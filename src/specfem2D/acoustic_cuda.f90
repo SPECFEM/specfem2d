@@ -44,12 +44,12 @@
 
 subroutine compute_forces_acoustic_GPU()
 
-  use specfem_par, only : Mesh_pointer,nspec_outer_acoustic, nspec_inner_acoustic,num_fluid_solid_edges,&
+  use specfem_par, only : Mesh_pointer,nspec_outer_acoustic, nspec_inner_acoustic,num_fluid_solid_edges, &
                           buffer_send_scalar_ext_mesh,NPROC,buffer_recv_scalar_ext_mesh,deltatover2f,b_deltatover2f, &
-                          ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh,&
-                          my_neighbours,tab_requests_send_recv_scalar,ninterface_acoustic,inum_interfaces_acoustic,&
-                          b_buffer_send_scalar_ext_mesh,b_buffer_recv_scalar_ext_mesh,b_tab_requests_send_recv_scalar,NGLOB_AB,&
-                          nelem_acoustic_surface,STACEY_BOUNDARY_CONDITIONS,any_elastic,any_poroelastic,SIMULATION_TYPE,it
+                          ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
+                          my_neighbours,tab_requests_send_recv_scalar,ninterface_acoustic,inum_interfaces_acoustic, &
+                          b_buffer_send_scalar_ext_mesh,b_buffer_recv_scalar_ext_mesh,b_tab_requests_send_recv_scalar, &
+                          nelem_acoustic_surface,STACEY_BOUNDARY_CONDITIONS,any_elastic,any_poroelastic,SIMULATION_TYPE
 
   implicit none
 
@@ -206,7 +206,7 @@ end subroutine compute_forces_acoustic_GPU
 
   use constants
   use specfem_par, only : nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_acoustic_left,b_absorb_acoustic_right,&
-                          b_absorb_acoustic_bottom, b_absorb_acoustic_top,myrank,it,NSTEP,SIMULATION_TYPE,SAVE_FORWARD,&
+                          b_absorb_acoustic_bottom, b_absorb_acoustic_top,it,NSTEP,SIMULATION_TYPE,SAVE_FORWARD,&
                           nelemabs,Mesh_pointer
 
   implicit none

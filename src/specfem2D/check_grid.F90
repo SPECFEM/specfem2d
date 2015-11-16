@@ -128,6 +128,11 @@
   if(UPPER_LIMIT_DISPLAY > nspec) &
     call exit_MPI('cannot have UPPER_LIMIT_DISPLAY > nspec in checkgrid.F90')
 
+  if (myrank == 0) then
+    write(IOUT,*) "  checking mesh and stability"
+    call flush_IOUT()
+  endif
+
 #ifndef USE_MPI
   allocate(coorg_recv(1,1))
   allocate(RGB_recv(1))
@@ -2165,6 +2170,7 @@ endif
 
 ! define percentage of smallest distance between GLL points for NGLLX points
 ! percentages were computed by calling the GLL points routine for each degree
+  percent_GLL(:) = 100.d0
 
   percent_GLL(2) = 100.d0
   percent_GLL(3) = 50.d0

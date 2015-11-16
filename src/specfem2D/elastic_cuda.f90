@@ -271,7 +271,7 @@ endif
   subroutine compute_add_sources_viscoelastic_GPU(phase_is_inner)
 
   use constants
-  use specfem_par,only: nsources_local,NSTEP,SIMULATION_TYPE,nadj_rec_local,it,Mesh_pointer
+  use specfem_par,only: NSTEP,SIMULATION_TYPE,nadj_rec_local,it,Mesh_pointer
 
   implicit none
 

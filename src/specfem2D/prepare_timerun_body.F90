@@ -992,6 +992,11 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
   enddo
 
 ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
+  if (myrank == 0) then
+    write(IOUT,*) "preparing array allocations..."
+    call flush_IOUT()
+  endif
+
     if(any_elastic) then
       nglob_elastic = nglob
     else
@@ -1286,21 +1291,35 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 
 
 
-
+  if (myrank == 0) then
+    write(IOUT,*) "preparing PML..."
+    call flush_IOUT()
+  endif
   call prepare_timerun_pml()
 
 
 ! Test compatibility with axisymmetric formulation
   if(AXISYM) call check_compatibility_axisym()
 
-
+  if (myrank == 0) then
+    write(IOUT,*) "preparing mass matrices..."
+    call flush_IOUT()
+  endif
   call prepare_timerun_mass_matrix()
 
-
+  if (myrank == 0) then
+    write(IOUT,*) "preparing image coloring..."
+    call flush_IOUT()
+  endif
   call prepare_timerun_image_coloring()
 !
 !---- initialize seismograms
 !
+  if (myrank == 0) then
+    write(IOUT,*) "preparing array initializations..."
+    call flush_IOUT()
+  endif
+
   sisux = ZERO ! double precision zero
   sisuz = ZERO
 
@@ -1437,7 +1456,10 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 
   endif ! if(anyabs .and. SIMULATION_TYPE == 3)
 
-
+  if (myrank == 0) then
+    write(IOUT,*) "preparing kernels..."
+    call flush_IOUT()
+  endif
   call prepare_timerun_kernel()
 
 !
@@ -2154,11 +2176,19 @@ if(coupled_elastic_poro) then
 ! open the file in which we will store the energy curve
   if(output_energy .and. myrank == 0) open(unit=IOUT_ENERGY,file='energy.dat',status='unknown',action='write')
 
+  if (myrank == 0) then
+    write(IOUT,*) "preparing noise..."
+    call flush_IOUT()
+  endif
   call prepare_timerun_noise()
 
 
   ! prepares image background
   if(output_color_image) then
+    if (myrank == 0) then
+      write(IOUT,*) "preparing color image vp..."
+      call flush_IOUT()
+    endif
     call prepare_color_image_vp()
   endif
 
@@ -2185,7 +2215,10 @@ if(coupled_elastic_poro) then
   seismo_offset = 0
   seismo_current = 0
 
-
+  if (myrank == 0) then
+    write(IOUT,*) "preparing attenuation..."
+    call flush_IOUT()
+  endif
   call prepare_timerun_attenuation()
 
 
@@ -2239,11 +2272,21 @@ endif ! Internal/External model
 
     call init_host_to_dev_variable()
 
+    if (myrank == 0) then
+      write(IOUT,*) "preparing GPU..."
+      call flush_IOUT()
+    endif
     call prepare_timerun_GPU()
 
   endif
 
 
+  if (myrank == 0) then
+    write(IOUT,*) ""
+    write(IOUT,*) "done, preparation successful"
+    write(IOUT,*) ""
+    call flush_IOUT()
+  endif
 
 
 end subroutine prepare_timerun

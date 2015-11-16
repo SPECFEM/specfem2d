@@ -46,7 +46,7 @@
 
 !  builds the global mass matrix
 
-  use specfem_par, only: any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
+  use specfem_par, only: myrank,any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one, &
                                 rmass_inverse_acoustic, &
                                 rmass_inverse_gravitoacoustic, &
@@ -85,6 +85,11 @@
   double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
   integer :: ispec_PML
   logical :: this_element_has_PML
+
+  if (myrank == 0) then
+    write(IOUT,*) "  initializing mass matrices"
+    call flush_IOUT()
+  endif
 
   ! initialize mass matrix
   if(any_elastic) rmass_inverse_elastic_one(:) = 0._CUSTOM_REAL
@@ -711,7 +716,6 @@
     enddo
   endif  ! end of absorbing boundaries
 
-
   end subroutine invert_mass_matrix_init
 !
 !-------------------------------------------------------------------------------------------------
@@ -721,7 +725,7 @@
 
 ! inverts the global mass matrix
 
-  use specfem_par, only: any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
+  use specfem_par, only: myrank,any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one,rmass_inverse_elastic_three,&
                                 rmass_inverse_acoustic, &
                                 rmass_inverse_gravitoacoustic, &
@@ -731,6 +735,10 @@
   implicit none
   include 'constants.h'
 
+  if (myrank == 0) then
+    write(IOUT,*) "  inverting mass matrices"
+    call flush_IOUT()
+  endif
 
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
 ! (this can happen when some degrees of freedom have been removed from some of the global arrays)
