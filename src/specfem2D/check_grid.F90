@@ -699,10 +699,10 @@
   scaling_factor = max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength
 
   if(ipass == 1) then
-    open(unit=14,file='points_per_wavelength_histogram_S_in_solid.txt',status='unknown')
+    open(unit=14,file='OUTPUT_FILES/points_per_wavelength_histogram_S_in_solid.txt',status='unknown')
     scaling_factor_S = scaling_factor
   else
-    open(unit=14,file='points_per_wavelength_histogram_P_in_fluid.txt',status='unknown')
+    open(unit=14,file='OUTPUT_FILES/points_per_wavelength_histogram_P_in_fluid.txt',status='unknown')
     scaling_factor_P = scaling_factor
   endif
   do iclass = 0,NCLASSES-1
@@ -731,7 +731,7 @@
 ! create script for Gnuplot histogram file
   if (myrank == 0) then
 
-  open(unit=14,file='plot_points_per_wavelength_histogram.gnu',status='unknown')
+  open(unit=14,file='OUTPUT_FILES/plot_points_per_wavelength_histogram.gnu',status='unknown')
   write(14,*) 'set term wxt'
 
   if(nspec_counted_all_solid > 0) then

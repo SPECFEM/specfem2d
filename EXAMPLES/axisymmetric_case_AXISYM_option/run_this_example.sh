@@ -4,7 +4,7 @@
 # with AXISYM=.true.
 # This is then an axisymmetric simulation
 #
-# To clean this directory : rm -rf DATA/ OUTPUT_FILES/ plot_points_per_wavelength_histogram.gnu points_per_wavelength_histogram_* x* *~
+# To clean this directory : rm -rf DATA/ OUTPUT_FILES/ x* *~
 
 echo "Simple axisymmetric simulation : `date`"
 currentdir=`pwd`

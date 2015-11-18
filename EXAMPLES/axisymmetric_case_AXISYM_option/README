@@ -20,6 +20,6 @@ Then see the results in OUTPUT_FILES/. The seismograms created can be compared w
 This script is designed for serial and parallel simulations. If specfem2d has been built correctly (with --with-mpi option) 
 just change the number of processes in Par_file_axisym.
 
-To clean this directory : rm -rf DATA/ OUTPUT_FILES/ plot_points_per_wavelength_histogram.gnu points_per_wavelength_histogram_* x* *~
+To clean this directory : rm -rf DATA/ OUTPUT_FILES/ x* *~
 
 If you have any questions feel free to contact me : alexis dot bottero at gmail doT com

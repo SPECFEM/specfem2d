@@ -144,7 +144,7 @@
      ! write actual source locations to file
      ! note that these may differ from input values, especially if source_surf = .true. in SOURCE
      ! note that the exact source locations are determined from (ispec,xi,gamma) values
-     open(unit=14,file='DATA/for_information_SOURCE_actually_used',status='unknown')
+     open(unit=14,file='OUTPUT_FILES/for_information_SOURCE_actually_used',status='unknown')
      do i_source=1,NSOURCES
         write(14,*) x_source(i_source), z_source(i_source)
      enddo
@@ -152,7 +152,7 @@
 
      ! write out actual station locations (compare with STATIONS from meshfem2D)
      ! NOTE: this will be written out even if use_existing_STATIONS = .true.
-     open(unit=15,file='DATA/for_information_STATIONS_actually_used',status='unknown')
+     open(unit=15,file='OUTPUT_FILES/for_information_STATIONS_actually_used',status='unknown')
      do irec = 1,nrec
         write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") &
              irec,x_final_receiver(irec),z_final_receiver(irec)
