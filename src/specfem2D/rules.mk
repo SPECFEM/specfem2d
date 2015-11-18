@@ -365,6 +365,8 @@ $O/invert_mass_matrix.spec.o: $O/specfem2D_par.spec.o
 $O/iterate_time.spec.o: $O/specfem2D_par.spec.o
 $O/iterate_time_undoatt.spec.o: $O/specfem2D_par.spec.o
 $O/locate_receivers.spec.o: $O/specfem2D_par.spec.o
+$O/locate_source_force.spec.o: $O/specfem2D_par.spec.o
+$O/locate_source_moment_tensor.spec.o: $O/specfem2D_par.spec.o
 $O/noise_tomography.spec.o: $O/specfem2D_par.spec.o
 $O/paco_beyond_critical.spec.o: $O/specfem2D_par.spec.o
 $O/plot_gll.spec.o: $O/specfem2D_par.spec.o

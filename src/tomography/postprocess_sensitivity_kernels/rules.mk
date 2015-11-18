@@ -138,19 +138,19 @@ xsmooth_sem_OBJECTS += $(cuda_smooth_sem_DEVICE_OBJ)
 endif
 ## libs
 xsmooth_sem_LIBS = $(MPILIBS) $(CUDA_LINK)
-INFO_CUDA="building xsmooth_sem with CUDA support"
+INFO_CUDA_SEM="building xsmooth_sem with CUDA support"
 else
 ## non-cuda version
 xsmooth_sem_OBJECTS += $(cuda_smooth_sem_STUBS)
 ## libs
 xsmooth_sem_LIBS = $(MPILIBS)
-INFO_CUDA="building xsmooth_sem without CUDA support"
+INFO_CUDA_SEM="building xsmooth_sem without CUDA support"
 endif
 
 
 ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS)
 	@echo ""
-	@echo $(INFO_CUDA)
+	@echo $(INFO_CUDA_SEM)
 	@echo ""
 	$(FCLINK) -o ${E}/xsmooth_sem $(xsmooth_sem_OBJECTS) $(xsmooth_sem_LIBS)
 	@echo ""
