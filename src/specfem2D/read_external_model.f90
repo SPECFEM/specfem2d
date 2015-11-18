@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -67,7 +66,7 @@
 
   if (tomo_material > 0) MODEL = 'tomo'
 
-  if(trim(MODEL) == 'legacy') then
+  if (trim(MODEL) == 'legacy') then
 
     write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_model_velocity.dat_input'
     open(unit=1001,file=inputname,status='unknown')
@@ -84,7 +83,7 @@
     close(1001)
 
 
-  else if(trim(MODEL)=='ascii') then
+  else if (trim(MODEL)=='ascii') then
     write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat'
     open(unit=1001,file= inputname,status='unknown')
     do ispec = 1,nspec
@@ -99,7 +98,7 @@
     enddo
     close(1001)
 
-  else if((trim(MODEL) == 'binary') .or. (trim(MODEL) == 'gll')) then
+  else if ((trim(MODEL) == 'binary') .or. (trim(MODEL) == 'gll')) then
       write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
       open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
       if (ios /= 0) stop 'Error opening rho.bin file.'
@@ -126,21 +125,21 @@
       Qmu_attenuationext(:,:,:) = 9999.d0
 
 
-  else if(trim(MODEL)=='external') then
+  else if (trim(MODEL)=='external') then
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
-  else if(trim(MODEL)=='tomo') then
+  else if (trim(MODEL)=='tomo') then
     call define_external_model_from_tomo_file()
   endif
 
-  if(trim(MODEL)=='external' .or. trim(MODEL)=='tomo') then
+  if (trim(MODEL)=='external' .or. trim(MODEL)=='tomo') then
 
     ! check that the external model that has just been defined makes sense
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
 
-          if(c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
+          if (c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
              c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
             ! vp, vs : assign dummy values, trick to avoid floating point errors in the case of an anisotropic medium
             vpext(i,j,ispec) = 20.d0
@@ -148,15 +147,15 @@
           endif
 
           ! check that the element type is not redefined compared to what is defined initially in DATA/Par_file
-          if((c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
+          if ((c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
               c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) &
               .and. .not. anisotropic(ispec)) &
       stop 'error: non anisotropic material in DATA/Par_file or external mesh redefined as anisotropic in define_external_model()'
 
-          if(vsext(i,j,ispec) < TINYVAL .and. (elastic(ispec) .or. anisotropic(ispec))) &
+          if (vsext(i,j,ispec) < TINYVAL .and. (elastic(ispec) .or. anisotropic(ispec))) &
             stop 'error: non acoustic material in DATA/Par_file or external mesh redefined as acoustic in define_external_model()'
 
-          if(vsext(i,j,ispec) > TINYVAL .and. .not. elastic(ispec)) &
+          if (vsext(i,j,ispec) > TINYVAL .and. .not. elastic(ispec)) &
             stop 'error: acoustic material in DATA/Par_file or external mesh redefined as non acoustic in define_external_model()'
 
         enddo
@@ -195,12 +194,12 @@
         iglob = ibool(i,j,ispec)
 
 
-        if(p_sv .and. (.not. (i == 1 .and. j == 1)) .and. &
+        if (p_sv .and. (.not. (i == 1 .and. j == 1)) .and. &
           ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
            (vsext(i,j,ispec) < TINYVAL  .and. previous_vsext >= TINYVAL)))  &
           call exit_MPI('external velocity model cannot be both fluid and solid inside the same spectral element')
 
-        if(c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
+        if (c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
            c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
           anisotropic(ispec) = .true.
           poroelastic(ispec) = .false.
@@ -208,13 +207,13 @@
           any_elastic = .true.
           QKappa_attenuationext(i,j,ispec) = 9999.d0
           Qmu_attenuationext(i,j,ispec) = 9999.d0
-        else if((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) < TINYVAL)) then
+        else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) < TINYVAL)) then
           elastic(ispec) = .false.
           poroelastic(ispec) = .false.
           gravitoacoustic(ispec)=.false.
           acoustic(ispec)=.true.
           any_acoustic = .true.
-        else if((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) >= TINYVAL)) then
+        else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) >= TINYVAL)) then
           elastic(ispec) = .false.
           poroelastic(ispec) = .false.
           acoustic(ispec)=.false.
@@ -227,15 +226,15 @@
         endif
 
 !       attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
-        if(acoustic(ispec)) cycle
+        if (acoustic(ispec)) cycle
 
 !       check that attenuation values entered by the user make sense
-        if((QKappa_attenuationext(i,j,ispec) <= 9998.999d0 .and. Qmu_attenuationext(i,j,ispec) >  9998.999d0) .or. &
+        if ((QKappa_attenuationext(i,j,ispec) <= 9998.999d0 .and. Qmu_attenuationext(i,j,ispec) >  9998.999d0) .or. &
            (QKappa_attenuationext(i,j,ispec) >  9998.999d0 .and. Qmu_attenuationext(i,j,ispec) <= 9998.999d0)) stop &
      'need to have Qkappa and Qmu both above or both below 9999 for a given material; trick: use 9998 if you want to turn off one'
 
 !       if no attenuation in that elastic element
-        if(QKappa_attenuationext(i,j,ispec) > 9998.999d0) cycle
+        if (QKappa_attenuationext(i,j,ispec) > 9998.999d0) cycle
 
         call attenuation_model(dble(QKappa_attenuationext(i,j,ispec)),dble(Qmu_attenuationext(i,j,ispec)))
 
@@ -246,8 +245,8 @@
         Mu_nu1(i,j,ispec) = Mu_nu1_sent
         Mu_nu2(i,j,ispec) = Mu_nu2_sent
 
-        if(ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0) then
-          if(anisotropic(ispec) .or. poroelastic(ispec) .or. gravitoacoustic(ispec)) stop &
+        if (ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0) then
+          if (anisotropic(ispec) .or. poroelastic(ispec) .or. gravitoacoustic(ispec)) stop &
              'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
 
           vp_dummy = dble(vpext(i,j,ispec))

@@ -1,3 +1,45 @@
+!========================================================================
+!
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This software is governed by the CeCILL license under French law and
+! abiding by the rules of distribution of free software. You can use,
+! modify and/or redistribute the software under the terms of the CeCILL
+! license as circulated by CEA, CNRS and Inria at the following URL
+! "http://www.cecill.info".
+!
+! As a counterpart to the access to the source code and rights to copy,
+! modify and redistribute granted by the license, users are provided only
+! with a limited warranty and the software's author, the holder of the
+! economic rights, and the successive licensors have only limited
+! liability.
+!
+! In this respect, the user's attention is drawn to the risks associated
+! with loading, using, modifying and/or developing or reproducing the
+! software by the user in light of its specific status of free software,
+! that may mean that it is complicated to manipulate, and that also
+! therefore means that it is reserved for developers and experienced
+! professionals having in-depth computer knowledge. Users are therefore
+! encouraged to load and test the software's suitability as regards their
+! requirements in conditions enabling the security of their systems and/or
+! data to be ensured and, more generally, to use and operate it in the
+! same conditions as regards security.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
+
 
   integer function julian_day(yr,mo,da)
 
@@ -10,7 +52,7 @@
   data mon /0,31,59,90,120,151,181,212,243,273,304,334/
 
   julian_day = da + mon(mo)
-  if(mo>2) julian_day = julian_day + lpyr(yr)
+  if (mo>2) julian_day = julian_day + lpyr(yr)
 
   end function julian_day
 
@@ -25,11 +67,11 @@
 !---- returns 1 if leap year
 !
   lpyr=0
-  if(mod(yr,400) == 0) then
+  if (mod(yr,400) == 0) then
     lpyr=1
-  else if(mod(yr,4) == 0) then
+  else if (mod(yr,4) == 0) then
     lpyr=1
-    if(mod(yr,100) == 0) lpyr=0
+    if (mod(yr,100) == 0) lpyr=0
   endif
 
   end function lpyr
@@ -46,7 +88,7 @@
   integer, external :: lpyr
 
 !---- function lpyr above returns 1 if leap year
-  if(lpyr(yr) == 1) then
+  if (lpyr(yr) == 1) then
     is_leap_year = .true.
   else
     is_leap_year = .false.
@@ -260,7 +302,7 @@
 ! for Julian Day number 2299161.
 !     ioptn = 5
 !     call calndr (ioptn, iday, month, iyear, 2299161)
-! calndr() should return iday=288, month=1, iyear=1582
+! calndr() should return iday=288, month= 1, iyear=1582
 !
 ! Given 15 October 1582 under the Gregorian calendar,
 ! find the date (idayJ,imonthJ,iyearJ) under the Julian calendar.
@@ -491,7 +533,7 @@
    endif
    if ((ioptn > 0)               .and. &
          ((jyear/100)*100 == jyear) .and. &
-         ((jyear/400)*400 /= jyear)      ) then
+         ((jyear/400)*400 /= jyear)     ) then
          leap = 0
    endif
   endif
@@ -692,7 +734,7 @@
 !
 ! This code handles abs(ioptn)=5, finding the day number during the year.
   else
-!        ioptn=5 always returns month=1, which we set now.
+!        ioptn=5 always returns month= 1, which we set now.
    month = 1
 !
 !        We need to determine whether this is a leap year.
@@ -702,7 +744,7 @@
    endif
    if ((ioptn > 0)               .and. &
       ((jyear/100)*100 == jyear) .and. &
-      ((jyear/400)*400 /= jyear)      ) then
+      ((jyear/400)*400 /= jyear)     ) then
          leap = 0
    endif
 !

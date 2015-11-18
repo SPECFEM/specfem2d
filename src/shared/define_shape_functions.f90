@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -84,7 +83,7 @@
   t  = gamma
 
 !----    4-node element
-  if(ngnod == 4) then
+  if (ngnod == 4) then
        sp = s + ONE
        sm = s - ONE
        tp = t + ONE
@@ -107,7 +106,7 @@
        dershape2D(2,4) = - QUARTER * sm
 
 !----    9-node element
-  else if(ngnod == 9) then
+  else if (ngnod == 9) then
 
        sp = s + ONE
        sm = s - ONE
@@ -164,9 +163,9 @@
 !--- check the shape functions and their derivatives
 ! sum of shape functions should be one
 ! sum of derivatives of shape functions should be zero
-  if(abs(sum(shape2D)-ONE) > TINYVAL) call exit_MPI('error shape functions')
-  if(abs(sum(dershape2D(1,:))) > TINYVAL) call exit_MPI('error deriv xi shape functions')
-  if(abs(sum(dershape2D(2,:))) > TINYVAL) call exit_MPI('error deriv gamma shape functions')
+  if (abs(sum(shape2D)-ONE) > TINYVAL) call exit_MPI('error shape functions')
+  if (abs(sum(dershape2D(1,:))) > TINYVAL) call exit_MPI('error deriv xi shape functions')
+  if (abs(sum(dershape2D(2,:))) > TINYVAL) call exit_MPI('error deriv gamma shape functions')
 
   end subroutine define_shape_functions
 

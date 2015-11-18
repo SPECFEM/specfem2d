@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -127,7 +126,7 @@
 ! sigma_zz = lambda * (epsilon_xx + epsilon_yy)
 ! pressure = - trace(sigma) / 3 = - (lambda + 2*mu/3) (epsilon_xx + epsilon_yy)
 
-  if(elastic(ispec)) then
+  if (elastic(ispec)) then
 
     ! get relaxed elastic parameters of current spectral element
     lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
@@ -138,7 +137,7 @@
       do i = 1,NGLLX
 
         !--- if external medium, get elastic parameters of current grid point
-        if(assign_external_model) then
+        if (assign_external_model) then
           cpl = vpext(i,j,ispec)
           csl = vsext(i,j,ispec)
           denst = rhoext(i,j,ispec)
@@ -156,7 +155,7 @@
         ! first double loop over GLL points to compute and store gradients
         ! we can merge the two loops because NGLLX == NGLLZ
 
-        if(AXISYM) then
+        if (AXISYM) then
           if (is_on_the_axis(ispec)) then
             do k = 1,NGLJ
               dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
@@ -196,7 +195,7 @@
 
 ! compute diagonal components of the stress tensor (include attenuation or anisotropy if needed)
 
-        if(ATTENUATION_VISCOELASTIC_SOLID) then
+        if (ATTENUATION_VISCOELASTIC_SOLID) then
 
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
@@ -219,7 +218,7 @@
 ! in a linear viscoelastic medium, Geophysical Journal International,
 ! vol. 95, p. 597-611 (1988) for two memory-variable mechanisms (page 604).
 
-          if(AXISYM) then
+          if (AXISYM) then
             if (is_on_the_axis(ispec)) then
               if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                 sigma_xx = 0._CUSTOM_REAL
@@ -285,7 +284,7 @@
 
           ! no attenuation
 
-          if(AXISYM) then
+          if (AXISYM) then
             if (is_on_the_axis(ispec)) then
               if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                 sigma_xx = 0._CUSTOM_REAL
@@ -332,8 +331,8 @@
         endif
 
         ! full anisotropy
-        if(anisotropic(ispec)) then
-          if(assign_external_model) then
+        if (anisotropic(ispec)) then
+          if (assign_external_model) then
             c11 = c11ext(i,j,ispec)
             c15 = c15ext(i,j,ispec)
             c13 = c13ext(i,j,ispec)
@@ -365,7 +364,7 @@
           ! implement anisotropy in 2D
           sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
-          if(c12 < 1.e-7 .or. c23 < 1.e-7) stop 'cannot compute pressure for an anisotropic material if c12 or c23 are zero'
+          if (c12 < 1.e-7 .or. c23 < 1.e-7) stop 'cannot compute pressure for an anisotropic material if c12 or c23 are zero'
           sigma_yy = c12*dux_dxl + c23*duz_dzl + c25*(duz_dxl + dux_dzl)
           sigma_zz = c13*dux_dxl + c33*duz_dzl + c35*(duz_dxl + dux_dzl)
 
@@ -378,7 +377,7 @@
       enddo
     enddo
 
-  else if(poroelastic(ispec)) then
+  else if (poroelastic(ispec)) then
 
     lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
     mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
@@ -454,7 +453,7 @@
 
 ! compute diagonal components of the stress tensor (include attenuation if needed)
 
-        if(ATTENUATION_VISCOELASTIC_SOLID) then
+        if (ATTENUATION_VISCOELASTIC_SOLID) then
 
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
@@ -523,7 +522,7 @@
     enddo
 
 ! pressure = - Chi_dot_dot if acoustic element
-  else if(acoustic(ispec)) then
+  else if (acoustic(ispec)) then
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -536,7 +535,7 @@
       enddo
     enddo
 
-  else if(gravitoacoustic(ispec)) then
+  else if (gravitoacoustic(ispec)) then
 
     do j = 1,NGLLZ
       do i = 1,NGLLX

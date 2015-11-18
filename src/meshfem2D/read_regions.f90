@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -67,10 +66,10 @@
 
   ! read the material numbers for each region
   call read_value_integer_p(nbregion, 'mesher.nbregions')
-  if(err_occurred() /= 0) stop 'error reading parameter nbregions in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter nbregions in Par_file'
 
 
-  if(nbregion <= 0) stop 'Negative number of regions not allowed!'
+  if (nbregion <= 0) stop 'Negative number of regions not allowed!'
 
   print *
   print *, 'Nb of regions in the mesh = ',nbregion
@@ -81,23 +80,23 @@
     call read_region_coordinates_p(ixdebregion,ixfinregion, &
                                 izdebregion,izfinregion,imaterial_number)
 
-    if(imaterial_number < 1) stop 'Negative material number not allowed!'
-    if(ixdebregion < 1) stop 'Left coordinate of region negative!'
-    if(ixfinregion > nxread) stop 'Right coordinate of region too high!'
-    if(izdebregion < 1) stop 'Bottom coordinate of region negative!'
-    if(izfinregion > nzread) stop 'Top coordinate of region too high!'
+    if (imaterial_number < 1) stop 'Negative material number not allowed!'
+    if (ixdebregion < 1) stop 'Left coordinate of region negative!'
+    if (ixfinregion > nxread) stop 'Right coordinate of region too high!'
+    if (izdebregion < 1) stop 'Bottom coordinate of region negative!'
+    if (izfinregion > nzread) stop 'Top coordinate of region too high!'
 
     print *,'Region ',iregion
     print *,'IX from ',ixdebregion,' to ',ixfinregion
     print *,'IZ from ',izdebregion,' to ',izfinregion
 
-    if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. icodemat(imaterial_number) /= POROELASTIC_MATERIAL) then
+    if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. icodemat(imaterial_number) /= POROELASTIC_MATERIAL) then
 
        ! isotropic material
        vpregion = cp(imaterial_number)
        vsregion = cs(imaterial_number)
        print *,'Material # ',imaterial_number,' isotropic'
-       if(vsregion < TINYVAL) then
+       if (vsregion < TINYVAL) then
           print *,'Material is fluid'
        else
           print *,'Material is solid'
@@ -107,10 +106,10 @@
        print *,'rho = ',rho_s(imaterial_number)
        poisson_ratio = 0.5d0*(vpregion*vpregion-2.d0*vsregion*vsregion) / (vpregion*vpregion-vsregion*vsregion)
        print *,'Poisson''s ratio = ',poisson_ratio
-       if(poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
+       if (poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
        print *,'QKappa = ',QKappa(imaterial_number)
        print *,'Qmu = ',Qmu(imaterial_number)
-    else if(icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
+    else if (icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
 
        ! poroelastic material
        print *,'Material # ',imaterial_number,' isotropic'
@@ -145,6 +144,6 @@
 
   enddo
 
-  if(minval(num_material) <= 0) stop 'Velocity model not entirely set...'
+  if (minval(num_material) <= 0) stop 'Velocity model not entirely set...'
 
   end subroutine read_regions

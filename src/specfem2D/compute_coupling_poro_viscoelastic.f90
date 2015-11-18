@@ -3,12 +3,11 @@
 !                   S P E C F E M 2 D  Version 7 . 0
 !                   --------------------------------
 !
-! Copyright CNRS, INRIA and University of Pau, France,
-! and Princeton University / California Institute of Technology, USA.
-! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
-!               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
-!               Roland Martin, roland DOT martin aT univ-pau DOT fr
-!               Christina Morency, cmorency aT princeton DOT edu
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
@@ -17,7 +16,7 @@
 ! This software is governed by the CeCILL license under French law and
 ! abiding by the rules of distribution of free software. You can use,
 ! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and INRIA at the following URL
+! license as circulated by CEA, CNRS and Inria at the following URL
 ! "http://www.cecill.info".
 !
 ! As a counterpart to the access to the source code and rights to copy,
@@ -40,6 +39,7 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
+
 ! for poro solver
 
  subroutine compute_coupling_poro_viscoelastic()
@@ -112,7 +112,7 @@
       dux_dgamma = ZERO
       duz_dgamma = ZERO
 
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         b_dux_dxi = ZERO
         b_duz_dxi = ZERO
 
@@ -128,7 +128,7 @@
         dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
         duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
 
-        if(SIMULATION_TYPE == 3) then
+        if (SIMULATION_TYPE == 3) then
           b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
           b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
           b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
@@ -148,7 +148,7 @@
       duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
       duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
         b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -157,9 +157,9 @@
       endif
       ! compute stress tensor
       ! full anisotropy
-      if(kmato(ispec_elastic) == 2) then
+      if (kmato(ispec_elastic) == 2) then
         ! implement anisotropy in 2D
-        if(assign_external_model) then
+        if (assign_external_model) then
           c11 = c11ext(i,j,ispec_elastic)
           c13 = c13ext(i,j,ispec_elastic)
           c15 = c15ext(i,j,ispec_elastic)
@@ -190,11 +190,11 @@
         sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
       endif
 
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         b_sigma_xx = lambdaplus2mu_unrelaxed_elastic*b_dux_dxl + lambdal_unrelaxed_elastic*b_duz_dzl
         b_sigma_xz = mul_unrelaxed_elastic*(b_duz_dxl + b_dux_dzl)
         b_sigma_zz = lambdaplus2mu_unrelaxed_elastic*b_duz_dzl + lambdal_unrelaxed_elastic*b_dux_dxl
-      endif ! if(SIMULATION_TYPE == 3)
+      endif ! if (SIMULATION_TYPE == 3)
 
       ! get point values for the poroelastic side
       i = ivalue(ipoin1D,iedge_poroelastic)
@@ -238,7 +238,7 @@
       dwx_dgamma = ZERO
       dwz_dgamma = ZERO
 
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         b_dux_dxi = ZERO
         b_duz_dxi = ZERO
 
@@ -264,7 +264,7 @@
         dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
         dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
         dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
-        if(SIMULATION_TYPE == 3) then
+        if (SIMULATION_TYPE == 3) then
           b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
           b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
           b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
@@ -295,7 +295,7 @@
       dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
       dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
         b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -317,7 +317,7 @@
 
       sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         b_sigma_xx = b_sigma_xx + lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
         b_sigma_xz = b_sigma_xz + mul_G*(b_duz_dxl + b_dux_dzl)
         b_sigma_zz = b_sigma_zz + lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
@@ -329,28 +329,28 @@
       ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
       ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
       ! Blackwell Science, page 110, equation (4.60).
-      if(iedge_poroelastic == ITOP) then
+      if (iedge_poroelastic == ITOP) then
         xxi = + gammaz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         zxi = - gammax(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         jacobian1D = sqrt(xxi**2 + zxi**2)
         nx = - zxi / jacobian1D
         nz = + xxi / jacobian1D
         weight = jacobian1D * wxgll(i)
-      else if(iedge_poroelastic == IBOTTOM) then
+      else if (iedge_poroelastic == IBOTTOM) then
         xxi = + gammaz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         zxi = - gammax(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         jacobian1D = sqrt(xxi**2 + zxi**2)
         nx = + zxi / jacobian1D
         nz = - xxi / jacobian1D
         weight = jacobian1D * wxgll(i)
-      else if(iedge_poroelastic ==ILEFT) then
+      else if (iedge_poroelastic ==ILEFT) then
         xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
         nx = - zgamma / jacobian1D
         nz = + xgamma / jacobian1D
         weight = jacobian1D * wzgll(j)
-      else if(iedge_poroelastic ==IRIGHT) then
+      else if (iedge_poroelastic ==IRIGHT) then
         xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -369,7 +369,7 @@
       ! contribution to the fluid phase
       ! w = 0
 
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         ! contribution to the solid phase
         b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + &
         weight*((b_sigma_xx*nx + b_sigma_xz*nz)/2.d0 -phil/tortl*b_sigmap*nx)
@@ -379,7 +379,7 @@
 
         ! contribution to the fluid phase
         ! w = 0
-      endif !if(SIMULATION_TYPE == 3) then
+      endif !if (SIMULATION_TYPE == 3) then
 
     enddo
 
@@ -428,8 +428,8 @@
        iglob = ibool(i,j,ispec_poroelastic)
        icount(iglob) = icount(iglob) + 1
 
-       if( icount(iglob) ==1 ) then
-         if( time_stepping_scheme == 1 ) then
+       if (icount(iglob) ==1) then
+         if (time_stepping_scheme == 1) then
            veloc_elastic(1,iglob) = veloc_elastic(1,iglob) - deltatover2*accel_elastic(1,iglob)
            veloc_elastic(3,iglob) = veloc_elastic(3,iglob) - deltatover2*accel_elastic(3,iglob)
            accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic_one(iglob)
@@ -458,7 +458,7 @@
            velocw_poroelastic(2,iglob) = ZERO
          endif
 
-!         if(time_stepping_scheme == 2) then
+!         if (time_stepping_scheme == 2) then
 !        recovering original velocities and accelerations on boundaries (elastic side)
 !      veloc_elastic = veloc_elastic - beta_LDDRK(i_stage) * veloc_elastic_LDDRK
 !      displ_elastic = displ_elastic - beta_LDDRK(i_stage) * displ_elastic_LDDRK
@@ -503,14 +503,14 @@
 !            endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!      if(time_stepping_scheme == 3) then
+!      if (time_stepping_scheme == 3) then
 
         ! recovering original velocities and accelerations on boundaries (elastic side)
-!        if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+!        if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
 
-!        if(i_stage == 1)weight_rk = 0.5d0
-!        if(i_stage == 2)weight_rk = 0.5d0
-!        if(i_stage == 3)weight_rk = 1.0d0
+!        if (i_stage == 1)weight_rk = 0.5d0
+!        if (i_stage == 2)weight_rk = 0.5d0
+!        if (i_stage == 3)weight_rk = 1.0d0
 
 !        veloc_elastic(1,iglob) = veloc_elastic_initial_rk(1,iglob) - weight_rk * accel_elastic_rk(1,iglob,i_stage)
 !  veloc_elastic(3,iglob) = veloc_elastic_initial_rk(3,iglob) - weight_rk * accel_elastic_rk(3,iglob,i_stage)
@@ -518,7 +518,7 @@
 !  displ_elastic(3,iglob) = displ_elastic_initial_rk(3,iglob) - weight_rk * veloc_elastic_rk(3,iglob,i_stage)
 
 
-!        else if(i_stage==4) then
+!        else if (i_stage==4) then
 
 !        veloc_elastic(1,iglob) = veloc_elastic_initial_rk(1,iglob) - 1.0d0 / 6.0d0 * &
 !        (accel_elastic_rk(1,iglob,1) + 2.0d0 * accel_elastic_rk(1,iglob,2) + &
@@ -548,11 +548,11 @@
 
 
         ! recovering original velocities and accelerations on boundaries (poro side)
-!        if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+!        if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
 
-!        if(i_stage == 1)weight_rk = 0.5d0
-!        if(i_stage == 2)weight_rk = 0.5d0
-!        if(i_stage == 3)weight_rk = 1.0d0
+!        if (i_stage == 1)weight_rk = 0.5d0
+!        if (i_stage == 2)weight_rk = 0.5d0
+!        if (i_stage == 3)weight_rk = 1.0d0
 
 !        velocs_poroelastic(1,iglob) = velocs_poroelastic_initial_rk(1,iglob) - weight_rk * accels_poroelastic_rk(1,iglob,i_stage)
 !  velocs_poroelastic(2,iglob) = velocs_poroelastic_initial_rk(2,iglob) - weight_rk * accels_poroelastic_rk(2,iglob,i_stage)
@@ -560,7 +560,7 @@
 !  displs_poroelastic(2,iglob) = displs_poroelastic_initial_rk(2,iglob) - weight_rk * velocs_poroelastic_rk(2,iglob,i_stage)
 
 
-!        else if(i_stage==4) then
+!        else if (i_stage==4) then
 
 !        velocs_poroelastic(1,iglob) = velocs_poroelastic_initial_rk(1,iglob) - 1.0d0 / 6.0d0 * &
 !        (accels_poroelastic_rk(1,iglob,1) + 2.0d0 * accels_poroelastic_rk(1,iglob,2) + &
@@ -603,11 +603,11 @@
  !       accel_elastic_rk(1,iglob,i_stage) = accel_elastic(1,iglob) * deltat
  !       accel_elastic_rk(3,iglob,i_stage) = accel_elastic(3,iglob) * deltat
 
- !       if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+ !       if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
 
- !       if(i_stage == 1)weight_rk = 0.5d0
- !       if(i_stage == 2)weight_rk = 0.5d0
- !       if(i_stage == 3)weight_rk = 1.0d0
+ !       if (i_stage == 1)weight_rk = 0.5d0
+ !       if (i_stage == 2)weight_rk = 0.5d0
+ !       if (i_stage == 3)weight_rk = 1.0d0
 
  !       veloc_elastic(1,iglob) = veloc_elastic_initial_rk(1,iglob) + weight_rk * accel_elastic_rk(1,iglob,i_stage)
  ! veloc_elastic(3,iglob) = veloc_elastic_initial_rk(3,iglob) + weight_rk * accel_elastic_rk(3,iglob,i_stage)
@@ -615,7 +615,7 @@
  ! displ_elastic(3,iglob) = displ_elastic_initial_rk(3,iglob) + weight_rk * veloc_elastic_rk(3,iglob,i_stage)
 
 
- !       else if(i_stage==4) then
+ !       else if (i_stage==4) then
 
  !       veloc_elastic(1,iglob) = veloc_elastic_initial_rk(1,iglob) + 1.0d0 / 6.0d0 * &
  !       (accel_elastic_rk(1,iglob,1) + 2.0d0 * accel_elastic_rk(1,iglob,2) + &
@@ -642,11 +642,11 @@
  !       velocs_poroelastic_rk(2,iglob,i_stage) = deltat * velocs_poroelastic(2,iglob)
 
 
- !       if(i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+ !       if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
 
- !       if(i_stage == 1)weight_rk = 0.5d0
- !       if(i_stage == 2)weight_rk = 0.5d0
- !       if(i_stage == 3)weight_rk = 1.0d0
+ !       if (i_stage == 1)weight_rk = 0.5d0
+ !       if (i_stage == 2)weight_rk = 0.5d0
+ !       if (i_stage == 3)weight_rk = 1.0d0
 
  !       velocs_poroelastic(1,iglob) = velocs_poroelastic_initial_rk(1,iglob) + weight_rk * accels_poroelastic_rk(1,iglob,i_stage)
  ! velocs_poroelastic(2,iglob) = velocs_poroelastic_initial_rk(2,iglob) + weight_rk * accels_poroelastic_rk(2,iglob,i_stage)
@@ -654,7 +654,7 @@
  ! displs_poroelastic(2,iglob) = displs_poroelastic_initial_rk(2,iglob) + weight_rk * velocs_poroelastic_rk(2,iglob,i_stage)
 
 
- !       else if(i_stage==4) then
+ !       else if (i_stage==4) then
 
  !       velocs_poroelastic(1,iglob) = velocs_poroelastic_initial_rk(1,iglob) + 1.0d0 / 6.0d0 * &
  !       (accels_poroelastic_rk(1,iglob,1) + 2.0d0 * accels_poroelastic_rk(1,iglob,2) + &
@@ -677,7 +677,7 @@
  !     endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-       if( SIMULATION_TYPE == 3 ) then
+       if (SIMULATION_TYPE == 3) then
          b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) - b_deltatover2*b_accel_elastic(1,iglob)
          b_veloc_elastic(3,iglob) = b_veloc_elastic(3,iglob) - b_deltatover2*b_accel_elastic(3,iglob)
          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) / rmass_inverse_elastic_one(iglob)
@@ -704,8 +704,8 @@
          b_accelw_poroelastic(2,iglob) = ZERO
          b_velocw_poroelastic(1,iglob) = ZERO
          b_velocw_poroelastic(2,iglob) = ZERO
-       endif !if(SIMULATION_TYPE == 3)
-     endif !if(icount(iglob) ==1)
+       endif !if (SIMULATION_TYPE == 3)
+     endif !if (icount(iglob) ==1)
    enddo
   enddo
 

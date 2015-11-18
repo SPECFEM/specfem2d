@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -80,7 +79,7 @@
     write(IOUT,*)
   endif
 
-  if(any_acoustic .or. any_poroelastic) &
+  if (any_acoustic .or. any_poroelastic) &
     call exit_MPI('initial field currently implemented for purely elastic simulation only')
 
   !=======================================================================
@@ -99,7 +98,7 @@
     write(IOUT,*)
 
   ! only implemented for one source
-    if(NSOURCES > 1) call exit_MPI('calculation of the initial wave is only implemented for one source')
+    if (NSOURCES > 1) call exit_MPI('calculation of the initial wave is only implemented for one source')
     if (source_type(1) == 1 .or. source_type(1) == 4) then
       write(IOUT,*) 'initial P wave of', anglesource(1)*180.d0/pi, 'degrees introduced.'
     else if (source_type(1) == 2 .or. source_type(1) == 5) then
@@ -226,7 +225,7 @@
   endif
 
 ! to suppress the reflected and converted plane wave fields
-  if(source_type(1) == 4 .or. source_type(1) == 5) then
+  if (source_type(1) == 4 .or. source_type(1) == 5) then
     B_plane(:) = 0
     C_plane(:) = 0
   endif
@@ -351,9 +350,9 @@ end subroutine prepare_initialfield
   count_bottom=0
   count_left=0
   count_right=0
-  do ispecabs=1,nelemabs
+  do ispecabs= 1,nelemabs
     ispec=numabs(ispecabs)
-    if(codeabs(IEDGE4,ispecabs)) then
+    if (codeabs(IEDGE4,ispecabs)) then
        i = 1
        do j = 1,NGLLZ
           count_left=count_left+1
@@ -361,7 +360,7 @@ end subroutine prepare_initialfield
           left_bound(count_left)=iglob
        enddo
     endif
-    if(codeabs(IEDGE2,ispecabs)) then
+    if (codeabs(IEDGE2,ispecabs)) then
        i = NGLLX
        do j = 1,NGLLZ
           count_right=count_right+1
@@ -369,13 +368,13 @@ end subroutine prepare_initialfield
           right_bound(count_right)=iglob
        enddo
     endif
-    if(codeabs(IEDGE1,ispecabs)) then
+    if (codeabs(IEDGE1,ispecabs)) then
        j = 1
 !! DK DK not needed       ! exclude corners to make sure there is no contradiction regarding the normal
        ibegin = 1
        iend = NGLLX
-!! DK DK not needed       if(codeabs(IEDGE4,ispecabs)) ibegin = 2
-!! DK DK not needed       if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+!! DK DK not needed       if (codeabs(IEDGE4,ispecabs)) ibegin = 2
+!! DK DK not needed       if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
        do i = ibegin,iend
           count_bottom=count_bottom+1
           iglob = ibool(i,j,ispec)

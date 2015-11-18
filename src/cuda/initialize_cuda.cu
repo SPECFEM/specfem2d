@@ -40,7 +40,6 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -82,17 +81,17 @@ void FC_FUNC_(initialize_cuda_device,
    //             however, for the CUDA runtime API functions (format cudaFUNCTION(..) )
    //             the initialization is implicit, thus cuInit() here would not be needed...
    CUresult status = cuInit(0);
-   if ( CUDA_SUCCESS != status ) exit_on_error("CUDA driver API device initialization failed\n");
+   if (CUDA_SUCCESS != status ) exit_on_error("CUDA driver API device initialization failed\n");
 
    // returns a handle to the first cuda compute device
    CUdevice dev;
    status = cuDeviceGet(&dev, 0);
-   if ( CUDA_SUCCESS != status ) exit_on_error("CUDA device not found\n");
+   if (CUDA_SUCCESS != status ) exit_on_error("CUDA device not found\n");
 
    // gets device properties
    int major,minor;
    status = cuDeviceComputeCapability(&major,&minor,dev);
-   if ( CUDA_SUCCESS != status ) exit_on_error("CUDA device information not found\n");
+   if (CUDA_SUCCESS != status ) exit_on_error("CUDA device information not found\n");
 
    // make sure that the device has compute capability >= 1.3
    if (major < 1){
@@ -127,7 +126,7 @@ void FC_FUNC_(initialize_cuda_device,
   *ncuda_devices = device_count;
 
   // Sets the active device
-  if(device_count >= 1) {
+  if (device_count >= 1) {
     // generalized for more GPUs per node
     // note: without previous context release, cudaSetDevice will complain with the cuda error
     //         "setting the device when a process is active is not allowed"
@@ -146,14 +145,14 @@ void FC_FUNC_(initialize_cuda_device,
 #ifdef CUDA_DEVICE_ID
     // uses fixed device id when compile with e.g.: -DCUDA_DEVICE_ID=1
     device = CUDA_DEVICE_ID;
-    if(myrank == 0 ) printf("setting cuda devices with id = %d for all processes by -DCUDA_DEVICE_ID\n\n",device);
+    if (myrank == 0) printf("setting cuda devices with id = %d for all processes by -DCUDA_DEVICE_ID\n\n",device);
 
     cudaSetDevice( device );
     exit_on_cuda_error("cudaSetDevice has invalid device");
 
     // double check that device was  properly selected
     cudaGetDevice(&device);
-    if( device != CUDA_DEVICE_ID ){
+    if (device != CUDA_DEVICE_ID) {
        printf("error rank: %d devices: %d \n",myrank,device_count);
        printf("  cudaSetDevice()=%d\n  cudaGetDevice()=%d\n",CUDA_DEVICE_ID,device);
        exit_on_error("CUDA set/get device error: device id conflict \n");
@@ -168,7 +167,7 @@ void FC_FUNC_(initialize_cuda_device,
 
     // double check that device was  properly selected
     cudaGetDevice(&device);
-    if( device != (myrank % device_count) ){
+    if (device != (myrank % device_count)) {
        printf("error rank: %d devices: %d \n",myrank,device_count);
        printf("  cudaSetDevice()=%d\n  cudaGetDevice()=%d\n",myrank%device_count,device);
        exit_on_error("CUDA set/get device error: device id conflict \n");
@@ -196,18 +195,18 @@ void FC_FUNC_(initialize_cuda_device,
 
   // by default, only master process outputs device infos to avoid file cluttering
   do_output_info = 0;
-  if( myrank == 0 ){
+  if (myrank == 0) {
     do_output_info = 1;
     sprintf(filename,OUTPUT_FILES_PATH"/gpu_device_info.txt");
   }
   // debugging
-  if( DEBUG ){
+  if (DEBUG) {
     do_output_info = 1;
     sprintf(filename,OUTPUT_FILES_PATH"/gpu_device_info_proc_%06d.txt",myrank);
   }
 
   // output to file
-  if( do_output_info ){
+  if (do_output_info) {
     fp = fopen(filename,"w");
     if (fp != NULL){
       // display device properties
@@ -228,17 +227,17 @@ void FC_FUNC_(initialize_cuda_device,
       fprintf(fp,"features:\n");
       fprintf(fp,"  Compute capability of the device = %d.%d\n", deviceProp.major, deviceProp.minor);
       fprintf(fp,"  multiProcessorCount: %d\n",deviceProp.multiProcessorCount);
-      if(deviceProp.canMapHostMemory){
+      if (deviceProp.canMapHostMemory){
         fprintf(fp,"  canMapHostMemory: TRUE\n");
       }else{
         fprintf(fp,"  canMapHostMemory: FALSE\n");
       }
-      if(deviceProp.deviceOverlap){
+      if (deviceProp.deviceOverlap){
         fprintf(fp,"  deviceOverlap: TRUE\n");
       }else{
         fprintf(fp,"  deviceOverlap: FALSE\n");
       }
-      if(deviceProp.concurrentKernels){
+      if (deviceProp.concurrentKernels){
         fprintf(fp,"  concurrentKernels: TRUE\n");
       }else{
         fprintf(fp,"  concurrentKernels: FALSE\n");
@@ -266,7 +265,7 @@ void FC_FUNC_(initialize_cuda_device,
   }
 
   // we use pinned memory for asynchronous copy
-  if( ! deviceProp.canMapHostMemory){
+  if (! deviceProp.canMapHostMemory){
     fprintf(stderr,"Device capability should allow to map host memory, exiting...\n");
     exit_on_error("CUDA Device capability canMapHostMemory should be TRUE\n");
   }
@@ -280,16 +279,16 @@ void FC_FUNC_(initialize_cuda_device,
   //       registers per block     = 9216                total = 65536    (limited by LAUNCH_MIN_BLOCKS 7)
 
   // shared memory
-  if( deviceProp.sharedMemPerBlock > 49152 && LAUNCH_MIN_BLOCKS <= 7 ){
-    if(myrank == 0 ){
+  if (deviceProp.sharedMemPerBlock > 49152 && LAUNCH_MIN_BLOCKS <= 7) {
+    if (myrank == 0) {
       printf("GPU non-optimal settings: your setting of using LAUNCH_MIN_BLOCK %i is too low and limits the register usage\n",
              LAUNCH_MIN_BLOCKS);
     }
   }
 
   // registers
-  if( deviceProp.regsPerBlock > 65536 && LAUNCH_MIN_BLOCKS <= 7 ){
-    if(myrank == 0 ){
+  if (deviceProp.regsPerBlock > 65536 && LAUNCH_MIN_BLOCKS <= 7) {
+    if (myrank == 0) {
       printf("GPU non-optimal settings: your setting of using LAUNCH_MIN_BLOCK %i is too low and limits the register usage\n",
              LAUNCH_MIN_BLOCKS);
     }
@@ -332,7 +331,7 @@ void FC_FUNC_(initialize_cuda_aware_mpi,
   if (device_count == 0) exit_on_error("CUDA runtime error: there is no device supporting CUDA\n");
 
   // Sets the active device
-  if(device_count >= 1) {
+  if (device_count >= 1) {
 #if CUDA_VERSION < 4000
     cudaThreadExit();
 #else
@@ -343,14 +342,14 @@ void FC_FUNC_(initialize_cuda_aware_mpi,
 #ifdef CUDA_DEVICE_ID
     // uses fixed device id when compile with e.g.: -DCUDA_DEVICE_ID=1
     device = CUDA_DEVICE_ID;
-    if(myrank == 0 ) printf("setting cuda devices with id = %d for all processes by -DCUDA_DEVICE_ID\n\n",device);
+    if (myrank == 0) printf("setting cuda devices with id = %d for all processes by -DCUDA_DEVICE_ID\n\n",device);
 
     cudaSetDevice( device );
     exit_on_cuda_error("cudaSetDevice has invalid device");
 
     // double check that device was  properly selected
     cudaGetDevice(&device);
-    if( device != CUDA_DEVICE_ID ){
+    if (device != CUDA_DEVICE_ID) {
        printf("error rank: %d devices: %d \n",myrank,device_count);
        printf("  cudaSetDevice()=%d\n  cudaGetDevice()=%d\n",CUDA_DEVICE_ID,device);
        exit_on_error("CUDA set/get device error: device id conflict \n");
@@ -365,7 +364,7 @@ void FC_FUNC_(initialize_cuda_aware_mpi,
 
     // double check that device was  properly selected
     cudaGetDevice(&device);
-    if( device != (myrank % device_count) ){
+    if (device != (myrank % device_count)) {
        printf("error rank: %d devices: %d \n",myrank,device_count);
        printf("  cudaSetDevice()=%d\n  cudaGetDevice()=%d\n",myrank%device_count,device);
        exit_on_error("CUDA set/get device error: device id conflict \n");
@@ -393,18 +392,18 @@ void FC_FUNC_(initialize_cuda_aware_mpi,
 
   // by default, only master process outputs device infos to avoid file cluttering
   do_output_info = 0;
-  if( myrank == 0 ){
+  if (myrank == 0) {
     do_output_info = 1;
     sprintf(filename,OUTPUT_FILES_PATH"/gpu_device_info.txt");
   }
   // debugging
-  if( DEBUG ){
+  if (DEBUG) {
     do_output_info = 1;
     sprintf(filename,OUTPUT_FILES_PATH"/gpu_device_info_proc_%06d.txt",myrank);
   }
 
   // output to file
-  if( do_output_info ){
+  if (do_output_info) {
     fp = fopen(filename,"w");
     if (fp != NULL){
       // display device properties
@@ -426,17 +425,17 @@ void FC_FUNC_(initialize_cuda_aware_mpi,
       fprintf(fp,"  Compute capability of the device = %d.%d\n", deviceProp.major, deviceProp.minor);
       fprintf(fp,"  multiProcessorCount: %d\n",deviceProp.multiProcessorCount);
       fprintf(fp,"  UVA = %d\n", deviceProp.unifiedAddressing);
-      if(deviceProp.canMapHostMemory){
+      if (deviceProp.canMapHostMemory){
         fprintf(fp,"  canMapHostMemory: TRUE\n");
       }else{
         fprintf(fp,"  canMapHostMemory: FALSE\n");
       }
-      if(deviceProp.deviceOverlap){
+      if (deviceProp.deviceOverlap){
         fprintf(fp,"  deviceOverlap: TRUE\n");
       }else{
         fprintf(fp,"  deviceOverlap: FALSE\n");
       }
-      if(deviceProp.concurrentKernels){
+      if (deviceProp.concurrentKernels){
         fprintf(fp,"  concurrentKernels: TRUE\n");
       }else{
         fprintf(fp,"  concurrentKernels: FALSE\n");
@@ -464,7 +463,7 @@ void FC_FUNC_(initialize_cuda_aware_mpi,
   }
 
   // we use pinned memory for asynchronous copy
-  if( ! deviceProp.canMapHostMemory){
+  if (! deviceProp.canMapHostMemory){
     fprintf(stderr,"Device capability should allow to map host memory, exiting...\n");
     exit_on_error("CUDA Device capability canMapHostMemory should be TRUE\n");
   }
@@ -481,16 +480,16 @@ void FC_FUNC_(initialize_cuda_aware_mpi,
   //       registers per block     = 9216                total = 65536    (limited by LAUNCH_MIN_BLOCKS 7)
 
   // shared memory
-  if( deviceProp.sharedMemPerBlock > 49152 && LAUNCH_MIN_BLOCKS <= 7 ){
-    if(myrank == 0 ){
+  if (deviceProp.sharedMemPerBlock > 49152 && LAUNCH_MIN_BLOCKS <= 7) {
+    if (myrank == 0) {
       printf("GPU non-optimal settings: your setting of using LAUNCH_MIN_BLOCK %i is too low and limits the register usage\n",
              LAUNCH_MIN_BLOCKS);
     }
   }
 
   // registers
-  if( deviceProp.regsPerBlock > 65536 && LAUNCH_MIN_BLOCKS <= 7 ){
-    if(myrank == 0 ){
+  if (deviceProp.regsPerBlock > 65536 && LAUNCH_MIN_BLOCKS <= 7) {
+    if (myrank == 0) {
       printf("GPU non-optimal settings: your setting of using LAUNCH_MIN_BLOCK %i is too low and limits the register usage\n",
              LAUNCH_MIN_BLOCKS);
     }

@@ -74,8 +74,8 @@ NGLOB_AB = nglob
 allocate(ibool_interfaces_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
 
 ibool_interfaces_ext_mesh(:,:)=0
-do j=1,ninterface
-do i=1,nibool_interfaces_ext_mesh(j)
+do j = 1,ninterface
+do i = 1,nibool_interfaces_ext_mesh(j)
 ibool_interfaces_ext_mesh(i,j)=ibool_interfaces_ext_mesh_init(i,j)
 enddo
 enddo
@@ -93,7 +93,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
 
 
   ! checks
-  if( nelemabs < 0 ) then
+  if (nelemabs < 0) then
     print *,'host_to_dev: reading in negative nelemabs ',nelemabs,'...resetting to zero'
     nelemabs = 0
   endif
@@ -102,16 +102,16 @@ free_ac_ispec(:)=acoustic_surface(1,:)
            abs_boundary_jacobian1Dw(NGLLX,nelemabs), &
            abs_boundary_normal(NDIM,NGLLX,nelemabs),&
            cote_abs(nelemabs),stat=ier)
-  if( ier /= 0 ) stop 'error allocating array abs_boundary_ispec etc.'
+  if (ier /= 0 ) stop 'error allocating array abs_boundary_ispec etc.'
 
 
 
-  if(STACEY_BOUNDARY_CONDITIONS) then
+  if (STACEY_BOUNDARY_CONDITIONS) then
 
-    do ispecabs=1,nelemabs
+    do ispecabs= 1,nelemabs
       ispec = numabs(ispecabs)
         !--- left absorbing boundary
-        if(codeabs(IEDGE4,ispecabs)) then
+        if (codeabs(IEDGE4,ispecabs)) then
         i = 1
         do j = 1,NGLLZ
 
@@ -132,7 +132,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
           enddo
 
         !--- right absorbing boundary
-        else if(codeabs(IEDGE2,ispecabs)) then
+        else if (codeabs(IEDGE2,ispecabs)) then
           i = NGLLX
            do j = 1,NGLLZ
 
@@ -153,7 +153,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
           enddo
 
            !--- bottom absorbing boundary
-      else if(codeabs(IEDGE1,ispecabs)) then
+      else if (codeabs(IEDGE1,ispecabs)) then
         j = 1
          do i = 1,NGLLX
 
@@ -174,7 +174,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
           enddo
 
               !--- top absorbing boundary
-      else if(codeabs(IEDGE3,ispecabs)) then
+      else if (codeabs(IEDGE3,ispecabs)) then
         j = NGLLZ
         do i = 1,NGLLX
 
@@ -224,22 +224,22 @@ free_ac_ispec(:)=acoustic_surface(1,:)
   enddo
 
 
-  if ( nsources_local > 0 ) then
+  if (nsources_local > 0) then
     allocate(sourcearray_loc(nsources_local,NDIM,NGLLX,NGLLX))
   else
     allocate(sourcearray_loc(1,1,1,1))
   endif
 
   k=0
-  do i_source=1,NSOURCES
+  do i_source= 1,NSOURCES
 
     if (is_proc_source(i_source) == 1) then
 
     k = k + 1
 
-    if(source_type(i_source) == 1) then
+    if (source_type(i_source) == 1) then
 
-      if( acoustic(ispec_selected_source(i_source)) ) then
+      if (acoustic(ispec_selected_source(i_source))) then
 
         do j = 1,NGLLZ
                     do i = 1,NGLLX
@@ -249,7 +249,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
                     enddo
         enddo
 
-      else if ( elastic(ispec_selected_source(i_source)) ) then
+      else if (elastic(ispec_selected_source(i_source))) then
         do j = 1,NGLLZ
                     do i = 1,NGLLX
 
@@ -285,11 +285,11 @@ free_ac_ispec(:)=acoustic_surface(1,:)
   ! sets up elements for loops in acoustic simulations
   nspec_inner_acoustic = 0
   nspec_outer_acoustic = 0
-  if( any_acoustic ) then
+  if (any_acoustic) then
     ! counts inner and outer elements
     do ispec = 1, nspec
-      if(acoustic(ispec) ) then
-        if( ispec_is_inner(ispec) .eqv. .true. ) then
+      if (acoustic(ispec)) then
+        if (ispec_is_inner(ispec) .eqv. .true.) then
           nspec_inner_acoustic = nspec_inner_acoustic + 1
         else
           nspec_outer_acoustic = nspec_outer_acoustic + 1
@@ -299,17 +299,17 @@ free_ac_ispec(:)=acoustic_surface(1,:)
 
     ! stores indices of inner and outer elements for faster(?) computation
     num_phase_ispec_acoustic = max(nspec_inner_acoustic,nspec_outer_acoustic)
-    if( num_phase_ispec_acoustic < 0 ) stop 'error acoustic simulation: num_phase_ispec_acoustic is < zero'
+    if (num_phase_ispec_acoustic < 0 ) stop 'error acoustic simulation: num_phase_ispec_acoustic is < zero'
 
     allocate( phase_ispec_inner_acoustic(num_phase_ispec_acoustic,2),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array phase_ispec_inner_acoustic'
+    if (ier /= 0 ) stop 'error allocating array phase_ispec_inner_acoustic'
     phase_ispec_inner_acoustic(:,:) = 0
 
     ispec_inner = 0
     ispec_outer = 0
     do ispec = 1, nspec
-      if(acoustic(ispec) ) then
-        if( ispec_is_inner(ispec) .eqv. .true. ) then
+      if (acoustic(ispec)) then
+        if (ispec_is_inner(ispec) .eqv. .true.) then
           ispec_inner = ispec_inner + 1
           phase_ispec_inner_acoustic(ispec_inner,2) = ispec
         else
@@ -322,7 +322,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
     ! allocates dummy array
     num_phase_ispec_acoustic = 0
     allocate( phase_ispec_inner_acoustic(num_phase_ispec_acoustic,2),stat=ier)
-    if( ier /= 0 ) stop 'error allocating dummy array phase_ispec_inner_acoustic'
+    if (ier /= 0 ) stop 'error allocating dummy array phase_ispec_inner_acoustic'
     phase_ispec_inner_acoustic(:,:) = 0
   endif
 
@@ -335,7 +335,7 @@ free_ac_ispec(:)=acoustic_surface(1,:)
 
 if (acoustic_surface(2,i_spec_free) ==acoustic_surface(3,i_spec_free)) then
 
-     do j=1,5
+     do j =1,5
       free_surface_ij(1,j,i_spec_free) = acoustic_surface(2,i_spec_free)
      enddo
 
@@ -356,7 +356,7 @@ endif
 
 if (acoustic_surface(4,i_spec_free) ==acoustic_surface(5,i_spec_free)) then
 
-     do j=1,5
+     do j =1,5
       free_surface_ij(2,j,i_spec_free) = acoustic_surface(4,i_spec_free)
      enddo
 
@@ -407,7 +407,7 @@ endif
 
 
 
-          if(iedge_acoustic == ITOP)then
+          if (iedge_acoustic == ITOP) then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
@@ -415,7 +415,7 @@ endif
             coupling_ac_el_normal(2,ipoint1D,inum) = + xxi / jacobian1D
             coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wxgll(i)
 
-          else if(iedge_acoustic == IBOTTOM)then
+          else if (iedge_acoustic == IBOTTOM) then
             xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xxi**2 + zxi**2)
@@ -423,7 +423,7 @@ endif
             coupling_ac_el_normal(2,ipoint1D,inum) = - xxi / jacobian1D
             coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wxgll(i)
 
-          else if(iedge_acoustic ==ILEFT)then
+          else if (iedge_acoustic ==ILEFT) then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -431,7 +431,7 @@ endif
             coupling_ac_el_normal(2,ipoint1D,inum) = + xgamma / jacobian1D
             coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wzgll(j)
 
-          else if(iedge_acoustic ==IRIGHT)then
+          else if (iedge_acoustic ==IRIGHT) then
             xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
             jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -464,11 +464,11 @@ num_elem_colors_acoustic(1)=0
   ! sets up elements for loops in acoustic simulations
   nspec_inner_elastic = 0
   nspec_outer_elastic = 0
-  if( any_elastic ) then
+  if (any_elastic) then
     ! counts inner and outer elements
     do ispec = 1, nspec
-      if(elastic(ispec) ) then
-        if( ispec_is_inner(ispec) .eqv. .true. ) then
+      if (elastic(ispec)) then
+        if (ispec_is_inner(ispec) .eqv. .true.) then
           nspec_inner_elastic = nspec_inner_elastic + 1
         else
           nspec_outer_elastic = nspec_outer_elastic + 1
@@ -478,17 +478,17 @@ num_elem_colors_acoustic(1)=0
 
     ! stores indices of inner and outer elements for faster(?) computation
     num_phase_ispec_elastic = max(nspec_inner_elastic,nspec_outer_acoustic)
-    if( num_phase_ispec_elastic < 0 ) stop 'error elastic simulation: num_phase_ispec_elastic is < zero'
+    if (num_phase_ispec_elastic < 0 ) stop 'error elastic simulation: num_phase_ispec_elastic is < zero'
 
     allocate( phase_ispec_inner_elastic(num_phase_ispec_elastic,2),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array phase_ispec_inner_elastic'
+    if (ier /= 0 ) stop 'error allocating array phase_ispec_inner_elastic'
     phase_ispec_inner_elastic(:,:) = 0
 
     ispec_inner = 0
     ispec_outer = 0
     do ispec = 1, nspec
-      if( elastic(ispec) ) then
-        if( ispec_is_inner(ispec) .eqv. .true. ) then
+      if (elastic(ispec)) then
+        if (ispec_is_inner(ispec) .eqv. .true.) then
           ispec_inner = ispec_inner + 1
           phase_ispec_inner_elastic(ispec_inner,2) = ispec
         else
@@ -501,7 +501,7 @@ num_elem_colors_acoustic(1)=0
     ! allocates dummy array
     num_phase_ispec_elastic = 0
     allocate( phase_ispec_inner_elastic(num_phase_ispec_elastic,2),stat=ier)
-    if( ier /= 0 ) stop 'error allocating dummy array phase_ispec_inner_elastic'
+    if (ier /= 0 ) stop 'error allocating dummy array phase_ispec_inner_elastic'
     phase_ispec_inner_elastic(:,:) = 0
   endif
 
@@ -535,7 +535,7 @@ allocate(c25store(NGLLX,NGLLZ,NSPEC))
 
 if (assign_external_model) then
 
-do ispec=1,nspec
+do ispec= 1,nspec
         do j = 1,NGLLZ
              do i = 1,NGLLX
 
@@ -555,7 +555,7 @@ enddo
 
 else
 
-do ispec=1,nspec
+do ispec= 1,nspec
         do j = 1,NGLLZ
              do i = 1,NGLLX
 
@@ -606,7 +606,7 @@ veloc_2D(2,:)=veloc_elastic(3,:)
 accel_2D(1,:)=accel_elastic(1,:)
 accel_2D(2,:)=accel_elastic(3,:)
 
-if(SIMULATION_TYPE == 3 .and. any_elastic) then
+if (SIMULATION_TYPE == 3 .and. any_elastic) then
   allocate(b_displ_2D(2,nglob))
   allocate(b_veloc_2D(2,nglob))
   allocate(b_accel_2D(2,nglob))
@@ -651,7 +651,7 @@ allocate(cosrot_irecf(nrecloc))
 allocate(sinrot_irecf(nrecloc))
 
 
-do i=1,nrecloc
+do i = 1,nrecloc
 cosrot_irecf(i)=sngl(cosrot_irec(i))
 sinrot_irecf(i)=sngl(sinrot_irec(i))
 enddo

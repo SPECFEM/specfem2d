@@ -1,8 +1,7 @@
-
 !========================================================================
 !
-!                  S P E C F E M 2 D  Version 7 . 0
-!                  --------------------------------
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
@@ -40,6 +39,7 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
+
 
   subroutine compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
 
@@ -90,7 +90,7 @@
 ! loop over spectral elements
   do ispec = ifirstelem,ilastelem
     ! acoustic spectral element
-    if( acoustic(ispec) ) then
+    if (acoustic(ispec)) then
       rhol = density(1,kmato(ispec))
 
       ! first double loop over GLL points to compute and store gradients
@@ -102,8 +102,8 @@
           ! first double loop over GLL points to compute and store gradients
           ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
-            if( AXISYM ) then
-              if( is_on_the_axis(ispec) ) then
+            if (AXISYM) then
+              if (is_on_the_axis(ispec)) then
                 dux_dxi = dux_dxi + b_potential_acoustic(ibool(k,j,ispec)) * hprimeBar_xx(i,k)
               else
                 dux_dxi = dux_dxi + b_potential_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
@@ -123,29 +123,29 @@
           dux_dxl = dux_dxi * xixl + dux_dgamma * gammaxl
           dux_dzl = dux_dxi * xizl + dux_dgamma * gammazl
 
-          if( AXISYM .and. is_on_the_axis(ispec) .and. i == 1 ) then ! dchi/dr=rho * u_r=0 on the axis
+          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! dchi/dr=rho * u_r=0 on the axis
             dux_dxl = ZERO
           endif
 
           jacobianl = jacobian(i,j,ispec)
 
           ! if external density model
-          if( assign_external_model ) then
+          if (assign_external_model) then
             rhol = rhoext(i,j,ispec)
           endif
 
-          if( AXISYM ) then
-            if( is_on_the_axis(ispec) .and. i == 1 ) then
+          if (AXISYM) then
+            if (is_on_the_axis(ispec) .and. i == 1) then
               xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
               r_xiplus1(i,j) = xxi
-            else if( is_on_the_axis(ispec) ) then
+            else if (is_on_the_axis(ispec)) then
               r_xiplus1(i,j) = coord(1,ibool(i,j,ispec))/(xiglj(i)+ONE)
             endif
           endif
 
           ! for acoustic medium also add integration weights
-          if( AXISYM ) then
-            if( is_on_the_axis(ispec) ) then
+          if (AXISYM) then
+            if (is_on_the_axis(ispec)) then
               tempx1(i,j) = wzgll(j) * r_xiplus1(i,j) * jacobianl * (xixl * dux_dxl + xizl * dux_dzl) / rhol
               tempx2(i,j) = wxglj(i) * r_xiplus1(i,j) * jacobianl * (gammaxl * dux_dxl + gammazl * dux_dzl) / rhol
             else
@@ -163,7 +163,7 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
-          if( assign_external_model ) then
+          if (assign_external_model) then
             rhol = rhoext(i,j,ispec)
             cpl = vpext(i,j,ispec)
             !assuming that in fluid(acoustic) part input cpl is defined by sqrt(kappal/rhol), &
@@ -187,8 +187,8 @@
           ! along x direction and z direction
           ! and assemble the contributions
           do k = 1,NGLLX
-            if( AXISYM ) then
-              if( is_on_the_axis(ispec) ) then
+            if (AXISYM) then
+              if (is_on_the_axis(ispec)) then
                 b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
                        (tempx1(k,j) * hprimeBarwglj_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
               else
@@ -217,13 +217,13 @@
 
 ! for Stacey paraxial absorbing conditions (more precisely: Sommerfeld in the case of a fluid) we implement them here
 
-  if( STACEY_BOUNDARY_CONDITIONS ) then
-    do ispecabs=1,nelemabs
+  if (STACEY_BOUNDARY_CONDITIONS) then
+    do ispecabs= 1,nelemabs
       ispec = numabs(ispecabs)
       ! Sommerfeld condition if acoustic
-      if( acoustic(ispec) ) then
+      if (acoustic(ispec)) then
         !--- left absorbing boundary
-        if( codeabs(IEDGE4,ispecabs) ) then
+        if (codeabs(IEDGE4,ispecabs)) then
           i = 1
           jbegin = ibegin_edge4(ispecabs)
           jend = iend_edge4(ispecabs)
@@ -236,7 +236,7 @@
         endif  !  end of left absorbing boundary
 
         !--- right absorbing boundary
-        if( codeabs(IEDGE2,ispecabs) ) then
+        if (codeabs(IEDGE2,ispecabs)) then
           i = NGLLX
           jbegin = ibegin_edge2(ispecabs)
           jend = iend_edge2(ispecabs)
@@ -249,13 +249,13 @@
         endif  !  end of right absorbing boundary
 
         !--- bottom absorbing boundary
-        if( codeabs(IEDGE1,ispecabs) ) then
+        if (codeabs(IEDGE1,ispecabs)) then
           j = 1
           ibegin = ibegin_edge1(ispecabs)
           iend = iend_edge1(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if( codeabs_corner(1,ispecabs)) ibegin = 2
-          if( codeabs_corner(2,ispecabs)) iend = NGLLX-1
+          if (codeabs_corner(1,ispecabs)) ibegin = 2
+          if (codeabs_corner(2,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! adds (previously) stored contribution
@@ -265,13 +265,13 @@
         endif  !  end of bottom absorbing boundary
 
         !--- top absorbing boundary
-        if( codeabs(IEDGE3,ispecabs) ) then
+        if (codeabs(IEDGE3,ispecabs)) then
           j = NGLLZ
           ibegin = ibegin_edge3(ispecabs)
           iend = iend_edge3(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if( codeabs_corner(3,ispecabs)) ibegin = 2
-          if( codeabs_corner(4,ispecabs)) iend = NGLLX-1
+          if (codeabs_corner(3,ispecabs)) ibegin = 2
+          if (codeabs_corner(4,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &

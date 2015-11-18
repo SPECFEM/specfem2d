@@ -1,3 +1,45 @@
+!========================================================================
+!
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This software is governed by the CeCILL license under French law and
+! abiding by the rules of distribution of free software. You can use,
+! modify and/or redistribute the software under the terms of the CeCILL
+! license as circulated by CEA, CNRS and Inria at the following URL
+! "http://www.cecill.info".
+!
+! As a counterpart to the access to the source code and rights to copy,
+! modify and redistribute granted by the license, users are provided only
+! with a limited warranty and the software's author, the holder of the
+! economic rights, and the successive licensors have only limited
+! liability.
+!
+! In this respect, the user's attention is drawn to the risks associated
+! with loading, using, modifying and/or developing or reproducing the
+! software by the user in light of its specific status of free software,
+! that may mean that it is complicated to manipulate, and that also
+! therefore means that it is reserved for developers and experienced
+! professionals having in-depth computer knowledge. Users are therefore
+! encouraged to load and test the software's suitability as regards their
+! requirements in conditions enabling the security of their systems and/or
+! data to be ensured and, more generally, to use and operate it in the
+! same conditions as regards security.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
+
 
 subroutine finalize_simulation()
 
@@ -18,14 +60,14 @@ integer i,ispec,j,iglob
 
   real(kind=4),dimension(:,:,:),allocatable :: rho_save, vp_save, vs_save, kappa_save, x_save, z_save
 
-if ( trim(SAVE_MODEL) /= 'default' ) then
+if (trim(SAVE_MODEL) /= 'default') then
    allocate(rho_save(NGLLX,NGLLZ,nspec))
    allocate(vp_save(NGLLX,NGLLZ,nspec))
    allocate(vs_save(NGLLX,NGLLZ,nspec))
    allocate(kappa_save(NGLLX,NGLLZ,nspec))
    allocate(x_save(NGLLX,NGLLZ,nspec))
    allocate(z_save(NGLLX,NGLLZ,nspec))
-do ispec=1,nspec
+do ispec= 1,nspec
           do j = 1,NGLLZ
               do i = 1,NGLLX
 
@@ -45,7 +87,7 @@ do ispec=1,nspec
 enddo
 
 
-  if(trim(SAVE_MODEL) == 'legacy') then
+  if (trim(SAVE_MODEL) == 'legacy') then
 
     write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_model_velocity.dat_input'
     open(unit=1001,file=inputname,status='unknown')
@@ -61,7 +103,7 @@ enddo
     close(1001)
 
 
-  else if(trim(SAVE_MODEL)=='ascii') then
+  else if (trim(SAVE_MODEL)=='ascii') then
 
     write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat'
     open(unit=1001,file= inputname,status='unknown')
@@ -75,7 +117,7 @@ enddo
     enddo
     close(1001)
 
-  else if((trim(SAVE_MODEL) == 'binary') .or. (trim(SAVE_MODEL) == 'gll')) then
+  else if ((trim(SAVE_MODEL) == 'binary') .or. (trim(SAVE_MODEL) == 'gll')) then
 
           write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
           open(unit=172,file=outputname,status='unknown',form='unformatted')
@@ -122,24 +164,24 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
                               APPROXIMATE_HESS_KL)
 
 
-  if(output_wavefield_dumps) deallocate(mask_ibool)
+  if (output_wavefield_dumps) deallocate(mask_ibool)
 
 
 !!!! Displacement Etienne GPU
 
 ! stores absorbing boundary contributions into files
-      if(anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
+      if (anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
 
       if (any_acoustic) then
 
         !--- left absorbing boundary
-        if(nspec_left >0) write(65) b_absorb_acoustic_left
+        if (nspec_left >0) write(65) b_absorb_acoustic_left
         !--- right absorbing boundary
-        if(nspec_right >0) write(66) b_absorb_acoustic_right
+        if (nspec_right >0) write(66) b_absorb_acoustic_right
         !--- bottom absorbing boundary
-        if(nspec_bottom >0) write(67) b_absorb_acoustic_bottom
+        if (nspec_bottom >0) write(67) b_absorb_acoustic_bottom
         !--- top absorbing boundary
-        if(nspec_top >0) write(68) b_absorb_acoustic_top
+        if (nspec_top >0) write(68) b_absorb_acoustic_top
 
       endif !any acoustic
 
@@ -149,16 +191,16 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
       close(68)
       close(72)
 
- if(any_elastic) then
+ if (any_elastic) then
 
         !--- left absorbing boundary
-        if(nspec_left >0) write(35) b_absorb_elastic_left
+        if (nspec_left >0) write(35) b_absorb_elastic_left
         !--- right absorbing boundary
-        if(nspec_right >0)  write(36) b_absorb_elastic_right
+        if (nspec_right >0)  write(36) b_absorb_elastic_right
         !--- bottom absorbing boundary
-        if(nspec_bottom >0)  write(37) b_absorb_elastic_bottom
+        if (nspec_bottom >0)  write(37) b_absorb_elastic_bottom
         !--- top absorbing boundary
-        if(nspec_top >0) write(38) b_absorb_elastic_top
+        if (nspec_top >0) write(38) b_absorb_elastic_top
 
    endif !any elastic
 
@@ -169,7 +211,7 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
       close(71)
 
 
-    if(any_poroelastic) then
+    if (any_poroelastic) then
       close(25)
       close(45)
       close(26)
@@ -185,8 +227,8 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
 !
 !--- save last frame
 !
-  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_elastic) then
-    if ( myrank == 0 ) then
+  if (SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_elastic) then
+    if (myrank == 0) then
       write(IOUT,*)
       write(IOUT,*) 'Saving elastic last frame...'
       write(IOUT,*)
@@ -201,8 +243,8 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
     close(55)
   endif
 
-  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_poroelastic) then
-    if ( myrank == 0 ) then
+  if (SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_poroelastic) then
+    if (myrank == 0) then
       write(IOUT,*)
       write(IOUT,*) 'Saving poroelastic last frame...'
       write(IOUT,*)
@@ -223,8 +265,8 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
     close(56)
   endif
 
-  if(SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_acoustic) then
-    if ( myrank == 0 ) then
+  if (SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_acoustic) then
+    if (myrank == 0) then
       write(IOUT,*)
       write(IOUT,*) 'Saving acoustic last frame...'
       write(IOUT,*)
@@ -254,7 +296,7 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
   deallocate(t0z_bot)
 
 !----  close energy file
-  if(output_energy .and. myrank == 0) close(IOUT_ENERGY)
+  if (output_energy .and. myrank == 0) close(IOUT_ENERGY)
 
 
 ! print exit banner
@@ -263,7 +305,7 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
 !
 !----  close output file
 !
-  if(IOUT /= ISTANDARD_OUTPUT) close(IOUT)
+  if (IOUT /= ISTANDARD_OUTPUT) close(IOUT)
 
 !
 !----  end MPI

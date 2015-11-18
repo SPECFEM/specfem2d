@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -59,7 +58,7 @@
   ! opens Database file
   write(prname,230) myrank
   open(unit=IIN,file=prname,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI('error opening file OUTPUT/Database***')
+  if (ier /= 0 ) call exit_MPI('error opening file OUTPUT/Database***')
 
   !---  read job title and skip remaining titles of the input file
   read(IIN,"(a80)") datlin
@@ -144,15 +143,15 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) initialfield,add_Bielak_conditions
-  if(add_Bielak_conditions .and. .not. initialfield) &
+  if (add_Bielak_conditions .and. .not. initialfield) &
     stop 'need to have an initial field to add Bielak plane wave conditions'
 
   read(IIN,"(a80)") datlin
   read(IIN,*) seismotype,imagetype_postscript
-  if(seismotype < 1 .or. seismotype > 6) call exit_MPI('Wrong type for seismogram output')
-  if(imagetype_postscript < 1 .or. imagetype_postscript > 4) call exit_MPI('Wrong type for PostScript snapshots')
+  if (seismotype < 1 .or. seismotype > 6) call exit_MPI('Wrong type for seismogram output')
+  if (imagetype_postscript < 1 .or. imagetype_postscript > 4) call exit_MPI('Wrong type for PostScript snapshots')
 
-  if(SAVE_FORWARD .and. (seismotype /= 1 .and. seismotype /= 6)) then
+  if (SAVE_FORWARD .and. (seismotype /= 1 .and. seismotype /= 6)) then
     print *, '***** WARNING *****'
     print *, 'seismotype =',seismotype
     print *, 'Save forward wavefield => seismogram must be in displacement for (poro)elastic or potential for acoustic'
@@ -268,25 +267,25 @@
   read(IIN,*) NT_DUMP_ATTENUATION
   if (myrank == 0) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
 
-  if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
      (ATTENUATION_PORO_FLUID_PART)) then
     print *, '*************** error ***************'
     stop 'Anisotropy & Viscous damping are not presently implemented for adjoint calculations'
   endif
 
-  if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
      ATTENUATION_PORO_FLUID_PART .and. (.not. UNDO_ATTENUATION)) then
     print *, '*************** error ***************'
     stop 'attenuation is only implemented for adjoint calculations with UNDO_ATTENUATION'
   endif
 
 ! make sure NSTEP_BETWEEN_OUTPUT_SEISMOS is a multiple of subsamp_seismos
-  if(mod(NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos) /= 0) &
+  if (mod(NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos) /= 0) &
     stop 'error: NSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of subsamp_seismos'
 
 ! make sure NSTEP is a multiple of subsamp_seismos
 ! if not, increase it a little bit, to the next multiple
-  if(mod(NSTEP,subsamp_seismos) /= 0) then
+  if (mod(NSTEP,subsamp_seismos) /= 0) then
     if (myrank == 0) then
       print *,'NSTEP is not a multiple of subsamp_seismos'
       NSTEP = (NSTEP/subsamp_seismos + 1)*subsamp_seismos
@@ -378,7 +377,7 @@
   anglesource(:) = 0.d0
 
   ! reads in source info from Database file
-  do i_source=1,NSOURCES
+  do i_source= 1,NSOURCES
      read(IIN,"(a80)") datlin
      read(IIN,*) source_type(i_source),time_function_type(i_source)
      read(IIN,"(a100)") name_of_source_file(i_source)
@@ -406,7 +405,7 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) N_SLS, f0_attenuation, READ_VELOCITIES_AT_f0
-  if(N_SLS < 2) stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
+  if (N_SLS < 2) stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
 
   end subroutine read_databases_atten
 
@@ -445,9 +444,9 @@
   allocate(coorgread(NDIM))
   do ip = 1,npgeo
     ! reads coordinates
-    read(IIN,*) ipoin,(coorgread(id),id =1,NDIM)
+    read(IIN,*) ipoin,(coorgread(id),id = 1,NDIM)
 
-    if(ipoin<1 .or. ipoin>npgeo) call exit_MPI('Wrong control point number')
+    if (ipoin<1 .or. ipoin>npgeo) call exit_MPI('Wrong control point number')
 
     ! saves coordinate array
     coorg(:,ipoin) = coorgread
@@ -466,7 +465,7 @@
               num_fluid_poro_edges,num_solid_poro_edges,nnodes_tangential_curve, &
               nelem_on_the_axis
   !---- print element group main parameters
-  if (myrank == 0 ) then
+  if (myrank == 0) then
     write(IOUT,107)
     write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat,nelem_acforcing
   endif
@@ -516,7 +515,7 @@
   n = 0
   do ispec = 1,nspec
     ! format: #element_id  #material_id #node_id1 #node_id2 #...
-    read(IIN,*) n,kmato_read,(knods_read(k), k=1,ngnod),pml_read
+    read(IIN,*) n,kmato_read,(knods_read(k), k= 1,ngnod),pml_read
       ! material association
       kmato(n) = kmato_read
       region_CPML(n) = pml_read
@@ -657,7 +656,7 @@
   read(IIN,"(a80)") datlin
 
   ! reads in values
-  if( anyabs ) then
+  if (anyabs) then
 
     ! reads absorbing boundaries
     do inum = 1,nelemabs
@@ -671,7 +670,7 @@
                   ibegin_edge2(inum), iend_edge2(inum), ibegin_edge3(inum), &
                   iend_edge3(inum), ibegin_edge4(inum), iend_edge4(inum)
 
-      if(numabsread < 1 .or. numabsread > nspec) &
+      if (numabsread < 1 .or. numabsread > nspec) &
         call exit_MPI('Wrong absorbing element number')
 
       numabs(inum) = numabsread
@@ -685,7 +684,7 @@
 
 ! check that a single edge is defined for each element cited
 ! (since elements with two absorbing edges MUST be cited twice, each time with a different "typeabs()" code
-      if(count(codeabs(:,inum) .eqv. .true.) /= 1) then
+      if (count(codeabs(:,inum) .eqv. .true.) /= 1) then
         print *,'error for absorbing element inum = ',inum
         stop 'must have one and only one absorbing edge per absorbing line cited'
       endif
@@ -848,7 +847,7 @@
   read(IIN,"(a80)") datlin
 
   ! reads in values
-  if( ACOUSTIC_FORCING ) then
+  if (ACOUSTIC_FORCING) then
 
     ! reads absorbing boundaries
     do inum = 1,nelem_acforcing
@@ -862,7 +861,7 @@
                   ibegin_edge2_acforcing(inum), iend_edge2_acforcing(inum), ibegin_edge3_acforcing(inum), &
                   iend_edge3_acforcing(inum), ibegin_edge4_acforcing(inum), iend_edge4_acforcing(inum)
 
-      if(numacforcingread < 1 .or. numacforcingread > nspec) &
+      if (numacforcingread < 1 .or. numacforcingread > nspec) &
         call exit_MPI('Wrong absorbing element number')
 
 
@@ -877,7 +876,7 @@
 
 ! check that a single edge is defined for each element cited
 ! (since elements with two absorbing edges MUST be cited twice, each time with a different "typeacforcing()" code
-      if(count(codeacforcing(:,inum) .eqv. .true.) /= 1) then
+      if (count(codeacforcing(:,inum) .eqv. .true.) /= 1) then
         print *,'error for absorbing element inum = ',inum
         stop 'must have one and only one absorbing edge per absorbing line cited'
       endif
@@ -942,7 +941,7 @@
   ! reads in any possible free surface edges
   read(IIN,"(a80)") datlin
 
-  if( any_acoustic_edges ) then
+  if (any_acoustic_edges) then
     do inum = 1,nelem_acoustic_surface
       read(IIN,*) acoustic_edges_read, acoustic_edges(2,inum), acoustic_edges(3,inum), &
            acoustic_edges(4,inum)
@@ -992,7 +991,7 @@
   ! reads acoustic elastic coupled edges
   read(IIN,"(a80)") datlin
 
-  if ( any_fluid_solid_edges ) then
+  if (any_fluid_solid_edges) then
     do inum = 1, num_fluid_solid_edges
       read(IIN,*) fluid_solid_acoustic_ispec_read,fluid_solid_elastic_ispec_read
 
@@ -1004,7 +1003,7 @@
   ! reads acoustic poroelastic coupled edges
   read(IIN,"(a80)") datlin
 
-  if ( any_fluid_poro_edges ) then
+  if (any_fluid_poro_edges) then
     do inum = 1, num_fluid_poro_edges
       read(IIN,*) fluid_poro_acoustic_ispec_read,fluid_poro_poro_ispec_read
 
@@ -1016,7 +1015,7 @@
   ! reads poroelastic elastic coupled edges
   read(IIN,"(a80)") datlin
 
-  if ( any_solid_poro_edges ) then
+  if (any_solid_poro_edges) then
     do inum = 1, num_solid_poro_edges
       read(IIN,*) solid_poro_poro_ispec_read,solid_poro_elastic_ispec_read
 
@@ -1052,7 +1051,7 @@
   read(IIN,"(a80)") datlin
   read(IIN,*) force_normal_to_surface,rec_normal_to_surface
 
-  if( any_tangential_curve ) then
+  if (any_tangential_curve) then
     do i = 1, nnodes_tangential_curve
       read(IIN,*) nodes_tangential_curve(1,i),nodes_tangential_curve(2,i)
     enddo

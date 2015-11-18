@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -95,10 +94,10 @@ program combine_sem
   nproc = 1
   myrank = 0
 #endif
-  if( ier /= 0 ) stop 'error MPI initialization'
+  if (ier /= 0 ) stop 'error MPI initialization'
 
 
-  if (myrank==0) then
+  if (myrank == 0) then
   print *, 'Running XCOMBINE_SEM'
   print *
 
@@ -147,7 +146,7 @@ program combine_sem
   close(IIN)
   nspec=(filesize-8)/(CUSTOM_REAL*NGLLX*NGLLZ)
 
-  do iker=1,nker
+  do iker= 1,nker
       call combine_sem_array(kernel_names(iker),kernel_paths,output_dir,npath,nspec,myrank)
   enddo
 

@@ -1,6 +1,3 @@
-
-  program specfem2D
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -42,6 +39,7 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
+
 
 !====================================================================================
 !
@@ -188,7 +186,7 @@
 ! journal={Bull. Seismol. Soc. Am.},
 ! year=1998,
 ! volume=88,
-! number=2,
+! number= 2,
 ! pages={368-392}}
 !
 ! @ARTICLE{KoTr99,
@@ -209,7 +207,7 @@
 !   based upon the Spectral-Element Method},
 ! journal={Bull. Seism. Soc. Am.},
 ! volume=94,
-! number=1,
+! number= 1,
 ! pages={187-206}}
 !
 ! @ARTICLE{MoTr08,
@@ -360,19 +358,19 @@
 !! DK DK (then array bound checking cannot be used, thus for instance do NOT use -check all in Intel ifort)
 ! #define FORCE_VECTORIZATION
 
+  program specfem2D
+
   use specfem_par, only: undo_attenuation
 
   call prepare_timerun()
 
-  if( undo_attenuation ) then
+  if (undo_attenuation) then
     call iterate_time_undoatt()
   else
     call iterate_time()
   endif
 
-
   call finalize_simulation()
-
 
   end program specfem2D
 

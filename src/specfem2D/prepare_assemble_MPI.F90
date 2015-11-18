@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -133,7 +132,7 @@
           ! global index
           iglob = ibool(ix,iz,ispec)
 
-           if(.not. mask_ibool_ext_mesh(iglob)) then
+           if (.not. mask_ibool_ext_mesh(iglob)) then
               ! masks point as being accounted for
               mask_ibool_ext_mesh(iglob) = .true.
               ! adds point to interface
@@ -143,23 +142,23 @@
 
 
           ! checks to which material this common interface belongs
-          if ( elastic(ispec) ) then
+          if (elastic(ispec)) then
             ! elastic element
-            if(.not. mask_ibool_elastic(iglob)) then
+            if (.not. mask_ibool_elastic(iglob)) then
               mask_ibool_elastic(iglob) = .true.
               nglob_interface_elastic = nglob_interface_elastic + 1
               ibool_interfaces_elastic(nglob_interface_elastic,num_interface) = iglob
             endif
-          else if ( poroelastic(ispec) ) then
+          else if (poroelastic(ispec)) then
             ! poroelastic element
-            if(.not. mask_ibool_poroelastic(iglob)) then
+            if (.not. mask_ibool_poroelastic(iglob)) then
               mask_ibool_poroelastic(iglob) = .true.
               nglob_interface_poroelastic = nglob_interface_poroelastic + 1
               ibool_interfaces_poroelastic(nglob_interface_poroelastic,num_interface) = iglob
             endif
           else
             ! acoustic element
-            if(.not. mask_ibool_acoustic(iglob)) then
+            if (.not. mask_ibool_acoustic(iglob)) then
               mask_ibool_acoustic(iglob) = .true.
               nglob_interface_acoustic = nglob_interface_acoustic + 1
               ibool_interfaces_acoustic(nglob_interface_acoustic,num_interface) = iglob
@@ -181,9 +180,9 @@
         do ix = 1, NGLLX
 
 
-           if ( mask_ibool_acoustic(ibool(ix,iz,ispec)) &
+           if (mask_ibool_acoustic(ibool(ix,iz,ispec)) &
             .or. mask_ibool_elastic(ibool(ix,iz,ispec)) &
-            .or. mask_ibool_poroelastic(ibool(ix,iz,ispec)) ) then
+            .or. mask_ibool_poroelastic(ibool(ix,iz,ispec))) then
                mask_ispec_inner_outer(ispec) = .true.
           endif
 
@@ -201,17 +200,17 @@
   ! loops over all MPI interfaces
   do num_interface = 1, ninterface
     ! sets acoustic MPI interface (local) indices in range [1,ninterface_acoustic]
-    if ( nibool_interfaces_acoustic(num_interface) > 0 ) then
+    if (nibool_interfaces_acoustic(num_interface) > 0) then
       ninterface_acoustic = ninterface_acoustic + 1
       inum_interfaces_acoustic(ninterface_acoustic) = num_interface
     endif
     ! elastic
-    if ( nibool_interfaces_elastic(num_interface) > 0 ) then
+    if (nibool_interfaces_elastic(num_interface) > 0) then
       ninterface_elastic = ninterface_elastic + 1
       inum_interfaces_elastic(ninterface_elastic) = num_interface
     endif
     ! poroelastic
-    if ( nibool_interfaces_poroelastic(num_interface) > 0 ) then
+    if (nibool_interfaces_poroelastic(num_interface) > 0) then
       ninterface_poroelastic = ninterface_poroelastic + 1
       inum_interfaces_poroelastic(ninterface_poroelastic) = num_interface
     endif
@@ -236,30 +235,30 @@
   integer, intent(out)  :: ixmin, ixmax, izmin, izmax
   integer, intent(out)  :: sens
 
-  if ( itype == 1 ) then
+  if (itype == 1) then
 
     ! common single point
 
     ! checks which corner point is given
-    if ( e1 == n(1) ) then
+    if (e1 == n(1)) then
         ixmin = 1
         ixmax = 1
         izmin = 1
         izmax = 1
     endif
-    if ( e1 == n(2) ) then
+    if (e1 == n(2)) then
         ixmin = NGLLX
         ixmax = NGLLX
         izmin = 1
         izmax = 1
     endif
-    if ( e1 == n(3) ) then
+    if (e1 == n(3)) then
         ixmin = NGLLX
         ixmax = NGLLX
         izmin = NGLLZ
         izmax = NGLLZ
     endif
-    if ( e1 == n(4) ) then
+    if (e1 == n(4)) then
         ixmin = 1
         ixmax = 1
         izmin = NGLLZ
@@ -267,62 +266,62 @@
     endif
     sens = 1
 
-  else if( itype == 2 ) then
+  else if (itype == 2) then
 
     ! common edge
 
     ! checks which edge and corner points are given
-    if ( e1 ==  n(1) ) then
+    if (e1 ==  n(1)) then
         ixmin = 1
         izmin = 1
-        if ( e2 == n(2) ) then
+        if (e2 == n(2)) then
            ixmax = NGLLX
            izmax = 1
            sens = 1
         endif
-        if ( e2 == n(4) ) then
+        if (e2 == n(4)) then
            ixmax = 1
            izmax = NGLLZ
            sens = 1
         endif
      endif
-     if ( e1 == n(2) ) then
+     if (e1 == n(2)) then
         ixmin = NGLLX
         izmin = 1
-        if ( e2 == n(3) ) then
+        if (e2 == n(3)) then
            ixmax = NGLLX
            izmax = NGLLZ
            sens = 1
         endif
-        if ( e2 == n(1) ) then
+        if (e2 == n(1)) then
            ixmax = 1
            izmax = 1
            sens = -1
         endif
      endif
-     if ( e1 == n(3) ) then
+     if (e1 == n(3)) then
         ixmin = NGLLX
         izmin = NGLLZ
-        if ( e2 == n(4) ) then
+        if (e2 == n(4)) then
            ixmax = 1
            izmax = NGLLZ
            sens = -1
         endif
-        if ( e2 == n(2) ) then
+        if (e2 == n(2)) then
            ixmax = NGLLX
            izmax = 1
            sens = -1
         endif
      endif
-     if ( e1 == n(4) ) then
+     if (e1 == n(4)) then
         ixmin = 1
         izmin = NGLLZ
-        if ( e2 == n(1) ) then
+        if (e2 == n(1)) then
            ixmax = 1
            izmax = 1
            sens = -1
         endif
-        if ( e2 == n(3) ) then
+        if (e2 == n(3)) then
            ixmax = NGLLX
            izmax = NGLLZ
            sens = 1

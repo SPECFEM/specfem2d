@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -62,7 +61,7 @@
 
   EPS = 1.d-5
   DZ = Z - ZGLL(I)
-  if(abs(DZ) < EPS) then
+  if (abs(DZ) < EPS) then
    HGLL = 1.d0
    return
   endif
@@ -97,7 +96,7 @@
 
   EPS = 1.d-5
   DZ = Z - ZGLJ(I)
-  if(abs(DZ) < EPS) then
+  if (abs(DZ) < EPS) then
    HGLJ = 1.d0
    return
   endif
@@ -124,12 +123,12 @@
   integer dgr,i,j
   double precision prod1,prod2
 
-  do dgr=1,NGLL
+  do dgr= 1,NGLL
 
     prod1 = 1.0d0
     prod2 = 1.0d0
-    do i=1,NGLL
-      if(i /= dgr) then
+    do i = 1,NGLL
+      if (i /= dgr) then
         prod1 = prod1*(xi-xigll(i))
         prod2 = prod2*(xigll(dgr)-xigll(i))
       endif
@@ -137,11 +136,11 @@
     h(dgr)=prod1/prod2
 
     hprime(dgr)=0.0d0
-    do i=1,NGLL
-      if(i /= dgr) then
+    do i = 1,NGLL
+      if (i /= dgr) then
         prod1=1.0d0
-        do j=1,NGLL
-          if(j /= dgr .and. j /= i) prod1 = prod1*(xi-xigll(j))
+        do j = 1,NGLL
+          if (j /= dgr .and. j /= i) prod1 = prod1*(xi-xigll(j))
         enddo
         hprime(dgr) = hprime(dgr)+prod1
       endif

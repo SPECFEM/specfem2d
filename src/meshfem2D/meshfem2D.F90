@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -185,7 +184,7 @@
 ! journal={Bull. Seismol. Soc. Am.},
 ! year=1998,
 ! volume=88,
-! number=2,
+! number= 2,
 ! pages={368-392}}
 !
 ! @ARTICLE{KoTr99,
@@ -206,7 +205,7 @@
 !   based upon the Spectral-Element Method},
 ! journal={Bull. Seism. Soc. Am.},
 ! volume=94,
-! number=1,
+! number= 1,
 ! pages={187-206}}
 !
 ! @ARTICLE{MoTr08,
@@ -432,7 +431,7 @@ program meshfem2D
   call read_parameter_file()
 
   ! reads in mesh elements
-  if ( read_external_mesh ) then
+  if (read_external_mesh) then
      call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, ngnod)
 
   else
@@ -449,9 +448,9 @@ program meshfem2D
   region_pml_external_mesh(:) = 0
 
   ! assigns materials to mesh elements
-  if ( read_external_mesh ) then
+  if (read_external_mesh) then
      call read_mat(materials_file, num_material)
-     if(PML_BOUNDARY_CONDITIONS)then
+     if (PML_BOUNDARY_CONDITIONS) then
       call read_pml_element(CPML_element_file, region_pml_external_mesh, nspec_cpml)
      endif
   else
@@ -486,7 +485,7 @@ program meshfem2D
 
   !---
 
-  if(ngnod /= 4 .and. ngnod /= 9) stop 'ngnod different from 4 or 9!'
+  if (ngnod /= 4 .and. ngnod /= 9) stop 'ngnod different from 4 or 9!'
 
   print *
   print *,'The mesh contains ',nelmnts,' elements'
@@ -496,7 +495,7 @@ program meshfem2D
 
   !---
 
-  if ( .not. read_external_mesh ) then
+  if (.not. read_external_mesh) then
      ! allocate arrays for the grid
      allocate(x(0:nx,0:nz))
      allocate(z(0:nx,0:nz))
@@ -555,8 +554,8 @@ program meshfem2D
 
         ! check if we are in the last layer, which contains topography,
         ! and modify the position of the source accordingly if it is located exactly at the surface
-        do i_source=1,NSOURCES
-           if(source_surf(i_source) .and. ilayer == number_of_layers ) then
+        do i_source= 1,NSOURCES
+           if (source_surf(i_source) .and. ilayer == number_of_layers) then
                 print *, 'source ', i_source
                 print *, '  target (input) z: ', zs(i_source)
                 zs(i_source) = value_spline(xs(i_source),xinterface_top,zinterface_top, &
@@ -566,7 +565,7 @@ program meshfem2D
         enddo
 
         ! compute the offset of this layer in terms of number of spectral elements below along Z
-        if(ilayer > 1) then
+        if (ilayer > 1) then
            ioffset = sum(nz_layer(1:ilayer-1))
         else
            ioffset = 0
@@ -609,7 +608,7 @@ program meshfem2D
 
      nnodes = (nz+1)*(nx+1)
      allocate(nodes_coords(2,nnodes))
-     if ( ngnod == 4 ) then
+     if (ngnod == 4) then
         do j = 0, nz
            do i = 0, nx
               num_node = num_4(i,j,nxread)
@@ -634,22 +633,22 @@ program meshfem2D
   endif
 
 
-  if ( read_external_mesh ) then
+  if (read_external_mesh) then
      call read_acoustic_surface(free_surface_file, num_material, &
                         ANISOTROPIC_MATERIAL, nb_materials, icodemat, phi, remove_min_to_start_at_zero)
 
-     if ( any_abs ) then
+     if (any_abs) then
         call read_abs_surface(absorbing_surface_file, remove_min_to_start_at_zero)
 ! rotate the elements that are located on the edges of the mesh if needed
 ! otherwise the plane wave and Bielak conditions may not be applied correctly
-        if(initialfield) call rotate_mesh_for_plane_wave(ngnod)
+        if (initialfield) call rotate_mesh_for_plane_wave(ngnod)
      endif
 
-     if ( ACOUSTIC_FORCING ) then
+     if (ACOUSTIC_FORCING) then
         call read_acoustic_forcing_surface(acoustic_forcing_surface_file, remove_min_to_start_at_zero)
 ! rotate the elements that are located on the edges of the mesh if needed
 ! otherwise the plane wave and Bielak conditions may not be applied correctly
-        if(initialfield) call rotate_mesh_for_plane_wave(ngnod)
+        if (initialfield) call rotate_mesh_for_plane_wave(ngnod)
      endif
 
   else
@@ -658,39 +657,39 @@ program meshfem2D
      nelem_acoustic_surface = 0
 
      ! if the surface is absorbing, it cannot be free at the same time
-     if(.not. abstop) then
+     if (.not. abstop) then
         j = nzread
         do i = 1,nxread
            imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
+           if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0) then
               nelem_acoustic_surface = nelem_acoustic_surface + 1
            endif
         enddo
      endif
-     if(.not. absbottom) then
+     if (.not. absbottom) then
         j = 1
         do i = 1,nxread
            imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
+           if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0) then
               nelem_acoustic_surface = nelem_acoustic_surface + 1
            endif
         enddo
      endif
      ! in the axisymmetric case if xmin == 0 the axis is a symmetry axis and thus cannot be a free surface as well
-     if(.not. absleft .and. .not. (AXISYM .and. abs(xmin) < TINYVAL)) then
+     if (.not. absleft .and. .not. (AXISYM .and. abs(xmin) < TINYVAL)) then
         i = 1
         do j = 1,nzread
            imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
+           if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0) then
               nelem_acoustic_surface = nelem_acoustic_surface + 1
            endif
         enddo
      endif
-     if(.not. absright) then
+     if (.not. absright) then
         i = nxread
         do j = 1,nzread
            imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
+           if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0) then
               nelem_acoustic_surface = nelem_acoustic_surface + 1
            endif
         enddo
@@ -701,11 +700,11 @@ program meshfem2D
 
      nelem_acoustic_surface = 0
 
-     if(.not. abstop) then
+     if (.not. abstop) then
         j = nzread
         do i = 1,nxread
            imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0 ) then
+           if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0) then
               nelem_acoustic_surface = nelem_acoustic_surface + 1
               acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
               acoustic_surface(2,nelem_acoustic_surface) = 2
@@ -714,11 +713,11 @@ program meshfem2D
            endif
         enddo
      endif
-     if(.not. absbottom) then
+     if (.not. absbottom) then
         j = 1
         do i = 1,nxread
            imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0 ) then
+           if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0) then
               nelem_acoustic_surface = nelem_acoustic_surface + 1
               acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
               acoustic_surface(2,nelem_acoustic_surface) = 2
@@ -728,11 +727,11 @@ program meshfem2D
         enddo
      endif
      ! in the axisymmetric case if xmin == 0 the axis is a symmetry axis and thus cannot be a free surface as well
-     if(.not. absleft .and. .not. (AXISYM .and. abs(xmin) < TINYVAL)) then
+     if (.not. absleft .and. .not. (AXISYM .and. abs(xmin) < TINYVAL)) then
         i = 1
         do j = 1,nzread
            imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0 ) then
+           if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0) then
               nelem_acoustic_surface = nelem_acoustic_surface + 1
               acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
               acoustic_surface(2,nelem_acoustic_surface) = 2
@@ -741,11 +740,11 @@ program meshfem2D
            endif
         enddo
      endif
-     if(.not. absright) then
+     if (.not. absright) then
         i = nxread
         do j = 1,nzread
            imaterial_number = num_material((j-1)*nxread+i)
-           if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0 ) then
+           if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0) then
               nelem_acoustic_surface = nelem_acoustic_surface + 1
               acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
               acoustic_surface(2,nelem_acoustic_surface) = 2
@@ -759,20 +758,20 @@ program meshfem2D
      !--- definition of absorbing boundaries
      !
      nelemabs = 0
-     if(absbottom) nelemabs = nelemabs + nxread
-     if(abstop) nelemabs = nelemabs + nxread
-     if(absleft) nelemabs = nelemabs + nzread
-     if(absright) nelemabs = nelemabs + nzread
+     if (absbottom) nelemabs = nelemabs + nxread
+     if (abstop) nelemabs = nelemabs + nxread
+     if (absleft) nelemabs = nelemabs + nzread
+     if (absright) nelemabs = nelemabs + nzread
 
      allocate(abs_surface(5,nelemabs))
 
      ! generate the list of absorbing elements
-     if(nelemabs > 0) then
+     if (nelemabs > 0) then
         nelemabs = 0
         do iz = 1,nzread
            do ix = 1,nxread
               inumelem = (iz-1)*nxread + ix
-              if(absbottom    .and. iz == 1) then
+              if (absbottom    .and. iz == 1) then
                  nelemabs = nelemabs + 1
                  abs_surface(1,nelemabs) = inumelem-1
                  abs_surface(2,nelemabs) = 2
@@ -780,7 +779,7 @@ program meshfem2D
                  abs_surface(4,nelemabs) = elmnts(1+ngnod*(inumelem-1))
                  abs_surface(5,nelemabs) = IBOTTOM
               endif
-              if(absright .and. ix == nxread) then
+              if (absright .and. ix == nxread) then
                  nelemabs = nelemabs + 1
                  abs_surface(1,nelemabs) = inumelem-1
                  abs_surface(2,nelemabs) = 2
@@ -788,7 +787,7 @@ program meshfem2D
                  abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1))
                  abs_surface(5,nelemabs) = IRIGHT
               endif
-              if(abstop   .and. iz == nzread) then
+              if (abstop   .and. iz == nzread) then
                  nelemabs = nelemabs + 1
                  abs_surface(1,nelemabs) = inumelem-1
                  abs_surface(2,nelemabs) = 2
@@ -796,7 +795,7 @@ program meshfem2D
                  abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1))
                  abs_surface(5,nelemabs) = ITOP
               endif
-              if(absleft .and. ix == 1) then
+              if (absleft .and. ix == 1) then
                  nelemabs = nelemabs + 1
                  abs_surface(1,nelemabs) = inumelem-1
                  abs_surface(2,nelemabs) = 2
@@ -809,8 +808,8 @@ program meshfem2D
      endif
   endif
 
-  if(AXISYM) then
-    if(read_external_mesh) then
+  if (AXISYM) then
+    if (read_external_mesh) then
       call read_axial_elements_file(axial_elements_file,remove_min_to_start_at_zero)
       ! the mesh can have elements that are rotated, but for our GLJ axisymmetric implementation
       ! we assume that the r axis is along the i direction;
@@ -822,17 +821,17 @@ program meshfem2D
 
       remove_min_to_start_at_zero = 0
 
-      if(xmin * xmax < 0) stop 'in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis'
-      if(xmin < 0) stop 'in axisymmetric mode, case of symmetry axis on the right edge instead of left not supported yet'
+      if (xmin * xmax < 0) stop 'in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis'
+      if (xmin < 0) stop 'in axisymmetric mode, case of symmetry axis on the right edge instead of left not supported yet'
 
       ! count the number of axial elements
       nelem_on_the_axis = 0
 
       ! test if the left edge is on the symmetry axis
-      if(abs(xmin) < TINYVAL) then
+      if (abs(xmin) < TINYVAL) then
 
         ! if the surface is absorbing, it cannot be axial at the same time
-        if(absleft) stop 'in axisymmetric mode, the left edge cannot be both axial and absorbing'
+        if (absleft) stop 'in axisymmetric mode, the left edge cannot be both axial and absorbing'
         !all the elements on the left edge are axial because that edge is vertical and located in x = 0
         nelem_on_the_axis = nzread
         allocate(ispec_of_axial_elements(nelem_on_the_axis))
@@ -845,7 +844,7 @@ program meshfem2D
         allocate(ispec_of_axial_elements(1))
       endif
 
-    endif ! of if(read_external_mesh) then
+    endif ! of if (read_external_mesh) then
 
   else ! of AXISYM
 
@@ -875,7 +874,7 @@ program meshfem2D
   allocate(part(0:nelmnts-1))
   part(:) = -1
 
-  if( nproc > 1 ) then
+  if (nproc > 1) then
     allocate(xadj_g(0:nelmnts))
     allocate(adjncy_g(0:MAX_NEIGHBORS*nelmnts-1))
     xadj_g(:) = 0
@@ -886,13 +885,13 @@ program meshfem2D
 
   ! if ngnod == 9, we work on a subarray of elements that represents the elements with four nodes (four corners) only
   ! because the adjacency of the mesh elements can be entirely determined from the knowledge of the four corners only
-  if ( ngnod == 9 ) then
+  if (ngnod == 9) then
      allocate(elmnts_bis(0:NCORNERS*nelmnts-1))
      do i = 0, nelmnts-1
        elmnts_bis(i*NCORNERS:i*NCORNERS+NCORNERS-1) = elmnts(i*ngnod:i*ngnod+NCORNERS-1)
      enddo
 
-     if ( nproc > 1 ) then
+     if (nproc > 1) then
 
 !! DK DK fixed problem in the previous implementation by Nicolas Le Goff:
 !! DK DK (nxread+1)*(nzread+1) is OK for a regular internal mesh only, not for non structured external meshes
@@ -904,7 +903,7 @@ program meshfem2D
      endif
 
   else
-     if ( nproc > 1 ) then
+     if (nproc > 1) then
         ! determines maximum neighbors based on 1 common node
         call mesh2dual_ncommonnodes(elmnts,1,xadj_g,adjncy_g)
      endif
@@ -912,7 +911,7 @@ program meshfem2D
   endif
 
 
-  if ( nproc == 1 ) then
+  if (nproc == 1) then
      part(:) = 0 ! single process has rank 0
   else
 
@@ -962,29 +961,29 @@ program meshfem2D
   endif
 
   ! fluid-solid edges: coupled elements are transferred to the same partition
-  if ( ngnod == 9 ) then
+  if (ngnod == 9) then
      call acoustic_elastic_repartitioning(elmnts_bis, nb_materials, phi, num_material, nproc)
   else
      call acoustic_elastic_repartitioning(elmnts, nb_materials, phi, num_material, nproc)
   endif
 
   ! fluid-porous edges: coupled elements are transferred to the same partition
-  if ( ngnod == 9 ) then
+  if (ngnod == 9) then
      call acoustic_poro_repartitioning(elmnts_bis, nb_materials, phi, num_material, nproc)
   else
      call acoustic_poro_repartitioning(elmnts, nb_materials, phi, num_material, nproc)
   endif
 
   ! porous-solid edges: coupled elements are transferred to the same partition
-  if ( ngnod == 9 ) then
+  if (ngnod == 9) then
      call poro_elastic_repartitioning(elmnts_bis, nb_materials, phi, num_material, nproc)
   else
      call poro_elastic_repartitioning(elmnts, nb_materials, phi, num_material, nproc)
   endif
 
   ! periodic edges: coupled elements are transferred to the same partition
-  if(ADD_PERIODIC_CONDITIONS .and. nproc > 1) then
-    if ( ngnod == 9 ) then
+  if (ADD_PERIODIC_CONDITIONS .and. nproc > 1) then
+    if (ngnod == 9) then
        call periodic_edges_repartitioning(elmnts_bis,nnodes,nodes_coords,PERIODIC_HORIZ_DIST)
     else
        call periodic_edges_repartitioning(elmnts,nnodes,nodes_coords,PERIODIC_HORIZ_DIST)
@@ -994,9 +993,9 @@ program meshfem2D
   ! local number of each element for each partition
   call Construct_glob2loc_elmnts(nproc)
 
-  if ( ngnod == 9 ) then
-    if( allocated(nnodes_elmnts) ) deallocate(nnodes_elmnts)
-    if( allocated(nodes_elmnts) ) deallocate(nodes_elmnts)
+  if (ngnod == 9) then
+    if (allocated(nnodes_elmnts) ) deallocate(nnodes_elmnts)
+    if (allocated(nodes_elmnts) ) deallocate(nodes_elmnts)
     allocate(nnodes_elmnts(0:nnodes-1))
     allocate(nodes_elmnts(0:nsize*nnodes-1))
     nnodes_elmnts(:) = 0
@@ -1006,9 +1005,9 @@ program meshfem2D
       nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
     enddo
   else
-    if ( nproc < 2 ) then
-      if( .not. allocated(nnodes_elmnts) ) allocate(nnodes_elmnts(0:nnodes-1))
-      if( .not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:nsize*nnodes-1))
+    if (nproc < 2) then
+      if (.not. allocated(nnodes_elmnts) ) allocate(nnodes_elmnts(0:nnodes-1))
+      if (.not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:nsize*nnodes-1))
       nnodes_elmnts(:) = 0
       nodes_elmnts(:) = 0
       do i = 0, ngnod*nelmnts-1
@@ -1022,8 +1021,8 @@ program meshfem2D
   call Construct_glob2loc_nodes(nproc)
 
   ! construct the interfaces between partitions (used for MPI assembly)
-  if ( nproc /= 1 ) then
-     if ( ngnod == 9 ) then
+  if (nproc /= 1) then
+     if (ngnod == 9) then
         call Construct_interfaces(nproc, elmnts_bis, &
                                   nb_materials, phi, num_material)
      else
@@ -1040,12 +1039,12 @@ program meshfem2D
   endif
 
   ! setting absorbing boundaries by elements instead of edges
-  if ( any_abs ) then
+  if (any_abs) then
      call merge_abs_boundaries(nb_materials, phi, num_material, ngnod)
   endif
 
   ! setting acoustic forcing boundaries by elements instead of edges
-  if ( ACOUSTIC_FORCING ) then
+  if (ACOUSTIC_FORCING) then
      call merge_acoustic_forcing_boundaries(ngnod)
   endif
 
@@ -1055,7 +1054,7 @@ program meshfem2D
                       nnodes_tangential_curve,nodes_tangential_curve,remove_min_to_start_at_zero)
 
   ! print position of the source
-  do i_source=1,NSOURCES
+  do i_source= 1,NSOURCES
      print *
      print *,'Position (x,z) of the source = ',xs(i_source),zs(i_source)
      print *
@@ -1066,7 +1065,7 @@ program meshfem2D
 
 !! DK DK for now we cannot use both record_at_surface_same_vertical and read_external_mesh
 !! DK DK because we need to know splines to define the shape of the surface of the model
-    if(any(record_at_surface_same_vertical) .and. read_external_mesh) &
+    if (any(record_at_surface_same_vertical) .and. read_external_mesh) &
       stop 'for now we cannot use both record_at_surface_same_vertical and read_external_mesh'
 
 !! DK DK if we read an external mesh, the splines are not defined for the shape of the surface and of the interfaces
@@ -1092,8 +1091,8 @@ program meshfem2D
   endif
   print *
 
-  if(associated(nz_layer)) deallocate(nz_layer)
-  if(associated(elmnts)) deallocate(elmnts)
+  if (associated(nz_layer)) deallocate(nz_layer)
+  if (associated(elmnts)) deallocate(elmnts)
 
 end program meshfem2D
 

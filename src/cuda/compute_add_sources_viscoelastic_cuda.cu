@@ -40,7 +40,6 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -80,11 +79,11 @@ __global__ void compute_add_sources_kernel(realw* accel,
   int ispec,iglob;
   realw stf;
 
-  if(isource < nsources_local) { // when NSOURCES > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
+  if (isource < nsources_local) { // when NSOURCES > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
 
       ispec = ispec_selected_source[isource]-1;
 
-      if(ispec_is_inner[ispec] == phase_is_inner && ispec_is_elastic[ispec] ) {
+      if (ispec_is_inner[ispec] == phase_is_inner && ispec_is_elastic[ispec]) {
 
 
         stf = d_source_time_function[INDEX2(nsources_local,isource,it)];
@@ -115,7 +114,7 @@ void FC_FUNC_(compute_add_sources_el_cuda,
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
   // check if anything to do
-  if( mp->nsources_local == 0 ) return;
+  if (mp->nsources_local == 0) return;
 
   int phase_is_inner = *h_phase_is_inner;
   int it = *itf -1;
@@ -157,7 +156,7 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
   // check if anything to do
-  if( mp->nsources_local == 0 ) return;
+  if (mp->nsources_local == 0) return;
 
   int phase_is_inner = *phase_is_innerf;
   int num_blocks_x, num_blocks_y;
@@ -198,18 +197,18 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
                                                       int it,
                                                       int* pre_computed_irec,
                                                       int nadj_rec_local,
-                                                      int NSTEP ) {
+                                                      int NSTEP) {
 
   int irec_local = blockIdx.x + gridDim.x*blockIdx.y;
 
-  if(irec_local < nadj_rec_local) { // when nrec > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
+  if (irec_local < nadj_rec_local) { // when nrec > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
 
     int irec = pre_computed_irec[irec_local];
 
     int ispec = ispec_selected_rec[irec]-1;
-    if( ispec_is_elastic[ispec] ){
+    if (ispec_is_elastic[ispec]) {
 
-      if(ispec_is_inner[ispec] == phase_is_inner) {
+      if (ispec_is_inner[ispec] == phase_is_inner) {
         int i = threadIdx.x;
         int j = threadIdx.y;
         int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
@@ -248,7 +247,7 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
   // checks
-  if( *nadj_rec_local != mp->nadj_rec_local) exit_on_error("add_sources_el_sim_type_2_or_3: nadj_rec_local not equal\n");
+  if (*nadj_rec_local != mp->nadj_rec_local) exit_on_error("add_sources_el_sim_type_2_or_3: nadj_rec_local not equal\n");
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nadj_rec_local,&num_blocks_x,&num_blocks_y);

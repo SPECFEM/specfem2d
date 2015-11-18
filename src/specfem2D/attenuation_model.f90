@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -80,13 +79,13 @@
 ! print *,'tau_sigma_nu2 = ',tau_sigma_nu2
 ! print *
 
-  if(any(tau_sigma_nu1 < 0.d0) .or. any(tau_sigma_nu2 < 0.d0) .or. &
+  if (any(tau_sigma_nu1 < 0.d0) .or. any(tau_sigma_nu2 < 0.d0) .or. &
      any(tau_epsilon_nu1_d < 0.d0) .or. any(tau_epsilon_nu2_d < 0.d0)) &
        stop 'error: negative relaxation time found for a viscoelastic material'
 
 ! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
 ! and thus this does not apply; it only applies to the right formula with 1/N included
-  if(minval(tau_epsilon_nu1_d / tau_sigma_nu1) < 0.999d0 .or. &
+  if (minval(tau_epsilon_nu1_d / tau_sigma_nu1) < 0.999d0 .or. &
                                     minval(tau_epsilon_nu2_d / tau_sigma_nu2) < 0.999d0) then
        print *
        print *,'*******************************************************************************'
@@ -122,7 +121,7 @@
 !
 !--- other constants computed from the parameters above, do not modify
 !
-  if(CUSTOM_REAL == SIZE_REAL) then
+  if (CUSTOM_REAL == SIZE_REAL) then
 
    tau_epsilon_nu1(:) = sngl(tau_epsilon_nu1_d(:))
    tau_epsilon_nu2(:) = sngl(tau_epsilon_nu2_d(:))
@@ -139,7 +138,7 @@
    Mu_nu1_sent = sngl(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS))
    Mu_nu2_sent = sngl(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS))
 
-   if(Mu_nu1_sent < 1. .or. Mu_nu2_sent < 1.) &
+   if (Mu_nu1_sent < 1. .or. Mu_nu2_sent < 1.) &
        stop 'error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one'
 
   else
@@ -157,7 +156,7 @@
    Mu_nu1_sent = sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS)
    Mu_nu2_sent = sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS)
 
-   if(Mu_nu1_sent < 1.d0 .or. Mu_nu2_sent < 1.d0) &
+   if (Mu_nu1_sent < 1.d0 .or. Mu_nu2_sent < 1.d0) &
        stop 'error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one'
 
   endif
@@ -598,26 +597,26 @@ SUBROUTINE lfit_zener(x,y,sig,ndat,poids,ia,covar,chisq,ma,Qref,point)
   mfit = 0
 
   do j = 1,ma
-    if(ia(j)) then
+    if (ia(j)) then
       mfit = mfit + 1
     endif
   enddo
-  if(mfit==0) then
+  if (mfit==0) then
     print *,'lfit: no parameters to be fitted'
   endif
 
-  do j=1,mfit
+  do j = 1,mfit
     beta(j,1) = 0.
-    do k=1,mfit
+    do k = 1,mfit
       covar(j,k) = 0.
     enddo
   enddo
 
-  do i=1,ndat
+  do i = 1,ndat
     call func_zener(x(i),afunc,ma,Qref,point)
     ym = y(i)
     if (mfit < ma) then
-      do j=1,ma
+      do j = 1,ma
         if (.not. ia(j)) then
           ym = ym - poids(j) * afunc(j)
         endif
@@ -625,7 +624,7 @@ SUBROUTINE lfit_zener(x,y,sig,ndat,poids,ia,covar,chisq,ma,Qref,point)
     endif
     sig2i = 1. / (sig(i) * sig(i))
     j = 0
-    do l=1,ma
+    do l= 1,ma
       if (ia(l)) then
         j = j+1
         wt = afunc(l) * sig2i
@@ -636,8 +635,8 @@ SUBROUTINE lfit_zener(x,y,sig,ndat,poids,ia,covar,chisq,ma,Qref,point)
     enddo
   enddo
 
-  do j=2,mfit,1
-  do k=1,j-1,1
+  do j = 2,mfit,1
+  do k = 1,j-1,1
     covar(k,j) = covar(j,k)
   enddo
   enddo
@@ -650,7 +649,7 @@ SUBROUTINE lfit_zener(x,y,sig,ndat,poids,ia,covar,chisq,ma,Qref,point)
   endif
 
   chisq = 0.
-  do i=1,ndat
+  do i = 1,ndat
     call func_zener(x(i),afunc,ma,Qref,point)
     chisq=chisq+((y(i)-dot_product(poids(1:ma),afunc(1:ma)))/sig(i))**2
   enddo
@@ -722,7 +721,7 @@ SUBROUTINE classical_linear_least_squares(Qref,poids,point,N,fmin,fmax)
 
   ref = 1.0 / Qref
 
-  do k=1,m
+  do k = 1,m
     freq = (fmax/fmin) ** ((k - 1.)/(m - 1.))
     freq = TWO_PI_OR_ONE * fmin * freq
     x(k) = freq
@@ -730,7 +729,7 @@ SUBROUTINE classical_linear_least_squares(Qref,poids,point,N,fmin,fmax)
     sig(k) = 1.
   enddo
 
-  do k=1,N
+  do k = 1,N
     ia(k) = .true.
   enddo
 
@@ -974,7 +973,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
       appconstr=.not.flgc
 ! Default values for options:
       call soptions(doptions)
-      do i=1,8
+      do i =1,8
             if (options(i)==zero) then
                options(i)=doptions(i)
             else if (i==2.or.i==3.or.i==6) then
@@ -1008,7 +1007,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
       ajpp=ajp                    !! Start value for the power
       ajs=1.15d0                  !! Base II
       knorms=0
-      do i=1,10
+      do i =1,10
        gnorms(i)=zero
       enddo
 !---}
@@ -1033,7 +1032,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
       du10=1.5d0
       du03=1.05d0        !! Step multipliers (at certain steps made)
       kstore=3
-      do i=1,kstore
+      do i = 1,kstore
        nsteps(i)=zero    !! Steps made at the last 'kstore' iterations
       enddo
       if (app) then
@@ -1077,7 +1076,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
          options(9)=-three
          goto 999
       endif
-      do i=1,n
+      do i = 1,n
         xrec(i)=x(i)
       enddo
       frec=f     !! record point and function value
@@ -1108,7 +1107,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
 ! ----}
 ! COMPUTE THE GRADIENT ( FIRST TIME ) ----{
       if (app) then
-        do i=1,n
+        do i = 1,n
          deltax(i)=h1*ddx
         enddo
         obj=.true.
@@ -1123,7 +1122,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
         options(11)=options(11)+one
       endif
       ng=zero
-      do i=1,n
+      do i = 1,n
          ng=ng+g(i)*g(i)
       enddo
       ng=dsqrt(ng)
@@ -1147,7 +1146,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
       if (constr) then
        if (.not.FsbPnt) then
          !if (appconstr) then
-            !do j=1,n
+            !do j = 1,n
               !if (x(j)>=zero) then
                  !deltax(j)=ddx
               !else
@@ -1160,7 +1159,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
             call gradc(x,gc,n/2,n,theta_min,theta_max)
          endif
          ngc=zero
-         do i=1,n
+         do i = 1,n
            ngc=ngc+gc(i)*gc(i)
          enddo
          ngc=dsqrt(ngc)
@@ -1180,25 +1179,25 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
             options(9)=-six
             goto 999
          endif
-         do i=1,n
+         do i = 1,n
            g(i)=g(i)+PenCoef*gc(i)
          enddo
          ng=zero
-         do i=1,n
+         do i = 1,n
            ng=ng+g(i)*g(i)
            grec(i)=g(i)
          enddo
          ng=dsqrt(ng)
        endif
       endif
-      do i=1,n
+      do i = 1,n
         grec(i)=g(i)
       enddo
       nng=ng
 ! ----}
 ! INITIAL STEPSIZE
       d=zero
-      do i=1,n
+      do i = 1,n
         if (d<dabs(x(i))) d=dabs(x(i))
       enddo
       h=h1*dsqrt(options(2))*d                  !! smallest possible stepsize
@@ -1213,8 +1212,8 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
         kcheck=0                       !! Set checkpoint counter.
         kg=0                           !! stepsizes stored
         kj=0                           !! ravine jump counter
-        do i=1,n
-          do j=1,n
+        do i = 1,n
+          do j = 1,n
             B(i,j)=zero
           enddo
           B(i,i)=one                   !! re-set transf. matrix to identity
@@ -1237,9 +1236,9 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
        ngt=zero
        ng1=zero
        dd=zero
-       do i=1,n
+       do i = 1,n
          d=zero
-         do j=1,n
+         do j = 1,n
             d=d+B(j,i)*g(j)
          enddo
          gt(i)=d
@@ -1255,7 +1254,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
 ! JUMPING OVER A RAVINE ----{
        if (dd<low_bound) then
         if (kj==2) then
-          do i=1,n
+          do i = 1,n
            xx(i)=x(i)
           enddo
         endif
@@ -1267,7 +1266,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
           kd=kd+1
           warnno=1
           endwarn='Premature stop is possible. Try to re-run the routine from the obtained point.'
-          do i=1,n
+          do i = 1,n
             if (dabs(x(i)-xx(i))<epsnorm*dabs(x(i))) then
              if (dispwarn)  then
                 print *,'SolvOpt warning:'
@@ -1282,49 +1281,49 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
 ! ----}
 ! DILATION ----{
        nrmz=zero
-       do i=1,n
+       do i = 1,n
          z(i)=gt(i)-g1(i)
          nrmz=nrmz+z(i)*z(i)
        enddo
        nrmz=dsqrt(nrmz)
        if (nrmz>epsnorm*ngt) then
-        do i=1,n
+        do i = 1,n
          z(i)=z(i)/nrmz
         enddo
 ! New direction in the transformed space: g1=gt+w*(z*gt')*z and
 ! new inverse matrix: B = B ( I + (1/alpha -1)zz' )
         d = zero
-        do i=1,n
+        do i = 1,n
           d=d+z(i)*gt(i)
         enddo
         ng1=zero
         d = d*w
-        do i=1,n
+        do i = 1,n
           dd=zero
           g1(i)=gt(i)+d*z(i)
           ng1=ng1+g1(i)*g1(i)
-          do j=1,n
+          do j = 1,n
              dd=dd+B(i,j)*z(j)
           enddo
           dd=w*dd
-          do j=1,n
+          do j = 1,n
             B(i,j)=B(i,j)+dd*z(j)
           enddo
         enddo
         ng1=dsqrt(ng1)
        else
-        do i=1,n
+        do i = 1,n
          z(i)=zero
          g1(i)=gt(i)
         enddo
         nrmz=zero
        endif
-       do i=1,n
+       do i = 1,n
            gt(i)=g1(i)/ng1
        enddo
-        do i=1,n
+        do i = 1,n
           d=zero
-            do j=1,n
+            do j = 1,n
                d=d+B(i,j)*gt(j)
             enddo
           g0(i)=d
@@ -1333,7 +1332,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
 ! RESETTING ----{
         if (kcheck>1) then
            numelem=0
-           do i=1,n
+           do i = 1,n
               if (dabs(g(i))>ZeroGrad) then
                  numelem=numelem+1
                  idx(numelem)=i
@@ -1342,7 +1341,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
            if (numelem>0) then
               grbnd=epsnorm*dble(numelem**2)
               ii=0
-              do i=1,numelem
+              do i = 1,numelem
                  j=idx(i)
                  if (dabs(g1(j))<=dabs(g(j))*grbnd) ii=ii+1
               enddo
@@ -1363,7 +1362,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
         endif
 ! ----}
 ! STORE THE CURRENT VALUES AND SET THE COUNTERS FOR 1-D SEARCH
-        do i=1,n
+        do i = 1,n
          xopt(i)=x(i)
         enddo
         fopt=f
@@ -1376,7 +1375,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
         if (constr) Reset=.false.
 ! 1-D SEARCH ----{
         do while (.true.)
-         do i=1,n
+         do i = 1,n
           x1(i)=x(i)
          enddo
          f1=f
@@ -1385,11 +1384,11 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
            fp1=fp
          endif
 ! NEW POINT
-         do i=1,n
+         do i = 1,n
             x(i)=x(i)+hp*g0(i)
          enddo
            ii=0
-           do i=1,n
+           do i = 1,n
             if (dabs(x(i)-x1(i))<dabs(x(i))*epsnorm) ii=ii+1
            enddo
 ! FUNCTION VALUE
@@ -1425,7 +1424,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
               if (fp_rate<-epsnorm) then
                if (.not.FsbPnt1) then
                 d=zero
-                do i=1,n
+                do i = 1,n
                   d=d+(x(i)-x1(i))**2
                 enddo
                 d=dsqrt(d)
@@ -1454,7 +1453,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                 k2=k2+1
                 k1=0
                 hp=hp/dq
-                do i=1,n
+                do i = 1,n
                  x(i)=x1(i)
                 enddo
                 f=f1
@@ -1475,7 +1474,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                     endif
                     goto 999
                 else
-                    do i=1,n
+                    do i = 1,n
                      x(i)=x1(i)
                     enddo
                     f=f1
@@ -1492,7 +1491,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
              k2=k2+1
              k1=0
              hp=hp/dq
-             do i=1,n
+             do i = 1,n
               x(i)=x1(i)
              enddo
              f=f1
@@ -1520,25 +1519,25 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
 ! ----}  End of 1-D search
 ! ADJUST THE TRIAL STEP SIZE ----{
         dx=zero
-        do i=1,n
+        do i = 1,n
            dx=dx+(xopt(i)-x(i))**2
         enddo
         dx=dsqrt(dx)
         if (kg<kstore)  kg=kg+1
         if (kg>=2)  then
-           do i=kg,2,-1
+           do i =kg,2,-1
              nsteps(i)=nsteps(i-1)
            enddo
         endif
         d=zero
-        do i=1,n
+        do i = 1,n
            d=d+g0(i)*g0(i)
         enddo
         d=dsqrt(d)
         nsteps(1)=dx/(dabs(h)*d)
         kk=zero
         d=zero
-        do i=1,kg
+        do i = 1,kg
            dd=dble(kg-i+1)
            d=d+dd
            kk=kk+nsteps(i)*dd
@@ -1558,7 +1557,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
 ! ----}
 ! COMPUTE THE GRADIENT ----{
         if (app) then
-          do j=1,n
+          do j = 1,n
             if (g0(j)>=zero) then
                deltax(j)=h1*ddx
             else
@@ -1577,7 +1576,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
           options(11)=options(11)+one
         endif
         ng=zero
-        do i=1,n
+        do i = 1,n
           ng=ng+g(i)*g(i)
         enddo
         ng=dsqrt(ng)
@@ -1609,7 +1608,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
               kless=0
            endif
            !if (appconstr) then
-                 !do j=1,n
+                 !do j = 1,n
                    !if (x(j)>=zero) then
                       !deltax(j)=ddx
                    !else
@@ -1624,7 +1623,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                  options(13)=options(13)+one
            endif
            ngc=zero
-           do i=1,n
+           do i = 1,n
               ngc=ngc+gc(i)*gc(i)
            enddo
            ngc=dsqrt(ngc)
@@ -1643,11 +1642,11 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                   options(9)=-six
                   goto 999
            endif
-           do i=1,n
+           do i = 1,n
              g(i)=g(i)+PenCoef*gc(i)
            enddo
            ng=zero
-           do i=1,n
+           do i = 1,n
               ng=ng+g(i)*g(i)
            enddo
            ng=dsqrt(ng)
@@ -1665,7 +1664,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
         endif
         if (h1*f>h1*frec) then
           frec=f
-          do i=1,n
+          do i = 1,n
             xrec(i)=x(i)
             grec(i)=g(i)
           enddo
@@ -1674,20 +1673,20 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
        if (ng>ZeroGrad) then
         if (knorms<10)  knorms=knorms+1
         if (knorms>=2)  then
-          do i=knorms,2,-1
+          do i =knorms,2,-1
            gnorms(i)=gnorms(i-1)
           enddo
         endif
         gnorms(1)=ng
         nng=one
-          do i=1,knorms
+          do i = 1,knorms
             nng=nng*gnorms(i)
           enddo
         nng=nng**(one/dble(knorms))
        endif
 ! Norm X:
        nx=zero
-       do i=1,n
+       do i = 1,n
         nx=nx+x(i)*x(i)
        enddo
        nx=dsqrt(nx)
@@ -1706,13 +1705,13 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
       if (constr) then
         if (.not.FsbPnt) termflag=.false.
       endif
-      if(kcheck<=5.or.kcheck<=12.and.ng>one)termflag=.false.
-      if(kc>=mxtc .or. knan)termflag=.false.
+      if (kcheck<=5.or.kcheck<=12.and.ng>one)termflag=.false.
+      if (kc>=mxtc .or. knan)termflag=.false.
 ! ARGUMENT
        if (termflag) then
            ii=0
            stopping=.true.
-           do i=1,n
+           do i = 1,n
              if (dabs(x(i))>=lowxbound) then
                 ii=ii+1
                 idx(ii)=i
@@ -1725,17 +1724,17 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                 stopping=.true.
                 termx=termx+1
                 d=zero
-                do i=1,n
+                do i = 1,n
                   d=d+(x(i)-xrec(i))**2
                 enddo
                 d=dsqrt(d)
 ! FUNCTION
-                if(dabs(f-frec)>detfr*dabs(f) .and. &
+                if (dabs(f-frec)>detfr*dabs(f) .and. &
                   dabs(f-fopt)<=options(3)*dabs(f) .and. &
                   krerun<=3 .and. .not. constr) then
                    stopping=.false.
                    if (ii>0) then
-                    do i=1,ii
+                    do i = 1,ii
                      j=idx(i)
                      if (dabs(xrec(j)-x(j))>detxr*dabs(x(j))) then
                        stopping=.true.
@@ -1749,7 +1748,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                         print *,'Re-run from recorded point.'
                       endif
                       ng=zero
-                      do i=1,n
+                      do i = 1,n
                        x(i)=xrec(i)
                        g(i)=grec(i)
                        ng=ng+g(i)*g(i)
@@ -1764,10 +1763,10 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                    else
                       h=h*ten
                    endif
-                else if(dabs(f-frec)>options(3)*dabs(f) .and. &
+                else if (dabs(f-frec)>options(3)*dabs(f) .and. &
                   d<options(2)*nx .and. constr) then
                    continue
-                else if  (dabs(f-fopt)<=options(3)*dabs(f) .or. &
+                else if (dabs(f-fopt)<=options(3)*dabs(f) .or. &
                    dabs(f)<=lowfbound .or. &
                    (dabs(f-fopt)<=options(3).and. &
                     termx>=limxterm )) then
@@ -1777,7 +1776,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                        warnno=0
                     endif
                     if (.not.app) then
-                      do i=1,n
+                      do i = 1,n
                        if (dabs(g(i))<=epsnorm2) then
                          warnno=3
                          endwarn='Result may be inaccurate in the coordinates. The function is flat at the solution.'
@@ -1802,14 +1801,14 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                    stopf=.true.
                   endif
                 else if (dx<powerm12*dmax1(nx,one) .and. &
-                       termx>=limxterm ) then
+                       termx>=limxterm) then
                      options(9)=-four-ten
                      if (dispwarn) then
                        print *,'SolvOpt: Termination warning:'
                        print *,'Stopping criteria are not fulfilled. The function is very steep at the solution.'
                        if (app) print *,'The above warning may be reasoned by inaccurate gradient approximation'
                        f=frec
-                       do i=1,n
+                       do i = 1,n
                         x(i)=xrec(i)
                        enddo
                      endif
@@ -1818,7 +1817,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
            endif
        endif
 ! ITERATIONS LIMIT
-            if(k==iterlimit) then
+            if (k==iterlimit) then
                 options(9)=-nine
                 if (dispwarn) then
                   print *,'SolvOpt warning:'
@@ -1848,11 +1847,11 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                options(9)=-eight
                goto 999
              endif
-             do i=1,n
+             do i = 1,n
                g0(i)=-h*g0(i)/two
              enddo
-             do i=1,10
-               do j=1,n
+             do i =1,10
+               do j = 1,n
                 x(j)=x(j)+g0(j)
                enddo
                call fun(x,f,Qref,n/2,n,Kopt,f_min,f_max)
@@ -1866,7 +1865,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                  goto 999
                endif
                !if (app) then
-                   !do j=1,n
+                   !do j = 1,n
                      !if (g0(j)>=zero) then
                         !deltax(j)=h1*ddx
                      !else
@@ -1881,7 +1880,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                    options(11)=options(11)+one
                endif
                ng=zero
-               do j=1,n
+               do j = 1,n
                   ng=ng+g(j)*g(j)
                enddo
                ng=dsqrt(ng)
@@ -1911,10 +1910,10 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
 ! FUNCTION IS FLAT AT THE POINT ----{
           if (.not.constr .and. &
              dabs(f-fopt)<dabs(fopt)*options(3) .and. &
-             kcheck>5  .and. ng<one ) then
+             kcheck>5  .and. ng<one) then
 
            ni=0
-           do i=1,n
+           do i = 1,n
              if (dabs(g(i))<=epsnorm2) then
                ni=ni+1
                idx(ni)=i
@@ -1928,11 +1927,11 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
              endif
              warnno=1
              endwarn='Premature stop is possible. Try to re-run the routine from the obtained point.'
-             do i=1,n
+             do i = 1,n
                x1(i)=x(i)
              enddo
              fm=f
-             do i=1,ni
+             do i = 1,ni
               j=idx(i)
               f2=fm
               y=x(j)
@@ -1963,7 +1962,7 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
              enddo
              if (h1*fm>h1*f) then
               !if (app) then
-                !do j=1,n
+                !do j = 1,n
                   !deltax(j)=h1*ddx
                 !enddo
                 !obj=.true.
@@ -1974,12 +1973,12 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
                 options(11)=options(11)+one
               endif
               ngt=zero
-              do i=1,n
+              do i = 1,n
                 ngt=ngt+gt(i)*gt(i)
               enddo
               if (ngt>epsnorm2 .and. ngt<infty) then
                 if (dispwarn) print *,'Trying to recover by shifting insensitive variables.'
-                do i=1,n
+                do i = 1,n
                  x(i)=x1(i)
                  g(i)=gt(i)
                 enddo
@@ -2040,7 +2039,7 @@ SUBROUTINE func_objective(x,res,freq,Qref,N,Nopt)
   double precision num,deno
 
   res = 0.d0
-  do i=1,N
+  do i = 1,N
     num = x(N+i)*x(N+i)*freq*Qref*(x(i)*x(i) - freq/qref)
     deno = (x(i) ** 4.) + freq*freq
     res = res + num/deno
@@ -2065,7 +2064,7 @@ SUBROUTINE func_mini(x,res,Qref,N,Nopt,K,f_min,f_max)
   double precision d,freq,aux
 
   res = 0.d0
-  do i=1,K
+  do i = 1,K
     freq = TWO_PI_OR_ONE * f_min*((f_max/f_min)**((i-1.d0)/(K-1.d0)))
     call func_objective(x,aux,freq,Qref,N,Nopt)
     d = aux - 1.d0
@@ -2090,20 +2089,20 @@ SUBROUTINE grad_func_mini(x,grad,Qref,N,Nopt,K,f_min,f_max)
   double precision, dimension(1:N) :: point,poids
   double precision, dimension(1:K) :: freq
 
-  do i=1,K
+  do i = 1,K
     freq(i) = TWO_PI_OR_ONE * f_min*((f_max/f_min)**((i-1.d0)/(K-1.d0)))
   enddo
 
-  do l=1,N
+  do l= 1,N
     point(l) = x(l)
     poids(l) = x(N+l)
   enddo
 
-  do l=1,N
+  do l= 1,N
     grad(l) = 0.d0
     grad(N+l) = 0.d0
 
-    do i=1,K
+    do i = 1,K
       call func_objective(x,R,freq(i),Qref,N,Nopt)
       temp3 = R - 1.d0
       temp0 = freq(i)*Qref
@@ -2144,7 +2143,7 @@ SUBROUTINE max_residu(x,res,N,Nopt,theta_min,theta_max)
   temp = 0.d0
   res = 0.d0
 
-  do l=1,N
+  do l= 1,N
     aux = res
     temp = max(0.d0,x(l)*x(l)-(theta_max-theta_min))
     res = max(temp,aux)
@@ -2168,12 +2167,12 @@ SUBROUTINE grad_max_residu(x,grad,N,Nopt,theta_min,theta_max)
   temp = 0.d0
   res = 0.d0
 
-  do l=1,N
+  do l= 1,N
     point(l) = x(l)
   enddo
 
   l0 = 1
-  do l=1,N
+  do l= 1,N
     aux = res
     temp = max(0.d0,point(l)*point(l) - (theta_max-theta_min))
     res = max(temp,aux)
@@ -2182,7 +2181,7 @@ SUBROUTINE grad_max_residu(x,grad,N,Nopt,theta_min,theta_max)
     endif
   enddo
 
-  do l=1,N
+  do l= 1,N
     grad(N+l) = 0.d0
     if (l/=l0) then
       grad(l) = 0.d0
@@ -2226,11 +2225,11 @@ SUBROUTINE nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
 
   ! this is used as a first guess
   call classical_linear_least_squares(Qref,poids,point,N,f_min,f_max)
-  if(.not. USE_SOLVOPT) return
+  if (.not. USE_SOLVOPT) return
 
   ! what follows is the nonlinear optimization part
 
-  do i=1,N
+  do i = 1,N
     x(i)   = sqrt(abs(point(i)) - theta_min)
     x(N+i) = sqrt(abs(poids(i)))
   enddo
@@ -2239,7 +2238,7 @@ SUBROUTINE nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
   call solvopt(2*N,x,res,func_mini,flg,grad_func_mini,options,flfc, &
       max_residu,flgc,grad_max_residu,Qref,K,theta_min,theta_max,f_min,f_max)
 
-  do i=1,N
+  do i = 1,N
     point(i) = theta_min + x(i)*x(i)
     poids(i) = x(N+i)*x(N+i)
   enddo

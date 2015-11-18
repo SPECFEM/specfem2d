@@ -192,13 +192,9 @@ end subroutine exit_MPI
 
   implicit none
 
-  integer ier
-
 #ifdef USE_MPI
+  integer ier
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
-#else
-  ! dummy statement to avoid compiler warning
-  ier = 0
 #endif
 
   end subroutine sync_all

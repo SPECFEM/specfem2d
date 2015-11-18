@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -59,12 +58,12 @@ subroutine save_adjoint_kernels()
   integer :: i, j, ispec, iglob
   double precision :: xx, zz
 
-  if ( myrank == 0 ) then
+  if (myrank == 0) then
     write(IOUT,*) 'Writing Kernels file'
   endif
 
-  if(any_acoustic) then
-    if(save_ASCII_kernels) then ! ascii format
+  if (any_acoustic) then
+    if (save_ASCII_kernels) then ! ascii format
       do ispec = 1, nspec
         do j = 1, NGLLZ
           do i = 1, NGLLX
@@ -102,8 +101,8 @@ subroutine save_adjoint_kernels()
     endif
   endif
 
-  if(any_elastic) then
-    if(save_ASCII_kernels)then ! ascii format
+  if (any_elastic) then
+    if (save_ASCII_kernels) then ! ascii format
     do ispec = 1, nspec
         do j = 1, NGLLZ
           do i = 1, NGLLX
@@ -149,9 +148,9 @@ subroutine save_adjoint_kernels()
     endif
   endif
 
-if (.not. GPU_MODE )  then
+if (.not. GPU_MODE) then
 
-  if(any_poroelastic) then
+  if (any_poroelastic) then
 
       if (.not. SAVE_ASCII_KERNELS) stop 'poroelastic simulations must use SAVE_ASCII_KERNELS'
 

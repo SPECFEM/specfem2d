@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -64,9 +63,9 @@
   integer irec
 #endif
 
-  do i_source=1,NSOURCES
+  do i_source= 1,NSOURCES
 
-    if(source_type(i_source) == 1) then
+    if (source_type(i_source) == 1) then
 
       ! collocated force source
       call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
@@ -75,16 +74,16 @@
           iglob_source(i_source))
 
       ! check that acoustic source is not exactly on the free surface because pressure is zero there
-      if(is_proc_source(i_source) == 1) then
+      if (is_proc_source(i_source) == 1) then
         do ispec_acoustic_surface = 1,nelem_acoustic_surface
           ispec = acoustic_surface(1,ispec_acoustic_surface)
           ixmin = acoustic_surface(2,ispec_acoustic_surface)
           ixmax = acoustic_surface(3,ispec_acoustic_surface)
           izmin = acoustic_surface(4,ispec_acoustic_surface)
           izmax = acoustic_surface(5,ispec_acoustic_surface)
-          if( .not. elastic(ispec) .and. .not. poroelastic(ispec) .and. &
-            ispec == ispec_selected_source(i_source) ) then
-            if ( (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
+          if (.not. elastic(ispec) .and. .not. poroelastic(ispec) .and. &
+            ispec == ispec_selected_source(i_source)) then
+            if ((izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
                 gamma_source(i_source) < -0.99d0) .or.&
                 (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==NGLLX .and. &
                 gamma_source(i_source) > 0.99d0) .or.&
@@ -99,7 +98,7 @@
                 (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
                 gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) < -0.99d0) .or.&
                 (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
-                gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) > 0.99d0) ) then
+                gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) > 0.99d0)) then
               call exit_MPI('an acoustic source cannot be located exactly '// &
                             'on the free surface because pressure is zero there')
             endif
@@ -107,7 +106,7 @@
         enddo
       endif
 
-    else if(source_type(i_source) == 2) then
+    else if (source_type(i_source) == 2) then
       ! moment-tensor source
       call locate_source_moment_tensor(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
              ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
@@ -118,13 +117,13 @@
              sourcearray(i_source,1,1,1), &
              Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
 
-    else if(.not.initialfield) then
+    else if (.not.initialfield) then
 
       call exit_MPI('incorrect source type')
 
     endif
 
-  enddo ! do i_source=1,NSOURCES
+  enddo ! do i_source= 1,NSOURCES
 
   ! locate receivers in the mesh
   call locate_receivers(ibool,coord,nspec,nglob,xigll,zigll, &
@@ -136,7 +135,7 @@
                       x_final_receiver,z_final_receiver)
 
 !! DK DK this below not supported in the case of MPI yet, we should do a MPI_GATHER() of the values
-!! DK DK and use "if(myrank == which_proc_receiver(irec)) then" to display the right sources
+!! DK DK and use "if (myrank == which_proc_receiver(irec)) then" to display the right sources
 !! DK DK and receivers carried by each mesh slice, and not fictitious values coming from other slices
 #ifndef USE_MPI
   if (myrank == 0) then
@@ -145,7 +144,7 @@
      ! note that these may differ from input values, especially if source_surf = .true. in SOURCE
      ! note that the exact source locations are determined from (ispec,xi,gamma) values
      open(unit=14,file='OUTPUT_FILES/for_information_SOURCE_actually_used',status='unknown')
-     do i_source=1,NSOURCES
+     do i_source= 1,NSOURCES
         write(14,*) x_source(i_source), z_source(i_source)
      enddo
      close(14)
@@ -198,7 +197,7 @@ subroutine add_adjoint_sources_SU
    adj_src_s(:,:) = 0.
 
    do irec = 1, nrec
-     if(myrank == which_proc_receiver(irec)) then
+     if (myrank == which_proc_receiver(irec)) then
       irec_local = irec_local + 1
       adj_sourcearray(:,:,:,:) = 0.0
       read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
@@ -211,7 +210,7 @@ subroutine add_adjoint_sources_SU
       if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
 
       if (AXISYM) then
-        if(is_on_the_axis(ispec_selected_rec(irec))) then ! TODO verify ispec_selected_rec and not ispec_selected_source
+        if (is_on_the_axis(ispec_selected_rec(irec))) then ! TODO verify ispec_selected_rec and not ispec_selected_source
           call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
         else
           call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
@@ -224,7 +223,7 @@ subroutine add_adjoint_sources_SU
       source_adjointe(irec_local,:,1) = adj_src_s(:,1)
       source_adjointe(irec_local,:,2) = adj_src_s(:,3)
 
-      if ( .not. GPU_MODE ) then
+      if (.not. GPU_MODE) then
         do k = 1, NGLLZ
             do i = 1, NGLLX
               adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
@@ -233,7 +232,7 @@ subroutine add_adjoint_sources_SU
         adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
       endif
 
-     endif !  if(myrank == which_proc_receiver(irec))
+     endif !  if (myrank == which_proc_receiver(irec))
    enddo ! irec
    close(111)
    close(112)

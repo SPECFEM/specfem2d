@@ -1,4 +1,46 @@
+!========================================================================
 !
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This software is governed by the CeCILL license under French law and
+! abiding by the rules of distribution of free software. You can use,
+! modify and/or redistribute the software under the terms of the CeCILL
+! license as circulated by CEA, CNRS and Inria at the following URL
+! "http://www.cecill.info".
+!
+! As a counterpart to the access to the source code and rights to copy,
+! modify and redistribute granted by the license, users are provided only
+! with a limited warranty and the software's author, the holder of the
+! economic rights, and the successive licensors have only limited
+! liability.
+!
+! In this respect, the user's attention is drawn to the risks associated
+! with loading, using, modifying and/or developing or reproducing the
+! software by the user in light of its specific status of free software,
+! that may mean that it is complicated to manipulate, and that also
+! therefore means that it is reserved for developers and experienced
+! professionals having in-depth computer knowledge. Users are therefore
+! encouraged to load and test the software's suitability as regards their
+! requirements in conditions enabling the security of their systems and/or
+! data to be ensured and, more generally, to use and operate it in the
+! same conditions as regards security.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
+
+
 ! This subroutine was written by Paco Sanchez-Sesma and his colleagues
 ! from the Autonomous University of Mexico (UNAM), Mexico City, Mexico
 !
@@ -125,30 +167,30 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
   ALFBE=1.0d0/BEALF
   RLM=ALFBE**2-2.0d0
 
-! flags: interior=0, left=1, right=2, bottom=3
+! flags: interior=0, left= 1, right= 2, bottom=3
   do FLAG=0,3
 
      if (FLAG==0) then
         print *,"calculation of the initial field for every point of the mesh"
         npt=nglob
         allocate(local_pt(npt))
-        do inode=1,npt
+        do inode= 1,npt
            local_pt(inode)=inode
         enddo
         NSTEP_local=1
-     else if(FLAG==1) then
+     else if (FLAG==1) then
         print *,"calculation of every time step on the left absorbing boundary"
         npt=nleft
         allocate(local_pt(npt))
         local_pt=left_bound
         NSTEP_local=NSTEP
-     else if(FLAG==2) then
+     else if (FLAG==2) then
         print *,"calculation of every time step on the right absorbing boundary"
         npt=nright
         allocate(local_pt(npt))
         local_pt=right_bound
         NSTEP_local=NSTEP
-     else if(FLAG==3) then
+     else if (FLAG==3) then
         print *,"calculation of every time step on the bottom absorbing boundary"
         npt=nbot
         allocate(local_pt(npt))
@@ -165,7 +207,7 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
      allocate(Field_Tz(NFREC1))
 
 
-     if(mod(N,2) /= 0) stop 'N must be a multiple of 2'
+     if (mod(N,2) /= 0) stop 'N must be a multiple of 2'
 
 ! normal vector to the edge at this grid point
 ! therefore corners between two grid edges must be computed twice
@@ -185,7 +227,7 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
      endif
 
 
-     do indice=1,npt
+     do indice= 1,npt
 
         if (FLAG==0) then
            inode=indice
@@ -231,7 +273,7 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
 !
 ! then loop on all the other discrete frequencies
 !
-        do J=1,N/2
+        do J = 1,N/2
 
 ! compute the value of the frequency (= index * delta in frequency = index * 1/delta in period)
            FJ = dble(J) * 1.d0 / delta_in_period
@@ -242,7 +284,7 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
            AQA=AKA*BEALF
 
 ! exclude attenuation completely if needed
-           if(ATTENUATION_VISCOELASTIC_SOLID) then
+           if (ATTENUATION_VISCOELASTIC_SOLID) then
               CAKA=CMPLX(AKA,-AKA/(2.0d0*QD))
               CAQA=CMPLX(AQA,-AQA/(2.0d0*QD))
            else

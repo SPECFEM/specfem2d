@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -121,7 +120,7 @@
            dist_squared = (x_source-dble(coord(1,iglob)))**2 + (z_source-dble(coord(2,iglob)))**2
 
            ! keep this point if it is closer to the source
-           if(dist_squared < distmin_squared) then
+           if (dist_squared < distmin_squared) then
               iglob_source = iglob
               distmin_squared = dist_squared
               ispec_selected_source = ispec
@@ -143,7 +142,7 @@
 #endif
 
 ! check if this process contains the source
-  if ( abs(sqrt(dist_glob_squared) - sqrt(distmin_squared)) < TINYVAL ) is_proc_source = 1
+  if (abs(sqrt(dist_glob_squared) - sqrt(distmin_squared)) < TINYVAL ) is_proc_source = 1
 
 #ifdef USE_MPI
   ! determining the number of processes that contain the source
@@ -156,13 +155,13 @@
 
 #ifdef USE_MPI
   ! when several processes contain the source, we elect one of them (minimum rank).
-  if ( nb_proc_source > 1 ) then
+  if (nb_proc_source > 1) then
 
      call MPI_ALLGATHER(is_proc_source, 1, MPI_INTEGER, allgather_is_proc_source(1), &
                         1, MPI_INTEGER, MPI_COMM_WORLD, ierror)
      locate_is_proc_source = maxloc(allgather_is_proc_source) - 1
 
-     if ( myrank /= locate_is_proc_source(1) ) then
+     if (myrank /= locate_is_proc_source(1)) then
         is_proc_source = 0
      endif
      nb_proc_source = 1
@@ -188,7 +187,7 @@
   gamma = zigll(iz_initial_guess)
 
 ! iterate to solve the non linear system
-  if(USE_BEST_LOCATION_FOR_SOURCE) then
+  if (USE_BEST_LOCATION_FOR_SOURCE) then
     number_of_iterations = NUM_ITER
   else
     number_of_iterations = 0 ! this means that the loop below will not be executed, i.e. we will not iterate
@@ -242,7 +241,7 @@
      write(IOUT,*)
      write(IOUT,*) 'Force source:'
 
-     if(final_distance == HUGEVAL) call exit_MPI('error locating force source')
+     if (final_distance == HUGEVAL) call exit_MPI('error locating force source')
 
      write(IOUT,*) '            original x: ',sngl(x_source)
      write(IOUT,*) '            original z: ',sngl(z_source)

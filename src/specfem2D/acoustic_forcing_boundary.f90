@@ -93,10 +93,10 @@
 ! speed of light
   c = 300000000.
 
-  if(forcing_type == 1) then !! First test function : same forcing for the whole boundary
+  if (forcing_type == 1) then !! First test function : same forcing for the whole boundary
 !  print *, ispec_acoustic
 !  print *, is_PML(ispec_acoustic)
-!  if(is_PML(ispec_acoustic)) then
+!  if (is_PML(ispec_acoustic)) then
 !  displ_x = 0
 !  displ_z = 0
 !  else
@@ -121,14 +121,14 @@
 
   endif
 
-  if(forcing_type == 2) then !! Second test function : moving forcing
+  if (forcing_type == 2) then !! Second test function : moving forcing
   displ_x = 0 !* Apo
 
   displ_z = A * (exp(-(alpha*(deltat*it-40-t0-(x-delayed)/c)/tho)**2) &
             - exp(-(alpha*(deltat*it-70-t0-(x-delayed)/c)/tho)**2)) !* Apo
   endif
 
-  if(forcing_type == 3) then !! forcing external
+  if (forcing_type == 3) then !! forcing external
     ngoce_time_step = 255
     n_models = 28
     t =it*deltat
@@ -142,7 +142,7 @@
 
     read(1001,*) goce_time(:)
 
-    do k=1,n_models
+    do k = 1,n_models
       read(1001,*) syn(k,:)
       read(1000,*) distance(k)
     enddo
@@ -160,14 +160,14 @@
       ll = ll+1
     enddo
 
-      if(x==0 .and. it==1) then
+      if (x==0 .and. it==1) then
         displ_z =  syn(1,1)
       else
-        if(x==0) then
+        if (x==0) then
           fract = (t-goce_time(ll-1))/(goce_time(ll)-goce_time(ll-1))
           displ_z =  (syn(1,ll-1) + fract * (syn(1,ll)-syn(1,ll-1)))
         else
-          if(it==1) then
+          if (it==1) then
             fracx = (x-distance(kk-1))/(distance(kk)-distance(kk-1))
             displ_z =  (syn(kk-1,1) + fracx * (syn(kk,1)-syn(kk-1,1)))
           else

@@ -39,6 +39,8 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
+
+
   subroutine write_wavefield_dumps()
 
   use specfem_par, only: this_is_the_first_time_we_dump,myrank,nglob,nspec,mask_ibool, &
@@ -55,17 +57,17 @@
   !local variables
   integer :: i,j,ispec,iglob,icounter,nb_of_values_to_save
 
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     write(IOUT,*)
     write(IOUT,*) 'Dumping the wave field to a file for time step ',it
   endif
 
-  if( this_is_the_first_time_we_dump ) then
+  if (this_is_the_first_time_we_dump) then
 
     if (.not. allocated(mask_ibool)) allocate(mask_ibool(nglob))
 
 ! save the grid separately once and for all
-    if( use_binary_for_wavefield_dumps ) then
+    if (use_binary_for_wavefield_dumps) then
       write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_for_dumps_',i3.3,'.bin')") myrank
       open(unit=27,file=wavefield_file,form='unformatted',access='direct',status='unknown', &
            action='write',recl=2*SIZE_REAL)
@@ -80,10 +82,10 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
            iglob = ibool(i,j,ispec)
-           if( .not. mask_ibool(iglob) ) then
+           if (.not. mask_ibool(iglob)) then
              icounter = icounter + 1
              mask_ibool(iglob) = .true.
-             if( use_binary_for_wavefield_dumps ) then
+             if (use_binary_for_wavefield_dumps) then
                write(27,rec=icounter) sngl(coord(1,iglob)),sngl(coord(2,iglob))
              else
                write(27,'(2e16.6)') coord(1,iglob),coord(2,iglob)
@@ -100,39 +102,39 @@
     open(unit=27,file=wavefield_file,status='unknown',action='write')
     write(27,*) icounter
     close(27)
-    if( icounter /= nglob) stop 'error: should have icounter == nglob in wavefield dumps'
+    if (icounter /= nglob) stop 'error: should have icounter == nglob in wavefield dumps'
 
     this_is_the_first_time_we_dump = .false.
 
   endif
 
-  if( imagetype_wavefield_dumps == 1 ) then
-    if( myrank == 0 ) write(IOUT,*) 'dumping the displacement vector...'
+  if (imagetype_wavefield_dumps == 1) then
+    if (myrank == 0) write(IOUT,*) 'dumping the displacement vector...'
       call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
                                        potential_gravito,displ_elastic,displs_poroelastic)
-  else if( imagetype_wavefield_dumps == 2 ) then
-    if( myrank == 0 ) write(IOUT,*) 'dumping the velocity vector...'
+  else if (imagetype_wavefield_dumps == 2) then
+    if (myrank == 0) write(IOUT,*) 'dumping the velocity vector...'
     call compute_vector_whole_medium(potential_dot_acoustic,potential_gravitoacoustic, &
                                      potential_gravito,veloc_elastic,velocs_poroelastic)
 
-  else if( imagetype_wavefield_dumps == 3 ) then
-    if( myrank == 0 ) write(IOUT,*) 'dumping the acceleration vector...'
+  else if (imagetype_wavefield_dumps == 3) then
+    if (myrank == 0) write(IOUT,*) 'dumping the acceleration vector...'
     call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_gravitoacoustic, &
                                      potential_gravito,accel_elastic,accels_poroelastic)
 
-  else if( imagetype_wavefield_dumps == 4 .and. p_sv ) then
-    if( myrank == 0 ) write(IOUT,*) 'dumping the pressure field...'
+  else if (imagetype_wavefield_dumps == 4 .and. p_sv) then
+    if (myrank == 0) write(IOUT,*) 'dumping the pressure field...'
     call compute_pressure_whole_medium()
 
-  else if( imagetype_wavefield_dumps == 4 .and. .not. p_sv ) then
+  else if (imagetype_wavefield_dumps == 4 .and. .not. p_sv) then
     call exit_MPI('cannot dump the pressure field for SH (membrane) waves')
 
   else
     call exit_MPI('wrong type of flag for wavefield dumping')
   endif
 
-  if( use_binary_for_wavefield_dumps ) then
-    if( p_sv .and. .not. imagetype_wavefield_dumps == 4 ) then
+  if (use_binary_for_wavefield_dumps) then
+    if (p_sv .and. .not. imagetype_wavefield_dumps == 4) then
       nb_of_values_to_save = 2
     else
       nb_of_values_to_save = 1
@@ -151,22 +153,22 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
-        if( .not. mask_ibool(iglob) ) then
+        if (.not. mask_ibool(iglob)) then
           icounter = icounter + 1
           mask_ibool(iglob) = .true.
-          if( use_binary_for_wavefield_dumps ) then
-            if( p_sv .and. .not. imagetype_wavefield_dumps == 4 ) then
+          if (use_binary_for_wavefield_dumps) then
+            if (p_sv .and. .not. imagetype_wavefield_dumps == 4) then
               write(27,rec=icounter) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(3,iglob))
-            else if( p_sv .and. imagetype_wavefield_dumps == 4 ) then
+            else if (p_sv .and. imagetype_wavefield_dumps == 4) then
               ! by convention we use the third component of the array to store the pressure above
               write(27,rec=icounter) sngl(vector_field_display(3,iglob))
             else ! SH case
               write(27,rec=icounter) sngl(vector_field_display(2,iglob))
             endif
           else
-            if( p_sv .and. .not. imagetype_wavefield_dumps == 4 ) then
+            if (p_sv .and. .not. imagetype_wavefield_dumps == 4) then
               write(27,*) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(3,iglob))
-            else if( p_sv .and. imagetype_wavefield_dumps == 4 ) then
+            else if (p_sv .and. imagetype_wavefield_dumps == 4) then
               ! by convention we use the third component of the array to store the pressure above
               write(27,*) sngl(vector_field_display(3,iglob))
             else ! SH case
@@ -179,7 +181,7 @@
   enddo
 
   close(27)
-  if( myrank ==0 ) write(IOUT,*) 'Wave field dumped'
+  if (myrank == 0) write(IOUT,*) 'Wave field dumped'
 
   end subroutine write_wavefield_dumps
 

@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -92,11 +91,11 @@
   endif
 
   ! initialize mass matrix
-  if(any_elastic) rmass_inverse_elastic_one(:) = 0._CUSTOM_REAL
-  if(any_elastic) rmass_inverse_elastic_three(:) = 0._CUSTOM_REAL
-  if(any_poroelastic) rmass_s_inverse_poroelastic(:) = 0._CUSTOM_REAL
-  if(any_poroelastic) rmass_w_inverse_poroelastic(:) = 0._CUSTOM_REAL
-  if(any_acoustic) rmass_inverse_acoustic(:) = 0._CUSTOM_REAL
+  if (any_elastic) rmass_inverse_elastic_one(:) = 0._CUSTOM_REAL
+  if (any_elastic) rmass_inverse_elastic_three(:) = 0._CUSTOM_REAL
+  if (any_poroelastic) rmass_s_inverse_poroelastic(:) = 0._CUSTOM_REAL
+  if (any_poroelastic) rmass_w_inverse_poroelastic(:) = 0._CUSTOM_REAL
+  if (any_acoustic) rmass_inverse_acoustic(:) = 0._CUSTOM_REAL
   if (any_gravitoacoustic) then
       rmass_inverse_gravitoacoustic(:) = 0._CUSTOM_REAL
       rmass_inverse_gravito(:) = 0._CUSTOM_REAL
@@ -108,7 +107,7 @@
         iglob = ibool(i,j,ispec)
 
         ! if external density model (elastic or acoustic)
-        if(assign_external_model) then
+        if (assign_external_model) then
           rhol = rhoext(i,j,ispec)
           kappal = rhol * vpext(i,j,ispec)**2
         else
@@ -118,7 +117,7 @@
           kappal = lambdal_relaxed + 2.d0/3.d0*mul_relaxed
         endif
 
-        if( poroelastic(ispec) ) then
+        if (poroelastic(ispec)) then
           ! material is poroelastic
 
           rhol_s = density(1,kmato(ispec))
@@ -136,19 +135,19 @@
                   - phil*rhol_f*rhol_f)/(rhol_bar*phil)
 
           ! for elastic medium
-        else if( elastic(ispec) ) then
+        else if (elastic(ispec)) then
 
           this_element_has_PML = .false.
-          if(PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
+          if (PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
 ! do not merge this condition with the above line because array is_PML() sometimes has a dummy size of 1
             if (is_PML(ispec)) this_element_has_PML = .true.
           endif
 
-          if(this_element_has_PML) then
+          if (this_element_has_PML) then
             ispec_PML=spec_to_PML(ispec)
-            if(time_stepping_scheme == 1)then
+            if (time_stepping_scheme == 1) then
 
-              if(region_CPML(ispec) == CPML_X_ONLY) then
+              if (region_CPML(ispec) == CPML_X_ONLY) then
                 if (AXISYM) then  ! This PML can't be on the axis
                    rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                         + coord(1,iglob)*wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) &
@@ -175,7 +174,7 @@
                  endif
                  rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
 
-              else if(region_CPML(ispec) == CPML_Z_ONLY) then
+              else if (region_CPML(ispec) == CPML_Z_ONLY) then
                 if (AXISYM) then
                   if (is_on_the_axis(ispec)) then
                     if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
@@ -202,7 +201,7 @@
               endif
 
             else ! time_stepping_scheme /= 1
-              if(region_CPML(ispec) == CPML_X_ONLY) then
+              if (region_CPML(ispec) == CPML_X_ONLY) then
                 rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
@@ -210,7 +209,7 @@
                 rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
-              else if(region_CPML(ispec) == CPML_Z_ONLY) then
+              else if (region_CPML(ispec) == CPML_Z_ONLY) then
                 rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
@@ -242,10 +241,10 @@
 
           ! for gravitoacoustic medium
           !!! PML NOT WORKING YET !!!
-        else if( gravitoacoustic(ispec) ) then
+        else if (gravitoacoustic(ispec)) then
 
         this_element_has_PML = .false.
-        if(PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
+        if (PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
           if (is_PML(ispec)) stop 'PML not implemented yet for gravitoacoustic case'
         endif
 
@@ -258,16 +257,16 @@
           ! for acoustic medium
 
           this_element_has_PML = .false.
-          if(PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
+          if (PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
 ! do not merge this condition with the above line because array is_PML() sometimes has a dummy size of 1
             if (is_PML(ispec)) this_element_has_PML = .true.
           endif
 
-          if(this_element_has_PML) then
+          if (this_element_has_PML) then
 
             ispec_PML=spec_to_PML(ispec)
-            if(time_stepping_scheme == 1)then
-              if(region_CPML(ispec) == CPML_X_ONLY) then
+            if (time_stepping_scheme == 1) then
+              if (region_CPML(ispec) == CPML_X_ONLY) then
                 if (AXISYM) then   !! AB AB: This PML cannot be on the axis: it is a right PML
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                        + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) &
@@ -292,7 +291,7 @@
                           + d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltat / 2.d0)
                 endif
 
-              else if(region_CPML(ispec) == CPML_Z_ONLY) then
+              else if (region_CPML(ispec) == CPML_Z_ONLY) then
                 if (AXISYM) then
                   if (is_on_the_axis(ispec)) then
                     if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
@@ -317,13 +316,13 @@
                 endif
               endif
             else  ! time_stepping_scheme /= 1
-              if(region_CPML(ispec) == CPML_X_ONLY) then
+              if (region_CPML(ispec) == CPML_X_ONLY) then
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
               else if (region_CPML(ispec) == CPML_XZ_ONLY) then
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
-              else if(region_CPML(ispec) == CPML_Z_ONLY) then
+              else if (region_CPML(ispec) == CPML_Z_ONLY) then
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
               endif
@@ -364,7 +363,7 @@
   !--- DK and Zhinan Xie: This was also suggested by Jean-Paul Ampuero in 2003.
   !
 
-  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs .and. time_stepping_scheme == 1) then
+  if (.not. PML_BOUNDARY_CONDITIONS .and. anyabs .and. time_stepping_scheme == 1) then
      count_left=1
      count_right=1
      count_bottom=1
@@ -379,13 +378,13 @@
         csl = sqrt(mul_unrelaxed_elastic/rhol)
 
         !--- left absorbing boundary
-        if(codeabs(IEDGE4,ispecabs)) then
+        if (codeabs(IEDGE4,ispecabs)) then
 
            i = 1
            do j = 1,NGLLZ
               iglob = ibool(i,j,ispec)
               ! external velocity model
-              if(assign_external_model) then
+              if (assign_external_model) then
                  cpl = vpext(i,j,ispec)
                  csl = vsext(i,j,ispec)
                  rhol = rhoext(i,j,ispec)
@@ -403,7 +402,7 @@
               weight = jacobian1D * wzgll(j)
 
               ! Clayton-Engquist condition if elastic
-              if(elastic(ispec)) then
+              if (elastic(ispec)) then
 
                  vx = 1.0d0*deltat/2.0d0
                  vy = 1.0d0*deltat/2.0d0
@@ -424,7 +423,7 @@
         endif  !  end of left absorbing boundary
 
         !--- right absorbing boundary
-        if(codeabs(IEDGE2,ispecabs)) then
+        if (codeabs(IEDGE2,ispecabs)) then
 
            i = NGLLX
 
@@ -436,7 +435,7 @@
               ! left or right edge, horizontal normal vector
 
               ! external velocity model
-              if(assign_external_model) then
+              if (assign_external_model) then
                  cpl = vpext(i,j,ispec)
                  csl = vsext(i,j,ispec)
                  rhol = rhoext(i,j,ispec)
@@ -454,7 +453,7 @@
               weight = jacobian1D * wzgll(j)
 
               ! Clayton-Engquist condition if elastic
-              if(elastic(ispec)) then
+              if (elastic(ispec)) then
 
                  vx = 1.0d0*deltat/2.0d0
                  vy = 1.0d0*deltat/2.0d0
@@ -476,7 +475,7 @@
         endif  !  end of right absorbing boundary
 
         !--- bottom absorbing boundary
-        if(codeabs(IEDGE1,ispecabs)) then
+        if (codeabs(IEDGE1,ispecabs)) then
 
            j = 1
            ibegin = 1
@@ -486,7 +485,7 @@
 
               iglob = ibool(i,j,ispec)
               ! external velocity model
-              if(assign_external_model) then
+              if (assign_external_model) then
                  cpl = vpext(i,j,ispec)
                  csl = vsext(i,j,ispec)
                  rhol = rhoext(i,j,ispec)
@@ -504,7 +503,7 @@
               weight = jacobian1D * wxgll(i)
 
               ! Clayton-Engquist condition if elastic
-              if(elastic(ispec)) then
+              if (elastic(ispec)) then
 
                  vx = 1.0d0*deltat/2.0d0
                  vy = 1.0d0*deltat/2.0d0
@@ -519,7 +518,7 @@
 ! exclude corners to make sure there is no contradiction on the normal
 ! for Stacey absorbing conditions but not for incident plane waves;
 ! thus subtract nothing i.e. zero in that case
-                 if((codeabs_corner(1,ispecabs) .and. i == 1) .or. (codeabs_corner(2,ispecabs) .and. i == NGLLX)) then
+                 if ((codeabs_corner(1,ispecabs) .and. i == 1) .or. (codeabs_corner(2,ispecabs) .and. i == NGLLX)) then
                    tx = 0
                    ty = 0
                    tz = 0
@@ -535,7 +534,7 @@
         endif  !  end of bottom absorbing boundary
 
         !--- top absorbing boundary
-        if(codeabs(IEDGE3,ispecabs)) then
+        if (codeabs(IEDGE3,ispecabs)) then
 
            j = NGLLZ
 
@@ -547,7 +546,7 @@
               iglob = ibool(i,j,ispec)
 
               ! external velocity model
-              if(assign_external_model) then
+              if (assign_external_model) then
                  cpl = vpext(i,j,ispec)
                  csl = vsext(i,j,ispec)
                  rhol = rhoext(i,j,ispec)
@@ -565,7 +564,7 @@
               weight = jacobian1D * wxgll(i)
 
               ! Clayton-Engquist condition if elastic
-              if(elastic(ispec)) then
+              if (elastic(ispec)) then
 
                  vx = 1.0d0*deltat/2.0d0
                  vy = 1.0d0*deltat/2.0d0
@@ -580,7 +579,7 @@
 ! exclude corners to make sure there is no contradiction on the normal
 ! for Stacey absorbing conditions but not for incident plane waves;
 ! thus subtract nothing i.e. zero in that case
-                 if((codeabs_corner(3,ispecabs) .and. i == 1) .or. (codeabs_corner(4,ispecabs) .and. i == NGLLX)) then
+                 if ((codeabs_corner(3,ispecabs) .and. i == 1) .or. (codeabs_corner(4,ispecabs) .and. i == NGLLX)) then
                    tx = 0
                    ty = 0
                    tz = 0
@@ -597,14 +596,14 @@
   endif  ! end of absorbing boundaries
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if(.not. PML_BOUNDARY_CONDITIONS .and. anyabs .and. time_stepping_scheme /= 1) then
+  if (.not. PML_BOUNDARY_CONDITIONS .and. anyabs .and. time_stepping_scheme /= 1) then
 
-    do ispecabs=1,nelemabs
+    do ispecabs= 1,nelemabs
 
       ispec = numabs(ispecabs)
 
       ! Sommerfeld condition if acoustic
-      if(acoustic(ispec)) then
+      if (acoustic(ispec)) then
 
         ! get elastic parameters of current spectral element
         lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
@@ -615,14 +614,14 @@
         cpl = sqrt(kappal/rhol)
 
         !--- left absorbing boundary
-        if(codeabs(IEDGE4,ispecabs)) then
+        if (codeabs(IEDGE4,ispecabs)) then
           i = 1
           jbegin = ibegin_edge4(ispecabs)
           jend = iend_edge4(ispecabs)
           do j = jbegin,jend
             iglob = ibool(i,j,ispec)
             ! external velocity model
-            if(assign_external_model) then
+            if (assign_external_model) then
               cpl = vpext(i,j,ispec)
               rhol = rhoext(i,j,ispec)
             endif
@@ -639,14 +638,14 @@
         endif  !  end of left absorbing boundary
 
         !--- right absorbing boundary
-        if(codeabs(IEDGE2,ispecabs)) then
+        if (codeabs(IEDGE2,ispecabs)) then
           i = NGLLX
           jbegin = ibegin_edge2(ispecabs)
           jend = iend_edge2(ispecabs)
           do j = jbegin,jend
             iglob = ibool(i,j,ispec)
             ! external velocity model
-            if(assign_external_model) then
+            if (assign_external_model) then
               cpl = vpext(i,j,ispec)
               rhol = rhoext(i,j,ispec)
             endif
@@ -661,17 +660,17 @@
         endif  !  end of right absorbing boundary
 
         !--- bottom absorbing boundary
-        if(codeabs(IEDGE1,ispecabs)) then
+        if (codeabs(IEDGE1,ispecabs)) then
           j = 1
           ibegin = ibegin_edge1(ispecabs)
           iend = iend_edge1(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if(codeabs_corner(1,ispecabs)) ibegin = 2
-          if(codeabs_corner(2,ispecabs)) iend = NGLLX-1
+          if (codeabs_corner(1,ispecabs)) ibegin = 2
+          if (codeabs_corner(2,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model
-            if(assign_external_model) then
+            if (assign_external_model) then
               cpl = vpext(i,j,ispec)
               rhol = rhoext(i,j,ispec)
             endif
@@ -687,17 +686,17 @@
         endif  !  end of bottom absorbing boundary
 
         !--- top absorbing boundary
-        if(codeabs(IEDGE3,ispecabs)) then
+        if (codeabs(IEDGE3,ispecabs)) then
           j = NGLLZ
           ibegin = ibegin_edge3(ispecabs)
           iend = iend_edge3(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if(codeabs_corner(3,ispecabs)) ibegin = 2
-          if(codeabs_corner(4,ispecabs)) iend = NGLLX-1
+          if (codeabs_corner(3,ispecabs)) ibegin = 2
+          if (codeabs_corner(4,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model
-            if(assign_external_model) then
+            if (assign_external_model) then
               cpl = vpext(i,j,ispec)
               rhol = rhoext(i,j,ispec)
             endif
@@ -742,33 +741,33 @@
 
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
 ! (this can happen when some degrees of freedom have been removed from some of the global arrays)
-  if(any_elastic) &
+  if (any_elastic) &
     where(rmass_inverse_elastic_one <= 0._CUSTOM_REAL) rmass_inverse_elastic_one = 1._CUSTOM_REAL
-  if(any_elastic) &
+  if (any_elastic) &
     where(rmass_inverse_elastic_three <= 0._CUSTOM_REAL) rmass_inverse_elastic_three = 1._CUSTOM_REAL
-  if(any_poroelastic) &
+  if (any_poroelastic) &
     where(rmass_s_inverse_poroelastic <= 0._CUSTOM_REAL) rmass_s_inverse_poroelastic = 1._CUSTOM_REAL
-  if(any_poroelastic) &
+  if (any_poroelastic) &
     where(rmass_w_inverse_poroelastic <= 0._CUSTOM_REAL) rmass_w_inverse_poroelastic = 1._CUSTOM_REAL
-  if(any_acoustic) &
+  if (any_acoustic) &
     where(rmass_inverse_acoustic <= 0._CUSTOM_REAL) rmass_inverse_acoustic = 1._CUSTOM_REAL
-  if(any_gravitoacoustic) then
+  if (any_gravitoacoustic) then
     where(rmass_inverse_gravitoacoustic <= 0._CUSTOM_REAL) rmass_inverse_gravitoacoustic = 1._CUSTOM_REAL
     where(rmass_inverse_gravito <= 0._CUSTOM_REAL) rmass_inverse_gravito = 1._CUSTOM_REAL
   endif
 
 ! compute the inverse of the mass matrix
-  if(any_elastic) &
+  if (any_elastic) &
     rmass_inverse_elastic_one(:) = 1._CUSTOM_REAL / rmass_inverse_elastic_one(:)
-  if(any_elastic) &
+  if (any_elastic) &
     rmass_inverse_elastic_three(:) = 1._CUSTOM_REAL / rmass_inverse_elastic_three(:)
-  if(any_poroelastic) &
+  if (any_poroelastic) &
     rmass_s_inverse_poroelastic(:) = 1._CUSTOM_REAL / rmass_s_inverse_poroelastic(:)
-  if(any_poroelastic) &
+  if (any_poroelastic) &
     rmass_w_inverse_poroelastic(:) = 1._CUSTOM_REAL / rmass_w_inverse_poroelastic(:)
-  if(any_acoustic) &
+  if (any_acoustic) &
     rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
-  if(any_gravitoacoustic) then
+  if (any_gravitoacoustic) then
     rmass_inverse_gravitoacoustic(:) = 1._CUSTOM_REAL / rmass_inverse_gravitoacoustic(:)
     rmass_inverse_gravito(:) = 1._CUSTOM_REAL / rmass_inverse_gravito(:)
   endif

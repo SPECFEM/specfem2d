@@ -40,7 +40,6 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -93,14 +92,14 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
 
   // don't compute points outside NGLLSQUARE==NGLL2==25
   // way 2: no further check needed since blocksize = 25
-  if( iface < num_abs_boundary_faces){
+  if (iface < num_abs_boundary_faces){
 
-  //  if(igll<NGLL2 && iface < num_abs_boundary_faces) {
+  //  if (igll<NGLL2 && iface < num_abs_boundary_faces) {
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = abs_boundary_ispec[iface]-1;
 
-    if(ispec_is_inner[ispec] == phase_is_inner && ispec_is_acoustic[ispec] ) {
+    if (ispec_is_inner[ispec] == phase_is_inner && ispec_is_acoustic[ispec]) {
 
       i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
       j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
@@ -127,7 +126,7 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
       atomicAdd(&potential_dot_dot_acoustic[iglob],-vel*jacobianw/cpl);
 
       // adjoint simulations
-      if( SIMULATION_TYPE == 3 ){
+      if (SIMULATION_TYPE == 3) {
 
 if (cote_abs[iface] == 1){ num_local = ib_bottom[iface] -1 ; atomicAdd(&b_potential_dot_dot_acoustic[iglob],
                                      -b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)]);}
@@ -138,7 +137,7 @@ else if (cote_abs[iface] == 3){ num_local = ib_top[iface] -1 ; atomicAdd(&b_pote
 else if (cote_abs[iface] == 4){ num_local = ib_left[iface] -1 ; atomicAdd(&b_potential_dot_dot_acoustic[iglob],
                                      -b_absorb_potential_left[INDEX2(NGLLX,igll,num_local)]);}
 
-}else if( SIMULATION_TYPE == 1 && SAVE_FORWARD ){
+}else if (SIMULATION_TYPE == 1 && SAVE_FORWARD) {
         // saves boundary values
 if (cote_abs[iface] == 1) { num_local = ib_bottom[iface] -1 ; b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
 else if (cote_abs[iface] == 2) { num_local = ib_right[iface] -1 ; b_absorb_potential_right[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
@@ -167,7 +166,7 @@ TRACE("compute_stacey_acoustic_cuda");
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
   // checks if anything to do
-  if( mp->d_num_abs_boundary_faces == 0 ) return;
+  if (mp->d_num_abs_boundary_faces == 0) return;
 
   int phase_is_inner          = *phase_is_innerf;
 
@@ -229,7 +228,7 @@ TRACE("compute_stacey_acoustic_cuda");
                                                    mp->d_cote_abs);
 
   //  adjoint simulations: stores absorbed wavefield part
-  if (mp->simulation_type == 1 && mp->save_forward && phase_is_inner==1 ){
+  if (mp->simulation_type == 1 && mp->save_forward && phase_is_inner==1) {
     // (cudaMemcpy implicitly synchronizes all other cuda operations)
     // copies array to CPU
     print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_potential_left,mp->d_b_absorb_potential_left,

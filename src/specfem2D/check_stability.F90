@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -86,7 +85,7 @@
   if (myrank == 0) then
     write(IOUT,*)
     write(IOUT,*) '******************************************************************'
-    if(timeval >= 1.d-3 .and. timeval < 1000.d0) then
+    if (timeval >= 1.d-3 .and. timeval < 1000.d0) then
       write(IOUT,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,timeval,NSTEP
     else
       write(IOUT,"('Time step number ',i7,'   t = ',1pe13.6,' s out of ',i7)") it,timeval,NSTEP
@@ -97,8 +96,8 @@
 
 
   ! elastic wavefield
-  if(any_elastic_glob) then
-    if(any_elastic) then
+  if (any_elastic_glob) then
+    if (any_elastic) then
       displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 &
                                 + displ_elastic(2,:)**2 &
                                 + displ_elastic(3,:)**2))
@@ -123,14 +122,14 @@
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
       call exit_MPI('code became unstable and blew up in solid (elastic)')
 
   endif
 
   ! poroelastic wavefield
-  if(any_poroelastic_glob) then
-    if(any_poroelastic) then
+  if (any_poroelastic_glob) then
+    if (any_poroelastic) then
       displnorm_all = maxval(sqrt(displs_poroelastic(1,:)**2 &
                                 + displs_poroelastic(2,:)**2))
     else
@@ -149,10 +148,10 @@
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
       call exit_MPI('code became unstable and blew up in solid (poroelastic)')
 
-    if(any_poroelastic) then
+    if (any_poroelastic) then
       displnorm_all = maxval(sqrt(displw_poroelastic(1,:)**2 &
                                 + displw_poroelastic(2,:)**2))
     else
@@ -171,15 +170,15 @@
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
       call exit_MPI('code became unstable and blew up in fluid (poroelastic)')
 
   endif
 
 
   ! acoustic wavefield
-  if(any_acoustic_glob) then
-    if(any_acoustic) then
+  if (any_acoustic_glob) then
+    if (any_acoustic) then
       displnorm_all = maxval(abs(potential_acoustic(:)))
     else
       displnorm_all = 0.d0
@@ -197,7 +196,7 @@
     ! check stability of the code in fluid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
       call exit_MPI('code became unstable and blew up in fluid (acoustic)')
 
   endif
@@ -255,7 +254,7 @@
       write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
              ihours_total,iminutes_total,iseconds_total
 
-      if(it < NSTEP) then
+      if (it < NSTEP) then
         ! compute date and time at which the run should finish (useful for long runs)
         ! add remaining minutes and get date and time of that future timestamp in minutes
         timestamp = nint((timestamp_seconds_current + t_remain) / 60.d0)

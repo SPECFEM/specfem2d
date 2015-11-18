@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -68,7 +67,7 @@
   call MPI_INIT(ier)
   call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-  if( ier /= 0 ) call exit_MPI('error MPI initialization')
+  if (ier /= 0 ) call exit_MPI('error MPI initialization')
 #else
   nproc = 1
   myrank = 0
@@ -79,7 +78,7 @@
   ninterface_poroelastic = 0
 
   ! determine if we write to file instead of standard output
-  if(IOUT /= ISTANDARD_OUTPUT) then
+  if (IOUT /= ISTANDARD_OUTPUT) then
 
 #ifdef USE_MPI
     write(prname,240) myrank
@@ -89,7 +88,7 @@
 #endif
 
     open(IOUT,file=prname,status='unknown',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_MPI('error opening file simulation_results***.txt')
+    if (ier /= 0 ) call exit_MPI('error opening file simulation_results***.txt')
 
   endif
 
@@ -128,7 +127,7 @@
   count_nspec_acoustic = 0
   do ispec = 1,nspec
 
-    if( nint(porosity(kmato(ispec))) == 1 ) then
+    if (nint(porosity(kmato(ispec))) == 1) then
       ! assume acoustic domain
       ! if gravitoacoustic -> set by read_external_model
       acoustic(ispec) = .true.
@@ -138,12 +137,12 @@
       gravitoacoustic(ispec) = .false.
       any_gravitoacoustic = .false.
       count_nspec_acoustic = count_nspec_acoustic + 1
-    else if( porosity(kmato(ispec)) < TINYVAL) then
+    else if (porosity(kmato(ispec)) < TINYVAL) then
       ! assume elastic domain
       elastic(ispec) = .true.
       poroelastic(ispec) = .false.
       any_elastic = .true.
-      if(any(anisotropy(:,kmato(ispec)) /= 0)) then
+      if (any(anisotropy(:,kmato(ispec)) /= 0)) then
          anisotropic(ispec) = .true.
       endif
     else
@@ -156,13 +155,13 @@
   enddo ! of do ispec = 1,nspec
 
 
-  if(.not. p_sv .and. .not. any_elastic) then
+  if (.not. p_sv .and. .not. any_elastic) then
     print *, '*************** WARNING ***************'
     print *, 'Surface (membrane) waves calculation needs an elastic medium'
     print *, '*************** WARNING ***************'
     stop
   endif
-  if(.not. p_sv .and. (ATTENUATION_VISCOELASTIC_SOLID)) then
+  if (.not. p_sv .and. (ATTENUATION_VISCOELASTIC_SOLID)) then
     print *, '*************** WARNING ***************'
     print *, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
     print *, '*************** WARNING ***************'
@@ -170,7 +169,7 @@
   endif
 
 
-  if(ATTENUATION_VISCOELASTIC_SOLID) then
+  if (ATTENUATION_VISCOELASTIC_SOLID) then
     nspec_allocate = nspec
   else
     nspec_allocate = 1

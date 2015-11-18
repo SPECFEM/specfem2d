@@ -102,7 +102,7 @@
   endif
   close(509)
 
-  if ( (NOISE_TOMOGRAPHY == 1) .and. (irec_master > nrec .or. irec_master < 1) ) &
+  if ((NOISE_TOMOGRAPHY == 1) .and. (irec_master > nrec .or. irec_master < 1) ) &
     call exit_mpi('irec_master out of range of given number of receivers. Exiting.')
 
   xi_noise    = xi_receiver(irec_master)
@@ -131,7 +131,7 @@
    if (any_poroelastic) call exit_mpi('Poroelastic models not yet implemented for noise simulations. Exiting.')
 
 !  moment tensor elements must be zero!
-   do i=1,NSOURCES
+   do i = 1,NSOURCES
      if (Mxx(i) /= 0.d0 .or. Mxz(i) /= 0.d0 .or. Mzz(i) /= 0.d0 .or. factor(i) /= 0.d0) then
        call exit_mpi('For noise simulations, all moment tensor elements must be zero. Exiting.')
      endif
@@ -195,7 +195,7 @@
   factor_noise = 1.e3_CUSTOM_REAL
 
 
-  if ( time_function_type == 0) then
+  if (time_function_type == 0) then
     !read in time function from file S_squared
     open(unit=55,file='DATA/NOISE_TOMOGRAPHY/S_squared',status='old')
     do it = 1,NSTEP
@@ -204,7 +204,7 @@
     close(55)
 
 
-  else if( time_function_type == 1) then
+  else if (time_function_type == 1) then
     !Ricker (second derivative of a Gaussian) time function
     do it = 1,NSTEP
       t = it*deltat
@@ -213,7 +213,7 @@
     enddo
 
 
-  else if( time_function_type == 2) then
+  else if (time_function_type == 2) then
     !first derivative of a Gaussian time function
     do it = 1,NSTEP
       t = it*deltat
@@ -221,7 +221,7 @@
     enddo
 
 
-  else if( time_function_type == 3) then
+  else if (time_function_type == 3) then
     !Gaussian time function
     do it = 1,NSTEP
       t = it*deltat
@@ -229,7 +229,7 @@
     enddo
 
 
-  else if( time_function_type == 4 ) then
+  else if (time_function_type == 4) then
     !reproduce time function from Figure 2a of Tromp et al. 2010
     do it = 1,NSTEP
       t = it*deltat
@@ -248,7 +248,7 @@
   source_array_noise(:,:,:,:) = 0._CUSTOM_REAL
 
   if (AXISYM) then
-    if(is_on_the_axis(ispec_noise)) then
+    if (is_on_the_axis(ispec_noise)) then
       call lagrange_any(xi_noise,NGLJ,xiglj,hxi,hpxi)
     else
       call lagrange_any(xi_noise,NGLLX,xigll,hxi,hpxi)
@@ -259,7 +259,7 @@
 
   call lagrange_any(gamma_noise,NGLLZ,zigll,hgamma,hpgamma)
 
-  if(p_sv) then ! P-SV simulation
+  if (p_sv) then ! P-SV simulation
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec_noise)
@@ -291,7 +291,7 @@
   !local
   integer :: i,j,iglob
 
-  if(p_sv) then ! P-SV calculation
+  if (p_sv) then ! P-SV calculation
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec_noise)
@@ -334,10 +334,10 @@
   if (it==1) then
     open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
          recl=nglob*CUSTOM_REAL,action='read',iostat=ios)
-    if( ios /= 0) call exit_mpi('Error retrieving generating wavefield.')
+    if (ios /= 0) call exit_mpi('Error retrieving generating wavefield.')
   endif
 
-  if(p_sv) then
+  if (p_sv) then
     call exit_mpi('P-SV case not yet implemented.')
   else
     if (NOISE_TOMOGRAPHY==2) read(unit=500,rec=NSTEP-it+1) surface_movie_y_noise
@@ -388,13 +388,13 @@
 
       open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
            recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
-      if( ios /= 0) call exit_mpi('Error saving generating wavefield.')
+      if (ios /= 0) call exit_mpi('Error saving generating wavefield.')
 
     else if (NOISE_TOMOGRAPHY == 2) then
 
       open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
            recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
-      if( ios /= 0) call exit_mpi('Error saving ensemble forward wavefield.')
+      if (ios /= 0) call exit_mpi('Error saving ensemble forward wavefield.')
 
     else
       call exit_mpi('Bad value of NOISE_TOMOGRAPHY in save_surface_movie_noise.')
@@ -403,7 +403,7 @@
 
   endif ! (it==1)
 
-  if(p_sv) then
+  if (p_sv) then
     call exit_mpi('P-SV case not yet implemented.')
   else
     write(unit=500,rec=it) displ_elastic(2,:)

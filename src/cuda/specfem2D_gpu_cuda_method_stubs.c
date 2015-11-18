@@ -40,7 +40,6 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -121,7 +120,7 @@ void FC_FUNC_(output_free_device_memory,
               OUTPUT_FREE_DEVICE_MEMORY)(int* myrank_f) {}
 
 void FC_FUNC_(get_free_device_memory,
-              get_FREE_DEVICE_MEMORY)(realw* free, realw* used, realw* total ) {}
+              get_FREE_DEVICE_MEMORY)(realw* free, realw* used, realw* total) {}
 
 void FC_FUNC_(get_norm_acoustic_from_device,
               GET_NORM_ACOUSTIC_FROM_DEVICE)(realw* norm,long* Mesh_pointer,int* sim_type) {}
@@ -222,7 +221,7 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
                                                       int* pre_computed_irec,
                                                       int nadj_rec_local,
                                                       realw* kappastore,
-                                                      int NSTEP  ) {}
+                                                      int NSTEP ) {}
 
 
 //
@@ -363,7 +362,7 @@ void FC_FUNC_(prepare_constants_device,
                                         int* nspec_acoustic,int* nspec_elastic,
                                         int* h_myrank,
                                         int* SAVE_FORWARD,
-                                        realw* h_xir_store, realw* h_gammar_store ) {}
+                                        realw* h_xir_store, realw* h_gammar_store) {}
 
 void FC_FUNC_(prepare_fields_acoustic_device,
               PREPARE_FIELDS_ACOUSTIC_DEVICE)(long* Mesh_pointer,
@@ -409,7 +408,7 @@ void FC_FUNC_(prepare_fields_elastic_device,
                                              realw *c23store,
                                              realw *c25store,realw *c33store,
                                              realw *c35store,
-                                             realw *c55store,int* h_ninterface_elastic,int * h_inum_interfaces_elastic ){}
+                                             realw *c55store,int* h_ninterface_elastic,int * h_inum_interfaces_elastic) {}
 
 void FC_FUNC_(prepare_fields_elastic_adj_dev,
               PREPARE_FIELDS_ELASTIC_ADJ_DEV)(long* Mesh_pointer,
@@ -550,7 +549,7 @@ void FC_FUNC_(kernel_3_b_cuda,
                                realw* b_deltatover2_F) {}
 
 void FC_FUNC_(kernel_3_a_acoustic_cuda,
-              KERNEL_3_ACOUSTIC_CUDA)(long* Mesh_pointer ) {}
+              KERNEL_3_ACOUSTIC_CUDA)(long* Mesh_pointer) {}
 
 void FC_FUNC_(kernel_3_b_acoustic_cuda,
               KERNEL_3_ACOUSTIC_CUDA)(long* Mesh_pointer,

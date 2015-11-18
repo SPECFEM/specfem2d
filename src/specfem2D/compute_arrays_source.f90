@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -76,8 +75,8 @@
 
 ! calculate G_ij for general source location
 ! the source does not necessarily correspond to a Gauss-Lobatto point
-  do m=1,NGLLZ
-      do k=1,NGLLX
+  do m = 1,NGLLZ
+      do k = 1,NGLLX
 
         xixd    = xix(k,m,ispec_selected_source)
         xizd    = xiz(k,m,ispec_selected_source)
@@ -98,7 +97,7 @@
 ! compute Lagrange polynomials at the source location
 
   if (AXISYM) then
-    if(is_on_the_axis(ispec_selected_source)) then ! TODO verify if we have to add : .and. is_proc_source(i)
+    if (is_on_the_axis(ispec_selected_source)) then ! TODO verify if we have to add : .and. is_proc_source(i)
       call lagrange_any(xi_source,NGLJ,xiglj,hxis,hpxis)
     else
       call lagrange_any(xi_source,NGLLX,xigll,hxis,hpxis)
@@ -110,13 +109,13 @@
   call lagrange_any(gamma_source,NGLLZ,zigll,hgammas,hpgammas)
 
 ! calculate source array
-  do m=1,NGLLZ
-    do k=1,NGLLX
+  do m = 1,NGLLZ
+    do k = 1,NGLLX
 
       sourcearray(:,k,m) = ZERO
 
-      do iv=1,NGLLZ
-        do ir=1,NGLLX
+      do iv = 1,NGLLZ
+        do ir = 1,NGLLX
 
           sourcearray(1,k,m) = sourcearray(1,k,m) + hxis(ir)*hgammas(iv) &
                                  *(G11(ir,iv)*hpxis(k)*hgammas(m) &
@@ -156,7 +155,7 @@
 
   adj_sourcearray(:,:,:,:) = 0.
 
-  if(seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
+  if (seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
 
   comp = (/"BXX","BXY","BXZ"/)
 
@@ -175,7 +174,7 @@
 
   source_adjointe(irec_local,:,2) = adj_src_s(:,3)
 
-  else if (seismotype == 4 ) then
+  else if (seismotype == 4) then
 
     filename = 'SEM/'//trim(adj_source_file) // '.PRE.adj'
     open(unit = IIN, file = trim(filename), iostat = ios)
@@ -186,7 +185,7 @@
     enddo
     close(IIN)
 
-  else if (seismotype == 6 ) then
+  else if (seismotype == 6) then
 
     filename = 'SEM/'//trim(adj_source_file) // '.POT.adj'
     open(unit = IIN, file = trim(filename), iostat = ios)
@@ -202,7 +201,7 @@
   source_adjointe(irec_local,:,1) = adj_src_s(:,1)
 
   if (AXISYM) then
-    if(is_on_the_axis(ispec_selected_rec(irec_local))) then ! TODO verify irec_local...
+    if (is_on_the_axis(ispec_selected_rec(irec_local))) then ! TODO verify irec_local...
       call lagrange_any(xi_rec,NGLJ,xiglj,hxir,hpxir)
     else
       call lagrange_any(xi_rec,NGLLX,xigll,hxir,hpxir)

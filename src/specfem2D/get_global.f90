@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -62,9 +61,9 @@
   ! reduce cache misses in all the elements
   ! loop over spectral elements
     do ispec = 1,nspec
-      do j=1,NGLLZ
-        do i=1,NGLLX
-          if(integer_mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          if (integer_mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
             ! create a new point
             inumber = inumber + 1
             ibool(i,j,ispec) = inumber
@@ -121,9 +120,9 @@ endif
   inumber = 0
 
   do ispec = 1,nspec
-    do j=1,NGLLZ
-      do i=1,NGLLX
-        if(integer_mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        if (integer_mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
           ! create a new point
           inumber = inumber + 1
           ibool(i,j,ispec) = inumber

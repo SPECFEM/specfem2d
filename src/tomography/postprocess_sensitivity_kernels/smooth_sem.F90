@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -166,12 +165,12 @@ myrank = 0
   call parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
   allocate(norm(nker),max_new(nker),max_old(nker),min_new(nker),min_old(nker))
 
- if(GPU_MODE) call initialize_cuda_device(myrank,ncuda_devices)
+ if (GPU_MODE) call initialize_cuda_device(myrank,ncuda_devices)
 
   call zwgljd(xigll,wxgll,NGLLX,alphaGLL,betaGLL)
   !We assume NGLLX=NGLLZ
-  do j=1,NGLLZ
-    do i=1,NGLLX
+  do j = 1,NGLLZ
+    do i = 1,NGLLX
       wgll_sq(i,j) = wxgll(i)*wxgll(j)
     enddo
   enddo
@@ -180,8 +179,8 @@ myrank = 0
   sigma_h2_inv = ( 1.0 / (2.0 * (sigma_h ** 2)) ) ! factor two for gaussian distribution with standard variance sigma
   sigma_v2_inv = ( 1.0 / (2.0 * (sigma_v ** 2)) )
 
-  if ( (1.0 / sigma_h2_inv) < 1.e-18) stop 'Error sigma_h2 zero, must non-zero'
-  if ( (1.0 / sigma_v2_inv) < 1.e-18) stop 'Error sigma_v2 zero, must non-zero'
+  if ((1.0 / sigma_h2_inv) < 1.e-18) stop 'Error sigma_h2 zero, must non-zero'
+  if ((1.0 / sigma_v2_inv) < 1.e-18) stop 'Error sigma_v2 zero, must non-zero'
 
   ! adds margin to search radius
   element_size = max(sigma_h,sigma_v) * 0.5
@@ -373,7 +372,7 @@ else
               exp_val(:,:) = exp_val(:,:) * factor(:,:)
 
               ! adds contribution of element ispec2 to smoothed kernel values
-              do iker=1, nker
+              do iker= 1, nker
               tk(iglob,iker) = tk(iglob,iker) + sum(exp_val(:,:) * dat_store(:,:,ispec2,iker))
               enddo
               ! normalization, integrated values of gaussian smoothing function

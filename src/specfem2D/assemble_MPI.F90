@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -260,7 +259,7 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_acoustic(iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
+    if (ier /= MPI_SUCCESS) then
       call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_start')
     endif
 
@@ -270,7 +269,7 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_acoustic(ninterface_acoustic+iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
+    if (ier /= MPI_SUCCESS) then
       call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector')
     endif
 
@@ -366,7 +365,7 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_elastic(iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
+    if (ier /= MPI_SUCCESS) then
       call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_el')
     endif
 
@@ -375,7 +374,7 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_elastic(ninterface_elastic+iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
+    if (ier /= MPI_SUCCESS) then
       call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector_el')
     endif
 
@@ -459,7 +458,7 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_poro(iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
+    if (ier /= MPI_SUCCESS) then
       call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_pos')
     endif
 
@@ -468,7 +467,7 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_poro(ninterface_poroelastic+iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
+    if (ier /= MPI_SUCCESS) then
       call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector_pos')
     endif
 
@@ -477,7 +476,7 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_poro(ninterface_poroelastic*2+iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
+    if (ier /= MPI_SUCCESS) then
       call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_pow')
     endif
 
@@ -486,7 +485,7 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_poro(ninterface_poroelastic*3+iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
+    if (ier /= MPI_SUCCESS) then
       call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector_pow')
     endif
 
@@ -558,7 +557,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
 
   ! sends only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! note: partition border copy into the buffer has already been done
     !          by routine transfer_boun_pot_from_device()
@@ -626,7 +625,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! wait for communications completion (recv)
     do iinterface = 1, ninterface_acoustic
@@ -694,7 +693,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
   !          already done in transfer_boun_accel routine
 
   ! send only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! send messages
     do iinterface = 1, ninterface_elastic
@@ -762,7 +761,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
   ! here we have to assemble all the contributions between partitions using MPI
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
 
     ! wait for communications completion (recv)
@@ -842,7 +841,7 @@ enddo
   ! here we have to assemble all the contributions between partitions using MPI
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
 
 

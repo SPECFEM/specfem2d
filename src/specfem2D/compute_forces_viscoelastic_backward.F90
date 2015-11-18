@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -122,7 +121,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
   real(kind=CUSTOM_REAL) :: weight_rk
 
   !!!update memory variable in viscoelastic simulation
-  if( ATTENUATION_VISCOELASTIC_SOLID ) then
+  if (ATTENUATION_VISCOELASTIC_SOLID) then
 
     ! compute Grad(b_displ_elastic) at time step n for attenuation
     call compute_gradient_attenuation(b_displ_elastic,dux_dxl_n,duz_dxl_n, &
@@ -136,14 +135,14 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
     do ispec = 1,nspec
 
       ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
-      if( acoustic(ispec)) cycle
+      if (acoustic(ispec)) cycle
 
-      if( (.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. is_PML(ispec))) ) then
-        do j=1,NGLLZ
-        do i=1,NGLLX
+      if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. is_PML(ispec)))) then
+        do j = 1,NGLLZ
+        do i = 1,NGLLX
 
           ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
-          if( inv_tau_sigma_nu1(i,j,ispec,1) < 0.) cycle
+          if (inv_tau_sigma_nu1(i,j,ispec,1) < 0.) cycle
 
           theta_n_u = dux_dxl_n(i,j,ispec) + duz_dzl_n(i,j,ispec)
           theta_nsub1_u = dux_dxl_nsub1(i,j,ispec) + duz_dzl_nsub1(i,j,ispec)
@@ -160,7 +159,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
             ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
             ! Anisotropic-Medium PML for Vector FETD With Modified Basis Functions,
             ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
-            if( stage_time_scheme == 1 ) then
+            if (stage_time_scheme == 1) then
 
               call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
 
@@ -179,7 +178,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
             endif
 
             ! update e1, e11, e13 in ADE formation with fourth-order LDDRK scheme
-            if( stage_time_scheme == 6 ) then
+            if (stage_time_scheme == 6) then
               e1_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
                                           deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
               e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + beta_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
@@ -196,17 +195,17 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
             endif
 
             ! update e1, e11, e13 in ADE formation with classical fourth-order Runge-Kutta scheme
-            if( stage_time_scheme == 4 ) then
+            if (stage_time_scheme == 4) then
               e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
 
-              if( i_stage==1 .or. i_stage==2 .or. i_stage==3 ) then
-                if( i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                if( i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                if( i_stage == 3)weight_rk = 1._CUSTOM_REAL
+              if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+                if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
+                if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
+                if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
 
-                if( i_stage==1) e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
+                if (i_stage==1) e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
                 e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
-              else if( i_stage==4 ) then
+              else if (i_stage==4) then
                 e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                       (e1_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,2) + &
                                        2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
@@ -215,14 +214,14 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
               e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2 - &
                                                                  e11(i,j,ispec,i_sls) * tauinvnu2)
 
-              if( i_stage==1 .or. i_stage==2 .or. i_stage==3 ) then
-                if( i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                if( i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                if( i_stage == 3)weight_rk = 1._CUSTOM_REAL
+              if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+                if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
+                if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
+                if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
 
-                if( i_stage==1) e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
+                if (i_stage==1) e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
                 e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
-              else if( i_stage==4 ) then
+              else if (i_stage==4) then
                 e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                        (e11_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,2) + &
                                         2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
@@ -230,14 +229,14 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
 
               e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2 - &
                                                                  e13(i,j,ispec,i_sls) * tauinvnu2)
-              if( i_stage==1 .or. i_stage==2 .or. i_stage==3 ) then
-                if( i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                if( i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                if( i_stage == 3)weight_rk = 1._CUSTOM_REAL
+              if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+                if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
+                if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
+                if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
 
-                if( i_stage==1) e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
+                if (i_stage==1) e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
                 e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
-              else if( i_stage==4 ) then
+              else if (i_stage==4) then
                 e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                        (e13_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,2) + &
                                         2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
@@ -268,7 +267,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
     sigma_thetatheta(:,:) = 0._CUSTOM_REAL
 
     !--- elastic spectral element
-    if( elastic(ispec) ) then
+    if (elastic(ispec)) then
       ! get unrelaxed elastic parameters of current spectral element
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
       mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
@@ -279,7 +278,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
       do j = 1,NGLLZ
         do i = 1,NGLLX
           !--- if external medium, get elastic parameters of current grid point
-          if( assign_external_model ) then
+          if (assign_external_model) then
             cpl = vpext(i,j,ispec)
             csl = vsext(i,j,ispec)
             rhol = rhoext(i,j,ispec)
@@ -295,8 +294,8 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
 
           ! first double loop over GLL points to compute and store gradients
           ! we can merge the two loops because NGLLX == NGLLZ
-            if( AXISYM ) then
-              if (is_on_the_axis(ispec) ) then
+            if (AXISYM) then
+              if (is_on_the_axis(ispec)) then
                 do k = 1,NGLJ
                   dux_dxi = dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
                   duz_dxi = duz_dxi + b_displ_elastic(3,ibool(k,j,ispec))*hprimeBar_xx(i,k)
@@ -338,12 +337,12 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1 ) then ! d_uz/dr=0 on the axis
+          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! d_uz/dr=0 on the axis
             duz_dxl = 0.d0
           endif
 
           ! compute stress tensor (include attenuation or anisotropy if needed)
-          if( ATTENUATION_VISCOELASTIC_SOLID ) then
+          if (ATTENUATION_VISCOELASTIC_SOLID) then
             ! attenuation is implemented following the memory variable formulation of
             ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
             ! vol. 58(1), p. 110-120 (1993). More details can be found in
@@ -365,9 +364,9 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
 ! in a linear viscoelastic medium, Geophysical Journal International,
 ! vol. 95, p. 597-611 (1988) for two memory-variable mechanisms (page 604).
 
-            if( AXISYM ) then
-              if (is_on_the_axis(ispec) ) then
-                if ( is_on_the_axis(ispec) .and. i == 1 ) then ! First GLJ point
+            if (AXISYM) then
+              if (is_on_the_axis(ispec)) then
+                if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                   sigma_xx = 0._CUSTOM_REAL
                   sigma_zz = 0._CUSTOM_REAL
                   sigma_thetatheta(i,j) = 0._CUSTOM_REAL
@@ -445,9 +444,9 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
           else
             ! no attenuation
 
-            if( AXISYM ) then
-              if (is_on_the_axis(ispec) ) then
-                if ( is_on_the_axis(ispec) .and. i == 1 ) then ! First GLJ point
+            if (AXISYM) then
+              if (is_on_the_axis(ispec)) then
+                if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                   sigma_xx = 0._CUSTOM_REAL
                   sigma_zz = 0._CUSTOM_REAL
                   sigma_thetatheta(i,j) = 0._CUSTOM_REAL
@@ -500,8 +499,8 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
           endif
 
           ! full anisotropy
-          if( anisotropic(ispec) ) then
-            if( assign_external_model ) then
+          if (anisotropic(ispec)) then
+            if (assign_external_model) then
               c11 = c11ext(i,j,ispec)
               c13 = c13ext(i,j,ispec)
               c15 = c15ext(i,j,ispec)
@@ -540,12 +539,12 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
           ! tempx2(i,j) = w.J.F_{12}^{ij}
           ! tempz2(i,j) = w.J.F_{22}^{ij}
 
-          if (AXISYM ) then
-            if (is_on_the_axis(ispec) ) then
+          if (AXISYM) then
+            if (is_on_the_axis(ispec)) then
               tempx3(i,j) = wzgll(j)*jacobian(1,j,ispec)*sigma_thetatheta(1,j)*hprimeBarwglj_xx(1,i)
 
-              if ( abs(coord(1,ibool(i,j,ispec))) > TINYVAL ) then ! Not first GLJ point
-                if ( i == 1 ) then
+              if (abs(coord(1,ibool(i,j,ispec))) > TINYVAL) then ! Not first GLJ point
+                if (i == 1) then
                   call exit_MPI("error: an axial element is rotated. The code should have been stopped before. Check that your &
                    &coordinates are >> TINYVAL. Maybe you should also have a look to &
                    &doc/problematic_case_that_we_exclude_for_axisymmetric.pdf")
@@ -596,8 +595,8 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
           ! along x direction and z direction
           ! and assemble the contributions
           ! we can merge the two loops because NGLLX == NGLLZ
-          if (AXISYM ) then
-            if (is_on_the_axis(ispec) ) then
+          if (AXISYM) then
+            if (is_on_the_axis(ispec)) then
               do k = 1,NGLJ
                 b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) &
                                          - (tempx1(k,j)*hprimeBarwglj_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
@@ -633,19 +632,19 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
   !
   !--- Clayton-Engquist condition if elastic
   !
-  if( STACEY_BOUNDARY_CONDITIONS ) then
+  if (STACEY_BOUNDARY_CONDITIONS) then
     do ispecabs = 1,nelemabs
 
       ispec = numabs(ispecabs)
-      if( .not. elastic(ispec) ) cycle
+      if (.not. elastic(ispec) ) cycle
 
       !--- left absorbing boundary
-      if( codeabs(IEDGE4,ispecabs) ) then
+      if (codeabs(IEDGE4,ispecabs)) then
         i = 1
         do j = 1,NGLLZ
           ! Clayton-Engquist condition if elastic
           iglob = ibool(i,j,ispec)
-          if( p_sv ) then !P-SV waves
+          if (p_sv) then !P-SV waves
             b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_left(1,j,ib_left(ispecabs),NSTEP-it+1)
             b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_left(3,j,ib_left(ispecabs),NSTEP-it+1)
           else !SH (membrane) waves
@@ -655,11 +654,11 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
       endif  !  end of left absorbing boundary
 
       !--- right absorbing boundary
-      if( codeabs(IEDGE2,ispecabs) ) then
+      if (codeabs(IEDGE2,ispecabs)) then
         i = NGLLX
         do j = 1,NGLLZ
           iglob = ibool(i,j,ispec)
-          if( p_sv ) then !P-SV waves
+          if (p_sv) then !P-SV waves
             b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_right(1,j,ib_right(ispecabs),NSTEP-it+1)
             b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_right(3,j,ib_right(ispecabs),NSTEP-it+1)
           else! SH (membrane) waves
@@ -669,16 +668,16 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
       endif  !  end of right absorbing boundary
 
       !--- bottom absorbing boundary
-      if( codeabs(IEDGE1,ispecabs) ) then
+      if (codeabs(IEDGE1,ispecabs)) then
         j = 1
 !! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
         ibegin = 1
         iend = NGLLX
-!! DK DK not needed           if( codeabs(IEDGE4,ispecabs)) ibegin = 2
-!! DK DK not needed           if( codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+!! DK DK not needed           if (codeabs(IEDGE4,ispecabs)) ibegin = 2
+!! DK DK not needed           if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
         do i = ibegin,iend
           iglob = ibool(i,j,ispec)
-          if( p_sv ) then !P-SV waves
+          if (p_sv) then !P-SV waves
             b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),NSTEP-it+1)
             b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_bottom(3,i,ib_bottom(ispecabs),NSTEP-it+1)
           else!SH (membrane) waves
@@ -688,16 +687,16 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
       endif  !  end of bottom absorbing boundary
 
       !--- top absorbing boundary
-      if( codeabs(IEDGE3,ispecabs) ) then
+      if (codeabs(IEDGE3,ispecabs)) then
         j = NGLLZ
 !! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
         ibegin = 1
         iend = NGLLX
-!! DK DK not needed           if( codeabs(IEDGE4,ispecabs)) ibegin = 2
-!! DK DK not needed           if( codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+!! DK DK not needed           if (codeabs(IEDGE4,ispecabs)) ibegin = 2
+!! DK DK not needed           if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
         do i = ibegin,iend
           iglob = ibool(i,j,ispec)
-          if( p_sv ) then !P-SV waves
+          if (p_sv) then !P-SV waves
             b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ib_top(ispecabs),NSTEP-it+1)
             b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_top(3,i,ib_top(ispecabs),NSTEP-it+1)
           else !SH (membrane) waves

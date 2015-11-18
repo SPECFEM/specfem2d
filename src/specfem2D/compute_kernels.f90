@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -40,9 +39,7 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !=====================================================================
-!
-!-------------------------------------------------------------------------------------------------
-!
+
 
   subroutine compute_kernels_el()
 
@@ -73,8 +70,8 @@
   double precision :: xixl,xizl,gammaxl,gammazl
 
   do ispec = 1,nspec
-    if( elastic(ispec) ) then
-      do j=1,NGLLZ; do i=1,NGLLX
+    if (elastic(ispec)) then
+      do j = 1,NGLLZ; do i = 1,NGLLX
         ! derivative along x and along z
         dux_dxi = 0._CUSTOM_REAL; duy_dxi = 0._CUSTOM_REAL; duz_dxi = 0._CUSTOM_REAL
         dux_dgamma = 0._CUSTOM_REAL; duy_dgamma = 0._CUSTOM_REAL; duz_dgamma = 0._CUSTOM_REAL
@@ -125,7 +122,7 @@
         b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
 
         iglob = ibool(i,j,ispec)
-        if( p_sv ) then !P-SV waves
+        if (p_sv) then !P-SV waves
           dsxx =  dux_dxl
           dsxz = HALF * (duz_dxl + dux_dzl)
           dszz =  duz_dzl
@@ -157,11 +154,11 @@
   enddo
 
   do ispec = 1, nspec
-    if( elastic(ispec) ) then
+    if (elastic(ispec)) then
       do j = 1, NGLLZ
         do i = 1, NGLLX
           iglob = ibool(i,j,ispec)
-          if( .not. assign_external_model ) then
+          if (.not. assign_external_model) then
             rhol_global(iglob) = density(1,kmato(ispec))
             mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
             kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) - &
@@ -223,11 +220,11 @@
   double precision :: xixl,xizl,gammaxl,gammazl
 
   do ispec = 1, nspec
-    if( acoustic(ispec) ) then
+    if (acoustic(ispec)) then
       do j = 1, NGLLZ
         do i = 1, NGLLX
           iglob = ibool(i,j,ispec)
-          if( .not. assign_external_model ) then
+          if (.not. assign_external_model) then
             kappal_ac_global(iglob) = poroelastcoef(3,1,kmato(ispec))
             rhol_ac_global(iglob) = density(1,kmato(ispec))
           else
@@ -274,7 +271,7 @@
   enddo
 
   do ispec = 1,nspec
-    if( acoustic(ispec) ) then
+    if (acoustic(ispec)) then
       do j = 1, NGLLZ
         do i = 1, NGLLX
           iglob = ibool(i,j,ispec)
@@ -333,7 +330,7 @@
   integer :: i,j,ispec,iglob
   real(kind=CUSTOM_REAL) :: rholb,dd1
 
-  do iglob =1,nglob
+  do iglob = 1,nglob
     rhot_k(iglob) = accels_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
                     accels_poroelastic(2,iglob) * b_displs_poroelastic(2,iglob)
     rhof_k(iglob) = accelw_poroelastic(1,iglob) * b_displs_poroelastic(1,iglob) + &
@@ -347,7 +344,7 @@
   enddo
 
   do ispec = 1, nspec
-    if( poroelastic(ispec) ) then
+    if (poroelastic(ispec)) then
       do j = 1, NGLLZ
         do i = 1, NGLLX
           iglob = ibool(i,j,ispec)

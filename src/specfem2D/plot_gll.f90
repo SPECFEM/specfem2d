@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -102,7 +101,7 @@
   write(20,*) coord(1,iglobnum2),coord(2,iglobnum2)
   write(20,"('')")
 
-  if(iy == 1 .or. iy == NGLLZ) then
+  if (iy == 1 .or. iy == NGLLZ) then
     write(21,*) coord(1,iglobnum),coord(2,iglobnum)
     write(21,*) coord(1,iglobnum2),coord(2,iglobnum2)
     write(21,"('')")
@@ -129,7 +128,7 @@
   write(20,*) coord(1,iglobnum2),coord(2,iglobnum2)
   write(20,"('')")
 
-  if(ix == 1 .or. ix == NGLLX) then
+  if (ix == 1 .or. ix == NGLLX) then
     write(21,*) coord(1,iglobnum),coord(2,iglobnum)
     write(21,*) coord(1,iglobnum2),coord(2,iglobnum2)
     write(21,"('')")
@@ -150,7 +149,7 @@
 
   enddo
 
-  if(ngnod == 4) then
+  if (ngnod == 4) then
 !
 !----  4-node rectangular element
 !

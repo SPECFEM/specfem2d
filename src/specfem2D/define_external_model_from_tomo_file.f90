@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -118,7 +117,7 @@ module interpolation
 
     if (length <= 0) then
       stop "Incorrect length in searchInf"
-    else if(length == 1) then
+    else if (length == 1) then
       searchInf = array(1)
     else
       if (array(1) > array(2)) stop "searchInf needs an increasing array"

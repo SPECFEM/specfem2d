@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -134,7 +133,7 @@
   real(kind=CUSTOM_REAL) :: bb,coef0,coef1,coef2
 
 ! implement attenuation
-  if(ATTENUATION_VISCOELASTIC_SOLID) then
+  if (ATTENUATION_VISCOELASTIC_SOLID) then
 
 ! compute Grad(displs_poroelastic) at time step n for attenuation
     call compute_gradient_attenuation(displs_poroelastic,dux_dxl_n,duz_dxl_n, &
@@ -149,7 +148,7 @@
   do ispec = 1,nspec
 
     if (poroelastic(ispec)) then
-       do j=1,NGLLZ; do i=1,NGLLX
+       do j = 1,NGLLZ; do i = 1,NGLLX
           theta_n_u = dux_dxl_n(i,j,ispec) + duz_dzl_n(i,j,ispec)
           theta_nsub1_u = dux_dxl_nsub1(i,j,ispec) + duz_dzl_nsub1(i,j,ispec)
 
@@ -164,9 +163,9 @@
             ! Anisotropic-Medium PML for Vector FETD With Modified Basis Functions,
             ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
             ! evolution e1 ! no need since we are just considering shear attenuation
-            if(stage_time_scheme == 1) then
+            if (stage_time_scheme == 1) then
               bb = tauinvnu2; coef0 = exp(-bb * deltat)
-              if ( abs(bb) > 1e-5_CUSTOM_REAL ) then
+              if (abs(bb) > 1e-5_CUSTOM_REAL) then
                  coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
                  coef2 = (1._CUSTOM_REAL - exp(-bb* deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL)/ bb
               else
@@ -185,7 +184,7 @@
 
             ! update e1, e11, e13 in ADE formation with LDDRK scheme
             ! evolution e1 ! no need since we are just considering shear attenuation
-            if(stage_time_scheme == 6) then
+            if (stage_time_scheme == 6) then
               e11_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) + &
                                            deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2) - &
                                            deltat * (e11(i,j,ispec,i_sls) * tauinvnu2)
@@ -199,17 +198,17 @@
 
             ! update e1, e11, e13 in ADE formation with classical Runge-Kutta scheme
             ! evolution e1 ! no need since we are just considering shear attenuation
-            if(stage_time_scheme == 4) then
+            if (stage_time_scheme == 4) then
               e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2 - &
                                                                  e11(i,j,ispec,i_sls) * tauinvnu2)
-              if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                if(i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                if(i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                if(i_stage == 3)weight_rk = 1._CUSTOM_REAL
+              if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+                if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
+                if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
+                if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
 
-                if(i_stage==1) e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
+                if (i_stage==1) e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
                 e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
-              else if(i_stage==4)then
+              else if (i_stage==4) then
                 e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                        (e11_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,2) + &
                                         2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
@@ -217,13 +216,13 @@
 
               e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2 - &
                                                                  e13(i,j,ispec,i_sls) * tauinvnu2)
-              if(i_stage==1 .or. i_stage==2 .or. i_stage==3)then
-                if(i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
-                if(i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
-                if(i_stage == 3)weight_rk = 1._CUSTOM_REAL
-                if(i_stage==1) e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
+              if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+                if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
+                if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
+                if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
+                if (i_stage==1) e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
                 e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
-              else if(i_stage==4)then
+              else if (i_stage==4) then
                 e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                        (e13_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,2) + &
                                         2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
@@ -243,7 +242,7 @@
 !--- poroelastic spectral element
 !---
 
-    if(poroelastic(ispec)) then
+    if (poroelastic(ispec)) then
 
 ! get poroelastic parameters of current spectral element
     phil = porosity(kmato(ispec))
@@ -289,7 +288,7 @@
           dwx_dgamma = ZERO
           dwz_dgamma = ZERO
 
-          if(SIMULATION_TYPE == 3) then ! kernels calculation
+          if (SIMULATION_TYPE == 3) then ! kernels calculation
           b_dux_dxi = ZERO
           b_duz_dxi = ZERO
 
@@ -316,7 +315,7 @@
             dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
             dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
 
-          if(SIMULATION_TYPE == 3) then ! kernels calculation
+          if (SIMULATION_TYPE == 3) then ! kernels calculation
             b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
             b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
             b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
@@ -347,7 +346,7 @@
           dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
           dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
-          if(SIMULATION_TYPE == 3) then ! kernels calculation
+          if (SIMULATION_TYPE == 3) then ! kernels calculation
           b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
           b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -363,7 +362,7 @@
 
 ! compute stress tensor (include attenuation or anisotropy if needed)
 
-  if(ATTENUATION_VISCOELASTIC_SOLID) then
+  if (ATTENUATION_VISCOELASTIC_SOLID) then
 ! Dissipation only controlled by frame share attenuation in poroelastic (see Morency & Tromp, GJI 2008).
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
@@ -425,7 +424,7 @@
 
     sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
-    if(SIMULATION_TYPE == 3) then ! kernels calculation
+    if (SIMULATION_TYPE == 3) then ! kernels calculation
       b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
       b_sigma_xz = mul_G*(b_duz_dxl + b_dux_dzl)
       b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
@@ -435,7 +434,7 @@
   endif
 
 ! kernels calculation
-   if(SIMULATION_TYPE == 3) then
+   if (SIMULATION_TYPE == 3) then
           iglob = ibool(i,j,ispec)
             dsxx =  dux_dxl
             dsxz = HALF * (duz_dxl + dux_dzl)
@@ -475,7 +474,7 @@
           tempx2p(i,j) = wxgll(i)*jacobianl*sigmap*gammaxl
           tempz2p(i,j) = wxgll(i)*jacobianl*sigmap*gammazl
 
-          if(SIMULATION_TYPE == 3) then ! kernels calculation
+          if (SIMULATION_TYPE == 3) then ! kernels calculation
           b_tempx1(i,j) = wzgll(j)*jacobianl*(b_sigma_xx*xixl+b_sigma_xz*xizl)
           b_tempz1(i,j) = wzgll(j)*jacobianl*(b_sigma_xz*xixl+b_sigma_zz*xizl)
 
@@ -511,7 +510,7 @@
     accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) - ( (tempz1(k,j) - phil/tortl*tempz1p(k,j)) &
            *hprimewgll_xx(k,i) + (tempz2(i,k) - phil/tortl*tempz2p(i,k))*hprimewgll_zz(k,j) )
 
-          if(SIMULATION_TYPE == 3) then ! kernels calculation
+          if (SIMULATION_TYPE == 3) then ! kernels calculation
     b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - ( (b_tempx1(k,j) - phil/tortl*b_tempx1p(k,j)) &
            *hprimewgll_xx(k,i) + (b_tempx2(i,k) - phil/tortl*b_tempx2p(i,k))*hprimewgll_zz(k,j) )
 
@@ -538,7 +537,7 @@
 
     etal_f = poroelastcoef(2,2,kmato(ispec))
 
-      if(poroelastic(ispec) .and. etal_f >0.d0) then
+      if (poroelastic(ispec) .and. etal_f >0.d0) then
 
     phil = porosity(kmato(ispec))
     tortl = tortuosity(kmato(ispec))
@@ -549,7 +548,7 @@
 ! calcul of the inverse of k
     detk = permlxx*permlzz - permlxz*permlxz
 
-    if(detk /= ZERO) then
+    if (detk /= ZERO) then
      invpermlxx = permlzz/detk
      invpermlxz = -permlxz/detk
      invpermlzz = permlxx/detk
@@ -562,7 +561,7 @@
           bl_unrelaxed_elastic(2) = etal_f*invpermlxz
           bl_unrelaxed_elastic(3) = etal_f*invpermlzz
 
-    if(ATTENUATION_PORO_FLUID_PART) then
+    if (ATTENUATION_PORO_FLUID_PART) then
 ! viscous attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
 ! anelastic and porous media, Elsevier, p. 304-305, 2007
@@ -576,7 +575,7 @@
 
           iglob = ibool(i,j,ispec)
 
-     if(ATTENUATION_PORO_FLUID_PART) then
+     if (ATTENUATION_PORO_FLUID_PART) then
 ! compute the viscous damping term with the unrelaxed viscous coef and add memory variable
       viscodampx = velocw_poroelastic(1,iglob)*bl_relaxed_viscoelastic(1) + velocw_poroelastic(2,iglob)*bl_relaxed_viscoelastic(2)&
                   - rx_viscous(i,j,ispec)
@@ -594,7 +593,7 @@
               viscodampz
 
 ! if SIMULATION_TYPE == 1 .and. SAVE_FORWARD then b_viscodamp is saved in compute_forces_poro_fluid.f90
-          if(SIMULATION_TYPE == 3) then ! kernels calculation
+          if (SIMULATION_TYPE == 3) then ! kernels calculation
         b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + phil/tortl*b_viscodampx(iglob)
         b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + phil/tortl*b_viscodampz(iglob)
           endif
@@ -610,7 +609,7 @@
 !
 !--- absorbing boundaries
 !
-  if(anyabs) then
+  if (anyabs) then
 
     do ispecabs = 1,nelemabs
 
@@ -648,7 +647,7 @@
       csl = sqrt(cssquare)
 
 !--- left absorbing boundary
-      if(codeabs(IEDGE4,ispecabs)) then
+      if (codeabs(IEDGE4,ispecabs)) then
 
         i = 1
 
@@ -674,7 +673,7 @@
           rho_vs = (rhol_bar - phil/tortl*rhol_f)*csl
 
 
-          if(poroelastic(ispec)) then
+          if (poroelastic(ispec)) then
             vx = velocs_poroelastic(1,iglob)
             vz = velocs_poroelastic(2,iglob)
             vxf = velocw_poroelastic(1,iglob)
@@ -689,10 +688,10 @@
             accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) - tx*weight
             accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) - tz*weight
 
-            if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_s_left(1,j,ib_left(ispecabs),it) = tx*weight
               b_absorb_poro_s_left(2,j,ib_left(ispecabs),it) = tz*weight
-            else if(SIMULATION_TYPE == 3) then
+            else if (SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
                                               b_absorb_poro_s_left(1,j,ib_left(ispecabs),NSTEP-it+1)
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
@@ -706,7 +705,7 @@
       endif  !  end of left absorbing boundary
 
 !--- right absorbing boundary
-      if(codeabs(IEDGE2,ispecabs)) then
+      if (codeabs(IEDGE2,ispecabs)) then
 
         i = NGLLX
 
@@ -730,7 +729,7 @@
           rho_vpII = (rhol_bar - phil/tortl*rhol_f)*cpIIl
           rho_vs = (rhol_bar - phil/tortl*rhol_f)*csl
 
-          if(poroelastic(ispec)) then
+          if (poroelastic(ispec)) then
             vx = velocs_poroelastic(1,iglob)
             vz = velocs_poroelastic(2,iglob)
             vxf = velocw_poroelastic(1,iglob)
@@ -745,10 +744,10 @@
             accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) - tx*weight
             accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) - tz*weight
 
-            if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_s_right(1,j,ib_right(ispecabs),it) = tx*weight
               b_absorb_poro_s_right(2,j,ib_right(ispecabs),it) = tz*weight
-            else if(SIMULATION_TYPE == 3) then
+            else if (SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
                                               b_absorb_poro_s_right(1,j,ib_right(ispecabs),NSTEP-it+1)
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
@@ -762,7 +761,7 @@
       endif  !  end of right absorbing boundary
 
 !--- bottom absorbing boundary
-      if(codeabs(IEDGE1,ispecabs)) then
+      if (codeabs(IEDGE1,ispecabs)) then
 
         j = 1
 
@@ -770,8 +769,8 @@
         iend = iend_edge1_poro(ispecabs)
 
 ! exclude corners to make sure there is no contradiction on the normal
-        if(codeabs_corner(1,ispecabs)) ibegin = 2
-        if(codeabs_corner(2,ispecabs)) iend = NGLLX-1
+        if (codeabs_corner(1,ispecabs)) ibegin = 2
+        if (codeabs_corner(2,ispecabs)) iend = NGLLX-1
 
         do i = ibegin,iend
 
@@ -790,7 +789,7 @@
           rho_vpII = (rhol_bar - phil/tortl*rhol_f)*cpIIl
           rho_vs = (rhol_bar - phil/tortl*rhol_f)*csl
 
-          if(poroelastic(ispec)) then
+          if (poroelastic(ispec)) then
             vx = velocs_poroelastic(1,iglob)
             vz = velocs_poroelastic(2,iglob)
             vxf = velocw_poroelastic(1,iglob)
@@ -805,10 +804,10 @@
             accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) - tx*weight
             accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) - tz*weight
 
-            if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_s_bottom(1,i,ib_bottom(ispecabs),it) = tx*weight
               b_absorb_poro_s_bottom(2,i,ib_bottom(ispecabs),it) = tz*weight
-            else if(SIMULATION_TYPE == 3) then
+            else if (SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
                                               b_absorb_poro_s_bottom(1,i,ib_bottom(ispecabs),NSTEP-it+1)
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
@@ -822,7 +821,7 @@
       endif  !  end of bottom absorbing boundary
 
 !--- top absorbing boundary
-      if(codeabs(IEDGE3,ispecabs)) then
+      if (codeabs(IEDGE3,ispecabs)) then
 
         j = NGLLZ
 
@@ -830,8 +829,8 @@
         iend = iend_edge3_poro(ispecabs)
 
 ! exclude corners to make sure there is no contradiction on the normal
-        if(codeabs_corner(3,ispecabs)) ibegin = 2
-        if(codeabs_corner(4,ispecabs)) iend = NGLLX-1
+        if (codeabs_corner(3,ispecabs)) ibegin = 2
+        if (codeabs_corner(4,ispecabs)) iend = NGLLX-1
 
         do i = ibegin,iend
 
@@ -850,7 +849,7 @@
           rho_vpII = (rhol_bar - phil/tortl*rhol_f)*cpIIl
           rho_vs = (rhol_bar - phil/tortl*rhol_f)*csl
 
-          if(poroelastic(ispec)) then
+          if (poroelastic(ispec)) then
             vx = velocs_poroelastic(1,iglob)
             vz = velocs_poroelastic(2,iglob)
             vxf = velocw_poroelastic(1,iglob)
@@ -865,10 +864,10 @@
             accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) - tx*weight
             accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) - tz*weight
 
-            if(SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_s_top(1,i,ib_top(ispecabs),it) = tx*weight
               b_absorb_poro_s_top(2,i,ib_top(ispecabs),it) = tz*weight
-            else if(SIMULATION_TYPE == 3) then
+            else if (SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
                                               b_absorb_poro_s_top(1,i,ib_top(ispecabs),NSTEP-it+1)
               b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
@@ -889,8 +888,8 @@
 
 
 ! --- add the source
-  if(.not. initialfield) then
-      do i_source=1,NSOURCES
+  if (.not. initialfield) then
+      do i_source= 1,NSOURCES
 
 ! if this processor core carries the source and the source element is poroelastic
     if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
@@ -899,20 +898,20 @@
     tortl = tortuosity(kmato(ispec_selected_source(i_source)))
 
 ! moment tensor
-  if(source_type(i_source) == 2) then
+  if (source_type(i_source) == 2) then
 
 ! add source array
-       if(SIMULATION_TYPE == 1) then  ! forward wavefield
-      do j=1,NGLLZ
-        do i=1,NGLLX
+       if (SIMULATION_TYPE == 1) then  ! forward wavefield
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
           iglob = ibool(i,j,ispec_selected_source(i_source))
           accels_poroelastic(:,iglob) = accels_poroelastic(:,iglob) + &
           (1._CUSTOM_REAL - phil/tortl)*sourcearray(i_source,:,i,j)*source_time_function(i_source,it,i_stage)
         enddo
       enddo
        else                   ! backward wavefield
-      do j=1,NGLLZ
-        do i=1,NGLLX
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
           iglob = ibool(i,j,ispec_selected_source(i_source))
           b_accels_poroelastic(:,iglob) = b_accels_poroelastic(:,iglob) + &
           (1._CUSTOM_REAL - phil/tortl)*sourcearray(i_source,:,i,j) * &
@@ -921,22 +920,22 @@
       enddo
        endif  !endif SIMULATION_TYPE == 1
 
-  endif !if(source_type(i_source) == 2)
+  endif !if (source_type(i_source) == 2)
 
      endif ! if this processor core carries the source and the source element is poroelastic
       enddo
 
-    if(SIMULATION_TYPE == 3) then   ! adjoint wavefield
+    if (SIMULATION_TYPE == 3) then   ! adjoint wavefield
       irec_local = 0
       do irec = 1,nrec
 !   add the source (only if this proc carries the source)
-      if(myrank == which_proc_receiver(irec)) then
+      if (myrank == which_proc_receiver(irec)) then
 
       irec_local = irec_local + 1
-      if(poroelastic(ispec_selected_rec(irec))) then
+      if (poroelastic(ispec_selected_rec(irec))) then
 ! add source array
-      do j=1,NGLLZ
-        do i=1,NGLLX
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
           iglob = ibool(i,j,ispec_selected_rec(irec))
           accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
           accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
