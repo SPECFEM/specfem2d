@@ -526,7 +526,6 @@
 #endif
 
 
-#ifdef USE_MPI
  subroutine assemble_MPI_scalar_send_cuda(NPROC, &
                                            buffer_send_scalar_ext_mesh,buffer_recv_scalar_ext_mesh, &
                                            num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
@@ -566,9 +565,9 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
     ! send messages
     do iinterface = 1, ninterface_acoustic
+      num_interface=inum_interfaces_acoustic(iinterface)
 
-     num_interface=inum_interfaces_acoustic(iinterface)
-
+#ifdef USE_MPI
       call isend_cr(buffer_send_scalar_ext_mesh(1,num_interface), &
                     nibool_interfaces_ext_mesh(num_interface), &
                     my_neighbours_ext_mesh(num_interface), &
@@ -581,12 +580,17 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
                     my_neighbours_ext_mesh(num_interface), &
                     itag, &
                     tab_requests_send_recv_ext_mesh(num_interface+num_interfaces_ext_mesh) )
+#else
+      ! dummy statements just to avoid a compiler warning about an unused variable
+      tab_requests_send_recv_ext_mesh(num_interface+num_interfaces_ext_mesh) = my_neighbours_ext_mesh(num_interface)
+      tab_requests_send_recv_ext_mesh(num_interface+num_interfaces_ext_mesh) = nibool_interfaces_ext_mesh(num_interface)
+      buffer_recv_scalar_ext_mesh(:,num_interface) = buffer_send_scalar_ext_mesh(:,num_interface)
+#endif
     enddo
 
   endif
 
   end subroutine assemble_MPI_scalar_send_cuda
-#endif
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -659,7 +663,6 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 !
 
 
-#ifdef USE_MPI
   subroutine assemble_MPI_vector_send_cuda(NPROC, &
                                           buffer_send_vector_ext_mesh,buffer_recv_vector_ext_mesh, &
                                           num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
@@ -692,9 +695,12 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
   ! send only if more than one partition
   if(NPROC > 1) then
+
     ! send messages
     do iinterface = 1, ninterface_elastic
        num_interface=inum_interfaces_elastic(iinterface)
+
+#ifdef USE_MPI
       call isend_cr(buffer_send_vector_ext_mesh(1,1,num_interface), &
                      NDIM*nibool_interfaces_ext_mesh(num_interface), &
                      my_neighbours_ext_mesh(num_interface), &
@@ -705,12 +711,17 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
                      my_neighbours_ext_mesh(num_interface), &
                      itag, &
                      tab_requests_send_recv_vector(num_interface + num_interfaces_ext_mesh ) )
+#else
+      ! dummy statement just to avoid a compiler warning about an unused variable
+      tab_requests_send_recv_vector(num_interface+num_interfaces_ext_mesh) = my_neighbours_ext_mesh(num_interface)
+      tab_requests_send_recv_vector(num_interface+num_interfaces_ext_mesh) = nibool_interfaces_ext_mesh(num_interface)
+      buffer_recv_vector_ext_mesh(:,:,num_interface) = buffer_send_vector_ext_mesh(:,:,num_interface)
+#endif
     enddo
 
   endif
 
   end subroutine assemble_MPI_vector_send_cuda
-#endif
 
 
 !

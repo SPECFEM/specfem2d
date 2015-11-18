@@ -129,10 +129,8 @@ subroutine iterate_time_undoatt()
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#ifdef USE_MPI
   ! synchronize all processes to make sure everybody is ready to start time loop
   call sync_all()
-  if( ier /= 0 ) stop 'error synchronize MPI processes'
 
   if( myrank == 0 ) then
     write(IOUT,*)
@@ -140,7 +138,6 @@ subroutine iterate_time_undoatt()
     write(IOUT,*)
     call flush_IOUT()
   endif
-#endif
 
   ! initialize variables for writing seismograms
   seismo_offset = it_begin-1

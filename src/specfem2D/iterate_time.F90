@@ -87,6 +87,16 @@ subroutine iterate_time()
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
+  ! synchronize all processes to make sure everybody is ready to start time loop
+  call sync_all()
+
+  if( myrank == 0 ) then
+    write(IOUT,*)
+    write(IOUT,*) 'Starting time iteration loop ...'
+    write(IOUT,*)
+    call flush_IOUT()
+  endif
+
   do it = 1,NSTEP
     ! compute current time
     timeval = (it-1)*deltat

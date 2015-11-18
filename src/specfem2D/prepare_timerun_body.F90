@@ -56,9 +56,11 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
   ! initializes GPU and outputs info to files for all processes
   call initialize_cuda_device(myrank,ncuda_devices)
 
+  ! synchronizes all processes
+  call sync_all()
+
   ! collects min/max of local devices found for statistics
 #ifdef USE_MPI
-  call sync_all()
   call min_all_i(ncuda_devices,ncuda_devices_min)
   call max_all_i(ncuda_devices,ncuda_devices_max)
 #else
@@ -2280,6 +2282,8 @@ endif ! Internal/External model
 
   endif
 
+  ! synchronizes all processes
+  call sync_all()
 
   if (myrank == 0) then
     write(IOUT,*) ""
@@ -2287,7 +2291,6 @@ endif ! Internal/External model
     write(IOUT,*) ""
     call flush_IOUT()
   endif
-
 
 end subroutine prepare_timerun
 

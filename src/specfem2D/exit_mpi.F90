@@ -125,9 +125,13 @@ end subroutine exit_MPI
 
   end subroutine isend_cr
 
+#endif
+
 !
 !----
 !
+
+#ifdef USE_MPI
 
   subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
 
@@ -148,9 +152,13 @@ end subroutine exit_MPI
 
   end subroutine irecv_cr
 
+#endif
+
 !
 !----
 !
+
+#ifdef USE_MPI
 
   subroutine wait_req(req)
 
@@ -169,26 +177,37 @@ end subroutine exit_MPI
 
   end subroutine wait_req
 
+#endif
+
 !
 !----
 !
 
   subroutine sync_all()
 
+#ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
+#endif
 
   implicit none
 
   integer ier
 
+#ifdef USE_MPI
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
+#else
+  ! dummy statement to avoid compiler warning
+  ier = 0
+#endif
 
   end subroutine sync_all
 
 !
 !----
 !
+
+#ifdef USE_MPI
 
   subroutine min_all_i(sendbuf, recvbuf)
 
@@ -208,9 +227,13 @@ end subroutine exit_MPI
 
   end subroutine min_all_i
 
+#endif
+
 !
 !----
 !
+
+#ifdef USE_MPI
 
   subroutine max_all_i(sendbuf, recvbuf)
 
