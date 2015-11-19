@@ -40,15 +40,10 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
-#ifndef CUDA_HEADER_H
-#define CUDA_HEADER_H
-
-
-
-
+#ifndef PREPARE_CONSTANTS_CUDA_H
+#define PREPARE_CONSTANTS_CUDA_H
 
 typedef float realw;  // type of "working" variables
 
@@ -64,11 +59,6 @@ typedef float realw;  // type of "working" variables
 #ifdef USE_OLDER_CUDA4_GPU
 #pragma message ("\nCompiling with: USE_OLDER_CUDA4_GPU enabled\n")
 #endif
-
-
-
-
-
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -212,4 +202,4 @@ void setConst_hprimewgll_zz(realw* array,Mesh* mp)
 
 
 
-#endif //CUDA_HEADER_H
+#endif

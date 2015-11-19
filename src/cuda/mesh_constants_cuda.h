@@ -40,7 +40,6 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 /* trivia
@@ -57,8 +56,8 @@
 
 */
 
-#ifndef GPU_MESH_
-#define GPU_MESH_
+#ifndef MESH_CONSTANTS_CUDA_H
+#define MESH_CONSTANTS_CUDA_H
 
 #include <sys/types.h>
 #include <unistd.h>

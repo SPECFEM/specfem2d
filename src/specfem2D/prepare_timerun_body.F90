@@ -59,18 +59,6 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 
 
 
-!***********************************************************************
-!
-!             i n i t i a l i z a t i o n    p h a s e
-!
-!***********************************************************************
-
-  ! force Flush-To-Zero if available to avoid very slow Gradual Underflow trapping
-  call force_ftz()
-
-  call initialize_simulation()
-  if (nproc < 1) stop 'should have nproc >= 1'
-
   call prepare_timerun_read()
 
 
@@ -99,7 +87,7 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
   call initialize_cuda_device(myrank,ncuda_devices)
 
   ! synchronizes all processes
-  call sync_all()
+  call synchronize_all()
 
   ! collects min/max of local devices found for statistics
 #ifdef USE_MPI
@@ -2325,7 +2313,7 @@ endif ! Internal/External model
   endif
 
   ! synchronizes all processes
-  call sync_all()
+  call synchronize_all()
 
   if (myrank == 0) then
     write(IOUT,*) ""

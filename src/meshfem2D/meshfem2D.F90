@@ -417,6 +417,15 @@ program meshfem2D
   integer :: i_source
   double precision :: tang1,tangN
 
+  integer :: myrank
+
+  ! MPI initialization
+  call init_mpi(nproc,myrank)
+
+  ! mesher works only for single process
+  ! slave processes can return
+  if (myrank == 0) then
+
   ! ***
   ! *** read the parameter file
   ! ***
@@ -1093,6 +1102,15 @@ program meshfem2D
 
   if (associated(nz_layer)) deallocate(nz_layer)
   if (associated(elmnts)) deallocate(elmnts)
+
+  ! mesher works only for single process
+  endif ! myrank == 0
+
+  ! slave processes wait
+  call synchronize_all()
+
+  ! mpi finish
+  call finalize_mpi()
 
 end program meshfem2D
 

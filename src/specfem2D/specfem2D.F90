@@ -360,17 +360,34 @@
 
   program specfem2D
 
-  use specfem_par, only: undo_attenuation
+  use specfem_par, only: NPROC,myrank,undo_attenuation
 
+  implicit none
+
+  ! MPI initialization
+  call init_mpi(NPROC,myrank)
+
+  ! force Flush-To-Zero if available to avoid very slow Gradual Underflow trapping
+  call force_ftz()
+
+  ! reads in parameters
+  call initialize_simulation()
+
+  ! sets up and precomputes simulation arrays
   call prepare_timerun()
 
+  ! steps through time iterations
   if (undo_attenuation) then
     call iterate_time_undoatt()
   else
     call iterate_time()
   endif
 
+  ! saves last time frame and finishes kernel calculations
   call finalize_simulation()
+
+  ! MPI finish
+  call finalize_mpi()
 
   end program specfem2D
 

@@ -78,6 +78,8 @@ meshfem2D_MODULES = \
 
 meshfem2D_SHARED_OBJECTS = \
 	$O/read_value_parameters.shared.o \
+	$O/exit_mpi.shared.o \
+	$O/parallel.shared.o \
 	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 

@@ -69,9 +69,6 @@
 
 program combine_sem
 
-#ifdef USE_MPI
-  use mpi
-#endif
   use postprocess_par, only: MAX_STRING_LEN, MAX_KERNEL_PATHS, MAX_KERNEL_NAMES, &
     CUSTOM_REAL, NGLLX, NGLLZ, IIN, IOUT
 
@@ -86,16 +83,8 @@ program combine_sem
   integer :: i,ier,iker, myrank, nproc
   integer :: filesize
 
-#ifdef USE_MPI
-  call MPI_INIT(ier)
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-#else
-  nproc = 1
-  myrank = 0
-#endif
-  if (ier /= 0 ) stop 'error MPI initialization'
-
+  ! MPI initialization
+  call init_mpi(NPROC,myrank)
 
   if (myrank == 0) then
   print *, 'Running XCOMBINE_SEM'
@@ -150,9 +139,8 @@ program combine_sem
       call combine_sem_array(kernel_names(iker),kernel_paths,output_dir,npath,nspec,myrank)
   enddo
 
-#ifdef USE_MPI
- call MPI_FINALIZE(ier)
-#endif
+  ! MPI finish
+  call finalize_mpi()
 
 end program combine_sem
 

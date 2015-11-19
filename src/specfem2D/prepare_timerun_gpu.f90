@@ -218,7 +218,7 @@
 
 
   ! synchronizes processes
-  call sync_all()
+  call synchronize_all()
 
 
   ! puts acoustic initial fields onto GPU
@@ -242,7 +242,7 @@
   endif
 
   ! synchronizes processes
-  call sync_all()
+  call synchronize_all()
 
   ! outputs GPU usage to files for all processes
   call output_free_device_memory(myrank)

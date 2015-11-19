@@ -74,36 +74,6 @@ void FC_FUNC_(initialize_cuda_device,
   // Gets rank number of MPI process
   int myrank = *myrank_f;
 
-  /*
-   // cuda initialization (needs -lcuda library)
-   // note:   cuInit initializes the driver API.
-   //             it is needed for any following CUDA driver API function call (format cuFUNCTION(..) )
-   //             however, for the CUDA runtime API functions (format cudaFUNCTION(..) )
-   //             the initialization is implicit, thus cuInit() here would not be needed...
-   CUresult status = cuInit(0);
-   if (CUDA_SUCCESS != status ) exit_on_error("CUDA driver API device initialization failed\n");
-
-   // returns a handle to the first cuda compute device
-   CUdevice dev;
-   status = cuDeviceGet(&dev, 0);
-   if (CUDA_SUCCESS != status ) exit_on_error("CUDA device not found\n");
-
-   // gets device properties
-   int major,minor;
-   status = cuDeviceComputeCapability(&major,&minor,dev);
-   if (CUDA_SUCCESS != status ) exit_on_error("CUDA device information not found\n");
-
-   // make sure that the device has compute capability >= 1.3
-   if (major < 1){
-   fprintf(stderr,"Compute capability major number should be at least 1, got: %d \nexiting...\n",major);
-   exit_on_error("CUDA Compute capability major number should be at least 1\n");
-   }
-   if (major == 1 && minor < 3){
-   fprintf(stderr,"Compute capability should be at least 1.3, got: %d.%d \nexiting...\n",major,minor);
-   exit_on_error("CUDA Compute capability major number should be at least 1.3\n");
-   }
-   */
-
   // note: from here on we use the runtime API  ...
 
   // Gets number of GPU devices
@@ -305,6 +275,7 @@ void FC_FUNC_(initialize_cuda_device,
 
 /***********************************************************************************************************************************/
 
+// routine not used yet... keeping it here for future possibilities
 
 extern "C"
 void FC_FUNC_(initialize_cuda_aware_mpi,
@@ -317,7 +288,14 @@ void FC_FUNC_(initialize_cuda_aware_mpi,
 
   int myrank;
 
-  if ((localRankStr = getenv(ENV_LOCAL_RANK)) != NULL) myrank = atoi(localRankStr);
+  // OpenMPI environment
+  if ((localRankStr = getenv(ENV_LOCAL_RANK)) != NULL) {
+    // catching OpenMPI environment rank
+    myrank = atoi(localRankStr);
+  } else {
+    // no OpenMPI environment rank found, initializing myrank to zero
+    myrank = 0;
+  }
 
   device_count = 0;
   cudaGetDeviceCount(&device_count);

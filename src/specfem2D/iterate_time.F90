@@ -87,7 +87,7 @@ subroutine iterate_time()
 ! *********************************************************
 
   ! synchronize all processes to make sure everybody is ready to start time loop
-  call sync_all()
+  call synchronize_all()
 
   if (myrank == 0) then
     write(IOUT,*)

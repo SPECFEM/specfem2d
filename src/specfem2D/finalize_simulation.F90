@@ -307,12 +307,4 @@ if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
 !
   if (IOUT /= ISTANDARD_OUTPUT) close(IOUT)
 
-!
-!----  end MPI
-!
-#ifdef USE_MPI
-  call MPI_FINALIZE(ier)
-#endif
-
-
 end subroutine finalize_simulation

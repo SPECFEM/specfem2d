@@ -102,7 +102,6 @@ specfem2D_OBJECTS = \
 	$O/define_external_model.spec.o \
 	$O/define_external_model_from_tomo_file.spec.o \
 	$O/enforce_acoustic_free_surface.spec.o \
-	$O/exit_mpi.spec.o \
 	$O/finalize_simulation.spec.o \
 	$O/force_ftz.cc.o \
 	$O/get_MPI.spec.o \
@@ -164,6 +163,8 @@ specfem2D_MODULES = \
 
 specfem2D_SHARED_OBJECTS = \
 	$O/define_shape_functions.shared.o \
+	$O/exit_mpi.shared.o \
+	$O/parallel.shared.o \
 	$(EMPTY_MACRO)
 
 JPEGLIB_OBJECTS = \
