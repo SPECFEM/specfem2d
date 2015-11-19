@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -48,7 +47,7 @@
 
   ! local parameters
   integer :: iteration_on_subset,iteration_on_subset_tmp
-
+  integer :: ier
 
   ! current subset iteration
   iteration_on_subset_tmp = iteration_on_subset
@@ -58,20 +57,20 @@
   write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
   open(unit=IOUT_UNDO_ATT  ,file='OUTPUT_FILES/'//outputname, &
        status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_MPI('error opening file proc***_save_frame_at** for writing')
+  if (ier /= 0 ) call exit_MPI('error opening file proc***_save_frame_at** for writing')
 
-  if( any_acoustic ) then
+  if (any_acoustic) then
     write( IOUT_UNDO_ATT ) potential_dot_dot_acoustic
     write( IOUT_UNDO_ATT ) potential_dot_acoustic
     write( IOUT_UNDO_ATT ) potential_acoustic
   endif
 
-  if( any_elastic ) then
+  if (any_elastic) then
     write(IOUT_UNDO_ATT ) accel_elastic
     write(IOUT_UNDO_ATT ) veloc_elastic
     write(IOUT_UNDO_ATT ) displ_elastic
 
-    if( ATTENUATION_VISCOELASTIC_SOLID ) then
+    if (ATTENUATION_VISCOELASTIC_SOLID) then
       write(IOUT_UNDO_ATT ) e1
       write(IOUT_UNDO_ATT ) e11
       write(IOUT_UNDO_ATT ) e13
@@ -96,6 +95,7 @@
 
   ! local parameters
   integer :: iteration_on_subset,iteration_on_subset_tmp
+  integer :: ier
 
   ! current subset iteration
   iteration_on_subset_tmp = NSTEP/NT_DUMP_ATTENUATION - iteration_on_subset + 1
@@ -106,20 +106,20 @@
   ! opens corresponding snapshot file for reading
   open(unit=IIN_UNDO_ATT,file='OUTPUT_FILES/'//outputname, &
        status='old',action='read',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_MPI('error opening file proc***_save_frame_at** for reading')
+  if (ier /= 0 ) call exit_MPI('error opening file proc***_save_frame_at** for reading')
 
-  if( any_acoustic ) then
+  if (any_acoustic) then
     read( IIN_UNDO_ATT ) b_potential_dot_dot_acoustic
     read( IIN_UNDO_ATT ) b_potential_dot_acoustic
     read( IIN_UNDO_ATT ) b_potential_acoustic
   endif
 
-  if( any_elastic ) then
+  if (any_elastic) then
     read(IIN_UNDO_ATT ) b_accel_elastic
     read(IIN_UNDO_ATT ) b_veloc_elastic
     read(IIN_UNDO_ATT ) b_displ_elastic
 
-    if( ATTENUATION_VISCOELASTIC_SOLID ) then
+    if (ATTENUATION_VISCOELASTIC_SOLID) then
       read(IIN_UNDO_ATT ) b_e1
       read(IIN_UNDO_ATT ) b_e11
       read(IIN_UNDO_ATT ) b_e13

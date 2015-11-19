@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -58,12 +57,12 @@
   print *,'Saving the grid in Gnuplot format...'
 
   open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown',iostat=ios)
-  if( ios /= 0 ) stop 'error saving gnuplot file'
+  if (ios /= 0 ) stop 'error saving gnuplot file'
 
   ! draw horizontal lines of the grid
   print *,'drawing horizontal lines of the grid'
   istepx = 1
-  if(ngnod == 4) then
+  if (ngnod == 4) then
     istepz = 1
   else
     istepz = 2
@@ -78,7 +77,7 @@
 
   ! draw vertical lines of the grid
   print *,'drawing vertical lines of the grid'
-  if(ngnod == 4) then
+  if (ngnod == 4) then
     istepx = 1
   else
     istepx = 2
@@ -98,7 +97,7 @@
 
   ! create a Gnuplot script to display the grid
   open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown',iostat=ios)
-  if( ios /= 0 ) stop 'error saving plotgnu file'
+  if (ios /= 0 ) stop 'error saving plotgnu file'
 
   write(20,*) '#set term wxt'
   write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'

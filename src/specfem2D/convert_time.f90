@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -85,7 +84,7 @@
 ! loop added by Dimitri Komatitsch to fill array "year()" automatically
   year(:) = 0
   do iyr = 1981,MAX_YEAR
-    if(is_leap_year(iyr-1)) then
+    if (is_leap_year(iyr-1)) then
       year(iyr) = year(iyr-1) + 366*24*60 ! number of minutes in a year if leap year
     else
       year(iyr) = year(iyr-1) + 365*24*60 ! number of minutes in a year if not leap year
@@ -166,7 +165,7 @@
 ! loop added by Dimitri Komatitsch to fill array "year()" automatically
   year(:) = 0
   do iyr = 1981,MAX_YEAR
-    if(is_leap_year(iyr-1)) then
+    if (is_leap_year(iyr-1)) then
       year(iyr) = year(iyr-1) + 366*24*60 ! number of minutes in a year if leap year
     else
       year(iyr) = year(iyr-1) + 365*24*60 ! number of minutes in a year if not leap year

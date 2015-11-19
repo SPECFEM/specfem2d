@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -60,12 +59,12 @@
   double precision :: hlagrange
 
   ! --- add the source
-  do i_source=1,NSOURCES
+  do i_source= 1,NSOURCES
     ! if this processor core carries the source and the source element is elastic
-    if( is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source)) ) then
+    if (is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source))) then
       ! collocated force
-      if( source_type(i_source) == 1 ) then
-        if( p_sv ) then ! P-SV calculation
+      if (source_type(i_source) == 1) then
+        if (p_sv) then ! P-SV calculation
           do j = 1,NGLLZ
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec_selected_source(i_source))
@@ -88,11 +87,11 @@
       endif
 
       ! moment tensor
-      if( source_type(i_source) == 2 ) then
-        if( .not. p_sv )  call exit_MPI('cannot have moment tensor source in SH (membrane) waves calculation')
+      if (source_type(i_source) == 2) then
+        if (.not. p_sv )  call exit_MPI('cannot have moment tensor source in SH (membrane) waves calculation')
         ! add source array
-        do j=1,NGLLZ;
-          do i=1,NGLLX
+        do j = 1,NGLLZ;
+          do i = 1,NGLLX
             iglob = ibool(i,j,ispec_selected_source(i_source))
             accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
                                      sourcearray(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
@@ -100,9 +99,9 @@
                                      sourcearray(i_source,2,i,j) * source_time_function(i_source,it,i_stage)
           enddo
         enddo
-      endif !if( source_type(i_source) == 2)
+      endif !if (source_type(i_source) == 2)
     endif ! if this processor core carries the source and the source element is elastic
-  enddo ! do i_source=1,NSOURCES
+  enddo ! do i_source= 1,NSOURCES
 
   end subroutine compute_add_sources_viscoelastic
 !
@@ -122,14 +121,14 @@
   irec_local = 0
   do irec = 1,nrec
     !   add the source (only if this proc carries the source)
-    if( myrank == which_proc_receiver(irec) ) then
+    if (myrank == which_proc_receiver(irec)) then
       irec_local = irec_local + 1
-      if( elastic(ispec_selected_rec(irec)) ) then
+      if (elastic(ispec_selected_rec(irec))) then
         ! add source array
-        do j=1,NGLLZ
-          do i=1,NGLLX
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
             iglob = ibool(i,j,ispec_selected_rec(irec))
-            if( p_sv ) then !P-SH waves
+            if (p_sv) then !P-SH waves
               accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
               accel_elastic(3,iglob) = accel_elastic(3,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
             else !SH (membrane) wavescompute_forces_v

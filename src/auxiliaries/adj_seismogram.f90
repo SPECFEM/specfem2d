@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -82,7 +81,7 @@ program adj_seismogram
   ! chose the component for the adjoint source (adj_comp = 1:X, 2:Y, 3:Z)
   adj_comp = 2
 
-  do irec =1,nrec
+  do irec = 1,nrec
 
      do icomp = 1, NDIMr
 
@@ -95,7 +94,7 @@ program adj_seismogram
 
      enddo
 
-     if(NDIMr==2)then
+     if (NDIMr==2) then
         seism(:,3) = seism(:,2)
         seism(:,2) = 0.d0
      else
@@ -111,7 +110,7 @@ program adj_seismogram
      iend = min(floor(tend(irec)/deltat),NSTEP)
      print *,'istart =',istart, 'iend =', iend
      print *,'tstart =',istart*deltat, 'tend =', iend*deltat
-     if(istart >= iend) stop 'check istart,iend'
+     if (istart >= iend) stop 'check istart,iend'
      nlenval = iend - istart +1
 
      do icomp = 1, NDIM
@@ -146,7 +145,7 @@ program adj_seismogram
         ! cross-correlation traveltime adjoint source
         Nnorm = deltat * sum(time_window(:) * seism_win(:) * seism_accel(:))
         !Nnorm = deltat * sum(time_window(:) * seism_veloc(:) * seism_veloc(:))
-        if(abs(Nnorm) > EPS) then
+        if (abs(Nnorm) > EPS) then
            !ft_bar(:) = -seism_veloc(:) * time_window(:) / Nnorm
            ft_bar(:) = seism_veloc(:) * time_window(:) / Nnorm
            print *,'Norm =', Nnorm
@@ -156,8 +155,8 @@ program adj_seismogram
            ft_bar(:) = 0.d0
         endif
 
-        do itime =1,NSTEP
-           if(icomp == adj_comp) then
+        do itime = 1,NSTEP
+           if (icomp == adj_comp) then
               write(11,*) (itime-1)*deltat - t0, ft_bar(itime)
            else
               write(11,*) (itime-1)*deltat - t0, 0.d0

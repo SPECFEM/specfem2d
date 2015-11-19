@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -56,12 +55,12 @@
   character(len=150) :: outputname,outputname2
 
 
-  if(any_elastic) then
+  if (any_elastic) then
 
     !--- left absorbing boundary
-    if( nspec_left >0 ) then
+    if (nspec_left >0) then
       write(outputname,'(a,i6.6,a)') 'absorb_elastic_left',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -72,9 +71,9 @@
     endif  !  end of left absorbing boundary
 
     !--- right absorbing boundary
-    if( nspec_right >0 ) then
+    if (nspec_right >0) then
       write(outputname,'(a,i6.6,a)') 'absorb_elastic_right',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         open(unit=36,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -85,9 +84,9 @@
     endif  !  end of right absorbing boundary
 
     !--- bottom absorbing boundary
-    if( nspec_bottom >0 ) then
+    if (nspec_bottom >0) then
       write(outputname,'(a,i6.6,a)') 'absorb_elastic_bottom',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         open(unit=37,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -98,9 +97,9 @@
     endif  !  end of bottom absorbing boundary
 
     !--- top absorbing boundary
-    if( nspec_top >0 ) then
+    if (nspec_top >0) then
         write(outputname,'(a,i6.6,a)') 'absorb_elastic_top',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         open(unit=38,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -112,13 +111,13 @@
 
   endif ! any_elastic
 
-  if(any_poroelastic) then
+  if (any_poroelastic) then
 
     !--- left absorbing boundary
-    if( nspec_left >0 ) then
+    if (nspec_left >0) then
       write(outputname,'(a,i6.6,a)') 'absorb_poro_s_left',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_left',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         open(unit=45,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
         open(unit=25,file='OUTPUT_FILES/'//outputname2,status='old',&
@@ -133,10 +132,10 @@
     endif  !  end of left absorbing boundary
 
     !--- right absorbing boundary
-    if( nspec_right >0 ) then
+    if (nspec_right >0) then
       write(outputname,'(a,i6.6,a)') 'absorb_poro_s_right',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_right',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         open(unit=46,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
         open(unit=26,file='OUTPUT_FILES/'//outputname2,status='old',&
@@ -151,10 +150,10 @@
     endif  !  end of right absorbing boundary
 
     !--- bottom absorbing boundary
-    if( nspec_bottom >0 ) then
+    if (nspec_bottom >0) then
       write(outputname,'(a,i6.6,a)') 'absorb_poro_s_bottom',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_bottom',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         open(unit=47,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
         open(unit=29,file='OUTPUT_FILES/'//outputname2,status='old',&
@@ -169,10 +168,10 @@
     endif  !  end of bottom absorbing boundary
 
     !--- top absorbing boundary
-    if( nspec_top >0 ) then
+    if (nspec_top >0) then
       write(outputname,'(a,i6.6,a)') 'absorb_poro_s_top',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_top',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         open(unit=48,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
         open(unit=28,file='OUTPUT_FILES/'//outputname2,status='old',&
@@ -188,12 +187,12 @@
 
   endif !any_poroelastic
 
-  if(any_acoustic) then
+  if (any_acoustic) then
 
     !--- left absorbing boundary
-    if( nspec_left >0 ) then
+    if (nspec_left >0) then
       write(outputname,'(a,i6.6,a)') 'absorb_acoustic_left',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         open(unit=65,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -204,9 +203,9 @@
     endif  !  end of left absorbing boundary
 
     !--- right absorbing boundary
-    if( nspec_right >0 ) then
+    if (nspec_right >0) then
       write(outputname,'(a,i6.6,a)') 'absorb_acoustic_right',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         open(unit=66,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -217,9 +216,9 @@
     endif  !  end of right absorbing boundary
 
     !--- bottom absorbing boundary
-    if( nspec_bottom >0 ) then
+    if (nspec_bottom >0) then
       write(outputname,'(a,i6.6,a)') 'absorb_acoustic_bottom',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         open(unit=67,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -230,9 +229,9 @@
     endif  !  end of bottom absorbing boundary
 
     !--- top absorbing boundary
-    if( nspec_top >0 ) then
+    if (nspec_top >0) then
       write(outputname,'(a,i6.6,a)') 'absorb_acoustic_top',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         open(unit=68,file='OUTPUT_FILES/'//outputname,status='old',&
               form='unformatted')
       else
@@ -262,13 +261,13 @@
   include "constants.h"
 
     !--- left absorbing boundary
-    if(nspec_left >0) read(35) b_absorb_elastic_left
+    if (nspec_left >0) read(35) b_absorb_elastic_left
     !--- right absorbing boundary
-    if(nspec_right >0) read(36) b_absorb_elastic_right
+    if (nspec_right >0) read(36) b_absorb_elastic_right
     !--- bottom absorbing boundary
-    if(nspec_bottom >0) read(37) b_absorb_elastic_bottom
+    if (nspec_bottom >0) read(37) b_absorb_elastic_bottom
    !--- top absorbing boundary
-    if(nspec_top >0) read(38) b_absorb_elastic_top
+    if (nspec_top >0) read(38) b_absorb_elastic_top
 
   end subroutine prepare_absorb_elastic
 
@@ -291,13 +290,13 @@
   ! local parameters
   integer :: ispec,i,it,id
 
-  do it =1, NSTEP
+  do it = 1, NSTEP
 
     !--- left absorbing boundary
-    if(nspec_left >0) then
+    if (nspec_left >0) then
       do ispec = 1,nspec_left
        do id =1,2
-         do i=1,NGLLZ
+         do i = 1,NGLLZ
           read(45) b_absorb_poro_s_left(id,i,ispec,it)
           read(25) b_absorb_poro_w_left(id,i,ispec,it)
          enddo
@@ -306,10 +305,10 @@
     endif
 
     !--- right absorbing boundary
-    if(nspec_right >0) then
+    if (nspec_right >0) then
       do ispec = 1,nspec_right
        do id =1,2
-         do i=1,NGLLZ
+         do i = 1,NGLLZ
           read(46) b_absorb_poro_s_right(id,i,ispec,it)
           read(26) b_absorb_poro_w_right(id,i,ispec,it)
          enddo
@@ -318,10 +317,10 @@
     endif
 
     !--- bottom absorbing boundary
-    if(nspec_bottom >0) then
+    if (nspec_bottom >0) then
       do ispec = 1,nspec_bottom
        do id =1,2
-         do i=1,NGLLX
+         do i = 1,NGLLX
           read(47) b_absorb_poro_s_bottom(id,i,ispec,it)
           read(29) b_absorb_poro_w_bottom(id,i,ispec,it)
          enddo
@@ -330,10 +329,10 @@
     endif
 
     !--- top absorbing boundary
-    if(nspec_top >0) then
+    if (nspec_top >0) then
       do ispec = 1,nspec_top
        do id =1,2
-         do i=1,NGLLX
+         do i = 1,NGLLX
           read(48) b_absorb_poro_s_top(id,i,ispec,it)
           read(28) b_absorb_poro_w_top(id,i,ispec,it)
          enddo
@@ -359,12 +358,12 @@
   include "constants.h"
 
     !--- left absorbing boundary
-    if(nspec_left >0)  read(65) b_absorb_acoustic_left
+    if (nspec_left >0)  read(65) b_absorb_acoustic_left
     !--- right absorbing boundary
-    if(nspec_right >0) read(66) b_absorb_acoustic_right
+    if (nspec_right >0) read(66) b_absorb_acoustic_right
     !--- bottom absorbing boundary
-    if(nspec_bottom >0) read(67) b_absorb_acoustic_bottom
+    if (nspec_bottom >0) read(67) b_absorb_acoustic_bottom
    !--- top absorbing boundary
-    if(nspec_top >0) read(68) b_absorb_acoustic_top
+    if (nspec_top >0) read(68) b_absorb_acoustic_top
 
   end subroutine prepare_absorb_acoustic

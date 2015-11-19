@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -96,11 +95,12 @@
 ! **************
 
   if (myrank == 0 .or. nproc == 1) then
-    write(IOUT,*)
-    write(IOUT,*) '*******************************'
-    write(IOUT,*) ' locating moment-tensor source'
-    write(IOUT,*) '*******************************'
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) '*******************************'
+    write(IMAIN,*) ' locating moment-tensor source'
+    write(IMAIN,*) '*******************************'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
 ! set distance to huge initial value
@@ -121,7 +121,7 @@
            dist_squared = (x_source-dble(coord(1,iglob)))**2 + (z_source-dble(coord(2,iglob)))**2
 
            ! keep this point if it is closer to the source
-           if(dist_squared < distmin_squared) then
+           if (dist_squared < distmin_squared) then
               distmin_squared = dist_squared
               ispec_selected_source = ispec
               ix_initial_guess = i
@@ -142,7 +142,7 @@
 #endif
 
 ! check if this process contains the source
-  if ( abs(sqrt(dist_glob_squared) - sqrt(distmin_squared)) < TINYVAL ) is_proc_source = 1
+  if (abs(sqrt(dist_glob_squared) - sqrt(distmin_squared)) < TINYVAL ) is_proc_source = 1
 
 #ifdef USE_MPI
   ! determining the number of processes that contain the source
@@ -155,13 +155,13 @@
 
 #ifdef USE_MPI
   ! when several processes contain the source, we elect one of them (minimum rank).
-  if ( nb_proc_source > 1 ) then
+  if (nb_proc_source > 1) then
 
      call MPI_ALLGATHER(is_proc_source, 1, MPI_INTEGER, allgather_is_proc_source(1), &
                         1, MPI_INTEGER, MPI_COMM_WORLD, ierror)
      locate_is_proc_source = maxloc(allgather_is_proc_source) - 1
 
-     if ( myrank /= locate_is_proc_source(1) ) then
+     if (myrank /= locate_is_proc_source(1)) then
         is_proc_source = 0
      endif
      nb_proc_source = 1
@@ -233,24 +233,25 @@
   final_distance = sqrt((x_source-x)**2 + (z_source-z)**2)
 
   if (is_proc_source == 1) then
-     write(IOUT,*)
-     write(IOUT,*) 'Moment-tensor source:'
+     write(IMAIN,*)
+     write(IMAIN,*) 'Moment-tensor source:'
 
-     if(final_distance == HUGEVAL) call exit_MPI('error locating moment-tensor source')
+     if (final_distance == HUGEVAL) call exit_MPI('error locating moment-tensor source')
 
-     write(IOUT,*) '            original x: ',sngl(x_source)
-     write(IOUT,*) '            original z: ',sngl(z_source)
-     write(IOUT,*) 'closest estimate found: ',sngl(final_distance),' m away'
+     write(IMAIN,*) '            original x: ',sngl(x_source)
+     write(IMAIN,*) '            original z: ',sngl(z_source)
+     write(IMAIN,*) 'closest estimate found: ',sngl(final_distance),' m away'
 #ifdef USE_MPI
-     write(IOUT,*) ' in rank ',myrank
+     write(IMAIN,*) ' in rank ',myrank
 #endif
-     write(IOUT,*) ' in element ',ispec_selected_source
-     write(IOUT,*) ' at xi,gamma coordinates = ',xi_source,gamma_source
-     write(IOUT,*)
+     write(IMAIN,*) ' in element ',ispec_selected_source
+     write(IMAIN,*) ' at xi,gamma coordinates = ',xi_source,gamma_source
+     write(IMAIN,*)
 
-     write(IOUT,*)
-     write(IOUT,*) 'end of moment-tensor source detection'
-     write(IOUT,*)
+     write(IMAIN,*)
+     write(IMAIN,*) 'end of moment-tensor source detection'
+     write(IMAIN,*)
+     call flush_IMAIN()
   endif
 
   end subroutine locate_source_moment_tensor

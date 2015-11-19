@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -61,7 +60,7 @@
   integer :: i_source,i,j,iglob
   double precision :: hlagrange,phil,tortl,rhol_s,rhol_f,rhol_bar
 
-  do i_source=1,NSOURCES
+  do i_source= 1,NSOURCES
     ! if this processor core carries the source and the source element is elastic
     if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
       phil = porosity(kmato(ispec_selected_source(i_source)))
@@ -71,7 +70,7 @@
       rhol_bar = (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f
 
       ! collocated force
-      if( source_type(i_source) == 1 ) then
+      if (source_type(i_source) == 1) then
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec_selected_source(i_source))
@@ -90,7 +89,7 @@
         enddo
       endif
     endif ! if this processor core carries the source and the source element is elastic
-  enddo ! do i_source=1,NSOURCES
+  enddo ! do i_source= 1,NSOURCES
 
  end subroutine compute_add_sources_poro
 

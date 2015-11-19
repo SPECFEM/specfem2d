@@ -39,6 +39,7 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
+
 ! for poro solver
 
  subroutine compute_coupling_poro_ac()
@@ -87,7 +88,7 @@
 
       ! compute pressure on the fluid/porous medium edge
       pressure = - potential_dot_dot_acoustic(iglob)
-      if(SIMULATION_TYPE == 3) then
+      if (SIMULATION_TYPE == 3) then
         b_pressure = - b_potential_dot_dot_acoustic(iglob)
         ! new definition of adjoint displacement and adjoint potential
         pressure = potential_acoustic_adj_coupling(iglob)
@@ -103,28 +104,28 @@
       ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
       ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
       ! Blackwell Science, page 110, equation (4.60).
-      if( iedge_acoustic == ITOP ) then
+      if (iedge_acoustic == ITOP) then
         xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xxi**2 + zxi**2)
         nx = - zxi / jacobian1D
         nz = + xxi / jacobian1D
         weight = jacobian1D * wxgll(i)
-      else if( iedge_acoustic == IBOTTOM ) then
+      else if (iedge_acoustic == IBOTTOM) then
         xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xxi**2 + zxi**2)
         nx = + zxi / jacobian1D
         nz = - xxi / jacobian1D
         weight = jacobian1D * wxgll(i)
-      else if( iedge_acoustic ==ILEFT ) then
+      else if (iedge_acoustic ==ILEFT) then
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
         nx = - zgamma / jacobian1D
         nz = + xgamma / jacobian1D
         weight = jacobian1D * wzgll(j)
-      else if( iedge_acoustic ==IRIGHT ) then
+      else if (iedge_acoustic ==IRIGHT) then
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -140,7 +141,7 @@
       accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) + weight*nx*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
       accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + weight*nz*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
 
-      if( SIMULATION_TYPE == 3 ) then
+      if (SIMULATION_TYPE == 3) then
         ! contribution to the solid phase
         b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + weight*nx*b_pressure*(1._CUSTOM_REAL-phil/tortl)
         b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + weight*nz*b_pressure*(1._CUSTOM_REAL-phil/tortl)

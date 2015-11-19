@@ -1,8 +1,7 @@
-
 !========================================================================
 !
-!                  S P E C F E M 2 D  Version 7 . 0
-!                  --------------------------------
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
@@ -40,6 +39,7 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
+
 
   subroutine compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
                     potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
@@ -106,14 +106,14 @@
 
   ifirstelem = 1
   ilastelem = nspec
-  if( stage_time_scheme == 1 ) then
+  if (stage_time_scheme == 1) then
     time_n = (it-1) * deltat
     time_nsub1 = (it-2) * deltat
-  else if( stage_time_scheme == 6 ) then
+  else if (stage_time_scheme == 6) then
     time_n = (it-1) * deltat + c_LDDRK(i_stage) * deltat
   endif
 
-  if( PML_BOUNDARY_CONDITIONS ) then
+  if (PML_BOUNDARY_CONDITIONS) then
     potential_dot_dot_acoustic_PML = 0._CUSTOM_REAL
     PML_dux_dxl = 0._CUSTOM_REAL;     PML_dux_dzl = 0._CUSTOM_REAL
     PML_dux_dxl_old = 0._CUSTOM_REAL; PML_dux_dzl_old = 0._CUSTOM_REAL
@@ -122,7 +122,7 @@
 ! loop over spectral elements
   do ispec = ifirstelem,ilastelem
     ! acoustic spectral element
-    if( acoustic(ispec) ) then
+    if (acoustic(ispec)) then
       rhol = density(1,kmato(ispec))
 
       ! first double loop over GLL points to compute and store gradients
@@ -134,8 +134,8 @@
           ! first double loop over GLL points to compute and store gradients
           ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
-            if( AXISYM ) then
-              if( is_on_the_axis(ispec) ) then
+            if (AXISYM) then
+              if (is_on_the_axis(ispec)) then
                 dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec)) * hprimeBar_xx(i,k)
               else
                 dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
@@ -155,12 +155,12 @@
           dux_dxl = dux_dxi * xixl + dux_dgamma * gammaxl
           dux_dzl = dux_dxi * xizl + dux_dgamma * gammazl
 
-          if( AXISYM .and. is_on_the_axis(ispec) .and. i == 1 ) then ! dchi/dr=rho * u_r=0 on the axis
+          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! dchi/dr=rho * u_r=0 on the axis
             dux_dxl = ZERO
           endif
 
           ! derivative along x and along zbb
-          if( PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) .and. nspec_PML > 0 ) then
+          if (PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) .and. nspec_PML > 0) then
             ispec_PML=spec_to_PML(ispec)
             CPML_region_local = region_CPML(ispec)
             kappa_x = K_x_store(i,j,ispec_PML)
@@ -177,10 +177,10 @@
 
             dux_dxi = 0._CUSTOM_REAL; dux_dgamma = 0._CUSTOM_REAL
 
-            if( stage_time_scheme == 1 ) then
+            if (stage_time_scheme == 1) then
               do k = 1,NGLLX
-                if( AXISYM ) then
-                  if( is_on_the_axis(ispec) ) then
+                if (AXISYM) then
+                  if (is_on_the_axis(ispec)) then
                     dux_dxi = dux_dxi + potential_acoustic_old(ibool(k,j,ispec)) * hprimeBar_xx(i,k)
                   else
                     dux_dxi = dux_dxi + potential_acoustic_old(ibool(k,j,ispec)) * hprime_xx(i,k)
@@ -195,7 +195,7 @@
               PML_dux_dxl_old(i,j) = dux_dxi * xixl + dux_dgamma * gammaxl
               PML_dux_dzl_old(i,j) = dux_dxi * xizl + dux_dgamma * gammazl
 
-              if( AXISYM .and. is_on_the_axis(ispec) .and. i == 1 ) then ! dchi/dr=rho * u_r=0 on the axis
+              if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! dchi/dr=rho * u_r=0 on the axis
                 PML_dux_dxl_old(i,j) = ZERO
               endif
             endif
@@ -208,10 +208,10 @@
                                            CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
                                            coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
 
-            if( stage_time_scheme == 1 ) then
+            if (stage_time_scheme == 1) then
               rmemory_acoustic_dux_dx(i,j,ispec_PML,1) = coef0_zx_1 * rmemory_acoustic_dux_dx(i,j,ispec_PML,1) + &
                                                          coef1_zx_1 * PML_dux_dxl(i,j) + coef2_zx_1 * PML_dux_dxl_old(i,j)
-              if( singularity_type_zx == 0 ) then
+              if (singularity_type_zx == 0) then
 
                 rmemory_acoustic_dux_dx(i,j,ispec_PML,2) = coef0_zx_2 * rmemory_acoustic_dux_dx(i,j,ispec_PML,2) + &
                                                            coef1_zx_2 * PML_dux_dxl(i,j) + coef2_zx_2 * PML_dux_dxl_old(i,j)
@@ -223,7 +223,7 @@
 
               rmemory_acoustic_dux_dz(i,j,ispec_PML,1) = coef0_xz_1 * rmemory_acoustic_dux_dz(i,j,ispec_PML,1) + &
                                                          coef1_xz_1 * PML_dux_dzl(i,j) + coef2_xz_1 * PML_dux_dzl_old(i,j)
-              if( singularity_type_xz == 0 ) then
+              if (singularity_type_xz == 0) then
                 rmemory_acoustic_dux_dz(i,j,ispec_PML,2) = coef0_xz_2 * rmemory_acoustic_dux_dz(i,j,ispec_PML,2) + &
                                                            coef1_xz_2 * PML_dux_dzl(i,j) + coef2_xz_2 * PML_dux_dzl_old(i,j)
               else
@@ -233,13 +233,13 @@
               endif
             endif
 
-            if( stage_time_scheme == 6 ) then
+            if (stage_time_scheme == 6) then
               rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML,1) = &
                      alpha_LDDRK(i_stage) * rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML,1) + &
                      deltat * (-bb_zx_1 * rmemory_acoustic_dux_dx(i,j,ispec_PML,1) + PML_dux_dxl(i,j))
               rmemory_acoustic_dux_dx(i,j,ispec_PML,1) = rmemory_acoustic_dux_dx(i,j,ispec_PML,1) + &
                      beta_LDDRK(i_stage) * rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML,1)
-              if( singularity_type_zx == 0 ) then
+              if (singularity_type_zx == 0) then
                 rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML,2) = &
                        alpha_LDDRK(i_stage) * rmemory_acoustic_dux_dx_LDDRK(i,j,ispec_PML,2) + &
                        deltat * (-bb_zx_2 * rmemory_acoustic_dux_dx(i,j,ispec_PML,2) + PML_dux_dxl(i,j))
@@ -258,7 +258,7 @@
                      deltat * (-bb_xz_1 * rmemory_acoustic_dux_dz(i,j,ispec_PML,1) + PML_dux_dzl(i,j))
               rmemory_acoustic_dux_dz(i,j,ispec_PML,1) = rmemory_acoustic_dux_dz(i,j,ispec_PML,1) + &
                      beta_LDDRK(i_stage) * rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML,1)
-              if( singularity_type_xz == 0 ) then
+              if (singularity_type_xz == 0) then
                 rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML,2) = &
                        alpha_LDDRK(i_stage) * rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML,2) + &
                        deltat * (-bb_xz_2 * rmemory_acoustic_dux_dz(i,j,ispec_PML,2) + PML_dux_dzl(i,j))
@@ -280,29 +280,29 @@
                                               A10 * rmemory_acoustic_dux_dz(i,j,ispec_PML,2)
           endif
 
-          if( AXISYM .and. is_on_the_axis(ispec) .and. i == 1 ) then ! dchi/dr=rho * u_r=0 on the axis
+          if (AXISYM .and. is_on_the_axis(ispec) .and. i == 1) then ! dchi/dr=rho * u_r=0 on the axis
             dux_dxl = ZERO
           endif
 
           jacobianl = jacobian(i,j,ispec)
 
           ! if external density model
-          if( assign_external_model ) then
+          if (assign_external_model) then
             rhol = rhoext(i,j,ispec)
           endif
 
-          if( AXISYM ) then
-            if( is_on_the_axis(ispec) .and. i == 1 ) then
+          if (AXISYM) then
+            if (is_on_the_axis(ispec) .and. i == 1) then
               xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
               r_xiplus1(i,j) = xxi
-            else if( is_on_the_axis(ispec) ) then
+            else if (is_on_the_axis(ispec)) then
               r_xiplus1(i,j) = coord(1,ibool(i,j,ispec))/(xiglj(i)+ONE)
             endif
           endif
 
           ! for acoustic medium also add integration weights
-          if( AXISYM ) then
-            if( is_on_the_axis(ispec) ) then
+          if (AXISYM) then
+            if (is_on_the_axis(ispec)) then
               tempx1(i,j) = wzgll(j) * r_xiplus1(i,j) * jacobianl * (xixl * dux_dxl + xizl * dux_dzl) / rhol
               tempx2(i,j) = wxglj(i) * r_xiplus1(i,j) * jacobianl * (gammaxl * dux_dxl + gammazl * dux_dzl) / rhol
             else
@@ -320,7 +320,7 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
-          if( assign_external_model ) then
+          if (assign_external_model) then
             rhol = rhoext(i,j,ispec)
             cpl = vpext(i,j,ispec)
             !assuming that in fluid(acoustic) part input cpl is defined by sqrt(kappal/rhol), &
@@ -333,7 +333,7 @@
             rhol = density(1,kmato(ispec))
           endif
 
-          if( is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS .and. nspec_PML > 0) then
+          if (is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS .and. nspec_PML > 0) then
             ispec_PML=spec_to_PML(ispec)
             CPML_region_local = region_CPML(ispec)
             kappa_x = K_x_store(i,j,ispec_PML)
@@ -349,11 +349,11 @@
                                          CPML_region_local,A0,A1,A2,A3,A4,singularity_type,&
                                          bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
-            if( stage_time_scheme == 1 ) then
+            if (stage_time_scheme == 1) then
               rmemory_potential_acoustic(1,i,j,ispec_PML) = coef0_1 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                      coef1_1 * potential_acoustic(iglob) + coef2_1 * potential_acoustic_old(iglob)
 
-              if( singularity_type == 0) then
+              if (singularity_type == 0) then
                 rmemory_potential_acoustic(2,i,j,ispec_PML) = coef0_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + &
                        coef1_2 * potential_acoustic(iglob) + coef2_2 * potential_acoustic_old(iglob)
               else
@@ -362,13 +362,13 @@
               endif
             endif
 
-            if( stage_time_scheme == 6 ) then
+            if (stage_time_scheme == 6) then
               rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML) = &
                      alpha_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML) + &
                      deltat * (-bb_1 * rmemory_potential_acoustic(1,i,j,ispec_PML) + potential_acoustic(iglob))
               rmemory_potential_acoustic(1,i,j,ispec_PML) = rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                        beta_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML)
-              if( singularity_type == 0) then
+              if (singularity_type == 0) then
                 rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) = &
                        alpha_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) + &
                        deltat * (-bb_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + potential_acoustic(iglob))
@@ -383,8 +383,8 @@
               endif
             endif
 
-            if( AXISYM ) then
-              if(is_on_the_axis(ispec) ) then
+            if (AXISYM) then
+              if (is_on_the_axis(ispec)) then
                 potential_dot_dot_acoustic_PML(i,j)= wxglj(i) * wzgll(j)/kappal * jacobian(i,j,ispec) * r_xiplus1(i,j) * &
                          (A1 * potential_dot_acoustic(iglob) + A2 * potential_acoustic(iglob) + &
                           A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
@@ -413,8 +413,8 @@
           ! along x direction and z direction
           ! and assemble the contributions
           do k = 1,NGLLX
-            if( AXISYM ) then
-              if( is_on_the_axis(ispec) ) then
+            if (AXISYM) then
+              if (is_on_the_axis(ispec)) then
                 potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
                        (tempx1(k,j) * hprimeBarwglj_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
               else
@@ -426,7 +426,7 @@
                        (tempx1(k,j) * hprimewgll_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
             endif
           enddo
-          if( PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) ) then
+          if (PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
                                               - potential_dot_dot_acoustic_PML(i,j)
           endif
@@ -447,11 +447,11 @@
 
 ! for Stacey paraxial absorbing conditions (more precisely: Sommerfeld in the case of a fluid) we implement them here
 
-  if( STACEY_BOUNDARY_CONDITIONS ) then
-    do ispecabs=1,nelemabs
+  if (STACEY_BOUNDARY_CONDITIONS) then
+    do ispecabs= 1,nelemabs
       ispec = numabs(ispecabs)
       ! Sommerfeld condition if acoustic
-      if( acoustic(ispec) ) then
+      if (acoustic(ispec)) then
 
         ! get elastic parameters of current spectral element
         lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
@@ -462,14 +462,14 @@
         cpl = sqrt(kappal/rhol)
 
         !--- left absorbing boundary
-        if( codeabs(IEDGE4,ispecabs) ) then
+        if (codeabs(IEDGE4,ispecabs)) then
           i = 1
           jbegin = ibegin_edge4(ispecabs)
           jend = iend_edge4(ispecabs)
           do j = jbegin,jend
             iglob = ibool(i,j,ispec)
             ! external velocity model
-            if( assign_external_model ) then
+            if (assign_external_model) then
               cpl = vpext(i,j,ispec)
               rhol = rhoext(i,j,ispec)
             endif
@@ -482,7 +482,7 @@
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
                       potential_dot_acoustic(iglob) * weight/cpl/rhol
 
-            if( SAVE_FORWARD ) then
+            if (SAVE_FORWARD) then
               ! saves contribution
               b_absorb_acoustic_left(j,ib_left(ispecabs),it) = potential_dot_acoustic(iglob) * weight/cpl/rhol
             endif
@@ -490,14 +490,14 @@
         endif  !  end of left absorbing boundary
 
         !--- right absorbing boundary
-        if( codeabs(IEDGE2,ispecabs) ) then
+        if (codeabs(IEDGE2,ispecabs)) then
           i = NGLLX
           jbegin = ibegin_edge2(ispecabs)
           jend = iend_edge2(ispecabs)
           do j = jbegin,jend
             iglob = ibool(i,j,ispec)
             ! external velocity model
-            if( assign_external_model ) then
+            if (assign_external_model) then
               cpl = vpext(i,j,ispec)
               rhol = rhoext(i,j,ispec)
             endif
@@ -510,7 +510,7 @@
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
                       potential_dot_acoustic(iglob) * weight/cpl/rhol
 
-            if( SAVE_FORWARD ) then
+            if (SAVE_FORWARD) then
               ! saves contribution
               b_absorb_acoustic_right(j,ib_right(ispecabs),it) = potential_dot_acoustic(iglob) * weight/cpl/rhol
             endif
@@ -518,17 +518,17 @@
         endif  !  end of right absorbing boundary
 
         !--- bottom absorbing boundary
-        if( codeabs(IEDGE1,ispecabs) ) then
+        if (codeabs(IEDGE1,ispecabs)) then
           j = 1
           ibegin = ibegin_edge1(ispecabs)
           iend = iend_edge1(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if( codeabs_corner(1,ispecabs)) ibegin = 2
-          if( codeabs_corner(2,ispecabs)) iend = NGLLX-1
+          if (codeabs_corner(1,ispecabs)) ibegin = 2
+          if (codeabs_corner(2,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model
-            if( assign_external_model ) then
+            if (assign_external_model) then
               cpl = vpext(i,j,ispec)
               rhol = rhoext(i,j,ispec)
             endif
@@ -541,7 +541,7 @@
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
                       potential_dot_acoustic(iglob) * weight/cpl/rhol
 
-            if( SAVE_FORWARD ) then
+            if (SAVE_FORWARD) then
               ! saves contribution
               b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),it) = potential_dot_acoustic(iglob) * weight/cpl/rhol
             endif
@@ -549,17 +549,17 @@
         endif  !  end of bottom absorbing boundary
 
         !--- top absorbing boundary
-        if( codeabs(IEDGE3,ispecabs) ) then
+        if (codeabs(IEDGE3,ispecabs)) then
           j = NGLLZ
           ibegin = ibegin_edge3(ispecabs)
           iend = iend_edge3(ispecabs)
           ! exclude corners to make sure there is no contradiction on the normal
-          if( codeabs_corner(3,ispecabs)) ibegin = 2
-          if( codeabs_corner(4,ispecabs)) iend = NGLLX-1
+          if (codeabs_corner(3,ispecabs)) ibegin = 2
+          if (codeabs_corner(4,ispecabs)) iend = NGLLX-1
           do i = ibegin,iend
             iglob = ibool(i,j,ispec)
             ! external velocity model
-            if( assign_external_model ) then
+            if (assign_external_model) then
               cpl = vpext(i,j,ispec)
               rhol = rhoext(i,j,ispec)
             endif
@@ -572,7 +572,7 @@
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
                       potential_dot_acoustic(iglob) * weight/cpl/rhol
 
-            if( SAVE_FORWARD ) then
+            if (SAVE_FORWARD) then
               ! saves contribution
               b_absorb_acoustic_top(i,ib_top(ispecabs),it) = potential_dot_acoustic(iglob) * weight/cpl/rhol
             endif
@@ -584,13 +584,13 @@
   endif  ! end of absorbing boundaries
 
 !--- set Dirichelet boundary condition on outer boundary of CFS-PML
-  if( PML_BOUNDARY_CONDITIONS .and. anyabs ) then
+  if (PML_BOUNDARY_CONDITIONS .and. anyabs) then
     do ispecabs = 1,nelemabs
       ispec = numabs(ispecabs)
 
-      if( is_PML(ispec) ) then
+      if (is_PML(ispec)) then
 !--- left absorbing boundary
-        if( codeabs(IEDGE4,ispecabs) ) then
+        if (codeabs(IEDGE4,ispecabs)) then
           i = 1
           do j = 1,NGLLZ
             iglob = ibool(i,j,ispec)
@@ -601,7 +601,7 @@
           enddo
         endif
 !--- right absorbing boundary
-        if( codeabs(IEDGE2,ispecabs) ) then
+        if (codeabs(IEDGE2,ispecabs)) then
           i = NGLLX
           do j = 1,NGLLZ
             iglob = ibool(i,j,ispec)
@@ -612,7 +612,7 @@
           enddo
         endif
 !--- bottom absorbing boundary
-        if( codeabs(IEDGE1,ispecabs) ) then
+        if (codeabs(IEDGE1,ispecabs)) then
           j = 1
           ibegin = 1
           iend = NGLLX
@@ -625,7 +625,7 @@
           enddo
         endif
 !--- top absorbing boundary
-        if( codeabs(IEDGE3,ispecabs) ) then
+        if (codeabs(IEDGE3,ispecabs)) then
           j = NGLLZ
 ! exclude corners to make sure there is no contradiction on the normal
           ibegin = 1

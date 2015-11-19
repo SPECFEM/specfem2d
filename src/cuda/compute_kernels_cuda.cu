@@ -40,7 +40,6 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -91,10 +90,10 @@ __global__ void compute_kernels_ani_cudakernel(int* ispec_is_elastic,
   int i,j;
 
   // handles case when there is 1 extra block (due to rectangular grid)
-  if(ispec < NSPEC_AB) {
+  if (ispec < NSPEC_AB) {
 
     // elastic elements only
-    if( ispec_is_elastic[ispec] ) {
+    if (ispec_is_elastic[ispec]) {
       int iglob = d_ibool[ijk + NGLL3_PADDED*ispec] - 1;
 
       // anisotropic kernels:
@@ -147,11 +146,11 @@ __global__ void compute_kernels_ani_cudakernel(int* ispec_is_elastic,
       for( i=0; i<6; i++){
         for( j=i; j<6; j++){
           prod[p] = eps[i] * b_eps[j];
-          if( j > i ){
+          if (j > i) {
             prod[p] = prod[p] + eps[j]*b_eps[i];
-            if( j > 2 && i < 3 ){ prod[p] = prod[p]*2; }
+            if (j > 2 && i < 3) { prod[p] = prod[p]*2; }
           }
-          if(i > 2 ){ prod[p] = prod[p]*4; }
+          if (i > 2) { prod[p] = prod[p]*4; }
           p++;
         }
       }
@@ -189,10 +188,10 @@ __global__ void compute_kernels_cudakernel(int* ispec_is_elastic,
 
 
   // handles case when there is 1 extra block (due to rectangular grid)
-  if(ispec < NSPEC_AB) {
+  if (ispec < NSPEC_AB) {
 
     // elastic elements only
-    if( ispec_is_elastic[ispec] ) {
+    if (ispec_is_elastic[ispec]) {
       int iglob = d_ibool[ij + NGLL2_PADDED*ispec] - 1 ;
 
       // isotropic kernels:
@@ -350,9 +349,9 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
   int active = 0;
 
   // handles case when there is 1 extra block (due to rectangular grid)
-  if( ispec < NSPEC_AB ){
+  if (ispec < NSPEC_AB) {
     // acoustic elements only
-    if( ispec_is_acoustic[ispec] ){
+    if (ispec_is_acoustic[ispec]) {
       active = 1;
 
       // copy field values
@@ -365,7 +364,7 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
   // synchronizes threads
   __syncthreads();
 
-  if( active ){
+  if (active) {
     realw accel_elm[2];
     realw b_displ_elm[2];
     realw rhol,kappal;
@@ -451,10 +450,10 @@ __global__ void compute_kernels_hess_el_cudakernel(int* ispec_is_elastic,
   int ij = threadIdx.x;
 
   // handles case when there is 1 extra block (due to rectangular grid)
-  if(ispec < NSPEC_AB) {
+  if (ispec < NSPEC_AB) {
 
     // elastic elements only
-    if( ispec_is_elastic[ispec] ) {
+    if (ispec_is_elastic[ispec]) {
       int iglob = d_ibool[ij + NGLL2_PADDED*ispec] - 1;
 
       // approximate hessian
@@ -489,10 +488,10 @@ __global__ void compute_kernels_hess_ac_cudakernel(int* ispec_is_acoustic,
   int active = 0;
 
   // handles case when there is 1 extra block (due to rectangular grid)
-  if(ispec < NSPEC_AB) {
+  if (ispec < NSPEC_AB) {
 
     // acoustic elements only
-    if( ispec_is_acoustic[ispec] ){
+    if (ispec_is_acoustic[ispec]) {
       active = 1;
 
       // global indices
@@ -507,7 +506,7 @@ __global__ void compute_kernels_hess_ac_cudakernel(int* ispec_is_acoustic,
   // synchronizes threads
   __syncthreads();
 
-  if( active ){
+  if (active) {
     realw accel_elm[2];
     realw b_accel_elm[2];
     realw rhol;
@@ -554,7 +553,7 @@ void FC_FUNC_(compute_kernels_hess_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  if( *ELASTIC_SIMULATION ) {
+  if (*ELASTIC_SIMULATION) {
     compute_kernels_hess_el_cudakernel<<<grid,threads>>>(mp->d_ispec_is_elastic,
                                                          mp->d_ibool,
                                                          mp->d_accel,
@@ -563,7 +562,7 @@ void FC_FUNC_(compute_kernels_hess_cuda,
                                                          mp->NSPEC_AB);
   }
 
-  if( *ACOUSTIC_SIMULATION ) {
+  if (*ACOUSTIC_SIMULATION) {
     compute_kernels_hess_ac_cudakernel<<<grid,threads>>>(mp->d_ispec_is_acoustic,
                                                          mp->d_ibool,
                                                          mp->d_potential_dot_dot_acoustic,

@@ -40,53 +40,62 @@
 !
 !========================================================================
 
-  subroutine define_derivation_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz)
+!-----------------------------------------------
+! subroutine to stop the code whether sequential or parallel.
+!-----------------------------------------------
+  subroutine exit_MPI(error_msg)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  ! identifier for error message file
+  integer, parameter :: IERROR = 30
+
+  character(len=*) error_msg
+
+  integer ier
+
+  ier = 0
+
+  ! write error message to screen
+  write(*,*) error_msg(1:len(error_msg))
+  write(*,*) 'Error detected, aborting MPI... proc '
+
+  ! stop all the MPI processes, and exit
+#ifdef USE_MPI
+  call MPI_ABORT(MPI_COMM_WORLD,30,ier)
+#endif
+
+  stop 'error, program ended in exit_MPI'
+
+  end subroutine exit_MPI
+
+!-------------------------------------------------------------------------------------------------
+!
+! I/O wrapper function
+!
+!-------------------------------------------------------------------------------------------------
+
+  subroutine flush_IMAIN()
 
   implicit none
 
   include "constants.h"
 
-! Gauss-Lobatto-Legendre points of integration
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLZ) :: zigll
+  ! only master process writes out to main output file
+  ! file I/O in fortran is buffered by default
+  !
+  ! note: Fortran2003 includes a FLUSH statement
+  !          which is implemented by most compilers by now
+  !
+  ! otherwise:
+  !   a) comment out the line below
+  !   b) try to use instead: call flush(IMAIN)
 
-! weights
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
-  real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
+  flush(IMAIN)
 
-! array with derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
-
-  double precision, parameter :: alphaGLL = 0.d0, betaGLL = 0.d0
-
-! function for calculating derivatives of Lagrange polynomials
-  double precision, external :: lagrange_deriv_GLL
-
-  integer i1,i2,k1,k2
-
-! set up coordinates of the Gauss-Lobatto-Legendre points
-  call zwgljd(xigll,wxgll,NGLLX,alphaGLL,betaGLL)
-  call zwgljd(zigll,wzgll,NGLLZ,alphaGLL,betaGLL)
-
-! if number of points is odd, the middle abscissa is exactly zero
-  if(mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = 0._CUSTOM_REAL
-  if(mod(NGLLZ,2) /= 0) zigll((NGLLZ-1)/2+1) = 0._CUSTOM_REAL
-
-! calculate derivatives of the Lagrange polynomials
-! and precalculate some products in double precision
-! hprime(i,j) = h'_j(xigll_i) by definition of the derivation matrix
-  do i1=1,NGLLX
-    do i2=1,NGLLX
-      hprime_xx(i2,i1) = lagrange_deriv_GLL(i1-1,i2-1,xigll,NGLLX)
-    enddo
-  enddo
-
-  do k1=1,NGLLZ
-    do k2=1,NGLLZ
-      hprime_zz(k2,k1) = lagrange_deriv_GLL(k1-1,k2-1,zigll,NGLLZ)
-    enddo
-  enddo
-
-  end subroutine define_derivation_matrices
+  end subroutine flush_IMAIN
 

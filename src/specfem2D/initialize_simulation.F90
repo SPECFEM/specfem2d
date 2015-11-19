@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -49,7 +48,7 @@
   use mpi
 #endif
 
-  use specfem_par, only : nproc,myrank,ninterface_acoustic,ninterface_elastic,ninterface_poroelastic
+  use specfem_par, only : NPROC,myrank,GPU_MODE,ninterface_acoustic,ninterface_elastic,ninterface_poroelastic
 
   implicit none
   include "constants.h"
@@ -64,37 +63,62 @@
 !
 !***********************************************************************
 
-#ifdef USE_MPI
-  call MPI_INIT(ier)
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-  if( ier /= 0 ) call exit_MPI('error MPI initialization')
-#else
-  nproc = 1
-  myrank = 0
-#endif
+  ! check process setup
+  if (NPROC < 1) stop 'should have NPROC >= 1'
 
+  ! determine if we write to file instead of standard output
+  if (IMAIN /= ISTANDARD_OUTPUT) then
+    ! sets main output file name
+#ifdef USE_MPI
+    write(prname,"('output_solver',i5.5,'.txt')") myrank
+#else
+    prname = 'output_solver.txt'
+    ! serial version: checks rank is initialized
+    if (myrank /= 0) stop 'process should have myrank zero'
+#endif
+    ! opens for simulation output
+    open(IMAIN,file='OUTPUT_FILES/'//trim(prname),status='unknown',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_MPI('error opening file OUTPUT_FILES/output_solver***.txt')
+  endif
+
+  ! starts reading in Database file
+  call read_databases_init()
+
+  ! checks flags
+  call initialize_simulation_check()
+
+  ! initializes GPU cards
+  if (GPU_MODE) call initialize_GPU()
+
+  ! initializes domain interfaces
   ninterface_acoustic = 0
   ninterface_elastic = 0
   ninterface_poroelastic = 0
 
-  ! determine if we write to file instead of standard output
-  if(IOUT /= ISTANDARD_OUTPUT) then
-
-#ifdef USE_MPI
-    write(prname,240) myrank
- 240 format('simulation_results',i5.5,'.txt')
-#else
-    prname = 'simulation_results.txt'
-#endif
-
-    open(IOUT,file=prname,status='unknown',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_MPI('error opening file simulation_results***.txt')
-
-  endif
-
   end subroutine initialize_simulation
 
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine initialize_simulation_check()
+
+  use specfem_par
+
+  implicit none
+
+  ! number of processes
+  if (nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
+
+  ! checks if matching with mpi processes
+  if (NPROC /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
+
+  ! time scheme
+  if (SIMULATION_TYPE == 3 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
+                                  stop 'RK and LDDRK time scheme not supported for adjoint inversion'
+
+  end subroutine initialize_simulation_check
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -128,7 +152,7 @@
   count_nspec_acoustic = 0
   do ispec = 1,nspec
 
-    if( nint(porosity(kmato(ispec))) == 1 ) then
+    if (nint(porosity(kmato(ispec))) == 1) then
       ! assume acoustic domain
       ! if gravitoacoustic -> set by read_external_model
       acoustic(ispec) = .true.
@@ -138,12 +162,12 @@
       gravitoacoustic(ispec) = .false.
       any_gravitoacoustic = .false.
       count_nspec_acoustic = count_nspec_acoustic + 1
-    else if( porosity(kmato(ispec)) < TINYVAL) then
+    else if (porosity(kmato(ispec)) < TINYVAL) then
       ! assume elastic domain
       elastic(ispec) = .true.
       poroelastic(ispec) = .false.
       any_elastic = .true.
-      if(any(anisotropy(:,kmato(ispec)) /= 0)) then
+      if (any(anisotropy(:,kmato(ispec)) /= 0)) then
          anisotropic(ispec) = .true.
       endif
     else
@@ -156,13 +180,13 @@
   enddo ! of do ispec = 1,nspec
 
 
-  if(.not. p_sv .and. .not. any_elastic) then
+  if (.not. p_sv .and. .not. any_elastic) then
     print *, '*************** WARNING ***************'
     print *, 'Surface (membrane) waves calculation needs an elastic medium'
     print *, '*************** WARNING ***************'
     stop
   endif
-  if(.not. p_sv .and. (ATTENUATION_VISCOELASTIC_SOLID)) then
+  if (.not. p_sv .and. (ATTENUATION_VISCOELASTIC_SOLID)) then
     print *, '*************** WARNING ***************'
     print *, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
     print *, '*************** WARNING ***************'
@@ -170,10 +194,63 @@
   endif
 
 
-  if(ATTENUATION_VISCOELASTIC_SOLID) then
+  if (ATTENUATION_VISCOELASTIC_SOLID) then
     nspec_allocate = nspec
   else
     nspec_allocate = 1
   endif
 
   end subroutine initialize_simulation_domains
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine initialize_GPU()
+
+! initialization for GPU cards
+
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: ncuda_devices,ncuda_devices_min,ncuda_devices_max
+
+  ! GPU_MODE now defined in Par_file
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) "GPU_MODE Active."
+    call flush_IMAIN()
+  endif
+
+  ! check for GPU runs
+  if (NGLLX /= 5 .or. NGLLZ /= 5 ) &
+    stop 'GPU mode can only be used if NGLLX == NGLLZ == 5'
+  if (CUSTOM_REAL /= 4 ) &
+    stop 'GPU mode runs only with CUSTOM_REAL == 4'
+
+  ! initializes GPU and outputs info to files for all processes
+  call initialize_cuda_device(myrank,ncuda_devices)
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! collects min/max of local devices found for statistics
+#ifdef USE_MPI
+  call min_all_i(ncuda_devices,ncuda_devices_min)
+  call max_all_i(ncuda_devices,ncuda_devices_max)
+#else
+  ncuda_devices_min = ncuda_devices
+  ncuda_devices_max = ncuda_devices
+#endif
+
+  if (myrank == 0) then
+    write(IMAIN,*) "GPU number of devices per node: min =",ncuda_devices_min
+    write(IMAIN,*) "                                max =",ncuda_devices_max
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  end subroutine initialize_GPU
+

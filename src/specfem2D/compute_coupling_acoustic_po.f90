@@ -39,6 +39,7 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
+
 ! for acoustic solver
 
  subroutine compute_coupling_acoustic_po()
@@ -84,7 +85,7 @@
       displw_x = displw_poroelastic(1,iglob)
       displw_z = displw_poroelastic(2,iglob)
 
-      if( SIMULATION_TYPE == 3 ) then
+      if (SIMULATION_TYPE == 3) then
         ! new definition of adjoint displacement and adjoint potential
         displ_x = -accels_poroelastic_adj_coupling(1,iglob)
         displ_z = -accels_poroelastic_adj_coupling(2,iglob)
@@ -102,28 +103,28 @@
       ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
       ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
       ! Blackwell Science, page 110, equation (4.60).
-      if( iedge_acoustic == ITOP ) then
+      if (iedge_acoustic == ITOP) then
         xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xxi**2 + zxi**2)
         nx = - zxi / jacobian1D
         nz = + xxi / jacobian1D
         weight = jacobian1D * wxgll(i)
-      else if( iedge_acoustic == IBOTTOM ) then
+      else if (iedge_acoustic == IBOTTOM) then
         xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xxi**2 + zxi**2)
         nx = + zxi / jacobian1D
         nz = - xxi / jacobian1D
         weight = jacobian1D * wxgll(i)
-      else if( iedge_acoustic ==ILEFT ) then
+      else if (iedge_acoustic ==ILEFT) then
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
         nx = - zgamma / jacobian1D
         nz = + xgamma / jacobian1D
         weight = jacobian1D * wzgll(j)
-      else if( iedge_acoustic ==IRIGHT ) then
+      else if (iedge_acoustic ==IRIGHT) then
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -196,28 +197,28 @@
       ! Sixth Edition, electronic version, www.amazon.com, p. 204 and Figure 7.7(a),
       ! or Y. K. Cheung, S. H. Lo and A. Y. T. Leung, Finite Element Implementation,
       ! Blackwell Science, page 110, equation (4.60).
-      if( iedge_acoustic == ITOP ) then
+      if (iedge_acoustic == ITOP) then
         xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xxi**2 + zxi**2)
         nx = - zxi / jacobian1D
         nz = + xxi / jacobian1D
         weight = jacobian1D * wxgll(i)
-      else if( iedge_acoustic == IBOTTOM ) then
+      else if (iedge_acoustic == IBOTTOM) then
         xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xxi**2 + zxi**2)
         nx = + zxi / jacobian1D
         nz = - xxi / jacobian1D
         weight = jacobian1D * wxgll(i)
-      else if( iedge_acoustic ==ILEFT ) then
+      else if (iedge_acoustic ==ILEFT) then
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
         nx = - zgamma / jacobian1D
         nz = + xgamma / jacobian1D
         weight = jacobian1D * wzgll(j)
-      else if( iedge_acoustic ==IRIGHT ) then
+      else if (iedge_acoustic ==IRIGHT) then
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)

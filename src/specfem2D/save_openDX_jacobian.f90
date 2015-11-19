@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -83,11 +82,11 @@
   allocate(ibool_OpenDX(npgeo))
   mask_point(:) = .false.
   do ispec = 1,nspec
-    do ia=1,ngnod
+    do ia = 1,ngnod
       nnum = knods(ia,ispec)
       xelm = coorg(1,nnum)
       zelm = coorg(2,nnum)
-      if(.not. mask_point(knods(ia,ispec))) then
+      if (.not. mask_point(knods(ia,ispec))) then
         mask_point(knods(ia,ispec)) = .true.
         ibool_OpenDX(knods(ia,ispec)) = ipoint_number
         write(11,*) xelm,zelm,' 0'
@@ -119,7 +118,7 @@
     found_a_problem_in_this_element = .false.
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        if(AXISYM) then
+        if (AXISYM) then
           if (is_on_the_axis(ispec)) then
             xi = xiglj(i)
           else
@@ -134,12 +133,12 @@
                         jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
                         .false.)
 
-        if(jacobianl <= ZERO) found_a_problem_in_this_element = .true.
+        if (jacobianl <= ZERO) found_a_problem_in_this_element = .true.
       enddo
     enddo
 
     ! output data value
-    if(found_a_problem_in_this_element) then
+    if (found_a_problem_in_this_element) then
       write(11,*) '2'
       print *,'element ',ispec,' has a negative Jacobian'
       total_of_negative_elements = total_of_negative_elements + 1

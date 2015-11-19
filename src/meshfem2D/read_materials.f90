@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -97,7 +96,7 @@
   number_of_materials_defined_by_tomo_file = 0
 
   ! reads in material parameters
-  do imaterial=1,nb_materials
+  do imaterial= 1,nb_materials
 
      call read_material_parameters_p(i,icodematread, &
                               val0read,val1read,val2read,val3read, &
@@ -105,12 +104,12 @@
                               val8read,val9read,val10read,val11read,val12read)
 
      ! checks material id
-     if(i < 1 .or. i > nb_materials) stop 'Wrong material number!'
+     if (i < 1 .or. i > nb_materials) stop 'Wrong material number!'
      icodemat(i) = icodematread
 
 
      ! sets material properties
-     if(icodemat(i) == ISOTROPIC_MATERIAL) then
+     if (icodemat(i) == ISOTROPIC_MATERIAL) then
 
         ! isotropic materials
 
@@ -121,13 +120,13 @@
         Qmu(i) = val6read
 
 ! for Cs we use a less restrictive test because acoustic media have Cs exactly equal to zero
-        if(rho_s(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) &
+        if (rho_s(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) &
             stop 'negative value of velocity or density'
-        if(QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) stop 'non-positive value of QKappa or Qmu'
+        if (QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) stop 'non-positive value of QKappa or Qmu'
 
         aniso3(i) = val3read
         aniso4(i) = val4read
-        if(abs(cs(i)) > TINYVAL) then
+        if (abs(cs(i)) > TINYVAL) then
            phi(i) = 0.d0           ! elastic
         else
            phi(i) = 1.d0           ! acoustic
@@ -166,12 +165,12 @@
         mu_fr(i) = val11read
         Qmu(i) = val12read
 
-        if(rho_s(i) <= 0.d0 .or. rho_f(i) <= 0.d0) stop 'non-positive value of density'
-        if(phi(i) <= 0.d0 .or. tortuosity(i) <= 0.d0) stop 'non-positive value of porosity or tortuosity'
-        if(kappa_s(i) <= 0.d0 .or. kappa_f(i) <= 0.d0 .or. kappa_fr(i) <= 0.d0 .or. mu_fr(i) <= 0.d0) then
+        if (rho_s(i) <= 0.d0 .or. rho_f(i) <= 0.d0) stop 'non-positive value of density'
+        if (phi(i) <= 0.d0 .or. tortuosity(i) <= 0.d0) stop 'non-positive value of porosity or tortuosity'
+        if (kappa_s(i) <= 0.d0 .or. kappa_f(i) <= 0.d0 .or. kappa_fr(i) <= 0.d0 .or. mu_fr(i) <= 0.d0) then
            stop 'non-positive value of modulus'
         endif
-        if(Qmu(i) <= 0.00000001d0) stop 'non-positive value of Qmu'
+        if (Qmu(i) <= 0.00000001d0) stop 'non-positive value of Qmu'
 
       else if (icodemat(i) <= 0) then
         number_of_materials_defined_by_tomo_file = number_of_materials_defined_by_tomo_file + 1
@@ -186,7 +185,7 @@
         Qmu(i) = -1.0d0
         aniso3(i) = -1.0d0
         aniso4(i) = -1.0d0
-        if(abs(cs(i)) > TINYVAL) then
+        if (abs(cs(i)) > TINYVAL) then
            phi(i) = 0.d0           ! elastic
         else
            phi(i) = 1.d0           ! acoustic
@@ -200,11 +199,11 @@
   print *
   print *, 'Nb of solid, fluid or porous materials = ',nb_materials
   print *
-  do i=1,nb_materials
-     if(icodemat(i) == ISOTROPIC_MATERIAL) then
+  do i = 1,nb_materials
+     if (icodemat(i) == ISOTROPIC_MATERIAL) then
         print *,'Material #',i,' isotropic'
         print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i),QKappa(i),Qmu(i)
-        if(cs(i) < TINYVAL) then
+        if (cs(i) < TINYVAL) then
            print *,'Material is fluid'
         else
            print *,'Material is solid'

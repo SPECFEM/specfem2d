@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -203,7 +202,7 @@ subroutine get_number_gll_points(kernel_path, nlines)
   filename = trim(kernel_path)//'/'//'proc000000_rhop_alpha_beta_kernel.dat'
   open(unit=3,file=filename,status='old',action='read')
   nlines = 0
-  do j=1,MAX_LINES
+  do j = 1,MAX_LINES
      read(3,*,iostat=ios) dummy1, dummy2, dummy3, dummy4, dummy5
      if (ios /= 0) exit
      nlines=nlines+1

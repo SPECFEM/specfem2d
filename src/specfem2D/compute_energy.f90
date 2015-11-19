@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -65,10 +64,10 @@
     !---
     !--- elastic spectral element
     !---
-    if(elastic(ispec)) then
+    if (elastic(ispec)) then
 
       ! checks wave type
-      if( .not. p_sv ) then
+      if (.not. p_sv) then
         call exit_MPI('output energy for SH waves not implemented yet')
       endif
 
@@ -83,7 +82,7 @@
         do i = 1,NGLLX
 
           !--- if external medium, get elastic parameters of current grid point
-          if(assign_external_model) then
+          if (assign_external_model) then
             cpl = vpext(i,j,ispec)
             csl = vsext(i,j,ispec)
             rhol = rhoext(i,j,ispec)
@@ -139,7 +138,7 @@
     !---
     !--- poroelastic spectral element
     !---
-    else if(poroelastic(ispec)) then
+    else if (poroelastic(ispec)) then
 
       ! get unrelaxed elastic parameters of current spectral element
       !for now replaced by solid, fluid, and frame parameters of current spectral element
@@ -232,7 +231,7 @@
               + two*M_biot*dwx_dxl*dwz_dzl )*wxgll(i)*wzgll(j)*jacobianl / TWO
 
           ! compute kinetic energy
-          if(phil > 0.0d0) then
+          if (phil > 0.0d0) then
             kinetic_energy = kinetic_energy &
               + ( rhol_bar*(velocs_poroelastic(1,ibool(i,j,ispec))**2 &
               + velocs_poroelastic(2,ibool(i,j,ispec))**2) &
@@ -283,7 +282,7 @@
         do i = 1,NGLLX
 
           !--- if external medium, get density of current grid point
-          if(assign_external_model) then
+          if (assign_external_model) then
             cpl = vpext(i,j,ispec)
             rhol = rhoext(i,j,ispec)
           endif

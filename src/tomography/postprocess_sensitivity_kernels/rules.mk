@@ -94,6 +94,8 @@ xcombine_sem_OBJECTS = \
 	$O/postprocess_par.postprocess_module.o \
 	$O/combine_sem.postprocess.o \
 	$O/parse_kernel_names.postprocess.o \
+	$O/exit_mpi.shared.o \
+	$O/parallel.shared.o \
 	$(EMPTY_MACRO)
 
 xcombine_sem_SHARED_OBJECTS = \
@@ -112,8 +114,9 @@ xsmooth_sem_OBJECTS = \
 	$O/postprocess_par.postprocess_module.o \
 	$O/smooth_sem.postprocess.o \
 	$O/parse_kernel_names.postprocess.o \
+	$O/exit_mpi.shared.o \
+	$O/parallel.shared.o \
 	$O/gll_library.spec.o \
-	$O/exit_mpi.spec.o \
 	$(EMPTY_MACRO)
 
 cuda_smooth_sem_STUBS = \

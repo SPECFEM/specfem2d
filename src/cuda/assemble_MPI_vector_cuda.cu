@@ -40,7 +40,6 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -77,7 +76,7 @@ __global__ void prepare_boundary_accel_on_device(realw* d_accel, realw* d_send_a
 
      num_int=inum_inter_elastic[iinterface]-1;
 
-      if( id < d_nibool_interfaces_ext_mesh[num_int] ) {
+      if (id < d_nibool_interfaces_ext_mesh[num_int]) {
 
 
       // entry in interface array
@@ -107,7 +106,7 @@ TRACE("\ttransfer_boun_accel_from_device");
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
   // checks if anything to do
-  if( mp->size_mpi_buffer > 0 ){
+  if (mp->size_mpi_buffer > 0) {
 
     int blocksize = BLOCKSIZE_TRANSFER;
     int size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_ext_mesh)/((double)blocksize)))*blocksize;
@@ -122,7 +121,7 @@ TRACE("\ttransfer_boun_accel_from_device");
     //cudaEvent_t start, stop;
     //start_timing_cuda(&start,&stop);
 
-    if(*FORWARD_OR_ADJOINT == 1) {
+    if (*FORWARD_OR_ADJOINT == 1) {
 
       prepare_boundary_accel_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel,mp->d_send_accel_buffer,
                                                                               mp->ninterface_elastic,
@@ -143,7 +142,7 @@ TRACE("\ttransfer_boun_accel_from_device");
                               mp->size_mpi_buffer*sizeof(realw),cudaMemcpyDeviceToHost),97001);
 
     }
-    else if(*FORWARD_OR_ADJOINT == 3) {
+    else if (*FORWARD_OR_ADJOINT == 3) {
       prepare_boundary_accel_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel,mp->d_b_send_accel_buffer,
                                                                               mp->ninterface_elastic,
                                                                               mp->max_nibool_interfaces_ext_mesh,
@@ -183,7 +182,7 @@ void FC_FUNC_(transfer_boundary_from_device_a,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
-  if( mp->size_mpi_buffer > 0 ){
+  if (mp->size_mpi_buffer > 0) {
 
     int blocksize = BLOCKSIZE_TRANSFER;
     int size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_ext_mesh)/((double)blocksize)))*blocksize;
@@ -222,7 +221,7 @@ void FC_FUNC_(prepare_boundary_on_device,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
-  if( mp->size_mpi_buffer > 0 ){
+  if (mp->size_mpi_buffer > 0) {
 
     int blocksize = BLOCKSIZE_TRANSFER;
     int size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_ext_mesh)/((double)blocksize)))*blocksize;
@@ -264,7 +263,7 @@ void FC_FUNC_(transfer_boundary_to_device_a,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
-  if( mp->size_mpi_buffer > 0 ){
+  if (mp->size_mpi_buffer > 0) {
     // copy on host memory
     memcpy(mp->h_recv_accel_buffer,buffer_recv_vector_ext_mesh,mp->size_mpi_buffer*sizeof(realw));
 
@@ -298,7 +297,7 @@ __global__ void assemble_boundary_accel_on_device(realw* d_accel, realw* d_send_
 
      num_int=inum_inter_elastic[iinterface]-1;
 
-     if( id < d_nibool_interfaces_ext_mesh[num_int] ) {
+     if (id < d_nibool_interfaces_ext_mesh[num_int]) {
 
       // entry in interface array
       ientry = id + max_nibool_interfaces_ext_mesh*num_int;
@@ -339,14 +338,14 @@ TRACE("\ttransfer_asmbl_accel_to_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
-  if( mp->size_mpi_buffer > 0 ){
+  if (mp->size_mpi_buffer > 0) {
 
     //daniel: todo - check if this copy is only needed for adjoint simulation, otherwise it is called asynchronously?
-    if(*FORWARD_OR_ADJOINT == 1 ){
+    if (*FORWARD_OR_ADJOINT == 1) {
       // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
       cudaStreamSynchronize(mp->copy_stream);
     }
-    else if(*FORWARD_OR_ADJOINT == 3 ){
+    else if (*FORWARD_OR_ADJOINT == 3) {
       // explicitly synchronizes
       // (cudaMemcpy implicitly synchronizes all other cuda operations)
       synchronize_cuda();
@@ -374,7 +373,7 @@ TRACE("\ttransfer_asmbl_accel_to_device");
     // cudaEventCreate(&stop);
     // cudaEventRecord( start, 0 );
 
-    if(*FORWARD_OR_ADJOINT == 1) {
+    if (*FORWARD_OR_ADJOINT == 1) {
       //assemble forward accel
 
 
@@ -387,7 +386,7 @@ TRACE("\ttransfer_asmbl_accel_to_device");
 
 
     }
-    else if(*FORWARD_OR_ADJOINT == 3) {
+    else if (*FORWARD_OR_ADJOINT == 3) {
       //assemble adjoint accel
       assemble_boundary_accel_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel, mp->d_b_send_accel_buffer,
                                                                                mp->ninterface_elastic,
@@ -426,9 +425,9 @@ void FC_FUNC_(sync_copy_from_device,
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
   // Wait until async-memcpy of outer elements is finished and start MPI.
-  if( *iphase != 2 ){ exit_on_cuda_error("sync_copy_from_device must be called for iphase == 2"); }
+  if (*iphase != 2) { exit_on_cuda_error("sync_copy_from_device must be called for iphase == 2"); }
 
-  if( mp->size_mpi_buffer > 0 ){
+  if (mp->size_mpi_buffer > 0) {
     // waits for asynchronous copy to finish
     cudaStreamSynchronize(mp->copy_stream);
 

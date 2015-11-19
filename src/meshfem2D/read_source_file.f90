@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -86,23 +85,23 @@ contains
 
     ! counts lines
     open(unit=IIN_SOURCE,file='DATA/SOURCE',iostat=ios,status='old',action='read')
-    if(ios /= 0) stop 'error opening DATA/SOURCE file'
+    if (ios /= 0) stop 'error opening DATA/SOURCE file'
 
     icounter = 0
     do while(ios == 0)
        read(IIN_SOURCE,"(a)",iostat=ios) string_read
 
-       if(ios == 0) then
+       if (ios == 0) then
 
   ! suppress trailing carriage return (ASCII code 13) if any (e.g. if input text file coming from Windows/DOS)
-         if(index(string_read,achar(13)) > 0) string_read = string_read(1:index(string_read,achar(13))-1)
+         if (index(string_read,achar(13)) > 0) string_read = string_read(1:index(string_read,achar(13))-1)
 
   ! suppress leading and trailing white spaces, if any
          string_read = adjustl(string_read)
          string_read = string_read(1:len_trim(string_read))
 
   ! if the line is not empty and is not a comment, count it
-         if(len_trim(string_read) > 0 .and. (index(string_read,'#') == 0 .or. index(string_read,'#') > 1)) icounter = icounter + 1
+         if (len_trim(string_read) > 0 .and. (index(string_read,'#') == 0 .or. index(string_read,'#') > 1)) icounter = icounter + 1
 
        endif
 
@@ -110,14 +109,14 @@ contains
     close(IIN_SOURCE)
 
     ! checks counter
-    if(mod(icounter,NLINES_PER_SOURCE) /= 0) &
+    if (mod(icounter,NLINES_PER_SOURCE) /= 0) &
       stop 'total number of non blank and non comment lines in SOURCE file should be a multiple of NLINES_PER_SOURCE'
 
     ! total number of sources
     num_sources = icounter / NLINES_PER_SOURCE
 
-    if(num_sources < 1) stop 'need at least one source in SOURCE file'
-    if(num_sources /= NSOURCES) then
+    if (num_sources < 1) stop 'need at least one source in SOURCE file'
+    if (num_sources /= NSOURCES) then
          print *,'num_sources :',num_sources
          print *,'NSOURCES :',NSOURCES
          stop 'error: Total number of sources read is different from that declared in the Par_file'
@@ -125,7 +124,7 @@ contains
 
     ! reads in source parameters
     open(unit=IIN_SOURCE,file='DATA/SOURCE',status='old',action='read')
-    do  i_source=1,NSOURCES
+    do  i_source= 1,NSOURCES
       call read_value_logical(IIN_SOURCE,IGNORE_JUNK,source_surf(i_source))
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,xs(i_source))
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,zs(i_source))
@@ -166,7 +165,7 @@ contains
         endif
       endif
 
-    enddo ! do i_source=1,NSOURCES
+    enddo ! do i_source= 1,NSOURCES
     close(IIN_SOURCE)
 
   end subroutine read_source_file

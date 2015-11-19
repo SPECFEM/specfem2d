@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -63,9 +62,9 @@
   dateprint = datein(7:8)//' - '//datein(5:6)//' - '//datein(1:4)
   timeprint = timein(1:2)//':'//timein(3:4)//':'//timein(5:6)
 
-  write(iout,"(//1x,79('-')/1x,79('-')/1x,'Program SPECFEM2D: ')")
-  write(iout,"(1x,79('-')/1x,79('-')/1x,a50)") string_input
-  write(iout,"(1x,79('-')/,1x,79('-')/' D a t e : ',a16,30x,' T i m e  : ',a8/1x,79('-'),/1x,79('-'))") dateprint,timeprint
+  write(IMAIN,"(//1x,79('-')/1x,79('-')/1x,'Program SPECFEM2D: ')")
+  write(IMAIN,"(1x,79('-')/1x,79('-')/1x,a50)") string_input
+  write(IMAIN,"(1x,79('-')/,1x,79('-')/' D a t e : ',a16,30x,' T i m e  : ',a8/1x,79('-'),/1x,79('-'))") dateprint,timeprint
 
   end subroutine datim
 

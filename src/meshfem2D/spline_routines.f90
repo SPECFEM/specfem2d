@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -126,7 +125,7 @@
   do while (index_higher - index_lower > 1)
 ! compute the middle of the interval
     index_loop = (index_higher + index_lower) / 2
-    if(xpoint(index_loop) > x_evaluate_spline) then
+    if (xpoint(index_loop) > x_evaluate_spline) then
       index_higher = index_loop
     else
       index_lower = index_loop
@@ -135,7 +134,7 @@
 
 ! test that the interval obtained does not have a size of zero
 ! (this could happen for instance in the case of duplicates in the input list of points)
-  if(xpoint(index_higher) == xpoint(index_lower)) stop 'incorrect interval found in spline evaluation'
+  if (xpoint(index_higher) == xpoint(index_lower)) stop 'incorrect interval found in spline evaluation'
 
   coef1 = (xpoint(index_higher) - x_evaluate_spline) / (xpoint(index_higher) - xpoint(index_lower))
   coef2 = (x_evaluate_spline - xpoint(index_lower)) / (xpoint(index_higher) - xpoint(index_lower))
@@ -165,8 +164,8 @@ double precision function value_spline(x,xinterface,zinterface,coefs_interface,n
   xp = x
 
   ! assign the value on the edge if point is outside the model
-  if(xp < xinterface(1)) xp = xinterface(1)
-  if(xp > xinterface(npoints_interface)) xp = xinterface(npoints_interface)
+  if (xp < xinterface(1)) xp = xinterface(1)
+  if (xp > xinterface(npoints_interface)) xp = xinterface(npoints_interface)
 
   call spline_evaluation(xinterface,zinterface,coefs_interface,npoints_interface,xp,value_spline)
 

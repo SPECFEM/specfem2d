@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -63,7 +62,7 @@
   real(kind=CUSTOM_REAL) :: duz_dxl,dux_dzl
   integer :: i,j,k
 
-  if(elastic(ispec)) then
+  if (elastic(ispec)) then
 
      do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -99,7 +98,7 @@
         enddo
      enddo
 
-  else if(poroelastic(ispec)) then
+  else if (poroelastic(ispec)) then
 
      do j = 1,NGLLZ
         do i = 1,NGLLX

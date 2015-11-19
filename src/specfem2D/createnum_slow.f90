@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -60,10 +59,11 @@
 
 
 !----  create global mesh numbering
-  if(myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'Generating global mesh numbering (slow version)...'
-    write(IOUT,*)
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Generating global mesh numbering (slow version)...'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   nglob = 0
@@ -92,17 +92,17 @@
   ibool(:,:,:) = 0
 
   do numelem = 1,nspec
-  do i=1,NGLLX
-    do j=1,NGLLZ
+  do i = 1,NGLLX
+    do j = 1,NGLLZ
 
 ! verifier que le point n'a pas deja ete genere
 
-  if(ibool(i,j,numelem) == 0) then
+  if (ibool(i,j,numelem) == 0) then
 
 !
 !---- point interieur a un element, donc forcement unique
 !
-  if(i /= 1 .and. i /= NGLLX .and. j /= 1 .and. j /= NGLLZ) then
+  if (i /= 1 .and. i /= NGLLX .and. j /= 1 .and. j /= NGLLZ) then
 
     nglob = nglob + 1
     ibool(i,j,numelem) = nglob
@@ -110,17 +110,17 @@
 !
 !---- point au coin d'un element, rechercher les coins des autres elements
 !
-  else if((i == 1 .and. j == 1) .or. (i == 1 .and. j == NGLLZ) .or. &
+  else if ((i == 1 .and. j == 1) .or. (i == 1 .and. j == NGLLZ) .or. &
           (i == NGLLX .and. j == 1) .or. (i == NGLLX .and. j == NGLLZ)) then
 
 ! trouver numero local du coin
-  if(i == 1 .and. j == 1) then
+  if (i == 1 .and. j == 1) then
     ngnodloc = 1
-  else if(i == NGLLX .and. j == 1) then
+  else if (i == NGLLX .and. j == 1) then
     ngnodloc = 2
-  else if(i == NGLLX .and. j == NGLLZ) then
+  else if (i == NGLLX .and. j == NGLLZ) then
     ngnodloc = 3
-  else if(i == 1 .and. j == NGLLZ) then
+  else if (i == 1 .and. j == NGLLZ) then
     ngnodloc = 4
   endif
 
@@ -128,28 +128,28 @@
 
   alreadyexist = .false.
 
-  if(numelem > 1) then
+  if (numelem > 1) then
 
-  do num2=1,numelem-1
+  do num2= 1,numelem-1
 
 ! ne rechercher que sur les 4 premiers points de controle et non sur ngnod
     do ngnodother=1,4
 
 ! voir si ce coin a deja ete genere
-      if(knods(ngnodother,num2) == knods(ngnodloc,numelem)) then
+      if (knods(ngnodother,num2) == knods(ngnodloc,numelem)) then
         alreadyexist = .true.
 
 ! obtenir la numerotation dans l'autre element
-          if(ngnodother == 1) then
+          if (ngnodother == 1) then
             i2 = 1
             j2 = 1
-          else if(ngnodother == 2) then
+          else if (ngnodother == 2) then
             i2 = NGLLX
             j2 = 1
-          else if(ngnodother == 3) then
+          else if (ngnodother == 3) then
             i2 = NGLLX
             j2 = NGLLZ
-          else if(ngnodother == 4) then
+          else if (ngnodother == 4) then
             i2 = 1
             j2 = NGLLZ
           else
@@ -171,7 +171,7 @@
   endif
 
 ! si un ancien point n'a pas ete trouve, en generer un nouveau
-  if(.not. alreadyexist) then
+  if (.not. alreadyexist) then
     npcorn = npcorn + 1
     nglob = nglob + 1
     ibool(i,j,numelem) = nglob
@@ -183,13 +183,13 @@
   else
 
 ! trouver numero local de l'arete
-  if(j == 1) then
+  if (j == 1) then
     nedgeloc = 1
-  else if(i == NGLLX) then
+  else if (i == NGLLX) then
     nedgeloc = 2
-  else if(j == NGLLZ) then
+  else if (j == NGLLZ) then
     nedgeloc = 3
-  else if(i == 1) then
+  else if (i == 1) then
     nedgeloc = 4
   endif
 
@@ -197,23 +197,23 @@
 
   alreadyexist = .false.
 
-  if(numelem > 1) then
+  if (numelem > 1) then
 
-  do num2=1,numelem-1
+  do num2= 1,numelem-1
 
 ! rechercher sur les 4 aretes
     do nedgeother=1,4
 
 !--- detecter un eventuel defaut dans la structure topologique du maillage
 
-  if((knods(ngnod_begin(nedgeother),num2) == knods(ngnod_begin(nedgeloc),numelem)) &
+  if ((knods(ngnod_begin(nedgeother),num2) == knods(ngnod_begin(nedgeloc),numelem)) &
        .and. &
     (knods(ngnod_end(nedgeother),num2) == knods(ngnod_end(nedgeloc),numelem))) then
      call exit_MPI('Improper topology of the input mesh detected')
 
 !--- sinon voir si cette arete a deja ete generee
 
-  else if((knods(ngnod_begin(nedgeother),num2) == knods(ngnod_end(nedgeloc),numelem)) &
+  else if ((knods(ngnod_begin(nedgeother),num2) == knods(ngnod_end(nedgeloc),numelem)) &
        .and. &
     (knods(ngnod_end(nedgeother),num2) == knods(ngnod_begin(nedgeloc),numelem))) then
 
@@ -226,19 +226,19 @@
   do kloc = 2,NGLLX-1
 
 ! calculer l'abscisse le long de l'arete de depart
-          if(nedgeloc == 1) then
+          if (nedgeloc == 1) then
             iloc = kloc
             jloc = 1
             ipos = iloc
-          else if(nedgeloc == 2) then
+          else if (nedgeloc == 2) then
             iloc = NGLLX
             jloc = kloc
             ipos = jloc
-          else if(nedgeloc == 3) then
+          else if (nedgeloc == 3) then
             iloc = kloc
             jloc = NGLLZ
             ipos = NGLLX - iloc + 1
-          else if(nedgeloc == 4) then
+          else if (nedgeloc == 4) then
             iloc = 1
             jloc = kloc
             ipos = NGLLZ - jloc + 1
@@ -252,16 +252,16 @@
         ipos2 = NGLLX - ipos + 1
 
 ! calculer les coordonnees reelles dans l'element d'arrivee
-          if(nedgeother == 1) then
+          if (nedgeother == 1) then
             i2 = ipos2
             j2 = 1
-          else if(nedgeother == 2) then
+          else if (nedgeother == 2) then
             i2 = NGLLX
             j2 = ipos2
-          else if(nedgeother == 3) then
+          else if (nedgeother == 3) then
             i2 = NGLLX - ipos2 + 1
             j2 = NGLLZ
-          else if(nedgeother == 4) then
+          else if (nedgeother == 4) then
             i2 = 1
             j2 = NGLLZ - ipos2 + 1
             else
@@ -269,10 +269,10 @@
             endif
 
 ! verifier que le point de depart n'existe pas deja
-      if(ibool(iloc,jloc,numelem) /= 0) call exit_MPI('point generated twice')
+      if (ibool(iloc,jloc,numelem) /= 0) call exit_MPI('point generated twice')
 
 ! verifier que le point d'arrivee existe bien deja
-      if(ibool(i2,j2,num2) == 0) call exit_MPI('unknown point in the mesh')
+      if (ibool(i2,j2,num2) == 0) call exit_MPI('unknown point in the mesh')
 
 ! affecter le meme numero
       ibool(iloc,jloc,numelem) = ibool(i2,j2,num2)
@@ -291,7 +291,7 @@
   endif
 
 ! si un ancien point n'a pas ete trouve, en generer un nouveau
-  if(.not. alreadyexist) then
+  if (.not. alreadyexist) then
     npedge = npedge + 1
     nglob = nglob + 1
     ibool(i,j,numelem) = nglob
@@ -306,7 +306,7 @@
   enddo
 
 ! verification de la coherence de la numerotation generee
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob) call exit_MPI('Error while generating global numbering')
+  if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) call exit_MPI('Error while generating global numbering')
 
   end subroutine createnum_slow
 

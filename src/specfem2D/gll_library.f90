@@ -1,3 +1,45 @@
+!========================================================================
+!
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This software is governed by the CeCILL license under French law and
+! abiding by the rules of distribution of free software. You can use,
+! modify and/or redistribute the software under the terms of the CeCILL
+! license as circulated by CEA, CNRS and Inria at the following URL
+! "http://www.cecill.info".
+!
+! As a counterpart to the access to the source code and rights to copy,
+! modify and redistribute granted by the license, users are provided only
+! with a limited warranty and the software's author, the holder of the
+! economic rights, and the successive licensors have only limited
+! liability.
+!
+! In this respect, the user's attention is drawn to the risks associated
+! with loading, using, modifying and/or developing or reproducing the
+! software by the user in light of its specific status of free software,
+! that may mean that it is complicated to manipulate, and that also
+! therefore means that it is reserved for developers and experienced
+! professionals having in-depth computer knowledge. Users are therefore
+! encouraged to load and test the software's suitability as regards their
+! requirements in conditions enabling the security of their systems and/or
+! data to be ensured and, more generally, to use and operate it in the
+! same conditions as regards security.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
+
 
 !=======================================================================
 !
@@ -21,13 +63,13 @@
 
   f3 = zero
   apb = alpha+beta
-  if(n == 0) then
+  if (n == 0) then
     endw1 = zero
     return
   endif
   f1 = gammaf(alpha+two)*gammaf(beta+one)/gammaf(apb+three)
   f1 = f1*(apb+two)*two**(apb+two)/two
-  if(n == 1) then
+  if (n == 1) then
    endw1 = f1
    return
   endif
@@ -36,11 +78,11 @@
   fint2 = gammaf(alpha+two)*gammaf(beta+two)/gammaf(apb+four)
   fint2 = fint2*two**(apb+three)
   f2    = (-two*(beta+two)*fint1 + (apb+four)*fint2) * (apb+three)/four
-  if(n == 2) then
+  if (n == 2) then
    endw1 = f2
    return
   endif
-  do i=3,n
+  do i = 3,n
    di   = dble(i-1)
    abn  = alpha+beta+di
    abnn = abn+di
@@ -92,7 +134,7 @@
    endw2 = f2
    return
   endif
-  do i=3,n
+  do i = 3,n
    di   = dble(i-1)
    abn  = alpha+beta+di
    abnn = abn+di
@@ -177,38 +219,38 @@
   p = 0.d0
   pd = 0.d0
   jmin = 0
-  do j=1,np
-   if(j == 1) then
+  do j = 1,np
+   if (j == 1) then
       x = cos((2.d0*(dble(j)-1.d0)+1.d0)*dth)
    else
       x1 = cos((2.d0*(dble(j)-1.d0)+1.d0)*dth)
       x2 = xlast
       x  = (x1+x2)/2.d0
    endif
-   do k=1,K_MAX_ITER
+   do k = 1,K_MAX_ITER
       call jacobf (p,pd,pm1,pdm1,pm2,pdm2,np,alpha,beta,x)
       recsum = 0.d0
       jm = j-1
-      do i=1,jm
+      do i = 1,jm
          recsum = recsum+1.d0/(x-xjac(np-i+1))
       enddo
       delx = -p/(pd-recsum*p)
       x    = x+delx
-      if(abs(delx) < eps) goto 31
+      if (abs(delx) < eps) goto 31
    enddo
  31      continue
    xjac(np-j+1) = x
    xlast        = x
   enddo
-  do i=1,np
+  do i = 1,np
    xmin = 2.d0
-   do j=i,np
-      if(xjac(j) < xmin) then
+   do j =i,np
+      if (xjac(j) < xmin) then
          xmin = xjac(j)
          jmin = j
       endif
    enddo
-   if(jmin /= i) then
+   if (jmin /= i) then
       swap = xjac(i)
       xjac(i) = xjac(jmin)
       xjac(jmin) = swap
@@ -251,7 +293,7 @@
   pder  = (apb+2.d0)/2.d0
   if (n == 1) return
 
-  do k=2,n
+  do k = 2,n
     dk = dble(k)
     a1 = 2.d0*dk*(dk+apb)*(2.d0*dk+apb-2.d0)
     a2 = (2.d0*dk+apb-1.d0)*(alp**2-bet**2)
@@ -438,7 +480,7 @@
   prod  = prod*(one+alpha)*(two+alpha)
   prod  = prod*(one+beta)*(two+beta)
 
-  do i=3,n
+  do i = 3,n
     dindx = dble(i)
     frac  = (dindx+alpha)*(dindx+beta)/(dindx*(dindx+alpha+beta))
     prod  = prod*frac
@@ -510,7 +552,7 @@
   fac3  = fac2+one
   fnorm = pnormj(np1,alpha,beta)
   rcoef = (fnorm*fac2*fac3)/(two*fac1*dnp2)
-  do i=1,np
+  do i = 1,np
     call jacobf(p,pd,pm1,pdm1,pm2,pdm2,np2,alpha,beta,z(i))
     w(i) = -rcoef/(p*pdm1)
   enddo
@@ -577,7 +619,7 @@
   z(1)  = - one
   z(np) =  one
 
-  do i=2,np-1
+  do i = 2,np-1
    w(i) = w(i)/(one-z(i)**2)
   enddo
 

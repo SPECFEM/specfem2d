@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -95,26 +94,26 @@ subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izma
   integer, intent(out)  :: ixmin, ixmax, izmin, izmax
 
 
-  if ( type == 1 ) then
-     if ( e1 == n(1) ) then
+  if (type == 1) then
+     if (e1 == n(1)) then
         ixmin = 1
         ixmax = 1
         izmin = 1
         izmax = 1
      endif
-     if ( e1 == n(2) ) then
+     if (e1 == n(2)) then
         ixmin = NGLLX
         ixmax = NGLLX
         izmin = 1
         izmax = 1
      endif
-     if ( e1 == n(3) ) then
+     if (e1 == n(3)) then
         ixmin = NGLLX
         ixmax = NGLLX
         izmin = NGLLZ
         izmax = NGLLZ
      endif
-     if ( e1 == n(4) ) then
+     if (e1 == n(4)) then
         ixmin = 1
         ixmax = 1
         izmin = NGLLZ
@@ -122,61 +121,61 @@ subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izma
      endif
 
   else
-     if ( e1 ==  n(1) ) then
+     if (e1 ==  n(1)) then
         ixmin = 1
         izmin = 1
-        if ( e2 == n(2) ) then
+        if (e2 == n(2)) then
            ixmax = NGLLX
            izmax = 1
 
         endif
-        if ( e2 == n(4) ) then
+        if (e2 == n(4)) then
            ixmax = 1
            izmax = NGLLZ
 
         endif
      endif
-     if ( e1 == n(2) ) then
+     if (e1 == n(2)) then
         ixmin = NGLLX
         izmin = 1
-        if ( e2 == n(3) ) then
+        if (e2 == n(3)) then
            ixmax = NGLLX
            izmax = NGLLZ
 
         endif
-        if ( e2 == n(1) ) then
+        if (e2 == n(1)) then
            ixmax = ixmin
            ixmin = 1
            izmax = 1
 
         endif
      endif
-     if ( e1 == n(3) ) then
+     if (e1 == n(3)) then
         ixmin = NGLLX
         izmin = NGLLZ
-        if ( e2 == n(4) ) then
+        if (e2 == n(4)) then
            ixmax = ixmin
            ixmin = 1
            izmax = NGLLZ
 
         endif
-        if ( e2 == n(2) ) then
+        if (e2 == n(2)) then
            ixmax = NGLLX
            izmax = izmin
            izmin = 1
 
         endif
      endif
-     if ( e1 == n(4) ) then
+     if (e1 == n(4)) then
         ixmin = 1
         izmin = NGLLZ
-        if ( e2 == n(1) ) then
+        if (e2 == n(1)) then
            ixmax = 1
            izmax = izmin
            izmin = 1
 
         endif
-        if ( e2 == n(3) ) then
+        if (e2 == n(3)) then
            ixmax = NGLLX
            izmax = NGLLZ
 

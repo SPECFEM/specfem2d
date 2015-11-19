@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -82,7 +81,7 @@
 !---
 !--- elastic spectral element
 !---
-    if(elastic(ispec)) then
+    if (elastic(ispec)) then
 
 ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
@@ -98,7 +97,7 @@
 ! first double loop over GLL points to compute and store gradients
 ! we can merge the two loops because NGLLX == NGLLZ
 
-          if(AXISYM) then
+          if (AXISYM) then
             if (is_on_the_axis(ispec)) then
               do k = 1,NGLJ
                 dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)

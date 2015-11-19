@@ -40,7 +40,6 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -111,7 +110,7 @@ __global__ void compute_elastic_seismogram_kernel(int nrec_local,
   __shared__ realw sh_dzd[NGLL2_PADDED];
 
 
-  if(irec_local < nrec_local) {
+  if (irec_local < nrec_local) {
 
     int irec = number_receiver_global[irec_local]-1;
     int ispec = ispec_selected_rec[irec]-1;
@@ -120,7 +119,7 @@ __global__ void compute_elastic_seismogram_kernel(int nrec_local,
    sh_dzd[tx] = 0;
 
 
-  if ( tx < NGLL2 ){
+  if (tx < NGLL2) {
 
     int iglob = d_ibool[tx+NGLL2_PADDED*ispec]-1;
 
@@ -130,12 +129,12 @@ __global__ void compute_elastic_seismogram_kernel(int nrec_local,
     __syncthreads();}
 
 for (unsigned int s=1; s<NGLL2_PADDED ; s *= 2) {
-  if(tx % (2*s) == 0){ sh_dxd[tx] += sh_dxd[tx + s];sh_dzd[tx] += sh_dzd[tx + s];}
+  if (tx % (2*s) == 0){ sh_dxd[tx] += sh_dxd[tx + s];sh_dzd[tx] += sh_dzd[tx + s];}
   __syncthreads();
 }
 
-  if ( tx == 0 ){seismograms[irec_local] = cosrot[irec_local]*sh_dxd[0]  + sinrot[irec_local]*sh_dzd[0];}
-  if ( tx == 1 ){seismograms[irec_local+nrec_local] = cosrot[irec_local]*sh_dzd[0]  - sinrot[irec_local]*sh_dxd[0];}
+  if (tx == 0) {seismograms[irec_local] = cosrot[irec_local]*sh_dxd[0]  + sinrot[irec_local]*sh_dzd[0];}
+  if (tx == 1) {seismograms[irec_local+nrec_local] = cosrot[irec_local]*sh_dzd[0]  - sinrot[irec_local]*sh_dxd[0];}
 }
 
 }
@@ -157,7 +156,7 @@ __global__ void compute_acoustic_seismogram_kernel(int nrec_local,
 
 
 
-  if(irec_local < nrec_local) {
+  if (irec_local < nrec_local) {
 
     int irec = number_receiver_global[irec_local]-1;
     int ispec = ispec_selected_rec[irec]-1;
@@ -165,7 +164,7 @@ __global__ void compute_acoustic_seismogram_kernel(int nrec_local,
    sh_dxd[tx] = 0;
 realw hlagrange;
 int iglob;
-  if ( tx < NGLL2 ){
+  if (tx < NGLL2) {
 
     iglob = d_ibool[tx+NGLL2_PADDED*ispec]-1;
 
@@ -174,13 +173,13 @@ int iglob;
     __syncthreads();}
 
 for (unsigned int s=1; s<NGLL2_PADDED ; s *= 2) {
-  if(tx % (2*s) == 0) sh_dxd[tx] += sh_dxd[tx + s];
+  if (tx % (2*s) == 0) sh_dxd[tx] += sh_dxd[tx + s];
   __syncthreads();}
 
 
 // Signe moins car pression = -potential_dot_dot
-  if ( tx == 0 ){seismograms[irec_local] = -sh_dxd[0];}
-  if ( tx == 1 ){seismograms[irec_local+nrec_local] = 0;}
+  if (tx == 0) {seismograms[irec_local] = -sh_dxd[0];}
+  if (tx == 1) {seismograms[irec_local+nrec_local] = 0;}
 
     }
 }

@@ -48,7 +48,7 @@ STEPS TO ADD A NEW OPTION TO SPECFEM2D
       read(IIN,"(a80)") datlin
       read(IIN,*) MY_WONDERFUL_FLAG
 
-      if (MY_WONDERFUL_FLAG) write(IOUT,*) 'IT IS WONDERFUL!! IT IS SO WONDERFUL!!' !*** To test your flag
+      if (MY_WONDERFUL_FLAG) write(IMAIN,*) 'IT IS WONDERFUL!! IT IS SO WONDERFUL!!' !*** To test your flag
 
       read(IIN,"(a80)") datlin
       read(IIN,*) a_gloomy_flag

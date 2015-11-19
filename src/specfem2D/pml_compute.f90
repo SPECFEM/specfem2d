@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -56,7 +55,7 @@
 
    coef0 = exp(- bb * deltat)
 
-   if(  abs(bb) > 1e-5_CUSTOM_REAL ) then
+   if (abs(bb) > 1e-5_CUSTOM_REAL) then
      coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
      coef2 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL) / bb
    else
@@ -89,11 +88,11 @@
 
   logical,parameter :: FIRST_ORDER_CONVOLUTION = .false.
 
-  if( index_ik == 13 ) then
+  if (index_ik == 13) then
     CPML_X_ONLY_TEMP = CPML_X_ONLY
     CPML_Z_ONLY_TEMP = CPML_Z_ONLY
     CPML_XZ_ONLY_TEMP = CPML_XZ_ONLY
-  else if( index_ik == 31 ) then
+  else if (index_ik == 31) then
     CPML_X_ONLY_TEMP = CPML_Z_ONLY
     CPML_Z_ONLY_TEMP = CPML_X_ONLY
     CPML_XZ_ONLY_TEMP = CPML_XZ_ONLY
@@ -101,12 +100,12 @@
     stop 'In lik_parameter_computation index_ik must be equal to 13 or 31'
   endif
 
-  if( CPML_region_local == CPML_XZ_ONLY_TEMP ) then
+  if (CPML_region_local == CPML_XZ_ONLY_TEMP) then
   !----------------A0-------------------------
     bar_A_0 = kappa_x / kappa_z
     A_0 = bar_A_0
 
-    if( abs(alpha_x-beta_z) >= 1.e-5_CUSTOM_REAL ) then
+    if (abs(alpha_x-beta_z) >= 1.e-5_CUSTOM_REAL) then
       !----------------A1,2-------------------------
       bar_A_1 = - bar_A_0 * (alpha_x - alpha_z) * (alpha_x - beta_x) / (alpha_x-beta_z)
       bar_A_2 = - bar_A_0 * (beta_z - alpha_z) * (beta_z - beta_x) / (beta_z-alpha_x)
@@ -116,7 +115,7 @@
 
       singularity_type_2 = 0 ! 0 means no singularity, 1 means first order singularity
 
-    else if( abs(alpha_x-beta_z) < 1.e-5_CUSTOM_REAL ) then
+    else if (abs(alpha_x-beta_z) < 1.e-5_CUSTOM_REAL) then
       !----------------A1,2,3-------------------------
       alpha_0 = max(alpha_x,beta_z)
 
@@ -132,7 +131,7 @@
       stop 'error in lik_parameter_computation'
     endif
 
-  else if( CPML_region_local == CPML_X_ONLY_TEMP ) then
+  else if (CPML_region_local == CPML_X_ONLY_TEMP) then
   !----------------A0-------------------------
     bar_A_0 = kappa_x
     A_0 = bar_A_0
@@ -145,7 +144,7 @@
 
     singularity_type_2 = 0 ! 0 means no singularity, 1 means first order singularity
 
-  else if( CPML_region_local == CPML_Z_ONLY_TEMP ) then
+  else if (CPML_region_local == CPML_Z_ONLY_TEMP) then
   !----------------A0-------------------------
     bar_A_0 = 1._CUSTOM_REAL / kappa_z
     A_0 = bar_A_0
@@ -193,7 +192,7 @@
   beta_xyz_1 = beta_x + beta_z
   beta_xyz_2 = beta_x * beta_z
 
-  if(  CPML_region_local == CPML_XZ_ONLY ) then
+  if (CPML_region_local == CPML_XZ_ONLY) then
     bar_A_0 = kappa_x * kappa_z
     bar_A_1 = bar_A_0 * (beta_x + beta_z - alpha_x - alpha_z)
     bar_A_2 = bar_A_0 * (beta_x - alpha_x) * (beta_z - alpha_z - alpha_x) &
@@ -206,7 +205,7 @@
     beta_xyz_1 = beta_x + beta_z
     beta_xyz_2 = beta_x * beta_z
 
-    if(  abs( alpha_x - alpha_z ) >= 1.e-5_CUSTOM_REAL ) then
+    if (abs( alpha_x - alpha_z ) >= 1.e-5_CUSTOM_REAL) then
       bar_A_3 = bar_A_0 * alpha_x**2 * (beta_x - alpha_x) * (beta_z - alpha_x) / (alpha_z - alpha_x)
       bar_A_4 = bar_A_0 * alpha_z**2 * (beta_x - alpha_z) * (beta_z - alpha_z) / (alpha_x - alpha_z)
 
@@ -214,7 +213,7 @@
       A_4 = bar_A_4
 
       singularity_type = 0
-    else if ( abs( alpha_x - alpha_z ) < 1.e-5_CUSTOM_REAL ) then
+    else if (abs( alpha_x - alpha_z ) < 1.e-5_CUSTOM_REAL) then
       alpha_0 = alpha_x
       bar_A_3 = bar_A_0 * (- 4._CUSTOM_REAL * alpha_0**3  &
                            + 3._CUSTOM_REAL * alpha_0**2 * beta_xyz_1 - 2._CUSTOM_REAL * alpha_0 * beta_xyz_2)
@@ -225,7 +224,7 @@
 
       singularity_type = 1
     endif
-  else if ( CPML_region_local == CPML_X_ONLY ) then
+  else if (CPML_region_local == CPML_X_ONLY) then
     bar_A_0 = kappa_x
     bar_A_1 = bar_A_0 * (beta_x - alpha_x)
     bar_A_2 = - bar_A_0 * alpha_x * (beta_x - alpha_x)
@@ -241,7 +240,7 @@
     A_4 = bar_A_4
 
     singularity_type = 0
-  else if ( CPML_region_local == CPML_Z_ONLY ) then
+  else if (CPML_region_local == CPML_Z_ONLY) then
     bar_A_0 = kappa_z
     bar_A_1 = bar_A_0 * (beta_z - alpha_z)
     bar_A_2 = - bar_A_0 * alpha_z * (beta_z - alpha_z)
@@ -284,7 +283,7 @@
   do ispec = 1,nspec
     do j = 1, NGLLZ
       do i = 1, NGLLX
-        if( acoustic(ispec) .and. is_pml(ispec) ) then
+        if (acoustic(ispec) .and. is_pml(ispec)) then
           b_potential_dot_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
           b_potential_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
         endif
@@ -292,7 +291,7 @@
     enddo
   enddo
 
-  if( any_acoustic .and. nglob_interface > 0 ) then
+  if (any_acoustic .and. nglob_interface > 0) then
     do i = 1, nglob_interface
       b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,it)
       b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,it)
@@ -317,7 +316,7 @@
   do ispec = 1,nspec
     do j = 1, NGLLZ
       do i = 1, NGLLX
-        if( elastic(ispec) .and. is_pml(ispec) ) then
+        if (elastic(ispec) .and. is_pml(ispec)) then
            b_veloc_elastic(:,ibool(i,j,ispec)) = 0.
            b_displ_elastic(:,ibool(i,j,ispec)) = 0.
         endif
@@ -325,7 +324,7 @@
     enddo
   enddo
 
-  if(any_elastic .and. nglob_interface > 0) then
+  if (any_elastic .and. nglob_interface > 0) then
      do i = 1, nglob_interface
        b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,it)
        b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,it)

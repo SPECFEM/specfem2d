@@ -196,7 +196,7 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
       continue;
     }
     // If any error, bail out with an error message.
-    if(regret != 0) {
+    if (regret != 0) {
       printf("regexec returned error %d\n", regret);
       *ierr = 1;
       regfree(&compiled_pattern);
@@ -300,7 +300,7 @@ FC_FUNC_(param_read_nextparam,PARAM_READ_NEXTPARAM)(char * string_read, int * st
       continue;
     }
     // If any error, bail out with an error message.
-    if(regret != 0) {
+    if (regret != 0) {
       printf("regexec returned error %d\n", regret);
       *ierr = 1;
       regfree(&compiled_pattern);
@@ -380,7 +380,7 @@ FC_FUNC_(param_read_nextline,PARAM_READ_NEXTLINE)(char * string_read, int * stri
       continue;
     }
     // If any error, bail out with an error message.
-    if(regret != 0) {
+    if (regret != 0) {
       printf("regexec returned error %d\n", regret);
       *ierr = 1;
       regfree(&compiled_pattern);

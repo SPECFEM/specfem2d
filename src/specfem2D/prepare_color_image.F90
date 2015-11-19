@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -158,8 +157,9 @@
 
   ! create all the pixels
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'locating all the pixels of color images'
+    write(IMAIN,*)
+    write(IMAIN,*) 'locating all the pixels of color images'
+    call flush_IMAIN()
   endif
 
   size_pixel_horizontal = (xmax_color_image - xmin_color_image) / dble(NX_IMAGE_color-1)
@@ -184,11 +184,11 @@
     max_j = ceiling(maxval((elmnt_coords(2,:) - zmin_color_image))/size_pixel_vertical) + 1
 
     ! avoid edge effects
-    if(min_i < 1) min_i = 1
-    if(min_j < 1) min_j = 1
+    if (min_i < 1) min_i = 1
+    if (min_j < 1) min_j = 1
 
-    if(max_i > NX_IMAGE_color) max_i = NX_IMAGE_color
-    if(max_j > NZ_IMAGE_color) max_j = NZ_IMAGE_color
+    if (max_i > NX_IMAGE_color) max_i = NX_IMAGE_color
+    if (max_j > NZ_IMAGE_color) max_j = NZ_IMAGE_color
 
      do j = min_j, max_j
         do i = min_i, max_i
@@ -199,7 +199,7 @@
            call is_in_convex_quadrilateral( elmnt_coords, i_coord, j_coord, pixel_is_in)
 
            ! if inside, getting the nearest point inside the element!
-           if ( pixel_is_in ) then
+           if (pixel_is_in) then
               dist_min_pixel = HUGEVAL
               do k = 1, NGLLX
                  do l = 1, NGLLZ
@@ -213,7 +213,7 @@
 
                  enddo
               enddo
-              if ( dist_min_pixel >= HUGEVAL ) then
+              if (dist_min_pixel >= HUGEVAL) then
                  call exit_MPI('Error in detecting pixel for color image')
 
               endif
@@ -231,29 +231,29 @@
   if (DRAW_SOURCES_AND_RECEIVERS .and. myrank == 0) then
 
 ! find pixel position of the sources with orange crosses
-    do i=1,NSOURCES
+    do i = 1,NSOURCES
       ix_image_color_source(i) = int((x_source(i) - xmin_color_image) / size_pixel_horizontal) + 1
       iy_image_color_source(i) = int((z_source(i) - zmin_color_image) / size_pixel_vertical) + 1
 
       ! avoid edge effects
-      if(ix_image_color_source(i) < 1) ix_image_color_source(i) = 1
-      if(iy_image_color_source(i) < 1) iy_image_color_source(i) = 1
+      if (ix_image_color_source(i) < 1) ix_image_color_source(i) = 1
+      if (iy_image_color_source(i) < 1) iy_image_color_source(i) = 1
 
-      if(ix_image_color_source(i) > NX_IMAGE_color) ix_image_color_source(i) = NX_IMAGE_color
-      if(iy_image_color_source(i) > NZ_IMAGE_color) iy_image_color_source(i) = NZ_IMAGE_color
+      if (ix_image_color_source(i) > NX_IMAGE_color) ix_image_color_source(i) = NX_IMAGE_color
+      if (iy_image_color_source(i) > NZ_IMAGE_color) iy_image_color_source(i) = NZ_IMAGE_color
     enddo
 
 ! find pixel position of the receivers with green squares
-    do i=1,nrec
+    do i = 1,nrec
       ix_image_color_receiver(i) = int((st_xval(i) - xmin_color_image) / size_pixel_horizontal) + 1
       iy_image_color_receiver(i) = int((st_zval(i) - zmin_color_image) / size_pixel_vertical) + 1
 
       ! avoid edge effects
-      if(ix_image_color_receiver(i) < 1) ix_image_color_receiver(i) = 1
-      if(iy_image_color_receiver(i) < 1) iy_image_color_receiver(i) = 1
+      if (ix_image_color_receiver(i) < 1) ix_image_color_receiver(i) = 1
+      if (iy_image_color_receiver(i) < 1) iy_image_color_receiver(i) = 1
 
-      if(ix_image_color_receiver(i) > NX_IMAGE_color) ix_image_color_receiver(i) = NX_IMAGE_color
-      if(iy_image_color_receiver(i) > NZ_IMAGE_color) iy_image_color_receiver(i) = NZ_IMAGE_color
+      if (ix_image_color_receiver(i) > NX_IMAGE_color) ix_image_color_receiver(i) = NX_IMAGE_color
+      if (iy_image_color_receiver(i) > NZ_IMAGE_color) iy_image_color_receiver(i) = NZ_IMAGE_color
     enddo
 
   endif
@@ -308,7 +308,7 @@
 
   do ispec = 1,nspec
 
-    if(poroelastic(ispec)) then
+    if (poroelastic(ispec)) then
       !get parameters of current spectral element
       phil = porosity(kmato(ispec))
       tortl = tortuosity(kmato(ispec))
@@ -363,14 +363,14 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           !--- if external medium, get elastic parameters of current grid point
-          if(assign_external_model) then
+          if (assign_external_model) then
             vp_display(ibool(i,j,ispec)) = vpext(i,j,ispec)
           else
             vp_display(ibool(i,j,ispec)) = sqrt((lambdal_relaxed + 2.d0*mul_relaxed) / rhol)
           endif
         enddo
       enddo
-    endif ! of if(poroelastic(ispec)) then
+    endif ! of if (poroelastic(ispec)) then
 
 ! now display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
 ! or in the case of offshore oil industry experiments.
@@ -378,12 +378,12 @@
 !  a purely acoustic simulation with different acoustic media for the oil industry, one then wants to see the different
 !  acoustic wave speeds displayed as a grey scale).
 ! For now, in this routine, use -1 as a flag to label such acoustic points
-    if(DRAW_WATER_IN_BLUE .and. .not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+    if (DRAW_WATER_IN_BLUE .and. .not. elastic(ispec) .and. .not. poroelastic(ispec)) then
       do j = 1,NGLLZ
         do i = 1,NGLLX
 
           !--- if external medium, get elastic parameters of current grid point
-          if(assign_external_model) then
+          if (assign_external_model) then
             vp_of_the_model = vpext(i,j,ispec)
           else
             vp_of_the_model = sqrt((lambdal_relaxed + 2.d0*mul_relaxed) / rhol)
@@ -391,7 +391,7 @@
 
 ! test that water is indeed water and not an acoustic version of a sediment for instance
 ! thus check that Vp is the typical Vp of water
-          if(abs(vp_of_the_model - 1480.d0) <= 50.d0) vp_display(ibool(i,j,ispec)) = -1
+          if (abs(vp_of_the_model - 1480.d0) <= 50.d0) vp_display(ibool(i,j,ispec)) = -1
 
         enddo
       enddo
@@ -407,13 +407,13 @@
     i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
 
 ! avoid edge effects
-    if(i < 1) i = 1
-    if(i > NX_IMAGE_color) i = NX_IMAGE_color
+    if (i < 1) i = 1
+    if (i > NX_IMAGE_color) i = NX_IMAGE_color
 
-    if(j < 1) j = 1
-    if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
+    if (j < 1) j = 1
+    if (j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
-    if(iglob_image_color(i,j) /= -1) image_color_vp_display(i,j) = vp_display(iglob_image_color(i,j))
+    if (iglob_image_color(i,j) /= -1) image_color_vp_display(i,j) = vp_display(iglob_image_color(i,j))
   enddo
 
 ! assembling array image_color_vp_display on process zero for color output
@@ -425,7 +425,7 @@
                   1, MPI_INTEGER, 0, MPI_COMM_WORLD, ier)
 
 
-  if ( myrank == 0 ) then
+  if (myrank == 0) then
      allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),nproc))
      allocate(data_pixel_recv(maxval(nb_pixel_per_proc(:))))
   endif
@@ -446,11 +446,11 @@
           i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
 
 ! avoid edge effects
-          if(i < 1) i = 1
-          if(i > NX_IMAGE_color) i = NX_IMAGE_color
+          if (i < 1) i = 1
+          if (i > NX_IMAGE_color) i = NX_IMAGE_color
 
-          if(j < 1) j = 1
-          if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
+          if (j < 1) j = 1
+          if (j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
           image_color_vp_display(i,j) = data_pixel_recv(k)
         enddo
@@ -462,13 +462,13 @@
         i = num_pixel_loc(k) - (j-1)*NX_IMAGE_color
 
 ! avoid edge effects
-        if(i < 1) i = 1
-        if(i > NX_IMAGE_color) i = NX_IMAGE_color
+        if (i < 1) i = 1
+        if (i > NX_IMAGE_color) i = NX_IMAGE_color
 
-        if(j < 1) j = 1
-        if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
+        if (j < 1) j = 1
+        if (j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
-        if(iglob_image_color(i,j) /= -1) data_pixel_send(k) = vp_display(iglob_image_color(i,j))
+        if (iglob_image_color(i,j) /= -1) data_pixel_send(k) = vp_display(iglob_image_color(i,j))
       enddo
 
       call MPI_SEND(num_pixel_loc(1),nb_pixel_loc,MPI_INTEGER, &
@@ -482,7 +482,7 @@
 
   deallocate(nb_pixel_per_proc)
   deallocate(data_pixel_send)
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     deallocate(num_pixel_recv)
     deallocate(data_pixel_recv)
   endif

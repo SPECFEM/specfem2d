@@ -1,4 +1,46 @@
+!========================================================================
 !
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This software is governed by the CeCILL license under French law and
+! abiding by the rules of distribution of free software. You can use,
+! modify and/or redistribute the software under the terms of the CeCILL
+! license as circulated by CEA, CNRS and Inria at the following URL
+! "http://www.cecill.info".
+!
+! As a counterpart to the access to the source code and rights to copy,
+! modify and redistribute granted by the license, users are provided only
+! with a limited warranty and the software's author, the holder of the
+! economic rights, and the successive licensors have only limited
+! liability.
+!
+! In this respect, the user's attention is drawn to the risks associated
+! with loading, using, modifying and/or developing or reproducing the
+! software by the user in light of its specific status of free software,
+! that may mean that it is complicated to manipulate, and that also
+! therefore means that it is reserved for developers and experienced
+! professionals having in-depth computer knowledge. Users are therefore
+! encouraged to load and test the software's suitability as regards their
+! requirements in conditions enabling the security of their systems and/or
+! data to be ensured and, more generally, to use and operate it in the
+! same conditions as regards security.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
+
+
 ! This subroutine was written by Paco Sanchez-Sesma and his colleagues
 ! from the Autonomous University of Mexico (UNAM), Mexico City, Mexico
 !
@@ -40,10 +82,10 @@ subroutine paco_convolve_fft(Field,label,NSTEP,dt,NFREC,output_field,tp,ts)
 ! flag=0 on a besoin de U, V et A (pas T)
 ! flag/=0 on a besoin de T et V (pas U ni A)
 !
-! NSTEP==1 <=> FLAG==0 (flags: interior=0, left=1, right=2, bottom=3)
+! NSTEP==1 <=> FLAG==0 (flags: interior=0, left= 1, right= 2, bottom=3)
 !
 
-  do j=1,N
+  do j = 1,N
      if (label==1 .or. label==4) FUN=ric(j,tp,ts,dt)
      if (label==2) FUN=deric(j,tp,ts,dt)
      if (label==3) FUN=de2ric(j,tp,ts,dt)
@@ -82,7 +124,7 @@ SUBROUTINE SINTER(V,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
 
   CY(1) = CR(1) * V(1) * RAIZ * dt
 
-  DO J=2,N/2+1
+  do J = 2,N/2+1
      FILT = 1.0d0
      VC   = V(J)
      CY(J)= CR(J)*VC * RAIZ * dt/ FILT
@@ -96,17 +138,17 @@ SUBROUTINE SINTER(V,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
 ! coefficients to take time steps needed (t=0: first time step)
      mult=1
      delay=0
-  else if(label==2 .and. NSTEP>1) then
+  else if (label==2 .and. NSTEP>1) then
 ! coefficients to take time steps needed (t=i*deltat+1/2: one step on two starting at 1/2)
      mult=2
      delay=0
-  else if(label==4) then
+  else if (label==4) then
 ! coefficients to take time steps needed (t=i*deltat+1: one step on two starting at 1)
      mult=2
      delay=1
   endif
 
-  do J=1,NSTEP
+  do J = 1,NSTEP
      CY(mult*J+delay)=CY(mult*J+delay)/RAIZ/dt
      VT(mult*J+delay)=REAL(CY(mult*J+delay))
      output_field(J)=VT(mult*J+delay)
@@ -130,7 +172,7 @@ FUNCTION RIC(J,tp,ts,dt)
   A=PI*(dt*(J-1)-ts)/tp
   A=A*A
   RIC=0.0d0
-  IF(A>30.0d0) RETURN
+  if (A>30.0d0) RETURN
   RIC=(A-0.5)*EXP(-A)
 
 END FUNCTION RIC
@@ -151,7 +193,7 @@ FUNCTION deRIC(J,tp,ts,dt)
   A=A*A
   A_dot=2*(PI/tp)**2*(dt*(J-1)-ts)
   deRIC=0.0d0
-  IF(A>30.0d0) RETURN
+  if (A>30.0d0) RETURN
   deRIC=A_dot*(1.5-A)*EXP(-A)
 
 END FUNCTION deRIC
@@ -173,7 +215,7 @@ FUNCTION de2RIC(J,tp,ts,dt)
   A_dot=2*(PI/tp)**2*(dt*(J-1)-ts)
   A_dot_dot=2*(PI/tp)**2
   de2RIC=0.0d0
-  IF(A>30.0d0) RETURN
+  if (A>30.0d0) RETURN
   de2RIC=(A_dot_dot*(1.5-A)-A_dot*A_dot-A_dot*(1.5-A)*A_dot)*EXP(-A)
 
 END FUNCTION de2RIC
@@ -196,7 +238,7 @@ SUBROUTINE fourier_transform(LX,CX,SIGNI)
 
   J=1
   SC=SQRT(1.0d0/LX)
-  DO I=1,LX
+  do I = 1,LX
      IF (I<=J) then
         CTEMP=CX(J)*SC
         CX(J)=CX(I)*SC
@@ -213,7 +255,7 @@ SUBROUTINE fourier_transform(LX,CX,SIGNI)
 
   do while(L<LX)
      ISTEP=2*L
-     DO  M=1,L
+     DO  M= 1,L
         CARG=(0.0d0,1.0d0)*(PI*SIGNI*(M-1))/L
         CW=EXP(CARG)
         DO  I=M,LX,ISTEP

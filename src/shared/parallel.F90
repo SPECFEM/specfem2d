@@ -40,68 +40,102 @@
 !
 !========================================================================
 
-!-----------------------------------------------
-! subroutine to stop the code whether sequential or parallel.
-!-----------------------------------------------
-subroutine exit_MPI(error_msg)
+! parallel routines
+
+!-------------------------------------------------------------------------------------------------
+!
+! MPI wrapper functions
+!
+!-------------------------------------------------------------------------------------------------
+
+  subroutine init_mpi(NPROC,myrank)
 
 #ifdef USE_MPI
+! standard include of the MPI library
   use mpi
 #endif
+
   implicit none
 
-  ! identifier for error message file
-  integer, parameter :: IERROR = 30
+  integer,intent(out) :: NPROC,myrank
 
-  character(len=*) error_msg
-
-  integer ier
-
-  ier = 0
-
-  ! write error message to screen
-  write(*,*) error_msg(1:len(error_msg))
-  write(*,*) 'Error detected, aborting MPI... proc '
-
-  ! stop all the MPI processes, and exit
 #ifdef USE_MPI
-  call MPI_ABORT(MPI_COMM_WORLD,30,ier)
+  integer :: ier
+
+  ! parallel version
+  call MPI_INIT(ier)
+  if (ier /= 0 ) call exit_MPI('Error MPI initialization')
+
+  call MPI_COMM_SIZE(MPI_COMM_WORLD,NPROC,ier)
+  if (ier /= 0 ) call exit_MPI('Error getting MPI size')
+
+  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+  if (ier /= 0 ) call exit_MPI('Error getting MPI rank')
+
+#else
+
+  ! serial version
+  ! compilation without MPI support -DUSE_MPI
+  NPROC = 1
+  myrank = 0
+
 #endif
 
-  stop 'error, program ended in exit_MPI'
-
-end subroutine exit_MPI
-
-!-------------------------------------------------------------------------------------------------
-!
-! I/O wrapper function
-!
-!-------------------------------------------------------------------------------------------------
-
-  subroutine flush_IOUT()
-
-  implicit none
-
-  include "constants.h"
-
-  ! only master process writes out to main output file
-  ! file I/O in fortran is buffered by default
-  !
-  ! note: Fortran2003 includes a FLUSH statement
-  !          which is implemented by most compilers by now
-  !
-  ! otherwise:
-  !   a) comment out the line below
-  !   b) try to use instead: call flush(IOUT)
-
-  flush(IOUT)
-
-  end subroutine flush_IOUT
+  end subroutine init_mpi
 
 
 !
 !----
 !
+
+  subroutine finalize_mpi()
+
+#ifdef USE_MPI
+! standard include of the MPI library
+  use mpi
+#endif
+
+  implicit none
+
+#ifdef USE_MPI
+  integer :: ier
+
+  ! synchronizes all
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+
+  ! stop all the MPI processes, and exit
+  call MPI_FINALIZE(ier)
+  if (ier /= 0) stop 'Error finalizing MPI'
+#endif
+
+  end subroutine finalize_mpi
+
+!
+!----
+!
+
+  subroutine synchronize_all()
+
+#ifdef USE_MPI
+! standard include of the MPI library
+  use mpi
+#endif
+
+  implicit none
+
+#ifdef USE_MPI
+  integer ier
+
+  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  if (ier /= 0 ) stop 'Error synchronize MPI processes'
+#endif
+
+  end subroutine synchronize_all
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 
 #ifdef USE_MPI
 
@@ -113,7 +147,6 @@ end subroutine exit_MPI
   implicit none
 
   include "constants.h"
-
   include "precision.h"
 
   integer sendcount, dest, sendtag, req
@@ -179,29 +212,6 @@ end subroutine exit_MPI
 
 #endif
 
-!
-!----
-!
-
-  subroutine sync_all()
-
-#ifdef USE_MPI
-! standard include of the MPI library
-  use mpi
-#endif
-
-  implicit none
-
-  integer ier
-
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-#else
-  ! dummy statement to avoid compiler warning
-  ier = 0
-#endif
-
-  end subroutine sync_all
 
 !
 !----
@@ -217,8 +227,6 @@ end subroutine exit_MPI
   implicit none
 
   include "constants.h"
-
-  include "precision.h"
 
   integer:: sendbuf, recvbuf
   integer ier
@@ -243,8 +251,6 @@ end subroutine exit_MPI
   implicit none
 
   include "constants.h"
-
-  include "precision.h"
 
   integer :: sendbuf, recvbuf
   integer :: ier

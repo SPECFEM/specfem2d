@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -116,22 +115,23 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
 ! **************
 
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) '********************'
-    write(IOUT,*) ' locating receivers'
-    write(IOUT,*) '********************'
-    write(IOUT,*)
-    write(IOUT,*) 'reading receiver information from the DATA/STATIONS file'
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) '********************'
+    write(IMAIN,*) ' locating receivers'
+    write(IMAIN,*) '********************'
+    write(IMAIN,*)
+    write(IMAIN,*) 'reading receiver information from the DATA/STATIONS file'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
-  open(unit=1,file='DATA/STATIONS',status='old',action='read')
+  open(unit= 1,file='DATA/STATIONS',status='old',action='read')
 
 ! allocate memory for arrays using number of stations
   allocate(final_distance(nrec))
 
 ! loop on all the stations
-  do irec=1,nrec
+  do irec= 1,nrec
 
     ! set distance to huge initial value
     distmin_squared = HUGEVAL
@@ -139,17 +139,17 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
     read(1,*) station_name(irec),network_name(irec),st_xval(irec),st_zval(irec),stele,stbur
 
     ! check that station is not buried, burial is not implemented in current code
-    if(abs(stbur) > TINYVAL) call exit_MPI('stations with non-zero burial not implemented yet')
+    if (abs(stbur) > TINYVAL) call exit_MPI('stations with non-zero burial not implemented yet')
 
     ! compute distance between source and receiver
     distance_receiver(irec) = sqrt((st_zval(irec)-z_source)**2 + (st_xval(irec)-x_source)**2)
 
-    do ispec=1,nspec
+    do ispec= 1,nspec
 
       ! loop only on points inside the element
       ! exclude edges to ensure this point is not shared with other elements
-      do j=2,NGLLZ-1
-        do i=2,NGLLX-1
+      do j = 2,NGLLZ-1
+        do i = 2,NGLLX-1
 
           iglob = ibool(i,j,ispec)
 
@@ -157,7 +157,7 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
           dist_squared = (st_xval(irec)-dble(coord(1,iglob)))**2 + (st_zval(irec)-dble(coord(2,iglob)))**2
 
           ! keep this point if it is closer to the receiver
-          if(dist_squared < distmin_squared) then
+          if (dist_squared < distmin_squared) then
             distmin_squared = dist_squared
             ispec_selected_rec(irec) = ispec
             ix_initial_guess = i
@@ -250,7 +250,7 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
   call MPI_GATHER(ispec_selected_rec(1),nrec,MPI_INTEGER,&
         gather_ispec_selected_rec(1,1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ierror)
 
-  if ( myrank == 0 ) then
+  if (myrank == 0) then
     do irec = 1, nrec
       which_proc_receiver(irec:irec) = minloc(gather_final_distance(irec,:)) - 1
     enddo
@@ -270,7 +270,7 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
 #endif
 
   if (USE_TRICK_FOR_BETTER_PRESSURE) then
-    do irec=1,nrec
+    do irec= 1,nrec
       if (which_proc_receiver(irec) == myrank) then
         if (.not. acoustic(ispec_selected_rec(irec))) then
           call exit_MPI('USE_TRICK_FOR_BETTER_PRESSURE : receivers must be in acoustic elements')
@@ -281,7 +281,7 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
 
   nrecloc = 0
   do irec = 1, nrec
-    if ( which_proc_receiver(irec) == myrank ) then
+    if (which_proc_receiver(irec) == myrank) then
       nrecloc = nrecloc + 1
       recloc(nrecloc) = irec
     endif
@@ -290,27 +290,28 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
   if (myrank == 0) then
 
     do irec = 1, nrec
-      write(IOUT,*)
-      write(IOUT,*) 'Station # ',irec,'    ',network_name(irec),station_name(irec)
+      write(IMAIN,*)
+      write(IMAIN,*) 'Station # ',irec,'    ',network_name(irec),station_name(irec)
 
-      if(gather_final_distance(irec,which_proc_receiver(irec)+1) == HUGEVAL) &
+      if (gather_final_distance(irec,which_proc_receiver(irec)+1) == HUGEVAL) &
         call exit_MPI('error locating receiver')
 
-      write(IOUT,*) '            original x: ',sngl(st_xval(irec))
-      write(IOUT,*) '            original z: ',sngl(st_zval(irec))
-      write(IOUT,*) '  distance from source: ',sngl(distance_receiver(irec))
-      write(IOUT,*) 'closest estimate found: ',sngl(gather_final_distance(irec,which_proc_receiver(irec)+1)), &
+      write(IMAIN,*) '            original x: ',sngl(st_xval(irec))
+      write(IMAIN,*) '            original z: ',sngl(st_zval(irec))
+      write(IMAIN,*) '  distance from source: ',sngl(distance_receiver(irec))
+      write(IMAIN,*) 'closest estimate found: ',sngl(gather_final_distance(irec,which_proc_receiver(irec)+1)), &
                     ' m away'
-      write(IOUT,*) ' in element ',gather_ispec_selected_rec(irec,which_proc_receiver(irec)+1)
-      write(IOUT,*) ' at process ', which_proc_receiver(irec)
-      write(IOUT,*) ' at xi,gamma coordinates = ',gather_xi_receiver(irec,which_proc_receiver(irec)+1),&
+      write(IMAIN,*) ' in element ',gather_ispec_selected_rec(irec,which_proc_receiver(irec)+1)
+      write(IMAIN,*) ' at process ', which_proc_receiver(irec)
+      write(IMAIN,*) ' at xi,gamma coordinates = ',gather_xi_receiver(irec,which_proc_receiver(irec)+1),&
                                   gather_gamma_receiver(irec,which_proc_receiver(irec)+1)
-      write(IOUT,*)
+      write(IMAIN,*)
     enddo
 
-    write(IOUT,*)
-    write(IOUT,*) 'end of receiver detection'
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'end of receiver detection'
+    write(IMAIN,*)
+    call flush_IMAIN()
 
   endif
 

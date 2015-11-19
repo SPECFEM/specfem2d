@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -102,7 +101,7 @@
   integer i,j,k,iglob
 
 ! simple copy of existing vector if elastic element
-  if(elastic(ispec)) then
+  if (elastic(ispec)) then
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -113,7 +112,7 @@
       enddo
     enddo
 
-  else if(poroelastic(ispec)) then
+  else if (poroelastic(ispec)) then
      do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
@@ -170,7 +169,7 @@
         gammaxl = gammax(i,j,ispec)
         gammazl = gammaz(i,j,ispec)
 
-        if(assign_external_model) rhol = rhoext(i,j,ispec)
+        if (assign_external_model) rhol = rhoext(i,j,ispec)
 
 ! derivatives of potential
         vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol        !u_x
@@ -210,7 +209,7 @@
         gammaxl = gammax(i,j,ispec)
         gammazl = gammaz(i,j,ispec)
 
-        if(assign_external_model) then
+        if (assign_external_model) then
            rhol = rhoext(i,j,ispec)
            gravityl = gravityext(i,j,ispec)
         endif

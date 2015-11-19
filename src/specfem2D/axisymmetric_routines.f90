@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -87,32 +86,32 @@ subroutine  build_is_on_the_axis()
     ! Local parameters
     integer :: isource
 
-    if ( any_poroelastic ) &
+    if (any_poroelastic ) &
       call exit_MPI('Poroelasticity is presently not implemented for axisymmetric simulations')
-    if ( ROTATE_PML_ACTIVATE ) &
+    if (ROTATE_PML_ACTIVATE ) &
       call exit_MPI('ROTATE_PML_ACTIVATE is presently not implemented for axisymmetric simulations')
-    if ( STACEY_BOUNDARY_CONDITIONS ) &
+    if (STACEY_BOUNDARY_CONDITIONS ) &
       call exit_MPI('Stacey boundary conditions are presently not implemented for axisymmetric simulations -> use PML instead')
-    if ( SIMULATION_TYPE /= 1 ) &
+    if (SIMULATION_TYPE /= 1 ) &
       call exit_MPI('Just axisymmetric FORWARD simulations are possible so far')
-    if ( SAVE_FORWARD ) &
+    if (SAVE_FORWARD ) &
       call exit_MPI('SAVE_FORWARD has presently not been tested with axisymmetric simulations')
-    if ( time_stepping_scheme /= 1 ) &
+    if (time_stepping_scheme /= 1 ) &
       call exit_MPI('Just Newmark scheme is presently possible for axisymmetric simulation')
-    if ( ADD_PERIODIC_CONDITIONS ) &
+    if (ADD_PERIODIC_CONDITIONS ) &
       call exit_MPI('Periodic conditions (ADD_PERIODIC_CONDITIONS) are presently not implemented for axisymmetric simulations')
-    if ( NOISE_TOMOGRAPHY /= 0 ) &
+    if (NOISE_TOMOGRAPHY /= 0 ) &
       call exit_MPI('Axisymmetric noise tomographies are not possible yet')
     ! Check sources
     do isource = 1,NSOURCES                                      ! Loop on the sources :
-      if ( is_proc_source(isource) == 1 ) then
-        if ( source_type(isource) /= 1 ) then                       !  If the source is not an elastic force or an acoustic pressure
+      if (is_proc_source(isource) == 1) then
+        if (source_type(isource) /= 1) then                       !  If the source is not an elastic force or an acoustic pressure
           call exit_MPI('Axisymmetry : just elastic force or acoustic pressure sources has been tested so far)')
         endif
-        if ( is_on_the_axis(ispec_selected_source(isource)) ) then  !   If the source is on an axial element
-          if ( elastic(ispec_selected_source(isource)) ) then       !  ... or if the source is (at r=0) on an elastic axial element.
-            if ( ((anglesource(isource) > TINYVAL) .and. (anglesource(isource) < PI) ) &    ! ... and has a radial component.
-               .or. ( (anglesource(isource) > PI) .and. (anglesource(isource) < TWO*PI)) ) then
+        if (is_on_the_axis(ispec_selected_source(isource))) then  !   If the source is on an axial element
+          if (elastic(ispec_selected_source(isource))) then       !  ... or if the source is (at r=0) on an elastic axial element.
+            if (((anglesource(isource) > TINYVAL) .and. (anglesource(isource) < PI) ) &    ! ... and has a radial component.
+               .or. ( (anglesource(isource) > PI) .and. (anglesource(isource) < TWO*PI))) then
                print *, '***** WARNING *****'
                print *, 'Axisymmetry : U_r(r=0)=0, Radial component of axial source will be ignored (anglesource /= 0 modulo 180)'
                print *, ''
@@ -153,10 +152,10 @@ subroutine  build_is_on_the_axis()
       ! will be set to zero on the axis later in the code, when they are computed
 
       ! if the element is elastic
-      if ( elastic(ispec_axis) ) then
+      if (elastic(ispec_axis)) then
         do j = 1,NGLLZ ! Loop on the GLL/GLJ points
           do i = 1,NGLJ
-            if( is_on_the_axis(ispec_axis) .and. i == 1 ) then ! If the point scanned is on the axis
+            if (is_on_the_axis(ispec_axis) .and. i == 1) then ! If the point scanned is on the axis
               displ_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! enforce the radial displacement to zero
               veloc_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! enforce the radial velocity to zero
               accel_elastic(1,ibool(i,j,ispec_axis)) = ZERO ! enforce the radial acceleration to zero

@@ -1,3 +1,46 @@
+!========================================================================
+!
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This software is governed by the CeCILL license under French law and
+! abiding by the rules of distribution of free software. You can use,
+! modify and/or redistribute the software under the terms of the CeCILL
+! license as circulated by CEA, CNRS and Inria at the following URL
+! "http://www.cecill.info".
+!
+! As a counterpart to the access to the source code and rights to copy,
+! modify and redistribute granted by the license, users are provided only
+! with a limited warranty and the software's author, the holder of the
+! economic rights, and the successive licensors have only limited
+! liability.
+!
+! In this respect, the user's attention is drawn to the risks associated
+! with loading, using, modifying and/or developing or reproducing the
+! software by the user in light of its specific status of free software,
+! that may mean that it is complicated to manipulate, and that also
+! therefore means that it is reserved for developers and experienced
+! professionals having in-depth computer knowledge. Users are therefore
+! encouraged to load and test the software's suitability as regards their
+! requirements in conditions enabling the security of their systems and/or
+! data to be ensured and, more generally, to use and operate it in the
+! same conditions as regards security.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
+
+
 subroutine prepare_timerun_mass_matrix()
 
 
@@ -13,18 +56,13 @@ integer ispec
 ! inner/outer elements in the case of an MPI simulation
   integer :: ispec_inner,ispec_outer
 
-#ifdef USE_MPI
-  include "precision.h"
-#endif
-
-
   !
   !---- build the global mass matrix
   !
   call invert_mass_matrix_init()
 
 #ifdef USE_MPI
-  if ( nproc > 1 ) then
+  if (nproc > 1) then
 
     ! preparing for MPI communications
     allocate(mask_ispec_inner_outer(nspec))
@@ -42,7 +80,7 @@ integer ispec
       num_ispec_outer = 0
       num_ispec_inner = 0
       do ispec = 1, nspec
-        if ( mask_ispec_inner_outer(ispec) ) then
+        if (mask_ispec_inner_outer(ispec)) then
           num_ispec_outer = num_ispec_outer + 1
           ispec_outer_to_glob(num_ispec_outer) = ispec
         else
@@ -155,13 +193,13 @@ integer ispec
   call invert_mass_matrix()
 
 ! check the mesh, stability and number of points per wavelength
-  if(DISPLAY_SUBSET_OPTION == 1) then
+  if (DISPLAY_SUBSET_OPTION == 1) then
     UPPER_LIMIT_DISPLAY = nspec
-  else if(DISPLAY_SUBSET_OPTION == 2) then
+  else if (DISPLAY_SUBSET_OPTION == 2) then
     UPPER_LIMIT_DISPLAY = nspec_inner
-  else if(DISPLAY_SUBSET_OPTION == 3) then
+  else if (DISPLAY_SUBSET_OPTION == 3) then
     UPPER_LIMIT_DISPLAY = nspec_outer
-  else if(DISPLAY_SUBSET_OPTION == 4) then
+  else if (DISPLAY_SUBSET_OPTION == 4) then
     UPPER_LIMIT_DISPLAY = NSPEC_DISPLAY_SUBSET
   else
     stop 'incorrect value of DISPLAY_SUBSET_OPTION'
@@ -188,11 +226,11 @@ subroutine prepare_timerun_image_coloring()
 
   implicit none
 
-  integer i,j
+  integer :: i,j
+  integer :: ier
 
 #ifdef USE_MPI
-  include "precision.h"
-  integer k
+  integer :: k
 #endif
 
 
@@ -200,17 +238,17 @@ subroutine prepare_timerun_image_coloring()
 !---- for color images
 !
 
-  if(output_color_image) then
+  if (output_color_image) then
     ! prepares dimension of image
     call prepare_color_image_init()
 
     ! allocate an array for image data
-    allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if(ier /= 0) stop 'error in an allocate statement 1'
-    allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if(ier /= 0) stop 'error in an allocate statement 2'
+    allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if (ier /= 0) stop 'error in an allocate statement 1'
+    allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if (ier /= 0) stop 'error in an allocate statement 2'
 
     ! allocate an array for the grid point that corresponds to a given image data point
-    allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if(ier /= 0) stop 'error in an allocate statement 3'
-    allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if(ier /= 0) stop 'error in an allocate statement 4'
+    allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if (ier /= 0) stop 'error in an allocate statement 3'
+    allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if (ier /= 0) stop 'error in an allocate statement 4'
 
     ! creates pixels indexing
     call prepare_color_image_pixels()
@@ -222,7 +260,7 @@ subroutine prepare_timerun_image_coloring()
     nb_pixel_loc = 0
     do i = 1, NX_IMAGE_color
        do j = 1, NZ_IMAGE_color
-          if ( iglob_image_color(i,j) /= -1 ) then
+          if (iglob_image_color(i,j) /= -1) then
              nb_pixel_loc = nb_pixel_loc + 1
              num_pixel_loc(nb_pixel_loc) = (j-1)*NX_IMAGE_color + i
           endif
@@ -236,7 +274,7 @@ subroutine prepare_timerun_image_coloring()
     call MPI_GATHER( nb_pixel_loc, 1, MPI_INTEGER, nb_pixel_per_proc(1), &
                     1, MPI_INTEGER, 0, MPI_COMM_WORLD, ier)
 
-    if ( myrank == 0 ) then
+    if (myrank == 0) then
       allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),nproc))
       allocate(data_pixel_recv(maxval(nb_pixel_per_proc(:))))
     endif
@@ -254,11 +292,11 @@ subroutine prepare_timerun_image_coloring()
                 i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
 
                 ! avoid edge effects
-                if(i < 1) i = 1
-                if(j < 1) j = 1
+                if (i < 1) i = 1
+                if (j < 1) j = 1
 
-                if(i > NX_IMAGE_color) i = NX_IMAGE_color
-                if(j > NZ_IMAGE_color) j = NZ_IMAGE_color
+                if (i > NX_IMAGE_color) i = NX_IMAGE_color
+                if (j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
                 iglob_image_color(i,j) = iproc
 
@@ -271,8 +309,10 @@ subroutine prepare_timerun_image_coloring()
     endif
 #endif
 
-    if (myrank == 0) write(IOUT,*) 'done locating all the pixels of color images'
-
+    if (myrank == 0) then
+      write(IMAIN,*) 'done locating all the pixels of color images'
+      call flush_IMAIN()
+    endif
   endif ! color_image
 
 
@@ -299,17 +339,13 @@ subroutine prepare_timerun_kernel()
 
   implicit none
 
-#ifdef USE_MPI
-  include "precision.h"
-#endif
-
 !
 !----- Allocate sensitivity kernel arrays
 !
 
-  if(SIMULATION_TYPE == 3) then
+  if (SIMULATION_TYPE == 3) then
 
-    if(any_elastic) then
+    if (any_elastic) then
 
       if (save_ASCII_kernels) then ! ascii format
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
@@ -353,7 +389,7 @@ subroutine prepare_timerun_kernel()
           open(unit = 211,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
-          if (SAVE_DIAGONAL_HESSIAN) then
+          if (APPROXIMATE_HESS_KL) then
             write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_kernel.bin'
             open(unit =214,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
             if (ios /= 0) stop 'Error writing kernel file to disk'
@@ -375,13 +411,15 @@ subroutine prepare_timerun_kernel()
       bulk_c_kl(:,:,:) = 0._CUSTOM_REAL
       bulk_beta_kl(:,:,:) = 0._CUSTOM_REAL
 
-      rhorho_el_hessian_final2(:,:,:) = 0._CUSTOM_REAL
-      rhorho_el_hessian_temp2(:) = 0._CUSTOM_REAL
-      rhorho_el_hessian_final1(:,:,:) = 0._CUSTOM_REAL
-      rhorho_el_hessian_temp1(:) = 0._CUSTOM_REAL
+      if (APPROXIMATE_HESS_KL) then
+        rhorho_el_hessian_final2(:,:,:) = 0._CUSTOM_REAL
+        rhorho_el_hessian_temp2(:) = 0._CUSTOM_REAL
+        rhorho_el_hessian_final1(:,:,:) = 0._CUSTOM_REAL
+        rhorho_el_hessian_temp1(:) = 0._CUSTOM_REAL
+      endif
     endif
 
-    if(any_poroelastic) then
+    if (any_poroelastic) then
 
       if (.not. SAVE_ASCII_KERNELS) stop 'poroelastic simulations must use SAVE_ASCII_KERNELS'
 
@@ -442,9 +480,9 @@ subroutine prepare_timerun_kernel()
       ratio_kl(:,:,:) = 0._CUSTOM_REAL
     endif
 
-    if(any_acoustic) then
+    if (any_acoustic) then
 
-      if(save_ASCII_kernels)then ! ascii format
+      if (save_ASCII_kernels) then ! ascii format
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.dat'
         open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status ='unknown',iostat=ios)
         if (ios /= 0) stop 'Error writing kernel file to disk'
@@ -470,7 +508,7 @@ subroutine prepare_timerun_kernel()
         open(unit = 203, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
         if (ios /= 0) stop 'Error writing kernel file to disk'
 
-        if (SAVE_DIAGONAL_HESSIAN) then
+        if (APPROXIMATE_HESS_KL) then
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_acoustic_kernel.bin'
           open(unit=212,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
@@ -487,11 +525,14 @@ subroutine prepare_timerun_kernel()
 
       rhop_ac_kl(:,:,:) = 0._CUSTOM_REAL
       alpha_ac_kl(:,:,:) = 0._CUSTOM_REAL
-      rhorho_ac_hessian_final2(:,:,:) = 0._CUSTOM_REAL
-      rhorho_ac_hessian_final1(:,:,:) = 0._CUSTOM_REAL
+
+      if (APPROXIMATE_HESS_KL) then
+        rhorho_ac_hessian_final2(:,:,:) = 0._CUSTOM_REAL
+        rhorho_ac_hessian_final1(:,:,:) = 0._CUSTOM_REAL
+      endif
     endif
 
-  endif ! if(SIMULATION_TYPE == 3)
+  endif ! if (SIMULATION_TYPE == 3)
 
 
 end subroutine prepare_timerun_kernel
@@ -515,11 +556,7 @@ subroutine prepare_timerun_pml()
 
   implicit none
 
-  integer i
-
-#ifdef USE_MPI
-  include "precision.h"
-#endif
+  integer :: i,ier
 
 if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented on GPU mode. Please use Stacey instead'
 
@@ -531,27 +568,27 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
 
     ! allocate this in all cases, even if PML is not set, because we use it for PostScript display as well
     allocate(is_PML(nspec),stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array is_PML'
+    if (ier /= 0) stop 'error: not enough memory to allocate array is_PML'
     is_PML(:) = .false.
 
-    if(PML_BOUNDARY_CONDITIONS .and. anyabs_glob ) then
+    if (PML_BOUNDARY_CONDITIONS .and. anyabs_glob) then
       allocate(spec_to_PML(nspec),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array spec_to_PML'
+      if (ier /= 0) stop 'error: not enough memory to allocate array spec_to_PML'
 
       allocate(which_PML_elem(4,nspec),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array which_PML_elem'
+      if (ier /= 0) stop 'error: not enough memory to allocate array which_PML_elem'
       which_PML_elem(:,:) = .false.
 
-      if(SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))then
+      if (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) then
         allocate(PML_interior_interface(4,nspec),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array PML_interior_interface'
+        if (ier /= 0) stop 'error: not enough memory to allocate array PML_interior_interface'
         PML_interior_interface = .false.
       else
         allocate(PML_interior_interface(4,1))
       endif
 
 ! add support for using PML in MPI mode with external mesh
-      if(read_external_mesh)then
+      if (read_external_mesh) then
         allocate(mask_ibool_pml(nglob))
       else
         allocate(mask_ibool_pml(1))
@@ -559,43 +596,43 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
 
       call pml_init()
 
-      if((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)then
+      if ((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS) then
 
-        if(nglob_interface > 0) then
+        if (nglob_interface > 0) then
           allocate(point_interface(nglob_interface),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array point_interface'
+          if (ier /= 0) stop 'error: not enough memory to allocate array point_interface'
         endif
 
-        if(any_elastic .and. nglob_interface > 0)then
+        if (any_elastic .and. nglob_interface > 0) then
           allocate(pml_interface_history_displ(3,nglob_interface,NSTEP),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_displ'
+          if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_displ'
           allocate(pml_interface_history_veloc(3,nglob_interface,NSTEP),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_veloc'
+          if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_veloc'
           allocate(pml_interface_history_accel(3,nglob_interface,NSTEP),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_accel'
+          if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_accel'
         endif
 
-        if(any_acoustic .and. nglob_interface > 0)then
+        if (any_acoustic .and. nglob_interface > 0) then
           allocate(pml_interface_history_potential(nglob_interface,NSTEP),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential'
+          if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential'
           allocate(pml_interface_history_potential_dot(nglob_interface,NSTEP),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot'
+          if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot'
           allocate(pml_interface_history_potential_dot_dot(nglob_interface,NSTEP),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot_dot'
+          if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot_dot'
         endif
 
-        if(nglob_interface > 0) then
+        if (nglob_interface > 0) then
           call determin_interface_pml_interior()
           deallocate(PML_interior_interface)
           deallocate(mask_ibool_pml)
         endif
 
-        if(any_elastic .and. nglob_interface > 0)then
+        if (any_elastic .and. nglob_interface > 0) then
           write(outputname,'(a,i6.6,a)') 'pml_interface_elastic',myrank,'.bin'
           open(unit=71,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
         endif
 
-        if(any_acoustic .and. nglob_interface > 0)then
+        if (any_acoustic .and. nglob_interface > 0) then
           write(outputname,'(a,i6.6,a)') 'pml_interface_acoustic',myrank,'.bin'
           open(unit=72,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
         endif
@@ -609,9 +646,9 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
         allocate(pml_interface_history_potential_dot_dot(1,1))
       endif
 
-      if(SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS)then
+      if (SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS) then
 
-        if(any_elastic .and. nglob_interface > 0)then
+        if (any_elastic .and. nglob_interface > 0) then
           do it = 1,NSTEP
             do i = 1, nglob_interface
               read(71)pml_interface_history_accel(1,i,it),pml_interface_history_accel(2,i,it),&
@@ -624,7 +661,7 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
          enddo
        endif
 
-       if(any_acoustic .and. nglob_interface > 0)then
+       if (any_acoustic .and. nglob_interface > 0) then
          do it = 1,NSTEP
            do i = 1, nglob_interface
              read(72)pml_interface_history_potential_dot_dot(i,it),pml_interface_history_potential_dot(i,it),&
@@ -640,17 +677,17 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
 
       if (nspec_PML > 0) then
         allocate(K_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
+        if (ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
         allocate(K_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
+        if (ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
         allocate(d_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
+        if (ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
         allocate(d_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
+        if (ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
         allocate(alpha_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
+        if (ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
         allocate(alpha_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
+        if (ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
         K_x_store(:,:,:) = ZERO
         K_z_store(:,:,:) = ZERO
         d_x_store(:,:,:) = ZERO
@@ -660,17 +697,17 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
         call define_PML_coefficients()
       else
         allocate(K_x_store(NGLLX,NGLLZ,1),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
+        if (ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
         allocate(K_z_store(NGLLX,NGLLZ,1),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
+        if (ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
         allocate(d_x_store(NGLLX,NGLLZ,1),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
+        if (ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
         allocate(d_z_store(NGLLX,NGLLZ,1),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
+        if (ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
         allocate(alpha_x_store(NGLLX,NGLLZ,1),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
+        if (ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
         allocate(alpha_z_store(NGLLX,NGLLZ,1),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
+        if (ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
         K_x_store(:,:,:) = ZERO
         K_z_store(:,:,:) = ZERO
         d_x_store(:,:,:) = ZERO
@@ -682,58 +719,58 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
       ! elastic PML memory variables
       if (any_elastic .and. nspec_PML>0) then
         allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
         allocate(rmemory_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
         allocate(rmemory_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
         allocate(rmemory_duz_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
         allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
-        if(any_acoustic .and. num_fluid_solid_edges > 0)then
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
+        if (any_acoustic .and. num_fluid_solid_edges > 0) then
           allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
           allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
         endif
 
-        if(ROTATE_PML_ACTIVATE)then
+        if (ROTATE_PML_ACTIVATE) then
           allocate(rmemory_dux_dx_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
           allocate(rmemory_dux_dz_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
           allocate(rmemory_duz_dx_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
           allocate(rmemory_duz_dz_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
         else
           allocate(rmemory_dux_dx_prime(1,1,1,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
           allocate(rmemory_dux_dz_prime(1,1,1,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
           allocate(rmemory_duz_dx_prime(1,1,1,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
           allocate(rmemory_duz_dz_prime(1,1,1,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
         endif
 
-        if(time_stepping_scheme == 2)then
+        if (time_stepping_scheme == 2) then
           allocate(rmemory_displ_elastic_LDDRK(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
           allocate(rmemory_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
           allocate(rmemory_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
           allocate(rmemory_duz_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
           allocate(rmemory_duz_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
-          if(any_acoustic .and. num_fluid_solid_edges > 0)then
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
+          if (any_acoustic .and. num_fluid_solid_edges > 0) then
             allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-            if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
+            if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
             allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-            if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
+            if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
           endif
         else
           allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1),stat=ier)
@@ -741,11 +778,11 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
           allocate(rmemory_dux_dz_LDDRK(1,1,1,2),stat=ier)
           allocate(rmemory_duz_dx_LDDRK(1,1,1,2),stat=ier)
           allocate(rmemory_duz_dz_LDDRK(1,1,1,2),stat=ier)
-          if(any_acoustic .and. num_fluid_solid_edges > 0)then
+          if (any_acoustic .and. num_fluid_solid_edges > 0) then
             allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1),stat=ier)
-            if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
+            if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
             allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1),stat=ier)
-            if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
+            if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
           endif
         endif
 
@@ -755,25 +792,25 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
         rmemory_duz_dx(:,:,:,:) = ZERO
         rmemory_duz_dz(:,:,:,:) = ZERO
 
-        if(any_acoustic .and. num_fluid_solid_edges > 0)then
+        if (any_acoustic .and. num_fluid_solid_edges > 0) then
           rmemory_fsb_displ_elastic(:,:,:,:,:) = ZERO
           rmemory_sfb_potential_ddot_acoustic(:,:,:,:) = ZERO
         endif
 
-        if(ROTATE_PML_ACTIVATE)then
+        if (ROTATE_PML_ACTIVATE) then
           rmemory_dux_dx_prime(:,:,:,:) = ZERO
           rmemory_dux_dz_prime(:,:,:,:) = ZERO
           rmemory_duz_dx_prime(:,:,:,:) = ZERO
           rmemory_duz_dz_prime(:,:,:,:) = ZERO
         endif
 
-        if(time_stepping_scheme == 2)then
+        if (time_stepping_scheme == 2) then
           rmemory_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
           rmemory_dux_dx_LDDRK(:,:,:,:) = ZERO
           rmemory_dux_dz_LDDRK(:,:,:,:) = ZERO
           rmemory_duz_dx_LDDRK(:,:,:,:) = ZERO
           rmemory_duz_dz_LDDRK(:,:,:,:) = ZERO
-          if(any_acoustic .and. num_fluid_solid_edges > 0)then
+          if (any_acoustic .and. num_fluid_solid_edges > 0) then
             rmemory_fsb_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
             rmemory_sfb_potential_ddot_acoustic_LDDRK(:,:,:,:) = ZERO
           endif
@@ -786,7 +823,7 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
         allocate(rmemory_dux_dz(1,1,1,1))
         allocate(rmemory_duz_dx(1,1,1,1))
         allocate(rmemory_duz_dz(1,1,1,1))
-        if(any_acoustic .and. num_fluid_solid_edges > 0)then
+        if (any_acoustic .and. num_fluid_solid_edges > 0) then
           allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
           allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
           allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
@@ -807,23 +844,23 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
 
       if (any_acoustic .and. nspec_PML>0) then
         allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
         allocate(rmemory_acoustic_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
         allocate(rmemory_acoustic_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
 
         rmemory_potential_acoustic = ZERO
         rmemory_acoustic_dux_dx = ZERO
         rmemory_acoustic_dux_dz = ZERO
 
-        if(time_stepping_scheme == 2)then
+        if (time_stepping_scheme == 2) then
           allocate(rmemory_potential_acoustic_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
           allocate(rmemory_acoustic_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
           allocate(rmemory_acoustic_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if(ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
         else
           allocate(rmemory_potential_acoustic_LDDRK(1,1,1,1),stat=ier)
           allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1),stat=ier)
@@ -885,12 +922,12 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
   ! avoid a potential side effect owing to the "if" statements above: this array may be unallocated,
   ! if so we need to allocate a dummy version in order to be able to use that array as an argument
   ! in some subroutine calls below
-  if(.not. allocated(rmemory_fsb_displ_elastic)) allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
-  if(.not. allocated(rmemory_sfb_potential_ddot_acoustic)) allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
-  if(.not. allocated(rmemory_fsb_displ_elastic_LDDRK)) then
+  if (.not. allocated(rmemory_fsb_displ_elastic)) allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
+  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic)) allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
+  if (.not. allocated(rmemory_fsb_displ_elastic_LDDRK)) then
     allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
   endif
-  if(.not. allocated(rmemory_sfb_potential_ddot_acoustic_LDDRK)) then
+  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic_LDDRK)) then
     allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
   endif
 
@@ -916,26 +953,11 @@ subroutine prepare_timerun_read()
 
   implicit none
 
-  integer i,ispec,ispec2,j
-
-#ifdef USE_MPI
-  include "precision.h"
-#endif
-
-
-
-
-  ! starts reading in Database file
-  call read_databases_init()
-
-  if(nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
-  if(SIMULATION_TYPE == 3 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
-                                  stop 'RK and LDDRK time scheme not supported for adjoint inversion'
-  if(nproc /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
+  integer :: i,ispec,ispec2,j,ier
 
 ! add a small crack (discontinuity) in the medium manually
   npgeo_ori = npgeo
-  if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
+  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
 
   !
   !--- source information
@@ -968,17 +990,17 @@ subroutine prepare_timerun_read()
   ! reads in source infos
   call read_databases_sources()
 
-  !if(AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify
+  !if (AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify
 
   ! sets source parameters
   call set_sources()
 
   !----  define time stepping scheme
-  if(time_stepping_scheme == 1)then
+  if (time_stepping_scheme == 1) then
     stage_time_scheme=1
-  else if(time_stepping_scheme == 2)then
+  else if (time_stepping_scheme == 2) then
     stage_time_scheme=Nstages
-  else if(time_stepping_scheme == 3)then
+  else if (time_stepping_scheme == 3) then
     stage_time_scheme=4
   endif
 
@@ -986,7 +1008,7 @@ subroutine prepare_timerun_read()
   call read_databases_atten()
 
   ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
-  if(.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
+  if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
     f0_attenuation = f0(1)
   endif
 
@@ -1004,38 +1026,43 @@ subroutine prepare_timerun_read()
     allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
     allocate(shape2D_display(ngnod,pointsdisp,pointsdisp))
     allocate(dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp))
-    if(AXISYM) then
+
+    if (AXISYM) then
       allocate(flagrange_GLJ(NGLJ,pointsdisp))
     else
       allocate(flagrange_GLJ(1,1))
     endif
+
+    ! mesh
     allocate(xix(NGLLX,NGLLZ,nspec))
     allocate(xiz(NGLLX,NGLLZ,nspec))
     allocate(gammax(NGLLX,NGLLZ,nspec))
     allocate(gammaz(NGLLX,NGLLZ,nspec))
     allocate(jacobian(NGLLX,NGLLZ,nspec))
+
     allocate(flagrange(NGLLX,pointsdisp))
+
     allocate(xinterp(pointsdisp,pointsdisp))
     allocate(zinterp(pointsdisp,pointsdisp))
     allocate(Uxinterp(pointsdisp,pointsdisp))
     allocate(Uzinterp(pointsdisp,pointsdisp))
+
+    ! elements
+    allocate(kmato(nspec))
+    allocate(knods(ngnod,nspec))
+
+    ! material
     allocate(density(2,numat))
     allocate(anisotropy(9,numat))
     allocate(porosity(numat))
     allocate(tortuosity(numat))
     allocate(permeability(3,numat))
     allocate(poroelastcoef(4,3,numat))
+
+    ! attenuation
     allocate(already_shifted_velocity(numat))
     allocate(QKappa_attenuation(numat))
     allocate(Qmu_attenuation(numat))
-    allocate(kmato(nspec))
-    allocate(knods(ngnod,nspec))
-    allocate(ibool(NGLLX,NGLLZ,nspec))
-    allocate(elastic(nspec))
-    allocate(acoustic(nspec))
-    allocate(gravitoacoustic(nspec))
-    allocate(poroelastic(nspec))
-    allocate(anisotropic(nspec))
     allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS))
     allocate(inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS))
     allocate(phi_nu1(NGLLX,NGLLZ,nspec,N_SLS))
@@ -1046,6 +1073,15 @@ subroutine prepare_timerun_read()
     allocate(inv_tau_sigma_nu2_sent(N_SLS))
     allocate(phi_nu1_sent(N_SLS))
     allocate(phi_nu2_sent(N_SLS))
+
+    ! domains
+    allocate(ibool(NGLLX,NGLLZ,nspec))
+    allocate(elastic(nspec))
+    allocate(acoustic(nspec))
+    allocate(gravitoacoustic(nspec))
+    allocate(poroelastic(nspec))
+    allocate(anisotropic(nspec))
+
 
     already_shifted_velocity(:) = .false.
 
@@ -1062,7 +1098,7 @@ subroutine prepare_timerun_read()
   call read_databases_mato()
 
 ! add a small crack (discontinuity) in the medium manually
-  if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) then
+  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) then
 
 #ifdef USE_MPI
   stop 'currently only serial runs are handled when adding a crack manually'
@@ -1073,12 +1109,12 @@ subroutine prepare_timerun_read()
   print *,'adding a crack manually'
   print *,'need to add ',nb_points_to_add_to_npgeo,' npgeo mesh points to do that'
 
-  if(check_nb_points_to_add_to_npgeo /= NB_POINTS_TO_ADD_TO_NPGEO) &
+  if (check_nb_points_to_add_to_npgeo /= NB_POINTS_TO_ADD_TO_NPGEO) &
     stop 'must have check_nb_points_to_add_to_npgeo == NB_POINTS_TO_ADD_TO_NPGEO when adding a crack manually'
 
-  if(ngnod /= 4) stop 'must currently have ngnod == 4 when adding a crack manually'
+  if (ngnod /= 4) stop 'must currently have ngnod == 4 when adding a crack manually'
 
-  if(FAST_NUMBERING) stop 'must not have FAST_NUMBERING when adding a crack manually'
+  if (FAST_NUMBERING) stop 'must not have FAST_NUMBERING when adding a crack manually'
 
 !! DK DK modify arrays "knods" and "coorg" to introduce the crack manually by duplicating and splitting the nodes
   already_found_a_crack_element = .false.
@@ -1086,7 +1122,7 @@ subroutine prepare_timerun_read()
 
   do ispec = 1,nspec-1
 !! DK DK my convention is to introduce a vertical crack between two elements with material numbers 2 and 3
-    if(kmato(ispec) == 2 .and. kmato(ispec+1) == 3) then
+    if (kmato(ispec) == 2 .and. kmato(ispec+1) == 3) then
 
       print *,'adding a crack between elements ',ispec,' and ',ispec+1
 
@@ -1094,15 +1130,15 @@ subroutine prepare_timerun_read()
 !! DK DK except if it is the first crack element found, because then it is the crack
 !! DK DK tip and thus it should be assembled rather than split.
 !! DK DK Lower-right corner of an element is local npgeo point #2
-      if(already_found_a_crack_element .and. knods(2,ispec) <= npgeo_ori) then
+      if (already_found_a_crack_element .and. knods(2,ispec) <= npgeo_ori) then
         current_last_point = current_last_point + 1
         original_value = knods(2,ispec)
 !! DK DK split this point number in all the elements in which it appears
         do ispec2 = 1,nspec
 ! do this only for elements that define the left vertical edge of the crack
-          if(kmato(ispec2) /= 2) cycle
+          if (kmato(ispec2) /= 2) cycle
           do ignod = 1,ngnod
-            if(knods(ignod,ispec2) == original_value) then
+            if (knods(ignod,ispec2) == original_value) then
               knods(ignod,ispec2) = current_last_point
               coorg(:,current_last_point) = coorg(:,original_value)
             endif
@@ -1114,16 +1150,16 @@ subroutine prepare_timerun_read()
       already_found_a_crack_element = .true.
 
 !! DK DK Upper-right corner of an element is local npgeo point #3
-      if(knods(3,ispec) <= npgeo_ori) then
+      if (knods(3,ispec) <= npgeo_ori) then
 
         current_last_point = current_last_point + 1
         original_value = knods(3,ispec)
 !! DK DK split this point number in all the elements in which it appears
         do ispec2 = 1,nspec
 ! do this only for elements that define the left vertical edge of the crack
-          if(kmato(ispec2) /= 2) cycle
+          if (kmato(ispec2) /= 2) cycle
           do ignod = 1,ngnod
-            if(knods(ignod,ispec2) == original_value) then
+            if (knods(ignod,ispec2) == original_value) then
               knods(ignod,ispec2) = current_last_point
               coorg(:,current_last_point) = coorg(:,original_value)
             endif
@@ -1131,38 +1167,38 @@ subroutine prepare_timerun_read()
         enddo
       endif
 
-    endif ! of if(kmato(ispec) == 2 .and. kmato(ispec+1) == 3)
+    endif ! of if (kmato(ispec) == 2 .and. kmato(ispec+1) == 3)
 
   enddo
 
-  if(current_last_point /= npgeo) then
+  if (current_last_point /= npgeo) then
     print *,'current_last_point = ',current_last_point
     print *,'npgeo_new = ',npgeo
     stop 'did not find the right total number of points, should have current_last_point == npgeo_new'
   endif
 
-  endif ! of if(ADD_A_SMALL_CRACK_IN_THE_MEDIUM) then
+  endif ! of if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) then
 
 !-------------------------------------------------------------------------------
 !----  determine if each spectral element is elastic, poroelastic, or acoustic
 !-------------------------------------------------------------------------------
   call initialize_simulation_domains()
 
-  if(PML_BOUNDARY_CONDITIONS .and. any_poroelastic) then
+  if (PML_BOUNDARY_CONDITIONS .and. any_poroelastic) then
     stop 'PML boundary conditions not implemented for poroelastic simulations yet'
   endif
 
-  if(PML_BOUNDARY_CONDITIONS .and. any_elastic .and. (.not. p_sv)) then
+  if (PML_BOUNDARY_CONDITIONS .and. any_elastic .and. (.not. p_sv)) then
     stop 'PML boundary conditions not implemented for SH simulations yet'
   endif
 
-  if(PML_BOUNDARY_CONDITIONS .and. time_stepping_scheme == 3) then
+  if (PML_BOUNDARY_CONDITIONS .and. time_stepping_scheme == 3) then
     stop 'PML boundary conditions not implemented with standard Runge Kutta scheme'
   endif
 
 #ifdef USE_MPI
-  if(myrank == 0)then
-   if(time_stepping_scheme == 3) then
+  if (myrank == 0) then
+   if (time_stepping_scheme == 3) then
     stop 'MPI support for standard Runge-Kutta scheme is not implemented'
    endif
   endif
@@ -1177,7 +1213,7 @@ subroutine prepare_timerun_read()
     e11(:,:,:,:) = 0._CUSTOM_REAL
     e13(:,:,:,:) = 0._CUSTOM_REAL
 
-    if(time_stepping_scheme == 2)then
+    if (time_stepping_scheme == 2) then
       allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
       allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
       allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
@@ -1190,7 +1226,7 @@ subroutine prepare_timerun_read()
     e11_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
     e13_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
 
-    if(time_stepping_scheme == 3)then
+    if (time_stepping_scheme == 3) then
       allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
       allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
       allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
@@ -1229,15 +1265,15 @@ subroutine prepare_timerun_read()
   do ispec = 1,nspec
 
 !   attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
-    if(acoustic(ispec)) cycle
+    if (acoustic(ispec)) cycle
 
 !   check that attenuation values entered by the user make sense
-    if((QKappa_attenuation(kmato(ispec)) <= 9998.999d0 .and. Qmu_attenuation(kmato(ispec)) >  9998.999d0) .or. &
+    if ((QKappa_attenuation(kmato(ispec)) <= 9998.999d0 .and. Qmu_attenuation(kmato(ispec)) >  9998.999d0) .or. &
        (QKappa_attenuation(kmato(ispec)) >  9998.999d0 .and. Qmu_attenuation(kmato(ispec)) <= 9998.999d0)) stop &
      'need to have Qkappa and Qmu both above or both below 9999 for a given material; trick: use 9998 if you want to turn off one'
 
 !   if no attenuation in that elastic element
-    if(QKappa_attenuation(kmato(ispec)) > 9998.999d0) cycle
+    if (QKappa_attenuation(kmato(ispec)) > 9998.999d0) cycle
 
     call attenuation_model(QKappa_attenuation(kmato(ispec)),Qmu_attenuation(kmato(ispec)))
 
@@ -1252,11 +1288,11 @@ subroutine prepare_timerun_read()
       enddo
     enddo
 
-    if(ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0 .and. .not. assign_external_model) then
-      if(anisotropic(ispec) .or. poroelastic(ispec) .or. gravitoacoustic(ispec)) &
+    if (ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0 .and. .not. assign_external_model) then
+      if (anisotropic(ispec) .or. poroelastic(ispec) .or. gravitoacoustic(ispec)) &
          stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
       n = kmato(ispec)
-      if(.not. already_shifted_velocity(n)) then
+      if (.not. already_shifted_velocity(n)) then
         rho = density(1,n)
         lambda = poroelastcoef(1,1,n)
         mu = poroelastcoef(2,1,n)
@@ -1273,18 +1309,18 @@ subroutine prepare_timerun_read()
  enddo
 
 ! allocate memory variables for viscous attenuation (poroelastic media)
-    if(ATTENUATION_PORO_FLUID_PART) then
+    if (ATTENUATION_PORO_FLUID_PART) then
       allocate(rx_viscous(NGLLX,NGLLZ,nspec))
       allocate(rz_viscous(NGLLX,NGLLZ,nspec))
       allocate(viscox(NGLLX,NGLLZ,nspec))
       allocate(viscoz(NGLLX,NGLLZ,nspec))
 
-      if(time_stepping_scheme == 2) then
+      if (time_stepping_scheme == 2) then
       allocate(rx_viscous_LDDRK(NGLLX,NGLLZ,nspec))
       allocate(rz_viscous_LDDRK(NGLLX,NGLLZ,nspec))
       endif
 
-      if(time_stepping_scheme == 3) then
+      if (time_stepping_scheme == 3) then
       allocate(rx_viscous_initial_rk(NGLLX,NGLLZ,nspec))
       allocate(rz_viscous_initial_rk(NGLLX,NGLLZ,nspec))
       allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
@@ -1302,7 +1338,7 @@ subroutine prepare_timerun_read()
   !----  read interfaces data
   !
   call read_databases_ninterface()
-  if ( ninterface > 0 ) then
+  if (ninterface > 0) then
        allocate(my_neighbours(ninterface))
        allocate(my_nelmnts_neighbours(ninterface))
        allocate(my_interfaces(4,max_interface_size,ninterface))
@@ -1339,7 +1375,7 @@ subroutine prepare_timerun_read()
 
 ! --- allocate arrays for absorbing boundary conditions
 
-  if(nelemabs <= 0) then
+  if (nelemabs <= 0) then
     nelemabs = 1
     anyabs = .false.
   else
@@ -1386,16 +1422,16 @@ subroutine prepare_timerun_read()
   !
   call read_databases_absorbing()
 
-  if(anyabs .and. (.not. PML_BOUNDARY_CONDITIONS))then
+  if (anyabs .and. (.not. PML_BOUNDARY_CONDITIONS)) then
     STACEY_BOUNDARY_CONDITIONS = .true.
   else
     STACEY_BOUNDARY_CONDITIONS = .false.
   endif
 
 
-  if( anyabs ) then
+  if (anyabs) then
     ! files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
-      if(any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3).and. (.not. PML_BOUNDARY_CONDITIONS)) then
+      if (any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3).and. (.not. PML_BOUNDARY_CONDITIONS)) then
         allocate(b_absorb_elastic_left(3,NGLLZ,nspec_left,NSTEP))
         allocate(b_absorb_elastic_right(3,NGLLZ,nspec_right,NSTEP))
         allocate(b_absorb_elastic_bottom(3,NGLLX,nspec_bottom,NSTEP))
@@ -1406,7 +1442,7 @@ subroutine prepare_timerun_read()
         allocate(b_absorb_elastic_bottom(1,1,1,1))
         allocate(b_absorb_elastic_top(1,1,1,1))
       endif
-      if(any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3).and. (.not. PML_BOUNDARY_CONDITIONS)) then
+      if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3).and. (.not. PML_BOUNDARY_CONDITIONS)) then
         allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP))
         allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP))
         allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
@@ -1425,7 +1461,7 @@ subroutine prepare_timerun_read()
         allocate(b_absorb_poro_w_bottom(1,1,1,1))
         allocate(b_absorb_poro_w_top(1,1,1,1))
       endif
-      if(any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. (.not. PML_BOUNDARY_CONDITIONS)) then
+      if (any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. (.not. PML_BOUNDARY_CONDITIONS)) then
         allocate(b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP))
         allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
         allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))
@@ -1439,14 +1475,14 @@ subroutine prepare_timerun_read()
 
   else
 
-    if(.not. allocated(b_absorb_elastic_left)) then
+    if (.not. allocated(b_absorb_elastic_left)) then
       allocate(b_absorb_elastic_left(1,1,1,1))
       allocate(b_absorb_elastic_right(1,1,1,1))
       allocate(b_absorb_elastic_bottom(1,1,1,1))
       allocate(b_absorb_elastic_top(1,1,1,1))
     endif
 
-    if(.not. allocated(b_absorb_poro_s_left)) then
+    if (.not. allocated(b_absorb_poro_s_left)) then
       allocate(b_absorb_poro_s_left(1,1,1,1))
       allocate(b_absorb_poro_s_right(1,1,1,1))
       allocate(b_absorb_poro_s_bottom(1,1,1,1))
@@ -1457,7 +1493,7 @@ subroutine prepare_timerun_read()
       allocate(b_absorb_poro_w_top(1,1,1,1))
     endif
 
-    if(.not. allocated(b_absorb_acoustic_left)) then
+    if (.not. allocated(b_absorb_acoustic_left)) then
       allocate(b_absorb_acoustic_left(1,1,1))
       allocate(b_absorb_acoustic_right(1,1,1))
       allocate(b_absorb_acoustic_bottom(1,1,1))
@@ -1468,7 +1504,7 @@ subroutine prepare_timerun_read()
 
 ! --- allocate arrays for acoustic forcing boundary conditions
 
-  if(.not. ACOUSTIC_FORCING) then
+  if (.not. ACOUSTIC_FORCING) then
     nelem_acforcing = 1
   endif
 
@@ -1500,7 +1536,7 @@ subroutine prepare_timerun_read()
 !
 !----  read acoustic free surface data
 !
-  if(nelem_acoustic_surface > 0) then
+  if (nelem_acoustic_surface > 0) then
     any_acoustic_edges = .true.
   else
     any_acoustic_edges = .false.
@@ -1510,14 +1546,15 @@ subroutine prepare_timerun_read()
   allocate(acoustic_surface(5,nelem_acoustic_surface))
   call read_databases_free_surf()
   ! resets nelem_acoustic_surface
-  if( any_acoustic_edges .eqv. .false. ) nelem_acoustic_surface = 0
+  if (any_acoustic_edges .eqv. .false. ) nelem_acoustic_surface = 0
 
   ! constructs acoustic surface
-  if(nelem_acoustic_surface > 0) then
+  if (nelem_acoustic_surface > 0) then
     call construct_acoustic_surface ()
     if (myrank == 0) then
-      write(IOUT,*)
-      write(IOUT,*) 'Number of free surface elements: ',nelem_acoustic_surface
+      write(IMAIN,*)
+      write(IMAIN,*) 'Number of free surface elements: ',nelem_acoustic_surface
+      call flush_IMAIN()
     endif
   endif
 
@@ -1525,7 +1562,7 @@ subroutine prepare_timerun_read()
   !
   !---- read coupled edges
   !
-  if( num_fluid_solid_edges > 0 ) then
+  if (num_fluid_solid_edges > 0) then
     any_fluid_solid_edges = .true.
   else
     any_fluid_solid_edges = .false.
@@ -1535,7 +1572,7 @@ subroutine prepare_timerun_read()
   allocate(fluid_solid_acoustic_iedge(num_fluid_solid_edges))
   allocate(fluid_solid_elastic_ispec(num_fluid_solid_edges))
   allocate(fluid_solid_elastic_iedge(num_fluid_solid_edges))
-  if( num_fluid_poro_edges > 0 ) then
+  if (num_fluid_poro_edges > 0) then
     any_fluid_poro_edges = .true.
   else
     any_fluid_poro_edges = .false.
@@ -1545,7 +1582,7 @@ subroutine prepare_timerun_read()
   allocate(fluid_poro_acoustic_iedge(num_fluid_poro_edges))
   allocate(fluid_poro_poroelastic_ispec(num_fluid_poro_edges))
   allocate(fluid_poro_poroelastic_iedge(num_fluid_poro_edges))
-  if ( num_solid_poro_edges > 0 ) then
+  if (num_solid_poro_edges > 0) then
     any_solid_poro_edges = .true.
   else
     any_solid_poro_edges = .false.
@@ -1559,9 +1596,9 @@ subroutine prepare_timerun_read()
   call read_databases_coupled()
 
   ! resets counters
-  if( any_fluid_solid_edges .eqv. .false. ) num_fluid_solid_edges = 0
-  if( any_fluid_poro_edges .eqv. .false. ) num_fluid_poro_edges = 0
-  if( any_solid_poro_edges .eqv. .false. ) num_solid_poro_edges = 0
+  if (any_fluid_solid_edges .eqv. .false. ) num_fluid_solid_edges = 0
+  if (any_fluid_poro_edges .eqv. .false. ) num_fluid_poro_edges = 0
+  if (any_solid_poro_edges .eqv. .false. ) num_solid_poro_edges = 0
 
 
   !
@@ -1578,15 +1615,16 @@ subroutine prepare_timerun_read()
   allocate(dist_tangential_detection_curve(nnodes_tangential_curve))
   call read_tangential_detection_curve()
   ! resets nnode_tangential_curve
-  if( any_tangential_curve .eqv. .false. ) nnodes_tangential_curve = 0
+  if (any_tangential_curve .eqv. .false. ) nnodes_tangential_curve = 0
 
 !
 !----  read axial elements data
 !
   allocate(is_on_the_axis(nspec),stat=ier)
-  if(ier /= 0) stop 'error: not enough memory to allocate array is_on_the_axis'
+  if (ier /= 0) stop 'error: not enough memory to allocate array is_on_the_axis'
   is_on_the_axis(:) = .false.
-  if(nelem_on_the_axis == 0) then
+
+  if (nelem_on_the_axis == 0) then
     allocate(ispec_of_axial_elements(1))
   else
     allocate(ispec_of_axial_elements(nelem_on_the_axis))
@@ -1599,8 +1637,9 @@ subroutine prepare_timerun_read()
   nelem_on_the_axis_total = nelem_on_the_axis
 #endif
   if (myrank == 0 .and. AXISYM) then
-    write(IOUT,*)
-    write(IOUT,*) 'Total number of elements on the axis : ',nelem_on_the_axis_total
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of elements on the axis : ',nelem_on_the_axis_total
+    call flush_IMAIN()
   endif
 
 !
@@ -1629,12 +1668,7 @@ subroutine prepare_timerun_noise()
 
   implicit none
 
-  integer i,j,iglob,ispec
-
-#ifdef USE_MPI
-  include "precision.h"
-#endif
-
+  integer :: i,j,iglob,ispec
 
 !<NOISE_TOMOGRAPHY
 
@@ -1684,7 +1718,7 @@ subroutine prepare_timerun_noise()
     close(504)
 
     !write out velocity model
-    if(assign_external_model) then
+    if (assign_external_model) then
       open(unit=504,file='OUTPUT_FILES/model_rho_vp_vs',status='unknown',action='write')
         do ispec = 1, nspec
           do j = 1, NGLLZ
@@ -1750,17 +1784,13 @@ subroutine prepare_timerun_attenuation()
   use specfem_par
 
   implicit none
+  integer :: ier
 
-#ifdef USE_MPI
-  include "precision.h"
-#endif
-
-
-! Precompute Runge Kutta coefficients if viscous attenuation
-  if(ATTENUATION_PORO_FLUID_PART) then
-! viscous attenuation is implemented following the memory variable formulation of
-! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
-! anelastic and porous media, Elsevier, p. 304-305, 2007
+  ! Precompute Runge Kutta coefficients if viscous attenuation
+  if (ATTENUATION_PORO_FLUID_PART) then
+    ! viscous attenuation is implemented following the memory variable formulation of
+    ! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
+    ! anelastic and porous media, Elsevier, p. 304-305, 2007
     theta_e = (sqrt(Q0**2+1.d0) +1.d0)/(2.d0*pi*freq0*Q0)
     theta_s = (sqrt(Q0**2+1.d0) -1.d0)/(2.d0*pi*freq0*Q0)
 
@@ -1770,69 +1800,68 @@ subroutine prepare_timerun_attenuation()
     betaval = deltat / 2.d0 + deltat**2*thetainv / 3.d0 + deltat**3*thetainv**2 / 8.d0 + deltat**4*thetainv**3 / 24.d0
     gammaval = deltat / 2.d0 + deltat**2*thetainv / 6.d0 + deltat**3*thetainv**2 / 24.d0
 
-! initialize memory variables for attenuation
+    ! initialize memory variables for attenuation
     viscox(:,:,:) = 0.d0
     viscoz(:,:,:) = 0.d0
     rx_viscous(:,:,:) = 0.d0
     rz_viscous(:,:,:) = 0.d0
-    if(time_stepping_scheme == 2) then
+    if (time_stepping_scheme == 2) then
      rx_viscous_LDDRK = 0.d0
      rz_viscous_LDDRK = 0.d0
     endif
 
-    if(time_stepping_scheme == 3) then
+    if (time_stepping_scheme == 3) then
      rx_viscous_initial_rk = 0.d0
      rz_viscous_initial_rk = 0.d0
      rx_viscous_force_RK = 0.d0
      rz_viscous_force_RK = 0.d0
     endif
-
   endif
 
-! allocate arrays for postscript output
+  ! allocate arrays for postscript output
 #ifdef USE_MPI
-  if(modelvect) then
-  d1_coorg_recv_ps_velocity_model=2
-  call mpi_allreduce(nspec,d2_coorg_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-  d2_coorg_recv_ps_velocity_model=d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+  if (modelvect) then
+    d1_coorg_recv_ps_velocity_model=2
+    call mpi_allreduce(nspec,d2_coorg_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    d2_coorg_recv_ps_velocity_model=d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
        ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
-  d1_RGB_recv_ps_velocity_model=1
-  call mpi_allreduce(nspec,d2_RGB_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-  d2_RGB_recv_ps_velocity_model=d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+    d1_RGB_recv_ps_velocity_model=1
+    call mpi_allreduce(nspec,d2_RGB_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    d2_RGB_recv_ps_velocity_model=d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
        ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
   else
-  d1_coorg_recv_ps_velocity_model=1
-  d2_coorg_recv_ps_velocity_model=1
-  d1_RGB_recv_ps_velocity_model=1
-  d2_RGB_recv_ps_velocity_model=1
+    d1_coorg_recv_ps_velocity_model=1
+    d2_coorg_recv_ps_velocity_model=1
+    d1_RGB_recv_ps_velocity_model=1
+    d2_RGB_recv_ps_velocity_model=1
   endif
 
   d1_coorg_send_ps_element_mesh=2
-  if ( ngnod == 4 ) then
-    if ( numbers == 1 ) then
+  if (ngnod == 4) then
+    if (numbers == 1) then
       d2_coorg_send_ps_element_mesh=nspec*5
-      if ( colors == 1 ) then
+      if (colors == 1) then
         d1_color_send_ps_element_mesh=2*nspec
       else
         d1_color_send_ps_element_mesh=1*nspec
       endif
     else
       d2_coorg_send_ps_element_mesh=nspec*6
-      if ( colors == 1 ) then
+      if (colors == 1) then
         d1_color_send_ps_element_mesh=1*nspec
       endif
     endif
   else
-    if ( numbers == 1 ) then
+    if (numbers == 1) then
       d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1+1)
-      if ( colors == 1 ) then
+      if (colors == 1) then
         d1_color_send_ps_element_mesh=2*nspec
       else
         d1_color_send_ps_element_mesh=1*nspec
       endif
     else
       d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1)
-      if ( colors == 1 ) then
+      if (colors == 1) then
         d1_color_send_ps_element_mesh=1*nspec
       endif
     endif
@@ -1853,8 +1882,8 @@ subroutine prepare_timerun_attenuation()
   call mpi_allreduce(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
 
   d1_coorg_send_ps_vector_field=8
-  if(interpol) then
-    if(plot_lowerleft_corner_only) then
+  if (interpol) then
+    if (plot_lowerleft_corner_only) then
       d2_coorg_send_ps_vector_field=nspec*1*1
     else
       d2_coorg_send_ps_vector_field=nspec*pointsdisp*pointsdisp
@@ -1864,7 +1893,6 @@ subroutine prepare_timerun_attenuation()
   endif
   call mpi_allreduce(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
   call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-
 
 #else
   d1_coorg_recv_ps_velocity_model=1
@@ -1919,7 +1947,8 @@ subroutine prepare_timerun_attenuation()
   allocate(coorg_recv_ps_free_surface(d1_coorg_recv_ps_free_surface,d2_coorg_recv_ps_free_surface))
 
   allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
-  allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field))
+  allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field),stat=ier)
+  if (ier /= 0) stop 'Error allocating attenuation arrays'
 
 ! to dump the wave field
   this_is_the_first_time_we_dump = .true.

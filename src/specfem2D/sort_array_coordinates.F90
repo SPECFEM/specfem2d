@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -77,7 +76,7 @@
   double precision,parameter :: xtol = SMALLVALTOL
 
   ! establish initial pointers
-  do ipoin=1,npointot
+  do ipoin= 1,npointot
     locval(ipoin)=ipoin
   enddo
 
@@ -87,15 +86,15 @@
   ifseg(1)=.true.
   ninseg(1)=npointot
 
-  do j=1,NDIM
+  do j = 1,NDIM
 
     ! sort within each segment
     ioff=1
-    do iseg=1,nseg
+    do iseg = 1,nseg
 
-      if(j == 1) then
+      if (j == 1) then
         call rank_buffers(x(ioff),ind,ninseg(iseg))
-      else if(j == 2) then
+      else if (j == 2) then
         call rank_buffers(z(ioff),ind,ninseg(iseg))
       endif
 
@@ -106,20 +105,20 @@
     enddo
 
     ! check for jumps in current coordinate
-    if(j == 1) then
-      do i=2,npointot
-        if(dabs(x(i)-x(i-1)) > xtol) ifseg(i)=.true.
+    if (j == 1) then
+      do i = 2,npointot
+        if (dabs(x(i)-x(i-1)) > xtol) ifseg(i)=.true.
       enddo
-    else if(j == 2) then
-      do i=2,npointot
-        if(dabs(z(i)-z(i-1)) > xtol) ifseg(i)=.true.
+    else if (j == 2) then
+      do i = 2,npointot
+        if (dabs(z(i)-z(i-1)) > xtol) ifseg(i)=.true.
       enddo
     endif
 
     ! count up number of different segments
     nseg=0
-    do i=1,npointot
-      if(ifseg(i)) then
+    do i = 1,npointot
+      if (ifseg(i)) then
         nseg=nseg+1
         ninseg(nseg)=1
       else
@@ -130,8 +129,8 @@
 
   ! assign global node numbers (now sorted lexicographically)
   ig=0
-  do i=1,npointot
-    if(ifseg(i)) ig=ig+1
+  do i = 1,npointot
+    if (ifseg(i)) ig=ig+1
     iglob(locval(i))=ig
   enddo
 
@@ -156,46 +155,46 @@
   integer i,j,l,ir,indx
   double precision q
 
-  do j=1,n
+  do j = 1,n
     IND(j)=j
   enddo
 
-  if(n == 1) return
+  if (n == 1) return
 
   L=n/2+1
   ir=n
   100 CONTINUE
-   IF(l>1) THEN
+   if (l>1) THEN
       l=l-1
-      indx=ind(l)
-      q=a(indx)
+      indx=IND(l)
+      q=A(indx)
    ELSE
-      indx=ind(ir)
-      q=a(indx)
-      ind(ir)=ind(1)
+      indx=IND(ir)
+      q=A(indx)
+      IND(ir)=IND(1)
       ir=ir-1
       if (ir == 1) then
-         ind(1)=indx
+         IND(1)=indx
          return
       endif
    endif
    i=l
    j=l+l
   200    CONTINUE
-   IF(J <= IR) THEN
-      IF(J < IR) THEN
-         IF(A(IND(j)) < A(IND(j+1))) j=j+1
+   if (j <= ir) THEN
+      if (j < ir) THEN
+         if (A(IND(j)) < A(IND(j+1))) j=j+1
       endif
       IF (q < A(IND(j))) THEN
-         IND(I)=IND(J)
-         I=J
-         J=J+J
+         IND(i)=IND(j)
+         i=j
+         j=j+j
       ELSE
-         J=IR+1
+         j=ir+1
       endif
    goto 200
    endif
-   IND(I)=INDX
+   IND(i)=indx
   goto 100
   end subroutine rank_buffers
 
@@ -215,22 +214,22 @@
 
   integer i
 
-  do i=1,n
+  do i = 1,n
     W(i)=A(i)
     IW(i)=IA(i)
   enddo
 
-  do i=1,n
+  do i = 1,n
     A(i)=W(ind(i))
     IA(i)=IW(ind(i))
   enddo
 
-  do i=1,n
+  do i = 1,n
     W(i)=B(i)
     IW(i)=IB(i)
   enddo
 
-  do i=1,n
+  do i = 1,n
     B(i)=W(ind(i))
     IB(i)=IW(ind(i))
   enddo

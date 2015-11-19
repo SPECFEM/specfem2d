@@ -40,7 +40,6 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -109,7 +108,7 @@ extern realw_texture d_wxgll_xx_tex;
 //   - hiding memory latency: to minimize waiting times to retrieve a memory value from global memory, we put
 //                some more calculations into the same code block before calling syncthreads(). this should help the
 //                compiler to move independent calculations to wherever it can overlap it with memory access operations.
-//                note, especially the if( gravity )-block locations are very sensitive
+//                note, especially the if (gravity )-block locations are very sensitive
 //                for optimal register usage and compiler optimizations
 //
 
@@ -191,7 +190,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 // 0 BYTES
 
   // checks if anything to do
-  if( bx >= nb_blocks_to_compute ) return;
+  if (bx >= nb_blocks_to_compute ) return;
 
 // counts:
 // + 1 FLOP
@@ -212,11 +211,11 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 
 #ifdef USE_TEXTURES_FIELDS
     s_dummy_loc[tx] = texfetch_potential<FORWARD_OR_ADJOINT>(iglob);
-   if(nb_field==2) s_dummy_loc[NGLL2+tx]=texfetch_potential<3>(iglob);
+   if (nb_field==2) s_dummy_loc[NGLL2+tx]=texfetch_potential<3>(iglob);
 #else
     // changing iglob indexing to match fortran row changes fast style
     s_dummy_loc[tx] = d_potential_acoustic[iglob];
-    if(nb_field==2) s_dummy_loc[NGLL2+tx]=d_b_potential_acoustic[iglob];
+    if (nb_field==2) s_dummy_loc[NGLL2+tx]=d_b_potential_acoustic[iglob];
 #endif
 
 
@@ -263,7 +262,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
     // loads hprimewgll into shared memory
     sh_hprimewgll_xx[tx] = hprimewgll_xx[tx];
 
-if(threadIdx.x<NGLLX){
+if (threadIdx.x<NGLLX){
 #ifdef USE_TEXTURES_CONSTANTS
     sh_wxgll[tx] = tex1Dfetch(d_wxgll_xx_tex,tx);
 #else
@@ -387,7 +386,7 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
 
   // Cuda timing
   cudaEvent_t start, stop;
-  if( CUDA_TIMING ){
+  if (CUDA_TIMING) {
     start_timing_cuda(&start,&stop);
   }
 
@@ -414,13 +413,13 @@ else nb_field=1;
 
 
   // Cuda timing
-  if( CUDA_TIMING ){
+  if (CUDA_TIMING) {
     realw flops,time;
     stop_timing_cuda(&start,&stop,"Kernel_2_acoustic_impl",&time);
     // time in seconds
     time = time / 1000.;
 
-      if( ! mp->use_mesh_coloring_gpu ){
+      if (! mp->use_mesh_coloring_gpu) {
         // see with: nvprof --metrics flops_sp ./xspecfem3D
         //           -> using 322631424 FLOPS (Single) floating-point operations for 20736 elements
         //              = 15559 FLOPS per block
@@ -457,12 +456,12 @@ void FC_FUNC_(compute_forces_acoustic_cuda,
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
   int num_elements;
 
-  if( *iphase == 1 )
+  if (*iphase == 1)
     num_elements = *nspec_outer_acoustic;
   else
     num_elements = *nspec_inner_acoustic;
 
-  if( num_elements == 0 ) return;
+  if (num_elements == 0) return;
 
   // no mesh coloring: uses atomic updates
   Kernel_2_acoustic(num_elements, mp, *iphase,
@@ -498,12 +497,12 @@ __global__ void enforce_free_surface_cuda_kernel(
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
 
   // for all faces on free surface
-  if( iface < num_free_surface_faces ){
+  if (iface < num_free_surface_faces) {
 
     int ispec = free_surface_ispec[iface]-1;
 
     // checks if element is in acoustic domain
-    if( ispec_is_acoustic[ispec] ){
+    if (ispec_is_acoustic[ispec]) {
 
       // gets global point index
       int igll = threadIdx.x + threadIdx.y*blockDim.x;
@@ -517,7 +516,7 @@ __global__ void enforce_free_surface_cuda_kernel(
       potential_acoustic[iglob] = 0;
       potential_dot_acoustic[iglob] = 0;
       potential_dot_dot_acoustic[iglob] = 0;
-if(simu_type==3){
+if (simu_type==3){
       b_potential_acoustic[iglob] = 0;
       b_potential_dot_acoustic[iglob] = 0;
       b_potential_dot_dot_acoustic[iglob] = 0;}

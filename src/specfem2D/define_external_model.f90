@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -93,7 +92,7 @@
         x = coord(1,iglob)
         z = coord(2,iglob)
 
-        if(material_element(ispec) == 1 .or. x < 1700.d0 .or. z >= 2300.d0) then
+        if (material_element(ispec) == 1 .or. x < 1700.d0 .or. z >= 2300.d0) then
           rho(i,j,ispec) = 2000.d0
           vp(i,j,ispec) = 3000.d0
           vs(i,j,ispec) = vp(i,j,ispec) / sqrt(3.d0)
@@ -109,7 +108,7 @@
           c23(i,j,ispec) = 0.d0
           c25(i,j,ispec) = 0.d0
 
-        else if(material_element(ispec) == 2) then
+        else if (material_element(ispec) == 2) then
           rho(i,j,ispec) = 2500.d0
           vp(i,j,ispec) = 3600.d0
           vs(i,j,ispec) = vp(i,j,ispec) / 2.d0
@@ -126,7 +125,8 @@
           c25(i,j,ispec) = 0.d0
 
         else
-          write(IOUT,*) 'flag number in external model is equal to ',material_element(ispec)
+          ! this case should not occur
+          write(IMAIN,*) 'Error: invalid flag number in external model is equal to ',material_element(ispec)
           stop 'wrong flag number in external model; exiting...'
         endif
 
@@ -1056,7 +1056,7 @@
 ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
   do ispec = 1,nspec
 
-  if(material_element(ispec) /= IREGION_MANTLE_CRUST_ABOVE_d670 .and. &
+  if (material_element(ispec) /= IREGION_MANTLE_CRUST_ABOVE_d670 .and. &
      material_element(ispec) /= IREGION_MANTLE_BELOW_d670 .and. &
      material_element(ispec) /= IREGION_OUTER_CORE .and. &
      material_element(ispec) /= IREGION_INNER_CORE) stop 'wrong flag number in external model'
@@ -1081,15 +1081,15 @@
 ! and a point below the ICB or the CMB and interpolate between them,
 ! which would lead to a wrong value (keeping in mind that we interpolate
 ! between points i-1 and i below)
-  if(material_element(ispec) == IREGION_INNER_CORE .and. ii > 24) ii = 24
+  if (material_element(ispec) == IREGION_INNER_CORE .and. ii > 24) ii = 24
 
-  if(material_element(ispec) == IREGION_OUTER_CORE .and. ii < 26) ii = 26
-  if(material_element(ispec) == IREGION_OUTER_CORE .and. ii > 69) ii = 69
+  if (material_element(ispec) == IREGION_OUTER_CORE .and. ii < 26) ii = 26
+  if (material_element(ispec) == IREGION_OUTER_CORE .and. ii > 69) ii = 69
 
-  if((material_element(ispec) == IREGION_MANTLE_CRUST_ABOVE_d670 .or. &
+  if ((material_element(ispec) == IREGION_MANTLE_CRUST_ABOVE_d670 .or. &
       material_element(ispec) == IREGION_MANTLE_BELOW_d670) .and. ii < 71) ii = 71
 
-  if(ii == 1) then
+  if (ii == 1) then
     rho(i,j,ispec) = density_ak135(1)
     vp(i,j,ispec) = vp_ak135(1)
     vs(i,j,ispec) = vs_ak135(1)
@@ -1110,7 +1110,7 @@
 
 ! make sure Vs is zero in the outer core even if roundoff errors on depth
 ! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
-  if(material_element(ispec) == IREGION_OUTER_CORE) then
+  if (material_element(ispec) == IREGION_OUTER_CORE) then
     vs(i,j,ispec) = 0.d0
     Qkappa_attenuation(i,j,ispec) = 9999.d0
     Qmu_attenuation(i,j,ispec) = 9999.d0
@@ -1204,7 +1204,7 @@
 ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
   do ispec = 1,nspec
 
-  if(material_element(ispec) /= IREGION_AIR ) stop 'error: Wrong flag number in external model'
+  if (material_element(ispec) /= IREGION_AIR ) stop 'error: Wrong flag number in external model'
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -1219,7 +1219,7 @@
     ii = ii + 1
   enddo
 
-  if(ii == 1) then
+  if (ii == 1) then
     rho(i,j,ispec) = density_atmos(1)
     vp(i,j,ispec) = vp_atmos(1)
     gravity(i,j,ispec) = gravity_atmos(1)

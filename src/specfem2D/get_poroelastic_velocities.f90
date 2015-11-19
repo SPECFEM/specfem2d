@@ -77,7 +77,7 @@
     taue = (sqrt(Q0*Q0+1) +1)/(w0il*Q0)
     taus = (sqrt(Q0*Q0+1) -1)/(w0il*Q0)
 
-     if(ATTENUATION_PORO_FLUID_PART) then
+     if (ATTENUATION_PORO_FLUID_PART) then
 ! high frequency, with memory variables
     bbr = etal_f/perm*(1.d0+alpha*alpha*taus*taue)/(1.d0 + alpha*alpha*taus*taus)
     bbi = etal_f/perm*alpha*(taue-taus)/(1.d0 + alpha*alpha*taus*taus)
