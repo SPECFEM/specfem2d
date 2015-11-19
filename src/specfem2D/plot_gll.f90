@@ -61,9 +61,10 @@
 !---- output the GLL mesh in a Gnuplot file
 !
 
-  write(iout,*)
-  write(iout,*) 'Generating gnuplot meshes...'
-  write(iout,*)
+  write(IMAIN,*)
+  write(IMAIN,*) 'Generating gnuplot meshes...'
+  write(IMAIN,*)
+  call flush_IMAIN()
 
 ! create non empty files for the case of 4-node elements
 

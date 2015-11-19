@@ -128,8 +128,8 @@
     call exit_MPI('cannot have UPPER_LIMIT_DISPLAY > nspec in checkgrid.F90')
 
   if (myrank == 0) then
-    write(IOUT,*) "  checking mesh and stability"
-    call flush_IOUT()
+    write(IMAIN,*) "  checking mesh and stability"
+    call flush_IMAIN()
   endif
 
 #ifndef USE_MPI
@@ -407,27 +407,28 @@
 
   if (myrank == 0) then
     if (.not. all_anisotropic) then
-      write(IOUT,*)
-      write(IOUT,*) '********'
-      write(IOUT,*) 'Model: P (or PI) velocity min,max = ',vpImin,vpImax
-      write(IOUT,*) 'Model: PII velocity min,max = ',vpIImin,vpIImax
-      write(IOUT,*) 'Model: S velocity min,max = ',vsmin,vsmax
-      write(IOUT,*) 'Model: density min,max = ',densmin,densmax
-      write(IOUT,*) '********'
-      write(IOUT,*)
+      write(IMAIN,*)
+      write(IMAIN,*) '********'
+      write(IMAIN,*) 'Model: P (or PI) velocity min,max = ',vpImin,vpImax
+      write(IMAIN,*) 'Model: PII velocity min,max = ',vpIImin,vpIImax
+      write(IMAIN,*) 'Model: S velocity min,max = ',vsmin,vsmax
+      write(IMAIN,*) 'Model: density min,max = ',densmin,densmax
+      write(IMAIN,*) '********'
+      write(IMAIN,*)
 
-      write(IOUT,*)
-      write(IOUT,*) '*********************************************'
-      write(IOUT,*) '*** Verification of simulation parameters ***'
-      write(IOUT,*) '*********************************************'
-      write(IOUT,*)
-      write(IOUT,*) '*** Max grid size = ',distance_max
-      write(IOUT,*) '*** Min grid size = ',distance_min
-      write(IOUT,*) '*** Max/min ratio = ',distance_max / distance_min
-      write(IOUT,*)
-      write(IOUT,*) '*** Max CFL stability condition of the time scheme &
+      write(IMAIN,*)
+      write(IMAIN,*) '*********************************************'
+      write(IMAIN,*) '*** Verification of simulation parameters ***'
+      write(IMAIN,*) '*********************************************'
+      write(IMAIN,*)
+      write(IMAIN,*) '*** Max grid size = ',distance_max
+      write(IMAIN,*) '*** Min grid size = ',distance_min
+      write(IMAIN,*) '*** Max/min ratio = ',distance_max / distance_min
+      write(IMAIN,*)
+      write(IMAIN,*) '*** Max CFL stability condition of the time scheme &
                          &based on P wave velocity (must be below about 0.50 or so) = ',courant_stability_number_max
-      write(IOUT,*)
+      write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
     create_wavelength_histogram = .false.
@@ -446,16 +447,16 @@
           if (f0(i) > f0max) f0max = f0(i)
 
           if (i == NSOURCES) then
-            write(IOUT,*) '----'
-            write(IOUT,*) ' Nb pts / lambdaPI_fmax min = ',lambdaPImin/(2.5d0*f0max)
-            write(IOUT,*) ' Nb pts / lambdaPI_fmax max = ',lambdaPImax/(2.5d0*f0max)
-            write(IOUT,*) '----'
-            write(IOUT,*) ' Nb pts / lambdaPII_fmax min = ',lambdaPIImin/(2.5d0*f0max)
-            write(IOUT,*) ' Nb pts / lambdaPII_fmax max = ',lambdaPIImax/(2.5d0*f0max)
-            write(IOUT,*) '----'
-            write(IOUT,*) ' Nb pts / lambdaS_fmax min = ',lambdaSmin/(2.5d0*f0max)
-            write(IOUT,*) ' Nb pts / lambdaS_fmax max = ',lambdaSmax/(2.5d0*f0max)
-            write(IOUT,*) '----'
+            write(IMAIN,*) '----'
+            write(IMAIN,*) ' Nb pts / lambdaPI_fmax min = ',lambdaPImin/(2.5d0*f0max)
+            write(IMAIN,*) ' Nb pts / lambdaPI_fmax max = ',lambdaPImax/(2.5d0*f0max)
+            write(IMAIN,*) '----'
+            write(IMAIN,*) ' Nb pts / lambdaPII_fmax min = ',lambdaPIImin/(2.5d0*f0max)
+            write(IMAIN,*) ' Nb pts / lambdaPII_fmax max = ',lambdaPIImax/(2.5d0*f0max)
+            write(IMAIN,*) '----'
+            write(IMAIN,*) ' Nb pts / lambdaS_fmax min = ',lambdaSmin/(2.5d0*f0max)
+            write(IMAIN,*) ' Nb pts / lambdaS_fmax max = ',lambdaSmax/(2.5d0*f0max)
+            write(IMAIN,*) '----'
 
 ! for histogram
             lambdaPmin_in_fluid_histo = lambdaPmin_in_fluid_histo/(2.5d0*f0max)
@@ -489,280 +490,279 @@
 
   if (create_wavelength_histogram) then
 
-! create statistics about mesh sampling (number of points per wavelength)
+    ! create statistics about mesh sampling (number of points per wavelength)
 
-  nspec_counted_all_solid = 0
-  nspec_counted_all_fluid = 0
+    nspec_counted_all_solid = 0
+    nspec_counted_all_fluid = 0
 
-! first pass is for S wave sampling in solid, second pass is for P wave sampling in fluid
-  do ipass = 1,2
+    ! first pass is for S wave sampling in solid, second pass is for P wave sampling in fluid
+    do ipass = 1,2
 
-  nspec_counted = 0
+      nspec_counted = 0
 
-  if (ipass == 1) then
-    min_nb_of_points_per_wavelength = lambdaSmin_histo
-    max_nb_of_points_per_wavelength = lambdaSmax_histo
-! do not create this histogram if the model is entirely fluid
-    if (.not. any_elastic_glob .and. .not. any_poroelastic_glob) cycle
-  else
-! do not create this histogram if the model is entirely solid
-    if (.not. any_fluid_histo_glob) cycle
-    min_nb_of_points_per_wavelength = lambdaPmin_in_fluid_histo
-    max_nb_of_points_per_wavelength = lambdaPmax_in_fluid_histo
-  endif
-
-! when the grid is regular and the medium is homogeneous, the minimum and the maximum are equal
-! and thus we cannot create an histogram; in such a case, let us artificially create a non-empty range
-  if (abs(max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) < 1.d-10) then
-    min_nb_of_points_per_wavelength = min_nb_of_points_per_wavelength * 0.99d0
-    max_nb_of_points_per_wavelength = max_nb_of_points_per_wavelength * 1.01d0
-  endif
-
-! erase histogram of wavelength
-  classes_wavelength(:) = 0
-
-! loop on all the elements
-  do ispec = 1,nspec
-
-    material = kmato(ispec)
-
-    if (poroelastic(ispec)) then
-
-      ! poroelastic material
-
-      phi = porosity(material)
-      tort = tortuosity(material)
-      perm = permeability(1,material)
-      ! solid properties
-      mu_s = poroelastcoef(2,1,material)
-      kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
-      denst_s = density(1,material)
-      denst = denst_s
-      ! fluid properties
-      kappa_f = poroelastcoef(1,2,material)
-      denst_f = density(2,material)
-      eta_f = poroelastcoef(2,2,material)
-      ! frame properties
-      mu_fr = poroelastcoef(2,3,material)
-      kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
-      ! Biot coefficients for the input phi
-      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
-      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
-      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
-      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
-
-      call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
-
-      cpIloc = sqrt(cpIsquare)
-      cpIIloc = sqrt(cpIIsquare)
-      csloc = sqrt(cssquare)
-    else
-      mu = poroelastcoef(2,1,material)
-      lambdaplus2mu  = poroelastcoef(3,1,material)
-      denst = density(1,material)
-
-      cpIloc = sqrt(lambdaplus2mu/denst)
-      cpIIloc = 0.d0
-      csloc = sqrt(mu/denst)
-    endif
-
-    vpImin_local = HUGEVAL
-    vpIImin_local = HUGEVAL
-    vsmin_local = HUGEVAL
-
-    distance_min_local = HUGEVAL
-    distance_max_local = -HUGEVAL
-
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-
-!--- if heterogeneous formulation with external velocity model
-        if (assign_external_model) then
-          cpIloc = vpext(i,j,ispec)
-          csloc = vsext(i,j,ispec)
-        endif
-
-        vpImin_local = min(vpImin_local,cpIloc)
-        vpIImin_local = min(vpIImin_local,cpIIloc)
-        vsmin_local = min(vsmin_local,csloc)
-
-      enddo
-    enddo
-
-! compute minimum and maximum size of edges of this grid cell
-    distance_1 = sqrt((coord(1,ibool(1,1,ispec)) - coord(1,ibool(NGLLX,1,ispec)))**2 + &
-               (coord(2,ibool(1,1,ispec)) - coord(2,ibool(NGLLX,1,ispec)))**2)
-
-    distance_2 = sqrt((coord(1,ibool(NGLLX,1,ispec)) - coord(1,ibool(NGLLX,NGLLZ,ispec)))**2 + &
-               (coord(2,ibool(NGLLX,1,ispec)) - coord(2,ibool(NGLLX,NGLLZ,ispec)))**2)
-
-    distance_3 = sqrt((coord(1,ibool(NGLLX,NGLLZ,ispec)) - coord(1,ibool(1,NGLLZ,ispec)))**2 + &
-               (coord(2,ibool(NGLLX,NGLLZ,ispec)) - coord(2,ibool(1,NGLLZ,ispec)))**2)
-
-    distance_4 = sqrt((coord(1,ibool(1,NGLLZ,ispec)) - coord(1,ibool(1,1,ispec)))**2 + &
-               (coord(2,ibool(1,NGLLZ,ispec)) - coord(2,ibool(1,1,ispec)))**2)
-
-    distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
-    distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
-
-  if (ipass == 1) then
-
-! in first pass, only solid regions, thus ignore fluid regions with Vs = 0
-    if (vsmin_local > 1.d-20) then
-      nb_of_points_per_wavelength = vsmin_local / (distance_max_local / (NGLLX - 1))
-
-      nspec_counted = nspec_counted + 1
-
-      nb_of_points_per_wavelength = nb_of_points_per_wavelength/(2.5d0*f0max)
-
-! store number of points per wavelength in histogram
-      iclass = int((nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) / &
-                   (max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) * dble(NCLASSES))
-      if (iclass < 0) iclass = 0
-      if (iclass > NCLASSES-1) iclass = NCLASSES-1
-      classes_wavelength(iclass) = classes_wavelength(iclass) + 1
-
-    endif
-
-  else
-
-! in second pass, only fluid regions, thus ignore solid regions with Vs > 0
-    if (abs(vsmin_local) < 1.d-20) then
-      if (vpIImin_local <= ZERO) then
-        nb_of_points_per_wavelength = vpImin_local / (distance_max_local / (NGLLX - 1))
+      if (ipass == 1) then
+        min_nb_of_points_per_wavelength = lambdaSmin_histo
+        max_nb_of_points_per_wavelength = lambdaSmax_histo
+        ! do not create this histogram if the model is entirely fluid
+        if (.not. any_elastic_glob .and. .not. any_poroelastic_glob) cycle
       else
-        nb_of_points_per_wavelength = min(vpImin_local,vpIImin_local) / (distance_max_local / (NGLLX - 1))
+        ! do not create this histogram if the model is entirely solid
+        if (.not. any_fluid_histo_glob) cycle
+        min_nb_of_points_per_wavelength = lambdaPmin_in_fluid_histo
+        max_nb_of_points_per_wavelength = lambdaPmax_in_fluid_histo
       endif
 
-      nspec_counted = nspec_counted + 1
+      ! when the grid is regular and the medium is homogeneous, the minimum and the maximum are equal
+      ! and thus we cannot create an histogram; in such a case, let us artificially create a non-empty range
+      if (abs(max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) < 1.d-10) then
+        min_nb_of_points_per_wavelength = min_nb_of_points_per_wavelength * 0.99d0
+        max_nb_of_points_per_wavelength = max_nb_of_points_per_wavelength * 1.01d0
+      endif
 
-      nb_of_points_per_wavelength = nb_of_points_per_wavelength/(2.5d0*f0max)
+      ! erase histogram of wavelength
+      classes_wavelength(:) = 0
 
-! store number of points per wavelength in histogram
-      iclass = int((nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) / &
-                   (max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) * dble(NCLASSES))
-      if (iclass < 0) iclass = 0
-      if (iclass > NCLASSES-1) iclass = NCLASSES-1
-      classes_wavelength(iclass) = classes_wavelength(iclass) + 1
-    endif
+      ! loop on all the elements
+      do ispec = 1,nspec
 
-  endif
+        material = kmato(ispec)
 
-  enddo
+        if (poroelastic(ispec)) then
+
+          ! poroelastic material
+
+          phi = porosity(material)
+          tort = tortuosity(material)
+          perm = permeability(1,material)
+          ! solid properties
+          mu_s = poroelastcoef(2,1,material)
+          kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
+          denst_s = density(1,material)
+          denst = denst_s
+          ! fluid properties
+          kappa_f = poroelastcoef(1,2,material)
+          denst_f = density(2,material)
+          eta_f = poroelastcoef(2,2,material)
+          ! frame properties
+          mu_fr = poroelastcoef(2,3,material)
+          kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
+          ! Biot coefficients for the input phi
+          D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
+          H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+          C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
+          M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+
+          call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
+                 tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+
+          cpIloc = sqrt(cpIsquare)
+          cpIIloc = sqrt(cpIIsquare)
+          csloc = sqrt(cssquare)
+        else
+          mu = poroelastcoef(2,1,material)
+          lambdaplus2mu  = poroelastcoef(3,1,material)
+          denst = density(1,material)
+
+          cpIloc = sqrt(lambdaplus2mu/denst)
+          cpIIloc = 0.d0
+          csloc = sqrt(mu/denst)
+        endif
+
+        vpImin_local = HUGEVAL
+        vpIImin_local = HUGEVAL
+        vsmin_local = HUGEVAL
+
+        distance_min_local = HUGEVAL
+        distance_max_local = -HUGEVAL
+
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+
+            !--- if heterogeneous formulation with external velocity model
+            if (assign_external_model) then
+              cpIloc = vpext(i,j,ispec)
+              csloc = vsext(i,j,ispec)
+            endif
+
+            vpImin_local = min(vpImin_local,cpIloc)
+            vpIImin_local = min(vpIImin_local,cpIIloc)
+            vsmin_local = min(vsmin_local,csloc)
+
+          enddo
+        enddo
+
+        ! compute minimum and maximum size of edges of this grid cell
+        distance_1 = sqrt((coord(1,ibool(1,1,ispec)) - coord(1,ibool(NGLLX,1,ispec)))**2 + &
+                   (coord(2,ibool(1,1,ispec)) - coord(2,ibool(NGLLX,1,ispec)))**2)
+
+        distance_2 = sqrt((coord(1,ibool(NGLLX,1,ispec)) - coord(1,ibool(NGLLX,NGLLZ,ispec)))**2 + &
+                   (coord(2,ibool(NGLLX,1,ispec)) - coord(2,ibool(NGLLX,NGLLZ,ispec)))**2)
+
+        distance_3 = sqrt((coord(1,ibool(NGLLX,NGLLZ,ispec)) - coord(1,ibool(1,NGLLZ,ispec)))**2 + &
+                   (coord(2,ibool(NGLLX,NGLLZ,ispec)) - coord(2,ibool(1,NGLLZ,ispec)))**2)
+
+        distance_4 = sqrt((coord(1,ibool(1,NGLLZ,ispec)) - coord(1,ibool(1,1,ispec)))**2 + &
+                   (coord(2,ibool(1,NGLLZ,ispec)) - coord(2,ibool(1,1,ispec)))**2)
+
+        distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
+        distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
+
+        if (ipass == 1) then
+          ! in first pass, only solid regions, thus ignore fluid regions with Vs = 0
+          if (vsmin_local > 1.d-20) then
+            nb_of_points_per_wavelength = vsmin_local / (distance_max_local / (NGLLX - 1))
+
+            nspec_counted = nspec_counted + 1
+
+            nb_of_points_per_wavelength = nb_of_points_per_wavelength/(2.5d0*f0max)
+
+            ! store number of points per wavelength in histogram
+            iclass = int((nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) / &
+                         (max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) * dble(NCLASSES))
+            if (iclass < 0) iclass = 0
+            if (iclass > NCLASSES-1) iclass = NCLASSES-1
+            classes_wavelength(iclass) = classes_wavelength(iclass) + 1
+
+          endif
+
+        else
+          ! in second pass, only fluid regions, thus ignore solid regions with Vs > 0
+          if (abs(vsmin_local) < 1.d-20) then
+            if (vpIImin_local <= ZERO) then
+              nb_of_points_per_wavelength = vpImin_local / (distance_max_local / (NGLLX - 1))
+            else
+              nb_of_points_per_wavelength = min(vpImin_local,vpIImin_local) / (distance_max_local / (NGLLX - 1))
+            endif
+
+            nspec_counted = nspec_counted + 1
+
+            nb_of_points_per_wavelength = nb_of_points_per_wavelength/(2.5d0*f0max)
+
+            ! store number of points per wavelength in histogram
+            iclass = int((nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) / &
+                         (max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) * dble(NCLASSES))
+            if (iclass < 0) iclass = 0
+            if (iclass > NCLASSES-1) iclass = NCLASSES-1
+            classes_wavelength(iclass) = classes_wavelength(iclass) + 1
+          endif
+
+        endif
+
+      enddo
 
 #ifdef USE_MPI
-  call MPI_REDUCE(classes_wavelength, classes_wavelength_all, NCLASSES, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+      call MPI_REDUCE(classes_wavelength, classes_wavelength_all, NCLASSES, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
 #else
-  classes_wavelength_all(:) = classes_wavelength(:)
+      classes_wavelength_all(:) = classes_wavelength(:)
 #endif
 
 #ifdef USE_MPI
-  call MPI_REDUCE(nspec, nspec_all, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(nspec_counted, nspec_counted_all, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+      call MPI_REDUCE(nspec, nspec_all, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+      call MPI_REDUCE(nspec_counted, nspec_counted_all, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
 #else
-  nspec_counted_all = nspec_counted
-  nspec_all = nspec
+      nspec_counted_all = nspec_counted
+      nspec_all = nspec
 #endif
 
-  if (ipass == 1) then
-    nspec_counted_all_solid = nspec_counted_all
-  else
-    nspec_counted_all_fluid = nspec_counted_all
-  endif
+      if (ipass == 1) then
+        nspec_counted_all_solid = nspec_counted_all
+      else
+        nspec_counted_all_fluid = nspec_counted_all
+      endif
 
-! create histogram of wavelength and save in Gnuplot file
-  if (myrank == 0) then
+      ! create histogram of wavelength and save in Gnuplot file
+      if (myrank == 0) then
+        ! user output
+        write(IMAIN,*)
+        write(IMAIN,*) '-----------------------------------------'
+        write(IMAIN,*)
+        if (ipass == 1) then
+          write(IMAIN,*) 'histogram of min number of points per S wavelength in solid regions:'
+          write(IMAIN,*)
+          write(IMAIN,*) 'there are ',nspec_counted_all,' elements out of ',nspec_all,' in solid regions'
+        else
+          write(IMAIN,*) 'histogram of min number of points per P wavelength in fluid regions:'
+          write(IMAIN,*)
+          write(IMAIN,*) 'there are ',nspec_counted_all,' elements out of ',nspec_all,' in fluid regions'
+        endif
+        write(IMAIN,*) '  (i.e., ',sngl(100.d0*nspec_counted_all/dble(nspec_all)),'% of the total)'
+        write(IMAIN,*)
+        write(IMAIN,*) '(too small = poor resolution of calculations -'
+        write(IMAIN,*) ' too big = wasting memory and CPU time)'
+        write(IMAIN,*) '(threshold value is around 4.5 points per S wavelength'
+        write(IMAIN,*) ' in elastic regions and 5.5 per P wavelength in fluid regions):'
+        write(IMAIN,*)
 
-  write(IOUT,*)
-  write(IOUT,*) '-----------------------------------------'
-  write(IOUT,*)
-  if (ipass == 1) then
-    write(IOUT,*) 'histogram of min number of points per S wavelength in solid regions:'
-    write(IOUT,*)
-    write(IOUT,*) 'there are ',nspec_counted_all,' elements out of ',nspec_all,' in solid regions'
-  else
-    write(IOUT,*) 'histogram of min number of points per P wavelength in fluid regions:'
-    write(IOUT,*)
-    write(IOUT,*) 'there are ',nspec_counted_all,' elements out of ',nspec_all,' in fluid regions'
-  endif
-  write(IOUT,*) '  (i.e., ',sngl(100.d0*nspec_counted_all/dble(nspec_all)),'% of the total)'
-  write(IOUT,*)
-  write(IOUT,*) '(too small = poor resolution of calculations -'
-  write(IOUT,*) ' too big = wasting memory and CPU time)'
-  write(IOUT,*) '(threshold value is around 4.5 points per S wavelength'
-  write(IOUT,*) ' in elastic regions and 5.5 per P wavelength in fluid regions):'
-  write(IOUT,*)
+        total_percent = 0.
+        scaling_factor = max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength
 
-  total_percent = 0.
-  scaling_factor = max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength
+        if (ipass == 1) then
+          open(unit=14,file='OUTPUT_FILES/points_per_wavelength_histogram_S_in_solid.txt',status='unknown')
+          scaling_factor_S = scaling_factor
+        else
+          open(unit=14,file='OUTPUT_FILES/points_per_wavelength_histogram_P_in_fluid.txt',status='unknown')
+          scaling_factor_P = scaling_factor
+        endif
+        do iclass = 0,NCLASSES-1
+          current_percent = 100.*dble(classes_wavelength_all(iclass))/dble(nspec_counted_all)
+          total_percent = total_percent + current_percent
+          write(IMAIN,*) sngl(min_nb_of_points_per_wavelength + scaling_factor*iclass/dble(NCLASSES)),' - ', &
+              sngl(min_nb_of_points_per_wavelength + scaling_factor*(iclass+1)/dble(NCLASSES)),classes_wavelength_all(iclass), &
+              ' ',sngl(current_percent),' %'
+          write(14,*) 0.5*(sngl(min_nb_of_points_per_wavelength + scaling_factor*iclass/dble(NCLASSES)) + &
+              sngl(min_nb_of_points_per_wavelength + scaling_factor*(iclass+1)/dble(NCLASSES))),' ',sngl(current_percent)
+        enddo
+        close(14)
 
-  if (ipass == 1) then
-    open(unit=14,file='OUTPUT_FILES/points_per_wavelength_histogram_S_in_solid.txt',status='unknown')
-    scaling_factor_S = scaling_factor
-  else
-    open(unit=14,file='OUTPUT_FILES/points_per_wavelength_histogram_P_in_fluid.txt',status='unknown')
-    scaling_factor_P = scaling_factor
-  endif
-  do iclass = 0,NCLASSES-1
-    current_percent = 100.*dble(classes_wavelength_all(iclass))/dble(nspec_counted_all)
-    total_percent = total_percent + current_percent
-    write(IOUT,*) sngl(min_nb_of_points_per_wavelength + scaling_factor*iclass/dble(NCLASSES)),' - ', &
-                  sngl(min_nb_of_points_per_wavelength + scaling_factor*(iclass+1)/dble(NCLASSES)),classes_wavelength_all(iclass), &
-                  ' ',sngl(current_percent),' %'
-    write(14,*) 0.5*(sngl(min_nb_of_points_per_wavelength + scaling_factor*iclass/dble(NCLASSES)) + &
-                     sngl(min_nb_of_points_per_wavelength + scaling_factor*(iclass+1)/dble(NCLASSES))),' ',sngl(current_percent)
-  enddo
-  close(14)
+        if (total_percent < 99.9d0 .or. total_percent > 100.1d0) then
+          write(IMAIN,*) 'total percentage = ',total_percent,' %'
+          stop 'total percentage should be 100%'
+        else
+          write(IMAIN,*)
+          write(IMAIN,*) 'total percentage = ',total_percent,' %'
+        endif
 
-  if (total_percent < 99.9d0 .or. total_percent > 100.1d0) then
-    write(IOUT,*) 'total percentage = ',total_percent,' %'
-    stop 'total percentage should be 100%'
-  else
-    write(IOUT,*)
-    write(IOUT,*) 'total percentage = ',total_percent,' %'
-  endif
+      endif ! of if myrank == 0
 
-  endif ! of if myrank == 0
+    enddo ! end of the two passes on S wavelength data and P wavelength data
 
-  enddo ! end of the two passes on S wavelength data and P wavelength data
+    ! create script for Gnuplot histogram file
+    if (myrank == 0) then
 
-! create script for Gnuplot histogram file
-  if (myrank == 0) then
+      open(unit=14,file='OUTPUT_FILES/plot_points_per_wavelength_histogram.gnu',status='unknown')
+      write(14,*) 'set term wxt'
 
-  open(unit=14,file='OUTPUT_FILES/plot_points_per_wavelength_histogram.gnu',status='unknown')
-  write(14,*) 'set term wxt'
+      if (nspec_counted_all_solid > 0) then
+        write(14,*) '#set term gif'
+        write(14,*) '#set output "points_per_wavelength_histogram_S_in_solid.gif"'
+        write(14,*)
+        write(14,*) 'set boxwidth ',real(scaling_factor_S/NCLASSES)
+        write(14,*) 'set xlabel "Range of min number of points per S wavelength in solid"'
+        write(14,*) 'set ylabel "Percentage of elements (%)"'
+        write(14,*) 'plot "points_per_wavelength_histogram_S_in_solid.txt" with boxes'
+        write(14,*) 'pause -1 "hit any key..."'
+      endif
 
-  if (nspec_counted_all_solid > 0) then
-    write(14,*) '#set term gif'
-    write(14,*) '#set output "points_per_wavelength_histogram_S_in_solid.gif"'
-    write(14,*)
-    write(14,*) 'set boxwidth ',real(scaling_factor_S/NCLASSES)
-    write(14,*) 'set xlabel "Range of min number of points per S wavelength in solid"'
-    write(14,*) 'set ylabel "Percentage of elements (%)"'
-    write(14,*) 'plot "points_per_wavelength_histogram_S_in_solid.txt" with boxes'
-    write(14,*) 'pause -1 "hit any key..."'
-  endif
+      if (nspec_counted_all_fluid > 0) then
+        write(14,*) '#set term gif'
+        write(14,*) '#set output "points_per_wavelength_histogram_P_in_fluid.gif"'
+        write(14,*)
+        write(14,*) 'set boxwidth ',real(scaling_factor_P/NCLASSES)
+        write(14,*) 'set xlabel "Range of min number of points per P wavelength in fluid"'
+        write(14,*) 'set ylabel "Percentage of elements (%)"'
+        write(14,*) 'plot "points_per_wavelength_histogram_P_in_fluid.txt" with boxes'
+        write(14,*) 'pause -1 "hit any key..."'
+      endif
 
-  if (nspec_counted_all_fluid > 0) then
-    write(14,*) '#set term gif'
-    write(14,*) '#set output "points_per_wavelength_histogram_P_in_fluid.gif"'
-    write(14,*)
-    write(14,*) 'set boxwidth ',real(scaling_factor_P/NCLASSES)
-    write(14,*) 'set xlabel "Range of min number of points per P wavelength in fluid"'
-    write(14,*) 'set ylabel "Percentage of elements (%)"'
-    write(14,*) 'plot "points_per_wavelength_histogram_P_in_fluid.txt" with boxes'
-    write(14,*) 'pause -1 "hit any key..."'
-  endif
+      close(14)
 
-  close(14)
+      write(IMAIN,*)
+      write(IMAIN,*)
+      write(IMAIN,*) 'total number of elements in fluid and solid regions = ',nspec_all
+      write(IMAIN,*)
+      call flush_IMAIN()
 
-  write(IOUT,*)
-  write(IOUT,*)
-  write(IOUT,*) 'total number of elements in fluid and solid regions = ',nspec_all
-  write(IOUT,*)
-
-  endif ! of if myrank == 0
+    endif ! of if myrank == 0
 
   endif ! of if create_wavelength_histogram
 
@@ -813,8 +813,8 @@
 
   if (myrank == 0) then
 
-    write(IOUT,*)
-    write(IOUT,*) 'Creating PostScript file with stability condition'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Creating PostScript file with stability condition'
 
 !
 !---- open PostScript file
@@ -1153,7 +1153,7 @@
 
     close(24)
 
-    write(IOUT,*) 'End of creation of PostScript file with stability condition'
+    write(IMAIN,*) 'End of creation of PostScript file with stability condition'
   endif
 
 !
@@ -1162,8 +1162,8 @@
 
   if (myrank == 0) then
 
-    write(IOUT,*)
-    write(IOUT,*) 'Creating PostScript file with mesh dispersion'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Creating PostScript file with mesh dispersion'
 
 !
 !---- open PostScript file
@@ -1576,7 +1576,7 @@
 
      close(24)
 
-     write(IOUT,*) 'End of creation of PostScript file with mesh dispersion'
+     write(IMAIN,*) 'End of creation of PostScript file with mesh dispersion'
 
   endif
 
@@ -1586,8 +1586,8 @@
 
   if (myrank == 0) then
 
-    write(IOUT,*)
-    write(IOUT,*) 'Creating PostScript file with velocity model'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Creating PostScript file with velocity model'
 
 !
 !---- open PostScript file
@@ -1886,14 +1886,14 @@ endif
 
      close(24)
 
-     write(IOUT,*) 'End of creation of PostScript file with velocity model'
+     write(IMAIN,*) 'End of creation of PostScript file with velocity model'
 
   endif
 
   if (myrank == 0) then
 
-    write(IOUT,*)
-    write(IOUT,*) 'Creating PostScript file with mesh partitioning'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Creating PostScript file with mesh partitioning'
 
 !
 !---- open PostScript file
@@ -2142,8 +2142,8 @@ endif
 
    close(24)
 
-   write(IOUT,*) 'End of creation of PostScript file with partitioning'
-   write(IOUT,*)
+   write(IMAIN,*) 'End of creation of PostScript file with partitioning'
+   write(IMAIN,*)
  endif
 
  10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a100,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')

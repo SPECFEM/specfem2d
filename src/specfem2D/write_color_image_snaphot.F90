@@ -51,31 +51,33 @@
 
   !local variables
   integer :: i,j,k,ispec,iglob
+  integer :: ier
 
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color,' for time step ',it
+    write(IMAIN,*)
+    write(IMAIN,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color,' for time step ',it
+    call flush_IMAIN()
   endif
 
   if (imagetype_JPEG >= 1 .and. imagetype_JPEG <= 3) then
-    if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the displacement vector...'
+    if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of the displacement vector...'
     call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
                                      potential_gravito,displ_elastic,displs_poroelastic)
 
   else if (imagetype_JPEG >= 4 .and. imagetype_JPEG <= 6) then
-    if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the velocity vector...'
+    if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of the velocity vector...'
     call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
               potential_dot_gravito,veloc_elastic,velocs_poroelastic)
 
   else if (imagetype_JPEG >= 7 .and. imagetype_JPEG <= 9) then
-    if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of the acceleration vector...'
+    if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of the acceleration vector...'
     call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
               potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
 
   else if (imagetype_JPEG >= 11 .and. imagetype_JPEG <= 13) then
     ! allocation for normalized representation in JPEG image
     ! for an atmosphere model
-    if (myrank == 0) write(IOUT,*) 'drawing scalar image of part of normalized displacement vector...'
+    if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of normalized displacement vector...'
     call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
               potential_gravito,displ_elastic,displs_poroelastic)
 
@@ -118,7 +120,7 @@
     enddo
 
   else if (imagetype_JPEG == 10 .and. p_sv) then
-    if (myrank == 0) write(IOUT,*) 'drawing image of pressure field...'
+    if (myrank == 0) write(IMAIN,*) 'drawing image of pressure field...'
     call compute_pressure_whole_medium()
 
   else if (imagetype_JPEG == 10 .and. .not. p_sv) then
@@ -188,8 +190,8 @@
   enddo
 
 ! assembling array image_color_data on process zero for color output
+  ier = 0 ! dummy to avoid compiler warning
 #ifdef USE_MPI
-
   if (nproc > 1) then
     if (myrank == 0) then
       do iproc = 1, nproc-1
@@ -256,7 +258,8 @@
 
   if (myrank == 0) then
     call create_color_image()
-    write(IOUT,*) 'Color image created'
+    write(IMAIN,*) 'Color image created'
+    call flush_IMAIN()
   endif
 
   end subroutine write_color_image_snaphot

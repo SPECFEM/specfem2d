@@ -65,19 +65,17 @@
   use mpi
 #endif
 
-use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs,&
-                       NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML,&
-#ifdef USE_MPI
-  ier, &
-#endif
+use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs, &
+                       NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML, &
                        PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh
 
   implicit none
-  include 'constants.h'
+  include "constants.h"
 
+  ! local parameters
   integer, dimension(nglob) ::   icorner_iglob
-
   integer :: nspec_PML_tot,ibound,ispecabs,ncorner,i_coef,i,j,k,ispec,iglob
+  integer :: ier
 
   nspec_PML = 0
 
@@ -294,11 +292,14 @@ use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,any
   call MPI_REDUCE(nspec_PML, nspec_PML_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
 #else
   nspec_PML_tot = nspec_PML
+  ! dummy statement to avoid compiler warning
+  ier = 0
 #endif
 
   if (myrank == 0) then
-    write(IOUT,*) "Total number of PML spectral elements: ", nspec_PML_tot
-    write(IOUT,*)
+    write(IMAIN,*) "Total number of PML spectral elements: ", nspec_PML_tot
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
 end subroutine pml_init
@@ -312,8 +313,9 @@ end subroutine pml_init
                          which_PML_elem,point_interface,read_external_mesh,mask_ibool,region_CPML
   implicit none
 
-  integer i,j,iglob,ispec
-  include 'constants.h'
+  ! local parameters
+  integer ::i,j,iglob,ispec
+  include "constants.h"
 
   nglob_interface = 0
 

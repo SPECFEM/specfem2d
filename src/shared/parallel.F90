@@ -147,7 +147,6 @@
   implicit none
 
   include "constants.h"
-
   include "precision.h"
 
   integer sendcount, dest, sendtag, req
@@ -229,8 +228,6 @@
 
   include "constants.h"
 
-  include "precision.h"
-
   integer:: sendbuf, recvbuf
   integer ier
 
@@ -254,8 +251,6 @@
   implicit none
 
   include "constants.h"
-
-  include "precision.h"
 
   integer :: sendbuf, recvbuf
   integer :: ier

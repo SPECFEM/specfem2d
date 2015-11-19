@@ -86,8 +86,8 @@
   logical :: this_element_has_PML
 
   if (myrank == 0) then
-    write(IOUT,*) "  initializing mass matrices"
-    call flush_IOUT()
+    write(IMAIN,*) "  initializing mass matrices"
+    call flush_IMAIN()
   endif
 
   ! initialize mass matrix
@@ -735,8 +735,8 @@
   include 'constants.h'
 
   if (myrank == 0) then
-    write(IOUT,*) "  inverting mass matrices"
-    call flush_IOUT()
+    write(IMAIN,*) "  inverting mass matrices"
+    call flush_IMAIN()
   endif
 
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally

@@ -125,7 +125,8 @@
           c25(i,j,ispec) = 0.d0
 
         else
-          write(IOUT,*) 'flag number in external model is equal to ',material_element(ispec)
+          ! this case should not occur
+          write(IMAIN,*) 'Error: invalid flag number in external model is equal to ',material_element(ispec)
           stop 'wrong flag number in external model; exiting...'
         endif
 

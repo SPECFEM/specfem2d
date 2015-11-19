@@ -71,12 +71,13 @@
 
   ! user output
   if (myrank == 0) then
-    write(IOUT,*)
+    write(IMAIN,*)
     !! DK DK reading of an initial field from an external file has been suppressed
     !! DK DK and replaced with the implementation of an analytical plane wave
-    !! DK DK     write(IOUT,*) 'Reading initial fields from external file...'
-    write(IOUT,*) 'Implementing an analytical initial plane wave...'
-    write(IOUT,*)
+    !! DK DK     write(IMAIN,*) 'Reading initial fields from external file...'
+    write(IMAIN,*) 'Implementing an analytical initial plane wave...'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   if (any_acoustic .or. any_poroelastic) &
@@ -89,22 +90,22 @@
   !=======================================================================
 
   if (myrank == 0) then
-    write(IOUT,*) 'Number of grid points: ',nglob
-    write(IOUT,*)
-    write(IOUT,*) '*** calculation of the initial plane wave ***'
-    write(IOUT,*)
-    write(IOUT,*)  'To change the initial plane wave, change source_type in DATA/SOURCE'
-    write(IOUT,*)  'and use 1 or 4 for a plane P wave, 2 or 5 for a plane SV wave, 3 for a Rayleigh wave'
-    write(IOUT,*)
+    write(IMAIN,*) 'Number of grid points: ',nglob
+    write(IMAIN,*)
+    write(IMAIN,*) '*** calculation of the initial plane wave ***'
+    write(IMAIN,*)
+    write(IMAIN,*)  'To change the initial plane wave, change source_type in DATA/SOURCE'
+    write(IMAIN,*)  'and use 1 or 4 for a plane P wave, 2 or 5 for a plane SV wave, 3 for a Rayleigh wave'
+    write(IMAIN,*)
 
   ! only implemented for one source
     if (NSOURCES > 1) call exit_MPI('calculation of the initial wave is only implemented for one source')
     if (source_type(1) == 1 .or. source_type(1) == 4) then
-      write(IOUT,*) 'initial P wave of', anglesource(1)*180.d0/pi, 'degrees introduced.'
+      write(IMAIN,*) 'initial P wave of', anglesource(1)*180.d0/pi, 'degrees introduced.'
     else if (source_type(1) == 2 .or. source_type(1) == 5) then
-      write(IOUT,*) 'initial SV wave of', anglesource(1)*180.d0/pi, ' degrees introduced.'
+      write(IMAIN,*) 'initial SV wave of', anglesource(1)*180.d0/pi, ' degrees introduced.'
     else if (source_type(1) == 3) then
-      write(IOUT,*) 'Rayleigh wave introduced.'
+      write(IMAIN,*) 'Rayleigh wave introduced.'
     else
       call exit_MPI('Unrecognized source_type: should be 1 or 4 for plane P waves, 2 or 5 for plane SV waves, 3 for Rayleigh wave')
     endif
@@ -120,13 +121,13 @@
   numat_local = numat
   if (numat /= 1) then
      if (myrank == 0) then
-        write(IOUT,*)
-        write(IOUT,*) 'It is not possible to have several materials with a plane wave, thus using the first material.'
-        write(IOUT,*) 'This is not a homogenous model, it contains ',numat,' materials'
-        write(IOUT,*) 'but the plane wave initial and boundary fields'
-        write(IOUT,*) 'are computed by analytical formulas for a homogenous model.'
-        write(IOUT,*) 'Thus use at your own risk!'
-        write(IOUT,*)
+        write(IMAIN,*)
+        write(IMAIN,*) 'It is not possible to have several materials with a plane wave, thus using the first material.'
+        write(IMAIN,*) 'This is not a homogenous model, it contains ',numat,' materials'
+        write(IMAIN,*) 'but the plane wave initial and boundary fields'
+        write(IMAIN,*) 'are computed by analytical formulas for a homogenous model.'
+        write(IMAIN,*) 'Thus use at your own risk!'
+        write(IMAIN,*)
      endif
      numat_local = 1
   endif
@@ -158,7 +159,7 @@
                +4.d0*p**2*cos(anglesource_abs)*cos(anglesource_refl)/cploc))
 
     if (myrank == 0) then
-      write(IOUT,*) 'reflected convert plane wave angle: ', anglesource_refl*180.d0/pi
+      write(IMAIN,*) 'reflected convert plane wave angle: ', anglesource_refl*180.d0/pi
     endif
 
     ! from Table 5.1 p141 in Aki & Richards (1980)
@@ -188,7 +189,7 @@
             +4.d0*p**2*cos(anglesource_refl)*cos(anglesource_abs)/cploc))
 
       if (myrank == 0) then
-        write(IOUT,*) 'reflected convert plane wave angle: ', anglesource_refl*180.d0/pi
+        write(IMAIN,*) 'reflected convert plane wave angle: ', anglesource_refl*180.d0/pi
       endif
 
     ! SV45 degree incident plane wave is a particular case
@@ -260,10 +261,11 @@
   z0_source = z_source(1)
 
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'You can modify the location of the initial plane wave by changing xs and zs in DATA/SOURCE.'
-    write(IOUT,*) '   for instance: xs=',x_source(1),'   zs=',z_source(1), ' (zs can/should be the height of the free surface)'
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'You can modify the location of the initial plane wave by changing xs and zs in DATA/SOURCE.'
+    write(IMAIN,*) '   for instance: xs=',x_source(1),'   zs=',z_source(1), ' (zs can/should be the height of the free surface)'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   if (.not. over_critical_angle) then
@@ -339,12 +341,13 @@ end subroutine prepare_initialfield
 
   if (myrank == 0) then
     if (source_type(1) /= 3 ) &
-      write(IOUT,*) 'You are beyond the critical angle ( > ',asin(c_inc/c_refl)*180d0/pi,')'
+      write(IMAIN,*) 'You are beyond the critical angle ( > ',asin(c_inc/c_refl)*180d0/pi,')'
 
-    write(IOUT,*)  '*************'
-    write(IOUT,*)  'We have to compute the initial field in the frequency domain'
-    write(IOUT,*)  'and then convert it to the time domain (can be long... be patient...)'
-    write(IOUT,*)  '*************'
+    write(IMAIN,*)  '*************'
+    write(IMAIN,*)  'We have to compute the initial field in the frequency domain'
+    write(IMAIN,*)  'and then convert it to the time domain (can be long... be patient...)'
+    write(IMAIN,*)  '*************'
+    call flush_IMAIN()
   endif
 
   count_bottom=0

@@ -47,23 +47,23 @@ subroutine iterate_time_undoatt()
 #endif
 
   use specfem_par
+
   implicit none
 
 #ifdef USE_MPI
   include "precision.h"
 #endif
 
-
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_potential_acoustic_buffer,b_potential_dot_dot_acoustic_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_elastic_buffer,b_accel_elastic_buffer
 
   ! local parameters
-  integer i,j,iteration_on_subset,it_of_this_subset,it_backward
+  integer :: i,j,iteration_on_subset,it_of_this_subset,it_backward
   integer :: it_temp,seismo_current_temp
-
+  integer :: ier
   integer, parameter :: it_begin = 1
 
-  if (myrank == 0) write(IOUT,400)
+  if (myrank == 0) write(IMAIN,400)
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
 !
@@ -132,10 +132,10 @@ subroutine iterate_time_undoatt()
   call synchronize_all()
 
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'Starting time iteration loop in undoing attenuation...'
-    write(IOUT,*)
-    call flush_IOUT()
+    write(IMAIN,*)
+    write(IMAIN,*) 'Starting time iteration loop in undoing attenuation...'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! initialize variables for writing seismograms

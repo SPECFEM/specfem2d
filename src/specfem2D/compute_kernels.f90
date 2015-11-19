@@ -145,13 +145,19 @@
     rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) + &
                     accel_elastic(2,iglob)*b_displ_elastic(2,iglob) + &
                     accel_elastic(3,iglob)*b_displ_elastic(3,iglob)
-    rhorho_el_hessian_temp1(iglob) = b_accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
-                                     b_accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
-                                     b_accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
-    rhorho_el_hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
-                                     accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
-                                     accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
   enddo
+
+  ! approximate hessians
+  if (APPROXIMATE_HESS_KL) then
+    do iglob = 1,nglob
+      rhorho_el_hessian_temp1(iglob) = b_accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
+                                       b_accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
+                                       b_accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
+      rhorho_el_hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
+                                       accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
+                                       accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
+    enddo
+  endif
 
   do ispec = 1, nspec
     if (elastic(ispec)) then
@@ -183,11 +189,13 @@
           bulk_c_kl(i,j,ispec) =  TWO * kappa_kl(i,j,ispec)
           bulk_beta_kl(i,j,ispec) =  TWO * mu_kl(i,j,ispec)
 
-          rhorho_el_hessian_final1(i,j,ispec) = rhorho_el_hessian_final1(i,j,ispec) + &
-                                  rhorho_el_hessian_temp1(iglob) * deltat
-          rhorho_el_hessian_final2(i,j,ispec) = rhorho_el_hessian_final2(i,j,ispec) + &
-                                  rhorho_el_hessian_temp2(iglob) * deltat
-
+          ! approximates Hessian
+          if (APPROXIMATE_HESS_KL) then
+            rhorho_el_hessian_final1(i,j,ispec) = rhorho_el_hessian_final1(i,j,ispec) + &
+                                    rhorho_el_hessian_temp1(iglob) * deltat
+            rhorho_el_hessian_final2(i,j,ispec) = rhorho_el_hessian_final2(i,j,ispec) + &
+                                    rhorho_el_hessian_temp2(iglob) * deltat
+          endif
         enddo
       enddo
     endif
@@ -292,10 +300,14 @@
           !>YANGL
           rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)
           alpha_ac_kl(i,j,ispec) = TWO *  kappa_ac_kl(i,j,ispec)
-          rhorho_ac_hessian_final1(i,j,ispec) =  rhorho_ac_hessian_final1(i,j,ispec) + &
-                                                 dot_product(accel_ac(:,iglob),accel_ac(:,iglob)) * deltat
-          rhorho_ac_hessian_final2(i,j,ispec) =  rhorho_ac_hessian_final2(i,j,ispec) + &
-                                                 dot_product(accel_ac(:,iglob),b_accel_ac(:,iglob)) * deltat
+
+          ! approximates Hessian
+          if (APPROXIMATE_HESS_KL) then
+            rhorho_ac_hessian_final1(i,j,ispec) =  rhorho_ac_hessian_final1(i,j,ispec) + &
+                                                   dot_product(accel_ac(:,iglob),accel_ac(:,iglob)) * deltat
+            rhorho_ac_hessian_final2(i,j,ispec) =  rhorho_ac_hessian_final2(i,j,ispec) + &
+                                                   dot_product(accel_ac(:,iglob),b_accel_ac(:,iglob)) * deltat
+          endif
         enddo
       enddo
     endif

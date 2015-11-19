@@ -95,11 +95,12 @@
 
 ! **************
   if (myrank == 0 .or. nproc == 1) then
-    write(IOUT,*)
-    write(IOUT,*) '*******************************'
-    write(IOUT,*) ' locating force source'
-    write(IOUT,*) '*******************************'
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) '*******************************'
+    write(IMAIN,*) ' locating force source'
+    write(IMAIN,*) '*******************************'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
 ! set distance to huge initial value
@@ -238,24 +239,25 @@
   final_distance = sqrt((x_source-x)**2 + (z_source-z)**2)
 
   if (is_proc_source == 1) then
-     write(IOUT,*)
-     write(IOUT,*) 'Force source:'
+     write(IMAIN,*)
+     write(IMAIN,*) 'Force source:'
 
      if (final_distance == HUGEVAL) call exit_MPI('error locating force source')
 
-     write(IOUT,*) '            original x: ',sngl(x_source)
-     write(IOUT,*) '            original z: ',sngl(z_source)
-     write(IOUT,*) 'closest estimate found: ',sngl(final_distance),' m away'
+     write(IMAIN,*) '            original x: ',sngl(x_source)
+     write(IMAIN,*) '            original z: ',sngl(z_source)
+     write(IMAIN,*) 'closest estimate found: ',sngl(final_distance),' m away'
 #ifdef USE_MPI
-     write(IOUT,*) ' in rank ',myrank
+     write(IMAIN,*) ' in rank ',myrank
 #endif
-     write(IOUT,*) ' in element ',ispec_selected_source
-     write(IOUT,*) ' at xi,gamma coordinates = ',xi_source,gamma_source
-     write(IOUT,*)
+     write(IMAIN,*) ' in element ',ispec_selected_source
+     write(IMAIN,*) ' at xi,gamma coordinates = ',xi_source,gamma_source
+     write(IMAIN,*)
 
-     write(IOUT,*)
-     write(IOUT,*) 'end of force source detection'
-     write(IOUT,*)
+     write(IMAIN,*)
+     write(IMAIN,*) 'end of force source detection'
+     write(IMAIN,*)
+     call flush_IMAIN()
   endif
 
   end subroutine locate_source_force

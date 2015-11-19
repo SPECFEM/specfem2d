@@ -79,7 +79,7 @@
 !
 !-------------------------------------------------------------------------------------------------
 
-  subroutine flush_IOUT()
+  subroutine flush_IMAIN()
 
   implicit none
 
@@ -93,9 +93,9 @@
   !
   ! otherwise:
   !   a) comment out the line below
-  !   b) try to use instead: call flush(IOUT)
+  !   b) try to use instead: call flush(IMAIN)
 
-  flush(IOUT)
+  flush(IMAIN)
 
-  end subroutine flush_IOUT
+  end subroutine flush_IMAIN
 

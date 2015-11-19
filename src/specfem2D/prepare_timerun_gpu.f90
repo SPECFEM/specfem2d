@@ -54,9 +54,9 @@
 
   ! GPU_MODE now defined in Par_file
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) "GPU Preparing Fields and Constants on Device."
-    call flush_IOUT()
+    write(IMAIN,*)
+    write(IMAIN,*) "GPU Preparing Fields and Constants on Device."
+    call flush_IMAIN()
   endif
 
 !!!!!!!!!!! Parametres fournis
@@ -161,10 +161,13 @@
                                 num_colors_outer_acoustic,num_colors_inner_acoustic, &
                                 num_elem_colors_acoustic)
 
-    if (SIMULATION_TYPE == 3) &
-      call prepare_fields_acoustic_adj_dev(Mesh_pointer, &
-                                APPROXIMATE_HESS_KL)
-
+    if (SIMULATION_TYPE == 3) then
+      ! safety check
+      if (APPROXIMATE_HESS_KL) then
+        stop 'Sorry, approximate acoustic hessian kernels not yet fully implemented for GPU simulations!'
+      endif
+      call prepare_fields_acoustic_adj_dev(Mesh_pointer,APPROXIMATE_HESS_KL)
+    endif
   endif
 
 !!! Parametres fournis
@@ -198,11 +201,13 @@
                                 c25store,c33store,c35store,c55store,ninterface_elastic,inum_interfaces_elastic)
 
 
-    if (SIMULATION_TYPE == 3) &
-      call prepare_fields_elastic_adj_dev(Mesh_pointer, &
-                                NDIM*NGLOB_AB, &
-                                APPROXIMATE_HESS_KL)
-
+    if (SIMULATION_TYPE == 3) then
+      ! safety check
+      if (APPROXIMATE_HESS_KL) then
+        stop 'Sorry, approximate elastic hessian kernels not yet fully implemented for GPU simulations!'
+      endif
+      call prepare_fields_elastic_adj_dev(Mesh_pointer,NDIM*NGLOB_AB,APPROXIMATE_HESS_KL)
+    endif
   endif
 
   ! prepares fields on GPU for poroelastic simulations
@@ -250,11 +255,11 @@
   ! outputs usage for main process
   if (myrank == 0) then
     call get_free_device_memory(free_mb,used_mb,total_mb)
-    write(IOUT,*) "GPU usage: free  =",free_mb," MB",nint(free_mb/total_mb*100.0),"%"
-    write(IOUT,*) "           used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
-    write(IOUT,*) "           total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
-    write(IOUT,*)
-    call flush_IOUT()
+    write(IMAIN,*) "GPU usage: free  =",free_mb," MB",nint(free_mb/total_mb*100.0),"%"
+    write(IMAIN,*) "           used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
+    write(IMAIN,*) "           total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine prepare_timerun_GPU

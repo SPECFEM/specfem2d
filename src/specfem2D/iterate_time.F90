@@ -47,16 +47,17 @@ subroutine iterate_time()
 #endif
 
   use specfem_par
-  implicit none
 
-  integer i,j,ispec,iglob,it_temp
+  implicit none
 
 #ifdef USE_MPI
   include "precision.h"
 #endif
 
+  integer :: i,j,ispec,iglob,it_temp
+  integer :: ier
 
-  if (myrank == 0) write(IOUT,400) ! Write = T i m e  e v o l u t i o n  l o o p =
+  if (myrank == 0) write(IMAIN,400) ! Write = T i m e  e v o l u t i o n  l o o p =
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
 !
@@ -90,10 +91,10 @@ subroutine iterate_time()
   call synchronize_all()
 
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'Starting time iteration loop ...'
-    write(IOUT,*)
-    call flush_IOUT()
+    write(IMAIN,*)
+    write(IMAIN,*) 'Starting time iteration loop ...'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   do it = 1,NSTEP
@@ -1065,83 +1066,87 @@ subroutine iterate_time()
 !                       reading lastframe for adjoint/kernels calculation
 ! ********************************************************************************************
    if (it == 1 .and. SIMULATION_TYPE == 3) then
-     ! acoustic medium
-     if (any_acoustic) then
-       write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-       open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
+      ! acoustic medium
+      if (any_acoustic) then
+        write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
+        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error opening file OUTPUT_FILES/lastframe_acoustic**.bin')
 
-         read(55) b_potential_acoustic
-         read(55) b_potential_dot_acoustic
-         read(55) b_potential_dot_dot_acoustic
+        read(55) b_potential_acoustic
+        read(55) b_potential_dot_acoustic
+        read(55) b_potential_dot_dot_acoustic
 
-       close(55)
+        close(55)
 
-       if (GPU_MODE) then
-         ! transfers fields onto GPU
-         call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
-                                             b_potential_dot_acoustic,      &
-                                             b_potential_dot_dot_acoustic,  &
-                                             Mesh_pointer)
-       else
-         ! free surface for an acoustic medium
-         if (nelem_acoustic_surface > 0) then
-           call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                              b_potential_acoustic)
-         endif
-       endif
-     endif
+        if (GPU_MODE) then
+          ! transfers fields onto GPU
+          call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
+                                              b_potential_dot_acoustic,      &
+                                              b_potential_dot_dot_acoustic,  &
+                                              Mesh_pointer)
+        else
+          ! free surface for an acoustic medium
+          if (nelem_acoustic_surface > 0) then
+            call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                                               b_potential_acoustic)
+          endif
+        endif
+      endif
 
-     ! elastic medium
-     if (any_elastic) then
-       write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
-       open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-       if (p_sv) then !P-SV waves
-           read(55) b_displ_elastic
-           read(55) b_veloc_elastic
-           read(55) b_accel_elastic
-         if (GPU_MODE) then
-           b_displ_2D(1,:) = b_displ_elastic(1,:)
-           b_displ_2D(2,:) = b_displ_elastic(2,:)
-           b_veloc_2D(1,:) = b_veloc_elastic(1,:)
-           b_veloc_2D(2,:) = b_veloc_elastic(2,:)
-           b_accel_2D(1,:) = b_accel_elastic(1,:)
-           b_accel_2D(2,:) = b_accel_elastic(2,:)
-           call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_2D,b_veloc_2D,b_accel_2D,Mesh_pointer)
-         endif
+      ! elastic medium
+      if (any_elastic) then
+        write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
+        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error opening file OUTPUT_FILES/lastframe_elastic**.bin')
+        if (p_sv) then
+          !P-SV waves
+          read(55) b_displ_elastic
+          read(55) b_veloc_elastic
+          read(55) b_accel_elastic
+          if (GPU_MODE) then
+            b_displ_2D(1,:) = b_displ_elastic(1,:)
+            b_displ_2D(2,:) = b_displ_elastic(2,:)
+            b_veloc_2D(1,:) = b_veloc_elastic(1,:)
+            b_veloc_2D(2,:) = b_veloc_elastic(2,:)
+            b_accel_2D(1,:) = b_accel_elastic(1,:)
+            b_accel_2D(2,:) = b_accel_elastic(2,:)
+            call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_2D,b_veloc_2D,b_accel_2D,Mesh_pointer)
+          endif
+        else
+          !SH (membrane) waves
+          read(55) b_displ_elastic
+          read(55) b_veloc_elastic
+          read(55) b_accel_elastic
 
-       else !SH (membrane) waves
+          b_displ_elastic(1,:) = 0._CUSTOM_REAL
+          b_displ_elastic(3,:) = 0._CUSTOM_REAL
+          b_veloc_elastic(1,:) = 0._CUSTOM_REAL
+          b_veloc_elastic(3,:) = 0._CUSTOM_REAL
+          b_accel_elastic(1,:) = 0._CUSTOM_REAL
+          b_accel_elastic(3,:) = 0._CUSTOM_REAL
+        endif
+        close(55)
+      endif
 
-           read(55) b_displ_elastic
-           read(55) b_veloc_elastic
-           read(55) b_accel_elastic
-
-         b_displ_elastic(1,:) = 0._CUSTOM_REAL
-         b_displ_elastic(3,:) = 0._CUSTOM_REAL
-         b_veloc_elastic(1,:) = 0._CUSTOM_REAL
-         b_veloc_elastic(3,:) = 0._CUSTOM_REAL
-         b_accel_elastic(1,:) = 0._CUSTOM_REAL
-         b_accel_elastic(3,:) = 0._CUSTOM_REAL
-       endif
-       close(55)
-     endif
-
-     ! poroelastic medium
-     if (any_poroelastic) then
-       write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
-       open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-       write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
-       open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-       do j = 1,nglob
-         read(55) (b_displs_poroelastic(i,j), i= 1,NDIM), &
-                  (b_velocs_poroelastic(i,j), i= 1,NDIM), &
-                  (b_accels_poroelastic(i,j), i= 1,NDIM)
-         read(56) (b_displw_poroelastic(i,j), i= 1,NDIM), &
-                  (b_velocw_poroelastic(i,j), i= 1,NDIM), &
-                  (b_accelw_poroelastic(i,j), i= 1,NDIM)
-       enddo
-       close(55)
-       close(56)
-     endif
+      ! poroelastic medium
+      if (any_poroelastic) then
+        write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
+        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_s**.bin')
+        write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
+        open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_mpi(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_w**.bin')
+        do j = 1,nglob
+          read(55) (b_displs_poroelastic(i,j), i= 1,NDIM), &
+                   (b_velocs_poroelastic(i,j), i= 1,NDIM), &
+                   (b_accels_poroelastic(i,j), i= 1,NDIM)
+          read(56) (b_displw_poroelastic(i,j), i= 1,NDIM), &
+                   (b_velocw_poroelastic(i,j), i= 1,NDIM), &
+                   (b_accelw_poroelastic(i,j), i= 1,NDIM)
+        enddo
+        close(55)
+        close(56)
+      endif
    endif ! if (it == 1 .and. SIMULATION_TYPE == 3)
 
 !<NOISE_TOMOGRAPHY
@@ -1164,10 +1169,11 @@ subroutine iterate_time()
 ! ********************************************************************************************
 !                                      kernels calculation
 ! ********************************************************************************************
-   !*******************************************************************************
-   ! GPU_MODE
-   !*******************************************************************************
+
    if (GPU_MODE) then
+     !*******************************************************************************
+     ! GPU_MODE
+     !*******************************************************************************
      ! Kernel calculation
      if (SIMULATION_TYPE == 3) then
        if (any_acoustic ) call compute_kernels_acoustic_cuda(Mesh_pointer,deltatf)
@@ -1182,9 +1188,8 @@ subroutine iterate_time()
        if (it == NSTEP) then
          if (any_acoustic) then
            call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
-          rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
-          alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
-
+           rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
+           alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
          endif
 
          if (any_elastic) then
@@ -1222,12 +1227,11 @@ subroutine iterate_time()
        seismo_current = seismo_current + 1
        if (nrecloc > 0) then
           if (USE_TRICK_FOR_BETTER_PRESSURE) then
-
-           call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
+            call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
                                                        NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
                                                        any_elastic_glob,any_acoustic_glob,1)
           else
-           call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
+            call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
                                                        NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,&
                                                        any_elastic_glob,any_acoustic_glob,0)
           endif
@@ -1247,14 +1251,15 @@ subroutine iterate_time()
          displ_elastic(3,:) = displ_2D(2,:)
          veloc_elastic(3,:) = veloc_2D(2,:)
          accel_elastic(3,:) = accel_2D(2,:)
-      endif
+       endif
      endif !If transfer
-   endif !If GPU Mode
 
-   !*******************************************************************************
-   ! CPU_MODE
-   !*******************************************************************************
-   if (.not. GPU_MODE) then
+   else
+
+     !*******************************************************************************
+     ! CPU_MODE
+     !*******************************************************************************
+
      !----  compute kinetic and potential energy
      if (output_energy) then
        call compute_energy()
@@ -1295,7 +1300,8 @@ subroutine iterate_time()
          call compute_kernels_po()
        endif ! if (any_poroelastic)
      endif ! if (SIMULATION_TYPE == 3)
-   endif !Not GPU_MODE
+
+   endif !GPU_MODE
 
    !
    !----  display results at given time steps

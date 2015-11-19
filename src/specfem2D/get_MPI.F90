@@ -158,9 +158,9 @@
       num_points1 = num_points1 + num_nibool
       num_points2 = num_points2 + nibool_interfaces_true(iinterface)
       if (num_points1 /= num_points2) then
-        write(IOUT,*) 'error sorting MPI interface points:',myrank
-        write(IOUT,*) '   domain:',idomain
-        write(IOUT,*) '   interface:',iinterface,num_points1,num_points2
+        write(IMAIN,*) 'Error sorting MPI interface points:',myrank
+        write(IMAIN,*) '   domain:',idomain
+        write(IMAIN,*) '   interface:',iinterface,num_points1,num_points2
         call exit_MPI('error sorting MPI interface')
       endif
 
@@ -194,7 +194,8 @@
   call MPI_REDUCE(num_points2, num_points1, 1, MPI_INTEGER, &
                     MPI_SUM, 0, MPI_COMM_WORLD, ier)
   if (myrank == 0) then
-    write(IOUT,*) 'total MPI interface points: ',num_points1
+    write(IMAIN,*) 'total MPI interface points: ',num_points1
+    call flush_IMAIN()
   endif
 
   ! checks interfaces in acoustic domains
@@ -240,7 +241,8 @@
                     MPI_SUM, 0, MPI_COMM_WORLD, ier)
 
   if (myrank == 0) then
-    write(IOUT,*) '       acoustic interface points: ',num_points1
+    write(IMAIN,*) '       acoustic interface points: ',num_points1
+    call flush_IMAIN()
   endif
 
   ! checks if assembly works
@@ -267,7 +269,8 @@
   call MPI_REDUCE(inum, num_points2, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
 
   if (myrank == 0) then
-    write(IOUT,*) '       assembly acoustic MPI interface points:',num_points2
+    write(IMAIN,*) '       assembly acoustic MPI interface points:',num_points2
+    call flush_IMAIN()
   endif
 
   end subroutine get_MPI

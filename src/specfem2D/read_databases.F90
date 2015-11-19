@@ -50,15 +50,21 @@
   implicit none
 
   ! local parameters
-
-  !integer :: ier,nproc
+  integer :: ier
   character(len=80) :: datlin
   character(len=256)  :: prname
 
   ! opens Database file
-  write(prname,230) myrank
-  open(unit=IIN,file=prname,status='old',action='read',iostat=ier)
-  if (ier /= 0 ) call exit_MPI('error opening file OUTPUT/Database***')
+  write(prname,"('./OUTPUT_FILES/Database',i5.5)") myrank
+  open(unit=IIN,file=trim(prname),status='old',action='read',iostat=ier)
+  if (ier /= 0 ) then
+    if (myrank == 0) then
+      print *,'Error opening database file: ',trim(prname)
+      print *,''
+      print *,'Please make sure that the mesher has been run before this solver simulation with the correct settings...'
+    endif
+    call exit_MPI('Error opening file OUTPUT_FILES/Database***')
+  endif
 
   !---  read job title and skip remaining titles of the input file
   read(IIN,"(a80)") datlin
@@ -72,31 +78,32 @@
   if (myrank == 0) call datim(simulation_title)
 
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*)
-    write(IOUT,*) '*********************'
-    write(IOUT,*) '****             ****'
-    write(IOUT,*) '****  SPECFEM2D  ****'
-    write(IOUT,*) '****             ****'
-    write(IOUT,*) '*********************'
+    write(IMAIN,*)
+    write(IMAIN,*)
+    write(IMAIN,*) '*********************'
+    write(IMAIN,*) '****             ****'
+    write(IMAIN,*) '****  SPECFEM2D  ****'
+    write(IMAIN,*) '****             ****'
+    write(IMAIN,*) '*********************'
+    call flush_IMAIN()
   endif
 
   !---- read parameters from input file
   read(IIN,"(a80)") datlin
   read(IIN,*) AXISYM
   if (myrank == 0 .and. AXISYM) then
-    write(IOUT,*)
-    write(IOUT,*)
-    write(IOUT,*) '====================================================='
-    write(IOUT,*) '=== A x i s y m m e t r i c   S i m u l a t i o n ==='
-    write(IOUT,*) '====================================================='
+    write(IMAIN,*)
+    write(IMAIN,*)
+    write(IMAIN,*) '====================================================='
+    write(IMAIN,*) '=== A x i s y m m e t r i c   S i m u l a t i o n ==='
+    write(IMAIN,*) '====================================================='
   endif
 
   read(IIN,"(a80)") datlin
   read(IIN,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) npgeo,nproc
+  read(IIN,*) npgeo,nproc_read_from_database
 
   read(IIN,"(a80)") datlin
   read(IIN,*) output_grid_Gnuplot,interpol
@@ -242,13 +249,14 @@
 
   !---- check parameters read
   if (myrank == 0) then
-    write(IOUT,200) npgeo,NDIM
-    write(IOUT,600) NSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
-    write(IOUT,700) seismotype,anglerec
-    write(IOUT,750) initialfield,add_Bielak_conditions,&
+    write(IMAIN,200) npgeo,NDIM
+    write(IMAIN,600) NSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
+    write(IMAIN,700) seismotype,anglerec
+    write(IMAIN,750) initialfield,add_Bielak_conditions,&
                     ATTENUATION_VISCOELASTIC_SOLID, &
                     output_grid_ASCII,output_energy
-    write(IOUT,800) imagetype_postscript,100.d0*cutsnaps,subsamp_postscript
+    write(IMAIN,800) imagetype_postscript,100.d0*cutsnaps,subsamp_postscript
+    call flush_IMAIN()
   endif
 
 
@@ -265,23 +273,23 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) NT_DUMP_ATTENUATION
-  if (myrank == 0) write(IOUT,703) NSTEP,deltat,NSTEP*deltat
+  if (myrank == 0) write(IMAIN,703) NSTEP,deltat,NSTEP*deltat
 
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
      (ATTENUATION_PORO_FLUID_PART)) then
-    print *, '*************** error ***************'
+    print *, '*************** Error ***************'
     stop 'Anisotropy & Viscous damping are not presently implemented for adjoint calculations'
   endif
 
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
      ATTENUATION_PORO_FLUID_PART .and. (.not. UNDO_ATTENUATION)) then
-    print *, '*************** error ***************'
+    print *, '*************** Error ***************'
     stop 'attenuation is only implemented for adjoint calculations with UNDO_ATTENUATION'
   endif
 
 ! make sure NSTEP_BETWEEN_OUTPUT_SEISMOS is a multiple of subsamp_seismos
   if (mod(NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos) /= 0) &
-    stop 'error: NSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of subsamp_seismos'
+    stop 'Error: NSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of subsamp_seismos'
 
 ! make sure NSTEP is a multiple of subsamp_seismos
 ! if not, increase it a little bit, to the next multiple
@@ -294,7 +302,6 @@
     endif
   endif
 
-  nproc_read_from_database=nproc
 
 ! output seismograms at least once at the end of the simulation
   NSTEP_BETWEEN_OUTPUT_SEISMOS = min(NSTEP,NSTEP_BETWEEN_OUTPUT_SEISMOS)
@@ -308,8 +315,6 @@
   read(IIN,*) NSOURCES
 
   ! output formats
-230 format('./OUTPUT_FILES/Database',i5.5)
-
 200 format(//1x,'C o n t r o l',/1x,13('='),//5x,&
   'Number of spectral element control nodes. . .(npgeo) =',i8/5x, &
   'Number of space dimensions. . . . . . . . . . (NDIM) =',i8)
@@ -466,8 +471,9 @@
               nelem_on_the_axis
   !---- print element group main parameters
   if (myrank == 0) then
-    write(IOUT,107)
-    write(IOUT,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat,nelem_acforcing
+    write(IMAIN,107)
+    write(IMAIN,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat,nelem_acforcing
+    call flush_IMAIN()
   endif
 
   ! output formats
@@ -685,7 +691,7 @@
 ! check that a single edge is defined for each element cited
 ! (since elements with two absorbing edges MUST be cited twice, each time with a different "typeabs()" code
       if (count(codeabs(:,inum) .eqv. .true.) /= 1) then
-        print *,'error for absorbing element inum = ',inum
+        print *,'Error for absorbing element inum = ',inum
         stop 'must have one and only one absorbing edge per absorbing line cited'
       endif
 
@@ -785,13 +791,14 @@
 #endif
 
     if (myrank == 0 .and. .not. PML_BOUNDARY_CONDITIONS) then
-      write(IOUT,*)
-      write(IOUT,*) 'Number of absorbing elements: ',nelemabs_tot
-      write(IOUT,*) '  nspec_left = ',nspec_left_tot
-      write(IOUT,*) '  nspec_right = ',nspec_right_tot
-      write(IOUT,*) '  nspec_bottom = ',nspec_bottom_tot
-      write(IOUT,*) '  nspec_top = ',nspec_top_tot
-      write(IOUT,*)
+      write(IMAIN,*)
+      write(IMAIN,*) 'Number of absorbing elements: ',nelemabs_tot
+      write(IMAIN,*) '  nspec_left = ',nspec_left_tot
+      write(IMAIN,*) '  nspec_right = ',nspec_right_tot
+      write(IMAIN,*) '  nspec_bottom = ',nspec_bottom_tot
+      write(IMAIN,*) '  nspec_top = ',nspec_top_tot
+      write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
   end subroutine read_databases_absorbing
@@ -877,7 +884,7 @@
 ! check that a single edge is defined for each element cited
 ! (since elements with two absorbing edges MUST be cited twice, each time with a different "typeacforcing()" code
       if (count(codeacforcing(:,inum) .eqv. .true.) /= 1) then
-        print *,'error for absorbing element inum = ',inum
+        print *,'Error for absorbing element inum = ',inum
         stop 'must have one and only one absorbing edge per absorbing line cited'
       endif
 
@@ -907,13 +914,14 @@
     enddo
 
     if (myrank == 0) then
-      write(IOUT,*)
-      write(IOUT,*) 'Number of acoustic forcing elements: ',nelem_acforcing
-      write(IOUT,*) '  nspec_left_acforcing = ',nspec_left_acforcing
-      write(IOUT,*) '  nspec_right_acforcing = ',nspec_right_acforcing
-      write(IOUT,*) '  nspec_bottom_acforcing = ',nspec_bottom_acforcing
-      write(IOUT,*) '  nspec_top_acforcing = ',nspec_top_acforcing
-      write(IOUT,*)
+      write(IMAIN,*)
+      write(IMAIN,*) 'Number of acoustic forcing elements: ',nelem_acforcing
+      write(IMAIN,*) '  nspec_left_acforcing = ',nspec_left_acforcing
+      write(IMAIN,*) '  nspec_right_acforcing = ',nspec_right_acforcing
+      write(IMAIN,*) '  nspec_bottom_acforcing = ',nspec_bottom_acforcing
+      write(IMAIN,*) '  nspec_top_acforcing = ',nspec_top_acforcing
+      write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
   endif

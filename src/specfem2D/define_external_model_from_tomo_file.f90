@@ -452,7 +452,7 @@ subroutine read_tomo_file()
   use specfem_par, only: myrank,TOMOGRAPHY_FILE
 
   use model_tomography_par
-  use constants,only: IIN,IOUT
+  use constants,only: IIN,IMAIN
 
   implicit none
 
@@ -535,8 +535,9 @@ subroutine read_tomo_file()
   endif
 
   if (myrank == 0) then
-    write(IOUT,*) '     Number of grid points = NX*NZ:',nrecord
-    write(IOUT,*)
+    write(IMAIN,*) '     Number of grid points = NX*NZ:',nrecord
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! closes file

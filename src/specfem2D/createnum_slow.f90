@@ -60,9 +60,10 @@
 
 !----  create global mesh numbering
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'Generating global mesh numbering (slow version)...'
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'Generating global mesh numbering (slow version)...'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   nglob = 0

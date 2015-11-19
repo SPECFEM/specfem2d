@@ -157,8 +157,9 @@
 
   ! create all the pixels
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'locating all the pixels of color images'
+    write(IMAIN,*)
+    write(IMAIN,*) 'locating all the pixels of color images'
+    call flush_IMAIN()
   endif
 
   size_pixel_horizontal = (xmax_color_image - xmin_color_image) / dble(NX_IMAGE_color-1)

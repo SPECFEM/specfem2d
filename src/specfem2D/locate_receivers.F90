@@ -115,13 +115,14 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
 ! **************
 
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) '********************'
-    write(IOUT,*) ' locating receivers'
-    write(IOUT,*) '********************'
-    write(IOUT,*)
-    write(IOUT,*) 'reading receiver information from the DATA/STATIONS file'
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) '********************'
+    write(IMAIN,*) ' locating receivers'
+    write(IMAIN,*) '********************'
+    write(IMAIN,*)
+    write(IMAIN,*) 'reading receiver information from the DATA/STATIONS file'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   open(unit= 1,file='DATA/STATIONS',status='old',action='read')
@@ -289,27 +290,28 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
   if (myrank == 0) then
 
     do irec = 1, nrec
-      write(IOUT,*)
-      write(IOUT,*) 'Station # ',irec,'    ',network_name(irec),station_name(irec)
+      write(IMAIN,*)
+      write(IMAIN,*) 'Station # ',irec,'    ',network_name(irec),station_name(irec)
 
       if (gather_final_distance(irec,which_proc_receiver(irec)+1) == HUGEVAL) &
         call exit_MPI('error locating receiver')
 
-      write(IOUT,*) '            original x: ',sngl(st_xval(irec))
-      write(IOUT,*) '            original z: ',sngl(st_zval(irec))
-      write(IOUT,*) '  distance from source: ',sngl(distance_receiver(irec))
-      write(IOUT,*) 'closest estimate found: ',sngl(gather_final_distance(irec,which_proc_receiver(irec)+1)), &
+      write(IMAIN,*) '            original x: ',sngl(st_xval(irec))
+      write(IMAIN,*) '            original z: ',sngl(st_zval(irec))
+      write(IMAIN,*) '  distance from source: ',sngl(distance_receiver(irec))
+      write(IMAIN,*) 'closest estimate found: ',sngl(gather_final_distance(irec,which_proc_receiver(irec)+1)), &
                     ' m away'
-      write(IOUT,*) ' in element ',gather_ispec_selected_rec(irec,which_proc_receiver(irec)+1)
-      write(IOUT,*) ' at process ', which_proc_receiver(irec)
-      write(IOUT,*) ' at xi,gamma coordinates = ',gather_xi_receiver(irec,which_proc_receiver(irec)+1),&
+      write(IMAIN,*) ' in element ',gather_ispec_selected_rec(irec,which_proc_receiver(irec)+1)
+      write(IMAIN,*) ' at process ', which_proc_receiver(irec)
+      write(IMAIN,*) ' at xi,gamma coordinates = ',gather_xi_receiver(irec,which_proc_receiver(irec)+1),&
                                   gather_gamma_receiver(irec,which_proc_receiver(irec)+1)
-      write(IOUT,*)
+      write(IMAIN,*)
     enddo
 
-    write(IOUT,*)
-    write(IOUT,*) 'end of receiver detection'
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'end of receiver detection'
+    write(IMAIN,*)
+    call flush_IMAIN()
 
   endif
 

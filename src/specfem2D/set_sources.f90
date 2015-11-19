@@ -66,13 +66,13 @@
       if (source_type(i_source) == 1) then
         if (myrank == 0) then
           ! user output
-          write(IOUT,212) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
+          write(IMAIN,212) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
                        factor(i_source),anglesource(i_source)
         endif
       else if (source_type(i_source) == 2) then
         if (myrank == 0) then
           ! user output
-          write(IOUT,222) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
+          write(IMAIN,222) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
                        factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
         endif
       else
@@ -132,11 +132,12 @@
 
     ! notifies user
     if (myrank == 0) then
-      write(IOUT,*)
-      write(IOUT,*) '    using USER_T0 . . . . . . . . . = ',USER_T0
-      write(IOUT,*) '      original t0 . . . . . . . . . = ',t0
-      write(IOUT,*) '      min_tshift_src_original . . . = ',min_tshift_src_original
-      write(IOUT,*)
+      write(IMAIN,*)
+      write(IMAIN,*) '    using USER_T0 . . . . . . . . . = ',USER_T0
+      write(IMAIN,*) '      original t0 . . . . . . . . . = ',t0
+      write(IMAIN,*) '      min_tshift_src_original . . . = ',min_tshift_src_original
+      write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
     ! checks if automatically set t0 is too small
@@ -149,7 +150,7 @@
 
       ! notifies user
       if (myrank == 0) then
-        write(IOUT,*) '    fix new simulation start time . = ', - t0
+        write(IMAIN,*) '    fix new simulation start time . = ', - t0
       endif
 
       ! loops over all sources
@@ -162,29 +163,29 @@
         endif
         ! user output
         if (myrank == 0) then
-          write(IOUT,*) '    source ',i_source,'uses tshift = ',tshift_src(i_source)
+          write(IMAIN,*) '    source ',i_source,'uses tshift = ',tshift_src(i_source)
         endif
       enddo
       ! user output
       if (myrank == 0) then
-        write(IOUT,*)
+        write(IMAIN,*)
       endif
 
     else
       ! start time needs to be at least t0 for numerical stability
       ! notifies user
       if (myrank == 0) then
-        write(IOUT,*) 'error: USER_T0 is too small'
-        write(IOUT,*) '       must make one of three adjustements:'
-        write(IOUT,*) '       - increase USER_T0 to be at least: ',t0
-        write(IOUT,*) '       - decrease time shift tshift_src in SOURCE file'
-        write(IOUT,*) '       - increase frequency f0 in SOURCE file'
+        write(IMAIN,*) 'error: USER_T0 is too small'
+        write(IMAIN,*) '       must make one of three adjustements:'
+        write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0
+        write(IMAIN,*) '       - decrease time shift tshift_src in SOURCE file'
+        write(IMAIN,*) '       - increase frequency f0 in SOURCE file'
       endif
       call exit_MPI('error USER_T0 is set but too small')
     endif
   else if (USER_T0 < 0.d0) then
     if (myrank == 0) then
-      write(IOUT,*) 'error: USER_T0 is negative, must be set zero or positive!'
+      write(IMAIN,*) 'error: USER_T0 is negative, must be set zero or positive!'
     endif
     call exit_MPI('error negative USER_T0 parameter in constants.h')
   endif
@@ -200,9 +201,9 @@
 
         ! user output
         if (myrank == 0) then
-          write(IOUT,*) '    Onset time. . . . . . = ',- (t0+tshift_src(i_source))
-          write(IOUT,*) '    Fundamental period. . = ',1.d0/f0(i_source)
-          write(IOUT,*) '    Fundamental frequency = ',f0(i_source)
+          write(IMAIN,*) '    Onset time. . . . . . = ',- (t0+tshift_src(i_source))
+          write(IMAIN,*) '    Fundamental period. . = ',1.d0/f0(i_source)
+          write(IMAIN,*) '    Fundamental frequency = ',f0(i_source)
         endif
 
         ! checks source onset time
@@ -210,7 +211,7 @@
           call exit_MPI('Onset time too small')
         else
           if (myrank == 0) then
-            write(IOUT,*) '    --> onset time ok'
+            write(IMAIN,*) '    --> onset time ok'
           endif
         endif
       endif

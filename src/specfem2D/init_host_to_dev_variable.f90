@@ -42,55 +42,44 @@
 
 
 
-subroutine init_host_to_dev_variable()
+  subroutine init_host_to_dev_variable()
+
+! helper routine for array initialization and time run setup
 
   use specfem_par
   implicit none
 
   integer :: i_spec_free, ipoint1D, i, j, k, ispec, ispecabs, i_source, ispec_inner, ispec_outer
+  integer :: ier
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! Initialisation variables pour routine prepare_constants_device
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+  deltatf=sngl(deltat)
+  deltatover2f=sngl(deltatover2)
+  deltatsquareover2f=sngl(deltatsquareover2)
 
+  b_deltatf=sngl(b_deltat)
+  b_deltatover2f=sngl(b_deltatover2)
+  b_deltatsquareover2f=sngl(b_deltatsquareover2)
 
-deltatf=sngl(deltat)
-deltatover2f=sngl(deltatover2)
-deltatsquareover2f=sngl(deltatsquareover2)
-b_deltatf=sngl(b_deltat)
-b_deltatover2f=sngl(b_deltatover2)
-b_deltatsquareover2f=sngl(b_deltatsquareover2)
+  NSPEC_AB = nspec
+  NGLOB_AB = nglob
 
+  allocate(ibool_interfaces_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
 
+  ibool_interfaces_ext_mesh(:,:)=0
+  do j = 1,ninterface
+    do i = 1,nibool_interfaces_ext_mesh(j)
+      ibool_interfaces_ext_mesh(i,j)=ibool_interfaces_ext_mesh_init(i,j)
+    enddo
+  enddo
 
+  !!!
+  allocate(free_ac_ispec(nelem_acoustic_surface))
 
-NSPEC_AB = nspec
-NGLOB_AB = nglob
-
-
-
-
-allocate(ibool_interfaces_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
-
-ibool_interfaces_ext_mesh(:,:)=0
-do j = 1,ninterface
-do i = 1,nibool_interfaces_ext_mesh(j)
-ibool_interfaces_ext_mesh(i,j)=ibool_interfaces_ext_mesh_init(i,j)
-enddo
-enddo
-
-
-
-
-
-
-!!!
-allocate(free_ac_ispec(nelem_acoustic_surface))
-
-free_ac_ispec(:)=acoustic_surface(1,:)
-
-
+  free_ac_ispec(:)=acoustic_surface(1,:)
 
   ! checks
   if (nelemabs < 0) then
@@ -272,15 +261,9 @@ free_ac_ispec(:)=acoustic_surface(1,:)
   enddo
 
 
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!! Init pour prepare acoustique
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
-
-
 
   ! sets up elements for loops in acoustic simulations
   nspec_inner_acoustic = 0
@@ -331,135 +314,105 @@ free_ac_ispec(:)=acoustic_surface(1,:)
   allocate(free_surface_ij(2,NGLLX,nelem_acoustic_surface))
 
   do i_spec_free = 1, nelem_acoustic_surface
-
-
-if (acoustic_surface(2,i_spec_free) ==acoustic_surface(3,i_spec_free)) then
-
-     do j =1,5
-      free_surface_ij(1,j,i_spec_free) = acoustic_surface(2,i_spec_free)
-     enddo
-
-
-else
-
+    if (acoustic_surface(2,i_spec_free) ==acoustic_surface(3,i_spec_free)) then
+      do j =1,5
+        free_surface_ij(1,j,i_spec_free) = acoustic_surface(2,i_spec_free)
+      enddo
+    else
       j=1
-
       do i = acoustic_surface(2,i_spec_free), acoustic_surface(3,i_spec_free)
-
-      free_surface_ij(1,j,i_spec_free) = i
-
-      j=j+1
-
+        free_surface_ij(1,j,i_spec_free) = i
+        j=j+1
       enddo
-endif
+    endif
 
-
-if (acoustic_surface(4,i_spec_free) ==acoustic_surface(5,i_spec_free)) then
-
-     do j =1,5
-      free_surface_ij(2,j,i_spec_free) = acoustic_surface(4,i_spec_free)
-     enddo
-
-
-else
-
-    j=1
-
+    if (acoustic_surface(4,i_spec_free) ==acoustic_surface(5,i_spec_free)) then
+      do j =1,5
+        free_surface_ij(2,j,i_spec_free) = acoustic_surface(4,i_spec_free)
+      enddo
+    else
+      j=1
       do i = acoustic_surface(4,i_spec_free), acoustic_surface(5,i_spec_free)
-
-      free_surface_ij(2,j,i_spec_free) = i
-
-      j=j+1
-
+        free_surface_ij(2,j,i_spec_free) = i
+        j=j+1
       enddo
-endif
-
+    endif
   enddo
-
 
 !
 
- allocate(coupling_ac_el_ispec(num_fluid_solid_edges))
- allocate(coupling_ac_el_ij(2,NGLLX,num_fluid_solid_edges))
- allocate(coupling_ac_el_normal(2,NGLLX,num_fluid_solid_edges))
- allocate(coupling_ac_el_jacobian1Dw(NGLLX,num_fluid_solid_edges))
-      do inum = 1,num_fluid_solid_edges
+  allocate(coupling_ac_el_ispec(num_fluid_solid_edges))
+  allocate(coupling_ac_el_ij(2,NGLLX,num_fluid_solid_edges))
+  allocate(coupling_ac_el_normal(2,NGLLX,num_fluid_solid_edges))
+  allocate(coupling_ac_el_jacobian1Dw(NGLLX,num_fluid_solid_edges))
 
-        ! get the edge of the acoustic element
-        ispec_acoustic = fluid_solid_acoustic_ispec(inum)
-        iedge_acoustic = fluid_solid_acoustic_iedge(inum)
-        coupling_ac_el_ispec(inum) = ispec_acoustic
+  do inum = 1,num_fluid_solid_edges
 
-        ! get the corresponding edge of the elastic element
-        ispec_elastic = fluid_solid_elastic_ispec(inum)
-        iedge_elastic = fluid_solid_elastic_iedge(inum)
+    ! get the edge of the acoustic element
+    ispec_acoustic = fluid_solid_acoustic_ispec(inum)
+    iedge_acoustic = fluid_solid_acoustic_iedge(inum)
+    coupling_ac_el_ispec(inum) = ispec_acoustic
 
-        ! implement 1D coupling along the edge
-        do ipoint1D = 1,NGLLX
+    ! get the corresponding edge of the elastic element
+    ispec_elastic = fluid_solid_elastic_ispec(inum)
+    iedge_elastic = fluid_solid_elastic_iedge(inum)
 
-          ! get point values for the elastic side, which matches our side in the inverse direction
-        coupling_ac_el_ij(1,ipoint1D,inum) = ivalue(ipoint1D,iedge_acoustic)
-        coupling_ac_el_ij(2,ipoint1D,inum) = jvalue(ipoint1D,iedge_acoustic)
+    ! implement 1D coupling along the edge
+    do ipoint1D = 1,NGLLX
 
-        i = ivalue(ipoint1D,iedge_acoustic)
-        j = jvalue(ipoint1D,iedge_acoustic)
+      ! get point values for the elastic side, which matches our side in the inverse direction
+      coupling_ac_el_ij(1,ipoint1D,inum) = ivalue(ipoint1D,iedge_acoustic)
+      coupling_ac_el_ij(2,ipoint1D,inum) = jvalue(ipoint1D,iedge_acoustic)
 
+      i = ivalue(ipoint1D,iedge_acoustic)
+      j = jvalue(ipoint1D,iedge_acoustic)
 
+      if (iedge_acoustic == ITOP) then
+        xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        jacobian1D = sqrt(xxi**2 + zxi**2)
+        coupling_ac_el_normal(1,ipoint1D,inum) = - zxi / jacobian1D
+        coupling_ac_el_normal(2,ipoint1D,inum) = + xxi / jacobian1D
+        coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wxgll(i)
 
+      else if (iedge_acoustic == IBOTTOM) then
+        xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        jacobian1D = sqrt(xxi**2 + zxi**2)
+        coupling_ac_el_normal(1,ipoint1D,inum) = + zxi / jacobian1D
+        coupling_ac_el_normal(2,ipoint1D,inum) = - xxi / jacobian1D
+        coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wxgll(i)
 
-          if (iedge_acoustic == ITOP) then
-            xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            jacobian1D = sqrt(xxi**2 + zxi**2)
-            coupling_ac_el_normal(1,ipoint1D,inum) = - zxi / jacobian1D
-            coupling_ac_el_normal(2,ipoint1D,inum) = + xxi / jacobian1D
-            coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wxgll(i)
+      else if (iedge_acoustic ==ILEFT) then
+        xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        jacobian1D = sqrt(xgamma**2 + zgamma**2)
+        coupling_ac_el_normal(1,ipoint1D,inum) = - zgamma / jacobian1D
+        coupling_ac_el_normal(2,ipoint1D,inum) = + xgamma / jacobian1D
+        coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wzgll(j)
 
-          else if (iedge_acoustic == IBOTTOM) then
-            xxi = + gammaz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            zxi = - gammax(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            jacobian1D = sqrt(xxi**2 + zxi**2)
-            coupling_ac_el_normal(1,ipoint1D,inum) = + zxi / jacobian1D
-            coupling_ac_el_normal(2,ipoint1D,inum) = - xxi / jacobian1D
-            coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wxgll(i)
-
-          else if (iedge_acoustic ==ILEFT) then
-            xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            jacobian1D = sqrt(xgamma**2 + zgamma**2)
-            coupling_ac_el_normal(1,ipoint1D,inum) = - zgamma / jacobian1D
-            coupling_ac_el_normal(2,ipoint1D,inum) = + xgamma / jacobian1D
-            coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wzgll(j)
-
-          else if (iedge_acoustic ==IRIGHT) then
-            xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
-            jacobian1D = sqrt(xgamma**2 + zgamma**2)
-            coupling_ac_el_normal(1,ipoint1D,inum) = + zgamma / jacobian1D
-            coupling_ac_el_normal(2,ipoint1D,inum) = - xgamma / jacobian1D
-            coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wzgll(j)
-          endif
-
-
-        enddo
-
-      enddo
-
+      else if (iedge_acoustic ==IRIGHT) then
+        xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
+        jacobian1D = sqrt(xgamma**2 + zgamma**2)
+        coupling_ac_el_normal(1,ipoint1D,inum) = + zgamma / jacobian1D
+        coupling_ac_el_normal(2,ipoint1D,inum) = - xgamma / jacobian1D
+        coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wzgll(j)
+      endif
+    enddo
+  enddo
 
 !!
 
-
-num_colors_outer_acoustic = 0
-num_colors_inner_acoustic = 0
-allocate(num_elem_colors_acoustic(1))
-num_elem_colors_acoustic(1)=0
+  num_colors_outer_acoustic = 0
+  num_colors_inner_acoustic = 0
+  allocate(num_elem_colors_acoustic(1))
+  num_elem_colors_acoustic(1)=0
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!! Initialisation parametres pour simulation elastique
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
 
   ! sets up elements for loops in acoustic simulations
   nspec_inner_elastic = 0
@@ -507,121 +460,107 @@ num_elem_colors_acoustic(1)=0
 
 !
 
-
-num_colors_outer_elastic = 0
-num_colors_inner_elastic = 0
-allocate(num_elem_colors_elastic(1))
-num_elem_colors_elastic(1)=0
+  num_colors_outer_elastic = 0
+  num_colors_inner_elastic = 0
+  allocate(num_elem_colors_elastic(1))
+  num_elem_colors_elastic(1)=0
 
 !
 
-ANY_ANISOTROPY= .false.
+  ANY_ANISOTROPY = .false.
 
-    do ispec = 1, nspec
-        if (anisotropic(ispec) ) ANY_ANISOTROPY=.true.
-    enddo
+  do ispec = 1, nspec
+    if (anisotropic(ispec) ) ANY_ANISOTROPY=.true.
+  enddo
 
-if (ANY_ANISOTROPY) then
+  if (ANY_ANISOTROPY) then
+    allocate(c11store(NGLLX,NGLLZ,NSPEC))
+    allocate(c13store(NGLLX,NGLLZ,NSPEC))
+    allocate(c15store(NGLLX,NGLLZ,NSPEC))
+    allocate(c33store(NGLLX,NGLLZ,NSPEC))
+    allocate(c35store(NGLLX,NGLLZ,NSPEC))
+    allocate(c55store(NGLLX,NGLLZ,NSPEC))
+    allocate(c12store(NGLLX,NGLLZ,NSPEC))
+    allocate(c23store(NGLLX,NGLLZ,NSPEC))
+    allocate(c25store(NGLLX,NGLLZ,NSPEC))
 
-allocate(c11store(NGLLX,NGLLZ,NSPEC))
-allocate(c13store(NGLLX,NGLLZ,NSPEC))
-allocate(c15store(NGLLX,NGLLZ,NSPEC))
-allocate(c33store(NGLLX,NGLLZ,NSPEC))
-allocate(c35store(NGLLX,NGLLZ,NSPEC))
-allocate(c55store(NGLLX,NGLLZ,NSPEC))
-allocate(c12store(NGLLX,NGLLZ,NSPEC))
-allocate(c23store(NGLLX,NGLLZ,NSPEC))
-allocate(c25store(NGLLX,NGLLZ,NSPEC))
+    if (assign_external_model) then
 
-if (assign_external_model) then
-
-do ispec= 1,nspec
+      do ispec= 1,nspec
         do j = 1,NGLLZ
-             do i = 1,NGLLX
-
-                c11store(i,j,ispec) = c11ext(i,j,ispec)
-                c13store(i,j,ispec) = c13ext(i,j,ispec)
-                c15store(i,j,ispec) = c15ext(i,j,ispec)
-                c33store(i,j,ispec) = c33ext(i,j,ispec)
-                c35store(i,j,ispec) = c35ext(i,j,ispec)
-                c55store(i,j,ispec) = c55ext(i,j,ispec)
-                c12store(i,j,ispec) = c12ext(i,j,ispec)
-                c23store(i,j,ispec) = c23ext(i,j,ispec)
-                c25store(i,j,ispec) = c25ext(i,j,ispec)
-
-               enddo
+          do i = 1,NGLLX
+            c11store(i,j,ispec) = c11ext(i,j,ispec)
+            c13store(i,j,ispec) = c13ext(i,j,ispec)
+            c15store(i,j,ispec) = c15ext(i,j,ispec)
+            c33store(i,j,ispec) = c33ext(i,j,ispec)
+            c35store(i,j,ispec) = c35ext(i,j,ispec)
+            c55store(i,j,ispec) = c55ext(i,j,ispec)
+            c12store(i,j,ispec) = c12ext(i,j,ispec)
+            c23store(i,j,ispec) = c23ext(i,j,ispec)
+            c25store(i,j,ispec) = c25ext(i,j,ispec)
+          enddo
        enddo
-enddo
-
-else
-
-do ispec= 1,nspec
+      enddo
+    else
+      do ispec= 1,nspec
         do j = 1,NGLLZ
-             do i = 1,NGLLX
+          do i = 1,NGLLX
+            c11store(i,j,ispec) = sngl(anisotropy(1,kmato(ispec)))
+            c13store(i,j,ispec) = sngl(anisotropy(2,kmato(ispec)))
+            c15store(i,j,ispec) = sngl(anisotropy(3,kmato(ispec)))
+            c33store(i,j,ispec) = sngl(anisotropy(4,kmato(ispec)))
+            c35store(i,j,ispec) = sngl(anisotropy(5,kmato(ispec)))
+            c55store(i,j,ispec) = sngl(anisotropy(6,kmato(ispec)))
+            c12store(i,j,ispec) = sngl(anisotropy(7,kmato(ispec)))
+            c23store(i,j,ispec) = sngl(anisotropy(8,kmato(ispec)))
+            c25store(i,j,ispec) = sngl(anisotropy(9,kmato(ispec)))
+          enddo
+        enddo
+      enddo
+    endif
 
-                    c11store(i,j,ispec) = sngl(anisotropy(1,kmato(ispec)))
-                    c13store(i,j,ispec) = sngl(anisotropy(2,kmato(ispec)))
-                    c15store(i,j,ispec) = sngl(anisotropy(3,kmato(ispec)))
-                    c33store(i,j,ispec) = sngl(anisotropy(4,kmato(ispec)))
-                    c35store(i,j,ispec) = sngl(anisotropy(5,kmato(ispec)))
-                    c55store(i,j,ispec) = sngl(anisotropy(6,kmato(ispec)))
-                    c12store(i,j,ispec) = sngl(anisotropy(7,kmato(ispec)))
-                    c23store(i,j,ispec) = sngl(anisotropy(8,kmato(ispec)))
-                    c25store(i,j,ispec) = sngl(anisotropy(9,kmato(ispec)))
-
-               enddo
-       enddo
-enddo
-
-endif
-
-else
-
-allocate(c11store(1,1,1))
-allocate(c13store(1,1,1))
-allocate(c15store(1,1,1))
-allocate(c33store(1,1,1))
-allocate(c35store(1,1,1))
-allocate(c55store(1,1,1))
-allocate(c12store(1,1,1))
-allocate(c23store(1,1,1))
-allocate(c25store(1,1,1))
-
-endif
+  else
+    ! dummy allocations
+    allocate(c11store(1,1,1))
+    allocate(c13store(1,1,1))
+    allocate(c15store(1,1,1))
+    allocate(c33store(1,1,1))
+    allocate(c35store(1,1,1))
+    allocate(c55store(1,1,1))
+    allocate(c12store(1,1,1))
+    allocate(c23store(1,1,1))
+    allocate(c25store(1,1,1))
+  endif
 
 
 
 !!!!
+  allocate(displ_2D(2,nglob_elastic))
+  allocate(veloc_2D(2,nglob_elastic))
+  allocate(accel_2D(2,nglob_elastic))
+  displ_2D(1,:)=displ_elastic(1,:)
+  displ_2D(2,:)=displ_elastic(3,:)
 
+  veloc_2D(1,:)=veloc_elastic(1,:)
+  veloc_2D(2,:)=veloc_elastic(3,:)
 
-allocate(displ_2D(2,nglob_elastic))
-allocate(veloc_2D(2,nglob_elastic))
-allocate(accel_2D(2,nglob_elastic))
-displ_2D(1,:)=displ_elastic(1,:)
-displ_2D(2,:)=displ_elastic(3,:)
+  accel_2D(1,:)=accel_elastic(1,:)
+  accel_2D(2,:)=accel_elastic(3,:)
 
-veloc_2D(1,:)=veloc_elastic(1,:)
-veloc_2D(2,:)=veloc_elastic(3,:)
+  if (SIMULATION_TYPE == 3 .and. any_elastic) then
+    allocate(b_displ_2D(2,nglob))
+    allocate(b_veloc_2D(2,nglob))
+    allocate(b_accel_2D(2,nglob))
 
-accel_2D(1,:)=accel_elastic(1,:)
-accel_2D(2,:)=accel_elastic(3,:)
+    b_displ_2D(1,:)=b_displ_elastic(1,:)
+    b_displ_2D(2,:)=b_displ_elastic(3,:)
 
-if (SIMULATION_TYPE == 3 .and. any_elastic) then
-  allocate(b_displ_2D(2,nglob))
-  allocate(b_veloc_2D(2,nglob))
-  allocate(b_accel_2D(2,nglob))
+    b_veloc_2D(1,:)=b_veloc_elastic(1,:)
+    b_veloc_2D(2,:)=b_veloc_elastic(3,:)
 
-
-b_displ_2D(1,:)=b_displ_elastic(1,:)
-b_displ_2D(2,:)=b_displ_elastic(3,:)
-
-b_veloc_2D(1,:)=b_veloc_elastic(1,:)
-b_veloc_2D(2,:)=b_veloc_elastic(3,:)
-
-b_accel_2D(1,:)=b_accel_elastic(1,:)
-b_accel_2D(2,:)=b_accel_elastic(3,:)
-
-endif
+    b_accel_2D(1,:)=b_accel_elastic(1,:)
+    b_accel_2D(2,:)=b_accel_elastic(3,:)
+  endif
 
 
 
@@ -629,32 +568,26 @@ endif
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+  allocate(tab_requests_send_recv_scalar(2*ninterface))
+  allocate(b_tab_requests_send_recv_scalar(2*ninterface))
+  allocate(tab_requests_send_recv_vector(2*ninterface))
+  allocate(b_tab_requests_send_recv_vector(2*ninterface))
 
-allocate(tab_requests_send_recv_scalar(2*ninterface))
-allocate(b_tab_requests_send_recv_scalar(2*ninterface))
-allocate(tab_requests_send_recv_vector(2*ninterface))
-allocate(b_tab_requests_send_recv_vector(2*ninterface))
+  allocate(buffer_send_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
+  allocate(b_buffer_send_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
+  allocate(buffer_recv_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
+  allocate(b_buffer_recv_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
+  allocate(buffer_send_vector_ext_mesh(2,max_nibool_interfaces_ext_mesh,ninterface))
+  allocate(b_buffer_send_vector_ext_mesh(2,max_nibool_interfaces_ext_mesh,ninterface))
+  allocate(buffer_recv_vector_ext_mesh(2,max_nibool_interfaces_ext_mesh,ninterface))
+  allocate(b_buffer_recv_vector_ext_mesh(2,max_nibool_interfaces_ext_mesh,ninterface))
 
+  allocate(cosrot_irecf(nrecloc))
+  allocate(sinrot_irecf(nrecloc))
 
-allocate(buffer_send_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
-allocate(b_buffer_send_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
-allocate(buffer_recv_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
-allocate(b_buffer_recv_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
-allocate(buffer_send_vector_ext_mesh(2,max_nibool_interfaces_ext_mesh,ninterface))
-allocate(b_buffer_send_vector_ext_mesh(2,max_nibool_interfaces_ext_mesh,ninterface))
-allocate(buffer_recv_vector_ext_mesh(2,max_nibool_interfaces_ext_mesh,ninterface))
-allocate(b_buffer_recv_vector_ext_mesh(2,max_nibool_interfaces_ext_mesh,ninterface))
+  do i = 1,nrecloc
+    cosrot_irecf(i)=sngl(cosrot_irec(i))
+    sinrot_irecf(i)=sngl(sinrot_irec(i))
+  enddo
 
-
-
-allocate(cosrot_irecf(nrecloc))
-allocate(sinrot_irecf(nrecloc))
-
-
-do i = 1,nrecloc
-cosrot_irecf(i)=sngl(cosrot_irec(i))
-sinrot_irecf(i)=sngl(sinrot_irec(i))
-enddo
-
-
-end subroutine init_host_to_dev_variable
+  end subroutine init_host_to_dev_variable

@@ -63,7 +63,7 @@
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-                         poroelastic,myrank,nproc,ier, &
+                         poroelastic,myrank,nproc, &
                          coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
                          coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model,&
                          coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
@@ -83,8 +83,10 @@
 
   double precision, dimension(:,:), allocatable  :: coorg_send
   double precision, dimension(:,:), allocatable  :: coorg_recv
-  integer k,j,ispec,material,is,ir,imat,icol,l,line_length
-  integer index_char,ii,ipoin,in,nnum,inum,ideb,ifin,iedge
+  integer :: k,j,ispec,material,is,ir,imat,icol,l,line_length
+  integer :: index_char,ii,ipoin,in,nnum,inum,ideb,ifin,iedge
+  integer :: ier
+
 ! for the file name
   character(len=100) :: file_name
   integer  :: buffer_offset, RGB_offset
@@ -100,6 +102,7 @@
 
   integer  :: nspec_recv,num_spec,pointsdisp_loop
   integer  :: nb_coorg_per_elem, nb_color_per_elem,i,iproc
+
 ! to suppress useless white spaces in postscript lines
   character(len=100) :: postscript_line
   character(len=1), dimension(100) :: ch1,ch2
@@ -1347,8 +1350,8 @@
 #endif
 
   if (myrank == 0) then
-     write(IOUT,*) 'X min, max = ',xmin,xmax
-     write(IOUT,*) 'Z min, max = ',zmin,zmax
+     write(IMAIN,*) 'X min, max = ',xmin,xmax
+     write(IMAIN,*) 'Z min, max = ',zmin,zmax
   endif
 
 ! ratio of physical page size/size of the domain meshed
@@ -1361,7 +1364,7 @@
   dispmax = dispmax_glob
 #endif
   if (myrank == 0) then
-     write(IOUT,*) 'Max norm = ',dispmax
+     write(IMAIN,*) 'Max norm = ',dispmax
   endif
 
 !
@@ -2615,7 +2618,7 @@
   if (myrank == 0) then
 ! return if the maximum vector equals zero (no source)
   if (dispmax == 0.d0) then
-    write(IOUT,*) 'null vector: returning!'
+    write(IMAIN,*) 'null vector: returning!'
     return
   endif
 
@@ -2633,7 +2636,7 @@
 
   if (interpol) then
 
-  if (myrank == 0) write(IOUT,*) 'Interpolating the vector field...'
+  if (myrank == 0) write(IMAIN,*) 'Interpolating the vector field...'
 
 ! option to plot only lowerleft corner value to avoid very large files if dense meshes
   if (plot_lowerleft_corner_only) then
@@ -2648,9 +2651,9 @@
 
 ! interpolation on a uniform grid
 #ifdef USE_MPI
-  if (myrank == 0 .and. mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec,' on processor core 0'
+  if (myrank == 0 .and. mod(ispec,1000) == 0) write(IMAIN,*) 'Interpolation uniform grid element ',ispec,' on processor core 0'
 #else
-  if (mod(ispec,1000) == 0) write(IOUT,*) 'Interpolation uniform grid element ',ispec
+  if (mod(ispec,1000) == 0) write(IMAIN,*) 'Interpolation uniform grid element ',ispec
 #endif
 
   do i = 1,pointsdisp_loop

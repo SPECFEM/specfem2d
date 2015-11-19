@@ -51,61 +51,15 @@ subroutine prepare_timerun()
 
   implicit none
 
-integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
+  integer :: i,j,ispec,k,iglob,irec,i_source,ispecabs,irecloc,ier
 
 #ifdef USE_MPI
   include "precision.h"
 #endif
 
-
-
+  ! reads sources, stations, and mesh from database
   call prepare_timerun_read()
 
-
-  if (GPU_MODE) then
-
-! initialization for GPU cards
-
-  ! local parameters
-
-
-  ! GPU_MODE now defined in Par_file
-  if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) "GPU_MODE Active."
-    call flush_IOUT()
-  endif
-
-  ! check for GPU runs
-  if (NGLLX /= 5 .or. NGLLZ /= 5 ) &
-    stop 'GPU mode can only be used if NGLLX == NGLLZ == 5'
-  if (CUSTOM_REAL /= 4 ) &
-    stop 'GPU mode runs only with CUSTOM_REAL == 4'
-
-
-  ! initializes GPU and outputs info to files for all processes
-  call initialize_cuda_device(myrank,ncuda_devices)
-
-  ! synchronizes all processes
-  call synchronize_all()
-
-  ! collects min/max of local devices found for statistics
-#ifdef USE_MPI
-  call min_all_i(ncuda_devices,ncuda_devices_min)
-  call max_all_i(ncuda_devices,ncuda_devices_max)
-#else
-  ncuda_devices_min = ncuda_devices
-  ncuda_devices_max = ncuda_devices
-#endif
-
-  if (myrank == 0) then
-    write(IOUT,*) "GPU number of devices per node: min =",ncuda_devices_min
-    write(IOUT,*) "                                max =",ncuda_devices_max
-    write(IOUT,*)
-    call flush_IOUT()
-  endif
-
-  endif
 
 !
 !---- compute shape functions and their derivatives for SEM grid
@@ -146,18 +100,18 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
   nglob_total = nglob
 #endif
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'Total number of elements: ',nspec_total
-    write(IOUT,*) 'decomposed as follows:'
-    write(IOUT,*)
-    write(IOUT,*) 'Total number of elastic/visco/poro elements: ',nspec_total - count_nspec_acoustic_total
-    write(IOUT,*) 'Total number of acoustic elements: ',count_nspec_acoustic_total
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of elements: ',nspec_total
+    write(IMAIN,*) 'decomposed as follows:'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of elastic/visco/poro elements: ',nspec_total - count_nspec_acoustic_total
+    write(IMAIN,*) 'Total number of acoustic elements: ',count_nspec_acoustic_total
+    write(IMAIN,*)
 #ifdef USE_MPI
-    write(IOUT,*) 'Approximate total number of grid points in the mesh'
-    write(IOUT,*) '(with a few duplicates coming from MPI buffers): ',nglob_total
+    write(IMAIN,*) 'Approximate total number of grid points in the mesh'
+    write(IMAIN,*) '(with a few duplicates coming from MPI buffers): ',nglob_total
 #else
-    write(IOUT,*) 'Exact total number of grid points in the mesh: ',nglob_total
+    write(IMAIN,*) 'Exact total number of grid points in the mesh: ',nglob_total
 #endif
 
 ! percentage of elements with 2 degrees of freedom per point
@@ -168,19 +122,20 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
     nb_elastic_DOFs  = nint(nglob_total*ratio_2DOFs*2)
 
     if (p_sv) then
-      write(IOUT,*)
-      write(IOUT,*) 'Approximate number of acoustic degrees of freedom in the mesh: ',nb_acoustic_DOFs
-      write(IOUT,*) 'Approximate number of elastic degrees of freedom in the mesh: ',nb_elastic_DOFs
-      write(IOUT,*) '  (there are 2 degrees of freedom per point for elastic elements)'
-      write(IOUT,*)
-      write(IOUT,*) 'Approximate total number of degrees of freedom in the mesh'
-      write(IOUT,*) '(sum of the two values above): ',nb_acoustic_DOFs + nb_elastic_DOFs
-      write(IOUT,*)
-      write(IOUT,*) ' (for simplicity viscoelastic or poroelastic elements, if any,'
-      write(IOUT,*) '  are counted as elastic in the above three estimates;'
-      write(IOUT,*) '  in reality they have more degrees of freedom)'
-      write(IOUT,*)
+      write(IMAIN,*)
+      write(IMAIN,*) 'Approximate number of acoustic degrees of freedom in the mesh: ',nb_acoustic_DOFs
+      write(IMAIN,*) 'Approximate number of elastic degrees of freedom in the mesh: ',nb_elastic_DOFs
+      write(IMAIN,*) '  (there are 2 degrees of freedom per point for elastic elements)'
+      write(IMAIN,*)
+      write(IMAIN,*) 'Approximate total number of degrees of freedom in the mesh'
+      write(IMAIN,*) '(sum of the two values above): ',nb_acoustic_DOFs + nb_elastic_DOFs
+      write(IMAIN,*)
+      write(IMAIN,*) ' (for simplicity viscoelastic or poroelastic elements, if any,'
+      write(IMAIN,*) '  are counted as elastic in the above three estimates;'
+      write(IMAIN,*) '  in reality they have more degrees of freedom)'
+      write(IMAIN,*)
     endif
+    call flush_IMAIN()
   endif
 
     ! allocate temporary arrays
@@ -222,9 +177,10 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
   close(IIN)
 
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'Total number of receivers = ',nrec
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of receivers = ',nrec
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   if (nrec < 1) call exit_MPI('need at least one receiver')
@@ -401,10 +357,10 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 #endif
 
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'Xmin,Xmax of the whole mesh = ',xmin,xmax
-    write(IOUT,*) 'Zmin,Zmax of the whole mesh = ',zmin,zmax
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'Xmin,Xmax of the whole mesh = ',xmin,xmax
+    write(IMAIN,*) 'Zmin,Zmax of the whole mesh = ',zmin,zmax
+    write(IMAIN,*)
 
 ! check that no source is located outside the mesh
     do i = 1,NSOURCES
@@ -429,18 +385,18 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
     if (ADD_PERIODIC_CONDITIONS) then
 
       if (myrank == 0) then
-        write(IOUT,*)
-        write(IOUT,*) 'implementing periodic boundary conditions'
-        write(IOUT,*) 'in the horizontal direction with a periodicity distance of ',PERIODIC_HORIZ_DIST,' m'
+        write(IMAIN,*)
+        write(IMAIN,*) 'implementing periodic boundary conditions'
+        write(IMAIN,*) 'in the horizontal direction with a periodicity distance of ',PERIODIC_HORIZ_DIST,' m'
         if (PERIODIC_HORIZ_DIST <= 0.d0) stop 'PERIODIC_HORIZ_DIST should be greater than zero when using ADD_PERIODIC_CONDITIONS'
-        write(IOUT,*)
-        write(IOUT,*) '*****************************************************************'
-        write(IOUT,*) '*****************************************************************'
-        write(IOUT,*) '**** BEWARE: because of periodic conditions, values computed ****'
-        write(IOUT,*) '****         by checkgrid() below will not be reliable       ****'
-        write(IOUT,*) '*****************************************************************'
-        write(IOUT,*) '*****************************************************************'
-        write(IOUT,*)
+        write(IMAIN,*)
+        write(IMAIN,*) '*****************************************************************'
+        write(IMAIN,*) '*****************************************************************'
+        write(IMAIN,*) '**** BEWARE: because of periodic conditions, values computed ****'
+        write(IMAIN,*) '****         by checkgrid() below will not be reliable       ****'
+        write(IMAIN,*) '*****************************************************************'
+        write(IMAIN,*) '*****************************************************************'
+        write(IMAIN,*)
       endif
 
 ! set up a local geometric tolerance
@@ -485,7 +441,7 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 ! reduced to O(NGLOB log(NGLOB)) by using a quicksort algorithm on the coordinates of the points to detect the multiples
 ! (as implemented in routine createnum_fast() elsewhere in the code). This could be done one day if needed instead
 ! of the very simple double loop below.
-      if (myrank == 0) write(IOUT,*) &
+      if (myrank == 0) write(IMAIN,*) &
         'start detecting points for periodic boundary conditions (the current algorithm can be slow and could be improved)...'
       counter = 0
       do iglob = 1,NGLOB-1
@@ -511,9 +467,9 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
         enddo
       enddo
 
-      if (myrank == 0) write(IOUT,*) 'done detecting points for periodic boundary conditions.'
+      if (myrank == 0) write(IMAIN,*) 'done detecting points for periodic boundary conditions.'
 
-      if (counter > 0) write(IOUT,*) 'implemented periodic conditions on ',counter,' grid points on proc ',myrank
+      if (counter > 0) write(IMAIN,*) 'implemented periodic conditions on ',counter,' grid points on proc ',myrank
 
     endif ! of if (ADD_PERIODIC_CONDITIONS)
 
@@ -521,9 +477,9 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 !--- save the grid of points in a file
 !
   if (output_grid_ASCII .and. myrank == 0) then
-     write(IOUT,*)
-     write(IOUT,*) 'Saving the grid in an ASCII text file...'
-     write(IOUT,*)
+     write(IMAIN,*)
+     write(IMAIN,*) 'Saving the grid in an ASCII text file...'
+     write(IMAIN,*)
      open(unit=55,file='OUTPUT_FILES/ASCII_dump_of_grid_points.txt',status='unknown')
      write(55,*) nglob
      do n = 1,nglob
@@ -539,7 +495,7 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
     call plotgll()
 
   if (assign_external_model) then
-    if (myrank == 0) write(IOUT,*) 'Assigning an external velocity and density model...'
+    if (myrank == 0) write(IMAIN,*) 'Assigning an external velocity and density model...'
     call read_external_model()
   endif
 
@@ -1025,8 +981,8 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 
 ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
   if (myrank == 0) then
-    write(IOUT,*) "preparing array allocations..."
-    call flush_IOUT()
+    write(IMAIN,*) "preparing array allocations..."
+    call flush_IMAIN()
   endif
 
     if (any_elastic) then
@@ -1078,10 +1034,12 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
       allocate(beta_kl(NGLLX,NGLLZ,nspec))
       allocate(bulk_c_kl(NGLLX,NGLLZ,nspec))
       allocate(bulk_beta_kl(NGLLX,NGLLZ,nspec))
-      allocate(rhorho_el_hessian_final2(NGLLX,NGLLZ,nspec))
-      allocate(rhorho_el_hessian_temp2(nglob))
-      allocate(rhorho_el_hessian_final1(NGLLX,NGLLZ,nspec))
-      allocate(rhorho_el_hessian_temp1(nglob))
+      if (APPROXIMATE_HESS_KL) then
+        allocate(rhorho_el_hessian_final2(NGLLX,NGLLZ,nspec))
+        allocate(rhorho_el_hessian_temp2(nglob))
+        allocate(rhorho_el_hessian_final1(NGLLX,NGLLZ,nspec))
+        allocate(rhorho_el_hessian_temp1(nglob))
+      endif
     else
       allocate(b_displ_elastic(1,1))
       allocate(b_displ_elastic_old(1,1))
@@ -1099,10 +1057,12 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
       allocate(rhop_kl(1,1,1))
       allocate(alpha_kl(1,1,1))
       allocate(beta_kl(1,1,1))
-      allocate(rhorho_el_hessian_final2(1,1,1))
-      allocate(rhorho_el_hessian_temp2(1))
-      allocate(rhorho_el_hessian_final1(1,1,1))
-      allocate(rhorho_el_hessian_temp1(1))
+      if (APPROXIMATE_HESS_KL) then
+        allocate(rhorho_el_hessian_final2(1,1,1))
+        allocate(rhorho_el_hessian_temp2(1))
+        allocate(rhorho_el_hessian_final1(1,1,1))
+        allocate(rhorho_el_hessian_temp1(1))
+      endif
     endif
 
     if (any_poroelastic) then
@@ -1284,8 +1244,10 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
       allocate(kappal_ac_global(nglob))
       allocate(rhop_ac_kl(NGLLX,NGLLZ,nspec))
       allocate(alpha_ac_kl(NGLLX,NGLLZ,nspec))
-      allocate(rhorho_ac_hessian_final2(NGLLX,NGLLZ,nspec))
-      allocate(rhorho_ac_hessian_final1(NGLLX,NGLLZ,nspec))
+      if (APPROXIMATE_HESS_KL) then
+        allocate(rhorho_ac_hessian_final2(NGLLX,NGLLZ,nspec))
+        allocate(rhorho_ac_hessian_final1(NGLLX,NGLLZ,nspec))
+      endif
     else
     ! allocate unused arrays with fictitious size
       allocate(b_potential_acoustic(1))
@@ -1301,8 +1263,10 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
       allocate(kappal_ac_global(1))
       allocate(rhop_ac_kl(1,1,1))
       allocate(alpha_ac_kl(1,1,1))
-      allocate(rhorho_ac_hessian_final2(1,1,1))
-      allocate(rhorho_ac_hessian_final1(1,1,1))
+      if (APPROXIMATE_HESS_KL) then
+        allocate(rhorho_ac_hessian_final2(1,1,1))
+        allocate(rhorho_ac_hessian_final1(1,1,1))
+      endif
     endif
 
     ! potential, its first and second derivative, and inverse of the mass matrix for gravitoacoustic elements
@@ -1324,8 +1288,8 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
 
 
   if (myrank == 0) then
-    write(IOUT,*) "preparing PML..."
-    call flush_IOUT()
+    write(IMAIN,*) "preparing PML..."
+    call flush_IMAIN()
   endif
   call prepare_timerun_pml()
 
@@ -1334,22 +1298,22 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
   if (AXISYM) call check_compatibility_axisym()
 
   if (myrank == 0) then
-    write(IOUT,*) "preparing mass matrices..."
-    call flush_IOUT()
+    write(IMAIN,*) "preparing mass matrices..."
+    call flush_IMAIN()
   endif
   call prepare_timerun_mass_matrix()
 
   if (myrank == 0) then
-    write(IOUT,*) "preparing image coloring..."
-    call flush_IOUT()
+    write(IMAIN,*) "preparing image coloring..."
+    call flush_IMAIN()
   endif
   call prepare_timerun_image_coloring()
 !
 !---- initialize seismograms
 !
   if (myrank == 0) then
-    write(IOUT,*) "preparing array initializations..."
-    call flush_IOUT()
+    write(IMAIN,*) "preparing array initializations..."
+    call flush_IMAIN()
   endif
 
   sisux = ZERO ! double precision zero
@@ -1489,8 +1453,8 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
   endif ! if (anyabs .and. SIMULATION_TYPE == 3)
 
   if (myrank == 0) then
-    write(IOUT,*) "preparing kernels..."
-    call flush_IOUT()
+    write(IMAIN,*) "preparing kernels..."
+    call flush_IMAIN()
   endif
   call prepare_timerun_kernel()
 
@@ -1542,14 +1506,14 @@ integer i,j,ispec,k,iglob,irec,i_source,ispecabs, irecloc
       deallocate(bot_bound)
 
       if (myrank == 0) then
-        write(IOUT,*)  '***********'
-        write(IOUT,*)  'done calculating the initial wave field'
-        write(IOUT,*)  '***********'
+        write(IMAIN,*)  '***********'
+        write(IMAIN,*)  'done calculating the initial wave field'
+        write(IMAIN,*)  '***********'
       endif
 
     endif ! beyond critical angle
 
-    write(IOUT,*) 'Max norm of initial elastic displacement = ', &
+    write(IMAIN,*) 'Max norm of initial elastic displacement = ', &
       maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(3,:)**2))
 
   endif ! initialfield
@@ -2209,8 +2173,8 @@ if (coupled_elastic_poro) then
   if (output_energy .and. myrank == 0) open(unit=IOUT_ENERGY,file='energy.dat',status='unknown',action='write')
 
   if (myrank == 0) then
-    write(IOUT,*) "preparing noise..."
-    call flush_IOUT()
+    write(IMAIN,*) "preparing noise..."
+    call flush_IMAIN()
   endif
   call prepare_timerun_noise()
 
@@ -2218,8 +2182,8 @@ if (coupled_elastic_poro) then
   ! prepares image background
   if (output_color_image) then
     if (myrank == 0) then
-      write(IOUT,*) "preparing color image vp..."
-      call flush_IOUT()
+      write(IMAIN,*) "preparing color image vp..."
+      call flush_IMAIN()
     endif
     call prepare_color_image_vp()
   endif
@@ -2248,8 +2212,8 @@ if (coupled_elastic_poro) then
   seismo_current = 0
 
   if (myrank == 0) then
-    write(IOUT,*) "preparing attenuation..."
-    call flush_IOUT()
+    write(IMAIN,*) "preparing attenuation..."
+    call flush_IMAIN()
   endif
   call prepare_timerun_attenuation()
 
@@ -2305,8 +2269,8 @@ endif ! Internal/External model
     call init_host_to_dev_variable()
 
     if (myrank == 0) then
-      write(IOUT,*) "preparing GPU..."
-      call flush_IOUT()
+      write(IMAIN,*) "preparing GPU..."
+      call flush_IMAIN()
     endif
     call prepare_timerun_GPU()
 
@@ -2316,10 +2280,10 @@ endif ! Internal/External model
   call synchronize_all()
 
   if (myrank == 0) then
-    write(IOUT,*) ""
-    write(IOUT,*) "done, preparation successful"
-    write(IOUT,*) ""
-    call flush_IOUT()
+    write(IMAIN,*) ""
+    write(IMAIN,*) "done, preparation successful"
+    write(IMAIN,*) ""
+    call flush_IMAIN()
   endif
 
 end subroutine prepare_timerun

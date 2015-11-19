@@ -59,7 +59,8 @@ subroutine save_adjoint_kernels()
   double precision :: xx, zz
 
   if (myrank == 0) then
-    write(IOUT,*) 'Writing Kernels file'
+    write(IMAIN,*) 'Writing Kernels file'
+    call flush_IMAIN()
   endif
 
   if (any_acoustic) then
@@ -72,9 +73,6 @@ subroutine save_adjoint_kernels()
             zz = coord(2,iglob)
             write(95,'(4e15.5e4)')xx,zz,rho_ac_kl(i,j,ispec),kappa_ac_kl(i,j,ispec)
             write(96,'(4e15.5e4)')xx,zz,rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
-            !write(96,'(4e15.5e4)')rhorho_ac_hessian_final1(i,j,ispec),
-            !rhorho_ac_hessian_final2(i,j,ispec),&
-            !                rhop_ac_kl(i,j,ispec),alpha_ac_kl(i,j,ispec)
           enddo
         enddo
       enddo
@@ -91,7 +89,7 @@ subroutine save_adjoint_kernels()
        close(202)
        close(203)
 
-      if (SAVE_DIAGONAL_HESSIAN) then
+      if (APPROXIMATE_HESS_KL) then
         write(212)rhorho_ac_hessian_final1
         write(213)rhorho_ac_hessian_final2
         close(212)
@@ -111,9 +109,6 @@ subroutine save_adjoint_kernels()
             zz = coord(2,iglob)
             write(97,'(5e15.5e4)')xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
             write(98,'(5e15.5e4)')xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
-            !write(98,'(5e15.5e4)')rhorho_el_hessian_final1(i,j,ispec),
-            !rhorho_el_hessian_final2(i,j,ispec),&
-            !rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
           enddo
         enddo
       enddo
@@ -138,7 +133,7 @@ subroutine save_adjoint_kernels()
       close(210)
       close(211)
 
-      if (SAVE_DIAGONAL_HESSIAN) then
+      if (APPROXIMATE_HESS_KL) then
         write(214) rhorho_el_hessian_final1
         write(215) rhorho_el_hessian_final2
         close(214)

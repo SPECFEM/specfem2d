@@ -73,9 +73,11 @@
 
   ! user output
   if (is_proc_source(1) == 1) then
-    write(IOUT,*)
-    write(IOUT,*) 'Saving the source time function in a text file...'
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'Saving the source time function in a text file...'
+    write(IMAIN,*)
+    call flush_IMAIN()
+
     open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
   endif
 

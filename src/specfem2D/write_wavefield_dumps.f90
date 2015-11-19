@@ -58,8 +58,9 @@
   integer :: i,j,ispec,iglob,icounter,nb_of_values_to_save
 
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'Dumping the wave field to a file for time step ',it
+    write(IMAIN,*)
+    write(IMAIN,*) 'Dumping the wave field to a file for time step ',it
+    call flush_IMAIN()
   endif
 
   if (this_is_the_first_time_we_dump) then
@@ -109,21 +110,21 @@
   endif
 
   if (imagetype_wavefield_dumps == 1) then
-    if (myrank == 0) write(IOUT,*) 'dumping the displacement vector...'
+    if (myrank == 0) write(IMAIN,*) 'dumping the displacement vector...'
       call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
                                        potential_gravito,displ_elastic,displs_poroelastic)
   else if (imagetype_wavefield_dumps == 2) then
-    if (myrank == 0) write(IOUT,*) 'dumping the velocity vector...'
+    if (myrank == 0) write(IMAIN,*) 'dumping the velocity vector...'
     call compute_vector_whole_medium(potential_dot_acoustic,potential_gravitoacoustic, &
                                      potential_gravito,veloc_elastic,velocs_poroelastic)
 
   else if (imagetype_wavefield_dumps == 3) then
-    if (myrank == 0) write(IOUT,*) 'dumping the acceleration vector...'
+    if (myrank == 0) write(IMAIN,*) 'dumping the acceleration vector...'
     call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_gravitoacoustic, &
                                      potential_gravito,accel_elastic,accels_poroelastic)
 
   else if (imagetype_wavefield_dumps == 4 .and. p_sv) then
-    if (myrank == 0) write(IOUT,*) 'dumping the pressure field...'
+    if (myrank == 0) write(IMAIN,*) 'dumping the pressure field...'
     call compute_pressure_whole_medium()
 
   else if (imagetype_wavefield_dumps == 4 .and. .not. p_sv) then
@@ -181,7 +182,10 @@
   enddo
 
   close(27)
-  if (myrank == 0) write(IOUT,*) 'Wave field dumped'
+  if (myrank == 0) then
+    write(IMAIN,*) 'Wave field dumped'
+    call flush_IMAIN()
+  endif
 
   end subroutine write_wavefield_dumps
 

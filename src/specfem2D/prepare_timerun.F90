@@ -56,11 +56,6 @@ integer ispec
 ! inner/outer elements in the case of an MPI simulation
   integer :: ispec_inner,ispec_outer
 
-#ifdef USE_MPI
-  include "precision.h"
-#endif
-
-
   !
   !---- build the global mass matrix
   !
@@ -231,11 +226,11 @@ subroutine prepare_timerun_image_coloring()
 
   implicit none
 
-  integer i,j
+  integer :: i,j
+  integer :: ier
 
 #ifdef USE_MPI
-  include "precision.h"
-  integer k
+  integer :: k
 #endif
 
 
@@ -314,8 +309,10 @@ subroutine prepare_timerun_image_coloring()
     endif
 #endif
 
-    if (myrank == 0) write(IOUT,*) 'done locating all the pixels of color images'
-
+    if (myrank == 0) then
+      write(IMAIN,*) 'done locating all the pixels of color images'
+      call flush_IMAIN()
+    endif
   endif ! color_image
 
 
@@ -341,10 +338,6 @@ subroutine prepare_timerun_kernel()
   use specfem_par
 
   implicit none
-
-#ifdef USE_MPI
-  include "precision.h"
-#endif
 
 !
 !----- Allocate sensitivity kernel arrays
@@ -396,7 +389,7 @@ subroutine prepare_timerun_kernel()
           open(unit = 211,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
 
-          if (SAVE_DIAGONAL_HESSIAN) then
+          if (APPROXIMATE_HESS_KL) then
             write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_kernel.bin'
             open(unit =214,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
             if (ios /= 0) stop 'Error writing kernel file to disk'
@@ -418,10 +411,12 @@ subroutine prepare_timerun_kernel()
       bulk_c_kl(:,:,:) = 0._CUSTOM_REAL
       bulk_beta_kl(:,:,:) = 0._CUSTOM_REAL
 
-      rhorho_el_hessian_final2(:,:,:) = 0._CUSTOM_REAL
-      rhorho_el_hessian_temp2(:) = 0._CUSTOM_REAL
-      rhorho_el_hessian_final1(:,:,:) = 0._CUSTOM_REAL
-      rhorho_el_hessian_temp1(:) = 0._CUSTOM_REAL
+      if (APPROXIMATE_HESS_KL) then
+        rhorho_el_hessian_final2(:,:,:) = 0._CUSTOM_REAL
+        rhorho_el_hessian_temp2(:) = 0._CUSTOM_REAL
+        rhorho_el_hessian_final1(:,:,:) = 0._CUSTOM_REAL
+        rhorho_el_hessian_temp1(:) = 0._CUSTOM_REAL
+      endif
     endif
 
     if (any_poroelastic) then
@@ -513,7 +508,7 @@ subroutine prepare_timerun_kernel()
         open(unit = 203, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
         if (ios /= 0) stop 'Error writing kernel file to disk'
 
-        if (SAVE_DIAGONAL_HESSIAN) then
+        if (APPROXIMATE_HESS_KL) then
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_acoustic_kernel.bin'
           open(unit=212,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
           if (ios /= 0) stop 'Error writing kernel file to disk'
@@ -530,8 +525,11 @@ subroutine prepare_timerun_kernel()
 
       rhop_ac_kl(:,:,:) = 0._CUSTOM_REAL
       alpha_ac_kl(:,:,:) = 0._CUSTOM_REAL
-      rhorho_ac_hessian_final2(:,:,:) = 0._CUSTOM_REAL
-      rhorho_ac_hessian_final1(:,:,:) = 0._CUSTOM_REAL
+
+      if (APPROXIMATE_HESS_KL) then
+        rhorho_ac_hessian_final2(:,:,:) = 0._CUSTOM_REAL
+        rhorho_ac_hessian_final1(:,:,:) = 0._CUSTOM_REAL
+      endif
     endif
 
   endif ! if (SIMULATION_TYPE == 3)
@@ -558,11 +556,7 @@ subroutine prepare_timerun_pml()
 
   implicit none
 
-  integer i
-
-#ifdef USE_MPI
-  include "precision.h"
-#endif
+  integer :: i,ier
 
 if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented on GPU mode. Please use Stacey instead'
 
@@ -959,22 +953,7 @@ subroutine prepare_timerun_read()
 
   implicit none
 
-  integer i,ispec,ispec2,j
-
-#ifdef USE_MPI
-  include "precision.h"
-#endif
-
-
-
-
-  ! starts reading in Database file
-  call read_databases_init()
-
-  if (nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
-  if (SIMULATION_TYPE == 3 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
-                                  stop 'RK and LDDRK time scheme not supported for adjoint inversion'
-  if (nproc /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
+  integer :: i,ispec,ispec2,j,ier
 
 ! add a small crack (discontinuity) in the medium manually
   npgeo_ori = npgeo
@@ -1047,38 +1026,43 @@ subroutine prepare_timerun_read()
     allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
     allocate(shape2D_display(ngnod,pointsdisp,pointsdisp))
     allocate(dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp))
+
     if (AXISYM) then
       allocate(flagrange_GLJ(NGLJ,pointsdisp))
     else
       allocate(flagrange_GLJ(1,1))
     endif
+
+    ! mesh
     allocate(xix(NGLLX,NGLLZ,nspec))
     allocate(xiz(NGLLX,NGLLZ,nspec))
     allocate(gammax(NGLLX,NGLLZ,nspec))
     allocate(gammaz(NGLLX,NGLLZ,nspec))
     allocate(jacobian(NGLLX,NGLLZ,nspec))
+
     allocate(flagrange(NGLLX,pointsdisp))
+
     allocate(xinterp(pointsdisp,pointsdisp))
     allocate(zinterp(pointsdisp,pointsdisp))
     allocate(Uxinterp(pointsdisp,pointsdisp))
     allocate(Uzinterp(pointsdisp,pointsdisp))
+
+    ! elements
+    allocate(kmato(nspec))
+    allocate(knods(ngnod,nspec))
+
+    ! material
     allocate(density(2,numat))
     allocate(anisotropy(9,numat))
     allocate(porosity(numat))
     allocate(tortuosity(numat))
     allocate(permeability(3,numat))
     allocate(poroelastcoef(4,3,numat))
+
+    ! attenuation
     allocate(already_shifted_velocity(numat))
     allocate(QKappa_attenuation(numat))
     allocate(Qmu_attenuation(numat))
-    allocate(kmato(nspec))
-    allocate(knods(ngnod,nspec))
-    allocate(ibool(NGLLX,NGLLZ,nspec))
-    allocate(elastic(nspec))
-    allocate(acoustic(nspec))
-    allocate(gravitoacoustic(nspec))
-    allocate(poroelastic(nspec))
-    allocate(anisotropic(nspec))
     allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS))
     allocate(inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS))
     allocate(phi_nu1(NGLLX,NGLLZ,nspec,N_SLS))
@@ -1089,6 +1073,15 @@ subroutine prepare_timerun_read()
     allocate(inv_tau_sigma_nu2_sent(N_SLS))
     allocate(phi_nu1_sent(N_SLS))
     allocate(phi_nu2_sent(N_SLS))
+
+    ! domains
+    allocate(ibool(NGLLX,NGLLZ,nspec))
+    allocate(elastic(nspec))
+    allocate(acoustic(nspec))
+    allocate(gravitoacoustic(nspec))
+    allocate(poroelastic(nspec))
+    allocate(anisotropic(nspec))
+
 
     already_shifted_velocity(:) = .false.
 
@@ -1559,8 +1552,9 @@ subroutine prepare_timerun_read()
   if (nelem_acoustic_surface > 0) then
     call construct_acoustic_surface ()
     if (myrank == 0) then
-      write(IOUT,*)
-      write(IOUT,*) 'Number of free surface elements: ',nelem_acoustic_surface
+      write(IMAIN,*)
+      write(IMAIN,*) 'Number of free surface elements: ',nelem_acoustic_surface
+      call flush_IMAIN()
     endif
   endif
 
@@ -1629,6 +1623,7 @@ subroutine prepare_timerun_read()
   allocate(is_on_the_axis(nspec),stat=ier)
   if (ier /= 0) stop 'error: not enough memory to allocate array is_on_the_axis'
   is_on_the_axis(:) = .false.
+
   if (nelem_on_the_axis == 0) then
     allocate(ispec_of_axial_elements(1))
   else
@@ -1642,8 +1637,9 @@ subroutine prepare_timerun_read()
   nelem_on_the_axis_total = nelem_on_the_axis
 #endif
   if (myrank == 0 .and. AXISYM) then
-    write(IOUT,*)
-    write(IOUT,*) 'Total number of elements on the axis : ',nelem_on_the_axis_total
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of elements on the axis : ',nelem_on_the_axis_total
+    call flush_IMAIN()
   endif
 
 !
@@ -1672,12 +1668,7 @@ subroutine prepare_timerun_noise()
 
   implicit none
 
-  integer i,j,iglob,ispec
-
-#ifdef USE_MPI
-  include "precision.h"
-#endif
-
+  integer :: i,j,iglob,ispec
 
 !<NOISE_TOMOGRAPHY
 
@@ -1793,17 +1784,13 @@ subroutine prepare_timerun_attenuation()
   use specfem_par
 
   implicit none
+  integer :: ier
 
-#ifdef USE_MPI
-  include "precision.h"
-#endif
-
-
-! Precompute Runge Kutta coefficients if viscous attenuation
+  ! Precompute Runge Kutta coefficients if viscous attenuation
   if (ATTENUATION_PORO_FLUID_PART) then
-! viscous attenuation is implemented following the memory variable formulation of
-! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
-! anelastic and porous media, Elsevier, p. 304-305, 2007
+    ! viscous attenuation is implemented following the memory variable formulation of
+    ! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
+    ! anelastic and porous media, Elsevier, p. 304-305, 2007
     theta_e = (sqrt(Q0**2+1.d0) +1.d0)/(2.d0*pi*freq0*Q0)
     theta_s = (sqrt(Q0**2+1.d0) -1.d0)/(2.d0*pi*freq0*Q0)
 
@@ -1813,7 +1800,7 @@ subroutine prepare_timerun_attenuation()
     betaval = deltat / 2.d0 + deltat**2*thetainv / 3.d0 + deltat**3*thetainv**2 / 8.d0 + deltat**4*thetainv**3 / 24.d0
     gammaval = deltat / 2.d0 + deltat**2*thetainv / 6.d0 + deltat**3*thetainv**2 / 24.d0
 
-! initialize memory variables for attenuation
+    ! initialize memory variables for attenuation
     viscox(:,:,:) = 0.d0
     viscoz(:,:,:) = 0.d0
     rx_viscous(:,:,:) = 0.d0
@@ -1829,25 +1816,24 @@ subroutine prepare_timerun_attenuation()
      rx_viscous_force_RK = 0.d0
      rz_viscous_force_RK = 0.d0
     endif
-
   endif
 
-! allocate arrays for postscript output
+  ! allocate arrays for postscript output
 #ifdef USE_MPI
   if (modelvect) then
-  d1_coorg_recv_ps_velocity_model=2
-  call mpi_allreduce(nspec,d2_coorg_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-  d2_coorg_recv_ps_velocity_model=d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+    d1_coorg_recv_ps_velocity_model=2
+    call mpi_allreduce(nspec,d2_coorg_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    d2_coorg_recv_ps_velocity_model=d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
        ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
-  d1_RGB_recv_ps_velocity_model=1
-  call mpi_allreduce(nspec,d2_RGB_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-  d2_RGB_recv_ps_velocity_model=d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+    d1_RGB_recv_ps_velocity_model=1
+    call mpi_allreduce(nspec,d2_RGB_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    d2_RGB_recv_ps_velocity_model=d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
        ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
   else
-  d1_coorg_recv_ps_velocity_model=1
-  d2_coorg_recv_ps_velocity_model=1
-  d1_RGB_recv_ps_velocity_model=1
-  d2_RGB_recv_ps_velocity_model=1
+    d1_coorg_recv_ps_velocity_model=1
+    d2_coorg_recv_ps_velocity_model=1
+    d1_RGB_recv_ps_velocity_model=1
+    d2_RGB_recv_ps_velocity_model=1
   endif
 
   d1_coorg_send_ps_element_mesh=2
@@ -1908,7 +1894,6 @@ subroutine prepare_timerun_attenuation()
   call mpi_allreduce(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
   call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
 
-
 #else
   d1_coorg_recv_ps_velocity_model=1
   d2_coorg_recv_ps_velocity_model=1
@@ -1962,7 +1947,8 @@ subroutine prepare_timerun_attenuation()
   allocate(coorg_recv_ps_free_surface(d1_coorg_recv_ps_free_surface,d2_coorg_recv_ps_free_surface))
 
   allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
-  allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field))
+  allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field),stat=ier)
+  if (ier /= 0) stop 'Error allocating attenuation arrays'
 
 ! to dump the wave field
   this_is_the_first_time_we_dump = .true.
