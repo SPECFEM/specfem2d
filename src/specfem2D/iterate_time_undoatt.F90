@@ -93,26 +93,26 @@ subroutine iterate_time_undoatt()
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
-  if (GPU_MODE ) call exit_mpi('for undo_attenuation, GPU_MODE is not supported')
-  if (time_stepping_scheme /= 1 ) call exit_mpi('for undo_attenuation, only Newmark scheme has implemented ')
-  if (any_gravitoacoustic ) call exit_mpi('undo_attenuation has not implemented for gravitoacoustic yet')
-  if (any_poroelastic ) call exit_mpi('undo_attenuation has not implemented for poroelastic simulation yet')
-  if (NOISE_TOMOGRAPHY /= 0 ) call exit_mpi('for undo_attenuation, NOISE_TOMOGRAPHY is not supported')
-  if (AXISYM ) call exit_mpi('Just axisymmetric FORWARD simulations are possible so far')
+  if (GPU_MODE ) call exit_MPI('for undo_attenuation, GPU_MODE is not supported')
+  if (time_stepping_scheme /= 1 ) call exit_MPI('for undo_attenuation, only Newmark scheme has implemented ')
+  if (any_gravitoacoustic ) call exit_MPI('undo_attenuation has not implemented for gravitoacoustic yet')
+  if (any_poroelastic ) call exit_MPI('undo_attenuation has not implemented for poroelastic simulation yet')
+  if (NOISE_TOMOGRAPHY /= 0 ) call exit_MPI('for undo_attenuation, NOISE_TOMOGRAPHY is not supported')
+  if (AXISYM ) call exit_MPI('Just axisymmetric FORWARD simulations are possible so far')
 
   if (SIMULATION_TYPE == 3) then
     if (any_acoustic) then
       allocate(b_potential_acoustic_buffer(nglob,NT_DUMP_ATTENUATION),stat=ier)
-      if (ier /= 0 ) call exit_mpi('error allocating b_potential_acoustic')
+      if (ier /= 0 ) call exit_MPI('error allocating b_potential_acoustic')
       allocate(b_potential_dot_dot_acoustic_buffer(nglob,NT_DUMP_ATTENUATION),stat=ier)
-      if (ier /= 0 ) call exit_mpi('error allocating b_potential_dot_dot_acoustic')
+      if (ier /= 0 ) call exit_MPI('error allocating b_potential_dot_dot_acoustic')
     endif
 
     if (any_elastic) then
       allocate(b_displ_elastic_buffer(3,nglob,NT_DUMP_ATTENUATION),stat=ier)
-      if (ier /= 0 ) call exit_mpi('error allocating b_displ_elastic')
+      if (ier /= 0 ) call exit_MPI('error allocating b_displ_elastic')
       allocate(b_accel_elastic_buffer(3,nglob,NT_DUMP_ATTENUATION),stat=ier)
-      if (ier /= 0 ) call exit_mpi('error allocating b_accel_elastic')
+      if (ier /= 0 ) call exit_MPI('error allocating b_accel_elastic')
 
       if (ATTENUATION_VISCOELASTIC_SOLID) then
         allocate(b_e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))

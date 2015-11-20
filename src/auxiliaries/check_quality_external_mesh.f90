@@ -744,19 +744,3 @@
 
   end subroutine create_mesh_quality_data_2D
 
-!========================================================================
-
-! dummy version needed to compile and link the call to "define_shape_functions" above
-
-subroutine exit_MPI(error_msg)
-
-  implicit none
-
-  character(len=*) error_msg
-
-  write(*,*) error_msg(1:len(error_msg))
-  write(*,*) 'Error detected'
-  stop 'error, program ended in exit_MPI'
-
-end subroutine exit_MPI
-

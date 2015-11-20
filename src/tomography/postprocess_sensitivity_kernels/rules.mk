@@ -102,7 +102,11 @@ xcombine_sem_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_sem: $(xcombine_sem_OBJECTS) $(xcombine_sem_SHARED_OBJECTS)
+	@echo ""
+	@echo "building xcombine_sem"
+	@echo ""
 	${FCLINK} -o $@ $+
+	@echo ""
 
 #######################################
 

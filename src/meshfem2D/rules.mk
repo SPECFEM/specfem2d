@@ -105,7 +105,11 @@ meshfem2D: xmeshfem2D
 xmeshfem2D: $E/xmeshfem2D
 
 $E/xmeshfem2D: $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS)
+	@echo ""
+	@echo "building xmeshfem2D"
+	@echo ""
 	$(FCLINK) -o ${E}/xmeshfem2D $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS) $(MPILIBS)
+	@echo ""
 
 
 #######################################

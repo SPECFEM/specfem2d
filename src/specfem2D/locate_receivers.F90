@@ -294,7 +294,7 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
       write(IMAIN,*) 'Station # ',irec,'    ',network_name(irec),station_name(irec)
 
       if (gather_final_distance(irec,which_proc_receiver(irec)+1) == HUGEVAL) &
-        call exit_MPI('error locating receiver')
+        call exit_MPI('Error locating receiver')
 
       write(IMAIN,*) '            original x: ',sngl(st_xval(irec))
       write(IMAIN,*) '            original z: ',sngl(st_zval(irec))
