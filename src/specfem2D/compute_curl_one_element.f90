@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -47,7 +46,7 @@
 
   use specfem_par, only: curl_element,displ_elastic, &
                          displs_poroelastic,elastic,poroelastic, &
-                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz
+                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,myrank
 
   implicit none
 
@@ -63,7 +62,7 @@
   real(kind=CUSTOM_REAL) :: duz_dxl,dux_dzl
   integer :: i,j,k
 
-  if(elastic(ispec)) then
+  if (elastic(ispec)) then
 
      do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -99,7 +98,7 @@
         enddo
      enddo
 
-  else if(poroelastic(ispec)) then
+  else if (poroelastic(ispec)) then
 
      do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -137,7 +136,7 @@
 
   else
 
-     call exit_MPI('no curl in acoustic')
+     call exit_MPI(myrank,'no curl in acoustic')
 
   endif ! end of test if acoustic or elastic element
 

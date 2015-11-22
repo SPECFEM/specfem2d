@@ -55,7 +55,7 @@ subroutine update_displacement_precondition_newmark_acoustic(deltat,deltatover2,
 #ifdef FORCE_VECTORIZATION
   integer :: i
 
-  if( PML_BOUNDARY_CONDITIONS ) then
+  if (PML_BOUNDARY_CONDITIONS) then
     do i = 1,nglob_acoustic
       potential_acoustic_old(i) = potential_acoustic(i) + deltatsquareover2/TWO*potential_dot_dot_acoustic(i)
     enddo
@@ -70,7 +70,7 @@ subroutine update_displacement_precondition_newmark_acoustic(deltat,deltatover2,
 
 #else
 
-  if( PML_BOUNDARY_CONDITIONS ) then
+  if (PML_BOUNDARY_CONDITIONS) then
     potential_acoustic_old = potential_acoustic + deltatsquareover2*potential_dot_dot_acoustic
   endif
 
@@ -101,7 +101,7 @@ subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,d
 #ifdef FORCE_VECTORIZATION
   integer :: i
 
-  if( PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOELASTIC_SOLID ) then
+  if (PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOELASTIC_SOLID) then
     do i = 1,3*nglob_elastic
       displ_elastic_old(i,1) = displ_elastic(i,1) + deltatsquareover2/TWO * accel_elastic(i,1)
     enddo
@@ -117,7 +117,7 @@ subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,d
   enddo
 #else
 
-  if( PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOELASTIC_SOLID  ) then
+  if (PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOELASTIC_SOLID ) then
     displ_elastic_old = displ_elastic + deltatsquareover2/TWO * accel_elastic
   endif
 
@@ -165,7 +165,7 @@ end subroutine update_displacement_precondition_newmark_poroelastic
   use specfem_par, only : Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
                           b_deltatsquareover2f,SIMULATION_TYPE,&
                           any_acoustic,any_elastic,any_poroelastic,&
-                          PML_BOUNDARY_CONDITIONS
+                          PML_BOUNDARY_CONDITIONS,myrank
 
   implicit none
   include 'constants.h'
@@ -173,13 +173,13 @@ end subroutine update_displacement_precondition_newmark_poroelastic
 
 ! update displacement using finite-difference time scheme (Newmark)
 
-  if(any_acoustic) then
+  if (any_acoustic) then
 
     ! wavefields on GPU
     ! check
-    if( SIMULATION_TYPE == 3 ) then
-      if( PML_BOUNDARY_CONDITIONS )then
-        call exit_MPI('acoustic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
+    if (SIMULATION_TYPE == 3) then
+      if (PML_BOUNDARY_CONDITIONS) then
+        call exit_MPI(myrank,'acoustic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
       endif
     endif
 
@@ -189,13 +189,13 @@ end subroutine update_displacement_precondition_newmark_poroelastic
 
   endif
 
-  if(any_elastic) then
+  if (any_elastic) then
     ! wavefields on GPU
     ! check
-    if( SIMULATION_TYPE == 3 ) then
-      if( PML_BOUNDARY_CONDITIONS )then
+    if (SIMULATION_TYPE == 3) then
+      if (PML_BOUNDARY_CONDITIONS) then
 
-          call exit_MPI('elastic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
+          call exit_MPI(myrank,'elastic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
 
       endif
     endif
@@ -206,8 +206,8 @@ end subroutine update_displacement_precondition_newmark_poroelastic
 
   endif
 
-  if(any_poroelastic) then
-    call exit_MPI('poroelastic time marching scheme on GPU not implemented yet...')
+  if (any_poroelastic) then
+    call exit_MPI(myrank,'poroelastic time marching scheme on GPU not implemented yet...')
   endif
 
   end subroutine update_displacement_precondition_newmark_GPU

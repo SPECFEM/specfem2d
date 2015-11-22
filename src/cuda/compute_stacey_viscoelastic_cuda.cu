@@ -40,7 +40,6 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -93,14 +92,14 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
 
   // don't compute points outside NGLLSQUARE==NGLL2==25
   // way 2: no further check needed since blocksize = 25
-  if( iface < num_abs_boundary_faces){
+  if (iface < num_abs_boundary_faces){
 
-  //if(igll < NGLL2 && iface < num_abs_boundary_faces) {
+  //if (igll < NGLL2 && iface < num_abs_boundary_faces) {
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = abs_boundary_ispec[iface]-1;
 
-    if(ispec_is_inner[ispec] == phase_is_inner && ispec_is_elastic[ispec] ) {
+    if (ispec_is_inner[ispec] == phase_is_inner && ispec_is_elastic[ispec]) {
 
       i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
       j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
@@ -130,7 +129,7 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
       atomicAdd(&accel[iglob*2],-tx*jacobianw);
       atomicAdd(&accel[iglob*2+1],-tz*jacobianw);
 
-      if(SAVE_FORWARD && SIMULATION_TYPE == 1) {
+      if (SAVE_FORWARD && SIMULATION_TYPE == 1) {
 
       if (cote_abs[iface] == 1) {num_local = ib_bottom[iface]-1;
                                 b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
@@ -176,14 +175,14 @@ __global__ void compute_stacey_elastic_sim3_kernel(int* abs_boundary_ispec,
 
   int i,j,iglob,ispec,num_local;
 
-  if( iface < num_abs_boundary_faces){
+  if (iface < num_abs_boundary_faces){
 
 
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = abs_boundary_ispec[iface]-1;
 
-    if(ispec_is_inner[ispec] == phase_is_inner && ispec_is_elastic[ispec] ) {
+    if (ispec_is_inner[ispec] == phase_is_inner && ispec_is_elastic[ispec]) {
 
       i = abs_boundary_ijk[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
       j = abs_boundary_ijk[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
@@ -236,7 +235,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
   // checks if anything to do
-  if( mp->d_num_abs_boundary_faces == 0 ) return;
+  if (mp->d_num_abs_boundary_faces == 0) return;
 
   int phase_is_inner    = *phase_is_innerf;
 
@@ -249,7 +248,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  if(mp->simulation_type == 3 && phase_is_inner == 0 ) {
+  if (mp->simulation_type == 3 && phase_is_inner == 0) {
     // reading is done in fortran routine
 
     print_CUDA_error_if_any(cudaMemcpy(mp->d_b_absorb_elastic_left,h_b_absorb_elastic_left,
@@ -294,7 +293,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
                                                    mp->d_cote_abs);
 
   // adjoint simulations
-  if(mp->simulation_type == 3 ){
+  if (mp->simulation_type == 3) {
     compute_stacey_elastic_sim3_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_abs_boundary_ispec,
                                                          mp->d_abs_boundary_ijk,
                                                          mp->d_ibool,
@@ -318,7 +317,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
   exit_on_cuda_error("compute_stacey_elastic_kernel");
 #endif
 
-  if(mp->simulation_type == 1 && mp->save_forward && phase_is_inner == 1) {
+  if (mp->simulation_type == 1 && mp->save_forward && phase_is_inner == 1) {
     // explicitly wait until compute stream is done
     // (cudaMemcpy implicitly synchronizes all other cuda operations)
     cudaStreamSynchronize(mp->compute_stream);

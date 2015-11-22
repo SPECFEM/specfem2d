@@ -40,7 +40,6 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -81,16 +80,16 @@ __global__ void compute_coupling_acoustic_el_kernel(realw* displ,
   realw nx,nz;
   realw jacobianw;
 
-  if( iface < num_coupling_ac_el_faces){
+  if (iface < num_coupling_ac_el_faces){
 
     // don't compute points outside NGLLSQUARE==NGLL2==25
     // way 2: no further check needed since blocksize = 25
-    //  if(igll<NGLL2) {
+    //  if (igll<NGLL2) {
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = coupling_ac_el_ispec[iface] - 1;
 
-    if(ispec_is_inner[ispec] == phase_is_inner ) {
+    if (ispec_is_inner[ispec] == phase_is_inner) {
 
       i = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
       j = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
@@ -166,7 +165,7 @@ void FC_FUNC_(compute_coupling_ac_el_cuda,
                                                        phase_is_inner);
 
   //  adjoint simulations
-  if (mp->simulation_type == 3 ){
+  if (mp->simulation_type == 3) {
     compute_coupling_acoustic_el_kernel<<<grid,threads>>>(mp->d_b_displ,
                                                           mp->d_b_potential_dot_dot_acoustic,
                                                           num_coupling_ac_el_faces,
@@ -215,16 +214,16 @@ __global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acou
   realw jacobianw;
 
 
-  if( iface < num_coupling_ac_el_faces){
+  if (iface < num_coupling_ac_el_faces){
 
     // don't compute points outside NGLLSQUARE==NGLL2==25
     // way 2: no further check needed since blocksize = 25
-    //  if(igll<NGLL2) {
+    //  if (igll<NGLL2) {
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = coupling_ac_el_ispec[iface] - 1;
 
-    if(ispec_is_inner[ispec] == phase_is_inner ) {
+    if (ispec_is_inner[ispec] == phase_is_inner) {
 
       i = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
       j = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
@@ -296,7 +295,7 @@ void FC_FUNC_(compute_coupling_el_ac_cuda,
                                                        phase_is_inner);
 
   //  adjoint simulations
-  if (mp->simulation_type == 3 ){
+  if (mp->simulation_type == 3) {
     compute_coupling_elastic_ac_kernel<<<grid,threads>>>(mp->d_b_potential_dot_dot_acoustic,
                                                          mp->d_b_accel,
                                                          num_coupling_ac_el_faces,

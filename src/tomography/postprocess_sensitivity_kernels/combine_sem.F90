@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -70,9 +69,6 @@
 
 program combine_sem
 
-#ifdef USE_MPI
-  use mpi
-#endif
   use postprocess_par, only: MAX_STRING_LEN, MAX_KERNEL_PATHS, MAX_KERNEL_NAMES, &
     CUSTOM_REAL, NGLLX, NGLLZ, IIN, IOUT
 
@@ -84,30 +80,27 @@ program combine_sem
   character(len=MAX_STRING_LEN) :: line,filename,output_dir,input_file
   character(len=MAX_STRING_LEN) :: arg(3)
   integer :: npath,nker,nspec
-  integer :: i,ier,iker, myrank, nproc
+  integer :: i,ier,iker
   integer :: filesize
+  ! mpi
+  integer :: myrank, NPROC
 
-#ifdef USE_MPI
-  call MPI_INIT(ier)
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-#else
-  nproc = 1
-  myrank = 0
-#endif
-  if( ier /= 0 ) stop 'error MPI initialization'
+  ! MPI initialization
+  call init_mpi()
+  call world_size(NPROC)
+  call world_rank(myrank)
 
+  if (myrank == 0) then
+    print *, 'Running XCOMBINE_SEM'
+    print *
 
-  if (myrank==0) then
-  print *, 'Running XCOMBINE_SEM'
-  print *
-
-  if (command_argument_count() /= 3) then
-    print *, 'mpirun -n NPROC bin/xcombine_sem KERNEL_NAMES INPUT_FILE OUTPUT_DIR'
-    print *, ''
-    stop 'Please check command line arguments'
+    if (command_argument_count() /= 3) then
+      print *, 'mpirun -n NPROC bin/xcombine_sem KERNEL_NAMES INPUT_FILE OUTPUT_DIR'
+      print *, ''
+      stop 'Please check command line arguments'
+    endif
   endif
-  endif
+
   do i = 1, 3
     call get_command_argument(i,arg(i), status=ier)
   enddo
@@ -137,7 +130,7 @@ program combine_sem
 
   ! Attempt to determine NSPEC directly from Fortran binary file.
   ! Advantage of this approach is that the utility doesn't have to be recompiled
-  ! whenever mech changes, and avoids dealing with SPECFEM2D database system,
+  ! whenever mesh changes, and avoids dealing with SPECFEM2D database system,
   ! which is a bit messy. Disadvantage of this approach is that it is a hack and
   ! possibly not portable.
 
@@ -145,15 +138,15 @@ program combine_sem
   open(IIN, file=trim(kernel_paths(1))//trim(filename))
   inquire(IIN, size=filesize)
   close(IIN)
-  nspec=(filesize-8)/(CUSTOM_REAL*NGLLX*NGLLZ)
 
-  do iker=1,nker
+  nspec = (filesize-8)/(CUSTOM_REAL*NGLLX*NGLLZ)
+
+  do iker= 1,nker
       call combine_sem_array(kernel_names(iker),kernel_paths,output_dir,npath,nspec,myrank)
   enddo
 
-#ifdef USE_MPI
- call MPI_FINALIZE(ier)
-#endif
+  ! MPI finish
+  call finalize_mpi()
 
 end program combine_sem
 

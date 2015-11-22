@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -76,7 +75,7 @@ contains
   ! get interface data from external file to count the spectral elements along Z
   print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
   open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old',iostat=ios)
-  if( ios /= 0 ) then
+  if (ios /= 0) then
     print *,'error opening file: ',trim('DATA/'//interfacesfile)
     stop 'error read interface file in meshfem2D'
   endif
@@ -85,13 +84,13 @@ contains
 
   ! read number of interfaces
   call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,number_of_interfaces)
-  if(number_of_interfaces < 2) stop 'not enough interfaces (minimum is 2)'
+  if (number_of_interfaces < 2) stop 'not enough interfaces (minimum is 2)'
 
   ! loop on all the interfaces
   do interface_current = 1,number_of_interfaces
 
     call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_bottom)
-    if(npoints_interface_bottom < 2) stop 'not enough interface points (minimum is 2)'
+    if (npoints_interface_bottom < 2) stop 'not enough interface points (minimum is 2)'
     max_npoints_interface = max(npoints_interface_bottom,max_npoints_interface)
     print *,'Reading ',npoints_interface_bottom,' points for interface ',interface_current
 
@@ -99,7 +98,7 @@ contains
     xinterface_dummy_previous = -HUGEVAL
     do ipoint_current = 1,npoints_interface_bottom
        call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK,xinterface_dummy,zinterface_dummy)
-       if(ipoint_current > 1 .and. xinterface_dummy <= xinterface_dummy_previous) &
+       if (ipoint_current > 1 .and. xinterface_dummy <= xinterface_dummy_previous) &
             stop 'interface points must be sorted in increasing X'
        xinterface_dummy_previous = xinterface_dummy
     enddo
@@ -117,7 +116,7 @@ contains
 
     ! read number of spectral elements in vertical direction in this layer
     call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,nz_layer(ilayer))
-    if(nz_layer(ilayer) < 1) stop 'not enough spectral elements along Z in layer (minimum is 1)'
+    if (nz_layer(ilayer) < 1) stop 'not enough spectral elements along Z in layer (minimum is 1)'
     print *,'There are ',nz_layer(ilayer),' spectral elements along Z in layer ',ilayer
 
   enddo
@@ -135,7 +134,7 @@ contains
   nzread = nz
 
   ! multiply by 2 if elements have 9 nodes
-  if(ngnod == 9) then
+  if (ngnod == 9) then
     nx = nx * 2
     nz = nz * 2
     nz_layer(:) = nz_layer(:) * 2
@@ -144,7 +143,7 @@ contains
   nelmnts = nxread * nzread
   allocate(elmnts(0:ngnod*nelmnts-1))
 
-  if ( ngnod == 4 ) then
+  if (ngnod == 4) then
     num_elmnt = 0
     do j = 1, nzread
        do i = 1, nxread

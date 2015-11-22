@@ -40,15 +40,10 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
-#ifndef CUDA_HEADER_H
-#define CUDA_HEADER_H
-
-
-
-
+#ifndef PREPARE_CONSTANTS_CUDA_H
+#define PREPARE_CONSTANTS_CUDA_H
 
 typedef float realw;  // type of "working" variables
 
@@ -64,11 +59,6 @@ typedef float realw;  // type of "working" variables
 #ifdef USE_OLDER_CUDA4_GPU
 #pragma message ("\nCompiling with: USE_OLDER_CUDA4_GPU enabled\n")
 #endif
-
-
-
-
-
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -121,7 +111,7 @@ void setConst_wxgll(realw* array,Mesh* mp)
 #else
   err = cudaGetSymbolAddress((void**)&(mp->d_wxgll),d_wxgll);
 #endif
-  if(err != cudaSuccess) {
+  if (err != cudaSuccess) {
     fprintf(stderr, "Error with d_wxgll: %s\n", cudaGetErrorString(err));
     exit(1);
   }
@@ -144,7 +134,7 @@ void setConst_hprime_xx(realw* array,Mesh* mp)
 #else
   err = cudaGetSymbolAddress((void**)&(mp->d_hprime_xx),d_hprime_xx);
 #endif
-  if(err != cudaSuccess) {
+  if (err != cudaSuccess) {
     fprintf(stderr, "Error with d_hprime_xx: %s\n", cudaGetErrorString(err));
     exit(1);
   }
@@ -163,7 +153,7 @@ void setConst_hprime_xx(realw* array,Mesh* mp)
 //   }
 
 //   err = cudaGetSymbolAddress((void**)&(mp->d_hprime_zz),"d_hprime_zz");
-//   if(err != cudaSuccess) {
+//   if (err != cudaSuccess) {
 //     fprintf(stderr, "Error with d_hprime_zz: %s\n", cudaGetErrorString(err));
 //     exit(1);
 //   }
@@ -184,7 +174,7 @@ void setConst_hprimewgll_xx(realw* array,Mesh* mp)
 #else
   err = cudaGetSymbolAddress((void**)&(mp->d_hprimewgll_xx),d_hprimewgll_xx);
 #endif
-  if(err != cudaSuccess) {
+  if (err != cudaSuccess) {
     fprintf(stderr, "Error with d_hprimewgll_xx: %s\n", cudaGetErrorString(err));
     exit(1);
   }
@@ -203,7 +193,7 @@ void setConst_hprimewgll_zz(realw* array,Mesh* mp)
   }
 
   err = cudaGetSymbolAddress((void**)&(mp->d_hprimewgll_zz),"d_hprimewgll_zz");
-  if(err != cudaSuccess) {
+  if (err != cudaSuccess) {
     fprintf(stderr, "Error with d_hprimewgll_zz: %s\n", cudaGetErrorString(err));
     exit(1);
   }
@@ -212,4 +202,4 @@ void setConst_hprimewgll_zz(realw* array,Mesh* mp)
 
 
 
-#endif //CUDA_HEADER_H
+#endif

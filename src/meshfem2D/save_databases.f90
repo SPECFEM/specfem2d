@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -81,7 +80,7 @@
     ! opens Database file
     write(prname, "('./OUTPUT_FILES/Database',i5.5)") iproc
     open(unit=15,file=trim(prname),status='unknown',iostat=ios)
-    if( ios /= 0 ) stop 'error saving databases; check that directory OUTPUT_FILES exists'
+    if (ios /= 0 ) stop 'Error saving databases; check that directory OUTPUT_FILES exists'
 
     write(15,*) '#'
     write(15,*) '# Database for SPECFEM2D'
@@ -97,11 +96,16 @@
     write(15,*) 'Type of simulation'
     write(15,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
 
+    ! counts number of nodes (npgeo) for this partition (iproc)
     call write_glob2loc_nodes_database(15, iproc, npgeo, 1)
 
+    ! counts number of elements (nspec) for this partition (iproc)
 !   DK DK add support for using pml in mpi mode with external mesh
 !   call write_partition_database(15, iproc, nspec, num_material, ngnod, 1)
     call write_partition_database(15, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 1)
+
+    write(15,*) 'nspec'
+    write(15,*) nspec
 
     write(15,*) 'npgeo nproc'
     write(15,*) npgeo,nproc
@@ -247,7 +251,7 @@
     write(15,*) 'NSOURCES'
     write(15,*) NSOURCES
 
-    do i_source=1,NSOURCES
+    do i_source= 1,NSOURCES
       write(15,*) 'source', i_source
       write(15,*) source_type(i_source),time_function_type(i_source)
       write(15,'(a100)') name_of_source_file(i_source) ! aXXX: Write wrong character if XXX != 100 !!!
@@ -292,7 +296,7 @@
     call write_axial_elements_database(15, nelem_on_the_axis, ispec_of_axial_elements,nelem_on_the_axis_loc,iproc,1, &
                                         remove_min_to_start_at_zero)
 
-    if (.not. ( force_normal_to_surface .or. rec_normal_to_surface ) ) then
+    if (.not. ( force_normal_to_surface .or. rec_normal_to_surface )) then
       nnodes_tangential_curve = 0
     endif
 
@@ -307,14 +311,14 @@
     write(15,*) 'Material sets (num 1 rho vp vs 0 0 QKappa Qmu 0 0 0 0 0 0) or '
     write(15,*) '(num 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0) or '
     write(15,*) '(num 3 rhos rhof phi c k_xx k_xz k_zz Ks Kf Kfr etaf mufr Qmu)'
-    do i=1,nb_materials
+    do i = 1,nb_materials
       if (icodemat(i) == ISOTROPIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
       else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i), &
                     aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
                     aniso7(i),aniso8(i),aniso9(i),aniso10(i),aniso11(i),aniso12(i),0,0
-      else if(icodemat(i) == POROELASTIC_MATERIAL) then
+      else if (icodemat(i) == POROELASTIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i), &
                     permxx(i),permxz(i),permzz(i),kappa_s(i),&
                     kappa_f(i),kappa_fr(i),eta_f(i),mu_fr(i),Qmu(i)
@@ -331,7 +335,7 @@
 !   call write_partition_database(15, iproc, nspec, num_material, ngnod, 2)
     call write_partition_database(15, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 2)
 
-    if ( nproc /= 1 ) then
+    if (nproc /= 1) then
       call write_interfaces_database(15, nproc, iproc, &
                               my_ninterface, my_interfaces, my_nb_interfaces, 1)
 
@@ -348,12 +352,12 @@
 
 
     write(15,*) 'List of absorbing elements (edge1 edge2 edge3 edge4 type):'
-    if ( any_abs ) then
+    if (any_abs) then
       call write_abs_merge_database(15, iproc, 2)
     endif
 
     write(15,*) 'List of acoustic forcing elements (edge1 edge2 edge3 edge4 type):'
-    if ( ACOUSTIC_FORCING ) then
+    if (ACOUSTIC_FORCING) then
       call write_acoustic_forcing_merge_database(15, iproc, 2)
     endif
 

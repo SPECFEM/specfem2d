@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -587,43 +586,51 @@ module specfem_par
   !for adjoint
   double precision :: b_sigma_xx,b_sigma_xz,b_sigma_zz,b_sigmap
 
-
   ! for kernel compuation
   character(len=100) TOMOGRAPHY_FILE
   integer :: tomo_material
   logical :: save_ASCII_kernels
   integer reclen
+
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_ac,b_displ_ac,b_accel_ac
+
+  ! elastic domain kernels
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_kl, mu_kl, kappa_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_global, mul_global, kappal_global
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mu_k, kappa_k,rho_k
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhop_kl, beta_kl, alpha_kl
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: bulk_c_kl, bulk_beta_kl
+
+  ! acoustic domain kernels
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_ac_kl, kappa_ac_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_ac_global, kappal_ac_global
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhop_ac_kl, alpha_ac_kl
 
   double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local
 
-  !!!! hessian
+  ! approximate hessians
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_final2
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_temp1, rhorho_el_hessian_temp2
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_ac_hessian_final1, rhorho_ac_hessian_final2
 
+  ! poro-elastic kernels
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
     C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, Bb_kl, Cb_kl, Mb_kl, mufrb_kl, &
     rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhot_k, rhof_k, sm_k, eta_k, mufr_k, B_k, &
     C_k, M_k
+
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: phil_global,etal_f_global, &
     rhol_s_global,rhol_f_global,rhol_bar_global, &
     tortl_global,mulfr_global
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: permlxx_global,permlxz_global,permlzz_global
+
   character(len=150) :: adj_source_file
   integer :: irec_local,nadj_rec_local
   double precision :: xx,zz,rholb,tempx1l,tempx2l,b_tempx1l,b_tempx2l,bb_tempx1l,bb_tempx2l
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearrays
+
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     b_absorb_elastic_left,b_absorb_poro_s_left,b_absorb_poro_w_left
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
@@ -669,8 +676,11 @@ module specfem_par
   integer :: ngnod,nspec,pointsdisp, nelemabs
 
   ! for MPI and partitioning
-  integer  :: ier
-  integer  :: myrank,nproc,nproc_read_from_database
+  integer :: myrank
+  integer :: NPROC
+  ! parameter read from parameter file
+  integer :: nproc_read_from_database
+
   character(len=150) :: inputname,outputname,outputname2
   integer  :: ninterface
   integer  :: max_interface_size
@@ -917,7 +927,7 @@ module specfem_par
 
   ! CUDA mesh pointer<->integer wrapper
   integer(kind=8) :: Mesh_pointer
-  integer :: ncuda_devices,ncuda_devices_min,ncuda_devices_max
+
   logical, dimension(:), allocatable :: ispec_is_inner
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_2D,veloc_2D,accel_2D
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_2D,b_veloc_2D,b_accel_2D

@@ -102,9 +102,7 @@ specfem2D_OBJECTS = \
 	$O/define_external_model.spec.o \
 	$O/define_external_model_from_tomo_file.spec.o \
 	$O/enforce_acoustic_free_surface.spec.o \
-	$O/exit_mpi.spec.o \
 	$O/finalize_simulation.spec.o \
-	$O/force_ftz.cc.o \
 	$O/get_MPI.spec.o \
 	$O/get_global.spec.o \
 	$O/get_poroelastic_velocities.spec.o \
@@ -164,55 +162,58 @@ specfem2D_MODULES = \
 
 specfem2D_SHARED_OBJECTS = \
 	$O/define_shape_functions.shared.o \
+	$O/exit_mpi.shared.o \
+	$O/force_ftz.cc.o \
+	$O/parallel.shared.o \
 	$(EMPTY_MACRO)
 
 JPEGLIB_OBJECTS = \
-	$O/jaricom.cc.o \
-	$O/jcapimin.cc.o \
-	$O/jcapistd.cc.o \
-	$O/jcarith.cc.o \
-	$O/jccoefct.cc.o \
-	$O/jccolor.cc.o \
-	$O/jcdctmgr.cc.o \
-	$O/jchuff.cc.o \
-	$O/jcinit.cc.o \
-	$O/jcmainct.cc.o \
-	$O/jcmarker.cc.o \
-	$O/jcmaster.cc.o \
-	$O/jcomapi.cc.o \
-	$O/jcparam.cc.o \
-	$O/jcprepct.cc.o \
-	$O/jcsample.cc.o \
-	$O/jctrans.cc.o \
-	$O/jdapimin.cc.o \
-	$O/jdapistd.cc.o \
-	$O/jdarith.cc.o \
-	$O/jdatadst.cc.o \
-	$O/jdatasrc.cc.o \
-	$O/jdcoefct.cc.o \
-	$O/jdcolor.cc.o \
-	$O/jddctmgr.cc.o \
-	$O/jdhuff.cc.o \
-	$O/jdinput.cc.o \
-	$O/jdmainct.cc.o \
-	$O/jdmarker.cc.o \
-	$O/jdmaster.cc.o \
-	$O/jdmerge.cc.o \
-	$O/jdpostct.cc.o \
-	$O/jdsample.cc.o \
-	$O/jdtrans.cc.o \
-	$O/jerror.cc.o \
-	$O/jfdctflt.cc.o \
-	$O/jfdctfst.cc.o \
-	$O/jfdctint.cc.o \
-	$O/jidctflt.cc.o \
-	$O/jidctfst.cc.o \
-	$O/jidctint.cc.o \
-	$O/jmemmgr.cc.o \
-	$O/jmemnobs.cc.o \
-	$O/jquant1.cc.o \
-	$O/jquant2.cc.o \
-	$O/jutils.cc.o \
+	$O/jaricom.cc_jpeg.o \
+	$O/jcapimin.cc_jpeg.o \
+	$O/jcapistd.cc_jpeg.o \
+	$O/jcarith.cc_jpeg.o \
+	$O/jccoefct.cc_jpeg.o \
+	$O/jccolor.cc_jpeg.o \
+	$O/jcdctmgr.cc_jpeg.o \
+	$O/jchuff.cc_jpeg.o \
+	$O/jcinit.cc_jpeg.o \
+	$O/jcmainct.cc_jpeg.o \
+	$O/jcmarker.cc_jpeg.o \
+	$O/jcmaster.cc_jpeg.o \
+	$O/jcomapi.cc_jpeg.o \
+	$O/jcparam.cc_jpeg.o \
+	$O/jcprepct.cc_jpeg.o \
+	$O/jcsample.cc_jpeg.o \
+	$O/jctrans.cc_jpeg.o \
+	$O/jdapimin.cc_jpeg.o \
+	$O/jdapistd.cc_jpeg.o \
+	$O/jdarith.cc_jpeg.o \
+	$O/jdatadst.cc_jpeg.o \
+	$O/jdatasrc.cc_jpeg.o \
+	$O/jdcoefct.cc_jpeg.o \
+	$O/jdcolor.cc_jpeg.o \
+	$O/jddctmgr.cc_jpeg.o \
+	$O/jdhuff.cc_jpeg.o \
+	$O/jdinput.cc_jpeg.o \
+	$O/jdmainct.cc_jpeg.o \
+	$O/jdmarker.cc_jpeg.o \
+	$O/jdmaster.cc_jpeg.o \
+	$O/jdmerge.cc_jpeg.o \
+	$O/jdpostct.cc_jpeg.o \
+	$O/jdsample.cc_jpeg.o \
+	$O/jdtrans.cc_jpeg.o \
+	$O/jerror.cc_jpeg.o \
+	$O/jfdctflt.cc_jpeg.o \
+	$O/jfdctfst.cc_jpeg.o \
+	$O/jfdctint.cc_jpeg.o \
+	$O/jidctflt.cc_jpeg.o \
+	$O/jidctfst.cc_jpeg.o \
+	$O/jidctint.cc_jpeg.o \
+	$O/jmemmgr.cc_jpeg.o \
+	$O/jmemnobs.cc_jpeg.o \
+	$O/jquant1.cc_jpeg.o \
+	$O/jquant2.cc_jpeg.o \
+	$O/jutils.cc_jpeg.o \
 	$(EMPTY_MACRO)
 
 specfem2D_OBJECTS += $(JPEGLIB_OBJECTS)
@@ -423,8 +424,8 @@ $(cuda_specfem2D_DEVICE_OBJ): $(cuda_OBJECTS)
 
 
 ##
-## shared
+## JPEG library files
 ##
 
-$O/%.cc.o: $S/libjpeg/%.c
+$O/%.cc_jpeg.o: $S/libjpeg/%.c
 	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $@ $<

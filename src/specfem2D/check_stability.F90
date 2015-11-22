@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -84,21 +83,21 @@
 
   ! user output
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) '******************************************************************'
-    if(timeval >= 1.d-3 .and. timeval < 1000.d0) then
-      write(IOUT,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,timeval,NSTEP
+    write(IMAIN,*)
+    write(IMAIN,*) '******************************************************************'
+    if (timeval >= 1.d-3 .and. timeval < 1000.d0) then
+      write(IMAIN,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,timeval,NSTEP
     else
-      write(IOUT,"('Time step number ',i7,'   t = ',1pe13.6,' s out of ',i7)") it,timeval,NSTEP
+      write(IMAIN,"('Time step number ',i7,'   t = ',1pe13.6,' s out of ',i7)") it,timeval,NSTEP
     endif
-    write(IOUT,*) '******************************************************************'
-    write(IOUT,*) 'We have done ',sngl(100.d0*dble(it-1)/dble(NSTEP-1)),'% of the total'
+    write(IMAIN,*) '******************************************************************'
+    write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it-1)/dble(NSTEP-1)),'% of the total'
   endif
 
 
   ! elastic wavefield
-  if(any_elastic_glob) then
-    if(any_elastic) then
+  if (any_elastic_glob) then
+    if (any_elastic) then
       displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 &
                                 + displ_elastic(2,:)**2 &
                                 + displ_elastic(3,:)**2))
@@ -118,19 +117,19 @@
 
 
     if (myrank == 0) &
-      write(IOUT,*) 'Max norm of vector field in solid (elastic) = ', displnorm_all_glob
+      write(IMAIN,*) 'Max norm of vector field in solid (elastic) = ', displnorm_all_glob
 
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-      call exit_MPI('code became unstable and blew up in solid (elastic)')
+    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+      call exit_MPI(myrank,'code became unstable and blew up in solid (elastic)')
 
   endif
 
   ! poroelastic wavefield
-  if(any_poroelastic_glob) then
-    if(any_poroelastic) then
+  if (any_poroelastic_glob) then
+    if (any_poroelastic) then
       displnorm_all = maxval(sqrt(displs_poroelastic(1,:)**2 &
                                 + displs_poroelastic(2,:)**2))
     else
@@ -144,15 +143,15 @@
 #endif
 
     if (myrank == 0) &
-      write(IOUT,*) 'Max norm of vector field in solid (poroelastic) = ',displnorm_all_glob
+      write(IMAIN,*) 'Max norm of vector field in solid (poroelastic) = ',displnorm_all_glob
 
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-      call exit_MPI('code became unstable and blew up in solid (poroelastic)')
+    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+      call exit_MPI(myrank,'code became unstable and blew up in solid (poroelastic)')
 
-    if(any_poroelastic) then
+    if (any_poroelastic) then
       displnorm_all = maxval(sqrt(displw_poroelastic(1,:)**2 &
                                 + displw_poroelastic(2,:)**2))
     else
@@ -166,20 +165,20 @@
 #endif
 
     if (myrank == 0) &
-      write(IOUT,*) 'Max norm of vector field in fluid (poroelastic) = ',displnorm_all_glob
+      write(IMAIN,*) 'Max norm of vector field in fluid (poroelastic) = ',displnorm_all_glob
 
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-      call exit_MPI('code became unstable and blew up in fluid (poroelastic)')
+    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+      call exit_MPI(myrank,'code became unstable and blew up in fluid (poroelastic)')
 
   endif
 
 
   ! acoustic wavefield
-  if(any_acoustic_glob) then
-    if(any_acoustic) then
+  if (any_acoustic_glob) then
+    if (any_acoustic) then
       displnorm_all = maxval(abs(potential_acoustic(:)))
     else
       displnorm_all = 0.d0
@@ -192,13 +191,13 @@
 #endif
 
     if (myrank == 0) &
-      write(IOUT,*) 'Max absolute value of scalar field in fluid (acoustic) = ',displnorm_all_glob
+      write(IMAIN,*) 'Max absolute value of scalar field in fluid (acoustic) = ',displnorm_all_glob
 
     ! check stability of the code in fluid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if(displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-      call exit_MPI('code became unstable and blew up in fluid (acoustic)')
+    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+      call exit_MPI(myrank,'code became unstable and blew up in fluid (acoustic)')
 
   endif
 
@@ -230,9 +229,9 @@
       ihours = int_tCPU / 3600
       iminutes = (int_tCPU - 3600*ihours) / 60
       iseconds = int_tCPU - 3600*ihours - 60*iminutes
-      write(IOUT,*) 'Elapsed time in seconds = ',tCPU
-      write(IOUT,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-      write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+      write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
+      write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+      write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
       ! compute estimated remaining simulation time
       t_remain = (NSTEP - it) * (tCPU/dble(it))
@@ -240,9 +239,9 @@
       ihours_remain = int_t_remain / 3600
       iminutes_remain = (int_t_remain - 3600*ihours_remain) / 60
       iseconds_remain = int_t_remain - 3600*ihours_remain - 60*iminutes_remain
-      write(IOUT,*) 'Time steps remaining = ',NSTEP - it
-      write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
-      write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
+      write(IMAIN,*) 'Time steps remaining = ',NSTEP - it
+      write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
+      write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
              ihours_remain,iminutes_remain,iseconds_remain
 
       ! compute estimated total simulation time
@@ -251,11 +250,11 @@
       ihours_total = int_t_total / 3600
       iminutes_total = (int_t_total - 3600*ihours_total) / 60
       iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
-      write(IOUT,*) 'Estimated total run time in seconds = ',t_total
-      write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
+      write(IMAIN,*) 'Estimated total run time in seconds = ',t_total
+      write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
              ihours_total,iminutes_total,iseconds_total
 
-      if(it < NSTEP) then
+      if (it < NSTEP) then
         ! compute date and time at which the run should finish (useful for long runs)
         ! add remaining minutes and get date and time of that future timestamp in minutes
         timestamp = nint((timestamp_seconds_current + t_remain) / 60.d0)
@@ -265,11 +264,12 @@
         call calndr(day,mon,year,julian_day_number)
         day_of_week = idaywk(julian_day_number)
 
-        write(IOUT,"(' The run will finish approximately on: ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
+        write(IMAIN,"(' The run will finish approximately on: ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
             weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
 
       endif
-      write(IOUT,*)
+      write(IMAIN,*)
+      call flush_IMAIN()
   endif
 
   end subroutine check_stability

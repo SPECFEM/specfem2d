@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -70,7 +69,7 @@
       do i = acoustic_surface(2,ispec_acoustic_surface), acoustic_surface(3,ispec_acoustic_surface)
         iglob = ibool(i,j,ispec)
         ! make sure that an acoustic free surface is not enforced on periodic edges
-        if(.not. this_ibool_is_a_periodic_edge(iglob)) then
+        if (.not. this_ibool_is_a_periodic_edge(iglob)) then
           potential_acoustic(iglob) = ZERO
           potential_dot_acoustic(iglob) = ZERO
           potential_dot_dot_acoustic(iglob) = ZERO

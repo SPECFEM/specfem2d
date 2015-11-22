@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -79,10 +78,10 @@ integer function num_9(i,j,nx,nz)
   integer i,j,nx,nz
 
 
-  if ( (mod(i,2) == 0) .and. (mod(j,2) == 0) ) then
+  if ((mod(i,2) == 0) .and. (mod(j,2) == 0)) then
      num_9 = j/2 * (nx+1) + i/2 + 1
   else
-     if ( mod(j,2) == 0 ) then
+     if (mod(j,2) == 0) then
         num_9 = (nx+1)*(nz+1) + j/2 * nx + ceiling(real(i)/real(2))
      else
         num_9 = (nx+1)*(nz+1) + nx*(nz+1) + floor(real(j)/real(2))*(nx*2+1) + i + 1

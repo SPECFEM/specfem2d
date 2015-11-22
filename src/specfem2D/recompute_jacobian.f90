@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -85,7 +84,7 @@
   xgamma = ZERO
   zgamma = ZERO
 
-  do ia=1,ngnod
+  do ia = 1,ngnod
 
     nnum = knods(ia,ispec)
 
@@ -107,12 +106,12 @@
 ! the Jacobian is negative, so far this means that there is an error in the mesh
 ! therefore print the coordinates of the mesh points of this element
 ! and also create an OpenDX file to visualize it
-  if(jacobian <= ZERO .and. stop_if_negative_jacobian) then
+  if (jacobian <= ZERO .and. stop_if_negative_jacobian) then
 
 ! print the coordinates of the mesh points of this element
     print *, 'ispec = ', ispec
     print *, 'ngnod = ', ngnod
-    do ia=1,ngnod
+    do ia = 1,ngnod
       nnum = knods(ia,ispec)
       xelm = coorg(1,nnum)
       zelm = coorg(2,nnum)
@@ -124,7 +123,7 @@
 
 ! output the points (the mesh is flat therefore the third coordinate is zero)
     write(11,*) 'object 1 class array type float rank 1 shape 3 items ',ngnod,' data follows'
-    do ia=1,ngnod
+    do ia = 1,ngnod
       nnum = knods(ia,ispec)
       xelm = coorg(1,nnum)
       zelm = coorg(2,nnum)
@@ -155,7 +154,7 @@
 ! close OpenDX file
     close(11)
 
-    call exit_MPI('negative 2D Jacobian, element saved in DX_first_element_with_negative_jacobian.dx')
+    stop 'negative 2D Jacobian, element saved in DX_first_element_with_negative_jacobian.dx'
   endif
 
 ! invert the relation

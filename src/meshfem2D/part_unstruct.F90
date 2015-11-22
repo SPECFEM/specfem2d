@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -144,7 +143,7 @@ contains
 #else
   open(unit=990, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
 #endif
-  if( ier /= 0 ) then
+  if (ier /= 0) then
     print *,'error opening file: ',trim(filename)
     stop 'error read external mesh file'
   endif
@@ -158,13 +157,13 @@ contains
   allocate(elmnts(0:ngnod*nelmnts-1))
 
   do i = 0, nelmnts-1
-    if(ngnod == 4) then
+    if (ngnod == 4) then
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
       read(990) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3)
 #else
       read(990,*) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3)
 #endif
-    else if(ngnod == 9) then
+    else if (ngnod == 9) then
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
       read(990) elmnts(i*ngnod), elmnts(i*ngnod+1), elmnts(i*ngnod+2), elmnts(i*ngnod+3), &
                   elmnts(i*ngnod+4), elmnts(i*ngnod+5), elmnts(i*ngnod+6), elmnts(i*ngnod+7), elmnts(i*ngnod+8)
@@ -201,7 +200,7 @@ contains
 #else
   open(unit=991, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
 #endif
-  if( ier /= 0 ) then
+  if (ier /= 0) then
     print *,'error opening file: ',trim(filename)
     stop 'error read external nodes coords file'
   endif
@@ -242,7 +241,7 @@ contains
 #else
   open(unit=992, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
 #endif
-  if( ier /= 0 ) then
+  if (ier /= 0) then
     print *,'error opening file: ',trim(filename)
     stop 'error read external mat file'
   endif
@@ -278,7 +277,7 @@ contains
 #else
   open(unit=992, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
 #endif
-  if( ier /= 0 ) then
+  if (ier /= 0) then
     print *,'error opening file: ',trim(filename)
     stop 'error read external CPML_element_file'
   endif
@@ -295,7 +294,7 @@ contains
 #else
      read(992,*) ispec, pml_flag
 #endif
-     if(pml_flag /= CPML_X_ONLY .and. pml_flag /= CPML_Z_ONLY .and. pml_flag /= CPML_XZ_ONLY) &
+     if (pml_flag /= CPML_X_ONLY .and. pml_flag /= CPML_Z_ONLY .and. pml_flag /= CPML_XZ_ONLY) &
        stop 'error: incorrect CPML element flag found, should be CPML_X_ONLY or CPML_Z_ONLY or CPML_XZ_ONLY only'
 
      region_pml_external_mesh(ispec) = pml_flag
@@ -341,7 +340,7 @@ contains
 #else
   open(unit=993, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
 #endif
-  if( ier /= 0 ) then
+  if (ier /= 0) then
     print *,'error opening file: ',trim(filename)
     stop 'error read acoustic surface file'
   endif
@@ -371,7 +370,7 @@ contains
   nelem_acoustic_surface = 0
   do i = 1, nelmnts_surface
      imaterial_number = num_material(acoustic_surface_tmp(1,i))
-     if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
+     if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0) then
         nelem_acoustic_surface = nelem_acoustic_surface + 1
      endif
   enddo
@@ -381,7 +380,7 @@ contains
   nelem_acoustic_surface = 0
   do i = 1, nelmnts_surface
      imaterial_number = num_material(acoustic_surface_tmp(1,i))
-     if(icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0 ) then
+     if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0) then
         nelem_acoustic_surface = nelem_acoustic_surface + 1
         acoustic_surface(:,nelem_acoustic_surface) = acoustic_surface_tmp(:,i)
      endif
@@ -410,7 +409,7 @@ contains
 #else
   open(unit=994, file=trim(axial_elements_file), form='formatted' , status='old', action='read', iostat=ier)
 #endif
-  if( ier /= 0 ) then
+  if (ier /= 0) then
     print *,'error opening file: ',trim(axial_elements_file)
     stop 'error read axial elements file'
   endif
@@ -481,7 +480,7 @@ contains
 #else
   open(unit=994, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
 #endif
-  if( ier /= 0 ) then
+  if (ier /= 0) then
     print *,'error opening file: ',trim(filename)
     stop 'error read absorbing surface file'
   endif
@@ -550,7 +549,7 @@ contains
 #else
   open(unit=995, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
 #endif
-  if( ier /= 0 ) then
+  if (ier /= 0) then
     print *,'error opening file: ',trim(filename)
     stop 'error read acoustic forcing surface file'
   endif
@@ -634,12 +633,12 @@ contains
  !            1 . . 5 . . 2
  ! --> we just create a copy in an easier format for ease of use in this routine
  do ispec = 1, nelmnts
-   if(ngnod == 4) then
+   if (ngnod == 4) then
      ibool(1,ispec) = elmnts((ispec-1)*ngnod)
      ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
      ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)
-   else if(ngnod == 9) then
+   else if (ngnod == 9) then
      ibool(1,ispec) = elmnts((ispec-1)*ngnod)
      ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
      ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
@@ -655,23 +654,23 @@ contains
  enddo
 
  do j = 1, 4
-   if(j == 1) then
+   if (j == 1) then
      index_edge=3
      ibool_rotated(:,:) = ibool(:,:)
-   else if(j == 2) then
+   else if (j == 2) then
      index_edge=1
      ibool(:,:) = ibool_rotated(:,:)
-   else if(j == 3) then
+   else if (j == 3) then
      index_edge=4
      ibool(:,:) = ibool_rotated(:,:)
-   else if(j == 4) then
+   else if (j == 4) then
      index_edge=2
      ibool(:,:) = ibool_rotated(:,:)
    else
      stop 'j should be >=1 and <=4'
    endif
 
-   if(index_edge == 1) then
+   if (index_edge == 1) then
    ! bottom edge
      index_rotation1 = 1
      index_rotation2 = 2
@@ -682,7 +681,7 @@ contains
      index_rotation7 = 1
      index_rotation8 = 4
      ! index_rotation9 does not need to exist because the center rotates on itself
-   else if(index_edge == 2) then
+   else if (index_edge == 2) then
    ! right edge
      index_rotation1 = 2
      index_rotation2 = 3
@@ -693,7 +692,7 @@ contains
      index_rotation7 = 1
      index_rotation8 = 2
      ! index_rotation9 does not need to exist because the center rotates on itself
-   else if(index_edge == 3) then
+   else if (index_edge == 3) then
    ! top edge
      index_rotation1 = 3
      index_rotation2 = 4
@@ -704,7 +703,7 @@ contains
      index_rotation7 = 2
      index_rotation8 = 3
      ! index_rotation9 does not need to exist because the center rotates on itself
-   else if(index_edge == 4) then
+   else if (index_edge == 4) then
    ! left edge
      index_rotation1 = 1
      index_rotation2 = 4
@@ -720,37 +719,37 @@ contains
    endif
 
    do i = 1,nelemabs
-     if(index_edge == abs_surface(5,i)) then
+     if (index_edge == abs_surface(5,i)) then
        ispec = abs_surface(1,i) + 1  !!!! be careful: ispec from abs_surface(1,i) start at zero
        found_this_point = .false.
        do inode = 1,ngnod
-         if(ibool(inode,ispec) == abs_surface(3,i)) then
+         if (ibool(inode,ispec) == abs_surface(3,i)) then
            i1 = inode
            found_this_point = .true.
            exit
          endif
        enddo
 
-       if(.not. found_this_point) stop 'point not found'
+       if (.not. found_this_point) stop 'point not found'
 
        found_this_point = .false.
        do inode = 1,4
-         if(ibool(inode,ispec) == abs_surface(4,i)) then
+         if (ibool(inode,ispec) == abs_surface(4,i)) then
            i2 = inode
            found_this_point = .true.
            exit
          endif
        enddo
-       if(.not. found_this_point) stop 'point not found'
+       if (.not. found_this_point) stop 'point not found'
 
        ! swap points if needed for clarity, to avoid testing both cases each time below
-       if(i1 > i2) then
+       if (i1 > i2) then
          iswap = i1
          i1 = i2
          i2 = iswap
        endif
        ! test orientation
-       if(i1 == index_rotation1 .and. i2 == index_rotation2) then
+       if (i1 == index_rotation1 .and. i2 == index_rotation2) then
        ! print *,'orientation of element ',i,' is already good'
 
        else if (i1 == index_rotation3 .and. i2 == index_rotation4) then !for this one, remember that we have swapped, thus 41 is 14
@@ -759,7 +758,7 @@ contains
          ibool_rotated(1,ispec) = ibool(2,ispec)
          ibool_rotated(2,ispec) = ibool(3,ispec)
          ibool_rotated(3,ispec) = ibool(4,ispec)
-         if(ngnod == 9) then
+         if (ngnod == 9) then
            ibool_rotated(8,ispec) = ibool(5,ispec)
            ibool_rotated(5,ispec) = ibool(6,ispec)
            ibool_rotated(6,ispec) = ibool(7,ispec)
@@ -773,7 +772,7 @@ contains
          ibool_rotated(4,ispec) = ibool(2,ispec)
          ibool_rotated(1,ispec) = ibool(3,ispec)
          ibool_rotated(2,ispec) = ibool(4,ispec)
-         if(ngnod == 9) then
+         if (ngnod == 9) then
            ibool_rotated(7,ispec) = ibool(5,ispec)
            ibool_rotated(8,ispec) = ibool(6,ispec)
            ibool_rotated(5,ispec) = ibool(7,ispec)
@@ -787,7 +786,7 @@ contains
          ibool_rotated(3,ispec) = ibool(2,ispec)
          ibool_rotated(4,ispec) = ibool(3,ispec)
          ibool_rotated(1,ispec) = ibool(4,ispec)
-         if(ngnod == 9) then
+         if (ngnod == 9) then
            ibool_rotated(6,ispec) = ibool(5,ispec)
            ibool_rotated(7,ispec) = ibool(6,ispec)
            ibool_rotated(8,ispec) = ibool(7,ispec)
@@ -803,12 +802,12 @@ contains
 
 ! here we put the result back in the not-so-easy to use format at the end of the routine
  do ispec = 1, nelmnts
-   if(ngnod == 4) then
+   if (ngnod == 4) then
      elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
      elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
      elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
      elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
-   else if(ngnod == 9) then
+   else if (ngnod == 9) then
      elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
      elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
      elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
@@ -881,12 +880,12 @@ subroutine rotate_mesh_for_axisym(ngnod)
   !            .           .
   !            1 . . 5 . . 2
   ! --> we just create a copy in an easier format for ease of use in this routine
-    if(ngnod == 4) then
+    if (ngnod == 4) then
       ibool(1,ispec) = elmnts((ispec-1)*ngnod)    ! -> Have to be zero if ispec is on the axis
       ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
       ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
       ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)  ! -> Have to be zero if ispec is on the axis
-    else if(ngnod == 9) then
+    else if (ngnod == 9) then
       ibool(1,ispec) = elmnts((ispec-1)*ngnod)    ! -> Have to be zero if ispec is on the axis
       ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
       ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
@@ -909,25 +908,25 @@ subroutine rotate_mesh_for_axisym(ngnod)
     found_this_point = .false.
     ! print *,"        Loop on the control points and look for ", inode1_axial_elements(i)
     do inode = 1,4 ! loop on the corners of axial element ispec_of_axial_elements(i) to see if we find inode1_axial_elements(i)
-      if(ibool(inode,ispec) == inode1_axial_elements(i)) then
+      if (ibool(inode,ispec) == inode1_axial_elements(i)) then
         i1 = inode
         found_this_point = .true.
         exit
       endif
     enddo
-    if(.not. found_this_point) stop 'rotate_mesh_for_axisym: point not found 1'
+    if (.not. found_this_point) stop 'rotate_mesh_for_axisym: point not found 1'
     found_this_point = .false.
     do inode = 1,4 ! loop on the corners of axial element ispec_of_axial_elements(i) to see if we find inode2_axial_elements(i)
-      if(ibool(inode,ispec) == inode2_axial_elements(i)) then
+      if (ibool(inode,ispec) == inode2_axial_elements(i)) then
         i2 = inode
         found_this_point = .true.
         exit
       endif
     enddo
-    if(.not. found_this_point) stop 'rotate_mesh_for_axisym: point not found 2'
-    if(i1 > i2) then
+    if (.not. found_this_point) stop 'rotate_mesh_for_axisym: point not found 2'
+    if (i1 > i2) then
       ! swap points if needed for clarity, to avoid testing both cases each time below
-      ! Otherwise we would have done : if((i1 == 1 .and. i2 == 4) .or. (i1 == 4 .and. i2 == 1)) then
+      ! Otherwise we would have done : if ((i1 == 1 .and. i2 == 4) .or. (i1 == 4 .and. i2 == 1)) then
       !                                   print *,'orientation of element ',i,' is already good'
       !                                 ...
       iswap = i1
@@ -946,7 +945,7 @@ subroutine rotate_mesh_for_axisym(ngnod)
     ! print *,"    i2 -->",i2
 
     ! test orientation
-    if(i1 == 1 .and. i2 == 4) then ! Orientation of this element is already good'
+    if (i1 == 1 .and. i2 == 4) then ! Orientation of this element is already good'
       ! print *,'orientation of element ',i,' is already good'
     else if (i1 == 1 .and. i2 == 2) then ! Remember that we have swapped, thus no need to test i1 == 1 and i2 == 1
       ! Element must be rotated 3 times
@@ -955,7 +954,7 @@ subroutine rotate_mesh_for_axisym(ngnod)
       ibool_rotated(1,ispec) = ibool(2,ispec)
       ibool_rotated(2,ispec) = ibool(3,ispec)
       ibool_rotated(3,ispec) = ibool(4,ispec)
-      if(ngnod == 9) then
+      if (ngnod == 9) then
         ibool_rotated(8,ispec) = ibool(5,ispec)
         ibool_rotated(5,ispec) = ibool(6,ispec)
         ibool_rotated(6,ispec) = ibool(7,ispec)
@@ -968,7 +967,7 @@ subroutine rotate_mesh_for_axisym(ngnod)
       ibool_rotated(4,ispec) = ibool(2,ispec)
       ibool_rotated(1,ispec) = ibool(3,ispec)
       ibool_rotated(2,ispec) = ibool(4,ispec)
-      if(ngnod == 9) then
+      if (ngnod == 9) then
         ibool_rotated(7,ispec) = ibool(5,ispec)
         ibool_rotated(8,ispec) = ibool(6,ispec)
         ibool_rotated(5,ispec) = ibool(7,ispec)
@@ -981,7 +980,7 @@ subroutine rotate_mesh_for_axisym(ngnod)
       ibool_rotated(3,ispec) = ibool(2,ispec)
       ibool_rotated(4,ispec) = ibool(3,ispec)
       ibool_rotated(1,ispec) = ibool(4,ispec)
-      if(ngnod == 9) then
+      if (ngnod == 9) then
         ibool_rotated(6,ispec) = ibool(5,ispec)
         ibool_rotated(7,ispec) = ibool(6,ispec)
         ibool_rotated(8,ispec) = ibool(7,ispec)
@@ -995,12 +994,12 @@ subroutine rotate_mesh_for_axisym(ngnod)
 
   ! Here we put the result back in the not-so-easy to use format at the end of the routine
   do ispec = 1, nelmnts
-    if(ngnod == 4) then
+    if (ngnod == 4) then
       elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
       elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
       elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
       elmnts((ispec-1)*ngnod+3) = ibool_rotated(4,ispec)
-    else if(ngnod == 9) then
+    else if (ngnod == 9) then
       elmnts((ispec-1)*ngnod)   = ibool_rotated(1,ispec)
       elmnts((ispec-1)*ngnod+1) = ibool_rotated(2,ispec)
       elmnts((ispec-1)*ngnod+2) = ibool_rotated(3,ispec)
@@ -1038,8 +1037,8 @@ end subroutine rotate_mesh_for_axisym
   integer  :: connectivity
 
   ! allocates memory for arrays
-  if( .not. allocated(nnodes_elmnts) ) allocate(nnodes_elmnts(0:nnodes-1))
-  if( .not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:nsize*nnodes-1))
+  if (.not. allocated(nnodes_elmnts) ) allocate(nnodes_elmnts(0:nnodes-1))
+  if (.not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:nsize*nnodes-1))
 
   ! initializes
   xadj(:) = 0
@@ -1065,7 +1064,7 @@ end subroutine rotate_mesh_for_axisym
         do n = 1, NCORNERS
           num_node = elmnts_l(NCORNERS*elem_base+n-1)
           do m = 0, nnodes_elmnts(num_node)-1
-            if ( nodes_elmnts(m+num_node*nsize) == elem_target ) then
+            if (nodes_elmnts(m+num_node*nsize) == elem_target) then
               connectivity = connectivity + 1
             endif
           enddo
@@ -1073,18 +1072,18 @@ end subroutine rotate_mesh_for_axisym
 
         ! sets adjacency (adjncy) and number of neighbors (xadj)
         ! according to ncommonnodes criteria
-        if ( connectivity >=  ncommonnodes) then
+        if (connectivity >=  ncommonnodes) then
 
           is_neighbour = .false.
 
           do m = 0, xadj(nodes_elmnts(k+j*nsize))
-            if ( .not.is_neighbour ) then
-              if ( adjncy(nodes_elmnts(k+j*nsize)*MAX_NEIGHBORS+m) == nodes_elmnts(l+j*nsize) ) then
+            if (.not.is_neighbour) then
+              if (adjncy(nodes_elmnts(k+j*nsize)*MAX_NEIGHBORS+m) == nodes_elmnts(l+j*nsize)) then
                 is_neighbour = .true.
               endif
             endif
           enddo
-          if ( .not.is_neighbour ) then
+          if (.not.is_neighbour) then
             adjncy(nodes_elmnts(k+j*nsize)*MAX_NEIGHBORS &
                    + xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
 
@@ -1196,7 +1195,7 @@ end subroutine rotate_mesh_for_axisym
      enddo
 
      do num_part = 0, nparts-1
-        if ( parts_node(num_part) == 1 ) then
+        if (parts_node(num_part) == 1) then
            size_glob2loc_nodes = size_glob2loc_nodes + 1
            parts_node(num_part) = 0
         endif
@@ -1222,7 +1221,7 @@ end subroutine rotate_mesh_for_axisym
      enddo
      do num_part = 0, nparts-1
 
-        if ( parts_node(num_part) == 1 ) then
+        if (parts_node(num_part) == 1) then
            glob2loc_nodes_parts(size_glob2loc_nodes) = num_part
            glob2loc_nodes(size_glob2loc_nodes) = num_parts(num_part)
            size_glob2loc_nodes = size_glob2loc_nodes + 1
@@ -1276,13 +1275,13 @@ end subroutine rotate_mesh_for_axisym
   do num_part = 0, nparts-1
      do num_part_bis = num_part+1, nparts-1
         do el = 0, nelmnts-1
-           if ( part(el) == num_part ) then
+           if (part(el) == num_part) then
               ! sets material flag
-              if ( phi_material(num_material(el+1)) < TINYVAL) then
+              if (phi_material(num_material(el+1)) < TINYVAL) then
                 ! elastic element
                 is_acoustic_el = .false.
                 is_elastic_el = .true.
-              else if ( phi_material(num_material(el+1)) >= 1.d0) then
+              else if (phi_material(num_material(el+1)) >= 1.d0) then
                 ! acoustic element
                 is_acoustic_el = .true.
                 is_elastic_el = .false.
@@ -1295,10 +1294,10 @@ end subroutine rotate_mesh_for_axisym
               ! looks at all neighbor elements
               do el_adj = xadj_g(el), xadj_g(el+1)-1
                 ! sets neighbor material flag
-                if ( phi_material(num_material(adjncy_g(el_adj)+1)) < TINYVAL) then
+                if (phi_material(num_material(adjncy_g(el_adj)+1)) < TINYVAL) then
                   is_acoustic_el_adj = .false.
                   is_elastic_el_adj = .true.
-                else if ( phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
+                else if (phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
                   is_acoustic_el_adj = .true.
                   is_elastic_el_adj = .false.
                 else
@@ -1307,9 +1306,9 @@ end subroutine rotate_mesh_for_axisym
                 endif
                 ! adds element if neighbor element lies in next parition
                 ! and belongs to same material
-                if ( (part(adjncy_g(el_adj)) == num_part_bis) .and. &
+                if ((part(adjncy_g(el_adj)) == num_part_bis) .and. &
                      (is_acoustic_el .eqv. is_acoustic_el_adj) .and. &
-                     (is_elastic_el .eqv. is_elastic_el_adj) ) then
+                     (is_elastic_el .eqv. is_elastic_el_adj)) then
                     num_edge = num_edge + 1
                 endif
               enddo
@@ -1333,11 +1332,11 @@ end subroutine rotate_mesh_for_axisym
   do num_part = 0, nparts-1
     do num_part_bis = num_part+1, nparts-1
       do el = 0, nelmnts-1
-        if ( part(el) == num_part ) then
-          if ( phi_material(num_material(el+1)) < TINYVAL) then
+        if (part(el) == num_part) then
+          if (phi_material(num_material(el+1)) < TINYVAL) then
             is_acoustic_el = .false.
             is_elastic_el = .true.
-          else if ( phi_material(num_material(el+1)) >= 1.d0) then
+          else if (phi_material(num_material(el+1)) >= 1.d0) then
             is_acoustic_el = .true.
             is_elastic_el = .false.
           else
@@ -1345,33 +1344,33 @@ end subroutine rotate_mesh_for_axisym
             is_elastic_el = .false.
           endif
           do el_adj = xadj_g(el), xadj_g(el+1)-1
-            if ( phi_material(num_material(adjncy_g(el_adj)+1)) < TINYVAL) then
+            if (phi_material(num_material(adjncy_g(el_adj)+1)) < TINYVAL) then
               is_acoustic_el_adj = .false.
               is_elastic_el_adj = .true.
-            else if ( phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
+            else if (phi_material(num_material(adjncy_g(el_adj)+1)) >= 1.d0) then
               is_acoustic_el_adj = .true.
               is_elastic_el_adj = .false.
             else
               is_acoustic_el_adj = .false.
               is_elastic_el_adj = .false.
             endif
-            if ( (part(adjncy_g(el_adj)) == num_part_bis) .and. &
+            if ((part(adjncy_g(el_adj)) == num_part_bis) .and. &
                 (is_acoustic_el .eqv. is_acoustic_el_adj) .and. &
-                (is_elastic_el .eqv. is_elastic_el_adj) ) then
+                (is_elastic_el .eqv. is_elastic_el_adj)) then
               tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+0) = el
               tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+1) = adjncy_g(el_adj)
               ncommon_nodes = 0
               do num_node = 0, 4-1
                 do num_node_bis = 0, 4-1
-                  if ( elmnts_l(el*NCORNERS+num_node) == &
-                      elmnts_l(adjncy_g(el_adj)*NCORNERS+num_node_bis) ) then
+                  if (elmnts_l(el*NCORNERS+num_node) == &
+                      elmnts_l(adjncy_g(el_adj)*NCORNERS+num_node_bis)) then
                     tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+3+ncommon_nodes) &
                                 = elmnts_l(el*NCORNERS+num_node)
                     ncommon_nodes = ncommon_nodes + 1
                   endif
                 enddo
               enddo
-              if ( ncommon_nodes > 0 ) then
+              if (ncommon_nodes > 0) then
                 tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+2) = ncommon_nodes
               else
                 print *, "Error while building interfaces!", ncommon_nodes
@@ -1404,12 +1403,12 @@ end subroutine rotate_mesh_for_axisym
 
   integer  :: i, j
 
-  if ( num_phase == 1 ) then
+  if (num_phase == 1) then
      npgeo = 0
 
      do i = 0, nnodes-1
         do j = glob2loc_nodes_nparts(i), glob2loc_nodes_nparts(i+1)-1
-           if ( glob2loc_nodes_parts(j) == iproc ) then
+           if (glob2loc_nodes_parts(j) == iproc) then
               npgeo = npgeo + 1
            endif
         enddo
@@ -1417,7 +1416,7 @@ end subroutine rotate_mesh_for_axisym
   else
      do i = 0, nnodes-1
         do j = glob2loc_nodes_nparts(i), glob2loc_nodes_nparts(i+1)-1
-           if ( glob2loc_nodes_parts(j) == iproc ) then
+           if (glob2loc_nodes_parts(j) == iproc) then
               write(IIN_database,*) glob2loc_nodes(j)+1, nodes_coords(1,i+1), nodes_coords(2,i+1)
            endif
         enddo
@@ -1495,15 +1494,15 @@ end subroutine rotate_mesh_for_axisym
 
   num_interface = 0
 
-  if ( num_phase == 1 ) then
+  if (num_phase == 1) then
 
      my_interfaces(:) = 0
      my_nb_interfaces(:) = 0
 
      do i = 0, nparts-1
         do j = i+1, nparts-1
-           if ( (tab_size_interfaces(num_interface) < tab_size_interfaces(num_interface+1)) .and. &
-                (i == iproc .or. j == iproc) ) then
+           if ((tab_size_interfaces(num_interface) < tab_size_interfaces(num_interface+1)) .and. &
+                (i == iproc .or. j == iproc)) then
               my_interfaces(num_interface) = 1
               my_nb_interfaces(num_interface) = tab_size_interfaces(num_interface+1) &
                                               - tab_size_interfaces(num_interface)
@@ -1517,25 +1516,25 @@ end subroutine rotate_mesh_for_axisym
 
     do i = 0, nparts-1
       do j = i+1, nparts-1
-        if ( my_interfaces(num_interface) == 1 ) then
-          if ( i == iproc ) then
+        if (my_interfaces(num_interface) == 1) then
+          if (i == iproc) then
             write(IIN_database,*) j, my_nb_interfaces(num_interface)
           else
             write(IIN_database,*) i, my_nb_interfaces(num_interface)
           endif
 
           do k = tab_size_interfaces(num_interface), tab_size_interfaces(num_interface+1)-1
-            if ( i == iproc ) then
+            if (i == iproc) then
               local_elmnt = glob2loc_elmnts(tab_interfaces(k*5+0))+1
             else
               local_elmnt = glob2loc_elmnts(tab_interfaces(k*5+1))+1
             endif
 
-            if ( tab_interfaces(k*5+2) == 1 ) then
+            if (tab_interfaces(k*5+2) == 1) then
               ! common node (single point)
               do l = glob2loc_nodes_nparts(tab_interfaces(k*5+3)), &
                         glob2loc_nodes_nparts(tab_interfaces(k*5+3)+1)-1
-                if ( glob2loc_nodes_parts(l) == iproc ) then
+                if (glob2loc_nodes_parts(l) == iproc) then
                   local_nodes(1) = glob2loc_nodes(l)+1
                 endif
               enddo
@@ -1543,19 +1542,19 @@ end subroutine rotate_mesh_for_axisym
               write(IIN_database,*) local_elmnt, tab_interfaces(k*5+2), &
                                         local_nodes(1), -1
             else
-              if ( tab_interfaces(k*5+2) == 2 ) then
+              if (tab_interfaces(k*5+2) == 2) then
                 ! common edge (two nodes)
                 ! first node
                 do l = glob2loc_nodes_nparts(tab_interfaces(k*5+3)), &
                            glob2loc_nodes_nparts(tab_interfaces(k*5+3)+1)-1
-                  if ( glob2loc_nodes_parts(l) == iproc ) then
+                  if (glob2loc_nodes_parts(l) == iproc) then
                     local_nodes(1) = glob2loc_nodes(l)+1
                   endif
                 enddo
                 ! second node
                 do l = glob2loc_nodes_nparts(tab_interfaces(k*5+4)), &
                          glob2loc_nodes_nparts(tab_interfaces(k*5+4)+1)-1
-                  if ( glob2loc_nodes_parts(l) == iproc ) then
+                  if (glob2loc_nodes_parts(l) == iproc) then
                     local_nodes(2) = glob2loc_nodes(l)+1
                   endif
                 enddo
@@ -1598,12 +1597,12 @@ end subroutine rotate_mesh_for_axisym
 
   integer  :: i, l
 
-  if ( num_phase == 1 ) then
+  if (num_phase == 1) then
 
     nsurface_loc = 0
 
     do i = 1, nsurface
-      if ( part(surface(1,i)) == iproc ) then
+      if (part(surface(1,i)) == iproc) then
         nsurface_loc = nsurface_loc + 1
       endif
     enddo
@@ -1613,15 +1612,15 @@ end subroutine rotate_mesh_for_axisym
     nsurface_loc = 0
 
     do i = 1, nsurface
-      if ( part(surface(1,i)) == iproc ) then
+      if (part(surface(1,i)) == iproc) then
         nsurface_loc = nsurface_loc + 1
 
         local_elmnt = glob2loc_elmnts(surface(1,i)) + 1
 
-        if ( surface(2,i) == 1 ) then
+        if (surface(2,i) == 1) then
           do l = glob2loc_nodes_nparts(surface(3,i)), &
                   glob2loc_nodes_nparts(surface(3,i)+1)-1
-            if ( glob2loc_nodes_parts(l) == iproc ) then
+            if (glob2loc_nodes_parts(l) == iproc) then
               local_nodes(1) = glob2loc_nodes(l)+1
             endif
           enddo
@@ -1629,16 +1628,16 @@ end subroutine rotate_mesh_for_axisym
           write(IIN_database,*) local_elmnt, surface(2,i), local_nodes(1), -1
         endif
 
-        if ( surface(2,i) == 2 ) then
+        if (surface(2,i) == 2) then
           do l = glob2loc_nodes_nparts(surface(3,i)), &
                   glob2loc_nodes_nparts(surface(3,i)+1)-1
-            if ( glob2loc_nodes_parts(l) == iproc ) then
+            if (glob2loc_nodes_parts(l) == iproc) then
               local_nodes(1) = glob2loc_nodes(l)+1
             endif
           enddo
           do l = glob2loc_nodes_nparts(surface(4,i)), &
                   glob2loc_nodes_nparts(surface(4,i)+1)-1
-            if ( glob2loc_nodes_parts(l) == iproc ) then
+            if (glob2loc_nodes_parts(l) == iproc) then
               local_nodes(2) = glob2loc_nodes(l)+1
             endif
           enddo
@@ -1698,13 +1697,13 @@ end subroutine rotate_mesh_for_axisym
 !! DK DK Sept 2012: appear twice in the list any more because each occurrence now appears with a different type code
 !! DK DK Sept 2012    match = 0
 !! DK DK Sept 2012    do i = 1, nb_elmnts_abs
-!! DK DK Sept 2012       if ( abs_surface(1,num_edge) == abs_surface_merge(i) ) then
+!! DK DK Sept 2012       if (abs_surface(1,num_edge) == abs_surface_merge(i)) then
 !! DK DK Sept 2012          match = i
 !! DK DK Sept 2012          exit
 !! DK DK Sept 2012       endif
 !! DK DK Sept 2012    enddo
 
-!! DK DK Sept 2012    if ( match == 0 ) then
+!! DK DK Sept 2012    if (match == 0) then
        nb_elmnts_abs = nb_elmnts_abs + 1
        match = nb_elmnts_abs
 !! DK DK Sept 2012    endif
@@ -1713,55 +1712,55 @@ end subroutine rotate_mesh_for_axisym
 !! DK DK Sept 2012 added the absorbing interface type for Stacey
     abs_surface_type(match) = abs_surface(5,num_edge)
 
-    if ( (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
-          abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1)) ) then
+    if ((abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
+          abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1))) then
        abs_surface_char(IEDGE1,match) = .true.
     endif
 
-    if ( (abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
-          abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1)) ) then
+    if ((abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
+          abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1))) then
        temp = abs_surface(4,num_edge)
        abs_surface(4,num_edge) = abs_surface(3,num_edge)
        abs_surface(3,num_edge) = temp
        abs_surface_char(IEDGE1,match) = .true.
     endif
 
-    if ( (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
-          abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
+    if ((abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
+          abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3))) then
        abs_surface_char(IEDGE4,match) = .true.
     endif
 
-    if ( (abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
-          abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
+    if ((abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+0) .and. &
+          abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3))) then
        temp = abs_surface(4,num_edge)
        abs_surface(4,num_edge) = abs_surface(3,num_edge)
        abs_surface(3,num_edge) = temp
        abs_surface_char(IEDGE4,match) = .true.
     endif
 
-    if ( (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1) .and. &
-          abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2)) ) then
+    if ((abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1) .and. &
+          abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2))) then
        abs_surface_char(IEDGE2,match) = .true.
     endif
 
-    if ( (abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1) .and. &
-          abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2)) ) then
+    if ((abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+1) .and. &
+          abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2))) then
        temp = abs_surface(4,num_edge)
        abs_surface(4,num_edge) = abs_surface(3,num_edge)
        abs_surface(3,num_edge) = temp
        abs_surface_char(IEDGE2,match) = .true.
     endif
 
-    if ( (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2) .and. &
-          abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
+    if ((abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2) .and. &
+          abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3))) then
        temp = abs_surface(4,num_edge)
        abs_surface(4,num_edge) = abs_surface(3,num_edge)
        abs_surface(3,num_edge) = temp
        abs_surface_char(IEDGE3,match) = .true.
     endif
 
-    if ( (abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2) .and. &
-          abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3)) ) then
+    if ((abs_surface(4,num_edge) == elmnts(ngnod*abs_surface_merge(match)+2) .and. &
+          abs_surface(3,num_edge) == elmnts(ngnod*abs_surface_merge(match)+3))) then
        abs_surface_char(IEDGE3,match) = .true.
     endif
 
@@ -1807,38 +1806,38 @@ end subroutine rotate_mesh_for_axisym
 !! DK DK Sept 2012: But here I think we must leave it because we are just fixing the fluid/solid elements in postprocessing.
   match = 0
   do i = 1, nelemabs_merge
-    if ( abs_surface(1,num_edge) == abs_surface_merge(i) ) then
+    if (abs_surface(1,num_edge) == abs_surface_merge(i)) then
        match = i
        exit
     endif
   enddo
 
-  if ( is_acoustic(num_material(abs_surface(1,num_edge)+1)) ) then
+  if (is_acoustic(num_material(abs_surface(1,num_edge)+1))) then
 
     do iedge = 1, nedges_coupled
 
       do inode1 = 0, 3
-        if ( abs_surface(3,num_edge) == elmnts(ngnod*edges_coupled(1,iedge)+inode1) ) then
+        if (abs_surface(3,num_edge) == elmnts(ngnod*edges_coupled(1,iedge)+inode1)) then
           do inode2 = 0, 3
-            if ( abs_surface(3,num_edge) == elmnts(ngnod*edges_coupled(2,iedge)+inode2) ) then
+            if (abs_surface(3,num_edge) == elmnts(ngnod*edges_coupled(2,iedge)+inode2)) then
 
-              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
+              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1)) then
                   ibegin_edge1(match) = 2
               endif
 
-              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2)) then
                   ibegin_edge2(match) = 2
               endif
 
-              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2)) then
                   ibegin_edge3(match) = 2
               endif
 
-              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) )  then
+              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3)) then
                   ibegin_edge4(match) = 2
               endif
 
@@ -1847,26 +1846,26 @@ end subroutine rotate_mesh_for_axisym
 
         endif
 
-        if ( abs_surface(4,num_edge) == elmnts(ngnod*edges_coupled(1,iedge)+inode1) ) then
+        if (abs_surface(4,num_edge) == elmnts(ngnod*edges_coupled(1,iedge)+inode1)) then
           do inode2 = 0, 3
-            if ( abs_surface(4,num_edge) == elmnts(ngnod*edges_coupled(2,iedge)+inode2) ) then
-              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) )  then
+            if (abs_surface(4,num_edge) == elmnts(ngnod*edges_coupled(2,iedge)+inode2)) then
+              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1)) then
                   iend_edge1(match) = NGLLX - 1
               endif
 
-              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2)) then
                   iend_edge2(match) = NGLLZ - 1
               endif
 
-              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2) )  then
+              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2)) then
                   iend_edge3(match) = NGLLX - 1
               endif
 
-              if ( abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) )  then
+              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3)) then
                   iend_edge4(match) = NGLLZ - 1
               endif
 
@@ -1901,16 +1900,16 @@ end subroutine rotate_mesh_for_axisym
 
   integer  :: i
 
-  if ( num_phase == 1 ) then
+  if (num_phase == 1) then
     nelemabs_loc = 0
     do i = 1, nelemabs_merge
-       if ( part(abs_surface_merge(i)) == iproc ) then
+       if (part(abs_surface_merge(i)) == iproc) then
           nelemabs_loc = nelemabs_loc + 1
        endif
     enddo
   else
     do i = 1, nelemabs_merge
-       if ( part(abs_surface_merge(i)) == iproc ) then
+       if (part(abs_surface_merge(i)) == iproc) then
 
 ! beware here and below that external meshes (for instance coming from CUBIT or Gmsh)
 ! may have rotated elements and thus edge 1 may not correspond to the bottom,
@@ -1968,55 +1967,55 @@ end subroutine rotate_mesh_for_axisym
     acforcing_surface_merge(match) = acforcing_surface(1,num_edge)
     acforcing_surface_type(match) = acforcing_surface(5,num_edge)
 
-    if ( (acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+0) .and. &
-          acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+1)) ) then
+    if ((acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+0) .and. &
+          acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+1))) then
        acforcing_surface_char(IEDGE1,match) = .true.
     endif
 
-    if ( (acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+0) .and. &
-          acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+1)) ) then
+    if ((acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+0) .and. &
+          acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+1))) then
        temp = acforcing_surface(4,num_edge)
        acforcing_surface(4,num_edge) = acforcing_surface(3,num_edge)
        acforcing_surface(3,num_edge) = temp
        acforcing_surface_char(IEDGE1,match) = .true.
     endif
 
-    if ( (acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+0) .and. &
-          acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+3)) ) then
+    if ((acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+0) .and. &
+          acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+3))) then
        acforcing_surface_char(IEDGE4,match) = .true.
     endif
 
-    if ( (acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+0) .and. &
-          acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+3)) ) then
+    if ((acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+0) .and. &
+          acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+3))) then
        temp = acforcing_surface(4,num_edge)
        acforcing_surface(4,num_edge) = acforcing_surface(3,num_edge)
        acforcing_surface(3,num_edge) = temp
        acforcing_surface_char(IEDGE4,match) = .true.
     endif
 
-    if ( (acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+1) .and. &
-          acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+2)) ) then
+    if ((acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+1) .and. &
+          acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+2))) then
        acforcing_surface_char(IEDGE2,match) = .true.
     endif
 
-    if ( (acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+1) .and. &
-          acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+2)) ) then
+    if ((acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+1) .and. &
+          acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+2))) then
        temp = acforcing_surface(4,num_edge)
        acforcing_surface(4,num_edge) = acforcing_surface(3,num_edge)
        acforcing_surface(3,num_edge) = temp
        acforcing_surface_char(IEDGE2,match) = .true.
     endif
 
-    if ( (acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+2) .and. &
-          acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+3)) ) then
+    if ((acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+2) .and. &
+          acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+3))) then
        temp = acforcing_surface(4,num_edge)
        acforcing_surface(4,num_edge) = acforcing_surface(3,num_edge)
        acforcing_surface(3,num_edge) = temp
        acforcing_surface_char(IEDGE3,match) = .true.
     endif
 
-    if ( (acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+2) .and. &
-          acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+3)) ) then
+    if ((acforcing_surface(4,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+2) .and. &
+          acforcing_surface(3,num_edge) == elmnts(ngnod*acforcing_surface_merge(match)+3))) then
        acforcing_surface_char(IEDGE3,match) = .true.
     endif
 
@@ -2065,16 +2064,16 @@ end subroutine rotate_mesh_for_axisym
 
   integer  :: i
 
-  if ( num_phase == 1 ) then
+  if (num_phase == 1) then
     nelemacforcing_loc = 0
     do i = 1, nelemacforcing_merge
-       if ( part(acforcing_surface_merge(i)) == iproc ) then
+       if (part(acforcing_surface_merge(i)) == iproc) then
           nelemacforcing_loc = nelemacforcing_loc + 1
        endif
     enddo
   else
     do i = 1, nelemacforcing_merge
-       if ( part(acforcing_surface_merge(i)) == iproc ) then
+       if (part(acforcing_surface_merge(i)) == iproc) then
 
 ! beware here and below that external meshes (for instance coming from CUBIT or Gmsh)
 ! may have rotated elements and thus edge 1 may not correspond to the bottom,
@@ -2251,9 +2250,9 @@ end subroutine rotate_mesh_for_axisym
 
   nedges_coupled = 0
   do el = 0, nelmnts-1
-     if ( is_acoustic(num_material(el+1)) ) then
+     if (is_acoustic(num_material(el+1))) then
         do el_adj = xadj_l(el), xadj_l(el+1) - 1
-           if ( is_elastic(num_material(adjncy_l(el_adj)+1)) ) then
+           if (is_elastic(num_material(adjncy_l(el_adj)+1))) then
               nedges_coupled = nedges_coupled + 1
            endif
         enddo
@@ -2266,9 +2265,9 @@ end subroutine rotate_mesh_for_axisym
 
   nedges_coupled = 0
   do el = 0, nelmnts-1
-     if ( is_acoustic(num_material(el+1)) ) then
+     if (is_acoustic(num_material(el+1))) then
         do el_adj = xadj_l(el), xadj_l(el+1) - 1
-           if ( is_elastic(num_material(adjncy_l(el_adj)+1)) ) then
+           if (is_elastic(num_material(adjncy_l(el_adj)+1))) then
               nedges_coupled = nedges_coupled + 1
               edges_coupled(1,nedges_coupled) = el
               edges_coupled(2,nedges_coupled) = adjncy_l(el_adj)
@@ -2281,8 +2280,8 @@ end subroutine rotate_mesh_for_axisym
   do i = 1, nedges_coupled*nproc
      is_repartitioned = .false.
      do num_edge = 1, nedges_coupled
-        if ( part(edges_coupled(1,num_edge)) /= part(edges_coupled(2,num_edge)) ) then
-           if ( part(edges_coupled(1,num_edge)) < part(edges_coupled(2,num_edge)) ) then
+        if (part(edges_coupled(1,num_edge)) /= part(edges_coupled(2,num_edge))) then
+           if (part(edges_coupled(1,num_edge)) < part(edges_coupled(2,num_edge))) then
               part(edges_coupled(2,num_edge)) = part(edges_coupled(1,num_edge))
            else
               part(edges_coupled(1,num_edge)) = part(edges_coupled(2,num_edge))
@@ -2292,7 +2291,7 @@ end subroutine rotate_mesh_for_axisym
         endif
 
      enddo
-     if ( .not. is_repartitioned ) then
+     if (.not. is_repartitioned) then
         exit
      endif
   enddo
@@ -2344,9 +2343,9 @@ end subroutine rotate_mesh_for_axisym
 
   nedges_acporo_coupled = 0
   do el = 0, nelmnts-1
-     if ( is_acoustic(num_material(el+1)) ) then
+     if (is_acoustic(num_material(el+1))) then
         do el_adj = xadj_l(el), xadj_l(el+1) - 1
-           if ( is_poroelastic(num_material(adjncy_l(el_adj)+1)) ) then
+           if (is_poroelastic(num_material(adjncy_l(el_adj)+1))) then
               nedges_acporo_coupled = nedges_acporo_coupled + 1
            endif
 
@@ -2360,9 +2359,9 @@ end subroutine rotate_mesh_for_axisym
 
   nedges_acporo_coupled = 0
   do el = 0, nelmnts-1
-     if ( is_acoustic(num_material(el+1)) ) then
+     if (is_acoustic(num_material(el+1))) then
         do el_adj = xadj_l(el), xadj_l(el+1) - 1
-           if ( is_poroelastic(num_material(adjncy_l(el_adj)+1)) ) then
+           if (is_poroelastic(num_material(adjncy_l(el_adj)+1))) then
               nedges_acporo_coupled = nedges_acporo_coupled + 1
               edges_acporo_coupled(1,nedges_acporo_coupled) = el
               edges_acporo_coupled(2,nedges_acporo_coupled) = adjncy_l(el_adj)
@@ -2375,8 +2374,8 @@ end subroutine rotate_mesh_for_axisym
   do i = 1, nedges_acporo_coupled*nproc
      is_repartitioned = .false.
      do num_edge = 1, nedges_acporo_coupled
-        if ( part(edges_acporo_coupled(1,num_edge)) /= part(edges_acporo_coupled(2,num_edge)) ) then
-           if ( part(edges_acporo_coupled(1,num_edge)) < part(edges_acporo_coupled(2,num_edge)) ) then
+        if (part(edges_acporo_coupled(1,num_edge)) /= part(edges_acporo_coupled(2,num_edge))) then
+           if (part(edges_acporo_coupled(1,num_edge)) < part(edges_acporo_coupled(2,num_edge))) then
               part(edges_acporo_coupled(2,num_edge)) = part(edges_acporo_coupled(1,num_edge))
            else
               part(edges_acporo_coupled(1,num_edge)) = part(edges_acporo_coupled(2,num_edge))
@@ -2385,7 +2384,7 @@ end subroutine rotate_mesh_for_axisym
         endif
 
      enddo
-     if ( .not. is_repartitioned ) then
+     if (.not. is_repartitioned) then
         exit
      endif
   enddo
@@ -2437,9 +2436,9 @@ end subroutine rotate_mesh_for_axisym
 
   nedges_elporo_coupled = 0
   do el = 0, nelmnts-1
-     if ( is_poroelastic(num_material(el+1)) ) then
+     if (is_poroelastic(num_material(el+1))) then
         do el_adj = xadj_l(el), xadj_l(el+1) - 1
-           if ( is_elastic(num_material(adjncy_l(el_adj)+1)) ) then
+           if (is_elastic(num_material(adjncy_l(el_adj)+1))) then
               nedges_elporo_coupled = nedges_elporo_coupled + 1
            endif
 
@@ -2453,9 +2452,9 @@ end subroutine rotate_mesh_for_axisym
 
   nedges_elporo_coupled = 0
   do el = 0, nelmnts-1
-     if ( is_poroelastic(num_material(el+1)) ) then
+     if (is_poroelastic(num_material(el+1))) then
         do el_adj = xadj_l(el), xadj_l(el+1) - 1
-           if ( is_elastic(num_material(adjncy_l(el_adj)+1)) ) then
+           if (is_elastic(num_material(adjncy_l(el_adj)+1))) then
               nedges_elporo_coupled = nedges_elporo_coupled + 1
               edges_elporo_coupled(1,nedges_elporo_coupled) = el
               edges_elporo_coupled(2,nedges_elporo_coupled) = adjncy_l(el_adj)
@@ -2468,8 +2467,8 @@ end subroutine rotate_mesh_for_axisym
   do i = 1, nedges_elporo_coupled*nproc
      is_repartitioned = .false.
      do num_edge = 1, nedges_elporo_coupled
-        if ( part(edges_elporo_coupled(1,num_edge)) /= part(edges_elporo_coupled(2,num_edge)) ) then
-           if ( part(edges_elporo_coupled(1,num_edge)) < part(edges_elporo_coupled(2,num_edge)) ) then
+        if (part(edges_elporo_coupled(1,num_edge)) /= part(edges_elporo_coupled(2,num_edge))) then
+           if (part(edges_elporo_coupled(1,num_edge)) < part(edges_elporo_coupled(2,num_edge))) then
               part(edges_elporo_coupled(2,num_edge)) = part(edges_elporo_coupled(1,num_edge))
            else
               part(edges_elporo_coupled(1,num_edge)) = part(edges_elporo_coupled(2,num_edge))
@@ -2478,7 +2477,7 @@ end subroutine rotate_mesh_for_axisym
         endif
 
      enddo
-     if ( .not. is_repartitioned ) then
+     if (.not. is_repartitioned) then
         exit
      endif
   enddo
@@ -2540,7 +2539,7 @@ end subroutine rotate_mesh_for_axisym
 ! loop on all the elements
   do el = 0, nelmnts-2 ! we stop one element before the end in order for the second loop to be OK in all cases
     do el2 = el+1, nelmnts-1
-      if(is_periodic(el2)) cycle
+      if (is_periodic(el2)) cycle
       ! it is sufficient to loop on the four corners to determine if this element has at least one periodic point
       do icorner = 0,NCORNERS-1
         num_node = elmnts_l(icorner + NCORNERS*el) + 1 ! the plus one is because elmnts_l() starts at zero
@@ -2551,9 +2550,9 @@ end subroutine rotate_mesh_for_axisym
           x2 = nodes_coords(1,num_node2)
           y2 = nodes_coords(2,num_node2)
           ! if the two points are at the same height Y
-          if(abs(y2 - y) < xtol) then
+          if (abs(y2 - y) < xtol) then
             ! if in addition their X coordinates differ by exactly the periodicity distance
-            if(abs(abs(x2 - x) - PERIODIC_HORIZ_DIST) < xtol) then
+            if (abs(abs(x2 - x) - PERIODIC_HORIZ_DIST) < xtol) then
               ! then these two elements are in contact by a periodic edge
               is_periodic(el) = .true.
               is_periodic(el2) = .true.
@@ -2572,16 +2571,16 @@ end subroutine rotate_mesh_for_axisym
 ! loop on all the elements to find the first partition that contains a periodic element
   ifirst_partition_found = -1
   do el = 0, nelmnts-1
-    if(is_periodic(el)) then
+    if (is_periodic(el)) then
       ifirst_partition_found = part(el)
       exit
     endif
   enddo
-  if(ifirst_partition_found < 0) stop 'error: no periodic element found, even though ADD_PERIODIC_CONDITIONS is set'
+  if (ifirst_partition_found < 0) stop 'error: no periodic element found, even though ADD_PERIODIC_CONDITIONS is set'
 
 ! loop on all the elements to move all periodic elements to the first partition found
   do el = 0, nelmnts-1
-    if(is_periodic(el)) part(el) = ifirst_partition_found
+    if (is_periodic(el)) part(el) = ifirst_partition_found
   enddo
 
   end subroutine periodic_edges_repartitioning
@@ -2606,16 +2605,16 @@ end subroutine rotate_mesh_for_axisym
 
   integer  :: i
 
-  if ( num_phase == 1 ) then
+  if (num_phase == 1) then
      nedges_coupled_loc_bis = 0
      do i = 1, nedges_coupled_bis
-        if ( part(edges_coupled_bis(1,i)) == iproc ) then
+        if (part(edges_coupled_bis(1,i)) == iproc) then
            nedges_coupled_loc_bis = nedges_coupled_loc_bis + 1
         endif
      enddo
   else
      do i = 1, nedges_coupled_bis
-        if ( part(edges_coupled_bis(1,i)) == iproc ) then
+        if (part(edges_coupled_bis(1,i)) == iproc) then
            write(IIN_database,*) glob2loc_elmnts(edges_coupled_bis(1,i))+1, glob2loc_elmnts(edges_coupled_bis(2,i))+1
         endif
      enddo
@@ -2642,10 +2641,10 @@ end subroutine rotate_mesh_for_axisym
 
   integer  :: i
 
-  if ( num_phase == 1 ) then
+  if (num_phase == 1) then
      nelem_on_the_axis_loc = 0
      do i = 1, nelem_on_the_axis
-        if ( part(ispec_of_axial_elements(i)) == iproc ) then
+        if (part(ispec_of_axial_elements(i)) == iproc) then
            nelem_on_the_axis_loc = nelem_on_the_axis_loc + 1
         endif
      enddo
@@ -2655,7 +2654,7 @@ end subroutine rotate_mesh_for_axisym
         !  print *,"ispec_of_axial_elements :",ispec_of_axial_elements(i)," -----> glob2loc_elmnts :", &
        !     glob2loc_elmnts(ispec_of_axial_elements(i))
        ! endif
-        if ( part(ispec_of_axial_elements(i)) == iproc ) then
+        if (part(ispec_of_axial_elements(i)) == iproc) then
            write(IIN_database,*) glob2loc_elmnts(ispec_of_axial_elements(i)) +remove_min_to_start_at_zero
         endif
      enddo

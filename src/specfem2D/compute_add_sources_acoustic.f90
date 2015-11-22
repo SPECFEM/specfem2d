@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -48,7 +47,7 @@
   use specfem_par, only: acoustic,nglob_acoustic,&
                          NSOURCES,source_type,source_time_function,&
                          is_proc_source,ispec_selected_source,&
-                         hxis_store,hgammas_store,ibool,kappastore
+                         hxis_store,hgammas_store,ibool,kappastore,myrank
   implicit none
   include "constants.h"
 
@@ -59,14 +58,14 @@
   integer :: i_source,i,j,iglob
   double precision :: hlagrange
 
-  do i_source=1,NSOURCES
+  do i_source= 1,NSOURCES
     ! if this processor core carries the source and the source element is acoustic
     if (is_proc_source(i_source) == 1 .and. acoustic(ispec_selected_source(i_source))) then
       ! collocated force
       ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
       ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
       ! to add minus the source to Chi_dot_dot to get plus the source in pressure
-      if( source_type(i_source) == 1 ) then
+      if (source_type(i_source) == 1) then
         ! forward wavefield
         do j = 1,NGLLZ
           do i = 1,NGLLX
@@ -81,11 +80,11 @@
           enddo
         enddo
       ! moment tensor
-      else if(source_type(i_source) == 2) then
-         call exit_MPI('cannot have moment tensor source in acoustic element')
+      else if (source_type(i_source) == 2) then
+         call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
       endif
     endif ! if this processor core carries the source and the source element is acoustic
-  enddo ! do i_source=1,NSOURCES
+  enddo ! do i_source= 1,NSOURCES
 
   end subroutine compute_add_sources_acoustic
 !
@@ -106,12 +105,12 @@
   irec_local = 0
   do irec = 1,nrec
     ! add the source (only if this proc carries the source)
-    if( myrank == which_proc_receiver(irec) ) then
+    if (myrank == which_proc_receiver(irec)) then
       irec_local = irec_local + 1
-      if( acoustic(ispec_selected_rec(irec)) ) then
+      if (acoustic(ispec_selected_rec(irec))) then
         ! add source array
-        do j=1,NGLLZ
-          do i=1,NGLLX
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
             iglob = ibool(i,j,ispec_selected_rec(irec))
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
                                                 adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j) &
@@ -148,10 +147,10 @@
   do inum = 1,nelem_acforcing
 
     ispec = numacforcing(inum)
-    if(.not. acoustic(ispec)) cycle ! acoustic spectral element
+    if (.not. acoustic(ispec)) cycle ! acoustic spectral element
 
     !--- left acoustic forcing boundary
-    if( codeacforcing(IEDGE4,inum) ) then
+    if (codeacforcing(IEDGE4,inum)) then
       i = 1
       do j = 1,NGLLZ
         iglob = ibool(i,j,ispec)
@@ -163,8 +162,8 @@
         weight = jacobian1D * wzgll(j)
 
         ! define displacement components which will force the boundary
-        if( PML_BOUNDARY_CONDITIONS ) then
-          if( is_PML(ispec) ) then
+        if (PML_BOUNDARY_CONDITIONS) then
+          if (is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -181,7 +180,7 @@
     endif  !  end of left acoustic forcing boundary
 
     !--- right acoustic forcing boundary
-    if(codeacforcing(IEDGE2,inum)) then
+    if (codeacforcing(IEDGE2,inum)) then
       i = NGLLX
       do j = 1,NGLLZ
         iglob = ibool(i,j,ispec)
@@ -193,8 +192,8 @@
         weight = jacobian1D * wzgll(j)
 
         ! define displacement components which will force the boundary
-        if( PML_BOUNDARY_CONDITIONS ) then
-          if( is_PML(ispec) ) then
+        if (PML_BOUNDARY_CONDITIONS) then
+          if (is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -211,7 +210,7 @@
     endif  !  end of right acoustic forcing boundary
 
     !--- bottom acoustic forcing boundary
-    if( codeacforcing(IEDGE1,inum) ) then
+    if (codeacforcing(IEDGE1,inum)) then
       j = 1
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
@@ -223,8 +222,8 @@
         weight = jacobian1D * wxgll(i)
 
         ! define displacement components which will force the boundary
-        if( PML_BOUNDARY_CONDITIONS ) then
-          if( is_PML(ispec) ) then
+        if (PML_BOUNDARY_CONDITIONS) then
+          if (is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -241,7 +240,7 @@
     endif  !  end of bottom acoustic forcing boundary
 
     !--- top acoustic forcing boundary
-    if( codeacforcing(IEDGE3,inum) ) then
+    if (codeacforcing(IEDGE3,inum)) then
       j = NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
@@ -253,8 +252,8 @@
         weight = jacobian1D * wxgll(i)
 
         ! define displacement components which will force the boundary
-        if( PML_BOUNDARY_CONDITIONS ) then
-          if( is_PML(ispec) ) then
+        if (PML_BOUNDARY_CONDITIONS) then
+          if (is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -302,10 +301,10 @@
 
     ispec = numacforcing(inum)
     ! gravito spectral element
-    if( .not. gravitoacoustic(ispec) ) cycle
+    if (.not. gravitoacoustic(ispec) ) cycle
 
     !--- left acoustic forcing boundary
-    if( codeacforcing(IEDGE4,inum) ) then
+    if (codeacforcing(IEDGE4,inum)) then
       i = 1
       do j = 1,NGLLZ
         iglob = ibool(i,j,ispec)
@@ -317,8 +316,8 @@
         weight = jacobian1D * wzgll(j)
 
         ! define displacement components which will force the boundary
-        if( PML_BOUNDARY_CONDITIONS ) then
-          if( is_PML(ispec) ) then
+        if (PML_BOUNDARY_CONDITIONS) then
+          if (is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -351,7 +350,7 @@
         gammazl = gammaz(i,j,ispec)
 
         ! if external density model
-        if( assign_external_model ) then
+        if (assign_external_model) then
           rhol = rhoext(i,j,ispec)
           gravityl = gravityext(i,j,ispec)
         endif
@@ -359,7 +358,7 @@
         ! impose potential_gravito in order to have z displacement equal to forced value
         iglob = ibool(i,j,ispec)
         displ_n = displ_x*nx + displ_z*nz
-        if( abs(nz) > TINYVAL ) then
+        if (abs(nz) > TINYVAL) then
           potential_gravito(iglob) = ( rhol*displ_n -(tempx1l*xizl + tempx2l*gammazl)*nz - &
                                        (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
         else
@@ -374,7 +373,7 @@
     endif  !  end of left acoustic forcing boundary
 
     !--- right acoustic forcing boundary
-    if( codeacforcing(IEDGE2,inum) ) then
+    if (codeacforcing(IEDGE2,inum)) then
       i = NGLLX
       do j = 1,NGLLZ
         iglob = ibool(i,j,ispec)
@@ -386,8 +385,8 @@
         weight = jacobian1D * wzgll(j)
 
         ! define displacement components which will force the boundary
-        if( PML_BOUNDARY_CONDITIONS ) then
-          if( is_PML(ispec) ) then
+        if (PML_BOUNDARY_CONDITIONS) then
+          if (is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -420,7 +419,7 @@
         gammazl = gammaz(i,j,ispec)
 
         ! if external density model
-        if( assign_external_model ) then
+        if (assign_external_model) then
           rhol = rhoext(i,j,ispec)
           gravityl = gravityext(i,j,ispec)
         endif
@@ -428,7 +427,7 @@
         ! impose potential_gravito in order to have z displacement equal to forced value
         iglob = ibool(i,j,ispec)
         displ_n = displ_x*nx + displ_z*nz
-        if( abs(nz) > TINYVAL ) then
+        if (abs(nz) > TINYVAL) then
           potential_gravito(iglob) = ( rhol*displ_n - (tempx1l*xizl + tempx2l*gammazl)*nz - &
                                        (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
         else
@@ -444,7 +443,7 @@
     endif  !  end of right acoustic forcing boundary
 
     !--- bottom acoustic forcing boundary
-    if( codeacforcing(IEDGE1,inum) ) then
+    if (codeacforcing(IEDGE1,inum)) then
       j = 1
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
@@ -456,8 +455,8 @@
         weight = jacobian1D * wxgll(i)
 
         ! define displacement components which will force the boundary
-        if( PML_BOUNDARY_CONDITIONS ) then
-          if( is_PML(ispec) ) then
+        if (PML_BOUNDARY_CONDITIONS) then
+          if (is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -490,7 +489,7 @@
         gammazl = gammaz(i,j,ispec)
 
         ! if external density model
-        if( assign_external_model ) then
+        if (assign_external_model) then
            rhol = rhoext(i,j,ispec)
            gravityl = gravityext(i,j,ispec)
         endif
@@ -498,7 +497,7 @@
         ! impose potential_gravito in order to have z displacement equal to forced value
         iglob = ibool(i,j,ispec)
         displ_n = displ_x*nx + displ_z*nz
-        if( abs(nz) > TINYVAL) then
+        if (abs(nz) > TINYVAL) then
           potential_gravito(iglob) = ( rhol*displ_n - (tempx1l*xizl + tempx2l*gammazl)*nz - &
                                        (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
         else
@@ -513,7 +512,7 @@
     endif  !  end of bottom acoustic forcing boundary
 
     !--- top acoustic forcing boundary
-    if( codeacforcing(IEDGE3,inum) ) then
+    if (codeacforcing(IEDGE3,inum)) then
       j = NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
@@ -525,8 +524,8 @@
         weight = jacobian1D * wxgll(i)
 
         ! define displacement components which will force the boundary
-        if( PML_BOUNDARY_CONDITIONS ) then
-          if( is_PML(ispec) ) then
+        if (PML_BOUNDARY_CONDITIONS) then
+          if (is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -559,7 +558,7 @@
         gammazl = gammaz(i,j,ispec)
 
         ! if external density model
-        if( assign_external_model ) then
+        if (assign_external_model) then
           rhol = rhoext(i,j,ispec)
           gravityl = gravityext(i,j,ispec)
           Nsql = Nsqext(i,j,ispec)
@@ -570,7 +569,7 @@
         !!!! Mais vrai pour tous les points partages entre deux elements
         iglob = ibool(i,j,ispec)
         displ_n = displ_x*nx + displ_z*nz
-        if( abs(nz) > TINYVAL ) then
+        if (abs(nz) > TINYVAL) then
           potential_gravito(iglob) = ( rhol*displ_n - (tempx1l*xizl + tempx2l*gammazl)*nz - &
                                       (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
         else
@@ -585,7 +584,7 @@
 
       !write(*,*) 'ispec detection =',ispec
       !if ((ispec==2000).and.(mod(it,100)==0)) then
-      if( (ispec==800) .and. (mod(it,100)==0) ) then
+      if ((ispec==800) .and. (mod(it,100)==0)) then
       !if ((ispec==800)) then
         iglobzero=iglob
         write(*,*) ispec,it,Nsql,rhol,displ_n, &

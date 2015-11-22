@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -60,42 +59,42 @@
   double precision :: min_tshift_src_original
 
   ! checks the input
-  do i_source=1,NSOURCES
+  do i_source= 1,NSOURCES
 
     ! checks source type
-    if(.not. initialfield) then
+    if (.not. initialfield) then
       if (source_type(i_source) == 1) then
-        if ( myrank == 0 ) then
+        if (myrank == 0) then
           ! user output
-          write(IOUT,212) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
+          write(IMAIN,212) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
                        factor(i_source),anglesource(i_source)
         endif
-      else if(source_type(i_source) == 2) then
-        if ( myrank == 0 ) then
+      else if (source_type(i_source) == 2) then
+        if (myrank == 0) then
           ! user output
-          write(IOUT,222) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
+          write(IMAIN,222) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
                        factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
         endif
       else
-        call exit_MPI('Unknown source type number !')
+        call exit_MPI(myrank,'Unknown source type number !')
       endif
     endif
 
     ! if Dirac source time function, use a very thin Gaussian instead
     ! if Heaviside source time function, use a very thin error function instead
-    if(time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) &
+    if (time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) &
       f0(i_source) = 1.d0 / (10.d0 * deltat)
 
     ! checks source frequency
-    if( abs(f0(i_source)) < TINYVAL ) then
-      call exit_MPI('Error source frequency is zero')
+    if (abs(f0(i_source)) < TINYVAL) then
+      call exit_MPI(myrank,'Error source frequency is zero')
     endif
 
     ! half-duration of source
     hdur(i_source) = 1.d0 / f0(i_source)
 
     ! sets source start times, shifted by the given (non-zero) time-shift
-    if(time_function_type(i_source)== 5) then
+    if (time_function_type(i_source)== 5) then
       t0_source(i_source) = 2.0d0 * hdur(i_source) + tshift_src(i_source)
     else
       t0_source(i_source) = 1.20d0 * hdur(i_source) + tshift_src(i_source)
@@ -107,10 +106,10 @@
     ! convert angle from degrees to radians
     anglesource(i_source) = anglesource(i_source) * PI / 180.d0
 
-  enddo ! do i_source=1,NSOURCES
+  enddo ! do i_source= 1,NSOURCES
 
   ! initializes simulation start time
-  if( NSOURCES == 1 ) then
+  if (NSOURCES == 1) then
     ! simulation start time
     t0 = t0_source(1)
     ! sets source time shift relative to simulation start time
@@ -126,92 +125,93 @@
 
   ! checks if user set USER_T0 to fix simulation start time
   ! note: USER_T0 has to be positive
-  if( USER_T0 > 0.d0 ) then
+  if (USER_T0 > 0.d0) then
     ! user cares about origin time and time shifts of the CMTSOLUTION
     ! and wants to fix simulation start time to a constant start time
     ! time 0 on time axis will correspond to given origin time
 
     ! notifies user
-    if( myrank == 0 ) then
-      write(IOUT,*)
-      write(IOUT,*) '    using USER_T0 . . . . . . . . . = ',USER_T0
-      write(IOUT,*) '      original t0 . . . . . . . . . = ',t0
-      write(IOUT,*) '      min_tshift_src_original . . . = ',min_tshift_src_original
-      write(IOUT,*)
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) '    using USER_T0 . . . . . . . . . = ',USER_T0
+      write(IMAIN,*) '      original t0 . . . . . . . . . = ',t0
+      write(IMAIN,*) '      min_tshift_src_original . . . = ',min_tshift_src_original
+      write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
     ! checks if automatically set t0 is too small
     ! note: times in seismograms are shifted by t0(1)
-    if( t0 <= USER_T0 + min_tshift_src_original ) then
+    if (t0 <= USER_T0 + min_tshift_src_original) then
 
       ! sets new simulation start time such that
       ! simulation starts at t = - t0 = - USER_T0
       t0 = USER_T0
 
       ! notifies user
-      if( myrank == 0 ) then
-        write(IOUT,*) '    fix new simulation start time . = ', - t0
+      if (myrank == 0) then
+        write(IMAIN,*) '    fix new simulation start time . = ', - t0
       endif
 
       ! loops over all sources
-      do i_source=1,NSOURCES
+      do i_source= 1,NSOURCES
         ! sets the given, initial time shifts
-        if( time_function_type(i_source) == 5 ) then
+        if (time_function_type(i_source) == 5) then
           tshift_src(i_source) = t0_source(i_source) - 2.0d0 * hdur(i_source)
         else
           tshift_src(i_source) = t0_source(i_source) - 1.20d0 * hdur(i_source)
         endif
         ! user output
-        if( myrank == 0 ) then
-          write(IOUT,*) '    source ',i_source,'uses tshift = ',tshift_src(i_source)
+        if (myrank == 0) then
+          write(IMAIN,*) '    source ',i_source,'uses tshift = ',tshift_src(i_source)
         endif
       enddo
       ! user output
-      if( myrank == 0 ) then
-        write(IOUT,*)
+      if (myrank == 0) then
+        write(IMAIN,*)
       endif
 
     else
       ! start time needs to be at least t0 for numerical stability
       ! notifies user
-      if( myrank == 0 ) then
-        write(IOUT,*) 'error: USER_T0 is too small'
-        write(IOUT,*) '       must make one of three adjustements:'
-        write(IOUT,*) '       - increase USER_T0 to be at least: ',t0
-        write(IOUT,*) '       - decrease time shift tshift_src in SOURCE file'
-        write(IOUT,*) '       - increase frequency f0 in SOURCE file'
+      if (myrank == 0) then
+        write(IMAIN,*) 'Error: USER_T0 is too small'
+        write(IMAIN,*) '       must make one of three adjustements:'
+        write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0
+        write(IMAIN,*) '       - decrease time shift tshift_src in SOURCE file'
+        write(IMAIN,*) '       - increase frequency f0 in SOURCE file'
       endif
-      call exit_MPI('error USER_T0 is set but too small')
+      call exit_MPI(myrank,'Error USER_T0 is set but too small')
     endif
-  else if( USER_T0 < 0.d0 ) then
-    if( myrank == 0 ) then
-      write(IOUT,*) 'error: USER_T0 is negative, must be set zero or positive!'
+  else if (USER_T0 < 0.d0) then
+    if (myrank == 0) then
+      write(IMAIN,*) 'error: USER_T0 is negative, must be set zero or positive!'
     endif
-    call exit_MPI('error negative USER_T0 parameter in constants.h')
+    call exit_MPI(myrank,'Error negative USER_T0 parameter in constants.h')
   endif
 
   ! checks onset times
-  if(.not. initialfield) then
+  if (.not. initialfield) then
 
     ! loops over sources
     do i_source = 1,NSOURCES
 
       ! excludes Dirac and Heaviside sources
-      if(time_function_type(i_source) /= 4 .and. time_function_type(i_source) /= 5) then
+      if (time_function_type(i_source) /= 4 .and. time_function_type(i_source) /= 5) then
 
         ! user output
-        if( myrank == 0 ) then
-          write(IOUT,*) '    Onset time. . . . . . = ',- (t0+tshift_src(i_source))
-          write(IOUT,*) '    Fundamental period. . = ',1.d0/f0(i_source)
-          write(IOUT,*) '    Fundamental frequency = ',f0(i_source)
+        if (myrank == 0) then
+          write(IMAIN,*) '    Onset time. . . . . . = ',- (t0+tshift_src(i_source))
+          write(IMAIN,*) '    Fundamental period. . = ',1.d0/f0(i_source)
+          write(IMAIN,*) '    Fundamental frequency = ',f0(i_source)
         endif
 
         ! checks source onset time
-        if( t0+tshift_src(i_source) < 1.d0/f0(i_source)) then
-          call exit_MPI('Onset time too small')
+        if (t0+tshift_src(i_source) < 1.d0/f0(i_source)) then
+          call exit_MPI(myrank,'Onset time too small')
         else
-          if( myrank == 0 ) then
-            write(IOUT,*) '    --> onset time ok'
+          if (myrank == 0) then
+            write(IMAIN,*) '    --> onset time ok'
           endif
         endif
       endif

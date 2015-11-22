@@ -18,7 +18,7 @@ STEPS TO ADD A SOURCE FILE TO SPECFEM2D
         do ispec = 1,nspec
           do j = 1,NGLLZ
             do i = 1,NGLLX
-              write(IOUT,*) 'That is a funny ',material_element(ispec),' isn't it?'
+              write(IMAIN,*) 'That is a funny ',material_element(ispec),' isn't it?'
             enddo
           enddo
         enddo

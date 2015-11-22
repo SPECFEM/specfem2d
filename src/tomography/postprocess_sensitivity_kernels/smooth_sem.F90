@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -91,7 +90,9 @@ program smooth_sem
   ! data must be of dimension: (NGLLX,NGLLZ,NSPEC_AB)
   real(kind=CUSTOM_REAL), dimension(:,:,:),allocatable :: dat
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: dat_store,dat_smooth
-  integer :: NGLOB_me, myrank,nproc, nspec_me, nspec_other, ncuda_devices
+  integer :: NGLOB_me, nspec_me, nspec_other, ncuda_devices
+  ! MPI
+  integer :: myrank,NPROC
   integer(kind=8) :: Container
 
   integer :: i,j,ier,ispec2,ispec, iker, iglob
@@ -116,7 +117,6 @@ program smooth_sem
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: exp_val, factor, wgll_sq
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   double precision, dimension(NGLLX) :: xigll
-  double precision, parameter :: alphaGLL = 0.d0, betaGLL = 0.d0
   integer, dimension(:,:,:),allocatable :: ibool_me
   integer, dimension(:),allocatable :: imask
   real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: tk
@@ -128,14 +128,11 @@ program smooth_sem
   real(kind=CUSTOM_REAL) :: element_size
   real(kind=CUSTOM_REAL), PARAMETER :: PI = 3.1415927
   real t1,t2
-#ifdef USE_MPI
-  call MPI_INIT(ier)
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,nproc,ier)
-  call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-#else
-nproc = 1
-myrank = 0
-#endif
+
+  ! mpi initialization
+  call init_mpi()
+  call world_size(NPROC)
+  call world_rank(myrank)
 
   if (myrank == 0) print *,"Running XSMOOTH_SEM on",NPROC,"processors"
   call cpu_time(t1)
@@ -148,9 +145,8 @@ myrank = 0
     endif
   endif
 
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-#endif
+  ! synchronizes all processes
+  call synchronize_all()
 
   do i = 1, NARGS
     call get_command_argument(i,arg(i), status=ier)
@@ -166,12 +162,12 @@ myrank = 0
   call parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
   allocate(norm(nker),max_new(nker),max_old(nker),min_new(nker),min_old(nker))
 
- if(GPU_MODE) call initialize_cuda_device(myrank,ncuda_devices)
+ if (GPU_MODE) call initialize_cuda_device(myrank,ncuda_devices)
 
-  call zwgljd(xigll,wxgll,NGLLX,alphaGLL,betaGLL)
+  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
   !We assume NGLLX=NGLLZ
-  do j=1,NGLLZ
-    do i=1,NGLLX
+  do j = 1,NGLLZ
+    do i = 1,NGLLX
       wgll_sq(i,j) = wxgll(i)*wxgll(j)
     enddo
   enddo
@@ -180,8 +176,8 @@ myrank = 0
   sigma_h2_inv = ( 1.0 / (2.0 * (sigma_h ** 2)) ) ! factor two for gaussian distribution with standard variance sigma
   sigma_v2_inv = ( 1.0 / (2.0 * (sigma_v ** 2)) )
 
-  if ( (1.0 / sigma_h2_inv) < 1.e-18) stop 'Error sigma_h2 zero, must non-zero'
-  if ( (1.0 / sigma_v2_inv) < 1.e-18) stop 'Error sigma_v2 zero, must non-zero'
+  if ((1.0 / sigma_h2_inv) < 1.e-18) stop 'Error sigma_h2 zero, must non-zero'
+  if ((1.0 / sigma_v2_inv) < 1.e-18) stop 'Error sigma_v2 zero, must non-zero'
 
   ! adds margin to search radius
   element_size = max(sigma_h,sigma_v) * 0.5
@@ -244,22 +240,16 @@ myrank = 0
     close(IIN)
 
 
+  ! synchronizes all processes
+  call synchronize_all()
 
-  ! synchronizes
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-#endif
+  ! GPU setup
+  if (GPU_MODE) then
+    call prepare_GPU(Container,xstore_me,zstore_me,sigma_h2_inv,sigma_v2_inv,sigma_h3_sq,sigma_v3_sq,nspec_me,nker,wgll_sq)
 
-if (GPU_MODE) then
-
-  call prepare_GPU(Container,xstore_me,zstore_me,sigma_h2_inv,sigma_v2_inv,sigma_h3_sq,sigma_v3_sq,nspec_me,nker,wgll_sq)
-
-endif
-
-  ! synchronizes
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-#endif
+    ! synchronizes all processes
+    call synchronize_all()
+  endif
 
 
 ! loops over slices
@@ -317,82 +307,81 @@ endif
     allocate(dat(NGLLX,NGLLZ,NSPEC_other),dat_store(NGLLX,NGLLZ,NSPEC_other,nker),stat=ier)
     if (ier /= 0) stop 'Error allocating dat array'
 
-  do iker= 1, nker
-    ! data file
-    write(prname,'(a,i6.6,a)') trim(input_dir)//'/proc',iproc,'_'//trim(kernel_names(iker))//'.bin'
+    do iker= 1, nker
+      ! data file
+      write(prname,'(a,i6.6,a)') trim(input_dir)//'/proc',iproc,'_'//trim(kernel_names(iker))//'.bin'
 
-    open(unit = IIN,file = trim(prname),status='old',action='read',form ='unformatted',iostat=ier)
-    if (ier /= 0) then
-      print *,'Error opening data file: ',trim(prname)
-      stop 'Error opening data file'
-    endif
-    read(IIN) dat
-    close(IIN)
+      open(unit = IIN,file = trim(prname),status='old',action='read',form ='unformatted',iostat=ier)
+      if (ier /= 0) then
+        print *,'Error opening data file: ',trim(prname)
+        stop 'Error opening data file'
+      endif
+      read(IIN) dat
+      close(IIN)
 
-  dat_store(:,:,:,iker) = dat(:,:,:)
+      dat_store(:,:,:,iker) = dat(:,:,:)
 
-    if (iproc == myrank) then
-      max_old(iker) = maxval(abs(dat(:,:,:)))
-      min_old(iker) = minval(abs(dat(:,:,:)))
-    endif
+      if (iproc == myrank) then
+        max_old(iker) = maxval(abs(dat(:,:,:)))
+        min_old(iker) = minval(abs(dat(:,:,:)))
+      endif
+    enddo
 
-  enddo
-imask=-1
+    imask = -1
 
-if (GPU_MODE) then
-  call compute_smooth(Container,jacobian,xstore_other,zstore_other,dat_store,nspec_other)
-else
-    ! loop over elements to be smoothed in the current slice
-    do ispec = 1, nspec_me
-      ! --- only double loop over the elements in the search radius ---
-      do ispec2 = 1, nspec_other
+    if (GPU_MODE) then
+      call compute_smooth(Container,jacobian,xstore_other,zstore_other,dat_store,nspec_other)
+    else
+      ! loop over elements to be smoothed in the current slice
+      do ispec = 1, nspec_me
+        ! --- only double loop over the elements in the search radius ---
+        do ispec2 = 1, nspec_other
 
-        ! calculates horizontal and vertical distance between two element centers
-        call get_distance_square_vec(dist_h,dist_v,xstore_me(1,1,ispec),zstore_me(1,1,ispec),&
-                          xstore_other(1,1,ispec2),zstore_other(1,1,ispec2))
+          ! calculates horizontal and vertical distance between two element centers
+          call get_distance_square_vec(dist_h,dist_v,xstore_me(1,1,ispec),zstore_me(1,1,ispec),&
+                            xstore_other(1,1,ispec2),zstore_other(1,1,ispec2))
 
-        ! checks distance between centers of elements
-   !     if (dist_h > 2*sigma_h3_sq .or. dist_v > 2*sigma_v3_sq) cycle
-
+          ! checks distance between centers of elements
+     !     if (dist_h > 2*sigma_h3_sq .or. dist_v > 2*sigma_v3_sq) cycle
 
 
-        factor(:,:) = jacobian(:,:,ispec2) * wgll_sq(:,:)
 
-    ! loop over GLL points of the elements in current slice (ispec)
-        do j = 1, NGLLZ
-            do i = 1, NGLLX
-              iglob = ibool_me(i,j,ispec)
-              if (imask(iglob)==1) cycle
+          factor(:,:) = jacobian(:,:,ispec2) * wgll_sq(:,:)
 
-              ! calculate weights based on gaussian smoothing
-              exp_val = 0.0_CUSTOM_REAL
+      ! loop over GLL points of the elements in current slice (ispec)
+          do j = 1, NGLLZ
+              do i = 1, NGLLX
+                iglob = ibool_me(i,j,ispec)
+                if (imask(iglob)==1) cycle
 
-              call smoothing_weights_vec(xstore_me(i,j,ispec),zstore_me(i,j,ispec),sigma_h2_inv,sigma_v2_inv,exp_val,&
-                      xstore_other(:,:,ispec2),zstore_other(:,:,ispec2))
+                ! calculate weights based on gaussian smoothing
+                exp_val = 0.0_CUSTOM_REAL
 
-              exp_val(:,:) = exp_val(:,:) * factor(:,:)
+                call smoothing_weights_vec(xstore_me(i,j,ispec),zstore_me(i,j,ispec),sigma_h2_inv,sigma_v2_inv,exp_val,&
+                        xstore_other(:,:,ispec2),zstore_other(:,:,ispec2))
 
-              ! adds contribution of element ispec2 to smoothed kernel values
-              do iker=1, nker
-              tk(iglob,iker) = tk(iglob,iker) + sum(exp_val(:,:) * dat_store(:,:,ispec2,iker))
+                exp_val(:,:) = exp_val(:,:) * factor(:,:)
+
+                ! adds contribution of element ispec2 to smoothed kernel values
+                do iker= 1, nker
+                tk(iglob,iker) = tk(iglob,iker) + sum(exp_val(:,:) * dat_store(:,:,ispec2,iker))
+                enddo
+                ! normalization, integrated values of gaussian smoothing function
+                bk(iglob) = bk(iglob) + sum(exp_val(:,:))
+
               enddo
-              ! normalization, integrated values of gaussian smoothing function
-              bk(iglob) = bk(iglob) + sum(exp_val(:,:))
+          enddo
+        enddo ! ispec2
 
-            enddo
-        enddo
-      enddo ! ispec2
+          do j = 1, NGLLZ
+              do i = 1, NGLLX
+                imask(ibool_me(i,j,ispec)) = 1
+              enddo
+          enddo
 
-        do j = 1, NGLLZ
-            do i = 1, NGLLX
-              imask(ibool_me(i,j,ispec)) = 1
-            enddo
-        enddo
+      enddo ! ispec
 
-    enddo ! ispec
-
-endif !GPU_MODE
-
+    endif !GPU_MODE
 
     ! frees arrays
     deallocate(dat,dat_store,xstore_other,zstore_other,jacobian)
@@ -407,48 +396,48 @@ endif !GPU_MODE
   if (ier /= 0) stop 'Error allocating array dat_smooth'
 
   dat_smooth(:,:,:,:) = 0.0_CUSTOM_REAL
- if (GPU_MODE) then
+
+  if (GPU_MODE) then
     call get_smooth(Container,dat_smooth)
   else
-
-  do ispec = 1, nspec_me
-      do j = 1, NGLLZ
-        do i = 1, NGLLX
- !         if (abs(bk(i,j,ispec)) < 1.e-18) then
- !           print *, 'Problem norm here --- ', ispec, i, j, bk(i,j,ispec)
-  !        endif
-              iglob = ibool_me(i,j,ispec)
-          ! normalizes smoothed kernel values by integral value of gaussian weighting
-          dat_smooth(i,j,ispec,:) = tk(iglob,:) / bk(iglob)
+    do ispec = 1, nspec_me
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+   !         if (abs(bk(i,j,ispec)) < 1.e-18) then
+   !           print *, 'Problem norm here --- ', ispec, i, j, bk(i,j,ispec)
+    !        endif
+                iglob = ibool_me(i,j,ispec)
+            ! normalizes smoothed kernel values by integral value of gaussian weighting
+            dat_smooth(i,j,ispec,:) = tk(iglob,:) / bk(iglob)
+          enddo
         enddo
-      enddo
-  enddo !  ispec
-
- endif
+    enddo !  ispec
+  endif
 
   deallocate(tk,bk)
 
-do iker= 1, nker
+  do iker= 1, nker
+    max_new(iker) = maxval(abs(dat_smooth(:,:,:,iker)))
+    min_new(iker) = minval(abs(dat_smooth(:,:,:,iker)))
+    ! file output
+    ! smoothed kernel file name
+    write(ks_file,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank,'_'//trim(kernel_names(iker))//'_smooth.bin'
 
-  max_new(iker) = maxval(abs(dat_smooth(:,:,:,iker)))
-  min_new(iker) = minval(abs(dat_smooth(:,:,:,iker)))
-  ! file output
-  ! smoothed kernel file name
-  write(ks_file,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank,'_'//trim(kernel_names(iker))//'_smooth.bin'
+    open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',iostat=ier)
+    if (ier /= 0) stop 'Error opening smoothed kernel file'
+    write(IOUT) dat_smooth(:,:,:,iker)
+    close(IOUT)
+    if (myrank == 0) print *,'written: ',trim(ks_file)
+  enddo
 
-  open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',iostat=ier)
-  if (ier /= 0) stop 'Error opening smoothed kernel file'
-  write(IOUT) dat_smooth(:,:,:,iker)
-  close(IOUT)
-  if (myrank == 0) print *,'written: ',trim(ks_file)
-enddo
   ! frees memory
   deallocate(dat_smooth)
 
+  ! synchronizes all processes
+  call synchronize_all()
+
 #ifdef USE_MPI
-  ! synchronizes
   if (NPROC>1) then
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
 
     ! the maximum value for the smoothed kernel
     norm(:) = max_old(:)
@@ -479,7 +468,8 @@ enddo
 
     endif
   enddo
-   call cpu_time(t2)
+
+  call cpu_time(t2)
 
   if (GPU_Mode) then
     print *,'Computation time with GPU:',t2-t1
@@ -487,12 +477,10 @@ enddo
     print *,'Computation time with CPU:',t2-t1
   endif
 
-   if (myrank == 0) close(IIN)
+  if (myrank == 0) close(IIN)
 
-#ifdef USE_MPI
-  ! stop all the processes and exit
-  call MPI_FINALIZE(ier)
-#endif
+  ! MPI finish
+  call finalize_mpi()
 
 end program smooth_sem
 

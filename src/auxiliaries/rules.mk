@@ -86,6 +86,8 @@ check_quality_external_mesh_auxiliaries_OBJECTS = \
 
 check_quality_external_mesh_auxiliaries_SHARED_OBJECTS = \
 	$O/define_shape_functions.shared.o \
+	$O/exit_mpi.shared.o \
+	$O/parallel.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
@@ -125,13 +127,25 @@ xconvolve_source_timefunction: $E/xconvolve_source_timefunction
 
 
 $E/xadj_seismogram: $(adj_seismogram_auxiliaries_OBJECTS) $(adj_seismogram_auxiliaries_SHARED_OBJECTS)
+	@echo ""
+	@echo "building xadj_seismogram"
+	@echo ""
 	${FCLINK} -o $@ $+
+	@echo ""
 
 $E/xcheck_quality_external_mesh: $(check_quality_external_mesh_auxiliaries_OBJECTS) $(check_quality_external_mesh_auxiliaries_SHARED_OBJECTS)
+	@echo ""
+	@echo "building xcheck_quality_external_mesh"
+	@echo ""
 	${FCLINK} -o $@ $+
+	@echo ""
 
 $E/xconvolve_source_timefunction: $(convolve_source_timefunction_auxiliaries_OBJECTS) $(convolve_source_timefunction_auxiliaries_SHARED_OBJECTS)
+	@echo ""
+	@echo "building xconvolve_source_timefunction"
+	@echo ""
 	${FCLINK} -o $@ $+
+	@echo ""
 
 #######################################
 

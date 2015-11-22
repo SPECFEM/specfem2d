@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -50,7 +49,7 @@
   use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0,tshift_src,factor, &
                          aval,t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK,is_proc_source, &
-                         USE_TRICK_FOR_BETTER_PRESSURE
+                         USE_TRICK_FOR_BETTER_PRESSURE,myrank
 
   implicit none
   include "constants.h"
@@ -74,20 +73,22 @@
 
   ! user output
   if (is_proc_source(1) == 1) then
-    write(IOUT,*)
-    write(IOUT,*) 'Saving the source time function in a text file...'
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'Saving the source time function in a text file...'
+    write(IMAIN,*)
+    call flush_IMAIN()
+
     open(unit=55,file='OUTPUT_FILES/source.txt',status='unknown')
   endif
 
     ! loop on all the sources
-    do i_source=1,NSOURCES
+    do i_source= 1,NSOURCES
 
      if (AXISYM) then
        factor(i_source) = - factor(i_source)
      !   if (is_on_the_axis(ispec_selected_source(i_source))) then
-     !     do i=1,NGLLX
-     !     do j=1,NGLLZ
+     !     do i = 1,NGLLX
+     !     do j = 1,NGLLZ
      !       print *,"jacobian :",jacobian(i,j,ispec_selected_source(i_source))
      !       print *,"wxglj:",wxglj(i)
      !       print *,"mu :",poroelastcoef(2,1,kmato(ispec_selected_source(i_source)))
@@ -102,28 +103,28 @@
     !          relative to this start time
 
     if (time_function_type(i_source) >= 5 .and. USE_TRICK_FOR_BETTER_PRESSURE) then
-      call exit_MPI('USE_TRICK_FOR_BETTER_PRESSURE is not compatible yet with the type of source you want to use')
+      call exit_MPI(myrank,'USE_TRICK_FOR_BETTER_PRESSURE is not compatible yet with the type of source you want to use')
     endif
 
     do i_stage = 1,stage_time_scheme
 
  ! loop on all the time steps
-    do it=1,NSTEP
+    do it= 1,NSTEP
 
 ! compute current time
-    if(stage_time_scheme == 1) timeval = (it-1)*deltat
+    if (stage_time_scheme == 1) timeval = (it-1)*deltat
 
-    if(stage_time_scheme == 4) timeval = (it-1)*deltat+c_RK(i_stage)*deltat
+    if (stage_time_scheme == 4) timeval = (it-1)*deltat+c_RK(i_stage)*deltat
 
-    if(stage_time_scheme == 6) timeval = (it-1)*deltat+c_LDDRK(i_stage)*deltat
+    if (stage_time_scheme == 6) timeval = (it-1)*deltat+c_LDDRK(i_stage)*deltat
 
     t_used =(timeval-t0-tshift_src(i_source))
 
     stf_used = 0.d0
 
-    if(is_proc_source(i_source) == 1) then
+    if (is_proc_source(i_source) == 1) then
 
-      if( time_function_type(i_source) == 1 ) then
+      if (time_function_type(i_source) == 1) then
 
         if (USE_TRICK_FOR_BETTER_PRESSURE) then
           ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
@@ -149,7 +150,7 @@
           !               t_used/pi * exp(-aval(i_source)*t_used**2)
         endif
 
-      else if( time_function_type(i_source) == 2 ) then
+      else if (time_function_type(i_source) == 2) then
         if (USE_TRICK_FOR_BETTER_PRESSURE) then
           ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
           ! use the second derivative of the source for the source time function instead of the source itself,
@@ -170,7 +171,7 @@
                     exp(-aval(i_source)*t_used**2)
         endif
 
-      else if(time_function_type(i_source) == 3 .or. time_function_type(i_source) == 4) then
+      else if (time_function_type(i_source) == 3 .or. time_function_type(i_source) == 4) then
         if (USE_TRICK_FOR_BETTER_PRESSURE) then
           ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
           ! use the second derivative of the source for the source time function instead of the source itself,
@@ -189,7 +190,7 @@
                     exp(-aval(i_source)*t_used**2)
         endif
 
-      else if(time_function_type(i_source) == 5) then
+      else if (time_function_type(i_source) == 5) then
 
         ! Heaviside source time function (we use a very thin error function instead)
         hdur(i_source) = 1.d0 / f0(i_source)
@@ -197,13 +198,13 @@
         source_time_function(i_source,it,i_stage) = factor(i_source) * 0.5d0*(1.0d0 + &
             netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*t_used/hdur_gauss(i_source)))
 
-      else if(time_function_type(i_source) == 6) then
+      else if (time_function_type(i_source) == 6) then
 
         DecT = t0 + tshift_src(i_source)
 
         Tc = 4.d0 / f0(i_source) + DecT
 
-        if ( timeval > DecT .and. timeval < Tc ) then
+        if (timeval > DecT .and. timeval < Tc) then
 
            ! source time function from Computational Ocean Acoustics
            omega_coa = TWO * PI * f0(i_source)
@@ -219,13 +220,13 @@
 
         endif
 
-       else if(time_function_type(i_source) == 7) then
+       else if (time_function_type(i_source) == 7) then
 
         DecT = t0 + tshift_src(i_source)
         Tc = 4.d0 / f0(i_source) + DecT
         omega_coa = TWO * PI * f0(i_source)
 
-        if ( timeval > DecT .and. timeval < Tc ) then
+        if (timeval > DecT .and. timeval < Tc) then
           ! source time function from Computational Ocean Acoustics
            omegat =  omega_coa * ( timeval - DecT )
            !source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
@@ -236,7 +237,7 @@
                  ( - sin(omegat) + 8.d0 / 9.d0 * sin(3.d0 / 4.d0 * omegat) + &
                   8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) - 1.d0 / 15.d0 * omegat )
 
-        else if ( timeval > DecT ) then
+        else if (timeval > DecT) then
 
            source_time_function(i_source,it,i_stage) = - factor(i_source) * HALF / omega_coa / 15.d0 * (4.d0 / f0(i_source))
 
@@ -246,18 +247,18 @@
 
         endif
 
-       else if(time_function_type(i_source) == 8) then
-        if (it == 1 ) then
+       else if (time_function_type(i_source) == 8) then
+        if (it == 1) then
           coeff = factor(i_source)
           error_msg = error_msg1//name_of_source_file(i_source)
           open(unit=num_file,file=name_of_source_file(i_source),iostat=ier)
-          if( ier /= 0 ) call exit_MPI(error_msg)
+          if (ier /= 0 ) call exit_MPI(myrank,error_msg)
         endif
 
         read(num_file,*) time, source_time_function(i_source,it,i_stage)
 
         if (it == NSTEP ) close(num_file)
-      else if(time_function_type(i_source) == 9) then
+      else if (time_function_type(i_source) == 9) then
         DecT = t0 + tshift_src(i_source)
         t_used = (timeval-t0-tshift_src(i_source))
         Nc = TWO * f0(i_source) / burst_band_width(i_source)
@@ -265,13 +266,13 @@
         if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0(i_source)) then
           source_time_function(i_source,it,i_stage) = - factor(i_source) * &
                       0.5d0*(ONE-cos(TWO*PI*f0(i_source)*t_used/Nc))*sin(TWO*PI*f0(i_source)*t_used)
-        !else if ( timeval > DecT ) then
+        !else if (timeval > DecT) then
         !  source_time_function(i_source,it,i_stage) = ZERO
         else
           source_time_function(i_source,it,i_stage) = ZERO
         endif
       else
-        call exit_MPI('unknown source time function')
+        call exit_MPI(myrank,'unknown source time function')
       endif
 
       stf_used = stf_used + source_time_function(i_source,it,i_stage)
@@ -298,7 +299,7 @@
   ! than one if the nearest point is on the interface between several partitions with an explosive source.
   ! since source contribution is linear, the source_time_function is cut down by that number (it would have been similar
   ! if we just had elected one of those processes).
-  do i_source=1,NSOURCES
+  do i_source= 1,NSOURCES
     source_time_function(i_source,:,:) = source_time_function(i_source,:,:) / nb_proc_source(i_source)
   enddo
 

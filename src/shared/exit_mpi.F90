@@ -43,34 +43,41 @@
 !-----------------------------------------------
 ! subroutine to stop the code whether sequential or parallel.
 !-----------------------------------------------
-subroutine exit_MPI(error_msg)
+  subroutine exit_MPI(myrank,error_msg)
 
 #ifdef USE_MPI
   use mpi
 #endif
+
   implicit none
+
+  include "constants.h"
 
   ! identifier for error message file
   integer, parameter :: IERROR = 30
 
-  character(len=*) error_msg
+  integer :: myrank
+  character(len=*) :: error_msg
 
-  integer ier
-
-  ier = 0
+  character(len=MAX_STRING_LEN) :: outputname
 
   ! write error message to screen
   write(*,*) error_msg(1:len(error_msg))
-  write(*,*) 'Error detected, aborting MPI... proc '
+  write(*,*) 'Error detected, aborting MPI... proc ',myrank
 
-  ! stop all the MPI processes, and exit
-#ifdef USE_MPI
-  call MPI_ABORT(MPI_COMM_WORLD,30,ier)
-#endif
+! write error message to file
+  write(outputname,"('/error_message',i6.6,'.txt')") myrank
+  open(unit=IERROR,file='OUTPUT_FILES'//outputname,status='unknown')
+  write(IERROR,*) error_msg(1:len(error_msg))
+  write(IERROR,*) 'Error detected, aborting MPI... proc ',myrank
+  close(IERROR)
 
-  stop 'error, program ended in exit_MPI'
+! close output file
+  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
-end subroutine exit_MPI
+  call abort_mpi()
+
+  end subroutine exit_MPI
 
 !-------------------------------------------------------------------------------------------------
 !
@@ -78,7 +85,7 @@ end subroutine exit_MPI
 !
 !-------------------------------------------------------------------------------------------------
 
-  subroutine flush_IOUT()
+  subroutine flush_IMAIN()
 
   implicit none
 
@@ -92,166 +99,9 @@ end subroutine exit_MPI
   !
   ! otherwise:
   !   a) comment out the line below
-  !   b) try to use instead: call flush(IOUT)
+  !   b) try to use instead: call flush(IMAIN)
 
-  flush(IOUT)
+  flush(IMAIN)
 
-  end subroutine flush_IOUT
-
-
-!
-!----
-!
-
-#ifdef USE_MPI
-
-  subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
-
-! standard include of the MPI library
-  use mpi
-
-  implicit none
-
-  include "constants.h"
-
-  include "precision.h"
-
-  integer sendcount, dest, sendtag, req
-  real(kind=CUSTOM_REAL), dimension(sendcount) :: sendbuf
-
-  integer ier
-
-  call MPI_ISEND(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag,MPI_COMM_WORLD,req,ier)
-
-  end subroutine isend_cr
-
-#endif
-
-!
-!----
-!
-
-#ifdef USE_MPI
-
-  subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
-
-! standard include of the MPI library
-  use mpi
-
-  implicit none
-
-  include "constants.h"
-  include "precision.h"
-
-  integer recvcount, dest, recvtag, req
-  real(kind=CUSTOM_REAL), dimension(recvcount) :: recvbuf
-
-  integer ier
-
-  call MPI_IRECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag,MPI_COMM_WORLD,req,ier)
-
-  end subroutine irecv_cr
-
-#endif
-
-!
-!----
-!
-
-#ifdef USE_MPI
-
-  subroutine wait_req(req)
-
-! standard include of the MPI library
-  use mpi
-
-  implicit none
-
-  integer :: req
-
-  integer, dimension(MPI_STATUS_SIZE) :: req_mpi_status
-
-  integer :: ier
-
-  call mpi_wait(req,req_mpi_status,ier)
-
-  end subroutine wait_req
-
-#endif
-
-!
-!----
-!
-
-  subroutine sync_all()
-
-#ifdef USE_MPI
-! standard include of the MPI library
-  use mpi
-#endif
-
-  implicit none
-
-  integer ier
-
-#ifdef USE_MPI
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
-#else
-  ! dummy statement to avoid compiler warning
-  ier = 0
-#endif
-
-  end subroutine sync_all
-
-!
-!----
-!
-
-#ifdef USE_MPI
-
-  subroutine min_all_i(sendbuf, recvbuf)
-
-! standard include of the MPI library
-  use mpi
-
-  implicit none
-
-  include "constants.h"
-
-  include "precision.h"
-
-  integer:: sendbuf, recvbuf
-  integer ier
-
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MIN,0,MPI_COMM_WORLD,ier)
-
-  end subroutine min_all_i
-
-#endif
-
-!
-!----
-!
-
-#ifdef USE_MPI
-
-  subroutine max_all_i(sendbuf, recvbuf)
-
-! standard include of the MPI library
-  use mpi
-
-  implicit none
-
-  include "constants.h"
-
-  include "precision.h"
-
-  integer :: sendbuf, recvbuf
-  integer :: ier
-
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
-
-  end subroutine max_all_i
-
-#endif
+  end subroutine flush_IMAIN
 

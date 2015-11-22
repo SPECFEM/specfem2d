@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -55,17 +54,17 @@
   double precision  :: theta1, theta2, theta3
   double precision  :: costheta1, costheta2, costheta3
 
-  if ( abs(n2_z - n1_z) < TINYVAL ) then
+  if (abs(n2_z - n1_z) < TINYVAL) then
      costheta1 = 0
   else
      costheta1 = (n2_z - n1_z) / sqrt((n2_x - n1_x)**2 + (n2_z - n1_z)**2)
   endif
-  if ( abs(n3_z - n2_z) < TINYVAL ) then
+  if (abs(n3_z - n2_z) < TINYVAL) then
      costheta2 = 0
   else
      costheta2 = (n3_z - n2_z) / sqrt((n3_x - n2_x)**2 + (n3_z - n2_z)**2)
   endif
-  if ( abs(n4_z - n3_z) < TINYVAL ) then
+  if (abs(n4_z - n3_z) < TINYVAL) then
      costheta3 = 0
   else
     costheta3 = (n4_z - n3_z) / sqrt((n4_x - n3_x)**2 + (n4_z - n3_z)**2)
@@ -98,19 +97,19 @@
 
   n(2) = n1
 
-  if ( n1 == 1 ) then
+  if (n1 == 1) then
      n(1) = nnodes
   else
      n(1) = n1-1
   endif
 
-  if ( n1 == nnodes ) then
+  if (n1 == nnodes) then
      n(3) = 1
   else
      n(3) = n1+1
   endif
 
-  if ( n(3) == nnodes ) then
+  if (n(3) == nnodes) then
      n(4) = 1
   else
      n(4) = n(3)+1

@@ -53,10 +53,10 @@
   nspec_elastic = nspec - count_nspec_acoustic
 
   ! GPU_MODE now defined in Par_file
-  if(myrank == 0 ) then
-    write(IOUT,*)
-    write(IOUT,*) "GPU Preparing Fields and Constants on Device."
-    call flush_IOUT()
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) "GPU Preparing Fields and Constants on Device."
+    call flush_IMAIN()
   endif
 
 !!!!!!!!!!! Parametres fournis
@@ -147,7 +147,7 @@
 
 
   ! prepares fields on GPU for acoustic simulations
-  if( any_acoustic ) then
+  if (any_acoustic) then
     call prepare_fields_acoustic_device(Mesh_pointer, &
                                 rmass_inverse_acoustic,rhostore,kappastore, &
                                 num_phase_ispec_acoustic,phase_ispec_inner_acoustic, &
@@ -161,10 +161,13 @@
                                 num_colors_outer_acoustic,num_colors_inner_acoustic, &
                                 num_elem_colors_acoustic)
 
-    if( SIMULATION_TYPE == 3 ) &
-      call prepare_fields_acoustic_adj_dev(Mesh_pointer, &
-                                APPROXIMATE_HESS_KL)
-
+    if (SIMULATION_TYPE == 3) then
+      ! safety check
+      if (APPROXIMATE_HESS_KL) then
+        stop 'Sorry, approximate acoustic hessian kernels not yet fully implemented for GPU simulations!'
+      endif
+      call prepare_fields_acoustic_adj_dev(Mesh_pointer,APPROXIMATE_HESS_KL)
+    endif
   endif
 
 !!! Parametres fournis
@@ -179,7 +182,7 @@
 
   ! prepares fields on GPU for elastic simulations
   !?!? JC JC here we will need to add GPU support for the new C-PML routines
-  if( any_elastic ) then
+  if (any_elastic) then
     call prepare_fields_elastic_device(Mesh_pointer, &
                                 rmass_inverse_elastic_one,rmass_inverse_elastic_three, &
                                 rho_vp,rho_vs, &
@@ -198,63 +201,65 @@
                                 c25store,c33store,c35store,c55store,ninterface_elastic,inum_interfaces_elastic)
 
 
-    if( SIMULATION_TYPE == 3 ) &
-      call prepare_fields_elastic_adj_dev(Mesh_pointer, &
-                                NDIM*NGLOB_AB, &
-                                APPROXIMATE_HESS_KL)
-
+    if (SIMULATION_TYPE == 3) then
+      ! safety check
+      if (APPROXIMATE_HESS_KL) then
+        stop 'Sorry, approximate elastic hessian kernels not yet fully implemented for GPU simulations!'
+      endif
+      call prepare_fields_elastic_adj_dev(Mesh_pointer,NDIM*NGLOB_AB,APPROXIMATE_HESS_KL)
+    endif
   endif
 
   ! prepares fields on GPU for poroelastic simulations
-  if( any_poroelastic ) then
+  if (any_poroelastic) then
     stop 'todo poroelastic simulations on GPU'
   endif
 
 
   ! prepares needed receiver array for adjoint runs
-  if( SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 ) &
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) &
     call prepare_sim2_or_3_const_device(Mesh_pointer, &
                                 which_proc_receiver,nrecloc,nrec,source_adjointe,NSTEP)
 
 
   ! synchronizes processes
-  call sync_all()
+  call synchronize_all()
 
 
   ! puts acoustic initial fields onto GPU
-  if( any_acoustic ) then
+  if (any_acoustic) then
     call transfer_fields_ac_to_device(NGLOB_AB,potential_acoustic, &
                                       potential_dot_acoustic,potential_dot_dot_acoustic,Mesh_pointer)
 
 
 
-    if( SIMULATION_TYPE == 3 ) &
+    if (SIMULATION_TYPE == 3) &
       call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
                                           b_potential_dot_acoustic,b_potential_dot_dot_acoustic,Mesh_pointer)
   endif
 
   ! puts elastic initial fields onto GPU
-  if( any_elastic ) then
+  if (any_elastic) then
     ! transfer forward and backward fields to device with initial values
     call transfer_fields_el_to_device(NDIM*NGLOB_AB,displ_2D,veloc_2D,accel_2D,Mesh_pointer)
-    if(SIMULATION_TYPE == 3) &
+    if (SIMULATION_TYPE == 3) &
       call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_2D,b_veloc_2D,b_accel_2D,Mesh_pointer)
   endif
 
   ! synchronizes processes
-  call sync_all()
+  call synchronize_all()
 
   ! outputs GPU usage to files for all processes
   call output_free_device_memory(myrank)
 
   ! outputs usage for main process
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     call get_free_device_memory(free_mb,used_mb,total_mb)
-    write(IOUT,*) "GPU usage: free  =",free_mb," MB",nint(free_mb/total_mb*100.0),"%"
-    write(IOUT,*) "           used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
-    write(IOUT,*) "           total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
-    write(IOUT,*)
-    call flush_IOUT()
+    write(IMAIN,*) "GPU usage: free  =",free_mb," MB",nint(free_mb/total_mb*100.0),"%"
+    write(IMAIN,*) "           used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
+    write(IMAIN,*) "           total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine prepare_timerun_GPU

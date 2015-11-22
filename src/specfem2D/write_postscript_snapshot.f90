@@ -39,6 +39,8 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
+
+
   subroutine write_postscript_snapshot()
 
   use specfem_par, only: myrank,p_sv,it,imagetype_postscript, &
@@ -52,42 +54,46 @@
   implicit none
   include "constants.h"
 
-  if( myrank == 0 ) then
-    write(IOUT,*)
-    write(IOUT,*) 'Writing PostScript vector plot for time step ',it
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Writing PostScript vector plot for time step ',it
+    call flush_IMAIN()
   endif
 
-  if( imagetype_postscript == 1 .and. p_sv ) then
+  if (imagetype_postscript == 1 .and. p_sv) then
 
-    if( myrank == 0 ) write(IOUT,*) 'drawing displacement vector as small arrows...'
+    if (myrank == 0) write(IMAIN,*) 'drawing displacement vector as small arrows...'
     call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
                  potential_gravito,displ_elastic,displs_poroelastic)
 
     call plotpost()
 
-  else if( imagetype_postscript == 2 .and. p_sv ) then
+  else if (imagetype_postscript == 2 .and. p_sv) then
 
-    if( myrank == 0 ) write(IOUT,*) 'drawing velocity vector as small arrows...'
+    if (myrank == 0) write(IMAIN,*) 'drawing velocity vector as small arrows...'
     call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
                  potential_dot_gravito,veloc_elastic,velocs_poroelastic)
 
     call plotpost()
 
-  else if( imagetype_postscript == 3 .and. p_sv ) then
+  else if (imagetype_postscript == 3 .and. p_sv) then
 
-    if( myrank == 0) write(IOUT,*) 'drawing acceleration vector as small arrows...'
+    if (myrank == 0) write(IMAIN,*) 'drawing acceleration vector as small arrows...'
     call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
                  potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
 
     call plotpost()
 
-  else if( .not. p_sv ) then
-    call exit_MPI('cannot draw a SH scalar field as a vector plot, turn PostScript plots off')
+  else if (.not. p_sv) then
+    call exit_MPI(myrank,'cannot draw a SH scalar field as a vector plot, turn PostScript plots off')
   else
-    call exit_MPI('wrong type for PostScript snapshots')
+    call exit_MPI(myrank,'wrong type for PostScript snapshots')
   endif
 
-  if( myrank == 0 .and. imagetype_postscript /= 4 .and. p_sv ) write(IOUT,*) 'PostScript file written'
+  if (myrank == 0 .and. imagetype_postscript /= 4 .and. p_sv ) then
+    write(IMAIN,*) 'PostScript file written'
+    call flush_IMAIN()
+  endif
 
   end subroutine write_postscript_snapshot
 

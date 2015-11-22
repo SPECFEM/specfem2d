@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -48,16 +47,17 @@ subroutine iterate_time()
 #endif
 
   use specfem_par
-  implicit none
 
-  integer i,j,ispec,iglob,it_temp
+  implicit none
 
 #ifdef USE_MPI
   include "precision.h"
 #endif
 
+  integer :: i,j,ispec,iglob,it_temp
+  integer :: ier
 
-  if (myrank == 0) write(IOUT,400) ! Write = T i m e  e v o l u t i o n  l o o p =
+  if (myrank == 0) write(IMAIN,400) ! Write = T i m e  e v o l u t i o n  l o o p =
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
 !
@@ -88,34 +88,34 @@ subroutine iterate_time()
 ! *********************************************************
 
   ! synchronize all processes to make sure everybody is ready to start time loop
-  call sync_all()
+  call synchronize_all()
 
-  if( myrank == 0 ) then
-    write(IOUT,*)
-    write(IOUT,*) 'Starting time iteration loop ...'
-    write(IOUT,*)
-    call flush_IOUT()
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Starting time iteration loop ...'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   do it = 1,NSTEP
     ! compute current time
     timeval = (it-1)*deltat
 
-    do i_stage=1, stage_time_scheme
+    do i_stage= 1, stage_time_scheme
 
-      if( GPU_MODE ) then
+      if (GPU_MODE) then
         call update_displacement_precondition_newmark_GPU()
       endif
 
-      if( .not. GPU_MODE ) then
+      if (.not. GPU_MODE) then
 
-        if( any_acoustic ) then
+        if (any_acoustic) then
           ! free surface for an acoustic medium
-          if( nelem_acoustic_surface > 0 ) then
+          if (nelem_acoustic_surface > 0) then
             call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                                potential_acoustic)
           endif
-          if( time_stepping_scheme == 1 ) then
+          if (time_stepping_scheme == 1) then
             call update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
                                                                    potential_dot_dot_acoustic,potential_dot_acoustic,&
                                                                    potential_acoustic,potential_acoustic_old, &
@@ -130,10 +130,10 @@ subroutine iterate_time()
 #endif
           endif
 
-          if( SIMULATION_TYPE == 3 ) then
+          if (SIMULATION_TYPE == 3) then
             !Since we do not do anything in PML region in case of backward simulation, thus we set
             !PML_BOUNDARY_CONDITIONS = .false.
-            if( time_stepping_scheme == 1 ) then
+            if (time_stepping_scheme == 1) then
               call update_displacement_precondition_newmark_acoustic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                                      b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
                                                                      b_potential_acoustic,b_potential_acoustic_old, &
@@ -150,9 +150,9 @@ subroutine iterate_time()
           endif
         endif
 
-        if( any_elastic ) then
-          if( time_stepping_scheme == 1 ) then
-            if( SIMULATION_TYPE == 3 ) then
+        if (any_elastic) then
+          if (time_stepping_scheme == 1) then
+            if (SIMULATION_TYPE == 3) then
 #ifdef FORCE_VECTORIZATION
               do i = 1,3*nglob_elastic
                 accel_elastic_adj_coupling(i,1) = accel_elastic(i,1)
@@ -162,7 +162,7 @@ subroutine iterate_time()
 #endif
             endif
 
-            if( time_stepping_scheme == 1 ) then
+            if (time_stepping_scheme == 1) then
               call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
                                                                     accel_elastic,veloc_elastic,&
                                                                     displ_elastic,displ_elastic_old,&
@@ -178,10 +178,10 @@ subroutine iterate_time()
             endif
           endif
 
-          if( SIMULATION_TYPE == 3 ) then
+          if (SIMULATION_TYPE == 3) then
             !Since we do not do anything in PML region in case of backward simulation, thus we set
             !PML_BOUNDARY_CONDITIONS = .false.
-            if( time_stepping_scheme == 1 ) then
+            if (time_stepping_scheme == 1) then
               call update_displacement_precondition_newmark_elastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                                     b_accel_elastic,b_veloc_elastic,&
                                                                     b_displ_elastic,b_displ_elastic_old,&
@@ -198,17 +198,17 @@ subroutine iterate_time()
           endif
         endif
 
-        if( AXISYM ) then
+        if (AXISYM) then
           call enforce_zero_radial_displacements_on_the_axis()
         endif
 
-        if( any_poroelastic ) then
-          if( SIMULATION_TYPE == 3 ) then
+        if (any_poroelastic) then
+          if (SIMULATION_TYPE == 3) then
             accels_poroelastic_adj_coupling = accels_poroelastic
             accelw_poroelastic_adj_coupling = accelw_poroelastic
           endif
 
-          if( time_stepping_scheme == 1 ) then
+          if (time_stepping_scheme == 1) then
             call update_displacement_precondition_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
                                                                       accels_poroelastic,velocs_poroelastic,&
                                                                       displs_poroelastic,accelw_poroelastic,&
@@ -218,8 +218,8 @@ subroutine iterate_time()
             accelw_poroelastic = 0._CUSTOM_REAL
           endif
 
-          if( SIMULATION_TYPE == 3 ) then
-            if( time_stepping_scheme == 1 ) then
+          if (SIMULATION_TYPE == 3) then
+            if (time_stepping_scheme == 1) then
               !PML did not implemented for poroelastic simulation
               call update_displacement_precondition_newmark_poroelastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                                         b_accels_poroelastic,b_velocs_poroelastic,&
@@ -234,12 +234,12 @@ subroutine iterate_time()
 ! *********************************************************
 ! ************* main solver for the acoustic elements
 ! *********************************************************
-        if( any_acoustic ) then
+        if (any_acoustic) then
           call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                        potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
 
-          if( SIMULATION_TYPE == 3 ) then
-            if( PML_BOUNDARY_CONDITIONS ) then
+          if (SIMULATION_TYPE == 3) then
+            if (PML_BOUNDARY_CONDITIONS) then
               it_temp = NSTEP-it+1
               call rebuild_value_on_PML_interface_acoustic(it_temp)
             endif
@@ -248,7 +248,7 @@ subroutine iterate_time()
                                                b_potential_acoustic)
             call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
 
-            if( PML_BOUNDARY_CONDITIONS ) then
+            if (PML_BOUNDARY_CONDITIONS) then
               it_temp = NSTEP-it+1
               call rebuild_value_on_PML_interface_acoustic(it_temp)
             endif
@@ -259,8 +259,8 @@ subroutine iterate_time()
         ! *********************************************************
         ! ************* add acoustic forcing at a rigid boundary
         ! *********************************************************
-        if( any_acoustic ) then
-          if( ACOUSTIC_FORCING ) then
+        if (any_acoustic) then
+          if (ACOUSTIC_FORCING) then
             call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
           endif
         endif ! end of test if any acoustic element
@@ -268,13 +268,13 @@ subroutine iterate_time()
         ! *********************************************************
         ! ************* add coupling with the elastic side
         ! *********************************************************
-        if( coupled_acoustic_elastic ) then
-          if( SIMULATION_TYPE == 1 ) then
+        if (coupled_acoustic_elastic) then
+          if (SIMULATION_TYPE == 1) then
             call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic, &
                                               PML_BOUNDARY_CONDITIONS)
           endif
 
-          if( SIMULATION_TYPE == 3 ) then
+          if (SIMULATION_TYPE == 3) then
             accel_elastic_adj_coupling2 = - accel_elastic_adj_coupling
             call compute_coupling_acoustic_el(accel_elastic_adj_coupling2,displ_elastic_old,potential_dot_dot_acoustic,&
                                               PML_BOUNDARY_CONDITIONS)
@@ -286,12 +286,12 @@ subroutine iterate_time()
         ! *********************************************************
         ! ************* add coupling with the poroelastic side
         ! *********************************************************
-        if( coupled_acoustic_poro) then
-          if( SIMULATION_TYPE == 1 ) then
+        if (coupled_acoustic_poro) then
+          if (SIMULATION_TYPE == 1) then
             call compute_coupling_acoustic_po()
           endif
 
-          if( SIMULATION_TYPE == 3 ) then
+          if (SIMULATION_TYPE == 3) then
             call compute_coupling_acoustic_po()
             call compute_coupling_acoustic_po_backward()
           endif
@@ -300,42 +300,42 @@ subroutine iterate_time()
         ! ************************************************************************************
         ! ************************************ add force source
         ! ************************************************************************************
-        if( any_acoustic ) then
-          if( .not. initialfield ) then
-            if( SIMULATION_TYPE == 1 ) then
+        if (any_acoustic) then
+          if (.not. initialfield) then
+            if (SIMULATION_TYPE == 1) then
               call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
             endif
 
-            if( SIMULATION_TYPE == 3 ) then   ! adjoint and backward wavefield
+            if (SIMULATION_TYPE == 3) then   ! adjoint and backward wavefield
               call compute_add_sources_acoustic_adjoint()
               call compute_add_sources_acoustic(b_potential_dot_dot_acoustic,NSTEP-it+1,stage_time_scheme-i_stage+1)
             endif ! SIMULATION_TYPE == 3 adjoint wavefield
           endif ! if not using an initial field
-        endif !if(any_acoustic)
+        endif !if (any_acoustic)
 
         ! ************************************************************************************
         ! ********** assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
         ! ************************************************************************************
 #ifdef USE_MPI
-        if( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0 ) then
+        if (nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
           call assemble_MPI_vector_ac(potential_dot_dot_acoustic)
 
-          if( time_stepping_scheme == 2 ) then
-            if( i_stage==1 .and. it == 1 .and. (.not. initialfield) ) then
+          if (time_stepping_scheme == 2) then
+            if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
               potential_dot_acoustic_temp = potential_dot_acoustic
               call assemble_MPI_vector_ac(potential_dot_acoustic)
             endif
           endif
 
-          if( SIMULATION_TYPE == 3) then
+          if (SIMULATION_TYPE == 3) then
             call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic)
           endif
         endif
 #endif
 
-        if( PML_BOUNDARY_CONDITIONS ) then
-          if( any_acoustic .and. nglob_interface > 0 ) then
-            if( SAVE_FORWARD .and. SIMULATION_TYPE == 1 ) then
+        if (PML_BOUNDARY_CONDITIONS) then
+          if (any_acoustic .and. nglob_interface > 0) then
+            if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
               do i = 1, nglob_interface
                 write(72)potential_dot_dot_acoustic(point_interface(i)),&
                          potential_dot_acoustic(point_interface(i)),&
@@ -343,7 +343,7 @@ subroutine iterate_time()
               enddo
             endif
 
-            if( SIMULATION_TYPE == 3 ) then
+            if (SIMULATION_TYPE == 3) then
               do i = 1, nglob_interface
                 b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
               enddo
@@ -354,24 +354,24 @@ subroutine iterate_time()
 ! ************* multiply by the inverse of the mass matrix and update velocity
 ! ************************************************************************************
 
-        if( any_acoustic ) then
+        if (any_acoustic) then
           ! free surface for an acoustic medium
-          if( nelem_acoustic_surface > 0 ) then
+          if (nelem_acoustic_surface > 0) then
             call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                                potential_acoustic)
-            if( SIMULATION_TYPE == 3 ) then
+            if (SIMULATION_TYPE == 3) then
               call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                                  b_potential_acoustic)
             endif
           endif
 
-          if( time_stepping_scheme == 1 ) then
+          if (time_stepping_scheme == 1) then
 
             !! DK DK this should be vectorized
             potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
             potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
 
-            if( SIMULATION_TYPE == 3 ) then
+            if (SIMULATION_TYPE == 3) then
             !! DK DK this should be vectorized
               b_potential_dot_dot_acoustic = b_potential_dot_dot_acoustic * rmass_inverse_acoustic
               b_potential_dot_acoustic = b_potential_dot_acoustic + b_deltatover2*b_potential_dot_dot_acoustic
@@ -382,7 +382,7 @@ subroutine iterate_time()
                                               deltatsquareover2*potential_dot_dot_acoustic
           endif
 
-          if( time_stepping_scheme == 2 ) then
+          if (time_stepping_scheme == 2) then
             !! DK DK this should be vectorized
             potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
             potential_dot_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_dot_acoustic_LDDRK + &
@@ -390,7 +390,7 @@ subroutine iterate_time()
             potential_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_acoustic_LDDRK + &
                                        deltat*potential_dot_acoustic
 
-            if( i_stage==1 .and. it == 1 .and. (.not. initialfield) ) then
+            if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
               !! DK DK this should be vectorized
               potential_dot_acoustic_temp = potential_dot_acoustic_temp + &
                                             beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
@@ -403,18 +403,18 @@ subroutine iterate_time()
             potential_acoustic = potential_acoustic + beta_LDDRK(i_stage) * potential_acoustic_LDDRK
           endif
 
-          if( time_stepping_scheme == 3 ) then
+          if (time_stepping_scheme == 3) then
             !! DK DK this should be vectorized
             potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
             potential_dot_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_dot_acoustic(:)
             potential_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_acoustic(:)
 
-            if( i_stage==1 .or. i_stage==2 .or. i_stage==3 ) then
-              if( i_stage == 1 )weight_rk = 0.5d0
-              if( i_stage == 2 )weight_rk = 0.5d0
-              if( i_stage == 3 )weight_rk = 1.0d0
+            if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+              if (i_stage == 1) weight_rk = 0.5d0
+              if (i_stage == 2) weight_rk = 0.5d0
+              if (i_stage == 3) weight_rk = 1.0d0
 
-              if( i_stage==1 ) then
+              if (i_stage==1) then
 !! DK DK this should be vectorized
                 potential_dot_acoustic_init_rk = potential_dot_acoustic
                 potential_acoustic_init_rk = potential_acoustic
@@ -423,7 +423,7 @@ subroutine iterate_time()
               potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &
                                           weight_rk * potential_dot_dot_acoustic_rk(:,i_stage)
               potential_acoustic(:) = potential_acoustic_init_rk(:) + weight_rk * potential_dot_acoustic_rk(:,i_stage)
-            else if( i_stage==4 ) then
+            else if (i_stage==4) then
 !! DK DK this should be vectorized
               potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &
                                           1.0d0 / 6.0d0 * ( potential_dot_dot_acoustic_rk(:,1) + &
@@ -439,9 +439,9 @@ subroutine iterate_time()
                                                         potential_dot_acoustic_rk(:,4) )
             endif
           endif
-        endif ! of if(any_acoustic)
+        endif ! of if (any_acoustic)
       else ! GPU_MODE
-        if(any_acoustic) call compute_forces_acoustic_GPU()
+        if (any_acoustic) call compute_forces_acoustic_GPU()
       endif ! GPU_MODE
 
 ! *********************************************************
@@ -451,9 +451,9 @@ subroutine iterate_time()
 ! NO MIX OF ACOUSTIC AND GRAVITOACOUTIC ELEMENTS
 ! NO COUPLING TO ELASTIC AND POROELASTIC SIDES
 ! *********************************************************
-      if( .not. GPU_MODE ) then
-        if( (any_gravitoacoustic) ) then
-          if( time_stepping_scheme==1 ) then
+      if (.not. GPU_MODE) then
+        if ((any_gravitoacoustic)) then
+          if (time_stepping_scheme==1) then
             ! Newmark time scheme
             !! DK DK this should be vectorized
             potential_gravitoacoustic = potential_gravitoacoustic + deltat*potential_dot_gravitoacoustic + &
@@ -479,17 +479,17 @@ subroutine iterate_time()
 ! ** impose displacement from acoustic forcing at a rigid boundary
 ! ** force potential_dot_dot_gravito by displacement
 ! *********************************************************
-          if( ACOUSTIC_FORCING ) then
+          if (ACOUSTIC_FORCING) then
             call add_acoustic_forcing_at_rigid_boundary_gravitoacoustic()
           endif ! end ACOUSTIC_FORCING !
 
 ! free surface for a gravitoacoustic medium
 !!! to be coded !!!
-!      if ( nelem_acoustic_surface > 0 ) then
+!      if (nelem_acoustic_surface > 0) then
 !        call enforce_acoustic_free_surface(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
 !                                          potential_gravitoacoustic)
 
-!        if(SIMULATION_TYPE == 3) then ! Adjoint calculation
+!        if (SIMULATION_TYPE == 3) then ! Adjoint calculation
 !          call enforce_acoustic_free_surface(b_potential_dot_dot_gravitoacoustic,b_potential_dot_gravitoacoustic, &
 !                                            b_potential_gravitoacoustic)
 !        endif
@@ -503,7 +503,7 @@ subroutine iterate_time()
                        potential_gravitoacoustic, potential_dot_dot_gravito, &
                        potential_gravito,.false.,PML_BOUNDARY_CONDITIONS)
 
-          if( (mod(it,100)==0) ) then
+          if ((mod(it,100)==0)) then
             iglob=iglobzero
             write(*,*)it,Nsql,gravityl, &
                       maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
@@ -525,7 +525,7 @@ subroutine iterate_time()
 
 ! assembling potential_dot_dot for gravitoacoustic elements
 !#ifdef USE_MPI
-!    if ( nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
+!    if (nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
 !      call assemble_MPI_vector_ac(potential_dot_dot_gravitoacoustic)
 !
 !    endif
@@ -536,8 +536,8 @@ subroutine iterate_time()
 ! ************* multiply by the inverse of the mass matrix and update velocity
 ! ************************************************************************************
 
-        if( (any_gravitoacoustic) ) then
-          if( time_stepping_scheme == 1 ) then
+        if ((any_gravitoacoustic)) then
+          if (time_stepping_scheme == 1) then
           !! DK DK this should be vectorized
           potential_dot_dot_gravitoacoustic = potential_dot_dot_gravitoacoustic * rmass_inverse_gravitoacoustic
           potential_dot_gravitoacoustic = potential_dot_gravitoacoustic + &
@@ -552,11 +552,11 @@ subroutine iterate_time()
         endif
 
 ! free surface for an acoustic medium
-!      if ( nelem_acoustic_surface > 0 ) then
+!      if (nelem_acoustic_surface > 0) then
 !        call enforce_acoustic_free_surface(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
 !                                        potential_gravitoacoustic)
 !
-!        if(SIMULATION_TYPE == 3) then
+!        if (SIMULATION_TYPE == 3) then
 !          call enforce_acoustic_free_surface(b_potential_dot_dot_gravitoacoustic,b_potential_dot_gravitoacoustic, &
 !                                          b_potential_gravitoacoustic)
 !        endif
@@ -568,18 +568,18 @@ subroutine iterate_time()
 !                          + deltat*potential_dot_gravitoacoustic &
 !                          + deltatsquareover2*potential_dot_dot_gravitoacoustic
 
-        endif ! of if(any_gravitoacoustic)
+        endif ! of if (any_gravitoacoustic)
       else ! GPU_MODE
-        if ((any_gravitoacoustic)) call exit_mpi('gravitoacoustic not implemented in GPU MODE yet')
+        if ((any_gravitoacoustic)) call exit_MPI(myrank,'gravitoacoustic not implemented in GPU MODE yet')
       endif
 
 ! *********************************************************
 ! ************* main solver for the elastic elements
 ! *********************************************************
 
-      if(.not. GPU_MODE ) then
-        if(any_elastic) then
-          if( SIMULATION_TYPE == 1 ) then
+      if (.not. GPU_MODE) then
+        if (any_elastic) then
+          if (SIMULATION_TYPE == 1) then
             call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
                                              x_source(1),z_source(1),f0(1),v0x_left(1,it),v0z_left(1,it), &
                                              v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
@@ -588,7 +588,7 @@ subroutine iterate_time()
                                              PML_BOUNDARY_CONDITIONS,e1,e11,e13)
           endif
 
-          if( SIMULATION_TYPE == 3 ) then
+          if (SIMULATION_TYPE == 3) then
             !ZN currently we do not support plane wave source in adjoint inversion
             call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
                                              x_source(1),z_source(1),f0(1),v0x_left(1,it),v0z_left(1,it), &
@@ -597,30 +597,30 @@ subroutine iterate_time()
                                              t0x_bot(1,it),t0z_bot(1,it),count_left,count_right,count_bottom, &
                                              PML_BOUNDARY_CONDITIONS,e1,e11,e13)
 
-            if( PML_BOUNDARY_CONDITIONS ) then
+            if (PML_BOUNDARY_CONDITIONS) then
               it_temp = NSTEP-it+1
               call rebuild_value_on_PML_interface_viscoelastic(it_temp)
             endif
 
             call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
                                                       PML_BOUNDARY_CONDITIONS,e1,e11,e13)
-            if( PML_BOUNDARY_CONDITIONS ) then
+            if (PML_BOUNDARY_CONDITIONS) then
               it_temp = NSTEP-it+1
               call rebuild_value_on_PML_interface_viscoelastic(it_temp)
             endif
           endif
 
-        endif !if(any_elastic)
+        endif !if (any_elastic)
 
         ! *********************************************************
         ! ************* add coupling with the acoustic side
         ! *********************************************************
-        if( coupled_acoustic_elastic ) then
-          if( SIMULATION_TYPE == 1 ) then
+        if (coupled_acoustic_elastic) then
+          if (SIMULATION_TYPE == 1) then
             call compute_coupling_viscoelastic_ac()
           endif
 
-          if( SIMULATION_TYPE == 3 ) then
+          if (SIMULATION_TYPE == 3) then
             call compute_coupling_viscoelastic_ac()
             call compute_coupling_viscoelastic_ac_backward()
           endif
@@ -628,60 +628,60 @@ subroutine iterate_time()
         ! ****************************************************************************
         ! ************* add coupling with the poroelastic side
         ! ****************************************************************************
-        if( coupled_acoustic_elastic ) then
-          if( SIMULATION_TYPE == 1 ) then
+        if (coupled_acoustic_elastic) then
+          if (SIMULATION_TYPE == 1) then
             call compute_coupling_viscoelastic_po()
           endif
 
-          if( SIMULATION_TYPE == 3 ) then
+          if (SIMULATION_TYPE == 3) then
             call compute_coupling_viscoelastic_po()
             call compute_coupling_viscoelastic_po_backward()
           endif
         endif
 
-        if( AXISYM ) then
+        if (AXISYM) then
           call enforce_zero_radial_displacements_on_the_axis()
         endif
 
         ! ************************************************************************************
         ! ************************************ add force source
         ! ************************************************************************************
-        if( any_elastic ) then
-          if( .not. initialfield ) then
-            if( SIMULATION_TYPE == 1 ) then
+        if (any_elastic) then
+          if (.not. initialfield) then
+            if (SIMULATION_TYPE == 1) then
               call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
             endif
 
-            if( SIMULATION_TYPE == 3 ) then   ! adjoint and backward wavefield
+            if (SIMULATION_TYPE == 3) then   ! adjoint and backward wavefield
               call compute_add_sources_viscoelastic_adjoint()
               call compute_add_sources_viscoelastic(b_accel_elastic,NSTEP-it+1,stage_time_scheme-i_stage+1)
             endif ! SIMULATION_TYPE == 3 ! adjoint and backward wavefield
 
             !<NOISE_TOMOGRAPHY
             ! inject wavefield sources for noise simulations
-            if( NOISE_TOMOGRAPHY == 1 ) then
+            if (NOISE_TOMOGRAPHY == 1) then
               call  add_point_source_noise()
-            else if( NOISE_TOMOGRAPHY == 2 ) then
+            else if (NOISE_TOMOGRAPHY == 2) then
               call add_surface_movie_noise(accel_elastic)
-            else if( NOISE_TOMOGRAPHY == 3 ) then
-              if( .not. save_everywhere ) then
+            else if (NOISE_TOMOGRAPHY == 3) then
+              if (.not. save_everywhere) then
                 call add_surface_movie_noise(b_accel_elastic)
               endif
             endif
             !>NOISE_TOMOGRAPHY
           endif ! if not using an initial field
-        endif !if(any_elastic)
+        endif !if (any_elastic)
 
-        if( AXISYM ) then
+        if (AXISYM) then
           call enforce_zero_radial_displacements_on_the_axis()
         endif
         ! ************************************************************************************
         ! ************************************ assembling accel_elastic for elastic elements
         ! ************************************************************************************
 #ifdef USE_MPI
-        if( nproc > 1 .and. any_elastic .and. ninterface_elastic > 0 ) then
-          if( time_stepping_scheme == 2 ) then
-            if( i_stage==1 .and. it == 1 .and. (.not. initialfield) ) then
+        if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
+          if (time_stepping_scheme == 2) then
+            if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
               veloc_elastic_LDDRK_temp = veloc_elastic
               call assemble_MPI_vector_el(veloc_elastic)
             endif
@@ -689,15 +689,15 @@ subroutine iterate_time()
 
           call assemble_MPI_vector_el(accel_elastic)
 
-          if( SIMULATION_TYPE == 3 ) then
+          if (SIMULATION_TYPE == 3) then
             call assemble_MPI_vector_el(b_accel_elastic)
           endif
         endif
 #endif
 
-        if( PML_BOUNDARY_CONDITIONS ) then
-          if( any_elastic .and. nglob_interface > 0 ) then
-            if( SAVE_FORWARD .and. SIMULATION_TYPE == 1)then
+        if (PML_BOUNDARY_CONDITIONS) then
+          if (any_elastic .and. nglob_interface > 0) then
+            if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
               do i = 1, nglob_interface
                 write(71)accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)),&
                          accel_elastic(3,point_interface(i)),&
@@ -708,7 +708,7 @@ subroutine iterate_time()
               enddo
             endif
 
-            if( SIMULATION_TYPE == 3 ) then
+            if (SIMULATION_TYPE == 3) then
               do i = 1, nglob_interface
                 b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
                 b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
@@ -721,22 +721,22 @@ subroutine iterate_time()
         ! ************************************************************************************
         ! ************* multiply by the inverse of the mass matrix and update velocity
         ! ************************************************************************************
-        if( any_elastic ) then
+        if (any_elastic) then
           !! DK DK this should be vectorized
           accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
           accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
           accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
 
-          if( time_stepping_scheme == 1 ) then
+          if (time_stepping_scheme == 1) then
             !! DK DK this should be vectorized
             veloc_elastic = veloc_elastic + deltatover2 * accel_elastic
           endif
 
-          if( time_stepping_scheme == 2 ) then
+          if (time_stepping_scheme == 2) then
             !! DK DK this should be vectorized
             veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
             displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
-            if( i_stage==1 .and. it == 1 .and. (.not. initialfield) ) then
+            if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
               veloc_elastic_LDDRK_temp = veloc_elastic_LDDRK_temp + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
               veloc_elastic = veloc_elastic_LDDRK_temp
             else
@@ -745,7 +745,7 @@ subroutine iterate_time()
             displ_elastic = displ_elastic + beta_LDDRK(i_stage) * displ_elastic_LDDRK
           endif
 
-          if( time_stepping_scheme == 3 ) then
+          if (time_stepping_scheme == 3) then
             !! DK DK this should be vectorized
             accel_elastic_rk(1,:,i_stage) = deltat * accel_elastic(1,:)
             accel_elastic_rk(2,:,i_stage) = deltat * accel_elastic(2,:)
@@ -755,13 +755,13 @@ subroutine iterate_time()
             veloc_elastic_rk(2,:,i_stage) = deltat * veloc_elastic(2,:)
             veloc_elastic_rk(3,:,i_stage) = deltat * veloc_elastic(3,:)
 
-            if( i_stage==1 .or. i_stage==2 .or. i_stage==3 ) then
+            if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
 
-              if(i_stage == 1)weight_rk = 0.5d0
-              if(i_stage == 2)weight_rk = 0.5d0
-              if(i_stage == 3)weight_rk = 1.0d0
+              if (i_stage == 1)weight_rk = 0.5d0
+              if (i_stage == 2)weight_rk = 0.5d0
+              if (i_stage == 3)weight_rk = 1.0d0
 
-              if( i_stage==1 ) then
+              if (i_stage==1) then
                 !! DK DK this should be vectorized
                 veloc_elastic_initial_rk(1,:) = veloc_elastic(1,:)
                 veloc_elastic_initial_rk(2,:) = veloc_elastic(2,:)
@@ -781,7 +781,7 @@ subroutine iterate_time()
               displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + weight_rk * veloc_elastic_rk(2,:,i_stage)
               displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + weight_rk * veloc_elastic_rk(3,:,i_stage)
 
-            else if( i_stage==4 ) then
+            else if (i_stage==4) then
               !! DK DK this should be vectorized
               veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
                                    ( accel_elastic_rk(1,:,1) + 2.0d0 * accel_elastic_rk(1,:,2) + &
@@ -805,7 +805,7 @@ subroutine iterate_time()
             endif
           endif
 
-          if( SIMULATION_TYPE == 3 ) then
+          if (SIMULATION_TYPE == 3) then
             !! DK DK this should be vectorized
             b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
             b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_one(:)
@@ -814,25 +814,25 @@ subroutine iterate_time()
             b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
           endif
 
-        endif !if(any_elastic)
+        endif !if (any_elastic)
 
       else ! GPU_MODE
-        if(any_elastic)  call compute_forces_elastic_GPU()
+        if (any_elastic)  call compute_forces_elastic_GPU()
       endif
 
 ! ******************************************************************************************************************
 ! ************* main solver for the poroelastic elements: first the solid (u_s) then the fluid (w)
 ! ******************************************************************************************************************
-      if( .not. GPU_MODE) then
-        if( any_poroelastic ) then
+      if (.not. GPU_MODE) then
+        if (any_poroelastic) then
           !--------------------------------------------------------------------------------------------
           ! implement viscous attenuation for poroelastic media
           !--------------------------------------------------------------------------------------------
-          if( ATTENUATION_PORO_FLUID_PART ) then
+          if (ATTENUATION_PORO_FLUID_PART) then
             call compute_attenuation_poro_fluid_part()
           endif
 
-          if( SIMULATION_TYPE == 3 ) then
+          if (SIMULATION_TYPE == 3) then
             ! if inviscid fluid, comment the reading and uncomment the zeroing
             !     read(23,rec=NSTEP-it+1) b_viscodampx
             !     read(24,rec=NSTEP-it+1) b_viscodampz
@@ -843,39 +843,39 @@ subroutine iterate_time()
           call compute_forces_poro_solid(f0(1))
           call compute_forces_poro_fluid(f0(1))
 
-          if( SAVE_FORWARD .and. SIMULATION_TYPE == 1 ) then
+          if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
             ! if inviscid fluid, comment
             !     write(23,rec=it) b_viscodampx
             !     write(24,rec=it) b_viscodampz
           endif
 
-        endif !if(any_poroelastic) then
+        endif !if (any_poroelastic) then
 
         ! *********************************************************
         ! ************* add coupling with the acoustic side
         ! *********************************************************
-        if( coupled_acoustic_poro ) then
+        if (coupled_acoustic_poro) then
           call compute_coupling_poro_ac()
         endif
 
         ! **********************************************************
         ! ************* add coupling with the elastic side
         ! **********************************************************
-        if( coupled_elastic_poro ) then
+        if (coupled_elastic_poro) then
           call compute_coupling_poro_viscoelastic()
         endif
 
         ! ***********************************************************
         ! ******************************** add force source
         ! ***********************************************************
-        if( any_poroelastic ) then
+        if (any_poroelastic) then
           ! --- add the source if it is a collocated force
-          if( .not. initialfield ) then
-            if( SIMULATION_TYPE == 1 ) then
+          if (.not. initialfield) then
+            if (SIMULATION_TYPE == 1) then
               call compute_add_sources_poro(accels_poroelastic,accelw_poroelastic,it,i_stage)
             endif
 
-            if( SIMULATION_TYPE == 3 ) then   ! adjoint and backward wavefield
+            if (SIMULATION_TYPE == 3) then   ! adjoint and backward wavefield
 !ZNZN the add force source for adjoint simulation in poro medium are inside compute_forces_poro_solid
 !ZNZN and compute_forces_poro_fluid,
               call compute_add_sources_poro(b_accels_poroelastic,b_accelw_poroelastic,NSTEP-it+1,stage_time_scheme-i_stage+1)
@@ -886,9 +886,9 @@ subroutine iterate_time()
         ! ******************************** ! assembling accels_proelastic & accelw_poroelastic for poroelastic elements
         ! ***********************************************************
 #ifdef USE_MPI
-        if( nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0 ) then
+        if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0) then
           call assemble_MPI_vector_po(accels_poroelastic,accelw_poroelastic)
-          if( SIMULATION_TYPE == 3 ) then
+          if (SIMULATION_TYPE == 3) then
             call assemble_MPI_vector_po(b_accels_poroelastic,b_accelw_poroelastic)
           endif
         endif
@@ -896,8 +896,8 @@ subroutine iterate_time()
         ! ************************************************************************************
         ! ************* multiply by the inverse of the mass matrix and update velocity
         ! ************************************************************************************
-        if( any_poroelastic ) then
-          if( time_stepping_scheme == 1 ) then
+        if (any_poroelastic) then
+          if (time_stepping_scheme == 1) then
             accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
             accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
             velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
@@ -906,7 +906,7 @@ subroutine iterate_time()
             accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
             velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
 
-            if( SIMULATION_TYPE == 3 ) then
+            if (SIMULATION_TYPE == 3) then
               b_accels_poroelastic(1,:) = b_accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
               b_accels_poroelastic(2,:) = b_accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
               b_velocs_poroelastic = b_velocs_poroelastic + b_deltatover2*b_accels_poroelastic
@@ -917,7 +917,7 @@ subroutine iterate_time()
             endif
           endif
 
-          if( time_stepping_scheme == 2 ) then
+          if (time_stepping_scheme == 2) then
             accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
             accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
 
@@ -935,7 +935,7 @@ subroutine iterate_time()
             displw_poroelastic = displw_poroelastic + beta_LDDRK(i_stage) * displw_poroelastic_LDDRK
           endif
 
-          if( time_stepping_scheme == 3 ) then
+          if (time_stepping_scheme == 3) then
             accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
             accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
 
@@ -952,12 +952,12 @@ subroutine iterate_time()
             velocw_poroelastic_rk(1,:,i_stage) = deltat * velocw_poroelastic(1,:)
             velocw_poroelastic_rk(2,:,i_stage) = deltat * velocw_poroelastic(2,:)
 
-            if( i_stage==1 .or. i_stage==2 .or. i_stage==3 ) then
-              if( i_stage == 1 )weight_rk = 0.5d0
-              if( i_stage == 2 )weight_rk = 0.5d0
-              if( i_stage == 3 )weight_rk = 1.0d0
+            if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+              if (i_stage == 1) weight_rk = 0.5d0
+              if (i_stage == 2) weight_rk = 0.5d0
+              if (i_stage == 3) weight_rk = 1.0d0
 
-              if( i_stage==1 ) then
+              if (i_stage==1) then
                 velocs_poroelastic_initial_rk(1,:) = velocs_poroelastic(1,:)
                 velocs_poroelastic_initial_rk(2,:) = velocs_poroelastic(2,:)
                 displs_poroelastic_initial_rk(1,:) = displs_poroelastic(1,:)
@@ -979,7 +979,7 @@ subroutine iterate_time()
               displw_poroelastic(1,:) = displw_poroelastic_initial_rk(1,:) + weight_rk * velocw_poroelastic_rk(1,:,i_stage)
               displw_poroelastic(2,:) = displw_poroelastic_initial_rk(2,:) + weight_rk * velocw_poroelastic_rk(2,:,i_stage)
 
-            else if( i_stage==4 ) then
+            else if (i_stage==4) then
 
               velocs_poroelastic(1,:) = velocs_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
               (accels_poroelastic_rk(1,:,1) + 2.0d0 * accels_poroelastic_rk(1,:,2) + &
@@ -1014,7 +1014,7 @@ subroutine iterate_time()
                2.0d0 * velocw_poroelastic_rk(2,:,3) + velocw_poroelastic_rk(2,:,4))
             endif
           endif
-        endif !if(any_poroelastic)
+        endif !if (any_poroelastic)
 
         !*******************************************************************************
         ! assembling the displacements on the elastic-poro boundaries
@@ -1054,108 +1054,112 @@ subroutine iterate_time()
         !
         ! This implementation highly helped stability especially with unstructured meshes.
         !
-        if( coupled_elastic_poro ) then
+        if (coupled_elastic_poro) then
           call compute_coupling_poro_viscoelastic_for_stabilization()
         endif
      else !GPU_MODE
-       if(any_poroelastic)   call exit_mpi('poroelastic not implemented in GPU MODE yet')
+       if (any_poroelastic) call exit_MPI(myrank,'poroelastic not implemented in GPU MODE yet')
      endif
    enddo !LDDRK or RK
 
 ! ********************************************************************************************
 !                       reading lastframe for adjoint/kernels calculation
 ! ********************************************************************************************
-   if( it == 1 .and. SIMULATION_TYPE == 3 ) then
-     ! acoustic medium
-     if( any_acoustic ) then
-       write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-       open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
+   if (it == 1 .and. SIMULATION_TYPE == 3) then
+      ! acoustic medium
+      if (any_acoustic) then
+        write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
+        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_acoustic**.bin')
 
-         read(55) b_potential_acoustic
-         read(55) b_potential_dot_acoustic
-         read(55) b_potential_dot_dot_acoustic
+        read(55) b_potential_acoustic
+        read(55) b_potential_dot_acoustic
+        read(55) b_potential_dot_dot_acoustic
 
-       close(55)
+        close(55)
 
-       if( GPU_MODE ) then
-         ! transfers fields onto GPU
-         call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
-                                             b_potential_dot_acoustic,      &
-                                             b_potential_dot_dot_acoustic,  &
-                                             Mesh_pointer)
-       else
-         ! free surface for an acoustic medium
-         if( nelem_acoustic_surface > 0 ) then
-           call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                              b_potential_acoustic)
-         endif
-       endif
-     endif
+        if (GPU_MODE) then
+          ! transfers fields onto GPU
+          call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
+                                              b_potential_dot_acoustic,      &
+                                              b_potential_dot_dot_acoustic,  &
+                                              Mesh_pointer)
+        else
+          ! free surface for an acoustic medium
+          if (nelem_acoustic_surface > 0) then
+            call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                                               b_potential_acoustic)
+          endif
+        endif
+      endif
 
-     ! elastic medium
-     if( any_elastic ) then
-       write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
-       open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-       if( p_sv ) then !P-SV waves
-           read(55) b_displ_elastic
-           read(55) b_veloc_elastic
-           read(55) b_accel_elastic
-         if( GPU_MODE ) then
-           b_displ_2D(1,:) = b_displ_elastic(1,:)
-           b_displ_2D(2,:) = b_displ_elastic(2,:)
-           b_veloc_2D(1,:) = b_veloc_elastic(1,:)
-           b_veloc_2D(2,:) = b_veloc_elastic(2,:)
-           b_accel_2D(1,:) = b_accel_elastic(1,:)
-           b_accel_2D(2,:) = b_accel_elastic(2,:)
-           call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_2D,b_veloc_2D,b_accel_2D,Mesh_pointer)
-         endif
+      ! elastic medium
+      if (any_elastic) then
+        write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
+        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_elastic**.bin')
+        if (p_sv) then
+          !P-SV waves
+          read(55) b_displ_elastic
+          read(55) b_veloc_elastic
+          read(55) b_accel_elastic
+          if (GPU_MODE) then
+            b_displ_2D(1,:) = b_displ_elastic(1,:)
+            b_displ_2D(2,:) = b_displ_elastic(2,:)
+            b_veloc_2D(1,:) = b_veloc_elastic(1,:)
+            b_veloc_2D(2,:) = b_veloc_elastic(2,:)
+            b_accel_2D(1,:) = b_accel_elastic(1,:)
+            b_accel_2D(2,:) = b_accel_elastic(2,:)
+            call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_2D,b_veloc_2D,b_accel_2D,Mesh_pointer)
+          endif
+        else
+          !SH (membrane) waves
+          read(55) b_displ_elastic
+          read(55) b_veloc_elastic
+          read(55) b_accel_elastic
 
-       else !SH (membrane) waves
+          b_displ_elastic(1,:) = 0._CUSTOM_REAL
+          b_displ_elastic(3,:) = 0._CUSTOM_REAL
+          b_veloc_elastic(1,:) = 0._CUSTOM_REAL
+          b_veloc_elastic(3,:) = 0._CUSTOM_REAL
+          b_accel_elastic(1,:) = 0._CUSTOM_REAL
+          b_accel_elastic(3,:) = 0._CUSTOM_REAL
+        endif
+        close(55)
+      endif
 
-           read(55) b_displ_elastic
-           read(55) b_veloc_elastic
-           read(55) b_accel_elastic
-
-         b_displ_elastic(1,:) = 0._CUSTOM_REAL
-         b_displ_elastic(3,:) = 0._CUSTOM_REAL
-         b_veloc_elastic(1,:) = 0._CUSTOM_REAL
-         b_veloc_elastic(3,:) = 0._CUSTOM_REAL
-         b_accel_elastic(1,:) = 0._CUSTOM_REAL
-         b_accel_elastic(3,:) = 0._CUSTOM_REAL
-       endif
-       close(55)
-     endif
-
-     ! poroelastic medium
-     if(any_poroelastic) then
-       write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
-       open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-       write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
-       open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted')
-       do j=1,nglob
-         read(55) (b_displs_poroelastic(i,j), i=1,NDIM), &
-                  (b_velocs_poroelastic(i,j), i=1,NDIM), &
-                  (b_accels_poroelastic(i,j), i=1,NDIM)
-         read(56) (b_displw_poroelastic(i,j), i=1,NDIM), &
-                  (b_velocw_poroelastic(i,j), i=1,NDIM), &
-                  (b_accelw_poroelastic(i,j), i=1,NDIM)
-       enddo
-       close(55)
-       close(56)
-     endif
-   endif ! if(it == 1 .and. SIMULATION_TYPE == 3)
+      ! poroelastic medium
+      if (any_poroelastic) then
+        write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
+        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_s**.bin')
+        write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
+        open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_w**.bin')
+        do j = 1,nglob
+          read(55) (b_displs_poroelastic(i,j), i= 1,NDIM), &
+                   (b_velocs_poroelastic(i,j), i= 1,NDIM), &
+                   (b_accels_poroelastic(i,j), i= 1,NDIM)
+          read(56) (b_displw_poroelastic(i,j), i= 1,NDIM), &
+                   (b_velocw_poroelastic(i,j), i= 1,NDIM), &
+                   (b_accelw_poroelastic(i,j), i= 1,NDIM)
+        enddo
+        close(55)
+        close(56)
+      endif
+   endif ! if (it == 1 .and. SIMULATION_TYPE == 3)
 
 !<NOISE_TOMOGRAPHY
-   if( NOISE_TOMOGRAPHY == 1 ) then
+   if (NOISE_TOMOGRAPHY == 1) then
       call save_surface_movie_noise()
-   else if( NOISE_TOMOGRAPHY == 2 .and. save_everywhere ) then
+   else if (NOISE_TOMOGRAPHY == 2 .and. save_everywhere) then
       call save_surface_movie_noise()
-   else if( NOISE_TOMOGRAPHY == 3 .and. save_everywhere ) then
-     if( it==1 ) open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
+   else if (NOISE_TOMOGRAPHY == 3 .and. save_everywhere) then
+     if (it == 1) open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
                       recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
-     if( ios /= 0 ) write(*,*) 'Error retrieving ensemble forward wavefield.'
-     if( p_sv ) then
-       call exit_mpi('P-SV case not yet implemented.')
+     if (ios /= 0) write(*,*) 'Error retrieving ensemble forward wavefield.'
+     if (p_sv) then
+       call exit_MPI(myrank,'P-SV case not yet implemented.')
      else
        read(unit=500,rec=NSTEP-it+1) b_displ_elastic(2,:)
      endif
@@ -1165,38 +1169,38 @@ subroutine iterate_time()
 ! ********************************************************************************************
 !                                      kernels calculation
 ! ********************************************************************************************
-   !*******************************************************************************
-   ! GPU_MODE
-   !*******************************************************************************
-   if( GPU_MODE ) then
-     ! Kernel calculation
-     if(SIMULATION_TYPE == 3 ) then
-       if( any_acoustic ) call compute_kernels_acoustic_cuda(Mesh_pointer,deltatf)
-       if( any_elastic ) call compute_kernels_elastic_cuda(Mesh_pointer,deltatf)
 
-       if( APPROXIMATE_HESS_KL ) then
+   if (GPU_MODE) then
+     !*******************************************************************************
+     ! GPU_MODE
+     !*******************************************************************************
+     ! Kernel calculation
+     if (SIMULATION_TYPE == 3) then
+       if (any_acoustic ) call compute_kernels_acoustic_cuda(Mesh_pointer,deltatf)
+       if (any_elastic ) call compute_kernels_elastic_cuda(Mesh_pointer,deltatf)
+
+       if (APPROXIMATE_HESS_KL) then
          ! computes contribution to density and bulk modulus kernel
          call compute_kernels_hess_cuda(Mesh_pointer,any_elastic,any_acoustic)
        endif
 
        ! Kernel transfer
-       if( it == NSTEP ) then
-         if( any_acoustic ) then
+       if (it == NSTEP) then
+         if (any_acoustic) then
            call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
-          rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
-          alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
-
+           rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
+           alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
          endif
 
-         if( any_elastic ) then
+         if (any_elastic) then
            call transfer_kernels_el_to_host(Mesh_pointer,rho_kl,mu_kl,kappa_kl,NSPEC_AB)
            ! Multiply each kernel point with the local coefficient
            do ispec = 1, nspec
-             if( elastic(ispec) ) then
+             if (elastic(ispec)) then
                do j = 1, NGLLZ
                  do i = 1, NGLLX
                    iglob = ibool(i,j,ispec)
-                   if( .not. assign_external_model ) then
+                   if (.not. assign_external_model) then
                      mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
                      kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) - &
                                             4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
@@ -1219,16 +1223,15 @@ subroutine iterate_time()
        endif  !! End NSTEP
      endif  !! End Sim 3
 
-     if( mod(it-1,subsamp_seismos) == 0 .and. SIMULATION_TYPE == 1 ) then
+     if (mod(it-1,subsamp_seismos) == 0 .and. SIMULATION_TYPE == 1) then
        seismo_current = seismo_current + 1
-       if( nrecloc > 0 ) then
+       if (nrecloc > 0) then
           if (USE_TRICK_FOR_BETTER_PRESSURE) then
-
-           call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
+            call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
                                                        NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
                                                        any_elastic_glob,any_acoustic_glob,1)
           else
-           call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
+            call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
                                                        NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,&
                                                        any_elastic_glob,any_acoustic_glob,0)
           endif
@@ -1236,11 +1239,11 @@ subroutine iterate_time()
      endif
 
      ! Fields transfer for imaging
-     if( (output_color_image .and. ( (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5)) .or. it == NSTEP) ) then
-       if( any_acoustic ) &
+     if ((output_color_image .and. ( (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5)) .or. it == NSTEP)) then
+       if (any_acoustic ) &
          call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic,potential_dot_acoustic, &
                                              potential_dot_dot_acoustic,Mesh_pointer)
-       if( any_elastic ) then
+       if (any_elastic) then
          call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_2D,veloc_2D,accel_2D,Mesh_pointer)
          displ_elastic(1,:) = displ_2D(1,:)
          veloc_elastic(1,:) = veloc_2D(1,:)
@@ -1248,16 +1251,17 @@ subroutine iterate_time()
          displ_elastic(3,:) = displ_2D(2,:)
          veloc_elastic(3,:) = veloc_2D(2,:)
          accel_elastic(3,:) = accel_2D(2,:)
-      endif
+       endif
      endif !If transfer
-   endif !If GPU Mode
 
-   !*******************************************************************************
-   ! CPU_MODE
-   !*******************************************************************************
-   if( .not. GPU_MODE ) then
+   else
+
+     !*******************************************************************************
+     ! CPU_MODE
+     !*******************************************************************************
+
      !----  compute kinetic and potential energy
-     if( output_energy ) then
+     if (output_energy) then
        call compute_energy()
 #ifdef USE_MPI
        call MPI_REDUCE(kinetic_energy, kinetic_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)
@@ -1268,48 +1272,49 @@ subroutine iterate_time()
 #endif
 
        ! save kinetic, potential and total energy for this time step in external file
-       if(myrank == 0) write(IOUT_ENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy_total,4), &
+       if (myrank == 0) write(IOUT_ENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy_total,4), &
                        real(potential_energy_total,4),real(kinetic_energy_total + potential_energy_total,4)
      endif
 
      !----  display time step and max of norm of displacement
-     if( mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP ) then
+     if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
        call check_stability()
      endif
 
      !---- loop on all the receivers to compute and store the seismograms
-     if( mod(it-1,subsamp_seismos) == 0 ) then
+     if (mod(it-1,subsamp_seismos) == 0) then
        call write_seismograms()
      endif
 
      ! kernels calculation
-     if( SIMULATION_TYPE == 3 ) then
-       if( any_acoustic ) then
+     if (SIMULATION_TYPE == 3) then
+       if (any_acoustic) then
          call compute_kernels_ac()
-       endif !if(any_acoustic)
+       endif !if (any_acoustic)
 
-       if( any_elastic ) then
+       if (any_elastic) then
          call compute_kernels_el()
        endif
 
-       if(any_poroelastic) then
+       if (any_poroelastic) then
          call compute_kernels_po()
-       endif ! if(any_poroelastic)
-     endif ! if(SIMULATION_TYPE == 3)
-   endif !Not GPU_MODE
+       endif ! if (any_poroelastic)
+     endif ! if (SIMULATION_TYPE == 3)
+
+   endif !GPU_MODE
 
    !
    !----  display results at given time steps
    !
-   if( mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP ) then
+   if (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP) then
      ! write kernel files
-     if(SIMULATION_TYPE == 3 .and. it == NSTEP) then
+     if (SIMULATION_TYPE == 3 .and. it == NSTEP) then
         call save_adjoint_kernels()
      endif
 
      !<NOISE_TOMOGRAPHY
-     if(.not. GPU_MODE ) then
-       if(NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise) then
+     if (.not. GPU_MODE) then
+       if (NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise) then
 
          !load ensemble forward source
          inquire(unit=500,exist=ex,opened=od)
@@ -1336,14 +1341,14 @@ subroutine iterate_time()
      ! ********************************************************************************************
      ! output_postscript_snapshot
      ! ********************************************************************************************
-     if( output_postscript_snapshot ) then
+     if (output_postscript_snapshot) then
        call write_postscript_snapshot()
      endif
 
      ! ********************************************************************************************
      ! display color image
      ! ********************************************************************************************
-     if( output_color_image ) then
+     if (output_color_image) then
        call write_color_image_snaphot()
      endif  ! of display images at a given time step
 
@@ -1352,14 +1357,14 @@ subroutine iterate_time()
      ! note: in the case of MPI, in the future it would be more convenient to output a single file
      !       rather than one for each myrank
      ! ********************************************************************************************
-     if( output_wavefield_dumps ) then
+     if (output_wavefield_dumps) then
        call write_wavefield_dumps()
      endif  ! of display wavefield dumps at a given time step
    endif
 
    !----  save temporary or final seismograms
    ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
-   if( mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP ) then
+   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
      call write_seismograms_to_file(x_source(1),z_source(1))
      seismo_offset = seismo_offset + seismo_current
      seismo_current = 0

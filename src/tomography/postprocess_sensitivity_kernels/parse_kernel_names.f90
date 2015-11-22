@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -142,7 +141,7 @@ subroutine strtok (source_string, delimiter, token)
 
   ! sets first index ibegin to beginning of (next) token
   do while (.true.)
-    if ( (ibegin <= isource_len) .and. (index(delimiter,saved_string(ibegin:ibegin)) /= 0)) then
+    if ((ibegin <= isource_len) .and. (index(delimiter,saved_string(ibegin:ibegin)) /= 0)) then
       ! delimiter is encountered, starts with next index (next token)
       ibegin = ibegin + 1
     else

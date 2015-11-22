@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -64,7 +63,7 @@
                               ibool_interfaces_acoustic,ibool_interfaces_elastic, &
                               ibool_interfaces_poroelastic, &
                               nibool_interfaces_acoustic,nibool_interfaces_elastic, &
-                              nibool_interfaces_poroelastic,my_neighbours,ier
+                              nibool_interfaces_poroelastic,my_neighbours
 
 
   implicit none
@@ -90,6 +89,7 @@
        buffer_send_faces_scalar, &
        buffer_recv_faces_scalar
   integer, dimension(ninterface)  :: msg_requests
+  integer :: ier
 
   buffer_send_faces_scalar(:,:) = 0.d0
   buffer_recv_faces_scalar(:,:) = 0.d0
@@ -215,17 +215,18 @@
                          tab_requests_send_recv_acoustic, &
                          buffer_send_faces_vector_ac, &
                          buffer_recv_faces_vector_ac, &
-                         my_neighbours,ier
+                         my_neighbours,myrank
 
   implicit none
 
-  include 'constants.h'
-  include 'precision.h'
+  include "constants.h"
+  include "precision.h"
 
   real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
 
   ! local parameters
   integer  :: ipoin, num_interface,iinterface, iglob
+  integer :: ier
 
   ! initializes buffers
   buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
@@ -260,8 +261,8 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_acoustic(iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_start')
+    if (ier /= MPI_SUCCESS) then
+      call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_start')
     endif
 
     ! starts a non-blocking receive
@@ -270,8 +271,8 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_acoustic(ninterface_acoustic+iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector')
+    if (ier /= MPI_SUCCESS) then
+      call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector')
     endif
 
   enddo
@@ -331,12 +332,12 @@
                          tab_requests_send_recv_elastic, &
                          buffer_send_faces_vector_el, &
                          buffer_recv_faces_vector_el, &
-                         my_neighbours
+                         my_neighbours,myrank
 
   implicit none
 
-  include 'constants.h'
-  include 'precision.h'
+  include "constants.h"
+  include "precision.h"
 
   ! array to assemble
   real(kind=CUSTOM_REAL), dimension(3,nglob), intent(inout) :: array_val2
@@ -366,8 +367,8 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_elastic(iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_el')
+    if (ier /= MPI_SUCCESS) then
+      call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_el')
     endif
 
     call MPI_IRECV ( buffer_recv_faces_vector_el(1,iinterface), &
@@ -375,8 +376,8 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_elastic(ninterface_elastic+iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector_el')
+    if (ier /= MPI_SUCCESS) then
+      call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_el')
     endif
 
   enddo
@@ -419,16 +420,22 @@
 
   use mpi
 
-  use specfem_par
-
+  use specfem_par, only: nglob,ninterface_poroelastic, &
+                         inum_interfaces_poroelastic, &
+                         ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
+                         tab_requests_send_recv_poro, &
+                         buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
+                         buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
+                         my_neighbours,myrank
 
   implicit none
 
-  include 'precision.h'
+  include "constants.h"
+  include "precision.h"
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob), intent(inout) :: array_val3,array_val4
 
-  integer  :: ipoin, num_interface, iinterface,i
+  integer  :: ipoin, num_interface, iinterface, i, ier
 
   do iinterface = 1, ninterface_poroelastic
 
@@ -459,8 +466,8 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_poro(iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_pos')
+    if (ier /= MPI_SUCCESS) then
+      call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_pos')
     endif
 
     call MPI_IRECV ( buffer_recv_faces_vector_pos(1,iinterface), &
@@ -468,8 +475,8 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_poro(ninterface_poroelastic+iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector_pos')
+    if (ier /= MPI_SUCCESS) then
+      call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_pos')
     endif
 
     call MPI_ISEND( buffer_send_faces_vector_pow(1,iinterface), &
@@ -477,8 +484,8 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_poro(ninterface_poroelastic*2+iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_pow')
+    if (ier /= MPI_SUCCESS) then
+      call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_pow')
     endif
 
     call MPI_IRECV ( buffer_recv_faces_vector_pow(1,iinterface), &
@@ -486,8 +493,8 @@
              my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
              tab_requests_send_recv_poro(ninterface_poroelastic*3+iinterface), ier)
 
-    if ( ier /= MPI_SUCCESS ) then
-      call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector_pow')
+    if (ier /= MPI_SUCCESS) then
+      call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_pow')
     endif
 
   enddo
@@ -558,7 +565,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
 
   ! sends only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! note: partition border copy into the buffer has already been done
     !          by routine transfer_boun_pot_from_device()
@@ -626,7 +633,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! wait for communications completion (recv)
     do iinterface = 1, ninterface_acoustic
@@ -694,7 +701,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
   !          already done in transfer_boun_accel routine
 
   ! send only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! send messages
     do iinterface = 1, ninterface_elastic
@@ -762,7 +769,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
   ! here we have to assemble all the contributions between partitions using MPI
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
 
     ! wait for communications completion (recv)
@@ -842,7 +849,7 @@ enddo
   ! here we have to assemble all the contributions between partitions using MPI
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
 
 

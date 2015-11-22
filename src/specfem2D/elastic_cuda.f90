@@ -60,14 +60,14 @@ subroutine compute_forces_elastic_GPU()
 
 
   ! check
-  if( PML_BOUNDARY_CONDITIONS ) &
-    call exit_MPI('PML conditions not yet implemented for routine compute_forces_viscoelastic_GPU()')
+  if (PML_BOUNDARY_CONDITIONS ) &
+    call exit_MPI(myrank,'PML conditions not yet implemented for routine compute_forces_viscoelastic_GPU()')
 
   ! distinguishes two runs: for points on MPI interfaces, and points within the partitions
   do iphase=1,2
 
     !first for points on MPI interfaces
-    if( iphase == 1 ) then
+    if (iphase == 1) then
       phase_is_inner = .false.
     else
       phase_is_inner = .true.
@@ -83,7 +83,7 @@ subroutine compute_forces_elastic_GPU()
 
     ! while inner elements compute "Kernel_2", we wait for MPI to
     ! finish and transfer the boundary terms to the device asynchronously
-    if(phase_is_inner .eqv. .true.) then
+    if (phase_is_inner .eqv. .true.) then
       !daniel: todo - this avoids calling the fortran vector send from CUDA routine
       ! wait for asynchronous copy to finish
 
@@ -113,14 +113,14 @@ subroutine compute_forces_elastic_GPU()
 
     ! adds elastic absorbing boundary term to acceleration (Stacey conditions)
 
-    if( STACEY_BOUNDARY_CONDITIONS ) then
+    if (STACEY_BOUNDARY_CONDITIONS) then
       call compute_stacey_viscoelastic_GPU(phase_is_inner,b_absorb_elastic_bottom_slice,b_absorb_elastic_left_slice,&
                                            b_absorb_elastic_right_slice,b_absorb_elastic_top_slice)
     endif
 
     ! acoustic coupling
-    if( any_acoustic ) then
-      if( num_fluid_solid_edges > 0 ) then
+    if (any_acoustic) then
+      if (num_fluid_solid_edges > 0) then
         call compute_coupling_el_ac_cuda(Mesh_pointer,phase_is_inner, &
                                          num_fluid_solid_edges)
       endif
@@ -128,7 +128,7 @@ subroutine compute_forces_elastic_GPU()
 
     ! poroelastic coupling
     ! poroelastic coupling
-    if(any_poroelastic )  then
+    if (any_poroelastic) then
           stop 'not implemented yet'
     endif
 
@@ -140,7 +140,7 @@ subroutine compute_forces_elastic_GPU()
 
 
     ! assemble all the contributions between slices using MPI
-    if( phase_is_inner .eqv. .false. ) then
+    if (phase_is_inner .eqv. .false.) then
 
 
         ! sends accel values to corresponding MPI interface neighbors
@@ -155,7 +155,7 @@ subroutine compute_forces_elastic_GPU()
         call transfer_boundary_from_device_a(Mesh_pointer)
 
         ! adjoint simulations
-        if( SIMULATION_TYPE == 3 ) then
+        if (SIMULATION_TYPE == 3) then
            call transfer_boun_accel_from_device(Mesh_pointer,&
                         b_buffer_send_vector_ext_mesh,&
                         3) ! <-- 3 == adjoint b_accel
@@ -179,7 +179,7 @@ subroutine compute_forces_elastic_GPU()
                       tab_requests_send_recv_vector, &
                       1,ninterface_elastic,inum_interfaces_elastic)
          ! adjoint simulations
-         if( SIMULATION_TYPE == 3 ) then
+         if (SIMULATION_TYPE == 3) then
            call assemble_MPI_vector_write_cuda(NPROC,Mesh_pointer,&
                               b_buffer_recv_vector_ext_mesh,ninterface,&
                               max_nibool_interfaces_ext_mesh, &
@@ -222,10 +222,10 @@ end subroutine compute_forces_elastic_GPU
   real(kind=CUSTOM_REAL),dimension(2,NGLLX,nspec_top) :: b_absorb_elastic_top_slice
 
   ! checks if anything to do
-  if( nelemabs == 0 ) return
+  if (nelemabs == 0) return
 
-if( SIMULATION_TYPE == 3 ) then
-    if( phase_is_inner .eqv. .false. ) then
+if (SIMULATION_TYPE == 3) then
+    if (phase_is_inner .eqv. .false.) then
 
     b_absorb_elastic_bottom_slice(1,:,:)=b_absorb_elastic_bottom(1,:,:,NSTEP-it+1)
     b_absorb_elastic_left_slice(1,:,:)=b_absorb_elastic_left(1,:,:,NSTEP-it+1)
@@ -245,9 +245,9 @@ endif
                    b_absorb_elastic_right_slice,b_absorb_elastic_top_slice,b_absorb_elastic_bottom_slice)
 
   ! adjoint simulations: stores absorbed wavefield part
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD ) then
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
     ! writes out absorbing boundary value only when second phase is running
-    if( phase_is_inner .eqv. .true. ) then
+    if (phase_is_inner .eqv. .true.) then
     b_absorb_elastic_bottom(1,:,:,it) = b_absorb_elastic_bottom_slice(1,:,:)
     b_absorb_elastic_right(1,:,:,it) = b_absorb_elastic_right_slice(1,:,:)
     b_absorb_elastic_top(1,:,:,it) = b_absorb_elastic_top_slice(1,:,:)
@@ -278,14 +278,14 @@ endif
   logical :: phase_is_inner
 
 ! forward simulations
-  if (SIMULATION_TYPE == 1 ) call compute_add_sources_el_cuda(Mesh_pointer,phase_is_inner,it)
+  if (SIMULATION_TYPE == 1) call compute_add_sources_el_cuda(Mesh_pointer,phase_is_inner,it)
 
 ! adjoint simulations
-  if (SIMULATION_TYPE == 3 .and. nadj_rec_local > 0 .and. it < NSTEP ) then
+  if (SIMULATION_TYPE == 3 .and. nadj_rec_local > 0 .and. it < NSTEP) then
         call add_sources_el_sim_type_2_or_3(Mesh_pointer,phase_is_inner, NSTEP -it + 1, nadj_rec_local,NSTEP)
   endif
 
 ! adjoint simulations
-  if (SIMULATION_TYPE == 3 ) call compute_add_sources_el_s3_cuda(Mesh_pointer,phase_is_inner,NSTEP -it + 1)
+  if (SIMULATION_TYPE == 3) call compute_add_sources_el_s3_cuda(Mesh_pointer,phase_is_inner,NSTEP -it + 1)
 
   end subroutine compute_add_sources_viscoelastic_GPU

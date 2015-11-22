@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -78,7 +77,7 @@
   print *
 
   open(unit=15,file='DATA/STATIONS',status='unknown',iostat=ios)
-  if( ios /= 0 ) stop 'error saving STATIONS file'
+  if (ios /= 0 ) stop 'error saving STATIONS file'
 
   irec_global_number = 0
 
@@ -92,7 +91,7 @@
        irec_global_number = irec_global_number + 1
 
        ! compute coordinates of the receiver
-       if(nrec(ireceiverlines) > 1) then
+       if (nrec(ireceiverlines) > 1) then
           xrec = xdeb(ireceiverlines) + dble(irec-1)*(xfin(ireceiverlines) &
                                   -xdeb(ireceiverlines))/dble(nrec(ireceiverlines)-1)
           zrec = zdeb(ireceiverlines) + dble(irec-1)*(zfin(ireceiverlines) &
@@ -103,7 +102,7 @@
        endif
 
        ! modify position of receiver if we must record exactly at the surface
-       if(record_at_surface_same_vertical(ireceiverlines)) &
+       if (record_at_surface_same_vertical(ireceiverlines)) &
             zrec = value_spline(xrec,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
 
        ! display position of the receiver

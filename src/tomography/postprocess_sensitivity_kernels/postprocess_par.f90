@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -41,24 +40,13 @@
 !
 !========================================================================
 
-module constants
-
-  include "constants.h"
-
-end module constants
-
-
-
-!------------------------------------------------------------------------
 
 module postprocess_par
 
-  use constants,only : IIN,IOUT,NGLLX,NGLLZ,&
-    CUSTOM_REAL,NGLLX,NGLLZ
+  use constants,only : MAX_STRING_LEN,IIN,IOUT, &
+    CUSTOM_REAL,NGLLX,NGLLZ,GAUSSALPHA,GAUSSBETA
 
   implicit none
-
-  integer,parameter :: MAX_STRING_LEN = 1023
 
   integer,parameter :: MAX_KERNEL_NAMES = 255
   integer,parameter :: MAX_KERNEL_PATHS = 65535

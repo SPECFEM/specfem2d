@@ -53,6 +53,9 @@ shared_TARGETS = \
 
 shared_OBJECTS = \
 	$O/define_shape_functions.shared.o \
+	$O/exit_mpi.shared.o \
+	$O/force_ftz.cc.o \
+	$O/parallel.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
@@ -74,6 +77,9 @@ shared_MODULES = \
 ##
 
 $O/%.shared.o: $S/%.f90
+	${F90} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.shared.o: $S/%.F90
 	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
 

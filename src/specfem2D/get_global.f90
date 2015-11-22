@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -45,13 +44,14 @@
 
   subroutine get_global()
 
-  use specfem_par, only : nspec,ibool,copy_ibool_ori,integer_mask_ibool,SAVE_MODEL,outputname,myrank,ier
+  use specfem_par, only : nspec,ibool,copy_ibool_ori,integer_mask_ibool,SAVE_MODEL,outputname,myrank
 
   implicit none
   include "constants.h"
 
   ! local parameters
   integer :: inumber,ispec,i,j
+  integer :: ier
 
   ! initializes temporary arrays
   integer_mask_ibool(:) = -1
@@ -61,37 +61,31 @@
 
   ! reduce cache misses in all the elements
   ! loop over spectral elements
-    do ispec = 1,nspec
-      do j=1,NGLLZ
-        do i=1,NGLLX
-          if(integer_mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
-            ! create a new point
-            inumber = inumber + 1
-            ibool(i,j,ispec) = inumber
-            integer_mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
-          else
-            ! use an existing point created previously
-            ibool(i,j,ispec) = integer_mask_ibool(copy_ibool_ori(i,j,ispec))
-          endif
-        enddo
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        if (integer_mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+          ! create a new point
+          inumber = inumber + 1
+          ibool(i,j,ispec) = inumber
+          integer_mask_ibool(copy_ibool_ori(i,j,ispec)) = inumber
+        else
+          ! use an existing point created previously
+          ibool(i,j,ispec) = integer_mask_ibool(copy_ibool_ori(i,j,ispec))
+        endif
       enddo
     enddo
+  enddo
 
-if (save_model=='binary') then
+  if (save_model=='binary') then
+    write(outputname,'(a,i6.6,a)') './DATA/proc',myrank,'_NSPEC_ibool.bin'
 
-  write(outputname,'(a,i6.6,a)') './DATA/proc',myrank,'_NSPEC_ibool.bin'
-
-  open(888,file=trim(outputname),status='unknown',form='unformatted',iostat=ier)
-  if (ier /= 0) stop 'Error opening smoothed kernel file'
-  write(888) nspec
-  write(888) ibool
-  close(888)
-
-
-
-endif
-
-
+    open(888,file=trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    if (ier /= 0) stop 'Error opening smoothed kernel file'
+    write(888) nspec
+    write(888) ibool
+    close(888)
+  endif
 
   end subroutine get_global
 
@@ -121,9 +115,9 @@ endif
   inumber = 0
 
   do ispec = 1,nspec
-    do j=1,NGLLZ
-      do i=1,NGLLX
-        if(integer_mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        if (integer_mask_ibool(copy_ibool_ori(i,j,ispec)) == -1) then
           ! create a new point
           inumber = inumber + 1
           ibool(i,j,ispec) = inumber

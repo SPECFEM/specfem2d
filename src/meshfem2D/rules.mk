@@ -78,6 +78,8 @@ meshfem2D_MODULES = \
 
 meshfem2D_SHARED_OBJECTS = \
 	$O/read_value_parameters.shared.o \
+	$O/exit_mpi.shared.o \
+	$O/parallel.shared.o \
 	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 
@@ -103,7 +105,11 @@ meshfem2D: xmeshfem2D
 xmeshfem2D: $E/xmeshfem2D
 
 $E/xmeshfem2D: $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS)
+	@echo ""
+	@echo "building xmeshfem2D"
+	@echo ""
 	$(FCLINK) -o ${E}/xmeshfem2D $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS) $(MPILIBS)
+	@echo ""
 
 
 #######################################
