@@ -211,6 +211,7 @@ SUBDIRS = \
 	shared \
 	specfem2D \
 	tomography/postprocess_sensitivity_kernels \
+	tomography \
 	$(EMPTY_MACRO)
 
 # default targets for the pure Fortran version
@@ -225,7 +226,7 @@ DEFAULT = \
 
 default: $(DEFAULT)
 
-all: default auxiliaries postprocess
+all: default auxiliaries postprocess tomography
 
 
 ifdef CLEAN
@@ -266,6 +267,9 @@ help:
 	@echo "- sensitivity kernel postprocessing tools: [make postprocess]"
 	@echo "    xcombine_sem"
 	@echo "    xsmooth_sem"
+	@echo ""
+	@echo "- tomography tools: [make tomography]"
+	@echo "    xsum_kernels"
 	@echo ""
 
 

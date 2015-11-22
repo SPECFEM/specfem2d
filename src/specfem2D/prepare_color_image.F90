@@ -51,7 +51,7 @@
   use specfem_par, only : NX_IMAGE_color,NZ_IMAGE_color, &
                           xmin_color_image,xmax_color_image, &
                           zmin_color_image,zmax_color_image, &
-                          coord,npgeo,factor_subsample_image
+                          coord,npgeo,factor_subsample_image,myrank
 
   implicit none
   include "constants.h"
@@ -107,22 +107,22 @@
 ! because from http://www.jpegcameras.com/libjpeg/libjpeg-2.html
 ! we know that the size limit of the image in each dimension is 65535:
 ! "JPEG supports image dimensions of 1 to 64K pixels in either direction".
-  if (NX_IMAGE_color < 4) call exit_MPI('output image too small: NX_IMAGE_color < 4.')
-  if (NZ_IMAGE_color < 4) call exit_MPI('output image too small: NZ_IMAGE_color < 4.')
+  if (NX_IMAGE_color < 4) call exit_MPI(myrank,'output image too small: NX_IMAGE_color < 4.')
+  if (NZ_IMAGE_color < 4) call exit_MPI(myrank,'output image too small: NZ_IMAGE_color < 4.')
 
   if (NX_IMAGE_color > 65534) &
-    call exit_MPI('output image too big: NX_IMAGE_color > 65534; increase factor_subsample_image in DATA/Par_file.')
+    call exit_MPI(myrank,'output image too big: NX_IMAGE_color > 65534; increase factor_subsample_image in DATA/Par_file.')
   if (NZ_IMAGE_color > 65534) &
-    call exit_MPI('output image too big: NZ_IMAGE_color > 65534; increase factor_subsample_image in DATA/Par_file.')
+    call exit_MPI(myrank,'output image too big: NZ_IMAGE_color > 65534; increase factor_subsample_image in DATA/Par_file.')
 
   if (NX_IMAGE_color > NX_NZ_IMAGE_MAX) then
     print *,'NX_IMAGE_color,NX_NZ_IMAGE_MAX = ',NX_IMAGE_color,NX_NZ_IMAGE_MAX
-    call exit_MPI( &
+    call exit_MPI(myrank, &
       'output image too big: NX_IMAGE_color > NX_NZ_IMAGE_MAX; increase factor_subsample_image or change NX_NZ_IMAGE_MAX.')
   endif
   if (NZ_IMAGE_color > NX_NZ_IMAGE_MAX) then
     print *,'NZ_IMAGE_color,NX_NZ_IMAGE_MAX = ',NZ_IMAGE_color,NX_NZ_IMAGE_MAX
-    call exit_MPI( &
+    call exit_MPI(myrank, &
       'output image too big: NZ_IMAGE_color > NX_NZ_IMAGE_MAX; increase factor_subsample_image or change NX_NZ_IMAGE_MAX.')
   endif
 
@@ -214,7 +214,7 @@
                  enddo
               enddo
               if (dist_min_pixel >= HUGEVAL) then
-                 call exit_MPI('Error in detecting pixel for color image')
+                 call exit_MPI(myrank,'Error in detecting pixel for color image')
 
               endif
               nb_pixel_loc = nb_pixel_loc + 1

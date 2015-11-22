@@ -154,7 +154,7 @@
 ! close OpenDX file
     close(11)
 
-    call exit_MPI('negative 2D Jacobian, element saved in DX_first_element_with_negative_jacobian.dx')
+    stop 'negative 2D Jacobian, element saved in DX_first_element_with_negative_jacobian.dx'
   endif
 
 ! invert the relation

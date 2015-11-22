@@ -43,7 +43,7 @@
 !-----------------------------------------------
 ! subroutine to stop the code whether sequential or parallel.
 !-----------------------------------------------
-  subroutine exit_MPI(error_msg)
+  subroutine exit_MPI(myrank,error_msg)
 
 #ifdef USE_MPI
   use mpi
@@ -51,25 +51,31 @@
 
   implicit none
 
+  include "constants.h"
+
   ! identifier for error message file
   integer, parameter :: IERROR = 30
 
-  character(len=*) error_msg
+  integer :: myrank
+  character(len=*) :: error_msg
 
-  integer ier
-
-  ier = 0
+  character(len=MAX_STRING_LEN) :: outputname
 
   ! write error message to screen
   write(*,*) error_msg(1:len(error_msg))
-  write(*,*) 'Error detected, aborting MPI... proc '
+  write(*,*) 'Error detected, aborting MPI... proc ',myrank
 
-  ! stop all the MPI processes, and exit
-#ifdef USE_MPI
-  call MPI_ABORT(MPI_COMM_WORLD,30,ier)
-#endif
+! write error message to file
+  write(outputname,"('/error_message',i6.6,'.txt')") myrank
+  open(unit=IERROR,file='OUTPUT_FILES'//outputname,status='unknown')
+  write(IERROR,*) error_msg(1:len(error_msg))
+  write(IERROR,*) 'Error detected, aborting MPI... proc ',myrank
+  close(IERROR)
 
-  stop 'error, program ended in exit_MPI'
+! close output file
+  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
+
+  call abort_mpi()
 
   end subroutine exit_MPI
 

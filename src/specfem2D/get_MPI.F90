@@ -161,7 +161,7 @@
         write(IMAIN,*) 'Error sorting MPI interface points:',myrank
         write(IMAIN,*) '   domain:',idomain
         write(IMAIN,*) '   interface:',iinterface,num_points1,num_points2
-        call exit_MPI('error sorting MPI interface')
+        call exit_MPI(myrank,'error sorting MPI interface')
       endif
 
       ! stores new order of ibool array

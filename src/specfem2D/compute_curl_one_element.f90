@@ -46,7 +46,7 @@
 
   use specfem_par, only: curl_element,displ_elastic, &
                          displs_poroelastic,elastic,poroelastic, &
-                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz
+                         xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,myrank
 
   implicit none
 
@@ -136,7 +136,7 @@
 
   else
 
-     call exit_MPI('no curl in acoustic')
+     call exit_MPI(myrank,'no curl in acoustic')
 
   endif ! end of test if acoustic or elastic element
 

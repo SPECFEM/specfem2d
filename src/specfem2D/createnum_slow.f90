@@ -153,7 +153,7 @@
             i2 = 1
             j2 = NGLLZ
           else
-             call exit_MPI('bad corner')
+             call exit_MPI(myrank,'bad corner')
           endif
 
 ! affecter le meme numero
@@ -209,7 +209,7 @@
   if ((knods(ngnod_begin(nedgeother),num2) == knods(ngnod_begin(nedgeloc),numelem)) &
        .and. &
     (knods(ngnod_end(nedgeother),num2) == knods(ngnod_end(nedgeloc),numelem))) then
-     call exit_MPI('Improper topology of the input mesh detected')
+     call exit_MPI(myrank,'Improper topology of the input mesh detected')
 
 !--- sinon voir si cette arete a deja ete generee
 
@@ -243,7 +243,7 @@
             jloc = kloc
             ipos = NGLLZ - jloc + 1
             else
-               call exit_MPI('bad nedgeloc')
+               call exit_MPI(myrank,'bad nedgeloc')
             endif
 
 ! calculer l'abscisse le long de l'arete d'arrivee
@@ -265,14 +265,14 @@
             i2 = 1
             j2 = NGLLZ - ipos2 + 1
             else
-               call exit_MPI('bad nedgeother')
+               call exit_MPI(myrank,'bad nedgeother')
             endif
 
 ! verifier que le point de depart n'existe pas deja
-      if (ibool(iloc,jloc,numelem) /= 0) call exit_MPI('point generated twice')
+      if (ibool(iloc,jloc,numelem) /= 0) call exit_MPI(myrank,'point generated twice')
 
 ! verifier que le point d'arrivee existe bien deja
-      if (ibool(i2,j2,num2) == 0) call exit_MPI('unknown point in the mesh')
+      if (ibool(i2,j2,num2) == 0) call exit_MPI(myrank,'unknown point in the mesh')
 
 ! affecter le meme numero
       ibool(iloc,jloc,numelem) = ibool(i2,j2,num2)
@@ -306,7 +306,7 @@
   enddo
 
 ! verification de la coherence de la numerotation generee
-  if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) call exit_MPI('Error while generating global numbering')
+  if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) call exit_MPI(myrank,'Error while generating global numbering')
 
   end subroutine createnum_slow
 

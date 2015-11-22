@@ -47,7 +47,7 @@
   use specfem_par, only: p_sv,elastic,nglob_elastic,&
                          NSOURCES,source_type,anglesource,source_time_function,&
                          is_proc_source,ispec_selected_source,sourcearray,&
-                         hxis_store,hgammas_store,ibool
+                         hxis_store,hgammas_store,ibool,myrank
   implicit none
   include "constants.h"
 
@@ -88,7 +88,7 @@
 
       ! moment tensor
       if (source_type(i_source) == 2) then
-        if (.not. p_sv )  call exit_MPI('cannot have moment tensor source in SH (membrane) waves calculation')
+        if (.not. p_sv )  call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
         ! add source array
         do j = 1,NGLLZ;
           do i = 1,NGLLX

@@ -48,7 +48,7 @@
                           anisotropy,permeability,poroelastcoef, &
                           numat,myrank,QKappa_attenuation,Qmu_attenuation, &
                           freq0,Q0,ATTENUATION_PORO_FLUID_PART,assign_external_model, &
-                          tomo_material
+                          tomo_material,myrank
 
   implicit none
   include "constants.h"
@@ -95,7 +95,7 @@
 
     read(IIN,*) n,indic,val0,val1,val2,val3,val4,val5,val6,val7,val8,val9,val10,val11,val12
 
-    if (n<1 .or. n>numat) call exit_MPI('Wrong material set number')
+    if (n<1 .or. n>numat) call exit_MPI(myrank,'Wrong material set number')
 
     !---- isotropic material, P and S velocities given, allows for declaration of elastic/acoustic material
     !---- elastic (cs/=0) and acoustic (cs=0)
@@ -128,7 +128,7 @@
       poisson = half*(3.d0*kappa-two_mu)/(3.d0*kappa+mu)
 
       ! Poisson's ratio must be between -1 and +1/2
-      if (poisson < -1.d0 .or. poisson > 0.5d0) call exit_MPI('Poisson''s ratio out of range')
+      if (poisson < -1.d0 .or. poisson > 0.5d0) call exit_MPI(myrank,'Poisson''s ratio out of range')
 
     !---- anisotropic material, c11, c13, c33 and c44 given in Pascal
     else if (indic == 2) then
@@ -225,7 +225,7 @@
       tomo_material = n
       mu = val2 ! for acoustic medium vs must be 0 anyway
     else
-      call exit_MPI('wrong model flag read')
+      call exit_MPI(myrank,'wrong model flag read')
     endif
 
     !
@@ -294,7 +294,7 @@
         porosity(n) = 1.d0
       endif
     else
-      call exit_MPI('wrong model flag read')
+      call exit_MPI(myrank,'wrong model flag read')
     endif
 
     !

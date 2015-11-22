@@ -235,6 +235,9 @@
 ! do not use tags for MPI messages, use dummy tag instead
   integer, parameter :: itag = 0
 
+! for the Gauss-Lobatto-Legendre points and weights
+  double precision, parameter :: GAUSSALPHA = 0.d0,GAUSSBETA = 0.d0
+
 ! number of lines per source in SOURCE file
   integer, parameter :: NLINES_PER_SOURCE = 14
 
@@ -245,6 +248,9 @@
 
 ! ignore variable name field (junk) at the beginning of each input line
   logical, parameter :: IGNORE_JUNK = .true., DONT_IGNORE_JUNK = .false.
+
+! maximum length of strings used for paths, reading from files, etc.
+  integer, parameter :: MAX_STRING_LEN = 512
 
 !!-----------------------------------------------------------
 !!

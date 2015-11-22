@@ -49,7 +49,7 @@
   use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0,tshift_src,factor, &
                          aval,t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK,is_proc_source, &
-                         USE_TRICK_FOR_BETTER_PRESSURE
+                         USE_TRICK_FOR_BETTER_PRESSURE,myrank
 
   implicit none
   include "constants.h"
@@ -103,7 +103,7 @@
     !          relative to this start time
 
     if (time_function_type(i_source) >= 5 .and. USE_TRICK_FOR_BETTER_PRESSURE) then
-      call exit_MPI('USE_TRICK_FOR_BETTER_PRESSURE is not compatible yet with the type of source you want to use')
+      call exit_MPI(myrank,'USE_TRICK_FOR_BETTER_PRESSURE is not compatible yet with the type of source you want to use')
     endif
 
     do i_stage = 1,stage_time_scheme
@@ -252,7 +252,7 @@
           coeff = factor(i_source)
           error_msg = error_msg1//name_of_source_file(i_source)
           open(unit=num_file,file=name_of_source_file(i_source),iostat=ier)
-          if (ier /= 0 ) call exit_MPI(error_msg)
+          if (ier /= 0 ) call exit_MPI(myrank,error_msg)
         endif
 
         read(num_file,*) time, source_time_function(i_source,it,i_stage)
@@ -272,7 +272,7 @@
           source_time_function(i_source,it,i_stage) = ZERO
         endif
       else
-        call exit_MPI('unknown source time function')
+        call exit_MPI(myrank,'unknown source time function')
       endif
 
       stf_used = stf_used + source_time_function(i_source,it,i_stage)

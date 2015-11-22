@@ -43,11 +43,10 @@
   subroutine define_derivation_matrices()
 
   use specfem_par, only: xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz
+
+  use constants,only: GAUSSALPHA,GAUSSBETA,NGLLX,NGLLZ,ZERO
+
   implicit none
-
-  include "constants.h"
-
-  double precision, parameter :: alphaGLL = 0.d0, betaGLL = 0.d0
 
 ! function for calculating derivatives of Lagrange polynomials
   double precision, external :: lagrange_deriv_GLL
@@ -55,8 +54,8 @@
   integer i1,i2,k1,k2
 
 ! set up coordinates of the Gauss-Lobatto-Legendre points
-  call zwgljd(xigll,wxgll,NGLLX,alphaGLL,betaGLL)
-  call zwgljd(zigll,wzgll,NGLLZ,alphaGLL,betaGLL)
+  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
+  call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
 
 ! if number of points is odd, the middle abscissa is exactly zero
   if (mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = ZERO

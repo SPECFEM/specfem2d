@@ -124,10 +124,10 @@
     call compute_pressure_whole_medium()
 
   else if (imagetype_JPEG == 10 .and. .not. p_sv) then
-    call exit_MPI('cannot draw pressure field for SH (membrane) waves')
+    call exit_MPI(myrank,'cannot draw pressure field for SH (membrane) waves')
 
   else
-    call exit_MPI('wrong type for JPEG snapshots')
+    call exit_MPI(myrank,'wrong type for JPEG snapshots')
   endif
 
 !! DK DK quick hack to remove the PMLs from JPEG images if needed: set the vector field to zero there
@@ -180,7 +180,7 @@
           image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
 
         else
-          call exit_MPI('wrong type for JPEG snapshots')
+          call exit_MPI(myrank,'wrong type for JPEG snapshots')
         endif
       endif
 
@@ -244,7 +244,7 @@
             data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))
 
           else
-            call exit_MPI('wrong type for JPEG snapshots')
+            call exit_MPI(myrank,'wrong type for JPEG snapshots')
           endif
 
         else ! SH (membrane) waves, plot y-component

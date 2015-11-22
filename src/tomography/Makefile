@@ -40,52 +40,25 @@
 #
 #========================================================================
 
-## compilation directories
-S := ${S_TOP}/src/shared
-$(shared_OBJECTS): S = ${S_TOP}/src/shared
+DIR = tomography
 
-#######################################
-
-shared_TARGETS = \
-	$(shared_OBJECTS) \
-	$(EMPTY_MACRO)
-
-
-shared_OBJECTS = \
-	$O/define_shape_functions.shared.o \
-	$O/exit_mpi.shared.o \
-	$O/force_ftz.cc.o \
-	$O/parallel.shared.o \
-	$O/param_reader.cc.o \
-	$O/read_value_parameters.shared.o \
-	$(EMPTY_MACRO)
-
-
-shared_MODULES = \
-	$(EMPTY_MACRO)
-
-
+# The rest of this file is generic
 #######################################
 
 ####
-#### rule for each .o file below
+#### targets
 ####
 
+default:
+	$(MAKE) -C ../.. $(DIR)
 
-##
-## shared
-##
+all:
+	$(MAKE) -C ../.. all
 
-$O/%.shared.o: $S/%.f90
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+clean:
+	$(MAKE) -C ../.. CLEAN=$(DIR) clean
 
-$O/%.shared.o: $S/%.F90
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+cleanall:
+	$(MAKE) -C ../.. clean
 
-
-##
-## C compilation
-##
-
-$O/%.cc.o: $S/%.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
+.PHONY: default all clean cleanall

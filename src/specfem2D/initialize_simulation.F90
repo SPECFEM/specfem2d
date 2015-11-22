@@ -63,6 +63,15 @@
 !
 !***********************************************************************
 
+  ! number of MPI processes
+  call world_size(NPROC)
+
+  ! myrank is the rank of each process, between 0 and NPROC-1.
+  ! as usual in MPI, process 0 is in charge of coordinating everything
+  ! and also takes care of the main output
+  call world_rank(myrank)
+
+
   ! check process setup
   if (NPROC < 1) stop 'should have NPROC >= 1'
 
@@ -78,7 +87,7 @@
 #endif
     ! opens for simulation output
     open(IMAIN,file='OUTPUT_FILES/'//trim(prname),status='unknown',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_MPI('error opening file OUTPUT_FILES/output_solver***.txt')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/output_solver***.txt')
   endif
 
   ! starts reading in Database file

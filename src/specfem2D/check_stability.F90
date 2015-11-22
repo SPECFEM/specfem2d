@@ -123,7 +123,7 @@
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
     if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-      call exit_MPI('code became unstable and blew up in solid (elastic)')
+      call exit_MPI(myrank,'code became unstable and blew up in solid (elastic)')
 
   endif
 
@@ -149,7 +149,7 @@
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
     if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-      call exit_MPI('code became unstable and blew up in solid (poroelastic)')
+      call exit_MPI(myrank,'code became unstable and blew up in solid (poroelastic)')
 
     if (any_poroelastic) then
       displnorm_all = maxval(sqrt(displw_poroelastic(1,:)**2 &
@@ -171,7 +171,7 @@
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
     if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-      call exit_MPI('code became unstable and blew up in fluid (poroelastic)')
+      call exit_MPI(myrank,'code became unstable and blew up in fluid (poroelastic)')
 
   endif
 
@@ -197,7 +197,7 @@
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
     if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
-      call exit_MPI('code became unstable and blew up in fluid (acoustic)')
+      call exit_MPI(myrank,'code became unstable and blew up in fluid (acoustic)')
 
   endif
 

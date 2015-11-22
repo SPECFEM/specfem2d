@@ -76,7 +76,7 @@
                        factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
         endif
       else
-        call exit_MPI('Unknown source type number !')
+        call exit_MPI(myrank,'Unknown source type number !')
       endif
     endif
 
@@ -87,7 +87,7 @@
 
     ! checks source frequency
     if (abs(f0(i_source)) < TINYVAL) then
-      call exit_MPI('Error source frequency is zero')
+      call exit_MPI(myrank,'Error source frequency is zero')
     endif
 
     ! half-duration of source
@@ -175,19 +175,19 @@
       ! start time needs to be at least t0 for numerical stability
       ! notifies user
       if (myrank == 0) then
-        write(IMAIN,*) 'error: USER_T0 is too small'
+        write(IMAIN,*) 'Error: USER_T0 is too small'
         write(IMAIN,*) '       must make one of three adjustements:'
         write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0
         write(IMAIN,*) '       - decrease time shift tshift_src in SOURCE file'
         write(IMAIN,*) '       - increase frequency f0 in SOURCE file'
       endif
-      call exit_MPI('error USER_T0 is set but too small')
+      call exit_MPI(myrank,'Error USER_T0 is set but too small')
     endif
   else if (USER_T0 < 0.d0) then
     if (myrank == 0) then
       write(IMAIN,*) 'error: USER_T0 is negative, must be set zero or positive!'
     endif
-    call exit_MPI('error negative USER_T0 parameter in constants.h')
+    call exit_MPI(myrank,'Error negative USER_T0 parameter in constants.h')
   endif
 
   ! checks onset times
@@ -208,7 +208,7 @@
 
         ! checks source onset time
         if (t0+tshift_src(i_source) < 1.d0/f0(i_source)) then
-          call exit_MPI('Onset time too small')
+          call exit_MPI(myrank,'Onset time too small')
         else
           if (myrank == 0) then
             write(IMAIN,*) '    --> onset time ok'

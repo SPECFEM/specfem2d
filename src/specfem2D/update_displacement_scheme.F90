@@ -165,7 +165,7 @@ end subroutine update_displacement_precondition_newmark_poroelastic
   use specfem_par, only : Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
                           b_deltatsquareover2f,SIMULATION_TYPE,&
                           any_acoustic,any_elastic,any_poroelastic,&
-                          PML_BOUNDARY_CONDITIONS
+                          PML_BOUNDARY_CONDITIONS,myrank
 
   implicit none
   include 'constants.h'
@@ -179,7 +179,7 @@ end subroutine update_displacement_precondition_newmark_poroelastic
     ! check
     if (SIMULATION_TYPE == 3) then
       if (PML_BOUNDARY_CONDITIONS) then
-        call exit_MPI('acoustic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
+        call exit_MPI(myrank,'acoustic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
       endif
     endif
 
@@ -195,7 +195,7 @@ end subroutine update_displacement_precondition_newmark_poroelastic
     if (SIMULATION_TYPE == 3) then
       if (PML_BOUNDARY_CONDITIONS) then
 
-          call exit_MPI('elastic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
+          call exit_MPI(myrank,'elastic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
 
       endif
     endif
@@ -207,7 +207,7 @@ end subroutine update_displacement_precondition_newmark_poroelastic
   endif
 
   if (any_poroelastic) then
-    call exit_MPI('poroelastic time marching scheme on GPU not implemented yet...')
+    call exit_MPI(myrank,'poroelastic time marching scheme on GPU not implemented yet...')
   endif
 
   end subroutine update_displacement_precondition_newmark_GPU

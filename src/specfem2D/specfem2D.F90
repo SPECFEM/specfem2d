@@ -360,12 +360,12 @@
 
   program specfem2D
 
-  use specfem_par, only: NPROC,myrank,undo_attenuation
+  use specfem_par, only: undo_attenuation
 
   implicit none
 
   ! MPI initialization
-  call init_mpi(NPROC,myrank)
+  call init_mpi()
 
   ! force Flush-To-Zero if available to avoid very slow Gradual Underflow trapping
   call force_ftz()

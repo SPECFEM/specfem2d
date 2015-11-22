@@ -90,7 +90,9 @@ program smooth_sem
   ! data must be of dimension: (NGLLX,NGLLZ,NSPEC_AB)
   real(kind=CUSTOM_REAL), dimension(:,:,:),allocatable :: dat
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: dat_store,dat_smooth
-  integer :: NGLOB_me, myrank,nproc, nspec_me, nspec_other, ncuda_devices
+  integer :: NGLOB_me, nspec_me, nspec_other, ncuda_devices
+  ! MPI
+  integer :: myrank,NPROC
   integer(kind=8) :: Container
 
   integer :: i,j,ier,ispec2,ispec, iker, iglob
@@ -115,7 +117,6 @@ program smooth_sem
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: exp_val, factor, wgll_sq
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   double precision, dimension(NGLLX) :: xigll
-  double precision, parameter :: alphaGLL = 0.d0, betaGLL = 0.d0
   integer, dimension(:,:,:),allocatable :: ibool_me
   integer, dimension(:),allocatable :: imask
   real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: tk
@@ -129,7 +130,9 @@ program smooth_sem
   real t1,t2
 
   ! mpi initialization
-  call init_mpi(NPROC,myrank)
+  call init_mpi()
+  call world_size(NPROC)
+  call world_rank(myrank)
 
   if (myrank == 0) print *,"Running XSMOOTH_SEM on",NPROC,"processors"
   call cpu_time(t1)
@@ -161,7 +164,7 @@ program smooth_sem
 
  if (GPU_MODE) call initialize_cuda_device(myrank,ncuda_devices)
 
-  call zwgljd(xigll,wxgll,NGLLX,alphaGLL,betaGLL)
+  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
   !We assume NGLLX=NGLLZ
   do j = 1,NGLLZ
     do i = 1,NGLLX

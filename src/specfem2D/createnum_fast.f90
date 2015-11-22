@@ -222,7 +222,7 @@
   deallocate(iwork)
 
 ! check the numbering obtained
-  if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) call exit_MPI('Error while generating global numbering')
+  if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) call exit_MPI(myrank,'Error while generating global numbering')
 
   end subroutine createnum_fast
 

@@ -215,7 +215,7 @@
                          tab_requests_send_recv_acoustic, &
                          buffer_send_faces_vector_ac, &
                          buffer_recv_faces_vector_ac, &
-                         my_neighbours
+                         my_neighbours,myrank
 
   implicit none
 
@@ -262,7 +262,7 @@
              tab_requests_send_recv_acoustic(iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
-      call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_start')
+      call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_start')
     endif
 
     ! starts a non-blocking receive
@@ -272,7 +272,7 @@
              tab_requests_send_recv_acoustic(ninterface_acoustic+iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
-      call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector')
+      call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector')
     endif
 
   enddo
@@ -332,7 +332,7 @@
                          tab_requests_send_recv_elastic, &
                          buffer_send_faces_vector_el, &
                          buffer_recv_faces_vector_el, &
-                         my_neighbours
+                         my_neighbours,myrank
 
   implicit none
 
@@ -368,7 +368,7 @@
              tab_requests_send_recv_elastic(iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
-      call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_el')
+      call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_el')
     endif
 
     call MPI_IRECV ( buffer_recv_faces_vector_el(1,iinterface), &
@@ -377,7 +377,7 @@
              tab_requests_send_recv_elastic(ninterface_elastic+iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
-      call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector_el')
+      call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_el')
     endif
 
   enddo
@@ -426,7 +426,7 @@
                          tab_requests_send_recv_poro, &
                          buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
                          buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
-                         my_neighbours
+                         my_neighbours,myrank
 
   implicit none
 
@@ -467,7 +467,7 @@
              tab_requests_send_recv_poro(iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
-      call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_pos')
+      call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_pos')
     endif
 
     call MPI_IRECV ( buffer_recv_faces_vector_pos(1,iinterface), &
@@ -476,7 +476,7 @@
              tab_requests_send_recv_poro(ninterface_poroelastic+iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
-      call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector_pos')
+      call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_pos')
     endif
 
     call MPI_ISEND( buffer_send_faces_vector_pow(1,iinterface), &
@@ -485,7 +485,7 @@
              tab_requests_send_recv_poro(ninterface_poroelastic*2+iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
-      call exit_mpi('MPI_ISEND unsuccessful in assemble_MPI_vector_pow')
+      call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_pow')
     endif
 
     call MPI_IRECV ( buffer_recv_faces_vector_pow(1,iinterface), &
@@ -494,7 +494,7 @@
              tab_requests_send_recv_poro(ninterface_poroelastic*3+iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
-      call exit_mpi('MPI_IRECV unsuccessful in assemble_MPI_vector_pow')
+      call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_pow')
     endif
 
   enddo

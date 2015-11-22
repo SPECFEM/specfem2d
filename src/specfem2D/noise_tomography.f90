@@ -81,7 +81,7 @@
                                      any_acoustic,any_poroelastic,p_sv,irec_master, &
                                      Mxx,Mxz,Mzz,factor,NSOURCES, &
                                      xi_receiver,gamma_receiver,ispec_selected_rec,nrec, &
-                                     xi_noise,gamma_noise,ispec_noise,angle_noise
+                                     xi_noise,gamma_noise,ispec_noise,angle_noise,myrank
 
   implicit none
   include "constants.h"
@@ -103,7 +103,7 @@
   close(509)
 
   if ((NOISE_TOMOGRAPHY == 1) .and. (irec_master > nrec .or. irec_master < 1) ) &
-    call exit_MPI('irec_master out of range of given number of receivers. Exiting.')
+    call exit_MPI(myrank,'irec_master out of range of given number of receivers. Exiting.')
 
   xi_noise    = xi_receiver(irec_master)
   gamma_noise = gamma_receiver(irec_master)
@@ -115,25 +115,25 @@
   if ((NOISE_TOMOGRAPHY /= 0) .and. (p_sv)) write(*,*) 'Warning: For P-SV case, noise tomography subroutines not yet fully tested'
 
   if (NOISE_TOMOGRAPHY == 1) then
-     if (SIMULATION_TYPE /= 1) call exit_MPI('NOISE_TOMOGRAPHY=1 requires SIMULATION_TYPE=1    -> check DATA/Par_file')
+     if (SIMULATION_TYPE /= 1) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=1 requires SIMULATION_TYPE=1    -> check DATA/Par_file')
 
   else if (NOISE_TOMOGRAPHY == 2) then
-     if (SIMULATION_TYPE /= 1) call exit_MPI('NOISE_TOMOGRAPHY=2 requires SIMULATION_TYPE=1    -> check DATA/Par_file')
-     if (.not. SAVE_FORWARD) call exit_MPI('NOISE_TOMOGRAPHY=2 requires SAVE_FORWARD=.true.  -> check DATA/Par_file')
+     if (SIMULATION_TYPE /= 1) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=2 requires SIMULATION_TYPE=1    -> check DATA/Par_file')
+     if (.not. SAVE_FORWARD) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=2 requires SAVE_FORWARD=.true.  -> check DATA/Par_file')
 
   else if (NOISE_TOMOGRAPHY == 3) then
-     if (SIMULATION_TYPE /= 3) call exit_MPI('NOISE_TOMOGRAPHY=3 requires SIMULATION_TYPE=3    -> check DATA/Par_file')
-     if (SAVE_FORWARD)       call exit_MPI('NOISE_TOMOGRAPHY=3 requires SAVE_FORWARD=.false. -> check DATA/Par_file')
+     if (SIMULATION_TYPE /= 3) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=3 requires SIMULATION_TYPE=3    -> check DATA/Par_file')
+     if (SAVE_FORWARD)       call exit_MPI(myrank,'NOISE_TOMOGRAPHY=3 requires SAVE_FORWARD=.false. -> check DATA/Par_file')
   endif
 
 !  check model parameters
-   if (any_acoustic)    call exit_MPI('Acoustic models not yet implemented for noise simulations. Exiting.')
-   if (any_poroelastic) call exit_MPI('Poroelastic models not yet implemented for noise simulations. Exiting.')
+   if (any_acoustic)    call exit_MPI(myrank,'Acoustic models not yet implemented for noise simulations. Exiting.')
+   if (any_poroelastic) call exit_MPI(myrank,'Poroelastic models not yet implemented for noise simulations. Exiting.')
 
 !  moment tensor elements must be zero!
    do i = 1,NSOURCES
      if (Mxx(i) /= 0.d0 .or. Mxz(i) /= 0.d0 .or. Mzz(i) /= 0.d0 .or. factor(i) /= 0.d0) then
-       call exit_MPI('For noise simulations, all moment tensor elements must be zero. Exiting.')
+       call exit_MPI(myrank,'For noise simulations, all moment tensor elements must be zero. Exiting.')
      endif
    enddo
 
@@ -147,7 +147,7 @@
 
   use specfem_par, only: AXISYM,is_on_the_axis,xiglj,p_sv,NSTEP,deltat,ibool,ispec_noise, &
                        xi_noise,gamma_noise,xigll,zigll, &
-                       time_function_noise,source_array_noise
+                       time_function_noise,source_array_noise,myrank
 
   implicit none
   include "constants.h"
@@ -240,7 +240,7 @@
 
 
   else
-    call exit_MPI('Bad time_function_type in compute_source_array_noise.')
+    call exit_MPI(myrank,'Bad time_function_type in compute_source_array_noise.')
 
   endif
 
@@ -320,7 +320,7 @@
 
   use specfem_par, only: p_sv,NOISE_TOMOGRAPHY,it,NSTEP,nspec,nglob,ibool, &
                          surface_movie_x_noise,surface_movie_y_noise, &
-                         surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll
+                         surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll,myrank
 
   implicit none
   include "constants.h"
@@ -334,11 +334,11 @@
   if (it==1) then
     open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
          recl=nglob*CUSTOM_REAL,action='read',iostat=ios)
-    if (ios /= 0) call exit_MPI('Error retrieving generating wavefield.')
+    if (ios /= 0) call exit_MPI(myrank,'Error retrieving generating wavefield.')
   endif
 
   if (p_sv) then
-    call exit_MPI('P-SV case not yet implemented.')
+    call exit_MPI(myrank,'P-SV case not yet implemented.')
   else
     if (NOISE_TOMOGRAPHY==2) read(unit=500,rec=NSTEP-it+1) surface_movie_y_noise
     if (NOISE_TOMOGRAPHY==3) read(unit=500,rec=it) surface_movie_y_noise
@@ -374,7 +374,7 @@
 ! the "ensemble forward wavefield"
   subroutine save_surface_movie_noise()
 
-  use specfem_par, only: NOISE_TOMOGRAPHY,p_sv,it,NSTEP,nglob,displ_elastic
+  use specfem_par, only: NOISE_TOMOGRAPHY,p_sv,it,NSTEP,nglob,displ_elastic,myrank
 
   implicit none
   include "constants.h"
@@ -388,23 +388,23 @@
 
       open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
            recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
-      if (ios /= 0) call exit_MPI('Error saving generating wavefield.')
+      if (ios /= 0) call exit_MPI(myrank,'Error saving generating wavefield.')
 
     else if (NOISE_TOMOGRAPHY == 2) then
 
       open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
            recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
-      if (ios /= 0) call exit_MPI('Error saving ensemble forward wavefield.')
+      if (ios /= 0) call exit_MPI(myrank,'Error saving ensemble forward wavefield.')
 
     else
-      call exit_MPI('Bad value of NOISE_TOMOGRAPHY in save_surface_movie_noise.')
+      call exit_MPI(myrank,'Bad value of NOISE_TOMOGRAPHY in save_surface_movie_noise.')
 
     endif
 
   endif ! (it==1)
 
   if (p_sv) then
-    call exit_MPI('P-SV case not yet implemented.')
+    call exit_MPI(myrank,'P-SV case not yet implemented.')
   else
     write(unit=500,rec=it) displ_elastic(2,:)
   endif

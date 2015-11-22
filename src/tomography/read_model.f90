@@ -41,17 +41,46 @@
 !========================================================================
 
 
-module postprocess_par
+subroutine read_model_nspec()
 
-  use constants,only : MAX_STRING_LEN,IIN,IOUT, &
-    CUSTOM_REAL,NGLLX,NGLLZ,GAUSSALPHA,GAUSSBETA
+! reads in nspec from database
+
+  use tomography_par,only: MAX_STRING_LEN,IIN,NSPEC,myrank
 
   implicit none
 
-  integer,parameter :: MAX_KERNEL_NAMES = 255
-  integer,parameter :: MAX_KERNEL_PATHS = 65535
+  ! local parameters
+  integer :: ier
+  character(len=MAX_STRING_LEN) :: m_file
+  character(len=80) :: datlin
 
-  integer,parameter :: MAX_LINES = 1000000000
+  ! opens database file
+  write(m_file,'(a,i5.5)') './OUTPUT_FILES/'//'Database',myrank
+  open(IIN,file=trim(m_file),status='old',action='read',iostat=ier)
+  if (ier /= 0) then
+    print *,'Error opening: ',trim(m_file)
+    call exit_MPI(myrank,'file not found')
+  endif
 
-end module postprocess_par
+  ! reads lines until nspec
+  read(IIN,"(a80)") datlin  ! header
+  read(IIN,"(a80)") datlin
+  read(IIN,"(a80)") datlin
+  read(IIN,"(a80)") datlin
+  read(IIN,"(a80)") datlin
+  read(IIN,"(a80)") datlin  ! simulation_title
+  read(IIN,"(a80)") datlin
+  read(IIN,"(a80)") datlin ! AXISYM
+  read(IIN,"(a80)") datlin
+  read(IIN,"(a80)") datlin  ! SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
+  read(IIN,"(a80)") datlin
+  read(IIN,*) nspec
 
+  close(IIN)
+
+  if (myrank == 0) then
+    print *,'number of spectral-elements: ',nspec
+    print *,''
+  endif
+
+end subroutine read_model_nspec

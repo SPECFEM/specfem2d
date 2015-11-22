@@ -48,7 +48,7 @@
 !
 !-------------------------------------------------------------------------------------------------
 
-  subroutine init_mpi(NPROC,myrank)
+  subroutine init_mpi()
 
 #ifdef USE_MPI
 ! standard include of the MPI library
@@ -57,35 +57,29 @@
 
   implicit none
 
-  integer,intent(out) :: NPROC,myrank
-
 #ifdef USE_MPI
+  ! local parameters
+  integer :: sizeprocs,myrank
   integer :: ier
 
   ! parallel version
   call MPI_INIT(ier)
-  if (ier /= 0 ) call exit_MPI('Error MPI initialization')
+  if (ier /= 0 ) stop 'Error initializing MPI'
 
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,NPROC,ier)
-  if (ier /= 0 ) call exit_MPI('Error getting MPI size')
+  ! checks if getting size works
+  call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
+  if (ier /= 0 ) stop 'Error getting MPI size'
 
+  ! checks if getting rank works
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-  if (ier /= 0 ) call exit_MPI('Error getting MPI rank')
-
-#else
-
-  ! serial version
-  ! compilation without MPI support -DUSE_MPI
-  NPROC = 1
-  myrank = 0
-
+  if (ier /= 0 ) stop 'Error getting MPI rank'
 #endif
 
   end subroutine init_mpi
 
 
 !
-!----
+!-------------------------------------------------------------------------------------------------
 !
 
   subroutine finalize_mpi()
@@ -111,7 +105,32 @@
   end subroutine finalize_mpi
 
 !
-!----
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine abort_mpi()
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+#ifdef USE_MPI
+  ! local parameters
+  integer :: ier
+
+  ! stop all the MPI processes, and exit
+  ! note: MPI_ABORT does not return, it makes the program exit with an error code of 30
+  call MPI_ABORT(MPI_COMM_WORLD,30,ier)
+#endif
+
+  stop 'error, program ended in exit_MPI'
+
+  end subroutine abort_mpi
+
+!
+!-------------------------------------------------------------------------------------------------
 !
 
   subroutine synchronize_all()
@@ -135,6 +154,34 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
+
+#ifdef USE_MPI
+
+  subroutine wait_req(req)
+
+! standard include of the MPI library
+  use mpi
+
+  implicit none
+
+  integer :: req
+
+  integer, dimension(MPI_STATUS_SIZE) :: req_mpi_status
+
+  integer :: ier
+
+  call mpi_wait(req,req_mpi_status,ier)
+
+  end subroutine wait_req
+
+#endif
+
+
+!-------------------------------------------------------------------------------------------------
+!
+! Send/Receive MPI
+!
+!-------------------------------------------------------------------------------------------------
 
 
 #ifdef USE_MPI
@@ -161,7 +208,7 @@
 #endif
 
 !
-!----
+!-------------------------------------------------------------------------------------------------
 !
 
 #ifdef USE_MPI
@@ -187,35 +234,13 @@
 
 #endif
 
+
+!-------------------------------------------------------------------------------------------------
 !
-!----
+! MPI math helper
 !
+!-------------------------------------------------------------------------------------------------
 
-#ifdef USE_MPI
-
-  subroutine wait_req(req)
-
-! standard include of the MPI library
-  use mpi
-
-  implicit none
-
-  integer :: req
-
-  integer, dimension(MPI_STATUS_SIZE) :: req_mpi_status
-
-  integer :: ier
-
-  call mpi_wait(req,req_mpi_status,ier)
-
-  end subroutine wait_req
-
-#endif
-
-
-!
-!----
-!
 
 #ifdef USE_MPI
 
@@ -238,7 +263,7 @@
 #endif
 
 !
-!----
+!-------------------------------------------------------------------------------------------------
 !
 
 #ifdef USE_MPI
@@ -261,3 +286,85 @@
 
 #endif
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sum_all_dp(sendbuf, recvbuf)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  double precision :: sendbuf, recvbuf
+
+#ifdef USE_MPI
+  ! local parameters
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,ier)
+#else
+    recvbuf = sendbuf
+#endif
+
+  end subroutine sum_all_dp
+
+
+!-------------------------------------------------------------------------------------------------
+!
+! MPI world helper
+!
+!-------------------------------------------------------------------------------------------------
+
+  subroutine world_size(sizeval)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  integer,intent(out) :: sizeval
+
+#ifdef USE_MPI
+  ! local parameters
+  integer :: ier
+
+  call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeval,ier)
+  if (ier /= 0 ) stop 'Error getting MPI world size'
+#else
+  ! single process
+  sizeval = 1
+#endif
+
+  end subroutine world_size
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine world_rank(rank)
+
+#ifdef USE_MPI
+! standard include of the MPI library
+  use mpi
+#endif
+
+  implicit none
+
+  integer,intent(out) :: rank
+
+#ifdef USE_MPI
+  ! local parameters
+  integer :: ier
+
+  call MPI_COMM_RANK(MPI_COMM_WORLD,rank,ier)
+  if (ier /= 0 ) stop 'Error getting MPI rank'
+#else
+  ! always returns master rank zero
+  rank = 0
+#endif
+
+  end subroutine world_rank

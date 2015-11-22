@@ -128,10 +128,10 @@
     call compute_pressure_whole_medium()
 
   else if (imagetype_wavefield_dumps == 4 .and. .not. p_sv) then
-    call exit_MPI('cannot dump the pressure field for SH (membrane) waves')
+    call exit_MPI(myrank,'cannot dump the pressure field for SH (membrane) waves')
 
   else
-    call exit_MPI('wrong type of flag for wavefield dumping')
+    call exit_MPI(myrank,'wrong type of flag for wavefield dumping')
   endif
 
   if (use_binary_for_wavefield_dumps) then

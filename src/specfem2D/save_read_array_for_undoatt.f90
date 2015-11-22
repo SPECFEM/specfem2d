@@ -57,7 +57,7 @@
   write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
   open(unit=IOUT_UNDO_ATT  ,file='OUTPUT_FILES/'//outputname, &
        status='unknown',form='unformatted',action='write',iostat=ier)
-  if (ier /= 0 ) call exit_MPI('error opening file proc***_save_frame_at** for writing')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for writing')
 
   if (any_acoustic) then
     write( IOUT_UNDO_ATT ) potential_dot_dot_acoustic
@@ -106,7 +106,7 @@
   ! opens corresponding snapshot file for reading
   open(unit=IIN_UNDO_ATT,file='OUTPUT_FILES/'//outputname, &
        status='old',action='read',form='unformatted',iostat=ier)
-  if (ier /= 0 ) call exit_MPI('error opening file proc***_save_frame_at** for reading')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for reading')
 
   if (any_acoustic) then
     read( IIN_UNDO_ATT ) b_potential_dot_dot_acoustic

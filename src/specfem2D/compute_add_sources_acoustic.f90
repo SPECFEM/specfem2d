@@ -47,7 +47,7 @@
   use specfem_par, only: acoustic,nglob_acoustic,&
                          NSOURCES,source_type,source_time_function,&
                          is_proc_source,ispec_selected_source,&
-                         hxis_store,hgammas_store,ibool,kappastore
+                         hxis_store,hgammas_store,ibool,kappastore,myrank
   implicit none
   include "constants.h"
 
@@ -81,7 +81,7 @@
         enddo
       ! moment tensor
       else if (source_type(i_source) == 2) then
-         call exit_MPI('cannot have moment tensor source in acoustic element')
+         call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
       endif
     endif ! if this processor core carries the source and the source element is acoustic
   enddo ! do i_source= 1,NSOURCES

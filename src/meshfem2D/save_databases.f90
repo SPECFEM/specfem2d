@@ -80,7 +80,7 @@
     ! opens Database file
     write(prname, "('./OUTPUT_FILES/Database',i5.5)") iproc
     open(unit=15,file=trim(prname),status='unknown',iostat=ios)
-    if (ios /= 0 ) stop 'error saving databases; check that directory OUTPUT_FILES exists'
+    if (ios /= 0 ) stop 'Error saving databases; check that directory OUTPUT_FILES exists'
 
     write(15,*) '#'
     write(15,*) '# Database for SPECFEM2D'
@@ -96,11 +96,16 @@
     write(15,*) 'Type of simulation'
     write(15,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
 
+    ! counts number of nodes (npgeo) for this partition (iproc)
     call write_glob2loc_nodes_database(15, iproc, npgeo, 1)
 
+    ! counts number of elements (nspec) for this partition (iproc)
 !   DK DK add support for using pml in mpi mode with external mesh
 !   call write_partition_database(15, iproc, nspec, num_material, ngnod, 1)
     call write_partition_database(15, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 1)
+
+    write(15,*) 'nspec'
+    write(15,*) nspec
 
     write(15,*) 'npgeo nproc'
     write(15,*) npgeo,nproc

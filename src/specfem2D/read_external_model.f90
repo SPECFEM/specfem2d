@@ -52,7 +52,7 @@
                          QKappa_attenuationext,Qmu_attenuationext, &
                          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
                          MODEL,ATTENUATION_VISCOELASTIC_SOLID,p_sv,&
-                         inputname,ios,tomo_material, myrank
+                         inputname,ios,tomo_material,myrank
 
   implicit none
   include "constants.h"
@@ -197,7 +197,7 @@
         if (p_sv .and. (.not. (i == 1 .and. j == 1)) .and. &
           ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
            (vsext(i,j,ispec) < TINYVAL  .and. previous_vsext >= TINYVAL)))  &
-          call exit_MPI('external velocity model cannot be both fluid and solid inside the same spectral element')
+          call exit_MPI(myrank,'external velocity model cannot be both fluid and solid inside the same spectral element')
 
         if (c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
            c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then

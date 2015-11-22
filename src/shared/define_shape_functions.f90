@@ -157,15 +157,15 @@
        dershape2D(2,9) = -ONE * t2 * (ONE - ss)
 
   else
-     call exit_MPI('Error: wrong number of control nodes')
+     stop 'Error: wrong number of control nodes'
   endif
 
 !--- check the shape functions and their derivatives
 ! sum of shape functions should be one
 ! sum of derivatives of shape functions should be zero
-  if (abs(sum(shape2D)-ONE) > TINYVAL) call exit_MPI('error shape functions')
-  if (abs(sum(dershape2D(1,:))) > TINYVAL) call exit_MPI('error deriv xi shape functions')
-  if (abs(sum(dershape2D(2,:))) > TINYVAL) call exit_MPI('error deriv gamma shape functions')
+  if (abs(sum(shape2D)-ONE) > TINYVAL) stop 'Error shape functions'
+  if (abs(sum(dershape2D(1,:))) > TINYVAL) stop 'Error deriv xi shape functions'
+  if (abs(sum(dershape2D(2,:))) > TINYVAL) stop 'Error deriv gamma shape functions'
 
   end subroutine define_shape_functions
 

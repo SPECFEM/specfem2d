@@ -281,7 +281,7 @@
   save_binary_seismograms = save_binary_seismograms_single .or. save_binary_seismograms_double
 
   if (SU_FORMAT .and. .not. save_binary_seismograms_single) &
-     stop 'error: SU_FORMAT seismograms are single precision and thus require save_binary_seismograms_single'
+     call exit_MPI(myrank,'Error: SU_FORMAT seismograms are single precision and thus require save_binary_seismograms_single')
 
 ! write seismograms in ASCII format
 
@@ -297,7 +297,7 @@
   else if (seismotype == 5) then
     component = 'c'
   else
-    call exit_MPI('wrong component to save for seismograms')
+    call exit_MPI(myrank,'wrong component to save for seismograms')
   endif
 
 
@@ -452,7 +452,7 @@
              else if (iorientation == 3) then
                 channel = 'cur'
              else
-                call exit_MPI('incorrect channel value')
+                call exit_MPI(myrank,'incorrect channel value')
              endif
 
              ! in case of pressure, use different abbreviation
@@ -467,10 +467,10 @@
 
              ! check that length conforms to standard
              if (length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) then
-               call exit_MPI('wrong length of station name')
+               call exit_MPI(myrank,'wrong length of station name')
             endif
              if (length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) then
-               call exit_MPI('wrong length of network name')
+               call exit_MPI(myrank,'wrong length of network name')
             endif
 
              write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") &

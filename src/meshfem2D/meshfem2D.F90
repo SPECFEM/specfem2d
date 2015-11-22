@@ -420,7 +420,9 @@ program meshfem2D
   integer :: myrank
 
   ! MPI initialization
-  call init_mpi(nproc,myrank)
+  call init_mpi()
+  call world_size(NPROC)
+  call world_rank(myrank)
 
   ! mesher works only for single process
   ! slave processes can return
@@ -883,7 +885,7 @@ program meshfem2D
   allocate(part(0:nelmnts-1))
   part(:) = -1
 
-  if (nproc > 1) then
+  if (NPROC > 1) then
     allocate(xadj_g(0:nelmnts))
     allocate(adjncy_g(0:MAX_NEIGHBORS*nelmnts-1))
     xadj_g(:) = 0
@@ -900,7 +902,7 @@ program meshfem2D
        elmnts_bis(i*NCORNERS:i*NCORNERS+NCORNERS-1) = elmnts(i*ngnod:i*ngnod+NCORNERS-1)
      enddo
 
-     if (nproc > 1) then
+     if (NPROC > 1) then
 
 !! DK DK fixed problem in the previous implementation by Nicolas Le Goff:
 !! DK DK (nxread+1)*(nzread+1) is OK for a regular internal mesh only, not for non structured external meshes
@@ -912,7 +914,7 @@ program meshfem2D
      endif
 
   else
-     if (nproc > 1) then
+     if (NPROC > 1) then
         ! determines maximum neighbors based on 1 common node
         call mesh2dual_ncommonnodes(elmnts,1,xadj_g,adjncy_g)
      endif
@@ -920,7 +922,7 @@ program meshfem2D
   endif
 
 
-  if (nproc == 1) then
+  if (NPROC == 1) then
      part(:) = 0 ! single process has rank 0
   else
 
@@ -939,15 +941,15 @@ program meshfem2D
 
      case(1)
 
-        do iproc = 0, nproc-2
-           part(iproc*floor(real(nelmnts)/real(nproc)):(iproc+1)*floor(real(nelmnts)/real(nproc))-1) = iproc
+        do iproc = 0, NPROC-2
+           part(iproc*floor(real(nelmnts)/real(NPROC)):(iproc+1)*floor(real(nelmnts)/real(NPROC))-1) = iproc
         enddo
-        part(floor(real(nelmnts)/real(nproc))*(nproc-1):nelmnts-1) = nproc - 1
+        part(floor(real(nelmnts)/real(NPROC))*(NPROC-1):nelmnts-1) = NPROC - 1
 
      case(2)
 
 !#ifdef USE_METIS
-!       call Part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, nproc, nb_edges, edgecut, part, metis_options)
+!       call Part_metis(nelmnts, xadj, adjncy, vwgt, adjwgt, NPROC, nb_edges, edgecut, part, metis_options)
 !#else
 !       print *, 'This version of SPECFEM was not compiled with support of METIS.'
 !       print *, 'Please recompile with -DUSE_METIS in order to enable use of METIS.'
@@ -958,7 +960,7 @@ program meshfem2D
      case(3)
 
 #ifdef USE_SCOTCH
-        call Part_scotch(nproc, edgecut)
+        call Part_scotch(NPROC, edgecut)
 #else
         print *, 'This version of SPECFEM was not compiled with support of SCOTCH.'
         print *, 'Please recompile with -DUSE_SCOTCH in order to enable use of SCOTCH.'
@@ -971,27 +973,27 @@ program meshfem2D
 
   ! fluid-solid edges: coupled elements are transferred to the same partition
   if (ngnod == 9) then
-     call acoustic_elastic_repartitioning(elmnts_bis, nb_materials, phi, num_material, nproc)
+     call acoustic_elastic_repartitioning(elmnts_bis, nb_materials, phi, num_material, NPROC)
   else
-     call acoustic_elastic_repartitioning(elmnts, nb_materials, phi, num_material, nproc)
+     call acoustic_elastic_repartitioning(elmnts, nb_materials, phi, num_material, NPROC)
   endif
 
   ! fluid-porous edges: coupled elements are transferred to the same partition
   if (ngnod == 9) then
-     call acoustic_poro_repartitioning(elmnts_bis, nb_materials, phi, num_material, nproc)
+     call acoustic_poro_repartitioning(elmnts_bis, nb_materials, phi, num_material, NPROC)
   else
-     call acoustic_poro_repartitioning(elmnts, nb_materials, phi, num_material, nproc)
+     call acoustic_poro_repartitioning(elmnts, nb_materials, phi, num_material, NPROC)
   endif
 
   ! porous-solid edges: coupled elements are transferred to the same partition
   if (ngnod == 9) then
-     call poro_elastic_repartitioning(elmnts_bis, nb_materials, phi, num_material, nproc)
+     call poro_elastic_repartitioning(elmnts_bis, nb_materials, phi, num_material, NPROC)
   else
-     call poro_elastic_repartitioning(elmnts, nb_materials, phi, num_material, nproc)
+     call poro_elastic_repartitioning(elmnts, nb_materials, phi, num_material, NPROC)
   endif
 
   ! periodic edges: coupled elements are transferred to the same partition
-  if (ADD_PERIODIC_CONDITIONS .and. nproc > 1) then
+  if (ADD_PERIODIC_CONDITIONS .and. NPROC > 1) then
     if (ngnod == 9) then
        call periodic_edges_repartitioning(elmnts_bis,nnodes,nodes_coords,PERIODIC_HORIZ_DIST)
     else
@@ -1000,7 +1002,7 @@ program meshfem2D
   endif
 
   ! local number of each element for each partition
-  call Construct_glob2loc_elmnts(nproc)
+  call Construct_glob2loc_elmnts(NPROC)
 
   if (ngnod == 9) then
     if (allocated(nnodes_elmnts) ) deallocate(nnodes_elmnts)
@@ -1014,7 +1016,7 @@ program meshfem2D
       nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
     enddo
   else
-    if (nproc < 2) then
+    if (NPROC < 2) then
       if (.not. allocated(nnodes_elmnts) ) allocate(nnodes_elmnts(0:nnodes-1))
       if (.not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:nsize*nnodes-1))
       nnodes_elmnts(:) = 0
@@ -1027,15 +1029,15 @@ program meshfem2D
   endif
 
   ! local number of each node for each partition
-  call Construct_glob2loc_nodes(nproc)
+  call Construct_glob2loc_nodes(NPROC)
 
   ! construct the interfaces between partitions (used for MPI assembly)
-  if (nproc /= 1) then
+  if (NPROC /= 1) then
      if (ngnod == 9) then
-        call Construct_interfaces(nproc, elmnts_bis, &
+        call Construct_interfaces(NPROC, elmnts_bis, &
                                   nb_materials, phi, num_material)
      else
-        call Construct_interfaces(nproc, elmnts, &
+        call Construct_interfaces(NPROC, elmnts, &
                                   nb_materials, phi, num_material)
      endif
      allocate(my_interfaces(0:ninterfaces-1))
@@ -1093,10 +1095,10 @@ program meshfem2D
   endif
 
   print *
-  if (nproc == 1) then
+  if (NPROC == 1) then
      print *,'This will be a serial simulation'
   else
-     print *,'This will be a parallel simulation on ',nproc,' processor cores'
+     print *,'This will be a parallel simulation on ',NPROC,' processor cores'
   endif
   print *
 

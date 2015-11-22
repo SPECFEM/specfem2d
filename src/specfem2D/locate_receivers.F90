@@ -52,7 +52,8 @@
                           coorg,knods,ngnod,npgeo, &
                           x_final_receiver, z_final_receiver)
 
-use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_PRESSURE
+use specfem_par, only : AXISYM,is_on_the_axis,xiglj, &
+  gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_PRESSURE
 
 #ifdef USE_MPI
   use mpi
@@ -139,7 +140,7 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
     read(1,*) station_name(irec),network_name(irec),st_xval(irec),st_zval(irec),stele,stbur
 
     ! check that station is not buried, burial is not implemented in current code
-    if (abs(stbur) > TINYVAL) call exit_MPI('stations with non-zero burial not implemented yet')
+    if (abs(stbur) > TINYVAL) call exit_MPI(myrank,'stations with non-zero burial not implemented yet')
 
     ! compute distance between source and receiver
     distance_receiver(irec) = sqrt((st_zval(irec)-z_source)**2 + (st_xval(irec)-x_source)**2)
@@ -273,7 +274,7 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
     do irec= 1,nrec
       if (which_proc_receiver(irec) == myrank) then
         if (.not. acoustic(ispec_selected_rec(irec))) then
-          call exit_MPI('USE_TRICK_FOR_BETTER_PRESSURE : receivers must be in acoustic elements')
+          call exit_MPI(myrank,'USE_TRICK_FOR_BETTER_PRESSURE : receivers must be in acoustic elements')
         endif
       endif
     enddo
@@ -294,7 +295,7 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj,gather_ispec_selected_rec,ac
       write(IMAIN,*) 'Station # ',irec,'    ',network_name(irec),station_name(irec)
 
       if (gather_final_distance(irec,which_proc_receiver(irec)+1) == HUGEVAL) &
-        call exit_MPI('Error locating receiver')
+        call exit_MPI(myrank,'Error locating receiver')
 
       write(IMAIN,*) '            original x: ',sngl(st_xval(irec))
       write(IMAIN,*) '            original z: ',sngl(st_zval(irec))

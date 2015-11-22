@@ -94,11 +94,12 @@ xcombine_sem_OBJECTS = \
 	$O/postprocess_par.postprocess_module.o \
 	$O/combine_sem.postprocess.o \
 	$O/parse_kernel_names.postprocess.o \
-	$O/exit_mpi.shared.o \
-	$O/parallel.shared.o \
 	$(EMPTY_MACRO)
 
 xcombine_sem_SHARED_OBJECTS = \
+	$O/specfem2D_par.spec.o \
+	$O/exit_mpi.shared.o \
+	$O/parallel.shared.o \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_sem: $(xcombine_sem_OBJECTS) $(xcombine_sem_SHARED_OBJECTS)
@@ -118,6 +119,14 @@ xsmooth_sem_OBJECTS = \
 	$O/postprocess_par.postprocess_module.o \
 	$O/smooth_sem.postprocess.o \
 	$O/parse_kernel_names.postprocess.o \
+	$O/specfem2D_par.spec.o \
+	$O/exit_mpi.shared.o \
+	$O/parallel.shared.o \
+	$O/gll_library.spec.o \
+	$(EMPTY_MACRO)
+
+xsmooth_sem_SHARED_OBJECTS = \
+	$O/specfem2D_par.spec.o \
 	$O/exit_mpi.shared.o \
 	$O/parallel.shared.o \
 	$O/gll_library.spec.o \
@@ -155,7 +164,7 @@ INFO_CUDA_SEM="building xsmooth_sem without CUDA support"
 endif
 
 
-${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS)
+${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
 	@echo ""
 	@echo $(INFO_CUDA_SEM)
 	@echo ""
@@ -163,6 +172,12 @@ ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS)
 	@echo ""
 
 #######################################
+
+###
+### Module dependencies
+###
+$O/postprocess_par.postprocess_module.o: $O/specfem2D_par.spec.o
+
 
 
 ####
@@ -173,7 +188,7 @@ ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS)
 ## postprocess
 ##
 
-$O/%.postprocess_module.o: $S/%.f90 ${SETUP}/constants.h $O/specfem2D_par.spec.o
+$O/%.postprocess_module.o: $S/%.f90 $O/specfem2D_par.spec.o
 	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.postprocess.o: $S/%.f90 $O/postprocess_par.postprocess_module.o

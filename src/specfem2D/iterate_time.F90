@@ -570,7 +570,7 @@ subroutine iterate_time()
 
         endif ! of if (any_gravitoacoustic)
       else ! GPU_MODE
-        if ((any_gravitoacoustic)) call exit_MPI('gravitoacoustic not implemented in GPU MODE yet')
+        if ((any_gravitoacoustic)) call exit_MPI(myrank,'gravitoacoustic not implemented in GPU MODE yet')
       endif
 
 ! *********************************************************
@@ -1058,7 +1058,7 @@ subroutine iterate_time()
           call compute_coupling_poro_viscoelastic_for_stabilization()
         endif
      else !GPU_MODE
-       if (any_poroelastic) call exit_MPI('poroelastic not implemented in GPU MODE yet')
+       if (any_poroelastic) call exit_MPI(myrank,'poroelastic not implemented in GPU MODE yet')
      endif
    enddo !LDDRK or RK
 
@@ -1070,7 +1070,7 @@ subroutine iterate_time()
       if (any_acoustic) then
         write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
         open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
-        if (ier /= 0) call exit_MPI('Error opening file OUTPUT_FILES/lastframe_acoustic**.bin')
+        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_acoustic**.bin')
 
         read(55) b_potential_acoustic
         read(55) b_potential_dot_acoustic
@@ -1097,7 +1097,7 @@ subroutine iterate_time()
       if (any_elastic) then
         write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
         open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
-        if (ier /= 0) call exit_MPI('Error opening file OUTPUT_FILES/lastframe_elastic**.bin')
+        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_elastic**.bin')
         if (p_sv) then
           !P-SV waves
           read(55) b_displ_elastic
@@ -1132,10 +1132,10 @@ subroutine iterate_time()
       if (any_poroelastic) then
         write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
         open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
-        if (ier /= 0) call exit_MPI('Error opening file OUTPUT_FILES/lastframe_poroelastic_s**.bin')
+        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_s**.bin')
         write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
         open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
-        if (ier /= 0) call exit_MPI('Error opening file OUTPUT_FILES/lastframe_poroelastic_w**.bin')
+        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_w**.bin')
         do j = 1,nglob
           read(55) (b_displs_poroelastic(i,j), i= 1,NDIM), &
                    (b_velocs_poroelastic(i,j), i= 1,NDIM), &
@@ -1159,7 +1159,7 @@ subroutine iterate_time()
                       recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
      if (ios /= 0) write(*,*) 'Error retrieving ensemble forward wavefield.'
      if (p_sv) then
-       call exit_MPI('P-SV case not yet implemented.')
+       call exit_MPI(myrank,'P-SV case not yet implemented.')
      else
        read(unit=500,rec=NSTEP-it+1) b_displ_elastic(2,:)
      endif

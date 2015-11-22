@@ -468,7 +468,7 @@ subroutine read_tomo_file()
   if (ier /= 0) then
     print *,'Error: could not open tomography file: ',trim(TOMOGRAPHY_FILE)
     print *,'Please check your settings in Par_file ...'
-    call exit_MPI('Error reading tomography file')
+    call exit_MPI(myrank,'Error reading tomography file')
   endif
 
   ! --------------------------------------------------------------------------------------
@@ -504,7 +504,7 @@ subroutine read_tomo_file()
   allocate(x_tomography(nrecord),z_tomography(nrecord),vp_tomography(nrecord),vs_tomography(nrecord), &
            rho_tomography(nrecord),stat=ier)
   allocate(x_tomo(NX),z_tomo(NZ),vp_tomo(NX,NZ),vs_tomo(NX,NZ),rho_tomo(NX,NZ),stat=ier)
-  if (ier /= 0) call exit_MPI('not enough memory to allocate tomo arrays')
+  if (ier /= 0) call exit_MPI(myrank,'not enough memory to allocate tomo arrays')
 
   ! Checks the number of records for points definition while storing them
   irecord = 0

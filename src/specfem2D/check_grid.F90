@@ -125,7 +125,7 @@
 
   ! check
   if (UPPER_LIMIT_DISPLAY > nspec) &
-    call exit_MPI('cannot have UPPER_LIMIT_DISPLAY > nspec in checkgrid.F90')
+    call exit_MPI(myrank,'cannot have UPPER_LIMIT_DISPLAY > nspec in checkgrid.F90')
 
   if (myrank == 0) then
     write(IMAIN,*) "  checking mesh and stability"
@@ -2165,7 +2165,7 @@ endif
   integer :: NGLLX_MAX_STABILITY
   double precision :: percent_GLL(NGLLX_MAX_STABILITY)
 
-  if (NGLLX_MAX_STABILITY /= 15 ) call exit_MPI('check NGLLX_MAX_STABILITY in checkgrid.f90')
+  if (NGLLX_MAX_STABILITY /= 15 ) stop 'check NGLLX_MAX_STABILITY is equal to 15 in checkgrid.f90'
 
 ! define percentage of smallest distance between GLL points for NGLLX points
 ! percentages were computed by calling the GLL points routine for each degree
@@ -2190,7 +2190,7 @@ endif
   percent_GLL(:) = percent_GLL(:) / 100.d0
 
   if (NGLLX > NGLLX_MAX_STABILITY) then
-    call exit_MPI('cannot estimate the stability condition for that degree')
+    stop 'cannot estimate the stability condition for degree NGLLX > NGLLX_MAX_STABILITY'
   endif
 
   end subroutine checkgrid_setup_GLLper
@@ -2208,7 +2208,7 @@ endif
   integer :: NUM_COLORS
   double precision, dimension(NUM_COLORS) :: red,green,blue
 
-  if (NUM_COLORS /= 236 ) call exit_MPI('check NUM_COLORS in checkgrid.f90')
+  if (NUM_COLORS /= 236 ) stop 'check NUM_COLORS is equal to 236 in checkgrid.f90'
 
 ! red
   red(1) = 1.00000000000000

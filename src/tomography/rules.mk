@@ -41,51 +41,93 @@
 #========================================================================
 
 ## compilation directories
-S := ${S_TOP}/src/shared
-$(shared_OBJECTS): S = ${S_TOP}/src/shared
+S := ${S_TOP}/src/tomography
+$(tomography_OBJECTS): S := ${S_TOP}/src/tomography
 
 #######################################
 
-shared_TARGETS = \
-	$(shared_OBJECTS) \
+tomography_TARGETS = \
+	$E/xsum_kernels \
 	$(EMPTY_MACRO)
 
+tomography_OBJECTS = \
+	$(xsum_kernels_OBJECTS) \
+	$(EMPTY_MACRO)
 
-shared_OBJECTS = \
-	$O/define_shape_functions.shared.o \
+# These files come from the shared directory
+tomography_SHARED_OBJECTS = \
+	$(xsum_kernels_SHARED_OBJECTS) \
+	$(EMPTY_MACRO)
+
+tomography_MODULES = \
+	$(FC_MODDIR)/tomography_par.$(FC_MODEXT) \
+	$(EMPTY_MACRO)
+
+####
+#### rules for executables
+####
+
+.PHONY: all_tomo tomo tomography
+
+all_tomo: $(tomography_TARGETS)
+
+tomo: $(tomography_TARGETS)
+
+tomography: $(tomography_TARGETS)
+
+
+### single targets
+sum_kernels: xsum_kernels
+xsum_kernels: $E/xsum_kernels
+
+
+#######################################
+
+####
+#### rules for each program follow
+####
+
+#######################################
+
+
+##
+## xsum_kernels
+##
+xsum_kernels_OBJECTS = \
+	$O/tomography_par.tomo_module.o \
+	$O/sum_kernels.tomo.o \
+	$O/read_model.tomo.o \
+	$(EMPTY_MACRO)
+
+xsum_kernels_SHARED_OBJECTS = \
+	$O/specfem2D_par.spec.o \
 	$O/exit_mpi.shared.o \
-	$O/force_ftz.cc.o \
 	$O/parallel.shared.o \
-	$O/param_reader.cc.o \
-	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
+${E}/xsum_kernels: $(xsum_kernels_OBJECTS) $(xsum_kernels_SHARED_OBJECTS) $(COND_MPI_OBJECTS)
+	@echo ""
+	@echo "building xsum_kernels"
+	@echo ""
+	${FCLINK} -o $@ $+ $(MPILIBS)
+	@echo ""
 
-shared_MODULES = \
-	$(EMPTY_MACRO)
 
 
 #######################################
+
+###
+### Module dependencies
+###
+$O/tomography_par.tomo_module.o: $O/specfem2D_par.spec.o
 
 ####
 #### rule for each .o file below
 ####
 
+$O/%.tomo_module.o: $S/%.f90 ${SETUP}/constants_tomography.h $O/specfem2D_par.spec.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-##
-## shared
-##
+$O/%.tomo.o: $S/%.f90 ${SETUP}/constants_tomography.h $O/tomography_par.tomo_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.shared.o: $S/%.f90
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
-
-$O/%.shared.o: $S/%.F90
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
-
-
-##
-## C compilation
-##
-
-$O/%.cc.o: $S/%.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $<

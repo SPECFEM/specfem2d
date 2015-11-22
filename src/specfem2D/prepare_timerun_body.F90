@@ -183,7 +183,7 @@ subroutine prepare_timerun()
     call flush_IMAIN()
   endif
 
-  if (nrec < 1) call exit_MPI('need at least one receiver')
+  if (nrec < 1) call exit_MPI(myrank,'need at least one receiver')
 
 ! receiver information
     allocate(ispec_selected_rec(nrec))
@@ -506,10 +506,10 @@ subroutine prepare_timerun()
   if (count(anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
 
   if (all_anisotropic .and. anyabs) &
-    call exit_MPI('Cannot put absorbing boundaries if anisotropic materials along edges')
+    call exit_MPI(myrank,'Cannot put absorbing boundaries if anisotropic materials along edges')
 
   if (ATTENUATION_VISCOELASTIC_SOLID .and. all_anisotropic) then
-    call exit_MPI('Cannot turn attenuation on in anisotropic materials')
+    call exit_MPI(myrank,'Cannot turn attenuation on in anisotropic materials')
   endif
 
   ! global domain flags
@@ -539,7 +539,7 @@ subroutine prepare_timerun()
 
   ! for acoustic
   if (ATTENUATION_VISCOELASTIC_SOLID .and. .not. any_elastic_glob) &
-    call exit_MPI('currently cannot have attenuation if acoustic/poroelastic simulation only')
+    call exit_MPI(myrank,'currently cannot have attenuation if acoustic/poroelastic simulation only')
 
 !
 !----   define coefficients of the Newmark time scheme
@@ -568,7 +568,7 @@ subroutine prepare_timerun()
       if (myrank == which_proc_receiver(irec)) then
         ! check that the source proc number is okay
         if (which_proc_receiver(irec) < 0 .or. which_proc_receiver(irec) > NPROC-1) &
-              call exit_MPI('something is wrong with the source proc number in adjoint simulation')
+              call exit_MPI(myrank,'something is wrong with the source proc number in adjoint simulation')
         nadj_rec_local = nadj_rec_local + 1
       endif
     enddo
@@ -615,7 +615,7 @@ subroutine prepare_timerun()
        irec_local = 0
        write(filename, "('./SEM/Up_file_single.su.adj')")
        open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
-               if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+               if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
        allocate(adj_src_s(NSTEP,3))
 
        do irec = 1, nrec
@@ -623,7 +623,7 @@ subroutine prepare_timerun()
           irec_local = irec_local + 1
           adj_sourcearray(:,:,:,:) = 0.0
           read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
-               if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
+               if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
           if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
 
           if (AXISYM) then
@@ -910,7 +910,7 @@ subroutine prepare_timerun()
         (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
         gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) > 0.99d0)) then
           if (seismotype == 4) then
-            call exit_MPI('an acoustic pressure receiver cannot be located exactly '// &
+            call exit_MPI(myrank,'an acoustic pressure receiver cannot be located exactly '// &
                             'on the free surface because pressure is zero there')
           else
             print *, '**********************************************************************'
@@ -1694,7 +1694,7 @@ subroutine prepare_timerun()
 
 ! if distance between the two points is not negligible, there is an error, since it should be zero
         if (sqrt((coord(1,iglob) - coord(1,iglob2))**2 + (coord(2,iglob) - coord(2,iglob2))**2) > TINYVAL) &
-            call exit_MPI( 'error in fluid/solid coupling buffer')
+            call exit_MPI(myrank,'Error in fluid/solid coupling buffer')
 
       enddo
 
@@ -1826,7 +1826,7 @@ subroutine prepare_timerun()
 
 ! if distance between the two points is not negligible, there is an error, since it should be zero
         if (sqrt((coord(1,iglob) - coord(1,iglob2))**2 + (coord(2,iglob) - coord(2,iglob2))**2) > TINYVAL) &
-            call exit_MPI( 'error in fluid/solid (poroelastic) coupling buffer')
+            call exit_MPI(myrank,'Error in fluid/solid (poroelastic) coupling buffer')
 
       enddo
 
@@ -2072,7 +2072,7 @@ if (coupled_elastic_poro) then
 
 ! if distance between the two points is not negligible, there is an error, since it should be zero
         if (sqrt((coord(1,iglob) - coord(1,iglob2))**2 + (coord(2,iglob) - coord(2,iglob2))**2) > TINYVAL) &
-            call exit_MPI( 'error in solid/porous coupling buffer')
+            call exit_MPI(myrank,'Error in solid/porous coupling buffer')
 
       enddo
 

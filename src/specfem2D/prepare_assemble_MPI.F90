@@ -330,7 +330,7 @@
 
   else
 
-    call exit_MPI('ERROR get_edge unknown type')
+    stop 'ERROR get_edge unknown type'
 
   endif
 

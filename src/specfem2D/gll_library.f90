@@ -531,9 +531,9 @@
   p    = zero
   pdm1 = zero
 
-  if (np <= 0) call exit_MPI('minimum number of Gauss points is 1')
+  if (np <= 0) stop 'minimum number of Gauss points is 1'
 
-  if ((alpha <= -one) .or. (beta <= -one)) call exit_MPI('alpha and beta must be greater than -1')
+  if ((alpha <= -one) .or. (beta <= -one)) stop 'alpha and beta must be greater than -1'
 
   if (np == 1) then
    z(1) = (beta-alpha)/(apb+two)
@@ -603,12 +603,12 @@
   nm1 = n-1
   pd  = zero
 
-  if (np <= 1) call exit_MPI('minimum number of Gauss-Lobatto points is 2')
+  if (np <= 1) stop 'minimum number of Gauss-Lobatto points is 2'
 
 ! with spectral elements, use at least 3 points
-  if (np <= 2) call exit_MPI('minimum number of Gauss-Lobatto points for the SEM is 3')
+  if (np <= 2) stop 'minimum number of Gauss-Lobatto points for the SEM is 3'
 
-  if ((alpha <= -one) .or. (beta <= -one)) call exit_MPI('alpha and beta must be greater than -1')
+  if ((alpha <= -one) .or. (beta <= -one)) stop 'alpha and beta must be greater than -1'
 
   if (nm1 > 0) then
     alpg  = alpha+one

@@ -163,7 +163,7 @@
 
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
     open(unit = IIN, file = trim(filename), iostat = ios)
-    if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+    if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
     do itime = 1, NSTEP
       read(IIN,*) junk, adj_src_s(itime,icomp)
@@ -178,7 +178,7 @@
 
     filename = 'SEM/'//trim(adj_source_file) // '.PRE.adj'
     open(unit = IIN, file = trim(filename), iostat = ios)
-    if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+    if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
     do itime = 1, NSTEP
       read(IIN,*) junk, adj_src_s(itime,1)
@@ -189,7 +189,7 @@
 
     filename = 'SEM/'//trim(adj_source_file) // '.POT.adj'
     open(unit = IIN, file = trim(filename), iostat = ios)
-    if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+    if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
     do itime = 1, NSTEP
       read(IIN,*) junk, adj_src_s(itime,1)

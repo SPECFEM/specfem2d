@@ -53,7 +53,7 @@
                          nglob,numat,poroelastcoef,density,coord, &
                          anglesource_refl,c_inc,c_refl,cploc,csloc,time_offset, &
                          A_plane, B_plane, C_plane, &
-                         accel_elastic,veloc_elastic,displ_elastic
+                         accel_elastic,veloc_elastic,displ_elastic,myrank
 
   implicit none
   include "constants.h"
@@ -81,7 +81,7 @@
   endif
 
   if (any_acoustic .or. any_poroelastic) &
-    call exit_MPI('initial field currently implemented for purely elastic simulation only')
+    call exit_MPI(myrank,'initial field currently implemented for purely elastic simulation only')
 
   !=======================================================================
   !
@@ -99,7 +99,7 @@
     write(IMAIN,*)
 
   ! only implemented for one source
-    if (NSOURCES > 1) call exit_MPI('calculation of the initial wave is only implemented for one source')
+    if (NSOURCES > 1) call exit_MPI(myrank,'calculation of the initial wave is only implemented for one source')
     if (source_type(1) == 1 .or. source_type(1) == 4) then
       write(IMAIN,*) 'initial P wave of', anglesource(1)*180.d0/pi, 'degrees introduced.'
     else if (source_type(1) == 2 .or. source_type(1) == 5) then
@@ -107,7 +107,8 @@
     else if (source_type(1) == 3) then
       write(IMAIN,*) 'Rayleigh wave introduced.'
     else
-      call exit_MPI('Unrecognized source_type: should be 1 or 4 for plane P waves, 2 or 5 for plane SV waves, 3 for Rayleigh wave')
+      call exit_MPI(myrank, &
+        'Unrecognized source_type: should be 1 or 4 for plane P waves, 2 or 5 for plane SV waves, 3 for Rayleigh wave')
     endif
   endif
 
@@ -115,7 +116,7 @@
   ! anglesource has been converted from degrees to radians before
     anglesource_abs=abs(anglesource(1))
     if (anglesource_abs > pi/2.d0 .and. source_type(1) /= 3) &
-      call exit_MPI("incorrect anglesource: must have 0 <= anglesource < 90")
+      call exit_MPI(myrank,"incorrect anglesource: must have 0 <= anglesource < 90")
 
   ! only implemented for homogeneous media therefore only one material supported
   numat_local = numat

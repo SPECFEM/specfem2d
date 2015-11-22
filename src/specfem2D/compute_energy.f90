@@ -68,7 +68,7 @@
 
       ! checks wave type
       if (.not. p_sv) then
-        call exit_MPI('output energy for SH waves not implemented yet')
+        call exit_MPI(myrank,'output energy for SH waves not implemented yet')
       endif
 
       ! get relaxed elastic parameters of current spectral element

@@ -99,7 +99,7 @@
                 gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) < -0.99d0) .or.&
                 (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
                 gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) > 0.99d0)) then
-              call exit_MPI('an acoustic source cannot be located exactly '// &
+              call exit_MPI(myrank,'an acoustic source cannot be located exactly '// &
                             'on the free surface because pressure is zero there')
             endif
           endif
@@ -119,7 +119,7 @@
 
     else if (.not.initialfield) then
 
-      call exit_MPI('incorrect source type')
+      call exit_MPI(myrank,'incorrect source type')
 
     endif
 
@@ -185,13 +185,13 @@ subroutine add_adjoint_sources_SU
    irec_local = 0
    write(filename, "('./SEM/Ux_file_single.su.adj')")
    open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
-           if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+           if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
    write(filename, "('./SEM/Uy_file_single.su.adj')")
    open(112,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
-           if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+           if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
    write(filename, "('./SEM/Uz_file_single.su.adj')")
    open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
-           if (ios /= 0) call exit_MPI(' file '//trim(filename)//'does not exist')
+           if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
    allocate(adj_src_s(NSTEP,3))
    adj_src_s(:,:) = 0.
@@ -201,11 +201,11 @@ subroutine add_adjoint_sources_SU
       irec_local = irec_local + 1
       adj_sourcearray(:,:,:,:) = 0.0
       read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
-           if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
+           if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
       read(112,rec=irec,iostat=ios) r4head, adj_src_s(:,2)
-           if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
+           if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
       read(113,rec=irec,iostat=ios) r4head, adj_src_s(:,3)
-           if (ios /= 0) call exit_MPI(' file '//trim(filename)//' read error')
+           if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
       header2=int(r4head(29), kind=2)
       if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
 

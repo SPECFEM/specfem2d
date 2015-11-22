@@ -242,7 +242,7 @@
      write(IMAIN,*)
      write(IMAIN,*) 'Force source:'
 
-     if (final_distance == HUGEVAL) call exit_MPI('Error locating force source')
+     if (final_distance == HUGEVAL) call exit_MPI(myrank,'Error locating force source')
 
      write(IMAIN,*) '            original x: ',sngl(x_source)
      write(IMAIN,*) '            original z: ',sngl(z_source)

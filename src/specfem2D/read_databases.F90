@@ -63,7 +63,7 @@
       print *,''
       print *,'Please make sure that the mesher has been run before this solver simulation with the correct settings...'
     endif
-    call exit_MPI('Error opening file OUTPUT_FILES/Database***')
+    call exit_MPI(myrank,'Error opening file OUTPUT_FILES/Database***')
   endif
 
   !---  read job title and skip remaining titles of the input file
@@ -101,6 +101,9 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) nspec
 
   read(IIN,"(a80)") datlin
   read(IIN,*) npgeo,nproc_read_from_database
@@ -155,8 +158,8 @@
 
   read(IIN,"(a80)") datlin
   read(IIN,*) seismotype,imagetype_postscript
-  if (seismotype < 1 .or. seismotype > 6) call exit_MPI('Wrong type for seismogram output')
-  if (imagetype_postscript < 1 .or. imagetype_postscript > 4) call exit_MPI('Wrong type for PostScript snapshots')
+  if (seismotype < 1 .or. seismotype > 6) call exit_MPI(myrank,'Wrong type for seismogram output')
+  if (imagetype_postscript < 1 .or. imagetype_postscript > 4) call exit_MPI(myrank,'Wrong type for PostScript snapshots')
 
   if (SAVE_FORWARD .and. (seismotype /= 1 .and. seismotype /= 6)) then
     print *, '***** WARNING *****'
@@ -451,7 +454,7 @@
     ! reads coordinates
     read(IIN,*) ipoin,(coorgread(id),id = 1,NDIM)
 
-    if (ipoin<1 .or. ipoin>npgeo) call exit_MPI('Wrong control point number')
+    if (ipoin<1 .or. ipoin>npgeo) call exit_MPI(myrank,'Wrong control point number')
 
     ! saves coordinate array
     coorg(:,ipoin) = coorgread
@@ -677,7 +680,7 @@
                   iend_edge3(inum), ibegin_edge4(inum), iend_edge4(inum)
 
       if (numabsread < 1 .or. numabsread > nspec) &
-        call exit_MPI('Wrong absorbing element number')
+        call exit_MPI(myrank,'Wrong absorbing element number')
 
       numabs(inum) = numabsread
 
@@ -869,7 +872,7 @@
                   iend_edge3_acforcing(inum), ibegin_edge4_acforcing(inum), iend_edge4_acforcing(inum)
 
       if (numacforcingread < 1 .or. numacforcingread > nspec) &
-        call exit_MPI('Wrong absorbing element number')
+        call exit_MPI(myrank,'Wrong absorbing element number')
 
 
         numacforcing(inum) = numacforcingread

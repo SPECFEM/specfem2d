@@ -320,6 +320,7 @@ AS_BOX([setting up default simulation setup])
 AC_CONFIG_FILES([
 	Makefile
 	setup/constants.h
+	setup/constants_tomography.h
 	setup/precision.h
 ])
 

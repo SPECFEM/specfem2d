@@ -1497,7 +1497,7 @@
   else if (imagetype_postscript == 3) then
     write(24,*) '(Acceleration vector field) show'
   else
-    call exit_MPI('Bad field code in PostScript display')
+    call exit_MPI(myrank,'Bad field code in PostScript display')
   endif
   write(24,*) 'grestore'
   write(24,*) '25.35 CM 18.9 CM MV'
@@ -2144,7 +2144,7 @@
     ideb = 4
     ifin = 1
   else
-    call exit_MPI('Wrong codeabs() absorbing boundary code')
+    call exit_MPI(myrank,'Wrong codeabs() absorbing boundary code')
   endif
 
 ! draw the Stacey absorbing boundary line segment in different colors depending on its type
@@ -2158,7 +2158,7 @@
   else if (typeabs(inum) == ILEFT) then
     write(24,*) '1 0.6470 0 RG' ! Orange
   else
-    call exit_MPI('Wrong typeabs() absorbing boundary code')
+    call exit_MPI(myrank,'Wrong typeabs() absorbing boundary code')
   endif
   endif
 
@@ -2340,7 +2340,7 @@
     ideb = 2
     ifin = 3
   else
-    call exit_MPI('Wrong fluid-solid coupling edge code')
+    call exit_MPI(myrank,'Wrong fluid-solid coupling edge code')
   endif
 
   x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
@@ -2445,7 +2445,7 @@
     ideb = 2
     ifin = 3
   else
-    call exit_MPI('Wrong fluid-solid coupling edge code')
+    call exit_MPI(myrank,'Wrong fluid-solid coupling edge code')
   endif
 
   x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
@@ -2550,7 +2550,7 @@
     ideb = 2
     ifin = 3
   else
-    call exit_MPI('Wrong fluid-solid coupling edge code')
+    call exit_MPI(myrank,'Wrong fluid-solid coupling edge code')
   endif
 
   x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x

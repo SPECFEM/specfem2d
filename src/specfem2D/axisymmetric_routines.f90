@@ -77,7 +77,7 @@ subroutine  build_is_on_the_axis()
     use specfem_par, only: any_poroelastic, ROTATE_PML_ACTIVATE, &
                            STACEY_BOUNDARY_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD,time_stepping_scheme, &
                            NOISE_TOMOGRAPHY, NSOURCES, source_type, ispec_selected_source, ADD_PERIODIC_CONDITIONS, &
-                           anglesource, is_on_the_axis, elastic, is_proc_source
+                           anglesource, is_on_the_axis, elastic, is_proc_source,myrank
 
     implicit none
 
@@ -87,26 +87,26 @@ subroutine  build_is_on_the_axis()
     integer :: isource
 
     if (any_poroelastic ) &
-      call exit_MPI('Poroelasticity is presently not implemented for axisymmetric simulations')
+      call exit_MPI(myrank,'Poroelasticity is not implemented for axisymmetric simulations')
     if (ROTATE_PML_ACTIVATE ) &
-      call exit_MPI('ROTATE_PML_ACTIVATE is presently not implemented for axisymmetric simulations')
+      call exit_MPI(myrank,'ROTATE_PML_ACTIVATE is not implemented for axisymmetric simulations')
     if (STACEY_BOUNDARY_CONDITIONS ) &
-      call exit_MPI('Stacey boundary conditions are presently not implemented for axisymmetric simulations -> use PML instead')
+      call exit_MPI(myrank,'Stacey boundary conditions are not implemented for axisymmetric simulations,use PML instead')
     if (SIMULATION_TYPE /= 1 ) &
-      call exit_MPI('Just axisymmetric FORWARD simulations are possible so far')
+      call exit_MPI(myrank,'Just axisymmetric FORWARD simulations are possible so far')
     if (SAVE_FORWARD ) &
-      call exit_MPI('SAVE_FORWARD has presently not been tested with axisymmetric simulations')
+      call exit_MPI(myrank,'SAVE_FORWARD has presently not been tested with axisymmetric simulations')
     if (time_stepping_scheme /= 1 ) &
-      call exit_MPI('Just Newmark scheme is presently possible for axisymmetric simulation')
+      call exit_MPI(myrank,'Just Newmark scheme is possible for axisymmetric simulation')
     if (ADD_PERIODIC_CONDITIONS ) &
-      call exit_MPI('Periodic conditions (ADD_PERIODIC_CONDITIONS) are presently not implemented for axisymmetric simulations')
+      call exit_MPI(myrank,'Periodic conditions (ADD_PERIODIC_CONDITIONS) are not implemented for axisymmetric simulations')
     if (NOISE_TOMOGRAPHY /= 0 ) &
-      call exit_MPI('Axisymmetric noise tomographies are not possible yet')
+      call exit_MPI(myrank,'Axisymmetric noise tomographies are not possible yet')
     ! Check sources
     do isource = 1,NSOURCES                                      ! Loop on the sources :
       if (is_proc_source(isource) == 1) then
         if (source_type(isource) /= 1) then                       !  If the source is not an elastic force or an acoustic pressure
-          call exit_MPI('Axisymmetry : just elastic force or acoustic pressure sources has been tested so far)')
+          call exit_MPI(myrank,'Axisymmetry : just elastic force or acoustic pressure sources has been tested so far)')
         endif
         if (is_on_the_axis(ispec_selected_source(isource))) then  !   If the source is on an axial element
           if (elastic(ispec_selected_source(isource))) then       !  ... or if the source is (at r=0) on an elastic axial element.
