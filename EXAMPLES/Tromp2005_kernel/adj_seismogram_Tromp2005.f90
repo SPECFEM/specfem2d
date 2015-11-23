@@ -64,8 +64,9 @@ program adj_seismogram
   double precision :: seism_veloc(NSTEP),seism_accel(NSTEP),ft_bar(NSTEP)
   character(len=3) :: compr(2),comp(3)
   character(len=150) :: filename
+  integer :: ier
 
-  NDIM=3
+  NDIM = 3
   comp = (/"BXX","BXY","BXZ"/)
 
   ! number of components
@@ -88,7 +89,8 @@ program adj_seismogram
      do icomp = 1, NDIMr
 
         filename = 'OUTPUT_FILES/'//'AA.'//trim(station_name(irec))//'.'// compr(icomp) // '.semd'
-        open(unit = 10, file = trim(filename))
+        open(unit = 10, file = trim(filename),status='old',iostat=ier)
+        if (ier /= 0) stop 'Error opening trace file'
 
         do itime = 1,NSTEP
            read(10,*) time , seism(itime,icomp)
@@ -120,7 +122,8 @@ program adj_seismogram
         print *,comp(icomp)
 
         filename = 'SEM/'//'AA.'//trim(station_name(irec))//'.'// comp(icomp) // '.adj'
-        open(unit = 11, file = trim(filename))
+        open(unit = 11, file = trim(filename),status='unknown',iostat=ier)
+        if (ier /= 0) stop 'Error opening SEM adjoint source file'
 
         time_window(:) = 0.d0
         seism_win(:) = seism(:,icomp)
@@ -170,7 +173,7 @@ program adj_seismogram
 
   enddo
   print *,'*************************'
-  print *,'The input files (S****.AA.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in SEM'
+  print *,'The input files (AA.S****.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in SEM'
   print *,'*************************'
 
 end program adj_seismogram

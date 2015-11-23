@@ -62,8 +62,9 @@ program adj_seismogram
   double precision :: seism_veloc(NSTEP),seism_accel(NSTEP),ft_bar(NSTEP)
   character(len=3) :: compr(2),comp(3)
   character(len=150) :: filename
+  integer :: ier
 
-  NDIM=3
+  NDIM = 3
   comp = (/"BXX","BXY","BXZ"/)
 
   ! number of components
@@ -85,8 +86,13 @@ program adj_seismogram
 
      do icomp = 1, NDIMr
 
-        filename = 'OUTPUT_FILES/'//trim(station_name(irec))//'.AA.'// compr(icomp) // '.semd'
-        open(unit = 10, file = trim(filename))
+        filename = 'OUTPUT_FILES/'//'AA.'//trim(station_name(irec))//'.'// compr(icomp) // '.semd'
+        open(unit = 10, file = trim(filename), status='old', iostat=ier)
+        if (ier /= 0) then
+          print *,'Error: could not open trace file ',trim(filename)
+          print *,'Please check if file exists...'
+          stop 'Error opening trace file'
+        endif
 
         do itime = 1,NSTEP
            read(10,*) timeval , seism(itime,icomp)
@@ -117,8 +123,14 @@ program adj_seismogram
 
         print *,comp(icomp)
 
-        filename = 'SEM/'//trim(station_name(irec))//'.AA.'// comp(icomp) // '.adj'
-        open(unit = 11, file = trim(filename))
+        filename = 'SEM/'//'AA.'//trim(station_name(irec))//'.'// comp(icomp) // '.adj'
+        open(unit = 11, file = trim(filename), status='unknown', iostat=ier)
+        if (ier /= 0) then
+          print *,'Error: could not open adjoint trace file ',trim(filename)
+          print *,'Please check if directory SEM/ exists...'
+          stop 'Error opening trace file'
+        endif
+
 
         time_window(:) = 0.d0
         seism_win(:) = seism(:,icomp)
@@ -168,7 +180,7 @@ program adj_seismogram
 
   enddo
   print *,'*************************'
-  print *,'The input files (S****.AA.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in SEM'
+  print *,'The input files (AA.S****.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in SEM'
   print *,'*************************'
 
 end program adj_seismogram

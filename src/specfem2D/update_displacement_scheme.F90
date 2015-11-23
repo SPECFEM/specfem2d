@@ -39,13 +39,16 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-subroutine update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                             potential_dot_dot_acoustic,potential_dot_acoustic,&
-                                                             potential_acoustic,potential_acoustic_old,&
-                                                             PML_BOUNDARY_CONDITIONS)
-  use specfem_par, only : nglob_acoustic
+
+
+  subroutine update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
+                                                               potential_dot_dot_acoustic,potential_dot_acoustic,&
+                                                               potential_acoustic,potential_acoustic_old,&
+                                                               PML_BOUNDARY_CONDITIONS)
+
+  use specfem_par, only : nglob_acoustic,CUSTOM_REAL
+
   implicit none
-  include 'constants.h'
 
   double precision :: deltat,deltatover2,deltatsquareover2
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_acoustic,potential_dot_acoustic,&
@@ -65,7 +68,7 @@ subroutine update_displacement_precondition_newmark_acoustic(deltat,deltatover2,
     potential_acoustic(i) = potential_acoustic(i) + deltat*potential_dot_acoustic(i) + &
                             deltatsquareover2*potential_dot_dot_acoustic(i)
     potential_dot_acoustic(i) = potential_dot_acoustic(i) + deltatover2*potential_dot_dot_acoustic(i)
-    potential_dot_dot_acoustic(i) = ZERO
+    potential_dot_dot_acoustic(i) = 0._CUSTOM_REAL
   enddo
 
 #else
@@ -76,21 +79,24 @@ subroutine update_displacement_precondition_newmark_acoustic(deltat,deltatover2,
 
   potential_acoustic = potential_acoustic + deltat*potential_dot_acoustic + deltatsquareover2*potential_dot_dot_acoustic
   potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
-  potential_dot_dot_acoustic = ZERO
+  potential_dot_dot_acoustic = 0._CUSTOM_REAL
 
 #endif
 
-end subroutine update_displacement_precondition_newmark_acoustic
-!========================================================================
+  end subroutine update_displacement_precondition_newmark_acoustic
 
+!
 !========================================================================
-subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                            accel_elastic,veloc_elastic,&
-                                                            displ_elastic,displ_elastic_old,&
-                                                            PML_BOUNDARY_CONDITIONS)
-  use specfem_par, only : nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID
+!
+
+  subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
+                                                              accel_elastic,veloc_elastic,&
+                                                              displ_elastic,displ_elastic_old,&
+                                                              PML_BOUNDARY_CONDITIONS)
+
+  use specfem_par, only : nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID,CUSTOM_REAL,TWO
+
   implicit none
-  include 'constants.h'
 
   double precision :: deltat,deltatover2,deltatsquareover2
   real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: accel_elastic,veloc_elastic, &
@@ -113,7 +119,7 @@ subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,d
   !do i = 1,NDIM*nglob_elastic  !! DK DK this should be the correct size in principle, but not here because of the SH component
     displ_elastic(i,1) = displ_elastic(i,1) + deltat*veloc_elastic(i,1) + deltatsquareover2*accel_elastic(i,1)
     veloc_elastic(i,1) = veloc_elastic(i,1) + deltatover2*accel_elastic(i,1)
-    accel_elastic(i,1) = ZERO
+    accel_elastic(i,1) = 0._CUSTOM_REAL
   enddo
 #else
 
@@ -123,25 +129,27 @@ subroutine update_displacement_precondition_newmark_elastic(deltat,deltatover2,d
 
   displ_elastic = displ_elastic + deltat*veloc_elastic + deltatsquareover2*accel_elastic
   veloc_elastic = veloc_elastic + deltatover2*accel_elastic
-  accel_elastic = ZERO
+  accel_elastic = 0._CUSTOM_REAL
 
 #endif
 
-end subroutine update_displacement_precondition_newmark_elastic
-!========================================================================
+  end subroutine update_displacement_precondition_newmark_elastic
 
+!
 !========================================================================
-subroutine update_displacement_precondition_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
-                                                                accels_poroelastic,velocs_poroelastic,&
-                                                                displs_poroelastic,accelw_poroelastic,&
-                                                                velocw_poroelastic,displw_poroelastic)
+!
 
-  use specfem_par, only : nglob_poroelastic
+  subroutine update_displacement_precondition_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
+                                                                  accels_poroelastic,velocs_poroelastic,&
+                                                                  displs_poroelastic,accelw_poroelastic,&
+                                                                  velocw_poroelastic,displw_poroelastic)
+
+  use specfem_par, only : nglob_poroelastic,CUSTOM_REAL,NDIM
+
   implicit none
-  include 'constants.h'
 
   double precision :: deltat,deltatover2,deltatsquareover2
-  real(kind=CUSTOM_REAL), dimension(3,nglob_poroelastic) :: accels_poroelastic,velocs_poroelastic,displs_poroelastic,&
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: accels_poroelastic,velocs_poroelastic,displs_poroelastic,&
                                                             accelw_poroelastic,velocw_poroelastic,displw_poroelastic
 
   !PML did not implemented for poroelastic simulation
@@ -149,16 +157,18 @@ subroutine update_displacement_precondition_newmark_poroelastic(deltat,deltatove
   !for the solid
   displs_poroelastic = displs_poroelastic + deltat*velocs_poroelastic + deltatsquareover2*accels_poroelastic
   velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
-  accels_poroelastic = ZERO
+  accels_poroelastic = 0._CUSTOM_REAL
 
   !for the fluid
   displw_poroelastic = displw_poroelastic + deltat*velocw_poroelastic + deltatsquareover2*accelw_poroelastic
   velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
-  accelw_poroelastic = ZERO
+  accelw_poroelastic = 0._CUSTOM_REAL
 
-end subroutine update_displacement_precondition_newmark_poroelastic
+  end subroutine update_displacement_precondition_newmark_poroelastic
+
+!
 !========================================================================
-
+!
 
   subroutine update_displacement_precondition_newmark_GPU()
 
@@ -168,13 +178,10 @@ end subroutine update_displacement_precondition_newmark_poroelastic
                           PML_BOUNDARY_CONDITIONS,myrank
 
   implicit none
-  include 'constants.h'
 
-
-! update displacement using finite-difference time scheme (Newmark)
+  ! update displacement using finite-difference time scheme (Newmark)
 
   if (any_acoustic) then
-
     ! wavefields on GPU
     ! check
     if (SIMULATION_TYPE == 3) then
@@ -186,7 +193,6 @@ end subroutine update_displacement_precondition_newmark_poroelastic
     ! updates acoustic potentials
     call it_update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f,&
              b_deltatf,b_deltatsquareover2f,b_deltatover2f)
-
   endif
 
   if (any_elastic) then
@@ -203,7 +209,6 @@ end subroutine update_displacement_precondition_newmark_poroelastic
     ! Includes SIM_TYPE 1 & 3 (for noise tomography)
     call update_displacement_cuda(Mesh_pointer,deltatf,deltatsquareover2f,&
                                   deltatover2f,b_deltatf,b_deltatsquareover2f,b_deltatover2f)
-
   endif
 
   if (any_poroelastic) then

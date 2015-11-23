@@ -53,6 +53,7 @@ subroutine finalize_simulation()
 
   integer :: i,ispec,j,iglob
   real(kind=4),dimension(:,:,:),allocatable :: rho_save, vp_save, vs_save, kappa_save, x_save, z_save
+  integer :: ier
 
   if (trim(SAVE_MODEL) /= 'default') then
     allocate(rho_save(NGLLX,NGLLZ,nspec))
@@ -81,7 +82,8 @@ subroutine finalize_simulation()
 
     if (trim(SAVE_MODEL) == 'legacy') then
       write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_model_velocity.dat_input'
-      open(unit=1001,file=inputname,status='unknown')
+      open(unit=1001,file=inputname,status='unknown',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_model_velocity.dat_input')
       do ispec = 1,nspec
         do j = 1,NGLLZ
           do i = 1,NGLLX
@@ -95,7 +97,8 @@ subroutine finalize_simulation()
 
     else if (trim(SAVE_MODEL)=='ascii') then
       write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat'
-      open(unit=1001,file= inputname,status='unknown')
+      open(unit=1001,file= inputname,status='unknown',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_rho_vp_vs.dat')
       do ispec = 1,nspec
         do j = 1,NGLLZ
           do i = 1,NGLLX
@@ -108,28 +111,34 @@ subroutine finalize_simulation()
 
     else if ((trim(SAVE_MODEL) == 'binary') .or. (trim(SAVE_MODEL) == 'gll')) then
       write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
-      open(unit=172,file=outputname,status='unknown',form='unformatted')
+      open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_rho.bin')
       write(172) rho_save
       close(172)
       write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vp.bin'
-      open(unit=172,file=outputname,status='unknown',form='unformatted')
+      open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_vp.bin')
       write(172) vp_save
       close(172)
       write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vs.bin'
-      open(unit=172,file=outputname,status='unknown',form='unformatted')
+      open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_vs.bin')
       write(172) vs_save
       close(172)
       write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_x.bin'
-      open(unit=172,file=outputname,status='unknown',form='unformatted')
+      open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_x.bin')
       write(172) x_save
       close(172)
       write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_z.bin'
-      open(unit=172,file=outputname,status='unknown',form='unformatted')
+      open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_z.bin')
       write(172) z_save
       close(172)
 
       write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_jacobian.bin'
-      open(unit=172,file=outputname,status='unknown',form='unformatted')
+      open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_jacobian.bin')
       write(172) jacobian
       close(172)
 
@@ -155,49 +164,74 @@ subroutine finalize_simulation()
 
     if (any_acoustic) then
       !--- left absorbing boundary
-      if (nspec_left >0) write(65) b_absorb_acoustic_left
+      if (nspec_left > 0) write(65) b_absorb_acoustic_left
       !--- right absorbing boundary
-      if (nspec_right >0) write(66) b_absorb_acoustic_right
+      if (nspec_right > 0) write(66) b_absorb_acoustic_right
       !--- bottom absorbing boundary
-      if (nspec_bottom >0) write(67) b_absorb_acoustic_bottom
+      if (nspec_bottom > 0) write(67) b_absorb_acoustic_bottom
       !--- top absorbing boundary
-      if (nspec_top >0) write(68) b_absorb_acoustic_top
+      if (nspec_top > 0) write(68) b_absorb_acoustic_top
+      ! closes absorbing files
+      close(65)
+      close(66)
+      close(67)
+      close(68)
     endif !any acoustic
-
-    close(65)
-    close(66)
-    close(67)
-    close(68)
-    close(72)
 
     if (any_elastic) then
       !--- left absorbing boundary
-      if (nspec_left >0) write(35) b_absorb_elastic_left
+      if (nspec_left > 0) write(35) b_absorb_elastic_left
       !--- right absorbing boundary
-      if (nspec_right >0)  write(36) b_absorb_elastic_right
+      if (nspec_right > 0)  write(36) b_absorb_elastic_right
       !--- bottom absorbing boundary
-      if (nspec_bottom >0)  write(37) b_absorb_elastic_bottom
+      if (nspec_bottom > 0)  write(37) b_absorb_elastic_bottom
       !--- top absorbing boundary
-      if (nspec_top >0) write(38) b_absorb_elastic_top
+      if (nspec_top > 0) write(38) b_absorb_elastic_top
+      ! closes absorbing files
+      close(35)
+      close(36)
+      close(37)
+      close(38)
     endif !any elastic
 
-    close(35)
-    close(36)
-    close(37)
-    close(38)
-    close(71)
-
     if (any_poroelastic) then
-      close(25)
+      !--- left absorbing boundary
+      if(nspec_left > 0) then
+        write(45) b_absorb_poro_s_left
+        write(25) b_absorb_poro_w_left
+      endif
+      !--- right absorbing boundary
+      if(nspec_right > 0) then
+        write(46) b_absorb_poro_s_right
+        write(26) b_absorb_poro_w_right
+      endif
+      !--- bottom absorbing boundary
+      if(nspec_bottom > 0)  then
+        write(47) b_absorb_poro_s_bottom
+        write(29) b_absorb_poro_w_bottom
+      endif
+      !--- top absorbing boundary
+      if(nspec_top > 0) then
+        write(48) b_absorb_poro_s_top
+        write(28) b_absorb_poro_w_top
+      endif
+      ! closes absorbing files
       close(45)
-      close(26)
       close(46)
-      close(29)
       close(47)
-      close(28)
       close(48)
+      close(25)
+      close(26)
+      close(29)
+      close(28)
     endif
 
+  endif
+
+  ! PML
+  if (anyabs_glob .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. PML_BOUNDARY_CONDITIONS) then
+    if (any_elastic .and. nglob_interface > 0) close(71)
+    if (any_acoustic .and. nglob_interface > 0) close(72)
   endif
 
 !
@@ -212,7 +246,8 @@ subroutine finalize_simulation()
     endif
 
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+    open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_elastic**.bin')
 
     write(55) displ_elastic
     write(55) veloc_elastic
@@ -230,9 +265,11 @@ subroutine finalize_simulation()
     endif
 
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+    open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_poroelastic_s**.bin')
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
-    open(unit=56,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+    open(unit=56,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_poroelastic_w**.bin')
 
     write(55) displs_poroelastic
     write(55) velocs_poroelastic
@@ -254,7 +291,8 @@ subroutine finalize_simulation()
     endif
 
     write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+    open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_acoustic**.bin')
 
     write(55) potential_acoustic
     write(55) potential_dot_acoustic

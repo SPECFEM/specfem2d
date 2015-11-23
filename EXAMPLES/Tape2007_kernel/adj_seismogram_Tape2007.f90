@@ -66,7 +66,7 @@ program adj_seismogram
   character(len=150) :: filename
   integer :: ier
 
-  NDIM=3
+  NDIM = 3
   comp = (/"BXX","BXY","BXZ"/)
 
   ! number of components

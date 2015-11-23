@@ -52,6 +52,8 @@ subroutine prepare_timerun()
   implicit none
 
   integer :: i,j,ispec,k,iglob,irec,i_source,ispecabs,irecloc,ier
+  integer :: nglob_acoustic_b,nglob_elastic_b,nglob_poroelastic_b
+  integer :: nspec_acoustic_b,nspec_elastic_b,nspec_poroelastic_b
 
 #ifdef USE_MPI
   include "precision.h"
@@ -985,6 +987,9 @@ subroutine prepare_timerun()
     call flush_IMAIN()
   endif
 
+    !
+    ! elastic domains
+    !
     if (any_elastic) then
       nglob_elastic = nglob
     else
@@ -1016,55 +1021,45 @@ subroutine prepare_timerun()
 
     ! extra array if adjoint and kernels calculation
     if (SIMULATION_TYPE == 3 .and. any_elastic) then
-      allocate(b_displ_elastic(3,nglob))
-      allocate(b_displ_elastic_old(3,nglob))
-      allocate(b_veloc_elastic(3,nglob))
-      allocate(b_accel_elastic(3,nglob))
-      allocate(rho_kl(NGLLX,NGLLZ,nspec))
-      allocate(rho_k(nglob))
-      allocate(rhol_global(nglob))
-      allocate(mu_kl(NGLLX,NGLLZ,nspec))
-      allocate(mu_k(nglob))
-      allocate(mul_global(nglob))
-      allocate(kappa_kl(NGLLX,NGLLZ,nspec))
-      allocate(kappa_k(nglob))
-      allocate(kappal_global(nglob))
-      allocate(rhop_kl(NGLLX,NGLLZ,nspec))
-      allocate(alpha_kl(NGLLX,NGLLZ,nspec))
-      allocate(beta_kl(NGLLX,NGLLZ,nspec))
-      allocate(bulk_c_kl(NGLLX,NGLLZ,nspec))
-      allocate(bulk_beta_kl(NGLLX,NGLLZ,nspec))
-      if (APPROXIMATE_HESS_KL) then
-        allocate(rhorho_el_hessian_final2(NGLLX,NGLLZ,nspec))
-        allocate(rhorho_el_hessian_temp2(nglob))
-        allocate(rhorho_el_hessian_final1(NGLLX,NGLLZ,nspec))
-        allocate(rhorho_el_hessian_temp1(nglob))
-      endif
+      nglob_elastic_b = nglob
+      nspec_elastic_b = nspec
     else
-      allocate(b_displ_elastic(1,1))
-      allocate(b_displ_elastic_old(1,1))
-      allocate(b_veloc_elastic(1,1))
-      allocate(b_accel_elastic(1,1))
-      allocate(rho_kl(1,1,1))
-      allocate(rho_k(1))
-      allocate(rhol_global(1))
-      allocate(mu_kl(1,1,1))
-      allocate(mu_k(1))
-      allocate(mul_global(1))
-      allocate(kappa_kl(1,1,1))
-      allocate(kappa_k(1))
-      allocate(kappal_global(1))
-      allocate(rhop_kl(1,1,1))
-      allocate(alpha_kl(1,1,1))
-      allocate(beta_kl(1,1,1))
-      if (APPROXIMATE_HESS_KL) then
-        allocate(rhorho_el_hessian_final2(1,1,1))
-        allocate(rhorho_el_hessian_temp2(1))
-        allocate(rhorho_el_hessian_final1(1,1,1))
-        allocate(rhorho_el_hessian_temp1(1))
-      endif
+      ! dummy allocations
+      nglob_elastic_b = 1
+      nspec_elastic_b = 1
     endif
 
+    allocate(b_displ_elastic(3,nglob_elastic_b))
+    allocate(b_displ_elastic_old(3,nglob_elastic_b))
+    allocate(b_veloc_elastic(3,nglob_elastic_b))
+    allocate(b_accel_elastic(3,nglob_elastic_b))
+    ! kernels
+    ! on global nodes
+    allocate(rho_k(nglob_elastic_b))
+    allocate(rhol_global(nglob_elastic_b))
+    allocate(mu_k(nglob_elastic_b))
+    allocate(mul_global(nglob_elastic_b))
+    allocate(kappa_k(nglob_elastic_b))
+    allocate(kappal_global(nglob_elastic_b))
+    ! on local nodes
+    allocate(rho_kl(NGLLX,NGLLZ,nspec_elastic_b))
+    allocate(mu_kl(NGLLX,NGLLZ,nspec_elastic_b))
+    allocate(kappa_kl(NGLLX,NGLLZ,nspec_elastic_b))
+    allocate(rhop_kl(NGLLX,NGLLZ,nspec_elastic_b))
+    allocate(alpha_kl(NGLLX,NGLLZ,nspec_elastic_b))
+    allocate(beta_kl(NGLLX,NGLLZ,nspec_elastic_b))
+    allocate(bulk_c_kl(NGLLX,NGLLZ,nspec_elastic_b))
+    allocate(bulk_beta_kl(NGLLX,NGLLZ,nspec_elastic_b))
+    if (APPROXIMATE_HESS_KL) then
+      allocate(rhorho_el_hessian_final2(NGLLX,NGLLZ,nspec_elastic_b))
+      allocate(rhorho_el_hessian_temp2(nglob_elastic_b))
+      allocate(rhorho_el_hessian_final1(NGLLX,NGLLZ,nspec_elastic_b))
+      allocate(rhorho_el_hessian_temp1(nglob))
+    endif
+
+    !
+    ! poro-elastic domains
+    !
     if (any_poroelastic) then
       nglob_poroelastic = nglob
     else
@@ -1103,100 +1098,71 @@ subroutine prepare_timerun()
 
     ! extra array if adjoint and kernels calculation
     if (SIMULATION_TYPE == 3 .and. any_poroelastic) then
-      allocate(b_displs_poroelastic(NDIM,nglob))
-      allocate(b_velocs_poroelastic(NDIM,nglob))
-      allocate(b_accels_poroelastic(NDIM,nglob))
-      allocate(b_displw_poroelastic(NDIM,nglob))
-      allocate(b_velocw_poroelastic(NDIM,nglob))
-      allocate(b_accelw_poroelastic(NDIM,nglob))
-      allocate(rhot_kl(NGLLX,NGLLZ,nspec))
-      allocate(rhot_k(nglob))
-      allocate(rhof_kl(NGLLX,NGLLZ,nspec))
-      allocate(rhof_k(nglob))
-      allocate(sm_kl(NGLLX,NGLLZ,nspec))
-      allocate(sm_k(nglob))
-      allocate(eta_kl(NGLLX,NGLLZ,nspec))
-      allocate(eta_k(nglob))
-      allocate(mufr_kl(NGLLX,NGLLZ,nspec))
-      allocate(mufr_k(nglob))
-      allocate(B_kl(NGLLX,NGLLZ,nspec))
-      allocate(B_k(nglob))
-      allocate(C_kl(NGLLX,NGLLZ,nspec))
-      allocate(C_k(nglob))
-      allocate(M_kl(NGLLX,NGLLZ,nspec))
-      allocate(M_k(nglob))
-      allocate(rhob_kl(NGLLX,NGLLZ,nspec))
-      allocate(rhofb_kl(NGLLX,NGLLZ,nspec))
-      allocate(phi_kl(NGLLX,NGLLZ,nspec))
-      allocate(Bb_kl(NGLLX,NGLLZ,nspec))
-      allocate(Cb_kl(NGLLX,NGLLZ,nspec))
-      allocate(Mb_kl(NGLLX,NGLLZ,nspec))
-      allocate(mufrb_kl(NGLLX,NGLLZ,nspec))
-      allocate(rhobb_kl(NGLLX,NGLLZ,nspec))
-      allocate(rhofbb_kl(NGLLX,NGLLZ,nspec))
-      allocate(phib_kl(NGLLX,NGLLZ,nspec))
-      allocate(cpI_kl(NGLLX,NGLLZ,nspec))
-      allocate(cpII_kl(NGLLX,NGLLZ,nspec))
-      allocate(cs_kl(NGLLX,NGLLZ,nspec))
-      allocate(ratio_kl(NGLLX,NGLLZ,nspec))
-      allocate(phil_global(nglob))
-      allocate(mulfr_global(nglob))
-      allocate(etal_f_global(nglob))
-      allocate(rhol_s_global(nglob))
-      allocate(rhol_f_global(nglob))
-      allocate(rhol_bar_global(nglob))
-      allocate(tortl_global(nglob))
-      allocate(permlxx_global(nglob))
-      allocate(permlxz_global(nglob))
-      allocate(permlzz_global(nglob))
+      nglob_poroelastic_b = nglob
+      nspec_poroelastic_b = nspec
     else
-      allocate(b_displs_poroelastic(1,1))
-      allocate(b_velocs_poroelastic(1,1))
-      allocate(b_accels_poroelastic(1,1))
-      allocate(b_displw_poroelastic(1,1))
-      allocate(b_velocw_poroelastic(1,1))
-      allocate(b_accelw_poroelastic(1,1))
-      allocate(rhot_kl(1,1,1))
-      allocate(rhot_k(1))
-      allocate(rhof_kl(1,1,1))
-      allocate(rhof_k(1))
-      allocate(sm_kl(1,1,1))
-      allocate(sm_k(1))
-      allocate(eta_kl(1,1,1))
-      allocate(eta_k(1))
-      allocate(mufr_kl(1,1,1))
-      allocate(mufr_k(1))
-      allocate(B_kl(1,1,1))
-      allocate(B_k(1))
-      allocate(C_kl(1,1,1))
-      allocate(C_k(1))
-      allocate(M_kl(1,1,1))
-      allocate(M_k(1))
-      allocate(rhob_kl(1,1,1))
-      allocate(rhofb_kl(1,1,1))
-      allocate(phi_kl(1,1,1))
-      allocate(Bb_kl(1,1,1))
-      allocate(Cb_kl(1,1,1))
-      allocate(Mb_kl(1,1,1))
-      allocate(mufrb_kl(1,1,1))
-      allocate(rhobb_kl(1,1,1))
-      allocate(rhofbb_kl(1,1,1))
-      allocate(phib_kl(1,1,1))
-      allocate(cpI_kl(1,1,1))
-      allocate(cpII_kl(1,1,1))
-      allocate(cs_kl(1,1,1))
-      allocate(ratio_kl(1,1,1))
-      allocate(phil_global(1))
-      allocate(mulfr_global(1))
-      allocate(etal_f_global(1))
-      allocate(rhol_s_global(1))
-      allocate(rhol_f_global(1))
-      allocate(rhol_bar_global(1))
-      allocate(tortl_global(1))
-      allocate(permlxx_global(1))
-      allocate(permlxz_global(1))
-      allocate(permlzz_global(1))
+      ! dummy allocations
+      nglob_poroelastic_b = 1
+      nspec_poroelastic_b = 1
     endif
+    allocate(b_displs_poroelastic(NDIM,nglob_poroelastic_b))
+    allocate(b_velocs_poroelastic(NDIM,nglob_poroelastic_b))
+    allocate(b_accels_poroelastic(NDIM,nglob_poroelastic_b))
+    allocate(b_displw_poroelastic(NDIM,nglob_poroelastic_b))
+    allocate(b_velocw_poroelastic(NDIM,nglob_poroelastic_b))
+    allocate(b_accelw_poroelastic(NDIM,nglob_poroelastic_b))
+    ! kernels
+    ! on global nodes
+    allocate(rhot_k(nglob_poroelastic_b))
+    allocate(rhof_k(nglob_poroelastic_b))
+    allocate(sm_k(nglob_poroelastic_b))
+    allocate(eta_k(nglob_poroelastic_b))
+    allocate(mufr_k(nglob_poroelastic_b))
+    allocate(B_k(nglob_poroelastic_b))
+    allocate(C_k(nglob_poroelastic_b))
+    allocate(M_k(nglob_poroelastic_b))
+
+    allocate(phil_global(nglob_poroelastic_b))
+    allocate(mulfr_global(nglob_poroelastic_b))
+    allocate(etal_f_global(nglob_poroelastic_b))
+
+    allocate(rhol_s_global(nglob_poroelastic_b))
+    allocate(rhol_f_global(nglob_poroelastic_b))
+    allocate(rhol_bar_global(nglob_poroelastic_b))
+    allocate(tortl_global(nglob_poroelastic_b))
+    allocate(permlxx_global(nglob_poroelastic_b))
+    allocate(permlxz_global(nglob_poroelastic_b))
+    allocate(permlzz_global(nglob_poroelastic_b))
+
+    allocate(mul_s_global(nglob_poroelastic_b))
+    allocate(kappal_s_global(nglob_poroelastic_b))
+    allocate(kappal_f_global(nglob_poroelastic_b))
+    allocate(kappal_fr_global(nglob_poroelastic_b))
+
+    ! on local nodes
+    allocate(rhot_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(rhof_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(sm_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(eta_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(mufr_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(B_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(C_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(M_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+
+    allocate(phi_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(phib_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(mufrb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+
+    allocate(rhob_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(rhobb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(rhofb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(rhofbb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+
+    allocate(cpI_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(cpII_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+    allocate(cs_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+
+    allocate(ratio_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
 
     if (any_poroelastic .and. any_elastic) then
       allocate(icount(nglob))
@@ -1204,6 +1170,9 @@ subroutine prepare_timerun()
       allocate(icount(1))
     endif
 
+    !
+    ! acoustic domains
+    !
     ! potential, its first and second derivative, and inverse of the mass matrix for acoustic elements
     if (any_acoustic) then
       nglob_acoustic = nglob
@@ -1231,44 +1200,38 @@ subroutine prepare_timerun()
     endif
 
     if (SIMULATION_TYPE == 3 .and. any_acoustic) then
-      allocate(b_potential_acoustic(nglob))
-      allocate(b_potential_acoustic_old(nglob))
-      allocate(b_potential_dot_acoustic(nglob))
-      allocate(b_potential_dot_dot_acoustic(nglob))
-      allocate(b_displ_ac(2,nglob))
-      allocate(b_accel_ac(2,nglob))
-      allocate(accel_ac(2,nglob))
-      allocate(rho_ac_kl(NGLLX,NGLLZ,nspec))
-      allocate(rhol_ac_global(nglob))
-      allocate(kappa_ac_kl(NGLLX,NGLLZ,nspec))
-      allocate(kappal_ac_global(nglob))
-      allocate(rhop_ac_kl(NGLLX,NGLLZ,nspec))
-      allocate(alpha_ac_kl(NGLLX,NGLLZ,nspec))
-      if (APPROXIMATE_HESS_KL) then
-        allocate(rhorho_ac_hessian_final2(NGLLX,NGLLZ,nspec))
-        allocate(rhorho_ac_hessian_final1(NGLLX,NGLLZ,nspec))
-      endif
+      nglob_acoustic_b = nglob
+      nspec_acoustic_b = nspec
     else
-    ! allocate unused arrays with fictitious size
-      allocate(b_potential_acoustic(1))
-      allocate(b_potential_acoustic_old(1))
-      allocate(b_potential_dot_acoustic(1))
-      allocate(b_potential_dot_dot_acoustic(1))
-      allocate(b_displ_ac(1,1))
-      allocate(b_accel_ac(1,1))
-      allocate(accel_ac(1,1))
-      allocate(rho_ac_kl(1,1,1))
-      allocate(rhol_ac_global(1))
-      allocate(kappa_ac_kl(1,1,1))
-      allocate(kappal_ac_global(1))
-      allocate(rhop_ac_kl(1,1,1))
-      allocate(alpha_ac_kl(1,1,1))
-      if (APPROXIMATE_HESS_KL) then
-        allocate(rhorho_ac_hessian_final2(1,1,1))
-        allocate(rhorho_ac_hessian_final1(1,1,1))
-      endif
+      ! dummy array allocations
+      ! allocates unused arrays with fictitious size
+      nglob_acoustic_b = 1
+      nspec_acoustic_b = 1
+    endif
+    allocate(b_potential_acoustic(nglob_acoustic_b))
+    allocate(b_potential_acoustic_old(nglob_acoustic_b))
+    allocate(b_potential_dot_acoustic(nglob_acoustic_b))
+    allocate(b_potential_dot_dot_acoustic(nglob_acoustic_b))
+    allocate(b_displ_ac(2,nglob_acoustic_b))
+    allocate(b_accel_ac(2,nglob_acoustic_b))
+    allocate(accel_ac(2,nglob_acoustic_b))
+    ! kernels
+    ! on global points
+    allocate(rhol_ac_global(nglob_acoustic_b))
+    allocate(kappal_ac_global(nglob_acoustic_b))
+    ! on local points
+    allocate(rho_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
+    allocate(kappa_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
+    allocate(rhop_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
+    allocate(alpha_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
+    if (APPROXIMATE_HESS_KL) then
+      allocate(rhorho_ac_hessian_final2(NGLLX,NGLLZ,nspec_acoustic_b))
+      allocate(rhorho_ac_hessian_final1(NGLLX,NGLLZ,nspec_acoustic_b))
     endif
 
+    !
+    ! gravito-acoustic domains
+    !
     ! potential, its first and second derivative, and inverse of the mass matrix for gravitoacoustic elements
     if (any_gravitoacoustic) then
       nglob_gravitoacoustic = nglob

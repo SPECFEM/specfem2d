@@ -231,6 +231,9 @@ subroutine iterate_time()
             endif
           endif
         endif
+
+
+
 ! *********************************************************
 ! ************* main solver for the acoustic elements
 ! *********************************************************
@@ -1098,18 +1101,20 @@ subroutine iterate_time()
         write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
         open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_elastic**.bin')
+
         if (p_sv) then
           !P-SV waves
           read(55) b_displ_elastic
           read(55) b_veloc_elastic
           read(55) b_accel_elastic
+
           if (GPU_MODE) then
             b_displ_2D(1,:) = b_displ_elastic(1,:)
-            b_displ_2D(2,:) = b_displ_elastic(2,:)
+            b_displ_2D(2,:) = b_displ_elastic(3,:)
             b_veloc_2D(1,:) = b_veloc_elastic(1,:)
-            b_veloc_2D(2,:) = b_veloc_elastic(2,:)
+            b_veloc_2D(2,:) = b_veloc_elastic(3,:)
             b_accel_2D(1,:) = b_accel_elastic(1,:)
-            b_accel_2D(2,:) = b_accel_elastic(2,:)
+            b_accel_2D(2,:) = b_accel_elastic(3,:)
             call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_2D,b_veloc_2D,b_accel_2D,Mesh_pointer)
           endif
         else
@@ -1124,8 +1129,21 @@ subroutine iterate_time()
           b_veloc_elastic(3,:) = 0._CUSTOM_REAL
           b_accel_elastic(1,:) = 0._CUSTOM_REAL
           b_accel_elastic(3,:) = 0._CUSTOM_REAL
+
+          if (GPU_MODE) then
+            b_displ_2D(1,:) = b_displ_elastic(2,:)
+            b_displ_2D(2,:) = 0._CUSTOM_REAL
+            b_veloc_2D(1,:) = b_veloc_elastic(2,:)
+            b_veloc_2D(2,:) = 0._CUSTOM_REAL
+            b_accel_2D(1,:) = b_accel_elastic(2,:)
+            b_accel_2D(2,:) = 0._CUSTOM_REAL
+            call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_2D,b_veloc_2D,b_accel_2D,Mesh_pointer)
+          endif
+
         endif
         close(55)
+
+
       endif
 
       ! poroelastic medium
@@ -1136,16 +1154,23 @@ subroutine iterate_time()
         write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
         open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_w**.bin')
-        do j = 1,nglob
-          read(55) (b_displs_poroelastic(i,j), i= 1,NDIM), &
-                   (b_velocs_poroelastic(i,j), i= 1,NDIM), &
-                   (b_accels_poroelastic(i,j), i= 1,NDIM)
-          read(56) (b_displw_poroelastic(i,j), i= 1,NDIM), &
-                   (b_velocw_poroelastic(i,j), i= 1,NDIM), &
-                   (b_accelw_poroelastic(i,j), i= 1,NDIM)
-        enddo
+
+        read(55) b_displs_poroelastic
+        read(55) b_velocs_poroelastic
+        read(55) b_accels_poroelastic
+
+        read(56) b_displw_poroelastic
+        read(56) b_velocw_poroelastic
+        read(56) b_accelw_poroelastic
+
         close(55)
         close(56)
+
+        ! safety check
+        if (GPU_MODE) then
+          stop 'GPU_MODE error: sorry, reading lastframe from poroelastic simulation not implemented yet'
+        endif
+
       endif
    endif ! if (it == 1 .and. SIMULATION_TYPE == 3)
 
@@ -1223,6 +1248,7 @@ subroutine iterate_time()
        endif  !! End NSTEP
      endif  !! End Sim 3
 
+     ! Simulating seismograms
      if (mod(it-1,subsamp_seismos) == 0 .and. SIMULATION_TYPE == 1) then
        seismo_current = seismo_current + 1
        if (nrecloc > 0) then
@@ -1245,12 +1271,20 @@ subroutine iterate_time()
                                              potential_dot_dot_acoustic,Mesh_pointer)
        if (any_elastic) then
          call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_2D,veloc_2D,accel_2D,Mesh_pointer)
-         displ_elastic(1,:) = displ_2D(1,:)
-         veloc_elastic(1,:) = veloc_2D(1,:)
-         accel_elastic(1,:) = accel_2D(1,:)
-         displ_elastic(3,:) = displ_2D(2,:)
-         veloc_elastic(3,:) = veloc_2D(2,:)
-         accel_elastic(3,:) = accel_2D(2,:)
+         if (p_sv) then
+           ! P-SV waves
+           displ_elastic(1,:) = displ_2D(1,:)
+           displ_elastic(3,:) = displ_2D(2,:)
+           veloc_elastic(1,:) = veloc_2D(1,:)
+           veloc_elastic(3,:) = veloc_2D(2,:)
+           accel_elastic(1,:) = accel_2D(1,:)
+           accel_elastic(3,:) = accel_2D(2,:)
+         else
+           ! SH waves
+           displ_elastic(2,:) = displ_2D(1,:)
+           veloc_elastic(2,:) = veloc_2D(1,:)
+           accel_elastic(2,:) = accel_2D(1,:)
+         endif
        endif
      endif !If transfer
 

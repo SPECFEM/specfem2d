@@ -488,6 +488,7 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interface_history_displ
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interface_history_veloc
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interface_history_accel
+
   !---------------------------------------------------------------------
   !for by poroelastic simulation
   !---------------------------------------------------------------------
@@ -615,14 +616,15 @@ module specfem_par
 
   ! poro-elastic kernels
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
-    C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, Bb_kl, Cb_kl, Mb_kl, mufrb_kl, &
+    C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, mufrb_kl, &
     rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhot_k, rhof_k, sm_k, eta_k, mufr_k, B_k, &
     C_k, M_k
 
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: phil_global,etal_f_global, &
-    rhol_s_global,rhol_f_global,rhol_bar_global, &
-    tortl_global,mulfr_global
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: phil_global,etal_f_global
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_s_global,rhol_f_global,rhol_bar_global
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: tortl_global,mulfr_global,mul_s_global
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: kappal_s_global, kappal_f_global, kappal_fr_global
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: permlxx_global,permlxz_global,permlzz_global
 
   character(len=150) :: adj_source_file

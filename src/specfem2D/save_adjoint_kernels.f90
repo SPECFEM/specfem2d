@@ -50,7 +50,7 @@ subroutine save_adjoint_kernels()
                           rhorho_ac_hessian_final1, rhorho_ac_hessian_final2, &
                           rhorho_el_hessian_final1, rhorho_el_hessian_final2, &
                           rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
-                          C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, Bb_kl, Cb_kl, Mb_kl, mufrb_kl, &
+                          C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, mufrb_kl, &
                           rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, GPU_MODE
 
   include "constants.h"
@@ -147,7 +147,7 @@ if (.not. GPU_MODE) then
 
   if (any_poroelastic) then
 
-      if (.not. SAVE_ASCII_KERNELS) stop 'poroelastic simulations must use SAVE_ASCII_KERNELS'
+    if (.not. SAVE_ASCII_KERNELS) stop 'poroelastic simulations must use SAVE_ASCII_KERNELS'
 
     do ispec = 1, nspec
       do j = 1, NGLLZ
@@ -157,9 +157,12 @@ if (.not. GPU_MODE) then
           zz = coord(2,iglob)
           write(144,'(5e11.3)')xx,zz,mufr_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
           write(155,'(5e11.3)')xx,zz,M_kl(i,j,ispec),rhot_kl(i,j,ispec),rhof_kl(i,j,ispec)
+
           write(16,'(5e11.3)')xx,zz,sm_kl(i,j,ispec),eta_kl(i,j,ispec)
-          write(17,'(5e11.3)')xx,zz,mufrb_kl(i,j,ispec),Bb_kl(i,j,ispec),Cb_kl(i,j,ispec)
-          write(18,'(5e11.3)')xx,zz,Mb_kl(i,j,ispec),rhob_kl(i,j,ispec),rhofb_kl(i,j,ispec)
+
+          write(17,'(5e11.3)')xx,zz,mufrb_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
+          write(18,'(5e11.3)')xx,zz,M_kl(i,j,ispec),rhob_kl(i,j,ispec),rhofb_kl(i,j,ispec)
+
           write(19,'(5e11.3)')xx,zz,phi_kl(i,j,ispec),eta_kl(i,j,ispec)
           write(20,'(5e11.3)')xx,zz,cpI_kl(i,j,ispec),cpII_kl(i,j,ispec),cs_kl(i,j,ispec)
           write(21,'(5e11.3)')xx,zz,rhobb_kl(i,j,ispec),rhofbb_kl(i,j,ispec),ratio_kl(i,j,ispec)

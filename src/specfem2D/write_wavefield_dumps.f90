@@ -56,6 +56,7 @@
 
   !local variables
   integer :: i,j,ispec,iglob,icounter,nb_of_values_to_save
+  integer :: ier
 
   if (myrank == 0) then
     write(IMAIN,*)
@@ -71,10 +72,12 @@
     if (use_binary_for_wavefield_dumps) then
       write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_for_dumps_',i3.3,'.bin')") myrank
       open(unit=27,file=wavefield_file,form='unformatted',access='direct',status='unknown', &
-           action='write',recl=2*SIZE_REAL)
+           action='write',recl=2*SIZE_REAL,iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield_grid_for_dumps_**.bin')
     else
       write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_for_dumps_',i3.3,'.txt')") myrank
-      open(unit=27,file=wavefield_file,status='unknown',action='write')
+      open(unit=27,file=wavefield_file,status='unknown',action='write',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield_grid_for_dumps_**.txt')
     endif
 
     icounter = 0
@@ -100,7 +103,8 @@
 
     ! save nglob to a file once and for all
     write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_value_of_nglob_',i3.3,'.txt')") myrank
-    open(unit=27,file=wavefield_file,status='unknown',action='write')
+    open(unit=27,file=wavefield_file,status='unknown',action='write',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield_grid_value_of_nglob_**.txt')
     write(27,*) icounter
     close(27)
     if (icounter /= nglob) stop 'error: should have icounter == nglob in wavefield dumps'
@@ -142,10 +146,12 @@
     endif
     write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.bin')") it,SIMULATION_TYPE,myrank
     open(unit=27,file=wavefield_file,form='unformatted',access='direct',status='unknown', &
-             action='write',recl=nb_of_values_to_save*SIZE_REAL)
+             action='write',recl=nb_of_values_to_save*SIZE_REAL,iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield**.bin')
   else
     write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
-    open(unit=27,file=wavefield_file,status='unknown',action='write')
+    open(unit=27,file=wavefield_file,status='unknown',action='write',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield**.txt')
   endif
 
   icounter = 0
@@ -158,21 +164,29 @@
           icounter = icounter + 1
           mask_ibool(iglob) = .true.
           if (use_binary_for_wavefield_dumps) then
-            if (p_sv .and. .not. imagetype_wavefield_dumps == 4) then
-              write(27,rec=icounter) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(3,iglob))
-            else if (p_sv .and. imagetype_wavefield_dumps == 4) then
-              ! by convention we use the third component of the array to store the pressure above
-              write(27,rec=icounter) sngl(vector_field_display(3,iglob))
-            else ! SH case
+            if (p_sv) then
+              ! P-SV waves
+              if (imagetype_wavefield_dumps == 4) then
+                ! by convention we use the third component of the array to store the pressure above
+                write(27,rec=icounter) sngl(vector_field_display(3,iglob))
+              else
+                write(27,rec=icounter) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(3,iglob))
+              endif
+            else
+              ! SH case
               write(27,rec=icounter) sngl(vector_field_display(2,iglob))
             endif
           else
-            if (p_sv .and. .not. imagetype_wavefield_dumps == 4) then
-              write(27,*) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(3,iglob))
-            else if (p_sv .and. imagetype_wavefield_dumps == 4) then
-              ! by convention we use the third component of the array to store the pressure above
-              write(27,*) sngl(vector_field_display(3,iglob))
-            else ! SH case
+            if (p_sv) then
+              ! P-SV waves
+              if (imagetype_wavefield_dumps == 4) then
+                ! by convention we use the third component of the array to store the pressure above
+                write(27,*) sngl(vector_field_display(3,iglob))
+              else
+                write(27,*) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(3,iglob))
+              endif
+            else
+              ! SH case
               write(27,*) sngl(vector_field_display(2,iglob))
             endif
           endif
@@ -182,6 +196,7 @@
   enddo
 
   close(27)
+
   if (myrank == 0) then
     write(IMAIN,*) 'Wave field dumped'
     call flush_IMAIN()

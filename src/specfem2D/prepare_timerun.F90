@@ -469,9 +469,6 @@ subroutine prepare_timerun_kernel()
       rhofb_kl(:,:,:) = 0._CUSTOM_REAL
       phi_kl(:,:,:) = 0._CUSTOM_REAL
       mufrb_kl(:,:,:) = 0._CUSTOM_REAL
-      Bb_kl(:,:,:) = 0._CUSTOM_REAL
-      Cb_kl(:,:,:) = 0._CUSTOM_REAL
-      Mb_kl(:,:,:) = 0._CUSTOM_REAL
 
       rhobb_kl(:,:,:) = 0._CUSTOM_REAL
       rhofbb_kl(:,:,:) = 0._CUSTOM_REAL
@@ -660,19 +657,21 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
                       pml_interface_history_veloc(3,i,it),&
                       pml_interface_history_displ(1,i,it),pml_interface_history_displ(2,i,it),&
                       pml_interface_history_displ(3,i,it)
+            enddo
           enddo
-         enddo
-       endif
+          close(71)
+        endif
 
-       if (any_acoustic .and. nglob_interface > 0) then
-         do it = 1,NSTEP
-           do i = 1, nglob_interface
-             read(72)pml_interface_history_potential_dot_dot(i,it),pml_interface_history_potential_dot(i,it),&
-                     pml_interface_history_potential(i,it)
-           enddo
-         enddo
-       endif
-     endif
+        if (any_acoustic .and. nglob_interface > 0) then
+          do it = 1,NSTEP
+            do i = 1, nglob_interface
+              read(72)pml_interface_history_potential_dot_dot(i,it),pml_interface_history_potential_dot(i,it),&
+                      pml_interface_history_potential(i,it)
+            enddo
+          enddo
+          close(72)
+        endif
+      endif
 
       deallocate(which_PML_elem)
 
@@ -720,7 +719,7 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
       endif
 
       ! elastic PML memory variables
-      if (any_elastic .and. nspec_PML>0) then
+      if (any_elastic .and. nspec_PML > 0) then
         allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
         allocate(rmemory_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
@@ -845,7 +844,7 @@ if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented o
         allocate(rmemory_duz_dz_LDDRK(1,1,1,1))
       endif
 
-      if (any_acoustic .and. nspec_PML>0) then
+      if (any_acoustic .and. nspec_PML > 0) then
         allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
         allocate(rmemory_acoustic_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
