@@ -96,16 +96,17 @@
   close(20)
 
   ! create a Gnuplot script to display the grid
-  open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown',iostat=ios)
+  open(unit=20,file='OUTPUT_FILES/plot_gridfile.gnu',status='unknown',iostat=ios)
   if (ios /= 0 ) stop 'error saving plotgnu file'
 
   write(20,*) '#set term wxt'
   write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
-  write(20,*) 'set output "grid.ps"'
+  write(20,*) 'set output "OUTPUT_FILES/gridfile.ps"'
   write(20,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
   write(20,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
   ! use same unit length on both X and Y axes
   write(20,*) 'set size ratio -1'
+  write(20,*) 'set loadpath "./OUTPUT_FILES"'
   write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
   write(20,*) 'pause -1 "Hit any key..."'
   close(20)

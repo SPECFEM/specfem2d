@@ -69,17 +69,17 @@
 ! create non empty files for the case of 4-node elements
 
   name='macros1.gnu'
-  open(unit=30,file=name,status='unknown')
+  open(unit=30,file='OUTPUT_FILES/'//trim(name),status='unknown')
 
   name='macros2.gnu'
-  open(unit=31,file=name,status='unknown')
+  open(unit=31,file='OUTPUT_FILES/'//trim(name),status='unknown')
   write(31,"('')")
 
   name='gllmesh1.gnu'
-  open(unit=20,file=name,status='unknown')
+  open(unit=20,file='OUTPUT_FILES/'//trim(name),status='unknown')
 
   name='gllmesh2.gnu'
-  open(unit=21,file=name,status='unknown')
+  open(unit=21,file='OUTPUT_FILES/'//trim(name),status='unknown')
   write(21,"('')")
 
   do ispec = 1,nspec
@@ -228,7 +228,7 @@
 !
 !----  generate the command file for Gnuplot
 !
-  open(unit=20,file='plotall_gll_mesh.gnu',status='unknown')
+  open(unit=20,file='OUTPUT_FILES/plotall_gll_mesh.gnu',status='unknown')
   write(20,*) 'set term wxt'
   write(20,*) '# set term postscript landscape color solid "Helvetica" 22'
   write(20,*) '# set output "gll_mesh.ps"'
@@ -236,11 +236,12 @@
   write(20,*) 'set ylabel "Y"'
   write(20,*) 'set title "Gauss-Lobatto-Legendre Mesh"'
   write(20,*) 'set size ratio -1'
+  write(20,*) 'set loadpath "./OUTPUT_FILES"'
   write(20,*) 'plot "gllmesh1.gnu" title '''' w l lc 2, "gllmesh2.gnu" title '''' w l lc 3'
   write(20,*) 'pause -1 "Hit any key to exit..."'
   close(20)
 
-  open(unit=20,file='plotall_macro_mesh.gnu',status='unknown')
+  open(unit=20,file='OUTPUT_FILES/plotall_macro_mesh.gnu',status='unknown')
   write(20,*) 'set term wxt'
   write(20,*) '# set term postscript landscape color solid "Helvetica" 22'
   write(20,*) '# set output "macro_mesh.ps"'
@@ -248,6 +249,7 @@
   write(20,*) 'set ylabel "Y"'
   write(20,*) 'set title "Spectral Element (Macrobloc) Mesh"'
   write(20,*) 'set size ratio -1'
+  write(20,*) 'set loadpath "./OUTPUT_FILES"'
   write(20,*) 'plot "macros2.gnu" title '''' w l lc 2, "macros1.gnu" title '''' w l lc 3'
   write(20,*) 'pause -1 "Hit any key to exit..."'
   close(20)

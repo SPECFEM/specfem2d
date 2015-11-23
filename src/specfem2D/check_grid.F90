@@ -739,6 +739,7 @@
         write(14,*) 'set boxwidth ',real(scaling_factor_S/NCLASSES)
         write(14,*) 'set xlabel "Range of min number of points per S wavelength in solid"'
         write(14,*) 'set ylabel "Percentage of elements (%)"'
+        write(14,*) 'set loadpath "./OUTPUT_FILES"'
         write(14,*) 'plot "points_per_wavelength_histogram_S_in_solid.txt" with boxes'
         write(14,*) 'pause -1 "hit any key..."'
       endif
@@ -750,6 +751,7 @@
         write(14,*) 'set boxwidth ',real(scaling_factor_P/NCLASSES)
         write(14,*) 'set xlabel "Range of min number of points per P wavelength in fluid"'
         write(14,*) 'set ylabel "Percentage of elements (%)"'
+        write(14,*) 'set loadpath "./OUTPUT_FILES"'
         write(14,*) 'plot "points_per_wavelength_histogram_P_in_fluid.txt" with boxes'
         write(14,*) 'pause -1 "hit any key..."'
       endif
