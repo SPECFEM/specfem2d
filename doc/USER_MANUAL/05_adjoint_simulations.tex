@@ -1,0 +1,108 @@
+%------------------------------------------------------------------------------------------------%
+
+\chapter{Adjoint Simulations}
+
+%------------------------------------------------------------------------------------------------%
+
+
+%------------------------------------------------------------------------------------------------%
+\section{How to obtain finite sensitivity kernels}
+%------------------------------------------------------------------------------------------------%
+
+\begin{enumerate}
+\item Run a forward simulation:
+\begin{itemize}
+\item \texttt{SIMULATION\_TYPE = 1}
+\item \texttt{SAVE\_FORWARD = .true.}
+\item \texttt{seismotype = 1} (we need to save the displacement fields to later on derive the
+adjoint source. Note: if the user forgets it, the program corrects it when reading the proper
+\texttt{SIMULATION\_TYPE} and \texttt{SAVE\_FORWARD} combination and a warning
+message appears in the output file)
+\end{itemize}
+
+Important output files (for example, for the elastic case, P-SV waves):
+\begin{itemize}
+\item \texttt{absorb\_elastic\_bottom*****.bin}
+\item \texttt{absorb\_elastic\_left*****.bin}
+\item \texttt{absorb\_elastic\_right*****.bin}
+\item \texttt{absorb\_elastic\_top*****.bin}
+\item \texttt{lastframe\_elastic*****.bin}
+\item \texttt{AA.S****.BXX.semd}
+\item \texttt{AA.S****.BXZ.semd}
+\end{itemize}
+
+\item Define the adjoint source:
+\begin{itemize}
+\item Use \texttt{adj\_seismogram.f90}
+\item Edit to update \texttt{NSTEP}, \texttt{nrec}, \texttt{t0}, \texttt{deltat}, and the position of the cut to pick
+any given phase if needed (\texttt{tstart},\texttt{tend}), add the right number of stations, and
+put one component of the source to zero if needed.
+\item The output files of \texttt{adj\_seismogram.f90} are \texttt{AA.S****.BXX.adj} and \texttt{AA.S****.BXZ.adj}, for P-SV waves (and
+\texttt{AA.S****.BXY.adj}, for SH (membrane) waves). Note that you will need these three
+files (\texttt{AA.S****.BXX.adj}, \texttt{AA.S****.BXY.adj} and \texttt{AA.S****.BXZ.adj}) to be present in the \texttt{SEM/} directory
+together with the \texttt{absorb\_elastic\_****.bin} and \texttt{lastframe\_elastic.bin} files to be read
+when running the adjoint simulation.
+\end{itemize}
+
+\item Run the adjoint simulation:
+\begin{itemize}
+\item Make sure that the adjoint source files absorbing boundaries and last frame files are
+in the \texttt{OUTPUT\_FILES/} directory.
+\item \texttt{SIMULATION\_TYPE = 3}
+\item \texttt{SAVE\_FORWARD = .false.}
+\end{itemize}
+
+Output files (for example for the elastic case):
+\begin{itemize}
+\item \texttt{snapshot\_rho\_kappa\_mu*****}
+\item \texttt{snapshot\_rhop\_alpha\_beta*****}
+\end{itemize}
+which are the primary moduli kernels and the phase velocities kernels respectively, in ascii format
+and at the local level, that is as ``\texttt{kernels(i,j,ispec)}''.
+
+\end{enumerate}
+
+\section{Remarks about adjoint runs and solving inverse problems}
+
+% This from Carl Tape:
+SPECFEM2D can produce the gradient of the misfit function for a
+tomographic inversion, but options for using the gradient within an
+iterative inversion are left to the user (e.g., conjugate-gradient,
+steepest descent). The plan is to include some examples in the future.
+
+% This from Yang Luo:
+The algorithm is simple:
+%
+\begin{enumerate}
+\item calculate the forward wave field $\mathbf{s}(x,t)$
+\item calculate the adjoint wave field $\mathbf{s}^\dagger(x,t)$
+\item calculate their interaction $\mathbf{s}(x,t) \cdot \mathbf{s}^\dagger(x,T-t)$ (these symbolic, temporal and spatial derivatives should be included)
+\item integrate the interactions, which is summation in the code.
+\end{enumerate}
+%
+That is all. Step 3 has some tricks in implementation, but which can be skipped by regular users.
+
+If you look into SPECFEM2D, besides ``\texttt{rhop\_ac\_kl}'' and ``\texttt{rho\_ac\_kl}'',
+there are more variables such as ``\texttt{kappa\_ac\_kl}'' and ``\texttt{rho\_el\_kl}'' etc.
+``\texttt{rho}'' denotes density $\rho$ (``\texttt{kappa}'' for bulk modulus $\kappa$ etc.),
+``\texttt{ac}'' denotes acoustic (``\texttt{el}'' for elastic),
+``\texttt{kl}'' means kernel (and you may find ``\texttt{k}'' as well, which is the interaction at each time step, i.e., before doing time integration).
+
+\section{Caution}
+
+Please note that:
+%
+\begin{itemize}
+\item at the moment, adjoint simulations do not support anisotropy, attenuation, and viscous damping.
+
+\item you will need \texttt{AA.S****.BXX.adj}, \texttt{AA.S****.BXY.adj} and \texttt{AA.S****.BXZ.adj}
+to be present in directory \texttt{SEM/} even if you are just running an acoustic or
+poroelastic adjoint simulation.
+  \begin{itemize}
+    \item \texttt{AA.S****.BXX.adj} is the only relevant component for an acoustic case.
+    \item \texttt{AA.S****.BXX.adj} and \texttt{AA.S****.BXZ.adj} are the only relevant components for a
+poroelastic case.
+  \end{itemize}
+\end{itemize}
+
+

@@ -1,0 +1,340 @@
+%------------------------------------------------------------------------------------------------%
+
+\chapter{Mesh Generation}
+
+%------------------------------------------------------------------------------------------------%
+
+%------------------------------------------------------------------------------------------------%
+\section{How to use SPECFEM2D}
+%------------------------------------------------------------------------------------------------%
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.6\textwidth]{figures/workflow}
+
+\caption{Schematic workflow for a SPECFEM2D simulation. The executable \texttt{xmeshfem2D} creates the GLL mesh points and assigns specific model parameters. The executable \texttt{xspecfem2D} solves the seismic wave propagation.}
+
+\label{fig:workflow.databases}
+\end{figure}
+
+To run the mesher, please follow these steps:
+%
+\begin{itemize}
+
+\item edit the input file \texttt{DATA/Par\_file}, which describes the simulation.
+\red{\textbf{The default \texttt{DATA/Par\_file} provided in the root directory of the code contains detailed comments and should be almost self-explanatory
+(note that some of the older \texttt{DATA/Par\_file} files provided in the \texttt{EXAMPLES} directory work fine but some of the comments
+they contain may be obsolete or even wrong; thus refer to the default \texttt{DATA/Par\_file} instead for reliable explanations).}}
+If you need more details we do not have a detailed description of all the parameters for the 2D version in this manual
+but you can find useful information in the manuals of the 3D versions, since many parameters and the general philosophy is similar. They are available at
+\urlwithparentheses{https://github.com/geodynamics/specfem3d/tree/master/doc/USER_MANUAL}.
+To create acoustic (fluid) regions, just set the S wave speed to zero and the code will see that these elements are fluid and switch to the right equations there automatically, and automatically match them with the solid regions
+
+\item if you are using an external mesher (like GiD or CUBIT / Trelis), you should set \texttt{read\_external\_mesh} to \texttt{.true.}:
+  \begin{description}[font=\ttfamily]
+     \item[mesh\_file] is the file describing the mesh : first line is the number of elements, then a list of 4 nodes (quadrilaterals only) forming each elements on each line.
+
+     \item[nodes\_coords\_file] is the file containing the coordinates ($x$ and $z$) of each node: number of nodes on the first line, then coordinates x and z on each line.
+
+     \item[materials\_file] is the number of the material for every element : an integer ranging from 1 to \texttt{nbmodels} on each line.
+
+     \item[free\_surface\_file] is the file describing the edges forming the acoustic free surface: number of edges on the first line, then on each line: number of the element, number of nodes forming the free surface (1 for a point, 2 for an edge), the nodes forming the free surface for this element. If you do not want any free surface, just put 0 on the first line.
+
+     \item[absorbing\_surface\_file] is the file describing the edges forming the absorbing boundaries:
+number of edges on the first line, then on each line: number of the element, number of nodes forming the absorbing edge (must always be equal to 2),
+the two nodes forming the absorbing edge for this element, and then the type of absorbing edge: 1 for BOTTOM, 2 for RIGHT, 3 for TOP and 4 for LEFT.
+Only two nodes per element can be listed, i.e., the second parameter of each line must always be equal to 2.
+If one of your elements has more than one edge along a given absorbing contour
+(e.g., if that contour has a corner) then list it twice,
+putting the first edge on the first line and the second edge on the second line.
+Do not list the same element with the same absorbing edge twice or more, otherwise absorption will not be correct because the edge integral
+will be improperly subtracted several times.
+If one of your elements has a single point along the absorbing contour rather than a full edge, do NOT list it
+(it would have no weight in the contour integral anyway because it would consist of a single point).
+If you use 9-node elements, list only the first and last points of the edge and not the intermediate point
+located around the middle of the edge; the right 9-node curvature will be restored automatically by the code.
+
+     \item[tangential\_detection\_curve\_file] contains points describing the envelope, that are used for the \texttt{source\_normal\_to\_surface} and \texttt{rec\_normal\_to\_surface}. Should be fine grained, and ordered clockwise. Number of points on the first line, then (x,z) coordinates on each line.
+  \end{description}
+
+\item if you have compiled with MPI, you must specify the number of processes.
+
+\end{itemize}
+%
+Then type
+%
+\begin{verbatim}
+    ./bin/xmeshfem2D
+\end{verbatim}
+%
+to create the mesh (which will be stored in directory \texttt{OUTPUT\_FILES/}). \texttt{xmeshfem2D} is serial; it will output several files called \texttt{Database??????}, one for each process.
+
+%%
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=3in]{figures/example-gridfile.pdf}
+\caption{Example of a grid file generated by \texttt{xmeshfem2D} and visualized with gnuplot
+(within gnuplot, type `\texttt{plot "OUTPUT\_FILES/gridfile.gnu" w l}').}
+\label{fig:example.mesh}
+\end{figure}
+
+Regarding mesh point numbering in the files created by the mesher, we use the classical convention of 4-node and 9-node finite elements:
+%
+\begin{verbatim}
+         4 . . . . 7 . . . . 3
+         .                   .
+         .         eta       .
+         .         |         .
+         8         9--xi     6
+         .                   .
+         .                   .
+         .                   .
+         1 . . . . 5 . . . . 2
+\end{verbatim}
+%
+the local coordinate system being $\xi$ and $\eta$ (\texttt{xi} and \texttt{eta}).
+Note that this convention is used to describe the geometry only. In the solver the wave field is then described based on high-order Lagrange interpolants
+at Gauss-Lobatto-Legendre points, as is classical in spectral-element methods.
+
+\section{How to use CUBIT/TRELIS or Gmsh to generate an external mesh}
+
+Gmsh%
+\footnote{freely available at the following address : http://www.geuz.org/gmsh/%
+} is a 3D finite element grid generator which can be used for the generation
+of quadrangle and hexahedral meshes. It is therefore a good candidate
+for generating meshes which can be processed by SPECFEM2D. Only two
+modules of Gmsh are of interest for the SPECFEM2D users : the geometry
+and the mesh modules. An example is given in directory \texttt{EXAMPLES/Gmsh\_example}
+which illustrates the generation of an external mesh using these two
+modules. The model that is considered consists of a homogeneous
+square containing two circles filled with a different material.
+
+The geometry is generated by loading file \texttt{SqrCirc.geo} into
+Gmsh. The end of the \texttt{.geo} file contains several lines which
+are required in order to define the sides of the box and the media.
+This is done using the following conventions :
+%
+\begin{quote}
+\texttt{\textit{Physical Line(\textquotedbl Top\textquotedbl)
+= \{1\}; }}
+\textsf{\textit{\small line corresponding to the top of the box}}
+
+\texttt{\textit{Physical Line(\textquotedbl Left\textquotedbl)
+= \{2\}; }}
+\textsf{\textit{\small line corresponding to the left side of the box}}
+
+\texttt{\textit{Physical Line(\textquotedbl Bottom\textquotedbl)
+= \{3\}; }}
+\textsf{\textit{\small line corresponding to the bottom of the box}}
+
+\texttt{\textit{Physical Line(\textquotedbl Right\textquotedbl)
+= \{4\}; }}
+\textsf{\textit{\small line corresponding to the right side of the box}}
+
+\texttt{\textit{Physical Surface(\textquotedbl M1\textquotedbl)
+= \{10\}; }}
+\textsf{\textit{\small surrounding medium}}
+
+\texttt{\textit{Physical Surface(\textquotedbl M2\textquotedbl)
+= \{11,12\}; }}
+\textsf{\textit{\small interior of the two circles}}
+\end{quote}
+%
+For instance, if you want to fill the two circles with two different
+materials, you will have to write :
+%
+\begin{quote}
+\texttt{\textit{Physical Surface(\textquotedbl M1\textquotedbl)
+= \{10\}; }}
+\textsf{\textit{\small surrounding medium}}
+
+\texttt{\textit{Physical Surface(\textquotedbl M2\textquotedbl)
+= \{11\}; }}
+\textsf{\textit{\small interior of the big circle}}
+
+\texttt{\textit{Physical Surface(\textquotedbl M3\textquotedbl)
+= \{12\}; }}
+\textsf{\textit{\small interior of the small circle}}
+\end{quote}
+%
+and, consequently, you will have to define a new medium numbered \texttt{3}
+in the \texttt{Par\_file}.
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=0.481\columnwidth]{figures/Gmsh_geo}\hspace*{2mm}\includegraphics[width=0.43\columnwidth]{figures/Gmsh_Msh}}
+\caption{Geometry and mesh of the two circle model generated with Gmsh\label{fig:Gmsh-example}}
+\end{figure}
+
+Then, a 2D mesh can be created and saved after selecting the appropriate
+options in Gmsh : \texttt{All quads} in \texttt{Subdivision algorithm}
+and \texttt{1} or \texttt{2} in \texttt{Element order} whether you
+want a 4 or 9 node mesh. This operation will generate a \texttt{SqrCirc.msh}
+file which must be processed to get all the files required by SPECFEM2D
+when using an external mesh (see previous section). This is done by
+running a python script called \texttt{LibGmsh2Specfem.py}, located in
+directory \texttt{utils/Gmsh}:
+%
+\begin{verbatim}
+    python LibGmsh2Specfem.py SqrCirc -t A -b A -r A -l A
+\end{verbatim}
+%
+Where the options \texttt{-t}, \texttt{-b},\texttt{ -r} and \texttt{-l}
+represent the different sides of the model (top, bottom, right and
+left) and can take the values \texttt{A} or \texttt{F} if the corresponding
+side is respectively absorbing or free. All boundaries are absorbing
+by default. The connections of the generated filenames to the filenames
+indicated in the previous section are :
+%
+\begin{itemize}
+\item \texttt{Mesh\_SqrCirc} is the \texttt{\textbf{mesh\_file}}
+\item \texttt{Material\_SqrCirc} is the \texttt{\textbf{material\_file}}
+\item \texttt{Nodes\_SqrCirc} is the\texttt{ }\texttt{\textbf{nodes\_coords\_file}}
+\item \texttt{Surf\_abs\_SqrCirc} is the \texttt{\textbf{absorbing\_surface\_file}}
+\item \texttt{Surf\_free\_SqrCirc} is the \texttt{\textbf{free\_surface\_file}}
+\end{itemize}
+%
+In addition, four files like \texttt{free\_surface\_file} corresponding
+to the sides of the model are generated.
+
+If you use CPML, an additional file listing the CPML elements is needed.
+Its first line is the total number of
+CPML elements, and then a list of all the CPML elements, one per line.
+The format of these lines is: in the first column the CPML element number, and in the second column a flag as follows:
+
+\begin{table}[hb]
+\caption{Definition of flags for CPML elements}
+% title of Table
+\centering
+% used for centering table
+\begin{tabular}{c l}
+% centered columns (4 columns)
+\hline\hline
+%inserts double horizontal lines
+Flag& Meaning\\ [0.5ex]
+% inserts table
+%heading
+\hline
+% inserts single horizontal line
+1 & element belongs to a X CPML layer only (either in Xmin or in Xmax)\\
+2 & element belongs to a Y CPML layer only (either in Ymin or in Ymax)\\
+3 & element belongs to both a X and a Y CPML layer (i.e., to a CPML corner)\\ [1ex]
+% [1ex] adds vertical space
+\hline
+%inserts single line
+\end{tabular}
+\label{table:CPMLflags}
+% is used to refer this table in the text
+\end{table}
+
+In order to see how to add PML layers to a mesh / model created with an external mesher such as `Gmsh', see the examples in directory
+\texttt{EXAMPLES/CPML\_absorbing\_layers}.
+
+If you use PML, the mesh elements that belong to the PML layers can be acoustic or elastic, but not viscoelastic nor poroelastic.
+Then, when defining your model, you should define these absorbing elements as either acoustic or elastic.
+In you forget to do that, the code will fix the problem by automatically converting the viscoelastic or poroelastic PML
+elements to elastic. This means that strictly speaking the PML layer will not be perfectly matched any more, since the physical
+model will change from viscoelastic or poroelastic to elastic at the entrance of the PML, but in practice this is sufficient and
+produces only tiny / negligible spurious reflections.
+
+If you use PML and an external mesh (created using an external meshing tool
+such as Gmsh, CUBIT/TRELIS or similar), try to have elements inside the PML as regular as possible,
+i.e. ideally non-deformed rectangles obtained by `extrusion' of the edge mesh elements meshing the
+outer edges of the computational domain without PML; by doing so, the PMLs obtained will be far more stable
+in time (PML being weakly unstable from a mathematical point of view, very deformed mesh elements
+inside the PMLs can trigger instabilities much more quickly).
+
+If you have an existing CUBIT (or similar) mesh stored in SPECFEM2D
+format but do not know how to assign CPML flags to it,
+we have created a small serial Fortran program that will do that automatically for you.
+That program is utils/CPML/convert\_external\_layers\_of\_a\_given\_mesh\_to\_CPML\_layers2D.f90.
+When you create the PML layers using that script, you do not need to mark
+(i.e. assign to physical entities with a specific name) those external layers in the mesher.
+However you still need to specify the boundary of the mesh as you where doing in the case of absorbing conditions.
+The script will automatically extract the elements on the PML. It will ask you for a thickness for the PML layers.
+Suppose that you have created a region with a 1-meter size element, when it will prompt for the PML thickness
+you can enter 3.1 and it will create a PML 3 element thick. Always input a slightly larger (5-10\%) size because the element might be slightly skewed,
+or if you have not created your PML region via extrusion/webcut in CUBIT/TRELIS.
+
+To be more precise:
+
+1/ If one wants to use PML layers, they should NOT mark the layers according to that python script - the reason is that the xmeshfem2d does not recognize those CPML flags. If whoever developed the script adjusts it to solve this problem - this might be a great relief for users; as of now no physical identifiers are needed for those layers.
+
+2/ HOWEVER, the "Top", "Bottom", "Left"," and "Right" boundaries of the model, need to be re-assigned to outer boundaries of the model - that will be the leftmost boundary of the left -bounding PML , rightmost of the right PML, topmost for the Top PML (if there is one) and the bottom boundary of the bottom layer. Those and only those lines need to have the mentioned identifiers (opposite to the example with the two-holed square with Stacey conditions).
+
+3/ There is no need to create Top PML in case one wants it to be reflective; as the fortran script that assigns the flag will ignore the elements that sit within  PML-layer thickness distance to the top.
+
+4/ The Fortran program utils/CPML/convert\_external\_layers\_of\_a\_given\_mesh\_to\_CPML\_layers2D.f90
+that flags the PML elements does not create additional elements; it simply takes the elements within chosen distance from the boundaries, that sit in the interior of model and marks them as absorbing.
+
+If you use PML and an external velocity and density model (e.g., setting flag ``\texttt{MODEL}'' to \texttt{tomography}),
+you should be careful because mathematically a PML cannot handle heterogeneities along the
+normal to the PML edge inside the PML layer. This comes from the fact that the damping profile
+that is defined assumes a constant velocity and density model along the normal
+direction.
+Thus, you need to modify your velocity and density model in order for it to be 1D inside
+the PML, as shown in Figure~\ref{fig:modify_external_velocity_model_to_use_PML}.
+This applies to the bottom layer as well; there you should make sure
+that your model is 1D and thus constant along the vertical direction.
+To summarize, only use a 2D velocity and density model inside the physical region, and in
+all the PML layers extend it by continuity from its values along the
+inner PML edge.
+
+%%
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=3in]{figures/how_to_use_PML_with_external_velocity_model}
+\caption{How to modify your external 2D velocity and density model in order to use PML.
+Such a modification is not needed when using Stacey absorbing boundary conditions (but such conditions
+are significantly less efficient).}
+\label{fig:modify_external_velocity_model_to_use_PML}
+\end{figure}
+%%
+
+%------------------------------------------------------------------------------------------------%
+\section{Controlling the quality of an external mesh}
+%------------------------------------------------------------------------------------------------%
+
+To examine the quality of the elements in your externally build mesh, type
+%
+\begin{verbatim}
+    ./bin/xcheck_quality_external_mesh
+\end{verbatim}
+%
+(and answer "3" to the first question asked).
+This code will tell you which element in the whole mesh has the worst quality (maximum skewness, i.e. maximum deformation of the element angles) and it should be enough to modify this element with the external software package used for the meshing, and
+to repeat the operation until the maximum skewness of the whole mesh is less or equal to about 0.75 (above is dangerous: from 0.75 to 0.80 could still work, but if there is a single element above 0.80 the mesh should be improved).
+
+The code also shows a histogram of 20 classes of skewness which tells how many element are above the skewness = 0.75, and to which percentage of the total this amounts. To see this histogram, you could type:
+%
+\begin{verbatim}
+    gnuplot plot_mesh_quality_histogram.gnu
+\end{verbatim}
+%
+This tool is useful to estimate the mesh quality and to see it evolve along the successive corrections.
+
+%------------------------------------------------------------------------------------------------%
+\section{Controlling how the mesh samples the wave field}
+%------------------------------------------------------------------------------------------------%
+
+To examine (using Gnuplot) how the mesh samples the wave field, type
+%
+\begin{verbatim}
+    gnuplot plot_points_per_wavelength_histogram.gnu
+\end{verbatim}
+%
+and also check the following histogram printed on the screen or in the output file:
+%
+\begin{verbatim}
+    histogram of min number of points per S wavelength (P wavelength in
+    acoustic regions)
+    (too small: poor resolution of calculations - too big = wasting
+    memory and CPU time)
+    (threshold value is around 4.5 points per wavelength in elastic media
+    and 5.5 in acoustic media)
+\end{verbatim}
+
+If you see that you have a significant number of mesh elements below the threshold indicated, then your simulations
+will not be accurate and you should create a denser mesh. Conversely, if you have a significant number of mesh elements above the threshold indicated,
+the mesh your created is too dense, it will be extremely accurate but the simulations will be slow; using a coarser mesh would be sufficient and would lead to faster simulations.
+
+

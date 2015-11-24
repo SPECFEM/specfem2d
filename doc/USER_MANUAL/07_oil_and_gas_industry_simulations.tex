@@ -1,0 +1,26 @@
+%------------------------------------------------------------------------------------------------%
+
+\chapter{Oil and gas industry simulations}
+
+%------------------------------------------------------------------------------------------------%
+
+The SPECFEM2D package provides compatibility with industrial (oil and gas industry) types of simulations.
+These features include importing Seismic Unix (SU) format wavespeed models into SPECFEM2D,
+output of seismograms in SU format with a few key parameters defined in the trace headers
+and reading adjoint sources in SU format etc.
+There is one example given in \texttt{EXAMPLES/INDUSTRIAL\_FORMAT}, which you can follow.
+
+We also changed the relationship between adjoint potential and adjoint displacement in fluid region
+(the relationship between forward potential and forward displacement remains the same as previously defined).
+The new definition is critical when there are adjoint sources (in other words, receivers) in the acoustic domain,
+and is the direct consequence of the optimization problem.
+%
+\begin{align*}
+\mathbf{s} &\equiv \frac{1}{\rho} \: \mathbf{\nabla}\phi \\
+p &\equiv -\kappa\left(\nabla\cdot\mathbf{s}\right) = -\partial_t^2\phi \\
+&\\
+\partial_t^2\mathbf{s}^\dagger &\equiv -\frac{1}{\rho} \: \mathbf{\nabla}\phi^\dagger \\
+p^\dagger &\equiv -\kappa\left(\nabla\cdot\mathbf{s}^\dagger\right) = \phi^\dagger
+\end{align*}
+
+
