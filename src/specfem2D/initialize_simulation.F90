@@ -137,7 +137,7 @@
   subroutine initialize_simulation_domains()
 
   use constants,only: TINYVAL
-  
+
   use specfem_par, only : any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
     ispec_is_anisotropic,ispec_is_acoustic,ispec_is_gravitoacoustic,ispec_is_elastic,ispec_is_poroelastic, &
     porosity,anisotropy,kmato, &

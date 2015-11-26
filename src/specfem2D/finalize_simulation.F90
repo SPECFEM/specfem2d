@@ -49,7 +49,7 @@ subroutine finalize_simulation()
 
   use specfem_par
   use specfem_par_gpu
-  
+
   implicit none
 
   integer :: i,ispec,j,iglob
