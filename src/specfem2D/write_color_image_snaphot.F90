@@ -39,6 +39,8 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
+
+
   subroutine write_color_image_snaphot()
 
 #ifdef USE_MPI
@@ -52,6 +54,7 @@
   !local variables
   integer :: i,j,k,ispec,iglob
   integer :: ier
+  double precision :: rhol
 
   if (myrank == 0) then
     write(IMAIN,*)
@@ -164,19 +167,22 @@
       if (iglob_image_color(i,j) /= -1) then
         if (imagetype_JPEG == 1  .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7 .or. &
             imagetype_JPEG == 11 .or. imagetype_JPEG == 14) then
-          image_color_data(i,j) = vector_field_display(1,iglob_image_color(i,j))  ! draw the X component of the vector
+          ! draw the X component of the vector
+          image_color_data(i,j) = vector_field_display(1,iglob_image_color(i,j))
 
         else if (imagetype_JPEG == 2 .or. imagetype_JPEG == 5 .or. imagetype_JPEG == 8 .or. &
                 imagetype_JPEG == 12 .or. imagetype_JPEG == 15) then
-          image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))  ! draw the Z component of the vector
+          ! draw the Z component of the vector
+          image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
 
         else if (imagetype_JPEG == 3 .or. imagetype_JPEG == 6 .or. imagetype_JPEG == 9 .or. &
                 imagetype_JPEG == 13 .or. imagetype_JPEG == 16) then
-          image_color_data(i,j) = sqrt(vector_field_display(1,iglob_image_color(i,j))**2 + &
-                           vector_field_display(3,iglob_image_color(i,j))**2)  ! draw the norm of the vector
+          ! draw the norm of the vector
+          image_color_data(i,j) = sqrt(vector_field_display(1,iglob_image_color(i,j))**2  &
+                                     + vector_field_display(3,iglob_image_color(i,j))**2)
 
         else if (imagetype_JPEG == 10) then
-! by convention we have stored pressure in the third component of the array
+          ! by convention we have stored pressure in the third component of the array
           image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
 
         else
@@ -184,12 +190,13 @@
         endif
       endif
 
-    else ! SH (membrane) waves, plot y-component
+    else
+      ! SH (membrane) waves, plot y-component
       if (iglob_image_color(i,j) /= -1) image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
     endif
   enddo
 
-! assembling array image_color_data on process zero for color output
+  ! assembling array image_color_data on process zero for color output
   ier = 0 ! dummy to avoid compiler warning
 #ifdef USE_MPI
   if (nproc > 1) then
@@ -256,8 +263,11 @@
   endif
 #endif
 
+  ! creates image
   if (myrank == 0) then
     call create_color_image()
+
+    ! user output
     write(IMAIN,*) 'Color image created'
     call flush_IMAIN()
   endif

@@ -63,7 +63,7 @@
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-                         poroelastic,myrank,nproc, &
+                         ispec_is_poroelastic,myrank,nproc, &
                          coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
                          coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model,&
                          coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
@@ -1350,8 +1350,8 @@
 #endif
 
   if (myrank == 0) then
-     write(IMAIN,*) 'X min, max = ',xmin,xmax
-     write(IMAIN,*) 'Z min, max = ',zmin,zmax
+     write(IMAIN,*) '  X min, max = ',xmin,xmax
+     write(IMAIN,*) '  Z min, max = ',zmin,zmax
   endif
 
 ! ratio of physical page size/size of the domain meshed
@@ -1363,8 +1363,18 @@
   call MPI_ALLREDUCE (dispmax, dispmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   dispmax = dispmax_glob
 #endif
+
+  ! checks value (isNaN)
+  if (dispmax > STABILITY_THRESHOLD .or. dispmax < 0 .or. dispmax /= dispmax) then
+    print *,'Warning: failed creating postscript image, maximum value of display is invalid'
+    print *,'display max = ',dispmax,' with threshold at ', STABILITY_THRESHOLD
+    print *,'Please check your simulation setup...'
+    call exit_MPI(myrank,'Code became unstable and blew up ( vector_field_display array in routine plot_post() )')
+  endif
+
+  ! user output
   if (myrank == 0) then
-     write(IMAIN,*) 'Max norm = ',dispmax
+     write(IMAIN,*) '  Max norm = ',dispmax
   endif
 
 !
@@ -1548,136 +1558,136 @@
 
   do ispec= 1,nspec
     do i = 1,NGLLX-subsamp_postscript,subsamp_postscript
-          do j = 1,NGLLX-subsamp_postscript,subsamp_postscript
+      do j = 1,NGLLX-subsamp_postscript,subsamp_postscript
 
-  if ((vpImax-vpImin)/vpImin > 0.02d0) then
+        if ((vpImax-vpImin)/vpImin > 0.02d0) then
 
-  if (assign_external_model) then
+          if (assign_external_model) then
 
-    x1 = (vpext(i,j,ispec)-vpImin) / (vpImax-vpImin)
+            x1 = (vpext(i,j,ispec)-vpImin) / (vpImax-vpImin)
 
-  else
+          else
 
-    material = kmato(ispec)
+            material = kmato(ispec)
 
-    if (poroelastic(ispec)) then
+            if (ispec_is_poroelastic(ispec)) then
 
-      ! poroelastic material
+              ! poroelastic material
 
-! get elastic parameters of current spectral element
-    phil = porosity(kmato(ispec))
-    tortl = tortuosity(kmato(ispec))
-!solid properties
-    mul_s = poroelastcoef(2,1,kmato(ispec))
-    kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
-    rhol_s = density(1,kmato(ispec))
-!fluid properties
-    kappal_f = poroelastcoef(1,2,kmato(ispec))
-    rhol_f = density(2,kmato(ispec))
-!frame properties
-    mul_fr = poroelastcoef(2,3,kmato(ispec))
-    kappal_fr = poroelastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
-    rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
-!Biot coefficients for the input phi
-      D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
-      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + kappal_fr + FOUR_THIRDS*mul_fr
-      C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
-      M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
-! Approximated velocities (no viscous dissipation)
-      afactor = rhol_bar - phil/tortl*rhol_f
-      bfactor = H_biot + phil*rhol_bar/(tortl*rhol_f)*M_biot - 2.d0*phil/tortl*C_biot
-      cfactor = phil/(tortl*rhol_f)*(H_biot*M_biot - C_biot*C_biot)
-      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-      cpIloc = sqrt(cpIsquare)
+              ! get elastic parameters of current spectral element
+              phil = porosity(kmato(ispec))
+              tortl = tortuosity(kmato(ispec))
+              !solid properties
+              mul_s = poroelastcoef(2,1,kmato(ispec))
+              kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
+              rhol_s = density(1,kmato(ispec))
+              !fluid properties
+              kappal_f = poroelastcoef(1,2,kmato(ispec))
+              rhol_f = density(2,kmato(ispec))
+              !frame properties
+              mul_fr = poroelastcoef(2,3,kmato(ispec))
+              kappal_fr = poroelastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
+              rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
+              !Biot coefficients for the input phi
+              D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
+              H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + kappal_fr + FOUR_THIRDS*mul_fr
+              C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
+              M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
+              ! Approximated velocities (no viscous dissipation)
+              afactor = rhol_bar - phil/tortl*rhol_f
+              bfactor = H_biot + phil*rhol_bar/(tortl*rhol_f)*M_biot - 2.d0*phil/tortl*C_biot
+              cfactor = phil/(tortl*rhol_f)*(H_biot*M_biot - C_biot*C_biot)
+              cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+              cpIloc = sqrt(cpIsquare)
 
-    else
+            else
 
-      lambdaplus2mu  = poroelastcoef(3,1,material)
-      denst = density(1,material)
-      cpIloc = sqrt(lambdaplus2mu/denst)
+              lambdaplus2mu  = poroelastcoef(3,1,material)
+              denst = density(1,material)
+              cpIloc = sqrt(lambdaplus2mu/denst)
 
-    endif
+            endif
 
-    x1 = (cpIloc-vpImin)/(vpImax-vpImin)
+            x1 = (cpIloc-vpImin)/(vpImax-vpImin)
 
-  endif
+          endif
 
-  else
-    x1 = 0.5d0
-  endif
+        else
+          x1 = 0.5d0
+        endif
 
-! rescale to avoid very dark gray levels
-  x1 = x1*0.7 + 0.2
-  if (x1 > 1.d0) x1=1.d0
+        ! rescale to avoid very dark gray levels
+        x1 = x1*0.7 + 0.2
+        if (x1 > 1.d0) x1=1.d0
 
-! invert scale: white = vpImin, dark gray = vpImax
-  x1 = 1.d0 - x1
+        ! invert scale: white = vpImin, dark gray = vpImax
+        x1 = 1.d0 - x1
 
-  xw = coord(1,ibool(i,j,ispec))
-  zw = coord(2,ibool(i,j,ispec))
-  xw = (xw-xmin)*ratio_page + orig_x
-  zw = (zw-zmin)*ratio_page + orig_z
-  xw = xw * centim
-  zw = zw * centim
-  if (myrank == 0) then
-     write(24,500) xw,zw
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_velocity_model(1,buffer_offset) = xw
-     coorg_send_ps_velocity_model(2,buffer_offset) = zw
-  endif
+        xw = coord(1,ibool(i,j,ispec))
+        zw = coord(2,ibool(i,j,ispec))
+        xw = (xw-xmin)*ratio_page + orig_x
+        zw = (zw-zmin)*ratio_page + orig_z
+        xw = xw * centim
+        zw = zw * centim
+        if (myrank == 0) then
+           write(24,500) xw,zw
+        else
+           buffer_offset = buffer_offset + 1
+           coorg_send_ps_velocity_model(1,buffer_offset) = xw
+           coorg_send_ps_velocity_model(2,buffer_offset) = zw
+        endif
 
-  xw = coord(1,ibool(i+subsamp_postscript,j,ispec))
-  zw = coord(2,ibool(i+subsamp_postscript,j,ispec))
-  xw = (xw-xmin)*ratio_page + orig_x
-  zw = (zw-zmin)*ratio_page + orig_z
-  xw = xw * centim
-  zw = zw * centim
-  if (myrank == 0) then
-     write(24,499) xw,zw
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_velocity_model(1,buffer_offset) = xw
-     coorg_send_ps_velocity_model(2,buffer_offset) = zw
-  endif
+        xw = coord(1,ibool(i+subsamp_postscript,j,ispec))
+        zw = coord(2,ibool(i+subsamp_postscript,j,ispec))
+        xw = (xw-xmin)*ratio_page + orig_x
+        zw = (zw-zmin)*ratio_page + orig_z
+        xw = xw * centim
+        zw = zw * centim
+        if (myrank == 0) then
+           write(24,499) xw,zw
+        else
+           buffer_offset = buffer_offset + 1
+           coorg_send_ps_velocity_model(1,buffer_offset) = xw
+           coorg_send_ps_velocity_model(2,buffer_offset) = zw
+        endif
 
-  xw = coord(1,ibool(i+subsamp_postscript,j+subsamp_postscript,ispec))
-  zw = coord(2,ibool(i+subsamp_postscript,j+subsamp_postscript,ispec))
-  xw = (xw-xmin)*ratio_page + orig_x
-  zw = (zw-zmin)*ratio_page + orig_z
-  xw = xw * centim
-  zw = zw * centim
-  if (myrank == 0) then
-     write(24,499) xw,zw
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_velocity_model(1,buffer_offset) = xw
-     coorg_send_ps_velocity_model(2,buffer_offset) = zw
-  endif
+        xw = coord(1,ibool(i+subsamp_postscript,j+subsamp_postscript,ispec))
+        zw = coord(2,ibool(i+subsamp_postscript,j+subsamp_postscript,ispec))
+        xw = (xw-xmin)*ratio_page + orig_x
+        zw = (zw-zmin)*ratio_page + orig_z
+        xw = xw * centim
+        zw = zw * centim
+        if (myrank == 0) then
+           write(24,499) xw,zw
+        else
+           buffer_offset = buffer_offset + 1
+           coorg_send_ps_velocity_model(1,buffer_offset) = xw
+           coorg_send_ps_velocity_model(2,buffer_offset) = zw
+        endif
 
-  xw = coord(1,ibool(i,j+subsamp_postscript,ispec))
-  zw = coord(2,ibool(i,j+subsamp_postscript,ispec))
-  xw = (xw-xmin)*ratio_page + orig_x
-  zw = (zw-zmin)*ratio_page + orig_z
-  xw = xw * centim
-  zw = zw * centim
-  if (myrank == 0) then
-     write(24,499) xw,zw
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_velocity_model(1,buffer_offset) = xw
-     coorg_send_ps_velocity_model(2,buffer_offset) = zw
-  endif
+        xw = coord(1,ibool(i,j+subsamp_postscript,ispec))
+        zw = coord(2,ibool(i,j+subsamp_postscript,ispec))
+        xw = (xw-xmin)*ratio_page + orig_x
+        zw = (zw-zmin)*ratio_page + orig_z
+        xw = xw * centim
+        zw = zw * centim
+        if (myrank == 0) then
+           write(24,499) xw,zw
+        else
+           buffer_offset = buffer_offset + 1
+           coorg_send_ps_velocity_model(1,buffer_offset) = xw
+           coorg_send_ps_velocity_model(2,buffer_offset) = zw
+        endif
 
-! display P-velocity model using gray levels
-  if (myrank == 0) then
-     write(24,604) x1
-  else
-     RGB_offset = RGB_offset + 1
-     RGB_send_ps_velocity_model(1,RGB_offset) = x1
-  endif
+        ! display P-velocity model using gray levels
+        if (myrank == 0) then
+           write(24,604) x1
+        else
+           RGB_offset = RGB_offset + 1
+           RGB_send_ps_velocity_model(1,RGB_offset) = x1
+        endif
 
-          enddo
+      enddo
     enddo
   enddo
 
@@ -2636,7 +2646,7 @@
 
   if (interpol) then
 
-  if (myrank == 0) write(IMAIN,*) 'Interpolating the vector field...'
+  if (myrank == 0) write(IMAIN,*) '  Interpolating the vector field...'
 
 ! option to plot only lowerleft corner value to avoid very large files if dense meshes
   if (plot_lowerleft_corner_only) then
@@ -2651,9 +2661,9 @@
 
 ! interpolation on a uniform grid
 #ifdef USE_MPI
-  if (myrank == 0 .and. mod(ispec,1000) == 0) write(IMAIN,*) 'Interpolation uniform grid element ',ispec,' on processor core 0'
+  if (myrank == 0 .and. mod(ispec,1000) == 0) write(IMAIN,*) '  Interpolation uniform grid element ',ispec,' on processor core 0'
 #else
-  if (mod(ispec,1000) == 0) write(IMAIN,*) 'Interpolation uniform grid element ',ispec
+  if (mod(ispec,1000) == 0) write(IMAIN,*) '  Interpolation uniform grid element ',ispec
 #endif
 
   do i = 1,pointsdisp_loop

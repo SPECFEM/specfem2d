@@ -214,17 +214,14 @@ void FC_FUNC_(prepare_constants_device,
   mp->absorbing_conditions = *ABSORBING_CONDITIONS;
   mp->save_forward = *SAVE_FORWARD;
 
-  setConst_wxgll(h_wxgll,mp);
-
-
   // sets constant arrays
   setConst_hprime_xx(h_hprime_xx,mp);
-
   // setConst_hprime_zz(h_hprime_zz,mp); // only needed if NGLLX != NGLLY != NGLLZ
 
   setConst_hprimewgll_xx(h_hprimewgll_xx,mp);
-
   //setConst_hprimewgll_zz(h_hprimewgll_zz,mp); // only needed if NGLLX != NGLLY != NGLLZ
+
+  setConst_wxgll(h_wxgll,mp);
 
   // Using texture memory for the hprime-style constants is slower on
   // Fermi generation hardware, but *may* be faster on Kepler
@@ -252,7 +249,6 @@ void FC_FUNC_(prepare_constants_device,
    #endif
   }
   #endif
-
 
   // mesh
   // Assuming NGLLX=5. Padded is then 32 (5^2+3)
@@ -291,7 +287,6 @@ void FC_FUNC_(prepare_constants_device,
                                        h_ibool, NGLL2*sizeof(int), NGLL2*sizeof(int),
                                        mp->NSPEC_AB, cudaMemcpyHostToDevice),1601);
 
-
   // prepare interprocess-edge exchange information
   mp->num_interfaces_ext_mesh = *num_interfaces_ext_mesh;
   mp->max_nibool_interfaces_ext_mesh = *max_nibool_interfaces_ext_mesh;
@@ -300,12 +295,8 @@ void FC_FUNC_(prepare_constants_device,
                       mp->num_interfaces_ext_mesh);
     copy_todevice_int((void**)&mp->d_ibool_interfaces_ext_mesh,h_ibool_interfaces_ext_mesh,
                       (mp->num_interfaces_ext_mesh)*(mp->max_nibool_interfaces_ext_mesh));
-
-
-  int blocksize = BLOCKSIZE_TRANSFER;
-    int size_padded = ((int)ceil(((double)(mp->max_nibool_interfaces_ext_mesh))/((double)blocksize)))*blocksize;
-
-
+    //int blocksize = BLOCKSIZE_TRANSFER;
+    //int size_padded = ((int)ceil(((double)(mp->max_nibool_interfaces_ext_mesh))/((double)blocksize)))*blocksize;
   }
 
   cudaStreamCreate(&mp->compute_stream);
@@ -313,7 +304,6 @@ void FC_FUNC_(prepare_constants_device,
   if (mp->num_interfaces_ext_mesh * mp->max_nibool_interfaces_ext_mesh > 0) {
     cudaStreamCreate(&mp->copy_stream);
   }
-
 
   // inner elements
   copy_todevice_int((void**)&mp->d_ispec_is_inner,h_ispec_is_inner,mp->NSPEC_AB);
@@ -323,35 +313,31 @@ void FC_FUNC_(prepare_constants_device,
   if (mp->absorbing_conditions && mp->d_num_abs_boundary_faces > 0) {
     copy_todevice_int((void**)&mp->d_abs_boundary_ispec,h_abs_boundary_ispec,mp->d_num_abs_boundary_faces);
     copy_todevice_int((void**)&mp->d_abs_boundary_ijk,h_abs_boundary_ij,
-                      2*NGLL*(mp->d_num_abs_boundary_faces));
+                      2*NGLLX*(mp->d_num_abs_boundary_faces));
     copy_todevice_realw((void**)&mp->d_abs_boundary_normal,h_abs_boundary_normal,
-                        NDIM*NGLL*(mp->d_num_abs_boundary_faces));
+                        NDIM*NGLLX*(mp->d_num_abs_boundary_faces));
     copy_todevice_realw((void**)&mp->d_abs_boundary_jacobian2Dw,h_abs_boundary_jacobian1Dw,
-                        NGLL*(mp->d_num_abs_boundary_faces));
+                        NGLLX*(mp->d_num_abs_boundary_faces));
     copy_todevice_int((void**)&mp->d_cote_abs,h_cote_abs,(mp->d_num_abs_boundary_faces));
     copy_todevice_int((void**)&mp->d_ib_left,h_ib_left,(mp->d_num_abs_boundary_faces));
     copy_todevice_int((void**)&mp->d_ib_right,h_ib_right,(mp->d_num_abs_boundary_faces));
     copy_todevice_int((void**)&mp->d_ib_top,h_ib_top,(mp->d_num_abs_boundary_faces));
     copy_todevice_int((void**)&mp->d_ib_bottom,h_ib_bottom,(mp->d_num_abs_boundary_faces));
-      mp->d_nspec_bottom = *h_nspec_bottom;
-      mp->d_nspec_left = *h_nspec_left;
-      mp->d_nspec_right = *h_nspec_right;
-      mp->d_nspec_top = *h_nspec_top;
 
+    mp->d_nspec_bottom = *h_nspec_bottom;
+    mp->d_nspec_left = *h_nspec_left;
+    mp->d_nspec_right = *h_nspec_right;
+    mp->d_nspec_top = *h_nspec_top;
   }
 
   // sources
   mp->nsources_local = *nsources_local_f;
 
-
-
   if (mp->nsources_local > 0){
     copy_todevice_realw((void**)&mp->d_source_time_function,h_source_time_function,(*NSTEP)*(mp->nsources_local));
     copy_todevice_realw((void**)&mp->d_sourcearrays,h_sourcearrays,mp->nsources_local*NDIM*NGLL2);
     copy_todevice_int((void**)&mp->d_ispec_selected_source,h_ispec_selected_source,mp->nsources_local);
-    }
-
-
+  }
 
   // receiver stations
   mp->nrec_local = *nrec_local; // number of receiver located in this partition
@@ -474,11 +460,9 @@ void FC_FUNC_(prepare_fields_acoustic_device,
   int size_padded = NGLL2_PADDED * mp->NSPEC_AB;
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_rhostore),size_padded*sizeof(realw)),2006);
   // transfer constant element data with padding
-
   print_CUDA_error_if_any(cudaMemcpy2D(mp->d_rhostore, NGLL2_PADDED*sizeof(realw),
                                        rhostore, NGLL2*sizeof(realw), NGLL2*sizeof(realw),
                                        mp->NSPEC_AB, cudaMemcpyHostToDevice),2106);
-
 
   // non-padded array
   copy_todevice_realw((void**)&mp->d_kappastore,kappastore,NGLL2*mp->NSPEC_AB);
@@ -490,13 +474,11 @@ void FC_FUNC_(prepare_fields_acoustic_device,
   copy_todevice_int((void**)&mp->d_ispec_is_acoustic,ispec_is_acoustic,mp->NSPEC_AB);
 
 
-    // allocate surface arrays
-    mp->num_free_surface_faces = *num_free_surface_faces;
-    if (mp->num_free_surface_faces > 0) {
-      copy_todevice_int((void**)&mp->d_free_surface_ispec,free_surface_ispec,mp->num_free_surface_faces);
-      copy_todevice_int((void**)&mp->d_free_surface_ijk,free_surface_ijk,
-                        2*NGLLX*mp->num_free_surface_faces);
-
+  // allocate surface arrays
+  mp->num_free_surface_faces = *num_free_surface_faces;
+  if (mp->num_free_surface_faces > 0) {
+    copy_todevice_int((void**)&mp->d_free_surface_ispec,free_surface_ispec,mp->num_free_surface_faces);
+    copy_todevice_int((void**)&mp->d_free_surface_ijk,free_surface_ijk,2*NGLLX*mp->num_free_surface_faces);
   }
 
   // absorbing boundaries
@@ -515,11 +497,11 @@ void FC_FUNC_(prepare_fields_acoustic_device,
   // coupling with elastic parts
   if (*ELASTIC_SIMULATION && *num_coupling_ac_el_faces > 0) {
     copy_todevice_int((void**)&mp->d_coupling_ac_el_ispec,coupling_ac_el_ispec,(*num_coupling_ac_el_faces));
-    copy_todevice_int((void**)&mp->d_coupling_ac_el_ijk,coupling_ac_el_ijk,2*NGLL*(*num_coupling_ac_el_faces));
+    copy_todevice_int((void**)&mp->d_coupling_ac_el_ijk,coupling_ac_el_ijk,2*NGLLX*(*num_coupling_ac_el_faces));
     copy_todevice_realw((void**)&mp->d_coupling_ac_el_normal,coupling_ac_el_normal,
-                        2*NGLL*(*num_coupling_ac_el_faces));
+                        2*NGLLX*(*num_coupling_ac_el_faces));
     copy_todevice_realw((void**)&mp->d_coupling_ac_el_jacobian2Dw,coupling_ac_el_jacobian2Dw,
-                        NGLL*(*num_coupling_ac_el_faces));
+                        NGLLX*(*num_coupling_ac_el_faces));
   }
 
   // mesh coloring
@@ -645,8 +627,7 @@ void FC_FUNC_(prepare_fields_elastic_device,
   TRACE("prepare_fields_elastic_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer);
-  int size;
-
+  int size,size_padded;
 
   // debug
   //printf("prepare_fields_elastic_device: rank %d - wavefield setup\n",mp->myrank);
@@ -781,7 +762,7 @@ void FC_FUNC_(prepare_fields_elastic_device,
     //synchronize_mpi();
 
     // Assuming NGLLX==5. Padded is then 32 (5^2+3)
-    int size_padded = NGLL2_PADDED * (mp->NSPEC_AB);
+    size_padded = NGLL2_PADDED * (mp->NSPEC_AB);
 
     // allocates memory on GPU
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_c11store),size_padded*sizeof(realw)),4700);
@@ -793,8 +774,6 @@ void FC_FUNC_(prepare_fields_elastic_device,
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_c33store),size_padded*sizeof(realw)),4711);
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_c35store),size_padded*sizeof(realw)),4711);
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_c55store),size_padded*sizeof(realw)),4718);
-
-
 
     print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c11store, NGLL2_PADDED*sizeof(realw),
                                          c11store, NGLL2*sizeof(realw), NGLL2*sizeof(realw),
@@ -823,9 +802,7 @@ void FC_FUNC_(prepare_fields_elastic_device,
     print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c55store, NGLL2_PADDED*sizeof(realw),
                                          c55store, NGLL2*sizeof(realw), NGLL2*sizeof(realw),
                                          mp->NSPEC_AB, cudaMemcpyHostToDevice),4800);
-
   }
-
 
   // mesh coloring
   if (mp->use_mesh_coloring_gpu) {
@@ -833,7 +810,6 @@ void FC_FUNC_(prepare_fields_elastic_device,
     mp->num_colors_inner_elastic = *num_colors_inner_elastic;
     mp->h_num_elem_colors_elastic = (int*) num_elem_colors_elastic;
   }
-
 
   mp->ninterface_elastic = *h_ninterface_elastic;
   copy_todevice_int((void**)&mp->d_inum_interfaces_elastic,h_inum_interfaces_elastic,mp->num_interfaces_ext_mesh);

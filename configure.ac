@@ -77,8 +77,9 @@ AC_ARG_WITH([cuda],
 AM_CONDITIONAL([COND_CUDA], [test "$want_cuda" != no])
 AM_CONDITIONAL([COND_CUDA5], [test "$want_cuda" = cuda5])
 AM_CONDITIONAL([COND_CUDA6], [test "$want_cuda" = cuda6])
+AM_CONDITIONAL([COND_CUDA7], [test "$want_cuda" = cuda7])
 # cuda linking for cuda 5x and 6x
-AM_CONDITIONAL([COND_CUDA_PLUS], [test "$want_cuda" = cuda5 -o "$want_cuda" = cuda6])
+AM_CONDITIONAL([COND_CUDA_PLUS], [test "$want_cuda" = cuda5 -o "$want_cuda" = cuda6 -o "$want_cuda" = cuda7])
 
 ############################################################
 

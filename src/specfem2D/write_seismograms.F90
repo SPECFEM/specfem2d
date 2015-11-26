@@ -66,7 +66,7 @@
 
         call compute_pressure_one_element(ispec)
 
-      else if (acoustic(ispec)) then
+      else if (ispec_is_acoustic(ispec)) then
 
         ! for acoustic medium, compute vector field from gradient of potential for seismograms
         if (seismotype == 1 .or. seismotype == 7) then
@@ -80,7 +80,7 @@
                               potential_dot_dot_gravito,accel_elastic,accels_poroelastic,ispec)
         endif
 
-      else if (gravitoacoustic(ispec)) then
+      else if (ispec_is_gravitoacoustic(ispec)) then
 
         ! for acoustic medium, compute vector field from gradient of potential for seismograms
         if (seismotype == 1 .or. seismotype == 7) then
@@ -117,7 +117,7 @@
           dcurld=ZERO
 
           if (seismotype == 4) then
-            if (USE_TRICK_FOR_BETTER_PRESSURE .and. (acoustic(ispec) .or. gravitoacoustic(ispec))) then
+            if (USE_TRICK_FOR_BETTER_PRESSURE .and. (ispec_is_acoustic(ispec) .or. ispec_is_gravitoacoustic(ispec))) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
               ! use the second derivative of the source for the source time function instead of the source itself,
               ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
@@ -126,7 +126,7 @@
               ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! compute pressure on the fluid/porous medium edge
-              if (gravitoacoustic(ispec)) then
+              if (ispec_is_gravitoacoustic(ispec)) then
                 dxd = - potential_gravitoacoustic(iglob)
               else
                 dxd = - potential_acoustic(iglob)
@@ -136,27 +136,27 @@
             endif
             dzd = ZERO
 
-          else if ((acoustic(ispec) .or. gravitoacoustic(ispec)) .and.  seismotype /= 6) then
+          else if ((ispec_is_acoustic(ispec) .or. ispec_is_gravitoacoustic(ispec)) .and.  seismotype /= 6) then
 
             dxd = vector_field_element(1,i,j)
             dzd = vector_field_element(3,i,j)
 
-          else if (acoustic(ispec) .and. seismotype == 6) then
+          else if (ispec_is_acoustic(ispec) .and. seismotype == 6) then
 
             dxd = potential_acoustic(iglob)
             dzd = ZERO
 
-          else if (gravitoacoustic(ispec) .and. seismotype == 6) then
+          else if (ispec_is_gravitoacoustic(ispec) .and. seismotype == 6) then
 
             dxd = potential_acoustic(iglob)
             dzd = ZERO
 
           else if (seismotype == 1) then
 
-            if (poroelastic(ispec)) then
+            if (ispec_is_poroelastic(ispec)) then
               dxd = displs_poroelastic(1,iglob)
               dzd = displs_poroelastic(2,iglob)
-            else if (elastic(ispec)) then
+            else if (ispec_is_elastic(ispec)) then
               dxd = displ_elastic(1,iglob)
               dyd = displ_elastic(2,iglob)
               dzd = displ_elastic(3,iglob)
@@ -164,10 +164,10 @@
 
           else if (seismotype == 2) then
 
-            if (poroelastic(ispec)) then
+            if (ispec_is_poroelastic(ispec)) then
               dxd = velocs_poroelastic(1,iglob)
               dzd = velocs_poroelastic(2,iglob)
-            else if (elastic(ispec)) then
+            else if (ispec_is_elastic(ispec)) then
               dxd = veloc_elastic(1,iglob)
               dyd = veloc_elastic(2,iglob)
               dzd = veloc_elastic(3,iglob)
@@ -175,10 +175,10 @@
 
           else if (seismotype == 3) then
 
-            if (poroelastic(ispec)) then
+            if (ispec_is_poroelastic(ispec)) then
               dxd = accels_poroelastic(1,iglob)
               dzd = accels_poroelastic(2,iglob)
-            else if (elastic(ispec)) then
+            else if (ispec_is_elastic(ispec)) then
               dxd = accel_elastic(1,iglob)
               dyd = accel_elastic(2,iglob)
               dzd = accel_elastic(3,iglob)
@@ -186,10 +186,10 @@
 
           else if (seismotype == 5) then
 
-            if (poroelastic(ispec)) then
+            if (ispec_is_poroelastic(ispec)) then
               dxd = displs_poroelastic(1,iglob)
               dzd = displs_poroelastic(2,iglob)
-            else if (elastic(ispec)) then
+            else if (ispec_is_elastic(ispec)) then
               dxd = displ_elastic(1,iglob)
               dzd = displ_elastic(2,iglob)
             endif
@@ -199,7 +199,7 @@
 
           ! compute interpolated field
           valux = valux + dxd*hlagrange
-          if (elastic(ispec))  valuy = valuy + dyd*hlagrange
+          if (ispec_is_elastic(ispec))  valuy = valuy + dyd*hlagrange
           valuz = valuz + dzd*hlagrange
           valcurl = valcurl + dcurld*hlagrange
 

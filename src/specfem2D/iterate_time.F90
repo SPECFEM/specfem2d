@@ -40,13 +40,15 @@
 !
 !========================================================================
 
-subroutine iterate_time()
+
+  subroutine iterate_time()
 
 #ifdef USE_MPI
   use mpi
 #endif
 
   use specfem_par
+  use specfem_par_gpu
 
   implicit none
 
@@ -56,6 +58,12 @@ subroutine iterate_time()
 
   integer :: i,j,ispec,iglob,it_temp
   integer :: ier
+  ! time
+  character(len=8) :: datein
+  character(len=10) :: timein
+  character(len=5) :: zone
+  integer, dimension(8) :: time_values
+  integer :: year,mon,day,hr,minutes,timestamp
 
   if (myrank == 0) write(IMAIN,400) ! Write = T i m e  e v o l u t i o n  l o o p =
 !
@@ -503,12 +511,13 @@ subroutine iterate_time()
 ! *********************************************************
 
           call compute_forces_gravitoacoustic(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-                       potential_gravitoacoustic, potential_dot_dot_gravito, &
-                       potential_gravito,.false.,PML_BOUNDARY_CONDITIONS)
+                                              potential_gravitoacoustic, potential_dot_dot_gravito, &
+                                              potential_gravito,.false.,PML_BOUNDARY_CONDITIONS)
 
+          ! debugging
           if ((mod(it,100)==0)) then
             iglob=iglobzero
-            write(*,*)it,Nsql,gravityl, &
+            write(*,*)it, & ! Nsql,gravityl,
                       maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
                       maxval(potential_dot_dot_gravitoacoustic),potential_dot_dot_gravitoacoustic(iglob)
           endif
@@ -1072,7 +1081,7 @@ subroutine iterate_time()
       ! acoustic medium
       if (any_acoustic) then
         write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+        open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_acoustic**.bin')
 
         read(55) b_potential_acoustic
@@ -1099,60 +1108,55 @@ subroutine iterate_time()
       ! elastic medium
       if (any_elastic) then
         write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
-        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+        open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_elastic**.bin')
 
-        if (p_sv) then
-          !P-SV waves
-          read(55) b_displ_elastic
-          read(55) b_veloc_elastic
-          read(55) b_accel_elastic
+        read(55) b_displ_elastic
+        read(55) b_veloc_elastic
+        read(55) b_accel_elastic
+        close(55)
 
-          if (GPU_MODE) then
-            b_displ_2D(1,:) = b_displ_elastic(1,:)
-            b_displ_2D(2,:) = b_displ_elastic(3,:)
-            b_veloc_2D(1,:) = b_veloc_elastic(1,:)
-            b_veloc_2D(2,:) = b_veloc_elastic(3,:)
-            b_accel_2D(1,:) = b_accel_elastic(1,:)
-            b_accel_2D(2,:) = b_accel_elastic(3,:)
-            call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_2D,b_veloc_2D,b_accel_2D,Mesh_pointer)
-          endif
-        else
-          !SH (membrane) waves
-          read(55) b_displ_elastic
-          read(55) b_veloc_elastic
-          read(55) b_accel_elastic
-
+        !SH (membrane) waves
+        if (.not. p_sv) then
+          ! only index array(2,:) contains SH wavefield
           b_displ_elastic(1,:) = 0._CUSTOM_REAL
           b_displ_elastic(3,:) = 0._CUSTOM_REAL
           b_veloc_elastic(1,:) = 0._CUSTOM_REAL
           b_veloc_elastic(3,:) = 0._CUSTOM_REAL
           b_accel_elastic(1,:) = 0._CUSTOM_REAL
           b_accel_elastic(3,:) = 0._CUSTOM_REAL
-
-          if (GPU_MODE) then
-            b_displ_2D(1,:) = b_displ_elastic(2,:)
-            b_displ_2D(2,:) = 0._CUSTOM_REAL
-            b_veloc_2D(1,:) = b_veloc_elastic(2,:)
-            b_veloc_2D(2,:) = 0._CUSTOM_REAL
-            b_accel_2D(1,:) = b_accel_elastic(2,:)
-            b_accel_2D(2,:) = 0._CUSTOM_REAL
-            call transfer_b_fields_to_device(NDIM*NGLOB_AB,b_displ_2D,b_veloc_2D,b_accel_2D,Mesh_pointer)
-          endif
-
         endif
-        close(55)
 
-
+        if (GPU_MODE) then
+          ! prepares wavefields for transfering
+          if (p_sv) then
+            tmp_displ_2D(1,:) = b_displ_elastic(1,:)
+            tmp_displ_2D(2,:) = b_displ_elastic(3,:)
+            tmp_veloc_2D(1,:) = b_veloc_elastic(1,:)
+            tmp_veloc_2D(2,:) = b_veloc_elastic(3,:)
+            tmp_accel_2D(1,:) = b_accel_elastic(1,:)
+            tmp_accel_2D(2,:) = b_accel_elastic(3,:)
+          else
+            ! SH waves
+            tmp_displ_2D(1,:) = b_displ_elastic(2,:)
+            tmp_displ_2D(2,:) = 0._CUSTOM_REAL
+            tmp_veloc_2D(1,:) = b_veloc_elastic(2,:)
+            tmp_veloc_2D(2,:) = 0._CUSTOM_REAL
+            tmp_accel_2D(1,:) = b_accel_elastic(2,:)
+            tmp_accel_2D(2,:) = 0._CUSTOM_REAL
+          endif
+          call transfer_b_fields_to_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
+        endif
       endif
 
       ! poroelastic medium
       if (any_poroelastic) then
         write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
-        open(unit=55,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+        open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_s**.bin')
+
         write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
-        open(unit=56,file='OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+        open(unit=56,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_w**.bin')
 
         read(55) b_displs_poroelastic
@@ -1181,11 +1185,14 @@ subroutine iterate_time()
       call save_surface_movie_noise()
    else if (NOISE_TOMOGRAPHY == 3 .and. save_everywhere) then
      if (it == 1) open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
-                      recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
-     if (ios /= 0) write(*,*) 'Error retrieving ensemble forward wavefield.'
+                      recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
+     if (ier /= 0) call exit_MPI(myrank,'Error retrieving noise ensemble forward wavefield')
+     ! safety check
      if (p_sv) then
+       ! P-SV case
        call exit_MPI(myrank,'P-SV case not yet implemented.')
      else
+       ! SH case
        read(unit=500,rec=NSTEP-it+1) b_displ_elastic(2,:)
      endif
    endif
@@ -1221,7 +1228,7 @@ subroutine iterate_time()
            call transfer_kernels_el_to_host(Mesh_pointer,rho_kl,mu_kl,kappa_kl,NSPEC_AB)
            ! Multiply each kernel point with the local coefficient
            do ispec = 1, nspec
-             if (elastic(ispec)) then
+             if (ispec_is_elastic(ispec)) then
                do j = 1, NGLLZ
                  do i = 1, NGLLX
                    iglob = ibool(i,j,ispec)
@@ -1266,24 +1273,26 @@ subroutine iterate_time()
 
      ! Fields transfer for imaging
      if ((output_color_image .and. ( (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5)) .or. it == NSTEP)) then
-       if (any_acoustic ) &
+       if (any_acoustic ) then
          call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic,potential_dot_acoustic, &
                                              potential_dot_dot_acoustic,Mesh_pointer)
+       endif
+
        if (any_elastic) then
-         call transfer_fields_el_from_device(NDIM*NGLOB_AB,displ_2D,veloc_2D,accel_2D,Mesh_pointer)
+         call transfer_fields_el_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
          if (p_sv) then
            ! P-SV waves
-           displ_elastic(1,:) = displ_2D(1,:)
-           displ_elastic(3,:) = displ_2D(2,:)
-           veloc_elastic(1,:) = veloc_2D(1,:)
-           veloc_elastic(3,:) = veloc_2D(2,:)
-           accel_elastic(1,:) = accel_2D(1,:)
-           accel_elastic(3,:) = accel_2D(2,:)
+           displ_elastic(1,:) = tmp_displ_2D(1,:)
+           displ_elastic(3,:) = tmp_displ_2D(2,:)
+           veloc_elastic(1,:) = tmp_veloc_2D(1,:)
+           veloc_elastic(3,:) = tmp_veloc_2D(2,:)
+           accel_elastic(1,:) = tmp_accel_2D(1,:)
+           accel_elastic(3,:) = tmp_accel_2D(2,:)
          else
            ! SH waves
-           displ_elastic(2,:) = displ_2D(1,:)
-           veloc_elastic(2,:) = veloc_2D(1,:)
-           accel_elastic(2,:) = accel_2D(1,:)
+           displ_elastic(2,:) = tmp_displ_2D(1,:)
+           veloc_elastic(2,:) = tmp_veloc_2D(1,:)
+           accel_elastic(2,:) = tmp_accel_2D(1,:)
          endif
        endif
      endif !If transfer
@@ -1352,9 +1361,11 @@ subroutine iterate_time()
 
          !load ensemble forward source
          inquire(unit=500,exist=ex,opened=od)
-         if (.not. od) &
+         if (.not. od) then
            open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
-           recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
+           recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
+           if (ier /= 0) call exit_MPI(myrank,'Error opening noise eta file')
+         endif
          read(unit=500,rec=it) surface_movie_y_noise
 
          !load product of fwd, adj wavefields
@@ -1412,4 +1423,4 @@ subroutine iterate_time()
   !----  formats
   400 format(/1x,41('=')/,' =  T i m e  e v o l u t i o n  l o o p  ='/1x,41('=')/)
 
- end subroutine
+  end subroutine iterate_time

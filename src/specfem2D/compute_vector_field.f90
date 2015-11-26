@@ -46,32 +46,35 @@
 ! compute Grad(potential) in acoustic elements
 ! and combine with existing velocity vector field in elastic elements
 
-  use specfem_par
+  use specfem_par,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
+    nspec,ibool, &
+    nglob_acoustic,nglob_elastic,nglob_gravitoacoustic,nglob_poroelastic, &
+    vector_field_display,vector_field_element
 
   implicit none
 
-  integer :: i,j,ispec,iglob
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: field_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravitoacoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravito
   real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: field_elastic
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: fields_poroelastic
 
-! loop over spectral elements
-  do ispec = 1,nspec
+  ! local parameters
+  integer :: i,j,ispec,iglob
 
-! compute vector field in this element
+  ! loop over spectral elements
+  do ispec = 1,nspec
+    ! compute vector field in this element
     call compute_vector_one_element(field_acoustic,field_gravitoacoustic, &
                                     field_gravito,field_elastic,fields_poroelastic,ispec)
 
-! store the result
+    ! store the result
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         vector_field_display(:,iglob) = vector_field_element(:,i,j)
       enddo
     enddo
-
   enddo
 
   end subroutine compute_vector_whole_medium
@@ -85,23 +88,35 @@
 
 ! compute Grad(potential) if acoustic element or copy existing vector if elastic element
 
-  use specfem_par
+  use specfem_par,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
+    nglob_acoustic,nglob_elastic,nglob_gravitoacoustic,nglob_poroelastic, &
+    vector_field_element, &
+    assign_external_model,density,kmato,gravityext,rhoext, &
+    hprimeBar_xx,hprime_xx,hprime_zz, &
+    xix,xiz,gammax,gammaz,ibool, &
+    ispec_is_elastic,ispec_is_poroelastic,ispec_is_acoustic,ispec_is_gravitoacoustic, &
+    AXISYM,is_on_the_axis
 
   implicit none
-
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: field_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravitoacoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravito
   real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: field_elastic
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: fields_poroelastic
-  integer ispec
 
-! local variables
+  integer,intent(in) :: ispec
+
+  ! local variables
   integer i,j,k,iglob
+  ! Jacobian matrix and determinant
+  double precision :: xixl,xizl,gammaxl,gammazl
+  double precision :: gravityl,hp1,hp2
+  double precision :: rhol
+  double precision :: tempx1l,tempx2l
 
 ! simple copy of existing vector if elastic element
-  if (elastic(ispec)) then
+  if (ispec_is_elastic(ispec)) then
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -112,7 +127,7 @@
       enddo
     enddo
 
-  else if (poroelastic(ispec)) then
+  else if (ispec_is_poroelastic(ispec)) then
      do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
@@ -124,7 +139,7 @@
 
 ! compute gradient of potential to calculate vector if acoustic element
 ! we then need to divide by density because the potential is a potential of (density * displacement)
-    else if (acoustic(ispec)) then
+    else if (ispec_is_acoustic(ispec)) then
 
       rhol = density(1,kmato(ispec))
 
@@ -180,7 +195,7 @@
 
 ! compute gradient of potential to calculate vector if acoustic element
 ! we then need to divide by density because the potential is a potential of (density * displacement)
-    else if (gravitoacoustic(ispec)) then
+    else if (ispec_is_gravitoacoustic(ispec)) then
 
       rhol = density(1,kmato(ispec))
 

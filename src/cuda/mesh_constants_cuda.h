@@ -107,7 +107,6 @@
 #define NDIM 2
 
 // Gauss-Lobatto-Legendre
-#define NGLL 5
 #define NGLLX 5
 #define NGLL2 25
 #define NGLL3 125 // no padding: requires same size as in fortran for NGLLX * NGLLY * NGLLZ
@@ -121,9 +120,11 @@
 // number of standard linear solids
 #define N_SLS 3
 
+/* ----------------------------------------------------------------------------------------------- */
 
 //For Cuda aware MPI
 #define ENV_LOCAL_RANK "OMPI_COMM_WORLD_LOCAL_RANK"
+
 /* ----------------------------------------------------------------------------------------------- */
 
 // Output paths, see setup/constants.h
@@ -136,6 +137,16 @@
 //#define USE_MESH_COLORING_GPU
 
 /* ----------------------------------------------------------------------------------------------- */
+
+// macros for version output
+#define VALUE_TO_STRING(x) #x
+#define VALUE(x) VALUE_TO_STRING(x)
+#define VAR_NAME_VALUE(var) #var " = "  VALUE(var)
+
+#pragma message ("Compiling with: " VAR_NAME_VALUE(CUDA_VERSION) "\n")
+#if defined(__CUDA_ARCH__)
+#pragma message ("Compiling with: " VAR_NAME_VALUE(__CUDA_ARCH__) "\n")
+#endif
 
 // Texture memory usage:
 // requires CUDA version >= 4.0, see check below
@@ -155,10 +166,10 @@
 #endif
 
 #ifdef USE_TEXTURES_FIELDS
-#pragma message ("\nCompiling with: USE_TEXTURES_FIELDS enabled\n")
+#pragma message ("Compiling with: USE_TEXTURES_FIELDS enabled\n")
 #endif
 #ifdef USE_TEXTURES_CONSTANTS
-#pragma message ("\nCompiling with: USE_TEXTURES_CONSTANTS enabled\n")
+#pragma message ("Compiling with: USE_TEXTURES_CONSTANTS enabled\n")
 #endif
 
 // (optional) unrolling loops
@@ -250,7 +261,7 @@ typedef realw* __restrict__ realw_p;
 
 // wrapper for global memory load function
 // usage:  val = get_global_cr( &A[index] );
-#if __CUDA_ARCH__ >= 350
+#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 350)
 // Device has ldg
 __device__ __forceinline__ realw get_global_cr(realw_const_p ptr) { return __ldg(ptr); }
 #else
@@ -300,17 +311,12 @@ typedef struct mesh_ {
   int use_mesh_coloring_gpu;
   int absorbing_conditions;
 
-
-
-
-
   // ------------------------------------------------------------------ //
   // GLL points & weights
   // ------------------------------------------------------------------ //
 
   // interpolators
   realw* d_xix; realw* d_xiz;
-
   realw* d_gammax; realw* d_gammaz;
 
   // model parameters
@@ -370,10 +376,6 @@ typedef struct mesh_ {
   int ninterface_elastic;
   int * d_inum_interfaces_elastic;
 
-
-
-
-
   // mesh coloring
   int* h_num_elem_colors_elastic;
   int num_colors_outer_elastic,num_colors_inner_elastic;
@@ -412,9 +414,6 @@ typedef struct mesh_ {
   realw* d_b_absorb_elastic_right;
   realw* d_b_absorb_elastic_top;
 
-
-
-
   realw* d_rho_vp;
   realw* d_rho_vs;
 
@@ -448,7 +447,6 @@ typedef struct mesh_ {
   int* d_free_surface_ijk;
   int num_free_surface_faces;
 
-
   // anisotropy
   realw* d_c11store;
   realw* d_c12store;
@@ -459,8 +457,6 @@ typedef struct mesh_ {
   realw* d_c33store;
   realw* d_c35store;
   realw* d_c55store;
-
-
 
   // sensitivity kernels
   realw* d_rho_kl;
@@ -473,7 +469,6 @@ typedef struct mesh_ {
   realw* d_b_dsxx;
   realw* d_b_dsxz;
   realw* d_b_dszz;
-
 
 
   // JC JC here we will need to add GPU support for the new C-PML routines
@@ -493,8 +488,6 @@ typedef struct mesh_ {
   int num_phase_ispec_acoustic;
   int ninterface_acoustic;
   int * d_inum_interfaces_acoustic;
-
-
 
   // mesh coloring
   int* h_num_elem_colors_acoustic;

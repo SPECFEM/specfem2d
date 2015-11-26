@@ -40,7 +40,8 @@
 !
 !========================================================================
 
-subroutine iterate_time_undoatt()
+
+  subroutine iterate_time_undoatt()
 
 #ifdef USE_MPI
   use mpi
@@ -62,6 +63,13 @@ subroutine iterate_time_undoatt()
   integer :: it_temp,seismo_current_temp
   integer :: ier
   integer, parameter :: it_begin = 1
+  ! time
+  character(len=8) :: datein
+  character(len=10) :: timein
+  character(len=5) :: zone
+  integer, dimension(8) :: time_values
+  integer :: year,mon,day,hr,minutes,timestamp
+
 
   if (myrank == 0) write(IMAIN,400)
 !
@@ -877,4 +885,4 @@ subroutine iterate_time_undoatt()
   !----  formats
   400 format(/1x,41('=')/,' =  T i m e  e v o l u t i o n  l o o p  ='/1x,41('=')/)
 
- end subroutine iterate_time_undoatt
+  end subroutine iterate_time_undoatt

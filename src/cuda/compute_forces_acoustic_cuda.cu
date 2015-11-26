@@ -136,8 +136,8 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
                        const realw* d_xix, const realw* d_xiz,
                        const realw* d_gammax,const realw* d_gammaz,
                        realw_const_p d_hprime_xx,
-                       realw_const_p hprimewgll_xx,
-                       realw_const_p wxgll,
+                       realw_const_p d_hprimewgll_xx,
+                       realw_const_p d_wxgll,
                        const realw* d_rhostore,
                        const int use_mesh_coloring_gpu,
                        const realw* d_kappastore){
@@ -198,7 +198,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 // + 0 BYTE
 
   // local padded index
-   offset = (d_phase_ispec_inner_acoustic[bx + num_phase_ispec_acoustic*(d_iphase-1)]-1)*NGLL2_PADDED + tx;
+  offset = (d_phase_ispec_inner_acoustic[bx + num_phase_ispec_acoustic*(d_iphase-1)]-1)*NGLL2_PADDED + tx;
 
   // global index
   iglob = d_ibool[offset] - 1;
@@ -210,12 +210,12 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 // + 2 float * 32 threads = 256 BYTE
 
 #ifdef USE_TEXTURES_FIELDS
-    s_dummy_loc[tx] = texfetch_potential<FORWARD_OR_ADJOINT>(iglob);
-   if (nb_field==2) s_dummy_loc[NGLL2+tx]=texfetch_potential<3>(iglob);
+  s_dummy_loc[tx] = texfetch_potential<FORWARD_OR_ADJOINT>(iglob);
+  if (nb_field==2) s_dummy_loc[NGLL2+tx]=texfetch_potential<3>(iglob);
 #else
-    // changing iglob indexing to match fortran row changes fast style
-    s_dummy_loc[tx] = d_potential_acoustic[iglob];
-    if (nb_field==2) s_dummy_loc[NGLL2+tx]=d_b_potential_acoustic[iglob];
+  // changing iglob indexing to match fortran row changes fast style
+  s_dummy_loc[tx] = d_potential_acoustic[iglob];
+  if (nb_field==2) s_dummy_loc[NGLL2+tx]=d_b_potential_acoustic[iglob];
 #endif
 
 
@@ -223,7 +223,6 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 // + 0 FLOP
 //
 // + 1 float * 25 threads = 100 BYTE
-
 
   // local index
   J = (tx/NGLLX);
@@ -239,13 +238,12 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
   //       loads all memory by texture loads (arrays accesses are coalescent, thus no need for texture reads)
   //
   // calculates laplacian
-  xixl = __ldg(&d_xix[offset]);
+  xixl = get_global_cr( &d_xix[offset] );
   xizl = d_xiz[offset];
   gammaxl = d_gammax[offset];
   gammazl = d_gammaz[offset];
 
   rho_invl_times_jacobianl = 1.f /(d_rhostore[offset] * (xixl*gammazl-gammaxl*xizl));
-
 
 // counts:
 // + 5 FLOP
@@ -255,21 +253,21 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
   // loads hprime into shared memory
 
 #ifdef USE_TEXTURES_CONSTANTS
-    sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_tex,tx);
+  sh_hprime_xx[tx] = tex1Dfetch(d_hprime_xx_tex,tx);
 #else
-    sh_hprime_xx[tx] = d_hprime_xx[tx];
+  sh_hprime_xx[tx] = d_hprime_xx[tx];
 #endif
-    // loads hprimewgll into shared memory
-    sh_hprimewgll_xx[tx] = hprimewgll_xx[tx];
+  // loads hprimewgll into shared memory
+  sh_hprimewgll_xx[tx] = d_hprimewgll_xx[tx];
 
-if (threadIdx.x<NGLLX){
+  if (threadIdx.x < NGLLX){
 #ifdef USE_TEXTURES_CONSTANTS
     sh_wxgll[tx] = tex1Dfetch(d_wxgll_xx_tex,tx);
 #else
     // changing iglob indexing to match fortran row changes fast style
-    sh_wxgll[tx] = wxgll[tx];
+    sh_wxgll[tx] = d_wxgll[tx];
 #endif
-}
+  }
 
 
 // counts:
@@ -282,66 +280,65 @@ if (threadIdx.x<NGLLX){
   // to be able to compute the matrix products along cut planes of the 3D element below
   __syncthreads();
 
-for (int k=0 ; k< nb_field ; k++)
-{
-  // computes first matrix product
-  temp1l = 0.f;
-  temp3l = 0.f;
+  for (int k=0 ; k < nb_field ; k++) {
+    // computes first matrix product
+    temp1l = 0.f;
+    temp3l = 0.f;
 
-  for (int l=0;l<NGLLX;l++) {
-    //assumes that hprime_xx = hprime_yy = hprime_zz
-    // 1. cut-plane along xi-direction
-    temp1l += s_dummy_loc[NGLL2*k+J*NGLLX+l] * sh_hprime_xx[l*NGLLX+I];
-    // 3. cut-plane along gamma-direction
-    temp3l += s_dummy_loc[NGLL2*k+l*NGLLX+I] * sh_hprime_xx[l*NGLLX+J];
-  }
+    for (int l=0;l<NGLLX;l++) {
+      //assumes that hprime_xx = hprime_yy = hprime_zz
+      // 1. cut-plane along xi-direction
+      temp1l += s_dummy_loc[NGLL2*k+J*NGLLX+l] * sh_hprime_xx[l*NGLLX+I];
+      // 3. cut-plane along gamma-direction
+      temp3l += s_dummy_loc[NGLL2*k+l*NGLLX+I] * sh_hprime_xx[l*NGLLX+J];
+    }
 
 // counts:
 // + NGLLX * 2 * 6 FLOP = 60 FLOP
 //
 // + 0 BYTE
 
-  // compute derivatives of ux, uy and uz with respect to x, y and z
-  // derivatives of potential
-  dpotentialdxl = xixl*temp1l +  gammaxl*temp3l;
-  dpotentialdzl = xizl*temp1l +  gammazl*temp3l;
+    // compute derivatives of ux, uy and uz with respect to x, y and z
+    // derivatives of potential
+    dpotentialdxl = xixl*temp1l +  gammaxl*temp3l;
+    dpotentialdzl = xizl*temp1l +  gammazl*temp3l;
 
 // counts:
 // + 2 * 3 FLOP = 6 FLOP
 //
 // + 0 BYTE
 
-  // form the dot product with the test vector
-
-      s_temp1[tx] = sh_wxgll[J]*rho_invl_times_jacobianl  * (dpotentialdxl*xixl  + dpotentialdzl*xizl)  ;
-      s_temp3[tx] = sh_wxgll[I]*rho_invl_times_jacobianl  * (dpotentialdxl*gammaxl + dpotentialdzl*gammazl)  ;
+    // form the dot product with the test vector
+    s_temp1[tx] = sh_wxgll[J]*rho_invl_times_jacobianl  * (dpotentialdxl*xixl  + dpotentialdzl*xizl)  ;
+    s_temp3[tx] = sh_wxgll[I]*rho_invl_times_jacobianl  * (dpotentialdxl*gammaxl + dpotentialdzl*gammazl)  ;
 
 // counts:
 // + 2 * 6 FLOP = 12 FLOP
 //
 // + 2 BYTE
 
-  // synchronize all the threads (one thread for each of the NGLL grid points of the
-  // current spectral element) because we need the whole element to be ready in order
-  // to be able to compute the matrix products along cut planes of the 3D element below
-  __syncthreads();
+    // synchronize all the threads (one thread for each of the NGLL grid points of the
+    // current spectral element) because we need the whole element to be ready in order
+    // to be able to compute the matrix products along cut planes of the 3D element below
+    __syncthreads();
 
-  sum_terms=0;
-
-  for (int l=0;l<NGLLX;l++) {
-    //assumes hprimewgll_xx = hprimewgll_zz
-  sum_terms -= s_temp1[J*NGLLX+l] * sh_hprimewgll_xx[I*NGLLX+l] + s_temp3[l*NGLLX+I] * sh_hprimewgll_xx[J*NGLLX+l];
-  }
+    sum_terms = 0;
+    for (int l=0;l<NGLLX;l++) {
+      //assumes hprimewgll_xx = hprimewgll_zz
+      sum_terms -= s_temp1[J*NGLLX+l] * sh_hprimewgll_xx[I*NGLLX+l] + s_temp3[l*NGLLX+I] * sh_hprimewgll_xx[J*NGLLX+l];
+    }
 
 // counts:
 // + NGLLX * 11 FLOP = 55 FLOP
 //
 // + 0 BYTE
 
-  // assembles potential array
-
-    if (k==0)  atomicAdd(&d_potential_dot_dot_acoustic[iglob],sum_terms);
-    else   atomicAdd(&d_b_potential_dot_dot_acoustic[iglob],sum_terms);
+    // assembles potential array
+    if (k==0) {
+      atomicAdd(&d_potential_dot_dot_acoustic[iglob],sum_terms);
+    } else {
+      atomicAdd(&d_b_potential_dot_dot_acoustic[iglob],sum_terms);
+    }
 
 // counts:
 // + 1 FLOP
@@ -355,7 +352,7 @@ for (int k=0 ; k< nb_field ; k++)
 //           818 BYTE DRAM accesses per block
 //
 //           -> arithmetic intensity: 4768 FLOP / 818 BYTES ~ 5.83 FLOP/BYTE (hand-count)
-}
+  }
 }
 
 

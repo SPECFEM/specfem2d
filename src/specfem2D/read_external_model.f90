@@ -43,26 +43,29 @@
 
   subroutine read_external_model()
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL
+
   use specfem_par, only: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
-                         acoustic,gravitoacoustic,elastic,poroelastic,anisotropic,nspec,nglob,ibool, &
-                         READ_VELOCITIES_AT_f0,inv_tau_sigma_nu1_sent,&
-                         phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
-                         inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
-                         coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
-                         QKappa_attenuationext,Qmu_attenuationext, &
-                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-                         MODEL,ATTENUATION_VISCOELASTIC_SOLID,p_sv,&
-                         inputname,ios,tomo_material,myrank
+    ispec_is_acoustic,ispec_is_gravitoacoustic,ispec_is_elastic,ispec_is_poroelastic,ispec_is_anisotropic, &
+    nspec,nglob,ibool, &
+    READ_VELOCITIES_AT_f0,inv_tau_sigma_nu1_sent,&
+    phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
+    inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
+    coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
+    QKappa_attenuationext,Qmu_attenuationext, &
+    c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
+    MODEL,ATTENUATION_VISCOELASTIC_SOLID,p_sv,&
+    inputname,tomo_material,myrank
 
   implicit none
-  include "constants.h"
-
 
   ! Local variables
   integer :: i,j,ispec,iglob
+  integer :: ier
   real(kind=CUSTOM_REAL) :: previous_vsext
   real(kind=CUSTOM_REAL) :: tmp1, tmp2,tmp3
   double precision :: rho_dummy,vp_dummy,vs_dummy,mu_dummy,lambda_dummy
+
 
   if (tomo_material > 0) MODEL = 'tomo'
 
@@ -82,7 +85,6 @@
     enddo
     close(1001)
 
-
   else if (trim(MODEL)=='ascii') then
     write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat'
     open(unit=1001,file= inputname,status='unknown')
@@ -100,23 +102,23 @@
 
   else if ((trim(MODEL) == 'binary') .or. (trim(MODEL) == 'gll')) then
       write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
-      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
-      if (ios /= 0) stop 'Error opening rho.bin file.'
+      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error opening rho.bin file.'
 
       read(1001) rhoext
       close(1001)
       print *, 'rho', minval(rhoext), maxval(rhoext)
 
       write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vp.bin'
-      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
-      if (ios /= 0) stop 'Error opening vp.bin file.'
+      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error opening vp.bin file.'
 
       read(1001) vpext
       close(1001)
 
       write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vs.bin'
-      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ios)
-      if (ios /= 0) stop 'Error opening vs.bin file.'
+      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error opening vs.bin file.'
 
       read(1001) vsext
       close(1001)
@@ -149,13 +151,13 @@
           ! check that the element type is not redefined compared to what is defined initially in DATA/Par_file
           if ((c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
               c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) &
-              .and. .not. anisotropic(ispec)) &
+              .and. .not. ispec_is_anisotropic(ispec)) &
       stop 'error: non anisotropic material in DATA/Par_file or external mesh redefined as anisotropic in define_external_model()'
 
-          if (vsext(i,j,ispec) < TINYVAL .and. (elastic(ispec) .or. anisotropic(ispec))) &
+          if (vsext(i,j,ispec) < TINYVAL .and. (ispec_is_elastic(ispec) .or. ispec_is_anisotropic(ispec))) &
             stop 'error: non acoustic material in DATA/Par_file or external mesh redefined as acoustic in define_external_model()'
 
-          if (vsext(i,j,ispec) > TINYVAL .and. .not. elastic(ispec)) &
+          if (vsext(i,j,ispec) > TINYVAL .and. .not. ispec_is_elastic(ispec)) &
             stop 'error: acoustic material in DATA/Par_file or external mesh redefined as non acoustic in define_external_model()'
 
         enddo
@@ -164,20 +166,21 @@
 
   endif
 
+  ! re-assigns flags
   ! initializes
   any_acoustic = .false.
   any_gravitoacoustic = .false.
   any_elastic = .false.
   any_poroelastic = .false.
 
-  acoustic(:) = .false.
-  gravitoacoustic(:) = .false.
-  anisotropic(:) = .false.
-  elastic(:) = .false.
-  poroelastic(:) = .false.
+  ispec_is_acoustic(:) = .false.
+  ispec_is_gravitoacoustic(:) = .false.
+  ispec_is_anisotropic(:) = .false.
+  ispec_is_elastic(:) = .false.
+  ispec_is_poroelastic(:) = .false.
 
-! initialize to dummy values
-! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
+  ! initialize to dummy values
+  ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
   inv_tau_sigma_nu1(:,:,:,:) = -1._CUSTOM_REAL
   phi_nu1(:,:,:,:) = -1._CUSTOM_REAL
   inv_tau_sigma_nu2(:,:,:,:) = -1._CUSTOM_REAL
@@ -201,32 +204,32 @@
 
         if (c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
            c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
-          anisotropic(ispec) = .true.
-          poroelastic(ispec) = .false.
-          elastic(ispec) = .true.
+          ispec_is_anisotropic(ispec) = .true.
+          ispec_is_poroelastic(ispec) = .false.
+          ispec_is_elastic(ispec) = .true.
           any_elastic = .true.
           QKappa_attenuationext(i,j,ispec) = 9999.d0
           Qmu_attenuationext(i,j,ispec) = 9999.d0
         else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) < TINYVAL)) then
-          elastic(ispec) = .false.
-          poroelastic(ispec) = .false.
-          gravitoacoustic(ispec)=.false.
-          acoustic(ispec)=.true.
+          ispec_is_elastic(ispec) = .false.
+          ispec_is_poroelastic(ispec) = .false.
+          ispec_is_gravitoacoustic(ispec)=.false.
+          ispec_is_acoustic(ispec)=.true.
           any_acoustic = .true.
         else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) >= TINYVAL)) then
-          elastic(ispec) = .false.
-          poroelastic(ispec) = .false.
-          acoustic(ispec)=.false.
-          gravitoacoustic(ispec)=.true.
+          ispec_is_elastic(ispec) = .false.
+          ispec_is_poroelastic(ispec) = .false.
+          ispec_is_acoustic(ispec)=.false.
+          ispec_is_gravitoacoustic(ispec)=.true.
           any_gravitoacoustic = .true.
         else
-          poroelastic(ispec) = .false.
-          elastic(ispec) = .true.
+          ispec_is_poroelastic(ispec) = .false.
+          ispec_is_elastic(ispec) = .true.
           any_elastic = .true.
         endif
 
 !       attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
-        if (acoustic(ispec)) cycle
+        if (ispec_is_acoustic(ispec)) cycle
 
 !       check that attenuation values entered by the user make sense
         if ((QKappa_attenuationext(i,j,ispec) <= 9998.999d0 .and. Qmu_attenuationext(i,j,ispec) >  9998.999d0) .or. &
@@ -246,7 +249,7 @@
         Mu_nu2(i,j,ispec) = Mu_nu2_sent
 
         if (ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0) then
-          if (anisotropic(ispec) .or. poroelastic(ispec) .or. gravitoacoustic(ispec)) stop &
+          if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) stop &
              'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
 
           vp_dummy = dble(vpext(i,j,ispec))

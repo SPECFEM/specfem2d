@@ -48,7 +48,8 @@ subroutine finalize_simulation()
 #endif
 
   use specfem_par
-
+  use specfem_par_gpu
+  
   implicit none
 
   integer :: i,ispec,j,iglob
@@ -148,11 +149,24 @@ subroutine finalize_simulation()
 
   endif !save model
 
-  if (GPU_MODE) call prepare_cleanup_device(Mesh_pointer, &
-                                            any_acoustic,any_elastic, &
-                                            STACEY_BOUNDARY_CONDITIONS, &
-                                            ANISOTROPY, &
-                                            APPROXIMATE_HESS_KL)
+  ! frees memory
+  if (GPU_MODE) then
+    ! frees temporary arrays
+    if (any_elastic) deallocate(tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D)
+
+    deallocate(tab_requests_send_recv_scalar,b_tab_requests_send_recv_scalar)
+    deallocate(tab_requests_send_recv_vector,b_tab_requests_send_recv_vector)
+    deallocate(buffer_send_scalar_ext_mesh,b_buffer_send_scalar_ext_mesh)
+    deallocate(buffer_recv_scalar_ext_mesh,b_buffer_recv_scalar_ext_mesh)
+    deallocate(buffer_send_vector_ext_mesh,b_buffer_send_vector_ext_mesh)
+    deallocate(buffer_recv_vector_ext_mesh,b_buffer_recv_vector_ext_mesh)
+
+    ! frees memory on GPU
+    call prepare_cleanup_device(Mesh_pointer,any_acoustic,any_elastic, &
+                                STACEY_BOUNDARY_CONDITIONS, &
+                                ANISOTROPY, &
+                                APPROXIMATE_HESS_KL)
+  endif
 
   if (output_wavefield_dumps) deallocate(mask_ibool)
 
@@ -246,7 +260,7 @@ subroutine finalize_simulation()
     endif
 
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+    open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_elastic**.bin')
 
     write(55) displ_elastic
@@ -265,15 +279,17 @@ subroutine finalize_simulation()
     endif
 
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+    open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_poroelastic_s**.bin')
+
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
-    open(unit=56,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+    open(unit=56,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_poroelastic_w**.bin')
 
     write(55) displs_poroelastic
     write(55) velocs_poroelastic
     write(55) accels_poroelastic
+
     write(56) displw_poroelastic
     write(56) velocw_poroelastic
     write(56) accelw_poroelastic
@@ -291,7 +307,7 @@ subroutine finalize_simulation()
     endif
 
     write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+    open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_acoustic**.bin')
 
     write(55) potential_acoustic

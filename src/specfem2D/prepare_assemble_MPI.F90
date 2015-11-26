@@ -58,7 +58,7 @@
 !-----------------------------------------------
   subroutine prepare_assemble_MPI()
 
-  use specfem_par, only: nspec,ibool,knods, ngnod,nglob, elastic, poroelastic, &
+  use specfem_par, only: nspec,ibool,knods, ngnod,nglob, ispec_is_elastic, ispec_is_poroelastic, &
                                 ninterface, &
                                 my_nelmnts_neighbours, my_interfaces, &
                                 ibool_interfaces_acoustic, ibool_interfaces_elastic, &
@@ -87,9 +87,6 @@
   integer  :: nglob_interface_elastic
   integer  :: nglob_interface_poroelastic
   integer :: npoin_interface_ext_mesh
-
-
-
 
   ! initializes
   ibool_interfaces_acoustic(:,:) = 0
@@ -142,14 +139,14 @@
 
 
           ! checks to which material this common interface belongs
-          if (elastic(ispec)) then
+          if (ispec_is_elastic(ispec)) then
             ! elastic element
             if (.not. mask_ibool_elastic(iglob)) then
               mask_ibool_elastic(iglob) = .true.
               nglob_interface_elastic = nglob_interface_elastic + 1
               ibool_interfaces_elastic(nglob_interface_elastic,num_interface) = iglob
             endif
-          else if (poroelastic(ispec)) then
+          else if (ispec_is_poroelastic(ispec)) then
             ! poroelastic element
             if (.not. mask_ibool_poroelastic(iglob)) then
               mask_ibool_poroelastic(iglob) = .true.

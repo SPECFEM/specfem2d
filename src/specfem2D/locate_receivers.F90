@@ -52,8 +52,7 @@
                           coorg,knods,ngnod,npgeo, &
                           x_final_receiver, z_final_receiver)
 
-use specfem_par, only : AXISYM,is_on_the_axis,xiglj, &
-  gather_ispec_selected_rec,acoustic,USE_TRICK_FOR_BETTER_PRESSURE
+  use specfem_par, only : AXISYM,is_on_the_axis,xiglj,ispec_is_acoustic,USE_TRICK_FOR_BETTER_PRESSURE
 
 #ifdef USE_MPI
   use mpi
@@ -108,13 +107,10 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj, &
   double precision, dimension(nrec,nproc)  :: gather_xi_receiver, gather_gamma_receiver
 
   integer, dimension(nrec), intent(inout)  :: which_proc_receiver
-  integer  :: ierror
+  integer, dimension(:,:), allocatable  :: gather_ispec_selected_rec
+  integer  :: ier
 
-  allocate(gather_ispec_selected_rec(nrec,nproc))
-  ierror = 0
-
-! **************
-
+  ! user output
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '********************'
@@ -240,16 +236,20 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj, &
   ! close receiver file
   close(1)
 
-! select one mesh slice for each receiver
+  ! select one mesh slice for each receiver
+  allocate(gather_ispec_selected_rec(nrec,nproc),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating gather array')
+
 #ifdef USE_MPI
+  ! gathers infos onto master process
   call MPI_GATHER(final_distance(1),nrec,MPI_DOUBLE_PRECISION,&
-        gather_final_distance(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)
+        gather_final_distance(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(xi_receiver(1),nrec,MPI_DOUBLE_PRECISION,&
-        gather_xi_receiver(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)
+        gather_xi_receiver(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(gamma_receiver(1),nrec,MPI_DOUBLE_PRECISION,&
-        gather_gamma_receiver(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierror)
+        gather_gamma_receiver(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_GATHER(ispec_selected_rec(1),nrec,MPI_INTEGER,&
-        gather_ispec_selected_rec(1,1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ierror)
+        gather_ispec_selected_rec(1,1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
   if (myrank == 0) then
     do irec = 1, nrec
@@ -257,23 +257,22 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj, &
     enddo
   endif
 
-  call MPI_BCAST(which_proc_receiver(1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ierror)
+  call MPI_BCAST(which_proc_receiver(1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
 
 #else
-
+  ! serial
   gather_final_distance(:,1) = final_distance(:)
 
   gather_xi_receiver(:,1) = xi_receiver(:)
   gather_gamma_receiver(:,1) = gamma_receiver(:)
   gather_ispec_selected_rec(:,1) = ispec_selected_rec(:)
   which_proc_receiver(:) = 0
-
 #endif
 
   if (USE_TRICK_FOR_BETTER_PRESSURE) then
     do irec= 1,nrec
       if (which_proc_receiver(irec) == myrank) then
-        if (.not. acoustic(ispec_selected_rec(irec))) then
+        if (.not. ispec_is_acoustic(ispec_selected_rec(irec))) then
           call exit_MPI(myrank,'USE_TRICK_FOR_BETTER_PRESSURE : receivers must be in acoustic elements')
         endif
       endif
@@ -318,6 +317,7 @@ use specfem_par, only : AXISYM,is_on_the_axis,xiglj, &
 
   ! deallocate arrays
   deallocate(final_distance)
+  deallocate(gather_ispec_selected_rec)
 
   end subroutine locate_receivers
 

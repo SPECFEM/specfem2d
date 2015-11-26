@@ -44,7 +44,7 @@
 
  subroutine compute_attenuation_poro_fluid_part()
 
-  use specfem_par, only: nspec,poroelastic,poroelastcoef,kmato,permeability,ibool,viscox_loc,viscoz_loc, &
+  use specfem_par, only: nspec,ispec_is_poroelastic,poroelastcoef,kmato,permeability,ibool,viscox_loc,viscoz_loc, &
                          velocw_poroelastic,time_stepping_scheme,deltat,i_stage,stage_time_scheme, &
                          rx_viscous,rz_viscous,viscox,viscoz, &
                          rx_viscous_force_RK,rx_viscous_initial_rk,rz_viscous_force_RK,rz_viscous_initial_rk, &
@@ -62,7 +62,7 @@
 
   ! loop over spectral elements
   do ispec = 1,nspec
-    if (poroelastic(ispec) .and. poroelastcoef(2,2,kmato(ispec)) > 0.d0) then
+    if (ispec_is_poroelastic(ispec) .and. poroelastcoef(2,2,kmato(ispec)) > 0.d0) then
       etal_f = poroelastcoef(2,2,kmato(ispec))
       permlxx = permeability(1,kmato(ispec))
       permlxz = permeability(2,kmato(ispec))

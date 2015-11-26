@@ -47,7 +47,7 @@
   ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
   use specfem_par, only: nglob,nspec,nelemabs,it,NSTEP, &
-                         assign_external_model,ibool,kmato,numabs,acoustic, &
+                         assign_external_model,ibool,kmato,numabs,ispec_is_acoustic, &
                          codeabs,codeabs_corner, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                          vpext,rhoext, &
@@ -89,8 +89,10 @@
 
 ! loop over spectral elements
   do ispec = ifirstelem,ilastelem
+
     ! acoustic spectral element
-    if (acoustic(ispec)) then
+    if (ispec_is_acoustic(ispec)) then
+
       rhol = density(1,kmato(ispec))
 
       ! first double loop over GLL points to compute and store gradients
@@ -220,8 +222,9 @@
   if (STACEY_BOUNDARY_CONDITIONS) then
     do ispecabs= 1,nelemabs
       ispec = numabs(ispecabs)
+
       ! Sommerfeld condition if acoustic
-      if (acoustic(ispec)) then
+      if (ispec_is_acoustic(ispec)) then
         !--- left absorbing boundary
         if (codeabs(IEDGE4,ispecabs)) then
           i = 1

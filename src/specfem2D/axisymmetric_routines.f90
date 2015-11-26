@@ -74,14 +74,14 @@ subroutine  build_is_on_the_axis()
   !   poroelasticity, anisotropy, Stacey absorbing boundaries, time stepping scheme /= 1, PML rotated, adjoint
   !   simulations, periodic conditions, noise tomographies
 
+    use constants,only: PI,TWO,TINYVAL
+
     use specfem_par, only: any_poroelastic, ROTATE_PML_ACTIVATE, &
                            STACEY_BOUNDARY_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD,time_stepping_scheme, &
                            NOISE_TOMOGRAPHY, NSOURCES, source_type, ispec_selected_source, ADD_PERIODIC_CONDITIONS, &
-                           anglesource, is_on_the_axis, elastic, is_proc_source,myrank
+                           anglesource, is_on_the_axis, ispec_is_elastic, is_proc_source,myrank
 
     implicit none
-
-    include "constants.h"
 
     ! Local parameters
     integer :: isource
@@ -102,6 +102,7 @@ subroutine  build_is_on_the_axis()
       call exit_MPI(myrank,'Periodic conditions (ADD_PERIODIC_CONDITIONS) are not implemented for axisymmetric simulations')
     if (NOISE_TOMOGRAPHY /= 0 ) &
       call exit_MPI(myrank,'Axisymmetric noise tomographies are not possible yet')
+
     ! Check sources
     do isource = 1,NSOURCES                                      ! Loop on the sources :
       if (is_proc_source(isource) == 1) then
@@ -109,7 +110,7 @@ subroutine  build_is_on_the_axis()
           call exit_MPI(myrank,'Axisymmetry : just elastic force or acoustic pressure sources has been tested so far)')
         endif
         if (is_on_the_axis(ispec_selected_source(isource))) then  !   If the source is on an axial element
-          if (elastic(ispec_selected_source(isource))) then       !  ... or if the source is (at r=0) on an elastic axial element.
+          if (ispec_is_elastic(ispec_selected_source(isource))) then       !  ... or if the source is (at r=0) on an elastic axial element.
             if (((anglesource(isource) > TINYVAL) .and. (anglesource(isource) < PI) ) &    ! ... and has a radial component.
                .or. ( (anglesource(isource) > PI) .and. (anglesource(isource) < TWO*PI))) then
                print *, '***** WARNING *****'
@@ -135,7 +136,7 @@ subroutine  build_is_on_the_axis()
     ! for acoustic elements we do not need to do anything, some gradient components
     ! will be set to zero on the axis later in the code, when they are computed
 
-    use specfem_par, only: elastic, ibool, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis, &
+    use specfem_par, only: ispec_is_elastic, ibool, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis, &
             displ_elastic, veloc_elastic, accel_elastic
 
     implicit none
@@ -152,7 +153,7 @@ subroutine  build_is_on_the_axis()
       ! will be set to zero on the axis later in the code, when they are computed
 
       ! if the element is elastic
-      if (elastic(ispec_axis)) then
+      if (ispec_is_elastic(ispec_axis)) then
         do j = 1,NGLLZ ! Loop on the GLL/GLJ points
           do i = 1,NGLJ
             if (is_on_the_axis(ispec_axis) .and. i == 1) then ! If the point scanned is on the axis

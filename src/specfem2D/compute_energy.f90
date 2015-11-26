@@ -48,13 +48,14 @@
 
   implicit none
 
-
 ! local variables
   integer :: i,j,k,ispec
-
   real(kind=CUSTOM_REAL) :: cpl,csl,kappal
+  ! Jacobian matrix and determinant
+  double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
+  double precision :: rhol
 
-
+  ! initializes
   kinetic_energy = ZERO
   potential_energy = ZERO
 
@@ -64,7 +65,7 @@
     !---
     !--- elastic spectral element
     !---
-    if (elastic(ispec)) then
+    if (ispec_is_elastic(ispec)) then
 
       ! checks wave type
       if (.not. p_sv) then
@@ -138,7 +139,7 @@
     !---
     !--- poroelastic spectral element
     !---
-    else if (poroelastic(ispec)) then
+    else if (ispec_is_poroelastic(ispec)) then
 
       ! get unrelaxed elastic parameters of current spectral element
       !for now replaced by solid, fluid, and frame parameters of current spectral element

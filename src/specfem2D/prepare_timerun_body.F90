@@ -51,9 +51,14 @@ subroutine prepare_timerun()
 
   implicit none
 
+  ! local parameters
   integer :: i,j,ispec,k,iglob,irec,i_source,ispecabs,irecloc,ier
   integer :: nglob_acoustic_b,nglob_elastic_b,nglob_poroelastic_b
   integer :: nspec_acoustic_b,nspec_elastic_b,nspec_poroelastic_b
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! Jacobian matrix and determinant
+  double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
 
 #ifdef USE_MPI
   include "precision.h"
@@ -170,11 +175,12 @@ subroutine prepare_timerun()
   enddo
 
 ! get number of stations from receiver file
-  open(unit=IIN,file='DATA/STATIONS',iostat=ios,status='old',action='read')
+  open(unit=IIN,file='DATA/STATIONS',status='old',action='read',iostat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error opening DATA/STATIONS file')
   nrec = 0
-  do while(ios == 0)
-    read(IIN,"(a)",iostat=ios) dummystring
-    if (ios == 0) nrec = nrec + 1
+  do while(ier == 0)
+    read(IIN,"(a)",iostat=ier) dummystring
+    if (ier == 0) nrec = nrec + 1
   enddo
   close(IIN)
 
@@ -496,8 +502,13 @@ subroutine prepare_timerun()
   if (output_grid_Gnuplot .and. myrank == 0)  &
     call plotgll()
 
+
+  ! external models
   if (assign_external_model) then
-    if (myrank == 0) write(IMAIN,*) 'Assigning an external velocity and density model...'
+    if (myrank == 0) then
+      write(IMAIN,*) 'Assigning an external velocity and density model...'
+      call flush_IMAIN()
+    endif
     call read_external_model()
   endif
 
@@ -505,7 +516,7 @@ subroutine prepare_timerun()
 !----  perform basic checks on parameters read
 !
   all_anisotropic = .false.
-  if (count(anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
+  if (count(ispec_is_anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
 
   if (all_anisotropic .and. anyabs) &
     call exit_MPI(myrank,'Cannot put absorbing boundaries if anisotropic materials along edges')
@@ -616,16 +627,19 @@ subroutine prepare_timerun()
     else
        irec_local = 0
        write(filename, "('./SEM/Up_file_single.su.adj')")
-       open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
-               if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+       open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+       if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+
        allocate(adj_src_s(NSTEP,3))
 
        do irec = 1, nrec
          if (myrank == which_proc_receiver(irec)) then
           irec_local = irec_local + 1
           adj_sourcearray(:,:,:,:) = 0.0
-          read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
-               if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+
+          read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
+          if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+
           if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
 
           if (AXISYM) then
@@ -894,7 +908,7 @@ subroutine prepare_timerun()
     izmax = acoustic_surface(5,ispec_acoustic_surface)
     do irecloc = 1,nrecloc
       irec = recloc(irecloc)
-      if (acoustic(ispec) .and. ispec == ispec_selected_rec(irec)) then
+      if (ispec_is_acoustic(ispec) .and. ispec == ispec_selected_rec(irec)) then
         if ((izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
         gamma_receiver(irec) < -0.99d0) .or.&
         (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==NGLLX .and. &
@@ -1602,8 +1616,8 @@ subroutine prepare_timerun()
        ispec_elastic =  fluid_solid_elastic_ispec(inum)
 
 ! one element must be acoustic and the other must be elastic
-        if (ispec_acoustic /= ispec_elastic .and. .not. elastic(ispec_acoustic) .and. &
-             .not. poroelastic(ispec_acoustic) .and. elastic(ispec_elastic)) then
+        if (ispec_acoustic /= ispec_elastic .and. .not. ispec_is_elastic(ispec_acoustic) .and. &
+             .not. ispec_is_poroelastic(ispec_acoustic) .and. ispec_is_elastic(ispec_elastic)) then
 
 ! loop on the four edges of the two elements
           do iedge_acoustic = 1,NEDGES
@@ -1732,8 +1746,8 @@ subroutine prepare_timerun()
        ispec_poroelastic =  fluid_poro_poroelastic_ispec(inum)
 
 ! one element must be acoustic and the other must be poroelastic
-        if (ispec_acoustic /= ispec_poroelastic .and. .not. poroelastic(ispec_acoustic) .and. &
-                 .not. elastic(ispec_acoustic) .and. poroelastic(ispec_poroelastic)) then
+        if (ispec_acoustic /= ispec_poroelastic .and. .not. ispec_is_poroelastic(ispec_acoustic) .and. &
+                 .not. ispec_is_elastic(ispec_acoustic) .and. ispec_is_poroelastic(ispec_poroelastic)) then
 
 ! loop on the four edges of the two elements
           do iedge_acoustic = 1,NEDGES
@@ -1979,8 +1993,8 @@ if (coupled_elastic_poro) then
        ispec_poroelastic =  solid_poro_poroelastic_ispec(inum)
 
 ! one element must be elastic and the other must be poroelastic
-        if (ispec_elastic /= ispec_poroelastic .and. elastic(ispec_elastic) .and. &
-                 poroelastic(ispec_poroelastic)) then
+        if (ispec_elastic /= ispec_poroelastic .and. ispec_is_elastic(ispec_elastic) .and. &
+                 ispec_is_poroelastic(ispec_poroelastic)) then
 
 ! loop on the four edges of the two elements
           do iedge_poroelastic = 1,NEDGES
@@ -2228,17 +2242,8 @@ enddo
 endif ! Internal/External model
 
 
-  if (GPU_MODE) then
-
-    call init_host_to_dev_variable()
-
-    if (myrank == 0) then
-      write(IMAIN,*) "preparing GPU..."
-      call flush_IMAIN()
-    endif
-    call prepare_timerun_GPU()
-
-  endif
+  ! prepares GPU arrays
+  if (GPU_MODE) call prepare_timerun_GPU()
 
   ! synchronizes all processes
   call synchronize_all()

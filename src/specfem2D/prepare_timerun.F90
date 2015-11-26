@@ -52,9 +52,11 @@ subroutine prepare_timerun_mass_matrix()
 
   implicit none
 
-integer ispec
-! inner/outer elements in the case of an MPI simulation
+  ! local parameters
+  integer ispec
+  ! inner/outer elements in the case of an MPI simulation
   integer :: ispec_inner,ispec_outer
+  integer, dimension(:,:,:), allocatable :: ibool_outer,ibool_inner
 
   !
   !---- build the global mass matrix
@@ -77,36 +79,39 @@ integer ispec
     allocate(ispec_inner_to_glob(nspec_inner))
 
     ! building of corresponding arrays between inner/outer elements and their global number
-      num_ispec_outer = 0
-      num_ispec_inner = 0
-      do ispec = 1, nspec
-        if (mask_ispec_inner_outer(ispec)) then
-          num_ispec_outer = num_ispec_outer + 1
-          ispec_outer_to_glob(num_ispec_outer) = ispec
-        else
-          num_ispec_inner = num_ispec_inner + 1
-          ispec_inner_to_glob(num_ispec_inner) = ispec
-        endif
-      enddo
+    num_ispec_outer = 0
+    num_ispec_inner = 0
+    do ispec = 1, nspec
+      if (mask_ispec_inner_outer(ispec)) then
+        num_ispec_outer = num_ispec_outer + 1
+        ispec_outer_to_glob(num_ispec_outer) = ispec
+      else
+        num_ispec_inner = num_ispec_inner + 1
+        ispec_inner_to_glob(num_ispec_inner) = ispec
+      endif
+    enddo
 
     ! buffers for MPI communications
     max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
     max_ibool_interfaces_size_el = 3*maxval(nibool_interfaces_elastic(:))
     max_ibool_interfaces_size_po = NDIM*maxval(nibool_interfaces_poroelastic(:))
     max_nibool_interfaces_ext_mesh = maxval(nibool_interfaces_ext_mesh(:))
-      allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
-      allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
-      allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
-      allocate(tab_requests_send_recv_elastic(ninterface_elastic*2))
-      allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
-      allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
-      allocate(tab_requests_send_recv_poro(ninterface_poroelastic*4))
-      allocate(buffer_send_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
-      allocate(buffer_recv_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
-      allocate(buffer_send_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
-      allocate(buffer_recv_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
 
-! assembling the mass matrix
+    allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
+    allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
+    allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
+
+    allocate(tab_requests_send_recv_elastic(ninterface_elastic*2))
+    allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
+    allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
+
+    allocate(tab_requests_send_recv_poro(ninterface_poroelastic*4))
+    allocate(buffer_send_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
+    allocate(buffer_recv_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
+    allocate(buffer_send_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
+    allocate(buffer_recv_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
+
+    ! assembling the mass matrix
     call assemble_MPI_scalar(rmass_inverse_acoustic,nglob_acoustic, &
                             rmass_inverse_elastic_one,rmass_inverse_elastic_three,nglob_elastic, &
                             rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic,nglob_poroelastic)
@@ -146,53 +151,53 @@ integer ispec
 
 #endif
 
-    ! loop over spectral elements
-    do ispec_outer = 1,nspec_outer
+  ! loop over spectral elements
+  do ispec_outer = 1,nspec_outer
     ! get global numbering for inner or outer elements
-      ispec = ispec_outer_to_glob(ispec_outer)
-    enddo
+    ispec = ispec_outer_to_glob(ispec_outer)
+  enddo
 
-    ! loop over spectral elements
-    do ispec_inner = 1,nspec_inner
+  ! loop over spectral elements
+  do ispec_inner = 1,nspec_inner
     ! get global numbering for inner or outer elements
-      ispec = ispec_inner_to_glob(ispec_inner)
-    enddo
+    ispec = ispec_inner_to_glob(ispec_inner)
+  enddo
 
-    allocate(ibool_outer(NGLLX,NGLLZ,nspec_outer))
-    allocate(ibool_inner(NGLLX,NGLLZ,nspec_inner))
-    allocate(ispec_is_inner(nspec))
-    ispec_is_inner(:) = .false.
+  allocate(ibool_outer(NGLLX,NGLLZ,nspec_outer))
+  allocate(ibool_inner(NGLLX,NGLLZ,nspec_inner))
 
-    ! loop over spectral elements
-    do ispec_outer = 1,nspec_outer
+  ! loop over spectral elements
+  do ispec_outer = 1,nspec_outer
     ! get global numbering for inner or outer elements
-      ispec = ispec_outer_to_glob(ispec_outer)
-      ibool_outer(:,:,ispec_outer) = ibool(:,:,ispec)
-    enddo
+    ispec = ispec_outer_to_glob(ispec_outer)
+    ibool_outer(:,:,ispec_outer) = ibool(:,:,ispec)
+  enddo
 
-    ! loop over spectral elements
-    do ispec_inner = 1,nspec_inner
+  ! loop over spectral elements
+  do ispec_inner = 1,nspec_inner
     ! get global numbering for inner or outer elements
-      ispec = ispec_inner_to_glob(ispec_inner)
-      ibool_inner(:,:,ispec_inner) = ibool(:,:,ispec)
-      ispec_is_inner(ispec) = .true.
-    enddo
+    ispec = ispec_inner_to_glob(ispec_inner)
+    ibool_inner(:,:,ispec_inner) = ibool(:,:,ispec)
+  enddo
 
-    ! reduces cache misses for outer elements
-    call get_global_indirect_addressing(nspec_outer,nglob,ibool_outer,copy_ibool_ori,integer_mask_ibool)
+  ! reduces cache misses for outer elements
+  call get_global_indirect_addressing(nspec_outer,nglob,ibool_outer,copy_ibool_ori,integer_mask_ibool)
 
-    ! the total number of points without multiples in this region is now known
-    nglob_outer = maxval(ibool_outer)
+  ! the total number of points without multiples in this region is now known
+  nglob_outer = maxval(ibool_outer)
 
-    ! reduces cache misses for inner elements
-    call get_global_indirect_addressing(nspec_inner,nglob,ibool_inner,copy_ibool_ori,integer_mask_ibool)
+  ! reduces cache misses for inner elements
+  call get_global_indirect_addressing(nspec_inner,nglob,ibool_inner,copy_ibool_ori,integer_mask_ibool)
 
-    ! the total number of points without multiples in this region is now known
-    nglob_inner = maxval(ibool_inner)
+  ! the total number of points without multiples in this region is now known
+  nglob_inner = maxval(ibool_inner)
+
+  ! frees temporary arrays
+  deallocate(ibool_inner,ibool_outer)
 
   call invert_mass_matrix()
 
-! check the mesh, stability and number of points per wavelength
+  ! check the mesh, stability and number of points per wavelength
   if (DISPLAY_SUBSET_OPTION == 1) then
     UPPER_LIMIT_DISPLAY = nspec
   else if (DISPLAY_SUBSET_OPTION == 2) then
@@ -206,17 +211,17 @@ integer ispec
   endif
   call checkgrid()
 
-! convert receiver angle to radians
+  ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
 
-end subroutine prepare_timerun_mass_matrix
+  end subroutine prepare_timerun_mass_matrix
+
+!
+!-------------------------------------------------------------------------------------
+!
 
 
-
-
-
-subroutine prepare_timerun_image_coloring()
-
+  subroutine prepare_timerun_image_coloring()
 
 #ifdef USE_MPI
   use mpi
@@ -338,7 +343,7 @@ subroutine prepare_timerun_kernel()
   use specfem_par
 
   implicit none
-
+  integer :: ier
 !
 !----- Allocate sensitivity kernel arrays
 !
@@ -350,55 +355,55 @@ subroutine prepare_timerun_kernel()
       if (save_ASCII_kernels) then
         ! ascii format
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
-        open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
-        open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
       else
         ! binary format
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kernel.bin'
-        open(unit = 204, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 204, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_kernel.bin'
-        open(unit = 205, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 205, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_kernel.bin'
-        open(unit = 206, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 206, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_kernel.bin'
-        open(unit = 207, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 207, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_alpha_kernel.bin'
-        open(unit = 208, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 208, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_beta_kernel.bin'
-        open(unit = 209, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 209, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
-        open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
-        open(unit = 211,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 211,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         if (APPROXIMATE_HESS_KL) then
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_kernel.bin'
-          open(unit =214,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
-          if (ios /= 0) stop 'Error writing kernel file to disk'
+          open(unit =214,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+          if (ier /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian2_kernel.bin'
-          open(unit=215,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
-          if (ios /= 0) stop 'Error writing kernel file to disk'
+          open(unit=215,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+          if (ier /= 0) stop 'Error writing kernel file to disk'
         endif
 
       endif
@@ -427,34 +432,34 @@ subroutine prepare_timerun_kernel()
 
       ! Primary kernels
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_B_C_kernel.dat'
-      open(unit = 144, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
+      open(unit = 144, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_M_rho_rhof_kernel.dat'
-      open(unit = 155, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
+      open(unit = 155, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_m_eta_kernel.dat'
-      open(unit = 16, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
+      open(unit = 16, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
       ! Wavespeed kernels
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_cpI_cpII_cs_kernel.dat'
-      open(unit = 20, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
+      open(unit = 20, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhobb_rhofbb_ratio_kernel.dat'
-      open(unit = 21, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
+      open(unit = 21, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_phib_eta_kernel.dat'
-      open(unit = 22, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
+      open(unit = 22, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
       ! Density normalized kernels
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mub_Bb_Cb_kernel.dat'
-      open(unit = 17, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
+      open(unit = 17, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Mb_rhob_rhofb_kernel.dat'
-      open(unit = 18, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
+      open(unit = 18, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mb_etab_kernel.dat'
-      open(unit = 19, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-      if (ios /= 0) stop 'Error writing kernel file to disk'
+      open(unit = 19, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
 
       rhot_kl(:,:,:) = 0._CUSTOM_REAL
       rhof_kl(:,:,:) = 0._CUSTOM_REAL
@@ -484,39 +489,39 @@ subroutine prepare_timerun_kernel()
       if (save_ASCII_kernels) then
         ! ascii format
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.dat'
-        open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status ='unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status ='unknown',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_c_kernel.dat'
-        open(unit = 96, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 96, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
       else
         ! binary format
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_acoustic_kernel.bin'
-        open(unit = 200, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 200, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_acoustic_kernel.bin'
-        open(unit = 201, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 201, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_acoustic_kernel.bin'
-        open(unit = 202, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 202, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c_acoustic_kernel.bin'
-        open(unit = 203, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ios)
-        if (ios /= 0) stop 'Error writing kernel file to disk'
+        open(unit = 203, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
         if (APPROXIMATE_HESS_KL) then
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_acoustic_kernel.bin'
-          open(unit=212,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
-          if (ios /= 0) stop 'Error writing kernel file to disk'
+          open(unit=212,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+          if (ier /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian2_acoustic_kernel.bin'
-          open(unit=213,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ios)
-          if (ios /= 0) stop 'Error writing kernel file to disk'
+          open(unit=213,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+          if (ier /= 0) stop 'Error writing kernel file to disk'
         endif
       endif
 
@@ -957,37 +962,37 @@ subroutine prepare_timerun_read()
 
   integer :: i,ispec,ispec2,j,ier
 
-! add a small crack (discontinuity) in the medium manually
+  ! add a small crack (discontinuity) in the medium manually
   npgeo_ori = npgeo
   if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
 
   !
   !--- source information
   !
-    allocate( source_type(NSOURCES) )
-    allocate( time_function_type(NSOURCES) )
-    allocate( name_of_source_file(NSOURCES) )
-    allocate( burst_band_width(NSOURCES) )
-    allocate( x_source(NSOURCES) )
-    allocate( z_source(NSOURCES) )
-    allocate( ix_image_color_source(NSOURCES) )
-    allocate( iy_image_color_source(NSOURCES) )
-    allocate( f0(NSOURCES) )
-    allocate( tshift_src(NSOURCES) )
-    allocate( factor(NSOURCES) )
-    allocate( anglesource(NSOURCES) )
-    allocate( Mxx(NSOURCES) )
-    allocate( Mxz(NSOURCES) )
-    allocate( Mzz(NSOURCES) )
-    allocate( aval(NSOURCES) )
-    allocate( ispec_selected_source(NSOURCES) )
-    allocate( iglob_source(NSOURCES) )
-    allocate( source_courbe_eros(NSOURCES) )
-    allocate( xi_source(NSOURCES) )
-    allocate( gamma_source(NSOURCES) )
-    allocate( is_proc_source(NSOURCES) )
-    allocate( nb_proc_source(NSOURCES) )
-    allocate( sourcearray(NSOURCES,NDIM,NGLLX,NGLLZ) )
+  allocate( source_type(NSOURCES) )
+  allocate( time_function_type(NSOURCES) )
+  allocate( name_of_source_file(NSOURCES) )
+  allocate( burst_band_width(NSOURCES) )
+  allocate( x_source(NSOURCES) )
+  allocate( z_source(NSOURCES) )
+  allocate( ix_image_color_source(NSOURCES) )
+  allocate( iy_image_color_source(NSOURCES) )
+  allocate( f0(NSOURCES) )
+  allocate( tshift_src(NSOURCES) )
+  allocate( factor(NSOURCES) )
+  allocate( anglesource(NSOURCES) )
+  allocate( Mxx(NSOURCES) )
+  allocate( Mxz(NSOURCES) )
+  allocate( Mzz(NSOURCES) )
+  allocate( aval(NSOURCES) )
+  allocate( ispec_selected_source(NSOURCES) )
+  allocate( iglob_source(NSOURCES) )
+  allocate( source_courbe_eros(NSOURCES) )
+  allocate( xi_source(NSOURCES) )
+  allocate( gamma_source(NSOURCES) )
+  allocate( is_proc_source(NSOURCES) )
+  allocate( nb_proc_source(NSOURCES) )
+  allocate( sourcearray(NSOURCES,NDIM,NGLLX,NGLLZ) )
 
   ! reads in source infos
   call read_databases_sources()
@@ -1024,68 +1029,69 @@ subroutine prepare_timerun_read()
   call read_databases_coorg_elem()
 
   !---- allocate arrays
-    allocate(shape2D(ngnod,NGLLX,NGLLZ))
-    allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
-    allocate(shape2D_display(ngnod,pointsdisp,pointsdisp))
-    allocate(dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp))
+  allocate(shape2D(ngnod,NGLLX,NGLLZ))
+  allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
+  allocate(shape2D_display(ngnod,pointsdisp,pointsdisp))
+  allocate(dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp))
 
-    if (AXISYM) then
-      allocate(flagrange_GLJ(NGLJ,pointsdisp))
-    else
-      allocate(flagrange_GLJ(1,1))
-    endif
+  if (AXISYM) then
+    allocate(flagrange_GLJ(NGLJ,pointsdisp))
+  else
+    allocate(flagrange_GLJ(1,1))
+  endif
 
-    ! mesh
-    allocate(xix(NGLLX,NGLLZ,nspec))
-    allocate(xiz(NGLLX,NGLLZ,nspec))
-    allocate(gammax(NGLLX,NGLLZ,nspec))
-    allocate(gammaz(NGLLX,NGLLZ,nspec))
-    allocate(jacobian(NGLLX,NGLLZ,nspec))
+  ! mesh
+  allocate(xix(NGLLX,NGLLZ,nspec))
+  allocate(xiz(NGLLX,NGLLZ,nspec))
+  allocate(gammax(NGLLX,NGLLZ,nspec))
+  allocate(gammaz(NGLLX,NGLLZ,nspec))
+  allocate(jacobian(NGLLX,NGLLZ,nspec))
 
-    allocate(flagrange(NGLLX,pointsdisp))
+  allocate(flagrange(NGLLX,pointsdisp))
 
-    allocate(xinterp(pointsdisp,pointsdisp))
-    allocate(zinterp(pointsdisp,pointsdisp))
-    allocate(Uxinterp(pointsdisp,pointsdisp))
-    allocate(Uzinterp(pointsdisp,pointsdisp))
+  allocate(xinterp(pointsdisp,pointsdisp))
+  allocate(zinterp(pointsdisp,pointsdisp))
+  allocate(Uxinterp(pointsdisp,pointsdisp))
+  allocate(Uzinterp(pointsdisp,pointsdisp))
 
-    ! elements
-    allocate(kmato(nspec))
-    allocate(knods(ngnod,nspec))
+  ! elements
+  allocate(kmato(nspec))
+  allocate(knods(ngnod,nspec))
 
-    ! material
-    allocate(density(2,numat))
-    allocate(anisotropy(9,numat))
-    allocate(porosity(numat))
-    allocate(tortuosity(numat))
-    allocate(permeability(3,numat))
-    allocate(poroelastcoef(4,3,numat))
+  ! material
+  allocate(density(2,numat))
+  allocate(anisotropy(9,numat))
+  allocate(porosity(numat))
+  allocate(tortuosity(numat))
+  allocate(permeability(3,numat))
+  allocate(poroelastcoef(4,3,numat))
 
-    ! attenuation
-    allocate(already_shifted_velocity(numat))
-    allocate(QKappa_attenuation(numat))
-    allocate(Qmu_attenuation(numat))
-    allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS))
-    allocate(inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS))
-    allocate(phi_nu1(NGLLX,NGLLZ,nspec,N_SLS))
-    allocate(phi_nu2(NGLLX,NGLLZ,nspec,N_SLS))
-    allocate(tau_epsilon_nu1(N_SLS))
-    allocate(tau_epsilon_nu2(N_SLS))
-    allocate(inv_tau_sigma_nu1_sent(N_SLS))
-    allocate(inv_tau_sigma_nu2_sent(N_SLS))
-    allocate(phi_nu1_sent(N_SLS))
-    allocate(phi_nu2_sent(N_SLS))
+  ! attenuation
+  allocate(already_shifted_velocity(numat))
+  allocate(QKappa_attenuation(numat))
+  allocate(Qmu_attenuation(numat))
+  allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS))
+  allocate(inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS))
+  allocate(phi_nu1(NGLLX,NGLLZ,nspec,N_SLS))
+  allocate(phi_nu2(NGLLX,NGLLZ,nspec,N_SLS))
+  allocate(tau_epsilon_nu1(N_SLS))
+  allocate(tau_epsilon_nu2(N_SLS))
+  allocate(inv_tau_sigma_nu1_sent(N_SLS))
+  allocate(inv_tau_sigma_nu2_sent(N_SLS))
+  allocate(phi_nu1_sent(N_SLS))
+  allocate(phi_nu2_sent(N_SLS))
 
-    ! domains
-    allocate(ibool(NGLLX,NGLLZ,nspec))
-    allocate(elastic(nspec))
-    allocate(acoustic(nspec))
-    allocate(gravitoacoustic(nspec))
-    allocate(poroelastic(nspec))
-    allocate(anisotropic(nspec))
+  ! local to global indexing
+  allocate(ibool(NGLLX,NGLLZ,nspec))
 
+  ! domain element flags
+  allocate(ispec_is_elastic(nspec))
+  allocate(ispec_is_acoustic(nspec))
+  allocate(ispec_is_gravitoacoustic(nspec))
+  allocate(ispec_is_poroelastic(nspec))
+  allocate(ispec_is_anisotropic(nspec))
 
-    already_shifted_velocity(:) = .false.
+  already_shifted_velocity(:) = .false.
 
   !
   !---- read the material properties
@@ -1267,7 +1273,7 @@ subroutine prepare_timerun_read()
   do ispec = 1,nspec
 
 !   attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
-    if (acoustic(ispec)) cycle
+    if (ispec_is_acoustic(ispec)) cycle
 
 !   check that attenuation values entered by the user make sense
     if ((QKappa_attenuation(kmato(ispec)) <= 9998.999d0 .and. Qmu_attenuation(kmato(ispec)) >  9998.999d0) .or. &
@@ -1291,7 +1297,7 @@ subroutine prepare_timerun_read()
     enddo
 
     if (ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0 .and. .not. assign_external_model) then
-      if (anisotropic(ispec) .or. poroelastic(ispec) .or. gravitoacoustic(ispec)) &
+      if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) &
          stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
       n = kmato(ispec)
       if (.not. already_shifted_velocity(n)) then

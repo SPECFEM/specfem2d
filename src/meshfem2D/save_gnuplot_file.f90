@@ -51,13 +51,17 @@
   double precision, dimension(0:nx,0:nz) :: x,z
 
   ! local parameters
-  integer :: ios,istepx,istepz,ili,icol
+  integer :: ier,istepx,istepz,ili,icol
 
   print *
   print *,'Saving the grid in Gnuplot format...'
 
-  open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown',iostat=ios)
-  if (ios /= 0 ) stop 'error saving gnuplot file'
+  open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown',iostat=ier)
+  if (ier /= 0 ) then
+    print *,'Error opening gnuplot file for writing: OUTPUT_FILES/gridfile.gnu'
+    print *,'Please make sure directory OUTPUT_FILES/ exists...'
+    stop 'Error saving gnuplot file'
+  endif
 
   ! draw horizontal lines of the grid
   print *,'drawing horizontal lines of the grid'
@@ -96,8 +100,8 @@
   close(20)
 
   ! create a Gnuplot script to display the grid
-  open(unit=20,file='OUTPUT_FILES/plot_gridfile.gnu',status='unknown',iostat=ios)
-  if (ios /= 0 ) stop 'error saving plotgnu file'
+  open(unit=20,file='OUTPUT_FILES/plot_gridfile.gnu',status='unknown',iostat=ier)
+  if (ier /= 0 ) stop 'Error saving plotgnu file'
 
   write(20,*) '#set term wxt'
   write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'

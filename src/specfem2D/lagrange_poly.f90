@@ -117,11 +117,12 @@
 
   implicit none
 
-  integer NGLL
-  double precision xi,xigll(NGLL),h(NGLL),hprime(NGLL)
+  integer,intent(in) :: NGLL
+  double precision,intent(in) :: xi,xigll(NGLL)
+  double precision,intent(out) :: h(NGLL),hprime(NGLL)
 
-  integer dgr,i,j
-  double precision prod1,prod2
+  integer :: dgr,i,j
+  double precision :: prod1,prod2
 
   do dgr= 1,NGLL
 

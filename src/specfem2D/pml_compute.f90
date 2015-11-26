@@ -40,38 +40,41 @@
 !
 !========================================================================
 
- subroutine compute_coef_convolution(bb,deltat,coef0,coef1,coef2)
+  subroutine compute_coef_convolution(bb,deltat,coef0,coef1,coef2)
   ! compute coefficient used in second order convolution scheme, from
   ! second-order accurate convolution term calculation from equation (21) of
   ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
   ! Anisotropic-Medium PML for Vector FETD With Modified Basis Functions,
   ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
 
-   implicit none
-   include "constants.h"
+  use constants,only: CUSTOM_REAL
 
-   double precision :: bb,coef0,coef1,coef2
-   double precision :: deltat
+  implicit none
 
-   coef0 = exp(- bb * deltat)
+  double precision :: bb,coef0,coef1,coef2
+  double precision :: deltat
 
-   if (abs(bb) > 1e-5_CUSTOM_REAL) then
-     coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
-     coef2 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL) / bb
-   else
-     coef1 = deltat / 2._CUSTOM_REAL
-     coef2 = deltat / 2._CUSTOM_REAL
-   endif
+  coef0 = exp(- bb * deltat)
 
- end subroutine compute_coef_convolution
+  if (abs(bb) > 1e-5_CUSTOM_REAL) then
+    coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
+    coef2 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL) / bb
+  else
+    coef1 = deltat / 2._CUSTOM_REAL
+    coef2 = deltat / 2._CUSTOM_REAL
+  endif
+
+  end subroutine compute_coef_convolution
 
 !========================================================================
 
- subroutine lik_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+  subroutine lik_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                       CPML_region_local,index_ik,A_0,A_1,A_2,singularity_type_2,bb_1,bb_2, &
                                       coef0_1,coef1_1,coef2_1,coef0_2,coef1_2,coef2_2)
+
+  use constants,only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
+
   implicit none
-  include "constants.h"
 
   double precision, intent(in) :: timeval
   double precision :: deltat
@@ -169,12 +172,13 @@
 
 !========================================================================
 
- subroutine l_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
-                                    CPML_region_local,A_0,A_1,A_2,A_3,A_4,singularity_type,&
-                                    bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
+  subroutine l_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+                                     CPML_region_local,A_0,A_1,A_2,A_3,A_4,singularity_type,&
+                                     bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
+
+  use constants,only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
 
   implicit none
-  include "constants.h"
 
   double precision :: timeval
   double precision :: deltat
@@ -264,17 +268,19 @@
   bb_2 = alpha_z
   call compute_coef_convolution(bb_2,deltat,coef0_2,coef1_2,coef2_2)
 
- end subroutine l_parameter_computation
+  end subroutine l_parameter_computation
 
 !=====================================================================
 
- subroutine rebuild_value_on_PML_interface_acoustic(it)
+  subroutine rebuild_value_on_PML_interface_acoustic(it)
 
-  use specfem_par, only: nspec,acoustic,any_acoustic,is_pml,ibool,nglob_interface,point_interface, &
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+
+  use specfem_par, only: nspec,ispec_is_acoustic,any_acoustic,is_pml,ibool,nglob_interface,point_interface, &
                          b_potential_dot_acoustic,b_potential_acoustic,&
                          pml_interface_history_potential_dot,pml_interface_history_potential
   implicit none
-  include "constants.h"
+
   integer :: it
 
   !local variables
@@ -283,7 +289,7 @@
   do ispec = 1,nspec
     do j = 1, NGLLZ
       do i = 1, NGLLX
-        if (acoustic(ispec) .and. is_pml(ispec)) then
+        if (ispec_is_acoustic(ispec) .and. is_pml(ispec)) then
           b_potential_dot_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
           b_potential_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
         endif
@@ -298,16 +304,19 @@
     enddo
   endif
 
- end subroutine rebuild_value_on_PML_interface_acoustic
+  end subroutine rebuild_value_on_PML_interface_acoustic
+
 !========================================================================
 
- subroutine rebuild_value_on_PML_interface_viscoelastic(it)
+  subroutine rebuild_value_on_PML_interface_viscoelastic(it)
 
-  use specfem_par, only: nspec,elastic,any_elastic,is_pml,ibool,nglob_interface,point_interface, &
+  use constants,only: NGLLX,NGLLZ
+
+  use specfem_par, only: nspec,ispec_is_elastic,any_elastic,is_pml,ibool,nglob_interface,point_interface, &
                          b_veloc_elastic,b_displ_elastic,&
                          pml_interface_history_veloc,pml_interface_history_displ
   implicit none
-  include "constants.h"
+
   integer :: it
 
   !local variables
@@ -316,7 +325,7 @@
   do ispec = 1,nspec
     do j = 1, NGLLZ
       do i = 1, NGLLX
-        if (elastic(ispec) .and. is_pml(ispec)) then
+        if (ispec_is_elastic(ispec) .and. is_pml(ispec)) then
            b_veloc_elastic(:,ibool(i,j,ispec)) = 0.
            b_displ_elastic(:,ibool(i,j,ispec)) = 0.
         endif
@@ -335,5 +344,4 @@
      enddo
   endif
 
- end subroutine rebuild_value_on_PML_interface_viscoelastic
-!========================================================================
+  end subroutine rebuild_value_on_PML_interface_viscoelastic

@@ -127,6 +127,9 @@ SCOTCH_LIBS = -L${SCOTCH_LIBDIR} -lscotch -lscotcherr
 @COND_CUDA6_TRUE@CUDA6 = yes
 @COND_CUDA6_FALSE@CUDA6 = no
 
+@COND_CUDA7_TRUE@CUDA7 = yes
+@COND_CUDA7_FALSE@CUDA7 = no
+
 # CUDA compilation with linking
 @COND_CUDA_PLUS_TRUE@CUDA_PLUS = yes
 @COND_CUDA_PLUS_FALSE@CUDA_PLUS = no
@@ -149,11 +152,15 @@ CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@ -lstdc++
 # Geforce GT 650m: -gencode=arch=compute_30,code=sm_30
 # Kepler (cuda5) : -gencode=arch=compute_35,code=sm_35
 # Kepler (cuda6.5,K80): -gencode=arch=compute_37,code=sm_37
+# Maxwell (cuda6.5+/cuda7,Quadro K2200): -gencode=arch=compute_50,code=sm_50
 GENCODE_20 = -gencode=arch=compute_20,code=\"sm_20,compute_20\"
 GENCODE_30 = -gencode=arch=compute_30,code=\"sm_30,compute_30\"
 GENCODE_35 = -gencode=arch=compute_35,code=\"sm_35,compute_35\"
 GENCODE_37 = -gencode=arch=compute_37,code=\"sm_37\"
+GENCODE_50 = -gencode=arch=compute_50,code=\"sm_50\"
 
+# CUDA version 7.x
+@COND_CUDA_TRUE@@COND_CUDA7_TRUE@GENCODE = $(GENCODE_50)
 # CUDA version 6.5
 @COND_CUDA_TRUE@@COND_CUDA6_TRUE@GENCODE = $(GENCODE_37)
 # CUDA version 5.x

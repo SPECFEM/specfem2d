@@ -64,10 +64,18 @@ module specfem_par
   !for model description
   !---------------------------------------------------------------------
   character(len=100) :: MODEL, SAVE_MODEL
-  integer :: SIMULATION_TYPE  ! 1 = forward wavefield, 3 = backward and adjoint wavefields and kernels
-  logical :: p_sv   ! for P-SV or SH (membrane) waves calculation
-  logical :: SAVE_FORWARD ! whether or not the last frame is saved to reconstruct the forward field
-  logical :: UNDO_ATTENUATION !for adjoint inversion with attenuation
+
+  ! 1 = forward wavefield, 3 = backward and adjoint wavefields and kernels
+  integer :: SIMULATION_TYPE
+
+  ! for P-SV or SH (membrane) waves calculation
+  logical :: p_sv
+
+  ! whether or not the last frame is saved to reconstruct the forward field
+  logical :: SAVE_FORWARD
+
+  !for adjoint inversion with attenuation
+  logical :: UNDO_ATTENUATION
   integer :: NT_DUMP_ATTENUATION
 
   ! add a small crack (discontinuity) in the medium manually
@@ -92,10 +100,11 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
 
   ! anisotropy parameters
-  logical :: all_anisotropic
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext
-  double precision ::  c11,c13,c15,c33,c35,c55,c12,c23,c25,c22
-  logical, dimension(:), allocatable :: anisotropic
+
+  logical :: all_anisotropic
+  logical, dimension(:), allocatable :: ispec_is_anisotropic
+
   double precision, dimension(:,:), allocatable :: anisotropy
 
   ! for attenuation
@@ -113,6 +122,12 @@ module specfem_par
                                                        inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,&
                                                        phi_nu1_sent,phi_nu2_sent
   real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
+
+  ! material
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: kappastore,mustore, rhostore
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_vp,rho_vs
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+    c11store,c12store,c13store,c15store,c23store,c25store,c33store,c35store,c55store
 
   !---------------------------------------------------------------------
   ! for boundary condition (physical BC or artificial BC)
@@ -220,7 +235,7 @@ module specfem_par
 
   ! for plane wave incidence
   ! to compute analytical initial plane wave field
-  logical initialfield,add_Bielak_conditions
+  logical :: initialfield,add_Bielak_conditions
   double precision :: anglesource_refl, c_inc, c_refl, cploc, csloc
   double precision, dimension(2) :: A_plane, B_plane, C_plane
   double precision :: time_offset
@@ -280,7 +295,7 @@ module specfem_par
 
   double precision, dimension(:,:,:,:), allocatable :: dershape2D,dershape2D_display
 
-  integer, dimension(:,:,:), allocatable :: ibool,ibool_outer,ibool_inner
+  integer, dimension(:,:,:), allocatable :: ibool
   integer, dimension(:,:), allocatable  :: knods
   integer, dimension(:), allocatable :: kmato,numabs, &
      ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
@@ -372,11 +387,6 @@ module specfem_par
   double precision :: ratio_1DOF,ratio_2DOFs
 
   ! to determine date and time at which the run will finish
-  character(len=8) datein
-  character(len=10) timein
-  character(len=5)  :: zone
-  integer, dimension(8) :: time_values
-  integer :: year,mon,day,hr,minutes,timestamp
   double precision :: timestamp_seconds_start
 
   !---------------------------------------------------------------------
@@ -391,9 +401,6 @@ module specfem_par
   !for acoustic simulation
   !---------------------------------------------------------------------
   ! for acoustic medium
-  logical :: any_acoustic,any_acoustic_glob
-  integer :: nglob_acoustic
-  integer :: nglob_gravitoacoustic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic,potential_acoustic_old
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_acoustic_LDDRK, potential_acoustic_LDDRK
@@ -409,8 +416,13 @@ module specfem_par
     potential_dot_dot_gravito,potential_dot_gravito,potential_gravito
 
   ! for acoustic and gravitoacoustic detection
-  logical, dimension(:), allocatable :: acoustic,gravitoacoustic
+  integer :: nglob_acoustic
+  logical :: any_acoustic,any_acoustic_glob
+  logical, dimension(:), allocatable :: ispec_is_acoustic
+
+  integer :: nglob_gravitoacoustic
   logical :: any_gravitoacoustic,any_gravitoacoustic_glob
+  logical, dimension(:), allocatable :: ispec_is_gravitoacoustic
 
   ! inverse mass matrices
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_acoustic
@@ -442,9 +454,9 @@ module specfem_par
   !for by elastic simulation
   !---------------------------------------------------------------------
   ! number of node associated with elastic medium
-  logical :: any_elastic,any_elastic_glob
   integer :: nglob_elastic
-  logical, dimension(:), allocatable :: elastic
+  logical :: any_elastic,any_elastic_glob
+  logical, dimension(:), allocatable :: ispec_is_elastic
 
   ! inverse mass matrices
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_one
@@ -492,9 +504,9 @@ module specfem_par
   !---------------------------------------------------------------------
   !for by poroelastic simulation
   !---------------------------------------------------------------------
-  logical :: any_poroelastic,any_poroelastic_glob
   integer :: nglob_poroelastic
-  logical, dimension(:), allocatable :: poroelastic
+  logical :: any_poroelastic,any_poroelastic_glob
+  logical, dimension(:), allocatable :: ispec_is_poroelastic
 
   ! inverse mass matrices
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
@@ -629,7 +641,7 @@ module specfem_par
 
   character(len=150) :: adj_source_file
   integer :: irec_local,nadj_rec_local
-  double precision :: xx,zz,rholb,tempx1l,tempx2l,b_tempx1l,b_tempx2l,bb_tempx1l,bb_tempx2l
+!  double precision :: xx,zz,rholb,tempx1l,tempx2l,b_tempx1l,b_tempx2l,bb_tempx1l,bb_tempx2l
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearrays
 
@@ -654,18 +666,16 @@ module specfem_par
   !prepare_timerun_body.F90 et al
   !---------------------------------------------------------------------
   logical :: anyabs
-  double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,rhol,xi,gamma,x,z
-  double precision :: gravityl,Nsql,hp1,hp2
+  double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,xi,gamma,x,z
 
   real(kind=CUSTOM_REAL) :: kinetic_energy,potential_energy,kinetic_energy_total,potential_energy_total
   double precision :: vpImin,vpImax,vpIImin,vpIImax
-  integer :: iglobzero,ios
+
+  integer :: iglobzero
   integer :: it,id,n,nglob,npgeo
   character(len=150) dummystring
   ! material properties of the elastic medium
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
-  ! Jacobian matrix and determinant
-  double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
 
   ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
   double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
@@ -680,6 +690,7 @@ module specfem_par
   ! for MPI and partitioning
   integer :: myrank
   integer :: NPROC
+
   ! parameter read from parameter file
   integer :: nproc_read_from_database
 
@@ -753,7 +764,6 @@ module specfem_par
   logical :: SU_FORMAT
   !<SU_FORMAT
   integer(kind=4) :: r4head(60)
-  character(len=512) :: filename
   real(kind=4),dimension(:,:),allocatable :: adj_src_s
   integer(kind=2) :: header2(2)
   !>SU_FORMAT
@@ -766,6 +776,7 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
   ! curl in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
+
   !---------------------------------------------------------------------
   ! for color image
   !---------------------------------------------------------------------
@@ -927,48 +938,79 @@ module specfem_par
   ! Global GPU toggle. Set in Par_file
   logical :: GPU_MODE
 
+end module specfem_par
+
+!=====================================================================
+
+module specfem_par_gpu
+
+! parameter module for gpu simulations
+
+  use constants,only: CUSTOM_REAL
+  implicit none
+
   ! CUDA mesh pointer<->integer wrapper
   integer(kind=8) :: Mesh_pointer
 
-  logical, dimension(:), allocatable :: ispec_is_inner
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_2D,veloc_2D,accel_2D
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_2D,b_veloc_2D,b_accel_2D
+  ! wavefield transfers
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D
+
+  ! time steps
+  real(kind=CUSTOM_REAL) :: deltatf,deltatover2f,deltatsquareover2f
+  real(kind=CUSTOM_REAL) :: b_deltatf,b_deltatover2f,b_deltatsquareover2f
+
+  ! mesh dimension
   integer :: NGLOB_AB, NSPEC_AB
-  real(kind=CUSTOM_REAL) deltatf,deltatover2f,deltatsquareover2f
+
   logical :: ANY_ANISOTROPY
-  integer, dimension(:,:), allocatable  :: gather_ispec_selected_rec
-  real(kind=CUSTOM_REAL) b_deltatf,b_deltatover2f,b_deltatsquareover2f
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: kappastore,mustore, rhostore
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_vp,rho_vs
+
+  ! absorbing boundary
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_boundary_normal
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian1Dw
   integer, dimension(:,:,:), allocatable :: abs_boundary_ij
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable ::  source_time_function_loc
+
+  ! free surface
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: free_surface_normal
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: free_surface_jacobian2Dw
   integer, dimension(:,:,:), allocatable :: free_surface_ij
   integer, dimension(:), allocatable :: free_ac_ispec
   integer :: num_free_surface_faces
+
   integer, dimension(:), allocatable :: cote_abs
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
-            c11store,c12store,c13store,c15store,c23store,c25store,c33store,c35store,c55store
+
+  ! coloring
   integer :: num_colors_outer_acoustic,num_colors_inner_acoustic
   integer, dimension(:), allocatable :: num_elem_colors_acoustic
+
   integer :: num_colors_outer_elastic,num_colors_inner_elastic
   integer, dimension(:), allocatable :: num_elem_colors_elastic
+
+  ! sources
   integer :: nsources_local
+  integer, dimension(:), allocatable :: ispec_selected_source_loc
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray_loc
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable ::  source_time_function_loc
+
+  ! domains
+  logical, dimension(:), allocatable :: ispec_is_inner
   integer :: num_phase_ispec_elastic,nspec_inner_elastic,nspec_outer_elastic
+  integer :: num_phase_ispec_acoustic,nspec_inner_acoustic,nspec_outer_acoustic
+
   integer, dimension(:,:), allocatable :: phase_ispec_inner_elastic
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: cosrot_irecf, sinrot_irecf
+  integer, dimension(:,:), allocatable :: phase_ispec_inner_acoustic
+
+  ! coupling
   integer, dimension(:), allocatable :: coupling_ac_el_ispec
   integer, dimension(:,:,:), allocatable :: coupling_ac_el_ij
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: coupling_ac_el_normal
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: coupling_ac_el_jacobian1Dw
-  integer, dimension(:), allocatable :: ispec_selected_source_loc
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray_loc
-  integer, dimension(:,:), allocatable :: phase_ispec_inner_acoustic
+
+  ! buffers
   integer, dimension(:), allocatable  :: tab_requests_send_recv_scalar
   integer, dimension(:), allocatable  :: b_tab_requests_send_recv_scalar
+  integer, dimension(:), allocatable  :: tab_requests_send_recv_vector
+  integer, dimension(:), allocatable  :: b_tab_requests_send_recv_vector
+
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar_ext_mesh
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_send_scalar_ext_mesh
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_recv_scalar_ext_mesh
@@ -977,9 +1019,7 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_vector_ext_mesh
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_recv_vector_ext_mesh
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_recv_vector_ext_mesh
-  integer, dimension(:), allocatable  :: tab_requests_send_recv_vector
-  integer, dimension(:), allocatable  :: b_tab_requests_send_recv_vector
-  integer :: num_phase_ispec_acoustic,nspec_inner_acoustic,nspec_outer_acoustic
+
+end module specfem_par_gpu
 
 
-end module specfem_par

@@ -44,7 +44,7 @@
 
   subroutine compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
 
-  use specfem_par, only: p_sv,elastic,nglob_elastic,&
+  use specfem_par, only: p_sv,ispec_is_elastic,nglob_elastic,&
                          NSOURCES,source_type,anglesource,source_time_function,&
                          is_proc_source,ispec_selected_source,sourcearray,&
                          hxis_store,hgammas_store,ibool,myrank
@@ -61,7 +61,7 @@
   ! --- add the source
   do i_source= 1,NSOURCES
     ! if this processor core carries the source and the source element is elastic
-    if (is_proc_source(i_source) == 1 .and. elastic(ispec_selected_source(i_source))) then
+    if (is_proc_source(i_source) == 1 .and. ispec_is_elastic(ispec_selected_source(i_source))) then
       ! collocated force
       if (source_type(i_source) == 1) then
         if (p_sv) then ! P-SV calculation
@@ -104,12 +104,16 @@
   enddo ! do i_source= 1,NSOURCES
 
   end subroutine compute_add_sources_viscoelastic
+
 !
 !=====================================================================
+!
+
 ! for viscoelastic solver for adjoint propagation wave field
+
   subroutine compute_add_sources_viscoelastic_adjoint()
 
-  use specfem_par, only: myrank,p_sv,accel_elastic,elastic,NSTEP,it,&
+  use specfem_par, only: myrank,p_sv,accel_elastic,ispec_is_elastic,NSTEP,it,&
                          nrec,which_proc_receiver,ispec_selected_rec,adj_sourcearrays,&
                          ibool
   implicit none
@@ -123,7 +127,7 @@
     !   add the source (only if this proc carries the source)
     if (myrank == which_proc_receiver(irec)) then
       irec_local = irec_local + 1
-      if (elastic(ispec_selected_rec(irec))) then
+      if (ispec_is_elastic(ispec_selected_rec(irec))) then
         ! add source array
         do j = 1,NGLLZ
           do i = 1,NGLLX

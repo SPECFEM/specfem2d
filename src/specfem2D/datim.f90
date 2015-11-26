@@ -44,15 +44,17 @@
 
 ! get date and time
 
+  use constants,only: IMAIN
+
   implicit none
 
-  include "constants.h"
+  character(len=50) :: string_input
 
-  character(len=50) string_input
-  character(len=8) datein
-  character(len=10) timein
-  character(len=16) dateprint
-  character(len=8) timeprint
+  ! local parameters
+  character(len=8) :: datein
+  character(len=10) :: timein
+  character(len=16) :: dateprint
+  character(len=8) :: timeprint
 
   datein = ' '
   timein = ' '
@@ -65,6 +67,7 @@
   write(IMAIN,"(//1x,79('-')/1x,79('-')/1x,'Program SPECFEM2D: ')")
   write(IMAIN,"(1x,79('-')/1x,79('-')/1x,a50)") string_input
   write(IMAIN,"(1x,79('-')/,1x,79('-')/' D a t e : ',a16,30x,' T i m e  : ',a8/1x,79('-'),/1x,79('-'))") dateprint,timeprint
+  call flush_IMAIN()
 
   end subroutine datim
 

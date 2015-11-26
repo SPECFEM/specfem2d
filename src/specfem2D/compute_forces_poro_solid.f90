@@ -48,7 +48,8 @@
                          ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                          source_type,it,NSTEP,anyabs, &
                          initialfield,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
-                         ibool,kmato,numabs,poroelastic,codeabs,codeabs_corner, &
+                         ibool,kmato,numabs,ispec_is_poroelastic, &
+                         codeabs,codeabs_corner, &
                          accels_poroelastic,velocs_poroelastic,velocw_poroelastic,displs_poroelastic,displs_poroelastic_old, &
                          displw_poroelastic,b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic, &
                          density,porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
@@ -137,17 +138,17 @@
 
 ! compute Grad(displs_poroelastic) at time step n for attenuation
     call compute_gradient_attenuation(displs_poroelastic,dux_dxl_n,duz_dxl_n, &
-           dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,poroelastic,hprime_xx,hprime_zz,nspec,nglob)
+           dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,ispec_is_poroelastic,hprime_xx,hprime_zz,nspec,nglob)
 
 ! compute Grad(displs_poroelastic) at time step n-1 for attenuation
     call compute_gradient_attenuation(displs_poroelastic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
-           dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,poroelastic,hprime_xx,hprime_zz,nspec,nglob)
+           dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,ispec_is_poroelastic,hprime_xx,hprime_zz,nspec,nglob)
 
 ! update memory variables with fourth-order Runge-Kutta time scheme for attenuation
 ! loop over spectral elements
   do ispec = 1,nspec
 
-    if (poroelastic(ispec)) then
+    if (ispec_is_poroelastic(ispec)) then
        do j = 1,NGLLZ; do i = 1,NGLLX
           theta_n_u = dux_dxl_n(i,j,ispec) + duz_dzl_n(i,j,ispec)
           theta_nsub1_u = dux_dxl_nsub1(i,j,ispec) + duz_dzl_nsub1(i,j,ispec)
@@ -242,7 +243,7 @@
 !--- poroelastic spectral element
 !---
 
-    if (poroelastic(ispec)) then
+    if (ispec_is_poroelastic(ispec)) then
 
 ! get poroelastic parameters of current spectral element
     phil = porosity(kmato(ispec))
@@ -537,7 +538,7 @@
 
     etal_f = poroelastcoef(2,2,kmato(ispec))
 
-      if (poroelastic(ispec) .and. etal_f >0.d0) then
+      if (ispec_is_poroelastic(ispec) .and. etal_f >0.d0) then
 
     phil = porosity(kmato(ispec))
     tortl = tortuosity(kmato(ispec))
@@ -615,7 +616,7 @@
 
       ispec = numabs(ispecabs)
 
-   if (poroelastic(ispec)) then
+   if (ispec_is_poroelastic(ispec)) then
 
 ! get poroelastic parameters of current spectral element
     phil = porosity(kmato(ispec))
@@ -673,7 +674,7 @@
           rho_vs = (rhol_bar - phil/tortl*rhol_f)*csl
 
 
-          if (poroelastic(ispec)) then
+          if (ispec_is_poroelastic(ispec)) then
             vx = velocs_poroelastic(1,iglob)
             vz = velocs_poroelastic(2,iglob)
             vxf = velocw_poroelastic(1,iglob)
@@ -729,7 +730,7 @@
           rho_vpII = (rhol_bar - phil/tortl*rhol_f)*cpIIl
           rho_vs = (rhol_bar - phil/tortl*rhol_f)*csl
 
-          if (poroelastic(ispec)) then
+          if (ispec_is_poroelastic(ispec)) then
             vx = velocs_poroelastic(1,iglob)
             vz = velocs_poroelastic(2,iglob)
             vxf = velocw_poroelastic(1,iglob)
@@ -789,7 +790,7 @@
           rho_vpII = (rhol_bar - phil/tortl*rhol_f)*cpIIl
           rho_vs = (rhol_bar - phil/tortl*rhol_f)*csl
 
-          if (poroelastic(ispec)) then
+          if (ispec_is_poroelastic(ispec)) then
             vx = velocs_poroelastic(1,iglob)
             vz = velocs_poroelastic(2,iglob)
             vxf = velocw_poroelastic(1,iglob)
@@ -849,7 +850,7 @@
           rho_vpII = (rhol_bar - phil/tortl*rhol_f)*cpIIl
           rho_vs = (rhol_bar - phil/tortl*rhol_f)*csl
 
-          if (poroelastic(ispec)) then
+          if (ispec_is_poroelastic(ispec)) then
             vx = velocs_poroelastic(1,iglob)
             vz = velocs_poroelastic(2,iglob)
             vxf = velocw_poroelastic(1,iglob)
@@ -880,7 +881,7 @@
 
       endif  !  end of top absorbing boundary
 
-    endif ! if poroelastic(ispec)
+    endif ! if ispec_is_poroelastic(ispec)
 
     enddo
 
@@ -892,7 +893,7 @@
       do i_source= 1,NSOURCES
 
 ! if this processor core carries the source and the source element is poroelastic
-    if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
+    if (is_proc_source(i_source) == 1 .and. ispec_is_poroelastic(ispec_selected_source(i_source))) then
 
     phil = porosity(kmato(ispec_selected_source(i_source)))
     tortl = tortuosity(kmato(ispec_selected_source(i_source)))
@@ -932,7 +933,7 @@
       if (myrank == which_proc_receiver(irec)) then
 
       irec_local = irec_local + 1
-      if (poroelastic(ispec_selected_rec(irec))) then
+      if (ispec_is_poroelastic(ispec_selected_rec(irec))) then
 ! add source array
       do j = 1,NGLLZ
         do i = 1,NGLLX

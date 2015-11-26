@@ -88,6 +88,8 @@ specfem2D_OBJECTS = \
 	$O/compute_coupling_viscoelastic_ac.spec.o \
 	$O/compute_coupling_viscoelastic_po.spec.o \
 	$O/compute_add_sources_viscoelastic.spec.o \
+	$O/compute_gpu_acoustic.spec.o \
+	$O/compute_gpu_elastic.spec.o \
 	$O/compute_gradient_attenuation.spec.o \
 	$O/compute_normal_vector.spec.o \
 	$O/compute_pressure.spec.o \
@@ -132,6 +134,7 @@ specfem2D_OBJECTS = \
 	$O/prepare_source_time_function.spec.o \
 	$O/prepare_timerun.spec.o \
 	$O/prepare_timerun_body.spec.o \
+	$O/prepare_timerun_gpu.spec.o \
 	$O/read_databases.spec.o \
 	$O/read_external_model.spec.o \
 	$O/recompute_jacobian.spec.o \
@@ -156,6 +159,7 @@ specfem2D_OBJECTS = \
 specfem2D_MODULES = \
 	$(FC_MODDIR)/constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_gpu.$(FC_MODEXT) \
 	$(FC_MODDIR)/interpolation.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_tomography_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
@@ -240,15 +244,10 @@ cuda_specfem2D_OBJECTS = \
 	$O/transfer_fields_cuda.cuda.o \
 	$O/update_displacement_cuda.cuda.o \
 	$O/write_seismograms_cuda.cuda.o \
-	$O/acoustic_cuda.spec.o \
-	$O/elastic_cuda.spec.o \
-	$O/init_host_to_dev_variable.spec.o \
-	$O/prepare_timerun_gpu.spec.o \
 	$(EMPTY_MACRO)
 
 
 cuda_specfem2D_STUBS = \
-	$O/specfem2D_wrapper_cuda_method_stubs.cudaf90.o \
 	$O/specfem2D_gpu_cuda_method_stubs.cudacc.o \
 	$(EMPTY_MACRO)
 
@@ -360,7 +359,6 @@ $O/finalize_simulation.spec.o: $O/specfem2D_par.spec.o
 $O/get_MPI.spec.o: $O/specfem2D_par.spec.o
 $O/get_global.spec.o: $O/specfem2D_par.spec.o
 $O/gmat01.spec.o: $O/specfem2D_par.spec.o
-$O/init_host_to_dev_variable.spec.o: $O/specfem2D_par.spec.o
 $O/initialize_simulation.spec.o: $O/specfem2D_par.spec.o
 $O/invert_mass_matrix.spec.o: $O/specfem2D_par.spec.o
 $O/iterate_time.spec.o: $O/specfem2D_par.spec.o

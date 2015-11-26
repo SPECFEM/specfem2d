@@ -42,13 +42,14 @@
 
 
   subroutine compute_forces_gravitoacoustic(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-               potential_gravitoacoustic,potential_dot_dot_gravito, &
-               potential_gravito,IS_BACKWARD_FIELD,PML_BOUNDARY_CONDITIONS)
+                                            potential_gravitoacoustic,potential_dot_dot_gravito, &
+                                            potential_gravito,IS_BACKWARD_FIELD,PML_BOUNDARY_CONDITIONS)
 
 ! compute forces for the gravitoacoustic elements
 
+  use constants,only: CUSTOM_REAL
 
-  use specfem_par, only: codeabs,gravitoacoustic,nglob,nspec,nelemabs,numat,it,NSTEP, &
+  use specfem_par, only: codeabs,ispec_is_gravitoacoustic,nglob,nspec,nelemabs,numat,it,NSTEP, &
                          anyabs,assign_external_model,ibool,kmato,numabs, &
                          rmass_inverse_gravito, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
@@ -62,9 +63,6 @@
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top,is_PML
 
   implicit none
-
-  include "constants.h"
-
 
 ! Chi potential
   real(kind=CUSTOM_REAL), dimension(nglob) :: &
@@ -81,9 +79,8 @@
 !--- local variables
 !---
 
-
   print *, nglob,nspec,nelemabs,numat,it,NSTEP, &
-               anyabs,assign_external_model,ibool,kmato,numabs,gravitoacoustic, &
+               anyabs,assign_external_model,ibool,kmato,numabs,ispec_is_gravitoacoustic, &
                codeabs,potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
                potential_gravitoacoustic,potential_dot_dot_gravito,&
                !potential_dot_gravito, &

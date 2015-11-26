@@ -276,7 +276,7 @@
 
   use specfem_par, only : nglob,image_color_vp_display,iglob_image_color, &
                             NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
-                            num_pixel_loc,nspec,elastic,poroelastic,ibool,kmato, &
+                            num_pixel_loc,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
                             density,poroelastcoef,porosity,tortuosity, &
                             nproc,myrank,assign_external_model,vpext,DRAW_WATER_IN_BLUE
 
@@ -308,7 +308,7 @@
 
   do ispec = 1,nspec
 
-    if (poroelastic(ispec)) then
+    if (ispec_is_poroelastic(ispec)) then
       !get parameters of current spectral element
       phil = porosity(kmato(ispec))
       tortl = tortuosity(kmato(ispec))
@@ -370,7 +370,7 @@
           endif
         enddo
       enddo
-    endif ! of if (poroelastic(ispec)) then
+    endif ! of if (ispec_is_poroelastic(ispec)) then
 
 ! now display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
 ! or in the case of offshore oil industry experiments.
@@ -378,7 +378,7 @@
 !  a purely acoustic simulation with different acoustic media for the oil industry, one then wants to see the different
 !  acoustic wave speeds displayed as a grey scale).
 ! For now, in this routine, use -1 as a flag to label such acoustic points
-    if (DRAW_WATER_IN_BLUE .and. .not. elastic(ispec) .and. .not. poroelastic(ispec)) then
+    if (DRAW_WATER_IN_BLUE .and. .not. ispec_is_elastic(ispec) .and. .not. ispec_is_poroelastic(ispec)) then
       do j = 1,NGLLZ
         do i = 1,NGLLX
 

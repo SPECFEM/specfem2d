@@ -41,10 +41,12 @@
 !
 !========================================================================
 
+
   subroutine setup_sources_receivers()
 
   use specfem_par, only: NSOURCES,initialfield,source_type, &
-                         coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface,elastic,poroelastic, &
+                         coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface, &
+                         ispec_is_elastic,ispec_is_poroelastic, &
                          x_source,z_source,ispec_selected_source,ispec_selected_rec, &
                          is_proc_source,nb_proc_source, &
                          sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo, &
@@ -81,7 +83,7 @@
           ixmax = acoustic_surface(3,ispec_acoustic_surface)
           izmin = acoustic_surface(4,ispec_acoustic_surface)
           izmax = acoustic_surface(5,ispec_acoustic_surface)
-          if (.not. elastic(ispec) .and. .not. poroelastic(ispec) .and. &
+          if (.not. ispec_is_elastic(ispec) .and. .not. ispec_is_poroelastic(ispec) .and. &
             ispec == ispec_selected_source(i_source)) then
             if ((izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
                 gamma_source(i_source) < -0.99d0) .or.&
@@ -167,45 +169,50 @@
 
 ! =====
 
-subroutine add_adjoint_sources_SU
+  subroutine add_adjoint_sources_SU()
 
   use specfem_par, only: AXISYM,xiglj,is_on_the_axis,myrank, NSTEP, nrec, xi_receiver, gamma_receiver, which_proc_receiver, &
                          xigll,zigll,hxir,hgammar,hpxir,hpgammar, &
                          adj_sourcearray, adj_sourcearrays, &
-                         r4head, header2, filename, source_adjointe, GPU_MODE, ispec_selected_rec
+                         r4head, header2, source_adjointe, GPU_MODE, ispec_selected_rec
 
-  include "constants.h"
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ
+  implicit none
 
-  integer :: i, k, irec, irec_local
-
+  ! local parameters
+  integer :: i, k, irec, irec_local, ier
   real(kind=CUSTOM_REAL), allocatable, dimension(:,:) :: adj_src_s
+  character(len=MAX_STRING_LEN) :: filename
 
-  integer :: ios
+  irec_local = 0
+  write(filename, "('./SEM/Ux_file_single.su.adj')")
+  open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+  if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
-   irec_local = 0
-   write(filename, "('./SEM/Ux_file_single.su.adj')")
-   open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
-           if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
-   write(filename, "('./SEM/Uy_file_single.su.adj')")
-   open(112,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
-           if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
-   write(filename, "('./SEM/Uz_file_single.su.adj')")
-   open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ios)
-           if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+  write(filename, "('./SEM/Uy_file_single.su.adj')")
+  open(112,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+  if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
-   allocate(adj_src_s(NSTEP,3))
-   adj_src_s(:,:) = 0.
+  write(filename, "('./SEM/Uz_file_single.su.adj')")
+  open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+  if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
-   do irec = 1, nrec
-     if (myrank == which_proc_receiver(irec)) then
+  allocate(adj_src_s(NSTEP,3))
+  adj_src_s(:,:) = 0.
+
+  do irec = 1, nrec
+    if (myrank == which_proc_receiver(irec)) then
       irec_local = irec_local + 1
       adj_sourcearray(:,:,:,:) = 0.0
-      read(111,rec=irec,iostat=ios) r4head, adj_src_s(:,1)
-           if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
-      read(112,rec=irec,iostat=ios) r4head, adj_src_s(:,2)
-           if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
-      read(113,rec=irec,iostat=ios) r4head, adj_src_s(:,3)
-           if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+      read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
+      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+
+      read(112,rec=irec,iostat=ier) r4head, adj_src_s(:,2)
+      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+
+      read(113,rec=irec,iostat=ier) r4head, adj_src_s(:,3)
+      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+
       header2=int(r4head(29), kind=2)
       if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
 
@@ -225,19 +232,19 @@ subroutine add_adjoint_sources_SU
 
       if (.not. GPU_MODE) then
         do k = 1, NGLLZ
-            do i = 1, NGLLX
-              adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
-            enddo
+          do i = 1, NGLLX
+            adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
+          enddo
         enddo
         adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
       endif
 
-     endif !  if (myrank == which_proc_receiver(irec))
-   enddo ! irec
-   close(111)
-   close(112)
-   close(113)
-   deallocate(adj_src_s)
+    endif !  if (myrank == which_proc_receiver(irec))
+  enddo ! irec
+  close(111)
+  close(112)
+  close(113)
+  deallocate(adj_src_s)
 
-end subroutine
+  end subroutine add_adjoint_sources_SU
 

@@ -66,9 +66,9 @@
              ihours_remain,iminutes_remain,iseconds_remain,int_t_remain, &
              ihours_total,iminutes_total,iseconds_total,int_t_total
   ! to determine date and time at which the run will finish
-  character(len=8) datein
-  character(len=10) timein
-  character(len=5)  :: zone
+  character(len=8) :: datein
+  character(len=10) :: timein
+  character(len=5) :: zone
   integer, dimension(8) :: time_values
   character(len=3), dimension(12) :: month_name
   character(len=3), dimension(0:6) :: weekday_name
@@ -122,7 +122,7 @@
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0 .or. displnorm_all_glob /= displnorm_all_glob) &
       call exit_MPI(myrank,'code became unstable and blew up in solid (elastic)')
 
   endif
@@ -148,7 +148,7 @@
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0 .or. displnorm_all_glob /= displnorm_all_glob) &
       call exit_MPI(myrank,'code became unstable and blew up in solid (poroelastic)')
 
     if (any_poroelastic) then
@@ -170,7 +170,7 @@
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0 .or. displnorm_all_glob /= displnorm_all_glob) &
       call exit_MPI(myrank,'code became unstable and blew up in fluid (poroelastic)')
 
   endif
@@ -196,7 +196,7 @@
     ! check stability of the code in fluid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0) &
+    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0 .or. displnorm_all_glob /= displnorm_all_glob) &
       call exit_MPI(myrank,'code became unstable and blew up in fluid (acoustic)')
 
   endif

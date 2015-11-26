@@ -44,7 +44,7 @@
 
   subroutine compute_add_sources_poro(accels_poroelastic,accelw_poroelastic,it,i_stage)
 
-  use specfem_par, only: poroelastic,nglob_poroelastic, &
+  use specfem_par, only: ispec_is_poroelastic,nglob_poroelastic, &
                          NSOURCES,source_type,anglesource,source_time_function, &
                          is_proc_source,ispec_selected_source, &
                          hxis_store,hgammas_store,ibool, &
@@ -62,7 +62,7 @@
 
   do i_source= 1,NSOURCES
     ! if this processor core carries the source and the source element is elastic
-    if (is_proc_source(i_source) == 1 .and. poroelastic(ispec_selected_source(i_source))) then
+    if (is_proc_source(i_source) == 1 .and. ispec_is_poroelastic(ispec_selected_source(i_source))) then
       phil = porosity(kmato(ispec_selected_source(i_source)))
       tortl = tortuosity(kmato(ispec_selected_source(i_source)))
       rhol_s = density(1,kmato(ispec_selected_source(i_source)))

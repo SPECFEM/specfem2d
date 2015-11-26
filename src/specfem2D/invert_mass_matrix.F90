@@ -53,7 +53,7 @@
                                 rmass_s_inverse_poroelastic, &
                                 rmass_w_inverse_poroelastic, &
                                 nspec,ibool,kmato,wxgll,wzgll,jacobian, &
-                                elastic,acoustic,gravitoacoustic,poroelastic, &
+                                ispec_is_elastic,ispec_is_acoustic,ispec_is_gravitoacoustic,ispec_is_poroelastic, &
                                 assign_external_model, &
                                 density,poroelastcoef,porosity,tortuosity, &
                                 vpext,rhoext, &
@@ -117,7 +117,7 @@
           kappal = lambdal_relaxed + 2.d0/3.d0*mul_relaxed
         endif
 
-        if (poroelastic(ispec)) then
+        if (ispec_is_poroelastic(ispec)) then
           ! material is poroelastic
 
           rhol_s = density(1,kmato(ispec))
@@ -135,7 +135,7 @@
                   - phil*rhol_f*rhol_f)/(rhol_bar*phil)
 
           ! for elastic medium
-        else if (elastic(ispec)) then
+        else if (ispec_is_elastic(ispec)) then
 
           this_element_has_PML = .false.
           if (PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
@@ -241,7 +241,7 @@
 
           ! for gravitoacoustic medium
           !!! PML NOT WORKING YET !!!
-        else if (gravitoacoustic(ispec)) then
+        else if (ispec_is_gravitoacoustic(ispec)) then
 
         this_element_has_PML = .false.
         if (PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
@@ -402,7 +402,7 @@
               weight = jacobian1D * wzgll(j)
 
               ! Clayton-Engquist condition if elastic
-              if (elastic(ispec)) then
+              if (ispec_is_elastic(ispec)) then
 
                  vx = 1.0d0*deltat/2.0d0
                  vy = 1.0d0*deltat/2.0d0
@@ -453,7 +453,7 @@
               weight = jacobian1D * wzgll(j)
 
               ! Clayton-Engquist condition if elastic
-              if (elastic(ispec)) then
+              if (ispec_is_elastic(ispec)) then
 
                  vx = 1.0d0*deltat/2.0d0
                  vy = 1.0d0*deltat/2.0d0
@@ -503,7 +503,7 @@
               weight = jacobian1D * wxgll(i)
 
               ! Clayton-Engquist condition if elastic
-              if (elastic(ispec)) then
+              if (ispec_is_elastic(ispec)) then
 
                  vx = 1.0d0*deltat/2.0d0
                  vy = 1.0d0*deltat/2.0d0
@@ -564,7 +564,7 @@
               weight = jacobian1D * wxgll(i)
 
               ! Clayton-Engquist condition if elastic
-              if (elastic(ispec)) then
+              if (ispec_is_elastic(ispec)) then
 
                  vx = 1.0d0*deltat/2.0d0
                  vy = 1.0d0*deltat/2.0d0
@@ -603,7 +603,7 @@
       ispec = numabs(ispecabs)
 
       ! Sommerfeld condition if acoustic
-      if (acoustic(ispec)) then
+      if (ispec_is_acoustic(ispec)) then
 
         ! get elastic parameters of current spectral element
         lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))

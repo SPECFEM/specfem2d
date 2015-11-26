@@ -45,7 +45,7 @@
   ! compute curl in (poro)elastic elements (for rotational study)
 
   use specfem_par, only: curl_element,displ_elastic, &
-                         displs_poroelastic,elastic,poroelastic, &
+                         displs_poroelastic,ispec_is_elastic,ispec_is_poroelastic, &
                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,myrank
 
   implicit none
@@ -62,7 +62,7 @@
   real(kind=CUSTOM_REAL) :: duz_dxl,dux_dzl
   integer :: i,j,k
 
-  if (elastic(ispec)) then
+  if (ispec_is_elastic(ispec)) then
 
      do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -98,7 +98,7 @@
         enddo
      enddo
 
-  else if (poroelastic(ispec)) then
+  else if (ispec_is_poroelastic(ispec)) then
 
      do j = 1,NGLLZ
         do i = 1,NGLLX

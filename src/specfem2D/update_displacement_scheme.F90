@@ -172,10 +172,11 @@
 
   subroutine update_displacement_precondition_newmark_GPU()
 
-  use specfem_par, only : Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
-                          b_deltatsquareover2f,SIMULATION_TYPE,&
-                          any_acoustic,any_elastic,any_poroelastic,&
-                          PML_BOUNDARY_CONDITIONS,myrank
+  use specfem_par, only : SIMULATION_TYPE,any_acoustic,any_elastic,any_poroelastic,&
+    PML_BOUNDARY_CONDITIONS,myrank
+
+  use specfem_par_gpu, only : Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
+    b_deltatsquareover2f
 
   implicit none
 

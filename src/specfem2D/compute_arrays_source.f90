@@ -140,45 +140,55 @@
 ! ------------------------------------------------------------------------------------------------------
 
 
- subroutine compute_arrays_adj_source(xi_rec,gamma_rec)
+  subroutine compute_arrays_adj_source(xi_rec,gamma_rec)
 
- use constants
- use specfem_par
+  use specfem_par,only: IIN,MAX_STRING_LEN,NSTEP,NGLLX,NGLLZ,NGLJ, &
+    AXISYM,is_on_the_axis, &
+    adj_sourcearray,adj_src_s,adj_source_file,source_adjointe, &
+    xigll,zigll,hxir,hpxir,hgammar,hpgammar,xiglj, &
+    irec_local,ispec_selected_rec,myrank,seismotype
 
- implicit none
+  implicit none
 
-  double precision xi_rec, gamma_rec
+  double precision,intent(in) :: xi_rec, gamma_rec
 
+  ! local parameters
   integer icomp, itime, i, k
+  integer :: ier
   double precision :: junk
   character(len=3) :: comp(3)
+  character(len=MAX_STRING_LEN) :: filename
 
   adj_sourcearray(:,:,:,:) = 0.
 
   if (seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
 
-  comp = (/"BXX","BXY","BXZ"/)
+    comp = (/"BXX","BXY","BXZ"/)
 
-  do icomp = 1,3
+    do icomp = 1,3
 
-    filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
-    open(unit = IIN, file = trim(filename), iostat = ios)
-    if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+      filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
+      open(unit = IIN, file = trim(filename), iostat = ier)
+      if (ier /= 0) then
+        print *,'Error: could not find adjoint source file ',trim(filename)
+        print *,'Please check if file exists...'
+        call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+      endif
 
-    do itime = 1, NSTEP
-      read(IIN,*) junk, adj_src_s(itime,icomp)
+      do itime = 1, NSTEP
+        read(IIN,*) junk, adj_src_s(itime,icomp)
+      enddo
+      close(IIN)
+
     enddo
-    close(IIN)
 
-  enddo
-
-  source_adjointe(irec_local,:,2) = adj_src_s(:,3)
+    source_adjointe(irec_local,:,2) = adj_src_s(:,3)
 
   else if (seismotype == 4) then
 
     filename = 'SEM/'//trim(adj_source_file) // '.PRE.adj'
-    open(unit = IIN, file = trim(filename), iostat = ios)
-    if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+    open(unit = IIN, file = trim(filename), iostat = ier)
+    if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
     do itime = 1, NSTEP
       read(IIN,*) junk, adj_src_s(itime,1)
@@ -188,8 +198,8 @@
   else if (seismotype == 6) then
 
     filename = 'SEM/'//trim(adj_source_file) // '.POT.adj'
-    open(unit = IIN, file = trim(filename), iostat = ios)
-    if (ios /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+    open(unit = IIN, file = trim(filename), iostat = ier)
+    if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
     do itime = 1, NSTEP
       read(IIN,*) junk, adj_src_s(itime,1)
@@ -219,4 +229,4 @@
   enddo
 
 
-end subroutine compute_arrays_adj_source
+  end subroutine compute_arrays_adj_source

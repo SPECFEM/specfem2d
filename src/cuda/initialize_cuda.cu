@@ -446,9 +446,6 @@ void FC_FUNC_(initialize_cuda_aware_mpi,
     exit_on_error("CUDA Device capability canMapHostMemory should be TRUE\n");
   }
 
-
-
-
   // checks kernel optimization setting
 #ifdef USE_LAUNCH_BOUNDS
   // see: mesh_constants_cuda.h

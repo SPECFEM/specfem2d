@@ -43,6 +43,8 @@
 
   subroutine write_wavefield_dumps()
 
+  use constants,only: IMAIN,SIZE_REAL,NGLLX,NGLLZ
+
   use specfem_par, only: this_is_the_first_time_we_dump,myrank,nglob,nspec,mask_ibool, &
                          ibool,coord,imagetype_wavefield_dumps,p_sv,it,SIMULATION_TYPE, &
                          use_binary_for_wavefield_dumps,wavefield_file, &
@@ -52,7 +54,6 @@
                          potential_dot_dot_acoustic,accel_elastic,accels_poroelastic
 
   implicit none
-  include "constants.h"
 
   !local variables
   integer :: i,j,ispec,iglob,icounter,nb_of_values_to_save

@@ -44,14 +44,14 @@
 
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
 
-  use specfem_par, only : AXISYM,ANY_ANISOTROPY,density,porosity,tortuosity, &
+  use specfem_par, only : AXISYM,density,porosity,tortuosity, &
                           anisotropy,permeability,poroelastcoef, &
                           numat,myrank,QKappa_attenuation,Qmu_attenuation, &
                           freq0,Q0,ATTENUATION_PORO_FLUID_PART,assign_external_model, &
                           tomo_material,myrank
 
+  use constants,only: IIN,IMAIN,ZERO,FOUR_THIRDS,HALF,TINYVAL
   implicit none
-  include "constants.h"
 
   double precision f0
 
@@ -63,27 +63,27 @@
   double precision :: cpIsquare,cpIIsquare,cssquare,mu_s,mu_fr,eta_f,lambda_s,lambda_fr
   double precision :: val1,val2,val3,val4,val5,val6
   double precision :: val7,val8,val9,val10,val11,val12,val0
-  double precision ::  c11,c13,c15,c33,c35,c55,c12,c23,c25,c22
+  double precision :: c11,c13,c15,c33,c35,c55,c12,c23,c25,c22
   double precision :: D_biot,H_biot,C_biot,M_biot
   double precision :: w_c
-  integer in,n,indic
-  character(len=80) datlin
+  integer :: imat,n,indic
+  character(len=80) :: datlin
 
-
-  ANY_ANISOTROPY = .false.
 
   !
   !---- loop over the different material sets
   !
-  density(:,:) = zero
-  porosity(:) = zero
-  tortuosity(:) = zero
-  anisotropy(:,:) = zero
-  permeability(:,:) = zero
-  poroelastcoef(:,:,:) = zero
+  density(:,:) = ZERO
+  porosity(:) = ZERO
+  tortuosity(:) = ZERO
+  anisotropy(:,:) = ZERO
+  permeability(:,:) = ZERO
+  poroelastcoef(:,:,:) = ZERO
   QKappa_attenuation(:) = 9999.
   Qmu_attenuation(:) = 9999.
-  tomo_material = 0 ! Index of the material that will be defined by an external tomo file if needed (TOMOGRAPHY_FILE)
+
+  ! Index of the material that will be defined by an external tomo file if needed (TOMOGRAPHY_FILE)
+  tomo_material = 0
 
   if (myrank == 0) write(IMAIN,100) numat
 
@@ -91,11 +91,11 @@
   read(IIN,"(a80)") datlin
   read(IIN,"(a80)") datlin
 
-  do in = 1,numat
+  do imat = 1,numat
 
     read(IIN,*) n,indic,val0,val1,val2,val3,val4,val5,val6,val7,val8,val9,val10,val11,val12
 
-    if (n<1 .or. n>numat) call exit_MPI(myrank,'Wrong material set number')
+    if (n < 1 .or. n > numat) call exit_MPI(myrank,'Wrong material set number')
 
     !---- isotropic material, P and S velocities given, allows for declaration of elastic/acoustic material
     !---- elastic (cs/=0) and acoustic (cs=0)
@@ -125,7 +125,7 @@
       young = 9.d0*kappa*mu/(3.d0*kappa + mu)
 
       ! Poisson's ratio
-      poisson = half*(3.d0*kappa-two_mu)/(3.d0*kappa+mu)
+      poisson = HALF * (3.d0*kappa-two_mu)/(3.d0*kappa+mu)
 
       ! Poisson's ratio must be between -1 and +1/2
       if (poisson < -1.d0 .or. poisson > 0.5d0) call exit_MPI(myrank,'Poisson''s ratio out of range')
@@ -164,10 +164,7 @@
       young = 9.d0*kappa*mu/(3.d0*kappa + mu)
 
       ! Poisson's ratio
-      poisson = half*(3.d0*kappa-two_mu)/(3.d0*kappa+mu)
-
-      ANY_ANISOTROPY = .true.
-
+      poisson = HALF * (3.d0*kappa-two_mu)/(3.d0*kappa+mu)
 
     !---- isotropic material, moduli are given, allows for declaration of poroelastic material
     !---- poroelastic (0<phi<1)
@@ -216,15 +213,18 @@
       young_s = 9.d0*kappa_s*mu_s/(3.d0*kappa_s + mu_s)
 
       ! Poisson's ratio for the solid phase
-      poisson_s = HALF*(3.d0*kappa_s- 2.d0*mu_s)/(3.d0*kappa_s+mu_s)
+      poisson_s = HALF * (3.d0*kappa_s- 2.d0*mu_s)/(3.d0*kappa_s+mu_s)
 
       ! Poisson's ratio must be between -1 and +1/2
       if (poisson_s < -1.d0 .or. poisson_s > 0.5d0) stop 'Poisson''s ratio for the solid phase out of range'
+
     else if (indic <= 0) then
       assign_external_model = .true.
       tomo_material = n
       mu = val2 ! for acoustic medium vs must be 0 anyway
+
     else
+      ! should not occur
       call exit_MPI(myrank,'wrong model flag read')
     endif
 
@@ -236,7 +236,7 @@
       poroelastcoef(1,1,n) = lambda
       poroelastcoef(2,1,n) = mu
       poroelastcoef(3,1,n) = lambdaplus2mu
-      poroelastcoef(4,1,n) = zero
+      poroelastcoef(4,1,n) = ZERO
       QKappa_attenuation(n) = QKappa
       Qmu_attenuation(n) = Qmu
       if (mu > TINYVAL) then
@@ -244,13 +244,14 @@
       else
         porosity(n) = 1.d0
       endif
+
     else if (indic == 2) then
       density(1,n) = density_mat(1)
       ! dummy poroelastcoef values, trick to avoid floating invalid
       poroelastcoef(1,1,n) = lambda
       poroelastcoef(2,1,n) = mu
       poroelastcoef(3,1,n) = lambdaplus2mu
-      poroelastcoef(4,1,n) = zero
+      poroelastcoef(4,1,n) = ZERO
       anisotropy(1,n) = c11
       anisotropy(2,n) = c13
       anisotropy(3,n) = c15
@@ -262,30 +263,32 @@
       anisotropy(9,n) = c25
       anisotropy(10,n) = c22 ! This value is used for AXISYM only
       porosity(n) = 0.d0
+
     else if (indic == 3) then
       density(1,n) = density_mat(1)
       density(2,n) = density_mat(2)
       poroelastcoef(1,1,n) = lambda_s
       poroelastcoef(2,1,n) = mu_s    ! = mu_fr
       poroelastcoef(3,1,n) = lambdaplus2mu_s
-      poroelastcoef(4,1,n) = zero
+      poroelastcoef(4,1,n) = ZERO
 
       poroelastcoef(1,2,n) = kappa_f
       poroelastcoef(2,2,n) = eta_f
-      poroelastcoef(3,2,n) = zero
-      poroelastcoef(4,2,n) = zero
+      poroelastcoef(3,2,n) = ZERO
+      poroelastcoef(4,2,n) = ZERO
 
       poroelastcoef(1,3,n) = lambda_fr
       poroelastcoef(2,3,n) = mu_fr
       poroelastcoef(3,3,n) = lambdaplus2mu_fr
-      poroelastcoef(4,3,n) = zero
+      poroelastcoef(4,3,n) = ZERO
+
     else if (indic <= 0) then
       ! Assign dummy values for now (for acoustic medium vs must be 0 anyway), these values will be read in read_external_model
       density(1,n) = -1.0d0
       poroelastcoef(1,1,n) = -1.0d0
       poroelastcoef(2,1,n) = mu
       poroelastcoef(3,1,n) = -1.0d0
-      poroelastcoef(4,1,n) = zero
+      poroelastcoef(4,1,n) = ZERO
       QKappa_attenuation(n) = 9999.
       Qmu_attenuation(n) = 9999.
       if (mu > TINYVAL) then
@@ -293,7 +296,9 @@
       else
         porosity(n) = 1.d0
       endif
+
     else
+      ! should not occur
       call exit_MPI(myrank,'wrong model flag read')
     endif
 
@@ -301,44 +306,50 @@
     !----    check what has been read
     !
     if (myrank == 0) then
+      ! user output
       if (indic == 1) then
-         ! material can be acoustic (fluid) or elastic (solid)
-         if (poroelastcoef(2,1,n) > TINYVAL) then    ! elastic
-            write(IMAIN,200) n,cp,cs,density_mat(1),poisson,lambda,mu,kappa,young,QKappa,Qmu
-            if (poisson < 0.d0) then
-              write(IMAIN,*)
-              write(IMAIN,*) 'Materials with a negative Poisson''s ratio can exist,'
-              write(IMAIN,*) 'see e.g. R. Lakes, "Science" vol. 235, p. 1038-1040 (1987),'
-              write(IMAIN,*) 'but are extremely rare.'
-              write(IMAIN,*) 'Hope you know what you are doing...'
-              write(IMAIN,*)
-              call flush_IMAIN()
-            endif
-         else                                       ! acoustic
-            write(IMAIN,300) n,cp,density_mat(1),kappa,QKappa,Qmu
-         endif
-      else if (indic == 2) then                      ! elastic (anisotropic)
+        ! material can be acoustic (fluid) or elastic (solid)
+        if (poroelastcoef(2,1,n) > TINYVAL) then
+          ! elastic
+          write(IMAIN,200) n,cp,cs,density_mat(1),poisson,lambda,mu,kappa,young,QKappa,Qmu
+          if (poisson < 0.d0) then
+            write(IMAIN,*)
+            write(IMAIN,*) 'Materials with a negative Poisson''s ratio can exist,'
+            write(IMAIN,*) 'see e.g. R. Lakes, "Science" vol. 235, p. 1038-1040 (1987),'
+            write(IMAIN,*) 'but are extremely rare.'
+            write(IMAIN,*) 'Hope you know what you are doing...'
+            write(IMAIN,*)
+          endif
+        else
+          ! acoustic
+          write(IMAIN,300) n,cp,density_mat(1),kappa,QKappa,Qmu
+        endif
+
+      else if (indic == 2) then
+        ! elastic (anisotropic)
         if (AXISYM) then
           write(IMAIN,450) n,density_mat(1),c11,c13,c15,c33,c35,c55,c12,c23,c25,c22
         else
           write(IMAIN,400) n,density_mat(1),c11,c13,c15,c33,c35,c55,c12,c23,c25
         endif
+
       else if (indic == 3) then
-         ! material is poroelastic (solid/fluid)
-         write(IMAIN,500) n,sqrt(cpIsquare),sqrt(cpIIsquare),sqrt(cssquare)
-         write(IMAIN,600) density_mat(1),poisson_s,lambda_s,mu_s,kappa_s,young_s
-         if (poisson_s < 0.d0) then
-           write(IMAIN,*)
-           write(IMAIN,*) 'Materials with a negative Poisson''s ratio can exist,'
-           write(IMAIN,*) 'see e.g. R. Lakes, "Science" vol. 235, p. 1038-1040 (1987),'
-           write(IMAIN,*) 'but are extremely rare.'
-           write(IMAIN,*) 'Hope you know what you are doing...'
-           write(IMAIN,*)
-         endif
-         write(IMAIN,700) density_mat(2),kappa_f,eta_f
-         write(IMAIN,800) lambda_fr,mu_fr,kappa_fr,porosity(n),tortuosity(n),&
-              permeability(1,n),permeability(2,n),permeability(3,n),Qmu
-         write(IMAIN,900) D_biot,H_biot,C_biot,M_biot,w_c
+        ! material is poroelastic (solid/fluid)
+        write(IMAIN,500) n,sqrt(cpIsquare),sqrt(cpIIsquare),sqrt(cssquare)
+        write(IMAIN,600) density_mat(1),poisson_s,lambda_s,mu_s,kappa_s,young_s
+        if (poisson_s < 0.d0) then
+          write(IMAIN,*)
+          write(IMAIN,*) 'Materials with a negative Poisson''s ratio can exist,'
+          write(IMAIN,*) 'see e.g. R. Lakes, "Science" vol. 235, p. 1038-1040 (1987),'
+          write(IMAIN,*) 'but are extremely rare.'
+          write(IMAIN,*) 'Hope you know what you are doing...'
+          write(IMAIN,*)
+        endif
+        write(IMAIN,700) density_mat(2),kappa_f,eta_f
+        write(IMAIN,800) lambda_fr,mu_fr,kappa_fr,porosity(n),tortuosity(n),&
+                         permeability(1,n),permeability(2,n),permeability(3,n),Qmu
+        write(IMAIN,900) D_biot,H_biot,C_biot,M_biot,w_c
+
       else if (indic <= 0) then
         write(IMAIN,1000) n
       endif

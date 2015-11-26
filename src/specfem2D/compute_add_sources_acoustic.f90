@@ -44,7 +44,7 @@
 
   subroutine compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
 
-  use specfem_par, only: acoustic,nglob_acoustic,&
+  use specfem_par, only: ispec_is_acoustic,nglob_acoustic,&
                          NSOURCES,source_type,source_time_function,&
                          is_proc_source,ispec_selected_source,&
                          hxis_store,hgammas_store,ibool,kappastore,myrank
@@ -60,7 +60,7 @@
 
   do i_source= 1,NSOURCES
     ! if this processor core carries the source and the source element is acoustic
-    if (is_proc_source(i_source) == 1 .and. acoustic(ispec_selected_source(i_source))) then
+    if (is_proc_source(i_source) == 1 .and. ispec_is_acoustic(ispec_selected_source(i_source))) then
       ! collocated force
       ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
       ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
@@ -87,13 +87,16 @@
   enddo ! do i_source= 1,NSOURCES
 
   end subroutine compute_add_sources_acoustic
+
 !
 !=====================================================================
+!
+
 ! for acoustic solver for adjoint propagation wave field
 
   subroutine compute_add_sources_acoustic_adjoint()
 
-  use specfem_par, only: myrank,potential_dot_dot_acoustic,acoustic,NSTEP,it,&
+  use specfem_par, only: myrank,potential_dot_dot_acoustic,ispec_is_acoustic,NSTEP,it,&
                          nrec,which_proc_receiver,ispec_selected_rec,adj_sourcearrays,&
                          ibool,kappastore
   implicit none
@@ -107,7 +110,7 @@
     ! add the source (only if this proc carries the source)
     if (myrank == which_proc_receiver(irec)) then
       irec_local = irec_local + 1
-      if (acoustic(ispec_selected_rec(irec))) then
+      if (ispec_is_acoustic(ispec_selected_rec(irec))) then
         ! add source array
         do j = 1,NGLLZ
           do i = 1,NGLLX
@@ -125,11 +128,14 @@
   enddo ! irec = 1,nrec
 
   end subroutine compute_add_sources_acoustic_adjoint
+
+!
 !=====================================================================
+!
 
   subroutine add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
 
-  use specfem_par, only: nglob_acoustic,nelem_acforcing,codeacforcing,numacforcing,acoustic,&
+  use specfem_par, only: nglob_acoustic,nelem_acforcing,codeacforcing,numacforcing,ispec_is_acoustic,&
                          ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll,&
                          PML_BOUNDARY_CONDITIONS,is_PML
 
@@ -147,7 +153,7 @@
   do inum = 1,nelem_acforcing
 
     ispec = numacforcing(inum)
-    if (.not. acoustic(ispec)) cycle ! acoustic spectral element
+    if (.not. ispec_is_acoustic(ispec)) cycle ! acoustic spectral element
 
     !--- left acoustic forcing boundary
     if (codeacforcing(IEDGE4,inum)) then
@@ -272,15 +278,19 @@
 
   end subroutine add_acoustic_forcing_at_rigid_boundary
 
+!
 !=====================================================================
+!
+
 ! *********************************************************
 ! ** impose displacement from acoustic forcing at a rigid boundary
 ! ** force potential_dot_dot_gravito by displacement
 ! *********************************************************
+
   subroutine add_acoustic_forcing_at_rigid_boundary_gravitoacoustic()
 
   use specfem_par, only: nelem_acforcing,codeacforcing,numacforcing, &
-                         gravitoacoustic,potential_dot_dot_gravito, &
+                         ispec_is_gravitoacoustic,potential_dot_dot_gravito, &
                          potential_gravitoacoustic,potential_gravito, &
                          it,ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll,hprime_xx,hprime_zz, &
                          iglobzero,assign_external_model,rhoext,gravityext,Nsqext, &
@@ -301,7 +311,7 @@
 
     ispec = numacforcing(inum)
     ! gravito spectral element
-    if (.not. gravitoacoustic(ispec) ) cycle
+    if (.not. ispec_is_gravitoacoustic(ispec) ) cycle
 
     !--- left acoustic forcing boundary
     if (codeacforcing(IEDGE4,inum)) then
@@ -582,6 +592,7 @@
         potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
       enddo
 
+      ! debugging
       !write(*,*) 'ispec detection =',ispec
       !if ((ispec==2000).and.(mod(it,100)==0)) then
       if ((ispec==800) .and. (mod(it,100)==0)) then

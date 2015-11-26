@@ -55,7 +55,7 @@
                       f0,initialfield,time_function_type, &
                       coorg,xinterp,zinterp,shape2D_display,knods,simulation_title, &
                       pointsdisp,ngnod,any_elastic,any_poroelastic,all_anisotropic, &
-                      myrank,nproc,NSOURCES,poroelastic, &
+                      myrank,nproc,NSOURCES,ispec_is_poroelastic, &
                       freq0,Q0,ATTENUATION_PORO_FLUID_PART,US_LETTER,output_postscript_snapshot
   implicit none
 
@@ -209,7 +209,7 @@
 
     material = kmato(ispec)
 
-    if (poroelastic(ispec)) then
+    if (ispec_is_poroelastic(ispec)) then
 
       ! poroelastic material
 
@@ -527,7 +527,7 @@
 
         material = kmato(ispec)
 
-        if (poroelastic(ispec)) then
+        if (ispec_is_poroelastic(ispec)) then
 
           ! poroelastic material
 
@@ -1012,7 +1012,7 @@
 
     material = kmato(ispec)
 
-    if (poroelastic(ispec)) then
+    if (ispec_is_poroelastic(ispec)) then
 
       ! poroelastic material
 
@@ -1369,7 +1369,7 @@
 
     material = kmato(ispec)
 
-   if (poroelastic(ispec)) then
+   if (ispec_is_poroelastic(ispec)) then
     phi = porosity(material)
     tort = tortuosity(material)
     perm = permeability(1,material)
@@ -1788,7 +1788,7 @@ endif
     x1 = (vpext(1,1,ispec)-vpImin) / (vpImax-vpImin)
   else
     material = kmato(ispec)
-   if (poroelastic(ispec)) then
+   if (ispec_is_poroelastic(ispec)) then
     phi = porosity(material)
     tort = tortuosity(material)
     perm = permeability(1,material)

@@ -41,7 +41,9 @@
 !========================================================================
 
   subroutine compute_gradient_attenuation(displ_elastic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
-         xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
+         xix,xiz,gammax,gammaz,ibool,ispec_is_elastic,hprime_xx,hprime_zz,nspec,nglob)
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO
 
   use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx
 
@@ -49,13 +51,11 @@
 
   implicit none
 
-  include "constants.h"
-
   integer :: nspec,nglob
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
-  logical, dimension(nspec) :: elastic
+  logical, dimension(nspec) :: ispec_is_elastic
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz
@@ -81,7 +81,7 @@
 !---
 !--- elastic spectral element
 !---
-    if (elastic(ispec)) then
+    if (ispec_is_elastic(ispec)) then
 
 ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ

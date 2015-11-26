@@ -40,14 +40,16 @@
 !
 !========================================================================
 
-  subroutine create_color_image()
 
+  subroutine create_color_image()
 
 ! display a given field as a red and blue color JPEG image
 
 ! to display the snapshots : display image*.jpg
 
-  use specfem_par, only: image_color_data,iglob_image_color, &
+  use constants,only: TINYVAL,HUGEVAL,STABILITY_THRESHOLD
+
+  use specfem_par, only: myrank,image_color_data,iglob_image_color, &
                          NX_IMAGE_color,NZ_IMAGE_color,it,isnapshot_number,cutsnaps,image_color_vp_display, &
                          USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
                          DRAW_SOURCES_AND_RECEIVERS,NSOURCES,p_sv,nrec, &
@@ -56,21 +58,17 @@
 
   implicit none
 
-  include "constants.h"
-
+  ! local parameters
   integer :: i
 
-! for the JPEG library
+  ! for the JPEG library
   character(len=1), dimension(3,NX_IMAGE_color,NZ_IMAGE_color) :: JPEG_raw_image
-
   integer :: ix,iy,R,G,B
-
   double precision :: amplitude_max,normalized_value,vpmin,vpmax,x1
-
   character(len=100) :: filename
+  logical :: do_warning
 
-
-! size of cross and square in pixels drawn to represent the source and the receivers in JPEG pictures
+  ! size of cross and square in pixels drawn to represent the source and the receivers in JPEG pictures
   integer :: half_width_cross, thickness_cross, half_size_square
 
 ! make the size of the source and receiver symbols depend on the size of the picture
@@ -109,6 +107,15 @@
     where(image_color_data < -CONSTANT_MAX_AMPLITUDE_TO_USE) image_color_data = -CONSTANT_MAX_AMPLITUDE_TO_USE
   endif
 
+  ! checks value (isNaN)
+  if (amplitude_max > STABILITY_THRESHOLD .or. amplitude_max < 0 .or. amplitude_max /= amplitude_max) then
+    print *,'Warning: failed creating color image, maximum value of amplitude in image color is invalid'
+    print *,'amplitude max = ',amplitude_max,' with threshold at ', STABILITY_THRESHOLD
+    print *,'Please check your simulation setup...'
+    call exit_MPI(myrank,'code became unstable and blew up (image_color_data)')
+  endif
+  do_warning = .false.
+
   vpmin = HUGEVAL
   vpmax = TINYVAL
   do iy= 1,NZ_IMAGE_color
@@ -118,7 +125,6 @@
         vpmin = min(vpmin,image_color_vp_display(ix,iy))
         vpmax = max(vpmax,image_color_vp_display(ix,iy))
       endif
-
     enddo
   enddo
 
@@ -180,6 +186,12 @@
         else
           normalized_value = image_color_data(ix,iy) / TINYVAL
         endif
+        ! check value (isNaN)
+        if (normalized_value /= normalized_value) then
+          ! will be set to zero
+          normalized_value = 0.d0
+          do_warning = .true.
+        endif
 
 ! suppress values outside of [-1:+1]
         if (normalized_value < -1.d0) normalized_value = -1.d0
@@ -205,6 +217,11 @@
 
     enddo
   enddo
+
+  if (do_warning) then
+    print *,'Warning: normalized value is invalid, likely due to unstable simulation! process rank is ',myrank
+    print *,'Warning: normalized_value = ',normalized_value,' will be set to zero'
+  endif
 
 !
 !----  draw position of the sources and receivers

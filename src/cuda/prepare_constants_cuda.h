@@ -115,7 +115,6 @@ void setConst_wxgll(realw* array,Mesh* mp)
     fprintf(stderr, "Error with d_wxgll: %s\n", cudaGetErrorString(err));
     exit(1);
   }
-
 }
 
 void setConst_hprime_xx(realw* array,Mesh* mp)

@@ -40,8 +40,8 @@
 !
 !========================================================================
 
-  subroutine pml_init()
 
+  subroutine pml_init()
 
 ! Rough strategy to select the PML damping parameters:
 
@@ -65,12 +65,14 @@
   use mpi
 #endif
 
-use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs, &
-                       NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML, &
-                       PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh
+  use constants,only: IMAIN,NGLLX,NGLLZ, &
+    IRIGHT,ILEFT,IBOTTOM,ITOP,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
+
+  use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs, &
+    NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML, &
+    PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer, dimension(nglob) ::   icorner_iglob
@@ -302,12 +304,15 @@ use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,any
     call flush_IMAIN()
   endif
 
-end subroutine pml_init
+  end subroutine pml_init
 
 !
 !-------------------------------------------------------------------------------------------------
 !
- subroutine determin_interface_pml_interior()
+
+  subroutine determin_interface_pml_interior()
+
+  use constants,only: NGLLX,NGLLZ,IRIGHT,ILEFT,IBOTTOM,ITOP
 
   use specfem_par, only: nglob_interface,nspec,ibool,PML_interior_interface,&
                          which_PML_elem,point_interface,read_external_mesh,mask_ibool,region_CPML
@@ -315,7 +320,6 @@ end subroutine pml_init
 
   ! local parameters
   integer ::i,j,iglob,ispec
-  include "constants.h"
 
   nglob_interface = 0
 
@@ -425,6 +429,7 @@ end subroutine pml_init
   endif
 
  end subroutine determin_interface_pml_interior
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -435,15 +440,15 @@ end subroutine pml_init
   use mpi
 #endif
 
-  use specfem_par, only: f0,elastic,acoustic,&
+  use constants,only: PI,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY,PML_parameter_adjustment
+
+  use specfem_par, only: f0,ispec_is_elastic,ispec_is_acoustic,&
                          NSOURCES,ispec_selected_source,&
                          nspec,kmato,density,poroelastcoef,&
                          ibool,coord,is_PML,region_CPML,spec_to_PML,&
                          K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   implicit none
-
-  include "constants.h"
 
 !ZN  an automatic adjustment of PML parameter for elongated model.
 !ZN  The goal here is to improve the absorbing efficiency of PML for waves with large incident angle,
@@ -645,13 +650,13 @@ end subroutine pml_init
   vpmax_elastic = 0.0d0
   do ispec = 1,nspec
     if (is_PML(ispec)) then
-      if (acoustic(ispec)) then
+      if (ispec_is_acoustic(ispec)) then
 ! From gmat01.f90 we know, in acoustic region
 ! lambdalplus2mul_relaxed = kappal  = poroelastcoef(3,1,kmato(ispec)) = rhol * vp_acoustic * vp_acoustic
         lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
         rhol = density(1,kmato(ispec))
         vpmax_acoustic=max(vpmax_acoustic,sqrt(lambdalplus2mul_relaxed/rhol))
-      else if (elastic(ispec)) then
+      else if (ispec_is_elastic(ispec)) then
         ! get relaxed elastic parameters of current spectral element
         lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
         rhol = density(1,kmato(ispec))
@@ -750,9 +755,9 @@ end subroutine pml_init
               if (abscissa_in_PML >= 0.d0) then
                 abscissa_normalized = abscissa_in_PML / thickness_PML_z_bottom
 !ZN                d_z = d0_z_bottom / damping_modified_factor * abscissa_normalized**NPOWER
-                if (acoustic(ispec)) then
+                if (ispec_is_acoustic(ispec)) then
                   d_z = d0_z_bottom_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
-                else if (elastic(ispec)) then
+                else if (ispec_is_elastic(ispec)) then
                   d_z = d0_z_bottom_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                 else
                   stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
@@ -776,9 +781,9 @@ end subroutine pml_init
               if (abscissa_in_PML >= 0.d0) then
                 abscissa_normalized = abscissa_in_PML / thickness_PML_z_top
 !ZN                d_z = d0_z_top / damping_modified_factor * abscissa_normalized**NPOWER
-                if (acoustic(ispec)) then
+                if (ispec_is_acoustic(ispec)) then
                   d_z = d0_z_top_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
-                else if (elastic(ispec)) then
+                else if (ispec_is_elastic(ispec)) then
                   d_z = d0_z_top_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                 else
                   stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
@@ -803,9 +808,9 @@ end subroutine pml_init
               if (abscissa_in_PML >= 0.d0) then
                 abscissa_normalized = abscissa_in_PML / thickness_PML_x_right
 !ZN                d_x = d0_x_right / damping_modified_factor * abscissa_normalized**NPOWER
-                if (acoustic(ispec)) then
+                if (ispec_is_acoustic(ispec)) then
                   d_x = d0_x_right_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
-                else if (elastic(ispec)) then
+                else if (ispec_is_elastic(ispec)) then
                   d_x = d0_x_right_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                 else
                   stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
@@ -829,9 +834,9 @@ end subroutine pml_init
               if (abscissa_in_PML >= 0.d0) then
                 abscissa_normalized = abscissa_in_PML / thickness_PML_x_left
 !ZN                d_x = d0_x_left / damping_modified_factor * abscissa_normalized**NPOWER
-                if (acoustic(ispec)) then
+                if (ispec_is_acoustic(ispec)) then
                   d_x = d0_x_left_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
-                else if (elastic(ispec)) then
+                else if (ispec_is_elastic(ispec)) then
                   d_x = d0_x_left_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                 else
                   stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
@@ -898,11 +903,11 @@ end subroutine pml_init
                   K_MAX_PML = 1.0d0
                   K_MIN_PML = 1.0d0
                   ALPHA_MAX_PML = 1.0d0
-                  if (acoustic(ispec)) then
+                  if (ispec_is_acoustic(ispec)) then
                     d_z = d0_z_bottom_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (elastic(ispec)) then
+                  else if (ispec_is_elastic(ispec)) then
                     d_z = d0_z_bottom_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -917,11 +922,11 @@ end subroutine pml_init
                   K_MAX_PML = 2.0d0
                   K_MIN_PML = 1.0d0
                   ALPHA_MAX_PML = 2.5d0
-                  if (acoustic(ispec)) then
+                  if (ispec_is_acoustic(ispec)) then
                     d_z = d0_z_bottom_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (elastic(ispec)) then
+                  else if (ispec_is_elastic(ispec)) then
                     d_z = d0_z_bottom_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -936,11 +941,11 @@ end subroutine pml_init
                   K_MAX_PML = 3.5d0
                   K_MIN_PML = 1.5d0
                   ALPHA_MAX_PML = 4.0d0
-                  if (acoustic(ispec)) then
+                  if (ispec_is_acoustic(ispec)) then
                     d_z = d0_z_bottom_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (elastic(ispec)) then
+                  else if (ispec_is_elastic(ispec)) then
                     d_z = d0_z_bottom_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -975,11 +980,11 @@ end subroutine pml_init
                   K_MAX_PML = 1.0d0
                   K_MIN_PML = 1.0d0
                   ALPHA_MAX_PML = 1.0d0
-                  if (acoustic(ispec)) then
+                  if (ispec_is_acoustic(ispec)) then
                     d_z = d0_z_top_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (elastic(ispec)) then
+                  else if (ispec_is_elastic(ispec)) then
                     d_z = d0_z_top_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -994,11 +999,11 @@ end subroutine pml_init
                   K_MAX_PML = 2.0d0
                   K_MIN_PML = 1.0d0
                   ALPHA_MAX_PML = 2.5d0
-                  if (acoustic(ispec)) then
+                  if (ispec_is_acoustic(ispec)) then
                     d_z = d0_z_top_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (elastic(ispec)) then
+                  else if (ispec_is_elastic(ispec)) then
                     d_z = d0_z_top_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -1013,11 +1018,11 @@ end subroutine pml_init
                   K_MAX_PML = 3.5d0
                   K_MIN_PML = 1.5d0
                   ALPHA_MAX_PML = 4.0d0
-                  if (acoustic(ispec)) then
+                  if (ispec_is_acoustic(ispec)) then
                     d_z = d0_z_top_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (elastic(ispec)) then
+                  else if (ispec_is_elastic(ispec)) then
                     d_z = d0_z_top_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -1052,11 +1057,11 @@ end subroutine pml_init
                   K_MAX_PML = 1.0d0
                   K_MIN_PML = 1.0d0
                   ALPHA_MAX_PML = 1.0d0
-                  if (acoustic(ispec)) then
+                  if (ispec_is_acoustic(ispec)) then
                     d_x = d0_x_right_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (elastic(ispec)) then
+                  else if (ispec_is_elastic(ispec)) then
                     d_x = d0_x_right_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -1071,11 +1076,11 @@ end subroutine pml_init
                   K_MAX_PML = 2.0d0
                   K_MIN_PML = 1.0d0
                   ALPHA_MAX_PML = 2.5d0
-                  if (acoustic(ispec)) then
+                  if (ispec_is_acoustic(ispec)) then
                     d_x = d0_x_right_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (elastic(ispec)) then
+                  else if (ispec_is_elastic(ispec)) then
                     d_x = d0_x_right_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -1090,11 +1095,11 @@ end subroutine pml_init
                   K_MAX_PML = 3.5d0
                   K_MIN_PML = 1.5d0
                   ALPHA_MAX_PML = 4.0d0
-                  if (acoustic(ispec)) then
+                  if (ispec_is_acoustic(ispec)) then
                     d_x = d0_x_right_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (elastic(ispec)) then
+                  else if (ispec_is_elastic(ispec)) then
                     d_x = d0_x_right_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -1129,11 +1134,11 @@ end subroutine pml_init
                   K_MAX_PML = 1.0d0
                   K_MIN_PML = 1.0d0
                   ALPHA_MAX_PML = 1.0d0
-                  if (acoustic(ispec)) then
+                  if (ispec_is_acoustic(ispec)) then
                     d_x = d0_x_left_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (elastic(ispec)) then
+                  else if (ispec_is_elastic(ispec)) then
                     d_x = d0_x_left_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -1148,11 +1153,11 @@ end subroutine pml_init
                   K_MAX_PML = 2.0d0
                   K_MIN_PML = 1.0d0
                   ALPHA_MAX_PML = 2.5d0
-                  if (acoustic(ispec)) then
+                  if (ispec_is_acoustic(ispec)) then
                     d_x = d0_x_left_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (elastic(ispec)) then
+                  else if (ispec_is_elastic(ispec)) then
                     d_x = d0_x_left_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -1167,11 +1172,11 @@ end subroutine pml_init
                   K_MAX_PML = 3.5d0
                   K_MIN_PML = 1.5d0
                   ALPHA_MAX_PML = 4.0d0
-                  if (acoustic(ispec)) then
+                  if (ispec_is_acoustic(ispec)) then
                     d_x = d0_x_left_acoustic / damping_modified_factor_acoustic * abscissa_normalized**NPOWER
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
-                  else if (elastic(ispec)) then
+                  else if (ispec_is_elastic(ispec)) then
                     d_x = d0_x_left_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)

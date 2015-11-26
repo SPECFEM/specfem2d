@@ -46,13 +46,15 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                                        nleft,nright,nbot,PML_BOUNDARY_CONDITIONS,e1,e11,e13)
 
   ! compute forces for the elastic elements
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CONVOLUTION_MEMORY_VARIABLES, &
+    IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL
 
   use specfem_par, only: p_sv,nglob,nspec,nelemabs,it,anyabs,assign_external_model, &
                          initialfield,ATTENUATION_VISCOELASTIC_SOLID,nspec_allocate,N_SLS,anglesource, &
-                         ibool,kmato,numabs,elastic,codeabs,codeabs_corner, &
+                         ibool,kmato,numabs,ispec_is_elastic,codeabs,codeabs_corner, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz, &
                          jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext, &
-                         anisotropic,anisotropy, &
+                         ispec_is_anisotropic,anisotropy, &
                          e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -69,10 +71,10 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
                          rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
                          rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
                          rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,&
-                         ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,STACEY_BOUNDARY_CONDITIONS,acoustic,time_stepping_scheme
+                         ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,STACEY_BOUNDARY_CONDITIONS, &
+                         ispec_is_acoustic,time_stepping_scheme
 
   implicit none
-  include "constants.h"
 
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_allocate,N_SLS) :: e1,e11,e13
@@ -161,17 +163,17 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
     ! compute Grad(displ_elastic) at time step n for attenuation
     call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
-          dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
+          dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,ispec_is_elastic,hprime_xx,hprime_zz,nspec,nglob)
 
     ! compute Grad(disp_elastic_old) at time step n-1 for attenuation
     call compute_gradient_attenuation(displ_elastic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
-          dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,elastic,hprime_xx,hprime_zz,nspec,nglob)
+          dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,ispec_is_elastic,hprime_xx,hprime_zz,nspec,nglob)
 
     ! loop over spectral elements
     do ispec = 1,nspec
 
       ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
-      if (acoustic(ispec) ) cycle
+      if (ispec_is_acoustic(ispec) ) cycle
 
       if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. is_PML(ispec)))) then
         do j = 1,NGLLZ
@@ -336,7 +338,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
     sigma_thetatheta(:,:) = 0._CUSTOM_REAL
 
     !--- elastic spectral element
-    if (elastic(ispec)) then
+    if (ispec_is_elastic(ispec)) then
       ! get unrelaxed elastic parameters of current spectral element
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
       mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
@@ -856,7 +858,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
             if (PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) .and. nspec_PML > 0) then
               if (ROTATE_PML_ACTIVATE) then
-                theta = -ROTATE_PML_ANGLE/180._CUSTOM_REAL*Pi
+                theta = -ROTATE_PML_ANGLE/180._CUSTOM_REAL*PI
                 if (it==1)write(*,*)theta,ROTATE_PML_ACTIVATE,cos(theta),sin(theta)
                 ct=cos(theta)
                 st=sin(theta)
@@ -892,7 +894,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           endif
 
           ! full anisotropy
-          if (anisotropic(ispec)) then
+          if (ispec_is_anisotropic(ispec)) then
             if (assign_external_model) then
               c11 = c11ext(i,j,ispec)
               c13 = c13ext(i,j,ispec)
@@ -1196,7 +1198,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
     do ispecabs = 1,nelemabs
 
       ispec = numabs(ispecabs)
-      if (.not. elastic(ispec) ) cycle
+      if (.not. ispec_is_elastic(ispec) ) cycle
 
       ! get elastic parameters of current spectral element
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))

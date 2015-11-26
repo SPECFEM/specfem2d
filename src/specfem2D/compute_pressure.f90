@@ -81,23 +81,21 @@
 
   implicit none
 
+  integer,intent(in) :: ispec
 
-  integer ispec
-
+  ! local variables
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum
-
   integer :: i_sls
-
-! local variables
   integer :: i,j,k,iglob
-
   real(kind=CUSTOM_REAL) :: sigma_yy !! ,sigmap
   real(kind=CUSTOM_REAL) :: sigma_thetatheta
-
-
-! material properties of the elastic medium
+  ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: denst
   real(kind=CUSTOM_REAL) :: cpl,csl
+  ! for anisotropy
+  double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25
+  ! Jacobian matrix and determinant
+  double precision :: xixl,xizl,gammaxl,gammazl
 
 ! if elastic element
 !
@@ -126,7 +124,7 @@
 ! sigma_zz = lambda * (epsilon_xx + epsilon_yy)
 ! pressure = - trace(sigma) / 3 = - (lambda + 2*mu/3) (epsilon_xx + epsilon_yy)
 
-  if (elastic(ispec)) then
+  if (ispec_is_elastic(ispec)) then
 
     ! get relaxed elastic parameters of current spectral element
     lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
@@ -331,7 +329,7 @@
         endif
 
         ! full anisotropy
-        if (anisotropic(ispec)) then
+        if (ispec_is_anisotropic(ispec)) then
           if (assign_external_model) then
             c11 = c11ext(i,j,ispec)
             c15 = c15ext(i,j,ispec)
@@ -377,7 +375,7 @@
       enddo
     enddo
 
-  else if (poroelastic(ispec)) then
+  else if (ispec_is_poroelastic(ispec)) then
 
     lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
     mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
@@ -522,7 +520,7 @@
     enddo
 
 ! pressure = - Chi_dot_dot if acoustic element
-  else if (acoustic(ispec)) then
+  else if (ispec_is_acoustic(ispec)) then
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -535,7 +533,7 @@
       enddo
     enddo
 
-  else if (gravitoacoustic(ispec)) then
+  else if (ispec_is_gravitoacoustic(ispec)) then
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
