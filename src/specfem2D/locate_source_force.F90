@@ -48,6 +48,8 @@
                ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
                xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source)
 
+  use constants,only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,USE_BEST_LOCATION_FOR_SOURCE
+
   use specfem_par, only : AXISYM,is_on_the_axis,xiglj
 
 #ifdef USE_MPI
@@ -55,8 +57,6 @@
 #endif
 
   implicit none
-
-  include "constants.h"
 
   integer nspec,nglob,ngnod,npgeo
 

@@ -55,7 +55,7 @@
     QKappa_attenuationext,Qmu_attenuationext, &
     c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
     MODEL,ATTENUATION_VISCOELASTIC_SOLID,p_sv,&
-    inputname,tomo_material,myrank
+    tomo_material,myrank
 
   implicit none
 
@@ -65,6 +65,7 @@
   real(kind=CUSTOM_REAL) :: previous_vsext
   real(kind=CUSTOM_REAL) :: tmp1, tmp2,tmp3
   double precision :: rho_dummy,vp_dummy,vs_dummy,mu_dummy,lambda_dummy
+  character(len=150) :: inputname
 
 
   if (tomo_material > 0) MODEL = 'tomo'

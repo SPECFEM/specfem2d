@@ -53,8 +53,10 @@ subroutine finalize_simulation()
   implicit none
 
   integer :: i,ispec,j,iglob
-  real(kind=4),dimension(:,:,:),allocatable :: rho_save, vp_save, vs_save, kappa_save, x_save, z_save
   integer :: ier
+  real(kind=4),dimension(:,:,:),allocatable :: rho_save, vp_save, vs_save, kappa_save, x_save, z_save
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
+  character(len=MAX_STRING_LEN) :: inputname,outputname
 
   if (trim(SAVE_MODEL) /= 'default') then
     allocate(rho_save(NGLLX,NGLLZ,nspec))
@@ -69,6 +71,7 @@ subroutine finalize_simulation()
           rho_save(i,j,ispec)            = density(1,kmato(ispec))
           lambdal_unrelaxed_elastic      = poroelastcoef(1,1,kmato(ispec))
           mul_unrelaxed_elastic          = poroelastcoef(2,1,kmato(ispec))
+
           kappa_save(i,j,ispec)          = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
           vp_save(i,j,ispec)             = sqrt((kappa_save(i,j,ispec) + &
                                             4._CUSTOM_REAL*mul_unrelaxed_elastic/ &
@@ -282,19 +285,18 @@ subroutine finalize_simulation()
     open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_poroelastic_s**.bin')
 
+    write(55) displs_poroelastic
+    write(55) velocs_poroelastic
+    write(55) accels_poroelastic
+    close(55)
+
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
     open(unit=56,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_poroelastic_w**.bin')
 
-    write(55) displs_poroelastic
-    write(55) velocs_poroelastic
-    write(55) accels_poroelastic
-
     write(56) displw_poroelastic
     write(56) velocw_poroelastic
     write(56) accelw_poroelastic
-
-    close(55)
     close(56)
   endif
 

@@ -92,10 +92,22 @@
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: denst
   real(kind=CUSTOM_REAL) :: cpl,csl
+  real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
+
   ! for anisotropy
   double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25
   ! Jacobian matrix and determinant
   double precision :: xixl,xizl,gammaxl,gammazl
+  ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
+  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: D_biot,H_biot,C_biot,M_biot
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
+  double precision :: sigma_xx,sigma_zz
+
+  double precision :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
+  double precision :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
+  double precision :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
+  double precision :: dwx_dxl,dwz_dzl
 
 ! if elastic element
 !
@@ -381,31 +393,17 @@
     mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
 
     ! get poroelastic parameters of current spectral element
-    phil = porosity(kmato(ispec))
-    tortl = tortuosity(kmato(ispec))
-    ! solid properties
-    mul_s = poroelastcoef(2,1,kmato(ispec))
-    kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
-    rhol_s = density(1,kmato(ispec))
-    ! fluid properties
-    kappal_f = poroelastcoef(1,2,kmato(ispec))
-    rhol_f = density(2,kmato(ispec))
-    ! frame properties
-    mul_fr = poroelastcoef(2,3,kmato(ispec))
-    kappal_fr = poroelastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
-    rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
+    call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
+
     ! Biot coefficients for the input phi
-    D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
-    H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) &
-            + kappal_fr + FOUR_THIRDS*mul_fr
-    C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
-    M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
+    call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
     ! where T = G:grad u_s + C div w I
     ! and T_f = C div u_s I + M div w I
     ! we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
-    mul_G = mul_fr
-    lambdal_G = H_biot - TWO*mul_fr
-    lambdalplus2mul_G = lambdal_G + TWO*mul_G
+    mu_G = mu_fr
+    lambdal_G = H_biot - TWO*mu_fr
+    lambdalplus2mul_G = lambdal_G + TWO*mu_G
 
     do j = 1,NGLLZ
       do i = 1,NGLLX

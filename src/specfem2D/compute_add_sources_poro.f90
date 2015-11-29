@@ -58,16 +58,24 @@
 
   !local variables
   integer :: i_source,i,j,iglob
-  double precision :: hlagrange,phil,tortl,rhol_s,rhol_f,rhol_bar
+  double precision :: hlagrange
+  double precision :: phi,tort,rho_s,rho_f,rho_bar
+  real(kind=CUSTOM_REAL) :: fac_s,fac_w
+  integer :: material
 
   do i_source= 1,NSOURCES
     ! if this processor core carries the source and the source element is elastic
     if (is_proc_source(i_source) == 1 .and. ispec_is_poroelastic(ispec_selected_source(i_source))) then
-      phil = porosity(kmato(ispec_selected_source(i_source)))
-      tortl = tortuosity(kmato(ispec_selected_source(i_source)))
-      rhol_s = density(1,kmato(ispec_selected_source(i_source)))
-      rhol_f = density(2,kmato(ispec_selected_source(i_source)))
-      rhol_bar = (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f
+      material = kmato(ispec_selected_source(i_source))
+      phi = porosity(material)
+      tort = tortuosity(material)
+      rho_s = density(1,material)
+      rho_f = density(2,material)
+
+      rho_bar = (1.d0 - phi)*rho_s + phi*rho_f
+
+      fac_s = real((1.d0 - phi/tort),kind=CUSTOM_REAL)
+      fac_w = real((1.d0 - rho_f/rho_bar),kind=CUSTOM_REAL)
 
       ! collocated force
       if (source_type(i_source) == 1) then
@@ -77,14 +85,14 @@
             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
             ! s
             accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) - hlagrange * &
-                   (1._CUSTOM_REAL - phil/tortl)*sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)
+                   fac_s * sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)
             accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + hlagrange * &
-                   (1._CUSTOM_REAL - phil/tortl)*cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)
+                   fac_s * cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)
             ! w
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - hlagrange * &
-                   (1._CUSTOM_REAL - rhol_f/rhol_bar)*sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)
+                   fac_w * sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + hlagrange * &
-                   (1._CUSTOM_REAL - rhol_f/rhol_bar)*cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)
+                   fac_w * cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)
           enddo
         enddo
       endif

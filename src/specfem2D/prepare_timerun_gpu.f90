@@ -131,7 +131,8 @@
 
 !!! Parametres fournis
 
-! rmass_inverse_acoustic                 : matrice acoustique inversee de taille nglob (nglob_acoustic = nglob s'il existe des elements acoustiques)
+! rmass_inverse_acoustic                 : matrice acoustique inversee de taille nglob 
+!                                          (nglob_acoustic = nglob s'il existe des elements acoustiques)
 ! num_phase_ispec_acoustic               : max entre nb d'element spectraux acoustiques interieur et exterieur
 ! phase_ispec_inner_acoustic(i,j)        : i eme element spectral acoustique interieur si j=2 exterieur si j=1
 ! acoustic(i)                            : vrai si l'element spectral i est acoustique
@@ -176,13 +177,14 @@
 
 !!! Parametres fournis
 
-! rmass_inverse_elastic                 : matrice elastique inversee de taille nglob_acoustic (nglob_acoustic = nglob s'il existe des elements acoustiques)
-! num_phase_ispec_elastic               : max entre nb d'element spectraux elastiques interieur et exterieur
-! phase_ispec_inner_elastic(i,j)        : i eme element spectral elastique interieur si j=2 exterieur si j=1
-! elastic(i)                            : vrai si l'element spectral i est elastique
-! num_colors_outer_elastic              : a initialiser plus tard quand USE_COLOR_MESH sera implemente
-! num_colors_inner_elastic              : a initialiser plus tard quand USE_COLOR_MESH sera implemente
-! num_elem_colors_elastic               : a initialiser plus tard quand USE_COLOR_MESH sera implemente
+! rmass_inverse_elastic          : matrice elastique inversee de taille nglob_acoustic 
+!                                 (nglob_acoustic = nglob s'il existe des elements acoustiques)
+! num_phase_ispec_elastic        : max entre nb d'element spectraux elastiques interieur et exterieur
+! phase_ispec_inner_elastic(i,j) : i eme element spectral elastique interieur si j=2 exterieur si j=1
+! elastic(i)                     : vrai si l'element spectral i est elastique
+! num_colors_outer_elastic       : a initialiser plus tard quand USE_COLOR_MESH sera implemente
+! num_colors_inner_elastic       : a initialiser plus tard quand USE_COLOR_MESH sera implemente
+! num_elem_colors_elastic        : a initialiser plus tard quand USE_COLOR_MESH sera implemente
 
   ! prepares fields on GPU for elastic simulations
   !?!? JC JC here we will need to add GPU support for the new C-PML routines
@@ -322,7 +324,9 @@
 
   ! local parameters
   integer :: i_spec_free, ipoint1D, i, j, k, ispec, ispecabs, i_source, ispec_inner, ispec_outer
+  integer :: ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic
   integer :: ier
+  real(kind=CUSTOM_REAL) :: zxi,xgamma,jacobian1D
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! Initialisation variables pour routine prepare_constants_device

@@ -40,7 +40,7 @@
 !
 !========================================================================
 
-  subroutine checkgrid()
+  subroutine check_grid()
 
 ! check the mesh, stability and number of points per wavelength
 
@@ -48,8 +48,10 @@
   use mpi
 #endif
 
+  use constants,only: IMAIN,HUGEVAL,ZERO,NGLLX,NGLLZ,CENTIM,ORIG_X,ORIG_Z,THRESHOLD_POSTSCRIPT,RPERCENTX,RPERCENTZ
+
   use specfem_par, only: vpext,vsext,rhoext,density,poroelastcoef, &
-                      porosity,tortuosity,permeability,ibool,kmato, &
+                      permeability,ibool,kmato, &
                       coord,vpImin,vpImax,vpIImin,vpIImax, &
                       assign_external_model,nspec,UPPER_LIMIT_DISPLAY,deltat, &
                       f0,initialfield,time_function_type, &
@@ -59,21 +61,24 @@
                       freq0,Q0,ATTENUATION_PORO_FLUID_PART,US_LETTER,output_postscript_snapshot
   implicit none
 
-  include "constants.h"
-
 ! option to display only part of the mesh and not the whole mesh,
 ! for instance to analyze Cuthill-McKee mesh partitioning etc.
 
   ! local parameters
-  double precision vpIImax_local,vpIImin_local
-  double precision vsmin,vsmax,densmin,densmax,vpImax_local,vpImin_local,vsmin_local
-  double precision kappa_s,kappa_f,kappa_fr,mu_s,mu_fr,denst_s,denst_f,denst,phi,tort,cpIloc,cpIIloc,csloc
-  double precision D_biot,H_biot,C_biot,M_biot,cpIsquare,cpIIsquare,cssquare
-  double precision f0max,w_c,eta_f,perm
-  double precision lambdaplus2mu,mu
-  double precision distance_min,distance_max,distance_min_local,distance_max_local,lambdaS_local,lambdaPI_local
-  double precision courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaPIImin,lambdaPIImax,lambdaSmin,lambdaSmax
-  double precision distance_1,distance_2,distance_3,distance_4
+  double precision :: vpIImax_local,vpIImin_local
+  double precision :: vsmin,vsmax,densmin,densmax,vpImax_local,vpImin_local,vsmin_local
+
+  double precision :: kappa_s,kappa_f,kappa_fr,mu_s,mu_fr,rho_s,rho_f,eta_f,phi,tort,rho_bar
+  double precision :: D_biot,H_biot,C_biot,M_biot
+
+  double precision :: cpIloc,cpIIloc,csloc
+  double precision :: cpIsquare,cpIIsquare,cssquare
+  double precision :: f0max,w_c,perm_xx
+  double precision :: denst
+  double precision :: lambdaplus2mu,mu
+  double precision :: distance_min,distance_max,distance_min_local,distance_max_local,lambdaS_local,lambdaPI_local
+  double precision :: courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaPIImin,lambdaPIImax,lambdaSmin,lambdaSmax
+  double precision :: distance_1,distance_2,distance_3,distance_4
 
 ! for the stability condition
 ! maximum polynomial degree for which we can compute the stability condition
@@ -117,15 +122,17 @@
                    min_nb_of_points_per_wavelength,max_nb_of_points_per_wavelength,nb_of_points_per_wavelength, &
                    scaling_factor,scaling_factor_S,scaling_factor_P
   logical :: any_fluid_histo,any_fluid_histo_glob
+
   integer, parameter :: NCLASSES = 20
   integer, dimension(0:NCLASSES-1) :: classes_wavelength,classes_wavelength_all
+
   integer :: iclass,nspec_all,ipass,nspec_counted,nspec_counted_all,nspec_counted_all_solid,nspec_counted_all_fluid
   logical :: create_wavelength_histogram
   double precision :: current_percent,total_percent
 
   ! check
   if (UPPER_LIMIT_DISPLAY > nspec) &
-    call exit_MPI(myrank,'cannot have UPPER_LIMIT_DISPLAY > nspec in checkgrid.F90')
+    call exit_MPI(myrank,'cannot have UPPER_LIMIT_DISPLAY > nspec in check_grid.F90')
 
   if (myrank == 0) then
     write(IMAIN,*) "  checking mesh and stability"
@@ -147,10 +154,10 @@
 
 ! define percentage of smallest distance between GLL points for NGLLX points
 ! percentages were computed by calling the GLL points routine for each degree
-  call checkgrid_setup_GLLper(percent_GLL,NGLLX_MAX_STABILITY)
+  call check_grid_setup_GLLper(percent_GLL,NGLLX_MAX_STABILITY)
 
 ! define color palette in random order
-  call checkgrid_setup_colorp(red,green,blue,NUM_COLORS)
+  call check_grid_setup_colorp(red,green,blue,NUM_COLORS)
 
 !---- compute parameters for the spectral elements
 
@@ -207,40 +214,27 @@
 
   do ispec= 1,nspec
 
-    material = kmato(ispec)
-
     if (ispec_is_poroelastic(ispec)) then
 
-      ! poroelastic material
+      ! gets poroelastic material
+      call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
+      denst = rho_s
 
-      phi = porosity(material)
-      tort = tortuosity(material)
-      perm = permeability(1,material)
-      ! solid properties
-      mu_s = poroelastcoef(2,1,material)
-      kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
-      denst_s = density(1,material)
-      denst = denst_s
-      ! fluid properties
-      kappa_f = poroelastcoef(1,2,material)
-      denst_f = density(2,material)
-      eta_f = poroelastcoef(2,2,material)
-      ! frame properties
-      mu_fr = poroelastcoef(2,3,material)
-      kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
       ! Biot coefficients for the input phi
-      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
-      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
-      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
-      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
 
+      ! permeability xx
+      perm_xx = permeability(1,kmato(ispec))
+
+      ! computes velocities
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+             tort,rho_s,rho_f,eta_f,perm_xx,f0(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIloc = sqrt(cpIsquare)
       cpIIloc = sqrt(cpIIsquare)
       csloc = sqrt(cssquare)
     else
+      material = kmato(ispec)
       mu = poroelastcoef(2,1,material)
       lambdaplus2mu  = poroelastcoef(3,1,material)
       denst = density(1,material)
@@ -262,22 +256,22 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
 
-!--- if heterogeneous formulation with external velocity model
+        !--- if heterogeneous formulation with external velocity model
         if (assign_external_model) then
           cpIloc = vpext(i,j,ispec)
           csloc = vsext(i,j,ispec)
           denst = rhoext(i,j,ispec)
         endif
 
-!--- compute min and max of velocity and density models
+        !--- compute min and max of velocity and density models
         vpImin = min(vpImin,cpIloc)
         vpImax = max(vpImax,cpIloc)
 
-! ignore acoustic and elastic regions with cpII = 0
+        ! ignore acoustic and elastic regions with cpII = 0
         if (cpIIloc > 1.d-20) vpIImin = min(vpIImin,cpIIloc)
         vpIImax = max(vpIImax,cpIIloc)
 
-! ignore fluid regions with Vs = 0
+        ! ignore fluid regions with Vs = 0
         if (csloc > 1.d-20) vsmin = min(vsmin,csloc)
         vsmax = max(vsmax,csloc)
 
@@ -293,7 +287,7 @@
       enddo
     enddo
 
-! compute minimum and maximum size of edges of this grid cell
+    ! compute minimum and maximum size of edges of this grid cell
     distance_1 = sqrt((coord(1,ibool(1,1,ispec)) - coord(1,ibool(NGLLX,1,ispec)))**2 + &
                (coord(2,ibool(1,1,ispec)) - coord(2,ibool(NGLLX,1,ispec)))**2)
 
@@ -315,7 +309,7 @@
     courant_stability_number_max = max(courant_stability_number_max, &
                 vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX)))
 
-! check if fluid region with Vs = 0
+    ! check if fluid region with Vs = 0
     if (vsmin_local > 1.d-20) then
       lambdaSmin = min(lambdaSmin,vsmin_local / (distance_max_local / (NGLLX - 1)))
       lambdaSmax = max(lambdaSmax,vsmin_local / (distance_max_local / (NGLLX - 1)))
@@ -333,7 +327,7 @@
       lambdaPIImax = max(lambdaPIImax,vpIImin_local / (distance_max_local / (NGLLX - 1)))
     endif
 
-  enddo
+  enddo ! ispec
 
 #ifdef USE_MPI
   call MPI_ALLREDUCE (vpImin, vpImin_glob, 1, MPI_DOUBLE_PRECISION, &
@@ -433,8 +427,8 @@
 
     create_wavelength_histogram = .false.
 
-! only if time source is not a Dirac or Heaviside (otherwise maximum frequency of spectrum undefined)
-! and if source is not an initial field, for the same reason
+    ! only if time source is not a Dirac or Heaviside (otherwise maximum frequency of spectrum undefined)
+    ! and if source is not an initial field, for the same reason
     if (.not. initialfield) then
       f0max = -HUGEVAL
 
@@ -458,7 +452,7 @@
             write(IMAIN,*) ' Nb pts / lambdaS_fmax max = ',lambdaSmax/(2.5d0*f0max)
             write(IMAIN,*) '----'
 
-! for histogram
+            ! for histogram
             lambdaPmin_in_fluid_histo = lambdaPmin_in_fluid_histo/(2.5d0*f0max)
             lambdaPmax_in_fluid_histo = lambdaPmax_in_fluid_histo/(2.5d0*f0max)
 
@@ -529,31 +523,19 @@
 
         if (ispec_is_poroelastic(ispec)) then
 
-          ! poroelastic material
+          ! gets poroelastic material
+          call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
+          denst = rho_s
 
-          phi = porosity(material)
-          tort = tortuosity(material)
-          perm = permeability(1,material)
-          ! solid properties
-          mu_s = poroelastcoef(2,1,material)
-          kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
-          denst_s = density(1,material)
-          denst = denst_s
-          ! fluid properties
-          kappa_f = poroelastcoef(1,2,material)
-          denst_f = density(2,material)
-          eta_f = poroelastcoef(2,2,material)
-          ! frame properties
-          mu_fr = poroelastcoef(2,3,material)
-          kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
           ! Biot coefficients for the input phi
-          D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
-          H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
-          C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
-          M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+          call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
 
+          ! permeability xx
+          perm_xx = permeability(1,kmato(ispec))
+
+          ! computes velocities
           call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                 tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+                 tort,rho_s,rho_f,eta_f,perm_xx,f0(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
 
           cpIloc = sqrt(cpIsquare)
           cpIIloc = sqrt(cpIIsquare)
@@ -810,7 +792,7 @@
 #endif
 
 ! ratio of physical page size/size of the domain meshed
-  ratio_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
+  ratio_page = min(RPERCENTZ*sizez/(zmax-zmin),RPERCENTX*sizex/(xmax-xmin)) / 100.d0
 
 
   if (myrank == 0) then
@@ -944,10 +926,10 @@
 
     is = 1
     ir = 1
-    x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-    z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-    x1 = x1 * centim
-    z1 = z1 * centim
+    x1 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+    z1 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+    x1 = x1 * CENTIM
+    z1 = z1 * CENTIM
     if (myrank == 0) then
       write(24,*) 'mark'
       write(24,681) x1,z1
@@ -959,10 +941,10 @@
     ! draw straight lines if elements have 4 nodes
 
     ir=pointsdisp
-    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-    x2 = x2 * centim
-    z2 = z2 * centim
+    x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+    z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+    x2 = x2 * CENTIM
+    z2 = z2 * CENTIM
     if (myrank == 0) then
       write(24,681) x2,z2
     else
@@ -972,10 +954,10 @@
 
     ir=pointsdisp
     is=pointsdisp
-    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-    x2 = x2 * centim
-    z2 = z2 * centim
+    x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+    z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+    x2 = x2 * CENTIM
+    z2 = z2 * CENTIM
     if (myrank == 0) then
       write(24,681) x2,z2
     else
@@ -985,10 +967,10 @@
 
     is=pointsdisp
     ir=1
-    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-    x2 = x2 * centim
-    z2 = z2 * centim
+    x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+    z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+    x2 = x2 * CENTIM
+    z2 = z2 * CENTIM
     if (myrank == 0) then
       write(24,681) x2,z2
     else
@@ -998,10 +980,10 @@
 
     ir=1
     is=2
-    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-    x2 = x2 * centim
-    z2 = z2 * centim
+    x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+    z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+    x2 = x2 * CENTIM
+    z2 = z2 * CENTIM
     if (myrank == 0) then
       write(24,681) x2,z2
       write(24,*) 'CO'
@@ -1010,38 +992,26 @@
       coorg_send(2,(ispec-1)*5+5) = z2
     endif
 
-    material = kmato(ispec)
 
     if (ispec_is_poroelastic(ispec)) then
-
       ! poroelastic material
+      call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
+      denst = rho_s
 
-      phi=porosity(material)
-      tort=tortuosity(material)
-      perm=permeability(1,material)
-      ! solid properties
-      mu_s = poroelastcoef(2,1,material)
-      kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
-      denst_s = density(1,material)
-      denst = denst_s
-      ! fluid properties
-      kappa_f = poroelastcoef(1,2,material)
-      denst_f = density(2,material)
-      eta_f = poroelastcoef(2,2,material)
-      ! frame properties
-      mu_fr = poroelastcoef(2,3,material)
-      kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
       ! Biot coefficients for the input phi
-      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
-      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
-      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
-      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
 
+      ! permeability xx
+      perm_xx = permeability(1,kmato(ispec))
+
+      ! computes velocities
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-           tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+           tort,rho_s,rho_f,eta_f,perm_xx,f0(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIloc = sqrt(cpIsquare)
     else
+      material = kmato(ispec)
+
       lambdaplus2mu  = poroelastcoef(3,1,material)
       denst = density(1,material)
 
@@ -1301,10 +1271,10 @@
 
   is = 1
   ir = 1
-  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
+  x1 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z1 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x1 = x1 * CENTIM
+  z1 = z1 * CENTIM
   if (myrank == 0) then
      write(24,*) 'mark'
      write(24,681) x1,z1
@@ -1316,10 +1286,10 @@
 ! draw straight lines if elements have 4 nodes
 
   ir=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x2 = x2 * CENTIM
+  z2 = z2 * CENTIM
   if (myrank == 0) then
      write(24,681) x2,z2
   else
@@ -1329,10 +1299,10 @@
 
   ir=pointsdisp
   is=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x2 = x2 * CENTIM
+  z2 = z2 * CENTIM
   if (myrank == 0) then
      write(24,681) x2,z2
   else
@@ -1342,10 +1312,10 @@
 
   is=pointsdisp
   ir=1
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x2 = x2 * CENTIM
+  z2 = z2 * CENTIM
   if (myrank == 0) then
      write(24,681) x2,z2
   else
@@ -1355,10 +1325,10 @@
 
   ir=1
   is=2
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x2 = x2 * CENTIM
+  z2 = z2 * CENTIM
   if (myrank == 0) then
      write(24,681) x2,z2
      write(24,*) 'CO'
@@ -1367,36 +1337,25 @@
      coorg_send(2,(ispec-1)*5+5) = z2
   endif
 
-    material = kmato(ispec)
-
    if (ispec_is_poroelastic(ispec)) then
-    phi = porosity(material)
-    tort = tortuosity(material)
-    perm = permeability(1,material)
-! solid properties
-    mu_s = poroelastcoef(2,1,material)
-    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
-    denst_s = density(1,material)
-    denst = denst_s
-! fluid properties
-    kappa_f = poroelastcoef(1,2,material)
-    denst_f = density(2,material)
-    eta_f = poroelastcoef(2,2,material)
-! frame properties
-    mu_fr = poroelastcoef(2,3,material)
-    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
-! Biot coefficients for the input phi
-      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
-      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
-      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
-      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+    ! gets poroelastic material
+    call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
+    denst = rho_s
 
+    ! Biot coefficients for the input phi
+    call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
+    ! permeability xx
+    perm_xx = permeability(1,kmato(ispec))
+
+    ! computes velocities
     call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+             tort,rho_s,rho_f,eta_f,perm_xx,f0(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
 
     cpIloc = sqrt(cpIsquare)
     csloc = sqrt(cssquare)
    else
+    material = kmato(ispec)
     mu = poroelastcoef(2,1,material)
     lambdaplus2mu  = poroelastcoef(3,1,material)
     denst = density(1,material)
@@ -1716,10 +1675,10 @@ endif
 
   is = 1
   ir = 1
-  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
+  x1 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z1 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x1 = x1 * CENTIM
+  z1 = z1 * CENTIM
   if (myrank == 0) then
      write(24,*) 'mark'
      write(24,681) x1,z1
@@ -1731,10 +1690,10 @@ endif
 ! draw straight lines if elements have 4 nodes
 
   ir=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x2 = x2 * CENTIM
+  z2 = z2 * CENTIM
   if (myrank == 0) then
      write(24,681) x2,z2
   else
@@ -1744,10 +1703,10 @@ endif
 
   ir=pointsdisp
   is=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x2 = x2 * CENTIM
+  z2 = z2 * CENTIM
   if (myrank == 0) then
      write(24,681) x2,z2
   else
@@ -1757,10 +1716,10 @@ endif
 
   is=pointsdisp
   ir=1
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x2 = x2 * CENTIM
+  z2 = z2 * CENTIM
   if (myrank == 0) then
      write(24,681) x2,z2
   else
@@ -1770,10 +1729,10 @@ endif
 
   ir=1
   is=2
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x2 = x2 * CENTIM
+  z2 = z2 * CENTIM
   if (myrank == 0) then
      write(24,681) x2,z2
      write(24,*) 'CO'
@@ -1787,33 +1746,25 @@ endif
 ! use lower-left corner
     x1 = (vpext(1,1,ispec)-vpImin) / (vpImax-vpImin)
   else
-    material = kmato(ispec)
    if (ispec_is_poroelastic(ispec)) then
-    phi = porosity(material)
-    tort = tortuosity(material)
-    perm = permeability(1,material)
-!solid properties
-    mu_s = poroelastcoef(2,1,material)
-    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS*mu_s
-    denst_s = density(1,material)
-!fluid properties
-    kappa_f = poroelastcoef(1,2,material)
-    denst_f = density(2,material)
-    eta_f = poroelastcoef(2,2,material)
-!frame properties
-    mu_fr = poroelastcoef(2,3,material)
-    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS*mu_fr
-!Biot coefficients for the input phi
-      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
-      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
-      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
-      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+    ! gets poroelastic material
+    call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
+    denst = rho_s
 
+    ! Biot coefficients for the input phi
+    call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
+    ! permeability xx
+    perm_xx = permeability(1,kmato(ispec))
+
+    ! computes velocities
     call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,denst_s,denst_f,eta_f,perm,f0(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+             tort,rho_s,rho_f,eta_f,perm_xx,f0(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
 
     cpIloc = sqrt(cpIsquare)
    else
+    material = kmato(ispec)
+
     lambdaplus2mu  = poroelastcoef(3,1,material)
     denst = density(1,material)
     cpIloc = sqrt(lambdaplus2mu/denst)
@@ -2024,10 +1975,10 @@ endif
 
   is = 1
   ir = 1
-  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
+  x1 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z1 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x1 = x1 * CENTIM
+  z1 = z1 * CENTIM
   if (myrank == 0) then
      write(24,*) 'mark'
      write(24,681) x1,z1
@@ -2039,10 +1990,10 @@ endif
 ! draw straight lines if elements have 4 nodes
 
   ir=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x2 = x2 * CENTIM
+  z2 = z2 * CENTIM
   if (myrank == 0) then
      write(24,681) x2,z2
   else
@@ -2052,10 +2003,10 @@ endif
 
   ir=pointsdisp
   is=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x2 = x2 * CENTIM
+  z2 = z2 * CENTIM
   if (myrank == 0) then
      write(24,681) x2,z2
   else
@@ -2065,10 +2016,10 @@ endif
 
   is=pointsdisp
   ir=1
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x2 = x2 * CENTIM
+  z2 = z2 * CENTIM
   if (myrank == 0) then
      write(24,681) x2,z2
   else
@@ -2078,10 +2029,10 @@ endif
 
   ir=1
   is=2
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
+  x2 = (xinterp(ir,is)-xmin)*ratio_page + ORIG_X
+  z2 = (zinterp(ir,is)-zmin)*ratio_page + ORIG_Z
+  x2 = x2 * CENTIM
+  z2 = z2 * CENTIM
   if (myrank == 0) then
      write(24,681) x2,z2
      write(24,*) 'CO'
@@ -2152,14 +2103,14 @@ endif
 
  681 format(f6.2,1x,f6.2)
 
-  end subroutine checkgrid
+  end subroutine check_grid
 
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine checkgrid_setup_GLLper(percent_GLL,NGLLX_MAX_STABILITY)
+  subroutine check_grid_setup_GLLper(percent_GLL,NGLLX_MAX_STABILITY)
 
   implicit none
   include "constants.h"
@@ -2167,7 +2118,7 @@ endif
   integer :: NGLLX_MAX_STABILITY
   double precision :: percent_GLL(NGLLX_MAX_STABILITY)
 
-  if (NGLLX_MAX_STABILITY /= 15 ) stop 'check NGLLX_MAX_STABILITY is equal to 15 in checkgrid.f90'
+  if (NGLLX_MAX_STABILITY /= 15 ) stop 'check NGLLX_MAX_STABILITY is equal to 15 in check_grid.f90'
 
 ! define percentage of smallest distance between GLL points for NGLLX points
 ! percentages were computed by calling the GLL points routine for each degree
@@ -2195,14 +2146,14 @@ endif
     stop 'cannot estimate the stability condition for degree NGLLX > NGLLX_MAX_STABILITY'
   endif
 
-  end subroutine checkgrid_setup_GLLper
+  end subroutine check_grid_setup_GLLper
 
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine checkgrid_setup_colorp(red,green,blue,NUM_COLORS)
+  subroutine check_grid_setup_colorp(red,green,blue,NUM_COLORS)
 
 ! color palette
 
@@ -2210,7 +2161,7 @@ endif
   integer :: NUM_COLORS
   double precision, dimension(NUM_COLORS) :: red,green,blue
 
-  if (NUM_COLORS /= 236 ) stop 'check NUM_COLORS is equal to 236 in checkgrid.f90'
+  if (NUM_COLORS /= 236 ) stop 'check NUM_COLORS is equal to 236 in check_grid.f90'
 
 ! red
   red(1) = 1.00000000000000
@@ -3392,5 +3343,5 @@ endif
   green(236) = 0.894117647058824
   blue(236) = 0.768627450980392
 
-  end subroutine checkgrid_setup_colorp
+  end subroutine check_grid_setup_colorp
 

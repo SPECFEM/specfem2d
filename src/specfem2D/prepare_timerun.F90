@@ -209,7 +209,7 @@ subroutine prepare_timerun_mass_matrix()
   else
     stop 'incorrect value of DISPLAY_SUBSET_OPTION'
   endif
-  call checkgrid()
+  call check_grid()
 
   ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
@@ -343,7 +343,11 @@ subroutine prepare_timerun_kernel()
   use specfem_par
 
   implicit none
+
+  ! local parameters
   integer :: ier
+  character(len=MAX_STRING_LEN) :: outputname
+
 !
 !----- Allocate sensitivity kernel arrays
 !
@@ -561,9 +565,11 @@ subroutine prepare_timerun_pml()
 
   implicit none
 
+  ! local parameters
   integer :: i,ier
+  character(len=MAX_STRING_LEN) :: outputname
 
-if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented on GPU mode. Please use Stacey instead'
+  if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented on GPU mode. Please use Stacey instead'
 
   ! PML absorbing conditions
     anyabs_glob=anyabs
@@ -961,7 +967,8 @@ subroutine prepare_timerun_read()
   implicit none
 
   integer :: i,ispec,ispec2,j,ier
-
+  integer :: n
+  
   ! add a small crack (discontinuity) in the medium manually
   npgeo_ori = npgeo
   if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO

@@ -45,9 +45,11 @@
 !----
 
   subroutine locate_source_moment_tensor(ibool,coord,nspec,nglob, &
-               xigll,zigll,x_source,z_source, &
-               ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
-               xi_source,gamma_source,coorg,knods,ngnod,npgeo)
+                                         xigll,zigll,x_source,z_source, &
+                                         ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
+                                         xi_source,gamma_source,coorg,knods,ngnod,npgeo)
+
+  use constants,only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER
 
   use specfem_par, only : AXISYM,is_on_the_axis,xiglj
 
@@ -56,8 +58,6 @@
 #endif
 
   implicit none
-
-  include "constants.h"
 
   integer nspec,nglob,ngnod,npgeo
 

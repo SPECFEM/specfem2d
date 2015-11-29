@@ -52,13 +52,22 @@ subroutine prepare_timerun()
   implicit none
 
   ! local parameters
-  integer :: i,j,ispec,k,iglob,irec,i_source,ispecabs,irecloc,ier
+  integer :: n,i,j,ispec,k,iglob,irec,i_source,ispecabs,irecloc,ier
+  integer :: reclen
   integer :: nglob_acoustic_b,nglob_elastic_b,nglob_poroelastic_b
   integer :: nspec_acoustic_b,nspec_elastic_b,nspec_poroelastic_b
-  character(len=MAX_STRING_LEN) :: filename
+  integer :: ispec_poroelastic,iedge_poroelastic
+  integer :: ispec_acoustic,ispec_elastic
+  integer :: iedge_acoustic,iedge_elastic
+  integer :: ipoin1D,iglob2
+
+  character(len=MAX_STRING_LEN) :: filename,outputname,outputname2
+  character(len=MAX_STRING_LEN) :: dummystring
 
   ! Jacobian matrix and determinant
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
+  double precision :: xi,gamma,x,z
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
 
 #ifdef USE_MPI
   include "precision.h"
@@ -401,7 +410,7 @@ subroutine prepare_timerun()
         write(IMAIN,*) '*****************************************************************'
         write(IMAIN,*) '*****************************************************************'
         write(IMAIN,*) '**** BEWARE: because of periodic conditions, values computed ****'
-        write(IMAIN,*) '****         by checkgrid() below will not be reliable       ****'
+        write(IMAIN,*) '****         by check_grid() below will not be reliable       ****'
         write(IMAIN,*) '*****************************************************************'
         write(IMAIN,*) '*****************************************************************'
         write(IMAIN,*)
@@ -1086,6 +1095,7 @@ subroutine prepare_timerun()
     allocate(accels_poroelastic(NDIM,nglob_poroelastic))
     allocate(accels_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
     allocate(rmass_s_inverse_poroelastic(nglob_poroelastic))
+
     allocate(displw_poroelastic(NDIM,nglob_poroelastic))
     allocate(velocw_poroelastic(NDIM,nglob_poroelastic))
     allocate(accelw_poroelastic(NDIM,nglob_poroelastic))
@@ -1135,24 +1145,6 @@ subroutine prepare_timerun()
     allocate(B_k(nglob_poroelastic_b))
     allocate(C_k(nglob_poroelastic_b))
     allocate(M_k(nglob_poroelastic_b))
-
-    allocate(phil_global(nglob_poroelastic_b))
-    allocate(mulfr_global(nglob_poroelastic_b))
-    allocate(etal_f_global(nglob_poroelastic_b))
-
-    allocate(rhol_s_global(nglob_poroelastic_b))
-    allocate(rhol_f_global(nglob_poroelastic_b))
-    allocate(rhol_bar_global(nglob_poroelastic_b))
-    allocate(tortl_global(nglob_poroelastic_b))
-    allocate(permlxx_global(nglob_poroelastic_b))
-    allocate(permlxz_global(nglob_poroelastic_b))
-    allocate(permlzz_global(nglob_poroelastic_b))
-
-    allocate(mul_s_global(nglob_poroelastic_b))
-    allocate(kappal_s_global(nglob_poroelastic_b))
-    allocate(kappal_f_global(nglob_poroelastic_b))
-    allocate(kappal_fr_global(nglob_poroelastic_b))
-
     ! on local nodes
     allocate(rhot_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
     allocate(rhof_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
@@ -1385,24 +1377,33 @@ subroutine prepare_timerun()
     allocate(b_viscodampz(nglob))
     write(outputname,'(a,i6.6,a)') 'viscodampingx',myrank,'.bin'
     write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
+    ! array size
+    reclen = CUSTOM_REAL * nglob
+    ! file i/o
     if (SIMULATION_TYPE == 3) then
-      reclen = CUSTOM_REAL * nglob
       open(unit=23,file='OUTPUT_FILES/'//outputname,status='old',&
             action='read',form='unformatted',access='direct',&
-            recl=reclen)
+            recl=reclen,iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+
       open(unit=24,file='OUTPUT_FILES/'//outputname2,status='old',&
             action='read',form='unformatted',access='direct',&
-            recl=reclen)
+            recl=reclen,iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+
     else
-      reclen = CUSTOM_REAL * nglob
       open(unit=23,file='OUTPUT_FILES/'//outputname,status='unknown',&
             form='unformatted',access='direct',&
-            recl=reclen)
+            recl=reclen,iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+
       open(unit=24,file='OUTPUT_FILES/'//outputname2,status='unknown',&
             form='unformatted',access='direct',&
-            recl=reclen)
+            recl=reclen,iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
     endif
   else
+    ! dummy
     allocate(b_viscodampx(1))
     allocate(b_viscodampz(1))
   endif
@@ -2195,52 +2196,44 @@ if (coupled_elastic_poro) then
   endif
   call prepare_timerun_attenuation()
 
-
-
   allocate(kappastore(NGLLX,NGLLZ,nspec))
   allocate(mustore(NGLLX,NGLLZ,nspec))
   allocate(rhostore(NGLLX,NGLLZ,nspec))
   allocate(rho_vp(NGLLX,NGLLZ,nspec))
   allocate(rho_vs(NGLLX,NGLLZ,nspec))
 
-
-if (assign_external_model) then
-
-do ispec= 1,nspec
-          do j = 1,NGLLZ
-              do i = 1,NGLLX
-
-              rhostore(i,j,ispec)    = rhoext(i,j,ispec)
-              rho_vp(i,j,ispec)      = rhostore(i,j,ispec) * vpext(i,j,ispec)
-              rho_vs(i,j,ispec)      = rhostore(i,j,ispec) * vsext(i,j,ispec)
-              mustore(i,j,ispec)     = rho_vs(i,j,ispec) * vsext(i,j,ispec)
-              kappastore(i,j,ispec)  = rho_vp(i,j,ispec) * vpext(i,j,ispec)-TWO*TWO*mustore(i,j,ispec)/3._CUSTOM_REAL
-
-              enddo
-          enddo
-enddo
-
-else ! Internal rho vp vs model
-
-do ispec= 1,nspec
-          do j = 1,NGLLZ
-              do i = 1,NGLLX
-
-              rhostore(i,j,ispec)       = density(1,kmato(ispec))
-              lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-              mul_unrelaxed_elastic     = poroelastcoef(2,1,kmato(ispec))
-              mustore(i,j,ispec)        = mul_unrelaxed_elastic
-              kappastore(i,j,ispec)     = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
-              rho_vp(i,j,ispec)         = density(1,kmato(ispec)) * sqrt((kappastore(i,j,ispec) + &
-                                          4._CUSTOM_REAL*mul_unrelaxed_elastic/ &
-                                          3._CUSTOM_REAL)/density(1,kmato(ispec)))
-              rho_vs(i,j,ispec)         = density(1,kmato(ispec)) * sqrt(mul_unrelaxed_elastic/density(1,kmato(ispec)))
-              enddo
+  if (assign_external_model) then
+    ! external model
+    do ispec= 1,nspec
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          rhostore(i,j,ispec)    = rhoext(i,j,ispec)
+          rho_vp(i,j,ispec)      = rhostore(i,j,ispec) * vpext(i,j,ispec)
+          rho_vs(i,j,ispec)      = rhostore(i,j,ispec) * vsext(i,j,ispec)
+          mustore(i,j,ispec)     = rho_vs(i,j,ispec) * vsext(i,j,ispec)
+          kappastore(i,j,ispec)  = rho_vp(i,j,ispec) * vpext(i,j,ispec)-TWO*TWO*mustore(i,j,ispec)/3._CUSTOM_REAL
         enddo
-enddo
+      enddo
+    enddo
+  else
+    ! Internal rho vp vs model
+    do ispec= 1,nspec
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          rhostore(i,j,ispec)       = density(1,kmato(ispec))
+          lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+          mul_unrelaxed_elastic     = poroelastcoef(2,1,kmato(ispec))
 
-endif ! Internal/External model
-
+          mustore(i,j,ispec)        = mul_unrelaxed_elastic
+          kappastore(i,j,ispec)     = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
+          rho_vp(i,j,ispec)         = density(1,kmato(ispec)) * sqrt((kappastore(i,j,ispec) + &
+                                      4._CUSTOM_REAL*mul_unrelaxed_elastic/ &
+                                      3._CUSTOM_REAL)/density(1,kmato(ispec)))
+          rho_vs(i,j,ispec)         = density(1,kmato(ispec)) * sqrt(mul_unrelaxed_elastic/density(1,kmato(ispec)))
+        enddo
+      enddo
+    enddo
+  endif ! Internal/External model
 
   ! prepares GPU arrays
   if (GPU_MODE) call prepare_timerun_GPU()

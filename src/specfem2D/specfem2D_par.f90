@@ -560,50 +560,16 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_viscodampx,b_viscodampz
 
 
-  !---------------------------------------------------------------------
-  !for fluid/solid coupling
-  !---------------------------------------------------------------------
-  integer :: ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,iglob2
-  real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,displw_x,displw_z,zxi,xgamma,jacobian1D,pressure
   ! PML parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_fsb_displ_elastic
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_fsb_displ_elastic_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_potential_ddot_acoustic
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_potential_ddot_acoustic_LDDRK
 
-  !for adjoint
-  real(kind=CUSTOM_REAL) :: b_displ_x,b_displ_z,b_displw_x,b_displw_z,b_pressure
-
-  !---------------------------------------------------------------------
-  !for fluid/porous coupling
-  !---------------------------------------------------------------------
-  integer :: iedge_poroelastic
-  double precision :: mul_G,lambdal_G,lambdalplus2mul_G
-  double precision :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
-  double precision :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
-  double precision :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
-  double precision :: dwx_dxl,dwz_dxl,dwx_dzl,dwz_dzl
-
-  !for adjoint
-  double precision :: b_dux_dxi,b_dux_dgamma,b_duz_dxi,b_duz_dgamma
-  double precision :: b_dwx_dxi,b_dwx_dgamma,b_dwz_dxi,b_dwz_dgamma
-  double precision :: b_dux_dxl,b_duz_dxl,b_dux_dzl,b_duz_dzl
-  double precision :: b_dwx_dxl,b_dwz_dxl,b_dwx_dzl,b_dwz_dzl
-
-  !---------------------------------------------------------------------
-  !for solid/porous coupling
-  !---------------------------------------------------------------------
-  integer :: ispec_poroelastic,ii2,jj2
-  double precision :: sigma_xx,sigma_xz,sigma_zz,sigmap
-
-  !for adjoint
-  double precision :: b_sigma_xx,b_sigma_xz,b_sigma_zz,b_sigmap
-
-  ! for kernel compuation
+  ! for kernel computation
   character(len=100) TOMOGRAPHY_FILE
   integer :: tomo_material
   logical :: save_ASCII_kernels
-  integer reclen
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_ac,b_displ_ac,b_accel_ac
 
@@ -628,20 +594,14 @@ module specfem_par
 
   ! poro-elastic kernels
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
-    C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, mufrb_kl, &
-    rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl
+    C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, mufrb_kl, rhobb_kl, rhofbb_kl, phib_kl, ratio_kl
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: cpI_kl, cpII_kl, cs_kl
+  ! on global nodes
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhot_k, rhof_k, sm_k, eta_k, mufr_k, B_k, &
     C_k, M_k
 
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: phil_global,etal_f_global
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhol_s_global,rhol_f_global,rhol_bar_global
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: tortl_global,mulfr_global,mul_s_global
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: kappal_s_global, kappal_f_global, kappal_fr_global
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: permlxx_global,permlxz_global,permlzz_global
-
   character(len=150) :: adj_source_file
   integer :: irec_local,nadj_rec_local
-!  double precision :: xx,zz,rholb,tempx1l,tempx2l,b_tempx1l,b_tempx2l,bb_tempx1l,bb_tempx2l
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearrays
 
@@ -666,26 +626,28 @@ module specfem_par
   !prepare_timerun_body.F90 et al
   !---------------------------------------------------------------------
   logical :: anyabs
-  double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange,xi,gamma,x,z
 
-  real(kind=CUSTOM_REAL) :: kinetic_energy,potential_energy,kinetic_energy_total,potential_energy_total
+  real(kind=CUSTOM_REAL) :: kinetic_energy,potential_energy
   double precision :: vpImin,vpImax,vpIImin,vpIImax
 
+  ! debugging gravitoacoustic
   integer :: iglobzero
-  integer :: it,id,n,nglob,npgeo
-  character(len=150) dummystring
-  ! material properties of the elastic medium
-  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
 
-  ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
-  double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
-  double precision :: mul_s,kappal_s
-  double precision :: kappal_f
-  double precision :: mul_fr,kappal_fr
-  double precision :: D_biot,H_biot,C_biot,M_biot,B_biot,cpIsquare,cpIIsquare,cssquare
-  real(kind=CUSTOM_REAL) :: ratio,dd1
+  ! current time step
+  integer :: it
 
-  integer :: ngnod,nspec,pointsdisp, nelemabs
+  ! global points
+  integer :: nglob,npgeo
+
+  ! spectral-elements
+  integer :: nspec
+  integer :: ngnod
+
+  ! number of interpolation points
+  integer :: pointsdisp
+
+  ! number of absorbing elements
+  integer :: nelemabs
 
   ! for MPI and partitioning
   integer :: myrank
@@ -694,7 +656,6 @@ module specfem_par
   ! parameter read from parameter file
   integer :: nproc_read_from_database
 
-  character(len=150) :: inputname,outputname,outputname2
   integer  :: ninterface
   integer  :: max_interface_size
   integer, dimension(:), allocatable  :: my_neighbours

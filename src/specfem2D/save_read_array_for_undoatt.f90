@@ -48,6 +48,7 @@
   ! local parameters
   integer :: iteration_on_subset,iteration_on_subset_tmp
   integer :: ier
+  character(len=MAX_STRING_LEN) :: outputname
 
   ! current subset iteration
   iteration_on_subset_tmp = iteration_on_subset
@@ -96,6 +97,7 @@
   ! local parameters
   integer :: iteration_on_subset,iteration_on_subset_tmp
   integer :: ier
+  character(len=MAX_STRING_LEN) :: outputname
 
   ! current subset iteration
   iteration_on_subset_tmp = NSTEP/NT_DUMP_ATTENUATION - iteration_on_subset + 1

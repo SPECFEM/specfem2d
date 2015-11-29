@@ -44,28 +44,32 @@
 
  subroutine compute_coupling_viscoelastic_po()
 
+  use constants,only: CUSTOM_REAL,IRIGHT,ILEFT,IBOTTOM,ITOP,NGLLX,NGLLZ,TWO,ZERO
+
   use specfem_par, only: SIMULATION_TYPE,num_solid_poro_edges,&
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          hprime_xx,hprime_zz, &
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,&
-                         kmato,porosity,tortuosity,poroelastcoef,density, &
+                         kmato,poroelastcoef, &
                          assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropy, &
                          displ_elastic,b_displ_elastic,displs_poroelastic,displw_poroelastic, &
                          b_displs_poroelastic,b_displw_poroelastic,&
                          accel_elastic,b_accel_elastic
 
   implicit none
-  include 'constants.h'
 
   !local variables
   integer :: inum,ispec_elastic,iedge_elastic,ispec_poroelastic,iedge_poroelastic, &
              i,j,k,ipoin1D,iglob,ii2,jj2
-  double precision :: phil,tortl,mul_s,kappal_s,rhol_s,kappal_f,rhol_f, &
-                      mul_fr,kappal_fr,rhol_bar,D_biot,H_biot,C_biot,M_biot, &
-                      mul_G,lambdal_G,lambdalplus2mul_G,lambdal_unrelaxed_elastic, &
-                      mul_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic, &
-                      c11,c13,c15,c33,c35,c55,c12,c23,c25
+
+  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: D_biot,H_biot,C_biot,M_biot
+
+  double precision :: c11,c13,c15,c33,c35,c55,c12,c23,c25
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
+
+  real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
 
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
@@ -101,29 +105,16 @@
       j = jvalue_inverse(ipoin1D,iedge_poroelastic)
       iglob = ibool(i,j,ispec_poroelastic)
 
-      ! get poroelastic domain paramters
-      phil = porosity(kmato(ispec_poroelastic))
-      tortl = tortuosity(kmato(ispec_poroelastic))
-      !solid properties
-      mul_s = poroelastcoef(2,1,kmato(ispec_poroelastic))
-      kappal_s = poroelastcoef(3,1,kmato(ispec_poroelastic)) - 4._CUSTOM_REAL*mul_s/3._CUSTOM_REAL
-      rhol_s = density(1,kmato(ispec_poroelastic))
-      !fluid properties
-      kappal_f = poroelastcoef(1,2,kmato(ispec_poroelastic))
-      rhol_f = density(2,kmato(ispec_poroelastic))
-      !frame properties
-      mul_fr = poroelastcoef(2,3,kmato(ispec_poroelastic))
-      kappal_fr = poroelastcoef(3,3,kmato(ispec_poroelastic)) - 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
-      rhol_bar =  (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f
-      !Biot coefficients for the input phi
-      D_biot = kappal_s*(1._CUSTOM_REAL + phil*(kappal_s/kappal_f - 1._CUSTOM_REAL))
-      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + &
-               kappal_fr + 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
-      C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
-      M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
-      mul_G = mul_fr
-      lambdal_G = H_biot - 2._CUSTOM_REAL*mul_fr
-      lambdalplus2mul_G = lambdal_G + TWO*mul_G
+      ! gets poroelastic material
+      call get_poroelastic_material(ispec_poroelastic,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f, &
+                                    mu_fr,kappa_fr,rho_bar)
+
+      ! Biot coefficients for the input phi
+      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
+      mu_G = mu_fr
+      lambdal_G = H_biot - 2._CUSTOM_REAL*mu_fr
+      lambdalplus2mul_G = lambdal_G + TWO*mu_G
 
       ! derivative along x and along z for u_s and w
       dux_dxi = ZERO
@@ -212,12 +203,12 @@
 
       ! no attenuation
       sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
-      sigma_xz = mul_G*(duz_dxl + dux_dzl)
+      sigma_xz = mu_G*(duz_dxl + dux_dzl)
       sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
       if (SIMULATION_TYPE == 3) then
         b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
-        b_sigma_xz = mul_G*(b_duz_dxl + b_dux_dzl)
+        b_sigma_xz = mu_G*(b_duz_dxl + b_dux_dzl)
         b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
       endif
       ! get point values for the elastic domain, which matches our side in the inverse direction
@@ -369,34 +360,40 @@
   enddo
  end subroutine compute_coupling_viscoelastic_po
 
+!
 !========================================================================
+!
 
 ! for viscoelastic solver
 
  subroutine compute_coupling_viscoelastic_po_backward()
+
+  use constants,only: CUSTOM_REAL,IRIGHT,ILEFT,IBOTTOM,ITOP,NGLLX,NGLLZ,TWO,ZERO
 
   use specfem_par, only: SIMULATION_TYPE,num_solid_poro_edges,&
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          hprime_xx,hprime_zz, &
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,&
-                         kmato,porosity,tortuosity,poroelastcoef,density, &
+                         kmato,poroelastcoef, &
                          assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropy, &
                          displ_elastic,b_displ_elastic,displs_poroelastic,displw_poroelastic, &
                          b_displs_poroelastic,b_displw_poroelastic,&
                          accel_elastic,b_accel_elastic
 
   implicit none
-  include 'constants.h'
 
   !local variables
   integer :: inum,ispec_elastic,iedge_elastic,ispec_poroelastic,iedge_poroelastic, &
              i,j,k,ipoin1D,iglob,ii2,jj2
-  double precision :: phil,tortl,mul_s,kappal_s,rhol_s,kappal_f,rhol_f, &
-                      mul_fr,kappal_fr,rhol_bar,D_biot,H_biot,C_biot,M_biot, &
-                      mul_G,lambdal_G,lambdalplus2mul_G,lambdal_unrelaxed_elastic, &
-                      mul_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic, &
-                      c11,c13,c15,c33,c35,c55,c12,c23,c25
+
+  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: D_biot,H_biot,C_biot,M_biot
+
+  double precision :: c11,c13,c15,c33,c35,c55,c12,c23,c25
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
+
+  real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
 
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
@@ -433,28 +430,16 @@
       iglob = ibool(i,j,ispec_poroelastic)
 
       ! get poroelastic domain paramters
-      phil = porosity(kmato(ispec_poroelastic))
-      tortl = tortuosity(kmato(ispec_poroelastic))
-      !solid properties
-      mul_s = poroelastcoef(2,1,kmato(ispec_poroelastic))
-      kappal_s = poroelastcoef(3,1,kmato(ispec_poroelastic)) - 4._CUSTOM_REAL*mul_s/3._CUSTOM_REAL
-      rhol_s = density(1,kmato(ispec_poroelastic))
-      !fluid properties
-      kappal_f = poroelastcoef(1,2,kmato(ispec_poroelastic))
-      rhol_f = density(2,kmato(ispec_poroelastic))
-      !frame properties
-      mul_fr = poroelastcoef(2,3,kmato(ispec_poroelastic))
-      kappal_fr = poroelastcoef(3,3,kmato(ispec_poroelastic)) - 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
-      rhol_bar =  (1._CUSTOM_REAL - phil)*rhol_s + phil*rhol_f
-      !Biot coefficients for the input phi
-      D_biot = kappal_s*(1._CUSTOM_REAL + phil*(kappal_s/kappal_f - 1._CUSTOM_REAL))
-      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) + &
-               kappal_fr + 4._CUSTOM_REAL*mul_fr/3._CUSTOM_REAL
-      C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
-      M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
-      mul_G = mul_fr
-      lambdal_G = H_biot - 2._CUSTOM_REAL*mul_fr
-      lambdalplus2mul_G = lambdal_G + TWO*mul_G
+      ! gets poroelastic material
+      call get_poroelastic_material(ispec_poroelastic,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f, &
+                                    mu_fr,kappa_fr,rho_bar)
+
+      ! Biot coefficients for the input phi
+      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
+      mu_G = mu_fr
+      lambdal_G = H_biot - 2._CUSTOM_REAL*mu_fr
+      lambdalplus2mul_G = lambdal_G + TWO*mu_G
 
       ! derivative along x and along z for u_s and w
       b_dux_dxi = ZERO
@@ -529,12 +514,12 @@
 
       ! no attenuation
       sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
-      sigma_xz = mul_G*(duz_dxl + dux_dzl)
+      sigma_xz = mu_G*(duz_dxl + dux_dzl)
       sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
       if (SIMULATION_TYPE == 3) then
         b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
-        b_sigma_xz = mul_G*(b_duz_dxl + b_dux_dzl)
+        b_sigma_xz = mu_G*(b_duz_dxl + b_dux_dzl)
         b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
       endif
       ! get point values for the elastic domain, which matches our side in the inverse direction

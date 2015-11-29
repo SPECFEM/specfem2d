@@ -55,14 +55,16 @@
   include "precision.h"
 #endif
 
+  ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_potential_acoustic_buffer,b_potential_dot_dot_acoustic_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_elastic_buffer,b_accel_elastic_buffer
+  real(kind=CUSTOM_REAL) :: kinetic_energy_total,potential_energy_total
 
-  ! local parameters
   integer :: i,j,iteration_on_subset,it_of_this_subset,it_backward
   integer :: it_temp,seismo_current_temp
   integer :: ier
   integer, parameter :: it_begin = 1
+
   ! time
   character(len=8) :: datein
   character(len=10) :: timein

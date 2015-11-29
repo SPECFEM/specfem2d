@@ -64,7 +64,9 @@
   double precision :: val1,val2,val3,val4,val5,val6
   double precision :: val7,val8,val9,val10,val11,val12,val0
   double precision :: c11,c13,c15,c33,c35,c55,c12,c23,c25,c22
+
   double precision :: D_biot,H_biot,C_biot,M_biot
+
   double precision :: w_c
   integer :: imat,n,indic
   character(len=80) :: datlin
@@ -172,8 +174,11 @@
       ! Qmu values
       Qmu = val12
 
-      density_mat(1) =val0
-      density_mat(2) =val1
+      density_mat(1) = val0
+      density_mat(2) = val1
+
+      phi = val2
+      tortuosity_mat = val3
 
       ! Solid properties
       kappa_s = val7
@@ -184,19 +189,15 @@
       ! Frame properties
       kappa_fr = val9
       mu_fr = val11
+
       ! Lame parameters for the solid phase and the frame
       lambdaplus2mu_s = kappa_s + FOUR_THIRDS*mu_s
       lambda_s = lambdaplus2mu_s - 2.d0*mu_s
       lambdaplus2mu_fr = kappa_fr + FOUR_THIRDS*mu_fr
       lambda_fr = lambdaplus2mu_fr - 2.d0*mu_fr
-      phi = val2
-      tortuosity_mat = val3
 
       ! Biot coefficients for the input phi
-      D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
-      H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
-      C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
-      M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
+      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
 
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare, &
                                       H_biot,C_biot,M_biot,mu_fr,phi, &
@@ -205,6 +206,7 @@
 
       porosity(n) = val2
       tortuosity(n) = val3
+
       permeability(1,n) = val4
       permeability(2,n) = val5
       permeability(3,n) = val6

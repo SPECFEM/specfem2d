@@ -51,9 +51,20 @@
 ! local variables
   integer :: i,j,k,ispec
   real(kind=CUSTOM_REAL) :: cpl,csl,kappal
+  real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
+
   ! Jacobian matrix and determinant
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
   double precision :: rhol
+  ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
+  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: D_biot,H_biot,C_biot,M_biot
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
+
+  double precision :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
+  double precision :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
+  double precision :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
+  double precision :: dwx_dxl,dwz_dxl,dwx_dzl,dwz_dzl
 
   ! initializes
   kinetic_energy = ZERO
@@ -76,6 +87,7 @@
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
       mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
       lambdaplus2mu_unrelaxed_elastic = poroelastcoef(3,1,kmato(ispec))
+
       rhol  = density(1,kmato(ispec))
 
       ! double loop over GLL points
@@ -143,32 +155,20 @@
 
       ! get unrelaxed elastic parameters of current spectral element
       !for now replaced by solid, fluid, and frame parameters of current spectral element
-      phil = porosity(kmato(ispec))
-      tortl = tortuosity(kmato(ispec))
-      !solid properties
-      mul_s = poroelastcoef(2,1,kmato(ispec))
-      kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
-      rhol_s = density(1,kmato(ispec))
-      !fluid properties
-      kappal_f = poroelastcoef(1,2,kmato(ispec))
-      rhol_f = density(2,kmato(ispec))
-      !frame properties
-      mul_fr = poroelastcoef(2,3,kmato(ispec))
-      kappal_fr = poroelastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
-      rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
-      !Biot coefficients for the input phi
-      D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
-      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) &
-              + kappal_fr + FOUR_THIRDS*mul_fr
-      C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
-      M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
+
+      ! gets poroelastic material
+      call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
+
+      ! Biot coefficients for the input phi
+      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
       !The RHS has the form : div T -phi/c div T_f + phi/ceta_fk^-1.partial t w
       !where T = G:grad u_s + C div w I
       !and T_f = C div u_s I + M div w I
       !we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
-      mul_G = mul_fr
-      lambdal_G = H_biot - TWO*mul_fr
-      lambdalplus2mul_G = lambdal_G + TWO*mul_G
+      mu_G = mu_fr
+      lambdal_G = H_biot - TWO*mu_fr
+      lambdalplus2mul_G = lambdal_G + TWO*mu_G
 
       ! first double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
@@ -225,25 +225,25 @@
           potential_energy = potential_energy &
               + ( lambdalplus2mul_G*dux_dxl**2 &
               + lambdalplus2mul_G*duz_dzl**2 &
-              + two*lambdal_G*dux_dxl*duz_dzl + mul_G*(dux_dzl + duz_dxl)**2 &
+              + two*lambdal_G*dux_dxl*duz_dzl + mu_G*(dux_dzl + duz_dxl)**2 &
               + two*C_biot*dwx_dxl*dux_dxl + two*C_biot*dwz_dzl*duz_dzl &
               + two*C_biot*(dwx_dxl*duz_dzl + dwz_dzl*dux_dxl) &
               + M_biot*dwx_dxl**2 + M_biot*dwz_dzl**2 &
               + two*M_biot*dwx_dxl*dwz_dzl )*wxgll(i)*wzgll(j)*jacobianl / TWO
 
           ! compute kinetic energy
-          if (phil > 0.0d0) then
+          if (phi > 0.0d0) then
             kinetic_energy = kinetic_energy &
-              + ( rhol_bar*(velocs_poroelastic(1,ibool(i,j,ispec))**2 &
+              + ( rho_bar*(velocs_poroelastic(1,ibool(i,j,ispec))**2 &
               + velocs_poroelastic(2,ibool(i,j,ispec))**2) &
-              + rhol_f*tortl/phil*(velocw_poroelastic(1,ibool(i,j,ispec))**2 &
+              + rho_f*tort/phi*(velocw_poroelastic(1,ibool(i,j,ispec))**2 &
               + velocw_poroelastic(2,ibool(i,j,ispec))**2) &
-              + rhol_f*(velocs_poroelastic(1,ibool(i,j,ispec))*velocw_poroelastic(1,ibool(i,j,ispec)) &
+              + rho_f*(velocs_poroelastic(1,ibool(i,j,ispec))*velocw_poroelastic(1,ibool(i,j,ispec)) &
               + velocs_poroelastic(2,ibool(i,j,ispec))*velocw_poroelastic(2,ibool(i,j,ispec))) &
                  )*wxgll(i)*wzgll(j)*jacobianl / TWO
           else
             kinetic_energy = kinetic_energy  &
-              + rhol_s*(velocs_poroelastic(1,ibool(i,j,ispec))**2 &
+              + rho_s*(velocs_poroelastic(1,ibool(i,j,ispec))**2 &
               + velocs_poroelastic(2,ibool(i,j,ispec))**2)*wxgll(i)*wzgll(j)*jacobianl / TWO
           endif
         enddo

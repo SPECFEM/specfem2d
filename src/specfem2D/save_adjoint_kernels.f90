@@ -155,18 +155,18 @@ if (.not. GPU_MODE) then
           iglob = ibool(i,j,ispec)
           xx = coord(1,iglob)
           zz = coord(2,iglob)
-          write(144,'(5e11.3)')xx,zz,mufr_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
-          write(155,'(5e11.3)')xx,zz,M_kl(i,j,ispec),rhot_kl(i,j,ispec),rhof_kl(i,j,ispec)
+          write(144,'(5e11.3)') xx,zz,mufr_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
+          write(155,'(5e11.3)') xx,zz,M_kl(i,j,ispec),rhot_kl(i,j,ispec),rhof_kl(i,j,ispec)
 
-          write(16,'(5e11.3)')xx,zz,sm_kl(i,j,ispec),eta_kl(i,j,ispec)
+          write(16,'(5e11.3)') xx,zz,sm_kl(i,j,ispec),eta_kl(i,j,ispec)
 
-          write(17,'(5e11.3)')xx,zz,mufrb_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
-          write(18,'(5e11.3)')xx,zz,M_kl(i,j,ispec),rhob_kl(i,j,ispec),rhofb_kl(i,j,ispec)
+          write(17,'(5e11.3)') xx,zz,mufrb_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
+          write(18,'(5e11.3)') xx,zz,M_kl(i,j,ispec),rhob_kl(i,j,ispec),rhofb_kl(i,j,ispec)
 
-          write(19,'(5e11.3)')xx,zz,phi_kl(i,j,ispec),eta_kl(i,j,ispec)
-          write(20,'(5e11.3)')xx,zz,cpI_kl(i,j,ispec),cpII_kl(i,j,ispec),cs_kl(i,j,ispec)
-          write(21,'(5e11.3)')xx,zz,rhobb_kl(i,j,ispec),rhofbb_kl(i,j,ispec),ratio_kl(i,j,ispec)
-          write(22,'(5e11.3)')xx,zz,phib_kl(i,j,ispec),eta_kl(i,j,ispec)
+          write(19,'(5e11.3)') xx,zz,phi_kl(i,j,ispec),eta_kl(i,j,ispec)
+          write(20,'(5e11.3)') xx,zz,cpI_kl(i,j,ispec),cpII_kl(i,j,ispec),cs_kl(i,j,ispec)
+          write(21,'(5e11.3)') xx,zz,rhobb_kl(i,j,ispec),rhofbb_kl(i,j,ispec),ratio_kl(i,j,ispec)
+          write(22,'(5e11.3)') xx,zz,phib_kl(i,j,ispec),eta_kl(i,j,ispec)
         enddo
       enddo
     enddo

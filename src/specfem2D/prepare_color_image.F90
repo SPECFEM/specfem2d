@@ -274,24 +274,27 @@
   use mpi
 #endif
 
+  use constants,only: NGLLX,NGLLZ,HALF,TWO
+
   use specfem_par, only : nglob,image_color_vp_display,iglob_image_color, &
-                            NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
-                            num_pixel_loc,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
-                            density,poroelastcoef,porosity,tortuosity, &
-                            nproc,myrank,assign_external_model,vpext,DRAW_WATER_IN_BLUE
+    NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
+    num_pixel_loc,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
+    density,poroelastcoef, &
+    nproc,myrank,assign_external_model,vpext,DRAW_WATER_IN_BLUE
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   double precision :: vp_of_the_model
   double precision, dimension(:), allocatable :: vp_display
   double precision :: rhol,mul_relaxed,lambdal_relaxed
-  double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl,mul_s,kappal_s,kappal_f, &
-    mul_fr,kappal_fr
-  double precision :: afactor,bfactor,cfactor,D_biot,H_biot,C_biot,&
-    M_biot,B_biot,cpIsquare,cpIIsquare,cssquare
-  double precision :: gamma1,gamma2,gamma3,gamma4,ratio
+
+  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: D_biot,H_biot,C_biot,M_biot
+
+  double precision :: afactor,bfactor,cfactor
+  double precision :: cpIsquare
+
   integer  :: i,j,k,ispec
 #ifdef USE_MPI
   double precision, dimension(:), allocatable  :: data_pixel_recv
@@ -310,44 +313,17 @@
 
     if (ispec_is_poroelastic(ispec)) then
       !get parameters of current spectral element
-      phil = porosity(kmato(ispec))
-      tortl = tortuosity(kmato(ispec))
-      !solid properties
-      mul_s = poroelastcoef(2,1,kmato(ispec))
-      kappal_s = poroelastcoef(3,1,kmato(ispec)) - 4.d0*mul_s/3.d0
-      rhol_s = density(1,kmato(ispec))
-      !fluid properties
-      kappal_f = poroelastcoef(1,2,kmato(ispec))
-      rhol_f = density(2,kmato(ispec))
-      !frame properties
-      mul_fr = poroelastcoef(2,3,kmato(ispec))
-      kappal_fr = poroelastcoef(3,3,kmato(ispec)) - 4.d0*mul_fr/3.d0
-      rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
-      !Biot coefficients for the input phi
-      D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
-      H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) &
-              + kappal_fr + 4.d0*mul_fr/3.d0
-      C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
-      M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
-      B_biot = H_biot - 4.d0*mul_fr/3.d0
-      ! Approximated velocities (no viscous dissipation)
-      afactor = rhol_bar - phil/tortl*rhol_f
-      bfactor = H_biot + phil*rhol_bar/(tortl*rhol_f)*M_biot - TWO*phil/tortl*C_biot
-      cfactor = phil/(tortl*rhol_f)*(H_biot*M_biot - C_biot*C_biot)
-      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-      cpIIsquare = (bfactor - sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-      cssquare = mul_fr/afactor
+      call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
 
-      ! Approximated ratio r = amplitude "w" field/amplitude "s" field (no viscous dissipation)
-      ! used later for wavespeed kernels calculation, which are presently implemented for inviscid case,
-      ! contrary to primary and density-normalized kernels, which are consistent with viscous fluid case.
-      gamma1 = H_biot - phil/tortl*C_biot
-      gamma2 = C_biot - phil/tortl*M_biot
-      gamma3 = phil/tortl*( M_biot*(afactor/rhol_f + phil/tortl) - C_biot)
-      gamma4 = phil/tortl*( C_biot*(afactor/rhol_f + phil/tortl) - H_biot)
-      ratio = HALF*(gamma1 - gamma3)/gamma4 &
-            + HALF*sqrt((gamma1-gamma3)**2/gamma4**2 &
-            + 4.d0 * gamma2/gamma4)
+      ! Biot coefficients for the input phi
+      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
+      ! Approximated velocities (no viscous dissipation)
+      afactor = rho_bar - phi/tort*rho_f
+      bfactor = H_biot + phi*rho_bar/(tort*rho_f)*M_biot - TWO*phi/tort*C_biot
+      cfactor = phi/(tort*rho_f)*(H_biot*M_biot - C_biot*C_biot)
+
+      cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
 
       do j = 1,NGLLZ
         do i = 1,NGLLX

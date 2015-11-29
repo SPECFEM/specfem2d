@@ -44,9 +44,9 @@
 
   subroutine compute_normal_vector( angle, n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_z, n4_z )
 
-  implicit none
+  use constants,only: TINYVAL,PI
 
-  include 'constants.h'
+  implicit none
 
   double precision :: angle
   double precision :: n1_x, n2_x, n3_x, n4_x, n1_z, n2_z, n3_z, n4_z

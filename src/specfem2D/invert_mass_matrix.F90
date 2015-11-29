@@ -45,6 +45,8 @@
 
 !  builds the global mass matrix
 
+  use constants,only: IMAIN,CUSTOM_REAL,NGLLX,NGLLZ,ONE,TWO,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+
   use specfem_par, only: myrank,any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one, &
                                 rmass_inverse_acoustic, &
@@ -68,20 +70,18 @@
                                 spec_to_PML,time_stepping_scheme
 
   implicit none
-  include 'constants.h'
-
-
-  integer :: ibegin,iend,ispecabs,jbegin,jend,ispec,i,j,iglob
-
 
   ! local parameter
+  integer :: ibegin,iend,ispecabs,jbegin,jend,ispec,i,j,iglob
+
   ! material properties of the elastic medium
-  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,cpl,csl
+  real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
+  real(kind=CUSTOM_REAL) :: cpl,csl
   integer count_left,count_right,count_bottom
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz,&
                             weight,xxi,zxi,xgamma,zgamma,jacobian1D
-  double precision :: rhol,kappal,mul_relaxed,lambdal_relaxed
-  double precision :: rhol_s,rhol_f,rhol_bar,phil,tortl
+  double precision :: rhol,kappal,mu_relaxed,lambda_relaxed
+  double precision :: rho_s,rho_f,rho_bar,phi,tort
   integer :: ispec_PML
   logical :: this_element_has_PML
 
@@ -112,27 +112,27 @@
           kappal = rhol * vpext(i,j,ispec)**2
         else
           rhol = density(1,kmato(ispec))
-          lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-          mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-          kappal = lambdal_relaxed + 2.d0/3.d0*mul_relaxed
+          lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
+          mu_relaxed = poroelastcoef(2,1,kmato(ispec))
+          kappal = lambda_relaxed + 2.d0/3.d0*mu_relaxed
         endif
 
         if (ispec_is_poroelastic(ispec)) then
           ! material is poroelastic
 
-          rhol_s = density(1,kmato(ispec))
-          rhol_f = density(2,kmato(ispec))
-          phil = porosity(kmato(ispec))
-          tortl = tortuosity(kmato(ispec))
-          rhol_bar = (1.d0-phil)*rhol_s + phil*rhol_f
+          rho_s = density(1,kmato(ispec))
+          rho_f = density(2,kmato(ispec))
+          phi = porosity(kmato(ispec))
+          tort = tortuosity(kmato(ispec))
+          rho_bar = (1.d0-phi)*rho_s + phi*rho_f
 
           ! for the solid mass matrix
           rmass_s_inverse_poroelastic(iglob) = rmass_s_inverse_poroelastic(iglob)  &
-                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*(rhol_bar - phil*rhol_f/tortl)
+                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*(rho_bar - phi*rho_f/tort)
           ! for the fluid mass matrix
           rmass_w_inverse_poroelastic(iglob) = rmass_w_inverse_poroelastic(iglob) &
-                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*(rhol_bar*rhol_f*tortl  &
-                  - phil*rhol_f*rhol_f)/(rhol_bar*phil)
+                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*(rho_bar*rho_f*tort  &
+                  - phi*rho_f*rho_f)/(rho_bar*phi)
 
           ! for elastic medium
         else if (ispec_is_elastic(ispec)) then
@@ -372,6 +372,7 @@
         ! get elastic parameters of current spectral elemegammaznt
         lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
         mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
+
         rhol  = density(1,kmato(ispec))
         kappal  = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
         cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)/rhol)
@@ -606,9 +607,9 @@
       if (ispec_is_acoustic(ispec)) then
 
         ! get elastic parameters of current spectral element
-        lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
-        mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-        kappal  = lambdal_relaxed + TWO*mul_relaxed/3._CUSTOM_REAL
+        lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
+        mu_relaxed = poroelastcoef(2,1,kmato(ispec))
+        kappal  = lambda_relaxed + TWO*mu_relaxed/3._CUSTOM_REAL
         rhol = density(1,kmato(ispec))
 
         cpl = sqrt(kappal/rhol)

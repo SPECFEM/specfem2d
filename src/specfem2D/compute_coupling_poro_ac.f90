@@ -61,7 +61,9 @@
              ipoin1D,i,j,ii2,jj2,iglob
   real(kind=CUSTOM_REAL) :: pressure,b_pressure,&
                             xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
-  double precision :: phil,tortl,rhol_f,rhol_s,rhol_bar
+  double precision :: phi,tort,rho_f,rho_s,rho_bar
+  real(kind=CUSTOM_REAL) :: fac_s,fac_w
+  integer :: material
 
   ! loop on all the coupling edges
   do inum = 1,num_fluid_poro_edges
@@ -80,11 +82,15 @@
       iglob = ibool(i,j,ispec_acoustic)
 
       ! get poroelastic parameters
-      phil = porosity(kmato(ispec_poroelastic))
-      tortl = tortuosity(kmato(ispec_poroelastic))
-      rhol_f = density(2,kmato(ispec_poroelastic))
-      rhol_s = density(1,kmato(ispec_poroelastic))
-      rhol_bar = (1._CUSTOM_REAL-phil)*rhol_s + phil*rhol_f
+      material = kmato(ispec_poroelastic)
+      phi = porosity(material)
+      tort = tortuosity(material)
+      rho_f = density(2,material)
+      rho_s = density(1,material)
+      rho_bar = (1.d0-phi)*rho_s + phi*rho_f
+
+      fac_s = real((1.d0 - phi/tort),kind=CUSTOM_REAL)
+      fac_w = real((1.d0 - rho_f/rho_bar),kind=CUSTOM_REAL)
 
       ! compute pressure on the fluid/porous medium edge
       pressure = - potential_dot_dot_acoustic(iglob)
@@ -135,19 +141,19 @@
       endif
 
       ! contribution to the solid phase
-      accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + weight*nx*pressure*(1._CUSTOM_REAL-phil/tortl)
-      accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + weight*nz*pressure*(1._CUSTOM_REAL-phil/tortl)
+      accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + weight*nx*pressure * fac_s
+      accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + weight*nz*pressure * fac_s
       ! contribution to the fluid phase
-      accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) + weight*nx*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
-      accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + weight*nz*pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
+      accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) + weight*nx*pressure * fac_w
+      accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + weight*nz*pressure * fac_w
 
       if (SIMULATION_TYPE == 3) then
         ! contribution to the solid phase
-        b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + weight*nx*b_pressure*(1._CUSTOM_REAL-phil/tortl)
-        b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + weight*nz*b_pressure*(1._CUSTOM_REAL-phil/tortl)
+        b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + weight*nx*b_pressure * fac_s
+        b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + weight*nz*b_pressure * fac_s
         ! contribution to the fluid phase
-        b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) + weight*nx*b_pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
-        b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) + weight*nz*b_pressure*(1._CUSTOM_REAL-rhol_f/rhol_bar)
+        b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) + weight*nx*b_pressure * fac_w
+        b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) + weight*nz*b_pressure * fac_w
       endif
     enddo
   enddo

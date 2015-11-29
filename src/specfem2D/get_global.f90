@@ -44,14 +44,16 @@
 
   subroutine get_global()
 
-  use specfem_par, only : nspec,ibool,copy_ibool_ori,integer_mask_ibool,SAVE_MODEL,outputname,myrank
+  use constants,only: NGLLX,NGLLZ
+
+  use specfem_par, only : nspec,ibool,copy_ibool_ori,integer_mask_ibool,SAVE_MODEL,myrank
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: inumber,ispec,i,j
   integer :: ier
+  character(len=150) :: outputname
 
   ! initializes temporary arrays
   integer_mask_ibool(:) = -1

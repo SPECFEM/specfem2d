@@ -56,14 +56,19 @@
   include "precision.h"
 #endif
 
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: kinetic_energy_total,potential_energy_total
+
   integer :: i,j,ispec,iglob,it_temp
   integer :: ier
+
   ! time
   character(len=8) :: datein
   character(len=10) :: timein
   character(len=5) :: zone
   integer, dimension(8) :: time_values
   integer :: year,mon,day,hr,minutes,timestamp
+  character(len=MAX_STRING_LEN) :: outputname
 
   if (myrank == 0) write(IMAIN,400) ! Write = T i m e  e v o l u t i o n  l o o p =
 !
@@ -1155,19 +1160,18 @@
         open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_s**.bin')
 
+        read(55) b_displs_poroelastic
+        read(55) b_velocs_poroelastic
+        read(55) b_accels_poroelastic
+        close(55)
+
         write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
         open(unit=56,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_w**.bin')
 
-        read(55) b_displs_poroelastic
-        read(55) b_velocs_poroelastic
-        read(55) b_accels_poroelastic
-
         read(56) b_displw_poroelastic
         read(56) b_velocw_poroelastic
         read(56) b_accelw_poroelastic
-
-        close(55)
         close(56)
 
         ! safety check

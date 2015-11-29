@@ -56,20 +56,24 @@
 
 ! local variables
   real, parameter :: pigrec = 3.1415927
+
   real :: alpha,tho,A,c,delayed,delta_x
   integer :: forcing_type,k,ngoce_time_step,n_models,kk,ll
 
   double precision, dimension(:), allocatable :: goce_time,distance
-  double precision, dimension(:,:), allocatable ::syn
+  double precision, dimension(:,:), allocatable :: syn
   double precision :: t,signal_x1,signal_x2,fracx,fract
+  double precision :: x
+
+  real(kind=CUSTOM_REAL) :: displ_x,displ_z
 
   forcing_type = 1
 
-
-  delta_x = 2.4       ! length of a PML element along x-axis at the edge which will be forced
+  ! length of a PML element along x-axis at the edge which will be forced
+  delta_x = 2.4
   alpha = 2
 
-! infrasounds / seismic
+  ! infrasounds / seismic
   tho = 30.0
 
 ! gravity wave test function
@@ -90,45 +94,44 @@
   x = coord(1,iglob)
   delayed = 0
 
-! speed of light
+  ! speed of light
   c = 300000000.
 
   if (forcing_type == 1) then !! First test function : same forcing for the whole boundary
-!  print *, ispec_acoustic
-!  print *, is_PML(ispec_acoustic)
-!  if (is_PML(ispec_acoustic)) then
-!  displ_x = 0
-!  displ_z = 0
-!  else
+    !  print *, ispec_acoustic
+    !  print *, is_PML(ispec_acoustic)
+    !  if (is_PML(ispec_acoustic)) then
+    !  displ_x = 0
+    !  displ_z = 0
+    !  else
 
-! infrasounds / seismic
-  displ_x = 0 !* Apo
-  displ_z = A * (exp(-(alpha*(deltat*it-40-t0)/tho)**2) &
-            - exp(-(alpha*(deltat*it-70-t0)/tho)**2)) !* Apo
+    ! infrasounds / seismic
+    displ_x = 0 !* Apo
+    displ_z = A * (exp(-(alpha*(deltat*it-40-t0)/tho)**2) &
+                 - exp(-(alpha*(deltat*it-70-t0)/tho)**2)) !* Apo
 
-! gravity wave test function
-!  displ_x = 0 !* Apo
-!  displ_z = A * ( exp(-(alpha*(x-(xo-lambdo/2))/lambdo)**2) - &
-!                  exp(-(alpha*(x-(xo+lambdo/2))/lambdo)**2) ) * &
-!            (exp(-(alpha*(deltat*it+1000-t0)/tho)**2) &
-!            - exp(-(alpha*(deltat*it-1300-t0)/tho)**2)) !* Apo
+    ! gravity wave test function
+    !  displ_x = 0 !* Apo
+    !  displ_z = A * ( exp(-(alpha*(x-(xo-lambdo/2))/lambdo)**2) - &
+    !                  exp(-(alpha*(x-(xo+lambdo/2))/lambdo)**2) ) * &
+    !            (exp(-(alpha*(deltat*it+1000-t0)/tho)**2) &
+    !            - exp(-(alpha*(deltat*it-1300-t0)/tho)**2)) !* Apo
 
-! gravity wave /tsunami
-!  displ_x = 0 !* Apo
-!  displ_z = A * (exp(-(alpha*(deltat*it-1000-t0)/tho)**2) &
-!            - exp(-(alpha*(deltat*it-1600-t0)/tho)**2)) !* Apo
-
-
+    ! gravity wave /tsunami
+    !  displ_x = 0 !* Apo
+    !  displ_z = A * (exp(-(alpha*(deltat*it-1000-t0)/tho)**2) &
+    !            - exp(-(alpha*(deltat*it-1600-t0)/tho)**2)) !* Apo
   endif
 
-  if (forcing_type == 2) then !! Second test function : moving forcing
-  displ_x = 0 !* Apo
-
-  displ_z = A * (exp(-(alpha*(deltat*it-40-t0-(x-delayed)/c)/tho)**2) &
-            - exp(-(alpha*(deltat*it-70-t0-(x-delayed)/c)/tho)**2)) !* Apo
+  !! Second test function : moving forcing
+  if (forcing_type == 2) then
+    displ_x = 0 !* Apo
+    displ_z = A * (exp(-(alpha*(deltat*it-40-t0-(x-delayed)/c)/tho)**2) &
+                 - exp(-(alpha*(deltat*it-70-t0-(x-delayed)/c)/tho)**2)) !* Apo
   endif
 
-  if (forcing_type == 3) then !! forcing external
+  !! forcing external
+  if (forcing_type == 3) then
     ngoce_time_step = 255
     n_models = 28
     t =it*deltat
@@ -160,37 +163,35 @@
       ll = ll+1
     enddo
 
-      if (x==0 .and. it==1) then
-        displ_z =  syn(1,1)
+    if (x==0 .and. it==1) then
+      displ_z =  syn(1,1)
+    else
+      if (x==0) then
+        fract = (t-goce_time(ll-1))/(goce_time(ll)-goce_time(ll-1))
+        displ_z =  (syn(1,ll-1) + fract * (syn(1,ll)-syn(1,ll-1)))
       else
-        if (x==0) then
-          fract = (t-goce_time(ll-1))/(goce_time(ll)-goce_time(ll-1))
-          displ_z =  (syn(1,ll-1) + fract * (syn(1,ll)-syn(1,ll-1)))
+        if (it==1) then
+          fracx = (x-distance(kk-1))/(distance(kk)-distance(kk-1))
+          displ_z =  (syn(kk-1,1) + fracx * (syn(kk,1)-syn(kk-1,1)))
         else
-          if (it==1) then
-            fracx = (x-distance(kk-1))/(distance(kk)-distance(kk-1))
-            displ_z =  (syn(kk-1,1) + fracx * (syn(kk,1)-syn(kk-1,1)))
-          else
-    ! interpolation in time
-    fract = (t-goce_time(ll-1))/(goce_time(ll)-goce_time(ll-1))
-    ! in x1 = distance(kk-1)
-    signal_x1 = syn(kk-1,ll-1) + fract * (syn(kk-1,ll)-syn(kk-1,ll-1))
-    ! in x2 = distance(kk)
-    signal_x2 = syn(kk,ll-1) + fract * (syn(kk,ll)-syn(kk,ll-1))
-
-    ! spatial interpolation
-    fracx = (x-distance(kk-1))/(distance(kk)-distance(kk-1))
-    displ_z =  (signal_x1 + fracx * (signal_x2 - signal_x1))
-          endif
+          ! interpolation in time
+          fract = (t-goce_time(ll-1))/(goce_time(ll)-goce_time(ll-1))
+          ! in x1 = distance(kk-1)
+          signal_x1 = syn(kk-1,ll-1) + fract * (syn(kk-1,ll)-syn(kk-1,ll-1))
+          ! in x2 = distance(kk)
+          signal_x2 = syn(kk,ll-1) + fract * (syn(kk,ll)-syn(kk,ll-1))
+          ! spatial interpolation
+          fracx = (x-distance(kk-1))/(distance(kk)-distance(kk-1))
+          displ_z =  (signal_x1 + fracx * (signal_x2 - signal_x1))
         endif
       endif
+    endif
 
-  displ_x = 0
+    displ_x = 0
 
   endif
 
   if (abs(displ_x) < TINYVAL) displ_x=ZERO
   if (abs(displ_z) < TINYVAL) displ_z=ZERO
-
 
   end subroutine acoustic_forcing_boundary

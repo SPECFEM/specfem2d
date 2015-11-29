@@ -58,6 +58,8 @@
 !-----------------------------------------------
   subroutine prepare_assemble_MPI()
 
+  use constants,only: NGLLX,NGLLZ
+
   use specfem_par, only: nspec,ibool,knods, ngnod,nglob, ispec_is_elastic, ispec_is_poroelastic, &
                                 ninterface, &
                                 my_nelmnts_neighbours, my_interfaces, &
@@ -70,8 +72,6 @@
                                 ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
                                 mask_ispec_inner_outer,nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh_init
   implicit none
-
-  include 'constants.h'
 
   ! local parameters
   integer  :: num_interface

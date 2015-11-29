@@ -42,15 +42,14 @@
 
 ! write seismograms to text files
 
-  subroutine write_seismograms
+  subroutine write_seismograms()
 
   use specfem_par
 
   implicit none
 
   integer :: i, j, iglob, irecloc, irec, ispec
-
-
+  double precision :: dxd,dyd,dzd,dcurld,valux,valuy,valuz,valcurl,hlagrange
 
 ! update position in seismograms
     seismo_current = seismo_current + 1

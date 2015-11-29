@@ -57,6 +57,9 @@
                               array_val3,array_val4,npoin_val3)
 
   use mpi
+
+  use constants,only: CUSTOM_REAL
+
   use specfem_par, only:ninterface,max_ibool_interfaces_size_ac, &
                               max_ibool_interfaces_size_el, &
                               max_ibool_interfaces_size_po, &
@@ -67,8 +70,6 @@
 
 
   implicit none
-
-  include 'constants.h'
 
   ! array to assemble
   ! acoustic
