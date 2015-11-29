@@ -968,7 +968,7 @@ subroutine prepare_timerun_read()
 
   integer :: i,ispec,ispec2,j,ier
   integer :: n
-  
+
   ! add a small crack (discontinuity) in the medium manually
   npgeo_ori = npgeo
   if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO

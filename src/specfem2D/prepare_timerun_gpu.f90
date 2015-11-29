@@ -131,7 +131,7 @@
 
 !!! Parametres fournis
 
-! rmass_inverse_acoustic                 : matrice acoustique inversee de taille nglob 
+! rmass_inverse_acoustic                 : matrice acoustique inversee de taille nglob
 !                                          (nglob_acoustic = nglob s'il existe des elements acoustiques)
 ! num_phase_ispec_acoustic               : max entre nb d'element spectraux acoustiques interieur et exterieur
 ! phase_ispec_inner_acoustic(i,j)        : i eme element spectral acoustique interieur si j=2 exterieur si j=1
@@ -177,7 +177,7 @@
 
 !!! Parametres fournis
 
-! rmass_inverse_elastic          : matrice elastique inversee de taille nglob_acoustic 
+! rmass_inverse_elastic          : matrice elastique inversee de taille nglob_acoustic
 !                                 (nglob_acoustic = nglob s'il existe des elements acoustiques)
 ! num_phase_ispec_elastic        : max entre nb d'element spectraux elastiques interieur et exterieur
 ! phase_ispec_inner_elastic(i,j) : i eme element spectral elastique interieur si j=2 exterieur si j=1
