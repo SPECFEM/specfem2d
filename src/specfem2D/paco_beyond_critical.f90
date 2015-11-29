@@ -56,8 +56,10 @@
 ! modified by Dimitri Komatitsch and Ronan Madec in March 2008
 ! in particular, converted to Fortran90 and to double precision
 
-subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_bound,&
-                                bot_bound,nleft,nright,nbot,x_source)
+  subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_bound,&
+                                  bot_bound,nleft,nright,nbot,x_source)
+
+  use constants,only: PI
 
   use specfem_par,only : coord,nglob,deltat,NSTEP,cploc,csloc,ATTENUATION_VISCOELASTIC_SOLID,v0x_left,&
                          v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
@@ -65,8 +67,6 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
 
 
   implicit none
-
-  include "constants.h"
 
   double precision :: f0,dt,TP,anglesource,QD,delta_in_period
   integer :: npt,source_type,nleft,nright,nbot
@@ -377,11 +377,11 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
 
   enddo
 
-end subroutine paco_beyond_critical
+  end subroutine paco_beyond_critical
 
 !---
 
-SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
+  SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
   implicit none
 
@@ -437,9 +437,9 @@ SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 ! Paco's convention for vertical coordinate axis is inverted
   SXZ = - SXZ
 
-END SUBROUTINE DESFXY
+  END SUBROUTINE DESFXY
 
-SUBROUTINE FAFB(CA,CB,FA,FB)
+  SUBROUTINE FAFB(CA,CB,FA,FB)
 
   implicit none
 
@@ -463,9 +463,9 @@ SUBROUTINE FAFB(CA,CB,FA,FB)
      FB=CMPLX(SQRT(B),0.0d0)
   endif
 
-END SUBROUTINE FAFB
+  END SUBROUTINE FAFB
 
-SUBROUTINE A2B2(FA,FB,A2,B2)
+  SUBROUTINE A2B2(FA,FB,A2,B2)
 
   implicit none
 
@@ -476,10 +476,10 @@ SUBROUTINE A2B2(FA,FB,A2,B2)
   A2=(4.0d0*FA*FB-AUX*AUX)/DEN
   B2=4.0d0*FA*AUX/DEN
 
-END SUBROUTINE A2B2
+  END SUBROUTINE A2B2
 
 ! calculation of P waves
-SUBROUTINE ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+  SUBROUTINE ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
   implicit none
 
@@ -510,10 +510,10 @@ SUBROUTINE ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
   A2=A2/AQB
   B2=B2/AQB
 
-END SUBROUTINE ONDASP
+  END SUBROUTINE ONDASP
 
 ! calculation of S waves
-SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+  SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
   implicit none
 
@@ -560,10 +560,10 @@ SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
     B2=B2/AKB
   endif
 
-END SUBROUTINE ONDASS
+  END SUBROUTINE ONDASS
 
 ! calculation of Rayleigh waves
-SUBROUTINE ONDASR(AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+  SUBROUTINE ONDASR(AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
   implicit none
 
@@ -590,13 +590,13 @@ SUBROUTINE ONDASR(AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
   B2=B2/(AL*A2+AK)
   A2=A2*B2
 
-END SUBROUTINE ONDASR
+  END SUBROUTINE ONDASR
 
-FUNCTION CRB(BEALF)
+  FUNCTION CRB(BEALF)
+
+  use constants,only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision U3,BA2,P,Q,FIND,F1,F2,F12,FACT,CRB,BEALF
 
@@ -634,5 +634,5 @@ FUNCTION CRB(BEALF)
      CRB=SQRT(F12)
   endif
 
-END FUNCTION CRB
+  END FUNCTION CRB
 

@@ -44,6 +44,8 @@
 
   subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic,PML_BOUNDARY_CONDITIONS)
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
+
   use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
@@ -55,8 +57,6 @@
                          nglob_acoustic,nglob_elastic
 
   implicit none
-
-  include "constants.h"
 
   real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_dot_dot_acoustic
@@ -254,6 +254,8 @@
 
   subroutine compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
+
   use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
@@ -262,8 +264,6 @@
                          nglob_acoustic,nglob_elastic
 
   implicit none
-
-  include "constants.h"
 
   real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: b_displ_elastic
   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: b_potential_dot_dot_acoustic

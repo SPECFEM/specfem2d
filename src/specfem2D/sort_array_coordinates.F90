@@ -53,9 +53,9 @@
 !
 ! returns: sorted indexing array (ibool),  reordering array (iglob) & number of global points (nglob)
 
-  implicit none
+  use constants,only: NGLLX,NGLLZ,NDIM,SMALLVALTOL
 
-  include "constants.h"
+  implicit none
 
   integer,intent(in) :: npointot
   integer,intent(out) :: nglob

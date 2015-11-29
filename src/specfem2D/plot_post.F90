@@ -50,6 +50,9 @@
   use mpi
 #endif
 
+  use constants,only: IMAIN,NGLLX,NGLLZ,ARROW_ANGLE,ARROW_RATIO,CENTIM,DISPLAY_PML_IN_DIFFERENT_COLOR,ICOLOR_FOR_PML_DISPLAY, &
+    IEDGE1,IEDGE2,IEDGE3,IEDGE4,IRIGHT,ILEFT,IBOTTOM,ITOP,ORIG_X,ORIG_Z,PI,RPERCENTX,RPERCENTZ,STABILITY_THRESHOLD
+
   use specfem_par, only: vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval,it,deltat,coorg, &
                          xinterp,zinterp,shape2D_display,Uxinterp,Uzinterp,flagrange,density,&
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
@@ -73,9 +76,6 @@
                          coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER,is_PML
 
   implicit none
-
-  include "constants.h"
-
 
 ! color palette
   integer, parameter :: NUM_COLORS = 236

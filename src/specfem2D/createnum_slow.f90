@@ -44,11 +44,11 @@
 
 ! generate the global numbering
 
+  use constants,only: IMAIN,NGLLX,NGLLZ,NEDGES
+
   use specfem_par, only : knods,ibool,nglob,nspec,myrank
 
   implicit none
-
-  include "constants.h"
 
   integer i,j,num2,i2,j2,ipos,ipos2,iloc,jloc,kloc
   integer ngnodloc,ngnodother,nedgeloc,nedgeother,npedge,numelem,npcorn

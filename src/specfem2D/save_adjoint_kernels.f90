@@ -40,7 +40,10 @@
 !
 !========================================================================
 
-subroutine save_adjoint_kernels()
+  subroutine save_adjoint_kernels()
+
+
+  use constants,only: NGLLX,NGLLZ,IMAIN,APPROXIMATE_HESS_KL
 
   use specfem_par, only : myrank, nspec, ibool, coord, save_ASCII_kernels, &
                           any_acoustic, any_elastic, any_poroelastic, &
@@ -53,7 +56,7 @@ subroutine save_adjoint_kernels()
                           C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, mufrb_kl, &
                           rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, GPU_MODE
 
-  include "constants.h"
+  implicit none
 
   integer :: i, j, ispec, iglob
   double precision :: xx, zz
@@ -143,45 +146,45 @@ subroutine save_adjoint_kernels()
     endif
   endif
 
-if (.not. GPU_MODE) then
+  if (.not. GPU_MODE) then
 
-  if (any_poroelastic) then
+    if (any_poroelastic) then
 
-    if (.not. SAVE_ASCII_KERNELS) stop 'poroelastic simulations must use SAVE_ASCII_KERNELS'
+      if (.not. SAVE_ASCII_KERNELS) stop 'poroelastic simulations must use SAVE_ASCII_KERNELS'
 
-    do ispec = 1, nspec
-      do j = 1, NGLLZ
-        do i = 1, NGLLX
-          iglob = ibool(i,j,ispec)
-          xx = coord(1,iglob)
-          zz = coord(2,iglob)
-          write(144,'(5e11.3)') xx,zz,mufr_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
-          write(155,'(5e11.3)') xx,zz,M_kl(i,j,ispec),rhot_kl(i,j,ispec),rhof_kl(i,j,ispec)
+      do ispec = 1, nspec
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
+            xx = coord(1,iglob)
+            zz = coord(2,iglob)
+            write(144,'(5e11.3)') xx,zz,mufr_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
+            write(155,'(5e11.3)') xx,zz,M_kl(i,j,ispec),rhot_kl(i,j,ispec),rhof_kl(i,j,ispec)
 
-          write(16,'(5e11.3)') xx,zz,sm_kl(i,j,ispec),eta_kl(i,j,ispec)
+            write(16,'(5e11.3)') xx,zz,sm_kl(i,j,ispec),eta_kl(i,j,ispec)
 
-          write(17,'(5e11.3)') xx,zz,mufrb_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
-          write(18,'(5e11.3)') xx,zz,M_kl(i,j,ispec),rhob_kl(i,j,ispec),rhofb_kl(i,j,ispec)
+            write(17,'(5e11.3)') xx,zz,mufrb_kl(i,j,ispec),B_kl(i,j,ispec),C_kl(i,j,ispec)
+            write(18,'(5e11.3)') xx,zz,M_kl(i,j,ispec),rhob_kl(i,j,ispec),rhofb_kl(i,j,ispec)
 
-          write(19,'(5e11.3)') xx,zz,phi_kl(i,j,ispec),eta_kl(i,j,ispec)
-          write(20,'(5e11.3)') xx,zz,cpI_kl(i,j,ispec),cpII_kl(i,j,ispec),cs_kl(i,j,ispec)
-          write(21,'(5e11.3)') xx,zz,rhobb_kl(i,j,ispec),rhofbb_kl(i,j,ispec),ratio_kl(i,j,ispec)
-          write(22,'(5e11.3)') xx,zz,phib_kl(i,j,ispec),eta_kl(i,j,ispec)
+            write(19,'(5e11.3)') xx,zz,phi_kl(i,j,ispec),eta_kl(i,j,ispec)
+            write(20,'(5e11.3)') xx,zz,cpI_kl(i,j,ispec),cpII_kl(i,j,ispec),cs_kl(i,j,ispec)
+            write(21,'(5e11.3)') xx,zz,rhobb_kl(i,j,ispec),rhofbb_kl(i,j,ispec),ratio_kl(i,j,ispec)
+            write(22,'(5e11.3)') xx,zz,phib_kl(i,j,ispec),eta_kl(i,j,ispec)
+          enddo
         enddo
       enddo
-    enddo
-    close(144)
-    close(155)
-    close(16)
-    close(17)
-    close(18)
-    close(19)
-    close(20)
-    close(21)
-    close(22)
+      close(144)
+      close(155)
+      close(16)
+      close(17)
+      close(18)
+      close(19)
+      close(20)
+      close(21)
+      close(22)
+    endif
+
   endif
 
-endif
-
-end subroutine save_adjoint_kernels
+  end subroutine save_adjoint_kernels
 

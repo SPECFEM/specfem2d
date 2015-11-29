@@ -43,6 +43,8 @@
 
   subroutine write_postscript_snapshot()
 
+  use constants,only: IMAIN
+
   use specfem_par, only: myrank,p_sv,it,imagetype_postscript, &
                          potential_acoustic,potential_gravitoacoustic, &
                          potential_gravito,displ_elastic,displs_poroelastic, &
@@ -52,7 +54,6 @@
                          potential_dot_dot_gravito,accel_elastic,accels_poroelastic
 
   implicit none
-  include "constants.h"
 
   if (myrank == 0) then
     write(IMAIN,*)

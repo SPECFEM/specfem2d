@@ -46,7 +46,7 @@
 ! We chose to have ixmin <= ixmax and izmin <= izmax, so as to be able to have DO loops on it with
 ! an increment of +1.
 !
-subroutine construct_acoustic_surface ()
+  subroutine construct_acoustic_surface ()
 
   use specfem_par, only : ngnod, knods, nelem_acoustic_surface, acoustic_edges, acoustic_surface
 
@@ -77,16 +77,17 @@ subroutine construct_acoustic_surface ()
 
   enddo
 
-end subroutine construct_acoustic_surface
+  end subroutine construct_acoustic_surface
 
 
 !-----------------------------------------------
 ! Get the points (ixmin, ixmax, izmin and izmax) on an node/edge for one element.
 !-----------------------------------------------
-subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax )
+  subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax )
+
+  use constants,only: NGLLX,NGLLZ
 
   implicit none
-  include "constants.h"
 
   integer, intent(in)  :: ngnod
   integer, dimension(ngnod), intent(in)  :: n
@@ -183,5 +184,5 @@ subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izma
      endif
   endif
 
-end subroutine get_acoustic_edge
+  end subroutine get_acoustic_edge
 

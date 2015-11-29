@@ -99,8 +99,9 @@
 
   subroutine get_global_indirect_addressing(nspec,nglob,ibool,copy_ibool_ori,integer_mask_ibool)
 
+  use constants,only: NGLLX,NGLLZ
+
   implicit none
-  include "constants.h"
 
   integer :: nspec,nglob
 

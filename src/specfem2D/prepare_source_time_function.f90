@@ -46,13 +46,14 @@
 
 ! prepares source_time_function array
 
+  use constants,only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE
+
   use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0,tshift_src,factor, &
                          aval,t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK,is_proc_source, &
                          USE_TRICK_FOR_BETTER_PRESSURE,myrank
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa,time,coeff, t_used, Nc

@@ -44,6 +44,9 @@
 
 ! compute forces for the solid poroelastic part
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
+    TWO,ONE,HALF,ZERO,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+
   use specfem_par, only: nglob,nspec,myrank,nelemabs, &
                          ispec_selected_source,ispec_selected_rec,is_proc_source,which_proc_receiver, &
                          source_type,it,NSTEP,anyabs, &
@@ -67,8 +70,6 @@
                          stage_time_scheme,i_stage
 
   implicit none
-
-  include "constants.h"
 
   real(kind=CUSTOM_REAL) :: e11_sum,e13_sum
   integer :: i_sls, i_source

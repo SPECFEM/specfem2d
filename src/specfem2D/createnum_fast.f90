@@ -44,10 +44,11 @@
 
 ! same as subroutine "createnum_slow" but with a faster algorithm
 
-  use specfem_par, only: knods,ibool,shape2D,coorg,nglob,nspec,ngnod,myrank
-  implicit none
+  use constants,only: IMAIN,NGLLX,NGLLZ,NDIM,HUGEVAL,SMALLVALTOL,ZERO
 
-  include "constants.h"
+  use specfem_par, only: knods,ibool,shape2D,coorg,nglob,nspec,ngnod,myrank
+
+  implicit none
 
 ! additional arrays needed for this fast version
   integer, dimension(:), allocatable :: locval,ind,ninseg,iglob,iwork

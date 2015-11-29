@@ -44,7 +44,10 @@
   subroutine compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
 
 
-  ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
+! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
+    ZERO,ONE,TWO,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,nspec,nelemabs,it,NSTEP, &
                          assign_external_model,ibool,kmato,numabs,ispec_is_acoustic, &
@@ -62,7 +65,6 @@
                          STACEY_BOUNDARY_CONDITIONS
 
   implicit none
-  include "constants.h"
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: b_potential_dot_dot_acoustic, b_potential_acoustic
 

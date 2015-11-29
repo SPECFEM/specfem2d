@@ -1032,7 +1032,7 @@ program meshfem2D
   call Construct_glob2loc_nodes(NPROC)
 
   ! construct the interfaces between partitions (used for MPI assembly)
-  if (NPROC /= 1) then
+  if (NPROC > 1) then
      if (ngnod == 9) then
         call Construct_interfaces(NPROC, elmnts_bis, &
                                   nb_materials, phi, num_material)

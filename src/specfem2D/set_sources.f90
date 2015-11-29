@@ -45,13 +45,13 @@
   subroutine set_sources()
 
 ! gets source parameters
+  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,TINYVAL,PI
 
   use specfem_par, only : myrank,NSOURCES,source_type,time_function_type, &
                           x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource,aval, &
                           t0,initialfield,deltat,USER_T0
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: i_source

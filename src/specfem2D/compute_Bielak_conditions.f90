@@ -42,13 +42,13 @@
 
 ! compute analytical initial plane wave for Bielak's conditions
 
-subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-     x0_source, z0_source, A_plane, B_plane, C_plane, anglesource, anglesource_refl, &
-     c_inc, c_refl, time_offset,f0)
+  subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                                       x0_source, z0_source, A_plane, B_plane, C_plane, anglesource, anglesource_refl, &
+                                      c_inc, c_refl, time_offset,f0)
+
+  use constants,only: NDIM
 
   implicit none
-
-  include "constants.h"
 
   integer, intent(in) :: iglob,nglob,it
 
@@ -158,16 +158,16 @@ subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,
        + B_plane(2) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc - cos(anglesource)*z/c_inc,f0) &
        + C_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0)
 
-end subroutine compute_Bielak_conditions
+  end subroutine compute_Bielak_conditions
 
 ! ********
 
 ! compute time variation of the source for analytical initial plane wave
-double precision function ricker_Bielak_integrale_displ(t,f0)
+  double precision function ricker_Bielak_integrale_displ(t,f0)
+
+  use constants,only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision :: t,f0,a
 
@@ -176,16 +176,16 @@ double precision function ricker_Bielak_integrale_displ(t,f0)
 ! Ricker
   ricker_Bielak_integrale_displ = t*exp(-a*t**2)
 
-end function ricker_Bielak_integrale_displ
+  end function ricker_Bielak_integrale_displ
 
 ! ********
 
 ! compute time variation of the source for analytical initial plane wave
-double precision function ricker_Bielak_displ(t,f0)
+  double precision function ricker_Bielak_displ(t,f0)
+
+  use constants,only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision :: t,f0,a
 
@@ -194,16 +194,16 @@ double precision function ricker_Bielak_displ(t,f0)
 ! Ricker
   ricker_Bielak_displ = (1 - 2*a*t**2)*exp(-a*t**2)
 
-end function ricker_Bielak_displ
+  end function ricker_Bielak_displ
 
 ! *******
 
 ! compute time variation of the source for analytical initial plane wave
-double precision function ricker_Bielak_veloc(t,f0)
+  double precision function ricker_Bielak_veloc(t,f0)
+
+  use constants,only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision :: t,f0,a
 
@@ -212,16 +212,16 @@ double precision function ricker_Bielak_veloc(t,f0)
 ! first time derivative of a Ricker
   ricker_Bielak_veloc = - 2*a*t*(3 - 2*a*t**2)*exp(-a*t**2)
 
-end function ricker_Bielak_veloc
+  end function ricker_Bielak_veloc
 
 ! *******
 
 ! compute time variation of the source for analytical initial plane wave
-double precision function ricker_Bielak_accel(t,f0)
+  double precision function ricker_Bielak_accel(t,f0)
+
+  use constants,only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision :: t,f0,a
 
@@ -230,5 +230,5 @@ double precision function ricker_Bielak_accel(t,f0)
 ! second time derivative of a Ricker
   ricker_Bielak_accel = - 2*a*(3 - 12*a*t**2 + 4*a**2*t**4)* exp(-a*t**2)
 
-end function ricker_Bielak_accel
+  end function ricker_Bielak_accel
 

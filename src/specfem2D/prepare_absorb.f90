@@ -47,9 +47,7 @@
   use specfem_par, only: myrank,any_elastic,any_poroelastic,any_acoustic, &
                          nspec_left,nspec_right,nspec_bottom,nspec_top,SIMULATION_TYPE
 
-
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: ier
@@ -291,7 +289,6 @@
                          b_absorb_elastic_bottom,b_absorb_elastic_top
 
   implicit none
-  include "constants.h"
 
   !--- left absorbing boundary
   if (nspec_left > 0) read(35) b_absorb_elastic_left
@@ -320,7 +317,6 @@
                          b_absorb_poro_s_top,b_absorb_poro_w_top
 
   implicit none
-  include "constants.h"
 
   !--- left absorbing boundary
   if (nspec_left > 0) then
@@ -359,7 +355,6 @@
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top
 
   implicit none
-  include "constants.h"
 
   !--- left absorbing boundary
   if (nspec_left > 0)  read(65) b_absorb_acoustic_left

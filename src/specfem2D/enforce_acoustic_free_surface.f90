@@ -47,11 +47,11 @@
 ! if acoustic, the free surface condition is a Dirichlet condition for the potential,
 ! not Neumann, in order to impose zero pressure at the surface
 
+  use constants,only: CUSTOM_REAL,ZERO
+
   use specfem_par, only: acoustic_surface,ibool,nelem_acoustic_surface,nglob,this_ibool_is_a_periodic_edge
 
   implicit none
-
-  include "constants.h"
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
 

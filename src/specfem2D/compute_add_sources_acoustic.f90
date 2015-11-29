@@ -44,12 +44,13 @@
 
   subroutine compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+
   use specfem_par, only: ispec_is_acoustic,nglob_acoustic,&
                          NSOURCES,source_type,source_time_function,&
                          is_proc_source,ispec_selected_source,&
                          hxis_store,hgammas_store,ibool,kappastore,myrank
   implicit none
-  include "constants.h"
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
   integer :: it,i_stage
@@ -96,11 +97,12 @@
 
   subroutine compute_add_sources_acoustic_adjoint()
 
+  use constants,only: NGLLX,NGLLZ
+
   use specfem_par, only: myrank,potential_dot_dot_acoustic,ispec_is_acoustic,NSTEP,it,&
                          nrec,which_proc_receiver,ispec_selected_rec,adj_sourcearrays,&
                          ibool,kappastore
   implicit none
-  include "constants.h"
 
   !local variables
   integer :: irec_local,irec,i,j,iglob
@@ -135,12 +137,13 @@
 
   subroutine add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+
   use specfem_par, only: nglob_acoustic,nelem_acforcing,codeacforcing,numacforcing,ispec_is_acoustic,&
                          ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll,&
                          PML_BOUNDARY_CONDITIONS,is_PML
 
   implicit none
-  include "constants.h"
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
 
@@ -289,6 +292,8 @@
 
   subroutine add_acoustic_forcing_at_rigid_boundary_gravitoacoustic()
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TINYVAL
+
   use specfem_par, only: nelem_acforcing,codeacforcing,numacforcing, &
                          ispec_is_gravitoacoustic,potential_dot_dot_gravito, &
                          potential_gravitoacoustic,potential_gravito, &
@@ -297,7 +302,6 @@
                          PML_BOUNDARY_CONDITIONS,is_PML
 
   implicit none
-  include "constants.h"
 
   !local variables
   integer :: inum,ispec,i,j,k,iglob

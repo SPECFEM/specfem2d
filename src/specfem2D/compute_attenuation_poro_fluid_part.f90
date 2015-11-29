@@ -44,6 +44,8 @@
 
  subroutine compute_attenuation_poro_fluid_part()
 
+  use constants,only: ZERO,NGLLX,NGLLZ
+
   use specfem_par, only: nspec,ispec_is_poroelastic,poroelastcoef,kmato,permeability,ibool,viscox_loc,viscoz_loc, &
                          velocw_poroelastic,time_stepping_scheme,deltat,i_stage,stage_time_scheme, &
                          rx_viscous,rz_viscous,viscox,viscoz, &
@@ -52,7 +54,6 @@
                          alphaval,betaval,gammaval,theta_e,theta_s,thetainv
 
   implicit none
-  include "constants.h"
 
   ! local variables
   integer :: i,j,ispec,iglob

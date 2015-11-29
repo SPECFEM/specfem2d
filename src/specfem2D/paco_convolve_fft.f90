@@ -51,7 +51,7 @@
 ! modified by Dimitri Komatitsch and Ronan Madec in March 2008
 ! in particular, converted to Fortran90 and to double precision
 
-subroutine paco_convolve_fft(Field,label,NSTEP,dt,NFREC,output_field,tp,ts)
+  subroutine paco_convolve_fft(Field,label,NSTEP,dt,NFREC,output_field,tp,ts)
 
   implicit none
 
@@ -98,9 +98,9 @@ subroutine paco_convolve_fft(Field,label,NSTEP,dt,NFREC,output_field,tp,ts)
 
   CALL SINTER(Field,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
 
-END subroutine paco_convolve_fft
+  END subroutine paco_convolve_fft
 
-SUBROUTINE SINTER(V,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
+  SUBROUTINE SINTER(V,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
 
   implicit none
 
@@ -154,16 +154,16 @@ SUBROUTINE SINTER(V,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
      output_field(J)=VT(mult*J+delay)
   enddo
 
-END SUBROUTINE SINTER
+  END SUBROUTINE SINTER
 
 !
 ! Ricker time function
 !
-FUNCTION RIC(J,tp,ts,dt)
+  FUNCTION RIC(J,tp,ts,dt)
+
+  use constants,only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision :: A,RIC,tp,ts,dt
 
@@ -175,16 +175,16 @@ FUNCTION RIC(J,tp,ts,dt)
   if (A>30.0d0) RETURN
   RIC=(A-0.5)*EXP(-A)
 
-END FUNCTION RIC
+  END FUNCTION RIC
 
 !
 ! first time derivative of Ricker time function
 !
-FUNCTION deRIC(J,tp,ts,dt)
+  FUNCTION deRIC(J,tp,ts,dt)
+
+  use constants,only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision :: A,A_dot,deRIC,tp,ts,dt
   integer :: j
@@ -196,16 +196,16 @@ FUNCTION deRIC(J,tp,ts,dt)
   if (A>30.0d0) RETURN
   deRIC=A_dot*(1.5-A)*EXP(-A)
 
-END FUNCTION deRIC
+  END FUNCTION deRIC
 
 !
 ! second time derivative of Ricker time function
 !
-FUNCTION de2RIC(J,tp,ts,dt)
+  FUNCTION de2RIC(J,tp,ts,dt)
+
+  use constants,only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision :: A,A_dot,A_dot_dot,de2RIC,tp,ts,dt
   integer j
@@ -218,15 +218,15 @@ FUNCTION de2RIC(J,tp,ts,dt)
   if (A>30.0d0) RETURN
   de2RIC=(A_dot_dot*(1.5-A)-A_dot*A_dot-A_dot*(1.5-A)*A_dot)*EXP(-A)
 
-END FUNCTION de2RIC
+  END FUNCTION de2RIC
 
 
 ! Fourier transform
-SUBROUTINE fourier_transform(LX,CX,SIGNI)
+  SUBROUTINE fourier_transform(LX,CX,SIGNI)
+
+  use constants,only: PI
 
   implicit none
-
-  include "constants.h"
 
   integer LX,i,j,l,istep,m
 
@@ -268,5 +268,5 @@ SUBROUTINE fourier_transform(LX,CX,SIGNI)
      L=ISTEP
   enddo
 
-END SUBROUTINE fourier_transform
+  END SUBROUTINE fourier_transform
 

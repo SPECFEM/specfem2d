@@ -42,15 +42,15 @@
 
   subroutine compute_curl_one_element(ispec)
 
-  ! compute curl in (poro)elastic elements (for rotational study)
+! compute curl in (poro)elastic elements (for rotational study)
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO
 
   use specfem_par, only: curl_element,displ_elastic, &
                          displs_poroelastic,ispec_is_elastic,ispec_is_poroelastic, &
                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,myrank
 
   implicit none
-
-  include "constants.h"
 
   integer ispec
 

@@ -2112,8 +2112,9 @@ endif
 
   subroutine check_grid_setup_GLLper(percent_GLL,NGLLX_MAX_STABILITY)
 
+  use constants,only: NGLLX
+
   implicit none
-  include "constants.h"
 
   integer :: NGLLX_MAX_STABILITY
   double precision :: percent_GLL(NGLLX_MAX_STABILITY)

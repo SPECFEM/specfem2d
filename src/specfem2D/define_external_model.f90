@@ -41,14 +41,14 @@
 !========================================================================
 
   subroutine define_external_model_dummy(coord,material_element,ibool, &
-              rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
-              c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+                                         rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+                                         c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
 
   use specfem_par, only: poroelastcoef,density,kmato
 
   implicit none
-
-  include "constants.h"
 
 ! -------------------------------------------------------------------------------------
 ! Dummy example of this routine, to be used as a template that users can modify.
@@ -149,12 +149,12 @@
 !
 !========================================================================
   subroutine define_external_model(coord,material_element,ibool, &
-              rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
-              c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+                                   rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+                                   c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
 
   implicit none
-
-  include "constants.h"
 
 !--------------------------------------------------------------------------------------------------
 !
@@ -1144,12 +1144,12 @@
 !========================================================================
 
   subroutine define_external_model_atmos_tabular_gravitoacoustic(coord,material_element,ibool, &
-              rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
-                              c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+                                                                 rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+                                                                 c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
 
   implicit none
-
-  include "constants.h"
 
 !--------------------------------------------------------------------------------------------------
 !

@@ -46,9 +46,9 @@
   subroutine recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec,ngnod,nspec,npgeo, &
                       stop_if_negative_jacobian)
 
-  implicit none
+  use constants,only: NDIM,ZERO
 
-  include "constants.h"
+  implicit none
 
   integer ispec,ngnod,nspec,npgeo
   double precision x,z,xix,xiz,gammax,gammaz

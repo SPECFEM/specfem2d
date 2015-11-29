@@ -47,7 +47,7 @@
 ! We chose to have ixmin <= ixmax and izmin <= izmax, so as to be able to have DO loops on it with
 ! an increment of +1.
 !
-subroutine construct_elastic_fixed_surface ()
+  subroutine construct_elastic_fixed_surface ()
 
   use specfem_par, only : ngnod, knods, nelem_elastic_fixed_surface, elastic_fixed_edges, elastic_fixed_surface
 
@@ -78,15 +78,16 @@ subroutine construct_elastic_fixed_surface ()
 
   enddo
 
-end subroutine construct_elastic_fixed_surface
+  end subroutine construct_elastic_fixed_surface
 
 !-----------------------------------------------
 ! Get the points (ixmin, ixmax, izmin and izmax) on an node/edge for one element.
 !-----------------------------------------------
-subroutine get_elastic_fixed_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax )
+  subroutine get_elastic_fixed_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax )
+
+  use constants,only: NGLLX,NGLLZ
 
   implicit none
-  include "constants.h"
 
   integer, intent(in)  :: ngnod
   integer, dimension(ngnod), intent(in)  :: n
@@ -183,7 +184,7 @@ subroutine get_elastic_fixed_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin,
      endif
   endif
 
-end subroutine get_elastic_fixed_edge
+  end subroutine get_elastic_fixed_edge
 
 
 !-----------------------------------------------
@@ -191,14 +192,14 @@ end subroutine get_elastic_fixed_edge
 ! that on an node/edge for one element to be zero
 !-----------------------------------------------
 
-subroutine enforce_elastic_fixed_surface(accel_elastic,veloc_elastic,displ_elastic)
+  subroutine enforce_elastic_fixed_surface(accel_elastic,veloc_elastic,displ_elastic)
+
+  use constants,only: CUSTOM_REAL,ZERO
 
   use specfem_par, only: elastic_fixed_surface,ibool,nelem_elastic_fixed_surface,nglob,&
                          this_ibool_is_a_periodic_edge
 
   implicit none
-
-  include "constants.h"
 
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic
 

@@ -51,7 +51,9 @@
   use part_unstruct
   use parameter_file
   use source_file
+
   implicit none
+
   include "constants.h"
 
   integer :: nspec,remove_min_to_start_at_zero
@@ -394,6 +396,10 @@
 
     ! closes Database file
     close(15)
+
+    ! user output
+    if (iproc == 0) print *,''
+    print *,'slice ',iproc,' has number of spectral-elements =',nspec
 
   enddo
 

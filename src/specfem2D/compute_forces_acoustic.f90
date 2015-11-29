@@ -45,7 +45,10 @@
                     potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
 
 
-  ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
+! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
+    ZERO,ONE,TWO,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,nspec,nelemabs,it, &
                          anyabs,assign_external_model,ibool,kmato,numabs,ispec_is_acoustic, &
@@ -70,7 +73,6 @@
                          deltat,STACEY_BOUNDARY_CONDITIONS
 
   implicit none
-  include "constants.h"
 
   logical :: PML_BOUNDARY_CONDITIONS
   real(kind=CUSTOM_REAL), dimension(nglob) :: potential_dot_dot_acoustic,potential_dot_acoustic, &

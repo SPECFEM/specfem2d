@@ -48,14 +48,14 @@
   use mpi
 #endif
 
+  use constants,only: NX_NZ_IMAGE_MAX,NGLLX
+
   use specfem_par, only : NX_IMAGE_color,NZ_IMAGE_color, &
                           xmin_color_image,xmax_color_image, &
                           zmin_color_image,zmax_color_image, &
                           coord,npgeo,factor_subsample_image,myrank
 
   implicit none
-  include "constants.h"
-
 
   ! local parameters
   integer  :: npgeo_glob
@@ -135,6 +135,8 @@
 
   subroutine prepare_color_image_pixels()
 
+  use constants,only: IMAIN,HUGEVAL,NGLLX,NGLLZ
+
   use specfem_par, only : myrank,NX_IMAGE_color,NZ_IMAGE_color, &
                             xmin_color_image,xmax_color_image, &
                             zmin_color_image,zmax_color_image, &
@@ -144,7 +146,6 @@
                             ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   double precision  :: size_pixel_horizontal,size_pixel_vertical

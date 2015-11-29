@@ -44,13 +44,14 @@
 
   subroutine compute_add_sources_poro(accels_poroelastic,accelw_poroelastic,it,i_stage)
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+
   use specfem_par, only: ispec_is_poroelastic,nglob_poroelastic, &
                          NSOURCES,source_type,anglesource,source_time_function, &
                          is_proc_source,ispec_selected_source, &
                          hxis_store,hgammas_store,ibool, &
                          porosity,tortuosity,density,kmato
   implicit none
-  include "constants.h"
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: accels_poroelastic,accelw_poroelastic
 

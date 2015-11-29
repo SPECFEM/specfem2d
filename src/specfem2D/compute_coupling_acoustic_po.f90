@@ -44,6 +44,8 @@
 
  subroutine compute_coupling_acoustic_po()
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
+
   use specfem_par, only: num_fluid_poro_edges,ibool,wxgll,wzgll,xix,xiz,&
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
@@ -53,7 +55,6 @@
                          potential_dot_dot_acoustic,SIMULATION_TYPE
 
   implicit none
-  include "constants.h"
 
   !local variable
   integer :: inum,ispec_acoustic,iedge_acoustic,ispec_poroelastic,iedge_poroelastic, &
@@ -146,6 +147,8 @@
 
  subroutine compute_coupling_acoustic_po_backward()
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
+
   use specfem_par, only: num_fluid_poro_edges,ibool,wxgll,wzgll,xix,xiz,&
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
@@ -154,7 +157,6 @@
                          b_potential_dot_dot_acoustic
 
   implicit none
-  include "constants.h"
 
   !local variable
   integer :: inum,ispec_acoustic,iedge_acoustic,ispec_poroelastic,iedge_poroelastic, &

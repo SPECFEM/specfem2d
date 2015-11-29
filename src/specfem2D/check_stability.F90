@@ -48,6 +48,8 @@
   use mpi
 #endif
 
+  use constants,only: IMAIN,STABILITY_THRESHOLD
+
   use specfem_par, only: myrank,timeval,it,NSTEP,NOISE_TOMOGRAPHY, &
                          any_elastic_glob,any_elastic,displ_elastic, &
                          any_poroelastic_glob,any_poroelastic, &
@@ -56,7 +58,6 @@
                          timestamp_seconds_start
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   double precision displnorm_all,displnorm_all_glob

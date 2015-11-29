@@ -41,13 +41,13 @@
 !========================================================================
 
   subroutine compute_arrays_source(ispec_selected_source,xi_source,gamma_source,sourcearray, &
-             Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,nspec)
+                                   Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,nspec)
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM,ZERO
 
   use specfem_par, only : AXISYM,is_on_the_axis,xiglj
 
   implicit none
-
-  include "constants.h"
 
   integer ispec_selected_source
   integer nspec

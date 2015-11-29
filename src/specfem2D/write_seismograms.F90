@@ -238,6 +238,8 @@
   use mpi
 #endif
 
+  use constants,only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME
+
   use specfem_par, only : sisux,sisuz,siscurl,station_name,network_name, &
                           NSTEP,which_proc_receiver,nrec,myrank,deltat,seismotype,t0, &
                           NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
@@ -249,7 +251,7 @@
 !
 ! #define PAUL_SAVE_ASCII_IN_BINARY
 
-  include "constants.h"
+  implicit none
 
   logical :: save_binary_seismograms
   integer irec,length_station_name,length_network_name,iorientation,isample,number_of_components

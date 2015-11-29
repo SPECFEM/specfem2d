@@ -51,9 +51,11 @@
 ! USERS need to modify this subroutine to suit their own needs
   subroutine create_mask_noise()
 
+  use constants,only: CUSTOM_REAL
+
   use specfem_par, only: nglob,coord,mask_noise
+
   implicit none
-  include "constants.h"
 
   !local
   integer :: iglob
@@ -84,7 +86,6 @@
                                      xi_noise,gamma_noise,ispec_noise,angle_noise,myrank
 
   implicit none
-  include "constants.h"
 
   !local
   integer :: i,ios
@@ -144,13 +145,13 @@
 ! read in time series based on noise spectrum and construct noise "source" array
   subroutine compute_source_array_noise()
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ
 
   use specfem_par, only: AXISYM,is_on_the_axis,xiglj,p_sv,NSTEP,deltat,ibool,ispec_noise, &
                        xi_noise,gamma_noise,xigll,zigll, &
                        time_function_noise,source_array_noise,myrank
 
   implicit none
-  include "constants.h"
 
   !local
   integer :: it,i,j,iglob
@@ -283,10 +284,11 @@
 ! inject the "source" that drives the "generating wavefield"
   subroutine add_point_source_noise()
 
+  use constants,only: NGLLX,NGLLZ
+
   use specfem_par, only: p_sv,it,ibool,ispec_noise, &
                          accel_elastic,angle_noise,source_array_noise
   implicit none
-  include "constants.h"
 
   !local
   integer :: i,j,iglob
@@ -318,12 +320,13 @@
 ! (recall that the ensemble forward wavefield has a spatially distributed source)
   subroutine add_surface_movie_noise(accel_elastic)
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+
   use specfem_par, only: p_sv,NOISE_TOMOGRAPHY,it,NSTEP,nspec,nglob,ibool, &
                          surface_movie_x_noise,surface_movie_y_noise, &
                          surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll,myrank
 
   implicit none
-  include "constants.h"
 
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic
 
@@ -374,10 +377,11 @@
 ! the "ensemble forward wavefield"
   subroutine save_surface_movie_noise()
 
+  use constants,only: CUSTOM_REAL
+
   use specfem_par, only: NOISE_TOMOGRAPHY,p_sv,it,NSTEP,nglob,displ_elastic,myrank
 
   implicit none
-  include "constants.h"
 
   !local
   integer :: ios
@@ -416,10 +420,12 @@
   end subroutine save_surface_movie_noise
 
 ! =============================================================================================================
+
   subroutine snapshots_noise(ncol,nglob,filename,array_all)
 
+  use constants,only: CUSTOM_REAL
+
   implicit none
-  include "constants.h"
 
   !input paramters
   integer :: ncol,nglob
@@ -432,27 +438,28 @@
 
   open(unit=504,file=filename,status='unknown',action='write')
 
-    do iglob = 1,nglob
-
-          do i = 1,ncol-1
-              write(unit=504,fmt='(1pe12.3e3)',advance='no') array_all(i,iglob)
-          enddo
-              write(unit=504,fmt='(1pe13.3e3)') array_all(ncol,iglob)
-
+  do iglob = 1,nglob
+    do i = 1,ncol-1
+      write(unit=504,fmt='(1pe12.3e3)',advance='no') array_all(i,iglob)
     enddo
 
-  close(504)
+    write(unit=504,fmt='(1pe13.3e3)') array_all(ncol,iglob)
 
+  enddo
+
+  close(504)
 
   end subroutine snapshots_noise
 
 
 ! =============================================================================================================
 ! auxillary routine
+
   subroutine spec2glob(nspec,nglob,ibool,array_spec,array_glob)
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+
   implicit none
-  include "constants.h"
 
   !input
   integer :: nspec, nglob

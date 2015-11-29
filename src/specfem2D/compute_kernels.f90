@@ -45,6 +45,7 @@
 
 ! elastic kernel calculations
 ! see e.g. Tromp et al. (2005)
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,APPROXIMATE_HESS_KL,HALF,TWO
 
   use specfem_par, only: ispec_is_elastic,rho_k,rhorho_el_hessian_temp1,rhorho_el_hessian_temp2, &
                          rho_kl,mu_kl,kappa_kl,rhop_kl,beta_kl,alpha_kl,bulk_c_kl,bulk_beta_kl, &
@@ -55,7 +56,6 @@
                          deltat,p_sv,displ_elastic,&
                          mu_k,kappa_k,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz
   implicit none
-  include "constants.h"
 
   !local variables
   integer :: i,j,k,ispec,iglob
@@ -211,6 +211,7 @@
 
 ! acoustic kernel calculations
 ! see e.g. Tromp et al. (2005)
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,APPROXIMATE_HESS_KL,ZERO,HALF,TWO
 
   use specfem_par, only: nspec,ispec_is_acoustic,ibool,kappal_ac_global,rhol_ac_global,&
                          poroelastcoef,density,kmato,assign_external_model,rhoext,vpext,deltat,&
@@ -220,7 +221,6 @@
                          rho_ac_kl,kappa_ac_kl,rhop_ac_kl,alpha_ac_kl,rhorho_ac_hessian_final1,&
                          rhorho_ac_hessian_final2
   implicit none
-  include "constants.h"
 
   !local variables
   integer :: i,j,k,ispec,iglob

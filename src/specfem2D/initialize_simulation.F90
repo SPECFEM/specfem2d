@@ -48,10 +48,11 @@
   use mpi
 #endif
 
+  use constants,only: IMAIN,ISTANDARD_OUTPUT
+
   use specfem_par, only : NPROC,myrank,GPU_MODE,ninterface_acoustic,ninterface_elastic,ninterface_poroelastic
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: ier

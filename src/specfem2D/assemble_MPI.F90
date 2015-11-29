@@ -210,6 +210,8 @@
 
   use mpi
 
+  use constants,only: CUSTOM_REAL
+
   use specfem_par, only: nglob,ninterface_acoustic, &
                          inum_interfaces_acoustic, &
                          ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
@@ -220,7 +222,6 @@
 
   implicit none
 
-  include "constants.h"
   include "precision.h"
 
   real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
@@ -327,6 +328,8 @@
 
   use mpi
 
+  use constants,only: CUSTOM_REAL
+
   use specfem_par, only: nglob,ninterface_elastic, &
                          inum_interfaces_elastic, &
                          ibool_interfaces_elastic, nibool_interfaces_elastic, &
@@ -337,7 +340,6 @@
 
   implicit none
 
-  include "constants.h"
   include "precision.h"
 
   ! array to assemble
@@ -421,6 +423,8 @@
 
   use mpi
 
+  use constants,only: CUSTOM_REAL,NDIM
+
   use specfem_par, only: nglob,ninterface_poroelastic, &
                          inum_interfaces_poroelastic, &
                          ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
@@ -431,7 +435,6 @@
 
   implicit none
 
-  include "constants.h"
   include "precision.h"
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob), intent(inout) :: array_val3,array_val4

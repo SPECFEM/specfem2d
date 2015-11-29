@@ -48,6 +48,8 @@
   use mpi
 #endif
 
+  use constants,only: IMAIN,PI,SMALLVALTOL
+
   use specfem_par, only: myrank,any_acoustic,any_poroelastic,over_critical_angle, &
                          NSOURCES,source_type,anglesource,x_source,z_source,f0,t0, &
                          nglob,numat,poroelastcoef,density,coord, &
@@ -56,7 +58,6 @@
                          accel_elastic,veloc_elastic,displ_elastic,myrank
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: numat_local,i
@@ -329,13 +330,14 @@ end subroutine prepare_initialfield
 
   subroutine prepare_initialfield_paco()
 
+  use constants,only: IMAIN,IEDGE1,IEDGE2,IEDGE4,NGLLX,NGLLZ,PI
+
   use specfem_par, only: myrank,nelemabs,left_bound,right_bound,bot_bound, &
                                     numabs,codeabs,ibool, &
                                     source_type,c_inc,c_refl, &
                                     count_bottom,count_left,count_right
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob,ibegin,iend

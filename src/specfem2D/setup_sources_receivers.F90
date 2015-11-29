@@ -44,6 +44,8 @@
 
   subroutine setup_sources_receivers()
 
+  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN
+
   use specfem_par, only: NSOURCES,initialfield,source_type, &
                          coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface, &
                          ispec_is_elastic,ispec_is_poroelastic, &
@@ -55,8 +57,6 @@
                          xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,&
                          z_final_receiver,iglob_source
   implicit none
-
-  include "constants.h"
 
   ! Local variables
   integer ispec_acoustic_surface

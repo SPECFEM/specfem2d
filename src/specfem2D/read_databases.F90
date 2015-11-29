@@ -361,11 +361,12 @@
   subroutine read_databases_sources()
 
 ! reads source parameters
+
+  use constants,only: IIN
+
   use specfem_par, only : NSOURCES,source_type,time_function_type,name_of_source_file,burst_band_width, &
                           x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
   implicit none
-  include "constants.h"
-
 
   ! local parameters
   integer :: i_source
@@ -405,8 +406,9 @@
 
 ! reads attenuation information
 
+  use constants,only: IIN
+
   implicit none
-  include "constants.h"
 
   ! local parameters
   character(len=80) :: datlin
@@ -425,6 +427,8 @@
 
 ! reads the spectral macrobloc nodal coordinates
 
+  use constants,only: IIN,NDIM,IMAIN,NDIM,NGLLX,NGLLZ
+
   use specfem_par, only : myrank,npgeo,coorg,numat,ngnod,nspec, &
                           pointsdisp,plot_lowerleft_corner_only, &
                           nelemabs,nelem_acforcing,nelem_acoustic_surface, &
@@ -434,7 +438,6 @@
 
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: ipoin,ip,id
@@ -502,9 +505,11 @@
 
 ! reads spectral macrobloc data
 
+  use constants,only: IIN
+
   use specfem_par, only : nspec,ngnod,kmato,knods,region_CPML
+
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: n,k,ispec,kmato_read,pml_read
@@ -533,7 +538,6 @@
   enddo
   deallocate(knods_read)
 
-
   end subroutine read_databases_mato
 
 !
@@ -544,10 +548,11 @@
 
 ! reads in interface dimensions
 
+  use constants,only: IIN
+
   use specfem_par, only : ninterface,max_interface_size
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   character(len=80) :: datlin
@@ -564,10 +569,11 @@
   subroutine read_databases_interfaces()
 
 ! reads in interfaces
+  use constants,only: IIN
 
   use specfem_par, only : ninterface,my_neighbours,my_nelmnts_neighbours,my_interfaces
+
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: num_interface,ie,my_interfaces_read
@@ -615,6 +621,8 @@
   use mpi
 #endif
 
+  use constants,only: IIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IMAIN
+
   use specfem_par, only : myrank,nelemabs,nspec,anyabs, &
                           ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2, &
                           ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
@@ -623,7 +631,6 @@
                           ib_right,ib_left,ib_bottom,ib_top,PML_BOUNDARY_CONDITIONS
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: inum,inum_duplicate,numabsread,typeabsread
@@ -814,6 +821,8 @@
 
 ! reads in absorbing edges
 
+  use constants,only: IIN,IRIGHT,ILEFT,IBOTTOM,ITOP,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IMAIN
+
   use specfem_par, only : myrank,nelem_acforcing,nspec,ACOUSTIC_FORCING, &
                           ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing, &
                           ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
@@ -822,7 +831,6 @@
                           ib_right_acforcing,ib_left_acforcing,ib_bottom_acforcing,ib_top_acforcing
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: inum,numacforcingread,typeacforcingread
@@ -938,9 +946,12 @@
   subroutine read_databases_free_surf()
 
 ! reads acoustic free surface data
+
+  use constants,only: IIN
+
   use specfem_par, only : nelem_acoustic_surface,acoustic_edges,any_acoustic_edges
+
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: inum,acoustic_edges_read
@@ -974,6 +985,9 @@
 ! reads acoustic elastic coupled edges
 ! reads acoustic poroelastic coupled edges
 ! reads poroelastic elastic coupled edges
+
+  use constants,only: IIN
+
   use specfem_par, only : num_fluid_solid_edges,any_fluid_solid_edges, &
                           fluid_solid_acoustic_ispec,fluid_solid_elastic_ispec, &
                           num_fluid_poro_edges,any_fluid_poro_edges, &
@@ -982,7 +996,6 @@
                           solid_poro_elastic_ispec,solid_poro_poroelastic_ispec
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: inum
@@ -1044,12 +1057,14 @@
   subroutine read_tangential_detection_curve()
 
 ! reads tangential detection curve
+
+  use constants,only: IIN
+
   use specfem_par, only : nnodes_tangential_curve,nodes_tangential_curve, &
                           force_normal_to_surface,rec_normal_to_surface, &
                           any_tangential_curve
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: i
@@ -1080,9 +1095,12 @@
   subroutine read_databases_axial_elements()
 
 ! reads axial elements data
+
+  use constants,only: IIN
+
   use specfem_par, only : nelem_on_the_axis,ispec_of_axial_elements
+
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: i

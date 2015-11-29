@@ -90,10 +90,11 @@
 
   subroutine define_GLJ_derivation_matrix()
 
-  use specfem_par, only: xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx
-  implicit none
+  use constants,only: NGLJ
 
-  include "constants.h"
+  use specfem_par, only: xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx
+
+  implicit none
 
   double precision, parameter    :: alphaGLJ=0.d0,betaGLJ=1.d0
 

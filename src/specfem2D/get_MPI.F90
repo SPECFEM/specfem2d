@@ -50,6 +50,8 @@
 
   use mpi
 
+  use constants,only: CUSTOM_REAL,IMAIN,NGLLX,NGLLZ
+
   use specfem_par, only: nspec,ibool,nglob, &
                     ninterface,ibool_interfaces_acoustic,ibool_interfaces_elastic, &
                     ibool_interfaces_poroelastic, &
@@ -60,8 +62,6 @@
                     tab_requests_send_recv_acoustic
 
   implicit none
-
-  include "constants.h"
 
   !local parameters
   double precision, dimension(:), allocatable :: xp,zp

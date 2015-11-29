@@ -45,8 +45,9 @@
   subroutine save_openDX_jacobian(nspec,npgeo,ngnod,knods,coorg,xigll,zigll, &
                                   AXISYM,is_on_the_axis,xiglj)
 
+  use constants,only: NDIM,NGLLX,NGLLZ,NGLJ,ZERO
+
   implicit none
-  include "constants.h"
 
   logical :: AXISYM
 

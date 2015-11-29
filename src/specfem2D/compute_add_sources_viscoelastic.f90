@@ -44,12 +44,13 @@
 
   subroutine compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+
   use specfem_par, only: p_sv,ispec_is_elastic,nglob_elastic,&
                          NSOURCES,source_type,anglesource,source_time_function,&
                          is_proc_source,ispec_selected_source,sourcearray,&
                          hxis_store,hgammas_store,ibool,myrank
   implicit none
-  include "constants.h"
 
   real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: accel_elastic
   integer :: it, i_stage
@@ -113,11 +114,12 @@
 
   subroutine compute_add_sources_viscoelastic_adjoint()
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+
   use specfem_par, only: myrank,p_sv,accel_elastic,ispec_is_elastic,NSTEP,it,&
                          nrec,which_proc_receiver,ispec_selected_rec,adj_sourcearrays,&
                          ibool
   implicit none
-  include "constants.h"
 
   !local variables
   integer :: irec_local,irec,i,j,iglob

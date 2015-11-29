@@ -222,9 +222,9 @@
 !-----------------------------------------------
   subroutine get_edge ( ngnod, n, itype, e1, e2, ixmin, ixmax, izmin, izmax, sens )
 
-  implicit none
+  use constants,only: NGLLX,NGLLZ
 
-  include "constants.h"
+  implicit none
 
   integer, intent(in)  :: ngnod
   integer, dimension(ngnod), intent(in)  :: n

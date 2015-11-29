@@ -121,45 +121,24 @@
 !
 !--- other constants computed from the parameters above, do not modify
 !
-  if (CUSTOM_REAL == SIZE_REAL) then
 
-   tau_epsilon_nu1(:) = sngl(tau_epsilon_nu1_d(:))
-   tau_epsilon_nu2(:) = sngl(tau_epsilon_nu2_d(:))
+  tau_epsilon_nu1(:) = real(tau_epsilon_nu1_d(:),kind=CUSTOM_REAL)
+  tau_epsilon_nu2(:) = real(tau_epsilon_nu2_d(:),kind=CUSTOM_REAL)
 
-   inv_tau_sigma_nu1_sent(:) = sngl(dble(ONE) / tau_sigma_nu1(:))
-   inv_tau_sigma_nu2_sent(:) = sngl(dble(ONE) / tau_sigma_nu2(:))
+  inv_tau_sigma_nu1_sent(:) = real(dble(ONE) / tau_sigma_nu1(:),kind=CUSTOM_REAL)
+  inv_tau_sigma_nu2_sent(:) = real(dble(ONE) / tau_sigma_nu2(:),kind=CUSTOM_REAL)
 
-! use the right formula with 1/N included
-   phi_nu1_sent(:) = sngl((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
-                                                                           / sum(tau_epsilon_nu1_d/tau_sigma_nu1))
-   phi_nu2_sent(:) = sngl((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
-                                                                           / sum(tau_epsilon_nu2_d/tau_sigma_nu2))
+  ! use the right formula with 1/N included
+  phi_nu1_sent(:) = real((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
+                                                                           / sum(tau_epsilon_nu1_d/tau_sigma_nu1),kind=CUSTOM_REAL)
+  phi_nu2_sent(:) = real((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
+                                                                           / sum(tau_epsilon_nu2_d/tau_sigma_nu2),kind=CUSTOM_REAL)
 
-   Mu_nu1_sent = sngl(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS))
-   Mu_nu2_sent = sngl(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS))
+  Mu_nu1_sent = real(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS),kind=CUSTOM_REAL)
+  Mu_nu2_sent = real(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS),kind=CUSTOM_REAL)
 
-   if (Mu_nu1_sent < 1. .or. Mu_nu2_sent < 1.) &
-       stop 'error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one'
-
-  else
-
-   tau_epsilon_nu1(:) = tau_epsilon_nu1_d(:)
-   tau_epsilon_nu2(:) = tau_epsilon_nu2_d(:)
-
-   inv_tau_sigma_nu1_sent(:) = ONE / tau_sigma_nu1(:)
-   inv_tau_sigma_nu2_sent(:) = ONE / tau_sigma_nu2(:)
-
-! use the right formula with 1/N included
-   phi_nu1_sent(:) = (ONE - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) / sum(tau_epsilon_nu1_d/tau_sigma_nu1)
-   phi_nu2_sent(:) = (ONE - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) / sum(tau_epsilon_nu2_d/tau_sigma_nu2)
-
-   Mu_nu1_sent = sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS)
-   Mu_nu2_sent = sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS)
-
-   if (Mu_nu1_sent < 1.d0 .or. Mu_nu2_sent < 1.d0) &
-       stop 'error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one'
-
-  endif
+  if (Mu_nu1_sent < 1. .or. Mu_nu2_sent < 1.) &
+    stop 'error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one'
 
   end subroutine attenuation_model
 
@@ -209,11 +188,11 @@
 !  A similar expression can then be established for Q_Kappa, and conversion from Q_Kappa and Q_mu to Q_P and Q_S (if needed)
 !  can be found for instance in equations (9.59) and (9.60) of the book of Dahlen and Tromp (1998).
 
+  use constants,only: ONE,TWO,PI,TWO_THIRDS
+
   use specfem_par, only : f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS
 
   implicit none
-
-  include "constants.h"
 
 ! arguments
   double precision, intent(in) :: rho
@@ -381,7 +360,7 @@
 
 !---------------------------------------------------
 
-SUBROUTINE compute_attenuation_coeffs(N,Qref,f0,f_min,f_max,tau_epsilon,tau_sigma)
+  SUBROUTINE compute_attenuation_coeffs(N,Qref,f0,f_min,f_max,tau_epsilon,tau_sigma)
 
   IMPLICIT NONE
 
@@ -424,13 +403,13 @@ SUBROUTINE compute_attenuation_coeffs(N,Qref,f0,f_min,f_max,tau_epsilon,tau_sigm
 ! enddo
 ! print *
 
-END SUBROUTINE compute_attenuation_coeffs
+  END SUBROUTINE compute_attenuation_coeffs
 
 !---------------------------------------------------
 
 ! classical calculation of the coefficients based on linear least squares
 
-SUBROUTINE decomposition_LU(a,i_min,n,indx,d)
+  SUBROUTINE decomposition_LU(a,i_min,n,indx,d)
 
   IMPLICIT NONE
 
@@ -506,9 +485,9 @@ SUBROUTINE decomposition_LU(a,i_min,n,indx,d)
     endif
   enddo
 
-END SUBROUTINE decomposition_LU
+  END SUBROUTINE decomposition_LU
 
-SUBROUTINE LUbksb(a,i_min,n,indx,b,m)
+  SUBROUTINE LUbksb(a,i_min,n,indx,b,m)
 
   IMPLICIT NONE
 
@@ -547,9 +526,9 @@ SUBROUTINE LUbksb(a,i_min,n,indx,b,m)
     enddo
   enddo
 
-END SUBROUTINE LUbksb
+  END SUBROUTINE LUbksb
 
-SUBROUTINE syst_LU(a,i_min,n,b,m)
+  SUBROUTINE syst_LU(a,i_min,n,b,m)
 
   IMPLICIT NONE
 
@@ -572,9 +551,9 @@ SUBROUTINE syst_LU(a,i_min,n,b,m)
   call decomposition_LU(aux,i_min,n,indx,d)
   call LUbksb(aux,i_min,n,indx,b,m)
 
-END SUBROUTINE syst_LU
+  END SUBROUTINE syst_LU
 
-SUBROUTINE lfit_zener(x,y,sig,ndat,poids,ia,covar,chisq,ma,Qref,point)
+  SUBROUTINE lfit_zener(x,y,sig,ndat,poids,ia,covar,chisq,ma,Qref,point)
 ! ma = nombre de variable diffusive
 ! ndat = m = K nombre d'abcisse freq_k
 
@@ -654,9 +633,9 @@ SUBROUTINE lfit_zener(x,y,sig,ndat,poids,ia,covar,chisq,ma,Qref,point)
     chisq=chisq+((y(i)-dot_product(poids(1:ma),afunc(1:ma)))/sig(i))**2
   enddo
 
-END SUBROUTINE lfit_zener
+  END SUBROUTINE lfit_zener
 
-SUBROUTINE func_zener(x,afunc,N,Qref,point)
+  SUBROUTINE func_zener(x,afunc,N,Qref,point)
 
   IMPLICIT NONE
 
@@ -674,13 +653,13 @@ SUBROUTINE func_zener(x,afunc,N,Qref,point)
     afunc(k) = num / deno
   enddo
 
-END SUBROUTINE func_zener
+  END SUBROUTINE func_zener
 
-SUBROUTINE remplit_point(fmin,fmax,N,point)
+  SUBROUTINE remplit_point(fmin,fmax,N,point)
+
+  use constants,only: TWO_PI_OR_ONE
 
   IMPLICIT NONE
-
-  include "constants.h"
 
   integer, intent(in) :: N
   double precision, intent(in) :: fmin,fmax
@@ -697,13 +676,13 @@ SUBROUTINE remplit_point(fmin,fmax,N,point)
     enddo
   endif
 
-END SUBROUTINE remplit_point
+  END SUBROUTINE remplit_point
 
-SUBROUTINE classical_linear_least_squares(Qref,poids,point,N,fmin,fmax)
+  SUBROUTINE classical_linear_least_squares(Qref,poids,point,N,fmin,fmax)
+
+  use constants,only: TWO_PI_OR_ONE
 
   IMPLICIT NONE
-
-  include "constants.h"
 
   integer, intent(in) :: N
   double precision, intent(in) :: Qref,fmin,fmax
@@ -735,11 +714,11 @@ SUBROUTINE classical_linear_least_squares(Qref,poids,point,N,fmin,fmax)
 
   call lfit_zener(x,y_ref,sig,m,poids,ia,covar,chi2,N,Qref,point)
 
-END SUBROUTINE classical_linear_least_squares
+  END SUBROUTINE classical_linear_least_squares
 
 ! Calcul des coefficients par optimisation non-lineaire avec contraintes
 
-SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,theta_min,theta_max,f_min,f_max)
+  SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,theta_min,theta_max,f_min,f_max)
 !-----------------------------------------------------------------------------
 ! The subroutine SOLVOPT performs a modified version of Shor's r-algorithm in
 ! order to find a local minimum resp. maximum of a nonlinear function
@@ -2000,9 +1979,9 @@ SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
 ! deallocate working arrays:
       deallocate (idx,deltax,xx,grec,xrec,xopt,x1,z,gc,gt,g1,g0,g,B)
 
-END SUBROUTINE solvopt
+  END SUBROUTINE solvopt
 
-SUBROUTINE soptions(default)
+  SUBROUTINE soptions(default)
 ! SOPTIONS returns the default values for the optional parameters
 ! used by SolvOpt.
 
@@ -2024,9 +2003,9 @@ SUBROUTINE soptions(default)
   default(12) = 0.d0
   default(13) = 0.d0
 
-END SUBROUTINE soptions
+  END SUBROUTINE soptions
 
-SUBROUTINE func_objective(x,res,freq,Qref,N,Nopt)
+  SUBROUTINE func_objective(x,res,freq,Qref,N,Nopt)
 
   IMPLICIT NONE
 
@@ -2045,15 +2024,15 @@ SUBROUTINE func_objective(x,res,freq,Qref,N,Nopt)
     res = res + num/deno
   enddo
 
-END SUBROUTINE func_objective
+  END SUBROUTINE func_objective
 
-SUBROUTINE func_mini(x,res,Qref,N,Nopt,K,f_min,f_max)
+  SUBROUTINE func_mini(x,res,Qref,N,Nopt,K,f_min,f_max)
 
 ! Nopt=2*N : nombre de coefficients a optimiser
 
-  IMPLICIT NONE
+  use constants,only: TWO_PI_OR_ONE
 
-  include "constants.h"
+  IMPLICIT NONE
 
   integer, intent(in) :: N,Nopt,K
   double precision, intent(in) :: Qref,f_min,f_max
@@ -2071,13 +2050,13 @@ SUBROUTINE func_mini(x,res,Qref,N,Nopt,K,f_min,f_max)
     res = res + d*d
   enddo
 
-END SUBROUTINE func_mini
+  END SUBROUTINE func_mini
 
-SUBROUTINE grad_func_mini(x,grad,Qref,N,Nopt,K,f_min,f_max)
+  SUBROUTINE grad_func_mini(x,grad,Qref,N,Nopt,K,f_min,f_max)
+
+  use constants,only: TWO_PI_OR_ONE
 
   IMPLICIT NONE
-
-  include "constants.h"
 
   integer, intent(in) :: N,Nopt,K
   double precision, intent(in) :: Qref,f_min,f_max
@@ -2126,9 +2105,9 @@ SUBROUTINE grad_func_mini(x,grad,Qref,N,Nopt,K,f_min,f_max)
     enddo
   enddo
 
-END SUBROUTINE grad_func_mini
+  END SUBROUTINE grad_func_mini
 
-SUBROUTINE max_residu(x,res,N,Nopt,theta_min,theta_max)
+  SUBROUTINE max_residu(x,res,N,Nopt,theta_min,theta_max)
 
   IMPLICIT NONE
 
@@ -2149,9 +2128,9 @@ SUBROUTINE max_residu(x,res,N,Nopt,theta_min,theta_max)
     res = max(temp,aux)
   enddo
 
-END SUBROUTINE max_residu
+  END SUBROUTINE max_residu
 
-SUBROUTINE grad_max_residu(x,grad,N,Nopt,theta_min,theta_max)
+  SUBROUTINE grad_max_residu(x,grad,N,Nopt,theta_min,theta_max)
 
   IMPLICIT NONE
 
@@ -2195,13 +2174,13 @@ SUBROUTINE grad_max_residu(x,grad,N,Nopt,theta_min,theta_max)
     endif
   enddo
 
-END SUBROUTINE grad_max_residu
+  END SUBROUTINE grad_max_residu
 
-SUBROUTINE nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
+  SUBROUTINE nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
+
+  use constants,only: USE_SOLVOPT
 
   IMPLICIT NONE
-
-  include "constants.h"
 
   integer, intent(in) :: N
   double precision, intent(in) :: Qref,f0,f_min,f_max
@@ -2243,5 +2222,5 @@ SUBROUTINE nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
     poids(i) = x(N+i)*x(N+i)
   enddo
 
-END SUBROUTINE nonlinear_optimization
+  END SUBROUTINE nonlinear_optimization
 
