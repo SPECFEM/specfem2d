@@ -103,6 +103,8 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
 
       i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
       j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
+      //check if the point must be computed
+      if (i==5 || j==5) return;
 
       iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
 
@@ -317,7 +319,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
   exit_on_cuda_error("compute_stacey_elastic_kernel");
 #endif
 
-  if (mp->simulation_type == 1 && mp->save_forward && phase_is_inner == 1) {
+  if (mp->simulation_type == 1 && mp->save_forward && phase_is_inner == -1) {
     // explicitly wait until compute stream is done
     // (cudaMemcpy implicitly synchronizes all other cuda operations)
     cudaStreamSynchronize(mp->compute_stream);

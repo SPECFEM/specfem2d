@@ -103,7 +103,8 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
 
       i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
       j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
-
+      //check if the point must be computed
+      if (i==5 || j==5) return;
 
       iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
 
@@ -228,7 +229,7 @@ TRACE("compute_stacey_acoustic_cuda");
                                                    mp->d_cote_abs);
 
   //  adjoint simulations: stores absorbed wavefield part
-  if (mp->simulation_type == 1 && mp->save_forward && phase_is_inner==1) {
+  if (mp->simulation_type == 1 && mp->save_forward && phase_is_inner==-1) {
     // (cudaMemcpy implicitly synchronizes all other cuda operations)
     // copies array to CPU
     print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_potential_left,mp->d_b_absorb_potential_left,

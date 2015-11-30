@@ -342,6 +342,8 @@ $O/compute_forces_poro_fluid.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_poro_solid.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_viscoelastic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_forces_viscoelastic_backward.spec.o: $O/specfem2D_par.spec.o
+$O/compute_gpu_acoustic.spec.o: $O/specfem2D_par.spec.o
+$O/compute_gpu_elastic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_gradient_attenuation.spec.o: $O/specfem2D_par.spec.o
 $O/compute_kernels.spec.o: $O/specfem2D_par.spec.o
 $O/compute_pressure.spec.o: $O/specfem2D_par.spec.o
