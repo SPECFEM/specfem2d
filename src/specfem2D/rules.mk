@@ -348,6 +348,7 @@ $O/compute_gpu_acoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_gpu_elastic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_gradient_attenuation.spec.o: $O/specfem2D_par.spec.o
 $O/compute_kernels.spec.o: $O/specfem2D_par.spec.o
+$O/compute_normal_vector.spec.o: $O/specfem2D_par.spec.o
 $O/compute_pressure.spec.o: $O/specfem2D_par.spec.o
 $O/compute_vector_field.spec.o: $O/specfem2D_par.spec.o
 $O/construct_acoustic_surface.spec.o: $O/specfem2D_par.spec.o
