@@ -52,19 +52,20 @@
 
   integer, intent(in) :: iglob,nglob,it
 
+  double precision, dimension(NDIM,nglob), intent(in) :: coord
   double precision, intent(in) :: deltat
 
   double precision, intent(out) :: dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert
+  double precision, intent(in) :: x0_source, z0_source
 
-  double precision, dimension(NDIM,nglob), intent(in) :: coord
+  double precision, dimension(NDIM),intent(in) :: A_plane, B_plane, C_plane
+  double precision, intent(in) :: anglesource, anglesource_refl
 
+  double precision :: c_inc, c_refl, time_offset, f0
+
+  ! local parameters
   double precision :: time_veloc,time_traction,t,x,z
-
   double precision, external :: ricker_Bielak_veloc
-
-  double precision x0_source, z0_source, anglesource, anglesource_refl
-  double precision c_inc, c_refl, time_offset, f0
-  double precision, dimension(NDIM) :: A_plane, B_plane, C_plane
 
 ! get the coordinates of the mesh point
   x = coord(1,iglob) - x0_source

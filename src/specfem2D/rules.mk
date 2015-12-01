@@ -324,6 +324,7 @@ $O/attenuation_model.spec.o: $O/specfem2D_par.spec.o
 $O/axisymmetric_routines.spec.o: $O/specfem2D_par.spec.o
 $O/check_grid.spec.o: $O/specfem2D_par.spec.o
 $O/check_stability.spec.o: $O/specfem2D_par.spec.o
+$O/compute_Bielak_conditions.spec.o: $O/specfem2D_par.spec.o
 $O/compute_add_sources_acoustic.spec.o: $O/specfem2D_par.spec.o
 $O/compute_add_sources_poro.spec.o: $O/specfem2D_par.spec.o
 $O/compute_add_sources_viscoelastic.spec.o: $O/specfem2D_par.spec.o
@@ -355,6 +356,7 @@ $O/construct_acoustic_surface.spec.o: $O/specfem2D_par.spec.o
 $O/create_color_image.spec.o: $O/specfem2D_par.spec.o
 $O/createnum_fast.spec.o: $O/specfem2D_par.spec.o
 $O/createnum_slow.spec.o: $O/specfem2D_par.spec.o
+$O/datim.spec.o: $O/specfem2D_par.spec.o
 $O/define_derivation_matrices.spec.o: $O/specfem2D_par.spec.o
 $O/define_external_model.spec.o: $O/specfem2D_par.spec.o
 $O/define_external_model_from_tomo_file.spec.o: $O/specfem2D_par.spec.o
