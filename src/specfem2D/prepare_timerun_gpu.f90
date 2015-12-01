@@ -384,105 +384,99 @@
            cote_abs(nelemabs),stat=ier)
   if (ier /= 0 ) stop 'error allocating array abs_boundary_ispec etc.'
 
-   if(STACEY_BOUNDARY_CONDITIONS) then
+  if(STACEY_BOUNDARY_CONDITIONS) then
 
-    do ispecabs=1,nelemabs
+    do ispecabs = 1,nelemabs
       ispec = numabs(ispecabs)
-        !--- left absorbing boundary
-        if(codeabs(IEDGE4,ispecabs)) then
+
+      !--- left absorbing boundary
+      if(codeabs(IEDGE4,ispecabs)) then
         i = 1
         do j = 1,NGLLZ
+          abs_boundary_ij(1,j,ispecabs) = i
+          abs_boundary_ij(2,j,ispecabs) = j
 
-            abs_boundary_ij(1,j,ispecabs) = i
-            abs_boundary_ij(2,j,ispecabs) = j
+          xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+          zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+          jacobian1D = sqrt(xgamma**2 + zgamma**2)
 
-            xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-            jacobian1D = sqrt(xgamma**2 + zgamma**2)
+          abs_boundary_normal(1,j,ispecabs) = - zgamma / jacobian1D
+          abs_boundary_normal(2,j,ispecabs) = + xgamma / jacobian1D
 
-            abs_boundary_normal(1,j,ispecabs) = - zgamma / jacobian1D
-            abs_boundary_normal(2,j,ispecabs) = + xgamma / jacobian1D
+          abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
 
-            abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
+          cote_abs(ispecabs) = 4
+        enddo
+        if (ibegin_edge4(ispecabs)==2) abs_boundary_ij(2,1,ispecabs) = 6
+        if (iend_edge4(ispecabs)==4) abs_boundary_ij(2,5,ispecabs) = 6
 
-            cote_abs(ispecabs) = 4
+      !--- right absorbing boundary
+      else if(codeabs(IEDGE2,ispecabs)) then
+        i = NGLLX
+        do j = 1,NGLLZ
+          abs_boundary_ij(1,j,ispecabs) = i
+          abs_boundary_ij(2,j,ispecabs) = j
 
-          enddo
-         if (ibegin_edge4(ispecabs)==2) abs_boundary_ij(2,1,ispecabs) = 6
-         if (iend_edge4(ispecabs)==4) abs_boundary_ij(2,5,ispecabs) = 6
+          xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+          zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+          jacobian1D = sqrt(xgamma**2 + zgamma**2)
 
-        !--- right absorbing boundary
-        else if(codeabs(IEDGE2,ispecabs)) then
-          i = NGLLX
-           do j = 1,NGLLZ
+          abs_boundary_normal(1,j,ispecabs) = + zgamma / jacobian1D
+          abs_boundary_normal(2,j,ispecabs) = - xgamma / jacobian1D
 
-            abs_boundary_ij(1,j,ispecabs) = i
-            abs_boundary_ij(2,j,ispecabs) = j
+          abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
 
-            xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-            zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-            jacobian1D = sqrt(xgamma**2 + zgamma**2)
+          cote_abs(ispecabs) = 2
+        enddo
+        if (ibegin_edge2(ispecabs)==2) abs_boundary_ij(2,1,ispecabs) = 6
+        if (iend_edge2(ispecabs)==4) abs_boundary_ij(2,5,ispecabs) = 6
 
-            abs_boundary_normal(1,j,ispecabs) = + zgamma / jacobian1D
-            abs_boundary_normal(2,j,ispecabs) = - xgamma / jacobian1D
-
-            abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
-
-            cote_abs(ispecabs) = 2
-
-          enddo
-         if (ibegin_edge2(ispecabs)==2) abs_boundary_ij(2,1,ispecabs) = 6
-         if (iend_edge2(ispecabs)==4) abs_boundary_ij(2,5,ispecabs) = 6
-
-           !--- bottom absorbing boundary
+      !--- bottom absorbing boundary
       else if(codeabs(IEDGE1,ispecabs)) then
         j = 1
-         do i = 1,NGLLX
+        do i = 1,NGLLX
+          abs_boundary_ij(1,i,ispecabs) = i
+          abs_boundary_ij(2,i,ispecabs) = j
 
-            abs_boundary_ij(1,i,ispecabs) = i
-            abs_boundary_ij(2,i,ispecabs) = j
+          xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+          zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+          jacobian1D = sqrt(xxi**2 + zxi**2)
 
-              xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-              zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-              jacobian1D = sqrt(xxi**2 + zxi**2)
+          abs_boundary_normal(1,i,ispecabs) = + zxi / jacobian1D
+          abs_boundary_normal(2,i,ispecabs) = - xxi / jacobian1D
 
-              abs_boundary_normal(1,i,ispecabs) = + zxi / jacobian1D
-              abs_boundary_normal(2,i,ispecabs) = - xxi / jacobian1D
+          abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
 
-              abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
+          cote_abs(ispecabs) = 1
 
-              cote_abs(ispecabs) = 1
+        enddo
+        if (ibegin_edge1(ispecabs)==2  .or. codeabs_corner(1,ispecabs)) abs_boundary_ij(1,1,ispecabs) = 6
+        if (iend_edge1(ispecabs)==4 .or. codeabs_corner(2,ispecabs))    abs_boundary_ij(1,5,ispecabs) = 6
 
-          enddo
-         if (ibegin_edge1(ispecabs)==2  .or. codeabs_corner(1,ispecabs)) abs_boundary_ij(1,1,ispecabs) = 6
-         if (iend_edge1(ispecabs)==4 .or. codeabs_corner(2,ispecabs))    abs_boundary_ij(1,5,ispecabs) = 6
-
-              !--- top absorbing boundary
+      !--- top absorbing boundary
       else if(codeabs(IEDGE3,ispecabs)) then
         j = NGLLZ
         do i = 1,NGLLX
+          abs_boundary_ij(1,i,ispecabs) = i
+          abs_boundary_ij(2,i,ispecabs) = j
 
-            abs_boundary_ij(1,i,ispecabs) = i
-            abs_boundary_ij(2,i,ispecabs) = j
+          xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+          zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+          jacobian1D = sqrt(xxi**2 + zxi**2)
 
-              xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-              zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-              jacobian1D = sqrt(xxi**2 + zxi**2)
+          abs_boundary_normal(1,i,ispecabs) = - zxi / jacobian1D
+          abs_boundary_normal(2,i,ispecabs) = + xxi / jacobian1D
 
-              abs_boundary_normal(1,i,ispecabs) = - zxi / jacobian1D
-              abs_boundary_normal(2,i,ispecabs) = + xxi / jacobian1D
+          abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
 
-              abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
+          cote_abs(ispecabs) = 3
+        enddo
+        if (ibegin_edge3(ispecabs)==2 .or. codeabs_corner(3,ispecabs)) abs_boundary_ij(1,1,ispecabs) = 6
+        if (iend_edge3(ispecabs)==4 .or. codeabs_corner(4,ispecabs))   abs_boundary_ij(1,5,ispecabs) = 6
 
-              cote_abs(ispecabs) = 3
-
-         enddo
-         if (ibegin_edge3(ispecabs)==2 .or. codeabs_corner(3,ispecabs)) abs_boundary_ij(1,1,ispecabs) = 6
-         if (iend_edge3(ispecabs)==4 .or. codeabs_corner(4,ispecabs))   abs_boundary_ij(1,5,ispecabs) = 6
-
-        endif
-      enddo
-   endif
+      endif
+    enddo
+  endif ! STACEY_BOUNDARY_CONDITIONS
 
   ! user output
   if (myrank == 0) write(IMAIN,*) '    number of sources = ',NSOURCES
@@ -491,7 +485,7 @@
   nsources_local = 0
   do i = 1, NSOURCES
     if (is_proc_source(i) == 1) then
-      nsources_local = nsources_local +1
+      nsources_local = nsources_local + 1
     endif
   enddo
 
@@ -500,11 +494,11 @@
 
   allocate(source_time_function_loc(nsources_local,NSTEP))
   allocate(ispec_selected_source_loc(nsources_local))
-  j=0
+  j = 0
   do i = 1, NSOURCES
     if (is_proc_source(i) == 1) then
       if (j>nsources_local) stop 'Error with the number of local sources'
-      j=j+1
+      j = j + 1
       source_time_function_loc(j,:) = source_time_function(i,:,1)
       ispec_selected_source_loc(j)  = ispec_selected_source(i)
     endif
@@ -516,8 +510,8 @@
     allocate(sourcearray_loc(1,1,1,1))
   endif
 
-  k=0
-  do i_source= 1,NSOURCES
+  k = 0
+  do i_source = 1,NSOURCES
     if (is_proc_source(i_source) == 1) then
       ! source belongs to this process
       k = k + 1
@@ -790,7 +784,7 @@
     allocate(c25store(NGLLX,NGLLZ,NSPEC))
 
     if (assign_external_model) then
-      do ispec= 1,nspec
+      do ispec = 1,nspec
         do j = 1,NGLLZ
           do i = 1,NGLLX
             c11store(i,j,ispec) = c11ext(i,j,ispec)
@@ -806,7 +800,7 @@
        enddo
       enddo
     else
-      do ispec= 1,nspec
+      do ispec = 1,nspec
         do j = 1,NGLLZ
           do i = 1,NGLLX
             c11store(i,j,ispec) = sngl(anisotropy(1,kmato(ispec)))
