@@ -279,7 +279,6 @@ __device__ void compute_gradient_kernel(int ij,
 
   const int NGLL2_ALIGN = NGLL2_PADDED;
 
-
   int J = (ij/NGLLX);
   int I = (ij-J*NGLLX);
 
@@ -307,13 +306,11 @@ __device__ void compute_gradient_kernel(int ij,
   gammaxl = d_gammax[offset];
   gammazl = d_gammaz[offset];
 
-
-    rho_invl = 1.0f / rhol;
+  rho_invl = 1.0f / rhol;
 
   // derivatives of acoustic scalar potential field on GLL points
   vector_field_element[0] = (temp1l*xixl + temp3l*gammaxl) * rho_invl;
   vector_field_element[1] = (temp1l*xizl + temp3l*gammazl) * rho_invl;
-
 }
 
 /* ----------------------------------------------------------------------------------------------- */

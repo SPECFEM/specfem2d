@@ -135,12 +135,13 @@ specfem2D_OBJECTS = \
 	$O/prepare_timerun.spec.o \
 	$O/prepare_timerun_body.spec.o \
 	$O/prepare_timerun_gpu.spec.o \
-	$O/read_databases.spec.o \
+	$O/read_mesh_databases.spec.o \
 	$O/read_external_model.spec.o \
 	$O/recompute_jacobian.spec.o \
 	$O/save_adjoint_kernels.spec.o \
 	$O/save_openDX_jacobian.spec.o \
 	$O/set_sources.spec.o \
+	$O/setup_GLL_points.spec.o \
 	$O/setup_sources_receivers.spec.o \
 	$O/sort_array_coordinates.spec.o \
 	$O/specfem2D.spec.o \
@@ -148,6 +149,7 @@ specfem2D_OBJECTS = \
 	$O/update_displacement_scheme.spec.o \
 	$O/compute_kernels.spec.o \
 	$O/write_jpeg_image.cc.o \
+	$O/write_movie_output.spec.o \
 	$O/write_output_SU.spec.o \
 	$O/write_seismograms.spec.o \
 	$O/write_postscript_snapshot.spec.o \
@@ -382,9 +384,10 @@ $O/prepare_source_time_function.spec.o: $O/specfem2D_par.spec.o
 $O/prepare_timerun.spec.o: $O/specfem2D_par.spec.o
 $O/prepare_timerun_body.spec.o: $O/specfem2D_par.spec.o
 $O/prepare_timerun_gpu.spec.o: $O/specfem2D_par.spec.o
-$O/read_databases.spec.o: $O/specfem2D_par.spec.o
+$O/read_mesh_databases.spec.o: $O/specfem2D_par.spec.o
 $O/read_external_model.spec.o: $O/specfem2D_par.spec.o
 $O/recompute_jacobian.spec.o: $O/specfem2D_par.spec.o
+$O/setup_GLL_points.spec.o: $O/specfem2D_par.spec.o
 $O/save_adjoint_kernels.spec.o: $O/specfem2D_par.spec.o
 $O/save_read_array_for_undoatt.spec.o: $O/specfem2D_par.spec.o
 $O/set_sources.spec.o: $O/specfem2D_par.spec.o
@@ -392,6 +395,7 @@ $O/setup_sources_receivers.spec.o: $O/specfem2D_par.spec.o
 $O/specfem2D.spec.o: $O/specfem2D_par.spec.o
 $O/update_displacement_scheme.spec.o: $O/specfem2D_par.spec.o
 $O/write_color_image_snaphot.spec.o: $O/specfem2D_par.spec.o
+$O/write_movie_output.spec.o: $O/specfem2D_par.spec.o
 $O/write_output_SU.spec.o: $O/specfem2D_par.spec.o
 $O/write_postscript_snapshot.spec.o: $O/specfem2D_par.spec.o
 $O/write_seismograms.spec.o: $O/specfem2D_par.spec.o

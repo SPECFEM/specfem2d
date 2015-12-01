@@ -58,7 +58,6 @@
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_potential_acoustic_buffer,b_potential_dot_dot_acoustic_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_elastic_buffer,b_accel_elastic_buffer
-  real(kind=CUSTOM_REAL) :: kinetic_energy_total,potential_energy_total
 
   integer :: i,j,iteration_on_subset,it_of_this_subset,it_backward
   integer :: it_temp,seismo_current_temp
@@ -103,6 +102,7 @@
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
+  ! safety checks
   if (GPU_MODE ) call exit_MPI(myrank,'for undo_attenuation, GPU_MODE is not supported')
   if (time_stepping_scheme /= 1 ) call exit_MPI(myrank,'for undo_attenuation, only Newmark scheme has implemented ')
   if (any_gravitoacoustic ) call exit_MPI(myrank,'undo_attenuation has not implemented for gravitoacoustic yet')
@@ -332,65 +332,22 @@
           endif
 
         enddo ! i_stage
-        !*******************************************************************************
-        ! ************* output_energy
-        !*******************************************************************************
-        if (output_energy) then
-          call compute_energy()
-#ifdef USE_MPI
-          call MPI_REDUCE(kinetic_energy, kinetic_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-          call MPI_REDUCE(potential_energy, potential_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-          kinetic_energy_total = kinetic_energy
-          potential_energy_total = potential_energy
-#endif
 
-          ! save kinetic, potential and total energy for this time step in external file
-          if (myrank == 0) write(IOUT_ENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy_total,4), &
-                          real(potential_energy_total,4),real(kinetic_energy_total + potential_energy_total,4)
+        ! computes kinetic and potential energy
+        if (output_energy) then
+          call it_compute_and_output_energy()
         endif
-        !*******************************************************************************
-        ! ************* display time step and max of norm of displacement
-        !*******************************************************************************
+
+        ! display time step and max of norm of displacement
         if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
           call check_stability()
         endif
-        !*******************************************************************************
-        ! ************* loop on all the receivers to compute and store the seismograms
-        !*******************************************************************************
-        if (mod(it-1,subsamp_seismos) == 0) then
-          call write_seismograms()
-        endif
-        !*******************************************************************************
-        ! ************* output_postscript_snapshot
-        !*******************************************************************************
-        if (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP) then
-          if (output_postscript_snapshot ) call write_postscript_snapshot()
-        endif
-        !*******************************************************************************
-        ! ************* display color image
-        !*******************************************************************************
-        if (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP) then
-          if (output_color_image ) call write_color_image_snaphot()
-        endif
-        ! ********************************************************************************************
-        ! dump the full (local) wavefield to a file
-        ! note: in the case of MPI, in the future it would be more convenient to output a single file
-        !       rather than one for each myrank
-        ! ********************************************************************************************
-        if (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP) then
-          if (output_wavefield_dumps ) call write_wavefield_dumps()
-        endif
-        ! ********************************************************************************************
-        ! save temporary or final seismograms
-        ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
-        ! ********************************************************************************************
 
-        if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
-          call write_seismograms_to_file(x_source(1),z_source(1))
-          seismo_offset = seismo_offset + seismo_current
-          seismo_current = 0
-        endif  ! of display images at a given time step
+        ! loop on all the receivers to compute and store the seismograms
+        call write_seismograms()
+
+        ! display results at given time steps
+        call write_movie_output()
 
       enddo ! subset loop
 
@@ -785,88 +742,34 @@
 !****************************************************************************************************
         enddo ! i_stage
 
-        !----  compute kinetic and potential energy
+        ! computes kinetic and potential energy
         if (output_energy) then
-          call compute_energy()
-#ifdef USE_MPI
-          call MPI_REDUCE(kinetic_energy, kinetic_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-          call MPI_REDUCE(potential_energy, potential_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-          kinetic_energy_total = kinetic_energy
-          potential_energy_total = potential_energy
-#endif
-
-          ! save kinetic, potential and total energy for this time step in external file
-          if (myrank == 0) write(IOUT_ENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy_total,4), &
-                          real(potential_energy_total,4),real(kinetic_energy_total + potential_energy_total,4)
+          call it_compute_and_output_energy()
         endif
 
-        !----  display time step and max of norm of displacement
+        ! display time step and max of norm of displacement
         if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
           call check_stability()
         endif
 
-        !---- loop on all the receivers to compute and store the seismograms
-        if (mod(it-1,subsamp_seismos) == 0) then
-          call write_seismograms()
-        endif
+        ! loop on all the receivers to compute and store the seismograms
+        call write_seismograms()
 
         ! kernels calculation
         if (SIMULATION_TYPE == 3) then
-          if (any_acoustic) then
-            call compute_kernels_ac()
-          endif
+          call compute_kernels()
+        endif
 
-          if (any_elastic) then
-            call compute_kernels_el()
-          endif
-        endif ! if (SIMULATION_TYPE == 3)
+        ! display results at given time steps
+        call write_movie_output()
 
-        ! ********************************************************************************************
-        ! output
-        ! ********************************************************************************************
-        if (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP) then
-          ! write kernel files
-          if (SIMULATION_TYPE == 3 .and. it == NSTEP) then
-             call save_adjoint_kernels()
-          endif
-
-          ! ********************************************************************************************
-          ! output_postscript_snapshot
-          ! ********************************************************************************************
-          if (output_postscript_snapshot) then
-            call write_postscript_snapshot()
-          endif
-
-          ! ********************************************************************************************
-          ! display color image
-          ! ********************************************************************************************
-          if (output_color_image) then
-            call write_color_image_snaphot()
-          endif
-
-          ! ********************************************************************************************
-          ! dump the full (local) wavefield to a file
-          ! note: in the case of MPI, in the future it would be more convenient to output a single file
-          !       rather than one for each myrank
-          ! ********************************************************************************************
-          if (output_wavefield_dumps) then
-            call write_wavefield_dumps()
-          endif
-        endif ! of display wavefield dumps at a given time step
-
-        !----  save temporary or final seismograms
-        ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
-        if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
-          call write_seismograms_to_file(x_source(1),z_source(1))
-          seismo_offset = seismo_offset + seismo_current
-          seismo_current = 0
-        endif  ! of display images at a given time step
       enddo ! subset loop
 !****************************************************************************************************
 !****************************************************************************************************
     end select ! SIMULATION_TYPE
+
   enddo   ! end of main time loop
+
   !
   !---- end of time iteration loop
   !

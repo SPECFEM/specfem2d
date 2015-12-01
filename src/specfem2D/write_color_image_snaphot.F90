@@ -52,7 +52,7 @@
   implicit none
 
   !local variables
-  integer :: i,j,k,ispec,iglob
+  integer :: i,j,k,ispec,iglob,iproc
   integer :: ier
   double precision :: rhol
 
@@ -70,19 +70,19 @@
   else if (imagetype_JPEG >= 4 .and. imagetype_JPEG <= 6) then
     if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of the velocity vector...'
     call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-              potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+                                     potential_dot_gravito,veloc_elastic,velocs_poroelastic)
 
   else if (imagetype_JPEG >= 7 .and. imagetype_JPEG <= 9) then
     if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of the acceleration vector...'
     call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-              potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
+                                     potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
 
   else if (imagetype_JPEG >= 11 .and. imagetype_JPEG <= 13) then
     ! allocation for normalized representation in JPEG image
     ! for an atmosphere model
     if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of normalized displacement vector...'
     call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-              potential_gravito,displ_elastic,displs_poroelastic)
+                                     potential_gravito,displ_elastic,displs_poroelastic)
 
     do ispec = 1,nspec
       do j = 1,NGLLZ
@@ -104,7 +104,7 @@
     ! allocation for normalized representation in JPEG image
     ! for an atmosphere model
     call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-              potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+                                     potential_dot_gravito,veloc_elastic,velocs_poroelastic)
 
     do ispec = 1,nspec
       do j = 1,NGLLZ
@@ -198,6 +198,7 @@
 
   ! assembling array image_color_data on process zero for color output
   ier = 0 ! dummy to avoid compiler warning
+  iproc = 0
 #ifdef USE_MPI
   if (nproc > 1) then
     if (myrank == 0) then

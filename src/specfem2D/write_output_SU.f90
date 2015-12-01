@@ -45,18 +45,22 @@
   use specfem_par, only : NSTEP,nrec,deltat,seismotype,st_xval, &
                           NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
                           st_zval,subsamp_seismos
+
+  implicit none
+
+  double precision,intent(in) :: x_source,z_source
+  integer,intent(in) :: irec,number_of_components
+
+  ! to write seismograms in single precision SEP and double precision binary
+  double precision, dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrec,number_of_components),intent(in) :: buffer_binary
+
+  ! local parameters
   integer :: deltat_int2
-  integer :: irec,isample,number_of_components
+  integer :: isample
 
-! to write seismograms in single precision SEP and double precision binary
-! format
-  double precision, dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrec,number_of_components) :: buffer_binary
-
-! scaling factor for Seismic Unix xsu dislay
+  ! scaling factor for Seismic Unix xsu dislay
   double precision, parameter :: FACTORXSU = 1.d0
 
-
-  double precision :: x_source,z_source
   integer(kind=2) :: header2(2)
 
   if (seismo_offset==0) then

@@ -49,7 +49,7 @@
   use specfem_par,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
     nspec,ibool, &
     nglob_acoustic,nglob_elastic,nglob_gravitoacoustic,nglob_poroelastic, &
-    vector_field_display,vector_field_element
+    vector_field_display
 
   implicit none
 
@@ -58,17 +58,19 @@
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravito
   real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: field_elastic
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: fields_poroelastic
+  ! vector field in an element
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ) :: vector_field_element
 
   ! local parameters
   integer :: i,j,ispec,iglob
 
   ! loop over spectral elements
   do ispec = 1,nspec
-    ! compute vector field in this element
+    ! computes vector field in this element
     call compute_vector_one_element(field_acoustic,field_gravitoacoustic, &
-                                    field_gravito,field_elastic,fields_poroelastic,ispec)
+                                    field_gravito,field_elastic,fields_poroelastic,ispec,vector_field_element)
 
-    ! store the result
+    ! stores the result on global nodes
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
@@ -84,13 +86,12 @@
 !
 
   subroutine compute_vector_one_element(field_acoustic,field_gravitoacoustic, &
-                                        field_gravito,field_elastic,fields_poroelastic,ispec)
+                                        field_gravito,field_elastic,fields_poroelastic,ispec,vector_field_element)
 
 ! compute Grad(potential) if acoustic element or copy existing vector if elastic element
 
   use specfem_par,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
     nglob_acoustic,nglob_elastic,nglob_gravitoacoustic,nglob_poroelastic, &
-    vector_field_element, &
     assign_external_model,density,kmato,gravityext,rhoext, &
     hprimeBar_xx,hprime_xx,hprime_zz, &
     xix,xiz,gammax,gammaz,ibool, &
@@ -107,6 +108,9 @@
 
   integer,intent(in) :: ispec
 
+  ! vector field in an element
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ),intent(out) :: vector_field_element
+
   ! local variables
   integer i,j,k,iglob
   ! Jacobian matrix and determinant
@@ -115,9 +119,13 @@
   double precision :: rhol
   double precision :: tempx1l,tempx2l
 
-! simple copy of existing vector if elastic element
-  if (ispec_is_elastic(ispec)) then
+  ! initializes
+  vector_field_element(:,:,:) = 0._CUSTOM_REAL
 
+  ! determines vector field
+  if (ispec_is_elastic(ispec)) then
+    ! elastic element
+    ! simple copy of existing vector if elastic element
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
@@ -128,7 +136,9 @@
     enddo
 
   else if (ispec_is_poroelastic(ispec)) then
-     do j = 1,NGLLZ
+    ! poro-elastic element
+    ! simple copy of existing vector if poroelastic element
+    do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         vector_field_element(1,i,j) = fields_poroelastic(1,iglob)
@@ -137,17 +147,17 @@
       enddo
     enddo
 
-! compute gradient of potential to calculate vector if acoustic element
-! we then need to divide by density because the potential is a potential of (density * displacement)
-    else if (ispec_is_acoustic(ispec)) then
+  else if (ispec_is_acoustic(ispec)) then
+    ! acoustic element
 
-      rhol = density(1,kmato(ispec))
+    ! compute gradient of potential to calculate vector if acoustic element
+    ! we then need to divide by density because the potential is a potential of (density * displacement)
+    rhol = density(1,kmato(ispec))
 
-! double loop over GLL points to compute and store gradients
+    ! double loop over GLL points to compute and store gradients
     do j = 1,NGLLZ
       do i = 1,NGLLX
-
-! derivative along x
+        ! derivative along x
         tempx1l = 0._CUSTOM_REAL
         if (AXISYM) then
           if (is_on_the_axis(ispec)) then
@@ -156,14 +166,16 @@
               iglob = ibool(k,j,ispec)
               tempx1l = tempx1l + field_acoustic(iglob)*hp1
             enddo
-          else !AXISYM but not on the axis
+          else
+            !AXISYM but not on the axis
             do k = 1,NGLLX
               hp1 = hprime_xx(i,k)
               iglob = ibool(k,j,ispec)
               tempx1l = tempx1l + field_acoustic(iglob)*hp1
             enddo
           endif
-        else !not AXISYM
+        else
+          !not AXISYM
           do k = 1,NGLLX
             hp1 = hprime_xx(i,k)
             iglob = ibool(k,j,ispec)
@@ -171,7 +183,7 @@
           enddo
         endif
 
-! derivative along z
+        ! derivative along z
         tempx2l = 0._CUSTOM_REAL
         do k = 1,NGLLZ
           hp2 = hprime_zz(j,k)
@@ -186,24 +198,24 @@
 
         if (assign_external_model) rhol = rhoext(i,j,ispec)
 
-! derivatives of potential
+        ! derivatives of potential
         vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol        !u_x
         vector_field_element(2,i,j) = 0._CUSTOM_REAL
         vector_field_element(3,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol        !u_z
       enddo
     enddo
 
-! compute gradient of potential to calculate vector if acoustic element
-! we then need to divide by density because the potential is a potential of (density * displacement)
-    else if (ispec_is_gravitoacoustic(ispec)) then
+  else if (ispec_is_gravitoacoustic(ispec)) then
+    ! gravito-acoustic element
 
-      rhol = density(1,kmato(ispec))
+    ! compute gradient of potential to calculate vector if gravitoacoustic element
+    ! we then need to divide by density because the potential is a potential of (density * displacement)
+    rhol = density(1,kmato(ispec))
 
-! double loop over GLL points to compute and store gradients
+    ! double loop over GLL points to compute and store gradients
     do j = 1,NGLLZ
       do i = 1,NGLLX
-
-! derivative along x
+        ! derivative along x
         tempx1l = 0._CUSTOM_REAL
         do k = 1,NGLLX
           hp1 = hprime_xx(i,k)
@@ -211,7 +223,7 @@
           tempx1l = tempx1l + field_gravitoacoustic(iglob)*hp1
         enddo
 
-! derivative along z
+        ! derivative along z
         tempx2l = 0._CUSTOM_REAL
         do k = 1,NGLLZ
           hp2 = hprime_zz(j,k)
@@ -225,19 +237,19 @@
         gammazl = gammaz(i,j,ispec)
 
         if (assign_external_model) then
-           rhol = rhoext(i,j,ispec)
-           gravityl = gravityext(i,j,ispec)
+          rhol = rhoext(i,j,ispec)
+          gravityl = gravityext(i,j,ispec)
         endif
 
-! derivatives of potential
+        ! derivatives of potential
         vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol
         vector_field_element(2,i,j) = 0._CUSTOM_REAL
         vector_field_element(3,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol
 
-! add the gravito potential along the z component
-        iglob=ibool(i,j,ispec)
-! remove gravito contribution
-! sign gravito correction
+        ! add the gravito potential along the z component
+        iglob = ibool(i,j,ispec)
+        ! remove gravito contribution
+        ! sign gravito correction
         vector_field_element(3,i,j) = vector_field_element(3,i,j) - (field_gravito(iglob)*gravityl) / rhol
 
       enddo

@@ -52,14 +52,18 @@ subroutine prepare_timerun()
   implicit none
 
   ! local parameters
-  integer :: n,i,j,ispec,k,iglob,irec,i_source,ispecabs,irecloc,ier
-  integer :: reclen
+  integer :: n,i,j,ispec,k,iglob
+  integer :: irec,irec_local,i_source
+  integer :: ispecabs,ier,inum
+  integer :: reclen,irecloc
   integer :: nglob_acoustic_b,nglob_elastic_b,nglob_poroelastic_b
   integer :: nspec_acoustic_b,nspec_elastic_b,nspec_poroelastic_b
   integer :: ispec_poroelastic,iedge_poroelastic
   integer :: ispec_acoustic,ispec_elastic
   integer :: iedge_acoustic,iedge_elastic
   integer :: ipoin1D,iglob2
+  integer :: ispec_acoustic_surface
+  integer :: ixmin, ixmax, izmin, izmax
 
   character(len=MAX_STRING_LEN) :: filename,outputname,outputname2
   character(len=MAX_STRING_LEN) :: dummystring
@@ -69,31 +73,20 @@ subroutine prepare_timerun()
   double precision :: xi,gamma,x,z
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
 
+  double precision :: x_final_receiver_dummy, z_final_receiver_dummy
+
+  ! for Lagrange interpolants
+  double precision, external :: hgll, hglj
+
+  ! SU
+  integer(kind=4) :: r4head(60)
+  integer(kind=2) :: header2(2)
+  real(kind=4),dimension(:,:),allocatable :: adj_src_s
+
 #ifdef USE_MPI
   include "precision.h"
 #endif
 
-  ! reads sources, stations, and mesh from database
-  call prepare_timerun_read()
-
-
-!
-!---- compute shape functions and their derivatives for SEM grid
-!
-
-! set up Gauss-Lobatto-Legendre points, weights and also derivation matrices
-  call define_derivation_matrices()
-
-  if (AXISYM) then
-    ! set up Gauss-Lobatto-Jacobi points, weights and also derivation matrices
-    call define_GLJ_derivation_matrix()
-  endif
-
-  do j = 1,NGLLZ
-    do i = 1,NGLLX
-      call define_shape_functions(shape2D(:,i,j),dershape2D(:,:,i,j),xigll(i),zigll(j),ngnod)
-    enddo
-  enddo
 
 !
 !---- generate the global numbering
@@ -217,15 +210,6 @@ subroutine prepare_timerun()
     allocate(ix_image_color_receiver(nrec))
     allocate(iy_image_color_receiver(nrec))
 
-! allocate 1-D Lagrange interpolators and derivatives
-    allocate(hxir(NGLLX))
-    allocate(hxis(NGLLX))
-    allocate(hpxir(NGLLX))
-    allocate(hpxis(NGLLX))
-    allocate(hgammar(NGLLZ))
-    allocate(hgammas(NGLLZ))
-    allocate(hpgammar(NGLLZ))
-    allocate(hpgammas(NGLLZ))
 
 ! allocate Lagrange interpolators for receivers
     allocate(hxir_store(nrec,NGLLX))
@@ -605,13 +589,12 @@ subroutine prepare_timerun()
 
     if (.not. SU_FORMAT) then
        irec_local = 0
-       allocate(adj_src_s(NSTEP,3))
        do irec = 1, nrec
          ! compute only adjoint source arrays in the local proc
          if (myrank == which_proc_receiver(irec)) then
            irec_local = irec_local + 1
            adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
-           call compute_arrays_adj_source(xi_receiver(irec), gamma_receiver(irec))
+           call compute_arrays_adj_source(xi_receiver(irec), gamma_receiver(irec),irec_local)
            adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
          endif
        enddo
@@ -623,17 +606,17 @@ subroutine prepare_timerun()
 
     if (.not. SU_FORMAT) then
        irec_local = 0
-       allocate(adj_src_s(NSTEP,3))
        do irec = 1, nrec
          ! compute only adjoint source arrays in the local proc
          if (myrank == which_proc_receiver(irec)) then
            irec_local = irec_local + 1
            adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
-           call compute_arrays_adj_source(xi_receiver(irec), gamma_receiver(irec))
+           call compute_arrays_adj_source(xi_receiver(irec), gamma_receiver(irec),irec_local)
            adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
          endif
        enddo
     else
+       ! SU format
        irec_local = 0
        write(filename, "('./SEM/Up_file_single.su.adj')")
        open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
@@ -649,6 +632,7 @@ subroutine prepare_timerun()
           read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
           if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
 
+          header2 = int(r4head(29), kind=2)
           if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
 
           if (AXISYM) then
@@ -1075,9 +1059,7 @@ subroutine prepare_timerun()
     allocate(bulk_beta_kl(NGLLX,NGLLZ,nspec_elastic_b))
     if (APPROXIMATE_HESS_KL) then
       allocate(rhorho_el_hessian_final2(NGLLX,NGLLZ,nspec_elastic_b))
-      allocate(rhorho_el_hessian_temp2(nglob_elastic_b))
       allocate(rhorho_el_hessian_final1(NGLLX,NGLLZ,nspec_elastic_b))
-      allocate(rhorho_el_hessian_temp1(nglob))
     endif
 
     !

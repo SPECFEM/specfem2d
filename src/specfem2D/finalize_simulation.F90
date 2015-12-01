@@ -58,6 +58,12 @@ subroutine finalize_simulation()
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
   character(len=MAX_STRING_LEN) :: inputname,outputname
 
+  ! writes out kernel files
+  if (SIMULATION_TYPE == 3) then
+    call save_adjoint_kernels()
+  endif
+
+  ! saves model files
   if (trim(SAVE_MODEL) /= 'default') then
     allocate(rho_save(NGLLX,NGLLZ,nspec))
     allocate(vp_save(NGLLX,NGLLZ,nspec))
@@ -149,7 +155,6 @@ subroutine finalize_simulation()
     else
       stop 'Save Model not implemented for external and tomo'
     endif !Type of model
-
   endif !save model
 
   ! frees memory

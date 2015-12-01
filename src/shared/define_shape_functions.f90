@@ -68,13 +68,14 @@
 
   include "constants.h"
 
-  integer ngnod
+  integer,intent(in) :: ngnod
 
-  double precision shape2D(ngnod)
-  double precision dershape2D(NDIM,ngnod)
-  double precision xi,gamma
+  double precision,intent(out) :: shape2D(ngnod)
+  double precision,intent(out) :: dershape2D(NDIM,ngnod)
+  double precision,intent(in) :: xi,gamma
 
-  double precision s,t,sp,sm,tp,tm,s2,t2,ss,tt,st
+  ! local parameters
+  double precision :: s,t,sp,sm,tp,tm,s2,t2,ss,tt,st
 
 !
 !---- set up the shape functions and their local derivatives
@@ -161,9 +162,10 @@
   endif
 
 !--- check the shape functions and their derivatives
-! sum of shape functions should be one
-! sum of derivatives of shape functions should be zero
+  ! sum of shape functions should be one
   if (abs(sum(shape2D)-ONE) > TINYVAL) stop 'Error shape functions'
+
+  ! sum of derivatives of shape functions should be zero
   if (abs(sum(dershape2D(1,:))) > TINYVAL) stop 'Error deriv xi shape functions'
   if (abs(sum(dershape2D(2,:))) > TINYVAL) stop 'Error deriv gamma shape functions'
 

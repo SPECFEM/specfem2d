@@ -176,7 +176,6 @@
       do iz = 1, NGLLZ
         do ix = 1, NGLLX
 
-
            if (mask_ibool_acoustic(ibool(ix,iz,ispec)) &
             .or. mask_ibool_elastic(ibool(ix,iz,ispec)) &
             .or. mask_ibool_poroelastic(ibool(ix,iz,ispec))) then

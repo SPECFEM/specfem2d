@@ -55,35 +55,37 @@
 
   implicit none
 
+  ! user output
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Writing PostScript vector plot for time step ',it
     call flush_IMAIN()
   endif
 
+  ! determines postscript output type
   if (imagetype_postscript == 1 .and. p_sv) then
 
     if (myrank == 0) write(IMAIN,*) 'drawing displacement vector as small arrows...'
     call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                 potential_gravito,displ_elastic,displs_poroelastic)
+                                     potential_gravito,displ_elastic,displs_poroelastic)
 
-    call plotpost()
+    call plot_post()
 
   else if (imagetype_postscript == 2 .and. p_sv) then
 
     if (myrank == 0) write(IMAIN,*) 'drawing velocity vector as small arrows...'
     call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                 potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+                                     potential_dot_gravito,veloc_elastic,velocs_poroelastic)
 
-    call plotpost()
+    call plot_post()
 
   else if (imagetype_postscript == 3 .and. p_sv) then
 
     if (myrank == 0) write(IMAIN,*) 'drawing acceleration vector as small arrows...'
     call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                 potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
+                                     potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
 
-    call plotpost()
+    call plot_post()
 
   else if (.not. p_sv) then
     call exit_MPI(myrank,'cannot draw a SH scalar field as a vector plot, turn PostScript plots off')
@@ -91,6 +93,7 @@
     call exit_MPI(myrank,'wrong type for PostScript snapshots')
   endif
 
+  ! user output
   if (myrank == 0 .and. imagetype_postscript /= 4 .and. p_sv ) then
     write(IMAIN,*) 'PostScript file written'
     call flush_IMAIN()

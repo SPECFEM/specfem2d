@@ -373,11 +373,17 @@
   ! reads in parameters
   call initialize_simulation()
 
+  ! reads sources, stations, and mesh from database
+  call read_mesh_databases()
+
+  ! sets up reference element GLL points/weights/derivatives
+  call setup_GLL_points()
+
   ! sets up and precomputes simulation arrays
   call prepare_timerun()
 
   ! steps through time iterations
-  if (undo_attenuation) then
+  if (UNDO_ATTENUATION) then
     call iterate_time_undoatt()
   else
     call iterate_time()

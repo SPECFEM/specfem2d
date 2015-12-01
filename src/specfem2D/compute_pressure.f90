@@ -48,15 +48,18 @@
 
   implicit none
 
-  integer i,j,ispec,iglob
+  ! local parameters
+  integer :: i,j,ispec,iglob
+  ! pressure in an element
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: pressure_element
 
-! loop over spectral elements
+  ! loop over spectral elements
   do ispec = 1,nspec
 
-! compute pressure in this element
-    call compute_pressure_one_element(ispec)
+    ! compute pressure in this element
+    call compute_pressure_one_element(ispec,pressure_element)
 
-! use vector_field_display as temporary storage, store pressure in its second component
+    ! use vector_field_display as temporary storage, store pressure in its second component
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
@@ -72,7 +75,7 @@
 !=====================================================================
 !
 
-  subroutine compute_pressure_one_element(ispec)
+  subroutine compute_pressure_one_element(ispec,pressure_element)
 
 
 ! compute pressure in acoustic elements and in elastic elements
@@ -82,6 +85,8 @@
   implicit none
 
   integer,intent(in) :: ispec
+  ! pressure in an element
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: pressure_element
 
   ! local variables
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum
@@ -108,6 +113,11 @@
   double precision :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
   double precision :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   double precision :: dwx_dxl,dwz_dzl
+
+  double precision :: xxi
+
+  ! initializes
+  pressure_element(:,:) = 0._CUSTOM_REAL
 
 ! if elastic element
 !
@@ -137,6 +147,7 @@
 ! pressure = - trace(sigma) / 3 = - (lambda + 2*mu/3) (epsilon_xx + epsilon_yy)
 
   if (ispec_is_elastic(ispec)) then
+    ! elastic element
 
     ! get relaxed elastic parameters of current spectral element
     lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
@@ -388,6 +399,7 @@
     enddo
 
   else if (ispec_is_poroelastic(ispec)) then
+    ! poro-elastic element
 
     lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
     mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
@@ -519,28 +531,23 @@
 
 ! pressure = - Chi_dot_dot if acoustic element
   else if (ispec_is_acoustic(ispec)) then
+    ! acoustic element
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
-
         iglob = ibool(i,j,ispec)
-
         ! store pressure
         pressure_element(i,j) = - potential_dot_dot_acoustic(iglob)
-
       enddo
     enddo
 
   else if (ispec_is_gravitoacoustic(ispec)) then
-
+    ! gravito-acoustic element
     do j = 1,NGLLZ
       do i = 1,NGLLX
-
         iglob = ibool(i,j,ispec)
-
         ! store pressure
         pressure_element(i,j) = - potential_dot_dot_gravitoacoustic(iglob)
-
       enddo
     enddo
 

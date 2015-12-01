@@ -50,7 +50,7 @@
 
   use constants,only: IMAIN,STABILITY_THRESHOLD
 
-  use specfem_par, only: myrank,timeval,it,NSTEP,NOISE_TOMOGRAPHY, &
+  use specfem_par, only: myrank,timeval,it,NSTEP,NOISE_TOMOGRAPHY,GPU_MODE, &
                          any_elastic_glob,any_elastic,displ_elastic, &
                          any_poroelastic_glob,any_poroelastic, &
                          displs_poroelastic,displw_poroelastic, &
@@ -60,12 +60,14 @@
   implicit none
 
   ! local parameters
-  double precision displnorm_all,displnorm_all_glob
+  double precision :: displnorm_all,displnorm_all_glob
+
   ! timer to count elapsed time
   double precision :: tCPU,t_remain,t_total,timestamp_seconds_current
   integer :: ihours,iminutes,iseconds,int_tCPU, &
              ihours_remain,iminutes_remain,iseconds_remain,int_t_remain, &
              ihours_total,iminutes_total,iseconds_total,int_t_total
+
   ! to determine date and time at which the run will finish
   character(len=8) :: datein
   character(len=10) :: timein
@@ -77,10 +79,14 @@
   data weekday_name /'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'/
   integer :: year,mon,day,hr,minutes,timestamp,julian_day_number,day_of_week
   integer, external :: idaywk
-#ifdef USE_MPI
-  integer :: ier
-#endif
 
+  integer :: ier
+
+  ! checks if anything to do
+  if (GPU_MODE) then
+    ! todo: wavefields are on GPU and not transferred onto CPU yet for the following norm checks
+    return
+  endif
 
   ! user output
   if (myrank == 0) then
@@ -106,16 +112,17 @@
       displnorm_all = 0.d0
     endif
 
+    ! collects norm from all processes
     displnorm_all_glob = displnorm_all
+    ier = 0
 #ifdef USE_MPI
     call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, &
                       MPI_MAX, MPI_COMM_WORLD, ier)
 #endif
 
-      if (NOISE_TOMOGRAPHY /= 0) then
-        if (myrank == 0) write(*,*) 'Noise simulation ', NOISE_TOMOGRAPHY, ' of 3'
-      endif
-
+    if (NOISE_TOMOGRAPHY /= 0) then
+      if (myrank == 0) write(*,*) 'Noise simulation ', NOISE_TOMOGRAPHY, ' of 3'
+    endif
 
     if (myrank == 0) &
       write(IMAIN,*) 'Max norm of vector field in solid (elastic) = ', displnorm_all_glob
@@ -125,7 +132,6 @@
     ! than the greatest possible floating-point number of the machine
     if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0 .or. displnorm_all_glob /= displnorm_all_glob) &
       call exit_MPI(myrank,'code became unstable and blew up in solid (elastic)')
-
   endif
 
   ! poroelastic wavefield
@@ -137,6 +143,7 @@
       displnorm_all = 0.d0
     endif
 
+    ! collects norm from all processes
     displnorm_all_glob = displnorm_all
 #ifdef USE_MPI
     call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, &
@@ -159,6 +166,7 @@
       displnorm_all = 0.d0
     endif
 
+    ! collects norm from all processes
     displnorm_all_glob = displnorm_all
 #ifdef USE_MPI
     call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, &
@@ -185,6 +193,7 @@
       displnorm_all = 0.d0
     endif
 
+    ! collects norm from all processes
     displnorm_all_glob = displnorm_all
 #ifdef USE_MPI
     call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, &

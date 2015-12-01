@@ -140,22 +140,25 @@
 ! ------------------------------------------------------------------------------------------------------
 
 
-  subroutine compute_arrays_adj_source(xi_rec,gamma_rec)
+  subroutine compute_arrays_adj_source(xi_rec,gamma_rec,irec_local)
 
   use specfem_par,only: IIN,MAX_STRING_LEN,NSTEP,NGLLX,NGLLZ,NGLJ, &
     AXISYM,is_on_the_axis, &
-    adj_sourcearray,adj_src_s,adj_source_file,source_adjointe, &
+    adj_sourcearray,adj_source_file,source_adjointe, &
     xigll,zigll,hxir,hpxir,hgammar,hpgammar,xiglj, &
-    irec_local,ispec_selected_rec,myrank,seismotype
+    ispec_selected_rec,myrank,seismotype
 
   implicit none
 
   double precision,intent(in) :: xi_rec, gamma_rec
+  integer,intent(in) :: irec_local
 
   ! local parameters
   integer icomp, itime, i, k
   integer :: ier
   double precision :: junk
+  double precision,dimension(NSTEP,3) :: adj_src_s
+
   character(len=3) :: comp(3)
   character(len=MAX_STRING_LEN) :: filename
 
@@ -227,6 +230,5 @@
         adj_sourcearray(:,:,i,k) = sngl(hxir(i) * hgammar(k)) * adj_src_s(:,:)
       enddo
   enddo
-
 
   end subroutine compute_arrays_adj_source

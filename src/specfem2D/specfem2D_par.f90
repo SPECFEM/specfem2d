@@ -82,7 +82,7 @@ module specfem_par
   logical, parameter :: ADD_A_SMALL_CRACK_IN_THE_MEDIUM = .false.
   !! must be set equal to the number of spectral elements on one vertical side of the crack
   integer :: NB_POINTS_TO_ADD_TO_NPGEO = 3
-  integer :: check_nb_points_to_add_to_npgeo,current_last_point,npgeo_ori,original_value,ignod
+  integer :: check_nb_points_to_add_to_npgeo,current_last_point,npgeo_ori,original_value
   logical :: already_found_a_crack_element
 
   logical :: read_external_mesh
@@ -214,13 +214,10 @@ module specfem_par
   double precision :: USER_T0
 
   ! for absorbing and acoustic free surface conditions
-  integer :: ispec_acoustic_surface,inum
-  real(kind=CUSTOM_REAL) :: nx,nz,weight,xxi,zgamma
   !acoustic free surface
   integer, dimension(:,:), allocatable :: acoustic_surface
   integer, dimension(:,:), allocatable :: acoustic_edges
   logical :: any_acoustic_edges
-  integer  :: ixmin, ixmax, izmin, izmax
 
   ! perform a forcing of an acoustic medium with a rigid boundary
   logical :: ACOUSTIC_FORCING
@@ -274,13 +271,11 @@ module specfem_par
   integer, dimension(:), allocatable  :: rec_tangential_detection_curve
   double precision :: distmin, dist_current, anglesource_recv
   double precision, dimension(:), allocatable :: dist_tangential_detection_curve
-  double precision :: x_final_receiver_dummy, z_final_receiver_dummy
 
   !---------------------------------------------------------------------
   ! for SEM discretization of the model
   !---------------------------------------------------------------------
-  ! for Lagrange interpolants
-  double precision, external :: hgll, hglj
+
   ! Gauss-Lobatto-Legendre points and weights
   double precision, dimension(NGLLX) :: xigll
   real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
@@ -313,10 +308,10 @@ module specfem_par
   !---------------------------------------------------------------------
   logical :: AXISYM ! .true. if we are performing a 2.5D simulation
   ! Number of elements on the symmetry axis
-  integer :: nelem_on_the_axis,nelem_on_the_axis_total
+  integer :: nelem_on_the_axis
   ! Flag to know if an element is on the axis
   logical, dimension(:), allocatable :: is_on_the_axis
-  integer, dimension(:), allocatable  ::ispec_of_axial_elements
+  integer, dimension(:), allocatable :: ispec_of_axial_elements
   ! Gauss-Lobatto-Jacobi points and weights
   double precision, dimension(NGLJ) :: xiglj
   real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj
@@ -343,7 +338,7 @@ module specfem_par
   integer :: time_stepping_scheme
 
   ! coefficients of the explicit Newmark time scheme
-  integer NSTEP
+  integer :: NSTEP
   double precision :: deltatover2,deltatsquareover2,timeval
   double precision :: deltat
 
@@ -369,8 +364,6 @@ module specfem_par
                 0.249351723343_CUSTOM_REAL,0.466911705055_CUSTOM_REAL,&
                 0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/
 
-  ! for rk44
-  double precision :: weight_rk
   !=====================================================================
   ! input for simulation (its end)
   !=====================================================================
@@ -540,13 +533,6 @@ module specfem_par
   double precision :: Q0,freq0
   double precision :: alphaval,betaval,gammaval,thetainv
 
-  double precision, dimension(NGLLX,NGLLZ) :: viscox_loc,viscoz_loc
-  double precision :: Sn,Snp1,etal_f
-  double precision, dimension(3):: bl_unrelaxed_elastic
-  double precision :: permlxx,permlxz,permlzz,invpermlxx,invpermlxz,invpermlzz,detk
-  ! for shifting of velocities if needed in the case of viscoelasticity
-  double precision :: vp,vs,rho,mu,lambda
-
   double precision, dimension(:,:,:), allocatable :: rx_viscous,rz_viscous,viscox,viscoz
   double precision, dimension(:,:,:), allocatable :: rx_viscous_LDDRK,rz_viscous_LDDRK
   double precision, dimension(:,:,:), allocatable :: rx_viscous_initial_rk,rz_viscous_initial_rk
@@ -589,7 +575,6 @@ module specfem_par
 
   ! approximate hessians
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_final2
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhorho_el_hessian_temp1, rhorho_el_hessian_temp2
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_ac_hessian_final1, rhorho_ac_hessian_final2
 
   ! poro-elastic kernels
@@ -601,7 +586,7 @@ module specfem_par
     C_k, M_k
 
   character(len=150) :: adj_source_file
-  integer :: irec_local,nadj_rec_local
+  integer :: nadj_rec_local
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearrays
 
@@ -656,8 +641,8 @@ module specfem_par
   ! parameter read from parameter file
   integer :: nproc_read_from_database
 
-  integer  :: ninterface
-  integer  :: max_interface_size
+  integer :: ninterface
+  integer :: max_interface_size
   integer, dimension(:), allocatable  :: my_neighbours
   integer, dimension(:), allocatable  :: my_nelmnts_neighbours
   integer, dimension(:,:,:), allocatable  :: my_interfaces
@@ -667,8 +652,8 @@ module specfem_par
   integer, dimension(:,:), allocatable :: ibool_interfaces_ext_mesh_init, ibool_interfaces_ext_mesh
   integer :: max_nibool_interfaces_ext_mesh
 
-  integer  :: ninterface_acoustic, ninterface_elastic,ninterface_poroelastic
-  integer, dimension(:), allocatable  :: inum_interfaces_acoustic, inum_interfaces_elastic, inum_interfaces_poroelastic
+  integer :: ninterface_acoustic, ninterface_elastic,ninterface_poroelastic
+  integer, dimension(:), allocatable :: inum_interfaces_acoustic, inum_interfaces_elastic, inum_interfaces_poroelastic
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_send_faces_vector_ac
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_ac
@@ -680,7 +665,6 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow
   integer, dimension(:), allocatable  :: tab_requests_send_recv_poro
   integer :: max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, max_ibool_interfaces_size_po
-  integer :: iproc
 
   ! for overlapping MPI communications with computation
   integer  :: nspec_outer, nspec_inner, num_ispec_outer, num_ispec_inner
@@ -723,26 +707,15 @@ module specfem_par
 
   ! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
   logical :: SU_FORMAT
-  !<SU_FORMAT
-  integer(kind=4) :: r4head(60)
-  real(kind=4),dimension(:,:),allocatable :: adj_src_s
-  integer(kind=2) :: header2(2)
-  !>SU_FORMAT
 
   ! for seismograms
   double precision, dimension(:,:), allocatable :: sisux,sisuz,siscurl
-  ! vector field in an element
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLX) :: vector_field_element
-  ! pressure in an element
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: pressure_element
-  ! curl in an element
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: curl_element
 
   !---------------------------------------------------------------------
   ! for color image
   !---------------------------------------------------------------------
-  integer :: colors !also used in plotpost
-  double precision :: cutsnaps !also used in plotpost
+  integer :: colors !also used in plot_post
+  double precision :: cutsnaps !also used in plot_post
   logical :: output_color_image,DRAW_SOURCES_AND_RECEIVERS
   integer :: NSTEP_BETWEEN_OUTPUT_IMAGES,imagetype_JPEG
   integer :: isnapshot_number = 0  !remember which image are going to produce
@@ -779,7 +752,7 @@ module specfem_par
   double precision, dimension(:,:), allocatable :: image_color_vp_display
 
   !---------------------------------------------------------------------
-  ! for plotpost
+  ! for plot_post
   !---------------------------------------------------------------------
   integer :: subsamp_postscript,imagetype_postscript
   integer :: numbers
@@ -823,10 +796,9 @@ module specfem_par
   !---------------------------------------------------------------------
   integer :: NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
   integer :: imagetype_wavefield_dumps
-  ! name of wavefield snapshot file
-  character(len=150) :: wavefield_file
+
   logical :: output_wavefield_dumps,use_binary_for_wavefield_dumps
-  integer :: icounter,nb_of_values_to_save ! icounter is local variable iterate_time.F90
+
   logical :: this_is_the_first_time_we_dump
   logical, dimension(:), allocatable  :: mask_ibool,mask_ibool_pml
 
@@ -863,7 +835,7 @@ module specfem_par
   ! International"
 
   integer :: NOISE_TOMOGRAPHY
-  integer :: irec_master, ispec_noise
+  integer :: ispec_noise
   double precision :: xi_noise, gamma_noise, angle_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: time_function_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: source_array_noise
@@ -881,11 +853,9 @@ module specfem_par
 
   ! For writing noise wavefields
   logical :: output_wavefields_noise = .true. ! this is output only in the case of noise tomography
-  logical :: ex, od
   integer :: noise_output_ncol
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: noise_output_array
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: noise_output_rhokl
-  character(len=512) :: noise_output_file
 
   ! For noise tomography only - specify whether to reconstruct ensemble forward
   ! wavefield by saving everywhere or by saving only at the boundaries (the

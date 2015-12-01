@@ -216,6 +216,7 @@ subroutine prepare_timerun_mass_matrix()
 
   end subroutine prepare_timerun_mass_matrix
 
+
 !
 !-------------------------------------------------------------------------------------
 !
@@ -231,13 +232,8 @@ subroutine prepare_timerun_mass_matrix()
 
   implicit none
 
-  integer :: i,j
+  integer :: i,j,k,iproc
   integer :: ier
-
-#ifdef USE_MPI
-  integer :: k
-#endif
-
 
 !
 !---- for color images
@@ -273,6 +269,8 @@ subroutine prepare_timerun_mass_matrix()
     enddo
 
 ! filling array iglob_image_color, containing info on which process owns which pixels.
+    iproc = 0
+    k = 0
 #ifdef USE_MPI
     allocate(nb_pixel_per_proc(nproc))
 
@@ -321,19 +319,15 @@ subroutine prepare_timerun_mass_matrix()
   endif ! color_image
 
 
-end subroutine prepare_timerun_image_coloring
+  end subroutine prepare_timerun_image_coloring
 
 
+!
+!-------------------------------------------------------------------------------------
+!
 
 
-
-
-
-
-
-
-
-subroutine prepare_timerun_kernel()
+  subroutine prepare_timerun_kernel()
 
 
 #ifdef USE_MPI
@@ -424,9 +418,7 @@ subroutine prepare_timerun_kernel()
 
       if (APPROXIMATE_HESS_KL) then
         rhorho_el_hessian_final2(:,:,:) = 0._CUSTOM_REAL
-        rhorho_el_hessian_temp2(:) = 0._CUSTOM_REAL
         rhorho_el_hessian_final1(:,:,:) = 0._CUSTOM_REAL
-        rhorho_el_hessian_temp1(:) = 0._CUSTOM_REAL
       endif
     endif
 
@@ -544,17 +536,15 @@ subroutine prepare_timerun_kernel()
   endif ! if (SIMULATION_TYPE == 3)
 
 
-end subroutine prepare_timerun_kernel
+  end subroutine prepare_timerun_kernel
 
 
+!
+!-------------------------------------------------------------------------------------
+!
 
 
-
-
-
-
-
-subroutine prepare_timerun_pml()
+  subroutine prepare_timerun_pml()
 
 
 #ifdef USE_MPI
@@ -945,735 +935,15 @@ subroutine prepare_timerun_pml()
   endif
 
 
-end subroutine prepare_timerun_pml
-
-
-
-
-
-
-
-
-
-subroutine prepare_timerun_read()
-
-
-#ifdef USE_MPI
-  use mpi
-#endif
-
-  use specfem_par
-
-  implicit none
-
-  integer :: i,ispec,ispec2,j,ier
-  integer :: n
-
-  ! add a small crack (discontinuity) in the medium manually
-  npgeo_ori = npgeo
-  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
-
-  !
-  !--- source information
-  !
-  allocate( source_type(NSOURCES) )
-  allocate( time_function_type(NSOURCES) )
-  allocate( name_of_source_file(NSOURCES) )
-  allocate( burst_band_width(NSOURCES) )
-  allocate( x_source(NSOURCES) )
-  allocate( z_source(NSOURCES) )
-  allocate( ix_image_color_source(NSOURCES) )
-  allocate( iy_image_color_source(NSOURCES) )
-  allocate( f0(NSOURCES) )
-  allocate( tshift_src(NSOURCES) )
-  allocate( factor(NSOURCES) )
-  allocate( anglesource(NSOURCES) )
-  allocate( Mxx(NSOURCES) )
-  allocate( Mxz(NSOURCES) )
-  allocate( Mzz(NSOURCES) )
-  allocate( aval(NSOURCES) )
-  allocate( ispec_selected_source(NSOURCES) )
-  allocate( iglob_source(NSOURCES) )
-  allocate( source_courbe_eros(NSOURCES) )
-  allocate( xi_source(NSOURCES) )
-  allocate( gamma_source(NSOURCES) )
-  allocate( is_proc_source(NSOURCES) )
-  allocate( nb_proc_source(NSOURCES) )
-  allocate( sourcearray(NSOURCES,NDIM,NGLLX,NGLLZ) )
-
-  ! reads in source infos
-  call read_databases_sources()
-
-  !if (AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify
-
-  ! sets source parameters
-  call set_sources()
-
-  !----  define time stepping scheme
-  if (time_stepping_scheme == 1) then
-    stage_time_scheme=1
-  else if (time_stepping_scheme == 2) then
-    stage_time_scheme=Nstages
-  else if (time_stepping_scheme == 3) then
-    stage_time_scheme=4
-  endif
-
-  !----  read attenuation information
-  call read_databases_atten()
-
-  ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
-  if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
-    f0_attenuation = f0(1)
-  endif
-
-  !---- read the spectral macrobloc nodal coordinates
-  allocate(coorg(NDIM,npgeo))
-
-  ! reads the spectral macrobloc nodal coordinates
-  ! and basic properties of the spectral elements
-  !! DK DK  call read_databases_coorg_elem(myrank,npgeo,coorg,numat,ngnod,nspec, &
-  !! DK DK  added a crack manually
-  call read_databases_coorg_elem()
-
-  !---- allocate arrays
-  allocate(shape2D(ngnod,NGLLX,NGLLZ))
-  allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
-  allocate(shape2D_display(ngnod,pointsdisp,pointsdisp))
-  allocate(dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp))
-
-  if (AXISYM) then
-    allocate(flagrange_GLJ(NGLJ,pointsdisp))
-  else
-    allocate(flagrange_GLJ(1,1))
-  endif
-
-  ! mesh
-  allocate(xix(NGLLX,NGLLZ,nspec))
-  allocate(xiz(NGLLX,NGLLZ,nspec))
-  allocate(gammax(NGLLX,NGLLZ,nspec))
-  allocate(gammaz(NGLLX,NGLLZ,nspec))
-  allocate(jacobian(NGLLX,NGLLZ,nspec))
-
-  allocate(flagrange(NGLLX,pointsdisp))
-
-  allocate(xinterp(pointsdisp,pointsdisp))
-  allocate(zinterp(pointsdisp,pointsdisp))
-  allocate(Uxinterp(pointsdisp,pointsdisp))
-  allocate(Uzinterp(pointsdisp,pointsdisp))
-
-  ! elements
-  allocate(kmato(nspec))
-  allocate(knods(ngnod,nspec))
-
-  ! material
-  allocate(density(2,numat))
-  allocate(anisotropy(9,numat))
-  allocate(porosity(numat))
-  allocate(tortuosity(numat))
-  allocate(permeability(3,numat))
-  allocate(poroelastcoef(4,3,numat))
-
-  ! attenuation
-  allocate(already_shifted_velocity(numat))
-  allocate(QKappa_attenuation(numat))
-  allocate(Qmu_attenuation(numat))
-  allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS))
-  allocate(inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS))
-  allocate(phi_nu1(NGLLX,NGLLZ,nspec,N_SLS))
-  allocate(phi_nu2(NGLLX,NGLLZ,nspec,N_SLS))
-  allocate(tau_epsilon_nu1(N_SLS))
-  allocate(tau_epsilon_nu2(N_SLS))
-  allocate(inv_tau_sigma_nu1_sent(N_SLS))
-  allocate(inv_tau_sigma_nu2_sent(N_SLS))
-  allocate(phi_nu1_sent(N_SLS))
-  allocate(phi_nu2_sent(N_SLS))
-
-  ! local to global indexing
-  allocate(ibool(NGLLX,NGLLZ,nspec))
-
-  ! domain element flags
-  allocate(ispec_is_elastic(nspec))
-  allocate(ispec_is_acoustic(nspec))
-  allocate(ispec_is_gravitoacoustic(nspec))
-  allocate(ispec_is_poroelastic(nspec))
-  allocate(ispec_is_anisotropic(nspec))
-
-  already_shifted_velocity(:) = .false.
-
-  !
-  !---- read the material properties
-  !
-  call gmat01(f0(1))
-  !
-  !----  read spectral macrobloc data
-  !
-
-! add support for using PML in MPI mode with external mesh
-  allocate(region_CPML(nspec))
-  call read_databases_mato()
-
-! add a small crack (discontinuity) in the medium manually
-  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) then
-
-#ifdef USE_MPI
-  stop 'currently only serial runs are handled when adding a crack manually'
-#endif
-!! DK DK material number 2 indicates the spectral elements that form the left vertical side of the crack
-  check_nb_points_to_add_to_npgeo = count(kmato == 2)
-  print *
-  print *,'adding a crack manually'
-  print *,'need to add ',nb_points_to_add_to_npgeo,' npgeo mesh points to do that'
-
-  if (check_nb_points_to_add_to_npgeo /= NB_POINTS_TO_ADD_TO_NPGEO) &
-    stop 'must have check_nb_points_to_add_to_npgeo == NB_POINTS_TO_ADD_TO_NPGEO when adding a crack manually'
-
-  if (ngnod /= 4) stop 'must currently have ngnod == 4 when adding a crack manually'
-
-  if (FAST_NUMBERING) stop 'must not have FAST_NUMBERING when adding a crack manually'
-
-!! DK DK modify arrays "knods" and "coorg" to introduce the crack manually by duplicating and splitting the nodes
-  already_found_a_crack_element = .false.
-  current_last_point = npgeo_ori
-
-  do ispec = 1,nspec-1
-!! DK DK my convention is to introduce a vertical crack between two elements with material numbers 2 and 3
-    if (kmato(ispec) == 2 .and. kmato(ispec+1) == 3) then
-
-      print *,'adding a crack between elements ',ispec,' and ',ispec+1
-
-!! DK DK duplicate and split the lower-right corner of this element,
-!! DK DK except if it is the first crack element found, because then it is the crack
-!! DK DK tip and thus it should be assembled rather than split.
-!! DK DK Lower-right corner of an element is local npgeo point #2
-      if (already_found_a_crack_element .and. knods(2,ispec) <= npgeo_ori) then
-        current_last_point = current_last_point + 1
-        original_value = knods(2,ispec)
-!! DK DK split this point number in all the elements in which it appears
-        do ispec2 = 1,nspec
-! do this only for elements that define the left vertical edge of the crack
-          if (kmato(ispec2) /= 2) cycle
-          do ignod = 1,ngnod
-            if (knods(ignod,ispec2) == original_value) then
-              knods(ignod,ispec2) = current_last_point
-              coorg(:,current_last_point) = coorg(:,original_value)
-            endif
-          enddo
-        enddo
-      endif
-
-!! DK DK duplicate and split the upper-right corner of this element
-      already_found_a_crack_element = .true.
-
-!! DK DK Upper-right corner of an element is local npgeo point #3
-      if (knods(3,ispec) <= npgeo_ori) then
-
-        current_last_point = current_last_point + 1
-        original_value = knods(3,ispec)
-!! DK DK split this point number in all the elements in which it appears
-        do ispec2 = 1,nspec
-! do this only for elements that define the left vertical edge of the crack
-          if (kmato(ispec2) /= 2) cycle
-          do ignod = 1,ngnod
-            if (knods(ignod,ispec2) == original_value) then
-              knods(ignod,ispec2) = current_last_point
-              coorg(:,current_last_point) = coorg(:,original_value)
-            endif
-          enddo
-        enddo
-      endif
-
-    endif ! of if (kmato(ispec) == 2 .and. kmato(ispec+1) == 3)
-
-  enddo
-
-  if (current_last_point /= npgeo) then
-    print *,'current_last_point = ',current_last_point
-    print *,'npgeo_new = ',npgeo
-    stop 'did not find the right total number of points, should have current_last_point == npgeo_new'
-  endif
-
-  endif ! of if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) then
-
-!-------------------------------------------------------------------------------
-!----  determine if each spectral element is elastic, poroelastic, or acoustic
-!-------------------------------------------------------------------------------
-  call initialize_simulation_domains()
-
-  if (PML_BOUNDARY_CONDITIONS .and. any_poroelastic) then
-    stop 'PML boundary conditions not implemented for poroelastic simulations yet'
-  endif
-
-  if (PML_BOUNDARY_CONDITIONS .and. any_elastic .and. (.not. p_sv)) then
-    stop 'PML boundary conditions not implemented for SH simulations yet'
-  endif
-
-  if (PML_BOUNDARY_CONDITIONS .and. time_stepping_scheme == 3) then
-    stop 'PML boundary conditions not implemented with standard Runge Kutta scheme'
-  endif
-
-#ifdef USE_MPI
-  if (myrank == 0) then
-   if (time_stepping_scheme == 3) then
-    stop 'MPI support for standard Runge-Kutta scheme is not implemented'
-   endif
-  endif
-#endif
-
-  ! allocate memory variables for attenuation
-    allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-    allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-    allocate(e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-
-    e1(:,:,:,:) = 0._CUSTOM_REAL
-    e11(:,:,:,:) = 0._CUSTOM_REAL
-    e13(:,:,:,:) = 0._CUSTOM_REAL
-
-    if (time_stepping_scheme == 2) then
-      allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-      allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-      allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-    else
-      allocate(e1_LDDRK(1,1,1,1))
-      allocate(e11_LDDRK(1,1,1,1))
-      allocate(e13_LDDRK(1,1,1,1))
-    endif
-    e1_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
-    e11_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
-    e13_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
-
-    if (time_stepping_scheme == 3) then
-      allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-      allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-      allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-      allocate(e1_force_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS,stage_time_scheme))
-      allocate(e11_force_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS,stage_time_scheme))
-      allocate(e13_force_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS,stage_time_scheme))
-    else
-      allocate(e1_initial_rk(1,1,1,1))
-      allocate(e11_initial_rk(1,1,1,1))
-      allocate(e13_initial_rk(1,1,1,1))
-      allocate(e1_force_rk(1,1,1,1,1))
-      allocate(e11_force_rk(1,1,1,1,1))
-      allocate(e13_force_rk(1,1,1,1,1))
-    endif
-    e1_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
-    e11_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
-    e13_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
-    e1_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
-    e11_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
-    e13_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
-    allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
-    allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
-
-! initialize to dummy values
-! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
-  inv_tau_sigma_nu1(:,:,:,:) = -1._CUSTOM_REAL
-  phi_nu1(:,:,:,:) = -1._CUSTOM_REAL
-  inv_tau_sigma_nu2(:,:,:,:) = -1._CUSTOM_REAL
-  phi_nu2(:,:,:,:) = -1._CUSTOM_REAL
-  Mu_nu1(:,:,:) = -1._CUSTOM_REAL
-  Mu_nu2(:,:,:) = -1._CUSTOM_REAL
-
-! define the attenuation quality factors.
-! they can be different for each element.
-!! DK DK if needed in the future, here the quality factor could be different for each point
-  do ispec = 1,nspec
-
-!   attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
-    if (ispec_is_acoustic(ispec)) cycle
-
-!   check that attenuation values entered by the user make sense
-    if ((QKappa_attenuation(kmato(ispec)) <= 9998.999d0 .and. Qmu_attenuation(kmato(ispec)) >  9998.999d0) .or. &
-       (QKappa_attenuation(kmato(ispec)) >  9998.999d0 .and. Qmu_attenuation(kmato(ispec)) <= 9998.999d0)) stop &
-     'need to have Qkappa and Qmu both above or both below 9999 for a given material; trick: use 9998 if you want to turn off one'
-
-!   if no attenuation in that elastic element
-    if (QKappa_attenuation(kmato(ispec)) > 9998.999d0) cycle
-
-    call attenuation_model(QKappa_attenuation(kmato(ispec)),Qmu_attenuation(kmato(ispec)))
-
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-        inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
-        phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
-        inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:)
-        phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)
-        Mu_nu1(i,j,ispec) = Mu_nu1_sent
-        Mu_nu2(i,j,ispec) = Mu_nu2_sent
-      enddo
-    enddo
-
-    if (ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0 .and. .not. assign_external_model) then
-      if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) &
-         stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
-      n = kmato(ispec)
-      if (.not. already_shifted_velocity(n)) then
-        rho = density(1,n)
-        lambda = poroelastcoef(1,1,n)
-        mu = poroelastcoef(2,1,n)
-        vp = dsqrt((lambda + TWO * mu) / rho)
-        vs = dsqrt(mu / rho)
-        call shift_velocities_from_f0(vp,vs,rho,mu,lambda)
-        poroelastcoef(1,1,n) = lambda
-        poroelastcoef(2,1,n) = mu
-        poroelastcoef(3,1,n) = lambda + TWO*mu
-        already_shifted_velocity(n) = .true.
-      endif
-    endif
-
- enddo
-
-! allocate memory variables for viscous attenuation (poroelastic media)
-    if (ATTENUATION_PORO_FLUID_PART) then
-      allocate(rx_viscous(NGLLX,NGLLZ,nspec))
-      allocate(rz_viscous(NGLLX,NGLLZ,nspec))
-      allocate(viscox(NGLLX,NGLLZ,nspec))
-      allocate(viscoz(NGLLX,NGLLZ,nspec))
-
-      if (time_stepping_scheme == 2) then
-      allocate(rx_viscous_LDDRK(NGLLX,NGLLZ,nspec))
-      allocate(rz_viscous_LDDRK(NGLLX,NGLLZ,nspec))
-      endif
-
-      if (time_stepping_scheme == 3) then
-      allocate(rx_viscous_initial_rk(NGLLX,NGLLZ,nspec))
-      allocate(rz_viscous_initial_rk(NGLLX,NGLLZ,nspec))
-      allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
-      allocate(rz_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
-      endif
-
-    else
-      allocate(rx_viscous(NGLLX,NGLLZ,1))
-      allocate(rz_viscous(NGLLX,NGLLZ,1))
-      allocate(viscox(NGLLX,NGLLZ,1))
-      allocate(viscoz(NGLLX,NGLLZ,1))
-    endif
-
-  !
-  !----  read interfaces data
-  !
-  call read_databases_ninterface()
-  if (ninterface > 0) then
-       allocate(my_neighbours(ninterface))
-       allocate(my_nelmnts_neighbours(ninterface))
-       allocate(my_interfaces(4,max_interface_size,ninterface))
-       allocate(ibool_interfaces_acoustic(NGLLX*max_interface_size,ninterface))
-       allocate(ibool_interfaces_elastic(NGLLX*max_interface_size,ninterface))
-       allocate(ibool_interfaces_poroelastic(NGLLX*max_interface_size,ninterface))
-       allocate(ibool_interfaces_ext_mesh_init(NGLLX*max_interface_size,ninterface))
-       allocate(nibool_interfaces_acoustic(ninterface))
-       allocate(nibool_interfaces_elastic(ninterface))
-       allocate(nibool_interfaces_poroelastic(ninterface))
-       allocate(nibool_interfaces_ext_mesh(ninterface))
-       allocate(inum_interfaces_acoustic(ninterface))
-       allocate(inum_interfaces_elastic(ninterface))
-       allocate(inum_interfaces_poroelastic(ninterface))
-   call read_databases_interfaces()
-
-  else
-       allocate(my_neighbours(1))
-       allocate(my_nelmnts_neighbours(1))
-       allocate(my_interfaces(1,1,1))
-       allocate(ibool_interfaces_acoustic(1,1))
-       allocate(ibool_interfaces_elastic(1,1))
-       allocate(ibool_interfaces_poroelastic(1,1))
-       allocate(ibool_interfaces_ext_mesh_init(1,1))
-       allocate(nibool_interfaces_acoustic(1))
-       allocate(nibool_interfaces_elastic(1))
-       allocate(nibool_interfaces_poroelastic(1))
-       allocate(nibool_interfaces_ext_mesh(1))
-       allocate(inum_interfaces_acoustic(1))
-       allocate(inum_interfaces_elastic(1))
-       allocate(inum_interfaces_poroelastic(1))
-  endif
-
-
-! --- allocate arrays for absorbing boundary conditions
-
-  if (nelemabs <= 0) then
-    nelemabs = 1
-    anyabs = .false.
-  else
-    anyabs = .true.
-  endif
-
-    allocate(numabs(nelemabs))
-    allocate(codeabs(4,nelemabs))
-
-!---codeabs_corner(1,nelemabs) denotes whether element is on bottom-left corner of absorbing boundary or not
-!---codeabs_corner(2,nelemabs) denotes whether element is on bottom-right corner of absorbing boundary or not
-!---codeabs_corner(3,nelemabs) denotes whether element is on top-left corner of absorbing boundary or not
-!---codeabs_corner(4,nelemabs) denotes whether element is on top-right corner of absorbing boundary or not
-    allocate(codeabs_corner(4,nelemabs))
-    allocate(typeabs(nelemabs))
-
-    allocate(ibegin_edge1(nelemabs))
-    allocate(iend_edge1(nelemabs))
-    allocate(ibegin_edge3(nelemabs))
-    allocate(iend_edge3(nelemabs))
-
-    allocate(ibegin_edge4(nelemabs))
-    allocate(iend_edge4(nelemabs))
-    allocate(ibegin_edge2(nelemabs))
-    allocate(iend_edge2(nelemabs))
-
-    allocate(ibegin_edge1_poro(nelemabs))
-    allocate(iend_edge1_poro(nelemabs))
-    allocate(ibegin_edge3_poro(nelemabs))
-    allocate(iend_edge3_poro(nelemabs))
-
-    allocate(ibegin_edge4_poro(nelemabs))
-    allocate(iend_edge4_poro(nelemabs))
-    allocate(ibegin_edge2_poro(nelemabs))
-    allocate(iend_edge2_poro(nelemabs))
-
-    allocate(ib_left(nelemabs))
-    allocate(ib_right(nelemabs))
-    allocate(ib_bottom(nelemabs))
-    allocate(ib_top(nelemabs))
-
-  !
-  !----  read absorbing boundary data
-  !
-  call read_databases_absorbing()
-
-  if (anyabs .and. (.not. PML_BOUNDARY_CONDITIONS)) then
-    STACEY_BOUNDARY_CONDITIONS = .true.
-  else
-    STACEY_BOUNDARY_CONDITIONS = .false.
-  endif
-
-
-  if (anyabs) then
-    ! files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
-      if (any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3).and. (.not. PML_BOUNDARY_CONDITIONS)) then
-        allocate(b_absorb_elastic_left(3,NGLLZ,nspec_left,NSTEP))
-        allocate(b_absorb_elastic_right(3,NGLLZ,nspec_right,NSTEP))
-        allocate(b_absorb_elastic_bottom(3,NGLLX,nspec_bottom,NSTEP))
-        allocate(b_absorb_elastic_top(3,NGLLX,nspec_top,NSTEP))
-      else
-        allocate(b_absorb_elastic_left(1,1,1,1))
-        allocate(b_absorb_elastic_right(1,1,1,1))
-        allocate(b_absorb_elastic_bottom(1,1,1,1))
-        allocate(b_absorb_elastic_top(1,1,1,1))
-      endif
-      if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3).and. (.not. PML_BOUNDARY_CONDITIONS)) then
-        allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP))
-        allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP))
-        allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
-        allocate(b_absorb_poro_s_top(NDIM,NGLLX,nspec_top,NSTEP))
-        allocate(b_absorb_poro_w_left(NDIM,NGLLZ,nspec_left,NSTEP))
-        allocate(b_absorb_poro_w_right(NDIM,NGLLZ,nspec_right,NSTEP))
-        allocate(b_absorb_poro_w_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
-        allocate(b_absorb_poro_w_top(NDIM,NGLLX,nspec_top,NSTEP))
-      else
-        allocate(b_absorb_poro_s_left(1,1,1,1))
-        allocate(b_absorb_poro_s_right(1,1,1,1))
-        allocate(b_absorb_poro_s_bottom(1,1,1,1))
-        allocate(b_absorb_poro_s_top(1,1,1,1))
-        allocate(b_absorb_poro_w_left(1,1,1,1))
-        allocate(b_absorb_poro_w_right(1,1,1,1))
-        allocate(b_absorb_poro_w_bottom(1,1,1,1))
-        allocate(b_absorb_poro_w_top(1,1,1,1))
-      endif
-      if (any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. (.not. PML_BOUNDARY_CONDITIONS)) then
-        allocate(b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP))
-        allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
-        allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))
-        allocate(b_absorb_acoustic_top(NGLLX,nspec_top,NSTEP))
-      else
-        allocate(b_absorb_acoustic_left(1,1,1))
-        allocate(b_absorb_acoustic_right(1,1,1))
-        allocate(b_absorb_acoustic_bottom(1,1,1))
-        allocate(b_absorb_acoustic_top(1,1,1))
-      endif
-
-  else
-
-    if (.not. allocated(b_absorb_elastic_left)) then
-      allocate(b_absorb_elastic_left(1,1,1,1))
-      allocate(b_absorb_elastic_right(1,1,1,1))
-      allocate(b_absorb_elastic_bottom(1,1,1,1))
-      allocate(b_absorb_elastic_top(1,1,1,1))
-    endif
-
-    if (.not. allocated(b_absorb_poro_s_left)) then
-      allocate(b_absorb_poro_s_left(1,1,1,1))
-      allocate(b_absorb_poro_s_right(1,1,1,1))
-      allocate(b_absorb_poro_s_bottom(1,1,1,1))
-      allocate(b_absorb_poro_s_top(1,1,1,1))
-      allocate(b_absorb_poro_w_left(1,1,1,1))
-      allocate(b_absorb_poro_w_right(1,1,1,1))
-      allocate(b_absorb_poro_w_bottom(1,1,1,1))
-      allocate(b_absorb_poro_w_top(1,1,1,1))
-    endif
-
-    if (.not. allocated(b_absorb_acoustic_left)) then
-      allocate(b_absorb_acoustic_left(1,1,1))
-      allocate(b_absorb_acoustic_right(1,1,1))
-      allocate(b_absorb_acoustic_bottom(1,1,1))
-      allocate(b_absorb_acoustic_top(1,1,1))
-    endif
-
-  endif
-
-! --- allocate arrays for acoustic forcing boundary conditions
-
-  if (.not. ACOUSTIC_FORCING) then
-    nelem_acforcing = 1
-  endif
-
-    allocate(numacforcing(nelem_acforcing))
-    allocate(codeacforcing(4,nelem_acforcing))
-    allocate(typeacforcing(nelem_acforcing))
-
-    allocate(ibegin_edge1_acforcing(nelem_acforcing))
-    allocate(iend_edge1_acforcing(nelem_acforcing))
-    allocate(ibegin_edge3_acforcing(nelem_acforcing))
-    allocate(iend_edge3_acforcing(nelem_acforcing))
-
-    allocate(ibegin_edge4_acforcing(nelem_acforcing))
-    allocate(iend_edge4_acforcing(nelem_acforcing))
-    allocate(ibegin_edge2_acforcing(nelem_acforcing))
-    allocate(iend_edge2_acforcing(nelem_acforcing))
-
-    allocate(ib_left_acforcing(nelem_acforcing))
-    allocate(ib_right_acforcing(nelem_acforcing))
-    allocate(ib_bottom_acforcing(nelem_acforcing))
-    allocate(ib_top_acforcing(nelem_acforcing))
-
-  !
-  !----  read acoustic forcing boundary data
-  !
-  call read_databases_acoustic_forcing()
+  end subroutine prepare_timerun_pml
 
 
 !
-!----  read acoustic free surface data
-!
-  if (nelem_acoustic_surface > 0) then
-    any_acoustic_edges = .true.
-  else
-    any_acoustic_edges = .false.
-    nelem_acoustic_surface = 1
-  endif
-  allocate(acoustic_edges(4,nelem_acoustic_surface))
-  allocate(acoustic_surface(5,nelem_acoustic_surface))
-  call read_databases_free_surf()
-  ! resets nelem_acoustic_surface
-  if (any_acoustic_edges .eqv. .false. ) nelem_acoustic_surface = 0
-
-  ! constructs acoustic surface
-  if (nelem_acoustic_surface > 0) then
-    call construct_acoustic_surface ()
-    if (myrank == 0) then
-      write(IMAIN,*)
-      write(IMAIN,*) 'Number of free surface elements: ',nelem_acoustic_surface
-      call flush_IMAIN()
-    endif
-  endif
-
-
-  !
-  !---- read coupled edges
-  !
-  if (num_fluid_solid_edges > 0) then
-    any_fluid_solid_edges = .true.
-  else
-    any_fluid_solid_edges = .false.
-    num_fluid_solid_edges = 1
-  endif
-  allocate(fluid_solid_acoustic_ispec(num_fluid_solid_edges))
-  allocate(fluid_solid_acoustic_iedge(num_fluid_solid_edges))
-  allocate(fluid_solid_elastic_ispec(num_fluid_solid_edges))
-  allocate(fluid_solid_elastic_iedge(num_fluid_solid_edges))
-  if (num_fluid_poro_edges > 0) then
-    any_fluid_poro_edges = .true.
-  else
-    any_fluid_poro_edges = .false.
-    num_fluid_poro_edges = 1
-  endif
-  allocate(fluid_poro_acoustic_ispec(num_fluid_poro_edges))
-  allocate(fluid_poro_acoustic_iedge(num_fluid_poro_edges))
-  allocate(fluid_poro_poroelastic_ispec(num_fluid_poro_edges))
-  allocate(fluid_poro_poroelastic_iedge(num_fluid_poro_edges))
-  if (num_solid_poro_edges > 0) then
-    any_solid_poro_edges = .true.
-  else
-    any_solid_poro_edges = .false.
-    num_solid_poro_edges = 1
-  endif
-  allocate(solid_poro_elastic_ispec(num_solid_poro_edges))
-  allocate(solid_poro_elastic_iedge(num_solid_poro_edges))
-  allocate(solid_poro_poroelastic_ispec(num_solid_poro_edges))
-  allocate(solid_poro_poroelastic_iedge(num_solid_poro_edges))
-
-  call read_databases_coupled()
-
-  ! resets counters
-  if (any_fluid_solid_edges .eqv. .false. ) num_fluid_solid_edges = 0
-  if (any_fluid_poro_edges .eqv. .false. ) num_fluid_poro_edges = 0
-  if (any_solid_poro_edges .eqv. .false. ) num_solid_poro_edges = 0
-
-
-  !
-  !---- read tangential detection curve
-  !      and close Database file
-  !
-  if (nnodes_tangential_curve > 0) then
-    any_tangential_curve = .true.
-  else
-    any_tangential_curve = .false.
-    nnodes_tangential_curve = 1
-  endif
-  allocate(nodes_tangential_curve(2,nnodes_tangential_curve))
-  allocate(dist_tangential_detection_curve(nnodes_tangential_curve))
-  call read_tangential_detection_curve()
-  ! resets nnode_tangential_curve
-  if (any_tangential_curve .eqv. .false. ) nnodes_tangential_curve = 0
-
-!
-!----  read axial elements data
-!
-  allocate(is_on_the_axis(nspec),stat=ier)
-  if (ier /= 0) stop 'error: not enough memory to allocate array is_on_the_axis'
-  is_on_the_axis(:) = .false.
-
-  if (nelem_on_the_axis == 0) then
-    allocate(ispec_of_axial_elements(1))
-  else
-    allocate(ispec_of_axial_elements(nelem_on_the_axis))
-    call read_databases_axial_elements()
-    call build_is_on_the_axis()
-  endif
-#ifdef USE_MPI
-  call MPI_REDUCE(nelem_on_the_axis, nelem_on_the_axis_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-  nelem_on_the_axis_total = nelem_on_the_axis
-#endif
-  if (myrank == 0 .and. AXISYM) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Total number of elements on the axis : ',nelem_on_the_axis_total
-    call flush_IMAIN()
-  endif
-
-!
-!----  end of reading
+!-------------------------------------------------------------------------------------
 !
 
-! closes input Database file
- close(IIN)
 
-end subroutine prepare_timerun_read
-
-
-
-
-
-
-
-subroutine prepare_timerun_noise()
-
+  subroutine prepare_timerun_noise()
 
 #ifdef USE_MPI
   use mpi
@@ -1780,16 +1050,15 @@ subroutine prepare_timerun_noise()
 
 !>NOISE_TOMOGRAPHY
 
-end subroutine prepare_timerun_noise
+  end subroutine prepare_timerun_noise
 
 
+!
+!-------------------------------------------------------------------------------------
+!
 
 
-
-
-
-
-subroutine prepare_timerun_attenuation()
+  subroutine prepare_timerun_attenuation()
 
 
 #ifdef USE_MPI
@@ -1799,7 +1068,140 @@ subroutine prepare_timerun_attenuation()
   use specfem_par
 
   implicit none
-  integer :: ier
+
+  ! local parameters
+  integer :: i,j,ispec,n,ier
+  ! for shifting of velocities if needed in the case of viscoelasticity
+  double precision :: vp,vs,rho,mu,lambda
+
+  ! allocate memory variables for attenuation
+  allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+  allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+  allocate(e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+
+  e1(:,:,:,:) = 0._CUSTOM_REAL
+  e11(:,:,:,:) = 0._CUSTOM_REAL
+  e13(:,:,:,:) = 0._CUSTOM_REAL
+
+  if (time_stepping_scheme == 2) then
+    allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+  else
+    allocate(e1_LDDRK(1,1,1,1))
+    allocate(e11_LDDRK(1,1,1,1))
+    allocate(e13_LDDRK(1,1,1,1))
+  endif
+  e1_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
+  e11_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
+  e13_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
+
+  if (time_stepping_scheme == 3) then
+    allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    allocate(e1_force_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS,stage_time_scheme))
+    allocate(e11_force_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS,stage_time_scheme))
+    allocate(e13_force_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS,stage_time_scheme))
+  else
+    allocate(e1_initial_rk(1,1,1,1))
+    allocate(e11_initial_rk(1,1,1,1))
+    allocate(e13_initial_rk(1,1,1,1))
+    allocate(e1_force_rk(1,1,1,1,1))
+    allocate(e11_force_rk(1,1,1,1,1))
+    allocate(e13_force_rk(1,1,1,1,1))
+  endif
+  e1_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
+  e11_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
+  e13_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
+  e1_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
+  e11_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
+  e13_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
+  allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
+  allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
+
+  ! initialize to dummy values
+  ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
+  inv_tau_sigma_nu1(:,:,:,:) = -1._CUSTOM_REAL
+  phi_nu1(:,:,:,:) = -1._CUSTOM_REAL
+  inv_tau_sigma_nu2(:,:,:,:) = -1._CUSTOM_REAL
+  phi_nu2(:,:,:,:) = -1._CUSTOM_REAL
+  Mu_nu1(:,:,:) = -1._CUSTOM_REAL
+  Mu_nu2(:,:,:) = -1._CUSTOM_REAL
+
+  ! define the attenuation quality factors.
+  ! they can be different for each element.
+!! DK DK if needed in the future, here the quality factor could be different for each point
+  do ispec = 1,nspec
+
+    ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
+    if (ispec_is_acoustic(ispec)) cycle
+
+    ! check that attenuation values entered by the user make sense
+    if ((QKappa_attenuation(kmato(ispec)) <= 9998.999d0 .and. Qmu_attenuation(kmato(ispec)) >  9998.999d0) .or. &
+       (QKappa_attenuation(kmato(ispec)) >  9998.999d0 .and. Qmu_attenuation(kmato(ispec)) <= 9998.999d0)) stop &
+     'need to have Qkappa and Qmu both above or both below 9999 for a given material; trick: use 9998 if you want to turn off one'
+
+    ! if no attenuation in that elastic element
+    if (QKappa_attenuation(kmato(ispec)) > 9998.999d0) cycle
+
+    call attenuation_model(QKappa_attenuation(kmato(ispec)),Qmu_attenuation(kmato(ispec)))
+
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
+        phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
+        inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:)
+        phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)
+        Mu_nu1(i,j,ispec) = Mu_nu1_sent
+        Mu_nu2(i,j,ispec) = Mu_nu2_sent
+      enddo
+    enddo
+
+    if (ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0 .and. .not. assign_external_model) then
+      if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) &
+         stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
+      n = kmato(ispec)
+      if (.not. already_shifted_velocity(n)) then
+        rho = density(1,n)
+        lambda = poroelastcoef(1,1,n)
+        mu = poroelastcoef(2,1,n)
+        vp = dsqrt((lambda + TWO * mu) / rho)
+        vs = dsqrt(mu / rho)
+        call shift_velocities_from_f0(vp,vs,rho,mu,lambda)
+        poroelastcoef(1,1,n) = lambda
+        poroelastcoef(2,1,n) = mu
+        poroelastcoef(3,1,n) = lambda + TWO*mu
+        already_shifted_velocity(n) = .true.
+      endif
+    endif
+  enddo
+
+  ! allocate memory variables for viscous attenuation (poroelastic media)
+  if (ATTENUATION_PORO_FLUID_PART) then
+    allocate(rx_viscous(NGLLX,NGLLZ,nspec))
+    allocate(rz_viscous(NGLLX,NGLLZ,nspec))
+    allocate(viscox(NGLLX,NGLLZ,nspec))
+    allocate(viscoz(NGLLX,NGLLZ,nspec))
+
+    if (time_stepping_scheme == 2) then
+      allocate(rx_viscous_LDDRK(NGLLX,NGLLZ,nspec))
+      allocate(rz_viscous_LDDRK(NGLLX,NGLLZ,nspec))
+    endif
+
+    if (time_stepping_scheme == 3) then
+      allocate(rx_viscous_initial_rk(NGLLX,NGLLZ,nspec))
+      allocate(rz_viscous_initial_rk(NGLLX,NGLLZ,nspec))
+      allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
+      allocate(rz_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
+    endif
+  else
+    ! dummy arrays
+    allocate(rx_viscous(NGLLX,NGLLZ,1))
+    allocate(rz_viscous(NGLLX,NGLLZ,1))
+    allocate(viscox(NGLLX,NGLLZ,1))
+    allocate(viscoz(NGLLX,NGLLZ,1))
+  endif
 
   ! Precompute Runge Kutta coefficients if viscous attenuation
   if (ATTENUATION_PORO_FLUID_PART) then
@@ -1968,4 +1370,5 @@ subroutine prepare_timerun_attenuation()
 ! to dump the wave field
   this_is_the_first_time_we_dump = .true.
 
-end subroutine prepare_timerun_attenuation
+  end subroutine prepare_timerun_attenuation
+

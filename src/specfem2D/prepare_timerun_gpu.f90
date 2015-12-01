@@ -325,8 +325,9 @@
   ! local parameters
   integer :: i_spec_free, ipoint1D, i, j, k, ispec, ispecabs, i_source, ispec_inner, ispec_outer
   integer :: ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic
-  integer :: ier
+  integer :: ier,inum
   real(kind=CUSTOM_REAL) :: zxi,xgamma,jacobian1D
+  real(kind=CUSTOM_REAL) :: xxi,zgamma
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! Initialisation variables pour routine prepare_constants_device

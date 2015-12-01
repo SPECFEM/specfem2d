@@ -65,6 +65,10 @@
   double precision :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
   double precision :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   double precision :: dwx_dxl,dwz_dxl,dwx_dzl,dwz_dzl
+  ! vector field in an element
+  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ) :: vector_field_element
+  ! pressure in an element
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: pressure_element
 
   ! initializes
   kinetic_energy = ZERO
@@ -266,11 +270,11 @@
       ! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
 
       ! compute pressure in this element
-      call compute_pressure_one_element(ispec)
+      call compute_pressure_one_element(ispec,pressure_element)
 
       ! compute velocity vector field in this element
       call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                              potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec)
+                                      potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
 
       ! get density of current spectral element
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))

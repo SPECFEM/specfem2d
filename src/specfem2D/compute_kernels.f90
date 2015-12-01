@@ -41,20 +41,63 @@
 !=====================================================================
 
 
+  subroutine compute_kernels()
+
+! computes adjoint sensitivity kernel contributions
+!
+! see e.g. Tromp et al. (2005) for elastic calculation
+! and Morency et al. (2009) for poroelastic calculation
+
+  use constants,only: APPROXIMATE_HESS_KL
+
+  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic
+
+  implicit none
+
+  ! acoustic simulations
+  if (any_acoustic) then
+    call compute_kernels_ac()
+  endif
+
+  ! elastic simulations
+  if (any_elastic) then
+    call compute_kernels_el()
+  endif
+
+  ! poro-elastic simulations
+  if (any_poroelastic) then
+    call compute_kernels_po()
+  endif
+
+  ! computes an approximative hessian for preconditioning kernels
+  if (APPROXIMATE_HESS_KL) then
+    call compute_kernels_hessian()
+  endif
+
+  end subroutine compute_kernels
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
   subroutine compute_kernels_el()
 
 ! elastic kernel calculations
 ! see e.g. Tromp et al. (2005)
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,APPROXIMATE_HESS_KL,HALF,TWO
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,HALF,TWO
 
-  use specfem_par, only: ispec_is_elastic,rho_k,rhorho_el_hessian_temp1,rhorho_el_hessian_temp2, &
+  use specfem_par, only: ispec_is_elastic,rho_k, &
                          rho_kl,mu_kl,kappa_kl,rhop_kl,beta_kl,alpha_kl,bulk_c_kl,bulk_beta_kl, &
-                         rhorho_el_hessian_final1,rhorho_el_hessian_final2, &
-                         nglob,nspec,ibool,accel_elastic,b_displ_elastic,b_accel_elastic, &
+                         nglob,nspec,ibool,accel_elastic,b_displ_elastic, &
                          rhol_global,mul_global,kappal_global, &
                          density,poroelastcoef,kmato,assign_external_model,rhoext,vsext,vpext,&
                          deltat,p_sv,displ_elastic,&
-                         mu_k,kappa_k,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz
+                         mu_k,kappa_k,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
+                         GPU_MODE
+
+  use specfem_par_gpu,only: Mesh_pointer,deltatf
+
   implicit none
 
   !local variables
@@ -69,94 +112,90 @@
   ! Jacobian matrix and determinant
   double precision :: xixl,xizl,gammaxl,gammazl
 
-  do ispec = 1,nspec
-    if (ispec_is_elastic(ispec)) then
-      do j = 1,NGLLZ; do i = 1,NGLLX
-        ! derivative along x and along z
-        dux_dxi = 0._CUSTOM_REAL; duy_dxi = 0._CUSTOM_REAL; duz_dxi = 0._CUSTOM_REAL
-        dux_dgamma = 0._CUSTOM_REAL; duy_dgamma = 0._CUSTOM_REAL; duz_dgamma = 0._CUSTOM_REAL
-        b_dux_dxi = 0._CUSTOM_REAL; b_duy_dxi = 0._CUSTOM_REAL; b_duz_dxi = 0._CUSTOM_REAL
-        b_dux_dgamma = 0._CUSTOM_REAL; b_duy_dgamma = 0._CUSTOM_REAL; b_duz_dgamma = 0._CUSTOM_REAL
+  ! elastic kernels
+  if (.not. GPU_MODE) then
+    ! updates kernels on CPU
+    do ispec = 1,nspec
+      if (ispec_is_elastic(ispec)) then
+        do j = 1,NGLLZ; do i = 1,NGLLX
+          ! derivative along x and along z
+          dux_dxi = 0._CUSTOM_REAL; duy_dxi = 0._CUSTOM_REAL; duz_dxi = 0._CUSTOM_REAL
+          dux_dgamma = 0._CUSTOM_REAL; duy_dgamma = 0._CUSTOM_REAL; duz_dgamma = 0._CUSTOM_REAL
+          b_dux_dxi = 0._CUSTOM_REAL; b_duy_dxi = 0._CUSTOM_REAL; b_duz_dxi = 0._CUSTOM_REAL
+          b_dux_dgamma = 0._CUSTOM_REAL; b_duy_dgamma = 0._CUSTOM_REAL; b_duz_dgamma = 0._CUSTOM_REAL
 
-        ! first double loop over GLL points to compute and store gradients
-        ! we can merge the two loops because NGLLX == NGLLZ
-        do k = 1,NGLLX
-          dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-          duy_dxi = duy_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-          duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
-          dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-          duy_dgamma = duy_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-          duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
-
-
-          b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-          b_duy_dxi = b_duy_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-          b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
-          b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-          b_duy_dgamma = b_duy_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-          b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
-
-        enddo
-
-        xixl = xix(i,j,ispec)
-        xizl = xiz(i,j,ispec)
-        gammaxl = gammax(i,j,ispec)
-        gammazl = gammaz(i,j,ispec)
-
-        ! derivatives of displacement
-        dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
-        dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
-        duy_dxl = duy_dxi*xixl + duy_dgamma*gammaxl
-        duy_dzl = duy_dxi*xizl + duy_dgamma*gammazl
-        duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
-        duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
+          ! first double loop over GLL points to compute and store gradients
+          ! we can merge the two loops because NGLLX == NGLLZ
+          do k = 1,NGLLX
+            dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+            duy_dxi = duy_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+            dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            duy_dgamma = duy_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
 
 
-        b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
-        b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
+            b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+            b_duy_dxi = b_duy_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+            b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            b_duy_dgamma = b_duy_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
 
-        b_duy_dxl = b_duy_dxi*xixl + b_duy_dgamma*gammaxl
-        b_duy_dzl = b_duy_dxi*xizl + b_duy_dgamma*gammazl
+          enddo
 
-        b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
-        b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
+          xixl = xix(i,j,ispec)
+          xizl = xiz(i,j,ispec)
+          gammaxl = gammax(i,j,ispec)
+          gammazl = gammaz(i,j,ispec)
 
-        iglob = ibool(i,j,ispec)
-        if (p_sv) then !P-SV waves
-          dsxx =  dux_dxl
-          dsxz = HALF * (duz_dxl + dux_dzl)
-          dszz =  duz_dzl
+          ! derivatives of displacement
+          dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
+          dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
+          duy_dxl = duy_dxi*xixl + duy_dgamma*gammaxl
+          duy_dzl = duy_dxi*xizl + duy_dgamma*gammazl
+          duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
+          duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-          b_dsxx =  b_dux_dxl
-          b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
-          b_dszz =  b_duz_dzl
 
-          kappa_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl)
-          mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
-                        2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
-        else !SH (membrane) waves
-          mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
-        endif
-      enddo; enddo
-    endif
-  enddo
+          b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
+          b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
-  do iglob = 1,nglob
-    rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) + &
-                    accel_elastic(2,iglob)*b_displ_elastic(2,iglob) + &
-                    accel_elastic(3,iglob)*b_displ_elastic(3,iglob)
-  enddo
+          b_duy_dxl = b_duy_dxi*xixl + b_duy_dgamma*gammaxl
+          b_duy_dzl = b_duy_dxi*xizl + b_duy_dgamma*gammazl
 
-  ! approximate hessians
-  if (APPROXIMATE_HESS_KL) then
-    do iglob = 1,nglob
-      rhorho_el_hessian_temp1(iglob) = b_accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
-                                       b_accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
-                                       b_accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
-      rhorho_el_hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
-                                       accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
-                                       accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
+          b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
+          b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
+
+          iglob = ibool(i,j,ispec)
+          if (p_sv) then !P-SV waves
+            dsxx =  dux_dxl
+            dsxz = HALF * (duz_dxl + dux_dzl)
+            dszz =  duz_dzl
+
+            b_dsxx =  b_dux_dxl
+            b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
+            b_dszz =  b_duz_dzl
+
+            kappa_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl)
+            mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
+                          2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
+          else !SH (membrane) waves
+            mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
+          endif
+        enddo; enddo
+      endif
     enddo
+
+    do iglob = 1,nglob
+      rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) + &
+                      accel_elastic(2,iglob)*b_displ_elastic(2,iglob) + &
+                      accel_elastic(3,iglob)*b_displ_elastic(3,iglob)
+    enddo
+
+  else
+    ! updates kernels on GPU
+    call compute_kernels_elastic_cuda(Mesh_pointer,deltatf)
   endif
 
   do ispec = 1, nspec
@@ -188,14 +227,6 @@
           !
           bulk_c_kl(i,j,ispec) =  TWO * kappa_kl(i,j,ispec)
           bulk_beta_kl(i,j,ispec) =  TWO * mu_kl(i,j,ispec)
-
-          ! approximates Hessian
-          if (APPROXIMATE_HESS_KL) then
-            rhorho_el_hessian_final1(i,j,ispec) = rhorho_el_hessian_final1(i,j,ispec) + &
-                                    rhorho_el_hessian_temp1(iglob) * deltat
-            rhorho_el_hessian_final2(i,j,ispec) = rhorho_el_hessian_final2(i,j,ispec) + &
-                                    rhorho_el_hessian_temp2(iglob) * deltat
-          endif
         enddo
       enddo
     endif
@@ -211,15 +242,18 @@
 
 ! acoustic kernel calculations
 ! see e.g. Tromp et al. (2005)
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,APPROXIMATE_HESS_KL,ZERO,HALF,TWO
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,HALF,TWO
 
   use specfem_par, only: nspec,ispec_is_acoustic,ibool,kappal_ac_global,rhol_ac_global,&
                          poroelastcoef,density,kmato,assign_external_model,rhoext,vpext,deltat,&
                          hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,&
                          potential_acoustic,b_potential_acoustic,b_potential_dot_dot_acoustic,&
                          accel_ac,b_accel_ac,b_displ_ac,&
-                         rho_ac_kl,kappa_ac_kl,rhop_ac_kl,alpha_ac_kl,rhorho_ac_hessian_final1,&
-                         rhorho_ac_hessian_final2
+                         rho_ac_kl,kappa_ac_kl,rhop_ac_kl,alpha_ac_kl, &
+                         GPU_MODE
+
+  use specfem_par_gpu,only: Mesh_pointer,deltatf
+
   implicit none
 
   !local variables
@@ -227,91 +261,89 @@
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,b_tempx1l,b_tempx2l,bb_tempx1l,bb_tempx2l
   double precision :: xixl,xizl,gammaxl,gammazl
 
-  do ispec = 1, nspec
-    if (ispec_is_acoustic(ispec)) then
-      do j = 1, NGLLZ
-        do i = 1, NGLLX
-          iglob = ibool(i,j,ispec)
-          if (.not. assign_external_model) then
-            kappal_ac_global(iglob) = poroelastcoef(3,1,kmato(ispec))
-            rhol_ac_global(iglob) = density(1,kmato(ispec))
-          else
-            kappal_ac_global(iglob) = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec)
-            rhol_ac_global(iglob)   = rhoext(i,j,ispec)
-          endif
+  if (.not. GPU_MODE) then
+    ! kernels on CPU
+    do ispec = 1, nspec
+      if (ispec_is_acoustic(ispec)) then
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
+            if (.not. assign_external_model) then
+              kappal_ac_global(iglob) = poroelastcoef(3,1,kmato(ispec))
+              rhol_ac_global(iglob) = density(1,kmato(ispec))
+            else
+              kappal_ac_global(iglob) = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec)
+              rhol_ac_global(iglob)   = rhoext(i,j,ispec)
+            endif
 
-! calcul the displacement by computing the gradient of potential / rho
-! and calcul the acceleration by computing the gradient of potential_dot_dot / rho
-          tempx1l = ZERO
-          tempx2l = ZERO
-          b_tempx1l = ZERO
-          b_tempx2l = ZERO
-          bb_tempx1l = ZERO
-          bb_tempx2l = ZERO
-          do k = 1,NGLLX
-            ! derivative along x
-            !tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
-            tempx1l = tempx1l + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k) !!! YANGL
-            b_tempx1l = b_tempx1l + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
-            bb_tempx1l = bb_tempx1l + b_potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
-            ! derivative along z
-            !tempx2l = tempx2l + potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
-            tempx2l = tempx2l + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k) !!! YANGL
-            b_tempx2l = b_tempx2l + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
-            bb_tempx2l = bb_tempx2l + b_potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+            ! calcul the displacement by computing the gradient of potential / rho
+            ! and calcul the acceleration by computing the gradient of potential_dot_dot / rho
+            tempx1l = ZERO
+            tempx2l = ZERO
+            b_tempx1l = ZERO
+            b_tempx2l = ZERO
+            bb_tempx1l = ZERO
+            bb_tempx2l = ZERO
+            do k = 1,NGLLX
+              ! derivative along x
+              !tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+              tempx1l = tempx1l + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k) !!! YANGL
+              b_tempx1l = b_tempx1l + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+              bb_tempx1l = bb_tempx1l + b_potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+              ! derivative along z
+              !tempx2l = tempx2l + potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+              tempx2l = tempx2l + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k) !!! YANGL
+              b_tempx2l = b_tempx2l + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+              bb_tempx2l = bb_tempx2l + b_potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+            enddo
+
+            xixl = xix(i,j,ispec)
+            xizl = xiz(i,j,ispec)
+            gammaxl = gammax(i,j,ispec)
+            gammazl = gammaz(i,j,ispec)
+
+            ! derivatives of potential
+            accel_ac(1,iglob) = (tempx1l*xixl + tempx2l*gammaxl) / rhol_ac_global(iglob)
+            accel_ac(2,iglob) = (tempx1l*xizl + tempx2l*gammazl) / rhol_ac_global(iglob)
+            b_displ_ac(1,iglob) = (b_tempx1l*xixl + b_tempx2l*gammaxl) / rhol_ac_global(iglob)
+            b_displ_ac(2,iglob) = (b_tempx1l*xizl + b_tempx2l*gammazl) / rhol_ac_global(iglob)
+            b_accel_ac(1,iglob) = (bb_tempx1l*xixl + bb_tempx2l*gammaxl) / rhol_ac_global(iglob)
+            b_accel_ac(2,iglob) = (bb_tempx1l*xizl + bb_tempx2l*gammazl) / rhol_ac_global(iglob)
+          enddo !i = 1, NGLLX
+        enddo !j = 1, NGLLZ
+      endif
+    enddo
+
+    do ispec = 1,nspec
+      if (ispec_is_acoustic(ispec)) then
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
+            !<YANGL
+            !!!! old expression (from elastic kernels)
+            !!!rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol_ac_global(iglob)  * &
+            !!!      dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
+            !!!kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) - kappal_ac_global(iglob) * &
+            !!!      potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
+            !!!      b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob)&
+            !!!      * deltat
+            !!!! new expression (from PDE-constrained optimization, coupling terms changed as well)
+            rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + rhol_ac_global(iglob) * &
+                                   dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
+            kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) + kappal_ac_global(iglob) * &
+                                     potential_acoustic(iglob)/kappal_ac_global(iglob) * &
+                                     b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * deltat
+            !>YANGL
+            rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)
+            alpha_ac_kl(i,j,ispec) = TWO *  kappa_ac_kl(i,j,ispec)
           enddo
-
-          xixl = xix(i,j,ispec)
-          xizl = xiz(i,j,ispec)
-          gammaxl = gammax(i,j,ispec)
-          gammazl = gammaz(i,j,ispec)
-
-          ! derivatives of potential
-          accel_ac(1,iglob) = (tempx1l*xixl + tempx2l*gammaxl) / rhol_ac_global(iglob)
-          accel_ac(2,iglob) = (tempx1l*xizl + tempx2l*gammazl) / rhol_ac_global(iglob)
-          b_displ_ac(1,iglob) = (b_tempx1l*xixl + b_tempx2l*gammaxl) / rhol_ac_global(iglob)
-          b_displ_ac(2,iglob) = (b_tempx1l*xizl + b_tempx2l*gammazl) / rhol_ac_global(iglob)
-          b_accel_ac(1,iglob) = (bb_tempx1l*xixl + bb_tempx2l*gammaxl) / rhol_ac_global(iglob)
-          b_accel_ac(2,iglob) = (bb_tempx1l*xizl + bb_tempx2l*gammazl) / rhol_ac_global(iglob)
-        enddo !i = 1, NGLLX
-      enddo !j = 1, NGLLZ
-    endif
-  enddo
-
-  do ispec = 1,nspec
-    if (ispec_is_acoustic(ispec)) then
-      do j = 1, NGLLZ
-        do i = 1, NGLLX
-          iglob = ibool(i,j,ispec)
-          !<YANGL
-          !!!! old expression (from elastic kernels)
-          !!!rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol_ac_global(iglob)  * &
-          !!!      dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
-          !!!kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) - kappal_ac_global(iglob) * &
-          !!!      potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
-          !!!      b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob)&
-          !!!      * deltat
-          !!!! new expression (from PDE-constrained optimization, coupling terms changed as well)
-          rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + rhol_ac_global(iglob) * &
-                                 dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
-          kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) + kappal_ac_global(iglob) * &
-                                   potential_acoustic(iglob)/kappal_ac_global(iglob) * &
-                                   b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * deltat
-          !>YANGL
-          rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)
-          alpha_ac_kl(i,j,ispec) = TWO *  kappa_ac_kl(i,j,ispec)
-
-          ! approximates Hessian
-          if (APPROXIMATE_HESS_KL) then
-            rhorho_ac_hessian_final1(i,j,ispec) =  rhorho_ac_hessian_final1(i,j,ispec) + &
-                                                   dot_product(accel_ac(:,iglob),accel_ac(:,iglob)) * deltat
-            rhorho_ac_hessian_final2(i,j,ispec) =  rhorho_ac_hessian_final2(i,j,ispec) + &
-                                                   dot_product(accel_ac(:,iglob),b_accel_ac(:,iglob)) * deltat
-          endif
         enddo
-      enddo
-    endif
-  enddo
+      endif
+    enddo
+  else
+    ! on GPU
+    call compute_kernels_acoustic_cuda(Mesh_pointer,deltatf)
+  endif
 
   end subroutine compute_kernels_ac
 
@@ -333,7 +365,8 @@
                          rhot_k,rhof_k,sm_k,eta_k,B_k,C_k, &
                          rhot_kl,rhof_kl,sm_kl,eta_kl,B_kl,C_kl,M_kl,M_k, &
                          mufr_kl,mufr_k,rhob_kl,rhofb_kl, &
-                         mufrb_kl,phi_kl,rhobb_kl,rhofbb_kl,phib_kl,cpI_kl,cpII_kl,cs_kl,ratio_kl
+                         mufrb_kl,phi_kl,rhobb_kl,rhofbb_kl,phib_kl,cpI_kl,cpII_kl,cs_kl,ratio_kl, &
+                         GPU_MODE
   implicit none
 
   !local variables
@@ -351,6 +384,9 @@
   double precision :: cpIsquare,cpIIsquare,cssquare
 
   integer :: material
+
+  ! safety check
+  if (GPU_MODE) stop 'Error poroelastic kernels not implemented on GPUs yet'
 
   ! kernel contributions on global nodes
   do iglob = 1,nglob
@@ -541,4 +577,82 @@
   enddo
 
   end subroutine compute_kernels_po
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine compute_kernels_hessian()
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+
+  use specfem_par, only: nglob,nspec,ibool,ispec_is_acoustic,ispec_is_elastic, &
+                         any_elastic,any_acoustic, &
+                         accel_elastic,b_accel_elastic,accel_ac,b_accel_ac, &
+                         rhorho_el_hessian_final1,rhorho_el_hessian_final2, &
+                         rhorho_ac_hessian_final1,rhorho_ac_hessian_final2, &
+                         deltat,GPU_MODE
+
+  use specfem_par_gpu,only: Mesh_pointer
+
+  implicit none
+
+  !local variables
+  real(kind=CUSTOM_REAL), dimension(nglob) :: rhorho_el_hessian_temp1, rhorho_el_hessian_temp2
+  integer :: i,j,ispec,iglob
+
+
+  if (.not. GPU_MODE) then
+    ! elastic domains
+    if (any_elastic) then
+      ! approximate hessians
+      ! pre-computes contributions on global points
+      do iglob = 1,nglob
+        rhorho_el_hessian_temp1(iglob) = b_accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
+                                         b_accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
+                                         b_accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
+        rhorho_el_hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
+                                         accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
+                                         accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
+      enddo
+
+      ! on local GLL basis
+      do ispec = 1, nspec
+        if (ispec_is_elastic(ispec)) then
+          do j = 1, NGLLZ
+            do i = 1, NGLLX
+              iglob = ibool(i,j,ispec)
+              rhorho_el_hessian_final1(i,j,ispec) = rhorho_el_hessian_final1(i,j,ispec) + rhorho_el_hessian_temp1(iglob) * deltat
+              rhorho_el_hessian_final2(i,j,ispec) = rhorho_el_hessian_final2(i,j,ispec) + rhorho_el_hessian_temp2(iglob) * deltat
+            enddo
+          enddo
+        endif
+      enddo
+    endif
+
+    ! acoustic domains
+    if (any_acoustic) then
+      ! on local GLL basis
+      do ispec = 1,nspec
+        if (ispec_is_acoustic(ispec)) then
+          do j = 1, NGLLZ
+            do i = 1, NGLLX
+              iglob = ibool(i,j,ispec)
+              rhorho_ac_hessian_final1(i,j,ispec) = rhorho_ac_hessian_final1(i,j,ispec) + &
+                                                    dot_product(accel_ac(:,iglob),accel_ac(:,iglob)) * deltat
+              rhorho_ac_hessian_final2(i,j,ispec) = rhorho_ac_hessian_final2(i,j,ispec) + &
+                                                    dot_product(accel_ac(:,iglob),b_accel_ac(:,iglob)) * deltat
+            enddo
+          enddo
+        endif
+      enddo
+    endif
+
+  else
+    ! on GPU
+    ! computes contribution to density and bulk modulus kernel
+    call compute_kernels_hess_cuda(Mesh_pointer,any_elastic,any_acoustic)
+  endif
+
+  end subroutine compute_kernels_hessian
 

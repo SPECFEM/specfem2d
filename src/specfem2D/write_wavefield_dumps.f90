@@ -47,7 +47,7 @@
 
   use specfem_par, only: this_is_the_first_time_we_dump,myrank,nglob,nspec,mask_ibool, &
                          ibool,coord,imagetype_wavefield_dumps,p_sv,it,SIMULATION_TYPE, &
-                         use_binary_for_wavefield_dumps,wavefield_file, &
+                         use_binary_for_wavefield_dumps, &
                          vector_field_display,potential_acoustic,potential_gravitoacoustic, &
                          potential_gravito,displ_elastic,displs_poroelastic, &
                          potential_dot_acoustic,veloc_elastic,velocs_poroelastic,  &
@@ -58,6 +58,8 @@
   !local variables
   integer :: i,j,ispec,iglob,icounter,nb_of_values_to_save
   integer :: ier
+  ! name of wavefield snapshot file
+  character(len=150) :: wavefield_file
 
   if (myrank == 0) then
     write(IMAIN,*)

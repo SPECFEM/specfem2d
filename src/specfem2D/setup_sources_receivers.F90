@@ -59,11 +59,9 @@
   implicit none
 
   ! Local variables
-  integer ispec_acoustic_surface
-  integer  :: ixmin, ixmax, izmin, izmax,i_source,ispec
-#ifndef USE_MPI
-  integer irec
-#endif
+  integer :: ispec_acoustic_surface
+  integer :: ixmin, ixmax, izmin, izmax,i_source,ispec
+  integer :: irec
 
   do i_source= 1,NSOURCES
 
@@ -139,9 +137,9 @@
 !! DK DK this below not supported in the case of MPI yet, we should do a MPI_GATHER() of the values
 !! DK DK and use "if (myrank == which_proc_receiver(irec)) then" to display the right sources
 !! DK DK and receivers carried by each mesh slice, and not fictitious values coming from other slices
+  irec = 0
 #ifndef USE_MPI
   if (myrank == 0) then
-
      ! write actual source locations to file
      ! note that these may differ from input values, especially if source_surf = .true. in SOURCE
      ! note that the exact source locations are determined from (ispec,xi,gamma) values
@@ -159,30 +157,34 @@
              irec,x_final_receiver(irec),z_final_receiver(irec)
      enddo
      close(15)
-
   endif
 #endif
 
   end subroutine setup_sources_receivers
 
 
+!
+!-----------------------------------------------------------------------------------------
+!
 
-! =====
 
   subroutine add_adjoint_sources_SU()
 
   use specfem_par, only: AXISYM,xiglj,is_on_the_axis,myrank, NSTEP, nrec, xi_receiver, gamma_receiver, which_proc_receiver, &
                          xigll,zigll,hxir,hgammar,hpxir,hpgammar, &
-                         adj_sourcearray, adj_sourcearrays, &
-                         r4head, header2, source_adjointe, GPU_MODE, ispec_selected_rec
+                         adj_sourcearray, adj_sourcearrays, source_adjointe, &
+                         GPU_MODE, ispec_selected_rec
 
   use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ
   implicit none
 
   ! local parameters
   integer :: i, k, irec, irec_local, ier
-  real(kind=CUSTOM_REAL), allocatable, dimension(:,:) :: adj_src_s
   character(len=MAX_STRING_LEN) :: filename
+  ! SU
+  integer(kind=4) :: r4head(60)
+  integer(kind=2) :: header2(2)
+  real(kind=4),dimension(:,:),allocatable :: adj_src_s
 
   irec_local = 0
   write(filename, "('./SEM/Ux_file_single.su.adj')")
@@ -213,7 +215,7 @@
       read(113,rec=irec,iostat=ier) r4head, adj_src_s(:,3)
       if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
 
-      header2=int(r4head(29), kind=2)
+      header2 = int(r4head(29), kind=2)
       if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
 
       if (AXISYM) then

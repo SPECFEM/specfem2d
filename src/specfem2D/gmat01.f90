@@ -44,16 +44,17 @@
 
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
 
+  use constants,only: IIN,IMAIN,ZERO,FOUR_THIRDS,HALF,TINYVAL
+
   use specfem_par, only : AXISYM,density,porosity,tortuosity, &
                           anisotropy,permeability,poroelastcoef, &
                           numat,myrank,QKappa_attenuation,Qmu_attenuation, &
                           freq0,Q0,ATTENUATION_PORO_FLUID_PART,assign_external_model, &
                           tomo_material,myrank
 
-  use constants,only: IIN,IMAIN,ZERO,FOUR_THIRDS,HALF,TINYVAL
   implicit none
 
-  double precision f0
+  double precision,intent(in) :: f0
 
   ! local parameters
   double precision :: lambdaplus2mu,kappa
@@ -87,8 +88,11 @@
   ! Index of the material that will be defined by an external tomo file if needed (TOMOGRAPHY_FILE)
   tomo_material = 0
 
+  ! user output
+  ! number of materials
   if (myrank == 0) write(IMAIN,100) numat
 
+  ! skips material sets header
   read(IIN,"(a80)") datlin
   read(IIN,"(a80)") datlin
   read(IIN,"(a80)") datlin

@@ -40,7 +40,7 @@
 !
 !========================================================================
 
-  subroutine plotpost()
+  subroutine plot_post()
 
 !
 ! PostScript display routine
@@ -2669,18 +2669,18 @@
   Uzinterp(i,j) = 0.d0
 
   do k = 1,NGLLX
-  do l= 1,NGLLX
-    if (AXISYM) then
-      if (is_on_the_axis(ispec)) then
-        Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
-        Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(3,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
+    do l= 1,NGLLX
+      if (AXISYM) then
+        if (is_on_the_axis(ispec)) then
+          Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
+          Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(3,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
+        else
+          Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+          Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+        endif
       else
         Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
         Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-      endif
-    else
-      Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-      Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
     endif
   enddo
   enddo
@@ -3009,5 +3009,5 @@
  604 format('CP ',f12.6,' BK')
  700 format(8(f6.2,1x),'F')
 
-  end subroutine plotpost
+  end subroutine plot_post
 

@@ -80,7 +80,7 @@
   subroutine read_parameters_noise()
 
   use specfem_par, only: NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
-                                     any_acoustic,any_poroelastic,p_sv,irec_master, &
+                                     any_acoustic,any_poroelastic,p_sv, &
                                      Mxx,Mxz,Mzz,factor,NSOURCES, &
                                      xi_receiver,gamma_receiver,ispec_selected_rec,nrec, &
                                      xi_noise,gamma_noise,ispec_noise,angle_noise,myrank
@@ -89,6 +89,7 @@
 
   !local
   integer :: i,ios
+  integer :: irec_master
 
   !define master receiver
   open(unit=509,file='DATA/NOISE_TOMOGRAPHY/irec_master',status='old',action='read',iostat=ios)
@@ -423,13 +424,13 @@
 
   subroutine snapshots_noise(ncol,nglob,filename,array_all)
 
-  use constants,only: CUSTOM_REAL
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN
 
   implicit none
 
   !input paramters
   integer :: ncol,nglob
-  character(len=512) filename
+  character(len=MAX_STRING_LEN) :: filename
 
   real(kind=CUSTOM_REAL), dimension(ncol,nglob) :: array_all
 

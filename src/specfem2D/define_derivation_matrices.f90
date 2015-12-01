@@ -51,7 +51,7 @@
 ! function for calculating derivatives of Lagrange polynomials
   double precision, external :: lagrange_deriv_GLL
 
-  integer i1,i2,k1,k2
+  integer :: i1,i2,k1,k2
 
 ! set up coordinates of the Gauss-Lobatto-Legendre points
   call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
@@ -96,7 +96,7 @@
 
   implicit none
 
-  double precision, parameter    :: alphaGLJ=0.d0,betaGLJ=1.d0
+  double precision, parameter    :: alphaGLJ = 0.d0,betaGLJ = 1.d0
 
 ! function for calculating derivatives of GLJ polynomials
   double precision, external :: poly_deriv_GLJ

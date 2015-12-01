@@ -46,7 +46,7 @@
 
   use constants,only: ZERO,NGLLX,NGLLZ
 
-  use specfem_par, only: nspec,ispec_is_poroelastic,poroelastcoef,kmato,permeability,ibool,viscox_loc,viscoz_loc, &
+  use specfem_par, only: nspec,ispec_is_poroelastic,poroelastcoef,kmato,permeability,ibool, &
                          velocw_poroelastic,time_stepping_scheme,deltat,i_stage,stage_time_scheme, &
                          rx_viscous,rz_viscous,viscox,viscoz, &
                          rx_viscous_force_RK,rx_viscous_initial_rk,rz_viscous_force_RK,rz_viscous_initial_rk, &
@@ -60,6 +60,7 @@
   double precision :: etal_f,permlxx,permlxz,permlzz,detk,invpermlxx,invpermlxz,invpermlzz, &
                       Sn,Snp1,weight_rk
   double precision, dimension(3) :: bl_unrelaxed_elastic
+  double precision, dimension(NGLLX,NGLLZ) :: viscox_loc,viscoz_loc
 
   ! loop over spectral elements
   do ispec = 1,nspec

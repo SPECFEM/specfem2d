@@ -57,6 +57,7 @@
   integer :: ispec
 
   is_on_the_axis(:) = .false.
+
   do ispec = 1,nspec
     if (any(ispec_of_axial_elements == ispec)) is_on_the_axis(ispec) = .true.
   enddo
