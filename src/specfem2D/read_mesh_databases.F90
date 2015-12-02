@@ -47,6 +47,7 @@
 
   use specfem_par
   use specfem_par_noise,only: NOISE_TOMOGRAPHY
+  use specfem_par_movie
 
   implicit none
 
@@ -393,6 +394,7 @@
 ! reads source parameters
 
   use specfem_par
+  use specfem_par_movie
 
   implicit none
 
@@ -409,19 +411,17 @@
            time_function_type(NSOURCES), &
            name_of_source_file(NSOURCES), &
            burst_band_width(NSOURCES), &
-           f0(NSOURCES), &
-           tshift_src(NSOURCES), &
-           factor(NSOURCES), &
-           anglesource(NSOURCES), &
            Mxx(NSOURCES), &
            Mxz(NSOURCES), &
            Mzz(NSOURCES), &
+           f0_source(NSOURCES), &
+           tshift_src(NSOURCES), &
+           factor(NSOURCES), &
+           anglesource(NSOURCES), &
            aval(NSOURCES), &
            ispec_selected_source(NSOURCES), &
            iglob_source(NSOURCES), &
            source_courbe_eros(NSOURCES), &
-           xi_source(NSOURCES), &
-           gamma_source(NSOURCES), &
            is_proc_source(NSOURCES), &
            nb_proc_source(NSOURCES), &
            sourcearray(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
@@ -432,16 +432,18 @@
            iy_image_color_source(NSOURCES),stat=ier)
   if (ier /= 0) stop 'Error allocating source arrays'
 
-  ! for SU output
+  ! source locations
   allocate(x_source(NSOURCES), &
-           z_source(NSOURCES),stat=ier)
+           z_source(NSOURCES), &
+           xi_source(NSOURCES), &
+           gamma_source(NSOURCES),stat=ier)
   if (ier /= 0) stop 'Error allocating source arrays'
 
   ! initializes
   source_type(:) = 0
   time_function_type(:) = 0
 
-  f0(:) = 0.d0
+  f0_source(:) = 0.d0
   tshift_src(:) = 0.d0
   factor(:) = 0.d0
   anglesource(:) = 0.d0
@@ -458,7 +460,7 @@
      read(IIN,"(a80)") datlin
      read(IIN,*) source_type(i_source),time_function_type(i_source)
      read(IIN,"(a100)") name_of_source_file(i_source)
-     read(IIN,*) burst_band_width(i_source),x_source(i_source),z_source(i_source),f0(i_source), &
+     read(IIN,*) burst_band_width(i_source),x_source(i_source),z_source(i_source),f0_source(i_source), &
                  tshift_src(i_source),factor(i_source),anglesource(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
   enddo
 
@@ -476,6 +478,7 @@
 ! reads the spectral macrobloc nodal coordinates
 
   use specfem_par
+  use specfem_par_movie
 
   implicit none
 
@@ -584,7 +587,7 @@
 
   use constants,only: IIN,NGLLX,NGLLZ
 
-  use specfem_par, only : nspec,numat,N_SLS,f0_attenuation,READ_VELOCITIES_AT_f0,time_function_type,f0, &
+  use specfem_par, only : nspec,numat,N_SLS,f0_attenuation,READ_VELOCITIES_AT_f0,time_function_type,f0_source, &
     already_shifted_velocity,QKappa_attenuation,Qmu_attenuation, &
     inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2, &
     inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu1_sent,phi_nu2_sent, &
@@ -604,7 +607,7 @@
 
   ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
   if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
-    f0_attenuation = f0(1)
+    f0_attenuation = f0_source(1)
   endif
 
   ! attenuation
@@ -636,7 +639,7 @@
 
   use constants,only: IIN
 
-  use specfem_par, only : nspec,ngnod,kmato,knods,region_CPML,f0
+  use specfem_par, only : nspec,ngnod,kmato,knods,region_CPML,f0_source
 
   implicit none
 
@@ -647,7 +650,7 @@
   character(len=80) :: datlin
 
   ! reads and sets the material properties
-  call gmat01(f0(1))
+  call gmat01(f0_source(1))
 
   ! add support for using PML in MPI mode with external mesh
   allocate(region_CPML(nspec),stat=ier)

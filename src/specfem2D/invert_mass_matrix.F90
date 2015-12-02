@@ -64,10 +64,12 @@
                                 ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
                                 rmass_inverse_elastic_three,&
                                 nelemabs,vsext,xix,xiz,gammaz,gammax, &
-                                K_x_store,K_z_store,is_PML,&
                                 AXISYM,is_on_the_axis,coord,wxglj,xiglj, &
-                                d_x_store,d_z_store,PML_BOUNDARY_CONDITIONS,region_CPML, &
-                                spec_to_PML,time_stepping_scheme
+                                time_stepping_scheme
+
+  ! PML arrays
+  use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML,region_CPML,spec_to_PML, &
+                         K_x_store,K_z_store,d_x_store,d_z_store
 
   implicit none
 
@@ -138,10 +140,7 @@
         else if (ispec_is_elastic(ispec)) then
 
           this_element_has_PML = .false.
-          if (PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
-! do not merge this condition with the above line because array is_PML() sometimes has a dummy size of 1
-            if (is_PML(ispec)) this_element_has_PML = .true.
-          endif
+          if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec)) this_element_has_PML = .true.
 
           if (this_element_has_PML) then
             ispec_PML=spec_to_PML(ispec)
@@ -244,8 +243,8 @@
         else if (ispec_is_gravitoacoustic(ispec)) then
 
         this_element_has_PML = .false.
-        if (PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
-          if (is_PML(ispec)) stop 'PML not implemented yet for gravitoacoustic case'
+        if (PML_BOUNDARY_CONDITIONS) then
+          if (ispec_is_PML(ispec)) stop 'PML not implemented yet for gravitoacoustic case'
         endif
 
           rmass_inverse_gravitoacoustic(iglob) = rmass_inverse_gravitoacoustic(iglob) &
@@ -257,10 +256,7 @@
           ! for acoustic medium
 
           this_element_has_PML = .false.
-          if (PML_BOUNDARY_CONDITIONS .and. size(is_PML) > 1) then
-! do not merge this condition with the above line because array is_PML() sometimes has a dummy size of 1
-            if (is_PML(ispec)) this_element_has_PML = .true.
-          endif
+          if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec)) this_element_has_PML = .true.
 
           if (this_element_has_PML) then
 

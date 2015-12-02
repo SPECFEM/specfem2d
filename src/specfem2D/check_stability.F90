@@ -51,10 +51,10 @@
   use constants,only: IMAIN,STABILITY_THRESHOLD
 
   use specfem_par, only: myrank,timeval,it,NSTEP,GPU_MODE, &
-                         any_elastic_glob,any_elastic,displ_elastic, &
-                         any_poroelastic_glob,any_poroelastic, &
+                         ELASTIC_SIMULATION,any_elastic,displ_elastic, &
+                         POROELASTIC_SIMULATION,any_poroelastic, &
                          displs_poroelastic,displw_poroelastic, &
-                         any_acoustic_glob,any_acoustic,potential_acoustic, &
+                         ACOUSTIC_SIMULATION,any_acoustic,potential_acoustic, &
                          timestamp_seconds_start
 
   use specfem_par_noise,only: NOISE_TOMOGRAPHY
@@ -105,7 +105,7 @@
 
 
   ! elastic wavefield
-  if (any_elastic_glob) then
+  if (ELASTIC_SIMULATION) then
     if (any_elastic) then
       displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 &
                                 + displ_elastic(2,:)**2 &
@@ -137,7 +137,7 @@
   endif
 
   ! poroelastic wavefield
-  if (any_poroelastic_glob) then
+  if (POROELASTIC_SIMULATION) then
     if (any_poroelastic) then
       displnorm_all = maxval(sqrt(displs_poroelastic(1,:)**2 &
                                 + displs_poroelastic(2,:)**2))
@@ -188,7 +188,7 @@
 
 
   ! acoustic wavefield
-  if (any_acoustic_glob) then
+  if (ACOUSTIC_SIMULATION) then
     if (any_acoustic) then
       displnorm_all = maxval(abs(potential_acoustic(:)))
     else

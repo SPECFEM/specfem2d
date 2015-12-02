@@ -45,12 +45,12 @@
 !----
 
   subroutine locate_receivers(ibool,coord,nspec,nglob,xigll,zigll, &
-                          nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
-                          st_xval,st_zval,ispec_selected_rec, &
-                          xi_receiver,gamma_receiver,station_name,network_name, &
-                          x_source,z_source, &
-                          coorg,knods,ngnod,npgeo, &
-                          x_final_receiver, z_final_receiver)
+                              nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
+                              st_xval,st_zval,ispec_selected_rec, &
+                              xi_receiver,gamma_receiver,station_name,network_name, &
+                              x_source,z_source, &
+                              coorg,knods,ngnod,npgeo, &
+                              x_final_receiver, z_final_receiver)
 
   use constants,only: NDIM,NGLLX,NGLLZ,MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME, &
     IMAIN,HUGEVAL,TINYVAL,NUM_ITER
@@ -63,31 +63,31 @@
 
   implicit none
 
-  integer nrec,nspec,nglob,ngnod,npgeo
+  integer :: nrec,nspec,nglob,ngnod,npgeo
   integer, intent(in)  :: nproc, myrank
 
-  integer knods(ngnod,nspec)
-  double precision coorg(NDIM,npgeo)
+  integer :: knods(ngnod,nspec)
+  double precision :: coorg(NDIM,npgeo)
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
 ! array containing coordinates of the points
-  double precision coord(NDIM,nglob)
+  double precision :: coord(NDIM,nglob)
 
-  integer irec,i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess
+  integer :: irec,i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess
 
-  double precision x_source,z_source,dist_squared,stele,stbur
+  double precision :: x_source,z_source,dist_squared,stele,stbur
   double precision, dimension(nrec)  :: distance_receiver
-  double precision xi,gamma,dx,dz,dxi,dgamma
+  double precision :: xi,gamma,dx,dz,dxi,dgamma
 
 ! Gauss-Lobatto-Legendre points of integration
-  double precision xigll(NGLLX)
-  double precision zigll(NGLLZ)
+  double precision :: xigll(NGLLX)
+  double precision :: zigll(NGLLZ)
 
-  double precision x,z,xix,xiz,gammax,gammaz,jacobian
+  double precision :: x,z,xix,xiz,gammax,gammaz,jacobian
 
 ! use dynamic allocation
-  double precision distmin_squared
+  double precision :: distmin_squared
   double precision, dimension(:), allocatable :: final_distance
 
 ! receiver information

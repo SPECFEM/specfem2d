@@ -47,7 +47,20 @@
   use mpi
 #endif
 
-  use specfem_par
+  use constants,only: IMAIN,NGLLX,NGLLZ,REMOVE_PMLS_FROM_JPEG_IMAGES
+
+  use specfem_par,only: myrank,nspec,it,NPROC, &
+                        assign_external_model,ibool,kmato,density,rhoext,p_sv, &
+                        potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
+                        potential_gravito,potential_dot_gravito,potential_dot_dot_gravito, &
+                        potential_gravitoacoustic,potential_dot_gravitoacoustic,potential_dot_dot_gravitoacoustic, &
+                        displ_elastic,veloc_elastic,accel_elastic, &
+                        displs_poroelastic,velocs_poroelastic,accels_poroelastic
+
+  ! PML arrays
+  use specfem_par,only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
+
+  use specfem_par_movie
 
   implicit none
 
@@ -136,7 +149,7 @@
 !! DK DK quick hack to remove the PMLs from JPEG images if needed: set the vector field to zero there
   if (PML_BOUNDARY_CONDITIONS .and. REMOVE_PMLS_FROM_JPEG_IMAGES) then
     do ispec = 1,nspec
-      if (is_PML(ispec)) then
+      if (ispec_is_PML(ispec)) then
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
@@ -197,12 +210,10 @@
   enddo
 
   ! assembling array image_color_data on process zero for color output
-  ier = 0 ! dummy to avoid compiler warning
-  iproc = 0
 #ifdef USE_MPI
-  if (nproc > 1) then
+  if (NPROC > 1) then
     if (myrank == 0) then
-      do iproc = 1, nproc-1
+      do iproc = 1, NPROC-1
         call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
                       iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
@@ -262,6 +273,10 @@
       call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
     endif
   endif
+#else
+  ! dummy to avoid compiler warning
+  ier = 0
+  iproc = NPROC
 #endif
 
   ! creates image

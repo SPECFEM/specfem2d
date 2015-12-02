@@ -134,17 +134,25 @@ module specfem_par
   !---------------------------------------------------------------------
   logical :: anyabs_glob
 
-  !PML
-  logical :: PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE
+  ! PML
+  logical :: PML_BOUNDARY_CONDITIONS
+  logical, dimension(:), allocatable :: ispec_is_PML
+
+  ! PML rotation
+  logical :: ROTATE_PML_ACTIVATE
   double precision :: ROTATE_PML_ANGLE
+
+  ! PML arrays
   integer :: nspec_PML,NELEM_PML_THICKNESS
-  logical, dimension(:), allocatable :: is_PML
+
   integer, dimension(:), allocatable :: region_CPML
   integer, dimension(:), allocatable :: spec_to_PML
+
   logical, dimension(:,:), allocatable :: which_PML_elem
+  logical, dimension(:), allocatable  :: mask_ibool_PML
 
   double precision, dimension(:,:,:), allocatable :: &
-                    K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+    K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   ! stacey BC
   logical :: STACEY_BOUNDARY_CONDITIONS
@@ -155,8 +163,6 @@ module specfem_par
   ! add spring to Stacey absorbing boundary condition
   logical :: ADD_SPRING_TO_STACEY
   double precision :: x_center_spring,z_center_spring
-  double precision :: xmin,xmax,zmin,zmax
-  double precision :: xmin_local,xmax_local,zmin_local,zmax_local
 
   ! for horizontal periodic conditions
   logical :: ADD_PERIODIC_CONDITIONS
@@ -195,12 +201,17 @@ module specfem_par
   ! for source-receiver information
   !---------------------------------------------------------------------
   ! source description
-  integer NSOURCES
+  integer :: NSOURCES
   integer, dimension(:), allocatable :: source_type,time_function_type
   character(len=150), dimension(:), allocatable :: name_of_source_file
   double precision, dimension(:), allocatable :: burst_band_width
-  double precision, dimension(:), allocatable :: x_source,z_source,xi_source,gamma_source,&
-                                                 Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource
+
+  ! source locations
+  double precision, dimension(:), allocatable :: x_source,z_source
+  double precision, dimension(:), allocatable :: xi_source,gamma_source
+
+  double precision, dimension(:), allocatable :: Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource
+
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
   double precision :: t0
   integer, dimension(:), allocatable :: ispec_selected_source,iglob_source,&
@@ -233,7 +244,7 @@ module specfem_par
   ! for plane wave incidence
   ! to compute analytical initial plane wave field
   logical :: initialfield,add_Bielak_conditions
-  double precision :: anglesource_refl, c_inc, c_refl, cploc, csloc
+  double precision :: anglesource_refl, c_inc, c_refl
   double precision, dimension(2) :: A_plane, B_plane, C_plane
   double precision :: time_offset
   ! beyond critical angle
@@ -285,14 +296,16 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
 
-  double precision, dimension(:,:,:), allocatable :: shape2D,shape2D_display
+  double precision, dimension(:,:,:), allocatable :: shape2D
+  double precision, dimension(:,:,:,:), allocatable :: dershape2D
+
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable  :: xix,xiz,gammax,gammaz,jacobian
-
-  double precision, dimension(:,:,:,:), allocatable :: dershape2D,dershape2D_display
-
   integer, dimension(:,:,:), allocatable :: ibool
+
   integer, dimension(:,:), allocatable  :: knods
-  integer, dimension(:), allocatable :: kmato,numabs, &
+  integer, dimension(:), allocatable :: kmato
+
+  integer, dimension(:), allocatable :: numabs, &
      ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
 
   ! Lagrange interpolators at receivers
@@ -385,9 +398,7 @@ module specfem_par
   !---------------------------------------------------------------------
   !global varable shared by acoustic/elastic/poroelastic simulation
   !---------------------------------------------------------------------
-  double precision, dimension(:,:), allocatable :: &
-    coord, flagrange,xinterp,zinterp,Uxinterp,Uzinterp,vector_field_display
-
+  double precision, dimension(:,:), allocatable :: coord
   double precision, dimension(:,:), allocatable :: coorg
 
   !---------------------------------------------------------------------
@@ -410,11 +421,23 @@ module specfem_par
 
   ! for acoustic and gravitoacoustic detection
   integer :: nglob_acoustic
-  logical :: any_acoustic,any_acoustic_glob
+
+  ! local flag to determine if any acoustic elements in this slice
+  logical :: any_acoustic
+
+  ! global flag for acoustic simulations
+  logical :: ACOUSTIC_SIMULATION
+
   logical, dimension(:), allocatable :: ispec_is_acoustic
 
   integer :: nglob_gravitoacoustic
-  logical :: any_gravitoacoustic,any_gravitoacoustic_glob
+
+  ! local flag to determine if any gravitoacoustic elements in this slice
+  logical :: any_gravitoacoustic
+
+  ! global flag for gravitoacoustic simulations
+  logical :: GRAVITOACOUSTIC_SIMULATION
+
   logical, dimension(:), allocatable :: ispec_is_gravitoacoustic
 
   ! inverse mass matrices
@@ -448,7 +471,13 @@ module specfem_par
   !---------------------------------------------------------------------
   ! number of node associated with elastic medium
   integer :: nglob_elastic
-  logical :: any_elastic,any_elastic_glob
+
+  ! local flag if any elastic element is in this slice
+  logical :: any_elastic
+
+  ! global flag to determine if any elastic elements are present in all slices
+  logical :: ELASTIC_SIMULATION
+
   logical, dimension(:), allocatable :: ispec_is_elastic
 
   ! inverse mass matrices
@@ -498,7 +527,13 @@ module specfem_par
   !for by poroelastic simulation
   !---------------------------------------------------------------------
   integer :: nglob_poroelastic
-  logical :: any_poroelastic,any_poroelastic_glob
+
+  ! local flag to determine if this slice has poroelastic elements
+  logical :: any_poroelastic
+
+  ! global flag for poroelastic simulations
+  logical :: POROELASTIC_SIMULATION
+
   logical, dimension(:), allocatable :: ispec_is_poroelastic
 
   ! inverse mass matrices
@@ -712,109 +747,9 @@ module specfem_par
   double precision, dimension(:,:), allocatable :: sisux,sisuz,siscurl
 
   !---------------------------------------------------------------------
-  ! for color image
-  !---------------------------------------------------------------------
-  integer :: colors !also used in plot_post
-  double precision :: cutsnaps !also used in plot_post
-  logical :: output_color_image,DRAW_SOURCES_AND_RECEIVERS
-  integer :: NSTEP_BETWEEN_OUTPUT_IMAGES,imagetype_JPEG
-  integer :: isnapshot_number = 0  !remember which image are going to produce
-  integer  :: nb_pixel_loc
-  integer, dimension(:), allocatable :: ix_image_color_source,iy_image_color_source
-  integer, dimension(:), allocatable :: ix_image_color_receiver,iy_image_color_receiver
-  integer, dimension(:), allocatable :: nb_pixel_per_proc
-  integer, dimension(:), allocatable :: num_pixel_loc
-  integer, dimension(:,:), allocatable :: num_pixel_recv
-  double precision, dimension(:), allocatable :: data_pixel_recv
-  double precision, dimension(:), allocatable :: data_pixel_send
-
-  ! factor to subsample color images output by the code (useful for very large models)
-  double precision :: factor_subsample_image
-  ! by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
-  logical :: USE_CONSTANT_MAX_AMPLITUDE
-  ! constant maximum amplitude to use for all color images if the USE_CONSTANT_MAX_AMPLITUDE option is true
-  double precision :: CONSTANT_MAX_AMPLITUDE_TO_USE
-  ! use snapshot number in the file name of JPG color snapshots instead of the time step
-  logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
-  ! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
-  ! or in the case of offshore oil industry experiments.
-  ! (if off, display them as greyscale, as for elastic or poroelastic elements,
-  !  for instance for acoustic-only oil industry models of solid media)
-  logical :: DRAW_WATER_IN_BLUE
-  ! non linear display to enhance small amplitudes in color images
-  double precision :: POWER_DISPLAY_COLOR
-
-  integer :: NX_IMAGE_color,NZ_IMAGE_color
-  double precision :: xmin_color_image,xmax_color_image, &
-                      zmin_color_image,zmax_color_image
-  integer, dimension(:,:), allocatable :: iglob_image_color,copy_iglob_image_color
-  double precision, dimension(:,:), allocatable :: image_color_data
-  double precision, dimension(:,:), allocatable :: image_color_vp_display
-
-  !---------------------------------------------------------------------
-  ! for plot_post
-  !---------------------------------------------------------------------
-  integer :: subsamp_postscript,imagetype_postscript
-  integer :: numbers
-  double precision :: sizemax_arrows
-  logical :: output_postscript_snapshot,US_LETTER,plot_lowerleft_corner_only
-  logical :: interpol,meshvect,modelvect,boundvect
-  ! title of the plot
-  character(len=60) simulation_title
-  ! US letter paper or European A4
-  integer :: d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
-             d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
-             d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
-             d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model
-  double precision, dimension(:,:), allocatable  :: coorg_send_ps_velocity_model
-  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_velocity_model
-  double precision, dimension(:,:), allocatable  :: RGB_send_ps_velocity_model
-  double precision, dimension(:,:), allocatable  :: RGB_recv_ps_velocity_model
-  integer :: d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
-             d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
-             d1_color_send_ps_element_mesh, &
-             d1_color_recv_ps_element_mesh
-  double precision, dimension(:,:), allocatable  :: coorg_send_ps_element_mesh
-  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_element_mesh
-  integer, dimension(:), allocatable  :: color_send_ps_element_mesh
-  integer, dimension(:), allocatable  :: color_recv_ps_element_mesh
-  integer :: d1_coorg_send_ps_abs, d2_coorg_send_ps_abs, &
-             d1_coorg_recv_ps_abs, d2_coorg_recv_ps_abs
-  double precision, dimension(:,:), allocatable  :: coorg_send_ps_abs
-  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_abs
-  integer :: d1_coorg_send_ps_free_surface, d2_coorg_send_ps_free_surface, &
-             d1_coorg_recv_ps_free_surface, d2_coorg_recv_ps_free_surface
-  double precision, dimension(:,:), allocatable  :: coorg_send_ps_free_surface
-  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_free_surface
-  integer :: d1_coorg_send_ps_vector_field, d2_coorg_send_ps_vector_field, &
-             d1_coorg_recv_ps_vector_field, d2_coorg_recv_ps_vector_field
-  double precision, dimension(:,:), allocatable  :: coorg_send_ps_vector_field
-  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_vector_field
-
-  !---------------------------------------------------------------------
-  ! for wavefield damp
-  !---------------------------------------------------------------------
-  integer :: NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
-  integer :: imagetype_wavefield_dumps
-
-  logical :: output_wavefield_dumps,use_binary_for_wavefield_dumps
-
-  logical :: this_is_the_first_time_we_dump
-  logical, dimension(:), allocatable  :: mask_ibool,mask_ibool_pml
-
-
-  !---------------------------------------------------------------------
-  ! for wavefield snapshot file
-  !---------------------------------------------------------------------
-  logical :: output_grid_ASCII,output_grid_Gnuplot
-
-  !=====================================================================
-  ! output for simulation (end)
-  !=====================================================================
-
-  !---------------------------------------------------------------------
   !global varable particular for computation with GPU
   !---------------------------------------------------------------------
+
   ! Global GPU toggle. Set in Par_file
   logical :: GPU_MODE
 
@@ -966,5 +901,118 @@ module specfem_par_gpu
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_recv_vector_ext_mesh
 
 end module specfem_par_gpu
+
+!=====================================================================
+
+module specfem_par_movie
+
+! parameter module for noise simulations
+
+  use constants,only: CUSTOM_REAL
+  implicit none
+
+  double precision, dimension(:,:), allocatable :: flagrange,xinterp,zinterp,Uxinterp,Uzinterp
+  double precision, dimension(:,:), allocatable :: vector_field_display
+
+  double precision, dimension(:,:,:), allocatable :: shape2D_display
+  double precision, dimension(:,:,:,:), allocatable :: dershape2D_display
+
+  !---------------------------------------------------------------------
+  ! for color image
+  !---------------------------------------------------------------------
+  integer :: colors !also used in plot_post
+  double precision :: cutsnaps !also used in plot_post
+
+  logical :: output_color_image
+  logical :: DRAW_SOURCES_AND_RECEIVERS
+
+  integer :: NSTEP_BETWEEN_OUTPUT_IMAGES
+
+  integer :: imagetype_JPEG
+  integer :: isnapshot_number = 0  !remember which image are going to produce
+  integer  :: nb_pixel_loc
+  integer, dimension(:), allocatable :: ix_image_color_source,iy_image_color_source
+  integer, dimension(:), allocatable :: ix_image_color_receiver,iy_image_color_receiver
+  integer, dimension(:), allocatable :: nb_pixel_per_proc
+  integer, dimension(:), allocatable :: num_pixel_loc
+  integer, dimension(:,:), allocatable :: num_pixel_recv
+  double precision, dimension(:), allocatable :: data_pixel_recv
+  double precision, dimension(:), allocatable :: data_pixel_send
+
+  ! factor to subsample color images output by the code (useful for very large models)
+  double precision :: factor_subsample_image
+  ! by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
+  logical :: USE_CONSTANT_MAX_AMPLITUDE
+  ! constant maximum amplitude to use for all color images if the USE_CONSTANT_MAX_AMPLITUDE option is true
+  double precision :: CONSTANT_MAX_AMPLITUDE_TO_USE
+  ! use snapshot number in the file name of JPG color snapshots instead of the time step
+  logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
+  ! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
+  ! or in the case of offshore oil industry experiments.
+  ! (if off, display them as greyscale, as for elastic or poroelastic elements,
+  !  for instance for acoustic-only oil industry models of solid media)
+  logical :: DRAW_WATER_IN_BLUE
+  ! non linear display to enhance small amplitudes in color images
+  double precision :: POWER_DISPLAY_COLOR
+
+  integer :: NX_IMAGE_color,NZ_IMAGE_color
+  double precision :: xmin_color_image,xmax_color_image, &
+                      zmin_color_image,zmax_color_image
+  integer, dimension(:,:), allocatable :: iglob_image_color,copy_iglob_image_color
+  double precision, dimension(:,:), allocatable :: image_color_data
+  double precision, dimension(:,:), allocatable :: image_color_vp_display
+
+  !---------------------------------------------------------------------
+  ! for plot_post
+  !---------------------------------------------------------------------
+  integer :: subsamp_postscript,imagetype_postscript
+  integer :: numbers
+  double precision :: sizemax_arrows
+
+  logical :: output_postscript_snapshot
+
+  logical :: US_LETTER,plot_lowerleft_corner_only
+  logical :: interpol,meshvect,modelvect,boundvect
+  ! title of the plot
+  character(len=60) simulation_title
+  ! US letter paper or European A4
+  double precision, dimension(:,:), allocatable  :: coorg_send_ps_velocity_model
+  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_velocity_model
+  double precision, dimension(:,:), allocatable  :: RGB_send_ps_velocity_model
+  double precision, dimension(:,:), allocatable  :: RGB_recv_ps_velocity_model
+
+  double precision, dimension(:,:), allocatable  :: coorg_send_ps_element_mesh
+  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_element_mesh
+  integer, dimension(:), allocatable  :: color_send_ps_element_mesh
+  integer, dimension(:), allocatable  :: color_recv_ps_element_mesh
+
+  double precision, dimension(:,:), allocatable  :: coorg_send_ps_abs
+  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_abs
+
+  double precision, dimension(:,:), allocatable  :: coorg_send_ps_free_surface
+  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_free_surface
+
+  double precision, dimension(:,:), allocatable  :: coorg_send_ps_vector_field
+  double precision, dimension(:,:), allocatable  :: coorg_recv_ps_vector_field
+
+  !---------------------------------------------------------------------
+  ! for wavefield damp
+  !---------------------------------------------------------------------
+  integer :: NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
+  integer :: imagetype_wavefield_dumps
+
+  logical :: output_wavefield_dumps
+  logical :: use_binary_for_wavefield_dumps
+
+  logical :: this_is_the_first_time_we_dump
+  logical, dimension(:), allocatable  :: mask_ibool
+
+
+  !---------------------------------------------------------------------
+  ! for wavefield snapshot file
+  !---------------------------------------------------------------------
+  logical :: output_grid_ASCII,output_grid_Gnuplot
+
+end module specfem_par_movie
 
 

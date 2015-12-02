@@ -50,11 +50,11 @@
 
   use constants,only: NX_NZ_IMAGE_MAX,NGLLX
 
-  use specfem_par, only : NX_IMAGE_color,NZ_IMAGE_color, &
-                          xmin_color_image,xmax_color_image, &
-                          zmin_color_image,zmax_color_image, &
-                          coord,npgeo,factor_subsample_image,myrank
+  use specfem_par, only : coord,npgeo,myrank
 
+  use specfem_par_movie,only: NX_IMAGE_color,NZ_IMAGE_color, &
+                          xmin_color_image,xmax_color_image, &
+                          zmin_color_image,zmax_color_image,factor_subsample_image
   implicit none
 
   ! local parameters
@@ -137,13 +137,16 @@
 
   use constants,only: IMAIN,HUGEVAL,NGLLX,NGLLZ
 
-  use specfem_par, only : myrank,NX_IMAGE_color,NZ_IMAGE_color, &
-                            xmin_color_image,xmax_color_image, &
-                            zmin_color_image,zmax_color_image, &
-                            coord,coorg,nspec,knods,ibool, &
-                            nb_pixel_loc,iglob_image_color, &
-                            DRAW_SOURCES_AND_RECEIVERS,NSOURCES,nrec,x_source,z_source,st_xval,st_zval, &
-                            ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver
+  use specfem_par, only : myrank,coord,coorg,nspec,knods,ibool, &
+                          NSOURCES,nrec,x_source,z_source,st_xval,st_zval
+
+
+  use specfem_par_movie,only: NX_IMAGE_color,NZ_IMAGE_color, &
+                              xmin_color_image,xmax_color_image, &
+                              zmin_color_image,zmax_color_image, &
+                              nb_pixel_loc,iglob_image_color, &
+                              DRAW_SOURCES_AND_RECEIVERS, &
+                              ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver
 
   implicit none
 
@@ -158,8 +161,7 @@
 
   ! create all the pixels
   if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'locating all the pixels of color images'
+    write(IMAIN,*) '  locating all the pixels of color images'
     call flush_IMAIN()
   endif
 
@@ -277,12 +279,12 @@
 
   use constants,only: NGLLX,NGLLZ,HALF,TWO
 
-  use specfem_par, only : nglob,image_color_vp_display,iglob_image_color, &
-    NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc, &
-    num_pixel_loc,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
+  use specfem_par, only : nglob,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
     density,poroelastcoef, &
-    nproc,myrank,assign_external_model,vpext,DRAW_WATER_IN_BLUE
+    nproc,myrank,assign_external_model,vpext
 
+  use specfem_par_movie,only: image_color_vp_display,iglob_image_color, &
+    NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc,num_pixel_loc,DRAW_WATER_IN_BLUE
   implicit none
 
   ! local parameters

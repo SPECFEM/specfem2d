@@ -46,7 +46,7 @@ module source_file
 
   ! source parameters
   integer, dimension(:),pointer ::  source_type,time_function_type
-  double precision, dimension(:),pointer :: xs,zs,f0,tshift_src,anglesource, &
+  double precision, dimension(:),pointer :: xs,zs,f0_source,tshift_src,anglesource, &
     Mxx,Mzz,Mxz,factor,burst_band_width
   logical, dimension(:),pointer ::  source_surf
   character(len=150), dimension(:),pointer :: name_of_source_file ! File name can't exceed 150 characters
@@ -75,7 +75,7 @@ contains
     allocate(time_function_type(NSOURCES))
     allocate(name_of_source_file(NSOURCES))
     allocate(burst_band_width(NSOURCES))
-    allocate(f0(NSOURCES))
+    allocate(f0_source(NSOURCES))
     allocate(tshift_src(NSOURCES))
     allocate(anglesource(NSOURCES))
     allocate(Mxx(NSOURCES))
@@ -132,7 +132,7 @@ contains
       call read_value_integer(IIN_SOURCE,IGNORE_JUNK,time_function_type(i_source))
       call read_value_string(IIN_SOURCE,IGNORE_JUNK,name_of_source_file(i_source))
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,burst_band_width(i_source))
-      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,f0(i_source))
+      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,f0_source(i_source))
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,tshift_src(i_source))
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,anglesource(i_source))
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxx(i_source))
@@ -156,7 +156,7 @@ contains
           print *,'Burst wavelet'
           print *,'Burst band width: ',burst_band_width(i_source)
         else
-          print *,'Frequency, delay = ',f0(i_source),tshift_src(i_source)
+          print *,'Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
           print *,'Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 8=Read from file, 9=burst):'&
                  ,time_function_type(i_source)
           print *,'Mxx of the source if moment tensor = ',Mxx(i_source)

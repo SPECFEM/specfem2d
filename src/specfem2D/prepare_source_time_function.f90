@@ -49,7 +49,7 @@
   use constants,only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE
 
   use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
-                         time_function_type,name_of_source_file,burst_band_width,f0,tshift_src,factor, &
+                         time_function_type,name_of_source_file,burst_band_width,f0_source,tshift_src,factor, &
                          aval,t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK,is_proc_source, &
                          USE_TRICK_FOR_BETTER_PRESSURE,myrank
 
@@ -194,7 +194,7 @@
       else if (time_function_type(i_source) == 5) then
 
         ! Heaviside source time function (we use a very thin error function instead)
-        hdur(i_source) = 1.d0 / f0(i_source)
+        hdur(i_source) = 1.d0 / f0_source(i_source)
         hdur_gauss(i_source) = hdur(i_source) * 5.d0 / 3.d0
         source_time_function(i_source,it,i_stage) = factor(i_source) * 0.5d0*(1.0d0 + &
             netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*t_used/hdur_gauss(i_source)))
@@ -203,12 +203,12 @@
 
         DecT = t0 + tshift_src(i_source)
 
-        Tc = 4.d0 / f0(i_source) + DecT
+        Tc = 4.d0 / f0_source(i_source) + DecT
 
         if (timeval > DecT .and. timeval < Tc) then
 
            ! source time function from Computational Ocean Acoustics
-           omega_coa = TWO * PI * f0(i_source)
+           omega_coa = TWO * PI * f0_source(i_source)
            omegat =  omega_coa * ( timeval - DecT )
            source_time_function(i_source,it,i_stage) = factor(i_source) * HALF * &
                  sin( omegat ) * ( ONE - cos( QUARTER * omegat ) )
@@ -224,15 +224,15 @@
        else if (time_function_type(i_source) == 7) then
 
         DecT = t0 + tshift_src(i_source)
-        Tc = 4.d0 / f0(i_source) + DecT
-        omega_coa = TWO * PI * f0(i_source)
+        Tc = 4.d0 / f0_source(i_source) + DecT
+        omega_coa = TWO * PI * f0_source(i_source)
 
         if (timeval > DecT .and. timeval < Tc) then
           ! source time function from Computational Ocean Acoustics
            omegat =  omega_coa * ( timeval - DecT )
            !source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
            !      ( sin(omegat) - 8.d0 / 9.d0 * sin(3.d0/ 4.d0 * omegat) - &
-           !     8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) -1./15.*( timeval - DecT ) + 1./15.*4./f0(i_source))
+           !     8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) -1./15.*( timeval - DecT ) + 1./15.*4./f0_source(i_source))
 
            source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
                  ( - sin(omegat) + 8.d0 / 9.d0 * sin(3.d0 / 4.d0 * omegat) + &
@@ -240,7 +240,8 @@
 
         else if (timeval > DecT) then
 
-           source_time_function(i_source,it,i_stage) = - factor(i_source) * HALF / omega_coa / 15.d0 * (4.d0 / f0(i_source))
+           source_time_function(i_source,it,i_stage) = &
+              - factor(i_source) * HALF / omega_coa / 15.d0 * (4.d0 / f0_source(i_source))
 
         else
 
@@ -262,11 +263,11 @@
       else if (time_function_type(i_source) == 9) then
         DecT = t0 + tshift_src(i_source)
         t_used = (timeval-t0-tshift_src(i_source))
-        Nc = TWO * f0(i_source) / burst_band_width(i_source)
-        Tc = Nc / f0(i_source) + DecT
-        if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0(i_source)) then
+        Nc = TWO * f0_source(i_source) / burst_band_width(i_source)
+        Tc = Nc / f0_source(i_source) + DecT
+        if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0_source(i_source)) then
           source_time_function(i_source,it,i_stage) = - factor(i_source) * &
-                      0.5d0*(ONE-cos(TWO*PI*f0(i_source)*t_used/Nc))*sin(TWO*PI*f0(i_source)*t_used)
+                      0.5d0*(ONE-cos(TWO*PI*f0_source(i_source)*t_used/Nc))*sin(TWO*PI*f0_source(i_source)*t_used)
         !else if (timeval > DecT) then
         !  source_time_function(i_source,it,i_stage) = ZERO
         else

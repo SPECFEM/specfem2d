@@ -41,51 +41,55 @@
 !========================================================================
 
 subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
-                                       x0_source, z0_source,f0,v0x_left,v0z_left,v0x_right,v0z_right,&
-                                       v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
-                                       nleft,nright,nbot,PML_BOUNDARY_CONDITIONS,e1,e11,e13)
+                                       PML_BOUNDARY_CONDITIONS,e1,e11,e13)
 
   ! compute forces for the elastic elements
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CONVOLUTION_MEMORY_VARIABLES, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL
 
   use specfem_par, only: p_sv,nglob,nspec,nelemabs,it,anyabs,assign_external_model, &
-                         initialfield,ATTENUATION_VISCOELASTIC_SOLID,nspec_allocate,N_SLS,anglesource, &
+                         ATTENUATION_VISCOELASTIC_SOLID,nspec_allocate,N_SLS,anglesource, &
                          ibool,kmato,numabs,ispec_is_elastic,codeabs,codeabs_corner, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz, &
-                         jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext, &
+                         jacobian,vpext,vsext,rhoext, &
+                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext, &
                          ispec_is_anisotropic,anisotropy, &
                          e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,N_SLS, &
-                         deltat,coord,add_Bielak_conditions, &
+                         deltat,coord, &
                          A_plane, B_plane, C_plane, anglesource_refl, c_inc, c_refl, time_offset, &
-                         over_critical_angle,SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
+                         SIMULATION_TYPE,SAVE_FORWARD,b_absorb_elastic_left,&
                          b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,&
                          ib_left,ib_right,ib_bottom,ib_top,&
-                         stage_time_scheme,i_stage,ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,&
-                         is_PML,nspec_PML,spec_to_PML,region_CPML,rmemory_duz_dz_LDDRK, &
-                         K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
+                         stage_time_scheme,i_stage, &
+                         ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring,&
+                         rmemory_duz_dz_LDDRK, &
                          rmemory_displ_elastic,rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
                          rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
-                         rmemory_displ_elastic_LDDRK,rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,&
+                         rmemory_displ_elastic_LDDRK, &
+                         rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,&
                          ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE,STACEY_BOUNDARY_CONDITIONS, &
                          ispec_is_acoustic,time_stepping_scheme
+
+  ! for Bielak
+  use specfem_par, only: x_source,z_source,f0_source
+
+  ! PML arrays
+  use specfem_par, only: nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
+                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+
+  ! initialfield
+  use specfem_par,only: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
+                        t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot, &
+                        add_Bielak_conditions,initialfield,over_critical_angle
 
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_allocate,N_SLS) :: e1,e11,e13
-
-  ! for analytical initial plane wave for Bielak's conditions
-  double precision x0_source, z0_source,f0
-
-  integer :: nleft, nright, nbot
-  double precision, dimension(nleft) :: v0x_left,v0z_left,t0x_left,t0z_left
-  double precision, dimension(nright) :: v0x_right,v0z_right,t0x_right,t0z_right
-  double precision, dimension(nbot) :: v0x_bot,v0z_bot,t0x_bot,t0z_bot
 
   ! CPML coefficients and memory variables
   logical :: PML_BOUNDARY_CONDITIONS
@@ -175,7 +179,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
       ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
       if (ispec_is_acoustic(ispec) ) cycle
 
-      if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. is_PML(ispec)))) then
+      if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. ispec_is_PML(ispec)))) then
         do j = 1,NGLLZ
         do i = 1,NGLLX
 
@@ -414,7 +418,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
             endif
           endif
 
-          if (PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) .and. nspec_PML > 0) then
+          if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec) .and. nspec_PML > 0) then
             ispec_PML = spec_to_PML(ispec)
             CPML_region_local = region_CPML(ispec)
             kappa_x = K_x_store(i,j,ispec_PML)
@@ -793,7 +797,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
             sigma_zz = sigma_zz + lambdalplusmul_unrelaxed_elastic * e1_sum - TWO * mul_unrelaxed_elastic * e11_sum
             sigma_zx = sigma_xz
 
-            if (PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
+            if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec)) then
 ! PML currently has no support for viscoelasticity, use the elastic formula instead
               sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*PML_duz_dzl(i,j)
               sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*PML_dux_dxl(i,j)
@@ -856,7 +860,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               sigma_zx = sigma_xz
             endif
 
-            if (PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) .and. nspec_PML > 0) then
+            if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec) .and. nspec_PML > 0) then
               if (ROTATE_PML_ACTIVATE) then
                 theta = -ROTATE_PML_ANGLE/180._CUSTOM_REAL*PI
                 if (it==1)write(*,*)theta,ROTATE_PML_ACTIVATE,cos(theta),sin(theta)
@@ -1025,7 +1029,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       ! update the displacement memory variable
-      if (is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS .and. nspec_PML > 0) then
+      if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec) .and. nspec_PML > 0) then
         ispec_PML=spec_to_PML(ispec)
         CPML_region_local = region_CPML(ispec)
         do j = 1,NGLLZ
@@ -1177,7 +1181,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           endif
 
           !!! PML_BOUNDARY_CONDITIONS
-          if (is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS) then
+          if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec)) then
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j)
             accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j)
           endif
@@ -1219,16 +1223,17 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           if (add_Bielak_conditions .and. initialfield) then
             if (.not.over_critical_angle) then
               call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                          x0_source, z0_source, A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
-                          c_inc, c_refl, time_offset,f0)
+                          x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
+                          c_inc, c_refl, time_offset,f0_source(1))
+
               traction_x_t0 = lambdaplus2mu_unrelaxed_elastic * dxUx + lambdal_unrelaxed_elastic * dzUz
               traction_z_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
             else
-              veloc_horiz=v0x_left(count_left)
-              veloc_vert=v0z_left(count_left)
-              traction_x_t0=t0x_left(count_left)
-              traction_z_t0=t0z_left(count_left)
-              count_left=count_left+1
+              veloc_horiz = v0x_left(count_left,it)
+              veloc_vert = v0z_left(count_left,it)
+              traction_x_t0 = t0x_left(count_left,it)
+              traction_z_t0 = t0z_left(count_left,it)
+              count_left = count_left+1
             endif
           else
             veloc_horiz = 0._CUSTOM_REAL;   veloc_vert = 0._CUSTOM_REAL
@@ -1285,7 +1290,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
           accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
 
-          if (SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
+          if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
             if (p_sv) then !P-SV waves
               b_absorb_elastic_left(1,j,ib_left(ispecabs),it) = (tx + traction_x_t0)*weight
               b_absorb_elastic_left(3,j,ib_left(ispecabs),it) = (tz + traction_z_t0)*weight
@@ -1307,16 +1312,17 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           if (add_Bielak_conditions .and. initialfield) then
             if (.not.over_critical_angle) then
               call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                          x0_source, z0_source, A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
-                          c_inc, c_refl, time_offset,f0)
+                          x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
+                          c_inc, c_refl, time_offset,f0_source(1))
+
               traction_x_t0 = lambdaplus2mu_unrelaxed_elastic * dxUx + lambdal_unrelaxed_elastic * dzUz
               traction_z_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
             else
-              veloc_horiz=v0x_right(count_right)
-              veloc_vert=v0z_right(count_right)
-              traction_x_t0=t0x_right(count_right)
-              traction_z_t0=t0z_right(count_right)
-              count_right=count_right+1
+              veloc_horiz = v0x_right(count_right,it)
+              veloc_vert = v0z_right(count_right,it)
+              traction_x_t0 = t0x_right(count_right,it)
+              traction_z_t0 = t0z_right(count_right,it)
+              count_right = count_right+1
             endif
           else
             veloc_horiz = 0._CUSTOM_REAL;   veloc_vert = 0._CUSTOM_REAL
@@ -1373,7 +1379,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
           accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0+displtz)*weight
 
-          if (SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
+          if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
             if (p_sv) then !P-SV waves
               b_absorb_elastic_right(1,j,ib_right(ispecabs),it) = (tx - traction_x_t0)*weight
               b_absorb_elastic_right(3,j,ib_right(ispecabs),it) = (tz - traction_z_t0)*weight
@@ -1400,16 +1406,17 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           if (add_Bielak_conditions .and. initialfield) then
             if (.not.over_critical_angle) then
               call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                          x0_source, z0_source, A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
-                          c_inc, c_refl, time_offset,f0)
+                          x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
+                          c_inc, c_refl, time_offset,f0_source(1))
+
               traction_x_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
               traction_z_t0 = lambdal_unrelaxed_elastic * dxUx + lambdaplus2mu_unrelaxed_elastic * dzUz
             else
-              veloc_horiz=v0x_bot(count_bottom)
-              veloc_vert=v0z_bot(count_bottom)
-              traction_x_t0=t0x_bot(count_bottom)
-              traction_z_t0=t0z_bot(count_bottom)
-              count_bottom=count_bottom+1
+              veloc_horiz = v0x_bot(count_bottom,it)
+              veloc_vert = v0z_bot(count_bottom,it)
+              traction_x_t0 = t0x_bot(count_bottom,it)
+              traction_z_t0 = t0z_bot(count_bottom,it)
+              count_bottom = count_bottom+1
             endif
           else
             veloc_horiz = 0._CUSTOM_REAL;   veloc_vert = 0._CUSTOM_REAL
@@ -1476,7 +1483,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
           accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
 
-          if (SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
+          if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
             if (p_sv) then !P-SV waves
               b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),it) = (tx + traction_x_t0)*weight
               b_absorb_elastic_bottom(3,i,ib_bottom(ispecabs),it) = (tz + traction_z_t0)*weight
@@ -1502,8 +1509,9 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           ! top or bottom edge, vertical normal vector
           if (add_Bielak_conditions .and. initialfield) then
             call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-                        x0_source, z0_source, A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
-                        c_inc, c_refl, time_offset,f0)
+                        x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
+                        c_inc, c_refl, time_offset,f0_source(1))
+
             traction_x_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
             traction_z_t0 = lambdal_unrelaxed_elastic * dxUx + lambdaplus2mu_unrelaxed_elastic * dzUz
           else
@@ -1571,7 +1579,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
           accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0+displtz)*weight
 
-          if (SAVE_FORWARD .and. SIMULATION_TYPE ==1) then
+          if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
             if (p_sv) then !P-SV waves
               b_absorb_elastic_top(1,i,ib_top(ispecabs),it) = (tx- traction_x_t0)*weight
               b_absorb_elastic_top(3,i,ib_top(ispecabs),it) = (tz- traction_z_t0)*weight
@@ -1592,7 +1600,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
     do ispecabs = 1,nelemabs
       ispec = numabs(ispecabs)
 
-      if (is_PML(ispec)) then
+      if (ispec_is_PML(ispec)) then
         ispec_PML=spec_to_PML(ispec)
 
 !--- left absorbing boundary
@@ -1647,7 +1655,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
           enddo
         endif
 
-      endif ! end of is_PML
+      endif ! end of ispec_is_PML
     enddo ! end specabs loop
   endif  ! end of PML_BOUNDARY_CONDITIONS
 

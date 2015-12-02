@@ -48,6 +48,8 @@ subroutine prepare_timerun()
 #endif
 
   use specfem_par
+  use specfem_par_movie
+  use specfem_par_noise,only: NOISE_TOMOGRAPHY
 
   implicit none
 
@@ -74,6 +76,10 @@ subroutine prepare_timerun()
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
 
   double precision :: x_final_receiver_dummy, z_final_receiver_dummy
+  double precision :: cploc,csloc
+
+  double precision :: xmin,xmax,zmin,zmax
+  double precision :: xmin_local,xmax_local,zmin_local,zmax_local
 
   ! for Lagrange interpolants
   double precision, external :: hgll, hglj
@@ -149,7 +155,7 @@ subroutine prepare_timerun()
 
     ! allocate temporary arrays
     allocate(integer_mask_ibool(nglob),stat=ier)
-    if (ier /= 0 ) stop 'error allocating mask_ibool'
+    if (ier /= 0 ) stop 'error allocating integer_mask_ibool'
     allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec),stat=ier)
     if (ier /= 0 ) stop 'error allocating copy_ibool_ori'
 
@@ -175,6 +181,10 @@ subroutine prepare_timerun()
       if (AXISYM) flagrange_GLJ(j,i) = hglj(j-1,xirec,xiglj,NGLJ)
     enddo
   enddo
+
+  ! synchronizes all processes
+  call synchronize_all()
+
 
 ! get number of stations from receiver file
   open(unit=IIN,file='DATA/STATIONS',status='old',action='read',iostat=ier)
@@ -267,6 +277,9 @@ subroutine prepare_timerun()
       allocate(c23ext(1,1,1))
       allocate(c25ext(1,1,1))
     endif
+
+  ! synchronizes all processes
+  call synchronize_all()
 
 !
 !----  set the coordinates of the points of the global grid
@@ -374,6 +387,9 @@ subroutine prepare_timerun()
 
   endif
 
+  ! synchronizes all processes
+  call synchronize_all()
+
 ! use a spring to improve the stability of the Stacey condition
   x_center_spring = (xmax + xmin)/2.d0
   z_center_spring = (zmax + zmin)/2.d0
@@ -383,53 +399,52 @@ subroutine prepare_timerun()
   this_ibool_is_a_periodic_edge(:) = .false.
 
 ! periodic conditions: detect common points between left and right edges and replace one of them with the other
-    if (ADD_PERIODIC_CONDITIONS) then
+  if (ADD_PERIODIC_CONDITIONS) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'implementing periodic boundary conditions'
+      write(IMAIN,*) 'in the horizontal direction with a periodicity distance of ',PERIODIC_HORIZ_DIST,' m'
+      if (PERIODIC_HORIZ_DIST <= 0.d0) stop 'PERIODIC_HORIZ_DIST should be greater than zero when using ADD_PERIODIC_CONDITIONS'
+      write(IMAIN,*)
+      write(IMAIN,*) '*****************************************************************'
+      write(IMAIN,*) '*****************************************************************'
+      write(IMAIN,*) '**** BEWARE: because of periodic conditions, values computed ****'
+      write(IMAIN,*) '****         by check_grid() below will not be reliable       ****'
+      write(IMAIN,*) '*****************************************************************'
+      write(IMAIN,*) '*****************************************************************'
+      write(IMAIN,*)
+    endif
 
-      if (myrank == 0) then
-        write(IMAIN,*)
-        write(IMAIN,*) 'implementing periodic boundary conditions'
-        write(IMAIN,*) 'in the horizontal direction with a periodicity distance of ',PERIODIC_HORIZ_DIST,' m'
-        if (PERIODIC_HORIZ_DIST <= 0.d0) stop 'PERIODIC_HORIZ_DIST should be greater than zero when using ADD_PERIODIC_CONDITIONS'
-        write(IMAIN,*)
-        write(IMAIN,*) '*****************************************************************'
-        write(IMAIN,*) '*****************************************************************'
-        write(IMAIN,*) '**** BEWARE: because of periodic conditions, values computed ****'
-        write(IMAIN,*) '****         by check_grid() below will not be reliable       ****'
-        write(IMAIN,*) '*****************************************************************'
-        write(IMAIN,*) '*****************************************************************'
-        write(IMAIN,*)
-      endif
+    ! set up a local geometric tolerance
+    xtypdist = +HUGEVAL
 
-! set up a local geometric tolerance
+    do ispec = 1,nspec
 
-  xtypdist = +HUGEVAL
+      xminval = +HUGEVAL
+      yminval = +HUGEVAL
+      xmaxval = -HUGEVAL
+      ymaxval = -HUGEVAL
 
-  do ispec = 1,nspec
+      ! only loop on the four corners of each element to get a typical size
+      do j = 1,NGLLZ,NGLLZ-1
+        do i = 1,NGLLX,NGLLX-1
+          iglob = ibool(i,j,ispec)
+          xmaxval = max(coord(1,iglob),xmaxval)
+          xminval = min(coord(1,iglob),xminval)
+          ymaxval = max(coord(2,iglob),ymaxval)
+          yminval = min(coord(2,iglob),yminval)
+        enddo
+      enddo
 
-  xminval = +HUGEVAL
-  yminval = +HUGEVAL
-  xmaxval = -HUGEVAL
-  ymaxval = -HUGEVAL
+      ! compute the minimum typical "size" of an element in the mesh
+      xtypdist = min(xtypdist,xmaxval-xminval)
+      xtypdist = min(xtypdist,ymaxval-yminval)
 
-! only loop on the four corners of each element to get a typical size
-  do j = 1,NGLLZ,NGLLZ-1
-    do i = 1,NGLLX,NGLLX-1
-      iglob = ibool(i,j,ispec)
-      xmaxval = max(coord(1,iglob),xmaxval)
-      xminval = min(coord(1,iglob),xminval)
-      ymaxval = max(coord(2,iglob),ymaxval)
-      yminval = min(coord(2,iglob),yminval)
     enddo
-  enddo
 
-! compute the minimum typical "size" of an element in the mesh
-  xtypdist = min(xtypdist,xmaxval-xminval)
-  xtypdist = min(xtypdist,ymaxval-yminval)
-
-  enddo
-
-! define a tolerance, small with respect to the minimum size
-  xtol = 1.d-4 * xtypdist
+    ! define a tolerance, small with respect to the minimum size
+    xtol = 1.d-4 * xtypdist
 
 ! detect the points that are on the same horizontal line (i.e. at the same height Z)
 ! and that have a value of the horizontal coordinate X that differs by exactly the periodicity length;
@@ -442,37 +457,43 @@ subroutine prepare_timerun()
 ! reduced to O(NGLOB log(NGLOB)) by using a quicksort algorithm on the coordinates of the points to detect the multiples
 ! (as implemented in routine createnum_fast() elsewhere in the code). This could be done one day if needed instead
 ! of the very simple double loop below.
-      if (myrank == 0) write(IMAIN,*) &
-        'start detecting points for periodic boundary conditions (the current algorithm can be slow and could be improved)...'
-      counter = 0
-      do iglob = 1,NGLOB-1
-        do iglob2 = iglob + 1,NGLOB
-          ! check if the two points have the exact same Z coordinate
-          if (abs(coord(2,iglob2) - coord(2,iglob)) < xtol) then
-            ! if so, check if their X coordinate differs by exactly the periodicity distance
-            if (abs(abs(coord(1,iglob2) - coord(1,iglob)) - PERIODIC_HORIZ_DIST) < xtol) then
-              ! if so, they are the same point, thus replace the highest value of ibool with the lowest
-              ! to make them the same global point and thus implement periodicity automatically
-              counter = counter + 1
-              this_ibool_is_a_periodic_edge(iglob) = .true.
-              this_ibool_is_a_periodic_edge(iglob2) = .true.
-              do ispec = 1,nspec
-                do j = 1,NGLLZ
-                  do i = 1,NGLLX
-                    if (ibool(i,j,ispec) == iglob2) ibool(i,j,ispec) = iglob
-                  enddo
+    if (myrank == 0) then
+      write(IMAIN,*) 'start detecting points for periodic boundary conditions '// &
+                     '(the current algorithm can be slow and could be improved)...'
+    endif
+
+    counter = 0
+    do iglob = 1,NGLOB-1
+      do iglob2 = iglob + 1,NGLOB
+        ! check if the two points have the exact same Z coordinate
+        if (abs(coord(2,iglob2) - coord(2,iglob)) < xtol) then
+          ! if so, check if their X coordinate differs by exactly the periodicity distance
+          if (abs(abs(coord(1,iglob2) - coord(1,iglob)) - PERIODIC_HORIZ_DIST) < xtol) then
+            ! if so, they are the same point, thus replace the highest value of ibool with the lowest
+            ! to make them the same global point and thus implement periodicity automatically
+            counter = counter + 1
+            this_ibool_is_a_periodic_edge(iglob) = .true.
+            this_ibool_is_a_periodic_edge(iglob2) = .true.
+            do ispec = 1,nspec
+              do j = 1,NGLLZ
+                do i = 1,NGLLX
+                  if (ibool(i,j,ispec) == iglob2) ibool(i,j,ispec) = iglob
                 enddo
               enddo
-            endif
+            enddo
           endif
-        enddo
+        endif
       enddo
+    enddo
 
-      if (myrank == 0) write(IMAIN,*) 'done detecting points for periodic boundary conditions.'
+    if (myrank == 0) write(IMAIN,*) 'done detecting points for periodic boundary conditions.'
 
-      if (counter > 0) write(IMAIN,*) 'implemented periodic conditions on ',counter,' grid points on proc ',myrank
+    if (counter > 0) write(IMAIN,*) 'implemented periodic conditions on ',counter,' grid points on proc ',myrank
 
-    endif ! of if (ADD_PERIODIC_CONDITIONS)
+  endif ! of if (ADD_PERIODIC_CONDITIONS)
+
+  ! synchronizes all processes
+  call synchronize_all()
 
 !
 !--- save the grid of points in a file
@@ -492,9 +513,12 @@ subroutine prepare_timerun()
 !
 !-----   plot the GLL mesh in a Gnuplot file
 !
-  if (output_grid_Gnuplot .and. myrank == 0)  &
+  if (output_grid_Gnuplot .and. myrank == 0) then
     call plotgll()
+  endif
 
+  ! synchronizes all processes
+  call synchronize_all()
 
   ! external models
   if (assign_external_model) then
@@ -504,6 +528,9 @@ subroutine prepare_timerun()
     endif
     call read_external_model()
   endif
+
+  ! synchronizes all processes
+  call synchronize_all()
 
 !
 !----  perform basic checks on parameters read
@@ -519,32 +546,32 @@ subroutine prepare_timerun()
   endif
 
   ! global domain flags
-  any_elastic_glob = any_elastic
+  ELASTIC_SIMULATION = any_elastic
 #ifdef USE_MPI
-  call MPI_ALLREDUCE(any_elastic, any_elastic_glob, 1, MPI_LOGICAL, &
+  call MPI_ALLREDUCE(any_elastic, ELASTIC_SIMULATION, 1, MPI_LOGICAL, &
                     MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
-  any_poroelastic_glob = any_poroelastic
+  POROELASTIC_SIMULATION = any_poroelastic
 #ifdef USE_MPI
-  call MPI_ALLREDUCE(any_poroelastic, any_poroelastic_glob, 1, MPI_LOGICAL, &
+  call MPI_ALLREDUCE(any_poroelastic, POROELASTIC_SIMULATION, 1, MPI_LOGICAL, &
                     MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
-  any_acoustic_glob = any_acoustic
+  ACOUSTIC_SIMULATION = any_acoustic
 #ifdef USE_MPI
-  call MPI_ALLREDUCE(any_acoustic, any_acoustic_glob, 1, MPI_LOGICAL, &
+  call MPI_ALLREDUCE(any_acoustic, ACOUSTIC_SIMULATION, 1, MPI_LOGICAL, &
                     MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
-   any_gravitoacoustic_glob = any_gravitoacoustic
+   GRAVITOACOUSTIC_SIMULATION = any_gravitoacoustic
 #ifdef USE_MPI
-  call MPI_ALLREDUCE(any_gravitoacoustic, any_gravitoacoustic_glob, 1, MPI_LOGICAL, &
+  call MPI_ALLREDUCE(any_gravitoacoustic, GRAVITOACOUSTIC_SIMULATION, 1, MPI_LOGICAL, &
                     MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
   ! for acoustic
-  if (ATTENUATION_VISCOELASTIC_SOLID .and. .not. any_elastic_glob) &
+  if (ATTENUATION_VISCOELASTIC_SOLID .and. .not. ELASTIC_SIMULATION) &
     call exit_MPI(myrank,'currently cannot have attenuation if acoustic/poroelastic simulation only')
 
 !
@@ -560,328 +587,350 @@ subroutine prepare_timerun()
     b_deltatsquareover2 = HALF*b_deltat*b_deltat
   endif
 
-!---- define actual location of source and receivers
+  ! synchronizes all processes
+  call synchronize_all()
 
+  ! defines actual location of source and receivers
   call setup_sources_receivers()
 
-! compute source array for adjoint source
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! compute source array for adjoint source
   nadj_rec_local = 0
+
   if (SIMULATION_TYPE == 3) then  ! adjoint calculation
 
-  allocate(source_adjointe(nrecloc,NSTEP,2))
+    allocate(source_adjointe(nrecloc,NSTEP,2))
 
     do irec = 1,nrec
+      ! counts local adjoint receiver stations
       if (myrank == which_proc_receiver(irec)) then
         ! check that the source proc number is okay
-        if (which_proc_receiver(irec) < 0 .or. which_proc_receiver(irec) > NPROC-1) &
-              call exit_MPI(myrank,'something is wrong with the source proc number in adjoint simulation')
+        if (which_proc_receiver(irec) < 0 .or. which_proc_receiver(irec) > NPROC-1) then
+          call exit_MPI(myrank,'something is wrong with the source proc number in adjoint simulation')
+        endif
+
         nadj_rec_local = nadj_rec_local + 1
       endif
     enddo
+
     allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
+
     if (nadj_rec_local > 0)  then
       allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
     else
       allocate(adj_sourcearrays(1,1,1,1,1))
     endif
 
-  if (seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
+    if (seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
 
-    if (.not. SU_FORMAT) then
-       irec_local = 0
-       do irec = 1, nrec
-         ! compute only adjoint source arrays in the local proc
-         if (myrank == which_proc_receiver(irec)) then
-           irec_local = irec_local + 1
-           adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
-           call compute_arrays_adj_source(xi_receiver(irec), gamma_receiver(irec),irec_local)
-           adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
-         endif
-       enddo
-    else ! (SU_FORMAT)
-        call add_adjoint_sources_SU()
-    endif
+      if (.not. SU_FORMAT) then
+         irec_local = 0
+         do irec = 1, nrec
+           ! compute only adjoint source arrays in the local proc
+           if (myrank == which_proc_receiver(irec)) then
+             irec_local = irec_local + 1
+             adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
 
-  else if (seismotype == 4 .or. seismotype == 6) then
+             call compute_arrays_adj_source(xi_receiver(irec), gamma_receiver(irec),irec_local)
 
-    if (.not. SU_FORMAT) then
-       irec_local = 0
-       do irec = 1, nrec
-         ! compute only adjoint source arrays in the local proc
-         if (myrank == which_proc_receiver(irec)) then
-           irec_local = irec_local + 1
-           adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
-           call compute_arrays_adj_source(xi_receiver(irec), gamma_receiver(irec),irec_local)
-           adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
-         endif
-       enddo
-    else
-       ! SU format
-       irec_local = 0
-       write(filename, "('./SEM/Up_file_single.su.adj')")
-       open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
-       if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+             adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+           endif
+         enddo
+      else ! (SU_FORMAT)
+          call add_adjoint_sources_SU()
+      endif
 
-       allocate(adj_src_s(NSTEP,3))
+    else if (seismotype == 4 .or. seismotype == 6) then
 
-       do irec = 1, nrec
-         if (myrank == which_proc_receiver(irec)) then
-          irec_local = irec_local + 1
-          adj_sourcearray(:,:,:,:) = 0.0
+      if (.not. SU_FORMAT) then
+        irec_local = 0
+        do irec = 1, nrec
+          ! compute only adjoint source arrays in the local proc
+          if (myrank == which_proc_receiver(irec)) then
+            irec_local = irec_local + 1
+            adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
 
-          read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
-          if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+            call compute_arrays_adj_source(xi_receiver(irec), gamma_receiver(irec),irec_local)
 
-          header2 = int(r4head(29), kind=2)
-          if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
+            adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+          endif
+        enddo
+      else
+        ! SU format
+        irec_local = 0
+        write(filename, "('./SEM/Up_file_single.su.adj')")
+        open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+        if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
-          if (AXISYM) then
-            if (is_on_the_axis(ispec_selected_rec(irec))) then
-              call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
-              !do j = 1,NGLJ ! Same result with that loop
-              !  hxir(j) = hglj(j-1,xi_receiver(irec),xiglj,NGLJ)
-              !enddo
+        allocate(adj_src_s(NSTEP,3))
+
+        do irec = 1, nrec
+          if (myrank == which_proc_receiver(irec)) then
+            irec_local = irec_local + 1
+            adj_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
+
+            read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
+            if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+
+            header2 = int(r4head(29), kind=2)
+            if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
+
+            if (AXISYM) then
+              if (is_on_the_axis(ispec_selected_rec(irec))) then
+                call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
+                !do j = 1,NGLJ ! Same result with that loop
+                !  hxir(j) = hglj(j-1,xi_receiver(irec),xiglj,NGLJ)
+                !enddo
+              else
+                call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+              endif
             else
               call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
             endif
-          else
-            call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
-          endif
 
-          call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
-          source_adjointe(irec_local,:,1) = adj_src_s(:,1)
+            call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
+            source_adjointe(irec_local,:,1) = adj_src_s(:,1)
 
-          if (.not. GPU_MODE) then
-            do k = 1, NGLLZ
-              do i = 1, NGLLX
-                adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
+            if (.not. GPU_MODE) then
+              do k = 1, NGLLZ
+                do i = 1, NGLLX
+                  adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
+                enddo
               enddo
-            enddo
-            adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
-          endif
+              adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+            endif
 
-         endif !  if (myrank == which_proc_receiver(irec))
-       enddo ! irec
-       close(111)
-       deallocate(adj_src_s)
+          endif !  if (myrank == which_proc_receiver(irec))
+        enddo ! irec
+        close(111)
+        deallocate(adj_src_s)
 
-    endif ! SU_format
+      endif ! SU_format
 
-  endif ! seismotype
+    endif ! seismotype
 
   else
      allocate(adj_sourcearrays(1,1,1,1,1))
-  endif ! SIMULATION_TYPE
+  endif ! SIMULATION_TYPE == 3
 
-    if (nrecloc > 0) then
-      allocate(anglerec_irec(nrecloc))
-      allocate(cosrot_irec(nrecloc))
-      allocate(sinrot_irec(nrecloc))
-      allocate(rec_tangential_detection_curve(nrecloc))
-    else
-      allocate(anglerec_irec(1))
-      allocate(cosrot_irec(1))
-      allocate(sinrot_irec(1))
-      allocate(rec_tangential_detection_curve(1))
-    endif
+  ! synchronizes all processes
+  call synchronize_all()
 
-    if (rec_normal_to_surface .and. abs(anglerec) > 1.d-6) &
-      stop 'anglerec should be zero when receivers are normal to the topography'
+  if (nrecloc > 0) then
+    allocate(anglerec_irec(nrecloc))
+    allocate(cosrot_irec(nrecloc))
+    allocate(sinrot_irec(nrecloc))
+    allocate(rec_tangential_detection_curve(nrecloc))
+  else
+    allocate(anglerec_irec(1))
+    allocate(cosrot_irec(1))
+    allocate(sinrot_irec(1))
+    allocate(rec_tangential_detection_curve(1))
+  endif
 
-    anglerec_irec(:) = anglerec * pi / 180.d0
-    cosrot_irec(:) = cos(anglerec_irec(:))
-    sinrot_irec(:) = sin(anglerec_irec(:))
+  if (rec_normal_to_surface .and. abs(anglerec) > 1.d-6) &
+    stop 'anglerec should be zero when receivers are normal to the topography'
+
+  anglerec_irec(:) = anglerec * pi / 180.d0
+  cosrot_irec(:) = cos(anglerec_irec(:))
+  sinrot_irec(:) = sin(anglerec_irec(:))
 
 !
 !--- tangential computation
 !
 
-! for receivers
-    if (rec_normal_to_surface) then
-      irecloc = 0
-      do irec = 1, nrec
-        if (which_proc_receiver(irec) == myrank) then
-          irecloc = irecloc + 1
-          distmin = HUGEVAL
-          do i = 1, nnodes_tangential_curve
-            dist_current = sqrt((x_final_receiver(irec)-nodes_tangential_curve(1,i))**2 + &
-               (z_final_receiver(irec)-nodes_tangential_curve(2,i))**2)
-            if (dist_current < distmin) then
-              n1_tangential_detection_curve = i
-              distmin = dist_current
-            endif
-         enddo
+  ! for receivers
+  if (rec_normal_to_surface) then
+    irecloc = 0
+    do irec = 1, nrec
+      if (which_proc_receiver(irec) == myrank) then
+        irecloc = irecloc + 1
+        distmin = HUGEVAL
+        do i = 1, nnodes_tangential_curve
+          dist_current = sqrt((x_final_receiver(irec)-nodes_tangential_curve(1,i))**2 + &
+             (z_final_receiver(irec)-nodes_tangential_curve(2,i))**2)
+          if (dist_current < distmin) then
+            n1_tangential_detection_curve = i
+            distmin = dist_current
+          endif
+       enddo
 
-         rec_tangential_detection_curve(irecloc) = n1_tangential_detection_curve
-         call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, &
-                      nnodes_tangential_curve)
+       rec_tangential_detection_curve(irecloc) = n1_tangential_detection_curve
+       call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, &
+                     nnodes_tangential_curve)
 
-         call compute_normal_vector( anglerec_irec(irecloc), &
-           nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
-           nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
-           nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
-           nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
-           nodes_tangential_curve(2,n_tangential_detection_curve(1)), &
-           nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
-           nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
-           nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
-       endif
+       call compute_normal_vector( anglerec_irec(irecloc), &
+                                   nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
+                                   nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
+                                   nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
+                                   nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
+                                   nodes_tangential_curve(2,n_tangential_detection_curve(1)), &
+                                   nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
+                                   nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
+                                   nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
+      endif
 
-      enddo
-      cosrot_irec(:) = cos(anglerec_irec(:))
-      sinrot_irec(:) = sin(anglerec_irec(:))
-    endif
+    enddo
+    cosrot_irec(:) = cos(anglerec_irec(:))
+    sinrot_irec(:) = sin(anglerec_irec(:))
+  endif
 
 ! for the source
-    if (force_normal_to_surface) then
+  if (force_normal_to_surface) then
 
-      do i_source= 1,NSOURCES
-        if (is_proc_source(i_source) == 1) then
-          distmin = HUGEVAL
-          do i = 1, nnodes_tangential_curve
-            dist_current = sqrt((coord(1,iglob_source(i_source))-nodes_tangential_curve(1,i))**2 + &
-                                (coord(2,iglob_source(i_source))-nodes_tangential_curve(2,i))**2)
-            if (dist_current < distmin) then
-              n1_tangential_detection_curve = i
-              distmin = dist_current
+    do i_source = 1,NSOURCES
+      if (is_proc_source(i_source) == 1) then
+        distmin = HUGEVAL
+        do i = 1, nnodes_tangential_curve
+          dist_current = sqrt((coord(1,iglob_source(i_source))-nodes_tangential_curve(1,i))**2 + &
+                              (coord(2,iglob_source(i_source))-nodes_tangential_curve(2,i))**2)
+          if (dist_current < distmin) then
+            n1_tangential_detection_curve = i
+            distmin = dist_current
 
-            endif
-          enddo
-
-          call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, &
-                       nnodes_tangential_curve)
-
-          ! in the case of a source force vector
-          ! users can give an angle with respect to the normal to the topography surface,
-          ! in which case we must compute the normal to the topography
-          ! and add it the existing rotation angle
-          call compute_normal_vector( anglesource(i_source), &
-                            nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
-                            nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
-                            nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
-                            nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
-                            nodes_tangential_curve(2,n_tangential_detection_curve(1)), &
-                            nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
-                            nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
-                            nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
-
-          source_courbe_eros(i_source) = n1_tangential_detection_curve
-          if (myrank == 0 .and. is_proc_source(i_source) == 1 .and. nb_proc_source(i_source) == 1) then
-            source_courbe_eros(i_source) = n1_tangential_detection_curve
-            anglesource_recv = anglesource(i_source)
-#ifdef USE_MPI
-          else if (myrank == 0) then
-            do i = 1, nb_proc_source(i_source) - is_proc_source(i_source)
-              call MPI_recv(source_courbe_eros(i_source),1,MPI_INTEGER, &
-                          MPI_ANY_SOURCE,42,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-              call MPI_recv(anglesource_recv,1,MPI_DOUBLE_PRECISION, &
-                          MPI_ANY_SOURCE,43,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-            enddo
-          else if (is_proc_source(i_source) == 1) then
-            call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,MPI_COMM_WORLD,ier)
-            call MPI_send(anglesource(i_source),1,MPI_DOUBLE_PRECISION,0,43,MPI_COMM_WORLD,ier)
-#endif
           endif
+        enddo
+
+        call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, &
+                     nnodes_tangential_curve)
+
+        ! in the case of a source force vector
+        ! users can give an angle with respect to the normal to the topography surface,
+        ! in which case we must compute the normal to the topography
+        ! and add it the existing rotation angle
+        call compute_normal_vector( anglesource(i_source), &
+                          nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
+                          nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
+                          nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
+                          nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
+                          nodes_tangential_curve(2,n_tangential_detection_curve(1)), &
+                          nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
+                          nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
+                          nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
+
+        source_courbe_eros(i_source) = n1_tangential_detection_curve
+        if (myrank == 0 .and. is_proc_source(i_source) == 1 .and. nb_proc_source(i_source) == 1) then
+          source_courbe_eros(i_source) = n1_tangential_detection_curve
+          anglesource_recv = anglesource(i_source)
+#ifdef USE_MPI
+        else if (myrank == 0) then
+          do i = 1, nb_proc_source(i_source) - is_proc_source(i_source)
+            call MPI_recv(source_courbe_eros(i_source),1,MPI_INTEGER, &
+                        MPI_ANY_SOURCE,42,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+            call MPI_recv(anglesource_recv,1,MPI_DOUBLE_PRECISION, &
+                        MPI_ANY_SOURCE,43,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+          enddo
+        else if (is_proc_source(i_source) == 1) then
+          call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,MPI_COMM_WORLD,ier)
+          call MPI_send(anglesource(i_source),1,MPI_DOUBLE_PRECISION,0,43,MPI_COMM_WORLD,ier)
+#endif
+        endif
 
 #ifdef USE_MPI
-          call MPI_bcast(anglesource_recv,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-          anglesource(i_source) = anglesource_recv
+        call MPI_bcast(anglesource_recv,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+        anglesource(i_source) = anglesource_recv
 #endif
-        endif !  if (is_proc_source(i_source) == 1)
-      enddo ! do i_source= 1,NSOURCES
-    endif !  if (force_normal_to_surface)
+      endif !  if (is_proc_source(i_source) == 1)
+    enddo ! do i_source= 1,NSOURCES
+  endif !  if (force_normal_to_surface)
 
 ! CHRIS --- how to deal with multiple source. Use first source now. ---
 ! compute distance from source to receivers following the curve
-    if (force_normal_to_surface .and. rec_normal_to_surface) then
-      dist_tangential_detection_curve(source_courbe_eros(1)) = 0
-      do i = source_courbe_eros(1)+1, nnodes_tangential_curve
-        dist_tangential_detection_curve(i) = dist_tangential_detection_curve(i-1) + &
-            sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i-1))**2 + &
-            (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i-1))**2)
-      enddo
-      dist_tangential_detection_curve(1) = dist_tangential_detection_curve(nnodes_tangential_curve) + &
-           sqrt((nodes_tangential_curve(1,1)-nodes_tangential_curve(1,nnodes_tangential_curve))**2 + &
-           (nodes_tangential_curve(2,1)-nodes_tangential_curve(2,nnodes_tangential_curve))**2)
-      do i = 2, source_courbe_eros(1)-1
-        dist_tangential_detection_curve(i) = dist_tangential_detection_curve(i-1) + &
-            sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i-1))**2 + &
-            (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i-1))**2)
-      enddo
-      do i = source_courbe_eros(1)-1, 1, -1
-        dist_current = dist_tangential_detection_curve(i+1) + &
-            sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i+1))**2 + &
-            (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i+1))**2)
-        if (dist_current < dist_tangential_detection_curve(i)) then
-          dist_tangential_detection_curve(i) = dist_current
-        endif
-      enddo
-      dist_current = dist_tangential_detection_curve(1) + &
+  if (force_normal_to_surface .and. rec_normal_to_surface) then
+    dist_tangential_detection_curve(source_courbe_eros(1)) = 0
+    do i = source_courbe_eros(1)+1, nnodes_tangential_curve
+      dist_tangential_detection_curve(i) = dist_tangential_detection_curve(i-1) + &
+          sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i-1))**2 + &
+          (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i-1))**2)
+    enddo
+    dist_tangential_detection_curve(1) = dist_tangential_detection_curve(nnodes_tangential_curve) + &
          sqrt((nodes_tangential_curve(1,1)-nodes_tangential_curve(1,nnodes_tangential_curve))**2 + &
          (nodes_tangential_curve(2,1)-nodes_tangential_curve(2,nnodes_tangential_curve))**2)
-      if (dist_current < dist_tangential_detection_curve(nnodes_tangential_curve)) then
-        dist_tangential_detection_curve(nnodes_tangential_curve) = dist_current
+    do i = 2, source_courbe_eros(1)-1
+      dist_tangential_detection_curve(i) = dist_tangential_detection_curve(i-1) + &
+          sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i-1))**2 + &
+          (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i-1))**2)
+    enddo
+    do i = source_courbe_eros(1)-1, 1, -1
+      dist_current = dist_tangential_detection_curve(i+1) + &
+          sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i+1))**2 + &
+          (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i+1))**2)
+      if (dist_current < dist_tangential_detection_curve(i)) then
+        dist_tangential_detection_curve(i) = dist_current
       endif
-      do i = nnodes_tangential_curve-1, source_courbe_eros(1)+1, -1
-        dist_current = dist_tangential_detection_curve(i+1) + &
-            sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i+1))**2 + &
-            (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i+1))**2)
-        if (dist_current < dist_tangential_detection_curve(i)) then
-          dist_tangential_detection_curve(i) = dist_current
-        endif
-      enddo
+    enddo
+    dist_current = dist_tangential_detection_curve(1) + &
+       sqrt((nodes_tangential_curve(1,1)-nodes_tangential_curve(1,nnodes_tangential_curve))**2 + &
+       (nodes_tangential_curve(2,1)-nodes_tangential_curve(2,nnodes_tangential_curve))**2)
+    if (dist_current < dist_tangential_detection_curve(nnodes_tangential_curve)) then
+      dist_tangential_detection_curve(nnodes_tangential_curve) = dist_current
+    endif
+    do i = nnodes_tangential_curve-1, source_courbe_eros(1)+1, -1
+      dist_current = dist_tangential_detection_curve(i+1) + &
+          sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i+1))**2 + &
+          (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i+1))**2)
+      if (dist_current < dist_tangential_detection_curve(i)) then
+        dist_tangential_detection_curve(i) = dist_current
+      endif
+    enddo
+
+    if (myrank == 0) then
+      open(unit=11,file='OUTPUT_FILES/dist_rec_tangential_detection_curve', &
+            form='formatted', status='unknown')
+    endif
+
+    irecloc = 0
+    do irec = 1,nrec
 
       if (myrank == 0) then
-        open(unit=11,file='OUTPUT_FILES/dist_rec_tangential_detection_curve', &
-              form='formatted', status='unknown')
-      endif
-      irecloc = 0
-      do irec = 1,nrec
-
-        if (myrank == 0) then
-          if (which_proc_receiver(irec) == myrank) then
-            irecloc = irecloc + 1
-            n1_tangential_detection_curve = rec_tangential_detection_curve(irecloc)
-            x_final_receiver_dummy = x_final_receiver(irec)
-            z_final_receiver_dummy = z_final_receiver(irec)
-#ifdef USE_MPI
-          else
-
-            call MPI_RECV(n1_tangential_detection_curve,1,MPI_INTEGER,&
-               which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-            call MPI_RECV(x_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
-               which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-            call MPI_RECV(z_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
-               which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-
-#endif
-          endif
-
+        if (which_proc_receiver(irec) == myrank) then
+          irecloc = irecloc + 1
+          n1_tangential_detection_curve = rec_tangential_detection_curve(irecloc)
+          x_final_receiver_dummy = x_final_receiver(irec)
+          z_final_receiver_dummy = z_final_receiver(irec)
 #ifdef USE_MPI
         else
-          if (which_proc_receiver(irec) == myrank) then
-            irecloc = irecloc + 1
-            call MPI_SEND(rec_tangential_detection_curve(irecloc),1,MPI_INTEGER,0,irec,MPI_COMM_WORLD,ier)
-            call MPI_SEND(x_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
-            call MPI_SEND(z_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
-          endif
+
+          call MPI_RECV(n1_tangential_detection_curve,1,MPI_INTEGER,&
+             which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+          call MPI_RECV(x_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
+             which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+          call MPI_RECV(z_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
+             which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+
+#endif
+        endif
+
+#ifdef USE_MPI
+      else
+        if (which_proc_receiver(irec) == myrank) then
+          irecloc = irecloc + 1
+          call MPI_SEND(rec_tangential_detection_curve(irecloc),1,MPI_INTEGER,0,irec,MPI_COMM_WORLD,ier)
+          call MPI_SEND(x_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
+          call MPI_SEND(z_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
+        endif
 #endif
 
-        endif
-        if (myrank == 0) then
-          write(11,*) dist_tangential_detection_curve(n1_tangential_detection_curve)
-          write(12,*) x_final_receiver_dummy
-          write(13,*) z_final_receiver_dummy
-        endif
-      enddo
-
-      if (myrank == 0) then
-        close(11)
-        close(12)
-        close(13)
       endif
+      if (myrank == 0) then
+        write(11,*) dist_tangential_detection_curve(n1_tangential_detection_curve)
+        write(12,*) x_final_receiver_dummy
+        write(13,*) z_final_receiver_dummy
+      endif
+    enddo
 
-    endif ! force_normal_to_surface
+    if (myrank == 0) then
+      close(11)
+      close(12)
+      close(13)
+    endif
+
+  endif ! force_normal_to_surface
+
+  ! synchronizes all processes
+  call synchronize_all()
 
 !
 !---
@@ -922,18 +971,16 @@ subroutine prepare_timerun()
             call exit_MPI(myrank,'an acoustic pressure receiver cannot be located exactly '// &
                             'on the free surface because pressure is zero there')
           else
-            print *, '**********************************************************************'
-            print *, '*** Warning: acoustic receiver located exactly on the free surface ***'
-            print *, '*** Warning: tangential component will be zero there               ***'
-            print *, '**********************************************************************'
-            print *
+            write(IMAIN,*) '**********************************************************************'
+            write(IMAIN,*) '*** Warning: acoustic receiver located exactly on the free surface ***'
+            write(IMAIN,*) '*** Warning: tangential component will be zero there               ***'
+            write(IMAIN,*) '**********************************************************************'
+            write(IMAIN,*)
           endif
         endif
       endif
     enddo
   enddo
-
-
 
   allocate(xir_store_loc(nrecloc,NGLLX))
   allocate(gammar_store_loc(nrecloc,NGLLX))
@@ -988,258 +1035,303 @@ subroutine prepare_timerun()
     hgammas_store(i,:) = hgammas(:)
   enddo
 
-! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
   if (myrank == 0) then
-    write(IMAIN,*) "preparing array allocations..."
+    write(IMAIN,*) 'Preparing array allocations'
     call flush_IMAIN()
   endif
 
-    !
-    ! elastic domains
-    !
-    if (any_elastic) then
-      nglob_elastic = nglob
-    else
-      ! allocate unused arrays with fictitious size
-      nglob_elastic = 1
+  !
+  ! elastic domains
+  !
+  ! user info
+  if (ELASTIC_SIMULATION) then
+    if (myrank == 0) then
+      write(IMAIN,*) '  arrays for elastic domains'
+      call flush_IMAIN()
     endif
-    allocate(displ_elastic(3,nglob_elastic))
-    allocate(displ_elastic_old(3,nglob_elastic))
-    allocate(veloc_elastic(3,nglob_elastic))
-    allocate(accel_elastic(3,nglob_elastic))
-    allocate(accel_elastic_adj_coupling(3,nglob_elastic))
-    allocate(accel_elastic_adj_coupling2(3,nglob_elastic))
+  endif
 
-    allocate(rmass_inverse_elastic_one(nglob_elastic))
-    allocate(rmass_inverse_elastic_three(nglob_elastic))
+  ! sets global points in this slice
+  if (any_elastic) then
+    nglob_elastic = nglob
+  else
+    ! dummy allocate unused arrays with fictitious size
+    nglob_elastic = 1
+  endif
 
-    if (time_stepping_scheme==2) then
-      allocate(displ_elastic_LDDRK(3,nglob_elastic))
-      allocate(veloc_elastic_LDDRK(3,nglob_elastic))
-      allocate(veloc_elastic_LDDRK_temp(3,nglob_elastic))
+  allocate(displ_elastic(3,nglob_elastic))
+  allocate(displ_elastic_old(3,nglob_elastic))
+  allocate(veloc_elastic(3,nglob_elastic))
+  allocate(accel_elastic(3,nglob_elastic))
+  allocate(accel_elastic_adj_coupling(3,nglob_elastic))
+  allocate(accel_elastic_adj_coupling2(3,nglob_elastic))
+
+  allocate(rmass_inverse_elastic_one(nglob_elastic))
+  allocate(rmass_inverse_elastic_three(nglob_elastic))
+
+  if (time_stepping_scheme==2) then
+    allocate(displ_elastic_LDDRK(3,nglob_elastic))
+    allocate(veloc_elastic_LDDRK(3,nglob_elastic))
+    allocate(veloc_elastic_LDDRK_temp(3,nglob_elastic))
+  endif
+
+  if (time_stepping_scheme == 3) then
+    allocate(accel_elastic_rk(3,nglob_elastic,stage_time_scheme))
+    allocate(veloc_elastic_rk(3,nglob_elastic,stage_time_scheme))
+    allocate(veloc_elastic_initial_rk(3,nglob_elastic))
+    allocate(displ_elastic_initial_rk(3,nglob_elastic))
+  endif
+
+  ! extra array if adjoint and kernels calculation
+  if (SIMULATION_TYPE == 3 .and. any_elastic) then
+    nglob_elastic_b = nglob
+    nspec_elastic_b = nspec
+  else
+    ! dummy allocations
+    nglob_elastic_b = 1
+    nspec_elastic_b = 1
+  endif
+
+  allocate(b_displ_elastic(3,nglob_elastic_b))
+  allocate(b_displ_elastic_old(3,nglob_elastic_b))
+  allocate(b_veloc_elastic(3,nglob_elastic_b))
+  allocate(b_accel_elastic(3,nglob_elastic_b))
+  ! kernels
+  ! on global nodes
+  allocate(rho_k(nglob_elastic_b))
+  allocate(rhol_global(nglob_elastic_b))
+  allocate(mu_k(nglob_elastic_b))
+  allocate(mul_global(nglob_elastic_b))
+  allocate(kappa_k(nglob_elastic_b))
+  allocate(kappal_global(nglob_elastic_b))
+  ! on local nodes
+  allocate(rho_kl(NGLLX,NGLLZ,nspec_elastic_b))
+  allocate(mu_kl(NGLLX,NGLLZ,nspec_elastic_b))
+  allocate(kappa_kl(NGLLX,NGLLZ,nspec_elastic_b))
+  allocate(rhop_kl(NGLLX,NGLLZ,nspec_elastic_b))
+  allocate(alpha_kl(NGLLX,NGLLZ,nspec_elastic_b))
+  allocate(beta_kl(NGLLX,NGLLZ,nspec_elastic_b))
+  allocate(bulk_c_kl(NGLLX,NGLLZ,nspec_elastic_b))
+  allocate(bulk_beta_kl(NGLLX,NGLLZ,nspec_elastic_b))
+  if (APPROXIMATE_HESS_KL) then
+    allocate(rhorho_el_hessian_final2(NGLLX,NGLLZ,nspec_elastic_b))
+    allocate(rhorho_el_hessian_final1(NGLLX,NGLLZ,nspec_elastic_b))
+  endif
+
+
+  !
+  ! poro-elastic domains
+  !
+  if (POROELASTIC_SIMULATION) then
+    if (myrank == 0) then
+      write(IMAIN,*) '  arrays for poroelastic domains'
+      call flush_IMAIN()
     endif
+  endif
 
-    if (time_stepping_scheme == 3) then
-      allocate(accel_elastic_rk(3,nglob_elastic,stage_time_scheme))
-      allocate(veloc_elastic_rk(3,nglob_elastic,stage_time_scheme))
-      allocate(veloc_elastic_initial_rk(3,nglob_elastic))
-      allocate(displ_elastic_initial_rk(3,nglob_elastic))
+  ! sets number of points for this slice
+  if (any_poroelastic) then
+    nglob_poroelastic = nglob
+  else
+    ! dummy allocate unused arrays with fictitious size
+    nglob_poroelastic = 1
+  endif
+  allocate(displs_poroelastic(NDIM,nglob_poroelastic))
+  allocate(displs_poroelastic_old(NDIM,nglob_poroelastic))
+  allocate(velocs_poroelastic(NDIM,nglob_poroelastic))
+  allocate(accels_poroelastic(NDIM,nglob_poroelastic))
+  allocate(accels_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
+  allocate(rmass_s_inverse_poroelastic(nglob_poroelastic))
+
+  allocate(displw_poroelastic(NDIM,nglob_poroelastic))
+  allocate(velocw_poroelastic(NDIM,nglob_poroelastic))
+  allocate(accelw_poroelastic(NDIM,nglob_poroelastic))
+  allocate(accelw_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
+  allocate(rmass_w_inverse_poroelastic(nglob_poroelastic))
+
+  if (time_stepping_scheme == 2) then
+    allocate(displs_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+    allocate(velocs_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+    allocate(displw_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+    allocate(velocw_poroelastic_LDDRK(NDIM,nglob_poroelastic))
+  endif
+
+  if (time_stepping_scheme == 3) then
+    allocate(accels_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
+    allocate(velocs_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
+    allocate(accelw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
+    allocate(velocw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
+    allocate(displs_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+    allocate(velocs_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+    allocate(displw_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+    allocate(velocw_poroelastic_initial_rk(NDIM,nglob_poroelastic))
+  endif
+
+  ! extra array if adjoint and kernels calculation
+  if (SIMULATION_TYPE == 3 .and. any_poroelastic) then
+    nglob_poroelastic_b = nglob
+    nspec_poroelastic_b = nspec
+  else
+    ! dummy allocations
+    nglob_poroelastic_b = 1
+    nspec_poroelastic_b = 1
+  endif
+  allocate(b_displs_poroelastic(NDIM,nglob_poroelastic_b))
+  allocate(b_velocs_poroelastic(NDIM,nglob_poroelastic_b))
+  allocate(b_accels_poroelastic(NDIM,nglob_poroelastic_b))
+  allocate(b_displw_poroelastic(NDIM,nglob_poroelastic_b))
+  allocate(b_velocw_poroelastic(NDIM,nglob_poroelastic_b))
+  allocate(b_accelw_poroelastic(NDIM,nglob_poroelastic_b))
+  ! kernels
+  ! on global nodes
+  allocate(rhot_k(nglob_poroelastic_b))
+  allocate(rhof_k(nglob_poroelastic_b))
+  allocate(sm_k(nglob_poroelastic_b))
+  allocate(eta_k(nglob_poroelastic_b))
+  allocate(mufr_k(nglob_poroelastic_b))
+  allocate(B_k(nglob_poroelastic_b))
+  allocate(C_k(nglob_poroelastic_b))
+  allocate(M_k(nglob_poroelastic_b))
+  ! on local nodes
+  allocate(rhot_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(rhof_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(sm_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(eta_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(mufr_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(B_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(C_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(M_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+
+  allocate(phi_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(phib_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(mufrb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+
+  allocate(rhob_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(rhobb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(rhofb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(rhofbb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+
+  allocate(cpI_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(cpII_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(cs_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+
+  allocate(ratio_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
+
+  if (any_poroelastic .and. any_elastic) then
+    allocate(icount(nglob))
+  else
+    allocate(icount(1))
+  endif
+
+  !
+  ! acoustic domains
+  !
+  if (ACOUSTIC_SIMULATION) then
+    if (myrank == 0) then
+      write(IMAIN,*) '  arrays for acoustic domains'
+      call flush_IMAIN()
     endif
+  endif
 
-    ! extra array if adjoint and kernels calculation
-    if (SIMULATION_TYPE == 3 .and. any_elastic) then
-      nglob_elastic_b = nglob
-      nspec_elastic_b = nspec
-    else
-      ! dummy allocations
-      nglob_elastic_b = 1
-      nspec_elastic_b = 1
+  ! potential, its first and second derivative, and inverse of the mass matrix for acoustic elements
+  if (any_acoustic) then
+    nglob_acoustic = nglob
+  else
+    ! dummy allocate unused arrays with fictitious size
+    nglob_acoustic = 1
+  endif
+
+  allocate(potential_acoustic(nglob_acoustic))
+  allocate(potential_acoustic_old(nglob_acoustic))
+  allocate(potential_acoustic_adj_coupling(nglob_acoustic))
+  allocate(potential_dot_acoustic(nglob_acoustic))
+  allocate(potential_dot_dot_acoustic(nglob_acoustic))
+  allocate(rmass_inverse_acoustic(nglob_acoustic))
+  if (time_stepping_scheme == 2) then
+    allocate(potential_acoustic_LDDRK(nglob_acoustic))
+    allocate(potential_dot_acoustic_LDDRK(nglob_acoustic))
+    allocate(potential_dot_acoustic_temp(nglob_acoustic))
+  endif
+
+  if (time_stepping_scheme == 3) then
+    allocate(potential_acoustic_init_rk(nglob_acoustic))
+    allocate(potential_dot_acoustic_init_rk(nglob_acoustic))
+    allocate(potential_dot_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
+    allocate(potential_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
+  endif
+
+  if (SIMULATION_TYPE == 3 .and. any_acoustic) then
+    nglob_acoustic_b = nglob
+    nspec_acoustic_b = nspec
+  else
+    ! dummy array allocations
+    ! allocates unused arrays with fictitious size
+    nglob_acoustic_b = 1
+    nspec_acoustic_b = 1
+  endif
+  allocate(b_potential_acoustic(nglob_acoustic_b))
+  allocate(b_potential_acoustic_old(nglob_acoustic_b))
+  allocate(b_potential_dot_acoustic(nglob_acoustic_b))
+  allocate(b_potential_dot_dot_acoustic(nglob_acoustic_b))
+  allocate(b_displ_ac(2,nglob_acoustic_b))
+  allocate(b_accel_ac(2,nglob_acoustic_b))
+  allocate(accel_ac(2,nglob_acoustic_b))
+  ! kernels
+  ! on global points
+  allocate(rhol_ac_global(nglob_acoustic_b))
+  allocate(kappal_ac_global(nglob_acoustic_b))
+  ! on local points
+  allocate(rho_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
+  allocate(kappa_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
+  allocate(rhop_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
+  allocate(alpha_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
+  if (APPROXIMATE_HESS_KL) then
+    allocate(rhorho_ac_hessian_final2(NGLLX,NGLLZ,nspec_acoustic_b))
+    allocate(rhorho_ac_hessian_final1(NGLLX,NGLLZ,nspec_acoustic_b))
+  endif
+
+  !
+  ! gravito-acoustic domains
+  !
+  if (GRAVITOACOUSTIC_SIMULATION) then
+    if (myrank == 0) then
+      write(IMAIN,*) '  arrays for elastic domains'
+      call flush_IMAIN()
     endif
+  endif
 
-    allocate(b_displ_elastic(3,nglob_elastic_b))
-    allocate(b_displ_elastic_old(3,nglob_elastic_b))
-    allocate(b_veloc_elastic(3,nglob_elastic_b))
-    allocate(b_accel_elastic(3,nglob_elastic_b))
-    ! kernels
-    ! on global nodes
-    allocate(rho_k(nglob_elastic_b))
-    allocate(rhol_global(nglob_elastic_b))
-    allocate(mu_k(nglob_elastic_b))
-    allocate(mul_global(nglob_elastic_b))
-    allocate(kappa_k(nglob_elastic_b))
-    allocate(kappal_global(nglob_elastic_b))
-    ! on local nodes
-    allocate(rho_kl(NGLLX,NGLLZ,nspec_elastic_b))
-    allocate(mu_kl(NGLLX,NGLLZ,nspec_elastic_b))
-    allocate(kappa_kl(NGLLX,NGLLZ,nspec_elastic_b))
-    allocate(rhop_kl(NGLLX,NGLLZ,nspec_elastic_b))
-    allocate(alpha_kl(NGLLX,NGLLZ,nspec_elastic_b))
-    allocate(beta_kl(NGLLX,NGLLZ,nspec_elastic_b))
-    allocate(bulk_c_kl(NGLLX,NGLLZ,nspec_elastic_b))
-    allocate(bulk_beta_kl(NGLLX,NGLLZ,nspec_elastic_b))
-    if (APPROXIMATE_HESS_KL) then
-      allocate(rhorho_el_hessian_final2(NGLLX,NGLLZ,nspec_elastic_b))
-      allocate(rhorho_el_hessian_final1(NGLLX,NGLLZ,nspec_elastic_b))
-    endif
+  ! potential, its first and second derivative, and inverse of the mass matrix for gravitoacoustic elements
+  if (any_gravitoacoustic) then
+    nglob_gravitoacoustic = nglob
+  else
+    ! allocate unused arrays with fictitious size
+    nglob_gravitoacoustic = 1
+  endif
 
-    !
-    ! poro-elastic domains
-    !
-    if (any_poroelastic) then
-      nglob_poroelastic = nglob
-    else
-      ! allocate unused arrays with fictitious size
-      nglob_poroelastic = 1
-    endif
-    allocate(displs_poroelastic(NDIM,nglob_poroelastic))
-    allocate(displs_poroelastic_old(NDIM,nglob_poroelastic))
-    allocate(velocs_poroelastic(NDIM,nglob_poroelastic))
-    allocate(accels_poroelastic(NDIM,nglob_poroelastic))
-    allocate(accels_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
-    allocate(rmass_s_inverse_poroelastic(nglob_poroelastic))
+  allocate(potential_gravitoacoustic(nglob_gravitoacoustic))
+  allocate(potential_dot_gravitoacoustic(nglob_gravitoacoustic))
+  allocate(potential_dot_dot_gravitoacoustic(nglob_gravitoacoustic))
+  allocate(rmass_inverse_gravitoacoustic(nglob_gravitoacoustic))
+  allocate(potential_gravito(nglob_gravitoacoustic))
+  allocate(potential_dot_gravito(nglob_gravitoacoustic))
+  allocate(potential_dot_dot_gravito(nglob_gravitoacoustic))
+  allocate(rmass_inverse_gravito(nglob_gravitoacoustic))
 
-    allocate(displw_poroelastic(NDIM,nglob_poroelastic))
-    allocate(velocw_poroelastic(NDIM,nglob_poroelastic))
-    allocate(accelw_poroelastic(NDIM,nglob_poroelastic))
-    allocate(accelw_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
-    allocate(rmass_w_inverse_poroelastic(nglob_poroelastic))
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  done allocations'
+    call flush_IMAIN()
+  endif
 
-    if (time_stepping_scheme == 2) then
-      allocate(displs_poroelastic_LDDRK(NDIM,nglob_poroelastic))
-      allocate(velocs_poroelastic_LDDRK(NDIM,nglob_poroelastic))
-      allocate(displw_poroelastic_LDDRK(NDIM,nglob_poroelastic))
-      allocate(velocw_poroelastic_LDDRK(NDIM,nglob_poroelastic))
-    endif
-
-    if (time_stepping_scheme == 3) then
-      allocate(accels_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
-      allocate(velocs_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
-      allocate(accelw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
-      allocate(velocw_poroelastic_rk(NDIM,nglob_poroelastic,stage_time_scheme))
-      allocate(displs_poroelastic_initial_rk(NDIM,nglob_poroelastic))
-      allocate(velocs_poroelastic_initial_rk(NDIM,nglob_poroelastic))
-      allocate(displw_poroelastic_initial_rk(NDIM,nglob_poroelastic))
-      allocate(velocw_poroelastic_initial_rk(NDIM,nglob_poroelastic))
-    endif
-
-    ! extra array if adjoint and kernels calculation
-    if (SIMULATION_TYPE == 3 .and. any_poroelastic) then
-      nglob_poroelastic_b = nglob
-      nspec_poroelastic_b = nspec
-    else
-      ! dummy allocations
-      nglob_poroelastic_b = 1
-      nspec_poroelastic_b = 1
-    endif
-    allocate(b_displs_poroelastic(NDIM,nglob_poroelastic_b))
-    allocate(b_velocs_poroelastic(NDIM,nglob_poroelastic_b))
-    allocate(b_accels_poroelastic(NDIM,nglob_poroelastic_b))
-    allocate(b_displw_poroelastic(NDIM,nglob_poroelastic_b))
-    allocate(b_velocw_poroelastic(NDIM,nglob_poroelastic_b))
-    allocate(b_accelw_poroelastic(NDIM,nglob_poroelastic_b))
-    ! kernels
-    ! on global nodes
-    allocate(rhot_k(nglob_poroelastic_b))
-    allocate(rhof_k(nglob_poroelastic_b))
-    allocate(sm_k(nglob_poroelastic_b))
-    allocate(eta_k(nglob_poroelastic_b))
-    allocate(mufr_k(nglob_poroelastic_b))
-    allocate(B_k(nglob_poroelastic_b))
-    allocate(C_k(nglob_poroelastic_b))
-    allocate(M_k(nglob_poroelastic_b))
-    ! on local nodes
-    allocate(rhot_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(rhof_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(sm_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(eta_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(mufr_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(B_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(C_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(M_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-
-    allocate(phi_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(phib_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(mufrb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-
-    allocate(rhob_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(rhobb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(rhofb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(rhofbb_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-
-    allocate(cpI_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(cpII_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-    allocate(cs_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-
-    allocate(ratio_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
-
-    if (any_poroelastic .and. any_elastic) then
-      allocate(icount(nglob))
-    else
-      allocate(icount(1))
-    endif
-
-    !
-    ! acoustic domains
-    !
-    ! potential, its first and second derivative, and inverse of the mass matrix for acoustic elements
-    if (any_acoustic) then
-      nglob_acoustic = nglob
-    else
-      ! allocate unused arrays with fictitious size
-      nglob_acoustic = 1
-    endif
-    allocate(potential_acoustic(nglob_acoustic))
-    allocate(potential_acoustic_old(nglob_acoustic))
-    allocate(potential_acoustic_adj_coupling(nglob_acoustic))
-    allocate(potential_dot_acoustic(nglob_acoustic))
-    allocate(potential_dot_dot_acoustic(nglob_acoustic))
-    allocate(rmass_inverse_acoustic(nglob_acoustic))
-    if (time_stepping_scheme == 2) then
-      allocate(potential_acoustic_LDDRK(nglob_acoustic))
-      allocate(potential_dot_acoustic_LDDRK(nglob_acoustic))
-      allocate(potential_dot_acoustic_temp(nglob_acoustic))
-    endif
-
-    if (time_stepping_scheme == 3) then
-      allocate(potential_acoustic_init_rk(nglob_acoustic))
-      allocate(potential_dot_acoustic_init_rk(nglob_acoustic))
-      allocate(potential_dot_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
-      allocate(potential_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
-    endif
-
-    if (SIMULATION_TYPE == 3 .and. any_acoustic) then
-      nglob_acoustic_b = nglob
-      nspec_acoustic_b = nspec
-    else
-      ! dummy array allocations
-      ! allocates unused arrays with fictitious size
-      nglob_acoustic_b = 1
-      nspec_acoustic_b = 1
-    endif
-    allocate(b_potential_acoustic(nglob_acoustic_b))
-    allocate(b_potential_acoustic_old(nglob_acoustic_b))
-    allocate(b_potential_dot_acoustic(nglob_acoustic_b))
-    allocate(b_potential_dot_dot_acoustic(nglob_acoustic_b))
-    allocate(b_displ_ac(2,nglob_acoustic_b))
-    allocate(b_accel_ac(2,nglob_acoustic_b))
-    allocate(accel_ac(2,nglob_acoustic_b))
-    ! kernels
-    ! on global points
-    allocate(rhol_ac_global(nglob_acoustic_b))
-    allocate(kappal_ac_global(nglob_acoustic_b))
-    ! on local points
-    allocate(rho_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
-    allocate(kappa_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
-    allocate(rhop_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
-    allocate(alpha_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
-    if (APPROXIMATE_HESS_KL) then
-      allocate(rhorho_ac_hessian_final2(NGLLX,NGLLZ,nspec_acoustic_b))
-      allocate(rhorho_ac_hessian_final1(NGLLX,NGLLZ,nspec_acoustic_b))
-    endif
-
-    !
-    ! gravito-acoustic domains
-    !
-    ! potential, its first and second derivative, and inverse of the mass matrix for gravitoacoustic elements
-    if (any_gravitoacoustic) then
-      nglob_gravitoacoustic = nglob
-    else
-      ! allocate unused arrays with fictitious size
-      nglob_gravitoacoustic = 1
-    endif
-    allocate(potential_gravitoacoustic(nglob_gravitoacoustic))
-    allocate(potential_dot_gravitoacoustic(nglob_gravitoacoustic))
-    allocate(potential_dot_dot_gravitoacoustic(nglob_gravitoacoustic))
-    allocate(rmass_inverse_gravitoacoustic(nglob_gravitoacoustic))
-    allocate(potential_gravito(nglob_gravitoacoustic))
-    allocate(potential_dot_gravito(nglob_gravitoacoustic))
-    allocate(potential_dot_dot_gravito(nglob_gravitoacoustic))
-    allocate(rmass_inverse_gravito(nglob_gravitoacoustic))
-
-
+  ! synchronizes all processes
+  call synchronize_all()
 
   if (myrank == 0) then
-    write(IMAIN,*) "preparing PML..."
+    write(IMAIN,*) 'Preparing PML'
     call flush_IMAIN()
   endif
   call prepare_timerun_pml()
@@ -1248,22 +1340,35 @@ subroutine prepare_timerun()
 ! Test compatibility with axisymmetric formulation
   if (AXISYM) call check_compatibility_axisym()
 
+  ! synchronizes all processes
+  call synchronize_all()
+
   if (myrank == 0) then
-    write(IMAIN,*) "preparing mass matrices..."
+    write(IMAIN,*) 'Preparing mass matrices'
     call flush_IMAIN()
   endif
   call prepare_timerun_mass_matrix()
 
-  if (myrank == 0) then
-    write(IMAIN,*) "preparing image coloring..."
-    call flush_IMAIN()
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! images
+  if (output_color_image .or. output_postscript_snapshot) then
+    if (myrank == 0) then
+      write(IMAIN,*) 'Preparing image coloring'
+      call flush_IMAIN()
+    endif
+    call prepare_timerun_image_coloring()
   endif
-  call prepare_timerun_image_coloring()
+
+  ! synchronizes all processes
+  call synchronize_all()
+
 !
 !---- initialize seismograms
 !
   if (myrank == 0) then
-    write(IMAIN,*) "preparing array initializations..."
+    write(IMAIN,*) 'Preparing array initializations'
     call flush_IMAIN()
   endif
 
@@ -1276,24 +1381,24 @@ subroutine prepare_timerun()
   veloc_elastic = 0._CUSTOM_REAL
   accel_elastic = 0._CUSTOM_REAL
 
-    if (SIMULATION_TYPE == 3 .and. any_elastic) then
-      b_displ_elastic_old = 0._CUSTOM_REAL
-      b_displ_elastic = 0._CUSTOM_REAL
-      b_veloc_elastic = 0._CUSTOM_REAL
-      b_accel_elastic = 0._CUSTOM_REAL
-    endif
+  if (SIMULATION_TYPE == 3 .and. any_elastic) then
+    b_displ_elastic_old = 0._CUSTOM_REAL
+    b_displ_elastic = 0._CUSTOM_REAL
+    b_veloc_elastic = 0._CUSTOM_REAL
+    b_accel_elastic = 0._CUSTOM_REAL
+  endif
 
   if (time_stepping_scheme == 2) then
-  displ_elastic_LDDRK = 0._CUSTOM_REAL
-  veloc_elastic_LDDRK = 0._CUSTOM_REAL
-  veloc_elastic_LDDRK_temp = 0._CUSTOM_REAL
+    displ_elastic_LDDRK = 0._CUSTOM_REAL
+    veloc_elastic_LDDRK = 0._CUSTOM_REAL
+    veloc_elastic_LDDRK_temp = 0._CUSTOM_REAL
   endif
 
   if (time_stepping_scheme == 3) then
-   accel_elastic_rk = 0._CUSTOM_REAL
-   veloc_elastic_rk = 0._CUSTOM_REAL
-   veloc_elastic_initial_rk = 0._CUSTOM_REAL
-   displ_elastic_initial_rk = 0._CUSTOM_REAL
+    accel_elastic_rk = 0._CUSTOM_REAL
+    veloc_elastic_rk = 0._CUSTOM_REAL
+    veloc_elastic_initial_rk = 0._CUSTOM_REAL
+    displ_elastic_initial_rk = 0._CUSTOM_REAL
   endif
 
   displs_poroelastic = 0._CUSTOM_REAL
@@ -1323,7 +1428,6 @@ subroutine prepare_timerun()
 
     velocw_poroelastic_initial_rk = 0._CUSTOM_REAL
     displw_poroelastic_initial_rk = 0._CUSTOM_REAL
-
   endif
 
   potential_acoustic = 0._CUSTOM_REAL
@@ -1350,6 +1454,9 @@ subroutine prepare_timerun()
   potential_gravito = 0._CUSTOM_REAL
   potential_dot_gravito = 0._CUSTOM_REAL
   potential_dot_dot_gravito = 0._CUSTOM_REAL
+
+  ! synchronizes all processes
+  call synchronize_all()
 
 !
 !----- Files where viscous damping are saved during forward wavefield calculation
@@ -1390,96 +1497,119 @@ subroutine prepare_timerun()
     allocate(b_viscodampz(1))
   endif
 
-!
-!----- Read last frame for forward wavefield reconstruction
-!
+  ! synchronizes all processes
+  call synchronize_all()
 
-  if (((SAVE_FORWARD .and. SIMULATION_TYPE ==1) .or. SIMULATION_TYPE == 3) .and. anyabs &
+! Reads last frame for forward wavefield reconstruction
+  if (((SAVE_FORWARD .and. SIMULATION_TYPE == 1) .or. SIMULATION_TYPE == 3) .and. anyabs &
       .and. (.not. PML_BOUNDARY_CONDITIONS)) then
     ! opens files for absorbing boundary data
     call prepare_absorb_files()
   endif
 
   if (anyabs .and. SIMULATION_TYPE == 3 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
-
     ! reads in absorbing boundary data
-
     if (any_elastic) call prepare_absorb_elastic()
 
     if (any_poroelastic) call prepare_absorb_poroelastic()
 
     if (any_acoustic) call prepare_absorb_acoustic()
-
   endif ! if (anyabs .and. SIMULATION_TYPE == 3)
 
-  if (myrank == 0) then
-    write(IMAIN,*) "preparing kernels..."
-    call flush_IMAIN()
+  ! synchronizes all processes
+  call synchronize_all()
+
+  if (SIMULATION_TYPE == 3) then
+    if (myrank == 0) then
+      write(IMAIN,*) 'Preparing adjoint sensitivity kernels'
+      call flush_IMAIN()
+    endif
+    call prepare_timerun_kernel()
   endif
-  call prepare_timerun_kernel()
 
-!
-!----  read initial fields from external file if needed
-!
+  ! synchronizes all processes
+  call synchronize_all()
 
-! if we are looking a plane wave beyond critical angle we use other method
+  ! reads initial fields from external file if needed
+  ! if we are looking a plane wave beyond critical angle we use other method
   over_critical_angle = .false.
-
   if (initialfield) then
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'Preparing initial field for plane wave source'
+      call flush_IMAIN()
+    endif
+
+    ! safety checks
+    if (.not. any_elastic) &
+      stop 'Sorry, initial field (plane wave source) only implemented for elastic simulations so far...'
+    if (any_acoustic .or. any_poroelastic) &
+      stop 'Initial field currently implemented for purely elastic simulation only'
 
     ! Calculation of the initial field for a plane wave
     if (any_elastic) then
-      call prepare_initialfield()
-    endif
+      call prepare_initialfield(cploc,csloc)
 
-    if (over_critical_angle) then
+      if (over_critical_angle) then
 
-      allocate(left_bound(nelemabs*NGLLX))
-      allocate(right_bound(nelemabs*NGLLX))
-      allocate(bot_bound(nelemabs*NGLLZ))
+        allocate(left_bound(nelemabs*NGLLX))
+        allocate(right_bound(nelemabs*NGLLX))
+        allocate(bot_bound(nelemabs*NGLLZ))
 
-      call prepare_initialfield_paco()
+        call prepare_initialfield_paco()
 
-      allocate(v0x_left(count_left,NSTEP))
-      allocate(v0z_left(count_left,NSTEP))
-      allocate(t0x_left(count_left,NSTEP))
-      allocate(t0z_left(count_left,NSTEP))
+        allocate(v0x_left(count_left,NSTEP))
+        allocate(v0z_left(count_left,NSTEP))
+        allocate(t0x_left(count_left,NSTEP))
+        allocate(t0z_left(count_left,NSTEP))
 
-      allocate(v0x_right(count_right,NSTEP))
-      allocate(v0z_right(count_right,NSTEP))
-      allocate(t0x_right(count_right,NSTEP))
-      allocate(t0z_right(count_right,NSTEP))
+        allocate(v0x_right(count_right,NSTEP))
+        allocate(v0z_right(count_right,NSTEP))
+        allocate(t0x_right(count_right,NSTEP))
+        allocate(t0z_right(count_right,NSTEP))
 
-      allocate(v0x_bot(count_bottom,NSTEP))
-      allocate(v0z_bot(count_bottom,NSTEP))
-      allocate(t0x_bot(count_bottom,NSTEP))
-      allocate(t0z_bot(count_bottom,NSTEP))
+        allocate(v0x_bot(count_bottom,NSTEP))
+        allocate(v0z_bot(count_bottom,NSTEP))
+        allocate(t0x_bot(count_bottom,NSTEP))
+        allocate(t0z_bot(count_bottom,NSTEP))
 
-      ! call Paco's routine to compute in frequency and convert to time by Fourier transform
-      call paco_beyond_critical(anglesource(1),&
-                                f0(1),QKappa_attenuation(1),source_type(1),left_bound(1:count_left),&
-                                right_bound(1:count_right),bot_bound(1:count_bottom), &
-                                count_left,count_right,count_bottom,x_source(1))
+        ! call Paco's routine to compute in frequency and convert to time by Fourier transform
+        call paco_beyond_critical(anglesource(1),&
+                                  f0_source(1),QKappa_attenuation(1),source_type(1),left_bound(1:count_left),&
+                                  right_bound(1:count_right),bot_bound(1:count_bottom), &
+                                  count_left,count_right,count_bottom,x_source(1),cploc,csloc)
 
-      deallocate(left_bound)
-      deallocate(right_bound)
-      deallocate(bot_bound)
+        deallocate(left_bound)
+        deallocate(right_bound)
+        deallocate(bot_bound)
+
+        if (myrank == 0) then
+          write(IMAIN,*)  '***********'
+          write(IMAIN,*)  'done calculating the initial wave field'
+          write(IMAIN,*)  '***********'
+          call flush_IMAIN()
+        endif
+
+      endif ! beyond critical angle
 
       if (myrank == 0) then
-        write(IMAIN,*)  '***********'
-        write(IMAIN,*)  'done calculating the initial wave field'
-        write(IMAIN,*)  '***********'
+        write(IMAIN,*) 'Max norm of initial elastic displacement = ', &
+                        maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(3,:)**2))
+        call flush_IMAIN()
       endif
 
-    endif ! beyond critical angle
-
-    write(IMAIN,*) 'Max norm of initial elastic displacement = ', &
-      maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(3,:)**2))
+    endif
 
   endif ! initialfield
 
-! compute the source time function and store it in a text file
+  ! compute the source time function and store it in a text file
   if (.not. initialfield) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'Preparing source time function'
+      call flush_IMAIN()
+    endif
 
     allocate(source_time_function(NSOURCES,NSTEP,stage_time_scheme))
     source_time_function(:,:,:) = 0._CUSTOM_REAL
@@ -1492,16 +1622,21 @@ subroutine prepare_timerun()
     allocate(source_time_function(1,1,1))
   endif
 
+  ! synchronizes all processes
+  call synchronize_all()
+
 ! acoustic forcing edge detection
 ! the elements forming an edge are already known (computed in meshfem2D),
 ! the common nodes forming the edge are computed here
   if (ACOUSTIC_FORCING) then
 
+    ! user output
     if (myrank == 0) then
-      print *
-      print *,'Acoustic forcing simulation'
-      print *
-      print *,'Beginning of acoustic forcing edge detection'
+      write(IMAIN,*)
+      write(IMAIN,*) 'Acoustic forcing simulation'
+      write(IMAIN,*)
+      write(IMAIN,*) 'Beginning of acoustic forcing edge detection'
+      call flush_IMAIN()
     endif
 
 ! define i and j points for each edge
@@ -1531,6 +1666,8 @@ subroutine prepare_timerun()
 
   endif ! if (ACOUSTIC_FORCING)
 
+  ! synchronizes all processes
+  call synchronize_all()
 
 ! determine if coupled fluid-solid simulation
   coupled_acoustic_elastic = any_acoustic .and. any_elastic
@@ -1541,11 +1678,13 @@ subroutine prepare_timerun()
 ! the common nodes forming the edge are computed here
   if (coupled_acoustic_elastic) then
 
+    ! user output
     if (myrank == 0) then
-      print *
-      print *,'Mixed acoustic/elastic simulation'
-      print *
-      print *,'Beginning of fluid/solid edge detection'
+      write(IMAIN,*)
+      write(IMAIN,*) 'Mixed acoustic/elastic simulation'
+      write(IMAIN,*)
+      write(IMAIN,*) '  Beginning of fluid/solid edge detection'
+      call flush_IMAIN()
     endif
 
 ! define the edges of a given element
@@ -1627,7 +1766,11 @@ subroutine prepare_timerun()
 ! have the same physical coordinates
 ! loop on all the coupling edges
 
-    if (myrank == 0) print *,'Checking fluid/solid edge topology...'
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  Checking fluid/solid edge topology...'
+      call flush_IMAIN()
+    endif
 
     do inum = 1,num_fluid_solid_edges
 
@@ -1660,9 +1803,11 @@ subroutine prepare_timerun()
 
     enddo
 
+    ! user output
     if (myrank == 0) then
-      print *,'End of fluid/solid edge detection'
-      print *
+      write(IMAIN,*) '  End of fluid/solid edge detection'
+      write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
   endif
@@ -1671,11 +1816,14 @@ subroutine prepare_timerun()
 ! the two elements (fluid and solid) forming an edge are already known (computed in meshfem2D),
 ! the common nodes forming the edge are computed here
   if (coupled_acoustic_poro) then
+
+    ! user output
     if (myrank == 0) then
-    print *
-    print *,'Mixed acoustic/poroelastic simulation'
-    print *
-    print *,'Beginning of fluid/solid (poroelastic) edge detection'
+      write(IMAIN,*)
+      write(IMAIN,*) 'Mixed acoustic/poroelastic simulation'
+      write(IMAIN,*)
+      write(IMAIN,*) '  Beginning of fluid/solid (poroelastic) edge detection'
+      call flush_IMAIN()
     endif
 
 ! define the edges of a given element
@@ -1757,8 +1905,10 @@ subroutine prepare_timerun()
 ! have the same physical coordinates
 ! loop on all the coupling edges
 
+    ! user output
     if (myrank == 0) then
-    print *,'Checking fluid/solid (poroelastic) edge topology...'
+      write(IMAIN,*) '  Checking fluid/solid (poroelastic) edge topology...'
+      call flush_IMAIN()
     endif
 
     do inum = 1,num_fluid_poro_edges
@@ -1792,18 +1942,26 @@ subroutine prepare_timerun()
 
     enddo
 
+    ! user output
     if (myrank == 0) then
-    print *,'End of fluid/solid (poroelastic) edge detection'
-    print *
+      write(IMAIN,*) '  End of fluid/solid (poroelastic) edge detection'
+      write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
   endif
 
+  ! synchronizes all processes
+  call synchronize_all()
+
 ! exclude common points between acoustic absorbing edges and acoustic/elastic matching interfaces
   if (coupled_acoustic_elastic .and. anyabs) then
 
-    if (myrank == 0) &
-      print *,'excluding common points between acoustic absorbing edges and acoustic/elastic matching interfaces, if any'
+    if (myrank == 0) then
+      write(IMAIN,*) 'excluding common points between acoustic absorbing edges '// &
+                     'and acoustic/elastic matching interfaces, if any'
+      call flush_IMAIN()
+    endif
 
 ! loop on all the absorbing elements
     do ispecabs = 1,nelemabs
@@ -1851,9 +2009,11 @@ subroutine prepare_timerun()
 ! exclude common points between acoustic absorbing edges and acoustic/poroelastic matching interfaces
   if (coupled_acoustic_poro .and. anyabs) then
 
-    if (myrank == 0) &
-      print *,'excluding common points between acoustic absorbing edges and acoustic/poroelastic matching interfaces, if any'
-
+    if (myrank == 0) then
+      write(IMAIN,*) 'excluding common points between acoustic absorbing edges'// &
+                     ' and acoustic/poroelastic matching interfaces, if any'
+      call flush_IMAIN()
+    endif
 ! loop on all the absorbing elements
     do ispecabs = 1,nelemabs
 
@@ -1905,11 +2065,11 @@ subroutine prepare_timerun()
 ! the two elements forming an edge are already known (computed in meshfem2D),
 ! the common nodes forming the edge are computed here
 
-if (ATTENUATION_PORO_FLUID_PART .and. any_poroelastic .and. &
-(time_stepping_scheme == 2.or. time_stepping_scheme == 3)) &
+  if (ATTENUATION_PORO_FLUID_PART .and. any_poroelastic .and. &
+     (time_stepping_scheme == 2.or. time_stepping_scheme == 3)) &
     stop 'RK and LDDRK time scheme not supported poroelastic simulations with attenuation'
 
-if (coupled_elastic_poro) then
+  if (coupled_elastic_poro) then
 
     if (ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_PORO_FLUID_PART) &
                    stop 'Attenuation not supported for mixed elastic/poroelastic simulations'
@@ -1918,10 +2078,11 @@ if (coupled_elastic_poro) then
                    stop 'RK and LDDRK time scheme not supported for mixed elastic/poroelastic simulations'
 
     if (myrank == 0) then
-    print *
-    print *,'Mixed elastic/poroelastic simulation'
-    print *
-    print *,'Beginning of solid/porous edge detection'
+      write(IMAIN,*)
+      write(IMAIN,*) 'Mixed elastic/poroelastic simulation'
+      write(IMAIN,*)
+      write(IMAIN,*) '  Beginning of solid/porous edge detection'
+      call flush_IMAIN()
     endif
 
 ! define the edges of a given element
@@ -2004,7 +2165,8 @@ if (coupled_elastic_poro) then
 ! loop on all the coupling edges
 
     if (myrank == 0) then
-    print *,'Checking solid/porous edge topology...'
+      write(IMAIN,*) '  Checking solid/porous edge topology...'
+      call flush_IMAIN()
     endif
 
     do inum = 1,num_solid_poro_edges
@@ -2039,35 +2201,39 @@ if (coupled_elastic_poro) then
     enddo
 
     if (myrank == 0) then
-    print *,'End of solid/porous edge detection'
-    print *
+      write(IMAIN,*) '  End of solid/porous edge detection'
+      write(IMAIN,*)
+      call flush_IMAIN()
     endif
 
   endif
 
-! initiation
- if (any_poroelastic .and. anyabs) then
-! loop on all the absorbing elements
+  ! initiation
+  if (any_poroelastic .and. anyabs) then
+    ! loop on all the absorbing elements
     do ispecabs = 1,nelemabs
-            ibegin_edge4_poro(ispecabs) = 1
-            ibegin_edge2_poro(ispecabs) = 1
+      ibegin_edge4_poro(ispecabs) = 1
+      ibegin_edge2_poro(ispecabs) = 1
 
-            iend_edge4_poro(ispecabs) = NGLLZ
-            iend_edge2_poro(ispecabs) = NGLLZ
+      iend_edge4_poro(ispecabs) = NGLLZ
+      iend_edge2_poro(ispecabs) = NGLLZ
 
-            ibegin_edge1_poro(ispecabs) = 1
-            ibegin_edge3_poro(ispecabs) = 1
+      ibegin_edge1_poro(ispecabs) = 1
+      ibegin_edge3_poro(ispecabs) = 1
 
-            iend_edge1_poro(ispecabs) = NGLLX
-            iend_edge3_poro(ispecabs) = NGLLX
+      iend_edge1_poro(ispecabs) = NGLLX
+      iend_edge3_poro(ispecabs) = NGLLX
     enddo
- endif
+  endif
 
 ! exclude common points between poroelastic absorbing edges and elastic/poroelastic matching interfaces
   if (coupled_elastic_poro .and. anyabs) then
 
-    if (myrank == 0) &
-      print *,'excluding common points between poroelastic absorbing edges and elastic/poroelastic matching interfaces, if any'
+    if (myrank == 0) then
+      write(IMAIN,*) 'excluding common points between poroelastic absorbing edges '// &
+                     'and elastic/poroelastic matching interfaces, if any'
+      call flush_IMAIN()
+    endif
 
 ! loop on all the absorbing elements
     do ispecabs = 1,nelemabs
@@ -2112,6 +2278,9 @@ if (coupled_elastic_poro) then
 
   endif
 
+  ! synchronizes all processes
+  call synchronize_all()
+
 !----  create a Gnuplot script to display the energy curve in log scale
   if (output_energy .and. myrank == 0) then
     close(IOUT_ENERGY)
@@ -2133,51 +2302,47 @@ if (coupled_elastic_poro) then
 ! open the file in which we will store the energy curve
   if (output_energy .and. myrank == 0) open(unit=IOUT_ENERGY,file='OUTPUT_FILES/energy.dat',status='unknown',action='write')
 
-  if (myrank == 0) then
-    write(IMAIN,*) "preparing noise..."
-    call flush_IMAIN()
-  endif
-  call prepare_timerun_noise()
+  ! synchronizes all processes
+  call synchronize_all()
 
+  ! prepares noise simulations
+  if (NOISE_TOMOGRAPHY /= 0) then
+    if (myrank == 0) then
+      write(IMAIN,*) 'Preparing noise arrays'
+      call flush_IMAIN()
+    endif
+    call prepare_timerun_noise()
+  endif
+
+  ! synchronizes all processes
+  call synchronize_all()
 
   ! prepares image background
   if (output_color_image) then
     if (myrank == 0) then
-      write(IMAIN,*) "preparing color image vp..."
+      write(IMAIN,*) 'Preparing color image vp'
       call flush_IMAIN()
     endif
     call prepare_color_image_vp()
   endif
 
-! dummy allocation of plane wave arrays if they are unused (but still need to exist because
-! they are used as arguments to subroutines)
-  if (.not. over_critical_angle) then
-    allocate(v0x_left(1,NSTEP))
-    allocate(v0z_left(1,NSTEP))
-    allocate(t0x_left(1,NSTEP))
-    allocate(t0z_left(1,NSTEP))
+  ! synchronizes all processes
+  call synchronize_all()
 
-    allocate(v0x_right(1,NSTEP))
-    allocate(v0z_right(1,NSTEP))
-    allocate(t0x_right(1,NSTEP))
-    allocate(t0z_right(1,NSTEP))
-
-    allocate(v0x_bot(1,NSTEP))
-    allocate(v0z_bot(1,NSTEP))
-    allocate(t0x_bot(1,NSTEP))
-    allocate(t0z_bot(1,NSTEP))
-  endif
-
-! initialize variables for writing seismograms
+  ! initialize variables for writing seismograms
   seismo_offset = 0
   seismo_current = 0
 
   if (myrank == 0) then
-    write(IMAIN,*) "preparing attenuation..."
+    write(IMAIN,*) 'Preparing attenuation'
     call flush_IMAIN()
   endif
   call prepare_timerun_attenuation()
 
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! material properties
   allocate(kappastore(NGLLX,NGLLZ,nspec))
   allocate(mustore(NGLLX,NGLLZ,nspec))
   allocate(rhostore(NGLLX,NGLLZ,nspec))
@@ -2217,18 +2382,22 @@ if (coupled_elastic_poro) then
     enddo
   endif ! Internal/External model
 
-  ! prepares GPU arrays
-  if (GPU_MODE) call prepare_timerun_GPU()
-
   ! synchronizes all processes
   call synchronize_all()
 
+  ! prepares GPU arrays
+  if (GPU_MODE) call prepare_timerun_GPU()
+
+  ! user output
   if (myrank == 0) then
     write(IMAIN,*) ""
     write(IMAIN,*) "done, preparation successful"
     write(IMAIN,*) ""
     call flush_IMAIN()
   endif
+
+  ! synchronizes all processes
+  call synchronize_all()
 
 end subroutine prepare_timerun
 

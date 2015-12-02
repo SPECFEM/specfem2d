@@ -52,9 +52,12 @@
                          accel_elastic,fluid_solid_acoustic_ispec, &
                          fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                          potential_acoustic_adj_coupling,AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
-                         PML_BOUNDARY_CONDITIONS,nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-                         alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_sfb_potential_ddot_acoustic,timeval,deltat,&
+                         rmemory_sfb_potential_ddot_acoustic,timeval,deltat,&
                          rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK
+  ! PML arrays
+  use specfem_par, only: PML_BOUNDARY_CONDITIONS,nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
+                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+
   implicit none
 
   !local variable
@@ -88,7 +91,7 @@
       pressure = - potential_dot_dot_acoustic(iglob)
 
       if (PML_BOUNDARY_CONDITIONS ) then
-        if (is_PML(ispec_acoustic) .and. nspec_PML > 0) then
+        if (ispec_is_PML(ispec_acoustic) .and. nspec_PML > 0) then
           ispec_PML = spec_to_PML(ispec_acoustic)
           CPML_region_local = region_CPML(ispec_acoustic)
           kappa_x = K_x_store(i,j,ispec_PML)

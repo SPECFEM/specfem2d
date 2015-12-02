@@ -43,7 +43,7 @@
 
   subroutine compute_forces_gravitoacoustic(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
                                             potential_gravitoacoustic,potential_dot_dot_gravito, &
-                                            potential_gravito,IS_BACKWARD_FIELD,PML_BOUNDARY_CONDITIONS)
+                                            potential_gravito,IS_BACKWARD_FIELD)
 
 ! compute forces for the gravitoacoustic elements
 
@@ -60,7 +60,10 @@
                          SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
                          nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
-                         b_absorb_acoustic_bottom,b_absorb_acoustic_top,is_PML
+                         b_absorb_acoustic_bottom,b_absorb_acoustic_top
+
+  ! PML arrays
+  use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
 
   implicit none
 
@@ -72,8 +75,7 @@
     potential_dot_dot_gravito,potential_gravito
 ! rho*u=grad(Chi)+xi*gravity_vector
 
-  logical :: IS_BACKWARD_FIELD
-  logical :: PML_BOUNDARY_CONDITIONS
+  logical,intent(in) :: IS_BACKWARD_FIELD
 
 !---
 !--- local variables
@@ -95,7 +97,7 @@
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
                b_absorb_acoustic_bottom,b_absorb_acoustic_top,IS_BACKWARD_FIELD,&
-               is_PML,PML_BOUNDARY_CONDITIONS
+               ispec_is_PML,PML_BOUNDARY_CONDITIONS
 
   end subroutine compute_forces_gravitoacoustic
 

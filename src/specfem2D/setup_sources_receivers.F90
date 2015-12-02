@@ -61,7 +61,14 @@
   ! Local variables
   integer :: ispec_acoustic_surface
   integer :: ixmin, ixmax, izmin, izmax,i_source,ispec
-  integer :: irec
+  integer :: irec,nrec_tot_found
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'sources:'
+    call flush_IMAIN()
+  endif
 
   do i_source= 1,NSOURCES
 
@@ -69,9 +76,9 @@
 
       ! collocated force source
       call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
-          ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
-          nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
-          iglob_source(i_source))
+                               ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
+                               nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                               iglob_source(i_source))
 
       ! check that acoustic source is not exactly on the free surface because pressure is zero there
       if (is_proc_source(i_source) == 1) then
@@ -125,14 +132,24 @@
 
   enddo ! do i_source= 1,NSOURCES
 
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'receivers:'
+    call flush_IMAIN()
+  endif
+
   ! locate receivers in the mesh
   call locate_receivers(ibool,coord,nspec,nglob,xigll,zigll, &
-                      nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
-                      st_xval,st_zval,ispec_selected_rec, &
-                      xi_receiver,gamma_receiver,station_name,network_name, &
-                      x_source(1),z_source(1), &
-                      coorg,knods,ngnod,npgeo, &
-                      x_final_receiver,z_final_receiver)
+                        nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
+                        st_xval,st_zval,ispec_selected_rec, &
+                        xi_receiver,gamma_receiver,station_name,network_name, &
+                        x_source(1),z_source(1), &
+                        coorg,knods,ngnod,npgeo, &
+                        x_final_receiver,z_final_receiver)
 
 !! DK DK this below not supported in the case of MPI yet, we should do a MPI_GATHER() of the values
 !! DK DK and use "if (myrank == which_proc_receiver(irec)) then" to display the right sources
@@ -159,6 +176,28 @@
      close(15)
   endif
 #endif
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! checks that the sum of the number of receivers in each slice is nrec
+  call sum_all_i(nrecloc,nrec_tot_found)
+  if (myrank == 0) then
+    ! checks total
+    if (nrec_tot_found /= nrec) then
+      call exit_MPI(myrank,'problem when dispatching the receivers')
+    endif
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'found a total of ',nrec_tot_found,' receivers, this is okay'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+  endif
+
+  ! synchronizes all processes
+  call synchronize_all()
 
   end subroutine setup_sources_receivers
 

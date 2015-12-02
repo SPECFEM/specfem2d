@@ -50,34 +50,44 @@
   use mpi
 #endif
 
-  use constants,only: IMAIN,NGLLX,NGLLZ,ARROW_ANGLE,ARROW_RATIO,CENTIM,DISPLAY_PML_IN_DIFFERENT_COLOR,ICOLOR_FOR_PML_DISPLAY, &
-    IEDGE1,IEDGE2,IEDGE3,IEDGE4,IRIGHT,ILEFT,IBOTTOM,ITOP,ORIG_X,ORIG_Z,PI,RPERCENTX,RPERCENTZ,STABILITY_THRESHOLD
+  use constants,only: IMAIN,NGLLX,NGLLZ,ARROW_ANGLE,ARROW_RATIO,CENTIM, &
+    DISPLAY_PML_IN_DIFFERENT_COLOR,ICOLOR_FOR_PML_DISPLAY, &
+    IEDGE1,IEDGE2,IEDGE3,IEDGE4, &
+    IRIGHT,ILEFT,IBOTTOM,ITOP, &
+    ORIG_X,ORIG_Z,PI,RPERCENTX,RPERCENTZ,STABILITY_THRESHOLD
 
-  use specfem_par, only: vector_field_display,coord,vpext,x_source,z_source,st_xval,st_zval,it,deltat,coorg, &
-                         xinterp,zinterp,shape2D_display,Uxinterp,Uzinterp,flagrange,density,&
+  use specfem_par, only: coord,vpext,x_source,z_source,st_xval,st_zval,it,deltat,coorg,density,&
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
                          poroelastcoef,knods,kmato,ibool, &
                          numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
-                         simulation_title,nglob,vpImin,vpImax,nrec,NSOURCES, &
-                         colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
-                         boundvect,assign_external_model,cutsnaps,sizemax_arrows,nelemabs,pointsdisp, &
+                         nglob,vpImin,vpImax,nrec,NSOURCES, &
+                         assign_external_model,nelemabs,pointsdisp, &
                          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
-                         any_acoustic,any_poroelastic,plot_lowerleft_corner_only, &
+                         any_acoustic,any_poroelastic, &
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-                         ispec_is_poroelastic,myrank,nproc, &
-                         coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
-                         coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model,&
-                         coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
-                         coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
-                         coorg_send_ps_abs,coorg_recv_ps_abs, &
-                         coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
-                         coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER,is_PML
+                         ispec_is_poroelastic,myrank,nproc
+
+  ! PML arrays
+  use specfem_par,only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
+
+  ! movie images
+  use specfem_par_movie,only: vector_field_display,simulation_title, &
+    xinterp,zinterp,Uxinterp,Uzinterp,flagrange,shape2D_display, &
+    colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
+    cutsnaps,sizemax_arrows,boundvect,plot_lowerleft_corner_only, &
+    coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
+    coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model,&
+    coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
+    coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
+    coorg_send_ps_abs,coorg_recv_ps_abs, &
+    coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
+    coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER
 
   implicit none
 
-! color palette
+  ! color palette
   integer, parameter :: NUM_COLORS = 236
   double precision, dimension(NUM_COLORS) :: red,green,blue
 
@@ -87,7 +97,7 @@
   integer :: index_char,ii,ipoin,in,nnum,inum,ideb,ifin,iedge
   integer :: ier
 
-! for the file name
+  ! for the file name
   character(len=100) :: file_name
   integer  :: buffer_offset, RGB_offset
   double precision convert,x1,cpIloc,xa,za,xb,zb,lambdaplus2mu,denst
@@ -111,7 +121,7 @@
   logical :: first
 
   double precision :: afactor,bfactor,cfactor
-  double precision xmax,zmax,height,xw,zw,usoffset,sizex,sizez,timeval
+  double precision :: xmax,zmax,height,xw,zw,usoffset,sizex,sizez,timeval
 #ifdef USE_MPI
   double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision  :: dispmax_glob
@@ -1909,10 +1919,12 @@
   icol = mod(imat - 1,NUM_COLORS) + 1
 
 ! display all the PML layers in a different (constant) color if needed
-  if (DISPLAY_PML_IN_DIFFERENT_COLOR .and. is_PML(ispec)) then
-    icol = ICOLOR_FOR_PML_DISPLAY
-    ! make sure that number exists
-    if (icol > NUM_COLORS) icol = NUM_COLORS
+  if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec)) then
+    if (DISPLAY_PML_IN_DIFFERENT_COLOR) then
+      icol = ICOLOR_FOR_PML_DISPLAY
+      ! make sure that number exists
+      if (icol > NUM_COLORS) icol = NUM_COLORS
+    endif
   endif
 
   if ( myrank == 0) then

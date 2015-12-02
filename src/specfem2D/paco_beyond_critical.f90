@@ -57,18 +57,22 @@
 ! in particular, converted to Fortran90 and to double precision
 
   subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_bound,&
-                                  bot_bound,nleft,nright,nbot,x_source)
+                                  bot_bound,nleft,nright,nbot,x_source,cploc,csloc)
 
   use constants,only: PI
 
-  use specfem_par,only : coord,nglob,deltat,NSTEP,cploc,csloc,ATTENUATION_VISCOELASTIC_SOLID,v0x_left,&
-                         v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
-                         displ_elastic,veloc_elastic,accel_elastic
+  use specfem_par,only : coord,nglob,deltat,NSTEP,ATTENUATION_VISCOELASTIC_SOLID, &
+    displ_elastic,veloc_elastic,accel_elastic, &
+    v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
+    t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
+
 
 
   implicit none
 
   double precision :: f0,dt,TP,anglesource,QD,delta_in_period
+  double precision,intent(in) :: cploc,csloc
+
   integer :: npt,source_type,nleft,nright,nbot
 
   integer, dimension(nleft) :: left_bound

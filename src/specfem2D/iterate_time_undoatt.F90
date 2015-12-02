@@ -222,8 +222,7 @@
           ! ************* add coupling with the elastic side
           ! *********************************************************
           if (coupled_acoustic_elastic) then
-            call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic, &
-                                              PML_BOUNDARY_CONDITIONS)
+            call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
           endif
           ! ************************************************************************************
           ! ************************************ add force source
@@ -274,10 +273,6 @@
 ! *********************************************************
           if (any_elastic) then
             call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
-                                             x_source(1),z_source(1),f0(1),v0x_left(1,it),v0z_left(1,it), &
-                                             v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
-                                             t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it), &
-                                             t0x_bot(1,it),t0z_bot(1,it),count_left,count_right,count_bottom, &
                                              PML_BOUNDARY_CONDITIONS,e1,e11,e13)
           endif
           ! *********************************************************
@@ -482,11 +477,8 @@
             endif
 
             call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                             x_source(1),z_source(1),f0(1),v0x_left(1,it),v0z_left(1,it), &
-                                             v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
-                                             t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it), &
-                                             t0x_bot(1,it),t0z_bot(1,it),count_left,count_right,count_bottom, &
                                              .false.,b_e1,b_e11,b_e13)
+
             if (PML_BOUNDARY_CONDITIONS) then
               it_backward = NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1)
               call rebuild_value_on_PML_interface_viscoelastic(it_backward)
@@ -626,10 +618,6 @@
           if (any_elastic) then
             !ZN currently we do not support plane wave source in adjoint inversion
             call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
-                                             x_source(1),z_source(1),f0(1),v0x_left(1,it),v0z_left(1,it), &
-                                             v0x_right(1,it),v0z_right(1,it),v0x_bot(1,it),v0z_bot(1,it), &
-                                             t0x_left(1,it),t0z_left(1,it),t0x_right(1,it),t0z_right(1,it), &
-                                             t0x_bot(1,it),t0z_bot(1,it),count_left,count_right,count_bottom, &
                                              PML_BOUNDARY_CONDITIONS,e1,e11,e13)
 
           endif !if (any_elastic)
@@ -701,8 +689,7 @@
           if (coupled_acoustic_elastic) then
             if (SIMULATION_TYPE == 3) then
               accel_elastic_adj_coupling2 = - accel_elastic_adj_coupling
-              call compute_coupling_acoustic_el(accel_elastic_adj_coupling2,displ_elastic_old,potential_dot_dot_acoustic,&
-                                                PML_BOUNDARY_CONDITIONS)
+              call compute_coupling_acoustic_el(accel_elastic_adj_coupling2,displ_elastic_old,potential_dot_dot_acoustic)
             endif
           endif
           ! ************************************************************************************

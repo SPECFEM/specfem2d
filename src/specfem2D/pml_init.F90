@@ -68,9 +68,13 @@
   use constants,only: IMAIN,NGLLX,NGLLZ, &
     IRIGHT,ILEFT,IBOTTOM,ITOP,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
 
-  use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool,anyabs,nelemabs,codeabs,numabs, &
-    NELEM_PML_THICKNESS,nspec_PML,is_PML,which_PML_elem,spec_to_PML,region_CPML, &
-    PML_interior_interface,nglob_interface,mask_ibool,read_external_mesh
+  use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool, &
+    anyabs,nelemabs,codeabs,numabs, &
+    nglob_interface,read_external_mesh
+
+  ! PML arrays
+  use specfem_par, only: nspec_PML,ispec_is_PML,spec_to_PML,region_CPML,which_PML_elem, &
+                         mask_ibool_PML,NELEM_PML_THICKNESS,PML_interior_interface
 
   implicit none
 
@@ -130,7 +134,7 @@
        nspec_PML=0
        do ispec= 1,nspec
           if (which_PML_elem(ibound,ispec)) then
-            is_PML(ispec)=.true.
+            ispec_is_PML(ispec) = .true.
             do j = 1,NGLLZ,NGLLZ-1; do i = 1,NGLLX,NGLLX-1
               iglob=ibool(i,j,ispec)
               k=1
@@ -197,7 +201,7 @@
     endif
 
    do ispec= 1,nspec
-     if (is_PML(ispec)) then
+     if (ispec_is_PML(ispec)) then
 ! element is in the left cpml layer
        if ((which_PML_elem(ILEFT,ispec).eqv. .true.)   .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
           (which_PML_elem(ITOP,ispec)  .eqv. .false.) .and. (which_PML_elem(IBOTTOM,ispec).eqv. .false.)) then
@@ -240,9 +244,9 @@
      spec_to_PML=0
      nspec_PML=0
      do ispec= 1,nspec
-        if (is_PML(ispec)) then
-           nspec_PML=nspec_PML+1
-           spec_to_PML(ispec)=nspec_PML
+        if (ispec_is_PML(ispec)) then
+           nspec_PML = nspec_PML+1
+           spec_to_PML(ispec) = nspec_PML
         endif
      enddo
 
@@ -251,25 +255,25 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if (read_external_mesh) then
 
-    if (.not. allocated(mask_ibool)) allocate(mask_ibool(nglob))
+    if (.not. allocated(mask_ibool_PML)) allocate(mask_ibool_PML(nglob))
 
-    is_PML(:) = .false.
+    ispec_is_PML(:) = .false.
     which_PML_elem(:,:) = .false.
     nspec_PML = 0
     spec_to_PML=0
-    mask_ibool(:) = .false.
+    mask_ibool_PML(:) = .false.
     do ispec= 1,nspec
       if (region_CPML(ispec) /= 0) then
         nspec_PML = nspec_PML + 1
-        is_PML(ispec)=.true.
-        spec_to_PML(ispec)=nspec_PML
+        ispec_is_PML(ispec) = .true.
+        spec_to_PML(ispec) = nspec_PML
       endif
 
       if (SIMULATION_TYPE == 3 .or.  (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) then
         if (region_CPML(ispec) == 0) then
           do i = 1, NGLLX;  do j = 1, NGLLZ
             iglob = ibool(i,j,ispec)
-            mask_ibool(iglob) = .true.
+            mask_ibool_PML(iglob) = .true.
           enddo; enddo
         endif
       endif
@@ -281,7 +285,7 @@
         if (region_CPML(ispec) /= 0) then
           do i = 1, NGLLX; do j = 1, NGLLZ
             iglob = ibool(i,j,ispec)
-            if (mask_ibool(iglob))nglob_interface = nglob_interface + 1
+            if (mask_ibool_PML(iglob)) nglob_interface = nglob_interface + 1
           enddo; enddo
         endif
       enddo
@@ -315,7 +319,7 @@
   use constants,only: NGLLX,NGLLZ,IRIGHT,ILEFT,IBOTTOM,ITOP
 
   use specfem_par, only: nglob_interface,nspec,ibool,PML_interior_interface,&
-                         which_PML_elem,point_interface,read_external_mesh,mask_ibool,region_CPML
+                         which_PML_elem,point_interface,read_external_mesh,mask_ibool_PML,region_CPML
   implicit none
 
   ! local parameters
@@ -419,7 +423,7 @@
       if (region_CPML(ispec) /= 0) then
         do i = 1, NGLLX; do j = 1, NGLLZ
           iglob = ibool(i,j,ispec)
-          if (mask_ibool(iglob)) then
+          if (mask_ibool_PML(iglob)) then
             nglob_interface = nglob_interface + 1
             point_interface(nglob_interface)= iglob
           endif
@@ -442,11 +446,14 @@
 
   use constants,only: PI,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY,PML_parameter_adjustment
 
-  use specfem_par, only: f0,ispec_is_elastic,ispec_is_acoustic,&
-                         NSOURCES,ispec_selected_source,&
-                         nspec,kmato,density,poroelastcoef,&
-                         ibool,coord,is_PML,region_CPML,spec_to_PML,&
-                         K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+  use specfem_par, only: f0_source,ispec_is_elastic,ispec_is_acoustic, &
+                         NSOURCES,ispec_selected_source, &
+                         nspec,kmato,density,poroelastcoef,ibool,coord
+
+  ! PML arrays
+  use specfem_par, only: ispec_is_PML,spec_to_PML,region_CPML, &
+                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+
 
   implicit none
 
@@ -514,7 +521,7 @@
 #endif
 
 ! compute the maximum dominant frequency of all sources
-  f0_max = maxval(f0(:))
+  f0_max = maxval(f0_source(:))
 #ifdef USE_MPI
   call MPI_ALLREDUCE (f0_max, f0_max_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   f0_max = f0_max_glob
@@ -566,7 +573,7 @@
   thickness_PML_x_max_left=-1.d30
 
   do ispec= 1,nspec
-     if (is_PML(ispec)) then
+     if (ispec_is_PML(ispec)) then
        do j = 1,NGLLZ; do i = 1,NGLLX
 !!!bottom_case
          if (coord(2,ibool(i,j,ispec)) < zorigin) then
@@ -649,7 +656,7 @@
   vpmax_acoustic = 0.0d0
   vpmax_elastic = 0.0d0
   do ispec = 1,nspec
-    if (is_PML(ispec)) then
+    if (ispec_is_PML(ispec)) then
       if (ispec_is_acoustic(ispec)) then
 ! From gmat01.f90 we know, in acoustic region
 ! lambdalplus2mul_relaxed = kappal  = poroelastcoef(3,1,kmato(ispec)) = rhol * vp_acoustic * vp_acoustic
@@ -737,7 +744,7 @@
   if (.not. PML_parameter_adjustment) then
     do ispec = 1,nspec
       ispec_PML = spec_to_PML(ispec)
-      if (is_PML(ispec)) then
+      if (ispec_is_PML(ispec)) then
         do j = 1,NGLLZ; do i = 1,NGLLX
           d_x = 0.d0; d_z = 0.d0
           K_x = 1.0d0; K_z = 1.0d0
@@ -875,7 +882,7 @@
   if (PML_parameter_adjustment) then
     do ispec = 1,nspec
       ispec_PML = spec_to_PML(ispec)
-      if (is_PML(ispec)) then
+      if (ispec_is_PML(ispec)) then
 
         do j = 1,NGLLZ; do i = 1,NGLLX
           d_x = 0.d0; d_z = 0.d0

@@ -64,13 +64,15 @@
                          ib_left,ib_right,ib_bottom,ib_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top,&
-                         is_PML,nspec_PML,spec_to_PML,region_CPML, &
-                         K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
                          rmemory_potential_acoustic,&
                          rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
                          rmemory_potential_acoustic_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
                          rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
                          deltat,STACEY_BOUNDARY_CONDITIONS
+
+  ! PML arrays
+  use specfem_par, only: nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
+                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   implicit none
 
@@ -164,7 +166,7 @@
           endif
 
           ! derivative along x and along zbb
-          if (PML_BOUNDARY_CONDITIONS .and. is_PML(ispec) .and. nspec_PML > 0) then
+          if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec) .and. nspec_PML > 0) then
             ispec_PML=spec_to_PML(ispec)
             CPML_region_local = region_CPML(ispec)
             kappa_x = K_x_store(i,j,ispec_PML)
@@ -337,7 +339,7 @@
             rhol = density(1,kmato(ispec))
           endif
 
-          if (is_PML(ispec) .and. PML_BOUNDARY_CONDITIONS .and. nspec_PML > 0) then
+          if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec) .and. nspec_PML > 0) then
             ispec_PML=spec_to_PML(ispec)
             CPML_region_local = region_CPML(ispec)
             kappa_x = K_x_store(i,j,ispec_PML)
@@ -430,7 +432,7 @@
                        (tempx1(k,j) * hprimewgll_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
             endif
           enddo
-          if (PML_BOUNDARY_CONDITIONS .and. is_PML(ispec)) then
+          if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec)) then
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
                                               - potential_dot_dot_acoustic_PML(i,j)
           endif
@@ -593,7 +595,7 @@
     do ispecabs = 1,nelemabs
       ispec = numabs(ispecabs)
 
-      if (is_PML(ispec)) then
+      if (ispec_is_PML(ispec)) then
 !--- left absorbing boundary
         if (codeabs(IEDGE4,ispecabs)) then
           i = 1
@@ -643,7 +645,7 @@
             potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
           enddo
         endif  !  end of top absorbing boundary
-      endif ! end of is_PML
+      endif ! end of ispec_is_PML
     enddo ! end specabs loop
   endif  ! end of absorbing boundaries PML_BOUNDARY_CONDITIONS
 

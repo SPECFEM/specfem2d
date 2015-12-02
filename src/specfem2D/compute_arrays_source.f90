@@ -142,11 +142,13 @@
 
   subroutine compute_arrays_adj_source(xi_rec,gamma_rec,irec_local)
 
-  use specfem_par,only: IIN,MAX_STRING_LEN,NSTEP,NGLLX,NGLLZ,NGLJ, &
-    AXISYM,is_on_the_axis, &
-    adj_sourcearray,adj_source_file,source_adjointe, &
-    xigll,zigll,hxir,hpxir,hgammar,hpgammar,xiglj, &
-    ispec_selected_rec,myrank,seismotype
+  use constants,only: IIN,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,CUSTOM_REAL
+
+  use specfem_par,only: myrank,NSTEP,&
+                        AXISYM,is_on_the_axis, &
+                        adj_sourcearray,adj_source_file,source_adjointe, &
+                        xigll,zigll,hxir,hpxir,hgammar,hpgammar,xiglj, &
+                        ispec_selected_rec,seismotype
 
   implicit none
 
@@ -154,7 +156,7 @@
   integer,intent(in) :: irec_local
 
   ! local parameters
-  integer icomp, itime, i, k
+  integer :: icomp, itime, i, k
   integer :: ier
   double precision :: junk
   double precision,dimension(NSTEP,3) :: adj_src_s
@@ -162,12 +164,17 @@
   character(len=3) :: comp(3)
   character(len=MAX_STRING_LEN) :: filename
 
-  adj_sourcearray(:,:,:,:) = 0.
+  ! initializes temporary array
+  ! note: we need to explicitly initialize the full array,
+  !       otherwise it can lead to a floating overflow problem (with intel compiler 15.x)
+  !       when copying the temporary array into the actual storage array adj_sourcearray
+  adj_src_s(:,:) = 0.d0
 
   if (seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
 
     comp = (/"BXX","BXY","BXZ"/)
 
+    ! reads all components
     do icomp = 1,3
 
       filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
@@ -193,6 +200,7 @@
     open(unit = IIN, file = trim(filename), iostat = ier)
     if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
+    ! reads only single component
     do itime = 1, NSTEP
       read(IIN,*) junk, adj_src_s(itime,1)
     enddo
@@ -204,6 +212,7 @@
     open(unit = IIN, file = trim(filename), iostat = ier)
     if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
+    ! reads only single component
     do itime = 1, NSTEP
       read(IIN,*) junk, adj_src_s(itime,1)
     enddo
@@ -222,13 +231,15 @@
   else
     call lagrange_any(xi_rec,NGLLX,xigll,hxir,hpxir)
   endif
-
   call lagrange_any(gamma_rec,NGLLZ,zigll,hgammar,hpgammar)
 
+  ! fills into full adjoint source array (NSTEP,3,NGLLX,NGLLZ)
+  ! note: adj_sourcearray is defined as CUSTOM_REAL
+  adj_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
   do k = 1, NGLLZ
-      do i = 1, NGLLX
-        adj_sourcearray(:,:,i,k) = sngl(hxir(i) * hgammar(k)) * adj_src_s(:,:)
-      enddo
+    do i = 1, NGLLX
+      adj_sourcearray(:,:,i,k) = real(hxir(i) * hgammar(k) * adj_src_s(:,:),kind=CUSTOM_REAL)
+    enddo
   enddo
 
   end subroutine compute_arrays_adj_source

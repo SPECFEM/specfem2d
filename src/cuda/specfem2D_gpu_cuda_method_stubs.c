@@ -554,6 +554,11 @@ void FC_FUNC_(kernel_3_acoustic_cuda,
 //
 
 void FC_FUNC_(compute_seismograms_cuda,
-              COMPUTE_SEISMOGRAMS_CUDA)(long* Mesh_pointer_f,int* seismotypef,double* sisux, double* sisuz,int* seismo_currentf,
-                                   int* NSTEP_BETWEEN_OUTPUT_SEISMOSf,int * any_elastic_glob,int * any_acoustic_glob,int* USE_TRICK_FOR_BETTER_PRESSURE) {}
+              COMPUTE_SEISMOGRAMS_CUDA)(long* Mesh_pointer_f,
+                                        int* seismotypef,
+                                        double* sisux, double* sisuz,
+                                        int* seismo_currentf,
+                                        int* NSTEP_BETWEEN_OUTPUT_SEISMOSf,
+                                        int * ELASTIC_SIMULATION,int * ACOUSTIC_SIMULATION,
+                                        int* USE_TRICK_FOR_BETTER_PRESSURE) {}
 

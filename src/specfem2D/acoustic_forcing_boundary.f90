@@ -99,8 +99,8 @@
 
   if (forcing_type == 1) then !! First test function : same forcing for the whole boundary
     !  print *, ispec_acoustic
-    !  print *, is_PML(ispec_acoustic)
-    !  if (is_PML(ispec_acoustic)) then
+    !  print *, ispec_is_PML(ispec_acoustic)
+    !  if (ispec_is_PML(ispec_acoustic)) then
     !  displ_x = 0
     !  displ_z = 0
     !  else

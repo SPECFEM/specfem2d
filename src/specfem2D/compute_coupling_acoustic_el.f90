@@ -42,7 +42,7 @@
 
 ! for acoustic solver
 
-  subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic,PML_BOUNDARY_CONDITIONS)
+  subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
 
@@ -51,16 +51,19 @@
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                          fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj,&
-                         nspec_PML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,&
-                         alpha_z_store,is_PML,spec_to_PML,region_CPML,rmemory_fsb_displ_elastic,timeval,deltat,&
-                         rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK, &
+                         rmemory_fsb_displ_elastic,timeval,deltat,&
+                         rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme, &
+                         alpha_LDDRK,beta_LDDRK, &
                          nglob_acoustic,nglob_elastic
+
+  ! PML arrays
+  use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML,nspec_PML,spec_to_PML,region_CPML, &
+                         K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   implicit none
 
   real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_dot_dot_acoustic
-  logical:: PML_BOUNDARY_CONDITIONS
 
   !local variable
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
@@ -91,7 +94,7 @@
       iglob = ibool(i,j,ispec_elastic)
 
       if (PML_BOUNDARY_CONDITIONS) then
-        if (is_PML(ispec_elastic) .and. nspec_PML > 0) then
+        if (ispec_is_PML(ispec_elastic) .and. nspec_PML > 0) then
           ispec_PML = spec_to_PML(ispec_elastic)
           CPML_region_local = region_CPML(ispec_elastic)
           kappa_x = K_x_store(i,j,ispec_PML)

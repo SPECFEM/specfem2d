@@ -85,7 +85,7 @@
   double precision :: x_source,z_source
   double precision :: x_receiver,z_receiver
 
-  double precision xmax,zmax,xw,zw,usoffset,sizex,sizez
+  double precision :: xmax,zmax,xw,zw,usoffset,sizex,sizez
 
 ! for the file name
   character(len=100) :: file_name

@@ -44,9 +44,10 @@
 !---- locate_source_force finds the correct position of the point force source
 !----
 
-  subroutine locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source,z_source, &
-               ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
-               xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source)
+  subroutine locate_source_force(ibool,coord,nspec,nglob,xigll,zigll, &
+                                 x_source,z_source, &
+                                 ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
+                                 xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source)
 
   use constants,only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,USE_BEST_LOCATION_FOR_SOURCE
 
@@ -58,32 +59,32 @@
 
   implicit none
 
-  integer nspec,nglob,ngnod,npgeo
+  integer :: nspec,nglob,ngnod,npgeo
 
-  integer knods(ngnod,nspec)
-  double precision coorg(NDIM,npgeo)
+  integer :: knods(ngnod,nspec)
+  double precision :: coorg(NDIM,npgeo)
 
   integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
 
 ! array containing coordinates of the points
-  double precision coord(NDIM,nglob)
+  double precision :: coord(NDIM,nglob)
 
-  integer i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess,number_of_iterations
+  integer :: i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess,number_of_iterations
 
-  double precision x_source,z_source,dist_squared
-  double precision xi,gamma,dx,dz,dxi,dgamma
+  double precision :: x_source,z_source,dist_squared
+  double precision :: xi,gamma,dx,dz,dxi,dgamma
 
 ! Gauss-Lobatto-Legendre points of integration
-  double precision xigll(NGLLX)
-  double precision zigll(NGLLZ)
+  double precision :: xigll(NGLLX)
+  double precision :: zigll(NGLLZ)
 
-  double precision x,z,xix,xiz,gammax,gammaz,jacobian
-  double precision distmin_squared,final_distance,dist_glob_squared
+  double precision :: x,z,xix,xiz,gammax,gammaz,jacobian
+  double precision :: distmin_squared,final_distance,dist_glob_squared
 
 ! source information
-  integer ispec_selected_source,is_proc_source,nb_proc_source,iglob_source
+  integer :: ispec_selected_source,is_proc_source,nb_proc_source,iglob_source
   integer, intent(in)  :: nproc, myrank
-  double precision xi_source,gamma_source
+  double precision :: xi_source,gamma_source
 
 #ifdef USE_MPI
   integer, dimension(1:nproc)  :: allgather_is_proc_source

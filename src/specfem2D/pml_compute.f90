@@ -276,9 +276,11 @@
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 
-  use specfem_par, only: nspec,ispec_is_acoustic,any_acoustic,is_pml,ibool,nglob_interface,point_interface, &
-                         b_potential_dot_acoustic,b_potential_acoustic,&
-                         pml_interface_history_potential_dot,pml_interface_history_potential
+  use specfem_par, only: nspec,ispec_is_acoustic,any_acoustic,ibool,nglob_interface,point_interface, &
+                         b_potential_dot_acoustic,b_potential_acoustic
+  ! PML arrays
+  use specfem_par,only: ispec_is_PML,pml_interface_history_potential_dot,pml_interface_history_potential
+
   implicit none
 
   integer :: it
@@ -289,7 +291,7 @@
   do ispec = 1,nspec
     do j = 1, NGLLZ
       do i = 1, NGLLX
-        if (ispec_is_acoustic(ispec) .and. is_pml(ispec)) then
+        if (ispec_is_acoustic(ispec) .and. ispec_is_PML(ispec)) then
           b_potential_dot_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
           b_potential_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
         endif
@@ -312,9 +314,11 @@
 
   use constants,only: NGLLX,NGLLZ
 
-  use specfem_par, only: nspec,ispec_is_elastic,any_elastic,is_pml,ibool,nglob_interface,point_interface, &
-                         b_veloc_elastic,b_displ_elastic,&
-                         pml_interface_history_veloc,pml_interface_history_displ
+  use specfem_par, only: nspec,ispec_is_elastic,any_elastic,ibool,nglob_interface,point_interface, &
+                         b_veloc_elastic,b_displ_elastic
+  ! PML arrays
+  use specfem_par, only: ispec_is_PML,pml_interface_history_veloc,pml_interface_history_displ
+
   implicit none
 
   integer :: it
@@ -325,7 +329,7 @@
   do ispec = 1,nspec
     do j = 1, NGLLZ
       do i = 1, NGLLX
-        if (ispec_is_elastic(ispec) .and. is_pml(ispec)) then
+        if (ispec_is_elastic(ispec) .and. ispec_is_PML(ispec)) then
            b_veloc_elastic(:,ibool(i,j,ispec)) = 0.
            b_displ_elastic(:,ibool(i,j,ispec)) = 0.
         endif

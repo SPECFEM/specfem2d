@@ -49,12 +49,15 @@
 
   use constants,only: TINYVAL,HUGEVAL,STABILITY_THRESHOLD
 
-  use specfem_par, only: myrank,image_color_data,iglob_image_color, &
-                         NX_IMAGE_color,NZ_IMAGE_color,it,isnapshot_number,cutsnaps,image_color_vp_display, &
-                         USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
-                         DRAW_SOURCES_AND_RECEIVERS,NSOURCES,p_sv,nrec, &
-                         ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver, &
-                         USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE
+  use specfem_par, only: myrank,it,NSOURCES,p_sv,nrec
+
+
+  use specfem_par_movie,only: image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color, &
+    isnapshot_number,cutsnaps,image_color_vp_display, &
+    USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
+    DRAW_SOURCES_AND_RECEIVERS, &
+    ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver, &
+    USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE
 
   implicit none
 

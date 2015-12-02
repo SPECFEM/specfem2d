@@ -256,11 +256,11 @@
           if (USE_TRICK_FOR_BETTER_PRESSURE) then
             call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
                                                        NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
-                                                       any_elastic_glob,any_acoustic_glob,1)
+                                                       ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,1)
           else
             call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current,&
                                                        NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,&
-                                                       any_elastic_glob,any_acoustic_glob,0)
+                                                       ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,0)
           endif
         endif
       endif ! GPU_MODE

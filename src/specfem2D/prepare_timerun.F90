@@ -58,13 +58,17 @@ subroutine prepare_timerun_mass_matrix()
   integer :: ispec_inner,ispec_outer
   integer, dimension(:,:,:), allocatable :: ibool_outer,ibool_inner
 
-  !
-  !---- build the global mass matrix
-  !
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  building mass matrices'
+    call flush_IMAIN()
+  endif
+
+  ! builds the global mass matrix
   call invert_mass_matrix_init()
 
 #ifdef USE_MPI
-  if (nproc > 1) then
+  if (NPROC > 1) then
 
     ! preparing for MPI communications
     allocate(mask_ispec_inner_outer(nspec))
@@ -134,8 +138,8 @@ subroutine prepare_timerun_mass_matrix()
     enddo
 
   endif ! end of test on whether there is more than one process (nproc > 1)
-
 #else
+  ! serial run
   num_ispec_outer = 0
   num_ispec_inner = 0
   allocate(mask_ispec_inner_outer(1))
@@ -148,7 +152,6 @@ subroutine prepare_timerun_mass_matrix()
   do ispec = 1, nspec
      ispec_inner_to_glob(ispec) = ispec
   enddo
-
 #endif
 
   ! loop over spectral elements
@@ -229,17 +232,42 @@ subroutine prepare_timerun_mass_matrix()
 #endif
 
   use specfem_par
+  use specfem_par_movie
 
   implicit none
 
+  ! local parameters
   integer :: i,j,k,iproc
   integer :: ier
 
-!
-!---- for color images
-!
+  ! postscripts
+  integer :: d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model, &
+             d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model, &
+             d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model, &
+             d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model
 
+  integer :: d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh, &
+             d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh, &
+             d1_color_send_ps_element_mesh, &
+             d1_color_recv_ps_element_mesh
+
+  integer :: d1_coorg_send_ps_abs, d2_coorg_send_ps_abs, &
+             d1_coorg_recv_ps_abs, d2_coorg_recv_ps_abs
+
+  integer :: d1_coorg_send_ps_free_surface, d2_coorg_send_ps_free_surface, &
+             d1_coorg_recv_ps_free_surface, d2_coorg_recv_ps_free_surface
+
+  integer :: d1_coorg_send_ps_vector_field, d2_coorg_send_ps_vector_field, &
+             d1_coorg_recv_ps_vector_field, d2_coorg_recv_ps_vector_field
+
+  ! for color images
   if (output_color_image) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  allocating color image arrays'
+      call flush_IMAIN()
+    endif
+
     ! prepares dimension of image
     call prepare_color_image_init()
 
@@ -268,7 +296,7 @@ subroutine prepare_timerun_mass_matrix()
        enddo
     enddo
 
-! filling array iglob_image_color, containing info on which process owns which pixels.
+    ! filling array iglob_image_color, containing info on which process owns which pixels.
     iproc = 0
     k = 0
 #ifdef USE_MPI
@@ -312,12 +340,159 @@ subroutine prepare_timerun_mass_matrix()
     endif
 #endif
 
+    ! user output
     if (myrank == 0) then
-      write(IMAIN,*) 'done locating all the pixels of color images'
+      write(IMAIN,*) '  done locating all the pixels of color images'
       call flush_IMAIN()
     endif
+
   endif ! color_image
 
+  ! postscript output
+  if (output_postscript_snapshot) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  allocating postscript image arrays'
+      call flush_IMAIN()
+    endif
+
+    ! allocate arrays for postscript output
+#ifdef USE_MPI
+    if (modelvect) then
+      d1_coorg_recv_ps_velocity_model=2
+      call mpi_allreduce(nspec,d2_coorg_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+      d2_coorg_recv_ps_velocity_model=d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+         ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
+      d1_RGB_recv_ps_velocity_model=1
+      call mpi_allreduce(nspec,d2_RGB_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+      d2_RGB_recv_ps_velocity_model=d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+         ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
+    else
+      d1_coorg_recv_ps_velocity_model=1
+      d2_coorg_recv_ps_velocity_model=1
+      d1_RGB_recv_ps_velocity_model=1
+      d2_RGB_recv_ps_velocity_model=1
+    endif
+
+    d1_coorg_send_ps_element_mesh=2
+    if (ngnod == 4) then
+      if (numbers == 1) then
+        d2_coorg_send_ps_element_mesh=nspec*5
+        if (colors == 1) then
+          d1_color_send_ps_element_mesh=2*nspec
+        else
+          d1_color_send_ps_element_mesh=1*nspec
+        endif
+      else
+        d2_coorg_send_ps_element_mesh=nspec*6
+        if (colors == 1) then
+          d1_color_send_ps_element_mesh=1*nspec
+        endif
+      endif
+    else
+      if (numbers == 1) then
+        d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1+1)
+        if (colors == 1) then
+          d1_color_send_ps_element_mesh=2*nspec
+        else
+          d1_color_send_ps_element_mesh=1*nspec
+        endif
+      else
+        d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1)
+        if (colors == 1) then
+          d1_color_send_ps_element_mesh=1*nspec
+        endif
+      endif
+    endif
+
+    call mpi_allreduce(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call mpi_allreduce(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call mpi_allreduce(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+
+    d1_coorg_send_ps_abs=4
+    d2_coorg_send_ps_abs=4*nelemabs
+    call mpi_allreduce(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call mpi_allreduce(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+
+    d1_coorg_send_ps_free_surface=4
+    d2_coorg_send_ps_free_surface=4*nelem_acoustic_surface
+    call mpi_allreduce(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call mpi_allreduce(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+
+    d1_coorg_send_ps_vector_field=8
+    if (interpol) then
+      if (plot_lowerleft_corner_only) then
+        d2_coorg_send_ps_vector_field=nspec*1*1
+      else
+        d2_coorg_send_ps_vector_field=nspec*pointsdisp*pointsdisp
+      endif
+    else
+      d2_coorg_send_ps_vector_field=nglob
+    endif
+    call mpi_allreduce(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+
+#else
+    ! dummy values
+    d1_coorg_recv_ps_velocity_model=1
+    d2_coorg_recv_ps_velocity_model=1
+    d1_RGB_recv_ps_velocity_model=1
+    d2_RGB_recv_ps_velocity_model=1
+
+    d1_coorg_send_ps_element_mesh=1
+    d2_coorg_send_ps_element_mesh=1
+    d1_coorg_recv_ps_element_mesh=1
+    d2_coorg_recv_ps_element_mesh=1
+    d1_color_send_ps_element_mesh=1
+    d1_color_recv_ps_element_mesh=1
+
+    d1_coorg_send_ps_abs=1
+    d2_coorg_send_ps_abs=1
+    d1_coorg_recv_ps_abs=1
+    d2_coorg_recv_ps_abs=1
+    d1_coorg_send_ps_free_surface=1
+    d2_coorg_send_ps_free_surface=1
+    d1_coorg_recv_ps_free_surface=1
+    d2_coorg_recv_ps_free_surface=1
+
+    d1_coorg_send_ps_vector_field=1
+    d2_coorg_send_ps_vector_field=1
+    d1_coorg_recv_ps_vector_field=1
+    d2_coorg_recv_ps_vector_field=1
+#endif
+
+    d1_coorg_send_ps_velocity_model=2
+    d2_coorg_send_ps_velocity_model=nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+                                          ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
+    d1_RGB_send_ps_velocity_model=1
+    d2_RGB_send_ps_velocity_model=nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+                                        ((NGLLX-subsamp_postscript)/subsamp_postscript)
+
+    allocate(coorg_send_ps_velocity_model(d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model))
+    allocate(RGB_send_ps_velocity_model(d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model))
+
+    allocate(coorg_recv_ps_velocity_model(d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model))
+    allocate(RGB_recv_ps_velocity_model(d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model))
+
+    allocate(coorg_send_ps_element_mesh(d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh))
+    allocate(coorg_recv_ps_element_mesh(d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh))
+    allocate(color_send_ps_element_mesh(d1_color_send_ps_element_mesh))
+    allocate(color_recv_ps_element_mesh(d1_color_recv_ps_element_mesh))
+
+    allocate(coorg_send_ps_abs(d1_coorg_send_ps_abs,d2_coorg_send_ps_abs))
+    allocate(coorg_recv_ps_abs(d1_coorg_recv_ps_abs,d2_coorg_recv_ps_abs))
+
+    allocate(coorg_send_ps_free_surface(d1_coorg_send_ps_free_surface,d2_coorg_send_ps_free_surface))
+    allocate(coorg_recv_ps_free_surface(d1_coorg_recv_ps_free_surface,d2_coorg_recv_ps_free_surface))
+
+    allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
+    allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field),stat=ier)
+    if (ier /= 0) stop 'Error allocating postscript arrays'
+
+    ! to dump the wave field
+    this_is_the_first_time_we_dump = .true.
+
+  endif ! postscript
 
   end subroutine prepare_timerun_image_coloring
 
@@ -342,198 +517,200 @@ subroutine prepare_timerun_mass_matrix()
   integer :: ier
   character(len=MAX_STRING_LEN) :: outputname
 
+  ! checks if anything to do
+  if (SIMULATION_TYPE /= 3) return
+
 !
 !----- Allocate sensitivity kernel arrays
 !
 
-  if (SIMULATION_TYPE == 3) then
+  ! elastic domains
+  if (any_elastic) then
 
-    if (any_elastic) then
+    if (save_ASCII_kernels) then
+      ! ascii format
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
+      open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
 
-      if (save_ASCII_kernels) then
-        ! ascii format
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
-        open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
+      open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
 
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
-        open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+    else
+      ! binary format
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kernel.bin'
+      open(unit = 204, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
 
-      else
-        ! binary format
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kernel.bin'
-        open(unit = 204, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_kernel.bin'
+      open(unit = 205, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
 
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_kernel.bin'
-        open(unit = 205, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_kernel.bin'
+      open(unit = 206, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
 
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_kernel.bin'
-        open(unit = 206, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_kernel.bin'
+      open(unit = 207, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
 
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_kernel.bin'
-        open(unit = 207, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_alpha_kernel.bin'
+      open(unit = 208, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
 
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_alpha_kernel.bin'
-        open(unit = 208, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_beta_kernel.bin'
+      open(unit = 209, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
 
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_beta_kernel.bin'
-        open(unit = 209, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
+      open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
 
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
-        open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
-
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
-        open(unit = 211,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
-
-        if (APPROXIMATE_HESS_KL) then
-          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_kernel.bin'
-          open(unit =214,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-          if (ier /= 0) stop 'Error writing kernel file to disk'
-
-          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian2_kernel.bin'
-          open(unit=215,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-          if (ier /= 0) stop 'Error writing kernel file to disk'
-        endif
-
-      endif
-
-      rho_kl(:,:,:) = 0._CUSTOM_REAL
-      mu_kl(:,:,:) = 0._CUSTOM_REAL
-      kappa_kl(:,:,:) = 0._CUSTOM_REAL
-
-      rhop_kl(:,:,:) = 0._CUSTOM_REAL
-      beta_kl(:,:,:) = 0._CUSTOM_REAL
-      alpha_kl(:,:,:) = 0._CUSTOM_REAL
-      bulk_c_kl(:,:,:) = 0._CUSTOM_REAL
-      bulk_beta_kl(:,:,:) = 0._CUSTOM_REAL
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
+      open(unit = 211,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
 
       if (APPROXIMATE_HESS_KL) then
-        rhorho_el_hessian_final2(:,:,:) = 0._CUSTOM_REAL
-        rhorho_el_hessian_final1(:,:,:) = 0._CUSTOM_REAL
-      endif
-    endif
-
-    if (any_poroelastic) then
-
-      if (.not. SAVE_ASCII_KERNELS) stop 'poroelastic simulations must use SAVE_ASCII_KERNELS'
-
-      ! Primary kernels
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_B_C_kernel.dat'
-      open(unit = 144, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_M_rho_rhof_kernel.dat'
-      open(unit = 155, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_m_eta_kernel.dat'
-      open(unit = 16, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
-      ! Wavespeed kernels
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_cpI_cpII_cs_kernel.dat'
-      open(unit = 20, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhobb_rhofbb_ratio_kernel.dat'
-      open(unit = 21, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_phib_eta_kernel.dat'
-      open(unit = 22, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
-      ! Density normalized kernels
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mub_Bb_Cb_kernel.dat'
-      open(unit = 17, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Mb_rhob_rhofb_kernel.dat'
-      open(unit = 18, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mb_etab_kernel.dat'
-      open(unit = 19, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
-
-      rhot_kl(:,:,:) = 0._CUSTOM_REAL
-      rhof_kl(:,:,:) = 0._CUSTOM_REAL
-      eta_kl(:,:,:) = 0._CUSTOM_REAL
-      sm_kl(:,:,:) = 0._CUSTOM_REAL
-      mufr_kl(:,:,:) = 0._CUSTOM_REAL
-      B_kl(:,:,:) = 0._CUSTOM_REAL
-      C_kl(:,:,:) = 0._CUSTOM_REAL
-      M_kl(:,:,:) = 0._CUSTOM_REAL
-
-      rhob_kl(:,:,:) = 0._CUSTOM_REAL
-      rhofb_kl(:,:,:) = 0._CUSTOM_REAL
-      phi_kl(:,:,:) = 0._CUSTOM_REAL
-      mufrb_kl(:,:,:) = 0._CUSTOM_REAL
-
-      rhobb_kl(:,:,:) = 0._CUSTOM_REAL
-      rhofbb_kl(:,:,:) = 0._CUSTOM_REAL
-      phib_kl(:,:,:) = 0._CUSTOM_REAL
-      cs_kl(:,:,:) = 0._CUSTOM_REAL
-      cpI_kl(:,:,:) = 0._CUSTOM_REAL
-      cpII_kl(:,:,:) = 0._CUSTOM_REAL
-      ratio_kl(:,:,:) = 0._CUSTOM_REAL
-    endif
-
-    if (any_acoustic) then
-
-      if (save_ASCII_kernels) then
-        ! ascii format
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.dat'
-        open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status ='unknown',iostat=ier)
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_kernel.bin'
+        open(unit =214,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_c_kernel.dat'
-        open(unit = 96, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian2_kernel.bin'
+        open(unit=215,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
-
-      else
-        ! binary format
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_acoustic_kernel.bin'
-        open(unit = 200, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
-
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_acoustic_kernel.bin'
-        open(unit = 201, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
-
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_acoustic_kernel.bin'
-        open(unit = 202, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
-
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c_acoustic_kernel.bin'
-        open(unit = 203, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
-
-        if (APPROXIMATE_HESS_KL) then
-          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_acoustic_kernel.bin'
-          open(unit=212,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-          if (ier /= 0) stop 'Error writing kernel file to disk'
-
-          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian2_acoustic_kernel.bin'
-          open(unit=213,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-          if (ier /= 0) stop 'Error writing kernel file to disk'
-        endif
       endif
 
-      rho_ac_kl(:,:,:) = 0._CUSTOM_REAL
-      kappa_ac_kl(:,:,:) = 0._CUSTOM_REAL
+    endif
 
-      rhop_ac_kl(:,:,:) = 0._CUSTOM_REAL
-      alpha_ac_kl(:,:,:) = 0._CUSTOM_REAL
+    rho_kl(:,:,:) = 0._CUSTOM_REAL
+    mu_kl(:,:,:) = 0._CUSTOM_REAL
+    kappa_kl(:,:,:) = 0._CUSTOM_REAL
+
+    rhop_kl(:,:,:) = 0._CUSTOM_REAL
+    beta_kl(:,:,:) = 0._CUSTOM_REAL
+    alpha_kl(:,:,:) = 0._CUSTOM_REAL
+    bulk_c_kl(:,:,:) = 0._CUSTOM_REAL
+    bulk_beta_kl(:,:,:) = 0._CUSTOM_REAL
+
+    if (APPROXIMATE_HESS_KL) then
+      rhorho_el_hessian_final2(:,:,:) = 0._CUSTOM_REAL
+      rhorho_el_hessian_final1(:,:,:) = 0._CUSTOM_REAL
+    endif
+  endif
+
+  ! poro-elastic domains
+  if (any_poroelastic) then
+
+    if (.not. SAVE_ASCII_KERNELS) stop 'poroelastic simulations must use SAVE_ASCII_KERNELS'
+
+    ! Primary kernels
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_B_C_kernel.dat'
+    open(unit = 144, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    if (ier /= 0) stop 'Error writing kernel file to disk'
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_M_rho_rhof_kernel.dat'
+    open(unit = 155, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    if (ier /= 0) stop 'Error writing kernel file to disk'
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_m_eta_kernel.dat'
+    open(unit = 16, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    if (ier /= 0) stop 'Error writing kernel file to disk'
+    ! Wavespeed kernels
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_cpI_cpII_cs_kernel.dat'
+    open(unit = 20, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    if (ier /= 0) stop 'Error writing kernel file to disk'
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhobb_rhofbb_ratio_kernel.dat'
+    open(unit = 21, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    if (ier /= 0) stop 'Error writing kernel file to disk'
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_phib_eta_kernel.dat'
+    open(unit = 22, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    if (ier /= 0) stop 'Error writing kernel file to disk'
+    ! Density normalized kernels
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mub_Bb_Cb_kernel.dat'
+    open(unit = 17, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    if (ier /= 0) stop 'Error writing kernel file to disk'
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Mb_rhob_rhofb_kernel.dat'
+    open(unit = 18, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    if (ier /= 0) stop 'Error writing kernel file to disk'
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mb_etab_kernel.dat'
+    open(unit = 19, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    if (ier /= 0) stop 'Error writing kernel file to disk'
+
+    rhot_kl(:,:,:) = 0._CUSTOM_REAL
+    rhof_kl(:,:,:) = 0._CUSTOM_REAL
+    eta_kl(:,:,:) = 0._CUSTOM_REAL
+    sm_kl(:,:,:) = 0._CUSTOM_REAL
+    mufr_kl(:,:,:) = 0._CUSTOM_REAL
+    B_kl(:,:,:) = 0._CUSTOM_REAL
+    C_kl(:,:,:) = 0._CUSTOM_REAL
+    M_kl(:,:,:) = 0._CUSTOM_REAL
+
+    rhob_kl(:,:,:) = 0._CUSTOM_REAL
+    rhofb_kl(:,:,:) = 0._CUSTOM_REAL
+    phi_kl(:,:,:) = 0._CUSTOM_REAL
+    mufrb_kl(:,:,:) = 0._CUSTOM_REAL
+
+    rhobb_kl(:,:,:) = 0._CUSTOM_REAL
+    rhofbb_kl(:,:,:) = 0._CUSTOM_REAL
+    phib_kl(:,:,:) = 0._CUSTOM_REAL
+    cs_kl(:,:,:) = 0._CUSTOM_REAL
+    cpI_kl(:,:,:) = 0._CUSTOM_REAL
+    cpII_kl(:,:,:) = 0._CUSTOM_REAL
+    ratio_kl(:,:,:) = 0._CUSTOM_REAL
+  endif
+
+  ! acoustic domains
+  if (any_acoustic) then
+
+    if (save_ASCII_kernels) then
+      ! ascii format
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.dat'
+      open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status ='unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
+
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_c_kernel.dat'
+      open(unit = 96, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
+
+    else
+      ! binary format
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_acoustic_kernel.bin'
+      open(unit = 200, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
+
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_acoustic_kernel.bin'
+      open(unit = 201, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
+
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_acoustic_kernel.bin'
+      open(unit = 202, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
+
+      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c_acoustic_kernel.bin'
+      open(unit = 203, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error writing kernel file to disk'
 
       if (APPROXIMATE_HESS_KL) then
-        rhorho_ac_hessian_final2(:,:,:) = 0._CUSTOM_REAL
-        rhorho_ac_hessian_final1(:,:,:) = 0._CUSTOM_REAL
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_acoustic_kernel.bin'
+        open(unit=212,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
+
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian2_acoustic_kernel.bin'
+        open(unit=213,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
       endif
     endif
 
-  endif ! if (SIMULATION_TYPE == 3)
+    rho_ac_kl(:,:,:) = 0._CUSTOM_REAL
+    kappa_ac_kl(:,:,:) = 0._CUSTOM_REAL
+
+    rhop_ac_kl(:,:,:) = 0._CUSTOM_REAL
+    alpha_ac_kl(:,:,:) = 0._CUSTOM_REAL
+
+    if (APPROXIMATE_HESS_KL) then
+      rhorho_ac_hessian_final2(:,:,:) = 0._CUSTOM_REAL
+      rhorho_ac_hessian_final1(:,:,:) = 0._CUSTOM_REAL
+    endif
+  endif
 
 
   end subroutine prepare_timerun_kernel
@@ -559,368 +736,364 @@ subroutine prepare_timerun_mass_matrix()
   integer :: i,ier
   character(len=MAX_STRING_LEN) :: outputname
 
+  ! safety check
   if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented on GPU mode. Please use Stacey instead'
 
   ! PML absorbing conditions
-    anyabs_glob=anyabs
+  anyabs_glob = anyabs
 #ifdef USE_MPI
-    call MPI_ALLREDUCE(anyabs, anyabs_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE(anyabs, anyabs_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
 #endif
 
-    ! allocate this in all cases, even if PML is not set, because we use it for PostScript display as well
-    allocate(is_PML(nspec),stat=ier)
-    if (ier /= 0) stop 'error: not enough memory to allocate array is_PML'
-    is_PML(:) = .false.
+  if (PML_BOUNDARY_CONDITIONS .and. anyabs_glob) then
+    ! allocates PML arrays
+    allocate(spec_to_PML(nspec),stat=ier)
+    if (ier /= 0) stop 'error: not enough memory to allocate array spec_to_PML'
 
-    if (PML_BOUNDARY_CONDITIONS .and. anyabs_glob) then
-      allocate(spec_to_PML(nspec),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array spec_to_PML'
+    allocate(which_PML_elem(4,nspec),stat=ier)
+    if (ier /= 0) stop 'error: not enough memory to allocate array which_PML_elem'
+    which_PML_elem(:,:) = .false.
 
-      allocate(which_PML_elem(4,nspec),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array which_PML_elem'
-      which_PML_elem(:,:) = .false.
+    if (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) then
+      allocate(PML_interior_interface(4,nspec),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array PML_interior_interface'
+      PML_interior_interface = .false.
+    else
+      allocate(PML_interior_interface(4,1))
+    endif
 
-      if (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) then
-        allocate(PML_interior_interface(4,nspec),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array PML_interior_interface'
-        PML_interior_interface = .false.
-      else
-        allocate(PML_interior_interface(4,1))
+    ! add support for using PML in MPI mode with external mesh
+    if (read_external_mesh) then
+      allocate(mask_ibool_pml(nglob))
+    else
+      allocate(mask_ibool_pml(1))
+    endif
+
+    call pml_init()
+
+    if ((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS) then
+
+      if (nglob_interface > 0) then
+        allocate(point_interface(nglob_interface),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array point_interface'
       endif
 
-! add support for using PML in MPI mode with external mesh
-      if (read_external_mesh) then
-        allocate(mask_ibool_pml(nglob))
-      else
-        allocate(mask_ibool_pml(1))
+      if (any_elastic .and. nglob_interface > 0) then
+        allocate(pml_interface_history_displ(3,nglob_interface,NSTEP),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_displ'
+        allocate(pml_interface_history_veloc(3,nglob_interface,NSTEP),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_veloc'
+        allocate(pml_interface_history_accel(3,nglob_interface,NSTEP),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_accel'
       endif
 
-      call pml_init()
-
-      if ((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS) then
-
-        if (nglob_interface > 0) then
-          allocate(point_interface(nglob_interface),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array point_interface'
-        endif
-
-        if (any_elastic .and. nglob_interface > 0) then
-          allocate(pml_interface_history_displ(3,nglob_interface,NSTEP),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_displ'
-          allocate(pml_interface_history_veloc(3,nglob_interface,NSTEP),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_veloc'
-          allocate(pml_interface_history_accel(3,nglob_interface,NSTEP),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_accel'
-        endif
-
-        if (any_acoustic .and. nglob_interface > 0) then
-          allocate(pml_interface_history_potential(nglob_interface,NSTEP),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential'
-          allocate(pml_interface_history_potential_dot(nglob_interface,NSTEP),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot'
-          allocate(pml_interface_history_potential_dot_dot(nglob_interface,NSTEP),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot_dot'
-        endif
-
-        if (nglob_interface > 0) then
-          call determin_interface_pml_interior()
-          deallocate(PML_interior_interface)
-          deallocate(mask_ibool_pml)
-        endif
-
-        if (any_elastic .and. nglob_interface > 0) then
-          write(outputname,'(a,i6.6,a)') 'pml_interface_elastic',myrank,'.bin'
-          open(unit=71,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
-        endif
-
-        if (any_acoustic .and. nglob_interface > 0) then
-          write(outputname,'(a,i6.6,a)') 'pml_interface_acoustic',myrank,'.bin'
-          open(unit=72,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
-        endif
-      else
-        allocate(point_interface(1))
-        allocate(pml_interface_history_displ(3,1,1))
-        allocate(pml_interface_history_veloc(3,1,1))
-        allocate(pml_interface_history_accel(3,1,1))
-        allocate(pml_interface_history_potential(1,1))
-        allocate(pml_interface_history_potential_dot(1,1))
-        allocate(pml_interface_history_potential_dot_dot(1,1))
+      if (any_acoustic .and. nglob_interface > 0) then
+        allocate(pml_interface_history_potential(nglob_interface,NSTEP),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential'
+        allocate(pml_interface_history_potential_dot(nglob_interface,NSTEP),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot'
+        allocate(pml_interface_history_potential_dot_dot(nglob_interface,NSTEP),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot_dot'
       endif
 
-      if (SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS) then
+      if (nglob_interface > 0) then
+        call determin_interface_pml_interior()
+        deallocate(PML_interior_interface)
+        deallocate(mask_ibool_pml)
+      endif
 
-        if (any_elastic .and. nglob_interface > 0) then
-          do it = 1,NSTEP
-            do i = 1, nglob_interface
-              read(71)pml_interface_history_accel(1,i,it),pml_interface_history_accel(2,i,it),&
-                      pml_interface_history_accel(3,i,it),&
-                      pml_interface_history_veloc(1,i,it),pml_interface_history_veloc(2,i,it),&
-                      pml_interface_history_veloc(3,i,it),&
-                      pml_interface_history_displ(1,i,it),pml_interface_history_displ(2,i,it),&
-                      pml_interface_history_displ(3,i,it)
-            enddo
+      if (any_elastic .and. nglob_interface > 0) then
+        write(outputname,'(a,i6.6,a)') 'pml_interface_elastic',myrank,'.bin'
+        open(unit=71,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+      endif
+
+      if (any_acoustic .and. nglob_interface > 0) then
+        write(outputname,'(a,i6.6,a)') 'pml_interface_acoustic',myrank,'.bin'
+        open(unit=72,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+      endif
+    else
+      allocate(point_interface(1))
+      allocate(pml_interface_history_displ(3,1,1))
+      allocate(pml_interface_history_veloc(3,1,1))
+      allocate(pml_interface_history_accel(3,1,1))
+      allocate(pml_interface_history_potential(1,1))
+      allocate(pml_interface_history_potential_dot(1,1))
+      allocate(pml_interface_history_potential_dot_dot(1,1))
+    endif
+
+    if (SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS) then
+
+      if (any_elastic .and. nglob_interface > 0) then
+        do it = 1,NSTEP
+          do i = 1, nglob_interface
+            read(71)pml_interface_history_accel(1,i,it),pml_interface_history_accel(2,i,it),&
+                    pml_interface_history_accel(3,i,it),&
+                    pml_interface_history_veloc(1,i,it),pml_interface_history_veloc(2,i,it),&
+                    pml_interface_history_veloc(3,i,it),&
+                    pml_interface_history_displ(1,i,it),pml_interface_history_displ(2,i,it),&
+                    pml_interface_history_displ(3,i,it)
           enddo
-          close(71)
-        endif
+        enddo
+        close(71)
+      endif
 
-        if (any_acoustic .and. nglob_interface > 0) then
-          do it = 1,NSTEP
-            do i = 1, nglob_interface
-              read(72)pml_interface_history_potential_dot_dot(i,it),pml_interface_history_potential_dot(i,it),&
-                      pml_interface_history_potential(i,it)
-            enddo
+      if (any_acoustic .and. nglob_interface > 0) then
+        do it = 1,NSTEP
+          do i = 1, nglob_interface
+            read(72)pml_interface_history_potential_dot_dot(i,it),pml_interface_history_potential_dot(i,it),&
+                    pml_interface_history_potential(i,it)
           enddo
-          close(72)
-        endif
+        enddo
+        close(72)
+      endif
+    endif
+
+    deallocate(which_PML_elem)
+
+    if (nspec_PML==0) nspec_PML=1 ! DK DK added this
+
+    if (nspec_PML > 0) then
+      allocate(K_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
+      allocate(K_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
+      allocate(d_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
+      allocate(d_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
+      allocate(alpha_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
+      allocate(alpha_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
+      K_x_store(:,:,:) = ZERO
+      K_z_store(:,:,:) = ZERO
+      d_x_store(:,:,:) = ZERO
+      d_z_store(:,:,:) = ZERO
+      alpha_x_store(:,:,:) = ZERO
+      alpha_z_store(:,:,:) = ZERO
+      call define_PML_coefficients()
+    else
+      allocate(K_x_store(NGLLX,NGLLZ,1),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
+      allocate(K_z_store(NGLLX,NGLLZ,1),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
+      allocate(d_x_store(NGLLX,NGLLZ,1),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
+      allocate(d_z_store(NGLLX,NGLLZ,1),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
+      allocate(alpha_x_store(NGLLX,NGLLZ,1),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
+      allocate(alpha_z_store(NGLLX,NGLLZ,1),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
+      K_x_store(:,:,:) = ZERO
+      K_z_store(:,:,:) = ZERO
+      d_x_store(:,:,:) = ZERO
+      d_z_store(:,:,:) = ZERO
+      alpha_x_store(:,:,:) = ZERO
+      alpha_z_store(:,:,:) = ZERO
+    endif
+
+    ! elastic PML memory variables
+    if (any_elastic .and. nspec_PML > 0) then
+      allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
+      allocate(rmemory_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
+      allocate(rmemory_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
+      allocate(rmemory_duz_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
+      allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
+      if (any_acoustic .and. num_fluid_solid_edges > 0) then
+        allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
+        allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
       endif
 
-      deallocate(which_PML_elem)
-
-      if (nspec_PML==0) nspec_PML=1 ! DK DK added this
-
-      if (nspec_PML > 0) then
-        allocate(K_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
-        allocate(K_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
-        allocate(d_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
-        allocate(d_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
-        allocate(alpha_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
-        allocate(alpha_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
-        K_x_store(:,:,:) = ZERO
-        K_z_store(:,:,:) = ZERO
-        d_x_store(:,:,:) = ZERO
-        d_z_store(:,:,:) = ZERO
-        alpha_x_store(:,:,:) = ZERO
-        alpha_z_store(:,:,:) = ZERO
-        call define_PML_coefficients()
+      if (ROTATE_PML_ACTIVATE) then
+        allocate(rmemory_dux_dx_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
+        allocate(rmemory_dux_dz_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
+        allocate(rmemory_duz_dx_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
+        allocate(rmemory_duz_dz_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
       else
-        allocate(K_x_store(NGLLX,NGLLZ,1),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
-        allocate(K_z_store(NGLLX,NGLLZ,1),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
-        allocate(d_x_store(NGLLX,NGLLZ,1),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
-        allocate(d_z_store(NGLLX,NGLLZ,1),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
-        allocate(alpha_x_store(NGLLX,NGLLZ,1),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
-        allocate(alpha_z_store(NGLLX,NGLLZ,1),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
-        K_x_store(:,:,:) = ZERO
-        K_z_store(:,:,:) = ZERO
-        d_x_store(:,:,:) = ZERO
-        d_z_store(:,:,:) = ZERO
-        alpha_x_store(:,:,:) = ZERO
-        alpha_z_store(:,:,:) = ZERO
+        allocate(rmemory_dux_dx_prime(1,1,1,2),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
+        allocate(rmemory_dux_dz_prime(1,1,1,2),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
+        allocate(rmemory_duz_dx_prime(1,1,1,2),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
+        allocate(rmemory_duz_dz_prime(1,1,1,2),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
       endif
 
-      ! elastic PML memory variables
-      if (any_elastic .and. nspec_PML > 0) then
-        allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
+      if (time_stepping_scheme == 2) then
+        allocate(rmemory_displ_elastic_LDDRK(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
-        allocate(rmemory_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+        allocate(rmemory_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
-        allocate(rmemory_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+        allocate(rmemory_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
-        allocate(rmemory_duz_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+        allocate(rmemory_duz_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
-        allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+        allocate(rmemory_duz_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
         if (any_acoustic .and. num_fluid_solid_edges > 0) then
-          allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
+          allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
-          allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
+          allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
         endif
-
-        if (ROTATE_PML_ACTIVATE) then
-          allocate(rmemory_dux_dx_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
-          allocate(rmemory_dux_dz_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
-          allocate(rmemory_duz_dx_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
-          allocate(rmemory_duz_dz_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
-        else
-          allocate(rmemory_dux_dx_prime(1,1,1,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
-          allocate(rmemory_dux_dz_prime(1,1,1,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
-          allocate(rmemory_duz_dx_prime(1,1,1,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
-          allocate(rmemory_duz_dz_prime(1,1,1,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
-        endif
-
-        if (time_stepping_scheme == 2) then
-          allocate(rmemory_displ_elastic_LDDRK(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
-          allocate(rmemory_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
-          allocate(rmemory_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
-          allocate(rmemory_duz_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
-          allocate(rmemory_duz_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
-          if (any_acoustic .and. num_fluid_solid_edges > 0) then
-            allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-            if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
-            allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-            if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
-          endif
-        else
-          allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1),stat=ier)
-          allocate(rmemory_dux_dx_LDDRK(1,1,1,2),stat=ier)
-          allocate(rmemory_dux_dz_LDDRK(1,1,1,2),stat=ier)
-          allocate(rmemory_duz_dx_LDDRK(1,1,1,2),stat=ier)
-          allocate(rmemory_duz_dz_LDDRK(1,1,1,2),stat=ier)
-          if (any_acoustic .and. num_fluid_solid_edges > 0) then
-            allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1),stat=ier)
-            if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
-            allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1),stat=ier)
-            if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
-          endif
-        endif
-
-        rmemory_displ_elastic(:,:,:,:,:) = ZERO
-        rmemory_dux_dx(:,:,:,:) = ZERO
-        rmemory_dux_dz(:,:,:,:) = ZERO
-        rmemory_duz_dx(:,:,:,:) = ZERO
-        rmemory_duz_dz(:,:,:,:) = ZERO
-
-        if (any_acoustic .and. num_fluid_solid_edges > 0) then
-          rmemory_fsb_displ_elastic(:,:,:,:,:) = ZERO
-          rmemory_sfb_potential_ddot_acoustic(:,:,:,:) = ZERO
-        endif
-
-        if (ROTATE_PML_ACTIVATE) then
-          rmemory_dux_dx_prime(:,:,:,:) = ZERO
-          rmemory_dux_dz_prime(:,:,:,:) = ZERO
-          rmemory_duz_dx_prime(:,:,:,:) = ZERO
-          rmemory_duz_dz_prime(:,:,:,:) = ZERO
-        endif
-
-        if (time_stepping_scheme == 2) then
-          rmemory_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
-          rmemory_dux_dx_LDDRK(:,:,:,:) = ZERO
-          rmemory_dux_dz_LDDRK(:,:,:,:) = ZERO
-          rmemory_duz_dx_LDDRK(:,:,:,:) = ZERO
-          rmemory_duz_dz_LDDRK(:,:,:,:) = ZERO
-          if (any_acoustic .and. num_fluid_solid_edges > 0) then
-            rmemory_fsb_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
-            rmemory_sfb_potential_ddot_acoustic_LDDRK(:,:,:,:) = ZERO
-          endif
-        endif
-
       else
-
-        allocate(rmemory_displ_elastic(1,1,1,1,1))
-        allocate(rmemory_dux_dx(1,1,1,1))
-        allocate(rmemory_dux_dz(1,1,1,1))
-        allocate(rmemory_duz_dx(1,1,1,1))
-        allocate(rmemory_duz_dz(1,1,1,1))
+        allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1),stat=ier)
+        allocate(rmemory_dux_dx_LDDRK(1,1,1,2),stat=ier)
+        allocate(rmemory_dux_dz_LDDRK(1,1,1,2),stat=ier)
+        allocate(rmemory_duz_dx_LDDRK(1,1,1,2),stat=ier)
+        allocate(rmemory_duz_dz_LDDRK(1,1,1,2),stat=ier)
         if (any_acoustic .and. num_fluid_solid_edges > 0) then
-          allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
-          allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
-          allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
-          allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
+          allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1),stat=ier)
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
+          allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1),stat=ier)
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
         endif
-
-        allocate(rmemory_dux_dx_prime(1,1,1,1))
-        allocate(rmemory_dux_dz_prime(1,1,1,1))
-        allocate(rmemory_duz_dx_prime(1,1,1,1))
-        allocate(rmemory_duz_dz_prime(1,1,1,1))
-
-        allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
-        allocate(rmemory_dux_dx_LDDRK(1,1,1,1))
-        allocate(rmemory_dux_dz_LDDRK(1,1,1,1))
-        allocate(rmemory_duz_dx_LDDRK(1,1,1,1))
-        allocate(rmemory_duz_dz_LDDRK(1,1,1,1))
       endif
 
-      if (any_acoustic .and. nspec_PML > 0) then
-        allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
-        allocate(rmemory_acoustic_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
-        allocate(rmemory_acoustic_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
+      rmemory_displ_elastic(:,:,:,:,:) = ZERO
+      rmemory_dux_dx(:,:,:,:) = ZERO
+      rmemory_dux_dz(:,:,:,:) = ZERO
+      rmemory_duz_dx(:,:,:,:) = ZERO
+      rmemory_duz_dz(:,:,:,:) = ZERO
 
-        rmemory_potential_acoustic = ZERO
-        rmemory_acoustic_dux_dx = ZERO
-        rmemory_acoustic_dux_dz = ZERO
+      if (any_acoustic .and. num_fluid_solid_edges > 0) then
+        rmemory_fsb_displ_elastic(:,:,:,:,:) = ZERO
+        rmemory_sfb_potential_ddot_acoustic(:,:,:,:) = ZERO
+      endif
 
-        if (time_stepping_scheme == 2) then
-          allocate(rmemory_potential_acoustic_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
-          allocate(rmemory_acoustic_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
-          allocate(rmemory_acoustic_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
-        else
-          allocate(rmemory_potential_acoustic_LDDRK(1,1,1,1),stat=ier)
-          allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1),stat=ier)
-          allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1),stat=ier)
+      if (ROTATE_PML_ACTIVATE) then
+        rmemory_dux_dx_prime(:,:,:,:) = ZERO
+        rmemory_dux_dz_prime(:,:,:,:) = ZERO
+        rmemory_duz_dx_prime(:,:,:,:) = ZERO
+        rmemory_duz_dz_prime(:,:,:,:) = ZERO
+      endif
+
+      if (time_stepping_scheme == 2) then
+        rmemory_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
+        rmemory_dux_dx_LDDRK(:,:,:,:) = ZERO
+        rmemory_dux_dz_LDDRK(:,:,:,:) = ZERO
+        rmemory_duz_dx_LDDRK(:,:,:,:) = ZERO
+        rmemory_duz_dz_LDDRK(:,:,:,:) = ZERO
+        if (any_acoustic .and. num_fluid_solid_edges > 0) then
+          rmemory_fsb_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
+          rmemory_sfb_potential_ddot_acoustic_LDDRK(:,:,:,:) = ZERO
         endif
-
-        rmemory_potential_acoustic_LDDRK = ZERO
-        rmemory_acoustic_dux_dx_LDDRK = ZERO
-        rmemory_acoustic_dux_dz_LDDRK = ZERO
-
-      else
-        allocate(rmemory_potential_acoustic(1,1,1,1))
-        allocate(rmemory_acoustic_dux_dx(1,1,1,1))
-        allocate(rmemory_acoustic_dux_dz(1,1,1,1))
       endif
 
     else
+
+      allocate(rmemory_displ_elastic(1,1,1,1,1))
       allocate(rmemory_dux_dx(1,1,1,1))
       allocate(rmemory_dux_dz(1,1,1,1))
       allocate(rmemory_duz_dx(1,1,1,1))
       allocate(rmemory_duz_dz(1,1,1,1))
-      allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
-      allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
-      allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
-      allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
+      if (any_acoustic .and. num_fluid_solid_edges > 0) then
+        allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
+        allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
+        allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
+        allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
+      endif
 
       allocate(rmemory_dux_dx_prime(1,1,1,1))
       allocate(rmemory_dux_dz_prime(1,1,1,1))
       allocate(rmemory_duz_dx_prime(1,1,1,1))
       allocate(rmemory_duz_dz_prime(1,1,1,1))
 
-      allocate(rmemory_displ_elastic(1,1,1,1,1))
-
       allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
       allocate(rmemory_dux_dx_LDDRK(1,1,1,1))
       allocate(rmemory_dux_dz_LDDRK(1,1,1,1))
       allocate(rmemory_duz_dx_LDDRK(1,1,1,1))
       allocate(rmemory_duz_dz_LDDRK(1,1,1,1))
+    endif
 
+    if (any_acoustic .and. nspec_PML > 0) then
+      allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
+      allocate(rmemory_acoustic_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
+      allocate(rmemory_acoustic_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
+
+      rmemory_potential_acoustic = ZERO
+      rmemory_acoustic_dux_dx = ZERO
+      rmemory_acoustic_dux_dz = ZERO
+
+      if (time_stepping_scheme == 2) then
+        allocate(rmemory_potential_acoustic_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
+        allocate(rmemory_acoustic_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
+        allocate(rmemory_acoustic_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
+      else
+        allocate(rmemory_potential_acoustic_LDDRK(1,1,1,1),stat=ier)
+        allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1),stat=ier)
+        allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1),stat=ier)
+      endif
+
+      rmemory_potential_acoustic_LDDRK = ZERO
+      rmemory_acoustic_dux_dx_LDDRK = ZERO
+      rmemory_acoustic_dux_dz_LDDRK = ZERO
+
+    else
       allocate(rmemory_potential_acoustic(1,1,1,1))
       allocate(rmemory_acoustic_dux_dx(1,1,1,1))
       allocate(rmemory_acoustic_dux_dz(1,1,1,1))
+    endif
 
-      allocate(rmemory_potential_acoustic_LDDRK(1,1,1,1))
-      allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1))
-      allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1))
+  else
+    allocate(rmemory_dux_dx(1,1,1,1))
+    allocate(rmemory_dux_dz(1,1,1,1))
+    allocate(rmemory_duz_dx(1,1,1,1))
+    allocate(rmemory_duz_dz(1,1,1,1))
+    allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
+    allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
+    allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
+    allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
 
-      allocate(spec_to_PML(1))
+    allocate(rmemory_dux_dx_prime(1,1,1,1))
+    allocate(rmemory_dux_dz_prime(1,1,1,1))
+    allocate(rmemory_duz_dx_prime(1,1,1,1))
+    allocate(rmemory_duz_dz_prime(1,1,1,1))
 
-      allocate(K_x_store(1,1,1))
-      allocate(K_z_store(1,1,1))
-      allocate(d_x_store(1,1,1))
-      allocate(d_z_store(1,1,1))
-      allocate(alpha_x_store(1,1,1))
-      allocate(alpha_z_store(1,1,1))
-    endif ! PML_BOUNDARY_CONDITIONS
+    allocate(rmemory_displ_elastic(1,1,1,1,1))
 
+    allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
+    allocate(rmemory_dux_dx_LDDRK(1,1,1,1))
+    allocate(rmemory_dux_dz_LDDRK(1,1,1,1))
+    allocate(rmemory_duz_dx_LDDRK(1,1,1,1))
+    allocate(rmemory_duz_dz_LDDRK(1,1,1,1))
+
+    allocate(rmemory_potential_acoustic(1,1,1,1))
+    allocate(rmemory_acoustic_dux_dx(1,1,1,1))
+    allocate(rmemory_acoustic_dux_dz(1,1,1,1))
+
+    allocate(rmemory_potential_acoustic_LDDRK(1,1,1,1))
+    allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1))
+    allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1))
+
+    allocate(spec_to_PML(1))
+
+    allocate(K_x_store(1,1,1))
+    allocate(K_z_store(1,1,1))
+    allocate(d_x_store(1,1,1))
+    allocate(d_z_store(1,1,1))
+    allocate(alpha_x_store(1,1,1))
+    allocate(alpha_z_store(1,1,1))
+  endif ! PML_BOUNDARY_CONDITIONS
 
   ! avoid a potential side effect owing to the "if" statements above: this array may be unallocated,
   ! if so we need to allocate a dummy version in order to be able to use that array as an argument
@@ -933,7 +1106,6 @@ subroutine prepare_timerun_mass_matrix()
   if (.not. allocated(rmemory_sfb_potential_ddot_acoustic_LDDRK)) then
     allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
   endif
-
 
   end subroutine prepare_timerun_pml
 
@@ -949,29 +1121,36 @@ subroutine prepare_timerun_mass_matrix()
   use mpi
 #endif
 
-  use constants,only: NGLLX,NGLLZ
-  use specfem_par,only: NSTEP,nglob,nspec,ibool,coord, &
+  use constants,only: NGLLX,NGLLZ,IMAIN
+  use specfem_par,only: myrank,NSTEP,nglob,nspec,ibool,coord, &
                         rhoext,vpext,vsext,density,poroelastcoef,kmato,assign_external_model
   use specfem_par_noise
 
   implicit none
 
-  integer :: i,j,iglob,ispec
+  integer :: i,j,iglob,ispec,ier
+
+  ! checks if anything to do
+  if (NOISE_TOMOGRAPHY <= 0) return
 
   ! noise simulations
-  if (NOISE_TOMOGRAPHY /= 0) then
-    !allocate arrays for noise tomography
-    allocate(time_function_noise(NSTEP))
-    allocate(source_array_noise(3,NGLLX,NGLLZ,NSTEP))
-    allocate(mask_noise(nglob))
-    allocate(surface_movie_x_noise(nglob))
-    allocate(surface_movie_y_noise(nglob))
-    allocate(surface_movie_z_noise(nglob))
-
-    !read in parameters for noise tomography
-    call read_parameters_noise()
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  allocating noise arrays'
+    call flush_IMAIN()
   endif
 
+  !allocate arrays for noise tomography
+  allocate(time_function_noise(NSTEP), &
+           source_array_noise(3,NGLLX,NGLLZ,NSTEP), &
+           mask_noise(nglob), &
+           surface_movie_x_noise(nglob), &
+           surface_movie_y_noise(nglob), &
+           surface_movie_z_noise(nglob),stat=ier)
+  if (ier /= 0) stop 'Error allocating noise arrays'
+
+  !read in parameters for noise tomography
+  call read_parameters_noise()
 
   if (NOISE_TOMOGRAPHY == 1) then
     call compute_source_array_noise()
@@ -1073,9 +1252,10 @@ subroutine prepare_timerun_mass_matrix()
   double precision :: vp,vs,rho,mu,lambda
 
   ! allocate memory variables for attenuation
-  allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-  allocate(e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-  allocate(e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+  allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS), &
+           e11(NGLLX,NGLLZ,nspec_allocate,N_SLS), &
+           e13(NGLLX,NGLLZ,nspec_allocate,N_SLS),stat=ier)
+  if (ier /= 0) stop 'Error allocating attenuation arrays'
 
   e1(:,:,:,:) = 0._CUSTOM_REAL
   e11(:,:,:,:) = 0._CUSTOM_REAL
@@ -1233,140 +1413,6 @@ subroutine prepare_timerun_mass_matrix()
     endif
   endif
 
-  ! allocate arrays for postscript output
-#ifdef USE_MPI
-  if (modelvect) then
-    d1_coorg_recv_ps_velocity_model=2
-    call mpi_allreduce(nspec,d2_coorg_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-    d2_coorg_recv_ps_velocity_model=d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-       ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
-    d1_RGB_recv_ps_velocity_model=1
-    call mpi_allreduce(nspec,d2_RGB_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-    d2_RGB_recv_ps_velocity_model=d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-       ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
-  else
-    d1_coorg_recv_ps_velocity_model=1
-    d2_coorg_recv_ps_velocity_model=1
-    d1_RGB_recv_ps_velocity_model=1
-    d2_RGB_recv_ps_velocity_model=1
-  endif
-
-  d1_coorg_send_ps_element_mesh=2
-  if (ngnod == 4) then
-    if (numbers == 1) then
-      d2_coorg_send_ps_element_mesh=nspec*5
-      if (colors == 1) then
-        d1_color_send_ps_element_mesh=2*nspec
-      else
-        d1_color_send_ps_element_mesh=1*nspec
-      endif
-    else
-      d2_coorg_send_ps_element_mesh=nspec*6
-      if (colors == 1) then
-        d1_color_send_ps_element_mesh=1*nspec
-      endif
-    endif
-  else
-    if (numbers == 1) then
-      d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1+1)
-      if (colors == 1) then
-        d1_color_send_ps_element_mesh=2*nspec
-      else
-        d1_color_send_ps_element_mesh=1*nspec
-      endif
-    else
-      d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1)
-      if (colors == 1) then
-        d1_color_send_ps_element_mesh=1*nspec
-      endif
-    endif
-  endif
-
-  call mpi_allreduce(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-  call mpi_allreduce(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-  call mpi_allreduce(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-
-  d1_coorg_send_ps_abs=4
-  d2_coorg_send_ps_abs=4*nelemabs
-  call mpi_allreduce(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-  call mpi_allreduce(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-
-  d1_coorg_send_ps_free_surface=4
-  d2_coorg_send_ps_free_surface=4*nelem_acoustic_surface
-  call mpi_allreduce(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-  call mpi_allreduce(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-
-  d1_coorg_send_ps_vector_field=8
-  if (interpol) then
-    if (plot_lowerleft_corner_only) then
-      d2_coorg_send_ps_vector_field=nspec*1*1
-    else
-      d2_coorg_send_ps_vector_field=nspec*pointsdisp*pointsdisp
-    endif
-  else
-    d2_coorg_send_ps_vector_field=nglob
-  endif
-  call mpi_allreduce(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-  call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-
-#else
-  d1_coorg_recv_ps_velocity_model=1
-  d2_coorg_recv_ps_velocity_model=1
-  d1_RGB_recv_ps_velocity_model=1
-  d2_RGB_recv_ps_velocity_model=1
-
-  d1_coorg_send_ps_element_mesh=1
-  d2_coorg_send_ps_element_mesh=1
-  d1_coorg_recv_ps_element_mesh=1
-  d2_coorg_recv_ps_element_mesh=1
-  d1_color_send_ps_element_mesh=1
-  d1_color_recv_ps_element_mesh=1
-
-  d1_coorg_send_ps_abs=1
-  d2_coorg_send_ps_abs=1
-  d1_coorg_recv_ps_abs=1
-  d2_coorg_recv_ps_abs=1
-  d1_coorg_send_ps_free_surface=1
-  d2_coorg_send_ps_free_surface=1
-  d1_coorg_recv_ps_free_surface=1
-  d2_coorg_recv_ps_free_surface=1
-
-  d1_coorg_send_ps_vector_field=1
-  d2_coorg_send_ps_vector_field=1
-  d1_coorg_recv_ps_vector_field=1
-  d2_coorg_recv_ps_vector_field=1
-
-#endif
-  d1_coorg_send_ps_velocity_model=2
-  d2_coorg_send_ps_velocity_model=nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-                                        ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
-  d1_RGB_send_ps_velocity_model=1
-  d2_RGB_send_ps_velocity_model=nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-                                      ((NGLLX-subsamp_postscript)/subsamp_postscript)
-
-  allocate(coorg_send_ps_velocity_model(d1_coorg_send_ps_velocity_model,d2_coorg_send_ps_velocity_model))
-  allocate(RGB_send_ps_velocity_model(d1_RGB_send_ps_velocity_model,d2_RGB_send_ps_velocity_model))
-
-  allocate(coorg_recv_ps_velocity_model(d1_coorg_recv_ps_velocity_model,d2_coorg_recv_ps_velocity_model))
-  allocate(RGB_recv_ps_velocity_model(d1_RGB_recv_ps_velocity_model,d2_RGB_recv_ps_velocity_model))
-
-  allocate(coorg_send_ps_element_mesh(d1_coorg_send_ps_element_mesh,d2_coorg_send_ps_element_mesh))
-  allocate(coorg_recv_ps_element_mesh(d1_coorg_recv_ps_element_mesh,d2_coorg_recv_ps_element_mesh))
-  allocate(color_send_ps_element_mesh(d1_color_send_ps_element_mesh))
-  allocate(color_recv_ps_element_mesh(d1_color_recv_ps_element_mesh))
-
-  allocate(coorg_send_ps_abs(d1_coorg_send_ps_abs,d2_coorg_send_ps_abs))
-  allocate(coorg_recv_ps_abs(d1_coorg_recv_ps_abs,d2_coorg_recv_ps_abs))
-
-  allocate(coorg_send_ps_free_surface(d1_coorg_send_ps_free_surface,d2_coorg_send_ps_free_surface))
-  allocate(coorg_recv_ps_free_surface(d1_coorg_recv_ps_free_surface,d2_coorg_recv_ps_free_surface))
-
-  allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
-  allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field),stat=ier)
-  if (ier /= 0) stop 'Error allocating attenuation arrays'
-
-! to dump the wave field
-  this_is_the_first_time_we_dump = .true.
 
   end subroutine prepare_timerun_attenuation
 

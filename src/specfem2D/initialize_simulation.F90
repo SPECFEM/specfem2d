@@ -49,6 +49,7 @@
 #endif
 
   use specfem_par
+  use specfem_par_movie,only: cutsnaps
 
   implicit none
 
@@ -125,10 +126,12 @@
   ispec_is_poroelastic(:) = .false.
 
   ! element property flags
-  allocate(ispec_is_anisotropic(nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating element property flag array'
+  allocate(ispec_is_anisotropic(nspec), &
+           ispec_is_PML(nspec), stat=ier)
+  if (ier /= 0) stop 'Error allocating element property flag arrays'
 
   ispec_is_anisotropic(:) = .false.
+  ispec_is_PML(:) = .false.
 
   ! initializes domain interfaces
   ninterface_acoustic = 0
@@ -198,14 +201,32 @@
   subroutine initialize_simulation_check()
 
   use specfem_par
+  use specfem_par_movie
 
   implicit none
+
+  ! synchronizes processes
+  call synchronize_all()
 
   ! number of processes
   if (nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
 
-  ! checks if matching with mpi processes
-  if (NPROC /= nproc_read_from_database) stop 'must always have nproc == nproc_read_from_database'
+  ! check that the code is running with the requested nb of processes
+  if (NPROC /= nproc_read_from_database) then
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'error: number of processors supposed to run on: ',nproc_read_from_database
+      write(IMAIN,*) 'error: number of MPI processors actually run on: ',NPROC
+      write(IMAIN,*)
+      if (IMAIN /= ISTANDARD_OUTPUT) then
+        print *
+        print *, 'Error specfem3D: number of processors supposed to run on: ',nproc_read_from_database
+        print *, 'Error specfem3D: number of MPI processors actually run on: ',NPROC
+        print *
+      endif
+    endif
+    call exit_MPI(myrank,'wrong number of MPI processes, must always have nproc == nproc_read_from_database')
+  endif
 
   ! time scheme
   if (SIMULATION_TYPE == 3 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
@@ -261,6 +282,9 @@
     stop 'Please set P_SV flag to .true. for simulations with attenuation and anisotropy'
   endif
 
+  ! synchronizes processes
+  call synchronize_all()
+
   end subroutine initialize_simulation_check
 
 !
@@ -314,6 +338,9 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+
+  ! synchronizes processes
+  call synchronize_all()
 
   end subroutine initialize_GPU
 

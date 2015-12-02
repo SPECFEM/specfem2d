@@ -48,7 +48,7 @@
   use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,TINYVAL,PI
 
   use specfem_par, only : myrank,NSOURCES,source_type,time_function_type, &
-                          x_source,z_source,Mxx,Mzz,Mxz,f0,tshift_src,factor,anglesource,aval, &
+                          x_source,z_source,Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource,aval, &
                           t0,initialfield,deltat,USER_T0
 
   implicit none
@@ -66,13 +66,13 @@
       if (source_type(i_source) == 1) then
         if (myrank == 0) then
           ! user output
-          write(IMAIN,212) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
+          write(IMAIN,212) x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
                        factor(i_source),anglesource(i_source)
         endif
       else if (source_type(i_source) == 2) then
         if (myrank == 0) then
           ! user output
-          write(IMAIN,222) x_source(i_source),z_source(i_source),f0(i_source),tshift_src(i_source), &
+          write(IMAIN,222) x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
                        factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
         endif
       else
@@ -83,15 +83,15 @@
     ! if Dirac source time function, use a very thin Gaussian instead
     ! if Heaviside source time function, use a very thin error function instead
     if (time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) &
-      f0(i_source) = 1.d0 / (10.d0 * deltat)
+      f0_source(i_source) = 1.d0 / (10.d0 * deltat)
 
     ! checks source frequency
-    if (abs(f0(i_source)) < TINYVAL) then
+    if (abs(f0_source(i_source)) < TINYVAL) then
       call exit_MPI(myrank,'Error source frequency is zero')
     endif
 
     ! half-duration of source
-    hdur(i_source) = 1.d0 / f0(i_source)
+    hdur(i_source) = 1.d0 / f0_source(i_source)
 
     ! sets source start times, shifted by the given (non-zero) time-shift
     if (time_function_type(i_source)== 5) then
@@ -101,7 +101,7 @@
     endif
 
     ! for the source time function
-    aval(i_source) = PI*PI*f0(i_source)*f0(i_source)
+    aval(i_source) = PI*PI*f0_source(i_source)*f0_source(i_source)
 
     ! convert angle from degrees to radians
     anglesource(i_source) = anglesource(i_source) * PI / 180.d0
@@ -202,12 +202,12 @@
         ! user output
         if (myrank == 0) then
           write(IMAIN,*) '    Onset time. . . . . . = ',- (t0+tshift_src(i_source))
-          write(IMAIN,*) '    Fundamental period. . = ',1.d0/f0(i_source)
-          write(IMAIN,*) '    Fundamental frequency = ',f0(i_source)
+          write(IMAIN,*) '    Fundamental period. . = ',1.d0/f0_source(i_source)
+          write(IMAIN,*) '    Fundamental frequency = ',f0_source(i_source)
         endif
 
         ! checks source onset time
-        if (t0+tshift_src(i_source) < 1.d0/f0(i_source)) then
+        if (t0+tshift_src(i_source) < 1.d0/f0_source(i_source)) then
           call exit_MPI(myrank,'Onset time too small')
         else
           if (myrank == 0) then

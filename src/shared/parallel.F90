@@ -92,6 +92,7 @@
   implicit none
 
 #ifdef USE_MPI
+  ! local parameters
   integer :: ier
 
   ! synchronizes all
@@ -143,7 +144,8 @@
   implicit none
 
 #ifdef USE_MPI
-  integer ier
+  ! local parameters
+  integer :: ier
 
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   if (ier /= 0 ) stop 'Error synchronize MPI processes'
@@ -242,49 +244,53 @@
 !-------------------------------------------------------------------------------------------------
 
 
-#ifdef USE_MPI
-
   subroutine min_all_i(sendbuf, recvbuf)
 
-! standard include of the MPI library
+#ifdef USE_MPI
   use mpi
+#endif
 
   implicit none
 
-  include "constants.h"
-
   integer:: sendbuf, recvbuf
+
+#ifdef USE_MPI
+  ! local parameters
   integer ier
 
   call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MIN,0,MPI_COMM_WORLD,ier)
+#else
+  recvbuf = sendbuf
+#endif
 
   end subroutine min_all_i
-
-#endif
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-#ifdef USE_MPI
 
   subroutine max_all_i(sendbuf, recvbuf)
 
-! standard include of the MPI library
+#ifdef USE_MPI
   use mpi
+#endif
 
   implicit none
 
-  include "constants.h"
-
   integer :: sendbuf, recvbuf
+
+#ifdef USE_MPI
+  ! local parameters
   integer :: ier
 
   call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
+#else
+  recvbuf = sendbuf
+#endif
 
   end subroutine max_all_i
 
-#endif
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -310,6 +316,32 @@
 #endif
 
   end subroutine sum_all_dp
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sum_all_i(sendbuf, recvbuf)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  integer :: sendbuf, recvbuf
+
+#ifdef USE_MPI
+  ! local parameters
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+#else
+    recvbuf = sendbuf
+#endif
+
+  end subroutine sum_all_i
 
 
 !-------------------------------------------------------------------------------------------------

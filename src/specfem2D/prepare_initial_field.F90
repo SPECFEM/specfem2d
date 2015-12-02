@@ -42,7 +42,7 @@
 !========================================================================
 
 
-  subroutine prepare_initialfield()
+  subroutine prepare_initialfield(cploc,csloc)
 
 #ifdef USE_MPI
   use mpi
@@ -51,23 +51,27 @@
   use constants,only: IMAIN,PI,SMALLVALTOL
 
   use specfem_par, only: myrank,any_acoustic,any_poroelastic,over_critical_angle, &
-                         NSOURCES,source_type,anglesource,x_source,z_source,f0,t0, &
+                         NSOURCES,source_type,anglesource,x_source,z_source,f0_source,t0, &
                          nglob,numat,poroelastcoef,density,coord, &
-                         anglesource_refl,c_inc,c_refl,cploc,csloc,time_offset, &
+                         anglesource_refl,c_inc,c_refl,time_offset, &
                          A_plane, B_plane, C_plane, &
                          accel_elastic,veloc_elastic,displ_elastic,myrank
 
   implicit none
+
+  double precision,intent(out) :: cploc, csloc
 
   ! local parameters
   integer :: numat_local,i
   double precision :: denst,lambdaplus2mu,mu,p,x0_source,z0_source
   double precision :: PP,PS,SP,SS,anglesource_abs
   double precision :: xmax, xmin, zmax, zmin,x,z,t
+
 #ifdef USE_MPI
   double precision :: xmax_glob, xmin_glob, zmax_glob, zmin_glob
   integer :: ier
 #endif
+
   double precision, external :: ricker_Bielak_displ,ricker_Bielak_veloc,ricker_Bielak_accel
 
   ! user output
@@ -81,6 +85,7 @@
     call flush_IMAIN()
   endif
 
+  ! safety check
   if (any_acoustic .or. any_poroelastic) &
     call exit_MPI(myrank,'initial field currently implemented for purely elastic simulation only')
 
@@ -290,33 +295,33 @@
 
       ! formulas for the initial displacement for a plane wave from Aki & Richards (1980)
       displ_elastic(1,i) = &
-          A_plane(1) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + B_plane(1) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + C_plane(1) * ricker_Bielak_displ(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
+          A_plane(1) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + B_plane(1) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + C_plane(1) * ricker_Bielak_displ(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
       displ_elastic(3,i) = &
-          A_plane(2) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + B_plane(2) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + C_plane(2) * ricker_Bielak_displ(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
+          A_plane(2) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + B_plane(2) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + C_plane(2) * ricker_Bielak_displ(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
 
       ! formulas for the initial velocity for a plane wave (first derivative in time of the displacement)
       veloc_elastic(1,i) = &
-          A_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + B_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + C_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
+          A_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + B_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + C_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
       veloc_elastic(3,i) = &
-          A_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + B_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + C_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
+          A_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + B_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + C_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
 
       ! formulas for the initial acceleration for a plane wave (second derivative in time of the displacement)
       accel_elastic(1,i) = &
-          A_plane(1) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + B_plane(1) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + C_plane(1) * ricker_Bielak_accel(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
+          A_plane(1) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + B_plane(1) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + C_plane(1) * ricker_Bielak_accel(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
       accel_elastic(3,i) = &
-          A_plane(2) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + B_plane(2) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + C_plane(2) * ricker_Bielak_accel(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
+          A_plane(2) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + B_plane(2) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + C_plane(2) * ricker_Bielak_accel(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
 
    enddo
 

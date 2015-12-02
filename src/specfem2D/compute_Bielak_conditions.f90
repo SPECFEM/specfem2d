@@ -44,7 +44,7 @@
 
   subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                                        x0_source, z0_source, A_plane, B_plane, C_plane, anglesource, anglesource_refl, &
-                                      c_inc, c_refl, time_offset,f0)
+                                       c_inc, c_refl, time_offset,f0)
 
   use constants,only: NDIM
 

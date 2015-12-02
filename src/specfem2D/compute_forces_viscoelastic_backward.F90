@@ -40,8 +40,9 @@
 !
 !========================================================================
 
-subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                                PML_BOUNDARY_CONDITIONS,e1,e11,e13)
+
+  subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
+                                                  e1,e11,e13)
 
   ! compute forces for the elastic elements
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CONVOLUTION_MEMORY_VARIABLES, &
@@ -61,7 +62,9 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
                          deltat,coord,b_absorb_elastic_left,&
                          b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,&
                          ib_left,ib_right,ib_bottom,ib_top,&
-                         stage_time_scheme,i_stage,is_PML,STACEY_BOUNDARY_CONDITIONS,ispec_is_acoustic
+                         stage_time_scheme,i_stage,STACEY_BOUNDARY_CONDITIONS,ispec_is_acoustic
+  ! PML arrays
+  use specfem_par, only: ispec_is_PML
 
   implicit none
 
@@ -137,7 +140,7 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
       ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
       if (ispec_is_acoustic(ispec)) cycle
 
-      if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. is_PML(ispec)))) then
+      if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. ispec_is_PML(ispec)))) then
         do j = 1,NGLLZ
         do i = 1,NGLLX
 
@@ -707,5 +710,5 @@ subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,
     enddo
   endif  ! end of absorbing boundaries
 
-end subroutine compute_forces_viscoelastic_backward
+  end subroutine compute_forces_viscoelastic_backward
 

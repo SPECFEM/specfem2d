@@ -140,8 +140,10 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob_acoustic,nelem_acforcing,codeacforcing,numacforcing,ispec_is_acoustic,&
-                         ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll,&
-                         PML_BOUNDARY_CONDITIONS,is_PML
+                         ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll
+
+  ! PML arrays
+  use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
 
   implicit none
 
@@ -172,7 +174,7 @@
 
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
-          if (is_PML(ispec)) then
+          if (ispec_is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -202,7 +204,7 @@
 
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
-          if (is_PML(ispec)) then
+          if (ispec_is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -232,7 +234,7 @@
 
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
-          if (is_PML(ispec)) then
+          if (ispec_is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -262,7 +264,7 @@
 
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
-          if (is_PML(ispec)) then
+          if (ispec_is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -298,8 +300,10 @@
                          ispec_is_gravitoacoustic,potential_dot_dot_gravito, &
                          potential_gravitoacoustic,potential_gravito, &
                          it,ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll,hprime_xx,hprime_zz, &
-                         iglobzero,assign_external_model,rhoext,gravityext,Nsqext, &
-                         PML_BOUNDARY_CONDITIONS,is_PML
+                         iglobzero,assign_external_model,rhoext,gravityext,Nsqext
+
+  ! PML arrays
+  use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
 
   implicit none
 
@@ -331,7 +335,7 @@
 
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
-          if (is_PML(ispec)) then
+          if (ispec_is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -400,7 +404,7 @@
 
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
-          if (is_PML(ispec)) then
+          if (ispec_is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -470,7 +474,7 @@
 
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
-          if (is_PML(ispec)) then
+          if (ispec_is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else
@@ -539,7 +543,7 @@
 
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
-          if (is_PML(ispec)) then
+          if (ispec_is_PML(ispec)) then
             displ_x = 0
             displ_z = 0
           else

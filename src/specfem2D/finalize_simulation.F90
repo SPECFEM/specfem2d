@@ -49,6 +49,7 @@ subroutine finalize_simulation()
 
   use specfem_par
   use specfem_par_gpu
+  use specfem_par_movie,only: simulation_title,output_wavefield_dumps,mask_ibool
 
   implicit none
 
@@ -259,7 +260,7 @@ subroutine finalize_simulation()
 !
 !--- save last frame
 !
-  if (SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_elastic) then
+  if (SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. any_elastic) then
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'Saving elastic last frame...'
@@ -278,7 +279,7 @@ subroutine finalize_simulation()
     close(55)
   endif
 
-  if (SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_poroelastic) then
+  if (SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. any_poroelastic) then
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'Saving poroelastic last frame...'
@@ -305,7 +306,7 @@ subroutine finalize_simulation()
     close(56)
   endif
 
-  if (SAVE_FORWARD .and. SIMULATION_TYPE ==1 .and. any_acoustic) then
+  if (SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. any_acoustic) then
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'Saving acoustic last frame...'
@@ -323,21 +324,22 @@ subroutine finalize_simulation()
     close(55)
   endif
 
+  if (initialfield .and. over_critical_angle) then
+    deallocate(v0x_left)
+    deallocate(v0z_left)
+    deallocate(t0x_left)
+    deallocate(t0z_left)
 
-  deallocate(v0x_left)
-  deallocate(v0z_left)
-  deallocate(t0x_left)
-  deallocate(t0z_left)
+    deallocate(v0x_right)
+    deallocate(v0z_right)
+    deallocate(t0x_right)
+    deallocate(t0z_right)
 
-  deallocate(v0x_right)
-  deallocate(v0z_right)
-  deallocate(t0x_right)
-  deallocate(t0z_right)
-
-  deallocate(v0x_bot)
-  deallocate(v0z_bot)
-  deallocate(t0x_bot)
-  deallocate(t0z_bot)
+    deallocate(v0x_bot)
+    deallocate(v0z_bot)
+    deallocate(t0x_bot)
+    deallocate(t0z_bot)
+  endif
 
 !----  close energy file
   if (output_energy .and. myrank == 0) close(IOUT_ENERGY)
