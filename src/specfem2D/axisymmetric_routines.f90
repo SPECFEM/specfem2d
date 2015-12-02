@@ -84,8 +84,10 @@
 
   use specfem_par, only: any_poroelastic, ROTATE_PML_ACTIVATE, &
                          STACEY_BOUNDARY_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD,time_stepping_scheme, &
-                         NOISE_TOMOGRAPHY, NSOURCES, source_type, ispec_selected_source, ADD_PERIODIC_CONDITIONS, &
+                         NSOURCES, source_type, ispec_selected_source, ADD_PERIODIC_CONDITIONS, &
                          anglesource, is_on_the_axis, ispec_is_elastic, is_proc_source,myrank
+
+  use specfem_par_noise,only: NOISE_TOMOGRAPHY
 
   implicit none
 

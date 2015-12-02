@@ -72,7 +72,7 @@ subroutine read_model_nspec()
   read(IIN,"(a80)") datlin
   read(IIN,"(a80)") datlin ! AXISYM
   read(IIN,"(a80)") datlin
-  read(IIN,"(a80)") datlin  ! SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
+  read(IIN,"(a80)") datlin  ! SIMULATION_TYPE, ...
   read(IIN,"(a80)") datlin
   read(IIN,*) nspec
 

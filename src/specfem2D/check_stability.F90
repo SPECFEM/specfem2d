@@ -50,12 +50,14 @@
 
   use constants,only: IMAIN,STABILITY_THRESHOLD
 
-  use specfem_par, only: myrank,timeval,it,NSTEP,NOISE_TOMOGRAPHY,GPU_MODE, &
+  use specfem_par, only: myrank,timeval,it,NSTEP,GPU_MODE, &
                          any_elastic_glob,any_elastic,displ_elastic, &
                          any_poroelastic_glob,any_poroelastic, &
                          displs_poroelastic,displw_poroelastic, &
                          any_acoustic_glob,any_acoustic,potential_acoustic, &
                          timestamp_seconds_start
+
+  use specfem_par_noise,only: NOISE_TOMOGRAPHY
 
   implicit none
 

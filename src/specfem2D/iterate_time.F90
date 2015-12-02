@@ -49,6 +49,7 @@
 
   use specfem_par
   use specfem_par_gpu
+  use specfem_par_noise,only: NOISE_TOMOGRAPHY,save_everywhere
 
   implicit none
 

@@ -53,7 +53,9 @@
 
   use constants,only: CUSTOM_REAL
 
-  use specfem_par, only: nglob,coord,mask_noise
+  use specfem_par, only: nglob,coord
+
+  use specfem_par_noise,only: mask_noise
 
   implicit none
 
@@ -79,11 +81,12 @@
 ! read noise parameters and check for consistency
   subroutine read_parameters_noise()
 
-  use specfem_par, only: NOISE_TOMOGRAPHY,SIMULATION_TYPE,SAVE_FORWARD, &
-                                     any_acoustic,any_poroelastic,p_sv, &
-                                     Mxx,Mxz,Mzz,factor,NSOURCES, &
-                                     xi_receiver,gamma_receiver,ispec_selected_rec,nrec, &
-                                     xi_noise,gamma_noise,ispec_noise,angle_noise,myrank
+  use specfem_par, only: SIMULATION_TYPE,SAVE_FORWARD, &
+                         any_acoustic,any_poroelastic,p_sv, &
+                         Mxx,Mxz,Mzz,factor,NSOURCES, &
+                         xi_receiver,gamma_receiver,ispec_selected_rec,nrec,myrank
+
+  use specfem_par_noise
 
   implicit none
 
@@ -148,9 +151,10 @@
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ
 
-  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,p_sv,NSTEP,deltat,ibool,ispec_noise, &
-                       xi_noise,gamma_noise,xigll,zigll, &
-                       time_function_noise,source_array_noise,myrank
+  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,p_sv,NSTEP,deltat,ibool, &
+                         xigll,zigll,myrank
+
+  use specfem_par_noise
 
   implicit none
 
@@ -286,9 +290,9 @@
   subroutine add_point_source_noise()
 
   use constants,only: NGLLX,NGLLZ
+  use specfem_par, only: p_sv,it,ibool,accel_elastic
+  use specfem_par_noise
 
-  use specfem_par, only: p_sv,it,ibool,ispec_noise, &
-                         accel_elastic,angle_noise,source_array_noise
   implicit none
 
   !local
@@ -322,10 +326,8 @@
   subroutine add_surface_movie_noise(accel_elastic)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
-
-  use specfem_par, only: p_sv,NOISE_TOMOGRAPHY,it,NSTEP,nspec,nglob,ibool, &
-                         surface_movie_x_noise,surface_movie_y_noise, &
-                         surface_movie_z_noise,mask_noise,jacobian,wxgll,wzgll,myrank
+  use specfem_par, only: p_sv,it,NSTEP,nspec,nglob,ibool,jacobian,wxgll,wzgll,myrank
+  use specfem_par_noise
 
   implicit none
 
@@ -379,8 +381,8 @@
   subroutine save_surface_movie_noise()
 
   use constants,only: CUSTOM_REAL
-
-  use specfem_par, only: NOISE_TOMOGRAPHY,p_sv,it,NSTEP,nglob,displ_elastic,myrank
+  use specfem_par, only: p_sv,it,NSTEP,nglob,displ_elastic,myrank
+  use specfem_par_noise,only: NOISE_TOMOGRAPHY
 
   implicit none
 

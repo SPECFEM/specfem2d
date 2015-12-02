@@ -949,16 +949,17 @@ subroutine prepare_timerun_mass_matrix()
   use mpi
 #endif
 
-  use specfem_par
+  use constants,only: NGLLX,NGLLZ
+  use specfem_par,only: NSTEP,nglob,nspec,ibool,coord, &
+                        rhoext,vpext,vsext,density,poroelastcoef,kmato,assign_external_model
+  use specfem_par_noise
 
   implicit none
 
   integer :: i,j,iglob,ispec
 
-!<NOISE_TOMOGRAPHY
-
+  ! noise simulations
   if (NOISE_TOMOGRAPHY /= 0) then
-
     !allocate arrays for noise tomography
     allocate(time_function_noise(NSTEP))
     allocate(source_array_noise(3,NGLLX,NGLLZ,NSTEP))
@@ -969,8 +970,7 @@ subroutine prepare_timerun_mass_matrix()
 
     !read in parameters for noise tomography
     call read_parameters_noise()
-
-  endif ! NOISE_TOMOGRAPHY /= 0
+  endif
 
 
   if (NOISE_TOMOGRAPHY == 1) then
@@ -1047,8 +1047,6 @@ subroutine prepare_timerun_mass_matrix()
     endif
 
   endif
-
-!>NOISE_TOMOGRAPHY
 
   end subroutine prepare_timerun_noise
 

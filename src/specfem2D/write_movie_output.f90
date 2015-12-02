@@ -45,7 +45,9 @@
 ! outputs snapshots for movies
 
   use specfem_par
-  use specfem_par_gpu
+  use specfem_par_gpu,only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
+  use specfem_par_noise,only: NOISE_TOMOGRAPHY,output_wavefields_noise,mask_noise, &
+                              surface_movie_y_noise,noise_output_rhokl,noise_output_array,noise_output_ncol
 
   implicit none
 

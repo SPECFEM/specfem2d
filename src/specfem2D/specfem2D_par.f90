@@ -807,12 +807,30 @@ module specfem_par
   ! for wavefield snapshot file
   !---------------------------------------------------------------------
   logical :: output_grid_ASCII,output_grid_Gnuplot
+
   !=====================================================================
   ! output for simulation (end)
   !=====================================================================
 
+  !---------------------------------------------------------------------
+  !global varable particular for computation with GPU
+  !---------------------------------------------------------------------
+  ! Global GPU toggle. Set in Par_file
+  logical :: GPU_MODE
 
-!<NOISE_TOMOGRAPHY
+end module specfem_par
+
+!=====================================================================
+
+module specfem_par_noise
+
+! parameter module for noise simulations
+
+  use constants,only: CUSTOM_REAL
+  implicit none
+
+  ! noise simulations:
+  !
   ! NOISE_TOMOGRAPHY = 0 - turn noise tomography subroutines off; setting
   ! NOISE_TOMOGRAPHY equal to 0, in other words, results in an earthquake
   ! simulation rather than a noise simulation
@@ -835,8 +853,11 @@ module specfem_par
   ! International"
 
   integer :: NOISE_TOMOGRAPHY
+
+  ! master station
   integer :: ispec_noise
   double precision :: xi_noise, gamma_noise, angle_noise
+
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: time_function_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: source_array_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mask_noise
@@ -861,15 +882,8 @@ module specfem_par
   ! wavefield by saving everywhere or by saving only at the boundaries (the
   ! latter usually much faster but prone to artefacts)
   logical :: save_everywhere = .false.
-!<NOISE_TOMOGRAPHY
 
-  !---------------------------------------------------------------------
-  !global varable particular for computation with GPU
-  !---------------------------------------------------------------------
-  ! Global GPU toggle. Set in Par_file
-  logical :: GPU_MODE
-
-end module specfem_par
+end module specfem_par_noise
 
 !=====================================================================
 
