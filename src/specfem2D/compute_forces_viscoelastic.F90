@@ -40,8 +40,9 @@
 !
 !========================================================================
 
-subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
-                                       PML_BOUNDARY_CONDITIONS,e1,e11,e13)
+
+  subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
+                                         PML_BOUNDARY_CONDITIONS,e1,e11,e13)
 
   ! compute forces for the elastic elements
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CONVOLUTION_MEMORY_VARIABLES, &
@@ -804,6 +805,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               sigma_zx = mul_unrelaxed_elastic * (PML_duz_dxl(i,j) + dux_dzl)
               sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j) + duz_dxl)
             endif
+
           else
             ! no attenuation
 
@@ -1659,5 +1661,5 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
     enddo ! end specabs loop
   endif  ! end of PML_BOUNDARY_CONDITIONS
 
-end subroutine compute_forces_viscoelastic
+  end subroutine compute_forces_viscoelastic
 

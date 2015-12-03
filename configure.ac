@@ -19,6 +19,7 @@ AC_CONFIG_MACRO_DIR([m4])
 ############################################################
 
 AS_BOX([setting up compilation flags])
+AC_CANONICAL_HOST
 
 # 'configure' options
 
@@ -64,6 +65,28 @@ AC_ARG_ENABLE([debug],
 AM_CONDITIONAL([COND_DEBUG], [test x"$want_debug" != xno])
 export COND_DEBUG_FALSE
 export COND_DEBUG_TRUE
+
+###
+### FORCE_VECTORIZATION
+###
+
+AC_ARG_ENABLE([vectorization],
+    [AC_HELP_STRING([--enable-vectorization],
+        [build FORCE_VECTORIZATION enabled version @<:@default=auto@:>@])],
+    [want_vec="$enableval"],
+    [want_vec=no])
+if test x"$want_vec" == xauto; then
+    if test x"$want_debug" != xno; then
+        want_vec=no
+    else
+        want_vec=yes
+    fi
+else
+    if test x"$want_vec" != xno && test x"$want_debug" != xno; then
+        AC_MSG_ERROR([--enable-debug and --enable-vectorization cannot be specified simultaneously.])
+    fi
+fi
+AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
 
 ###
 ### CUDA
@@ -312,6 +335,17 @@ AS_IF([test x"$want_cuda" != xno], [
     CIT_CUDA_CONFIG
 ])
 
+###
+### FORCE_VECTORIZATION
+###
+
+AS_IF([test x"$want_vec" != xno],[
+  AS_BOX([FORCE VECTORIZATION])
+  AC_MSG_NOTICE([FORCE_VECTORIZATION is enabled])
+
+  FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}FORCE_VECTORIZATION"
+  CPPFLAGS="${CPPFLAGS} -DFORCE_VECTORIZATION"
+])
 
 ############################################################
 
@@ -319,10 +353,11 @@ AS_BOX([setting up default simulation setup])
 
 # Output results.
 AC_CONFIG_FILES([
-	Makefile
-	setup/constants.h
-	setup/constants_tomography.h
-	setup/precision.h
+  Makefile
+  setup/constants.h
+  setup/constants_tomography.h
+  setup/precision.h
+  setup/config.fh
 ])
 
 if test "$USE_BUNDLED_SCOTCH" = 1; then
@@ -333,6 +368,7 @@ fi
 
 AC_CONFIG_COMMANDS([bin], [AS_MKDIR_P(bin)])
 AC_CONFIG_COMMANDS([obj], [AS_MKDIR_P(obj)])
+AC_CONFIG_COMMANDS([DATA], [AS_MKDIR_P(DATA)])
 AC_CONFIG_COMMANDS([OUTPUT_FILES], [AS_MKDIR_P(OUTPUT_FILES)])
 
 AC_OUTPUT

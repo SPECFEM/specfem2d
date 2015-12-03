@@ -209,6 +209,9 @@
   integer, parameter :: NEDGES = 4
   integer, parameter :: NCORNERS = 4
 
+! number of points per surface element
+  integer, parameter :: NGLLSQUARE = NGLLX * NGLLZ
+
 ! displacement threshold above which we consider the code became unstable
   double precision, parameter :: STABILITY_THRESHOLD = 1.d+25
 

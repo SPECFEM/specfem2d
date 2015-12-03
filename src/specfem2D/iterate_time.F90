@@ -114,11 +114,12 @@
     do i_stage = 1, stage_time_scheme
 
       if (GPU_MODE) then
-        call update_displacement_precondition_newmark_GPU()
+        call update_displacement_newmark_GPU()
       endif
 
       if (.not. GPU_MODE) then
 
+        ! acoustic domains
         if (any_acoustic) then
           ! free surface for an acoustic medium
           if (nelem_acoustic_surface > 0) then
@@ -126,10 +127,10 @@
                                                potential_acoustic)
           endif
           if (time_stepping_scheme == 1) then
-            call update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                                   potential_dot_dot_acoustic,potential_dot_acoustic,&
-                                                                   potential_acoustic,potential_acoustic_old, &
-                                                                   PML_BOUNDARY_CONDITIONS)
+            call update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
+                                                      potential_dot_dot_acoustic,potential_dot_acoustic,&
+                                                      potential_acoustic,potential_acoustic_old, &
+                                                      PML_BOUNDARY_CONDITIONS)
           else
 #ifdef FORCE_VECTORIZATION
             do i = 1,nglob_acoustic
@@ -144,10 +145,10 @@
             !Since we do not do anything in PML region in case of backward simulation, thus we set
             !PML_BOUNDARY_CONDITIONS = .false.
             if (time_stepping_scheme == 1) then
-              call update_displacement_precondition_newmark_acoustic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                                     b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
-                                                                     b_potential_acoustic,b_potential_acoustic_old, &
-                                                                     .false.)
+              call update_displacement_newmark_acoustic(b_deltat,b_deltatover2,b_deltatsquareover2,&
+                                                        b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
+                                                        b_potential_acoustic,b_potential_acoustic_old, &
+                                                        .false.)
             else
 #ifdef FORCE_VECTORIZATION
               do i = 1,nglob_acoustic
@@ -173,10 +174,10 @@
             endif
 
             if (time_stepping_scheme == 1) then
-              call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                                    accel_elastic,veloc_elastic,&
-                                                                    displ_elastic,displ_elastic_old,&
-                                                                    PML_BOUNDARY_CONDITIONS)
+              call update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
+                                                       accel_elastic,veloc_elastic,&
+                                                       displ_elastic,displ_elastic_old,&
+                                                       PML_BOUNDARY_CONDITIONS)
             else
 #ifdef FORCE_VECTORIZATION
               do i = 1,3*nglob_elastic
@@ -192,10 +193,10 @@
             !Since we do not do anything in PML region in case of backward simulation, thus we set
             !PML_BOUNDARY_CONDITIONS = .false.
             if (time_stepping_scheme == 1) then
-              call update_displacement_precondition_newmark_elastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                                    b_accel_elastic,b_veloc_elastic,&
-                                                                    b_displ_elastic,b_displ_elastic_old,&
-                                                                    .false.)
+              call update_displacement_newmark_elastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
+                                                       b_accel_elastic,b_veloc_elastic,&
+                                                       b_displ_elastic,b_displ_elastic_old,&
+                                                       .false.)
             else
 #ifdef FORCE_VECTORIZATION
               do i = 1,3*nglob_elastic
@@ -219,10 +220,10 @@
           endif
 
           if (time_stepping_scheme == 1) then
-            call update_displacement_precondition_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
-                                                                      accels_poroelastic,velocs_poroelastic,&
-                                                                      displs_poroelastic,accelw_poroelastic,&
-                                                                      velocw_poroelastic,displw_poroelastic)
+            call update_displacement_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
+                                                         accels_poroelastic,velocs_poroelastic,&
+                                                         displs_poroelastic,accelw_poroelastic,&
+                                                         velocw_poroelastic,displw_poroelastic)
           else
             accels_poroelastic = 0._CUSTOM_REAL
             accelw_poroelastic = 0._CUSTOM_REAL
@@ -231,10 +232,10 @@
           if (SIMULATION_TYPE == 3) then
             if (time_stepping_scheme == 1) then
               !PML did not implemented for poroelastic simulation
-              call update_displacement_precondition_newmark_poroelastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                                        b_accels_poroelastic,b_velocs_poroelastic,&
-                                                                        b_displs_poroelastic,b_accelw_poroelastic,&
-                                                                        b_velocw_poroelastic,b_displw_poroelastic)
+              call update_displacement_newmark_poroelastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
+                                                           b_accels_poroelastic,b_velocs_poroelastic,&
+                                                           b_displs_poroelastic,b_accelw_poroelastic,&
+                                                           b_velocw_poroelastic,b_displw_poroelastic)
             else
               b_accels_poroelastic = 0._CUSTOM_REAL
               b_accelw_poroelastic = 0._CUSTOM_REAL

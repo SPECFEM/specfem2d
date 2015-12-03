@@ -186,24 +186,24 @@
         do i_stage = 1, stage_time_scheme ! is equal to 1 if Newmark because only one stage then
 
           ! *********************************************************
-          ! ************* update_displacement_precondition_newmark
+          ! ************* update_displacement_newmark
           ! *********************************************************
           if (any_acoustic) then
             if (nelem_acoustic_surface > 0) then
               call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                                  potential_acoustic)
             endif
-            call update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                                   potential_dot_dot_acoustic,potential_dot_acoustic,&
-                                                                   potential_acoustic,potential_acoustic_old, &
-                                                                   PML_BOUNDARY_CONDITIONS)
+            call update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
+                                                      potential_dot_dot_acoustic,potential_dot_acoustic,&
+                                                      potential_acoustic,potential_acoustic_old, &
+                                                      PML_BOUNDARY_CONDITIONS)
           endif
 
           if (any_elastic) then
-            call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                                  accel_elastic,veloc_elastic,&
-                                                                  displ_elastic,displ_elastic_old,&
-                                                                  PML_BOUNDARY_CONDITIONS)
+            call update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
+                                                     accel_elastic,veloc_elastic,&
+                                                     displ_elastic,displ_elastic_old,&
+                                                     PML_BOUNDARY_CONDITIONS)
           endif
 ! *********************************************************
 ! ************* main solver for the acoustic elements
@@ -367,20 +367,20 @@
           !****************************************************************************************************backward_inner_loop
           !****************************************************************************************************
           ! *********************************************************
-          ! ************* update_displacement_precondition_newmark
+          ! ************* update_displacement_newmark
           ! *********************************************************
           if (any_acoustic) then
-            call update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                                   b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
-                                                                   b_potential_acoustic,b_potential_acoustic_old, &
-                                                                   .false.)
+            call update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
+                                                      b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
+                                                      b_potential_acoustic,b_potential_acoustic_old, &
+                                                      .false.)
           endif
 
           if (any_elastic) then
-            call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                                  b_accel_elastic,b_veloc_elastic,&
-                                                                  b_displ_elastic,b_displ_elastic_old,&
-                                                                  .false.)
+            call update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
+                                                     b_accel_elastic,b_veloc_elastic,&
+                                                     b_displ_elastic,b_displ_elastic_old,&
+                                                     .false.)
           endif
 
 ! *********************************************************
@@ -585,7 +585,7 @@
 !****************************************************************************************************adjoint
 !****************************************************************************************************
           ! *********************************************************
-          ! ************* update_displacement_precondition_newmark
+          ! ************* update_displacement_newmark
           ! *********************************************************
           if (any_acoustic) then
             ! free surface for an acoustic medium
@@ -594,10 +594,10 @@
                                                  potential_acoustic)
             endif
 
-            call update_displacement_precondition_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                                   potential_dot_dot_acoustic,potential_dot_acoustic,&
-                                                                   potential_acoustic,potential_acoustic_old, &
-                                                                   PML_BOUNDARY_CONDITIONS)
+            call update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
+                                                      potential_dot_dot_acoustic,potential_dot_acoustic,&
+                                                      potential_acoustic,potential_acoustic_old, &
+                                                      PML_BOUNDARY_CONDITIONS)
 
             !ZN here we remove the trick introduced by Luoyang to stabilized the adjoint simulation
             !ZN However in order to keep the current code be consistent, we still keep potential_acoustic_adj_coupling
@@ -607,10 +607,10 @@
           endif
 
           if (any_elastic) then
-            call update_displacement_precondition_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                                  accel_elastic,veloc_elastic,&
-                                                                  displ_elastic,displ_elastic_old,&
-                                                                  PML_BOUNDARY_CONDITIONS)
+            call update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
+                                                     accel_elastic,veloc_elastic,&
+                                                     displ_elastic,displ_elastic_old,&
+                                                     PML_BOUNDARY_CONDITIONS)
           endif
 ! *********************************************************
 ! ************* main solver for the elastic elements
