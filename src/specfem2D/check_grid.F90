@@ -257,7 +257,7 @@
     distance_max = max(distance_max,distance_max_local)
 
     courant_stability_number_max = max(courant_stability_number_max, &
-                vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX)))
+                                       vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX)))
 
     ! check if fluid region with Vs = 0
     if (vsmin_local > 1.d-20) then
@@ -439,7 +439,6 @@
     call check_grid_create_postscript(courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaSmin,lambdaSmax)
   endif
 
-
   end subroutine check_grid
 
 
@@ -565,9 +564,6 @@
       vpImin_local = HUGEVAL
       vpIImin_local = HUGEVAL
       vsmin_local = HUGEVAL
-
-      distance_min_local = HUGEVAL
-      distance_max_local = -HUGEVAL
 
       do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -2036,8 +2032,9 @@
   double precision :: w_c,perm_xx
   double precision :: denst
   double precision :: lambdaplus2mu,mu
+  double precision :: lambdaS_local,lambdaPI_local
 
-  double precision :: distance_min,distance_max,distance_min_local,distance_max_local,lambdaS_local,lambdaPI_local
+  double precision :: distance_min_local,distance_max_local
   double precision :: distance_1,distance_2,distance_3,distance_4
 
 ! for the stability condition
@@ -2337,9 +2334,6 @@
 
     vpImax_local = -HUGEVAL
 
-    distance_min_local = HUGEVAL
-    distance_max_local = -HUGEVAL
-
     do j = 1,NGLLZ
       do i = 1,NGLLX
 
@@ -2369,9 +2363,6 @@
 
     distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
     distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
-
-    distance_min = min(distance_min,distance_min_local)
-    distance_max = max(distance_max,distance_max_local)
 
     courant_stability_number = vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX))
 
@@ -2693,9 +2684,6 @@
     vpImin_local = HUGEVAL
     vsmin_local = HUGEVAL
 
-    distance_min_local = HUGEVAL
-    distance_max_local = -HUGEVAL
-
     do j = 1,NGLLZ
       do i = 1,NGLLX
 !--- if heterogeneous formulation with external velocity model
@@ -2726,9 +2714,6 @@
 
     distance_min_local = min(distance_1,distance_2,distance_3,distance_4)
     distance_max_local = max(distance_1,distance_2,distance_3,distance_4)
-
-    distance_min = min(distance_min,distance_min_local)
-    distance_max = max(distance_max,distance_max_local)
 
 ! display mesh dispersion for S waves if there is at least one elastic element in the mesh
     if (ELASTIC_SIMULATION .or. POROELASTIC_SIMULATION) then
