@@ -71,7 +71,7 @@
     enddo
   enddo
 
-  ! allocate 1-D Lagrange interpolators and derivatives 
+  ! allocate 1-D Lagrange interpolators and derivatives
   ! for source and receivers
   allocate(hxir(NGLLX), &
            hxis(NGLLX), &
