@@ -428,10 +428,6 @@
 
  subroutine define_PML_coefficients()
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants,only: PI,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY,PML_parameter_adjustment
 
   use specfem_par, only: f0_source,ispec_is_elastic,ispec_is_acoustic, &
@@ -496,9 +492,7 @@
   double precision :: averagex_source, averagez_source, averagex_source_sum, averagez_source_sum
   double precision :: rough_estimate_incident_angle
 
-#ifdef USE_MPI
 ! for MPI and partitioning
-  integer :: ier
   double precision :: f0_max_glob
   double precision :: thickness_PML_z_min_bottom_glob,thickness_PML_z_max_bottom_glob,&
                       thickness_PML_x_min_right_glob,thickness_PML_x_max_right_glob,&
@@ -506,14 +500,12 @@
                       thickness_PML_x_min_left_glob,thickness_PML_x_max_left_glob
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision :: vpmax_glob_acoustic, vpmax_glob_elastic
-#endif
 
 ! compute the maximum dominant frequency of all sources
   f0_max = maxval(f0_source(:))
-#ifdef USE_MPI
-  call MPI_ALLREDUCE (f0_max, f0_max_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call max_all_all_dp(f0_max, f0_max_glob)
   f0_max = f0_max_glob
-#endif
+
 ! finish the computation of the maximum dominant frequency of all sources
 
 ! reflection coefficient (Inria report section 6.1) http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
@@ -534,14 +526,14 @@
   xmax = maxval(coord(1,:))
   zmax = maxval(coord(2,:))
   if (zmax - zmin < 0.0 .or. xmax - xmin < 0.0) stop 'there are errors in the mesh'
-#ifdef USE_MPI
-  call MPI_ALLREDUCE (xmin, xmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (zmin, zmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (xmax, xmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (zmax, zmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+
+  call min_all_all_dp(xmin, xmin_glob)
+  call min_all_all_dp(zmin, zmin_glob)
+  call max_all_all_dp(xmax, xmax_glob)
+  call max_all_all_dp(zmax, zmax_glob)
+
   xmin = xmin_glob; zmin = zmin_glob
   xmax = xmax_glob; zmax = zmax_glob
-#endif
 
 ! get the center(origin) of mesh coordinates
   xorigin = xmin + (xmax - xmin)/2.d0
@@ -595,39 +587,30 @@
      endif
   enddo
 
-#ifdef USE_MPI
 !!!bottom_case
-  call MPI_ALLREDUCE (thickness_PML_z_max_bottom, thickness_PML_z_max_bottom_glob, &
-                      1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (thickness_PML_z_min_bottom, thickness_PML_z_min_bottom_glob, &
-                      1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call max_all_all_dp(thickness_PML_z_max_bottom, thickness_PML_z_max_bottom_glob)
+  call min_all_all_dp(thickness_PML_z_min_bottom, thickness_PML_z_min_bottom_glob)
   thickness_PML_z_max_bottom=thickness_PML_z_max_bottom_glob
   thickness_PML_z_min_bottom=thickness_PML_z_min_bottom_glob
 
 !!!right_case
-  call MPI_ALLREDUCE (thickness_PML_x_max_right, thickness_PML_x_max_right_glob, &
-                      1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (thickness_PML_x_min_right, thickness_PML_x_min_right_glob, &
-                      1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call max_all_all_dp(thickness_PML_x_max_right, thickness_PML_x_max_right_glob)
+  call min_all_all_dp(thickness_PML_x_min_right, thickness_PML_x_min_right_glob)
   thickness_PML_x_max_right=thickness_PML_x_max_right_glob
   thickness_PML_x_min_right=thickness_PML_x_min_right_glob
 
 !!!top_case
-  call MPI_ALLREDUCE (thickness_PML_z_max_top, thickness_PML_z_max_top_glob, &
-                      1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (thickness_PML_z_min_top, thickness_PML_z_min_top_glob, &
-                      1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call max_all_all_dp(thickness_PML_z_max_top, thickness_PML_z_max_top_glob)
+  call min_all_all_dp(thickness_PML_z_min_top, thickness_PML_z_min_top_glob)
   thickness_PML_z_max_top=thickness_PML_z_max_top_glob
   thickness_PML_z_min_top=thickness_PML_z_min_top_glob
 
 !!!left_case
-  call MPI_ALLREDUCE (thickness_PML_x_max_left, thickness_PML_x_max_left_glob, &
-                      1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (thickness_PML_x_min_left, thickness_PML_x_min_left_glob, &
-                      1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
+  call max_all_all_dp(thickness_PML_x_max_left, thickness_PML_x_max_left_glob)
+  call min_all_all_dp(thickness_PML_x_min_left, thickness_PML_x_min_left_glob)
   thickness_PML_x_max_left=thickness_PML_x_max_left_glob
   thickness_PML_x_min_left=thickness_PML_x_min_left_glob
-#endif
+
 
   thickness_PML_x_left= thickness_PML_x_max_left - thickness_PML_x_min_left
   thickness_PML_x_right= thickness_PML_x_max_right - thickness_PML_x_min_right
@@ -688,13 +671,10 @@
 
 
 ! finish the computation of the average position of all sources (not the plane wave incident)
-
-#ifdef USE_MPI
-  call MPI_ALLREDUCE (vpmax_acoustic, vpmax_glob_acoustic, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vpmax_elastic, vpmax_glob_elastic, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  vpmax_acoustic=vpmax_glob_acoustic
-  vpmax_elastic=vpmax_glob_elastic
-#endif
+  call max_all_all_dp(vpmax_acoustic, vpmax_glob_acoustic)
+  call max_all_all_dp(vpmax_elastic, vpmax_glob_elastic)
+  vpmax_acoustic = vpmax_glob_acoustic
+  vpmax_elastic = vpmax_glob_elastic
 
   d0_x_left_acoustic = - (NPOWER + 1) * vpmax_acoustic * log(Rcoef) / (2.d0 * thickness_PML_x_left)
   d0_x_right_acoustic = - (NPOWER + 1) * vpmax_acoustic * log(Rcoef) / (2.d0 * thickness_PML_x_right)

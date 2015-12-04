@@ -260,7 +260,7 @@
   ! local parameters
   double precision :: xmin,xmax,zmin,zmax
   double precision :: xmin_local,xmax_local,zmin_local,zmax_local
-  integer :: i,n,ier
+  integer :: i,n
 
   ! determines mesh dimensions
   xmin_local = minval(coord(1,:))
@@ -269,17 +269,10 @@
   zmax_local = maxval(coord(2,:))
 
   ! collect min/max
-#ifdef USE_MPI
-  call MPI_ALLREDUCE(xmin_local, xmin, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE(xmax_local, xmax, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE(zmin_local, zmin, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE(zmax_local, zmax, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-#else
-  xmin = xmin_local
-  xmax = xmax_local
-  zmin = zmin_local
-  zmax = zmax_local
-#endif
+  call min_all_all_dp(xmin_local, xmin)
+  call max_all_all_dp(xmax_local, xmax)
+  call min_all_all_dp(zmin_local, zmin)
+  call max_all_all_dp(zmax_local, zmax)
 
   ! user output
   if (myrank == 0) then

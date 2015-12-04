@@ -134,12 +134,8 @@
 ! end of loop on all the spectral elements
   enddo
 
-#ifdef USE_MPI
   ! global minimum distance computed over all processes
-  call MPI_ALLREDUCE (distmin_squared, dist_glob_squared, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ierror)
-#else
-  dist_glob_squared = distmin_squared
-#endif
+  call min_all_all_dp(distmin_squared, dist_glob_squared)
 
   ! check if this process contains the source
   if (abs(sqrt(dist_glob_squared) - sqrt(distmin_squared)) < TINYVAL ) is_proc_source = 1

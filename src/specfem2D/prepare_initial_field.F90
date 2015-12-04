@@ -44,10 +44,6 @@
 
   subroutine prepare_initialfield(cploc,csloc)
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants,only: IMAIN,PI,SMALLVALTOL
 
   use specfem_par, only: myrank,any_acoustic,any_poroelastic,over_critical_angle, &
@@ -66,11 +62,7 @@
   double precision :: denst,lambdaplus2mu,mu,p,x0_source,z0_source
   double precision :: PP,PS,SP,SS,anglesource_abs
   double precision :: xmax, xmin, zmax, zmin,x,z,t
-
-#ifdef USE_MPI
   double precision :: xmax_glob, xmin_glob, zmax_glob, zmin_glob
-  integer :: ier
-#endif
 
   double precision, external :: ricker_Bielak_displ,ricker_Bielak_veloc,ricker_Bielak_accel
 
@@ -244,16 +236,16 @@
   xmax = maxval(coord(1,:))
   zmax = maxval(coord(2,:))
 
-#ifdef USE_MPI
-  call MPI_ALLREDUCE (xmin, xmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (zmin, zmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (xmax, xmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (zmax, zmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  ! collects min/max on all slices
+  call min_all_all_dp(xmin, xmin_glob)
+  call max_all_all_dp(xmax, xmax_glob)
+  call min_all_all_dp(zmin, zmin_glob)
+  call max_all_all_dp(zmax, zmax_glob)
+
   xmin = xmin_glob
   zmin = zmin_glob
   xmax = xmax_glob
   zmax = zmax_glob
-#endif
 
   ! check if zs = zmax (free surface)
   if (myrank == 0 .and. abs(z_source(1)-zmax) > SMALLVALTOL) then

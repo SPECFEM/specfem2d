@@ -122,10 +122,9 @@
 
   double precision :: afactor,bfactor,cfactor
   double precision :: xmax,zmax,height,xw,zw,usoffset,sizex,sizez,timeval
-#ifdef USE_MPI
-  double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
-  double precision  :: dispmax_glob
-#endif
+  ! for mpi collection
+  double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
+  double precision :: dispmax_glob
 
 #ifndef USE_MPI
 ! this to avoid warnings by the compiler about unused variables in the case
@@ -1349,16 +1348,14 @@
   xmax = maxval(coord(1,:))
   zmax = maxval(coord(2,:))
 
-#ifdef USE_MPI
-  call MPI_ALLREDUCE (xmin, xmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (zmin, zmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (xmax, xmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (zmax, zmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call min_all_all_dp(xmin, xmin_glob)
+  call min_all_all_dp(zmin, zmin_glob)
+  call max_all_all_dp(xmax, xmax_glob)
+  call max_all_all_dp(zmax, zmax_glob)
   xmin = xmin_glob
   zmin = zmin_glob
   xmax = xmax_glob
   zmax = zmax_glob
-#endif
 
   if (myrank == 0) then
      write(IMAIN,*) '  X min, max = ',xmin,xmax
@@ -1370,10 +1367,9 @@
 
 ! compute the maximum of the norm of the vector
   dispmax = maxval(sqrt(vector_field_display(1,:)**2 + vector_field_display(3,:)**2))
-#ifdef USE_MPI
-  call MPI_ALLREDUCE (dispmax, dispmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+
+  call max_all_all_dp(dispmax, dispmax_glob)
   dispmax = dispmax_glob
-#endif
 
   ! checks value (isNaN)
   if (dispmax > STABILITY_THRESHOLD .or. dispmax < 0 .or. dispmax /= dispmax) then

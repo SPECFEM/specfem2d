@@ -82,8 +82,6 @@
   integer :: year,mon,day,hr,minutes,timestamp,julian_day_number,day_of_week
   integer, external :: idaywk
 
-  integer :: ier
-
   ! checks if anything to do
   if (GPU_MODE) then
     ! todo: wavefields are on GPU and not transferred onto CPU yet for the following norm checks
@@ -115,12 +113,7 @@
     endif
 
     ! collects norm from all processes
-    displnorm_all_glob = displnorm_all
-    ier = 0
-#ifdef USE_MPI
-    call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, &
-                      MPI_MAX, MPI_COMM_WORLD, ier)
-#endif
+    call max_all_all_dp(displnorm_all, displnorm_all_glob)
 
     if (NOISE_TOMOGRAPHY /= 0) then
       if (myrank == 0) write(*,*) 'Noise simulation ', NOISE_TOMOGRAPHY, ' of 3'
@@ -146,11 +139,7 @@
     endif
 
     ! collects norm from all processes
-    displnorm_all_glob = displnorm_all
-#ifdef USE_MPI
-    call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, &
-                      MPI_MAX, MPI_COMM_WORLD, ier)
-#endif
+    call max_all_all_dp(displnorm_all, displnorm_all_glob)
 
     if (myrank == 0) &
       write(IMAIN,*) 'Max norm of vector field in solid (poroelastic) = ',displnorm_all_glob
@@ -169,11 +158,7 @@
     endif
 
     ! collects norm from all processes
-    displnorm_all_glob = displnorm_all
-#ifdef USE_MPI
-    call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, &
-                      MPI_MAX, MPI_COMM_WORLD, ier)
-#endif
+    call max_all_all_dp(displnorm_all, displnorm_all_glob)
 
     if (myrank == 0) &
       write(IMAIN,*) 'Max norm of vector field in fluid (poroelastic) = ',displnorm_all_glob
@@ -196,11 +181,7 @@
     endif
 
     ! collects norm from all processes
-    displnorm_all_glob = displnorm_all
-#ifdef USE_MPI
-    call MPI_ALLREDUCE (displnorm_all, displnorm_all_glob, 1, MPI_DOUBLE_PRECISION, &
-                      MPI_MAX, MPI_COMM_WORLD, ier)
-#endif
+    call max_all_all_dp(displnorm_all, displnorm_all_glob)
 
     if (myrank == 0) &
       write(IMAIN,*) 'Max absolute value of scalar field in fluid (acoustic) = ',displnorm_all_glob

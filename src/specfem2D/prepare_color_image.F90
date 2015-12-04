@@ -44,10 +44,6 @@
 
   subroutine prepare_color_image_init()
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants,only: NX_NZ_IMAGE_MAX,NGLLX
 
   use specfem_par, only : coord,npgeo,myrank
@@ -60,10 +56,7 @@
   ! local parameters
   integer  :: npgeo_glob
   double precision  :: xmin_color_image_loc, xmax_color_image_loc, &
-      zmin_color_image_loc,zmax_color_image_loc
-#ifdef USE_MPI
-  integer :: ier
-#endif
+                       zmin_color_image_loc,zmax_color_image_loc
 
   ! horizontal size of the image
   xmin_color_image_loc = minval(coord(1,:))
@@ -80,12 +73,10 @@
   zmax_color_image = zmax_color_image_loc
   npgeo_glob = npgeo
 
-#ifdef USE_MPI
-  call MPI_ALLREDUCE(xmin_color_image_loc, xmin_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE(xmax_color_image_loc, xmax_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE(zmin_color_image_loc, zmin_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE(zmax_color_image_loc, zmax_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-#endif
+  call min_all_all_dp(xmin_color_image_loc, xmin_color_image)
+  call max_all_all_dp(xmax_color_image_loc, xmax_color_image)
+  call min_all_all_dp(zmin_color_image_loc, zmin_color_image)
+  call max_all_all_dp(zmax_color_image_loc, zmax_color_image)
 
   ! collects total on all processes
   call sum_all_all_i(npgeo, npgeo_glob)

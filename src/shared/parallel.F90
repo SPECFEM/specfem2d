@@ -269,6 +269,30 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine min_all_all_dp(sendbuf, recvbuf)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  double precision :: sendbuf, recvbuf
+
+#ifdef USE_MPI
+  integer ier
+
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_MIN,MPI_COMM_WORLD,ier)
+#else
+  recvbuf = sendbuf
+#endif
+
+  end subroutine min_all_all_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 
   subroutine max_all_i(sendbuf, recvbuf)
 
@@ -290,6 +314,30 @@
 #endif
 
   end subroutine max_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine max_all_all_dp(sendbuf, recvbuf)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  double precision :: sendbuf, recvbuf
+
+#ifdef USE_MPI
+  integer ier
+
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_MAX,MPI_COMM_WORLD,ier)
+#else
+  recvbuf = sendbuf
+#endif
+
+  end subroutine max_all_all_dp
 
 !
 !-------------------------------------------------------------------------------------------------

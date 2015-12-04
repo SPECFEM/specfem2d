@@ -77,14 +77,13 @@
   integer, parameter :: NGLLX_MAX_STABILITY = 15
   double precision :: percent_GLL(NGLLX_MAX_STABILITY)
 
-#ifdef USE_MPI
+! for slice totals
   double precision  :: vpImin_glob,vpImax_glob,vsmin_glob,vsmax_glob,densmin_glob,densmax_glob
   double precision  :: vpIImin_glob,vpIImax_glob
   double precision  :: distance_min_glob,distance_max_glob
   double precision  :: courant_stability_max_glob,lambdaPImin_glob,lambdaPImax_glob,&
                        lambdaPIImin_glob,lambdaPIImax_glob,lambdaSmin_glob,lambdaSmax_glob, &
                        lambdaPmin_in_fluid_histo_glob,lambdaPmax_in_fluid_histo_glob
-#endif
 
   integer :: ier
   integer :: i,j,ispec,material
@@ -278,46 +277,26 @@
   enddo ! ispec
 
   ! global statistics
-  ier = 0
-#ifdef USE_MPI
-  call MPI_ALLREDUCE (vpImin, vpImin_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vpImax, vpImax_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vpIImin, vpIImin_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vpIImax, vpIImax_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vsmin, vsmin_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (vsmax, vsmax_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (densmin, densmin_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (densmax, densmax_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (distance_min, distance_min_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (distance_max, distance_max_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (courant_stability_number_max, courant_stability_max_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPImin, lambdaPImin_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPImax, lambdaPImax_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPIImin, lambdaPIImin_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPIImax, lambdaPIImax_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaSmin, lambdaSmin_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaSmax, lambdaSmax_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPmin_in_fluid_histo, lambdaPmin_in_fluid_histo_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (lambdaPmax_in_fluid_histo, lambdaPmax_in_fluid_histo_glob, 1, MPI_DOUBLE_PRECISION, &
-                    MPI_MAX, MPI_COMM_WORLD, ier)
+  call min_all_all_dp(vpImin, vpImin_glob)
+  call max_all_all_dp(vpImax, vpImax_glob)
+  call min_all_all_dp(vpIImin, vpIImin_glob)
+  call max_all_all_dp(vpIImax, vpIImax_glob)
+  call min_all_all_dp(vsmin, vsmin_glob)
+  call max_all_all_dp(vsmax, vsmax_glob)
+  call min_all_all_dp(densmin, densmin_glob)
+  call max_all_all_dp(densmax, densmax_glob)
+  call min_all_all_dp(distance_min, distance_min_glob)
+  call max_all_all_dp(distance_max, distance_max_glob)
+  call min_all_all_dp(lambdaPImin, lambdaPImin_glob)
+  call max_all_all_dp(lambdaPImax, lambdaPImax_glob)
+  call min_all_all_dp(lambdaPIImin, lambdaPIImin_glob)
+  call max_all_all_dp(lambdaPIImax, lambdaPIImax_glob)
+  call min_all_all_dp(lambdaSmin, lambdaSmin_glob)
+  call max_all_all_dp(lambdaSmax, lambdaSmax_glob)
+  call min_all_all_dp(lambdaPmin_in_fluid_histo, lambdaPmin_in_fluid_histo_glob)
+  call max_all_all_dp(lambdaPmax_in_fluid_histo, lambdaPmax_in_fluid_histo_glob)
+  call max_all_all_dp(courant_stability_number_max, courant_stability_max_glob)
+
   vpImin = vpImin_glob
   vpImax = vpImax_glob
   vpIImin = vpIImin_glob
@@ -328,7 +307,6 @@
   densmax = densmax_glob
   distance_min = distance_min_glob
   distance_max = distance_max_glob
-  courant_stability_number_max = courant_stability_max_glob
   lambdaPImin = lambdaPImin_glob
   lambdaPImax = lambdaPImax_glob
   lambdaPIImin = lambdaPIImin_glob
@@ -337,7 +315,8 @@
   lambdaSmax = lambdaSmax_glob
   lambdaPmin_in_fluid_histo = lambdaPmin_in_fluid_histo_glob
   lambdaPmax_in_fluid_histo = lambdaPmax_in_fluid_histo_glob
-#endif
+  courant_stability_number_max = courant_stability_max_glob
+
 
   ! sets if any slice has fluid histogram
   call any_all_l(any_fluid_histo,any_fluid_histo_glob)
@@ -411,6 +390,8 @@
     endif
   endif
 
+  ! master sends to all others
+  ier = 0
 #ifdef USE_MPI
   call MPI_BCAST(lambdaPmin_in_fluid_histo,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
   call MPI_BCAST(lambdaPmax_in_fluid_histo,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
@@ -2043,9 +2024,9 @@
   double precision :: xmax,zmax,height,usoffset,sizex,sizez,courant_stability_number
   double precision :: x1,z1,x2,z2,ratio_page,xmin,zmin
 
+  double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
 #ifdef USE_MPI
   integer  :: icol
-  double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
 #endif
 
   double precision, dimension(2,nspec*5)  :: coorg_send
@@ -2106,16 +2087,14 @@
   xmax = maxval(coord(1,:))
   zmax = maxval(coord(2,:))
 
-#ifdef USE_MPI
-  call MPI_ALLREDUCE (xmin, xmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (xmax, xmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (zmin, zmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (zmax, zmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  call min_all_all_dp(xmin, xmin_glob)
+  call max_all_all_dp(xmax, xmax_glob)
+  call min_all_all_dp(zmin, zmin_glob)
+  call max_all_all_dp(zmax, zmax_glob)
   xmin = xmin_glob
   xmax = xmax_glob
   zmin = zmin_glob
   zmax = zmax_glob
-#endif
 
 ! ratio of physical page size/size of the domain meshed
   ratio_page = min(RPERCENTZ*sizez/(zmax-zmin),RPERCENTX*sizex/(xmax-xmin)) / 100.d0
