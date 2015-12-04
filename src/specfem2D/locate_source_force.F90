@@ -143,16 +143,12 @@
   dist_glob_squared = distmin_squared
 #endif
 
-! check if this process contains the source
+  ! check if this process contains the source
   if (abs(sqrt(dist_glob_squared) - sqrt(distmin_squared)) < TINYVAL ) is_proc_source = 1
 
-#ifdef USE_MPI
   ! determining the number of processes that contain the source
   ! (useful when the source is located on an interface)
-  call MPI_ALLREDUCE (is_proc_source, nb_proc_source, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierror)
-#else
-  nb_proc_source = is_proc_source
-#endif
+  call sum_all_all_i(is_proc_source, nb_proc_source)
 
 
 #ifdef USE_MPI

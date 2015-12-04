@@ -107,6 +107,10 @@
     call flush_IMAIN()
   endif
 
+  ! initialize variables for writing seismograms
+  seismo_offset = 0
+  seismo_current = 0
+
   do it = 1,NSTEP
     ! compute current time
     timeval = (it-1)*deltat
@@ -1340,23 +1344,14 @@
 
   subroutine it_compute_and_output_energy()
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants,only: IOUT_ENERGY,CUSTOM_REAL
 
   use specfem_par,only: GPU_MODE,myrank,it,deltat,kinetic_energy,potential_energy,t0
 
   implicit none
 
-#ifdef USE_MPI
-  include "precision.h"
-#endif
-
   ! local parameters
   real(kind=CUSTOM_REAL) :: kinetic_energy_total,potential_energy_total
-  integer :: ier
 
   ! safety check
   if (GPU_MODE) stop 'Error computing energy for output is not implemented on GPUs yet'
@@ -1365,14 +1360,8 @@
   call compute_energy()
 
   ! computes total for all processes
-  ier = 0
-#ifdef USE_MPI
-  call MPI_REDUCE(kinetic_energy, kinetic_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(potential_energy, potential_energy_total, 1, CUSTOM_MPI_TYPE, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-  kinetic_energy_total = kinetic_energy
-  potential_energy_total = potential_energy
-#endif
+  call sum_all_cr(kinetic_energy,kinetic_energy_total)
+  call sum_all_cr(potential_energy,potential_energy_total)
 
   ! saves kinetic, potential and total energy for this time step in external file
   if (myrank == 0) then

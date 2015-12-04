@@ -369,7 +369,6 @@ void FC_FUNC_(prepare_constants_device,
   mp->nspec_elastic = *nspec_elastic;
 
   copy_todevice_realw((void**)&mp->d_xir_store_loc,h_xir_store,(*nrec_local)*NGLLX);
-
   copy_todevice_realw((void**)&mp->d_gammar_store_loc,h_gammar_store,(*nrec_local)*NGLLX);
 
 

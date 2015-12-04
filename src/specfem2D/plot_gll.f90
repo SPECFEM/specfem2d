@@ -40,7 +40,7 @@
 !
 !========================================================================
 
-  subroutine plotgll()
+  subroutine plot_gll()
 
 ! output the Gauss-Lobatto-Legendre mesh in a gnuplot file
 
@@ -88,137 +88,137 @@
 !
 !----    plot the lines in xi-direction
 !
-   do iy = 1,NGLLZ
-     do ix = 1,NGLLX-1
+    do iy = 1,NGLLZ
+      do ix = 1,NGLLX-1
 !
 !----   get the global point number
 !
-         iglobnum = ibool(ix,iy,ispec)
+        iglobnum = ibool(ix,iy,ispec)
 !
 !----   do the same for next point on horizontal line
 !
-         iglobnum2 = ibool(ix+1,iy,ispec)
+        iglobnum2 = ibool(ix+1,iy,ispec)
 
-  write(20,*) coord(1,iglobnum),coord(2,iglobnum)
-  write(20,*) coord(1,iglobnum2),coord(2,iglobnum2)
-  write(20,"('')")
+        write(20,*) coord(1,iglobnum),coord(2,iglobnum)
+        write(20,*) coord(1,iglobnum2),coord(2,iglobnum2)
+        write(20,"('')")
 
-  if (iy == 1 .or. iy == NGLLZ) then
-    write(21,*) coord(1,iglobnum),coord(2,iglobnum)
-    write(21,*) coord(1,iglobnum2),coord(2,iglobnum2)
-    write(21,"('')")
-  endif
+        if (iy == 1 .or. iy == NGLLZ) then
+          write(21,*) coord(1,iglobnum),coord(2,iglobnum)
+          write(21,*) coord(1,iglobnum2),coord(2,iglobnum2)
+          write(21,"('')")
+        endif
 
+      enddo
     enddo
-  enddo
 
 !
 !----    plot the lines in eta-direction
 !
-   do ix = 1,NGLLX
-     do iy = 1,NGLLZ-1
+    do ix = 1,NGLLX
+      do iy = 1,NGLLZ-1
 !
 !----   get the global point number
 !
-         iglobnum = ibool(ix,iy,ispec)
+        iglobnum = ibool(ix,iy,ispec)
 !
 !----   do the same for next point on vertical line
 !
-         iglobnum2 = ibool(ix,iy+1,ispec)
+        iglobnum2 = ibool(ix,iy+1,ispec)
 
-  write(20,*) coord(1,iglobnum),coord(2,iglobnum)
-  write(20,*) coord(1,iglobnum2),coord(2,iglobnum2)
-  write(20,"('')")
+        write(20,*) coord(1,iglobnum),coord(2,iglobnum)
+        write(20,*) coord(1,iglobnum2),coord(2,iglobnum2)
+        write(20,"('')")
 
-  if (ix == 1 .or. ix == NGLLX) then
-    write(21,*) coord(1,iglobnum),coord(2,iglobnum)
-    write(21,*) coord(1,iglobnum2),coord(2,iglobnum2)
-    write(21,"('')")
-  endif
+        if (ix == 1 .or. ix == NGLLX) then
+          write(21,*) coord(1,iglobnum),coord(2,iglobnum)
+          write(21,*) coord(1,iglobnum2),coord(2,iglobnum2)
+          write(21,"('')")
+        endif
 
+      enddo
     enddo
-  enddo
   enddo
 
 !
 !----  plot the macrobloc mesh using Gnuplot
 !
   do ibloc = 1,nspec
-  do inode = 1,ngnod
+    do inode = 1,ngnod
 
-   xval(inode) = coorg(1,knods(inode,ibloc))
-   zval(inode) = coorg(2,knods(inode,ibloc))
+      xval(inode) = coorg(1,knods(inode,ibloc))
+      zval(inode) = coorg(2,knods(inode,ibloc))
 
-  enddo
+    enddo
 
-  if (ngnod == 4) then
+    if (ngnod == 4) then
 !
 !----  4-node rectangular element
 !
 
 ! draw the edges of the element using one color
-    write(30,*) xval(1),zval(1)
-    write(30,*) xval(2),zval(2)
-    write(30,"('')")
-    write(30,*) xval(2),zval(2)
-    write(30,*) xval(3),zval(3)
-    write(30,"('')")
-    write(30,*) xval(3),zval(3)
-    write(30,*) xval(4),zval(4)
-    write(30,"('')")
-    write(30,*) xval(4),zval(4)
-    write(30,*) xval(1),zval(1)
-    write(30,"('')")
+      write(30,*) xval(1),zval(1)
+      write(30,*) xval(2),zval(2)
+      write(30,"('')")
+      write(30,*) xval(2),zval(2)
+      write(30,*) xval(3),zval(3)
+      write(30,"('')")
+      write(30,*) xval(3),zval(3)
+      write(30,*) xval(4),zval(4)
+      write(30,"('')")
+      write(30,*) xval(4),zval(4)
+      write(30,*) xval(1),zval(1)
+      write(30,"('')")
 
-  else
+    else
 
 !
 !----  9-node rectangular element
 !
 
 ! draw the edges of the element using one color
-    write(30,*) xval(1),zval(1)
-    write(30,*) xval(5),zval(5)
-    write(30,"('')")
-    write(30,*) xval(5),zval(5)
-    write(30,*) xval(2),zval(2)
-    write(30,"('')")
-    write(30,*) xval(2),zval(2)
-    write(30,*) xval(6),zval(6)
-    write(30,"('')")
-    write(30,*) xval(6),zval(6)
-    write(30,*) xval(3),zval(3)
-    write(30,"('')")
-    write(30,*) xval(3),zval(3)
-    write(30,*) xval(7),zval(7)
-    write(30,"('')")
-    write(30,*) xval(7),zval(7)
-    write(30,*) xval(4),zval(4)
-    write(30,"('')")
-    write(30,*) xval(4),zval(4)
-    write(30,*) xval(8),zval(8)
-    write(30,"('')")
-    write(30,*) xval(8),zval(8)
-    write(30,*) xval(1),zval(1)
-    write(30,"('')")
+      write(30,*) xval(1),zval(1)
+      write(30,*) xval(5),zval(5)
+      write(30,"('')")
+      write(30,*) xval(5),zval(5)
+      write(30,*) xval(2),zval(2)
+      write(30,"('')")
+      write(30,*) xval(2),zval(2)
+      write(30,*) xval(6),zval(6)
+      write(30,"('')")
+      write(30,*) xval(6),zval(6)
+      write(30,*) xval(3),zval(3)
+      write(30,"('')")
+      write(30,*) xval(3),zval(3)
+      write(30,*) xval(7),zval(7)
+      write(30,"('')")
+      write(30,*) xval(7),zval(7)
+      write(30,*) xval(4),zval(4)
+      write(30,"('')")
+      write(30,*) xval(4),zval(4)
+      write(30,*) xval(8),zval(8)
+      write(30,"('')")
+      write(30,*) xval(8),zval(8)
+      write(30,*) xval(1),zval(1)
+      write(30,"('')")
 
 ! draw middle lines using another color
-    write(31,*) xval(5),zval(5)
-    write(31,*) xval(9),zval(9)
-    write(31,"('')")
-    write(31,*) xval(9),zval(9)
-    write(31,*) xval(7),zval(7)
-    write(31,"('')")
-    write(31,*) xval(8),zval(8)
-    write(31,*) xval(9),zval(9)
-    write(31,"('')")
-    write(31,*) xval(9),zval(9)
-    write(31,*) xval(6),zval(6)
-    write(31,"('')")
+      write(31,*) xval(5),zval(5)
+      write(31,*) xval(9),zval(9)
+      write(31,"('')")
+      write(31,*) xval(9),zval(9)
+      write(31,*) xval(7),zval(7)
+      write(31,"('')")
+      write(31,*) xval(8),zval(8)
+      write(31,*) xval(9),zval(9)
+      write(31,"('')")
+      write(31,*) xval(9),zval(9)
+      write(31,*) xval(6),zval(6)
+      write(31,"('')")
 
-  endif
+    endif
 
- enddo
+  enddo
 
   close(20)
   close(21)
@@ -255,5 +255,5 @@
   write(20,*) 'pause -1 "Hit any key to exit..."'
   close(20)
 
-  end subroutine plotgll
+  end subroutine plot_gll
 

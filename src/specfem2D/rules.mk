@@ -106,6 +106,7 @@ specfem2D_OBJECTS = \
 	$O/define_external_model_from_tomo_file.spec.o \
 	$O/enforce_acoustic_free_surface.spec.o \
 	$O/finalize_simulation.spec.o \
+	$O/get_coupling_edges.spec.o \
 	$O/get_MPI.spec.o \
 	$O/get_global.spec.o \
 	$O/get_poroelastic_velocities.spec.o \
@@ -143,6 +144,7 @@ specfem2D_OBJECTS = \
 	$O/save_openDX_jacobian.spec.o \
 	$O/set_sources.spec.o \
 	$O/setup_GLL_points.spec.o \
+	$O/setup_mesh.spec.o \
 	$O/setup_sources_receivers.spec.o \
 	$O/sort_array_coordinates.spec.o \
 	$O/specfem2D.spec.o \
@@ -365,6 +367,7 @@ $O/define_external_model_from_tomo_file.spec.o: $O/specfem2D_par.spec_module.o
 $O/elastic_cuda.spec.o: $O/specfem2D_par.spec_module.o
 $O/enforce_acoustic_free_surface.spec.o: $O/specfem2D_par.spec_module.o
 $O/finalize_simulation.spec.o: $O/specfem2D_par.spec_module.o
+$O/get_coupling_edges.spec.o: $O/specfem2D_par.spec_module.o
 $O/get_MPI.spec.o: $O/specfem2D_par.spec_module.o
 $O/get_global.spec.o: $O/specfem2D_par.spec_module.o
 $O/get_poroelastic_velocities.spec.o: $O/specfem2D_par.spec_module.o
@@ -393,10 +396,11 @@ $O/prepare_timerun_gpu.spec.o: $O/specfem2D_par.spec_module.o
 $O/read_mesh_databases.spec.o: $O/specfem2D_par.spec_module.o
 $O/read_external_model.spec.o: $O/specfem2D_par.spec_module.o
 $O/recompute_jacobian.spec.o: $O/specfem2D_par.spec_module.o
-$O/setup_GLL_points.spec.o: $O/specfem2D_par.spec_module.o
 $O/save_adjoint_kernels.spec.o: $O/specfem2D_par.spec_module.o
 $O/save_read_array_for_undoatt.spec.o: $O/specfem2D_par.spec_module.o
 $O/set_sources.spec.o: $O/specfem2D_par.spec_module.o
+$O/setup_GLL_points.spec.o: $O/specfem2D_par.spec_module.o
+$O/setup_mesh.spec.o: $O/specfem2D_par.spec_module.o
 $O/setup_sources_receivers.spec.o: $O/specfem2D_par.spec_module.o
 $O/specfem2D.spec.o: $O/specfem2D_par.spec_module.o
 $O/update_displacement_scheme.spec.o: $O/specfem2D_par.spec_module.o

@@ -85,8 +85,10 @@
   call MPI_ALLREDUCE(xmax_color_image_loc, xmax_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE(zmin_color_image_loc, zmin_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE(zmax_color_image_loc, zmax_color_image, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE(npgeo, npgeo_glob, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ier)
 #endif
+
+  ! collects total on all processes
+  call sum_all_all_i(npgeo, npgeo_glob)
 
   zmax_color_image = zmin_color_image + 1.05d0 * (zmax_color_image - zmin_color_image)
 
@@ -156,7 +158,7 @@
   double precision  :: i_coord, j_coord
   double precision  :: dist_pixel, dist_min_pixel
   integer  :: min_i, min_j, max_i, max_j
-  integer  :: ispec,i,j,k,l,iglob
+  integer  :: ispec,i,j,k,l,iglob,ier
   logical  :: pixel_is_in
 
   ! create all the pixels
@@ -233,7 +235,11 @@
 !
   if (DRAW_SOURCES_AND_RECEIVERS .and. myrank == 0) then
 
-! find pixel position of the sources with orange crosses
+    ! find pixel position of the sources with orange crosses
+    allocate(ix_image_color_source(NSOURCES), &
+             iy_image_color_source(NSOURCES),stat=ier)
+    if (ier /= 0) stop 'Error allocating image source arrays'
+
     do i = 1,NSOURCES
       ix_image_color_source(i) = int((x_source(i) - xmin_color_image) / size_pixel_horizontal) + 1
       iy_image_color_source(i) = int((z_source(i) - zmin_color_image) / size_pixel_vertical) + 1
@@ -246,7 +252,11 @@
       if (iy_image_color_source(i) > NZ_IMAGE_color) iy_image_color_source(i) = NZ_IMAGE_color
     enddo
 
-! find pixel position of the receivers with green squares
+    ! find pixel position of the receivers with green squares
+    allocate(ix_image_color_receiver(nrec), &
+             iy_image_color_receiver(nrec),stat=ier)
+    if (ier /= 0) stop 'Error allocating image receiver arrays'
+
     do i = 1,nrec
       ix_image_color_receiver(i) = int((st_xval(i) - xmin_color_image) / size_pixel_horizontal) + 1
       iy_image_color_receiver(i) = int((st_zval(i) - zmin_color_image) / size_pixel_vertical) + 1

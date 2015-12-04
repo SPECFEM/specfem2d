@@ -76,7 +76,7 @@
   integer :: iinterface,ilocnum
   integer :: num_points1, num_points2
   ! assembly test
-  integer :: i,j,ispec,iglob,countval,inum,ier,idomain
+  integer :: i,j,ispec,iglob,countval,inum,idomain
   integer :: max_nibool_interfaces,num_nibool,num_interface
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: test_flag_cr
 
@@ -191,9 +191,9 @@
   deallocate(nibool_interfaces_true)
 
   ! outputs total number of MPI interface points
-  call MPI_REDUCE(num_points2, num_points1, 1, MPI_INTEGER, &
-                    MPI_SUM, 0, MPI_COMM_WORLD, ier)
+  call sum_all_i(num_points2,num_points1)
   if (myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) 'total MPI interface points: ',num_points1
     call flush_IMAIN()
   endif
@@ -237,9 +237,7 @@
 
   ! note: this mpi reduction awaits information from all processes.
   !          thus, avoid an mpi deadlock in case some of the paritions have no acoustic interface
-  call MPI_REDUCE(inum, num_points1, 1, MPI_INTEGER, &
-                    MPI_SUM, 0, MPI_COMM_WORLD, ier)
-
+  call sum_all_i(inum,num_points1)
   if (myrank == 0) then
     write(IMAIN,*) '       acoustic interface points: ',num_points1
     call flush_IMAIN()
@@ -266,10 +264,10 @@
   endif
 
   ! note: this mpi reduction awaits information from all processes.
-  call MPI_REDUCE(inum, num_points2, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-
+  call sum_all_i(inum,num_points2)
   if (myrank == 0) then
     write(IMAIN,*) '       assembly acoustic MPI interface points:',num_points2
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 

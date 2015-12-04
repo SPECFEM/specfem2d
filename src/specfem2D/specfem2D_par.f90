@@ -320,27 +320,23 @@ module specfem_par
   ! AXISYM parameters
   !---------------------------------------------------------------------
   logical :: AXISYM ! .true. if we are performing a 2.5D simulation
+
   ! Number of elements on the symmetry axis
   integer :: nelem_on_the_axis
   ! Flag to know if an element is on the axis
   logical, dimension(:), allocatable :: is_on_the_axis
   integer, dimension(:), allocatable :: ispec_of_axial_elements
+
   ! Gauss-Lobatto-Jacobi points and weights
   double precision, dimension(NGLJ) :: xiglj
   real(kind=CUSTOM_REAL), dimension(NGLJ) :: wxglj
+
   ! derivatives of GLJ polynomials
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLJ) :: hprimeBar_xx,hprimeBarwglj_xx
+
   ! Shape functions (and their derivatives) evaluated at the GLJ points
   double precision, dimension(:,:), allocatable :: flagrange_GLJ
 
-  !---------------------------------------------------------------------
-  ! for the check of mesh
-  !---------------------------------------------------------------------
-  integer :: UPPER_LIMIT_DISPLAY
-
-  !---------------------------------------------------------------------
-  ! for parallel simulation
-  !---------------------------------------------------------------------
 
   !---------------------------------------------------------------------
   ! for time discretization
@@ -385,12 +381,6 @@ module specfem_par
   !=====================================================================
   ! for simulation (its beginning)
   !=====================================================================
-  ! to help locate elements with a negative Jacobian using OpenDX
-  logical :: found_a_negative_jacobian
-
-  ! to count the number of degrees of freedom
-  integer :: count_nspec_acoustic,count_nspec_acoustic_total,nspec_total,nglob_total,nb_acoustic_DOFs,nb_elastic_DOFs
-  double precision :: ratio_1DOF,ratio_2DOFs
 
   ! to determine date and time at which the run will finish
   double precision :: timestamp_seconds_start
@@ -421,6 +411,9 @@ module specfem_par
 
   ! for acoustic and gravitoacoustic detection
   integer :: nglob_acoustic
+
+  ! number of purely acoustic elements
+  integer :: count_nspec_acoustic
 
   ! local flag to determine if any acoustic elements in this slice
   logical :: any_acoustic
@@ -639,6 +632,7 @@ module specfem_par
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(:), allocatable :: ib_left,ib_right,ib_bottom,ib_top
   real(kind=CUSTOM_REAL),  dimension(:,:,:), allocatable :: source_adjointe
+
   real(kind=CUSTOM_REAL),  dimension(:,:), allocatable :: xir_store_loc, gammar_store_loc
 
   !---------------------------------------------------------------------

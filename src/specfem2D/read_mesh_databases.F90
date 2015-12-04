@@ -427,11 +427,6 @@
            sourcearray(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
   if (ier /= 0) stop 'Error allocating source arrays'
 
-  ! for images
-  allocate(ix_image_color_source(NSOURCES), &
-           iy_image_color_source(NSOURCES),stat=ier)
-  if (ier /= 0) stop 'Error allocating source arrays'
-
   ! source locations
   allocate(x_source(NSOURCES), &
            z_source(NSOURCES), &
@@ -530,24 +525,6 @@
   endif
 
   ! allocates mesh arrays
-  ! shape arrays
-  allocate(shape2D(ngnod,NGLLX,NGLLZ))
-  allocate(dershape2D(NDIM,ngnod,NGLLX,NGLLZ))
-
-  ! arrays for display images
-  allocate(shape2D_display(ngnod,pointsdisp,pointsdisp))
-  allocate(dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp))
-  allocate(flagrange(NGLLX,pointsdisp))
-  if (AXISYM) then
-    allocate(flagrange_GLJ(NGLJ,pointsdisp))
-  else
-    allocate(flagrange_GLJ(1,1))
-  endif
-  allocate(xinterp(pointsdisp,pointsdisp))
-  allocate(zinterp(pointsdisp,pointsdisp))
-  allocate(Uxinterp(pointsdisp,pointsdisp))
-  allocate(Uzinterp(pointsdisp,pointsdisp))
-
   ! elements
   allocate(kmato(nspec))
   allocate(knods(ngnod,nspec))
@@ -999,19 +976,12 @@
   endif
 
   ! collects total values
-#ifdef USE_MPI
-  call MPI_REDUCE(nelemabs, nelemabs_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(nspec_left, nspec_left_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(nspec_right, nspec_right_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(nspec_bottom, nspec_bottom_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(nspec_top, nspec_top_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-  nelemabs_tot = nelemabs
-  nspec_left_tot = nspec_left
-  nspec_right_tot = nspec_right
-  nspec_bottom_tot = nspec_bottom
-  nspec_top_tot = nspec_top
-#endif
+  call sum_all_i(nelemabs, nelemabs_tot)
+  call sum_all_i(nspec_left, nspec_left_tot)
+  call sum_all_i(nspec_right, nspec_right_tot)
+  call sum_all_i(nspec_bottom, nspec_bottom_tot)
+  call sum_all_i(nspec_top, nspec_top_tot)
+
   ! user output
   if (myrank == 0 .and. .not. PML_BOUNDARY_CONDITIONS) then
     write(IMAIN,*)
@@ -1557,11 +1527,7 @@
   endif
 
   ! collects total number of axial elements
-#ifdef USE_MPI
-  call MPI_REDUCE(nelem_on_the_axis, nelem_on_the_axis_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-  nelem_on_the_axis_total = nelem_on_the_axis
-#endif
+  call sum_all_i(nelem_on_the_axis, nelem_on_the_axis_total)
 
   ! user output
   if (myrank == 0 .and. AXISYM) then

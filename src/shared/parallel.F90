@@ -291,6 +291,29 @@
 
   end subroutine max_all_i
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine any_all_l(sendbuf, recvbuf)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  logical :: sendbuf, recvbuf
+
+#ifdef USE_MPI
+  integer :: ier
+
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_LOGICAL,MPI_LOR,MPI_COMM_WORLD,ier)
+#else
+  recvbuf = sendbuf
+#endif
+
+  end subroutine any_all_l
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -317,6 +340,61 @@
 
   end subroutine sum_all_dp
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sum_all_all_dp(sendbuf, recvbuf)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  double precision :: sendbuf, recvbuf
+
+#ifdef USE_MPI
+  ! local parameters
+  integer :: ier
+
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_SUM,MPI_COMM_WORLD,ier)
+#else
+    recvbuf = sendbuf
+#endif
+
+  end subroutine sum_all_all_dp
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sum_all_cr(sendbuf, recvbuf)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  include "constants.h"
+#ifdef USE_MPI
+  include "precision.h"
+#endif
+
+  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
+
+#ifdef USE_MPI
+  ! local parameters
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_SUM,0,MPI_COMM_WORLD,ier)
+#else
+    recvbuf = sendbuf
+#endif
+
+  end subroutine sum_all_cr
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -343,6 +421,31 @@
 
   end subroutine sum_all_i
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine sum_all_all_i(sendbuf, recvbuf)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  integer :: sendbuf, recvbuf
+
+#ifdef USE_MPI
+  ! local parameters
+  integer :: ier
+
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,ier)
+#else
+  recvbuf = sendbuf
+#endif
+
+  end subroutine sum_all_all_i
 
 !-------------------------------------------------------------------------------------------------
 !

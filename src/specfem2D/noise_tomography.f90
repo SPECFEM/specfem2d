@@ -163,7 +163,7 @@
   real(kind=CUSTOM_REAL) :: t
   double precision, dimension(NGLLX) :: hxi, hpxi
   double precision, dimension(NGLLZ) :: hgamma, hpgamma
-  real(kind=CUSTOM_REAL) :: factor_noise, aval, t0
+  real(kind=CUSTOM_REAL) :: factor_noise, a_val, t0
 
 ! ---------------------------------------------------------------------------------
 ! A NOTE ABOUT TIME FUNCTIONS FOR NOISE SIMULATIONS
@@ -196,8 +196,10 @@
   integer, parameter :: time_function_type = 4
 
   time_function_noise(:) = 0._CUSTOM_REAL
+
   t0   = ((NSTEP-1)/2.)*deltat
-  aval = 0.6_CUSTOM_REAL
+
+  a_val = 0.6_CUSTOM_REAL
   factor_noise = 1.e3_CUSTOM_REAL
 
 
@@ -214,8 +216,8 @@
     !Ricker (second derivative of a Gaussian) time function
     do it = 1,NSTEP
       t = it*deltat
-      time_function_noise(it) = - factor_noise * 2.*aval * (1. - 2.*aval*(t-t0)**2.) * &
-                                 exp(-aval*(t-t0)**2.)
+      time_function_noise(it) = - factor_noise * 2.*a_val * (1. - 2.*a_val*(t-t0)**2.) * &
+                                 exp(-a_val*(t-t0)**2.)
     enddo
 
 
@@ -223,7 +225,7 @@
     !first derivative of a Gaussian time function
     do it = 1,NSTEP
       t = it*deltat
-      time_function_noise(it) = - factor_noise * (2.*aval*(t-t0)) * exp(-aval*(t-t0)**2.)
+      time_function_noise(it) = - factor_noise * (2.*a_val*(t-t0)) * exp(-a_val*(t-t0)**2.)
     enddo
 
 
@@ -231,7 +233,7 @@
     !Gaussian time function
     do it = 1,NSTEP
       t = it*deltat
-      time_function_noise(it) = factor_noise * exp(-aval*(t-t0)**2.)
+      time_function_noise(it) = factor_noise * exp(-a_val*(t-t0)**2.)
     enddo
 
 
@@ -240,8 +242,8 @@
     do it = 1,NSTEP
       t = it*deltat
       time_function_noise(it) = factor_noise * &
-       4.*aval**2. * (3. - 12.*aval*(t-t0)**2. + 4.*aval**2.*(t-t0)**4.) * &
-       exp(-aval*(t-t0)**2.)
+       4.*a_val**2. * (3. - 12.*a_val*(t-t0)**2. + 4.*a_val**2.*(t-t0)**4.) * &
+       exp(-a_val*(t-t0)**2.)
     enddo
 
 

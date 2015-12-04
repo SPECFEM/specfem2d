@@ -54,32 +54,20 @@ subroutine prepare_timerun()
   implicit none
 
   ! local parameters
-  integer :: n,i,j,ispec,k,iglob
+  integer :: i,j,ispec,k,iglob
   integer :: irec,irec_local,i_source
-  integer :: ispecabs,ier,inum
+  integer :: ier
   integer :: reclen,irecloc
   integer :: nglob_acoustic_b,nglob_elastic_b,nglob_poroelastic_b
   integer :: nspec_acoustic_b,nspec_elastic_b,nspec_poroelastic_b
-  integer :: ispec_poroelastic,iedge_poroelastic
-  integer :: ispec_acoustic,ispec_elastic
-  integer :: iedge_acoustic,iedge_elastic
   integer :: ipoin1D,iglob2
   integer :: ispec_acoustic_surface
   integer :: ixmin, ixmax, izmin, izmax
+  integer :: nspec_ext
 
-  character(len=MAX_STRING_LEN) :: filename,outputname,outputname2
-  character(len=MAX_STRING_LEN) :: dummystring
-
-  ! Jacobian matrix and determinant
-  double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
-  double precision :: xi,gamma,x,z
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
-
   double precision :: x_final_receiver_dummy, z_final_receiver_dummy
   double precision :: cploc,csloc
-
-  double precision :: xmin,xmax,zmin,zmax
-  double precision :: xmin_local,xmax_local,zmin_local,zmax_local
 
   ! for Lagrange interpolants
   double precision, external :: hgll, hglj
@@ -89,310 +77,13 @@ subroutine prepare_timerun()
   integer(kind=2) :: header2(2)
   real(kind=4),dimension(:,:),allocatable :: adj_src_s
 
+  character(len=MAX_STRING_LEN) :: filename,outputname,outputname2
+
 #ifdef USE_MPI
   include "precision.h"
 #endif
 
-
-!
-!---- generate the global numbering
-!
-
-! "slow and clean" or "quick and dirty" version
-  if (FAST_NUMBERING) then
-    call createnum_fast()
-  else
-    call createnum_slow()
-  endif
-
-#ifdef USE_MPI
-  call MPI_REDUCE(count_nspec_acoustic, count_nspec_acoustic_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(nspec, nspec_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(nglob, nglob_total, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-  count_nspec_acoustic_total = count_nspec_acoustic
-  nspec_total = nspec
-  nglob_total = nglob
-#endif
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Total number of elements: ',nspec_total
-    write(IMAIN,*) 'decomposed as follows:'
-    write(IMAIN,*)
-    write(IMAIN,*) 'Total number of elastic/visco/poro elements: ',nspec_total - count_nspec_acoustic_total
-    write(IMAIN,*) 'Total number of acoustic elements: ',count_nspec_acoustic_total
-    write(IMAIN,*)
-#ifdef USE_MPI
-    write(IMAIN,*) 'Approximate total number of grid points in the mesh'
-    write(IMAIN,*) '(with a few duplicates coming from MPI buffers): ',nglob_total
-#else
-    write(IMAIN,*) 'Exact total number of grid points in the mesh: ',nglob_total
-#endif
-
-! percentage of elements with 2 degrees of freedom per point
-    ratio_2DOFs = (nspec_total - count_nspec_acoustic_total) / dble(nspec_total)
-    ratio_1DOF  = count_nspec_acoustic_total / dble(nspec_total)
-    nb_acoustic_DOFs = nint(nglob_total*ratio_1DOF)
-! elastic elements have two degrees of freedom per point
-    nb_elastic_DOFs  = nint(nglob_total*ratio_2DOFs*2)
-
-    if (p_sv) then
-      write(IMAIN,*)
-      write(IMAIN,*) 'Approximate number of acoustic degrees of freedom in the mesh: ',nb_acoustic_DOFs
-      write(IMAIN,*) 'Approximate number of elastic degrees of freedom in the mesh: ',nb_elastic_DOFs
-      write(IMAIN,*) '  (there are 2 degrees of freedom per point for elastic elements)'
-      write(IMAIN,*)
-      write(IMAIN,*) 'Approximate total number of degrees of freedom in the mesh'
-      write(IMAIN,*) '(sum of the two values above): ',nb_acoustic_DOFs + nb_elastic_DOFs
-      write(IMAIN,*)
-      write(IMAIN,*) ' (for simplicity viscoelastic or poroelastic elements, if any,'
-      write(IMAIN,*) '  are counted as elastic in the above three estimates;'
-      write(IMAIN,*) '  in reality they have more degrees of freedom)'
-      write(IMAIN,*)
-    endif
-    call flush_IMAIN()
-  endif
-
-    ! allocate temporary arrays
-    allocate(integer_mask_ibool(nglob),stat=ier)
-    if (ier /= 0 ) stop 'error allocating integer_mask_ibool'
-    allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec),stat=ier)
-    if (ier /= 0 ) stop 'error allocating copy_ibool_ori'
-
-    ! reduce cache misses by sorting the global numbering in the order in which it is accessed in the time loop.
-    ! this speeds up the calculations significantly on modern processors
-    call get_global()
-
-!---- compute shape functions and their derivatives for regular interpolated display grid
-  do j = 1,pointsdisp
-    do i = 1,pointsdisp
-      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
-      gammarec  = 2.d0*dble(j-1)/dble(pointsdisp-1) - 1.d0
-      call define_shape_functions(shape2D_display(:,i,j),dershape2D_display(:,:,i,j),xirec,gammarec,ngnod)
-    enddo
-  enddo
-
-!---- compute Lagrange interpolants on a regular interpolated grid in (xi,gamma)
-!---- for display (assumes NGLLX = NGLLZ)
-  do j = 1,NGLLX
-    do i = 1,pointsdisp
-      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
-      flagrange(j,i) = hgll(j-1,xirec,xigll,NGLLX)
-      if (AXISYM) flagrange_GLJ(j,i) = hglj(j-1,xirec,xiglj,NGLJ)
-    enddo
-  enddo
-
-  ! synchronizes all processes
-  call synchronize_all()
-
-
-! get number of stations from receiver file
-  open(unit=IIN,file='DATA/STATIONS',status='old',action='read',iostat=ier)
-  if (ier /= 0) call exit_MPI(myrank,'Error opening DATA/STATIONS file')
-  nrec = 0
-  do while(ier == 0)
-    read(IIN,"(a)",iostat=ier) dummystring
-    if (ier == 0) nrec = nrec + 1
-  enddo
-  close(IIN)
-
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Total number of receivers = ',nrec
-    write(IMAIN,*)
-    call flush_IMAIN()
-  endif
-
-  if (nrec < 1) call exit_MPI(myrank,'need at least one receiver')
-
-! receiver information
-    allocate(ispec_selected_rec(nrec))
-    allocate(st_xval(nrec))
-    allocate(st_zval(nrec))
-    allocate(xi_receiver(nrec))
-    allocate(gamma_receiver(nrec))
-    allocate(station_name(nrec))
-    allocate(network_name(nrec))
-    allocate(recloc(nrec))
-    allocate(which_proc_receiver(nrec))
-    allocate(x_final_receiver(nrec))
-    allocate(z_final_receiver(nrec))
-    allocate(ix_image_color_receiver(nrec))
-    allocate(iy_image_color_receiver(nrec))
-
-
-! allocate Lagrange interpolators for receivers
-    allocate(hxir_store(nrec,NGLLX))
-    allocate(hgammar_store(nrec,NGLLZ))
-
-! allocate Lagrange interpolators for sources
-    allocate(hxis_store(NSOURCES,NGLLX))
-    allocate(hgammas_store(NSOURCES,NGLLZ))
-
-! allocate other global arrays
-    allocate(coord(NDIM,nglob))
-
-! to display the whole vector field (it needs to be computed from the potential in acoustic elements,
-! thus it does not exist as a whole it case of simulations that contain some acoustic elements
-! and it thus needs to be computed specifically for display purposes)
-    allocate(vector_field_display(3,nglob))
-
-! when periodic boundary conditions are on, some global degrees of freedom are going to be removed,
-! thus we need to set this array to zero otherwise some of its locations may contain random values
-! if the memory is not cleaned
-    vector_field_display(:,:) = 0.d0
-
-    if (assign_external_model) then
-      allocate(vpext(NGLLX,NGLLZ,nspec))
-      allocate(vsext(NGLLX,NGLLZ,nspec))
-      allocate(rhoext(NGLLX,NGLLZ,nspec))
-      allocate(gravityext(NGLLX,NGLLZ,nspec))
-      allocate(Nsqext(NGLLX,NGLLZ,nspec))
-      allocate(QKappa_attenuationext(NGLLX,NGLLZ,nspec))
-      allocate(Qmu_attenuationext(NGLLX,NGLLZ,nspec))
-      allocate(c11ext(NGLLX,NGLLZ,nspec))
-      allocate(c13ext(NGLLX,NGLLZ,nspec))
-      allocate(c15ext(NGLLX,NGLLZ,nspec))
-      allocate(c33ext(NGLLX,NGLLZ,nspec))
-      allocate(c35ext(NGLLX,NGLLZ,nspec))
-      allocate(c55ext(NGLLX,NGLLZ,nspec))
-      allocate(c12ext(NGLLX,NGLLZ,nspec))
-      allocate(c23ext(NGLLX,NGLLZ,nspec))
-      allocate(c25ext(NGLLX,NGLLZ,nspec))
-    else
-      allocate(vpext(1,1,1))
-      allocate(vsext(1,1,1))
-      allocate(rhoext(1,1,1))
-      allocate(gravityext(1,1,1))
-      allocate(Nsqext(1,1,1))
-      allocate(QKappa_attenuationext(1,1,1))
-      allocate(Qmu_attenuationext(1,1,1))
-      allocate(c11ext(1,1,1))
-      allocate(c13ext(1,1,1))
-      allocate(c15ext(1,1,1))
-      allocate(c33ext(1,1,1))
-      allocate(c35ext(1,1,1))
-      allocate(c55ext(1,1,1))
-      allocate(c12ext(1,1,1))
-      allocate(c23ext(1,1,1))
-      allocate(c25ext(1,1,1))
-    endif
-
-  ! synchronizes all processes
-  call synchronize_all()
-
-!
-!----  set the coordinates of the points of the global grid
-!
-    found_a_negative_jacobian = .false.
-    do ispec = 1,nspec
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          if (AXISYM) then
-            if (is_on_the_axis(ispec)) then
-              xi = xiglj(i)
-            else
-              xi = xigll(i)
-            endif
-          else
-            xi = xigll(i)
-          endif
-          gamma = zigll(j)
-
-          call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
-                          jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
-                          .false.)
-
-          if (jacobianl <= ZERO) found_a_negative_jacobian = .true.
-
-          coord(1,ibool(i,j,ispec)) = x
-          coord(2,ibool(i,j,ispec)) = z
-
-          xix(i,j,ispec) = xixl
-          xiz(i,j,ispec) = xizl
-          gammax(i,j,ispec) = gammaxl
-          gammaz(i,j,ispec) = gammazl
-          jacobian(i,j,ispec) = jacobianl
-
-        enddo
-      enddo
-    enddo
-
-! create an OpenDX file containing all the negative elements displayed in red, if any
-! this allows users to locate problems in a mesh based on the OpenDX file created at the second iteration
-! do not create OpenDX files if no negative Jacobian has been found, or if we are running in parallel
-! (because writing OpenDX routines is much easier in serial)
-  if (found_a_negative_jacobian .and. nproc == 1) then
-    call save_openDX_jacobian(nspec,npgeo,ngnod,knods,coorg,xigll,zigll,AXISYM,is_on_the_axis,xiglj)
-  endif
-
-! stop the code at the first negative element found, because such a mesh cannot be computed
-  if (found_a_negative_jacobian) then
-
-    do ispec = 1,nspec
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          if (AXISYM) then
-            if (is_on_the_axis(ispec)) then
-              xi = xiglj(i)
-            else
-              xi = xigll(i)
-            endif
-          else
-            xi = xigll(i)
-          endif
-          gamma = zigll(j)
-
-          call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
-                          jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
-                          .true.)
-
-        enddo
-      enddo
-    enddo
-
-  endif
-
-  xmin_local = minval(coord(1,:))
-  xmax_local = maxval(coord(1,:))
-  zmin_local = minval(coord(2,:))
-  zmax_local = maxval(coord(2,:))
-
-#ifdef USE_MPI
-  call MPI_REDUCE(xmin_local, xmin, 1, MPI_DOUBLE_PRECISION, MPI_MIN, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(xmax_local, xmax, 1, MPI_DOUBLE_PRECISION, MPI_MAX, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(zmin_local, zmin, 1, MPI_DOUBLE_PRECISION, MPI_MIN, 0, MPI_COMM_WORLD, ier)
-  call MPI_REDUCE(zmax_local, zmax, 1, MPI_DOUBLE_PRECISION, MPI_MAX, 0, MPI_COMM_WORLD, ier)
-#else
-  xmin = xmin_local
-  xmax = xmax_local
-  zmin = zmin_local
-  zmax = zmax_local
-#endif
-
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Xmin,Xmax of the whole mesh = ',xmin,xmax
-    write(IMAIN,*) 'Zmin,Zmax of the whole mesh = ',zmin,zmax
-    write(IMAIN,*)
-
-! check that no source is located outside the mesh
-    do i = 1,NSOURCES
-      if (x_source(i) < xmin) stop 'error: at least one source has x < xmin of the mesh'
-      if (x_source(i) > xmax) stop 'error: at least one source has x > xmax of the mesh'
-
-      if (z_source(i) < zmin) stop 'error: at least one source has z < zmin of the mesh'
-      if (z_source(i) > zmax) stop 'error: at least one source has z > zmax of the mesh'
-    enddo
-
-  endif
-
-  ! synchronizes all processes
-  call synchronize_all()
-
-! use a spring to improve the stability of the Stacey condition
-  x_center_spring = (xmax + xmin)/2.d0
-  z_center_spring = (zmax + zmin)/2.d0
+!-------------------------------------------------------------
 
 ! allocate an array to make sure that an acoustic free surface is not enforced on periodic edges
   allocate(this_ibool_is_a_periodic_edge(NGLOB))
@@ -495,35 +186,39 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
-!
-!--- save the grid of points in a file
-!
-  if (output_grid_ASCII .and. myrank == 0) then
-     write(IMAIN,*)
-     write(IMAIN,*) 'Saving the grid in an ASCII text file...'
-     write(IMAIN,*)
-     open(unit=55,file='OUTPUT_FILES/ASCII_dump_of_grid_points.txt',status='unknown')
-     write(55,*) nglob
-     do n = 1,nglob
-        write(55,*) (coord(i,n), i= 1,NDIM)
-     enddo
-     close(55)
-  endif
-
-!
-!-----   plot the GLL mesh in a Gnuplot file
-!
-  if (output_grid_Gnuplot .and. myrank == 0) then
-    call plotgll()
-  endif
-
-  ! synchronizes all processes
-  call synchronize_all()
+!-------------------------------------------------------------
 
   ! external models
+  ! allocates material arrays
+  if (assign_external_model) then
+    nspec_ext = nspec
+  else
+    ! dummy allocations
+    nspec_ext = 1
+  endif
+
+  allocate(vpext(NGLLX,NGLLZ,nspec_ext), &
+           vsext(NGLLX,NGLLZ,nspec_ext), &
+           rhoext(NGLLX,NGLLZ,nspec_ext), &
+           gravityext(NGLLX,NGLLZ,nspec_ext), &
+           Nsqext(NGLLX,NGLLZ,nspec_ext), &
+           QKappa_attenuationext(NGLLX,NGLLZ,nspec_ext), &
+           Qmu_attenuationext(NGLLX,NGLLZ,nspec_ext), &
+           c11ext(NGLLX,NGLLZ,nspec_ext), &
+           c13ext(NGLLX,NGLLZ,nspec_ext), &
+           c15ext(NGLLX,NGLLZ,nspec_ext), &
+           c33ext(NGLLX,NGLLZ,nspec_ext), &
+           c35ext(NGLLX,NGLLZ,nspec_ext), &
+           c55ext(NGLLX,NGLLZ,nspec_ext), &
+           c12ext(NGLLX,NGLLZ,nspec_ext), &
+           c23ext(NGLLX,NGLLZ,nspec_ext), &
+           c25ext(NGLLX,NGLLZ,nspec_ext),stat=ier)
+  if (ier /= 0) stop 'Error allocating external model arrays'
+
+  ! reads in external models
   if (assign_external_model) then
     if (myrank == 0) then
-      write(IMAIN,*) 'Assigning an external velocity and density model...'
+      write(IMAIN,*) 'Assigning an external velocity and density model'
       call flush_IMAIN()
     endif
     call read_external_model()
@@ -532,9 +227,9 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
-!
-!----  perform basic checks on parameters read
-!
+!-------------------------------------------------------------
+
+  ! performs basic checks on parameters read
   all_anisotropic = .false.
   if (count(ispec_is_anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
 
@@ -546,42 +241,24 @@ subroutine prepare_timerun()
   endif
 
   ! global domain flags
-  ELASTIC_SIMULATION = any_elastic
-#ifdef USE_MPI
-  call MPI_ALLREDUCE(any_elastic, ELASTIC_SIMULATION, 1, MPI_LOGICAL, &
-                    MPI_LOR, MPI_COMM_WORLD, ier)
-#endif
+  ! (sets global flag for all slices)
+  call any_all_l(any_elastic, ELASTIC_SIMULATION)
+  call any_all_l(any_poroelastic, POROELASTIC_SIMULATION)
+  call any_all_l(any_acoustic, ACOUSTIC_SIMULATION)
+  call any_all_l(any_gravitoacoustic, GRAVITOACOUSTIC_SIMULATION)
 
-  POROELASTIC_SIMULATION = any_poroelastic
-#ifdef USE_MPI
-  call MPI_ALLREDUCE(any_poroelastic, POROELASTIC_SIMULATION, 1, MPI_LOGICAL, &
-                    MPI_LOR, MPI_COMM_WORLD, ier)
-#endif
-
-  ACOUSTIC_SIMULATION = any_acoustic
-#ifdef USE_MPI
-  call MPI_ALLREDUCE(any_acoustic, ACOUSTIC_SIMULATION, 1, MPI_LOGICAL, &
-                    MPI_LOR, MPI_COMM_WORLD, ier)
-#endif
-
-   GRAVITOACOUSTIC_SIMULATION = any_gravitoacoustic
-#ifdef USE_MPI
-  call MPI_ALLREDUCE(any_gravitoacoustic, GRAVITOACOUSTIC_SIMULATION, 1, MPI_LOGICAL, &
-                    MPI_LOR, MPI_COMM_WORLD, ier)
-#endif
-
-  ! for acoustic
+  ! check for acoustic
   if (ATTENUATION_VISCOELASTIC_SOLID .and. .not. ELASTIC_SIMULATION) &
     call exit_MPI(myrank,'currently cannot have attenuation if acoustic/poroelastic simulation only')
 
-!
-!----   define coefficients of the Newmark time scheme
-!
+!-------------------------------------------------------------
+
+  ! defines coefficients of the Newmark time scheme
   deltatover2 = HALF*deltat
   deltatsquareover2 = HALF*deltat*deltat
 
+  !  define coefficients of the Newmark time scheme for the backward wavefield
   if (SIMULATION_TYPE == 3) then
-!  define coefficients of the Newmark time scheme for the backward wavefield
     b_deltat = - deltat
     b_deltatover2 = HALF*b_deltat
     b_deltatsquareover2 = HALF*b_deltat*b_deltat
@@ -589,6 +266,8 @@ subroutine prepare_timerun()
 
   ! synchronizes all processes
   call synchronize_all()
+
+!-------------------------------------------------------------
 
   ! defines actual location of source and receivers
   call setup_sources_receivers()
@@ -718,6 +397,9 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
+!-------------------------------------------------------------
+
+  ! receiver arrays
   if (nrecloc > 0) then
     allocate(anglerec_irec(nrecloc))
     allocate(cosrot_irec(nrecloc))
@@ -730,10 +412,14 @@ subroutine prepare_timerun()
     allocate(rec_tangential_detection_curve(1))
   endif
 
+  ! checks angle
   if (rec_normal_to_surface .and. abs(anglerec) > 1.d-6) &
     stop 'anglerec should be zero when receivers are normal to the topography'
 
-  anglerec_irec(:) = anglerec * pi / 180.d0
+  ! convert receiver angle to radians
+  anglerec = anglerec * pi / 180.d0
+
+  anglerec_irec(:) = anglerec
   cosrot_irec(:) = cos(anglerec_irec(:))
   sinrot_irec(:) = sin(anglerec_irec(:))
 
@@ -777,9 +463,8 @@ subroutine prepare_timerun()
     sinrot_irec(:) = sin(anglerec_irec(:))
   endif
 
-! for the source
+  ! for the source
   if (force_normal_to_surface) then
-
     do i_source = 1,NSOURCES
       if (is_proc_source(i_source) == 1) then
         distmin = HUGEVAL
@@ -932,16 +617,16 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
-!
-!---
-!
+!-------------------------------------------------------------
 
-! allocate seismogram arrays
+  ! seismograms
+
+  ! allocate seismogram arrays
   allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc))
   allocate(sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc))
   allocate(siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc))
 
-! check if acoustic receiver is exactly on the free surface because pressure is zero there
+  ! check if acoustic receiver is exactly on the free surface because pressure is zero there
   do ispec_acoustic_surface = 1,nelem_acoustic_surface
     ispec = acoustic_surface(1,ispec_acoustic_surface)
     ixmin = acoustic_surface(2,ispec_acoustic_surface)
@@ -982,13 +667,18 @@ subroutine prepare_timerun()
     enddo
   enddo
 
-  allocate(xir_store_loc(nrecloc,NGLLX))
-  allocate(gammar_store_loc(nrecloc,NGLLX))
+  ! allocate Lagrange interpolators for receivers
+  allocate(hxir_store(nrec,NGLLX), &
+           hgammar_store(nrec,NGLLZ),stat=ier)
+  if (ier /= 0) stop 'Error allocating receiver h**_store arrays'
 
-! define and store Lagrange interpolators at all the receivers
-  irec_local=0
+  allocate(xir_store_loc(nrecloc,NGLLX), &
+           gammar_store_loc(nrecloc,NGLLZ),stat=ier)
+  if (ier /= 0) stop 'Error allocating local receiver h**_store arrays'
+
+  ! define and store Lagrange interpolators at all the receivers
+  irec_local = 0
   do irec = 1,nrec
-
     if (AXISYM) then
       if (is_on_the_axis(ispec_selected_rec(irec)) .and. myrank == which_proc_receiver(irec)) then
         call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
@@ -1001,19 +691,24 @@ subroutine prepare_timerun()
     else
       call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
     endif
-
     call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
+
+    ! stores Lagrangians for receiver
     hxir_store(irec,:) = hxir(:)
     hgammar_store(irec,:) = hgammar(:)
 
+    ! local receivers in this slice
     if (myrank == which_proc_receiver(irec)) then
-     irec_local = irec_local + 1
-      do i = 1, NGLLX
-        xir_store_loc(irec_local,i)    = sngl(hxir(i))
-        gammar_store_loc(irec_local,i) = sngl(hgammar(i))
-      enddo
+      irec_local = irec_local + 1
+      xir_store_loc(irec_local,:) = hxir(:)
+      gammar_store_loc(irec_local,:) = hgammar(:)
     endif
   enddo
+
+  ! allocate Lagrange interpolators for sources
+  allocate(hxis_store(NSOURCES,NGLLX), &
+           hgammas_store(NSOURCES,NGLLZ),stat=ier)
+  if (ier /= 0) stop 'Error allocating source h**_store arrays'
 
   ! define and store Lagrange interpolators at all the sources
   do i = 1,NSOURCES
@@ -1029,14 +724,17 @@ subroutine prepare_timerun()
     else
       call lagrange_any(xi_source(i),NGLLX,xigll,hxis,hpxis)
     endif
-
     call lagrange_any(gamma_source(i),NGLLZ,zigll,hgammas,hpgammas)
+
+    ! stores Lagrangians for source
     hxis_store(i,:) = hxis(:)
     hgammas_store(i,:) = hgammas(:)
   enddo
 
   ! synchronizes all processes
   call synchronize_all()
+
+!-------------------------------------------------------------
 
   ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
   if (myrank == 0) then
@@ -1330,6 +1028,8 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
+!-------------------------------------------------------------
+
   if (myrank == 0) then
     write(IMAIN,*) 'Preparing PML'
     call flush_IMAIN()
@@ -1337,12 +1037,16 @@ subroutine prepare_timerun()
   call prepare_timerun_pml()
 
 
-! Test compatibility with axisymmetric formulation
+  ! Test compatibility with axisymmetric formulation
   if (AXISYM) call check_compatibility_axisym()
 
   ! synchronizes all processes
   call synchronize_all()
 
+
+!---------------------------------------------------------------------------
+
+  ! prepares mass matrices
   if (myrank == 0) then
     write(IMAIN,*) 'Preparing mass matrices'
     call flush_IMAIN()
@@ -1351,6 +1055,67 @@ subroutine prepare_timerun()
 
   ! synchronizes all processes
   call synchronize_all()
+
+!----------------------------------------------------------------------------
+
+  ! postscript images for grids and snapshots
+  !
+  ! arrays for display images
+  allocate(shape2D_display(ngnod,pointsdisp,pointsdisp), &
+           dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp),stat=ier)
+  if (ier /= 0) stop 'Error allocating shape arrays for display'
+
+  ! computes shape functions and their derivatives for regular interpolated display grid
+  do j = 1,pointsdisp
+    do i = 1,pointsdisp
+      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
+      gammarec  = 2.d0*dble(j-1)/dble(pointsdisp-1) - 1.d0
+      call define_shape_functions(shape2D_display(:,i,j),dershape2D_display(:,:,i,j),xirec,gammarec,ngnod)
+    enddo
+  enddo
+
+  ! for postscript snapshots
+  ! arrays for display images as snapshot postscript images
+  allocate(flagrange(NGLLX,pointsdisp))
+  if (AXISYM) then
+    allocate(flagrange_GLJ(NGLJ,pointsdisp))
+  else
+    allocate(flagrange_GLJ(1,1))
+  endif
+
+  ! compute Lagrange interpolants on a regular interpolated grid in (xi,gamma)
+  ! for display (assumes NGLLX = NGLLZ)
+  do j = 1,NGLLX
+    do i = 1,pointsdisp
+      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
+      flagrange(j,i) = hgll(j-1,xirec,xigll,NGLLX)
+      if (AXISYM) flagrange_GLJ(j,i) = hglj(j-1,xirec,xiglj,NGLJ)
+    enddo
+  enddo
+
+  allocate(xinterp(pointsdisp,pointsdisp))
+  allocate(zinterp(pointsdisp,pointsdisp))
+  allocate(Uxinterp(pointsdisp,pointsdisp))
+  allocate(Uzinterp(pointsdisp,pointsdisp))
+
+! to display the whole vector field (it needs to be computed from the potential in acoustic elements,
+! thus it does not exist as a whole it case of simulations that contain some acoustic elements
+! and it thus needs to be computed specifically for display purposes)
+  allocate(vector_field_display(3,nglob))
+
+! when periodic boundary conditions are on, some global degrees of freedom are going to be removed,
+! thus we need to set this array to zero otherwise some of its locations may contain random values
+! if the memory is not cleaned
+  vector_field_display(:,:) = 0.d0
+
+
+  ! check the mesh, stability and number of points per wavelength
+  call check_grid()
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+!-------------------------------------------------------------
 
   ! images
   if (output_color_image .or. output_postscript_snapshot) then
@@ -1364,9 +1129,9 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
-!
-!---- initialize seismograms
-!
+!-------------------------------------------------------------
+
+  ! initializes seismograms and arrays
   if (myrank == 0) then
     write(IMAIN,*) 'Preparing array initializations'
     call flush_IMAIN()
@@ -1375,7 +1140,7 @@ subroutine prepare_timerun()
   sisux = ZERO ! double precision zero
   sisuz = ZERO
 
-! initialize arrays to zero
+  ! initialize arrays to zero
   displ_elastic = 0._CUSTOM_REAL
   displ_elastic_old = 0._CUSTOM_REAL
   veloc_elastic = 0._CUSTOM_REAL
@@ -1458,9 +1223,9 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
-!
-!----- Files where viscous damping are saved during forward wavefield calculation
-!
+!-------------------------------------------------------------
+
+  ! Files where viscous damping are saved during forward wavefield calculation
   if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
     allocate(b_viscodampx(nglob))
     allocate(b_viscodampz(nglob))
@@ -1500,7 +1265,11 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
-! Reads last frame for forward wavefield reconstruction
+!-------------------------------------------------------------
+
+  ! Absorbing boundaries
+
+  ! Reads last frame for forward wavefield reconstruction
   if (((SAVE_FORWARD .and. SIMULATION_TYPE == 1) .or. SIMULATION_TYPE == 3) .and. anyabs &
       .and. (.not. PML_BOUNDARY_CONDITIONS)) then
     ! opens files for absorbing boundary data
@@ -1519,6 +1288,8 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
+!-------------------------------------------------------------
+
   if (SIMULATION_TYPE == 3) then
     if (myrank == 0) then
       write(IMAIN,*) 'Preparing adjoint sensitivity kernels'
@@ -1529,6 +1300,8 @@ subroutine prepare_timerun()
 
   ! synchronizes all processes
   call synchronize_all()
+
+!-------------------------------------------------------------
 
   ! reads initial fields from external file if needed
   ! if we are looking a plane wave beyond critical angle we use other method
@@ -1603,6 +1376,8 @@ subroutine prepare_timerun()
 
   endif ! initialfield
 
+!-------------------------------------------------------------
+
   ! compute the source time function and store it in a text file
   if (.not. initialfield) then
     ! user output
@@ -1625,9 +1400,11 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
-! acoustic forcing edge detection
-! the elements forming an edge are already known (computed in meshfem2D),
-! the common nodes forming the edge are computed here
+!-------------------------------------------------------------
+
+  ! acoustic forcing edge detection
+  ! the elements forming an edge are already known (computed in meshfem2D),
+  ! the common nodes forming the edge are computed here
   if (ACOUSTIC_FORCING) then
 
     ! user output
@@ -1639,7 +1416,7 @@ subroutine prepare_timerun()
       call flush_IMAIN()
     endif
 
-! define i and j points for each edge
+    ! define i and j points for each edge
     do ipoin1D = 1,NGLLX
 
       ivalue(ipoin1D,IBOTTOM) = NGLLX - ipoin1D + 1
@@ -1669,619 +1446,17 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
-! determine if coupled fluid-solid simulation
-  coupled_acoustic_elastic = any_acoustic .and. any_elastic
-  coupled_acoustic_poro = any_acoustic .and. any_poroelastic
+!-------------------------------------------------------------
 
-! fluid/solid (elastic) edge detection
-! the two elements (fluid and solid) forming an edge are already known (computed in meshfem2D),
-! the common nodes forming the edge are computed here
-  if (coupled_acoustic_elastic) then
-
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*)
-      write(IMAIN,*) 'Mixed acoustic/elastic simulation'
-      write(IMAIN,*)
-      write(IMAIN,*) '  Beginning of fluid/solid edge detection'
-      call flush_IMAIN()
-    endif
-
-! define the edges of a given element
-    i_begin(IBOTTOM) = 1
-    j_begin(IBOTTOM) = 1
-    i_end(IBOTTOM) = NGLLX
-    j_end(IBOTTOM) = 1
-
-    i_begin(IRIGHT) = NGLLX
-    j_begin(IRIGHT) = 1
-    i_end(IRIGHT) = NGLLX
-    j_end(IRIGHT) = NGLLZ
-
-    i_begin(ITOP) = NGLLX
-    j_begin(ITOP) = NGLLZ
-    i_end(ITOP) = 1
-    j_end(ITOP) = NGLLZ
-
-    i_begin(ILEFT) = 1
-    j_begin(ILEFT) = NGLLZ
-    i_end(ILEFT) = 1
-    j_end(ILEFT) = 1
-
-! define i and j points for each edge
-    do ipoin1D = 1,NGLLX
-
-      ivalue(ipoin1D,IBOTTOM) = ipoin1D
-      ivalue_inverse(ipoin1D,IBOTTOM) = NGLLX - ipoin1D + 1
-      jvalue(ipoin1D,IBOTTOM) = 1
-      jvalue_inverse(ipoin1D,IBOTTOM) = 1
-
-      ivalue(ipoin1D,IRIGHT) = NGLLX
-      ivalue_inverse(ipoin1D,IRIGHT) = NGLLX
-      jvalue(ipoin1D,IRIGHT) = ipoin1D
-      jvalue_inverse(ipoin1D,IRIGHT) = NGLLZ - ipoin1D + 1
-
-      ivalue(ipoin1D,ITOP) = NGLLX - ipoin1D + 1
-      ivalue_inverse(ipoin1D,ITOP) = ipoin1D
-      jvalue(ipoin1D,ITOP) = NGLLZ
-      jvalue_inverse(ipoin1D,ITOP) = NGLLZ
-
-      ivalue(ipoin1D,ILEFT) = 1
-      ivalue_inverse(ipoin1D,ILEFT) = 1
-      jvalue(ipoin1D,ILEFT) = NGLLZ - ipoin1D + 1
-      jvalue_inverse(ipoin1D,ILEFT) = ipoin1D
-
-    enddo
-
-    do inum = 1, num_fluid_solid_edges
-       ispec_acoustic =  fluid_solid_acoustic_ispec(inum)
-       ispec_elastic =  fluid_solid_elastic_ispec(inum)
-
-! one element must be acoustic and the other must be elastic
-        if (ispec_acoustic /= ispec_elastic .and. .not. ispec_is_elastic(ispec_acoustic) .and. &
-             .not. ispec_is_poroelastic(ispec_acoustic) .and. ispec_is_elastic(ispec_elastic)) then
-
-! loop on the four edges of the two elements
-          do iedge_acoustic = 1,NEDGES
-            do iedge_elastic = 1,NEDGES
-! store the matching topology if the two edges match in inverse order
-              if (ibool(i_begin(iedge_acoustic),j_begin(iedge_acoustic),ispec_acoustic) == &
-                  ibool(i_end(iedge_elastic),j_end(iedge_elastic),ispec_elastic) .and. &
-                  ibool(i_end(iedge_acoustic),j_end(iedge_acoustic),ispec_acoustic) == &
-                  ibool(i_begin(iedge_elastic),j_begin(iedge_elastic),ispec_elastic)) then
-                 fluid_solid_acoustic_iedge(inum) = iedge_acoustic
-                 fluid_solid_elastic_iedge(inum) = iedge_elastic
-!                  print *,'edge ',iedge_acoustic,' of acoustic element ',ispec_acoustic, &
-!                          ' is in contact with edge ',iedge_elastic,' of elastic element ',ispec_elastic
-              endif
-
-            enddo
-          enddo
-
-       endif
-
-    enddo
-
-! make sure fluid/solid (elastic) matching has been perfectly detected: check that the grid points
-! have the same physical coordinates
-! loop on all the coupling edges
-
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*) '  Checking fluid/solid edge topology...'
-      call flush_IMAIN()
-    endif
-
-    do inum = 1,num_fluid_solid_edges
-
-! get the edge of the acoustic element
-      ispec_acoustic = fluid_solid_acoustic_ispec(inum)
-      iedge_acoustic = fluid_solid_acoustic_iedge(inum)
-
-! get the corresponding edge of the elastic element
-      ispec_elastic = fluid_solid_elastic_ispec(inum)
-      iedge_elastic = fluid_solid_elastic_iedge(inum)
-
-! implement 1D coupling along the edge
-      do ipoin1D = 1,NGLLX
-
-! get point values for the elastic side, which matches our side in the inverse direction
-        i = ivalue_inverse(ipoin1D,iedge_elastic)
-        j = jvalue_inverse(ipoin1D,iedge_elastic)
-        iglob = ibool(i,j,ispec_elastic)
-
-! get point values for the acoustic side
-        i = ivalue(ipoin1D,iedge_acoustic)
-        j = jvalue(ipoin1D,iedge_acoustic)
-        iglob2 = ibool(i,j,ispec_acoustic)
-
-! if distance between the two points is not negligible, there is an error, since it should be zero
-        if (sqrt((coord(1,iglob) - coord(1,iglob2))**2 + (coord(2,iglob) - coord(2,iglob2))**2) > TINYVAL) &
-            call exit_MPI(myrank,'Error in fluid/solid coupling buffer')
-
-      enddo
-
-    enddo
-
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*) '  End of fluid/solid edge detection'
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
-
-  endif
-
-! fluid/solid (poroelastic) edge detection
-! the two elements (fluid and solid) forming an edge are already known (computed in meshfem2D),
-! the common nodes forming the edge are computed here
-  if (coupled_acoustic_poro) then
-
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*)
-      write(IMAIN,*) 'Mixed acoustic/poroelastic simulation'
-      write(IMAIN,*)
-      write(IMAIN,*) '  Beginning of fluid/solid (poroelastic) edge detection'
-      call flush_IMAIN()
-    endif
-
-! define the edges of a given element
-    i_begin(IBOTTOM) = 1
-    j_begin(IBOTTOM) = 1
-    i_end(IBOTTOM) = NGLLX
-    j_end(IBOTTOM) = 1
-
-    i_begin(IRIGHT) = NGLLX
-    j_begin(IRIGHT) = 1
-    i_end(IRIGHT) = NGLLX
-    j_end(IRIGHT) = NGLLZ
-
-    i_begin(ITOP) = NGLLX
-    j_begin(ITOP) = NGLLZ
-    i_end(ITOP) = 1
-    j_end(ITOP) = NGLLZ
-
-    i_begin(ILEFT) = 1
-    j_begin(ILEFT) = NGLLZ
-    i_end(ILEFT) = 1
-    j_end(ILEFT) = 1
-
-! define i and j points for each edge
-    do ipoin1D = 1,NGLLX
-
-      ivalue(ipoin1D,IBOTTOM) = ipoin1D
-      ivalue_inverse(ipoin1D,IBOTTOM) = NGLLX - ipoin1D + 1
-      jvalue(ipoin1D,IBOTTOM) = 1
-      jvalue_inverse(ipoin1D,IBOTTOM) = 1
-
-      ivalue(ipoin1D,IRIGHT) = NGLLX
-      ivalue_inverse(ipoin1D,IRIGHT) = NGLLX
-      jvalue(ipoin1D,IRIGHT) = ipoin1D
-      jvalue_inverse(ipoin1D,IRIGHT) = NGLLZ - ipoin1D + 1
-
-      ivalue(ipoin1D,ITOP) = NGLLX - ipoin1D + 1
-      ivalue_inverse(ipoin1D,ITOP) = ipoin1D
-      jvalue(ipoin1D,ITOP) = NGLLZ
-      jvalue_inverse(ipoin1D,ITOP) = NGLLZ
-
-      ivalue(ipoin1D,ILEFT) = 1
-      ivalue_inverse(ipoin1D,ILEFT) = 1
-      jvalue(ipoin1D,ILEFT) = NGLLZ - ipoin1D + 1
-      jvalue_inverse(ipoin1D,ILEFT) = ipoin1D
-
-    enddo
-
-    do inum = 1, num_fluid_poro_edges
-       ispec_acoustic =  fluid_poro_acoustic_ispec(inum)
-       ispec_poroelastic =  fluid_poro_poroelastic_ispec(inum)
-
-! one element must be acoustic and the other must be poroelastic
-        if (ispec_acoustic /= ispec_poroelastic .and. .not. ispec_is_poroelastic(ispec_acoustic) .and. &
-                 .not. ispec_is_elastic(ispec_acoustic) .and. ispec_is_poroelastic(ispec_poroelastic)) then
-
-! loop on the four edges of the two elements
-          do iedge_acoustic = 1,NEDGES
-            do iedge_poroelastic = 1,NEDGES
-
-! store the matching topology if the two edges match in inverse order
-              if (ibool(i_begin(iedge_acoustic),j_begin(iedge_acoustic),ispec_acoustic) == &
-                   ibool(i_end(iedge_poroelastic),j_end(iedge_poroelastic),ispec_poroelastic) .and. &
-                   ibool(i_end(iedge_acoustic),j_end(iedge_acoustic),ispec_acoustic) == &
-                   ibool(i_begin(iedge_poroelastic),j_begin(iedge_poroelastic),ispec_poroelastic)) then
-                 fluid_poro_acoustic_iedge(inum) = iedge_acoustic
-                 fluid_poro_poroelastic_iedge(inum) = iedge_poroelastic
-                endif
-
-             enddo
-          enddo
-
-       endif
-
-    enddo
-
-
-! make sure fluid/solid (poroelastic) matching has been perfectly detected: check that the grid points
-! have the same physical coordinates
-! loop on all the coupling edges
-
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*) '  Checking fluid/solid (poroelastic) edge topology...'
-      call flush_IMAIN()
-    endif
-
-    do inum = 1,num_fluid_poro_edges
-
-! get the edge of the acoustic element
-      ispec_acoustic = fluid_poro_acoustic_ispec(inum)
-      iedge_acoustic = fluid_poro_acoustic_iedge(inum)
-
-! get the corresponding edge of the poroelastic element
-      ispec_poroelastic = fluid_poro_poroelastic_ispec(inum)
-      iedge_poroelastic = fluid_poro_poroelastic_iedge(inum)
-
-! implement 1D coupling along the edge
-      do ipoin1D = 1,NGLLX
-
-! get point values for the poroelastic side, which matches our side in the inverse direction
-        i = ivalue_inverse(ipoin1D,iedge_poroelastic)
-        j = jvalue_inverse(ipoin1D,iedge_poroelastic)
-        iglob = ibool(i,j,ispec_poroelastic)
-
-! get point values for the acoustic side
-        i = ivalue(ipoin1D,iedge_acoustic)
-        j = jvalue(ipoin1D,iedge_acoustic)
-        iglob2 = ibool(i,j,ispec_acoustic)
-
-! if distance between the two points is not negligible, there is an error, since it should be zero
-        if (sqrt((coord(1,iglob) - coord(1,iglob2))**2 + (coord(2,iglob) - coord(2,iglob2))**2) > TINYVAL) &
-            call exit_MPI(myrank,'Error in fluid/solid (poroelastic) coupling buffer')
-
-      enddo
-
-    enddo
-
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*) '  End of fluid/solid (poroelastic) edge detection'
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
-
-  endif
+  ! domain coupling
+  call get_coupling_edges()
 
   ! synchronizes all processes
   call synchronize_all()
 
-! exclude common points between acoustic absorbing edges and acoustic/elastic matching interfaces
-  if (coupled_acoustic_elastic .and. anyabs) then
+!-------------------------------------------------------------
 
-    if (myrank == 0) then
-      write(IMAIN,*) 'excluding common points between acoustic absorbing edges '// &
-                     'and acoustic/elastic matching interfaces, if any'
-      call flush_IMAIN()
-    endif
-
-! loop on all the absorbing elements
-    do ispecabs = 1,nelemabs
-
-      ispec = numabs(ispecabs)
-
-! loop on all the coupling edges
-      do inum = 1,num_fluid_solid_edges
-
-! get the edge of the acoustic element
-        ispec_acoustic = fluid_solid_acoustic_ispec(inum)
-        iedge_acoustic = fluid_solid_acoustic_iedge(inum)
-
-! if acoustic absorbing element and acoustic/elastic coupled element is the same
-        if (ispec_acoustic == ispec) then
-
-          if (iedge_acoustic == IBOTTOM) then
-            ibegin_edge4(ispecabs) = 2
-            ibegin_edge2(ispecabs) = 2
-          endif
-
-          if (iedge_acoustic == ITOP) then
-            iend_edge4(ispecabs) = NGLLZ - 1
-            iend_edge2(ispecabs) = NGLLZ - 1
-          endif
-
-          if (iedge_acoustic == ILEFT) then
-            ibegin_edge1(ispecabs) = 2
-            ibegin_edge3(ispecabs) = 2
-          endif
-
-          if (iedge_acoustic == IRIGHT) then
-            iend_edge1(ispecabs) = NGLLX - 1
-            iend_edge3(ispecabs) = NGLLX - 1
-          endif
-
-        endif
-
-      enddo
-
-    enddo
-
-  endif
-
-! exclude common points between acoustic absorbing edges and acoustic/poroelastic matching interfaces
-  if (coupled_acoustic_poro .and. anyabs) then
-
-    if (myrank == 0) then
-      write(IMAIN,*) 'excluding common points between acoustic absorbing edges'// &
-                     ' and acoustic/poroelastic matching interfaces, if any'
-      call flush_IMAIN()
-    endif
-! loop on all the absorbing elements
-    do ispecabs = 1,nelemabs
-
-      ispec = numabs(ispecabs)
-
-! loop on all the coupling edges
-      do inum = 1,num_fluid_poro_edges
-
-! get the edge of the acoustic element
-        ispec_acoustic = fluid_poro_acoustic_ispec(inum)
-        iedge_acoustic = fluid_poro_acoustic_iedge(inum)
-
-! if acoustic absorbing element and acoustic/poroelastic coupled element is the same
-        if (ispec_acoustic == ispec) then
-
-          if (iedge_acoustic == IBOTTOM) then
-            ibegin_edge4(ispecabs) = 2
-            ibegin_edge2(ispecabs) = 2
-          endif
-
-          if (iedge_acoustic == ITOP) then
-            iend_edge4(ispecabs) = NGLLZ - 1
-            iend_edge2(ispecabs) = NGLLZ - 1
-          endif
-
-          if (iedge_acoustic == ILEFT) then
-            ibegin_edge1(ispecabs) = 2
-            ibegin_edge3(ispecabs) = 2
-          endif
-
-          if (iedge_acoustic == IRIGHT) then
-            iend_edge1(ispecabs) = NGLLX - 1
-            iend_edge3(ispecabs) = NGLLX - 1
-          endif
-
-        endif
-
-      enddo
-
-    enddo
-
-  endif
-
-
-! determine if coupled elastic-poroelastic simulation
-  coupled_elastic_poro = any_elastic .and. any_poroelastic
-
-! solid/porous edge detection
-! the two elements forming an edge are already known (computed in meshfem2D),
-! the common nodes forming the edge are computed here
-
-  if (ATTENUATION_PORO_FLUID_PART .and. any_poroelastic .and. &
-     (time_stepping_scheme == 2.or. time_stepping_scheme == 3)) &
-    stop 'RK and LDDRK time scheme not supported poroelastic simulations with attenuation'
-
-  if (coupled_elastic_poro) then
-
-    if (ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_PORO_FLUID_PART) &
-                   stop 'Attenuation not supported for mixed elastic/poroelastic simulations'
-
-    if (time_stepping_scheme == 2.or. time_stepping_scheme == 3) &
-                   stop 'RK and LDDRK time scheme not supported for mixed elastic/poroelastic simulations'
-
-    if (myrank == 0) then
-      write(IMAIN,*)
-      write(IMAIN,*) 'Mixed elastic/poroelastic simulation'
-      write(IMAIN,*)
-      write(IMAIN,*) '  Beginning of solid/porous edge detection'
-      call flush_IMAIN()
-    endif
-
-! define the edges of a given element
-    i_begin(IBOTTOM) = 1
-    j_begin(IBOTTOM) = 1
-    i_end(IBOTTOM) = NGLLX
-    j_end(IBOTTOM) = 1
-
-    i_begin(IRIGHT) = NGLLX
-    j_begin(IRIGHT) = 1
-    i_end(IRIGHT) = NGLLX
-    j_end(IRIGHT) = NGLLZ
-
-    i_begin(ITOP) = NGLLX
-    j_begin(ITOP) = NGLLZ
-    i_end(ITOP) = 1
-    j_end(ITOP) = NGLLZ
-
-    i_begin(ILEFT) = 1
-    j_begin(ILEFT) = NGLLZ
-    i_end(ILEFT) = 1
-    j_end(ILEFT) = 1
-
-! define i and j points for each edge
-    do ipoin1D = 1,NGLLX
-
-      ivalue(ipoin1D,IBOTTOM) = ipoin1D
-      ivalue_inverse(ipoin1D,IBOTTOM) = NGLLX - ipoin1D + 1
-      jvalue(ipoin1D,IBOTTOM) = 1
-      jvalue_inverse(ipoin1D,IBOTTOM) = 1
-
-      ivalue(ipoin1D,IRIGHT) = NGLLX
-      ivalue_inverse(ipoin1D,IRIGHT) = NGLLX
-      jvalue(ipoin1D,IRIGHT) = ipoin1D
-      jvalue_inverse(ipoin1D,IRIGHT) = NGLLZ - ipoin1D + 1
-
-      ivalue(ipoin1D,ITOP) = NGLLX - ipoin1D + 1
-      ivalue_inverse(ipoin1D,ITOP) = ipoin1D
-      jvalue(ipoin1D,ITOP) = NGLLZ
-      jvalue_inverse(ipoin1D,ITOP) = NGLLZ
-
-      ivalue(ipoin1D,ILEFT) = 1
-      ivalue_inverse(ipoin1D,ILEFT) = 1
-      jvalue(ipoin1D,ILEFT) = NGLLZ - ipoin1D + 1
-      jvalue_inverse(ipoin1D,ILEFT) = ipoin1D
-
-    enddo
-
-
-    do inum = 1, num_solid_poro_edges
-       ispec_elastic =  solid_poro_elastic_ispec(inum)
-       ispec_poroelastic =  solid_poro_poroelastic_ispec(inum)
-
-! one element must be elastic and the other must be poroelastic
-        if (ispec_elastic /= ispec_poroelastic .and. ispec_is_elastic(ispec_elastic) .and. &
-                 ispec_is_poroelastic(ispec_poroelastic)) then
-
-! loop on the four edges of the two elements
-          do iedge_poroelastic = 1,NEDGES
-            do iedge_elastic = 1,NEDGES
-
-! store the matching topology if the two edges match in inverse order
-              if (ibool(i_begin(iedge_poroelastic),j_begin(iedge_poroelastic),ispec_poroelastic) == &
-                   ibool(i_end(iedge_elastic),j_end(iedge_elastic),ispec_elastic) .and. &
-                   ibool(i_end(iedge_poroelastic),j_end(iedge_poroelastic),ispec_poroelastic) == &
-                   ibool(i_begin(iedge_elastic),j_begin(iedge_elastic),ispec_elastic)) then
-                 solid_poro_elastic_iedge(inum) = iedge_elastic
-                 solid_poro_poroelastic_iedge(inum) = iedge_poroelastic
-                endif
-
-             enddo
-          enddo
-
-       endif
-
-    enddo
-
-! make sure solid/porous matching has been perfectly detected: check that the grid points
-! have the same physical coordinates
-! loop on all the coupling edges
-
-    if (myrank == 0) then
-      write(IMAIN,*) '  Checking solid/porous edge topology...'
-      call flush_IMAIN()
-    endif
-
-    do inum = 1,num_solid_poro_edges
-
-! get the edge of the elastic element
-      ispec_elastic = solid_poro_elastic_ispec(inum)
-      iedge_elastic = solid_poro_elastic_iedge(inum)
-
-! get the corresponding edge of the poroelastic element
-      ispec_poroelastic = solid_poro_poroelastic_ispec(inum)
-      iedge_poroelastic = solid_poro_poroelastic_iedge(inum)
-
-! implement 1D coupling along the edge
-      do ipoin1D = 1,NGLLX
-
-! get point values for the poroelastic side, which matches our side in the inverse direction
-        i = ivalue_inverse(ipoin1D,iedge_elastic)
-        j = jvalue_inverse(ipoin1D,iedge_elastic)
-        iglob = ibool(i,j,ispec_elastic)
-
-! get point values for the elastic side
-        i = ivalue(ipoin1D,iedge_poroelastic)
-        j = jvalue(ipoin1D,iedge_poroelastic)
-        iglob2 = ibool(i,j,ispec_poroelastic)
-
-! if distance between the two points is not negligible, there is an error, since it should be zero
-        if (sqrt((coord(1,iglob) - coord(1,iglob2))**2 + (coord(2,iglob) - coord(2,iglob2))**2) > TINYVAL) &
-            call exit_MPI(myrank,'Error in solid/porous coupling buffer')
-
-      enddo
-
-    enddo
-
-    if (myrank == 0) then
-      write(IMAIN,*) '  End of solid/porous edge detection'
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
-
-  endif
-
-  ! initiation
-  if (any_poroelastic .and. anyabs) then
-    ! loop on all the absorbing elements
-    do ispecabs = 1,nelemabs
-      ibegin_edge4_poro(ispecabs) = 1
-      ibegin_edge2_poro(ispecabs) = 1
-
-      iend_edge4_poro(ispecabs) = NGLLZ
-      iend_edge2_poro(ispecabs) = NGLLZ
-
-      ibegin_edge1_poro(ispecabs) = 1
-      ibegin_edge3_poro(ispecabs) = 1
-
-      iend_edge1_poro(ispecabs) = NGLLX
-      iend_edge3_poro(ispecabs) = NGLLX
-    enddo
-  endif
-
-! exclude common points between poroelastic absorbing edges and elastic/poroelastic matching interfaces
-  if (coupled_elastic_poro .and. anyabs) then
-
-    if (myrank == 0) then
-      write(IMAIN,*) 'excluding common points between poroelastic absorbing edges '// &
-                     'and elastic/poroelastic matching interfaces, if any'
-      call flush_IMAIN()
-    endif
-
-! loop on all the absorbing elements
-    do ispecabs = 1,nelemabs
-
-      ispec = numabs(ispecabs)
-
-! loop on all the coupling edges
-      do inum = 1,num_solid_poro_edges
-
-! get the edge of the acoustic element
-        ispec_poroelastic = solid_poro_poroelastic_ispec(inum)
-        iedge_poroelastic = solid_poro_poroelastic_iedge(inum)
-
-! if poroelastic absorbing element and elastic/poroelastic coupled element is the same
-        if (ispec_poroelastic == ispec) then
-
-          if (iedge_poroelastic == IBOTTOM) then
-            ibegin_edge4_poro(ispecabs) = 2
-            ibegin_edge2_poro(ispecabs) = 2
-          endif
-
-          if (iedge_poroelastic == ITOP) then
-            iend_edge4_poro(ispecabs) = NGLLZ - 1
-            iend_edge2_poro(ispecabs) = NGLLZ - 1
-          endif
-
-          if (iedge_poroelastic == ILEFT) then
-            ibegin_edge1_poro(ispecabs) = 2
-            ibegin_edge3_poro(ispecabs) = 2
-          endif
-
-          if (iedge_poroelastic == IRIGHT) then
-            iend_edge1_poro(ispecabs) = NGLLX - 1
-            iend_edge3_poro(ispecabs) = NGLLX - 1
-          endif
-
-        endif
-
-      enddo
-
-    enddo
-
-  endif
-
-  ! synchronizes all processes
-  call synchronize_all()
-
-!----  create a Gnuplot script to display the energy curve in log scale
+  ! creates a Gnuplot script to display the energy curve in log scale
   if (output_energy .and. myrank == 0) then
     close(IOUT_ENERGY)
     open(unit=IOUT_ENERGY,file='OUTPUT_FILES/plot_energy.gnu',status='unknown',action='write')
@@ -2299,11 +1474,13 @@ subroutine prepare_timerun()
     close(IOUT_ENERGY)
   endif
 
-! open the file in which we will store the energy curve
+  ! open the file in which we will store the energy curve
   if (output_energy .and. myrank == 0) open(unit=IOUT_ENERGY,file='OUTPUT_FILES/energy.dat',status='unknown',action='write')
 
   ! synchronizes all processes
   call synchronize_all()
+
+!-------------------------------------------------------------
 
   ! prepares noise simulations
   if (NOISE_TOMOGRAPHY /= 0) then
@@ -2317,6 +1494,8 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
+!-------------------------------------------------------------
+
   ! prepares image background
   if (output_color_image) then
     if (myrank == 0) then
@@ -2329,10 +1508,9 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
-  ! initialize variables for writing seismograms
-  seismo_offset = 0
-  seismo_current = 0
+!-------------------------------------------------------------
 
+  ! attenuation
   if (myrank == 0) then
     write(IMAIN,*) 'Preparing attenuation'
     call flush_IMAIN()
@@ -2341,6 +1519,8 @@ subroutine prepare_timerun()
 
   ! synchronizes all processes
   call synchronize_all()
+
+!-------------------------------------------------------------
 
   ! material properties
   allocate(kappastore(NGLLX,NGLLZ,nspec))
@@ -2385,8 +1565,15 @@ subroutine prepare_timerun()
   ! synchronizes all processes
   call synchronize_all()
 
+!-------------------------------------------------------------
+
   ! prepares GPU arrays
   if (GPU_MODE) call prepare_timerun_GPU()
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+!-------------------------------------------------------------
 
   ! user output
   if (myrank == 0) then

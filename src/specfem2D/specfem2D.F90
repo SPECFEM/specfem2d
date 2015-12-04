@@ -379,6 +379,9 @@
   ! sets up reference element GLL points/weights/derivatives
   call setup_GLL_points()
 
+  ! sets up global mesh numbering and mesh properties
+  call setup_mesh()
+
   ! sets up and precomputes simulation arrays
   call prepare_timerun()
 

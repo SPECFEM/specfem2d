@@ -64,15 +64,15 @@
 ! calculate derivatives of the Lagrange polynomials
 ! and precalculate some products in double precision
 ! hprime(i,j) = h'_j(xigll_i) by definition of the derivation matrix
-  do i1= 1,NGLLX
-    do i2= 1,NGLLX
+  do i1 = 1,NGLLX
+    do i2 = 1,NGLLX
       hprime_xx(i2,i1) = lagrange_deriv_GLL(i1-1,i2-1,xigll,NGLLX)
       hprimewgll_xx(i2,i1) = wxgll(i2) * hprime_xx(i2,i1)
     enddo
   enddo
 
-  do k1= 1,NGLLZ
-    do k2= 1,NGLLZ
+  do k1 = 1,NGLLZ
+    do k2 = 1,NGLLZ
       hprime_zz(k2,k1) = lagrange_deriv_GLL(k1-1,k2-1,zigll,NGLLZ)
       hprimewgll_zz(k2,k1) = wzgll(k2) * hprime_zz(k2,k1)
     enddo
@@ -109,8 +109,8 @@
 ! calculate derivatives of the GLJ quadrature polynomials
 ! and precalculate some products in double precision
 ! hprimeBar(i,j) = hBar'_j(xiglj_i) by definition of the derivation matrix
-  do i1= 1,NGLJ
-    do i2= 1,NGLJ
+  do i1 = 1,NGLJ
+    do i2 = 1,NGLJ
       hprimeBar_xx(i2,i1) = poly_deriv_GLJ(i1-1,i2-1,xiglj,NGLJ)
       hprimeBarwglj_xx(i2,i1) = wxglj(i2) * hprimeBar_xx(i2,i1)
     enddo

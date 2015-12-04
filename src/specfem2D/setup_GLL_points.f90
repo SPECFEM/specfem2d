@@ -40,7 +40,10 @@
 !
 !========================================================================
 
+
   subroutine setup_GLL_points()
+
+! computes shape functions and their derivatives for SEM grid
 
   use specfem_par
 
@@ -49,11 +52,7 @@
   ! local parameters
   integer :: i,j,ier
 
-!
-!---- compute shape functions and their derivatives for SEM grid
-!
-
-  ! set up Gauss-Lobatto-Legendre points, weights and also derivation matrices
+  ! set up Gauss-Lobatto-Legendre points, weights and also derivation matrices (hprime_**,..)
   call define_derivation_matrices()
 
   if (AXISYM) then
@@ -61,13 +60,19 @@
     call define_GLJ_derivation_matrix()
   endif
 
+  ! shape arrays
+  allocate(shape2D(ngnod,NGLLX,NGLLZ), &
+           dershape2D(NDIM,ngnod,NGLLX,NGLLZ),stat=ier)
+  if (ier /= 0) stop 'Error allocating shape arrays'
+
   do j = 1,NGLLZ
     do i = 1,NGLLX
       call define_shape_functions(shape2D(:,i,j),dershape2D(:,:,i,j),xigll(i),zigll(j),ngnod)
     enddo
   enddo
 
-  ! allocate 1-D Lagrange interpolators and derivatives
+  ! allocate 1-D Lagrange interpolators and derivatives 
+  ! for source and receivers
   allocate(hxir(NGLLX), &
            hxis(NGLLX), &
            hpxir(NGLLX), &

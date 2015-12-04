@@ -95,12 +95,10 @@
   double precision :: lambdaPmin_in_fluid_histo,lambdaPmax_in_fluid_histo
   double precision :: lambdaSmin_histo,lambdaSmax_histo
 
-  ! check
-  if (UPPER_LIMIT_DISPLAY > nspec) &
-    call exit_MPI(myrank,'cannot have UPPER_LIMIT_DISPLAY > nspec in check_grid.F90')
-
+  ! user output
   if (myrank == 0) then
-    write(IMAIN,*) "  checking mesh and stability"
+    write(IMAIN,*)
+    write(IMAIN,*) 'Checking mesh and stability'
     call flush_IMAIN()
   endif
 
@@ -279,6 +277,8 @@
 
   enddo ! ispec
 
+  ! global statistics
+  ier = 0
 #ifdef USE_MPI
   call MPI_ALLREDUCE (vpImin, vpImin_glob, 1, MPI_DOUBLE_PRECISION, &
                     MPI_MIN, MPI_COMM_WORLD, ier)
@@ -318,8 +318,6 @@
                     MPI_MIN, MPI_COMM_WORLD, ier)
   call MPI_ALLREDUCE (lambdaPmax_in_fluid_histo, lambdaPmax_in_fluid_histo_glob, 1, MPI_DOUBLE_PRECISION, &
                     MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (any_fluid_histo, any_fluid_histo_glob, 1, MPI_LOGICAL, &
-                    MPI_LOR, MPI_COMM_WORLD, ier)
   vpImin = vpImin_glob
   vpImax = vpImax_glob
   vpIImin = vpIImin_glob
@@ -339,10 +337,10 @@
   lambdaSmax = lambdaSmax_glob
   lambdaPmin_in_fluid_histo = lambdaPmin_in_fluid_histo_glob
   lambdaPmax_in_fluid_histo = lambdaPmax_in_fluid_histo_glob
-#else
-  ier = 0
-  any_fluid_histo_glob = any_fluid_histo
 #endif
+
+  ! sets if any slice has fluid histogram
+  call any_all_l(any_fluid_histo,any_fluid_histo_glob)
 
   if (myrank == 0) then
     if (.not. all_anisotropic) then
@@ -647,13 +645,9 @@
     classes_wavelength_all(:) = classes_wavelength(:)
 #endif
 
-#ifdef USE_MPI
-    call MPI_REDUCE(nspec, nspec_all, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-    call MPI_REDUCE(nspec_counted, nspec_counted_all, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-    nspec_counted_all = nspec_counted
-    nspec_all = nspec
-#endif
+    ! gets total for all slices
+    call sum_all_i(nspec,nspec_all)
+    call sum_all_i(nspec_counted,nspec_counted_all)
 
     if (ipass == 1) then
       nspec_counted_all_solid = nspec_counted_all
@@ -2066,6 +2060,24 @@
   integer :: ier
   integer :: i,j,ispec,material
   integer :: is,ir,in,nnum
+  integer :: UPPER_LIMIT_DISPLAY
+
+  ! sets display limit
+  if (DISPLAY_SUBSET_OPTION == 1) then
+    UPPER_LIMIT_DISPLAY = nspec
+  else if (DISPLAY_SUBSET_OPTION == 2) then
+    UPPER_LIMIT_DISPLAY = nspec_inner
+  else if (DISPLAY_SUBSET_OPTION == 3) then
+    UPPER_LIMIT_DISPLAY = nspec_outer
+  else if (DISPLAY_SUBSET_OPTION == 4) then
+    UPPER_LIMIT_DISPLAY = NSPEC_DISPLAY_SUBSET
+  else
+    stop 'incorrect value of DISPLAY_SUBSET_OPTION'
+  endif
+
+  ! checks limit
+  if (UPPER_LIMIT_DISPLAY > nspec) &
+    call exit_MPI(myrank,'cannot have UPPER_LIMIT_DISPLAY > nspec in postscript creation of check_grid.F90')
 
 ! define color palette in random order
   call check_grid_setup_colorp(red,green,blue,NUM_COLORS)

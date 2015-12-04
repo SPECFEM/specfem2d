@@ -61,10 +61,6 @@
 ! relatively fine grid, then the above effect will be small.
 
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants,only: IMAIN,NGLLX,NGLLZ, &
     IRIGHT,ILEFT,IBOTTOM,ITOP,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
 
@@ -81,7 +77,6 @@
   ! local parameters
   integer, dimension(nglob) ::   icorner_iglob
   integer :: nspec_PML_tot,ibound,ispecabs,ncorner,i_coef,i,j,k,ispec,iglob
-  integer :: ier
 
   nspec_PML = 0
 
@@ -292,16 +287,9 @@
     endif
 
   endif
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-#ifdef USE_MPI
-  call MPI_REDUCE(nspec_PML, nspec_PML_tot, 1, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
-#else
-  nspec_PML_tot = nspec_PML
-  ! dummy statement to avoid compiler warning
-  ier = 0
-#endif
-
+  ! outputs total
+  call sum_all_i(nspec_PML,nspec_PML_tot)
   if (myrank == 0) then
     write(IMAIN,*) "Total number of PML spectral elements: ", nspec_PML_tot
     write(IMAIN,*)
@@ -678,6 +666,7 @@
   if (PML_parameter_adjustment) then
     averagex_source = 0.0d0
     averagez_source = 0.0d0
+
     do i_source = 1, NSOURCES
       ispec = ispec_selected_source(i_source)
       do i = 1, NGLLX
@@ -687,30 +676,17 @@
         enddo
       enddo
     enddo
-  endif
 
-  averagex_source_sum = 0.0d0
-  averagez_source_sum = 0.0d0
-  NSOURCES_glob = 0
-#ifdef USE_MPI
-  if (PML_parameter_adjustment) then
-    call MPI_ALLREDUCE (averagex_source, averagex_source_sum, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ier)
-    call MPI_ALLREDUCE (averagez_source, averagez_source_sum, 1, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ier)
-    call MPI_ALLREDUCE (NSOURCES, NSOURCES_glob, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ier)
-  endif
-#endif
+    ! collects sum of all on all processes
+    call sum_all_all_dp(averagex_source, averagex_source_sum)
+    call sum_all_all_dp(averagez_source, averagez_source_sum)
+    call sum_all_all_i(NSOURCES,NSOURCES_glob)
 
-  if (PML_parameter_adjustment) then
-    averagex_source = averagex_source / (NSOURCES*NGLLX*NGLLZ)
-    averagez_source = averagez_source / (NSOURCES*NGLLX*NGLLZ)
-  endif
-
-#ifdef USE_MPI
-  if (PML_parameter_adjustment) then
     averagex_source = averagex_source_sum / (NSOURCES_glob*NGLLX*NGLLZ)
     averagez_source = averagez_source_sum / (NSOURCES_glob*NGLLX*NGLLZ)
   endif
-#endif
+
+
 ! finish the computation of the average position of all sources (not the plane wave incident)
 
 #ifdef USE_MPI

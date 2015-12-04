@@ -200,23 +200,6 @@ subroutine prepare_timerun_mass_matrix()
 
   call invert_mass_matrix()
 
-  ! check the mesh, stability and number of points per wavelength
-  if (DISPLAY_SUBSET_OPTION == 1) then
-    UPPER_LIMIT_DISPLAY = nspec
-  else if (DISPLAY_SUBSET_OPTION == 2) then
-    UPPER_LIMIT_DISPLAY = nspec_inner
-  else if (DISPLAY_SUBSET_OPTION == 3) then
-    UPPER_LIMIT_DISPLAY = nspec_outer
-  else if (DISPLAY_SUBSET_OPTION == 4) then
-    UPPER_LIMIT_DISPLAY = NSPEC_DISPLAY_SUBSET
-  else
-    stop 'incorrect value of DISPLAY_SUBSET_OPTION'
-  endif
-  call check_grid()
-
-  ! convert receiver angle to radians
-  anglerec = anglerec * pi / 180.d0
-
   end subroutine prepare_timerun_mass_matrix
 
 
@@ -723,11 +706,6 @@ subroutine prepare_timerun_mass_matrix()
 
   subroutine prepare_timerun_pml()
 
-
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use specfem_par
 
   implicit none
@@ -740,10 +718,8 @@ subroutine prepare_timerun_mass_matrix()
   if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented on GPU mode. Please use Stacey instead'
 
   ! PML absorbing conditions
-  anyabs_glob = anyabs
-#ifdef USE_MPI
-  call MPI_ALLREDUCE(anyabs, anyabs_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
-#endif
+  ! sets global flag for all slices
+  call any_all_l(anyabs, anyabs_glob)
 
   if (PML_BOUNDARY_CONDITIONS .and. anyabs_glob) then
     ! allocates PML arrays

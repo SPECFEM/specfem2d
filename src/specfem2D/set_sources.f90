@@ -45,6 +45,7 @@
   subroutine set_sources()
 
 ! gets source parameters
+
   use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,TINYVAL,PI
 
   use specfem_par, only : myrank,NSOURCES,source_type,time_function_type, &
@@ -67,13 +68,13 @@
         if (myrank == 0) then
           ! user output
           write(IMAIN,212) x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
-                       factor(i_source),anglesource(i_source)
+                          factor(i_source),anglesource(i_source)
         endif
       else if (source_type(i_source) == 2) then
         if (myrank == 0) then
           ! user output
           write(IMAIN,222) x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
-                       factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
+                           factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
         endif
       else
         call exit_MPI(myrank,'Unknown source type number !')

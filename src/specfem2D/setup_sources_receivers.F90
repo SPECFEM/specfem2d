@@ -44,7 +44,7 @@
 
   subroutine setup_sources_receivers()
 
-  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN
+  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,IIN,MAX_STRING_LEN
 
   use specfem_par, only: NSOURCES,initialfield,source_type, &
                          coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface, &
@@ -62,6 +62,8 @@
   integer :: ispec_acoustic_surface
   integer :: ixmin, ixmax, izmin, izmax,i_source,ispec
   integer :: irec,nrec_tot_found
+  integer :: ier
+  character(len=MAX_STRING_LEN) :: dummystring
 
   ! user output
   if (myrank == 0) then
@@ -141,6 +143,39 @@
     write(IMAIN,*) 'receivers:'
     call flush_IMAIN()
   endif
+
+  ! get number of stations from receiver file
+  open(unit=IIN,file='DATA/STATIONS',status='old',action='read',iostat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error opening DATA/STATIONS file')
+  nrec = 0
+  do while(ier == 0)
+    read(IIN,"(a)",iostat=ier) dummystring
+    if (ier == 0) nrec = nrec + 1
+  enddo
+  close(IIN)
+
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of receivers = ',nrec
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  if (nrec < 1) call exit_MPI(myrank,'need at least one receiver')
+
+  ! receiver information
+  allocate(ispec_selected_rec(nrec), &
+           st_xval(nrec), &
+           st_zval(nrec), &
+           xi_receiver(nrec), &
+           gamma_receiver(nrec), &
+           station_name(nrec), &
+           network_name(nrec), &
+           recloc(nrec), &
+           which_proc_receiver(nrec), &
+           x_final_receiver(nrec), &
+           z_final_receiver(nrec),stat=ier)
+  if (ier /= 0) stop 'Error allocating receiver arrays'
 
   ! locate receivers in the mesh
   call locate_receivers(ibool,coord,nspec,nglob,xigll,zigll, &

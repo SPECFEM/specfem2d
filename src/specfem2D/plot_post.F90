@@ -2114,10 +2114,8 @@
 !
 !--- draw absorbing boundaries with a thick color line
 !
-  anyabs_glob = anyabs
-#ifdef USE_MPI
-  call MPI_ALLREDUCE(anyabs, anyabs_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
-#endif
+  ! sets global flag for all slices
+  call any_all_l(anyabs, anyabs_glob)
 
   if (anyabs_glob .and. boundvect) then
   if (myrank == 0) then
@@ -2309,10 +2307,8 @@
 !
 !----  draw the fluid-solid coupling edges with a thick color line
 !
-  coupled_acoustic_elastic_glob = coupled_acoustic_elastic
-#ifdef USE_MPI
-  call MPI_ALLREDUCE(coupled_acoustic_elastic, coupled_acoustic_elastic_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
-#endif
+  ! sets global flag for all slices
+  call any_all_l(coupled_acoustic_elastic, coupled_acoustic_elastic_glob)
 
   if (coupled_acoustic_elastic_glob .and. boundvect) then
 
@@ -2414,10 +2410,8 @@
 !
 !----  draw the fluid-porous coupling edges with a thick color line
 !
-  coupled_acoustic_poro_glob = coupled_acoustic_poro
-#ifdef USE_MPI
-  call MPI_ALLREDUCE(coupled_acoustic_poro, coupled_acoustic_poro_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
-#endif
+  ! sets global flag for all slices
+  call any_all_l(coupled_acoustic_poro, coupled_acoustic_poro_glob)
 
   if (coupled_acoustic_poro_glob .and. boundvect) then
 
@@ -2519,10 +2513,9 @@
 !
 !----  draw the solid-porous coupling edges with a thick color line
 !
-  coupled_elastic_poro_glob = coupled_elastic_poro
-#ifdef USE_MPI
-  call MPI_ALLREDUCE(coupled_elastic_poro, coupled_elastic_poro_glob, 1, MPI_LOGICAL, MPI_LOR, MPI_COMM_WORLD, ier)
-#endif
+  ! sets global flag for all slices
+  call any_all_l(coupled_elastic_poro, coupled_elastic_poro_glob)
+
 
   if (coupled_elastic_poro_glob .and. boundvect) then
 
