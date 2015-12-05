@@ -42,7 +42,7 @@
 !========================================================================
 
 
-  subroutine prepare_initialfield(cploc,csloc)
+  subroutine prepare_initial_field(cploc,csloc)
 
   use constants,only: IMAIN,PI,SMALLVALTOL
 
@@ -319,13 +319,13 @@
 
 endif
 
-end subroutine prepare_initialfield
+end subroutine prepare_initial_field
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_initialfield_paco()
+  subroutine prepare_initial_field_paco()
 
   use constants,only: IMAIN,IEDGE1,IEDGE2,IEDGE4,NGLLX,NGLLZ,PI
 
@@ -386,5 +386,5 @@ end subroutine prepare_initialfield
     endif
   enddo
 
-  end subroutine prepare_initialfield_paco
+  end subroutine prepare_initial_field_paco
 

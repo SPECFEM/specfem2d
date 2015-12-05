@@ -135,14 +135,15 @@ specfem2D_OBJECTS = \
 	$O/prepare_initial_field.spec.o \
 	$O/prepare_source_time_function.spec.o \
 	$O/prepare_timerun.spec.o \
-	$O/prepare_timerun_body.spec.o \
 	$O/prepare_timerun_gpu.spec.o \
+	$O/prepare_timerun_pml.spec.o \
+	$O/prepare_timerun_wavefields.spec.o \
 	$O/read_mesh_databases.spec.o \
 	$O/read_external_model.spec.o \
 	$O/recompute_jacobian.spec.o \
 	$O/save_adjoint_kernels.spec.o \
 	$O/save_openDX_jacobian.spec.o \
-	$O/set_sources.spec.o \
+	$O/set_source_parameters.spec.o \
 	$O/setup_GLL_points.spec.o \
 	$O/setup_mesh.spec.o \
 	$O/setup_sources_receivers.spec.o \
@@ -175,6 +176,7 @@ specfem2D_SHARED_OBJECTS = \
 	$O/exit_mpi.shared.o \
 	$O/force_ftz.cc.o \
 	$O/parallel.shared.o \
+	$O/set_color_palette.shared.o \
 	$(EMPTY_MACRO)
 
 JPEGLIB_OBJECTS = \
@@ -391,14 +393,15 @@ $O/prepare_color_image.spec.o: $O/specfem2D_par.spec_module.o
 $O/prepare_initial_field.spec.o: $O/specfem2D_par.spec_module.o
 $O/prepare_source_time_function.spec.o: $O/specfem2D_par.spec_module.o
 $O/prepare_timerun.spec.o: $O/specfem2D_par.spec_module.o
-$O/prepare_timerun_body.spec.o: $O/specfem2D_par.spec_module.o
 $O/prepare_timerun_gpu.spec.o: $O/specfem2D_par.spec_module.o
+$O/prepare_timerun_pml.spec.o: $O/specfem2D_par.spec_module.o
+$O/prepare_timerun_wavefields.spec.o: $O/specfem2D_par.spec_module.o
 $O/read_mesh_databases.spec.o: $O/specfem2D_par.spec_module.o
 $O/read_external_model.spec.o: $O/specfem2D_par.spec_module.o
 $O/recompute_jacobian.spec.o: $O/specfem2D_par.spec_module.o
 $O/save_adjoint_kernels.spec.o: $O/specfem2D_par.spec_module.o
 $O/save_read_array_for_undoatt.spec.o: $O/specfem2D_par.spec_module.o
-$O/set_sources.spec.o: $O/specfem2D_par.spec_module.o
+$O/set_source_parameters.spec.o: $O/specfem2D_par.spec_module.o
 $O/setup_GLL_points.spec.o: $O/specfem2D_par.spec_module.o
 $O/setup_mesh.spec.o: $O/specfem2D_par.spec_module.o
 $O/setup_sources_receivers.spec.o: $O/specfem2D_par.spec_module.o

@@ -41,6 +41,7 @@
 !
 !========================================================================
 
+
   subroutine read_external_model()
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL
@@ -60,11 +61,11 @@
   implicit none
 
   ! Local variables
-  integer :: i,j,ispec,iglob
+  integer :: i,j,ispec
   integer :: ier
   real(kind=CUSTOM_REAL) :: previous_vsext
   real(kind=CUSTOM_REAL) :: tmp1, tmp2,tmp3
-  double precision :: rho_dummy,vp_dummy,vs_dummy,mu_dummy,lambda_dummy
+  double precision :: rho_dummy,vp_dummy,vs_dummy,mu_dummy,lambda_dummy,vs_val,vp_val,rho_val
   character(len=150) :: inputname
 
 
@@ -77,8 +78,10 @@
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          iglob = ibool(i,j,ispec)
-          read(1001,*) tmp1,tmp2,tmp3,rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
+          read(1001,*) tmp1,tmp2,tmp3,rho_val,vp_val,vs_val
+          rhoext(i,j,ispec) = rho_val
+          vpext(i,j,ispec) = vp_val
+          vsext(i,j,ispec) = vs_val
           QKappa_attenuationext(i,j,ispec) = 9999.d0
           Qmu_attenuationext(i,j,ispec) = 9999.d0
         enddo
@@ -92,8 +95,10 @@
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          iglob = ibool(i,j,ispec)
-          read(1001,*) tmp1,tmp2,rhoext(i,j,ispec),vpext(i,j,ispec),vsext(i,j,ispec)
+          read(1001,*) tmp1,tmp2,rho_val,vp_val,vs_val
+          rhoext(i,j,ispec) = rho_val
+          vpext(i,j,ispec) = vp_val
+          vsext(i,j,ispec) = vs_val
           QKappa_attenuationext(i,j,ispec) = 9999.d0
           Qmu_attenuationext(i,j,ispec) = 9999.d0
         enddo
@@ -129,8 +134,10 @@
 
 
   else if (trim(MODEL)=='external') then
-    call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
+    call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext, &
+                               QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
+
   else if (trim(MODEL)=='tomo') then
     call define_external_model_from_tomo_file()
   endif
@@ -143,7 +150,7 @@
         do i = 1,NGLLX
 
           if (c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
-             c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
+              c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
             ! vp, vs : assign dummy values, trick to avoid floating point errors in the case of an anisotropic medium
             vpext(i,j,ispec) = 20.d0
             vsext(i,j,ispec) = 10.d0
@@ -151,15 +158,18 @@
 
           ! check that the element type is not redefined compared to what is defined initially in DATA/Par_file
           if ((c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
-              c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) &
+               c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) &
               .and. .not. ispec_is_anisotropic(ispec)) &
-      stop 'error: non anisotropic material in DATA/Par_file or external mesh redefined as anisotropic in define_external_model()'
+            stop 'Error: non anisotropic material in DATA/Par_file or &
+                 &external mesh redefined as anisotropic in define_external_model()'
 
           if (vsext(i,j,ispec) < TINYVAL .and. (ispec_is_elastic(ispec) .or. ispec_is_anisotropic(ispec))) &
-            stop 'error: non acoustic material in DATA/Par_file or external mesh redefined as acoustic in define_external_model()'
+            stop 'Error: non acoustic material in DATA/Par_file or &
+                 &external mesh redefined as acoustic in define_external_model()'
 
           if (vsext(i,j,ispec) > TINYVAL .and. .not. ispec_is_elastic(ispec)) &
-            stop 'error: acoustic material in DATA/Par_file or external mesh redefined as non acoustic in define_external_model()'
+            stop 'Error: acoustic material in DATA/Par_file or &
+                 &external mesh redefined as non acoustic in define_external_model()'
 
         enddo
       enddo
@@ -195,8 +205,6 @@
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        iglob = ibool(i,j,ispec)
-
 
         if (p_sv .and. (.not. (i == 1 .and. j == 1)) .and. &
           ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
@@ -204,7 +212,7 @@
           call exit_MPI(myrank,'external velocity model cannot be both fluid and solid inside the same spectral element')
 
         if (c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
-           c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
+            c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
           ispec_is_anisotropic(ispec) = .true.
           ispec_is_poroelastic(ispec) = .false.
           ispec_is_elastic(ispec) = .true.
@@ -229,17 +237,19 @@
           any_elastic = .true.
         endif
 
-!       attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
+        ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
         if (ispec_is_acoustic(ispec)) cycle
 
-!       check that attenuation values entered by the user make sense
+        ! check that attenuation values entered by the user make sense
         if ((QKappa_attenuationext(i,j,ispec) <= 9998.999d0 .and. Qmu_attenuationext(i,j,ispec) >  9998.999d0) .or. &
-           (QKappa_attenuationext(i,j,ispec) >  9998.999d0 .and. Qmu_attenuationext(i,j,ispec) <= 9998.999d0)) stop &
-     'need to have Qkappa and Qmu both above or both below 9999 for a given material; trick: use 9998 if you want to turn off one'
+            (QKappa_attenuationext(i,j,ispec) >  9998.999d0 .and. Qmu_attenuationext(i,j,ispec) <= 9998.999d0)) &
+          stop 'need to have Qkappa and Qmu both above or both below 9999 for a given material; &
+               &trick: use 9998 if you want to turn off one'
 
-!       if no attenuation in that elastic element
+        ! if no attenuation in that elastic element
         if (QKappa_attenuationext(i,j,ispec) > 9998.999d0) cycle
 
+        ! attenuation
         call attenuation_model(dble(QKappa_attenuationext(i,j,ispec)),dble(Qmu_attenuationext(i,j,ispec)))
 
         inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
@@ -250,8 +260,9 @@
         Mu_nu2(i,j,ispec) = Mu_nu2_sent
 
         if (ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0) then
-          if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) stop &
-             'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
+          if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) &
+            stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, &
+                  &non gravitoacoustic materials for now'
 
           vp_dummy = dble(vpext(i,j,ispec))
           vs_dummy = dble(vpext(i,j,ispec))

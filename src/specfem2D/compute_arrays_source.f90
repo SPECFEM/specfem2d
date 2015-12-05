@@ -140,13 +140,13 @@
 ! ------------------------------------------------------------------------------------------------------
 
 
-  subroutine compute_arrays_adj_source(xi_rec,gamma_rec,irec_local)
+  subroutine compute_arrays_adj_source(xi_rec,gamma_rec,irec_local,adj_source_file,adj_sourcearray)
 
   use constants,only: IIN,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,CUSTOM_REAL
 
   use specfem_par,only: myrank,NSTEP,&
                         AXISYM,is_on_the_axis, &
-                        adj_sourcearray,adj_source_file,source_adjointe, &
+                        source_adjointe, &
                         xigll,zigll,hxir,hpxir,hgammar,hpgammar,xiglj, &
                         ispec_selected_rec,seismotype
 
@@ -154,6 +154,10 @@
 
   double precision,intent(in) :: xi_rec, gamma_rec
   integer,intent(in) :: irec_local
+
+  character(len=MAX_STRING_LEN),intent(in) :: adj_source_file
+
+  real(kind=CUSTOM_REAL),dimension(NSTEP,3,NGLLX,NGLLZ),intent(out) :: adj_sourcearray
 
   ! local parameters
   integer :: icomp, itime, i, k

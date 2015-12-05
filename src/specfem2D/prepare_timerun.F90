@@ -41,8 +41,140 @@
 !========================================================================
 
 
-subroutine prepare_timerun_mass_matrix()
+  subroutine prepare_timerun()
 
+  use specfem_par
+  use specfem_par_movie
+  use specfem_par_noise,only: NOISE_TOMOGRAPHY
+
+  implicit none
+
+  ! Test compatibility with axisymmetric formulation
+  if (AXISYM) call check_compatibility_axisym()
+
+  ! prepares constant factors for time scheme and seismograms
+  call prepare_timerun_constants()
+
+  ! wavefield array initialization
+  call prepare_timerun_wavefields()
+
+  ! PML preparation
+  call prepare_timerun_PML()
+
+  ! prepares mass matrices
+  call prepare_timerun_mass_matrix()
+
+  ! postscript images for grids and snapshots
+  call prepare_timerun_postscripts()
+
+  ! jpeg images
+  call prepare_timerun_image_coloring()
+
+  ! for adjoint kernel runs
+  call prepare_timerun_adjoint()
+
+  ! reads initial fields from external file if needed
+  call prepare_timerun_initialfield
+
+  ! compute the source time function and stores it in a text file
+  call prepare_timerun_stf()
+
+  ! prepares noise simulations
+  if (NOISE_TOMOGRAPHY /= 0) call prepare_timerun_noise()
+
+  ! attenuation
+  call prepare_timerun_attenuation()
+
+  ! prepares GPU arrays
+  if (GPU_MODE) call prepare_timerun_GPU()
+
+  !-------------------------------------------------------------
+
+  ! creates a Gnuplot script to display the energy curve in log scale
+  if (output_energy .and. myrank == 0) then
+    close(IOUT_ENERGY)
+    open(unit=IOUT_ENERGY,file='OUTPUT_FILES/plot_energy.gnu',status='unknown',action='write')
+    write(IOUT_ENERGY,*) 'set term wxt'
+    write(IOUT_ENERGY,*) '#set term postscript landscape color solid "Helvetica" 22'
+    write(IOUT_ENERGY,*) '#set output "energy.ps"'
+    write(IOUT_ENERGY,*) '# set xrange [0:60]'
+    write(IOUT_ENERGY,*) 'set logscale y'
+    write(IOUT_ENERGY,*) 'set xlabel "Time (s)"'
+    write(IOUT_ENERGY,*) 'set ylabel "Energy (J)"'
+    write(IOUT_ENERGY,*) 'set loadpath "./OUTPUT_FILES"'
+    write(IOUT_ENERGY,'(A)') &
+      'plot "energy.dat" us 1:4 t ''Total Energy'' w l lc 1, "energy.dat" us 1:3 t ''Potential Energy'' w l lc 2'
+    write(IOUT_ENERGY,*) 'pause -1 "Hit any key..."'
+    close(IOUT_ENERGY)
+  endif
+
+  ! open the file in which we will store the energy curve
+  if (output_energy .and. myrank == 0) open(unit=IOUT_ENERGY,file='OUTPUT_FILES/energy.dat',status='unknown',action='write')
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) ""
+    write(IMAIN,*) "done, preparation successful"
+    write(IMAIN,*) ""
+    call flush_IMAIN()
+  endif
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine prepare_timerun
+
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+
+  subroutine prepare_timerun_constants()
+
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: ier
+
+  ! defines coefficients of the Newmark time scheme
+  deltatover2 = HALF*deltat
+  deltatsquareover2 = HALF*deltat*deltat
+
+  !  define coefficients of the Newmark time scheme for the backward wavefield
+  !  SIMULATION_TYPE == 3
+  b_deltat = - deltat
+  b_deltatover2 = HALF*b_deltat
+  b_deltatsquareover2 = HALF*b_deltat*b_deltat
+
+  ! seismograms
+  ! allocate seismogram arrays
+  allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
+           sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
+           siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),stat=ier)
+  if (ier /= 0) stop 'Error allocating seismogram arrays'
+
+  sisux = ZERO ! double precision zero
+  sisuz = ZERO
+  siscurl = ZERO
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine prepare_timerun_constants
+
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+
+  subroutine prepare_timerun_mass_matrix()
 
 #ifdef USE_MPI
   use mpi
@@ -53,14 +185,14 @@ subroutine prepare_timerun_mass_matrix()
   implicit none
 
   ! local parameters
-  integer ispec
+  integer :: ispec
   ! inner/outer elements in the case of an MPI simulation
   integer :: ispec_inner,ispec_outer
   integer, dimension(:,:,:), allocatable :: ibool_outer,ibool_inner
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  building mass matrices'
+    write(IMAIN,*) 'Preparing mass matrices'
     call flush_IMAIN()
   endif
 
@@ -117,8 +249,8 @@ subroutine prepare_timerun_mass_matrix()
 
     ! assembling the mass matrix
     call assemble_MPI_scalar(rmass_inverse_acoustic,nglob_acoustic, &
-                            rmass_inverse_elastic_one,rmass_inverse_elastic_three,nglob_elastic, &
-                            rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic,nglob_poroelastic)
+                             rmass_inverse_elastic_one,rmass_inverse_elastic_three,nglob_elastic, &
+                             rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic,nglob_poroelastic)
 
   else
     ninterface_acoustic = 0
@@ -200,7 +332,85 @@ subroutine prepare_timerun_mass_matrix()
 
   call invert_mass_matrix()
 
+  ! synchronizes all processes
+  call synchronize_all()
+
   end subroutine prepare_timerun_mass_matrix
+
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_postscripts()
+
+  use specfem_par
+  use specfem_par_movie
+
+  implicit none
+
+  ! local parameters
+  integer :: i,j,ier
+
+  ! for Lagrange interpolants
+  double precision, external :: hgll, hglj
+
+  ! arrays for display images
+  allocate(shape2D_display(ngnod,pointsdisp,pointsdisp), &
+           dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp),stat=ier)
+  if (ier /= 0) stop 'Error allocating shape arrays for display'
+
+  ! computes shape functions and their derivatives for regular interpolated display grid
+  do j = 1,pointsdisp
+    do i = 1,pointsdisp
+      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
+      gammarec  = 2.d0*dble(j-1)/dble(pointsdisp-1) - 1.d0
+      call define_shape_functions(shape2D_display(:,i,j),dershape2D_display(:,:,i,j),xirec,gammarec,ngnod)
+    enddo
+  enddo
+
+  ! for postscript snapshots
+  ! arrays for display images as snapshot postscript images
+  allocate(flagrange(NGLLX,pointsdisp))
+  if (AXISYM) then
+    allocate(flagrange_GLJ(NGLJ,pointsdisp))
+  else
+    allocate(flagrange_GLJ(1,1))
+  endif
+
+  ! compute Lagrange interpolants on a regular interpolated grid in (xi,gamma)
+  ! for display (assumes NGLLX = NGLLZ)
+  do j = 1,NGLLX
+    do i = 1,pointsdisp
+      xirec  = 2.d0*dble(i-1)/dble(pointsdisp-1) - 1.d0
+      flagrange(j,i) = hgll(j-1,xirec,xigll,NGLLX)
+      if (AXISYM) flagrange_GLJ(j,i) = hglj(j-1,xirec,xiglj,NGLJ)
+    enddo
+  enddo
+
+  allocate(xinterp(pointsdisp,pointsdisp))
+  allocate(zinterp(pointsdisp,pointsdisp))
+  allocate(Uxinterp(pointsdisp,pointsdisp))
+  allocate(Uzinterp(pointsdisp,pointsdisp))
+
+! to display the whole vector field (it needs to be computed from the potential in acoustic elements,
+! thus it does not exist as a whole it case of simulations that contain some acoustic elements
+! and it thus needs to be computed specifically for display purposes)
+  allocate(vector_field_display(3,nglob))
+
+! when periodic boundary conditions are on, some global degrees of freedom are going to be removed,
+! thus we need to set this array to zero otherwise some of its locations may contain random values
+! if the memory is not cleaned
+  vector_field_display(:,:) = 0.d0
+
+
+  ! check the mesh, stability and number of points per wavelength
+  call check_grid()
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine prepare_timerun_postscripts
 
 
 !
@@ -242,6 +452,15 @@ subroutine prepare_timerun_mass_matrix()
 
   integer :: d1_coorg_send_ps_vector_field, d2_coorg_send_ps_vector_field, &
              d1_coorg_recv_ps_vector_field, d2_coorg_recv_ps_vector_field
+
+  ! checks if anything to do
+  if (.not. (output_color_image .or. output_postscript_snapshot)) return
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Preparing image coloring'
+    call flush_IMAIN()
+  endif
 
   ! for color images
   if (output_color_image) then
@@ -329,7 +548,13 @@ subroutine prepare_timerun_mass_matrix()
       call flush_IMAIN()
     endif
 
-  endif ! color_image
+    ! prepares image background
+    call prepare_color_image_vp()
+
+  endif ! output_color_image
+
+  ! synchronizes all processes
+  call synchronize_all()
 
   ! postscript output
   if (output_postscript_snapshot) then
@@ -479,13 +704,97 @@ subroutine prepare_timerun_mass_matrix()
 
   end subroutine prepare_timerun_image_coloring
 
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_adjoint()
+
+! prepares adjoint runs
+
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: reclen,ier
+  character(len=MAX_STRING_LEN) :: outputname,outputname2
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Preparing adjoint'
+    call flush_IMAIN()
+  endif
+
+  ! prepares kernels
+  if (SIMULATION_TYPE == 3) call prepare_timerun_kernels()
+
+  ! Absorbing boundaries
+  ! Reads last frame for forward wavefield reconstruction
+  if (((SAVE_FORWARD .and. SIMULATION_TYPE == 1) .or. SIMULATION_TYPE == 3) .and. anyabs &
+      .and. (.not. PML_BOUNDARY_CONDITIONS)) then
+    ! opens files for absorbing boundary data
+    call prepare_absorb_files()
+  endif
+
+  if (anyabs .and. SIMULATION_TYPE == 3 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
+    ! reads in absorbing boundary data
+    if (any_elastic) call prepare_absorb_elastic()
+
+    if (any_poroelastic) call prepare_absorb_poroelastic()
+
+    if (any_acoustic) call prepare_absorb_acoustic()
+  endif ! if (anyabs .and. SIMULATION_TYPE == 3)
+
+  ! Files where viscous damping are saved during forward wavefield calculation
+  if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
+    allocate(b_viscodampx(nglob))
+    allocate(b_viscodampz(nglob))
+    write(outputname,'(a,i6.6,a)') 'viscodampingx',myrank,'.bin'
+    write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
+    ! array size
+    reclen = CUSTOM_REAL * nglob
+    ! file i/o
+    if (SIMULATION_TYPE == 3) then
+      open(unit=23,file='OUTPUT_FILES/'//outputname,status='old',&
+            action='read',form='unformatted',access='direct',&
+            recl=reclen,iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+
+      open(unit=24,file='OUTPUT_FILES/'//outputname2,status='old',&
+            action='read',form='unformatted',access='direct',&
+            recl=reclen,iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+
+    else
+      open(unit=23,file='OUTPUT_FILES/'//outputname,status='unknown',&
+            form='unformatted',access='direct',&
+            recl=reclen,iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+
+      open(unit=24,file='OUTPUT_FILES/'//outputname2,status='unknown',&
+            form='unformatted',access='direct',&
+            recl=reclen,iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+    endif
+  else
+    ! dummy
+    allocate(b_viscodampx(1))
+    allocate(b_viscodampz(1))
+  endif
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine prepare_timerun_adjoint
+
 
 !
 !-------------------------------------------------------------------------------------
 !
 
 
-  subroutine prepare_timerun_kernel()
+  subroutine prepare_timerun_kernels()
 
 
 #ifdef USE_MPI
@@ -503,9 +812,13 @@ subroutine prepare_timerun_mass_matrix()
   ! checks if anything to do
   if (SIMULATION_TYPE /= 3) return
 
-!
-!----- Allocate sensitivity kernel arrays
-!
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  initializing adjoint sensitivity kernels'
+    call flush_IMAIN()
+  endif
+
+  ! Allocates sensitivity kernel arrays
 
   ! elastic domains
   if (any_elastic) then
@@ -696,394 +1009,96 @@ subroutine prepare_timerun_mass_matrix()
   endif
 
 
-  end subroutine prepare_timerun_kernel
-
+  end subroutine prepare_timerun_kernels
 
 !
 !-------------------------------------------------------------------------------------
 !
 
+  subroutine prepare_timerun_initialfield()
 
-  subroutine prepare_timerun_pml()
+! reads initial fields from external file if needed
 
   use specfem_par
 
   implicit none
 
   ! local parameters
-  integer :: i,ier
-  character(len=MAX_STRING_LEN) :: outputname
+  double precision :: cploc,csloc
 
-  ! safety check
-  if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented on GPU mode. Please use Stacey instead'
+  ! if we are looking a plane wave beyond critical angle we use other method
+  over_critical_angle = .false.
 
-  ! PML absorbing conditions
-  ! sets global flag for all slices
-  call any_all_l(anyabs, anyabs_glob)
+  ! checks if anything to do
+  if (.not. initialfield) return
 
-  if (PML_BOUNDARY_CONDITIONS .and. anyabs_glob) then
-    ! allocates PML arrays
-    allocate(spec_to_PML(nspec),stat=ier)
-    if (ier /= 0) stop 'error: not enough memory to allocate array spec_to_PML'
-
-    allocate(which_PML_elem(4,nspec),stat=ier)
-    if (ier /= 0) stop 'error: not enough memory to allocate array which_PML_elem'
-    which_PML_elem(:,:) = .false.
-
-    if (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) then
-      allocate(PML_interior_interface(4,nspec),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array PML_interior_interface'
-      PML_interior_interface = .false.
-    else
-      allocate(PML_interior_interface(4,1))
-    endif
-
-    ! add support for using PML in MPI mode with external mesh
-    if (read_external_mesh) then
-      allocate(mask_ibool_pml(nglob))
-    else
-      allocate(mask_ibool_pml(1))
-    endif
-
-    call pml_init()
-
-    if ((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS) then
-
-      if (nglob_interface > 0) then
-        allocate(point_interface(nglob_interface),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array point_interface'
-      endif
-
-      if (any_elastic .and. nglob_interface > 0) then
-        allocate(pml_interface_history_displ(3,nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_displ'
-        allocate(pml_interface_history_veloc(3,nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_veloc'
-        allocate(pml_interface_history_accel(3,nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_accel'
-      endif
-
-      if (any_acoustic .and. nglob_interface > 0) then
-        allocate(pml_interface_history_potential(nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential'
-        allocate(pml_interface_history_potential_dot(nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot'
-        allocate(pml_interface_history_potential_dot_dot(nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot_dot'
-      endif
-
-      if (nglob_interface > 0) then
-        call determin_interface_pml_interior()
-        deallocate(PML_interior_interface)
-        deallocate(mask_ibool_pml)
-      endif
-
-      if (any_elastic .and. nglob_interface > 0) then
-        write(outputname,'(a,i6.6,a)') 'pml_interface_elastic',myrank,'.bin'
-        open(unit=71,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
-      endif
-
-      if (any_acoustic .and. nglob_interface > 0) then
-        write(outputname,'(a,i6.6,a)') 'pml_interface_acoustic',myrank,'.bin'
-        open(unit=72,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
-      endif
-    else
-      allocate(point_interface(1))
-      allocate(pml_interface_history_displ(3,1,1))
-      allocate(pml_interface_history_veloc(3,1,1))
-      allocate(pml_interface_history_accel(3,1,1))
-      allocate(pml_interface_history_potential(1,1))
-      allocate(pml_interface_history_potential_dot(1,1))
-      allocate(pml_interface_history_potential_dot_dot(1,1))
-    endif
-
-    if (SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS) then
-
-      if (any_elastic .and. nglob_interface > 0) then
-        do it = 1,NSTEP
-          do i = 1, nglob_interface
-            read(71)pml_interface_history_accel(1,i,it),pml_interface_history_accel(2,i,it),&
-                    pml_interface_history_accel(3,i,it),&
-                    pml_interface_history_veloc(1,i,it),pml_interface_history_veloc(2,i,it),&
-                    pml_interface_history_veloc(3,i,it),&
-                    pml_interface_history_displ(1,i,it),pml_interface_history_displ(2,i,it),&
-                    pml_interface_history_displ(3,i,it)
-          enddo
-        enddo
-        close(71)
-      endif
-
-      if (any_acoustic .and. nglob_interface > 0) then
-        do it = 1,NSTEP
-          do i = 1, nglob_interface
-            read(72)pml_interface_history_potential_dot_dot(i,it),pml_interface_history_potential_dot(i,it),&
-                    pml_interface_history_potential(i,it)
-          enddo
-        enddo
-        close(72)
-      endif
-    endif
-
-    deallocate(which_PML_elem)
-
-    if (nspec_PML==0) nspec_PML=1 ! DK DK added this
-
-    if (nspec_PML > 0) then
-      allocate(K_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
-      allocate(K_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
-      allocate(d_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
-      allocate(d_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
-      allocate(alpha_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
-      allocate(alpha_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
-      K_x_store(:,:,:) = ZERO
-      K_z_store(:,:,:) = ZERO
-      d_x_store(:,:,:) = ZERO
-      d_z_store(:,:,:) = ZERO
-      alpha_x_store(:,:,:) = ZERO
-      alpha_z_store(:,:,:) = ZERO
-      call define_PML_coefficients()
-    else
-      allocate(K_x_store(NGLLX,NGLLZ,1),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
-      allocate(K_z_store(NGLLX,NGLLZ,1),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
-      allocate(d_x_store(NGLLX,NGLLZ,1),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
-      allocate(d_z_store(NGLLX,NGLLZ,1),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
-      allocate(alpha_x_store(NGLLX,NGLLZ,1),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
-      allocate(alpha_z_store(NGLLX,NGLLZ,1),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
-      K_x_store(:,:,:) = ZERO
-      K_z_store(:,:,:) = ZERO
-      d_x_store(:,:,:) = ZERO
-      d_z_store(:,:,:) = ZERO
-      alpha_x_store(:,:,:) = ZERO
-      alpha_z_store(:,:,:) = ZERO
-    endif
-
-    ! elastic PML memory variables
-    if (any_elastic .and. nspec_PML > 0) then
-      allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
-      allocate(rmemory_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
-      allocate(rmemory_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
-      allocate(rmemory_duz_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
-      allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
-      if (any_acoustic .and. num_fluid_solid_edges > 0) then
-        allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
-        allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
-      endif
-
-      if (ROTATE_PML_ACTIVATE) then
-        allocate(rmemory_dux_dx_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
-        allocate(rmemory_dux_dz_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
-        allocate(rmemory_duz_dx_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
-        allocate(rmemory_duz_dz_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
-      else
-        allocate(rmemory_dux_dx_prime(1,1,1,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
-        allocate(rmemory_dux_dz_prime(1,1,1,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
-        allocate(rmemory_duz_dx_prime(1,1,1,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
-        allocate(rmemory_duz_dz_prime(1,1,1,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
-      endif
-
-      if (time_stepping_scheme == 2) then
-        allocate(rmemory_displ_elastic_LDDRK(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
-        allocate(rmemory_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
-        allocate(rmemory_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
-        allocate(rmemory_duz_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
-        allocate(rmemory_duz_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
-        if (any_acoustic .and. num_fluid_solid_edges > 0) then
-          allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
-          allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
-        endif
-      else
-        allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1),stat=ier)
-        allocate(rmemory_dux_dx_LDDRK(1,1,1,2),stat=ier)
-        allocate(rmemory_dux_dz_LDDRK(1,1,1,2),stat=ier)
-        allocate(rmemory_duz_dx_LDDRK(1,1,1,2),stat=ier)
-        allocate(rmemory_duz_dz_LDDRK(1,1,1,2),stat=ier)
-        if (any_acoustic .and. num_fluid_solid_edges > 0) then
-          allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
-          allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
-        endif
-      endif
-
-      rmemory_displ_elastic(:,:,:,:,:) = ZERO
-      rmemory_dux_dx(:,:,:,:) = ZERO
-      rmemory_dux_dz(:,:,:,:) = ZERO
-      rmemory_duz_dx(:,:,:,:) = ZERO
-      rmemory_duz_dz(:,:,:,:) = ZERO
-
-      if (any_acoustic .and. num_fluid_solid_edges > 0) then
-        rmemory_fsb_displ_elastic(:,:,:,:,:) = ZERO
-        rmemory_sfb_potential_ddot_acoustic(:,:,:,:) = ZERO
-      endif
-
-      if (ROTATE_PML_ACTIVATE) then
-        rmemory_dux_dx_prime(:,:,:,:) = ZERO
-        rmemory_dux_dz_prime(:,:,:,:) = ZERO
-        rmemory_duz_dx_prime(:,:,:,:) = ZERO
-        rmemory_duz_dz_prime(:,:,:,:) = ZERO
-      endif
-
-      if (time_stepping_scheme == 2) then
-        rmemory_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
-        rmemory_dux_dx_LDDRK(:,:,:,:) = ZERO
-        rmemory_dux_dz_LDDRK(:,:,:,:) = ZERO
-        rmemory_duz_dx_LDDRK(:,:,:,:) = ZERO
-        rmemory_duz_dz_LDDRK(:,:,:,:) = ZERO
-        if (any_acoustic .and. num_fluid_solid_edges > 0) then
-          rmemory_fsb_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
-          rmemory_sfb_potential_ddot_acoustic_LDDRK(:,:,:,:) = ZERO
-        endif
-      endif
-
-    else
-
-      allocate(rmemory_displ_elastic(1,1,1,1,1))
-      allocate(rmemory_dux_dx(1,1,1,1))
-      allocate(rmemory_dux_dz(1,1,1,1))
-      allocate(rmemory_duz_dx(1,1,1,1))
-      allocate(rmemory_duz_dz(1,1,1,1))
-      if (any_acoustic .and. num_fluid_solid_edges > 0) then
-        allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
-        allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
-        allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
-        allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
-      endif
-
-      allocate(rmemory_dux_dx_prime(1,1,1,1))
-      allocate(rmemory_dux_dz_prime(1,1,1,1))
-      allocate(rmemory_duz_dx_prime(1,1,1,1))
-      allocate(rmemory_duz_dz_prime(1,1,1,1))
-
-      allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
-      allocate(rmemory_dux_dx_LDDRK(1,1,1,1))
-      allocate(rmemory_dux_dz_LDDRK(1,1,1,1))
-      allocate(rmemory_duz_dx_LDDRK(1,1,1,1))
-      allocate(rmemory_duz_dz_LDDRK(1,1,1,1))
-    endif
-
-    if (any_acoustic .and. nspec_PML > 0) then
-      allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
-      allocate(rmemory_acoustic_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
-      allocate(rmemory_acoustic_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
-
-      rmemory_potential_acoustic = ZERO
-      rmemory_acoustic_dux_dx = ZERO
-      rmemory_acoustic_dux_dz = ZERO
-
-      if (time_stepping_scheme == 2) then
-        allocate(rmemory_potential_acoustic_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
-        allocate(rmemory_acoustic_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
-        allocate(rmemory_acoustic_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
-      else
-        allocate(rmemory_potential_acoustic_LDDRK(1,1,1,1),stat=ier)
-        allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1),stat=ier)
-        allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1),stat=ier)
-      endif
-
-      rmemory_potential_acoustic_LDDRK = ZERO
-      rmemory_acoustic_dux_dx_LDDRK = ZERO
-      rmemory_acoustic_dux_dz_LDDRK = ZERO
-
-    else
-      allocate(rmemory_potential_acoustic(1,1,1,1))
-      allocate(rmemory_acoustic_dux_dx(1,1,1,1))
-      allocate(rmemory_acoustic_dux_dz(1,1,1,1))
-    endif
-
-  else
-    allocate(rmemory_dux_dx(1,1,1,1))
-    allocate(rmemory_dux_dz(1,1,1,1))
-    allocate(rmemory_duz_dx(1,1,1,1))
-    allocate(rmemory_duz_dz(1,1,1,1))
-    allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
-    allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
-    allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
-    allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
-
-    allocate(rmemory_dux_dx_prime(1,1,1,1))
-    allocate(rmemory_dux_dz_prime(1,1,1,1))
-    allocate(rmemory_duz_dx_prime(1,1,1,1))
-    allocate(rmemory_duz_dz_prime(1,1,1,1))
-
-    allocate(rmemory_displ_elastic(1,1,1,1,1))
-
-    allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1))
-    allocate(rmemory_dux_dx_LDDRK(1,1,1,1))
-    allocate(rmemory_dux_dz_LDDRK(1,1,1,1))
-    allocate(rmemory_duz_dx_LDDRK(1,1,1,1))
-    allocate(rmemory_duz_dz_LDDRK(1,1,1,1))
-
-    allocate(rmemory_potential_acoustic(1,1,1,1))
-    allocate(rmemory_acoustic_dux_dx(1,1,1,1))
-    allocate(rmemory_acoustic_dux_dz(1,1,1,1))
-
-    allocate(rmemory_potential_acoustic_LDDRK(1,1,1,1))
-    allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1))
-    allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1))
-
-    allocate(spec_to_PML(1))
-
-    allocate(K_x_store(1,1,1))
-    allocate(K_z_store(1,1,1))
-    allocate(d_x_store(1,1,1))
-    allocate(d_z_store(1,1,1))
-    allocate(alpha_x_store(1,1,1))
-    allocate(alpha_z_store(1,1,1))
-  endif ! PML_BOUNDARY_CONDITIONS
-
-  ! avoid a potential side effect owing to the "if" statements above: this array may be unallocated,
-  ! if so we need to allocate a dummy version in order to be able to use that array as an argument
-  ! in some subroutine calls below
-  if (.not. allocated(rmemory_fsb_displ_elastic)) allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
-  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic)) allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
-  if (.not. allocated(rmemory_fsb_displ_elastic_LDDRK)) then
-    allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
-  endif
-  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic_LDDRK)) then
-    allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Preparing initial field for plane wave source'
+    call flush_IMAIN()
   endif
 
-  end subroutine prepare_timerun_pml
+  ! safety checks
+  if (.not. any_elastic) &
+    stop 'Sorry, initial field (plane wave source) only implemented for elastic simulations so far...'
+  if (any_acoustic .or. any_poroelastic) &
+    stop 'Initial field currently implemented for purely elastic simulation only'
+
+  ! Calculation of the initial field for a plane wave
+  if (any_elastic) then
+    call prepare_initial_field(cploc,csloc)
+
+    if (over_critical_angle) then
+
+      allocate(left_bound(nelemabs*NGLLX))
+      allocate(right_bound(nelemabs*NGLLX))
+      allocate(bot_bound(nelemabs*NGLLZ))
+
+      call prepare_initial_field_paco()
+
+      allocate(v0x_left(count_left,NSTEP))
+      allocate(v0z_left(count_left,NSTEP))
+      allocate(t0x_left(count_left,NSTEP))
+      allocate(t0z_left(count_left,NSTEP))
+
+      allocate(v0x_right(count_right,NSTEP))
+      allocate(v0z_right(count_right,NSTEP))
+      allocate(t0x_right(count_right,NSTEP))
+      allocate(t0z_right(count_right,NSTEP))
+
+      allocate(v0x_bot(count_bottom,NSTEP))
+      allocate(v0z_bot(count_bottom,NSTEP))
+      allocate(t0x_bot(count_bottom,NSTEP))
+      allocate(t0z_bot(count_bottom,NSTEP))
+
+      ! call Paco's routine to compute in frequency and convert to time by Fourier transform
+      call paco_beyond_critical(anglesource(1),&
+                                f0_source(1),QKappa_attenuation(1),source_type(1),left_bound(1:count_left),&
+                                right_bound(1:count_right),bot_bound(1:count_bottom), &
+                                count_left,count_right,count_bottom,x_source(1),cploc,csloc)
+
+      deallocate(left_bound)
+      deallocate(right_bound)
+      deallocate(bot_bound)
+
+      if (myrank == 0) then
+        write(IMAIN,*)  '***********'
+        write(IMAIN,*)  'done calculating the initial wave field'
+        write(IMAIN,*)  '***********'
+        call flush_IMAIN()
+      endif
+
+    endif ! beyond critical angle
+
+    if (myrank == 0) then
+      write(IMAIN,*) 'Max norm of initial elastic displacement = ', &
+                      maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(3,:)**2))
+      call flush_IMAIN()
+    endif
+
+  endif
+
+  end subroutine prepare_timerun_initialfield
 
 
 !
@@ -1091,7 +1106,45 @@ subroutine prepare_timerun_mass_matrix()
 !
 
 
+  subroutine prepare_timerun_stf()
+
+  use specfem_par
+
+  implicit none
+
+  if (.not. initialfield) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'Preparing source time function'
+      call flush_IMAIN()
+    endif
+
+    allocate(source_time_function(NSOURCES,NSTEP,stage_time_scheme))
+    source_time_function(:,:,:) = 0._CUSTOM_REAL
+
+    ! computes source time function array
+    call prepare_source_time_function()
+
+  else
+    ! uses an initialfield
+    ! dummy allocation
+    allocate(source_time_function(1,1,1))
+  endif
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine prepare_timerun_stf
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+
+
   subroutine prepare_timerun_noise()
+
+! for noise simulations
 
 #ifdef USE_MPI
   use mpi
@@ -1109,10 +1162,9 @@ subroutine prepare_timerun_mass_matrix()
   ! checks if anything to do
   if (NOISE_TOMOGRAPHY <= 0) return
 
-  ! noise simulations
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  allocating noise arrays'
+    write(IMAIN,*) 'Preparing noise arrays'
     call flush_IMAIN()
   endif
 
@@ -1124,6 +1176,12 @@ subroutine prepare_timerun_mass_matrix()
            surface_movie_y_noise(nglob), &
            surface_movie_z_noise(nglob),stat=ier)
   if (ier /= 0) stop 'Error allocating noise arrays'
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  reading noise parameters'
+    call flush_IMAIN()
+  endif
 
   !read in parameters for noise tomography
   call read_parameters_noise()
@@ -1203,6 +1261,9 @@ subroutine prepare_timerun_mass_matrix()
 
   endif
 
+  ! synchronizes all processes
+  call synchronize_all()
+
   end subroutine prepare_timerun_noise
 
 
@@ -1226,6 +1287,13 @@ subroutine prepare_timerun_mass_matrix()
   integer :: i,j,ispec,n,ier
   ! for shifting of velocities if needed in the case of viscoelasticity
   double precision :: vp,vs,rho,mu,lambda
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Preparing attenuation'
+    call flush_IMAIN()
+  endif
 
   ! allocate memory variables for attenuation
   allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS), &
@@ -1389,6 +1457,52 @@ subroutine prepare_timerun_mass_matrix()
     endif
   endif
 
+
+  ! sets new material properties
+  ! note: velocities might have been shifted by attenuation
+
+  ! allocates material arrays
+  allocate(kappastore(NGLLX,NGLLZ,nspec))
+  allocate(mustore(NGLLX,NGLLZ,nspec))
+  allocate(rhostore(NGLLX,NGLLZ,nspec))
+  allocate(rho_vp(NGLLX,NGLLZ,nspec))
+  allocate(rho_vs(NGLLX,NGLLZ,nspec))
+
+  if (assign_external_model) then
+    ! external model
+    do ispec= 1,nspec
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          rhostore(i,j,ispec)    = rhoext(i,j,ispec)
+          rho_vp(i,j,ispec)      = rhostore(i,j,ispec) * vpext(i,j,ispec)
+          rho_vs(i,j,ispec)      = rhostore(i,j,ispec) * vsext(i,j,ispec)
+          mustore(i,j,ispec)     = rho_vs(i,j,ispec) * vsext(i,j,ispec)
+          kappastore(i,j,ispec)  = rho_vp(i,j,ispec) * vpext(i,j,ispec)-TWO*TWO*mustore(i,j,ispec)/3._CUSTOM_REAL
+        enddo
+      enddo
+    enddo
+  else
+    ! Internal rho vp vs model
+    do ispec= 1,nspec
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          rhostore(i,j,ispec)       = density(1,kmato(ispec))
+          lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+          mul_unrelaxed_elastic     = poroelastcoef(2,1,kmato(ispec))
+
+          mustore(i,j,ispec)        = mul_unrelaxed_elastic
+          kappastore(i,j,ispec)     = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
+          rho_vp(i,j,ispec)         = density(1,kmato(ispec)) * sqrt((kappastore(i,j,ispec) + &
+                                      4._CUSTOM_REAL*mul_unrelaxed_elastic/ &
+                                      3._CUSTOM_REAL)/density(1,kmato(ispec)))
+          rho_vs(i,j,ispec)         = density(1,kmato(ispec)) * sqrt(mul_unrelaxed_elastic/density(1,kmato(ispec)))
+        enddo
+      enddo
+    enddo
+  endif ! Internal/External model
+
+  ! synchronizes all processes
+  call synchronize_all()
 
   end subroutine prepare_timerun_attenuation
 

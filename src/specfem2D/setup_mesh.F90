@@ -45,6 +45,8 @@
 
 ! creates mesh related properties, local to global mesh numbering and node locations
 
+  use specfem_par
+
   implicit none
 
   ! generate the global numbering
@@ -55,6 +57,49 @@
 
   ! sets material properties on node points
   call setup_mesh_properties()
+
+  ! for periodic edges
+  call setup_mesh_periodic_edges()
+
+  ! for acoustic forcing
+  call setup_mesh_acoustic_forcing_edges()
+
+  ! reads in external models and re-assigns material properties
+  call setup_mesh_external_models()
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! performs basic checks on parameters read
+  all_anisotropic = .false.
+  if (count(ispec_is_anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
+
+  if (all_anisotropic .and. anyabs) &
+    call exit_MPI(myrank,'Cannot put absorbing boundaries if anisotropic materials along edges')
+
+  if (ATTENUATION_VISCOELASTIC_SOLID .and. all_anisotropic) then
+    call exit_MPI(myrank,'Cannot turn attenuation on in anisotropic materials')
+  endif
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! global domain flags
+  ! (sets global flag for all slices)
+  call any_all_l(any_elastic, ELASTIC_SIMULATION)
+  call any_all_l(any_poroelastic, POROELASTIC_SIMULATION)
+  call any_all_l(any_acoustic, ACOUSTIC_SIMULATION)
+  call any_all_l(any_gravitoacoustic, GRAVITOACOUSTIC_SIMULATION)
+
+  ! check for acoustic
+  if (ATTENUATION_VISCOELASTIC_SOLID .and. .not. ELASTIC_SIMULATION) &
+    call exit_MPI(myrank,'currently cannot have attenuation if acoustic/poroelastic simulation only')
+
+  ! sets up domain coupling, i.e. edge detection for domain coupling
+  call get_coupling_edges()
+
+  ! synchronizes all processes
+  call synchronize_all()
 
   end subroutine setup_mesh
 
@@ -321,4 +366,239 @@
   call synchronize_all()
 
   end subroutine setup_mesh_properties
+
+!
+!-----------------------------------------------------------------------------------
+!
+
+  subroutine setup_mesh_periodic_edges()
+
+  use constants,only: IMAIN,NGLLX,NGLLZ,HUGEVAL
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: ispec,i,j,iglob,iglob2,ier
+  double precision :: xmaxval,xminval,ymaxval,yminval,xtol,xtypdist
+  integer :: counter
+
+! allocate an array to make sure that an acoustic free surface is not enforced on periodic edges
+  allocate(this_ibool_is_a_periodic_edge(NGLOB),stat=ier)
+  if (ier /= 0) stop 'Error allocating periodic edge array'
+
+  this_ibool_is_a_periodic_edge(:) = .false.
+
+! periodic conditions: detect common points between left and right edges and replace one of them with the other
+  if (ADD_PERIODIC_CONDITIONS) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'implementing periodic boundary conditions'
+      write(IMAIN,*) 'in the horizontal direction with a periodicity distance of ',PERIODIC_HORIZ_DIST,' m'
+      if (PERIODIC_HORIZ_DIST <= 0.d0) stop 'PERIODIC_HORIZ_DIST should be greater than zero when using ADD_PERIODIC_CONDITIONS'
+      write(IMAIN,*)
+      write(IMAIN,*) '*****************************************************************'
+      write(IMAIN,*) '*****************************************************************'
+      write(IMAIN,*) '**** BEWARE: because of periodic conditions, values computed ****'
+      write(IMAIN,*) '****         by check_grid() below will not be reliable       ****'
+      write(IMAIN,*) '*****************************************************************'
+      write(IMAIN,*) '*****************************************************************'
+      write(IMAIN,*)
+    endif
+
+    ! set up a local geometric tolerance
+    xtypdist = +HUGEVAL
+
+    do ispec = 1,nspec
+
+      xminval = +HUGEVAL
+      yminval = +HUGEVAL
+      xmaxval = -HUGEVAL
+      ymaxval = -HUGEVAL
+
+      ! only loop on the four corners of each element to get a typical size
+      do j = 1,NGLLZ,NGLLZ-1
+        do i = 1,NGLLX,NGLLX-1
+          iglob = ibool(i,j,ispec)
+          xmaxval = max(coord(1,iglob),xmaxval)
+          xminval = min(coord(1,iglob),xminval)
+          ymaxval = max(coord(2,iglob),ymaxval)
+          yminval = min(coord(2,iglob),yminval)
+        enddo
+      enddo
+
+      ! compute the minimum typical "size" of an element in the mesh
+      xtypdist = min(xtypdist,xmaxval-xminval)
+      xtypdist = min(xtypdist,ymaxval-yminval)
+
+    enddo
+
+    ! define a tolerance, small with respect to the minimum size
+    xtol = 1.d-4 * xtypdist
+
+! detect the points that are on the same horizontal line (i.e. at the same height Z)
+! and that have a value of the horizontal coordinate X that differs by exactly the periodicity length;
+! if so, make them all have the same global number, which will then implement periodic boundary conditions automatically.
+! We select the smallest value of iglob and assign it to all the points that are the same due to periodicity,
+! this way the maximum value of the ibool() array will remain as small as possible.
+!
+! *** IMPORTANT: this simple algorithm will be slow for large meshes because it has a cost of NGLOB^2 / 2
+! (where NGLOB is the number of points per MPI slice, not of the whole mesh though). This could be
+! reduced to O(NGLOB log(NGLOB)) by using a quicksort algorithm on the coordinates of the points to detect the multiples
+! (as implemented in routine createnum_fast() elsewhere in the code). This could be done one day if needed instead
+! of the very simple double loop below.
+    if (myrank == 0) then
+      write(IMAIN,*) 'start detecting points for periodic boundary conditions '// &
+                     '(the current algorithm can be slow and could be improved)...'
+    endif
+
+    counter = 0
+    do iglob = 1,NGLOB-1
+      do iglob2 = iglob + 1,NGLOB
+        ! check if the two points have the exact same Z coordinate
+        if (abs(coord(2,iglob2) - coord(2,iglob)) < xtol) then
+          ! if so, check if their X coordinate differs by exactly the periodicity distance
+          if (abs(abs(coord(1,iglob2) - coord(1,iglob)) - PERIODIC_HORIZ_DIST) < xtol) then
+            ! if so, they are the same point, thus replace the highest value of ibool with the lowest
+            ! to make them the same global point and thus implement periodicity automatically
+            counter = counter + 1
+            this_ibool_is_a_periodic_edge(iglob) = .true.
+            this_ibool_is_a_periodic_edge(iglob2) = .true.
+            do ispec = 1,nspec
+              do j = 1,NGLLZ
+                do i = 1,NGLLX
+                  if (ibool(i,j,ispec) == iglob2) ibool(i,j,ispec) = iglob
+                enddo
+              enddo
+            enddo
+          endif
+        endif
+      enddo
+    enddo
+
+    if (myrank == 0) write(IMAIN,*) 'done detecting points for periodic boundary conditions.'
+
+    if (counter > 0) write(IMAIN,*) 'implemented periodic conditions on ',counter,' grid points on proc ',myrank
+
+  endif ! of if (ADD_PERIODIC_CONDITIONS)
+
+  end subroutine setup_mesh_periodic_edges
+
+!
+!-----------------------------------------------------------------------------------
+!
+
+  subroutine setup_mesh_acoustic_forcing_edges()
+
+! acoustic forcing edge detection
+
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: ipoin1D
+
+  ! acoustic forcing edge detection
+  ! the elements forming an edge are already known (computed in meshfem2D),
+  ! the common nodes forming the edge are computed here
+  if (ACOUSTIC_FORCING) then
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'Acoustic forcing simulation'
+      write(IMAIN,*)
+      write(IMAIN,*) 'Beginning of acoustic forcing edge detection'
+      call flush_IMAIN()
+    endif
+
+    ! define i and j points for each edge
+    do ipoin1D = 1,NGLLX
+
+      ivalue(ipoin1D,IBOTTOM) = NGLLX - ipoin1D + 1
+      ivalue_inverse(ipoin1D,IBOTTOM) = ipoin1D
+      jvalue(ipoin1D,IBOTTOM) = NGLLZ
+      jvalue_inverse(ipoin1D,IBOTTOM) = NGLLZ
+
+      ivalue(ipoin1D,IRIGHT) = 1
+      ivalue_inverse(ipoin1D,IRIGHT) = 1
+      jvalue(ipoin1D,IRIGHT) = NGLLZ - ipoin1D + 1
+      jvalue_inverse(ipoin1D,IRIGHT) = ipoin1D
+
+      ivalue(ipoin1D,ITOP) = ipoin1D
+      ivalue_inverse(ipoin1D,ITOP) = NGLLX - ipoin1D + 1
+      jvalue(ipoin1D,ITOP) = 1
+      jvalue_inverse(ipoin1D,ITOP) = 1
+
+      ivalue(ipoin1D,ILEFT) = NGLLX
+      ivalue_inverse(ipoin1D,ILEFT) = NGLLX
+      jvalue(ipoin1D,ILEFT) = ipoin1D
+      jvalue_inverse(ipoin1D,ILEFT) = NGLLZ - ipoin1D + 1
+
+    enddo
+
+  endif ! if (ACOUSTIC_FORCING)
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine setup_mesh_acoustic_forcing_edges
+
+
+!
+!-----------------------------------------------------------------------------------
+!
+
+  subroutine setup_mesh_external_models()
+
+! external models
+
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: nspec_ext,ier
+
+  ! allocates material arrays
+  if (assign_external_model) then
+    nspec_ext = nspec
+  else
+    ! dummy allocations
+    nspec_ext = 1
+  endif
+
+  allocate(vpext(NGLLX,NGLLZ,nspec_ext), &
+           vsext(NGLLX,NGLLZ,nspec_ext), &
+           rhoext(NGLLX,NGLLZ,nspec_ext), &
+           gravityext(NGLLX,NGLLZ,nspec_ext), &
+           Nsqext(NGLLX,NGLLZ,nspec_ext), &
+           QKappa_attenuationext(NGLLX,NGLLZ,nspec_ext), &
+           Qmu_attenuationext(NGLLX,NGLLZ,nspec_ext), &
+           c11ext(NGLLX,NGLLZ,nspec_ext), &
+           c13ext(NGLLX,NGLLZ,nspec_ext), &
+           c15ext(NGLLX,NGLLZ,nspec_ext), &
+           c33ext(NGLLX,NGLLZ,nspec_ext), &
+           c35ext(NGLLX,NGLLZ,nspec_ext), &
+           c55ext(NGLLX,NGLLZ,nspec_ext), &
+           c12ext(NGLLX,NGLLZ,nspec_ext), &
+           c23ext(NGLLX,NGLLZ,nspec_ext), &
+           c25ext(NGLLX,NGLLZ,nspec_ext),stat=ier)
+  if (ier /= 0) stop 'Error allocating external model arrays'
+
+  ! reads in external models
+  if (assign_external_model) then
+    if (myrank == 0) then
+      write(IMAIN,*) 'Assigning an external velocity and density model'
+      call flush_IMAIN()
+    endif
+    call read_external_model()
+  endif
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine setup_mesh_external_models
 

@@ -40,7 +40,8 @@
 !
 !========================================================================
 
- subroutine prepare_timerun_GPU()
+
+  subroutine prepare_timerun_GPU()
 
   use specfem_par
   use specfem_par_gpu
@@ -302,6 +303,8 @@
   ! outputs usage for main process
   if (myrank == 0) then
     call get_free_device_memory(free_mb,used_mb,total_mb)
+
+    write(IMAIN,*)
     write(IMAIN,*) "GPU usage: free  =",free_mb," MB",nint(free_mb/total_mb*100.0),"%"
     write(IMAIN,*) "           used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
     write(IMAIN,*) "           total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
@@ -311,6 +314,9 @@
 
   ! frees temporary arrays
   deallocate(cosrot_irecf,sinrot_irecf)
+
+  ! synchronizes all processes
+  call synchronize_all()
 
   contains
 
@@ -352,7 +358,7 @@
   NGLOB_AB = nglob
 
   ! user output
-  if (myrank == 0) write(IMAIN,*) '    number of mpi interfaces = ',ninterface
+  if (myrank == 0) write(IMAIN,*) '  number of mpi interfaces = ',ninterface
 
   ! mpi interfaces
   allocate(ibool_interfaces_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
@@ -364,7 +370,7 @@
   enddo
 
   ! user output
-  if (myrank == 0) write(IMAIN,*) '    number of acoustic elements at free surface = ',nelem_acoustic_surface
+  if (myrank == 0) write(IMAIN,*) '  number of acoustic elements at free surface = ',nelem_acoustic_surface
 
   ! acoustic elements at free surface
   allocate(free_ac_ispec(nelem_acoustic_surface))
@@ -480,7 +486,7 @@
   endif ! STACEY_BOUNDARY_CONDITIONS
 
   ! user output
-  if (myrank == 0) write(IMAIN,*) '    number of sources = ',NSOURCES
+  if (myrank == 0) write(IMAIN,*) '  number of sources = ',NSOURCES
 
   ! counts sources in this process slice
   nsources_local = 0
@@ -491,7 +497,7 @@
   enddo
 
   ! user output
-  if (myrank == 0) write(IMAIN,*) '    number of sources in this process slice = ',nsources_local
+  if (myrank == 0) write(IMAIN,*) '  number of sources in this process slice = ',nsources_local
 
   allocate(source_time_function_loc(nsources_local,NSTEP))
   allocate(ispec_selected_source_loc(nsources_local))
@@ -569,7 +575,7 @@
   nspec_outer_acoustic = 0
   if (any_acoustic) then
     ! user output
-    if (myrank == 0) write(IMAIN,*) '    determining phases for acoustic domain'
+    if (myrank == 0) write(IMAIN,*) '  determining phases for acoustic domain'
 
     ! counts inner and outer elements
     do ispec = 1, nspec
@@ -716,7 +722,7 @@
   nspec_outer_elastic = 0
   if (any_elastic) then
     ! user output
-    if (myrank == 0) write(IMAIN,*) '    determining phases for elastic domain'
+    if (myrank == 0) write(IMAIN,*) '  determining phases for elastic domain'
 
     ! counts inner and outer elements
     do ispec = 1, nspec
@@ -772,7 +778,7 @@
 
   if (ANY_ANISOTROPY) then
     ! user output
-    if (myrank == 0) write(IMAIN,*) '    setting up anisotropic arrays'
+    if (myrank == 0) write(IMAIN,*) '  setting up anisotropic arrays'
 
     allocate(c11store(NGLLX,NGLLZ,NSPEC))
     allocate(c13store(NGLLX,NGLLZ,NSPEC))
@@ -832,7 +838,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  initialization done'
+    write(IMAIN,*) '  initialization done successfully'
     call flush_IMAIN()
   endif
 

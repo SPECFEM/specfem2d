@@ -338,7 +338,7 @@
   call read_mesh_databases_sources()
 
   ! sets source parameters
-  call set_sources()
+  call set_source_parameters()
 
   ! reads the spectral macrobloc nodal coordinates
   ! and basic properties of the spectral elements

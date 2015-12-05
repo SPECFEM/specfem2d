@@ -42,7 +42,7 @@
 !========================================================================
 
 
-  subroutine set_sources()
+  subroutine set_source_parameters()
 
 ! gets source parameters
 
@@ -240,4 +240,4 @@
                   'Mzz. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
                   'Mxz. . . . . . . . . . . . . . . . . . =',1pe20.10)
 
-  end subroutine set_sources
+  end subroutine set_source_parameters

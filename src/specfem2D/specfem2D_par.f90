@@ -160,23 +160,25 @@ module specfem_par
   integer, dimension(:), allocatable  :: typeabs
   ! for detection of corner element on absorbing boundary
   logical, dimension(:,:), allocatable  :: codeabs_corner
+
   ! add spring to Stacey absorbing boundary condition
   logical :: ADD_SPRING_TO_STACEY
   double precision :: x_center_spring,z_center_spring
 
   ! for horizontal periodic conditions
   logical :: ADD_PERIODIC_CONDITIONS
+
   ! horizontal periodicity distance for periodic conditions
   double precision :: PERIODIC_HORIZ_DIST
   logical, dimension(:), allocatable :: this_ibool_is_a_periodic_edge
-  double precision :: xmaxval,xminval,ymaxval,yminval,xtol,xtypdist
-  integer :: counter
+
+  ! edge detection
+  integer, dimension(NEDGES) :: i_begin,j_begin,i_end,j_end
+  integer, dimension(NGLLX,NEDGES) :: ivalue,jvalue,ivalue_inverse,jvalue_inverse
 
   ! fluid/solid interface
   integer :: num_fluid_solid_edges
   logical :: coupled_acoustic_elastic,any_fluid_solid_edges
-  integer, dimension(NEDGES) :: i_begin,j_begin,i_end,j_end
-  integer, dimension(NGLLX,NEDGES) :: ivalue,jvalue,ivalue_inverse,jvalue_inverse
   integer, dimension(:), allocatable :: fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                                         fluid_solid_elastic_ispec,fluid_solid_elastic_iedge
 
@@ -613,9 +615,8 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rhot_k, rhof_k, sm_k, eta_k, mufr_k, B_k, &
     C_k, M_k
 
-  character(len=150) :: adj_source_file
+  ! adjoint sources
   integer :: nadj_rec_local
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearrays
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &

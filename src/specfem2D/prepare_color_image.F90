@@ -278,7 +278,7 @@
   use mpi
 #endif
 
-  use constants,only: NGLLX,NGLLZ,HALF,TWO
+  use constants,only: NGLLX,NGLLZ,HALF,TWO,IMAIN
 
   use specfem_par, only : nglob,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
     density,poroelastcoef, &
@@ -309,6 +309,12 @@
 #else
   integer :: dummy
 #endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  coloring image background based on vp'
+    call flush_IMAIN()
+  endif
 
   ! to display the P-velocity model in background on color images
   allocate(vp_display(nglob))

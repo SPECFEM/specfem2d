@@ -44,26 +44,50 @@
 
   subroutine setup_sources_receivers()
 
+  implicit none
+
+  ! locates sources and determines simulation start time t0
+  call setup_sources()
+
+  ! reads in stations file and locates receivers
+  call setup_receivers()
+
+  ! reads in adjoint sources
+  call setup_adjoint_sources()
+
+  ! tangential components
+  call setup_source_receiver_tangentials()
+
+  ! pre-compute lagrangians
+  call setup_source_receiver_interpolation()
+
+  ! synchronizes processes
+  call synchronize_all()
+
+  end subroutine setup_sources_receivers
+
+!
+!----------------------------------------------------------------------------
+!
+
+  subroutine setup_sources()
+
   use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,IIN,MAX_STRING_LEN
 
   use specfem_par, only: NSOURCES,initialfield,source_type, &
                          coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface, &
                          ispec_is_elastic,ispec_is_poroelastic, &
-                         x_source,z_source,ispec_selected_source,ispec_selected_rec, &
+                         x_source,z_source,ispec_selected_source, &
                          is_proc_source,nb_proc_source, &
-                         sourcearray,Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,npgeo, &
+                         sourcearray,Mxx,Mzz,Mxz, &
+                         xix,xiz,gammax,gammaz,xigll,zigll,npgeo, &
                          nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
-                         nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
-                         xi_receiver,gamma_receiver,station_name,network_name,x_final_receiver,&
-                         z_final_receiver,iglob_source
+                         iglob_source
   implicit none
 
   ! Local variables
   integer :: ispec_acoustic_surface
   integer :: ixmin, ixmax, izmin, izmax,i_source,ispec
-  integer :: irec,nrec_tot_found
-  integer :: ier
-  character(len=MAX_STRING_LEN) :: dummystring
 
   ! user output
   if (myrank == 0) then
@@ -134,8 +158,51 @@
 
   enddo ! do i_source= 1,NSOURCES
 
+!! DK DK this below not supported in the case of MPI yet, we should do a MPI_GATHER() of the values
+!! DK DK and use "if (myrank == which_proc_receiver(irec)) then" to display the right sources
+!! DK DK and receivers carried by each mesh slice, and not fictitious values coming from other slices
+#ifndef USE_MPI
+  if (myrank == 0) then
+     ! write actual source locations to file
+     ! note that these may differ from input values, especially if source_surf = .true. in SOURCE
+     ! note that the exact source locations are determined from (ispec,xi,gamma) values
+     open(unit=14,file='OUTPUT_FILES/for_information_SOURCE_actually_used',status='unknown')
+     do i_source= 1,NSOURCES
+        write(14,*) x_source(i_source), z_source(i_source)
+     enddo
+     close(14)
+  endif
+#endif
+
   ! synchronizes all processes
   call synchronize_all()
+
+  end subroutine setup_sources
+
+!
+!----------------------------------------------------------------------------
+!
+
+  subroutine setup_receivers()
+
+  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,IIN,MAX_STRING_LEN
+
+  use specfem_par, only: coord,ibool,nglob,nspec, &
+                         ispec_selected_rec, &
+                         nproc,myrank,coorg,knods,ngnod, &
+                         xigll,zigll,npgeo, &
+                         nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
+                         xi_receiver,gamma_receiver,station_name,network_name, &
+                         x_final_receiver,z_final_receiver, &
+                         x_source,z_source
+
+  implicit none
+
+  ! Local variables
+  integer :: irec,nrec_tot_found
+  integer :: ier
+
+  character(len=MAX_STRING_LEN) :: dummystring
 
   ! user output
   if (myrank == 0) then
@@ -192,15 +259,6 @@
   irec = 0
 #ifndef USE_MPI
   if (myrank == 0) then
-     ! write actual source locations to file
-     ! note that these may differ from input values, especially if source_surf = .true. in SOURCE
-     ! note that the exact source locations are determined from (ispec,xi,gamma) values
-     open(unit=14,file='OUTPUT_FILES/for_information_SOURCE_actually_used',status='unknown')
-     do i_source= 1,NSOURCES
-        write(14,*) x_source(i_source), z_source(i_source)
-     enddo
-     close(14)
-
      ! write out actual station locations (compare with STATIONS from meshfem2D)
      ! NOTE: this will be written out even if use_existing_STATIONS = .true.
      open(unit=15,file='OUTPUT_FILES/for_information_STATIONS_actually_used',status='unknown')
@@ -234,7 +292,75 @@
   ! synchronizes all processes
   call synchronize_all()
 
-  end subroutine setup_sources_receivers
+  ! checks if acoustic receiver is exactly on the free surface because pressure is zero there
+  call setup_receivers_check_acoustic()
+
+  end subroutine setup_receivers
+
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
+  subroutine setup_receivers_check_acoustic()
+
+! checks if acoustic receiver is exactly on the free surface because pressure is zero there
+
+  use constants,only: NGLLX,NGLLZ,IMAIN
+
+  use specfem_par, only: myrank,ispec_selected_rec,nrecloc,recloc, &
+                         xi_receiver,gamma_receiver,seismotype, &
+                         nelem_acoustic_surface,acoustic_surface,ispec_is_acoustic
+  implicit none
+
+  ! Local variables
+  integer :: irec,irecloc
+  integer :: ispec,ispec_acoustic_surface
+  integer :: ixmin, ixmax, izmin, izmax
+
+  ! check if acoustic receiver is exactly on the free surface because pressure is zero there
+  do ispec_acoustic_surface = 1,nelem_acoustic_surface
+    ispec = acoustic_surface(1,ispec_acoustic_surface)
+    ixmin = acoustic_surface(2,ispec_acoustic_surface)
+    ixmax = acoustic_surface(3,ispec_acoustic_surface)
+    izmin = acoustic_surface(4,ispec_acoustic_surface)
+    izmax = acoustic_surface(5,ispec_acoustic_surface)
+    do irecloc = 1,nrecloc
+      irec = recloc(irecloc)
+      if (ispec_is_acoustic(ispec) .and. ispec == ispec_selected_rec(irec)) then
+        if ((izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
+        gamma_receiver(irec) < -0.99d0) .or.&
+        (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==NGLLX .and. &
+        gamma_receiver(irec) > 0.99d0) .or.&
+        (izmin==1 .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
+        xi_receiver(irec) < -0.99d0) .or.&
+        (izmin==1 .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+        xi_receiver(irec) > 0.99d0) .or.&
+        (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==1 .and. &
+        gamma_receiver(irec) < -0.99d0 .and. xi_receiver(irec) < -0.99d0) .or.&
+        (izmin==1 .and. izmax==1 .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+        gamma_receiver(irec) < -0.99d0 .and. xi_receiver(irec) > 0.99d0) .or.&
+        (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
+        gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) < -0.99d0) .or.&
+        (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+        gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) > 0.99d0)) then
+          ! checks
+          if (seismotype == 4) then
+            call exit_MPI(myrank,'an acoustic pressure receiver cannot be located exactly '// &
+                            'on the free surface because pressure is zero there')
+          else
+            write(IMAIN,*) '**********************************************************************'
+            write(IMAIN,*) '*** Warning: acoustic receiver located exactly on the free surface ***'
+            write(IMAIN,*) '*** Warning: tangential component will be zero there               ***'
+            write(IMAIN,*) '**********************************************************************'
+            write(IMAIN,*)
+          endif
+        endif
+      endif
+    enddo
+  enddo
+
+  end subroutine setup_receivers_check_acoustic
 
 
 !
@@ -242,52 +368,181 @@
 !
 
 
-  subroutine add_adjoint_sources_SU()
+  subroutine setup_adjoint_sources
 
-  use specfem_par, only: AXISYM,xiglj,is_on_the_axis,myrank, NSTEP, nrec, xi_receiver, gamma_receiver, which_proc_receiver, &
-                         xigll,zigll,hxir,hgammar,hpxir,hpgammar, &
-                         adj_sourcearray, adj_sourcearrays, source_adjointe, &
-                         GPU_MODE, ispec_selected_rec
+! compute source array for adjoint source
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,MAX_STRING_LEN
+
+  use specfem_par,only: nadj_rec_local,nrec,nrecloc,NSTEP,NPROC,SIMULATION_TYPE,SU_FORMAT, &
+                        adj_sourcearrays,source_adjointe, &
+                        myrank,which_proc_receiver,seismotype, &
+                        xi_receiver,gamma_receiver, &
+                        network_name,station_name
+
   implicit none
 
   ! local parameters
-  integer :: i, k, irec, irec_local, ier
+  integer :: irec,irec_local
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
+  character(len=MAX_STRING_LEN) :: adj_source_file
+
+  ! number of adjoint receivers in this slice
+  nadj_rec_local = 0
+
+  ! adjoint calculation
+  if (SIMULATION_TYPE == 3) then
+
+    allocate(source_adjointe(nrecloc,NSTEP,2))
+
+    ! counts number of adjoint sources in this slice
+    do irec = 1,nrec
+      ! counts local adjoint receiver stations
+      if (myrank == which_proc_receiver(irec)) then
+        ! check that the source proc number is okay
+        if (which_proc_receiver(irec) < 0 .or. which_proc_receiver(irec) > NPROC-1) then
+          call exit_MPI(myrank,'something is wrong with the source proc number in adjoint simulation')
+        endif
+        ! counter
+        nadj_rec_local = nadj_rec_local + 1
+      endif
+    enddo
+
+    ! array for all adjoint sources
+    if (nadj_rec_local > 0)  then
+      allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
+    else
+      allocate(adj_sourcearrays(1,1,1,1,1))
+    endif
+    adj_sourcearrays(:,:,:,:,:) = 0._CUSTOM_REAL
+
+    ! reads in adjoint source files
+    if (.not. SU_FORMAT) then
+      ! temporary array
+      allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
+
+      ! reads in ascii adjoint source files **.adj
+      if (seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
+         irec_local = 0
+         do irec = 1, nrec
+           ! compute only adjoint source arrays in the local proc
+           if (myrank == which_proc_receiver(irec)) then
+             irec_local = irec_local + 1
+             adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
+
+             call compute_arrays_adj_source(xi_receiver(irec),gamma_receiver(irec),irec_local,adj_source_file,adj_sourcearray)
+
+             adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+           endif
+         enddo
+      else if (seismotype == 4 .or. seismotype == 6) then
+        ! single component
+        irec_local = 0
+        do irec = 1, nrec
+          ! compute only adjoint source arrays in the local proc
+          if (myrank == which_proc_receiver(irec)) then
+            irec_local = irec_local + 1
+            adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
+
+            call compute_arrays_adj_source(xi_receiver(irec),gamma_receiver(irec),irec_local,adj_source_file,adj_sourcearray)
+
+            adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+          endif
+        enddo
+      endif
+      ! frees temporary array
+      deallocate(adj_sourcearray)
+    else
+      ! (SU_FORMAT)
+      call add_adjoint_sources_SU(seismotype)
+    endif
+  else
+    ! dummy allocation
+    allocate(adj_sourcearrays(1,1,1,1,1))
+  endif ! SIMULATION_TYPE == 3
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine setup_adjoint_sources
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
+
+  subroutine add_adjoint_sources_SU(seismotype)
+
+  use specfem_par, only: AXISYM,xiglj,is_on_the_axis, &
+                         myrank, NSTEP, nrec, &
+                         xi_receiver, gamma_receiver, which_proc_receiver, &
+                         xigll,zigll,hxir,hgammar,hpxir,hpgammar, &
+                         adj_sourcearrays, source_adjointe, &
+                         GPU_MODE, ispec_selected_rec
+
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ
+
+  implicit none
+
+  integer,intent(in) :: seismotype
+
+  ! local parameters
+  integer :: i, j, irec, irec_local, ier
   character(len=MAX_STRING_LEN) :: filename
+
   ! SU
   integer(kind=4) :: r4head(60)
   integer(kind=2) :: header2(2)
   real(kind=4),dimension(:,:),allocatable :: adj_src_s
 
-  irec_local = 0
-  write(filename, "('./SEM/Ux_file_single.su.adj')")
-  open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
-  if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
 
-  write(filename, "('./SEM/Uy_file_single.su.adj')")
-  open(112,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
-  if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+  ! opens adjoint source files
+  if (seismotype == 4 .or. seismotype == 6) then
+    write(filename, "('./SEM/Up_file_single.su.adj')")
+    open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+    if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+  else
+    write(filename, "('./SEM/Ux_file_single.su.adj')")
+    open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+    if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
-  write(filename, "('./SEM/Uz_file_single.su.adj')")
-  open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
-  if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+    write(filename, "('./SEM/Uy_file_single.su.adj')")
+    open(112,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+    if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
+    write(filename, "('./SEM/Uz_file_single.su.adj')")
+    open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+    if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+  endif
+
+  ! allocates temporary array
   allocate(adj_src_s(NSTEP,3))
-  adj_src_s(:,:) = 0.
+  adj_src_s(:,:) = 0.0
 
+  ! temporary array
+  allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
+
+  irec_local = 0
   do irec = 1, nrec
     if (myrank == which_proc_receiver(irec)) then
       irec_local = irec_local + 1
-      adj_sourcearray(:,:,:,:) = 0.0
-      read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
-      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
 
-      read(112,rec=irec,iostat=ier) r4head, adj_src_s(:,2)
-      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+      adj_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
 
-      read(113,rec=irec,iostat=ier) r4head, adj_src_s(:,3)
-      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+      if (seismotype == 4 .or. seismotype == 6) then
+        read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
+        if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+      else
+        read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
+        if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+
+        read(112,rec=irec,iostat=ier) r4head, adj_src_s(:,2)
+        if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+
+        read(113,rec=irec,iostat=ier) r4head, adj_src_s(:,3)
+        if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+      endif
 
       header2 = int(r4head(29), kind=2)
       if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
@@ -303,13 +558,14 @@
       endif
 
       call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
+
       source_adjointe(irec_local,:,1) = adj_src_s(:,1)
       source_adjointe(irec_local,:,2) = adj_src_s(:,3)
 
       if (.not. GPU_MODE) then
-        do k = 1, NGLLZ
+        do j = 1, NGLLZ
           do i = 1, NGLLX
-            adj_sourcearray(:,:,i,k) = hxir(i) * hgammar(k) * adj_src_s(:,:)
+            adj_sourcearray(:,:,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,:)
           enddo
         enddo
         adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
@@ -317,10 +573,344 @@
 
     endif !  if (myrank == which_proc_receiver(irec))
   enddo ! irec
-  close(111)
-  close(112)
-  close(113)
+
+  ! closes files
+  if (seismotype == 4) then
+    close(111)
+  else
+    close(111)
+    close(112)
+    close(113)
+  endif
+
+  ! frees memory
   deallocate(adj_src_s)
+  deallocate(adj_sourcearray)
 
   end subroutine add_adjoint_sources_SU
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
+  subroutine setup_source_receiver_tangentials()
+
+! tangential computation
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: i,irec,i_source
+  integer :: ier,nrec_alloc
+  integer :: irecloc
+  double precision :: x_final_receiver_dummy, z_final_receiver_dummy
+
+  ! for Lagrange interpolants
+  double precision, external :: hgll, hglj
+
+  ! receiver arrays
+  if (nrecloc > 0) then
+    nrec_alloc = nrecloc
+  else
+    ! dummy allocation
+    nrec_alloc = 1
+  endif
+
+  allocate(anglerec_irec(nrecloc), &
+           cosrot_irec(nrecloc), &
+           sinrot_irec(nrecloc), &
+           rec_tangential_detection_curve(nrecloc),stat=ier)
+  if (ier /= 0) stop 'Error allocating tangential arrays'
+
+  ! checks angle
+  if (rec_normal_to_surface .and. abs(anglerec) > 1.d-6) &
+    stop 'anglerec should be zero when receivers are normal to the topography'
+
+  ! convert receiver angle to radians
+  anglerec = anglerec * pi / 180.d0
+
+  anglerec_irec(:) = anglerec
+  cosrot_irec(:) = cos(anglerec_irec(:))
+  sinrot_irec(:) = sin(anglerec_irec(:))
+
+  ! tangential computation
+  ! for receivers
+  if (rec_normal_to_surface) then
+    irecloc = 0
+    do irec = 1, nrec
+      if (which_proc_receiver(irec) == myrank) then
+        irecloc = irecloc + 1
+        distmin = HUGEVAL
+        do i = 1, nnodes_tangential_curve
+          dist_current = sqrt((x_final_receiver(irec)-nodes_tangential_curve(1,i))**2 + &
+             (z_final_receiver(irec)-nodes_tangential_curve(2,i))**2)
+          if (dist_current < distmin) then
+            n1_tangential_detection_curve = i
+            distmin = dist_current
+          endif
+       enddo
+
+       rec_tangential_detection_curve(irecloc) = n1_tangential_detection_curve
+       call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, &
+                     nnodes_tangential_curve)
+
+       call compute_normal_vector( anglerec_irec(irecloc), &
+                                   nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
+                                   nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
+                                   nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
+                                   nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
+                                   nodes_tangential_curve(2,n_tangential_detection_curve(1)), &
+                                   nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
+                                   nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
+                                   nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
+      endif
+
+    enddo
+    cosrot_irec(:) = cos(anglerec_irec(:))
+    sinrot_irec(:) = sin(anglerec_irec(:))
+  endif
+
+  ! for the source
+  if (force_normal_to_surface) then
+    do i_source = 1,NSOURCES
+      if (is_proc_source(i_source) == 1) then
+        distmin = HUGEVAL
+        do i = 1, nnodes_tangential_curve
+          dist_current = sqrt((coord(1,iglob_source(i_source))-nodes_tangential_curve(1,i))**2 + &
+                              (coord(2,iglob_source(i_source))-nodes_tangential_curve(2,i))**2)
+          if (dist_current < distmin) then
+            n1_tangential_detection_curve = i
+            distmin = dist_current
+
+          endif
+        enddo
+
+        call tri_quad(n_tangential_detection_curve, n1_tangential_detection_curve, &
+                     nnodes_tangential_curve)
+
+        ! in the case of a source force vector
+        ! users can give an angle with respect to the normal to the topography surface,
+        ! in which case we must compute the normal to the topography
+        ! and add it the existing rotation angle
+        call compute_normal_vector( anglesource(i_source), &
+                          nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
+                          nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
+                          nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
+                          nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
+                          nodes_tangential_curve(2,n_tangential_detection_curve(1)), &
+                          nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
+                          nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
+                          nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
+
+        source_courbe_eros(i_source) = n1_tangential_detection_curve
+        if (myrank == 0 .and. is_proc_source(i_source) == 1 .and. nb_proc_source(i_source) == 1) then
+          source_courbe_eros(i_source) = n1_tangential_detection_curve
+          anglesource_recv = anglesource(i_source)
+#ifdef USE_MPI
+        else if (myrank == 0) then
+          do i = 1, nb_proc_source(i_source) - is_proc_source(i_source)
+            call MPI_recv(source_courbe_eros(i_source),1,MPI_INTEGER, &
+                        MPI_ANY_SOURCE,42,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+            call MPI_recv(anglesource_recv,1,MPI_DOUBLE_PRECISION, &
+                        MPI_ANY_SOURCE,43,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+          enddo
+        else if (is_proc_source(i_source) == 1) then
+          call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,MPI_COMM_WORLD,ier)
+          call MPI_send(anglesource(i_source),1,MPI_DOUBLE_PRECISION,0,43,MPI_COMM_WORLD,ier)
+#endif
+        endif
+
+#ifdef USE_MPI
+        call MPI_bcast(anglesource_recv,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+        anglesource(i_source) = anglesource_recv
+#endif
+      endif !  if (is_proc_source(i_source) == 1)
+    enddo ! do i_source= 1,NSOURCES
+  endif !  if (force_normal_to_surface)
+
+! CHRIS --- how to deal with multiple source. Use first source now. ---
+! compute distance from source to receivers following the curve
+  if (force_normal_to_surface .and. rec_normal_to_surface) then
+    dist_tangential_detection_curve(source_courbe_eros(1)) = 0
+    do i = source_courbe_eros(1)+1, nnodes_tangential_curve
+      dist_tangential_detection_curve(i) = dist_tangential_detection_curve(i-1) + &
+          sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i-1))**2 + &
+          (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i-1))**2)
+    enddo
+    dist_tangential_detection_curve(1) = dist_tangential_detection_curve(nnodes_tangential_curve) + &
+         sqrt((nodes_tangential_curve(1,1)-nodes_tangential_curve(1,nnodes_tangential_curve))**2 + &
+         (nodes_tangential_curve(2,1)-nodes_tangential_curve(2,nnodes_tangential_curve))**2)
+    do i = 2, source_courbe_eros(1)-1
+      dist_tangential_detection_curve(i) = dist_tangential_detection_curve(i-1) + &
+          sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i-1))**2 + &
+          (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i-1))**2)
+    enddo
+    do i = source_courbe_eros(1)-1, 1, -1
+      dist_current = dist_tangential_detection_curve(i+1) + &
+          sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i+1))**2 + &
+          (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i+1))**2)
+      if (dist_current < dist_tangential_detection_curve(i)) then
+        dist_tangential_detection_curve(i) = dist_current
+      endif
+    enddo
+    dist_current = dist_tangential_detection_curve(1) + &
+       sqrt((nodes_tangential_curve(1,1)-nodes_tangential_curve(1,nnodes_tangential_curve))**2 + &
+       (nodes_tangential_curve(2,1)-nodes_tangential_curve(2,nnodes_tangential_curve))**2)
+    if (dist_current < dist_tangential_detection_curve(nnodes_tangential_curve)) then
+      dist_tangential_detection_curve(nnodes_tangential_curve) = dist_current
+    endif
+    do i = nnodes_tangential_curve-1, source_courbe_eros(1)+1, -1
+      dist_current = dist_tangential_detection_curve(i+1) + &
+          sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i+1))**2 + &
+          (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i+1))**2)
+      if (dist_current < dist_tangential_detection_curve(i)) then
+        dist_tangential_detection_curve(i) = dist_current
+      endif
+    enddo
+
+    if (myrank == 0) then
+      open(unit=11,file='OUTPUT_FILES/dist_rec_tangential_detection_curve', &
+            form='formatted', status='unknown')
+    endif
+
+    irecloc = 0
+    do irec = 1,nrec
+
+      if (myrank == 0) then
+        if (which_proc_receiver(irec) == myrank) then
+          irecloc = irecloc + 1
+          n1_tangential_detection_curve = rec_tangential_detection_curve(irecloc)
+          x_final_receiver_dummy = x_final_receiver(irec)
+          z_final_receiver_dummy = z_final_receiver(irec)
+#ifdef USE_MPI
+        else
+
+          call MPI_RECV(n1_tangential_detection_curve,1,MPI_INTEGER,&
+             which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+          call MPI_RECV(x_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
+             which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+          call MPI_RECV(z_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
+             which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+
+#endif
+        endif
+
+#ifdef USE_MPI
+      else
+        if (which_proc_receiver(irec) == myrank) then
+          irecloc = irecloc + 1
+          call MPI_SEND(rec_tangential_detection_curve(irecloc),1,MPI_INTEGER,0,irec,MPI_COMM_WORLD,ier)
+          call MPI_SEND(x_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
+          call MPI_SEND(z_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
+        endif
+#endif
+
+      endif
+      if (myrank == 0) then
+        write(11,*) dist_tangential_detection_curve(n1_tangential_detection_curve)
+        write(12,*) x_final_receiver_dummy
+        write(13,*) z_final_receiver_dummy
+      endif
+    enddo
+
+    if (myrank == 0) then
+      close(11)
+      close(12)
+      close(13)
+    endif
+
+  endif ! force_normal_to_surface
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine setup_source_receiver_tangentials
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
+  subroutine setup_source_receiver_interpolation()
+
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: i,irec,irec_local,ier
+
+  ! allocate Lagrange interpolators for receivers
+  allocate(hxir_store(nrec,NGLLX), &
+           hgammar_store(nrec,NGLLZ),stat=ier)
+  if (ier /= 0) stop 'Error allocating receiver h**_store arrays'
+
+  allocate(xir_store_loc(nrecloc,NGLLX), &
+           gammar_store_loc(nrecloc,NGLLZ),stat=ier)
+  if (ier /= 0) stop 'Error allocating local receiver h**_store arrays'
+
+  ! define and store Lagrange interpolators at all the receivers
+  irec_local = 0
+  do irec = 1,nrec
+    if (AXISYM) then
+      if (is_on_the_axis(ispec_selected_rec(irec)) .and. myrank == which_proc_receiver(irec)) then
+        call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
+        !do j = 1,NGLJ ! AB AB Same result with that loop
+        !  hxir(j) = hglj(j-1,xi_receiver(irec),xiglj,NGLJ)
+        !enddo
+      else
+        call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+      endif
+    else
+      call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+    endif
+    call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
+
+    ! stores Lagrangians for receiver
+    hxir_store(irec,:) = hxir(:)
+    hgammar_store(irec,:) = hgammar(:)
+
+    ! local receivers in this slice
+    if (myrank == which_proc_receiver(irec)) then
+      irec_local = irec_local + 1
+      xir_store_loc(irec_local,:) = hxir(:)
+      gammar_store_loc(irec_local,:) = hgammar(:)
+    endif
+  enddo
+
+  ! allocate Lagrange interpolators for sources
+  allocate(hxis_store(NSOURCES,NGLLX), &
+           hgammas_store(NSOURCES,NGLLZ),stat=ier)
+  if (ier /= 0) stop 'Error allocating source h**_store arrays'
+
+  ! define and store Lagrange interpolators at all the sources
+  do i = 1,NSOURCES
+    if (AXISYM) then
+      if (is_on_the_axis(ispec_selected_source(i)) .and. is_proc_source(i) == 1) then
+        call lagrange_any(xi_source(i),NGLJ,xiglj,hxis,hpxis)
+        !do j = 1,NGLJ ! AB AB same result with that loop
+        !  hxis(j) = hglj(j-1,xi_source(i),xiglj,NGLJ)
+        !enddo
+      else
+        call lagrange_any(xi_source(i),NGLLX,xigll,hxis,hpxis)
+      endif
+    else
+      call lagrange_any(xi_source(i),NGLLX,xigll,hxis,hpxis)
+    endif
+    call lagrange_any(gamma_source(i),NGLLZ,zigll,hgammas,hpgammas)
+
+    ! stores Lagrangians for source
+    hxis_store(i,:) = hxis(:)
+    hgammas_store(i,:) = hgammas(:)
+  enddo
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine setup_source_receiver_interpolation
 

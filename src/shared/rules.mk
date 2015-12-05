@@ -58,6 +58,7 @@ shared_OBJECTS = \
 	$O/parallel.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_value_parameters.shared.o \
+	$O/set_color_palette.shared.o \
 	$(EMPTY_MACRO)
 
 
