@@ -1,0 +1,32 @@
+Subject: converting the SPECFEM2D license from CeCILL to GNU?
+Date: Thu, 26 Nov 2015 14:49:02 +0100
+From: Dimitri Komatitsch
+Organization: CNRS, Marseille, France
+To: SPECFEM Developers, cig-seismo AT geodynamics DOT org
+
+Dear all,
+
+We are trying to clean the source code of SPECFEM2D to make it more
+similar to that of the 3D versions (3D and 3D_GLOBE). Thanks in
+particular to Daniel, Alexis and Etienne for that!
+
+In the process we noticed that for historical reasons SPECFEM2D uses a
+license called CeCILL, which is a French equivalent of GNU GPL v2+,
+while 3D and 3D_GLOBE use GNU.
+
+Would you mind if we switched to GNU GPL v2+?
+
+In principle all developers who have worked on the SPECFEM2D source code
+have to agree, thus if you *disagree* please send me an email before
+December 6, otherwise let us say that on Monday December 7 I will
+permanently switch to GNU.
+
+Thanks,
+Best regards,
+
+Dimitri.
+
+--
+Dimitri Komatitsch
+CNRS Research Director (DR CNRS), Laboratory of Mechanics and Acoustics,
+UPR 7051, Marseille, France http://komatitsch.free.fr
