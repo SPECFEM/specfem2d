@@ -32,6 +32,7 @@
 !========================================================================
 
   subroutine compute_coef_convolution(bb,deltat,coef0,coef1,coef2)
+
   ! compute coefficient used in second order convolution scheme, from
   ! second-order accurate convolution term calculation from equation (21) of
   ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,

@@ -31,13 +31,10 @@
 !
 !========================================================================
 
-
 ! From array 'surface' (element, type : node/edge, node(s) ) that describes the
-! elastic fixed surface, determines the points (ixmin, ixmax, izmin and izmax) on the surface
-! for each element.
-! We chose to have ixmin <= ixmax and izmin <= izmax, so as to be able to have DO loops on it with
-! an increment of +1.
-!
+! elastic fixed surface, determines the points (ixmin, ixmax, izmin and izmax) on the surface for each element.
+! We chose to have ixmin <= ixmax and izmin <= izmax, so as to be able to have DO loops on it with an increment of +1.
+
   subroutine construct_elastic_fixed_surface ()
 
   use specfem_par, only : ngnod, knods, nelem_elastic_fixed_surface, elastic_fixed_edges, elastic_fixed_surface

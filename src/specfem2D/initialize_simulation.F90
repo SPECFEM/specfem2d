@@ -32,7 +32,6 @@
 !
 !========================================================================
 
-
   subroutine initialize_simulation()
 
 #ifdef USE_MPI

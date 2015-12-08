@@ -35,8 +35,6 @@
 
   subroutine get_MPI()
 
-
-
 ! sets up the MPI interface for communication between partitions
 
   use mpi

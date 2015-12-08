@@ -32,11 +32,9 @@
 !========================================================================
 
 ! From array 'surface' (element, type : node/edge, node(s) ) that describes the
-! acoustic free surface, determines the points (ixmin, ixmax, izmin and izmax) on the surface
-! for each element.
-! We chose to have ixmin <= ixmax and izmin <= izmax, so as to be able to have DO loops on it with
-! an increment of +1.
-!
+! acoustic free surface, determines the points (ixmin, ixmax, izmin and izmax) on the surface for each element.
+! We chose to have ixmin <= ixmax and izmin <= izmax, so as to be able to have DO loops on it with an increment of +1.
+
   subroutine construct_acoustic_surface ()
 
   use specfem_par, only : ngnod, knods, nelem_acoustic_surface, acoustic_edges, acoustic_surface

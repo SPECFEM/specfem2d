@@ -31,14 +31,12 @@
 !
 !========================================================================
 
-
   subroutine pml_init()
 
 ! Rough strategy to select the PML damping parameters:
 
 ! In order to achieve absorbing for gradient incident wave for zPML:
-! we need to set K>1 to bending the wavefront aside from its tangential propagation
-! direction.
+! we need to set K>1 to bending the wavefront aside from its tangential propagation direction.
 ! Then a bigger damping factor d and alpha could help damping out the
 ! bended wave along its propagation close to normal direction.
 

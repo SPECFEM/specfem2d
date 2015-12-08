@@ -31,8 +31,6 @@
 !
 !========================================================================
 
-
-
 ! elastic solver
 
   subroutine compute_forces_elastic_GPU()

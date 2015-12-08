@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-! for poro solver
+! for poroelastic solver
 
   subroutine compute_coupling_poro_viscoelastic()
 

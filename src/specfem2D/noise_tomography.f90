@@ -31,15 +31,16 @@
 !
 !========================================================================
 
-!NOISE TOMOGRAPHY TO DO LIST
+! NOISE TOMOGRAPHY TO DO LIST
 
-!1. Use separate STATIONS_ADJOINT file
-!2. Add exploration test case under EXAMPLES
-!3. Update manual
+! 1. Use separate STATIONS_ADJOINT file
+! 2. Add exploration test case under EXAMPLES
+! 3. Update manual
 
 ! =============================================================================================================
 ! specify spatial distribution of microseismic noise sources
 ! USERS need to modify this subroutine to suit their own needs
+
   subroutine create_mask_noise()
 
   use constants,only: CUSTOM_REAL

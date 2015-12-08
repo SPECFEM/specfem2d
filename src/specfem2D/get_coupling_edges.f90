@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
   subroutine get_coupling_edges()
 
 ! handles all domain coupling

@@ -32,7 +32,6 @@
 !
 !========================================================================
 
-
   subroutine prepare_absorb_files()
 
   use specfem_par, only: myrank,any_elastic,any_poroelastic,any_acoustic, &
@@ -43,7 +42,6 @@
   ! local parameters
   integer :: ier
   character(len=150) :: outputname,outputname2
-
 
   if (any_elastic) then
 

@@ -31,8 +31,6 @@
 !
 !========================================================================
 
-
-
   subroutine compute_forces_acoustic_GPU()
 
   use specfem_par, only : NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
