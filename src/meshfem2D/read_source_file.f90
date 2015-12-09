@@ -121,6 +121,7 @@ contains
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,zs(i_source))
       call read_value_integer(IIN_SOURCE,IGNORE_JUNK,source_type(i_source))
       call read_value_integer(IIN_SOURCE,IGNORE_JUNK,time_function_type(i_source))
+      name_of_source_file(i_source)=''
       call read_value_string(IIN_SOURCE,IGNORE_JUNK,name_of_source_file(i_source))
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,burst_band_width(i_source))
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,f0_source(i_source))
