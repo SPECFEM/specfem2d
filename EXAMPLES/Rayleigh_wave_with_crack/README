@@ -4,7 +4,7 @@ README
 
 ##################
 ##################  IMPORTANT: for this example (only) do not change nproc = 1 in DATA/Par_file to any other value because
-##################  IMPORTANT: this example with a crack in the mesh can ony run in serial mode (I use a trick
+##################  IMPORTANT: this example with a crack in the mesh can only run in serial mode (I use a trick
 ##################  IMPORTANT: inside the code to create a mathematical crack, and that trick is not ported to MPI yet)
 ##################
 

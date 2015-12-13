@@ -5,9 +5,9 @@ title                           = Test for 2D P-SV elastic
 AXISYM                          = .false.
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 1  # 1 = forward, 3 = adjoint + kernels; 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)
-NOISE_TOMOGRAPHY                = 0  # 0 = earthquake simulation, 1/2/3 = noise simulation
-SAVE_FORWARD                    = .false. # save the last frame, needed for adjoint simulation
+SIMULATION_TYPE                 = 1              # 1 = forward, 3 = adjoint + kernels; 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)
+NOISE_TOMOGRAPHY                = 0              # 0 = regular wave propagation simulation, 1/2/3 = noise simulation
+SAVE_FORWARD                    = .false.        # save the last frame, needed for adjoint simulation
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use the flag below. It performs undoing of attenuation in an exact way for sensitivity kernel calculations
 # but requires disk space for temporary storage, and uses a significant amount of memory used as buffers for temporary storage.
@@ -18,9 +18,8 @@ NT_DUMP_ATTENUATION             = 500
 # parameters concerning partitioning
 nproc                           = 1              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
-
 ngnod                           = 4              # number of control nodes per element (4 or 9)
-initialfield                    = .false.        # use a plane wave as source or not
+initialfield                    = .false.        # use an existing initial wave field as source or start from zero (medium initially at rest)
 add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
 
 # available models
@@ -33,32 +32,31 @@ MODEL                           = default
 
 # Output the model with the requested type, does not save if turn to default
 SAVE_MODEL                      = default
-
 ATTENUATION_VISCOELASTIC_SOLID  = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
-Q0                              =  1             # quality factor for viscous attenuation
-freq0                           =  10            # frequency for viscous attenuation
+Q0                              = 1              # quality factor for viscous attenuation
+freq0                           = 10             # frequency for viscous attenuation
 p_sv                            = .true.         # set the type of calculation (P-SV or SH/membrane waves)
 
 # time step parameters
 nt                              = 1500           # total number of time steps
 deltat                          = 0.8e-3         # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
-USER_T0                         = 0.0d0         # use this t0 as earliest starting time rather than the automatically calculated one
-time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical 4th-order 4-stage Runge-Kutta
+USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
+time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
 
 # acoustic forcing
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
 
 # source parameters
-NSOURCES                        = 1              # number of sources (source info read from DATA/CMTSOLUTION file)
+NSOURCES                        = 1              # number of sources (source information is then read from the DATA/SOURCE file)
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
 # for viscoelastic attenuation
-N_SLS                           = 2                      # number of standard linear solids for attenuation
-f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
+N_SLS                           = 2              # number of standard linear solids for attenuation (3 is usually the minimum)
+f0_attenuation                  = 5.196152422706633 # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
 READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
 
-# receiver set parameters for seismograms
+# receiver set parameters for recording stations (i.e. recording points)
 seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
 USE_TRICK_FOR_BETTER_PRESSURE   = .false.        # so far, this option can only be used if all the receivers are in acoustic elements
 NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000        # every how many time steps we save the seismograms (costly, do not use a very small value; if you use a very large value that is larger than the total number of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
@@ -68,7 +66,7 @@ save_binary_seismograms_double  = .false.        # save seismograms in double pr
 SU_FORMAT                       = .false.        # output single precision binary seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 subsamp_seismos                 = 1              # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
 use_existing_STATIONS           = .false.        # use an existing STATION file found in ./DATA or create a new one from the receiver positions below in this Par_file
-nreceiversets                   = 1              # number of receiver sets
+nreceiversets                   = 1              # number of receiver sets (i.e. number of receiver lines to create below)
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 save_ASCII_kernels              = .true.         # save sensitivity kernels in ASCII format (much bigger files, but compatible with current GMT scripts) or in binary format
@@ -77,12 +75,12 @@ save_ASCII_kernels              = .true.         # save sensitivity kernels in A
 nrec                            = 1              # number of receivers
 xdeb                            = 1500.d0        # first receiver x in meters
 zdeb                            = -500.d0        # first receiver z in meters
-xfin                            = 1500.d0       # last receiver x in meters (ignored if only one receiver)
+xfin                            = 1500.d0        # last receiver x in meters (ignored if only one receiver)
 zfin                            = -1500.d0       # last receiver z in meters (ignored if only one receiver)
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
 # display parameters
-NSTEP_BETWEEN_OUTPUT_INFO      = 100            # every how many time steps we display information about the simulation (costly, do not use a very small value)
+NSTEP_BETWEEN_OUTPUT_INFO       = 100            # every how many time steps we display information about the simulation (costly, do not use a very small value)
 ####
 NSTEP_BETWEEN_OUTPUT_IMAGES     = 100            # every how many time steps we draw JPEG or PostScript pictures of the simulation (costly, do not use a very small value)
 cutsnaps                        = 1.             # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
@@ -116,8 +114,6 @@ use_binary_for_wavefield_dumps  = .false.        # use ASCII or single-precision
 output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
 output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 output_energy                   = .false.        # compute and output total acoustic and elastic energy curves (slows down the code significantly)
-
-
 nbmodels                        = 1
 # available material types (see user manual for more information)
 #   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0
@@ -125,13 +121,12 @@ nbmodels                        = 1
 #   anistoropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
 #   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
 #   tomo:        model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
-
 1 1 2200.d0 3200.d0  1847.5d0 0 0 20. 10. 0 0 0 0 0 0
 
 # external tomography file
 TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
 
-# external mesh or not
+# use an external mesh created by an external meshing tool or use the internal mesher
 read_external_mesh              = .false.
 
 # absorbing boundary active or not
@@ -141,11 +136,7 @@ ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
 STACEY_ABSORBING_CONDITIONS     = .false.
 ADD_SPRING_TO_STACEY            = .false.
-
-# for horizontal periodic conditions: detect common points between left and right edges
 ADD_PERIODIC_CONDITIONS         = .false.
-
-# horizontal periodicity distance for periodic conditions
 PERIODIC_HORIZ_DIST             = 0.3597d0
 
 # set to true to use GPUs
@@ -160,11 +151,11 @@ mesh_file                       = ./DATA/Mesh_canyon/canyon_mesh_file   # file c
 nodes_coords_file               = ./DATA/Mesh_canyon/canyon_nodes_coords_file   # file containing the nodes coordinates
 materials_file                  = ./DATA/Mesh_canyon/canyon_materials_file   # file containing the material number for each element
 free_surface_file               = ./DATA/Mesh_canyon/canyon_free_surface_file   # file containing the free surface
-axial_elements_file             = ./DATA/axial_elements_file # file containing the axial elements if AXISYM is true
+axial_elements_file             = ./DATA/axial_elements_file   # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = ./DATA/Mesh_canyon/canyon_absorbing_surface_file   # file containing the absorbing surface
 acoustic_forcing_surface_file   = ./DATA/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
-CPML_element_file               = Elements_CPML_list  # file containing the CPML element numbers
-tangential_detection_curve_file = ./DATA/courbe_eros_nodes # file containing the curve delimiting the velocity model
+CPML_element_file               = Elements_CPML_list   # file containing the CPML element numbers
+tangential_detection_curve_file = ./DATA/courbe_eros_nodes   # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------------------------
 # PARAMETERS FOR INTERNAL MESHING
@@ -183,6 +174,7 @@ absorbright                     = .true.
 absorbtop                       = .true.
 absorbleft                      = .true.
 
-# define the different regions of the model in the (nx,nz) spectral element mesh
-nbregions                       = 1              # nb of regions and model number for each
+# define the different regions of the model in the (nx,nz) spectral-element mesh
+nbregions                       = 1              # then set below the different regions and model number for each region
 1 50 1   50 1
+
