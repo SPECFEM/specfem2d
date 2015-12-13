@@ -39,7 +39,7 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CONVOLUTION_MEMORY_VARIABLES, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL
 
-  use specfem_par, only: p_sv,nglob,nspec,nelemabs,it,NSTEP,assign_external_model, &
+  use specfem_par, only: P_SV,nglob,nspec,nelemabs,it,NSTEP,assign_external_model, &
                          ATTENUATION_VISCOELASTIC_SOLID,nspec_allocate,N_SLS, &
                          ibool,kmato,numabs,ispec_is_elastic,codeabs, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
@@ -638,7 +638,7 @@
         do j = 1,NGLLZ
           ! Clayton-Engquist condition if elastic
           iglob = ibool(i,j,ispec)
-          if (p_sv) then !P-SV waves
+          if (P_SV) then !P-SV waves
             b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_left(1,j,ib_left(ispecabs),NSTEP-it+1)
             b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_left(3,j,ib_left(ispecabs),NSTEP-it+1)
           else !SH (membrane) waves
@@ -652,7 +652,7 @@
         i = NGLLX
         do j = 1,NGLLZ
           iglob = ibool(i,j,ispec)
-          if (p_sv) then !P-SV waves
+          if (P_SV) then !P-SV waves
             b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_right(1,j,ib_right(ispecabs),NSTEP-it+1)
             b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_right(3,j,ib_right(ispecabs),NSTEP-it+1)
           else! SH (membrane) waves
@@ -671,7 +671,7 @@
 !! DK DK not needed           if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
         do i = ibegin,iend
           iglob = ibool(i,j,ispec)
-          if (p_sv) then !P-SV waves
+          if (P_SV) then !P-SV waves
             b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),NSTEP-it+1)
             b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_bottom(3,i,ib_bottom(ispecabs),NSTEP-it+1)
           else!SH (membrane) waves
@@ -690,7 +690,7 @@
 !! DK DK not needed           if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
         do i = ibegin,iend
           iglob = ibool(i,j,ispec)
-          if (p_sv) then !P-SV waves
+          if (P_SV) then !P-SV waves
             b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ib_top(ispecabs),NSTEP-it+1)
             b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_top(3,i,ib_top(ispecabs),NSTEP-it+1)
           else !SH (membrane) waves

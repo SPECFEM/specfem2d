@@ -1076,7 +1076,7 @@
                       recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
      if (ier /= 0) call exit_MPI(myrank,'Error retrieving noise ensemble forward wavefield')
      ! safety check
-     if (p_sv) then
+     if (P_SV) then
        ! P-SV case
        call exit_MPI(myrank,'P-SV case not yet implemented.')
      else
@@ -1148,7 +1148,7 @@
   if (any_elastic) then
     call transfer_fields_el_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
 
-    if (p_sv) then
+    if (P_SV) then
       ! P-SV waves
       displ_elastic(1,:) = tmp_displ_2D(1,:)
       displ_elastic(3,:) = tmp_displ_2D(2,:)
@@ -1268,7 +1268,7 @@
     close(55)
 
     !SH (membrane) waves
-    if (.not. p_sv) then
+    if (.not. P_SV) then
       ! only index array(2,:) contains SH wavefield
       b_displ_elastic(1,:) = 0._CUSTOM_REAL
       b_displ_elastic(3,:) = 0._CUSTOM_REAL
@@ -1280,7 +1280,7 @@
 
     if (GPU_MODE) then
       ! prepares wavefields for transfering
-      if (p_sv) then
+      if (P_SV) then
         tmp_displ_2D(1,:) = b_displ_elastic(1,:)
         tmp_displ_2D(2,:) = b_displ_elastic(3,:)
         tmp_veloc_2D(1,:) = b_veloc_elastic(1,:)

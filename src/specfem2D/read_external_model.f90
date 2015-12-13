@@ -46,7 +46,7 @@
     coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
     QKappa_attenuationext,Qmu_attenuationext, &
     c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-    MODEL,ATTENUATION_VISCOELASTIC_SOLID,p_sv,&
+    MODEL,ATTENUATION_VISCOELASTIC_SOLID,P_SV,&
     tomo_material,myrank
 
   implicit none
@@ -197,7 +197,7 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
 
-        if (p_sv .and. (.not. (i == 1 .and. j == 1)) .and. &
+        if (P_SV .and. (.not. (i == 1 .and. j == 1)) .and. &
           ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
            (vsext(i,j,ispec) < TINYVAL  .and. previous_vsext >= TINYVAL)))  &
           call exit_MPI(myrank,'external velocity model cannot be both fluid and solid inside the same spectral element')

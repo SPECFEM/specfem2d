@@ -265,7 +265,7 @@
     stop 'attenuation is only implemented for adjoint calculations with UNDO_ATTENUATION'
   endif
 
-  if (.not. p_sv .and. (ATTENUATION_VISCOELASTIC_SOLID)) then
+  if (.not. P_SV .and. (ATTENUATION_VISCOELASTIC_SOLID)) then
     print *, '*************** WARNING ***************'
     print *, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
     print *, '*************** WARNING ***************'

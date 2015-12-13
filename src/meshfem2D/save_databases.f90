@@ -241,8 +241,8 @@
   write(15,*) 'Q0 freq0'
   write(15,*) Q0,freq0
 
-  write(15,*) 'p_sv'
-  write(15,*) p_sv
+  write(15,*) 'P_SV'
+  write(15,*) P_SV
 
   write(15,*) 'factor_subsample_image'
   write(15,*) factor_subsample_image
@@ -286,8 +286,8 @@
   write(15,*) 'GPU_MODE'
   write(15,*) GPU_MODE
 
-  write(15,*) 'nt deltat'
-  write(15,*) nt,deltat
+  write(15,*) 'NSTEP deltat'
+  write(15,*) NSTEP,deltat
 
   write(15,*) 'NT_DUMP_ATTENUATION'
   write(15,*) NT_DUMP_ATTENUATION

@@ -74,7 +74,7 @@
     if (ispec_is_elastic(ispec)) then
 
       ! checks wave type
-      if (.not. p_sv) then
+      if (.not. P_SV) then
         call exit_MPI(myrank,'output energy for SH waves not implemented yet')
       endif
 

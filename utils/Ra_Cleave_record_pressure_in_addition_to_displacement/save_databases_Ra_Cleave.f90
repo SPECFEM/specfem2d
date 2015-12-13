@@ -160,8 +160,8 @@
     write(15,*) 'Q0 freq0'
     write(15,*) Q0,freq0
 
-    write(15,*) 'p_sv'
-    write(15,*) p_sv
+    write(15,*) 'P_SV'
+    write(15,*) P_SV
 
     write(15,*) 'factor_subsample_image'
     write(15,*) factor_subsample_image

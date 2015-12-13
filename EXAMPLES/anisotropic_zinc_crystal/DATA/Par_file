@@ -7,12 +7,6 @@
 # title of job
 title                           = Test of anisotropic zinc crystal
 
-# axisymmetric (2.5D) or Cartesian planar (2D) simulation
-AXISYM                          = .false.
-
-# set the type of calculation (P-SV or SH/membrane waves)
-p_sv                            = .true.
-
 # forward or adjoint simulation
 # 1 = forward, 2 = adjoint, 3 = both simultaneously
 # note: 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)
@@ -30,12 +24,18 @@ partitioning_method             = 3              # SCOTCH = 3, ascending order (
 ngnod                           = 4
 
 # time step parameters
-nt                              = 1500           # total number of time steps
+NSTEP                           = 1500           # total number of time steps
 deltat                          = 55.e-9         # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
 
 # time stepping
 # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
 time_stepping_scheme            = 1
+
+# axisymmetric (2.5D) or Cartesian planar (2D) simulation
+AXISYM                          = .false.
+
+# set the type of calculation (P-SV or SH/membrane waves)
+P_SV                            = .true.
 
 # set to true to use GPUs
 GPU_MODE                        = .false.

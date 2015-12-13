@@ -37,7 +37,7 @@
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 
-  use specfem_par, only: p_sv,ispec_is_elastic,nglob_elastic,&
+  use specfem_par, only: P_SV,ispec_is_elastic,nglob_elastic,&
                          NSOURCES,source_type,anglesource,source_time_function,&
                          is_proc_source,ispec_selected_source,sourcearray,&
                          hxis_store,hgammas_store,ibool,myrank
@@ -56,7 +56,7 @@
     if (is_proc_source(i_source) == 1 .and. ispec_is_elastic(ispec_selected_source(i_source))) then
       ! collocated force
       if (source_type(i_source) == 1) then
-        if (p_sv) then ! P-SV calculation
+        if (P_SV) then ! P-SV calculation
           do j = 1,NGLLZ
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec_selected_source(i_source))
@@ -80,7 +80,7 @@
 
       ! moment tensor
       if (source_type(i_source) == 2) then
-        if (.not. p_sv )  call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
+        if (.not. P_SV )  call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
         ! add source array
         do j = 1,NGLLZ;
           do i = 1,NGLLX
@@ -107,7 +107,7 @@
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 
-  use specfem_par, only: myrank,p_sv,accel_elastic,ispec_is_elastic,NSTEP,it,&
+  use specfem_par, only: myrank,P_SV,accel_elastic,ispec_is_elastic,NSTEP,it,&
                          nrec,which_proc_receiver,ispec_selected_rec,adj_sourcearrays,&
                          ibool
   implicit none
@@ -125,7 +125,7 @@
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec_selected_rec(irec))
-            if (p_sv) then !P-SH waves
+            if (P_SV) then !P-SH waves
               accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
               accel_elastic(3,iglob) = accel_elastic(3,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
             else !SH (membrane) wavescompute_forces_v

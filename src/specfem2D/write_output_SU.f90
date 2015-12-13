@@ -34,7 +34,7 @@
   subroutine write_output_SU(x_source,z_source,irec,buffer_binary,number_of_components)
 
   use specfem_par, only : NSTEP,nrec,deltat,seismotype,st_xval, &
-                          NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
+                          NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,P_SV, &
                           st_zval,subsamp_seismos
 
   implicit none
@@ -76,7 +76,7 @@
      header2(1)=deltat_int2
      header2(2)=0  ! dummy
      write(12,rec=(irec-1)*60+(irec-1)*NSTEP+30) header2
-     if (seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
+     if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
         ! headers
         if (seismo_offset==0) then
            write(14,rec=(irec-1)*60+(irec-1)*NSTEP+1)  irec
@@ -100,7 +100,7 @@
   ! the "60" in the following corresponds to 240 bytes header (note the reclength is 4 bytes)
   do isample = 1, seismo_current
      write(12,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,1))
-     if (seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
+     if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
         write(14,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,2))
      endif
   enddo

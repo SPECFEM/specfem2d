@@ -74,7 +74,7 @@
   subroutine read_parameters_noise()
 
   use specfem_par, only: SIMULATION_TYPE,SAVE_FORWARD, &
-                         any_acoustic,any_poroelastic,p_sv, &
+                         any_acoustic,any_poroelastic,P_SV, &
                          Mxx,Mxz,Mzz,factor,NSOURCES, &
                          xi_receiver,gamma_receiver,ispec_selected_rec,nrec,myrank
 
@@ -109,7 +109,7 @@
 
 ! check simulation parameters
 
-  if ((NOISE_TOMOGRAPHY /= 0) .and. (p_sv)) write(*,*) 'Warning: For P-SV case, noise tomography subroutines not yet fully tested'
+  if ((NOISE_TOMOGRAPHY /= 0) .and. (P_SV)) write(*,*) 'Warning: For P-SV case, noise tomography subroutines not yet fully tested'
 
   if (NOISE_TOMOGRAPHY == 1) then
      if (SIMULATION_TYPE /= 1) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=1 requires SIMULATION_TYPE=1    -> check DATA/Par_file')
@@ -143,7 +143,7 @@
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ
 
-  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,p_sv,NSTEP,deltat,ibool, &
+  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,deltat,ibool, &
                          xigll,zigll,myrank
 
   use specfem_par_noise
@@ -259,7 +259,7 @@
 
   call lagrange_any(gamma_noise,NGLLZ,zigll,hgamma,hpgamma)
 
-  if (p_sv) then ! P-SV simulation
+  if (P_SV) then ! P-SV simulation
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec_noise)
@@ -284,7 +284,7 @@
   subroutine add_point_source_noise()
 
   use constants,only: NGLLX,NGLLZ
-  use specfem_par, only: p_sv,it,ibool,accel_elastic
+  use specfem_par, only: P_SV,it,ibool,accel_elastic
   use specfem_par_noise
 
   implicit none
@@ -292,7 +292,7 @@
   !local
   integer :: i,j,iglob
 
-  if (p_sv) then ! P-SV calculation
+  if (P_SV) then ! P-SV calculation
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec_noise)
@@ -320,7 +320,7 @@
   subroutine add_surface_movie_noise(accel_elastic)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
-  use specfem_par, only: p_sv,it,NSTEP,nspec,nglob,ibool,jacobian,wxgll,wzgll,myrank
+  use specfem_par, only: P_SV,it,NSTEP,nspec,nglob,ibool,jacobian,wxgll,wzgll,myrank
   use specfem_par_noise
 
   implicit none
@@ -337,7 +337,7 @@
     if (ios /= 0) call exit_MPI(myrank,'Error retrieving generating wavefield.')
   endif
 
-  if (p_sv) then
+  if (P_SV) then
     call exit_MPI(myrank,'P-SV case not yet implemented.')
   else
     if (NOISE_TOMOGRAPHY==2) read(unit=500,rec=NSTEP-it+1) surface_movie_y_noise
@@ -351,7 +351,7 @@
   do ispec = 1, nspec
     do j = 1, NGLLZ
       do i = 1, NGLLX
-        if (p_sv) then ! P-SV calculation
+        if (P_SV) then ! P-SV calculation
           iglob = ibool(i,j,ispec)
           accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_x_noise(iglob) * &
                                    mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
@@ -375,7 +375,7 @@
   subroutine save_surface_movie_noise()
 
   use constants,only: CUSTOM_REAL
-  use specfem_par, only: p_sv,it,NSTEP,nglob,displ_elastic,myrank
+  use specfem_par, only: P_SV,it,NSTEP,nglob,displ_elastic,myrank
   use specfem_par_noise,only: NOISE_TOMOGRAPHY
 
   implicit none
@@ -404,7 +404,7 @@
 
   endif ! (it==1)
 
-  if (p_sv) then
+  if (P_SV) then
     call exit_MPI(myrank,'P-SV case not yet implemented.')
   else
     write(unit=500,rec=it) displ_elastic(2,:)

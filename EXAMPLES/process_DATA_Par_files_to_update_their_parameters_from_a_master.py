@@ -16,7 +16,9 @@ import collections
 # deprecated parameter names which have been renamed
 DEPRECATED_RENAMED_PARAMETERS = [ \
   ("enreg_surf_same_vertical", "record_at_surface_same_vertical"), \
-  ("PERIODIC_horiz_dist","PERIODIC_HORIZ_DIST") \
+  ("PERIODIC_horiz_dist","PERIODIC_HORIZ_DIST"), \
+  ("p_sv","P_SV"), \
+  ("nt","NSTEP"), \
 ]
 
 # exclude other possible files with similar name, but with different format
@@ -181,7 +183,8 @@ def read_Par_file_sections(parameters,file,verbose=False):
                     appendix = ''
 
                 # checks for deprecated parameter name
-                name = update_old_parameter_name(name)
+                #name_in = name
+                #name = update_old_parameter_name(name_in)
 
                 # checks if entry belongs to new receiver set
                 if name == "nrec":
@@ -289,24 +292,20 @@ def get_maximum_parameter_name_length(parameters,verbose=False):
 #----------------------------------------------------------------------------
 #
 
-def update_old_parameter_name(name):
+def update_old_parameter_name(name_in):
     """
     updates parameter name
     """
     global DEPRECATED_RENAMED_PARAMETERS
 
     # checks for old, deprecated parameters
-    name2 = name
+    name_out = name_in
     for old_name,new_name in DEPRECATED_RENAMED_PARAMETERS:
         # converts old to new parameter name
-        if name in old_name :
-            # renames old (e.g. enreg_surf_same_vertical1 to record_at_surface_same_vertical1
-            if name == old_name:
-                name2 = new_name
-            else:
-                name2 = name[0:len(old_name)] + name[len(old_name)+1:len(name)]
-            print "deprecated name: ",name," -> will be converted to ",new_name
-    return name2
+        if name_in == old_name :
+            name_out = new_name
+            print "deprecated name: ",name_in," -> will be converted to ",name_out
+    return name_out
 
 #
 #----------------------------------------------------------------------------

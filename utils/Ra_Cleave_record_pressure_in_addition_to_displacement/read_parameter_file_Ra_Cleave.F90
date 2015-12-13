@@ -64,7 +64,7 @@ module parameter_file
 
   double precision :: Q0,freq0
 
-  logical :: p_sv
+  logical :: P_SV
   logical :: any_abs,absbottom,absright,abstop,absleft
   logical :: ADD_SPRING_TO_STACEY
 
@@ -221,7 +221,7 @@ contains
   if(err_occurred() /= 0) stop 'error reading parameter 14 in Par_file'
 
   ! determine if body or surface (membrane) waves calculation
-  call read_value_logical_p(p_sv, 'solver.p_sv')
+  call read_value_logical_p(P_SV, 'solver.P_SV')
   if(err_occurred() /= 0) stop 'error reading parameter 15 in Par_file'
 
   ! read time step parameters

@@ -36,7 +36,7 @@
 
   use constants,only: IMAIN
 
-  use specfem_par, only: myrank,p_sv,it, &
+  use specfem_par, only: myrank,P_SV,it, &
                          potential_acoustic,potential_gravitoacoustic, &
                          potential_gravito,displ_elastic,displs_poroelastic, &
                          potential_dot_acoustic,potential_dot_gravitoacoustic, &
@@ -56,7 +56,7 @@
   endif
 
   ! determines postscript output type
-  if (imagetype_postscript == 1 .and. p_sv) then
+  if (imagetype_postscript == 1 .and. P_SV) then
 
     if (myrank == 0) write(IMAIN,*) 'drawing displacement vector as small arrows...'
     call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
@@ -64,7 +64,7 @@
 
     call plot_post()
 
-  else if (imagetype_postscript == 2 .and. p_sv) then
+  else if (imagetype_postscript == 2 .and. P_SV) then
 
     if (myrank == 0) write(IMAIN,*) 'drawing velocity vector as small arrows...'
     call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
@@ -72,7 +72,7 @@
 
     call plot_post()
 
-  else if (imagetype_postscript == 3 .and. p_sv) then
+  else if (imagetype_postscript == 3 .and. P_SV) then
 
     if (myrank == 0) write(IMAIN,*) 'drawing acceleration vector as small arrows...'
     call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
@@ -80,14 +80,14 @@
 
     call plot_post()
 
-  else if (.not. p_sv) then
+  else if (.not. P_SV) then
     call exit_MPI(myrank,'cannot draw a SH scalar field as a vector plot, turn PostScript plots off')
   else
     call exit_MPI(myrank,'wrong type for PostScript snapshots')
   endif
 
   ! user output
-  if (myrank == 0 .and. imagetype_postscript /= 4 .and. p_sv ) then
+  if (myrank == 0 .and. imagetype_postscript /= 4 .and. P_SV ) then
     write(IMAIN,*) 'PostScript file written'
     call flush_IMAIN()
   endif

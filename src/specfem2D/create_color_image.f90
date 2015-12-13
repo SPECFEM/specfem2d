@@ -39,7 +39,7 @@
 
   use constants,only: TINYVAL,HUGEVAL,STABILITY_THRESHOLD
 
-  use specfem_par, only: myrank,it,NSOURCES,p_sv,nrec
+  use specfem_par, only: myrank,it,NSOURCES,P_SV,nrec
 
   use specfem_par_movie,only: image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color, &
     isnapshot_number,cutsnaps,image_color_vp_display, &
@@ -136,7 +136,7 @@
       else if (abs(image_color_data(ix,iy)) < amplitude_max * cutsnaps) then
 
 ! use P velocity model as background where amplitude is negligible
-        if ((p_sv) .and. ((vpmax-vpmin)/max(vpmin, TINYVAL) > 0.02d0)) then
+        if ((P_SV) .and. ((vpmax-vpmin)/max(vpmin, TINYVAL) > 0.02d0)) then
           x1 = (image_color_vp_display(ix,iy)-vpmin)/(vpmax-vpmin)
         else
           x1 = 0.5d0

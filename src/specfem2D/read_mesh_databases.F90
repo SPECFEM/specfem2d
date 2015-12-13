@@ -167,7 +167,7 @@
   read(IIN,*) Q0,freq0
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) p_sv
+  read(IIN,*) P_SV
 
   read(IIN,"(a80)") datlin
   read(IIN,*) factor_subsample_image
@@ -1635,7 +1635,7 @@
   use specfem_par, only : any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
     ispec_is_anisotropic,ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic, &
     porosity,anisotropy,kmato, &
-    nspec,p_sv,count_nspec_acoustic,PML_BOUNDARY_CONDITIONS
+    nspec,P_SV,count_nspec_acoustic,PML_BOUNDARY_CONDITIONS
 
   implicit none
 
@@ -1677,7 +1677,7 @@
   enddo ! of do ispec = 1,nspec
 
   ! safety checks
-  if (.not. p_sv .and. .not. any_elastic) then
+  if (.not. P_SV .and. .not. any_elastic) then
     print *, '*************** WARNING ***************'
     print *, 'Surface (membrane) waves calculation needs an elastic medium'
     print *, '*************** WARNING ***************'
@@ -1688,7 +1688,7 @@
     stop 'PML boundary conditions not implemented for poroelastic simulations yet'
   endif
 
-  if (PML_BOUNDARY_CONDITIONS .and. any_elastic .and. (.not. p_sv)) then
+  if (PML_BOUNDARY_CONDITIONS .and. any_elastic .and. (.not. P_SV)) then
     stop 'PML boundary conditions not implemented for SH simulations yet'
   endif
 

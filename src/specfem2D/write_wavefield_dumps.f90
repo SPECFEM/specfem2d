@@ -37,7 +37,7 @@
   use constants,only: IMAIN,SIZE_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: myrank,nglob,nspec, &
-                         ibool,coord,p_sv,it,SIMULATION_TYPE, &
+                         ibool,coord,P_SV,it,SIMULATION_TYPE, &
                          potential_acoustic,potential_gravitoacoustic, &
                          potential_gravito,displ_elastic,displs_poroelastic, &
                          potential_dot_acoustic,veloc_elastic,velocs_poroelastic,  &
@@ -123,11 +123,11 @@
     call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_gravitoacoustic, &
                                      potential_gravito,accel_elastic,accels_poroelastic)
 
-  else if (imagetype_wavefield_dumps == 4 .and. p_sv) then
+  else if (imagetype_wavefield_dumps == 4 .and. P_SV) then
     if (myrank == 0) write(IMAIN,*) 'dumping the pressure field...'
     call compute_pressure_whole_medium()
 
-  else if (imagetype_wavefield_dumps == 4 .and. .not. p_sv) then
+  else if (imagetype_wavefield_dumps == 4 .and. .not. P_SV) then
     call exit_MPI(myrank,'cannot dump the pressure field for SH (membrane) waves')
 
   else
@@ -135,7 +135,7 @@
   endif
 
   if (use_binary_for_wavefield_dumps) then
-    if (p_sv .and. .not. imagetype_wavefield_dumps == 4) then
+    if (P_SV .and. .not. imagetype_wavefield_dumps == 4) then
       nb_of_values_to_save = 2
     else
       nb_of_values_to_save = 1
@@ -160,7 +160,7 @@
           icounter = icounter + 1
           mask_ibool(iglob) = .true.
           if (use_binary_for_wavefield_dumps) then
-            if (p_sv) then
+            if (P_SV) then
               ! P-SV waves
               if (imagetype_wavefield_dumps == 4) then
                 ! by convention we use the third component of the array to store the pressure above
@@ -173,7 +173,7 @@
               write(27,rec=icounter) sngl(vector_field_display(2,iglob))
             endif
           else
-            if (p_sv) then
+            if (P_SV) then
               ! P-SV waves
               if (imagetype_wavefield_dumps == 4) then
                 ! by convention we use the third component of the array to store the pressure above

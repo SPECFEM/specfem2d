@@ -225,7 +225,7 @@
 
           ! rotate seismogram components if needed, except if recording pressure, which is a scalar
           if (seismotype /= 4 .and. seismotype /= 6) then
-            if (p_sv) then
+            if (P_SV) then
               sisux(seismo_current,irecloc) =   cosrot_irec(irecloc)*valux + sinrot_irec(irecloc)*valuz
               sisuz(seismo_current,irecloc) = - sinrot_irec(irecloc)*valux + cosrot_irec(irecloc)*valuz
             else
@@ -286,7 +286,7 @@
 
   use specfem_par, only : sisux,sisuz,siscurl,station_name,network_name, &
                           NSTEP,which_proc_receiver,nrec,myrank,deltat,seismotype,t0, &
-                          NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,p_sv, &
+                          NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,P_SV, &
                           SU_FORMAT,save_ASCII_seismograms, &
                           save_binary_seismograms_single,save_binary_seismograms_double,subsamp_seismos
 
@@ -342,7 +342,7 @@
 
 
 ! only one seismogram if pressures or SH (membrane) waves
-  if (seismotype == 4 .or. seismotype == 6 .or. .not. p_sv) then
+  if (seismotype == 4 .or. seismotype == 6 .or. .not. P_SV) then
      number_of_components = 1
   else if (seismotype == 5) then
      number_of_components = NDIM+1
@@ -400,7 +400,7 @@
     if (save_binary_seismograms_single) then
       if (seismotype == 4 .or. seismotype == 6) then
         open(unit=12,file='OUTPUT_FILES/Up_file_single'//suffix,status='unknown',access='direct',recl=4)
-      else if (.not.p_sv) then
+      else if (.not. P_SV) then
         open(unit=12,file='OUTPUT_FILES/Uy_file_single'//suffix,status='unknown',access='direct',recl=4)
       else
         open(unit=12,file='OUTPUT_FILES/Ux_file_single'//suffix,status='unknown',access='direct',recl=4)
@@ -410,7 +410,7 @@
     if (save_binary_seismograms_double) then
       if (seismotype == 4 .or. seismotype == 6) then
         ! continue without output
-      else if (.not.p_sv) then
+      else if (.not. P_SV) then
         open(unit=13,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
       else
         open(unit=13,file='OUTPUT_FILES/Ux_file_double'//suffix,status='unknown',access='direct',recl=8)
@@ -418,7 +418,7 @@
     endif
 
     ! no Z component seismogram if pressure
-    if (seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
+    if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
       if (save_binary_seismograms_single) &
         open(unit=14,file='OUTPUT_FILES/Uz_file_single'//suffix,status='unknown',access='direct',recl=4)
       if (save_binary_seismograms_double) &
@@ -495,7 +495,7 @@
             if (seismotype == 4 .or. seismotype == 6) channel = 'PRE'
 
             ! in case of SH (membrane) waves, use different abbreviation
-            if (.not.p_sv) channel = 'BXY'
+            if (.not. P_SV) channel = 'BXY'
 
             ! create the name of the seismogram file for each slice
             ! file name includes the name of the station, the network and the component
@@ -552,7 +552,7 @@
             if (save_binary_seismograms_double) &
               write(13,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,irec,1)
 
-            if (seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
+            if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
               if (save_binary_seismograms_single) &
                 write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,2))
               if (save_binary_seismograms_double) &
@@ -600,7 +600,7 @@
   ! closes files
   if (save_binary_seismograms_single) close(12)
   if (save_binary_seismograms_double) close(13)
-  if (seismotype /= 4 .and. seismotype /= 6 .and. p_sv) then
+  if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
     if (save_binary_seismograms_single) close(14)
     if (save_binary_seismograms_double) close(15)
   endif

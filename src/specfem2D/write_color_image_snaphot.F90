@@ -41,7 +41,7 @@
   use constants,only: IMAIN,NGLLX,NGLLZ,REMOVE_PMLS_FROM_JPEG_IMAGES
 
   use specfem_par,only: myrank,nspec,it,NPROC, &
-                        assign_external_model,ibool,kmato,density,rhoext,p_sv, &
+                        assign_external_model,ibool,kmato,density,rhoext,P_SV, &
                         potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
                         potential_gravito,potential_dot_gravito,potential_dot_dot_gravito, &
                         potential_gravitoacoustic,potential_dot_gravitoacoustic,potential_dot_dot_gravitoacoustic, &
@@ -126,11 +126,11 @@
       enddo
     enddo
 
-  else if (imagetype_JPEG == 10 .and. p_sv) then
+  else if (imagetype_JPEG == 10 .and. P_SV) then
     if (myrank == 0) write(IMAIN,*) 'drawing image of pressure field...'
     call compute_pressure_whole_medium()
 
-  else if (imagetype_JPEG == 10 .and. .not. p_sv) then
+  else if (imagetype_JPEG == 10 .and. .not. P_SV) then
     call exit_MPI(myrank,'cannot draw pressure field for SH (membrane) waves')
 
   else
@@ -167,7 +167,7 @@
     if (i > NX_IMAGE_color ) i = NX_IMAGE_color
     if (j > NZ_IMAGE_color ) j = NZ_IMAGE_color
 
-    if (p_sv) then ! P-SH waves, plot a component of vector, its norm, or else pressure
+    if (P_SV) then ! P-SH waves, plot a component of vector, its norm, or else pressure
       if (iglob_image_color(i,j) /= -1) then
         if (imagetype_JPEG == 1  .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7 .or. &
             imagetype_JPEG == 11 .or. imagetype_JPEG == 14) then
@@ -234,7 +234,7 @@
         if (i > NX_IMAGE_color) i = NX_IMAGE_color
         if (j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
-        if (p_sv) then ! P-SH waves, plot a component of vector, its norm, or else pressure
+        if (P_SV) then ! P-SH waves, plot a component of vector, its norm, or else pressure
 
           if (imagetype_JPEG == 1 .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7 .or. &
               imagetype_JPEG == 11 .or. imagetype_JPEG == 14) then

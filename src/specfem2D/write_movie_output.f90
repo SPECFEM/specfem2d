@@ -41,7 +41,7 @@
     potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
     b_displ_elastic,rho_k,rho_kl, &
-    any_acoustic,any_elastic,GPU_MODE,p_sv
+    any_acoustic,any_elastic,GPU_MODE,P_SV
 
   use specfem_par_gpu,only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
 
@@ -72,7 +72,7 @@
     ! elastic domains
     if (any_elastic) then
       call transfer_fields_el_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
-      if (p_sv) then
+      if (P_SV) then
         ! P-SV waves
         displ_elastic(1,:) = tmp_displ_2D(1,:)
         displ_elastic(3,:) = tmp_displ_2D(2,:)

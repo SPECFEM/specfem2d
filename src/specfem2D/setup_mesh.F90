@@ -147,7 +147,7 @@
     ! elastic elements have two degrees of freedom per point
     nb_elastic_DOFs  = nint(nglob_total*ratio_2DOFs*2)
 
-    if (p_sv) then
+    if (P_SV) then
       write(IMAIN,*)
       write(IMAIN,*) 'Approximate number of acoustic degrees of freedom in the mesh: ',nb_acoustic_DOFs
       write(IMAIN,*) 'Approximate number of elastic degrees of freedom in the mesh: ',nb_elastic_DOFs

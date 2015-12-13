@@ -35,7 +35,7 @@ TO RUN:
 
 6. mv OUTPUT_FILES OUTPUT_FILES_PSV
 
-7. set p_sv = .false. in Par_file_Tromp2005
+7. set P_SV = .false. in Par_file_Tromp2005
 
 8. execute script to run mesher and solver for the SH case:
    ./process.sh

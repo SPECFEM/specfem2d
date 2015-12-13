@@ -83,7 +83,7 @@
                          nglob,nspec,ibool,accel_elastic,b_displ_elastic, &
                          rhol_global,mul_global,kappal_global, &
                          density,poroelastcoef,kmato,assign_external_model,rhoext,vsext,vpext,&
-                         deltat,p_sv,displ_elastic,&
+                         deltat,P_SV,displ_elastic,&
                          mu_k,kappa_k,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
                          GPU_MODE
 
@@ -159,7 +159,7 @@
           b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
 
           iglob = ibool(i,j,ispec)
-          if (p_sv) then !P-SV waves
+          if (P_SV) then !P-SV waves
             dsxx =  dux_dxl
             dsxz = HALF * (duz_dxl + dux_dzl)
             dszz =  duz_dzl

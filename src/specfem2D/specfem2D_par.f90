@@ -60,7 +60,7 @@ module specfem_par
   integer :: SIMULATION_TYPE
 
   ! for P-SV or SH (membrane) waves calculation
-  logical :: p_sv
+  logical :: P_SV
 
   ! whether or not the last frame is saved to reconstruct the forward field
   logical :: SAVE_FORWARD
@@ -339,10 +339,15 @@ module specfem_par
   ! 3 = classical 4th-order 4-stage Runge-Kutta
   integer :: time_stepping_scheme
 
-  ! coefficients of the explicit Newmark time scheme
+  ! time steps
   integer :: NSTEP
-  double precision :: deltatover2,deltatsquareover2,timeval
   double precision :: deltat
+
+  ! coefficients of the explicit Newmark time scheme
+  double precision :: deltatover2,deltatsquareover2
+
+  ! current time
+  double precision :: timeval
 
   ! for backward simulation in adjoint inversion
   double precision :: b_deltatover2,b_deltatsquareover2,b_deltat ! coefficients of the explicit Newmark time scheme
