@@ -70,7 +70,7 @@
     enddo
   enddo
 
-  if (save_model=='binary') then
+  if (trim(SAVE_MODEL) == 'binary') then
     write(outputname,'(a,i6.6,a)') './DATA/proc',myrank,'_NSPEC_ibool.bin'
 
     open(888,file=trim(outputname),status='unknown',form='unformatted',iostat=ier)

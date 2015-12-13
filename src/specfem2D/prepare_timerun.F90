@@ -465,12 +465,16 @@
     call prepare_color_image_init()
 
     ! allocate an array for image data
-    allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if (ier /= 0) stop 'error in an allocate statement 1'
-    allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if (ier /= 0) stop 'error in an allocate statement 2'
+    allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
+    if (ier /= 0) stop 'error in an allocate statement 1'
+    allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
+    if (ier /= 0) stop 'error in an allocate statement 2'
 
     ! allocate an array for the grid point that corresponds to a given image data point
-    allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if (ier /= 0) stop 'error in an allocate statement 3'
-    allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier); if (ier /= 0) stop 'error in an allocate statement 4'
+    allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
+    if (ier /= 0) stop 'error in an allocate statement 3'
+    allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
+    if (ier /= 0) stop 'error in an allocate statement 4'
 
     ! creates pixels indexing
     call prepare_color_image_pixels()
@@ -889,7 +893,7 @@
   ! poro-elastic domains
   if (any_poroelastic) then
 
-    if (.not. SAVE_ASCII_KERNELS) stop 'poroelastic simulations must use SAVE_ASCII_KERNELS'
+    if (.not. save_ASCII_kernels) stop 'poroelastic simulations must use save_ASCII_kernels'
 
     ! Primary kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_B_C_kernel.dat'

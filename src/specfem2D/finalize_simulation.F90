@@ -96,7 +96,7 @@ subroutine finalize_simulation()
       enddo
       close(1001)
 
-    else if (trim(SAVE_MODEL)=='ascii') then
+    else if (trim(SAVE_MODEL) == 'ascii') then
       write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat'
       open(unit=1001,file= inputname,status='unknown',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_rho_vp_vs.dat')
