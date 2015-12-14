@@ -90,8 +90,7 @@
   use specfem_par_gpu,only: Mesh_pointer,deltatf
 
   use specfem_par, only: c11_k,c13_k,c15_k,c33_k,c35_k,c55_k,ispec_is_anisotropic,&
-                         rho_kl,c11_kl,c13_kl,c15_kl,c33_kl,c35_kl,c55_kl,&
-                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
+                         rho_kl,c11_kl,c13_kl,c15_kl,c33_kl,c35_kl,c55_kl
 
   implicit none
 
