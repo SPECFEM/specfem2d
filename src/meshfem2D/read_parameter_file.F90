@@ -126,7 +126,7 @@ module parameter_file
 
   ! time steps
   integer :: NSTEP
-  double precision :: deltat
+  double precision :: DT
 
   ! value of time_stepping_scheme to decide which time scheme will be used
   ! # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta)
@@ -250,8 +250,8 @@ contains
   call read_value_integer_p(NSTEP, 'solver.NSTEP')
   if (err_occurred() /= 0) stop 'error reading parameter NSTEP in Par_file'
 
-  call read_value_double_precision_p(deltat, 'solver.deltat')
-  if (err_occurred() /= 0) stop 'error reading parameter deltat in Par_file'
+  call read_value_double_precision_p(DT, 'solver.DT')
+  if (err_occurred() /= 0) stop 'error reading parameter DT in Par_file'
 
   call read_value_integer_p(time_stepping_scheme, 'solver.time_stepping_scheme')
   if (err_occurred() /= 0) stop 'error reading parameter time_stepping_scheme in Par_file'

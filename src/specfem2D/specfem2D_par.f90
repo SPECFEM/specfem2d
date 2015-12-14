@@ -341,10 +341,10 @@ module specfem_par
 
   ! time steps
   integer :: NSTEP
-  double precision :: deltat
+  double precision :: DT
 
   ! coefficients of the explicit Newmark time scheme
-  double precision :: deltatover2,deltatsquareover2
+  double precision :: deltat,deltatover2,deltatsquareover2
 
   ! current time
   double precision :: timeval

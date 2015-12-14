@@ -24,8 +24,10 @@ partitioning_method             = 3              # SCOTCH = 3, ascending order (
 ngnod                           = 4
 
 # time step parameters
-NSTEP                           = 1500           # total number of time steps
-deltat                          = 55.e-9         # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
+# total number of time steps
+NSTEP                           = 1500
+# duration of a time step (see section "How to choose the time step" of the manual for how to do this)
+DT                              = 55.e-9
 
 # time stepping
 # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta

@@ -213,7 +213,7 @@
 
   !---- read time step
   read(IIN,"(a80)") datlin
-  read(IIN,*) NSTEP,deltat
+  read(IIN,*) NSTEP,DT
 
   read(IIN,"(a80)") datlin
   read(IIN,*) NT_DUMP_ATTENUATION
@@ -223,6 +223,8 @@
   read(IIN,*) ACOUSTIC_FORCING
 
   !-------- finish reading init section
+  ! sets time step for time scheme
+  deltat = DT
 
   ! user output
   if (myrank == 0) then
@@ -295,7 +297,7 @@
 
 703 format(//' I t e r a t i o n s '/1x,19('='),//5x, &
       'Number of time iterations . . . . .(NSTEP) =',i8,/5x, &
-      'Time step increment. . . . . . . .(deltat) =',1pe15.6,/5x, &
+      'Time step increment. . . . . . . . . .(DT) =',1pe15.6,/5x, &
       'Total simulation duration . . . . . (ttot) =',1pe15.6)
 
   end subroutine read_mesh_for_init

@@ -286,8 +286,8 @@
   write(15,*) 'GPU_MODE'
   write(15,*) GPU_MODE
 
-  write(15,*) 'NSTEP deltat'
-  write(15,*) NSTEP,deltat
+  write(15,*) 'NSTEP DT'
+  write(15,*) NSTEP,DT
 
   write(15,*) 'NT_DUMP_ATTENUATION'
   write(15,*) NT_DUMP_ATTENUATION
