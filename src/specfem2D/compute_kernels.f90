@@ -86,8 +86,12 @@
                          deltat,P_SV,displ_elastic,&
                          mu_k,kappa_k,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
                          GPU_MODE
-
+  
   use specfem_par_gpu,only: Mesh_pointer,deltatf
+
+  use specfem_par, only: c11_k,c13_k,c15_k,c33_k,c35_k,c55_k,ispec_is_anisotropic,&
+                         rho_kl,c11_kl,c13_kl,c15_kl,c33_kl,c35_kl,c55_kl,&
+                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
 
   implicit none
 
@@ -159,20 +163,33 @@
           b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
 
           iglob = ibool(i,j,ispec)
-          if (P_SV) then !P-SV waves
-            dsxx =  dux_dxl
-            dsxz = HALF * (duz_dxl + dux_dzl)
-            dszz =  duz_dzl
 
-            b_dsxx =  b_dux_dxl
-            b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
-            b_dszz =  b_duz_dzl
+          ! Voigt kernels, e.g., see Sieminski, 2007a,b
+          if(ispec_is_anisotropic(ispec))then
+            c11_k(iglob) = dux_dxl*b_dux_dxl
+            c13_k(iglob) = dux_dxl*b_duz_dzl + duz_dzl*b_dux_dxl
+            c15_k(iglob) = 2*(dux_dxl*HALF*(b_dux_dzl+b_duz_dxl)+&
+                           HALF*(dux_dzl+duz_dxl)*b_dux_dxl)
+            c33_k(iglob) = duz_dzl*b_duz_dzl
+            c35_k(iglob) = 2*(duz_dzl*HALF*(b_dux_dzl+b_duz_dxl)+&
+                           HALF*(dux_dzl+duz_dxl)*b_duz_dzl)
+            c55_k(iglob) = 4*HALF*(dux_dzl+duz_dxl)*HALF*(b_dux_dzl+b_duz_dxl)         
+          else
+            if (p_sv) then !P-SV waves
+              dsxx =  dux_dxl
+              dsxz = HALF * (duz_dxl + dux_dzl)
+              dszz =  duz_dzl
 
-            kappa_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl)
-            mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
-                          2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
-          else !SH (membrane) waves
-            mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
+              b_dsxx =  b_dux_dxl
+              b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
+              b_dszz =  b_duz_dzl
+
+              kappa_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl)
+              mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
+                            2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
+            else !SH (membrane) waves
+              mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
+            endif
           endif
         enddo; enddo
       endif
@@ -218,6 +235,25 @@
           !
           bulk_c_kl(i,j,ispec) =  TWO * kappa_kl(i,j,ispec)
           bulk_beta_kl(i,j,ispec) =  TWO * mu_kl(i,j,ispec)
+        enddo
+      enddo
+    endif
+
+    ! Voigt kernels, e.g., see Sieminski, 2007a,b
+    if(ispec_is_anisotropic(ispec)) then
+      do j = 1, NGLLZ
+        do i = 1, NGLLX
+          iglob = ibool(i,j,ispec)
+          rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rho_k(iglob) * deltat
+          c11_kl(i,j,ispec) = c11_kl(i,j,ispec) - c11_k(iglob) * deltat
+          c13_kl(i,j,ispec) = c13_kl(i,j,ispec) - c13_k(iglob) * deltat
+          c15_kl(i,j,ispec) = c15_kl(i,j,ispec) - c15_k(iglob) * deltat
+          c33_kl(i,j,ispec) = c33_kl(i,j,ispec) - c33_k(iglob) * deltat
+          c35_kl(i,j,ispec) = c35_kl(i,j,ispec) - c35_k(iglob) * deltat
+          c55_kl(i,j,ispec) = c55_kl(i,j,ispec) - c55_k(iglob) * deltat
+          rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + c11_kl(i,j,ispec) + &
+                               c13_kl(i,j,ispec) + c15_kl(i,j,ispec) + c33_kl(i,j,ispec) + &
+                               c35_kl(i,j,ispec) + c55_kl(i,j,ispec)
         enddo
       enddo
     endif

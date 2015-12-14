@@ -48,6 +48,10 @@
                           C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, mufrb_kl, &
                           rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, GPU_MODE
 
+  use specfem_par, only : ispec_is_anisotropic, c11_kl, c13_kl, c15_kl, c33_kl, &
+                          c35_kl, c55_kl, &
+                          rhoext, c11ext, c13ext, c15ext, c33ext, c35ext, c55ext
+
   implicit none
 
   integer :: i, j, ispec, iglob
@@ -106,8 +110,14 @@
             iglob = ibool(i,j,ispec)
             xx = coord(1,iglob)
             zz = coord(2,iglob)
-            write(97,'(5e15.5e4)') xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
-            write(98,'(5e15.5e4)') xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+            if(count(ispec_is_anisotropic(:) .eqv. .true.) >= 1)then ! anisotropic
+              write(97,'(9e15.5e4)') xx, zz, rho_kl(i,j,ispec), c11_kl(i,j,ispec),&
+                    c13_kl(i,j,ispec), c15_kl(i,j,ispec), c33_kl(i,j,ispec), c35_kl(i,j,ispec),&
+                    c55_kl(i,j,ispec)
+            else
+              write(97,'(5e15.5e4)') xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
+              write(98,'(5e15.5e4)') xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
+            endif
           enddo
         enddo
       enddo
@@ -116,13 +126,23 @@
     else
       ! binary format
       write(204) rho_kl
-      write(205) kappa_kl
-      write(206) mu_kl
-      write(207) rhop_kl
-      write(208) alpha_kl
-      write(209) beta_kl
-      write(210) bulk_c_kl
-      write(211) bulk_beta_kl
+      if(count(ispec_is_anisotropic(:) .eqv. .true.) >= 1)then ! anisotropic
+        write(205) c11_kl
+        write(206) c13_kl
+        write(207) c15_kl
+        write(208) c33_kl
+        write(209) c35_kl
+        write(210) c55_kl
+      else
+        write(205) kappa_kl
+        write(206) mu_kl
+        write(207) rhop_kl
+        write(208) alpha_kl
+        write(209) beta_kl
+        write(210) bulk_c_kl
+        write(211) bulk_beta_kl
+        close(211)
+      endif
       close(204)
       close(205)
       close(202)
@@ -130,7 +150,6 @@
       close(208)
       close(209)
       close(210)
-      close(211)
       ! hessian kernels
       if (APPROXIMATE_HESS_KL) then
         write(214) rhorho_el_hessian_final1

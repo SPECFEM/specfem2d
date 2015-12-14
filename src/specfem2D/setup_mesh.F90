@@ -65,8 +65,9 @@
   all_anisotropic = .false.
   if (count(ispec_is_anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
 
-  if (all_anisotropic .and. anyabs) &
-    call exit_MPI(myrank,'Cannot put absorbing boundaries if anisotropic materials along edges')
+! absorbing boundaries work, but not perfect for anisotropic
+!  if (all_anisotropic .and. anyabs) &
+!    call exit_MPI(myrank,'Cannot put absorbing boundaries if anisotropic materials along edges')
 
   if (ATTENUATION_VISCOELASTIC_SOLID .and. all_anisotropic) then
     call exit_MPI(myrank,'Cannot turn attenuation on in anisotropic materials')
