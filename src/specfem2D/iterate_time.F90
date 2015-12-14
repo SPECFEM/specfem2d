@@ -323,7 +323,7 @@
         ! ********** assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
         ! ************************************************************************************
 #ifdef USE_MPI
-        if (nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
+        if (NPROC > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
           call assemble_MPI_vector_ac(potential_dot_dot_acoustic)
 
           if (time_stepping_scheme == 2) then
@@ -532,7 +532,7 @@
 
 ! assembling potential_dot_dot for gravitoacoustic elements
 !#ifdef USE_MPI
-!    if (nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
+!    if (NPROC > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
 !      call assemble_MPI_vector_ac(potential_dot_dot_gravitoacoustic)
 !
 !    endif
@@ -678,7 +678,7 @@
         ! ************************************ assembling accel_elastic for elastic elements
         ! ************************************************************************************
 #ifdef USE_MPI
-        if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
+        if (NPROC > 1 .and. any_elastic .and. ninterface_elastic > 0) then
           if (time_stepping_scheme == 2) then
             if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
               veloc_elastic_LDDRK_temp = veloc_elastic
@@ -885,7 +885,7 @@
         ! ******************************** ! assembling accels_proelastic & accelw_poroelastic for poroelastic elements
         ! ***********************************************************
 #ifdef USE_MPI
-        if (nproc > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0) then
+        if (NPROC > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0) then
           call assemble_MPI_vector_po(accels_poroelastic,accelw_poroelastic)
           if (SIMULATION_TYPE == 3) then
             call assemble_MPI_vector_po(b_accels_poroelastic,b_accelw_poroelastic)

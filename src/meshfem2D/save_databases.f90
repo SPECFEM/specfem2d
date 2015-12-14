@@ -68,7 +68,7 @@
   character(len=MAX_STRING_LEN) :: prname
 
 
-  do iproc = 0, nproc-1
+  do iproc = 0, NPROC-1
 
     ! opens Database file
     write(prname, "('./OUTPUT_FILES/Database',i5.5)") iproc
@@ -154,8 +154,8 @@
   write(15,*) 'nspec'
   write(15,*) nspec
 
-  write(15,*) 'npgeo nproc'
-  write(15,*) npgeo,nproc
+  write(15,*) 'npgeo NPROC'
+  write(15,*) npgeo,NPROC
 
   write(15,*) 'output_grid_Gnuplot interpol'
   write(15,*) output_grid_Gnuplot,interpol
@@ -444,15 +444,15 @@
 
   implicit none
 
-  if (nproc /= 1) then
+  if (NPROC /= 1) then
     ! counts interfaces
-    call write_interfaces_database(15, nproc, iproc,my_ninterface, my_interfaces, my_nb_interfaces, 1)
+    call write_interfaces_database(15, NPROC, iproc,my_ninterface, my_interfaces, my_nb_interfaces, 1)
 
     write(15,*) 'Interfaces:'
     write(15,*) my_ninterface, maxval(my_nb_interfaces)
 
     ! writes out interface infos
-    call write_interfaces_database(15, nproc, iproc,my_ninterface, my_interfaces, my_nb_interfaces, 2)
+    call write_interfaces_database(15, NPROC, iproc,my_ninterface, my_interfaces, my_nb_interfaces, 2)
 
   else
     ! single partition, no interfaces

@@ -85,7 +85,7 @@ module parameter_file
   ! variables for compuation
   !--------------------------------------------------------------
   ! variables used for partitioning
-  integer :: nproc, partitioning_method
+  integer :: NPROC, partitioning_method
 
   ! variables used for attenuation
   integer :: N_SLS
@@ -237,8 +237,8 @@ contains
   if (err_occurred() /= 0) stop 'error reading parameter SAVE_FORWARD in Par_file'
 
   ! read info about partitioning
-  call read_value_integer_p(nproc, 'solver.nproc')
-  if (err_occurred() /= 0) stop 'error reading parameter nproc in Par_file'
+  call read_value_integer_p(NPROC, 'solver.NPROC')
+  if (err_occurred() /= 0) stop 'error reading parameter NPROC in Par_file'
 
   call read_value_integer_p(partitioning_method, 'mesher.partitioning_method')
   if (err_occurred() /= 0) stop 'error reading parameter partitioning_method in Par_file'
@@ -742,14 +742,14 @@ contains
   implicit none
 
   ! checks partitioning
-  if (nproc <= 0) then
-     print *, 'Number of processes (nproc) must be greater than or equal to one.'
+  if (NPROC <= 0) then
+     print *, 'Number of processes (NPROC) must be greater than or equal to one.'
      stop
   endif
 
 #ifndef USE_MPI
-  if (nproc > 1) then
-     print *, 'Number of processes (nproc) must be equal to one when not using MPI.'
+  if (NPROC > 1) then
+     print *, 'Number of processes (NPROC) must be equal to one when not using MPI.'
      print *, 'Please recompile with -DUSE_MPI in order to enable use of MPI.'
      stop
   endif

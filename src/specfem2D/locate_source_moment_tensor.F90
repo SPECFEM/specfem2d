@@ -37,7 +37,7 @@
 
   subroutine locate_source_moment_tensor(ibool,coord,nspec,nglob, &
                                          xigll,zigll,x_source,z_source, &
-                                         ispec_selected_source,is_proc_source,nb_proc_source,nproc,myrank, &
+                                         ispec_selected_source,is_proc_source,nb_proc_source,NPROC,myrank, &
                                          xi_source,gamma_source,coorg,knods,ngnod,npgeo)
 
   use constants,only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER
@@ -74,18 +74,18 @@
 
 ! source information
   integer :: ispec_selected_source,is_proc_source,nb_proc_source
-  integer, intent(in)  :: nproc, myrank
+  integer, intent(in)  :: NPROC, myrank
   double precision :: xi_source,gamma_source
 
 #ifdef USE_MPI
-  integer, dimension(1:nproc)  :: allgather_is_proc_source
+  integer, dimension(1:NPROC)  :: allgather_is_proc_source
   integer, dimension(1)  :: locate_is_proc_source
   integer  :: ierror
 #endif
 
 ! **************
 
-  if (myrank == 0 .or. nproc == 1) then
+  if (myrank == 0 .or. NPROC == 1) then
     write(IMAIN,*)
     write(IMAIN,*) '*******************************'
     write(IMAIN,*) ' locating moment-tensor source'

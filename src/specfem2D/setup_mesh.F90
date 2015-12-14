@@ -245,7 +245,7 @@
 ! this allows users to locate problems in a mesh based on the OpenDX file created at the second iteration
 ! do not create OpenDX files if no negative Jacobian has been found, or if we are running in parallel
 ! (because writing OpenDX routines is much easier in serial)
-  if (found_a_negative_jacobian .and. nproc == 1) then
+  if (found_a_negative_jacobian .and. NPROC == 1) then
     call save_openDX_jacobian(nspec,npgeo,ngnod,knods,coorg,xigll,zigll,AXISYM,is_on_the_axis,xiglj)
   endif
 

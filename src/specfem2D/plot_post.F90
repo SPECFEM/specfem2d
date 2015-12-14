@@ -58,7 +58,7 @@
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge,num_fluid_poro_edges, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
-                         ispec_is_poroelastic,myrank,nproc
+                         ispec_is_poroelastic,myrank,NPROC
 
   ! PML arrays
   use specfem_par,only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
@@ -125,7 +125,7 @@
   nb_color_per_elem = 0
   ier = 0
   num_spec = 0
-  iproc = nproc
+  iproc = NPROC
   coorg_recv_ps_velocity_model = 0
   RGB_recv_ps_velocity_model = 0
   coorg_recv_ps_element_mesh = 0
@@ -500,7 +500,7 @@
 #ifdef USE_MPI
   if (myrank == 0) then
 
-     do iproc = 1, nproc-1
+     do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         call MPI_RECV (coorg_recv_ps_velocity_model(1,1), &
              2*nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
@@ -795,7 +795,7 @@
 #ifdef USE_MPI
   if (myrank == 0) then
 
-     do iproc = 1, nproc-1
+     do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         nb_coorg_per_elem = 1
         if (numbers == 1) then
@@ -1005,7 +1005,7 @@
 #ifdef USE_MPI
   if (myrank == 0) then
 
-     do iproc = 1, nproc-1
+     do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if (nspec_recv > 0) then
         call MPI_RECV (coorg_recv_ps_abs(1,1), 4*nspec_recv, &
@@ -1082,7 +1082,7 @@
 #ifdef USE_MPI
   if (myrank == 0) then
 
-     do iproc = 1, nproc-1
+     do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if (nspec_recv > 0) then
         call MPI_RECV (coorg_recv_ps_free_surface(1,1), 4*nspec_recv, &
@@ -1180,7 +1180,7 @@
 #ifdef USE_MPI
   if (myrank == 0) then
 
-     do iproc = 1, nproc-1
+     do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if (nspec_recv > 0) then
         allocate(coorg_recv(4,nspec_recv))
@@ -1283,7 +1283,7 @@
 #ifdef USE_MPI
   if (myrank == 0) then
 
-     do iproc = 1, nproc-1
+     do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if (nspec_recv > 0) then
         allocate(coorg_recv(4,nspec_recv))
@@ -1387,7 +1387,7 @@
 #ifdef USE_MPI
   if (myrank == 0) then
 
-     do iproc = 1, nproc-1
+     do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if (nspec_recv > 0) then
         allocate(coorg_recv(4,nspec_recv))
@@ -1575,7 +1575,7 @@
 #ifdef USE_MPI
   if (myrank == 0) then
 
-     do iproc = 1, nproc-1
+     do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 46, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if (nspec_recv > 0) then
         call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
@@ -1706,7 +1706,7 @@
 #ifdef USE_MPI
   if (myrank == 0) then
 
-     do iproc = 1, nproc-1
+     do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 47, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if (nspec_recv > 0) then
         call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &

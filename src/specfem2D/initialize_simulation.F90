@@ -215,7 +215,7 @@
         print *
       endif
     endif
-    call exit_MPI(myrank,'wrong number of MPI processes, must always have nproc == nproc_read_from_database')
+    call exit_MPI(myrank,'wrong number of MPI processes, must always have NPROC == nproc_read_from_database')
   endif
 
   ! time scheme

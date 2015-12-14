@@ -72,7 +72,7 @@
                          is_proc_source,nb_proc_source, &
                          sourcearray,Mxx,Mzz,Mxz, &
                          xix,xiz,gammax,gammaz,xigll,zigll,npgeo, &
-                         nproc,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
+                         NPROC,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
                          iglob_source
   implicit none
 
@@ -94,7 +94,7 @@
       ! collocated force source
       call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
                                ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
-                               nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                               NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
                                iglob_source(i_source))
 
       ! check that acoustic source is not exactly on the free surface because pressure is zero there
@@ -134,7 +134,7 @@
       ! moment-tensor source
       call locate_source_moment_tensor(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
              ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
-             nproc,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo)
+             NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo)
 
       ! compute source array for moment-tensor source
       call compute_arrays_source(ispec_selected_source(i_source),xi_source(i_source),gamma_source(i_source),&
@@ -180,7 +180,7 @@
 
   use specfem_par, only: coord,ibool,nglob,nspec, &
                          ispec_selected_rec, &
-                         nproc,myrank,coorg,knods,ngnod, &
+                         NPROC,myrank,coorg,knods,ngnod, &
                          xigll,zigll,npgeo, &
                          nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
                          xi_receiver,gamma_receiver,station_name,network_name, &
@@ -237,7 +237,7 @@
 
   ! locate receivers in the mesh
   call locate_receivers(ibool,coord,nspec,nglob,xigll,zigll, &
-                        nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
+                        nrec,nrecloc,recloc,which_proc_receiver,NPROC,myrank, &
                         st_xval,st_zval,ispec_selected_rec, &
                         xi_receiver,gamma_receiver,station_name,network_name, &
                         x_source(1),z_source(1), &

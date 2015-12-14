@@ -226,7 +226,7 @@
           ! ********** assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
           ! ************************************************************************************
 #ifdef USE_MPI
-          if (nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
+          if (NPROC > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
             call assemble_MPI_vector_ac(potential_dot_dot_acoustic)
           endif
 #endif
@@ -284,7 +284,7 @@
           ! ************* assembling accel_elastic for elastic elements
           ! ************************************************************************************
 #ifdef USE_MPI
-          if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
+          if (NPROC > 1 .and. any_elastic .and. ninterface_elastic > 0) then
             call assemble_MPI_vector_el(accel_elastic)
           endif
 #endif
@@ -424,7 +424,7 @@
           ! ********** assembling b_potential_dot_dot for acoustic elements
           ! ************************************************************************************
 #ifdef USE_MPI
-          if (nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
+          if (NPROC > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
             call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic)
           endif
 #endif
@@ -497,7 +497,7 @@
           ! ************* assembling accel_elastic for elastic elements
           ! ************************************************************************************
 #ifdef USE_MPI
-          if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
+          if (NPROC > 1 .and. any_elastic .and. ninterface_elastic > 0) then
             call assemble_MPI_vector_el(b_accel_elastic)
           endif
 #endif
@@ -631,7 +631,7 @@
           ! ************* assembling accel_elastic for elastic elements
           ! ************************************************************************************
 #ifdef USE_MPI
-          if (nproc > 1 .and. any_elastic .and. ninterface_elastic > 0) then
+          if (NPROC > 1 .and. any_elastic .and. ninterface_elastic > 0) then
             call assemble_MPI_vector_el(accel_elastic)
           endif
 #endif
@@ -694,7 +694,7 @@
           ! ********** assembling potential_dot_dot for acoustic elements
           ! ************************************************************************************
 #ifdef USE_MPI
-          if (nproc > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
+          if (NPROC > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
             call assemble_MPI_vector_ac(potential_dot_dot_acoustic)
           endif
 #endif

@@ -36,7 +36,7 @@
 !----
 
   subroutine locate_receivers(ibool,coord,nspec,nglob,xigll,zigll, &
-                              nrec,nrecloc,recloc,which_proc_receiver,nproc,myrank, &
+                              nrec,nrecloc,recloc,which_proc_receiver,NPROC,myrank, &
                               st_xval,st_zval,ispec_selected_rec, &
                               xi_receiver,gamma_receiver,station_name,network_name, &
                               x_source,z_source, &
@@ -55,7 +55,7 @@
   implicit none
 
   integer :: nrec,nspec,nglob,ngnod,npgeo
-  integer, intent(in)  :: nproc, myrank
+  integer, intent(in)  :: NPROC, myrank
 
   integer :: knods(ngnod,nspec)
   double precision :: coorg(NDIM,npgeo)
@@ -95,8 +95,8 @@
 ! tangential detection
   double precision, dimension(nrec)  :: x_final_receiver, z_final_receiver
 
-  double precision, dimension(nrec,nproc)  :: gather_final_distance
-  double precision, dimension(nrec,nproc)  :: gather_xi_receiver, gather_gamma_receiver
+  double precision, dimension(nrec,NPROC)  :: gather_final_distance
+  double precision, dimension(nrec,NPROC)  :: gather_xi_receiver, gather_gamma_receiver
 
   integer, dimension(nrec), intent(inout)  :: which_proc_receiver
   integer, dimension(:,:), allocatable  :: gather_ispec_selected_rec
@@ -229,7 +229,7 @@
   close(1)
 
   ! select one mesh slice for each receiver
-  allocate(gather_ispec_selected_rec(nrec,nproc),stat=ier)
+  allocate(gather_ispec_selected_rec(nrec,NPROC),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating gather array')
 
 #ifdef USE_MPI

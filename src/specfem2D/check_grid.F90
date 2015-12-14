@@ -1174,7 +1174,7 @@
 #ifdef USE_MPI
   if (myrank == 0) then
 
-    do iproc = 1, nproc-1
+    do iproc = 1, NPROC-1
       call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
               iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
       allocate(coorg_recv(2,nspec_recv*5))
@@ -1216,7 +1216,7 @@
   allocate(RGB_recv(1))
   nspec_recv = 0
   ier = 0
-  iproc = nproc
+  iproc = NPROC
   deallocate(coorg_recv)
   deallocate(RGB_recv)
 #endif
@@ -1580,7 +1580,7 @@
 
 #ifdef USE_MPI
   if (myrank == 0) then
-    do iproc = 1, nproc-1
+    do iproc = 1, NPROC-1
       call MPI_RECV (nspec_recv, 1, MPI_INTEGER,iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
       allocate(coorg_recv(2,nspec_recv*5))
       allocate(RGB_recv(nspec_recv))
@@ -1884,7 +1884,7 @@
 
 #ifdef USE_MPI
   if (myrank == 0) then
-    do iproc = 1, nproc-1
+    do iproc = 1, NPROC-1
       call MPI_RECV (nspec_recv, 1, MPI_INTEGER,iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
       allocate(coorg_recv(2,nspec_recv*5))
       allocate(greyscale_recv(nspec_recv))
@@ -2138,7 +2138,7 @@
 
 #ifdef USE_MPI
   if (myrank == 0) then
-    do iproc = 1, nproc-1
+    do iproc = 1, NPROC-1
       ! use a different color for each material set
       icol = mod(iproc, NUM_COLORS) + 1
 

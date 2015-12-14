@@ -19,7 +19,8 @@ DEPRECATED_RENAMED_PARAMETERS = [ \
   ("PERIODIC_horiz_dist","PERIODIC_HORIZ_DIST"), \
   ("p_sv","P_SV"), \
   ("nt","NSTEP"), \
-  ("deltat","DT") \
+  ("deltat","DT"), \
+  ("nproc","NPROC") \
 ]
 
 # exclude other possible files with similar name, but with different format

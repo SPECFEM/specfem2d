@@ -273,7 +273,7 @@
 
   use specfem_par, only : nglob,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
     density,poroelastcoef, &
-    nproc,myrank,assign_external_model,vpext
+    NPROC,myrank,assign_external_model,vpext
 
   use specfem_par_movie,only: image_color_vp_display,iglob_image_color, &
     NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc,num_pixel_loc,DRAW_WATER_IN_BLUE
@@ -396,21 +396,21 @@
 ! assembling array image_color_vp_display on process zero for color output
 #ifdef USE_MPI
 
-  allocate(nb_pixel_per_proc(nproc))
+  allocate(nb_pixel_per_proc(NPROC))
   nb_pixel_per_proc(:) = 0
   call MPI_GATHER( nb_pixel_loc, 1, MPI_INTEGER, nb_pixel_per_proc(1), &
                   1, MPI_INTEGER, 0, MPI_COMM_WORLD, ier)
 
 
   if (myrank == 0) then
-     allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),nproc))
+     allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),NPROC))
      allocate(data_pixel_recv(maxval(nb_pixel_per_proc(:))))
   endif
   allocate(data_pixel_send(nb_pixel_loc))
 
-  if (nproc > 1) then
+  if (NPROC > 1) then
     if (myrank == 0) then
-      do iproc = 1, nproc-1
+      do iproc = 1, NPROC-1
 
         call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc+1), MPI_INTEGER, &
                 iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
@@ -466,7 +466,7 @@
 #else
   ! to avoid compiler warnings
   dummy = myrank
-  dummy = nproc
+  dummy = NPROC
 #endif
 
   end subroutine prepare_color_image_vp

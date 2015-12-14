@@ -260,7 +260,7 @@
       ispec_inner_to_glob(ispec) = ispec
     enddo
 
-  endif ! end of test on whether there is more than one process (nproc > 1)
+  endif ! end of test on whether there is more than one process (NPROC > 1)
 #else
   ! serial run
   num_ispec_outer = 0
@@ -497,21 +497,21 @@
     iproc = 0
     k = 0
 #ifdef USE_MPI
-    allocate(nb_pixel_per_proc(nproc))
+    allocate(nb_pixel_per_proc(NPROC))
 
     call MPI_GATHER( nb_pixel_loc, 1, MPI_INTEGER, nb_pixel_per_proc(1), &
                     1, MPI_INTEGER, 0, MPI_COMM_WORLD, ier)
 
     if (myrank == 0) then
-      allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),nproc))
+      allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),NPROC))
       allocate(data_pixel_recv(maxval(nb_pixel_per_proc(:))))
     endif
 
     allocate(data_pixel_send(nb_pixel_loc))
-    if (nproc > 1) then
+    if (NPROC > 1) then
        if (myrank == 0) then
 
-          do iproc = 1, nproc-1
+          do iproc = 1, NPROC-1
 
              call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc+1), MPI_INTEGER, &
                   iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
