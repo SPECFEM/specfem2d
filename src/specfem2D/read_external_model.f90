@@ -194,7 +194,7 @@
                c23ext(i,j,ispec) = 1.d-6
                vpext(i,j,ispec) = sqrt(c33ext(i,j,ispec)/rhoext(i,j,ispec))
                vsext(i,j,ispec) = sqrt(c55ext(i,j,ispec)/rhoext(i,j,ispec))
-            end if
+            endif
             c25ext(i,j,ispec) = 0.0
           enddo
         enddo

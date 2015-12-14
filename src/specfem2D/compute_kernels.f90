@@ -86,7 +86,7 @@
                          deltat,P_SV,displ_elastic,&
                          mu_k,kappa_k,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
                          GPU_MODE
-  
+
   use specfem_par_gpu,only: Mesh_pointer,deltatf
 
   use specfem_par, only: c11_k,c13_k,c15_k,c33_k,c35_k,c55_k,ispec_is_anisotropic,&
@@ -172,7 +172,7 @@
             c33_k(iglob) = duz_dzl*b_duz_dzl
             c35_k(iglob) = 2*(duz_dzl*HALF*(b_dux_dzl+b_duz_dxl)+&
                            HALF*(dux_dzl+duz_dxl)*b_duz_dzl)
-            c55_k(iglob) = 4*HALF*(dux_dzl+duz_dxl)*HALF*(b_dux_dzl+b_duz_dxl)         
+            c55_k(iglob) = 4*HALF*(dux_dzl+duz_dxl)*HALF*(b_dux_dzl+b_duz_dxl)
           else
             if (p_sv) then !P-SV waves
               dsxx =  dux_dxl

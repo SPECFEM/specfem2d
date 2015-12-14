@@ -831,7 +831,7 @@
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
         open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
-      end if
+      endif
     else
       ! binary format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kernel.bin'
