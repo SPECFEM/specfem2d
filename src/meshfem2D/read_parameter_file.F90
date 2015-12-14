@@ -690,7 +690,7 @@ contains
 
   ! checks model
   select case (MODEL)
-  case ('default','ascii','binary','external','gll')
+  case ('default','ascii','binary','external','gll','binary_voigt')
     print * ! do nothing
   case default
     stop 'Bad value: MODEL'

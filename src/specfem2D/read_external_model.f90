@@ -132,6 +132,82 @@
       QKappa_attenuationext(:,:,:) = 9999.d0
       Qmu_attenuationext(:,:,:) = 9999.d0
 
+  else if (trim(MODEL)=='binary_voigt') then
+      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
+      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error opening rho.bin file.'
+
+      read(1001) rhoext
+      close(1001)
+      print *, 'rho', minval(rhoext), maxval(rhoext)
+
+      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c11.bin'
+      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error opening c11.bin file.'
+
+      read(1001) c11ext
+      close(1001)
+      print *, 'c11ext', minval(c11ext), maxval(c11ext)
+
+      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c13.bin'
+      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error opening c13.bin file.'
+
+      read(1001) c13ext
+      close(1001)
+      print *, 'c13ext', minval(c13ext), maxval(c13ext)
+
+      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c15.bin'
+      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error opening c15.bin file.'
+
+      read(1001) c15ext
+      close(1001)
+      print *, 'c15ext', minval(c15ext), maxval(c15ext)
+
+      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c33.bin'
+      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error opening c33.bin file.'
+
+      read(1001) c33ext
+      close(1001)
+      print *, 'c33ext', minval(c33ext), maxval(c33ext)
+
+      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c35.bin'
+      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error opening c35.bin file.'
+
+      read(1001) c35ext
+      close(1001)
+      print *, 'c35ext', minval(c35ext), maxval(c35ext)
+
+      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c55.bin'
+      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+      if (ier /= 0) stop 'Error opening c55.bin file.'
+
+      read(1001) c55ext
+      close(1001)
+      print *, 'c55ext', minval(c55ext), maxval(c55ext)
+
+      do ispec = 1,nspec
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            if(c55ext(i,j,ispec) == 0.0)then
+               c33ext(i,j,ispec) = 0.0
+               c12ext(i,j,ispec) = 0.0
+               c23ext(i,j,ispec) = 0.0
+               vpext(i,j,ispec) = 1500.0
+               vsext(i,j,ispec) = 0.0
+            else
+               c12ext(i,j,ispec) = 1.d-6
+               c23ext(i,j,ispec) = 1.d-6
+               vpext(i,j,ispec) = sqrt(c33ext(i,j,ispec)/rhoext(i,j,ispec))
+               vsext(i,j,ispec) = sqrt(c55ext(i,j,ispec)/rhoext(i,j,ispec))
+            end if
+            c25ext(i,j,ispec) = 0.0
+          enddo
+        enddo
+      enddo
 
   else if (trim(MODEL)=='external') then
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext, &

@@ -819,62 +819,92 @@
   endif
 
   ! Allocates sensitivity kernel arrays
-
   ! elastic domains
   if (any_elastic) then
 
     if (save_ASCII_kernels) then
       ! ascii format
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
-      open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if(count(ispec_is_anisotropic(:) .eqv. .true.) >= 1)then ! anisotropic
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_cijkl_kernel.dat'
+        open(unit = 97, file='OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
+      else
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
+        open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
 
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
-      open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
-
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
+        open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
+      end if
     else
       ! binary format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kernel.bin'
       open(unit = 204, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_kernel.bin'
-      open(unit = 205, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if(count(ispec_is_anisotropic(:) .eqv. .true.) >= 1)then ! anisotropic
+         write(outputname,'(a,i6.6,a)')'proc',myrank,'_c11_kernel.bin'
+         open(unit = 205,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         if (ier /= 0) stop 'Error writing kernel file to disk'
 
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_kernel.bin'
-      open(unit = 206, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c13_kernel.bin'
+         open(unit = 206,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         if (ier /= 0) stop 'Error writing kernel file to disk'
 
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_kernel.bin'
-      open(unit = 207, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c15_kernel.bin'
+         open(unit = 207,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         if (ier /= 0) stop 'Error writing kernel file to disk'
 
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_alpha_kernel.bin'
-      open(unit = 208, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c33_kernel.bin'
+         open(unit = 208,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         if (ier /= 0) stop 'Error writing kernel file to disk'
 
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_beta_kernel.bin'
-      open(unit = 209, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c35_kernel.bin'
+         open(unit = 209,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         if (ier /= 0) stop 'Error writing kernel file to disk'
 
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
-      open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
-
-      write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
-      open(unit = 211,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
-
-      if (APPROXIMATE_HESS_KL) then
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_kernel.bin'
-        open(unit =214,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c55_kernel.bin'
+         open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         if (ier /= 0) stop 'Error writing kernel file to disk'
+      else
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_kernel.bin'
+        open(unit = 205, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian2_kernel.bin'
-        open(unit=215,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_kernel.bin'
+        open(unit = 206, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
+
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_kernel.bin'
+        open(unit = 207, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
+
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_alpha_kernel.bin'
+        open(unit = 208, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
+
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_beta_kernel.bin'
+        open(unit = 209, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
+
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
+        open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
+
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
+        open(unit = 211,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        if (ier /= 0) stop 'Error writing kernel file to disk'
+
+        if (APPROXIMATE_HESS_KL) then
+          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_kernel.bin'
+          open(unit =214,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+          if (ier /= 0) stop 'Error writing kernel file to disk'
+
+          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian2_kernel.bin'
+          open(unit=215,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+          if (ier /= 0) stop 'Error writing kernel file to disk'
+        endif
       endif
 
     endif
