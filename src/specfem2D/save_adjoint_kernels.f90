@@ -49,8 +49,7 @@
                           rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, GPU_MODE
 
   use specfem_par, only : ispec_is_anisotropic, c11_kl, c13_kl, c15_kl, c33_kl, &
-                          c35_kl, c55_kl, &
-                          rhoext, c11ext, c13ext, c15ext, c33ext, c35ext, c55ext
+                          c35_kl, c55_kl
 
   implicit none
 
