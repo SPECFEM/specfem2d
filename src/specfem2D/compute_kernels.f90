@@ -163,8 +163,27 @@
 
           iglob = ibool(i,j,ispec)
 
+          ! isotropic kernel contributions
+          if (P_SV) then
+            ! P-SV waves
+            dsxx =  dux_dxl
+            dsxz = HALF * (duz_dxl + dux_dzl)
+            dszz =  duz_dzl
+
+            b_dsxx =  b_dux_dxl
+            b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
+            b_dszz =  b_duz_dzl
+
+            kappa_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl)
+            mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
+                          2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
+          else
+            ! SH (membrane) waves
+            mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
+          endif
+
           ! Voigt kernels, e.g., see Sieminski, 2007a,b
-          if(ispec_is_anisotropic(ispec))then
+          if (ispec_is_anisotropic(ispec)) then
             c11_k(iglob) = dux_dxl*b_dux_dxl
             c13_k(iglob) = dux_dxl*b_duz_dzl + duz_dzl*b_dux_dxl
             c15_k(iglob) = 2*(dux_dxl*HALF*(b_dux_dzl+b_duz_dxl)+&
@@ -173,22 +192,6 @@
             c35_k(iglob) = 2*(duz_dzl*HALF*(b_dux_dzl+b_duz_dxl)+&
                            HALF*(dux_dzl+duz_dxl)*b_duz_dzl)
             c55_k(iglob) = 4*HALF*(dux_dzl+duz_dxl)*HALF*(b_dux_dzl+b_duz_dxl)
-          else
-            if (p_sv) then !P-SV waves
-              dsxx =  dux_dxl
-              dsxz = HALF * (duz_dxl + dux_dzl)
-              dszz =  duz_dzl
-
-              b_dsxx =  b_dux_dxl
-              b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
-              b_dszz =  b_duz_dzl
-
-              kappa_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl)
-              mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
-                            2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
-            else !SH (membrane) waves
-              mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
-            endif
           endif
         enddo; enddo
       endif
@@ -207,6 +210,7 @@
 
   do ispec = 1, nspec
     if (ispec_is_elastic(ispec)) then
+      ! isotropic kernels
       do j = 1, NGLLZ
         do i = 1, NGLLX
           iglob = ibool(i,j,ispec)
@@ -222,40 +226,50 @@
                                    4._CUSTOM_REAL*mul_global(iglob) / 3._CUSTOM_REAL
           endif
 
+          ! for parameterization (rho,mu,kappa): "primary" kernels
+          ! density kernel
           rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rhol_global(iglob)  * rho_k(iglob) * deltat
+          ! shear modulus kernel
           mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) - TWO * mul_global(iglob) * mu_k(iglob) * deltat
+          ! bulk modulus kernel
           kappa_kl(i,j,ispec) = kappa_kl(i,j,ispec) - kappal_global(iglob) * kappa_k(iglob) * deltat
-          !
+
+          ! for parameterization (rho,beta,alpha):
+          ! rho prime kernel
           rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + kappa_kl(i,j,ispec) + mu_kl(i,j,ispec)
+          ! Vs kernel
           beta_kl(i,j,ispec) = TWO * (mu_kl(i,j,ispec) - 4._CUSTOM_REAL * mul_global(iglob)/&
                         (3._CUSTOM_REAL * kappal_global(iglob)) * kappa_kl(i,j,ispec))
+          ! Vp kernel
           alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + 4._CUSTOM_REAL * mul_global(iglob)/&
                          (3._CUSTOM_REAL * kappal_global(iglob))) * kappa_kl(i,j,ispec)
-          !
+
+          ! for bulk velocity c parameterization (rho,bulk_c,beta):
           bulk_c_kl(i,j,ispec) =  TWO * kappa_kl(i,j,ispec)
           bulk_beta_kl(i,j,ispec) =  TWO * mu_kl(i,j,ispec)
         enddo
       enddo
-    endif
 
-    ! Voigt kernels, e.g., see Sieminski, 2007a,b
-    if(ispec_is_anisotropic(ispec)) then
-      do j = 1, NGLLZ
-        do i = 1, NGLLX
-          iglob = ibool(i,j,ispec)
-          rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rho_k(iglob) * deltat
-          c11_kl(i,j,ispec) = c11_kl(i,j,ispec) - c11_k(iglob) * deltat
-          c13_kl(i,j,ispec) = c13_kl(i,j,ispec) - c13_k(iglob) * deltat
-          c15_kl(i,j,ispec) = c15_kl(i,j,ispec) - c15_k(iglob) * deltat
-          c33_kl(i,j,ispec) = c33_kl(i,j,ispec) - c33_k(iglob) * deltat
-          c35_kl(i,j,ispec) = c35_kl(i,j,ispec) - c35_k(iglob) * deltat
-          c55_kl(i,j,ispec) = c55_kl(i,j,ispec) - c55_k(iglob) * deltat
-          rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + c11_kl(i,j,ispec) + &
-                               c13_kl(i,j,ispec) + c15_kl(i,j,ispec) + c33_kl(i,j,ispec) + &
-                               c35_kl(i,j,ispec) + c55_kl(i,j,ispec)
+      ! Voigt kernels, e.g., see Sieminski, 2007a,b
+      if (ispec_is_anisotropic(ispec)) then
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
+            rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rho_k(iglob) * deltat
+            c11_kl(i,j,ispec) = c11_kl(i,j,ispec) - c11_k(iglob) * deltat
+            c13_kl(i,j,ispec) = c13_kl(i,j,ispec) - c13_k(iglob) * deltat
+            c15_kl(i,j,ispec) = c15_kl(i,j,ispec) - c15_k(iglob) * deltat
+            c33_kl(i,j,ispec) = c33_kl(i,j,ispec) - c33_k(iglob) * deltat
+            c35_kl(i,j,ispec) = c35_kl(i,j,ispec) - c35_k(iglob) * deltat
+            c55_kl(i,j,ispec) = c55_kl(i,j,ispec) - c55_k(iglob) * deltat
+            rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + c11_kl(i,j,ispec) + &
+                                 c13_kl(i,j,ispec) + c15_kl(i,j,ispec) + c33_kl(i,j,ispec) + &
+                                 c35_kl(i,j,ispec) + c55_kl(i,j,ispec)
+          enddo
         enddo
-      enddo
-    endif
+      endif
+
+    endif ! elastic
   enddo
 
   end subroutine compute_kernels_el
