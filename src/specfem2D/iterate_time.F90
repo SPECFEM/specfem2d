@@ -1136,6 +1136,7 @@
 
   ! local parameters
   integer :: i,j,ispec,iglob
+  real(kind=CUSTOM_REAL) :: rhol,mul,kappal
 
   ! Fields transfer for imaging
   ! acoustic domains
@@ -1186,20 +1187,18 @@
             do i = 1, NGLLX
               iglob = ibool(i,j,ispec)
               if (.not. assign_external_model) then
-                mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
-                kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) - &
-                                        4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
-                rhol_global(iglob) = density(1,kmato(ispec))
+                mul = poroelastcoef(2,1,kmato(ispec))
+                kappal = poroelastcoef(3,1,kmato(ispec)) - 4._CUSTOM_REAL * mul / 3._CUSTOM_REAL
+                rhol = density(1,kmato(ispec))
               else
-                rhol_global(iglob)   = rhoext(i,j,ispec)
-                mul_global(iglob)    = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
-                kappal_global(iglob) = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - &
-                                        4._CUSTOM_REAL*mul_global(iglob)/3._CUSTOM_REAL
+                rhol = rhoext(i,j,ispec)
+                mul = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
+                kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - 4._CUSTOM_REAL * mul / 3._CUSTOM_REAL
               endif
 
-              rho_kl(i,j,ispec) = - rhol_global(iglob) * rho_kl(i,j,ispec)
-              mu_kl(i,j,ispec) =  - TWO * mul_global(iglob) * mu_kl(i,j,ispec)
-              kappa_kl(i,j,ispec) = - kappal_global(iglob) * kappa_kl(i,j,ispec)
+              rho_kl(i,j,ispec) = - rhol * rho_kl(i,j,ispec)
+              mu_kl(i,j,ispec) =  - TWO * mul * mu_kl(i,j,ispec)
+              kappa_kl(i,j,ispec) = - kappal * kappa_kl(i,j,ispec)
             enddo
           enddo
         endif

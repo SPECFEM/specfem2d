@@ -107,11 +107,8 @@
   ! kernels
   ! on global nodes
   allocate(rho_k(nglob_elastic_b))
-  allocate(rhol_global(nglob_elastic_b))
   allocate(mu_k(nglob_elastic_b))
-  allocate(mul_global(nglob_elastic_b))
   allocate(kappa_k(nglob_elastic_b))
-  allocate(kappal_global(nglob_elastic_b))
   allocate(c11_k(nglob_elastic_b))
   allocate(c13_k(nglob_elastic_b))
   allocate(c15_k(nglob_elastic_b))

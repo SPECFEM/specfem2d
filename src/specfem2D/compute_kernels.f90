@@ -81,7 +81,6 @@
   use specfem_par, only: ispec_is_elastic,rho_k, &
                          rho_kl,mu_kl,kappa_kl,rhop_kl,beta_kl,alpha_kl,bulk_c_kl,bulk_beta_kl, &
                          nglob,nspec,ibool,accel_elastic,b_displ_elastic, &
-                         rhol_global,mul_global,kappal_global, &
                          density,poroelastcoef,kmato,assign_external_model,rhoext,vsext,vpext,&
                          deltat,P_SV,displ_elastic,&
                          mu_k,kappa_k,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
@@ -102,6 +101,7 @@
   real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duy_dxl,b_duz_dxl,b_dux_dzl,b_duy_dzl,b_duz_dzl
   real(kind=CUSTOM_REAL) :: dsxx,dsxz,dszz
   real(kind=CUSTOM_REAL) :: b_dsxx,b_dsxz,b_dszz
+  real(kind=CUSTOM_REAL) :: rhol,mul,kappal
 
   ! Jacobian matrix and determinant
   double precision :: xixl,xizl,gammaxl,gammazl
@@ -215,34 +215,30 @@
         do i = 1, NGLLX
           iglob = ibool(i,j,ispec)
           if (.not. assign_external_model) then
-            rhol_global(iglob) = density(1,kmato(ispec))
-            mul_global(iglob) = poroelastcoef(2,1,kmato(ispec))
-            kappal_global(iglob) = poroelastcoef(3,1,kmato(ispec)) - &
-                                   4._CUSTOM_REAL*mul_global(iglob) / 3._CUSTOM_REAL
+            rhol = density(1,kmato(ispec))
+            mul = poroelastcoef(2,1,kmato(ispec))
+            kappal = poroelastcoef(3,1,kmato(ispec)) - 4._CUSTOM_REAL * mul / 3._CUSTOM_REAL
           else
-            rhol_global(iglob)   = rhoext(i,j,ispec)
-            mul_global(iglob)    = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
-            kappal_global(iglob) = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - &
-                                   4._CUSTOM_REAL*mul_global(iglob) / 3._CUSTOM_REAL
+            rhol = rhoext(i,j,ispec)
+            mul = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
+            kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - 4._CUSTOM_REAL * mul / 3._CUSTOM_REAL
           endif
 
           ! for parameterization (rho,mu,kappa): "primary" kernels
           ! density kernel
-          rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rhol_global(iglob)  * rho_k(iglob) * deltat
+          rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rhol  * rho_k(iglob) * deltat
           ! shear modulus kernel
-          mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) - TWO * mul_global(iglob) * mu_k(iglob) * deltat
+          mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) - TWO * mul * mu_k(iglob) * deltat
           ! bulk modulus kernel
-          kappa_kl(i,j,ispec) = kappa_kl(i,j,ispec) - kappal_global(iglob) * kappa_k(iglob) * deltat
+          kappa_kl(i,j,ispec) = kappa_kl(i,j,ispec) - kappal * kappa_k(iglob) * deltat
 
           ! for parameterization (rho,beta,alpha):
           ! rho prime kernel
           rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + kappa_kl(i,j,ispec) + mu_kl(i,j,ispec)
           ! Vs kernel
-          beta_kl(i,j,ispec) = TWO * (mu_kl(i,j,ispec) - 4._CUSTOM_REAL * mul_global(iglob)/&
-                        (3._CUSTOM_REAL * kappal_global(iglob)) * kappa_kl(i,j,ispec))
+          beta_kl(i,j,ispec) = TWO * (mu_kl(i,j,ispec) - 4._CUSTOM_REAL * mul/(3._CUSTOM_REAL * kappal) * kappa_kl(i,j,ispec))
           ! Vp kernel
-          alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + 4._CUSTOM_REAL * mul_global(iglob)/&
-                         (3._CUSTOM_REAL * kappal_global(iglob))) * kappa_kl(i,j,ispec)
+          alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + 4._CUSTOM_REAL * mul/(3._CUSTOM_REAL * kappal)) * kappa_kl(i,j,ispec)
 
           ! for bulk velocity c parameterization (rho,bulk_c,beta):
           bulk_c_kl(i,j,ispec) =  TWO * kappa_kl(i,j,ispec)
