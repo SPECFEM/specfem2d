@@ -270,7 +270,8 @@ class mesh(object,mesh_tools):
         self.pmlname='elements_cpml_list' # Name of cpml file to create
         self.axisname='elements_axis' # Name of axial elements file to create and name of the block containing axial edges
         self.recname='STATIONS'
-        self.face='QUAD4'  # Faces' type
+        self.face=['QUAD4','QUAD9']  # Faces' type
+        self.elementType='QUAD4'
         self.edge='BAR2'   # Edges' type
         self.topo='topo'   # Name of the block containing topography edges
         self.pml_boun_name=['pml_x_acoust','pml_z_acoust','pml_xz_acoust','pml_x_elast','pml_z_elast','pml_xz_elast']  # Name of the block containing pml layers elements
@@ -300,7 +301,9 @@ class mesh(object,mesh_tools):
         for block in blocks: # Loop on the blocks
             name=cubit.get_exodus_entity_name('block',block) # Contains the name of the blocks
             ty=cubit.get_block_element_type(block) # Contains the block element type (QUAD4...)
-            if ty == self.face: # If we are dealing with a block containing faces
+            if ty in self.face: # If we are dealing with a block containing faces
+                if ty == self.face[1]:
+                    self.elementType='QUAD9'
                 nAttributes = cubit.get_block_attribute_count(block)
                 if (nAttributes != 1 and nAttributes != 6):
                     print 'Blocks not properly defined, 2d blocks must have one attribute (material id) or 6 attributes'
