@@ -690,14 +690,14 @@
         ! in which case we must compute the normal to the topography
         ! and add it the existing rotation angle
         call compute_normal_vector( anglesource(i_source), &
-                          nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
-                          nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
-                          nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
-                          nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
-                          nodes_tangential_curve(2,n_tangential_detection_curve(1)), &
-                          nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
-                          nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
-                          nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
+                                    nodes_tangential_curve(1,n_tangential_detection_curve(1)), &
+                                    nodes_tangential_curve(1,n_tangential_detection_curve(2)), &
+                                    nodes_tangential_curve(1,n_tangential_detection_curve(3)), &
+                                    nodes_tangential_curve(1,n_tangential_detection_curve(4)), &
+                                    nodes_tangential_curve(2,n_tangential_detection_curve(1)), &
+                                    nodes_tangential_curve(2,n_tangential_detection_curve(2)), &
+                                    nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
+                                    nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
 
         source_courbe_eros(i_source) = n1_tangential_detection_curve
         if (myrank == 0 .and. is_proc_source(i_source) == 1 .and. nb_proc_source(i_source) == 1) then
