@@ -32,30 +32,20 @@
 !========================================================================
 
 
-  subroutine save_databases(nspec,num_material,region_pml_external_mesh, &
-                            my_interfaces,my_nb_interfaces, &
-                            nnodes_tangential_curve,nodes_tangential_curve,remove_min_to_start_at_zero)
-
+  subroutine save_databases(nspec,region_pml_external_mesh,remove_min_to_start_at_zero)
 
 ! generates the databases for the solver
 
-  use part_unstruct
-  use parameter_file
-  use source_file
+
+  use part_unstruct_par,only: nelmnts
+  use parameter_file_par,only: NPROC
 
   implicit none
 
   include "constants.h"
 
   integer :: nspec,remove_min_to_start_at_zero
-  integer, dimension(nelmnts) :: num_material
   integer, dimension(nelmnts) :: region_pml_external_mesh
-
-  integer, dimension(0:ninterfaces-1) :: my_interfaces
-  integer, dimension(0:ninterfaces-1) :: my_nb_interfaces
-
-  integer ::  nnodes_tangential_curve
-  double precision, dimension(2,nnodes_tangential_curve) :: nodes_tangential_curve
 
   ! local parameters
   integer :: iproc,i,ier
@@ -64,7 +54,6 @@
   integer :: nedges_coupled_loc
   integer :: nedges_acporo_coupled_loc
   integer :: nedges_elporo_coupled_loc
-
   character(len=MAX_STRING_LEN) :: prname
 
 
@@ -125,6 +114,8 @@
 !-------------------------------------------------------------------------------
 
   subroutine save_databases_init()
+
+  use parameter_file_par
 
   implicit none
 
@@ -301,6 +292,9 @@
 
   subroutine save_databases_sources()
 
+  use source_file_par
+  use parameter_file_par
+
   implicit none
   ! local parameters
   integer :: i_source
@@ -325,6 +319,9 @@
 !-------------------------------------------------------------------------------
 
   subroutine save_databases_coorg_elem()
+
+  use part_unstruct_par
+  use parameter_file_par
 
   implicit none
 
@@ -352,22 +349,17 @@
   ! counts number of acoustic surface elements
   call write_surface_database(15, nelem_acoustic_surface, acoustic_surface, nelem_acoustic_surface_loc,iproc, 1)
 
-  ! counts nuber of coupling edges
+  ! counts number of coupling edges
   ! fluid-solid
-  call write_fluidsolid_edges_database(15,nedges_coupled, nedges_coupled_loc,edges_coupled, iproc, 1)
+  call write_fluidsolid_edges_database(15, nedges_coupled, edges_coupled, nedges_coupled_loc, iproc, 1)
   ! fluid-poroelastic
-  call write_fluidsolid_edges_database(15, nedges_acporo_coupled, nedges_acporo_coupled_loc,edges_acporo_coupled, iproc, 1)
+  call write_fluidsolid_edges_database(15, nedges_acporo_coupled, edges_acporo_coupled, nedges_acporo_coupled_loc, iproc, 1)
   ! solid-poroelastic
-  call write_fluidsolid_edges_database(15, nedges_elporo_coupled, nedges_elporo_coupled_loc,edges_elporo_coupled, iproc, 1)
+  call write_fluidsolid_edges_database(15, nedges_elporo_coupled, edges_elporo_coupled, nedges_elporo_coupled_loc, iproc, 1)
 
   ! counts number of axial elements
-  call write_axial_elements_database(15, nelem_on_the_axis, ispec_of_axial_elements,nelem_on_the_axis_loc,iproc,1, &
-                                      remove_min_to_start_at_zero)
-
-  ! sets tangential nodes
-  if (.not. ( force_normal_to_surface .or. rec_normal_to_surface )) then
-    nnodes_tangential_curve = 0
-  endif
+  call write_axial_elements_database(15, nelem_on_the_axis, ispec_of_axial_elements, &
+                                     nelem_on_the_axis_loc, iproc, 1, remove_min_to_start_at_zero)
 
   write(15,*) 'nelemabs nelemacforcing nelem_acoustic_surface num_fluid_solid_edges'
   write(15,*) 'num_fluid_poro_edges num_solid_poro_edges'
@@ -383,6 +375,9 @@
 
   subroutine save_databases_attenuation()
 
+  use part_unstruct_par
+  use parameter_file_par
+
   implicit none
 
   ! attenuation setting
@@ -394,6 +389,9 @@
 !-------------------------------------------------------------------------------
 
   subroutine save_databases_kmato()
+
+  use part_unstruct_par
+  use parameter_file_par
 
   implicit none
 
@@ -442,6 +440,9 @@
 
   subroutine save_databases_interfaces()
 
+  use part_unstruct_par
+  use decompose_par
+
   implicit none
 
   if (NPROC /= 1) then
@@ -467,6 +468,8 @@
 
   subroutine save_databases_absorbing()
 
+  use parameter_file_par,only: any_abs
+
   implicit none
 
   write(15,*) 'List of absorbing elements (edge1 edge2 edge3 edge4 type):'
@@ -480,6 +483,8 @@
 !-------------------------------------------------------------------------------
 
   subroutine save_databases_acoustic_forcing()
+
+  use parameter_file_par,only: ACOUSTIC_FORCING
 
   implicit none
 
@@ -495,6 +500,8 @@
 
   subroutine save_databases_free_surf()
 
+  use part_unstruct_par
+
   implicit none
 
   write(15,*) 'List of acoustic free-surface elements:'
@@ -506,25 +513,27 @@
 
   subroutine save_databases_coupled()
 
+  use part_unstruct_par
+
   implicit none
 
   write(15,*) 'List of acoustic elastic coupled edges:'
-  call write_fluidsolid_edges_database(15, nedges_coupled, nedges_coupled_loc, &
-                                      edges_coupled, iproc, 2)
+  call write_fluidsolid_edges_database(15, nedges_coupled, edges_coupled, nedges_coupled_loc, iproc, 2)
 
   write(15,*) 'List of acoustic poroelastic coupled edges:'
-  call write_fluidsolid_edges_database(15, nedges_acporo_coupled, nedges_acporo_coupled_loc, &
-                                      edges_acporo_coupled, iproc, 2)
+  call write_fluidsolid_edges_database(15, nedges_acporo_coupled, edges_acporo_coupled, nedges_acporo_coupled_loc, iproc, 2)
 
   write(15,*) 'List of poroelastic elastic coupled edges:'
-  call write_fluidsolid_edges_database(15, nedges_elporo_coupled, nedges_elporo_coupled_loc, &
-                                      edges_elporo_coupled, iproc, 2)
+  call write_fluidsolid_edges_database(15, nedges_elporo_coupled, edges_elporo_coupled, nedges_elporo_coupled_loc, iproc, 2)
 
   end subroutine save_databases_coupled
 
 !-------------------------------------------------------------------------------
 
   subroutine save_databases_tangential()
+
+  use part_unstruct_par
+  use parameter_file_par
 
   implicit none
 
@@ -544,11 +553,13 @@
 
   subroutine save_databases_axial_elements
 
+  use part_unstruct_par
+
   implicit none
 
   write(15,*) 'List of axial elements:'
-  call write_axial_elements_database(15, nelem_on_the_axis, ispec_of_axial_elements, nelem_on_the_axis_loc, iproc, 2, &
-                                     remove_min_to_start_at_zero)
+  call write_axial_elements_database(15, nelem_on_the_axis, ispec_of_axial_elements, &
+                                     nelem_on_the_axis_loc, iproc, 2, remove_min_to_start_at_zero)
 
   end subroutine save_databases_axial_elements
 

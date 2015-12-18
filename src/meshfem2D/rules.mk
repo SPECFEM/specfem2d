@@ -46,25 +46,35 @@ meshfem2D_TARGETS = \
 	$(EMPTY_MACRO)
 
 meshfem2D_OBJECTS = \
+	$O/meshfem2D_par.mesh_module.o \
+	$O/decompose_mesh.mesh.o \
+	$O/determine_abs_surface.mesh.o \
+	$O/determine_acoustic_surface.mesh.o \
 	$O/get_node_number.mesh.o \
+	$O/metis_partitioning.mesh.o \
 	$O/part_unstruct.mesh.o \
+	$O/read_external_mesh_files.mesh.o \
 	$O/read_interfaces_file.mesh.o \
 	$O/read_materials.mesh.o \
 	$O/read_parameter_file.mesh.o \
 	$O/read_regions.mesh.o \
 	$O/read_source_file.mesh.o \
+	$O/read_mesh_files.mesh.o \
+	$O/repartition_coupling.mesh.o \
+	$O/rotate_mesh.mesh.o \
 	$O/save_databases.mesh.o \
 	$O/save_gnuplot_file.mesh.o \
 	$O/save_stations_file.mesh.o \
+	$O/scotch_partitioning.mesh.o \
 	$O/spline_routines.mesh.o \
 	$O/meshfem2D.mesh.o \
 	$(EMPTY_MACRO)
 
 meshfem2D_MODULES = \
-	$(FC_MODDIR)/interfaces_file.$(FC_MODEXT) \
-	$(FC_MODDIR)/parameter_file.$(FC_MODEXT) \
-	$(FC_MODDIR)/part_unstruct.$(FC_MODEXT) \
-	$(FC_MODDIR)/source_file.$(FC_MODEXT) \
+	$(FC_MODDIR)/decompose_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/parameter_file_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/part_unstruct_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/source_file_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 meshfem2D_SHARED_OBJECTS = \
@@ -109,20 +119,23 @@ $E/xmeshfem2D: $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS)
 ### Module dependencies
 ###
 
-$O/meshfem2D.mesh.o: $O/part_unstruct.mesh.o $O/read_interfaces_file.mesh.o $O/read_parameter_file.mesh.o $O/read_source_file.mesh.o
+
+$O/meshfem2D.mesh.o: $O/meshfem2D_par.mesh_module.o
 
 ifdef SCOTCH_INCDIR
 $O/part_unstruct.mesh.o: $(SCOTCH_INCDIR)/scotchf.h
 endif
 
-$O/save_databases.mesh.o: $O/part_unstruct.mesh.o $O/read_parameter_file.mesh.o $O/read_source_file.mesh.o
 
 ####
 #### rule to build each .o file below
 ####
 
-$O/%.mesh.o: $S/%.f90 ${SETUP}/constants.h
+$O/%.mesh_module.o: $S/%.f90 ${SETUP}/constants.h
 	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.mesh.o: $S/%.F90 ${SETUP}/constants.h
+$O/%.mesh.o: $S/%.f90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o
+	${F90} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.mesh.o: $S/%.F90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o
 	${F90} ${FCFLAGS_f90} -c -o $@ $<

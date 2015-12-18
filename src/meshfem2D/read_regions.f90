@@ -33,9 +33,11 @@
 
   subroutine read_regions(nbregion,nb_materials,icodemat,cp,cs, &
                           rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
-                          nelmnts,num_material,nxread,nzread)
+                          nelmnts,num_material)
 
 ! reads in material definitions in DATA/Par_file
+
+  use part_unstruct_par,only: nxread,nzread
 
   implicit none
   include "constants.h"
@@ -47,7 +49,6 @@
 
   integer :: nelmnts
   integer,dimension(nelmnts) :: num_material
-  integer :: nxread,nzread
 
   ! local parameters
   integer :: iregion,ixdebregion,ixfinregion,izdebregion,izfinregion,imaterial_number
@@ -69,7 +70,7 @@
   do iregion = 1,nbregion
 
     call read_region_coordinates_p(ixdebregion,ixfinregion, &
-                                izdebregion,izfinregion,imaterial_number)
+                                   izdebregion,izfinregion,imaterial_number)
 
     if (imaterial_number < 1) stop 'Negative material number not allowed!'
     if (ixdebregion < 1) stop 'Left coordinate of region negative!'
@@ -100,11 +101,13 @@
        if (poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
        print *,'QKappa = ',QKappa(imaterial_number)
        print *,'Qmu = ',Qmu(imaterial_number)
+
     else if (icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
 
        ! poroelastic material
        print *,'Material # ',imaterial_number,' isotropic'
        print *,'Material is poroelastic'
+
     else
 
        ! anisotropic material
@@ -124,6 +127,7 @@
        print *,'QKappa = ',QKappa(imaterial_number)
        print *,'Qmu = ',Qmu(imaterial_number)
     endif
+
     print *,' -----'
 
     ! store density and velocity model

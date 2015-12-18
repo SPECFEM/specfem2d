@@ -32,8 +32,8 @@
 !========================================================================
 
   subroutine save_stations_file(nreceiversets,nrec,xdeb,zdeb,xfin,zfin,record_at_surface_same_vertical, &
-                            xinterface_top,zinterface_top,coefs_interface_top, &
-                            npoints_interface_top,max_npoints_interface)
+                                xinterface_top,zinterface_top,coefs_interface_top, &
+                                npoints_interface_top,max_npoints_interface)
 
   implicit none
 

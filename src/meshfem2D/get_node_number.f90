@@ -38,7 +38,7 @@
 
 !--- global node number
 
-integer function num(i,j,nx)
+  integer function num(i,j,nx)
 
   implicit none
 
@@ -46,11 +46,11 @@ integer function num(i,j,nx)
 
   num = j*(nx+1) + i + 1
 
-end function num
+  end function num
 
 
 !---  global node number (when ngnod==4).
-integer function num_4(i,j,nx)
+  integer function num_4(i,j,nx)
 
   implicit none
 
@@ -58,11 +58,11 @@ integer function num_4(i,j,nx)
 
   num_4 = j*(nx+1) + i + 1
 
-end function num_4
+  end function num_4
 
 
 !---  global node number (when ngnod==9).
-integer function num_9(i,j,nx,nz)
+  integer function num_9(i,j,nx,nz)
 
   implicit none
 
@@ -80,4 +80,4 @@ integer function num_9(i,j,nx,nz)
      endif
   endif
 
-end function num_9
+  end function num_9

@@ -31,42 +31,29 @@
 !
 !========================================================================
 
-module interfaces_file
+! note: the filename ending is .F90 to have pre-compilation with pragmas
+!            (like #ifndef USE_MPI) working properly
 
-  ! note: we use this module definition only to be able to allocate
-  !          arrays for receiverlines and materials in this subroutine rather than in the main
-  !          routine in meshfem2D.F90
+  subroutine read_interfaces_file()
 
-  ! note 2: the filename ending is .F90 to have pre-compilation with pragmas
-  !            (like #ifndef USE_MPI) working properly
+  use part_unstruct_par,only: elmnts,nelmnts,nz_layer,number_of_layers,max_npoints_interface,number_of_interfaces, &
+    nx,nz,nxread,nzread
+
+  use parameter_file_par,only: ngnod,interfacesfile
 
   implicit none
 
-contains
-
-  subroutine read_interfaces_file(interfacesfile,max_npoints_interface, &
-                                number_of_interfaces,npoints_interface_bottom, &
-                                number_of_layers,nz_layer,nx,nz,nxread,nzread,ngnod, &
-                                nelmnts,elmnts)
-  implicit none
   include "constants.h"
 
-  character(len=100) :: interfacesfile
-
-  integer :: max_npoints_interface,number_of_interfaces,npoints_interface_bottom
-  integer :: number_of_layers,nx,nz,nxread,nzread,ngnod
-  integer :: nelmnts
-  integer, dimension(:), pointer :: nz_layer
-  integer, dimension(:), pointer  :: elmnts
-
   ! local parameters
-  integer :: ios,interface_current,ipoint_current,ilayer,i,j,num_elmnt
+  integer :: ier,interface_current,ipoint_current,ilayer,i,j,num_elmnt
+  integer :: npoints_interface_bottom
   double precision :: xinterface_dummy,zinterface_dummy,xinterface_dummy_previous
 
   ! get interface data from external file to count the spectral elements along Z
   print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
-  open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old',iostat=ios)
-  if (ios /= 0) then
+  open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old',iostat=ier)
+  if (ier /= 0) then
     print *,'error opening file: ',trim('DATA/'//interfacesfile)
     stop 'error read interface file in meshfem2D'
   endif
@@ -81,24 +68,31 @@ contains
   do interface_current = 1,number_of_interfaces
 
     call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_bottom)
+
     if (npoints_interface_bottom < 2) stop 'not enough interface points (minimum is 2)'
+
     max_npoints_interface = max(npoints_interface_bottom,max_npoints_interface)
+
     print *,'Reading ',npoints_interface_bottom,' points for interface ',interface_current
 
     ! loop on all the points describing this interface
     xinterface_dummy_previous = -HUGEVAL
     do ipoint_current = 1,npoints_interface_bottom
-       call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK,xinterface_dummy,zinterface_dummy)
-       if (ipoint_current > 1 .and. xinterface_dummy <= xinterface_dummy_previous) &
-            stop 'interface points must be sorted in increasing X'
-       xinterface_dummy_previous = xinterface_dummy
+
+      call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK,xinterface_dummy,zinterface_dummy)
+
+      if (ipoint_current > 1 .and. xinterface_dummy <= xinterface_dummy_previous) &
+        stop 'interface points must be sorted in increasing X'
+
+      xinterface_dummy_previous = xinterface_dummy
     enddo
   enddo
 
   ! define number of layers
   number_of_layers = number_of_interfaces - 1
 
-  allocate(nz_layer(number_of_layers))
+  allocate(nz_layer(number_of_layers),stat=ier)
+  if (ier /= 0) stop 'Error allocating array nz_layer'
 
   print *, 'Total number of layers in z direction = ', number_of_layers
 
@@ -107,9 +101,9 @@ contains
 
     ! read number of spectral elements in vertical direction in this layer
     call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,nz_layer(ilayer))
+
     if (nz_layer(ilayer) < 1) stop 'not enough spectral elements along Z in layer (minimum is 1)'
     print *,'There are ',nz_layer(ilayer),' spectral elements along Z in layer ',ilayer
-
   enddo
 
   close(IIN_INTERFACES)
@@ -131,8 +125,10 @@ contains
     nz_layer(:) = nz_layer(:) * 2
   endif
 
+  ! stores mesh point indices in array 'elmnts'
   nelmnts = nxread * nzread
-  allocate(elmnts(0:ngnod*nelmnts-1))
+  allocate(elmnts(0:ngnod*nelmnts-1),stat=ier)
+  if (ier /= 0) stop 'Error allocating array elmnts'
 
   if (ngnod == 4) then
     num_elmnt = 0
@@ -145,7 +141,8 @@ contains
           num_elmnt = num_elmnt + 1
        enddo
     enddo
-  else
+
+  else if (ngnod == 9) then
     num_elmnt = 0
     do j = 1, nzread
        do i = 1, nxread
@@ -162,8 +159,8 @@ contains
        enddo
     enddo
 
+  else
+    stop 'ngnod must be either 4 or 9'
   endif
 
   end subroutine read_interfaces_file
-
-end module interfaces_file

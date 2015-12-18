@@ -89,102 +89,108 @@
   ! reads in material parameters
   do imaterial= 1,nb_materials
 
-     call read_material_parameters_p(i,icodematread, &
-                              val0read,val1read,val2read,val3read, &
-                              val4read,val5read,val6read,val7read, &
-                              val8read,val9read,val10read,val11read,val12read)
+    call read_material_parameters_p(i,icodematread, &
+                                    val0read,val1read,val2read,val3read, &
+                                    val4read,val5read,val6read,val7read, &
+                                    val8read,val9read,val10read,val11read,val12read)
 
-     ! checks material id
-     if (i < 1 .or. i > nb_materials) stop 'Wrong material number!'
-     icodemat(i) = icodematread
+    ! checks material id
+    if (i < 1 .or. i > nb_materials) stop 'Wrong material number!'
+    icodemat(i) = icodematread
 
+    ! sets material properties
+    if (icodemat(i) == ISOTROPIC_MATERIAL) then
 
-     ! sets material properties
-     if (icodemat(i) == ISOTROPIC_MATERIAL) then
+      ! isotropic materials
+      rho_s(i) = val0read
+      cp(i) = val1read
+      cs(i) = val2read
+      QKappa(i) = val5read
+      Qmu(i) = val6read
 
-        ! isotropic materials
+      ! for Cs we use a less restrictive test because acoustic media have Cs exactly equal to zero
+      if (rho_s(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) &
+        stop 'negative value of velocity or density'
+      if (QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) &
+        stop 'non-positive value of QKappa or Qmu'
 
-        rho_s(i) = val0read
-        cp(i) = val1read
-        cs(i) = val2read
-        QKappa(i) = val5read
-        Qmu(i) = val6read
-
-! for Cs we use a less restrictive test because acoustic media have Cs exactly equal to zero
-        if (rho_s(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) &
-            stop 'negative value of velocity or density'
-        if (QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) stop 'non-positive value of QKappa or Qmu'
-
-        aniso3(i) = val3read
-        aniso4(i) = val4read
-        if (abs(cs(i)) > TINYVAL) then
-           phi(i) = 0.d0           ! elastic
-        else
-           phi(i) = 1.d0           ! acoustic
-        endif
-     else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
-
-        ! anisotropic materials
-
-        rho_s(i) = val0read
-        aniso3(i) = val1read
-        aniso4(i) = val2read
-        aniso5(i) = val3read
-        aniso6(i) = val4read
-        aniso7(i) = val5read
-        aniso8(i) = val6read
-        aniso9(i) = val7read
-        aniso10(i) = val8read
-        aniso11(i) = val9read
-        aniso12(i) = val10read ! This value will be used only in AXISYM
-
-     else if (icodemat(i) == POROELASTIC_MATERIAL) then
-
-        ! poroelastic materials
-
-        rho_s(i) = val0read
-        rho_f(i) = val1read
-        phi(i) = val2read
-        tortuosity(i) = val3read
-        permxx(i) = val4read
-        permxz(i) = val5read
-        permzz(i) = val6read
-        kappa_s(i) = val7read
-        kappa_f(i) = val8read
-        kappa_fr(i) = val9read
-        eta_f(i) = val10read
-        mu_fr(i) = val11read
-        Qmu(i) = val12read
-
-        if (rho_s(i) <= 0.d0 .or. rho_f(i) <= 0.d0) stop 'non-positive value of density'
-        if (phi(i) <= 0.d0 .or. tortuosity(i) <= 0.d0) stop 'non-positive value of porosity or tortuosity'
-        if (kappa_s(i) <= 0.d0 .or. kappa_f(i) <= 0.d0 .or. kappa_fr(i) <= 0.d0 .or. mu_fr(i) <= 0.d0) then
-           stop 'non-positive value of modulus'
-        endif
-        if (Qmu(i) <= 0.00000001d0) stop 'non-positive value of Qmu'
-
-      else if (icodemat(i) <= 0) then
-        number_of_materials_defined_by_tomo_file = number_of_materials_defined_by_tomo_file + 1
-        if (number_of_materials_defined_by_tomo_file > 1) then
-          stop 'Just one material can be defined by a tomo file for now (we would need to write a nummaterial_velocity_file)'
-        endif
-        ! Assign dummy values for now (they will be read by the solver). Vs must be == 0 for acoustic media anyway
-        rho_s(i) = -1.0d0
-        cp(i) = -1.0d0
-        cs(i) = val2read
-        QKappa(i) = -1.0d0
-        Qmu(i) = -1.0d0
-        aniso3(i) = -1.0d0
-        aniso4(i) = -1.0d0
-        if (abs(cs(i)) > TINYVAL) then
-           phi(i) = 0.d0           ! elastic
-        else
-           phi(i) = 1.d0           ! acoustic
-        endif
+      aniso3(i) = val3read
+      aniso4(i) = val4read
+      if (abs(cs(i)) > TINYVAL) then
+        phi(i) = 0.d0           ! elastic
       else
-        stop 'Unknown material code'
-     endif
-  enddo
+        phi(i) = 1.d0           ! acoustic
+      endif
+
+    else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
+
+      ! anisotropic materials
+      rho_s(i) = val0read
+      aniso3(i) = val1read
+      aniso4(i) = val2read
+      aniso5(i) = val3read
+      aniso6(i) = val4read
+      aniso7(i) = val5read
+      aniso8(i) = val6read
+      aniso9(i) = val7read
+      aniso10(i) = val8read
+      aniso11(i) = val9read
+      aniso12(i) = val10read ! This value will be used only in AXISYM
+
+    else if (icodemat(i) == POROELASTIC_MATERIAL) then
+
+      ! poroelastic materials
+      rho_s(i) = val0read
+      rho_f(i) = val1read
+      phi(i) = val2read
+      tortuosity(i) = val3read
+      permxx(i) = val4read
+      permxz(i) = val5read
+      permzz(i) = val6read
+      kappa_s(i) = val7read
+      kappa_f(i) = val8read
+      kappa_fr(i) = val9read
+      eta_f(i) = val10read
+      mu_fr(i) = val11read
+      Qmu(i) = val12read
+
+      if (rho_s(i) <= 0.d0 .or. rho_f(i) <= 0.d0) &
+        stop 'non-positive value of density'
+      if (phi(i) <= 0.d0 .or. tortuosity(i) <= 0.d0) &
+        stop 'non-positive value of porosity or tortuosity'
+      if (kappa_s(i) <= 0.d0 .or. kappa_f(i) <= 0.d0 .or. kappa_fr(i) <= 0.d0 .or. mu_fr(i) <= 0.d0) &
+        stop 'non-positive value of modulus'
+      if (Qmu(i) <= 0.00000001d0) &
+        stop 'non-positive value of Qmu'
+
+    else if (icodemat(i) <= 0) then
+
+      number_of_materials_defined_by_tomo_file = number_of_materials_defined_by_tomo_file + 1
+
+      if (number_of_materials_defined_by_tomo_file > 1) &
+        stop 'Just one material can be defined by a tomo file for now (we would need to write a nummaterial_velocity_file)'
+
+      ! Assign dummy values for now (they will be read by the solver). Vs must be == 0 for acoustic media anyway
+      rho_s(i) = -1.0d0
+      cp(i) = -1.0d0
+      cs(i) = val2read
+      QKappa(i) = -1.0d0
+      Qmu(i) = -1.0d0
+      aniso3(i) = -1.0d0
+      aniso4(i) = -1.0d0
+      if (abs(cs(i)) > TINYVAL) then
+        phi(i) = 0.d0           ! elastic
+      else
+        phi(i) = 1.d0           ! acoustic
+      endif
+
+    else
+
+      stop 'Unknown material code'
+
+    endif
+
+  enddo ! nb_materials
 
   ! user output
   print *
