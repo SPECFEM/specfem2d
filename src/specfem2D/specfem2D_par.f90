@@ -117,10 +117,16 @@ module specfem_par
   real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
 
   ! material
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: kappastore,mustore, rhostore
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_vp,rho_vs
+  ! density
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhostore
+  ! isotropic moduli
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: kappastore,mustore
+  ! anisotropic
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     c11store,c12store,c13store,c15store,c23store,c25store,c33store,c35store,c55store
+
+  ! for absorbing boundaries
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_vp,rho_vs
 
   !---------------------------------------------------------------------
   ! for boundary condition (physical BC or artificial BC)

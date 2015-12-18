@@ -65,18 +65,17 @@ subroutine finalize_simulation()
     do ispec= 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          rho_save(i,j,ispec)            = density(1,kmato(ispec))
-          lambdal_unrelaxed_elastic      = poroelastcoef(1,1,kmato(ispec))
-          mul_unrelaxed_elastic          = poroelastcoef(2,1,kmato(ispec))
+          rho_save(i,j,ispec) = density(1,kmato(ispec))
+          lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+          mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
 
-          kappa_save(i,j,ispec)          = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
-          vp_save(i,j,ispec)             = sqrt((kappa_save(i,j,ispec) + &
-                                            4._CUSTOM_REAL*mul_unrelaxed_elastic/ &
-                                            3._CUSTOM_REAL)/density(1,kmato(ispec)))
-          vs_save(i,j,ispec)             = sqrt(mul_unrelaxed_elastic/density(1,kmato(ispec)))
+          kappa_save(i,j,ispec) = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
+          vp_save(i,j,ispec) = sqrt((kappa_save(i,j,ispec) + FOUR_THIRDS *mul_unrelaxed_elastic)/density(1,kmato(ispec)))
+          vs_save(i,j,ispec) = sqrt(mul_unrelaxed_elastic/density(1,kmato(ispec)))
+
           iglob = ibool(i,j,ispec)
-          x_save(i,j,ispec)              = coord(1,iglob)
-          z_save(i,j,ispec)              = coord(2,iglob)
+          x_save(i,j,ispec) = coord(1,iglob)
+          z_save(i,j,ispec) = coord(2,iglob)
         enddo
       enddo
     enddo

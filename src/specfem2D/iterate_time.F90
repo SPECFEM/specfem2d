@@ -1188,12 +1188,12 @@
               iglob = ibool(i,j,ispec)
               if (.not. assign_external_model) then
                 mul = poroelastcoef(2,1,kmato(ispec))
-                kappal = poroelastcoef(3,1,kmato(ispec)) - 4._CUSTOM_REAL * mul / 3._CUSTOM_REAL
+                kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
                 rhol = density(1,kmato(ispec))
               else
                 rhol = rhoext(i,j,ispec)
                 mul = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
-                kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - 4._CUSTOM_REAL * mul / 3._CUSTOM_REAL
+                kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - FOUR_THIRDS * mul
               endif
 
               rho_kl(i,j,ispec) = - rhol * rho_kl(i,j,ispec)

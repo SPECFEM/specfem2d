@@ -76,7 +76,7 @@
 
 ! elastic kernel calculations
 ! see e.g. Tromp et al. (2005)
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,HALF,TWO
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,HALF,TWO,FOUR_THIRDS
 
   use specfem_par, only: ispec_is_elastic,rho_k, &
                          rho_kl,mu_kl,kappa_kl,rhop_kl,beta_kl,alpha_kl,bulk_c_kl,bulk_beta_kl, &
@@ -217,11 +217,11 @@
           if (.not. assign_external_model) then
             rhol = density(1,kmato(ispec))
             mul = poroelastcoef(2,1,kmato(ispec))
-            kappal = poroelastcoef(3,1,kmato(ispec)) - 4._CUSTOM_REAL * mul / 3._CUSTOM_REAL
+            kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
           else
             rhol = rhoext(i,j,ispec)
             mul = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
-            kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - 4._CUSTOM_REAL * mul / 3._CUSTOM_REAL
+            kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - FOUR_THIRDS * mul
           endif
 
           ! for parameterization (rho,mu,kappa): "primary" kernels
@@ -236,9 +236,9 @@
           ! rho prime kernel
           rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + kappa_kl(i,j,ispec) + mu_kl(i,j,ispec)
           ! Vs kernel
-          beta_kl(i,j,ispec) = TWO * (mu_kl(i,j,ispec) - 4._CUSTOM_REAL * mul/(3._CUSTOM_REAL * kappal) * kappa_kl(i,j,ispec))
+          beta_kl(i,j,ispec) = TWO * (mu_kl(i,j,ispec) - FOUR_THIRDS * mul/kappal * kappa_kl(i,j,ispec))
           ! Vp kernel
-          alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + 4._CUSTOM_REAL * mul/(3._CUSTOM_REAL * kappal)) * kappa_kl(i,j,ispec)
+          alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + FOUR_THIRDS * mul/kappal) * kappa_kl(i,j,ispec)
 
           ! for bulk velocity c parameterization (rho,bulk_c,beta):
           bulk_c_kl(i,j,ispec) =  TWO * kappa_kl(i,j,ispec)

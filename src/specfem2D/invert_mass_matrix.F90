@@ -36,7 +36,9 @@
 
 !  builds the global mass matrix
 
-  use constants,only: IMAIN,CUSTOM_REAL,NGLLX,NGLLZ,ONE,TWO,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants,only: IMAIN,CUSTOM_REAL,NGLLX,NGLLZ,ONE,TWO,FOUR_THIRDS, &
+    CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY, &
+    IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: myrank,any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
                                 rmass_inverse_elastic_one, &
@@ -362,7 +364,7 @@
 
         rhol  = density(1,kmato(ispec))
         kappal  = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
-        cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)/rhol)
+        cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
         csl = sqrt(mul_unrelaxed_elastic/rhol)
 
         !--- left absorbing boundary

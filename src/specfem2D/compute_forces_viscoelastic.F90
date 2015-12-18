@@ -37,7 +37,7 @@
 
   ! compute forces for the elastic elements
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CONVOLUTION_MEMORY_VARIABLES, &
-    IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL
+    IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL,FOUR_THIRDS
 
   use specfem_par, only: P_SV,nglob,nspec,nelemabs,it,anyabs,assign_external_model, &
                          ATTENUATION_VISCOELASTIC_SOLID,nspec_allocate,N_SLS,anglesource, &
@@ -1204,7 +1204,7 @@
       lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
       rhol  = density(1,kmato(ispec))
       kappal  = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
-      cpl = sqrt((kappal + 4._CUSTOM_REAL*mul_unrelaxed_elastic/3._CUSTOM_REAL)/rhol)
+      cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
       csl = sqrt(mul_unrelaxed_elastic/rhol)
 
       !--- left absorbing boundary

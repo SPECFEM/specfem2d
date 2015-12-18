@@ -1311,7 +1311,7 @@
   ! local parameters
   integer :: i,j,ispec,n,ier
   ! for shifting of velocities if needed in the case of viscoelasticity
-  double precision :: vp,vs,rho,mu,lambda
+  double precision :: vp,vs,rhol,mul,lambdal
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
 
   ! user output
@@ -1410,15 +1410,19 @@
          stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
       n = kmato(ispec)
       if (.not. already_shifted_velocity(n)) then
-        rho = density(1,n)
-        lambda = poroelastcoef(1,1,n)
-        mu = poroelastcoef(2,1,n)
-        vp = dsqrt((lambda + TWO * mu) / rho)
-        vs = dsqrt(mu / rho)
-        call shift_velocities_from_f0(vp,vs,rho,mu,lambda)
-        poroelastcoef(1,1,n) = lambda
-        poroelastcoef(2,1,n) = mu
-        poroelastcoef(3,1,n) = lambda + TWO*mu
+        rhol = density(1,n)
+        lambdal = poroelastcoef(1,1,n)
+        mul = poroelastcoef(2,1,n)
+
+        vp = sqrt((lambdal + TWO * mul) / rhol)
+        vs = sqrt(mul/rhol)
+
+        call shift_velocities_from_f0(vp,vs,rhol,mul,lambdal)
+
+        poroelastcoef(1,1,n) = lambdal
+        poroelastcoef(2,1,n) = mul
+        poroelastcoef(3,1,n) = lambdal + TWO * mul
+
         already_shifted_velocity(n) = .true.
       endif
     endif
@@ -1495,32 +1499,36 @@
 
   if (assign_external_model) then
     ! external model
-    do ispec= 1,nspec
+    do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          rhostore(i,j,ispec)    = rhoext(i,j,ispec)
-          rho_vp(i,j,ispec)      = rhostore(i,j,ispec) * vpext(i,j,ispec)
-          rho_vs(i,j,ispec)      = rhostore(i,j,ispec) * vsext(i,j,ispec)
-          mustore(i,j,ispec)     = rho_vs(i,j,ispec) * vsext(i,j,ispec)
-          kappastore(i,j,ispec)  = rho_vp(i,j,ispec) * vpext(i,j,ispec)-TWO*TWO*mustore(i,j,ispec)/3._CUSTOM_REAL
+          rhol = rhoext(i,j,ispec)
+          mul = rhol * vsext(i,j,ispec) * vsext(i,j,ispec)
+
+          rhostore(i,j,ispec)    = rhol
+          mustore(i,j,ispec)     = mul
+          kappastore(i,j,ispec)  = rhol * vpext(i,j,ispec) * vpext(i,j,ispec) - FOUR_THIRDS * mul
+
+          rho_vp(i,j,ispec)      = rhol * vpext(i,j,ispec)
+          rho_vs(i,j,ispec)      = rhol * vsext(i,j,ispec)
         enddo
       enddo
     enddo
   else
     ! Internal rho vp vs model
-    do ispec= 1,nspec
+    do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          rhostore(i,j,ispec)       = density(1,kmato(ispec))
+          rhol = density(1,kmato(ispec))
           lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-          mul_unrelaxed_elastic     = poroelastcoef(2,1,kmato(ispec))
+          mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
 
-          mustore(i,j,ispec)        = mul_unrelaxed_elastic
-          kappastore(i,j,ispec)     = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
-          rho_vp(i,j,ispec)         = density(1,kmato(ispec)) * sqrt((kappastore(i,j,ispec) + &
-                                      4._CUSTOM_REAL*mul_unrelaxed_elastic/ &
-                                      3._CUSTOM_REAL)/density(1,kmato(ispec)))
-          rho_vs(i,j,ispec)         = density(1,kmato(ispec)) * sqrt(mul_unrelaxed_elastic/density(1,kmato(ispec)))
+          rhostore(i,j,ispec) = rhol
+          mustore(i,j,ispec) = mul_unrelaxed_elastic
+          kappastore(i,j,ispec) = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic/3._CUSTOM_REAL
+
+          rho_vp(i,j,ispec) = rhol * sqrt((kappastore(i,j,ispec) + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
+          rho_vs(i,j,ispec) = rhol * sqrt(mul_unrelaxed_elastic/rhol)
         enddo
       enddo
     enddo
