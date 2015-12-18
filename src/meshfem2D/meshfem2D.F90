@@ -422,7 +422,7 @@
     ! PML mesh elements
     allocate(region_pml_external_mesh(nelmnts),stat=ier)
     if (ier /= 0) stop 'Error allocating array region_pml_external_mesh'
-    
+
     region_pml_external_mesh(:) = 0
 
     if (read_external_mesh) then
