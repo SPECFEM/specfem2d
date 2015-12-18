@@ -399,7 +399,7 @@
     if (read_external_mesh) then
        call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, ngnod)
     else
-       call read_interfaces_file(nx_param)
+       call read_interfaces_file()
     endif
 
     ! assigns materials to mesh elements
