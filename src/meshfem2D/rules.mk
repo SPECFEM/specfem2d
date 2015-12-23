@@ -123,7 +123,7 @@ $E/xmeshfem2D: $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS)
 $O/meshfem2D.mesh.o: $O/meshfem2D_par.mesh_module.o
 
 ifdef SCOTCH_INCDIR
-$O/part_unstruct.mesh.o: $(SCOTCH_INCDIR)/scotchf.h
+$O/scotch_partitioning.mesh.o: $(SCOTCH_INCDIR)/scotchf.h
 endif
 
 
