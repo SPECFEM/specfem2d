@@ -34,7 +34,7 @@ pause -1 "Hit any key..."
 #plot "OUTPUT_FILES/AA.S0001.BXZ.semd" t 'Numerical Uz' w l lc 1
 #pause -1 "Hit any key..."
 
-#plot "source.txt" t 'Numerical Uz' w l lc 1 
+#plot "OUTPUT_FILES/plot_source_time_function.txt" t 'Numerical Uz' w l lc 1
 #pause -1 "Hit any key..."
 
 #plot "OUTPUT_FILES/AA.S0001.BXX.semd" t 'Numerical Ux' w l lc 1, "AA.S0001.BXX.rk.semd" t 'RKUx' w l lc 3
