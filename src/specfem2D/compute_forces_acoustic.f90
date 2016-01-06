@@ -33,7 +33,7 @@
 
 
   subroutine compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                    potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
+                                     potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
 
 
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion

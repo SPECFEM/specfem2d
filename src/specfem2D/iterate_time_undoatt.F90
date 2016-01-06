@@ -50,7 +50,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_potential_acoustic_buffer,b_potential_dot_dot_acoustic_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_elastic_buffer,b_accel_elastic_buffer
 
-  integer :: i,j,iteration_on_subset,it_of_this_subset,it_backward
+  integer :: i,j
   integer :: it_temp,seismo_current_temp
   integer :: ier
   integer, parameter :: it_begin = 1
@@ -70,6 +70,7 @@
 
   ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)
+
   ! time_values(1): year
   ! time_values(2): month of the year
   ! time_values(3): day of the month
@@ -101,6 +102,7 @@
   if (NOISE_TOMOGRAPHY /= 0 ) call exit_MPI(myrank,'for undo_attenuation, NOISE_TOMOGRAPHY is not supported')
   if (AXISYM ) call exit_MPI(myrank,'Just axisymmetric FORWARD simulations are possible so far')
 
+  ! allocates buffers
   if (SIMULATION_TYPE == 3) then
     if (any_acoustic) then
       allocate(b_potential_acoustic_buffer(nglob,NT_DUMP_ATTENUATION),stat=ier)
@@ -153,11 +155,11 @@
     ! wavefield storage
     if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
       ! saves forward wavefields
-      call save_forward_arrays_undoatt(iteration_on_subset)
+      call save_forward_arrays_undoatt()
 
     else if (SIMULATION_TYPE == 3) then
       ! reads in last stored forward wavefield
-      call read_forward_arrays_undoatt(iteration_on_subset)
+      call read_forward_arrays_undoatt()
 
       ! intermediate storage of it and seismo_current positions
       it_temp = it
@@ -165,168 +167,36 @@
     endif
 
     ! time loop within this iteration subset
-    select case( SIMULATION_TYPE )
-    case( 1 )
+    select case (SIMULATION_TYPE)
+    case (1)
       ! forward and adjoint simulations
       ! subset loop
       do it_of_this_subset = 1, NT_DUMP_ATTENUATION
 
         it = it + 1
 
-        do i_stage = 1, stage_time_scheme ! is equal to 1 if Newmark because only one stage then
-
-          ! *********************************************************
-          ! ************* update_displacement_newmark
-          ! *********************************************************
-          if (any_acoustic) then
-            if (nelem_acoustic_surface > 0) then
-              call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                                 potential_acoustic)
-            endif
-            call update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                      potential_dot_dot_acoustic,potential_dot_acoustic,&
-                                                      potential_acoustic,potential_acoustic_old, &
-                                                      PML_BOUNDARY_CONDITIONS)
-          endif
-
-          if (any_elastic) then
-            call update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                     accel_elastic,veloc_elastic,&
-                                                     displ_elastic,displ_elastic_old,&
-                                                     PML_BOUNDARY_CONDITIONS)
-          endif
-! *********************************************************
-! ************* main solver for the acoustic elements
-! *********************************************************
-          if (any_acoustic) then
-            call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                         potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
-            ! *********************************************************
-            ! ************* add acoustic forcing at a rigid boundary
-            ! *********************************************************
-            if (ACOUSTIC_FORCING) then
-              call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
-            endif
-          endif
-          ! *********************************************************
-          ! ************* add coupling with the elastic side
-          ! *********************************************************
-          if (coupled_acoustic_elastic) then
-            call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
-          endif
-          ! ************************************************************************************
-          ! ************************************ add force source
-          ! ************************************************************************************
-          if (any_acoustic) then
-            if (.not. initialfield) then
-              call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
-            endif
-          endif
-          ! ************************************************************************************
-          ! ********** assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
-          ! ************************************************************************************
-#ifdef USE_MPI
-          if (NPROC > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-            call assemble_MPI_vector_ac(potential_dot_dot_acoustic)
-          endif
-#endif
-          ! ************************************************************************************
-          ! ********** save or read value on PML interface: potential_*_acoustic
-          ! ************************************************************************************
-          if (PML_BOUNDARY_CONDITIONS) then
-            if (any_acoustic .and. nglob_interface > 0) then
-              if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-                do i = 1, nglob_interface
-                  write(72)potential_dot_dot_acoustic(point_interface(i)),&
-                           potential_dot_acoustic(point_interface(i)),&
-                           potential_acoustic(point_interface(i))
-                enddo
-              endif
-            endif
-          endif
-          ! ************************************************************************************
-          ! ************* multiply by the inverse of the mass matrix and update velocity
-          ! ************************************************************************************
-          if (any_acoustic) then
-            ! free surface for an acoustic medium
-            if (nelem_acoustic_surface > 0) then
-              call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                                 potential_acoustic)
-            endif
-
-            !! DK DK this should be vectorized
-            potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
-            potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
-          endif
-! *********************************************************
-! ************* main solver for the elastic elements
-! *********************************************************
-          if (any_elastic) then
-            call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
-                                             PML_BOUNDARY_CONDITIONS,e1,e11,e13)
-          endif
-          ! *********************************************************
-          ! ************* add coupling with the acoustic side
-          ! *********************************************************
-          if (coupled_acoustic_elastic ) call compute_coupling_viscoelastic_ac()
-
-          ! ************************************************************************************
-          ! ************* add force source
-          ! ************************************************************************************
-          if (any_elastic) then
-            if (.not. initialfield) then
-              if (SIMULATION_TYPE == 1) then
-                call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
-              endif
-            endif
-          endif
-          ! ************************************************************************************
-          ! ************* assembling accel_elastic for elastic elements
-          ! ************************************************************************************
-#ifdef USE_MPI
-          if (NPROC > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-            call assemble_MPI_vector_el(accel_elastic)
-          endif
-#endif
-          ! ************************************************************************************
-          ! ********** save or read value on PML interface: *_elastic
-          ! ************************************************************************************
-          if (PML_BOUNDARY_CONDITIONS) then
-            if (any_elastic .and. nglob_interface > 0) then
-              if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-                do i = 1, nglob_interface
-                  write(71)accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)),&
-                           accel_elastic(3,point_interface(i)),&
-                           veloc_elastic(1,point_interface(i)),veloc_elastic(2,point_interface(i)),&
-                           veloc_elastic(3,point_interface(i)),&
-                           displ_elastic(1,point_interface(i)),displ_elastic(2,point_interface(i)),&
-                           displ_elastic(3,point_interface(i))
-                enddo
-              endif
-            endif
-          endif
-          ! ************************************************************************************
-          ! ************* multiply by the inverse of the mass matrix and update velocity
-          ! ************************************************************************************
-          if (any_elastic) then
-            !! DK DK this should be vectorized
-            accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
-            accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
-            accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
-
-            veloc_elastic = veloc_elastic + deltatover2 * accel_elastic
-          endif
-
-        enddo ! i_stage
-
-        ! computes kinetic and potential energy
-        if (output_energy) then
-          call it_compute_and_output_energy()
-        endif
+        ! compute current time
+        timeval = (it-1) * deltat
 
         ! display time step and max of norm of displacement
         if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
           call check_stability()
+        endif
+
+        do i_stage = 1, stage_time_scheme ! is equal to 1 if Newmark because only one stage then
+          ! update_displacement_newmark
+          call update_displacement_forward()
+
+          ! main solver for the acoustic elements
+          call compute_forces_acoustic_main()
+
+          ! main solver for the elastic elements
+          call compute_forces_viscoelastic_main()
+        enddo
+
+        ! computes kinetic and potential energy
+        if (output_energy) then
+          call it_compute_and_output_energy()
         endif
 
         ! loop on all the receivers to compute and store the seismograms
@@ -337,9 +207,7 @@
 
       enddo ! subset loop
 
-    case( 3 )
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    case (3)
       ! kernel simulations
 
       ! reconstructs forward wavefield based on last stored wavefield data
@@ -348,189 +216,20 @@
       !       the newly computed, reconstructed forward wavefields (b_displ_..) get stored in buffers.
 
       ! subset loop
-!****************************************************************************************************backward
-!****************************************************************************************************
       do it_of_this_subset = 1, NT_DUMP_ATTENUATION
 
         it = it + 1
         do i_stage = 1, stage_time_scheme
-          !****************************************************************************************************backward_inner_loop
-          !****************************************************************************************************
-          ! *********************************************************
-          ! ************* update_displacement_newmark
-          ! *********************************************************
-          if (any_acoustic) then
-            call update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                      b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
-                                                      b_potential_acoustic,b_potential_acoustic_old, &
-                                                      .false.)
-          endif
+          ! backward_inner_loop
+          ! update_displacement_newmark
+          call update_displacement_acoustic_backward()
+          call update_displacement_elastic_backward()
 
-          if (any_elastic) then
-            call update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                     b_accel_elastic,b_veloc_elastic,&
-                                                     b_displ_elastic,b_displ_elastic_old,&
-                                                     .false.)
-          endif
+          ! main solver for the acoustic elements
+          call compute_forces_acoustic_main_backward()
 
-! *********************************************************
-! ************* main solver for the acoustic elements
-! *********************************************************
-          if (any_acoustic) then
-            if (nelem_acoustic_surface > 0) then
-              call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                                 b_potential_acoustic)
-            endif
-
-            if (PML_BOUNDARY_CONDITIONS) then
-              it_backward = NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1)
-              call rebuild_value_on_PML_interface_acoustic(it_backward)  !ZN need to modify the it value inside this code
-            endif
-            call compute_forces_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                         b_potential_acoustic,b_potential_acoustic_old,.false.)
-            if (PML_BOUNDARY_CONDITIONS) then
-              it_backward = NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1)
-              call rebuild_value_on_PML_interface_acoustic(it_backward)  !ZN need to modify the it value inside this code
-            endif
-            ! *********************************************************
-            ! ************* add acoustic forcing at a rigid boundary
-            ! *********************************************************
-            if (ACOUSTIC_FORCING) then
-              call add_acoustic_forcing_at_rigid_boundary(b_potential_dot_dot_acoustic)
-            endif
-          endif
-          ! *********************************************************
-          ! ************* add coupling with the elastic side
-          ! *********************************************************
-          if (coupled_acoustic_elastic) then
-            call compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
-          endif
-
-          if (PML_BOUNDARY_CONDITIONS) then
-            it_backward = NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1)
-            call rebuild_value_on_PML_interface_acoustic(it_backward)  !ZN need to modify the it value inside this code
-          endif
-
-          ! ************************************************************************************
-          ! ************************************ add force source
-          ! ************************************************************************************
-          if (any_acoustic) then
-            if (.not. initialfield) then  !ZN maybe need to change it
-              it_backward = NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1)
-              call compute_add_sources_acoustic(b_potential_dot_dot_acoustic,it_backward,i_stage)
-            endif
-          endif
-          ! ************************************************************************************
-          ! ********** assembling b_potential_dot_dot for acoustic elements
-          ! ************************************************************************************
-#ifdef USE_MPI
-          if (NPROC > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-            call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic)
-          endif
-#endif
-          ! ************************************************************************************
-          ! ********** rebuild b_potential_dot_dot_acoustic on PML interface
-          ! ************************************************************************************
-          if (PML_BOUNDARY_CONDITIONS) then
-            if (any_acoustic .and. nglob_interface > 0) then !ZN may need to change it
-                do i = 1, nglob_interface
-                  it_backward = NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1)
-                  b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,it_backward)
-                enddo
-            endif
-          endif
-          ! ************************************************************************************
-          ! ************* multiply by the inverse of the mass matrix and update velocity
-          ! ************************************************************************************
-          if (any_acoustic) then
-            ! free surface for an acoustic medium
-            if (nelem_acoustic_surface > 0) then
-              if (SIMULATION_TYPE == 3) then
-                call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                                   b_potential_acoustic)
-              endif
-            endif
-
-            if (time_stepping_scheme == 1) then
-              !! DK DK this should be vectorized
-              b_potential_dot_dot_acoustic = b_potential_dot_dot_acoustic * rmass_inverse_acoustic
-              b_potential_dot_acoustic = b_potential_dot_acoustic + deltatover2*b_potential_dot_dot_acoustic
-            endif
-          endif ! any_acoustic
-! *********************************************************
-! ************* main solver for the elastic elements
-! *********************************************************
-          if (any_elastic) then
-            if (PML_BOUNDARY_CONDITIONS) then
-              it_backward = NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1)
-              call rebuild_value_on_PML_interface_viscoelastic(it_backward)
-            endif
-
-            call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                             .false.,b_e1,b_e11,b_e13)
-
-            if (PML_BOUNDARY_CONDITIONS) then
-              it_backward = NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1)
-              call rebuild_value_on_PML_interface_viscoelastic(it_backward)
-            endif
-          endif ! any_elastic
-          ! *********************************************************
-          ! ************* add coupling with the acoustic side
-          ! *********************************************************
-          if (coupled_acoustic_elastic ) call compute_coupling_viscoelastic_ac_backward()
-
-          if (PML_BOUNDARY_CONDITIONS) then
-            it_backward = NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1)
-            call rebuild_value_on_PML_interface_viscoelastic(it_backward)
-          endif
-
-          ! ************************************************************************************
-          ! ************* add force source
-          ! ************************************************************************************
-          if (any_elastic) then
-            if (.not. initialfield) then
-              it_backward = NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1)
-              call compute_add_sources_viscoelastic(b_accel_elastic,it_backward,i_stage)
-            endif ! if not using an initial field
-          endif !if (any_elastic)
-          ! ************************************************************************************
-          ! ************* assembling accel_elastic for elastic elements
-          ! ************************************************************************************
-#ifdef USE_MPI
-          if (NPROC > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-            call assemble_MPI_vector_el(b_accel_elastic)
-          endif
-#endif
-          ! ************************************************************************************
-          ! ********** rebuild b_accel_elastic on PML interface
-          ! ************************************************************************************
-          if (PML_BOUNDARY_CONDITIONS) then
-            if (any_elastic .and. nglob_interface > 0) then  !the it may have to change
-              if (SIMULATION_TYPE == 3) then
-                do i = 1, nglob_interface
-                  it_backward = NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1)
-                  b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,it_backward)
-                  b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,it_backward)
-                  b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,it_backward)
-                enddo
-              endif
-            endif
-          endif
-
-          ! ************************************************************************************
-          ! ************* multiply by the inverse of the mass matrix and update velocity
-          ! ************************************************************************************
-          if (any_elastic) then
-            !! DK DK this should be vectorized
-            b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
-            b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_one(:)
-            b_accel_elastic(3,:) = b_accel_elastic(3,:) * rmass_inverse_elastic_three(:)
-
-            b_veloc_elastic = b_veloc_elastic + deltatover2*b_accel_elastic
-          endif
-
-          !****************************************************************************************************backward_inner_loop
-          !****************************************************************************************************
+          ! main solver for the elastic elements
+          call compute_forces_viscoelastic_main_backward()
         enddo
 
         ! stores wavefield in buffers
@@ -545,10 +244,10 @@
         endif
 
       enddo ! subset loop
-!****************************************************************************************************backward
-!****************************************************************************************************
+
       it = it_temp
       seismo_current = seismo_current_temp
+
       ! adjoint wavefield simulation
       do it_of_this_subset = 1, NT_DUMP_ATTENUATION
         ! reads backward/reconstructed wavefield from buffers
@@ -569,181 +268,69 @@
           enddo
         endif
 
+        ! safety stop
+        if (NOISE_TOMOGRAPHY == 3) stop 'Undo_attenuation for noise kernels not implemented yet'
+
         it = it + 1
 
-        do i_stage = 1, stage_time_scheme
-!****************************************************************************************************adjoint
-!****************************************************************************************************
-          ! *********************************************************
-          ! ************* update_displacement_newmark
-          ! *********************************************************
-          if (any_acoustic) then
-            ! free surface for an acoustic medium
-            if (nelem_acoustic_surface > 0) then
-              call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                                 potential_acoustic)
-            endif
-
-            call update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                      potential_dot_dot_acoustic,potential_dot_acoustic,&
-                                                      potential_acoustic,potential_acoustic_old, &
-                                                      PML_BOUNDARY_CONDITIONS)
-
-            !ZN here we remove the trick introduced by Luoyang to stabilized the adjoint simulation
-            !ZN However in order to keep the current code be consistent, we still keep potential_acoustic_adj_coupling
-            !ZN the final goal should remove the *adj_coupling
-            potential_acoustic_adj_coupling = potential_acoustic
-
-          endif
-
-          if (any_elastic) then
-            call update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                     accel_elastic,veloc_elastic,&
-                                                     displ_elastic,displ_elastic_old,&
-                                                     PML_BOUNDARY_CONDITIONS)
-          endif
-! *********************************************************
-! ************* main solver for the elastic elements
-! *********************************************************
-          if (any_elastic) then
-            !ZN currently we do not support plane wave source in adjoint inversion
-            call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
-                                             PML_BOUNDARY_CONDITIONS,e1,e11,e13)
-
-          endif !if (any_elastic)
-          ! *********************************************************
-          ! ************* add coupling with the acoustic side
-          ! *********************************************************
-          if (coupled_acoustic_elastic) then
-            call compute_coupling_viscoelastic_ac()
-          endif
-
-          ! ************************************************************************************
-          ! ************************************ add force source
-          ! ************************************************************************************
-          if (any_elastic) then
-            if (.not. initialfield) then
-              call compute_add_sources_viscoelastic_adjoint()
-            endif
-          endif
-
-          ! ************************************************************************************
-          ! ************* assembling accel_elastic for elastic elements
-          ! ************************************************************************************
-#ifdef USE_MPI
-          if (NPROC > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-            call assemble_MPI_vector_el(accel_elastic)
-          endif
-#endif
-          ! ************************************************************************************
-          ! ************* multiply by the inverse of the mass matrix and update velocity
-          ! ************************************************************************************
-          if (any_elastic) then
-            !! DK DK this should be vectorized
-            accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one(:)
-            accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one(:)
-            accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three(:)
-
-            veloc_elastic = veloc_elastic + deltatover2*accel_elastic
-          endif
-
-          if (coupled_acoustic_elastic) then
-#ifdef FORCE_VECTORIZATION
-              do i = 1,3*nglob_elastic
-                accel_elastic_adj_coupling(i,1) = accel_elastic(i,1)
-              enddo
-#else
-              accel_elastic_adj_coupling = accel_elastic
-#endif
-          endif
-! *********************************************************
-! ************* main solver for the acoustic elements
-! *********************************************************
-          if (any_acoustic) then
-            call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                         potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
-          endif ! end of test if any acoustic element
-
-          ! *********************************************************
-          ! ************* add acoustic forcing at a rigid boundary
-          ! *********************************************************
-          if (any_acoustic) then
-            if (ACOUSTIC_FORCING) then
-              call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
-            endif
-          endif ! end of test if any acoustic element
-
-          ! *********************************************************
-          ! ************* add coupling with the elastic side
-          ! *********************************************************
-          if (coupled_acoustic_elastic) then
-            if (SIMULATION_TYPE == 3) then
-              accel_elastic_adj_coupling2 = - accel_elastic_adj_coupling
-              call compute_coupling_acoustic_el(accel_elastic_adj_coupling2,displ_elastic_old,potential_dot_dot_acoustic)
-            endif
-          endif
-          ! ************************************************************************************
-          ! ************************************ add force source
-          ! ************************************************************************************
-          if (any_acoustic) then
-            if (.not. initialfield) then
-              call compute_add_sources_acoustic_adjoint()
-            endif
-          endif
-          ! ************************************************************************************
-          ! ********** assembling potential_dot_dot for acoustic elements
-          ! ************************************************************************************
-#ifdef USE_MPI
-          if (NPROC > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-            call assemble_MPI_vector_ac(potential_dot_dot_acoustic)
-          endif
-#endif
-          ! ************************************************************************************
-          ! ************* multiply by the inverse of the mass matrix and update velocity
-          ! ************************************************************************************
-
-          if (any_acoustic) then
-            ! free surface for an acoustic medium
-            if (nelem_acoustic_surface > 0) then
-              call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                                 potential_acoustic)
-            endif
-
-            if (time_stepping_scheme == 1) then
-              !! DK DK this should be vectorized
-              potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
-              potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
-            endif
-          endif ! of if (any_acoustic)
-
-!****************************************************************************************************adjoint
-!****************************************************************************************************
-        enddo ! i_stage
-
-        ! computes kinetic and potential energy
-        if (output_energy) then
-          call it_compute_and_output_energy()
-        endif
+        ! compute current time
+        timeval = (it-1) * deltat
 
         ! display time step and max of norm of displacement
         if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
           call check_stability()
         endif
 
+        do i_stage = 1, stage_time_scheme
+          ! adjoint
+          ! update_displacement_newmark
+          call update_displacement_acoustic_forward()
+
+          if (any_acoustic) then
+            !ZN here we remove the trick introduced by Luoyang to stabilized the adjoint simulation
+            !ZN However in order to keep the current code be consistent, we still keep potential_acoustic_adj_coupling
+            !ZN the final goal should remove the *adj_coupling
+            potential_acoustic_adj_coupling(:) = potential_acoustic(:)
+          endif
+
+          call update_displacement_elastic_forward()
+
+
+          ! main solver for the elastic elements
+          call compute_forces_viscoelastic_main()
+
+          ! for coupling with adjoint wavefields, stores temporary old wavefield
+          if (coupled_acoustic_elastic) then
+            ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+            ! adjoint definition: \partial_t^2 \bfs^\dagger=-\frac{1}{\rho}\bfnabla\phi^\dagger
+#ifdef FORCE_VECTORIZATION
+              do i = 1,3*nglob_elastic
+                accel_elastic_adj_coupling(i,1) = - accel_elastic(i,1)
+              enddo
+#else
+              accel_elastic_adj_coupling(:,:) = - accel_elastic(:,:)
+#endif
+          endif
+
+          ! main solver for the acoustic elements
+          call compute_forces_acoustic_main()
+        enddo
+
+        ! computes kinetic and potential energy
+        if (output_energy) then
+          call it_compute_and_output_energy()
+        endif
+
         ! loop on all the receivers to compute and store the seismograms
         call write_seismograms()
 
         ! kernels calculation
-        if (SIMULATION_TYPE == 3) then
-          call compute_kernels()
-        endif
+        call compute_kernels()
 
         ! display results at given time steps
         call write_movie_output()
 
       enddo ! subset loop
-!****************************************************************************************************
-!****************************************************************************************************
     end select ! SIMULATION_TYPE
 
   enddo   ! end of main time loop
@@ -755,14 +342,14 @@
   ! frees undo_attenuation buffers
   if (SIMULATION_TYPE == 3) then
     if (any_acoustic) then
-      deallocate(b_potential_acoustic,b_potential_dot_dot_acoustic)
+      deallocate(b_potential_acoustic_buffer,b_potential_dot_dot_acoustic_buffer)
     endif
-
     if (any_elastic) then
-      deallocate(b_displ_elastic,b_accel_elastic)
+      deallocate(b_displ_elastic_buffer,b_accel_elastic_buffer)
+      if (ATTENUATION_VISCOELASTIC_SOLID) deallocate(b_e1,b_e11,b_e13)
     endif
-
   endif
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !----  formats

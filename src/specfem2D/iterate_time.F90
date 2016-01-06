@@ -44,11 +44,7 @@
   implicit none
 
   ! local parameters
-  integer :: i,iglob,it_temp
   integer :: ier
-
-  ! for rk44
-  double precision :: weight_rk
 
   ! time
   character(len=8) :: datein
@@ -103,1008 +99,102 @@
 
   do it = 1,NSTEP
     ! compute current time
-    timeval = (it-1)*deltat
+    timeval = (it-1) * deltat
+
+    ! display time step and max of norm of displacement
+    if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+      call check_stability()
+    endif
 
     do i_stage = 1, stage_time_scheme
 
-      if (GPU_MODE) then
-        call update_displacement_newmark_GPU()
-      endif
+      ! updates wavefields using Newmark time scheme
+      call update_displacement_scheme()
 
-      if (.not. GPU_MODE) then
-
-        ! acoustic domains
-        if (any_acoustic) then
-          ! free surface for an acoustic medium
-          if (nelem_acoustic_surface > 0) then
-            call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                               potential_acoustic)
-          endif
-          if (time_stepping_scheme == 1) then
-            call update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                      potential_dot_dot_acoustic,potential_dot_acoustic,&
-                                                      potential_acoustic,potential_acoustic_old, &
-                                                      PML_BOUNDARY_CONDITIONS)
-          else
-#ifdef FORCE_VECTORIZATION
-            do i = 1,nglob_acoustic
-              potential_dot_dot_acoustic(i) = 0._CUSTOM_REAL
-            enddo
-#else
-            potential_dot_dot_acoustic = 0._CUSTOM_REAL
-#endif
-          endif
-
-          if (SIMULATION_TYPE == 3) then
-            !Since we do not do anything in PML region in case of backward simulation, thus we set
-            !PML_BOUNDARY_CONDITIONS = .false.
-            if (time_stepping_scheme == 1) then
-              call update_displacement_newmark_acoustic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                        b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
-                                                        b_potential_acoustic,b_potential_acoustic_old, &
-                                                        .false.)
-            else
-#ifdef FORCE_VECTORIZATION
-              do i = 1,nglob_acoustic
-                b_potential_dot_dot_acoustic(i) = 0._CUSTOM_REAL
-              enddo
-#else
-              b_potential_dot_dot_acoustic = 0._CUSTOM_REAL
-#endif
-            endif
-          endif
-        endif
-
-        if (any_elastic) then
-          if (time_stepping_scheme == 1) then
-            if (SIMULATION_TYPE == 3) then
-#ifdef FORCE_VECTORIZATION
-              do i = 1,3*nglob_elastic
-                accel_elastic_adj_coupling(i,1) = accel_elastic(i,1)
-              enddo
-#else
-              accel_elastic_adj_coupling = accel_elastic
-#endif
-            endif
-
-            if (time_stepping_scheme == 1) then
-              call update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                       accel_elastic,veloc_elastic,&
-                                                       displ_elastic,displ_elastic_old,&
-                                                       PML_BOUNDARY_CONDITIONS)
-            else
-#ifdef FORCE_VECTORIZATION
-              do i = 1,3*nglob_elastic
-                accel_elastic(i,1) = 0._CUSTOM_REAL
-              enddo
-#else
-              accel_elastic = 0._CUSTOM_REAL
-#endif
-            endif
-          endif
-
-          if (SIMULATION_TYPE == 3) then
-            !Since we do not do anything in PML region in case of backward simulation, thus we set
-            !PML_BOUNDARY_CONDITIONS = .false.
-            if (time_stepping_scheme == 1) then
-              call update_displacement_newmark_elastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                       b_accel_elastic,b_veloc_elastic,&
-                                                       b_displ_elastic,b_displ_elastic_old,&
-                                                       .false.)
-            else
-#ifdef FORCE_VECTORIZATION
-              do i = 1,3*nglob_elastic
-                b_accel_elastic(i,1) = 0._CUSTOM_REAL
-              enddo
-#else
-              b_accel_elastic = 0._CUSTOM_REAL
-#endif
-            endif
-          endif
-        endif
-
-        if (AXISYM) then
-          call enforce_zero_radial_displacements_on_the_axis()
-        endif
-
-        if (any_poroelastic) then
-          if (SIMULATION_TYPE == 3) then
-            accels_poroelastic_adj_coupling = accels_poroelastic
-            accelw_poroelastic_adj_coupling = accelw_poroelastic
-          endif
-
-          if (time_stepping_scheme == 1) then
-            call update_displacement_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
-                                                         accels_poroelastic,velocs_poroelastic,&
-                                                         displs_poroelastic,accelw_poroelastic,&
-                                                         velocw_poroelastic,displw_poroelastic)
-          else
-            accels_poroelastic = 0._CUSTOM_REAL
-            accelw_poroelastic = 0._CUSTOM_REAL
-          endif
-
-          if (SIMULATION_TYPE == 3) then
-            if (time_stepping_scheme == 1) then
-              !PML did not implemented for poroelastic simulation
-              call update_displacement_newmark_poroelastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                           b_accels_poroelastic,b_velocs_poroelastic,&
-                                                           b_displs_poroelastic,b_accelw_poroelastic,&
-                                                           b_velocw_poroelastic,b_displw_poroelastic)
-            else
-              b_accels_poroelastic = 0._CUSTOM_REAL
-              b_accelw_poroelastic = 0._CUSTOM_REAL
-            endif
-          endif
-        endif
-
-
-
-! *********************************************************
-! ************* main solver for the acoustic elements
-! *********************************************************
-        if (any_acoustic) then
-          call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                       potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
-
-          if (SIMULATION_TYPE == 3) then
-            if (PML_BOUNDARY_CONDITIONS) then
-              it_temp = NSTEP-it+1
-              call rebuild_value_on_PML_interface_acoustic(it_temp)
-            endif
-
-            call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                               b_potential_acoustic)
-            call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
-
-            if (PML_BOUNDARY_CONDITIONS) then
-              it_temp = NSTEP-it+1
-              call rebuild_value_on_PML_interface_acoustic(it_temp)
-            endif
-          endif
-
-        endif ! end of test if any acoustic element
-
-        ! *********************************************************
-        ! ************* add acoustic forcing at a rigid boundary
-        ! *********************************************************
-        if (any_acoustic) then
-          if (ACOUSTIC_FORCING) then
-            call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
-          endif
-        endif ! end of test if any acoustic element
-
-        ! *********************************************************
-        ! ************* add coupling with the elastic side
-        ! *********************************************************
-        if (coupled_acoustic_elastic) then
-          if (SIMULATION_TYPE == 1) then
-            call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
-          endif
-
-          if (SIMULATION_TYPE == 3) then
-            accel_elastic_adj_coupling2 = - accel_elastic_adj_coupling
-            call compute_coupling_acoustic_el(accel_elastic_adj_coupling2,displ_elastic_old,potential_dot_dot_acoustic)
-
-            call compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
-          endif
-        endif
-
-        ! *********************************************************
-        ! ************* add coupling with the poroelastic side
-        ! *********************************************************
-        if (coupled_acoustic_poro) then
-          if (SIMULATION_TYPE == 1) then
-            call compute_coupling_acoustic_po()
-          endif
-
-          if (SIMULATION_TYPE == 3) then
-            call compute_coupling_acoustic_po()
-            call compute_coupling_acoustic_po_backward()
-          endif
-        endif
-
-        ! ************************************************************************************
-        ! ************************************ add force source
-        ! ************************************************************************************
-        if (any_acoustic) then
-          if (.not. initialfield) then
-            if (SIMULATION_TYPE == 1) then
-              call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
-            endif
-
-            if (SIMULATION_TYPE == 3) then   ! adjoint and backward wavefield
-              call compute_add_sources_acoustic_adjoint()
-              call compute_add_sources_acoustic(b_potential_dot_dot_acoustic,NSTEP-it+1,stage_time_scheme-i_stage+1)
-            endif ! SIMULATION_TYPE == 3 adjoint wavefield
-          endif ! if not using an initial field
-        endif !if (any_acoustic)
-
-        ! ************************************************************************************
-        ! ********** assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
-        ! ************************************************************************************
-#ifdef USE_MPI
-        if (NPROC > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-          call assemble_MPI_vector_ac(potential_dot_dot_acoustic)
-
-          if (time_stepping_scheme == 2) then
-            if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-              potential_dot_acoustic_temp = potential_dot_acoustic
-              call assemble_MPI_vector_ac(potential_dot_acoustic)
-            endif
-          endif
-
-          if (SIMULATION_TYPE == 3) then
-            call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic)
-          endif
-        endif
-#endif
-
-        if (PML_BOUNDARY_CONDITIONS) then
-          if (any_acoustic .and. nglob_interface > 0) then
-            if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-              do i = 1, nglob_interface
-                write(72)potential_dot_dot_acoustic(point_interface(i)),&
-                         potential_dot_acoustic(point_interface(i)),&
-                         potential_acoustic(point_interface(i))
-              enddo
-            endif
-
-            if (SIMULATION_TYPE == 3) then
-              do i = 1, nglob_interface
-                b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,NSTEP-it+1)
-              enddo
-            endif
-          endif
-        endif
-! ************************************************************************************
-! ************* multiply by the inverse of the mass matrix and update velocity
-! ************************************************************************************
-
-        if (any_acoustic) then
-          ! free surface for an acoustic medium
-          if (nelem_acoustic_surface > 0) then
-            call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                               potential_acoustic)
-            if (SIMULATION_TYPE == 3) then
-              call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                                 b_potential_acoustic)
-            endif
-          endif
-
-          if (time_stepping_scheme == 1) then
-
-            !! DK DK this should be vectorized
-            potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
-            potential_dot_acoustic = potential_dot_acoustic + deltatover2*potential_dot_dot_acoustic
-
-            if (SIMULATION_TYPE == 3) then
-            !! DK DK this should be vectorized
-              b_potential_dot_dot_acoustic = b_potential_dot_dot_acoustic * rmass_inverse_acoustic
-              b_potential_dot_acoustic = b_potential_dot_acoustic + b_deltatover2*b_potential_dot_dot_acoustic
-            endif
-
-            ! update the potential field (use a new array here) for coupling terms
-            potential_acoustic_adj_coupling = potential_acoustic + deltat*potential_dot_acoustic + &
-                                              deltatsquareover2*potential_dot_dot_acoustic
-          endif
-
-          if (time_stepping_scheme == 2) then
-            !! DK DK this should be vectorized
-            potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
-            potential_dot_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_dot_acoustic_LDDRK + &
-                                         deltat * potential_dot_dot_acoustic
-            potential_acoustic_LDDRK = alpha_LDDRK(i_stage) * potential_acoustic_LDDRK + &
-                                       deltat*potential_dot_acoustic
-
-            if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-              !! DK DK this should be vectorized
-              potential_dot_acoustic_temp = potential_dot_acoustic_temp + &
-                                            beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
-              potential_dot_acoustic = potential_dot_acoustic_temp
-            else
-              potential_dot_acoustic = potential_dot_acoustic + beta_LDDRK(i_stage) * potential_dot_acoustic_LDDRK
-            endif
-
-            !! DK DK this should be vectorized
-            potential_acoustic = potential_acoustic + beta_LDDRK(i_stage) * potential_acoustic_LDDRK
-          endif
-
-          if (time_stepping_scheme == 3) then
-            !! DK DK this should be vectorized
-            potential_dot_dot_acoustic = potential_dot_dot_acoustic * rmass_inverse_acoustic
-            potential_dot_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_dot_acoustic(:)
-            potential_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_acoustic(:)
-
-            if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
-              if (i_stage == 1) weight_rk = 0.5d0
-              if (i_stage == 2) weight_rk = 0.5d0
-              if (i_stage == 3) weight_rk = 1.0d0
-
-              if (i_stage==1) then
-!! DK DK this should be vectorized
-                potential_dot_acoustic_init_rk = potential_dot_acoustic
-                potential_acoustic_init_rk = potential_acoustic
-              endif
-!! DK DK this should be vectorized
-              potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &
-                                          weight_rk * potential_dot_dot_acoustic_rk(:,i_stage)
-              potential_acoustic(:) = potential_acoustic_init_rk(:) + weight_rk * potential_dot_acoustic_rk(:,i_stage)
-            else if (i_stage==4) then
-!! DK DK this should be vectorized
-              potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &
-                                          1.0d0 / 6.0d0 * ( potential_dot_dot_acoustic_rk(:,1) + &
-                                                            2.0d0 * potential_dot_dot_acoustic_rk(:,2) + &
-                                                            2.0d0 * potential_dot_dot_acoustic_rk(:,3) + &
-                                                            potential_dot_dot_acoustic_rk(:,4) )
-
-!! DK DK this should be vectorized
-              potential_acoustic(:) = potential_acoustic_init_rk(:) + &
-                                      1.0d0 / 6.0d0 * ( potential_dot_acoustic_rk(:,1) + &
-                                                        2.0d0 * potential_dot_acoustic_rk(:,2) + &
-                                                        2.0d0 * potential_dot_acoustic_rk(:,3) + &
-                                                        potential_dot_acoustic_rk(:,4) )
-            endif
-          endif
-        endif ! of if (any_acoustic)
-      else ! GPU_MODE
-        if (any_acoustic) call compute_forces_acoustic_GPU()
-      endif ! GPU_MODE
-
-! *********************************************************
-! ************* main solver for the gravitoacoustic elements
-! *********************************************************
-! only SIMULATION_TYPE == 1, time_stepping_scheme == 1, and no PML or STACEY yet
-! NO MIX OF ACOUSTIC AND GRAVITOACOUTIC ELEMENTS
-! NO COUPLING TO ELASTIC AND POROELASTIC SIDES
-! *********************************************************
-      if (.not. GPU_MODE) then
-        if ((any_gravitoacoustic)) then
-          if (time_stepping_scheme==1) then
-            ! Newmark time scheme
-            !! DK DK this should be vectorized
-            potential_gravitoacoustic = potential_gravitoacoustic + deltat*potential_dot_gravitoacoustic + &
-                                        deltatsquareover2*potential_dot_dot_gravitoacoustic
-            potential_dot_gravitoacoustic = potential_dot_gravitoacoustic + &
-                                            deltatover2*potential_dot_dot_gravitoacoustic
-            potential_gravito = potential_gravito + deltat*potential_dot_gravito + &
-                                deltatsquareover2*potential_dot_dot_gravito
-            potential_dot_gravito = potential_dot_gravito + deltatover2*potential_dot_dot_gravito
-          else
-            stop 'Only time_stepping_scheme=1 for gravitoacoustic'
-          endif
-
-          potential_dot_dot_gravitoacoustic = ZERO
-          potential_dot_dot_gravito = ZERO
-
-! Impose displacements from boundary forcing here
-! because at this step the displacement (potentials) values
-! are already equal to value at n+1
-! equivalent to free surface condition
-! the contour integral u.n is computed after compute_forces_gravitoacoustic
-! *********************************************************
-! ** impose displacement from acoustic forcing at a rigid boundary
-! ** force potential_dot_dot_gravito by displacement
-! *********************************************************
-          if (ACOUSTIC_FORCING) then
-            call add_acoustic_forcing_at_rigid_boundary_gravitoacoustic()
-          endif ! end ACOUSTIC_FORCING !
-
-! free surface for a gravitoacoustic medium
-!!! to be coded !!!
-!      if (nelem_acoustic_surface > 0) then
-!        call enforce_acoustic_free_surface(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-!                                          potential_gravitoacoustic)
-
-!        if (SIMULATION_TYPE == 3) then ! Adjoint calculation
-!          call enforce_acoustic_free_surface(b_potential_dot_dot_gravitoacoustic,b_potential_dot_gravitoacoustic, &
-!                                            b_potential_gravitoacoustic)
-!        endif
-!      endif
-
-! *********************************************************
-! ************* compute forces for the gravitoacoustic elements
-! *********************************************************
-
-          call compute_forces_gravitoacoustic(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-                                              potential_gravitoacoustic, potential_dot_dot_gravito, &
-                                              potential_gravito,.false.)
-
-          ! debugging
-          if ((mod(it,100)==0)) then
-            iglob=iglobzero
-            write(*,*)it, & ! Nsql,gravityl,
-                      maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
-                      maxval(potential_dot_dot_gravitoacoustic),potential_dot_dot_gravitoacoustic(iglob)
-          endif
-        endif ! end of test if any gravitoacoustic element
-
-! *********************************************************
-! ************* add coupling with the elastic side
-! *********************************************************
-
-! *********************************************************
-! ************* add coupling with the poroelastic side
-! *********************************************************
-
-! ************************************************************************************
-! ************************************ add force source
-! ************************************************************************************
-
-! assembling potential_dot_dot for gravitoacoustic elements
-!#ifdef USE_MPI
-!    if (NPROC > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-!      call assemble_MPI_vector_ac(potential_dot_dot_gravitoacoustic)
-!
-!    endif
-!
-!#endif
-
-! ************************************************************************************
-! ************* multiply by the inverse of the mass matrix and update velocity
-! ************************************************************************************
-
-        if ((any_gravitoacoustic)) then
-          if (time_stepping_scheme == 1) then
-          !! DK DK this should be vectorized
-          potential_dot_dot_gravitoacoustic = potential_dot_dot_gravitoacoustic * rmass_inverse_gravitoacoustic
-          potential_dot_gravitoacoustic = potential_dot_gravitoacoustic + &
-                                          deltatover2*potential_dot_dot_gravitoacoustic
-
-!! line below already done in compute_forces_gravitoacoustic, because necessary
-!! for the computation of potential_dot_dot_gravitoacoustic
-!      potential_dot_dot_gravito = potential_dot_dot_gravito * rmass_inverse_gravito
-          potential_dot_gravito = potential_dot_gravito + deltatover2*potential_dot_dot_gravito
+      ! acoustic domains
+      if (ACOUSTIC_SIMULATION) then
+        if (.not. GPU_MODE) then
+          call compute_forces_acoustic_main()
+          if (SIMULATION_TYPE == 3) call compute_forces_acoustic_main_backward()
         else
-          stop 'Only time_stepping_scheme = 1 implemented for gravitoacoustic case'
+          ! on GPU
+          if (any_acoustic) call compute_forces_acoustic_GPU()
         endif
-
-! free surface for an acoustic medium
-!      if (nelem_acoustic_surface > 0) then
-!        call enforce_acoustic_free_surface(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-!                                        potential_gravitoacoustic)
-!
-!        if (SIMULATION_TYPE == 3) then
-!          call enforce_acoustic_free_surface(b_potential_dot_dot_gravitoacoustic,b_potential_dot_gravitoacoustic, &
-!                                          b_potential_gravitoacoustic)
-!        endif
-!
-!      endif
-!
-      ! update the potential field (use a new array here) for coupling terms
-!      potential_gravitoacoustic_adj_coupling = potential_gravitoacoustic &
-!                          + deltat*potential_dot_gravitoacoustic &
-!                          + deltatsquareover2*potential_dot_dot_gravitoacoustic
-
-        endif ! of if (any_gravitoacoustic)
-      else ! GPU_MODE
-        if ((any_gravitoacoustic)) call exit_MPI(myrank,'gravitoacoustic not implemented in GPU MODE yet')
       endif
 
-! *********************************************************
-! ************* main solver for the elastic elements
-! *********************************************************
-
-      if (.not. GPU_MODE) then
-        if (any_elastic) then
-          if (SIMULATION_TYPE == 1) then
-            call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
-                                             PML_BOUNDARY_CONDITIONS,e1,e11,e13)
-          endif
-
-          if (SIMULATION_TYPE == 3) then
-            !ZN currently we do not support plane wave source in adjoint inversion
-            call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
-                                             PML_BOUNDARY_CONDITIONS,e1,e11,e13)
-
-            if (PML_BOUNDARY_CONDITIONS) then
-              it_temp = NSTEP-it+1
-              call rebuild_value_on_PML_interface_viscoelastic(it_temp)
-            endif
-
-            call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                                      e1,e11,e13)
-            if (PML_BOUNDARY_CONDITIONS) then
-              it_temp = NSTEP-it+1
-              call rebuild_value_on_PML_interface_viscoelastic(it_temp)
-            endif
-          endif
-
-        endif !if (any_elastic)
-
-        ! *********************************************************
-        ! ************* add coupling with the acoustic side
-        ! *********************************************************
-        if (coupled_acoustic_elastic) then
-          if (SIMULATION_TYPE == 1) then
-            call compute_coupling_viscoelastic_ac()
-          endif
-
-          if (SIMULATION_TYPE == 3) then
-            call compute_coupling_viscoelastic_ac()
-            call compute_coupling_viscoelastic_ac_backward()
-          endif
+      ! gravitoacoustic domains
+      if (GRAVITOACOUSTIC_SIMULATION) then
+        if (.not. GPU_MODE) then
+          call compute_forces_gravitoacoustic_main()
+        else
+          ! on GPU
+          if (any_gravitoacoustic) call exit_MPI(myrank,'gravitoacoustic not implemented in GPU MODE yet')
         endif
-        ! ****************************************************************************
-        ! ************* add coupling with the poroelastic side
-        ! ****************************************************************************
-        if (coupled_acoustic_elastic) then
-          if (SIMULATION_TYPE == 1) then
-            call compute_coupling_viscoelastic_po()
-          endif
-
-          if (SIMULATION_TYPE == 3) then
-            call compute_coupling_viscoelastic_po()
-            call compute_coupling_viscoelastic_po_backward()
-          endif
-        endif
-
-        if (AXISYM) then
-          call enforce_zero_radial_displacements_on_the_axis()
-        endif
-
-        ! ************************************************************************************
-        ! ************************************ add force source
-        ! ************************************************************************************
-        if (any_elastic) then
-          if (.not. initialfield) then
-            if (SIMULATION_TYPE == 1) then
-              call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
-            endif
-
-            if (SIMULATION_TYPE == 3) then   ! adjoint and backward wavefield
-              call compute_add_sources_viscoelastic_adjoint()
-              call compute_add_sources_viscoelastic(b_accel_elastic,NSTEP-it+1,stage_time_scheme-i_stage+1)
-            endif ! SIMULATION_TYPE == 3 ! adjoint and backward wavefield
-
-            !<NOISE_TOMOGRAPHY
-            ! inject wavefield sources for noise simulations
-            if (NOISE_TOMOGRAPHY == 1) then
-              call  add_point_source_noise()
-            else if (NOISE_TOMOGRAPHY == 2) then
-              call add_surface_movie_noise(accel_elastic)
-            else if (NOISE_TOMOGRAPHY == 3) then
-              if (.not. save_everywhere) then
-                call add_surface_movie_noise(b_accel_elastic)
-              endif
-            endif
-            !>NOISE_TOMOGRAPHY
-          endif ! if not using an initial field
-        endif !if (any_elastic)
-
-        if (AXISYM) then
-          call enforce_zero_radial_displacements_on_the_axis()
-        endif
-        ! ************************************************************************************
-        ! ************************************ assembling accel_elastic for elastic elements
-        ! ************************************************************************************
-#ifdef USE_MPI
-        if (NPROC > 1 .and. any_elastic .and. ninterface_elastic > 0) then
-          if (time_stepping_scheme == 2) then
-            if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-              veloc_elastic_LDDRK_temp = veloc_elastic
-              call assemble_MPI_vector_el(veloc_elastic)
-            endif
-          endif
-
-          call assemble_MPI_vector_el(accel_elastic)
-
-          if (SIMULATION_TYPE == 3) then
-            call assemble_MPI_vector_el(b_accel_elastic)
-          endif
-        endif
-#endif
-
-        if (PML_BOUNDARY_CONDITIONS) then
-          if (any_elastic .and. nglob_interface > 0) then
-            if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-              do i = 1, nglob_interface
-                write(71)accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)),&
-                         accel_elastic(3,point_interface(i)),&
-                         veloc_elastic(1,point_interface(i)),veloc_elastic(2,point_interface(i)),&
-                         veloc_elastic(3,point_interface(i)),&
-                         displ_elastic(1,point_interface(i)),displ_elastic(2,point_interface(i)),&
-                         displ_elastic(3,point_interface(i))
-              enddo
-            endif
-
-            if (SIMULATION_TYPE == 3) then
-              do i = 1, nglob_interface
-                b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,NSTEP-it+1)
-                b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,NSTEP-it+1)
-                b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,NSTEP-it+1)
-              enddo
-            endif
-          endif
-        endif
-
-        ! ************************************************************************************
-        ! ************* multiply by the inverse of the mass matrix and update velocity
-        ! ************************************************************************************
-        if (any_elastic) then
-          !! DK DK this should be vectorized
-          accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one
-          accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one
-          accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three
-
-          if (time_stepping_scheme == 1) then
-            !! DK DK this should be vectorized
-            veloc_elastic = veloc_elastic + deltatover2 * accel_elastic
-          endif
-
-          if (time_stepping_scheme == 2) then
-            !! DK DK this should be vectorized
-            veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
-            displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
-            if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-              veloc_elastic_LDDRK_temp = veloc_elastic_LDDRK_temp + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
-              veloc_elastic = veloc_elastic_LDDRK_temp
-            else
-              veloc_elastic = veloc_elastic + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
-            endif
-            displ_elastic = displ_elastic + beta_LDDRK(i_stage) * displ_elastic_LDDRK
-          endif
-
-          if (time_stepping_scheme == 3) then
-            !! DK DK this should be vectorized
-            accel_elastic_rk(1,:,i_stage) = deltat * accel_elastic(1,:)
-            accel_elastic_rk(2,:,i_stage) = deltat * accel_elastic(2,:)
-            accel_elastic_rk(3,:,i_stage) = deltat * accel_elastic(3,:)
-
-            veloc_elastic_rk(1,:,i_stage) = deltat * veloc_elastic(1,:)
-            veloc_elastic_rk(2,:,i_stage) = deltat * veloc_elastic(2,:)
-            veloc_elastic_rk(3,:,i_stage) = deltat * veloc_elastic(3,:)
-
-            if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
-
-              if (i_stage == 1)weight_rk = 0.5d0
-              if (i_stage == 2)weight_rk = 0.5d0
-              if (i_stage == 3)weight_rk = 1.0d0
-
-              if (i_stage==1) then
-                !! DK DK this should be vectorized
-                veloc_elastic_initial_rk(1,:) = veloc_elastic(1,:)
-                veloc_elastic_initial_rk(2,:) = veloc_elastic(2,:)
-                veloc_elastic_initial_rk(3,:) = veloc_elastic(3,:)
-
-                displ_elastic_initial_rk(1,:) = displ_elastic(1,:)
-                displ_elastic_initial_rk(2,:) = displ_elastic(2,:)
-                displ_elastic_initial_rk(3,:) = displ_elastic(3,:)
-              endif
-
-              !! DK DK this should be vectorized
-              veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + weight_rk * accel_elastic_rk(1,:,i_stage)
-              veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + weight_rk * accel_elastic_rk(2,:,i_stage)
-              veloc_elastic(3,:) = veloc_elastic_initial_rk(3,:) + weight_rk * accel_elastic_rk(3,:,i_stage)
-
-              displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + weight_rk * veloc_elastic_rk(1,:,i_stage)
-              displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + weight_rk * veloc_elastic_rk(2,:,i_stage)
-              displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + weight_rk * veloc_elastic_rk(3,:,i_stage)
-
-            else if (i_stage==4) then
-              !! DK DK this should be vectorized
-              veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-                                   ( accel_elastic_rk(1,:,1) + 2.0d0 * accel_elastic_rk(1,:,2) + &
-                                     2.0d0 * accel_elastic_rk(1,:,3) + accel_elastic_rk(1,:,4) )
-              veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-                                   ( accel_elastic_rk(2,:,1) + 2.0d0 * accel_elastic_rk(2,:,2) + &
-                                     2.0d0 * accel_elastic_rk(2,:,3) + accel_elastic_rk(2,:,4) )
-              veloc_elastic(3,:) = veloc_elastic_initial_rk(3,:) + 1.0d0 / 6.0d0 * &
-                                   ( accel_elastic_rk(3,:,1) + 2.0d0 * accel_elastic_rk(3,:,2) + &
-                                     2.0d0 * accel_elastic_rk(3,:,3) + accel_elastic_rk(3,:,4) )
-
-              displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-                                   ( veloc_elastic_rk(1,:,1) + 2.0d0 * veloc_elastic_rk(1,:,2) + &
-                                     2.0d0 * veloc_elastic_rk(1,:,3) + veloc_elastic_rk(1,:,4) )
-              displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-                                   ( veloc_elastic_rk(2,:,1) + 2.0d0 * veloc_elastic_rk(2,:,2) + &
-                                     2.0d0 * veloc_elastic_rk(2,:,3) + veloc_elastic_rk(2,:,4))
-              displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + 1.0d0 / 6.0d0 * &
-                                   ( veloc_elastic_rk(3,:,1) + 2.0d0 * veloc_elastic_rk(3,:,2) + &
-                                     2.0d0 * veloc_elastic_rk(3,:,3) + veloc_elastic_rk(3,:,4))
-            endif
-          endif
-
-          if (SIMULATION_TYPE == 3) then
-            !! DK DK this should be vectorized
-            b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
-            b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_one(:)
-            b_accel_elastic(3,:) = b_accel_elastic(3,:) * rmass_inverse_elastic_three(:)
-
-            b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
-          endif
-
-        endif !if (any_elastic)
-
-      else ! GPU_MODE
-        if (any_elastic)  call compute_forces_elastic_GPU()
       endif
 
-! ******************************************************************************************************************
-! ************* main solver for the poroelastic elements: first the solid (u_s) then the fluid (w)
-! ******************************************************************************************************************
-      if (.not. GPU_MODE) then
-        if (any_poroelastic) then
-          !--------------------------------------------------------------------------------------------
-          ! implement viscous attenuation for poroelastic media
-          !--------------------------------------------------------------------------------------------
-          if (ATTENUATION_PORO_FLUID_PART) then
-            call compute_attenuation_poro_fluid_part()
-          endif
-
-          if (SIMULATION_TYPE == 3) then
-            ! if inviscid fluid, comment the reading and uncomment the zeroing
-            !     read(23,rec=NSTEP-it+1) b_viscodampx
-            !     read(24,rec=NSTEP-it+1) b_viscodampz
-            b_viscodampx(:) = ZERO
-            b_viscodampz(:) = ZERO
-          endif
-
-          call compute_forces_poro_solid(f0_source(1))
-          call compute_forces_poro_fluid(f0_source(1))
-
-          if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-            ! if inviscid fluid, comment
-            !     write(23,rec=it) b_viscodampx
-            !     write(24,rec=it) b_viscodampz
-          endif
-
-        endif !if (any_poroelastic) then
-
-        ! *********************************************************
-        ! ************* add coupling with the acoustic side
-        ! *********************************************************
-        if (coupled_acoustic_poro) then
-          call compute_coupling_poro_ac()
+      ! elastic domains
+      if (ELASTIC_SIMULATION) then
+        if (.not. GPU_MODE) then
+          call compute_forces_viscoelastic_main()
+          if (SIMULATION_TYPE == 3) call compute_forces_viscoelastic_main_backward()
+        else
+          ! on GPU
+          if (any_elastic)  call compute_forces_viscoelastic_GPU()
         endif
+      endif
 
-        ! **********************************************************
-        ! ************* add coupling with the elastic side
-        ! **********************************************************
-        if (coupled_elastic_poro) then
-          call compute_coupling_poro_viscoelastic()
+      ! poroelastic domains
+      if (POROELASTIC_SIMULATION) then
+        if (.not. GPU_MODE) then
+          call compute_forces_poroelastic_main()
+        else
+          ! on GPU
+          if (any_poroelastic) call exit_MPI(myrank,'poroelastic not implemented in GPU MODE yet')
         endif
+      endif
 
-        ! ***********************************************************
-        ! ******************************** add force source
-        ! ***********************************************************
-        if (any_poroelastic) then
-          ! --- add the source if it is a collocated force
-          if (.not. initialfield) then
-            if (SIMULATION_TYPE == 1) then
-              call compute_add_sources_poro(accels_poroelastic,accelw_poroelastic,it,i_stage)
-            endif
+    enddo ! stage_time_scheme (LDDRK or RK)
 
-            if (SIMULATION_TYPE == 3) then   ! adjoint and backward wavefield
-!ZNZN the add force source for adjoint simulation in poro medium are inside compute_forces_poro_solid
-!ZNZN and compute_forces_poro_fluid,
-              call compute_add_sources_poro(b_accels_poroelastic,b_accelw_poroelastic,NSTEP-it+1,stage_time_scheme-i_stage+1)
-            endif
-          endif
-        endif
-        ! ***********************************************************
-        ! ******************************** ! assembling accels_proelastic & accelw_poroelastic for poroelastic elements
-        ! ***********************************************************
-#ifdef USE_MPI
-        if (NPROC > 1 .and. any_poroelastic .and. ninterface_poroelastic > 0) then
-          call assemble_MPI_vector_po(accels_poroelastic,accelw_poroelastic)
-          if (SIMULATION_TYPE == 3) then
-            call assemble_MPI_vector_po(b_accels_poroelastic,b_accelw_poroelastic)
-          endif
-        endif
-#endif
-        ! ************************************************************************************
-        ! ************* multiply by the inverse of the mass matrix and update velocity
-        ! ************************************************************************************
-        if (any_poroelastic) then
-          if (time_stepping_scheme == 1) then
-            accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
-            accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
-            velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
+    ! reads in lastframe for adjoint/kernels calculation
+    if (SIMULATION_TYPE == 3 .and. it == 1) then
+      call it_read_forward_arrays()
+    endif
 
-            accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
-            accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
-            velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
-
-            if (SIMULATION_TYPE == 3) then
-              b_accels_poroelastic(1,:) = b_accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
-              b_accels_poroelastic(2,:) = b_accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
-              b_velocs_poroelastic = b_velocs_poroelastic + b_deltatover2*b_accels_poroelastic
-
-              b_accelw_poroelastic(1,:) = b_accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
-              b_accelw_poroelastic(2,:) = b_accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
-              b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
-            endif
-          endif
-
-          if (time_stepping_scheme == 2) then
-            accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
-            accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
-
-            velocs_poroelastic_LDDRK = alpha_LDDRK(i_stage) * velocs_poroelastic_LDDRK + deltat * accels_poroelastic
-            displs_poroelastic_LDDRK = alpha_LDDRK(i_stage) * displs_poroelastic_LDDRK + deltat * velocs_poroelastic
-            velocs_poroelastic = velocs_poroelastic + beta_LDDRK(i_stage) * velocs_poroelastic_LDDRK
-            displs_poroelastic = displs_poroelastic + beta_LDDRK(i_stage) * displs_poroelastic_LDDRK
-
-            accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
-            accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
-
-            velocw_poroelastic_LDDRK = alpha_LDDRK(i_stage) * velocw_poroelastic_LDDRK + deltat * accelw_poroelastic
-            displw_poroelastic_LDDRK = alpha_LDDRK(i_stage) * displw_poroelastic_LDDRK + deltat * velocw_poroelastic
-            velocw_poroelastic = velocw_poroelastic + beta_LDDRK(i_stage) * velocw_poroelastic_LDDRK
-            displw_poroelastic = displw_poroelastic + beta_LDDRK(i_stage) * displw_poroelastic_LDDRK
-          endif
-
-          if (time_stepping_scheme == 3) then
-            accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
-            accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
-
-            accels_poroelastic_rk(1,:,i_stage) = deltat * accels_poroelastic(1,:)
-            accels_poroelastic_rk(2,:,i_stage) = deltat * accels_poroelastic(2,:)
-            velocs_poroelastic_rk(1,:,i_stage) = deltat * velocs_poroelastic(1,:)
-            velocs_poroelastic_rk(2,:,i_stage) = deltat * velocs_poroelastic(2,:)
-
-            accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
-            accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
-
-            accelw_poroelastic_rk(1,:,i_stage) = deltat * accelw_poroelastic(1,:)
-            accelw_poroelastic_rk(2,:,i_stage) = deltat * accelw_poroelastic(2,:)
-            velocw_poroelastic_rk(1,:,i_stage) = deltat * velocw_poroelastic(1,:)
-            velocw_poroelastic_rk(2,:,i_stage) = deltat * velocw_poroelastic(2,:)
-
-            if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
-              if (i_stage == 1) weight_rk = 0.5d0
-              if (i_stage == 2) weight_rk = 0.5d0
-              if (i_stage == 3) weight_rk = 1.0d0
-
-              if (i_stage==1) then
-                velocs_poroelastic_initial_rk(1,:) = velocs_poroelastic(1,:)
-                velocs_poroelastic_initial_rk(2,:) = velocs_poroelastic(2,:)
-                displs_poroelastic_initial_rk(1,:) = displs_poroelastic(1,:)
-                displs_poroelastic_initial_rk(2,:) = displs_poroelastic(2,:)
-
-                velocw_poroelastic_initial_rk(1,:) = velocw_poroelastic(1,:)
-                velocw_poroelastic_initial_rk(2,:) = velocw_poroelastic(2,:)
-                displw_poroelastic_initial_rk(1,:) = displw_poroelastic(1,:)
-                displw_poroelastic_initial_rk(2,:) = displw_poroelastic(2,:)
-              endif
-
-              velocs_poroelastic(1,:) = velocs_poroelastic_initial_rk(1,:) + weight_rk * accels_poroelastic_rk(1,:,i_stage)
-              velocs_poroelastic(2,:) = velocs_poroelastic_initial_rk(2,:) + weight_rk * accels_poroelastic_rk(2,:,i_stage)
-              displs_poroelastic(1,:) = displs_poroelastic_initial_rk(1,:) + weight_rk * velocs_poroelastic_rk(1,:,i_stage)
-              displs_poroelastic(2,:) = displs_poroelastic_initial_rk(2,:) + weight_rk * velocs_poroelastic_rk(2,:,i_stage)
-
-              velocw_poroelastic(1,:) = velocw_poroelastic_initial_rk(1,:) + weight_rk * accelw_poroelastic_rk(1,:,i_stage)
-              velocw_poroelastic(2,:) = velocw_poroelastic_initial_rk(2,:) + weight_rk * accelw_poroelastic_rk(2,:,i_stage)
-              displw_poroelastic(1,:) = displw_poroelastic_initial_rk(1,:) + weight_rk * velocw_poroelastic_rk(1,:,i_stage)
-              displw_poroelastic(2,:) = displw_poroelastic_initial_rk(2,:) + weight_rk * velocw_poroelastic_rk(2,:,i_stage)
-
-            else if (i_stage==4) then
-
-              velocs_poroelastic(1,:) = velocs_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-              (accels_poroelastic_rk(1,:,1) + 2.0d0 * accels_poroelastic_rk(1,:,2) + &
-              2.0d0 * accels_poroelastic_rk(1,:,3) + accels_poroelastic_rk(1,:,4))
-
-              velocs_poroelastic(2,:) = velocs_poroelastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-              (accels_poroelastic_rk(2,:,1) + 2.0d0 * accels_poroelastic_rk(2,:,2) + &
-               2.0d0 * accels_poroelastic_rk(2,:,3) + accels_poroelastic_rk(2,:,4))
-
-              displs_poroelastic(1,:) = displs_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-              (velocs_poroelastic_rk(1,:,1) + 2.0d0 * velocs_poroelastic_rk(1,:,2) + &
-               2.0d0 * velocs_poroelastic_rk(1,:,3) + velocs_poroelastic_rk(1,:,4))
-
-              displs_poroelastic(2,:) = displs_poroelastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-              (velocs_poroelastic_rk(2,:,1) + 2.0d0 * velocs_poroelastic_rk(2,:,2) + &
-               2.0d0 * velocs_poroelastic_rk(2,:,3) + velocs_poroelastic_rk(2,:,4))
-
-              velocw_poroelastic(1,:) = velocw_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-              (accelw_poroelastic_rk(1,:,1) + 2.0d0 * accelw_poroelastic_rk(1,:,2) + &
-               2.0d0 * accelw_poroelastic_rk(1,:,3) + accelw_poroelastic_rk(1,:,4))
-
-              velocw_poroelastic(2,:) = velocw_poroelastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-              (accelw_poroelastic_rk(2,:,1) + 2.0d0 * accelw_poroelastic_rk(2,:,2) + &
-               2.0d0 * accelw_poroelastic_rk(2,:,3) + accelw_poroelastic_rk(2,:,4))
-
-              displw_poroelastic(1,:) = displw_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-              (velocw_poroelastic_rk(1,:,1) + 2.0d0 * velocw_poroelastic_rk(1,:,2) + &
-               2.0d0 * velocw_poroelastic_rk(1,:,3) + velocw_poroelastic_rk(1,:,4))
-
-              displw_poroelastic(2,:) = displw_poroelastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-              (velocw_poroelastic_rk(2,:,1) + 2.0d0 * velocw_poroelastic_rk(2,:,2) + &
-               2.0d0 * velocw_poroelastic_rk(2,:,3) + velocw_poroelastic_rk(2,:,4))
-            endif
-          endif
-        endif !if (any_poroelastic)
-
-        !*******************************************************************************
-        ! assembling the displacements on the elastic-poro boundaries
-        !*******************************************************************************
-
-        !
-        ! Explanation of the code below, from Christina Morency and Yang Luo, January 2012:
-        !
-        ! Coupled elastic-poroelastic simulations imply continuity of traction and
-        ! displacement at the interface.
-        ! For the traction we pass on both sides n*(T + Te)/2 , that is, the average
-        ! between the total stress (from the poroelastic part) and the elastic stress.
-        ! For the displacement, we enforce its continuity in the assembling stage,
-        ! realizing that continuity of displacement correspond to the continuity of
-        ! the acceleration we have:
-        !
-        ! accel_elastic = rmass_inverse_elastic * force_elastic
-        ! accels_poroelastic = rmass_s_inverse_poroelastic * force_poroelastic
-        !
-        ! Therefore, continuity of acceleration gives
-        !
-        ! accel = (force_elastic + force_poroelastic)/
-        !     (1/rmass_inverse_elastic + 1/rmass_inverse_poroelastic)
-        !
-        ! Then
-        !
-        ! accel_elastic = accel
-        ! accels_poroelastic = accel
-        ! accelw_poroelastic = 0
-        !
-        ! From there, the velocity and displacement are updated.
-        ! Note that force_elastic and force_poroelastic are the right hand sides of
-        ! the equations we solve, that is, the acceleration terms before the
-        ! division by the inverse of the mass matrices. This is why in the code below
-        ! we first need to recover the accelerations (which are then
-        ! the right hand sides forces) and the velocities before the update.
-        !
-        ! This implementation highly helped stability especially with unstructured meshes.
-        !
-        if (coupled_elastic_poro) then
-          call compute_coupling_poro_viscoelastic_for_stabilization()
-        endif
-     else !GPU_MODE
-       if (any_poroelastic) call exit_MPI(myrank,'poroelastic not implemented in GPU MODE yet')
-     endif
-   enddo !LDDRK or RK
-
-   ! reads in lastframe for adjoint/kernels calculation
-   if (SIMULATION_TYPE == 3 .and. it == 1) then
-     call it_read_forward_arrays()
-   endif
-
-   ! noise simulations
-   if (NOISE_TOMOGRAPHY == 1) then
+    ! noise simulations
+    if (NOISE_TOMOGRAPHY == 1) then
       call save_surface_movie_noise()
-   else if (NOISE_TOMOGRAPHY == 2 .and. save_everywhere) then
+    else if (NOISE_TOMOGRAPHY == 2 .and. save_everywhere) then
       call save_surface_movie_noise()
-   else if (NOISE_TOMOGRAPHY == 3 .and. save_everywhere) then
-     if (it == 1) open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
-                      recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
-     if (ier /= 0) call exit_MPI(myrank,'Error retrieving noise ensemble forward wavefield')
-     ! safety check
-     if (P_SV) then
-       ! P-SV case
-       call exit_MPI(myrank,'P-SV case not yet implemented.')
-     else
-       ! SH case
-       read(unit=500,rec=NSTEP-it+1) b_displ_elastic(2,:)
-     endif
-   endif
+    else if (NOISE_TOMOGRAPHY == 3 .and. save_everywhere) then
+      if (it == 1) open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
+                        recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error retrieving noise ensemble forward wavefield')
 
-   ! computes kinetic and potential energy
-   if (output_energy) then
-     call it_compute_and_output_energy()
-   endif
+      ! safety check
+      if (P_SV) then
+        ! P-SV case
+        call exit_MPI(myrank,'P-SV case not yet implemented.')
+      else
+        ! SH case
+        read(unit=500,rec=NSTEP-it+1) b_displ_elastic(2,:)
+      endif
+    endif
 
-   ! display time step and max of norm of displacement
-   if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
-     call check_stability()
-   endif
+    ! computes kinetic and potential energy
+    if (output_energy) then
+      call it_compute_and_output_energy()
+    endif
 
-   ! loop on all the receivers to compute and store the seismograms
-   call write_seismograms()
+    ! loop on all the receivers to compute and store the seismograms
+    call write_seismograms()
 
-   ! kernels calculation
-   if (SIMULATION_TYPE == 3) then
-     call compute_kernels()
-   endif
+    ! kernels calculation
+    if (SIMULATION_TYPE == 3) then
+      call compute_kernels()
+    endif
 
-   ! display results at given time steps
-   call write_movie_output()
+    ! display results at given time steps
+    call write_movie_output()
 
   enddo ! end of the main time loop
 
