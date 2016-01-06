@@ -142,7 +142,7 @@
 
 !--- spline to describe the interfaces
 
-double precision function value_spline(x,xinterface,zinterface,coefs_interface,npoints_interface)
+  double precision function value_spline(x,xinterface,zinterface,coefs_interface,npoints_interface)
 
   implicit none
 
@@ -160,4 +160,4 @@ double precision function value_spline(x,xinterface,zinterface,coefs_interface,n
 
   call spline_evaluation(xinterface,zinterface,coefs_interface,npoints_interface,xp,value_spline)
 
-end function value_spline
+  end function value_spline
