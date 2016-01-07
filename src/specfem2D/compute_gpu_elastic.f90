@@ -33,7 +33,7 @@
 
 ! elastic solver
 
-  subroutine compute_forces_elastic_GPU()
+  subroutine compute_forces_viscoelastic_GPU()
 
   use constants,only: CUSTOM_REAL,NGLLX
 
@@ -176,7 +176,7 @@
   ! multiplies with inverse of mass matrix (note: rmass has been inverted already)
   call kernel_3_a_cuda(Mesh_pointer,deltatover2f,b_deltatover2f)
 
-  end subroutine compute_forces_elastic_GPU
+  end subroutine compute_forces_viscoelastic_GPU
 
 !
 !---------------------------------------------------------------------------------------------

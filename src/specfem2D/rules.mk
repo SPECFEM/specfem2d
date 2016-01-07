@@ -59,27 +59,31 @@ specfem2D_OBJECTS = \
 	$O/calendar.spec.o \
 	$O/check_grid.spec.o \
 	$O/check_stability.spec.o \
-	$O/compute_Bielak_conditions.spec.o \
+	$O/compute_add_sources_acoustic.spec.o \
+	$O/compute_add_sources_poro.spec.o \
+	$O/compute_add_sources_viscoelastic.spec.o \
 	$O/compute_arrays_source.spec.o \
+	$O/compute_attenuation_poro_fluid_part.spec.o \
+	$O/compute_Bielak_conditions.spec.o \
 	$O/compute_coupling_acoustic_el.spec.o \
 	$O/compute_coupling_acoustic_po.spec.o \
+	$O/compute_coupling_poro_ac.spec.o \
+	$O/compute_coupling_poro_viscoelastic.spec.o \
+	$O/compute_coupling_viscoelastic_ac.spec.o \
+	$O/compute_coupling_viscoelastic_po.spec.o \
 	$O/compute_curl_one_element.spec.o \
 	$O/compute_energy.spec.o \
 	$O/compute_forces_acoustic.spec.o \
 	$O/compute_forces_acoustic_backward.spec.o \
-	$O/compute_add_sources_acoustic.spec.o \
+	$O/compute_forces_acoustic_calling_routine.spec.o \
 	$O/compute_forces_gravitoacoustic.spec.o \
+	$O/compute_forces_gravitoacoustic_calling_routine.spec.o \
+	$O/compute_forces_poroelastic_calling_routine.spec.o \
 	$O/compute_forces_poro_fluid.spec.o \
-	$O/compute_attenuation_poro_fluid_part.spec.o \
 	$O/compute_forces_poro_solid.spec.o \
-	$O/compute_coupling_poro_ac.spec.o \
-	$O/compute_coupling_poro_viscoelastic.spec.o \
-	$O/compute_add_sources_poro.spec.o \
 	$O/compute_forces_viscoelastic.spec.o \
 	$O/compute_forces_viscoelastic_backward.spec.o \
-	$O/compute_coupling_viscoelastic_ac.spec.o \
-	$O/compute_coupling_viscoelastic_po.spec.o \
-	$O/compute_add_sources_viscoelastic.spec.o \
+	$O/compute_forces_viscoelastic_calling_routine.spec.o \
 	$O/compute_gpu_acoustic.spec.o \
 	$O/compute_gpu_elastic.spec.o \
 	$O/compute_gradient_attenuation.spec.o \
@@ -314,96 +318,9 @@ endif
 ### Module dependencies
 ###
 
-$O/acoustic_forcing_boundary.spec.o: $O/specfem2D_par.spec_module.o
-$O/acoutic_cuda.spec.o: $O/specfem2D_par.spec_module.o
-$O/assemble_MPI.spec.o: $O/specfem2D_par.spec_module.o
-$O/attenuation_model.spec.o: $O/specfem2D_par.spec_module.o
-$O/axisymmetric_routines.spec.o: $O/specfem2D_par.spec_module.o
-$O/check_grid.spec.o: $O/specfem2D_par.spec_module.o
-$O/check_stability.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_Bielak_conditions.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_add_sources_acoustic.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_add_sources_poro.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_add_sources_viscoelastic.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_arrays_source.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_attenuation_poro_fluid_part.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_coupling_acoustic_el.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_coupling_acoustic_po.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_coupling_poro_ac.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_coupling_poro_viscoelastic.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_coupling_viscoelastic_ac.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_coupling_viscoelastic_po.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_curl_one_element.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_energy.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_forces_acoustic.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_forces_acoustic_backward.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_forces_gravitoacoustic.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_forces_poro_fluid.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_forces_poro_solid.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_forces_viscoelastic.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_forces_viscoelastic_backward.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_gpu_acoustic.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_gpu_elastic.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_gradient_attenuation.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_kernels.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_normal_vector.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_pressure.spec.o: $O/specfem2D_par.spec_module.o
-$O/compute_vector_field.spec.o: $O/specfem2D_par.spec_module.o
-$O/construct_acoustic_surface.spec.o: $O/specfem2D_par.spec_module.o
-$O/create_color_image.spec.o: $O/specfem2D_par.spec_module.o
-$O/createnum_fast.spec.o: $O/specfem2D_par.spec_module.o
-$O/createnum_slow.spec.o: $O/specfem2D_par.spec_module.o
-$O/datim.spec.o: $O/specfem2D_par.spec_module.o
-$O/define_derivation_matrices.spec.o: $O/specfem2D_par.spec_module.o
-$O/define_external_model.spec.o: $O/specfem2D_par.spec_module.o
-$O/define_external_model_from_tomo_file.spec.o: $O/specfem2D_par.spec_module.o
-$O/elastic_cuda.spec.o: $O/specfem2D_par.spec_module.o
-$O/enforce_acoustic_free_surface.spec.o: $O/specfem2D_par.spec_module.o
-$O/finalize_simulation.spec.o: $O/specfem2D_par.spec_module.o
-$O/get_coupling_edges.spec.o: $O/specfem2D_par.spec_module.o
-$O/get_MPI.spec.o: $O/specfem2D_par.spec_module.o
-$O/get_global.spec.o: $O/specfem2D_par.spec_module.o
-$O/get_poroelastic_velocities.spec.o: $O/specfem2D_par.spec_module.o
-$O/gmat01.spec.o: $O/specfem2D_par.spec_module.o
-$O/initialize_simulation.spec.o: $O/specfem2D_par.spec_module.o
-$O/invert_mass_matrix.spec.o: $O/specfem2D_par.spec_module.o
-$O/iterate_time.spec.o: $O/specfem2D_par.spec_module.o
-$O/iterate_time_undoatt.spec.o: $O/specfem2D_par.spec_module.o
-$O/locate_receivers.spec.o: $O/specfem2D_par.spec_module.o
-$O/locate_source_force.spec.o: $O/specfem2D_par.spec_module.o
-$O/locate_source_moment_tensor.spec.o: $O/specfem2D_par.spec_module.o
-$O/noise_tomography.spec.o: $O/specfem2D_par.spec_module.o
-$O/paco_beyond_critical.spec.o: $O/specfem2D_par.spec_module.o
-$O/plot_gll.spec.o: $O/specfem2D_par.spec_module.o
-$O/plot_post.spec.o: $O/specfem2D_par.spec_module.o
-$O/pml_compute.spec.o: $O/specfem2D_par.spec_module.o
-$O/pml_init.spec.o: $O/specfem2D_par.spec_module.o
-$O/prepare_absorb.spec.o: $O/specfem2D_par.spec_module.o
-$O/prepare_assemble_MPI.spec.o: $O/specfem2D_par.spec_module.o
-$O/prepare_color_image.spec.o: $O/specfem2D_par.spec_module.o
-$O/prepare_initial_field.spec.o: $O/specfem2D_par.spec_module.o
-$O/prepare_source_time_function.spec.o: $O/specfem2D_par.spec_module.o
-$O/prepare_timerun.spec.o: $O/specfem2D_par.spec_module.o
-$O/prepare_timerun_gpu.spec.o: $O/specfem2D_par.spec_module.o
-$O/prepare_timerun_pml.spec.o: $O/specfem2D_par.spec_module.o
-$O/prepare_timerun_wavefields.spec.o: $O/specfem2D_par.spec_module.o
-$O/read_mesh_databases.spec.o: $O/specfem2D_par.spec_module.o
-$O/read_external_model.spec.o: $O/specfem2D_par.spec_module.o
-$O/recompute_jacobian.spec.o: $O/specfem2D_par.spec_module.o
-$O/save_adjoint_kernels.spec.o: $O/specfem2D_par.spec_module.o
-$O/save_read_array_for_undoatt.spec.o: $O/specfem2D_par.spec_module.o
-$O/set_source_parameters.spec.o: $O/specfem2D_par.spec_module.o
-$O/setup_GLL_points.spec.o: $O/specfem2D_par.spec_module.o
-$O/setup_mesh.spec.o: $O/specfem2D_par.spec_module.o
-$O/setup_sources_receivers.spec.o: $O/specfem2D_par.spec_module.o
+# mostly as example how to specify special dependencies
+# the general dependency on the specfem module is handled by the rules below
 $O/specfem2D.spec.o: $O/specfem2D_par.spec_module.o
-$O/update_displacement_scheme.spec.o: $O/specfem2D_par.spec_module.o
-$O/write_color_image_snaphot.spec.o: $O/specfem2D_par.spec_module.o
-$O/write_movie_output.spec.o: $O/specfem2D_par.spec_module.o
-$O/write_output_SU.spec.o: $O/specfem2D_par.spec_module.o
-$O/write_postscript_snapshot.spec.o: $O/specfem2D_par.spec_module.o
-$O/write_seismograms.spec.o: $O/specfem2D_par.spec_module.o
-$O/write_wavefield_dumps.spec.o: $O/specfem2D_par.spec_module.o
 
 
 ##

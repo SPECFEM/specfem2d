@@ -149,7 +149,7 @@
   implicit none
 
   ! local variables
-  integer i_on_the_axis,ispec_axis,i,j
+  integer :: i_on_the_axis,ispec_axis,i,j
 
   do i_on_the_axis = 1,nelem_on_the_axis ! Loop on the elements on the axis
     ispec_axis = ispec_of_axial_elements(i_on_the_axis)
@@ -169,7 +169,6 @@
         enddo
       enddo
     endif
-
   enddo
 
   end subroutine enforce_zero_radial_displacements_on_the_axis

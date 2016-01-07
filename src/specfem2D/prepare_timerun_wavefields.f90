@@ -71,8 +71,10 @@
   allocate(displ_elastic_old(3,nglob_elastic))
   allocate(veloc_elastic(3,nglob_elastic))
   allocate(accel_elastic(3,nglob_elastic))
-  allocate(accel_elastic_adj_coupling(3,nglob_elastic))
-  allocate(accel_elastic_adj_coupling2(3,nglob_elastic))
+
+  if (SIMULATION_TYPE == 3) then
+    allocate(accel_elastic_adj_coupling(3,nglob_elastic))
+  endif
 
   allocate(rmass_inverse_elastic_one(nglob_elastic))
   allocate(rmass_inverse_elastic_three(nglob_elastic))

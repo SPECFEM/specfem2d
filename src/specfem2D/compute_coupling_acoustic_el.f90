@@ -58,10 +58,11 @@
 
   !local variable
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
-  integer :: inum,ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,i,j,iglob,&
-             ispec_PML,CPML_region_local,singularity_type_xz
+  integer :: inum,ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,i,j,iglob
   real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,&
                             xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
+  ! PML
+  integer :: ispec_PML,CPML_region_local,singularity_type_xz
   double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &
                       A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2
 
@@ -84,6 +85,11 @@
       j = jvalue_inverse(ipoin1D,iedge_elastic)
       iglob = ibool(i,j,ispec_elastic)
 
+      displ_x = displ_elastic(1,iglob)
+      displ_z = displ_elastic(3,iglob)
+
+      ! PML elements
+      ! overwrites displ_x and displ_z
       if (PML_BOUNDARY_CONDITIONS) then
         if (ispec_is_PML(ispec_elastic) .and. nspec_PML > 0) then
           ispec_PML = spec_to_PML(ispec_elastic)
@@ -133,13 +139,7 @@
 
           displ_x = A8 * displ_elastic(1,iglob) + A9 * rmemory_fsb_displ_elastic(1,1,i,j,inum)
           displ_z = A8 * displ_elastic(3,iglob) + A9 * rmemory_fsb_displ_elastic(1,3,i,j,inum)
-        else
-          displ_x = displ_elastic(1,iglob)
-          displ_z = displ_elastic(3,iglob)
         endif
-      else
-        displ_x = displ_elastic(1,iglob)
-        displ_z = displ_elastic(3,iglob)
       endif
 
       ! get point values for the acoustic side

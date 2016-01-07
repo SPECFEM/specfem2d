@@ -362,6 +362,7 @@ module specfem_par
 
   ! for LDDRK46
   integer :: i_stage,stage_time_scheme
+  integer :: iteration_on_subset,it_of_this_subset
   real(kind=CUSTOM_REAL), dimension(Nstages):: alpha_LDDRK,beta_LDDRK,c_LDDRK
 
   ! parameters used in LDDRK scheme, from equation (2) of
@@ -497,7 +498,7 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_force_rk,e11_force_rk,e13_force_rk
 
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling,accel_elastic_adj_coupling2
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
 
   ! the variable for PML
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &

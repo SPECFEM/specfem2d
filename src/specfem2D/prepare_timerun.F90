@@ -134,14 +134,28 @@
   integer :: ier
 
   ! defines coefficients of the Newmark time scheme
-  deltatover2 = HALF*deltat
-  deltatsquareover2 = HALF*deltat*deltat
+  deltatover2 = HALF * deltat
+  deltatsquareover2 = HALF * deltat * deltat
 
   !  define coefficients of the Newmark time scheme for the backward wavefield
-  !  SIMULATION_TYPE == 3
-  b_deltat = - deltat
-  b_deltatover2 = HALF*b_deltat
-  b_deltatsquareover2 = HALF*b_deltat*b_deltat
+  if (SIMULATION_TYPE == 3) then
+    if (UNDO_ATTENUATION) then
+      ! moves forward
+      b_deltat = deltat
+      b_deltatover2 = deltatover2
+      b_deltatsquareover2 = deltatsquareover2
+    else
+      ! reconstructed wavefield moves backward in time from last snapshot
+      b_deltat = - deltat
+      b_deltatover2 = HALF * b_deltat
+      b_deltatsquareover2 = HALF * b_deltat * b_deltat
+    endif
+  else
+    ! will not be used, but initialized
+    b_deltat = 0._CUSTOM_REAL
+    b_deltatover2 = 0._CUSTOM_REAL
+    b_deltatsquareover2 = 0._CUSTOM_REAL
+  endif
 
   ! seismograms
   ! allocate seismogram arrays
@@ -717,7 +731,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) 'Preparing adjoint'
+    write(IMAIN,*) 'Preparing adjoint settings'
     call flush_IMAIN()
   endif
 

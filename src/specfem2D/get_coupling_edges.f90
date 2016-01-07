@@ -50,6 +50,7 @@
   ! determine if coupled fluid-solid simulation
   coupled_acoustic_elastic = any_acoustic .and. any_elastic
   coupled_acoustic_poro = any_acoustic .and. any_poroelastic
+  coupled_elastic_poro = any_elastic .and. any_poroelastic
 
   ! fluid/solid (elastic) edge detection
   ! the two elements (fluid and solid) forming an edge are already known (computed in meshfem2D),
@@ -433,25 +434,21 @@
 
   endif
 
-
-  ! determine if coupled elastic-poroelastic simulation
-  coupled_elastic_poro = any_elastic .and. any_poroelastic
+  ! safety check
+  if (ATTENUATION_PORO_FLUID_PART .and. any_poroelastic .and. &
+     (time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
+    stop 'RK and LDDRK time scheme not supported for poroelastic simulations with attenuation'
 
   ! solid/porous edge detection
   ! the two elements forming an edge are already known (computed in meshfem2D),
   ! the common nodes forming the edge are computed here
-
-  if (ATTENUATION_PORO_FLUID_PART .and. any_poroelastic .and. &
-     (time_stepping_scheme == 2.or. time_stepping_scheme == 3)) &
-    stop 'RK and LDDRK time scheme not supported poroelastic simulations with attenuation'
-
   if (coupled_elastic_poro) then
 
+    ! checks
     if (ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_PORO_FLUID_PART) &
-                   stop 'Attenuation not supported for mixed elastic/poroelastic simulations'
-
+      stop 'Attenuation not supported for mixed elastic/poroelastic simulations'
     if (time_stepping_scheme == 2.or. time_stepping_scheme == 3) &
-                   stop 'RK and LDDRK time scheme not supported for mixed elastic/poroelastic simulations'
+      stop 'RK and LDDRK time scheme not supported for mixed elastic/poroelastic simulations'
 
     if (myrank == 0) then
       write(IMAIN,*)

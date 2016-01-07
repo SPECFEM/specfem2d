@@ -33,7 +33,7 @@
 
 ! for viscoelastic solver
 
- subroutine compute_coupling_viscoelastic_po()
+  subroutine compute_coupling_viscoelastic_po()
 
   use constants,only: CUSTOM_REAL,IRIGHT,ILEFT,IBOTTOM,ITOP,NGLLX,NGLLZ,TWO,ZERO
 
@@ -74,8 +74,6 @@
   real(kind=CUSTOM_REAL) :: b_sigma_xx,b_sigma_xz,b_sigma_zz
   real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
-
-
 
   ! loop on all the coupling edges
   do inum = 1,num_solid_poro_edges
@@ -349,7 +347,8 @@
 
     enddo
   enddo
- end subroutine compute_coupling_viscoelastic_po
+
+  end subroutine compute_coupling_viscoelastic_po
 
 !
 !========================================================================
@@ -357,7 +356,7 @@
 
 ! for viscoelastic solver
 
- subroutine compute_coupling_viscoelastic_po_backward()
+  subroutine compute_coupling_viscoelastic_po_backward()
 
   use constants,only: CUSTOM_REAL,IRIGHT,ILEFT,IBOTTOM,ITOP,NGLLX,NGLLZ,TWO,ZERO
 
@@ -398,8 +397,6 @@
   real(kind=CUSTOM_REAL) :: b_sigma_xx,b_sigma_xz,b_sigma_zz
   real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
-
-
 
   ! loop on all the coupling edges
   do inum = 1,num_solid_poro_edges
@@ -660,6 +657,7 @@
 
     enddo
   enddo
- end subroutine compute_coupling_viscoelastic_po_backward
+
+  end subroutine compute_coupling_viscoelastic_po_backward
 
 

@@ -17,16 +17,7 @@ echo "   setting up example..."
 echo
 
 mkdir -p OUTPUT_FILES
-mkdir -p DATA
 mkdir -p SEM
-
-# sets up local DATA/ directory
-cd DATA/
-rm -f Par_file SOURCE interfaces.dat
-ln -s ../Par_file Par_file
-ln -s ../SOURCE SOURCE
-cp ../interfaces.dat interfaces.dat
-cd ../
 
 # cleans output files (only if a command line argument is NOT given, because the second time when we run the adjoint run we should not erase anything)
 noargument=0

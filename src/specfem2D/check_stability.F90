@@ -159,7 +159,6 @@
     ! than the greatest possible floating-point number of the machine
     if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0 .or. displnorm_all_glob /= displnorm_all_glob) &
       call exit_MPI(myrank,'code became unstable and blew up in fluid (poroelastic)')
-
   endif
 
 
@@ -182,11 +181,11 @@
     ! than the greatest possible floating-point number of the machine
     if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0 .or. displnorm_all_glob /= displnorm_all_glob) &
       call exit_MPI(myrank,'code became unstable and blew up in fluid (acoustic)')
-
   endif
 
   ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)
+
   ! time_values(1): year
   ! time_values(2): month of the year
   ! time_values(3): day of the month
@@ -208,52 +207,52 @@
 
   ! elapsed time since beginning of the simulation
   if (myrank == 0) then
-      tCPU = timestamp_seconds_current - timestamp_seconds_start
-      int_tCPU = int(tCPU)
-      ihours = int_tCPU / 3600
-      iminutes = (int_tCPU - 3600*ihours) / 60
-      iseconds = int_tCPU - 3600*ihours - 60*iminutes
-      write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
-      write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-      write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+    tCPU = timestamp_seconds_current - timestamp_seconds_start
+    int_tCPU = int(tCPU)
+    ihours = int_tCPU / 3600
+    iminutes = (int_tCPU - 3600*ihours) / 60
+    iseconds = int_tCPU - 3600*ihours - 60*iminutes
+    write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
+    write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
-      ! compute estimated remaining simulation time
-      t_remain = (NSTEP - it) * (tCPU/dble(it))
-      int_t_remain = int(t_remain)
-      ihours_remain = int_t_remain / 3600
-      iminutes_remain = (int_t_remain - 3600*ihours_remain) / 60
-      iseconds_remain = int_t_remain - 3600*ihours_remain - 60*iminutes_remain
-      write(IMAIN,*) 'Time steps remaining = ',NSTEP - it
-      write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
-      write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
-             ihours_remain,iminutes_remain,iseconds_remain
+    ! compute estimated remaining simulation time
+    t_remain = (NSTEP - it) * (tCPU/dble(it))
+    int_t_remain = int(t_remain)
+    ihours_remain = int_t_remain / 3600
+    iminutes_remain = (int_t_remain - 3600*ihours_remain) / 60
+    iseconds_remain = int_t_remain - 3600*ihours_remain - 60*iminutes_remain
+    write(IMAIN,*) 'Time steps remaining = ',NSTEP - it
+    write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
+    write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
+           ihours_remain,iminutes_remain,iseconds_remain
 
-      ! compute estimated total simulation time
-      t_total = t_remain + tCPU
-      int_t_total = int(t_total)
-      ihours_total = int_t_total / 3600
-      iminutes_total = (int_t_total - 3600*ihours_total) / 60
-      iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
-      write(IMAIN,*) 'Estimated total run time in seconds = ',t_total
-      write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
-             ihours_total,iminutes_total,iseconds_total
+    ! compute estimated total simulation time
+    t_total = t_remain + tCPU
+    int_t_total = int(t_total)
+    ihours_total = int_t_total / 3600
+    iminutes_total = (int_t_total - 3600*ihours_total) / 60
+    iseconds_total = int_t_total - 3600*ihours_total - 60*iminutes_total
+    write(IMAIN,*) 'Estimated total run time in seconds = ',t_total
+    write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
+           ihours_total,iminutes_total,iseconds_total
 
-      if (it < NSTEP) then
-        ! compute date and time at which the run should finish (useful for long runs)
-        ! add remaining minutes and get date and time of that future timestamp in minutes
-        timestamp = nint((timestamp_seconds_current + t_remain) / 60.d0)
-        call invtime(timestamp,year,mon,day,hr,minutes)
+    if (it < NSTEP) then
+      ! compute date and time at which the run should finish (useful for long runs)
+      ! add remaining minutes and get date and time of that future timestamp in minutes
+      timestamp = nint((timestamp_seconds_current + t_remain) / 60.d0)
+      call invtime(timestamp,year,mon,day,hr,minutes)
 
-        ! convert to Julian day to get day of the week
-        call calndr(day,mon,year,julian_day_number)
-        day_of_week = idaywk(julian_day_number)
+      ! convert to Julian day to get day of the week
+      call calndr(day,mon,year,julian_day_number)
+      day_of_week = idaywk(julian_day_number)
 
-        write(IMAIN,"(' The run will finish approximately on: ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
-            weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
+      write(IMAIN,"(' The run will finish approximately on: ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
+          weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
 
-      endif
-      write(IMAIN,*)
-      call flush_IMAIN()
+    endif
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine check_stability

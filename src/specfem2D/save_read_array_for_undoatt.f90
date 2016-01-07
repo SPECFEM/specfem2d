@@ -30,14 +30,22 @@
 ! The full text of the license is available in file "LICENSE".
 !
 !=====================================================================
-  subroutine save_forward_arrays_undoatt(iteration_on_subset)
 
-  use specfem_par
+  subroutine save_forward_arrays_undoatt()
+
+  use constants,only: IOUT_UNDO_ATT,MAX_STRING_LEN
+
+  use specfem_par,only: myrank,iteration_on_subset, &
+    any_acoustic,any_elastic,ATTENUATION_VISCOELASTIC_SOLID, &
+    potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
+    displ_elastic,veloc_elastic,accel_elastic, &
+    e1,e11,e13
+
 
   implicit none
 
   ! local parameters
-  integer :: iteration_on_subset,iteration_on_subset_tmp
+  integer :: iteration_on_subset_tmp
   integer :: ier
   character(len=MAX_STRING_LEN) :: outputname
 
@@ -77,16 +85,22 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_forward_arrays_undoatt(iteration_on_subset)
+  subroutine read_forward_arrays_undoatt()
 
 ! reads in saved wavefields
 
-  use specfem_par
+  use constants,only: IIN_UNDO_ATT,MAX_STRING_LEN
+
+  use specfem_par,only: myrank,iteration_on_subset,NSTEP,NT_DUMP_ATTENUATION, &
+    any_acoustic,any_elastic,ATTENUATION_VISCOELASTIC_SOLID, &
+    b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
+    b_displ_elastic,b_veloc_elastic,b_accel_elastic, &
+    b_e1,b_e11,b_e13
 
   implicit none
 
   ! local parameters
-  integer :: iteration_on_subset,iteration_on_subset_tmp
+  integer :: iteration_on_subset_tmp
   integer :: ier
   character(len=MAX_STRING_LEN) :: outputname
 
@@ -119,7 +133,7 @@
     endif
   endif
 
-  close(IOUT_UNDO_ATT)
+  close(IIN_UNDO_ATT)
 
   end subroutine read_forward_arrays_undoatt
 

@@ -50,8 +50,10 @@
   integer :: npoints_interface_bottom
   double precision :: xinterface_dummy,zinterface_dummy,xinterface_dummy_previous
 
-  ! get interface data from external file to count the spectral elements along Z
+  print *,''
   print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
+
+  ! get interface data from external file to count the spectral elements along Z
   open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old',iostat=ier)
   if (ier /= 0) then
     print *,'error opening file: ',trim('DATA/'//interfacesfile)

@@ -17,7 +17,7 @@ TO RUN:
 
 2. run the mesher and the solver for the forward wavefield:
    > cd EXAMPLES/LuoYang_fluid_soild_kernel/
-   > cp Par_file_forward Par_file
+   > ./change_simulation_type.pl -F
    > ./run_a_single_run_of_this_two_step_example.sh
 
 3. compute the adjoint source:
@@ -25,7 +25,7 @@ TO RUN:
 !! Comment from Zhinan Xie to himself, others can safely ignore it: "if time history you get is pressure, please change it to its twice differentiation with time"
 
 4. run the adjoint simulation:
-   > cp Par_file_adjoint Par_file
+   > ./change_simulation_type.pl -b
    > ./run_a_single_run_of_this_two_step_example.sh
 
 5. Optional: you can then plot the kernels using Gnuplot:
