@@ -338,10 +338,7 @@
                                           Mesh_pointer)
     else
       ! free surface for an acoustic medium
-      if (nelem_acoustic_surface > 0) then
-        call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                           b_potential_acoustic)
-      endif
+      call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic)
     endif
   endif
 

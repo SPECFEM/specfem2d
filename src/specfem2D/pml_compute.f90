@@ -280,22 +280,24 @@
   !local variables
   integer :: i,j,ispec
 
-  do ispec = 1,nspec
-    if (ispec_is_acoustic(ispec) .and. ispec_is_PML(ispec)) then
-      do j = 1, NGLLZ
-        do i = 1, NGLLX
-          b_potential_dot_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
-          b_potential_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
+  if (any_acoustic) then
+    do ispec = 1,nspec
+      if (ispec_is_acoustic(ispec) .and. ispec_is_PML(ispec)) then
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            b_potential_dot_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
+            b_potential_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
+          enddo
         enddo
+      endif
+    enddo
+
+    if (nglob_interface > 0) then
+      do i = 1, nglob_interface
+        b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,it)
+        b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,it)
       enddo
     endif
-  enddo
-
-  if (any_acoustic .and. nglob_interface > 0) then
-    do i = 1, nglob_interface
-      b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,it)
-      b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,it)
-    enddo
   endif
 
   end subroutine rebuild_value_on_PML_interface_acoustic
@@ -345,27 +347,29 @@
   !local variables
   integer :: i,j,ispec
 
-  do ispec = 1,nspec
-    if (ispec_is_elastic(ispec) .and. ispec_is_PML(ispec)) then
-      do j = 1, NGLLZ
-        do i = 1, NGLLX
-          b_veloc_elastic(:,ibool(i,j,ispec)) = 0.0_CUSTOM_REAL
-          b_displ_elastic(:,ibool(i,j,ispec)) = 0.0_CUSTOM_REAL
+  if (any_elastic) then
+    do ispec = 1,nspec
+      if (ispec_is_elastic(ispec) .and. ispec_is_PML(ispec)) then
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            b_veloc_elastic(:,ibool(i,j,ispec)) = 0.0_CUSTOM_REAL
+            b_displ_elastic(:,ibool(i,j,ispec)) = 0.0_CUSTOM_REAL
+          enddo
         enddo
+      endif
+    enddo
+
+    if (nglob_interface > 0) then
+      do i = 1, nglob_interface
+        b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,it)
+        b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,it)
+        b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,it)
+
+        b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,it)
+        b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,it)
+        b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,it)
       enddo
     endif
-  enddo
-
-  if (any_elastic .and. nglob_interface > 0) then
-     do i = 1, nglob_interface
-       b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,it)
-       b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,it)
-       b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,it)
-
-       b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,it)
-       b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,it)
-       b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,it)
-     enddo
   endif
 
   end subroutine rebuild_value_on_PML_interface_viscoelastic

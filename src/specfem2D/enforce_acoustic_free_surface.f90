@@ -31,8 +31,7 @@
 !
 !========================================================================
 
-  subroutine enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                          potential_acoustic)
+  subroutine enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic)
 
 ! free surface for an acoustic medium
 ! if acoustic, the free surface condition is a Dirichlet condition for the potential,
@@ -51,6 +50,9 @@
 !---
 
   integer :: ispec_acoustic_surface,ispec,i,j,iglob
+
+  ! checks if anything to do
+  if (nelem_acoustic_surface == 0) return
 
   do ispec_acoustic_surface = 1, nelem_acoustic_surface
 

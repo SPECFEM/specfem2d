@@ -515,14 +515,14 @@ void FC_FUNC_(update_displacement_cuda,
                                           realw* b_deltatsqover2_F,
                                           realw* b_deltatover2_F) {}
 
-void FC_FUNC_(it_update_displacement_ac_cuda,
-              it_update_displacement_ac_cuda)(long* Mesh_pointer,
-                                               realw* deltat_F,
-                                               realw* deltatsqover2_F,
-                                               realw* deltatover2_F,
-                                               realw* b_deltat_F,
-                                               realw* b_deltatsqover2_F,
-                                               realw* b_deltatover2_F) {}
+void FC_FUNC_(update_displacement_ac_cuda,
+              UPDATE_DISPLACEMENT_AC_CUDA)(long* Mesh_pointer,
+                                           realw* deltat_F,
+                                           realw* deltatsqover2_F,
+                                           realw* deltatover2_F,
+                                           realw* b_deltat_F,
+                                           realw* b_deltatsqover2_F,
+                                           realw* b_deltatover2_F) {}
 
 void FC_FUNC_(kernel_3_a_cuda,
               KERNEL_3_A_CUDA)(long* Mesh_pointer,

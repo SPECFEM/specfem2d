@@ -39,7 +39,7 @@
 
   use specfem_par, only: SIMULATION_TYPE,num_fluid_solid_edges,&
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
-                         potential_acoustic,potential_acoustic_old,potential_dot_acoustic,potential_dot_dot_acoustic,&
+                         potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic,&
                          accel_elastic,fluid_solid_acoustic_ispec, &
                          fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                          potential_acoustic_adj_coupling, &
@@ -48,7 +48,7 @@
                          rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
-                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,potential_acoustic_old
 
   implicit none
 

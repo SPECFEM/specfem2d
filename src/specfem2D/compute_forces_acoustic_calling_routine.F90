@@ -42,10 +42,15 @@
   ! for rk44
   double precision :: weight_rk
 
+  ! free surface for an acoustic medium
+  if (any_acoustic) then
+    call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic)
+  endif
+
   ! main solver for the acoustic elements
   if (any_acoustic) then
-    call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                 potential_acoustic,potential_acoustic_old,PML_BOUNDARY_CONDITIONS)
+    call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
+                                 PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
   endif
 
   ! add acoustic forcing at a rigid boundary
@@ -115,14 +120,8 @@
 
   ! multiply by the inverse of the mass matrix and update velocity
   if (any_acoustic) then
-    ! free surface for an acoustic medium
-    if (nelem_acoustic_surface > 0) then
-      call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                         potential_acoustic)
-    endif
-
     if (time_stepping_scheme == 1) then
-
+      ! Newmark scheme
       !! DK DK this should be vectorized
       potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
 
@@ -136,6 +135,7 @@
     endif
 
     if (time_stepping_scheme == 2) then
+      ! LDDRK scheme
       !! DK DK this should be vectorized
       potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
 
@@ -158,6 +158,7 @@
     endif
 
     if (time_stepping_scheme == 3) then
+      ! RK scheme
       !! DK DK this should be vectorized
       potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
 
@@ -196,6 +197,11 @@
     endif
   endif ! of if (any_acoustic)
 
+  ! free surface for an acoustic medium
+  if (any_acoustic) then
+    call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic)
+  endif
+
   end subroutine compute_forces_acoustic_main
 
 !
@@ -229,18 +235,21 @@
     istage_temp = stage_time_scheme - i_stage + 1
   endif
 
+  ! PML
+  if (PML_BOUNDARY_CONDITIONS) then
+    call rebuild_value_on_PML_interface_acoustic(it_temp)
+  endif
+
+  ! free surface for an acoustic medium
+  if (any_acoustic) then
+    call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic)
+  endif
+
   ! main solver for the acoustic elements
   if (any_acoustic) then
-    if (PML_BOUNDARY_CONDITIONS) then
-      call rebuild_value_on_PML_interface_acoustic(it_temp)
-    endif
-
-    call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                       b_potential_acoustic)
-
     if (UNDO_ATTENUATION) then
-      call compute_forces_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                   b_potential_acoustic,b_potential_acoustic_old,.false.)
+      call compute_forces_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
+                                   .false.,b_potential_acoustic_old)
 
     else
       call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
@@ -293,20 +302,18 @@
 
   ! multiply by the inverse of the mass matrix and update velocity
   if (any_acoustic) then
-    ! free surface for an acoustic medium
-    if (nelem_acoustic_surface > 0) then
-      call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                         b_potential_acoustic)
-    endif
-
     if (time_stepping_scheme == 1) then
       !! DK DK this should be vectorized
       b_potential_dot_dot_acoustic(:) = b_potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
 
       b_potential_dot_acoustic(:) = b_potential_dot_acoustic(:) + b_deltatover2 * b_potential_dot_dot_acoustic(:)
     endif
-
   endif ! of if (any_acoustic)
+
+  ! free surface for an acoustic medium
+  if (any_acoustic) then
+    call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic)
+  endif
 
   end subroutine compute_forces_acoustic_main_backward
 

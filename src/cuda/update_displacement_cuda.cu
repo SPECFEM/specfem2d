@@ -205,15 +205,15 @@ __global__ void UpdatePotential_kernel(realw_p potential_acoustic,
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(it_update_displacement_ac_cuda,
-              it_update_displacement_ac_cuda)(long* Mesh_pointer,
-                                               realw* deltat_F,
-                                               realw* deltatsqover2_F,
-                                               realw* deltatover2_F,
-                                               realw* b_deltat_F,
-                                               realw* b_deltatsqover2_F,
-                                               realw* b_deltatover2_F) {
-  TRACE("\tit_update_displacement_ac_cuda");
+void FC_FUNC_(update_displacement_ac_cuda,
+              UPDATE_DISPLACEMENT_AC_CUDA)(long* Mesh_pointer,
+                                           realw* deltat_F,
+                                           realw* deltatsqover2_F,
+                                           realw* deltatover2_F,
+                                           realw* b_deltat_F,
+                                           realw* b_deltatsqover2_F,
+                                           realw* b_deltatover2_F) {
+  TRACE("\tupdate_displacement_ac_cuda");
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
   int size = mp->NGLOB_AB;
@@ -273,7 +273,7 @@ void FC_FUNC_(it_update_displacement_ac_cuda,
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //printf("checking updatedispl_kernel launch...with %dx%d blocks\n",num_blocks_x,num_blocks_y);
-  exit_on_cuda_error("it_update_displacement_ac_cuda");
+  exit_on_cuda_error("update_displacement_ac_cuda");
 #endif
 }
 

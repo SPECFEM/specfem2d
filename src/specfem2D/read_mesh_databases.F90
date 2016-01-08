@@ -513,7 +513,7 @@
   if (myrank == 0) then
     ! print element group main parameters
     write(IMAIN,107)
-    write(IMAIN,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat,nelem_acforcing
+    write(IMAIN,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat,nelem_acforcing,nelem_acoustic_surface
     call flush_IMAIN()
   endif
 
@@ -541,7 +541,8 @@
                'Number of points per element. . . . . . (NGLLX*NGLLZ) =',i7,/5x, &
                'Number of points for display . . . . . . (pointsdisp) =',i7,/5x, &
                'Number of element material sets . . . . . . . (numat) =',i7,/5x, &
-               'Number of acoustic forcing elements (nelem_acforcing) =',i7)
+               'Number of acoustic forcing elements (nelem_acforcing) =',i7,/5x, &
+               'Number of acoustic free surf (nelem_acoustic_surface) =',i7)
 
   end subroutine read_mesh_databases_coorg_elem
 

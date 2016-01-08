@@ -227,13 +227,14 @@ module specfem_par
 
   ! for absorbing and acoustic free surface conditions
   !acoustic free surface
+  integer :: nelem_acoustic_surface
   integer, dimension(:,:), allocatable :: acoustic_surface
   integer, dimension(:,:), allocatable :: acoustic_edges
   logical :: any_acoustic_edges
 
   ! perform a forcing of an acoustic medium with a rigid boundary
   logical :: ACOUSTIC_FORCING
-  integer :: nelem_acforcing,nelem_acoustic_surface
+  integer :: nelem_acforcing
   logical, dimension(:,:), allocatable  :: codeacforcing
   integer, dimension(:), allocatable  :: typeacforcing
   integer, dimension(:), allocatable :: numacforcing, &
@@ -408,7 +409,12 @@ module specfem_par
   !---------------------------------------------------------------------
   ! for acoustic medium
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic,potential_acoustic_old
+    potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
+
+  ! PML
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_old
+
+  ! RK time schemes
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_acoustic_LDDRK, potential_acoustic_LDDRK
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_acoustic_temp
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_init_rk, potential_dot_acoustic_init_rk
@@ -462,7 +468,10 @@ module specfem_par
 
   ! for backward simulation in adjoint inversion
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic,b_potential_acoustic_old
+    b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic
+
+  ! PML
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_potential_acoustic_old
 
   ! store potential, potential_dot, potential_dot_dot along interior interface of PML, shared by interior compuational domain
   integer :: nglob_interface !can be optimized

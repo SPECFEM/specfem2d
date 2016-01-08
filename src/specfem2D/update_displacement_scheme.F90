@@ -154,17 +154,11 @@
 
   if (.not. GPU_MODE) then
 
-    ! free surface for an acoustic medium
-    if (nelem_acoustic_surface > 0) then
-      call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                         potential_acoustic)
-    endif
-
     if (time_stepping_scheme == 1) then
       call update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
                                                 potential_dot_dot_acoustic,potential_dot_acoustic,&
-                                                potential_acoustic,potential_acoustic_old, &
-                                                PML_BOUNDARY_CONDITIONS)
+                                                potential_acoustic, &
+                                                PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
     else
 #ifdef FORCE_VECTORIZATION
       do i = 1,nglob_acoustic
@@ -211,8 +205,8 @@
     if (time_stepping_scheme == 1) then
       call update_displacement_newmark_acoustic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                 b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
-                                                b_potential_acoustic,b_potential_acoustic_old, &
-                                                .false.)
+                                                b_potential_acoustic, &
+                                                .false.,b_potential_acoustic_old)
     else
 #ifdef FORCE_VECTORIZATION
       do i = 1,nglob_acoustic
@@ -425,10 +419,10 @@
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                  potential_dot_dot_acoustic,potential_dot_acoustic,&
-                                                  potential_acoustic,potential_acoustic_old,&
-                                                  PML_BOUNDARY_CONDITIONS)
+  subroutine update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2, &
+                                                  potential_dot_dot_acoustic,potential_dot_acoustic, &
+                                                  potential_acoustic, &
+                                                  PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
 
   use specfem_par, only : nglob_acoustic,CUSTOM_REAL
 
@@ -436,8 +430,10 @@
 
   double precision,intent(in) :: deltat,deltatover2,deltatsquareover2
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_acoustic,potential_dot_acoustic,&
-                                                                     potential_dot_dot_acoustic,potential_acoustic_old
+                                                                     potential_dot_dot_acoustic
+
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_acoustic_old
 
   ! local parameters
 #ifdef FORCE_VECTORIZATION
@@ -645,8 +641,8 @@
   endif
 
   ! updates acoustic potentials
-  call it_update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f,&
-                                      b_deltatf,b_deltatsquareover2f,b_deltatover2f)
+  call update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f,&
+                                   b_deltatf,b_deltatsquareover2f,b_deltatover2f)
 
   end subroutine update_displacement_newmark_GPU_acoustic
 

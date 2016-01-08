@@ -81,7 +81,6 @@
 
 ! free surface for a gravitoacoustic medium
 !!! to be coded !!!
-!      if (nelem_acoustic_surface > 0) then
 !        call enforce_acoustic_free_surface(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
 !                                          potential_gravitoacoustic)
 
@@ -89,7 +88,6 @@
 !          call enforce_acoustic_free_surface(b_potential_dot_dot_gravitoacoustic,b_potential_dot_gravitoacoustic, &
 !                                            b_potential_gravitoacoustic)
 !        endif
-!      endif
 
 ! *********************************************************
 ! ************* compute forces for the gravitoacoustic elements
@@ -149,7 +147,6 @@
     endif
 
 ! free surface for an acoustic medium
-!      if (nelem_acoustic_surface > 0) then
 !        call enforce_acoustic_free_surface(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
 !                                        potential_gravitoacoustic)
 !
@@ -157,8 +154,6 @@
 !          call enforce_acoustic_free_surface(b_potential_dot_dot_gravitoacoustic,b_potential_dot_gravitoacoustic, &
 !                                          b_potential_gravitoacoustic)
 !        endif
-!
-!      endif
 !
       ! update the potential field (use a new array here) for coupling terms
 !      potential_gravitoacoustic_adj_coupling = potential_gravitoacoustic &
