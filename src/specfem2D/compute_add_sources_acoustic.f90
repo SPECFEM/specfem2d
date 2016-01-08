@@ -43,8 +43,8 @@
                          hxis_store,hgammas_store,ibool,kappastore,myrank
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
-  integer :: it,i_stage
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_dot_dot_acoustic
+  integer,intent(in) :: it,i_stage
 
   !local variables
   integer :: i_source,i,j,iglob
@@ -97,6 +97,10 @@
 
   !local variables
   integer :: irec_local,irec,i,j,iglob
+  integer :: it_tmp
+
+  ! time step index
+  it_tmp = NSTEP - it + 1
 
   irec_local = 0
   do irec = 1,nrec
@@ -109,7 +113,7 @@
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec_selected_rec(irec))
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
-                                                adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j) &
+                                                adj_sourcearrays(irec_local,it_tmp,1,i,j) &
                                                 !ZN becareful the following line is new added, thus when do comparison
                                                 !ZN of the new code with the old code, you will have big difference if you
                                                 !ZN do not tune the source

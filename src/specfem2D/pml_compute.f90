@@ -275,20 +275,20 @@
 
   implicit none
 
-  integer :: it
+  integer,intent(in) :: it
 
   !local variables
   integer :: i,j,ispec
 
   do ispec = 1,nspec
-    do j = 1, NGLLZ
-      do i = 1, NGLLX
-        if (ispec_is_acoustic(ispec) .and. ispec_is_PML(ispec)) then
+    if (ispec_is_acoustic(ispec) .and. ispec_is_PML(ispec)) then
+      do j = 1, NGLLZ
+        do i = 1, NGLLX
           b_potential_dot_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
           b_potential_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
-        endif
+        enddo
       enddo
-    enddo
+    endif
   enddo
 
   if (any_acoustic .and. nglob_interface > 0) then
@@ -300,11 +300,38 @@
 
   end subroutine rebuild_value_on_PML_interface_acoustic
 
+!=====================================================================
+
+  subroutine rebuild_value_on_PML_interface_acoustic_accel(it)
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+
+  use specfem_par, only: any_acoustic,nglob_interface,point_interface, &
+                         b_potential_dot_dot_acoustic
+  ! PML arrays
+  use specfem_par,only: pml_interface_history_potential_dot_dot
+
+  implicit none
+
+  integer,intent(in) :: it
+
+  !local variables
+  integer :: i
+
+  if (any_acoustic .and. nglob_interface > 0) then
+    do i = 1, nglob_interface
+      b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,it)
+    enddo
+  endif
+
+  end subroutine rebuild_value_on_PML_interface_acoustic_accel
+
+
 !========================================================================
 
   subroutine rebuild_value_on_PML_interface_viscoelastic(it)
 
-  use constants,only: NGLLX,NGLLZ
+  use constants,only: NGLLX,NGLLZ,CUSTOM_REAL
 
   use specfem_par, only: nspec,ispec_is_elastic,any_elastic,ibool,nglob_interface,point_interface, &
                          b_veloc_elastic,b_displ_elastic
@@ -313,20 +340,20 @@
 
   implicit none
 
-  integer :: it
+  integer,intent(in) :: it
 
   !local variables
   integer :: i,j,ispec
 
   do ispec = 1,nspec
-    do j = 1, NGLLZ
-      do i = 1, NGLLX
-        if (ispec_is_elastic(ispec) .and. ispec_is_PML(ispec)) then
-           b_veloc_elastic(:,ibool(i,j,ispec)) = 0.
-           b_displ_elastic(:,ibool(i,j,ispec)) = 0.
-        endif
+    if (ispec_is_elastic(ispec) .and. ispec_is_PML(ispec)) then
+      do j = 1, NGLLZ
+        do i = 1, NGLLX
+          b_veloc_elastic(:,ibool(i,j,ispec)) = 0.0_CUSTOM_REAL
+          b_displ_elastic(:,ibool(i,j,ispec)) = 0.0_CUSTOM_REAL
+        enddo
       enddo
-    enddo
+    endif
   enddo
 
   if (any_elastic .and. nglob_interface > 0) then
@@ -334,6 +361,7 @@
        b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,it)
        b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,it)
        b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,it)
+
        b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,it)
        b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,it)
        b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,it)
@@ -341,3 +369,31 @@
   endif
 
   end subroutine rebuild_value_on_PML_interface_viscoelastic
+
+!========================================================================
+
+  subroutine rebuild_value_on_PML_interface_viscoelastic_accel(it)
+
+  use constants,only: NGLLX,NGLLZ,CUSTOM_REAL
+
+  use specfem_par, only: any_elastic,nglob_interface,point_interface, &
+                         b_accel_elastic
+  ! PML arrays
+  use specfem_par, only: pml_interface_history_accel
+
+  implicit none
+
+  integer,intent(in) :: it
+
+  !local variables
+  integer :: i
+
+  if (any_elastic .and. nglob_interface > 0) then
+    do i = 1, nglob_interface
+      b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,it)
+      b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,it)
+      b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,it)
+    enddo
+  endif
+
+  end subroutine rebuild_value_on_PML_interface_viscoelastic_accel

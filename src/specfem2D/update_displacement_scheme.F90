@@ -251,7 +251,7 @@
 
   if (.not. GPU_MODE) then
 
-    ! for coupling with adjoint wavefield, stores old wavefield
+    ! for coupling with adjoint wavefield, stores old (at time t_n) wavefield
     if (SIMULATION_TYPE == 3) then
       if (time_stepping_scheme == 1) then
         ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
@@ -353,6 +353,17 @@
 
   if (.not. GPU_MODE) then
 
+    ! for coupling with adjoint wavefield, stores old (at time t_n) wavefield
+    if (SIMULATION_TYPE == 3) then
+      if (time_stepping_scheme == 1) then
+        ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+        ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
+        accels_poroelastic_adj_coupling(:,:) = - accels_poroelastic(:,:)
+        accelw_poroelastic_adj_coupling(:,:) = - accelw_poroelastic(:,:)
+      endif
+    endif
+
+    ! updates poroelastic wavefields
     if (time_stepping_scheme == 1) then
       call update_displacement_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
                                                    accels_poroelastic,velocs_poroelastic,&
@@ -391,11 +402,8 @@
 
   if (.not. GPU_MODE) then
 
-    accels_poroelastic_adj_coupling = accels_poroelastic
-    accelw_poroelastic_adj_coupling = accelw_poroelastic
-
     if (time_stepping_scheme == 1) then
-      !PML did not implemented for poroelastic simulation
+      !PML not implemented for poroelastic simulation
       call update_displacement_newmark_poroelastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
                                                    b_accels_poroelastic,b_velocs_poroelastic,&
                                                    b_displs_poroelastic,b_accelw_poroelastic,&

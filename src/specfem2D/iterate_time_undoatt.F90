@@ -49,6 +49,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_potential_acoustic_buffer,b_potential_dot_dot_acoustic_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_elastic_buffer,b_accel_elastic_buffer
+  double precision :: sizeval
 
   integer :: i,j
   integer :: it_temp,seismo_current_temp
@@ -62,8 +63,12 @@
   integer, dimension(8) :: time_values
   integer :: year,mon,day,hr,minutes,timestamp
 
+  ! checks if anything to do
+  if (.not. UNDO_ATTENUATION) return
 
+  ! user output
   if (myrank == 0) write(IMAIN,400)
+
 !
 !----          s t a r t   t i m e   i t e r a t i o n s
 !
@@ -102,6 +107,33 @@
   if (NOISE_TOMOGRAPHY /= 0 ) call exit_MPI(myrank,'for undo_attenuation, NOISE_TOMOGRAPHY is not supported')
   if (AXISYM ) call exit_MPI(myrank,'Just axisymmetric FORWARD simulations are possible so far')
 
+  ! number of time subsets for time loop
+  NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
+
+  ! checks
+  if (NSUBSET_ITERATIONS <= 0) call exit_MPI(myrank,'Error invalid number of time subsets for undoing attenuation')
+
+  ! user output
+  if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
+    if (myrank == 0) then
+      write(IMAIN,*) 'undoing attenuation:'
+      write(IMAIN,*) '  total number of time subsets                     = ',NSUBSET_ITERATIONS
+      write(IMAIN,*) '  wavefield snapshots at every NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION
+      if (any_acoustic) then
+        ! buffer(nglob,NT_DUMP_ATTENUATION) in MB
+        sizeval = 2 * dble(nglob) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+        write(IMAIN,*) '  size of acoustic wavefield buffer per slice      = ', sngl(sizeval),'MB'
+      endif
+      if (any_elastic) then
+        ! buffer(3,nglob,NT_DUMP_ATTENUATION) in MB
+        sizeval = 2 * dble(3) * dble(nglob) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+        write(IMAIN,*) '  size of elastic wavefield buffer per slice       = ', sngl(sizeval),'MB'
+      endif
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+  endif
+
   ! allocates buffers
   if (SIMULATION_TYPE == 3) then
     if (any_acoustic) then
@@ -117,15 +149,13 @@
       allocate(b_accel_elastic_buffer(3,nglob,NT_DUMP_ATTENUATION),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_accel_elastic')
 
-      if (ATTENUATION_VISCOELASTIC_SOLID) then
-        allocate(b_e1(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-        allocate(b_e11(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-        allocate(b_e13(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-
-        b_e1(:,:,:,:) = 0._CUSTOM_REAL
-        b_e11(:,:,:,:) = 0._CUSTOM_REAL
-        b_e13(:,:,:,:) = 0._CUSTOM_REAL
-      endif
+      allocate(b_e1(NGLLX,NGLLZ,nspec_allocate,N_SLS), &
+               b_e11(NGLLX,NGLLZ,nspec_allocate,N_SLS), &
+               b_e13(NGLLX,NGLLZ,nspec_allocate,N_SLS),stat=ier)
+      if (ier /= 0) stop 'Error allocating attenuation arrays'
+      b_e1(:,:,:,:) = 0._CUSTOM_REAL
+      b_e11(:,:,:,:) = 0._CUSTOM_REAL
+      b_e13(:,:,:,:) = 0._CUSTOM_REAL
     endif
   endif
 
@@ -149,8 +179,11 @@
   ! ************* MAIN LOOP OVER THE TIME STEPS *************
   ! *********************************************************
 
+  ! initializes time increments
   it = 0
-  do iteration_on_subset = 1, NSTEP / NT_DUMP_ATTENUATION
+
+  ! loops over time subsets
+  do iteration_on_subset = 1, NSUBSET_ITERATIONS
 
     ! wavefield storage
     if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
@@ -160,18 +193,27 @@
     else if (SIMULATION_TYPE == 3) then
       ! reads in last stored forward wavefield
       call read_forward_arrays_undoatt()
-
-      ! intermediate storage of it and seismo_current positions
-      it_temp = it
-      seismo_current_temp = seismo_current
     endif
 
     ! time loop within this iteration subset
     select case (SIMULATION_TYPE)
     case (1)
       ! forward and adjoint simulations
+
+      ! increment end of this subset
+      if (iteration_on_subset < NSUBSET_ITERATIONS) then
+        ! takes full length of subset
+        it_subset_end = NT_DUMP_ATTENUATION
+      else
+        ! loops over remaining steps in last subset
+        it_subset_end = NSTEP - (iteration_on_subset-1)*NT_DUMP_ATTENUATION
+      endif
+      ! checks end index
+      if (it_subset_end > NT_DUMP_ATTENUATION) &
+        call exit_MPI(myrank,'Error invalid buffer index for undoing attenuation')
+
       ! subset loop
-      do it_of_this_subset = 1, NT_DUMP_ATTENUATION
+      do it_of_this_subset = 1, it_subset_end
 
         it = it + 1
 
@@ -210,13 +252,29 @@
     case (3)
       ! kernel simulations
 
+      ! intermediate storage of it and seismo_current positions
+      it_temp = it
+      seismo_current_temp = seismo_current
+
+      ! increment end of this subset
+      if (iteration_on_subset == 1) then
+        ! loops over remaining steps in last forward subset
+        it_subset_end = NSTEP - (NSUBSET_ITERATIONS-1)*NT_DUMP_ATTENUATION
+      else
+        ! takes full length of subset
+        it_subset_end = NT_DUMP_ATTENUATION
+      endif
+      ! checks end index
+      if (it_subset_end > NT_DUMP_ATTENUATION) &
+        call exit_MPI(myrank,'Error invalid buffer index for undoing attenuation')
+
       ! reconstructs forward wavefield based on last stored wavefield data
       !
       ! note: we step forward in time here, starting from last snapshot.
       !       the newly computed, reconstructed forward wavefields (b_displ_..) get stored in buffers.
 
       ! subset loop
-      do it_of_this_subset = 1, NT_DUMP_ATTENUATION
+      do it_of_this_subset = 1, it_subset_end
 
         it = it + 1
         do i_stage = 1, stage_time_scheme
@@ -245,25 +303,26 @@
 
       enddo ! subset loop
 
+      ! resets current it and seismo_current positions
       it = it_temp
       seismo_current = seismo_current_temp
 
       ! adjoint wavefield simulation
-      do it_of_this_subset = 1, NT_DUMP_ATTENUATION
+      do it_of_this_subset = 1, it_subset_end
         ! reads backward/reconstructed wavefield from buffers
         ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
         if (any_acoustic) then
           do j = 1,NGLOB
-            b_potential_acoustic(j) = b_potential_acoustic_buffer(j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
-            b_potential_dot_dot_acoustic(j) = b_potential_dot_dot_acoustic_buffer(j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
+            b_potential_acoustic(j) = b_potential_acoustic_buffer(j,it_subset_end-it_of_this_subset+1)
+            b_potential_dot_dot_acoustic(j) = b_potential_dot_dot_acoustic_buffer(j,it_subset_end-it_of_this_subset+1)
           enddo
         endif
 
         if (any_elastic) then
           do i = 1,3
             do j = 1,NGLOB
-              b_displ_elastic(i,j) = b_displ_elastic_buffer(i,j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
-              b_accel_elastic(i,j) = b_accel_elastic_buffer(i,j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
+              b_displ_elastic(i,j) = b_displ_elastic_buffer(i,j,it_subset_end-it_of_this_subset+1)
+              b_accel_elastic(i,j) = b_accel_elastic_buffer(i,j,it_subset_end-it_of_this_subset+1)
             enddo
           enddo
         endif
@@ -302,7 +361,7 @@
           ! for coupling with adjoint wavefields, stores temporary old wavefield
           if (coupled_acoustic_elastic) then
             ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
-            ! adjoint definition: \partial_t^2 \bfs^\dagger=-\frac{1}{\rho}\bfnabla\phi^\dagger
+            ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
 #ifdef FORCE_VECTORIZATION
               do i = 1,3*nglob_elastic
                 accel_elastic_adj_coupling(i,1) = - accel_elastic(i,1)
@@ -346,7 +405,7 @@
     endif
     if (any_elastic) then
       deallocate(b_displ_elastic_buffer,b_accel_elastic_buffer)
-      if (ATTENUATION_VISCOELASTIC_SOLID) deallocate(b_e1,b_e11,b_e13)
+      deallocate(b_e1,b_e11,b_e13)
     endif
   endif
 

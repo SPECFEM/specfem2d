@@ -114,6 +114,10 @@
 
   !local variables
   integer :: irec_local,irec,i,j,iglob
+  integer :: it_tmp
+
+  ! time step index
+  it_tmp = NSTEP - it + 1
 
   irec_local = 0
   do irec = 1,nrec
@@ -125,11 +129,13 @@
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec_selected_rec(irec))
-            if (P_SV) then !P-SH waves
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
-              accel_elastic(3,iglob) = accel_elastic(3,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
-            else !SH (membrane) wavescompute_forces_v
-              accel_elastic(2,iglob) = accel_elastic(2,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j)
+            if (P_SV) then
+              ! P-SH waves
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,it_tmp,1,i,j)
+              accel_elastic(3,iglob) = accel_elastic(3,iglob) + adj_sourcearrays(irec_local,it_tmp,3,i,j)
+            else
+              ! SH (membrane) wavescompute_forces_v
+              accel_elastic(2,iglob) = accel_elastic(2,iglob) + adj_sourcearrays(irec_local,it_tmp,2,i,j)
             endif
           enddo
         enddo

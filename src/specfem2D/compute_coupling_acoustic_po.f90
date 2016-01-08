@@ -74,15 +74,17 @@
 
       displ_x = displs_poroelastic(1,iglob)
       displ_z = displs_poroelastic(2,iglob)
+
       displw_x = displw_poroelastic(1,iglob)
       displw_z = displw_poroelastic(2,iglob)
 
       if (SIMULATION_TYPE == 3) then
         ! new definition of adjoint displacement and adjoint potential
-        displ_x = -accels_poroelastic_adj_coupling(1,iglob)
-        displ_z = -accels_poroelastic_adj_coupling(2,iglob)
-        displw_x = -accelw_poroelastic_adj_coupling(1,iglob)
-        displw_z = -accelw_poroelastic_adj_coupling(2,iglob)
+        displ_x = accels_poroelastic_adj_coupling(1,iglob)
+        displ_z = accels_poroelastic_adj_coupling(2,iglob)
+
+        displw_x = accelw_poroelastic_adj_coupling(1,iglob)
+        displw_z = accelw_poroelastic_adj_coupling(2,iglob)
       endif
 
       ! get point values for the acoustic side

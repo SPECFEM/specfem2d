@@ -42,7 +42,8 @@
                          potential_acoustic,potential_acoustic_old,potential_dot_acoustic,potential_dot_dot_acoustic,&
                          accel_elastic,fluid_solid_acoustic_ispec, &
                          fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
-                         potential_acoustic_adj_coupling,AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
+                         potential_acoustic_adj_coupling, &
+                         AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
                          rmemory_sfb_potential_ddot_acoustic,timeval,deltat,&
                          rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK
   ! PML arrays
@@ -81,6 +82,14 @@
       ! compute pressure on the fluid/solid edge
       pressure = - potential_dot_dot_acoustic(iglob)
 
+      if (SIMULATION_TYPE == 3) then
+        ! new definition of adjoint displacement and adjoint potential
+        ! adjoint definition: pressure^\dagger = potential^\dagger
+        pressure = potential_acoustic_adj_coupling(iglob)
+      endif
+
+      ! PML
+      ! (overwrites pressure value if needed)
       if (PML_BOUNDARY_CONDITIONS ) then
         if (ispec_is_PML(ispec_acoustic) .and. nspec_PML > 0) then
           ispec_PML = spec_to_PML(ispec_acoustic)
@@ -113,18 +122,7 @@
 
           pressure = - (A0 * potential_dot_dot_acoustic(iglob) + A1 * potential_dot_acoustic(iglob) + &
                         A2 * potential_acoustic(iglob) + A3 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum))
-        else
-          pressure = - potential_dot_dot_acoustic(iglob)
         endif
-      else
-        pressure = - potential_dot_dot_acoustic(iglob)
-      endif
-
-      if (SIMULATION_TYPE == 3) then
-        !<YANGL
-        ! new definition of adjoint displacement and adjoint potential
-        pressure = potential_acoustic_adj_coupling(iglob)
-        !>YANGL
       endif
 
       ! get point values for the elastic side

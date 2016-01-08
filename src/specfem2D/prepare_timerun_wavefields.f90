@@ -159,13 +159,17 @@
   allocate(displs_poroelastic_old(NDIM,nglob_poroelastic))
   allocate(velocs_poroelastic(NDIM,nglob_poroelastic))
   allocate(accels_poroelastic(NDIM,nglob_poroelastic))
-  allocate(accels_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
+  if (SIMULATION_TYPE == 3) then
+    allocate(accels_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
+  endif
   allocate(rmass_s_inverse_poroelastic(nglob_poroelastic))
 
   allocate(displw_poroelastic(NDIM,nglob_poroelastic))
   allocate(velocw_poroelastic(NDIM,nglob_poroelastic))
   allocate(accelw_poroelastic(NDIM,nglob_poroelastic))
-  allocate(accelw_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
+  if (SIMULATION_TYPE == 3) then
+    allocate(accelw_poroelastic_adj_coupling(NDIM,nglob_poroelastic))
+  endif
   allocate(rmass_w_inverse_poroelastic(nglob_poroelastic))
 
   if (time_stepping_scheme == 2) then
@@ -262,7 +266,9 @@
 
   allocate(potential_acoustic(nglob_acoustic))
   allocate(potential_acoustic_old(nglob_acoustic))
-  allocate(potential_acoustic_adj_coupling(nglob_acoustic))
+  if (SIMULATION_TYPE == 3) then
+    allocate(potential_acoustic_adj_coupling(nglob_acoustic))
+  endif
   allocate(potential_dot_acoustic(nglob_acoustic))
   allocate(potential_dot_dot_acoustic(nglob_acoustic))
   allocate(rmass_inverse_acoustic(nglob_acoustic))

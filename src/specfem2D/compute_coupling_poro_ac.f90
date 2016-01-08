@@ -42,7 +42,8 @@
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
                          fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge, &
                          porosity,tortuosity,density,kmato, &
-                         potential_dot_dot_acoustic,b_potential_dot_dot_acoustic,potential_acoustic_adj_coupling, &
+                         potential_dot_dot_acoustic,b_potential_dot_dot_acoustic, &
+                         potential_acoustic_adj_coupling, &
                          accels_poroelastic,accelw_poroelastic,b_accels_poroelastic,b_accelw_poroelastic, &
                          SIMULATION_TYPE
 
@@ -86,9 +87,12 @@
 
       ! compute pressure on the fluid/porous medium edge
       pressure = - potential_dot_dot_acoustic(iglob)
+
       if (SIMULATION_TYPE == 3) then
         b_pressure = - b_potential_dot_dot_acoustic(iglob)
+
         ! new definition of adjoint displacement and adjoint potential
+        ! adjoint definition: pressure^\dagger = potential^\dagger
         pressure = potential_acoustic_adj_coupling(iglob)
       endif
 

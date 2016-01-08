@@ -106,9 +106,8 @@
     if (any_acoustic .and. nglob_interface > 0) then
       if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
         do i = 1, nglob_interface
-          write(72)potential_dot_dot_acoustic(point_interface(i)),&
-                   potential_dot_acoustic(point_interface(i)),&
-                   potential_acoustic(point_interface(i))
+          write(72) potential_dot_dot_acoustic(point_interface(i)), potential_dot_acoustic(point_interface(i)), &
+                    potential_acoustic(point_interface(i))
         enddo
       endif
     endif
@@ -130,8 +129,10 @@
       potential_dot_acoustic(:) = potential_dot_acoustic(:) + deltatover2 * potential_dot_dot_acoustic(:)
 
       ! update the potential field (use a new array here) for coupling terms
-      potential_acoustic_adj_coupling(:) = potential_acoustic(:) + deltat * potential_dot_acoustic(:) + &
-                                        deltatsquareover2 * potential_dot_dot_acoustic(:)
+      if (SIMULATION_TYPE == 3) then
+        potential_acoustic_adj_coupling(:) = potential_acoustic(:) + deltat * potential_dot_acoustic(:) + &
+                                             deltatsquareover2 * potential_dot_dot_acoustic(:)
+      endif
     endif
 
     if (time_stepping_scheme == 2) then
@@ -208,17 +209,23 @@
   implicit none
 
   ! local parameters
-  integer :: i,it_temp,istage_temp
+  integer :: it_temp,istage_temp
 
   ! checks
   if (SIMULATION_TYPE /= 3 ) return
 
   ! timing
   if (UNDO_ATTENUATION) then
-    it_temp = NSTEP - (iteration_on_subset * NT_DUMP_ATTENUATION - it_of_this_subset + 1)
+    ! time increment
+    ! example: NSTEP = 800, NT_DUMP_ATTENUATION = 500 -> 1. subset: it_temp = (2-1)*500 + 1 = 501,502,..,800
+    !                                                 -> 2. subset: it_temp = (2-2)*500 + 1 = 1,2,..,500
+    it_temp = (NSUBSET_ITERATIONS - iteration_on_subset)*NT_DUMP_ATTENUATION + it_of_this_subset
+    ! time scheme
     istage_temp = i_stage
   else
+    ! time increment
     it_temp = NSTEP - it + 1
+    ! time scheme
     istage_temp = stage_time_scheme - i_stage + 1
   endif
 
@@ -281,11 +288,7 @@
 #endif
 
   if (PML_BOUNDARY_CONDITIONS) then
-    if (any_acoustic .and. nglob_interface > 0) then
-      do i = 1, nglob_interface
-        b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,it_temp)
-      enddo
-    endif
+    call rebuild_value_on_PML_interface_acoustic_accel(it_temp)
   endif
 
   ! multiply by the inverse of the mass matrix and update velocity

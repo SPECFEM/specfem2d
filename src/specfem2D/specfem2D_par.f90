@@ -153,7 +153,7 @@ module specfem_par
   double precision, dimension(:,:,:), allocatable :: &
     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
-  ! stacey BC
+  ! Stacey BC
   logical :: STACEY_BOUNDARY_CONDITIONS
   logical, dimension(:,:), allocatable  :: codeabs
   integer, dimension(:), allocatable  :: typeabs
@@ -360,9 +360,14 @@ module specfem_par
   ! for backward simulation in adjoint inversion
   double precision :: b_deltatover2,b_deltatsquareover2,b_deltat ! coefficients of the explicit Newmark time scheme
 
+  ! UNDO_ATTENUATION
+  integer :: NSUBSET_ITERATIONS
+  integer :: iteration_on_subset,it_of_this_subset
+  integer :: it_subset_end
+
   ! for LDDRK46
   integer :: i_stage,stage_time_scheme
-  integer :: iteration_on_subset,it_of_this_subset
+
   real(kind=CUSTOM_REAL), dimension(Nstages):: alpha_LDDRK,beta_LDDRK,c_LDDRK
 
   ! parameters used in LDDRK scheme, from equation (2) of
@@ -408,6 +413,7 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_acoustic_temp
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_init_rk, potential_dot_acoustic_init_rk
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: potential_dot_dot_acoustic_rk, potential_dot_acoustic_rk
+
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_adj_coupling
 
   ! for gravitoacoustic medium
@@ -560,6 +566,7 @@ module specfem_par
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     accels_poroelastic_adj_coupling, accelw_poroelastic_adj_coupling
+
   double precision, dimension(:), allocatable :: porosity,tortuosity
   double precision, dimension(:,:), allocatable :: density,permeability
 
@@ -588,7 +595,7 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_potential_ddot_acoustic_LDDRK
 
   ! for kernel computation
-  character(len=100) TOMOGRAPHY_FILE
+  character(len=100) :: TOMOGRAPHY_FILE
   integer :: tomo_material
   logical :: save_ASCII_kernels
 

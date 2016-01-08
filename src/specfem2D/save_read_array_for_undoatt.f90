@@ -60,20 +60,20 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for writing')
 
   if (any_acoustic) then
-    write( IOUT_UNDO_ATT ) potential_dot_dot_acoustic
-    write( IOUT_UNDO_ATT ) potential_dot_acoustic
-    write( IOUT_UNDO_ATT ) potential_acoustic
+    write(IOUT_UNDO_ATT) potential_dot_dot_acoustic
+    write(IOUT_UNDO_ATT) potential_dot_acoustic
+    write(IOUT_UNDO_ATT) potential_acoustic
   endif
 
   if (any_elastic) then
-    write(IOUT_UNDO_ATT ) accel_elastic
-    write(IOUT_UNDO_ATT ) veloc_elastic
-    write(IOUT_UNDO_ATT ) displ_elastic
+    write(IOUT_UNDO_ATT) accel_elastic
+    write(IOUT_UNDO_ATT) veloc_elastic
+    write(IOUT_UNDO_ATT) displ_elastic
 
     if (ATTENUATION_VISCOELASTIC_SOLID) then
-      write(IOUT_UNDO_ATT ) e1
-      write(IOUT_UNDO_ATT ) e11
-      write(IOUT_UNDO_ATT ) e13
+      write(IOUT_UNDO_ATT) e1
+      write(IOUT_UNDO_ATT) e11
+      write(IOUT_UNDO_ATT) e13
     endif
   endif
 
@@ -91,7 +91,8 @@
 
   use constants,only: IIN_UNDO_ATT,MAX_STRING_LEN
 
-  use specfem_par,only: myrank,iteration_on_subset,NSTEP,NT_DUMP_ATTENUATION, &
+  use specfem_par,only: myrank, &
+    iteration_on_subset,NSUBSET_ITERATIONS, &
     any_acoustic,any_elastic,ATTENUATION_VISCOELASTIC_SOLID, &
     b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
     b_displ_elastic,b_veloc_elastic,b_accel_elastic, &
@@ -105,7 +106,7 @@
   character(len=MAX_STRING_LEN) :: outputname
 
   ! current subset iteration
-  iteration_on_subset_tmp = NSTEP/NT_DUMP_ATTENUATION - iteration_on_subset + 1
+  iteration_on_subset_tmp = NSUBSET_ITERATIONS - iteration_on_subset + 1
 
   ! reads in saved wavefield
   write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
@@ -116,20 +117,20 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for reading')
 
   if (any_acoustic) then
-    read( IIN_UNDO_ATT ) b_potential_dot_dot_acoustic
-    read( IIN_UNDO_ATT ) b_potential_dot_acoustic
-    read( IIN_UNDO_ATT ) b_potential_acoustic
+    read(IIN_UNDO_ATT) b_potential_dot_dot_acoustic
+    read(IIN_UNDO_ATT) b_potential_dot_acoustic
+    read(IIN_UNDO_ATT) b_potential_acoustic
   endif
 
   if (any_elastic) then
-    read(IIN_UNDO_ATT ) b_accel_elastic
-    read(IIN_UNDO_ATT ) b_veloc_elastic
-    read(IIN_UNDO_ATT ) b_displ_elastic
+    read(IIN_UNDO_ATT) b_accel_elastic
+    read(IIN_UNDO_ATT) b_veloc_elastic
+    read(IIN_UNDO_ATT) b_displ_elastic
 
     if (ATTENUATION_VISCOELASTIC_SOLID) then
-      read(IIN_UNDO_ATT ) b_e1
-      read(IIN_UNDO_ATT ) b_e11
-      read(IIN_UNDO_ATT ) b_e13
+      read(IIN_UNDO_ATT) b_e1
+      read(IIN_UNDO_ATT) b_e11
+      read(IIN_UNDO_ATT) b_e13
     endif
   endif
 

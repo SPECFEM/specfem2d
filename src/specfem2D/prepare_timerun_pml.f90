@@ -136,12 +136,12 @@
       if (any_elastic .and. nglob_interface > 0) then
         do it = 1,NSTEP
           do i = 1, nglob_interface
-            read(71)pml_interface_history_accel(1,i,it),pml_interface_history_accel(2,i,it),&
-                    pml_interface_history_accel(3,i,it),&
-                    pml_interface_history_veloc(1,i,it),pml_interface_history_veloc(2,i,it),&
-                    pml_interface_history_veloc(3,i,it),&
-                    pml_interface_history_displ(1,i,it),pml_interface_history_displ(2,i,it),&
-                    pml_interface_history_displ(3,i,it)
+            read(71) pml_interface_history_accel(1,i,it),pml_interface_history_accel(2,i,it),&
+                     pml_interface_history_accel(3,i,it),&
+                     pml_interface_history_veloc(1,i,it),pml_interface_history_veloc(2,i,it),&
+                     pml_interface_history_veloc(3,i,it),&
+                     pml_interface_history_displ(1,i,it),pml_interface_history_displ(2,i,it),&
+                     pml_interface_history_displ(3,i,it)
           enddo
         enddo
         close(71)
@@ -150,8 +150,8 @@
       if (any_acoustic .and. nglob_interface > 0) then
         do it = 1,NSTEP
           do i = 1, nglob_interface
-            read(72)pml_interface_history_potential_dot_dot(i,it),pml_interface_history_potential_dot(i,it),&
-                    pml_interface_history_potential(i,it)
+            read(72) pml_interface_history_potential_dot_dot(i,it),pml_interface_history_potential_dot(i,it),&
+                     pml_interface_history_potential(i,it)
           enddo
         enddo
         close(72)

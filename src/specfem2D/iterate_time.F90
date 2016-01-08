@@ -139,7 +139,7 @@
           if (SIMULATION_TYPE == 3) call compute_forces_viscoelastic_main_backward()
         else
           ! on GPU
-          if (any_elastic)  call compute_forces_viscoelastic_GPU()
+          if (any_elastic) call compute_forces_viscoelastic_GPU()
         endif
       endif
 
