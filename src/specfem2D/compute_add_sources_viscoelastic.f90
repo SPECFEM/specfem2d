@@ -52,10 +52,14 @@
 
   ! --- add the source
   do i_source= 1,NSOURCES
+
     ! if this processor core carries the source and the source element is elastic
     if (is_proc_source(i_source) == 1 .and. ispec_is_elastic(ispec_selected_source(i_source))) then
-      ! collocated force
-      if (source_type(i_source) == 1) then
+
+      ! adds source term
+      select case (source_type(i_source))
+      case (1)
+        ! collocated force
         if (P_SV) then ! P-SV calculation
           do j = 1,NGLLZ
             do i = 1,NGLLX
@@ -76,10 +80,9 @@
             enddo
           enddo
         endif
-      endif
 
-      ! moment tensor
-      if (source_type(i_source) == 2) then
+      case (2)
+        ! moment tensor
         if (.not. P_SV )  call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
         ! add source array
         do j = 1,NGLLZ;
@@ -91,7 +94,8 @@
                                      sourcearray(i_source,2,i,j) * source_time_function(i_source,it,i_stage)
           enddo
         enddo
-      endif !if (source_type(i_source) == 2)
+      end select
+
     endif ! if this processor core carries the source and the source element is elastic
   enddo ! do i_source= 1,NSOURCES
 

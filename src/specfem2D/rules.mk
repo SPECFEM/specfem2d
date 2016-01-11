@@ -89,6 +89,9 @@ specfem2D_OBJECTS = \
 	$O/compute_gradient_attenuation.spec.o \
 	$O/compute_normal_vector.spec.o \
 	$O/compute_pressure.spec.o \
+	$O/compute_stacey_acoustic.spec.o \
+	$O/compute_stacey_elastic.spec.o \
+	$O/compute_stacey_poroelastic.spec.o \
 	$O/compute_vector_field.spec.o \
 	$O/construct_acoustic_surface.spec.o \
 	$O/convert_time.spec.o \

@@ -120,14 +120,13 @@
           ! global index
           iglob = ibool(ix,iz,ispec)
 
-           if (.not. mask_ibool_ext_mesh(iglob)) then
-              ! masks point as being accounted for
-              mask_ibool_ext_mesh(iglob) = .true.
-              ! adds point to interface
-              npoin_interface_ext_mesh = npoin_interface_ext_mesh + 1
-              ibool_interfaces_ext_mesh_init(npoin_interface_ext_mesh,num_interface) = iglob
-            endif
-
+          if (.not. mask_ibool_ext_mesh(iglob)) then
+            ! masks point as being accounted for
+            mask_ibool_ext_mesh(iglob) = .true.
+            ! adds point to interface
+            npoin_interface_ext_mesh = npoin_interface_ext_mesh + 1
+            ibool_interfaces_ext_mesh_init(npoin_interface_ext_mesh,num_interface) = iglob
+          endif
 
           ! checks to which material this common interface belongs
           if (ispec_is_elastic(ispec)) then

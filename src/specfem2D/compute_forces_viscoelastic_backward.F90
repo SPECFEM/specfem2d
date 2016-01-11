@@ -39,9 +39,9 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CONVOLUTION_MEMORY_VARIABLES, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL
 
-  use specfem_par, only: P_SV,nglob,nspec,nelemabs,it,NSTEP,assign_external_model, &
+  use specfem_par, only: nglob,nspec,assign_external_model, &
                          ATTENUATION_VISCOELASTIC_SOLID,nspec_allocate,N_SLS, &
-                         ibool,kmato,numabs,ispec_is_elastic,codeabs, &
+                         ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
                          jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,&
                          ispec_is_anisotropic,anisotropy, &
@@ -50,10 +50,8 @@
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,N_SLS, &
-                         deltat,coord,b_absorb_elastic_left,&
-                         b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top,&
-                         ib_left,ib_right,ib_bottom,ib_top,&
-                         stage_time_scheme,i_stage,STACEY_BOUNDARY_CONDITIONS,ispec_is_acoustic
+                         deltat,coord, &
+                         stage_time_scheme,i_stage,ispec_is_acoustic
   ! PML arrays
   use specfem_par, only: ispec_is_PML
 
@@ -72,7 +70,7 @@
   !--- local variables
   !---
 
-  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend
+  integer :: ispec,i,j,k,iglob
 
   ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duy_dxi,duy_dgamma,duz_dxi,duz_dgamma
@@ -109,7 +107,6 @@
   double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25
 
   integer :: ifirstelem,ilastelem
-
 
   ! temp variable RK
   real(kind=CUSTOM_REAL) :: weight_rk
@@ -622,84 +619,6 @@
       enddo ! second loop over the GLL points
     endif ! end of test if elastic element
   enddo ! end of loop over all spectral elements
-
-  !
-  !--- Clayton-Engquist condition if elastic
-  !
-  if (STACEY_BOUNDARY_CONDITIONS) then
-    do ispecabs = 1,nelemabs
-
-      ispec = numabs(ispecabs)
-      if (.not. ispec_is_elastic(ispec) ) cycle
-
-      !--- left absorbing boundary
-      if (codeabs(IEDGE4,ispecabs)) then
-        i = 1
-        do j = 1,NGLLZ
-          ! Clayton-Engquist condition if elastic
-          iglob = ibool(i,j,ispec)
-          if (P_SV) then !P-SV waves
-            b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_left(1,j,ib_left(ispecabs),NSTEP-it+1)
-            b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_left(3,j,ib_left(ispecabs),NSTEP-it+1)
-          else !SH (membrane) waves
-            b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_left(2,j,ib_left(ispecabs),NSTEP-it+1)
-          endif
-        enddo
-      endif  !  end of left absorbing boundary
-
-      !--- right absorbing boundary
-      if (codeabs(IEDGE2,ispecabs)) then
-        i = NGLLX
-        do j = 1,NGLLZ
-          iglob = ibool(i,j,ispec)
-          if (P_SV) then !P-SV waves
-            b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_right(1,j,ib_right(ispecabs),NSTEP-it+1)
-            b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_right(3,j,ib_right(ispecabs),NSTEP-it+1)
-          else! SH (membrane) waves
-            b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_right(2,j,ib_right(ispecabs),NSTEP-it+1)
-          endif
-        enddo
-      endif  !  end of right absorbing boundary
-
-      !--- bottom absorbing boundary
-      if (codeabs(IEDGE1,ispecabs)) then
-        j = 1
-!! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
-        ibegin = 1
-        iend = NGLLX
-!! DK DK not needed           if (codeabs(IEDGE4,ispecabs)) ibegin = 2
-!! DK DK not needed           if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
-        do i = ibegin,iend
-          iglob = ibool(i,j,ispec)
-          if (P_SV) then !P-SV waves
-            b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),NSTEP-it+1)
-            b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_bottom(3,i,ib_bottom(ispecabs),NSTEP-it+1)
-          else!SH (membrane) waves
-            b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_bottom(2,i,ib_bottom(ispecabs),NSTEP-it+1)
-          endif
-        enddo
-      endif  !  end of bottom absorbing boundary
-
-      !--- top absorbing boundary
-      if (codeabs(IEDGE3,ispecabs)) then
-        j = NGLLZ
-!! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
-        ibegin = 1
-        iend = NGLLX
-!! DK DK not needed           if (codeabs(IEDGE4,ispecabs)) ibegin = 2
-!! DK DK not needed           if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
-        do i = ibegin,iend
-          iglob = ibool(i,j,ispec)
-          if (P_SV) then !P-SV waves
-            b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ib_top(ispecabs),NSTEP-it+1)
-            b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_top(3,i,ib_top(ispecabs),NSTEP-it+1)
-          else !SH (membrane) waves
-            b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_top(2,i,ib_top(ispecabs),NSTEP-it+1)
-          endif
-        enddo
-      endif  !  end of top absorbing boundary
-    enddo
-  endif  ! end of absorbing boundaries
 
   end subroutine compute_forces_viscoelastic_backward
 

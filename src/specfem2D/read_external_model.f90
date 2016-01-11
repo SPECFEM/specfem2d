@@ -289,14 +289,14 @@
         else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) < TINYVAL)) then
           ispec_is_elastic(ispec) = .false.
           ispec_is_poroelastic(ispec) = .false.
-          ispec_is_gravitoacoustic(ispec)=.false.
-          ispec_is_acoustic(ispec)=.true.
+          ispec_is_gravitoacoustic(ispec) = .false.
+          ispec_is_acoustic(ispec) = .true.
           any_acoustic = .true.
         else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) >= TINYVAL)) then
           ispec_is_elastic(ispec) = .false.
           ispec_is_poroelastic(ispec) = .false.
           ispec_is_acoustic(ispec)=.false.
-          ispec_is_gravitoacoustic(ispec)=.true.
+          ispec_is_gravitoacoustic(ispec) = .true.
           any_gravitoacoustic = .true.
         else
           ispec_is_poroelastic(ispec) = .false.

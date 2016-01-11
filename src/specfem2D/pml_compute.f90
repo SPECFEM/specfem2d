@@ -401,3 +401,172 @@
   endif
 
   end subroutine rebuild_value_on_PML_interface_viscoelastic_accel
+
+!========================================================================
+
+  subroutine pml_boundary_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
+                                   potential_acoustic,potential_acoustic_old)
+
+! The outer boundary condition to use for PML elements in fluid layers is Neumann for the potential
+! because we need Dirichlet conditions for the displacement vector, which means Neumann for the potential.
+! Thus, there is nothing to enforce explicitly here.
+! There is something to enforce explicitly only in the case of elastic elements, for which a Dirichlet
+! condition is needed for the displacement vector, which is the vectorial unknown for these elements.
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+
+  use specfem_par, only: nglob,ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: potential_dot_dot_acoustic,potential_dot_acoustic, &
+    potential_acoustic,potential_acoustic_old
+
+  ! local parameters
+  integer :: i,j,ispecabs,ispec,iglob,ibegin,iend
+
+  ! checks if anything to do
+  if (.not. anyabs) return
+
+  ! set Dirichelet boundary condition on outer boundary of CFS-PML
+  do ispecabs = 1,nelemabs
+    ispec = numabs(ispecabs)
+
+    if (ispec_is_PML(ispec)) then
+!--- left absorbing boundary
+      if (codeabs(IEDGE4,ispecabs)) then
+        i = 1
+        do j = 1,NGLLZ
+          iglob = ibool(i,j,ispec)
+          potential_acoustic_old(iglob) = 0._CUSTOM_REAL
+          potential_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+        enddo
+      endif
+!--- right absorbing boundary
+      if (codeabs(IEDGE2,ispecabs)) then
+        i = NGLLX
+        do j = 1,NGLLZ
+          iglob = ibool(i,j,ispec)
+          potential_acoustic_old(iglob) = 0._CUSTOM_REAL
+          potential_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+        enddo
+      endif
+!--- bottom absorbing boundary
+      if (codeabs(IEDGE1,ispecabs)) then
+        j = 1
+        ibegin = 1
+        iend = NGLLX
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+          potential_acoustic_old(iglob) = 0._CUSTOM_REAL
+          potential_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+        enddo
+      endif
+!--- top absorbing boundary
+      if (codeabs(IEDGE3,ispecabs)) then
+        j = NGLLZ
+! exclude corners to make sure there is no contradiction on the normal
+        ibegin = 1
+        iend = NGLLX
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+          potential_acoustic_old(iglob) = 0._CUSTOM_REAL
+          potential_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+        enddo
+      endif  !  end of top absorbing boundary
+    endif ! end of ispec_is_PML
+  enddo ! end specabs loop
+
+  end subroutine pml_boundary_acoustic
+
+!========================================================================
+
+  subroutine pml_boundary_elastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old)
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+
+  use specfem_par, only: nglob,ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML,nspec_PML
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
+
+  ! local parameters
+  integer :: i,j,ispecabs,ispec,iglob,ibegin,iend
+
+  ! checks if anything to do
+  if (.not. anyabs) return
+  if (nspec_PML == 0) return
+
+  !set Dirichlet boundary condition on outer boundary of PML
+
+  ! we have to put Dirichlet on the boundary of the PML
+  do ispecabs = 1,nelemabs
+    ispec = numabs(ispecabs)
+
+    if (ispec_is_PML(ispec)) then
+
+!--- left absorbing boundary
+      if (codeabs(IEDGE4,ispecabs)) then
+        i = 1
+        do j = 1,NGLLZ
+          iglob = ibool(i,j,ispec)
+          displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
+          displ_elastic(:,iglob) = 0._CUSTOM_REAL
+          veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+          accel_elastic(:,iglob) = 0._CUSTOM_REAL
+        enddo
+      endif
+
+!--- right absorbing boundary
+      if (codeabs(IEDGE2,ispecabs)) then
+        i = NGLLX
+        do j = 1,NGLLZ
+          iglob = ibool(i,j,ispec)
+          displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
+          displ_elastic(:,iglob) = 0._CUSTOM_REAL
+          veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+          accel_elastic(:,iglob) = 0._CUSTOM_REAL
+        enddo
+      endif
+
+!--- bottom absorbing boundary
+      if (codeabs(IEDGE1,ispecabs)) then
+        j = 1
+        ibegin = 1
+        iend = NGLLX
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+          displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
+          displ_elastic(:,iglob) = 0._CUSTOM_REAL
+          veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+          accel_elastic(:,iglob) = 0._CUSTOM_REAL
+        enddo
+      endif
+
+!--- top absorbing boundary
+      if (codeabs(IEDGE3,ispecabs)) then
+        j = NGLLZ
+        ibegin = 1
+        iend = NGLLX
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+          displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
+          displ_elastic(:,iglob) = 0._CUSTOM_REAL
+          veloc_elastic(:,iglob) = 0._CUSTOM_REAL
+          accel_elastic(:,iglob) = 0._CUSTOM_REAL
+        enddo
+      endif
+
+    endif ! end of ispec_is_PML
+  enddo ! end specabs loop
+
+  end subroutine pml_boundary_elastic

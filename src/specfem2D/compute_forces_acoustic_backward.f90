@@ -40,27 +40,20 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
     ZERO,ONE,TWO,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: nglob,nspec,nelemabs,it,NSTEP, &
-                         assign_external_model,ibool,kmato,numabs,ispec_is_acoustic, &
-                         codeabs,codeabs_corner, &
+  use specfem_par, only: nglob,nspec, &
+                         assign_external_model,ibool,kmato,ispec_is_acoustic, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                          vpext,rhoext, &
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-                         AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
-                         ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
-                         ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
-                         ib_left,ib_right,ib_bottom,ib_top, &
-                         b_absorb_acoustic_left,b_absorb_acoustic_right, &
-                         b_absorb_acoustic_bottom,b_absorb_acoustic_top, &
-                         STACEY_BOUNDARY_CONDITIONS
+                         AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj
 
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: b_potential_dot_dot_acoustic, b_potential_acoustic
 
   ! local parameters
-  integer :: ispec,i,j,k,iglob,ispecabs,ibegin,iend,jbegin,jend
+  integer :: ispec,i,j,k,iglob
   integer :: ifirstelem,ilastelem
 
   ! spatial derivatives
@@ -200,82 +193,5 @@
 
     endif ! end of test if acoustic element
   enddo ! end of loop over all spectral elements
-!
-!--- absorbing boundaries
-!
 
-! The outer boundary condition to use for PML elements in fluid layers is Neumann for the potential
-! because we need Dirichlet conditions for the displacement vector, which means Neumann for the potential.
-! Thus, there is nothing to enforce explicitly here.
-! There is something to enforce explicitly only in the case of elastic elements, for which a Dirichlet
-! condition is needed for the displacement vector, which is the vectorial unknown for these elements.
-
-! for Stacey paraxial absorbing conditions (more precisely: Sommerfeld in the case of a fluid) we implement them here
-
-  if (STACEY_BOUNDARY_CONDITIONS) then
-    do ispecabs= 1,nelemabs
-      ispec = numabs(ispecabs)
-
-      ! Sommerfeld condition if acoustic
-      if (ispec_is_acoustic(ispec)) then
-        !--- left absorbing boundary
-        if (codeabs(IEDGE4,ispecabs)) then
-          i = 1
-          jbegin = ibegin_edge4(ispecabs)
-          jend = iend_edge4(ispecabs)
-          do j = jbegin,jend
-            iglob = ibool(i,j,ispec)
-            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                                  b_absorb_acoustic_left(j,ib_left(ispecabs),NSTEP-it+1)
-
-          enddo
-        endif  !  end of left absorbing boundary
-
-        !--- right absorbing boundary
-        if (codeabs(IEDGE2,ispecabs)) then
-          i = NGLLX
-          jbegin = ibegin_edge2(ispecabs)
-          jend = iend_edge2(ispecabs)
-          do j = jbegin,jend
-            iglob = ibool(i,j,ispec)
-            ! adds (previously) stored contribution
-            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                                  b_absorb_acoustic_right(j,ib_right(ispecabs),NSTEP-it+1)
-          enddo
-        endif  !  end of right absorbing boundary
-
-        !--- bottom absorbing boundary
-        if (codeabs(IEDGE1,ispecabs)) then
-          j = 1
-          ibegin = ibegin_edge1(ispecabs)
-          iend = iend_edge1(ispecabs)
-          ! exclude corners to make sure there is no contradiction on the normal
-          if (codeabs_corner(1,ispecabs)) ibegin = 2
-          if (codeabs_corner(2,ispecabs)) iend = NGLLX-1
-          do i = ibegin,iend
-            iglob = ibool(i,j,ispec)
-            ! adds (previously) stored contribution
-            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                                  b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),NSTEP-it+1)
-          enddo
-        endif  !  end of bottom absorbing boundary
-
-        !--- top absorbing boundary
-        if (codeabs(IEDGE3,ispecabs)) then
-          j = NGLLZ
-          ibegin = ibegin_edge3(ispecabs)
-          iend = iend_edge3(ispecabs)
-          ! exclude corners to make sure there is no contradiction on the normal
-          if (codeabs_corner(3,ispecabs)) ibegin = 2
-          if (codeabs_corner(4,ispecabs)) iend = NGLLX-1
-          do i = ibegin,iend
-            iglob = ibool(i,j,ispec)
-            b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                                                  b_absorb_acoustic_top(i,ib_top(ispecabs),NSTEP-it+1)
-          enddo
-        endif  !  end of top absorbing boundary
-      endif ! acoustic ispec
-    enddo
-  endif  ! end of absorbing boundaries
-
- end subroutine compute_forces_acoustic_backward
+  end subroutine compute_forces_acoustic_backward

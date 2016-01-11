@@ -270,7 +270,6 @@
 
   enddo
 
-
   ! waits for MPI requests to complete (recv)
   ! each wait returns once the specified MPI request completed
   do iinterface = 1, ninterface_acoustic
@@ -293,13 +292,11 @@
 
   enddo
 
-
   ! waits for MPI requests to complete (send)
   ! just to make sure that all sending is done
   do iinterface = 1, ninterface_acoustic
     call MPI_Wait(tab_requests_send_recv_acoustic(iinterface), MPI_STATUS_IGNORE, ier)
   enddo
-
 
   end subroutine assemble_MPI_vector_ac
 
