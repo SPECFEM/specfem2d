@@ -35,7 +35,8 @@
 
   subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ, &
+    CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
@@ -44,7 +45,6 @@
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj,&
                          rmemory_fsb_displ_elastic,timeval,deltat,&
                          rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme, &
-                         alpha_LDDRK,beta_LDDRK, &
                          nglob_acoustic,nglob_elastic
 
   ! PML arrays
@@ -125,16 +125,16 @@
 
           if (stage_time_scheme == 6) then
             rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) = &
-                   alpha_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) + &
+                   ALPHA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) + &
                    deltat * ( - bb_xz_1 * rmemory_fsb_displ_elastic(1,1,i,j,inum) + displ_elastic(1,iglob) )
             rmemory_fsb_displ_elastic(1,1,i,j,inum) = rmemory_fsb_displ_elastic(1,1,i,j,inum) + &
-                   beta_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum)
+                   BETA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum)
 
             rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum) = &
-                  alpha_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum) + &
+                  ALPHA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum) + &
                   deltat * ( - bb_xz_1 * rmemory_fsb_displ_elastic(1,3,i,j,inum) + displ_elastic(3,iglob) )
             rmemory_fsb_displ_elastic(1,3,i,j,inum) = rmemory_fsb_displ_elastic(1,3,i,j,inum) + &
-                   beta_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum)
+                   BETA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum)
           endif
 
           displ_x = A8 * displ_elastic(1,iglob) + A9 * rmemory_fsb_displ_elastic(1,1,i,j,inum)

@@ -347,6 +347,8 @@ module specfem_par
   ! 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta)
   ! 3 = classical 4th-order 4-stage Runge-Kutta
   integer :: time_stepping_scheme
+  ! for LDDRK46
+  integer :: i_stage,stage_time_scheme
 
   ! time steps
   integer :: NSTEP
@@ -365,35 +367,6 @@ module specfem_par
   integer :: NSUBSET_ITERATIONS
   integer :: iteration_on_subset,it_of_this_subset
   integer :: it_subset_end
-
-  ! for LDDRK46
-  integer :: i_stage,stage_time_scheme
-
-  real(kind=CUSTOM_REAL), dimension(Nstages):: alpha_LDDRK,beta_LDDRK,c_LDDRK
-
-  ! parameters used in LDDRK scheme, from equation (2) of
-  ! Berland, J., Bogey, C., & Bailly, C.
-  ! Low-dissipation and low-dispersion fourth-order Runge-Kutta algorithm, Computers & Fluids, 35(10), 1459-1463.
-  Data alpha_LDDRK /0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, &
-                    -1.634740794341_CUSTOM_REAL,-0.744739003780_CUSTOM_REAL, &
-                    -1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/
-
-  Data beta_LDDRK /0.032918605146_CUSTOM_REAL,0.823256998200_CUSTOM_REAL,&
-                   0.381530948900_CUSTOM_REAL,0.200092213184_CUSTOM_REAL,&
-                   1.718581042715_CUSTOM_REAL,0.27_CUSTOM_REAL/
-
-  Data c_LDDRK /0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,&
-                0.249351723343_CUSTOM_REAL,0.466911705055_CUSTOM_REAL,&
-                0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/
-
-  !=====================================================================
-  ! input for simulation (its end)
-  !=====================================================================
-
-
-  !=====================================================================
-  ! for simulation (its beginning)
-  !=====================================================================
 
   ! to determine date and time at which the run will finish
   double precision :: timestamp_seconds_start
@@ -499,10 +472,16 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_one
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_three
 
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
+
+  ! PML/attenuation
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_elastic_old
+
+  ! LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_LDDRK,displ_elastic_LDDRK,&
                                                          veloc_elastic_LDDRK_temp
 
+  ! RK
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: accel_elastic_rk,veloc_elastic_rk
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_initial_rk,displ_elastic_initial_rk
 
@@ -557,19 +536,28 @@ module specfem_par
 
   ! material properties of the poroelastic medium (solid phase:s and fluid phase [defined as w=phi(u_f-u_s)]: w)
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
-    accels_poroelastic,velocs_poroelastic,displs_poroelastic, displs_poroelastic_old
+    accels_poroelastic,velocs_poroelastic,displs_poroelastic
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    accelw_poroelastic,velocw_poroelastic,displw_poroelastic
+
+  ! PML/attenuation
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    displs_poroelastic_old
+
+  ! LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     velocs_poroelastic_LDDRK,displs_poroelastic_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
-    velocs_poroelastic_initial_rk,displs_poroelastic_initial_rk
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
-    accels_poroelastic_rk,velocs_poroelastic_rk
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
-    accelw_poroelastic,velocw_poroelastic,displw_poroelastic
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     velocw_poroelastic_LDDRK,displw_poroelastic_LDDRK
+
+  ! RK
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
+    velocs_poroelastic_initial_rk,displs_poroelastic_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     velocw_poroelastic_initial_rk,displw_poroelastic_initial_rk
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+    accels_poroelastic_rk,velocs_poroelastic_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     accelw_poroelastic_rk,velocw_poroelastic_rk
 
@@ -595,7 +583,6 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     b_accelw_poroelastic,b_velocw_poroelastic,b_displw_poroelastic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_viscodampx,b_viscodampz
-
 
   ! PML parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_fsb_displ_elastic
@@ -639,31 +626,25 @@ module specfem_par
   integer :: nadj_rec_local
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearrays
 
+  ! absorbing boundary
+  logical :: anyabs
+  ! number of absorbing elements
+  integer :: nelemabs
+  ! elastic contributions
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    b_absorb_elastic_left,b_absorb_poro_s_left,b_absorb_poro_w_left
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    b_absorb_elastic_right,b_absorb_poro_s_right,b_absorb_poro_w_right
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    b_absorb_elastic_bottom,b_absorb_poro_s_bottom,b_absorb_poro_w_bottom
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
-    b_absorb_elastic_top,b_absorb_poro_s_top,b_absorb_poro_w_top
+    b_absorb_elastic_left,b_absorb_elastic_right,b_absorb_elastic_bottom,b_absorb_elastic_top
+  ! acoustic
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable ::  &
-    b_absorb_acoustic_left,b_absorb_acoustic_right,&
-    b_absorb_acoustic_bottom, b_absorb_acoustic_top
+    b_absorb_acoustic_left,b_absorb_acoustic_right,b_absorb_acoustic_bottom, b_absorb_acoustic_top
+  ! poroelastic solid
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+    b_absorb_poro_s_left,b_absorb_poro_s_right,b_absorb_poro_s_bottom,b_absorb_poro_s_top
+  ! poroelastic fluid
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
+    b_absorb_poro_w_left,b_absorb_poro_w_right,b_absorb_poro_w_bottom,b_absorb_poro_w_top
+
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(:), allocatable :: ib_left,ib_right,ib_bottom,ib_top
-  real(kind=CUSTOM_REAL),  dimension(:,:,:), allocatable :: source_adjointe
-
-  real(kind=CUSTOM_REAL),  dimension(:,:), allocatable :: xir_store_loc, gammar_store_loc
-
-  !---------------------------------------------------------------------
-  !local varable used in the unclean part of code in iterate_time.F90
-  !prepare_timerun_body.F90 et al
-  !---------------------------------------------------------------------
-  logical :: anyabs
-
-  real(kind=CUSTOM_REAL) :: kinetic_energy,potential_energy
-  double precision :: vpImin,vpImax,vpIImin,vpIImax
 
   ! debugging gravitoacoustic
   integer :: iglobzero
@@ -680,9 +661,6 @@ module specfem_par
 
   ! number of interpolation points
   integer :: pointsdisp
-
-  ! number of absorbing elements
-  integer :: nelemabs
 
   ! for MPI and partitioning
   integer :: myrank
@@ -728,14 +706,6 @@ module specfem_par
   integer, dimension(:,:,:), allocatable :: copy_ibool_ori
   integer, dimension(:), allocatable :: integer_mask_ibool
 
-  !=====================================================================
-  ! for simulation (its end)
-  !=====================================================================
-
-
-  !=====================================================================
-  ! output for simulation (the beginning)
-  !=====================================================================
   !---------------------------------------------------------------------
   ! for information of the stability behavior during the simulation
   !---------------------------------------------------------------------
@@ -745,6 +715,7 @@ module specfem_par
   ! for energy output
   !---------------------------------------------------------------------
   logical :: output_energy
+  real(kind=CUSTOM_REAL) :: kinetic_energy,potential_energy
 
   !---------------------------------------------------------------------
   ! for seismograms
@@ -885,6 +856,10 @@ module specfem_par_gpu
   integer, dimension(:), allocatable :: ispec_selected_source_loc
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray_loc
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable ::  source_time_function_loc
+  real(kind=CUSTOM_REAL),  dimension(:,:,:), allocatable :: source_adjointe
+
+  ! receivers
+  real(kind=CUSTOM_REAL),  dimension(:,:), allocatable :: xir_store_loc, gammar_store_loc
 
   ! domains
   logical, dimension(:), allocatable :: ispec_is_inner
@@ -982,14 +957,18 @@ module specfem_par_movie
   !---------------------------------------------------------------------
   integer :: subsamp_postscript,imagetype_postscript
   integer :: numbers
+
   double precision :: sizemax_arrows
+  double precision :: vpImin,vpImax,vpIImin,vpIImax
 
   logical :: output_postscript_snapshot
 
   logical :: US_LETTER,plot_lowerleft_corner_only
   logical :: interpol,meshvect,modelvect,boundvect
+
   ! title of the plot
   character(len=60) simulation_title
+
   ! US letter paper or European A4
   double precision, dimension(:,:), allocatable  :: coorg_send_ps_velocity_model
   double precision, dimension(:,:), allocatable  :: coorg_recv_ps_velocity_model

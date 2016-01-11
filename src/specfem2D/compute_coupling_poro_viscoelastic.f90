@@ -445,18 +445,18 @@
 
 !         if (time_stepping_scheme == 2) then
 !        recovering original velocities and accelerations on boundaries (elastic side)
-!      veloc_elastic = veloc_elastic - beta_LDDRK(i_stage) * veloc_elastic_LDDRK
-!      displ_elastic = displ_elastic - beta_LDDRK(i_stage) * displ_elastic_LDDRK
-!      veloc_elastic_LDDRK = (veloc_elastic_LDDRK - deltat * accel_elastic) / alpha_LDDRK(i_stage)
-!      displ_elastic_LDDRK = (displ_elastic_LDDRK - deltat * veloc_elastic) / alpha_LDDRK(i_stage)
+!      veloc_elastic = veloc_elastic - BETA_LDDRK(i_stage) * veloc_elastic_LDDRK
+!      displ_elastic = displ_elastic - BETA_LDDRK(i_stage) * displ_elastic_LDDRK
+!      veloc_elastic_LDDRK = (veloc_elastic_LDDRK - deltat * accel_elastic) / ALPHA_LDDRK(i_stage)
+!      displ_elastic_LDDRK = (displ_elastic_LDDRK - deltat * veloc_elastic) / ALPHA_LDDRK(i_stage)
 !            accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
 !            accel_elastic(3,iglob) = accel_elastic(3,iglob) / rmass_inverse_elastic(iglob)
 
             ! recovering original velocities and accelerations on boundaries (poro side)
-!      velocs_poroelastic = velocs_poroelastic - beta_LDDRK(i_stage) * velocs_poroelastic_LDDRK
-!      displs_poroelastic = displs_poroelastic - beta_LDDRK(i_stage) * displs_poroelastic_LDDRK
-!      velocs_poroelastic_LDDRK = (velocs_poroelastic_LDDRK - deltat * accels_poroelastic) / alpha_LDDRK(i_stage)
-!      displs_poroelastic_LDDRK = (velocs_poroelastic_LDDRK - deltat * velocs_poroelastic) / alpha_LDDRK(i_stage)
+!      velocs_poroelastic = velocs_poroelastic - BETA_LDDRK(i_stage) * velocs_poroelastic_LDDRK
+!      displs_poroelastic = displs_poroelastic - BETA_LDDRK(i_stage) * displs_poroelastic_LDDRK
+!      velocs_poroelastic_LDDRK = (velocs_poroelastic_LDDRK - deltat * accels_poroelastic) / ALPHA_LDDRK(i_stage)
+!      displs_poroelastic_LDDRK = (velocs_poroelastic_LDDRK - deltat * velocs_poroelastic) / ALPHA_LDDRK(i_stage)
 !            accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
 !            accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
 
@@ -470,15 +470,15 @@
 
       ! updating velocities
             ! updating velocities(elastic side)
-!      veloc_elastic_LDDRK = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
-!      displ_elastic_LDDRK = alpha_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
-!      veloc_elastic = veloc_elastic + beta_LDDRK(i_stage) * veloc_elastic_LDDRK
-!      displ_elastic = displ_elastic + beta_LDDRK(i_stage) * displ_elastic_LDDRK
+!      veloc_elastic_LDDRK = ALPHA_LDDRK(i_stage) * veloc_elastic_LDDRK + deltat * accel_elastic
+!      displ_elastic_LDDRK = ALPHA_LDDRK(i_stage) * displ_elastic_LDDRK + deltat * veloc_elastic
+!      veloc_elastic = veloc_elastic + BETA_LDDRK(i_stage) * veloc_elastic_LDDRK
+!      displ_elastic = displ_elastic + BETA_LDDRK(i_stage) * displ_elastic_LDDRK
             ! updating velocities(poro side)
-!      velocs_poroelastic_LDDRK = alpha_LDDRK(i_stage) * velocs_poroelastic_LDDRK + deltat * accels_poroelastic
-!      displs_poroelastic_LDDRK = alpha_LDDRK(i_stage) * displs_poroelastic_LDDRK + deltat * velocs_poroelastic
-!      velocs_poroelastic = velocs_poroelastic + beta_LDDRK(i_stage) * velocs_poroelastic_LDDRK
-!      displs_poroelastic = displs_poroelastic + beta_LDDRK(i_stage) * displs_poroelastic_LDDRK
+!      velocs_poroelastic_LDDRK = ALPHA_LDDRK(i_stage) * velocs_poroelastic_LDDRK + deltat * accels_poroelastic
+!      displs_poroelastic_LDDRK = ALPHA_LDDRK(i_stage) * displs_poroelastic_LDDRK + deltat * velocs_poroelastic
+!      velocs_poroelastic = velocs_poroelastic + BETA_LDDRK(i_stage) * velocs_poroelastic_LDDRK
+!      displs_poroelastic = displs_poroelastic + BETA_LDDRK(i_stage) * displs_poroelastic_LDDRK
 
             ! zeros w
 !            accelw_poroelastic(1,iglob) = ZERO

@@ -137,9 +137,9 @@
 
   use specfem_par,only: myrank,NSTEP,&
                         AXISYM,is_on_the_axis, &
-                        source_adjointe, &
                         xigll,zigll,hxir,hpxir,hgammar,hpgammar,xiglj, &
                         ispec_selected_rec,seismotype
+  use specfem_par_gpu,only: source_adjointe
 
   implicit none
 

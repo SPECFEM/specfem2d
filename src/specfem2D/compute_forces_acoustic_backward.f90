@@ -174,20 +174,24 @@
           iglob = ibool(i,j,ispec)
           ! along x direction and z direction
           ! and assemble the contributions
-          do k = 1,NGLLX
-            if (AXISYM) then
-              if (is_on_the_axis(ispec)) then
+          if (AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              do k = 1,NGLLX
                 b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                       (tempx1(k,j) * hprimeBarwglj_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
-              else
-                b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                         (tempx1(k,j) * hprimewgll_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
-              endif
+                        (tempx1(k,j) * hprimeBarwglj_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
+              enddo
             else
-              b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
-                       (tempx1(k,j) * hprimewgll_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
+              do k = 1,NGLLX
+                b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+                        (tempx1(k,j) * hprimewgll_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
+              enddo
             endif
-          enddo
+          else
+            do k = 1,NGLLX
+              b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+                        (tempx1(k,j) * hprimewgll_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
+            enddo
+          endif
         enddo ! second loop over the GLL points
       enddo
 

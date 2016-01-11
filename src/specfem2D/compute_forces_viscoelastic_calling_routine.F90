@@ -148,15 +148,15 @@
 
   if (time_stepping_scheme == 2) then
     !! DK DK this should be vectorized
-    veloc_elastic_LDDRK(:,:) = alpha_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:) + deltat * accel_elastic(:,:)
-    displ_elastic_LDDRK(:,:) = alpha_LDDRK(i_stage) * displ_elastic_LDDRK(:,:) + deltat * veloc_elastic(:,:)
+    veloc_elastic_LDDRK(:,:) = ALPHA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:) + deltat * accel_elastic(:,:)
+    displ_elastic_LDDRK(:,:) = ALPHA_LDDRK(i_stage) * displ_elastic_LDDRK(:,:) + deltat * veloc_elastic(:,:)
     if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-      veloc_elastic_LDDRK_temp(:,:) = veloc_elastic_LDDRK_temp(:,:) + beta_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:)
+      veloc_elastic_LDDRK_temp(:,:) = veloc_elastic_LDDRK_temp(:,:) + BETA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:)
       veloc_elastic(:,:) = veloc_elastic_LDDRK_temp(:,:)
     else
-      veloc_elastic(:,:) = veloc_elastic(:,:) + beta_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:)
+      veloc_elastic(:,:) = veloc_elastic(:,:) + BETA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:)
     endif
-    displ_elastic(:,:) = displ_elastic(:,:) + beta_LDDRK(i_stage) * displ_elastic_LDDRK(:,:)
+    displ_elastic(:,:) = displ_elastic(:,:) + BETA_LDDRK(i_stage) * displ_elastic_LDDRK(:,:)
   endif
 
   if (time_stepping_scheme == 3) then

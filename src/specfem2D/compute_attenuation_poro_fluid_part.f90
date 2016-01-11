@@ -35,13 +35,13 @@
 
  subroutine compute_attenuation_poro_fluid_part()
 
-  use constants,only: ZERO,NGLLX,NGLLZ
+  use constants,only: ZERO,NGLLX,NGLLZ,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: nspec,ispec_is_poroelastic,poroelastcoef,kmato,permeability,ibool, &
                          velocw_poroelastic,time_stepping_scheme,deltat,i_stage,stage_time_scheme, &
                          rx_viscous,rz_viscous,viscox,viscoz, &
                          rx_viscous_force_RK,rx_viscous_initial_rk,rz_viscous_force_RK,rz_viscous_initial_rk, &
-                         rx_viscous_LDDRK,rz_viscous_LDDRK,alpha_LDDRK,beta_LDDRK, &
+                         rx_viscous_LDDRK,rz_viscous_LDDRK, &
                          alphaval,betaval,gammaval,theta_e,theta_s,thetainv
 
   implicit none
@@ -98,14 +98,14 @@
 
           if (time_stepping_scheme == 2) then
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
-            rx_viscous_LDDRK(i,j,ispec) = alpha_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec) + &
+            rx_viscous_LDDRK(i,j,ispec) = ALPHA_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec) + &
                                           deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
-            rx_viscous(i,j,ispec)= rx_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec)
+            rx_viscous(i,j,ispec)= rx_viscous(i,j,ispec)+BETA_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec)
 
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
-            rz_viscous_LDDRK(i,j,ispec)= alpha_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)+&
+            rz_viscous_LDDRK(i,j,ispec)= ALPHA_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)+&
                                          deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
-            rz_viscous(i,j,ispec)= rz_viscous(i,j,ispec)+beta_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)
+            rz_viscous(i,j,ispec)= rz_viscous(i,j,ispec)+BETA_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)
           endif
 
           if (time_stepping_scheme == 3) then

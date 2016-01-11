@@ -35,8 +35,10 @@
 
 ! compute forces for the solid poroelastic part
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
-    TWO,ONE,HALF,ZERO,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ, &
+    CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
+    TWO,ONE,HALF,ZERO,FOUR_THIRDS, &
+    IEDGE1,IEDGE2,IEDGE3,IEDGE4,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: nglob,nspec, &
                          ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
@@ -50,7 +52,7 @@
                          rx_viscous,rz_viscous,theta_e,theta_s,b_viscodampx,b_viscodampz, &
                          mufr_k,B_k, &
                          SIMULATION_TYPE, &
-                         e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK, &
+                         e11_LDDRK,e13_LDDRK, &
                          e11_initial_rk,e13_initial_rk,e11_force_RK, e13_force_RK, &
                          stage_time_scheme,i_stage
 
@@ -167,15 +169,15 @@
             ! update e1, e11, e13 in ADE formation with LDDRK scheme
             ! evolution e1 ! no need since we are just considering shear attenuation
             if (stage_time_scheme == 6) then
-              e11_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) + &
+              e11_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) + &
                                            deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2) - &
                                            deltat * (e11(i,j,ispec,i_sls) * tauinvnu2)
-              e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)+beta_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
+              e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)+BETA_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
 
-              e13_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls) + &
+              e13_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls) + &
                                            deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2) - &
                                            deltat * (e13(i,j,ispec,i_sls) * tauinvnu2)
-              e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+beta_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
+              e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+BETA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
             endif
 
             ! update e1, e11, e13 in ADE formation with classical Runge-Kutta scheme

@@ -37,7 +37,8 @@
 
   ! compute forces for the elastic elements
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CONVOLUTION_MEMORY_VARIABLES, &
-    IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL,FOUR_THIRDS
+    IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL,FOUR_THIRDS, &
+    ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: nglob,nspec,it,assign_external_model, &
                          ATTENUATION_VISCOELASTIC_SOLID,nspec_allocate,N_SLS, &
@@ -46,7 +47,7 @@
                          jacobian,vpext,vsext,rhoext, &
                          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext, &
                          ispec_is_anisotropic,anisotropy, &
-                         e1_LDDRK,e11_LDDRK,e13_LDDRK,alpha_LDDRK,beta_LDDRK,c_LDDRK, &
+                         e1_LDDRK,e11_LDDRK,e13_LDDRK, &
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
@@ -213,19 +214,19 @@
 
             ! update e1, e11, e13 in ADE formation with fourth-order LDDRK scheme
             if (stage_time_scheme == 6) then
-              e1_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
+              e1_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
                                           deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
-              e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + beta_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
+              e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + BETA_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
 
-              e11_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) + &
+              e11_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) + &
                                            deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2) - &
                                            deltat * (e11(i,j,ispec,i_sls) * tauinvnu2)
-              e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)+beta_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
+              e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)+BETA_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
 
-              e13_LDDRK(i,j,ispec,i_sls) = alpha_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls) + &
+              e13_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls) + &
                                            deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2) - &
                                            deltat * (e13(i,j,ispec,i_sls) * tauinvnu2)
-              e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+beta_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
+              e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+BETA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
             endif
 
             ! update e1, e11, e13 in ADE formation with classical fourth-order Runge-Kutta scheme
@@ -306,7 +307,7 @@
     time_n = (it-1) * deltat
     time_nsub1 = (it-2) * deltat
   else if (stage_time_scheme == 6) then
-    time_n = (it-1) * deltat + c_LDDRK(i_stage) * deltat
+    time_n = (it-1) * deltat + C_LDDRK(i_stage) * deltat
   endif
 
   ! loop over spectral elements
@@ -569,63 +570,63 @@
             endif
 
             if (stage_time_scheme == 6) then
-              rmemory_dux_dx_LDDRK(i,j,ispec_PML,1) = alpha_LDDRK(i_stage) * rmemory_dux_dx_LDDRK(i,j,ispec_PML,1) + &
+              rmemory_dux_dx_LDDRK(i,j,ispec_PML,1) = ALPHA_LDDRK(i_stage) * rmemory_dux_dx_LDDRK(i,j,ispec_PML,1) + &
                                                       deltat * (-bb_zx_1 * rmemory_dux_dx(i,j,ispec_PML,1) + PML_dux_dxl(i,j))
               rmemory_dux_dx(i,j,ispec_PML,1) = rmemory_dux_dx(i,j,ispec_PML,1) + &
-                                                beta_LDDRK(i_stage) * rmemory_dux_dx_LDDRK(i,j,ispec_PML,1)
-              rmemory_duz_dx_LDDRK(i,j,ispec_PML,1) = alpha_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML,1) + &
+                                                BETA_LDDRK(i_stage) * rmemory_dux_dx_LDDRK(i,j,ispec_PML,1)
+              rmemory_duz_dx_LDDRK(i,j,ispec_PML,1) = ALPHA_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML,1) + &
                                                       deltat * (-bb_zx_1 * rmemory_duz_dx(i,j,ispec_PML,1) + PML_duz_dxl(i,j))
               rmemory_duz_dx(i,j,ispec_PML,1) = rmemory_duz_dx(i,j,ispec_PML,1) + &
-                                                beta_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML,1)
+                                                BETA_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML,1)
               if (singularity_type_zx == 0) then
-                rmemory_dux_dx_LDDRK(i,j,ispec_PML,2) = alpha_LDDRK(i_stage) * rmemory_dux_dx_LDDRK(i,j,ispec_PML,2) + &
+                rmemory_dux_dx_LDDRK(i,j,ispec_PML,2) = ALPHA_LDDRK(i_stage) * rmemory_dux_dx_LDDRK(i,j,ispec_PML,2) + &
                                                         deltat * (-bb_zx_2 * rmemory_dux_dx(i,j,ispec_PML,2) + PML_dux_dxl(i,j))
                 rmemory_dux_dx(i,j,ispec_PML,2) = rmemory_dux_dx(i,j,ispec_PML,2) + &
-                                                  beta_LDDRK(i_stage) * rmemory_dux_dx_LDDRK(i,j,ispec_PML,2)
-                rmemory_duz_dx_LDDRK(i,j,ispec_PML,2) = alpha_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML,2) + &
+                                                  BETA_LDDRK(i_stage) * rmemory_dux_dx_LDDRK(i,j,ispec_PML,2)
+                rmemory_duz_dx_LDDRK(i,j,ispec_PML,2) = ALPHA_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML,2) + &
                                                         deltat * (-bb_zx_2 * rmemory_duz_dx(i,j,ispec_PML,2) + PML_duz_dxl(i,j))
                 rmemory_duz_dx(i,j,ispec_PML,2) = rmemory_duz_dx(i,j,ispec_PML,2) + &
-                                                  beta_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML,2)
+                                                  BETA_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML,2)
               else
-                rmemory_dux_dx_LDDRK(i,j,ispec_PML,2) = alpha_LDDRK(i_stage) * rmemory_dux_dx_LDDRK(i,j,ispec_PML,2) + &
+                rmemory_dux_dx_LDDRK(i,j,ispec_PML,2) = ALPHA_LDDRK(i_stage) * rmemory_dux_dx_LDDRK(i,j,ispec_PML,2) + &
                       deltat * (-bb_zx_2 * rmemory_dux_dx(i,j,ispec_PML,2) + PML_dux_dxl(i,j) * time_n)
                 rmemory_dux_dx(i,j,ispec_PML,2) = rmemory_dux_dx(i,j,ispec_PML,2) + &
-                                                  beta_LDDRK(i_stage) * rmemory_dux_dx_LDDRK(i,j,ispec_PML,2)
+                                                  BETA_LDDRK(i_stage) * rmemory_dux_dx_LDDRK(i,j,ispec_PML,2)
 
-                rmemory_duz_dx_LDDRK(i,j,ispec_PML,2) = alpha_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML,2) + &
+                rmemory_duz_dx_LDDRK(i,j,ispec_PML,2) = ALPHA_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML,2) + &
                       deltat * (-bb_zx_2 * rmemory_duz_dx(i,j,ispec_PML,2) + PML_duz_dxl(i,j) * time_n)
                 rmemory_duz_dx(i,j,ispec_PML,2) = rmemory_duz_dx(i,j,ispec_PML,2) + &
-                                                  beta_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML,2)
+                                                  BETA_LDDRK(i_stage) * rmemory_duz_dx_LDDRK(i,j,ispec_PML,2)
               endif
 
-              rmemory_dux_dz_LDDRK(i,j,ispec_PML,1) = alpha_LDDRK(i_stage) * rmemory_dux_dz_LDDRK(i,j,ispec_PML,1) + &
+              rmemory_dux_dz_LDDRK(i,j,ispec_PML,1) = ALPHA_LDDRK(i_stage) * rmemory_dux_dz_LDDRK(i,j,ispec_PML,1) + &
                                                       deltat * (-bb_xz_1 * rmemory_dux_dz(i,j,ispec_PML,1) + PML_dux_dzl(i,j))
               rmemory_dux_dz(i,j,ispec_PML,1) = rmemory_dux_dz(i,j,ispec_PML,1) + &
-                                                beta_LDDRK(i_stage) * rmemory_dux_dz_LDDRK(i,j,ispec_PML,1)
-              rmemory_duz_dz_LDDRK(i,j,ispec_PML,1) = alpha_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,1) + &
+                                                BETA_LDDRK(i_stage) * rmemory_dux_dz_LDDRK(i,j,ispec_PML,1)
+              rmemory_duz_dz_LDDRK(i,j,ispec_PML,1) = ALPHA_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,1) + &
                                                       deltat * (-bb_xz_1 * rmemory_duz_dz(i,j,ispec_PML,1) + PML_duz_dzl(i,j))
               rmemory_duz_dz(i,j,ispec_PML,1) = rmemory_duz_dz(i,j,ispec_PML,1) + &
-                                                beta_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,1)
+                                                BETA_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,1)
               if (singularity_type_xz == 0) then
-                rmemory_dux_dz_LDDRK(i,j,ispec_PML,2) = alpha_LDDRK(i_stage) * rmemory_dux_dz_LDDRK(i,j,ispec_PML,2) + &
+                rmemory_dux_dz_LDDRK(i,j,ispec_PML,2) = ALPHA_LDDRK(i_stage) * rmemory_dux_dz_LDDRK(i,j,ispec_PML,2) + &
                                                         deltat * (-bb_xz_2 * rmemory_dux_dz(i,j,ispec_PML,2) + PML_dux_dzl(i,j))
                 rmemory_dux_dz(i,j,ispec_PML,2) = rmemory_dux_dz(i,j,ispec_PML,2) + &
-                                                  beta_LDDRK(i_stage) * rmemory_dux_dz_LDDRK(i,j,ispec_PML,2)
+                                                  BETA_LDDRK(i_stage) * rmemory_dux_dz_LDDRK(i,j,ispec_PML,2)
 
-                rmemory_duz_dz_LDDRK(i,j,ispec_PML,2) = alpha_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,2) + &
+                rmemory_duz_dz_LDDRK(i,j,ispec_PML,2) = ALPHA_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,2) + &
                                                         deltat * (-bb_xz_2 * rmemory_duz_dz(i,j,ispec_PML,2) + PML_duz_dzl(i,j))
                 rmemory_duz_dz(i,j,ispec_PML,2) = rmemory_duz_dz(i,j,ispec_PML,2) + &
-                                                  beta_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,2)
+                                                  BETA_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,2)
               else
-                rmemory_dux_dz_LDDRK(i,j,ispec_PML,2) = alpha_LDDRK(i_stage) * rmemory_dux_dz_LDDRK(i,j,ispec_PML,2) + &
+                rmemory_dux_dz_LDDRK(i,j,ispec_PML,2) = ALPHA_LDDRK(i_stage) * rmemory_dux_dz_LDDRK(i,j,ispec_PML,2) + &
                       deltat * (-bb_xz_2 * rmemory_dux_dz(i,j,ispec_PML,2) + PML_dux_dzl(i,j) * time_n)
                 rmemory_dux_dz(i,j,ispec_PML,2) = rmemory_dux_dz(i,j,ispec_PML,2) + &
-                                                  beta_LDDRK(i_stage) * rmemory_dux_dz_LDDRK(i,j,ispec_PML,2)
+                                                  BETA_LDDRK(i_stage) * rmemory_dux_dz_LDDRK(i,j,ispec_PML,2)
 
-                rmemory_duz_dz_LDDRK(i,j,ispec_PML,2) = alpha_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,2) + &
+                rmemory_duz_dz_LDDRK(i,j,ispec_PML,2) = ALPHA_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,2) + &
                       deltat * (-bb_xz_2 * rmemory_duz_dz(i,j,ispec_PML,2) + PML_duz_dzl(i,j) * time_n)
                 rmemory_duz_dz(i,j,ispec_PML,2) = rmemory_duz_dz(i,j,ispec_PML,2) + &
-                                                  beta_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,2)
+                                                  BETA_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,2)
               endif
             endif
 
@@ -1053,41 +1054,41 @@
             if (stage_time_scheme == 6) then
 
               rmemory_displ_elastic_LDDRK(1,1,i,j,ispec_PML) = &
-                    alpha_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,1,i,j,ispec_PML) + &
+                    ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,1,i,j,ispec_PML) + &
                     deltat * (-bb_1 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + displ_elastic(1,iglob))
               rmemory_displ_elastic(1,1,i,j,ispec_PML) = rmemory_displ_elastic(1,1,i,j,ispec_PML) + &
-                    beta_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,1,i,j,ispec_PML)
+                    BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,1,i,j,ispec_PML)
 
               rmemory_displ_elastic_LDDRK(1,3,i,j,ispec_PML) = &
-                    alpha_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,3,i,j,ispec_PML) + &
+                    ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,3,i,j,ispec_PML) + &
                     deltat * (-bb_1 * rmemory_displ_elastic(1,3,i,j,ispec_PML) + displ_elastic(3,iglob))
               rmemory_displ_elastic(1,3,i,j,ispec_PML) = rmemory_displ_elastic(1,3,i,j,ispec_PML) + &
-                    beta_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,3,i,j,ispec_PML)
+                    BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,3,i,j,ispec_PML)
 
               if (singularity_type == 0) then
                 rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) = &
-                      alpha_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) + &
+                      ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) + &
                       deltat * (-bb_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + displ_elastic(1,iglob))
                 rmemory_displ_elastic(2,1,i,j,ispec_PML) = rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
-                      beta_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML)
+                      BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML)
 
                 rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML) = &
-                      alpha_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML) + &
+                      ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML) + &
                       deltat * (-bb_2 * rmemory_displ_elastic(2,3,i,j,ispec_PML) + displ_elastic(3,iglob))
                 rmemory_displ_elastic(2,3,i,j,ispec_PML) = rmemory_displ_elastic(2,3,i,j,ispec_PML) + &
-                      beta_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML)
+                      BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML)
               else
                 rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) = &
-                      alpha_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) + &
+                      ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) + &
                       deltat * (-bb_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + displ_elastic(1,iglob) * time_n)
                 rmemory_displ_elastic(2,1,i,j,ispec_PML) = rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
-                      beta_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML)
+                      BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML)
 
                 rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML) = &
-                      alpha_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML) + &
+                      ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML) + &
                       deltat * (-bb_2 * rmemory_displ_elastic(2,3,i,j,ispec_PML) + displ_elastic(3,iglob) * time_n)
                 rmemory_displ_elastic(2,3,i,j,ispec_PML) = rmemory_displ_elastic(2,3,i,j,ispec_PML) + &
-                      beta_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML)
+                      BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML)
               endif
 
             endif

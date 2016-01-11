@@ -366,10 +366,12 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,MAX_STRING_LEN
 
   use specfem_par,only: nadj_rec_local,nrec,nrecloc,NSTEP,NPROC,SIMULATION_TYPE,SU_FORMAT, &
-                        adj_sourcearrays,source_adjointe, &
+                        adj_sourcearrays, &
                         myrank,which_proc_receiver,seismotype, &
                         xi_receiver,gamma_receiver, &
                         network_name,station_name
+
+  use specfem_par_gpu,only: source_adjointe
 
   implicit none
 
@@ -464,14 +466,16 @@
 
   subroutine add_adjoint_sources_SU(seismotype)
 
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ
+
   use specfem_par, only: AXISYM,xiglj,is_on_the_axis, &
                          myrank, NSTEP, nrec, &
                          xi_receiver, gamma_receiver, which_proc_receiver, &
                          xigll,zigll,hxir,hgammar,hpxir,hpgammar, &
-                         adj_sourcearrays, source_adjointe, &
+                         adj_sourcearrays, &
                          GPU_MODE, ispec_selected_rec
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ
+  use specfem_par_gpu,only: source_adjointe
 
   implicit none
 
@@ -829,7 +833,16 @@
 
   subroutine setup_source_receiver_interpolation()
 
-  use specfem_par
+  use constants,only: NGLLX,NGLLZ,NGLJ
+
+  use specfem_par,only: myrank,nrec,nrecloc,NSOURCES, &
+    ispec_selected_rec,ispec_selected_source,which_proc_receiver,is_proc_source, &
+    xigll,zigll, &
+    hxir_store,hgammar_store,xi_receiver,gamma_receiver,hxir,hpxir,hgammar,hpgammar, &
+    hxis_store,hgammas_store,xi_source,gamma_source,hxis,hpxis,hgammas,hpgammas, &
+    AXISYM,is_on_the_axis,xiglj
+
+  use specfem_par_gpu,only: xir_store_loc,gammar_store_loc
 
   implicit none
 

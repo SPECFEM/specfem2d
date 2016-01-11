@@ -35,7 +35,8 @@
 
   subroutine compute_coupling_viscoelastic_ac()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,ONE,TWO,IRIGHT,ILEFT,IBOTTOM,ITOP
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,ONE,TWO, &
+    IRIGHT,ILEFT,IBOTTOM,ITOP,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: SIMULATION_TYPE,num_fluid_solid_edges,&
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
@@ -45,7 +46,7 @@
                          potential_acoustic_adj_coupling, &
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
                          rmemory_sfb_potential_ddot_acoustic,timeval,deltat,&
-                         rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,stage_time_scheme,alpha_LDDRK,beta_LDDRK
+                         rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,stage_time_scheme
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
                 K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,potential_acoustic_old
@@ -114,10 +115,10 @@
 
           if (stage_time_scheme == 6) then
             rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) = &
-                    alpha_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) + &
+                    ALPHA_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) + &
                     deltat * (-bb_1 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + potential_acoustic(iglob))
             rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) = rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + &
-                    beta_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum)
+                    BETA_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum)
           endif
 
           pressure = - (A0 * potential_dot_dot_acoustic(iglob) + A1 * potential_dot_acoustic(iglob) + &

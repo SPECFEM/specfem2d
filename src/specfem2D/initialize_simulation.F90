@@ -138,10 +138,13 @@
   ! time scheme
   ! defines number of stages of chosen time stepping scheme
   if (time_stepping_scheme == 1) then
+    ! Newmark
     stage_time_scheme = 1
   else if (time_stepping_scheme == 2) then
-    stage_time_scheme = Nstages
+    ! LDDRK
+    stage_time_scheme = NSTAGE
   else if (time_stepping_scheme == 3) then
+    ! Runge-Kutta
     stage_time_scheme = 4
   endif
 

@@ -131,18 +131,18 @@
     accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
     accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
 
-    velocs_poroelastic_LDDRK = alpha_LDDRK(i_stage) * velocs_poroelastic_LDDRK + deltat * accels_poroelastic
-    displs_poroelastic_LDDRK = alpha_LDDRK(i_stage) * displs_poroelastic_LDDRK + deltat * velocs_poroelastic
-    velocs_poroelastic = velocs_poroelastic + beta_LDDRK(i_stage) * velocs_poroelastic_LDDRK
-    displs_poroelastic = displs_poroelastic + beta_LDDRK(i_stage) * displs_poroelastic_LDDRK
+    velocs_poroelastic_LDDRK = ALPHA_LDDRK(i_stage) * velocs_poroelastic_LDDRK + deltat * accels_poroelastic
+    displs_poroelastic_LDDRK = ALPHA_LDDRK(i_stage) * displs_poroelastic_LDDRK + deltat * velocs_poroelastic
+    velocs_poroelastic = velocs_poroelastic + BETA_LDDRK(i_stage) * velocs_poroelastic_LDDRK
+    displs_poroelastic = displs_poroelastic + BETA_LDDRK(i_stage) * displs_poroelastic_LDDRK
 
     accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
     accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
 
-    velocw_poroelastic_LDDRK = alpha_LDDRK(i_stage) * velocw_poroelastic_LDDRK + deltat * accelw_poroelastic
-    displw_poroelastic_LDDRK = alpha_LDDRK(i_stage) * displw_poroelastic_LDDRK + deltat * velocw_poroelastic
-    velocw_poroelastic = velocw_poroelastic + beta_LDDRK(i_stage) * velocw_poroelastic_LDDRK
-    displw_poroelastic = displw_poroelastic + beta_LDDRK(i_stage) * displw_poroelastic_LDDRK
+    velocw_poroelastic_LDDRK = ALPHA_LDDRK(i_stage) * velocw_poroelastic_LDDRK + deltat * accelw_poroelastic
+    displw_poroelastic_LDDRK = ALPHA_LDDRK(i_stage) * displw_poroelastic_LDDRK + deltat * velocw_poroelastic
+    velocw_poroelastic = velocw_poroelastic + BETA_LDDRK(i_stage) * velocw_poroelastic_LDDRK
+    displw_poroelastic = displw_poroelastic + BETA_LDDRK(i_stage) * displw_poroelastic_LDDRK
   endif
 
   if (time_stepping_scheme == 3) then

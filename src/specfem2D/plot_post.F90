@@ -51,7 +51,7 @@
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
                          poroelastcoef,knods,kmato,ibool, &
                          numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
-                         nglob,vpImin,vpImax,nrec,NSOURCES, &
+                         nglob,nrec,NSOURCES, &
                          assign_external_model,nelemabs,pointsdisp, &
                          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                          any_acoustic,any_poroelastic, &
@@ -68,6 +68,7 @@
     xinterp,zinterp,Uxinterp,Uzinterp,flagrange,shape2D_display, &
     colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
     cutsnaps,sizemax_arrows,boundvect,plot_lowerleft_corner_only, &
+    vpImin,vpImax, &
     coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
     coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model,&
     coorg_send_ps_element_mesh,color_send_ps_element_mesh, &

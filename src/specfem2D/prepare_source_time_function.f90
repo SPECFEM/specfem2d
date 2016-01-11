@@ -41,7 +41,7 @@
 
   use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0_source,tshift_src,factor, &
-                         aval,t0,nb_proc_source,deltat,stage_time_scheme,c_LDDRK,is_proc_source, &
+                         aval,t0,nb_proc_source,deltat,stage_time_scheme,C_LDDRK,is_proc_source, &
                          USE_TRICK_FOR_BETTER_PRESSURE,myrank
 
   implicit none
@@ -115,7 +115,7 @@
         ! compute current time
         if (stage_time_scheme == 1) timeval = (it-1)*deltat
         if (stage_time_scheme == 4) timeval = (it-1)*deltat+c_RK(i_stage)*deltat
-        if (stage_time_scheme == 6) timeval = (it-1)*deltat+c_LDDRK(i_stage)*deltat
+        if (stage_time_scheme == 6) timeval = (it-1)*deltat+C_LDDRK(i_stage)*deltat
 
         t_used = timeval - t0 - tshift_src(i_source)
         stf_used = 0.d0
