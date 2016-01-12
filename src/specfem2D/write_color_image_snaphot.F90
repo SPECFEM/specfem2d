@@ -99,7 +99,6 @@
           iglob = ibool(i,j,ispec)
           vector_field_display(1,iglob) = sqrt(rhol) * vector_field_display(1,iglob)
           vector_field_display(2,iglob) = sqrt(rhol) * vector_field_display(2,iglob)
-          vector_field_display(3,iglob) = sqrt(rhol) * vector_field_display(3,iglob)
         enddo
       enddo
     enddo
@@ -121,7 +120,6 @@
           iglob = ibool(i,j,ispec)
           vector_field_display(1,iglob) = sqrt(rhol) * vector_field_display(1,iglob)
           vector_field_display(2,iglob) = sqrt(rhol) * vector_field_display(2,iglob)
-          vector_field_display(3,iglob) = sqrt(rhol) * vector_field_display(3,iglob)
         enddo
       enddo
     enddo
@@ -146,7 +144,6 @@
             iglob = ibool(i,j,ispec)
             vector_field_display(1,iglob) = 0.d0
             vector_field_display(2,iglob) = 0.d0
-            vector_field_display(3,iglob) = 0.d0
           enddo
         enddo
       endif
@@ -177,17 +174,17 @@
         else if (imagetype_JPEG == 2 .or. imagetype_JPEG == 5 .or. imagetype_JPEG == 8 .or. &
                 imagetype_JPEG == 12 .or. imagetype_JPEG == 15) then
           ! draw the Z component of the vector
-          image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
+          image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
 
         else if (imagetype_JPEG == 3 .or. imagetype_JPEG == 6 .or. imagetype_JPEG == 9 .or. &
                 imagetype_JPEG == 13 .or. imagetype_JPEG == 16) then
           ! draw the norm of the vector
           image_color_data(i,j) = sqrt(vector_field_display(1,iglob_image_color(i,j))**2  &
-                                     + vector_field_display(3,iglob_image_color(i,j))**2)
+                                     + vector_field_display(2,iglob_image_color(i,j))**2)
 
         else if (imagetype_JPEG == 10) then
-          ! by convention we have stored pressure in the third component of the array
-          image_color_data(i,j) = vector_field_display(3,iglob_image_color(i,j))
+          ! by convention we have stored pressure in the 2. component of the array
+          image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
 
         else
           call exit_MPI(myrank,'wrong type for JPEG snapshots')
@@ -196,7 +193,7 @@
 
     else
       ! SH (membrane) waves, plot y-component
-      if (iglob_image_color(i,j) /= -1) image_color_data(i,j) = vector_field_display(2,iglob_image_color(i,j))
+      if (iglob_image_color(i,j) /= -1) image_color_data(i,j) = vector_field_display(1,iglob_image_color(i,j))
     endif
   enddo
 
@@ -242,23 +239,23 @@
 
           else if (imagetype_JPEG == 2 .or. imagetype_JPEG == 5 .or. imagetype_JPEG == 8 .or. &
                   imagetype_JPEG == 12 .or. imagetype_JPEG == 15) then
-             data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))  ! draw the Z component of the vector
+             data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))  ! draw the Z component of the vector
 
           else if (imagetype_JPEG == 3 .or. imagetype_JPEG == 6 .or. imagetype_JPEG == 9 .or. &
                   imagetype_JPEG == 13 .or. imagetype_JPEG == 16) then
             data_pixel_send(k) = sqrt(vector_field_display(1,iglob_image_color(i,j))**2 + &
-                                      vector_field_display(3,iglob_image_color(i,j))**2)  ! draw the norm of the vector
+                                      vector_field_display(2,iglob_image_color(i,j))**2)  ! draw the norm of the vector
 
           else if (imagetype_JPEG == 10) then
-            ! by convention we have stored pressure in the third component of the array
-            data_pixel_send(k) = vector_field_display(3,iglob_image_color(i,j))
+            ! by convention we have stored pressure in the 2. component of the array
+            data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
 
           else
             call exit_MPI(myrank,'wrong type for JPEG snapshots')
           endif
 
         else ! SH (membrane) waves, plot y-component
-          if (iglob_image_color(i,j) /= -1) data_pixel_send(k) = vector_field_display(2,iglob_image_color(i,j))
+          if (iglob_image_color(i,j) /= -1) data_pixel_send(k) = vector_field_display(1,iglob_image_color(i,j))
         endif
       enddo
       call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)

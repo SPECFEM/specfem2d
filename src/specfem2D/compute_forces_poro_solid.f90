@@ -41,15 +41,14 @@
     IEDGE1,IEDGE2,IEDGE3,IEDGE4,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: nglob,nspec, &
-                         ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART,deltat, &
-                         ibool,kmato,ispec_is_poroelastic, &
-                         accels_poroelastic,velocw_poroelastic,displs_poroelastic,displs_poroelastic_old, &
-                         displw_poroelastic,b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic, &
-                         porosity,tortuosity,permeability,poroelastcoef,xix,xiz,gammax,gammaz, &
-                         jacobian, &
+                         ATTENUATION_VISCOELASTIC_SOLID,deltat, &
+                         ibool,ispec_is_poroelastic, &
+                         accels_poroelastic,displs_poroelastic,displw_poroelastic, &
+                         displs_poroelastic_old, &
+                         b_accels_poroelastic,b_displs_poroelastic,b_displw_poroelastic, &
+                         xix,xiz,gammax,gammaz,jacobian, &
                          e11,e13,hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          inv_tau_sigma_nu2,phi_nu2,Mu_nu2,N_SLS, &
-                         rx_viscous,rz_viscous,theta_e,theta_s,b_viscodampx,b_viscodampz, &
                          mufr_k,B_k, &
                          SIMULATION_TYPE, &
                          e11_LDDRK,e13_LDDRK, &
@@ -58,25 +57,11 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL) :: e11_sum,e13_sum
+  ! local variables
+  integer :: ispec,i,j,k,iglob
   integer :: i_sls
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) ::dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-                                                         !nsub1 denote discrete time step n-1
-                                                         dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1
-
-  double precision, dimension(3):: bl_relaxed_viscoelastic,bl_unrelaxed_elastic
-
-! temporary variable
-  real(kind=CUSTOM_REAL) :: weight_rk
-
-!---
-!--- local variables
-!---
-
-  integer :: ispec,i,j,k,iglob
-
-! spatial derivatives
+  ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
   real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
   real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
@@ -109,12 +94,18 @@
   double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
   double precision :: D_biot,H_biot,C_biot,M_biot
 
-  double precision :: viscodampx,viscodampz
-  double precision :: permlxx,permlxz,permlzz,invpermlxx,invpermlxz,invpermlzz,detk
-
 ! for attenuation
   real(kind=CUSTOM_REAL) :: phinu2,tauinvnu2,theta_n_u,theta_nsub1_u
   real(kind=CUSTOM_REAL) :: bb,coef0,coef1,coef2
+
+  ! RK
+  real(kind=CUSTOM_REAL) :: weight_rk
+
+  real(kind=CUSTOM_REAL) :: e11_sum,e13_sum
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) ::dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
+                                                         !nsub1 denote discrete time step n-1
+                                                         dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1
 
 ! implement attenuation
   if (ATTENUATION_VISCOELASTIC_SOLID) then
@@ -257,22 +248,8 @@
           dwx_dgamma = ZERO
           dwz_dgamma = ZERO
 
-          if (SIMULATION_TYPE == 3) then ! kernels calculation
-          b_dux_dxi = ZERO
-          b_duz_dxi = ZERO
-
-          b_dux_dgamma = ZERO
-          b_duz_dgamma = ZERO
-
-          b_dwx_dxi = ZERO
-          b_dwz_dxi = ZERO
-
-          b_dwx_dgamma = ZERO
-          b_dwz_dgamma = ZERO
-          endif
-
-! first double loop over GLL points to compute and store gradients
-! we can merge the two loops because NGLLX == NGLLZ
+          ! first double loop over GLL points to compute and store gradients
+          ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
             duz_dxi = duz_dxi + displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
@@ -283,26 +260,41 @@
             dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
             dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
             dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-
-          if (SIMULATION_TYPE == 3) then ! kernels calculation
-            b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-            b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-            b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-            b_duz_dgamma = b_duz_dgamma + b_displs_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-
-            b_dwx_dxi = b_dwx_dxi + b_displw_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-            b_dwz_dxi = b_dwz_dxi + b_displw_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-            b_dwx_dgamma = b_dwx_dgamma + b_displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-            b_dwz_dgamma = b_dwz_dgamma + b_displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-          endif
           enddo
+
+          if (SIMULATION_TYPE == 3) then
+            ! kernels calculation
+            b_dux_dxi = ZERO
+            b_duz_dxi = ZERO
+
+            b_dux_dgamma = ZERO
+            b_duz_dgamma = ZERO
+
+            b_dwx_dxi = ZERO
+            b_dwz_dxi = ZERO
+
+            b_dwx_dgamma = ZERO
+            b_dwz_dgamma = ZERO
+
+            do k = 1,NGLLX
+              b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+              b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+              b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+              b_duz_dgamma = b_duz_dgamma + b_displs_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+
+              b_dwx_dxi = b_dwx_dxi + b_displw_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+              b_dwz_dxi = b_dwz_dxi + b_displw_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+              b_dwx_dgamma = b_dwx_dgamma + b_displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+              b_dwz_dgamma = b_dwz_dgamma + b_displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+            enddo
+          endif
 
           xixl = xix(i,j,ispec)
           xizl = xiz(i,j,ispec)
           gammaxl = gammax(i,j,ispec)
           gammazl = gammaz(i,j,ispec)
 
-! derivatives of displacement
+          ! derivatives of displacement
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
@@ -316,21 +308,20 @@
           dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
           if (SIMULATION_TYPE == 3) then ! kernels calculation
-          b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
-          b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
+            b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
+            b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
-          b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
-          b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
+            b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
+            b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
 
-          b_dwx_dxl = b_dwx_dxi*xixl + b_dwx_dgamma*gammaxl
-          b_dwx_dzl = b_dwx_dxi*xizl + b_dwx_dgamma*gammazl
+            b_dwx_dxl = b_dwx_dxi*xixl + b_dwx_dgamma*gammaxl
+            b_dwx_dzl = b_dwx_dxi*xizl + b_dwx_dgamma*gammazl
 
-          b_dwz_dxl = b_dwz_dxi*xixl + b_dwz_dgamma*gammaxl
-          b_dwz_dzl = b_dwz_dxi*xizl + b_dwz_dgamma*gammazl
+            b_dwz_dxl = b_dwz_dxi*xixl + b_dwz_dgamma*gammaxl
+            b_dwz_dzl = b_dwz_dxi*xizl + b_dwz_dgamma*gammazl
           endif
 
-! compute stress tensor (include attenuation or anisotropy if needed)
-
+          ! compute stress tensor (include attenuation or anisotropy if needed)
           if (ATTENUATION_VISCOELASTIC_SOLID) then
 ! Dissipation only controlled by frame share attenuation in poroelastic (see Morency & Tromp, GJI 2008).
 ! attenuation is implemented following the memory variable formulation of
@@ -393,7 +384,8 @@
 
             sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
-            if (SIMULATION_TYPE == 3) then ! kernels calculation
+            if (SIMULATION_TYPE == 3) then
+              ! kernels calculation
               b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
               b_sigma_xz = mu_G*(b_duz_dxl + b_dux_dzl)
               b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
@@ -423,8 +415,8 @@
 
             B_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl) * (H_biot - FOUR_THIRDS * mu_fr)
             mufr_k(iglob) = (dsxx * b_dsxx + dszz * b_dszz + &
-                  2._CUSTOM_REAL * dsxz * b_dsxz - &
-                 1._CUSTOM_REAL/3._CUSTOM_REAL * (dux_dxl + duz_dzl) * (b_dux_dxl + b_duz_dzl) ) * mu_fr
+                            2._CUSTOM_REAL * dsxz * b_dsxz - &
+                            1._CUSTOM_REAL/3._CUSTOM_REAL * (dux_dxl + duz_dzl) * (b_dux_dxl + b_duz_dzl) ) * mu_fr
           endif
 
           jacobianl = jacobian(i,j,ispec)
@@ -468,107 +460,29 @@
 
           iglob = ibool(i,j,ispec)
 
-! along x direction and z direction
-! and assemble the contributions
-! we can merge the two loops because NGLLX == NGLLZ
+          ! along x direction and z direction
+          ! and assemble the contributions
+          ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
-
             accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) - ( (tempx1(k,j) - phi/tort*tempx1p(k,j)) &
                                           *hprimewgll_xx(k,i) + (tempx2(i,k) - phi/tort*tempx2p(i,k))*hprimewgll_zz(k,j))
 
             accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) - ( (tempz1(k,j) - phi/tort*tempz1p(k,j)) &
                                           *hprimewgll_xx(k,i) + (tempz2(i,k) - phi/tort*tempz2p(i,k))*hprimewgll_zz(k,j))
-
-          if (SIMULATION_TYPE == 3) then ! kernels calculation
-            b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - ( (b_tempx1(k,j) - phi/tort*b_tempx1p(k,j)) &
-                                            *hprimewgll_xx(k,i) + (b_tempx2(i,k) - phi/tort*b_tempx2p(i,k))*hprimewgll_zz(k,j))
-
-            b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - ( (b_tempz1(k,j) - phi/tort*b_tempz1p(k,j)) &
-                                            *hprimewgll_xx(k,i) + (b_tempz2(i,k) - phi/tort*b_tempz2p(i,k))*hprimewgll_zz(k,j))
-          endif
-
           enddo
 
+          if (SIMULATION_TYPE == 3) then
+            ! kernels calculation
+            do k = 1,NGLLX
+              b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - ( (b_tempx1(k,j) - phi/tort*b_tempx1p(k,j)) &
+                                              *hprimewgll_xx(k,i) + (b_tempx2(i,k) - phi/tort*b_tempx2p(i,k))*hprimewgll_zz(k,j))
+
+              b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - ( (b_tempz1(k,j) - phi/tort*b_tempz1p(k,j)) &
+                                              *hprimewgll_xx(k,i) + (b_tempz2(i,k) - phi/tort*b_tempz2p(i,k))*hprimewgll_zz(k,j))
+            enddo
+          endif
+
         enddo ! second loop over the GLL points
-      enddo
-
-    endif ! end of test if poroelastic element
-
-  enddo ! end of loop over all spectral elements
-
-!
-!---- viscous damping
-!
-! add + phi/tort eta_f k^-1 dot(w)
-
-! loop over spectral elements
-  do ispec = 1,nspec
-
-    eta_f = poroelastcoef(2,2,kmato(ispec))
-
-    if (ispec_is_poroelastic(ispec) .and. eta_f >0.d0) then
-      phi = porosity(kmato(ispec))
-      tort = tortuosity(kmato(ispec))
-      permlxx = permeability(1,kmato(ispec))
-      permlxz = permeability(2,kmato(ispec))
-      permlzz = permeability(3,kmato(ispec))
-
-      ! calcul of the inverse of k
-      detk = permlxx*permlzz - permlxz*permlxz
-
-      if (detk /= ZERO) then
-        invpermlxx = permlzz/detk
-        invpermlxz = -permlxz/detk
-        invpermlzz = permlxx/detk
-      else
-        stop 'Permeability matrix is not invertible'
-      endif
-
-      ! relaxed viscous coef
-      bl_unrelaxed_elastic(1) = eta_f*invpermlxx
-      bl_unrelaxed_elastic(2) = eta_f*invpermlxz
-      bl_unrelaxed_elastic(3) = eta_f*invpermlzz
-
-      if (ATTENUATION_PORO_FLUID_PART) then
-        ! viscous attenuation is implemented following the memory variable formulation of
-        ! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
-        ! anelastic and porous media, Elsevier, p. 304-305, 2007
-        bl_relaxed_viscoelastic(1) = eta_f*invpermlxx*theta_e/theta_s
-        bl_relaxed_viscoelastic(2) = eta_f*invpermlxz*theta_e/theta_s
-        bl_relaxed_viscoelastic(3) = eta_f*invpermlzz*theta_e/theta_s
-      endif
-
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-
-          iglob = ibool(i,j,ispec)
-
-          if (ATTENUATION_PORO_FLUID_PART) then
-            ! compute the viscous damping term with the unrelaxed viscous coef and add memory variable
-            viscodampx = velocw_poroelastic(1,iglob)*bl_relaxed_viscoelastic(1) &
-                       + velocw_poroelastic(2,iglob)*bl_relaxed_viscoelastic(2) &
-                       - rx_viscous(i,j,ispec)
-            viscodampz = velocw_poroelastic(1,iglob)*bl_relaxed_viscoelastic(2) &
-                       + velocw_poroelastic(2,iglob)*bl_relaxed_viscoelastic(3)&
-                       - rz_viscous(i,j,ispec)
-          else
-            ! no viscous attenuation
-            viscodampx = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(1) + velocw_poroelastic(2,iglob)*bl_unrelaxed_elastic(2)
-            viscodampz = velocw_poroelastic(1,iglob)*bl_unrelaxed_elastic(2) + velocw_poroelastic(2,iglob)*bl_unrelaxed_elastic(3)
-          endif
-
-          accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + phi/tort*wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*&
-              viscodampx
-          accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + phi/tort*wxgll(i)*wzgll(j)*jacobian(i,j,ispec)*&
-              viscodampz
-
-          ! if SIMULATION_TYPE == 1 .and. SAVE_FORWARD then b_viscodamp is saved in compute_forces_poro_fluid.f90
-          if (SIMULATION_TYPE == 3) then ! kernels calculation
-            b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + phi/tort*b_viscodampx(iglob)
-            b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + phi/tort*b_viscodampz(iglob)
-          endif
-
-        enddo
       enddo
 
     endif ! end of test if poroelastic element

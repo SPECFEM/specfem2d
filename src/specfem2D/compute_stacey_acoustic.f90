@@ -100,8 +100,7 @@
           weight = jacobian1D * wzgll(j)
 
           ! adds absorbing boundary contribution
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-                    potential_dot_acoustic(iglob) * weight/cpl/rhol
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
 
           if (SAVE_FORWARD) then
             ! saves contribution
@@ -128,8 +127,7 @@
           weight = jacobian1D * wzgll(j)
 
           ! adds absorbing boundary contribution
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-                    potential_dot_acoustic(iglob) * weight/cpl/rhol
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
 
           if (SAVE_FORWARD) then
             ! saves contribution
@@ -159,8 +157,7 @@
           weight = jacobian1D * wxgll(i)
 
           ! adds absorbing boundary contribution
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-                    potential_dot_acoustic(iglob) * weight/cpl/rhol
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
 
           if (SAVE_FORWARD) then
             ! saves contribution
@@ -190,8 +187,7 @@
           weight = jacobian1D * wxgll(i)
 
           ! adds absorbing boundary contribution
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-                    potential_dot_acoustic(iglob) * weight/cpl/rhol
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
 
           if (SAVE_FORWARD) then
             ! saves contribution

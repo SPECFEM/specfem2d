@@ -45,32 +45,19 @@
   if (.not. any_poroelastic) return
 
   ! implement viscous attenuation for poroelastic media
-  if (ATTENUATION_PORO_FLUID_PART) then
-    call compute_attenuation_poro_fluid_part()
-  endif
-
-  if (SIMULATION_TYPE == 3) then
-    ! if inviscid fluid, comment the reading and uncomment the zeroing
-    !     read(23,rec=NSTEP-it+1) b_viscodampx
-    !     read(24,rec=NSTEP-it+1) b_viscodampz
-    b_viscodampx(:) = ZERO
-    b_viscodampz(:) = ZERO
-  endif
+  if (ATTENUATION_PORO_FLUID_PART) call compute_attenuation_poro_fluid_part()
 
   ! main solver for the poroelastic elements: first the solid (u_s) then the fluid (w)
   call compute_forces_poro_solid()
   call compute_forces_poro_fluid()
 
+  ! viscous damping
+  if (USE_PORO_VISCOUS_DAMPING) call compute_forces_poro_viscous_damping()
+
   ! Stacey absorbing boundary
   if (anyabs) then
     call compute_stacey_poro_fluid(f0_source(1))
     call compute_stacey_poro_solid(f0_source(1))
-  endif
-
-  if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
-    ! if inviscid fluid, comment
-    !     write(23,rec=it) b_viscodampx
-    !     write(24,rec=it) b_viscodampz
   endif
 
   ! add coupling with the acoustic side

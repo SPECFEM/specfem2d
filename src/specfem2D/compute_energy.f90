@@ -57,7 +57,7 @@
   double precision :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   double precision :: dwx_dxl,dwz_dxl,dwx_dzl,dwz_dzl
   ! vector field in an element
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ) :: vector_field_element
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: vector_field_element
   ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: pressure_element
 

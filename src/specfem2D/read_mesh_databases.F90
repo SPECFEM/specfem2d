@@ -319,6 +319,10 @@
 
   implicit none
 
+  ! local parameters
+  ! for small crack case
+  integer :: npgeo_ori
+
   ! add a small crack (discontinuity) in the medium manually
   npgeo_ori = npgeo
   if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
@@ -344,7 +348,7 @@
   call read_mesh_databases_mato()
 
   ! add a small crack (discontinuity) in the medium manually
-  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) call add_manual_crack()
+  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) call add_manual_crack(npgeo_ori)
 
   ! determines if each spectral element is elastic, poroelastic, or acoustic
   call set_simulation_domains()
@@ -998,7 +1002,7 @@
   ! allocates arrays
   if (anyabs) then
     ! files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
-    if (any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3).and. (.not. PML_BOUNDARY_CONDITIONS)) then
+    if (any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_BOUNDARY_CONDITIONS) then
       allocate(b_absorb_elastic_left(3,NGLLZ,nspec_left,NSTEP))
       allocate(b_absorb_elastic_right(3,NGLLZ,nspec_right,NSTEP))
       allocate(b_absorb_elastic_bottom(3,NGLLX,nspec_bottom,NSTEP))
@@ -1009,7 +1013,7 @@
       allocate(b_absorb_elastic_bottom(1,1,1,1))
       allocate(b_absorb_elastic_top(1,1,1,1))
     endif
-    if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3).and. (.not. PML_BOUNDARY_CONDITIONS)) then
+    if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_BOUNDARY_CONDITIONS) then
       allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP))
       allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP))
       allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
@@ -1028,7 +1032,7 @@
       allocate(b_absorb_poro_w_bottom(1,1,1,1))
       allocate(b_absorb_poro_w_top(1,1,1,1))
     endif
-    if (any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. (.not. PML_BOUNDARY_CONDITIONS)) then
+    if (any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_BOUNDARY_CONDITIONS) then
       allocate(b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP))
       allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
       allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))
@@ -1536,14 +1540,18 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine add_manual_crack()
+  subroutine add_manual_crack(npgeo_ori)
 
   use specfem_par
 
   implicit none
 
+  integer,intent(in) :: npgeo_ori
+
   ! local parameters
   integer :: ispec,ispec2,ignod
+  integer :: check_nb_points_to_add_to_npgeo,current_last_point,original_value
+  logical :: already_found_a_crack_element
 
   ! safety check
   if (NPROC > 1) &

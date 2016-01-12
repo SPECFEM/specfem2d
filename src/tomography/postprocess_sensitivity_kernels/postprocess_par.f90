@@ -32,7 +32,7 @@
 !========================================================================
 
 
-module postprocess_par
+  module postprocess_par
 
   use constants,only : MAX_STRING_LEN,IIN,IOUT, &
     CUSTOM_REAL,NGLLX,NGLLZ,GAUSSALPHA,GAUSSBETA
@@ -44,5 +44,5 @@ module postprocess_par
 
   integer,parameter :: MAX_LINES = 1000000000
 
-end module postprocess_par
+  end module postprocess_par
 

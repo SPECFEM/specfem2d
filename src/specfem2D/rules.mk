@@ -81,12 +81,14 @@ specfem2D_OBJECTS = \
 	$O/compute_forces_poroelastic_calling_routine.spec.o \
 	$O/compute_forces_poro_fluid.spec.o \
 	$O/compute_forces_poro_solid.spec.o \
+	$O/compute_forces_poro_viscous_damping.spec.o \
 	$O/compute_forces_viscoelastic.spec.o \
 	$O/compute_forces_viscoelastic_backward.spec.o \
 	$O/compute_forces_viscoelastic_calling_routine.spec.o \
 	$O/compute_gpu_acoustic.spec.o \
 	$O/compute_gpu_elastic.spec.o \
 	$O/compute_gradient_attenuation.spec.o \
+	$O/compute_interpolated_dva.spec.o \
 	$O/compute_normal_vector.spec.o \
 	$O/compute_pressure.spec.o \
 	$O/compute_stacey_acoustic.spec.o \

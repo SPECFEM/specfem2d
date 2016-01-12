@@ -193,7 +193,7 @@ void FC_FUNC_(compute_seismograms_cuda,
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
   int seismotype = *seismotypef;
   int seismo_current = *seismo_currentf - 1 ;
-  int NSTEP_BETWEEN_OUTPUT_SEISMOS =*NSTEP_BETWEEN_OUTPUT_SEISMOSf;
+  int NSTEP_BETWEEN_OUTPUT_SEISMOS = *NSTEP_BETWEEN_OUTPUT_SEISMOSf;
   int i;
 
   int num_blocks_x, num_blocks_y;
@@ -202,13 +202,11 @@ void FC_FUNC_(compute_seismograms_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(NGLL2_PADDED,1,1);
 
-
- switch (seismotype){
-
+  switch (seismotype){
 
   case 1 :  //Deplacement
-
   if (! *ELASTIC_SIMULATION) printf("\nWrong type of seismogram for a pure fluid simulation, use pressure in seismotype\n");
+
   compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(       mp->nrec_local,
                                                                                   mp->d_displ,
                                                                                   mp->d_ibool,
@@ -224,6 +222,7 @@ void FC_FUNC_(compute_seismograms_cuda,
 
   case 2 :  //Vitesse
   if (! *ELASTIC_SIMULATION) printf("\nWrong type of seismogram for a pure fluid simulation, use pressure in seismotype\n");
+
   compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(       mp->nrec_local,
                                                                                   mp->d_veloc,
                                                                                   mp->d_ibool,
@@ -238,6 +237,7 @@ void FC_FUNC_(compute_seismograms_cuda,
 
   case 3 :  //Acceleration
   if (! *ELASTIC_SIMULATION) printf("\nWrong type of seismogram for a pure fluid simulation, use pressure in seismotype\n");
+
   compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(       mp->nrec_local,
                                                                                   mp->d_accel,
                                                                                   mp->d_ibool,
@@ -250,9 +250,9 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                   );
   break;
 
- case 4 :  //Pression
-
+  case 4 :  //Pression
   if (! *ACOUSTIC_SIMULATION) printf("\nWrong type of seismogram for a pure elasticsimulation, use displ veloc or accel in seismotype\n");
+
   if (*USE_TRICK_FOR_BETTER_PRESSURE)
   compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(      mp->nrec_local,
                                                                                   mp->d_potential_acoustic,
@@ -273,28 +273,17 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                   );
 
   break;
+  }
 
-
-
-}
-
-
-
- int size = mp->nrec_local;
-
+  int size = mp->nrec_local;
 
   // (cudaMemcpy implicitly synchronizes all other cuda operations)
   print_CUDA_error_if_any(cudaMemcpy(mp->h_seismograms,mp->d_seismograms,
                                     sizeof(realw)*2* size,cudaMemcpyDeviceToHost),72001);
 
-
-
-
   for (i=0;i<size;i++)
    { sisux[seismo_current + NSTEP_BETWEEN_OUTPUT_SEISMOS * i ] = (double)*(mp->h_seismograms+i);
      sisuz[seismo_current + NSTEP_BETWEEN_OUTPUT_SEISMOS * i ] = (double)*(mp->h_seismograms+i+size);
    }
-
-
 
 }

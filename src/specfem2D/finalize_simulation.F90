@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-subroutine finalize_simulation()
+  subroutine finalize_simulation()
 
 #ifdef USE_MPI
   use mpi
@@ -168,11 +168,8 @@ subroutine finalize_simulation()
 
   if (output_wavefield_dumps) deallocate(mask_ibool)
 
-
-!!!! Displacement Etienne GPU
-
-! stores absorbing boundary contributions into files
-  if (anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
+  ! stores absorbing boundary contributions into files
+  if (anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. STACEY_BOUNDARY_CONDITIONS) then
 
     if (any_acoustic) then
       !--- left absorbing boundary
@@ -237,7 +234,6 @@ subroutine finalize_simulation()
       close(29)
       close(28)
     endif
-
   endif
 
   ! PML
@@ -246,9 +242,7 @@ subroutine finalize_simulation()
     if (any_acoustic .and. nglob_interface > 0) close(72)
   endif
 
-!
-!--- save last frame
-!
+  ! save last frame
   if (SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. any_elastic) then
     if (myrank == 0) then
       write(IMAIN,*)
@@ -330,16 +324,13 @@ subroutine finalize_simulation()
     deallocate(t0z_bot)
   endif
 
-!----  close energy file
+  ! close energy file
   if (output_energy .and. myrank == 0) close(IOUT_ENERGY)
 
-
-! print exit banner
+  ! print exit banner
   if (myrank == 0) call datim(simulation_title)
 
-!
-!----  close output file
-!
+  ! close output file
   if (IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
-end subroutine finalize_simulation
+  end subroutine finalize_simulation

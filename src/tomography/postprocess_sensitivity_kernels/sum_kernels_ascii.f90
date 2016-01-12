@@ -178,7 +178,7 @@ end program sum_kernels_ascii
 
 ! ------------------------------------------------------------------------------
 
-subroutine get_number_gll_points(kernel_path, nlines)
+  subroutine get_number_gll_points(kernel_path, nlines)
 
   use postprocess_par, only: MAX_STRING_LEN, MAX_LINES
 
@@ -200,5 +200,5 @@ subroutine get_number_gll_points(kernel_path, nlines)
   enddo
   close(3)
 
-end subroutine get_number_gll_points
+  end subroutine get_number_gll_points
 

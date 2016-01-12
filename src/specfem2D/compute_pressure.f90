@@ -55,7 +55,7 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
-        vector_field_display(3,iglob) = pressure_element(i,j)
+        vector_field_display(2,iglob) = pressure_element(i,j)
       enddo
     enddo
 
@@ -79,11 +79,12 @@
     kmato,poroelastcoef,assign_external_model,vpext,vsext,rhoext, &
     ATTENUATION_VISCOELASTIC_SOLID,AXISYM,is_on_the_axis, &
     displ_elastic,displs_poroelastic,displw_poroelastic, &
-    potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
+    potential_dot_dot_acoustic,potential_acoustic,potential_dot_dot_gravitoacoustic,potential_gravitoacoustic, &
     anisotropy,c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext,c55ext, &
     hprimebar_xx,hprime_xx,hprime_zz, &
     xix,xiz,gammax,gammaz,jacobian,ibool,coord, &
-    e1,e11
+    e1,e11, &
+    USE_TRICK_FOR_BETTER_PRESSURE
 
   implicit none
 
@@ -536,23 +537,60 @@
   else if (ispec_is_acoustic(ispec)) then
     ! acoustic element
 
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-        iglob = ibool(i,j,ispec)
-        ! store pressure
-        pressure_element(i,j) = - potential_dot_dot_acoustic(iglob)
+    if (USE_TRICK_FOR_BETTER_PRESSURE) then
+      ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
+      ! use the second derivative of the source for the source time function instead of the source itself,
+      ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+      ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
+      ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
+      ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+      ! is accurate at second order and thus contains significantly less numerical noise.
+      ! compute pressure on the fluid/porous medium edge
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          ! store pressure
+          pressure_element(i,j) = - potential_acoustic(iglob)
+        enddo
       enddo
-    enddo
+    else
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          ! store pressure
+          pressure_element(i,j) = - potential_dot_dot_acoustic(iglob)
+        enddo
+      enddo
+    endif
 
   else if (ispec_is_gravitoacoustic(ispec)) then
     ! gravito-acoustic element
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-        iglob = ibool(i,j,ispec)
-        ! store pressure
-        pressure_element(i,j) = - potential_dot_dot_gravitoacoustic(iglob)
+
+    if (USE_TRICK_FOR_BETTER_PRESSURE) then
+      ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
+      ! use the second derivative of the source for the source time function instead of the source itself,
+      ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+      ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
+      ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
+      ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+      ! is accurate at second order and thus contains significantly less numerical noise.
+      ! compute pressure on the fluid/porous medium edge
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          ! store pressure
+          pressure_element(i,j) = - potential_gravitoacoustic(iglob)
+        enddo
       enddo
-    enddo
+    else
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          ! store pressure
+          pressure_element(i,j) = - potential_dot_dot_gravitoacoustic(iglob)
+        enddo
+      enddo
+    endif
 
   endif ! end of test if acoustic or elastic or gravito element
 

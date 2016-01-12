@@ -35,7 +35,7 @@
 
  subroutine compute_attenuation_poro_fluid_part()
 
-  use constants,only: ZERO,NGLLX,NGLLZ,ALPHA_LDDRK,BETA_LDDRK
+  use constants,only: ZERO,NGLLX,NGLLZ,ALPHA_LDDRK,BETA_LDDRK,USE_PORO_VISCOUS_DAMPING
 
   use specfem_par, only: nspec,ispec_is_poroelastic,poroelastcoef,kmato,permeability,ibool, &
                          velocw_poroelastic,time_stepping_scheme,deltat,i_stage,stage_time_scheme, &
@@ -48,15 +48,20 @@
 
   ! local variables
   integer :: i,j,ispec,iglob
-  double precision :: etal_f,permlxx,permlxz,permlzz,detk,invpermlxx,invpermlxz,invpermlzz, &
+  double precision :: eta_f,permlxx,permlxz,permlzz,detk,invpermlxx,invpermlxz,invpermlzz, &
                       Sn,Snp1,weight_rk
   double precision, dimension(3) :: bl_unrelaxed_elastic
   double precision, dimension(NGLLX,NGLLZ) :: viscox_loc,viscoz_loc
 
+  ! checks if anything to do
+  if (.not. USE_PORO_VISCOUS_DAMPING) return
+
   ! loop over spectral elements
   do ispec = 1,nspec
-    if (ispec_is_poroelastic(ispec) .and. poroelastcoef(2,2,kmato(ispec)) > 0.d0) then
-      etal_f = poroelastcoef(2,2,kmato(ispec))
+
+    eta_f = poroelastcoef(2,2,kmato(ispec))
+
+    if (ispec_is_poroelastic(ispec) .and. eta_f > 0.d0) then
       permlxx = permeability(1,kmato(ispec))
       permlxz = permeability(2,kmato(ispec))
       permlzz = permeability(3,kmato(ispec))
@@ -72,9 +77,9 @@
       endif
 
       ! relaxed viscous coef
-      bl_unrelaxed_elastic(1) = etal_f*invpermlxx
-      bl_unrelaxed_elastic(2) = etal_f*invpermlxz
-      bl_unrelaxed_elastic(3) = etal_f*invpermlzz
+      bl_unrelaxed_elastic(1) = eta_f*invpermlxx
+      bl_unrelaxed_elastic(2) = eta_f*invpermlxz
+      bl_unrelaxed_elastic(3) = eta_f*invpermlzz
 
       do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -84,7 +89,9 @@
           viscoz_loc(i,j) = velocw_poroelastic(1,iglob) * bl_unrelaxed_elastic(2) + &
                             velocw_poroelastic(2,iglob) * bl_unrelaxed_elastic(3)
 
+          ! time stepping
           if (time_stepping_scheme == 1) then
+            ! Newmark
             ! evolution rx_viscous
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
             Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscox_loc(i,j)
@@ -97,6 +104,7 @@
           endif
 
           if (time_stepping_scheme == 2) then
+            ! LDDRK
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
             rx_viscous_LDDRK(i,j,ispec) = ALPHA_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec) + &
                                           deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
@@ -109,7 +117,8 @@
           endif
 
           if (time_stepping_scheme == 3) then
-
+            ! Runge-Kutta
+            ! x-component
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
             rx_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
 
@@ -118,12 +127,12 @@
               if (i_stage == 2) weight_rk = 0.5d0
               if (i_stage == 3) weight_rk = 1.0d0
 
-              if (i_stage==1) then
+              if (i_stage == 1) then
                 rx_viscous_initial_rk(i,j,ispec) = rx_viscous(i,j,ispec)
               endif
-                  rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
-                                          weight_rk * rx_viscous_force_RK(i,j,ispec,i_stage)
-            else if (i_stage==4) then
+              rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + weight_rk * rx_viscous_force_RK(i,j,ispec,i_stage)
+
+            else if (i_stage == 4) then
                 rx_viscous(i,j,ispec) = rx_viscous_initial_rk(i,j,ispec) + &
                                         1.0d0 / 6.0d0 * (rx_viscous_force_RK(i,j,ispec,i_stage) + &
                                         2.0d0 * rx_viscous_force_RK(i,j,ispec,i_stage) + &
@@ -131,20 +140,21 @@
                                         rx_viscous_force_RK(i,j,ispec,i_stage))
             endif
 
+            ! z-component
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
             rz_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
 
-            if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+            if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
               if (i_stage == 1) weight_rk = 0.5d0
               if (i_stage == 2) weight_rk = 0.5d0
               if (i_stage == 3) weight_rk = 1.0d0
 
-              if (i_stage==1) then
+              if (i_stage == 1) then
                 rz_viscous_initial_rk(i,j,ispec) = rz_viscous(i,j,ispec)
               endif
-              rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
-                                      weight_rk * rz_viscous_force_RK(i,j,ispec,i_stage)
-            else if (i_stage==4) then
+              rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + weight_rk * rz_viscous_force_RK(i,j,ispec,i_stage)
+
+            else if (i_stage == 4) then
               rz_viscous(i,j,ispec) = rz_viscous_initial_rk(i,j,ispec) + &
                                       1.0d0 / 6.0d0 * (rz_viscous_force_RK(i,j,ispec,i_stage) + &
                                       2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &

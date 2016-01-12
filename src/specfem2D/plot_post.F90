@@ -179,7 +179,7 @@
   ratio_page = min(rpercentz*sizez/(zmax-zmin),rpercentx*sizex/(xmax-xmin)) / 100.d0
 
   ! compute the maximum of the norm of the vector
-  dispmax = maxval(sqrt(vector_field_display(1,:)**2 + vector_field_display(3,:)**2))
+  dispmax = maxval(sqrt(vector_field_display(1,:)**2 + vector_field_display(2,:)**2))
 
   call max_all_all_dp(dispmax, dispmax_glob)
   dispmax = dispmax_glob
@@ -1487,14 +1487,14 @@
       if (AXISYM) then
         if (is_on_the_axis(ispec)) then
           Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
-          Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(3,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
+          Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(2,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
         else
           Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-          Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+          Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(2,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
         endif
       else
         Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-        Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(3,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+        Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(2,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
     endif
   enddo
   enddo
@@ -1635,7 +1635,7 @@
   z1 =(coord(2,ipoin)-zmin)*ratio_page
 
   x2 = vector_field_display(1,ipoin)*sizemax_arrows/dispmax
-  z2 = vector_field_display(3,ipoin)*sizemax_arrows/dispmax
+  z2 = vector_field_display(2,ipoin)*sizemax_arrows/dispmax
 
   d = sqrt(x2**2 + z2**2)
 

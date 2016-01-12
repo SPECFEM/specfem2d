@@ -164,9 +164,9 @@
            siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),stat=ier)
   if (ier /= 0) stop 'Error allocating seismogram arrays'
 
-  sisux = ZERO ! double precision zero
-  sisuz = ZERO
-  siscurl = ZERO
+  sisux(:,:) = ZERO ! double precision zero
+  sisuz(:,:) = ZERO
+  siscurl(:,:) = ZERO
 
   ! synchronizes all processes
   call synchronize_all()
@@ -398,16 +398,15 @@
   allocate(Uxinterp(pointsdisp,pointsdisp))
   allocate(Uzinterp(pointsdisp,pointsdisp))
 
-! to display the whole vector field (it needs to be computed from the potential in acoustic elements,
-! thus it does not exist as a whole it case of simulations that contain some acoustic elements
-! and it thus needs to be computed specifically for display purposes)
-  allocate(vector_field_display(3,nglob))
+  ! to display the whole vector field (it needs to be computed from the potential in acoustic elements,
+  ! thus it does not exist as a whole in case of simulations that contain some acoustic elements
+  ! and it thus needs to be computed specifically for display purposes)
+  allocate(vector_field_display(NDIM,nglob))
 
-! when periodic boundary conditions are on, some global degrees of freedom are going to be removed,
-! thus we need to set this array to zero otherwise some of its locations may contain random values
-! if the memory is not cleaned
+  ! when periodic boundary conditions are on, some global degrees of freedom are going to be removed,
+  ! thus we need to set this array to zero otherwise some of its locations may contain random values
+  ! if the memory is not cleaned
   vector_field_display(:,:) = 0.d0
-
 
   ! check the mesh, stability and number of points per wavelength
   call check_grid()
@@ -729,9 +728,12 @@
   integer :: reclen,ier
   character(len=MAX_STRING_LEN) :: outputname,outputname2
 
+  ! checks if anything to do
+  if (.not. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) return
+
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) 'Preparing adjoint settings'
+    write(IMAIN,*) 'Preparing forward/adjoint simulation'
     call flush_IMAIN()
   endif
 
@@ -739,57 +741,70 @@
   if (SIMULATION_TYPE == 3) call prepare_timerun_kernels()
 
   ! Absorbing boundaries
-  ! Reads last frame for forward wavefield reconstruction
-  if (((SAVE_FORWARD .and. SIMULATION_TYPE == 1) .or. SIMULATION_TYPE == 3) .and. anyabs &
-      .and. (.not. PML_BOUNDARY_CONDITIONS)) then
-    ! opens files for absorbing boundary data
-    call prepare_absorb_files()
+  if (anyabs .and. STACEY_BOUNDARY_CONDITIONS) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  using Stacey boundary arrays'
+      call flush_IMAIN()
+    endif
+
+    ! Reads last frame for forward wavefield reconstruction
+    if ((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
+      ! opens files for absorbing boundary data
+      if (any_acoustic) call prepare_absorb_open_files_acoustic()
+      if (any_elastic) call prepare_absorb_open_files_elastic()
+      if (any_poroelastic) call prepare_absorb_open_files_poroelastic()
+    endif
+
+    if (SIMULATION_TYPE == 3) then
+      ! reads in absorbing boundary data
+      if (any_acoustic) call prepare_absorb_read_acoustic()
+      if (any_elastic) call prepare_absorb_read_elastic()
+      if (any_poroelastic) call prepare_absorb_read_poroelastic()
+    endif
   endif
-
-  if (anyabs .and. SIMULATION_TYPE == 3 .and. (.not. PML_BOUNDARY_CONDITIONS)) then
-    ! reads in absorbing boundary data
-    if (any_elastic) call prepare_absorb_elastic()
-
-    if (any_poroelastic) call prepare_absorb_poroelastic()
-
-    if (any_acoustic) call prepare_absorb_acoustic()
-  endif ! if (anyabs .and. SIMULATION_TYPE == 3)
 
   ! Files where viscous damping are saved during forward wavefield calculation
   if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
-    allocate(b_viscodampx(nglob))
-    allocate(b_viscodampz(nglob))
-    write(outputname,'(a,i6.6,a)') 'viscodampingx',myrank,'.bin'
-    write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
-    ! array size
-    reclen = CUSTOM_REAL * nglob
-    ! file i/o
-    if (SIMULATION_TYPE == 3) then
-      open(unit=23,file='OUTPUT_FILES/'//outputname,status='old',&
-            action='read',form='unformatted',access='direct',&
-            recl=reclen,iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+    if (USE_PORO_VISCOUS_DAMPING) then
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*) '  using viscous damping arrays for poroelastic domain'
+        call flush_IMAIN()
+      endif
 
-      open(unit=24,file='OUTPUT_FILES/'//outputname2,status='old',&
-            action='read',form='unformatted',access='direct',&
-            recl=reclen,iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+      allocate(b_viscodampx(NGLLX,NGLLZ,nspec), &
+               b_viscodampz(NGLLX,NGLLZ,nspec),stat=ier)
+      if (ier /= 0) stop 'Error allocating b_viscodamp arrays'
+      b_viscodampx(:,:,:) = 0._CUSTOM_REAL
+      b_viscodampz(:,:,:) = 0._CUSTOM_REAL
 
-    else
-      open(unit=23,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',access='direct',&
-            recl=reclen,iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+      ! array size
+      reclen = CUSTOM_REAL * NGLLX * NGLLZ * nspec
 
-      open(unit=24,file='OUTPUT_FILES/'//outputname2,status='unknown',&
-            form='unformatted',access='direct',&
-            recl=reclen,iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+      write(outputname,'(a,i6.6,a)') 'viscodampingx',myrank,'.bin'
+      write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
+
+      ! file i/o
+      if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+        open(unit=23,file='OUTPUT_FILES/'//outputname,status='unknown',&
+              form='unformatted',access='direct',recl=reclen,iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+
+        open(unit=24,file='OUTPUT_FILES/'//outputname2,status='unknown',&
+              form='unformatted',access='direct',recl=reclen,iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+
+      else if (SIMULATION_TYPE == 3) then
+        open(unit=23,file='OUTPUT_FILES/'//outputname,status='old',&
+              action='read',form='unformatted',access='direct',recl=reclen,iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+
+        open(unit=24,file='OUTPUT_FILES/'//outputname2,status='old',&
+              action='read',form='unformatted',access='direct',recl=reclen,iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+      endif
     endif
-  else
-    ! dummy
-    allocate(b_viscodampx(1))
-    allocate(b_viscodampz(1))
   endif
 
   ! synchronizes all processes
@@ -1444,21 +1459,23 @@
 
   ! allocate memory variables for viscous attenuation (poroelastic media)
   if (ATTENUATION_PORO_FLUID_PART) then
-    allocate(rx_viscous(NGLLX,NGLLZ,nspec))
-    allocate(rz_viscous(NGLLX,NGLLZ,nspec))
-    allocate(viscox(NGLLX,NGLLZ,nspec))
-    allocate(viscoz(NGLLX,NGLLZ,nspec))
+    if (USE_PORO_VISCOUS_DAMPING) then
+      allocate(rx_viscous(NGLLX,NGLLZ,nspec))
+      allocate(rz_viscous(NGLLX,NGLLZ,nspec))
+      allocate(viscox(NGLLX,NGLLZ,nspec))
+      allocate(viscoz(NGLLX,NGLLZ,nspec))
 
-    if (time_stepping_scheme == 2) then
-      allocate(rx_viscous_LDDRK(NGLLX,NGLLZ,nspec))
-      allocate(rz_viscous_LDDRK(NGLLX,NGLLZ,nspec))
-    endif
+      if (time_stepping_scheme == 2) then
+        allocate(rx_viscous_LDDRK(NGLLX,NGLLZ,nspec))
+        allocate(rz_viscous_LDDRK(NGLLX,NGLLZ,nspec))
+      endif
 
-    if (time_stepping_scheme == 3) then
-      allocate(rx_viscous_initial_rk(NGLLX,NGLLZ,nspec))
-      allocate(rz_viscous_initial_rk(NGLLX,NGLLZ,nspec))
-      allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
-      allocate(rz_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
+      if (time_stepping_scheme == 3) then
+        allocate(rx_viscous_initial_rk(NGLLX,NGLLZ,nspec))
+        allocate(rz_viscous_initial_rk(NGLLX,NGLLZ,nspec))
+        allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
+        allocate(rz_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
+      endif
     endif
   else
     ! dummy arrays
@@ -1477,8 +1494,8 @@
     theta_s = (sqrt(Q0**2+1.d0) -1.d0)/(2.d0*pi*freq0*Q0)
 
     thetainv = - 1.d0 / theta_s
-    alphaval = 1.d0 + deltat*thetainv + deltat**2*thetainv**2 / 2.d0 + &
-      deltat**3*thetainv**3 / 6.d0 + deltat**4*thetainv**4 / 24.d0
+    alphaval = 1.d0 + deltat*thetainv + deltat**2*thetainv**2 / 2.d0 &
+                    + deltat**3*thetainv**3 / 6.d0 + deltat**4*thetainv**4 / 24.d0
     betaval = deltat / 2.d0 + deltat**2*thetainv / 3.d0 + deltat**3*thetainv**2 / 8.d0 + deltat**4*thetainv**3 / 24.d0
     gammaval = deltat / 2.d0 + deltat**2*thetainv / 6.d0 + deltat**3*thetainv**2 / 24.d0
 

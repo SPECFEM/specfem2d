@@ -69,13 +69,7 @@ module specfem_par
   logical :: UNDO_ATTENUATION
   integer :: NT_DUMP_ATTENUATION
 
-  ! add a small crack (discontinuity) in the medium manually
-  logical, parameter :: ADD_A_SMALL_CRACK_IN_THE_MEDIUM = .false.
-  !! must be set equal to the number of spectral elements on one vertical side of the crack
-  integer :: NB_POINTS_TO_ADD_TO_NPGEO = 3
-  integer :: check_nb_points_to_add_to_npgeo,current_last_point,npgeo_ori,original_value
-  logical :: already_found_a_crack_element
-
+  ! external mesh files
   logical :: read_external_mesh
 
   !---------------------------------------------------------------------
@@ -582,7 +576,9 @@ module specfem_par
     b_accels_poroelastic,b_velocs_poroelastic,b_displs_poroelastic
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     b_accelw_poroelastic,b_velocw_poroelastic,b_displw_poroelastic
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_viscodampx,b_viscodampz
+
+  ! viscous damping
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_viscodampx,b_viscodampz
 
   ! PML parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_fsb_displ_elastic

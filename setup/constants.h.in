@@ -97,6 +97,18 @@
 ! update the memory variables using a convolution or using a differential equation
   logical, parameter :: CONVOLUTION_MEMORY_VARIABLES = .false.
 
+
+!!-----------------------------------------------------------
+!!
+!! poroelasticity
+!!
+!!-----------------------------------------------------------
+
+! viscid flow controlled by fluid viscosity eta_f parameter (eta_f is zero for no viscosity)
+! for ideal fluid (neglecting viscosity) and inviscid flow set to .false.
+  logical, parameter :: USE_PORO_VISCOUS_DAMPING = .true.
+
+
 !!-----------------------------------------------------------
 !!
 !! kernels
@@ -174,6 +186,17 @@
 ! mesh tolerance for fast global numbering
   double precision, parameter :: SMALLVALTOL = 1.d-10
 
+!!-----------------------------------------------------------
+!!
+!! small crack
+!!
+!!-----------------------------------------------------------
+
+! add a small crack (discontinuity) in the medium manually
+  logical, parameter :: ADD_A_SMALL_CRACK_IN_THE_MEDIUM = .false.
+
+! must be set equal to the number of spectral elements on one vertical side of the crack
+  integer, parameter :: NB_POINTS_TO_ADD_TO_NPGEO = 3
 
 !!-----------------------------------------------------------
 !!

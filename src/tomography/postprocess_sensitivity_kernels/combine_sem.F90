@@ -65,7 +65,6 @@ program combine_sem
 
   implicit none
 
-
   character(len=MAX_STRING_LEN) :: kernel_paths(MAX_KERNEL_PATHS), kernel_names(MAX_KERNEL_NAMES)
   character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: line,filename,output_dir,input_file
@@ -145,7 +144,7 @@ end program combine_sem
 !-------------------------------------------------------------------------------------------------
 !
 
-subroutine combine_sem_array(kernel_name,kernel_paths,output_dir,npath,nspec,myrank)
+  subroutine combine_sem_array(kernel_name,kernel_paths,output_dir,npath,nspec,myrank)
 
   use postprocess_par, only: MAX_STRING_LEN, MAX_KERNEL_PATHS, MAX_KERNEL_NAMES, &
     CUSTOM_REAL, NGLLX, NGLLZ, IIN, IOUT
@@ -169,8 +168,8 @@ subroutine combine_sem_array(kernel_name,kernel_paths,output_dir,npath,nspec,myr
  ! loop over kernel paths
   sum_arrays = 0._CUSTOM_REAL
   do iker = 1, npath
-  write(*,*) 'reading in array for: ',trim(kernel_name)
-  write(*,*) '    ',iker, ' out of ', npath
+    write(*,*) 'reading in array for: ',trim(kernel_name)
+    write(*,*) '    ',iker, ' out of ', npath
 
     ! read array
     array = 0._CUSTOM_REAL
@@ -185,7 +184,6 @@ subroutine combine_sem_array(kernel_name,kernel_paths,output_dir,npath,nspec,myr
 
     ! keep track of sum
     sum_arrays = sum_arrays + array
-
   enddo
 
   ! write sum
@@ -202,6 +200,6 @@ subroutine combine_sem_array(kernel_name,kernel_paths,output_dir,npath,nspec,myr
   write(*,*)
   deallocate(array,sum_arrays)
 
-end subroutine combine_sem_array
+  end subroutine combine_sem_array
 
 

@@ -50,7 +50,7 @@
   real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: field_elastic
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: fields_poroelastic
   ! vector field in an element
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ) :: vector_field_element
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: vector_field_element
 
   ! local parameters
   integer :: i,j,ispec,iglob
@@ -81,13 +81,15 @@
 
 ! compute Grad(potential) if acoustic element or copy existing vector if elastic element
 
-  use specfem_par,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
-    nglob_acoustic,nglob_elastic,nglob_gravitoacoustic,nglob_poroelastic, &
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+
+  use specfem_par,only: nglob_acoustic,nglob_elastic,nglob_gravitoacoustic,nglob_poroelastic, &
     assign_external_model,density,kmato,gravityext,rhoext, &
     hprimeBar_xx,hprime_xx,hprime_zz, &
     xix,xiz,gammax,gammaz,ibool, &
     ispec_is_elastic,ispec_is_poroelastic,ispec_is_acoustic,ispec_is_gravitoacoustic, &
-    AXISYM,is_on_the_axis
+    AXISYM,is_on_the_axis, &
+    P_SV
 
   implicit none
 
@@ -100,7 +102,7 @@
   integer,intent(in) :: ispec
 
   ! vector field in an element
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ),intent(out) :: vector_field_element
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ),intent(out) :: vector_field_element
 
   ! local variables
   integer i,j,k,iglob
@@ -120,9 +122,14 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
-        vector_field_element(1,i,j) = field_elastic(1,iglob)
-        vector_field_element(2,i,j) = field_elastic(2,iglob)
-        vector_field_element(3,i,j) = field_elastic(3,iglob)
+        if (P_SV) then
+          ! P_SV case
+          vector_field_element(1,i,j) = field_elastic(1,iglob)
+          vector_field_element(2,i,j) = field_elastic(3,iglob)
+        else
+          ! SH case
+          vector_field_element(1,i,j) = field_elastic(2,iglob)
+        endif
       enddo
     enddo
 
@@ -133,8 +140,7 @@
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         vector_field_element(1,i,j) = fields_poroelastic(1,iglob)
-        vector_field_element(2,i,j) = 0._CUSTOM_REAL
-        vector_field_element(3,i,j) = fields_poroelastic(2,iglob)
+        vector_field_element(2,i,j) = fields_poroelastic(2,iglob)
       enddo
     enddo
 
@@ -191,8 +197,7 @@
 
         ! derivatives of potential
         vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol        !u_x
-        vector_field_element(2,i,j) = 0._CUSTOM_REAL
-        vector_field_element(3,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol        !u_z
+        vector_field_element(2,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol        !u_z
       enddo
     enddo
 
@@ -234,14 +239,13 @@
 
         ! derivatives of potential
         vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol
-        vector_field_element(2,i,j) = 0._CUSTOM_REAL
-        vector_field_element(3,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol
+        vector_field_element(2,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol
 
         ! add the gravito potential along the z component
         iglob = ibool(i,j,ispec)
         ! remove gravito contribution
         ! sign gravito correction
-        vector_field_element(3,i,j) = vector_field_element(3,i,j) - (field_gravito(iglob)*gravityl) / rhol
+        vector_field_element(2,i,j) = vector_field_element(2,i,j) - (field_gravito(iglob)*gravityl) / rhol
 
       enddo
     enddo

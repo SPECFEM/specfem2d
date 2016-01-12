@@ -163,27 +163,27 @@
             if (P_SV) then
               ! P-SV waves
               if (imagetype_wavefield_dumps == 4) then
-                ! by convention we use the third component of the array to store the pressure above
-                write(27,rec=icounter) sngl(vector_field_display(3,iglob))
+                ! by convention we use the 2. component of the array to store the pressure above
+                write(27,rec=icounter) sngl(vector_field_display(2,iglob))
               else
-                write(27,rec=icounter) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(3,iglob))
+                write(27,rec=icounter) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(2,iglob))
               endif
             else
               ! SH case
-              write(27,rec=icounter) sngl(vector_field_display(2,iglob))
+              write(27,rec=icounter) sngl(vector_field_display(1,iglob))
             endif
           else
             if (P_SV) then
               ! P-SV waves
               if (imagetype_wavefield_dumps == 4) then
-                ! by convention we use the third component of the array to store the pressure above
-                write(27,*) sngl(vector_field_display(3,iglob))
+                ! by convention we use the 2. component of the array to store the pressure above
+                write(27,*) sngl(vector_field_display(2,iglob))
               else
-                write(27,*) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(3,iglob))
+                write(27,*) sngl(vector_field_display(1,iglob)),sngl(vector_field_display(2,iglob))
               endif
             else
               ! SH case
-              write(27,*) sngl(vector_field_display(2,iglob))
+              write(27,*) sngl(vector_field_display(1,iglob))
             endif
           endif
         endif

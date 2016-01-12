@@ -208,8 +208,8 @@
   if (NPROC /= nproc_read_from_database) then
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) 'error: number of processors supposed to run on: ',nproc_read_from_database
-      write(IMAIN,*) 'error: number of MPI processors actually run on: ',NPROC
+      write(IMAIN,*) 'Error: number of processors supposed to run on: ',nproc_read_from_database
+      write(IMAIN,*) 'Error: number of MPI processors actually run on: ',NPROC
       write(IMAIN,*)
       if (IMAIN /= ISTANDARD_OUTPUT) then
         print *
@@ -239,15 +239,21 @@
     stop 'need to have an initial field to add Bielak plane wave conditions'
 
   ! seismogram output
-  if (seismotype < 1 .or. seismotype > 6) stop 'Wrong type for seismogram output'
+  if (seismotype < 1 .or. seismotype > 6) &
+    stop 'seismotype should be 1(=displ), 2(=veloc), 3(=accel), 4(=pressure), 5(=curl of displ) or 6(=the fluid potential)'
+
+  if (SU_FORMAT .and. .not. save_binary_seismograms_single) &
+     stop 'SU_FORMAT seismograms are single precision and thus require save_binary_seismograms_single set to .true.'
 
   if (SAVE_FORWARD .and. (seismotype /= 1 .and. seismotype /= 6)) then
     ! user warning
     if (myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) '***** WARNING *****'
-      write(IMAIN,*) 'seismotype =',seismotype
-      write(IMAIN,*) 'Save forward wavefield => seismogram must be in displacement for (poro)elastic or potential for acoustic'
-      write(IMAIN,*) 'Seismotype must be changed to 1 (elastic/poroelastic adjoint source) or 6 (acoustic adjoint source)'
+      write(IMAIN,*) 'SAVE_FORWARD simulation: uses seismotype = ',seismotype
+      write(IMAIN,*) '  Note that seismograms usually must be in displacement/potential for (poro)elastic/acoustic domains'
+      write(IMAIN,*) '  and seismotype should be 1 (elastic/poroelastic adjoint source) or 6 (acoustic adjoint source)'
+      write(IMAIN,*) '*******************'
       write(IMAIN,*)
     endif
     ! safety stop
