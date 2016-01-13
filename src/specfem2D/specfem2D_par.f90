@@ -785,7 +785,7 @@ module specfem_par_noise
   ! or ensemble forward wavefield needs to be saved for all times steps. Since
   ! the disk space required to do this is usually quite large, separate arrays
   ! are used for x,y,z to avoid having empty dimensions (one empty dimension in
-  ! the case of P-SV or two empty dimensions in the case of SH).
+  ! the case of SH).
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     surface_movie_x_noise, surface_movie_y_noise, surface_movie_z_noise
 

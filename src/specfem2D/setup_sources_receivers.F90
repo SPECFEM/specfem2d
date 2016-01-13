@@ -363,7 +363,7 @@
 
 ! compute source array for adjoint source
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,MAX_STRING_LEN
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,MAX_STRING_LEN
 
   use specfem_par,only: nadj_rec_local,nrec,nrecloc,NSTEP,NPROC,SIMULATION_TYPE,SU_FORMAT, &
                         adj_sourcearrays, &
@@ -403,7 +403,7 @@
 
     ! array for all adjoint sources
     if (nadj_rec_local > 0)  then
-      allocate(adj_sourcearrays(nadj_rec_local,NSTEP,3,NGLLX,NGLLZ))
+      allocate(adj_sourcearrays(nadj_rec_local,NSTEP,NDIM,NGLLX,NGLLZ))
     else
       allocate(adj_sourcearrays(1,1,1,1,1))
     endif
@@ -412,7 +412,7 @@
     ! reads in adjoint source files
     if (.not. SU_FORMAT) then
       ! temporary array
-      allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
+      allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLZ))
 
       ! reads in ascii adjoint source files **.adj
       if (seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
@@ -466,14 +466,15 @@
 
   subroutine add_adjoint_sources_SU(seismotype)
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,NDIM
 
   use specfem_par, only: AXISYM,xiglj,is_on_the_axis, &
                          myrank, NSTEP, nrec, &
                          xi_receiver, gamma_receiver, which_proc_receiver, &
                          xigll,zigll,hxir,hgammar,hpxir,hpgammar, &
                          adj_sourcearrays, &
-                         GPU_MODE, ispec_selected_rec
+                         GPU_MODE, ispec_selected_rec, &
+                         P_SV
 
   use specfem_par_gpu,only: source_adjointe
 
@@ -516,7 +517,7 @@
   adj_src_s(:,:) = 0.0
 
   ! temporary array
-  allocate(adj_sourcearray(NSTEP,3,NGLLX,NGLLZ))
+  allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLZ))
 
   irec_local = 0
   do irec = 1, nrec
@@ -554,13 +555,26 @@
 
       call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
 
-      source_adjointe(irec_local,:,1) = adj_src_s(:,1)
-      source_adjointe(irec_local,:,2) = adj_src_s(:,3)
+      if (P_SV) then
+        ! P_SV-case
+        source_adjointe(irec_local,:,1) = adj_src_s(:,1)
+        source_adjointe(irec_local,:,2) = adj_src_s(:,3)
+      else
+        ! SH-case
+        source_adjointe(irec_local,:,1) = adj_src_s(:,2)
+      endif
 
       if (.not. GPU_MODE) then
         do j = 1, NGLLZ
           do i = 1, NGLLX
-            adj_sourcearray(:,:,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,:)
+            if (P_SV) then
+              ! P_SV-case
+              adj_sourcearray(:,1,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,1)
+              adj_sourcearray(:,2,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,3)
+            else
+              ! SH-case
+              adj_sourcearray(:,1,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,2)
+            endif
           enddo
         enddo
         adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)

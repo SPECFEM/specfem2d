@@ -242,16 +242,16 @@
     if (P_SV) then
       ! P-SV waves
       displ_elastic(1,:) = tmp_displ_2D(1,:)
-      displ_elastic(3,:) = tmp_displ_2D(2,:)
+      displ_elastic(2,:) = tmp_displ_2D(2,:)
       veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-      veloc_elastic(3,:) = tmp_veloc_2D(2,:)
+      veloc_elastic(2,:) = tmp_veloc_2D(2,:)
       accel_elastic(1,:) = tmp_accel_2D(1,:)
-      accel_elastic(3,:) = tmp_accel_2D(2,:)
+      accel_elastic(2,:) = tmp_accel_2D(2,:)
     else
       ! SH waves
-      displ_elastic(2,:) = tmp_displ_2D(1,:)
-      veloc_elastic(2,:) = tmp_veloc_2D(1,:)
-      accel_elastic(2,:) = tmp_accel_2D(1,:)
+      displ_elastic(1,:) = tmp_displ_2D(1,:)
+      veloc_elastic(1,:) = tmp_veloc_2D(1,:)
+      accel_elastic(1,:) = tmp_accel_2D(1,:)
     endif
   endif
 
@@ -355,31 +355,28 @@
 
     !SH (membrane) waves
     if (.not. P_SV) then
-      ! only index array(2,:) contains SH wavefield
-      b_displ_elastic(1,:) = 0._CUSTOM_REAL
-      b_displ_elastic(3,:) = 0._CUSTOM_REAL
-      b_veloc_elastic(1,:) = 0._CUSTOM_REAL
-      b_veloc_elastic(3,:) = 0._CUSTOM_REAL
-      b_accel_elastic(1,:) = 0._CUSTOM_REAL
-      b_accel_elastic(3,:) = 0._CUSTOM_REAL
+      ! only index array(1,:) contains SH wavefield
+      b_displ_elastic(2,:) = 0._CUSTOM_REAL
+      b_veloc_elastic(2,:) = 0._CUSTOM_REAL
+      b_accel_elastic(2,:) = 0._CUSTOM_REAL
     endif
 
     if (GPU_MODE) then
       ! prepares wavefields for transfering
       if (P_SV) then
         tmp_displ_2D(1,:) = b_displ_elastic(1,:)
-        tmp_displ_2D(2,:) = b_displ_elastic(3,:)
+        tmp_displ_2D(2,:) = b_displ_elastic(2,:)
         tmp_veloc_2D(1,:) = b_veloc_elastic(1,:)
-        tmp_veloc_2D(2,:) = b_veloc_elastic(3,:)
+        tmp_veloc_2D(2,:) = b_veloc_elastic(2,:)
         tmp_accel_2D(1,:) = b_accel_elastic(1,:)
-        tmp_accel_2D(2,:) = b_accel_elastic(3,:)
+        tmp_accel_2D(2,:) = b_accel_elastic(2,:)
       else
         ! SH waves
-        tmp_displ_2D(1,:) = b_displ_elastic(2,:)
+        tmp_displ_2D(1,:) = b_displ_elastic(1,:)
         tmp_displ_2D(2,:) = 0._CUSTOM_REAL
-        tmp_veloc_2D(1,:) = b_veloc_elastic(2,:)
+        tmp_veloc_2D(1,:) = b_veloc_elastic(1,:)
         tmp_veloc_2D(2,:) = 0._CUSTOM_REAL
-        tmp_accel_2D(1,:) = b_accel_elastic(2,:)
+        tmp_accel_2D(1,:) = b_accel_elastic(1,:)
         tmp_accel_2D(2,:) = 0._CUSTOM_REAL
       endif
       call transfer_b_fields_to_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)

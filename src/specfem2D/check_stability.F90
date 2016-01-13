@@ -96,9 +96,7 @@
   ! elastic wavefield
   if (ELASTIC_SIMULATION) then
     if (any_elastic) then
-      displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 &
-                                + displ_elastic(2,:)**2 &
-                                + displ_elastic(3,:)**2))
+      displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
     else
       displnorm_all = 0.d0
     endif
@@ -123,8 +121,7 @@
   ! poroelastic wavefield
   if (POROELASTIC_SIMULATION) then
     if (any_poroelastic) then
-      displnorm_all = maxval(sqrt(displs_poroelastic(1,:)**2 &
-                                + displs_poroelastic(2,:)**2))
+      displnorm_all = maxval(sqrt(displs_poroelastic(1,:)**2 + displs_poroelastic(2,:)**2))
     else
       displnorm_all = 0.d0
     endif
@@ -142,8 +139,7 @@
       call exit_MPI(myrank,'code became unstable and blew up in solid (poroelastic)')
 
     if (any_poroelastic) then
-      displnorm_all = maxval(sqrt(displw_poroelastic(1,:)**2 &
-                                + displw_poroelastic(2,:)**2))
+      displnorm_all = maxval(sqrt(displw_poroelastic(1,:)**2 + displw_poroelastic(2,:)**2))
     else
       displnorm_all = 0.d0
     endif

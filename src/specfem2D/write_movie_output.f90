@@ -75,16 +75,16 @@
       if (P_SV) then
         ! P-SV waves
         displ_elastic(1,:) = tmp_displ_2D(1,:)
-        displ_elastic(3,:) = tmp_displ_2D(2,:)
+        displ_elastic(2,:) = tmp_displ_2D(2,:)
         veloc_elastic(1,:) = tmp_veloc_2D(1,:)
-        veloc_elastic(3,:) = tmp_veloc_2D(2,:)
+        veloc_elastic(2,:) = tmp_veloc_2D(2,:)
         accel_elastic(1,:) = tmp_accel_2D(1,:)
-        accel_elastic(3,:) = tmp_accel_2D(2,:)
+        accel_elastic(2,:) = tmp_accel_2D(2,:)
       else
         ! SH waves
-        displ_elastic(2,:) = tmp_displ_2D(1,:)
-        veloc_elastic(2,:) = tmp_veloc_2D(1,:)
-        accel_elastic(2,:) = tmp_accel_2D(1,:)
+        displ_elastic(1,:) = tmp_displ_2D(1,:)
+        veloc_elastic(1,:) = tmp_veloc_2D(1,:)
+        accel_elastic(1,:) = tmp_accel_2D(1,:)
       endif
     endif
   endif
@@ -92,7 +92,6 @@
   ! noise simulations
   if (.not. GPU_MODE) then
     if (NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise) then
-
       ! load ensemble forward source
       inquire(unit=500,exist=ex,opened=od)
       if (.not. od) then
@@ -106,15 +105,18 @@
       call spec2glob(nspec,nglob,ibool,rho_kl,noise_output_rhokl)
 
       ! prepares array
+      ! noise distribution
       noise_output_array(1,:) = surface_movie_y_noise(:) * mask_noise(:)
-      noise_output_array(2,:) = b_displ_elastic(2,:)
-      noise_output_array(3,:) = accel_elastic(2,:)
+      ! P_SV/SH-case
+      noise_output_array(2,:) = b_displ_elastic(1,:)
+      noise_output_array(3,:) = accel_elastic(1,:)
+      ! rho kernel on global nodes
       noise_output_array(4,:) = rho_k(:)
+      ! rho kernel on global nodes from local kernel (for comparison)
       noise_output_array(5,:) = noise_output_rhokl(:)
 
-      !write text file
-      write(noise_output_file,"('OUTPUT_FILES/snapshot_all_',i6.6)") it
-
+      ! writes out to text file
+      write(noise_output_file,"('OUTPUT_FILES/noise_snapshot_all_',i6.6)") it
       call snapshots_noise(noise_output_ncol,nglob,noise_output_file,noise_output_array)
     endif
   endif

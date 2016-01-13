@@ -182,14 +182,14 @@
 
   subroutine enforce_elastic_fixed_surface(accel_elastic,veloc_elastic,displ_elastic)
 
-  use constants,only: CUSTOM_REAL,ZERO
+  use constants,only: CUSTOM_REAL,ZERO,NDIM
 
   use specfem_par, only: elastic_fixed_surface,ibool,nelem_elastic_fixed_surface,nglob,&
                          this_ibool_is_a_periodic_edge
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: accel_elastic,veloc_elastic,displ_elastic
 
 !---
 !--- local variables

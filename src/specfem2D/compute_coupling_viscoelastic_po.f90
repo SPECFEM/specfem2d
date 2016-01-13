@@ -229,15 +229,15 @@
       ! we can merge the two loops because NGLLX == NGLLZ
       do k = 1,NGLLX
         dux_dxi = dux_dxi + displ_elastic(1,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
-        duz_dxi = duz_dxi + displ_elastic(3,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
+        duz_dxi = duz_dxi + displ_elastic(2,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
         dux_dgamma = dux_dgamma + displ_elastic(1,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
-        duz_dgamma = duz_dgamma + displ_elastic(3,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
+        duz_dgamma = duz_dgamma + displ_elastic(2,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
 
         if (SIMULATION_TYPE == 3) then
           b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
-          b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
+          b_duz_dxi = b_duz_dxi + b_displ_elastic(2,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
           b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
-          b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
+          b_duz_dgamma = b_duz_dgamma + b_displ_elastic(2,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
         endif
       enddo
 
@@ -338,11 +338,11 @@
       endif
 
       accel_elastic(1,iglob) = accel_elastic(1,iglob) - weight * (sigma_xx*nx + sigma_xz*nz)/2.d0
-      accel_elastic(3,iglob) = accel_elastic(3,iglob) - weight * (sigma_xz*nx + sigma_zz*nz)/2.d0
+      accel_elastic(2,iglob) = accel_elastic(2,iglob) - weight * (sigma_xz*nx + sigma_zz*nz)/2.d0
 
       if (SIMULATION_TYPE == 3) then
         b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - weight * (b_sigma_xx*nx + b_sigma_xz*nz)/2.d0
-        b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - weight * (b_sigma_xz*nx + b_sigma_zz*nz)/2.d0
+        b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - weight * (b_sigma_xz*nx + b_sigma_zz*nz)/2.d0
       endif !if (SIMULATION_TYPE == 3) then
 
     enddo
@@ -539,15 +539,15 @@
       ! we can merge the two loops because NGLLX == NGLLZ
       do k = 1,NGLLX
         dux_dxi = dux_dxi + displ_elastic(1,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
-        duz_dxi = duz_dxi + displ_elastic(3,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
+        duz_dxi = duz_dxi + displ_elastic(2,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
         dux_dgamma = dux_dgamma + displ_elastic(1,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
-        duz_dgamma = duz_dgamma + displ_elastic(3,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
+        duz_dgamma = duz_dgamma + displ_elastic(2,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
 
         if (SIMULATION_TYPE == 3) then
           b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
-          b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
+          b_duz_dxi = b_duz_dxi + b_displ_elastic(2,ibool(k,jj2,ispec_elastic))*hprime_xx(ii2,k)
           b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
-          b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
+          b_duz_dgamma = b_duz_dgamma + b_displ_elastic(2,ibool(ii2,k,ispec_elastic))*hprime_zz(jj2,k)
         endif
       enddo
 
@@ -648,11 +648,11 @@
       endif
 
       accel_elastic(1,iglob) = accel_elastic(1,iglob) - weight * (sigma_xx*nx + sigma_xz*nz)/2.d0
-      accel_elastic(3,iglob) = accel_elastic(3,iglob) - weight * (sigma_xz*nx + sigma_zz*nz)/2.d0
+      accel_elastic(2,iglob) = accel_elastic(2,iglob) - weight * (sigma_xz*nx + sigma_zz*nz)/2.d0
 
       if (SIMULATION_TYPE == 3) then
         b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - weight * (b_sigma_xx*nx + b_sigma_xz*nz)/2.d0
-        b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - weight * (b_sigma_xz*nx + b_sigma_zz*nz)/2.d0
+        b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - weight * (b_sigma_xz*nx + b_sigma_zz*nz)/2.d0
       endif !if (SIMULATION_TYPE == 3) then
 
     enddo

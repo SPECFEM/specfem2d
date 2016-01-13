@@ -47,7 +47,7 @@
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: field_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravitoacoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravito
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: field_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic) :: field_elastic
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: fields_poroelastic
   ! vector field in an element
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: vector_field_element
@@ -96,7 +96,7 @@
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: field_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravitoacoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravito
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: field_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic) :: field_elastic
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: fields_poroelastic
 
   integer,intent(in) :: ispec
@@ -125,10 +125,10 @@
         if (P_SV) then
           ! P_SV case
           vector_field_element(1,i,j) = field_elastic(1,iglob)
-          vector_field_element(2,i,j) = field_elastic(3,iglob)
+          vector_field_element(2,i,j) = field_elastic(2,iglob)
         else
           ! SH case
-          vector_field_element(1,i,j) = field_elastic(2,iglob)
+          vector_field_element(1,i,j) = field_elastic(1,iglob)
         endif
       enddo
     enddo

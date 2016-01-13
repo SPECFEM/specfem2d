@@ -219,7 +219,7 @@
       endif
 
       accel_elastic(1,iglob) = accel_elastic(1,iglob) + weight*nx*pressure
-      accel_elastic(3,iglob) = accel_elastic(3,iglob) + weight*nz*pressure
+      accel_elastic(2,iglob) = accel_elastic(2,iglob) + weight*nz*pressure
 
     enddo
   enddo
@@ -349,7 +349,7 @@
       endif
 
       b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) + weight*nx*b_pressure
-      b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) + weight*nz*b_pressure
+      b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) + weight*nz*b_pressure
 
     enddo
   enddo

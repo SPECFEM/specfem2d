@@ -363,11 +363,9 @@
       do i = 1, nglob_interface
         b_veloc_elastic(1,point_interface(i)) = pml_interface_history_veloc(1,i,it)
         b_veloc_elastic(2,point_interface(i)) = pml_interface_history_veloc(2,i,it)
-        b_veloc_elastic(3,point_interface(i)) = pml_interface_history_veloc(3,i,it)
 
         b_displ_elastic(1,point_interface(i)) = pml_interface_history_displ(1,i,it)
         b_displ_elastic(2,point_interface(i)) = pml_interface_history_displ(2,i,it)
-        b_displ_elastic(3,point_interface(i)) = pml_interface_history_displ(3,i,it)
       enddo
     endif
   endif
@@ -396,7 +394,6 @@
     do i = 1, nglob_interface
       b_accel_elastic(1,point_interface(i)) = pml_interface_history_accel(1,i,it)
       b_accel_elastic(2,point_interface(i)) = pml_interface_history_accel(2,i,it)
-      b_accel_elastic(3,point_interface(i)) = pml_interface_history_accel(3,i,it)
     enddo
   endif
 
@@ -491,13 +488,13 @@
 
   subroutine pml_boundary_elastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML,nspec_PML
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
 
   ! local parameters
   integer :: i,j,ispecabs,ispec,iglob,ibegin,iend

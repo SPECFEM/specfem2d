@@ -239,31 +239,21 @@
   ! puts elastic initial fields onto GPU
   if (any_elastic) then
     ! prepares wavefields for transfering
-    allocate(tmp_displ_2D(2,nglob_elastic), &
-             tmp_veloc_2D(2,nglob_elastic), &
-             tmp_accel_2D(2,nglob_elastic))
+    allocate(tmp_displ_2D(NDIM,nglob_elastic), &
+             tmp_veloc_2D(NDIM,nglob_elastic), &
+             tmp_accel_2D(NDIM,nglob_elastic))
 
-    tmp_displ_2D(1,:) = displ_elastic(1,:)
-    tmp_displ_2D(2,:) = displ_elastic(3,:)
-
-    tmp_veloc_2D(1,:) = veloc_elastic(1,:)
-    tmp_veloc_2D(2,:) = veloc_elastic(3,:)
-
-    tmp_accel_2D(1,:) = accel_elastic(1,:)
-    tmp_accel_2D(2,:) = accel_elastic(3,:)
+    tmp_displ_2D(:,:) = displ_elastic(:,:)
+    tmp_veloc_2D(:,:) = veloc_elastic(:,:)
+    tmp_accel_2D(:,:) = accel_elastic(:,:)
 
     ! transfers forward fields to device with initial values
     call transfer_fields_el_to_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
 
     if (SIMULATION_TYPE == 3) then
-      tmp_displ_2D(1,:) = b_displ_elastic(1,:)
-      tmp_displ_2D(2,:) = b_displ_elastic(3,:)
-
-      tmp_veloc_2D(1,:) = b_veloc_elastic(1,:)
-      tmp_veloc_2D(2,:) = b_veloc_elastic(3,:)
-
-      tmp_accel_2D(1,:) = b_accel_elastic(1,:)
-      tmp_accel_2D(2,:) = b_accel_elastic(3,:)
+      tmp_displ_2D(:,:) = b_displ_elastic(:,:)
+      tmp_veloc_2D(:,:) = b_veloc_elastic(:,:)
+      tmp_accel_2D(:,:) = b_accel_elastic(:,:)
 
       ! transfers backward fields to device with initial values
       call transfer_b_fields_to_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
@@ -612,7 +602,7 @@
   allocate(free_surface_ij(2,NGLLX,nelem_acoustic_surface))
 
   do i_spec_free = 1, nelem_acoustic_surface
-    if (acoustic_surface(2,i_spec_free) ==acoustic_surface(3,i_spec_free)) then
+    if (acoustic_surface(2,i_spec_free) == acoustic_surface(3,i_spec_free)) then
       do j =1,5
         free_surface_ij(1,j,i_spec_free) = acoustic_surface(2,i_spec_free)
       enddo
@@ -624,7 +614,7 @@
       enddo
     endif
 
-    if (acoustic_surface(4,i_spec_free) ==acoustic_surface(5,i_spec_free)) then
+    if (acoustic_surface(4,i_spec_free) == acoustic_surface(5,i_spec_free)) then
       do j =1,5
         free_surface_ij(2,j,i_spec_free) = acoustic_surface(4,i_spec_free)
       enddo

@@ -35,7 +35,7 @@
 
   subroutine compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
   use specfem_par, only: P_SV,ispec_is_elastic,nglob_elastic,&
                          NSOURCES,source_type,anglesource,source_time_function,&
@@ -43,7 +43,7 @@
                          hxis_store,hgammas_store,ibool,myrank
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: accel_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic) :: accel_elastic
   integer :: it, i_stage
 
   !local variable
@@ -67,7 +67,7 @@
               hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
               accel_elastic(1,iglob) = accel_elastic(1,iglob) - &
                                        sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
-              accel_elastic(3,iglob) = accel_elastic(3,iglob) + &
+              accel_elastic(2,iglob) = accel_elastic(2,iglob) + &
                                        cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
             enddo
           enddo
@@ -76,7 +76,7 @@
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec_selected_source(i_source))
               hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-              accel_elastic(2,iglob) = accel_elastic(2,iglob) + source_time_function(i_source,it,i_stage)*hlagrange
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + source_time_function(i_source,it,i_stage)*hlagrange
             enddo
           enddo
         endif
@@ -90,7 +90,7 @@
             iglob = ibool(i,j,ispec_selected_source(i_source))
             accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
                                      sourcearray(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
-            accel_elastic(3,iglob) = accel_elastic(3,iglob) + &
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) + &
                                      sourcearray(i_source,2,i,j) * source_time_function(i_source,it,i_stage)
           enddo
         enddo
@@ -136,10 +136,10 @@
             if (P_SV) then
               ! P-SH waves
               accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,it_tmp,1,i,j)
-              accel_elastic(3,iglob) = accel_elastic(3,iglob) + adj_sourcearrays(irec_local,it_tmp,3,i,j)
+              accel_elastic(2,iglob) = accel_elastic(2,iglob) + adj_sourcearrays(irec_local,it_tmp,2,i,j)
             else
               ! SH (membrane) wavescompute_forces_v
-              accel_elastic(2,iglob) = accel_elastic(2,iglob) + adj_sourcearrays(irec_local,it_tmp,2,i,j)
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,it_tmp,1,i,j)
             endif
           enddo
         enddo

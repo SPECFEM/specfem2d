@@ -251,7 +251,7 @@
         ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
         ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
 #ifdef FORCE_VECTORIZATION
-        do i = 1,3*nglob_elastic
+        do i = 1,NDIM*nglob_elastic
           accel_elastic_adj_coupling(i,1) = - accel_elastic(i,1)
         enddo
 #else
@@ -268,7 +268,7 @@
                                                PML_BOUNDARY_CONDITIONS)
     else
 #ifdef FORCE_VECTORIZATION
-      do i = 1,3*nglob_elastic
+      do i = 1,NDIM*nglob_elastic
         accel_elastic(i,1) = 0._CUSTOM_REAL
       enddo
 #else
@@ -315,7 +315,7 @@
                                                .false.)
     else
 #ifdef FORCE_VECTORIZATION
-      do i = 1,3*nglob_elastic
+      do i = 1,NDIM*nglob_elastic
         b_accel_elastic(i,1) = 0._CUSTOM_REAL
       enddo
 #else
@@ -481,12 +481,14 @@
                                                  displ_elastic,displ_elastic_old,&
                                                  PML_BOUNDARY_CONDITIONS)
 
-  use specfem_par, only : nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID,CUSTOM_REAL,TWO
+  use constants,only: CUSTOM_REAL,NDIM,TWO
+
+  use specfem_par, only : nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID
 
   implicit none
 
   double precision,intent(in) :: deltat,deltatover2,deltatsquareover2
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic),intent(inout) :: accel_elastic,veloc_elastic, &
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic),intent(inout) :: accel_elastic,veloc_elastic, &
                                                                       displ_elastic,displ_elastic_old
 
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
@@ -502,7 +504,7 @@
     ! note: todo - there is an additional factor 1/TWO to the default deltasquareover2 for the acceleration term
     !       find explanations where?
 #ifdef FORCE_VECTORIZATION
-    do i = 1,3*nglob_elastic
+    do i = 1,NDIM*nglob_elastic
       displ_elastic_old(i,1) = displ_elastic(i,1) + deltatsquareover2/TWO * accel_elastic(i,1)
     enddo
 #else
@@ -514,8 +516,7 @@
 #ifdef FORCE_VECTORIZATION
   !! DK DK this allows for full vectorization by using a trick to see the 2D array as a 1D array
   !! DK DK whose dimension is the product of the two dimensions, the second dimension being equal to 1
-  do i = 1,3*nglob_elastic !! DK DK here change 3 to NDIM when/if we suppress the 2nd component of the arrays (the SH component)
-  !do i = 1,NDIM*nglob_elastic  !! DK DK this should be the correct size in principle, but not here because of the SH component
+  do i = 1,NDIM*nglob_elastic
     displ_elastic(i,1) = displ_elastic(i,1) + deltat * veloc_elastic(i,1) + deltatsquareover2 * accel_elastic(i,1)
     veloc_elastic(i,1) = veloc_elastic(i,1) + deltatover2 * accel_elastic(i,1)
     accel_elastic(i,1) = 0._CUSTOM_REAL
@@ -537,8 +538,9 @@
                                                      displs_poroelastic,accelw_poroelastic,&
                                                      velocw_poroelastic,displw_poroelastic)
 
-  use specfem_par, only : nglob_poroelastic,CUSTOM_REAL,NDIM,PML_BOUNDARY_CONDITIONS
+  use constants,only: CUSTOM_REAL,NDIM
 
+  use specfem_par, only : nglob_poroelastic,PML_BOUNDARY_CONDITIONS
 
   implicit none
 

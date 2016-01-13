@@ -89,11 +89,11 @@
       endif
 
       if (any_elastic .and. nglob_interface > 0) then
-        allocate(pml_interface_history_displ(3,nglob_interface,NSTEP),stat=ier)
+        allocate(pml_interface_history_displ(NDIM,nglob_interface,NSTEP),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_displ'
-        allocate(pml_interface_history_veloc(3,nglob_interface,NSTEP),stat=ier)
+        allocate(pml_interface_history_veloc(NDIM,nglob_interface,NSTEP),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_veloc'
-        allocate(pml_interface_history_accel(3,nglob_interface,NSTEP),stat=ier)
+        allocate(pml_interface_history_accel(NDIM,nglob_interface,NSTEP),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_accel'
       endif
 
@@ -123,9 +123,9 @@
       endif
     else
       allocate(point_interface(1))
-      allocate(pml_interface_history_displ(3,1,1))
-      allocate(pml_interface_history_veloc(3,1,1))
-      allocate(pml_interface_history_accel(3,1,1))
+      allocate(pml_interface_history_displ(NDIM,1,1))
+      allocate(pml_interface_history_veloc(NDIM,1,1))
+      allocate(pml_interface_history_accel(NDIM,1,1))
       allocate(pml_interface_history_potential(1,1))
       allocate(pml_interface_history_potential_dot(1,1))
       allocate(pml_interface_history_potential_dot_dot(1,1))
@@ -136,12 +136,9 @@
       if (any_elastic .and. nglob_interface > 0) then
         do it = 1,NSTEP
           do i = 1, nglob_interface
-            read(71) pml_interface_history_accel(1,i,it),pml_interface_history_accel(2,i,it),&
-                     pml_interface_history_accel(3,i,it),&
-                     pml_interface_history_veloc(1,i,it),pml_interface_history_veloc(2,i,it),&
-                     pml_interface_history_veloc(3,i,it),&
-                     pml_interface_history_displ(1,i,it),pml_interface_history_displ(2,i,it),&
-                     pml_interface_history_displ(3,i,it)
+            read(71) pml_interface_history_accel(1,i,it),pml_interface_history_accel(2,i,it), &
+                     pml_interface_history_veloc(1,i,it),pml_interface_history_veloc(2,i,it), &
+                     pml_interface_history_displ(1,i,it),pml_interface_history_displ(2,i,it)
           enddo
         enddo
         close(71)
@@ -150,7 +147,8 @@
       if (any_acoustic .and. nglob_interface > 0) then
         do it = 1,NSTEP
           do i = 1, nglob_interface
-            read(72) pml_interface_history_potential_dot_dot(i,it),pml_interface_history_potential_dot(i,it),&
+            read(72) pml_interface_history_potential_dot_dot(i,it), &
+                     pml_interface_history_potential_dot(i,it), &
                      pml_interface_history_potential(i,it)
           enddo
         enddo
@@ -205,7 +203,7 @@
 
     ! elastic PML memory variables
     if (any_elastic .and. nspec_PML > 0) then
-      allocate(rmemory_displ_elastic(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
+      allocate(rmemory_displ_elastic(2,NDIM,NGLLX,NGLLZ,nspec_PML),stat=ier)
       if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
       allocate(rmemory_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
       if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
@@ -216,7 +214,7 @@
       allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
       if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
       if (any_acoustic .and. num_fluid_solid_edges > 0) then
-        allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
+        allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
         allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
@@ -243,7 +241,7 @@
       endif
 
       if (time_stepping_scheme == 2) then
-        allocate(rmemory_displ_elastic_LDDRK(2,3,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        allocate(rmemory_displ_elastic_LDDRK(2,NDIM,NGLLX,NGLLZ,nspec_PML),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
         allocate(rmemory_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
@@ -254,7 +252,7 @@
         allocate(rmemory_duz_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
         if (any_acoustic .and. num_fluid_solid_edges > 0) then
-          allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
+          allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
           allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
@@ -266,7 +264,7 @@
         allocate(rmemory_duz_dx_LDDRK(1,1,1,2),stat=ier)
         allocate(rmemory_duz_dz_LDDRK(1,1,1,2),stat=ier)
         if (any_acoustic .and. num_fluid_solid_edges > 0) then
-          allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1),stat=ier)
+          allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,1),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
           allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
@@ -311,9 +309,9 @@
       allocate(rmemory_duz_dx(1,1,1,1))
       allocate(rmemory_duz_dz(1,1,1,1))
       if (any_acoustic .and. num_fluid_solid_edges > 0) then
-        allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
+        allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,1))
         allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
-        allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
+        allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,1))
         allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
       endif
 
@@ -369,9 +367,9 @@
     allocate(rmemory_dux_dz(1,1,1,1))
     allocate(rmemory_duz_dx(1,1,1,1))
     allocate(rmemory_duz_dz(1,1,1,1))
-    allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
+    allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,1))
     allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
-    allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
+    allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,1))
     allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
 
     allocate(rmemory_dux_dx_prime(1,1,1,1))
@@ -408,10 +406,10 @@
   ! avoid a potential side effect owing to the "if" statements above: this array may be unallocated,
   ! if so we need to allocate a dummy version in order to be able to use that array as an argument
   ! in some subroutine calls below
-  if (.not. allocated(rmemory_fsb_displ_elastic)) allocate(rmemory_fsb_displ_elastic(1,3,NGLLX,NGLLZ,1))
+  if (.not. allocated(rmemory_fsb_displ_elastic)) allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,1))
   if (.not. allocated(rmemory_sfb_potential_ddot_acoustic)) allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
   if (.not. allocated(rmemory_fsb_displ_elastic_LDDRK)) then
-    allocate(rmemory_fsb_displ_elastic_LDDRK(1,3,NGLLX,NGLLZ,1))
+    allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,1))
   endif
   if (.not. allocated(rmemory_sfb_potential_ddot_acoustic_LDDRK)) then
     allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))

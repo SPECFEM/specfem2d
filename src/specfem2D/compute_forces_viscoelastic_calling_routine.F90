@@ -125,11 +125,8 @@
       if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
         do i = 1, nglob_interface
           write(71) accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)),&
-                    accel_elastic(3,point_interface(i)),&
                     veloc_elastic(1,point_interface(i)),veloc_elastic(2,point_interface(i)),&
-                    veloc_elastic(3,point_interface(i)),&
-                    displ_elastic(1,point_interface(i)),displ_elastic(2,point_interface(i)),&
-                    displ_elastic(3,point_interface(i))
+                    displ_elastic(1,point_interface(i)),displ_elastic(2,point_interface(i))
         enddo
       endif
     endif
@@ -138,8 +135,7 @@
   ! multiply by the inverse of the mass matrix and update velocity
   !! DK DK this should be vectorized
   accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one(:)
-  accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_one(:)
-  accel_elastic(3,:) = accel_elastic(3,:) * rmass_inverse_elastic_three(:)
+  accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_three(:)
 
   if (time_stepping_scheme == 1) then
     !! DK DK this should be vectorized
@@ -163,11 +159,9 @@
     !! DK DK this should be vectorized
     accel_elastic_rk(1,:,i_stage) = deltat * accel_elastic(1,:)
     accel_elastic_rk(2,:,i_stage) = deltat * accel_elastic(2,:)
-    accel_elastic_rk(3,:,i_stage) = deltat * accel_elastic(3,:)
 
     veloc_elastic_rk(1,:,i_stage) = deltat * veloc_elastic(1,:)
     veloc_elastic_rk(2,:,i_stage) = deltat * veloc_elastic(2,:)
-    veloc_elastic_rk(3,:,i_stage) = deltat * veloc_elastic(3,:)
 
     if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
 
@@ -179,21 +173,17 @@
         !! DK DK this should be vectorized
         veloc_elastic_initial_rk(1,:) = veloc_elastic(1,:)
         veloc_elastic_initial_rk(2,:) = veloc_elastic(2,:)
-        veloc_elastic_initial_rk(3,:) = veloc_elastic(3,:)
 
         displ_elastic_initial_rk(1,:) = displ_elastic(1,:)
         displ_elastic_initial_rk(2,:) = displ_elastic(2,:)
-        displ_elastic_initial_rk(3,:) = displ_elastic(3,:)
       endif
 
       !! DK DK this should be vectorized
       veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + weight_rk * accel_elastic_rk(1,:,i_stage)
       veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + weight_rk * accel_elastic_rk(2,:,i_stage)
-      veloc_elastic(3,:) = veloc_elastic_initial_rk(3,:) + weight_rk * accel_elastic_rk(3,:,i_stage)
 
       displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + weight_rk * veloc_elastic_rk(1,:,i_stage)
       displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + weight_rk * veloc_elastic_rk(2,:,i_stage)
-      displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + weight_rk * veloc_elastic_rk(3,:,i_stage)
 
     else if (i_stage == 4) then
       !! DK DK this should be vectorized
@@ -203,9 +193,6 @@
       veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
                            ( accel_elastic_rk(2,:,1) + 2.0d0 * accel_elastic_rk(2,:,2) + &
                              2.0d0 * accel_elastic_rk(2,:,3) + accel_elastic_rk(2,:,4) )
-      veloc_elastic(3,:) = veloc_elastic_initial_rk(3,:) + 1.0d0 / 6.0d0 * &
-                           ( accel_elastic_rk(3,:,1) + 2.0d0 * accel_elastic_rk(3,:,2) + &
-                             2.0d0 * accel_elastic_rk(3,:,3) + accel_elastic_rk(3,:,4) )
 
       displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
                            ( veloc_elastic_rk(1,:,1) + 2.0d0 * veloc_elastic_rk(1,:,2) + &
@@ -213,9 +200,6 @@
       displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
                            ( veloc_elastic_rk(2,:,1) + 2.0d0 * veloc_elastic_rk(2,:,2) + &
                              2.0d0 * veloc_elastic_rk(2,:,3) + veloc_elastic_rk(2,:,4))
-      displ_elastic(3,:) = displ_elastic_initial_rk(3,:) + 1.0d0 / 6.0d0 * &
-                           ( veloc_elastic_rk(3,:,1) + 2.0d0 * veloc_elastic_rk(3,:,2) + &
-                             2.0d0 * veloc_elastic_rk(3,:,3) + veloc_elastic_rk(3,:,4))
     endif
   endif
 
@@ -340,8 +324,7 @@
   ! multiply by the inverse of the mass matrix and update velocity
   !! DK DK this should be vectorized
   b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
-  b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_one(:)
-  b_accel_elastic(3,:) = b_accel_elastic(3,:) * rmass_inverse_elastic_three(:)
+  b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_three(:)
 
   b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
 

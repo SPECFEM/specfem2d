@@ -35,7 +35,7 @@
 
   subroutine compute_forces_viscoelastic_GPU()
 
-  use constants,only: CUSTOM_REAL,NGLLX
+  use constants,only: CUSTOM_REAL,NGLLX,NDIM
 
   use specfem_par, only : myrank,NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbours,ninterface_elastic,inum_interfaces_elastic,ibool_interfaces_ext_mesh, &
@@ -53,10 +53,10 @@
   ! local parameters
   integer:: iphase
   logical:: phase_is_inner
-  real(kind=CUSTOM_REAL),dimension(2,NGLLX,nspec_bottom) :: b_absorb_elastic_bottom_slice
-  real(kind=CUSTOM_REAL),dimension(2,NGLLX,nspec_left) :: b_absorb_elastic_left_slice
-  real(kind=CUSTOM_REAL),dimension(2,NGLLX,nspec_right) :: b_absorb_elastic_right_slice
-  real(kind=CUSTOM_REAL),dimension(2,NGLLX,nspec_top) :: b_absorb_elastic_top_slice
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_bottom) :: b_absorb_elastic_bottom_slice
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_left) :: b_absorb_elastic_left_slice
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_right) :: b_absorb_elastic_right_slice
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_top) :: b_absorb_elastic_top_slice
 
   ! check
   if (PML_BOUNDARY_CONDITIONS ) &
@@ -187,7 +187,7 @@
   subroutine compute_stacey_viscoelastic_GPU(phase_is_inner,b_absorb_elastic_bottom_slice,b_absorb_elastic_left_slice, &
                                              b_absorb_elastic_right_slice, b_absorb_elastic_top_slice)
 
-  use constants,only: CUSTOM_REAL,NGLLX
+  use constants,only: CUSTOM_REAL,NGLLX,NDIM
 
   use specfem_par, only : nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_elastic_left,b_absorb_elastic_right, &
                           b_absorb_elastic_bottom, b_absorb_elastic_top,SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &
@@ -200,10 +200,10 @@
   ! communication overlap
   logical :: phase_is_inner
 
-  real(kind=CUSTOM_REAL),dimension(2,NGLLX,nspec_bottom) :: b_absorb_elastic_bottom_slice
-  real(kind=CUSTOM_REAL),dimension(2,NGLLX,nspec_left) :: b_absorb_elastic_left_slice
-  real(kind=CUSTOM_REAL),dimension(2,NGLLX,nspec_right) :: b_absorb_elastic_right_slice
-  real(kind=CUSTOM_REAL),dimension(2,NGLLX,nspec_top) :: b_absorb_elastic_top_slice
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_bottom) :: b_absorb_elastic_bottom_slice
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_left) :: b_absorb_elastic_left_slice
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_right) :: b_absorb_elastic_right_slice
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_top) :: b_absorb_elastic_top_slice
 
   ! checks if anything to do
   if (nelemabs == 0) return
@@ -215,10 +215,10 @@
       b_absorb_elastic_right_slice(1,:,:) = b_absorb_elastic_right(1,:,:,NSTEP-it+1)
       b_absorb_elastic_top_slice(1,:,:) = b_absorb_elastic_top(1,:,:,NSTEP-it+1)
 
-      b_absorb_elastic_bottom_slice(2,:,:) = b_absorb_elastic_bottom(3,:,:,NSTEP-it+1)
-      b_absorb_elastic_left_slice(2,:,:) = b_absorb_elastic_left(3,:,:,NSTEP-it+1)
-      b_absorb_elastic_right_slice(2,:,:) = b_absorb_elastic_right(3,:,:,NSTEP-it+1)
-      b_absorb_elastic_top_slice(2,:,:) = b_absorb_elastic_top(3,:,:,NSTEP-it+1)
+      b_absorb_elastic_bottom_slice(2,:,:) = b_absorb_elastic_bottom(2,:,:,NSTEP-it+1)
+      b_absorb_elastic_left_slice(2,:,:) = b_absorb_elastic_left(2,:,:,NSTEP-it+1)
+      b_absorb_elastic_right_slice(2,:,:) = b_absorb_elastic_right(2,:,:,NSTEP-it+1)
+      b_absorb_elastic_top_slice(2,:,:) = b_absorb_elastic_top(2,:,:,NSTEP-it+1)
     endif
   endif
 
@@ -234,10 +234,10 @@
       b_absorb_elastic_top(1,:,:,it) = b_absorb_elastic_top_slice(1,:,:)
       b_absorb_elastic_left(1,:,:,it) = b_absorb_elastic_left_slice(1,:,:)
 
-      b_absorb_elastic_bottom(3,:,:,it) = b_absorb_elastic_bottom_slice(2,:,:)
-      b_absorb_elastic_right(3,:,:,it) = b_absorb_elastic_right_slice(2,:,:)
-      b_absorb_elastic_top(3,:,:,it) = b_absorb_elastic_top_slice(2,:,:)
-      b_absorb_elastic_left(3,:,:,it) = b_absorb_elastic_left_slice(2,:,:)
+      b_absorb_elastic_bottom(2,:,:,it) = b_absorb_elastic_bottom_slice(2,:,:)
+      b_absorb_elastic_right(2,:,:,it) = b_absorb_elastic_right_slice(2,:,:)
+      b_absorb_elastic_top(2,:,:,it) = b_absorb_elastic_top_slice(2,:,:)
+      b_absorb_elastic_left(2,:,:,it) = b_absorb_elastic_left_slice(2,:,:)
     endif
   endif
 

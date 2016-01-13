@@ -89,11 +89,11 @@ __global__ void compute_coupling_acoustic_el_kernel(realw* displ,
 
       // elastic displacement on global point
       displ_x = displ[iglob*2] ; // (1,iglob)
-      displ_z = displ[iglob*2+1] ; // (3,iglob)
+      displ_z = displ[iglob*2+1] ; // (2,iglob)
 
       // gets associated normal on GLL point
       nx = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,0,igll,iface)]; // (1,igll,iface)
-      nz = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,1,igll,iface)]; // (3,igll,iface)
+      nz = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,1,igll,iface)]; // (2,igll,iface)
 
       // calculates displacement component along normal
       // (normal points outwards of acoustic element)
@@ -225,7 +225,7 @@ __global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acou
       // gets associated normal on GLL point
       // note: normal points away from acoustic element
       nx = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,0,igll,iface)]; // (1,igll,iface)
-      nz = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,1,igll,iface)]; // (3,igll,iface)
+      nz = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,1,igll,iface)]; // (2,igll,iface)
 
       // gets associated, weighted jacobian
       jacobianw = coupling_ac_el_jacobian1Dw[INDEX2(NGLLX,igll,iface)];

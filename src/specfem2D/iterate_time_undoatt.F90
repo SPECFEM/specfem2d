@@ -126,7 +126,7 @@
       endif
       if (any_elastic) then
         ! buffer(3,nglob,NT_DUMP_ATTENUATION) in MB
-        sizeval = 2 * dble(3) * dble(nglob) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+        sizeval = 2 * dble(NDIM) * dble(nglob) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
         write(IMAIN,*) '  size of elastic wavefield buffer per slice       = ', sngl(sizeval),'MB'
       endif
       write(IMAIN,*)
@@ -144,9 +144,9 @@
     endif
 
     if (any_elastic) then
-      allocate(b_displ_elastic_buffer(3,nglob,NT_DUMP_ATTENUATION),stat=ier)
+      allocate(b_displ_elastic_buffer(NDIM,nglob,NT_DUMP_ATTENUATION),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_elastic')
-      allocate(b_accel_elastic_buffer(3,nglob,NT_DUMP_ATTENUATION),stat=ier)
+      allocate(b_accel_elastic_buffer(NDIM,nglob,NT_DUMP_ATTENUATION),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_accel_elastic')
 
       allocate(b_e1(NGLLX,NGLLZ,nspec_allocate,N_SLS), &

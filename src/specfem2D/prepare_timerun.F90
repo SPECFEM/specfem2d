@@ -234,7 +234,7 @@
 
     ! buffers for MPI communications
     max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
-    max_ibool_interfaces_size_el = 3*maxval(nibool_interfaces_elastic(:))
+    max_ibool_interfaces_size_el = NDIM*maxval(nibool_interfaces_elastic(:))
     max_ibool_interfaces_size_po = NDIM*maxval(nibool_interfaces_poroelastic(:))
     max_nibool_interfaces_ext_mesh = maxval(nibool_interfaces_ext_mesh(:))
 
@@ -1146,7 +1146,7 @@
 
     if (myrank == 0) then
       write(IMAIN,*) 'Max norm of initial elastic displacement = ', &
-                      maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(3,:)**2))
+                      maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
       call flush_IMAIN()
     endif
 
@@ -1204,7 +1204,8 @@
   use mpi
 #endif
 
-  use constants,only: NGLLX,NGLLZ,IMAIN
+  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN
+
   use specfem_par,only: myrank,NSTEP,nglob,nspec,ibool,coord, &
                         rhoext,vpext,vsext,density,poroelastcoef,kmato,assign_external_model
   use specfem_par_noise
@@ -1224,7 +1225,7 @@
 
   !allocate arrays for noise tomography
   allocate(time_function_noise(NSTEP), &
-           source_array_noise(3,NGLLX,NGLLZ,NSTEP), &
+           source_array_noise(NDIM,NGLLX,NGLLZ,NSTEP), &
            mask_noise(nglob), &
            surface_movie_x_noise(nglob), &
            surface_movie_y_noise(nglob), &

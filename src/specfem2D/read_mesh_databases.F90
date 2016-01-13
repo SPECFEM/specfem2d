@@ -1003,10 +1003,10 @@
   if (anyabs) then
     ! files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
     if (any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_BOUNDARY_CONDITIONS) then
-      allocate(b_absorb_elastic_left(3,NGLLZ,nspec_left,NSTEP))
-      allocate(b_absorb_elastic_right(3,NGLLZ,nspec_right,NSTEP))
-      allocate(b_absorb_elastic_bottom(3,NGLLX,nspec_bottom,NSTEP))
-      allocate(b_absorb_elastic_top(3,NGLLX,nspec_top,NSTEP))
+      allocate(b_absorb_elastic_left(NDIM,NGLLZ,nspec_left,NSTEP))
+      allocate(b_absorb_elastic_right(NDIM,NGLLZ,nspec_right,NSTEP))
+      allocate(b_absorb_elastic_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
+      allocate(b_absorb_elastic_top(NDIM,NGLLX,nspec_top,NSTEP))
     else
       allocate(b_absorb_elastic_left(1,1,1,1))
       allocate(b_absorb_elastic_right(1,1,1,1))

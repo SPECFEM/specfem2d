@@ -164,13 +164,13 @@
 
             ! solid contribution
             accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
-            accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
+            accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j)
 
             ! fluid
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - &
                   rho_f/rho_bar*adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - &
-                  rho_f/rho_bar*adj_sourcearrays(irec_local,NSTEP-it+1,3,i,j)
+                  rho_f/rho_bar*adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j)
           enddo
         enddo
 

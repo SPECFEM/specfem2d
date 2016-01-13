@@ -37,7 +37,8 @@
 !
 ! Clayton-Engquist condition if elastic
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
+    ZERO,ONE,TWO,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,nelemabs,it,any_elastic, &
                          assign_external_model,ibool,kmato,numabs,ispec_is_elastic, &
@@ -66,15 +67,15 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(3,nglob),intent(inout) :: accel_elastic
-  real(kind=CUSTOM_REAL), dimension(3,nglob),intent(in) :: veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(inout) :: accel_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: veloc_elastic,displ_elastic
 
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob
   integer :: ibegin,iend
   real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz
-  real(kind=CUSTOM_REAL) :: displx,disply,displz,displn,spring_position,displtx,displty,displtz
+  real(kind=CUSTOM_REAL) :: displx,displz,displn,spring_position,displtx,displtz
 
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
@@ -156,23 +157,26 @@
 
         weight = jacobian1D * wzgll(j)
 
-        vx = veloc_elastic(1,iglob) - veloc_horiz
-        vy = veloc_elastic(2,iglob)
-        vz = veloc_elastic(3,iglob) - veloc_vert
+        if (P_SV) then
+          ! P_SV-case
+          vx = veloc_elastic(1,iglob) - veloc_horiz
+          vz = veloc_elastic(2,iglob) - veloc_vert
+          vn = nx*vx+nz*vz
+          tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
+          tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+        else
+          ! SH-case
+          vy = veloc_elastic(1,iglob)
+          ty = rho_vs*vy
+        endif
 
-        vn = nx*vx+nz*vz
-
-        tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
-        ty = rho_vs*vy
-        tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
         displtx = 0._CUSTOM_REAL
         displtz = 0._CUSTOM_REAL
 
         if (ADD_SPRING_TO_STACEY) then
           displx = displ_elastic(1,iglob)
-          disply = displ_elastic(2,iglob)
-          displz = displ_elastic(3,iglob)
+          displz = displ_elastic(2,iglob)
 
           spring_position = sqrt((coord(1,iglob)-x_center_spring)**2 + (coord(2,iglob)-z_center_spring)**2)
 
@@ -180,23 +184,27 @@
 
           displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nx + &
                     mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
-          displty = mul_unrelaxed_elastic*disply
           displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nz + &
                     mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displz-displn*nz)
         endif
 
-        accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0 + displtx)*weight
-        accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
-        accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0 + displtz)*weight
+        if (P_SV) then
+          ! P_SV case
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0 + displtx)*weight
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0 + displtz)*weight
+        else
+          ! SH-case
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
+        endif
 
         if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
           if (P_SV) then
             ! P-SV waves
             b_absorb_elastic_left(1,j,ib_left(ispecabs),it) = (tx + traction_x_t0)*weight
-            b_absorb_elastic_left(3,j,ib_left(ispecabs),it) = (tz + traction_z_t0)*weight
+            b_absorb_elastic_left(2,j,ib_left(ispecabs),it) = (tz + traction_z_t0)*weight
           else
             ! SH (membrane) waves
-            b_absorb_elastic_left(2,j,ib_left(ispecabs),it) = ty*weight
+            b_absorb_elastic_left(1,j,ib_left(ispecabs),it) = ty*weight
           endif
         endif
       enddo
@@ -251,47 +259,53 @@
 
         weight = jacobian1D * wzgll(j)
 
-        vx = veloc_elastic(1,iglob) - veloc_horiz
-        vy = veloc_elastic(2,iglob)
-        vz = veloc_elastic(3,iglob) - veloc_vert
-
-        vn = nx*vx+nz*vz
-
-        tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
-        ty = rho_vs*vy
-        tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+        if (P_SV) then
+          ! P_SV case
+          vx = veloc_elastic(1,iglob) - veloc_horiz
+          vz = veloc_elastic(2,iglob) - veloc_vert
+          vn = nx*vx+nz*vz
+          tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
+          tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+        else
+          ! SH-case
+          vy = veloc_elastic(1,iglob)
+          ty = rho_vs*vy
+        endif
 
         displtx = 0._CUSTOM_REAL
         displtz = 0._CUSTOM_REAL
 
         if (ADD_SPRING_TO_STACEY) then
           displx = displ_elastic(1,iglob)
-          disply = displ_elastic(2,iglob)
-          displz = displ_elastic(3,iglob)
+          displz = displ_elastic(2,iglob)
 
           spring_position = sqrt((coord(1,iglob)-x_center_spring)**2 + (coord(2,iglob)-z_center_spring)**2)
 
           displn = nx*displx+nz*displz
 
           displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nx + &
-                     mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
-          displty = mul_unrelaxed_elastic*disply
+                    mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
           displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nz + &
                     mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displz-displn*nz)
         endif
 
-        accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0 + displtx)*weight
-        accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
-        accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz - traction_z_t0 + displtz)*weight
+        if (P_SV) then
+          ! P_SV-case
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0 + displtx)*weight
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0 + displtz)*weight
+        else
+          ! SH-case
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
+        endif
 
         if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
           if (P_SV) then
             ! P-SV waves
             b_absorb_elastic_right(1,j,ib_right(ispecabs),it) = (tx - traction_x_t0)*weight
-            b_absorb_elastic_right(3,j,ib_right(ispecabs),it) = (tz - traction_z_t0)*weight
+            b_absorb_elastic_right(2,j,ib_right(ispecabs),it) = (tz - traction_z_t0)*weight
           else
             ! SH (membrane) waves
-            b_absorb_elastic_right(2,j,ib_right(ispecabs),it) = ty*weight
+            b_absorb_elastic_right(1,j,ib_right(ispecabs),it) = ty*weight
           endif
         endif
       enddo
@@ -351,15 +365,18 @@
 
         weight = jacobian1D * wxgll(i)
 
-        vx = veloc_elastic(1,iglob) - veloc_horiz
-        vy = veloc_elastic(2,iglob)
-        vz = veloc_elastic(3,iglob) - veloc_vert
-
-        vn = nx*vx+nz*vz
-
-        tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
-        ty = rho_vs*vy
-        tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+        if (P_SV) then
+          ! P_SV-case
+          vx = veloc_elastic(1,iglob) - veloc_horiz
+          vz = veloc_elastic(2,iglob) - veloc_vert
+          vn = nx*vx+nz*vz
+          tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
+          tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+        else
+          ! SH-case
+          vy = veloc_elastic(2,iglob)
+          ty = rho_vs*vy
+        endif
 
 ! exclude corners to make sure there is no contradiction on the normal
 ! for Stacey absorbing conditions but not for incident plane waves;
@@ -375,8 +392,7 @@
 
         if (ADD_SPRING_TO_STACEY) then
           displx = displ_elastic(1,iglob)
-          disply = displ_elastic(2,iglob)
-          displz = displ_elastic(3,iglob)
+          displz = displ_elastic(2,iglob)
 
           spring_position = sqrt((coord(1,iglob)-x_center_spring)**2 + (coord(2,iglob)-z_center_spring)**2)
 
@@ -384,29 +400,32 @@
 
           displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nx + &
                     mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
-          displty = mul_unrelaxed_elastic*disply
           displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nz + &
                     mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displz-displn*nz)
 
           if ((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
             displtx = 0._CUSTOM_REAL
-            displty = 0._CUSTOM_REAL
             displtz = 0._CUSTOM_REAL
           endif
         endif
 
-        accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0 + displtx)*weight
-        accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
-        accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0 + displtz)*weight
+        if (P_SV) then
+          ! P_SV-case
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0 + displtx)*weight
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0 + displtz)*weight
+        else
+          ! SH-case
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
+        endif
 
         if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
           if (P_SV) then
             ! P-SV waves
             b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),it) = (tx + traction_x_t0)*weight
-            b_absorb_elastic_bottom(3,i,ib_bottom(ispecabs),it) = (tz + traction_z_t0)*weight
+            b_absorb_elastic_bottom(2,i,ib_bottom(ispecabs),it) = (tz + traction_z_t0)*weight
           else
             ! SH (membrane) waves
-            b_absorb_elastic_bottom(2,i,ib_bottom(ispecabs),it) = ty*weight
+            b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),it) = ty*weight
           endif
         endif
       enddo
@@ -458,15 +477,18 @@
 
         weight = jacobian1D * wxgll(i)
 
-        vx = veloc_elastic(1,iglob) - veloc_horiz
-        vy = veloc_elastic(2,iglob)
-        vz = veloc_elastic(3,iglob) - veloc_vert
-
-        vn = nx*vx+nz*vz
-
-        tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
-        ty = rho_vs*vy
-        tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+        if (P_SV) then
+          ! P_SV-case
+          vx = veloc_elastic(1,iglob) - veloc_horiz
+          vz = veloc_elastic(2,iglob) - veloc_vert
+          vn = nx*vx+nz*vz
+          tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
+          tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+        else
+          ! SH-case
+          vy = veloc_elastic(1,iglob)
+          ty = rho_vs*vy
+        endif
 
 ! exclude corners to make sure there is no contradiction on the normal
 ! for Stacey absorbing conditions but not for incident plane waves;
@@ -482,38 +504,40 @@
 
         if (ADD_SPRING_TO_STACEY) then
           displx = displ_elastic(1,iglob)
-          disply = displ_elastic(2,iglob)
-          displz = displ_elastic(3,iglob)
+          displz = displ_elastic(2,iglob)
 
           spring_position = sqrt((coord(1,iglob)-x_center_spring)**2 + (coord(2,iglob)-z_center_spring)**2)
 
           displn = nx*displx+nz*displz
 
-          displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL * spring_position) * displn * nx + &
+          displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nx + &
                     mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
-          displty = mul_unrelaxed_elastic * disply
-          displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL * spring_position) * displn * nz + &
+          displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nz + &
                     mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displz-displn*nz)
 
           if ((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
             displtx = 0._CUSTOM_REAL
-            displty = 0._CUSTOM_REAL
             displtz = 0._CUSTOM_REAL
           endif
         endif
 
-        accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0 + displtx)*weight
-        accel_elastic(2,iglob) = accel_elastic(2,iglob) - ty*weight
-        accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tz + traction_z_t0 + displtz)*weight
+        if (P_SV) then
+          ! P_SV-case
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0 + displtx)*weight
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0 + displtz)*weight
+        else
+          ! SH-case
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
+        endif
 
         if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
           if (P_SV) then
             ! P-SV waves
             b_absorb_elastic_top(1,i,ib_top(ispecabs),it) = (tx - traction_x_t0)*weight
-            b_absorb_elastic_top(3,i,ib_top(ispecabs),it) = (tz - traction_z_t0)*weight
+            b_absorb_elastic_top(2,i,ib_top(ispecabs),it) = (tz - traction_z_t0)*weight
           else
             ! SH (membrane) waves
-            b_absorb_elastic_top(2,i,ib_top(ispecabs),it) = ty*weight
+            b_absorb_elastic_top(1,i,ib_top(ispecabs),it) = ty*weight
           endif
         endif
       enddo
@@ -533,7 +557,8 @@
 !
 ! Clayton-Engquist condition if elastic
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
+    ZERO,ONE,TWO,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,any_elastic,ibool,ispec_is_elastic, &
                          NSTEP,it, &
@@ -545,7 +570,7 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(3,nglob),intent(inout) :: b_accel_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(inout) :: b_accel_elastic
 
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob,it_tmp
@@ -573,10 +598,10 @@
         if (P_SV) then
           ! P-SV waves
           b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_left(1,j,ib_left(ispecabs),it_tmp)
-          b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_left(3,j,ib_left(ispecabs),it_tmp)
+          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_left(2,j,ib_left(ispecabs),it_tmp)
         else
           ! SH (membrane) waves
-          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_left(2,j,ib_left(ispecabs),it_tmp)
+          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_left(1,j,ib_left(ispecabs),it_tmp)
         endif
       enddo
     endif  !  end of left absorbing boundary
@@ -589,10 +614,10 @@
         if (P_SV) then
           ! P-SV waves
           b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_right(1,j,ib_right(ispecabs),it_tmp)
-          b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_right(3,j,ib_right(ispecabs),it_tmp)
+          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_right(2,j,ib_right(ispecabs),it_tmp)
         else
           ! SH (membrane) waves
-          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_right(2,j,ib_right(ispecabs),it_tmp)
+          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_right(1,j,ib_right(ispecabs),it_tmp)
         endif
       enddo
     endif  !  end of right absorbing boundary
@@ -610,10 +635,10 @@
         if (P_SV) then
           ! P-SV waves
           b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),it_tmp)
-          b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_bottom(3,i,ib_bottom(ispecabs),it_tmp)
+          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_bottom(2,i,ib_bottom(ispecabs),it_tmp)
         else
           ! SH (membrane) waves
-          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_bottom(2,i,ib_bottom(ispecabs),it_tmp)
+          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_bottom(1,i,ib_bottom(ispecabs),it_tmp)
         endif
       enddo
     endif  !  end of bottom absorbing boundary
@@ -631,10 +656,10 @@
         if (P_SV) then
           ! P-SV waves
           b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ib_top(ispecabs),it_tmp)
-          b_accel_elastic(3,iglob) = b_accel_elastic(3,iglob) - b_absorb_elastic_top(3,i,ib_top(ispecabs),it_tmp)
+          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_top(2,i,ib_top(ispecabs),it_tmp)
         else
           ! SH (membrane) waves
-          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) - b_absorb_elastic_top(2,i,ib_top(ispecabs),it_tmp)
+          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) - b_absorb_elastic_top(1,i,ib_top(ispecabs),it_tmp)
         endif
       enddo
     endif  !  end of top absorbing boundary

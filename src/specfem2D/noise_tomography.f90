@@ -138,12 +138,13 @@
 
 
 ! =============================================================================================================
-! read in time series based on noise spectrum and construct noise "source" array
+
+! reads in time series based on noise spectrum and construct noise "source" array
   subroutine compute_source_array_noise()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NOISE_SOURCE_TIME_FUNCTION_TYPE
 
-  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,deltat,ibool, &
+  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,deltat, &
                          xigll,zigll,myrank
 
   use specfem_par_noise
@@ -151,7 +152,7 @@
   implicit none
 
   !local
-  integer :: it,i,j,iglob
+  integer :: it,i,j,ier
   real(kind=CUSTOM_REAL) :: t
   double precision, dimension(NGLLX) :: hxi, hpxi
   double precision, dimension(NGLLZ) :: hgamma, hpgamma
@@ -170,22 +171,17 @@
 ! by inverse Fourier transforming a model of the noise spectrum for that
 ! region.
 !
-! IN CASES SUCH AS THIS--WHERE THE USER REQUIRES A REALISTIC MODEL OF THE
-! SEISMIC NOISE FIELD--THE VARIABE "time_function_type" SHOULD BE SET TO 0
-! AND A TIME FUNCTION ENCODING THE DESIRED NOISE SPECTRUM SHOULD BE
+! FOR A REALISTIC MODEL OF THE SEISMIC NOISE FIELD,
+! THE VARIABE "NOISE_SOURCE_TIME_FUNCTION_TYPE" (SET IN setup/constants.h) SHOULD BE SET TO 0
+! AND A TIME FUNCTION FOR THE DESIRED NOISE SPECTRUM SHOULD BE
 ! ***SUPPLIED BY THE USER*** IN THE FILE "DATA/NOISE_TOMOGRAPHY/S_squared"
 !
 ! The alternative--setting "time_function_type" to a value other than
-! 0--results in an idealized time function that does represent a physically
+! 0--results in an idealized time function that does not represent a physically
 ! realizable noise spectrum but which nevertheless may be useful for
 ! performing tests or illustrating certain theoretical concepts.
 !
 ! ----------------------------------------------------------------------------------
-
-  !the following values are chosen to reproduce the time function from Fig 2a of
-  !"Tromp et al., 2010, Noise Cross-Correlation Sensitivity Kernels"
-
-  integer, parameter :: time_function_type = 4
 
   time_function_noise(:) = 0._CUSTOM_REAL
 
@@ -195,16 +191,16 @@
   factor_noise = 1.e3_CUSTOM_REAL
 
 
-  if (time_function_type == 0) then
+  if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 0) then
     !read in time function from file S_squared
-    open(unit=55,file='DATA/NOISE_TOMOGRAPHY/S_squared',status='old')
+    open(unit=55,file='DATA/NOISE_TOMOGRAPHY/S_squared',status='old',iostat=ier)
+    if (ier /= 0) stop 'Error opening file DATA/NOISE_TOMOGRAPHY/S_squared'
     do it = 1,NSTEP
       READ(55,*) time_function_noise(it)
     enddo
     close(55)
 
-
-  else if (time_function_type == 1) then
+  else if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 1) then
     !Ricker (second derivative of a Gaussian) time function
     do it = 1,NSTEP
       t = it*deltat
@@ -212,8 +208,7 @@
                                  exp(-a_val*(t-t0)**2.)
     enddo
 
-
-  else if (time_function_type == 2) then
+  else if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 2) then
     !first derivative of a Gaussian time function
     do it = 1,NSTEP
       t = it*deltat
@@ -221,7 +216,7 @@
     enddo
 
 
-  else if (time_function_type == 3) then
+  else if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 3) then
     !Gaussian time function
     do it = 1,NSTEP
       t = it*deltat
@@ -229,7 +224,7 @@
     enddo
 
 
-  else if (time_function_type == 4) then
+  else if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 4) then
     !reproduce time function from Figure 2a of Tromp et al. 2010
     do it = 1,NSTEP
       t = it*deltat
@@ -238,9 +233,8 @@
        exp(-a_val*(t-t0)**2.)
     enddo
 
-
   else
-    call exit_MPI(myrank,'Bad time_function_type in compute_source_array_noise.')
+    call exit_MPI(myrank,'Bad NOISE_SOURCE_TIME_FUNCTION_TYPE in compute_source_array_noise.')
 
   endif
 
@@ -259,19 +253,22 @@
 
   call lagrange_any(gamma_noise,NGLLZ,zigll,hgamma,hpgamma)
 
-  if (P_SV) then ! P-SV simulation
+  ! master station for noise source: located in element ispec_noise
+  if (P_SV) then
+    ! P-SV simulation
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        iglob = ibool(i,j,ispec_noise)
+        ! iglob = ibool(i,j,ispec_noise)
         source_array_noise(1,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
-        source_array_noise(3,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
+        source_array_noise(2,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
       enddo
     enddo
-  else ! SH (membrane) simulation
+  else
+    ! SH (membrane) simulation
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        iglob = ibool(i,j,ispec_noise)
-        source_array_noise(2,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
+        ! iglob = ibool(i,j,ispec_noise)
+        source_array_noise(1,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
       enddo
     enddo
   endif
@@ -280,6 +277,7 @@
 
 
 ! =============================================================================================================
+
 ! inject the "source" that drives the "generating wavefield"
   subroutine add_point_source_noise()
 
@@ -292,21 +290,23 @@
   !local
   integer :: i,j,iglob
 
-  if (P_SV) then ! P-SV calculation
+  if (P_SV) then
+    ! P-SV calculation
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec_noise)
         accel_elastic(1,iglob) = accel_elastic(1,iglob) &
           + sin(angle_noise)*source_array_noise(1,i,j,it)
-        accel_elastic(3,iglob) = accel_elastic(3,iglob) &
-          - cos(angle_noise)*source_array_noise(3,i,j,it)
+        accel_elastic(2,iglob) = accel_elastic(2,iglob) &
+          - cos(angle_noise)*source_array_noise(2,i,j,it)
       enddo
     enddo
-  else ! SH (membrane) calculation
+  else
+    ! SH (membrane) calculation
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec_noise)
-        accel_elastic(2,iglob) = accel_elastic(2,iglob) - source_array_noise(2,i,j,it)
+        accel_elastic(2,iglob) = accel_elastic(2,iglob) - source_array_noise(1,i,j,it)
       enddo
     enddo
   endif
@@ -319,13 +319,15 @@
 ! (recall that the ensemble forward wavefield has a spatially distributed source)
   subroutine add_surface_movie_noise(accel_elastic)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+
   use specfem_par, only: P_SV,it,NSTEP,nspec,nglob,ibool,jacobian,wxgll,wzgll,myrank
+
   use specfem_par_noise
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: accel_elastic
 
   !local
   integer :: ios, i, j, ispec, iglob
@@ -355,12 +357,12 @@
           iglob = ibool(i,j,ispec)
           accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_x_noise(iglob) * &
                                    mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
-          accel_elastic(3,iglob) = accel_elastic(3,iglob) + surface_movie_z_noise(iglob) * &
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) + surface_movie_z_noise(iglob) * &
                                    mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
 
         else ! SH (membrane) calculation
           iglob = ibool(i,j,ispec)
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) + surface_movie_y_noise(iglob) * &
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_y_noise(iglob) * &
                                    mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
         endif
       enddo
@@ -439,9 +441,7 @@
     do i = 1,ncol-1
       write(unit=504,fmt='(1pe12.3e3)',advance='no') array_all(i,iglob)
     enddo
-
     write(unit=504,fmt='(1pe13.3e3)') array_all(ncol,iglob)
-
   enddo
 
   close(504)

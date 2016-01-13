@@ -36,11 +36,12 @@
                                          PML_BOUNDARY_CONDITIONS,e1,e11,e13)
 
   ! compute forces for the elastic elements
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CONVOLUTION_MEMORY_VARIABLES, &
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
+    CONVOLUTION_MEMORY_VARIABLES, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL,FOUR_THIRDS, &
     ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: nglob,nspec,it,assign_external_model, &
+  use specfem_par, only: nglob,nspec,it,assign_external_model,P_SV, &
                          ATTENUATION_VISCOELASTIC_SOLID,nspec_allocate,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz, &
@@ -59,17 +60,17 @@
                          rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
                          rmemory_displ_elastic_LDDRK, &
                          rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,&
-                         ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE, &
                          ispec_is_acoustic,time_stepping_scheme
 
   ! PML arrays
   use specfem_par, only: nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
+                ROTATE_PML_ACTIVATE,ROTATE_PML_ANGLE, &
                 K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: accel_elastic,veloc_elastic,displ_elastic
-  real(kind=CUSTOM_REAL), dimension(3,nglob) :: displ_elastic_old
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: accel_elastic,veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: displ_elastic_old
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_allocate,N_SLS) :: e1,e11,e13
 
   ! CPML coefficients and memory variables
@@ -82,15 +83,15 @@
   integer :: ispec,i,j,k,iglob
 
   ! spatial derivatives
-  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duy_dxi,duy_dgamma,duz_dxi,duz_dgamma
-  real(kind=CUSTOM_REAL) :: dux_dxl,duy_dxl,duz_dxl,dux_dzl,duy_dzl,duz_dzl
+  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
+  real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   real(kind=CUSTOM_REAL) :: dux_dxl_prime,duz_dxl_prime,dux_dzl_prime,duz_dzl_prime
   real(kind=CUSTOM_REAL) :: theta,ct,st
   real(kind=CUSTOM_REAL) :: sigma_xx,sigma_xy,sigma_xz,sigma_zy,sigma_zz,sigma_zx
   real(kind=CUSTOM_REAL) :: sigma_xx_prime,sigma_xz_prime,sigma_zz_prime,sigma_zx_prime
   real(kind=CUSTOM_REAL) :: xxi
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempy1,tempy2,tempz1,tempz2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempz1,tempz2
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: tempx3
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: sigma_thetatheta
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
@@ -122,7 +123,7 @@
 
   ! CPML coefficients and memory variables
   integer :: ispec_PML
-  real(kind=CUSTOM_REAL), dimension(3,NGLLX,NGLLZ) :: accel_elastic_PML
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: accel_elastic_PML
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) ::PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl,&
                            PML_dux_dxl_old,PML_dux_dzl_old,PML_duz_dxl_old,PML_duz_dzl_old
 
@@ -287,8 +288,14 @@
 
 ! this to avoid a warning at execution time about an undefined variable being used
 ! for the SH component in the case of a P-SV calculation, and vice versa
-  sigma_xx = 0._CUSTOM_REAL; sigma_xy = 0._CUSTOM_REAL; sigma_xz = 0._CUSTOM_REAL
-  sigma_zy = 0._CUSTOM_REAL; sigma_zz = 0._CUSTOM_REAL; sigma_zx = 0._CUSTOM_REAL
+  ! P_SV-case
+  sigma_xx = 0._CUSTOM_REAL
+  sigma_xz = 0._CUSTOM_REAL
+  sigma_zz = 0._CUSTOM_REAL
+  sigma_zx = 0._CUSTOM_REAL
+  ! SH-case
+  sigma_xy = 0._CUSTOM_REAL
+  sigma_zy = 0._CUSTOM_REAL
 
   if (PML_BOUNDARY_CONDITIONS) then
     accel_elastic_PML = 0._CUSTOM_REAL
@@ -312,9 +319,13 @@
 
   ! loop over spectral elements
   do ispec = ifirstelem,ilastelem
-    tempx1(:,:) = 0._CUSTOM_REAL; tempy1(:,:) = 0._CUSTOM_REAL; tempz1(:,:) = 0._CUSTOM_REAL
-    tempx2(:,:) = 0._CUSTOM_REAL; tempy2(:,:) = 0._CUSTOM_REAL; tempz2(:,:) = 0._CUSTOM_REAL
+    tempx1(:,:) = 0._CUSTOM_REAL
+    tempz1(:,:) = 0._CUSTOM_REAL
+    tempx2(:,:) = 0._CUSTOM_REAL
+    tempz2(:,:) = 0._CUSTOM_REAL
+    ! AXISYM-case
     tempx3(:,:) = 0._CUSTOM_REAL
+
     sigma_thetatheta(:,:) = 0._CUSTOM_REAL
 
     !--- elastic spectral element
@@ -340,8 +351,10 @@
           endif
 
           ! derivative along x and along z
-          dux_dxi = 0._CUSTOM_REAL;    duy_dxi = 0._CUSTOM_REAL;    duz_dxi = 0._CUSTOM_REAL
-          dux_dgamma = 0._CUSTOM_REAL; duy_dgamma = 0._CUSTOM_REAL; duz_dgamma = 0._CUSTOM_REAL
+          dux_dxi = 0._CUSTOM_REAL
+          duz_dxi = 0._CUSTOM_REAL
+          dux_dgamma = 0._CUSTOM_REAL
+          duz_dgamma = 0._CUSTOM_REAL
 
           ! first double loop over GLL points to compute and store gradients
           ! we can merge the two loops because NGLLX == NGLLZ
@@ -349,26 +362,24 @@
               if (is_on_the_axis(ispec)) then
                 do k = 1,NGLJ
                   dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
-                  duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                  duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprimeBar_xx(i,k)
                   dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-                  duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+                  duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
                 enddo
               else
                 do k = 1,NGLJ
                   dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-                  duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+                  duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
                   dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-                  duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+                  duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
                 enddo
               endif
             else
               do k = 1,NGLLX
                 dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-                duy_dxi = duy_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-                duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+                duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
                 dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-                duy_dgamma = duy_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-                duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+                duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
               enddo
             endif
 
@@ -381,9 +392,6 @@
           ! derivatives of displacement
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
-
-          duy_dxl = duy_dxi*xixl + duy_dgamma*gammaxl
-          duy_dzl = duy_dxi*xizl + duy_dgamma*gammazl
 
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
@@ -422,24 +430,24 @@
               if (is_on_the_axis(ispec)) then
                 do k = 1,NGLJ
                   dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
-                  duz_dxi_old = duz_dxi_old + displ_elastic_old(3,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                  duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprimeBar_xx(i,k)
                   dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
-                  duz_dgamma_old = duz_dgamma_old + displ_elastic_old(3,ibool(i,k,ispec))*hprime_zz(j,k)
+                  duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
                 enddo
               else
                 do k = 1,NGLJ
                   dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprime_xx(i,k)
-                  duz_dxi_old = duz_dxi_old + displ_elastic_old(3,ibool(k,j,ispec))*hprime_xx(i,k)
+                  duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprime_xx(i,k)
                   dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
-                  duz_dgamma_old = duz_dgamma_old + displ_elastic_old(3,ibool(i,k,ispec))*hprime_zz(j,k)
+                  duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
                 enddo
               endif
             else
               do k = 1,NGLLX
                 dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprime_xx(i,k)
-                duz_dxi_old = duz_dxi_old + displ_elastic_old(3,ibool(k,j,ispec))*hprime_xx(i,k)
+                duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprime_xx(i,k)
                 dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
-                duz_dgamma_old = duz_dgamma_old + displ_elastic_old(3,ibool(i,k,ispec))*hprime_zz(j,k)
+                duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
               enddo
             endif
 
@@ -828,13 +836,19 @@
                                         + lambdaplus2mu_unrelaxed_elastic &
                                         * displ_elastic(1,ibool(i,j,ispec))/coord(1,ibool(i,j,ispec))
               endif
-            else ! Not axisym
-              sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
-              sigma_xy = mul_unrelaxed_elastic*duy_dxl
-              sigma_xz = mul_unrelaxed_elastic*(duz_dxl + dux_dzl)
-              sigma_zy = mul_unrelaxed_elastic*duy_dzl
-              sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
-              sigma_zx = sigma_xz
+            else
+              ! Not axisym
+              if (P_SV) then
+                ! P_SV case
+                sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
+                sigma_xz = mul_unrelaxed_elastic*(duz_dxl + dux_dzl)
+                sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
+                sigma_zx = sigma_xz
+              else
+                ! SH-case
+                sigma_xy = mul_unrelaxed_elastic*dux_dxl
+                sigma_zy = mul_unrelaxed_elastic*dux_dzl
+              endif
             endif
 
             if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec) .and. nspec_PML > 0) then
@@ -993,14 +1007,18 @@
             endif
           else
 
-            tempx1(i,j) = wzgll(j)*jacobianl*(sigma_xx*xixl+sigma_zx*xizl) ! this goes to accel_x
-            tempy1(i,j) = wzgll(j)*jacobianl*(sigma_xy*xixl+sigma_zy*xizl) ! this goes to accel_y
-            tempz1(i,j) = wzgll(j)*jacobianl*(sigma_xz*xixl+sigma_zz*xizl) ! this goes to accel_z
+            if (P_SV) then
+              ! P_SV case
+              tempx1(i,j) = wzgll(j)*jacobianl*(sigma_xx*xixl+sigma_zx*xizl) ! this goes to accel_x
+              tempz1(i,j) = wzgll(j)*jacobianl*(sigma_xz*xixl+sigma_zz*xizl) ! this goes to accel_z
 
-            tempx2(i,j) = wxgll(i)*jacobianl*(sigma_xx*gammaxl+sigma_zx*gammazl) ! this goes to accel_x
-            tempy2(i,j) = wxgll(i)*jacobianl*(sigma_xy*gammaxl+sigma_zy*gammazl) ! this goes to accel_y
-            tempz2(i,j) = wxgll(i)*jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl) ! this goes to accel_z
-
+              tempx2(i,j) = wxgll(i)*jacobianl*(sigma_xx*gammaxl+sigma_zx*gammazl) ! this goes to accel_x
+              tempz2(i,j) = wxgll(i)*jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl) ! this goes to accel_z
+            else
+              ! SH-case
+              tempx1(i,j) = wzgll(j)*jacobianl*(sigma_xy*xixl+sigma_zy*xizl) ! this goes to accel_x
+              tempx2(i,j) = wxgll(i)*jacobianl*(sigma_xy*gammaxl+sigma_zy*gammazl) ! this goes to accel_x
+            endif
           endif
         enddo
       enddo  ! end of the loops on the collocation points i,j
@@ -1033,21 +1051,21 @@
             if (stage_time_scheme == 1) then
               rmemory_displ_elastic(1,1,i,j,ispec_PML) = coef0_1 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + &
                                                          coef1_1 * displ_elastic(1,iglob) + coef2_1 * displ_elastic_old(1,iglob)
-              rmemory_displ_elastic(1,3,i,j,ispec_PML) = coef0_1 * rmemory_displ_elastic(1,3,i,j,ispec_PML) + &
-                                                         coef1_1 * displ_elastic(3,iglob) + coef2_1 * displ_elastic_old(3,iglob)
+              rmemory_displ_elastic(1,2,i,j,ispec_PML) = coef0_1 * rmemory_displ_elastic(1,2,i,j,ispec_PML) + &
+                                                         coef1_1 * displ_elastic(2,iglob) + coef2_1 * displ_elastic_old(2,iglob)
 
               if (singularity_type == 0) then
                 rmemory_displ_elastic(2,1,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
                                                            coef1_2 * displ_elastic(1,iglob) + coef2_2 * displ_elastic_old(1,iglob)
-                rmemory_displ_elastic(2,3,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,3,i,j,ispec_PML) + &
-                                                           coef1_2 * displ_elastic(3,iglob) + coef2_2 * displ_elastic_old(3,iglob)
+                rmemory_displ_elastic(2,2,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,2,i,j,ispec_PML) + &
+                                                           coef1_2 * displ_elastic(2,iglob) + coef2_2 * displ_elastic_old(2,iglob)
               else
                 rmemory_displ_elastic(2,1,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
                                                            coef1_2 * time_n * displ_elastic(1,iglob) + &
                                                            coef2_2 * time_nsub1 * displ_elastic_old(1,iglob)
-                rmemory_displ_elastic(2,3,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,3,i,j,ispec_PML) + &
-                                                           coef1_2 * time_n * displ_elastic(3,iglob) + &
-                                                           coef2_2 * time_nsub1 * displ_elastic_old(3,iglob)
+                rmemory_displ_elastic(2,2,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,2,i,j,ispec_PML) + &
+                                                           coef1_2 * time_n * displ_elastic(2,iglob) + &
+                                                           coef2_2 * time_nsub1 * displ_elastic_old(2,iglob)
               endif
             endif
 
@@ -1059,11 +1077,11 @@
               rmemory_displ_elastic(1,1,i,j,ispec_PML) = rmemory_displ_elastic(1,1,i,j,ispec_PML) + &
                     BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,1,i,j,ispec_PML)
 
-              rmemory_displ_elastic_LDDRK(1,3,i,j,ispec_PML) = &
-                    ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,3,i,j,ispec_PML) + &
-                    deltat * (-bb_1 * rmemory_displ_elastic(1,3,i,j,ispec_PML) + displ_elastic(3,iglob))
-              rmemory_displ_elastic(1,3,i,j,ispec_PML) = rmemory_displ_elastic(1,3,i,j,ispec_PML) + &
-                    BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,3,i,j,ispec_PML)
+              rmemory_displ_elastic_LDDRK(1,2,i,j,ispec_PML) = &
+                    ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,2,i,j,ispec_PML) + &
+                    deltat * (-bb_1 * rmemory_displ_elastic(1,2,i,j,ispec_PML) + displ_elastic(2,iglob))
+              rmemory_displ_elastic(1,2,i,j,ispec_PML) = rmemory_displ_elastic(1,2,i,j,ispec_PML) + &
+                    BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,2,i,j,ispec_PML)
 
               if (singularity_type == 0) then
                 rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) = &
@@ -1072,11 +1090,11 @@
                 rmemory_displ_elastic(2,1,i,j,ispec_PML) = rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
                       BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML)
 
-                rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML) = &
-                      ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML) + &
-                      deltat * (-bb_2 * rmemory_displ_elastic(2,3,i,j,ispec_PML) + displ_elastic(3,iglob))
-                rmemory_displ_elastic(2,3,i,j,ispec_PML) = rmemory_displ_elastic(2,3,i,j,ispec_PML) + &
-                      BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML)
+                rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML) = &
+                      ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML) + &
+                      deltat * (-bb_2 * rmemory_displ_elastic(2,2,i,j,ispec_PML) + displ_elastic(2,iglob))
+                rmemory_displ_elastic(2,2,i,j,ispec_PML) = rmemory_displ_elastic(2,2,i,j,ispec_PML) + &
+                      BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML)
               else
                 rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) = &
                       ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) + &
@@ -1084,11 +1102,11 @@
                 rmemory_displ_elastic(2,1,i,j,ispec_PML) = rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
                       BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML)
 
-                rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML) = &
-                      ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML) + &
-                      deltat * (-bb_2 * rmemory_displ_elastic(2,3,i,j,ispec_PML) + displ_elastic(3,iglob) * time_n)
-                rmemory_displ_elastic(2,3,i,j,ispec_PML) = rmemory_displ_elastic(2,3,i,j,ispec_PML) + &
-                      BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,3,i,j,ispec_PML)
+                rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML) = &
+                      ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML) + &
+                      deltat * (-bb_2 * rmemory_displ_elastic(2,2,i,j,ispec_PML) + displ_elastic(2,iglob) * time_n)
+                rmemory_displ_elastic(2,2,i,j,ispec_PML) = rmemory_displ_elastic(2,2,i,j,ispec_PML) + &
+                      BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML)
               endif
 
             endif
@@ -1098,25 +1116,25 @@
                 accel_elastic_PML(1,i,j)= wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*r_xiplus1(i,j) * &
                      ( A1 * veloc_elastic(1,iglob) + A2 * displ_elastic(1,iglob) + &
                        A3 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,1,i,j,ispec_PML))
-                accel_elastic_PML(3,i,j)= wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*r_xiplus1(i,j) * &
-                     ( A1 * veloc_elastic(3,iglob) + A2 * displ_elastic(3,iglob) + &
-                       A3 * rmemory_displ_elastic(1,3,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,3,i,j,ispec_PML))
+                accel_elastic_PML(2,i,j)= wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*r_xiplus1(i,j) * &
+                     ( A1 * veloc_elastic(2,iglob) + A2 * displ_elastic(2,iglob) + &
+                       A3 * rmemory_displ_elastic(1,2,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,2,i,j,ispec_PML))
               else
                 accel_elastic_PML(1,i,j)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*coord(1,ibool(i,j,ispec))* &
                      ( A1 * veloc_elastic(1,iglob) + A2 * displ_elastic(1,iglob) + &
                        A3 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,1,i,j,ispec_PML))
-                accel_elastic_PML(3,i,j)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*coord(1,ibool(i,j,ispec))* &
-                     ( A1 * veloc_elastic(3,iglob) + A2 * displ_elastic(3,iglob) + &
-                       A3 * rmemory_displ_elastic(1,3,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,3,i,j,ispec_PML))
+                accel_elastic_PML(2,i,j)= wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)*coord(1,ibool(i,j,ispec))* &
+                     ( A1 * veloc_elastic(2,iglob) + A2 * displ_elastic(2,iglob) + &
+                       A3 * rmemory_displ_elastic(1,2,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,2,i,j,ispec_PML))
               endif
             else
 
               accel_elastic_PML(1,i,j) = wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
                     ( A1 * veloc_elastic(1,iglob) + A2 * displ_elastic(1,iglob) + &
                       A3 * rmemory_displ_elastic(1,1,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,1,i,j,ispec_PML))
-              accel_elastic_PML(3,i,j) = wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
-                    ( A1 * veloc_elastic(3,iglob) + A2 * displ_elastic(3,iglob) + &
-                      A3 * rmemory_displ_elastic(1,3,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,3,i,j,ispec_PML))
+              accel_elastic_PML(2,i,j) = wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * &
+                    ( A1 * veloc_elastic(2,iglob) + A2 * displ_elastic(2,iglob) + &
+                      A3 * rmemory_displ_elastic(1,2,i,j,ispec_PML) + A4 * rmemory_displ_elastic(2,2,i,j,ispec_PML))
             endif
           enddo
         enddo
@@ -1137,7 +1155,7 @@
               do k = 1,NGLJ
                 accel_elastic(1,iglob) = accel_elastic(1,iglob) &
                                          - (tempx1(k,j)*hprimeBarwglj_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
-                accel_elastic(3,iglob) = accel_elastic(3,iglob) &
+                accel_elastic(2,iglob) = accel_elastic(2,iglob) &
                                          - (tempz1(k,j)*hprimeBarwglj_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
               enddo
               accel_elastic(1,iglob) = accel_elastic(1,iglob) - tempx3(i,j)
@@ -1145,23 +1163,23 @@
               do k = 1,NGLLX
                 accel_elastic(1,iglob) = accel_elastic(1,iglob) &
                                          - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
-                accel_elastic(3,iglob) = accel_elastic(3,iglob) &
+                accel_elastic(2,iglob) = accel_elastic(2,iglob) &
                                          - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
               enddo
               accel_elastic(1,iglob) = accel_elastic(1,iglob) - tempx3(i,j)
             endif
-          else !if AXISYM == false
+          else
+            !if AXISYM == false
             do k = 1,NGLLX
               accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
-              accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempy1(k,j)*hprimewgll_xx(k,i) + tempy2(i,k)*hprimewgll_zz(k,j))
-              accel_elastic(3,iglob) = accel_elastic(3,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
+              accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
             enddo
           endif
 
           !!! PML_BOUNDARY_CONDITIONS
           if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec)) then
             accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j)
-            accel_elastic(3,iglob) = accel_elastic(3,iglob) - accel_elastic_PML(3,i,j)
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) - accel_elastic_PML(2,i,j)
           endif
 
         enddo

@@ -35,7 +35,16 @@
 
 ! compute kinetic and potential energy in the solid (acoustic elements are excluded)
 
-  use specfem_par
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,ZERO,TWO
+
+  use specfem_par,only: myrank,nspec,kinetic_energy,potential_energy, &
+    ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,jacobian,wxgll,wzgll, &
+    displ_elastic,veloc_elastic, &
+    displs_poroelastic,displw_poroelastic,velocs_poroelastic,velocw_poroelastic, &
+    potential_dot_acoustic,potential_dot_gravitoacoustic,potential_dot_gravito, &
+    vsext,vpext,rhoext,poroelastcoef,density,kmato,assign_external_model, &
+    ispec_is_poroelastic,ispec_is_elastic, &
+    P_SV
 
   implicit none
 
@@ -110,9 +119,9 @@
           ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-            duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+            duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-            duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
           enddo
 
           xixl = xix(i,j,ispec)
@@ -130,8 +139,8 @@
 
           ! compute kinetic energy
           kinetic_energy = kinetic_energy  &
-              + rhol*(veloc_elastic(1,ibool(i,j,ispec))**2  &
-              + veloc_elastic(3,ibool(i,j,ispec))**2) *wxgll(i)*wzgll(j)*jacobianl / TWO
+              + rhol * (veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) &
+                *wxgll(i)*wzgll(j)*jacobianl / TWO
 
           ! compute potential energy
           potential_energy = potential_energy &
@@ -287,8 +296,7 @@
 
           ! compute kinetic energy
           kinetic_energy = kinetic_energy &
-              + rhol*(vector_field_element(1,i,j)**2 &
-              + vector_field_element(2,i,j)**2) *wxgll(i)*wzgll(j)*jacobianl / TWO
+              + rhol*(vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) *wxgll(i)*wzgll(j)*jacobianl / TWO
 
           ! compute potential energy
           potential_energy = potential_energy &

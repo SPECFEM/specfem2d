@@ -133,12 +133,13 @@
 
   subroutine compute_arrays_adj_source(xi_rec,gamma_rec,irec_local,adj_source_file,adj_sourcearray)
 
-  use constants,only: IIN,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,CUSTOM_REAL
+  use constants,only: IIN,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,CUSTOM_REAL,NDIM
 
-  use specfem_par,only: myrank,NSTEP,&
+  use specfem_par,only: myrank,NSTEP,P_SV, &
                         AXISYM,is_on_the_axis, &
                         xigll,zigll,hxir,hpxir,hgammar,hpgammar,xiglj, &
                         ispec_selected_rec,seismotype
+
   use specfem_par_gpu,only: source_adjointe
 
   implicit none
@@ -148,7 +149,7 @@
 
   character(len=MAX_STRING_LEN),intent(in) :: adj_source_file
 
-  real(kind=CUSTOM_REAL),dimension(NSTEP,3,NGLLX,NGLLZ),intent(out) :: adj_sourcearray
+  real(kind=CUSTOM_REAL),dimension(NSTEP,NDIM,NGLLX,NGLLZ),intent(out) :: adj_sourcearray
 
   ! local parameters
   integer :: icomp, itime, i, k
@@ -187,8 +188,6 @@
 
     enddo
 
-    source_adjointe(irec_local,:,2) = adj_src_s(:,3)
-
   else if (seismotype == 4) then
 
     filename = 'SEM/'//trim(adj_source_file) // '.PRE.adj'
@@ -215,7 +214,15 @@
 
   endif
 
-  source_adjointe(irec_local,:,1) = adj_src_s(:,1)
+  if (P_SV) then
+    ! P_SV-case
+    source_adjointe(irec_local,:,1) = adj_src_s(:,1)
+    source_adjointe(irec_local,:,2) = adj_src_s(:,3)
+  else
+    ! SH-case
+    source_adjointe(irec_local,:,1) = adj_src_s(:,2)
+  endif
+
 
   if (AXISYM) then
     if (is_on_the_axis(ispec_selected_rec(irec_local))) then ! TODO verify irec_local...
@@ -228,12 +235,19 @@
   endif
   call lagrange_any(gamma_rec,NGLLZ,zigll,hgammar,hpgammar)
 
-  ! fills into full adjoint source array (NSTEP,3,NGLLX,NGLLZ)
+  ! fills into full adjoint source array (NSTEP,NDIM,NGLLX,NGLLZ)
   ! note: adj_sourcearray is defined as CUSTOM_REAL
   adj_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
   do k = 1, NGLLZ
     do i = 1, NGLLX
-      adj_sourcearray(:,:,i,k) = real(hxir(i) * hgammar(k) * adj_src_s(:,:),kind=CUSTOM_REAL)
+      if (P_SV) then
+        ! P_SV-case
+        adj_sourcearray(:,1,i,k) = real(hxir(i) * hgammar(k) * adj_src_s(:,1),kind=CUSTOM_REAL)
+        adj_sourcearray(:,2,i,k) = real(hxir(i) * hgammar(k) * adj_src_s(:,3),kind=CUSTOM_REAL)
+      else
+        ! SH-case
+        adj_sourcearray(:,1,i,k) = real(hxir(i) * hgammar(k) * adj_src_s(:,2),kind=CUSTOM_REAL)
+      endif
     enddo
   enddo
 

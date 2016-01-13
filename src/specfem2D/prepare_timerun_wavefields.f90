@@ -41,6 +41,7 @@
   ! local parameters
   integer :: nglob_acoustic_b,nglob_elastic_b,nglob_poroelastic_b
   integer :: nspec_acoustic_b,nspec_elastic_b,nspec_poroelastic_b
+  integer :: ier
 
   ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
   if (myrank == 0) then
@@ -67,29 +68,35 @@
     nglob_elastic = 1
   endif
 
-  allocate(displ_elastic(3,nglob_elastic))
-  allocate(displ_elastic_old(3,nglob_elastic))
-  allocate(veloc_elastic(3,nglob_elastic))
-  allocate(accel_elastic(3,nglob_elastic))
+  allocate(displ_elastic(NDIM,nglob_elastic), &
+           veloc_elastic(NDIM,nglob_elastic), &
+           accel_elastic(NDIM,nglob_elastic),stat=ier)
+  if (ier /= 0) stop 'Error allocating elastic wavefield arrays'
+
+  ! PML
+  allocate(displ_elastic_old(NDIM,nglob_elastic),stat=ier)
+  if (ier /= 0) stop 'Error allocating old elastic wavefield arrays'
 
   if (SIMULATION_TYPE == 3) then
-    allocate(accel_elastic_adj_coupling(3,nglob_elastic))
+    allocate(accel_elastic_adj_coupling(NDIM,nglob_elastic))
   endif
 
   allocate(rmass_inverse_elastic_one(nglob_elastic))
   allocate(rmass_inverse_elastic_three(nglob_elastic))
 
   if (time_stepping_scheme==2) then
-    allocate(displ_elastic_LDDRK(3,nglob_elastic))
-    allocate(veloc_elastic_LDDRK(3,nglob_elastic))
-    allocate(veloc_elastic_LDDRK_temp(3,nglob_elastic))
+    allocate(displ_elastic_LDDRK(NDIM,nglob_elastic), &
+             veloc_elastic_LDDRK(NDIM,nglob_elastic), &
+             veloc_elastic_LDDRK_temp(NDIM,nglob_elastic),stat=ier)
+    if (ier /= 0) stop 'Error allocating elastic LDDRK wavefield arrays'
   endif
 
   if (time_stepping_scheme == 3) then
-    allocate(accel_elastic_rk(3,nglob_elastic,stage_time_scheme))
-    allocate(veloc_elastic_rk(3,nglob_elastic,stage_time_scheme))
-    allocate(veloc_elastic_initial_rk(3,nglob_elastic))
-    allocate(displ_elastic_initial_rk(3,nglob_elastic))
+    allocate(accel_elastic_rk(NDIM,nglob_elastic,stage_time_scheme), &
+             veloc_elastic_rk(NDIM,nglob_elastic,stage_time_scheme), &
+             veloc_elastic_initial_rk(NDIM,nglob_elastic), &
+             displ_elastic_initial_rk(NDIM,nglob_elastic),stat=ier)
+    if (ier /= 0) stop 'Error allocating elastic RK wavefield arrays'
   endif
 
   ! extra array if adjoint and kernels calculation
@@ -102,10 +109,13 @@
     nspec_elastic_b = 1
   endif
 
-  allocate(b_displ_elastic(3,nglob_elastic_b))
-  allocate(b_displ_elastic_old(3,nglob_elastic_b))
-  allocate(b_veloc_elastic(3,nglob_elastic_b))
-  allocate(b_accel_elastic(3,nglob_elastic_b))
+  allocate(b_displ_elastic(NDIM,nglob_elastic_b), &
+           b_veloc_elastic(NDIM,nglob_elastic_b), &
+           b_accel_elastic(NDIM,nglob_elastic_b),stat=ier)
+  if (ier /= 0) stop 'Error allocating elastic backward wavefield arrays'
+
+  allocate(b_displ_elastic_old(NDIM,nglob_elastic_b))
+
   ! kernels
   ! on global nodes
   allocate(rho_k(nglob_elastic_b))
@@ -136,7 +146,6 @@
     allocate(rhorho_el_hessian_final2(NGLLX,NGLLZ,nspec_elastic_b))
     allocate(rhorho_el_hessian_final1(NGLLX,NGLLZ,nspec_elastic_b))
   endif
-
 
   !
   ! poro-elastic domains

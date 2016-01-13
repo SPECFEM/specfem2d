@@ -95,10 +95,10 @@
 
   !local variables
   integer :: i,j,k,ispec,iglob
-  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duy_dxi,duy_dgamma,duz_dxi,duz_dgamma
-  real(kind=CUSTOM_REAL) :: dux_dxl,duy_dxl,duz_dxl,dux_dzl,duy_dzl,duz_dzl
-  real(kind=CUSTOM_REAL) :: b_dux_dxi,b_dux_dgamma,b_duy_dxi,b_duy_dgamma,b_duz_dxi,b_duz_dgamma
-  real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duy_dxl,b_duz_dxl,b_dux_dzl,b_duy_dzl,b_duz_dzl
+  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
+  real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
+  real(kind=CUSTOM_REAL) :: b_dux_dxi,b_dux_dgamma,b_duz_dxi,b_duz_dgamma
+  real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duz_dxl,b_dux_dzl,b_duz_dzl
   real(kind=CUSTOM_REAL) :: dsxx,dsxz,dszz
   real(kind=CUSTOM_REAL) :: b_dsxx,b_dsxz,b_dszz
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal
@@ -113,28 +113,28 @@
       if (ispec_is_elastic(ispec)) then
         do j = 1,NGLLZ; do i = 1,NGLLX
           ! derivative along x and along z
-          dux_dxi = 0._CUSTOM_REAL; duy_dxi = 0._CUSTOM_REAL; duz_dxi = 0._CUSTOM_REAL
-          dux_dgamma = 0._CUSTOM_REAL; duy_dgamma = 0._CUSTOM_REAL; duz_dgamma = 0._CUSTOM_REAL
-          b_dux_dxi = 0._CUSTOM_REAL; b_duy_dxi = 0._CUSTOM_REAL; b_duz_dxi = 0._CUSTOM_REAL
-          b_dux_dgamma = 0._CUSTOM_REAL; b_duy_dgamma = 0._CUSTOM_REAL; b_duz_dgamma = 0._CUSTOM_REAL
+          dux_dxi = 0._CUSTOM_REAL
+          duz_dxi = 0._CUSTOM_REAL
+          dux_dgamma = 0._CUSTOM_REAL
+          duz_dgamma = 0._CUSTOM_REAL
+          b_dux_dxi = 0._CUSTOM_REAL
+          b_duz_dxi = 0._CUSTOM_REAL
+          b_dux_dgamma = 0._CUSTOM_REAL
+          b_duz_dgamma = 0._CUSTOM_REAL
 
           ! first double loop over GLL points to compute and store gradients
           ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-            duy_dxi = duy_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-            duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+            duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-            duy_dgamma = duy_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-            duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
 
 
             b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-            b_duy_dxi = b_duy_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-            b_duz_dxi = b_duz_dxi + b_displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+            b_duz_dxi = b_duz_dxi + b_displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
             b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-            b_duy_dgamma = b_duy_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+            b_duz_dgamma = b_duz_dgamma + b_displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
 
           enddo
 
@@ -146,17 +146,12 @@
           ! derivatives of displacement
           dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
           dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
-          duy_dxl = duy_dxi*xixl + duy_dgamma*gammaxl
-          duy_dzl = duy_dxi*xizl + duy_dgamma*gammazl
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
 
           b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
           b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
-
-          b_duy_dxl = b_duy_dxi*xixl + b_duy_dgamma*gammaxl
-          b_duy_dzl = b_duy_dxi*xizl + b_duy_dgamma*gammazl
 
           b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
           b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
@@ -179,7 +174,7 @@
                           2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
           else
             ! SH (membrane) waves
-            mu_k(iglob) = duy_dxl * b_duy_dxl + duy_dzl * b_duy_dzl
+            mu_k(iglob) = dux_dxl * b_dux_dxl + dux_dzl * b_dux_dzl
           endif
 
           ! Voigt kernels, e.g., see Sieminski, 2007a,b
@@ -198,9 +193,7 @@
     enddo
 
     do iglob = 1,nglob
-      rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) + &
-                      accel_elastic(2,iglob)*b_displ_elastic(2,iglob) + &
-                      accel_elastic(3,iglob)*b_displ_elastic(3,iglob)
+      rho_k(iglob) =  accel_elastic(1,iglob)*b_displ_elastic(1,iglob) + accel_elastic(2,iglob)*b_displ_elastic(2,iglob)
     enddo
 
   else
@@ -645,11 +638,9 @@
       ! pre-computes contributions on global points
       do iglob = 1,nglob
         rhorho_el_hessian_temp1(iglob) = b_accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
-                                         b_accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
-                                         b_accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
+                                         b_accel_elastic(2,iglob)*b_accel_elastic(2,iglob)
         rhorho_el_hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
-                                         accel_elastic(2,iglob)*b_accel_elastic(2,iglob) + &
-                                         accel_elastic(3,iglob)*b_accel_elastic(3,iglob)
+                                         accel_elastic(2,iglob)*b_accel_elastic(2,iglob)
       enddo
 
       ! on local GLL basis

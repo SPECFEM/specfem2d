@@ -35,7 +35,7 @@
 
   subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ, &
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
     CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
@@ -53,7 +53,7 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: displ_elastic,displ_elastic_old
+  real(kind=CUSTOM_REAL),dimension(NDIM,nglob_elastic) :: displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_dot_dot_acoustic
 
   !local variable
@@ -86,7 +86,7 @@
       iglob = ibool(i,j,ispec_elastic)
 
       displ_x = displ_elastic(1,iglob)
-      displ_z = displ_elastic(3,iglob)
+      displ_z = displ_elastic(2,iglob)
 
       ! PML elements
       ! overwrites displ_x and displ_z
@@ -119,8 +119,8 @@
           if (stage_time_scheme == 1) then
             rmemory_fsb_displ_elastic(1,1,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,1,i,j,inum) + &
                    coef1_xz_1 * displ_elastic(1,iglob) + coef2_xz_1 * displ_elastic_old(1,iglob)
-            rmemory_fsb_displ_elastic(1,3,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,3,i,j,inum) + &
-                   coef1_xz_1 * displ_elastic(3,iglob) + coef2_xz_1 * displ_elastic_old(3,iglob)
+            rmemory_fsb_displ_elastic(1,2,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,2,i,j,inum) + &
+                   coef1_xz_1 * displ_elastic(2,iglob) + coef2_xz_1 * displ_elastic_old(2,iglob)
           endif
 
           if (stage_time_scheme == 6) then
@@ -130,15 +130,15 @@
             rmemory_fsb_displ_elastic(1,1,i,j,inum) = rmemory_fsb_displ_elastic(1,1,i,j,inum) + &
                    BETA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum)
 
-            rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum) = &
-                  ALPHA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum) + &
-                  deltat * ( - bb_xz_1 * rmemory_fsb_displ_elastic(1,3,i,j,inum) + displ_elastic(3,iglob) )
-            rmemory_fsb_displ_elastic(1,3,i,j,inum) = rmemory_fsb_displ_elastic(1,3,i,j,inum) + &
-                   BETA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,3,i,j,inum)
+            rmemory_fsb_displ_elastic_LDDRK(1,2,i,j,inum) = &
+                  ALPHA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,2,i,j,inum) + &
+                  deltat * ( - bb_xz_1 * rmemory_fsb_displ_elastic(1,2,i,j,inum) + displ_elastic(2,iglob) )
+            rmemory_fsb_displ_elastic(1,2,i,j,inum) = rmemory_fsb_displ_elastic(1,2,i,j,inum) + &
+                   BETA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,2,i,j,inum)
           endif
 
           displ_x = A8 * displ_elastic(1,iglob) + A9 * rmemory_fsb_displ_elastic(1,1,i,j,inum)
-          displ_z = A8 * displ_elastic(3,iglob) + A9 * rmemory_fsb_displ_elastic(1,3,i,j,inum)
+          displ_z = A8 * displ_elastic(2,iglob) + A9 * rmemory_fsb_displ_elastic(1,2,i,j,inum)
         endif
       endif
 
@@ -248,7 +248,8 @@
 
   subroutine compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
+    CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
 
   use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
@@ -259,7 +260,7 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL),dimension(3,nglob_elastic) :: b_displ_elastic
+  real(kind=CUSTOM_REAL),dimension(NDIM,nglob_elastic) :: b_displ_elastic
   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: b_potential_dot_dot_acoustic
 
   !local variable
@@ -289,7 +290,7 @@
 
 
       displ_x = b_displ_elastic(1,iglob)
-      displ_z = b_displ_elastic(3,iglob)
+      displ_z = b_displ_elastic(2,iglob)
 
       ! get point values for the acoustic side
       i = ivalue(ipoin1D,iedge_acoustic)

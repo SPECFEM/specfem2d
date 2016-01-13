@@ -543,7 +543,20 @@
   ! solve the conflict in value of PML_BOUNDARY_CONDITIONS and STACEY_ABSORBING_CONDITIONS
   if (PML_BOUNDARY_CONDITIONS) any_abs = .true.
 
-  if (add_Bielak_conditions .or. initialfield ) ADD_SPRING_TO_STACEY = .false.
+  if (any_abs .and. ADD_SPRING_TO_STACEY) then
+    if (add_Bielak_conditions .or. initialfield) then
+      ! spring not supported
+      print *,''
+      print *,'Warning: ADD_SPRING_TO_STACEY not supported for Bielak or initialfield, setting ADD_SPRING_TO_STACEY to .false.'
+      ADD_SPRING_TO_STACEY = .false.
+    endif
+    if (.not. P_SV) then
+      ! spring not supported for SH
+      print *,''
+      print *,'Warning: ADD_SPRING_TO_STACEY not supported for SH-wavefield simulation, setting ADD_SPRING_TO_STACEY to .false.'
+      ADD_SPRING_TO_STACEY = .false.
+    endif
+  endif
 
   ! initializes flags for absorbing boundaries
   if (.not. any_abs) then
