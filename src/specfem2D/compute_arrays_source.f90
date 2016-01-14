@@ -167,12 +167,21 @@
   adj_src_s(:,:) = 0.d0
 
   if (seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
-
+    ! displacement/velocity/acceleration
     comp = (/"BXX","BXY","BXZ"/)
 
-    ! reads all components
+    ! reads corresponding components
     do icomp = 1,3
+      ! skips unnecessary components
+      if (P_SV) then
+        ! P_SV-case: skips BXY component
+        if (icomp == 2) cycle
+      else
+        ! SH-case: skips BXX and BXZ components
+        if (icomp == 1 .or. icomp == 3) cycle
+      endif
 
+      ! reads in ascii adjoint source files **.adj
       filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
       open(unit = IIN, file = trim(filename), iostat = ier)
       if (ier /= 0) then
@@ -185,11 +194,11 @@
         read(IIN,*) junk, adj_src_s(itime,icomp)
       enddo
       close(IIN)
-
     enddo
 
   else if (seismotype == 4) then
-
+    ! pressure
+    ! reads in ascii adjoint source files **.PRE.adj
     filename = 'SEM/'//trim(adj_source_file) // '.PRE.adj'
     open(unit = IIN, file = trim(filename), iostat = ier)
     if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
@@ -201,7 +210,8 @@
     close(IIN)
 
   else if (seismotype == 6) then
-
+    ! potential
+    ! reads in ascii adjoint source files **.POT.adj
     filename = 'SEM/'//trim(adj_source_file) // '.POT.adj'
     open(unit = IIN, file = trim(filename), iostat = ier)
     if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')

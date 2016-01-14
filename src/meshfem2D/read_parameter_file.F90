@@ -609,6 +609,9 @@
   if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /= 3) &
     stop 'SIMULATION_TYPE can only be set to 1 or 3 in the Par_file; exiting'
 
+  if (NOISE_TOMOGRAPHY < 0 .or. NOISE_TOMOGRAPHY > 3) &
+    stop 'NOISE_TOMOGRAPHY can only be set to 0, 1, 2 or 3 in the Par_file; exiting'
+
   if (N_SLS < 2) &
     stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
 

@@ -122,6 +122,13 @@
 ! "Tromp et al., 2010, Noise Cross-Correlation Sensitivity Kernels"
   integer, parameter :: NOISE_SOURCE_TIME_FUNCTION_TYPE = 4
 
+! For noise tomography only - specify whether to reconstruct ensemble forward
+! wavefield by saving everywhere or by saving only at the boundaries (the
+! latter usually much faster but prone to artefacts)
+  logical,parameter :: NOISE_SAVE_EVERYWHERE = .false.
+
+! this is movie file output only in the case of noise tomography
+  logical,parameter :: NOISE_MOVIE_OUTPUT = .false.
 
 !!-----------------------------------------------------------
 !!

@@ -415,34 +415,18 @@
       allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLZ))
 
       ! reads in ascii adjoint source files **.adj
-      if (seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
-         irec_local = 0
-         do irec = 1, nrec
-           ! compute only adjoint source arrays in the local proc
-           if (myrank == which_proc_receiver(irec)) then
-             irec_local = irec_local + 1
-             adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
+      irec_local = 0
+      do irec = 1, nrec
+        ! compute only adjoint source arrays in the local proc
+        if (myrank == which_proc_receiver(irec)) then
+          irec_local = irec_local + 1
+          adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
 
-             call compute_arrays_adj_source(xi_receiver(irec),gamma_receiver(irec),irec_local,adj_source_file,adj_sourcearray)
+          call compute_arrays_adj_source(xi_receiver(irec),gamma_receiver(irec),irec_local,adj_source_file,adj_sourcearray)
 
-             adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
-           endif
-         enddo
-      else if (seismotype == 4 .or. seismotype == 6) then
-        ! single component
-        irec_local = 0
-        do irec = 1, nrec
-          ! compute only adjoint source arrays in the local proc
-          if (myrank == which_proc_receiver(irec)) then
-            irec_local = irec_local + 1
-            adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
-
-            call compute_arrays_adj_source(xi_receiver(irec),gamma_receiver(irec),irec_local,adj_source_file,adj_sourcearray)
-
-            adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
-          endif
-        enddo
-      endif
+          adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+        endif
+      enddo
       ! frees temporary array
       deallocate(adj_sourcearray)
     else
@@ -495,21 +479,28 @@
 
   ! opens adjoint source files
   if (seismotype == 4 .or. seismotype == 6) then
+    ! pressure/potential type
     write(filename, "('./SEM/Up_file_single.su.adj')")
     open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
     if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
   else
-    write(filename, "('./SEM/Ux_file_single.su.adj')")
-    open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
-    if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+    ! displacement/velocity/acceleration type
+    if (P_SV) then
+      ! P_SV-case
+      write(filename, "('./SEM/Ux_file_single.su.adj')")
+      open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
 
-    write(filename, "('./SEM/Uy_file_single.su.adj')")
-    open(112,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
-    if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+      write(filename, "('./SEM/Uz_file_single.su.adj')")
+      open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+    else
+      ! SH-case
+      write(filename, "('./SEM/Uy_file_single.su.adj')")
+      open(112,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+    endif
 
-    write(filename, "('./SEM/Uz_file_single.su.adj')")
-    open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
-    if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
   endif
 
   ! allocates temporary array
@@ -527,17 +518,24 @@
       adj_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
 
       if (seismotype == 4 .or. seismotype == 6) then
+        ! pressure/potential
+        ! single component
         read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
         if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
       else
-        read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
-        if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+        ! displacement/velocity/acceleration
+        if (P_SV) then
+          ! P_SV-case
+          read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
+          if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
 
-        read(112,rec=irec,iostat=ier) r4head, adj_src_s(:,2)
-        if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
-
-        read(113,rec=irec,iostat=ier) r4head, adj_src_s(:,3)
-        if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+          read(113,rec=irec,iostat=ier) r4head, adj_src_s(:,3)
+          if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+        else
+          ! SH-case
+          read(112,rec=irec,iostat=ier) r4head, adj_src_s(:,2)
+          if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+        endif
       endif
 
       header2 = int(r4head(29), kind=2)
@@ -587,9 +585,14 @@
   if (seismotype == 4) then
     close(111)
   else
-    close(111)
-    close(112)
-    close(113)
+    if (P_SV) then
+      ! P_SV-case
+      close(111)
+      close(113)
+    else
+      ! SH-case
+      close(112)
+    endif
   endif
 
   ! frees memory

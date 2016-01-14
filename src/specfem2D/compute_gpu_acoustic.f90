@@ -194,10 +194,10 @@
 
   if (SIMULATION_TYPE == 3) then
     if (phase_is_inner .eqv. .false.) then
-      b_absorb_potential_left_slice(:,:)=b_absorb_acoustic_left(:,:,NSTEP-it+1)
-      b_absorb_potential_right_slice(:,:)=b_absorb_acoustic_right(:,:,NSTEP-it+1)
-      b_absorb_potential_top_slice(:,:)=b_absorb_acoustic_top(:,:,NSTEP-it+1)
-      b_absorb_potential_bottom_slice(:,:)=b_absorb_acoustic_bottom(:,:,NSTEP-it+1)
+      b_absorb_potential_left_slice(:,:) = b_absorb_acoustic_left(:,:,NSTEP-it+1)
+      b_absorb_potential_right_slice(:,:) = b_absorb_acoustic_right(:,:,NSTEP-it+1)
+      b_absorb_potential_top_slice(:,:) = b_absorb_acoustic_top(:,:,NSTEP-it+1)
+      b_absorb_potential_bottom_slice(:,:) = b_absorb_acoustic_bottom(:,:,NSTEP-it+1)
     endif
   endif
 

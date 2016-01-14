@@ -47,7 +47,7 @@
   integer :: ier
   real(kind=4),dimension(:,:,:),allocatable :: rho_save, vp_save, vs_save, kappa_save, x_save, z_save
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
-  character(len=MAX_STRING_LEN) :: inputname,outputname
+  character(len=MAX_STRING_LEN) :: inputname,outputname,outputname2
 
   ! writes out kernel files
   if (SIMULATION_TYPE == 3) then
@@ -176,66 +176,141 @@
 
     if (any_acoustic) then
       !--- left absorbing boundary
-      if (nspec_left > 0) write(65) b_absorb_acoustic_left
+      if (nspec_left > 0) then
+        ! opens file
+        write(outputname,'(a,i6.6,a)') 'absorb_acoustic_left',myrank,'.bin'
+        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        ! writes boundary contributions
+        write(35) b_absorb_acoustic_left
+        close(35)
+      endif
       !--- right absorbing boundary
-      if (nspec_right > 0) write(66) b_absorb_acoustic_right
+      if (nspec_right > 0) then
+        write(outputname,'(a,i6.6,a)') 'absorb_acoustic_right',myrank,'.bin'
+        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        ! writes boundary contributions
+        write(35) b_absorb_acoustic_right
+        close(35)
+      endif
       !--- bottom absorbing boundary
-      if (nspec_bottom > 0) write(67) b_absorb_acoustic_bottom
+      if (nspec_bottom > 0) then
+        write(outputname,'(a,i6.6,a)') 'absorb_acoustic_bottom',myrank,'.bin'
+        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        ! writes boundary contributions
+        write(35) b_absorb_acoustic_bottom
+        close(35)
+      endif
       !--- top absorbing boundary
-      if (nspec_top > 0) write(68) b_absorb_acoustic_top
-      ! closes absorbing files
-      close(65)
-      close(66)
-      close(67)
-      close(68)
+      if (nspec_top > 0) then
+        write(outputname,'(a,i6.6,a)') 'absorb_acoustic_top',myrank,'.bin'
+        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        ! writes boundary contributions
+        write(35) b_absorb_acoustic_top
+        close(35)
+      endif
     endif !any acoustic
 
     if (any_elastic) then
       !--- left absorbing boundary
-      if (nspec_left > 0) write(35) b_absorb_elastic_left
+      if (nspec_left > 0) then
+        write(outputname,'(a,i6.6,a)') 'absorb_elastic_left',myrank,'.bin'
+        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        ! writes boundary contributions
+        write(35) b_absorb_elastic_left
+        close(35)
+      endif
       !--- right absorbing boundary
-      if (nspec_right > 0)  write(36) b_absorb_elastic_right
+      if (nspec_right > 0) then
+        write(outputname,'(a,i6.6,a)') 'absorb_elastic_right',myrank,'.bin'
+        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        ! writes boundary contributions
+        write(35) b_absorb_elastic_right
+        close(35)
+      endif
       !--- bottom absorbing boundary
-      if (nspec_bottom > 0)  write(37) b_absorb_elastic_bottom
+      if (nspec_bottom > 0) then
+        write(outputname,'(a,i6.6,a)') 'absorb_elastic_bottom',myrank,'.bin'
+        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        ! writes boundary contributions
+        write(35) b_absorb_elastic_bottom
+        close(35)
+      endif
       !--- top absorbing boundary
-      if (nspec_top > 0) write(38) b_absorb_elastic_top
-      ! closes absorbing files
-      close(35)
-      close(36)
-      close(37)
-      close(38)
+      if (nspec_top > 0) then
+        write(outputname,'(a,i6.6,a)') 'absorb_elastic_top',myrank,'.bin'
+        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        ! writes boundary contributions
+        write(35) b_absorb_elastic_top
+        close(35)
+      endif
+
     endif !any elastic
 
     if (any_poroelastic) then
       !--- left absorbing boundary
       if(nspec_left > 0) then
-        write(45) b_absorb_poro_s_left
-        write(25) b_absorb_poro_w_left
+        write(outputname,'(a,i6.6,a)') 'absorb_poro_s_left',myrank,'.bin'
+        write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_left',myrank,'.bin'
+        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        open(unit=36,file='OUTPUT_FILES/'//outputname2,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        ! writes boundary contributions
+        write(35) b_absorb_poro_s_left
+        write(36) b_absorb_poro_w_left
+        close(35)
+        close(36)
       endif
       !--- right absorbing boundary
       if(nspec_right > 0) then
-        write(46) b_absorb_poro_s_right
-        write(26) b_absorb_poro_w_right
+        write(outputname,'(a,i6.6,a)') 'absorb_poro_s_right',myrank,'.bin'
+        write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_right',myrank,'.bin'
+        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        open(unit=36,file='OUTPUT_FILES/'//outputname2,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        ! writes boundary contributions
+        write(35) b_absorb_poro_s_right
+        write(36) b_absorb_poro_w_right
+        close(35)
+        close(36)
       endif
       !--- bottom absorbing boundary
       if(nspec_bottom > 0)  then
-        write(47) b_absorb_poro_s_bottom
-        write(29) b_absorb_poro_w_bottom
+        write(outputname,'(a,i6.6,a)') 'absorb_poro_s_bottom',myrank,'.bin'
+        write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_bottom',myrank,'.bin'
+        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        open(unit=36,file='OUTPUT_FILES/'//outputname2,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        ! writes boundary contributions
+        write(35) b_absorb_poro_s_bottom
+        write(36) b_absorb_poro_w_bottom
+        close(35)
+        close(36)
       endif
       !--- top absorbing boundary
       if(nspec_top > 0) then
-        write(48) b_absorb_poro_s_top
-        write(28) b_absorb_poro_w_top
+        write(outputname,'(a,i6.6,a)') 'absorb_poro_s_top',myrank,'.bin'
+        write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_top',myrank,'.bin'
+        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        open(unit=36,file='OUTPUT_FILES/'//outputname2,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+        ! writes boundary contributions
+        write(35) b_absorb_poro_s_top
+        write(36) b_absorb_poro_w_top
+        close(35)
+        close(36)
       endif
-      ! closes absorbing files
-      close(45)
-      close(46)
-      close(47)
-      close(48)
-      close(25)
-      close(26)
-      close(29)
-      close(28)
     endif
   endif
 
@@ -261,7 +336,6 @@
     write(55) displ_elastic
     write(55) veloc_elastic
     write(55) accel_elastic
-
     close(55)
   endif
 

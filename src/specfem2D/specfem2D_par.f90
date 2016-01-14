@@ -783,26 +783,19 @@ module specfem_par_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: source_array_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mask_noise
 
-  ! The following three arrays are used to hold snapshots of the generating
+  ! The following arrays are used to hold snapshots of the generating
   ! wavefield or of the ensemble forward wavefield, depending on the type of
   ! noise simulation specified. In some cases, the entire generating wavefield
   ! or ensemble forward wavefield needs to be saved for all times steps. Since
   ! the disk space required to do this is usually quite large, separate arrays
-  ! are used for x,y,z to avoid having empty dimensions (one empty dimension in
-  ! the case of SH).
+  ! are used to avoid having empty arrays
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    surface_movie_x_noise, surface_movie_y_noise, surface_movie_z_noise
+    surface_movie_x_noise, surface_movie_z_noise
 
   ! For writing noise wavefields
-  logical :: output_wavefields_noise = .true. ! this is output only in the case of noise tomography
   integer :: noise_output_ncol
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: noise_output_array
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: noise_output_rhokl
-
-  ! For noise tomography only - specify whether to reconstruct ensemble forward
-  ! wavefield by saving everywhere or by saving only at the boundaries (the
-  ! latter usually much faster but prone to artefacts)
-  logical :: save_everywhere = .false.
 
 end module specfem_par_noise
 
@@ -919,8 +912,8 @@ module specfem_par_movie
   integer :: NSTEP_BETWEEN_OUTPUT_IMAGES
 
   integer :: imagetype_JPEG
-  integer :: isnapshot_number = 0  !remember which image are going to produce
-  integer  :: nb_pixel_loc
+  integer :: isnapshot_number
+  integer :: nb_pixel_loc
   integer, dimension(:), allocatable :: ix_image_color_source,iy_image_color_source
   integer, dimension(:), allocatable :: ix_image_color_receiver,iy_image_color_receiver
   integer, dimension(:), allocatable :: nb_pixel_per_proc

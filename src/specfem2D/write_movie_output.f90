@@ -35,7 +35,7 @@
 
 ! outputs snapshots for movies
 
-  use constants,only: MAX_STRING_LEN,CUSTOM_REAL,NDIM
+  use constants,only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,NOISE_MOVIE_OUTPUT
 
   use specfem_par,only: myrank,it,NSTEP,nspec,nglob,ibool, &
     potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
@@ -45,8 +45,8 @@
 
   use specfem_par_gpu,only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
 
-  use specfem_par_noise,only: NOISE_TOMOGRAPHY,output_wavefields_noise,mask_noise, &
-                              surface_movie_y_noise,noise_output_rhokl,noise_output_array,noise_output_ncol
+  use specfem_par_noise,only: NOISE_TOMOGRAPHY,mask_noise, &
+                              surface_movie_x_noise,noise_output_rhokl,noise_output_array,noise_output_ncol
 
   use specfem_par_movie,only: output_postscript_snapshot,output_color_image,output_wavefield_dumps, &
     NSTEP_BETWEEN_OUTPUT_IMAGES
@@ -55,7 +55,7 @@
 
   ! local parameters
   integer :: ier
-  logical :: ex, od
+  logical :: ex, is_opened
   character(len=MAX_STRING_LEN) :: noise_output_file
 
   ! checks if anything to do
@@ -91,22 +91,23 @@
 
   ! noise simulations
   if (.not. GPU_MODE) then
-    if (NOISE_TOMOGRAPHY == 3 .and. output_wavefields_noise) then
+    if (NOISE_TOMOGRAPHY == 3 .and. NOISE_MOVIE_OUTPUT) then
       ! load ensemble forward source
-      inquire(unit=500,exist=ex,opened=od)
-      if (.not. od) then
-        open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct',recl = nglob * CUSTOM_REAL, &
-             action='write',iostat=ier)
+      inquire(unit=501,exist=ex,opened=is_opened)
+      if (.not. is_opened) then
+        open(unit=501,file='OUTPUT_FILES/noise_eta.bin',access='direct', &
+             recl=nglob*CUSTOM_REAL,action='read',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening noise eta file')
       endif
-      read(unit=500,rec=it) surface_movie_y_noise
+      ! for both P_SV/SH cases
+      read(unit=501,rec=it) surface_movie_x_noise ! either x (SH) or z (P_SV) component
 
       ! load product of fwd, adj wavefields
       call spec2glob(nspec,nglob,ibool,rho_kl,noise_output_rhokl)
 
       ! prepares array
       ! noise distribution
-      noise_output_array(1,:) = surface_movie_y_noise(:) * mask_noise(:)
+      noise_output_array(1,:) = surface_movie_x_noise(:) * mask_noise(:)
       ! P_SV/SH-case
       noise_output_array(2,:) = b_displ_elastic(1,:)
       noise_output_array(3,:) = accel_elastic(1,:)
@@ -116,8 +117,11 @@
       noise_output_array(5,:) = noise_output_rhokl(:)
 
       ! writes out to text file
-      write(noise_output_file,"('OUTPUT_FILES/noise_snapshot_all_',i6.6)") it
+      write(noise_output_file,"('OUTPUT_FILES/noise_snapshot_all_',i6.6,'.txt')") it
       call snapshots_noise(noise_output_ncol,nglob,noise_output_file,noise_output_array)
+
+      ! re-initializes noise array
+      surface_movie_x_noise(:) = 0._CUSTOM_REAL
     endif
   endif
 

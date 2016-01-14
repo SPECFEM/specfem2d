@@ -39,13 +39,11 @@ subroutine iterate_time()
 
   use specfem_par
   use specfem_par_gpu
-  use specfem_par_noise,only: NOISE_TOMOGRAPHY,save_everywhere
+  use specfem_par_noise,only: NOISE_TOMOGRAPHY
 
   implicit none
 
   ! local parameters
-  integer :: ier
-
   ! time
   character(len=8) :: datein
   character(len=10) :: timein
@@ -161,24 +159,17 @@ subroutine iterate_time()
     endif
 
     ! noise simulations
-    if (NOISE_TOMOGRAPHY == 1) then
+    select case (NOISE_TOMOGRAPHY)
+    case (1)
+      ! stores generating wavefield
       call save_surface_movie_noise()
-    else if (NOISE_TOMOGRAPHY == 2 .and. save_everywhere) then
-      call save_surface_movie_noise()
-    else if (NOISE_TOMOGRAPHY == 3 .and. save_everywhere) then
-      if (it == 1) open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
-                        recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error retrieving noise ensemble forward wavefield')
-
-      ! safety check
-      if (P_SV) then
-        ! P-SV case
-        call exit_MPI(myrank,'P-SV case not yet implemented.')
-      else
-        ! SH case
-        read(unit=500,rec=NSTEP-it+1) b_displ_elastic(2,:)
-      endif
-    endif
+    case (2)
+      ! stores complete wavefield for reconstruction
+      if (NOISE_SAVE_EVERYWHERE) call save_surface_movie_noise()
+    case (3)
+      ! reconstructs forward wavefield based on complete wavefield storage
+      if (NOISE_SAVE_EVERYWHERE) call read_wavefield_noise()
+    end select
 
     ! computes kinetic and potential energy
     if (output_energy) then

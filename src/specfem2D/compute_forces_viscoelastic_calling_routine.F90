@@ -84,21 +84,28 @@
 
   ! add force source
   if (.not. initialfield) then
-    if (SIMULATION_TYPE == 1) then
-      call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
-    else if (SIMULATION_TYPE == 3) then
+
+    select case(NOISE_TOMOGRAPHY)
+    case (0)
+      ! earthquake/force source
+      if (SIMULATION_TYPE == 1) then
+        call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
+      endif
+
+    case (1)
+      ! noise source at master station
+      call add_point_source_noise()
+
+    case (2)
+      ! inject generating wavefield for noise simulations
+      call add_surface_movie_noise(accel_elastic)
+    end select
+
+    ! adjoint wavefield source
+    if (SIMULATION_TYPE == 3) then
       ! adjoint sources
       call compute_add_sources_viscoelastic_adjoint()
     endif
-
-    !<NOISE_TOMOGRAPHY
-    ! inject wavefield sources for noise simulations
-    if (NOISE_TOMOGRAPHY == 1) then
-      call add_point_source_noise()
-    else if (NOISE_TOMOGRAPHY == 2) then
-      call add_surface_movie_noise(accel_elastic)
-    endif
-    !>NOISE_TOMOGRAPHY
   endif
 
   ! enforces vanishing wavefields on axis
@@ -292,17 +299,19 @@
 
   ! add force source
   if (.not. initialfield) then
-    ! backward wavefield
-    call compute_add_sources_viscoelastic(b_accel_elastic,it_temp,istage_temp)
 
-    !<NOISE_TOMOGRAPHY
-    ! inject wavefield sources for noise simulations
-    if (NOISE_TOMOGRAPHY == 3) then
-      if (.not. save_everywhere) then
-        call add_surface_movie_noise(b_accel_elastic)
-      endif
-    endif
-    !>NOISE_TOMOGRAPHY
+    select case (NOISE_TOMOGRAPHY)
+    case (0)
+      ! earthquake/force source
+      ! for backward wavefield
+      call compute_add_sources_viscoelastic(b_accel_elastic,it_temp,istage_temp)
+
+    case (3)
+      ! noise simulation
+      ! reconstruction/backward wavefield
+      ! injects generating wavefield sources
+      if (.not. NOISE_SAVE_EVERYWHERE) call add_surface_movie_noise(b_accel_elastic)
+    end select
   endif ! if not using an initial field
 
   ! only on forward arrays so far implemented...

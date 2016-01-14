@@ -214,7 +214,8 @@
               endif
             endif
 
-          else ! no PML
+          else
+            ! no PML
 
             if (AXISYM) then
               if (is_on_the_axis(ispec)) then
@@ -230,7 +231,8 @@
                 rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                     + coord(1,iglob)*wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
               endif
-            else ! not axisym
+            else
+              ! not axisym
               rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
                       + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
             endif
@@ -241,17 +243,17 @@
           !!! PML NOT WORKING YET !!!
         else if (ispec_is_gravitoacoustic(ispec)) then
 
-        this_element_has_PML = .false.
-        if (PML_BOUNDARY_CONDITIONS) then
-          if (ispec_is_PML(ispec)) stop 'PML not implemented yet for gravitoacoustic case'
-        endif
+          this_element_has_PML = .false.
+          if (PML_BOUNDARY_CONDITIONS) then
+            if (ispec_is_PML(ispec)) stop 'PML not implemented yet for gravitoacoustic case'
+          endif
 
           rmass_inverse_gravitoacoustic(iglob) = rmass_inverse_gravitoacoustic(iglob) &
                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / (kappal/rhol)
-           rmass_inverse_gravito(iglob) = rmass_inverse_gravito(iglob) &
+          rmass_inverse_gravito(iglob) = rmass_inverse_gravito(iglob) &
                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
 
-         else
+        else
           ! for acoustic medium
 
           this_element_has_PML = .false.
