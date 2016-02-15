@@ -84,8 +84,8 @@
         z = coord(2,iglob)
 
         if (material_element(ispec) == 1 .or. x < 1700.d0 .or. z >= 2300.d0) then
-          rho(i,j,ispec) = 2000.d0
-          vp(i,j,ispec) = 3000.d0
+          rho(i,j,ispec) = 2000.d0 + 10.d0*x - 32.17d0*z**3
+          vp(i,j,ispec) = 3000.d0 - 7.12d0*cos(x)
           vs(i,j,ispec) = vp(i,j,ispec) / sqrt(3.d0)
           QKappa_attenuation(i,j,ispec) = 9999. ! this means no attenuation
           Qmu_attenuation(i,j,ispec)    = 9999. ! this means no attenuation
