@@ -293,7 +293,8 @@ class mesh(object,mesh_tools):
         block_bc=[] # Will contain edge block ids
         block_bc_flag=[] # Will contain edge id -> 2
         abs_boun=[-1] * self.nabs # total 4 sides of absorbing boundaries (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
-        pml_boun=[-1] * 6 # To store pml layers id (for each pml layer : x_acoust, z_acoust, xz_acoust, x_elast, z_elast, xz_elast)
+        #pml_boun=[-1] * 6 # To store pml layers id (for each pml layer : x_acoust, z_acoust, xz_acoust, x_elast, z_elast, xz_elast)
+        pml_boun=[[] for _ in range(6)] # To store the block id corresponding to pml layers id (arbitrary number of blocks for each pml layer : x_acoust, z_acoust, xz_acoust, x_elast, z_elast, xz_elast)
         material={} # Will contain each material name and their properties
         bc={} # Will contains each boundary name and their connectivity -> 2
         blocks=cubit.get_block_id_list() # Load the blocks list
@@ -319,13 +320,21 @@ class mesh(object,mesh_tools):
                     material[name]=par # associate the name of the block to its id and properties
                 block_flag.append(int(flag)) # Append material id to block_flag
                 block_mat.append(block)  # Append block id to block_mat
-                if name in self.pml_boun_name : # If the block considered refered to one of the pml layer
-                    self.abs_mesh=True
-                    self.pml_layers=True
-                    pml_boun[self.pml_boun_name.index(name)]=block 
+                for pml_idx,pml_name in enumerate(self.pml_boun_name):
+                    if pml_name in name:
+                        pml_boun[pml_idx].append(block)
+                        self.abs_mesh=True
+                        self.pml_layers=True
                     # -> Put it at the correct position in pml_boun 
                     # (index 0 : pml_x_acoust, index 1 : pml_z_acoust, index 2 : pml_xz_acoust, 
                     #  index 3 : pml_x_elast, index 4 : pml_z_elast, index 5 : pml_xz_elast)
+                #if name in self.pml_boun_name : # If the block considered refered to one of the pml layer
+                #    self.abs_mesh=True
+                #    self.pml_layers=True
+                #    pml_boun[self.pml_boun_name.index(name)]=block
+                #    # -> Put it at the correct position in pml_boun
+                #    # (index 0 : pml_x_acoust, index 1 : pml_z_acoust, index 2 : pml_xz_acoust, 
+                #    #  index 3 : pml_x_elast, index 4 : pml_z_elast, index 5 : pml_xz_elast)
             elif ty == self.edge: # If we are dealing with a block containing edges
                 block_bc_flag.append(2) # Append "2" to block_bc_flag
                 block_bc.append(block) # Append block id to block_bc
@@ -394,7 +403,9 @@ class mesh(object,mesh_tools):
         meshfile=open(mesh_name,'w')
         print 'Writing '+mesh_name+'.....'
         num_elems=cubit.get_quad_count() # Store the number of elements
-        meshfile.write(str(num_elems)+'\n') # Write it on first line
+        toWritetoFile=[""]*(num_elems+1)
+        toWritetoFile[0]=str(num_elems)+'\n'
+        #meshfile.write(str(num_elems)+'\n') # Write it on first line
         num_write=0
         for block,flag in zip(self.block_mat,self.block_flag): # for each 2D block
             quads=cubit.get_block_faces(block) # Import quads ids
@@ -402,19 +413,28 @@ class mesh(object,mesh_tools):
                 nodes=cubit.get_connectivity('face',quad) # Get the nodes
                 nodes=self.jac_check(nodes) # Check the jacobian
                 txt=('%10i %10i %10i %10i\n')% nodes
-                meshfile.write(txt) # Write a line to mesh file
+                toWritetoFile[quad] = txt
+                #meshfile.write(txt) # Write a line to mesh file
             num_write=num_write+inum+1
             print 'block', block, 'number of ',self.face,' : ', inum+1
+        meshfile.writelines(toWritetoFile)
         meshfile.close()
         print 'Ok num elements/write=',str(num_elems), str(num_write)
     def material_write(self,mat_name):
-        """ Write quads material on file : mat_name """ 
+        """ Write quads material on file : mat_name """
         mat=open(mat_name,'w')
         print 'Writing '+mat_name+'.....'
+        num_elems=cubit.get_quad_count() # Store the number of elements
+        toWritetoFile=[""]*num_elems
+        print 'block_mat:',self.block_mat
+        print 'block_flag:',self.block_flag
         for block,flag in zip(self.block_mat,self.block_flag): # for each 2D block
-                quads=cubit.get_block_faces(block) # Import quads id
-                for quad in quads: # For each quad
-                    mat.write(('%10i\n') % flag) # Write its id in the file
+            print 'mat: ',block,' flag: ',flag
+            quads=cubit.get_block_faces(block) # Import quads id
+            for quad in quads: # For each quad
+                toWritetoFile[quad-1]=('%10i\n') % flag
+                #mat.write(('%10i\n') % flag) # Write its id in the file
+        mat.writelines(toWritetoFile)
         mat.close()
         print 'Ok'
     def pmls_write(self,pml_name):
@@ -424,28 +444,34 @@ class mesh(object,mesh_tools):
         pml_file=open(pml_name,'w')
         print 'Writing '+pml_name+'.....'
         npml_elements=0
-        id_element=0 # Global id
-        faces_all=[0]*6
+        #id_element=0 # Global id
+        indexFile=1
+        faces_all=[[] for _ in range(6)]
         for block,flag in zip(self.block_mat,self.block_flag): # For each 2D block
-            for ipml in range(0, 6): # iabs = 0,1,2,3,4,5 : for each pml layer (x_acoust, z_acoust, xz_acoust,x_elast, z_elast, xz_elast)
-               if block == self.pml_boun[ipml]: # If the block considered correspond to the pml
-                    faces_all[ipml]=cubit.get_block_faces(block) # Import all pml faces id as a Set
-                    npml_elements=npml_elements+len(faces_all[ipml])
-        pml_file.write('%10i\n' % npml_elements) # Print the number of faces on the pmls
+            for ipml in range(6): # ipml = 0,1,2,3,4,5 : for each pml layer (x_acoust, z_acoust, xz_acoust,x_elast, z_elast, xz_elast)
+               if block in self.pml_boun[ipml]: # If the block considered correspond to the pml
+                    faces_all[ipml] = faces_all[ipml] + list(cubit.get_block_faces(block)) # Concatenation
+        npml_elements=sum(map(len, faces_all))
+        toWritetoFile=[""]*(npml_elements+1)
+        toWritetoFile[0] = '%10i\n' % npml_elements # Print the number of faces on the pmls
+        #pml_file.write('%10i\n' % npml_elements) # Print the number of faces on the pmls
         print 'Number of elements in all PMLs :',npml_elements
         for block,flag in zip(self.block_mat,self.block_flag): # For each 2D block
             quads=cubit.get_block_faces(block) # Import quads id
             for quad in quads: # For each quad
-                id_element=id_element+1 # global id of this quad
+                #id_element=id_element+1 # global id of this quad
                 for ipml in range(0, 6): # iabs = 0,1,2,3,4,5 : for each pml layer (x_acoust, z_acoust, xz_acoust,x_elast, z_elast, xz_elast)
-                    if type(faces_all[ipml]) is not int: # ~ if there are elements in that pml
+                    if faces_all[ipml] != []: #type(faces_all[ipml]) is not int: # ~ if there are elements in that pml
                         if quad in faces_all[ipml]: # If this quad is belong to that pml
                           #  nodes=cubit.get_connectivity('face',quad) # Import the nodes describing the quad
                           #  nodes=self.jac_check(list(nodes)) # Check the jacobian of the quad
-                            pml_file.write(('%10i %10i\n') % (id_element,ipml%3+1)) # Write its id in the file next to its type
+                            toWritetoFile[indexFile] = ('%10i %10i\n') % (quad,ipml%3+1)
+                            indexFile = indexFile + 1
+                            #pml_file.write(('%10i %10i\n') % (id_element,ipml%3+1)) # Write its id in the file next to its type
         # ipml%3+1 = 1 -> element belongs to a X CPML layer only (either in Xmin or in Xmax)
         # ipml%3+1 = 2 -> element belongs to a Z CPML layer only (either in Zmin or in Zmax)
         # ipml%3+1 = 3 -> element belongs to both a X and a Y CPML layer (i.e., to a CPML corner)
+        pml_file.writelines(toWritetoFile)
         pml_file.close()
         print 'Ok'
         cubit.cmd('set info on') # Turn on return messages from Cubit commands
@@ -476,13 +502,16 @@ class mesh(object,mesh_tools):
             for block,flag in zip(self.block_bc,self.block_bc_flag): # For each 1D block
                 if block == self.topography: # If the block correspond to topography
                     edges_all=Set(cubit.get_block_edges(block)) # Import all topo edges id as a Set
-            freeedge.write('%10i\n' % len(edges_all)) # Print the number of edges on the free surface
+            toWritetoFile=[""]*(len(edges_all)+1)
+            toWritetoFile[0] = '%10i\n' % len(edges_all) # Print the number of edges on the free surface
+            #freeedge.write('%10i\n' % len(edges_all)) # Print the number of edges on the free surface
             print 'Number of edges in free surface :',len(edges_all)
-            id_element=0
+            #id_element=0
+            indexFile=1
             for block,flag in zip(self.block_mat,self.block_flag): # For each 2D block
                     quads=cubit.get_block_faces(block) # Import quads id
                     for quad in quads: # For each quad
-                        id_element=id_element+1 # id of this quad
+                        #id_element=id_element+1 # id of this quad
                         edges=Set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities. 
                         # Here it gets the 1D edges associates with the face of id "quad". Store it as a Set 
                         intersection=edges & edges_all # Contains the edges of the considered quad that is on the free surface
@@ -495,9 +524,13 @@ class mesh(object,mesh_tools):
                                 for i in nodes: # ??? TODO nodes_ok == node_edge ???
                                     if i in node_edge:
                                         nodes_ok.append(i)
-                                txt='%10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1]) 
+                                txt='%10i %10i %10i %10i\n' % (quad,2,nodes_ok[0],nodes_ok[1])
+                                #txt='%10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1])
+                                toWritetoFile[indexFile] = txt
+                                indexFile = indexFile + 1
                                 # Write the id of the quad, 2 (number of nodes describing a free surface elements), and the nodes
-                                freeedge.write(txt)
+                                #freeedge.write(txt)
+            freeedge.writelines(toWritetoFile)
         else:
             freeedge.write('0') # Even without any free surface specfem2d need a file with a 0 in first line
         freeedge.close()
@@ -521,13 +554,16 @@ class mesh(object,mesh_tools):
                 if block == self.abs_boun[iabs]: # If the block considered correspond to the boundary
                     edges_abs[iabs]=Set(cubit.get_block_edges(block)) # Store each edge on edges_abs
                     nedges_all=nedges_all+len(edges_abs[iabs]); # add the number of edges to nedges_all
-        absedge.write('%10i\n' % nedges_all) # Write the total number of absorbing edges to the first line of file
+        toWritetoFile=[""]*(nedges_all+1)
+        toWritetoFile[0] = '%10i\n' % nedges_all # Write the total number of absorbing edges to the first line of file
+        #absedge.write('%10i\n' % nedges_all) # Write the total number of absorbing edges to the first line of file
         print 'Number of edges', nedges_all
-        id_element=0
+        #id_element=0
+        indexFile=1
         for block,flag in zip(self.block_mat,self.block_flag): # For each 2D block
                 quads=cubit.get_block_faces(block) # Import quads id
                 for quad in quads: # For each quad
-                    id_element=id_element+1 # id of this quad
+                    #id_element=id_element+1 # id of this quad
                     edges=Set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities. 
                     # Here it gets the 1D edges associates with the face of id "quad". Store it as a Set 
                     for iabs in range(0,self.nabs): # iabs = 0,1,2,3 : for each absorbing boundaries
@@ -541,9 +577,13 @@ class mesh(object,mesh_tools):
                                 for i in nodes:  # ??? TODO nodes_ok == node_edge ???
                                     if i in node_edge:
                                         nodes_ok.append(i)
-                                txt='%10i %10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1],iabs+1)
-                                # Write the id of the quad, 2 (number of nodes describing a free surface elements), the nodes and the type of boundary 
-                                absedge.write(txt)
+                                #txt='%10i %10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1],iabs+1)
+                                txt='%10i %10i %10i %10i %10i\n' % (quad,2,nodes_ok[0],nodes_ok[1],iabs+1)
+                                # Write the id of the quad, 2 (number of nodes describing a free surface elements), the nodes and the type of boundary
+                                toWritetoFile[indexFile] = txt
+                                indexFile = indexFile + 1
+                                #absedge.write(txt)
+        absedge.writelines(toWritetoFile)
         absedge.close()
         print 'Ok'
         cubit.cmd('set info on') # Turn on return messages from Cubit commands
@@ -559,13 +599,16 @@ class mesh(object,mesh_tools):
         for block,flag in zip(self.block_bc,self.block_bc_flag): # For each 1D block
             if block == self.axisId: # If the block correspond to the axis
                 edges_all=Set(cubit.get_block_edges(block)) # Import all axis edges id as a Set
-        axisedge.write('%10i\n' % len(edges_all)) # Write the number of edges on the axis
+        toWritetoFile=[""]*(len(edges_all)+1)
+        toWritetoFile[0] = '%10i\n' % len(edges_all) # Write the number of edges on the axis
+        #axisedge.write('%10i\n' % len(edges_all)) # Write the number of edges on the axis
         print 'Number of edges on the axis :',len(edges_all)
-        id_element=0
+        #id_element=0
+        indexFile=1
         for block,flag in zip(self.block_mat,self.block_flag): # For each 2D block
                 quads=cubit.get_block_faces(block) # Import quads id
                 for quad in quads: # For each quad
-                    id_element=id_element+1 # id of this quad
+                    #id_element=id_element+1 # id of this quad
                     edges=Set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities. 
                     # Here it gets the 1D edges associates with the face of id "quad". Store it as a Set 
                     intersection=edges & edges_all # Contains the edges of the considered quad that are on the axis
@@ -578,9 +621,13 @@ class mesh(object,mesh_tools):
                             for i in nodes: # ??? TODO nodes_ok == node_edge ???
                                 if i in node_edge:
                                     nodes_ok.append(i)
-                            txt='%10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1]) 
+                            txt='%10i %10i %10i %10i\n' % (quad,2,nodes_ok[0],nodes_ok[1]) 
+                            #txt='%10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1]) 
                             # Write the id of the quad, 2 (number of nodes describing a free surface elements), the nodes
-                            axisedge.write(txt)
+                            toWritetoFile[indexFile] = txt
+                            indexFile = indexFile + 1
+                            #axisedge.write(txt)
+        axisedge.writelines(toWritetoFile)
         axisedge.close()
         print 'Ok'
         cubit.cmd('set info on') # Turn on return messages from Cubit commands
