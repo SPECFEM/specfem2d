@@ -15,7 +15,7 @@ cd $currentdir
 
 # runs database generation
 # In principle we do not need rerun xmeshfem2D in the adjoint run.
-# However, in the current structure of the code, the xspecfem2D program can not detect the 
+# However, in the current structure of the code, the xspecfem2D program can not detect the
 # the parameter change in Par_file. Since in the adjoint run we change the SIMULATION_TYPE and the save_forward
 echo
 echo "  running mesher..."
