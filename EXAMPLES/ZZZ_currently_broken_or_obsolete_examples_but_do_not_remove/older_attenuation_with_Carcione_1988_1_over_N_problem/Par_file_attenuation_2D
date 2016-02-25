@@ -21,7 +21,11 @@ partitioning_method             = 3              # SCOTCH = 3, ascending order (
 
 ngnod                           = 4              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
-add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
+add_Bielak_conditions_bottom    = .false.        # add Bielak conditions or not if initial plane wave
+add_Bielak_conditions_right     = .false.
+add_Bielak_conditions_top       = .false.
+add_Bielak_conditions_left      = .false.
+
 assign_external_model           = .false.        # define external earth model or not
 READ_EXTERNAL_SEP_FILE          = .false.        # Read external model from DATA/model_velocity.dat_input, or use routine
 ATTENUATION_VISCOELASTIC_SOLID  = .true.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
