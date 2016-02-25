@@ -239,7 +239,9 @@ module specfem_par
 
   ! for plane wave incidence
   ! to compute analytical initial plane wave field
-  logical :: initialfield,add_Bielak_conditions
+  logical :: initialfield
+  logical :: add_Bielak_conditions,add_Bielak_conditions_bottom,add_Bielak_conditions_right, &
+             add_Bielak_conditions_top,add_Bielak_conditions_left
   double precision :: anglesource_refl, c_inc, c_refl
   double precision, dimension(2) :: A_plane, B_plane, C_plane
   double precision :: time_offset

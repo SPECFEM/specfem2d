@@ -59,7 +59,9 @@
   ! initialfield
   use specfem_par,only: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
                         t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot, &
-                        add_Bielak_conditions,initialfield,over_critical_angle, &
+                        add_Bielak_conditions_bottom,add_Bielak_conditions_right, &
+                        add_Bielak_conditions_top,add_Bielak_conditions_left, &
+                        initialfield,over_critical_angle, &
                         anglesource,anglesource_refl,A_plane,B_plane,C_plane,c_inc,c_refl,time_offset
 
   ! for Bielak
@@ -122,7 +124,7 @@
 
         ! for analytical initial plane wave for Bielak's conditions
         ! left or right edge, horizontal normal vector
-        if (add_Bielak_conditions .and. initialfield) then
+        if (add_Bielak_conditions_left .and. initialfield) then
           if (.not. over_critical_angle) then
             call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                         x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
@@ -224,7 +226,7 @@
 
         ! for analytical initial plane wave for Bielak's conditions
         ! left or right edge, horizontal normal vector
-        if (add_Bielak_conditions .and. initialfield) then
+        if (add_Bielak_conditions_right .and. initialfield) then
           if (.not.over_critical_angle) then
             call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                         x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
@@ -330,7 +332,7 @@
 
         ! for analytical initial plane wave for Bielak's conditions
         ! top or bottom edge, vertical normal vector
-        if (add_Bielak_conditions .and. initialfield) then
+        if (add_Bielak_conditions_bottom .and. initialfield) then
           if (.not.over_critical_angle) then
             call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                         x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
@@ -450,7 +452,7 @@
 
         ! for analytical initial plane wave for Bielak's conditions
         ! top or bottom edge, vertical normal vector
-        if (add_Bielak_conditions .and. initialfield) then
+        if (add_Bielak_conditions_top .and. initialfield) then
           call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                       x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
                       c_inc, c_refl, time_offset,f0_source(1))

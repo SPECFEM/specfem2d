@@ -105,7 +105,7 @@
 
     ! user output
     if (iproc == 0) print *,''
-    print *,'slice ',iproc,' has number of spectral-elements =',nspec
+    print *,'slice ',iproc,' has number of spectral elements =',nspec
 
   enddo
 
@@ -190,8 +190,20 @@
   write(15,*) 'anglerec'
   write(15,*) anglerec
 
-  write(15,*) 'initialfield add_Bielak_conditions'
-  write(15,*) initialfield,add_Bielak_conditions
+  write(15,*) 'initialfield'
+  write(15,*) initialfield
+
+  write(15,*) 'add_Bielak_conditions_bottom'
+  write(15,*) add_Bielak_conditions_bottom
+
+  write(15,*) 'add_Bielak_conditions_right'
+  write(15,*) add_Bielak_conditions_right
+
+  write(15,*) 'add_Bielak_conditions_top'
+  write(15,*) add_Bielak_conditions_top
+
+  write(15,*) 'add_Bielak_conditions_left'
+  write(15,*) add_Bielak_conditions_left
 
   write(15,*) 'seismotype imagetype_postscript'
   write(15,*) seismotype,imagetype_postscript

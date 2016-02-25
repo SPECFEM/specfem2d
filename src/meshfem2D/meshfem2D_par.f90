@@ -96,7 +96,9 @@
   double precision :: Q0,freq0
 
   ! variables used for plane wave incidence
-  logical :: initialfield,add_Bielak_conditions
+  logical :: initialfield
+  logical :: add_Bielak_conditions_left,add_Bielak_conditions_right,add_Bielak_conditions_bottom,add_Bielak_conditions_top, &
+             add_Bielak_conditions
 
   ! variables used for absorbing boundary condition
   logical :: any_abs,absbottom,absright,abstop,absleft

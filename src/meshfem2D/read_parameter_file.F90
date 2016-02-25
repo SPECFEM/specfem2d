@@ -161,8 +161,20 @@
   call read_value_logical_p(initialfield, 'solver.initialfield')
   if (err_occurred() /= 0) stop 'error reading parameter initialfield in Par_file'
 
-  call read_value_logical_p(add_Bielak_conditions, 'solver.add_Bielak_conditions')
-  if (err_occurred() /= 0) stop 'error reading parameter add_Bielak_conditions in Par_file'
+  call read_value_logical_p(add_Bielak_conditions_bottom, 'solver.add_Bielak_conditions_bottom')
+  if (err_occurred() /= 0) stop 'error reading parameter add_Bielak_conditions_bottom in Par_file'
+
+  call read_value_logical_p(add_Bielak_conditions_right, 'solver.add_Bielak_conditions_right')
+  if (err_occurred() /= 0) stop 'error reading parameter add_Bielak_conditions_right in Par_file'
+
+  call read_value_logical_p(add_Bielak_conditions_top, 'solver.add_Bielak_conditions_top')
+  if (err_occurred() /= 0) stop 'error reading parameter add_Bielak_conditions_top in Par_file'
+
+  call read_value_logical_p(add_Bielak_conditions_left, 'solver.add_Bielak_conditions_left')
+  if (err_occurred() /= 0) stop 'error reading parameter add_Bielak_conditions_left in Par_file'
+
+  add_Bielak_conditions = add_Bielak_conditions_bottom .or. add_Bielak_conditions_right .or. &
+                          add_Bielak_conditions_top .or. add_Bielak_conditions_left
 
   ! read acoustic forcing flag
   call read_value_logical_p(ACOUSTIC_FORCING, 'solver.ACOUSTIC_FORCING')

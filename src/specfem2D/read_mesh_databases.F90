@@ -125,7 +125,19 @@
   read(IIN,*) anglerec
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) initialfield,add_Bielak_conditions
+  read(IIN,*) initialfield
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) add_Bielak_conditions_bottom
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) add_Bielak_conditions_right
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) add_Bielak_conditions_top
+
+  read(IIN,"(a80)") datlin
+  read(IIN,*) add_Bielak_conditions_left
 
   read(IIN,"(a80)") datlin
   read(IIN,*) seismotype,imagetype_postscript
@@ -251,9 +263,10 @@
     write(IMAIN,200) npgeo,NDIM
     write(IMAIN,600) NSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
     write(IMAIN,700) seismotype,anglerec
-    write(IMAIN,750) initialfield,add_Bielak_conditions,&
-                    ATTENUATION_VISCOELASTIC_SOLID, &
-                    output_grid_ASCII,output_energy
+    write(IMAIN,750) initialfield, &
+                 add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left, &
+                 ATTENUATION_VISCOELASTIC_SOLID, &
+                 output_grid_ASCII,output_energy
     write(IMAIN,800) imagetype_postscript,cutsnaps,subsamp_postscript
 
     ! time step
@@ -285,7 +298,10 @@
 
 750 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Read external initial field. . . . . .(initialfield) = ',l6/5x, &
-  'Add Bielak conditions . . . .(add_Bielak_conditions) = ',l6/5x, &
+  'Add Bielak conditions (add_Bielak_conditions_bottom) = ',l6/5x, &
+  'Add Bielak conditions .(add_Bielak_conditions_right) = ',l6/5x, &
+  'Add Bielak conditions . .(add_Bielak_conditions_top) = ',l6/5x, &
+  'Add Bielak conditions. .(add_Bielak_conditions_left) = ',l6/5x, &
   'Attenuation on/off .(ATTENUATION_VISCOELASTIC_SOLID) = ',l6/5x, &
   'Save grid in ASCII file or not . (output_grid_ASCII) = ',l6/5x, &
   'Save a file with total energy or not.(output_energy) = ',l6)

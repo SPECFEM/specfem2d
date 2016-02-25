@@ -91,7 +91,10 @@ force_normal_to_surface         = .false.        # angleforce normal to surface 
 
 # use an existing initial wave field as source or start from zero (medium initially at rest)
 initialfield                    = .false.
-add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
+add_Bielak_conditions_bottom    = .false.        # add Bielak conditions or not if initial plane wave
+add_Bielak_conditions_right     = .false.
+add_Bielak_conditions_top       = .false.
+add_Bielak_conditions_left      = .false.
 
 # acoustic forcing
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
