@@ -31,6 +31,11 @@ echo
 # stores output
 cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES
 
+# plot the traveltime kernel
+cp ../../utils/visualization/plot_wavefield.pl ./
+./plot_wavefield.pl 400/2800/400 400/2000/400 0/200/0/80    50/10/40/10 -8/-8/-8 1/1/1  -8.0/0.02 1/0/1/1/0 4.0/1/0 1/0/1/200 Tromp2005_kernel PSV_homo
+
+
 echo
 echo "see results in directory: OUTPUT_FILES/"
 echo
