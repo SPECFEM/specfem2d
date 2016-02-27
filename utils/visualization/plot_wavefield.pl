@@ -48,7 +48,7 @@ if (@ARGV < 1) {die("Usage: plot_wavefield.pl xxx\n");}
 $numf = ($pend - $pfirst)/$pint + 1;
 
 # directory with data files (USER CHANGE THIS)
-# you can specify you own path by change $bdir and $idir1
+# you can specify you own path by changing $bdir and $idir1
 #$bdir = "/data2/SVN/seismo/2D/SPECFEM2D_20120420";
 #$idir1 = "$bdir/OUTPUT_FILES";                 # if running from the default directory
 #$idir1 = "$bdir/EXAMPLES/$tlab/OUTPUT_FILES";   # if running from an examples directory
