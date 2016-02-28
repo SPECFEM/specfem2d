@@ -285,7 +285,7 @@
   ! No interface between acoustic, elastic, and poroelastic elements.
   !--------------------------------------------------
   subroutine construct_interfaces(nparts, elmnts_l,  &
-                                  nb_materials, phi_material, num_material)
+                                  nbmodels, phi_material, num_material)
 
   use part_unstruct_par,only: nelmnts,ninterfaces,tab_size_interfaces,tab_interfaces,part, &
     xadj_g,adjncy_g
@@ -296,8 +296,8 @@
   integer, intent(in)  :: nparts
   integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
   integer, dimension(1:nelmnts), intent(in)  :: num_material
-  integer, intent(in)  :: nb_materials
-  double precision, dimension(1:nb_materials), intent(in)  :: phi_material
+  integer, intent(in)  :: nbmodels
+  double precision, dimension(1:nbmodels), intent(in)  :: phi_material
 
   integer  :: num_part, num_part_bis, el, el_adj, num_interface, num_edge, ncommon_nodes, &
        num_node, num_node_bis
@@ -733,7 +733,7 @@
   ! Under development : excluding points that have two different normals in two different elements.
   !--------------------------------------------------
 
-  subroutine merge_abs_boundaries(nb_materials, phi_material, num_material, ngnod)
+  subroutine merge_abs_boundaries(nbmodels, phi_material, num_material, ngnod)
 
   use part_unstruct_par,only: nelmnts,elmnts,nelemabs,nelemabs_merge,abs_surface, &
     abs_surface_char,abs_surface_merge,abs_surface_merge,abs_surface_type, &
@@ -744,11 +744,11 @@
   include "constants.h"
 
   integer, intent(in)  :: ngnod
-  integer  :: nb_materials
-  double precision, dimension(nb_materials), intent(in)  :: phi_material
+  integer  :: nbmodels
+  double precision, dimension(nbmodels), intent(in)  :: phi_material
   integer, dimension(1:nelmnts), intent(in)  :: num_material
 
-  logical, dimension(nb_materials)  :: is_acoustic
+  logical, dimension(nbmodels)  :: is_acoustic
   integer  :: num_edge, nedge_bound
   integer  :: match
   integer  :: nb_elmnts_abs
@@ -868,7 +868,7 @@
 
   is_acoustic(:) = .false.
 
-  do i = 1, nb_materials
+  do i = 1, nbmodels
      if (phi_material(i) >= 1.d0) then
         is_acoustic(i) = .true.
      endif

@@ -342,10 +342,10 @@
   call write_glob2loc_nodes_database(15, iproc, npgeo, 2)
 
   write(15,*) 'numat ngnod nspec pointsdisp plot_lowerleft_corner_only'
-  write(15,*) nb_materials,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
+  write(15,*) nbmodels,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
 
   ! counts number of absorbing elements
-  if (any_abs) then
+  if (STACEY_ABSORBING_CONDITIONS) then
     call write_abs_merge_database(15, iproc, 1)
   else
     nelemabs_loc = 0
@@ -412,7 +412,7 @@
   write(15,*) '(num 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0) or '
   write(15,*) '(num 3 rhos rhof phi c k_xx k_xz k_zz Ks Kf Kfr etaf mufr Qmu)'
 
-  do i = 1,nb_materials
+  do i = 1,nbmodels
     if (icodemat(i) == ISOTROPIC_MATERIAL) then
       ! isotropic
       write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
@@ -480,12 +480,12 @@
 
   subroutine save_databases_absorbing()
 
-  use parameter_file_par,only: any_abs
+  use parameter_file_par,only: STACEY_ABSORBING_CONDITIONS
 
   implicit none
 
   write(15,*) 'List of absorbing elements (edge1 edge2 edge3 edge4 type):'
-  if (any_abs) then
+  if (STACEY_ABSORBING_CONDITIONS) then
     ! writes out absorbing boundaries
     call write_abs_merge_database(15, iproc, 2)
   endif

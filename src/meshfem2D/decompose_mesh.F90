@@ -35,7 +35,7 @@
   subroutine decompose_mesh()
 
   use parameter_file_par,only: NPROC,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
-    ngnod,nb_materials,num_material,partitioning_method,phi
+    ngnod,nbmodels,num_material,partitioning_method,phi
 
   use part_unstruct_par,only: part,nelmnts,xadj_g,adjncy_g,elmnts,elmnts_bis,nb_edges, &
     nnodes_elmnts,nnodes,nodes_elmnts,nodes_coords,ninterfaces
@@ -127,23 +127,23 @@
 
   ! fluid-solid edges: coupled elements are transferred to the same partition
   if (ngnod == 9) then
-     call acoustic_elastic_repartitioning(elmnts_bis, nb_materials, phi, num_material, NPROC)
+     call acoustic_elastic_repartitioning(elmnts_bis, nbmodels, phi, num_material, NPROC)
   else
-     call acoustic_elastic_repartitioning(elmnts, nb_materials, phi, num_material, NPROC)
+     call acoustic_elastic_repartitioning(elmnts, nbmodels, phi, num_material, NPROC)
   endif
 
   ! fluid-porous edges: coupled elements are transferred to the same partition
   if (ngnod == 9) then
-     call acoustic_poro_repartitioning(elmnts_bis, nb_materials, phi, num_material, NPROC)
+     call acoustic_poro_repartitioning(elmnts_bis, nbmodels, phi, num_material, NPROC)
   else
-     call acoustic_poro_repartitioning(elmnts, nb_materials, phi, num_material, NPROC)
+     call acoustic_poro_repartitioning(elmnts, nbmodels, phi, num_material, NPROC)
   endif
 
   ! porous-solid edges: coupled elements are transferred to the same partition
   if (ngnod == 9) then
-     call poro_elastic_repartitioning(elmnts_bis, nb_materials, phi, num_material, NPROC)
+     call poro_elastic_repartitioning(elmnts_bis, nbmodels, phi, num_material, NPROC)
   else
-     call poro_elastic_repartitioning(elmnts, nb_materials, phi, num_material, NPROC)
+     call poro_elastic_repartitioning(elmnts, nbmodels, phi, num_material, NPROC)
   endif
 
   ! periodic edges: coupled elements are transferred to the same partition
@@ -189,10 +189,10 @@
   if (NPROC > 1) then
      if (ngnod == 9) then
         call Construct_interfaces(NPROC, elmnts_bis, &
-                                  nb_materials, phi, num_material)
+                                  nbmodels, phi, num_material)
      else
         call Construct_interfaces(NPROC, elmnts, &
-                                  nb_materials, phi, num_material)
+                                  nbmodels, phi, num_material)
      endif
      allocate(my_interfaces(0:ninterfaces-1))
      allocate(my_nb_interfaces(0:ninterfaces-1))

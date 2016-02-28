@@ -411,7 +411,7 @@
     if (read_external_mesh) then
       call read_external_materials_file(materials_file, num_material)
     else
-      call read_regions(nbregion,nb_materials,icodemat,cp,cs, &
+      call read_regions(nbregion,nbmodels,icodemat,cp,cs, &
                         rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
                         nelmnts,num_material)
     endif
@@ -456,9 +456,9 @@
 
     if (read_external_mesh) then
       call read_external_acoustic_surface(free_surface_file, num_material, &
-                                          nb_materials, icodemat, phi, remove_min_to_start_at_zero)
+                                          nbmodels, icodemat, phi, remove_min_to_start_at_zero)
 
-      if (any_abs) then
+      if (STACEY_ABSORBING_CONDITIONS) then
         call read_external_abs_surface(absorbing_surface_file, remove_min_to_start_at_zero)
 
         ! rotate the elements that are located on the edges of the mesh if needed
@@ -505,7 +505,7 @@
         if (abs(xmin_param) < TINYVAL) then
 
           ! if the surface is absorbing, it cannot be axial at the same time
-          if (absleft) stop 'in axisymmetric mode, the left edge cannot be both axial and absorbing'
+          if (absorbleft) stop 'in axisymmetric mode, the left edge cannot be both axial and absorbing'
 
           !all the elements on the left edge are axial because that edge is vertical and located in x = 0
           nelem_on_the_axis = nzread
@@ -546,8 +546,8 @@
     call decompose_mesh()
 
     ! setting absorbing boundaries by elements instead of edges
-    if (any_abs) then
-       call merge_abs_boundaries(nb_materials, phi, num_material, ngnod)
+    if (STACEY_ABSORBING_CONDITIONS) then
+       call merge_abs_boundaries(nbmodels, phi, num_material, ngnod)
     endif
 
     ! setting acoustic forcing boundaries by elements instead of edges
