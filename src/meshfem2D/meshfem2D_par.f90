@@ -101,7 +101,7 @@
              add_Bielak_conditions
 
   ! variables used for absorbing boundary condition
-  logical :: any_abs,absbottom,absright,abstop,absleft
+  logical :: STACEY_ABSORBING_CONDITIONS,absorbbottom,absorbright,absorbtop,absorbleft
   logical :: ADD_SPRING_TO_STACEY
 
   integer :: NELEM_PML_THICKNESS
@@ -146,7 +146,7 @@
   double precision :: USER_T0
 
   ! to store density and velocity model
-  integer :: nb_materials
+  integer :: nbmodels
   integer, dimension(:),allocatable :: num_material
 
   integer, dimension(:),allocatable :: icodemat

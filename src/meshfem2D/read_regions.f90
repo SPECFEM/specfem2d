@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine read_regions(nbregion,nb_materials,icodemat,cp,cs, &
+  subroutine read_regions(nbregion,nbmodels,icodemat,cp,cs, &
                           rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
                           nelmnts,num_material)
 
@@ -42,9 +42,9 @@
   implicit none
   include "constants.h"
 
-  integer :: nbregion,nb_materials
-  integer, dimension(nb_materials) :: icodemat
-  double precision, dimension(nb_materials) :: rho_s,cp,cs, &
+  integer :: nbregion,nbmodels
+  integer, dimension(nbmodels) :: icodemat
+  double precision, dimension(nbmodels) :: rho_s,cp,cs, &
     aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,QKappa,Qmu
 
   integer :: nelmnts

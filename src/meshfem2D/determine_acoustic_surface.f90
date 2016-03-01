@@ -37,7 +37,7 @@
     nxread,nzread,elmnts
 
   use parameter_file_par,only: AXISYM,ngnod,num_material,icodemat,phi,xmin_param, &
-    absbottom,absleft,absright,abstop
+    absorbbottom,absorbleft,absorbright,absorbtop
 
   implicit none
   include "constants.h"
@@ -50,7 +50,7 @@
   nelem_acoustic_surface = 0
 
   ! if the surface is absorbing, it cannot be free at the same time
-  if (.not. abstop) then
+  if (.not. absorbtop) then
     j = nzread
     do i = 1,nxread
        imaterial_number = num_material((j-1)*nxread+i)
@@ -59,7 +59,7 @@
        endif
     enddo
   endif
-  if (.not. absbottom) then
+  if (.not. absorbbottom) then
     j = 1
     do i = 1,nxread
        imaterial_number = num_material((j-1)*nxread+i)
@@ -69,7 +69,7 @@
     enddo
   endif
   ! in the axisymmetric case if xmin == 0 the axis is a symmetry axis and thus cannot be a free surface as well
-  if (.not. absleft .and. .not. (AXISYM .and. abs(xmin_param) < TINYVAL)) then
+  if (.not. absorbleft .and. .not. (AXISYM .and. abs(xmin_param) < TINYVAL)) then
     i = 1
     do j = 1,nzread
        imaterial_number = num_material((j-1)*nxread+i)
@@ -78,7 +78,7 @@
        endif
     enddo
   endif
-  if (.not. absright) then
+  if (.not. absorbright) then
     i = nxread
     do j = 1,nzread
        imaterial_number = num_material((j-1)*nxread+i)
@@ -94,7 +94,7 @@
 
   nelem_acoustic_surface = 0
 
-  if (.not. abstop) then
+  if (.not. absorbtop) then
     j = nzread
     do i = 1,nxread
        imaterial_number = num_material((j-1)*nxread+i)
@@ -107,7 +107,7 @@
        endif
     enddo
   endif
-  if (.not. absbottom) then
+  if (.not. absorbbottom) then
     j = 1
     do i = 1,nxread
        imaterial_number = num_material((j-1)*nxread+i)
@@ -121,7 +121,7 @@
     enddo
   endif
   ! in the axisymmetric case if xmin == 0 the axis is a symmetry axis and thus cannot be a free surface as well
-  if (.not. absleft .and. .not. (AXISYM .and. abs(xmin_param) < TINYVAL)) then
+  if (.not. absorbleft .and. .not. (AXISYM .and. abs(xmin_param) < TINYVAL)) then
     i = 1
     do j = 1,nzread
        imaterial_number = num_material((j-1)*nxread+i)
@@ -134,7 +134,7 @@
        endif
     enddo
   endif
-  if (.not. absright) then
+  if (.not. absorbright) then
     i = nxread
     do j = 1,nzread
        imaterial_number = num_material((j-1)*nxread+i)

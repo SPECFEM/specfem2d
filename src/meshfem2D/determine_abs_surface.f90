@@ -39,7 +39,7 @@
   use part_unstruct_par,only: nelemabs,abs_surface, &
     elmnts,nxread,nzread
 
-  use parameter_file_par,only: ngnod,absbottom,absleft,absright,abstop
+  use parameter_file_par,only: ngnod,absorbbottom,absorbleft,absorbright,absorbtop
 
   implicit none
   include "constants.h"
@@ -52,10 +52,10 @@
   !--- definition of absorbing boundaries
   !
   nelemabs = 0
-  if (absbottom) nelemabs = nelemabs + nxread
-  if (abstop) nelemabs = nelemabs + nxread
-  if (absleft) nelemabs = nelemabs + nzread
-  if (absright) nelemabs = nelemabs + nzread
+  if (absorbbottom) nelemabs = nelemabs + nxread
+  if (absorbtop) nelemabs = nelemabs + nxread
+  if (absorbleft) nelemabs = nelemabs + nzread
+  if (absorbright) nelemabs = nelemabs + nzread
 
   allocate(abs_surface(5,nelemabs))
 
@@ -65,7 +65,7 @@
     do iz = 1,nzread
        do ix = 1,nxread
           inumelem = (iz-1)*nxread + ix
-          if (absbottom    .and. iz == 1) then
+          if (absorbbottom    .and. iz == 1) then
              nelemabs = nelemabs + 1
              abs_surface(1,nelemabs) = inumelem-1
              abs_surface(2,nelemabs) = 2
@@ -73,7 +73,7 @@
              abs_surface(4,nelemabs) = elmnts(1+ngnod*(inumelem-1))
              abs_surface(5,nelemabs) = IBOTTOM
           endif
-          if (absright .and. ix == nxread) then
+          if (absorbright .and. ix == nxread) then
              nelemabs = nelemabs + 1
              abs_surface(1,nelemabs) = inumelem-1
              abs_surface(2,nelemabs) = 2
@@ -81,7 +81,7 @@
              abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1))
              abs_surface(5,nelemabs) = IRIGHT
           endif
-          if (abstop   .and. iz == nzread) then
+          if (absorbtop   .and. iz == nzread) then
              nelemabs = nelemabs + 1
              abs_surface(1,nelemabs) = inumelem-1
              abs_surface(2,nelemabs) = 2
@@ -89,7 +89,7 @@
              abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1))
              abs_surface(5,nelemabs) = ITOP
           endif
-          if (absleft .and. ix == 1) then
+          if (absorbleft .and. ix == 1) then
              nelemabs = nelemabs + 1
              abs_surface(1,nelemabs) = inumelem-1
              abs_surface(2,nelemabs) = 2

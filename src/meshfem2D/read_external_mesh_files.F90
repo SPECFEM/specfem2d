@@ -253,7 +253,7 @@
   !-----------------------------------------------
 
   subroutine read_external_acoustic_surface(filename, num_material, &
-                                            nb_materials, icodemat, phi, remove_min_to_start_at_zero)
+                                            nbmodels, icodemat, phi, remove_min_to_start_at_zero)
 
   use part_unstruct_par,only: nelmnts,nelem_acoustic_surface,acoustic_surface
 
@@ -263,9 +263,9 @@
 
   character(len=256), intent(in)  :: filename
   integer, dimension(0:nelmnts-1)  :: num_material
-  integer, intent(in)  :: nb_materials
-  integer, dimension(1:nb_materials), intent(in)  :: icodemat
-  double precision, dimension(1:nb_materials), intent(in)  :: phi
+  integer, intent(in)  :: nbmodels
+  integer, dimension(1:nbmodels), intent(in)  :: icodemat
+  double precision, dimension(1:nbmodels), intent(in)  :: phi
   integer, intent(in)  :: remove_min_to_start_at_zero
 
 

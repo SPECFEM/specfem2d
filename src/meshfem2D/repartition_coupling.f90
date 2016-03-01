@@ -36,7 +36,7 @@
   ! repartitioning: coupled acoustic/elastic elements are transferred to the same partition
   !--------------------------------------------------
 
-  subroutine acoustic_elastic_repartitioning(elmnts_l, nb_materials, phi_material, num_material, nproc)
+  subroutine acoustic_elastic_repartitioning(elmnts_l, nbmodels, phi_material, num_material, nproc)
 
   use part_unstruct_par,only: nelmnts,edges_coupled,nedges_coupled,part
 
@@ -44,14 +44,14 @@
   include "constants.h"
 
   integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
-  integer, intent(in)  :: nproc, nb_materials
-  double precision, dimension(nb_materials), intent(in)  :: phi_material
+  integer, intent(in)  :: nproc, nbmodels
+  double precision, dimension(nbmodels), intent(in)  :: phi_material
   integer, dimension(1:nelmnts), intent(in)  :: num_material
 
   ! local parameters
   integer, dimension(:), allocatable  :: xadj_l
   integer, dimension(:), allocatable  :: adjncy_l
-  logical, dimension(nb_materials)  :: is_acoustic, is_elastic
+  logical, dimension(nbmodels)  :: is_acoustic, is_elastic
   integer  :: i, ier, num_edge
   integer  :: el, el_adj
   logical  :: is_repartitioned
@@ -62,7 +62,7 @@
   is_acoustic(:) = .false.
   is_elastic(:) = .false.
 
-  do i = 1, nb_materials
+  do i = 1, nbmodels
      if (phi_material(i) >= 1.d0) then
         is_acoustic(i) = .true.
      endif
@@ -135,7 +135,7 @@
   ! repartitioning: coupled acoustic/poroelastic elements are transferred to the same partition
   !--------------------------------------------------
 
-  subroutine acoustic_poro_repartitioning(elmnts_l, nb_materials, phi_material, num_material, nproc)
+  subroutine acoustic_poro_repartitioning(elmnts_l, nbmodels, phi_material, num_material, nproc)
 
   use part_unstruct_par,only: nelmnts,edges_acporo_coupled,nedges_acporo_coupled,part
 
@@ -143,14 +143,14 @@
   include "constants.h"
 
   integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
-  integer, intent(in)  :: nproc, nb_materials
-  double precision, dimension(nb_materials), intent(in)  :: phi_material
+  integer, intent(in)  :: nproc, nbmodels
+  double precision, dimension(nbmodels), intent(in)  :: phi_material
   integer, dimension(1:nelmnts), intent(in)  :: num_material
 
   ! local parameters
   integer, dimension(:), allocatable  :: xadj_l
   integer, dimension(:), allocatable  :: adjncy_l
-  logical, dimension(nb_materials)  :: is_acoustic,is_poroelastic
+  logical, dimension(nbmodels)  :: is_acoustic,is_poroelastic
   integer  :: i, ier, num_edge
   integer  :: el, el_adj
   logical  :: is_repartitioned
@@ -161,7 +161,7 @@
   is_acoustic(:) = .false.
   is_poroelastic(:) = .false.
 
-  do i = 1, nb_materials
+  do i = 1, nbmodels
      if (phi_material(i) >=1.d0) then
         is_acoustic(i) = .true.
      endif
@@ -234,7 +234,7 @@
   ! repartitioning: coupled poroelastic/elastic elements are transferred to the same partition
   !--------------------------------------------------
 
-  subroutine poro_elastic_repartitioning(elmnts_l, nb_materials, phi_material, num_material, nproc)
+  subroutine poro_elastic_repartitioning(elmnts_l, nbmodels, phi_material, num_material, nproc)
 
   use part_unstruct_par,only: nelmnts,nedges_elporo_coupled,edges_elporo_coupled,part
 
@@ -242,14 +242,14 @@
   include "constants.h"
 
   integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
-  integer, intent(in)  :: nproc, nb_materials
-  double precision, dimension(nb_materials), intent(in)  :: phi_material
+  integer, intent(in)  :: nproc, nbmodels
+  double precision, dimension(nbmodels), intent(in)  :: phi_material
   integer, dimension(1:nelmnts), intent(in)  :: num_material
 
   ! local parameters
   integer, dimension(:), allocatable  :: xadj_l
   integer, dimension(:), allocatable  :: adjncy_l
-  logical, dimension(nb_materials)  :: is_elastic,is_poroelastic
+  logical, dimension(nbmodels)  :: is_elastic,is_poroelastic
   integer  :: i, ier, num_edge
   integer  :: el, el_adj
   logical  :: is_repartitioned
@@ -260,7 +260,7 @@
   is_elastic(:) = .false.
   is_poroelastic(:) = .false.
 
-  do i = 1, nb_materials
+  do i = 1, nbmodels
      if (phi_material(i) < TINYVAL) then
         is_elastic(i) = .true.
      endif

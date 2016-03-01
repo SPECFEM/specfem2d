@@ -189,43 +189,43 @@
 
   ! read receiver line parameters
   call read_value_integer_p(seismotype, 'solver.seismotype')
-  if (err_occurred() /= 0) stop 'error reading parameter 22 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter seismotype in Par_file'
 
   call read_value_integer_p(subsamp_seismos, 'solver.subsamp_seismos')
-  if (err_occurred() /= 0) stop 'error reading parameter 33e in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter subsamp_seismos in Par_file'
 
   call read_value_logical_p(USE_TRICK_FOR_BETTER_PRESSURE, 'solver.USE_TRICK_FOR_BETTER_PRESSURE')
-  if (err_occurred() /= 0) stop 'error reading parameter 22b in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter USE_TRICK_FOR_BETTER_PRESSURE in Par_file'
 
   call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NSTEP_BETWEEN_OUTPUT_SEISMOS')
-  if (err_occurred() /= 0) stop 'error reading parameter 33b in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter NSTEP_BETWEEN_OUTPUT_SEISMOS in Par_file'
 
   call read_value_double_precision_p(USER_T0, 'solver.USER_T0')
-  if (err_occurred() /= 0) stop 'error reading parameter 17b in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter USER_T0 in Par_file'
 
   call read_value_logical_p(save_ASCII_seismograms, 'solver.save_ASCII_seismograms')
-  if (err_occurred() /= 0) stop 'error reading parameter 12b in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter save_ASCII_seismograms in Par_file'
 
   call read_value_logical_p(save_binary_seismograms_single, 'solver.save_binary_seismograms_single')
-  if (err_occurred() /= 0) stop 'error reading parameter 12c in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter save_binary_seismograms_single in Par_file'
 
   call read_value_logical_p(save_binary_seismograms_double, 'solver.save_binary_seismograms_double')
-  if (err_occurred() /= 0) stop 'error reading parameter 12cc in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter save_binary_seismograms_double in Par_file'
 
   call read_value_logical_p(SU_FORMAT, 'solver.SU_FORMAT')
-  if (err_occurred() /= 0) stop 'error reading parameter 26b in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter SU_FORMAT in Par_file'
 
   call read_value_logical_p(use_existing_STATIONS, 'solver.use_existing_STATIONS')
-  if (err_occurred() /= 0) stop 'error reading parameter 23 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter use_existing_STATIONS in Par_file'
 
   call read_value_integer_p(nreceiversets, 'solver.nreceiversets')
-  if (err_occurred() /= 0) stop 'error reading parameter 24 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter nreceiversets in Par_file'
 
   call read_value_double_precision_p(anglerec, 'solver.anglerec')
-  if (err_occurred() /= 0) stop 'error reading parameter 25 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter anglerec in Par_file'
 
   call read_value_logical_p(rec_normal_to_surface, 'solver.rec_normal_to_surface')
-  if (err_occurred() /= 0) stop 'error reading parameter 26a in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter rec_normal_to_surface in Par_file'
 
   ! reads in receiver sets
   if (nreceiversets < 1) stop 'number of receiver lines must be greater than 1'
@@ -242,22 +242,22 @@
   ! loop on all the receiver lines
   do ireceiverlines = 1,nreceiversets
     call read_value_integer_next_p(nrec(ireceiverlines),'solver.nrec')
-    if (err_occurred() /= 0) stop 'error reading parameter 27 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter nrec in Par_file'
 
     call read_value_double_prec_next_p(xdeb(ireceiverlines),'solver.xdeb')
-    if (err_occurred() /= 0) stop 'error reading parameter 28 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter xdeb in Par_file'
 
     call read_value_double_prec_next_p(zdeb(ireceiverlines),'solver.zdeb')
-    if (err_occurred() /= 0) stop 'error reading parameter 29 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter zdeb in Par_file'
 
     call read_value_double_prec_next_p(xfin(ireceiverlines),'solver.xfin')
-    if (err_occurred() /= 0) stop 'error reading parameter 30 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter xfin in Par_file'
 
     call read_value_double_prec_next_p(zfin(ireceiverlines),'solver.zfin')
-    if (err_occurred() /= 0) stop 'error reading parameter 31 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter zfin in Par_file'
 
     call read_value_logical_next_p(record_at_surface_same_vertical(ireceiverlines),'solver.record_at_surface_same_vertical')
-    if (err_occurred() /= 0) stop 'error reading parameter 32 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter record_at_surface_same_vertical in Par_file'
 
     if (read_external_mesh .and. record_at_surface_same_vertical(ireceiverlines)) then
       stop 'Cannot use record_at_surface_same_vertical with external meshes!'
@@ -271,7 +271,7 @@
   !--------------------------------------------------------------------
 
   call read_value_logical_p(save_ASCII_kernels, 'solver.save_ASCII_kernels')
-  if (err_occurred() /= 0) stop 'error reading parameter 27 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter save_ASCII_kernels in Par_file'
 
   !--------------------------------------------------------------------
   !
@@ -280,29 +280,29 @@
   !--------------------------------------------------------------------
 
   call read_value_logical_p(PML_BOUNDARY_CONDITIONS, 'solver.PML_BOUNDARY_CONDITIONS')
-  if (err_occurred() /= 0) stop 'error reading parameter 33za in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter PML_BOUNDARY_CONDITIONS in Par_file'
 
   call read_value_integer_p(NELEM_PML_THICKNESS, 'solver.NELEM_PML_THICKNESS')
-  if (err_occurred() /= 0) stop 'error reading parameter 33zb in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter NELEM_PML_THICKNESS in Par_file'
 
   call read_value_logical_p(ROTATE_PML_ACTIVATE, 'solver.ROTATE_PML_ACTIVATE')
-  if (err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter ROTATE_PML_ACTIVATE in Par_file'
 
   call read_value_double_precision_p(ROTATE_PML_ANGLE, 'solver.ROTATE_PML_ANGLE')
-  if (err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter ROTATE_PML_ANGLE in Par_file'
 
   ! boolean defining whether to use any absorbing boundaries
-  call read_value_logical_p(any_abs, 'solver.STACEY_ABSORBING_CONDITIONS')
-  if (err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
+  call read_value_logical_p(STACEY_ABSORBING_CONDITIONS, 'solver.STACEY_ABSORBING_CONDITIONS')
+  if (err_occurred() /= 0) stop 'error reading parameter STACEY_ABSORBING_CONDITIONS in Par_file'
 
   call read_value_logical_p(ADD_SPRING_TO_STACEY, 'solver.ADD_SPRING_TO_STACEY')
-  if (err_occurred() /= 0) stop 'error reading parameter 51a in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter ADD_SPRING_TO_STACEY in Par_file'
 
   call read_value_logical_p(ADD_PERIODIC_CONDITIONS, 'solver.ADD_PERIODIC_CONDITIONS')
-  if (err_occurred() /= 0) stop 'error reading parameter 51b in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter ADD_PERIODIC_CONDITIONS in Par_file'
 
   call read_value_double_precision_p(PERIODIC_HORIZ_DIST, 'solver.PERIODIC_HORIZ_DIST')
-  if (err_occurred() /= 0) stop 'error reading parameter 51c in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter PERIODIC_HORIZ_DIST in Par_file'
 
   !--------------------------------------------------------------------
   !
@@ -310,53 +310,53 @@
   !
   !--------------------------------------------------------------------
 
-  ! read the different material materials
-  call read_value_integer_p(nb_materials, 'mesher.nbmodels')
-  if (err_occurred() /= 0) stop 'error reading parameter 49 in Par_file'
+  ! read the different material materials (i.e. the number of models)
+  call read_value_integer_p(nbmodels, 'mesher.nbmodels')
+  if (err_occurred() /= 0) stop 'error reading parameter nbmodels in Par_file'
 
   ! reads in material definitions
-  if (nb_materials <= 0) stop 'Non-positive number of materials not allowed!'
+  if (nbmodels <= 0) stop 'Non-positive number of materials not allowed!'
 
-  allocate(icodemat(nb_materials))
-  allocate(cp(nb_materials))
-  allocate(cs(nb_materials))
-  allocate(aniso3(nb_materials))
-  allocate(aniso4(nb_materials))
-  allocate(aniso5(nb_materials))
-  allocate(aniso6(nb_materials))
-  allocate(aniso7(nb_materials))
-  allocate(aniso8(nb_materials))
-  allocate(aniso9(nb_materials))
-  allocate(aniso10(nb_materials))
-  allocate(aniso11(nb_materials))
-  allocate(aniso12(nb_materials))
-  allocate(QKappa(nb_materials))
-  allocate(Qmu(nb_materials))
-  allocate(rho_s(nb_materials))
-  allocate(rho_f(nb_materials))
-  allocate(phi(nb_materials))
-  allocate(tortuosity(nb_materials))
-  allocate(permxx(nb_materials))
-  allocate(permxz(nb_materials))
-  allocate(permzz(nb_materials))
-  allocate(kappa_s(nb_materials))
-  allocate(kappa_f(nb_materials))
-  allocate(kappa_fr(nb_materials))
-  allocate(eta_f(nb_materials))
-  allocate(mu_fr(nb_materials))
+  allocate(icodemat(nbmodels))
+  allocate(cp(nbmodels))
+  allocate(cs(nbmodels))
+  allocate(aniso3(nbmodels))
+  allocate(aniso4(nbmodels))
+  allocate(aniso5(nbmodels))
+  allocate(aniso6(nbmodels))
+  allocate(aniso7(nbmodels))
+  allocate(aniso8(nbmodels))
+  allocate(aniso9(nbmodels))
+  allocate(aniso10(nbmodels))
+  allocate(aniso11(nbmodels))
+  allocate(aniso12(nbmodels))
+  allocate(QKappa(nbmodels))
+  allocate(Qmu(nbmodels))
+  allocate(rho_s(nbmodels))
+  allocate(rho_f(nbmodels))
+  allocate(phi(nbmodels))
+  allocate(tortuosity(nbmodels))
+  allocate(permxx(nbmodels))
+  allocate(permxz(nbmodels))
+  allocate(permzz(nbmodels))
+  allocate(kappa_s(nbmodels))
+  allocate(kappa_f(nbmodels))
+  allocate(kappa_fr(nbmodels))
+  allocate(eta_f(nbmodels))
+  allocate(mu_fr(nbmodels))
 
-  call read_materials(AXISYM,nb_materials,icodemat,cp,cs, &
+  call read_materials(AXISYM,nbmodels,icodemat,cp,cs, &
                       aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
                       QKappa,Qmu,rho_s,rho_f,phi,tortuosity, &
                       permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
                       eta_f,mu_fr)
 
   call read_value_string_p(TOMOGRAPHY_FILE, 'solver.TOMOGRAPHY_FILE')
-  if (err_occurred() /= 0) stop 'error reading parameter 49b in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter TOMOGRAPHY_FILE in Par_file'
 
   ! boolean defining whether internal or external mesh
   call read_value_logical_p(read_external_mesh, 'mesher.read_external_mesh')
-  if (err_occurred() /= 0) stop 'error reading parameter 50 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter read_external_mesh in Par_file'
 
   !--------------------------------------------------------------------
   !
@@ -372,31 +372,31 @@
 
     ! read info about external mesh
     call read_value_string_p(mesh_file, 'mesher.mesh_file')
-    if (err_occurred() /= 0) stop 'error reading parameter 52 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter mesh_file in Par_file'
 
     call read_value_string_p(nodes_coords_file, 'mesher.nodes_coords_file')
-    if (err_occurred() /= 0) stop 'error reading parameter 53 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter nodes_coords_file in Par_file'
 
     call read_value_string_p(materials_file, 'mesher.materials_file')
-    if (err_occurred() /= 0) stop 'error reading parameter 54 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter materials_file in Par_file'
 
     call read_value_string_p(free_surface_file, 'mesher.free_surface_file')
-    if (err_occurred() /= 0) stop 'error reading parameter 55 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter free_surface_file in Par_file'
 
     call read_value_string_p(axial_elements_file, 'mesher.axial_elements_file')
-    if (err_occurred() /= 0) stop 'error reading parameter 55b in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter axial_elements_file in Par_file'
 
     call read_value_string_p(absorbing_surface_file, 'mesher.absorbing_surface_file')
-    if (err_occurred() /= 0) stop 'error reading parameter 56a in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter absorbing_surface_file in Par_file'
 
     call read_value_string_p(acoustic_forcing_surface_file, 'mesher.acoustic_forcing_surface_file')
-    if (err_occurred() /= 0) stop 'error reading parameter 56b in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter acoustic_forcing_surface_file in Par_file'
 
     call read_value_string_p(CPML_element_file, 'mesher.CPML_element_file')
-    if (err_occurred() /= 0) stop 'error reading parameter 56c in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter CPML_element_file in Par_file'
 
     call read_value_string_p(tangential_detection_curve_file, 'mesher.tangential_detection_curve_file')
-    if (err_occurred() /= 0) stop 'error reading parameter 57 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter tangential_detection_curve_file in Par_file'
 
   else
 
@@ -405,30 +405,30 @@
 
     ! interfaces file
     call read_value_string_p(interfacesfile, 'mesher.interfacesfile')
-    if (err_occurred() /= 0) stop 'error reading parameter 58 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter interfacesfile in Par_file'
 
     ! read grid parameters
     call read_value_double_precision_p(xmin_param, 'mesher.xmin')
-    if (err_occurred() /= 0) stop 'error reading parameter 59 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter xmin_param in Par_file'
 
     call read_value_double_precision_p(xmax_param, 'mesher.xmax')
-    if (err_occurred() /= 0) stop 'error reading parameter 60 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter xmax_param in Par_file'
 
     call read_value_integer_p(nx_param, 'mesher.nx')
-    if (err_occurred() /= 0) stop 'error reading parameter 61 in Par_file'
+    if (err_occurred() /= 0) stop 'error reading parameter nx in Par_file'
 
     ! read absorbing boundary parameters
-    call read_value_logical_p(absbottom, 'solver.absorbbottom')
-    if (err_occurred() /= 0) stop 'error reading parameter 62 in Par_file'
+    call read_value_logical_p(absorbbottom, 'solver.absorbbottom')
+    if (err_occurred() /= 0) stop 'error reading parameter absorbbottom in Par_file'
 
-    call read_value_logical_p(absright, 'solver.absorbright')
-    if (err_occurred() /= 0) stop 'error reading parameter 63 in Par_file'
+    call read_value_logical_p(absorbright, 'solver.absorbright')
+    if (err_occurred() /= 0) stop 'error reading parameter absorbright in Par_file'
 
-    call read_value_logical_p(abstop, 'solver.absorbtop')
-    if (err_occurred() /= 0) stop 'error reading parameter 64 in Par_file'
+    call read_value_logical_p(absorbtop, 'solver.absorbtop')
+    if (err_occurred() /= 0) stop 'error reading parameter absorbtop in Par_file'
 
-    call read_value_logical_p(absleft, 'solver.absorbleft')
-    if (err_occurred() /= 0) stop 'error reading parameter 65 in Par_file'
+    call read_value_logical_p(absorbleft, 'solver.absorbleft')
+    if (err_occurred() /= 0) stop 'error reading parameter absorbleft in Par_file'
 
     ! note: if internal mesh, then regions will be read in by read_regions (from meshfem2D)
 
@@ -443,16 +443,16 @@
 
   ! read display parameters
   call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_INFO, 'solver.NSTEP_BETWEEN_OUTPUT_INFO')
-  if (err_occurred() /= 0) stop 'error reading parameter 33a in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter NSTEP_BETWEEN_OUTPUT_INFO in Par_file'
 
   call read_value_logical_p(output_grid_Gnuplot, 'solver.output_grid_Gnuplot')
-  if (err_occurred() /= 0) stop 'error reading parameter 45 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter output_grid_Gnuplot in Par_file'
 
   call read_value_logical_p(output_grid_ASCII, 'solver.output_grid_ASCII')
-  if (err_occurred() /= 0) stop 'error reading parameter 46 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter output_grid_ASCII in Par_file'
 
   call read_value_logical_p(output_energy, 'solver.output_energy')
-  if (err_occurred() /= 0) stop 'error reading parameter 47 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter output_energy in Par_file'
 
   !--------------------------------------------------------------------
   !
@@ -461,101 +461,101 @@
   !--------------------------------------------------------------------
 
   call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_IMAGES, 'solver.NSTEP_BETWEEN_OUTPUT_IMAGES')
-  if (err_occurred() /= 0) stop 'error reading parameter 33c in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter NSTEP_BETWEEN_OUTPUT_IMAGES in Par_file'
 
   call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS, 'solver.NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS')
-  if (err_occurred() /= 0) stop 'error reading parameter 33d in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS in Par_file'
 
   call read_value_double_precision_p(cutsnaps, 'solver.cutsnaps')
-  if (err_occurred() /= 0) stop 'error reading parameter 37 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter cutsnaps in Par_file'
 
   ! jpeg images
   call read_value_logical_p(output_color_image, 'solver.output_color_image')
-  if (err_occurred() /= 0) stop 'error reading parameter 35 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter output_color_image in Par_file'
 
   call read_value_integer_p(imagetype_JPEG, 'solver.imagetype_JPEG')
-  if (err_occurred() /= 0) stop 'error reading parameter 33f in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter imagetype_JPEG in Par_file'
 
   call read_value_double_precision_p(factor_subsample_image, 'solver.factor_subsample_image')
-  if (err_occurred() /= 0) stop 'error reading parameter 43b in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter factor_subsample_image in Par_file'
 
   call read_value_logical_p(USE_CONSTANT_MAX_AMPLITUDE, 'solver.USE_CONSTANT_MAX_AMPLITUDE')
-  if (err_occurred() /= 0) stop 'error reading parameter 43bb in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter USE_CONSTANT_MAX_AMPLITUDE in Par_file'
 
   call read_value_double_precision_p(CONSTANT_MAX_AMPLITUDE_TO_USE, 'solver.CONSTANT_MAX_AMPLITUDE_TO_USE')
-  if (err_occurred() /= 0) stop 'error reading parameter 43bbb in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter CONSTANT_MAX_AMPLITUDE_TO_USE in Par_file'
 
   call read_value_double_precision_p(POWER_DISPLAY_COLOR, 'solver.POWER_DISPLAY_COLOR')
-  if (err_occurred() /= 0) stop 'error reading parameter 43c in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter POWER_DISPLAY_COLOR in Par_file'
 
   call read_value_logical_p(DRAW_SOURCES_AND_RECEIVERS, 'solver.DRAW_SOURCES_AND_RECEIVERS')
-  if (err_occurred() /= 0) stop 'error reading parameter 12d in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter DRAW_SOURCES_AND_RECEIVERS in Par_file'
 
   call read_value_logical_p(DRAW_WATER_IN_BLUE, 'solver.DRAW_WATER_IN_BLUE')
-  if (err_occurred() /= 0) stop 'error reading parameter 43d in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter DRAW_WATER_IN_BLUE in Par_file'
 
   call read_value_logical_p(USE_SNAPSHOT_NUMBER_IN_FILENAME, 'solver.USE_SNAPSHOT_NUMBER_IN_FILENAME')
-  if (err_occurred() /= 0) stop 'error reading parameter 44c in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter USE_SNAPSHOT_NUMBER_IN_FILENAME in Par_file'
 
   ! postscript files
   call read_value_logical_p(output_postscript_snapshot, 'solver.output_postscript_snapshot')
-  if (err_occurred() /= 0) stop 'error reading parameter 34 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter output_postscript_snapshot in Par_file'
 
   call read_value_integer_p(imagetype_postscript, 'solver.imagetype_postscript')
-  if (err_occurred() /= 0) stop 'error reading parameter 36 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter imagetype_postscript in Par_file'
 
   call read_value_logical_p(meshvect, 'solver.meshvect')
-  if (err_occurred() /= 0) stop 'error reading parameter 38 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter meshvect in Par_file'
 
   call read_value_logical_p(modelvect, 'solver.modelvect')
-  if (err_occurred() /= 0) stop 'error reading parameter 39 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter modelvect in Par_file'
 
   call read_value_logical_p(boundvect, 'solver.boundvect')
-  if (err_occurred() /= 0) stop 'error reading parameter 40 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter boundvect in Par_file'
 
   call read_value_logical_p(interpol, 'solver.interpol')
-  if (err_occurred() /= 0) stop 'error reading parameter 41 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter interpol in Par_file'
 
   call read_value_integer_p(pointsdisp, 'solver.pointsdisp')
-  if (err_occurred() /= 0) stop 'error reading parameter 42 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter pointsdisp in Par_file'
 
   call read_value_integer_p(subsamp_postscript, 'solver.subsamp_postscript')
-  if (err_occurred() /= 0) stop 'error reading parameter 43a in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter subsamp_postscript in Par_file'
 
   call read_value_double_precision_p(sizemax_arrows, 'solver.sizemax_arrows')
-  if (err_occurred() /= 0) stop 'error reading parameter 44a in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter sizemax_arrows in Par_file'
 
   call read_value_logical_p(US_LETTER, 'solver.US_LETTER')
-  if (err_occurred() /= 0) stop 'error reading parameter 44b in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter US_LETTER in Par_file'
 
   ! wavefield dumps
   call read_value_logical_p(output_wavefield_dumps, 'solver.output_wavefield_dumps')
-  if (err_occurred() /= 0) stop 'error reading parameter 48 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter output_wavefield_dumps in Par_file'
 
   call read_value_integer_p(imagetype_wavefield_dumps, 'solver.imagetype_wavefield_dumps')
-  if (err_occurred() /= 0) stop 'error reading parameter 33g in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter imagetype_wavefield_dumps in Par_file'
 
   call read_value_logical_p(use_binary_for_wavefield_dumps, 'solver.use_binary_for_wavefield_dumps')
-  if (err_occurred() /= 0) stop 'error reading parameter 48 in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter use_binary_for_wavefield_dumps in Par_file'
 
 
   ! checks input parameters
   call check_parameters()
 
   ! boundary conditions
-  if (add_Bielak_conditions .and. .not. any_abs) &
+  if (add_Bielak_conditions .and. .not. STACEY_ABSORBING_CONDITIONS) &
     stop 'need STACEY_ABSORBING_CONDITIONS set to .true. in order to use add_Bielak_conditions'
 
   ! CPML and Stacey are mutually exclusive
-  if (any_abs .and. PML_BOUNDARY_CONDITIONS) &
+  if (STACEY_ABSORBING_CONDITIONS .and. PML_BOUNDARY_CONDITIONS) &
     stop 'STACEY_ABSORBING_CONDITIONS and PML_BOUNDARY_CONDITIONS are mutually exclusive but are both set to .true.'
   ! we also set in subroutine prepare_timerun_read to make sure that STACEY_ABSORBING_CONDITIONS = .false. when
   ! PML_BOUNDARY_CONDITIONS is used.
 
   ! solve the conflict in value of PML_BOUNDARY_CONDITIONS and STACEY_ABSORBING_CONDITIONS
-  if (PML_BOUNDARY_CONDITIONS) any_abs = .true.
+  if (PML_BOUNDARY_CONDITIONS) STACEY_ABSORBING_CONDITIONS = .true.
 
-  if (any_abs .and. ADD_SPRING_TO_STACEY) then
+  if (STACEY_ABSORBING_CONDITIONS .and. ADD_SPRING_TO_STACEY) then
     if (add_Bielak_conditions .or. initialfield) then
       ! spring not supported
       print *,''
@@ -571,11 +571,11 @@
   endif
 
   ! initializes flags for absorbing boundaries
-  if (.not. any_abs) then
-    absbottom = .false.
-    absright = .false.
-    abstop = .false.
-    absleft = .false.
+  if (.not. STACEY_ABSORBING_CONDITIONS) then
+    absorbbottom = .false.
+    absorbright = .false.
+    absorbtop = .false.
+    absorbleft = .false.
   endif
 
   ! can use only one point to display lower-left corner only for interpolated snapshot

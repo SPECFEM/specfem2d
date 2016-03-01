@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine read_materials(AXISYM,nb_materials,icodemat,cp,cs, &
+  subroutine read_materials(AXISYM,nbmodels,icodemat,cp,cs, &
                             aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
                             QKappa,Qmu,rho_s,rho_f,phi,tortuosity, &
                             permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
@@ -43,13 +43,13 @@
   include "constants.h"
 
   logical :: AXISYM
-  integer :: nb_materials
+  integer :: nbmodels
 
-  integer, dimension(nb_materials) :: icodemat
+  integer, dimension(nbmodels) :: icodemat
 
-  double precision, dimension(nb_materials) :: rho_s,cp,cs, &
+  double precision, dimension(nbmodels) :: rho_s,cp,cs, &
     aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,QKappa,Qmu
-  double precision, dimension(nb_materials) :: rho_f,phi,tortuosity,permxx,permxz,&
+  double precision, dimension(nbmodels) :: rho_f,phi,tortuosity,permxx,permxz,&
        permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
 
   ! local parameters
@@ -87,7 +87,7 @@
   number_of_materials_defined_by_tomo_file = 0
 
   ! reads in material parameters
-  do imaterial= 1,nb_materials
+  do imaterial= 1,nbmodels
 
     call read_material_parameters_p(i,icodematread, &
                                     val0read,val1read,val2read,val3read, &
@@ -95,7 +95,7 @@
                                     val8read,val9read,val10read,val11read,val12read)
 
     ! checks material id
-    if (i < 1 .or. i > nb_materials) stop 'Wrong material number!'
+    if (i < 1 .or. i > nbmodels) stop 'Wrong material number!'
     icodemat(i) = icodematread
 
     ! sets material properties
@@ -190,13 +190,13 @@
 
     endif
 
-  enddo ! nb_materials
+  enddo ! nbmodels
 
   ! user output
   print *
-  print *, 'Nb of solid, fluid or porous materials = ',nb_materials
+  print *, 'Nb of solid, fluid or porous materials = ',nbmodels
   print *
-  do i = 1,nb_materials
+  do i = 1,nbmodels
      if (icodemat(i) == ISOTROPIC_MATERIAL) then
         print *,'Material #',i,' isotropic'
         print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i),QKappa(i),Qmu(i)
