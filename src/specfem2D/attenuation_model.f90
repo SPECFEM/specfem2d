@@ -234,21 +234,24 @@
 ! use of SolvOpt to compute attenuation relaxation mechanisms,
 ! from Emilie Blanc, Bruno Lombard and Dimitri Komatitsch, CNRS Marseille, France, for a Generalized Zener body model.
 
+! If you use this code for your own research, please cite some (or all) of these articles:
+!
+! @Article{BlKoChLoXi16,
+! Title   = {Highly accurate stability-preserving optimization of the {Z}ener viscoelastic model,
+!            with application to wave propagation in the presence of strong attenuation},
+! Author  = {\'Emilie Blanc and Dimitri Komatitsch and Emmanuel Chaljub and Bruno Lombard and Zhinan Xie},
+! Journal = {Geophysical Journal International},
+! Year    = {2016},
+! Number  = {1},
+! Pages   = {427-439},
+! Volume  = {205},
+! Doi     = {10.1093/gji/ggw024}}
+
 ! The SolvOpt algorithm was developed by Franz Kappel and Alexei V. Kuntsevich
 ! and is available open source at http://www.uni-graz.at/imawww/kuntsevich/solvopt
 !
 ! It is described in Kappel and Kuntsevich, An Implementation of Shor's r-Algorithm,
 ! Computational Optimization and Applications, vol. 15, p. 193-205 (2000).
-
-! If you use this code for your own research, please cite some (or all) of these articles:
-!
-! @Article{BlKoChLoXi15,
-! Title   = {Positivity-preserving highly-accurate optimization of the {Z}ener viscoelastic model, with application
-!            to wave propagation in the presence of strong attenuation},
-! Author  = {\'Emilie Blanc and Dimitri Komatitsch and Emmanuel Chaljub and Bruno Lombard and Zhinan Xie},
-! Journal = {Geophysical Journal International},
-! Year    = {2015},
-! Note    = {submitted.}}
 
 !-------------------------------------------------------------------------
 
