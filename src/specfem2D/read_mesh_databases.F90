@@ -544,7 +544,7 @@
 
   ! material
   allocate(density(2,numat))
-  allocate(anisotropy(9,numat))
+  allocate(anisotropy(10,numat)) ! don't forget c22 value (it is used for AXISYM simulations only)
   allocate(porosity(numat))
   allocate(tortuosity(numat))
   allocate(permeability(3,numat))
@@ -582,7 +582,7 @@
     already_shifted_velocity,QKappa_attenuation,Qmu_attenuation, &
     inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2, &
     inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu1_sent,phi_nu2_sent, &
-    tau_epsilon_nu1,tau_epsilon_nu2
+    tau_epsilon_nu1,tau_epsilon_nu2,Mu_nu1,Mu_nu2
 
 
   implicit none
@@ -615,6 +615,8 @@
   allocate(inv_tau_sigma_nu2_sent(N_SLS))
   allocate(phi_nu1_sent(N_SLS))
   allocate(phi_nu2_sent(N_SLS))
+  allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
+  allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
 
   already_shifted_velocity(:) = .false.
 

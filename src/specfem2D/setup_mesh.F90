@@ -577,7 +577,8 @@
            c55ext(NGLLX,NGLLZ,nspec_ext), &
            c12ext(NGLLX,NGLLZ,nspec_ext), &
            c23ext(NGLLX,NGLLZ,nspec_ext), &
-           c25ext(NGLLX,NGLLZ,nspec_ext),stat=ier)
+           c25ext(NGLLX,NGLLZ,nspec_ext), &
+           c22ext(NGLLX,NGLLZ,nspec_ext),stat=ier)
   if (ier /= 0) stop 'Error allocating external model arrays'
 
   ! reads in external models

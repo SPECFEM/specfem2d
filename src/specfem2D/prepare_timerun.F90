@@ -1394,8 +1394,6 @@
   e1_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
   e11_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
   e13_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
-  allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
-  allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
 
   ! initialize to dummy values
   ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
