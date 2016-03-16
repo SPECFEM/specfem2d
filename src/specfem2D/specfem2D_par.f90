@@ -714,7 +714,12 @@ module specfem_par
   !---------------------------------------------------------------------
   logical :: output_energy
   real(kind=CUSTOM_REAL) :: kinetic_energy,potential_energy
-
+  
+  ! Integrated energy field output int_0^t v^2 dt
+  logical :: COMPUTE_INTEGRATED_ENERGY_FIELD
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: integrated_energy_field
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: max_energy_field
+  
   !---------------------------------------------------------------------
   ! for seismograms
   !---------------------------------------------------------------------

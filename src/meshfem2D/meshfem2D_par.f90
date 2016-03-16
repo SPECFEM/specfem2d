@@ -179,7 +179,9 @@
   logical :: USE_TRICK_FOR_BETTER_PRESSURE
   ! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
   logical :: SU_FORMAT
-
+  
+  ! Integrated energy field output
+  logical :: COMPUTE_INTEGRATED_ENERGY_FIELD
   ! wave field
   integer :: NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
   logical :: output_wavefield_dumps,use_binary_for_wavefield_dumps

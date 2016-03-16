@@ -255,6 +255,13 @@
     allocate(icount(1))
   endif
 
+  if (COMPUTE_INTEGRATED_ENERGY_FIELD) then ! = int_0^t v^2 dt
+    allocate(integrated_energy_field(nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating elastic integrated_energy_field array'
+    allocate(max_energy_field(nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating elastic max_energy_field array'
+    max_energy_field(:) = 0._CUSTOM_REAL
+  endif
   !
   ! acoustic domains
   !

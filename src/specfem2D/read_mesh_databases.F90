@@ -170,6 +170,9 @@
   read(IIN,*) USE_TRICK_FOR_BETTER_PRESSURE
 
   read(IIN,"(a80)") datlin
+  read(IIN,*) COMPUTE_INTEGRATED_ENERGY_FIELD
+
+  read(IIN,"(a80)") datlin
   read(IIN,*) save_ASCII_kernels
 
   read(IIN,"(a80)") datlin

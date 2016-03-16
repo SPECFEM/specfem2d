@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine iterate_time()
+subroutine iterate_time()
 
 #ifdef USE_MPI
   use mpi
@@ -185,6 +185,11 @@
       call it_compute_and_output_energy()
     endif
 
+    ! computes integrated_energy_field
+    if (COMPUTE_INTEGRATED_ENERGY_FIELD) then
+      call it_compute_integrated_energy_field_and_output() ! compute the field int_0^t v^2 dt and write it on file if needed
+    endif
+
     ! loop on all the receivers to compute and store the seismograms
     call write_seismograms()
 
@@ -209,13 +214,13 @@
   !----  formats
   400 format(/1x,41('=')/,' =  T i m e  e v o l u t i o n  l o o p  ='/1x,41('=')/)
 
-  end subroutine iterate_time
+end subroutine iterate_time
 
 !
 !----------------------------------------------------------------------------------------
 !
 
-  subroutine it_transfer_from_GPU()
+subroutine it_transfer_from_GPU()
 
 ! transfers fields on GPU back onto CPU
 
@@ -296,13 +301,13 @@
     endif
   endif
 
-  end subroutine it_transfer_from_GPU
+end subroutine it_transfer_from_GPU
 
 !
 !----------------------------------------------------------------------------------------
 !
 
-  subroutine it_read_forward_arrays()
+subroutine it_read_forward_arrays()
 
 ! restores last time snapshot saved for backward/reconstruction of wavefields
 ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
@@ -409,13 +414,13 @@
     endif
   endif
 
-  end subroutine it_read_forward_arrays
+end subroutine it_read_forward_arrays
 
 !
 !----------------------------------------------------------------------------------------
 !
 
-  subroutine it_compute_and_output_energy()
+subroutine it_compute_and_output_energy()
 
   use constants,only: IOUT_ENERGY,CUSTOM_REAL
 
@@ -442,5 +447,58 @@
                          real(potential_energy_total,4),real(kinetic_energy_total + potential_energy_total,4)
   endif
 
-  end subroutine it_compute_and_output_energy
+end subroutine it_compute_and_output_energy
+
+!
+!----------------------------------------------------------------------------------------
+!
+
+subroutine it_compute_integrated_energy_field_and_output()
+  ! compute int_0^t v^2 dt and write it on file if needed
+
+  use constants,only:CUSTOM_REAL,NGLLX,NGLLZ,IIN
+
+  use specfem_par,only: myrank,it,deltat,t0,coord,nspec,ibool,integrated_energy_field,max_energy_field, &
+                        NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
+
+  implicit none
+  
+  ! local variables
+  integer :: ispec,iglob!,i,j
+  character(len=256)  :: filename
+  
+  ! computes maximum energy and integrated energy field
+  call compute_energy_fields()
+
+  ! write integrated energy field in external file
+  
+  write(filename,"('./OUTPUT_FILES/integrated_energy_field',i5.5)") myrank
+  open(unit=IIN,file=trim(filename),status='unknown',action='write')
+  
+  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(integrated_energy_field(ispec),4)
+    enddo
+  endif
+  close(IIN)
+  
+  ! write max energy field in external file
+  
+  write(filename,"('./OUTPUT_FILES/max_energy_field',i5.5)") myrank
+  open(unit=IIN,file=trim(filename),status='unknown',action='write')
+  
+  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(max_energy_field(ispec),4)
+    enddo
+  endif
+  close(IIN)
+
+end subroutine it_compute_integrated_energy_field_and_output
 

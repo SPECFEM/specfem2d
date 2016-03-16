@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine compute_energy()
+subroutine compute_energy()
 
 ! compute kinetic and potential energy in the solid (acoustic elements are excluded)
 
@@ -148,7 +148,7 @@
               + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
               + two*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
               + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2)*wxgll(i)*wzgll(j)*jacobianl / TWO
-
+          
         enddo
       enddo
 
@@ -301,7 +301,7 @@
           ! compute potential energy
           potential_energy = potential_energy &
               + (pressure_element(i,j)**2)*wxgll(i)*wzgll(j)*jacobianl / (TWO * rhol * cpl**2)
-
+          
         enddo
       enddo
 
@@ -309,5 +309,100 @@
 
   enddo
 
-  end subroutine compute_energy
+end subroutine compute_energy
+
+!
+!----------------------------------------------------------------------------------------
+!
+  
+subroutine compute_energy_fields()
+  ! computes maximum energy and integrated energy field (int_0^t v^2 dt)
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM !,TWO
+
+  use specfem_par,only: myrank,nspec,ibool,veloc_elastic,potential_dot_acoustic,ispec_is_elastic,ispec_is_poroelastic, &
+                        integrated_energy_field,max_energy_field,potential_dot_gravitoacoustic,potential_dot_gravito, &
+                        velocs_poroelastic !,rhoext,density,kmato,assign_external_model,jacobian,wxgll,wzgll,displ_elastic
+
+  implicit none
+
+  ! local variables
+  integer :: ispec !,i,j
+
+  ! Jacobian matrix
+  !double precision :: jacobianl
+  !double precision :: rhol
+
+  ! vector field in an element
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: vector_field_element
+
+! loop over spectral elements
+  do ispec = 1,nspec
+
+    !---
+    !--- elastic spectral element
+    !---
+    
+    if (ispec_is_elastic(ispec)) then
+
+      !rhol  = density(1,kmato(ispec))
+
+      !--- if external medium, get elastic parameters of current grid point
+      ! if (assign_external_model) then
+      !   rhol = rhoext(i,j,ispec)
+      ! endif
+
+      !jacobianl = jacobian(i,j,ispec)
+
+      ! compute total integrated energy ! = int_0^t v^2 dt
+      ! We record just one point per element (i=2, j=2)
+      integrated_energy_field(ispec) = integrated_energy_field(ispec)  &
+          +  (veloc_elastic(1,ibool(2,2,ispec))**2 + veloc_elastic(2,ibool(2,2,ispec))**2) ! &
+            !*wxgll(i)*wzgll(j)*jacobianl / TWO
+            
+      if (max_energy_field(ispec) < veloc_elastic(1,ibool(2,2,ispec))**2 + veloc_elastic(2,ibool(2,2,ispec))**2) then
+        max_energy_field(ispec) = veloc_elastic(1,ibool(2,2,ispec))**2 + veloc_elastic(2,ibool(2,2,ispec))**2
+      endif
+      
+    !---
+    !--- poroelastic spectral element
+    !---
+    else if (ispec_is_poroelastic(ispec)) then
+       ! safety check
+       stop 'COMPUTE_INTEGRATED_ENERGY_FIELD is not available for poroelastic media yet'
+    !---
+    !--- acoustic spectral element
+    !---
+    else
+
+      ! compute velocity vector field in this element
+      call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
+                                      potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
+
+      ! get density of current spectral element
+      !rhol  = density(1,kmato(ispec))
+
+      !--- if external medium, get density of current grid point
+      !if (assign_external_model) then
+      !  rhol = rhoext(i,j,ispec)
+      !endif
+
+      !jacobianl = jacobian(i,j,ispec)
+
+      ! compute total integrated energy ! = int_0^t v^2 dt
+      ! We record just one point per element (i=2, j=2)
+      integrated_energy_field(ispec) = integrated_energy_field(ispec)  &
+           +  vector_field_element(1,2,2)**2 + vector_field_element(2,2,2)**2 ! &
+           !*wxgll(i)*wzgll(j)*jacobianl / TWO
+           
+      if (max_energy_field(ispec) < vector_field_element(1,2,2)**2 + vector_field_element(2,2,2)**2) then
+        max_energy_field(ispec) = vector_field_element(1,2,2)**2 + vector_field_element(2,2,2)**2
+      endif
+
+    endif
+
+  enddo
+
+end subroutine compute_energy_fields
+
 
