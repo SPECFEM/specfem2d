@@ -320,7 +320,7 @@ subroutine compute_energy_fields()
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM !,TWO
 
-  use specfem_par,only: myrank,nspec,ibool,veloc_elastic,potential_dot_acoustic,ispec_is_elastic,ispec_is_poroelastic, &
+  use specfem_par,only: nspec,ibool,veloc_elastic,potential_dot_acoustic,ispec_is_elastic,ispec_is_poroelastic, &
                         integrated_energy_field,max_energy_field,potential_dot_gravitoacoustic,potential_dot_gravito, &
                         velocs_poroelastic !,rhoext,density,kmato,assign_external_model,jacobian,wxgll,wzgll,displ_elastic
 
