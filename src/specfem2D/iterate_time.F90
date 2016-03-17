@@ -458,7 +458,7 @@ subroutine it_compute_integrated_energy_field_and_output()
 
   use constants,only:CUSTOM_REAL,NGLLX,NGLLZ,IIN
 
-  use specfem_par,only: myrank,it,deltat,t0,coord,nspec,ibool,integrated_energy_field,max_energy_field, &
+  use specfem_par,only: myrank,it,coord,nspec,ibool,integrated_energy_field,max_energy_field, &
                         NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
 
   implicit none
