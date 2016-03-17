@@ -15,7 +15,7 @@ import matplotlib.mlab as mlab
 import os,sys,glob,shutil
 import argparse # To deal with arguments :
 # https://docs.python.org/2/library/argparse.html
-#import scipy.ndimage
+import scipy.ndimage
 
 ####################### PARSE ARGUMENTS #######################
 # Here we read the argument given and we check them
@@ -30,6 +30,8 @@ parser.add_argument('-p','--profiles', action='store_true',
     help='profiles: calculate energy profiles')
 parser.add_argument('-nc','--no_concatenate_files', action='store_true',
     help='no_concatenate_files: don t concatenate files at the beginning of the script')
+parser.add_argument("--title","-t",type=str,default="",
+                    help="title : title of the figures")
 parser.add_argument('-v','--verbose', action='store_true',
     help='display more information')
 
@@ -66,6 +68,8 @@ intEnergy[~mask0]=min(intEnergy[mask0])
 
 # Color map to use:
 cmap = cm.Greys #cm.BuPu
+climMin = -200
+climMax = -90
 
 # Display limits:
 xmin=0
@@ -78,7 +82,7 @@ zmax=-100
 #plt.tripcolor(x,z,intEnergy,shading='gouraud',cmap=cmap)
 #plt.axis([xmin, xmax, zmin, zmax])
 #plt.colorbar()
-#plt.clim(-200,-90)
+#plt.clim(climMin,climMax)
 ##cmap.set_bad('w',1.)
 
 #%%
@@ -100,27 +104,31 @@ plt.figure(1)
 plt.pcolormesh(xi,zi,intEnergyi,shading='gouraud',cmap=cmap)
 plt.colorbar()
 plt.axis([xmin, xmax, zmin, zmax])
-plt.clim(-200,-90)
+plt.clim(climMin,climMax)
+plt.title(args.title)
 
 #%%
 
 if args.profiles:
     # Plot energy profiles:
-    plt.figure(2)
+
+    def find_index(x,z,xil,zil):
+        """Return the indices of the closest point in 2D array"""
+        idxX=np.searchsorted(xil,x)
+        idxZ=np.searchsorted(zil,z)
+        return idxX,idxZ
+
+    num=1000
     cmap2 = plt.get_cmap('prism')
+
+    plt.figure(2)
     zVector=np.arange(-9500,0,1000)
     colors = [cmap2(i) for i in np.linspace(0, 1, len(zVector))]
 
     for i,zz in enumerate(zVector):
-        num=1000
         x0,z0=0,zz
         x1,z1=95000,zz
 
-        def find_index(x,z,xil,zil):
-            """Return the indices of the closest point in 2D array"""
-            idxX=np.searchsorted(xil,x)
-            idxZ=np.searchsorted(zil,z)
-            return idxX,idxZ
         idxX0,idxZ0 = find_index(x0,z0,xil,zil)
         idxX1,idxZ1 = find_index(x1,z1,xil,zil)
 
@@ -131,11 +139,48 @@ if args.profiles:
 
         zi = intEnergyi[zLine.astype(np.int),xLine.astype(np.int)]
 
-
         #zi = scipy.ndimage.map_coordinates(intEnergyi, np.vstack((xLine,zLine)))
         plt.plot([x0, x1], [z0, z1], 'o-',color=colors[i])
 
         plt.figure(2)
         plt.plot(zi,color=colors[i])
+        plt.title(args.title)
+
+    plt.figure(3)
+    xVector=np.arange(10000,100000,10000)
+    colors = [cmap2(i) for i in np.linspace(0, 1, len(xVector))]
+    z0=-8000
+    z1=-100
+    zvect=np.linspace(z0,z1,num)
+    depthIntegratedEnergy=np.zeros(len(xVector))
+
+    for i,xx in enumerate(xVector):
+        x0=xx
+        x1=xx
+
+        idxX0,idxZ0 = find_index(x0,z0,xil,zil)
+        idxX1,idxZ1 = find_index(x1,z1,xil,zil)
+
+        plt.figure(1)
+        plt.hold(True)
+        xLine, zLine = np.linspace(idxX0,idxX1, num), np.linspace(idxZ0, idxZ1, num)
+
+        zi = intEnergyi[zLine.astype(np.int),xLine.astype(np.int)]
+
+        # Extract the values along the line, using cubic interpolation
+        zi2 = scipy.ndimage.map_coordinates(intEnergyi.filled(), np.vstack((zLine,xLine)))
+        depthIntegratedEnergy[i]=zi2.sum()
+
+        plt.plot([x0, x1], [z0, z1], 'o-',color=colors[i])
+
+        plt.figure(3)
+        #plt.plot(zi,zvect,color=colors[i]) # Without filtering
+        plt.plot(zi2,zvect,color=colors[i])
+        plt.ylim([z0,z1])
+        plt.title(args.title)
+
+    plt.figure(4)
+    plt.plot(xVector,depthIntegratedEnergy,'o-')
+    plt.title(args.title)
 
 plt.show()

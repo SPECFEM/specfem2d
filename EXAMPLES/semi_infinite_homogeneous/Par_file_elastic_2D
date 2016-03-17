@@ -120,6 +120,10 @@ USE_TRICK_FOR_BETTER_PRESSURE   = .false.
 #  of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
 NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000
 
+# Compute the field int_0^t v^2 dt for a set of GLL points and write it to file. Use 
+# the script utils/visualisation/plotIntegratedEnergyFile.py to watch. It is refreshed at the same time than the seismograms
+COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
+
 # use this t0 as earliest starting time rather than the automatically calculated one
 USER_T0                         = 0.15d0
 
