@@ -462,19 +462,19 @@ subroutine it_compute_integrated_energy_field_and_output()
                         NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
 
   implicit none
-  
+
   ! local variables
   integer :: ispec,iglob!,i,j
   character(len=256)  :: filename
-  
+
   ! computes maximum energy and integrated energy field
   call compute_energy_fields()
 
   ! write integrated energy field in external file
-  
+
   write(filename,"('./OUTPUT_FILES/integrated_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
-  
+
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
     ! loop over spectral elements
     do ispec = 1,nspec
@@ -484,12 +484,12 @@ subroutine it_compute_integrated_energy_field_and_output()
     enddo
   endif
   close(IIN)
-  
+
   ! write max energy field in external file
-  
+
   write(filename,"('./OUTPUT_FILES/max_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
-  
+
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
     ! loop over spectral elements
     do ispec = 1,nspec
