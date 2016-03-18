@@ -148,7 +148,7 @@ subroutine compute_energy()
               + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
               + two*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
               + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2)*wxgll(i)*wzgll(j)*jacobianl / TWO
-          
+
         enddo
       enddo
 
@@ -301,7 +301,7 @@ subroutine compute_energy()
           ! compute potential energy
           potential_energy = potential_energy &
               + (pressure_element(i,j)**2)*wxgll(i)*wzgll(j)*jacobianl / (TWO * rhol * cpl**2)
-          
+
         enddo
       enddo
 
@@ -314,7 +314,7 @@ end subroutine compute_energy
 !
 !----------------------------------------------------------------------------------------
 !
-  
+
 subroutine compute_energy_fields()
   ! computes maximum energy and integrated energy field (int_0^t v^2 dt)
 

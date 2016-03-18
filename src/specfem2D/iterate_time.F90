@@ -464,25 +464,25 @@ subroutine it_compute_integrated_energy_field_and_output()
                         !poroelastcoef,kmato,density,assign_external_model,vpext,ispec_is_acoustic ! TODO
 
   implicit none
-  
+
   ! local variables
   integer :: ispec,iglob!,i,j
   character(len=256)  :: filename
-  
+
   !! Uncomment to write the velocity profile in acoustic part TODO
   !real(kind=CUSTOM_REAL) :: cpl,kappal
   !double precision :: rhol
   !double precision :: lambdal_unrelaxed_elastic
   !! TODO
-  
+
   ! computes maximum energy and integrated energy fields
   call compute_energy_fields()
 
   ! write integrated cinetic energy field in external file
-  
+
   write(filename,"('./OUTPUT_FILES/integrated_cinetic_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
-  
+
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
     ! loop over spectral elements
     do ispec = 1,nspec
@@ -492,12 +492,12 @@ subroutine it_compute_integrated_energy_field_and_output()
     enddo
   endif
   close(IIN)
-  
+
   ! write max cinetic energy field in external file
-  
+
   write(filename,"('./OUTPUT_FILES/max_cinetic_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
-  
+
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
     ! loop over spectral elements
     do ispec = 1,nspec
