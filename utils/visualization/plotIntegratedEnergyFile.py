@@ -21,15 +21,17 @@ import scipy.ndimage
 # Here we read the argument given and we check them
 
 parser = argparse.ArgumentParser(
-    description="This script plot the files integrated_energy_fieldXXXXX representing the energy that have crossed each point")
+    description="This script plot the files integrated_cinetic_energy_fieldXXXXX representing the energy that have crossed each point")
 parser.add_argument("--input_directory","-d",type=str,default="./",
                     help="input_directory : directory where we can find the files integrated_energy_fieldXXXXX")
-parser.add_argument("--name_of_files","-n",type=str,default="integrated_energy_field",
-                    help="name_of_files : directory where we can find the files integrated_energy_fieldXXXXX")
+parser.add_argument("--name_of_files","-n",type=str,default="integrated_cinetic_energy_field",
+                    help="name_of_files : directory where we can find the files integrated_cinetic_energy_fieldXXXXX")
 parser.add_argument('-p','--profiles', action='store_true',
     help='profiles: calculate energy profiles')
 parser.add_argument('-nc','--no_concatenate_files', action='store_true',
     help='no_concatenate_files: don t concatenate files at the beginning of the script')
+parser.add_argument('-nl','--nolog', action='store_true',
+    help='no apply log at the beginning of the script')
 parser.add_argument("--title","-t",type=str,default="",
                     help="title : title of the figures")
 parser.add_argument('-v','--verbose', action='store_true',
@@ -62,14 +64,19 @@ plt.close('all')
 # Load data
 x,z,intEnergy=np.loadtxt(directory+args.name_of_files+"All").T
 
-intEnergy=10*np.log(intEnergy)
+if not args.nolog:
+    intEnergy=10*np.log(intEnergy)
+
 mask0=~np.isinf(intEnergy)
 intEnergy[~mask0]=min(intEnergy[mask0])
 
 # Color map to use:
 cmap = cm.Greys #cm.BuPu
-climMin = -200
-climMax = -90
+climMin = -16#-200
+climMax = 0#-90
+
+#climMin = -200
+#climMax = -150
 
 # Display limits:
 xmin=0
@@ -104,7 +111,7 @@ plt.figure(1)
 plt.pcolormesh(xi,zi,intEnergyi,shading='gouraud',cmap=cmap)
 plt.colorbar()
 plt.axis([xmin, xmax, zmin, zmax])
-plt.clim(climMin,climMax)
+#plt.clim(climMin,climMax)
 plt.title(args.title)
 
 #%%

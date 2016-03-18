@@ -458,8 +458,10 @@ subroutine it_compute_integrated_energy_field_and_output()
 
   use constants,only:CUSTOM_REAL,NGLLX,NGLLZ,IIN
 
-  use specfem_par,only: myrank,it,coord,nspec,ibool,integrated_energy_field,max_energy_field, &
-                        NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
+  use specfem_par,only: myrank,it,coord,nspec,ibool,integrated_cinetic_energy_field,max_cinetic_energy_field, &
+                        integrated_potential_energy_field,max_potential_energy_field,cinetic_effective_duration_field, &
+                        potential_effective_duration_field,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
+                        !poroelastcoef,kmato,density,assign_external_model,vpext,ispec_is_acoustic ! TODO
 
   implicit none
   
@@ -467,12 +469,18 @@ subroutine it_compute_integrated_energy_field_and_output()
   integer :: ispec,iglob!,i,j
   character(len=256)  :: filename
   
-  ! computes maximum energy and integrated energy field
+  !! Uncomment to write the velocity profile in acoustic part TODO
+  !real(kind=CUSTOM_REAL) :: cpl,kappal
+  !double precision :: rhol
+  !double precision :: lambdal_unrelaxed_elastic
+  !! TODO
+  
+  ! computes maximum energy and integrated energy fields
   call compute_energy_fields()
 
-  ! write integrated energy field in external file
+  ! write integrated cinetic energy field in external file
   
-  write(filename,"('./OUTPUT_FILES/integrated_energy_field',i5.5)") myrank
+  write(filename,"('./OUTPUT_FILES/integrated_cinetic_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
   
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
@@ -480,14 +488,14 @@ subroutine it_compute_integrated_energy_field_and_output()
     do ispec = 1,nspec
       iglob = ibool(2,2,ispec)
       write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(integrated_energy_field(ispec),4)
+                   real(coord(2,iglob),4),real(integrated_cinetic_energy_field(ispec),4)
     enddo
   endif
   close(IIN)
   
-  ! write max energy field in external file
+  ! write max cinetic energy field in external file
   
-  write(filename,"('./OUTPUT_FILES/max_energy_field',i5.5)") myrank
+  write(filename,"('./OUTPUT_FILES/max_cinetic_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
   
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
@@ -495,10 +503,96 @@ subroutine it_compute_integrated_energy_field_and_output()
     do ispec = 1,nspec
       iglob = ibool(2,2,ispec)
       write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(max_energy_field(ispec),4)
+                   real(coord(2,iglob),4),real(max_cinetic_energy_field(ispec),4)
+    enddo
+  endif
+  close(IIN)
+  
+  ! write integrated potential energy field in external file
+  
+  write(filename,"('./OUTPUT_FILES/integrated_potential_energy_field',i5.5)") myrank
+  open(unit=IIN,file=trim(filename),status='unknown',action='write')
+  
+  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(integrated_potential_energy_field(ispec),4)
+    enddo
+  endif
+  close(IIN)
+  
+  ! write max potential energy field in external file
+  
+  write(filename,"('./OUTPUT_FILES/max_potential_energy_field',i5.5)") myrank
+  open(unit=IIN,file=trim(filename),status='unknown',action='write')
+  
+  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(max_potential_energy_field(ispec),4)
     enddo
   endif
   close(IIN)
 
+  ! write potential effective duration field in external file
+  
+  write(filename,"('./OUTPUT_FILES/potential_effective_duration_field',i5.5)") myrank
+  open(unit=IIN,file=trim(filename),status='unknown',action='write')
+  
+  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(potential_effective_duration_field(ispec),4)
+    enddo
+  endif
+  close(IIN)
+
+  ! write cinetic effective duration field in external file
+  
+  write(filename,"('./OUTPUT_FILES/cinetic_effective_duration_field',i5.5)") myrank
+  open(unit=IIN,file=trim(filename),status='unknown',action='write')
+  
+  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(cinetic_effective_duration_field(ispec),4)
+    enddo
+  endif
+  close(IIN)
+  
+  ! Uncomment to write the velocity profile in the acoustic part in file
+  !  
+  !  write(filename,"('./OUTPUT_FILES/velocities',i5.5)") myrank
+  !  open(unit=IIN,file=trim(filename),status='unknown',action='write')
+  !  
+  !  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+  !    ! loop over spectral elements
+  !    do ispec = 1,nspec
+  !      if (ispec_is_acoustic(ispec)) then
+  !        ! get density of current spectral element
+  !        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+  !        rhol  = density(1,kmato(ispec))
+  !        kappal = lambdal_unrelaxed_elastic
+  !        cpl = sqrt(kappal/rhol)
+  !      
+  !        !--- if external medium, get density of current grid point
+  !        if (assign_external_model) then
+  !          cpl = vpext(2,2,ispec)
+  !        endif
+  !        iglob = ibool(2,2,ispec)
+  !        write(IIN,*) real(coord(2,iglob),4),cpl
+  !      endif
+  !    enddo
+  !  endif
+  !  close(IIN)
+  
 end subroutine it_compute_integrated_energy_field_and_output
 

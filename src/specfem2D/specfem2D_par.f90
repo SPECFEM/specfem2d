@@ -717,8 +717,9 @@ module specfem_par
   
   ! Integrated energy field output int_0^t v^2 dt
   logical :: COMPUTE_INTEGRATED_ENERGY_FIELD
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: integrated_energy_field
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: max_energy_field
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: integrated_cinetic_energy_field,max_cinetic_energy_field
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: integrated_potential_energy_field,max_potential_energy_field
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: cinetic_effective_duration_field,potential_effective_duration_field
   
   !---------------------------------------------------------------------
   ! for seismograms
