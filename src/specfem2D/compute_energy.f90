@@ -344,20 +344,20 @@ subroutine compute_energy_fields()
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: vector_field_element
   ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: pressure_element
-  
+
   ! We save the value at the GLL point:
   i=2
   j=2
-  
+
   ! loop over spectral elements
   do ispec = 1,nspec
 
     !---
     !--- elastic spectral element
     !---
-    
+
     if (ispec_is_elastic(ispec)) then
-      
+
       ! get relaxed elastic parameters of current spectral element
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
       mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
@@ -425,11 +425,11 @@ subroutine compute_energy_fields()
       integrated_cinetic_energy_field(ispec) = integrated_cinetic_energy_field(ispec)  &
           +  (veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) ! &
             !*wxgll(i)*wzgll(j)*jacobianl / TWO
-            
+
       if (max_cinetic_energy_field(ispec) < veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) then
         max_cinetic_energy_field(ispec) = veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2
       endif
-      
+
       if (max_cinetic_energy_field(ispec) > ZERO) then
         cinetic_effective_duration_field(ispec) = TWO*integrated_cinetic_energy_field(ispec)*deltat/max_cinetic_energy_field(ispec)
       endif
@@ -484,19 +484,19 @@ subroutine compute_energy_fields()
             + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2)*wxgll(i)*wzgll(j)*jacobianl / TWO
         endif
       endif
-      
+
       if (max_potential_energy_field(ispec) > ZERO) then
         potential_effective_duration_field(ispec) = TWO*integrated_potential_energy_field(ispec) &
                                                     *deltat/max_potential_energy_field(ispec)
       endif
-      
+
     !---
     !--- poroelastic spectral element
     !---
     else if (ispec_is_poroelastic(ispec)) then
        ! safety check
        stop 'COMPUTE_INTEGRATED_ENERGY_FIELD is not available for poroelastic media yet'
-       
+
     !---
     !--- acoustic spectral element
     !---
@@ -505,10 +505,10 @@ subroutine compute_energy_fields()
       ! compute velocity vector field in this element
       call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
                                       potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
-                                      
+
       ! compute pressure in this element
       call compute_pressure_one_element(ispec,pressure_element)
-      
+
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
       rhol  = density(1,kmato(ispec))
       cpl = sqrt(lambdal_unrelaxed_elastic/rhol) !lambdal_unrelaxed_elastic = kappal
@@ -525,15 +525,15 @@ subroutine compute_energy_fields()
       integrated_cinetic_energy_field(ispec) = integrated_cinetic_energy_field(ispec)  &
            +  vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2 ! &
            !*wxgll(i)*wzgll(j)*jacobianl / TWO
-           
+
       if (max_cinetic_energy_field(ispec) < vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) then
         max_cinetic_energy_field(ispec) = vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2
       endif
-      
+
       if (max_cinetic_energy_field(ispec) > ZERO) then
         cinetic_effective_duration_field(ispec) = TWO*integrated_cinetic_energy_field(ispec)*deltat/max_cinetic_energy_field(ispec)
       endif
-      
+
       ! compute potential energy
       if (AXISYM) then
         if (is_on_the_axis(ispec)) then
@@ -544,7 +544,7 @@ subroutine compute_energy_fields()
           endif
         else
           integrated_potential_energy_field(ispec) = integrated_potential_energy_field(ispec) + pressure_element(i,j)**2 &
-                                                     *wxgll(i)*wzgll(j)*jacobianl / (TWO*rhol*cpl**2)   
+                                                     *wxgll(i)*wzgll(j)*jacobianl / (TWO*rhol*cpl**2)
           if (max_potential_energy_field(ispec) < pressure_element(i,j)**2 * wxgll(i)*wzgll(j)*jacobianl / (TWO*rhol*cpl**2)) then
             max_potential_energy_field(ispec) = pressure_element(i,j)**2 * wxgll(i)*wzgll(j)*jacobianl / (TWO*rhol*cpl**2)
           endif
@@ -562,7 +562,7 @@ subroutine compute_energy_fields()
                                                     *deltat/max_potential_energy_field(ispec)
       endif
 
-    endif 
+    endif
   enddo
 
 end subroutine compute_energy_fields

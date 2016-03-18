@@ -507,12 +507,12 @@ subroutine it_compute_integrated_energy_field_and_output()
     enddo
   endif
   close(IIN)
-  
+
   ! write integrated potential energy field in external file
-  
+
   write(filename,"('./OUTPUT_FILES/integrated_potential_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
-  
+
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
     ! loop over spectral elements
     do ispec = 1,nspec
@@ -522,12 +522,12 @@ subroutine it_compute_integrated_energy_field_and_output()
     enddo
   endif
   close(IIN)
-  
+
   ! write max potential energy field in external file
-  
+
   write(filename,"('./OUTPUT_FILES/max_potential_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
-  
+
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
     ! loop over spectral elements
     do ispec = 1,nspec
@@ -539,10 +539,10 @@ subroutine it_compute_integrated_energy_field_and_output()
   close(IIN)
 
   ! write potential effective duration field in external file
-  
+
   write(filename,"('./OUTPUT_FILES/potential_effective_duration_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
-  
+
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
     ! loop over spectral elements
     do ispec = 1,nspec
@@ -554,10 +554,10 @@ subroutine it_compute_integrated_energy_field_and_output()
   close(IIN)
 
   ! write cinetic effective duration field in external file
-  
+
   write(filename,"('./OUTPUT_FILES/cinetic_effective_duration_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
-  
+
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
     ! loop over spectral elements
     do ispec = 1,nspec
@@ -567,12 +567,12 @@ subroutine it_compute_integrated_energy_field_and_output()
     enddo
   endif
   close(IIN)
-  
+
   ! Uncomment to write the velocity profile in the acoustic part in file
-  !  
+  !
   !  write(filename,"('./OUTPUT_FILES/velocities',i5.5)") myrank
   !  open(unit=IIN,file=trim(filename),status='unknown',action='write')
-  !  
+  !
   !  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
   !    ! loop over spectral elements
   !    do ispec = 1,nspec
@@ -582,7 +582,7 @@ subroutine it_compute_integrated_energy_field_and_output()
   !        rhol  = density(1,kmato(ispec))
   !        kappal = lambdal_unrelaxed_elastic
   !        cpl = sqrt(kappal/rhol)
-  !      
+  !
   !        !--- if external medium, get density of current grid point
   !        if (assign_external_model) then
   !          cpl = vpext(2,2,ispec)
@@ -593,6 +593,6 @@ subroutine it_compute_integrated_energy_field_and_output()
   !    enddo
   !  endif
   !  close(IIN)
-  
+
 end subroutine it_compute_integrated_energy_field_and_output
 
