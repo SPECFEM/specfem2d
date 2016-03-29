@@ -40,6 +40,8 @@
 # On this case the blocks are used to gather faces corresponding to different materials and edges corresponding to free surfaces,
 # absorbing surfaces, topography or axis
 
+import cubit
+
 class mtools(object):
     """docstring for mtools"""
     def __init__(self,frequency,list_surf,list_vp):
