@@ -509,14 +509,14 @@ subroutine compute_energy_fields()
       ! compute pressure in this element
       call compute_pressure_one_element(ispec,pressure_element)
 
-      lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-      rhol  = density(1,kmato(ispec))
-      cpl = sqrt(lambdal_unrelaxed_elastic/rhol) !lambdal_unrelaxed_elastic = kappal
-
       !--- if external medium, get density of current grid point
       if (assign_external_model) then
-        cpl = vpext(i,j,ispec)
         rhol = rhoext(i,j,ispec)
+        cpl = vpext(i,j,ispec)
+      else
+        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+        rhol  = density(1,kmato(ispec))
+        cpl = sqrt(lambdal_unrelaxed_elastic/rhol) !lambdal_unrelaxed_elastic = kappal
       endif
 
       jacobianl = jacobian(i,j,ispec)
