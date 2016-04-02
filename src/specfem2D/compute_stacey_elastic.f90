@@ -115,6 +115,7 @@
     if (codeabs(IEDGE4,ispecabs)) then
       i = 1
       do j = 1,NGLLZ
+        ! Clayton-Engquist condition if elastic
         iglob = ibool(i,j,ispec)
 
         veloc_horiz = 0._CUSTOM_REAL
@@ -160,18 +161,17 @@
         weight = jacobian1D * wzgll(j)
 
         if (P_SV) then
-          ! P_SV-case
+          ! P_SV case
           vx = veloc_elastic(1,iglob) - veloc_horiz
           vz = veloc_elastic(2,iglob) - veloc_vert
           vn = nx*vx+nz*vz
           tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
           tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
         else
-          ! SH-case
+          ! SH case
           vy = veloc_elastic(1,iglob)
           ty = rho_vs*vy
         endif
-
 
         displtx = 0._CUSTOM_REAL
         displtz = 0._CUSTOM_REAL
@@ -195,7 +195,7 @@
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0 + displtx)*weight
           accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0 + displtz)*weight
         else
-          ! SH-case
+          ! SH case
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
         endif
 
@@ -227,13 +227,13 @@
         ! for analytical initial plane wave for Bielak's conditions
         ! left or right edge, horizontal normal vector
         if (add_Bielak_conditions_right .and. initialfield) then
-          if (.not.over_critical_angle) then
+          if (.not. over_critical_angle) then
             call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                         x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
                         c_inc, c_refl, time_offset,f0_source(1))
 
             traction_x_t0 = lambdaplus2mu_unrelaxed_elastic * dxUx + lambdal_unrelaxed_elastic * dzUz
-            traction_z_t0 = mul_unrelaxed_elastic*(dxUz + dzUx)
+            traction_z_t0 = mul_unrelaxed_elastic * (dxUz + dzUx)
           else
             veloc_horiz = v0x_right(count_right,it)
             veloc_vert = v0z_right(count_right,it)
@@ -269,7 +269,7 @@
           tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
           tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
         else
-          ! SH-case
+          ! SH case
           vy = veloc_elastic(1,iglob)
           ty = rho_vs*vy
         endif
@@ -292,11 +292,11 @@
         endif
 
         if (P_SV) then
-          ! P_SV-case
+          ! P_SV case
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0 + displtx)*weight
           accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0 + displtz)*weight
         else
-          ! SH-case
+          ! SH case
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
         endif
 
@@ -333,7 +333,7 @@
         ! for analytical initial plane wave for Bielak's conditions
         ! top or bottom edge, vertical normal vector
         if (add_Bielak_conditions_bottom .and. initialfield) then
-          if (.not.over_critical_angle) then
+          if (.not. over_critical_angle) then
             call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                         x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
                         c_inc, c_refl, time_offset,f0_source(1))
@@ -368,15 +368,15 @@
         weight = jacobian1D * wxgll(i)
 
         if (P_SV) then
-          ! P_SV-case
+          ! P_SV case
           vx = veloc_elastic(1,iglob) - veloc_horiz
           vz = veloc_elastic(2,iglob) - veloc_vert
           vn = nx*vx+nz*vz
           tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
           tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
         else
-          ! SH-case
-          vy = veloc_elastic(2,iglob)
+          ! SH case
+          vy = veloc_elastic(1,iglob)
           ty = rho_vs*vy
         endif
 
@@ -412,11 +412,11 @@
         endif
 
         if (P_SV) then
-          ! P_SV-case
+          ! P_SV case
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0 + displtx)*weight
           accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0 + displtz)*weight
         else
-          ! SH-case
+          ! SH case
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
         endif
 
@@ -453,6 +453,8 @@
         ! for analytical initial plane wave for Bielak's conditions
         ! top or bottom edge, vertical normal vector
         if (add_Bielak_conditions_top .and. initialfield) then
+        ! at the top there is no test for whether we are above the critical angle
+        ! because a critical angle can only exist when the top edge is a free surface, not in an infinite medium
           call compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
                       x_source(1), z_source(1), A_plane, B_plane, C_plane, anglesource(1), anglesource_refl, &
                       c_inc, c_refl, time_offset,f0_source(1))
@@ -480,14 +482,14 @@
         weight = jacobian1D * wxgll(i)
 
         if (P_SV) then
-          ! P_SV-case
+          ! P_SV case
           vx = veloc_elastic(1,iglob) - veloc_horiz
           vz = veloc_elastic(2,iglob) - veloc_vert
           vn = nx*vx+nz*vz
           tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
           tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
         else
-          ! SH-case
+          ! SH case
           vy = veloc_elastic(1,iglob)
           ty = rho_vs*vy
         endif
@@ -524,11 +526,11 @@
         endif
 
         if (P_SV) then
-          ! P_SV-case
+          ! P_SV case
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0 + displtx)*weight
           accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0 + displtz)*weight
         else
-          ! SH-case
+          ! SH case
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
         endif
 
@@ -543,7 +545,7 @@
           endif
         endif
       enddo
-    endif
+    endif  !  end of top absorbing boundary
 
   enddo
 
