@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
   subroutine read_parameter_file()
 
 ! reads in DATA/Par_file
@@ -160,6 +159,8 @@
 
   call read_value_logical_p(initialfield, 'solver.initialfield')
   if (err_occurred() /= 0) stop 'error reading parameter initialfield in Par_file'
+  if (initialfield .and. NPROC > 1) stop 'initialfield (plane waves) currently have a bug in parallel i.e. when &
+     & NPROC > 1, see https://github.com/geodynamics/specfem2d/issues/550 , thus please run with a single processor'
 
   call read_value_logical_p(add_Bielak_conditions_bottom, 'solver.add_Bielak_conditions_bottom')
   if (err_occurred() /= 0) stop 'error reading parameter add_Bielak_conditions_bottom in Par_file'
