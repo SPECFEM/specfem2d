@@ -299,9 +299,6 @@
   call read_value_logical_p(STACEY_ABSORBING_CONDITIONS, 'solver.STACEY_ABSORBING_CONDITIONS')
   if (err_occurred() /= 0) stop 'error reading parameter STACEY_ABSORBING_CONDITIONS in Par_file'
 
-  call read_value_logical_p(ADD_SPRING_TO_STACEY, 'solver.ADD_SPRING_TO_STACEY')
-  if (err_occurred() /= 0) stop 'error reading parameter ADD_SPRING_TO_STACEY in Par_file'
-
   call read_value_logical_p(ADD_PERIODIC_CONDITIONS, 'solver.ADD_PERIODIC_CONDITIONS')
   if (err_occurred() /= 0) stop 'error reading parameter ADD_PERIODIC_CONDITIONS in Par_file'
 
@@ -558,21 +555,6 @@
 
   ! solve the conflict in value of PML_BOUNDARY_CONDITIONS and STACEY_ABSORBING_CONDITIONS
   if (PML_BOUNDARY_CONDITIONS) STACEY_ABSORBING_CONDITIONS = .true.
-
-  if (STACEY_ABSORBING_CONDITIONS .and. ADD_SPRING_TO_STACEY) then
-    if (add_Bielak_conditions .or. initialfield) then
-      ! spring not supported
-      print *,''
-      print *,'Warning: ADD_SPRING_TO_STACEY not supported for Bielak or initialfield, setting ADD_SPRING_TO_STACEY to .false.'
-      ADD_SPRING_TO_STACEY = .false.
-    endif
-    if (.not. P_SV) then
-      ! spring not supported for SH
-      print *,''
-      print *,'Warning: ADD_SPRING_TO_STACEY not supported for SH-wavefield simulation, setting ADD_SPRING_TO_STACEY to .false.'
-      ADD_SPRING_TO_STACEY = .false.
-    endif
-  endif
 
   ! initializes flags for absorbing boundaries
   if (.not. STACEY_ABSORBING_CONDITIONS) then

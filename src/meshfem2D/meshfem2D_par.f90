@@ -102,7 +102,6 @@
 
   ! variables used for absorbing boundary condition
   logical :: STACEY_ABSORBING_CONDITIONS,absorbbottom,absorbright,absorbtop,absorbleft
-  logical :: ADD_SPRING_TO_STACEY
 
   integer :: NELEM_PML_THICKNESS
   logical :: PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE

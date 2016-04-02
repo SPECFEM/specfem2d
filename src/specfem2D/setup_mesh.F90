@@ -330,12 +330,6 @@
     enddo
   endif
 
-  ! use a spring to improve the stability of the Stacey condition
-  if(STACEY_BOUNDARY_CONDITIONS .and. ADD_SPRING_TO_STACEY) then
-    x_center_spring = (xmax + xmin)/2.d0
-    z_center_spring = (zmax + zmin)/2.d0
-  endif
-
   ! saves the grid of points in a file
   if (output_grid_ASCII .and. myrank == 0) then
      write(IMAIN,*)

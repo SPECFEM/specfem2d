@@ -59,7 +59,7 @@
 
   ! Stacey boundary conditions
   if (STACEY_BOUNDARY_CONDITIONS) then
-    call compute_stacey_elastic(accel_elastic,veloc_elastic,displ_elastic)
+    call compute_stacey_elastic(accel_elastic,veloc_elastic)
   endif
 
   ! PML boundary
@@ -260,7 +260,7 @@
   ! Stacey boundary conditions
   if (STACEY_BOUNDARY_CONDITIONS) then
     if (UNDO_ATTENUATION) then
-      call compute_stacey_elastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic)
+      call compute_stacey_elastic(b_accel_elastic,b_veloc_elastic)
     else
       call compute_stacey_elastic_backward(b_accel_elastic)
     endif

@@ -184,7 +184,6 @@ ROTATE_PML_ANGLE                = 30.
 
 # Stacey ABC
 STACEY_ABSORBING_CONDITIONS     = .false.
-ADD_SPRING_TO_STACEY            = .true.
 
 # periodic boundaries
 ADD_PERIODIC_CONDITIONS         = .false.

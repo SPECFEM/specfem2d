@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine compute_stacey_elastic(accel_elastic,veloc_elastic,displ_elastic)
+  subroutine compute_stacey_elastic(accel_elastic,veloc_elastic)
 
 ! absorbing boundaries
 !
@@ -42,19 +42,13 @@
 
   use specfem_par, only: nglob,nelemabs,it,any_elastic, &
                          assign_external_model,ibool,kmato,numabs,ispec_is_elastic, &
-                         codeabs,codeabs_corner, &
-                         density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-                         vpext,vsext,rhoext, &
-                         wxgll,wzgll, &
-                         P_SV, &
+                         codeabs,codeabs_corner,density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
+                         vpext,vsext,rhoext,wxgll,wzgll,P_SV, &
                          SIMULATION_TYPE,SAVE_FORWARD, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top,&
                          ib_left,ib_right,ib_bottom,ib_top, &
-                         STACEY_BOUNDARY_CONDITIONS, &
-                         ADD_SPRING_TO_STACEY,x_center_spring,z_center_spring, &
-                         deltat
-
+                         STACEY_BOUNDARY_CONDITIONS,deltat
 
   ! initialfield
   use specfem_par,only: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
@@ -70,14 +64,13 @@
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(inout) :: accel_elastic
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: veloc_elastic,displ_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: veloc_elastic
 
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob
   integer :: ibegin,iend
   real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz
-  real(kind=CUSTOM_REAL) :: displx,displz,displn,spring_position,displtx,displtz
 
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
@@ -173,27 +166,10 @@
           ty = rho_vs*vy
         endif
 
-        displtx = 0._CUSTOM_REAL
-        displtz = 0._CUSTOM_REAL
-
-        if (ADD_SPRING_TO_STACEY) then
-          displx = displ_elastic(1,iglob)
-          displz = displ_elastic(2,iglob)
-
-          spring_position = sqrt((coord(1,iglob)-x_center_spring)**2 + (coord(2,iglob)-z_center_spring)**2)
-
-          displn = nx*displx+nz*displz
-
-          displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nx + &
-                    mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
-          displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nz + &
-                    mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displz-displn*nz)
-        endif
-
         if (P_SV) then
           ! P_SV case
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0 + displtx)*weight
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0 + displtz)*weight
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0)*weight
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0)*weight
         else
           ! SH case
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
@@ -274,27 +250,10 @@
           ty = rho_vs*vy
         endif
 
-        displtx = 0._CUSTOM_REAL
-        displtz = 0._CUSTOM_REAL
-
-        if (ADD_SPRING_TO_STACEY) then
-          displx = displ_elastic(1,iglob)
-          displz = displ_elastic(2,iglob)
-
-          spring_position = sqrt((coord(1,iglob)-x_center_spring)**2 + (coord(2,iglob)-z_center_spring)**2)
-
-          displn = nx*displx+nz*displz
-
-          displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nx + &
-                    mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
-          displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nz + &
-                    mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displz-displn*nz)
-        endif
-
         if (P_SV) then
           ! P_SV case
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0 + displtx)*weight
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0 + displtz)*weight
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0)*weight
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0)*weight
         else
           ! SH case
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
@@ -389,32 +348,10 @@
           tz = 0._CUSTOM_REAL
         endif
 
-        displtx = 0._CUSTOM_REAL
-        displtz = 0._CUSTOM_REAL
-
-        if (ADD_SPRING_TO_STACEY) then
-          displx = displ_elastic(1,iglob)
-          displz = displ_elastic(2,iglob)
-
-          spring_position = sqrt((coord(1,iglob)-x_center_spring)**2 + (coord(2,iglob)-z_center_spring)**2)
-
-          displn = nx*displx+nz*displz
-
-          displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nx + &
-                    mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
-          displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nz + &
-                    mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displz-displn*nz)
-
-          if ((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
-            displtx = 0._CUSTOM_REAL
-            displtz = 0._CUSTOM_REAL
-          endif
-        endif
-
         if (P_SV) then
           ! P_SV case
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0 + displtx)*weight
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0 + displtz)*weight
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0)*weight
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0)*weight
         else
           ! SH case
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
@@ -503,32 +440,10 @@
           tz = 0._CUSTOM_REAL
         endif
 
-        displtx = 0._CUSTOM_REAL
-        displtz = 0._CUSTOM_REAL
-
-        if (ADD_SPRING_TO_STACEY) then
-          displx = displ_elastic(1,iglob)
-          displz = displ_elastic(2,iglob)
-
-          spring_position = sqrt((coord(1,iglob)-x_center_spring)**2 + (coord(2,iglob)-z_center_spring)**2)
-
-          displn = nx*displx+nz*displz
-
-          displtx = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nx + &
-                    mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displx-displn*nx)
-          displtz = lambdaplus2mu_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * displn * nz + &
-                    mul_unrelaxed_elastic / (2._CUSTOM_REAL*spring_position) * (displz-displn*nz)
-
-          if ((codeabs(IEDGE4,ispecabs) .and. i == 1) .or. (codeabs(IEDGE2,ispecabs) .and. i == NGLLX)) then
-            displtx = 0._CUSTOM_REAL
-            displtz = 0._CUSTOM_REAL
-          endif
-        endif
-
         if (P_SV) then
           ! P_SV case
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0 + displtx)*weight
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0 + displtz)*weight
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0)*weight
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0)*weight
         else
           ! SH case
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight

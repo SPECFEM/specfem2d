@@ -154,10 +154,6 @@ module specfem_par
   ! for detection of corner element on absorbing boundary
   logical, dimension(:,:), allocatable  :: codeabs_corner
 
-  ! add spring to Stacey absorbing boundary condition
-  logical :: ADD_SPRING_TO_STACEY
-  double precision :: x_center_spring,z_center_spring
-
   ! for horizontal periodic conditions
   logical :: ADD_PERIODIC_CONDITIONS
 

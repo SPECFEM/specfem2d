@@ -215,9 +215,6 @@
   read(IIN,*) time_stepping_scheme
 
   read(IIN,"(a80)") datlin
-  read(IIN,*) ADD_SPRING_TO_STACEY
-
-  read(IIN,"(a80)") datlin
   read(IIN,*) ADD_PERIODIC_CONDITIONS
 
   read(IIN,"(a80)") datlin
