@@ -527,8 +527,8 @@
 
         if (P_SV) then
           ! P_SV case
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx + traction_x_t0 + displtx)*weight
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz + traction_z_t0 + displtz)*weight
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tx - traction_x_t0 + displtx)*weight
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tz - traction_z_t0 + displtz)*weight
         else
           ! SH case
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
