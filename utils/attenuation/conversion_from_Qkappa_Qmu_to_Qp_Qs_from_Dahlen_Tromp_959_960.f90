@@ -37,6 +37,14 @@
   inverse_of_Qp = (1.d0 - (4.d0/3.d0)*(cs**2)/(cp**2))/Qkappa + (4.d0/3.d0)*(cs**2)/(cp**2)/Qmu
   Qp = 1.d0/inverse_of_Qp
 
+! In 2D plane strain, one spatial dimension is much greater than the others
+! (see for example: http://www.engineering.ucsb.edu/~hpscicom/projects/stress/introge.pdf)
+! and thus kappa = lambda + mu in 2D plane strain (instead of kappa = lambda + 2/3 mu in 3D).
+! See for example equation 6 in http://cherrypit.princeton.edu/papers/paper-99.pdf.
+! In 2D axisymmetric I think the 2/3 coefficient is OK, but it would be worth doublechecking.
+  stop 'error: this code is currently wrong because it uses the 3D formulas instead of 2D plane strain formulas for Kappa. &
+    & See comments about this in the source code of this program as well as in the users manual.'
+
 ! print the result
   print *,'Qp = ',Qp
   print *,'Qs = ',Qs
