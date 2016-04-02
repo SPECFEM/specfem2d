@@ -68,7 +68,7 @@ freq0                           = 100            # frequency for viscous attenua
 
 # for viscoelastic attenuation
 N_SLS                           = 2              # number of standard linear solids for attenuation (3 is usually the minimum)
-f0_attenuation                  = 5.196152422706633 # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
+f0_attenuation                  = 5.196152422706633 # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
 READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD

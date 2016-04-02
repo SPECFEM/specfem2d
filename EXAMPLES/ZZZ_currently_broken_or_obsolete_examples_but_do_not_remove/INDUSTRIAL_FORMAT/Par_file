@@ -44,12 +44,12 @@ time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = 
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
 
 # source parameters
-NSOURCES                        = 1              # number of sources (source info read from DATA/CMTSOLUTION file)
+NSOURCES                        = 1              # number of sources
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
 # for viscoelastic attenuation
 N_SLS                           = 2                      # number of standard linear solids for attenuation
-f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
+f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
 READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
 
 # receiver set parameters for seismograms
