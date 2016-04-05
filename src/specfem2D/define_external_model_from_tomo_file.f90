@@ -406,15 +406,15 @@ subroutine read_tomo_file()
   ! SPACING_X SPACING_Z
   ! NX NZ
   ! VP_MIN VP_MAX VS_MIN VS_MAX RHO_MIN RHO_MAX
-  ! x(1) z(0) vp vs rho
-  ! x(2) z(0) vp vs rho
-  ! ...
-  ! x(NX) z(0) vp vs rho
   ! x(1) z(1) vp vs rho
   ! x(2) z(1) vp vs rho
   ! ...
   ! x(NX) z(1) vp vs rho
   ! x(1) z(2) vp vs rho
+  ! x(2) z(2) vp vs rho
+  ! ...
+  ! x(NX) z(2) vp vs rho
+  ! x(1) z(3) vp vs rho
   ! ...
   ! ...
   ! x(NX) z(NZ) vp vs rho
