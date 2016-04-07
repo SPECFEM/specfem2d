@@ -267,12 +267,15 @@
   Mu_nu2(:,:,:) = -1._CUSTOM_REAL
 
   do ispec = 1,nspec
+  
+    print *,"myrank:",myrank," ispec:",ispec
 
     previous_vsext = vsext(1,1,ispec)
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
-
+        !print *,"vsext(i,j,ispec)",vsext(i,j,ispec)
+        !print *,"gravityext(i,j,ispec)",gravityext(i,j,ispec)
         if (P_SV .and. (.not. (i == 1 .and. j == 1)) .and. &
           ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
            (vsext(i,j,ispec) < TINYVAL  .and. previous_vsext >= TINYVAL)))  &

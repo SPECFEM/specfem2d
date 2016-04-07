@@ -91,7 +91,7 @@
   character(len=100) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
-  read(string_read,*) value_to_read
+  read(string_read,'(a)') value_to_read
 
   end subroutine read_value_string
 

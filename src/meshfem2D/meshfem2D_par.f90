@@ -238,8 +238,8 @@
   double precision, dimension(:),pointer :: f0_source,tshift_src,anglesource,factor,burst_band_width
   ! flag for fixation to surface
   logical, dimension(:),allocatable ::  source_surf
-  ! File name can't exceed 150 characters
-  character(len=150), dimension(:),allocatable :: name_of_source_file
+  ! File name can't exceed 100 characters
+  character(len=100), dimension(:),allocatable :: name_of_source_file
 
   end module source_file_par
 

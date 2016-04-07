@@ -194,7 +194,7 @@ module specfem_par
   ! source description
   integer :: NSOURCES
   integer, dimension(:), allocatable :: source_type,time_function_type
-  character(len=150), dimension(:), allocatable :: name_of_source_file
+  character(len=100), dimension(:), allocatable :: name_of_source_file
   double precision, dimension(:), allocatable :: burst_band_width
 
   ! source locations
