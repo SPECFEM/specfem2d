@@ -52,28 +52,29 @@
     if (time_stepping_scheme==1) then
       ! Newmark time scheme
       !! DK DK this should be vectorized
-      potential_gravitoacoustic = potential_gravitoacoustic + deltat*potential_dot_gravitoacoustic + &
-                                  deltatsquareover2*potential_dot_dot_gravitoacoustic
-      potential_dot_gravitoacoustic = potential_dot_gravitoacoustic + &
-                                      deltatover2*potential_dot_dot_gravitoacoustic
-      potential_gravito = potential_gravito + deltat*potential_dot_gravito + &
-                          deltatsquareover2*potential_dot_dot_gravito
-      potential_dot_gravito = potential_dot_gravito + deltatover2*potential_dot_dot_gravito
+      minus_int_int_pressure_gravitoacoustic = minus_int_int_pressure_gravitoacoustic + &
+                                  deltat*minus_int_pressure_gravitoacoustic + &
+                                  deltatsquareover2*minus_pressure_gravitoacoustic
+      minus_int_pressure_gravitoacoustic = minus_int_pressure_gravitoacoustic + &
+                                      deltatover2*minus_pressure_gravitoacoustic
+      minus_int_int_pressure_gravito = minus_int_int_pressure_gravito + deltat*minus_int_pressure_gravito + &
+                          deltatsquareover2*minus_pressure_gravito
+      minus_int_pressure_gravito = minus_int_pressure_gravito + deltatover2*minus_pressure_gravito
     else
       stop 'Only time_stepping_scheme=1 for gravitoacoustic'
     endif
 
-    potential_dot_dot_gravitoacoustic = ZERO
-    potential_dot_dot_gravito = ZERO
+    minus_pressure_gravitoacoustic = ZERO
+    minus_pressure_gravito = ZERO
 
 ! Impose displacements from boundary forcing here
-! because at this step the displacement (potentials) values
+! because at this step the values
 ! are already equal to value at n+1
 ! equivalent to free surface condition
 ! the contour integral u.n is computed after compute_forces_gravitoacoustic
 ! *********************************************************
 ! ** impose displacement from acoustic forcing at a rigid boundary
-! ** force potential_dot_dot_gravito by displacement
+! ** force minus_pressure_gravito by displacement
 ! *********************************************************
     if (ACOUSTIC_FORCING) then
       call add_acoustic_forcing_at_rigid_boundary_gravitoacoustic()
@@ -81,28 +82,28 @@
 
 ! free surface for a gravitoacoustic medium
 !!! to be coded !!!
-!        call enforce_acoustic_free_surface(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-!                                          potential_gravitoacoustic)
+!        call enforce_acoustic_free_surface(minus_pressure_gravitoacoustic,minus_int_pressure_gravitoacoustic, &
+!                                          minus_int_int_pressure_gravitoacoustic)
 
 !        if (SIMULATION_TYPE == 3) then ! Adjoint calculation
-!          call enforce_acoustic_free_surface(b_potential_dot_dot_gravitoacoustic,b_potential_dot_gravitoacoustic, &
-!                                            b_potential_gravitoacoustic)
+!          call enforce_acoustic_free_surface(b_minus_pressure_gravitoacoustic,b_minus_int_pressure_gravitoacoustic, &
+!                                            b_minus_int_int_pressure_gravitoacoustic)
 !        endif
 
 ! *********************************************************
 ! ************* compute forces for the gravitoacoustic elements
 ! *********************************************************
 
-    call compute_forces_gravitoacoustic(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-                                        potential_gravitoacoustic, potential_dot_dot_gravito, &
-                                        potential_gravito,.false.)
+    call compute_forces_gravitoacoustic(minus_pressure_gravitoacoustic,minus_int_pressure_gravitoacoustic, &
+                                        minus_int_int_pressure_gravitoacoustic, minus_pressure_gravito, &
+                                        minus_int_int_pressure_gravito,.false.)
 
     ! debugging
     if ((mod(it,100)==0)) then
       iglob=iglobzero
       write(*,*)it, & ! Nsql,gravityl,
-                maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
-                maxval(potential_dot_dot_gravitoacoustic),potential_dot_dot_gravitoacoustic(iglob)
+                maxval(minus_pressure_gravito),minus_pressure_gravito(iglob), &
+                maxval(minus_pressure_gravitoacoustic),minus_pressure_gravitoacoustic(iglob)
     endif
   endif ! end of test if any gravitoacoustic element
 
@@ -118,10 +119,10 @@
 ! ************************************ add force source
 ! ************************************************************************************
 
-! assembling potential_dot_dot for gravitoacoustic elements
+! assembling minus_pressure for gravitoacoustic elements
 !#ifdef USE_MPI
 !    if (NPROC > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-!      call assemble_MPI_vector_ac(potential_dot_dot_gravitoacoustic)
+!      call assemble_MPI_vector_ac(minus_pressure_gravitoacoustic)
 !
 !    endif
 !
@@ -134,31 +135,31 @@
   if ((any_gravitoacoustic)) then
     if (time_stepping_scheme == 1) then
       !! DK DK this should be vectorized
-      potential_dot_dot_gravitoacoustic = potential_dot_dot_gravitoacoustic * rmass_inverse_gravitoacoustic
-      potential_dot_gravitoacoustic = potential_dot_gravitoacoustic + &
-                                      deltatover2*potential_dot_dot_gravitoacoustic
+      minus_pressure_gravitoacoustic = minus_pressure_gravitoacoustic * rmass_inverse_gravitoacoustic
+      minus_int_pressure_gravitoacoustic = minus_int_pressure_gravitoacoustic + &
+                                      deltatover2*minus_pressure_gravitoacoustic
 
 !! line below already done in compute_forces_gravitoacoustic, because necessary
-!! for the computation of potential_dot_dot_gravitoacoustic
-!      potential_dot_dot_gravito = potential_dot_dot_gravito * rmass_inverse_gravito
-      potential_dot_gravito = potential_dot_gravito + deltatover2*potential_dot_dot_gravito
+!! for the computation of minus_pressure_gravitoacoustic
+!      minus_pressure_gravito = minus_pressure_gravito * rmass_inverse_gravito
+      minus_int_pressure_gravito = minus_int_pressure_gravito + deltatover2*minus_pressure_gravito
     else
       stop 'Only time_stepping_scheme = 1 implemented for gravitoacoustic case'
     endif
 
 ! free surface for an acoustic medium
-!        call enforce_acoustic_free_surface(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-!                                        potential_gravitoacoustic)
+!        call enforce_acoustic_free_surface(minus_pressure_gravitoacoustic,minus_int_pressure_gravitoacoustic, &
+!                                        minus_int_int_pressure_gravitoacoustic)
 !
 !        if (SIMULATION_TYPE == 3) then
-!          call enforce_acoustic_free_surface(b_potential_dot_dot_gravitoacoustic,b_potential_dot_gravitoacoustic, &
-!                                          b_potential_gravitoacoustic)
+!          call enforce_acoustic_free_surface(b_minus_pressure_gravitoacoustic,b_minus_int_pressure_gravitoacoustic, &
+!                                          b_minus_int_int_pressure_gravitoacoustic)
 !        endif
 !
-      ! update the potential field (use a new array here) for coupling terms
-!      potential_gravitoacoustic_adj_coupling = potential_gravitoacoustic &
-!                          + deltat*potential_dot_gravitoacoustic &
-!                          + deltatsquareover2*potential_dot_dot_gravitoacoustic
+      ! update the scalar field (use a new array here) for coupling terms
+!      minus_int_int_pressure_gravitoacoustic_adj_coupling = minus_int_int_pressure_gravitoacoustic &
+!                          + deltat*minus_int_pressure_gravitoacoustic &
+!                          + deltatsquareover2*minus_pressure_gravitoacoustic
 
   endif ! of if (any_gravitoacoustic)
 

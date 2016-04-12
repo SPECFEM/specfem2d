@@ -301,9 +301,9 @@
     open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_acoustic**.bin')
 
-    write(55) potential_acoustic
-    write(55) potential_dot_acoustic
-    write(55) potential_dot_dot_acoustic
+    write(55) minus_int_int_pressure_acoustic
+    write(55) minus_int_pressure_acoustic
+    write(55) minus_pressure_acoustic
     close(55)
   endif
 

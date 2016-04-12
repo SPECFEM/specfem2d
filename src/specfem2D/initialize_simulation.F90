@@ -239,8 +239,8 @@
     stop 'need to have an initial field to add Bielak plane wave conditions'
 
   ! seismogram output
-  if (seismotype < 1 .or. seismotype > 6) &
-    stop 'seismotype should be 1(=displ), 2(=veloc), 3(=accel), 4(=pressure), 5(=curl of displ) or 6(=the fluid potential)'
+  if (seismotype < 1 .or. seismotype > 6) stop 'seismotype should be 1(=displ), 2(=veloc), 3(=accel), &
+    &4(=pressure), 5(=curl of displ) or 6(=minus the second integral of pressure)'
 
   if (SU_FORMAT .and. .not. save_binary_seismograms_single) &
      stop 'SU_FORMAT seismograms are single precision and thus require save_binary_seismograms_single set to .true.'
@@ -251,7 +251,7 @@
       write(IMAIN,*)
       write(IMAIN,*) '***** WARNING *****'
       write(IMAIN,*) 'SAVE_FORWARD simulation: uses seismotype = ',seismotype
-      write(IMAIN,*) '  Note that seismograms usually must be in displacement/potential for (poro)elastic/acoustic domains'
+      write(IMAIN,*) '  Note that seismograms usually must be in displacement/scalar for (poro)elastic/acoustic domains'
       write(IMAIN,*) '  and seismotype should be 1 (elastic/poroelastic adjoint source) or 6 (acoustic adjoint source)'
       write(IMAIN,*) '*******************'
       write(IMAIN,*)

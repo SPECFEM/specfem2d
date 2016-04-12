@@ -34,7 +34,7 @@
   subroutine compute_vector_whole_medium(field_acoustic,field_gravitoacoustic, &
                                          field_gravito,field_elastic,fields_poroelastic)
 
-! compute Grad(potential) in acoustic elements
+! compute Grad(scalar) in acoustic elements
 ! and combine with existing velocity vector field in elastic elements
 
   use specfem_par,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,nspec,ibool, &
@@ -79,7 +79,7 @@
   subroutine compute_vector_one_element(field_acoustic,field_gravitoacoustic, &
                                         field_gravito,field_elastic,fields_poroelastic,ispec,vector_field_element)
 
-! compute Grad(potential) if acoustic element or copy existing vector if elastic element
+! compute Grad(scalar) if acoustic element or copy existing vector if elastic element
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
@@ -147,8 +147,8 @@
   else if (ispec_is_acoustic(ispec)) then
     ! acoustic element
 
-    ! compute gradient of potential to calculate vector if acoustic element
-    ! we then need to divide by density because the potential is a potential of (density * displacement)
+    ! compute gradient to calculate vector if acoustic element
+    ! we then need to divide by density because the scalar is related to a gradient of (density * displacement)
     rhol = density(1,kmato(ispec))
 
     ! double loop over GLL points to compute and store gradients
@@ -195,7 +195,7 @@
 
         if (assign_external_model) rhol = rhoext(i,j,ispec)
 
-        ! derivatives of potential
+        ! derivatives of the scalar
         vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol        !u_x
         vector_field_element(2,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol        !u_z
       enddo
@@ -204,8 +204,8 @@
   else if (ispec_is_gravitoacoustic(ispec)) then
     ! gravito-acoustic element
 
-    ! compute gradient of potential to calculate vector if gravitoacoustic element
-    ! we then need to divide by density because the potential is a potential of (density * displacement)
+    ! compute gradient to calculate the vector if gravitoacoustic element
+    ! we then need to divide by density because the scalar is related to a gradient of (density * displacement)
     rhol = density(1,kmato(ispec))
 
     ! double loop over GLL points to compute and store gradients
@@ -237,11 +237,11 @@
           gravityl = gravityext(i,j,ispec)
         endif
 
-        ! derivatives of potential
+        ! derivatives of quantities related to pressure
         vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol
         vector_field_element(2,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol
 
-        ! add the gravito potential along the z component
+        ! add the gravito scalar field along the z component
         iglob = ibool(i,j,ispec)
         ! remove gravito contribution
         ! sign gravito correction

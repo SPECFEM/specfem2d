@@ -32,8 +32,8 @@
 !========================================================================
 
 
-  subroutine compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                                     PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
+  subroutine compute_forces_acoustic(minus_pressure_acoustic,minus_int_pressure_acoustic,minus_int_int_pressure_acoustic, &
+                                     PML_BOUNDARY_CONDITIONS,minus_int_int_pressure_acoustic_old)
 
 
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
@@ -50,9 +50,9 @@
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
-                         rmemory_potential_acoustic,&
+                         rmemory_minus_int_int_pressure_acoustic,&
                          rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
-                         rmemory_potential_acoustic_LDDRK, &
+                         rmemory_minus_int_int_pressure_acoustic_LDDRK, &
                          rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
                          deltat
 
@@ -62,11 +62,11 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob) :: potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                              potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob) :: minus_pressure_acoustic,minus_int_pressure_acoustic, &
+                                              minus_int_int_pressure_acoustic
 
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
-  real(kind=CUSTOM_REAL), dimension(nglob) :: potential_acoustic_old
+  real(kind=CUSTOM_REAL), dimension(nglob) :: minus_int_int_pressure_acoustic_old
 
   ! local parameters
   integer :: ispec,i,j,k,iglob
@@ -94,7 +94,7 @@
                       A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: PML_dux_dxl,PML_dux_dzl,PML_dux_dxl_old,PML_dux_dzl_old
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_dot_dot_acoustic_PML
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: minus_pressure_acoustic_PML
 
   ifirstelem = 1
   ilastelem = nspec
@@ -106,7 +106,7 @@
   endif
 
   if (PML_BOUNDARY_CONDITIONS) then
-    potential_dot_dot_acoustic_PML(:,:) = 0._CUSTOM_REAL
+    minus_pressure_acoustic_PML(:,:) = 0._CUSTOM_REAL
     PML_dux_dxl(:,:) = 0._CUSTOM_REAL
     PML_dux_dzl(:,:) = 0._CUSTOM_REAL
     PML_dux_dxl_old(:,:) = 0._CUSTOM_REAL
@@ -131,8 +131,8 @@
           ! first double loop over GLL points to compute and store gradients
           ! we can merge the two loops because NGLLX == NGLLZ
           do k = 1,NGLLX
-            dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
-            dux_dgamma = dux_dgamma + potential_acoustic(ibool(i,k,ispec)) * hprime_zz(j,k)
+            dux_dxi = dux_dxi + minus_int_int_pressure_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
+            dux_dgamma = dux_dgamma + minus_int_int_pressure_acoustic(ibool(i,k,ispec)) * hprime_zz(j,k)
           enddo
 
           ! AXISYM case overwrites dux_dxi
@@ -140,7 +140,7 @@
             if (is_on_the_axis(ispec)) then
               dux_dxi = 0._CUSTOM_REAL
               do k = 1,NGLLX
-                dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec)) * hprimeBar_xx(i,k)
+                dux_dxi = dux_dxi + minus_int_int_pressure_acoustic(ibool(k,j,ispec)) * hprimeBar_xx(i,k)
               enddo
             endif
           endif
@@ -150,7 +150,7 @@
           gammaxl = gammax(i,j,ispec)
           gammazl = gammaz(i,j,ispec)
 
-          ! derivatives of potential
+          ! derivatives of the scalar field
           dux_dxl = dux_dxi * xixl + dux_dgamma * gammaxl
           dux_dzl = dux_dxi * xizl + dux_dgamma * gammazl
 
@@ -184,17 +184,17 @@
                 do k = 1,NGLLX
                   if (AXISYM) then
                     if (is_on_the_axis(ispec)) then
-                      dux_dxi = dux_dxi + potential_acoustic_old(ibool(k,j,ispec)) * hprimeBar_xx(i,k)
+                      dux_dxi = dux_dxi + minus_int_int_pressure_acoustic_old(ibool(k,j,ispec)) * hprimeBar_xx(i,k)
                     else
-                      dux_dxi = dux_dxi + potential_acoustic_old(ibool(k,j,ispec)) * hprime_xx(i,k)
+                      dux_dxi = dux_dxi + minus_int_int_pressure_acoustic_old(ibool(k,j,ispec)) * hprime_xx(i,k)
                     endif
                   else
-                    dux_dxi = dux_dxi + potential_acoustic_old(ibool(k,j,ispec)) * hprime_xx(i,k)
+                    dux_dxi = dux_dxi + minus_int_int_pressure_acoustic_old(ibool(k,j,ispec)) * hprime_xx(i,k)
                   endif
-                  dux_dgamma = dux_dgamma + potential_acoustic_old(ibool(i,k,ispec)) * hprime_zz(j,k)
+                  dux_dgamma = dux_dgamma + minus_int_int_pressure_acoustic_old(ibool(i,k,ispec)) * hprime_zz(j,k)
                 enddo
 
-                ! derivatives of potential
+                ! derivatives of the scalar field
                 PML_dux_dxl_old(i,j) = dux_dxi * xixl + dux_dgamma * gammaxl
                 PML_dux_dzl_old(i,j) = dux_dxi * xizl + dux_dgamma * gammazl
 
@@ -358,56 +358,67 @@
                                            bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
               if (stage_time_scheme == 1) then
-                rmemory_potential_acoustic(1,i,j,ispec_PML) = coef0_1 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
-                       coef1_1 * potential_acoustic(iglob) + coef2_1 * potential_acoustic_old(iglob)
+                rmemory_minus_int_int_pressure_acoustic(1,i,j,ispec_PML) = &
+                       coef0_1 * rmemory_minus_int_int_pressure_acoustic(1,i,j,ispec_PML) + &
+                       coef1_1 * minus_int_int_pressure_acoustic(iglob) + coef2_1 * minus_int_int_pressure_acoustic_old(iglob)
 
                 if (singularity_type == 0) then
-                  rmemory_potential_acoustic(2,i,j,ispec_PML) = coef0_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + &
-                         coef1_2 * potential_acoustic(iglob) + coef2_2 * potential_acoustic_old(iglob)
+                  rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML) = &
+                       coef0_2 * rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML) + &
+                       coef1_2 * minus_int_int_pressure_acoustic(iglob) + coef2_2 * minus_int_int_pressure_acoustic_old(iglob)
                 else
-                  rmemory_potential_acoustic(2,i,j,ispec_PML) = coef0_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + &
-                         coef1_2 * time_n * potential_acoustic(iglob) + coef2_2 * time_nsub1 * potential_acoustic_old(iglob)
+                  rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML) = &
+                       coef0_2 * rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML) + &
+                       coef1_2 * time_n * minus_int_int_pressure_acoustic(iglob) + &
+                       coef2_2 * time_nsub1 * minus_int_int_pressure_acoustic_old(iglob)
                 endif
               endif
 
               if (stage_time_scheme == 6) then
-                rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML) = &
-                       ALPHA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML) + &
-                       deltat * (-bb_1 * rmemory_potential_acoustic(1,i,j,ispec_PML) + potential_acoustic(iglob))
-                rmemory_potential_acoustic(1,i,j,ispec_PML) = rmemory_potential_acoustic(1,i,j,ispec_PML) + &
-                         BETA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML)
+                rmemory_minus_int_int_pressure_acoustic_LDDRK(1,i,j,ispec_PML) = &
+                       ALPHA_LDDRK(i_stage) * rmemory_minus_int_int_pressure_acoustic_LDDRK(1,i,j,ispec_PML) + &
+                       deltat * (-bb_1 * rmemory_minus_int_int_pressure_acoustic(1,i,j,ispec_PML) &
+                       + minus_int_int_pressure_acoustic(iglob))
+                rmemory_minus_int_int_pressure_acoustic(1,i,j,ispec_PML) = &
+                       rmemory_minus_int_int_pressure_acoustic(1,i,j,ispec_PML) + &
+                       BETA_LDDRK(i_stage) * rmemory_minus_int_int_pressure_acoustic_LDDRK(1,i,j,ispec_PML)
                 if (singularity_type == 0) then
-                  rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) = &
-                         ALPHA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) + &
-                         deltat * (-bb_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + potential_acoustic(iglob))
-                  rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
-                         BETA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML)
+                  rmemory_minus_int_int_pressure_acoustic_LDDRK(2,i,j,ispec_PML) = &
+                       ALPHA_LDDRK(i_stage) * rmemory_minus_int_int_pressure_acoustic_LDDRK(2,i,j,ispec_PML) + &
+                       deltat * (-bb_2 * rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML) &
+                       + minus_int_int_pressure_acoustic(iglob))
+                  rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML) = &
+                       rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML) + &
+                       BETA_LDDRK(i_stage) * rmemory_minus_int_int_pressure_acoustic_LDDRK(2,i,j,ispec_PML)
                 else
-                  rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) = &
-                         ALPHA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) + &
-                         deltat * (-bb_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + potential_acoustic(iglob) * time_n)
-                  rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
-                         BETA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML)
+                  rmemory_minus_int_int_pressure_acoustic_LDDRK(2,i,j,ispec_PML) = &
+                       ALPHA_LDDRK(i_stage) * rmemory_minus_int_int_pressure_acoustic_LDDRK(2,i,j,ispec_PML) + &
+                       deltat * (-bb_2 * rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML) &
+                       + minus_int_int_pressure_acoustic(iglob) * time_n)
+                  rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML) = &
+                       rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML) + &
+                       BETA_LDDRK(i_stage) * rmemory_minus_int_int_pressure_acoustic_LDDRK(2,i,j,ispec_PML)
                 endif
               endif
 
               if (AXISYM) then
                 if (is_on_the_axis(ispec)) then
-                  potential_dot_dot_acoustic_PML(i,j)= wxglj(i) * wzgll(j)/kappal * jacobian(i,j,ispec) * r_xiplus1(i,j) * &
-                           (A1 * potential_dot_acoustic(iglob) + A2 * potential_acoustic(iglob) + &
-                            A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
-                            A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
+                  minus_pressure_acoustic_PML(i,j)= wxglj(i) * wzgll(j)/kappal * jacobian(i,j,ispec) * r_xiplus1(i,j) * &
+                           (A1 * minus_int_pressure_acoustic(iglob) + A2 * minus_int_int_pressure_acoustic(iglob) + &
+                            A3 * rmemory_minus_int_int_pressure_acoustic(1,i,j,ispec_PML) + &
+                            A4 * rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML))
                 else
-                  potential_dot_dot_acoustic_PML(i,j)= wxgll(i) * wzgll(j)/kappal * jacobian(i,j,ispec) &
+                  minus_pressure_acoustic_PML(i,j)= wxgll(i) * wzgll(j)/kappal * jacobian(i,j,ispec) &
                                                       * coord(1,ibool(i,j,ispec)) * &
-                           (A1 * potential_dot_acoustic(iglob) + A2 * potential_acoustic(iglob) + &
-                            A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
-                            A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
+                           (A1 * minus_int_pressure_acoustic(iglob) + A2 * minus_int_int_pressure_acoustic(iglob) + &
+                            A3 * rmemory_minus_int_int_pressure_acoustic(1,i,j,ispec_PML) + &
+                            A4 * rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML))
                 endif
               else
-                  potential_dot_dot_acoustic_PML(i,j)= wxgll(i) * wzgll(j)/kappal * jacobian(i,j,ispec) * &
-                           (A1 * potential_dot_acoustic(iglob) + A2 * potential_acoustic(iglob) + &
-                            A3 * rmemory_potential_acoustic(1,i,j,ispec_PML) + A4 * rmemory_potential_acoustic(2,i,j,ispec_PML))
+                  minus_pressure_acoustic_PML(i,j)= wxgll(i) * wzgll(j)/kappal * jacobian(i,j,ispec) * &
+                           (A1 * minus_int_pressure_acoustic(iglob) + A2 * minus_int_int_pressure_acoustic(iglob) + &
+                            A3 * rmemory_minus_int_int_pressure_acoustic(1,i,j,ispec_PML) + &
+                            A4 * rmemory_minus_int_int_pressure_acoustic(2,i,j,ispec_PML))
               endif
             endif
           endif ! PML_BOUNDARY_CONDITIONS
@@ -425,25 +436,25 @@
           if (AXISYM) then
             if (is_on_the_axis(ispec)) then
               do k = 1,NGLLX
-                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) - &
                        (tempx1(k,j) * hprimeBarwglj_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
               enddo
             else
               do k = 1,NGLLX
-                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) - &
                          (tempx1(k,j) * hprimewgll_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
               enddo
             endif
           else
             do k = 1,NGLLX
-              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+              minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) - &
                        (tempx1(k,j) * hprimewgll_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
             enddo
           endif
 
           if (PML_BOUNDARY_CONDITIONS) then
             if (ispec_is_PML(ispec)) then
-              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_dot_acoustic_PML(i,j)
+              minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) - minus_pressure_acoustic_PML(i,j)
             endif
           endif
         enddo ! second loop over the GLL points

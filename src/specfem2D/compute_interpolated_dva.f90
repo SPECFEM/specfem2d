@@ -71,7 +71,7 @@
         vz = vz + dzd*hlagrange
 
       case (4,6)
-        ! pressure/potential
+        ! pressure
         dxd = pressure_element(i,j)
         ! computes interpolated field
         vx = vx + dxd*hlagrange

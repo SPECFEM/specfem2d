@@ -41,7 +41,7 @@ subroutine compute_energy()
     ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,jacobian,wxgll,wzgll, &
     displ_elastic,veloc_elastic, &
     displs_poroelastic,displw_poroelastic,velocs_poroelastic,velocw_poroelastic, &
-    potential_dot_acoustic,potential_dot_gravitoacoustic,potential_dot_gravito, &
+    minus_int_pressure_acoustic,minus_int_pressure_gravitoacoustic,minus_int_pressure_gravito, &
     vsext,vpext,rhoext,poroelastcoef,density,kmato,assign_external_model, &
     ispec_is_poroelastic,ispec_is_elastic, &
     P_SV
@@ -266,15 +266,15 @@ subroutine compute_energy()
       ! as in Komatitsch and Tromp, Geophysical Journal International, vol. 150, p. 303-318 (2002).
       ! This permits acoustic-elastic coupling based on a non-iterative time scheme.
       ! Displacement is then: u = grad(Chi) / rho
-      ! Velocity is then: v = grad(Chi_dot) / rho (Chi_dot being the time derivative of Chi)
-      ! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
+      ! Velocity is then: v = grad(minus_int_pressure) / rho (minus_int_pressure being the time derivative of Chi)
+      ! and pressure is: p = - minus_pressure  (minus_pressure being the time second derivative of Chi).
 
       ! compute pressure in this element
       call compute_pressure_one_element(ispec,pressure_element)
 
       ! compute velocity vector field in this element
-      call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                                      potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
+      call compute_vector_one_element(minus_int_pressure_acoustic,minus_int_pressure_gravitoacoustic, &
+                                      minus_int_pressure_gravito,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
 
       ! get density of current spectral element
       lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
@@ -320,10 +320,11 @@ subroutine compute_energy_fields()
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,TWO,ZERO
 
-  use specfem_par,only: AXISYM,is_on_the_axis,nspec,ibool,deltat,veloc_elastic,potential_dot_acoustic,ispec_is_elastic, &
+  use specfem_par,only: AXISYM,is_on_the_axis,nspec,ibool,deltat,veloc_elastic,minus_int_pressure_acoustic,ispec_is_elastic, &
                         ispec_is_poroelastic,integrated_cinetic_energy_field,max_cinetic_energy_field, &
                         integrated_potential_energy_field,max_potential_energy_field,cinetic_effective_duration_field, &
-                        potential_effective_duration_field,potential_dot_gravitoacoustic,potential_dot_gravito,velocs_poroelastic, &
+                        potential_effective_duration_field, &
+                        minus_int_pressure_gravitoacoustic,minus_int_pressure_gravito,velocs_poroelastic, &
                         poroelastcoef,vsext,vpext,rhoext,density,kmato,assign_external_model,jacobian,wxgll,wzgll,displ_elastic, &
                         hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz,wxglj
 
@@ -503,8 +504,8 @@ subroutine compute_energy_fields()
     else
 
       ! compute velocity vector field in this element
-      call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                                      potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
+      call compute_vector_one_element(minus_int_pressure_acoustic,minus_int_pressure_gravitoacoustic, &
+                                      minus_int_pressure_gravito,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
 
       ! compute pressure in this element
       call compute_pressure_one_element(ispec,pressure_element)

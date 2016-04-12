@@ -236,8 +236,8 @@ subroutine it_transfer_from_GPU()
   ! Fields transfer for imaging
   ! acoustic domains
   if (any_acoustic ) then
-    call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic,potential_dot_acoustic, &
-                                        potential_dot_dot_acoustic,Mesh_pointer)
+    call transfer_fields_ac_from_device(NGLOB_AB,minus_int_int_pressure_acoustic,minus_int_pressure_acoustic, &
+                                        minus_pressure_acoustic,Mesh_pointer)
   endif
 
   ! elastic domains
@@ -329,21 +329,21 @@ subroutine it_read_forward_arrays()
     open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_acoustic**.bin')
 
-    read(55) b_potential_acoustic
-    read(55) b_potential_dot_acoustic
-    read(55) b_potential_dot_dot_acoustic
+    read(55) b_minus_int_int_pressure_acoustic
+    read(55) b_minus_int_pressure_acoustic
+    read(55) b_minus_pressure_acoustic
 
     close(55)
 
     if (GPU_MODE) then
       ! transfers fields onto GPU
-      call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
-                                          b_potential_dot_acoustic,      &
-                                          b_potential_dot_dot_acoustic,  &
+      call transfer_b_fields_ac_to_device(NGLOB_AB,b_minus_int_int_pressure_acoustic, &
+                                          b_minus_int_pressure_acoustic,      &
+                                          b_minus_pressure_acoustic,  &
                                           Mesh_pointer)
     else
       ! free surface for an acoustic medium
-      call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic)
+      call enforce_acoustic_free_surface(b_minus_pressure_acoustic,b_minus_int_pressure_acoustic,b_minus_int_int_pressure_acoustic)
     endif
   endif
 

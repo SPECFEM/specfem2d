@@ -47,7 +47,7 @@
 #endif
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_potential_acoustic_buffer,b_potential_dot_dot_acoustic_buffer
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_minus_int_int_pressure_acoustic_buffer,b_minus_pressure_acoustic_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_elastic_buffer,b_accel_elastic_buffer
   double precision :: sizeval
 
@@ -137,10 +137,10 @@
   ! allocates buffers
   if (SIMULATION_TYPE == 3) then
     if (any_acoustic) then
-      allocate(b_potential_acoustic_buffer(nglob,NT_DUMP_ATTENUATION),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_potential_acoustic')
-      allocate(b_potential_dot_dot_acoustic_buffer(nglob,NT_DUMP_ATTENUATION),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_potential_dot_dot_acoustic')
+      allocate(b_minus_int_int_pressure_acoustic_buffer(nglob,NT_DUMP_ATTENUATION),stat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_minus_int_int_pressure_acoustic')
+      allocate(b_minus_pressure_acoustic_buffer(nglob,NT_DUMP_ATTENUATION),stat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_minus_pressure_acoustic')
     endif
 
     if (any_elastic) then
@@ -292,8 +292,8 @@
 
         ! stores wavefield in buffers
         if (any_acoustic) then
-          b_potential_acoustic_buffer(:,it_of_this_subset) = b_potential_acoustic(:)
-          b_potential_dot_dot_acoustic_buffer(:,it_of_this_subset) = b_potential_dot_dot_acoustic(:)
+          b_minus_int_int_pressure_acoustic_buffer(:,it_of_this_subset) = b_minus_int_int_pressure_acoustic(:)
+          b_minus_pressure_acoustic_buffer(:,it_of_this_subset) = b_minus_pressure_acoustic(:)
         endif
 
         if (any_elastic) then
@@ -313,8 +313,8 @@
         ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
         if (any_acoustic) then
           do j = 1,NGLOB
-            b_potential_acoustic(j) = b_potential_acoustic_buffer(j,it_subset_end-it_of_this_subset+1)
-            b_potential_dot_dot_acoustic(j) = b_potential_dot_dot_acoustic_buffer(j,it_subset_end-it_of_this_subset+1)
+            b_minus_int_int_pressure_acoustic(j) = b_minus_int_int_pressure_acoustic_buffer(j,it_subset_end-it_of_this_subset+1)
+            b_minus_pressure_acoustic(j) = b_minus_pressure_acoustic_buffer(j,it_subset_end-it_of_this_subset+1)
           enddo
         endif
 
@@ -347,9 +347,9 @@
 
           if (any_acoustic) then
             !ZN here we remove the trick introduced by Luoyang to stabilized the adjoint simulation
-            !ZN However in order to keep the current code be consistent, we still keep potential_acoustic_adj_coupling
+            !ZN However in order to keep the current code be consistent, we still keep minus_int_int_pressure_acoustic_adj_coupling
             !ZN the final goal should remove the *adj_coupling
-            potential_acoustic_adj_coupling(:) = potential_acoustic(:)
+            minus_int_int_pressure_acoustic_adj_coupling(:) = minus_int_int_pressure_acoustic(:)
           endif
 
           call update_displacement_elastic_forward()
@@ -360,7 +360,7 @@
 
           ! for coupling with adjoint wavefields, stores temporary old wavefield
           if (coupled_acoustic_elastic) then
-            ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+            ! handles adjoint runs coupling between adjoint pressure and adjoint elastic wavefield
             ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
 #ifdef FORCE_VECTORIZATION
               do i = 1,3*nglob_elastic
@@ -401,7 +401,7 @@
   ! frees undo_attenuation buffers
   if (SIMULATION_TYPE == 3) then
     if (any_acoustic) then
-      deallocate(b_potential_acoustic_buffer,b_potential_dot_dot_acoustic_buffer)
+      deallocate(b_minus_int_int_pressure_acoustic_buffer,b_minus_pressure_acoustic_buffer)
     endif
     if (any_elastic) then
       deallocate(b_displ_elastic_buffer,b_accel_elastic_buffer)

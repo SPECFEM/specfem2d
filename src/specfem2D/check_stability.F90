@@ -45,7 +45,7 @@
                          ELASTIC_SIMULATION,any_elastic,displ_elastic, &
                          POROELASTIC_SIMULATION,any_poroelastic, &
                          displs_poroelastic,displw_poroelastic, &
-                         ACOUSTIC_SIMULATION,any_acoustic,potential_acoustic, &
+                         ACOUSTIC_SIMULATION,any_acoustic,minus_int_int_pressure_acoustic, &
                          timestamp_seconds_start
 
   use specfem_par_noise,only: NOISE_TOMOGRAPHY
@@ -161,7 +161,7 @@
   ! acoustic wavefield
   if (ACOUSTIC_SIMULATION) then
     if (any_acoustic) then
-      displnorm_all = maxval(abs(potential_acoustic(:)))
+      displnorm_all = maxval(abs(minus_int_int_pressure_acoustic(:)))
     else
       displnorm_all = 0.d0
     endif

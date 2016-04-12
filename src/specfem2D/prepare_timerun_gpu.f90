@@ -131,7 +131,7 @@
 ! nelem_acoustic_surface                 : nombre d'elements spectraux situes sur une surface libre acoustique
 ! free_ac_ispec                          : numero d'element spectral du i eme element acoustique sur surface libre
 ! free_surface_ij(i,j,ispec)             : i eme coordonnee du j eme point GLL de l'element spectral libre ispec
-! b_reclen_potential                     : place en octet prise par b_nelem_acoustic_surface * GLLX
+! b_reclen                               : place en octet prise par b_nelem_acoustic_surface * GLLX
 ! any_elastic                            : vrai s'il existe des elements elastiques
 ! num_fluid_solid_edges                  : nombre d'elements spectraux sur une frontiere elastique/acoustique
 ! coupling_ac_el_ispec                   : tableau des elements spectraux frontiere ACOUSTIQUE
@@ -226,14 +226,14 @@
 
   ! puts acoustic initial fields onto GPU
   if (any_acoustic) then
-    call transfer_fields_ac_to_device(NGLOB_AB,potential_acoustic, &
-                                      potential_dot_acoustic,potential_dot_dot_acoustic,Mesh_pointer)
+    call transfer_fields_ac_to_device(NGLOB_AB,minus_int_int_pressure_acoustic, &
+                                      minus_int_pressure_acoustic,minus_pressure_acoustic,Mesh_pointer)
 
 
 
     if (SIMULATION_TYPE == 3) &
-      call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
-                                          b_potential_dot_acoustic,b_potential_dot_dot_acoustic,Mesh_pointer)
+      call transfer_b_fields_ac_to_device(NGLOB_AB,b_minus_int_int_pressure_acoustic, &
+                                          b_minus_int_pressure_acoustic,b_minus_pressure_acoustic,Mesh_pointer)
   endif
 
   ! puts elastic initial fields onto GPU

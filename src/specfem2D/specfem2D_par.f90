@@ -374,24 +374,24 @@ module specfem_par
   !---------------------------------------------------------------------
   ! for acoustic medium
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
+    minus_pressure_acoustic,minus_int_pressure_acoustic,minus_int_int_pressure_acoustic
 
   ! PML
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_old
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: minus_int_int_pressure_acoustic_old
 
   ! RK time schemes
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_acoustic_LDDRK, potential_acoustic_LDDRK
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_dot_acoustic_temp
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_init_rk, potential_dot_acoustic_init_rk
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: potential_dot_dot_acoustic_rk, potential_dot_acoustic_rk
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: minus_int_pressure_acoustic_LDDRK, minus_int_int_pressure_acoustic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: minus_int_pressure_acoustic_temp
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: minus_int_int_pressure_acoustic_init_rk, minus_int_pressure_acoustic_init_rk
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: minus_pressure_acoustic_rk, minus_int_pressure_acoustic_rk
 
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_adj_coupling
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: minus_int_int_pressure_acoustic_adj_coupling
 
   ! for gravitoacoustic medium
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic,potential_gravitoacoustic
+    minus_pressure_gravitoacoustic,minus_int_pressure_gravitoacoustic,minus_int_int_pressure_gravitoacoustic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    potential_dot_dot_gravito,potential_dot_gravito,potential_gravito
+    minus_pressure_gravito,minus_int_pressure_gravito,minus_int_int_pressure_gravito
 
   ! for acoustic and gravitoacoustic detection
   integer :: nglob_acoustic
@@ -423,28 +423,28 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_gravito
 
   ! the variable for PML
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_minus_int_int_pressure_acoustic
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
                           rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_minus_int_int_pressure_acoustic_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
                           rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK
 
   ! for backward simulation in adjoint inversion
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic
+    b_minus_pressure_acoustic,b_minus_int_pressure_acoustic,b_minus_int_int_pressure_acoustic
 
   ! PML
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_potential_acoustic_old
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: b_minus_int_int_pressure_acoustic_old
 
-  ! store potential, potential_dot, potential_dot_dot along interior interface of PML, shared by interior compuational domain
-  integer :: nglob_interface !can be optimized
+  ! store minus_pressure, minus_int_pressure, minus_pressure along interior interface of PML
+  integer :: nglob_interface ! can be optimized
   integer, dimension(:), allocatable :: point_interface
   logical, dimension(:,:), allocatable :: PML_interior_interface
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential_dot
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential_dot_dot
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_minus_int_int_pressure
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_minus_int_pressure
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_minus_pressure
 
   !---------------------------------------------------------------------
   !for by elastic simulation
@@ -496,21 +496,18 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic_LDDRK
 
-  !for backward simulation in adjoint inversion
+  ! for backward simulation in adjoint inversion
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old
 
-  ! store potential, potential_dot, potential_dot_dot along interior interface of PML, shared by interior compuational domain
+  ! store minus_pressure, minus_int_pressure, minus_pressure along interior interface of PML
   ! for backward simulation in adjoint inversion
-  ! integer :: nglob_interface !can be optimized
-  ! integer, dimension(:), allocatable :: point_interface
-  ! logical, dimension(:,:), allocatable :: PML_interior_interface
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interface_history_displ
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interface_history_veloc
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interface_history_accel
 
   !---------------------------------------------------------------------
-  !for by poroelastic simulation
+  ! for poroelastic simulation
   !---------------------------------------------------------------------
   integer :: nglob_poroelastic
 
@@ -581,8 +578,8 @@ module specfem_par
   ! PML parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_fsb_displ_elastic
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_fsb_displ_elastic_LDDRK
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_potential_ddot_acoustic
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_potential_ddot_acoustic_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_minus_pressure_acoustic
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_minus_pressure_acoustic_LDDRK
 
   ! for kernel computation
   character(len=100) :: TOMOGRAPHY_FILE

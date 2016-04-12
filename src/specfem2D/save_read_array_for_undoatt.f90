@@ -37,7 +37,7 @@
 
   use specfem_par,only: myrank,iteration_on_subset, &
     any_acoustic,any_elastic,ATTENUATION_VISCOELASTIC_SOLID, &
-    potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
+    minus_int_int_pressure_acoustic,minus_int_pressure_acoustic,minus_pressure_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
     e1,e11,e13
 
@@ -60,9 +60,9 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for writing')
 
   if (any_acoustic) then
-    write(IOUT_UNDO_ATT) potential_dot_dot_acoustic
-    write(IOUT_UNDO_ATT) potential_dot_acoustic
-    write(IOUT_UNDO_ATT) potential_acoustic
+    write(IOUT_UNDO_ATT) minus_pressure_acoustic
+    write(IOUT_UNDO_ATT) minus_int_pressure_acoustic
+    write(IOUT_UNDO_ATT) minus_int_int_pressure_acoustic
   endif
 
   if (any_elastic) then
@@ -94,7 +94,7 @@
   use specfem_par,only: myrank, &
     iteration_on_subset,NSUBSET_ITERATIONS, &
     any_acoustic,any_elastic,ATTENUATION_VISCOELASTIC_SOLID, &
-    b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
+    b_minus_int_int_pressure_acoustic,b_minus_int_pressure_acoustic,b_minus_pressure_acoustic, &
     b_displ_elastic,b_veloc_elastic,b_accel_elastic, &
     b_e1,b_e11,b_e13
 
@@ -117,9 +117,9 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for reading')
 
   if (any_acoustic) then
-    read(IIN_UNDO_ATT) b_potential_dot_dot_acoustic
-    read(IIN_UNDO_ATT) b_potential_dot_acoustic
-    read(IIN_UNDO_ATT) b_potential_acoustic
+    read(IIN_UNDO_ATT) b_minus_pressure_acoustic
+    read(IIN_UNDO_ATT) b_minus_int_pressure_acoustic
+    read(IIN_UNDO_ATT) b_minus_int_int_pressure_acoustic
   endif
 
   if (any_elastic) then

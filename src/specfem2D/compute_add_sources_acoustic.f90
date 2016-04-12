@@ -33,7 +33,7 @@
 
 ! for acoustic solver
 
-  subroutine compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
+  subroutine compute_add_sources_acoustic(minus_pressure_acoustic,it,i_stage)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 
@@ -43,7 +43,7 @@
                          hxis_store,hgammas_store,ibool,kappastore,myrank
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_dot_dot_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: minus_pressure_acoustic
   integer,intent(in) :: it,i_stage
 
   !local variables
@@ -55,15 +55,15 @@
     if (is_proc_source(i_source) == 1 .and. ispec_is_acoustic(ispec_selected_source(i_source))) then
       ! collocated force
       ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
-      ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
-      ! to add minus the source to Chi_dot_dot to get plus the source in pressure
+      ! the sign is negative because pressure p = - minus_pressure therefore we need
+      ! to add minus the source to minus_pressure to get plus the source in pressure
       if (source_type(i_source) == 1) then
         ! forward wavefield
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec_selected_source(i_source))
             hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+            minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) - &
                                                 source_time_function(i_source,it,i_stage)*hlagrange &
                                                 !ZN becareful the following line is new added, thus when do comparison
                                                 !ZN of the new code with the old code, you will have big difference if you
@@ -90,7 +90,7 @@
 
   use constants,only: NGLLX,NGLLZ
 
-  use specfem_par, only: myrank,potential_dot_dot_acoustic,ispec_is_acoustic,NSTEP,it,&
+  use specfem_par, only: myrank,minus_pressure_acoustic,ispec_is_acoustic,NSTEP,it,&
                          nrec,which_proc_receiver,ispec_selected_rec,adj_sourcearrays,&
                          ibool,kappastore
   implicit none
@@ -112,7 +112,7 @@
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec_selected_rec(irec))
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
+            minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) + &
                                                 adj_sourcearrays(irec_local,it_tmp,1,i,j) &
                                                 !ZN becareful the following line is new added, thus when do comparison
                                                 !ZN of the new code with the old code, you will have big difference if you
@@ -130,7 +130,7 @@
 !=====================================================================
 !
 
-  subroutine add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
+  subroutine add_acoustic_forcing_at_rigid_boundary(minus_pressure_acoustic)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
@@ -142,7 +142,7 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: minus_pressure_acoustic
 
   !local variables
   integer :: inum,ispec,i,j,iglob
@@ -181,7 +181,7 @@
 
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+        minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) + weight*displ_n
       enddo
     endif  !  end of left acoustic forcing boundary
 
@@ -211,7 +211,7 @@
 
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+        minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) + weight*displ_n
       enddo
     endif  !  end of right acoustic forcing boundary
 
@@ -241,7 +241,7 @@
 
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+        minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) + weight*displ_n
       enddo
     endif  !  end of bottom acoustic forcing boundary
 
@@ -271,7 +271,7 @@
 
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+        minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) + weight*displ_n
       enddo
     endif  !  end of top acoustic forcing boundary
   enddo
@@ -284,7 +284,7 @@
 
 ! *********************************************************
 ! ** impose displacement from acoustic forcing at a rigid boundary
-! ** force potential_dot_dot_gravito by displacement
+! ** force minus_pressure_gravito by displacement
 ! *********************************************************
 
   subroutine add_acoustic_forcing_at_rigid_boundary_gravitoacoustic()
@@ -292,8 +292,8 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TINYVAL
 
   use specfem_par, only: nelem_acforcing,codeacforcing,numacforcing, &
-                         ispec_is_gravitoacoustic,potential_dot_dot_gravito, &
-                         potential_gravitoacoustic,potential_gravito, &
+                         ispec_is_gravitoacoustic,minus_pressure_gravito, &
+                         minus_int_int_pressure_gravitoacoustic,minus_int_int_pressure_gravito, &
                          it,ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll,hprime_xx,hprime_zz, &
                          iglobzero,assign_external_model,rhoext,gravityext,Nsqext
 
@@ -346,7 +346,7 @@
         do k = 1,NGLLX
           hp1 = hprime_xx(i,k)
           iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
+          tempx1l = tempx1l + minus_int_int_pressure_gravitoacoustic(iglob)*hp1
         enddo
 
         ! derivative along z
@@ -354,7 +354,7 @@
         do k = 1,NGLLZ
           hp2 = hprime_zz(j,k)
           iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
+          tempx2l = tempx2l + minus_int_int_pressure_gravitoacoustic(iglob)*hp2
         enddo
 
         xixl = xix(i,j,ispec)
@@ -368,11 +368,11 @@
           gravityl = gravityext(i,j,ispec)
         endif
 
-        ! impose potential_gravito in order to have z displacement equal to forced value
+        ! impose minus_int_int_pressure_gravito in order to have z displacement equal to forced value
         iglob = ibool(i,j,ispec)
         displ_n = displ_x*nx + displ_z*nz
         if (abs(nz) > TINYVAL) then
-          potential_gravito(iglob) = ( rhol*displ_n -(tempx1l*xizl + tempx2l*gammazl)*nz - &
+          minus_int_int_pressure_gravito(iglob) = ( rhol*displ_n -(tempx1l*xizl + tempx2l*gammazl)*nz - &
                                        (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
         else
           write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
@@ -381,7 +381,7 @@
 
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
+        minus_pressure_gravito(iglob) = minus_pressure_gravito(iglob) - rhol*weight*displ_n
       enddo
     endif  !  end of left acoustic forcing boundary
 
@@ -415,7 +415,7 @@
         do k = 1,NGLLX
           hp1 = hprime_xx(i,k)
           iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
+          tempx1l = tempx1l + minus_int_int_pressure_gravitoacoustic(iglob)*hp1
         enddo
 
         ! derivative along z
@@ -423,7 +423,7 @@
         do k = 1,NGLLZ
           hp2 = hprime_zz(j,k)
           iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
+          tempx2l = tempx2l + minus_int_int_pressure_gravitoacoustic(iglob)*hp2
         enddo
 
         xixl = xix(i,j,ispec)
@@ -437,11 +437,11 @@
           gravityl = gravityext(i,j,ispec)
         endif
 
-        ! impose potential_gravito in order to have z displacement equal to forced value
+        ! impose minus_int_int_pressure_gravito in order to have z displacement equal to forced value
         iglob = ibool(i,j,ispec)
         displ_n = displ_x*nx + displ_z*nz
         if (abs(nz) > TINYVAL) then
-          potential_gravito(iglob) = ( rhol*displ_n - (tempx1l*xizl + tempx2l*gammazl)*nz - &
+          minus_int_int_pressure_gravito(iglob) = ( rhol*displ_n - (tempx1l*xizl + tempx2l*gammazl)*nz - &
                                        (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
         else
           write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
@@ -450,7 +450,7 @@
 
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
+        minus_pressure_gravito(iglob) = minus_pressure_gravito(iglob) - rhol*weight*displ_n
 
       enddo
     endif  !  end of right acoustic forcing boundary
@@ -485,7 +485,7 @@
         do k = 1,NGLLX
           hp1 = hprime_xx(i,k)
           iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
+          tempx1l = tempx1l + minus_int_int_pressure_gravitoacoustic(iglob)*hp1
         enddo
 
         ! derivative along z
@@ -493,7 +493,7 @@
         do k = 1,NGLLZ
           hp2 = hprime_zz(j,k)
           iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
+          tempx2l = tempx2l + minus_int_int_pressure_gravitoacoustic(iglob)*hp2
         enddo
 
         xixl = xix(i,j,ispec)
@@ -507,11 +507,11 @@
            gravityl = gravityext(i,j,ispec)
         endif
 
-        ! impose potential_gravito in order to have z displacement equal to forced value
+        ! impose minus_int_int_pressure_gravito in order to have z displacement equal to forced value
         iglob = ibool(i,j,ispec)
         displ_n = displ_x*nx + displ_z*nz
         if (abs(nz) > TINYVAL) then
-          potential_gravito(iglob) = ( rhol*displ_n - (tempx1l*xizl + tempx2l*gammazl)*nz - &
+          minus_int_int_pressure_gravito(iglob) = ( rhol*displ_n - (tempx1l*xizl + tempx2l*gammazl)*nz - &
                                        (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
         else
           write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
@@ -520,7 +520,7 @@
 
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
+        minus_pressure_gravito(iglob) = minus_pressure_gravito(iglob) - rhol*weight*displ_n
       enddo
     endif  !  end of bottom acoustic forcing boundary
 
@@ -554,7 +554,7 @@
         do k = 1,NGLLX
           hp1 = hprime_xx(i,k)
           iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
+          tempx1l = tempx1l + minus_int_int_pressure_gravitoacoustic(iglob)*hp1
         enddo
 
         ! derivative along z
@@ -562,7 +562,7 @@
         do k = 1,NGLLZ
           hp2 = hprime_zz(j,k)
           iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
+          tempx2l = tempx2l + minus_int_int_pressure_gravitoacoustic(iglob)*hp2
         enddo
 
         xixl = xix(i,j,ispec)
@@ -577,13 +577,13 @@
           Nsql = Nsqext(i,j,ispec)
         endif
 
-        ! impose potential_gravito in order to have z displacement equal to forced value on the boundary
+        ! impose minus_int_int_pressure_gravito in order to have z displacement equal to forced value on the boundary
         !!!! Passe deux fois sur le meme iglob
         !!!! Mais vrai pour tous les points partages entre deux elements
         iglob = ibool(i,j,ispec)
         displ_n = displ_x*nx + displ_z*nz
         if (abs(nz) > TINYVAL) then
-          potential_gravito(iglob) = ( rhol*displ_n - (tempx1l*xizl + tempx2l*gammazl)*nz - &
+          minus_int_int_pressure_gravito(iglob) = ( rhol*displ_n - (tempx1l*xizl + tempx2l*gammazl)*nz - &
                                       (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
         else
           write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
@@ -592,7 +592,7 @@
 
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
+        minus_pressure_gravito(iglob) = minus_pressure_gravito(iglob) - rhol*weight*displ_n
       enddo
 
       ! debugging
@@ -602,9 +602,9 @@
       !if ((ispec==800)) then
         iglobzero=iglob
         write(*,*) ispec,it,Nsql,rhol,displ_n, &
-                   maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
-                   maxval(potential_gravitoacoustic),potential_gravitoacoustic(iglob), &
-                   maxval(potential_gravito),potential_gravito(iglob)
+                   maxval(minus_pressure_gravito),minus_pressure_gravito(iglob), &
+                   maxval(minus_int_int_pressure_gravitoacoustic),minus_int_int_pressure_gravitoacoustic(iglob), &
+                   maxval(minus_int_int_pressure_gravito),minus_int_int_pressure_gravito(iglob)
       endif
     endif  !  end of top acoustic forcing boundary
   enddo

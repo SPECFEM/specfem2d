@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine compute_stacey_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic)
+  subroutine compute_stacey_acoustic(minus_pressure_acoustic,minus_int_pressure_acoustic)
 
 ! absorbing boundaries
 ! for Stacey paraxial absorbing conditions (more precisely: Sommerfeld in the case of a fluid) we implement them here
@@ -54,8 +54,8 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: potential_dot_dot_acoustic
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_dot_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: minus_pressure_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: minus_int_pressure_acoustic
 
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob
@@ -100,11 +100,11 @@
           weight = jacobian1D * wzgll(j)
 
           ! adds absorbing boundary contribution
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+          minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) - minus_int_pressure_acoustic(iglob) * weight/cpl/rhol
 
           if (SAVE_FORWARD) then
             ! saves contribution
-            b_absorb_acoustic_left(j,ib_left(ispecabs),it) = potential_dot_acoustic(iglob) * weight/cpl/rhol
+            b_absorb_acoustic_left(j,ib_left(ispecabs),it) = minus_int_pressure_acoustic(iglob) * weight/cpl/rhol
           endif
         enddo
       endif  !  end of left absorbing boundary
@@ -127,11 +127,11 @@
           weight = jacobian1D * wzgll(j)
 
           ! adds absorbing boundary contribution
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+          minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) - minus_int_pressure_acoustic(iglob) * weight/cpl/rhol
 
           if (SAVE_FORWARD) then
             ! saves contribution
-            b_absorb_acoustic_right(j,ib_right(ispecabs),it) = potential_dot_acoustic(iglob) * weight/cpl/rhol
+            b_absorb_acoustic_right(j,ib_right(ispecabs),it) = minus_int_pressure_acoustic(iglob) * weight/cpl/rhol
           endif
         enddo
       endif  !  end of right absorbing boundary
@@ -157,11 +157,11 @@
           weight = jacobian1D * wxgll(i)
 
           ! adds absorbing boundary contribution
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+          minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) - minus_int_pressure_acoustic(iglob) * weight/cpl/rhol
 
           if (SAVE_FORWARD) then
             ! saves contribution
-            b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),it) = potential_dot_acoustic(iglob) * weight/cpl/rhol
+            b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),it) = minus_int_pressure_acoustic(iglob) * weight/cpl/rhol
           endif
         enddo
       endif  !  end of bottom absorbing boundary
@@ -187,11 +187,11 @@
           weight = jacobian1D * wxgll(i)
 
           ! adds absorbing boundary contribution
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+          minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) - minus_int_pressure_acoustic(iglob) * weight/cpl/rhol
 
           if (SAVE_FORWARD) then
             ! saves contribution
-            b_absorb_acoustic_top(i,ib_top(ispecabs),it) = potential_dot_acoustic(iglob) * weight/cpl/rhol
+            b_absorb_acoustic_top(i,ib_top(ispecabs),it) = minus_int_pressure_acoustic(iglob) * weight/cpl/rhol
           endif
         enddo
       endif  !  end of top absorbing boundary
@@ -205,7 +205,7 @@
 !------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_stacey_acoustic_backward(b_potential_dot_dot_acoustic)
+  subroutine compute_stacey_acoustic_backward(b_minus_pressure_acoustic)
 
 ! absorbing boundaries
 ! uses contributions stored in forward simulation
@@ -224,7 +224,7 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: b_potential_dot_dot_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: b_minus_pressure_acoustic
 
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob
@@ -250,7 +250,7 @@
         jend = iend_edge4(ispecabs)
         do j = jbegin,jend
           iglob = ibool(i,j,ispec)
-          b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+          b_minus_pressure_acoustic(iglob) = b_minus_pressure_acoustic(iglob) - &
                                                 b_absorb_acoustic_left(j,ib_left(ispecabs),it_tmp)
 
         enddo
@@ -264,7 +264,7 @@
         do j = jbegin,jend
           iglob = ibool(i,j,ispec)
           ! adds (previously) stored contribution
-          b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+          b_minus_pressure_acoustic(iglob) = b_minus_pressure_acoustic(iglob) - &
                                                 b_absorb_acoustic_right(j,ib_right(ispecabs),it_tmp)
         enddo
       endif  !  end of right absorbing boundary
@@ -280,7 +280,7 @@
         do i = ibegin,iend
           iglob = ibool(i,j,ispec)
           ! adds (previously) stored contribution
-          b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+          b_minus_pressure_acoustic(iglob) = b_minus_pressure_acoustic(iglob) - &
                                                 b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),it_tmp)
         enddo
       endif  !  end of bottom absorbing boundary
@@ -295,7 +295,7 @@
         if (codeabs_corner(4,ispecabs)) iend = NGLLX-1
         do i = ibegin,iend
           iglob = ibool(i,j,ispec)
-          b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+          b_minus_pressure_acoustic(iglob) = b_minus_pressure_acoustic(iglob) - &
                                                 b_absorb_acoustic_top(i,ib_top(ispecabs),it_tmp)
         enddo
       endif  !  end of top absorbing boundary

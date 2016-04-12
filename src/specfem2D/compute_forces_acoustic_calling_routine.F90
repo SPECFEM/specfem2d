@@ -46,26 +46,26 @@
   if (.not. any_acoustic) return
 
   ! free surface for an acoustic medium
-  call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic)
+  call enforce_acoustic_free_surface(minus_pressure_acoustic,minus_int_pressure_acoustic,minus_int_int_pressure_acoustic)
 
   ! main solver for the acoustic elements
-  call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                               PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
+  call compute_forces_acoustic(minus_pressure_acoustic,minus_int_pressure_acoustic,minus_int_int_pressure_acoustic, &
+                               PML_BOUNDARY_CONDITIONS,minus_int_int_pressure_acoustic_old)
 
   ! Stacey boundary conditions
   if (STACEY_BOUNDARY_CONDITIONS) then
-    call compute_stacey_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic)
+    call compute_stacey_acoustic(minus_pressure_acoustic,minus_int_pressure_acoustic)
   endif
 
   ! PML boundary conditions
   if (PML_BOUNDARY_CONDITIONS) then
-    call pml_boundary_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                               potential_acoustic,potential_acoustic_old)
+    call pml_boundary_acoustic(minus_pressure_acoustic,minus_int_pressure_acoustic, &
+                               minus_int_int_pressure_acoustic,minus_int_int_pressure_acoustic_old)
   endif
 
   ! add acoustic forcing at a rigid boundary
   if (ACOUSTIC_FORCING) then
-    call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
+    call add_acoustic_forcing_at_rigid_boundary(minus_pressure_acoustic)
   endif
 
   ! applies to coupling in case of MPI partitioning:
@@ -76,16 +76,16 @@
   ! add coupling with the elastic side
   if (coupled_acoustic_elastic) then
     if (SIMULATION_TYPE == 1) then
-      call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
+      call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,minus_pressure_acoustic)
     endif
 
     ! coupling for adjoint wavefields
     if (SIMULATION_TYPE == 3) then
-      ! note: handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+      ! note: handles adjoint runs coupling between adjoint pressure and adjoint elastic wavefield
       !       adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
       !
       ! coupling with adjoint wavefields
-      call compute_coupling_acoustic_el(accel_elastic_adj_coupling,displ_elastic_old,potential_dot_dot_acoustic)
+      call compute_coupling_acoustic_el(accel_elastic_adj_coupling,displ_elastic_old,minus_pressure_acoustic)
     endif
   endif
 
@@ -97,22 +97,22 @@
   ! add force source
   if (.not. initialfield) then
     if (SIMULATION_TYPE == 1) then
-      call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
+      call compute_add_sources_acoustic(minus_pressure_acoustic,it,i_stage)
     else if (SIMULATION_TYPE == 3) then
       ! adjoint sources
       call compute_add_sources_acoustic_adjoint()
     endif
   endif
 
-  ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
+  ! assembling minus_pressure or b_minus_pressure for acoustic elements
 #ifdef USE_MPI
   if (NPROC > 1 .and. ninterface_acoustic > 0) then
-    call assemble_MPI_vector_ac(potential_dot_dot_acoustic)
+    call assemble_MPI_vector_ac(minus_pressure_acoustic)
 
     if (time_stepping_scheme == 2) then
       if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-        potential_dot_acoustic_temp(:) = potential_dot_acoustic(:)
-        call assemble_MPI_vector_ac(potential_dot_acoustic)
+        minus_int_pressure_acoustic_temp(:) = minus_int_pressure_acoustic(:)
+        call assemble_MPI_vector_ac(minus_int_pressure_acoustic)
       endif
     endif
   endif
@@ -122,8 +122,8 @@
     if (nglob_interface > 0) then
       if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
         do i = 1, nglob_interface
-          write(72) potential_dot_dot_acoustic(point_interface(i)), potential_dot_acoustic(point_interface(i)), &
-                    potential_acoustic(point_interface(i))
+          write(72) minus_pressure_acoustic(point_interface(i)), minus_int_pressure_acoustic(point_interface(i)), &
+                    minus_int_int_pressure_acoustic(point_interface(i))
         enddo
       endif
     endif
@@ -133,47 +133,49 @@
   if (time_stepping_scheme == 1) then
     ! Newmark scheme
     !! DK DK this should be vectorized
-    potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
+    minus_pressure_acoustic(:) = minus_pressure_acoustic(:) * rmass_inverse_acoustic(:)
 
-    potential_dot_acoustic(:) = potential_dot_acoustic(:) + deltatover2 * potential_dot_dot_acoustic(:)
+    minus_int_pressure_acoustic(:) = minus_int_pressure_acoustic(:) + deltatover2 * minus_pressure_acoustic(:)
 
-    ! update the potential field (use a new array here) for coupling terms
+    ! update the pressure field (use a new array here) for coupling terms
     if (SIMULATION_TYPE == 3) then
-      potential_acoustic_adj_coupling(:) = potential_acoustic(:) + deltat * potential_dot_acoustic(:) + &
-                                           deltatsquareover2 * potential_dot_dot_acoustic(:)
+      minus_int_int_pressure_acoustic_adj_coupling(:) = minus_int_int_pressure_acoustic(:) + &
+                                           deltat * minus_int_pressure_acoustic(:) + &
+                                           deltatsquareover2 * minus_pressure_acoustic(:)
     endif
   endif
 
   if (time_stepping_scheme == 2) then
     ! LDDRK scheme
     !! DK DK this should be vectorized
-    potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
+    minus_pressure_acoustic(:) = minus_pressure_acoustic(:) * rmass_inverse_acoustic(:)
 
-    potential_dot_acoustic_LDDRK(:) = ALPHA_LDDRK(i_stage) * potential_dot_acoustic_LDDRK(:) + &
-                                      deltat * potential_dot_dot_acoustic(:)
-    potential_acoustic_LDDRK(:) = ALPHA_LDDRK(i_stage) * potential_acoustic_LDDRK(:) + &
-                                  deltat * potential_dot_acoustic(:)
+    minus_int_pressure_acoustic_LDDRK(:) = ALPHA_LDDRK(i_stage) * minus_int_pressure_acoustic_LDDRK(:) + &
+                                      deltat * minus_pressure_acoustic(:)
+    minus_int_int_pressure_acoustic_LDDRK(:) = ALPHA_LDDRK(i_stage) * minus_int_int_pressure_acoustic_LDDRK(:) + &
+                                  deltat * minus_int_pressure_acoustic(:)
 
     if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
       !! DK DK this should be vectorized
-      potential_dot_acoustic_temp(:) = potential_dot_acoustic_temp(:) + &
-                                       BETA_LDDRK(i_stage) * potential_dot_acoustic_LDDRK(:)
-      potential_dot_acoustic(:) = potential_dot_acoustic_temp(:)
+      minus_int_pressure_acoustic_temp(:) = minus_int_pressure_acoustic_temp(:) + &
+                                       BETA_LDDRK(i_stage) * minus_int_pressure_acoustic_LDDRK(:)
+      minus_int_pressure_acoustic(:) = minus_int_pressure_acoustic_temp(:)
     else
-      potential_dot_acoustic(:) = potential_dot_acoustic(:) + BETA_LDDRK(i_stage) * potential_dot_acoustic_LDDRK(:)
+      minus_int_pressure_acoustic(:) = minus_int_pressure_acoustic(:) + BETA_LDDRK(i_stage) * minus_int_pressure_acoustic_LDDRK(:)
     endif
 
     !! DK DK this should be vectorized
-    potential_acoustic(:) = potential_acoustic(:) + BETA_LDDRK(i_stage) * potential_acoustic_LDDRK(:)
+    minus_int_int_pressure_acoustic(:) = minus_int_int_pressure_acoustic(:) + &
+        BETA_LDDRK(i_stage) * minus_int_int_pressure_acoustic_LDDRK(:)
   endif
 
   if (time_stepping_scheme == 3) then
     ! RK scheme
     !! DK DK this should be vectorized
-    potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
+    minus_pressure_acoustic(:) = minus_pressure_acoustic(:) * rmass_inverse_acoustic(:)
 
-    potential_dot_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_dot_acoustic(:)
-    potential_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_acoustic(:)
+    minus_pressure_acoustic_rk(:,i_stage) = deltat * minus_pressure_acoustic(:)
+    minus_int_pressure_acoustic_rk(:,i_stage) = deltat * minus_int_pressure_acoustic(:)
 
     if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
       if (i_stage == 1) weight_rk = 0.5d0
@@ -182,32 +184,33 @@
 
       if (i_stage == 1) then
 !! DK DK this should be vectorized
-        potential_dot_acoustic_init_rk(:) = potential_dot_acoustic(:)
-        potential_acoustic_init_rk(:) = potential_acoustic(:)
+        minus_int_pressure_acoustic_init_rk(:) = minus_int_pressure_acoustic(:)
+        minus_int_int_pressure_acoustic_init_rk(:) = minus_int_int_pressure_acoustic(:)
       endif
 !! DK DK this should be vectorized
-      potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &
-                                  weight_rk * potential_dot_dot_acoustic_rk(:,i_stage)
-      potential_acoustic(:) = potential_acoustic_init_rk(:) + weight_rk * potential_dot_acoustic_rk(:,i_stage)
+      minus_int_pressure_acoustic(:) = minus_int_pressure_acoustic_init_rk(:) + &
+                                  weight_rk * minus_pressure_acoustic_rk(:,i_stage)
+      minus_int_int_pressure_acoustic(:) = minus_int_int_pressure_acoustic_init_rk(:) + &
+                                  weight_rk * minus_int_pressure_acoustic_rk(:,i_stage)
     else if (i_stage == 4) then
 !! DK DK this should be vectorized
-      potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &
-                                  1.0d0 / 6.0d0 * ( potential_dot_dot_acoustic_rk(:,1) + &
-                                                    2.0d0 * potential_dot_dot_acoustic_rk(:,2) + &
-                                                    2.0d0 * potential_dot_dot_acoustic_rk(:,3) + &
-                                                    potential_dot_dot_acoustic_rk(:,4) )
+      minus_int_pressure_acoustic(:) = minus_int_pressure_acoustic_init_rk(:) + &
+                                  1.0d0 / 6.0d0 * ( minus_pressure_acoustic_rk(:,1) + &
+                                                    2.0d0 * minus_pressure_acoustic_rk(:,2) + &
+                                                    2.0d0 * minus_pressure_acoustic_rk(:,3) + &
+                                                    minus_pressure_acoustic_rk(:,4) )
 
 !! DK DK this should be vectorized
-      potential_acoustic(:) = potential_acoustic_init_rk(:) + &
-                              1.0d0 / 6.0d0 * ( potential_dot_acoustic_rk(:,1) + &
-                                                2.0d0 * potential_dot_acoustic_rk(:,2) + &
-                                                2.0d0 * potential_dot_acoustic_rk(:,3) + &
-                                                potential_dot_acoustic_rk(:,4) )
+      minus_int_int_pressure_acoustic(:) = minus_int_int_pressure_acoustic_init_rk(:) + &
+                              1.0d0 / 6.0d0 * ( minus_int_pressure_acoustic_rk(:,1) + &
+                                                2.0d0 * minus_int_pressure_acoustic_rk(:,2) + &
+                                                2.0d0 * minus_int_pressure_acoustic_rk(:,3) + &
+                                                minus_int_pressure_acoustic_rk(:,4) )
     endif
   endif
 
   ! free surface for an acoustic medium
-  call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic)
+  call enforce_acoustic_free_surface(minus_pressure_acoustic,minus_int_pressure_acoustic,minus_int_int_pressure_acoustic)
 
   end subroutine compute_forces_acoustic_main
 
@@ -251,29 +254,29 @@
   endif
 
   ! free surface for an acoustic medium
-  call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic)
+  call enforce_acoustic_free_surface(b_minus_pressure_acoustic,b_minus_int_pressure_acoustic,b_minus_int_int_pressure_acoustic)
 
   ! main solver for the acoustic elements
   if (UNDO_ATTENUATION) then
-    call compute_forces_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
-                                 .false.,b_potential_acoustic_old)
+    call compute_forces_acoustic(b_minus_pressure_acoustic,b_minus_int_pressure_acoustic,b_minus_int_int_pressure_acoustic, &
+                                 .false.,b_minus_int_int_pressure_acoustic_old)
   else
-    call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
+    call compute_forces_acoustic_backward(b_minus_pressure_acoustic,b_minus_int_int_pressure_acoustic)
   endif
 
   ! Stacey boundary conditions
   if (STACEY_BOUNDARY_CONDITIONS) then
     if (UNDO_ATTENUATION) then
-      call compute_stacey_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic)
+      call compute_stacey_acoustic(b_minus_pressure_acoustic,b_minus_int_pressure_acoustic)
     else
-      call compute_stacey_acoustic_backward(b_potential_dot_dot_acoustic)
+      call compute_stacey_acoustic_backward(b_minus_pressure_acoustic)
     endif
   endif
 
   ! PML boundary conditions
   if (PML_BOUNDARY_CONDITIONS) then
-    call pml_boundary_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                               b_potential_acoustic,b_potential_acoustic_old)
+    call pml_boundary_acoustic(b_minus_pressure_acoustic,b_minus_int_pressure_acoustic, &
+                               b_minus_int_int_pressure_acoustic,b_minus_int_int_pressure_acoustic_old)
   endif
 
   ! PML
@@ -283,12 +286,12 @@
 
   ! add acoustic forcing at a rigid boundary
   if (ACOUSTIC_FORCING) then
-    call add_acoustic_forcing_at_rigid_boundary(b_potential_dot_dot_acoustic)
+    call add_acoustic_forcing_at_rigid_boundary(b_minus_pressure_acoustic)
   endif
 
   ! add coupling with the elastic side
   if (coupled_acoustic_elastic) then
-    call compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
+    call compute_coupling_acoustic_el_backward(b_displ_elastic,b_minus_pressure_acoustic)
   endif
 
   ! add coupling with the poroelastic side
@@ -303,13 +306,13 @@
   ! add force source
   if (.not. initialfield) then
     ! backward wavefield
-    call compute_add_sources_acoustic(b_potential_dot_dot_acoustic,it_temp,istage_temp)
+    call compute_add_sources_acoustic(b_minus_pressure_acoustic,it_temp,istage_temp)
   endif
 
-  ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
+  ! assembling minus_pressure or b_minus_pressure for acoustic elements
 #ifdef USE_MPI
   if (NPROC > 1 .and. ninterface_acoustic > 0) then
-    call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic)
+    call assemble_MPI_vector_ac(b_minus_pressure_acoustic)
   endif
 #endif
 
@@ -320,13 +323,13 @@
   ! multiply by the inverse of the mass matrix and update velocity
   if (time_stepping_scheme == 1) then
     !! DK DK this should be vectorized
-    b_potential_dot_dot_acoustic(:) = b_potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
+    b_minus_pressure_acoustic(:) = b_minus_pressure_acoustic(:) * rmass_inverse_acoustic(:)
 
-    b_potential_dot_acoustic(:) = b_potential_dot_acoustic(:) + b_deltatover2 * b_potential_dot_dot_acoustic(:)
+    b_minus_int_pressure_acoustic(:) = b_minus_int_pressure_acoustic(:) + b_deltatover2 * b_minus_pressure_acoustic(:)
   endif
 
   ! free surface for an acoustic medium
-  call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic)
+  call enforce_acoustic_free_surface(b_minus_pressure_acoustic,b_minus_int_pressure_acoustic,b_minus_int_int_pressure_acoustic)
 
   end subroutine compute_forces_acoustic_main_backward
 

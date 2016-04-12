@@ -32,7 +32,7 @@
 !========================================================================
 
 !
-! This file contains subroutines related to assembling (of the mass matrix, potential_dot_dot and
+! This file contains subroutines related to assembling (of the mass matrix, minus_pressure and
 ! accel_elastic, accels_poroelastic, accelw_poroelastic).
 ! These subroutines are for the most part not used in the sequential version.
 !

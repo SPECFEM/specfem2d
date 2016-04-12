@@ -79,7 +79,7 @@
     kmato,poroelastcoef,assign_external_model,vpext,vsext,rhoext, &
     ATTENUATION_VISCOELASTIC_SOLID,AXISYM,is_on_the_axis, &
     displ_elastic,displs_poroelastic,displw_poroelastic, &
-    potential_dot_dot_acoustic,potential_acoustic,potential_dot_dot_gravitoacoustic,potential_gravitoacoustic, &
+    minus_pressure_acoustic,minus_int_int_pressure_acoustic,minus_pressure_gravitoacoustic,minus_int_int_pressure_gravitoacoustic, &
     anisotropy,c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext,c55ext, &
     hprimebar_xx,hprime_xx,hprime_zz, &
     xix,xiz,gammax,gammaz,jacobian,ibool,coord, &
@@ -533,24 +533,24 @@
       enddo
     enddo
 
-! pressure = - Chi_dot_dot if acoustic element
+! pressure = - minus_pressure if acoustic element
   else if (ispec_is_acoustic(ispec)) then
     ! acoustic element
 
     if (USE_TRICK_FOR_BETTER_PRESSURE) then
       ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
       ! use the second derivative of the source for the source time function instead of the source itself,
-      ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+      ! and then record -minus_int_int_pressure_acoustic() as pressure seismograms instead of -minus_pressure_acoustic();
       ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
       ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
-      ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+      ! thus in fluid elements minus_pressure_acoustic() is accurate at zeroth order while minus_int_int_pressure_acoustic()
       ! is accurate at second order and thus contains significantly less numerical noise.
       ! compute pressure on the fluid/porous medium edge
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           ! store pressure
-          pressure_element(i,j) = - potential_acoustic(iglob)
+          pressure_element(i,j) = - minus_int_int_pressure_acoustic(iglob)
         enddo
       enddo
     else
@@ -558,7 +558,7 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           ! store pressure
-          pressure_element(i,j) = - potential_dot_dot_acoustic(iglob)
+          pressure_element(i,j) = - minus_pressure_acoustic(iglob)
         enddo
       enddo
     endif
@@ -569,17 +569,17 @@
     if (USE_TRICK_FOR_BETTER_PRESSURE) then
       ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
       ! use the second derivative of the source for the source time function instead of the source itself,
-      ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+      ! and then record -minus_int_int_pressure_acoustic() as pressure seismograms instead of -minus_pressure_acoustic();
       ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
       ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
-      ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+      ! thus in fluid elements minus_pressure_acoustic() is accurate at zeroth order while minus_int_int_pressure_acoustic()
       ! is accurate at second order and thus contains significantly less numerical noise.
       ! compute pressure on the fluid/porous medium edge
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           ! store pressure
-          pressure_element(i,j) = - potential_gravitoacoustic(iglob)
+          pressure_element(i,j) = - minus_int_int_pressure_gravitoacoustic(iglob)
         enddo
       enddo
     else
@@ -587,7 +587,7 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           ! store pressure
-          pressure_element(i,j) = - potential_dot_dot_gravitoacoustic(iglob)
+          pressure_element(i,j) = - minus_pressure_gravitoacoustic(iglob)
         enddo
       enddo
     endif

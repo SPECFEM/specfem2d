@@ -32,7 +32,7 @@
 !========================================================================
 
 
-  subroutine compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
+  subroutine compute_forces_acoustic_backward(b_minus_pressure_acoustic,b_minus_int_int_pressure_acoustic)
 
 
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
@@ -50,7 +50,7 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob) :: b_potential_dot_dot_acoustic, b_potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob) :: b_minus_pressure_acoustic, b_minus_int_int_pressure_acoustic
 
   ! local parameters
   integer :: ispec,i,j,k,iglob
@@ -92,14 +92,14 @@
           do k = 1,NGLLX
             if (AXISYM) then
               if (is_on_the_axis(ispec)) then
-                dux_dxi = dux_dxi + b_potential_acoustic(ibool(k,j,ispec)) * hprimeBar_xx(i,k)
+                dux_dxi = dux_dxi + b_minus_int_int_pressure_acoustic(ibool(k,j,ispec)) * hprimeBar_xx(i,k)
               else
-                dux_dxi = dux_dxi + b_potential_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
+                dux_dxi = dux_dxi + b_minus_int_int_pressure_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
               endif
             else
-              dux_dxi = dux_dxi + b_potential_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
+              dux_dxi = dux_dxi + b_minus_int_int_pressure_acoustic(ibool(k,j,ispec)) * hprime_xx(i,k)
             endif
-            dux_dgamma = dux_dgamma + b_potential_acoustic(ibool(i,k,ispec)) * hprime_zz(j,k)
+            dux_dgamma = dux_dgamma + b_minus_int_int_pressure_acoustic(ibool(i,k,ispec)) * hprime_zz(j,k)
           enddo
 
           xixl = xix(i,j,ispec)
@@ -107,7 +107,7 @@
           gammaxl = gammax(i,j,ispec)
           gammazl = gammaz(i,j,ispec)
 
-          ! derivatives of potential
+          ! derivatives of the scalar field
           dux_dxl = dux_dxi * xixl + dux_dgamma * gammaxl
           dux_dzl = dux_dxi * xizl + dux_dgamma * gammazl
 
@@ -177,18 +177,18 @@
           if (AXISYM) then
             if (is_on_the_axis(ispec)) then
               do k = 1,NGLLX
-                b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+                b_minus_pressure_acoustic(iglob) = b_minus_pressure_acoustic(iglob) - &
                         (tempx1(k,j) * hprimeBarwglj_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
               enddo
             else
               do k = 1,NGLLX
-                b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+                b_minus_pressure_acoustic(iglob) = b_minus_pressure_acoustic(iglob) - &
                         (tempx1(k,j) * hprimewgll_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
               enddo
             endif
           else
             do k = 1,NGLLX
-              b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) - &
+              b_minus_pressure_acoustic(iglob) = b_minus_pressure_acoustic(iglob) - &
                         (tempx1(k,j) * hprimewgll_xx(k,i) + tempx2(i,k) * hprimewgll_zz(k,j))
             enddo
           endif

@@ -292,7 +292,7 @@
 !                 with METIS or SCOTCH
 !               - general fluid/solid implementation with any number, shape and orientation of
 !                 matching edges
-!               - fluid potential of density * displacement instead of displacement
+!               - a scalar related to grad(density * displacement) instead of displacement
 !               - absorbing edges with any normal vector
 !               - general numbering of absorbing and acoustic free surface edges
 !               - cleaned implementation of attenuation as in Carcione (1993)
@@ -328,16 +328,16 @@
 ! Institut de Physique du Globe de Paris, France
 !
 
-! in case of an acoustic medium, a potential Chi of (density * displacement) is used as in Chaljub and Valette,
+! in case of an acoustic medium, a scalar related to grad(density * displacement) is used as in Chaljub and Valette,
 ! Geophysical Journal International, vol. 158, p. 131-141 (2004) and *NOT* a velocity potential
 ! as in Komatitsch and Tromp, Geophysical Journal International, vol. 150, p. 303-318 (2002).
 ! This permits acoustic-elastic coupling based on a non-iterative time scheme.
 ! Displacement is then: u = grad(Chi) / rho
-! Velocity is then: v = grad(Chi_dot) / rho (Chi_dot being the time derivative of Chi)
-! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
+! Velocity is then: v = grad(minus_int_pressure) / rho (minus_int_pressure being the time derivative of Chi)
+! and pressure is: p = - minus_pressure  (minus_pressure being the time second derivative of Chi).
 ! The source in an acoustic element is a pressure source.
 ! First-order acoustic-acoustic discontinuities are also handled automatically
-! because pressure is continuous at such an interface, therefore Chi_dot_dot
+! because pressure is continuous at such an interface, therefore minus_pressure
 ! is continuous, therefore Chi is also continuous, which is consistent with
 ! the spectral-element basis functions and with the assembling process.
 ! This is the reason why a simple displacement potential u = grad(Chi) would

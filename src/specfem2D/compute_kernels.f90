@@ -276,7 +276,7 @@
   use specfem_par, only: nspec,ispec_is_acoustic,ibool,kappal_ac_global,rhol_ac_global,&
                          poroelastcoef,density,kmato,assign_external_model,rhoext,vpext,deltat,&
                          hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,&
-                         potential_acoustic,b_potential_acoustic,b_potential_dot_dot_acoustic,&
+                         minus_int_int_pressure_acoustic,b_minus_int_int_pressure_acoustic,b_minus_pressure_acoustic,&
                          accel_ac,b_accel_ac,b_displ_ac,&
                          rho_ac_kl,kappa_ac_kl,rhop_ac_kl,alpha_ac_kl, &
                          GPU_MODE
@@ -305,8 +305,8 @@
               rhol_ac_global(iglob)   = rhoext(i,j,ispec)
             endif
 
-            ! calcul the displacement by computing the gradient of potential / rho
-            ! and calcul the acceleration by computing the gradient of potential_dot_dot / rho
+            ! calcul the displacement by computing the gradient of the scalar divided by rho
+            ! and calcul the acceleration by computing the gradient of minus_pressure divided by rho
             tempx1l = ZERO
             tempx2l = ZERO
             b_tempx1l = ZERO
@@ -315,15 +315,15 @@
             bb_tempx2l = ZERO
             do k = 1,NGLLX
               ! derivative along x
-              !tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
-              tempx1l = tempx1l + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k) !!! YANGL
-              b_tempx1l = b_tempx1l + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
-              bb_tempx1l = bb_tempx1l + b_potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+              !tempx1l = tempx1l + minus_pressure_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+              tempx1l = tempx1l + minus_int_int_pressure_acoustic(ibool(k,j,ispec))*hprime_xx(i,k) !!! YANGL
+              b_tempx1l = b_tempx1l + b_minus_int_int_pressure_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+              bb_tempx1l = bb_tempx1l + b_minus_pressure_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
               ! derivative along z
-              !tempx2l = tempx2l + potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
-              tempx2l = tempx2l + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k) !!! YANGL
-              b_tempx2l = b_tempx2l + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
-              bb_tempx2l = bb_tempx2l + b_potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+              !tempx2l = tempx2l + minus_pressure_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+              tempx2l = tempx2l + minus_int_int_pressure_acoustic(ibool(i,k,ispec))*hprime_zz(j,k) !!! YANGL
+              b_tempx2l = b_tempx2l + b_minus_int_int_pressure_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+              bb_tempx2l = bb_tempx2l + b_minus_pressure_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
             enddo
 
             xixl = xix(i,j,ispec)
@@ -331,7 +331,7 @@
             gammaxl = gammax(i,j,ispec)
             gammazl = gammaz(i,j,ispec)
 
-            ! derivatives of potential
+            ! derivatives of the scalar
             accel_ac(1,iglob) = (tempx1l*xixl + tempx2l*gammaxl) / rhol_ac_global(iglob)
             accel_ac(2,iglob) = (tempx1l*xizl + tempx2l*gammazl) / rhol_ac_global(iglob)
             b_displ_ac(1,iglob) = (b_tempx1l*xixl + b_tempx2l*gammaxl) / rhol_ac_global(iglob)
@@ -353,15 +353,15 @@
             !!!rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol_ac_global(iglob)  * &
             !!!      dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
             !!!kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) - kappal_ac_global(iglob) * &
-            !!!      potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
-            !!!      b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob)&
+            !!!      minus_pressure_acoustic(iglob)/kappal_ac_global(iglob) * &
+            !!!      b_minus_pressure_acoustic(iglob)/kappal_ac_global(iglob)&
             !!!      * deltat
             !!!! new expression (from PDE-constrained optimization, coupling terms changed as well)
             rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + rhol_ac_global(iglob) * &
                                    dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
             kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) + kappal_ac_global(iglob) * &
-                                     potential_acoustic(iglob)/kappal_ac_global(iglob) * &
-                                     b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * deltat
+                                     minus_int_int_pressure_acoustic(iglob)/kappal_ac_global(iglob) * &
+                                     b_minus_pressure_acoustic(iglob)/kappal_ac_global(iglob) * deltat
             !>YANGL
             rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)
             alpha_ac_kl(i,j,ispec) = TWO *  kappa_ac_kl(i,j,ispec)

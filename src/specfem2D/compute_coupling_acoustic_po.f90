@@ -43,7 +43,7 @@
                          fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge, &
                          displs_poroelastic,displw_poroelastic, &
                          accels_poroelastic_adj_coupling,accelw_poroelastic_adj_coupling,&
-                         potential_dot_dot_acoustic,SIMULATION_TYPE
+                         minus_pressure_acoustic,SIMULATION_TYPE
 
   implicit none
 
@@ -79,7 +79,7 @@
       displw_z = displw_poroelastic(2,iglob)
 
       if (SIMULATION_TYPE == 3) then
-        ! new definition of adjoint displacement and adjoint potential
+        ! new definition of adjoint displacement and adjoint scalar
         displ_x = accels_poroelastic_adj_coupling(1,iglob)
         displ_z = accels_poroelastic_adj_coupling(2,iglob)
 
@@ -129,7 +129,7 @@
 
       ! compute dot product [u_s + u_w]*n
       displ_n = (displ_x + displw_x)*nx + (displ_z + displw_z)*nz
-      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+      minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) + weight*displ_n
     enddo
   enddo
 
@@ -147,7 +147,7 @@
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
                          fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge, &
                          b_displs_poroelastic,b_displw_poroelastic, &
-                         b_potential_dot_dot_acoustic
+                         b_minus_pressure_acoustic
 
   implicit none
 
@@ -224,7 +224,7 @@
 
       ! compute dot product [u_s + u_w]*n
       b_displ_n = (b_displ_x + b_displw_x)*nx + (b_displ_z + b_displw_z)*nz
-      b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) + weight*b_displ_n
+      b_minus_pressure_acoustic(iglob) = b_minus_pressure_acoustic(iglob) + weight*b_displ_n
     enddo
   enddo
 

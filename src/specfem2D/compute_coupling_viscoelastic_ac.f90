@@ -40,16 +40,16 @@
 
   use specfem_par, only: SIMULATION_TYPE,num_fluid_solid_edges,&
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
-                         potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic,&
+                         minus_int_int_pressure_acoustic,minus_int_pressure_acoustic,minus_pressure_acoustic,&
                          accel_elastic,fluid_solid_acoustic_ispec, &
                          fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
-                         potential_acoustic_adj_coupling, &
+                         minus_int_int_pressure_acoustic_adj_coupling, &
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
-                         rmemory_sfb_potential_ddot_acoustic,timeval,deltat,&
-                         rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,stage_time_scheme
+                         rmemory_sfb_minus_pressure_acoustic,timeval,deltat,&
+                         rmemory_sfb_minus_pressure_acoustic_LDDRK,i_stage,stage_time_scheme
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
-                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,potential_acoustic_old
+                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,minus_int_int_pressure_acoustic_old
 
   implicit none
 
@@ -81,12 +81,10 @@
       iglob = ibool(i,j,ispec_acoustic)
 
       ! compute pressure on the fluid/solid edge
-      pressure = - potential_dot_dot_acoustic(iglob)
+      pressure = - minus_pressure_acoustic(iglob)
 
       if (SIMULATION_TYPE == 3) then
-        ! new definition of adjoint displacement and adjoint potential
-        ! adjoint definition: pressure^\dagger = potential^\dagger
-        pressure = potential_acoustic_adj_coupling(iglob)
+        pressure = minus_int_int_pressure_acoustic_adj_coupling(iglob)
       endif
 
       ! PML
@@ -108,21 +106,21 @@
                                        bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
           if (stage_time_scheme == 1) then
-            rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) = &
-                        coef0_1 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + &
-                        coef1_1 * potential_acoustic(iglob) + coef2_1 * potential_acoustic_old(iglob)
+            rmemory_sfb_minus_pressure_acoustic(1,i,j,inum) = &
+                        coef0_1 * rmemory_sfb_minus_pressure_acoustic(1,i,j,inum) + &
+                        coef1_1 * minus_int_int_pressure_acoustic(iglob) + coef2_1 * minus_int_int_pressure_acoustic_old(iglob)
           endif
 
           if (stage_time_scheme == 6) then
-            rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) = &
-                    ALPHA_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) + &
-                    deltat * (-bb_1 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + potential_acoustic(iglob))
-            rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) = rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + &
-                    BETA_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum)
+            rmemory_sfb_minus_pressure_acoustic_LDDRK(1,i,j,inum) = &
+                    ALPHA_LDDRK(i_stage) * rmemory_sfb_minus_pressure_acoustic_LDDRK(1,i,j,inum) + &
+                    deltat * (-bb_1 * rmemory_sfb_minus_pressure_acoustic(1,i,j,inum) + minus_int_int_pressure_acoustic(iglob))
+            rmemory_sfb_minus_pressure_acoustic(1,i,j,inum) = rmemory_sfb_minus_pressure_acoustic(1,i,j,inum) + &
+                    BETA_LDDRK(i_stage) * rmemory_sfb_minus_pressure_acoustic_LDDRK(1,i,j,inum)
           endif
 
-          pressure = - (A0 * potential_dot_dot_acoustic(iglob) + A1 * potential_dot_acoustic(iglob) + &
-                        A2 * potential_acoustic(iglob) + A3 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum))
+          pressure = - (A0 * minus_pressure_acoustic(iglob) + A1 * minus_int_pressure_acoustic(iglob) + &
+                        A2 * minus_int_int_pressure_acoustic(iglob) + A3 * rmemory_sfb_minus_pressure_acoustic(1,i,j,inum))
         endif
       endif
 
@@ -235,7 +233,7 @@
 
   use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,gammax,gammaz, &
                          jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
-                         b_potential_dot_dot_acoustic,b_accel_elastic,fluid_solid_acoustic_ispec, &
+                         b_minus_pressure_acoustic,b_accel_elastic,fluid_solid_acoustic_ispec, &
                          fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj
   implicit none
@@ -264,7 +262,7 @@
       j = jvalue_inverse(ipoin1D,iedge_acoustic)
       iglob = ibool(i,j,ispec_acoustic)
 
-      b_pressure = - b_potential_dot_dot_acoustic(iglob)
+      b_pressure = - b_minus_pressure_acoustic(iglob)
 
       ! get point values for the elastic side
       ii2 = ivalue(ipoin1D,iedge_elastic)

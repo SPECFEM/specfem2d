@@ -398,7 +398,7 @@
   allocate(Uxinterp(pointsdisp,pointsdisp))
   allocate(Uzinterp(pointsdisp,pointsdisp))
 
-  ! to display the whole vector field (it needs to be computed from the potential in acoustic elements,
+  ! to display the whole vector field (it needs to be computed from the pressure in acoustic elements,
   ! thus it does not exist as a whole in case of simulations that contain some acoustic elements
   ! and it thus needs to be computed specifically for display purposes)
   allocate(vector_field_display(NDIM,nglob))

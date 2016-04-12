@@ -51,7 +51,7 @@
   logical:: phase_is_inner
 
   if (nelem_acoustic_surface > 0) then
-    !  enforces free surface (zeroes potentials at free surface)
+    !  enforces free surface (zeroes the pressure at the free surface)
     call acoustic_enforce_free_surf_cuda(Mesh_pointer)
   endif
 
@@ -96,7 +96,7 @@
     if (ninterface_acoustic > 0) then
 
       if (phase_is_inner .eqv. .false.) then
-        ! sends potential_dot_dot_acoustic values to corresponding MPI interface neighbors (non-blocking)
+        ! sends minus_pressure_acoustic values to corresponding MPI interface neighbors (non-blocking)
         call transfer_boun_pot_from_device(Mesh_pointer, &
                                            buffer_send_scalar_ext_mesh, &
                                            1) ! <-- 1 == fwd accel
@@ -154,10 +154,10 @@
 
   ! divides pressure with mass matrix
   ! corrector:
-  ! updates the chi_dot term which requires chi_dot_dot(t+delta)
+  ! updates the minus_int_pressure term which requires minus_pressure(t+delta)
   call kernel_3_acoustic_cuda(Mesh_pointer,deltatover2f,b_deltatover2f)
 
-  ! enforces free surface (zeroes potentials at free surface)
+  ! enforces free surface (zeroes the pressure at the free surface)
   call acoustic_enforce_free_surf_cuda(Mesh_pointer)
 
   end subroutine compute_forces_acoustic_GPU
@@ -184,35 +184,36 @@
   logical :: phase_is_inner
 
 ! adjoint simulations
-  real(kind=CUSTOM_REAL),dimension(NGLLX,nspec_bottom) :: b_absorb_potential_bottom_slice
-  real(kind=CUSTOM_REAL),dimension(NGLLX,nspec_left) :: b_absorb_potential_left_slice
-  real(kind=CUSTOM_REAL),dimension(NGLLX,nspec_right) :: b_absorb_potential_right_slice
-  real(kind=CUSTOM_REAL),dimension(NGLLX,nspec_top) :: b_absorb_potential_top_slice
+  real(kind=CUSTOM_REAL),dimension(NGLLX,nspec_bottom) :: b_absorb_minus_int_int_pressure_bottom_slice
+  real(kind=CUSTOM_REAL),dimension(NGLLX,nspec_left) :: b_absorb_minus_int_int_pressure_left_slice
+  real(kind=CUSTOM_REAL),dimension(NGLLX,nspec_right) :: b_absorb_minus_int_int_pressure_right_slice
+  real(kind=CUSTOM_REAL),dimension(NGLLX,nspec_top) :: b_absorb_minus_int_int_pressure_top_slice
 
   ! checks if anything to do
   if (nelemabs == 0) return
 
   if (SIMULATION_TYPE == 3) then
     if (phase_is_inner .eqv. .false.) then
-      b_absorb_potential_left_slice(:,:)=b_absorb_acoustic_left(:,:,NSTEP-it+1)
-      b_absorb_potential_right_slice(:,:)=b_absorb_acoustic_right(:,:,NSTEP-it+1)
-      b_absorb_potential_top_slice(:,:)=b_absorb_acoustic_top(:,:,NSTEP-it+1)
-      b_absorb_potential_bottom_slice(:,:)=b_absorb_acoustic_bottom(:,:,NSTEP-it+1)
+      b_absorb_minus_int_int_pressure_left_slice(:,:)=b_absorb_acoustic_left(:,:,NSTEP-it+1)
+      b_absorb_minus_int_int_pressure_right_slice(:,:)=b_absorb_acoustic_right(:,:,NSTEP-it+1)
+      b_absorb_minus_int_int_pressure_top_slice(:,:)=b_absorb_acoustic_top(:,:,NSTEP-it+1)
+      b_absorb_minus_int_int_pressure_bottom_slice(:,:)=b_absorb_acoustic_bottom(:,:,NSTEP-it+1)
     endif
   endif
 
   ! absorbs absorbing-boundary surface using Sommerfeld condition (vanishing field in the outer-space)
-  call compute_stacey_acoustic_cuda(Mesh_pointer, phase_is_inner,b_absorb_potential_left_slice,b_absorb_potential_right_slice,&
-                                     b_absorb_potential_top_slice,b_absorb_potential_bottom_slice)
+  call compute_stacey_acoustic_cuda(Mesh_pointer, phase_is_inner, &
+                                     b_absorb_minus_int_int_pressure_left_slice,b_absorb_minus_int_int_pressure_right_slice, &
+                                     b_absorb_minus_int_int_pressure_top_slice,b_absorb_minus_int_int_pressure_bottom_slice)
 
   ! adjoint simulations: stores absorbed wavefield part
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
     ! writes out absorbing boundary value only when second phase is running
     if (phase_is_inner .eqv. .true.) then
-      b_absorb_acoustic_bottom(:,:,it) = b_absorb_potential_bottom_slice(:,:)
-      b_absorb_acoustic_right(:,:,it) = b_absorb_potential_right_slice(:,:)
-      b_absorb_acoustic_top(:,:,it) = b_absorb_potential_top_slice(:,:)
-      b_absorb_acoustic_left(:,:,it) = b_absorb_potential_left_slice(:,:)
+      b_absorb_acoustic_bottom(:,:,it) = b_absorb_minus_int_int_pressure_bottom_slice(:,:)
+      b_absorb_acoustic_right(:,:,it) = b_absorb_minus_int_int_pressure_right_slice(:,:)
+      b_absorb_acoustic_top(:,:,it) = b_absorb_minus_int_int_pressure_top_slice(:,:)
+      b_absorb_acoustic_left(:,:,it) = b_absorb_minus_int_int_pressure_left_slice(:,:)
     endif
   endif
 

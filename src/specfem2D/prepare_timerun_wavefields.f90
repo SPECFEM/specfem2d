@@ -285,7 +285,7 @@
     endif
   endif
 
-  ! potential, its first and second derivative, and inverse of the mass matrix for acoustic elements
+  ! minus pressure, its first and second time integrals, and inverse of the mass matrix for acoustic elements
   if (any_acoustic) then
     nglob_acoustic = nglob
   else
@@ -293,25 +293,25 @@
     nglob_acoustic = 1
   endif
 
-  allocate(potential_acoustic(nglob_acoustic))
-  allocate(potential_acoustic_old(nglob_acoustic))
+  allocate(minus_int_int_pressure_acoustic(nglob_acoustic))
+  allocate(minus_int_int_pressure_acoustic_old(nglob_acoustic))
   if (SIMULATION_TYPE == 3) then
-    allocate(potential_acoustic_adj_coupling(nglob_acoustic))
+    allocate(minus_int_int_pressure_acoustic_adj_coupling(nglob_acoustic))
   endif
-  allocate(potential_dot_acoustic(nglob_acoustic))
-  allocate(potential_dot_dot_acoustic(nglob_acoustic))
+  allocate(minus_int_pressure_acoustic(nglob_acoustic))
+  allocate(minus_pressure_acoustic(nglob_acoustic))
   allocate(rmass_inverse_acoustic(nglob_acoustic))
   if (time_stepping_scheme == 2) then
-    allocate(potential_acoustic_LDDRK(nglob_acoustic))
-    allocate(potential_dot_acoustic_LDDRK(nglob_acoustic))
-    allocate(potential_dot_acoustic_temp(nglob_acoustic))
+    allocate(minus_int_int_pressure_acoustic_LDDRK(nglob_acoustic))
+    allocate(minus_int_pressure_acoustic_LDDRK(nglob_acoustic))
+    allocate(minus_int_pressure_acoustic_temp(nglob_acoustic))
   endif
 
   if (time_stepping_scheme == 3) then
-    allocate(potential_acoustic_init_rk(nglob_acoustic))
-    allocate(potential_dot_acoustic_init_rk(nglob_acoustic))
-    allocate(potential_dot_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
-    allocate(potential_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
+    allocate(minus_int_int_pressure_acoustic_init_rk(nglob_acoustic))
+    allocate(minus_int_pressure_acoustic_init_rk(nglob_acoustic))
+    allocate(minus_pressure_acoustic_rk(nglob_acoustic,stage_time_scheme))
+    allocate(minus_int_pressure_acoustic_rk(nglob_acoustic,stage_time_scheme))
   endif
 
   if (SIMULATION_TYPE == 3 .and. any_acoustic) then
@@ -323,10 +323,10 @@
     nglob_acoustic_b = 1
     nspec_acoustic_b = 1
   endif
-  allocate(b_potential_acoustic(nglob_acoustic_b))
-  allocate(b_potential_acoustic_old(nglob_acoustic_b))
-  allocate(b_potential_dot_acoustic(nglob_acoustic_b))
-  allocate(b_potential_dot_dot_acoustic(nglob_acoustic_b))
+  allocate(b_minus_int_int_pressure_acoustic(nglob_acoustic_b))
+  allocate(b_minus_int_int_pressure_acoustic_old(nglob_acoustic_b))
+  allocate(b_minus_int_pressure_acoustic(nglob_acoustic_b))
+  allocate(b_minus_pressure_acoustic(nglob_acoustic_b))
   allocate(b_displ_ac(2,nglob_acoustic_b))
   allocate(b_accel_ac(2,nglob_acoustic_b))
   allocate(accel_ac(2,nglob_acoustic_b))
@@ -354,7 +354,7 @@
     endif
   endif
 
-  ! potential, its first and second derivative, and inverse of the mass matrix for gravitoacoustic elements
+  ! minus pressure, its first and second time integrals, and inverse of the mass matrix for gravitoacoustic elements
   if (any_gravitoacoustic) then
     nglob_gravitoacoustic = nglob
   else
@@ -362,13 +362,13 @@
     nglob_gravitoacoustic = 1
   endif
 
-  allocate(potential_gravitoacoustic(nglob_gravitoacoustic))
-  allocate(potential_dot_gravitoacoustic(nglob_gravitoacoustic))
-  allocate(potential_dot_dot_gravitoacoustic(nglob_gravitoacoustic))
+  allocate(minus_int_int_pressure_gravitoacoustic(nglob_gravitoacoustic))
+  allocate(minus_int_pressure_gravitoacoustic(nglob_gravitoacoustic))
+  allocate(minus_pressure_gravitoacoustic(nglob_gravitoacoustic))
   allocate(rmass_inverse_gravitoacoustic(nglob_gravitoacoustic))
-  allocate(potential_gravito(nglob_gravitoacoustic))
-  allocate(potential_dot_gravito(nglob_gravitoacoustic))
-  allocate(potential_dot_dot_gravito(nglob_gravitoacoustic))
+  allocate(minus_int_int_pressure_gravito(nglob_gravitoacoustic))
+  allocate(minus_int_pressure_gravito(nglob_gravitoacoustic))
+  allocate(minus_pressure_gravito(nglob_gravitoacoustic))
   allocate(rmass_inverse_gravito(nglob_gravitoacoustic))
 
   ! synchronizes all processes
@@ -435,30 +435,30 @@
     displw_poroelastic_initial_rk = 0._CUSTOM_REAL
   endif
 
-  potential_acoustic = 0._CUSTOM_REAL
-  potential_acoustic_old = 0._CUSTOM_REAL
-  potential_dot_acoustic = 0._CUSTOM_REAL
-  potential_dot_dot_acoustic = 0._CUSTOM_REAL
+  minus_int_int_pressure_acoustic = 0._CUSTOM_REAL
+  minus_int_int_pressure_acoustic_old = 0._CUSTOM_REAL
+  minus_int_pressure_acoustic = 0._CUSTOM_REAL
+  minus_pressure_acoustic = 0._CUSTOM_REAL
 
   if (time_stepping_scheme == 2) then
-    potential_acoustic_LDDRK = 0._CUSTOM_REAL
-    potential_dot_acoustic_LDDRK = 0._CUSTOM_REAL
-    potential_dot_acoustic_temp = 0._CUSTOM_REAL
+    minus_int_int_pressure_acoustic_LDDRK = 0._CUSTOM_REAL
+    minus_int_pressure_acoustic_LDDRK = 0._CUSTOM_REAL
+    minus_int_pressure_acoustic_temp = 0._CUSTOM_REAL
   endif
 
   if (time_stepping_scheme == 3) then
-    potential_acoustic_init_rk = 0._CUSTOM_REAL
-    potential_dot_acoustic_init_rk = 0._CUSTOM_REAL
-    potential_dot_dot_acoustic_rk = 0._CUSTOM_REAL
-    potential_dot_acoustic_rk = 0._CUSTOM_REAL
+    minus_int_int_pressure_acoustic_init_rk = 0._CUSTOM_REAL
+    minus_int_pressure_acoustic_init_rk = 0._CUSTOM_REAL
+    minus_pressure_acoustic_rk = 0._CUSTOM_REAL
+    minus_int_pressure_acoustic_rk = 0._CUSTOM_REAL
   endif
 
-  potential_gravitoacoustic = 0._CUSTOM_REAL
-  potential_dot_gravitoacoustic = 0._CUSTOM_REAL
-  potential_dot_dot_gravitoacoustic = 0._CUSTOM_REAL
-  potential_gravito = 0._CUSTOM_REAL
-  potential_dot_gravito = 0._CUSTOM_REAL
-  potential_dot_dot_gravito = 0._CUSTOM_REAL
+  minus_int_int_pressure_gravitoacoustic = 0._CUSTOM_REAL
+  minus_int_pressure_gravitoacoustic = 0._CUSTOM_REAL
+  minus_pressure_gravitoacoustic = 0._CUSTOM_REAL
+  minus_int_int_pressure_gravito = 0._CUSTOM_REAL
+  minus_int_pressure_gravito = 0._CUSTOM_REAL
+  minus_pressure_gravito = 0._CUSTOM_REAL
 
   ! user output
   if (myrank == 0) then

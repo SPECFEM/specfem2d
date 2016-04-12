@@ -32,9 +32,9 @@
 !========================================================================
 
 
-  subroutine compute_forces_gravitoacoustic(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-                                            potential_gravitoacoustic,potential_dot_dot_gravito, &
-                                            potential_gravito,IS_BACKWARD_FIELD)
+  subroutine compute_forces_gravitoacoustic(minus_pressure_gravitoacoustic,minus_int_pressure_gravitoacoustic, &
+                                            minus_int_int_pressure_gravitoacoustic,minus_pressure_gravito, &
+                                            minus_int_int_pressure_gravito,IS_BACKWARD_FIELD)
 
 ! compute forces for the gravitoacoustic elements
 
@@ -58,12 +58,12 @@
 
   implicit none
 
-! Chi potential
+! scalar
   real(kind=CUSTOM_REAL), dimension(nglob) :: &
-    potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic,potential_gravitoacoustic
-! Xi potential
+    minus_pressure_gravitoacoustic,minus_int_pressure_gravitoacoustic,minus_int_int_pressure_gravitoacoustic
+! scalar
   real(kind=CUSTOM_REAL), dimension(nglob) :: &
-    potential_dot_dot_gravito,potential_gravito
+    minus_pressure_gravito,minus_int_int_pressure_gravito
 ! rho*u=grad(Chi)+xi*gravity_vector
 
   logical,intent(in) :: IS_BACKWARD_FIELD
@@ -74,10 +74,10 @@
 
   print *, nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs,ispec_is_gravitoacoustic, &
-               codeabs,potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-               potential_gravitoacoustic,potential_dot_dot_gravito,&
-               !potential_dot_gravito, &
-               potential_gravito,rmass_inverse_gravito,&
+               codeabs,minus_pressure_gravitoacoustic,minus_int_pressure_gravitoacoustic, &
+               minus_int_int_pressure_gravitoacoustic,minus_pressure_gravito,&
+               !minus_int_pressure_gravito, &
+               minus_int_int_pressure_gravito,rmass_inverse_gravito,&
                !stage_time_scheme, i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,gravityext,Nsqext,hprime_xx,hprimewgll_xx, &

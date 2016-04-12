@@ -40,16 +40,16 @@
 ! explicit Newmark time scheme with acoustic & elastic domains:
 ! (see e.g. Hughes, 1987; Chaljub et al., 2003)
 !
-! chi(t+delta_t) = chi(t) + delta_t chi_dot(t) + 1/2 delta_t**2 chi_dot_dot(t)
-! chi_dot(t+delta_t) = chi_dot(t) + 1/2 delta_t chi_dot_dot(t) + 1/2 delta_t chi_dot_dot(t+delta_t)
-! chi_dot_dot(t+delta_t) = 1/M_acoustic( -K_acoustic chi(t+delta) + B_acoustic u(t+delta_t) + f(t+delta_t) )
+! chi(t+delta_t) = chi(t) + delta_t minus_int_pressure(t) + 1/2 delta_t**2 minus_pressure(t)
+! minus_int_pressure(t+delta_t) = minus_int_pressure(t) + 1/2 delta_t minus_pressure(t) + 1/2 delta_t minus_pressure(t+delta_t)
+! minus_pressure(t+delta_t) = 1/M_acoustic( -K_acoustic chi(t+delta) + B_acoustic u(t+delta_t) + f(t+delta_t) )
 !
 ! u(t+delta_t) = u(t) + delta_t  v(t) + 1/2  delta_t**2 a(t)
 ! v(t+delta_t) = v(t) + 1/2 delta_t a(t) + 1/2 delta_t a(t+delta_t)
-! a(t+delta_t) = 1/M_elastic ( -K_elastic u(t+delta) + B_elastic chi_dot_dot(t+delta_t) + f( t+delta_t) )
+! a(t+delta_t) = 1/M_elastic ( -K_elastic u(t+delta) + B_elastic minus_pressure(t+delta_t) + f( t+delta_t) )
 !
 ! where
-!   chi, chi_dot, chi_dot_dot are acoustic (fluid) potentials ( dotted with respect to time)
+!   minus_pressure, minus_int_pressure, minus_pressure are pressure and its time integrals
 !   u, v, a are displacement,velocity & acceleration
 !   M is mass matrix, K stiffness matrix and B boundary term for acoustic/elastic domains
 !   f denotes a source term (acoustic/elastic)
@@ -57,14 +57,14 @@
 ! note that this stage calculates the predictor terms
 !
 !   for
-!   potential chi_dot(t+delta) requires + 1/2 delta_t chi_dot_dot(t+delta_t)
-!                                   at a later stage (corrector) once where chi_dot_dot(t+delta) is calculated
+!   minus_int_pressure(t+delta) requires + 1/2 delta_t minus_pressure(t+delta_t)
+!                                   at a later stage (corrector) once where minus_pressure(t+delta) is calculated
 !   and similar,
 !   velocity v(t+delta_t) requires  + 1/2 delta_t a(t+delta_t)
 !                                   at a later stage once where a(t+delta) is calculated
 ! also:
-!   boundary term B_elastic requires chi_dot_dot(t+delta)
-!                                   thus chi_dot_dot has to be updated first before the elastic boundary term is considered
+!   boundary term B_elastic requires minus_pressure(t+delta)
+!                                   thus minus_pressure has to be updated first before the elastic boundary term is considered
 
 
 !------------------------------------------------------------------------------------------------
@@ -156,16 +156,16 @@
 
     if (time_stepping_scheme == 1) then
       call update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                potential_dot_dot_acoustic,potential_dot_acoustic,&
-                                                potential_acoustic, &
-                                                PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
+                                                minus_pressure_acoustic,minus_int_pressure_acoustic,&
+                                                minus_int_int_pressure_acoustic, &
+                                                PML_BOUNDARY_CONDITIONS,minus_int_int_pressure_acoustic_old)
     else
 #ifdef FORCE_VECTORIZATION
       do i = 1,nglob_acoustic
-        potential_dot_dot_acoustic(i) = 0._CUSTOM_REAL
+        minus_pressure_acoustic(i) = 0._CUSTOM_REAL
       enddo
 #else
-      potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+      minus_pressure_acoustic(:) = 0._CUSTOM_REAL
 #endif
     endif
 
@@ -204,16 +204,16 @@
     !PML_BOUNDARY_CONDITIONS = .false.
     if (time_stepping_scheme == 1) then
       call update_displacement_newmark_acoustic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
-                                                b_potential_acoustic, &
-                                                .false.,b_potential_acoustic_old)
+                                                b_minus_pressure_acoustic,b_minus_int_pressure_acoustic,&
+                                                b_minus_int_int_pressure_acoustic, &
+                                                .false.,b_minus_int_int_pressure_acoustic_old)
     else
 #ifdef FORCE_VECTORIZATION
       do i = 1,nglob_acoustic
-        b_potential_dot_dot_acoustic(i) = 0._CUSTOM_REAL
+        b_minus_pressure_acoustic(i) = 0._CUSTOM_REAL
       enddo
 #else
-      b_potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+      b_minus_pressure_acoustic(:) = 0._CUSTOM_REAL
 #endif
     endif
   else
@@ -248,7 +248,7 @@
     ! for coupling with adjoint wavefield, stores old (at time t_n) wavefield
     if (SIMULATION_TYPE == 3) then
       if (time_stepping_scheme == 1) then
-        ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+        ! handles adjoint runs coupling between adjoint pressure and adjoint elastic wavefield
         ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
 #ifdef FORCE_VECTORIZATION
         do i = 1,NDIM*nglob_elastic
@@ -350,7 +350,7 @@
     ! for coupling with adjoint wavefield, stores old (at time t_n) wavefield
     if (SIMULATION_TYPE == 3) then
       if (time_stepping_scheme == 1) then
-        ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+        ! handles adjoint runs coupling between adjoint pressure and adjoint elastic wavefield
         ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
         accels_poroelastic_adj_coupling(:,:) = - accels_poroelastic(:,:)
         accelw_poroelastic_adj_coupling(:,:) = - accelw_poroelastic(:,:)
@@ -420,20 +420,20 @@
 !
 
   subroutine update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2, &
-                                                  potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                                  potential_acoustic, &
-                                                  PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
+                                                  minus_pressure_acoustic,minus_int_pressure_acoustic, &
+                                                  minus_int_int_pressure_acoustic, &
+                                                  PML_BOUNDARY_CONDITIONS,minus_int_int_pressure_acoustic_old)
 
   use specfem_par, only : nglob_acoustic,CUSTOM_REAL
 
   implicit none
 
   double precision,intent(in) :: deltat,deltatover2,deltatsquareover2
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_acoustic,potential_dot_acoustic,&
-                                                                     potential_dot_dot_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: minus_int_int_pressure_acoustic,minus_int_pressure_acoustic,&
+                                                                     minus_pressure_acoustic
 
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_acoustic_old
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: minus_int_int_pressure_acoustic_old
 
   ! local parameters
 #ifdef FORCE_VECTORIZATION
@@ -447,10 +447,10 @@
     !       find explanations where?
 #ifdef FORCE_VECTORIZATION
     do i = 1,nglob_acoustic
-      potential_acoustic_old(i) = potential_acoustic(i) + deltatsquareover2 * potential_dot_dot_acoustic(i)
+      minus_int_int_pressure_acoustic_old(i) = minus_int_int_pressure_acoustic(i) + deltatsquareover2 * minus_pressure_acoustic(i)
     enddo
 #else
-    potential_acoustic_old(:) = potential_acoustic(:) + deltatsquareover2 * potential_dot_dot_acoustic(:)
+    minus_int_int_pressure_acoustic_old(:) = minus_int_int_pressure_acoustic(:) + deltatsquareover2 * minus_pressure_acoustic(:)
 #endif
 
   endif ! PML_BOUNDARY_CONDITIONS
@@ -458,16 +458,16 @@
 
 #ifdef FORCE_VECTORIZATION
   do i = 1,nglob_acoustic
-    potential_acoustic(i) = potential_acoustic(i) + deltat * potential_dot_acoustic(i) &
-                                                  + deltatsquareover2 * potential_dot_dot_acoustic(i)
-    potential_dot_acoustic(i) = potential_dot_acoustic(i) + deltatover2 * potential_dot_dot_acoustic(i)
-    potential_dot_dot_acoustic(i) = 0._CUSTOM_REAL
+    minus_int_int_pressure_acoustic(i) = minus_int_int_pressure_acoustic(i) + deltat * minus_int_pressure_acoustic(i) &
+                                                  + deltatsquareover2 * minus_pressure_acoustic(i)
+    minus_int_pressure_acoustic(i) = minus_int_pressure_acoustic(i) + deltatover2 * minus_pressure_acoustic(i)
+    minus_pressure_acoustic(i) = 0._CUSTOM_REAL
   enddo
 #else
-  potential_acoustic(:) = potential_acoustic(:) + deltat * potential_dot_acoustic &
-                                                + deltatsquareover2 * potential_dot_dot_acoustic(:)
-  potential_dot_acoustic(:) = potential_dot_acoustic(:) + deltatover2 * potential_dot_dot_acoustic(:)
-  potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+  minus_int_int_pressure_acoustic(:) = minus_int_int_pressure_acoustic(:) + deltat * minus_int_pressure_acoustic &
+                                                + deltatsquareover2 * minus_pressure_acoustic(:)
+  minus_int_pressure_acoustic(:) = minus_int_pressure_acoustic(:) + deltatover2 * minus_pressure_acoustic(:)
+  minus_pressure_acoustic(:) = 0._CUSTOM_REAL
 #endif
 
   end subroutine update_displacement_newmark_acoustic
@@ -642,7 +642,7 @@
     endif
   endif
 
-  ! updates acoustic potentials
+  ! updates acoustic pressure
   call update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f,&
                                    b_deltatf,b_deltatsquareover2f,b_deltatover2f)
 

@@ -37,12 +37,12 @@
   use constants,only: IMAIN
 
   use specfem_par, only: myrank,P_SV,it, &
-                         potential_acoustic,potential_gravitoacoustic, &
-                         potential_gravito,displ_elastic,displs_poroelastic, &
-                         potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                         potential_dot_gravito,veloc_elastic,velocs_poroelastic, &
-                         potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                         potential_dot_dot_gravito,accel_elastic,accels_poroelastic
+                         minus_int_int_pressure_acoustic,minus_int_int_pressure_gravitoacoustic, &
+                         minus_int_int_pressure_gravito,displ_elastic,displs_poroelastic, &
+                         minus_int_pressure_acoustic,minus_int_pressure_gravitoacoustic, &
+                         minus_int_pressure_gravito,veloc_elastic,velocs_poroelastic, &
+                         minus_pressure_acoustic,minus_pressure_gravitoacoustic, &
+                         minus_pressure_gravito,accel_elastic,accels_poroelastic
 
   use specfem_par_movie,only: imagetype_postscript
 
@@ -59,24 +59,24 @@
   if (imagetype_postscript == 1 .and. P_SV) then
 
     if (myrank == 0) write(IMAIN,*) 'drawing displacement vector as small arrows...'
-    call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                                     potential_gravito,displ_elastic,displs_poroelastic)
+    call compute_vector_whole_medium(minus_int_int_pressure_acoustic,minus_int_int_pressure_gravitoacoustic, &
+                                     minus_int_int_pressure_gravito,displ_elastic,displs_poroelastic)
 
     call plot_post()
 
   else if (imagetype_postscript == 2 .and. P_SV) then
 
     if (myrank == 0) write(IMAIN,*) 'drawing velocity vector as small arrows...'
-    call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                                     potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+    call compute_vector_whole_medium(minus_int_pressure_acoustic,minus_int_pressure_gravitoacoustic, &
+                                     minus_int_pressure_gravito,veloc_elastic,velocs_poroelastic)
 
     call plot_post()
 
   else if (imagetype_postscript == 3 .and. P_SV) then
 
     if (myrank == 0) write(IMAIN,*) 'drawing acceleration vector as small arrows...'
-    call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                                     potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
+    call compute_vector_whole_medium(minus_pressure_acoustic,minus_pressure_gravitoacoustic, &
+                                     minus_pressure_gravito,accel_elastic,accels_poroelastic)
 
     call plot_post()
 

@@ -98,12 +98,12 @@
       endif
 
       if (any_acoustic .and. nglob_interface > 0) then
-        allocate(pml_interface_history_potential(nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential'
-        allocate(pml_interface_history_potential_dot(nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot'
-        allocate(pml_interface_history_potential_dot_dot(nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot_dot'
+        allocate(pml_interface_history_minus_int_int_pressure(nglob_interface,NSTEP),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_minus_int_int_pressure'
+        allocate(pml_interface_history_minus_int_pressure(nglob_interface,NSTEP),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_minus_int_pressure'
+        allocate(pml_interface_history_minus_pressure(nglob_interface,NSTEP),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_minus_pressure'
       endif
 
       if (nglob_interface > 0) then
@@ -126,9 +126,9 @@
       allocate(pml_interface_history_displ(NDIM,1,1))
       allocate(pml_interface_history_veloc(NDIM,1,1))
       allocate(pml_interface_history_accel(NDIM,1,1))
-      allocate(pml_interface_history_potential(1,1))
-      allocate(pml_interface_history_potential_dot(1,1))
-      allocate(pml_interface_history_potential_dot_dot(1,1))
+      allocate(pml_interface_history_minus_int_int_pressure(1,1))
+      allocate(pml_interface_history_minus_int_pressure(1,1))
+      allocate(pml_interface_history_minus_pressure(1,1))
     endif
 
     if (SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS) then
@@ -147,9 +147,9 @@
       if (any_acoustic .and. nglob_interface > 0) then
         do it = 1,NSTEP
           do i = 1, nglob_interface
-            read(72) pml_interface_history_potential_dot_dot(i,it), &
-                     pml_interface_history_potential_dot(i,it), &
-                     pml_interface_history_potential(i,it)
+            read(72) pml_interface_history_minus_pressure(i,it), &
+                     pml_interface_history_minus_int_pressure(i,it), &
+                     pml_interface_history_minus_int_int_pressure(i,it)
           enddo
         enddo
         close(72)
@@ -216,8 +216,8 @@
       if (any_acoustic .and. num_fluid_solid_edges > 0) then
         allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
-        allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
+        allocate(rmemory_sfb_minus_pressure_acoustic(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_minus_pressure_acoustic'
       endif
 
       if (ROTATE_PML_ACTIVATE) then
@@ -254,8 +254,8 @@
         if (any_acoustic .and. num_fluid_solid_edges > 0) then
           allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
-          allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
+          allocate(rmemory_sfb_minus_pressure_acoustic_LDDRK(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_minus_pressure_acoustic'
         endif
       else
         allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1),stat=ier)
@@ -266,8 +266,8 @@
         if (any_acoustic .and. num_fluid_solid_edges > 0) then
           allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,1),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
-          allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
+          allocate(rmemory_sfb_minus_pressure_acoustic_LDDRK(1,NGLLX,NGLLZ,1),stat=ier)
+          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_minus_pressure_acoustic'
         endif
       endif
 
@@ -279,7 +279,7 @@
 
       if (any_acoustic .and. num_fluid_solid_edges > 0) then
         rmemory_fsb_displ_elastic(:,:,:,:,:) = ZERO
-        rmemory_sfb_potential_ddot_acoustic(:,:,:,:) = ZERO
+        rmemory_sfb_minus_pressure_acoustic(:,:,:,:) = ZERO
       endif
 
       if (ROTATE_PML_ACTIVATE) then
@@ -297,7 +297,7 @@
         rmemory_duz_dz_LDDRK(:,:,:,:) = ZERO
         if (any_acoustic .and. num_fluid_solid_edges > 0) then
           rmemory_fsb_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
-          rmemory_sfb_potential_ddot_acoustic_LDDRK(:,:,:,:) = ZERO
+          rmemory_sfb_minus_pressure_acoustic_LDDRK(:,:,:,:) = ZERO
         endif
       endif
 
@@ -310,9 +310,9 @@
       allocate(rmemory_duz_dz(1,1,1,1))
       if (any_acoustic .and. num_fluid_solid_edges > 0) then
         allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,1))
-        allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
+        allocate(rmemory_sfb_minus_pressure_acoustic(1,NGLLX,NGLLZ,1))
         allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,1))
-        allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
+        allocate(rmemory_sfb_minus_pressure_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
       endif
 
       allocate(rmemory_dux_dx_prime(1,1,1,1))
@@ -328,36 +328,36 @@
     endif
 
     if (any_acoustic .and. nspec_PML > 0) then
-      allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
+      allocate(rmemory_minus_int_int_pressure_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_minus_int_int_pressure_acoustic'
       allocate(rmemory_acoustic_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
       if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
       allocate(rmemory_acoustic_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
       if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
 
-      rmemory_potential_acoustic = ZERO
+      rmemory_minus_int_int_pressure_acoustic = ZERO
       rmemory_acoustic_dux_dx = ZERO
       rmemory_acoustic_dux_dz = ZERO
 
       if (time_stepping_scheme == 2) then
-        allocate(rmemory_potential_acoustic_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
+        allocate(rmemory_minus_int_int_pressure_acoustic_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
+        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_minus_int_int_pressure_acoustic'
         allocate(rmemory_acoustic_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
         allocate(rmemory_acoustic_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
         if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
       else
-        allocate(rmemory_potential_acoustic_LDDRK(1,1,1,1),stat=ier)
+        allocate(rmemory_minus_int_int_pressure_acoustic_LDDRK(1,1,1,1),stat=ier)
         allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1),stat=ier)
         allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1),stat=ier)
       endif
 
-      rmemory_potential_acoustic_LDDRK = ZERO
+      rmemory_minus_int_int_pressure_acoustic_LDDRK = ZERO
       rmemory_acoustic_dux_dx_LDDRK = ZERO
       rmemory_acoustic_dux_dz_LDDRK = ZERO
 
     else
-      allocate(rmemory_potential_acoustic(1,1,1,1))
+      allocate(rmemory_minus_int_int_pressure_acoustic(1,1,1,1))
       allocate(rmemory_acoustic_dux_dx(1,1,1,1))
       allocate(rmemory_acoustic_dux_dz(1,1,1,1))
     endif
@@ -368,9 +368,9 @@
     allocate(rmemory_duz_dx(1,1,1,1))
     allocate(rmemory_duz_dz(1,1,1,1))
     allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,1))
-    allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
+    allocate(rmemory_sfb_minus_pressure_acoustic(1,NGLLX,NGLLZ,1))
     allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,1))
-    allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
+    allocate(rmemory_sfb_minus_pressure_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
 
     allocate(rmemory_dux_dx_prime(1,1,1,1))
     allocate(rmemory_dux_dz_prime(1,1,1,1))
@@ -385,11 +385,11 @@
     allocate(rmemory_duz_dx_LDDRK(1,1,1,1))
     allocate(rmemory_duz_dz_LDDRK(1,1,1,1))
 
-    allocate(rmemory_potential_acoustic(1,1,1,1))
+    allocate(rmemory_minus_int_int_pressure_acoustic(1,1,1,1))
     allocate(rmemory_acoustic_dux_dx(1,1,1,1))
     allocate(rmemory_acoustic_dux_dz(1,1,1,1))
 
-    allocate(rmemory_potential_acoustic_LDDRK(1,1,1,1))
+    allocate(rmemory_minus_int_int_pressure_acoustic_LDDRK(1,1,1,1))
     allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1))
     allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1))
 
@@ -407,12 +407,12 @@
   ! if so we need to allocate a dummy version in order to be able to use that array as an argument
   ! in some subroutine calls below
   if (.not. allocated(rmemory_fsb_displ_elastic)) allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,1))
-  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic)) allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
+  if (.not. allocated(rmemory_sfb_minus_pressure_acoustic)) allocate(rmemory_sfb_minus_pressure_acoustic(1,NGLLX,NGLLZ,1))
   if (.not. allocated(rmemory_fsb_displ_elastic_LDDRK)) then
     allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,1))
   endif
-  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic_LDDRK)) then
-    allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
+  if (.not. allocated(rmemory_sfb_minus_pressure_acoustic_LDDRK)) then
+    allocate(rmemory_sfb_minus_pressure_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
   endif
 
   end subroutine prepare_timerun_PML

@@ -269,9 +269,9 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: nspec,ispec_is_acoustic,any_acoustic,ibool,nglob_interface,point_interface, &
-                         b_potential_dot_acoustic,b_potential_acoustic
+                         b_minus_int_pressure_acoustic,b_minus_int_int_pressure_acoustic
   ! PML arrays
-  use specfem_par,only: ispec_is_PML,pml_interface_history_potential_dot,pml_interface_history_potential
+  use specfem_par,only: ispec_is_PML,pml_interface_history_minus_int_pressure,pml_interface_history_minus_int_int_pressure
 
   implicit none
 
@@ -285,8 +285,8 @@
       if (ispec_is_acoustic(ispec) .and. ispec_is_PML(ispec)) then
         do j = 1, NGLLZ
           do i = 1, NGLLX
-            b_potential_dot_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
-            b_potential_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
+            b_minus_int_pressure_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
+            b_minus_int_int_pressure_acoustic(ibool(i,j,ispec)) = 0._CUSTOM_REAL
           enddo
         enddo
       endif
@@ -294,8 +294,8 @@
 
     if (nglob_interface > 0) then
       do i = 1, nglob_interface
-        b_potential_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot(i,it)
-        b_potential_acoustic(point_interface(i)) = pml_interface_history_potential(i,it)
+        b_minus_int_pressure_acoustic(point_interface(i)) = pml_interface_history_minus_int_pressure(i,it)
+        b_minus_int_int_pressure_acoustic(point_interface(i)) = pml_interface_history_minus_int_int_pressure(i,it)
       enddo
     endif
   endif
@@ -309,9 +309,9 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: any_acoustic,nglob_interface,point_interface, &
-                         b_potential_dot_dot_acoustic
+                         b_minus_pressure_acoustic
   ! PML arrays
-  use specfem_par,only: pml_interface_history_potential_dot_dot
+  use specfem_par,only: pml_interface_history_minus_pressure
 
   implicit none
 
@@ -322,7 +322,7 @@
 
   if (any_acoustic .and. nglob_interface > 0) then
     do i = 1, nglob_interface
-      b_potential_dot_dot_acoustic(point_interface(i)) = pml_interface_history_potential_dot_dot(i,it)
+      b_minus_pressure_acoustic(point_interface(i)) = pml_interface_history_minus_pressure(i,it)
     enddo
   endif
 
@@ -401,11 +401,11 @@
 
 !========================================================================
 
-  subroutine pml_boundary_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                   potential_acoustic,potential_acoustic_old)
+  subroutine pml_boundary_acoustic(minus_pressure_acoustic,minus_int_pressure_acoustic, &
+                                   minus_int_int_pressure_acoustic,minus_int_int_pressure_acoustic_old)
 
-! The outer boundary condition to use for PML elements in fluid layers is Neumann for the potential
-! because we need Dirichlet conditions for the displacement vector, which means Neumann for the potential.
+! The outer boundary condition to use for PML elements in fluid layers is Neumann for pressure
+! because we need Dirichlet conditions for the displacement vector, which means Neumann for pressure.
 ! Thus, there is nothing to enforce explicitly here.
 ! There is something to enforce explicitly only in the case of elastic elements, for which a Dirichlet
 ! condition is needed for the displacement vector, which is the vectorial unknown for these elements.
@@ -416,8 +416,8 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: potential_dot_dot_acoustic,potential_dot_acoustic, &
-    potential_acoustic,potential_acoustic_old
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: minus_pressure_acoustic,minus_int_pressure_acoustic, &
+    minus_int_int_pressure_acoustic,minus_int_int_pressure_acoustic_old
 
   ! local parameters
   integer :: i,j,ispecabs,ispec,iglob,ibegin,iend
@@ -435,10 +435,10 @@
         i = 1
         do j = 1,NGLLZ
           iglob = ibool(i,j,ispec)
-          potential_acoustic_old(iglob) = 0._CUSTOM_REAL
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          minus_int_int_pressure_acoustic_old(iglob) = 0._CUSTOM_REAL
+          minus_int_int_pressure_acoustic(iglob) = 0._CUSTOM_REAL
+          minus_int_pressure_acoustic(iglob) = 0._CUSTOM_REAL
+          minus_pressure_acoustic(iglob) = 0._CUSTOM_REAL
         enddo
       endif
 !--- right absorbing boundary
@@ -446,10 +446,10 @@
         i = NGLLX
         do j = 1,NGLLZ
           iglob = ibool(i,j,ispec)
-          potential_acoustic_old(iglob) = 0._CUSTOM_REAL
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          minus_int_int_pressure_acoustic_old(iglob) = 0._CUSTOM_REAL
+          minus_int_int_pressure_acoustic(iglob) = 0._CUSTOM_REAL
+          minus_int_pressure_acoustic(iglob) = 0._CUSTOM_REAL
+          minus_pressure_acoustic(iglob) = 0._CUSTOM_REAL
         enddo
       endif
 !--- bottom absorbing boundary
@@ -459,10 +459,10 @@
         iend = NGLLX
         do i = ibegin,iend
           iglob = ibool(i,j,ispec)
-          potential_acoustic_old(iglob) = 0._CUSTOM_REAL
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          minus_int_int_pressure_acoustic_old(iglob) = 0._CUSTOM_REAL
+          minus_int_int_pressure_acoustic(iglob) = 0._CUSTOM_REAL
+          minus_int_pressure_acoustic(iglob) = 0._CUSTOM_REAL
+          minus_pressure_acoustic(iglob) = 0._CUSTOM_REAL
         enddo
       endif
 !--- top absorbing boundary
@@ -473,10 +473,10 @@
         iend = NGLLX
         do i = ibegin,iend
           iglob = ibool(i,j,ispec)
-          potential_acoustic_old(iglob) = 0._CUSTOM_REAL
-          potential_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_acoustic(iglob) = 0._CUSTOM_REAL
-          potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+          minus_int_int_pressure_acoustic_old(iglob) = 0._CUSTOM_REAL
+          minus_int_int_pressure_acoustic(iglob) = 0._CUSTOM_REAL
+          minus_int_pressure_acoustic(iglob) = 0._CUSTOM_REAL
+          minus_pressure_acoustic(iglob) = 0._CUSTOM_REAL
         enddo
       endif  !  end of top absorbing boundary
     endif ! end of ispec_is_PML

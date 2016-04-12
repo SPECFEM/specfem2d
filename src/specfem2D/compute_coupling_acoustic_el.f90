@@ -33,7 +33,7 @@
 
 ! for acoustic solver
 
-  subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
+  subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,minus_pressure_acoustic)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
     CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE,ALPHA_LDDRK,BETA_LDDRK
@@ -54,7 +54,7 @@
   implicit none
 
   real(kind=CUSTOM_REAL),dimension(NDIM,nglob_elastic) :: displ_elastic,displ_elastic_old
-  real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_dot_dot_acoustic
+  real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: minus_pressure_acoustic
 
   !local variable
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
@@ -236,7 +236,7 @@
 
       ! compute dot product
       displ_n = displ_x*nx + displ_z*nz
-      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+      minus_pressure_acoustic(iglob) = minus_pressure_acoustic(iglob) + weight*displ_n
 
     enddo
   enddo
@@ -246,7 +246,7 @@
 !========================================================================
 ! for acoustic solver: backward simulation in adjoint inversion
 
-  subroutine compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
+  subroutine compute_coupling_acoustic_el_backward(b_displ_elastic,b_minus_pressure_acoustic)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
     CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
@@ -261,7 +261,7 @@
   implicit none
 
   real(kind=CUSTOM_REAL),dimension(NDIM,nglob_elastic) :: b_displ_elastic
-  real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: b_potential_dot_dot_acoustic
+  real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: b_minus_pressure_acoustic
 
   !local variable
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
@@ -376,7 +376,7 @@
 
       ! compute dot product
       displ_n = displ_x*nx + displ_z*nz
-      b_potential_dot_dot_acoustic(iglob) = b_potential_dot_dot_acoustic(iglob) + weight*displ_n
+      b_minus_pressure_acoustic(iglob) = b_minus_pressure_acoustic(iglob) + weight*displ_n
 
     enddo
   enddo

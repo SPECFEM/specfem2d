@@ -126,10 +126,10 @@
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
               ! use the second derivative of the source for the source time function instead of the source itself,
-              ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+              ! and then record -minus_int_int_pressure_acoustic() as pressure seismograms instead of -minus_pressure_acoustic();
               ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
               ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
-              ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+              ! thus in fluid elements minus_pressure_acoustic() is accurate at zeroth order while minus_int_int_pressure_acoustic()
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! Second derivative of Ricker source time function :
               source_time_function(i_source,it,i_stage) = factor(i_source) * &
@@ -151,10 +151,10 @@
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
               ! use the second derivative of the source for the source time function instead of the source itself,
-              ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+              ! and then record -minus_int_int_pressure_acoustic() as pressure seismograms instead of -minus_pressure_acoustic();
               ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
               ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
-              ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+              ! thus in fluid elements minus_pressure_acoustic() is accurate at zeroth order while minus_int_int_pressure_acoustic()
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! Third derivative of Gaussian source time function :
               source_time_function(i_source,it,i_stage) = factor(i_source) * &
@@ -172,10 +172,10 @@
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
               ! use the second derivative of the source for the source time function instead of the source itself,
-              ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+              ! and then record -minus_int_int_pressure_acoustic() as pressure seismograms instead of -minus_pressure_acoustic();
               ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
               ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
-              ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+              ! thus in fluid elements minus_pressure_acoustic() is accurate at zeroth order while minus_int_int_pressure_acoustic()
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! Second derivative of Gaussian :
               source_time_function(i_source,it,i_stage) = factor(i_source) * &

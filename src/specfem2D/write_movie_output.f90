@@ -38,7 +38,7 @@
   use constants,only: MAX_STRING_LEN,CUSTOM_REAL,NDIM
 
   use specfem_par,only: myrank,it,NSTEP,nspec,nglob,ibool, &
-    potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
+    minus_int_int_pressure_acoustic,minus_int_pressure_acoustic,minus_pressure_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
     b_displ_elastic,rho_k,rho_kl, &
     any_acoustic,any_elastic,GPU_MODE,P_SV
@@ -66,8 +66,8 @@
     ! Fields transfer for imaging
     ! acoustic domains
     if (any_acoustic ) then
-      call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic,potential_dot_acoustic, &
-                                          potential_dot_dot_acoustic,Mesh_pointer)
+      call transfer_fields_ac_from_device(NGLOB_AB,minus_int_int_pressure_acoustic,minus_int_pressure_acoustic, &
+                                          minus_pressure_acoustic,Mesh_pointer)
     endif
     ! elastic domains
     if (any_elastic) then

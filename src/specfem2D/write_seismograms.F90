@@ -81,18 +81,18 @@
           select case (seismotype)
           case (1)
             ! displacement
-            call compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
-                                            potential_gravito,displ_elastic,displs_poroelastic, &
+            call compute_vector_one_element(minus_int_int_pressure_acoustic,minus_int_int_pressure_gravitoacoustic, &
+                                            minus_int_int_pressure_gravito,displ_elastic,displs_poroelastic, &
                                             ispec,vector_field_element)
           case (2)
             ! velocity
-            call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                                            potential_dot_gravito,veloc_elastic,velocs_poroelastic, &
+            call compute_vector_one_element(minus_int_pressure_acoustic,minus_int_pressure_gravitoacoustic, &
+                                            minus_int_pressure_gravito,veloc_elastic,velocs_poroelastic, &
                                             ispec,vector_field_element)
           case (3)
             ! acceleration
-            call compute_vector_one_element(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                                            potential_dot_dot_gravito,accel_elastic,accels_poroelastic, &
+            call compute_vector_one_element(minus_pressure_acoustic,minus_pressure_gravitoacoustic, &
+                                            minus_pressure_gravito,accel_elastic,accels_poroelastic, &
                                             ispec,vector_field_element)
           case (4)
             ! pressure
@@ -100,27 +100,27 @@
 
           case (5)
             ! displacement
-            call compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
-                                            potential_gravito,displ_elastic,displs_poroelastic, &
+            call compute_vector_one_element(minus_int_int_pressure_acoustic,minus_int_int_pressure_gravitoacoustic, &
+                                            minus_int_int_pressure_gravito,displ_elastic,displs_poroelastic, &
                                             ispec,vector_field_element)
             ! curl of displacement
             call compute_curl_one_element(ispec,curl_element)
 
           case (6)
-            ! fluid potential
+            ! pressure
             ! uses pressure_element to store local element values
             if (ispec_is_acoustic(ispec)) then
               do j = 1,NGLLZ
                 do i = 1,NGLLX
                   iglob = ibool(i,j,ispec)
-                  pressure_element(i,j) = potential_acoustic(iglob)
+                  pressure_element(i,j) = minus_int_int_pressure_acoustic(iglob)
                 enddo
               enddo
             else if (ispec_is_gravitoacoustic(ispec)) then
               do j = 1,NGLLZ
                 do i = 1,NGLLX
                   iglob = ibool(i,j,ispec)
-                  pressure_element(i,j) = potential_gravitoacoustic(iglob)
+                  pressure_element(i,j) = minus_int_int_pressure_gravitoacoustic(iglob)
                 enddo
               enddo
             endif
@@ -135,7 +135,7 @@
 
           ! rotate seismogram components if needed, except if recording pressure, which is a scalar
           if (seismotype == 4 .or. seismotype == 6) then
-            ! pressure/potential type has only single component
+            ! pressure type has a single component
             sisux(seismo_current,irecloc) = valux
             sisuz(seismo_current,irecloc) = ZERO
           else

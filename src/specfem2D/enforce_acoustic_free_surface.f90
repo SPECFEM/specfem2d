@@ -31,10 +31,10 @@
 !
 !========================================================================
 
-  subroutine enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic)
+  subroutine enforce_acoustic_free_surface(minus_pressure_acoustic,minus_int_pressure_acoustic,minus_int_int_pressure_acoustic)
 
 ! free surface for an acoustic medium
-! if acoustic, the free surface condition is a Dirichlet condition for the potential,
+! if acoustic, the free surface condition is a Dirichlet condition for pressure,
 ! not Neumann, in order to impose zero pressure at the surface
 
   use constants,only: CUSTOM_REAL,ZERO
@@ -43,7 +43,7 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob) :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob) :: minus_pressure_acoustic,minus_int_pressure_acoustic,minus_int_int_pressure_acoustic
 
 !---
 !--- local variables
@@ -63,9 +63,9 @@
         iglob = ibool(i,j,ispec)
         ! make sure that an acoustic free surface is not enforced on periodic edges
         if (.not. this_ibool_is_a_periodic_edge(iglob)) then
-          potential_acoustic(iglob) = ZERO
-          potential_dot_acoustic(iglob) = ZERO
-          potential_dot_dot_acoustic(iglob) = ZERO
+          minus_int_int_pressure_acoustic(iglob) = ZERO
+          minus_int_pressure_acoustic(iglob) = ZERO
+          minus_pressure_acoustic(iglob) = ZERO
         endif
       enddo
     enddo

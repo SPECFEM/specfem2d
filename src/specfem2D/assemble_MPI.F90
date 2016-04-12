@@ -32,7 +32,7 @@
 !========================================================================
 
 !
-! This file contains subroutines related to assembling (of the mass matrix, potential_dot_dot and
+! This file contains subroutines related to assembling (of the mass matrix, minus_pressure and
 ! accel_elastic, accels_poroelastic, accelw_poroelastic).
 ! These subroutines are for the most part not used in the sequential version.
 !
@@ -187,7 +187,7 @@
 
 
 !-----------------------------------------------
-! Assembling potential_dot_dot for acoustic elements :
+! Assembling minus_pressure for acoustic elements :
 ! the buffers are filled, the ISEND and IRECV are started here, then
 ! contributions are added.
 ! The previous version included communication overlap using persistent
