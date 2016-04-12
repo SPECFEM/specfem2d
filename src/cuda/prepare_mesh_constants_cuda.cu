@@ -59,11 +59,11 @@
     extern realw_texture d_b_displ_tex;
     extern realw_texture d_b_accel_tex;
     // acoustic
-    extern realw_texture d_potential_tex;
-    extern realw_texture d_potential_dot_dot_tex;
+    extern realw_texture d_minus_int_int_pressure_tex;
+    extern realw_texture d_minus_pressure_tex;
     // backward/reconstructed
-    extern realw_texture d_b_potential_tex;
-    extern realw_texture d_b_potential_dot_dot_tex;
+    extern realw_texture d_b_minus_int_int_pressure_tex;
+    extern realw_texture d_b_minus_pressure_tex;
   #endif
   #ifdef USE_TEXTURES_CONSTANTS
     extern realw_texture d_hprime_xx_tex;
@@ -408,37 +408,37 @@ void FC_FUNC_(prepare_fields_acoustic_device,
 
   // allocates arrays on device (GPU)
   int size = mp->NGLOB_AB;
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_potential_acoustic),sizeof(realw)*size),2001);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_potential_dot_acoustic),sizeof(realw)*size),2002);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_potential_dot_dot_acoustic),sizeof(realw)*size),2003);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_minus_int_int_pressure_acoustic),sizeof(realw)*size),2001);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_minus_int_pressure_acoustic),sizeof(realw)*size),2002);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_minus_pressure_acoustic),sizeof(realw)*size),2003);
   // initializes values to zero
-  //print_CUDA_error_if_any(cudaMemset(mp->d_potential_acoustic,0,sizeof(realw)*size),2007);
-  //print_CUDA_error_if_any(cudaMemset(mp->d_potential_dot_acoustic,0,sizeof(realw)*size),2007);
-  //print_CUDA_error_if_any(cudaMemset(mp->d_potential_dot_dot_acoustic,0,sizeof(realw)*size),2007);
+  //print_CUDA_error_if_any(cudaMemset(mp->d_minus_int_int_pressure_acoustic,0,sizeof(realw)*size),2007);
+  //print_CUDA_error_if_any(cudaMemset(mp->d_minus_int_pressure_acoustic,0,sizeof(realw)*size),2007);
+  //print_CUDA_error_if_any(cudaMemset(mp->d_minus_pressure_acoustic,0,sizeof(realw)*size),2007);
 
   #ifdef USE_TEXTURES_FIELDS
   {
     #ifdef USE_OLDER_CUDA4_GPU
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      const textureReference* d_potential_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_potential_tex_ref_ptr, "d_potential_tex"), 2001);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_potential_tex_ref_ptr, mp->d_potential_acoustic, &channelDesc, sizeof(realw)*size), 2001);
+      const textureReference* d_minus_int_int_pressure_tex_ref_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_minus_int_int_pressure_tex_ref_ptr, "d_minus_int_int_pressure_tex"), 2001);
+      print_CUDA_error_if_any(cudaBindTexture(0, d_minus_int_int_pressure_tex_ref_ptr, mp->d_minus_int_int_pressure_acoustic, &channelDesc, sizeof(realw)*size), 2001);
 
-      const textureReference* d_potential_dot_dot_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_potential_dot_dot_tex_ref_ptr, "d_potential_dot_dot_tex"), 2003);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_potential_dot_dot_tex_ref_ptr, mp->d_potential_dot_dot_acoustic, &channelDesc, sizeof(realw)*size), 2003);
+      const textureReference* d_minus_pressure_tex_ref_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_minus_pressure_tex_ref_ptr, "d_minus_pressure_tex"), 2003);
+      print_CUDA_error_if_any(cudaBindTexture(0, d_minus_pressure_tex_ref_ptr, mp->d_minus_pressure_acoustic, &channelDesc, sizeof(realw)*size), 2003);
     #else
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_potential_tex, mp->d_potential_acoustic, &channelDesc, sizeof(realw)*size), 2001);
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_potential_dot_dot_tex, mp->d_potential_dot_dot_acoustic, &channelDesc, sizeof(realw)*size), 2003);
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_minus_int_int_pressure_tex, mp->d_minus_int_int_pressure_acoustic, &channelDesc, sizeof(realw)*size), 2001);
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_minus_pressure_tex, mp->d_minus_pressure_acoustic, &channelDesc, sizeof(realw)*size), 2003);
     #endif
   }
   #endif
 
   // mpi buffer
-  mp->size_mpi_buffer_potential = (mp->num_interfaces_ext_mesh) * (mp->max_nibool_interfaces_ext_mesh);
-  if (mp->size_mpi_buffer_potential > 0) {
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_potential_dot_dot_buffer),mp->size_mpi_buffer_potential *sizeof(realw)),2004);
+  mp->size_mpi_buffer_minus_int_int_pressure = (mp->num_interfaces_ext_mesh) * (mp->max_nibool_interfaces_ext_mesh);
+  if (mp->size_mpi_buffer_minus_int_int_pressure > 0) {
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_minus_pressure_buffer),mp->size_mpi_buffer_minus_int_int_pressure *sizeof(realw)),2004);
   }
 
   // mass matrix
@@ -475,10 +475,10 @@ void FC_FUNC_(prepare_fields_acoustic_device,
   if (mp->absorbing_conditions && mp->d_num_abs_boundary_faces > 0) {
     // absorb_field array used for file i/o
     if (mp->simulation_type == 3 || ( mp->simulation_type == 1 && mp->save_forward )){
-      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_left,mp->d_nspec_left*sizeof(realw)*NGLLX),2201);
-      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_right,mp->d_nspec_right*sizeof(realw)*NGLLX),2201);
-      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_top,mp->d_nspec_top*sizeof(realw)*NGLLX),2201);
-      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_bottom,mp->d_nspec_bottom*sizeof(realw)*NGLLX),2201);
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_minus_int_int_pressure_left,mp->d_nspec_left*sizeof(realw)*NGLLX),2201);
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_minus_int_int_pressure_right,mp->d_nspec_right*sizeof(realw)*NGLLX),2201);
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_minus_int_int_pressure_top,mp->d_nspec_top*sizeof(realw)*NGLLX),2201);
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_minus_int_int_pressure_bottom,mp->d_nspec_bottom*sizeof(realw)*NGLLX),2201);
 
     }
   }
@@ -528,30 +528,30 @@ void FC_FUNC_(prepare_fields_acoustic_adj_dev,
 
   // allocates backward/reconstructed arrays on device (GPU)
   int size = mp->NGLOB_AB;
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_potential_acoustic),sizeof(realw)*size),3014);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_potential_dot_acoustic),sizeof(realw)*size),3015);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_potential_dot_dot_acoustic),sizeof(realw)*size),3016);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_minus_int_int_pressure_acoustic),sizeof(realw)*size),3014);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_minus_int_pressure_acoustic),sizeof(realw)*size),3015);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_minus_pressure_acoustic),sizeof(realw)*size),3016);
   // initializes values to zero
-  print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_acoustic,0,sizeof(realw)*size),3007);
-  print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_dot_acoustic,0,sizeof(realw)*size),3007);
-  print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_dot_dot_acoustic,0,sizeof(realw)*size),3007);
+  print_CUDA_error_if_any(cudaMemset(mp->d_b_minus_int_int_pressure_acoustic,0,sizeof(realw)*size),3007);
+  print_CUDA_error_if_any(cudaMemset(mp->d_b_minus_int_pressure_acoustic,0,sizeof(realw)*size),3007);
+  print_CUDA_error_if_any(cudaMemset(mp->d_b_minus_pressure_acoustic,0,sizeof(realw)*size),3007);
 
 
   #ifdef USE_TEXTURES_FIELDS
   {
     #ifdef USE_OLDER_CUDA4_GPU
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      const textureReference* d_b_potential_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_potential_tex_ref_ptr, "d_b_potential_tex"), 3001);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_b_potential_tex_ref_ptr, mp->d_b_potential_acoustic, &channelDesc, sizeof(realw)*size), 3001);
+      const textureReference* d_b_minus_int_int_pressure_tex_ref_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_minus_int_int_pressure_tex_ref_ptr, "d_b_minus_int_int_pressure_tex"), 3001);
+      print_CUDA_error_if_any(cudaBindTexture(0, d_b_minus_int_int_pressure_tex_ref_ptr, mp->d_b_minus_int_int_pressure_acoustic, &channelDesc, sizeof(realw)*size), 3001);
 
-      const textureReference* d_b_potential_dot_dot_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_potential_dot_dot_tex_ref_ptr, "d_b_potential_dot_dot_tex"),3003);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_b_potential_dot_dot_tex_ref_ptr, mp->d_b_potential_dot_dot_acoustic, &channelDesc, sizeof(realw)*size), 3003);
+      const textureReference* d_b_minus_pressure_tex_ref_ptr;
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_minus_pressure_tex_ref_ptr, "d_b_minus_pressure_tex"),3003);
+      print_CUDA_error_if_any(cudaBindTexture(0, d_b_minus_pressure_tex_ref_ptr, mp->d_b_minus_pressure_acoustic, &channelDesc, sizeof(realw)*size), 3003);
     #else
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_b_potential_tex, mp->d_b_potential_acoustic, &channelDesc, sizeof(realw)*size), 3001);
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_b_potential_dot_dot_tex, mp->d_b_potential_dot_dot_acoustic, &channelDesc, sizeof(realw)*size), 3003);
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_b_minus_int_int_pressure_tex, mp->d_b_minus_int_int_pressure_acoustic, &channelDesc, sizeof(realw)*size), 3001);
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_b_minus_pressure_tex, mp->d_b_minus_pressure_acoustic, &channelDesc, sizeof(realw)*size), 3003);
     #endif
   }
   #endif
@@ -572,8 +572,8 @@ void FC_FUNC_(prepare_fields_acoustic_adj_dev,
   }
 
   // mpi buffer
-  if (mp->size_mpi_buffer_potential > 0) {
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_send_potential_dot_dot_buffer),mp->size_mpi_buffer_potential*sizeof(realw)),3014);
+  if (mp->size_mpi_buffer_minus_int_int_pressure > 0) {
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_send_minus_pressure_buffer),mp->size_mpi_buffer_minus_int_int_pressure*sizeof(realw)),3014);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -1050,10 +1050,10 @@ TRACE("prepare_cleanup_device");
 
   // ACOUSTIC arrays
   if (*ACOUSTIC_SIMULATION) {
-    cudaFree(mp->d_potential_acoustic);
-    cudaFree(mp->d_potential_dot_acoustic);
-    cudaFree(mp->d_potential_dot_dot_acoustic);
-    cudaFree(mp->d_send_potential_dot_dot_buffer);
+    cudaFree(mp->d_minus_int_int_pressure_acoustic);
+    cudaFree(mp->d_minus_int_pressure_acoustic);
+    cudaFree(mp->d_minus_pressure_acoustic);
+    cudaFree(mp->d_send_minus_pressure_buffer);
     cudaFree(mp->d_rmass_acoustic);
     cudaFree(mp->d_rhostore);
     cudaFree(mp->d_kappastore);
@@ -1062,22 +1062,22 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_inum_interfaces_acoustic);
 
     if (mp->simulation_type == 3) {
-      cudaFree(mp->d_b_potential_acoustic);
-      cudaFree(mp->d_b_potential_dot_acoustic);
-      cudaFree(mp->d_b_potential_dot_dot_acoustic);
+      cudaFree(mp->d_b_minus_int_int_pressure_acoustic);
+      cudaFree(mp->d_b_minus_int_pressure_acoustic);
+      cudaFree(mp->d_b_minus_pressure_acoustic);
       cudaFree(mp->d_rho_ac_kl);
       cudaFree(mp->d_kappa_ac_kl);
       if (*APPROXIMATE_HESS_KL) cudaFree(mp->d_hess_ac_kl);
-      if (mp->size_mpi_buffer_potential > 0 ) cudaFree(mp->d_b_send_potential_dot_dot_buffer);
+      if (mp->size_mpi_buffer_minus_int_int_pressure > 0 ) cudaFree(mp->d_b_send_minus_pressure_buffer);
   }
 
 
  if (*ABSORBING_CONDITIONS && mp->d_num_abs_boundary_faces > 0){
  if (mp->simulation_type == 3 || ( mp->simulation_type == 1 && mp->save_forward )){
-      cudaFree(mp->d_b_absorb_potential_bottom);
-      cudaFree(mp->d_b_absorb_potential_left);
-      cudaFree(mp->d_b_absorb_potential_right);
-      cudaFree(mp->d_b_absorb_potential_top); }}
+      cudaFree(mp->d_b_absorb_minus_int_int_pressure_bottom);
+      cudaFree(mp->d_b_absorb_minus_int_int_pressure_left);
+      cudaFree(mp->d_b_absorb_minus_int_int_pressure_right);
+      cudaFree(mp->d_b_absorb_minus_int_int_pressure_top); }}
 
   } // ACOUSTIC_SIMULATION
 

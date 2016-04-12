@@ -47,8 +47,8 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
-                                               realw* potential_dot_dot_acoustic,
+__global__ void compute_stacey_acoustic_kernel(realw* minus_int_pressure_acoustic,
+                                               realw* minus_pressure_acoustic,
                                                int* abs_boundary_ispec,
                                                int* abs_boundary_ij,
                                                realw* abs_boundary_jacobian1Dw,
@@ -61,12 +61,12 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
                                                int SIMULATION_TYPE,
                                                int SAVE_FORWARD,
                                                int num_abs_boundary_faces,
-                                               realw* b_potential_dot_acoustic,
-                                               realw* b_potential_dot_dot_acoustic,
-                                               realw* b_absorb_potential_left,
-                                               realw* b_absorb_potential_right,
-                                               realw* b_absorb_potential_top,
-                                               realw* b_absorb_potential_bottom,
+                                               realw* b_minus_int_pressure_acoustic,
+                                               realw* b_minus_pressure_acoustic,
+                                               realw* b_absorb_minus_int_int_pressure_left,
+                                               realw* b_absorb_minus_int_int_pressure_right,
+                                               realw* b_absorb_minus_int_int_pressure_top,
+                                               realw* b_absorb_minus_int_int_pressure_bottom,
                                                int* ib_left,
                                                int* ib_right,
                                                int* ib_top,
@@ -107,34 +107,34 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
       cpl = sqrt( kappal / rhol );
 
 
-        // uses a potential definition of: s = 1/rho grad(chi)
-        vel = potential_dot_acoustic[iglob] / rhol;
+        // uses a minus_int_int_pressure definition of: s = 1/rho grad(scalar)
+        vel = minus_int_pressure_acoustic[iglob] / rhol;
 
 
       // gets associated, weighted jacobian
       jacobianw = abs_boundary_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
 
      // Sommerfeld condition
-      atomicAdd(&potential_dot_dot_acoustic[iglob],-vel*jacobianw/cpl);
+      atomicAdd(&minus_pressure_acoustic[iglob],-vel*jacobianw/cpl);
 
       // adjoint simulations
       if (SIMULATION_TYPE == 3) {
 
-if (cote_abs[iface] == 1){ num_local = ib_bottom[iface] -1 ; atomicAdd(&b_potential_dot_dot_acoustic[iglob],
-                                     -b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)]);}
-else if (cote_abs[iface] == 2){ num_local = ib_right[iface] -1 ; atomicAdd(&b_potential_dot_dot_acoustic[iglob],
-                                     -b_absorb_potential_right[INDEX2(NGLLX,igll,num_local)]);}
-else if (cote_abs[iface] == 3){ num_local = ib_top[iface] -1 ; atomicAdd(&b_potential_dot_dot_acoustic[iglob],
-                                     -b_absorb_potential_top[INDEX2(NGLLX,igll,num_local)]);}
-else if (cote_abs[iface] == 4){ num_local = ib_left[iface] -1 ; atomicAdd(&b_potential_dot_dot_acoustic[iglob],
-                                     -b_absorb_potential_left[INDEX2(NGLLX,igll,num_local)]);}
+if (cote_abs[iface] == 1){ num_local = ib_bottom[iface] -1 ; atomicAdd(&b_minus_pressure_acoustic[iglob],
+                                     -b_absorb_minus_int_int_pressure_bottom[INDEX2(NGLLX,igll,num_local)]);}
+else if (cote_abs[iface] == 2){ num_local = ib_right[iface] -1 ; atomicAdd(&b_minus_pressure_acoustic[iglob],
+                                     -b_absorb_minus_int_int_pressure_right[INDEX2(NGLLX,igll,num_local)]);}
+else if (cote_abs[iface] == 3){ num_local = ib_top[iface] -1 ; atomicAdd(&b_minus_pressure_acoustic[iglob],
+                                     -b_absorb_minus_int_int_pressure_top[INDEX2(NGLLX,igll,num_local)]);}
+else if (cote_abs[iface] == 4){ num_local = ib_left[iface] -1 ; atomicAdd(&b_minus_pressure_acoustic[iglob],
+                                     -b_absorb_minus_int_int_pressure_left[INDEX2(NGLLX,igll,num_local)]);}
 
 }else if (SIMULATION_TYPE == 1 && SAVE_FORWARD) {
         // saves boundary values
-if (cote_abs[iface] == 1) { num_local = ib_bottom[iface] -1 ; b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
-else if (cote_abs[iface] == 2) { num_local = ib_right[iface] -1 ; b_absorb_potential_right[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
-else if (cote_abs[iface] == 3) { num_local = ib_top[iface] -1 ; b_absorb_potential_top[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
-else if (cote_abs[iface] == 4) { num_local = ib_left[iface] -1 ; b_absorb_potential_left[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
+if (cote_abs[iface] == 1) { num_local = ib_bottom[iface] -1 ; b_absorb_minus_int_int_pressure_bottom[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
+else if (cote_abs[iface] == 2) { num_local = ib_right[iface] -1 ; b_absorb_minus_int_int_pressure_right[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
+else if (cote_abs[iface] == 3) { num_local = ib_top[iface] -1 ; b_absorb_minus_int_int_pressure_top[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
+else if (cote_abs[iface] == 4) { num_local = ib_left[iface] -1 ; b_absorb_minus_int_int_pressure_left[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
 
       }
     }
@@ -148,10 +148,10 @@ extern "C"
 void FC_FUNC_(compute_stacey_acoustic_cuda,
               COMPUTE_STACEY_ACOUSTIC_CUDA)(long* Mesh_pointer,
                                             int* phase_is_innerf,
-                                            realw* h_b_absorb_potential_left,
-                                            realw* h_b_absorb_potential_right,
-                                            realw* h_b_absorb_potential_top,
-                                            realw* h_b_absorb_potential_bottom) {
+                                            realw* h_b_absorb_minus_int_int_pressure_left,
+                                            realw* h_b_absorb_minus_int_int_pressure_right,
+                                            realw* h_b_absorb_minus_int_int_pressure_top,
+                                            realw* h_b_absorb_minus_int_int_pressure_bottom) {
 TRACE("compute_stacey_acoustic_cuda");
   //double start_time = get_time();
 
@@ -182,19 +182,19 @@ TRACE("compute_stacey_acoustic_cuda");
   //  adjoint simulations: reads in absorbing boundary
   if (mp->simulation_type == 3 && phase_is_inner == 0){
     // copies array to GPU
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_absorb_potential_left,h_b_absorb_potential_left,
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_absorb_minus_int_int_pressure_left,h_b_absorb_minus_int_int_pressure_left,
                                        mp->d_nspec_left*sizeof(realw)*NGLLX,cudaMemcpyHostToDevice),7700);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_absorb_potential_right,h_b_absorb_potential_right,
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_absorb_minus_int_int_pressure_right,h_b_absorb_minus_int_int_pressure_right,
                                        mp->d_nspec_right*sizeof(realw)*NGLLX,cudaMemcpyHostToDevice),7700);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_absorb_potential_top,h_b_absorb_potential_top,
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_absorb_minus_int_int_pressure_top,h_b_absorb_minus_int_int_pressure_top,
                                        mp->d_nspec_top*sizeof(realw)*NGLLX,cudaMemcpyHostToDevice),7700);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_absorb_potential_bottom,h_b_absorb_potential_bottom,
+    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_absorb_minus_int_int_pressure_bottom,h_b_absorb_minus_int_int_pressure_bottom,
                                        mp->d_nspec_bottom*sizeof(realw)*NGLLX,cudaMemcpyHostToDevice),7700);
   }
 
 
-  compute_stacey_acoustic_kernel<<<grid,threads>>>(mp->d_potential_dot_acoustic,
-                                                   mp->d_potential_dot_dot_acoustic,
+  compute_stacey_acoustic_kernel<<<grid,threads>>>(mp->d_minus_int_pressure_acoustic,
+                                                   mp->d_minus_pressure_acoustic,
                                                    mp->d_abs_boundary_ispec,
                                                    mp->d_abs_boundary_ijk,
                                                    mp->d_abs_boundary_jacobian2Dw,
@@ -207,12 +207,12 @@ TRACE("compute_stacey_acoustic_cuda");
                                                    mp->simulation_type,
                                                    mp->save_forward,
                                                    mp->d_num_abs_boundary_faces,
-                                                   mp->d_b_potential_dot_acoustic,
-                                                   mp->d_b_potential_dot_dot_acoustic,
-                                                   mp->d_b_absorb_potential_left,
-                                                   mp->d_b_absorb_potential_right,
-                                                   mp->d_b_absorb_potential_top,
-                                                   mp->d_b_absorb_potential_bottom,
+                                                   mp->d_b_minus_int_pressure_acoustic,
+                                                   mp->d_b_minus_pressure_acoustic,
+                                                   mp->d_b_absorb_minus_int_int_pressure_left,
+                                                   mp->d_b_absorb_minus_int_int_pressure_right,
+                                                   mp->d_b_absorb_minus_int_int_pressure_top,
+                                                   mp->d_b_absorb_minus_int_int_pressure_bottom,
                                                    mp->d_ib_left,
                                                    mp->d_ib_right,
                                                    mp->d_ib_top,
@@ -223,13 +223,13 @@ TRACE("compute_stacey_acoustic_cuda");
   if (mp->simulation_type == 1 && mp->save_forward && phase_is_inner==-1) {
     // (cudaMemcpy implicitly synchronizes all other cuda operations)
     // copies array to CPU
-    print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_potential_left,mp->d_b_absorb_potential_left,
+    print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_minus_int_int_pressure_left,mp->d_b_absorb_minus_int_int_pressure_left,
                                        mp->d_nspec_left*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7701);
-    print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_potential_right,mp->d_b_absorb_potential_right,
+    print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_minus_int_int_pressure_right,mp->d_b_absorb_minus_int_int_pressure_right,
                                        mp->d_nspec_right*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7702);
-    print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_potential_top,mp->d_b_absorb_potential_top,
+    print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_minus_int_int_pressure_top,mp->d_b_absorb_minus_int_int_pressure_top,
                                        mp->d_nspec_top*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7703);
-    print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_potential_bottom,mp->d_b_absorb_potential_bottom,
+    print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_minus_int_int_pressure_bottom,mp->d_b_absorb_minus_int_int_pressure_bottom,
                                        mp->d_nspec_bottom*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7704);
 
   }

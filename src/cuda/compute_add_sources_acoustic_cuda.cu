@@ -52,7 +52,7 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_acoustic,
+__global__ void compute_add_sources_acoustic_kernel(realw* minus_pressure_acoustic,
                                                     int* d_ibool,
                                                     int* ispec_is_inner,
                                                     int phase_is_inner,
@@ -82,7 +82,7 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
         kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
 
         stf = source_time_function[INDEX2(nsources_local,isource,it)]/kappal;
-        atomicAdd(&potential_dot_dot_acoustic[iglob],
+        atomicAdd(&minus_pressure_acoustic[iglob],
                   -sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 0,i,j)]*stf);
 
 
@@ -119,7 +119,7 @@ void FC_FUNC_(compute_add_sources_ac_cuda,
 
 
 
-  compute_add_sources_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
+  compute_add_sources_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_minus_pressure_acoustic,
                                                                               mp->d_ibool,
                                                                               mp->d_ispec_is_inner,
                                                                               phase_is_inner,
@@ -161,7 +161,7 @@ void FC_FUNC_(compute_add_sources_ac_s3_cuda,
   dim3 threads(5,5,1);
   int it = *itf -1;
 
-  compute_add_sources_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_dot_acoustic,
+  compute_add_sources_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_minus_pressure_acoustic,
                                                                               mp->d_ibool,
                                                                               mp->d_ispec_is_inner,
                                                                               phase_is_inner,
@@ -188,7 +188,7 @@ void FC_FUNC_(compute_add_sources_ac_s3_cuda,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_acoustic,
+__global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* minus_pressure_acoustic,
                                                       realw* source_adjointe,
                                                       realw* xir_store,
                                                       realw* gammar_store,
@@ -239,7 +239,7 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
 
         realw stf = source_adj * gammar * xir / kappal ;
 
-        atomicAdd(&potential_dot_dot_acoustic[iglob],stf);
+        atomicAdd(&minus_pressure_acoustic[iglob],stf);
 
 
       }
@@ -275,7 +275,7 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
 
 
   // launches cuda kernel for acoustic adjoint sources
-  add_sources_ac_SIM_TYPE_2_OR_3_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
+  add_sources_ac_SIM_TYPE_2_OR_3_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_minus_pressure_acoustic,
                                                                                 mp->d_source_adjointe,
                                                                                 mp->d_xir_store_loc,
                                                                                 mp->d_gammar_store_loc,

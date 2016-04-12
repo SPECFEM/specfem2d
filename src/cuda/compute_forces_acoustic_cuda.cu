@@ -44,11 +44,11 @@
 #include "mesh_constants_cuda.h"
 
 #ifdef USE_TEXTURES_FIELDS
-realw_texture d_potential_tex;
-realw_texture d_potential_dot_dot_tex;
+realw_texture d_minus_int_int_pressure_tex;
+realw_texture d_minus_pressure_tex;
 //backward/reconstructed
-realw_texture d_b_potential_tex;
-realw_texture d_b_potential_dot_dot_tex;
+realw_texture d_b_minus_int_int_pressure_tex;
+realw_texture d_b_minus_pressure_tex;
 
 //note: texture variables are implicitly static, and cannot be passed as arguments to cuda kernels;
 //      thus, 1) we thus use if-statements (FORWARD_OR_ADJOINT) to determine from which texture to fetch from
@@ -56,16 +56,16 @@ realw_texture d_b_potential_dot_dot_tex;
 //      since if-statements are a bit slower as the variable is only known at runtime, we use option 2)
 
 // templates definitions
-template<int FORWARD_OR_ADJOINT> __device__ float texfetch_potential(int x);
-template<int FORWARD_OR_ADJOINT> __device__ float texfetch_potential_dot_dot(int x);
+template<int FORWARD_OR_ADJOINT> __device__ float texfetch_minus_int_int_pressure(int x);
+template<int FORWARD_OR_ADJOINT> __device__ float texfetch_minus_pressure(int x);
 
 // templates for texture fetching
 // FORWARD_OR_ADJOINT == 1 <- forward arrays
-template<> __device__ float texfetch_potential<1>(int x) { return tex1Dfetch(d_potential_tex, x); }
-template<> __device__ float texfetch_potential_dot_dot<1>(int x) { return tex1Dfetch(d_potential_dot_dot_tex, x); }
+template<> __device__ float texfetch_minus_int_int_pressure<1>(int x) { return tex1Dfetch(d_minus_int_int_pressure_tex, x); }
+template<> __device__ float texfetch_minus_pressure<1>(int x) { return tex1Dfetch(d_minus_pressure_tex, x); }
 // FORWARD_OR_ADJOINT == 3 <- backward/reconstructed arrays
-template<> __device__ float texfetch_potential<3>(int x) { return tex1Dfetch(d_b_potential_tex, x); }
-template<> __device__ float texfetch_potential_dot_dot<3>(int x) { return tex1Dfetch(d_b_potential_dot_dot_tex, x); }
+template<> __device__ float texfetch_minus_int_int_pressure<3>(int x) { return tex1Dfetch(d_b_minus_int_int_pressure_tex, x); }
+template<> __device__ float texfetch_minus_pressure<3>(int x) { return tex1Dfetch(d_b_minus_pressure_tex, x); }
 
 #endif
 
@@ -119,10 +119,10 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
                        const int* d_phase_ispec_inner_acoustic,
                        const int num_phase_ispec_acoustic,
                        const int d_iphase,
-                       realw_const_p d_potential_acoustic,
-                       realw_p d_potential_dot_dot_acoustic,
-                       realw_const_p d_b_potential_acoustic,
-                       realw_p d_b_potential_dot_dot_acoustic,
+                       realw_const_p d_minus_int_int_pressure_acoustic,
+                       realw_p d_minus_pressure_acoustic,
+                       realw_const_p d_b_minus_int_int_pressure_acoustic,
+                       realw_p d_b_minus_pressure_acoustic,
                        const int nb_field,
                        const realw* d_xix, const realw* d_xiz,
                        const realw* d_gammax,const realw* d_gammaz,
@@ -149,7 +149,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
   realw temp1l,temp3l;
   realw xixl,xizl,gammaxl,gammazl;
 
-  realw dpotentialdxl,dpotentialdzl;
+  realw dminus_int_int_pressuredxl,dminus_int_int_pressuredzl;
   realw rho_invl_times_jacobianl;
 
   realw sum_terms;
@@ -201,12 +201,12 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 // + 2 float * 32 threads = 256 BYTE
 
 #ifdef USE_TEXTURES_FIELDS
-  s_dummy_loc[tx] = texfetch_potential<FORWARD_OR_ADJOINT>(iglob);
-  if (nb_field==2) s_dummy_loc[NGLL2+tx]=texfetch_potential<3>(iglob);
+  s_dummy_loc[tx] = texfetch_minus_int_int_pressure<FORWARD_OR_ADJOINT>(iglob);
+  if (nb_field==2) s_dummy_loc[NGLL2+tx]=texfetch_minus_int_int_pressure<3>(iglob);
 #else
   // changing iglob indexing to match fortran row changes fast style
-  s_dummy_loc[tx] = d_potential_acoustic[iglob];
-  if (nb_field==2) s_dummy_loc[NGLL2+tx]=d_b_potential_acoustic[iglob];
+  s_dummy_loc[tx] = d_minus_int_int_pressure_acoustic[iglob];
+  if (nb_field==2) s_dummy_loc[NGLL2+tx]=d_b_minus_int_int_pressure_acoustic[iglob];
 #endif
 
 
@@ -290,9 +290,9 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 // + 0 BYTE
 
     // compute derivatives of ux, uy and uz with respect to x, y and z
-    // derivatives of potential
-    dpotentialdxl = xixl*temp1l +  gammaxl*temp3l;
-    dpotentialdzl = xizl*temp1l +  gammazl*temp3l;
+    // derivatives of minus_int_int_pressure
+    dminus_int_int_pressuredxl = xixl*temp1l +  gammaxl*temp3l;
+    dminus_int_int_pressuredzl = xizl*temp1l +  gammazl*temp3l;
 
 // counts:
 // + 2 * 3 FLOP = 6 FLOP
@@ -300,8 +300,8 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 // + 0 BYTE
 
     // form the dot product with the test vector
-    s_temp1[tx] = sh_wxgll[J]*rho_invl_times_jacobianl  * (dpotentialdxl*xixl  + dpotentialdzl*xizl)  ;
-    s_temp3[tx] = sh_wxgll[I]*rho_invl_times_jacobianl  * (dpotentialdxl*gammaxl + dpotentialdzl*gammazl)  ;
+    s_temp1[tx] = sh_wxgll[J]*rho_invl_times_jacobianl  * (dminus_int_int_pressuredxl*xixl  + dminus_int_int_pressuredzl*xizl)  ;
+    s_temp3[tx] = sh_wxgll[I]*rho_invl_times_jacobianl  * (dminus_int_int_pressuredxl*gammaxl + dminus_int_int_pressuredzl*gammazl)  ;
 
 // counts:
 // + 2 * 6 FLOP = 12 FLOP
@@ -324,11 +324,11 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 //
 // + 0 BYTE
 
-    // assembles potential array
+    // assembles minus_int_int_pressure array
     if (k==0) {
-      atomicAdd(&d_potential_dot_dot_acoustic[iglob],sum_terms);
+      atomicAdd(&d_minus_pressure_acoustic[iglob],sum_terms);
     } else {
-      atomicAdd(&d_b_potential_dot_dot_acoustic[iglob],sum_terms);
+      atomicAdd(&d_b_minus_pressure_acoustic[iglob],sum_terms);
     }
 
 // counts:
@@ -387,8 +387,8 @@ else nb_field=1;
                                                                     mp->d_phase_ispec_inner_acoustic,
                                                                     mp->num_phase_ispec_acoustic,
                                                                     d_iphase,
-                                                                    mp->d_potential_acoustic, mp->d_potential_dot_dot_acoustic,
-                                                                    mp->d_b_potential_acoustic,mp->d_b_potential_dot_dot_acoustic,
+                                                                    mp->d_minus_int_int_pressure_acoustic, mp->d_minus_pressure_acoustic,
+                                                                    mp->d_b_minus_int_int_pressure_acoustic,mp->d_b_minus_pressure_acoustic,
                                                                     nb_field,
                                                                     d_xix, d_xiz,
                                                                     d_gammax, d_gammaz,
@@ -470,12 +470,12 @@ void FC_FUNC_(compute_forces_acoustic_cuda,
 
 
 __global__ void enforce_free_surface_cuda_kernel(
-                                       realw_p potential_acoustic,
-                                       realw_p potential_dot_acoustic,
-                                       realw_p potential_dot_dot_acoustic,
-                                       realw_p b_potential_acoustic,
-                                       realw_p b_potential_dot_acoustic,
-                                       realw_p b_potential_dot_dot_acoustic,
+                                       realw_p minus_int_int_pressure_acoustic,
+                                       realw_p minus_int_pressure_acoustic,
+                                       realw_p minus_pressure_acoustic,
+                                       realw_p b_minus_int_int_pressure_acoustic,
+                                       realw_p b_minus_int_pressure_acoustic,
+                                       realw_p b_minus_pressure_acoustic,
                                        const int num_free_surface_faces,
                                        const int* free_surface_ispec,
                                        const int* free_surface_ij,
@@ -500,14 +500,14 @@ __global__ void enforce_free_surface_cuda_kernel(
 
       int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
-      // sets potentials to zero at free surface
-      potential_acoustic[iglob] = 0;
-      potential_dot_acoustic[iglob] = 0;
-      potential_dot_dot_acoustic[iglob] = 0;
+      // sets minus_int_int_pressure to zero at free surface
+      minus_int_int_pressure_acoustic[iglob] = 0;
+      minus_int_pressure_acoustic[iglob] = 0;
+      minus_pressure_acoustic[iglob] = 0;
 if (simu_type==3){
-      b_potential_acoustic[iglob] = 0;
-      b_potential_dot_acoustic[iglob] = 0;
-      b_potential_dot_dot_acoustic[iglob] = 0;}
+      b_minus_int_int_pressure_acoustic[iglob] = 0;
+      b_minus_int_pressure_acoustic[iglob] = 0;
+      b_minus_pressure_acoustic[iglob] = 0;}
 
     }
   }
@@ -525,7 +525,7 @@ TRACE("acoustic_enforce_free_surf_cuda");
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
 
-    // does not absorb free surface, thus we enforce the potential to be zero at surface
+    // does not absorb free surface, thus we enforce the minus_int_int_pressure to be zero at surface
 
     // block sizes
     int num_blocks_x, num_blocks_y;
@@ -535,13 +535,13 @@ TRACE("acoustic_enforce_free_surf_cuda");
     dim3 threads(NGLLX,1,1);
 
 
-    // sets potentials to zero at free surface
-    enforce_free_surface_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_acoustic,
-                                                                             mp->d_potential_dot_acoustic,
-                                                                             mp->d_potential_dot_dot_acoustic,
-                                                                             mp->d_b_potential_acoustic,
-                                                                             mp->d_b_potential_dot_acoustic,
-                                                                             mp->d_b_potential_dot_dot_acoustic,
+    // sets minus_int_int_pressure to zero at free surface
+    enforce_free_surface_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_minus_int_int_pressure_acoustic,
+                                                                             mp->d_minus_int_pressure_acoustic,
+                                                                             mp->d_minus_pressure_acoustic,
+                                                                             mp->d_b_minus_int_int_pressure_acoustic,
+                                                                             mp->d_b_minus_int_pressure_acoustic,
+                                                                             mp->d_b_minus_pressure_acoustic,
                                                                              mp->num_free_surface_faces,
                                                                              mp->d_free_surface_ispec,
                                                                              mp->d_free_surface_ijk,

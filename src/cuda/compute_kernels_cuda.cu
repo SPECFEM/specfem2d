@@ -299,7 +299,7 @@ __device__ void compute_gradient_kernel(int ij,
 
   rho_invl = 1.0f / rhol;
 
-  // derivatives of acoustic scalar potential field on GLL points
+  // derivatives of acoustic scalar minus_int_int_pressure field on GLL points
   vector_field_element[0] = (temp1l*xixl + temp3l*gammaxl) * rho_invl;
   vector_field_element[1] = (temp1l*xizl + temp3l*gammazl) * rho_invl;
 }
@@ -314,9 +314,9 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
                                                 realw* d_hprime_xx,
                                                 realw* d_xix,realw* d_xiz,
                                                 realw* d_gammax,realw* d_gammaz,
-                                                realw* potential_dot_dot_acoustic,
-                                                realw* b_potential_acoustic,
-                                                realw* b_potential_dot_dot_acoustic,
+                                                realw* minus_pressure_acoustic,
+                                                realw* b_minus_int_int_pressure_acoustic,
+                                                realw* b_minus_pressure_acoustic,
                                                 realw* rho_ac_kl,
                                                 realw* kappa_ac_kl,
                                                 int NSPEC_AB,
@@ -344,8 +344,8 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
 
       // copy field values
       iglob = d_ibool[ij_ispec_padded] - 1;
-      scalar_field_displ[ij] = b_potential_acoustic[iglob];
-      scalar_field_accel[ij] = potential_dot_dot_acoustic[iglob];
+      scalar_field_displ[ij] = b_minus_int_int_pressure_acoustic[iglob];
+      scalar_field_accel[ij] = minus_pressure_acoustic[iglob];
     }
   }
 
@@ -378,7 +378,7 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
 
     // bulk modulus kernel
     kappal = kappastore[ij_ispec];
-    kappa_ac_kl[ij_ispec] -= potential_dot_dot_acoustic[iglob] * b_potential_acoustic[iglob] * deltat / kappal ;
+    kappa_ac_kl[ij_ispec] -= minus_pressure_acoustic[iglob] * b_minus_int_int_pressure_acoustic[iglob] * deltat / kappal ;
   } // active
 }
 
@@ -408,9 +408,9 @@ TRACE("compute_kernels_acoustic_cuda");
                                                     mp->d_hprime_xx,
                                                     mp->d_xix,mp->d_xiz,
                                                     mp->d_gammax,mp->d_gammaz,
-                                                    mp->d_potential_dot_dot_acoustic,
-                                                    mp->d_b_potential_acoustic,
-                                                    mp->d_b_potential_dot_dot_acoustic,
+                                                    mp->d_minus_pressure_acoustic,
+                                                    mp->d_b_minus_int_int_pressure_acoustic,
+                                                    mp->d_b_minus_pressure_acoustic,
                                                     mp->d_rho_ac_kl,
                                                     mp->d_kappa_ac_kl,
                                                     mp->NSPEC_AB,
@@ -455,8 +455,8 @@ __global__ void compute_kernels_hess_el_cudakernel(int* ispec_is_elastic,
 
 __global__ void compute_kernels_hess_ac_cudakernel(int* ispec_is_acoustic,
                                                    int* d_ibool,
-                                                   realw* potential_dot_dot_acoustic,
-                                                   realw* b_potential_dot_dot_acoustic,
+                                                   realw* minus_pressure_acoustic,
+                                                   realw* b_minus_pressure_acoustic,
                                                    realw* rhostore,
                                                    realw* d_hprime_xx,
                                                    realw* d_xix,realw* d_xiz,
@@ -486,8 +486,8 @@ __global__ void compute_kernels_hess_ac_cudakernel(int* ispec_is_acoustic,
       iglob = d_ibool[ij_ispec_padded] - 1;
 
       // copy field values
-      scalar_field_accel[ij] = potential_dot_dot_acoustic[iglob];
-      scalar_field_b_accel[ij] = b_potential_dot_dot_acoustic[iglob];
+      scalar_field_accel[ij] = minus_pressure_acoustic[iglob];
+      scalar_field_b_accel[ij] = b_minus_pressure_acoustic[iglob];
     }
   }
 
@@ -553,8 +553,8 @@ void FC_FUNC_(compute_kernels_hess_cuda,
   if (*ACOUSTIC_SIMULATION) {
     compute_kernels_hess_ac_cudakernel<<<grid,threads>>>(mp->d_ispec_is_acoustic,
                                                          mp->d_ibool,
-                                                         mp->d_potential_dot_dot_acoustic,
-                                                         mp->d_b_potential_dot_dot_acoustic,
+                                                         mp->d_minus_pressure_acoustic,
+                                                         mp->d_b_minus_pressure_acoustic,
                                                          mp->d_rhostore,
                                                          mp->d_hprime_xx,
                                                          mp->d_xix,mp->d_xiz,

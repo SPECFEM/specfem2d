@@ -50,7 +50,7 @@ typedef float realw;
 
 void FC_FUNC_(transfer_boun_pot_from_device,
               TRANSFER_BOUN_POT_FROM_DEVICE)(long* Mesh_pointer,
-                                             realw* send_potential_dot_dot_buffer,
+                                             realw* send_minus_pressure_buffer,
                                              const int* FORWARD_OR_ADJOINT){}
 
 void FC_FUNC_(transfer_asmbl_pot_to_device,
@@ -253,10 +253,10 @@ void FC_FUNC_(compute_kernels_hess_cuda,
 void FC_FUNC_(compute_stacey_acoustic_cuda,
               COMPUTE_STACEY_ACOUSTIC_CUDA)(long* Mesh_pointer,
                                             int* phase_is_innerf,
-                                            realw* h_b_absorb_potential_left,
-                                            realw* h_b_absorb_potential_right,
-                                            realw* h_b_absorb_potential_top,
-                                            realw* h_b_absorb_potential_bottom) {}
+                                            realw* h_b_absorb_minus_int_int_pressure_left,
+                                            realw* h_b_absorb_minus_int_int_pressure_right,
+                                            realw* h_b_absorb_minus_int_int_pressure_top,
+                                            realw* h_b_absorb_minus_int_int_pressure_bottom) {}
 
 
 //
@@ -437,37 +437,37 @@ void FC_FUNC_(transfer_kernels_el_to_host,
 
 void FC_FUNC_(transfer_fields_ac_to_device,
               TRANSFER_FIELDS_AC_TO_DEVICE)(int* size,
-                                            realw* potential_acoustic,
-                                            realw* potential_dot_acoustic,
-                                            realw* potential_dot_dot_acoustic,
+                                            realw* minus_int_int_pressure_acoustic,
+                                            realw* minus_int_pressure_acoustic,
+                                            realw* minus_pressure_acoustic,
                                             long* Mesh_pointer) {}
 
 void FC_FUNC_(transfer_b_fields_ac_to_device,
               TRANSFER_B_FIELDS_AC_TO_DEVICE)(int* size,
-                                              realw* b_potential_acoustic,
-                                              realw* b_potential_dot_acoustic,
-                                              realw* b_potential_dot_dot_acoustic,
+                                              realw* b_minus_int_int_pressure_acoustic,
+                                              realw* b_minus_int_pressure_acoustic,
+                                              realw* b_minus_pressure_acoustic,
                                               long* Mesh_pointer) {}
 
 void FC_FUNC_(transfer_fields_ac_from_device,
               TRANSFER_FIELDS_AC_FROM_DEVICE)(int* size,
-                                              realw* potential_acoustic,
-                                              realw* potential_dot_acoustic,
-                                              realw* potential_dot_dot_acoustic,
+                                              realw* minus_int_int_pressure_acoustic,
+                                              realw* minus_int_pressure_acoustic,
+                                              realw* minus_pressure_acoustic,
                                               long* Mesh_pointer) {}
 
 void FC_FUNC_(transfer_b_fields_ac_from_device,
               TRANSFER_B_FIELDS_AC_FROM_DEVICE)(int* size,
-                                                realw* b_potential_acoustic,
-                                                realw* b_potential_dot_acoustic,
-                                                realw* b_potential_dot_dot_acoustic,
+                                                realw* b_minus_int_int_pressure_acoustic,
+                                                realw* b_minus_int_pressure_acoustic,
+                                                realw* b_minus_pressure_acoustic,
                                                 long* Mesh_pointer) {}
 
 void FC_FUNC_(transfer_dot_dot_from_device,
-              TRNASFER_DOT_DOT_FROM_DEVICE)(int* size, realw* potential_dot_dot_acoustic,long* Mesh_pointer) {}
+              TRNASFER_DOT_DOT_FROM_DEVICE)(int* size, realw* minus_pressure_acoustic,long* Mesh_pointer) {}
 
 void FC_FUNC_(transfer_b_dot_dot_from_device,
-              TRNASFER_B_DOT_DOT_FROM_DEVICE)(int* size, realw* b_potential_dot_dot_acoustic,long* Mesh_pointer) {}
+              TRNASFER_B_DOT_DOT_FROM_DEVICE)(int* size, realw* b_minus_pressure_acoustic,long* Mesh_pointer) {}
 
 void FC_FUNC_(transfer_kernels_ac_to_host,
               TRANSFER_KERNELS_AC_TO_HOST)(long* Mesh_pointer,realw* h_rho_ac_kl,realw* h_kappa_ac_kl,int* NSPEC_AB) {}

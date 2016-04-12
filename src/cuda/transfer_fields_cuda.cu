@@ -231,9 +231,9 @@ void FC_FUNC_(transfer_kernels_el_to_host,
 extern "C"
 void FC_FUNC_(transfer_fields_ac_to_device,
               TRANSFER_FIELDS_AC_TO_DEVICE)(int* size,
-                                            realw* potential_acoustic,
-                                            realw* potential_dot_acoustic,
-                                            realw* potential_dot_dot_acoustic,
+                                            realw* minus_int_int_pressure_acoustic,
+                                            realw* minus_int_pressure_acoustic,
+                                            realw* minus_pressure_acoustic,
                                             long* Mesh_pointer) {
 
   TRACE("transfer_fields_ac_to_device");
@@ -241,11 +241,11 @@ void FC_FUNC_(transfer_fields_ac_to_device,
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
 
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_potential_acoustic,potential_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_minus_int_int_pressure_acoustic,minus_int_int_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyHostToDevice),50110);
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_potential_dot_acoustic,potential_dot_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_minus_int_pressure_acoustic,minus_int_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyHostToDevice),50120);
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_potential_dot_dot_acoustic,potential_dot_dot_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_minus_pressure_acoustic,minus_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyHostToDevice),50130);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -258,9 +258,9 @@ void FC_FUNC_(transfer_fields_ac_to_device,
 extern "C"
 void FC_FUNC_(transfer_b_fields_ac_to_device,
               TRANSFER_B_FIELDS_AC_TO_DEVICE)(int* size,
-                                              realw* b_potential_acoustic,
-                                              realw* b_potential_dot_acoustic,
-                                              realw* b_potential_dot_dot_acoustic,
+                                              realw* b_minus_int_int_pressure_acoustic,
+                                              realw* b_minus_int_pressure_acoustic,
+                                              realw* b_minus_pressure_acoustic,
                                               long* Mesh_pointer) {
 
   TRACE("transfer_b_fields_ac_to_device");
@@ -268,11 +268,11 @@ void FC_FUNC_(transfer_b_fields_ac_to_device,
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
 
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_potential_acoustic,b_potential_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_minus_int_int_pressure_acoustic,b_minus_int_int_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyHostToDevice),51110);
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_potential_dot_acoustic,b_potential_dot_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_minus_int_pressure_acoustic,b_minus_int_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyHostToDevice),51120);
-  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_potential_dot_dot_acoustic,b_potential_dot_dot_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_minus_pressure_acoustic,b_minus_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyHostToDevice),51130);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -286,20 +286,20 @@ void FC_FUNC_(transfer_b_fields_ac_to_device,
 extern "C"
 void FC_FUNC_(transfer_fields_ac_from_device,
               TRANSFER_FIELDS_AC_FROM_DEVICE)(int* size,
-                                              realw* potential_acoustic,
-                                              realw* potential_dot_acoustic,
-                                              realw* potential_dot_dot_acoustic,
+                                              realw* minus_int_int_pressure_acoustic,
+                                              realw* minus_int_pressure_acoustic,
+                                              realw* minus_pressure_acoustic,
                                               long* Mesh_pointer) {
   TRACE("transfer_fields_ac_from_device");
 
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
 
-  print_CUDA_error_if_any(cudaMemcpy(potential_acoustic,mp->d_potential_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(minus_int_int_pressure_acoustic,mp->d_minus_int_int_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyDeviceToHost),52111);
-  print_CUDA_error_if_any(cudaMemcpy(potential_dot_acoustic,mp->d_potential_dot_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(minus_int_pressure_acoustic,mp->d_minus_int_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyDeviceToHost),52121);
-  print_CUDA_error_if_any(cudaMemcpy(potential_dot_dot_acoustic,mp->d_potential_dot_dot_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(minus_pressure_acoustic,mp->d_minus_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyDeviceToHost),52131);
 
 
@@ -316,20 +316,20 @@ void FC_FUNC_(transfer_fields_ac_from_device,
 extern "C"
 void FC_FUNC_(transfer_b_fields_ac_from_device,
               TRANSFER_B_FIELDS_AC_FROM_DEVICE)(int* size,
-                                                realw* b_potential_acoustic,
-                                                realw* b_potential_dot_acoustic,
-                                                realw* b_potential_dot_dot_acoustic,
+                                                realw* b_minus_int_int_pressure_acoustic,
+                                                realw* b_minus_int_pressure_acoustic,
+                                                realw* b_minus_pressure_acoustic,
                                                 long* Mesh_pointer) {
   TRACE("transfer_b_fields_ac_from_device");
 
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
 
-  print_CUDA_error_if_any(cudaMemcpy(b_potential_acoustic,mp->d_b_potential_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(b_minus_int_int_pressure_acoustic,mp->d_b_minus_int_int_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyDeviceToHost),53111);
-  print_CUDA_error_if_any(cudaMemcpy(b_potential_dot_acoustic,mp->d_b_potential_dot_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(b_minus_int_pressure_acoustic,mp->d_b_minus_int_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyDeviceToHost),53121);
-  print_CUDA_error_if_any(cudaMemcpy(b_potential_dot_dot_acoustic,mp->d_b_potential_dot_dot_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(b_minus_pressure_acoustic,mp->d_b_minus_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyDeviceToHost),53131);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -341,14 +341,14 @@ void FC_FUNC_(transfer_b_fields_ac_from_device,
 
 extern "C"
 void FC_FUNC_(transfer_dot_dot_from_device,
-              TRNASFER_DOT_DOT_FROM_DEVICE)(int* size, realw* potential_dot_dot_acoustic,long* Mesh_pointer) {
+              TRNASFER_DOT_DOT_FROM_DEVICE)(int* size, realw* minus_pressure_acoustic,long* Mesh_pointer) {
 
   TRACE("transfer_dot_dot_from_device");
 
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
 
-  print_CUDA_error_if_any(cudaMemcpy(potential_dot_dot_acoustic,mp->d_potential_dot_dot_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(minus_pressure_acoustic,mp->d_minus_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyDeviceToHost),50041);
 
 }
@@ -357,14 +357,14 @@ void FC_FUNC_(transfer_dot_dot_from_device,
 
 extern "C"
 void FC_FUNC_(transfer_b_dot_dot_from_device,
-              TRNASFER_B_DOT_DOT_FROM_DEVICE)(int* size, realw* b_potential_dot_dot_acoustic,long* Mesh_pointer) {
+              TRNASFER_B_DOT_DOT_FROM_DEVICE)(int* size, realw* b_minus_pressure_acoustic,long* Mesh_pointer) {
 
   TRACE("transfer_b_dot_dot_from_device");
 
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
 
-  print_CUDA_error_if_any(cudaMemcpy(b_potential_dot_dot_acoustic,mp->d_b_potential_dot_dot_acoustic,
+  print_CUDA_error_if_any(cudaMemcpy(b_minus_pressure_acoustic,mp->d_b_minus_pressure_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyDeviceToHost),50042);
 
 }

@@ -53,7 +53,7 @@
 /* ----------------------------------------------------------------------------------------------- */
 
 __global__ void compute_coupling_acoustic_el_kernel(realw* displ,
-                                                    realw* potential_dot_dot_acoustic,
+                                                    realw* minus_pressure_acoustic,
                                                     int num_coupling_ac_el_faces,
                                                     int* coupling_ac_el_ispec,
                                                     int* coupling_ac_el_ij,
@@ -104,14 +104,14 @@ __global__ void compute_coupling_acoustic_el_kernel(realw* displ,
 
       // continuity of pressure and normal displacement on global point
 
-      // note: Newmark time scheme together with definition of scalar potential:
-      //          pressure = - chi_dot_dot
+      // note: Newmark time scheme together with definition of scalar minus_int_int_pressure:
+      //          pressure = - minus_pressure
       //          requires that this coupling term uses the updated displacement at time step [t+delta_t],
       //          which is done at the very beginning of the time loop
       //          (see e.g. Chaljub & Vilotte, Nissen-Meyer thesis...)
       //          it also means you have to calculate and update this here first before
       //          calculating the coupling on the elastic side for the acceleration...
-      atomicAdd(&potential_dot_dot_acoustic[iglob],+ jacobianw*displ_n);
+      atomicAdd(&minus_pressure_acoustic[iglob],+ jacobianw*displ_n);
 
     }
   //  }
@@ -145,7 +145,7 @@ void FC_FUNC_(compute_coupling_ac_el_cuda,
 
   // launches GPU kernel
   compute_coupling_acoustic_el_kernel<<<grid,threads>>>(mp->d_displ,
-                                                       mp->d_potential_dot_dot_acoustic,
+                                                       mp->d_minus_pressure_acoustic,
                                                        num_coupling_ac_el_faces,
                                                        mp->d_coupling_ac_el_ispec,
                                                        mp->d_coupling_ac_el_ijk,
@@ -158,7 +158,7 @@ void FC_FUNC_(compute_coupling_ac_el_cuda,
   //  adjoint simulations
   if (mp->simulation_type == 3) {
     compute_coupling_acoustic_el_kernel<<<grid,threads>>>(mp->d_b_displ,
-                                                          mp->d_b_potential_dot_dot_acoustic,
+                                                          mp->d_b_minus_pressure_acoustic,
                                                           num_coupling_ac_el_faces,
                                                           mp->d_coupling_ac_el_ispec,
                                                           mp->d_coupling_ac_el_ijk,
@@ -185,7 +185,7 @@ void FC_FUNC_(compute_coupling_ac_el_cuda,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acoustic,
+__global__ void compute_coupling_elastic_ac_kernel(realw* minus_pressure_acoustic,
                                                     realw* accel,
                                                     int num_coupling_ac_el_faces,
                                                     int* coupling_ac_el_ispec,
@@ -231,14 +231,14 @@ __global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acou
       jacobianw = coupling_ac_el_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
 
 
-        pressure = - potential_dot_dot_acoustic[iglob];
+        pressure = - minus_pressure_acoustic[iglob];
 
 
       // continuity of displacement and pressure on global point
       //
-      // note: Newmark time scheme together with definition of scalar potential:
-      //          pressure = - chi_dot_dot
-      //          requires that this coupling term uses the *UPDATED* pressure (chi_dot_dot), i.e.
+      // note: Newmark time scheme together with definition of scalar minus_int_int_pressure:
+      //          pressure = - minus_pressure
+      //          requires that this coupling term uses the *UPDATED* pressure (minus_pressure), i.e.
       //          pressure at time step [t + delta_t]
       //          (see e.g. Chaljub & Vilotte, Nissen-Meyer thesis...)
       //          it means you have to calculate and update the acoustic pressure first before
@@ -274,7 +274,7 @@ void FC_FUNC_(compute_coupling_el_ac_cuda,
   dim3 threads(blocksize,1,1);
 
   // launches GPU kernel
-  compute_coupling_elastic_ac_kernel<<<grid,threads>>>(mp->d_potential_dot_dot_acoustic,
+  compute_coupling_elastic_ac_kernel<<<grid,threads>>>(mp->d_minus_pressure_acoustic,
                                                        mp->d_accel,
                                                        num_coupling_ac_el_faces,
                                                        mp->d_coupling_ac_el_ispec,
@@ -287,7 +287,7 @@ void FC_FUNC_(compute_coupling_el_ac_cuda,
 
   //  adjoint simulations
   if (mp->simulation_type == 3) {
-    compute_coupling_elastic_ac_kernel<<<grid,threads>>>(mp->d_b_potential_dot_dot_acoustic,
+    compute_coupling_elastic_ac_kernel<<<grid,threads>>>(mp->d_b_minus_pressure_acoustic,
                                                          mp->d_b_accel,
                                                          num_coupling_ac_el_faces,
                                                          mp->d_coupling_ac_el_ispec,

@@ -550,13 +550,13 @@ void FC_FUNC_(get_norm_acoustic_from_device,
 
 
   if (*sim_type == 1) {
-    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,size,d_max);
-    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_acoustic,size,d_max2);
-    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_acoustic,size,d_max3);
+    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_minus_pressure_acoustic,size,d_max);
+    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_minus_int_pressure_acoustic,size,d_max2);
+    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_minus_int_int_pressure_acoustic,size,d_max3);
   }else if (*sim_type == 3) {
-   get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_dot_acoustic,size,d_max);
-    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_acoustic,size,d_max2);
-    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_acoustic,size,d_max3);
+   get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_minus_pressure_acoustic,size,d_max);
+    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_minus_int_pressure_acoustic,size,d_max2);
+    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_minus_int_int_pressure_acoustic,size,d_max3);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
