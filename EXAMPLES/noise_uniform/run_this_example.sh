@@ -3,6 +3,12 @@
 # script runs mesher and solver (in serial)
 # using this example setup
 #
+##########################################
+
+# master station #id
+master_id=1
+
+##########################################
 
 echo "running example: `date`"
 currentdir=`pwd`
@@ -25,7 +31,7 @@ cp ../uniform.dat ./
 cd ../
 
 # sets a master station
-echo "1" > NOISE_TOMOGRAPHY/irec_master_noise
+echo $master_id > NOISE_TOMOGRAPHY/irec_master_noise
 
 # cleans output files
 rm -rf OUTPUT_FILES/*
