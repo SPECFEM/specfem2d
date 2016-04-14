@@ -101,8 +101,11 @@
              add_Bielak_conditions
 
   ! variables used for absorbing boundary condition
-  logical :: STACEY_ABSORBING_CONDITIONS,absorbbottom,absorbright,absorbtop,absorbleft
+  logical :: any_abs,absbottom,absright,abstop,absleft
 
+  logical :: STACEY_ABSORBING_CONDITIONS
+
+  ! PML
   integer :: NELEM_PML_THICKNESS
   logical :: PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE
   double precision :: ROTATE_PML_ANGLE
