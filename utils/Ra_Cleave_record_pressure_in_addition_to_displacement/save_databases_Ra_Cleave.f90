@@ -274,7 +274,7 @@
 !   call write_partition_database(15, iproc, nspec, num_material, ngnod, 2)
     call write_partition_database(15, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 2)
 
-    if ( nproc /= 1 ) then
+    if (nproc /= 1) then
       call write_interfaces_database(15, nproc, iproc, &
                               my_ninterface, my_interfaces, my_nb_interfaces, 1)
 
@@ -291,7 +291,7 @@
 
 
     write(15,*) 'List of absorbing elements (edge1 edge2 edge3 edge4 type):'
-    if ( any_abs ) then
+    if (any_abs) then
       call write_abs_merge_database(15, iproc, 2)
     endif
 
