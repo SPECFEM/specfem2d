@@ -806,6 +806,13 @@
     anyabs = .true.
   endif
 
+  ! sets Stacey flag
+  if (anyabs .and. (.not. PML_BOUNDARY_CONDITIONS)) then
+    STACEY_ABSORBING_CONDITIONS = .true.
+  else
+    STACEY_ABSORBING_CONDITIONS = .false.
+  endif
+
   ! allocate arrays for absorbing boundary conditions
   allocate(numabs(nelemabs), &
            codeabs(4,nelemabs),stat=ier)
@@ -999,28 +1006,33 @@
   call sum_all_i(nspec_top, nspec_top_tot)
 
   ! user output
-  if (myrank == 0 .and. .not. PML_BOUNDARY_CONDITIONS) then
+  if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'Number of absorbing elements: ',nelemabs_tot
-    write(IMAIN,*) '  nspec_left = ',nspec_left_tot
-    write(IMAIN,*) '  nspec_right = ',nspec_right_tot
-    write(IMAIN,*) '  nspec_bottom = ',nspec_bottom_tot
-    write(IMAIN,*) '  nspec_top = ',nspec_top_tot
-    write(IMAIN,*)
+    write(IMAIN,*) 'Absorbing boundaries:'
+    if (PML_BOUNDARY_CONDITIONS) &
+      write(IMAIN,*) '  using PML boundary conditions'
+    if (STACEY_ABSORBING_CONDITIONS) &
+      write(IMAIN,*) '  using Stacey absorbing boundary conditions'
+    if (STACEY_ABSORBING_CONDITIONS .and. ADD_SPRING_TO_STACEY) &
+      write(IMAIN,*) '  adding spring to Stacey boundary conditions'
+    ! for Stacey
+    if (STACEY_ABSORBING_CONDITIONS) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'Number of absorbing elements: ',nelemabs_tot
+      write(IMAIN,*) '  nspec_left = ',nspec_left_tot
+      write(IMAIN,*) '  nspec_right = ',nspec_right_tot
+      write(IMAIN,*) '  nspec_bottom = ',nspec_bottom_tot
+      write(IMAIN,*) '  nspec_top = ',nspec_top_tot
+      write(IMAIN,*)
+    endif
     call flush_IMAIN()
   endif
 
-  ! sets Stacey flag
-  if (anyabs .and. (.not. PML_BOUNDARY_CONDITIONS)) then
-    STACEY_BOUNDARY_CONDITIONS = .true.
-  else
-    STACEY_BOUNDARY_CONDITIONS = .false.
-  endif
 
   ! allocates arrays
   if (anyabs) then
     ! files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
-    if (any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_BOUNDARY_CONDITIONS) then
+    if (any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_ABSORBING_CONDITIONS) then
       allocate(b_absorb_elastic_left(NDIM,NGLLZ,nspec_left,NSTEP))
       allocate(b_absorb_elastic_right(NDIM,NGLLZ,nspec_right,NSTEP))
       allocate(b_absorb_elastic_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
@@ -1031,7 +1043,7 @@
       allocate(b_absorb_elastic_bottom(1,1,1,1))
       allocate(b_absorb_elastic_top(1,1,1,1))
     endif
-    if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_BOUNDARY_CONDITIONS) then
+    if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_ABSORBING_CONDITIONS) then
       allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP))
       allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP))
       allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
@@ -1050,7 +1062,7 @@
       allocate(b_absorb_poro_w_bottom(1,1,1,1))
       allocate(b_absorb_poro_w_top(1,1,1,1))
     endif
-    if (any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_BOUNDARY_CONDITIONS) then
+    if (any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_ABSORBING_CONDITIONS) then
       allocate(b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP))
       allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
       allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))

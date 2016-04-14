@@ -164,7 +164,7 @@
 
     ! frees memory on GPU
     call prepare_cleanup_device(Mesh_pointer,any_acoustic,any_elastic, &
-                                STACEY_BOUNDARY_CONDITIONS, &
+                                STACEY_ABSORBING_CONDITIONS, &
                                 ANISOTROPY, &
                                 APPROXIMATE_HESS_KL)
   endif
@@ -172,7 +172,7 @@
   if (output_wavefield_dumps) deallocate(mask_ibool)
 
   ! stores absorbing boundary contributions into files
-  if (anyabs .and. SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. STACEY_BOUNDARY_CONDITIONS) then
+  if (SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. STACEY_ABSORBING_CONDITIONS) then
 
     if (any_acoustic) then
       !--- left absorbing boundary

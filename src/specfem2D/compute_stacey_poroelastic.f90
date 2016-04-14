@@ -36,7 +36,7 @@
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
-  use specfem_par, only: it,NSTEP,STACEY_BOUNDARY_CONDITIONS, &
+  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
                          anyabs,nelemabs,numabs, &
                          ATTENUATION_PORO_FLUID_PART, &
                          ibool,kmato,ispec_is_poroelastic, &
@@ -75,7 +75,7 @@
   double precision :: permlxx
 
   ! checks if anything to do
-  if (.not. STACEY_BOUNDARY_CONDITIONS) return
+  if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. anyabs) return
 
   ! absorbing boundaries
@@ -339,7 +339,7 @@
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
-  use specfem_par, only: it,NSTEP,STACEY_BOUNDARY_CONDITIONS, &
+  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
                          anyabs,nelemabs,numabs, &
                          ATTENUATION_PORO_FLUID_PART, &
                          ibool,kmato,ispec_is_poroelastic, &
@@ -378,7 +378,7 @@
   double precision :: permlxx
 
   ! checks if anything to do
-  if (.not. STACEY_BOUNDARY_CONDITIONS) return
+  if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. anyabs) return
 
   ! absorbing boundaries

@@ -747,7 +747,7 @@
   if (SIMULATION_TYPE == 3) call prepare_timerun_kernels()
 
   ! Absorbing boundaries
-  if (anyabs .and. STACEY_BOUNDARY_CONDITIONS) then
+  if (STACEY_ABSORBING_CONDITIONS) then
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) '  using Stacey boundary arrays'

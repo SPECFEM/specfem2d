@@ -351,7 +351,7 @@
 
   program specfem2D
 
-  use specfem_par, only: undo_attenuation
+  use specfem_par, only: UNDO_ATTENUATION
 
   implicit none
 

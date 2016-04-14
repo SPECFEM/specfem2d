@@ -74,7 +74,7 @@
   use constants,only: PI,TWO,TINYVAL
 
   use specfem_par, only: any_poroelastic, ROTATE_PML_ACTIVATE, &
-                         STACEY_BOUNDARY_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD,time_stepping_scheme, &
+                         STACEY_ABSORBING_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD,time_stepping_scheme, &
                          NSOURCES, source_type, ispec_selected_source, ADD_PERIODIC_CONDITIONS, &
                          anglesource, is_on_the_axis, ispec_is_elastic, is_proc_source,myrank
 
@@ -85,21 +85,21 @@
   ! Local parameters
   integer :: isource
 
-  if (any_poroelastic ) &
+  if (any_poroelastic) &
     call exit_MPI(myrank,'Poroelasticity is not implemented for axisymmetric simulations')
-  if (ROTATE_PML_ACTIVATE ) &
+  if (ROTATE_PML_ACTIVATE) &
     call exit_MPI(myrank,'ROTATE_PML_ACTIVATE is not implemented for axisymmetric simulations')
-  if (STACEY_BOUNDARY_CONDITIONS ) &
+  if (STACEY_ABSORBING_CONDITIONS) &
     call exit_MPI(myrank,'Stacey boundary conditions are not implemented for axisymmetric simulations,use PML instead')
-  if (SIMULATION_TYPE /= 1 ) &
+  if (SIMULATION_TYPE /= 1) &
     call exit_MPI(myrank,'Just axisymmetric FORWARD simulations are possible so far')
-  if (SAVE_FORWARD ) &
+  if (SAVE_FORWARD) &
     call exit_MPI(myrank,'SAVE_FORWARD has presently not been tested with axisymmetric simulations')
-  if (time_stepping_scheme /= 1 ) &
+  if (time_stepping_scheme /= 1) &
     call exit_MPI(myrank,'Just Newmark scheme is possible for axisymmetric simulation')
-  if (ADD_PERIODIC_CONDITIONS ) &
+  if (ADD_PERIODIC_CONDITIONS) &
     call exit_MPI(myrank,'Periodic conditions (ADD_PERIODIC_CONDITIONS) are not implemented for axisymmetric simulations')
-  if (NOISE_TOMOGRAPHY /= 0 ) &
+  if (NOISE_TOMOGRAPHY /= 0) &
     call exit_MPI(myrank,'Axisymmetric noise tomographies are not possible yet')
 
   ! Check sources

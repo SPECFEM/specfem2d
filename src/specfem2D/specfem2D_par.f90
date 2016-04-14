@@ -148,7 +148,7 @@ module specfem_par
     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   ! Stacey BC
-  logical :: STACEY_BOUNDARY_CONDITIONS
+  logical :: STACEY_ABSORBING_CONDITIONS
   logical, dimension(:,:), allocatable  :: codeabs
   integer, dimension(:), allocatable  :: typeabs
   ! for detection of corner element on absorbing boundary

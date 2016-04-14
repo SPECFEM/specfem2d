@@ -52,9 +52,13 @@
   use specfem_par,only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
 
   use specfem_par_movie,only: vector_field_display,image_color_data,iglob_image_color, &
-    imagetype_JPEG,nb_pixel_loc,nb_pixel_per_proc, &
+    imagetype_JPEG,nb_pixel_loc, &
     NX_IMAGE_color,NZ_IMAGE_color, &
-    data_pixel_send,data_pixel_recv,num_pixel_loc,num_pixel_recv
+    num_pixel_loc
+
+#ifdef USE_MPI
+  use specfem_par_movie,only: data_pixel_recv,data_pixel_send,nb_pixel_per_proc,num_pixel_recv
+#endif
 
   implicit none
 

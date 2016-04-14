@@ -36,7 +36,7 @@
   use specfem_par, only : NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbours,ninterface_acoustic,inum_interfaces_acoustic, &
     nelem_acoustic_surface,num_fluid_solid_edges, &
-    STACEY_BOUNDARY_CONDITIONS,any_elastic,any_poroelastic,SIMULATION_TYPE
+    STACEY_ABSORBING_CONDITIONS,any_elastic,any_poroelastic,SIMULATION_TYPE
 
   use specfem_par_gpu, only : Mesh_pointer,nspec_outer_acoustic, nspec_inner_acoustic, &
     deltatover2f,b_deltatover2f, &
@@ -71,7 +71,7 @@
                                       nspec_outer_acoustic, nspec_inner_acoustic)
 
     ! Stacey absorbing boundary conditions
-    if (STACEY_BOUNDARY_CONDITIONS) then
+    if (STACEY_ABSORBING_CONDITIONS) then
       call compute_stacey_acoustic_GPU(phase_is_inner)
     endif
 

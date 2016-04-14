@@ -120,16 +120,16 @@
     vsmin = HUGEVAL
     vsmax = -HUGEVAL
   else
-    vsmin = 0
-    vsmax = 0
+    vsmin = 0.d0
+    vsmax = 0.d0
   endif
 
   if (any_poroelastic) then
     vpIImin = HUGEVAL
     vpIImax = -HUGEVAL
   else
-    vpIImin = 0
-    vpIImax = 0
+    vpIImin = 0.d0
+    vpIImax = 0.d0
   endif
 
   densmin = HUGEVAL
@@ -149,16 +149,16 @@
     lambdaSmin = HUGEVAL
     lambdaSmax = -HUGEVAL
   else
-    lambdaSmin = 0
-    lambdaSmax = 0
+    lambdaSmin = 0.d0
+    lambdaSmax = 0.d0
   endif
 
   if (any_poroelastic) then
     lambdaPIImin = HUGEVAL
     lambdaPIImax = -HUGEVAL
   else
-    lambdaPIImin = 0
-    lambdaPIImax = 0
+    lambdaPIImin = 0.d0
+    lambdaPIImax = 0.d0
   endif
 
   lambdaPmin_in_fluid_histo = HUGEVAL
@@ -266,7 +266,6 @@
     courant_stability_number_max = max(courant_stability_number_max, &
                                        vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX)))
 
-
     ! estimation of minimum period resolved
     ! based on average GLL distance within element and minimum velocity
     !
@@ -285,7 +284,13 @@
     !          there is no such sharp cut-off period for valid synthetics.
     !          seismograms become just more and more inaccurate for periods shorter than this estimate.
     vel_min = min(vpImin_local,vsmin_local)
-    pmax = max(pmax,avg_distance / vel_min * NPTS_PER_WAVELENGTH)
+
+    if (vel_min > 1.d-20) then
+      pmax = max(pmax,avg_distance / vel_min * NPTS_PER_WAVELENGTH)
+    else
+      ! acoustic/fluid region uses vpImin_local
+      pmax = max(pmax,avg_distance / vpImin_local * NPTS_PER_WAVELENGTH)
+    endif
 
     ! suggested timestep: uses minimum GLL point distance such that
     ! dt = C * min_gll_distance / vs_max
@@ -432,8 +437,14 @@
               write(IMAIN,*) '  Nb pts / lambdaP_fmax max = ',lambdaPImax/f0max
             endif
             write(IMAIN,*) ''
-            write(IMAIN,*) '  Nb pts / lambdaS_fmax min = ',lambdaSmin/f0max
-            write(IMAIN,*) '  Nb pts / lambdaS_fmax max = ',lambdaSmax/f0max
+
+            ! check if fluid regions
+            if (vsmin > 1.d-20) then
+              write(IMAIN,*) '  Nb pts / lambdaS_fmax min = ',lambdaSmin/f0max
+              write(IMAIN,*) '  Nb pts / lambdaS_fmax max = ',lambdaSmax/f0max
+            else
+              write(IMAIN,*) '  purely fluid regions'
+            endif
             call flush_IMAIN()
             ! for histogram
             lambdaPmin_in_fluid_histo = lambdaPmin_in_fluid_histo/f0max

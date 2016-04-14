@@ -265,7 +265,7 @@
   endif
 
   ! Stacey boundary conditions
-  if (STACEY_BOUNDARY_CONDITIONS) then
+  if (STACEY_ABSORBING_CONDITIONS) then
     if (UNDO_ATTENUATION) then
       call compute_stacey_elastic(b_accel_elastic,b_veloc_elastic)
     else

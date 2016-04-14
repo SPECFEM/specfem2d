@@ -92,7 +92,7 @@
                                 nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh, &
                                 hprime_xx,hprimewgll_xx, &
                                 wxgll,&
-                                STACEY_BOUNDARY_CONDITIONS, &
+                                STACEY_ABSORBING_CONDITIONS, &
                                 nspec_bottom,&
                                 nspec_left,&
                                 nspec_right,&
@@ -372,7 +372,7 @@
            cote_abs(nelemabs),stat=ier)
   if (ier /= 0 ) stop 'error allocating array abs_boundary_ispec etc.'
 
-  if(STACEY_BOUNDARY_CONDITIONS) then
+  if(STACEY_ABSORBING_CONDITIONS) then
 
     do ispecabs = 1,nelemabs
       ispec = numabs(ispecabs)
@@ -464,7 +464,7 @@
 
       endif
     enddo
-  endif ! STACEY_BOUNDARY_CONDITIONS
+  endif ! STACEY_ABSORBING_CONDITIONS
 
   ! user output
   if (myrank == 0) write(IMAIN,*) '  number of sources = ',NSOURCES
