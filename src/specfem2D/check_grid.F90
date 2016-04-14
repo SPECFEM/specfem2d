@@ -49,14 +49,14 @@
 
   ! local parameters
   double precision :: vpIImax_local,vpIImin_local
-  double precision :: vsmin,vsmax,densmin,densmax,vpImax_local,vpImin_local,vsmin_local
+  double precision :: vsmin,vsmax,densmin,densmax,vpImax_local,vpImin_local,vsmin_local,vsmax_local
 
   double precision :: kappa_s,kappa_f,kappa_fr,mu_s,mu_fr,rho_s,rho_f,eta_f,phi,tort,rho_bar
   double precision :: D_biot,H_biot,C_biot,M_biot
 
   double precision :: cpIloc,cpIIloc,csloc
   double precision :: cpIsquare,cpIIsquare,cssquare
-  double precision :: f0max,w_c,perm_xx
+  double precision :: f0,f0max,w_c,perm_xx
   double precision :: denst
   double precision :: lambdaplus2mu,mu
   double precision :: distance_min,distance_max,distance_min_local,distance_max_local
@@ -69,12 +69,16 @@
   double precision :: percent_GLL(NGLLX_MAX_STABILITY)
 
 ! for slice totals
-  double precision  :: vpImin_glob,vpImax_glob,vsmin_glob,vsmax_glob,densmin_glob,densmax_glob
-  double precision  :: vpIImin_glob,vpIImax_glob
-  double precision  :: distance_min_glob,distance_max_glob
-  double precision  :: courant_stability_max_glob,lambdaPImin_glob,lambdaPImax_glob,&
+  double precision :: vpImin_glob,vpImax_glob,vsmin_glob,vsmax_glob,densmin_glob,densmax_glob
+  double precision :: vpIImin_glob,vpIImax_glob
+  double precision :: distance_min_glob,distance_max_glob
+  double precision :: courant_stability_max_glob,lambdaPImin_glob,lambdaPImax_glob,&
                        lambdaPIImin_glob,lambdaPIImax_glob,lambdaSmin_glob,lambdaSmax_glob, &
                        lambdaPmin_in_fluid_histo_glob,lambdaPmax_in_fluid_histo_glob
+
+  double precision :: pmax_glob,pmax
+  double precision :: dt_suggested,dt_suggested_glob
+  double precision :: avg_distance,vel_min,vel_max
 
   integer :: ier
   integer :: i,j,ispec,material
@@ -84,6 +88,16 @@
   logical :: create_wavelength_histogram
   double precision :: lambdaPmin_in_fluid_histo,lambdaPmax_in_fluid_histo
   double precision :: lambdaSmin_histo,lambdaSmax_histo
+
+  !********************************************************************************
+
+  ! empirical choice for distorted elements to estimate time step and period resolved:
+  ! Courant number for time step estimate
+  real(kind=CUSTOM_REAL),parameter :: COURANT_SUGGESTED = 0.5
+  ! number of points per minimum wavelength for minimum period estimate
+  real(kind=CUSTOM_REAL),parameter :: NPTS_PER_WAVELENGTH = 5
+
+  !********************************************************************************
 
   ! user output
   if (myrank == 0) then
@@ -125,6 +139,8 @@
   distance_max = -HUGEVAL
 
   courant_stability_number_max = -HUGEVAL
+  pmax = -HUGEVAL
+  dt_suggested = HUGEVAL
 
   lambdaPImin = HUGEVAL
   lambdaPImax = -HUGEVAL
@@ -153,7 +169,6 @@
   do ispec= 1,nspec
 
     if (ispec_is_poroelastic(ispec)) then
-
       ! gets poroelastic material
       call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
       denst = rho_s
@@ -172,6 +187,7 @@
       cpIIloc = sqrt(cpIIsquare)
       csloc = sqrt(cssquare)
     else
+      ! acoustic/elastic
       material = kmato(ispec)
       mu = poroelastcoef(2,1,material)
       lambdaplus2mu  = poroelastcoef(3,1,material)
@@ -187,13 +203,13 @@
     vpIImax_local = -HUGEVAL
     vpIImin_local = HUGEVAL
     vsmin_local = HUGEVAL
+    vsmax_local = -HUGEVAL
 
     distance_min_local = HUGEVAL
     distance_max_local = -HUGEVAL
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
-
         !--- if heterogeneous formulation with external velocity model
         if (assign_external_model) then
           cpIloc = vpext(i,j,ispec)
@@ -221,7 +237,7 @@
         vpIImax_local = max(vpIImax_local,cpIIloc)
         vpIImin_local = min(vpIImin_local,cpIIloc)
         vsmin_local = min(vsmin_local,csloc)
-
+        vsmax_local = max(vsmax_local,csloc)
       enddo
     enddo
 
@@ -244,8 +260,37 @@
     distance_min = min(distance_min,distance_min_local)
     distance_max = max(distance_max,distance_max_local)
 
+    ! Courant number
+    ! based on minimum GLL point distance and maximum velocity
+    ! i.e. on the maximum ratio of ( velocity / gridsize )
     courant_stability_number_max = max(courant_stability_number_max, &
                                        vpImax_local * deltat / (distance_min_local * percent_GLL(NGLLX)))
+
+
+    ! estimation of minimum period resolved
+    ! based on average GLL distance within element and minimum velocity
+    !
+    ! rule of thumb (Komatitsch et al. 2005):
+    ! "average number of points per minimum wavelength in an element should be around 5."
+
+    ! average distance between GLL points within this element
+    avg_distance = distance_max_local / ( NGLLX - 1)  ! since NGLLX = NGLLY = NGLLZ
+
+    ! largest possible minimum period (pmax) such that number of points per minimum wavelength
+    ! npts = ( min(vpmin,vsmin)  * pmax ) / avg_distance  is about ~ NPTS_PER_WAVELENGTH
+    !
+    ! note: obviously, this estimation depends on the choice of points per wavelength
+    !          which is empirical at the moment.
+    !          also, keep in mind that the minimum period is just an estimation and
+    !          there is no such sharp cut-off period for valid synthetics.
+    !          seismograms become just more and more inaccurate for periods shorter than this estimate.
+    vel_min = min(vpImin_local,vsmin_local)
+    pmax = max(pmax,avg_distance / vel_min * NPTS_PER_WAVELENGTH)
+
+    ! suggested timestep: uses minimum GLL point distance such that
+    ! dt = C * min_gll_distance / vs_max
+    vel_max = max(vpImax_local,vsmax_local)
+    dt_suggested = min(dt_suggested,COURANT_SUGGESTED * distance_min_local * percent_GLL(NGLLX) / vel_max)
 
     ! check if fluid region with Vs = 0
     if (vsmin_local > 1.d-20) then
@@ -287,6 +332,8 @@
   call min_all_all_dp(lambdaPmin_in_fluid_histo, lambdaPmin_in_fluid_histo_glob)
   call max_all_all_dp(lambdaPmax_in_fluid_histo, lambdaPmax_in_fluid_histo_glob)
   call max_all_all_dp(courant_stability_number_max, courant_stability_max_glob)
+  call max_all_all_dp(pmax, pmax_glob)
+  call min_all_all_dp(dt_suggested, dt_suggested_glob)
 
   vpImin = vpImin_glob
   vpImax = vpImax_glob
@@ -307,7 +354,8 @@
   lambdaPmin_in_fluid_histo = lambdaPmin_in_fluid_histo_glob
   lambdaPmax_in_fluid_histo = lambdaPmax_in_fluid_histo_glob
   courant_stability_number_max = courant_stability_max_glob
-
+  pmax = pmax_glob
+  dt_suggested = dt_suggested_glob
 
   ! sets if any slice has fluid histogram
   call any_all_l(any_fluid_histo,any_fluid_histo_glob)
@@ -332,6 +380,17 @@
       write(IMAIN,*) '*** Min grid size = ',distance_min
       write(IMAIN,*) '*** Max/min ratio = ',distance_max / distance_min
       write(IMAIN,*)
+      write(IMAIN,*) '*** Minimum GLL point distance  = ',distance_min * percent_GLL(NGLLX)
+      write(IMAIN,*) '*** Average GLL point distance  = ',distance_min / ( NGLLX - 1)
+      write(IMAIN,*)
+      write(IMAIN,*) '*** Minimum period resolved     = ',pmax_glob
+      write(IMAIN,*) '*** Maximum frequency resolved  = ',(1.d0/pmax_glob),'Hz'
+      write(IMAIN,*)
+      write(IMAIN,*) '*** Maximum suggested time step                 = ',dt_suggested_glob
+      ! for a Ricker wavelet: dominant frequency f0_dominant = 2.5 * f0 -> f0 = 1/2.5 * f0_dominant
+      write(IMAIN,*) '*** Maximum suggested (Ricker) source frequency = ',1.d0/2.5d0 * (1.d0/pmax_glob)
+      write(IMAIN,*)
+      write(IMAIN,*) '*** for DT : ',deltat
       write(IMAIN,*) '*** Max CFL stability condition of the time scheme &
                          &based on P wave velocity (must be below about 0.50 or so) = ',courant_stability_number_max
       write(IMAIN,*)
@@ -351,29 +410,39 @@
         if (time_function_type(i) /= 4 .and. time_function_type(i) /= 5) then
 
           ! sets min/max frequency
-          if (f0_source(i) > f0max) f0max = f0_source(i)
+          ! for a Ricker wavelet: dominant frequency f0_dominant = 2.5 * f0
+          f0 = 2.5d0 * f0_source(i)
+          if (f0 > f0max) f0max = f0
 
+          ! user output
           if (i == NSOURCES) then
             write(IMAIN,*) '----'
-            write(IMAIN,*) ' Nb pts / lambdaPI_fmax min = ',lambdaPImin/(2.5d0*f0max)
-            write(IMAIN,*) ' Nb pts / lambdaPI_fmax max = ',lambdaPImax/(2.5d0*f0max)
-            write(IMAIN,*) '----'
-            write(IMAIN,*) ' Nb pts / lambdaPII_fmax min = ',lambdaPIImin/(2.5d0*f0max)
-            write(IMAIN,*) ' Nb pts / lambdaPII_fmax max = ',lambdaPIImax/(2.5d0*f0max)
-            write(IMAIN,*) '----'
-            write(IMAIN,*) ' Nb pts / lambdaS_fmax min = ',lambdaSmin/(2.5d0*f0max)
-            write(IMAIN,*) ' Nb pts / lambdaS_fmax max = ',lambdaSmax/(2.5d0*f0max)
-            write(IMAIN,*) '----'
-
+            write(IMAIN,*) 'Number of points per wavelength:'
+            write(IMAIN,*) '  maximum dominant source frequency = ',f0max,'Hz'
+            write(IMAIN,*) ''
+            if (POROELASTIC_SIMULATION) then
+              ! slow and fast P-waves
+              write(IMAIN,*) '  Nb pts / lambdaPI_fmax min = ',lambdaPImin/f0max
+              write(IMAIN,*) '  Nb pts / lambdaPI_fmax max = ',lambdaPImax/f0max
+              write(IMAIN,*) ''
+              write(IMAIN,*) '  Nb pts / lambdaPII_fmax min = ',lambdaPIImin/f0max
+              write(IMAIN,*) '  Nb pts / lambdaPII_fmax max = ',lambdaPIImax/f0max
+            else
+              write(IMAIN,*) '  Nb pts / lambdaP_fmax min = ',lambdaPImin/f0max
+              write(IMAIN,*) '  Nb pts / lambdaP_fmax max = ',lambdaPImax/f0max
+            endif
+            write(IMAIN,*) ''
+            write(IMAIN,*) '  Nb pts / lambdaS_fmax min = ',lambdaSmin/f0max
+            write(IMAIN,*) '  Nb pts / lambdaS_fmax max = ',lambdaSmax/f0max
+            call flush_IMAIN()
             ! for histogram
-            lambdaPmin_in_fluid_histo = lambdaPmin_in_fluid_histo/(2.5d0*f0max)
-            lambdaPmax_in_fluid_histo = lambdaPmax_in_fluid_histo/(2.5d0*f0max)
+            lambdaPmin_in_fluid_histo = lambdaPmin_in_fluid_histo/f0max
+            lambdaPmax_in_fluid_histo = lambdaPmax_in_fluid_histo/f0max
 
-            lambdaSmin_histo = lambdaSmin/(2.5d0*f0max)
-            lambdaSmax_histo = lambdaSmax/(2.5d0*f0max)
+            lambdaSmin_histo = lambdaSmin/f0max
+            lambdaSmax_histo = lambdaSmax/f0max
 
             create_wavelength_histogram = .true.
-
           endif
 
         endif
@@ -574,7 +643,7 @@
 
           nspec_counted = nspec_counted + 1
 
-          nb_of_points_per_wavelength = nb_of_points_per_wavelength/(2.5d0*f0max)
+          nb_of_points_per_wavelength = nb_of_points_per_wavelength/f0max
 
           ! store number of points per wavelength in histogram
           iclass = int((nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) / &
@@ -596,7 +665,7 @@
 
           nspec_counted = nspec_counted + 1
 
-          nb_of_points_per_wavelength = nb_of_points_per_wavelength/(2.5d0*f0max)
+          nb_of_points_per_wavelength = nb_of_points_per_wavelength/f0max
 
           ! store number of points per wavelength in histogram
           iclass = int((nb_of_points_per_wavelength - min_nb_of_points_per_wavelength) / &
@@ -1631,10 +1700,6 @@
 
   endif
 
-!
-!--------------------------------------------------------------------------------
-!
-
   if (myrank == 0) then
 
     write(IMAIN,*)
@@ -1834,7 +1899,7 @@
 
     if ((vpImax-vpImin)/vpImin > 0.02d0) then
       if (assign_external_model) then
-! use lower-left corner
+        ! use lower-left corner
         x1 = (vpext(1,1,ispec)-vpImin) / (vpImax-vpImin)
       else
         if (ispec_is_poroelastic(ispec)) then
