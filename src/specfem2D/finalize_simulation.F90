@@ -68,8 +68,11 @@
           rho_save(i,j,ispec) = density(1,kmato(ispec))
           lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
           mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-
-          kappa_save(i,j,ispec) = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
+          if (AXISYM) then ! CHECK kappa
+            kappa_save(i,j,ispec) = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
+          else
+            kappa_save(i,j,ispec) = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
+          endif
           vp_save(i,j,ispec) = sqrt((kappa_save(i,j,ispec) + FOUR_THIRDS *mul_unrelaxed_elastic)/density(1,kmato(ispec)))
           vs_save(i,j,ispec) = sqrt(mul_unrelaxed_elastic/density(1,kmato(ispec)))
 

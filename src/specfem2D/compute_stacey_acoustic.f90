@@ -38,7 +38,7 @@
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: nglob,nelemabs,it,any_acoustic, &
+  use specfem_par, only: AXISYM,nglob,nelemabs,it,any_acoustic, &
                          assign_external_model,ibool,kmato,numabs,ispec_is_acoustic, &
                          codeabs,codeabs_corner, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
@@ -77,7 +77,13 @@
       ! get elastic parameters of current spectral element
       lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
       mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-      kappal  = lambdal_relaxed + TWO * mul_relaxed/3._CUSTOM_REAL
+
+      if (AXISYM) then ! CHECK kappa
+        kappal  = lambdal_relaxed + TWO * mul_relaxed/3._CUSTOM_REAL
+      else
+        kappal  = lambdal_relaxed + mul_relaxed
+      endif
+
       rhol = density(1,kmato(ispec))
 
       cpl = sqrt(kappal/rhol)

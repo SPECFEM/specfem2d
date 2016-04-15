@@ -156,11 +156,15 @@
             cpl = vpext(i,j,ispec)
             !assuming that in fluid(acoustic) part input cpl is defined by sqrt(kappal/rhol), &
             !which is not the same as in cpl input in elastic part
-            kappal = rhol * cpl * cpl
+            kappal = rhol * cpl * cpl ! CHECK kappa
           else
             lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
             mul_relaxed = poroelastcoef(2,1,kmato(ispec))
-            kappal  = lambdal_relaxed + TWO * mul_relaxed/3._CUSTOM_REAL
+            if (AXISYM) then ! CHECK kappa
+              kappal  = lambdal_relaxed + TWO * mul_relaxed/3._CUSTOM_REAL
+            else
+              kappal  = lambdal_relaxed + mul_relaxed
+            endif
             rhol = density(1,kmato(ispec))
           endif
 

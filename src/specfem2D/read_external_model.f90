@@ -268,8 +268,6 @@
 
   do ispec = 1,nspec
 
-    print *,"myrank:",myrank," ispec:",ispec
-
     previous_vsext = vsext(1,1,ispec)
 
     do j = 1,NGLLZ

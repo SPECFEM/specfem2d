@@ -181,7 +181,7 @@
 
   use constants,only: ONE,TWO,PI,TWO_THIRDS
 
-  use specfem_par, only : f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS
+  use specfem_par,only : AXISYM,f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS
 
   implicit none
 
@@ -196,8 +196,12 @@
 
   mu = rho * vs*vs
   lambda = rho * vp*vp - TWO * mu
-  kappa  = lambda + TWO_THIRDS*mu
 
+  if (AXISYM) then
+    kappa  = lambda + TWO_THIRDS*mu
+  else
+    kappa  = lambda + mu
+  endif
   xtmp1_nu1 = ONE
   xtmp2_nu1 = ONE
   xtmp1_nu2 = ONE
@@ -221,7 +225,12 @@
   factor_kappa = xtmp1_nu1/xtmp2_nu1
   kappa = kappa * factor_kappa
 
-  lambda = kappa - TWO_THIRDS*mu
+  if (AXISYM) then ! CHECK kappa
+    lambda = kappa - TWO_THIRDS*mu
+  else
+    lambda = kappa - mu
+  endif
+
   vp = dsqrt((lambda + TWO * mu) / rho)
   vs = dsqrt(mu / rho)
 

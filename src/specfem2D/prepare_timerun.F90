@@ -1555,7 +1555,11 @@
 
           rhostore(i,j,ispec) = rhol
           mustore(i,j,ispec) = mul_unrelaxed_elastic
-          kappastore(i,j,ispec) = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic/3._CUSTOM_REAL
+          if (AXISYM) then ! CHECK kappa
+            kappastore(i,j,ispec) = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic/3._CUSTOM_REAL
+          else
+            kappastore(i,j,ispec) = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
+          endif
 
           rho_vp(i,j,ispec) = rhol * sqrt((kappastore(i,j,ispec) + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
           rho_vs(i,j,ispec) = rhol * sqrt(mul_unrelaxed_elastic/rhol)

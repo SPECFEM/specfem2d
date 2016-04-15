@@ -104,12 +104,18 @@
         ! if external density model (elastic or acoustic)
         if (assign_external_model) then
           rhol = rhoext(i,j,ispec)
-          kappal = rhol * vpext(i,j,ispec)**2
+          kappal = rhol * vpext(i,j,ispec)**2 ! CHECK Kappa
         else
           rhol = density(1,kmato(ispec))
           lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
           mu_relaxed = poroelastcoef(2,1,kmato(ispec))
-          kappal = lambda_relaxed + 2.d0/3.d0*mu_relaxed
+
+          if (AXISYM) then ! CHECK kappa
+            kappal = lambda_relaxed + 2.d0/3.d0*mu_relaxed
+          else
+            kappal = lambda_relaxed + mu_relaxed
+          endif
+
         endif
 
         if (ispec_is_poroelastic(ispec)) then
@@ -363,8 +369,14 @@
         mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
 
         rhol  = density(1,kmato(ispec))
-        kappal  = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
-        cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
+
+        if (AXISYM) then ! CHECK kappa
+          kappal  = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
+        else
+          kappal  = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
+        endif
+
+        cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol) ! Check kappa
         csl = sqrt(mul_unrelaxed_elastic/rhol)
 
         !--- left absorbing boundary
@@ -598,7 +610,13 @@
         ! get elastic parameters of current spectral element
         lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
         mu_relaxed = poroelastcoef(2,1,kmato(ispec))
-        kappal  = lambda_relaxed + TWO*mu_relaxed/3._CUSTOM_REAL
+
+        if (AXISYM) then ! CHECK kappa
+          kappal  = lambda_relaxed + TWO*mu_relaxed/3._CUSTOM_REAL
+        else
+          kappal  = lambda_relaxed + mu_relaxed
+        endif
+
         rhol = density(1,kmato(ispec))
 
         cpl = sqrt(kappal/rhol)
