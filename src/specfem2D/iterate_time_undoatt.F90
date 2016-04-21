@@ -319,7 +319,7 @@
         endif
 
         if (any_elastic) then
-          do i = 1,3
+          do i = 1,NDIM
             do j = 1,NGLOB
               b_displ_elastic(i,j) = b_displ_elastic_buffer(i,j,it_subset_end-it_of_this_subset+1)
               b_accel_elastic(i,j) = b_accel_elastic_buffer(i,j,it_subset_end-it_of_this_subset+1)

@@ -116,7 +116,12 @@
       lambda = lambdaplus2mu - two_mu
 
       ! bulk modulus Kappa
-      kappa = lambda + two_mu/3.d0
+
+      if (AXISYM) then ! CHECK kappa
+        kappa = lambda + two_mu/3.d0
+      else
+        kappa = lambda + mu
+      endif
 
       ! Young modulus
       young = 9.d0*kappa*mu/(3.d0*kappa + mu)
@@ -155,7 +160,12 @@
       lambda = lambdaplus2mu - two_mu
 
       ! bulk modulus Kappa
-      kappa = lambda + two_mu/3.d0
+
+      if (AXISYM) then ! CHECK kappa
+        kappa = lambda + two_mu/3.d0
+      else
+        kappa = lambda + mu
+      endif
 
       ! Young modulus
       young = 9.d0*kappa*mu/(3.d0*kappa + mu)

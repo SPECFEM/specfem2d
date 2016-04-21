@@ -40,7 +40,7 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
     ZERO,ONE,TWO,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: nglob,nelemabs,it,any_elastic, &
+  use specfem_par, only: AXISYM,nglob,nelemabs,it,any_elastic, &
                          assign_external_model,ibool,kmato,numabs,ispec_is_elastic, &
                          codeabs,codeabs_corner,density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                          vpext,vsext,rhoext,wxgll,wzgll,P_SV, &
@@ -100,8 +100,12 @@
     mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
     lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
     rhol  = density(1,kmato(ispec))
-    kappal  = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
-    cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
+    if (AXISYM) then ! CHECK kappa
+      kappal  = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
+    else
+      kappal  = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
+    endif
+    cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol) ! CHECK kappa
     csl = sqrt(mul_unrelaxed_elastic/rhol)
 
     !--- left absorbing boundary
