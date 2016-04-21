@@ -267,8 +267,6 @@
   Mu_nu2(:,:,:) = -1._CUSTOM_REAL
 
   do ispec = 1,nspec
-  
-    print *,"myrank:",myrank," ispec:",ispec
 
     previous_vsext = vsext(1,1,ispec)
 

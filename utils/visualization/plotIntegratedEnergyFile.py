@@ -61,6 +61,24 @@ class ParFile:
                         self.dt = float(self.dt)
                     else:
                         raise ValueError('Incorrect value of DT read')
+                        
+def find_index(x,z,xil,zil):
+    """Return the indices of the closest point in 2D array"""
+    idxX=np.searchsorted(xil,x)
+    idxZ=np.searchsorted(zil,z)
+    return idxX,idxZ
+                        
+def interpolateValue(array,xil,zil,x,z):
+    """Return the value of the 2D field described by array,xil and zil at (x,z)"""
+    idxX,idxZ = find_index(x,z,xil,zil)
+    xLine, zLine = np.array([idxX]), np.array([idxZ])
+    # Extract the values along the line, using cubic interpolation
+    if type(intEnergyi) == np.ndarray:
+        zi = scipy.ndimage.map_coordinates(array, np.vstack((zLine,xLine)),order=1)
+    else:
+        zi = scipy.ndimage.map_coordinates(array.filled(), np.vstack((zLine,xLine)),order=1)
+
+    return zi[0]
 
 ####################### PARSE ARGUMENTS #######################
 # Here we read the argument given and we check them
@@ -93,6 +111,8 @@ parser.add_argument('--displayPoints', action='store_true',
     help='displayPoints: plot the data points')
 parser.add_argument('--clim',nargs=2,default=[],
     help='clim: set limits of the color bar')
+parser.add_argument('--ref',nargs=2,default=[300,-2500],
+    help='ref: Point that we set to 1')
 parser.add_argument('--nxnzProfiles',nargs=2,default=[10,10],
     help='nxnz: set the number of x and z profiles to plot')
 parser.add_argument('--noplot', action='store_true',
@@ -105,10 +125,12 @@ directory=args.input_directory
 
 fontsize = 14
 zminProfiles = -5000
+zmaxProfiles = -650 # TODO (-650m for 0.5Hz, -300m for 2Hz...)
+xsp = 500000
 
 # Check
 if not os.path.isdir(directory):
-    print("Wrong directory!")
+    print("Wrong directory! "+directory)
     sys.exit(0)
 
 if directory[-1] != '/': #If the path given don't finish by slash...
@@ -120,26 +142,41 @@ if not glob.glob(directory+args.name_of_files+"*"): # If we don't find any match
 
 # Concatenate all the files (if specfem has been run on parallel each proc has created its own files)
 
-if args.verbose:
-    print("Concatenate files...")
-if not args.no_concatenate_files:
-    with open(args.input_directory+args.name_of_files+"All", 'w') as outfile:
-        for infile in glob.glob(directory+args.name_of_files+"0*"):
-            shutil.copyfileobj(open(infile), outfile)
+if not os.path.isfile(directory+args.name_of_files+"All"): # If the concatenation has not already been done
+    if args.verbose:
+        print("Concatenate files...")
+    if not args.no_concatenate_files:
+        with open(directory+args.name_of_files+"All", 'w') as outfile:
+            for infile in glob.glob(directory+args.name_of_files+"0*"):
+                shutil.copyfileobj(open(infile), outfile)
+else:
+    print(directory+args.name_of_files+"All has been found!")
+
 if args.verbose:
     print("Done")
 plt.close('all')
 
 # Load data
 if args.verbose:
-    print("Load data...")
+    print("Load data in "+directory+args.name_of_files+"All")
 x,z,intEnergy=np.loadtxt(directory+args.name_of_files+"All").T
+#if args.verbose:
+#    print("Load seismograms "+directory+"AA.S0001.BXX.semv AA.S0001.BXZ.semv at 300m from the source")
+#t,vx0=np.loadtxt(directory+"AA.S0001.BXX.semv").T
+#t,vz0=np.loadtxt(directory+"AA.S0001.BXZ.semv").T
 if args.verbose:
     print("Done")
 
 if "integrated" in args.name_of_files: # We have to multiply by dt
-    par_file=ParFile(args.input_directory+'Par_file') # Open and read the Par_file
-    intEnergy = intEnergy * par_file.dt
+    #scalingFactor = (vx0**2+vz0**2).sum()
+    par_file=ParFile(directory+'Par_file') # Open and read the Par_file
+    intEnergy = intEnergy * par_file.dt * x
+    #intEnergy = intEnergy/scalingFactor
+
+if "max" in args.name_of_files:
+    #scalingFactor = (vx0**2+vz0**2).max()
+    intEnergy = intEnergy * x
+    #intEnergy = intEnergy/scalingFactor
 
 if not args.nolog:
     intEnergy=10*np.log10(intEnergy)
@@ -211,11 +248,26 @@ else:
         intEnergyi.dump(args.input_directory+args.name_of_files+"AllInterpolatedx"+str(nx)+"z"+str(nz))
         if args.verbose:
             print("Done")
+
+# Normalize
+if "max" in args.name_of_files or "integrated" in args.name_of_files:
+    if args.verbose:
+        print("Normalizing...")
+    valueAtRef = interpolateValue(intEnergyi,xil,zil,float(args.ref[0]),float(args.ref[1]))
+    if args.verbose:
+        print("Value at reference point (",args.ref[0],",",args.ref[1],") is ",valueAtRef)
+    intEnergyi = intEnergyi - valueAtRef
+    valueAtRef = interpolateValue(intEnergyi,xil,zil,float(args.ref[0]),float(args.ref[1]))
+    if args.verbose:
+        print("Value at reference point (",args.ref[0],",",args.ref[1],") is ",valueAtRef)
+    if args.verbose:
+        print("Done")
+
 #Plot:
 if not args.noplot:
     if args.verbose:
         print("Plots...")
-    plt.figure(1,figsize=(16,4))
+    plt.figure(1,figsize=(10,4))
     plt.pcolormesh(xi,zi,intEnergyi,shading='gouraud',cmap=cmap)
     plt.colorbar()
     plt.axis([xmin, xmax, zmin, zmax])
@@ -234,12 +286,6 @@ if args.profiles:
     # Plot energy profiles:
     if args.verbose:
         print("Print profiles...")
-
-    def find_index(x,z,xil,zil):
-        """Return the indices of the closest point in 2D array"""
-        idxX=np.searchsorted(xil,x)
-        idxZ=np.searchsorted(zil,z)
-        return idxX,idxZ
 
     num=500
     cmap2 = plt.get_cmap('prism')
@@ -284,7 +330,7 @@ if args.profiles:
     xVector=np.arange(xmax/(nxProfiles + 1),xmax,xmax/(nxProfiles + 1))
     colors = [cmap2(i) for i in np.linspace(0, 1, len(xVector))]
     z0=zminProfiles
-    z1=-300 # Be careful! This point can't be too close to zmax!
+    z1=zmaxProfiles # Be careful! This point can't be too close to zmax!
     zvect=np.linspace(z0,z1,num)
     depthIntegratedEnergy=np.zeros(len(xVector))
     #depthIntegratedEnergy2=np.zeros(len(xVector))
@@ -351,8 +397,8 @@ if args.profiles:
         np.savetxt(args.input_directory+args.name_of_files+"_energy_vs_range",np.dstack((xVector,depthIntegratedEnergy))[0])
         print("File ",args.input_directory+args.name_of_files+"_energy_vs_range has been written")
 
-        x0,z0=45000,zminProfiles
-        x1,z1=45000,-300
+        x0,z0=xsp,zminProfiles
+        x1,z1=xsp,zmaxProfiles
         zvect2=np.linspace(z0,z1,num)
         if args.verbose:
             print("Profile to be saved: (x0,z0) = (",x0,",",z0,")   (x1,z1) = (",x1,",",z1,")")
@@ -388,8 +434,8 @@ if args.profiles:
                 plt.ylabel("Integrated energy",fontsize=fontsize+3)
             plt.title(args.title)
         i=0
-        while os.path.isfile(args.input_directory+args.name_of_files+"_profile_"+str(i)): # If the a profile of this name has already been written
-            i = i+1
+        #while os.path.isfile(args.input_directory+args.name_of_files+"_profile_"+str(i)): # If the a profile of this name has already been written
+        #    i = i+1
         np.savetxt(args.input_directory+args.name_of_files+"_profile_"+str(i),np.dstack((zvect2,zi))[0])
         print("File ",args.input_directory+args.name_of_files+"_profile_"+str(i)," has been written")
         if args.verbose:
