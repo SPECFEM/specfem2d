@@ -204,6 +204,7 @@
 !
 !---- generate the global numbering
 !
+
   call createnum_slow(knods,ibool,nglob_to_compute,nspec,NGLLX,NGLLZ,ngnod) ! Create ibool and recompute nglob for checking
   if(nglob_to_compute /= NGLOB) stop 'error: incorrect total number of unique grid points found'
   if(minval(ibool) /= 1) stop 'error: incorrect minimum value of ibool'
