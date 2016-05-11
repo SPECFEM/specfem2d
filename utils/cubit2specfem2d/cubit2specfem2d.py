@@ -261,6 +261,7 @@ class mesh(object,mesh_tools):
         self.mesh_name='mesh_file'
         self.axisymmetric_mesh=False # Will be set to true if a group self.pml_boun_name is found
         self.topo_mesh=False # Will be set to true if a group self.topo is found
+        self.forcing_mesh=False # Will be set to true if a group self.forcing_boun_name is found
         self.abs_mesh=False # Will be set to true if a group self.pml_boun_name or self.abs_boun_name is found
         self.pml_layers=False # Will be set to true if a group self.pml_boun_name is found
         self.write_nummaterial_velocity_file=False # Will be set to True if 2d blocks have 6 attributes
@@ -268,6 +269,7 @@ class mesh(object,mesh_tools):
         self.material_name='materials_file' # Name of material file to create
         self.nummaterial_name='nummaterial_velocity_file'
         self.absname='absorbing_surface_file' # Name of absorbing surface file to create
+        self.forcname='forcing_surface_file' # Name of forcing surface file to create
         self.freename='free_surface_file' # Name of free surface file to create
         self.pmlname='elements_cpml_list' # Name of cpml file to create
         self.axisname='elements_axis' # Name of axial elements file to create and name of the block containing axial edges
@@ -277,8 +279,10 @@ class mesh(object,mesh_tools):
         self.topo='topo'   # Name of the block containing topography edges
         self.pml_boun_name=['pml_x_acoust','pml_z_acoust','pml_xz_acoust','pml_x_elast','pml_z_elast','pml_xz_elast']  # Name of the block containing pml layers elements
         self.abs_boun_name=['abs_bottom','abs_right','abs_top','abs_left'] # Name of the block containing absorbing layer edges
+        self.forcing_boun_name=['forcing_bottom','forcing_right','forcing_top','forcing_left'] # Name of the block containing forcing layer edges
         self.abs_boun=[]  # block numbers for abs boundaries
         self.pml_boun=[]  # block numbers for pml boundaries
+        self.nforc=4 # Maximum number of forcing surfaces (4)
         self.nabs=4 # Maximum number of absorbing surfaces (4)
         self.rec='receivers'
         self.block_definition() # import blocks features from Cubit
@@ -295,6 +299,7 @@ class mesh(object,mesh_tools):
         block_bc=[] # Will contain edge block ids
         block_bc_flag=[] # Will contain edge id -> 2
         abs_boun=[-1] * self.nabs # total 4 sides of absorbing boundaries (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
+        forcing_boun=[-1] * self.nforc # 4 possible forcing boundaries (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
         #pml_boun=[-1] * 6 # To store pml layers id (for each pml layer : x_acoust, z_acoust, xz_acoust, x_elast, z_elast, xz_elast)
         pml_boun=[[] for _ in range(6)] # To store the block id corresponding to pml layers id (arbitrary number of blocks for each pml layer : x_acoust, z_acoust, xz_acoust, x_elast, z_elast, xz_elast)
         material={} # Will contain each material name and their properties
@@ -344,6 +349,10 @@ class mesh(object,mesh_tools):
                 if name == self.topo: 
                     self.topo_mesh=True
                     topography=block # If the block considered refered to topography store its id in "topography"
+                if name in self.forcing_boun_name: 
+                    self.forcing_mesh=True
+                    forcing_boun[self.forcing_boun_name.index(name)]=block
+                    # -> Put it at the correct position in abs_boun (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
                 if name == self.axisname:
                     self.axisymmetric_mesh=True
                     axisId=block # AXISYM If the block considered refered to the axis store its id in "axisId"
@@ -363,7 +372,7 @@ class mesh(object,mesh_tools):
             else:
                 print 'nodeset '+name+' not defined'
                 self.receivers=None
-        # Store everything on the object :
+        # Store everything in the object :
         try:
             self.block_mat=block_mat
             self.block_flag=block_flag
@@ -376,6 +385,8 @@ class mesh(object,mesh_tools):
                 self.abs_boun=abs_boun
             if self.topo_mesh:
                 self.topography=topography
+            if self.forcing_mesh:
+                self.forcing_boun=forcing_boun
             if self.axisymmetric_mesh:
                 self.axisId=axisId
             if self.pml_layers:
@@ -539,6 +550,62 @@ class mesh(object,mesh_tools):
         print 'Ok'
         cubit.cmd('set info on') # Turn on return messages from Cubit commands
         cubit.cmd('set echo on') # Turn on echo of Cubit commands
+
+    def forcing_write(self,forcname):
+        """ Write forcing surfaces on file : forcname """ 
+        cubit.cmd('set info off') # Turn off return messages from Cubit commands
+        cubit.cmd('set echo off') # Turn off echo of Cubit commands
+        cubit.cmd('set journal off') # Do not save journal file
+        from sets import Set
+        forceedge=open(forcname,'w')
+        print 'Writing '+forcname+'.....'
+        edges_forc=[Set()]*self.nforc # edges_forc[0] will be a Set containing the nodes describing the forcing boundary 
+        # (index 0 : bottom, index 1 : right, index 2 : top, index 3 : left)
+        nedges_all=0 # To count the total number of forcing edges 
+        for block,flag in zip(self.block_bc,self.block_bc_flag): # For each 1D block
+            for iforc in range(0, self.nforc): # iforc = 0,1,2,3 : for each forcing boundaries
+                if block == self.forcing_boun[iforc]: # If the block considered correspond to the boundary
+                    edges_forc[iforc]=Set(cubit.get_block_edges(block)) # Store each edge on edges_forc
+                    nedges_all=nedges_all+len(edges_forc[iforc]); # add the number of edges to nedges_all
+        toWritetoFile=[""]*(nedges_all+1)
+        toWritetoFile[0] = '%10i\n' % nedges_all # Write the total number of forcing edges to the first line of file
+        #forceedge.write('%10i\n' % nedges_all) # Write the total number of forcing edges to the first line of file
+        print 'Number of edges', nedges_all
+        #id_element=0
+        indexFile=1
+        for block,flag in zip(self.block_mat,self.block_flag): # For each 2D block
+                quads=cubit.get_block_faces(block) # Import quads id
+                for quad in quads: # For each quad
+                    #id_element=id_element+1 # id of this quad
+                    edges=Set(cubit.get_sub_elements("face", quad, 1)) # Get the lower dimension entities associated with a higher dimension entities. 
+                    # Here it gets the 1D edges associates with the face of id "quad". Store it as a Set 
+                    for iforc in range(0,self.nforc): # iforc = 0,1,2,3 : for each forcing boundaries
+                        intersection=edges & edges_forc[iforc]  # Contains the edges of the considered quad that is on the forcing boundary considered
+                        if len(intersection) != 0: # If this quad touch the forcing boundary considered
+                            nodes=cubit.get_connectivity('face',quad) # Import the nodes describing the quad
+                            nodes=self.jac_check(list(nodes)) # Check the jacobian of the quad
+                            for e in intersection: # For each edge on the forcing boundary considered
+                                node_edge=cubit.get_connectivity('edge',e) # Import the nodes describing the edge
+                                nodes_ok=[]
+                                for i in nodes:  # ??? TODO nodes_ok == node_edge ???
+                                    if i in node_edge:
+                                        nodes_ok.append(i)       
+                                # forcname contains 1/ element number, 2/ number of nodes that form the acoustic forcing edge
+                                # (which currently must always be equal to two, see comment below),
+                                # 3/ first node on the acforcing surface, 4/ second node on the acforcing surface
+                                # 5/ 1=IBOTTOME, 2=IRIGHT, 3=ITOP, 4=ILEFT
+                                #txt='%10i %10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1],iforc+1)
+                                txt='%10i %10i %10i %10i %10i\n' % (quad,2,nodes_ok[0],nodes_ok[1],iforc+1)
+                                # Write the id of the quad, 2 (number of nodes describing a free surface elements), the nodes and the type of boundary
+                                toWritetoFile[indexFile] = txt
+                                indexFile = indexFile + 1
+                                #forceedge.write(txt)
+        forceedge.writelines(toWritetoFile)
+        forceedge.close()
+        print 'Ok'
+        cubit.cmd('set info on') # Turn on return messages from Cubit commands
+        cubit.cmd('set echo on') # Turn on echo of Cubit commands
+
     def abs_write(self,absname): #absname=None):
         """ Write absorbing surfaces on file : absname """ 
         cubit.cmd('set info off') # Turn off return messages from Cubit commands
@@ -660,6 +727,8 @@ class mesh(object,mesh_tools):
         self.free_write(path+self.freename) # Write free surface file (specfem2d needs it even if there is no free surface)
         if self.abs_mesh:
             self.abs_write(path+self.absname) # Write absorbing surface file
+        if self.forcing_mesh:
+            self.forcing_write(path+self.forcname) # Write forcing surface file
         if self.axisymmetric_mesh:
             self.axis_write(path+self.axisname) # Write axis on file
         if self.pml_layers:
