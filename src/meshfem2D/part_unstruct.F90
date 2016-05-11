@@ -1056,8 +1056,8 @@
   nb_elmnts_acforcing = 0
   do num_edge = 1, nedge_bound
 
-       nb_elmnts_acforcing = nb_elmnts_acforcing + 1
-       match = nb_elmnts_acforcing
+    nb_elmnts_acforcing = nb_elmnts_acforcing + 1
+    match = nb_elmnts_acforcing
 
     acforcing_surface_merge(match) = acforcing_surface(1,num_edge)
     acforcing_surface_type(match) = acforcing_surface(5,num_edge)
