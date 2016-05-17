@@ -305,7 +305,7 @@ subroutine define_external_model_from_tomo_file()
   use specfem_par, only: tomo_material,coord,nspec,ibool,kmato,rhoext,vpext,vsext, &
                        QKappa_attenuation,Qmu_attenuation,anisotropy, &
                        QKappa_attenuationext,Qmu_attenuationext,poroelastcoef,density, &
-                       c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext
+                       c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext,gravityext,Nsqext
 
   use model_tomography_par
   use interpolation
@@ -320,6 +320,11 @@ subroutine define_external_model_from_tomo_file()
   double precision :: xmesh,zmesh
 
   call read_tomo_file() ! Read external tomo file TOMOGRAPHY_FILE
+
+  ! remove gravity
+  ! leave these arrays here even if you do not assign them to use them because they need to be cleared
+  gravityext(:,:,:) = 0.d0
+  Nsqext(:,:,:) = 0.d0
 
   ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
 
