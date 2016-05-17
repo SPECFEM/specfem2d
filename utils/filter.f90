@@ -15,7 +15,7 @@ program filter_input_trace
 ! Optional arguments :
 !   -h, --help                       Show this help message and exit
 !   --norder FILTER_ORDER            Order of the filter (default 4)
-!   --output PATH_TO_FILTERED_SIGNAL If one signal given: path where we store the filtered 
+!   --output PATH_TO_FILTERED_SIGNAL If one signal given: path where we store the filtered
 !                                    signal (default PATH_TO_SIGNAL+Filt)
 !   -v, --verbose                    Verbose mode
 
@@ -34,7 +34,7 @@ program filter_input_trace
   !======= Local variables ======!
   character(len=100), dimension(:), allocatable :: filesToFilter,output_files
   real(kind=4), dimension(:), allocatable :: input_tr1,input_tr2, output_tr1,output_tr2
-  
+
   !=============== Default parameters ===============!
   character(len=100) :: output_file_name = "default"
   real(kind=4) :: f1 = -9999
@@ -49,7 +49,7 @@ program filter_input_trace
   integer      :: ifile = 1
   integer      :: irek
   real(kind=4) :: x
-  
+
   !=============== Help message ===============!
   200 format(/5x,'This program is used to filter signals with a Butterworth bandpass filter.',/5x, &
        'It has been initially written by Vadim Monteiller and has been adapted by Alexis Bottero.',/5x, &
@@ -111,8 +111,8 @@ program filter_input_trace
             nFiles = nFiles + 1
           endif
       end select
-    end do
-    
+    enddo
+
     if (nFiles > 0) then
       ! Allocate the array to store file names
       allocate(filesToFilter(nFiles),output_files(nFiles))
@@ -121,7 +121,7 @@ program filter_input_trace
       write(*,200)
       stop
     endif
-    
+
     ! Second loop across options to store files
     do cptArg = 1,narg
       call get_command_argument(cptArg,name)
@@ -156,15 +156,15 @@ program filter_input_trace
             i = i + 1
           endif
       end select
-    end do
-  end if
+    enddo
+  endif
 
   if (f1 == -9999 .or. f2 == -9999) then
     write(*,*) "Options -f1 and -f2 must be given... Nothing has been done!"
     write(*,200)
     stop
   endif
-  
+
   if (output_file_name == "default") then
     do ifile = 1,nFiles
       output_files(ifile) = adjustl(trim(filesToFilter(ifile))) // "Filt"
@@ -176,7 +176,7 @@ program filter_input_trace
     write(*,*) "Nothing has been done!"
     stop
   endif
-  
+
   if (verbose) then
     if (nFiles == 1) then
       write(*,"(A,A)") "Name of the file containing the trace to filter: ",adjustl(trim(filesToFilter(1)))
@@ -198,27 +198,27 @@ program filter_input_trace
     write(*,"(A,I3)") "Filter order : ",norder
     write(*,*)
   endif
-  
+
   do ifile = 1,nFiles
     ! Open file containing signal to filter
     open(10,file=filesToFilter(ifile))
 
     ! Count the number of values in file
     nstep = 0
-    do 
+    do
       read(10,*,end=99) x
       nstep = nstep + 1
-    end do
+    enddo
 99  close(10)
-  
+
     allocate(input_tr1(nstep),output_tr1(nstep),input_tr2(nstep),output_tr2(nstep))
     output_tr2(:) = 0.
-  
+
     ! Read input trace
     open(10,file=filesToFilter(ifile))
     do i = 1,nstep
       read(10,*) input_tr1(i),input_tr2(i)
-    end do
+    enddo
     close(10)
 
     dt = input_tr1(2) - input_tr1(1)
@@ -234,13 +234,13 @@ program filter_input_trace
 
     do i = 1,nstep
       write(10,*) output_tr1(i),output_tr2(i)
-    end do
+    enddo
     close(10)
 
     write(*,"(A,A,A)") "File ",adjustl(trim(output_files(ifile)))," has been written."
     deallocate(input_tr1,output_tr1,input_tr2,output_tr2)
   enddo
-  
+
   deallocate(filesToFilter,output_files)
 
 end program filter_input_trace
