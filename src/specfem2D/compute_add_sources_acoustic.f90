@@ -95,7 +95,7 @@
                          hxis_store,hgammas_store,ibool,kappastore,myrank,deltat,t0,tshift_src,&
                          coord,nspec,nglob,xigll,zigll,z_source,nb_proc_source,NPROC,xi_source,& !These 3 lines are for moving src
                          gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source,stage_time_scheme,IMAIN, & ! " "
-                         AXISYM,hxis,hpxis,hgammas,hpgammas,xiglj,is_on_the_axis
+                         hxis,hpxis,hgammas,hpgammas!,AXISYM,xiglj,is_on_the_axis
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_dot_dot_acoustic
