@@ -97,7 +97,11 @@
   ! add force source
   if (.not. initialfield) then
     if (SIMULATION_TYPE == 1) then
-      call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
+      if (SOURCE_IS_MOVING) then
+        call compute_add_sources_acoustic_moving_source(potential_dot_dot_acoustic,it,i_stage)
+      else
+        call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
+      endif
     else if (SIMULATION_TYPE == 3) then
       ! adjoint sources
       call compute_add_sources_acoustic_adjoint()

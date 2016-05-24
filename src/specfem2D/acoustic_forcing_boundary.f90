@@ -37,7 +37,7 @@
 ! variable forcing_type should be passed as a parameter
 ! in future versions
 
-  subroutine acoustic_forcing_boundary(iglob)
+  subroutine acoustic_forcing_boundary(iglob,displ_x,displ_z)
 
   use specfem_par
 
@@ -53,8 +53,10 @@
 
   double precision, dimension(:), allocatable :: goce_time,distance
   double precision, dimension(:,:), allocatable :: syn
-  double precision :: t,signal_x1,signal_x2,fracx,fract
-  double precision :: x
+  double precision :: t,t_used,signal_x1,signal_x2,fracx,fract
+  double precision :: x,z
+
+  double precision :: f0 = 6000.0
 
   real(kind=CUSTOM_REAL) :: displ_x,displ_z
 
@@ -80,38 +82,45 @@
 ! gravity wave /tsunami
 !  tho = 600.0 ! *20
 !  c = 200.0 ! /20
-
   A = 1
   x = coord(1,iglob)
+  z = coord(2,iglob)
   delayed = 0
 
   ! speed of light
   c = 300000000.
 
   if (forcing_type == 1) then !! First test function : same forcing for the whole boundary
-    !  print *, ispec_acoustic
-    !  print *, ispec_is_PML(ispec_acoustic)
-    !  if (ispec_is_PML(ispec_acoustic)) then
+    !if (ispec_is_PML(ispec_acoustic)) then
     !  displ_x = 0
     !  displ_z = 0
-    !  else
+    !else
+      ! infrasounds / seismic
+      !displ_x = 0 !* Apo
+      !displ_z = A * (exp(-(alpha*(deltat*it-40-t0)/tho)**2) &
+      !             - exp(-(alpha*(deltat*it-70-t0)/tho)**2)) !* Apo
+      t_used = deltat*(it-1) - 0.0007d0
+      !sin(2.0d0*pigrec*f0*t_used)
+      if ((z < -1.5d0) .and. (z > -3.5d0)) then
+        displ_x =  2.0d0 * f0*f0 * (2.0d0 * f0*f0 * t_used**2 - 1.0d0) * &
+                             exp(-f0*f0*t_used**2) !(z+2.5d0)**3
+        displ_z = 0.0d0
+      else
+        displ_x =  0.0d0
+        displ_z = 0.0d0
+      endif
+      ! gravity wave test function
+      !  displ_x = 0 !* Apo
+      !  displ_z = A * ( exp(-(alpha*(x-(xo-lambdo/2))/lambdo)**2) - &
+      !                  exp(-(alpha*(x-(xo+lambdo/2))/lambdo)**2) ) * &
+      !            (exp(-(alpha*(deltat*it+1000-t0)/tho)**2) &
+      !            - exp(-(alpha*(deltat*it-1300-t0)/tho)**2)) !* Apo
 
-    ! infrasounds / seismic
-    displ_x = 0 !* Apo
-    displ_z = A * (exp(-(alpha*(deltat*it-40-t0)/tho)**2) &
-                 - exp(-(alpha*(deltat*it-70-t0)/tho)**2)) !* Apo
-
-    ! gravity wave test function
-    !  displ_x = 0 !* Apo
-    !  displ_z = A * ( exp(-(alpha*(x-(xo-lambdo/2))/lambdo)**2) - &
-    !                  exp(-(alpha*(x-(xo+lambdo/2))/lambdo)**2) ) * &
-    !            (exp(-(alpha*(deltat*it+1000-t0)/tho)**2) &
-    !            - exp(-(alpha*(deltat*it-1300-t0)/tho)**2)) !* Apo
-
-    ! gravity wave /tsunami
-    !  displ_x = 0 !* Apo
-    !  displ_z = A * (exp(-(alpha*(deltat*it-1000-t0)/tho)**2) &
-    !            - exp(-(alpha*(deltat*it-1600-t0)/tho)**2)) !* Apo
+      ! gravity wave /tsunami
+      !  displ_x = 0 !* Apo
+      !  displ_z = A * (exp(-(alpha*(deltat*it-1000-t0)/tho)**2) &
+      !            - exp(-(alpha*(deltat*it-1600-t0)/tho)**2)) !* Apo
+    !endif
   endif
 
   !! Second test function : moving forcing

@@ -37,7 +37,7 @@
 
   ! prepares source_time_function array
 
-  use constants,only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE
+  use constants,only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE,SOURCE_IS_MOVING
 
   use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0_source,tshift_src,factor, &
@@ -55,6 +55,7 @@
   double precision, dimension(4) :: c_RK
   character(len=27) :: error_msg1 = 'Error opening file source: '
   character(len=177) :: error_msg
+  logical :: trick_ok = .false.
 
   if (stage_time_scheme == 4) then
     c_RK(1) = 0.0d0 * deltat
@@ -104,8 +105,11 @@
 
     ! note: t0 is the simulation start time, tshift_src is the time shift of the source
     !          relative to this start time
-    if (time_function_type(i_source) >= 5 .and. USE_TRICK_FOR_BETTER_PRESSURE) then
-      call exit_MPI(myrank,'USE_TRICK_FOR_BETTER_PRESSURE is not compatible yet with the type of source you want to use')
+
+    trick_ok = (time_function_type(i_source) < 5) .or. (time_function_type(i_source) == 9) .or. &
+               (time_function_type(i_source) == 10)
+    if ((.not. trick_ok) .and. USE_TRICK_FOR_BETTER_PRESSURE) then
+      call exit_MPI(myrank,'USE_TRICK_FOR_BETTER_PRESSURE is not compatible yet with the type of source you want to use!')
     endif
 
     do i_stage = 1,stage_time_scheme
@@ -120,7 +124,7 @@
         t_used = timeval - t0 - tshift_src(i_source)
         stf_used = 0.d0
 
-        if (is_proc_source(i_source) == 1) then
+        if (is_proc_source(i_source) == 1 .or. SOURCE_IS_MOVING) then
           if (time_function_type(i_source) == 1) then
             ! Ricker type: second derivative
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
@@ -251,17 +255,60 @@
 
           else if (time_function_type(i_source) == 9) then
             ! burst type
+
             DecT = t0 + tshift_src(i_source)
             t_used = (timeval-t0-tshift_src(i_source))
             Nc = TWO * f0_source(i_source) / burst_band_width(i_source)
             Tc = Nc / f0_source(i_source) + DecT
-            if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0_source(i_source)) then
-              source_time_function(i_source,it,i_stage) = - factor(i_source) * &
-                        0.5d0*(ONE-cos(TWO*PI*f0_source(i_source)*t_used/Nc))*sin(TWO*PI*f0_source(i_source)*t_used)
-            !else if (timeval > DecT) then
-            !  source_time_function(i_source,it,i_stage) = ZERO
+
+            if (USE_TRICK_FOR_BETTER_PRESSURE) then
+              ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
+              ! use the second derivative of the source for the source time function instead of the source itself,
+              ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+              ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
+              ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
+              ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+              ! is accurate at second order and thus contains significantly less numerical noise.
+              ! Second derivative of Burst :
+              if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0_source(i_source)) then
+                source_time_function(i_source,it,i_stage) = - factor(i_source) * (0.5d0 * (TWO*PI*f0_source(i_source))**2 * &
+                          sin(TWO*PI*f0_source(i_source)*t_used) * cos(TWO*PI*f0_source(i_source)*t_used/Nc) / Nc**2 - &
+                          0.5d0 * (TWO*PI*f0_source(i_source))**2 * sin(TWO*PI*f0_source(i_source)*t_used) * &
+                          (ONE-cos(TWO*PI*f0_source(i_source)*t_used/Nc)) + &
+                          (TWO*PI*f0_source(i_source))**2 * cos(TWO*PI*f0_source(i_source)*t_used) * &
+                          sin(TWO*PI*f0_source(i_source)*t_used/Nc) / Nc)
+              !else if (timeval > DecT) then
+              !  source_time_function(i_source,it,i_stage) = ZERO
+              else
+                source_time_function(i_source,it,i_stage) = ZERO
+              endif
             else
-              source_time_function(i_source,it,i_stage) = ZERO
+              if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0_source(i_source)) then
+                source_time_function(i_source,it,i_stage) = - factor(i_source) * &
+                          0.5d0*(ONE-cos(TWO*PI*f0_source(i_source)*t_used/Nc))*sin(TWO*PI*f0_source(i_source)*t_used)
+              !else if (timeval > DecT) then
+              !  source_time_function(i_source,it,i_stage) = ZERO
+              else
+                source_time_function(i_source,it,i_stage) = ZERO
+              endif
+            endif
+
+          else if (time_function_type(i_source) == 10) then
+            ! Sinus source time function
+            if (USE_TRICK_FOR_BETTER_PRESSURE) then
+              ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
+              ! use the second derivative of the source for the source time function instead of the source itself,
+              ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+              ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
+              ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
+              ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+              ! is accurate at second order and thus contains significantly less numerical noise.
+              ! Third derivative of Gaussian source time function :
+              source_time_function(i_source,it,i_stage) = -TWO*PI*TWO*PI*f0_source(i_source)*f0_source(i_source)* &
+                                                          factor(i_source) * sin(TWO*PI*f0_source(i_source)*t_used)
+            else
+              ! First derivative of a Gaussian source time function
+              source_time_function(i_source,it,i_stage) = factor(i_source) * sin(TWO*PI*f0_source(i_source)*t_used)
             endif
           else
             call exit_MPI(myrank,'unknown source time function')

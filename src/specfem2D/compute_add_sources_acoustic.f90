@@ -84,6 +84,122 @@
 !=====================================================================
 !
 
+  subroutine compute_add_sources_acoustic_moving_source(potential_dot_dot_acoustic,it,i_stage)
+  !This subroutine is the same than the previous one but with a moving source
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,TINYVAL,SOURCE_IS_MOVING
+
+  use specfem_par, only: ispec_is_acoustic,nglob_acoustic,&
+                         NSOURCES,source_type,source_time_function,&
+                         is_proc_source,ispec_selected_source,&
+                         hxis_store,hgammas_store,ibool,kappastore,myrank,deltat,t0,tshift_src,&
+                         coord,nspec,nglob,xigll,zigll,z_source,nb_proc_source,NPROC,xi_source,& !These 3 lines are for moving src
+                         gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source,stage_time_scheme,IMAIN, & ! " "
+                         AXISYM,hxis,hpxis,hgammas,hpgammas,xiglj,is_on_the_axis
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_dot_dot_acoustic
+  integer,intent(in) :: it,i_stage
+
+  !local variables
+  integer :: i_source,i,j,iglob
+  double precision :: hlagrange
+  double precision :: xminSource,vSource,timeval,t_used
+
+  xminSource = 5000.0d0 !m
+  vSource = 1000.0 !m/s
+  if (stage_time_scheme == 1) then
+    timeval = (it-1)*deltat
+  else
+    call exit_MPI(myrank,'Not implemented!')
+  endif
+
+  do i_source= 1,NSOURCES
+    if (SOURCE_IS_MOVING) then
+      if (abs(source_time_function(i_source,it,i_stage)) > TINYVAL) then
+        t_used = (timeval-t0-tshift_src(i_source))
+
+        x_source(i_source) = xminSource + vSource*timeval !t_used?
+
+        ! collocated force source
+        call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
+                               ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
+                               NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                               iglob_source(i_source))
+
+        ! define and store Lagrange interpolators (hxis,hpxis,hgammas,hpgammas) at all the sources
+        !if (AXISYM) then
+        !  if (is_on_the_axis(ispec_selected_source(i_source)) .and. is_proc_source(i_source) == 1) then
+        !    call lagrange_any(xi_source(i_source),NGLJ,xiglj,hxis,hpxis)
+        !    !do j = 1,NGLJ ! AB AB same result with that loop
+        !    !  hxis(j) = hglj(j-1,xi_source(i),xiglj,NGLJ)
+        !    !enddo
+        !  else
+        !    call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
+        !  endif
+        !else
+          call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
+        !endif
+        call lagrange_any(gamma_source(i_source),NGLLZ,zigll,hgammas,hpgammas)
+
+        ! stores Lagrangians for source
+        hxis_store(i_source,:) = hxis(:)
+        hgammas_store(i_source,:) = hgammas(:)
+
+        if (mod(it,10) == 0) then
+            !  write(IMAIN,*) "myrank:",myrank
+            ! user output
+            if (is_proc_source(i_source) == 1) then
+              iglob = ibool(2,2,ispec_selected_source(i_source))
+              !write(IMAIN,*) 'xcoord: ',coord(1,iglob)
+              write(IMAIN,*) 'it: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob 
+              !'source carried by proc',myrank,"  source x:",x_source(i_source)," ispec:",ispec_selected_source(i_source)
+
+              !call flush_IMAIN()
+            endif
+
+        endif
+      endif
+    endif
+  enddo
+  do i_source= 1,NSOURCES
+    ! if this processor core carries the source and the source element is acoustic
+    ! .and. acoustic(ispec_selected_source(i_source)) ??
+    if (is_proc_source(i_source) == 1 .and. ispec_is_acoustic(ispec_selected_source(i_source))) then
+      ! collocated force
+      ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
+      ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
+      ! to add minus the source to Chi_dot_dot to get plus the source in pressure
+      if (source_type(i_source) == 1) then
+        ! forward wavefield
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            iglob = ibool(i,j,ispec_selected_source(i_source))
+
+            !if (mod(it,10) == 0 .and. i == 2 .and. j == 2) write(IMAIN,*) 'it',it,'source carried by proc',myrank, &
+            !"iglob",iglob !"  source x:",x_source(i_source)," xcoord:", coord(1,iglob)," ispec:",ispec_selected_source(i_source)
+            hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                                                source_time_function(i_source,it,i_stage)*hlagrange &
+                                                !ZN becareful the following line is new added, thus when do comparison
+                                                !ZN of the new code with the old code, you will have big difference if you
+                                                !ZN do not tune the source
+                                                / kappastore(i,j,ispec_selected_source(i_source))
+          enddo
+        enddo
+        ! moment tensor
+        else if (source_type(i_source) == 2) then
+          call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
+      endif
+    endif ! if this processor core carries the source and the source element is acoustic
+  enddo ! do i_source= 1,NSOURCES
+
+  end subroutine compute_add_sources_acoustic_moving_source
+
+!
+!=====================================================================
+!
+
 ! for acoustic solver for adjoint propagation wave field
 
   subroutine compute_add_sources_acoustic_adjoint()
@@ -150,6 +266,7 @@
                             displ_x,displ_z,displ_n
 
   ! loop on all the forced edges
+
   do inum = 1,nelem_acforcing
 
     ispec = numacforcing(inum)
@@ -170,15 +287,14 @@
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
           if (ispec_is_PML(ispec)) then
-            displ_x = 0
-            displ_z = 0
+            displ_x = 0.0d0
+            displ_z = 0.0d0
           else
-            call acoustic_forcing_boundary(iglob)
+            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
           endif
         else
-          call acoustic_forcing_boundary(iglob)
+          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
         endif
-
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
         potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
@@ -200,18 +316,19 @@
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
           if (ispec_is_PML(ispec)) then
-            displ_x = 0
-            displ_z = 0
+            displ_x = 0.0d0
+            displ_z = 0.0d0
           else
-            call acoustic_forcing_boundary(iglob)
+            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
           endif
         else
-          call acoustic_forcing_boundary(iglob)
+          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
         endif
 
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
         potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+
       enddo
     endif  !  end of right acoustic forcing boundary
 
@@ -230,13 +347,13 @@
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
           if (ispec_is_PML(ispec)) then
-            displ_x = 0
-            displ_z = 0
+            displ_x = 0.0d0
+            displ_z = 0.0d0
           else
-            call acoustic_forcing_boundary(iglob)
+            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
           endif
         else
-          call acoustic_forcing_boundary(iglob)
+          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
         endif
 
         ! compute dot product
@@ -260,13 +377,13 @@
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
           if (ispec_is_PML(ispec)) then
-            displ_x = 0
-            displ_z = 0
+            displ_x = 0.0d0
+            displ_z = 0.0d0
           else
-            call acoustic_forcing_boundary(iglob)
+            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
           endif
         else
-          call acoustic_forcing_boundary(iglob)
+          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
         endif
 
         ! compute dot product
@@ -331,13 +448,13 @@
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
           if (ispec_is_PML(ispec)) then
-            displ_x = 0
-            displ_z = 0
+            displ_x = 0.0d0
+            displ_z = 0.0d0
           else
-            call acoustic_forcing_boundary(iglob)
+            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
           endif
         else
-          call acoustic_forcing_boundary(iglob)
+          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
         endif
 
         ! compute displacement at this point
@@ -400,13 +517,13 @@
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
           if (ispec_is_PML(ispec)) then
-            displ_x = 0
-            displ_z = 0
+            displ_x = 0.0d0
+            displ_z = 0.0d0
           else
-            call acoustic_forcing_boundary(iglob)
+            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
           endif
         else
-          call acoustic_forcing_boundary(iglob)
+          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
         endif
 
         ! compute displacement at this point
@@ -470,13 +587,13 @@
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
           if (ispec_is_PML(ispec)) then
-            displ_x = 0
-            displ_z = 0
+            displ_x = 0.0d0
+            displ_z = 0.0d0
           else
-            call acoustic_forcing_boundary(iglob)
+            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
           endif
         else
-          call acoustic_forcing_boundary(iglob)
+          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
         endif
 
         ! compute displacement at this point
@@ -539,13 +656,13 @@
         ! define displacement components which will force the boundary
         if (PML_BOUNDARY_CONDITIONS) then
           if (ispec_is_PML(ispec)) then
-            displ_x = 0
-            displ_z = 0
+            displ_x = 0.0d0
+            displ_z = 0.0d0
           else
-            call acoustic_forcing_boundary(iglob)
+            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
           endif
         else
-          call acoustic_forcing_boundary(iglob)
+          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
         endif
 
         ! compute z displacement at this point

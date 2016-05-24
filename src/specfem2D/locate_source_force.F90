@@ -40,7 +40,7 @@
                                  ispec_selected_source,is_proc_source,nb_proc_source,NPROC,myrank, &
                                  xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source)
 
-  use constants,only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,USE_BEST_LOCATION_FOR_SOURCE
+  use constants,only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,USE_BEST_LOCATION_FOR_SOURCE,SOURCE_IS_MOVING
 
   use specfem_par, only : AXISYM,is_on_the_axis,xiglj
 
@@ -86,7 +86,7 @@
 
 
 ! **************
-  if (myrank == 0 .or. NPROC == 1) then
+  if ((myrank == 0 .or. NPROC == 1) .and. (.not. SOURCE_IS_MOVING)) then ! TODO
     write(IMAIN,*)
     write(IMAIN,*) '*******************************'
     write(IMAIN,*) ' locating force source'
@@ -202,10 +202,10 @@
 ! we can go slightly outside the [1,1] segment since with finite elements
 ! the polynomial solution is defined everywhere
 ! this can be useful for convergence of itertive scheme with distorted elements
-    if (xi > 1.10d0) xi = 1.10d0
-    if (xi < -1.10d0) xi = -1.10d0
-    if (gamma > 1.10d0) gamma = 1.10d0
-    if (gamma < -1.10d0) gamma = -1.10d0
+    if (xi > 1.010d0) xi = 1.010d0
+    if (xi < -1.010d0) xi = -1.010d0
+    if (gamma > 1.010d0) gamma = 1.010d0
+    if (gamma < -1.010d0) gamma = -1.010d0
 
 ! end of non linear iterations
   enddo
@@ -222,7 +222,7 @@
 ! compute final distance between asked and found
   final_distance = sqrt((x_source-x)**2 + (z_source-z)**2)
 
-  if (is_proc_source == 1) then
+  if ((is_proc_source == 1) .and. (.not. SOURCE_IS_MOVING)) then
      write(IMAIN,*)
      write(IMAIN,*) 'Force source:'
 

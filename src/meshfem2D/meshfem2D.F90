@@ -471,7 +471,7 @@
 
         ! rotate the elements that are located on the edges of the mesh if needed
         ! otherwise the plane wave and Bielak conditions may not be applied correctly
-        if (initialfield) call rotate_mesh_for_plane_wave(ngnod)
+        call rotate_mesh_for_acoustic_forcing(ngnod)
       endif
 
     else

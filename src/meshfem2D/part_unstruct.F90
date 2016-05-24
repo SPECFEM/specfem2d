@@ -1132,7 +1132,7 @@
   allocate(iend_edge4_acforcing(nelemacforcing_merge))
 
   ibegin_edge1_acforcing(:) = 1
-  iend_edge1_acforcing(:) = 1
+  ibegin_edge2_acforcing(:) = 1
   ibegin_edge3_acforcing(:) = 1
   ibegin_edge4_acforcing(:) = 1
   iend_edge1_acforcing(:) = NGLLX
