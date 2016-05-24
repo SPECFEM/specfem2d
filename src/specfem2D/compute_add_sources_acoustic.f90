@@ -152,7 +152,7 @@
             if (is_proc_source(i_source) == 1) then
               iglob = ibool(2,2,ispec_selected_source(i_source))
               !write(IMAIN,*) 'xcoord: ',coord(1,iglob)
-              write(IMAIN,*) 'it: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob 
+              write(IMAIN,*) 'it: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob
               !'source carried by proc',myrank,"  source x:",x_source(i_source)," ispec:",ispec_selected_source(i_source)
 
               !call flush_IMAIN()
