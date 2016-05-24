@@ -293,7 +293,7 @@
   integer, parameter :: MAX_STRING_LEN = 512
 
 ! For moving sources
-  logical :: SOURCE_IS_MOVING = .false.
+  logical, parameter :: SOURCE_IS_MOVING = .false.
 
 !!-----------------------------------------------------------
 !!
