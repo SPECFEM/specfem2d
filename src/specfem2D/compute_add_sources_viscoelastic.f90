@@ -51,52 +51,57 @@
   double precision :: hlagrange
 
   ! --- add the source
-  do i_source= 1,NSOURCES
+  do i_source = 1,NSOURCES
 
-    ! if this processor core carries the source and the source element is elastic
-    if (is_proc_source(i_source) == 1 .and. ispec_is_elastic(ispec_selected_source(i_source))) then
+    ! if this processor core carries the source
+    if (is_proc_source(i_source) == 1) then
+      ! source element is elastic
+      if (ispec_is_elastic(ispec_selected_source(i_source))) then
 
-      ! adds source term
-      select case (source_type(i_source))
-      case (1)
-        ! collocated force
-        if (P_SV) then ! P-SV calculation
-          do j = 1,NGLLZ
+        ! adds source term
+        select case (source_type(i_source))
+        case (1)
+          ! collocated force
+          if (P_SV) then
+            ! P-SV calculation
+            do j = 1,NGLLZ
+              do i = 1,NGLLX
+                iglob = ibool(i,j,ispec_selected_source(i_source))
+                hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+                accel_elastic(1,iglob) = accel_elastic(1,iglob) - &
+                                         sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
+                accel_elastic(2,iglob) = accel_elastic(2,iglob) + &
+                                         cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
+              enddo
+            enddo
+          else
+            ! SH (membrane) calculation
+            do j = 1,NGLLZ
+              do i = 1,NGLLX
+                iglob = ibool(i,j,ispec_selected_source(i_source))
+                hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+                accel_elastic(1,iglob) = accel_elastic(1,iglob) + source_time_function(i_source,it,i_stage)*hlagrange
+              enddo
+            enddo
+          endif
+
+        case (2)
+          ! moment tensor
+          ! checks wave type
+          if (.not. P_SV ) call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
+          ! add source array
+          do j = 1,NGLLZ;
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec_selected_source(i_source))
-              hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) - &
-                                       sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
+                                       sourcearray(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
               accel_elastic(2,iglob) = accel_elastic(2,iglob) + &
-                                       cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
+                                       sourcearray(i_source,2,i,j) * source_time_function(i_source,it,i_stage)
             enddo
           enddo
-        else    ! SH (membrane) calculation
-          do j = 1,NGLLZ
-            do i = 1,NGLLX
-              iglob = ibool(i,j,ispec_selected_source(i_source))
-              hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + source_time_function(i_source,it,i_stage)*hlagrange
-            enddo
-          enddo
-        endif
-
-      case (2)
-        ! moment tensor
-        if (.not. P_SV )  call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
-        ! add source array
-        do j = 1,NGLLZ;
-          do i = 1,NGLLX
-            iglob = ibool(i,j,ispec_selected_source(i_source))
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
-                                     sourcearray(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) + &
-                                     sourcearray(i_source,2,i,j) * source_time_function(i_source,it,i_stage)
-          enddo
-        enddo
-      end select
-
-    endif ! if this processor core carries the source and the source element is elastic
+        end select
+      endif ! source element is elastic
+    endif ! if this processor core carries the source
   enddo ! do i_source= 1,NSOURCES
 
   end subroutine compute_add_sources_viscoelastic

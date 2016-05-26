@@ -370,9 +370,11 @@
       write(IMAIN,*)
       write(IMAIN,*) '********'
       write(IMAIN,*) 'Model: P (or PI) velocity min,max = ',vpImin,vpImax
-      write(IMAIN,*) 'Model: PII velocity min,max = ',vpIImin,vpIImax
-      write(IMAIN,*) 'Model: S velocity min,max = ',vsmin,vsmax
-      write(IMAIN,*) 'Model: density min,max = ',densmin,densmax
+      if (POROELASTIC_SIMULATION) then
+        write(IMAIN,*) 'Model: PII velocity min,max       = ',vpIImin,vpIImax
+      endif
+      write(IMAIN,*) 'Model: S velocity min,max         = ',vsmin,vsmax
+      write(IMAIN,*) 'Model: density min,max            = ',densmin,densmax
       write(IMAIN,*) '********'
       write(IMAIN,*)
 

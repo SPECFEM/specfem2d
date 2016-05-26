@@ -397,9 +397,15 @@
 
     ! reads in mesh elements
     if (read_external_mesh) then
-       call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, ngnod)
+      print *
+      print *,'mesh from external mesh file'
+      print *
+      call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, ngnod)
     else
-       call read_interfaces_file()
+      print *
+      print *,'mesh from internal mesher'
+      print *
+      call read_interfaces_file()
     endif
 
     ! assigns materials to mesh elements

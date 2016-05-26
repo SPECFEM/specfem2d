@@ -39,6 +39,8 @@
 
 
 #ifdef USE_MPI
+! only supported with parallel version...
+
 
 !-----------------------------------------------
 ! Assembling the mass matrix.
@@ -524,6 +526,12 @@
 #endif
 
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+
  subroutine assemble_MPI_scalar_send_cuda(NPROC, &
                                            buffer_send_scalar_ext_mesh,buffer_recv_scalar_ext_mesh, &
                                            num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
@@ -872,8 +880,4 @@ enddo
   ! enddo
 
   end subroutine transfer_boundary_to_device
-
-!
-!-------------------------------------------------------------------------------------------------
-!
 

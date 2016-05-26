@@ -37,11 +37,12 @@
 
   ! prepares source_time_function array
 
-  use constants,only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE,SOURCE_IS_MOVING
+  use constants,only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE,SOURCE_IS_MOVING,C_LDDRK
 
   use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0_source,tshift_src,factor, &
-                         aval,t0,nb_proc_source,deltat,stage_time_scheme,C_LDDRK,is_proc_source, &
+                         aval,t0,nb_proc_source,deltat, &
+                         time_stepping_scheme,stage_time_scheme,is_proc_source, &
                          USE_TRICK_FOR_BETTER_PRESSURE,myrank
 
   implicit none
@@ -57,7 +58,14 @@
   character(len=177) :: error_msg
   logical :: trick_ok = .false.
 
-  if (stage_time_scheme == 4) then
+  ! checks time scheme
+  ! Newmark: time_stepping_scheme == 1
+  ! LDDRK  : time_stepping_scheme == 2
+  ! RK     : time_stepping_scheme == 3
+  if (time_stepping_scheme < 1 .or. time_stepping_scheme > 3) stop 'Error invalid time stepping scheme for STF'
+
+  ! RK time scheme constants
+  if (time_stepping_scheme == 3) then
     c_RK(1) = 0.0d0 * deltat
     c_RK(2) = 0.5d0 * deltat
     c_RK(3) = 0.5d0 * deltat
@@ -113,19 +121,25 @@
     endif
 
     do i_stage = 1,stage_time_scheme
+
       ! loop on all the time steps
       do it = 1,NSTEP
-
         ! compute current time
-        if (stage_time_scheme == 1) timeval = (it-1)*deltat
-        if (stage_time_scheme == 4) timeval = (it-1)*deltat+c_RK(i_stage)*deltat
-        if (stage_time_scheme == 6) timeval = (it-1)*deltat+C_LDDRK(i_stage)*deltat
+        ! Newmark
+        if (time_stepping_scheme == 1) timeval = (it-1)*deltat
+        ! LDDRK: Low-Dissipation and low-dispersion Runge-Kutta
+        if (time_stepping_scheme == 2) timeval = (it-1)*deltat+C_LDDRK(i_stage)*deltat
+        ! RK: Runge-Kutta
+        if (time_stepping_scheme == 3) timeval = (it-1)*deltat+c_RK(i_stage)*deltat
 
         t_used = timeval - t0 - tshift_src(i_source)
-        stf_used = 0.d0
 
+        ! only process/partition containing source must set STF
         if (is_proc_source(i_source) == 1 .or. SOURCE_IS_MOVING) then
-          if (time_function_type(i_source) == 1) then
+
+          ! determines source_time_function value for different source types
+          select case (time_function_type(i_source))
+          case (1)
             ! Ricker type: second derivative
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
@@ -150,7 +164,7 @@
               !               t_used/pi * exp(-aval(i_source)*t_used**2)
             endif
 
-          else if (time_function_type(i_source) == 2) then
+          case (2)
             ! Ricker type: first derivative
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
@@ -171,7 +185,7 @@
                         exp(-aval(i_source)*t_used**2)
             endif
 
-          else if (time_function_type(i_source) == 3 .or. time_function_type(i_source) == 4) then
+          case (3,4)
             ! Gaussian/Dirac type
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
@@ -191,14 +205,15 @@
                         exp(-aval(i_source)*t_used**2)
             endif
 
-          else if (time_function_type(i_source) == 5) then
+          case (5)
             ! Heaviside source time function (we use a very thin error function instead)
             hdur(i_source) = 1.d0 / f0_source(i_source)
             hdur_gauss(i_source) = hdur(i_source) * 5.d0 / 3.d0
+
             source_time_function(i_source,it,i_stage) = factor(i_source) * 0.5d0*(1.0d0 + &
                 netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*t_used/hdur_gauss(i_source)))
 
-          else if (time_function_type(i_source) == 6) then
+          case (6)
             ! ocean acoustics type I
             DecT = t0 + tshift_src(i_source)
             Tc = 4.d0 / f0_source(i_source) + DecT
@@ -215,7 +230,7 @@
               source_time_function(i_source,it,i_stage) = ZERO
             endif
 
-          else if (time_function_type(i_source) == 7) then
+          case (7)
             ! ocean acoustics type II
             DecT = t0 + tshift_src(i_source)
             Tc = 4.d0 / f0_source(i_source) + DecT
@@ -237,7 +252,7 @@
               source_time_function(i_source,it,i_stage) = ZERO
             endif
 
-          else if (time_function_type(i_source) == 8) then
+          case (8)
             ! external type
             ! opens external file to read in source time function
             if (it == 1) then
@@ -253,7 +268,7 @@
             ! closes external file
             if (it == NSTEP ) close(num_file)
 
-          else if (time_function_type(i_source) == 9) then
+          case (9)
             ! burst type
 
             DecT = t0 + tshift_src(i_source)
@@ -310,28 +325,34 @@
               ! First derivative of a Gaussian source time function
               source_time_function(i_source,it,i_stage) = factor(i_source) * sin(TWO*PI*f0_source(i_source)*t_used)
             endif
-          else
+
+          case default
             call exit_MPI(myrank,'unknown source time function')
-          endif
 
-          stf_used = stf_used + source_time_function(i_source,it,i_stage)
+          end select
 
-          ! output relative time in third column, in case user wants to check it as well
-          !if (myrank == 0 .and. i_source == 1) write(55,*) &
-          !  sngl(timeval-t0-tshift_src(1)),real(source_time_function(1,it),4),sngl(timeval)
+          ! outputs source time function
           if (i_source == 1 .and. i_stage == 1) then
-            ! note: earliest start time of the simulation is: (it-1)*deltat - t0
-            write(55,*) sngl(timeval-t0),sngl(stf_used),sngl(timeval)
+            stf_used = source_time_function(i_source,it,i_stage)
+
+            ! note: earliest start time of the simulation is: (it-1)*deltat - t0 - tshift_src(i_source)
+            write(55,*) sngl(t_used),sngl(stf_used)
+
+            ! output relative time in third column, in case user wants to check it as well
+            ! write(55,*) sngl(t_used),sngl(stf_used),sngl(timeval)
           endif
         endif
+
+
       enddo
     enddo
   enddo
 
+  ! closes STF file
   if (is_proc_source(1) == 1) close(55)
 
   ! nb_proc_source is the number of processes that own the source (the nearest point). It can be greater
-  ! than one if the nearest point is on the interface between several partitions with an explosive source.
+  ! than one if the nearest point is on the MPI interface between several partitions with an explosive source.
   ! since source contribution is linear, the source_time_function is cut down by that number (it would have been similar
   ! if we just had elected one of those processes).
   do i_source = 1,NSOURCES

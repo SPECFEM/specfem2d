@@ -61,6 +61,7 @@
   double precision :: coord(NDIM,nglob)
 
   integer :: i,j,ispec,iglob,iter_loop,ix_initial_guess,iz_initial_guess,number_of_iterations
+  integer :: imin,imax,jmin,jmax
 
   double precision :: x_source,z_source,dist_squared
   double precision :: xi,gamma,dx,dz,dxi,dgamma
@@ -95,48 +96,70 @@
     call flush_IMAIN()
   endif
 
-! set distance to huge initial value
+  ! initializes slice and element which hold source
+  is_proc_source = 0
+  ispec_selected_source = 0
+  iglob_source = 0 ! closest global point
+
+  ! set distance to huge initial value
   distmin_squared = HUGEVAL
 
-  is_proc_source = 0
+  ! determines search range
+  if (USE_BEST_LOCATION_FOR_SOURCE) then
+    ! only search best element with inner points (exact location will be interpolated afterwards)
+    imin = 2
+    imax = NGLLX - 1
 
+    jmin = 2
+    jmax = NGLLZ - 1
+  else
+    ! search best gll location
+    imin = 1
+    imax = NGLLX
+
+    jmin = 1
+    jmax = NGLLZ
+  endif
+
+  ! loops over all elements
   do ispec = 1,nspec
+    ! loop only on points inside the element
+    ! exclude edges to ensure this point is not shared with other elements
+    do j = jmin,jmax
+      do i = imin,imax
+        iglob = ibool(i,j,ispec)
 
-! loop only on points inside the element
-! exclude edges to ensure this point is not shared with other elements
-     do j = 2,NGLLZ-1
-        do i = 2,NGLLX-1
+        !  we compare squared distances instead of distances themselves to significantly speed up calculations
+        dist_squared = (x_source-dble(coord(1,iglob)))**2 + (z_source-dble(coord(2,iglob)))**2
 
-           iglob = ibool(i,j,ispec)
-
-           !  we compare squared distances instead of distances themselves to significantly speed up calculations
-           dist_squared = (x_source-dble(coord(1,iglob)))**2 + (z_source-dble(coord(2,iglob)))**2
-
-           ! keep this point if it is closer to the source
-           if (dist_squared < distmin_squared) then
-              iglob_source = iglob
-              distmin_squared = dist_squared
-              ispec_selected_source = ispec
-              ix_initial_guess = i
-              iz_initial_guess = j
-           endif
-
-        enddo
-     enddo
-
-! end of loop on all the spectral elements
+        ! keep this point if it is closer to the source
+        if (dist_squared < distmin_squared) then
+          iglob_source = iglob
+          distmin_squared = dist_squared
+          ispec_selected_source = ispec
+          ix_initial_guess = i
+          iz_initial_guess = j
+        endif
+      enddo
+    enddo
   enddo
 
   ! global minimum distance computed over all processes
   call min_all_all_dp(distmin_squared, dist_glob_squared)
 
   ! check if this process contains the source
-  if (abs(sqrt(dist_glob_squared) - sqrt(distmin_squared)) < TINYVAL ) is_proc_source = 1
+  if (abs(sqrt(dist_glob_squared) - sqrt(distmin_squared)) < TINYVAL ) then
+    is_proc_source = 1
+    ! debug
+    !print *,'*******DEBUG: ',' source located in rank = ',myrank,' ********'
+  endif
 
   ! determining the number of processes that contain the source
   ! (useful when the source is located on an interface)
   call sum_all_all_i(is_proc_source, nb_proc_source)
 
+  ! debug
+  !print *,'*******DEBUG: ',' number of proc source = ',nb_proc_source,' ********'
 
 #ifdef USE_MPI
   ! when several processes contain the source, we elect one of them (minimum rank).
@@ -180,28 +203,28 @@
 
   do iter_loop = 1,NUM_ITER
 
-! recompute jacobian for the new point
+    ! recompute jacobian for the new point
     call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
                   coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
                   .true.)
 
-! compute distance to target location
+    ! compute distance to target location
     dx = - (x - x_source)
     dz = - (z - z_source)
 
-! compute increments
+    ! compute increments
     dxi  = xix*dx + xiz*dz
     dgamma = gammax*dx + gammaz*dz
 
-! update values
+    ! update values
     xi = xi + dxi
     gamma = gamma + dgamma
 
-! impose that we stay in that element
-! (useful if user gives a source outside the mesh for instance)
-! we can go slightly outside the [1,1] segment since with finite elements
-! the polynomial solution is defined everywhere
-! this can be useful for convergence of itertive scheme with distorted elements
+    ! impose that we stay in that element
+    ! (useful if user gives a source outside the mesh for instance)
+    ! we can go slightly outside the [1,1] segment since with finite elements
+    ! the polynomial solution is defined everywhere
+    ! this can be useful for convergence of itertive scheme with distorted elements
     if (xi > 1.010d0) xi = 1.010d0
     if (xi < -1.010d0) xi = -1.010d0
     if (gamma > 1.010d0) gamma = 1.010d0
@@ -212,8 +235,8 @@
 
 ! compute final coordinates of point found
   call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                    coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
-                    .true.)
+                          coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
+                          .true.)
 
 ! store xi,gamma of point found
   xi_source = xi

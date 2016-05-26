@@ -205,8 +205,10 @@ module specfem_par
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
   double precision :: t0
-  integer, dimension(:), allocatable :: ispec_selected_source,iglob_source,&
-                                        is_proc_source,nb_proc_source
+
+  integer, dimension(:), allocatable :: ispec_selected_source,iglob_source
+  integer, dimension(:), allocatable :: is_proc_source,nb_proc_source
+
   double precision, dimension(:), allocatable :: aval
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: source_time_function
   double precision, external :: netlib_specfun_erf

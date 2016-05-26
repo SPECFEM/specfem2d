@@ -94,10 +94,12 @@
     call flush_IMAIN()
   endif
 
-! set distance to huge initial value
-  distmin_squared = HUGEVAL
-
+  ! initializes slice and element which hold source
   is_proc_source = 0
+  ispec_selected_source = 0
+
+  ! set distance to huge initial value
+  distmin_squared = HUGEVAL
 
   do ispec = 1,nspec
 
@@ -172,40 +174,40 @@
 ! iterate to solve the non linear system
   do iter_loop = 1,NUM_ITER
 
-! recompute jacobian for the new point
+    ! recompute jacobian for the new point
     call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
                     coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
                     .true.)
 
-! compute distance to target location
-  dx = - (x - x_source)
-  dz = - (z - z_source)
+    ! compute distance to target location
+    dx = - (x - x_source)
+    dz = - (z - z_source)
 
-! compute increments
-  dxi  = xix*dx + xiz*dz
-  dgamma = gammax*dx + gammaz*dz
+    ! compute increments
+    dxi  = xix*dx + xiz*dz
+    dgamma = gammax*dx + gammaz*dz
 
-! update values
-  xi = xi + dxi
-  gamma = gamma + dgamma
+    ! update values
+    xi = xi + dxi
+    gamma = gamma + dgamma
 
-! impose that we stay in that element
-! (useful if user gives a source outside the mesh for instance)
-! we can go slightly outside the [1,1] segment since with finite elements
-! the polynomial solution is defined everywhere
-! this can be useful for convergence of itertive scheme with distorted elements
-  if (xi > 1.10d0) xi = 1.10d0
-  if (xi < -1.10d0) xi = -1.10d0
-  if (gamma > 1.10d0) gamma = 1.10d0
-  if (gamma < -1.10d0) gamma = -1.10d0
+    ! impose that we stay in that element
+    ! (useful if user gives a source outside the mesh for instance)
+    ! we can go slightly outside the [1,1] segment since with finite elements
+    ! the polynomial solution is defined everywhere
+    ! this can be useful for convergence of itertive scheme with distorted elements
+    if (xi > 1.10d0) xi = 1.10d0
+    if (xi < -1.10d0) xi = -1.10d0
+    if (gamma > 1.10d0) gamma = 1.10d0
+    if (gamma < -1.10d0) gamma = -1.10d0
 
 ! end of non linear iterations
   enddo
 
 ! compute final coordinates of point found
-    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                    coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
-                    .true.)
+  call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
+                          coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
+                          .true.)
 
 ! store xi,gamma of point found
   xi_source = xi

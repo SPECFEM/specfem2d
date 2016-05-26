@@ -142,7 +142,7 @@
     stage_time_scheme = 1
   else if (time_stepping_scheme == 2) then
     ! LDDRK
-    stage_time_scheme = NSTAGE
+    stage_time_scheme = NSTAGE ! 6
   else if (time_stepping_scheme == 3) then
     ! Runge-Kutta
     stage_time_scheme = 4

@@ -51,29 +51,32 @@
   double precision :: hlagrange
 
   do i_source= 1,NSOURCES
-    ! if this processor core carries the source and the source element is acoustic
-    if (is_proc_source(i_source) == 1 .and. ispec_is_acoustic(ispec_selected_source(i_source))) then
-      ! collocated force
-      ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
-      ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
-      ! to add minus the source to Chi_dot_dot to get plus the source in pressure
-      if (source_type(i_source) == 1) then
-        ! forward wavefield
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            iglob = ibool(i,j,ispec_selected_source(i_source))
-            hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-                                                source_time_function(i_source,it,i_stage)*hlagrange &
-                                                !ZN becareful the following line is new added, thus when do comparison
-                                                !ZN of the new code with the old code, you will have big difference if you
-                                                !ZN do not tune the source
-                                                / kappastore(i,j,ispec_selected_source(i_source))
+    ! if this processor core carries the source
+    if (is_proc_source(i_source) == 1) then
+      ! source element is acoustic
+      if (ispec_is_acoustic(ispec_selected_source(i_source))) then
+        ! collocated force
+        ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
+        ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
+        ! to add minus the source to Chi_dot_dot to get plus the source in pressure
+        if (source_type(i_source) == 1) then
+          ! forward wavefield
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              iglob = ibool(i,j,ispec_selected_source(i_source))
+              hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                                                  source_time_function(i_source,it,i_stage)*hlagrange &
+                                                  !ZN becareful the following line is new added, thus when do comparison
+                                                  !ZN of the new code with the old code, you will have big difference if you
+                                                  !ZN do not tune the source
+                                                  / kappastore(i,j,ispec_selected_source(i_source))
+            enddo
           enddo
-        enddo
-      ! moment tensor
-      else if (source_type(i_source) == 2) then
-         call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
+        ! moment tensor
+        else if (source_type(i_source) == 2) then
+           call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
+        endif
       endif
     endif ! if this processor core carries the source and the source element is acoustic
   enddo ! do i_source= 1,NSOURCES

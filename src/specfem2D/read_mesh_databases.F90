@@ -463,13 +463,23 @@
   x_source(:) = 0.d0
   z_source(:) = 0.d0
 
-  ! reads in source info from Database file
+  is_proc_source(:) = 0
+  nb_proc_source(:) = 0
+
+  ispec_selected_source(:) = 0
+  iglob_source(:) = 0
+
+  sourcearray(:,:,:,:) = 0.d0
+
+  ! reads in source info from Database file (check with routine save_databases_sources())
   do i_source= 1,NSOURCES
-     read(IIN,"(a80)") datlin
-     read(IIN,*) source_type(i_source),time_function_type(i_source)
-     read(IIN,"(a100)") name_of_source_file(i_source)
-     read(IIN,*) burst_band_width(i_source),x_source(i_source),z_source(i_source),f0_source(i_source), &
-                 tshift_src(i_source),factor(i_source),anglesource(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
+    read(IIN,"(a80)") datlin
+    read(IIN,*) source_type(i_source),time_function_type(i_source)
+    read(IIN,"(a100)") name_of_source_file(i_source)
+    read(IIN,*) burst_band_width(i_source), &
+                x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
+                factor(i_source),anglesource(i_source), &
+                Mxx(i_source),Mzz(i_source),Mxz(i_source)
   enddo
 
   !if (AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify

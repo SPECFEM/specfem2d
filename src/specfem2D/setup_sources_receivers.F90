@@ -87,10 +87,9 @@
     call flush_IMAIN()
   endif
 
-  do i_source= 1,NSOURCES
+  do i_source = 1,NSOURCES
 
     if (source_type(i_source) == 1) then
-
       ! collocated force source
       call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
                                ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
@@ -133,13 +132,13 @@
     else if (source_type(i_source) == 2) then
       ! moment-tensor source
       call locate_source_moment_tensor(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
-             ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
-             NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo)
+                                       ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
+                                       NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo)
 
       ! compute source array for moment-tensor source
       call compute_arrays_source(ispec_selected_source(i_source),xi_source(i_source),gamma_source(i_source),&
-             sourcearray(i_source,1,1,1), &
-             Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
+                                 sourcearray(i_source,1,1,1), &
+                                 Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
 
     else if (.not.initialfield) then
 
