@@ -68,7 +68,7 @@ freq0                           = 10             # frequency for viscous attenua
 
 # for viscoelastic attenuation
 N_SLS                           = 2              # number of standard linear solids for attenuation (3 is usually the minimum)
-f0_attenuation                  = 5.196152422706633 # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
+f0_attenuation                  = 5.196152422706633 # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
 READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
@@ -91,7 +91,10 @@ force_normal_to_surface         = .false.        # angleforce normal to surface 
 
 # use an existing initial wave field as source or start from zero (medium initially at rest)
 initialfield                    = .false.
-add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
+add_Bielak_conditions_bottom    = .false.        # add Bielak conditions or not if initial plane wave
+add_Bielak_conditions_right     = .false.
+add_Bielak_conditions_top       = .false.
+add_Bielak_conditions_left      = .false.
 
 # acoustic forcing
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
@@ -116,6 +119,10 @@ USE_TRICK_FOR_BETTER_PRESSURE   = .false.
 # (costly, do not use a very small value; if you use a very large value that is larger than the total number
 #  of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
 NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000
+
+# Compute the field int_0^t v^2 dt for a set of GLL points and write it to file. Use
+# the script utils/visualisation/plotIntegratedEnergyFile.py to watch. It is refreshed at the same time than the seismograms
+COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
 
 # use this t0 as earliest starting time rather than the automatically calculated one
 USER_T0                         = 0.0d0
@@ -169,7 +176,6 @@ ROTATE_PML_ANGLE                = 30.
 
 # Stacey ABC
 STACEY_ABSORBING_CONDITIONS     = .true.
-ADD_SPRING_TO_STACEY            = .false.
 
 # periodic boundaries
 ADD_PERIODIC_CONDITIONS         = .false.
