@@ -58,7 +58,7 @@
                                    PML_BOUNDARY_CONDITIONS,e1,e11,e13)
 
   ! Stacey boundary conditions
-  if (STACEY_BOUNDARY_CONDITIONS) then
+  if (STACEY_ABSORBING_CONDITIONS) then
     call compute_stacey_elastic(accel_elastic,veloc_elastic)
   endif
 

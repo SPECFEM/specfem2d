@@ -308,7 +308,7 @@
               endif
             endif
 
-          else if (time_function_type(i_source) == 10) then
+          case (10)
             ! Sinus source time function
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:

@@ -190,9 +190,6 @@
     write(15,*) 'time_stepping_scheme'
     write(15,*) time_stepping_scheme
 
-    write(15,*) 'ADD_SPRING_TO_STACEY'
-    write(15,*) ADD_SPRING_TO_STACEY
-
     write(15,*) 'ADD_PERIODIC_CONDITIONS'
     write(15,*) ADD_PERIODIC_CONDITIONS
 

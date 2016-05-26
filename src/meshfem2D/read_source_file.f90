@@ -201,6 +201,9 @@
     case (9)
       print *,'  Burst wavelet:'
       print *,'  Burst band width: ',burst_band_width(i_source)
+    case (10)
+      print *,'  Sinus source time function:'
+      print *,'  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case default
       stop 'Error invalid source time function type! must be between 1 and 9, exiting...'
     end select

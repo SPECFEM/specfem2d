@@ -1023,8 +1023,6 @@
       write(IMAIN,*) '  using PML boundary conditions'
     if (STACEY_ABSORBING_CONDITIONS) &
       write(IMAIN,*) '  using Stacey absorbing boundary conditions'
-    if (STACEY_ABSORBING_CONDITIONS .and. ADD_SPRING_TO_STACEY) &
-      write(IMAIN,*) '  adding spring to Stacey boundary conditions'
     ! for Stacey
     if (STACEY_ABSORBING_CONDITIONS) then
       write(IMAIN,*)

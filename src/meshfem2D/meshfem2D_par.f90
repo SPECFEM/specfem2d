@@ -101,7 +101,7 @@
              add_Bielak_conditions
 
   ! variables used for absorbing boundary condition
-  logical :: any_abs,absbottom,absright,abstop,absleft
+  logical :: any_abs,absorbbottom,absorbright,absorbtop,absorbleft
 
   logical :: STACEY_ABSORBING_CONDITIONS
 
