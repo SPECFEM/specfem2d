@@ -49,8 +49,11 @@
   ! tangential components
   call setup_source_receiver_tangentials()
 
-  ! pre-compute lagrangians
-  call setup_source_receiver_interpolation()
+  ! pre-compute lagrangians and sourcearrays for sources
+  call setup_source_interpolation()
+
+  ! pre-compute lagrangians for receivers
+  call setup_receiver_interpolation()
 
   ! synchronizes processes
   call synchronize_all()
@@ -70,8 +73,7 @@
                          ispec_is_elastic,ispec_is_poroelastic, &
                          x_source,z_source,ispec_selected_source, &
                          is_proc_source,nb_proc_source, &
-                         sourcearray,Mxx,Mzz,Mxz, &
-                         xix,xiz,gammax,gammaz,xigll,zigll,npgeo, &
+                         xigll,zigll,npgeo, &
                          NPROC,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
                          iglob_source
   implicit none
@@ -87,6 +89,7 @@
     call flush_IMAIN()
   endif
 
+  ! locates sources
   do i_source = 1,NSOURCES
 
     if (source_type(i_source) == 1) then
@@ -96,8 +99,9 @@
                                NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
                                iglob_source(i_source))
 
-      ! check that acoustic source is not exactly on the free surface because pressure is zero there
+      ! check
       if (is_proc_source(i_source) == 1) then
+        ! checks that acoustic source is not exactly on the free surface because pressure is zero there
         do ispec_acoustic_surface = 1,nelem_acoustic_surface
           ispec = acoustic_surface(1,ispec_acoustic_surface)
           ixmin = acoustic_surface(2,ispec_acoustic_surface)
@@ -127,6 +131,11 @@
             endif
           endif
         enddo
+
+        ! daniel debug
+        !print *,'***** DEBUG source rank/element/iglob',myrank,ispec_selected_source(i_source),iglob_source(i_source),'*******'
+        open(unit=1234,file='OUTPUT_FILES/debug_accel_contribution.txt',status='unknown')
+
       endif
 
     else if (source_type(i_source) == 2) then
@@ -134,11 +143,6 @@
       call locate_source_moment_tensor(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
                                        ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
                                        NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo)
-
-      ! compute source array for moment-tensor source
-      call compute_arrays_source(ispec_selected_source(i_source),xi_source(i_source),gamma_source(i_source),&
-                                 sourcearray(i_source,1,1,1), &
-                                 Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
 
     else if (.not.initialfield) then
 
@@ -698,7 +702,6 @@
           if (dist_current < distmin) then
             n1_tangential_detection_curve = i
             distmin = dist_current
-
           endif
         enddo
 
@@ -847,15 +850,141 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine setup_source_receiver_interpolation()
+  subroutine setup_source_interpolation()
+
+  use constants,only: NDIM,NGLLX,NGLLZ,NGLJ,ZERO,CUSTOM_REAL
+
+  use specfem_par,only: myrank,nspec,NSOURCES,source_type,anglesource,P_SV, &
+    sourcearrays,Mxx,Mxz,Mzz, &
+    ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic, &
+    ispec_selected_source,is_proc_source, &
+    xi_source,gamma_source, &
+    xix,xiz,gammax,gammaz,xigll,zigll, &
+    hxis_store,hgammas_store,hxis,hpxis,hgammas,hpgammas, &
+    AXISYM,is_on_the_axis,xiglj
+
+  implicit none
+
+  ! local parameters
+  integer :: i_source,ispec,i,j,ier
+  double precision :: hlagrange
+  ! single source array
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
+
+  ! allocates Lagrange interpolators for sources
+  allocate(hxis_store(NSOURCES,NGLLX), &
+           hgammas_store(NSOURCES,NGLLZ),stat=ier)
+  if (ier /= 0) stop 'Error allocating source h**_store arrays'
+
+  ! initializes
+  hxis_store(:,:) = ZERO
+  hgammas_store(:,:) = ZERO
+
+  sourcearrays(:,:,:,:) = 0._CUSTOM_REAL
+
+  ! define and store Lagrange interpolators at all the sources
+  do i_source = 1,NSOURCES
+
+    if (is_proc_source(i_source) == 1) then
+
+      ! element containing source
+      ispec = ispec_selected_source(i_source)
+
+      ! Lagrange interpolators
+      if (AXISYM) then
+        if (is_on_the_axis(ispec)) then
+          call lagrange_any(xi_source(i_source),NGLJ,xiglj,hxis,hpxis)
+          !do j = 1,NGLJ ! AB AB same result with that loop
+          !  hxis(j) = hglj(j-1,xi_source(i_source),xiglj,NGLJ)
+          !enddo
+        else
+          call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
+        endif
+      else
+        call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
+      endif
+      call lagrange_any(gamma_source(i_source),NGLLZ,zigll,hgammas,hpgammas)
+
+      ! stores Lagrangians for source
+      hxis_store(i_source,:) = hxis(:)
+      hgammas_store(i_source,:) = hgammas(:)
+
+      sourcearray(:,:,:) = 0._CUSTOM_REAL
+
+      ! computes source arrays
+      select case (source_type(i_source))
+      case (1)
+        ! collocated force source
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+
+            ! source element is acoustic
+            if (ispec_is_acoustic(ispec)) then
+              sourcearray(:,i,j) = hlagrange
+            endif
+
+            ! source element is elastic
+            if (ispec_is_elastic(ispec)) then
+              if (P_SV) then
+                ! P_SV case
+                sourcearray(1,i,j) = - sin(anglesource(i_source)) * hlagrange
+                sourcearray(2,i,j) =   cos(anglesource(i_source)) * hlagrange
+              else
+                ! SH case (membrane)
+                sourcearray(:,i,j) = hlagrange
+              endif
+            endif
+
+            ! source element is poroelastic
+            if (ispec_is_poroelastic(ispec)) then
+              sourcearray(1,i,j) = - sin(anglesource(i_source)) * hlagrange
+              sourcearray(2,i,j) =   cos(anglesource(i_source)) * hlagrange
+            endif
+
+          enddo
+        enddo
+
+      case (2)
+        ! moment-tensor source
+        call compute_arrays_source(ispec,xi_source(i_source),gamma_source(i_source),sourcearray, &
+                                   Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
+        ! checks source
+        if (ispec_is_acoustic(ispec)) then
+          call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
+        endif
+
+        ! checks wave type
+        if (ispec_is_elastic(ispec)) then
+          if (.not. P_SV ) call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
+        endif
+
+      end select
+
+      ! stores sourcearray for all sources
+      sourcearrays(i_source,:,:,:) = sourcearray(:,:,:)
+
+    endif
+  enddo
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine setup_source_interpolation
+
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
+  subroutine setup_receiver_interpolation()
 
   use constants,only: NGLLX,NGLLZ,NGLJ
 
-  use specfem_par,only: myrank,nrec,nrecloc,NSOURCES, &
-    ispec_selected_rec,ispec_selected_source,which_proc_receiver,is_proc_source, &
+  use specfem_par,only: myrank,nrec,nrecloc, &
+    ispec_selected_rec,which_proc_receiver, &
     xigll,zigll, &
     hxir_store,hgammar_store,xi_receiver,gamma_receiver,hxir,hpxir,hgammar,hpgammar, &
-    hxis_store,hgammas_store,xi_source,gamma_source,hxis,hpxis,hgammas,hpgammas, &
     AXISYM,is_on_the_axis,xiglj
 
   use specfem_par_gpu,only: xir_store_loc,gammar_store_loc
@@ -863,7 +992,7 @@
   implicit none
 
   ! local parameters
-  integer :: i,irec,irec_local,ier
+  integer :: irec,irec_local,ier
 
   ! allocate Lagrange interpolators for receivers
   allocate(hxir_store(nrec,NGLLX), &
@@ -903,34 +1032,8 @@
     endif
   enddo
 
-  ! allocate Lagrange interpolators for sources
-  allocate(hxis_store(NSOURCES,NGLLX), &
-           hgammas_store(NSOURCES,NGLLZ),stat=ier)
-  if (ier /= 0) stop 'Error allocating source h**_store arrays'
-
-  ! define and store Lagrange interpolators at all the sources
-  do i = 1,NSOURCES
-    if (AXISYM) then
-      if (is_on_the_axis(ispec_selected_source(i)) .and. is_proc_source(i) == 1) then
-        call lagrange_any(xi_source(i),NGLJ,xiglj,hxis,hpxis)
-        !do j = 1,NGLJ ! AB AB same result with that loop
-        !  hxis(j) = hglj(j-1,xi_source(i),xiglj,NGLJ)
-        !enddo
-      else
-        call lagrange_any(xi_source(i),NGLLX,xigll,hxis,hpxis)
-      endif
-    else
-      call lagrange_any(xi_source(i),NGLLX,xigll,hxis,hpxis)
-    endif
-    call lagrange_any(gamma_source(i),NGLLZ,zigll,hgammas,hpgammas)
-
-    ! stores Lagrangians for source
-    hxis_store(i,:) = hxis(:)
-    hgammas_store(i,:) = hgammas(:)
-  enddo
-
   ! synchronizes all processes
   call synchronize_all()
 
-  end subroutine setup_source_receiver_interpolation
+  end subroutine setup_receiver_interpolation
 

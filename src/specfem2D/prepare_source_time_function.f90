@@ -331,7 +331,7 @@
 
           end select
 
-          ! outputs source time function
+          ! outputs (first source) source time function
           if (i_source == 1 .and. i_stage == 1) then
             stf_used = source_time_function(i_source,it,i_stage)
 
@@ -342,8 +342,6 @@
             ! write(55,*) sngl(t_used),sngl(stf_used),sngl(timeval)
           endif
         endif
-
-
       enddo
     enddo
   enddo

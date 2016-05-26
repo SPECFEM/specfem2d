@@ -201,9 +201,10 @@ module specfem_par
   double precision, dimension(:), allocatable :: x_source,z_source
   double precision, dimension(:), allocatable :: xi_source,gamma_source
 
-  double precision, dimension(:), allocatable :: Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource
+  double precision, dimension(:), allocatable :: Mxx,Mzz,Mxz
+  double precision, dimension(:), allocatable :: f0_source,tshift_src,factor,anglesource
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearrays
   double precision :: t0
 
   integer, dimension(:), allocatable :: ispec_selected_source,iglob_source

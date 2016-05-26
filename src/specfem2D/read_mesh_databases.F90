@@ -437,7 +437,7 @@
            source_courbe_eros(NSOURCES), &
            is_proc_source(NSOURCES), &
            nb_proc_source(NSOURCES), &
-           sourcearray(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
+           sourcearrays(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
   if (ier /= 0) stop 'Error allocating source arrays'
 
   ! source locations
@@ -469,7 +469,7 @@
   ispec_selected_source(:) = 0
   iglob_source(:) = 0
 
-  sourcearray(:,:,:,:) = 0.d0
+  sourcearrays(:,:,:,:) = 0._CUSTOM_REAL
 
   ! reads in source info from Database file (check with routine save_databases_sources())
   do i_source= 1,NSOURCES

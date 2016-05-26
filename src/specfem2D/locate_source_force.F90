@@ -164,7 +164,6 @@
 #ifdef USE_MPI
   ! when several processes contain the source, we elect one of them (minimum rank).
   if (nb_proc_source > 1) then
-
      call MPI_ALLGATHER(is_proc_source, 1, MPI_INTEGER, allgather_is_proc_source(1), &
                         1, MPI_INTEGER, MPI_COMM_WORLD, ierror)
      locate_is_proc_source = maxloc(allgather_is_proc_source) - 1
@@ -173,9 +172,7 @@
         is_proc_source = 0
      endif
      nb_proc_source = 1
-
   endif
-
 #endif
 
 ! ****************************************

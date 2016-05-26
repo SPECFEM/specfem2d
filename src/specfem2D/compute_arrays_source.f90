@@ -31,6 +31,7 @@
 !
 !========================================================================
 
+
   subroutine compute_arrays_source(ispec_selected_source,xi_source,gamma_source,sourcearray, &
                                    Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,nspec)
 

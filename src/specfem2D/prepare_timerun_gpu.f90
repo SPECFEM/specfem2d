@@ -503,27 +503,8 @@
     if (is_proc_source(i_source) == 1) then
       ! source belongs to this process
       k = k + 1
-      if (source_type(i_source) == 1) then
-        if (ispec_is_acoustic(ispec_selected_source(i_source))) then
-          ! acoustic domain
-          do j = 1,NGLLZ
-            do i = 1,NGLLX
-              sourcearray_loc(k,1,i,j) = sngl(hxis_store(i_source,i) * hgammas_store(i_source,j))
-            enddo
-          enddo
-        else if (ispec_is_elastic(ispec_selected_source(i_source))) then
-          ! elastic domain
-          do j = 1,NGLLZ
-            do i = 1,NGLLX
-              sourcearray_loc(k,1,i,j) = - sngl(sin(anglesource(i_source)) * hxis_store(i_source,i) * hgammas_store(i_source,j))
-              sourcearray_loc(k,2,i,j) = sngl(cos(anglesource(i_source)) * hxis_store(i_source,i) * hgammas_store(i_source,j))
-            enddo
-          enddo
-        endif
-      else
-        sourcearray_loc(k,:,:,:) = sourcearray(i_source,:,:,:)
-        sourcearray_loc(k,:,:,:) = sourcearray(i_source,:,:,:)
-      endif ! Source_type
+      sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
+      sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
     endif ! is_proc_source
   enddo
 

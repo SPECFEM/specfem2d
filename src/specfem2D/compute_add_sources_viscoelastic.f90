@@ -37,69 +37,63 @@
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
-  use specfem_par, only: P_SV,ispec_is_elastic,nglob_elastic,&
-                         NSOURCES,source_type,anglesource,source_time_function,&
-                         is_proc_source,ispec_selected_source,sourcearray,&
-                         hxis_store,hgammas_store,ibool,myrank
+  use specfem_par, only: P_SV,ispec_is_elastic,nglob_elastic, &
+                         NSOURCES,source_time_function, &
+                         is_proc_source,ispec_selected_source,sourcearrays, &
+                         ibool
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic) :: accel_elastic
   integer :: it, i_stage
 
   !local variable
-  integer :: i_source,i,j,iglob
-  double precision :: hlagrange
+  integer :: i_source,i,j,iglob,ispec
 
   ! --- add the source
   do i_source = 1,NSOURCES
 
     ! if this processor core carries the source
     if (is_proc_source(i_source) == 1) then
+
+      ! element containing source
+      ispec = ispec_selected_source(i_source)
+
       ! source element is elastic
-      if (ispec_is_elastic(ispec_selected_source(i_source))) then
+      if (ispec_is_elastic(ispec)) then
 
         ! adds source term
-        select case (source_type(i_source))
-        case (1)
-          ! collocated force
-          if (P_SV) then
-            ! P-SV calculation
-            do j = 1,NGLLZ
-              do i = 1,NGLLX
-                iglob = ibool(i,j,ispec_selected_source(i_source))
-                hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-                accel_elastic(1,iglob) = accel_elastic(1,iglob) - &
-                                         sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
-                accel_elastic(2,iglob) = accel_elastic(2,iglob) + &
-                                         cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)*hlagrange
-              enddo
-            enddo
-          else
-            ! SH (membrane) calculation
-            do j = 1,NGLLZ
-              do i = 1,NGLLX
-                iglob = ibool(i,j,ispec_selected_source(i_source))
-                hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-                accel_elastic(1,iglob) = accel_elastic(1,iglob) + source_time_function(i_source,it,i_stage)*hlagrange
-              enddo
-            enddo
-          endif
-
-        case (2)
-          ! moment tensor
-          ! checks wave type
-          if (.not. P_SV ) call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
-          ! add source array
-          do j = 1,NGLLZ;
+        ! note: we use sourcearrays for both collocated forces and moment tensors
+        !       (see setup in setup_source_interpolation() routine)
+        if (P_SV) then
+          ! P-SV calculation
+          do j = 1,NGLLZ
             do i = 1,NGLLX
-              iglob = ibool(i,j,ispec_selected_source(i_source))
+              iglob = ibool(i,j,ispec)
               accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
-                                       sourcearray(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
+                                       sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
               accel_elastic(2,iglob) = accel_elastic(2,iglob) + &
-                                       sourcearray(i_source,2,i,j) * source_time_function(i_source,it,i_stage)
+                                       sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
             enddo
           enddo
-        end select
+        else
+          ! SH (membrane) calculation
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              iglob = ibool(i,j,ispec)
+
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
+                                       sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
+
+              ! daniel debug 
+              if (iglob == 37905) &
+              write(1234,*) it, dble(sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)), &
+                            accel_elastic(1,iglob),source_time_function(i_source,it,i_stage),sourcearrays(i_source,1,i,j)
+
+
+            enddo
+          enddo
+        endif
+
       endif ! source element is elastic
     endif ! if this processor core carries the source
   enddo ! do i_source= 1,NSOURCES
@@ -122,7 +116,7 @@
   implicit none
 
   !local variables
-  integer :: irec_local,irec,i,j,iglob
+  integer :: irec_local,irec,i,j,iglob,ispec
   integer :: it_tmp
 
   ! time step index
@@ -133,21 +127,30 @@
     !   add the source (only if this proc carries the source)
     if (myrank == which_proc_receiver(irec)) then
       irec_local = irec_local + 1
-      if (ispec_is_elastic(ispec_selected_rec(irec))) then
+
+      ! element containing adjoint source
+      ispec = ispec_selected_rec(irec)
+
+      if (ispec_is_elastic(ispec)) then
         ! add source array
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            iglob = ibool(i,j,ispec_selected_rec(irec))
-            if (P_SV) then
-              ! P-SH waves
+        if (P_SV) then
+          ! P-SH waves
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              iglob = ibool(i,j,ispec)
               accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,it_tmp,1,i,j)
               accel_elastic(2,iglob) = accel_elastic(2,iglob) + adj_sourcearrays(irec_local,it_tmp,2,i,j)
-            else
-              ! SH (membrane) wavescompute_forces_v
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,it_tmp,1,i,j)
-            endif
+            enddo
           enddo
-        enddo
+        else
+          ! SH (membrane) wavescompute_forces_v
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              iglob = ibool(i,j,ispec)
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,it_tmp,1,i,j)
+            enddo
+          enddo
+        endif
       endif ! if element is elastic
     endif ! if this processor core carries the adjoint source and the source element is elastic
 

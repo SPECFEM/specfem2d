@@ -116,17 +116,20 @@
   ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
   if (NPROC > 1 .and. ninterface_elastic > 0) then
+    ! LDDRK
     if (time_stepping_scheme == 2) then
-      if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-        veloc_elastic_LDDRK_temp = veloc_elastic
+      if (i_stage == 1 .and. it == 1 .and. (.not. initialfield)) then
+        veloc_elastic_LDDRK_temp(:,:) = veloc_elastic(:,:)
         call assemble_MPI_vector_el(veloc_elastic)
       endif
     endif
 
+    ! collects all contributions on shared degrees of freedom
     call assemble_MPI_vector_el(accel_elastic)
   endif
 #endif
 
+  ! saves boundary condition for reconstruction
   if (PML_BOUNDARY_CONDITIONS) then
     if (nglob_interface > 0) then
       if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
@@ -144,12 +147,15 @@
   accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one(:)
   accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_three(:)
 
-  if (time_stepping_scheme == 1) then
+  ! time stepping
+  select case (time_stepping_scheme)
+  case (1)
+    ! Newmark
     !! DK DK this should be vectorized
     veloc_elastic(:,:) = veloc_elastic(:,:) + deltatover2 * accel_elastic(:,:)
-  endif
 
-  if (time_stepping_scheme == 2) then
+  case (2)
+    ! LDDRK
     !! DK DK this should be vectorized
     veloc_elastic_LDDRK(:,:) = ALPHA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:) + deltat * accel_elastic(:,:)
     displ_elastic_LDDRK(:,:) = ALPHA_LDDRK(i_stage) * displ_elastic_LDDRK(:,:) + deltat * veloc_elastic(:,:)
@@ -160,9 +166,9 @@
       veloc_elastic(:,:) = veloc_elastic(:,:) + BETA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:)
     endif
     displ_elastic(:,:) = displ_elastic(:,:) + BETA_LDDRK(i_stage) * displ_elastic_LDDRK(:,:)
-  endif
 
-  if (time_stepping_scheme == 3) then
+  case (3)
+    ! RK
     !! DK DK this should be vectorized
     accel_elastic_rk(1,:,i_stage) = deltat * accel_elastic(1,:)
     accel_elastic_rk(2,:,i_stage) = deltat * accel_elastic(2,:)
@@ -208,7 +214,7 @@
                            ( veloc_elastic_rk(2,:,1) + 2.0d0 * veloc_elastic_rk(2,:,2) + &
                              2.0d0 * veloc_elastic_rk(2,:,3) + veloc_elastic_rk(2,:,4))
     endif
-  endif
+  end select
 
   end subroutine compute_forces_viscoelastic_main
 
@@ -335,7 +341,8 @@
   b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
   b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_three(:)
 
-  b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
+  ! time stepping
+  b_veloc_elastic(:,:) = b_veloc_elastic(:,:) + b_deltatover2 * b_accel_elastic(:,:)
 
   end subroutine compute_forces_viscoelastic_main_backward
 
