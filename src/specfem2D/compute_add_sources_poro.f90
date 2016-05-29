@@ -51,6 +51,7 @@
   integer :: i_source,i,j,iglob,ispec
   double precision :: phi,tort,rho_s,rho_f,rho_bar
   real(kind=CUSTOM_REAL) :: fac_s,fac_w
+  real(kind=CUSTOM_REAL) :: stf_used
   integer :: material
 
   do i_source = 1,NSOURCES
@@ -75,6 +76,9 @@
         fac_s = real((1.d0 - phi/tort),kind=CUSTOM_REAL)
         fac_w = real((1.d0 - rho_f/rho_bar),kind=CUSTOM_REAL)
 
+        ! source time function
+        stf_used = source_time_function(i_source,it,i_stage)
+
         ! adds source contribution
         ! note: we use sourcearrays for both, collocated force and moment tensor forces
         !       (see setup in setup_souces_interpolation() routine), thus can write for both cases the same loop
@@ -84,15 +88,15 @@
 
             ! solid contribution
             accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + &
-                        fac_s * sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
+                        fac_s * sourcearrays(i_source,1,i,j) * stf_used
             accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + &
-                        fac_s * sourcearrays(i_source,2,i,j) * source_time_function(i_source,it,i_stage)
+                        fac_s * sourcearrays(i_source,2,i,j) * stf_used
 
             ! fluid contribution
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) + &
-                        fac_w * sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
+                        fac_w * sourcearrays(i_source,1,i,j) * stf_used
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + &
-                        fac_w * sourcearrays(i_source,2,i,j) * source_time_function(i_source,it,i_stage)
+                        fac_w * sourcearrays(i_source,2,i,j) * stf_used
           enddo
         enddo
       endif

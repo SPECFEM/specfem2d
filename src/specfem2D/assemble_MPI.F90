@@ -46,12 +46,12 @@
 ! Assembling the mass matrix.
 !-----------------------------------------------
   subroutine assemble_MPI_scalar(array_val1,npoin_val1, &
-                              array_val2,array_val5,npoin_val2, &
-                              array_val3,array_val4,npoin_val3)
+                                 array_val2,npoin_val2, &
+                                 array_val3,array_val4,npoin_val3)
 
   use mpi
 
-  use constants,only: CUSTOM_REAL
+  use constants,only: CUSTOM_REAL,NDIM
 
   use specfem_par, only:ninterface,max_ibool_interfaces_size_ac, &
                               max_ibool_interfaces_size_el, &
@@ -70,7 +70,7 @@
   real(kind=CUSTOM_REAL), dimension(npoin_val1), intent(inout) :: array_val1
   ! elastic
   integer :: npoin_val2
-  real(kind=CUSTOM_REAL), dimension(npoin_val2), intent(inout) :: array_val2,array_val5
+  real(kind=CUSTOM_REAL), dimension(NDIM,npoin_val2), intent(inout) :: array_val2
   ! poroelastic
   integer :: npoin_val3
   real(kind=CUSTOM_REAL), dimension(npoin_val3), intent(inout) :: array_val3,array_val4
@@ -100,7 +100,7 @@
      do i = 1, nibool_interfaces_elastic(num_interface)
         ipoin = ipoin + 1
         buffer_send_faces_scalar(ipoin,num_interface) = &
-             array_val2(ibool_interfaces_elastic(i,num_interface))
+             array_val2(1,ibool_interfaces_elastic(i,num_interface))
      enddo
 
      do i = 1, nibool_interfaces_elastic(num_interface)
@@ -108,7 +108,7 @@
 ! there are now two different mass matrices for the elastic case
 ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
         buffer_send_faces_scalar(ipoin,num_interface) = &
-             array_val5(ibool_interfaces_elastic(i,num_interface))
+             array_val2(2,ibool_interfaces_elastic(i,num_interface))
      enddo
 
      do i = 1, nibool_interfaces_poroelastic(num_interface)
@@ -156,8 +156,8 @@
 
      do i = 1, nibool_interfaces_elastic(num_interface)
         ipoin = ipoin + 1
-        array_val2(ibool_interfaces_elastic(i,num_interface)) = &
-            array_val2(ibool_interfaces_elastic(i,num_interface))  &
+        array_val2(1,ibool_interfaces_elastic(i,num_interface)) = &
+            array_val2(1,ibool_interfaces_elastic(i,num_interface))  &
             + buffer_recv_faces_scalar(ipoin,num_interface)
      enddo
 
@@ -165,8 +165,8 @@
         ipoin = ipoin + 1
 ! there are now two different mass matrices for the elastic case
 ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
-        array_val5(ibool_interfaces_elastic(i,num_interface)) = &
-            array_val5(ibool_interfaces_elastic(i,num_interface))  &
+        array_val2(2,ibool_interfaces_elastic(i,num_interface)) = &
+            array_val2(2,ibool_interfaces_elastic(i,num_interface))  &
             + buffer_recv_faces_scalar(ipoin,num_interface)
      enddo
 
@@ -252,9 +252,9 @@
 
     ! non-blocking send
     call MPI_ISEND( buffer_send_faces_vector_ac(1,iinterface), &
-             nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
-             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_acoustic(iinterface), ier)
+                    nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
+                    my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+                    tab_requests_send_recv_acoustic(iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
       call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_start')
@@ -262,9 +262,9 @@
 
     ! starts a non-blocking receive
     call MPI_IRECV ( buffer_recv_faces_vector_ac(1,iinterface), &
-             nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
-             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_acoustic(ninterface_acoustic+iinterface), ier)
+                     nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
+                     my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+                     tab_requests_send_recv_acoustic(ninterface_acoustic+iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
       call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector')
@@ -314,7 +314,7 @@
 ! Particular care should be taken concerning possible optimisations of the
 ! communication scheme.
 !-----------------------------------------------
-  subroutine assemble_MPI_vector_el(array_val2)
+  subroutine assemble_MPI_vector_el(array_val)
 
   use mpi
 
@@ -333,40 +333,41 @@
   include "precision.h"
 
   ! array to assemble
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob), intent(inout) :: array_val2
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob), intent(inout) :: array_val
 
-
+  ! local parameters
   integer  :: ipoin, num_interface, iinterface, ier, i
 
+  ! fills buffer
   do iinterface = 1, ninterface_elastic
 
      num_interface = inum_interfaces_elastic(iinterface)
 
      ipoin = 0
      do i = 1, nibool_interfaces_elastic(num_interface)
-        buffer_send_faces_vector_el(ipoin+1:ipoin+2,iinterface) = array_val2(:,ibool_interfaces_elastic(i,num_interface))
-        ipoin = ipoin + 2
+        buffer_send_faces_vector_el(ipoin+1:ipoin+NDIM,iinterface) = array_val(:,ibool_interfaces_elastic(i,num_interface))
+        ipoin = ipoin + NDIM
      enddo
-
   enddo
 
+  ! send/receive with neighbors
   do iinterface = 1, ninterface_elastic
 
     num_interface = inum_interfaces_elastic(iinterface)
 
     call MPI_ISEND( buffer_send_faces_vector_el(1,iinterface), &
-             NDIM*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
-             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_elastic(iinterface), ier)
+                    NDIM * nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
+                    my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+                    tab_requests_send_recv_elastic(iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
       call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_el')
     endif
 
     call MPI_IRECV ( buffer_recv_faces_vector_el(1,iinterface), &
-             NDIM*nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
-             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_elastic(ninterface_elastic+iinterface), ier)
+                     NDIM * nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
+                     my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+                     tab_requests_send_recv_elastic(ninterface_elastic+iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
       call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_el')
@@ -374,22 +375,23 @@
 
   enddo
 
+  ! waits for all send/receive has finished
   do iinterface = 1, ninterface_elastic*2
 
     call MPI_Wait(tab_requests_send_recv_elastic(iinterface), MPI_STATUS_IGNORE, ier)
 
   enddo
 
+  ! adds contributions
   do iinterface = 1, ninterface_elastic
 
      num_interface = inum_interfaces_elastic(iinterface)
 
      ipoin = 0
      do i = 1, nibool_interfaces_elastic(num_interface)
-        array_val2(:,ibool_interfaces_elastic(i,num_interface)) = &
-            array_val2(:,ibool_interfaces_elastic(i,num_interface))  &
-            + buffer_recv_faces_vector_el(ipoin+1:ipoin+2,iinterface)
-        ipoin = ipoin + 2
+        array_val(:,ibool_interfaces_elastic(i,num_interface)) = &
+            array_val(:,ibool_interfaces_elastic(i,num_interface)) + buffer_recv_faces_vector_el(ipoin+1:ipoin+NDIM,iinterface)
+        ipoin = ipoin + NDIM
      enddo
 
   enddo
@@ -436,16 +438,16 @@
 
      ipoin = 0
      do i = 1, nibool_interfaces_poroelastic(num_interface)
-        buffer_send_faces_vector_pos(ipoin+1:ipoin+2,iinterface) = &
+        buffer_send_faces_vector_pos(ipoin+1:ipoin+NDIM,iinterface) = &
              array_val3(:,ibool_interfaces_poroelastic(i,num_interface))
-        ipoin = ipoin + 2
+        ipoin = ipoin + NDIM
      enddo
 
      ipoin = 0
      do i = 1, nibool_interfaces_poroelastic(num_interface)
-        buffer_send_faces_vector_pow(ipoin+1:ipoin+2,iinterface) = &
+        buffer_send_faces_vector_pow(ipoin+1:ipoin+NDIM,iinterface) = &
              array_val4(:,ibool_interfaces_poroelastic(i,num_interface))
-        ipoin = ipoin + 2
+        ipoin = ipoin + NDIM
      enddo
 
   enddo
@@ -455,36 +457,36 @@
     num_interface = inum_interfaces_poroelastic(iinterface)
 
     call MPI_ISEND( buffer_send_faces_vector_pos(1,iinterface), &
-             NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
-             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_poro(iinterface), ier)
+                    NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
+                    my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+                    tab_requests_send_recv_poro(iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
       call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_pos')
     endif
 
     call MPI_IRECV ( buffer_recv_faces_vector_pos(1,iinterface), &
-             NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
-             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_poro(ninterface_poroelastic+iinterface), ier)
+                     NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
+                     my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+                     tab_requests_send_recv_poro(ninterface_poroelastic+iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
       call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_pos')
     endif
 
     call MPI_ISEND( buffer_send_faces_vector_pow(1,iinterface), &
-             NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
-             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_poro(ninterface_poroelastic*2+iinterface), ier)
+                    NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
+                    my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+                    tab_requests_send_recv_poro(ninterface_poroelastic*2+iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
       call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_pow')
     endif
 
     call MPI_IRECV ( buffer_recv_faces_vector_pow(1,iinterface), &
-             NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
-             my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-             tab_requests_send_recv_poro(ninterface_poroelastic*3+iinterface), ier)
+                     NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
+                     my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
+                     tab_requests_send_recv_poro(ninterface_poroelastic*3+iinterface), ier)
 
     if (ier /= MPI_SUCCESS) then
       call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_pow')
@@ -506,16 +508,16 @@
      do i = 1, nibool_interfaces_poroelastic(num_interface)
         array_val3(:,ibool_interfaces_poroelastic(i,num_interface)) = &
              array_val3(:,ibool_interfaces_poroelastic(i,num_interface)) + &
-             buffer_recv_faces_vector_pos(ipoin+1:ipoin+2,iinterface)
-        ipoin = ipoin + 2
+             buffer_recv_faces_vector_pos(ipoin+1:ipoin+NDIM,iinterface)
+        ipoin = ipoin + NDIM
      enddo
 
      ipoin = 0
      do i = 1, nibool_interfaces_poroelastic(num_interface)
         array_val4(:,ibool_interfaces_poroelastic(i,num_interface)) = &
              array_val4(:,ibool_interfaces_poroelastic(i,num_interface)) + &
-             buffer_recv_faces_vector_pow(ipoin+1:ipoin+2,iinterface)
-        ipoin = ipoin + 2
+             buffer_recv_faces_vector_pow(ipoin+1:ipoin+NDIM,iinterface)
+        ipoin = ipoin + NDIM
      enddo
 
   enddo
@@ -850,8 +852,6 @@ enddo
   ! assemble only if more than one partition
   if (NPROC > 1) then
 
-
-
     ! wait for communications completion (recv)
     !write(IMAIN,*) "sending MPI_wait"
     do iinterface = 1, ninterface_elastic
@@ -863,9 +863,6 @@ enddo
       tab_requests_send_recv_vector(num_interface+num_interfaces_ext_mesh) = 0
 #endif
     enddo
-
-
-
 
     ! send contributions to GPU
     call transfer_boundary_to_device_a(Mesh_pointer, buffer_recv_vector_ext_mesh, max_nibool_interfaces_ext_mesh)

@@ -105,7 +105,8 @@
   distmin_squared = HUGEVAL
 
   ! determines search range
-  if (USE_BEST_LOCATION_FOR_SOURCE) then
+!  if (USE_BEST_LOCATION_FOR_SOURCE) then
+  if (.false.) then
     ! only search best element with inner points (exact location will be interpolated afterwards)
     imin = 2
     imax = NGLLX - 1
@@ -150,15 +151,17 @@
   ! check if this process contains the source
   if (abs(sqrt(dist_glob_squared) - sqrt(distmin_squared)) < TINYVAL ) then
     is_proc_source = 1
-    ! debug
-    !print *,'*******DEBUG: ',' source located in rank = ',myrank,' ********'
   endif
 
   ! determining the number of processes that contain the source
   ! (useful when the source is located on an interface)
   call sum_all_all_i(is_proc_source, nb_proc_source)
 
-  ! debug
+  ! daniel debug
+  !if (is_proc_source == 1) then
+  !  print *,'*******DEBUG: ',' source located in rank = ',myrank,' ********'
+  !  print *,'*******DEBUG: ',' source iglob/i/j = ',iglob_source,ix_initial_guess,iz_initial_guess,' ********'
+  !endif
   !print *,'*******DEBUG: ',' number of proc source = ',nb_proc_source,' ********'
 
 #ifdef USE_MPI

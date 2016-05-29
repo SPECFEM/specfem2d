@@ -48,6 +48,7 @@
 
   !local variable
   integer :: i_source,i,j,iglob,ispec
+  real(kind=CUSTOM_REAL) :: stf_used
 
   ! --- add the source
   do i_source = 1,NSOURCES
@@ -61,6 +62,9 @@
       ! source element is elastic
       if (ispec_is_elastic(ispec)) then
 
+        ! source time function
+        stf_used = source_time_function(i_source,it,i_stage)
+
         ! adds source term
         ! note: we use sourcearrays for both collocated forces and moment tensors
         !       (see setup in setup_source_interpolation() routine)
@@ -70,9 +74,9 @@
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
               accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
-                                       sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
+                                       sourcearrays(i_source,1,i,j) * stf_used
               accel_elastic(2,iglob) = accel_elastic(2,iglob) + &
-                                       sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
+                                       sourcearrays(i_source,2,i,j) * stf_used
             enddo
           enddo
         else
@@ -82,12 +86,12 @@
               iglob = ibool(i,j,ispec)
 
               accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
-                                       sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
+                                       sourcearrays(i_source,1,i,j) * stf_used
 
-              ! daniel debug 
-              if (iglob == 37905) &
-              write(1234,*) it, dble(sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)), &
-                            accel_elastic(1,iglob),source_time_function(i_source,it,i_stage),sourcearrays(i_source,1,i,j)
+              ! daniel debug source contribution
+              !if (iglob == 37905) &
+              !write(1234,*) it, dble(sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)), &
+              !              accel_elastic(1,iglob),source_time_function(i_source,it,i_stage),sourcearrays(i_source,1,i,j)
 
 
             enddo

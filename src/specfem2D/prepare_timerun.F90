@@ -254,7 +254,7 @@
 
     ! assembling the mass matrix
     call assemble_MPI_scalar(rmass_inverse_acoustic,nglob_acoustic, &
-                             rmass_inverse_elastic_one,rmass_inverse_elastic_three,nglob_elastic, &
+                             rmass_inverse_elastic,nglob_elastic, &
                              rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic,nglob_poroelastic)
 
   else

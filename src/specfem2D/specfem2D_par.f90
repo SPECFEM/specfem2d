@@ -464,8 +464,7 @@ module specfem_par
   logical, dimension(:), allocatable :: ispec_is_elastic
 
   ! inverse mass matrices
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_one
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_three
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: rmass_inverse_elastic
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
 

@@ -41,7 +41,7 @@
     IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: myrank,any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
-    rmass_inverse_elastic_one,rmass_inverse_elastic_three, &
+    rmass_inverse_elastic, &
     rmass_inverse_acoustic, &
     rmass_inverse_gravitoacoustic, &
     rmass_inverse_gravito, &
@@ -87,8 +87,7 @@
 
   ! initialize mass matrix
   if (any_elastic) then
-    rmass_inverse_elastic_one(:) = 0._CUSTOM_REAL
-    rmass_inverse_elastic_three(:) = 0._CUSTOM_REAL
+    rmass_inverse_elastic(:,:) = 0._CUSTOM_REAL
   endif
 
   if (any_poroelastic) then
@@ -160,71 +159,71 @@
               ! Newmark
               if (region_CPML(ispec) == CPML_X_ONLY) then
                 if (AXISYM) then  ! This PML can't be on the axis
-                   rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                   rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                         + coord(1,iglob)*wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) &
                         + d_x_store(i,j,ispec_PML) * deltatover2)
                  else ! not axisym
-                   rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                   rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                         + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML)&
                         + d_x_store(i,j,ispec_PML) * deltatover2)
                  endif
-                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
 
               else if (region_CPML(ispec) == CPML_XZ_ONLY) then
                 if (AXISYM) then  ! This corner can't be on the axis
-                   rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                   rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                         + coord(1,iglob)*wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) &
                         * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML) &
                         + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML) + &
                         d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltatover2)
                  else ! not axisym
-                   rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                   rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                         + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML)&
                         + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML)+&
                           d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltatover2)
                  endif
-                 rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
 
               else if (region_CPML(ispec) == CPML_Z_ONLY) then
                 if (AXISYM) then
                   if (is_on_the_axis(ispec)) then
                     if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                       xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-                      rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                      rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                          + xxi*wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec) &
                          * (K_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML)* deltatover2)
                     else
-                      rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                      rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                          + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec) &
                          * (K_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML)* deltatover2)
                     endif
                   else ! not on the axis
-                    rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                    rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                          + coord(1,iglob)*wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) &
                          * (K_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML)* deltatover2)
                   endif
                 else ! not axisym
-                  rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                  rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                        + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML)&
                        + d_z_store(i,j,ispec_PML)* deltatover2)
                 endif
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
               endif
 
             else
               ! time_stepping_scheme /= 1
               if (region_CPML(ispec) == CPML_X_ONLY) then
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
               else if (region_CPML(ispec) == CPML_XZ_ONLY) then
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
               else if (region_CPML(ispec) == CPML_Z_ONLY) then
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
               endif
             endif
 
@@ -235,23 +234,23 @@
                 if (is_on_the_axis(ispec) .and. i == 1) then
                   ! First GLJ point
                   xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-                  rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                  rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                       + xxi*wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
                 else
-                  rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                  rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                       + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
                 endif
               else
                 ! not on the axis
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                     + coord(1,iglob)*wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
               endif
             else
               ! not axisym
-              rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob)  &
+              rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                       + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec)
             endif
-            rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_one(iglob)
+            rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
           endif
 
         else if (ispec_is_gravitoacoustic(ispec)) then
@@ -441,13 +440,13 @@
                 tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
                 tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
 
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) + tx*weight
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_three(iglob) + tz*weight
+                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
+                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
               else
                 ! SH-case
                 vy = deltatover2
                 ty = rho_vs*vy
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) + ty*weight
+                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
               endif
             enddo
           endif  !  end of left absorbing boundary
@@ -489,13 +488,13 @@
 
                 tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
                 tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) + tx*weight
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_three(iglob) + tz*weight
+                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
+                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
               else
                 ! SH-case
                 vy = deltatover2
                 ty = rho_vs*vy
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) + ty*weight
+                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
               endif
             enddo
           endif  !  end of right absorbing boundary
@@ -539,13 +538,13 @@
 
                 tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
                 tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) + tx*weight
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_three(iglob) + tz*weight
+                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
+                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
               else
                 ! SH-case
                 vy = deltatover2
                 ty = rho_vs*vy
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) + ty*weight
+                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
               endif
             enddo
           endif  !  end of bottom absorbing boundary
@@ -589,13 +588,13 @@
 
                 tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
                 tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) + tx*weight
-                rmass_inverse_elastic_three(iglob) = rmass_inverse_elastic_three(iglob) + tz*weight
+                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + tx*weight
+                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(2,iglob) + tz*weight
               else
                 ! SH-case
                 vy = deltatover2
                 ty = rho_vs*vy
-                rmass_inverse_elastic_one(iglob) = rmass_inverse_elastic_one(iglob) + ty*weight
+                rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
               endif
             enddo
           endif  !  end of top absorbing boundary
@@ -738,7 +737,7 @@
 ! inverts the global mass matrix
 
   use specfem_par, only: myrank,any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
-                                rmass_inverse_elastic_one,rmass_inverse_elastic_three,&
+                                rmass_inverse_elastic, &
                                 rmass_inverse_acoustic, &
                                 rmass_inverse_gravitoacoustic, &
                                 rmass_inverse_gravito, &
@@ -755,8 +754,7 @@
 ! fill mass matrix with fictitious non-zero values to make sure it can be inverted globally
 ! (this can happen when some degrees of freedom have been removed from some of the global arrays)
   if (any_elastic) then
-    where(rmass_inverse_elastic_one <= 0._CUSTOM_REAL) rmass_inverse_elastic_one = 1._CUSTOM_REAL
-    where(rmass_inverse_elastic_three <= 0._CUSTOM_REAL) rmass_inverse_elastic_three = 1._CUSTOM_REAL
+    where(rmass_inverse_elastic <= 0._CUSTOM_REAL) rmass_inverse_elastic = 1._CUSTOM_REAL
   endif
 
   if (any_poroelastic) then
@@ -775,8 +773,7 @@
 
 ! compute the inverse of the mass matrix
   if (any_elastic) then
-    rmass_inverse_elastic_one(:) = 1._CUSTOM_REAL / rmass_inverse_elastic_one(:)
-    rmass_inverse_elastic_three(:) = 1._CUSTOM_REAL / rmass_inverse_elastic_three(:)
+    rmass_inverse_elastic(:,:) = 1._CUSTOM_REAL / rmass_inverse_elastic(:,:)
   endif
 
   if (any_poroelastic) then

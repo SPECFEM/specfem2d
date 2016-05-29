@@ -113,6 +113,11 @@
     call enforce_zero_radial_displacements_on_the_axis()
   endif
 
+  ! daniel debug source contribution
+  !if (myrank == 1) &
+  !write(1234,*) it, dble(sourcearrays(1,1,5,5) * source_time_function(1,it,i_stage)), &
+  !              accel_elastic(1,1102),source_time_function(1,it,i_stage),sourcearrays(1,1,5,5)
+
   ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
   if (NPROC > 1 .and. ninterface_elastic > 0) then
@@ -144,8 +149,7 @@
 
   ! multiply by the inverse of the mass matrix and update velocity
   !! DK DK this should be vectorized
-  accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one(:)
-  accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_three(:)
+  accel_elastic(:,:) = accel_elastic(:,:) * rmass_inverse_elastic(:,:)
 
   ! time stepping
   select case (time_stepping_scheme)
@@ -159,7 +163,7 @@
     !! DK DK this should be vectorized
     veloc_elastic_LDDRK(:,:) = ALPHA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:) + deltat * accel_elastic(:,:)
     displ_elastic_LDDRK(:,:) = ALPHA_LDDRK(i_stage) * displ_elastic_LDDRK(:,:) + deltat * veloc_elastic(:,:)
-    if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
+    if (i_stage == 1 .and. it == 1 .and. (.not. initialfield)) then
       veloc_elastic_LDDRK_temp(:,:) = veloc_elastic_LDDRK_temp(:,:) + BETA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:)
       veloc_elastic(:,:) = veloc_elastic_LDDRK_temp(:,:)
     else
@@ -338,8 +342,7 @@
 
   ! multiply by the inverse of the mass matrix and update velocity
   !! DK DK this should be vectorized
-  b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
-  b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_three(:)
+  b_accel_elastic(:,:) = b_accel_elastic(:,:) * rmass_inverse_elastic(:,:)
 
   ! time stepping
   b_veloc_elastic(:,:) = b_veloc_elastic(:,:) + b_deltatover2 * b_accel_elastic(:,:)

@@ -48,6 +48,7 @@
 
   !local variables
   integer :: i_source,i,j,iglob,ispec
+  real(kind=CUSTOM_REAL) :: stf_used
 
   do i_source= 1,NSOURCES
     ! if this processor core carries the source
@@ -58,6 +59,10 @@
 
       ! source element is acoustic
       if (ispec_is_acoustic(ispec)) then
+
+        ! source time function
+        stf_used = source_time_function(i_source,it,i_stage)
+
         ! collocated force
         ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
         ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
@@ -70,21 +75,22 @@
 
               ! old way: source without factor 1/kappa
               !potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-              !                                    sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)
+              !                                    sourcearrays(i_source,1,i,j) * stf_used
 
               !ZN becareful the following line is new added, thus when do comparison
               !ZN of the new code with the old code, you will have big difference if you
               !ZN do not tune the source
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-                                                  sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage) &
-                                                  / kappastore(i,j,ispec)
+                                                  sourcearrays(i_source,1,i,j) * stf_used / kappastore(i,j,ispec)
 
             enddo
           enddo
+
         ! moment tensor
         else if (source_type(i_source) == 2) then
            call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
         endif
+
       endif
     endif ! if this processor core carries the source and the source element is acoustic
   enddo ! do i_source= 1,NSOURCES

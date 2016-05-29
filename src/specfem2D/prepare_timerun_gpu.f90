@@ -43,6 +43,7 @@
   real :: free_mb,used_mb,total_mb
   integer :: nspec_elastic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: cosrot_irecf, sinrot_irecf
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassz
 
   ! GPU_MODE now defined in Par_file
   if (myrank == 0) then
@@ -181,8 +182,13 @@
   ! prepares fields on GPU for elastic simulations
   !?!? JC JC here we will need to add GPU support for the new C-PML routines
   if (any_elastic) then
+    ! temporary mass matrices
+    allocate(rmassx(nglob_elastic),rmassz(nglob_elastic))
+    rmassx(:) = rmass_inverse_elastic(1,:)
+    rmassz(:) = rmass_inverse_elastic(2,:)
+
     call prepare_fields_elastic_device(Mesh_pointer, &
-                                rmass_inverse_elastic_one,rmass_inverse_elastic_three, &
+                                rmassx,rmassz, &
                                 rho_vp,rho_vs, &
                                 num_phase_ispec_elastic,phase_ispec_inner_elastic, &
                                 ispec_is_elastic, &
@@ -206,6 +212,9 @@
       endif
       call prepare_fields_elastic_adj_dev(Mesh_pointer,NDIM*NGLOB_AB,APPROXIMATE_HESS_KL)
     endif
+
+    ! frees memory
+    deallocate(rmassx,rmassz)
   endif
 
   ! prepares fields on GPU for poroelastic simulations

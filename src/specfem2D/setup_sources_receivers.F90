@@ -133,9 +133,7 @@
         enddo
 
         ! daniel debug
-        !print *,'***** DEBUG source rank/element/iglob',myrank,ispec_selected_source(i_source),iglob_source(i_source),'*******'
-        open(unit=1234,file='OUTPUT_FILES/debug_accel_contribution.txt',status='unknown')
-
+        !open(unit=1234,file='OUTPUT_FILES/debug_source_contribution.txt',status='unknown')
       endif
 
     else if (source_type(i_source) == 2) then
