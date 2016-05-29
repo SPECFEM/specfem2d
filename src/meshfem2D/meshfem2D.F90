@@ -464,7 +464,7 @@
       call read_external_acoustic_surface(free_surface_file, num_material, &
                                           nbmodels, icodemat, phi, remove_min_to_start_at_zero)
 
-      if (STACEY_ABSORBING_CONDITIONS) then
+      if (any_abs) then
         call read_external_abs_surface(absorbing_surface_file, remove_min_to_start_at_zero)
 
         ! rotate the elements that are located on the edges of the mesh if needed
@@ -552,7 +552,7 @@
     call decompose_mesh()
 
     ! setting absorbing boundaries by elements instead of edges
-    if (STACEY_ABSORBING_CONDITIONS) then
+    if (any_abs) then
        call merge_abs_boundaries(nbmodels, phi, num_material, ngnod)
     endif
 
