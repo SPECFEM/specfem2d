@@ -449,7 +449,8 @@
               time_t = dble(seismo_offset + isample - 1) * deltat - t0
 
               ! distinguish between single and double precision for reals
-              write(11,*) sngl(time_t),' ',sngl(buffer_binary(isample,irec,iorientation))
+              write(11,"(E14.7,A,E14.7)") sngl(time_t),' ',sngl(buffer_binary(isample,irec,iorientation))
+              !write(11,*) sngl(time_t),' ',sngl(buffer_binary(isample,irec,iorientation))
             enddo
 #else
             write(11) sngl(buffer_binary(:,irec,iorientation))

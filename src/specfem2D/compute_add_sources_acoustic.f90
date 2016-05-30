@@ -106,8 +106,8 @@
   double precision :: hlagrange
   double precision :: xminSource,vSource,timeval,t_used
 
-  xminSource = 5000.0d0 !m
-  vSource = 1000.0 !m/s
+  xminSource = 0.0d0 !m
+  vSource = 500.0 !m/s
   if (stage_time_scheme == 1) then
     timeval = (it-1)*deltat
   else
@@ -119,7 +119,7 @@
       if (abs(source_time_function(i_source,it,i_stage)) > TINYVAL) then
         t_used = (timeval-t0-tshift_src(i_source))
 
-        x_source(i_source) = xminSource + vSource*timeval !t_used?
+        x_source(i_source) = xminSource + vSource*t_used !timeval?
 
         ! collocated force source
         call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &

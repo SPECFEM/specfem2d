@@ -106,8 +106,8 @@
     ! note: t0 is the simulation start time, tshift_src is the time shift of the source
     !          relative to this start time
 
-    trick_ok = (time_function_type(i_source) < 5) .or. (time_function_type(i_source) == 9) .or. &
-               (time_function_type(i_source) == 10)
+    trick_ok = (time_function_type(i_source) < 4) .or. (time_function_type(i_source) == 7) .or. &
+               (time_function_type(i_source) == 9) .or. (time_function_type(i_source) == 10)
     if ((.not. trick_ok) .and. USE_TRICK_FOR_BETTER_PRESSURE) then
       call exit_MPI(myrank,'USE_TRICK_FOR_BETTER_PRESSURE is not compatible yet with the type of source you want to use!')
     endif
@@ -219,22 +219,60 @@
             ! ocean acoustics type II
             DecT = t0 + tshift_src(i_source)
             Tc = 4.d0 / f0_source(i_source) + DecT
-            omega_coa = TWO * PI * f0_source(i_source)
-
-            if (timeval > DecT .and. timeval < Tc) then
-              ! source time function from Computational Ocean Acoustics
-              omegat =  omega_coa * ( timeval - DecT )
-              !source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
-              !      ( sin(omegat) - 8.d0 / 9.d0 * sin(3.d0/ 4.d0 * omegat) - &
-              !     8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) -1./15.*( timeval - DecT ) + 1./15.*4./f0_source(i_source))
-              source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
-                     ( - sin(omegat) + 8.d0 / 9.d0 * sin(3.d0 / 4.d0 * omegat) + &
-                      8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) - 1.d0 / 15.d0 * omegat )
-            else if (timeval > DecT) then
-              source_time_function(i_source,it,i_stage) = &
-              - factor(i_source) * HALF / omega_coa / 15.d0 * (4.d0 / f0_source(i_source))
+            omega_coa = TWO*PI*f0_source(i_source)
+            if (USE_TRICK_FOR_BETTER_PRESSURE) then !TODO
+              ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
+              ! use the second derivative of the source for the source time function instead of the source itself,
+              ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+              ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
+              ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
+              ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+              ! is accurate at second order and thus contains significantly less numerical noise.
+              ! Second derivative of source 7 :
+              if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0_source(i_source)) then
+                source_time_function(i_source,it,i_stage) = factor(i_source) * &
+                          0.5d0*(ONE-cos(omega_coa*t_used/4.0d0))*sin(omega_coa*t_used)
+              else
+                source_time_function(i_source,it,i_stage) = ZERO
+              endif
             else
-              source_time_function(i_source,it,i_stage) = ZERO
+              !Tc = 1.d0 / f0_source(i_source) + DecT ! For source 1 OASES
+              !if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0_source(i_source)) then
+              !  source_time_function(i_source,it,i_stage) = factor(i_source) * ( &  ! Source 1 OASES
+              !            0.75d0 - cos(omega_coa*t_used) + 0.25d0*cos(TWO*omega_coa*t_used))
+              !else
+              !  source_time_function(i_source,it,i_stage) = ZERO
+              !endif
+              if (timeval > DecT .and. timeval < Tc) then
+                ! source time function from Computational Ocean Acoustics
+                omegat =  omega_coa * ( timeval - DecT )
+                !source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
+                !      ( sin(omegat) - 8.d0 / 9.d0 * sin(3.d0/ 4.d0 * omegat) - &
+                !     8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) -1./15.*( timeval - DecT ) + 1./15.*4./f0_source(i_source))
+                source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
+                       ( - sin(omegat) + 8.d0 / 9.d0 * sin(3.d0 / 4.d0 * omegat) + &
+                        8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) - 1.d0 / 15.d0 * omegat )
+              else if (timeval > DecT) then
+                source_time_function(i_source,it,i_stage) = &
+                - factor(i_source) * HALF / omega_coa / 15.d0 * (4.d0 / f0_source(i_source))
+              else
+                source_time_function(i_source,it,i_stage) = ZERO
+              endif
+!              if (timeval > DecT .and. timeval < Tc) then
+!                ! source time function from Computational Ocean Acoustics
+!                omegat =  omega_coa * ( timeval - DecT )
+!                !source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
+!                !      ( sin(omegat) - 8.d0 / 9.d0 * sin(3.d0/ 4.d0 * omegat) - &
+!                !     8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) -1./15.*( timeval - DecT ) + 1./15.*4./f0_source(i_source))
+!                source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
+!                       ( - sin(omegat) + 8.d0 / 9.d0 * sin(3.d0 / 4.d0 * omegat) + &
+!                        8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) - 1.d0 / 15.d0 * omegat )
+!              else if (timeval > DecT) then
+!                source_time_function(i_source,it,i_stage) = &
+!                - factor(i_source) * HALF / omega_coa / 15.d0 * (4.d0 / f0_source(i_source))
+!              else
+!                source_time_function(i_source,it,i_stage) = ZERO
+!              endif
             endif
 
           else if (time_function_type(i_source) == 8) then
@@ -260,6 +298,7 @@
             t_used = (timeval-t0-tshift_src(i_source))
             Nc = TWO * f0_source(i_source) / burst_band_width(i_source)
             Tc = Nc / f0_source(i_source) + DecT
+            omega_coa = TWO*PI*f0_source(i_source)
 
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
@@ -271,21 +310,40 @@
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! Second derivative of Burst :
               if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0_source(i_source)) then
-                source_time_function(i_source,it,i_stage) = - factor(i_source) * (0.5d0 * (TWO*PI*f0_source(i_source))**2 * &
-                          sin(TWO*PI*f0_source(i_source)*t_used) * cos(TWO*PI*f0_source(i_source)*t_used/Nc) / Nc**2 - &
-                          0.5d0 * (TWO*PI*f0_source(i_source))**2 * sin(TWO*PI*f0_source(i_source)*t_used) * &
-                          (ONE-cos(TWO*PI*f0_source(i_source)*t_used/Nc)) + &
-                          (TWO*PI*f0_source(i_source))**2 * cos(TWO*PI*f0_source(i_source)*t_used) * &
-                          sin(TWO*PI*f0_source(i_source)*t_used/Nc) / Nc)
+                source_time_function(i_source,it,i_stage) = - factor(i_source) * (0.5d0 * (omega_coa)**2 * &
+                          sin(omega_coa*t_used) * cos(omega_coa*t_used/Nc) / Nc**2 - &
+                          0.5d0 * (omega_coa)**2 * sin(omega_coa*t_used) * &
+                          (ONE-cos(omega_coa*t_used/Nc)) + &
+                          (omega_coa)**2 * cos(omega_coa*t_used) * &
+                          sin(omega_coa*t_used/Nc) / Nc)
               !else if (timeval > DecT) then
               !  source_time_function(i_source,it,i_stage) = ZERO
               else
                 source_time_function(i_source,it,i_stage) = ZERO
               endif
+              ! Integral of burst
+              !if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0_source(i_source)) then
+              !  source_time_function(i_source,it,i_stage) = - factor(i_source) * ( &
+              !  Nc*( (Nc+1.0d0)*cos((omega_coa*(Nc-1.0d0)*t_used)/Nc) + &
+              !       (Nc-1.0d0)*cos((omega_coa*(Nc+1.0d0)*t_used)/Nc)) - &
+              !  TWO*(Nc**2-1.0d0)*cos(omega_coa*t_used) &
+              !  ) / (8.0d0*PI*f0_source(i_source)*(Nc-1)*(Nc+1))
+              !else
+              !  source_time_function(i_source,it,i_stage) = ZERO
+              !endif
+              ! Double integral of burst
+              !if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0_source(i_source)) then
+              !  source_time_function(i_source,it,i_stage) = - factor(i_source) * ( &
+              !      -sin(TWO*f0_source(i_source)*Pi*t_used)/(8.0d0*f0_source(i_source)**TWO*Pi**2) + &
+              !      (Nc**2*sin((TWO*f0_source(i_source)*(Nc-1)*PI*t_used)/Nc))/(16.0d0*f0_source(i_source)**2*(Nc-1)**2*Pi**2) + &
+              !      (Nc**2*sin((TWO*f0_source(i_source)*(Nc+1)*PI*t_used)/Nc))/(16.0d0*f0_source(i_source)**2*(Nc+1)**2*Pi**2) )
+              !else
+              !  source_time_function(i_source,it,i_stage) = ZERO
+              !endif
             else
               if (timeval > DecT .and. timeval < Tc) then ! t_used > 0 t_used < Nc/f0_source(i_source)) then
                 source_time_function(i_source,it,i_stage) = - factor(i_source) * &
-                          0.5d0*(ONE-cos(TWO*PI*f0_source(i_source)*t_used/Nc))*sin(TWO*PI*f0_source(i_source)*t_used)
+                          0.5d0*(ONE-cos(omega_coa*t_used/Nc))*sin(omega_coa*t_used)
               !else if (timeval > DecT) then
               !  source_time_function(i_source,it,i_stage) = ZERO
               else
@@ -295,6 +353,7 @@
 
           else if (time_function_type(i_source) == 10) then
             ! Sinus source time function
+            omega_coa = TWO*PI*f0_source(i_source)
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
               ! use the second derivative of the source for the source time function instead of the source itself,
@@ -304,11 +363,11 @@
               ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! Third derivative of Gaussian source time function :
-              source_time_function(i_source,it,i_stage) = -TWO*PI*TWO*PI*f0_source(i_source)*f0_source(i_source)* &
-                                                          factor(i_source) * sin(TWO*PI*f0_source(i_source)*t_used)
+              source_time_function(i_source,it,i_stage) = -TWO*PI*omega_coa*f0_source(i_source)* &
+                                                          factor(i_source) * sin(omega_coa*t_used)
             else
               ! First derivative of a Gaussian source time function
-              source_time_function(i_source,it,i_stage) = factor(i_source) * sin(TWO*PI*f0_source(i_source)*t_used)
+              source_time_function(i_source,it,i_stage) = factor(i_source) * sin(omega_coa*t_used)
             endif
           else
             call exit_MPI(myrank,'unknown source time function')
@@ -321,7 +380,7 @@
           !  sngl(timeval-t0-tshift_src(1)),real(source_time_function(1,it),4),sngl(timeval)
           if (i_source == 1 .and. i_stage == 1) then
             ! note: earliest start time of the simulation is: (it-1)*deltat - t0
-            write(55,*) sngl(timeval-t0),sngl(stf_used),sngl(timeval)
+            write(55,"(E14.7,A,E14.7)") sngl(timeval-t0)," ",sngl(stf_used) !," ",sngl(timeval)
           endif
         endif
       enddo
