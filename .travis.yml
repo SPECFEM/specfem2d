@@ -27,6 +27,8 @@ before_install:
   # recommended for MPI projects to unset CC: see https://docs.travis-ci.com/user/languages/c
   #- test -n $CC && unset CC
   - sudo apt-get update
+  # python script needs numpy
+  - pip install numpy
 
 install:
   - sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
