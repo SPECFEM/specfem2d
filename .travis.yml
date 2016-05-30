@@ -15,12 +15,6 @@ env:
   - MPIFC=mpif90
   - CC=gcc
   - OMP_NUM_THREADS=2
-  # function: checks seismograms with reference solutions
-  - my_test(){
-      echo "testing seismograms:";
-      ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/;
-      ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}';
-    }
   matrix:
   - TEST="" TESTCOV=0
   - TEST="--enable-debug" TESTCOV=0
@@ -53,7 +47,12 @@ script:
     fi
   # compilation
   - make clean; make -j4 all
-  - my_test
+  # function for checking seismogram output with reference solutions
+  - my_test(){
+    echo "testing seismograms:";
+    ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/;
+    ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}';
+    }
   # testing small example
   - cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
   - ./run_this_example.sh
