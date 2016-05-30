@@ -10,7 +10,7 @@
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=.6\textwidth]{figures/workflow}
+\includegraphics[width=.6\textwidth]{figures/workflow.pdf}
 
 \caption{Schematic workflow for a SPECFEM2D simulation. The executable \texttt{xmeshfem2D} creates the GLL mesh points and assigns specific model parameters. The executable \texttt{xspecfem2D} solves the seismic wave propagation.}
 
@@ -162,9 +162,9 @@ in the \texttt{Par\_file}.
 
 \begin{figure}[htbp]
 \begin{centering}
-\includegraphics[width=0.481\columnwidth]{figures/Gmsh_geo}
+\includegraphics[width=0.481\columnwidth]{figures/Gmsh_geo.pdf}
 \hspace{2mm}
-\includegraphics[width=0.43\columnwidth]{figures/Gmsh_Msh}
+\includegraphics[width=0.43\columnwidth]{figures/Gmsh_Msh.pdf}
 \end{centering}
 \caption{Geometry and mesh of the two circle model generated with Gmsh}
 \label{fig:Gmsh-example}
@@ -213,7 +213,7 @@ Many powerful graphical tools are available, and very useful, but we will focus 
 the command line functionalities and especially the Python interface which is the real force of
 Cubit/Trelis.
 To get started we recommend to the inpatients to open Cubit/Trelis and to click on the
-following symbol: \includegraphics[width=0.15in]{figures/play_journal_file}. Then select the
+following symbol: \includegraphics[width=0.15in]{figures/play_journal_file.png}. Then select the
 files of type Python Files (*.py) and play the following script:
 \begin{verbatim}
     utils/cubit2specfem2d/simplest2DexampleWithPmls.py
@@ -222,7 +222,7 @@ In the case you want to perform an axisymmetric simulation, we recommend you rat
 \begin{verbatim}
     utils/cubit2specfem2d/simpleAxisym2dMesh.py
 \end{verbatim}
-It will create a simple mesh with PMLs. Then re-click on \includegraphics[width=0.15in]{figures/play_journal_file} and
+It will create a simple mesh with PMLs. Then re-click on \includegraphics[width=0.15in]{figures/play_journal_file.png} and
 play:
 \begin{verbatim}
     utils/cubit2specfem2d/cubit2specfem2d.py
@@ -327,7 +327,7 @@ inner PML edge.
 %%
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=6in]{figures/how_to_use_PML_with_external_velocity_model}
+\includegraphics[width=6in]{figures/how_to_use_PML_with_external_velocity_model.pdf}
 \caption{How to modify your external 2D velocity and density model in order to use PML.
 Such a modification is not needed when using Stacey absorbing boundary conditions (but such conditions
 are significantly less efficient).}

@@ -10,8 +10,12 @@ Main "historical" developers: Dimitri Komatitsch and Jeroen Tromp
 
 ## Installation
 
-Instructions on how to install and use SPECFEM2D are
-available in the PDF manual located in directory doc/USER_MANUAL.
+Instructions on how to install and use `SPECFEM2D` are
+available in the
+
+- PDF manual located in directory: [doc/USER_MANUAL](doc/USER_MANUAL).
+
+- HTML manual (latest version): [specfem2d.readthedocs.io](http://specfem2d.readthedocs.io/)
 
 
 For a quick test, run the default example with these commands:
