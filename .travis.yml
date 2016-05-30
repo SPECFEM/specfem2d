@@ -1,0 +1,56 @@
+# Travis configuration
+#
+# Note: building Fortran code is not supported (yet): see https://docs.travis-ci.com/user/language-specific/
+#       this is using C as a base and installs gfortran in the test environment
+language: c
+
+sudo: required
+
+os: linux
+compiler: gcc
+
+env:
+  global:
+  - FC=gfortran
+  - MPIFC=mpif90
+  - CC=gcc
+  - OMP_NUM_THREADS=2
+  matrix:
+  - TEST="" TESTCOV=0
+  - TEST="--enable-debug" TESTCOV=0
+  - TEST="--enable-debug --enable-double-precision" TESTCOV=0
+  - TEST="--enable-vectorization" TESTCOV=0
+  - TEST="--enable-vectorization --without-mpi" TESTCOV=0
+  - TEST="--enable-vectorization --with-mpi" TESTCOV=1
+
+before_install:
+  # recommended for MPI projects to unset CC: see https://docs.travis-ci.com/user/languages/c
+  #- test -n $CC && unset CC
+  - sudo apt-get update
+
+install:
+  - sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
+  - echo "compiler versions:" ${FC} ${MPIFC} ${CC}
+  - ${FC} --version
+  - ${MPIFC} --version
+  - ${CC} --version
+
+script:
+  - echo "configuration test:" ${TEST} ${TESTFLAGS}
+  # test configuration
+  - if [ "$TESTCOV" == "1" ]; then
+      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0";
+    else
+      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST};
+    fi
+  - make clean; make -j4 all
+  # test small example
+  - cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
+  - ./run_this_example.sh
+  - ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/
+  - ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
+
+# runs example
+after_success:
+  # code coverage: see example https://github.com/codecov/example-fortran/blob/master/.travis.yml
+  - if [ "$TESTCOV" == "1" ]; then bash <(curl -s https://codecov.io/bash) -s obj/; fi

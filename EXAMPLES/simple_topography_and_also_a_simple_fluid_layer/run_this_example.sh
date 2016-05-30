@@ -17,13 +17,6 @@ echo "   setting up example..."
 echo
 
 mkdir -p OUTPUT_FILES
-mkdir -p DATA
-
-# sets up local DATA/ directory
-cd DATA/
-cp ../Par_file_simple_topo Par_file
-cp ../SOURCE_simple_topo SOURCE
-cd ../
 
 # cleans output files
 rm -rf OUTPUT_FILES/*
