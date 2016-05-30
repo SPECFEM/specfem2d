@@ -63,9 +63,10 @@
 
   if (nbregion <= 0) stop 'Negative number of regions not allowed!'
 
-  print *
-  print *, 'Nb of regions in the mesh = ',nbregion
-  print *
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'Nb of regions in the mesh = ',nbregion
+  write(IMAIN,*)
 
   do iregion = 1,nbregion
 
@@ -78,57 +79,59 @@
     if (izdebregion < 1) stop 'Bottom coordinate of region negative!'
     if (izfinregion > nzread) stop 'Top coordinate of region too high!'
 
-    print *,'Region ',iregion
-    print *,'IX from ',ixdebregion,' to ',ixfinregion
-    print *,'IZ from ',izdebregion,' to ',izfinregion
+    write(IMAIN,*) 'Region ',iregion
+    write(IMAIN,*) 'IX from ',ixdebregion,' to ',ixfinregion
+    write(IMAIN,*) 'IZ from ',izdebregion,' to ',izfinregion
 
     if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. icodemat(imaterial_number) /= POROELASTIC_MATERIAL) then
 
        ! isotropic material
        vpregion = cp(imaterial_number)
        vsregion = cs(imaterial_number)
-       print *,'Material # ',imaterial_number,' isotropic'
+
+       write(IMAIN,*) 'Material # ',imaterial_number,' isotropic'
        if (vsregion < TINYVAL) then
-          print *,'Material is fluid'
+          write(IMAIN,*) 'Material is fluid'
        else
-          print *,'Material is solid'
+          write(IMAIN,*) 'Material is solid'
        endif
-       print *,'vp = ',vpregion
-       print *,'vs = ',vsregion
-       print *,'rho = ',rho_s(imaterial_number)
+       write(IMAIN,*) 'vp = ',vpregion
+       write(IMAIN,*) 'vs = ',vsregion
+       write(IMAIN,*) 'rho = ',rho_s(imaterial_number)
        poisson_ratio = 0.5d0*(vpregion*vpregion-2.d0*vsregion*vsregion) / (vpregion*vpregion-vsregion*vsregion)
-       print *,'Poisson''s ratio = ',poisson_ratio
+       write(IMAIN,*) 'Poisson''s ratio = ',poisson_ratio
        if (poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
-       print *,'QKappa = ',QKappa(imaterial_number)
-       print *,'Qmu = ',Qmu(imaterial_number)
+       write(IMAIN,*) 'QKappa = ',QKappa(imaterial_number)
+       write(IMAIN,*) 'Qmu = ',Qmu(imaterial_number)
 
     else if (icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
 
        ! poroelastic material
-       print *,'Material # ',imaterial_number,' isotropic'
-       print *,'Material is poroelastic'
+       write(IMAIN,*) 'Material # ',imaterial_number,' isotropic'
+       write(IMAIN,*) 'Material is poroelastic'
 
     else
 
        ! anisotropic material
-       print *,'Material # ',imaterial_number,' anisotropic'
-       print *,'cp = ',cp(imaterial_number)
-       print *,'cs = ',cs(imaterial_number)
-       print *,'c11 = ',aniso3(imaterial_number)
-       print *,'c13 = ',aniso4(imaterial_number)
-       print *,'c15 = ',aniso5(imaterial_number)
-       print *,'c33 = ',aniso6(imaterial_number)
-       print *,'c35 = ',aniso7(imaterial_number)
-       print *,'c55 = ',aniso8(imaterial_number)
-       print *,'c12 = ',aniso9(imaterial_number)
-       print *,'c23 = ',aniso10(imaterial_number)
-       print *,'c25 = ',aniso11(imaterial_number)
-       print *,'rho = ',rho_s(imaterial_number)
-       print *,'QKappa = ',QKappa(imaterial_number)
-       print *,'Qmu = ',Qmu(imaterial_number)
+       write(IMAIN,*) 'Material # ',imaterial_number,' anisotropic'
+       write(IMAIN,*) 'cp = ',cp(imaterial_number)
+       write(IMAIN,*) 'cs = ',cs(imaterial_number)
+       write(IMAIN,*) 'c11 = ',aniso3(imaterial_number)
+       write(IMAIN,*) 'c13 = ',aniso4(imaterial_number)
+       write(IMAIN,*) 'c15 = ',aniso5(imaterial_number)
+       write(IMAIN,*) 'c33 = ',aniso6(imaterial_number)
+       write(IMAIN,*) 'c35 = ',aniso7(imaterial_number)
+       write(IMAIN,*) 'c55 = ',aniso8(imaterial_number)
+       write(IMAIN,*) 'c12 = ',aniso9(imaterial_number)
+       write(IMAIN,*) 'c23 = ',aniso10(imaterial_number)
+       write(IMAIN,*) 'c25 = ',aniso11(imaterial_number)
+       write(IMAIN,*) 'rho = ',rho_s(imaterial_number)
+       write(IMAIN,*) 'QKappa = ',QKappa(imaterial_number)
+       write(IMAIN,*) 'Qmu = ',Qmu(imaterial_number)
     endif
 
-    print *,' -----'
+    write(IMAIN,*) ' -----'
+    call flush_IMAIN()
 
     ! store density and velocity model
     do j = izdebregion,izfinregion

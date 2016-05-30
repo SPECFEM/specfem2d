@@ -79,8 +79,8 @@
   !     options, edgecut, part(0))
 #else
   ! safety stop
-  print *, 'This version of SPECFEM was not compiled with support of METIS.'
-  print *, 'Please recompile with -DUSE_METIS in order to enable use of METIS.'
+  write(IMAIN,*) 'This version of SPECFEM was not compiled with support of METIS.'
+  write(IMAIN,*) 'Please recompile with -DUSE_METIS in order to enable use of METIS.'
   stop 'Metis partitioning not compiled'
 #endif
 

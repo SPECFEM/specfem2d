@@ -109,9 +109,9 @@
     select case (partitioning_method)
     case(1)
       ! analytical
-      print *,''
-      print *,'Partitioning method: analytical'
-      print *,''
+      write(IMAIN,*)
+      write(IMAIN,*) 'Partitioning method: analytical'
+      write(IMAIN,*)
       do iproc = 0, NPROC-2
         part(iproc*floor(real(nelmnts)/real(NPROC)):(iproc+1)*floor(real(nelmnts)/real(NPROC))-1) = iproc
       enddo
@@ -119,16 +119,16 @@
 
     case(2)
       ! METIS
-      print *,''
-      print *,'Partitioning method: METIS'
-      print *,''
+      write(IMAIN,*)
+      write(IMAIN,*) 'Partitioning method: METIS'
+      write(IMAIN,*)
       call metis_partitioning()
 
     case(3)
       ! SCOTCH
-      print *,''
-      print *,'Partitioning method: SCOTCH'
-      print *,''
+      write(IMAIN,*)
+      write(IMAIN,*) 'Partitioning method: SCOTCH'
+      write(IMAIN,*)
       call scotch_partitioning()
 
     case default

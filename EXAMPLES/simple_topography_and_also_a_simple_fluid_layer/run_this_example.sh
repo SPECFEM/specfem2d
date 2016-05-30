@@ -36,13 +36,13 @@ cp DATA/SOURCE OUTPUT_FILES/
 NPROC=`grep ^NPROC DATA/Par_file | cut -d = -f 2 | cut -d \# -f 1 | tr -d ' '`
 
 # runs database generation
-if [ "$NPROC" -eq 1 ]; then 
+if [ "$NPROC" -eq 1 ]; then
   # This is a serial simulation
   echo
   echo "  running mesher..."
   echo
   ./xmeshfem2D
-else 
+else
   # This is a MPI simulation
   echo
   echo "  running mesher on $NPROC processors..."
@@ -53,7 +53,7 @@ fi
 if [[ $? -ne 0 ]]; then exit 1; fi
 
 # runs simulation
-if [ "$NPROC" -eq 1 ]; then 
+if [ "$NPROC" -eq 1 ]; then
   # This is a serial simulation
   echo
   echo "  running solver..."

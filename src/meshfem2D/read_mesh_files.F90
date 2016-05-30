@@ -95,7 +95,7 @@
   double precision, external :: value_spline
 
   ! get interface data from external file
-  print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile))
+  write(IMAIN,*) 'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile))
   open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old')
 
   ! allocate arrays for the grid
@@ -159,11 +159,14 @@
     ! and modify the position of the source accordingly if it is located exactly at the surface
     do i_source= 1,NSOURCES
        if (source_surf(i_source) .and. ilayer == number_of_layers) then
-            print *, 'source ', i_source
-            print *, '  target (input) z: ', zs(i_source)
-            zs(i_source) = value_spline(xs(i_source),xinterface_top,zinterface_top, &
-                                        coefs_interface_top,npoints_interface_top)
-            print *, '  surface (actual) z: ', zs(i_source)
+          ! user output
+          write(IMAIN,*) 'source ', i_source
+          write(IMAIN,*) '  target (input) z: ', zs(i_source)
+
+          zs(i_source) = value_spline(xs(i_source),xinterface_top,zinterface_top, &
+                                      coefs_interface_top,npoints_interface_top)
+
+          write(IMAIN,*) '  surface (actual) z: ', zs(i_source)
        endif
     enddo
 

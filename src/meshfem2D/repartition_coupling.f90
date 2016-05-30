@@ -85,7 +85,8 @@
      endif
   enddo
 
-  print *, 'nedges_coupled (acoustic/elastic)', nedges_coupled
+  ! user output
+  write(IMAIN,*) 'nedges_coupled (acoustic/elastic)     = ', nedges_coupled
 
   allocate(edges_coupled(2,nedges_coupled),stat=ier)
   if (ier /= 0) stop 'Error allocating array edges_coupled'
@@ -185,7 +186,8 @@
      endif
   enddo
 
-  print *, 'nedges_coupled (acoustic/poroelastic)', nedges_acporo_coupled
+  ! user output
+  write(IMAIN,*) 'nedges_coupled (acoustic/poroelastic) = ', nedges_acporo_coupled
 
   allocate(edges_acporo_coupled(2,nedges_acporo_coupled),stat=ier)
   if (ier /= 0) stop 'Error allocating array edges_acporo_coupled'
@@ -284,7 +286,8 @@
      endif
   enddo
 
-  print *, 'nedges_coupled (poroelastic/elastic)', nedges_elporo_coupled
+  ! user output
+  write(IMAIN,*) 'nedges_coupled (poroelastic/elastic)  = ', nedges_elporo_coupled
 
   allocate(edges_elporo_coupled(2,nedges_elporo_coupled),stat=ier)
   if (ier /= 0) stop 'Error allocating array edges_elporo_coupled'
@@ -376,7 +379,9 @@
 ! (as implemented in routine createnum_fast() elsewhere in the code). This could be done one day if needed instead
 ! of the very simple double loop below.
 
-  print *,'start detecting points for periodic boundary conditions (the current algorithm can be slow and could be improved)...'
+  ! user output
+  write(IMAIN,*) 'start detecting points for periodic boundary conditions &
+                 &(the current algorithm can be slow and could be improved)...'
 
   is_periodic(:) = .false.
 
@@ -409,10 +414,12 @@
     enddo
   enddo
 
-  print *,'done detecting points for periodic boundary conditions.'
-  print *,'number of periodic elements found and grouped in the same partition: ',count(is_periodic)
+  ! user output
+  write(IMAIN,*) 'done detecting points for periodic boundary conditions.'
+  write(IMAIN,*) 'number of periodic elements found and grouped in the same partition: ',count(is_periodic)
+  call flush_IMAIN()
 
-! loop on all the elements to find the first partition that contains a periodic element
+  ! loop on all the elements to find the first partition that contains a periodic element
   ifirst_partition_found = -1
   do el = 0, nelmnts-1
     if (is_periodic(el)) then
@@ -422,7 +429,7 @@
   enddo
   if (ifirst_partition_found < 0) stop 'error: no periodic element found, even though ADD_PERIODIC_CONDITIONS is set'
 
-! loop on all the elements to move all periodic elements to the first partition found
+  ! loop on all the elements to move all periodic elements to the first partition found
   do el = 0, nelmnts-1
     if (is_periodic(el)) part(el) = ifirst_partition_found
   enddo

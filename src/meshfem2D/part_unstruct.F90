@@ -418,8 +418,8 @@
               if (ncommon_nodes > 0) then
                 tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+2) = ncommon_nodes
               else
-                print *, "Error while building interfaces!", ncommon_nodes
-                stop 'fatal error'
+                print *,'Error while building interfaces! invalid number of common nodes ', ncommon_nodes
+                stop 'Error building interfaces'
               endif
               num_edge = num_edge + 1
             endif

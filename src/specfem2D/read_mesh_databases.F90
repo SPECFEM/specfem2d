@@ -242,13 +242,6 @@
   if (myrank == 0) then
     !---- print the date, time and start-up banner
     call datim(simulation_title)
-    write(IMAIN,*)
-    write(IMAIN,*)
-    write(IMAIN,*) '*********************'
-    write(IMAIN,*) '****             ****'
-    write(IMAIN,*) '****  SPECFEM2D  ****'
-    write(IMAIN,*) '****             ****'
-    write(IMAIN,*) '*********************'
 
     ! AXISYM simulation
     if (AXISYM) then
@@ -1018,24 +1011,25 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'Absorbing boundaries:'
-    if (PML_BOUNDARY_CONDITIONS) &
-      write(IMAIN,*) '  using PML boundary conditions'
-    if (STACEY_ABSORBING_CONDITIONS) &
-      write(IMAIN,*) '  using Stacey absorbing boundary conditions'
-    ! for Stacey
-    if (STACEY_ABSORBING_CONDITIONS) then
-      write(IMAIN,*)
-      write(IMAIN,*) 'Number of absorbing elements: ',nelemabs_tot
-      write(IMAIN,*) '  nspec_left = ',nspec_left_tot
-      write(IMAIN,*) '  nspec_right = ',nspec_right_tot
-      write(IMAIN,*) '  nspec_bottom = ',nspec_bottom_tot
-      write(IMAIN,*) '  nspec_top = ',nspec_top_tot
-      write(IMAIN,*)
+    if (PML_BOUNDARY_CONDITIONS .or. STACEY_ABSORBING_CONDITIONS) then
+      write(IMAIN,*) 'Absorbing boundaries:'
+      if (PML_BOUNDARY_CONDITIONS) &
+        write(IMAIN,*) '  using PML boundary conditions'
+      if (STACEY_ABSORBING_CONDITIONS) &
+        write(IMAIN,*) '  using Stacey absorbing boundary conditions'
+      ! for Stacey
+      if (STACEY_ABSORBING_CONDITIONS) then
+        write(IMAIN,*)
+        write(IMAIN,*) 'Number of absorbing elements: ',nelemabs_tot
+        write(IMAIN,*) '  nspec_left = ',nspec_left_tot
+        write(IMAIN,*) '  nspec_right = ',nspec_right_tot
+        write(IMAIN,*) '  nspec_bottom = ',nspec_bottom_tot
+        write(IMAIN,*) '  nspec_top = ',nspec_top_tot
+        write(IMAIN,*)
+      endif
     endif
     call flush_IMAIN()
   endif
-
 
   ! allocates arrays
   if (anyabs) then
@@ -1320,6 +1314,8 @@
   ! constructs acoustic surface
   if (nelem_acoustic_surface > 0) then
     call construct_acoustic_surface ()
+
+    ! user output
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'Number of free surface elements: ',nelem_acoustic_surface

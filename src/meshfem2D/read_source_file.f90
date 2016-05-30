@@ -113,7 +113,7 @@
   ! checks number of sources
   if (num_sources < 1) stop 'need at least one source in SOURCE file'
   if (num_sources /= NSOURCES) then
-       print *,'num_sources :',num_sources
+       print *,'Error invalid num_sources :',num_sources
        print *,'NSOURCES :',NSOURCES
        stop 'Error: Total number of sources in DATA/SOURCE is different from that declared in the Par_file, please check...'
   endif
@@ -146,68 +146,68 @@
 
     ! note: we will further process source info in solver,
     !         here we just read in the given specifics and show them
-    print *,'Source', i_source
-    print *,'  Position xs, zs = ',xs(i_source),zs(i_source)
-    print *,''
+    write(IMAIN,*) 'Source', i_source
+    write(IMAIN,*) '  Position xs, zs = ',xs(i_source),zs(i_source)
+    write(IMAIN,*)
 
     ! source type
-    print *,'  Source type (1=force, 2=moment tensor): ',source_type(i_source)
+    write(IMAIN,*) '  Source type (1=force, 2=moment tensor): ',source_type(i_source)
     select case (source_type(i_source))
     case (1)
       ! force
-      print *,'  Force source:'
-      print *,'  Angle of the source = ',anglesource(i_source)
-      print *,'  Multiplying factor  = ',factor(i_source)
+      write(IMAIN,*) '  Force source:'
+      write(IMAIN,*) '  Angle of the source = ',anglesource(i_source)
+      write(IMAIN,*) '  Multiplying factor  = ',factor(i_source)
     case (2)
       ! moment tensor
-      print *,'  Moment tensor source:'
-      print *,'  Mxx of the source = ',Mxx(i_source)
-      print *,'  Mzz of the source = ',Mzz(i_source)
-      print *,'  Mxz of the source = ',Mxz(i_source)
+      write(IMAIN,*) '  Moment tensor source:'
+      write(IMAIN,*) '  Mxx of the source = ',Mxx(i_source)
+      write(IMAIN,*) '  Mzz of the source = ',Mzz(i_source)
+      write(IMAIN,*) '  Mxz of the source = ',Mxz(i_source)
     case default
       ! not supported yet
       stop 'Error invalid source type! must be 1 or 2, exiting...'
     end select
-    print *,''
+    write(IMAIN,*)
 
     ! STF
-    print *,'  Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 8=Read from file, 9=burst):'&
-               ,time_function_type(i_source)
+    write(IMAIN,*) '  Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, &
+                   &8=Read from file, 9=burst):',time_function_type(i_source)
     select case (time_function_type(i_source))
     case (1)
-      print *,'  Ricker wavelet (second-derivative):'
-      print *,'  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+      write(IMAIN,*) '  Ricker wavelet (second-derivative):'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case (2)
-      print *,'  Ricker wavelet (first-derivative):'
-      print *,'  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+      write(IMAIN,*) '  Ricker wavelet (first-derivative):'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case (3)
-      print *,'  Gaussian:'
-      print *,'  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+      write(IMAIN,*) '  Gaussian:'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case (4)
-      print *,'  Dirac:'
-      print *,'  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+      write(IMAIN,*) '  Dirac:'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case (5)
-      print *,'  Heaviside:'
-      print *,'  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+      write(IMAIN,*) '  Heaviside:'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case (6)
-      print *,'  Ocean acoustics (type I):'
-      print *,'  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+      write(IMAIN,*) '  Ocean acoustics (type I):'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case (7)
-      print *,'  Ocean acoustics (type II):'
-      print *,'  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+      write(IMAIN,*) '  Ocean acoustics (type II):'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case (8)
-      print *,'  External source time function file:'
-      print *,'  Source read from file:', trim(name_of_source_file(i_source))
+      write(IMAIN,*) '  External source time function file:'
+      write(IMAIN,*) '  Source read from file:', trim(name_of_source_file(i_source))
     case (9)
-      print *,'  Burst wavelet:'
-      print *,'  Burst band width: ',burst_band_width(i_source)
+      write(IMAIN,*) '  Burst wavelet:'
+      write(IMAIN,*) '  Burst band width: ',burst_band_width(i_source)
     case (10)
-      print *,'  Sinus source time function:'
-      print *,'  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+      write(IMAIN,*) '  Sinus source time function:'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case default
       stop 'Error invalid source time function type! must be between 1 and 9, exiting...'
     end select
-    print *,''
+    write(IMAIN,*)
 
   enddo ! do i_source= 1,NSOURCES
   close(IIN_SOURCE)
