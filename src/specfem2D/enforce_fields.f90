@@ -65,14 +65,14 @@ subroutine build_forced()
                          PML_BOUNDARY_CONDITIONS,ispec_is_PML,read_external_mesh
   use enforce_par
   use constants, only: TINYVAL,IMAIN,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
-  
+
   implicit none
-  
+
   !local variables
   integer :: inum,ispec,i,j,iglob
-  
+
   if (read_external_mesh) then
-  
+
     ! loop on all the forced edges
     do inum = 1,nelem_acforcing
       ispec = numacforcing(inum)
@@ -141,10 +141,10 @@ subroutine build_forced()
         enddo
       endif  !  end of top acoustic forcing boundary
     enddo
-  
+
   else ! If internal mesher:
 
-    do iglob = 1,nglob ! Loop on all the GLL points 
+    do iglob = 1,nglob ! Loop on all the GLL points
       if (abs(coord(1,iglob) - xforced) < TINYVAL) then
         forced(iglob) = .true.
         nforced = nforced + 1
@@ -152,7 +152,7 @@ subroutine build_forced()
     enddo
 
   endif
-  
+
   call sum_all_i(nforced, nforced_sum)
   if (myrank == 0) then
     if (nforced_sum == 0) then
@@ -179,7 +179,7 @@ subroutine enforce_fields(iglob,it)
   use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI
 
   implicit none
-  
+
   ! Inputs
   integer, intent(in) :: iglob,it
 
@@ -201,7 +201,7 @@ subroutine enforce_fields(iglob,it)
   omegaj = TWO*PI*f0
   x = coord(1,iglob)
   z = coord(2,iglob)
-  
+
   tval=(it-1)*deltat
   tval_old=(it-2)*deltat
   if (tval < TWO*Nc*PI/omegaj) then
@@ -229,7 +229,7 @@ subroutine enforce_fields(iglob,it)
   endif
 
   call calculateUxUz(ux,uz,z,cp,cs,h,omegaj,antisym)
-  
+
   if ((abs(real(ux)) < TINYVAL) .and. (abs(aimag(ux)) > TINYVAL)) then ! if ux is imaginary
     !print *,"Ux imaginary"
     if (abs(aimag(uz)) > TINYVAL) then ! ... and uz not real
@@ -269,7 +269,7 @@ subroutine enforce_fields(iglob,it)
       veloc_elastic(1,iglob) = veloc_elastic(1,iglob) + deltatover2*(accelOld(1) + accel_elastic(1,iglob))
       displ_elastic(1,iglob) = displ_elastic(1,iglob) + deltat*velocOld(1) + deltatsquareover2*accelOld(1)
       velocOld(2) = veloc_elastic(2,iglob)
-      veloc_elastic(2,iglob) = veloc_elastic(2,iglob) + deltatover2*(accelOld(2) + accel_elastic(2,iglob)) 
+      veloc_elastic(2,iglob) = veloc_elastic(2,iglob) + deltatover2*(accelOld(2) + accel_elastic(2,iglob))
       displ_elastic(2,iglob) = displ_elastic(2,iglob) + deltat*velocOld(2) + deltatsquareover2*accelOld(2)
     endif
   else
@@ -292,11 +292,11 @@ subroutine calculateUxUz(ux,uz,zi,cp,cs,h,omegaj,antisym)
   use constants, only: CUSTOM_REAL,TWO,PI
 
   implicit none
-  
+
   ! Inputs
   logical, intent(in) :: antisym
-  real(kind=CUSTOM_REAL), intent(in) :: zi,cp,cs,h,omegaj  
-  
+  real(kind=CUSTOM_REAL), intent(in) :: zi,cp,cs,h,omegaj
+
   ! Outputs
   complex, intent(out) :: ux,uz
 
@@ -376,7 +376,7 @@ end subroutine calculateCphase
 !  use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI
 
 !  implicit none
-!  
+!
 !  ! Inputs
 !  integer, intent(in) :: iglob,it
 
@@ -389,9 +389,9 @@ end subroutine calculateCphase
 
 !  x = coord(1,iglob)
 !  z = coord(2,iglob)
-!  
+!
 !  factor = 1.0d0 ! * (z - 2.0d0)**2
-!  
+!
 !  !if (abs(z + 1.5d-3) < 1.5d-3) then
 !    if (it == 1) then ! We initialize the variables
 !      displ_elastic(1,iglob) = factor*(-1.0d0)
@@ -410,7 +410,7 @@ end subroutine calculateCphase
 !      veloc_elastic(1,iglob) = veloc_elastic(1,iglob) + deltatover2*(accelOld(1) + accel_elastic(1,iglob))
 !      displ_elastic(1,iglob) = displ_elastic(1,iglob) + deltat*velocOld(1) + deltatsquareover2*accelOld(1)
 !      velocOld(2) = veloc_elastic(2,iglob)
-!      veloc_elastic(2,iglob) = veloc_elastic(2,iglob) + deltatover2*(accelOld(2) + accel_elastic(2,iglob)) 
+!      veloc_elastic(2,iglob) = veloc_elastic(2,iglob) + deltatover2*(accelOld(2) + accel_elastic(2,iglob))
 !      displ_elastic(2,iglob) = displ_elastic(2,iglob) + deltat*velocOld(2) + deltatsquareover2*accelOld(2)
 !    endif
 !  !else
