@@ -59,7 +59,7 @@
   open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old',iostat=ier)
   if (ier /= 0) then
     print *,'Error opening file: ',trim('DATA/'//interfacesfile)
-    stop 'Error read interface file in meshfem2D'
+    call exit_MPI(0,'Error read interface file in meshfem2D')
   endif
 
   max_npoints_interface = -1
