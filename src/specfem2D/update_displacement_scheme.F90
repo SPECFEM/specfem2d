@@ -483,7 +483,7 @@
 
   use constants,only: CUSTOM_REAL,NDIM,TWO
 
-  use specfem_par, only : nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID
+  use specfem_par, only : nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID,forced,it
 
   implicit none
 
@@ -494,6 +494,8 @@
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
 
   ! local parameters
+  integer :: iglob
+
 #ifdef FORCE_VECTORIZATION
   integer :: i
 #endif
@@ -511,7 +513,7 @@
     displ_elastic_old(:,:) = displ_elastic(:,:) + deltatsquareover2/TWO * accel_elastic(:,:)
 #endif
 
-  endif ! PM
+  endif ! PML
 
 #ifdef FORCE_VECTORIZATION
   !! DK DK this allows for full vectorization by using a trick to see the 2D array as a 1D array
@@ -522,9 +524,19 @@
     accel_elastic(i,1) = 0._CUSTOM_REAL
   enddo
 #else
-  displ_elastic(:,:) = displ_elastic(:,:) + deltat * veloc_elastic(:,:) + deltatsquareover2 * accel_elastic(:,:)
-  veloc_elastic(:,:) = veloc_elastic(:,:) + deltatover2 * accel_elastic(:,:)
-  accel_elastic(:,:) = 0._CUSTOM_REAL
+
+  do iglob = 1,nglob_elastic
+    if (forced(iglob)) then
+      call enforce_fields(iglob,it)
+    else
+      ! big loop over all the global points (not elements) in the mesh to update
+      ! the displacement and velocity vectors and clear the acceleration vector
+      displ_elastic(:,iglob) = displ_elastic(:,iglob) + deltat * veloc_elastic(:,iglob) + deltatsquareover2 * accel_elastic(:,iglob)
+      veloc_elastic(:,iglob) = veloc_elastic(:,iglob) + deltatover2 * accel_elastic(:,iglob) ! Predictor
+      accel_elastic(:,iglob) = 0._CUSTOM_REAL
+    endif
+  enddo
+
 #endif
 
   end subroutine update_displacement_newmark_elastic

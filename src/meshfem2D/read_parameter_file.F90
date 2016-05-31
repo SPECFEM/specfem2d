@@ -550,14 +550,16 @@
   ! CPML and Stacey are mutually exclusive
   if (STACEY_ABSORBING_CONDITIONS .and. PML_BOUNDARY_CONDITIONS) &
     stop 'STACEY_ABSORBING_CONDITIONS and PML_BOUNDARY_CONDITIONS are mutually exclusive but are both set to .true.'
+
   ! we also set in subroutine prepare_timerun_read to make sure that STACEY_ABSORBING_CONDITIONS = .false. when
   ! PML_BOUNDARY_CONDITIONS is used.
 
   ! solve the conflict in value of PML_BOUNDARY_CONDITIONS and STACEY_ABSORBING_CONDITIONS
-  if (PML_BOUNDARY_CONDITIONS) STACEY_ABSORBING_CONDITIONS = .true.
+  if (PML_BOUNDARY_CONDITIONS) any_abs = .true.
+  if (STACEY_ABSORBING_CONDITIONS) any_abs = .true.
 
   ! initializes flags for absorbing boundaries
-  if (.not. STACEY_ABSORBING_CONDITIONS) then
+  if (.not. any_abs) then
     absorbbottom = .false.
     absorbright = .false.
     absorbtop = .false.
@@ -608,6 +610,9 @@
   ! simulation parameters
   if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /= 3) &
     stop 'SIMULATION_TYPE can only be set to 1 or 3 in the Par_file; exiting'
+
+  if (NOISE_TOMOGRAPHY < 0 .or. NOISE_TOMOGRAPHY > 3) &
+    stop 'NOISE_TOMOGRAPHY can only be set to 0, 1, 2 or 3 in the Par_file; exiting'
 
   if (N_SLS < 2) &
     stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'

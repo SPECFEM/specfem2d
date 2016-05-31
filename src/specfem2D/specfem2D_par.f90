@@ -148,7 +148,7 @@ module specfem_par
     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   ! Stacey BC
-  logical :: STACEY_BOUNDARY_CONDITIONS
+  logical :: STACEY_ABSORBING_CONDITIONS
   logical, dimension(:,:), allocatable  :: codeabs
   integer, dimension(:), allocatable  :: typeabs
   ! for detection of corner element on absorbing boundary
@@ -201,12 +201,15 @@ module specfem_par
   double precision, dimension(:), allocatable :: x_source,z_source
   double precision, dimension(:), allocatable :: xi_source,gamma_source
 
-  double precision, dimension(:), allocatable :: Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource
+  double precision, dimension(:), allocatable :: Mxx,Mzz,Mxz
+  double precision, dimension(:), allocatable :: f0_source,tshift_src,factor,anglesource
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearray
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearrays
   double precision :: t0
-  integer, dimension(:), allocatable :: ispec_selected_source,iglob_source,&
-                                        is_proc_source,nb_proc_source
+
+  integer, dimension(:), allocatable :: ispec_selected_source,iglob_source
+  integer, dimension(:), allocatable :: is_proc_source,nb_proc_source
+
   double precision, dimension(:), allocatable :: aval
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: source_time_function
   double precision, external :: netlib_specfun_erf
@@ -232,6 +235,9 @@ module specfem_par
      ibegin_edge4_acforcing,iend_edge4_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing
   integer :: nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing
   integer, dimension(:), allocatable :: ib_left_acforcing,ib_right_acforcing,ib_bottom_acforcing,ib_top_acforcing
+
+  ! Variables for forcing
+  logical, dimension(:), allocatable :: forced
 
   ! for plane wave incidence
   ! to compute analytical initial plane wave field
@@ -461,8 +467,7 @@ module specfem_par
   logical, dimension(:), allocatable :: ispec_is_elastic
 
   ! inverse mass matrices
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_one
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_elastic_three
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: rmass_inverse_elastic
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic,veloc_elastic,displ_elastic
 
@@ -783,26 +788,19 @@ module specfem_par_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: source_array_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mask_noise
 
-  ! The following three arrays are used to hold snapshots of the generating
+  ! The following arrays are used to hold snapshots of the generating
   ! wavefield or of the ensemble forward wavefield, depending on the type of
   ! noise simulation specified. In some cases, the entire generating wavefield
   ! or ensemble forward wavefield needs to be saved for all times steps. Since
   ! the disk space required to do this is usually quite large, separate arrays
-  ! are used for x,y,z to avoid having empty dimensions (one empty dimension in
-  ! the case of SH).
+  ! are used to avoid having empty arrays
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    surface_movie_x_noise, surface_movie_y_noise, surface_movie_z_noise
+    surface_movie_x_noise, surface_movie_z_noise
 
   ! For writing noise wavefields
-  logical :: output_wavefields_noise = .true. ! this is output only in the case of noise tomography
   integer :: noise_output_ncol
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: noise_output_array
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: noise_output_rhokl
-
-  ! For noise tomography only - specify whether to reconstruct ensemble forward
-  ! wavefield by saving everywhere or by saving only at the boundaries (the
-  ! latter usually much faster but prone to artefacts)
-  logical :: save_everywhere = .false.
 
 end module specfem_par_noise
 
@@ -919,8 +917,8 @@ module specfem_par_movie
   integer :: NSTEP_BETWEEN_OUTPUT_IMAGES
 
   integer :: imagetype_JPEG
-  integer :: isnapshot_number = 0  !remember which image are going to produce
-  integer  :: nb_pixel_loc
+  integer :: isnapshot_number
+  integer :: nb_pixel_loc
   integer, dimension(:), allocatable :: ix_image_color_source,iy_image_color_source
   integer, dimension(:), allocatable :: ix_image_color_receiver,iy_image_color_receiver
   integer, dimension(:), allocatable :: nb_pixel_per_proc

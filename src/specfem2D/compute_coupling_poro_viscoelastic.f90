@@ -385,7 +385,7 @@
                          velocs_poroelastic,b_velocs_poroelastic, &
                          accelw_poroelastic,b_accelw_poroelastic, &
                          velocw_poroelastic,b_velocw_poroelastic, &
-                         icount,rmass_inverse_elastic_one,rmass_inverse_elastic_three, &
+                         icount,rmass_inverse_elastic, &
                          rmass_s_inverse_poroelastic,&
                          time_stepping_scheme,deltatover2,b_deltatover2
 
@@ -417,8 +417,8 @@
          if (time_stepping_scheme == 1) then
            veloc_elastic(1,iglob) = veloc_elastic(1,iglob) - deltatover2*accel_elastic(1,iglob)
            veloc_elastic(2,iglob) = veloc_elastic(2,iglob) - deltatover2*accel_elastic(2,iglob)
-           accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic_one(iglob)
-           accel_elastic(2,iglob) = accel_elastic(2,iglob) / rmass_inverse_elastic_three(iglob)
+           accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(1,iglob)
+           accel_elastic(2,iglob) = accel_elastic(2,iglob) / rmass_inverse_elastic(2,iglob)
            ! recovering original velocities and accelerations on boundaries (poro side)
            velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) - deltatover2*accels_poroelastic(1,iglob)
            velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) - deltatover2*accels_poroelastic(2,iglob)
@@ -426,9 +426,9 @@
            accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
            ! assembling accelerations
            accel_elastic(1,iglob) = ( accel_elastic(1,iglob) + accels_poroelastic(1,iglob) ) / &
-                                    ( 1.0/rmass_inverse_elastic_one(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+                                    ( 1.0/rmass_inverse_elastic(1,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
            accel_elastic(2,iglob) = ( accel_elastic(2,iglob) + accels_poroelastic(2,iglob) ) / &
-                                    ( 1.0/rmass_inverse_elastic_three(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+                                    ( 1.0/rmass_inverse_elastic(2,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
            accels_poroelastic(1,iglob) = accel_elastic(1,iglob)
            accels_poroelastic(2,iglob) = accel_elastic(2,iglob)
            ! updating velocities
@@ -449,8 +449,8 @@
 !      displ_elastic = displ_elastic - BETA_LDDRK(i_stage) * displ_elastic_LDDRK
 !      veloc_elastic_LDDRK = (veloc_elastic_LDDRK - deltat * accel_elastic) / ALPHA_LDDRK(i_stage)
 !      displ_elastic_LDDRK = (displ_elastic_LDDRK - deltat * veloc_elastic) / ALPHA_LDDRK(i_stage)
-!            accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
-!            accel_elastic(2,iglob) = accel_elastic(2,iglob) / rmass_inverse_elastic(iglob)
+!            accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(1,iglob)
+!            accel_elastic(2,iglob) = accel_elastic(2,iglob) / rmass_inverse_elastic(2,iglob)
 
             ! recovering original velocities and accelerations on boundaries (poro side)
 !      velocs_poroelastic = velocs_poroelastic - BETA_LDDRK(i_stage) * velocs_poroelastic_LDDRK
@@ -462,9 +462,9 @@
 
             ! assembling accelerations
 !            accel_elastic(1,iglob) = ( accel_elastic(1,iglob) + accels_poroelastic(1,iglob) ) / &
-!                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+!                                   ( 1.0/rmass_inverse_elastic(1,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
 !            accel_elastic(2,iglob) = ( accel_elastic(2,iglob) + accels_poroelastic(2,iglob) ) / &
-!                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+!                                   ( 1.0/rmass_inverse_elastic(2,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
 !            accels_poroelastic(1,iglob) = accel_elastic(1,iglob)
 !            accels_poroelastic(2,iglob) = accel_elastic(2,iglob)
 
@@ -523,8 +523,8 @@
 
 !        endif
 
-!        accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(iglob)
-!        accel_elastic(2,iglob) = accel_elastic(2,iglob) / rmass_inverse_elastic(iglob)
+!        accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(1,iglob)
+!        accel_elastic(2,iglob) = accel_elastic(2,iglob) / rmass_inverse_elastic(2,iglob)
 
 !        accel_elastic_rk(1,iglob,i_stage) = accel_elastic(1,iglob) / deltat
 !        accel_elastic_rk(2,iglob,i_stage) = accel_elastic(2,iglob) / deltat
@@ -576,9 +576,9 @@
 
         ! assembling accelerations
 !            accel_elastic(1,iglob) = ( accel_elastic(1,iglob) + accels_poroelastic(1,iglob) ) / &
-!                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+!                                   ( 1.0/rmass_inverse_elastic(1,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
 !            accel_elastic(2,iglob) = ( accel_elastic(2,iglob) + accels_poroelastic(2,iglob) ) / &
-!                                   ( 1.0/rmass_inverse_elastic(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+!                                   ( 1.0/rmass_inverse_elastic(2,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
 !            accels_poroelastic(1,iglob) = accel_elastic(1,iglob)
 !            accels_poroelastic(2,iglob) = accel_elastic(2,iglob)
 
@@ -665,8 +665,8 @@
        if (SIMULATION_TYPE == 3) then
          b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) - b_deltatover2*b_accel_elastic(1,iglob)
          b_veloc_elastic(2,iglob) = b_veloc_elastic(2,iglob) - b_deltatover2*b_accel_elastic(2,iglob)
-         b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) / rmass_inverse_elastic_one(iglob)
-         b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) / rmass_inverse_elastic_three(iglob)
+         b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) / rmass_inverse_elastic(1,iglob)
+         b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) / rmass_inverse_elastic(2,iglob)
 
          ! recovering original velocities and accelerations on boundaries (poro side)
          b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) - b_deltatover2*b_accels_poroelastic(1,iglob)
@@ -677,9 +677,9 @@
 
          ! assembling accelerations
          b_accel_elastic(1,iglob) = ( b_accel_elastic(1,iglob) + b_accels_poroelastic(1,iglob) ) / &
-                        ( 1.0/rmass_inverse_elastic_one(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+                        ( 1.0/rmass_inverse_elastic(1,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
          b_accel_elastic(2,iglob) = ( b_accel_elastic(2,iglob) + b_accels_poroelastic(2,iglob) ) / &
-                        ( 1.0/rmass_inverse_elastic_three(iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+                        ( 1.0/rmass_inverse_elastic(2,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
 
          b_accels_poroelastic(1,iglob) = b_accel_elastic(1,iglob)
          b_accels_poroelastic(2,iglob) = b_accel_elastic(2,iglob)

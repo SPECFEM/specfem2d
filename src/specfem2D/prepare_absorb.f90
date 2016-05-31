@@ -32,13 +32,17 @@
 !
 !========================================================================
 
-  subroutine prepare_absorb_open_files_elastic()
+
+  subroutine prepare_absorb_read_elastic()
+
+! reads in previously stored Stacey boundary contributions
 
   use specfem_par, only: myrank,any_elastic,SIMULATION_TYPE, &
-                         nspec_left,nspec_right,nspec_bottom,nspec_top
+                         nspec_left,nspec_right,nspec_bottom,nspec_top, &
+                         b_absorb_elastic_left,b_absorb_elastic_right, &
+                         b_absorb_elastic_bottom,b_absorb_elastic_top
 
   implicit none
-
   ! local parameters
   integer :: ier
   character(len=150) :: outputname
@@ -46,280 +50,48 @@
   ! checks if anything to do in this slice
   if (.not. any_elastic) return
 
+  ! checks if anything to do
+  if (SIMULATION_TYPE /= 3) return
+
   !--- left absorbing boundary
   if (nspec_left > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_elastic_left',myrank,'.bin'
-    if (SIMULATION_TYPE == 3) then
-      open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    else
-      open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    endif
-
-  endif  !  end of left absorbing boundary
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_elastic_left
+    close(35)
+  endif
 
   !--- right absorbing boundary
   if (nspec_right > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_elastic_right',myrank,'.bin'
-    if (SIMULATION_TYPE == 3) then
-      open(unit=36,file='OUTPUT_FILES/'//outputname,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    else
-      open(unit=36,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    endif
-
-  endif  !  end of right absorbing boundary
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_elastic_right
+    close(35)
+  endif
 
   !--- bottom absorbing boundary
   if (nspec_bottom > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_elastic_bottom',myrank,'.bin'
-    if (SIMULATION_TYPE == 3) then
-      open(unit=37,file='OUTPUT_FILES/'//outputname,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    else
-      open(unit=37,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    endif
-
-  endif  !  end of bottom absorbing boundary
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_elastic_bottom
+    close(35)
+  endif
 
   !--- top absorbing boundary
   if (nspec_top > 0) then
-      write(outputname,'(a,i6.6,a)') 'absorb_elastic_top',myrank,'.bin'
-    if (SIMULATION_TYPE == 3) then
-      open(unit=38,file='OUTPUT_FILES/'//outputname,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    else
-      open(unit=38,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    endif
-
-  endif ! end of top absorbing boundary
-
-  end subroutine prepare_absorb_open_files_elastic
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine prepare_absorb_open_files_poroelastic()
-
-  use specfem_par, only: myrank,any_poroelastic,SIMULATION_TYPE, &
-                         nspec_left,nspec_right,nspec_bottom,nspec_top
-
-  implicit none
-
-  ! local parameters
-  integer :: ier
-  character(len=150) :: outputname,outputname2
-
-  ! checks if anything to do in this slice
-  if (.not. any_poroelastic) return
-
-  !--- left absorbing boundary
-  if (nspec_left > 0) then
-    write(outputname,'(a,i6.6,a)') 'absorb_poro_s_left',myrank,'.bin'
-    write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_left',myrank,'.bin'
-    if (SIMULATION_TYPE == 3) then
-      open(unit=45,file='OUTPUT_FILES/'//outputname,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-      open(unit=25,file='OUTPUT_FILES/'//outputname2,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    else
-      open(unit=45,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-      open(unit=25,file='OUTPUT_FILES/'//outputname2,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    endif
-
-  endif  !  end of left absorbing boundary
-
-  !--- right absorbing boundary
-  if (nspec_right > 0) then
-    write(outputname,'(a,i6.6,a)') 'absorb_poro_s_right',myrank,'.bin'
-    write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_right',myrank,'.bin'
-    if (SIMULATION_TYPE == 3) then
-      open(unit=46,file='OUTPUT_FILES/'//outputname,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-      open(unit=26,file='OUTPUT_FILES/'//outputname2,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    else
-      open(unit=46,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-      open(unit=26,file='OUTPUT_FILES/'//outputname2,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    endif
-
-  endif  !  end of right absorbing boundary
-
-  !--- bottom absorbing boundary
-  if (nspec_bottom > 0) then
-    write(outputname,'(a,i6.6,a)') 'absorb_poro_s_bottom',myrank,'.bin'
-    write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_bottom',myrank,'.bin'
-    if (SIMULATION_TYPE == 3) then
-      open(unit=47,file='OUTPUT_FILES/'//outputname,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-      open(unit=29,file='OUTPUT_FILES/'//outputname2,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    else
-      open(unit=47,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-      open(unit=29,file='OUTPUT_FILES/'//outputname2,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    endif
-
-  endif  !  end of bottom absorbing boundary
-
-  !--- top absorbing boundary
-  if (nspec_top > 0) then
-    write(outputname,'(a,i6.6,a)') 'absorb_poro_s_top',myrank,'.bin'
-    write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_top',myrank,'.bin'
-    if (SIMULATION_TYPE == 3) then
-      open(unit=48,file='OUTPUT_FILES/'//outputname,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-      open(unit=28,file='OUTPUT_FILES/'//outputname2,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    else
-      open(unit=48,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-      open(unit=28,file='OUTPUT_FILES/'//outputname2,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    endif
-
-  endif ! end of top absorbing boundary
-
-  end subroutine prepare_absorb_open_files_poroelastic
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine prepare_absorb_open_files_acoustic()
-
-  use specfem_par, only: myrank,any_acoustic,SIMULATION_TYPE, &
-                         nspec_left,nspec_right,nspec_bottom,nspec_top
-
-  implicit none
-
-  ! local parameters
-  integer :: ier
-  character(len=150) :: outputname
-
-  ! checks if anything to do in this slice
-  if (.not. any_acoustic) return
-
-  !--- left absorbing boundary
-  if (nspec_left > 0) then
-    write(outputname,'(a,i6.6,a)') 'absorb_acoustic_left',myrank,'.bin'
-    if (SIMULATION_TYPE == 3) then
-      open(unit=65,file='OUTPUT_FILES/'//outputname,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    else
-      open(unit=65,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    endif
-
-  endif  !  end of left absorbing boundary
-
-  !--- right absorbing boundary
-  if (nspec_right > 0) then
-    write(outputname,'(a,i6.6,a)') 'absorb_acoustic_right',myrank,'.bin'
-    if (SIMULATION_TYPE == 3) then
-      open(unit=66,file='OUTPUT_FILES/'//outputname,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    else
-      open(unit=66,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    endif
-
-  endif  !  end of right absorbing boundary
-
-  !--- bottom absorbing boundary
-  if (nspec_bottom > 0) then
-    write(outputname,'(a,i6.6,a)') 'absorb_acoustic_bottom',myrank,'.bin'
-    if (SIMULATION_TYPE == 3) then
-      open(unit=67,file='OUTPUT_FILES/'//outputname,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    else
-      open(unit=67,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    endif
-
-  endif  !  end of bottom absorbing boundary
-
-  !--- top absorbing boundary
-  if (nspec_top > 0) then
-    write(outputname,'(a,i6.6,a)') 'absorb_acoustic_top',myrank,'.bin'
-    if (SIMULATION_TYPE == 3) then
-      open(unit=68,file='OUTPUT_FILES/'//outputname,status='old',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    else
-      open(unit=68,file='OUTPUT_FILES/'//outputname,status='unknown',&
-            form='unformatted',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    endif
-
-  endif ! end of top absorbing boundary
-
-  end subroutine prepare_absorb_open_files_acoustic
-
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine prepare_absorb_read_elastic()
-
-  use specfem_par, only: nspec_left,nspec_right,nspec_bottom,nspec_top, &
-                         b_absorb_elastic_left,b_absorb_elastic_right, &
-                         b_absorb_elastic_bottom,b_absorb_elastic_top
-
-  implicit none
-
-  !--- left absorbing boundary
-  if (nspec_left > 0) read(35) b_absorb_elastic_left
-
-  !--- right absorbing boundary
-  if (nspec_right > 0) read(36) b_absorb_elastic_right
-
-  !--- bottom absorbing boundary
-  if (nspec_bottom > 0) read(37) b_absorb_elastic_bottom
-
-  !--- top absorbing boundary
-  if (nspec_top > 0) read(38) b_absorb_elastic_top
+    write(outputname,'(a,i6.6,a)') 'absorb_elastic_top',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_elastic_top
+    close(35)
+  endif
 
   end subroutine prepare_absorb_read_elastic
 
@@ -329,36 +101,82 @@
 
   subroutine prepare_absorb_read_poroelastic()
 
-  use specfem_par, only: nspec_left,nspec_right,nspec_bottom,nspec_top, &
+  use specfem_par, only: myrank,any_poroelastic,SIMULATION_TYPE, &
+                         nspec_left,nspec_right,nspec_bottom,nspec_top, &
                          b_absorb_poro_s_left,b_absorb_poro_w_left, &
                          b_absorb_poro_s_right,b_absorb_poro_w_right, &
                          b_absorb_poro_s_bottom,b_absorb_poro_w_bottom, &
                          b_absorb_poro_s_top,b_absorb_poro_w_top
 
   implicit none
+  ! local parameters
+  integer :: ier
+  character(len=150) :: outputname,outputname2
+
+  ! checks if anything to do in this slice
+  if (.not. any_poroelastic) return
+
+  ! checks if anything to do
+  if (SIMULATION_TYPE /= 3) return
 
   !--- left absorbing boundary
   if (nspec_left > 0) then
-    read(45) b_absorb_poro_s_left
-    read(25) b_absorb_poro_w_left
+    write(outputname,'(a,i6.6,a)') 'absorb_poro_s_left',myrank,'.bin'
+    write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_left',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    open(unit=36,file='OUTPUT_FILES/'//outputname2,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_poro_s_left
+    read(36) b_absorb_poro_w_left
+    close(35)
+    close(36)
   endif
 
   !--- right absorbing boundary
   if (nspec_right > 0) then
-    read(46) b_absorb_poro_s_right
-    read(26) b_absorb_poro_w_right
+    write(outputname,'(a,i6.6,a)') 'absorb_poro_s_right',myrank,'.bin'
+    write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_right',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    open(unit=36,file='OUTPUT_FILES/'//outputname2,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_poro_s_right
+    read(36) b_absorb_poro_w_right
+    close(35)
+    close(36)
   endif
 
   !--- bottom absorbing boundary
   if (nspec_bottom > 0)  then
-    read(47) b_absorb_poro_s_bottom
-    read(29) b_absorb_poro_w_bottom
+    write(outputname,'(a,i6.6,a)') 'absorb_poro_s_bottom',myrank,'.bin'
+    write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_bottom',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    open(unit=36,file='OUTPUT_FILES/'//outputname2,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_poro_s_bottom
+    read(36) b_absorb_poro_w_bottom
+    close(35)
+    close(36)
   endif
 
   !--- top absorbing boundary
   if (nspec_top > 0) then
-    read(48) b_absorb_poro_s_top
-    read(28) b_absorb_poro_w_top
+    write(outputname,'(a,i6.6,a)') 'absorb_poro_s_top',myrank,'.bin'
+    write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_top',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    open(unit=36,file='OUTPUT_FILES/'//outputname2,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_poro_s_top
+    read(36) b_absorb_poro_w_top
+    close(35)
+    close(36)
   endif
 
   end subroutine prepare_absorb_read_poroelastic
@@ -369,22 +187,61 @@
 
   subroutine prepare_absorb_read_acoustic()
 
-  use specfem_par, only: nspec_left,nspec_right,nspec_bottom,nspec_top, &
+  use specfem_par, only: myrank,any_acoustic,SIMULATION_TYPE, &
+                         nspec_left,nspec_right,nspec_bottom,nspec_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top
 
   implicit none
 
+  ! local parameters
+  integer :: ier
+  character(len=150) :: outputname
+
+  ! checks if anything to do in this slice
+  if (.not. any_acoustic) return
+
+  ! checks if anything to do
+  if (SIMULATION_TYPE /= 3) return
+
   !--- left absorbing boundary
-  if (nspec_left > 0)  read(65) b_absorb_acoustic_left
+  if (nspec_left > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_acoustic_left',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_acoustic_left
+    close(35)
+  endif
 
   !--- right absorbing boundary
-  if (nspec_right > 0) read(66) b_absorb_acoustic_right
+  if (nspec_right > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_acoustic_right',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_acoustic_right
+    close(35)
+  endif
 
   !--- bottom absorbing boundary
-  if (nspec_bottom > 0) read(67) b_absorb_acoustic_bottom
+  if (nspec_bottom > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_acoustic_bottom',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_acoustic_bottom
+    close(35)
+  endif
 
   !--- top absorbing boundary
-  if (nspec_top > 0) read(68) b_absorb_acoustic_top
+  if (nspec_top > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_acoustic_top',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_acoustic_top
+    close(35)
+  endif
 
   end subroutine prepare_absorb_read_acoustic

@@ -47,15 +47,18 @@
   include "constants.h"
 
   ! local parameters
-  integer :: i, iproc
+  integer :: i, iproc, ier
 
   ! allocates and initializes partitioning of elements
-  allocate(part(0:nelmnts-1))
+  allocate(part(0:nelmnts-1),stat=ier)
+  if (ier /= 0) stop 'Error allocating partition array'
   part(:) = -1
 
+  ! connectivity
   if (NPROC > 1) then
-    allocate(xadj_g(0:nelmnts))
-    allocate(adjncy_g(0:MAX_NEIGHBORS*nelmnts-1))
+    allocate(xadj_g(0:nelmnts), &
+             adjncy_g(0:MAX_NEIGHBORS*nelmnts-1),stat=ier)
+    if (ier /= 0) stop 'Error allocating connectivity arrays'
     xadj_g(:) = 0
     adjncy_g(:) = -1
   endif
@@ -65,28 +68,27 @@
   ! if ngnod == 9, we work on a subarray of elements that represents the elements with four nodes (four corners) only
   ! because the adjacency of the mesh elements can be entirely determined from the knowledge of the four corners only
   if (ngnod == 9) then
-     allocate(elmnts_bis(0:NCORNERS*nelmnts-1))
-     do i = 0, nelmnts-1
-       elmnts_bis(i*NCORNERS:i*NCORNERS+NCORNERS-1) = elmnts(i*ngnod:i*ngnod+NCORNERS-1)
-     enddo
+    allocate(elmnts_bis(0:NCORNERS*nelmnts-1),stat=ier)
+    if (ier /= 0) stop 'Error allocating elmnts_bis array'
 
-     if (NPROC > 1) then
+    do i = 0, nelmnts-1
+      elmnts_bis(i*NCORNERS:i*NCORNERS+NCORNERS-1) = elmnts(i*ngnod:i*ngnod+NCORNERS-1)
+    enddo
 
+    if (NPROC > 1) then
 !! DK DK fixed problem in the previous implementation by Nicolas Le Goff:
 !! DK DK (nxread+1)*(nzread+1) is OK for a regular internal mesh only, not for non structured external meshes
 !! DK DK      call mesh2dual_ncommonnodes(nelmnts, (nxread+1)*(nzread+1), &
 !! DK DK                                    elmnts_bis, xadj, adjncy, nnodes_elmnts, nodes_elmnts,1)
 !! DK DK the subset of element corners is not renumbered therefore we must still use the nnodes computed for 9 nodes here
-        ! determines maximum neighbors based on 1 common node
-        call mesh2dual_ncommonnodes(elmnts_bis,1,xadj_g,adjncy_g)
-     endif
-
+      ! determines maximum neighbors based on 1 common node
+      call mesh2dual_ncommonnodes(elmnts_bis,1,xadj_g,adjncy_g)
+    endif
   else
-     if (NPROC > 1) then
-        ! determines maximum neighbors based on 1 common node
-        call mesh2dual_ncommonnodes(elmnts,1,xadj_g,adjncy_g)
-     endif
-
+    if (NPROC > 1) then
+      ! determines maximum neighbors based on 1 common node
+      call mesh2dual_ncommonnodes(elmnts,1,xadj_g,adjncy_g)
+    endif
   endif
 
 
@@ -105,9 +107,11 @@
 
     ! partitioning
     select case (partitioning_method)
-
     case(1)
       ! analytical
+      print *,''
+      print *,'Partitioning method: analytical'
+      print *,''
       do iproc = 0, NPROC-2
         part(iproc*floor(real(nelmnts)/real(NPROC)):(iproc+1)*floor(real(nelmnts)/real(NPROC))-1) = iproc
       enddo
@@ -115,12 +119,20 @@
 
     case(2)
       ! METIS
+      print *,''
+      print *,'Partitioning method: METIS'
+      print *,''
       call metis_partitioning()
 
     case(3)
       ! SCOTCH
+      print *,''
+      print *,'Partitioning method: SCOTCH'
+      print *,''
       call scotch_partitioning()
 
+    case default
+      stop 'Error invalid partitioning method value! must be 1, 2 or 3, please check your Par_file...'
     end select
 
   endif

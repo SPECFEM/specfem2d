@@ -56,12 +56,14 @@
     ! checks source type
     if (.not. initialfield) then
       if (source_type(i_source) == 1) then
+        ! force
         if (myrank == 0) then
           ! user output
           write(IMAIN,212) x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
-                          factor(i_source),anglesource(i_source)
+                           factor(i_source),anglesource(i_source)
         endif
       else if (source_type(i_source) == 2) then
+        ! moment tensor
         if (myrank == 0) then
           ! user output
           write(IMAIN,222) x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &

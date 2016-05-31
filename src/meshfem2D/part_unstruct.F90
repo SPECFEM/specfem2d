@@ -759,6 +759,7 @@
   allocate(abs_surface_char(4,nelemabs))
   allocate(abs_surface_merge(nelemabs))
   allocate(abs_surface_type(nelemabs))
+
   abs_surface_char(:,:) = .false.
   abs_surface_merge(:) = -1
   abs_surface_type(:) = -1

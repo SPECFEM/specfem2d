@@ -51,7 +51,14 @@
   ! PML arrays
   use specfem_par,only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
 
-  use specfem_par_movie
+  use specfem_par_movie,only: vector_field_display,image_color_data,iglob_image_color, &
+    imagetype_JPEG,nb_pixel_loc, &
+    NX_IMAGE_color,NZ_IMAGE_color, &
+    num_pixel_loc
+
+#ifdef USE_MPI
+  use specfem_par_movie,only: data_pixel_recv,data_pixel_send,nb_pixel_per_proc,num_pixel_recv
+#endif
 
   implicit none
 
@@ -164,7 +171,8 @@
     if (i > NX_IMAGE_color ) i = NX_IMAGE_color
     if (j > NZ_IMAGE_color ) j = NZ_IMAGE_color
 
-    if (P_SV) then ! P-SH waves, plot a component of vector, its norm, or else pressure
+    if (P_SV) then
+      ! P-SH waves, plot a component of vector, its norm, or else pressure
       if (iglob_image_color(i,j) /= -1) then
         if (imagetype_JPEG == 1  .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7 .or. &
             imagetype_JPEG == 11 .or. imagetype_JPEG == 14) then

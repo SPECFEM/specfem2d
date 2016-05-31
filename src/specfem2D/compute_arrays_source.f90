@@ -31,6 +31,7 @@
 !
 !========================================================================
 
+
   subroutine compute_arrays_source(ispec_selected_source,xi_source,gamma_source,sourcearray, &
                                    Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,nspec)
 
@@ -40,17 +41,17 @@
 
   implicit none
 
-  integer ispec_selected_source
-  integer nspec
+  integer,intent(in) :: ispec_selected_source
+  integer,intent(in) :: nspec
 
-  double precision xi_source,gamma_source
-  double precision Mxx,Mzz,Mxz
+  double precision,intent(in) :: xi_source,gamma_source
+  double precision,intent(in) :: Mxx,Mzz,Mxz
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: xix,xiz,gammax,gammaz
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
 
-  double precision xixd,xizd,gammaxd,gammazd
+  double precision :: xixd,xizd,gammaxd,gammazd
 
 ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll
@@ -61,8 +62,8 @@
   double precision, dimension(NGLLX) :: hxis,hpxis
   double precision, dimension(NGLLZ) :: hgammas,hpgammas
 
-  integer k,m
-  integer ir,iv
+  integer :: k,m
+  integer :: ir,iv
 
 ! calculate G_ij for general source location
 ! the source does not necessarily correspond to a Gauss-Lobatto point
@@ -74,13 +75,10 @@
         gammaxd = gammax(k,m,ispec_selected_source)
         gammazd = gammaz(k,m,ispec_selected_source)
 
-        G11(k,m) = Mxx*xixd+Mxz*xizd
-        G13(k,m) = Mxx*gammaxd+Mxz*gammazd
-        G31(k,m) = Mxz*xixd+Mzz*xizd
-        G33(k,m) = Mxz*gammaxd+Mzz*gammazd
-
-!!!!        G21(k,m) = Mxy*xixd+Myz*xizd
-!!!!        G23(k,m) = Mxy*gammaxd+Myz*gammazd
+        G11(k,m) = Mxx*xixd + Mxz*xizd
+        G13(k,m) = Mxx*gammaxd + Mxz*gammazd
+        G31(k,m) = Mxz*xixd + Mzz*xizd
+        G33(k,m) = Mxz*gammaxd + Mzz*gammazd
 
       enddo
   enddo
@@ -96,29 +94,23 @@
   else
     call lagrange_any(xi_source,NGLLX,xigll,hxis,hpxis)
   endif
-
   call lagrange_any(gamma_source,NGLLZ,zigll,hgammas,hpgammas)
 
+
 ! calculate source array
+  sourcearray(:,:,:) = ZERO
+
   do m = 1,NGLLZ
     do k = 1,NGLLX
-
-      sourcearray(:,k,m) = ZERO
 
       do iv = 1,NGLLZ
         do ir = 1,NGLLX
 
           sourcearray(1,k,m) = sourcearray(1,k,m) + hxis(ir)*hgammas(iv) &
-                                 *(G11(ir,iv)*hpxis(k)*hgammas(m) &
-                                 +G13(ir,iv)*hxis(k)*hpgammas(m))
-
-!        sourcearray(2,k,m) = sourcearray(2,k,m) + hxis(ir)*hgammas(iv) &
-!                               *(G21(ir,iv)*hpxis(k)*hgammas(m) &
-!                               +G23(ir,iv)*hxis(k)*hpgammas(m))
+                                 *(G11(ir,iv)*hpxis(k)*hgammas(m) + G13(ir,iv)*hxis(k)*hpgammas(m))
 
           sourcearray(2,k,m) = sourcearray(2,k,m) + hxis(ir)*hgammas(iv) &
-                                 *(G31(ir,iv)*hpxis(k)*hgammas(m) &
-                                 +G33(ir,iv)*hxis(k)*hpgammas(m))
+                                 *(G31(ir,iv)*hpxis(k)*hgammas(m) + G33(ir,iv)*hxis(k)*hpgammas(m))
 
         enddo
       enddo
@@ -167,12 +159,21 @@
   adj_src_s(:,:) = 0.d0
 
   if (seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
-
+    ! displacement/velocity/acceleration
     comp = (/"BXX","BXY","BXZ"/)
 
-    ! reads all components
+    ! reads corresponding components
     do icomp = 1,3
+      ! skips unnecessary components
+      if (P_SV) then
+        ! P_SV-case: skips BXY component
+        if (icomp == 2) cycle
+      else
+        ! SH-case: skips BXX and BXZ components
+        if (icomp == 1 .or. icomp == 3) cycle
+      endif
 
+      ! reads in ascii adjoint source files **.adj
       filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
       open(unit = IIN, file = trim(filename), iostat = ier)
       if (ier /= 0) then
@@ -185,11 +186,11 @@
         read(IIN,*) junk, adj_src_s(itime,icomp)
       enddo
       close(IIN)
-
     enddo
 
   else if (seismotype == 4) then
-
+    ! pressure
+    ! reads in ascii adjoint source files **.PRE.adj
     filename = 'SEM/'//trim(adj_source_file) // '.PRE.adj'
     open(unit = IIN, file = trim(filename), iostat = ier)
     if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
@@ -201,7 +202,8 @@
     close(IIN)
 
   else if (seismotype == 6) then
-
+    ! potential
+    ! reads in ascii adjoint source files **.POT.adj
     filename = 'SEM/'//trim(adj_source_file) // '.POT.adj'
     open(unit = IIN, file = trim(filename), iostat = ier)
     if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')

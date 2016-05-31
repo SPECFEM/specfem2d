@@ -61,9 +61,8 @@
   ! synchronizes all processes
   call synchronize_all()
 
-  ! performs basic checks on parameters read
-  all_anisotropic = .false.
-  if (count(ispec_is_anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
+  ! checks domain flags
+  call setup_mesh_basic_check()
 
 ! absorbing boundaries work, but not perfect for anisotropic
 !  if (all_anisotropic .and. anyabs) &
@@ -532,7 +531,6 @@
 
   end subroutine setup_mesh_acoustic_forcing_edges
 
-
 !
 !-----------------------------------------------------------------------------------
 !
@@ -588,4 +586,63 @@
   call synchronize_all()
 
   end subroutine setup_mesh_external_models
+
+!
+!-----------------------------------------------------------------------------------
+!
+
+  subroutine setup_mesh_basic_check()
+
+! basic checks on mesh parameters
+
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: ispec
+
+  ! performs basic checks on parameters read
+  all_anisotropic = .false.
+  if (count(ispec_is_anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
+
+  ! mutually exclusive domain flags (element can only belong to a single domain)
+  do ispec = 1,nspec
+
+    if (ispec_is_acoustic(ispec) .and. ispec_is_elastic(ispec)) &
+      stop 'Error invalid domain element found! element is acoustic and elastic, please check...'
+
+    if (ispec_is_acoustic(ispec) .and. ispec_is_poroelastic(ispec)) &
+      stop 'Error invalid domain element found! element is acoustic and poroelastic, please check...'
+
+    if (ispec_is_acoustic(ispec) .and. ispec_is_gravitoacoustic(ispec)) &
+      stop 'Error invalid domain element found! element is acoustic and gravitoacoustic, please check...'
+
+    if (ispec_is_elastic(ispec) .and. ispec_is_poroelastic(ispec)) &
+      stop 'Error invalid domain element found! element is elastic and poroelastic, please check...'
+
+    if (ispec_is_elastic(ispec) .and. ispec_is_gravitoacoustic(ispec)) &
+      stop 'Error invalid domain element found! element is elastic and gravitoacoustic, please check...'
+
+    if ((.not. ispec_is_acoustic(ispec)) .and. &
+        (.not. ispec_is_elastic(ispec)) .and. &
+        (.not. ispec_is_poroelastic(ispec)) .and. &
+        (.not. ispec_is_gravitoacoustic(ispec))) &
+      stop 'Error invalid domain element found! element has no domain (acoustic, elastic, poroelastic or gravitoacoustic),&
+            & please check...'
+
+  enddo
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'basic mesh setup is successful'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine setup_mesh_basic_check
 

@@ -43,6 +43,7 @@
   real :: free_mb,used_mb,total_mb
   integer :: nspec_elastic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: cosrot_irecf, sinrot_irecf
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassz
 
   ! GPU_MODE now defined in Par_file
   if (myrank == 0) then
@@ -92,7 +93,7 @@
                                 nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh, &
                                 hprime_xx,hprimewgll_xx, &
                                 wxgll,&
-                                STACEY_BOUNDARY_CONDITIONS, &
+                                STACEY_ABSORBING_CONDITIONS, &
                                 nspec_bottom,&
                                 nspec_left,&
                                 nspec_right,&
@@ -181,8 +182,13 @@
   ! prepares fields on GPU for elastic simulations
   !?!? JC JC here we will need to add GPU support for the new C-PML routines
   if (any_elastic) then
+    ! temporary mass matrices
+    allocate(rmassx(nglob_elastic),rmassz(nglob_elastic))
+    rmassx(:) = rmass_inverse_elastic(1,:)
+    rmassz(:) = rmass_inverse_elastic(2,:)
+
     call prepare_fields_elastic_device(Mesh_pointer, &
-                                rmass_inverse_elastic_one,rmass_inverse_elastic_three, &
+                                rmassx,rmassz, &
                                 rho_vp,rho_vs, &
                                 num_phase_ispec_elastic,phase_ispec_inner_elastic, &
                                 ispec_is_elastic, &
@@ -206,6 +212,9 @@
       endif
       call prepare_fields_elastic_adj_dev(Mesh_pointer,NDIM*NGLOB_AB,APPROXIMATE_HESS_KL)
     endif
+
+    ! frees memory
+    deallocate(rmassx,rmassz)
   endif
 
   ! prepares fields on GPU for poroelastic simulations
@@ -372,7 +381,7 @@
            cote_abs(nelemabs),stat=ier)
   if (ier /= 0 ) stop 'error allocating array abs_boundary_ispec etc.'
 
-  if(STACEY_BOUNDARY_CONDITIONS) then
+  if(STACEY_ABSORBING_CONDITIONS) then
 
     do ispecabs = 1,nelemabs
       ispec = numabs(ispecabs)
@@ -464,7 +473,7 @@
 
       endif
     enddo
-  endif ! STACEY_BOUNDARY_CONDITIONS
+  endif ! STACEY_ABSORBING_CONDITIONS
 
   ! user output
   if (myrank == 0) write(IMAIN,*) '  number of sources = ',NSOURCES
@@ -503,27 +512,8 @@
     if (is_proc_source(i_source) == 1) then
       ! source belongs to this process
       k = k + 1
-      if (source_type(i_source) == 1) then
-        if (ispec_is_acoustic(ispec_selected_source(i_source))) then
-          ! acoustic domain
-          do j = 1,NGLLZ
-            do i = 1,NGLLX
-              sourcearray_loc(k,1,i,j) = sngl(hxis_store(i_source,i) * hgammas_store(i_source,j))
-            enddo
-          enddo
-        else if (ispec_is_elastic(ispec_selected_source(i_source))) then
-          ! elastic domain
-          do j = 1,NGLLZ
-            do i = 1,NGLLX
-              sourcearray_loc(k,1,i,j) = - sngl(sin(anglesource(i_source)) * hxis_store(i_source,i) * hgammas_store(i_source,j))
-              sourcearray_loc(k,2,i,j) = sngl(cos(anglesource(i_source)) * hxis_store(i_source,i) * hgammas_store(i_source,j))
-            enddo
-          enddo
-        endif
-      else
-        sourcearray_loc(k,:,:,:) = sourcearray(i_source,:,:,:)
-        sourcearray_loc(k,:,:,:) = sourcearray(i_source,:,:,:)
-      endif ! Source_type
+      sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
+      sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
     endif ! is_proc_source
   enddo
 

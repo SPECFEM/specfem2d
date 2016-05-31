@@ -55,6 +55,11 @@
   ! prepares mass matrices
   call prepare_timerun_mass_matrix()
 
+  ! check which GLL will be forced or not
+  if (FORCING) then
+    call build_forced()
+  endif
+
   ! postscript images for grids and snapshots
   call prepare_timerun_postscripts()
 
@@ -254,7 +259,7 @@
 
     ! assembling the mass matrix
     call assemble_MPI_scalar(rmass_inverse_acoustic,nglob_acoustic, &
-                             rmass_inverse_elastic_one,rmass_inverse_elastic_three,nglob_elastic, &
+                             rmass_inverse_elastic,nglob_elastic, &
                              rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic,nglob_poroelastic)
 
   else
@@ -488,6 +493,12 @@
     if (ier /= 0) stop 'error in an allocate statement 3'
     allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
     if (ier /= 0) stop 'error in an allocate statement 4'
+
+    !remember which image are going to produce
+    if (USE_SNAPSHOT_NUMBER_IN_FILENAME) then
+      ! initializes counter
+      isnapshot_number = 0
+    endif
 
     ! creates pixels indexing
     call prepare_color_image_pixels()
@@ -741,7 +752,7 @@
   if (SIMULATION_TYPE == 3) call prepare_timerun_kernels()
 
   ! Absorbing boundaries
-  if (anyabs .and. STACEY_BOUNDARY_CONDITIONS) then
+  if (STACEY_ABSORBING_CONDITIONS) then
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) '  using Stacey boundary arrays'
@@ -749,13 +760,6 @@
     endif
 
     ! Reads last frame for forward wavefield reconstruction
-    if ((SIMULATION_TYPE == 1 .and. SAVE_FORWARD) .or. SIMULATION_TYPE == 3) then
-      ! opens files for absorbing boundary data
-      if (any_acoustic) call prepare_absorb_open_files_acoustic()
-      if (any_elastic) call prepare_absorb_open_files_elastic()
-      if (any_poroelastic) call prepare_absorb_open_files_poroelastic()
-    endif
-
     if (SIMULATION_TYPE == 3) then
       ! reads in absorbing boundary data
       if (any_acoustic) call prepare_absorb_read_acoustic()
@@ -1204,7 +1208,7 @@
   use mpi
 #endif
 
-  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN
+  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT
 
   use specfem_par,only: myrank,NSTEP,nglob,nspec,ibool,coord, &
                         rhoext,vpext,vsext,density,poroelastcoef,kmato,assign_external_model
@@ -1219,18 +1223,21 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) 'Preparing noise arrays'
+    write(IMAIN,*) 'Preparing noise simulation'
     call flush_IMAIN()
   endif
 
-  !allocate arrays for noise tomography
+  ! allocates arrays for noise tomography
   allocate(time_function_noise(NSTEP), &
            source_array_noise(NDIM,NGLLX,NGLLZ,NSTEP), &
            mask_noise(nglob), &
            surface_movie_x_noise(nglob), &
-           surface_movie_y_noise(nglob), &
            surface_movie_z_noise(nglob),stat=ier)
   if (ier /= 0) stop 'Error allocating noise arrays'
+
+  ! initializes
+  surface_movie_x_noise(:) = 0._CUSTOM_REAL
+  surface_movie_z_noise(:) = 0._CUSTOM_REAL
 
   ! user output
   if (myrank == 0) then
@@ -1244,7 +1251,7 @@
   if (NOISE_TOMOGRAPHY == 1) then
     call compute_source_array_noise()
 
-    !write out coordinates of mesh
+    ! write out coordinates of mesh
     open(unit=504,file='OUTPUT_FILES/mesh_spec',status='unknown',action='write')
       do ispec = 1, nspec
         do j = 1, NGLLZ
@@ -1262,7 +1269,7 @@
       enddo
     close(504)
 
-    !write out spatial distribution of noise sources
+    ! write out spatial distribution of noise sources
     call create_mask_noise()
     open(unit=504,file='OUTPUT_FILES/mask_noise',status='unknown',action='write')
       do iglob = 1, nglob
@@ -1270,7 +1277,7 @@
       enddo
     close(504)
 
-    !write out velocity model
+    ! write out velocity model
     if (assign_external_model) then
       open(unit=504,file='OUTPUT_FILES/model_rho_vp_vs',status='unknown',action='write')
         do ispec = 1, nspec
@@ -1304,14 +1311,13 @@
     call create_mask_noise()
 
   else if (NOISE_TOMOGRAPHY == 3) then
-
-    if (output_wavefields_noise) then
+    ! noise movie
+    if (NOISE_MOVIE_OUTPUT) then
       call create_mask_noise()
-
-      !prepare array that will hold wavefield snapshots
+      ! prepare array that will hold wavefield snapshots
       noise_output_ncol = 5
-      allocate(noise_output_array(noise_output_ncol,nglob))
-      allocate(noise_output_rhokl(nglob))
+      allocate(noise_output_array(noise_output_ncol,nglob), &
+               noise_output_rhokl(nglob))
     endif
 
   endif

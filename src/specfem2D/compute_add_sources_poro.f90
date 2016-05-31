@@ -38,10 +38,9 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
   use specfem_par, only: ispec_is_poroelastic,nglob_poroelastic, &
-                         NSOURCES,source_type,anglesource,source_time_function,sourcearray, &
+                         NSOURCES,source_time_function,sourcearrays, &
                          is_proc_source,ispec_selected_source, &
-                         hxis_store,hgammas_store,ibool, &
-                         porosity,tortuosity,density,kmato
+                         ibool,porosity,tortuosity,density,kmato
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: accels_poroelastic,accelw_poroelastic
@@ -49,68 +48,58 @@
   integer :: it,i_stage
 
   !local variables
-  integer :: i_source,i,j,iglob
-  double precision :: hlagrange
+  integer :: i_source,i,j,iglob,ispec
   double precision :: phi,tort,rho_s,rho_f,rho_bar
   real(kind=CUSTOM_REAL) :: fac_s,fac_w
+  real(kind=CUSTOM_REAL) :: stf_used
   integer :: material
 
   do i_source = 1,NSOURCES
 
-    ! if this processor core carries the source and the source element is poroelastic
-    if (is_proc_source(i_source) == 1 .and. ispec_is_poroelastic(ispec_selected_source(i_source))) then
+    ! if this processor core carries the source
+    if (is_proc_source(i_source) == 1) then
 
-      material = kmato(ispec_selected_source(i_source))
-      phi = porosity(material)
-      tort = tortuosity(material)
-      rho_s = density(1,material)
-      rho_f = density(2,material)
+      ! element containing source
+      ispec = ispec_selected_source(i_source)
 
-      rho_bar = (1.d0 - phi)*rho_s + phi*rho_f
+      ! source element is poroelastic
+      if (ispec_is_poroelastic(ispec)) then
 
-      fac_s = real((1.d0 - phi/tort),kind=CUSTOM_REAL)
-      fac_w = real((1.d0 - rho_f/rho_bar),kind=CUSTOM_REAL)
+        material = kmato(ispec)
+        phi = porosity(material)
+        tort = tortuosity(material)
+        rho_s = density(1,material)
+        rho_f = density(2,material)
 
-      select case (source_type(i_source))
+        rho_bar = (1.d0 - phi)*rho_s + phi*rho_f
 
-      case (1)
-        ! collocated force
+        fac_s = real((1.d0 - phi/tort),kind=CUSTOM_REAL)
+        fac_w = real((1.d0 - rho_f/rho_bar),kind=CUSTOM_REAL)
+
+        ! source time function
+        stf_used = source_time_function(i_source,it,i_stage)
+
+        ! adds source contribution
+        ! note: we use sourcearrays for both, collocated force and moment tensor forces
+        !       (see setup in setup_souces_interpolation() routine), thus can write for both cases the same loop
         do j = 1,NGLLZ
           do i = 1,NGLLX
-            iglob = ibool(i,j,ispec_selected_source(i_source))
-            hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-            ! s
-            accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) - hlagrange * &
-                   fac_s * sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)
-            accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + hlagrange * &
-                   fac_s * cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)
-            ! w
-            accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - hlagrange * &
-                   fac_w * sin(anglesource(i_source))*source_time_function(i_source,it,i_stage)
-            accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + hlagrange * &
-                   fac_w * cos(anglesource(i_source))*source_time_function(i_source,it,i_stage)
-          enddo
-        enddo
-
-      case(2)
-        ! moment tensor
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            iglob = ibool(i,j,ispec_selected_source(i_source))
+            iglob = ibool(i,j,ispec)
 
             ! solid contribution
-            accels_poroelastic(:,iglob) = accels_poroelastic(:,iglob) + &
-                        (1._CUSTOM_REAL - phi/tort)*sourcearray(i_source,:,i,j) &
-                        * source_time_function(i_source,it,i_stage)
+            accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + &
+                        fac_s * sourcearrays(i_source,1,i,j) * stf_used
+            accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + &
+                        fac_s * sourcearrays(i_source,2,i,j) * stf_used
 
             ! fluid contribution
-            accelw_poroelastic(:,iglob) = accelw_poroelastic(:,iglob) + &
-                    (1._CUSTOM_REAL - rho_f/rho_bar)*sourcearray(i_source,:,i,j) * &
-                    source_time_function(i_source,it,i_stage)
+            accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) + &
+                        fac_w * sourcearrays(i_source,1,i,j) * stf_used
+            accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + &
+                        fac_w * sourcearrays(i_source,2,i,j) * stf_used
           enddo
         enddo
-      end select
-
+      endif
     endif ! if this processor core carries the source and the source element is elastic
   enddo ! do i_source= 1,NSOURCES
 
@@ -133,7 +122,7 @@
   implicit none
 
   ! local parameters
-  integer :: irec_local,irec,i,j,iglob
+  integer :: irec_local,irec,i,j,iglob,ispec
   double precision :: phi,rho_s,rho_f,rho_bar
 
   ! checks if anything to do
@@ -149,18 +138,21 @@
     if (myrank == which_proc_receiver(irec)) then
       irec_local = irec_local + 1
 
-      if (ispec_is_poroelastic(ispec_selected_rec(irec))) then
+      ! element containing adjoint source
+      ispec = ispec_selected_rec(irec)
 
-        phi = porosity(kmato(ispec_selected_rec(irec)))
-        rho_s = density(1,kmato(ispec_selected_rec(irec)))
-        rho_f = density(2,kmato(ispec_selected_rec(irec)))
+      if (ispec_is_poroelastic(ispec)) then
+
+        phi = porosity(kmato(ispec))
+        rho_s = density(1,kmato(ispec))
+        rho_f = density(2,kmato(ispec))
 
         rho_bar = (1.d0 - phi)*rho_s + phi*rho_f
 
         ! add source array
         do j = 1,NGLLZ
           do i = 1,NGLLX
-            iglob = ibool(i,j,ispec_selected_rec(irec))
+            iglob = ibool(i,j,ispec)
 
             ! solid contribution
             accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
@@ -168,9 +160,9 @@
 
             ! fluid
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - &
-                  rho_f/rho_bar*adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
+                  rho_f/rho_bar * adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - &
-                  rho_f/rho_bar*adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j)
+                  rho_f/rho_bar * adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j)
           enddo
         enddo
 

@@ -345,7 +345,7 @@
   write(15,*) nbmodels,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
 
   ! counts number of absorbing elements
-  if (STACEY_ABSORBING_CONDITIONS) then
+  if (any_abs) then
     call write_abs_merge_database(15, iproc, 1)
   else
     nelemabs_loc = 0
@@ -480,12 +480,12 @@
 
   subroutine save_databases_absorbing()
 
-  use parameter_file_par,only: STACEY_ABSORBING_CONDITIONS
+  use parameter_file_par,only: any_abs
 
   implicit none
 
   write(15,*) 'List of absorbing elements (edge1 edge2 edge3 edge4 type):'
-  if (STACEY_ABSORBING_CONDITIONS) then
+  if (any_abs) then
     ! writes out absorbing boundaries
     call write_abs_merge_database(15, iproc, 2)
   endif

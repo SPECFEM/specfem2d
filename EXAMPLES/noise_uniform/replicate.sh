@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $# -ne 2 ]; then echo "Usage:  replicate  par_file  dir"; exit 1; fi
+if [ $# -ne 2 ]; then echo "Usage: ./replicate.sh  par_file  dir"; exit 1; fi
 
 if [ ! -e $1 ];  then echo "File not found: $1"; exit 1; fi
 if [ ! -d $2 ];  then echo "Directory not found: $2"; exit 1; fi

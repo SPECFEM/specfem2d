@@ -103,7 +103,7 @@
 
   ! allow negative anglesource(1): incidence from the right side of the domain
   ! anglesource has been converted from degrees to radians before
-    anglesource_abs=abs(anglesource(1))
+    anglesource_abs = abs(anglesource(1))
     if (anglesource_abs > pi/2.d0 .and. source_type(1) /= 3) &
       call exit_MPI(myrank,"incorrect anglesource: must have 0 <= anglesource < 90")
 
@@ -132,7 +132,7 @@
   ! P wave case
   if (source_type(1) == 1 .or. source_type(1) == 4) then
 
-    p=sin(anglesource_abs)/cploc
+    p = sin(anglesource_abs)/cploc
     c_inc  = cploc
     c_refl = csloc
 

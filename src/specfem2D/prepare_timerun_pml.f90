@@ -43,7 +43,7 @@
   character(len=MAX_STRING_LEN) :: outputname
 
   ! safety check
-  if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'error : PML not implemented on GPU mode. Please use Stacey instead'
+  if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'Error : PML not implemented on GPU mode. Please use Stacey instead'
 
   ! PML absorbing conditions
   ! sets global flag for all slices

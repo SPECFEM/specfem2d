@@ -60,7 +60,7 @@
                          rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
                          rmemory_displ_elastic_LDDRK, &
                          rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,&
-                         ispec_is_acoustic,time_stepping_scheme
+                         ispec_is_acoustic,time_stepping_scheme,forced,it
 
   ! PML arrays
   use specfem_par, only: nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
@@ -1146,42 +1146,43 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
-          ! along x direction and z direction
-          ! and assemble the contributions
-          ! we can merge the two loops because NGLLX == NGLLZ
+          if (.not. forced(iglob)) then
+            ! along x direction and z direction
+            ! and assemble the contributions
+            ! we can merge the two loops because NGLLX == NGLLZ
 
-          if (AXISYM) then
-            if (is_on_the_axis(ispec)) then
-              do k = 1,NGLJ
-                accel_elastic(1,iglob) = accel_elastic(1,iglob) &
-                                         - (tempx1(k,j)*hprimeBarwglj_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
-                accel_elastic(2,iglob) = accel_elastic(2,iglob) &
-                                         - (tempz1(k,j)*hprimeBarwglj_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
-              enddo
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) - tempx3(i,j)
-            else ! Axisym but not on the axis
+            if (AXISYM) then
+              if (is_on_the_axis(ispec)) then
+                do k = 1,NGLJ
+                  accel_elastic(1,iglob) = accel_elastic(1,iglob) &
+                                           - (tempx1(k,j)*hprimeBarwglj_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
+                  accel_elastic(2,iglob) = accel_elastic(2,iglob) &
+                                           - (tempz1(k,j)*hprimeBarwglj_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
+                enddo
+                accel_elastic(1,iglob) = accel_elastic(1,iglob) - tempx3(i,j)
+              else ! Axisym but not on the axis
+                do k = 1,NGLLX
+                  accel_elastic(1,iglob) = accel_elastic(1,iglob) &
+                                           - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
+                  accel_elastic(2,iglob) = accel_elastic(2,iglob) &
+                                           - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
+                enddo
+                accel_elastic(1,iglob) = accel_elastic(1,iglob) - tempx3(i,j)
+              endif
+            else
+              !if AXISYM == false
               do k = 1,NGLLX
-                accel_elastic(1,iglob) = accel_elastic(1,iglob) &
-                                         - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
-                accel_elastic(2,iglob) = accel_elastic(2,iglob) &
-                                         - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
+                accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
+                accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
               enddo
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) - tempx3(i,j)
             endif
-          else
-            !if AXISYM == false
-            do k = 1,NGLLX
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
-              accel_elastic(2,iglob) = accel_elastic(2,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
-            enddo
-          endif
 
-          !!! PML_BOUNDARY_CONDITIONS
-          if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec)) then
-            accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j)
-            accel_elastic(2,iglob) = accel_elastic(2,iglob) - accel_elastic_PML(2,i,j)
-          endif
-
+            !!! PML_BOUNDARY_CONDITIONS
+            if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec)) then
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) - accel_elastic_PML(1,i,j)
+              accel_elastic(2,iglob) = accel_elastic(2,iglob) - accel_elastic_PML(2,i,j)
+            endif
+          endif ! not forced
         enddo
       enddo ! second loop over the GLL points
 

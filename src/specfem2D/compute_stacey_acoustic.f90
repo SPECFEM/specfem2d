@@ -36,7 +36,7 @@
 ! absorbing boundaries
 ! for Stacey paraxial absorbing conditions (more precisely: Sommerfeld in the case of a fluid) we implement them here
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: AXISYM,nglob,nelemabs,it,any_acoustic, &
                          assign_external_model,ibool,kmato,numabs,ispec_is_acoustic, &
@@ -50,7 +50,7 @@
                          ib_left,ib_right,ib_bottom,ib_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top,&
-                         STACEY_BOUNDARY_CONDITIONS
+                         STACEY_ABSORBING_CONDITIONS
 
   implicit none
 
@@ -65,7 +65,7 @@
   real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,rhol
 
   ! checks if anything to do
-  if (.not. STACEY_BOUNDARY_CONDITIONS) return
+  if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. any_acoustic) return
 
   do ispecabs = 1,nelemabs
@@ -79,7 +79,7 @@
       mul_relaxed = poroelastcoef(2,1,kmato(ispec))
 
       if (AXISYM) then ! CHECK kappa
-        kappal  = lambdal_relaxed + TWO * mul_relaxed/3._CUSTOM_REAL
+        kappal  = lambdal_relaxed + TWO_THIRDS * mul_relaxed
       else
         kappal  = lambdal_relaxed + mul_relaxed
       endif
@@ -226,7 +226,7 @@
                          ib_left,ib_right,ib_bottom,ib_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top, &
-                         STACEY_BOUNDARY_CONDITIONS
+                         STACEY_ABSORBING_CONDITIONS
 
   implicit none
 
@@ -238,7 +238,7 @@
   integer :: it_tmp
 
   ! checks if anything to do
-  if (.not. STACEY_BOUNDARY_CONDITIONS) return
+  if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. any_acoustic) return
 
   ! time increment step

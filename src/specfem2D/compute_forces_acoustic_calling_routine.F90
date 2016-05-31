@@ -53,7 +53,7 @@
                                PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
 
   ! Stacey boundary conditions
-  if (STACEY_BOUNDARY_CONDITIONS) then
+  if (STACEY_ABSORBING_CONDITIONS) then
     call compute_stacey_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic)
   endif
 
@@ -64,7 +64,7 @@
   endif
 
   ! add acoustic forcing at a rigid boundary
-  if (ACOUSTIC_FORCING) then
+  if (ACOUSTIC_FORCING .and. (.not. FORCING)) then
     call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
   endif
 
@@ -266,7 +266,7 @@
   endif
 
   ! Stacey boundary conditions
-  if (STACEY_BOUNDARY_CONDITIONS) then
+  if (STACEY_ABSORBING_CONDITIONS) then
     if (UNDO_ATTENUATION) then
       call compute_stacey_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic)
     else

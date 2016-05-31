@@ -38,42 +38,59 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: ispec_is_acoustic,nglob_acoustic,&
-                         NSOURCES,source_type,source_time_function,&
+                         NSOURCES,source_type,source_time_function,sourcearrays, &
                          is_proc_source,ispec_selected_source,&
-                         hxis_store,hgammas_store,ibool,kappastore,myrank
+                         ibool,kappastore,myrank
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_dot_dot_acoustic
   integer,intent(in) :: it,i_stage
 
   !local variables
-  integer :: i_source,i,j,iglob
-  double precision :: hlagrange
+  integer :: i_source,i,j,iglob,ispec
+  real(kind=CUSTOM_REAL) :: stf_used
 
   do i_source= 1,NSOURCES
-    ! if this processor core carries the source and the source element is acoustic
-    if (is_proc_source(i_source) == 1 .and. ispec_is_acoustic(ispec_selected_source(i_source))) then
-      ! collocated force
-      ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
-      ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
-      ! to add minus the source to Chi_dot_dot to get plus the source in pressure
-      if (source_type(i_source) == 1) then
-        ! forward wavefield
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            iglob = ibool(i,j,ispec_selected_source(i_source))
-            hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-                                                source_time_function(i_source,it,i_stage)*hlagrange &
-                                                !ZN becareful the following line is new added, thus when do comparison
-                                                !ZN of the new code with the old code, you will have big difference if you
-                                                !ZN do not tune the source
-                                                / kappastore(i,j,ispec_selected_source(i_source))
+    ! if this processor core carries the source
+    if (is_proc_source(i_source) == 1) then
+
+      ! element containing source
+      ispec = ispec_selected_source(i_source)
+
+      ! source element is acoustic
+      if (ispec_is_acoustic(ispec)) then
+
+        ! source time function
+        stf_used = source_time_function(i_source,it,i_stage)
+
+        ! collocated force
+        ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
+        ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
+        ! to add minus the source to Chi_dot_dot to get plus the source in pressure
+        if (source_type(i_source) == 1) then
+          ! forward wavefield
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              iglob = ibool(i,j,ispec)
+
+              ! old way: source without factor 1/kappa
+              !potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+              !                                    sourcearrays(i_source,1,i,j) * stf_used
+
+              !ZN becareful the following line is new added, thus when do comparison
+              !ZN of the new code with the old code, you will have big difference if you
+              !ZN do not tune the source
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                                                  sourcearrays(i_source,1,i,j) * stf_used / kappastore(i,j,ispec)
+
+            enddo
           enddo
-        enddo
-      ! moment tensor
-      else if (source_type(i_source) == 2) then
-         call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
+
+        ! moment tensor
+        else if (source_type(i_source) == 2) then
+           call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
+        endif
+
       endif
     endif ! if this processor core carries the source and the source element is acoustic
   enddo ! do i_source= 1,NSOURCES
@@ -85,7 +102,8 @@
 !
 
   subroutine compute_add_sources_acoustic_moving_source(potential_dot_dot_acoustic,it,i_stage)
-  !This subroutine is the same than the previous one but with a moving source
+
+! This subroutine is the same than the previous one but with a moving source
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,TINYVAL,SOURCE_IS_MOVING
 
@@ -94,102 +112,116 @@
                          is_proc_source,ispec_selected_source,&
                          hxis_store,hgammas_store,ibool,kappastore,myrank,deltat,t0,tshift_src,&
                          coord,nspec,nglob,xigll,zigll,z_source,nb_proc_source,NPROC,xi_source,& !These 3 lines are for moving src
-                         gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source,stage_time_scheme,IMAIN, & ! " "
-                         hxis,hpxis,hgammas,hpgammas!,AXISYM,xiglj,is_on_the_axis
+                         gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source, &
+                         time_stepping_scheme,IMAIN, &
+                         hxis,hpxis,hgammas,hpgammas !,AXISYM,xiglj,is_on_the_axis
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_dot_dot_acoustic
   integer,intent(in) :: it,i_stage
 
   !local variables
-  integer :: i_source,i,j,iglob
+  integer :: i_source,i,j,iglob,ispec
   double precision :: hlagrange
   double precision :: xminSource,vSource,timeval,t_used
 
-  xminSource = 0.0d0 !m
-  vSource = 500.0 !m/s
-  if (stage_time_scheme == 1) then
+  ! checks if anything to do
+  if (.not. SOURCE_IS_MOVING) return
+
+  xminSource = 5000.0d0 !m
+  vSource = 1000.0 !m/s
+
+  if (time_stepping_scheme == 1) then
+    ! Newmark
     timeval = (it-1)*deltat
   else
     call exit_MPI(myrank,'Not implemented!')
   endif
 
-  do i_source= 1,NSOURCES
-    if (SOURCE_IS_MOVING) then
-      if (abs(source_time_function(i_source,it,i_stage)) > TINYVAL) then
-        t_used = (timeval-t0-tshift_src(i_source))
+  ! moves and re-locates sources along x-axis
+  do i_source = 1,NSOURCES
+    if (abs(source_time_function(i_source,it,i_stage)) > TINYVAL) then
+      t_used = (timeval-t0-tshift_src(i_source))
 
-        x_source(i_source) = xminSource + vSource*t_used !timeval?
+      x_source(i_source) = xminSource + vSource*t_used !timeval?
 
-        ! collocated force source
-        call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
+      ! collocated force source
+      call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
                                ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
                                NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
                                iglob_source(i_source))
 
-        ! define and store Lagrange interpolators (hxis,hpxis,hgammas,hpgammas) at all the sources
-        !if (AXISYM) then
-        !  if (is_on_the_axis(ispec_selected_source(i_source)) .and. is_proc_source(i_source) == 1) then
-        !    call lagrange_any(xi_source(i_source),NGLJ,xiglj,hxis,hpxis)
-        !    !do j = 1,NGLJ ! AB AB same result with that loop
-        !    !  hxis(j) = hglj(j-1,xi_source(i),xiglj,NGLJ)
-        !    !enddo
-        !  else
-        !    call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
-        !  endif
-        !else
-          call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
-        !endif
-        call lagrange_any(gamma_source(i_source),NGLLZ,zigll,hgammas,hpgammas)
+      ! define and store Lagrange interpolators (hxis,hpxis,hgammas,hpgammas) at all the sources
+      !if (AXISYM) then
+      !  if (is_on_the_axis(ispec_selected_source(i_source)) .and. is_proc_source(i_source) == 1) then
+      !    call lagrange_any(xi_source(i_source),NGLJ,xiglj,hxis,hpxis)
+      !    !do j = 1,NGLJ ! AB AB same result with that loop
+      !    !  hxis(j) = hglj(j-1,xi_source(i),xiglj,NGLJ)
+      !    !enddo
+      !  else
+      !    call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
+      !  endif
+      !else
+        call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
+      !endif
+      call lagrange_any(gamma_source(i_source),NGLLZ,zigll,hgammas,hpgammas)
 
-        ! stores Lagrangians for source
-        hxis_store(i_source,:) = hxis(:)
-        hgammas_store(i_source,:) = hgammas(:)
+      ! stores Lagrangians for source
+      hxis_store(i_source,:) = hxis(:)
+      hgammas_store(i_source,:) = hgammas(:)
 
-        if (mod(it,10) == 0) then
-            !  write(IMAIN,*) "myrank:",myrank
-            ! user output
-            if (is_proc_source(i_source) == 1) then
-              iglob = ibool(2,2,ispec_selected_source(i_source))
-              !write(IMAIN,*) 'xcoord: ',coord(1,iglob)
-              write(IMAIN,*) 'it: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob
-              !'source carried by proc',myrank,"  source x:",x_source(i_source)," ispec:",ispec_selected_source(i_source)
+      if (mod(it,10) == 0) then
+          !  write(IMAIN,*) "myrank:",myrank
+          ! user output
+          if (is_proc_source(i_source) == 1) then
+            iglob = ibool(2,2,ispec_selected_source(i_source))
+            !write(IMAIN,*) 'xcoord: ',coord(1,iglob)
+            write(IMAIN,*) 'it: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob
+            !'source carried by proc',myrank,"  source x:",x_source(i_source)," ispec:",ispec_selected_source(i_source)
 
-              !call flush_IMAIN()
-            endif
+            !call flush_IMAIN()
+          endif
 
-        endif
       endif
     endif
   enddo
-  do i_source= 1,NSOURCES
+
+  ! adds source contributions
+  do i_source = 1,NSOURCES
     ! if this processor core carries the source and the source element is acoustic
     ! .and. acoustic(ispec_selected_source(i_source)) ??
-    if (is_proc_source(i_source) == 1 .and. ispec_is_acoustic(ispec_selected_source(i_source))) then
-      ! collocated force
-      ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
-      ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
-      ! to add minus the source to Chi_dot_dot to get plus the source in pressure
-      if (source_type(i_source) == 1) then
-        ! forward wavefield
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            iglob = ibool(i,j,ispec_selected_source(i_source))
+    if (is_proc_source(i_source) == 1) then
 
-            !if (mod(it,10) == 0 .and. i == 2 .and. j == 2) write(IMAIN,*) 'it',it,'source carried by proc',myrank, &
-            !"iglob",iglob !"  source x:",x_source(i_source)," xcoord:", coord(1,iglob)," ispec:",ispec_selected_source(i_source)
-            hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-                                                source_time_function(i_source,it,i_stage)*hlagrange &
-                                                !ZN becareful the following line is new added, thus when do comparison
-                                                !ZN of the new code with the old code, you will have big difference if you
-                                                !ZN do not tune the source
-                                                / kappastore(i,j,ispec_selected_source(i_source))
+      ! element containing source
+      ispec = ispec_selected_source(i_source)
+
+      if (ispec_is_acoustic(ispec)) then
+        ! collocated force
+        ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
+        ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
+        ! to add minus the source to Chi_dot_dot to get plus the source in pressure
+        if (source_type(i_source) == 1) then
+          ! forward wavefield
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              iglob = ibool(i,j,ispec)
+
+              !if (mod(it,10) == 0 .and. i == 2 .and. j == 2) write(IMAIN,*) 'it',it,'source carried by proc',myrank, &
+              !"iglob",iglob !"  source x:",x_source(i_source)," xcoord:", coord(1,iglob)," ispec:",ispec_selected_source(i_source)
+              hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+
+              !ZN becareful the following line is new added, thus when do comparison
+              !ZN of the new code with the old code, you will have big difference if you
+              !ZN do not tune the source
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+                                                  source_time_function(i_source,it,i_stage)*hlagrange &
+                                                  / kappastore(i,j,ispec)
+            enddo
           enddo
-        enddo
-        ! moment tensor
-        else if (source_type(i_source) == 2) then
-          call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
+          ! moment tensor
+          else if (source_type(i_source) == 2) then
+            call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
+        endif
       endif
     endif ! if this processor core carries the source and the source element is acoustic
   enddo ! do i_source= 1,NSOURCES
@@ -212,7 +244,7 @@
   implicit none
 
   !local variables
-  integer :: irec_local,irec,i,j,iglob
+  integer :: irec_local,irec,i,j,iglob,ispec
   integer :: it_tmp
 
   ! time step index
@@ -223,17 +255,22 @@
     ! add the source (only if this proc carries the source)
     if (myrank == which_proc_receiver(irec)) then
       irec_local = irec_local + 1
-      if (ispec_is_acoustic(ispec_selected_rec(irec))) then
+
+      ! element containing adjoint source
+      ispec = ispec_selected_rec(irec)
+
+      if (ispec_is_acoustic(ispec)) then
         ! add source array
         do j = 1,NGLLZ
           do i = 1,NGLLX
-            iglob = ibool(i,j,ispec_selected_rec(irec))
+            iglob = ibool(i,j,ispec)
+
+            !ZN becareful the following line is new added, thus when do comparison
+            !ZN of the new code with the old code, you will have big difference if you
+            !ZN do not tune the source
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
                                                 adj_sourcearrays(irec_local,it_tmp,1,i,j) &
-                                                !ZN becareful the following line is new added, thus when do comparison
-                                                !ZN of the new code with the old code, you will have big difference if you
-                                                !ZN do not tune the source
-                                                / kappastore(i,j,ispec_selected_rec(irec))
+                                                / kappastore(i,j,ispec)
           enddo
         enddo
       endif ! if element acoustic
@@ -241,490 +278,4 @@
   enddo ! irec = 1,nrec
 
   end subroutine compute_add_sources_acoustic_adjoint
-
-!
-!=====================================================================
-!
-
-  subroutine add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
-
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
-
-  use specfem_par, only: nglob_acoustic,nelem_acforcing,codeacforcing,numacforcing,ispec_is_acoustic,&
-                         ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll
-
-  ! PML arrays
-  use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
-
-  implicit none
-
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
-
-  !local variables
-  integer :: inum,ispec,i,j,iglob
-  real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight,&
-                            displ_x,displ_z,displ_n
-
-  ! loop on all the forced edges
-
-  do inum = 1,nelem_acforcing
-
-    ispec = numacforcing(inum)
-    if (.not. ispec_is_acoustic(ispec)) cycle ! acoustic spectral element
-
-    !--- left acoustic forcing boundary
-    if (codeacforcing(IEDGE4,inum)) then
-      i = 1
-      do j = 1,NGLLZ
-        iglob = ibool(i,j,ispec)
-        xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-        zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xgamma**2 + zgamma**2)
-        nx = - zgamma / jacobian1D
-        nz = + xgamma / jacobian1D
-        weight = jacobian1D * wzgll(j)
-
-        ! define displacement components which will force the boundary
-        if (PML_BOUNDARY_CONDITIONS) then
-          if (ispec_is_PML(ispec)) then
-            displ_x = 0.0d0
-            displ_z = 0.0d0
-          else
-            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-          endif
-        else
-          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-        endif
-        ! compute dot product
-        displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
-      enddo
-    endif  !  end of left acoustic forcing boundary
-
-    !--- right acoustic forcing boundary
-    if (codeacforcing(IEDGE2,inum)) then
-      i = NGLLX
-      do j = 1,NGLLZ
-        iglob = ibool(i,j,ispec)
-        xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-        zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xgamma**2 + zgamma**2)
-        nx = + zgamma / jacobian1D
-        nz = - xgamma / jacobian1D
-        weight = jacobian1D * wzgll(j)
-
-        ! define displacement components which will force the boundary
-        if (PML_BOUNDARY_CONDITIONS) then
-          if (ispec_is_PML(ispec)) then
-            displ_x = 0.0d0
-            displ_z = 0.0d0
-          else
-            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-          endif
-        else
-          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-        endif
-
-        ! compute dot product
-        displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
-
-      enddo
-    endif  !  end of right acoustic forcing boundary
-
-    !--- bottom acoustic forcing boundary
-    if (codeacforcing(IEDGE1,inum)) then
-      j = 1
-      do i = 1,NGLLX
-        iglob = ibool(i,j,ispec)
-        xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-        zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xxi**2 + zxi**2)
-        nx = + zxi / jacobian1D
-        nz = - xxi / jacobian1D
-        weight = jacobian1D * wxgll(i)
-
-        ! define displacement components which will force the boundary
-        if (PML_BOUNDARY_CONDITIONS) then
-          if (ispec_is_PML(ispec)) then
-            displ_x = 0.0d0
-            displ_z = 0.0d0
-          else
-            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-          endif
-        else
-          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-        endif
-
-        ! compute dot product
-        displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
-      enddo
-    endif  !  end of bottom acoustic forcing boundary
-
-    !--- top acoustic forcing boundary
-    if (codeacforcing(IEDGE3,inum)) then
-      j = NGLLZ
-      do i = 1,NGLLX
-        iglob = ibool(i,j,ispec)
-        xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-        zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xxi**2 + zxi**2)
-        nx = - zxi / jacobian1D
-        nz = + xxi / jacobian1D
-        weight = jacobian1D * wxgll(i)
-
-        ! define displacement components which will force the boundary
-        if (PML_BOUNDARY_CONDITIONS) then
-          if (ispec_is_PML(ispec)) then
-            displ_x = 0.0d0
-            displ_z = 0.0d0
-          else
-            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-          endif
-        else
-          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-        endif
-
-        ! compute dot product
-        displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
-      enddo
-    endif  !  end of top acoustic forcing boundary
-  enddo
-
-  end subroutine add_acoustic_forcing_at_rigid_boundary
-
-!
-!=====================================================================
-!
-
-! *********************************************************
-! ** impose displacement from acoustic forcing at a rigid boundary
-! ** force potential_dot_dot_gravito by displacement
-! *********************************************************
-
-  subroutine add_acoustic_forcing_at_rigid_boundary_gravitoacoustic()
-
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TINYVAL
-
-  use specfem_par, only: nelem_acforcing,codeacforcing,numacforcing, &
-                         ispec_is_gravitoacoustic,potential_dot_dot_gravito, &
-                         potential_gravitoacoustic,potential_gravito, &
-                         it,ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll,hprime_xx,hprime_zz, &
-                         iglobzero,assign_external_model,rhoext,gravityext,Nsqext
-
-  ! PML arrays
-  use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
-
-  implicit none
-
-  !local variables
-  integer :: inum,ispec,i,j,k,iglob
-  real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight,&
-                            tempx1l,hp1,tempx2l,hp2,xixl,xizl,gammaxl,gammazl, &
-                            rhol,gravityl,Nsql,displ_x,displ_z,displ_n
-
-
-  ! loop on all the forced edges
-  do inum = 1,nelem_acforcing
-
-    ispec = numacforcing(inum)
-    ! gravito spectral element
-    if (.not. ispec_is_gravitoacoustic(ispec) ) cycle
-
-    !--- left acoustic forcing boundary
-    if (codeacforcing(IEDGE4,inum)) then
-      i = 1
-      do j = 1,NGLLZ
-        iglob = ibool(i,j,ispec)
-        xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-        zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xgamma**2 + zgamma**2)
-        nx = - zgamma / jacobian1D
-        nz = + xgamma / jacobian1D
-        weight = jacobian1D * wzgll(j)
-
-        ! define displacement components which will force the boundary
-        if (PML_BOUNDARY_CONDITIONS) then
-          if (ispec_is_PML(ispec)) then
-            displ_x = 0.0d0
-            displ_z = 0.0d0
-          else
-            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-          endif
-        else
-          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-        endif
-
-        ! compute displacement at this point
-        ! derivative along x
-        tempx1l = 0._CUSTOM_REAL
-        do k = 1,NGLLX
-          hp1 = hprime_xx(i,k)
-          iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
-        enddo
-
-        ! derivative along z
-        tempx2l = 0._CUSTOM_REAL
-        do k = 1,NGLLZ
-          hp2 = hprime_zz(j,k)
-          iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
-        enddo
-
-        xixl = xix(i,j,ispec)
-        xizl = xiz(i,j,ispec)
-        gammaxl = gammax(i,j,ispec)
-        gammazl = gammaz(i,j,ispec)
-
-        ! if external density model
-        if (assign_external_model) then
-          rhol = rhoext(i,j,ispec)
-          gravityl = gravityext(i,j,ispec)
-        endif
-
-        ! impose potential_gravito in order to have z displacement equal to forced value
-        iglob = ibool(i,j,ispec)
-        displ_n = displ_x*nx + displ_z*nz
-        if (abs(nz) > TINYVAL) then
-          potential_gravito(iglob) = ( rhol*displ_n -(tempx1l*xizl + tempx2l*gammazl)*nz - &
-                                       (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
-        else
-          write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
-          stop
-        endif
-
-        ! compute dot product
-        displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
-      enddo
-    endif  !  end of left acoustic forcing boundary
-
-    !--- right acoustic forcing boundary
-    if (codeacforcing(IEDGE2,inum)) then
-      i = NGLLX
-      do j = 1,NGLLZ
-        iglob = ibool(i,j,ispec)
-        xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-        zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xgamma**2 + zgamma**2)
-        nx = + zgamma / jacobian1D
-        nz = - xgamma / jacobian1D
-        weight = jacobian1D * wzgll(j)
-
-        ! define displacement components which will force the boundary
-        if (PML_BOUNDARY_CONDITIONS) then
-          if (ispec_is_PML(ispec)) then
-            displ_x = 0.0d0
-            displ_z = 0.0d0
-          else
-            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-          endif
-        else
-          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-        endif
-
-        ! compute displacement at this point
-        ! derivative along x
-        tempx1l = 0._CUSTOM_REAL
-        do k = 1,NGLLX
-          hp1 = hprime_xx(i,k)
-          iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
-        enddo
-
-        ! derivative along z
-        tempx2l = 0._CUSTOM_REAL
-        do k = 1,NGLLZ
-          hp2 = hprime_zz(j,k)
-          iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
-        enddo
-
-        xixl = xix(i,j,ispec)
-        xizl = xiz(i,j,ispec)
-        gammaxl = gammax(i,j,ispec)
-        gammazl = gammaz(i,j,ispec)
-
-        ! if external density model
-        if (assign_external_model) then
-          rhol = rhoext(i,j,ispec)
-          gravityl = gravityext(i,j,ispec)
-        endif
-
-        ! impose potential_gravito in order to have z displacement equal to forced value
-        iglob = ibool(i,j,ispec)
-        displ_n = displ_x*nx + displ_z*nz
-        if (abs(nz) > TINYVAL) then
-          potential_gravito(iglob) = ( rhol*displ_n - (tempx1l*xizl + tempx2l*gammazl)*nz - &
-                                       (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
-        else
-          write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
-          stop
-        endif
-
-        ! compute dot product
-        displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
-
-      enddo
-    endif  !  end of right acoustic forcing boundary
-
-    !--- bottom acoustic forcing boundary
-    if (codeacforcing(IEDGE1,inum)) then
-      j = 1
-      do i = 1,NGLLX
-        iglob = ibool(i,j,ispec)
-        xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-        zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xxi**2 + zxi**2)
-        nx = + zxi / jacobian1D
-        nz = - xxi / jacobian1D
-        weight = jacobian1D * wxgll(i)
-
-        ! define displacement components which will force the boundary
-        if (PML_BOUNDARY_CONDITIONS) then
-          if (ispec_is_PML(ispec)) then
-            displ_x = 0.0d0
-            displ_z = 0.0d0
-          else
-            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-          endif
-        else
-          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-        endif
-
-        ! compute displacement at this point
-        ! derivative along x
-        tempx1l = 0._CUSTOM_REAL
-        do k = 1,NGLLX
-          hp1 = hprime_xx(i,k)
-          iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
-        enddo
-
-        ! derivative along z
-        tempx2l = 0._CUSTOM_REAL
-        do k = 1,NGLLZ
-          hp2 = hprime_zz(j,k)
-          iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
-        enddo
-
-        xixl = xix(i,j,ispec)
-        xizl = xiz(i,j,ispec)
-        gammaxl = gammax(i,j,ispec)
-        gammazl = gammaz(i,j,ispec)
-
-        ! if external density model
-        if (assign_external_model) then
-           rhol = rhoext(i,j,ispec)
-           gravityl = gravityext(i,j,ispec)
-        endif
-
-        ! impose potential_gravito in order to have z displacement equal to forced value
-        iglob = ibool(i,j,ispec)
-        displ_n = displ_x*nx + displ_z*nz
-        if (abs(nz) > TINYVAL) then
-          potential_gravito(iglob) = ( rhol*displ_n - (tempx1l*xizl + tempx2l*gammazl)*nz - &
-                                       (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
-        else
-          write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
-          stop
-        endif
-
-        ! compute dot product
-        displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
-      enddo
-    endif  !  end of bottom acoustic forcing boundary
-
-    !--- top acoustic forcing boundary
-    if (codeacforcing(IEDGE3,inum)) then
-      j = NGLLZ
-      do i = 1,NGLLX
-        iglob = ibool(i,j,ispec)
-        xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-        zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xxi**2 + zxi**2)
-        nx = - zxi / jacobian1D
-        nz = + xxi / jacobian1D
-        weight = jacobian1D * wxgll(i)
-
-        ! define displacement components which will force the boundary
-        if (PML_BOUNDARY_CONDITIONS) then
-          if (ispec_is_PML(ispec)) then
-            displ_x = 0.0d0
-            displ_z = 0.0d0
-          else
-            call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-          endif
-        else
-          call acoustic_forcing_boundary(iglob,displ_x,displ_z)
-        endif
-
-        ! compute z displacement at this point
-        ! derivative along x
-        tempx1l = 0._CUSTOM_REAL
-        do k = 1,NGLLX
-          hp1 = hprime_xx(i,k)
-          iglob = ibool(k,j,ispec)
-          tempx1l = tempx1l + potential_gravitoacoustic(iglob)*hp1
-        enddo
-
-        ! derivative along z
-        tempx2l = 0._CUSTOM_REAL
-        do k = 1,NGLLZ
-          hp2 = hprime_zz(j,k)
-          iglob = ibool(i,k,ispec)
-          tempx2l = tempx2l + potential_gravitoacoustic(iglob)*hp2
-        enddo
-
-        xixl = xix(i,j,ispec)
-        xizl = xiz(i,j,ispec)
-        gammaxl = gammax(i,j,ispec)
-        gammazl = gammaz(i,j,ispec)
-
-        ! if external density model
-        if (assign_external_model) then
-          rhol = rhoext(i,j,ispec)
-          gravityl = gravityext(i,j,ispec)
-          Nsql = Nsqext(i,j,ispec)
-        endif
-
-        ! impose potential_gravito in order to have z displacement equal to forced value on the boundary
-        !!!! Passe deux fois sur le meme iglob
-        !!!! Mais vrai pour tous les points partages entre deux elements
-        iglob = ibool(i,j,ispec)
-        displ_n = displ_x*nx + displ_z*nz
-        if (abs(nz) > TINYVAL) then
-          potential_gravito(iglob) = ( rhol*displ_n - (tempx1l*xizl + tempx2l*gammazl)*nz - &
-                                      (tempx1l*xixl + tempx2l*gammaxl)*nx ) / (0._CUSTOM_REAL - gravityl*nz)
-        else
-          write(*,*) 'STOP : forcing surface element along z',i,j,ispec,iglob,nx,nz
-          stop
-        endif
-
-        ! compute dot product
-        displ_n = displ_x*nx + displ_z*nz
-        potential_dot_dot_gravito(iglob) = potential_dot_dot_gravito(iglob) - rhol*weight*displ_n
-      enddo
-
-      ! debugging
-      !write(*,*) 'ispec detection =',ispec
-      !if ((ispec==2000).and.(mod(it,100)==0)) then
-      if ((ispec==800) .and. (mod(it,100)==0)) then
-      !if ((ispec==800)) then
-        iglobzero=iglob
-        write(*,*) ispec,it,Nsql,rhol,displ_n, &
-                   maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &
-                   maxval(potential_gravitoacoustic),potential_gravitoacoustic(iglob), &
-                   maxval(potential_gravito),potential_gravito(iglob)
-      endif
-    endif  !  end of top acoustic forcing boundary
-  enddo
-
-  end subroutine add_acoustic_forcing_at_rigid_boundary_gravitoacoustic
 

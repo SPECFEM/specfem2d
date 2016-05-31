@@ -31,17 +31,19 @@
 !
 !========================================================================
 
+!*************************************************************
 ! NOISE TOMOGRAPHY TO DO LIST
-
+!
 ! 1. Use separate STATIONS_ADJOINT file
 ! 2. Add exploration test case under EXAMPLES
 ! 3. Update manual
+!*************************************************************
 
-! =============================================================================================================
-! specify spatial distribution of microseismic noise sources
-! USERS need to modify this subroutine to suit their own needs
 
   subroutine create_mask_noise()
+
+! specify spatial distribution of microseismic noise sources
+! **** USERS need to modify this subroutine **** to suit their own needs
 
   use constants,only: CUSTOM_REAL
 
@@ -60,55 +62,78 @@
     xx = coord(1,iglob)
     zz = coord(2,iglob)
 
-    !below, the noise is assumed to be uniform; users are free to
-    !to change this expression to one involving xx, zz
+    ! below, the noise is assumed to be uniform; users are free to
+    ! to change this expression to one involving xx, zz
     mask_noise(iglob) = 1.0
-
   enddo
 
   end subroutine create_mask_noise
 
 
 ! =============================================================================================================
-! read noise parameters and check for consistency
+
   subroutine read_parameters_noise()
 
-  use specfem_par, only: SIMULATION_TYPE,SAVE_FORWARD, &
+! read noise parameters and check for consistency
+
+  use constants,only: IMAIN,PI, &
+    NOISE_SOURCE_TIME_FUNCTION_TYPE,NOISE_MOVIE_OUTPUT,NOISE_SAVE_EVERYWHERE
+
+  use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD, &
                          any_acoustic,any_poroelastic,P_SV, &
-                         Mxx,Mxz,Mzz,factor,NSOURCES, &
-                         xi_receiver,gamma_receiver,ispec_selected_rec,nrec,myrank
+                         xi_receiver,gamma_receiver,ispec_selected_rec,nrec,station_name,network_name
 
   use specfem_par_noise
 
   implicit none
 
-  !local
-  integer :: i,ios
-  integer :: irec_master
+  ! local parameters
+  integer :: ier,irec_master
+
+  ! master noise source angle (in rad) use for P_SV-case: 0 for vertical along z-direction
+  angle_noise = 0.d0
 
   !define master receiver
-  open(unit=509,file='DATA/NOISE_TOMOGRAPHY/irec_master',status='old',action='read',iostat=ios)
-  if (ios == 0) then
-    read(509,*) irec_master
-  else
-    irec_master=1
+  open(unit=500,file='NOISE_TOMOGRAPHY/irec_master_noise',status='old',action='read',iostat=ier)
+  if (ier /= 0) then
+    ! we will be strict on input format
     write(*,*) ''
-    write(*,*) 'Error opening DATA/NOISE_TOMOGRAPHY/irec_master.'
-    write(*,*) 'Using irec_master=1. Continuing.'
+    write(*,*) 'Error opening NOISE_TOMOGRAPHY/irec_master_noise file'
+    write(*,*) 'Please make sure all noise setup files exist in NOISE_TOMOGRAPHY/ directory...'
     write(*,*) ''
+    stop 'Error opening NOISE_TOMOGRAPHY/irec_master_noise file'
   endif
-  close(509)
 
+  read(500,*) irec_master
+  close(500)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  noise simulation type           = ',NOISE_TOMOGRAPHY
+    write(IMAIN,*) '  noise source time function type = ',NOISE_SOURCE_TIME_FUNCTION_TYPE
+    write(IMAIN,*)
+    write(IMAIN,*) '  master station is #',irec_master,': ',trim(network_name(irec_master))//'.'//trim(station_name(irec_master))
+    if (P_SV) then
+      write(IMAIN,*) '  using P_SV waves'
+      write(IMAIN,*) '  angle of the noise source is ',angle_noise * 180./PI,'degrees (0=vertical)'
+    else
+      write(IMAIN,*) '  using SH waves'
+    endif
+    if (NOISE_MOVIE_OUTPUT) write(IMAIN,*) '  outputting noise movie snapshot files'
+    if (NOISE_SAVE_EVERYWHERE) write(IMAIN,*) '  saving noise field for reconstruction'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! checks value
   if ((NOISE_TOMOGRAPHY == 1) .and. (irec_master > nrec .or. irec_master < 1) ) &
     call exit_MPI(myrank,'irec_master out of range of given number of receivers. Exiting.')
 
   xi_noise    = xi_receiver(irec_master)
   gamma_noise = gamma_receiver(irec_master)
   ispec_noise = ispec_selected_rec(irec_master)
-  angle_noise = 0.d0
 
-! check simulation parameters
-
+  ! check simulation parameters
   if ((NOISE_TOMOGRAPHY /= 0) .and. (P_SV)) write(*,*) 'Warning: For P-SV case, noise tomography subroutines not yet fully tested'
 
   if (NOISE_TOMOGRAPHY == 1) then
@@ -123,40 +148,22 @@
      if (SAVE_FORWARD)       call exit_MPI(myrank,'NOISE_TOMOGRAPHY=3 requires SAVE_FORWARD=.false. -> check DATA/Par_file')
   endif
 
-!  check model parameters
-   if (any_acoustic)    call exit_MPI(myrank,'Acoustic models not yet implemented for noise simulations. Exiting.')
-   if (any_poroelastic) call exit_MPI(myrank,'Poroelastic models not yet implemented for noise simulations. Exiting.')
+  ! check model parameters
+  if (any_acoustic) &
+    call exit_MPI(myrank,'Acoustic models not yet implemented for noise simulations. Exiting.')
+  if (any_poroelastic) &
+    call exit_MPI(myrank,'Poroelastic models not yet implemented for noise simulations. Exiting.')
 
-!  moment tensor elements must be zero!
-   do i = 1,NSOURCES
-     if (Mxx(i) /= 0.d0 .or. Mxz(i) /= 0.d0 .or. Mzz(i) /= 0.d0 .or. factor(i) /= 0.d0) then
-       call exit_MPI(myrank,'For noise simulations, all moment tensor elements must be zero. Exiting.')
-     endif
-   enddo
+  ! note that moment tensor source elements specified in file DATA/SOURCE will be ignored for noise simulations
 
   end subroutine read_parameters_noise
 
 
 ! =============================================================================================================
 
-! reads in time series based on noise spectrum and construct noise "source" array
   subroutine compute_source_array_noise()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NOISE_SOURCE_TIME_FUNCTION_TYPE
-
-  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,deltat, &
-                         xigll,zigll,myrank
-
-  use specfem_par_noise
-
-  implicit none
-
-  !local
-  integer :: it,i,j,ier
-  real(kind=CUSTOM_REAL) :: t
-  double precision, dimension(NGLLX) :: hxi, hpxi
-  double precision, dimension(NGLLZ) :: hgamma, hpgamma
-  real(kind=CUSTOM_REAL) :: factor_noise, a_val, t0
+! reads in time series based on noise spectrum and construct noise "source" array
 
 ! ---------------------------------------------------------------------------------
 ! A NOTE ABOUT TIME FUNCTIONS FOR NOISE SIMULATIONS
@@ -174,7 +181,7 @@
 ! FOR A REALISTIC MODEL OF THE SEISMIC NOISE FIELD,
 ! THE VARIABE "NOISE_SOURCE_TIME_FUNCTION_TYPE" (SET IN setup/constants.h) SHOULD BE SET TO 0
 ! AND A TIME FUNCTION FOR THE DESIRED NOISE SPECTRUM SHOULD BE
-! ***SUPPLIED BY THE USER*** IN THE FILE "DATA/NOISE_TOMOGRAPHY/S_squared"
+! ***SUPPLIED BY THE USER*** IN THE FILE "NOISE_TOMOGRAPHY/S_squared"
 !
 ! The alternative--setting "time_function_type" to a value other than
 ! 0--results in an idealized time function that does not represent a physically
@@ -183,25 +190,48 @@
 !
 ! ----------------------------------------------------------------------------------
 
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,IMAIN,NOISE_SOURCE_TIME_FUNCTION_TYPE
+
+  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,deltat, &
+                         xigll,zigll,myrank
+
+  use specfem_par_noise
+
+  implicit none
+
+  !local
+  integer :: it,i,j,ier
+  real(kind=CUSTOM_REAL) :: t
+  double precision, dimension(NGLLX) :: hxi, hpxi
+  double precision, dimension(NGLLZ) :: hgamma, hpgamma
+  real(kind=CUSTOM_REAL) :: factor_noise, a_val, t0
+
   time_function_noise(:) = 0._CUSTOM_REAL
 
-  t0   = ((NSTEP-1)/2.)*deltat
+  t0 = ((NSTEP-1)/2.0_CUSTOM_REAL) * deltat
 
   a_val = 0.6_CUSTOM_REAL
   factor_noise = 1.e3_CUSTOM_REAL
 
-
   if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 0) then
     !read in time function from file S_squared
-    open(unit=55,file='DATA/NOISE_TOMOGRAPHY/S_squared',status='old',iostat=ier)
-    if (ier /= 0) stop 'Error opening file DATA/NOISE_TOMOGRAPHY/S_squared'
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  reading noise source from file ','NOISE_TOMOGRAPHY/S_squared'
+    endif
+    open(unit=500,file='NOISE_TOMOGRAPHY/S_squared',status='old',iostat=ier)
+    if (ier /= 0) stop 'Error opening file NOISE_TOMOGRAPHY/S_squared'
     do it = 1,NSTEP
-      READ(55,*) time_function_noise(it)
+      read(500,*) time_function_noise(it)
     enddo
-    close(55)
+    close(500)
 
   else if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 1) then
     !Ricker (second derivative of a Gaussian) time function
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  Ricker (second derivative) noise source'
+    endif
     do it = 1,NSTEP
       t = it*deltat
       time_function_noise(it) = - factor_noise * 2.*a_val * (1. - 2.*a_val*(t-t0)**2.) * &
@@ -210,6 +240,10 @@
 
   else if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 2) then
     !first derivative of a Gaussian time function
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  Ricker (first derivative) noise source'
+    endif
     do it = 1,NSTEP
       t = it*deltat
       time_function_noise(it) = - factor_noise * (2.*a_val*(t-t0)) * exp(-a_val*(t-t0)**2.)
@@ -218,6 +252,10 @@
 
   else if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 3) then
     !Gaussian time function
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  Gaussian noise source'
+    endif
     do it = 1,NSTEP
       t = it*deltat
       time_function_noise(it) = factor_noise * exp(-a_val*(t-t0)**2.)
@@ -226,6 +264,10 @@
 
   else if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 4) then
     !reproduce time function from Figure 2a of Tromp et al. 2010
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  Figure 2a noise source'
+    endif
     do it = 1,NSTEP
       t = it*deltat
       time_function_noise(it) = factor_noise * &
@@ -235,8 +277,16 @@
 
   else
     call exit_MPI(myrank,'Bad NOISE_SOURCE_TIME_FUNCTION_TYPE in compute_source_array_noise.')
-
   endif
+
+  ! saves source time function
+  open(500,file='OUTPUT_FILES/plot_source_time_function_noise.txt',status='unknown',iostat=ier)
+  if (ier /= 0) stop 'Error opening noise source time function text-file'
+  do it = 1,NSTEP
+    t = it*deltat
+    write(500,*) (t-t0),time_function_noise(it)
+  enddo
+  close(500)
 
   !interpolate over GLL points
   source_array_noise(:,:,:,:) = 0._CUSTOM_REAL
@@ -278,12 +328,15 @@
 
 ! =============================================================================================================
 
-! inject the "source" that drives the "generating wavefield"
   subroutine add_point_source_noise()
 
+! inject the "source" that drives the "generating wavefield"
+
   use constants,only: NGLLX,NGLLZ
+
   use specfem_par, only: P_SV,it,ibool,accel_elastic
-  use specfem_par_noise
+
+  use specfem_par_noise,only: ispec_noise,angle_noise,source_array_noise
 
   implicit none
 
@@ -295,10 +348,8 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec_noise)
-        accel_elastic(1,iglob) = accel_elastic(1,iglob) &
-          + sin(angle_noise)*source_array_noise(1,i,j,it)
-        accel_elastic(2,iglob) = accel_elastic(2,iglob) &
-          - cos(angle_noise)*source_array_noise(2,i,j,it)
+        accel_elastic(1,iglob) = accel_elastic(1,iglob) + sin(angle_noise)*source_array_noise(1,i,j,it)
+        accel_elastic(2,iglob) = accel_elastic(2,iglob) - cos(angle_noise)*source_array_noise(2,i,j,it)
       enddo
     enddo
   else
@@ -306,7 +357,7 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec_noise)
-        accel_elastic(2,iglob) = accel_elastic(2,iglob) - source_array_noise(1,i,j,it)
+        accel_elastic(1,iglob) = accel_elastic(1,iglob) - source_array_noise(1,i,j,it)
       enddo
     enddo
   endif
@@ -315,11 +366,13 @@
 
 
 ! =============================================================================================================
-! read in and inject the "source" that drives the "enemble forward wavefield"
-! (recall that the ensemble forward wavefield has a spatially distributed source)
+
   subroutine add_surface_movie_noise(accel_elastic)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+! read in and inject the "source" that drives the "enemble forward wavefield"
+! (recall that the ensemble forward wavefield has a spatially distributed source)
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,NOISE_SAVE_EVERYWHERE
 
   use specfem_par, only: P_SV,it,NSTEP,nspec,nglob,ibool,jacobian,wxgll,wzgll,myrank
 
@@ -330,39 +383,62 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: accel_elastic
 
   !local
-  integer :: ios, i, j, ispec, iglob
+  integer :: ier, i, j, ispec, iglob
 
+  ! checks if anything to do
+  if (NOISE_TOMOGRAPHY /= 2 .and. NOISE_TOMOGRAPHY /= 3) return
 
-  if (it==1) then
-    open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
-         recl=nglob*CUSTOM_REAL,action='read',iostat=ios)
-    if (ios /= 0) call exit_MPI(myrank,'Error retrieving generating wavefield.')
+  ! checks if reconstruction by file storage
+  if (NOISE_TOMOGRAPHY == 3 .and. NOISE_SAVE_EVERYWHERE) return
+
+  ! opens noise source file
+  if (it == 1) then
+    open(unit=501,file='OUTPUT_FILES/noise_eta.bin',access='direct', &
+         recl=nglob*CUSTOM_REAL,action='read',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error retrieving generating wavefield.')
   endif
 
-  if (P_SV) then
-    call exit_MPI(myrank,'P-SV case not yet implemented.')
-  else
-    if (NOISE_TOMOGRAPHY==2) read(unit=500,rec=NSTEP-it+1) surface_movie_y_noise
-    if (NOISE_TOMOGRAPHY==3) read(unit=500,rec=it) surface_movie_y_noise
+  ! generating wavefield
+  if (NOISE_TOMOGRAPHY == 2) then
+    ! reads backward
+    if (P_SV) then
+      ! P-SV calculation
+      read(unit=501,rec=NSTEP-it+1) surface_movie_z_noise ! only vertical component as noise for now...
+    else
+      ! SH-calculation
+      read(unit=501,rec=NSTEP-it+1) surface_movie_x_noise
+    endif
+  else if (NOISE_TOMOGRAPHY == 3) then
+    ! for reconstructed/backward wavefield
+    ! reads forward again
+    if (P_SV) then
+      ! P-SV calculation
+      read(unit=501,rec=it) surface_movie_z_noise ! only vertical component...
+    else
+      ! SH calculation
+      read(unit=501,rec=it) surface_movie_x_noise
+    endif
   endif
 
-  if (it==NSTEP) then
-    !close(500)
+  ! close file at simulation end
+  if (it == NSTEP) then
+    close(501)
   endif
 
   do ispec = 1, nspec
     do j = 1, NGLLZ
       do i = 1, NGLLX
-        if (P_SV) then ! P-SV calculation
-          iglob = ibool(i,j,ispec)
+        iglob = ibool(i,j,ispec)
+        if (P_SV) then
+          ! P-SV calculation
           accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_x_noise(iglob) * &
                                    mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
           accel_elastic(2,iglob) = accel_elastic(2,iglob) + surface_movie_z_noise(iglob) * &
                                    mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
 
-        else ! SH (membrane) calculation
-          iglob = ibool(i,j,ispec)
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_y_noise(iglob) * &
+        else
+          ! SH (membrane) calculation
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_x_noise(iglob) * &
                                    mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
         endif
       enddo
@@ -372,51 +448,110 @@
   end subroutine add_surface_movie_noise
 
 ! =============================================================================================================
-! save a snapshot of the "generating wavefield" eta that will be used to drive
-! the "ensemble forward wavefield"
+
   subroutine save_surface_movie_noise()
 
-  use constants,only: CUSTOM_REAL
-  use specfem_par, only: P_SV,it,NSTEP,nglob,displ_elastic,myrank
+! save a snapshot of the "generating wavefield" eta that will be used to drive
+! the "ensemble forward wavefield"
+
+  use constants,only: CUSTOM_REAL,NDIM,IMAIN
+
+  use specfem_par, only: myrank,it,NSTEP,nglob,P_SV,displ_elastic
+
   use specfem_par_noise,only: NOISE_TOMOGRAPHY
 
   implicit none
 
-  !local
-  integer :: ios
+  ! local parameter
+  integer :: ier
 
-  if (it==1) then
+  ! checks if anything to do
+  if (NOISE_TOMOGRAPHY /= 1 .and. NOISE_TOMOGRAPHY /= 2) return
 
-    if (NOISE_TOMOGRAPHY == 1) then
+  if (NOISE_TOMOGRAPHY == 1) then
+    ! stores forward generating wavefield
 
-      open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/eta',access='direct', &
-           recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
-      if (ios /= 0) call exit_MPI(myrank,'Error saving generating wavefield.')
+    ! opens files
+    if (it == 1) then
+      ! user output
+      if (myrank == 0) write(IMAIN,*) 'noise simulation: storing generating wavefield in file noise_eta.bin'
+      ! opens file
+      open(unit=501,file='OUTPUT_FILES/noise_eta.bin',access='direct',recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error saving generating wavefield.')
+    endif ! (it==1)
 
-    else if (NOISE_TOMOGRAPHY == 2) then
-
-      open(unit=500,file='OUTPUT_FILES/NOISE_TOMOGRAPHY/phi',access='direct', &
-           recl=nglob*CUSTOM_REAL,action='write',iostat=ios)
-      if (ios /= 0) call exit_MPI(myrank,'Error saving ensemble forward wavefield.')
-
+    ! stores generating wavefield
+    if (P_SV) then
+      ! P_SV-case
+      write(unit=501,rec=it) displ_elastic(2,:) ! only vertical component
     else
-      call exit_MPI(myrank,'Bad value of NOISE_TOMOGRAPHY in save_surface_movie_noise.')
-
+      ! SH-case
+      write(unit=501,rec=it) displ_elastic(1,:)
     endif
 
-  endif ! (it==1)
+    ! closes file at the end of simulation
+    if (it == NSTEP) then
+      close(501)
+    endif
 
-  if (P_SV) then
-    call exit_MPI(myrank,'P-SV case not yet implemented.')
-  else
-    write(unit=500,rec=it) displ_elastic(2,:)
-  endif
+  else if (NOISE_TOMOGRAPHY == 2) then
+    ! stores whole forward wavefield for reconstruction
 
-  if (it==NSTEP) then
-    !close(500)
+    ! opens files
+    if (it == 1) then
+      ! user output
+      if (myrank == 0) write(IMAIN,*) 'noise simulation: storing forward wavefield in file noise_phi.bin'
+      ! opens file
+      open(unit=502,file='OUTPUT_FILES/noise_phi.bin',access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='write',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error saving ensemble forward wavefield.')
+    endif ! (it==1)
+
+    ! stores complete wavefield
+    write(unit=502,rec=it) displ_elastic(1,:),displ_elastic(2,:)
+
+    ! closes file at the end of simulation
+    if (it == NSTEP) then
+      close(502)
+    endif
+
   endif
 
   end subroutine save_surface_movie_noise
+
+! =============================================================================================================
+
+  subroutine read_wavefield_noise()
+
+! reads in backward wavefield
+
+  use constants,only: CUSTOM_REAL,NDIM
+
+  use specfem_par, only: myrank,it,NSTEP,nglob,b_displ_elastic
+
+  use specfem_par_noise,only: NOISE_TOMOGRAPHY
+
+  implicit none
+  ! local parameters
+  integer :: ier
+
+  ! checks if anything to do
+  if (NOISE_TOMOGRAPHY /= 3) return
+
+  ! opens noise file
+  if (it == 1) then
+    open(unit=503,file='OUTPUT_FILES/noise_phi.bin',access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='read',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error retrieving noise ensemble forward wavefield')
+  endif
+
+  ! reads stored wavefield for reconstructed/backward wavefield
+  read(unit=503,rec=NSTEP-it+1) b_displ_elastic(1,:),b_displ_elastic(2,:)
+
+  ! closes file
+  if (it == NSTEP) then
+    close(503)
+  endif
+
+  end subroutine read_wavefield_noise
 
 ! =============================================================================================================
 
@@ -453,6 +588,8 @@
 ! auxillary routine
 
   subroutine spec2glob(nspec,nglob,ibool,array_spec,array_glob)
+
+! converts local basis array(i,j,ispec) to global array(iglob)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 

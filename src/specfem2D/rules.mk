@@ -53,6 +53,7 @@ specfem2D_TARGETS = \
 specfem2D_OBJECTS = \
 	$O/specfem2D_par.spec_module.o \
 	$O/acoustic_forcing_boundary.spec.o \
+	$O/add_acoustic_forcing.spec.o \
 	$O/assemble_MPI.spec.o \
 	$O/attenuation_model.spec.o \
 	$O/axisymmetric_routines.spec.o \
@@ -105,6 +106,7 @@ specfem2D_OBJECTS = \
 	$O/define_external_model.spec.o \
 	$O/define_external_model_from_tomo_file.spec.o \
 	$O/enforce_acoustic_free_surface.spec.o \
+	$O/enforce_fields.spec.o \
 	$O/finalize_simulation.spec.o \
 	$O/get_coupling_edges.spec.o \
 	$O/get_MPI.spec.o \

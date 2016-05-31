@@ -38,7 +38,7 @@
 ! Clayton-Engquist condition if elastic
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
-    ZERO,ONE,TWO,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+    ZERO,ONE,TWO,TWO_THIRDS,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: AXISYM,nglob,nelemabs,it,any_elastic, &
                          assign_external_model,ibool,kmato,numabs,ispec_is_elastic, &
@@ -48,7 +48,7 @@
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top,&
                          ib_left,ib_right,ib_bottom,ib_top, &
-                         STACEY_BOUNDARY_CONDITIONS,deltat
+                         STACEY_ABSORBING_CONDITIONS,deltat
 
   ! initialfield
   use specfem_par,only: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
@@ -68,7 +68,6 @@
 
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob
-  integer :: ibegin,iend
   real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz
 
@@ -81,7 +80,7 @@
   integer :: count_left,count_right,count_bottom
 
   ! checks if anything to do
-  if (.not. STACEY_BOUNDARY_CONDITIONS) return
+  if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. any_elastic) return
 
   ! Clayton-Engquist condition if elastic
@@ -98,13 +97,17 @@
     ! get elastic parameters of current spectral element
     lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
     mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-    lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
+
+    lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic
+
     rhol  = density(1,kmato(ispec))
+
     if (AXISYM) then ! CHECK kappa
-      kappal  = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
+      kappal  = lambdal_unrelaxed_elastic + TWO_THIRDS*mul_unrelaxed_elastic
     else
       kappal  = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
     endif
+
     cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol) ! CHECK kappa
     csl = sqrt(mul_unrelaxed_elastic/rhol)
 
@@ -149,26 +152,90 @@
         rho_vp = rhol*cpl
         rho_vs = rhol*csl
 
+        ! normal pointing left
         xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
         zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
         nx = - zgamma / jacobian1D
         nz = + xgamma / jacobian1D
 
-        weight = jacobian1D * wzgll(j)
-
         if (P_SV) then
           ! P_SV case
           vx = veloc_elastic(1,iglob) - veloc_horiz
           vz = veloc_elastic(2,iglob) - veloc_vert
-          vn = nx*vx+nz*vz
-          tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
-          tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+          vn = nx*vx + nz*vz
+
+          ! first-order Clayton-Engquist (1977) uses tractions
+          !   T_normal = - rho * vp * veloc_normal
+          ! with velocity's normal component: veloc_normal = vn * normal
+          !   T_tangential = - rho * vs * veloc_tangential
+          ! with velocity's tangential component: veloc_tangential = v - vn * normal
+          ! total traction
+          !    T = T_normal + T_tangential
+          tx = rho_vp*vn*nx + rho_vs*(vx-vn*nx)
+          tz = rho_vp*vn*nz + rho_vs*(vz-vn*nz)
+
+          ! second-order Stacey (1988), named P3 uses derivatives du / dx_tangential
+          !   T_tangential2 = + rho * vs * (2 * vs - vp) du_normal / dx_tangential
+          ! and
+          !   T_normal2 = - rho * vs * (2 * vs - vp) du_tangential / dx_tangential
+          ! and total traction is
+          !   T_normal + Tnormal2 + T_tangential + T_tangential2
+          ! derivatives: grad_tangential(f) is the dot-product grad(f) * vector_tangential
+
+! daniel debug: todo - still one could try to evaluate this second-order boundary...
+!
+!          ! u_normal
+!          displn = nx*displ_elastic(1,iglob) + nz*displ_elastic(2,iglob)
+!          displnx = displn * nx
+!          displnz = displn * nz
+!          ! u_tangential
+!          displtx = displ_elastic(1,iglob) - displn * nx
+!          displtz = displ_elastic(2,iglob) - displn * nz
+!          displt_norm = sqrt(displtx**2 + displtz**2)
+!          if (displt_norm > 0._CUSTOM_REAL) then
+!            ! unit vector in tangential direction
+!            unit_tx = displtx / displt_norm
+!            unit_tz = displtz / displt_norm
+!
+!            ! derivative along x
+!            tempx1l = 0._CUSTOM_REAL
+!            tempx2l = 0._CUSTOM_REAL
+!            do k = 1,NGLLX
+!              iglob = ibool(k,j,ispec)
+!              tempx1l = tempx1l + displnx * hprime_xx(i,k)
+!              tempx2l = tempx2l + displnz * hprime_xx(i,k)
+!            enddo
+!            ! derivative along z
+!            tempz1l = 0._CUSTOM_REAL
+!            tempz2l = 0._CUSTOM_REAL
+!            do k = 1,NGLLX
+!              iglob = ibool(i,k,ispec)
+!              tempz1l = tempz1l + displnx * hprime_zz(j,k)
+!              tempz2l = tempz2l + displnz * hprime_zz(j,k)
+!            enddo
+!            ! derivatives of displacement du_normal / du
+!            dux_dxl = (tempx1l*xixl + tempz1l*gammaxl)
+!            dux_dzl = (tempx1l*xizl + tempz1l*gammazl)
+!
+!            duz_dxl = (tempx2l*xixl + tempz2l*gammaxl)
+!            duz_dzl = (tempx2l*xizl + tempz2l*gammazl)
+!
+!            ! derivative du_normal / dx_tangential (along tangential vector)
+!            derivx = (dux_dxl * unit_tx + dux_dzl * unit_tz) * unit_tx
+!            derivz = (duz_dxl * unit_tx + duz_dzl * unit_tz) * unit_tz
+!
+!            tx = tx + rho_vs *( 2._CUSTOM_REAL * csl - cpl) * derivx
+!            tz = tz + rho_vs *( 2._CUSTOM_REAL * csl - cpl) * derivz
+!          endif
+
         else
           ! SH case
           vy = veloc_elastic(1,iglob)
           ty = rho_vs*vy
         endif
+
+        weight = jacobian1D * wzgll(j)
 
         if (P_SV) then
           ! P_SV case
@@ -233,26 +300,27 @@
         rho_vp = rhol*cpl
         rho_vs = rhol*csl
 
+        ! normal pointing right
         xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
         zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
         nx = + zgamma / jacobian1D
         nz = - xgamma / jacobian1D
 
-        weight = jacobian1D * wzgll(j)
-
         if (P_SV) then
           ! P_SV case
           vx = veloc_elastic(1,iglob) - veloc_horiz
           vz = veloc_elastic(2,iglob) - veloc_vert
-          vn = nx*vx+nz*vz
-          tx = rho_vp*vn*nx+rho_vs*(vx-vn*nx)
-          tz = rho_vp*vn*nz+rho_vs*(vz-vn*nz)
+          vn = nx*vx + nz*vz
+          tx = rho_vp*vn*nx + rho_vs*(vx-vn*nx)
+          tz = rho_vp*vn*nz + rho_vs*(vz-vn*nz)
         else
           ! SH case
           vy = veloc_elastic(1,iglob)
           ty = rho_vs*vy
         endif
+
+        weight = jacobian1D * wzgll(j)
 
         if (P_SV) then
           ! P_SV case
@@ -279,12 +347,7 @@
     !--- bottom absorbing boundary
     if (codeabs(IEDGE1,ispecabs)) then
       j = 1
-!! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
-      ibegin = 1
-      iend = NGLLX
-!! DK DK not needed           if (codeabs(IEDGE4,ispecabs)) ibegin = 2
-!! DK DK not needed           if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
-      do i = ibegin,iend
+      do i = 1,NGLLX
         ! Clayton-Engquist condition if elastic
         iglob = ibool(i,j,ispec)
 
@@ -328,8 +391,6 @@
         nx = + zxi / jacobian1D
         nz = - xxi / jacobian1D
 
-        weight = jacobian1D * wxgll(i)
-
         if (P_SV) then
           ! P_SV case
           vx = veloc_elastic(1,iglob) - veloc_horiz
@@ -351,6 +412,8 @@
           ty = 0._CUSTOM_REAL
           tz = 0._CUSTOM_REAL
         endif
+
+        weight = jacobian1D * wxgll(i)
 
         if (P_SV) then
           ! P_SV case
@@ -377,12 +440,7 @@
     !--- top absorbing boundary
     if (codeabs(IEDGE3,ispecabs)) then
       j = NGLLZ
-!! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
-      ibegin = 1
-      iend = NGLLX
-!! DK DK not needed           if (codeabs(IEDGE4,ispecabs)) ibegin = 2
-!! DK DK not needed           if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
-      do i = ibegin,iend
+      do i = 1,NGLLX
         ! Clayton-Engquist condition if elastic
         iglob = ibool(i,j,ispec)
 
@@ -420,8 +478,6 @@
         nx = - zxi / jacobian1D
         nz = + xxi / jacobian1D
 
-        weight = jacobian1D * wxgll(i)
-
         if (P_SV) then
           ! P_SV case
           vx = veloc_elastic(1,iglob) - veloc_horiz
@@ -443,6 +499,8 @@
           ty = 0._CUSTOM_REAL
           tz = 0._CUSTOM_REAL
         endif
+
+        weight = jacobian1D * wxgll(i)
 
         if (P_SV) then
           ! P_SV case
@@ -481,7 +539,7 @@
 ! Clayton-Engquist condition if elastic
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
-    ZERO,ONE,TWO,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+    IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,any_elastic,ibool,ispec_is_elastic, &
                          NSTEP,it, &
@@ -489,7 +547,7 @@
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top, &
                          ib_left,ib_right,ib_bottom,ib_top, &
-                         STACEY_BOUNDARY_CONDITIONS,P_SV
+                         STACEY_ABSORBING_CONDITIONS,P_SV
 
   implicit none
 
@@ -497,10 +555,9 @@
 
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob,it_tmp
-  integer :: ibegin,iend
 
   ! checks if anything to do
-  if (.not. STACEY_BOUNDARY_CONDITIONS) return
+  if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. any_elastic) return
 
   ! time increment index
@@ -548,12 +605,7 @@
     !--- bottom absorbing boundary
     if (codeabs(IEDGE1,ispecabs)) then
       j = 1
-!! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
-      ibegin = 1
-      iend = NGLLX
-!! DK DK not needed           if (codeabs(IEDGE4,ispecabs)) ibegin = 2
-!! DK DK not needed           if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
-      do i = ibegin,iend
+      do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         if (P_SV) then
           ! P-SV waves
@@ -569,12 +621,7 @@
     !--- top absorbing boundary
     if (codeabs(IEDGE3,ispecabs)) then
       j = NGLLZ
-!! DK DK not needed           ! exclude corners to make sure there is no contradiction on the normal
-      ibegin = 1
-      iend = NGLLX
-!! DK DK not needed           if (codeabs(IEDGE4,ispecabs)) ibegin = 2
-!! DK DK not needed           if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
-      do i = ibegin,iend
+      do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         if (P_SV) then
           ! P-SV waves

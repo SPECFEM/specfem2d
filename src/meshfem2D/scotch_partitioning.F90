@@ -37,7 +37,7 @@
   subroutine scotch_partitioning()
 
 #ifdef USE_SCOTCH
-  use part_unstruct_par,only: nb_edges,part,nelmnts,xadj_g,adjncy_g,adjwgt
+  use part_unstruct_par,only: nb_edges,part,nelmnts,xadj_g,adjncy_g,adjwgt,vwgt
 
   use parameter_file_par,only: nparts => NPROC
 #endif
@@ -51,18 +51,44 @@
 
   double precision, dimension(SCOTCH_GRAPHDIM)  :: SCOTCHGRAPH
   double precision, dimension(SCOTCH_STRATDIM)  :: SCOTCHSTRAT
-  integer :: IERR
+  integer :: ier
+
+! workflow preferred by F. Pellegrini (SCOTCH):
+!!
+!!This comes from the fact that, in version 5.1.8, the name
+!!for the "recursive bisection" method has changed from "b"
+!!("bipartitioning") to "r" ("recursive").
+!!
+!!As a general rule, do not try to set up strategies by
+!!yourself. The default strategy in Scotch will most probably
+!!provide better results. To use it, just call:
+!!
+!!SCOTCHFstratInit (),
+!!
+!!and use this "empty" strategy in the mapping routine
+!!(consequently, no call to SCOTCHFstratGraphMap () is
+!!required).
+!!
+!!This will make you independent from further changes
+!!(improvements) in the strategy syntax.
+!!And you should see an improvement in performance, too,
+!!as your hand-made strategy did not make use of the
+!!multi-level framework.
 
   ! we use the default strategy for partitioning
   ! thus no need to define an explicit strategy
-  call scotchfstratinit (SCOTCHSTRAT(1), IERR)
-   IF (IERR /= 0) THEN
-     PRINT *, 'ERROR : MAIN : Cannot initialize strat'
+  call scotchfstratinit (SCOTCHSTRAT(1), ier)
+   IF (ier /= 0) THEN
+     PRINT *, 'ERROR : MAIN : Cannot initialize strategy'
      STOP
   endif
 
-  CALL SCOTCHFGRAPHINIT (SCOTCHGRAPH (1), IERR)
-  IF (IERR /= 0) THEN
+  ! resets SCOTCH random number generator to produce deterministic partitions
+  call scotchfrandomReset()
+
+  ! initializes graph
+  call scotchfgraphinit (SCOTCHGRAPH (1), ier)
+  IF (ier /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot initialize graph'
      STOP
   endif
@@ -73,36 +99,36 @@
   !                    #(6) vertex_load_array (optional) #(7) vertex_label_array
   !                    #(7) number_of_arcs                    #(8) adjacency_array
   !                    #(9) arc_load_array (optional)      #(10) ierror
-  CALL SCOTCHFGRAPHBUILD (SCOTCHGRAPH (1), 0, nelmnts, &
+  call scotchfgraphbuild (SCOTCHGRAPH (1), 0, nelmnts, &
                           xadj_g(0), xadj_g(0), &
-                          xadj_g(0), xadj_g(0), &
+                          vwgt(0), xadj_g(0), &
                           nb_edges, &
-                          adjncy_g(0), adjwgt (0), IERR)
-  IF (IERR /= 0) THEN
+                          adjncy_g(0), adjwgt (0), ier)
+  IF (ier /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot build graph'
      STOP
   endif
 
-  CALL SCOTCHFGRAPHCHECK (SCOTCHGRAPH (1), IERR)
-  IF (IERR /= 0) THEN
+  call scotchfgraphcheck (SCOTCHGRAPH (1), ier)
+  IF (ier /= 0) THEN
      PRINT *, 'ERROR : MAIN : Invalid check'
      STOP
   endif
 
-  call scotchfgraphpart (SCOTCHGRAPH (1), nparts, SCOTCHSTRAT(1), part(0), IERR)
-  IF (IERR /= 0) THEN
+  call scotchfgraphpart (SCOTCHGRAPH (1), nparts, SCOTCHSTRAT(1), part(0), ier)
+  IF (ier /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot part graph'
      STOP
   endif
 
-  CALL SCOTCHFGRAPHEXIT (SCOTCHGRAPH (1), IERR)
-  IF (IERR /= 0) THEN
+  call SCOTCHFGRAPHEXIT (SCOTCHGRAPH (1), ier)
+  IF (ier /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot destroy graph'
      STOP
   endif
 
-  call scotchfstratexit (SCOTCHSTRAT(1), IERR)
-  IF (IERR /= 0) THEN
+  call scotchfstratexit (SCOTCHSTRAT(1), ier)
+  IF (ier /= 0) THEN
      PRINT *, 'ERROR : MAIN : Cannot destroy strat'
      STOP
   endif

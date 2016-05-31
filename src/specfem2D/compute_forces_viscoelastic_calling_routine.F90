@@ -39,7 +39,7 @@
   implicit none
 
   ! local parameters
-  integer :: i
+  integer :: i,iglob
   ! for rk44
   double precision :: weight_rk
 
@@ -58,7 +58,7 @@
                                    PML_BOUNDARY_CONDITIONS,e1,e11,e13)
 
   ! Stacey boundary conditions
-  if (STACEY_BOUNDARY_CONDITIONS) then
+  if (STACEY_ABSORBING_CONDITIONS) then
     call compute_stacey_elastic(accel_elastic,veloc_elastic)
   endif
 
@@ -84,21 +84,28 @@
 
   ! add force source
   if (.not. initialfield) then
-    if (SIMULATION_TYPE == 1) then
-      call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
-    else if (SIMULATION_TYPE == 3) then
+
+    select case(NOISE_TOMOGRAPHY)
+    case (0)
+      ! earthquake/force source
+      if (SIMULATION_TYPE == 1) then
+        call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
+      endif
+
+    case (1)
+      ! noise source at master station
+      call add_point_source_noise()
+
+    case (2)
+      ! inject generating wavefield for noise simulations
+      call add_surface_movie_noise(accel_elastic)
+    end select
+
+    ! adjoint wavefield source
+    if (SIMULATION_TYPE == 3) then
       ! adjoint sources
       call compute_add_sources_viscoelastic_adjoint()
     endif
-
-    !<NOISE_TOMOGRAPHY
-    ! inject wavefield sources for noise simulations
-    if (NOISE_TOMOGRAPHY == 1) then
-      call add_point_source_noise()
-    else if (NOISE_TOMOGRAPHY == 2) then
-      call add_surface_movie_noise(accel_elastic)
-    endif
-    !>NOISE_TOMOGRAPHY
   endif
 
   ! enforces vanishing wavefields on axis
@@ -106,20 +113,28 @@
     call enforce_zero_radial_displacements_on_the_axis()
   endif
 
+  ! daniel debug source contribution
+  !if (myrank == 1) &
+  !write(1234,*) it, dble(sourcearrays(1,1,5,5) * source_time_function(1,it,i_stage)), &
+  !              accel_elastic(1,1102),source_time_function(1,it,i_stage),sourcearrays(1,1,5,5)
+
   ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
   if (NPROC > 1 .and. ninterface_elastic > 0) then
+    ! LDDRK
     if (time_stepping_scheme == 2) then
-      if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-        veloc_elastic_LDDRK_temp = veloc_elastic
+      if (i_stage == 1 .and. it == 1 .and. (.not. initialfield)) then
+        veloc_elastic_LDDRK_temp(:,:) = veloc_elastic(:,:)
         call assemble_MPI_vector_el(veloc_elastic)
       endif
     endif
 
+    ! collects all contributions on shared degrees of freedom
     call assemble_MPI_vector_el(accel_elastic)
   endif
 #endif
 
+  ! saves boundary condition for reconstruction
   if (PML_BOUNDARY_CONDITIONS) then
     if (nglob_interface > 0) then
       if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
@@ -134,28 +149,38 @@
 
   ! multiply by the inverse of the mass matrix and update velocity
   !! DK DK this should be vectorized
-  accel_elastic(1,:) = accel_elastic(1,:) * rmass_inverse_elastic_one(:)
-  accel_elastic(2,:) = accel_elastic(2,:) * rmass_inverse_elastic_three(:)
-
-  if (time_stepping_scheme == 1) then
+  do iglob = 1,nglob_elastic
+    if (.not. forced(iglob)) then
+      accel_elastic(:,iglob) = accel_elastic(:,iglob) * rmass_inverse_elastic(:,iglob)
+    endif
+  enddo
+  ! time stepping
+  select case (time_stepping_scheme)
+  case (1)
+    ! Newmark
     !! DK DK this should be vectorized
-    veloc_elastic(:,:) = veloc_elastic(:,:) + deltatover2 * accel_elastic(:,:)
-  endif
+    do iglob = 1,nglob_elastic
+      ! big loop over all the global points (not elements) in the mesh to update velocity vector (corrector).
+      if (.not. forced(iglob)) then
+        veloc_elastic(:,iglob) = veloc_elastic(:,iglob) + deltatover2 * accel_elastic(:,iglob)
+      endif
+    enddo
 
-  if (time_stepping_scheme == 2) then
+  case (2)
+    ! LDDRK
     !! DK DK this should be vectorized
     veloc_elastic_LDDRK(:,:) = ALPHA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:) + deltat * accel_elastic(:,:)
     displ_elastic_LDDRK(:,:) = ALPHA_LDDRK(i_stage) * displ_elastic_LDDRK(:,:) + deltat * veloc_elastic(:,:)
-    if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
+    if (i_stage == 1 .and. it == 1 .and. (.not. initialfield)) then
       veloc_elastic_LDDRK_temp(:,:) = veloc_elastic_LDDRK_temp(:,:) + BETA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:)
       veloc_elastic(:,:) = veloc_elastic_LDDRK_temp(:,:)
     else
       veloc_elastic(:,:) = veloc_elastic(:,:) + BETA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:)
     endif
     displ_elastic(:,:) = displ_elastic(:,:) + BETA_LDDRK(i_stage) * displ_elastic_LDDRK(:,:)
-  endif
 
-  if (time_stepping_scheme == 3) then
+  case (3)
+    ! RK
     !! DK DK this should be vectorized
     accel_elastic_rk(1,:,i_stage) = deltat * accel_elastic(1,:)
     accel_elastic_rk(2,:,i_stage) = deltat * accel_elastic(2,:)
@@ -201,7 +226,7 @@
                            ( veloc_elastic_rk(2,:,1) + 2.0d0 * veloc_elastic_rk(2,:,2) + &
                              2.0d0 * veloc_elastic_rk(2,:,3) + veloc_elastic_rk(2,:,4))
     endif
-  endif
+  end select
 
   end subroutine compute_forces_viscoelastic_main
 
@@ -258,7 +283,7 @@
   endif
 
   ! Stacey boundary conditions
-  if (STACEY_BOUNDARY_CONDITIONS) then
+  if (STACEY_ABSORBING_CONDITIONS) then
     if (UNDO_ATTENUATION) then
       call compute_stacey_elastic(b_accel_elastic,b_veloc_elastic)
     else
@@ -292,23 +317,22 @@
 
   ! add force source
   if (.not. initialfield) then
-    ! backward wavefield
-    call compute_add_sources_viscoelastic(b_accel_elastic,it_temp,istage_temp)
 
-    !<NOISE_TOMOGRAPHY
-    ! inject wavefield sources for noise simulations
-    if (NOISE_TOMOGRAPHY == 3) then
-      if (.not. save_everywhere) then
-        call add_surface_movie_noise(b_accel_elastic)
-      endif
-    endif
-    !>NOISE_TOMOGRAPHY
+    select case (NOISE_TOMOGRAPHY)
+    case (0)
+      ! earthquake/force source
+      ! for backward wavefield
+      call compute_add_sources_viscoelastic(b_accel_elastic,it_temp,istage_temp)
+
+    case (3)
+      ! noise simulation
+      ! reconstruction/backward wavefield
+      ! injects generating wavefield sources
+      if (.not. NOISE_SAVE_EVERYWHERE) call add_surface_movie_noise(b_accel_elastic)
+    end select
   endif ! if not using an initial field
 
   ! only on forward arrays so far implemented...
-  !if (AXISYM) then
-  !  call enforce_zero_radial_displacements_on_the_axis()
-  !endif
 
   ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
@@ -323,10 +347,10 @@
 
   ! multiply by the inverse of the mass matrix and update velocity
   !! DK DK this should be vectorized
-  b_accel_elastic(1,:) = b_accel_elastic(1,:) * rmass_inverse_elastic_one(:)
-  b_accel_elastic(2,:) = b_accel_elastic(2,:) * rmass_inverse_elastic_three(:)
+  b_accel_elastic(:,:) = b_accel_elastic(:,:) * rmass_inverse_elastic(:,:)
 
-  b_veloc_elastic = b_veloc_elastic + b_deltatover2*b_accel_elastic
+  ! time stepping
+  b_veloc_elastic(:,:) = b_veloc_elastic(:,:) + b_deltatover2 * b_accel_elastic(:,:)
 
   end subroutine compute_forces_viscoelastic_main_backward
 

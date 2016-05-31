@@ -81,8 +81,8 @@
     allocate(accel_elastic_adj_coupling(NDIM,nglob_elastic))
   endif
 
-  allocate(rmass_inverse_elastic_one(nglob_elastic))
-  allocate(rmass_inverse_elastic_three(nglob_elastic))
+  allocate(rmass_inverse_elastic(NDIM,nglob_elastic),stat=ier)
+  if (ier /= 0) stop 'Error allocating elastic mass matrix array'
 
   if (time_stepping_scheme==2) then
     allocate(displ_elastic_LDDRK(NDIM,nglob_elastic), &
@@ -370,6 +370,10 @@
   allocate(potential_dot_gravito(nglob_gravitoacoustic))
   allocate(potential_dot_dot_gravito(nglob_gravitoacoustic))
   allocate(rmass_inverse_gravito(nglob_gravitoacoustic))
+
+  ! forced is used when FORCING is .true. it says if a GLL point is forced or not
+  allocate(forced(nglob))
+  forced(:) = .false.
 
   ! synchronizes all processes
   call synchronize_all()

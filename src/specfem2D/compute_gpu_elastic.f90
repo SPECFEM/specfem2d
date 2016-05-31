@@ -40,7 +40,7 @@
   use specfem_par, only : myrank,NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbours,ninterface_elastic,inum_interfaces_elastic,ibool_interfaces_ext_mesh, &
     num_fluid_solid_edges,nspec_bottom,nspec_left,nspec_right,nspec_top, &
-    STACEY_BOUNDARY_CONDITIONS,PML_BOUNDARY_CONDITIONS,any_poroelastic,any_acoustic,SIMULATION_TYPE
+    STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS,any_poroelastic,any_acoustic,SIMULATION_TYPE
 
   use specfem_par_gpu, only : Mesh_pointer,nspec_outer_elastic, nspec_inner_elastic,ANY_ANISOTROPY, &
     deltatf,deltatover2f,b_deltatover2f, &
@@ -105,7 +105,7 @@
 
     ! adds elastic absorbing boundary term to acceleration (Stacey conditions)
 
-    if (STACEY_BOUNDARY_CONDITIONS) then
+    if (STACEY_ABSORBING_CONDITIONS) then
       call compute_stacey_viscoelastic_GPU(phase_is_inner,b_absorb_elastic_bottom_slice,b_absorb_elastic_left_slice,&
                                            b_absorb_elastic_right_slice,b_absorb_elastic_top_slice)
     endif

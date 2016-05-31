@@ -437,7 +437,7 @@
            source_courbe_eros(NSOURCES), &
            is_proc_source(NSOURCES), &
            nb_proc_source(NSOURCES), &
-           sourcearray(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
+           sourcearrays(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
   if (ier /= 0) stop 'Error allocating source arrays'
 
   ! source locations
@@ -463,13 +463,23 @@
   x_source(:) = 0.d0
   z_source(:) = 0.d0
 
-  ! reads in source info from Database file
+  is_proc_source(:) = 0
+  nb_proc_source(:) = 0
+
+  ispec_selected_source(:) = 0
+  iglob_source(:) = 0
+
+  sourcearrays(:,:,:,:) = 0._CUSTOM_REAL
+
+  ! reads in source info from Database file (check with routine save_databases_sources())
   do i_source= 1,NSOURCES
-     read(IIN,"(a80)") datlin
-     read(IIN,*) source_type(i_source),time_function_type(i_source)
-     read(IIN,"(a100)") name_of_source_file(i_source)
-     read(IIN,*) burst_band_width(i_source),x_source(i_source),z_source(i_source),f0_source(i_source), &
-                 tshift_src(i_source),factor(i_source),anglesource(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
+    read(IIN,"(a80)") datlin
+    read(IIN,*) source_type(i_source),time_function_type(i_source)
+    read(IIN,"(a100)") name_of_source_file(i_source)
+    read(IIN,*) burst_band_width(i_source), &
+                x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
+                factor(i_source),anglesource(i_source), &
+                Mxx(i_source),Mzz(i_source),Mxz(i_source)
   enddo
 
   !if (AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify
@@ -806,6 +816,13 @@
     anyabs = .true.
   endif
 
+  ! sets Stacey flag
+  if (anyabs .and. (.not. PML_BOUNDARY_CONDITIONS)) then
+    STACEY_ABSORBING_CONDITIONS = .true.
+  else
+    STACEY_ABSORBING_CONDITIONS = .false.
+  endif
+
   ! allocate arrays for absorbing boundary conditions
   allocate(numabs(nelemabs), &
            codeabs(4,nelemabs),stat=ier)
@@ -999,28 +1016,31 @@
   call sum_all_i(nspec_top, nspec_top_tot)
 
   ! user output
-  if (myrank == 0 .and. .not. PML_BOUNDARY_CONDITIONS) then
+  if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'Number of absorbing elements: ',nelemabs_tot
-    write(IMAIN,*) '  nspec_left = ',nspec_left_tot
-    write(IMAIN,*) '  nspec_right = ',nspec_right_tot
-    write(IMAIN,*) '  nspec_bottom = ',nspec_bottom_tot
-    write(IMAIN,*) '  nspec_top = ',nspec_top_tot
-    write(IMAIN,*)
+    write(IMAIN,*) 'Absorbing boundaries:'
+    if (PML_BOUNDARY_CONDITIONS) &
+      write(IMAIN,*) '  using PML boundary conditions'
+    if (STACEY_ABSORBING_CONDITIONS) &
+      write(IMAIN,*) '  using Stacey absorbing boundary conditions'
+    ! for Stacey
+    if (STACEY_ABSORBING_CONDITIONS) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'Number of absorbing elements: ',nelemabs_tot
+      write(IMAIN,*) '  nspec_left = ',nspec_left_tot
+      write(IMAIN,*) '  nspec_right = ',nspec_right_tot
+      write(IMAIN,*) '  nspec_bottom = ',nspec_bottom_tot
+      write(IMAIN,*) '  nspec_top = ',nspec_top_tot
+      write(IMAIN,*)
+    endif
     call flush_IMAIN()
   endif
 
-  ! sets Stacey flag
-  if (anyabs .and. (.not. PML_BOUNDARY_CONDITIONS)) then
-    STACEY_BOUNDARY_CONDITIONS = .true.
-  else
-    STACEY_BOUNDARY_CONDITIONS = .false.
-  endif
 
   ! allocates arrays
   if (anyabs) then
     ! files to save absorbed waves needed to reconstruct backward wavefield for adjoint method
-    if (any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_BOUNDARY_CONDITIONS) then
+    if (any_elastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_ABSORBING_CONDITIONS) then
       allocate(b_absorb_elastic_left(NDIM,NGLLZ,nspec_left,NSTEP))
       allocate(b_absorb_elastic_right(NDIM,NGLLZ,nspec_right,NSTEP))
       allocate(b_absorb_elastic_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
@@ -1031,7 +1051,7 @@
       allocate(b_absorb_elastic_bottom(1,1,1,1))
       allocate(b_absorb_elastic_top(1,1,1,1))
     endif
-    if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_BOUNDARY_CONDITIONS) then
+    if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_ABSORBING_CONDITIONS) then
       allocate(b_absorb_poro_s_left(NDIM,NGLLZ,nspec_left,NSTEP))
       allocate(b_absorb_poro_s_right(NDIM,NGLLZ,nspec_right,NSTEP))
       allocate(b_absorb_poro_s_bottom(NDIM,NGLLX,nspec_bottom,NSTEP))
@@ -1050,7 +1070,7 @@
       allocate(b_absorb_poro_w_bottom(1,1,1,1))
       allocate(b_absorb_poro_w_top(1,1,1,1))
     endif
-    if (any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_BOUNDARY_CONDITIONS) then
+    if (any_acoustic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) .and. STACEY_ABSORBING_CONDITIONS) then
       allocate(b_absorb_acoustic_left(NGLLZ,nspec_left,NSTEP))
       allocate(b_absorb_acoustic_right(NGLLZ,nspec_right,NSTEP))
       allocate(b_absorb_acoustic_bottom(NGLLX,nspec_bottom,NSTEP))
