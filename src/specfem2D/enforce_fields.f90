@@ -61,7 +61,7 @@ subroutine build_forced()
 ! forced has already been already initialized to .false.
 ! ----------------------------------------------------------------------------------------
 
-  use specfem_par, only: coord,nglob,nspec,ibool,forced,myrank,nglob_acoustic,nelem_acforcing,codeacforcing,numacforcing,ibool, &
+  use specfem_par, only: coord,nglob,ibool,forced,myrank,nelem_acforcing,codeacforcing,numacforcing,ibool, &
                          PML_BOUNDARY_CONDITIONS,ispec_is_PML,read_external_mesh
   use enforce_par
   use constants, only: TINYVAL,IMAIN,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
@@ -173,7 +173,7 @@ subroutine enforce_fields(iglob,it)
 ! This subroutine impose the fields at a given GLL point and at a given time step
 ! ----------------------------------------------------------------------------------------
 
-  use specfem_par, only: coord,forced,displ_elastic,veloc_elastic,accel_elastic,deltat,deltatover2, &
+  use specfem_par, only: coord,displ_elastic,veloc_elastic,accel_elastic,deltat,deltatover2, &
                          deltatsquareover2
   use enforce_par
   use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI
