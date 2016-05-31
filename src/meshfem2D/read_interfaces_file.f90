@@ -50,14 +50,16 @@
   integer :: npoints_interface_bottom
   double precision :: xinterface_dummy,zinterface_dummy,xinterface_dummy_previous
 
-  print *,''
-  print *,'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)),' to count the spectral elements'
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)), &
+                 ' to count the spectral elements'
 
   ! get interface data from external file to count the spectral elements along Z
   open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old',iostat=ier)
   if (ier /= 0) then
-    print *,'error opening file: ',trim('DATA/'//interfacesfile)
-    stop 'error read interface file in meshfem2D'
+    print *,'Error opening file: ',trim('DATA/'//interfacesfile)
+    stop 'Error read interface file in meshfem2D'
   endif
 
   max_npoints_interface = -1
@@ -75,7 +77,8 @@
 
     max_npoints_interface = max(npoints_interface_bottom,max_npoints_interface)
 
-    print *,'Reading ',npoints_interface_bottom,' points for interface ',interface_current
+    ! user output
+    write(IMAIN,*) 'Reading ',npoints_interface_bottom,' points for interface ',interface_current
 
     ! loop on all the points describing this interface
     xinterface_dummy_previous = -HUGEVAL
@@ -96,7 +99,8 @@
   allocate(nz_layer(number_of_layers),stat=ier)
   if (ier /= 0) stop 'Error allocating array nz_layer'
 
-  print *, 'Total number of layers in z direction = ', number_of_layers
+  ! user output
+  write(IMAIN,*) 'Total number of layers in z direction = ', number_of_layers
 
   ! loop on all the layers
   do ilayer = 1,number_of_layers
@@ -105,7 +109,9 @@
     call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,nz_layer(ilayer))
 
     if (nz_layer(ilayer) < 1) stop 'not enough spectral elements along Z in layer (minimum is 1)'
-    print *,'There are ',nz_layer(ilayer),' spectral elements along Z in layer ',ilayer
+
+    ! user output
+    write(IMAIN,*) 'There are ',nz_layer(ilayer),' spectral elements along Z in layer ',ilayer
   enddo
 
   close(IIN_INTERFACES)
@@ -113,9 +119,9 @@
   ! compute total number of spectral elements in vertical direction
   nz = sum(nz_layer)
 
-  print *
-  print *,'Total number of spectral elements along Z = ',nz
-  print *
+  write(IMAIN,*)
+  write(IMAIN,*) 'Total number of spectral elements along Z = ',nz
+  write(IMAIN,*)
 
   nxread = nx
   nzread = nz

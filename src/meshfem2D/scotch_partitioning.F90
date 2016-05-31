@@ -79,8 +79,8 @@
   ! thus no need to define an explicit strategy
   call scotchfstratinit (SCOTCHSTRAT(1), ier)
    IF (ier /= 0) THEN
-     PRINT *, 'ERROR : MAIN : Cannot initialize strategy'
-     STOP
+     print *, 'ERROR : MAIN : Cannot initialize strategy'
+     stop 'Error scotch init'
   endif
 
   ! resets SCOTCH random number generator to produce deterministic partitions
@@ -89,8 +89,8 @@
   ! initializes graph
   call scotchfgraphinit (SCOTCHGRAPH (1), ier)
   IF (ier /= 0) THEN
-     PRINT *, 'ERROR : MAIN : Cannot initialize graph'
-     STOP
+     print *, 'ERROR : MAIN : Cannot initialize graph'
+     stop 'Error scotch graph'
   endif
 
   ! fills graph structure : see user manual (scotch_user5.1.pdf, page 72/73)
@@ -105,39 +105,39 @@
                           nb_edges, &
                           adjncy_g(0), adjwgt (0), ier)
   IF (ier /= 0) THEN
-     PRINT *, 'ERROR : MAIN : Cannot build graph'
-     STOP
+     print *, 'ERROR : MAIN : Cannot build graph'
+     stop 'Error scotch graphbuild'
   endif
 
   call scotchfgraphcheck (SCOTCHGRAPH (1), ier)
   IF (ier /= 0) THEN
-     PRINT *, 'ERROR : MAIN : Invalid check'
-     STOP
+     print *, 'ERROR : MAIN : Invalid check'
+     stop 'Error scotch graphcheck'
   endif
 
   call scotchfgraphpart (SCOTCHGRAPH (1), nparts, SCOTCHSTRAT(1), part(0), ier)
   IF (ier /= 0) THEN
-     PRINT *, 'ERROR : MAIN : Cannot part graph'
-     STOP
+     print *, 'ERROR : MAIN : Cannot part graph'
+     stop 'Error scotch graphpart'
   endif
 
   call SCOTCHFGRAPHEXIT (SCOTCHGRAPH (1), ier)
   IF (ier /= 0) THEN
-     PRINT *, 'ERROR : MAIN : Cannot destroy graph'
-     STOP
+     print *, 'ERROR : MAIN : Cannot destroy graph'
+     stop 'Error scotch graphexit'
   endif
 
   call scotchfstratexit (SCOTCHSTRAT(1), ier)
   IF (ier /= 0) THEN
-     PRINT *, 'ERROR : MAIN : Cannot destroy strat'
-     STOP
+     print *, 'ERROR : MAIN : Cannot destroy strat'
+     stop 'Error scotch exit'
   endif
 
 #else
   ! safety stop
   print *, 'This version of SPECFEM was not compiled with support of SCOTCH.'
   print *, 'Please recompile with -DUSE_SCOTCH in order to enable use of SCOTCH.'
-  stop 'SCOTCH partitioning not compiled'
+  stop 'Error SCOTCH partitioning not compiled'
 #endif
 
   end subroutine scotch_partitioning

@@ -372,19 +372,42 @@
   call world_size(NPROC)
   call world_rank(myrank)
 
+  ! open main output file, only written to by process 0
+  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
+    open(unit=IMAIN,file='OUTPUT_FILES/'//'output_meshfem2D.txt',status='unknown',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error could not open output file :','OUTPUT_FILES/'//'output_meshfem2D.txt'
+      stop 'Error opening output file'
+    endif
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+#ifdef USE_MPI
+    write(IMAIN,*) '**********************************************'
+    write(IMAIN,*) '*** Specfem 2-D Mesher - MPI version       ***'
+    write(IMAIN,*) '**********************************************'
+#else
+    write(IMAIN,*) '**********************************************'
+    write(IMAIN,*) '*** Specfem 2-D Mesher - serial version    ***'
+    write(IMAIN,*) '**********************************************'
+#endif
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   ! initializes
   remove_min_to_start_at_zero = 0
 
   ! mesher works only for single process
-  ! slave processes can return
+  ! (slave processes can sit idle)
   if (myrank == 0) then
-
     ! ***
     ! *** read the parameter file
     ! ***
-
-    print *,'Reading the parameter file...'
-    print *
+    write(IMAIN,*) 'Reading the parameter file...'
+    write(IMAIN,*)
 
     ! opens file Par_file
     call open_parameter_file()
@@ -397,14 +420,14 @@
 
     ! reads in mesh elements
     if (read_external_mesh) then
-      print *
-      print *,'mesh from external mesh file'
-      print *
+      write(IMAIN,*)
+      write(IMAIN,*) 'mesh from external meshing'
+      write(IMAIN,*)
       call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, ngnod)
     else
-      print *
-      print *,'mesh from internal mesher'
-      print *
+      write(IMAIN,*)
+      write(IMAIN,*) 'mesh from internal meshing'
+      write(IMAIN,*)
       call read_interfaces_file()
     endif
 
@@ -438,13 +461,13 @@
     endif
 
     ! user output
-    print *
-    print *,'Parameter file successfully read '
-    print *
-    print *,'The mesh contains ',nelmnts,' elements'
-    print *
-    print *,'Control elements have ',ngnod,' nodes'
-    print *
+    write(IMAIN,*)
+    write(IMAIN,*) 'Parameter file successfully read '
+    write(IMAIN,*)
+    write(IMAIN,*) 'The mesh contains ',nelmnts,' elements'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Control elements have ',ngnod,' nodes'
+    write(IMAIN,*)
 
     ! reads in source descriptions
     call read_source_file(NSOURCES)
@@ -540,10 +563,10 @@
     endif
 
     ! compute min and max of X and Z in the grid
-    print *
-    print *,'Min and max value of X in the grid = ',minval(nodes_coords(1,:)),maxval(nodes_coords(1,:))
-    print *,'Min and max value of Z in the grid = ',minval(nodes_coords(2,:)),maxval(nodes_coords(2,:))
-    print *
+    write(IMAIN,*)
+    write(IMAIN,*) 'Min and max value of X in the grid = ',minval(nodes_coords(1,:)),maxval(nodes_coords(1,:))
+    write(IMAIN,*) 'Min and max value of Z in the grid = ',minval(nodes_coords(2,:)),maxval(nodes_coords(2,:))
+    write(IMAIN,*)
 
     ! create a Gnuplot file that displays the grid
     if (output_grid_Gnuplot .and. .not. read_external_mesh) call save_gnuplot_file(ngnod,nx,nz,grid_point_x,grid_point_z)
@@ -553,12 +576,12 @@
 
     ! setting absorbing boundaries by elements instead of edges
     if (any_abs) then
-       call merge_abs_boundaries(nbmodels, phi, num_material, ngnod)
+      call merge_abs_boundaries(nbmodels, phi, num_material, ngnod)
     endif
 
     ! setting acoustic forcing boundaries by elements instead of edges
     if (ACOUSTIC_FORCING) then
-       call merge_acoustic_forcing_boundaries(ngnod)
+      call merge_acoustic_forcing_boundaries(ngnod)
     endif
 
     ! generate the databases for the solver
@@ -566,9 +589,9 @@
 
     ! print position of the source
     do i_source= 1,NSOURCES
-       print *
-       print *,'Position (x,z) of the source = ',xs(i_source),zs(i_source)
-       print *
+      write(IMAIN,*)
+      write(IMAIN,*) 'Position (x,z) of the source = ',xs(i_source),zs(i_source)
+      write(IMAIN,*)
     enddo
 
     !--- compute position of the receivers and write the STATIONS file
@@ -594,13 +617,16 @@
                               npoints_interface_top,max_npoints_interface)
     endif
 
-    print *
+    ! user output
     if (NPROC == 1) then
-       print *,'This will be a serial simulation'
+      write(IMAIN,*)
+      write(IMAIN,*) 'This will be a serial simulation'
+      write(IMAIN,*)
     else
-       print *,'This will be a parallel simulation on ',NPROC,' processor cores'
+      write(IMAIN,*)
+      write(IMAIN,*) 'This will be a parallel simulation on ',NPROC,' processor cores'
+      write(IMAIN,*)
     endif
-    print *
 
     ! frees memory
     if (allocated(nz_layer)) deallocate(nz_layer)
@@ -608,6 +634,9 @@
 
   ! mesher works only for single process
   endif ! myrank == 0
+
+  ! close main output file
+  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
   ! slave processes wait
   call synchronize_all()

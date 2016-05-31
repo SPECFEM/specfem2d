@@ -37,6 +37,7 @@
 ! creates a Gnuplot file that displays the grid
 
   implicit none
+  include "constants.h"
 
   integer :: ngnod,nx,nz
   double precision, dimension(0:nx,0:nz) :: x,z
@@ -44,8 +45,10 @@
   ! local parameters
   integer :: ier,istepx,istepz,ili,icol
 
-  print *
-  print *,'Saving the grid in Gnuplot format...'
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'Saving the grid in Gnuplot format...'
+  write(IMAIN,*)
 
   open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown',iostat=ier)
   if (ier /= 0 ) then
@@ -55,7 +58,7 @@
   endif
 
   ! draw horizontal lines of the grid
-  print *,'drawing horizontal lines of the grid'
+  write(IMAIN,*) 'drawing horizontal lines of the grid'
   istepx = 1
   if (ngnod == 4) then
     istepz = 1
@@ -71,7 +74,7 @@
   enddo
 
   ! draw vertical lines of the grid
-  print *,'drawing vertical lines of the grid'
+  write(IMAIN,*) 'drawing vertical lines of the grid'
   if (ngnod == 4) then
     istepx = 1
   else
@@ -106,7 +109,7 @@
   write(20,*) 'pause -1 "Hit any key..."'
   close(20)
 
-  print *,'Grid saved in Gnuplot format...'
-  print *
+  write(IMAIN,*) 'Grid saved in Gnuplot format...'
+  write(IMAIN,*)
 
   end subroutine save_gnuplot_file

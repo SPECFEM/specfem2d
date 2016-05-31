@@ -408,6 +408,6 @@
   if (myrank == 0) call datim(simulation_title)
 
   ! close output file
-  if (IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
+  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
   end subroutine finalize_simulation

@@ -103,11 +103,10 @@
   if (err_occurred() /= 0) stop 'error reading parameter SAVE_MODEL in Par_file'
 
   ! user output
-  write(*,*) 'Title of the simulation'
-  write(*,*) title
-  print *
-  if (AXISYM) write(*,*) 'Axisymmetric simulation'
-  print *
+  write(IMAIN,*) 'Title of the simulation: ',trim(title)
+  write(IMAIN,*)
+  if (AXISYM) write(IMAIN,*) 'Axisymmetric simulation'
+  write(IMAIN,*)
 
   !--------------------------------------------------------------------
   !
@@ -588,23 +587,23 @@
 
   ! checks partitioning
   if (NPROC <= 0) then
-     print *, 'Number of processes (NPROC) must be greater than or equal to one.'
-     stop
+     print *, 'Error: Number of processes (NPROC) must be greater than or equal to one.'
+     stop 'Error invalid NPROC value'
   endif
 
 #ifndef USE_MPI
   if (NPROC > 1) then
-     print *, 'Number of processes (NPROC) must be equal to one when not using MPI.'
+     print *, 'Error: Number of processes (NPROC) must be equal to one when not using MPI.'
      print *, 'Please recompile with -DUSE_MPI in order to enable use of MPI.'
-     stop
+     stop 'Error invalid NPROC value'
   endif
 #endif
 
   if (partitioning_method /= 1 .and. partitioning_method /= 3) then
-     print *, 'Invalid partitioning method number.'
+     print *, 'Error: Invalid partitioning method number.'
      print *, 'Partitioning method ',partitioning_method,' was requested, but is not available.'
      print *, 'Support for the METIS graph partitioner has been discontinued, please use SCOTCH (option 3) instead.'
-     stop
+     stop 'Error invalid partitioning method'
   endif
 
   ! simulation parameters
@@ -641,17 +640,19 @@
   ! checks model
   select case (MODEL)
   case ('default','ascii','binary','external','gll','binary_voigt')
-    print * ! do nothing
+    continue ! do nothing
   case default
-    stop 'Bad value: MODEL'
+    print *,'Error: unknown model choosen ',trim(MODEL)
+    stop 'Error bad model value for parameter MODEL'
   end select
 
   ! checks model
   select case (SAVE_MODEL)
   case ('default','ascii','binary','external','gll')
-    print * ! do nothing
+    continue ! do nothing
   case default
-    stop 'Bad value: SAVE_MODEL'
+    print *,'Error: unknown save_model choosen ',trim(SAVE_MODEL)
+    stop 'Error bad value for parameter SAVE_MODEL'
   end select
 
   end subroutine check_parameters

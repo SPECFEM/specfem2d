@@ -104,8 +104,8 @@
     close(15)
 
     ! user output
-    if (iproc == 0) print *,''
-    print *,'slice ',iproc,' has number of spectral elements =',nspec
+    if (iproc == 0) write(IMAIN,*)
+    write(IMAIN,*) 'slice ',iproc,' has number of spectral elements =',nspec
 
   enddo
 

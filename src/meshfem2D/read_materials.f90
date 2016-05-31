@@ -193,42 +193,46 @@
   enddo ! nbmodels
 
   ! user output
-  print *
-  print *, 'Nb of solid, fluid or porous materials = ',nbmodels
-  print *
+  write(IMAIN,*)
+  write(IMAIN,*) 'Nb of solid, fluid or porous materials = ',nbmodels
+  write(IMAIN,*)
+
   do i = 1,nbmodels
      if (icodemat(i) == ISOTROPIC_MATERIAL) then
-        print *,'Material #',i,' isotropic'
-        print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i),QKappa(i),Qmu(i)
+        write(IMAIN,*) 'Material #',i,' isotropic'
+        write(IMAIN,*) 'rho,cp,cs = ',rho_s(i),cp(i),cs(i),QKappa(i),Qmu(i)
         if (cs(i) < TINYVAL) then
-           print *,'Material is fluid'
+           write(IMAIN,*) 'Material is fluid'
         else
-           print *,'Material is solid'
+           write(IMAIN,*) 'Material is solid'
         endif
      else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
-        print *,'Material #',i,' anisotropic'
-        print *,'rho,cp,cs = ',rho_s(i),cp(i),cs(i)
+        write(IMAIN,*) 'Material #',i,' anisotropic'
+        write(IMAIN,*) 'rho,cp,cs = ',rho_s(i),cp(i),cs(i)
         if (AXISYM) then
-          print *,'c11,c13,c15,c33,c35,c55,c12,c23,c25,c22 = ',aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
-                                                          aniso9(i),aniso10(i),aniso11(i),aniso12(i)
+          write(IMAIN,*) 'c11,c13,c15,c33,c35,c55,c12,c23,c25,c22 = ', &
+                          aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
+                          aniso9(i),aniso10(i),aniso11(i),aniso12(i)
         else
-          print *,'c11,c13,c15,c33,c35,c55,c12,c23,c25 = ',aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
-                                                          aniso9(i),aniso10(i),aniso11(i)
-          print *,'QKappa,Qmu = ',QKappa(i),Qmu(i)
+          write(IMAIN,*) 'c11,c13,c15,c33,c35,c55,c12,c23,c25 = ', &
+                          aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
+                          aniso9(i),aniso10(i),aniso11(i)
+          write(IMAIN,*) 'QKappa,Qmu = ',QKappa(i),Qmu(i)
         endif
      else if (icodemat(i) == POROELASTIC_MATERIAL) then
-        print *,'Material #',i,' isotropic'
-        print *,'rho_s, kappa_s= ',rho_s(i),kappa_s(i)
-        print *,'rho_f, kappa_f, eta_f= ',rho_f(i),kappa_f(i),eta_f(i)
-        print *,'phi, tortuosity, permxx, permxz, permzz= ',phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i)
-        print *,'kappa_fr, mu_fr, Qmu= ',kappa_fr(i),mu_fr(i),Qmu(i)
-        print *,'Material is porous'
+        write(IMAIN,*) 'Material #',i,' isotropic'
+        write(IMAIN,*) 'rho_s, kappa_s= ',rho_s(i),kappa_s(i)
+        write(IMAIN,*) 'rho_f, kappa_f, eta_f= ',rho_f(i),kappa_f(i),eta_f(i)
+        write(IMAIN,*) 'phi, tortuosity, permxx, permxz, permzz= ',phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i)
+        write(IMAIN,*) 'kappa_fr, mu_fr, Qmu= ',kappa_fr(i),mu_fr(i),Qmu(i)
+        write(IMAIN,*) 'Material is porous'
      else if (icodemat(i) <= 0) then
-        print *,'Material #',i,' will be read in an external tomography file (TOMOGRAPHY_FILE in Par_file)'
+        write(IMAIN,*) 'Material #',i,' will be read in an external tomography file (TOMOGRAPHY_FILE in Par_file)'
      else
         stop 'Unknown material code'
      endif
-     print *
+     write(IMAIN,*)
+     call flush_IMAIN()
   enddo
 
   end subroutine read_materials

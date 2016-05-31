@@ -45,7 +45,6 @@
 
   ! local parameters
   integer :: ier
-  character(len=256)  :: prname
 
 !***********************************************************************
 !
@@ -61,23 +60,58 @@
   ! and also takes care of the main output
   call world_rank(myrank)
 
-
   ! check process setup
   if (NPROC < 1) stop 'should have NPROC >= 1'
 
-  ! determine if we write to file instead of standard output
-  if (IMAIN /= ISTANDARD_OUTPUT) then
-    ! sets main output file name
+  ! checks rank to make sure that myrank is zero for serial version
 #ifdef USE_MPI
-    write(prname,"('output_solver',i5.5,'.txt')") myrank
+    if (myrank >= NPROC) stop 'Error: invalid MPI rank'
 #else
-    prname = 'output_solver.txt'
     ! serial version: checks rank is initialized
-    if (myrank /= 0) stop 'process should have myrank zero'
+    if (myrank /= 0) stop 'Error: process should have myrank zero for serial version'
 #endif
+
+  ! determine if we write to file instead of standard output
+  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
+    ! sets main output file name
     ! opens for simulation output
-    open(IMAIN,file='OUTPUT_FILES/'//trim(prname),status='unknown',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/output_solver***.txt')
+    open(IMAIN,file='OUTPUT_FILES/'//'output_solver.txt',status='unknown',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/output_solver.txt')
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+#ifdef USE_MPI
+    write(IMAIN,*) '**********************************************'
+    write(IMAIN,*) '**** Specfem 2-D Solver - MPI version     ****'
+    write(IMAIN,*) '**********************************************'
+    write(IMAIN,*)
+    write(IMAIN,*) 'There are ',NPROC,' MPI processes'
+    write(IMAIN,*) 'Processes are numbered from 0 to ',NPROC-1
+    write(IMAIN,*)
+    write(IMAIN,*) 'There is a total of ',NPROC,' slices'
+#else
+    write(IMAIN,*) '**********************************************'
+    write(IMAIN,*) '**** Specfem 2-D Solver - serial version  ****'
+    write(IMAIN,*) '**********************************************'
+#endif
+    write(IMAIN,*)
+    write(IMAIN,*) 'NDIM = ',NDIM
+    write(IMAIN,*)
+    write(IMAIN,*) 'NGLLX = ',NGLLX
+    write(IMAIN,*) 'NGLLZ = ',NGLLZ
+    write(IMAIN,*)
+    ! write information about precision used for floating-point operations
+    if (CUSTOM_REAL == SIZE_REAL) then
+      write(IMAIN,*) 'using single precision for the calculations'
+    else
+      write(IMAIN,*) 'using double precision for the calculations'
+    endif
+    write(IMAIN,*)
+    write(IMAIN,*) 'smallest and largest possible floating-point numbers are: ',&
+                   tiny(1._CUSTOM_REAL),huge(1._CUSTOM_REAL)
+    call flush_IMAIN()
   endif
 
   ! starts reading in Database file (header info, simulation flags, number of elements

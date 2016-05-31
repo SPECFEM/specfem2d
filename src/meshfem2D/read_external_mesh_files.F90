@@ -60,8 +60,8 @@
   open(unit=990, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
 #endif
   if (ier /= 0) then
-    print *,'error opening file: ',trim(filename)
-    stop 'error read external mesh file'
+    print *,'Error opening file: ',trim(filename)
+    stop 'Error read external mesh file'
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -126,8 +126,8 @@
   open(unit=992, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
 #endif
   if (ier /= 0) then
-    print *,'error opening file: ',trim(filename)
-    stop 'error read external mat file'
+    print *,'Error opening file: ',trim(filename)
+    stop 'Error read external mat file'
   endif
 
   do i = 1, nelmnts
@@ -169,8 +169,8 @@
   open(unit=992, file=trim(filename), form='formatted' , status='old', action='read',iostat=ier)
 #endif
   if (ier /= 0) then
-    print *,'error opening file: ',trim(filename)
-    stop 'error read external CPML_element_file'
+    print *,'Error opening file: ',trim(filename)
+    stop 'Error read external CPML_element_file'
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -219,8 +219,8 @@
   open(unit=991, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
 #endif
   if (ier /= 0) then
-    print *,'error opening file: ',trim(filename)
-    stop 'error read external nodes coords file'
+    print *,'Error opening file: ',trim(filename)
+    stop 'Error read external nodes coords file'
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -281,8 +281,8 @@
   open(unit=993, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
 #endif
   if (ier /= 0) then
-    print *,'error opening file: ',trim(filename)
-    stop 'error read acoustic surface file'
+    print *,'Error opening file: ',trim(filename)
+    stop 'Error read acoustic surface file'
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -358,8 +358,8 @@
   open(unit=994, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
 #endif
   if (ier /= 0) then
-    print *,'error opening file: ',trim(filename)
-    stop 'error read absorbing surface file'
+    print *,'Error opening file: ',trim(filename)
+    stop 'Error read absorbing surface file'
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -433,8 +433,8 @@
   open(unit=995, file=trim(filename), form='formatted' , status='old', action='read', iostat=ier)
 #endif
   if (ier /= 0) then
-    print *,'error opening file: ',trim(filename)
-    stop 'error read acoustic forcing surface file'
+    print *,'Error opening file: ',trim(filename)
+    stop 'Error read acoustic forcing surface file'
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -497,6 +497,7 @@
   use part_unstruct_par,only: ispec_of_axial_elements,nelem_on_the_axis,inode1_axial_elements,inode2_axial_elements
 
   implicit none
+  include "constants.h"
 
   character(len=256), intent(in)  :: axial_elements_file
   integer, intent(in)  :: remove_min_to_start_at_zero
@@ -510,8 +511,8 @@
   open(unit=994, file=trim(axial_elements_file), form='formatted' , status='old', action='read', iostat=ier)
 #endif
   if (ier /= 0) then
-    print *,'error opening file: ',trim(axial_elements_file)
-    stop 'error read axial elements file'
+    print *,'Error opening file: ',trim(axial_elements_file)
+    stop 'Error read axial elements file'
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -520,7 +521,8 @@
   read(994,*) nelem_on_the_axis
 #endif
 
-  print *,"Number of elements on the axis: ", nelem_on_the_axis
+  ! user output
+  write(IMAIN,*) "Number of elements on the axis: ", nelem_on_the_axis
 
   allocate(ispec_of_axial_elements(nelem_on_the_axis),stat=ier)
   if (ier /= 0) stop 'Error allocating array ispec_of_axial_elements'
@@ -543,7 +545,7 @@
 
   ! this has a cost of O(nelem_on_the_axis^2), could be reduced by using a quicksort algorithm
   ! and checking the sorted list
-  print *,'testing for duplicates in the axial element input file...'
+  write(IMAIN,*) 'testing for duplicates in the axial element input file...'
   do i = 1,nelem_on_the_axis
     do j = i+1,nelem_on_the_axis
       if (ispec_of_axial_elements(i) == ispec_of_axial_elements(j)) then
@@ -551,8 +553,8 @@
       endif
     enddo
   enddo
-  print *,'done testing for duplicates'
-  print *
+  write(IMAIN,*) 'done testing for duplicates'
+  write(IMAIN,*)
 
   ! axisym TODO : Test if the informations supplied are compatible with axisym
 
@@ -582,8 +584,8 @@
   ! reads in specified external file
   open(unit=IIN,file=trim(tangential_detection_curve_file),status='old',action='read',iostat=ier)
   if (ier /= 0) then
-    print *,'error opening file: ',trim(tangential_detection_curve_file)
-    stop 'error read tangential curve file'
+    print *,'Error opening file: ',trim(tangential_detection_curve_file)
+    stop 'Error read tangential curve file'
   endif
 
   read(IIN,*) nnodes_tangential_curve

@@ -36,6 +36,7 @@
                                 npoints_interface_top,max_npoints_interface)
 
   implicit none
+  include "constants.h"
 
   integer :: nreceiversets
   integer, dimension(nreceiversets) :: nrec
@@ -53,19 +54,20 @@
   double precision :: xrec,zrec
   double precision, external :: value_spline
 
-  print *
-  print *,'writing the DATA/STATIONS file'
-  print *
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'writing the DATA/STATIONS file'
+  write(IMAIN,*)
 
   ! total number of receivers in all the receiver lines
   nrec_total = sum(nrec)
 
-  print *
-  print *,'There are ',nrec_total,' receivers'
+  write(IMAIN,*)
+  write(IMAIN,*) 'There are ',nrec_total,' receivers'
 
-  print *
-  print *,'Target positions (x,z) of the ',nrec_total,' receivers'
-  print *
+  write(IMAIN,*)
+  write(IMAIN,*) 'Target positions (x,z) of the ',nrec_total,' receivers'
+  write(IMAIN,*)
 
   open(unit=15,file='DATA/STATIONS',status='unknown',iostat=ios)
   if (ios /= 0 ) stop 'error saving STATIONS file'
@@ -97,7 +99,7 @@
             zrec = value_spline(xrec,xinterface_top,zinterface_top,coefs_interface_top,npoints_interface_top)
 
        ! display position of the receiver
-       print *,'Receiver ',irec_global_number,' = ',xrec,zrec
+       write(IMAIN,*) 'Receiver ',irec_global_number,' = ',xrec,zrec
 
        write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") irec_global_number,xrec,zrec
 
