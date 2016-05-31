@@ -303,7 +303,7 @@
   logical, parameter :: SOURCE_IS_MOVING = .false.
 
 ! This option is used when we want to enforce fields
-  logical, parameter :: FORCING = .true.
+  logical, parameter :: FORCING = .false.
 
 !!-----------------------------------------------------------
 !!
