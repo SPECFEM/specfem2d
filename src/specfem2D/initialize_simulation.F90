@@ -315,6 +315,14 @@
     stop 'Please set P_SV flag to .true. for simulations with attenuation and anisotropy'
   endif
 
+  ! enforcing wavefield at global degrees-of-freedom
+#ifdef FORCE_VECTORIZATION
+  ! safety stop
+  if (USE_ENFORCE_FIELDS) &
+    stop 'USE_ENFORCE_FIELDS is not supported yet when using FORCE_VECTORIZATION'
+#endif
+
+
   ! synchronizes processes
   call synchronize_all()
 

@@ -64,7 +64,7 @@
   endif
 
   ! add acoustic forcing at a rigid boundary
-  if (ACOUSTIC_FORCING .and. (.not. FORCING)) then
+  if (ACOUSTIC_FORCING .and. (.not. USE_ENFORCE_FIELDS)) then
     call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
   endif
 

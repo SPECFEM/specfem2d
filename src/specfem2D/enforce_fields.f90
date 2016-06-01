@@ -53,15 +53,15 @@ end module enforce_par
 ! ----------------------------------------------------------------------------------------
 !
 
-subroutine build_forced()
+  subroutine build_forced()
 ! ----------------------------------------------------------------------------------------
 ! This subroutine build the logical array: is_forced which gives for each GLL
 ! point if we impose the displacement on this point or not.
-! For example: forced(iglob) = .false.
+! For example: iglob_is_forced(iglob) = .false.
 ! forced has already been already initialized to .false.
 ! ----------------------------------------------------------------------------------------
 
-  use specfem_par, only: coord,nglob,ibool,forced,myrank,nelem_acforcing,codeacforcing,numacforcing,ibool, &
+  use specfem_par, only: coord,nglob,ibool,iglob_is_forced,myrank,nelem_acforcing,codeacforcing,numacforcing,ibool, &
                          PML_BOUNDARY_CONDITIONS,ispec_is_PML,read_external_mesh
   use enforce_par
   use constants, only: TINYVAL,IMAIN,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
@@ -83,11 +83,11 @@ subroutine build_forced()
           iglob = ibool(i,j,ispec)
           if (PML_BOUNDARY_CONDITIONS) then
             if (.not. ispec_is_PML(ispec)) then
-              forced(iglob) = .true.
+              iglob_is_forced(iglob) = .true.
               nforced = nforced + 1
             endif
           else
-            forced(iglob) = .true.
+            iglob_is_forced(iglob) = .true.
             nforced = nforced + 1
           endif
         enddo
@@ -99,11 +99,11 @@ subroutine build_forced()
           iglob = ibool(i,j,ispec)
           if (PML_BOUNDARY_CONDITIONS) then
             if (.not. ispec_is_PML(ispec)) then
-              forced(iglob) = .true.
+              iglob_is_forced(iglob) = .true.
               nforced = nforced + 1
             endif
           else
-            forced(iglob) = .true.
+            iglob_is_forced(iglob) = .true.
             nforced = nforced + 1
           endif
         enddo
@@ -115,11 +115,11 @@ subroutine build_forced()
           iglob = ibool(i,j,ispec)
           if (PML_BOUNDARY_CONDITIONS) then
             if (.not. ispec_is_PML(ispec)) then
-              forced(iglob) = .true.
+              iglob_is_forced(iglob) = .true.
               nforced = nforced + 1
             endif
           else
-            forced(iglob) = .true.
+            iglob_is_forced(iglob) = .true.
             nforced = nforced + 1
           endif
         enddo
@@ -131,11 +131,11 @@ subroutine build_forced()
           iglob = ibool(i,j,ispec)
           if (PML_BOUNDARY_CONDITIONS) then
             if (.not. ispec_is_PML(ispec)) then
-              forced(iglob) = .true.
+              iglob_is_forced(iglob) = .true.
               nforced = nforced + 1
             endif
           else
-            forced(iglob) = .true.
+            iglob_is_forced(iglob) = .true.
             nforced = nforced + 1
           endif
         enddo
@@ -146,7 +146,7 @@ subroutine build_forced()
 
     do iglob = 1,nglob ! Loop on all the GLL points
       if (abs(coord(1,iglob) - xforced) < TINYVAL) then
-        forced(iglob) = .true.
+        iglob_is_forced(iglob) = .true.
         nforced = nforced + 1
       endif
     enddo
@@ -162,13 +162,13 @@ subroutine build_forced()
     endif
   endif
 
-end subroutine build_forced
+  end subroutine build_forced
 
 !
 ! ----------------------------------------------------------------------------------------
 !
 
-subroutine enforce_fields(iglob,it)
+  subroutine enforce_fields(iglob,it)
 ! ----------------------------------------------------------------------------------------
 ! This subroutine impose the fields at a given GLL point and at a given time step
 ! ----------------------------------------------------------------------------------------
@@ -278,13 +278,13 @@ subroutine enforce_fields(iglob,it)
     accel_elastic(:,iglob) = 0.0d0
   endif
 
-end subroutine enforce_fields
+  end subroutine enforce_fields
 
 !
 ! ----------------------------------------------------------------------------------------
 !
 
-subroutine calculateUxUz(ux,uz,zi,cp,cs,h,omegaj,antisym)
+  subroutine calculateUxUz(ux,uz,zi,cp,cs,h,omegaj,antisym)
   ! ----------------------------------------------------------------------------------------
   ! See eq. (3) (4) Hora & Cervena 2012
   ! ----------------------------------------------------------------------------------------
@@ -325,13 +325,13 @@ subroutine calculateUxUz(ux,uz,zi,cp,cs,h,omegaj,antisym)
     endif
   endif
 
-end subroutine calculateUxUz
+  end subroutine calculateUxUz
 
 !
 ! ----------------------------------------------------------------------------------------
 !
 
-subroutine calculateCphase(cphase,omegaj,antisym) !,cp,cs,h)
+  subroutine calculateCphase(cphase,omegaj,antisym) !,cp,cs,h)
   ! ----------------------------------------------------------------------------------------
   ! This is not trivial !! We use here an approximate value
   ! do something clever here
@@ -363,9 +363,9 @@ subroutine calculateCphase(cphase,omegaj,antisym) !,cp,cs,h)
     call exit_MPI(myrank,'Phase speed not calculated for this frequency')
   endif
 
-end subroutine calculateCphase
+  end subroutine calculateCphase
 
-!subroutine enforce_fields(iglob,it)
+! subroutine enforce_fields(iglob,it)
 !! ----------------------------------------------------------------------------------------
 !! This subroutine impose the fields at a given GLL point and at a given time step
 !! ----------------------------------------------------------------------------------------
@@ -419,5 +419,5 @@ end subroutine calculateCphase
 !  !  accel_elastic(:,iglob) = 0.0d0
 !  !endif
 
-!end subroutine enforce_fields
+! end subroutine enforce_fields
 
