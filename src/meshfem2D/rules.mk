@@ -84,15 +84,16 @@ meshfem2D_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 
-$(SCOTCH_INCDIR)/scotchf.h: scotch_library
-scotch_library:
-ifeq ($(USE_BUNDLED_SCOTCH),1)
-	@echo "Using bundled Scotch"
-	$(MAKE) -C "$(SCOTCH_DIR)/src"
-else
-	@echo "Not using bundled Scotch"
-endif
+# default mesher flags
+FCFLAGS_f90_MESH = $(FCFLAGS_f90)
+MPILIBS_MESH = $(MPILIBS)
 
+# only mesher needs scotch for compilation of parallel version
+ifeq ($(SCOTCH),yes)
+  FCFLAGS_f90_MESH += $(SCOTCH_FLAGS)
+  ## scotch libraries
+  MPILIBS_MESH = $(MPILIBS) $(SCOTCH_LIBS)
+endif
 
 #######################################
 
@@ -109,8 +110,18 @@ $E/xmeshfem2D: $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS)
 	@echo ""
 	@echo "building xmeshfem2D"
 	@echo ""
-	$(FCLINK) -o ${E}/xmeshfem2D $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS) $(MPILIBS)
+	$(FCLINK) -o ${E}/xmeshfem2D $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS) $(MPILIBS_MESH)
 	@echo ""
+
+# target for SCOTCH
+$(SCOTCH_INCDIR)/scotchf.h: scotch_library
+scotch_library:
+ifeq ($(USE_BUNDLED_SCOTCH),1)
+	@echo "Using bundled Scotch"
+	$(MAKE) -C "$(SCOTCH_DIR)/src"
+else
+	@echo "Not using bundled Scotch"
+endif
 
 
 #######################################
@@ -132,10 +143,10 @@ endif
 ####
 
 $O/%.mesh_module.o: $S/%.f90 ${SETUP}/constants.h
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<
 
 $O/%.mesh.o: $S/%.f90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<
 
 $O/%.mesh.o: $S/%.F90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<

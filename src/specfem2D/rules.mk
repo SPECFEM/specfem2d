@@ -328,6 +328,7 @@ endif
 
 # mostly as example how to specify special dependencies
 # the general dependency on the specfem module is handled by the rules below
+
 $O/specfem2D.spec.o: $O/specfem2D_par.spec_module.o
 
 

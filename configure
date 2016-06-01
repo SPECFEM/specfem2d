@@ -651,6 +651,8 @@ SCOTCH_LIBDIR
 SCOTCH_INCLUDEDIR
 SCOTCH_DIR
 USE_BUNDLED_SCOTCH
+COND_SCOTCH_FALSE
+COND_SCOTCH_TRUE
 PTHREAD_CFLAGS
 PTHREAD_LIBS
 PTHREAD_CC
@@ -689,14 +691,14 @@ COND_CUDA5_FALSE
 COND_CUDA5_TRUE
 COND_CUDA_FALSE
 COND_CUDA_TRUE
+COND_MPI_FALSE
+COND_MPI_TRUE
 COND_VECTORIZATION_FALSE
 COND_VECTORIZATION_TRUE
 COND_DEBUG_FALSE
 COND_DEBUG_TRUE
 CUSTOM_MPI_TYPE
 CUSTOM_REAL
-COND_MPI_FALSE
-COND_MPI_TRUE
 host_os
 host_vendor
 host_cpu
@@ -746,10 +748,10 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
-with_mpi
 enable_double_precision
 enable_debug
 enable_vectorization
+with_mpi
 with_cuda
 with_scotch_dir
 with_scotch_includedir
@@ -1408,7 +1410,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-mpi              build parallel version [default=yes]
+  --with-mpi              build parallel version [default=no]
   --with-cuda             build CUDA GPU enabled version [default=no]
   --with-scotch-dir=DIR   define the root path to Scotch (e.g. /opt/scotch/)
   --with-scotch-includedir=DIR
@@ -2541,27 +2543,6 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 # 'configure' options
 
 ###
-### MPI
-###
-
-
-# Check whether --with-mpi was given.
-if test "${with_mpi+set}" = set; then :
-  withval=$with_mpi; want_mpi="$withval"
-else
-  want_mpi=no
-fi
-
- if test "$want_mpi" = yes; then
-  COND_MPI_TRUE=
-  COND_MPI_FALSE='#'
-else
-  COND_MPI_TRUE='#'
-  COND_MPI_FALSE=
-fi
-
-
-###
 ### precision
 ###
 
@@ -2632,6 +2613,27 @@ fi
 else
   COND_VECTORIZATION_TRUE='#'
   COND_VECTORIZATION_FALSE=
+fi
+
+
+###
+### MPI
+###
+
+
+# Check whether --with-mpi was given.
+if test "${with_mpi+set}" = set; then :
+  withval=$with_mpi; want_mpi="$withval"
+else
+  want_mpi=no
+fi
+
+ if test "$want_mpi" = yes; then
+  COND_MPI_TRUE=
+  COND_MPI_FALSE='#'
+else
+  COND_MPI_TRUE='#'
+  COND_MPI_FALSE=
 fi
 
 
@@ -5865,6 +5867,7 @@ if test "x${scotch_usable}" = "xyes"; then
 
 $as_echo "#define HAVE_SCOTCH 1" >>confdefs.h
 
+ want_scotch=yes
  USE_BUNDLED_SCOTCH=0
  SCOTCH_DIR="${ac_scotch_dir}"
  SCOTCH_LIBDIR="${ac_scotch_lib_dir}"
@@ -6452,27 +6455,44 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 
 
-
  # scotch only needed with mpi support
  if test "$want_mpi" = yes; then
+  want_scotch=yes
+  #daniel: scotch bundle
+  # uses bundled scotch: current version pointed to by symbolic link scotch/
+  USE_BUNDLED_SCOTCH=1
 
- #daniel: scotch bundle
- # uses bundled scotch: current version pointed to by symbolic link scotch/
- USE_BUNDLED_SCOTCH=1
-
- SCOTCH_DIR="$srcdir/src/meshfem2D/scotch"
- SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
- SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
-
+  SCOTCH_DIR="$srcdir/src/meshfem2D/scotch"
+  SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
+  SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
  else
-
- # no mpi support, scotch not needed
- USE_BUNDLED_SCOTCH=0
-
+  # no mpi support, scotch not needed
+  want_scotch=no
+  USE_BUNDLED_SCOTCH=0
  fi # want_mpi
 
 fi
 LDFLAGS=${ac_save_ldflags}
+
+ if test "$want_scotch" = yes; then
+  COND_SCOTCH_TRUE=
+  COND_SCOTCH_FALSE='#'
+else
+  COND_SCOTCH_TRUE='#'
+  COND_SCOTCH_FALSE=
+fi
+
+if test "$want_scotch" = yes; then :
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: SCOTCH is enabled" >&5
+$as_echo "SCOTCH is enabled" >&6; }
+
+else
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: SCOTCH is not enabled" >&5
+$as_echo "SCOTCH is not enabled" >&6; }
+
+fi
 
 
 ############################################################
@@ -7623,16 +7643,16 @@ LIBOBJS=$ac_libobjs
 LTLIBOBJS=$ac_ltlibobjs
 
 
-if test -z "${COND_MPI_TRUE}" && test -z "${COND_MPI_FALSE}"; then
-  as_fn_error $? "conditional \"COND_MPI\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${COND_DEBUG_TRUE}" && test -z "${COND_DEBUG_FALSE}"; then
   as_fn_error $? "conditional \"COND_DEBUG\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_VECTORIZATION_TRUE}" && test -z "${COND_VECTORIZATION_FALSE}"; then
   as_fn_error $? "conditional \"COND_VECTORIZATION\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_MPI_TRUE}" && test -z "${COND_MPI_FALSE}"; then
+  as_fn_error $? "conditional \"COND_MPI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CUDA_TRUE}" && test -z "${COND_CUDA_FALSE}"; then
@@ -7653,6 +7673,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CUDA_PLUS_TRUE}" && test -z "${COND_CUDA_PLUS_FALSE}"; then
   as_fn_error $? "conditional \"COND_CUDA_PLUS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_SCOTCH_TRUE}" && test -z "${COND_SCOTCH_FALSE}"; then
+  as_fn_error $? "conditional \"COND_SCOTCH\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 case $FC_MODINC in #(

@@ -24,17 +24,6 @@ AC_CANONICAL_HOST
 # 'configure' options
 
 ###
-### MPI
-###
-
-AC_ARG_WITH([mpi],
-    [AC_HELP_STRING([--with-mpi],
-        [build parallel version @<:@default=yes@:>@])],
-    [want_mpi="$withval"],
-    [want_mpi=no])
-AM_CONDITIONAL([COND_MPI], [test "$want_mpi" = yes])
-
-###
 ### precision
 ###
 
@@ -87,6 +76,17 @@ else
     fi
 fi
 AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
+
+###
+### MPI
+###
+
+AC_ARG_WITH([mpi],
+    [AC_HELP_STRING([--with-mpi],
+        [build parallel version @<:@default=no@:>@])],
+    [want_mpi="$withval"],
+    [want_mpi=no])
+AM_CONDITIONAL([COND_MPI], [test "$want_mpi" = yes])
 
 ###
 ### CUDA
@@ -226,6 +226,7 @@ fi
 AC_MSG_CHECKING([whether Scotch is usable])
 if test "x${scotch_usable}" = "xyes"; then
  AC_DEFINE([HAVE_SCOTCH],[1],[defined if Scotch is installed])
+ want_scotch=yes
  USE_BUNDLED_SCOTCH=0
  SCOTCH_DIR="${ac_scotch_dir}"
  SCOTCH_LIBDIR="${ac_scotch_lib_dir}"
@@ -244,27 +245,31 @@ else
  fi
  ACX_PTHREAD(AC_MSG_RESULT([pthread found]), AC_MSG_ERROR([pthread not found]))
 
-
  # scotch only needed with mpi support
  if test "$want_mpi" = yes; then
+  want_scotch=yes
+  #daniel: scotch bundle
+  # uses bundled scotch: current version pointed to by symbolic link scotch/
+  USE_BUNDLED_SCOTCH=1
 
- #daniel: scotch bundle
- # uses bundled scotch: current version pointed to by symbolic link scotch/
- USE_BUNDLED_SCOTCH=1
-
- SCOTCH_DIR="$srcdir/src/meshfem2D/scotch"
- SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
- SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
-
+  SCOTCH_DIR="$srcdir/src/meshfem2D/scotch"
+  SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
+  SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
  else
-
- # no mpi support, scotch not needed
- USE_BUNDLED_SCOTCH=0
-
+  # no mpi support, scotch not needed
+  want_scotch=no
+  USE_BUNDLED_SCOTCH=0
  fi # want_mpi
 
 fi
 LDFLAGS=${ac_save_ldflags}
+
+AM_CONDITIONAL([COND_SCOTCH], [test "$want_scotch" = yes])
+AS_IF([test "$want_scotch" = yes],[
+  AC_MSG_RESULT([SCOTCH is enabled])
+],[
+  AC_MSG_RESULT([SCOTCH is not enabled])
+])
 
 
 ############################################################
