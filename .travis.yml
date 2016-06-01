@@ -153,6 +153,8 @@ script:
       sed -i "s:^NPROC .*:NPROC    = 4:" DATA/Par_file
       ./run_this_example.sh
       my_test
+      # tests mesh quality output
+      awk '{if(NR==1){dy=sqrt(($2-13.3242693)^2);if(dy>1.e-5){print $0,"failed",dy;exit 1;}else{print $0,"good",dy;exit 0;}}}' OUTPUT_FILES/mesh_quality_histogram.txt
       cd ../../
     fi
 
