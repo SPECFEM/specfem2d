@@ -46,7 +46,7 @@
   ! main solver for the elastic elements
 
   ! checks if anything to do in this slice
-  if (.not. any_elastic) return
+  if ((.not. any_elastic) .and. (.not. SOURCE_IS_MOVING)) return
 
   ! enforces vanishing wavefields on axis
   if (AXISYM) then
@@ -89,7 +89,11 @@
     case (0)
       ! earthquake/force source
       if (SIMULATION_TYPE == 1) then
-        call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
+        if (SOURCE_IS_MOVING) then
+          call compute_add_sources_viscoelastic_moving_source(accel_elastic,it,i_stage)
+        else
+          call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
+        endif
       endif
 
     case (1)
