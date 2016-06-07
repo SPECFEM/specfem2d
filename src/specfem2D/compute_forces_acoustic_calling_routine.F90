@@ -43,7 +43,7 @@
   double precision :: weight_rk
 
   ! checks if anything to do in this slice
-  if (.not. any_acoustic) return
+  if ((.not. any_acoustic) .and. (.not. SOURCE_IS_MOVING)) return
 
   ! free surface for an acoustic medium
   call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic)
