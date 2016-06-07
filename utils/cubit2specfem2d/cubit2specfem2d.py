@@ -550,7 +550,6 @@ class mesh(object,mesh_tools):
         print 'Ok'
         cubit.cmd('set info on') # Turn on return messages from Cubit commands
         cubit.cmd('set echo on') # Turn on echo of Cubit commands
-
     def forcing_write(self,forcname):
         """ Write forcing surfaces on file : forcname """ 
         cubit.cmd('set info off') # Turn off return messages from Cubit commands
@@ -566,7 +565,7 @@ class mesh(object,mesh_tools):
             for iforc in range(0, self.nforc): # iforc = 0,1,2,3 : for each forcing boundaries
                 if block == self.forcing_boun[iforc]: # If the block considered correspond to the boundary
                     edges_forc[iforc]=Set(cubit.get_block_edges(block)) # Store each edge on edges_forc
-                    nedges_all=nedges_all+len(edges_forc[iforc]); # add the number of edges to nedges_all
+                    nedges_all=nedges_all+len(edges_forc[iforc]) # add the number of edges to nedges_all
         toWritetoFile=[""]*(nedges_all+1)
         toWritetoFile[0] = '%10i\n' % nedges_all # Write the total number of forcing edges to the first line of file
         #forceedge.write('%10i\n' % nedges_all) # Write the total number of forcing edges to the first line of file
@@ -589,7 +588,7 @@ class mesh(object,mesh_tools):
                                 nodes_ok=[]
                                 for i in nodes:  # ??? TODO nodes_ok == node_edge ???
                                     if i in node_edge:
-                                        nodes_ok.append(i)       
+                                        nodes_ok.append(i)
                                 # forcname contains 1/ element number, 2/ number of nodes that form the acoustic forcing edge
                                 # (which currently must always be equal to two, see comment below),
                                 # 3/ first node on the acforcing surface, 4/ second node on the acforcing surface
@@ -597,6 +596,7 @@ class mesh(object,mesh_tools):
                                 #txt='%10i %10i %10i %10i %10i\n' % (id_element,2,nodes_ok[0],nodes_ok[1],iforc+1)
                                 txt='%10i %10i %10i %10i %10i\n' % (quad,2,nodes_ok[0],nodes_ok[1],iforc+1)
                                 # Write the id of the quad, 2 (number of nodes describing a free surface elements), the nodes and the type of boundary
+                                #print indexFile
                                 toWritetoFile[indexFile] = txt
                                 indexFile = indexFile + 1
                                 #forceedge.write(txt)
@@ -605,12 +605,11 @@ class mesh(object,mesh_tools):
         print 'Ok'
         cubit.cmd('set info on') # Turn on return messages from Cubit commands
         cubit.cmd('set echo on') # Turn on echo of Cubit commands
-
-    def abs_write(self,absname): #absname=None):
-        """ Write absorbing surfaces on file : absname """ 
+    def abs_write(self,absname):
+        """ Write absorbing surfaces on file : absname """
         cubit.cmd('set info off') # Turn off return messages from Cubit commands
         cubit.cmd('set echo off') # Turn off echo of Cubit commands
-        cubit.cmd('set journal off') # Do not save journal file
+        cubit.cmd('set journal off') # Do not save journal file.
         from sets import Set
         # if not absname: absname=self.absname
         absedge=open(absname,'w')
@@ -713,6 +712,7 @@ class mesh(object,mesh_tools):
         print 'Ok'
     def write(self,path=''):
         """ Write mesh in specfem2d format """
+        print 'Writing '+self.recname+'.....'
         import os
         cubit.cmd('set info off') # Turn off return messages from Cubit commands
         cubit.cmd('set echo off') # Turn off echo of Cubit commands
