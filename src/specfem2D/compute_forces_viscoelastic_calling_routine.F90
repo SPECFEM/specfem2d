@@ -153,22 +153,31 @@
 
   ! multiply by the inverse of the mass matrix and update velocity
   !! DK DK this should be vectorized
-  do iglob = 1,nglob_elastic
-    if (.not. forced(iglob)) then
-      accel_elastic(:,iglob) = accel_elastic(:,iglob) * rmass_inverse_elastic(:,iglob)
-    endif
-  enddo
+  if (USE_ENFORCE_FIELDS) then
+    do iglob = 1,nglob_elastic
+      if (.not. iglob_is_forced(iglob)) then
+        accel_elastic(:,iglob) = accel_elastic(:,iglob) * rmass_inverse_elastic(:,iglob)
+      endif
+    enddo
+  else
+    accel_elastic(:,:) = accel_elastic(:,:) * rmass_inverse_elastic(:,:)
+  endif
+
   ! time stepping
   select case (time_stepping_scheme)
   case (1)
     ! Newmark
     !! DK DK this should be vectorized
-    do iglob = 1,nglob_elastic
-      ! big loop over all the global points (not elements) in the mesh to update velocity vector (corrector).
-      if (.not. forced(iglob)) then
-        veloc_elastic(:,iglob) = veloc_elastic(:,iglob) + deltatover2 * accel_elastic(:,iglob)
-      endif
-    enddo
+    if (USE_ENFORCE_FIELDS) then
+      do iglob = 1,nglob_elastic
+        ! big loop over all the global points (not elements) in the mesh to update velocity vector (corrector).
+        if (.not. iglob_is_forced(iglob)) then
+          veloc_elastic(:,iglob) = veloc_elastic(:,iglob) + deltatover2 * accel_elastic(:,iglob)
+        endif
+      enddo
+    else
+      veloc_elastic(:,:) = veloc_elastic(:,:) + deltatover2 * accel_elastic(:,:)
+    endif
 
   case (2)
     ! LDDRK

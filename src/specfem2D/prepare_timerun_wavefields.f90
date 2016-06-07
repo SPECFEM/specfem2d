@@ -371,9 +371,9 @@
   allocate(potential_dot_dot_gravito(nglob_gravitoacoustic))
   allocate(rmass_inverse_gravito(nglob_gravitoacoustic))
 
-  ! forced is used when FORCING is .true. it says if a GLL point is forced or not
-  allocate(forced(nglob))
-  forced(:) = .false.
+  ! iglob_is_forced array is used when USE_ENFORCE_FIELDS is .true. (it says if a GLL point is forced or not)
+  allocate(iglob_is_forced(nglob))
+  iglob_is_forced(:) = .false.
 
   ! synchronizes all processes
   call synchronize_all()

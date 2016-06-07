@@ -237,7 +237,7 @@ module specfem_par
   integer, dimension(:), allocatable :: ib_left_acforcing,ib_right_acforcing,ib_bottom_acforcing,ib_top_acforcing
 
   ! Variables for forcing
-  logical, dimension(:), allocatable :: forced
+  logical, dimension(:), allocatable :: iglob_is_forced
 
   ! for plane wave incidence
   ! to compute analytical initial plane wave field

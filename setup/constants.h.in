@@ -242,6 +242,27 @@
 ! for CUDA mode
   logical, parameter :: USE_MESH_COLORING_GPU = .false.
 
+
+!!-----------------------------------------------------------
+!!
+!! moving source location
+!!
+!!-----------------------------------------------------------
+
+! For moving sources
+  logical, parameter :: SOURCE_IS_MOVING = .false.
+
+!!-----------------------------------------------------------
+!!
+!! enforces wavefield
+!!
+!!-----------------------------------------------------------
+
+! This option is used when we want to enforce fields
+  logical, parameter :: USE_ENFORCE_FIELDS = .false.
+
+
+
 !------------------------------------------------------
 !----------- do not modify anything below -------------
 !------------------------------------------------------
@@ -299,11 +320,6 @@
 ! maximum length of strings used for paths, reading from files, etc.
   integer, parameter :: MAX_STRING_LEN = 512
 
-! For moving sources
-  logical, parameter :: SOURCE_IS_MOVING = .false.
-
-! This option is used when we want to enforce fields
-  logical, parameter :: FORCING = .false.
 
 !!-----------------------------------------------------------
 !!

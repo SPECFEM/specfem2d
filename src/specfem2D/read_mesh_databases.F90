@@ -1021,10 +1021,10 @@
       if (STACEY_ABSORBING_CONDITIONS) then
         write(IMAIN,*)
         write(IMAIN,*) 'Number of absorbing elements: ',nelemabs_tot
-        write(IMAIN,*) '  nspec_left = ',nspec_left_tot
-        write(IMAIN,*) '  nspec_right = ',nspec_right_tot
+        write(IMAIN,*) '  nspec_left   = ',nspec_left_tot
+        write(IMAIN,*) '  nspec_right  = ',nspec_right_tot
         write(IMAIN,*) '  nspec_bottom = ',nspec_bottom_tot
-        write(IMAIN,*) '  nspec_top = ',nspec_top_tot
+        write(IMAIN,*) '  nspec_top    = ',nspec_top_tot
         write(IMAIN,*)
       endif
     endif

@@ -180,10 +180,23 @@ def plot_correlations(out_dir,ref_dir):
 
         #debug
         #print "  seismogram: ", fname, "vs", fname_old,"  lengths: ",len(ref0),len(syn0)
-        
+
         # cuts common length
         length = min(len(ref0),len(syn0))
         if length <= 1: continue
+
+        # length warning
+        if len(ref0) != len(syn0):
+          print("** warning: mismatch of file length in both files syn/ref = %d / %d" %(len(syn0),len(ref0)))
+          #print("** warning: using smaller length %d" % length)
+
+        # time step size in reference file
+        ref_time = np.loadtxt(ref_file)[:, 0]
+        dt_ref = ref_time[1] - ref_time[0]
+        # mismatch warning
+        if abs(dt - dt_ref) > 1.e-9:
+          print("** warning: mismatch of time step size in both files syn/ref = %e / %e" %(dt,dt_ref))
+          #print("** warning: using time step size %e from file %s" %(dt,syn_file))
 
         #debug
         #print "common length: ",length
@@ -194,11 +207,15 @@ def plot_correlations(out_dir,ref_dir):
         # least square test
         norm = np.linalg.norm
         sqrt = np.sqrt
-        fac_norm = sqrt(norm(ref)*norm(syn))
+        # normalized by power in reference solution
+        fac_norm = norm(ref)
+        # or normalized by power in (ref*syn)
+        #fac_norm = sqrt(norm(ref)*norm(syn))
         if fac_norm > 0.0:
             err = norm(ref-syn)/fac_norm
         else:
             err = norm(ref-syn)
+        #print('norm syn = %e norm ref = %e' % (norm(syn),fac_norm))
 
         # correlation test
         # total length

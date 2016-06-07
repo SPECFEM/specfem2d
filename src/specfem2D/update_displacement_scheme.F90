@@ -483,7 +483,12 @@
 
   use constants,only: CUSTOM_REAL,NDIM,TWO
 
-  use specfem_par, only : nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID,forced,it
+  use specfem_par,only : nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID
+
+#ifndef FORCE_VECTORIZATION
+  use constants,only: USE_ENFORCE_FIELDS
+  use specfem_par,only: iglob_is_forced,it
+#endif
 
   implicit none
 
@@ -494,10 +499,10 @@
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
 
   ! local parameters
-  integer :: iglob
-
 #ifdef FORCE_VECTORIZATION
   integer :: i
+#else
+  integer :: iglob
 #endif
 
   ! attenuation/PML simulations
@@ -518,24 +523,32 @@
 #ifdef FORCE_VECTORIZATION
   !! DK DK this allows for full vectorization by using a trick to see the 2D array as a 1D array
   !! DK DK whose dimension is the product of the two dimensions, the second dimension being equal to 1
+  ! vectorized updates
   do i = 1,NDIM*nglob_elastic
     displ_elastic(i,1) = displ_elastic(i,1) + deltat * veloc_elastic(i,1) + deltatsquareover2 * accel_elastic(i,1)
     veloc_elastic(i,1) = veloc_elastic(i,1) + deltatover2 * accel_elastic(i,1)
     accel_elastic(i,1) = 0._CUSTOM_REAL
   enddo
 #else
-
-  do iglob = 1,nglob_elastic
-    if (forced(iglob)) then
-      call enforce_fields(iglob,it)
-    else
-      ! big loop over all the global points (not elements) in the mesh to update
-      ! the displacement and velocity vectors and clear the acceleration vector
-      displ_elastic(:,iglob) = displ_elastic(:,iglob) + deltat * veloc_elastic(:,iglob) + deltatsquareover2 * accel_elastic(:,iglob)
-      veloc_elastic(:,iglob) = veloc_elastic(:,iglob) + deltatover2 * accel_elastic(:,iglob) ! Predictor
-      accel_elastic(:,iglob) = 0._CUSTOM_REAL
-    endif
-  enddo
+  ! non-vectorized updates
+  if (USE_ENFORCE_FIELDS) then
+    do iglob = 1,nglob_elastic
+      if (iglob_is_forced(iglob)) then
+        call enforce_fields(iglob,it)
+      else
+        ! big loop over all the global points (not elements) in the mesh to update
+        ! the displacement and velocity vectors and clear the acceleration vector
+        displ_elastic(:,iglob) = displ_elastic(:,iglob) &
+                                 + deltat * veloc_elastic(:,iglob) + deltatsquareover2 * accel_elastic(:,iglob)
+        veloc_elastic(:,iglob) = veloc_elastic(:,iglob) + deltatover2 * accel_elastic(:,iglob) ! Predictor
+        accel_elastic(:,iglob) = 0._CUSTOM_REAL
+      endif
+    enddo
+  else
+    displ_elastic(:,:) = displ_elastic(:,:) + deltat * veloc_elastic(:,:) + deltatsquareover2 * accel_elastic(:,:)
+    veloc_elastic(:,:) = veloc_elastic(:,:) + deltatover2 * accel_elastic(:,:)
+    accel_elastic(:,:) = 0._CUSTOM_REAL
+  endif
 
 #endif
 

@@ -56,9 +56,7 @@
   call prepare_timerun_mass_matrix()
 
   ! check which GLL will be forced or not
-  if (FORCING) then
-    call build_forced()
-  endif
+  if (USE_ENFORCE_FIELDS) call build_forced()
 
   ! postscript images for grids and snapshots
   call prepare_timerun_postscripts()

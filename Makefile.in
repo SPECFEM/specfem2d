@@ -86,6 +86,9 @@ MPI_INCLUDES = @MPI_INCLUDES@
 ####
 #######################################
 
+@COND_SCOTCH_TRUE@SCOTCH=yes
+@COND_SCOTCH_FALSE@SCOTCH=no
+
 USE_BUNDLED_SCOTCH = @USE_BUNDLED_SCOTCH@
 
 SCOTCH_DIR = @SCOTCH_DIR@
@@ -95,11 +98,7 @@ SCOTCH_LIBDIR = @SCOTCH_LIBDIR@
 SCOTCH_INC = -I${SCOTCH_INCDIR}
 SCOTCH_LIBS = -L${SCOTCH_LIBDIR} -lscotch -lscotcherr
 
-@COND_MPI_TRUE@F90 += @FC_DEFINE@USE_SCOTCH $(SCOTCH_INC)
-
-## scotch libraries
-@COND_MPI_TRUE@MPILIBS += ${SCOTCH_LIBS}
-@COND_MPI_FALSE@MPILIBS +=
+SCOTCH_FLAGS = @FC_DEFINE@USE_SCOTCH $(SCOTCH_INC)
 
 #######################################
 ####
@@ -242,7 +241,7 @@ clean:
 endif
 
 realclean: clean
-ifeq (${SCOTCH_BUNDLED},1)
+ifeq (${USE_BUNDLED_SCOTCH},1)
 	@echo "cleaning bundled Scotch in directory: ${SCOTCH_DIR}/src"
 	$(MAKE) -C ${SCOTCH_DIR}/src realclean
 endif

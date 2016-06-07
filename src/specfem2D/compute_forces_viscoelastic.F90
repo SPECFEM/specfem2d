@@ -60,7 +60,7 @@
                          rmemory_dux_dx_prime,rmemory_dux_dz_prime,rmemory_duz_dx_prime,rmemory_duz_dz_prime, &
                          rmemory_displ_elastic_LDDRK, &
                          rmemory_dux_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dx_LDDRK,&
-                         ispec_is_acoustic,time_stepping_scheme,forced,it
+                         ispec_is_acoustic,time_stepping_scheme,iglob_is_forced,it
 
   ! PML arrays
   use specfem_par, only: nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
@@ -1146,7 +1146,8 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
-          if (.not. forced(iglob)) then
+
+          if (.not. iglob_is_forced(iglob)) then
             ! along x direction and z direction
             ! and assemble the contributions
             ! we can merge the two loops because NGLLX == NGLLZ
@@ -1183,6 +1184,7 @@
               accel_elastic(2,iglob) = accel_elastic(2,iglob) - accel_elastic_PML(2,i,j)
             endif
           endif ! not forced
+
         enddo
       enddo ! second loop over the GLL points
 

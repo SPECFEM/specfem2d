@@ -17,8 +17,22 @@ TO RUN:
 3. cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer
 
 4. execute script to run mesher and solver for the PSV case:
-   ./process.sh
+   ./run_this_example.sh
 
 5. check out the output files in the local directory OUTPUT_FILES
 
 ----------------------------------------------------------------------
+
+
+note: for convenience, a second parameter file DATA/Par_file_with_PML is provided
+      which changes the setup to use PMLs. 
+
+      it is the same setup as given in the package root DATA/ directory.
+      in order to run this modified setup, just:
+
+      > cp DATA/Par_file_with_PML DATA/Par_file
+
+      and rerun the above steps (mainly 4. and 5.)
+
+
+
