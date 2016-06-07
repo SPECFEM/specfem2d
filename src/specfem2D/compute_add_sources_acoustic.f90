@@ -128,8 +128,8 @@
   ! checks if anything to do
   if (.not. SOURCE_IS_MOVING) return
 
-  xminSource = 5000.0d0 !m
-  vSource = 1000.0 !m/s
+  xminSource = -15000.0d0 !m
+  vSource = 1250.0d0 !1425.0d0 !1250.0 !m/s
 
   if (time_stepping_scheme == 1) then
     ! Newmark
@@ -170,19 +170,19 @@
       hxis_store(i_source,:) = hxis(:)
       hgammas_store(i_source,:) = hgammas(:)
 
-      if (mod(it,10) == 0) then
-          !  write(IMAIN,*) "myrank:",myrank
-          ! user output
-          if (is_proc_source(i_source) == 1) then
-            iglob = ibool(2,2,ispec_selected_source(i_source))
-            !write(IMAIN,*) 'xcoord: ',coord(1,iglob)
-            write(IMAIN,*) 'it: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob
-            !'source carried by proc',myrank,"  source x:",x_source(i_source)," ispec:",ispec_selected_source(i_source)
+!      if (mod(it,10) == 0) then
+!          !  write(IMAIN,*) "myrank:",myrank
+!          ! user output
+!          if (is_proc_source(i_source) == 1) then
+!            iglob = ibool(2,2,ispec_selected_source(i_source))
+!            !write(IMAIN,*) 'xcoord: ',coord(1,iglob)
+!            write(IMAIN,*) 'it?: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob
+!            !'source carried by proc',myrank,"  source x:",x_source(i_source)," ispec:",ispec_selected_source(i_source)
 
-            !call flush_IMAIN()
-          endif
+!            !call flush_IMAIN()
+!          endif
 
-      endif
+!      endif
     endif
   enddo
 

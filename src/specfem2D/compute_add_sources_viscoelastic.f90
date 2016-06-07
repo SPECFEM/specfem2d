@@ -108,6 +108,222 @@
 !=====================================================================
 !
 
+  subroutine compute_add_sources_viscoelastic_moving_source(accel_elastic,it,i_stage)
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,SOURCE_IS_MOVING,TINYVAL,NGLJ
+
+  use specfem_par, only: P_SV,ispec_is_elastic,nglob_elastic, &
+                         NSOURCES,source_time_function, &
+                         is_proc_source,ispec_selected_source,sourcearrays, &
+                         ibool,coord,nspec,nglob,xigll,zigll,z_source,nb_proc_source,NPROC, & !These 3 lines are for moving src
+                         xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source,deltat,t0,myrank, &
+                         time_stepping_scheme,IMAIN,hxis_store,hgammas_store,tshift_src,source_type,ispec_is_acoustic, &
+                         hxis,hpxis,hgammas,hpgammas,anglesource,ispec_is_poroelastic,Mxx,Mxz,Mzz,gammax,gammaz,xix,xiz, &
+                         AXISYM,xiglj,is_on_the_axis,initialfield
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic) :: accel_elastic
+  integer :: it, i_stage
+
+  !local variable
+  integer :: i_source,i,j,iglob,ispec
+  real(kind=CUSTOM_REAL) :: stf_used
+  double precision :: hlagrange
+  double precision :: xminSource,vSource,timeval,t_used
+  ! single source array
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
+
+  ! checks if anything to do
+  if (.not. SOURCE_IS_MOVING) return
+
+  xminSource = -5000.0d0 !m
+  vSource = 2150.0d0 !1425.0d0 !1250.0 !m/s
+
+  if (time_stepping_scheme == 1) then
+    ! Newmark
+    timeval = (it-1)*deltat
+  else
+    call exit_MPI(myrank,'Not implemented!')
+  endif
+
+  ! moves and re-locates sources along x-axis
+
+  do i_source = 1,NSOURCES
+    if (abs(source_time_function(i_source,it,i_stage)) > TINYVAL) then
+      t_used = (timeval-t0-tshift_src(i_source))
+
+      x_source(i_source) = xminSource + vSource*t_used !timeval?
+
+      ! collocated force source
+      if (source_type(i_source) == 1) then
+        call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
+                               ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
+                               NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                               iglob_source(i_source))
+
+      else if (source_type(i_source) == 2) then
+        ! moment-tensor source
+        call locate_source_moment_tensor(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
+                                       ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
+                                       NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo)
+
+      else if (.not.initialfield) then
+
+        call exit_MPI(myrank,'incorrect source type')
+
+      endif
+
+      ispec = ispec_selected_source(i_source)
+
+      ! Lagrange interpolators
+      if (AXISYM) then
+        if (is_on_the_axis(ispec)) then
+          call lagrange_any(xi_source(i_source),NGLJ,xiglj,hxis,hpxis)
+          !do j = 1,NGLJ ! AB AB same result with that loop
+          !  hxis(j) = hglj(j-1,xi_source(i_source),xiglj,NGLJ)
+          !enddo
+        else
+          call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
+        endif
+      else
+        call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
+      endif
+      call lagrange_any(gamma_source(i_source),NGLLZ,zigll,hgammas,hpgammas)
+
+      if (mod(it,10) == 0) then
+          !  write(IMAIN,*) "myrank:",myrank
+          ! user output
+          if (is_proc_source(i_source) == 1) then
+            iglob = ibool(2,2,ispec_selected_source(i_source))
+            !write(IMAIN,*) 'xcoord: ',coord(1,iglob)
+            write(IMAIN,*) 'it??: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob
+            !'source carried by proc',myrank,"  source x:",x_source(i_source)," ispec:",ispec_selected_source(i_source)
+
+            !call flush_IMAIN()
+          endif
+
+      endif
+
+      ! stores Lagrangians for source
+      hxis_store(i_source,:) = hxis(:)
+      hgammas_store(i_source,:) = hgammas(:)
+
+      sourcearray(:,:,:) = 0._CUSTOM_REAL
+
+      ! computes source arrays
+      select case (source_type(i_source))
+      case (1)
+        ! collocated force source
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+
+            ! source element is acoustic
+            if (ispec_is_acoustic(ispec)) then
+              sourcearray(:,i,j) = hlagrange
+            endif
+
+            ! source element is elastic
+            if (ispec_is_elastic(ispec)) then
+              if (P_SV) then
+                ! P_SV case
+                sourcearray(1,i,j) = - sin(anglesource(i_source)) * hlagrange
+                sourcearray(2,i,j) =   cos(anglesource(i_source)) * hlagrange
+              else
+                ! SH case (membrane)
+                sourcearray(:,i,j) = hlagrange
+              endif
+            endif
+
+            ! source element is poroelastic
+            if (ispec_is_poroelastic(ispec)) then
+              sourcearray(1,i,j) = - sin(anglesource(i_source)) * hlagrange
+              sourcearray(2,i,j) =   cos(anglesource(i_source)) * hlagrange
+            endif
+
+          enddo
+        enddo
+
+      case (2)
+        ! moment-tensor source
+        call compute_arrays_source(ispec,xi_source(i_source),gamma_source(i_source),sourcearray, &
+                                   Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
+        ! checks source
+        if (ispec_is_acoustic(ispec)) then
+          call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
+        endif
+
+        ! checks wave type
+        if (ispec_is_elastic(ispec)) then
+          if (.not. P_SV ) call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
+        endif
+
+      end select
+
+      ! stores sourcearray for all sources
+      sourcearrays(i_source,:,:,:) = sourcearray(:,:,:)
+
+    endif
+  enddo
+
+  ! --- add the source
+  do i_source = 1,NSOURCES
+
+    ! if this processor core carries the source
+    if (is_proc_source(i_source) == 1) then
+
+      ! element containing source
+      ispec = ispec_selected_source(i_source)
+
+      ! source element is elastic
+      if (ispec_is_elastic(ispec)) then
+
+        ! source time function
+        stf_used = source_time_function(i_source,it,i_stage)
+
+        ! adds source term
+        ! note: we use sourcearrays for both collocated forces and moment tensors
+        !       (see setup in setup_source_interpolation() routine)
+        if (P_SV) then
+          ! P-SV calculation
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              iglob = ibool(i,j,ispec)
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
+                                       sourcearrays(i_source,1,i,j) * stf_used
+              accel_elastic(2,iglob) = accel_elastic(2,iglob) + &
+                                       sourcearrays(i_source,2,i,j) * stf_used
+            enddo
+          enddo
+        else
+          ! SH (membrane) calculation
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              iglob = ibool(i,j,ispec)
+
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
+                                       sourcearrays(i_source,1,i,j) * stf_used
+
+              ! daniel debug source contribution
+              !if (iglob == 37905) &
+              !write(1234,*) it, dble(sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)), &
+              !              accel_elastic(1,iglob),source_time_function(i_source,it,i_stage),sourcearrays(i_source,1,i,j)
+
+
+            enddo
+          enddo
+        endif
+
+      endif ! source element is elastic
+    endif ! if this processor core carries the source
+  enddo ! do i_source= 1,NSOURCES
+
+  end subroutine compute_add_sources_viscoelastic_moving_source
+
+!
+!=====================================================================
+!
+
 ! for viscoelastic solver for adjoint propagation wave field
 
   subroutine compute_add_sources_viscoelastic_adjoint()
