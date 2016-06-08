@@ -210,9 +210,9 @@ module specfem_par
   integer, dimension(:), allocatable :: ispec_selected_source,iglob_source
   integer, dimension(:), allocatable :: is_proc_source,nb_proc_source
 
-  double precision, dimension(:), allocatable :: aval
+  ! source time function
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: source_time_function
-  double precision, external :: netlib_specfun_erf
+
   ! use this t0 as earliest starting time rather than the automatically calculated one
   ! (must be positive and bigger than the automatically one to be effective;
   !  simulation will start at t = - t0)
@@ -854,6 +854,7 @@ module specfem_par_gpu
   integer, dimension(:), allocatable :: ispec_selected_source_loc
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray_loc
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable ::  source_time_function_loc
+
   real(kind=CUSTOM_REAL),  dimension(:,:,:), allocatable :: source_adjointe
 
   ! receivers

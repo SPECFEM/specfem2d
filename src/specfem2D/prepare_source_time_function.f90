@@ -41,22 +41,49 @@
 
   use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0_source,tshift_src,factor, &
-                         aval,t0,nb_proc_source,deltat, &
+                         t0,nb_proc_source,deltat, &
                          time_stepping_scheme,stage_time_scheme,is_proc_source, &
-                         USE_TRICK_FOR_BETTER_PRESSURE,myrank
+                         USE_TRICK_FOR_BETTER_PRESSURE,myrank,initialfield
 
   implicit none
 
   ! local parameters
-  double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa,time,coeff, t_used, Nc
-  double precision, dimension(NSOURCES) :: hdur,hdur_gauss
-  double precision, external :: netlib_specfun_erf
+  double precision :: stf_used, timeval, aval, DecT, Tc, omegat, omega_coa,time,coeff, t_used, Nc
+  double precision :: hdur,hdur_gauss
+
   integer :: it,i_source,ier,num_file
   integer :: i_stage
+
+  ! RK
   double precision, dimension(4) :: c_RK
+
   character(len=27) :: error_msg1 = 'Error opening file source: '
   character(len=177) :: error_msg
-  logical :: trick_ok = .false.
+  logical :: trick_ok
+
+  ! external functions
+  double precision, external :: comp_source_time_function_heavi
+  double precision, external :: comp_source_time_function_gaussB,comp_source_time_function_dgaussB, &
+    comp_source_time_function_d2gaussB,comp_source_time_function_d3gaussB
+  double precision, external :: comp_source_time_function_rickr,comp_source_time_function_d2rck
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Preparing source time function'
+    call flush_IMAIN()
+  endif
+
+  ! checks if anything to do
+  if (initialfield) then
+    ! uses an initialfield
+    ! dummy allocation
+    allocate(source_time_function(1,1,1))
+    ! we're all done
+    return
+  else
+    allocate(source_time_function(NSOURCES,NSTEP,stage_time_scheme),stat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error allocating array source_time_function')
+  endif
 
   ! checks time scheme
   ! Newmark: time_stepping_scheme == 1
@@ -71,6 +98,9 @@
     c_RK(3) = 0.5d0 * deltat
     c_RK(4) = 1.0d0 * deltat
   endif
+
+  ! initializes stf array
+  source_time_function(:,:,:) = 0.d0
 
   ! user output
   if (is_proc_source(1) == 1) then
@@ -114,10 +144,14 @@
     ! note: t0 is the simulation start time, tshift_src is the time shift of the source
     !          relative to this start time
 
-    trick_ok = (time_function_type(i_source) < 4) .or. (time_function_type(i_source) == 7) .or. &
-               (time_function_type(i_source) == 9) .or. (time_function_type(i_source) == 10)
-    if ((.not. trick_ok) .and. USE_TRICK_FOR_BETTER_PRESSURE) then
-      call exit_MPI(myrank,'USE_TRICK_FOR_BETTER_PRESSURE is not compatible yet with the type of source you want to use!')
+    ! checks if trick for better pressure can be applied
+    if (USE_TRICK_FOR_BETTER_PRESSURE) then
+      trick_ok = (time_function_type(i_source) < 4) .or. (time_function_type(i_source) == 7) .or. &
+                 (time_function_type(i_source) == 9) .or. (time_function_type(i_source) == 10)
+
+      if (.not. trick_ok) then
+        call exit_MPI(myrank,'USE_TRICK_FOR_BETTER_PRESSURE is not compatible yet with the type of source you want to use!')
+      endif
     endif
 
     do i_stage = 1,stage_time_scheme
@@ -125,12 +159,19 @@
       ! loop on all the time steps
       do it = 1,NSTEP
         ! compute current time
-        ! Newmark
-        if (time_stepping_scheme == 1) timeval = (it-1)*deltat
-        ! LDDRK: Low-Dissipation and low-dispersion Runge-Kutta
-        if (time_stepping_scheme == 2) timeval = (it-1)*deltat+C_LDDRK(i_stage)*deltat
-        ! RK: Runge-Kutta
-        if (time_stepping_scheme == 3) timeval = (it-1)*deltat+c_RK(i_stage)*deltat
+        select case(time_stepping_scheme)
+        case (1)
+          ! Newmark
+          timeval = dble(it-1)*deltat
+        case (2)
+          ! LDDRK: Low-Dissipation and low-dispersion Runge-Kutta
+          timeval = dble(it-1)*deltat + dble(C_LDDRK(i_stage))*deltat
+        case (3)
+          ! RK: Runge-Kutta
+          timeval = dble(it-1)*deltat + c_RK(i_stage)*deltat
+        case default
+          call exit_MPI(myrank,'Error invalid time stepping scheme chosen, please check...')
+        end select
 
         t_used = timeval - t0 - tshift_src(i_source)
 
@@ -150,22 +191,20 @@
               ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! Second derivative of Ricker source time function :
-              source_time_function(i_source,it,i_stage) = factor(i_source) * &
-                       2.0d0*aval(i_source) * (3.0d0 - 12.0d0*aval(i_source)*t_used**2 + 4.0d0*aval(i_source)**2*t_used**4) * &
-                       exp(-aval(i_source)*t_used**2)
+              source_time_function(i_source,it,i_stage) =  - factor(i_source) * &
+                       comp_source_time_function_d2rck(t_used,f0_source(i_source))
             else
               ! Ricker (second derivative of a Gaussian) source time function
               source_time_function(i_source,it,i_stage) = - factor(i_source) * &
-                         (ONE-TWO*aval(i_source)*t_used**2) * &
-                         exp(-aval(i_source)*t_used**2)
-
-              ! source_time_function(i_source,it) = - factor(i_source) *  &
-              !               TWO*aval(i_source)*sqrt(aval(i_source))*&
-              !               t_used/pi * exp(-aval(i_source)*t_used**2)
+                      comp_source_time_function_rickr(t_used,f0_source(i_source))
             endif
 
           case (2)
             ! Ricker type: first derivative
+
+            ! for the source time function
+            aval = PI*PI*f0_source(i_source)*f0_source(i_source)
+
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
               ! use the second derivative of the source for the source time function instead of the source itself,
@@ -176,17 +215,19 @@
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! Third derivative of Gaussian source time function :
               source_time_function(i_source,it,i_stage) = factor(i_source) * &
-                        4.0d0*aval(i_source)**2*t_used * (3.0d0 - 2.0d0*aval(i_source)*t_used**2) * &
-                        exp(-aval(i_source)*t_used**2)
+                        comp_source_time_function_d3gaussB(t_used,f0_source(i_source))
             else
               ! First derivative of a Gaussian source time function
-              source_time_function(i_source,it,i_stage) = - factor(i_source) * &
-                        TWO*aval(i_source)*t_used * &
-                        exp(-aval(i_source)*t_used**2)
+              source_time_function(i_source,it,i_stage) = factor(i_source) * &
+                        comp_source_time_function_dgaussB(t_used,f0_source(i_source))
             endif
 
           case (3,4)
             ! Gaussian/Dirac type
+
+            ! for the source time function
+            aval = PI*PI*f0_source(i_source)*f0_source(i_source)
+
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
               ! use the second derivative of the source for the source time function instead of the source itself,
@@ -197,21 +238,23 @@
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! Second derivative of Gaussian :
               source_time_function(i_source,it,i_stage) = factor(i_source) * &
-                         2.0d0 * aval(i_source) * (2.0d0 * aval(i_source) * t_used**2 - 1.0d0) * &
-                         exp(-aval(i_source)*t_used**2)
+                         comp_source_time_function_d2gaussB(t_used,f0_source(i_source))
             else
               ! Gaussian or Dirac (we use a very thin Gaussian instead) source time function
               source_time_function(i_source,it,i_stage) = factor(i_source) * &
-                        exp(-aval(i_source)*t_used**2)
+                          comp_source_time_function_gaussB(t_used,f0_source(i_source))
             endif
 
           case (5)
             ! Heaviside source time function (we use a very thin error function instead)
-            hdur(i_source) = 1.d0 / f0_source(i_source)
-            hdur_gauss(i_source) = hdur(i_source) * 5.d0 / 3.d0
+            hdur = 1.d0 / f0_source(i_source)
+            hdur_gauss = hdur * 5.d0 / 3.d0
 
-            source_time_function(i_source,it,i_stage) = factor(i_source) * 0.5d0*(1.0d0 + &
-                netlib_specfun_erf(SOURCE_DECAY_MIMIC_TRIANGLE*t_used/hdur_gauss(i_source)))
+            ! convert the half duration for triangle STF to the one for gaussian STF
+            hdur_gauss = hdur_gauss / SOURCE_DECAY_MIMIC_TRIANGLE
+
+            ! quasi-Heaviside
+            source_time_function(i_source,it,i_stage) = factor(i_source) * comp_source_time_function_heavi(t_used,hdur_gauss)
 
           case (6)
             ! ocean acoustics type I
@@ -308,7 +351,6 @@
 
           case (9)
             ! burst type
-
             DecT = t0 + tshift_src(i_source)
             t_used = (timeval-t0-tshift_src(i_source))
             Nc = TWO * f0_source(i_source) / burst_band_width(i_source)
@@ -415,6 +457,9 @@
   do i_source = 1,NSOURCES
     source_time_function(i_source,:,:) = source_time_function(i_source,:,:) / nb_proc_source(i_source)
   enddo
+
+  ! synchronizes all processes
+  call synchronize_all()
 
   end subroutine prepare_source_time_function
 

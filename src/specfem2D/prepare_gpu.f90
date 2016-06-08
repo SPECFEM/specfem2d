@@ -32,7 +32,7 @@
 !========================================================================
 
 
-  subroutine prepare_timerun_GPU()
+  subroutine prepare_GPU()
 
   use specfem_par
   use specfem_par_gpu
@@ -817,4 +817,4 @@
 
 !----------------------------------------------------------------------
 
-  end subroutine prepare_timerun_GPU
+  end subroutine prepare_GPU

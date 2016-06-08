@@ -626,7 +626,7 @@
     stop 'USE_TRICK_FOR_BETTER_PRESSURE : seismograms must record pressure'
 
   if (subsamp_seismos < 1) &
-    stop 'error: subsamp_seismos must be >= 1'
+    stop 'Error: subsamp_seismos must be >= 1'
 
   if (output_color_image .and. USE_CONSTANT_MAX_AMPLITUDE .and. CONSTANT_MAX_AMPLITUDE_TO_USE < 0.d0) &
     stop 'CONSTANT_MAX_AMPLITUDE_TO_USE must be strictly positive'
@@ -636,6 +636,9 @@
       stop 'Error read_external_mesh must be set to .true. for force_normal_to_surface or rec_normal_to_surface &
             &to use external tangential_dectection_curve_file'
   endif
+
+  if (DT == 0.d0) &
+    stop 'DT must be non-zero value'
 
   ! checks model
   select case (MODEL)

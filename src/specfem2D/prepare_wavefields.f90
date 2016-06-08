@@ -32,7 +32,7 @@
 !========================================================================
 
 
-  subroutine prepare_timerun_wavefields()
+  subroutine prepare_wavefields()
 
   use specfem_par
 
@@ -473,5 +473,5 @@
   ! synchronizes all processes
   call synchronize_all()
 
-  end subroutine prepare_timerun_wavefields
+  end subroutine prepare_wavefields
 

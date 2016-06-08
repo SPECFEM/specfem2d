@@ -370,7 +370,7 @@
                         adj_sourcearrays, &
                         myrank,which_proc_receiver,seismotype, &
                         xi_receiver,gamma_receiver, &
-                        network_name,station_name
+                        network_name,station_name,GPU_MODE
 
   use specfem_par_gpu,only: source_adjointe
 
@@ -384,10 +384,17 @@
   ! number of adjoint receivers in this slice
   nadj_rec_local = 0
 
-  ! adjoint calculation
-  if (SIMULATION_TYPE == 3) then
+  ! note: SIMULATION_TYPE == 2 for "pure" adjoint simulations is not fully supported yet,
+  !       the run would stop after initialization.
+  !       it is left here for compatibility with 3D versions however and in case we plan to support it in future...
 
-    allocate(source_adjointe(nrecloc,NSTEP,2))
+  ! adjoint calculation
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+
+    ! for GPU-version
+    if (GPU_MODE) then
+      allocate(source_adjointe(nrecloc,NSTEP,2))
+    endif
 
     ! counts number of adjoint sources in this slice
     do irec = 1,nrec
@@ -432,7 +439,7 @@
       deallocate(adj_sourcearray)
     else
       ! (SU_FORMAT)
-      call add_adjoint_sources_SU(seismotype)
+      call compute_arrays_adj_source_SU(seismotype)
     endif
   else
     ! dummy allocation
@@ -443,164 +450,6 @@
   call synchronize_all()
 
   end subroutine setup_adjoint_sources
-
-!
-!-----------------------------------------------------------------------------------------
-!
-
-
-  subroutine add_adjoint_sources_SU(seismotype)
-
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,NDIM
-
-  use specfem_par, only: AXISYM,xiglj,is_on_the_axis, &
-                         myrank, NSTEP, nrec, &
-                         xi_receiver, gamma_receiver, which_proc_receiver, &
-                         xigll,zigll,hxir,hgammar,hpxir,hpgammar, &
-                         adj_sourcearrays, &
-                         GPU_MODE, ispec_selected_rec, &
-                         P_SV
-
-  use specfem_par_gpu,only: source_adjointe
-
-  implicit none
-
-  integer,intent(in) :: seismotype
-
-  ! local parameters
-  integer :: i, j, irec, irec_local, ier
-  character(len=MAX_STRING_LEN) :: filename
-
-  ! SU
-  integer(kind=4) :: r4head(60)
-  integer(kind=2) :: header2(2)
-  real(kind=4),dimension(:,:),allocatable :: adj_src_s
-
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
-
-  ! opens adjoint source files
-  if (seismotype == 4 .or. seismotype == 6) then
-    ! pressure/potential type
-    write(filename, "('./SEM/Up_file_single.su.adj')")
-    open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
-    if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
-  else
-    ! displacement/velocity/acceleration type
-    if (P_SV) then
-      ! P_SV-case
-      write(filename, "('./SEM/Ux_file_single.su.adj')")
-      open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
-      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
-
-      write(filename, "('./SEM/Uz_file_single.su.adj')")
-      open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
-      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
-    else
-      ! SH-case
-      write(filename, "('./SEM/Uy_file_single.su.adj')")
-      open(112,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
-      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
-    endif
-
-  endif
-
-  ! allocates temporary array
-  allocate(adj_src_s(NSTEP,3))
-  adj_src_s(:,:) = 0.0
-
-  ! temporary array
-  allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLZ))
-
-  irec_local = 0
-  do irec = 1, nrec
-    if (myrank == which_proc_receiver(irec)) then
-      irec_local = irec_local + 1
-
-      adj_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
-
-      if (seismotype == 4 .or. seismotype == 6) then
-        ! pressure/potential
-        ! single component
-        read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
-        if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
-      else
-        ! displacement/velocity/acceleration
-        if (P_SV) then
-          ! P_SV-case
-          read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
-          if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
-
-          read(113,rec=irec,iostat=ier) r4head, adj_src_s(:,3)
-          if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
-        else
-          ! SH-case
-          read(112,rec=irec,iostat=ier) r4head, adj_src_s(:,2)
-          if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
-        endif
-      endif
-
-      header2 = int(r4head(29), kind=2)
-      if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
-
-      if (AXISYM) then
-        if (is_on_the_axis(ispec_selected_rec(irec))) then ! TODO verify ispec_selected_rec and not ispec_selected_source
-          call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
-        else
-          call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
-        endif
-      else
-        call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
-      endif
-
-      call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
-
-      if (P_SV) then
-        ! P_SV-case
-        source_adjointe(irec_local,:,1) = adj_src_s(:,1)
-        source_adjointe(irec_local,:,2) = adj_src_s(:,3)
-      else
-        ! SH-case
-        source_adjointe(irec_local,:,1) = adj_src_s(:,2)
-      endif
-
-      if (.not. GPU_MODE) then
-        do j = 1, NGLLZ
-          do i = 1, NGLLX
-            if (P_SV) then
-              ! P_SV-case
-              adj_sourcearray(:,1,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,1)
-              adj_sourcearray(:,2,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,3)
-            else
-              ! SH-case
-              adj_sourcearray(:,1,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,2)
-            endif
-          enddo
-        enddo
-        adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
-      endif
-
-    endif !  if (myrank == which_proc_receiver(irec))
-  enddo ! irec
-
-  ! closes files
-  if (seismotype == 4) then
-    close(111)
-  else
-    if (P_SV) then
-      ! P_SV-case
-      close(111)
-      close(113)
-    else
-      ! SH-case
-      close(112)
-    endif
-  endif
-
-  ! frees memory
-  deallocate(adj_src_s)
-  deallocate(adj_sourcearray)
-
-  end subroutine add_adjoint_sources_SU
 
 !
 !-----------------------------------------------------------------------------------------

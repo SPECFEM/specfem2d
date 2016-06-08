@@ -47,10 +47,10 @@
   call prepare_timerun_constants()
 
   ! wavefield array initialization
-  call prepare_timerun_wavefields()
+  call prepare_wavefields()
 
   ! PML preparation
-  call prepare_timerun_PML()
+  call prepare_PML()
 
   ! prepares mass matrices
   call prepare_timerun_mass_matrix()
@@ -71,7 +71,7 @@
   call prepare_timerun_initialfield
 
   ! compute the source time function and stores it in a text file
-  call prepare_timerun_stf()
+  call prepare_source_time_function()
 
   ! prepares noise simulations
   if (NOISE_TOMOGRAPHY /= 0) call prepare_timerun_noise()
@@ -80,7 +80,7 @@
   call prepare_timerun_attenuation()
 
   ! prepares GPU arrays
-  if (GPU_MODE) call prepare_timerun_GPU()
+  if (GPU_MODE) call prepare_GPU()
 
   !-------------------------------------------------------------
 
@@ -1160,42 +1160,6 @@
 !
 !-------------------------------------------------------------------------------------
 !
-
-
-  subroutine prepare_timerun_stf()
-
-  use specfem_par
-
-  implicit none
-
-  if (.not. initialfield) then
-    ! user output
-    if (myrank == 0) then
-      write(IMAIN,*) 'Preparing source time function'
-      call flush_IMAIN()
-    endif
-
-    allocate(source_time_function(NSOURCES,NSTEP,stage_time_scheme))
-    source_time_function(:,:,:) = 0._CUSTOM_REAL
-
-    ! computes source time function array
-    call prepare_source_time_function()
-
-  else
-    ! uses an initialfield
-    ! dummy allocation
-    allocate(source_time_function(1,1,1))
-  endif
-
-  ! synchronizes all processes
-  call synchronize_all()
-
-  end subroutine prepare_timerun_stf
-
-!
-!-------------------------------------------------------------------------------------
-!
-
 
 
   subroutine prepare_timerun_noise()

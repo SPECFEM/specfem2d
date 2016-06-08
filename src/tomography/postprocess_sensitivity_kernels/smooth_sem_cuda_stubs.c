@@ -43,18 +43,17 @@ typedef float realw;
 void FC_FUNC_(initialize_cuda_device,
               INITIALIZE_CUDA_DEVICE)(int* myrank_f,int* ncuda_devices){}
 
-
-void FC_FUNC_(prepare_gpu,
-              PREPARE_GPU)(long * Container,
-                          realw * xstore_me,
-                          realw * zstore_me,
-                          realw sigma_h2_inv,
-                          realw sigma_v2_inv,
-                          realw h_criterion,
-                          realw v_criterion,
-                          int nspec_me,
-                          int nker,
-                          realw gll){}
+void FC_FUNC_(prepare_arrays_gpu,
+              PREPARE_arrays_GPU)(long * Container,
+                                  realw * xstore_me,
+                                  realw * zstore_me,
+                                  realw sigma_h2_inv,
+                                  realw sigma_v2_inv,
+                                  realw h_criterion,
+                                  realw v_criterion,
+                                  int nspec_me,
+                                  int nker,
+                                  realw gll){}
 
 void FC_FUNC_(compute_smooth,
               COMPUTE_SMOOTH)(long * smooth_pointer,
@@ -63,7 +62,6 @@ void FC_FUNC_(compute_smooth,
                               realw * zstore_other,
                               realw * data_other,
                               const int * nspec_other){}
-
 
 void FC_FUNC_(get_smooth,
               GET_SMOOTH)(long * smooth_pointer,realw * data_smooth){}

@@ -130,7 +130,6 @@ endif
 ### Module dependencies
 ###
 
-
 $O/meshfem2D.mesh.o: $O/meshfem2D_par.mesh_module.o
 
 ifdef SCOTCH_INCDIR

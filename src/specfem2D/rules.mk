@@ -60,6 +60,7 @@ specfem2D_OBJECTS = \
 	$O/calendar.spec.o \
 	$O/check_grid.spec.o \
 	$O/check_stability.spec.o \
+	$O/comp_source_time_function.spec.o \
 	$O/compute_add_sources_acoustic.spec.o \
 	$O/compute_add_sources_poro.spec.o \
 	$O/compute_add_sources_viscoelastic.spec.o \
@@ -134,12 +135,12 @@ specfem2D_OBJECTS = \
 	$O/prepare_absorb.spec.o \
 	$O/prepare_assemble_MPI.spec.o \
 	$O/prepare_color_image.spec.o \
+	$O/prepare_gpu.spec.o \
 	$O/prepare_initial_field.spec.o \
+	$O/prepare_pml.spec.o \
 	$O/prepare_source_time_function.spec.o \
 	$O/prepare_timerun.spec.o \
-	$O/prepare_timerun_gpu.spec.o \
-	$O/prepare_timerun_pml.spec.o \
-	$O/prepare_timerun_wavefields.spec.o \
+	$O/prepare_wavefields.spec.o \
 	$O/read_mesh_databases.spec.o \
 	$O/read_external_model.spec.o \
 	$O/recompute_jacobian.spec.o \

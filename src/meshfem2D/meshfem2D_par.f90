@@ -133,8 +133,10 @@
   ! variables used for iteration
   integer :: NT_DUMP_ATTENUATION
 
-  ! time steps
+  ! number of time steps
   integer :: NSTEP
+
+  ! time step size
   double precision :: DT
 
   ! value of time_stepping_scheme to decide which time scheme will be used

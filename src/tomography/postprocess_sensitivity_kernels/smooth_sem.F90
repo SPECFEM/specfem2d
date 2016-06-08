@@ -236,7 +236,8 @@ program smooth_sem
 
   ! GPU setup
   if (GPU_MODE) then
-    call prepare_GPU(Container,xstore_me,zstore_me,sigma_h2_inv,sigma_v2_inv,sigma_h3_sq,sigma_v3_sq,nspec_me,nker,wgll_sq)
+    call prepare_arrays_GPU(Container,xstore_me,zstore_me, &
+                            sigma_h2_inv,sigma_v2_inv,sigma_h3_sq,sigma_v3_sq,nspec_me,nker,wgll_sq)
 
     ! synchronizes all processes
     call synchronize_all()

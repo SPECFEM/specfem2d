@@ -36,7 +36,10 @@
 
   ! reads in source file DATA/SOURCE
 
+
   use source_file_par
+
+  use parameter_file_par,only: DT
 
   implicit none
 
@@ -124,26 +127,59 @@
 
   ! reads in all source informations
   do  i_source= 1,NSOURCES
+
+    ! source set to surface
     call read_value_logical(IIN_SOURCE,IGNORE_JUNK,source_surf(i_source))
+
+    ! x/z location
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,xs(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,zs(i_source))
+
+    ! source and source time function type
     call read_value_integer(IIN_SOURCE,IGNORE_JUNK,source_type(i_source))
     call read_value_integer(IIN_SOURCE,IGNORE_JUNK,time_function_type(i_source))
 
+    ! external source time function file (sft type == 8)
     name_of_source_file(i_source)=''
     call read_value_string(IIN_SOURCE,IGNORE_JUNK,name_of_source_file(i_source))
 
+    ! burst (stf type == 9)
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,burst_band_width(i_source))
+
+    ! dominant frequency
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,f0_source(i_source))
+
+    ! time shift
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,tshift_src(i_source))
+
+    ! force source angle
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,anglesource(i_source))
 
+    ! moment tensor
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxx(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mzz(i_source))
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxz(i_source))
 
+    ! amplification factor
     call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,factor(i_source))
 
+
+    ! Dirac/Heaviside
+    ! if Dirac source time function, use a very thin Gaussian instead
+    ! if Heaviside source time function, use a very thin error function instead
+    if (time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) then
+      f0_source(i_source) = 1.d0 / (10.d0 * DT)
+    endif
+
+    ! checks source frequency
+    if (abs(f0_source(i_source)) < TINYVAL) then
+      call exit_MPI(0,'Error source frequency is zero')
+    endif
+
+    ! convert angle from degrees to radians
+    anglesource(i_source) = anglesource(i_source) * PI / 180.d0
+
+    ! user output
     ! note: we will further process source info in solver,
     !         here we just read in the given specifics and show them
     write(IMAIN,*) 'Source', i_source
@@ -156,7 +192,7 @@
     case (1)
       ! force
       write(IMAIN,*) '  Force source:'
-      write(IMAIN,*) '  Angle of the source = ',anglesource(i_source)
+      write(IMAIN,*) '  Angle of the source (deg) = ',anglesource(i_source)
       write(IMAIN,*) '  Multiplying factor  = ',factor(i_source)
     case (2)
       ! moment tensor
@@ -197,7 +233,7 @@
       write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case (8)
       write(IMAIN,*) '  External source time function file:'
-      write(IMAIN,*) '  Source read from file:', trim(name_of_source_file(i_source))
+      write(IMAIN,*) '  Source read from file:',trim(name_of_source_file(i_source))
     case (9)
       write(IMAIN,*) '  Burst wavelet:'
       write(IMAIN,*) '  Burst band width: ',burst_band_width(i_source)

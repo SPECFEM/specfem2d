@@ -32,7 +32,7 @@
 !========================================================================
 
 
-  subroutine prepare_timerun_PML()
+  subroutine prepare_PML()
 
   use specfem_par
 
@@ -415,6 +415,5 @@
     allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
   endif
 
-  end subroutine prepare_timerun_PML
-
+  end subroutine prepare_PML
 

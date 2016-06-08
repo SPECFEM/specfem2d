@@ -424,7 +424,6 @@
            tshift_src(NSOURCES), &
            factor(NSOURCES), &
            anglesource(NSOURCES), &
-           aval(NSOURCES), &
            ispec_selected_source(NSOURCES), &
            iglob_source(NSOURCES), &
            source_courbe_eros(NSOURCES), &

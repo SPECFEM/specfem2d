@@ -35,23 +35,25 @@
 
   subroutine set_source_parameters()
 
-! gets source parameters
+! gets source parameters and determines simulation start/onset time
 
   use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,TINYVAL,PI
 
   use specfem_par, only : myrank,NSOURCES,source_type,time_function_type, &
-                          x_source,z_source,Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource,aval, &
-                          t0,initialfield,deltat,USER_T0
+                          x_source,z_source,Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource, &
+                          t0,initialfield,USER_T0
 
   implicit none
 
   ! local parameters
   integer :: i_source
-  double precision, dimension(NSOURCES) :: t0_source,hdur
-  double precision :: min_tshift_src_original
+  double precision, dimension(NSOURCES) :: t0_source
+  double precision :: min_tshift_src_original,hdur
+
+  ! note: see also routine in read_source_file.f90 which reads in source parameters
 
   ! checks the input
-  do i_source= 1,NSOURCES
+  do i_source = 1,NSOURCES
 
     ! checks source type
     if (.not. initialfield) then
@@ -74,31 +76,16 @@
       endif
     endif
 
-    ! if Dirac source time function, use a very thin Gaussian instead
-    ! if Heaviside source time function, use a very thin error function instead
-    if (time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) &
-      f0_source(i_source) = 1.d0 / (10.d0 * deltat)
-
-    ! checks source frequency
-    if (abs(f0_source(i_source)) < TINYVAL) then
-      call exit_MPI(myrank,'Error source frequency is zero')
-    endif
-
     ! half-duration of source
-    hdur(i_source) = 1.d0 / f0_source(i_source)
+    hdur = 1.d0 / f0_source(i_source)
 
     ! sets source start times, shifted by the given (non-zero) time-shift
-    if (time_function_type(i_source)== 5) then
-      t0_source(i_source) = 2.0d0 * hdur(i_source) + tshift_src(i_source)
+    if (time_function_type(i_source) == 5) then
+      ! Heaviside
+      t0_source(i_source) = 2.0d0 * hdur + tshift_src(i_source)
     else
-      t0_source(i_source) = 1.20d0 * hdur(i_source) + tshift_src(i_source)
+      t0_source(i_source) = 1.20d0 * hdur + tshift_src(i_source)
     endif
-
-    ! for the source time function
-    aval(i_source) = PI*PI*f0_source(i_source)*f0_source(i_source)
-
-    ! convert angle from degrees to radians
-    anglesource(i_source) = anglesource(i_source) * PI / 180.d0
 
   enddo ! do i_source= 1,NSOURCES
 
@@ -148,12 +135,15 @@
       endif
 
       ! loops over all sources
-      do i_source= 1,NSOURCES
+      do i_source = 1,NSOURCES
+        ! half-duration of source
+        hdur = 1.d0 / f0_source(i_source)
+
         ! sets the given, initial time shifts
         if (time_function_type(i_source) == 5) then
-          tshift_src(i_source) = t0_source(i_source) - 2.0d0 * hdur(i_source)
+          tshift_src(i_source) = t0_source(i_source) - 2.0d0 * hdur
         else
-          tshift_src(i_source) = t0_source(i_source) - 1.20d0 * hdur(i_source)
+          tshift_src(i_source) = t0_source(i_source) - 1.20d0 * hdur
         endif
         ! user output
         if (myrank == 0) then

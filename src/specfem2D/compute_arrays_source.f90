@@ -120,17 +120,20 @@
 
   end subroutine compute_arrays_source
 
-! ------------------------------------------------------------------------------------------------------
-
+!
+!-----------------------------------------------------------------------------------------
+!
 
   subroutine compute_arrays_adj_source(xi_rec,gamma_rec,irec_local,adj_source_file,adj_sourcearray)
+
+! reads in adjoint source file and computes source arrays for receiver location
 
   use constants,only: IIN,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,CUSTOM_REAL,NDIM
 
   use specfem_par,only: myrank,NSTEP,P_SV, &
                         AXISYM,is_on_the_axis, &
                         xigll,zigll,hxir,hpxir,hgammar,hpgammar,xiglj, &
-                        ispec_selected_rec,seismotype
+                        ispec_selected_rec,seismotype,GPU_MODE
 
   use specfem_par_gpu,only: source_adjointe
 
@@ -216,16 +219,19 @@
 
   endif
 
-  if (P_SV) then
-    ! P_SV-case
-    source_adjointe(irec_local,:,1) = adj_src_s(:,1)
-    source_adjointe(irec_local,:,2) = adj_src_s(:,3)
-  else
-    ! SH-case
-    source_adjointe(irec_local,:,1) = adj_src_s(:,2)
+  ! gpu arrays
+  if (GPU_MODE) then
+    if (P_SV) then
+      ! P_SV-case
+      source_adjointe(irec_local,:,1) = adj_src_s(:,1)
+      source_adjointe(irec_local,:,2) = adj_src_s(:,3)
+    else
+      ! SH-case
+      source_adjointe(irec_local,:,1) = adj_src_s(:,2)
+    endif
   endif
 
-
+  ! location interpolation
   if (AXISYM) then
     if (is_on_the_axis(ispec_selected_rec(irec_local))) then ! TODO verify irec_local...
       call lagrange_any(xi_rec,NGLJ,xiglj,hxir,hpxir)
@@ -254,3 +260,171 @@
   enddo
 
   end subroutine compute_arrays_adj_source
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
+  subroutine compute_arrays_adj_source_SU(seismotype)
+
+! reads in all adjoint sources in SU-file format and computes source arrays for receiver locations
+
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,NDIM
+
+  use specfem_par, only: AXISYM,xiglj,is_on_the_axis, &
+                         myrank, NSTEP, nrec, &
+                         xi_receiver, gamma_receiver, which_proc_receiver, &
+                         xigll,zigll,hxir,hgammar,hpxir,hpgammar, &
+                         adj_sourcearrays, &
+                         GPU_MODE, ispec_selected_rec,P_SV
+
+  use specfem_par_gpu,only: source_adjointe
+
+  implicit none
+
+  integer,intent(in) :: seismotype
+
+  ! local parameters
+  integer :: i, j, irec, irec_local, ier
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! SU
+  integer(kind=4) :: r4head(60)
+  integer(kind=2) :: header2(2)
+
+  real(kind=4),dimension(:,:),allocatable :: adj_src_s
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
+
+  ! opens adjoint source files in SU format
+  if (seismotype == 4 .or. seismotype == 6) then
+    ! pressure/potential type
+    write(filename, "('./SEM/Up_file_single.su.adj')")
+    open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+    if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+  else
+    ! displacement/velocity/acceleration type
+    if (P_SV) then
+      ! P_SV-case
+      write(filename, "('./SEM/Ux_file_single.su.adj')")
+      open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+
+      write(filename, "('./SEM/Uz_file_single.su.adj')")
+      open(113,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+    else
+      ! SH-case
+      write(filename, "('./SEM/Uy_file_single.su.adj')")
+      open(112,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
+      if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' does not exist')
+    endif
+
+  endif
+
+  ! allocates temporary array
+  allocate(adj_src_s(NSTEP,NDIM))
+
+  ! temporary array
+  allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLZ))
+
+  irec_local = 0
+  do irec = 1, nrec
+
+    ! only process/slice holding receiver
+    if (myrank == which_proc_receiver(irec)) then
+      irec_local = irec_local + 1
+
+      adj_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
+      adj_src_s(:,:) = 0.0
+
+      if (seismotype == 4 .or. seismotype == 6) then
+        ! pressure/potential
+        ! single component
+        read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
+        if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+      else
+        ! displacement/velocity/acceleration
+        if (P_SV) then
+          ! P_SV-case
+          read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
+          if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+
+          read(113,rec=irec,iostat=ier) r4head, adj_src_s(:,2)
+          if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+        else
+          ! SH-case
+          read(112,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
+          if (ier /= 0) call exit_MPI(myrank,'file '//trim(filename)//' read error')
+        endif
+      endif
+
+      header2 = int(r4head(29), kind=2)
+      if (irec==1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
+
+      ! location interpolation
+      if (AXISYM) then
+        if (is_on_the_axis(ispec_selected_rec(irec))) then ! TODO verify ispec_selected_rec and not ispec_selected_source
+          call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
+        else
+          call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+        endif
+      else
+        call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+      endif
+
+      call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
+
+      ! gpu arrays
+      if (GPU_MODE) then
+        if (P_SV) then
+          ! P_SV-case
+          source_adjointe(irec_local,:,1) = adj_src_s(:,1)
+          source_adjointe(irec_local,:,2) = adj_src_s(:,2)
+        else
+          ! SH-case
+          source_adjointe(irec_local,:,1) = adj_src_s(:,1)
+        endif
+      endif
+
+      ! adjoint source interpolated on element
+      if (.not. GPU_MODE) then
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            if (P_SV) then
+              ! P_SV-case
+              adj_sourcearray(:,1,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,1)
+              adj_sourcearray(:,2,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,2)
+            else
+              ! SH-case
+              adj_sourcearray(:,1,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,1)
+            endif
+          enddo
+        enddo
+
+        ! stores all local adjoint sources
+        adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+      endif
+
+    endif !  if (myrank == which_proc_receiver(irec))
+  enddo ! irec
+
+  ! closes files
+  if (seismotype == 4) then
+    close(111)
+  else
+    if (P_SV) then
+      ! P_SV-case
+      close(111)
+      close(113)
+    else
+      ! SH-case
+      close(112)
+    endif
+  endif
+
+  ! frees memory
+  deallocate(adj_src_s)
+  deallocate(adj_sourcearray)
+
+  end subroutine compute_arrays_adj_source_SU
