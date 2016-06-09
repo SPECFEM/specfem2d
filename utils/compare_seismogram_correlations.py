@@ -194,7 +194,7 @@ def plot_correlations(out_dir,ref_dir):
         ref_time = np.loadtxt(ref_file)[:, 0]
         dt_ref = ref_time[1] - ref_time[0]
         # mismatch warning
-        if abs(dt - dt_ref) > 1.e-9:
+        if abs(dt - dt_ref)/dt > 1.e-5:
           print("** warning: mismatch of time step size in both files syn/ref = %e / %e" %(dt,dt_ref))
           #print("** warning: using time step size %e from file %s" %(dt,syn_file))
 

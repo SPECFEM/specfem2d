@@ -47,15 +47,16 @@ if (@ARGV < 1) {die("Usage: plot_wavefield.pl xxx\n");}
 #$numf = @frames;
 $numf = ($pend - $pfirst)/$pint + 1;
 
+###############################################################
+##
+## setup
+##
+###############################################################
 # directory with data files (USER CHANGE THIS)
-# you can specify you own path by changing $bdir and $idir1
-#$bdir = "/data2/SVN/seismo/2D/SPECFEM2D_20120420";
-#$idir1 = "$bdir/OUTPUT_FILES";                 # if running from the default directory
-#$idir1 = "$bdir/EXAMPLES/$tlab/OUTPUT_FILES";   # if running from an examples directory
-$bdir = $ENV{'PWD'};
-$idir1 = "$bdir/OUTPUT_FILES";
+$outdir = "OUTPUT_FILES";
 
-if (not -e $idir1) {die("check if idir1 $idir1 exist or not\n");}
+# kernel type
+$iktype = 2;   # =1 rho-kappa-mu, =2 rhop-Vp-Vs
 
 # plot the color frames or not
 $icolor = 1;    # ccc
@@ -73,9 +74,22 @@ $iheader = 1;
 #$btick1z = 20; $btick2z = 10;
 
 $xgap = 0.25;
-$ygap = 0.25;
+$ygap = 1.0;
 $originY = 1.25;
 #$msize = 0.25;    # KEY: marker size for plotting points or pixels
+
+# gmt version (=1 new, =0 older gmt4 version)
+$gmt5 = 1;
+###############################################################
+
+# you can specify you own path by changing $bdir and $idir1
+#$bdir = "/data2/SVN/seismo/2D/SPECFEM2D_20120420";
+#$idir1 = "$bdir/OUTPUT_FILES";                 # if running from the default directory
+#$idir1 = "$bdir/EXAMPLES/$tlab/OUTPUT_FILES";   # if running from an examples directory
+$bdir = $ENV{'PWD'};
+$idir1 = "$bdir/$outdir";
+if (not -e $idir1) {die("check if directory $idir1 exist or not\n");}
+
 
 $R = "-R$R0";
 $xran = $xmax - $xmin;
@@ -106,24 +120,35 @@ if($igrd==1) {print "interpolation for grd file is $interp\n";}
 
 #----------------------------------------------
 
-if($iportrait==1) {$orient = "-P";} else {$orient = "";}
+if($iportrait==1) {
+  $orient = "-P";
+} else {
+  $orient = "";
+}
 
-   $ncol = $ipx + $ipy + $ipz;
-   print "$ncol (ncol) to display: $ipx (X), $ipy (Y), $ipz (Z)\n";
-   if($ncol==0) {die("Must specify at least one component to display");}
-   if($ncol==1 && $ipx==1) {@comps = (1);}
-   if($ncol==1 && $ipy==1) {@comps = (2);}
-   if($ncol==1 && $ipz==1) {@comps = (3);}
-   if($ncol==2 && $ipx==0) {@comps = (2,3);}
-   if($ncol==2 && $ipy==0) {@comps = (1,3);}
-   if($ncol==2 && $ipz==0) {@comps = (1,2);}
-   if($ncol==3) {@comps = (1,2,3);}
-   print "$ncol (ncol) to display: $ipx (X), $ipy (Y), $ipz (Z)\n";
-   print "comps: @comps\n";
-   #die("TESTING");
+$ncol = $ipx + $ipy + $ipz;
+if($ncol==0) {
+  print "Error $ncol (ncol) to display: $ipx (X), $ipy (Y), $ipz (Z)\n";
+  die("Must specify at least one component to display");
+}
 
-$origin = "-X0.75 -Y1.25";
-if($ncol==3) {$originX = 0.75;} else {$originX = 1.5;}
+if($ncol==1 && $ipx==1) {@comps = (1);}
+if($ncol==1 && $ipy==1) {@comps = (2);}
+if($ncol==1 && $ipz==1) {@comps = (3);}
+if($ncol==2 && $ipx==0) {@comps = (2,3);}
+if($ncol==2 && $ipy==0) {@comps = (1,3);}
+if($ncol==2 && $ipz==0) {@comps = (1,2);}
+if($ncol==3) {@comps = (1,2,3);}
+
+print "$ncol (ncol) to display: $ipx (X), $ipy (Y), $ipz (Z)\n";
+print "comps: @comps\n";
+#die("TESTING");
+
+if($ncol==3) {
+  $originX = 0.75;
+} else {
+  $originX = 1.5;
+}
 $origin = "-X$originX -Y$originY";
 
 # yakutat
@@ -147,7 +172,16 @@ $fontno = "1";
 $tick   = "0.1c";
 $cgray = 200;
 
-if($imask==1) {$BG = " ";} else {$BG = "-G$cgray"};
+if($imask==1) {
+  $BG = " ";
+} else {
+  if($gmt5==1){
+    $BG = "+g$cgray";
+  }else{
+    # older gmt
+    $BG = "-G$cgray";
+  }
+};
 $stitype = sprintf("%02d",$itype);
 
 # plot symbols for sources, receivers
@@ -178,25 +212,43 @@ $srcz = $srcz/1000;
 
 print "\nsource at ($srcx, $srcz)\n";
 
-$shfile = "plot_wavefield.sh";
-open(CSH,">$shfile");
-print "\nWriting CSH file $shfile\n";
-print CSH "gmtset BASEMAP_TYPE plain PAPER_MEDIA letter MEASURE_UNIT inch PLOT_DEGREE_FORMAT D TICK_LENGTH $tick LABEL_FONT_SIZE $fsize2 ANOT_FONT_SIZE $fsize2  HEADER_FONT $fontno ANOT_FONT $fontno LABEL_FONT $fontno HEADER_FONT_SIZE $fsize1 CHAR_ENCODING Standard+ COLOR_NAN $cgray\n";
-
 $R = "-R$xmin/$xmax/$zmin/$zmax";
-print "\nregion is $R\n";
+print "\nregion is    : $R\n";
 
 # projection
 #$ywid = $xwid*($zran/$xran);
 $J = "-JX${xwid}i/${ywid}i";
-print "\n projection is $J \n";
+print "projection is: $J \n\n";
+
+#=================================================================
+#
+# SCRIPT
+#
+#=================================================================
+
+$shfile = "plot_wavefield.sh";
+open(CSH,">$shfile");
+print "\nWriting CSH file: $shfile\n";
+print CSH "#!/bin/bash\n\n";
+print CSH "echo \"##################################\"\n";
+print CSH "echo \"run script $shfile\"\n";
+print CSH "echo \"##################################\"\n";
+print CSH "echo\n";
+
+if($gmt5==1){
+  print CSH "gmtset MAP_FRAME_TYPE plain PS_MEDIA letter PROJ_LENGTH_UNIT inch FORMAT_GEO_MAP D MAP_TICK_LENGTH_PRIMARY $tick  PS_CHAR_ENCODING Standard+ COLOR_NAN $cgray\n";
+}else{
+  # older gmt
+  print CSH "gmtset BASEMAP_TYPE plain PAPER_MEDIA letter MEASURE_UNIT inch PLOT_DEGREE_FORMAT D TICK_LENGTH $tick LABEL_FONT_SIZE $fsize2 ANOT_FONT_SIZE $fsize2  HEADER_FONT $fontno ANOT_FONT $fontno LABEL_FONT $fontno HEADER_FONT_SIZE $fsize1 CHAR_ENCODING Standard+ COLOR_NAN $cgray\n";
+}
+
 
 # KEY: scaling for color
-$scale_color = 21.0;
+$scale_color = 101; # 21;
 $colorbar = "seis";
 @norm = ("1e$pwr[0]","1e$pwr[1]","1e$pwr[2]");
 #$fac = 5;      # KEY: enhance the interaction field (increase for more contrast)
-print "@norm \n";
+print "norm = @norm \n";
 
 $numw = @cmax;
 for ($k = 0; $k < $numw; $k++ ){
@@ -205,70 +257,55 @@ for ($k = 0; $k < $numw; $k++ ){
   $ds[$k] = 2*$ss[$k]/$scale_color;
   #$bs[$k] = sprintf("%3.3e",0.9*$ss[$k]);  # colorbar
   $bs[$k] = sprintf("%3.3e",$ss[$k]);  # colorbar
-  $Ts[$k] = sprintf("-T%3.3e/%3.3e/%3.3e",-$ss[$k]*1.05,$ss[$k]*1.05,$ds[$k]);
-  print "Ts = $Ts[$k]\n";
+  $Ts[$k] = sprintf("-T%3.3f/%3.3f/%3.3f",-$ss[$k]*1.05,$ss[$k]*1.05,$ds[$k]);
+  print "color range Ts = $Ts[$k]\n";
 
   print CSH "makecpt -C$colorbar $Ts[$k] -D > color_${k}.cpt\n";
 }
 
-$Dx = $xwid/2;
-$Dscale = "-D$Dx/-0.3/1.5/0.15h -E10p";            # colorbar
+# colorbar
+$Dx = ($xwid - $originX)/2;
+if($gmt5==1){
+  $Dscale = "-Dx$Dx/-0.5+w1.5/0.15+h+e10p";
+}else{
+  # older gmt
+  $Dscale = "-D$Dx/-0.3/1.5/0.15h -E10p";
+}
+print "color scale position D = $Dscale\n";
 
 #=================================================================
 
 if ($itype != 0) {
 
-# labels
-@wavefield = ("wavefield","wavefield","wavefield");
-@titles    = ("Ux","Uy","Uz");
+#=================================================================
+#
+# WAVEFIELDS
+#
+#=================================================================
 
-#-------------------------
-# color for kernels
+  print "\nwavefields\n\n";
 
-# color for the kernel
-#$ss = $cmax[2];
-#$ds = 2*$ss/$scale_color;
-#$bs = sprintf("%3.3e",0.9*$ss);  # colorbar
-#$TsK = sprintf("-T%3.3e/%3.3e/%3.3e",-$ss,$ss,$ds);
-#print "TsK = $TsK\n";
+  # labels
+  @wavefield = ("wavefield","wavefield","wavefield");
+  @titles    = ("Ux","Uy","Uz");
 
-# color for the interaction
-#$ss2 = $cmax[2] / $fac;
-#$ds2 = 2*$ss2/$scale_color;
-#$bs2 = sprintf("%3.3e",0.9*$ss2);  # colorbar
-#$TsI = sprintf("-T%3.3e/%3.3e/%3.3e",-$ss2,$ss2,$ds2);
-#print "TsI = $TsI\n";
+  $name = "wavefield_${tlab}_${ttag}";
+  $psfile  = "$name.ps";
+  $jpgfile = "$name.jpg";
 
-#print CSH "makecpt -C$colorbar $TsK -D > color_K.cpt\n";
-#print CSH "makecpt -C$colorbar $TsI -D > color_I.cpt\n";
+  print CSH "echo\n";
+  print CSH "echo \"postscript file = $psfile\";echo\n";
+  print CSH "echo\n";
+  # clean
+  print CSH "rm -f $psfile\n\n";
 
-# color bars
-# NOTE: there seems to be a max LENGTH of the label string for the color bars
-#$BscaleSx = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+  m\":",$bs[0],$titles[0],$pwr[0]);
-#$BscaleSy = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+  m\":",$bs[1],$titles[1],$pwr[1]);
-#$BscaleSz = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+ m\":",$bs[2],$titles[2],$pwr[2]);
+  #$numf = 1;
 
-#$BscaleS1 = sprintf("-B%2.2e:\"s ($pt, t), 10\@+%2.2i\@+  m\":",$bs[0],$pwr[0]);  # $k = 0
-#$BscaleS2 = sprintf("-B%2.2e:\"s\@+\262\@+ ($pt, t), 10\@+%2.2i\@+ kg\@+-1\@+ s  [F]\":",$bs[1],$pwr[1]);   # $k = 1
-#$BscaleI  = sprintf("-B%2.2e:\"K\302 ($pt, t), 10\@+%2.2i\@+ m\@+-2\@+ s\@+-1\@+ [F]\":",$bs2,$pwr[2]);
-#$BscaleK  = sprintf("-B%2.2e:\"K ($pt, t), 10\@+%2.2i\@+  m\@+-2\@+ [F]\":",$bs,$pwr[2]);
+  $imin = 0; $imax = $numf-1;  # default
+  #$imin = 4; $imax = $imin;
 
-#print "\n $BscaleS1 \n $BscaleS2 \n $BscaleI \n $BscaleK\n"; die("testing\n");
-#print "\n $BscaleSx \n $BscaleSy \n $BscaleSz\n"; die("testing\n");
-
-#-------------------------
-
-$name = "wavefield_${tlab}_${ttag}";
-$psfile  = "$name.ps";
-$jpgfile = "$name.jpg";
-
-#$numf = 1;
-
-$imin = 0; $imax = $numf-1;  # default
-#$imin = 4; $imax = $imin;
-
-#for ($j = $rfirst; $j <= $rend; $j = $j + $rint) {
-for ($i = $imin; $i <= $imax; $i++) {
+  #for ($j = $rfirst; $j <= $rend; $j = $j + $rint) {
+  for ($i = $imin; $i <= $imax; $i++) {
 
    #$j1 = $frames[$i];           # forward frame
    $j1 = $pfirst + $i*$pint;
@@ -293,9 +330,16 @@ for ($i = $imin; $i <= $imax; $i++) {
    print CSH "echo $psfile\n";
    print CSH "echo $snapshot_f\n";
 
-   $B0 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"t = $time s\"::.\"  \"");
-   $B      = "$B0:Wsne";
-   $B_row1 = "$B0:WSne";
+   if($gmt5==1){
+    $B0 = sprintf("-Bxa${btick1x}f${btick2x} -Bya${btick1z}f${btick2z}+l\"t = $time s\"");
+    $B      = "$B0 -BWsne";
+    $B_row1 = "$B0 -BWSne";
+   }else{
+    # older gmt
+    $B0 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"t = $time s\"::.\"  \"");
+    $B      = "$B0:Wsne";
+    $B_row1 = "$B0:WSne";
+   }
    if ($i == $imin) { $B = $B_row1;}
 
    #-------------------------
@@ -318,12 +362,23 @@ for ($i = $imin; $i <= $imax; $i++) {
        $shift = "$dX";
      }
 
-     $BscaleS = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+  m\":",$bs[$comp-1],$titles[$comp-1],$pwr[$comp-1]);
-     $B = "$B0:Wesn";
-     if($k > 1) {$B = "$B0:wesn";}
-     if($i==$imin && $k==1) {$B = "$B0:WeSn";}
-     if($i==$imin && $k > 1) {$B = "$B0:weSn";}
+     if($gmt5==1){
+      $BscaleS = sprintf("-B%2.2f+l\"%s (x, z, t), 10\@+%2.2i\@+  m\"",$bs[$comp-1],$titles[$comp-1],$pwr[$comp-1]);
+     }else{
+      $BscaleS = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+  m\":",$bs[$comp-1],$titles[$comp-1],$pwr[$comp-1]);
+     }
 
+     if($gmt5==1){
+       $B = "$B0 -BWesn";
+       if($k > 1) {$B = "$B0 -Bwesn";}
+       if($i==$imin && $k==1) {$B = "$B0 -BWeSn";}
+       if($i==$imin && $k > 1) {$B = "$B0 -BweSn";}
+     }else{
+       $B = "$B0:Wesn";
+       if($k > 1) {$B = "$B0:wesn";}
+       if($i==$imin && $k==1) {$B = "$B0:WeSn";}
+       if($i==$imin && $k > 1) {$B = "$B0:weSn";}
+     }
      #if ($k==0) {
      #  $comp=1; $shift = "$dY $mdX"; $BscaleS = $BscaleS1;
      #} else {
@@ -349,76 +404,79 @@ for ($i = $imin; $i <= $imax; $i++) {
      # PLOT THE FORWARD WAVEFIELD
      if ($icolor==1) {
        if ($igrd==1) {
-   #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f > dfile\n";
-   #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f | nearneighbor -G$grdfile $R $interp\n";
-   print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f | xyz2grd -G$grdfile $R $interp\n";
-   print CSH "grdimage $grdfile -C$cfile $J -K -O -V -Q >> $psfile\n";
+          #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f > dfile\n";
+          #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f | nearneighbor -G$grdfile $R $interp\n";
+          print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f | xyz2grd -G$grdfile $R $interp\n";
+          print CSH "grdimage $grdfile -C$cfile $J -K -O -V -Q >> $psfile\n";
        } else {
-   print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f | psxy $R $J $minfo -C$cfile -K -O -V >> $psfile\n";
+          print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $nm}' $snapshot_f | psxy $R $J $minfo -C$cfile -K -O -V >> $psfile\n";
        }
 
        # mask points above topography
        if ($imask==1) {
-   #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2)}' $snapshot_f > maskpts\n";
-   printf CSH "grep NaN $snapshot_f > maskpts\n";
-   print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2)}' maskpts | psxy $R $J $minfo -C$cfile -K -O -V >> $psfile\n";
+          #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2)}' $snapshot_f > maskpts\n";
+          printf CSH "grep NaN $snapshot_f > maskpts\n";
+          print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2)}' maskpts | psxy $R $J $minfo -C$cfile -K -O -V >> $psfile\n";
        }
      }
 
-   # plot the boundaries of the geometrical units in the model
-   if ($ibound==1) {
-     $bfile = "/home/carltape/PROJECTS/yakutat/profiles/yakutat_p1_m3.xy";
-     #$bfile = "/home/carltape/PROJECTS/yahtse/data/icybay_chris/profiles_specfem2d/profile_p1.xy";
-     #$bfile = "/home/carltape/PROJECTS/yahtse/data/icybay_chris/profiles_specfem2d/profile_p1_top.xy";
-     if (not -f $bfile) {
-       die("check if bfile $bfile exist or not\n");
-     }
-     #print CSH "awk '{print \$1/1000,\$2/1000}' $bfile | psxy $J $R -W1.5p -m -K -O -V >> $psfile\n";
-     print CSH "awk '{print \$1,\$2}' $bfile | psxy $J $R -W1p -m -K -O -V >> $psfile\n";
-   }
-
-   # plot seismicity
-    if ($iseis==1 && $i==$imin) {
-      $bfile = "/home/carltape/PROJECTS/yakutat/data/yakutat_p1_seis_km_xyz.dat";
+     # plot the boundaries of the geometrical units in the model
+     if ($ibound==1) {
+      $bfile = "/home/carltape/PROJECTS/yakutat/profiles/yakutat_p1_m3.xy";
+      #$bfile = "/home/carltape/PROJECTS/yahtse/data/icybay_chris/profiles_specfem2d/profile_p1.xy";
+      #$bfile = "/home/carltape/PROJECTS/yahtse/data/icybay_chris/profiles_specfem2d/profile_p1_top.xy";
       if (not -f $bfile) {
-  die("check if bfile $bfile exist or not\n");
+       die("check if bfile $bfile exist or not\n");
       }
-      print CSH "awk '{print \$1,\$2}' $bfile | psxy $J $R -Sc3p -G0 -K -O -V >> $psfile\n";
-    }
-
-   if ($i == $imin) {print CSH "psscale -C$cfile $Dscale $BscaleS -K -O -V >> $psfile \n";}
-   print CSH "psbasemap $J $R $B -K -O -V >> $psfile\n";
-
-    # label the figures
-   if (0==1) {
-     if ($i==$imin) {
-       print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -2 -0.5 14 0 $fontno CM rock\nEOF\n";
-       print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -1 0.75 14 0 $fontno CM ice\nEOF\n";
-       print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n 1.0 0.75 14 0 $fontno CM water\nEOF\n";
-       print CSH "psxy -W1p $J $R -K -O -V >>$psfile<<EOF\n1.0 0.6\n 0.7 -0.1\nEOF\n";
-       print CSH "psxy -W1p $J $R -K -O -V >>$psfile<<EOF\n-1.0 0.6\n -0.7 -0.05\nEOF\n";
+      #print CSH "awk '{print \$1/1000,\$2/1000}' $bfile | psxy $J $R -W1.5p -m -K -O -V >> $psfile\n";
+      print CSH "awk '{print \$1,\$2}' $bfile | psxy $J $R -W1p -m -K -O -V >> $psfile\n";
      }
-   }
 
-   # plot stations and labels
-   if($iplotrec==1) {
-     #print CSH "awk '{print \$3/1000,\$4/1000}' $recfile2 | psxy $J $R -K -O -V $rec2 >> $psfile\n";
-     print CSH "awk '{print \$3/1000,\$4/1000}' $recfile | psxy $J $R -K -O -V $rec >> $psfile\n";
-     #if($i==$imin && $iplotreclab==1) {print CSH "awk '{print \$3/1000,\$4/1000,8,0,$fontno,\"CM\",\"S\"\$7}' $recfile | pstext $textrec $J $R -K -O -V >> $psfile\n";}
-     if($i==$imin && $iplotreclab==1 && $k==1) {print CSH "awk '{print \$3/1000,\$4/1000,8,0,$fontno,\"CM\",\$1}' $recfile | pstext $textrec $J $R -K -O -V >> $psfile\n";}
-   }
-   print CSH "psxy $J $R -K -O -V $src >> $psfile<<EOF\n $srcx $srcz\nEOF\n";
+     # plot seismicity
+     if ($iseis==1 && $i==$imin) {
+        $bfile = "/home/carltape/PROJECTS/yakutat/data/yakutat_p1_seis_km_xyz.dat";
+        if (not -f $bfile) {
+          die("check if bfile $bfile exist or not\n");
+        }
+        print CSH "awk '{print \$1,\$2}' $bfile | psxy $J $R -Sc3p -G0 -K -O -V >> $psfile\n";
+     }
 
-   # plot the time of the snapshot (for some reason, it won't work inside the B command)
-   #$xtext = $xmin-0.3*$xran;
-   #$ztext = $zmin+0.5*$zran;
-   #$tstr = "t = $time s";
-   #print CSH "pstext -N $J $R -K -O -V >>$psfile<<EOF\n $xtext $ztext $fsize1 90 $fontno CM $tstr\nEOF\n";
+     if ($i == $imin) {print CSH "psscale -C$cfile $Dscale $BscaleS -K -O -V >> $psfile \n";}
+     print CSH "psbasemap $J $R $B -K -O -V >> $psfile\n";
 
-   #$xtx = $xmin+0.5*$xran; $ztx = $zmin+1.1*$zran;
-   #if ($i == $imax) {print CSH "pstext -N $J $R -K -O -V >>$psfile<<EOF\n $xtx $ztx $fsize1 0 $fontno CM $titles[$k]\nEOF\n";}
+     # label the figures
+     if (0==1) {
+       if ($i==$imin) {
+          if($gmt5==1){
+          }else{
+            print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -2 -0.5 14 0 $fontno CM rock\nEOF\n";
+            print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -1 0.75 14 0 $fontno CM ice\nEOF\n";
+            print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n 1.0 0.75 14 0 $fontno CM water\nEOF\n";
+          }
+          print CSH "psxy -W1p $J $R -K -O -V >>$psfile<<EOF\n1.0 0.6\n 0.7 -0.1\nEOF\n";
+          print CSH "psxy -W1p $J $R -K -O -V >>$psfile<<EOF\n-1.0 0.6\n -0.7 -0.05\nEOF\n";
+       }
+     }
 
-   #-------------------------
+     # plot stations and labels
+     if($iplotrec==1) {
+        #print CSH "awk '{print \$3/1000,\$4/1000}' $recfile2 | psxy $J $R -K -O -V $rec2 >> $psfile\n";
+        print CSH "awk '{print \$3/1000,\$4/1000}' $recfile | psxy $J $R -K -O -V $rec >> $psfile\n";
+        #if($i==$imin && $iplotreclab==1) {print CSH "awk '{print \$3/1000,\$4/1000,8,0,$fontno,\"CM\",\"S\"\$7}' $recfile | pstext $textrec $J $R -K -O -V >> $psfile\n";}
+        if($i==$imin && $iplotreclab==1 && $k==1) {print CSH "awk '{print \$3/1000,\$4/1000,8,0,$fontno,\"CM\",\$1}' $recfile | pstext $textrec $J $R -K -O -V >> $psfile\n";}
+     }
+     print CSH "psxy $J $R -K -O -V $src >> $psfile<<EOF\n $srcx $srcz\nEOF\n";
+
+     # plot the time of the snapshot (for some reason, it won't work inside the B command)
+     #$xtext = $xmin-0.3*$xran;
+     #$ztext = $zmin+0.5*$zran;
+     #$tstr = "t = $time s";
+     #print CSH "pstext -N $J $R -K -O -V >>$psfile<<EOF\n $xtext $ztext $fsize1 90 $fontno CM $tstr\nEOF\n";
+
+     #$xtx = $xmin+0.5*$xran; $ztx = $zmin+1.1*$zran;
+     #if ($i == $imax) {print CSH "pstext -N $J $R -K -O -V >>$psfile<<EOF\n $xtx $ztx $fsize1 0 $fontno CM $titles[$k]\nEOF\n";}
+
+     #-------------------------
 
 #    $comp = 3;
 #    $k = 1;
@@ -458,30 +516,38 @@ for ($i = $imin; $i <= $imax; $i++) {
 
 #    if ($i == $imax) {print CSH "pstext -N $J $R -K -O -V >>$psfile<<EOF\n $xtx $ztx $fsize1 0 $fontno CM $titles[1]\nEOF\n";}
 
- }  # for $m
+    }  # for $m
 
- }
+  }
 
-# plot title and GMT header
-if($iheader==1) {
-$plabel = "plot_wavefield.pl";
-$ux = -$xwid;
-$ux = 0;
-$uy = $ywid + 0.3;
-$Utag = "-U/$ux/$uy/$plabel"; # GMT header
-$shift = "-X0i -Y0.7i";
-if($ncol==2) {$shift = "-X-${dX0}i -Y0.7i";}
-if($ipsv==1) {$tlab0 = "PSV"} else {$tlab0 = "SH"}
-$title = "$tlab0 wavefield -- $tlab";
-print CSH "pstext -N $J $R $Utag -K -O -V $shift >>$psfile<<EOF\n $xmin $zmax $fsize0 0 $fontno LM $title\nEOF\n";  # LM or CM
-}
+  # plot title and GMT header
+  if($iheader==1) {
+    $plabel = "plot_wavefield.pl";
+    $ux = -$xwid;
+    $ux = 0;
+    $uy = $ywid + 0.3;
+    $Utag = "-U/$ux/$uy/$plabel"; # GMT header
+    $shift = "-X0i -Y0.7i";
+    if($ncol==2) {$shift = "-X-${dX0}i -Y0.7i";}
+    if($ipsv==1) {$tlab0 = "PSV"} else {$tlab0 = "SH"}
+    $title = "$tlab0 wavefield -- $tlab";
+    if($gmt5==1){
+      print CSH "pstext -N $J $R $Utag -K -O -V $shift -F+f+a+j >>$psfile<<EOF\n $xmin $zmax $fsize0,$fontno 0 LM $title\nEOF\n";
+    }else{
+      print CSH "pstext -N $J $R $Utag -K -O -V $shift >>$psfile<<EOF\n $xmin $zmax $fsize0 0 $fontno LM $title\nEOF\n";  # LM or CM
+    }
+  }
 
-#=================================================================
-# KERNELS
 
 } else {
 
-  $iktype = 2;   # =1 rho-kappa-mu, =2 rhop-Vp-Vs
+#=================================================================
+#
+# KERNELS
+#
+#=================================================================
+
+  print "\nkernels\n\n";
 
   # labels for kernels
   $ik = 1;     # index for kernel, e.g., the time window for a single seismogram (Yahtse)
@@ -497,42 +563,51 @@ print CSH "pstext -N $J $R $Utag -K -O -V $shift >>$psfile<<EOF\n $xmin $zmax $f
     @ytitles    = ("Krho","Kalpha","Kbeta");
     $kfile1 = "${idir1}/proc000000_rhop_alpha_beta_kernel.dat";
   }
-  #@ytitles    = (" "," "," ");
-  @wavefield = ("wavefield","wavefield","wavefield");
 
   # kernel file for plotting
-  if (not -f $kfile1) {die("check if kfile1 $kfile1 exist or not\n");}
-  #$kfile2 = "${idir1}/kernel_rab.txt";
-  #if (not -f $kfile2) {die("check if kfile2 $kfile2 exist or not\n");}
+  if (not -f $kfile1) {die("check if kernel file $kfile1 exist or not\n");}
   $kfile = $kfile1;
-
-  $BscaleS = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+  m\@+-2\@+\":",$bs[0],"K",$pwr[0]);
-  #$BscaleS = sprintf("-B%2.2e:\" \":",$bs[0],"K",$pwr[0]);
 
   $name = "kernel_${tlab}_${ttag}";
   $psfile  = "$name.ps";
   $jpgfile = "$name.jpg";
 
-  $i = 0;
+  print CSH "echo\n";
+  print CSH "echo \"kernel file     = $kfile\"\n";
+  print CSH "echo \"postscript file = $psfile\";echo\n";
+  print CSH "echo\n";
+  # clean
+  print CSH "rm -f $psfile\n\n";
 
-  #$j1 = $frames[$i];           # forward frame
+  if($gmt5==1){
+    $BscaleS = sprintf("-B%2.2e+l\"%s (x, z, t), 10\@+%2.2i\@+  m\@+-2\@+\" -BS",$bs[0],"K",$pwr[0]);
+  }else{
+    # older gmt
+    $BscaleS = sprintf("-B%2.2e:\"%s (x, z, t), 10\@+%2.2i\@+  m\@+-2\@+\":",$bs[0],"K",$pwr[0]);
+    #$BscaleS = sprintf("-B%2.2e:\" \":",$bs[0],"K",$pwr[0]);
+  }
+  print CSH "echo \"scale B option \"$BscaleS\" \"\n";
+
+  if($gmt5==1){
+    $B1 = sprintf("-Bxa${btick1x}f${btick2x} -Bya${btick1z}f${btick2z}+l\"$ytitles[0]\" -BWSne$BG");
+    $B2 = sprintf("-Bxa${btick1x}f${btick2x} -Bya${btick1z}f${btick2z}+l\"$ytitles[1]\" -BWsne$BG");
+    $B3 = sprintf("-Bxa${btick1x}f${btick2x} -Bya${btick1z}f${btick2z}+l\"$ytitles[2]\" -BWsne$BG");
+  }else{
+    # older gmt
+    #$B0 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"t = $time s\"::.\"  \"");
+    $B1 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"$ytitles[0]\"::.\" \":WSne $BG");
+    $B2 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"$ytitles[1]\"::.\" \":Wsne $BG");
+    $B3 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"$ytitles[2]\"::.\" \":Wsne $BG");
+  }
+
+  $i = 0;
+  # forward frame
   $j1 = $pfirst + $i*$pint;
-  $j2 = $rend + $rfirst - $j1;  # corresponding adjoint frame
+  # corresponding adjoint frame
+  $j2 = $rend + $rfirst - $j1;
   $snap1 = sprintf("%07d",$j1);
   $snap2 = sprintf("%07d",$j2);
-  #$time = sprintf("%04d",$j1*$dt);
   $time = sprintf("%.3f",$j1*$dt);
-
-  print CSH "echo $kfile\n";
-  print CSH "echo $psfile\n";
-
-  #$B0 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"t = $time s\"::.\"  \"");
-  $B1 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"$ytitles[0]\"::.\" \":WSne");
-  $B2 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"$ytitles[1]\"::.\" \":Wsne");
-  $B3 = sprintf("-Ba${btick1x}f${btick2x}/a${btick1z}f${btick2z}:\"$ytitles[2]\"::.\" \":Wsne");
-  #$B      = "$B0:Wsne";
-  #$B_row1 = "$B0:WSne";
-  #if ($i == $imin) {$B = $B_row1;}
 
   $kmin = 0; $kmax = 2;
   for ($k = $kmin; $k <= $kmax; $k++) {
@@ -540,92 +615,130 @@ print CSH "pstext -N $J $R $Utag -K -O -V $shift >>$psfile<<EOF\n $xmin $zmax $f
     $comp = $k+1;
     if($k==0) {$B=$B1}; if($k==1) {$B=$B2}; if($k==2) {$B=$B3};
 
+    print CSH "echo;echo \"B option $B\";echo;\n";
+
     # START
-    if ($k == $kmin) {print CSH "psbasemap $J $R $B $BG -K -V $orient $origin > $psfile\n";
-    } else {print CSH "psbasemap $J $R $B $BG -K -O -V $dY $dY >> $psfile\n";}
+    if ($k == $kmin) {
+      print CSH "psbasemap $J $R $B -K -V $orient $origin > $psfile\n";
+    } else {
+      print CSH "psbasemap $J $R $B -K -O -V $dY >> $psfile\n";
+    }
+
+    print CSH "echo;echo \"norm = $norm[$k]\"\n";
 
     if ($icolor==1) {
+      print CSH "echo;echo \"using color\";\n";
       if ($igrd==1) {
+        print CSH "echo;echo \"plotting by grdimage\";echo;\n";
         #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $norm[$k]}' $kfile > dfile\n";
         #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $norm[$k]}' $kfile | nearneighbor -G$grdfile $R $interp\n";
         print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $norm[$k]}' $kfile | xyz2grd -G$grdfile $R $interp\n";
+        print CSH "grdinfo $grdfile\n";
         print CSH "grdimage $grdfile -Ccolor_${k}.cpt $J -K -O -V -Q >> $psfile\n";
       } else {
+        print CSH "echo;echo \"plotting by psxy\";\n";
         print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2) / $norm[$k]}' $kfile | psxy $R $J $minfo -Ccolor_${k}.cpt -K -O -V >> $psfile\n";
       }
 
       # mask points above topography
       if($imask==1) {
-      #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2)}' $kfile > maskpts\n";
-      printf CSH "grep NaN $kfile > maskpts\n";
-      print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2)}' maskpts | psxy $R $J $minfo -Ccolor_${k}.cpt -K -O -V >> $psfile\n";
-    }
+        print CSH "echo;echo \"using mask\";\n";
+        #print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2)}' $kfile > maskpts\n";
+        printf CSH "grep NaN $kfile > maskpts\n";
+        print CSH "awk '{print \$1/1000,\$2/1000,\$($comp+2)}' maskpts | psxy $R $J $minfo -Ccolor_${k}.cpt -K -O -V >> $psfile\n";
+      }
     }
 
-   # plot the boundaries of the geometrical units in the model
-   if ($ibound==1) {
-     $bfile = "/home/carltape/PROJECTS/yakutat/profiles/yakutat_p1_m3.xy";
-     #$bfile = "/home/carltape/PROJECTS/yahtse/data/icybay_chris/profiles_specfem2d/profile_p1.xy";
-     #$bfile = "/home/carltape/PROJECTS/yahtse/data/icybay_chris/profiles_specfem2d/profile_p1_top.xy";
-     if (not -f $bfile) {
-       die("check if bfile $bfile exist or not\n");
-     }
-     #print CSH "awk '{print \$1/1000,\$2/1000}' $bfile | psxy $J $R -W1.5p -m -K -O -V >> $psfile\n";
-     print CSH "awk '{print \$1,\$2}' $bfile | psxy $J $R -W1p -m -K -O -V >> $psfile\n";
-   }
+    # plot the boundaries of the geometrical units in the model
+    if ($ibound==1) {
+      print CSH "echo;echo \"using boundaries\";\n";
+      $bfile = "/home/carltape/PROJECTS/yakutat/profiles/yakutat_p1_m3.xy";
+      #$bfile = "/home/carltape/PROJECTS/yahtse/data/icybay_chris/profiles_specfem2d/profile_p1.xy";
+      #$bfile = "/home/carltape/PROJECTS/yahtse/data/icybay_chris/profiles_specfem2d/profile_p1_top.xy";
+      if (not -f $bfile) {
+        die("check if bfile $bfile exist or not\n");
+      }
+      #print CSH "awk '{print \$1/1000,\$2/1000}' $bfile | psxy $J $R -W1.5p -m -K -O -V >> $psfile\n";
+      print CSH "awk '{print \$1,\$2}' $bfile | psxy $J $R -W1p -m -K -O -V >> $psfile\n";
+    }
 
     #print CSH "pscoast $J $R $B -W1p -Na/1p -Dh -K -O -V >> $psfile\n";
     #print CSH "awk '{print \$2,\$1}' INPUT/oms_shelf |psxy $J $R $Wshelf -K -O -V >> $psfile\n";
     if ($k == $kmin) {
       print CSH "psscale -Ccolor_${k}.cpt $Dscale $BscaleS -K -O -V >> $psfile \n";
     }
-    print CSH "awk '{print \$3/1000,\$4/1000}' $recfile | psxy $J $R -K -O -V $rec >> $psfile\n";
-    print CSH "psxy -N $J $R -K -O -V $src >> $psfile<<EOF\n $srcx $srcz\nEOF\n";
-    print CSH "psbasemap $J $R $B -K -O -V >> $psfile\n";
+    #print CSH "awk '{print \$3/1000,\$4/1000}' $recfile | psxy $J $R -K -O -V $rec >> $psfile\n";
+    #print CSH "psxy -N $J $R -K -O -V $src >> $psfile<<EOF\n $srcx $srcz\nEOF\n";
+    #print CSH "psbasemap $J $R $B -K -O -V >> $psfile\n";
 
     # label the figures
     if(0==1) {
-      if($ik==1 && $k==1) {print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -4.2 0 14 0 $fontno CM P\nEOF\n";}
-      if($ik==2 && $k==2) {print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -4.2 0 14 0 $fontno CM S\nEOF\n";}
-      if($ik==3 && $k==1) {print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -2.8 -0.3 14 0 $fontno CM P\nEOF\n";}
-      if($ik==3 && $k==2) {print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -2.4 0.4 14 -5 $fontno CM Rayleigh\nEOF\n";}
-      if($ik==4 && $k==2) {
-         print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -4.2 0 14 0 $fontno CM S\nEOF\n";
-         print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -2.4 0.4 14 -5 $fontno CM Rayleigh (x2)\nEOF\n";
+      print CSH "echo;echo \"using labels\";\n";
+      if($gmt5==1){
+      }else{
+        if($ik==1 && $k==1) {print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -4.2 0 14 0 $fontno CM P\nEOF\n";}
+        if($ik==2 && $k==2) {print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -4.2 0 14 0 $fontno CM S\nEOF\n";}
+        if($ik==3 && $k==1) {print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -2.8 -0.3 14 0 $fontno CM P\nEOF\n";}
+        if($ik==3 && $k==2) {print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -2.4 0.4 14 -5 $fontno CM Rayleigh\nEOF\n";}
+        if($ik==4 && $k==2) {
+          print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -4.2 0 14 0 $fontno CM S\nEOF\n";
+          print CSH "pstext $J $R -K -O -V >>$psfile<<EOF\n -2.4 0.4 14 -5 $fontno CM Rayleigh (x2)\nEOF\n";
+        }
       }
     }
 
     # plot title
     $xtx = $xmin+0.98*$xran; $ztx = $zmin+0.93*$zran;
-    print "\ntitle plotting at $xtx, $ztx\n";
-    $textinfo = "-G0 -W255 -C2p -N";
-    print CSH "pstext $textinfo $J $R -K -O -V >>$psfile<<EOF\n $xtx $ztx 16 0 $fontno RT $titles[$k]\nEOF\n";
+    $textinfo = "-G255"; #"-G0 -W255 -C2p -N";
+    print "\ntitle plotting at $xtx, $ztx info: $textinfo $titles[$k]\n";
+    if($gmt5==1){
+      print CSH "pstext $textinfo $J $R -K -O -V -F+f+a+j >>$psfile<<EOF\n $xtx $ztx 16,$fontno 0 RT $titles[$k]\nEOF\n";
+    }else{
+      # older gmt
+      print CSH "pstext $textinfo $J $R -K -O -V >>$psfile<<EOF\n $xtx $ztx 16 0 $fontno RT $titles[$k]\nEOF\n";
+    }
 
+    print CSH "echo \"iteration $k done\";echo\n\n\n";
   }
 
   if($iheader==1) {
-  # plot title and GMT header
-  $plabel = "plot_wavefield.pl";
-  $ux = 0;
-  $uy = $ywid + 0.3;
-  $Utag = "-U/$ux/$uy/$plabel"; # GMT header
-  $shift = "-X0i -Y0.7i";
-  if ($ipsv==1) {$tlab0 = "PSV";} else {$tlab0 = "SH";}
-  $title = "$tlab0 kernel -- $tlab";
-  print CSH "pstext -N $J $R $Utag -K -O -V $shift >>$psfile<<EOF\n $xmin $zmax $fsize0 0 $fontno LM $title\nEOF\n";
-}
-
+    # plot title and GMT header
+    print CSH "echo;echo \"plotting header\";echo;\n";
+    $plabel = "plot_wavefield.pl";
+    $ux = 0;
+    $uy = $ywid + 0.3;
+    $Utag = "-U/$ux/$uy/$plabel"; # GMT header
+    $shift = "-X0i -Y0.7i";
+    if ($ipsv==1) {$tlab0 = "PSV";} else {$tlab0 = "SH";}
+    $title = "$tlab0 kernel -- $tlab";
+    if($gmt5==1){
+      print CSH "pstext -N $J $R $Utag -K -O -V $shift -F+f+a+j >>$psfile<<EOF\n $xmin $zmax $fsize0,$fontno 0 LM $title\nEOF\n";
+    }else{
+      # older gmt
+      print CSH "pstext -N $J $R $Utag -K -O -V $shift >>$psfile<<EOF\n $xmin $zmax $fsize0 0 $fontno LM $title\nEOF\n";
+    }
+  }
 }
 
 #=================================================================
 
 #-------------------------
-print CSH "pstext $J -R0/1/0/1 -O -V >>$psfile<<EOF\n 10 10 $fsize0 0 $fontno CM junk \nEOF\n";  # FINISH
-#print CSH "convert $psfile $jpgfile\n";
-print CSH "echo output psfile: $psfile\n";
+# FINISH
+#print CSH "pstext $J -R0/1/0/1 -O -V >>$psfile<<EOF\n 10 10 $fsize0 0 $fontno CM junk \nEOF\n";
+print CSH "psxy $J -R0/1/0/1 -O -V >>$psfile<<EOF\nEOF\n\n";
+# cleanup
+print CSH "rm -f temp.grd color_0.cpt color_1.cpt color_2.cpt\n";
+# user output
+print CSH "\necho\necho \"see output psfile: $psfile\"\necho\n";
 
+# converts (using ImageMagick command)
+#print CSH "convert $psfile $jpgfile\n";
 close (CSH);
+
+# executes script
 system("sh -f $shfile");
-system("gv $psfile &");
+
+# opens output ps-file
+#system("gv $psfile &");
 
 #=================================================================
