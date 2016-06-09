@@ -364,7 +364,7 @@
 
 ! compute source array for adjoint source
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,MAX_STRING_LEN
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,MAX_STRING_LEN,IMAIN
 
   use specfem_par,only: nadj_rec_local,nrec,nrecloc,NSTEP,NPROC,SIMULATION_TYPE,SU_FORMAT, &
                         adj_sourcearrays, &
@@ -390,6 +390,12 @@
 
   ! adjoint calculation
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'adjoint sources:'
+      call flush_IMAIN()
+    endif
 
     ! for GPU-version
     if (GPU_MODE) then
@@ -419,6 +425,12 @@
 
     ! reads in adjoint source files
     if (.not. SU_FORMAT) then
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*) '  reading ASCII adjoint source files'
+        call flush_IMAIN()
+      endif
+
       ! temporary array
       allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLZ))
 
@@ -435,11 +447,25 @@
           adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
         endif
       enddo
+      ! checks
+      if (irec_local /= nadj_rec_local) stop 'Error invalid number of local adjoint sources found'
       ! frees temporary array
       deallocate(adj_sourcearray)
     else
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*) '  reading SU-format adjoint source files'
+        call flush_IMAIN()
+      endif
+
       ! (SU_FORMAT)
       call compute_arrays_adj_source_SU(seismotype)
+    endif
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  number of adjoint sources = ',nrec
+      call flush_IMAIN()
     endif
   else
     ! dummy allocation
@@ -588,7 +614,7 @@
         endif
 
 #ifdef USE_MPI
-        call MPI_bcast(anglesource_recv,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+        call bcast_all_singledp(anglesource_recv)
         anglesource(i_source) = anglesource_recv
 #endif
       endif !  if (is_proc_source(i_source) == 1)

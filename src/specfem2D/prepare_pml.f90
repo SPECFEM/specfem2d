@@ -52,6 +52,7 @@
   if (PML_BOUNDARY_CONDITIONS .and. anyabs_glob) then
     ! user output
     if (myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) 'Preparing PML'
       call flush_IMAIN()
     endif

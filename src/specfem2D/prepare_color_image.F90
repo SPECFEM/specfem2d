@@ -295,7 +295,7 @@
   double precision, dimension(:), allocatable  :: data_pixel_recv
   double precision, dimension(:), allocatable  :: data_pixel_send
   integer, dimension(:,:), allocatable  :: num_pixel_recv
-  integer, dimension(:), allocatable  :: nb_pixel_per_proc
+  integer, dimension(:), allocatable  :: tmp_nb_pixel_per_proc
   integer :: ier,iproc
 #else
   integer :: dummy
@@ -396,15 +396,13 @@
 ! assembling array image_color_vp_display on process zero for color output
 #ifdef USE_MPI
 
-  allocate(nb_pixel_per_proc(NPROC))
-  nb_pixel_per_proc(:) = 0
-  call MPI_GATHER( nb_pixel_loc, 1, MPI_INTEGER, nb_pixel_per_proc(1), &
-                  1, MPI_INTEGER, 0, MPI_COMM_WORLD, ier)
-
+  allocate(tmp_nb_pixel_per_proc(0:NPROC-1))
+  tmp_nb_pixel_per_proc(:) = 0
+  call gather_all_singlei(nb_pixel_loc,tmp_nb_pixel_per_proc,NPROC)
 
   if (myrank == 0) then
-     allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),NPROC))
-     allocate(data_pixel_recv(maxval(nb_pixel_per_proc(:))))
+     allocate(num_pixel_recv(maxval(tmp_nb_pixel_per_proc(:)),NPROC))
+     allocate(data_pixel_recv(maxval(tmp_nb_pixel_per_proc(:))))
   endif
   allocate(data_pixel_send(nb_pixel_loc))
 
@@ -412,13 +410,13 @@
     if (myrank == 0) then
       do iproc = 1, NPROC-1
 
-        call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc+1), MPI_INTEGER, &
+        call MPI_RECV(num_pixel_recv(1,iproc+1),tmp_nb_pixel_per_proc(iproc), MPI_INTEGER, &
                 iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
-        call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
+        call MPI_RECV(data_pixel_recv(1),tmp_nb_pixel_per_proc(iproc), MPI_DOUBLE_PRECISION, &
                 iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
-        do k = 1, nb_pixel_per_proc(iproc+1)
+        do k = 1, tmp_nb_pixel_per_proc(iproc)
           j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
           i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
 
@@ -457,7 +455,7 @@
     endif
   endif
 
-  deallocate(nb_pixel_per_proc)
+  deallocate(tmp_nb_pixel_per_proc)
   deallocate(data_pixel_send)
   if (myrank == 0) then
     deallocate(num_pixel_recv)

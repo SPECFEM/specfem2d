@@ -48,7 +48,7 @@
   ! GPU_MODE now defined in Par_file
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) "GPU Preparing Fields and Constants on Device."
+    write(IMAIN,*) "Preparing GPU Fields and Constants on Device."
     call flush_IMAIN()
   endif
 

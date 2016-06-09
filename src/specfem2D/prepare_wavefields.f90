@@ -45,6 +45,7 @@
 
   ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
   if (myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) 'Preparing array allocations'
     call flush_IMAIN()
   endif

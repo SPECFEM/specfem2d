@@ -48,10 +48,6 @@
 
   use specfem_par, only : AXISYM,is_on_the_axis,xiglj,ispec_is_acoustic,USE_TRICK_FOR_BETTER_PRESSURE
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   implicit none
 
   integer :: nrec,nspec,nglob,ngnod,npgeo
@@ -232,34 +228,19 @@
   allocate(gather_ispec_selected_rec(nrec,NPROC),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating gather array')
 
-#ifdef USE_MPI
   ! gathers infos onto master process
-  call MPI_GATHER(final_distance(1),nrec,MPI_DOUBLE_PRECISION,&
-        gather_final_distance(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(xi_receiver(1),nrec,MPI_DOUBLE_PRECISION,&
-        gather_xi_receiver(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(gamma_receiver(1),nrec,MPI_DOUBLE_PRECISION,&
-        gather_gamma_receiver(1,1),nrec,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_GATHER(ispec_selected_rec(1),nrec,MPI_INTEGER,&
-        gather_ispec_selected_rec(1,1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call gather_all_dp(final_distance(1),nrec,gather_final_distance(1,1),nrec,NPROC)
+  call gather_all_dp(xi_receiver(1),nrec,gather_xi_receiver(1,1),nrec,NPROC)
+  call gather_all_dp(gamma_receiver(1),nrec,gather_gamma_receiver(1,1),nrec,NPROC)
+
+  call gather_all_i(ispec_selected_rec(1),nrec,gather_ispec_selected_rec(1,1),nrec, NPROC)
 
   if (myrank == 0) then
     do irec = 1, nrec
       which_proc_receiver(irec:irec) = minloc(gather_final_distance(irec,:)) - 1
     enddo
   endif
-
-  call MPI_BCAST(which_proc_receiver(1),nrec,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
-
-#else
-  ! serial
-  gather_final_distance(:,1) = final_distance(:)
-
-  gather_xi_receiver(:,1) = xi_receiver(:)
-  gather_gamma_receiver(:,1) = gamma_receiver(:)
-  gather_ispec_selected_rec(:,1) = ispec_selected_rec(:)
-  which_proc_receiver(:) = 0
-#endif
+  call bcast_all_i(which_proc_receiver(1),nrec)
 
   if (USE_TRICK_FOR_BETTER_PRESSURE) then
     do irec= 1,nrec

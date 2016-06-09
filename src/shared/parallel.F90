@@ -169,6 +169,100 @@
 
 #endif
 
+!-------------------------------------------------------------------------------------------------
+!
+! MPI broadcasting helper
+!
+!-------------------------------------------------------------------------------------------------
+
+
+  subroutine bcast_all_i(buffer, countval)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  integer :: countval
+  integer, dimension(countval) :: buffer
+
+#ifdef USE_MPI
+  integer :: ier
+
+  call MPI_BCAST(buffer,countval,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+#endif
+
+  end subroutine bcast_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_singlei(buffer)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  integer :: buffer
+
+#ifdef USE_MPI
+  integer :: ier
+
+  call MPI_BCAST(buffer,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+#endif
+
+  end subroutine bcast_all_singlei
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_singlel(buffer)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  logical :: buffer
+
+#ifdef USE_MPI
+  integer :: ier
+
+  call MPI_BCAST(buffer,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+#endif
+
+  end subroutine bcast_all_singlel
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_singledp(buffer)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  double precision :: buffer
+
+#ifdef USE_MPI
+  integer :: ier
+
+  call MPI_BCAST(buffer,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#endif
+
+  end subroutine bcast_all_singledp
+
+
 
 !-------------------------------------------------------------------------------------------------
 !
@@ -485,6 +579,91 @@
 #endif
 
   end subroutine sum_all_all_i
+
+
+!-------------------------------------------------------------------------------------------------
+!
+! MPI gather helper
+!
+!-------------------------------------------------------------------------------------------------
+
+  subroutine gather_all_i(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  integer :: sendcnt, recvcount, NPROC
+  integer, dimension(sendcnt) :: sendbuf
+  integer, dimension(recvcount,0:NPROC-1) :: recvbuf
+
+#ifdef USE_MPI
+  ! local parameters
+  integer :: ier
+
+  call MPI_GATHER(sendbuf,sendcnt,MPI_INTEGER,recvbuf,recvcount,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+#else
+  recvbuf(:,0) = sendbuf(:)
+#endif
+
+  end subroutine gather_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gather_all_dp(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  integer :: sendcnt, recvcount, NPROC
+  double precision, dimension(sendcnt) :: sendbuf
+  double precision, dimension(recvcount,0:NPROC-1) :: recvbuf
+
+#ifdef USE_MPI
+  ! local parameters
+  integer :: ier
+
+  call MPI_GATHER(sendbuf,sendcnt,MPI_DOUBLE_PRECISION,recvbuf,recvcount,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#else
+  recvbuf(:,0) = sendbuf(:)
+#endif
+
+  end subroutine gather_all_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gather_all_singlei(sendbuf, recvbuf, NPROC)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  integer :: NPROC
+  integer :: sendbuf
+  integer, dimension(0:NPROC-1) :: recvbuf
+
+#ifdef USE_MPI
+  ! local parameters
+  integer :: ier
+
+  call MPI_GATHER(sendbuf,1,MPI_INTEGER,recvbuf,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+#else
+  recvbuf(0) = sendbuf
+#endif
+
+  end subroutine gather_all_singlei
+
 
 !-------------------------------------------------------------------------------------------------
 !

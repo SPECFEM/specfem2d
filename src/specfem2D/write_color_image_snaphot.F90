@@ -210,10 +210,10 @@
   if (NPROC > 1) then
     if (myrank == 0) then
       do iproc = 1, NPROC-1
-        call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc+1), MPI_DOUBLE_PRECISION, &
+        call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc), MPI_DOUBLE_PRECISION, &
                       iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
-        do k = 1, nb_pixel_per_proc(iproc+1)
+        do k = 1, nb_pixel_per_proc(iproc)
           j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
           i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
 
@@ -269,11 +269,14 @@
       call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
     endif
   endif
+  call synchronize_all()
 #else
   ! dummy to avoid compiler warning
   ier = 0
   iproc = NPROC
 #endif
+
+  call synchronize_all()
 
   ! creates image
   if (myrank == 0) then
@@ -283,6 +286,7 @@
     write(IMAIN,*) 'Color image created'
     call flush_IMAIN()
   endif
+  call synchronize_all()
 
   end subroutine write_color_image_snaphot
 

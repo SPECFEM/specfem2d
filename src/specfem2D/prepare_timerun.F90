@@ -200,6 +200,7 @@
 
   ! user output
   if (myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) 'Preparing mass matrices'
     call flush_IMAIN()
   endif
@@ -437,7 +438,7 @@
   implicit none
 
   ! local parameters
-  integer :: i,j,k,iproc
+  integer :: i,j,k,iproc,ipixel
   integer :: ier
 
   ! postscripts
@@ -465,6 +466,7 @@
 
   ! user output
   if (myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) 'Preparing image coloring'
     call flush_IMAIN()
   endif
@@ -505,24 +507,24 @@
     ! pixel owned by the local process (useful for parallel jobs)
     allocate(num_pixel_loc(nb_pixel_loc))
 
-    nb_pixel_loc = 0
+    ipixel = 0
     do i = 1, NX_IMAGE_color
        do j = 1, NZ_IMAGE_color
           if (iglob_image_color(i,j) /= -1) then
-             nb_pixel_loc = nb_pixel_loc + 1
-             num_pixel_loc(nb_pixel_loc) = (j-1)*NX_IMAGE_color + i
+             ipixel = ipixel + 1
+             num_pixel_loc(ipixel) = (j-1)*NX_IMAGE_color + i
           endif
        enddo
     enddo
+    if (ipixel /= nb_pixel_loc) stop 'Error invalid pixel count for color image'
 
     ! filling array iglob_image_color, containing info on which process owns which pixels.
     iproc = 0
     k = 0
 #ifdef USE_MPI
-    allocate(nb_pixel_per_proc(NPROC))
-
-    call MPI_GATHER( nb_pixel_loc, 1, MPI_INTEGER, nb_pixel_per_proc(1), &
-                    1, MPI_INTEGER, 0, MPI_COMM_WORLD, ier)
+    allocate(nb_pixel_per_proc(0:NPROC-1))
+    nb_pixel_per_proc(:) = 0
+    call gather_all_singlei(nb_pixel_loc,nb_pixel_per_proc,NPROC)
 
     if (myrank == 0) then
       allocate(num_pixel_recv(maxval(nb_pixel_per_proc(:)),NPROC))
@@ -531,32 +533,32 @@
 
     allocate(data_pixel_send(nb_pixel_loc))
     if (NPROC > 1) then
-       if (myrank == 0) then
+      if (myrank == 0) then
+        ! master collects
+        do iproc = 1, NPROC-1
+          call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc), MPI_INTEGER, &
+                        iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          do k = 1, nb_pixel_per_proc(iproc)
+            j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
+            i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
 
-          do iproc = 1, NPROC-1
+            ! avoid edge effects
+            if (i < 1) i = 1
+            if (j < 1) j = 1
 
-             call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc+1), MPI_INTEGER, &
-                  iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-             do k = 1, nb_pixel_per_proc(iproc+1)
-                j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
-                i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
+            if (i > NX_IMAGE_color) i = NX_IMAGE_color
+            if (j > NZ_IMAGE_color) j = NZ_IMAGE_color
 
-                ! avoid edge effects
-                if (i < 1) i = 1
-                if (j < 1) j = 1
+            iglob_image_color(i,j) = iproc
 
-                if (i > NX_IMAGE_color) i = NX_IMAGE_color
-                if (j > NZ_IMAGE_color) j = NZ_IMAGE_color
-
-                iglob_image_color(i,j) = iproc
-
-             enddo
           enddo
+        enddo
 
-       else
-          call MPI_SEND(num_pixel_loc(1),nb_pixel_loc,MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-       endif
+      else
+        call MPI_SEND(num_pixel_loc(1),nb_pixel_loc,MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+      endif
     endif
+    call synchronize_all()
 #endif
 
     ! user output
@@ -740,25 +742,27 @@
   ! checks if anything to do
   if (.not. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) return
 
-  ! user output
-  if (myrank == 0) then
-    write(IMAIN,*) 'Preparing forward/adjoint simulation'
-    call flush_IMAIN()
-  endif
 
   ! prepares kernels
-  if (SIMULATION_TYPE == 3) call prepare_timerun_kernels()
-
-  ! Absorbing boundaries
-  if (STACEY_ABSORBING_CONDITIONS) then
+  if (SIMULATION_TYPE == 3) then
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*) '  using Stacey boundary arrays'
+      write(IMAIN,*)
+      write(IMAIN,*) 'Preparing adjoint simulation'
       call flush_IMAIN()
     endif
 
-    ! Reads last frame for forward wavefield reconstruction
-    if (SIMULATION_TYPE == 3) then
+    call prepare_timerun_kernels()
+
+    ! Absorbing boundaries
+    if (STACEY_ABSORBING_CONDITIONS) then
+      ! Reads last frame for forward wavefield reconstruction
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*) '  reading Stacey boundary arrays'
+        call flush_IMAIN()
+      endif
+
       ! reads in absorbing boundary data
       if (any_acoustic) call prepare_absorb_read_acoustic()
       if (any_elastic) call prepare_absorb_read_elastic()
@@ -771,7 +775,8 @@
     if (USE_PORO_VISCOUS_DAMPING) then
       ! user output
       if (myrank == 0) then
-        write(IMAIN,*) '  using viscous damping arrays for poroelastic domain'
+        write(IMAIN,*)
+        write(IMAIN,*) 'Preparing save forward/adjoint simulation for poroelasticity'
         call flush_IMAIN()
       endif
 
@@ -786,6 +791,12 @@
 
       write(outputname,'(a,i6.6,a)') 'viscodampingx',myrank,'.bin'
       write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
+
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*) '  using viscous damping arrays for poroelastic domain'
+        call flush_IMAIN()
+      endif
 
       ! file i/o
       if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
@@ -1090,6 +1101,7 @@
 
   ! user output
   if (myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) 'Preparing initial field for plane wave source'
     call flush_IMAIN()
   endif
@@ -1185,6 +1197,7 @@
 
   ! user output
   if (myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) 'Preparing noise simulation'
     call flush_IMAIN()
   endif
@@ -1314,6 +1327,7 @@
 
   ! user output
   if (myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) 'Preparing attenuation'
     call flush_IMAIN()
   endif

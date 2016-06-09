@@ -195,174 +195,176 @@
   ! user output
   if (myrank == 0) then
      write(IMAIN,*) '  Max norm = ',dispmax
+     call flush_IMAIN()
   endif
+  call synchronize_all()
 
 !
 !---- open PostScript file
 !
   if (myrank == 0) then
-  write(file_name,"('OUTPUT_FILES/vect',i7.7,'.ps')") it
-  open(unit=24,file=file_name,status='unknown')
+    write(file_name,"('OUTPUT_FILES/vect',i7.7,'.ps')") it
+    open(unit=24,file=file_name,status='unknown',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening postscript file for image output')
 
-!
-!---- write PostScript header
-!
-  write(24,10) simulation_title
-  write(24,*) '/CM {28.5 mul} def'
-  write(24,*) '/LR {rlineto} def'
-  write(24,*) '/LT {lineto} def'
-  write(24,*) '/L {lineto} def'
-  write(24,*) '/MR {rmoveto} def'
-  write(24,*) '/MV {moveto} def'
-  write(24,*) '/M {moveto} def'
-  write(24,*) '/ST {stroke} def'
-  write(24,*) '/CP {closepath} def'
-  write(24,*) '/RG {setrgbcolor} def'
-  write(24,*) '/GF {gsave fill grestore} def'
-  write(24,*) '% different useful symbols'
-  write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
-  write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
-  write(24,*) 'CP fill} def'
-  write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
-  write(24,*) 'CP fill} def'
-  write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
-  write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
-  write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
-  write(24,*) '0.01 CM setlinewidth} def'
-  write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
-  write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
-  write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
-  write(24,*) 'grestore 0.01 CM setlinewidth} def'
-  write(24,*) '%'
-  write(24,*) '% gray levels for the velocity model'
-  write(24,*) '/BK {setgray fill} def'
-  write(24,*) '% black and white version'
-  write(24,*) '%/BK {pop 1 setgray fill} def'
-  write(24,*) '%'
-  write(24,*) '% magenta for vectors'
-  write(24,*) '/Colvects {0 setlinewidth 1. 0. 1. RG} def'
-  write(24,*) '% black and white version'
-  write(24,*) '%/Colvects {0 setlinewidth 0. setgray} def'
-  write(24,*) '%'
-  write(24,*) '% chartreuse for macrobloc mesh'
-  write(24,*) '/Colmesh {0 setlinewidth 0.5 1. 0. RG} def'
-  write(24,*) '% black and white version'
-  write(24,*) '%/Colmesh {0 setlinewidth 0. setgray} def'
-  write(24,*) '%'
-  write(24,*) '% cyan for sources and receivers'
-  write(24,*) '/Colreceiv {0. 1. 1. RG} def'
-  write(24,*) '% black and white version'
-  write(24,*) '%/Colreceiv {0. setgray} def'
-  write(24,*) '%'
-  write(24,*) '% macro to draw an arrow'
-  write(24,*) '/F {MV LR gsave LR ST grestore LR ST} def'
-  write(24,*) '% macro to draw the contour of the elements'
-  write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
-  write(24,*) '%'
-  write(24,*) '0 setlinewidth'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.35 CM scalefont setfont'
-  write(24,*) '%'
-  write(24,*) '/vshift ',-height/2,' CM def'
-  write(24,*) '/Rshow { currentpoint stroke MV'
-  write(24,*) 'dup stringwidth pop neg vshift MR show } def'
-  write(24,*) '/Cshow { currentpoint stroke MV'
-  write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
-  write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
-  write(24,*) '%'
-  write(24,*) 'gsave newpath 90 rotate'
-  write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
-  write(24,*) '% uncomment this to zoom on parts of the mesh'
-  write(24,*) '% -32 CM -21 CM translate 3. 3. scale'
-  write(24,*) '% -52 CM -24 CM translate 4. 4. scale'
-  write(24,*) '%'
+    !
+    !---- write PostScript header
+    !
+    write(24,10) simulation_title
+    write(24,*) '/CM {28.5 mul} def'
+    write(24,*) '/LR {rlineto} def'
+    write(24,*) '/LT {lineto} def'
+    write(24,*) '/L {lineto} def'
+    write(24,*) '/MR {rmoveto} def'
+    write(24,*) '/MV {moveto} def'
+    write(24,*) '/M {moveto} def'
+    write(24,*) '/ST {stroke} def'
+    write(24,*) '/CP {closepath} def'
+    write(24,*) '/RG {setrgbcolor} def'
+    write(24,*) '/GF {gsave fill grestore} def'
+    write(24,*) '% different useful symbols'
+    write(24,*) '/Point {2 0 360 arc CP 0 setgray fill} def'
+    write(24,*) '/VDot {-0.75 -1.5 MR 1.5 0 LR 0 3. LR -1.5 0 LR'
+    write(24,*) 'CP fill} def'
+    write(24,*) '/HDot {-1.5 -0.75 MR 3. 0 LR 0 1.5 LR -3. 0 LR'
+    write(24,*) 'CP fill} def'
+    write(24,*) '/Cross {gsave 0.05 CM setlinewidth'
+    write(24,*) 'gsave 3 3 MR -6. -6. LR ST grestore'
+    write(24,*) 'gsave 3 -3 MR -6. 6. LR ST grestore'
+    write(24,*) '0.01 CM setlinewidth} def'
+    write(24,*) '/SmallLine {MV 0.07 CM 0 rlineto} def'
+    write(24,*) '/Diamond {gsave 0.05 CM setlinewidth 0 4.2 MR'
+    write(24,*) '-3 -4.2 LR 3 -4.2 LR 3 4.2 LR CP ST'
+    write(24,*) 'grestore 0.01 CM setlinewidth} def'
+    write(24,*) '%'
+    write(24,*) '% gray levels for the velocity model'
+    write(24,*) '/BK {setgray fill} def'
+    write(24,*) '% black and white version'
+    write(24,*) '%/BK {pop 1 setgray fill} def'
+    write(24,*) '%'
+    write(24,*) '% magenta for vectors'
+    write(24,*) '/Colvects {0 setlinewidth 1. 0. 1. RG} def'
+    write(24,*) '% black and white version'
+    write(24,*) '%/Colvects {0 setlinewidth 0. setgray} def'
+    write(24,*) '%'
+    write(24,*) '% chartreuse for macrobloc mesh'
+    write(24,*) '/Colmesh {0 setlinewidth 0.5 1. 0. RG} def'
+    write(24,*) '% black and white version'
+    write(24,*) '%/Colmesh {0 setlinewidth 0. setgray} def'
+    write(24,*) '%'
+    write(24,*) '% cyan for sources and receivers'
+    write(24,*) '/Colreceiv {0. 1. 1. RG} def'
+    write(24,*) '% black and white version'
+    write(24,*) '%/Colreceiv {0. setgray} def'
+    write(24,*) '%'
+    write(24,*) '% macro to draw an arrow'
+    write(24,*) '/F {MV LR gsave LR ST grestore LR ST} def'
+    write(24,*) '% macro to draw the contour of the elements'
+    write(24,*) '/CO {M counttomark 2 idiv {L} repeat cleartomark CP} def'
+    write(24,*) '%'
+    write(24,*) '0 setlinewidth'
+    write(24,*) '/Times-Roman findfont'
+    write(24,*) '.35 CM scalefont setfont'
+    write(24,*) '%'
+    write(24,*) '/vshift ',-height/2,' CM def'
+    write(24,*) '/Rshow { currentpoint stroke MV'
+    write(24,*) 'dup stringwidth pop neg vshift MR show } def'
+    write(24,*) '/Cshow { currentpoint stroke MV'
+    write(24,*) 'dup stringwidth pop -2 div vshift MR show } def'
+    write(24,*) '/fN {/Helvetica-Bold findfont ',height,' CM scalefont setfont} def'
+    write(24,*) '%'
+    write(24,*) 'gsave newpath 90 rotate'
+    write(24,*) '0 ',-sizez,' CM translate 1. 1. scale'
+    write(24,*) '% uncomment this to zoom on parts of the mesh'
+    write(24,*) '% -32 CM -21 CM translate 3. 3. scale'
+    write(24,*) '% -52 CM -24 CM translate 4. 4. scale'
+    write(24,*) '%'
 
-!
-!--- write captions of PostScript figure
-!
-  write(24,*) '0 setgray'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.5 CM scalefont setfont'
+    !
+    !--- write captions of PostScript figure
+    !
+    write(24,*) '0 setgray'
+    write(24,*) '/Times-Roman findfont'
+    write(24,*) '.5 CM scalefont setfont'
 
-  write(24,*) '24. CM 1.2 CM MV'
-  write(24,610) usoffset,it
-  write(24,*) '%'
+    write(24,*) '24. CM 1.2 CM MV'
+    write(24,610) usoffset,it
+    write(24,*) '%'
 
-  write(24,*) '24. CM 1.95 CM MV'
-  timeval = it*deltat
-  if (timeval >= 1.d-3 .and. timeval < 1000.d0) then
-    write(24,600) usoffset,timeval
-  else
-    write(24,601) usoffset,timeval
-  endif
-  write(24,*) '%'
-  write(24,*) '24. CM 2.7 CM MV'
-  write(24,640) usoffset,dispmax
-  write(24,*) '%'
-  write(24,*) '24. CM 3.45 CM MV'
-  write(24,620) usoffset,cutsnaps*100.d0
+    write(24,*) '24. CM 1.95 CM MV'
+    timeval = it*deltat
+    if (timeval >= 1.d-3 .and. timeval < 1000.d0) then
+      write(24,600) usoffset,timeval
+    else
+      write(24,601) usoffset,timeval
+    endif
+    write(24,*) '%'
+    write(24,*) '24. CM 2.7 CM MV'
+    write(24,640) usoffset,dispmax
+    write(24,*) '%'
+    write(24,*) '24. CM 3.45 CM MV'
+    write(24,620) usoffset,cutsnaps*100.d0
 
-  write(24,*) '%'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.6 CM scalefont setfont'
-  if (colors == 1) write(24,*) '.4 .9 .9 setrgbcolor'
-  write(24,*) '11 CM 1.1 CM MV'
-  write(24,*) '(X axis) show'
-  write(24,*) '%'
-  write(24,*) '1.4 CM 9.5 CM MV'
-  write(24,*) 'currentpoint gsave translate 90 rotate 0 0 moveto'
-  write(24,*) '(Z axis) show'
-  write(24,*) 'grestore'
-  write(24,*) '%'
-  write(24,*) '/Times-Roman findfont'
-  write(24,*) '.7 CM scalefont setfont'
-  if (colors == 1) write(24,*) '.8 0 .8 setrgbcolor'
-  write(24,*) '24.35 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  if (imagetype_postscript == 1) then
-    write(24,*) '(Displacement vector field) show'
-  else if (imagetype_postscript == 2) then
-    write(24,*) '(Velocity vector field) show'
-  else if (imagetype_postscript == 3) then
-    write(24,*) '(Acceleration vector field) show'
-  else
-    call exit_MPI(myrank,'Bad field code in PostScript display')
-  endif
-  write(24,*) 'grestore'
-  write(24,*) '25.35 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-  write(24,*) '(',simulation_title,') show'
-  write(24,*) 'grestore'
-  write(24,*) '26.45 CM 18.9 CM MV'
-  write(24,*) usoffset,' CM 2 div neg 0 MR'
-  write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+    write(24,*) '%'
+    write(24,*) '/Times-Roman findfont'
+    write(24,*) '.6 CM scalefont setfont'
+    if (colors == 1) write(24,*) '.4 .9 .9 setrgbcolor'
+    write(24,*) '11 CM 1.1 CM MV'
+    write(24,*) '(X axis) show'
+    write(24,*) '%'
+    write(24,*) '1.4 CM 9.5 CM MV'
+    write(24,*) 'currentpoint gsave translate 90 rotate 0 0 moveto'
+    write(24,*) '(Z axis) show'
+    write(24,*) 'grestore'
+    write(24,*) '%'
+    write(24,*) '/Times-Roman findfont'
+    write(24,*) '.7 CM scalefont setfont'
+    if (colors == 1) write(24,*) '.8 0 .8 setrgbcolor'
+    write(24,*) '24.35 CM 18.9 CM MV'
+    write(24,*) usoffset,' CM 2 div neg 0 MR'
+    write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+    if (imagetype_postscript == 1) then
+      write(24,*) '(Displacement vector field) show'
+    else if (imagetype_postscript == 2) then
+      write(24,*) '(Velocity vector field) show'
+    else if (imagetype_postscript == 3) then
+      write(24,*) '(Acceleration vector field) show'
+    else
+      call exit_MPI(myrank,'Bad field code in PostScript display')
+    endif
+    write(24,*) 'grestore'
+    write(24,*) '25.35 CM 18.9 CM MV'
+    write(24,*) usoffset,' CM 2 div neg 0 MR'
+    write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+    write(24,*) '(',simulation_title,') show'
+    write(24,*) 'grestore'
+    write(24,*) '26.45 CM 18.9 CM MV'
+    write(24,*) usoffset,' CM 2 div neg 0 MR'
+    write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
 
-  if (coupled_acoustic_elastic) then
-    write(24,*) '(Coupled Acoustic/Elastic Wave 2D - SEM) show'
-  else if (coupled_acoustic_poro) then
-    write(24,*) '(Coupled Acoustic/Poroelastic Wave 2D - SEM) show'
-  else if (coupled_elastic_poro) then
-    write(24,*) '(Coupled Elastic/Poroelastic Wave 2D - SEM) show'
-  else if (any_acoustic) then
-    write(24,*) '(Acoustic Wave 2D - Spectral Element Method) show'
-  else if (any_poroelastic) then
-    write(24,*) '(Poroelastic Wave 2D - Spectral Element Method) show'
-  else
-    write(24,*) '(Elastic Wave 2D - Spectral Element Method) show'
-  endif
+    if (coupled_acoustic_elastic) then
+      write(24,*) '(Coupled Acoustic/Elastic Wave 2D - SEM) show'
+    else if (coupled_acoustic_poro) then
+      write(24,*) '(Coupled Acoustic/Poroelastic Wave 2D - SEM) show'
+    else if (coupled_elastic_poro) then
+      write(24,*) '(Coupled Elastic/Poroelastic Wave 2D - SEM) show'
+    else if (any_acoustic) then
+      write(24,*) '(Acoustic Wave 2D - Spectral Element Method) show'
+    else if (any_poroelastic) then
+      write(24,*) '(Poroelastic Wave 2D - Spectral Element Method) show'
+    else
+      write(24,*) '(Elastic Wave 2D - Spectral Element Method) show'
+    endif
 
-  write(24,*) 'grestore'
+    write(24,*) 'grestore'
 
-  write(24,*) '%'
-  write(24,*) '1 1 scale'
-  write(24,*) '%'
+    write(24,*) '%'
+    write(24,*) '1 1 scale'
+    write(24,*) '%'
 
-!
-!---- print the spectral elements mesh in PostScript
-!
-
+    !
+    !---- print the spectral elements mesh in PostScript
+    !
   endif
 
 
@@ -373,182 +375,185 @@
 !
   if (modelvect) then
 
-  buffer_offset = 0
-  RGB_offset = 0
+    buffer_offset = 0
+    RGB_offset = 0
 
-  do ispec= 1,nspec
-    do i = 1,NGLLX-subsamp_postscript,subsamp_postscript
-      do j = 1,NGLLX-subsamp_postscript,subsamp_postscript
+    do ispec= 1,nspec
+      do i = 1,NGLLX-subsamp_postscript,subsamp_postscript
+        do j = 1,NGLLX-subsamp_postscript,subsamp_postscript
 
-        if ((vpImax-vpImin)/vpImin > 0.02d0) then
+          if ((vpImax-vpImin)/vpImin > 0.02d0) then
 
-          if (assign_external_model) then
+            if (assign_external_model) then
 
-            x1 = (vpext(i,j,ispec)-vpImin) / (vpImax-vpImin)
-
-          else
-
-            material = kmato(ispec)
-
-            if (ispec_is_poroelastic(ispec)) then
-
-              ! poroelastic material
-
-              ! get elastic parameters of current spectral element
-              call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
-
-              ! Biot coefficients for the input phi
-              call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
-
-              ! Approximated velocities (no viscous dissipation)
-              afactor = rho_bar - phi/tort*rho_f
-              bfactor = H_biot + phi*rho_bar/(tort*rho_f)*M_biot - 2.d0*phi/tort*C_biot
-              cfactor = phi/(tort*rho_f)*(H_biot*M_biot - C_biot*C_biot)
-              cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
-              cpIloc = sqrt(cpIsquare)
+              x1 = (vpext(i,j,ispec)-vpImin) / (vpImax-vpImin)
 
             else
 
-              lambdaplus2mu  = poroelastcoef(3,1,material)
-              denst = density(1,material)
-              cpIloc = sqrt(lambdaplus2mu/denst)
+              material = kmato(ispec)
+
+              if (ispec_is_poroelastic(ispec)) then
+
+                ! poroelastic material
+
+                ! get elastic parameters of current spectral element
+                call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
+
+                ! Biot coefficients for the input phi
+                call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
+                ! Approximated velocities (no viscous dissipation)
+                afactor = rho_bar - phi/tort*rho_f
+                bfactor = H_biot + phi*rho_bar/(tort*rho_f)*M_biot - 2.d0*phi/tort*C_biot
+                cfactor = phi/(tort*rho_f)*(H_biot*M_biot - C_biot*C_biot)
+                cpIsquare = (bfactor + sqrt(bfactor*bfactor - 4.d0*afactor*cfactor))/(2.d0*afactor)
+                cpIloc = sqrt(cpIsquare)
+
+              else
+
+                lambdaplus2mu  = poroelastcoef(3,1,material)
+                denst = density(1,material)
+                cpIloc = sqrt(lambdaplus2mu/denst)
+
+              endif
+
+              x1 = (cpIloc-vpImin)/(vpImax-vpImin)
 
             endif
 
-            x1 = (cpIloc-vpImin)/(vpImax-vpImin)
-
+          else
+            x1 = 0.5d0
           endif
 
-        else
-          x1 = 0.5d0
-        endif
+          ! rescale to avoid very dark gray levels
+          x1 = x1*0.7 + 0.2
+          if (x1 > 1.d0) x1=1.d0
 
-        ! rescale to avoid very dark gray levels
-        x1 = x1*0.7 + 0.2
-        if (x1 > 1.d0) x1=1.d0
+          ! invert scale: white = vpImin, dark gray = vpImax
+          x1 = 1.d0 - x1
 
-        ! invert scale: white = vpImin, dark gray = vpImax
-        x1 = 1.d0 - x1
+          xw = coord(1,ibool(i,j,ispec))
+          zw = coord(2,ibool(i,j,ispec))
+          xw = (xw-xmin)*ratio_page + orig_x
+          zw = (zw-zmin)*ratio_page + orig_z
+          xw = xw * centim
+          zw = zw * centim
+          if (myrank == 0) then
+             write(24,500) xw,zw
+          else
+             buffer_offset = buffer_offset + 1
+             coorg_send_ps_velocity_model(1,buffer_offset) = xw
+             coorg_send_ps_velocity_model(2,buffer_offset) = zw
+          endif
 
-        xw = coord(1,ibool(i,j,ispec))
-        zw = coord(2,ibool(i,j,ispec))
-        xw = (xw-xmin)*ratio_page + orig_x
-        zw = (zw-zmin)*ratio_page + orig_z
-        xw = xw * centim
-        zw = zw * centim
-        if (myrank == 0) then
-           write(24,500) xw,zw
-        else
-           buffer_offset = buffer_offset + 1
-           coorg_send_ps_velocity_model(1,buffer_offset) = xw
-           coorg_send_ps_velocity_model(2,buffer_offset) = zw
-        endif
+          xw = coord(1,ibool(i+subsamp_postscript,j,ispec))
+          zw = coord(2,ibool(i+subsamp_postscript,j,ispec))
+          xw = (xw-xmin)*ratio_page + orig_x
+          zw = (zw-zmin)*ratio_page + orig_z
+          xw = xw * centim
+          zw = zw * centim
+          if (myrank == 0) then
+             write(24,499) xw,zw
+          else
+             buffer_offset = buffer_offset + 1
+             coorg_send_ps_velocity_model(1,buffer_offset) = xw
+             coorg_send_ps_velocity_model(2,buffer_offset) = zw
+          endif
 
-        xw = coord(1,ibool(i+subsamp_postscript,j,ispec))
-        zw = coord(2,ibool(i+subsamp_postscript,j,ispec))
-        xw = (xw-xmin)*ratio_page + orig_x
-        zw = (zw-zmin)*ratio_page + orig_z
-        xw = xw * centim
-        zw = zw * centim
-        if (myrank == 0) then
-           write(24,499) xw,zw
-        else
-           buffer_offset = buffer_offset + 1
-           coorg_send_ps_velocity_model(1,buffer_offset) = xw
-           coorg_send_ps_velocity_model(2,buffer_offset) = zw
-        endif
+          xw = coord(1,ibool(i+subsamp_postscript,j+subsamp_postscript,ispec))
+          zw = coord(2,ibool(i+subsamp_postscript,j+subsamp_postscript,ispec))
+          xw = (xw-xmin)*ratio_page + orig_x
+          zw = (zw-zmin)*ratio_page + orig_z
+          xw = xw * centim
+          zw = zw * centim
+          if (myrank == 0) then
+             write(24,499) xw,zw
+          else
+             buffer_offset = buffer_offset + 1
+             coorg_send_ps_velocity_model(1,buffer_offset) = xw
+             coorg_send_ps_velocity_model(2,buffer_offset) = zw
+          endif
 
-        xw = coord(1,ibool(i+subsamp_postscript,j+subsamp_postscript,ispec))
-        zw = coord(2,ibool(i+subsamp_postscript,j+subsamp_postscript,ispec))
-        xw = (xw-xmin)*ratio_page + orig_x
-        zw = (zw-zmin)*ratio_page + orig_z
-        xw = xw * centim
-        zw = zw * centim
-        if (myrank == 0) then
-           write(24,499) xw,zw
-        else
-           buffer_offset = buffer_offset + 1
-           coorg_send_ps_velocity_model(1,buffer_offset) = xw
-           coorg_send_ps_velocity_model(2,buffer_offset) = zw
-        endif
+          xw = coord(1,ibool(i,j+subsamp_postscript,ispec))
+          zw = coord(2,ibool(i,j+subsamp_postscript,ispec))
+          xw = (xw-xmin)*ratio_page + orig_x
+          zw = (zw-zmin)*ratio_page + orig_z
+          xw = xw * centim
+          zw = zw * centim
+          if (myrank == 0) then
+             write(24,499) xw,zw
+          else
+             buffer_offset = buffer_offset + 1
+             coorg_send_ps_velocity_model(1,buffer_offset) = xw
+             coorg_send_ps_velocity_model(2,buffer_offset) = zw
+          endif
 
-        xw = coord(1,ibool(i,j+subsamp_postscript,ispec))
-        zw = coord(2,ibool(i,j+subsamp_postscript,ispec))
-        xw = (xw-xmin)*ratio_page + orig_x
-        zw = (zw-zmin)*ratio_page + orig_z
-        xw = xw * centim
-        zw = zw * centim
-        if (myrank == 0) then
-           write(24,499) xw,zw
-        else
-           buffer_offset = buffer_offset + 1
-           coorg_send_ps_velocity_model(1,buffer_offset) = xw
-           coorg_send_ps_velocity_model(2,buffer_offset) = zw
-        endif
+          ! display P-velocity model using gray levels
+          if (myrank == 0) then
+             write(24,604) x1
+          else
+             RGB_offset = RGB_offset + 1
+             RGB_send_ps_velocity_model(1,RGB_offset) = x1
+          endif
 
-        ! display P-velocity model using gray levels
-        if (myrank == 0) then
-           write(24,604) x1
-        else
-           RGB_offset = RGB_offset + 1
-           RGB_send_ps_velocity_model(1,RGB_offset) = x1
-        endif
-
+        enddo
       enddo
     enddo
-  enddo
 
 #ifdef USE_MPI
-  if (myrank == 0) then
+    if (NPROC > 1) then
+      if (myrank == 0) then
+        ! master collects
+        do iproc = 1, NPROC-1
+          call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
-     do iproc = 1, NPROC-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-        call MPI_RECV (coorg_recv_ps_velocity_model(1,1), &
-             2*nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
-             MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-        call MPI_RECV (RGB_recv_ps_velocity_model(1,1), nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-             ((NGLLX-subsamp_postscript)/subsamp_postscript), &
-             MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call MPI_RECV (coorg_recv_ps_velocity_model(1,1), &
+               2*nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
+               MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
-        buffer_offset = 0
-        RGB_offset = 0
-        do ispec = 1, nspec_recv
-           do i = 1,NGLLX-subsamp_postscript,subsamp_postscript
-              do j = 1,NGLLX-subsamp_postscript,subsamp_postscript
-                 buffer_offset = buffer_offset + 1
-                 write(24,500) coorg_recv_ps_velocity_model(1,buffer_offset), &
-                               coorg_recv_ps_velocity_model(2,buffer_offset)
-                 buffer_offset = buffer_offset + 1
-                 write(24,499) coorg_recv_ps_velocity_model(1,buffer_offset), &
-                               coorg_recv_ps_velocity_model(2,buffer_offset)
-                 buffer_offset = buffer_offset + 1
-                 write(24,499) coorg_recv_ps_velocity_model(1,buffer_offset), &
-                               coorg_recv_ps_velocity_model(2,buffer_offset)
-                 buffer_offset = buffer_offset + 1
-                 write(24,499) coorg_recv_ps_velocity_model(1,buffer_offset), &
-                               coorg_recv_ps_velocity_model(2,buffer_offset)
-                 RGB_offset = RGB_offset + 1
-                 write(24,604) RGB_recv_ps_velocity_model(1,RGB_offset)
-              enddo
-           enddo
+          call MPI_RECV (RGB_recv_ps_velocity_model(1,1), nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+               ((NGLLX-subsamp_postscript)/subsamp_postscript), &
+               MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+
+          buffer_offset = 0
+          RGB_offset = 0
+          do ispec = 1, nspec_recv
+             do i = 1,NGLLX-subsamp_postscript,subsamp_postscript
+                do j = 1,NGLLX-subsamp_postscript,subsamp_postscript
+                   buffer_offset = buffer_offset + 1
+                   write(24,500) coorg_recv_ps_velocity_model(1,buffer_offset), &
+                                 coorg_recv_ps_velocity_model(2,buffer_offset)
+                   buffer_offset = buffer_offset + 1
+                   write(24,499) coorg_recv_ps_velocity_model(1,buffer_offset), &
+                                 coorg_recv_ps_velocity_model(2,buffer_offset)
+                   buffer_offset = buffer_offset + 1
+                   write(24,499) coorg_recv_ps_velocity_model(1,buffer_offset), &
+                                 coorg_recv_ps_velocity_model(2,buffer_offset)
+                   buffer_offset = buffer_offset + 1
+                   write(24,499) coorg_recv_ps_velocity_model(1,buffer_offset), &
+                                 coorg_recv_ps_velocity_model(2,buffer_offset)
+                   RGB_offset = RGB_offset + 1
+                   write(24,604) RGB_recv_ps_velocity_model(1,RGB_offset)
+                enddo
+             enddo
+          enddo
         enddo
+      else
+        call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
 
-     enddo
-  else
-     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (coorg_send_ps_velocity_model(1,1), 2*nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-          ((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
-          MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-     call MPI_SEND (RGB_send_ps_velocity_model(1,1), nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-          ((NGLLX-subsamp_postscript)/subsamp_postscript), &
-          MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-  endif
+        call MPI_SEND (coorg_send_ps_velocity_model(1,1), 2*nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+                        ((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
+                        MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
 
-
+        call MPI_SEND (RGB_send_ps_velocity_model(1,1), nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+                        ((NGLLX-subsamp_postscript)/subsamp_postscript), &
+                        MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+      endif
+    endif
+    call synchronize_all()
 #endif
 
-
-  endif
+  endif ! modelvect
 
 !
 !---- draw the spectral element mesh
@@ -562,362 +567,365 @@
 
   buffer_offset = 0
   RGB_offset = 0
+  color_send_ps_element_mesh(:) = 0
 
-  do ispec= 1,nspec
+  do ispec = 1,nspec
 
-  if (myrank == 0) write(24,*) '% elem ',ispec
+    if (myrank == 0) write(24,*) '% elem ',ispec
 
-  do i = 1,pointsdisp
-  do j = 1,pointsdisp
-  xinterp(i,j) = 0.d0
-  zinterp(i,j) = 0.d0
-  do in = 1,ngnod
-    nnum = knods(in,ispec)
-      xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
-      zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
-  enddo
-  enddo
-  enddo
+    do i = 1,pointsdisp
+      do j = 1,pointsdisp
+        xinterp(i,j) = 0.d0
+        zinterp(i,j) = 0.d0
+        do in = 1,ngnod
+          nnum = knods(in,ispec)
+          xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
+          zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
+        enddo
+      enddo
+    enddo
 
-  is = 1
-  ir = 1
-  x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
-  if (myrank == 0) then
-     write(24,*) 'mark'
-     write(24,681) x1,z1
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_element_mesh(1,buffer_offset) = x1
-     coorg_send_ps_element_mesh(2,buffer_offset) = z1
-  endif
-
-  if (ngnod == 4) then
-
-! draw straight lines if elements have 4 nodes
-
-  ir=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if (myrank == 0) then
-     write(24,681) x2,z2
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_element_mesh(1,buffer_offset) = x2
-     coorg_send_ps_element_mesh(2,buffer_offset) = z2
-  endif
-
-  ir=pointsdisp
-  is=pointsdisp
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if (myrank == 0) then
-     write(24,681) x2,z2
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_element_mesh(1,buffer_offset) = x2
-     coorg_send_ps_element_mesh(2,buffer_offset) = z2
-  endif
-
-  is=pointsdisp
-  ir=1
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if (myrank == 0) then
-     write(24,681) x2,z2
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_element_mesh(1,buffer_offset) = x2
-     coorg_send_ps_element_mesh(2,buffer_offset) = z2
-  endif
-
-  ir=1
-  is=2
-  x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-  z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if (myrank == 0) then
-     write(24,681) x2,z2
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_element_mesh(1,buffer_offset) = x2
-     coorg_send_ps_element_mesh(2,buffer_offset) = z2
-  endif
-
-  else
-
-! draw curved lines if elements have 9 nodes
-  do ir = 2,pointsdisp
-    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-    x2 = x2 * centim
-    z2 = z2 * centim
+    is = 1
+    ir = 1
+    x1 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+    z1 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+    x1 = x1 * centim
+    z1 = z1 * centim
     if (myrank == 0) then
-       write(24,681) x2,z2
+      write(24,*) 'mark'
+      write(24,681) x1,z1
     else
-       buffer_offset = buffer_offset + 1
-       coorg_send_ps_element_mesh(1,buffer_offset) = x2
-       coorg_send_ps_element_mesh(2,buffer_offset) = z2
+      buffer_offset = buffer_offset + 1
+      coorg_send_ps_element_mesh(1,buffer_offset) = x1
+      coorg_send_ps_element_mesh(2,buffer_offset) = z1
     endif
-  enddo
 
-  ir=pointsdisp
-  do is= 2,pointsdisp
-    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-    x2 = x2 * centim
-    z2 = z2 * centim
+    if (ngnod == 4) then
+
+      ! draw straight lines if elements have 4 nodes
+
+      ir=pointsdisp
+      x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+      z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+      x2 = x2 * centim
+      z2 = z2 * centim
+      if (myrank == 0) then
+         write(24,681) x2,z2
+      else
+         buffer_offset = buffer_offset + 1
+         coorg_send_ps_element_mesh(1,buffer_offset) = x2
+         coorg_send_ps_element_mesh(2,buffer_offset) = z2
+      endif
+
+      ir=pointsdisp
+      is=pointsdisp
+      x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+      z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+      x2 = x2 * centim
+      z2 = z2 * centim
+      if (myrank == 0) then
+         write(24,681) x2,z2
+      else
+         buffer_offset = buffer_offset + 1
+         coorg_send_ps_element_mesh(1,buffer_offset) = x2
+         coorg_send_ps_element_mesh(2,buffer_offset) = z2
+      endif
+
+      is=pointsdisp
+      ir=1
+      x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+      z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+      x2 = x2 * centim
+      z2 = z2 * centim
+      if (myrank == 0) then
+         write(24,681) x2,z2
+      else
+         buffer_offset = buffer_offset + 1
+         coorg_send_ps_element_mesh(1,buffer_offset) = x2
+         coorg_send_ps_element_mesh(2,buffer_offset) = z2
+      endif
+
+      ir=1
+      is=2
+      x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+      z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+      x2 = x2 * centim
+      z2 = z2 * centim
+      if (myrank == 0) then
+         write(24,681) x2,z2
+      else
+         buffer_offset = buffer_offset + 1
+         coorg_send_ps_element_mesh(1,buffer_offset) = x2
+         coorg_send_ps_element_mesh(2,buffer_offset) = z2
+      endif
+
+    else
+
+      ! draw curved lines if elements have 9 nodes
+      do ir = 2,pointsdisp
+        x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+        z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+        x2 = x2 * centim
+        z2 = z2 * centim
+        if (myrank == 0) then
+           write(24,681) x2,z2
+        else
+           buffer_offset = buffer_offset + 1
+           coorg_send_ps_element_mesh(1,buffer_offset) = x2
+           coorg_send_ps_element_mesh(2,buffer_offset) = z2
+        endif
+      enddo
+
+      ir=pointsdisp
+      do is= 2,pointsdisp
+        x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+        z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+        x2 = x2 * centim
+        z2 = z2 * centim
+        if (myrank == 0) then
+           write(24,681) x2,z2
+        else
+           buffer_offset = buffer_offset + 1
+           coorg_send_ps_element_mesh(1,buffer_offset) = x2
+           coorg_send_ps_element_mesh(2,buffer_offset) = z2
+        endif
+      enddo
+
+      is=pointsdisp
+      do ir =pointsdisp-1,1,-1
+        x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+        z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+        x2 = x2 * centim
+        z2 = z2 * centim
+        if (myrank == 0) then
+           write(24,681) x2,z2
+        else
+           buffer_offset = buffer_offset + 1
+           coorg_send_ps_element_mesh(1,buffer_offset) = x2
+           coorg_send_ps_element_mesh(2,buffer_offset) = z2
+        endif
+      enddo
+
+      ir=1
+      do is=pointsdisp-1,2,-1
+        x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
+        z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
+        x2 = x2 * centim
+        z2 = z2 * centim
+        if (myrank == 0) then
+           write(24,681) x2,z2
+        else
+           buffer_offset = buffer_offset + 1
+           coorg_send_ps_element_mesh(1,buffer_offset) = x2
+           coorg_send_ps_element_mesh(2,buffer_offset) = z2
+        endif
+      enddo
+
+    endif
+
     if (myrank == 0) then
-       write(24,681) x2,z2
-    else
-       buffer_offset = buffer_offset + 1
-       coorg_send_ps_element_mesh(1,buffer_offset) = x2
-       coorg_send_ps_element_mesh(2,buffer_offset) = z2
+       write(24,*) 'CO'
     endif
-  enddo
 
-  is=pointsdisp
-  do ir =pointsdisp-1,1,-1
-    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-    x2 = x2 * centim
-    z2 = z2 * centim
+    if (colors == 1) then
+
+      ! use a different color for each material set
+      imat = kmato(ispec)
+      icol = mod(imat - 1,NUM_COLORS) + 1
+
+      ! display all the PML layers in a different (constant) color if needed
+      if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec)) then
+        if (DISPLAY_PML_IN_DIFFERENT_COLOR) then
+          icol = ICOLOR_FOR_PML_DISPLAY
+          ! make sure that number exists
+          if (icol > NUM_COLORS) icol = NUM_COLORS
+        endif
+      endif
+
+      if ( myrank == 0) then
+        if (meshvect) then
+          write(24,680) red(icol),green(icol),blue(icol)
+        else
+          write(24,679) red(icol),green(icol),blue(icol)
+        endif
+      else
+        RGB_offset = RGB_offset + 1
+        color_send_ps_element_mesh(RGB_offset) = icol
+      endif
+
+    endif
+
     if (myrank == 0) then
-       write(24,681) x2,z2
-    else
-       buffer_offset = buffer_offset + 1
-       coorg_send_ps_element_mesh(1,buffer_offset) = x2
-       coorg_send_ps_element_mesh(2,buffer_offset) = z2
+      if (meshvect) then
+        if (modelvect) then
+          write(24,*) 'Colmesh ST'
+        else
+          write(24,*) '0 setgray ST'
+        endif
+      endif
     endif
-  enddo
 
-  ir=1
-  do is=pointsdisp-1,2,-1
-    x2 = (xinterp(ir,is)-xmin)*ratio_page + orig_x
-    z2 = (zinterp(ir,is)-zmin)*ratio_page + orig_z
-    x2 = x2 * centim
-    z2 = z2 * centim
-    if (myrank == 0) then
-       write(24,681) x2,z2
-    else
-       buffer_offset = buffer_offset + 1
-       coorg_send_ps_element_mesh(1,buffer_offset) = x2
-       coorg_send_ps_element_mesh(2,buffer_offset) = z2
+    ! write the element number, the group number and the material number inside the element
+    if (numbers == 1) then
+
+      xw = (coorg(1,knods(1,ispec)) + coorg(1,knods(2,ispec)) + coorg(1,knods(3,ispec)) + coorg(1,knods(4,ispec))) / 4.d0
+      zw = (coorg(2,knods(1,ispec)) + coorg(2,knods(2,ispec)) + coorg(2,knods(3,ispec)) + coorg(2,knods(4,ispec))) / 4.d0
+      xw = (xw-xmin)*ratio_page + orig_x
+      zw = (zw-zmin)*ratio_page + orig_z
+      xw = xw * centim
+      zw = zw * centim
+
+      if (myrank == 0) then
+        if (colors == 1) write(24,*) '1 setgray'
+      endif
+
+      if (myrank == 0) then
+        write(24,500) xw,zw
+      else
+        buffer_offset = buffer_offset + 1
+        coorg_send_ps_element_mesh(1,buffer_offset) = x2
+        coorg_send_ps_element_mesh(2,buffer_offset) = z2
+      endif
+
+      ! write spectral element number
+      if (myrank == 0) then
+        write(24,502) ispec
+      else
+        RGB_offset = RGB_offset + 1
+        color_send_ps_element_mesh(RGB_offset) = ispec
+      endif
+
     endif
-  enddo
 
-  endif
-
-  if (myrank == 0) then
-     write(24,*) 'CO'
-  endif
-
-  if (colors == 1) then
-
-! use a different color for each material set
-  imat = kmato(ispec)
-  icol = mod(imat - 1,NUM_COLORS) + 1
-
-! display all the PML layers in a different (constant) color if needed
-  if (PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec)) then
-    if (DISPLAY_PML_IN_DIFFERENT_COLOR) then
-      icol = ICOLOR_FOR_PML_DISPLAY
-      ! make sure that number exists
-      if (icol > NUM_COLORS) icol = NUM_COLORS
-    endif
-  endif
-
-  if ( myrank == 0) then
-    if (meshvect) then
-      write(24,680) red(icol),green(icol),blue(icol)
-    else
-      write(24,679) red(icol),green(icol),blue(icol)
-    endif
-  else
-     RGB_offset = RGB_offset + 1
-     color_send_ps_element_mesh(RGB_offset) = icol
-  endif
-
-  endif
-
-  if (myrank == 0) then
-  if (meshvect) then
-    if (modelvect) then
-      write(24,*) 'Colmesh ST'
-    else
-      write(24,*) '0 setgray ST'
-    endif
-  endif
-  endif
-
-! write the element number, the group number and the material number inside the element
-  if (numbers == 1) then
-
-  xw = (coorg(1,knods(1,ispec)) + coorg(1,knods(2,ispec)) + coorg(1,knods(3,ispec)) + coorg(1,knods(4,ispec))) / 4.d0
-  zw = (coorg(2,knods(1,ispec)) + coorg(2,knods(2,ispec)) + coorg(2,knods(3,ispec)) + coorg(2,knods(4,ispec))) / 4.d0
-  xw = (xw-xmin)*ratio_page + orig_x
-  zw = (zw-zmin)*ratio_page + orig_z
-  xw = xw * centim
-  zw = zw * centim
-
-  if (myrank == 0) then
-  if (colors == 1) write(24,*) '1 setgray'
-  endif
-
-  if (myrank == 0) then
-     write(24,500) xw,zw
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_element_mesh(1,buffer_offset) = x2
-     coorg_send_ps_element_mesh(2,buffer_offset) = z2
-  endif
-
-! write spectral element number
-  if (myrank == 0) then
-     write(24,502) ispec
-  else
-     RGB_offset = RGB_offset + 1
-     color_send_ps_element_mesh(RGB_offset) = ispec
-  endif
-
-  endif
-
-  enddo
+  enddo ! ispec
 
 #ifdef USE_MPI
-  if (myrank == 0) then
-
-     do iproc = 1, NPROC-1
+  if (NPROC > 1) then
+    if (myrank == 0) then
+      ! master collects
+      do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+
         nb_coorg_per_elem = 1
         if (numbers == 1) then
-           nb_coorg_per_elem = nb_coorg_per_elem + 1
+          nb_coorg_per_elem = nb_coorg_per_elem + 1
         endif
         if (ngnod == 4) then
-           nb_coorg_per_elem = nb_coorg_per_elem + 4
+          nb_coorg_per_elem = nb_coorg_per_elem + 4
         else
-           nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
+          nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
         endif
+        call MPI_RECV (coorg_recv_ps_element_mesh(1,1), 2*nspec_recv*nb_coorg_per_elem, &
+                       MPI_DOUBLE_PRECISION, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+
         nb_color_per_elem = 0
         if (colors == 1) then
-           nb_color_per_elem = nb_color_per_elem + 1
+          nb_color_per_elem = nb_color_per_elem + 1
         endif
         if (numbers == 1) then
-           nb_color_per_elem = nb_color_per_elem + 1
+          nb_color_per_elem = nb_color_per_elem + 1
         endif
-
-        call MPI_RECV (coorg_recv_ps_element_mesh(1,1), 2*nspec_recv*nb_coorg_per_elem, &
-             MPI_DOUBLE_PRECISION, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-        call MPI_RECV (color_recv_ps_element_mesh(1), nspec_recv*nb_coorg_per_elem, &
-             MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+        if (nb_color_per_elem > 0) then
+          call MPI_RECV (color_recv_ps_element_mesh(1), nspec_recv*nb_color_per_elem, &
+                         MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+        endif
 
         buffer_offset = 0
         RGB_offset = 0
         num_spec = nspec
         do ispec = 1, nspec_recv
-           num_spec = num_spec + 1
-           write(24,*) '% elem ',num_spec
-           buffer_offset = buffer_offset + 1
-           write(24,*) 'mark'
-           write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
-           if (ngnod == 4) then
+          num_spec = num_spec + 1
+          write(24,*) '% elem ',num_spec
+          buffer_offset = buffer_offset + 1
+          write(24,*) 'mark'
+          write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+          if (ngnod == 4) then
+            buffer_offset = buffer_offset + 1
+            write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+            buffer_offset = buffer_offset + 1
+            write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+            buffer_offset = buffer_offset + 1
+            write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+            buffer_offset = buffer_offset + 1
+            write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+          else
+            do ir = 2,pointsdisp
               buffer_offset = buffer_offset + 1
               write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+            enddo
+            do is= 2,pointsdisp
               buffer_offset = buffer_offset + 1
               write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+            enddo
+            do ir =pointsdisp-1,1,-1
               buffer_offset = buffer_offset + 1
               write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+            enddo
+            do is=pointsdisp-1,2,-1
               buffer_offset = buffer_offset + 1
               write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+            enddo
+          endif
 
-           else
-              do ir = 2,pointsdisp
-                 buffer_offset = buffer_offset + 1
-                 write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
-              enddo
-              do is= 2,pointsdisp
-                 buffer_offset = buffer_offset + 1
-                 write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
-              enddo
-              do ir =pointsdisp-1,1,-1
-                 buffer_offset = buffer_offset + 1
-                 write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
-              enddo
-              do is=pointsdisp-1,2,-1
-                 buffer_offset = buffer_offset + 1
-                 write(24,681) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
-              enddo
-
-           endif
-
-           write(24,*) 'CO'
-           if (colors == 1) then
-              if (meshvect) then
-                 RGB_offset = RGB_offset + 1
-                 write(24,680) red(color_recv_ps_element_mesh(RGB_offset)),&
-                               green(color_recv_ps_element_mesh(RGB_offset)),&
-                               blue(color_recv_ps_element_mesh(RGB_offset))
-              else
-                 RGB_offset = RGB_offset + 1
-                 write(24,679) red(color_recv_ps_element_mesh(RGB_offset)),&
-                               green(color_recv_ps_element_mesh(RGB_offset)),&
-                               blue(color_recv_ps_element_mesh(RGB_offset))
-              endif
-           endif
-           if (meshvect) then
-              if (modelvect) then
-                 write(24,*) 'Colmesh ST'
-              else
-                 write(24,*) '0 setgray ST'
-              endif
-           endif
-           if (numbers == 1) then
-              if (colors == 1) write(24,*) '1 setgray'
-              buffer_offset = buffer_offset + 1
-              write(24,500) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+          write(24,*) 'CO'
+          if (colors == 1) then
+            if (meshvect) then
               RGB_offset = RGB_offset + 1
-              write(24,502) color_recv_ps_element_mesh(RGB_offset)
-           endif
-
+              write(24,680) red(color_recv_ps_element_mesh(RGB_offset)),&
+                            green(color_recv_ps_element_mesh(RGB_offset)),&
+                            blue(color_recv_ps_element_mesh(RGB_offset))
+            else
+              RGB_offset = RGB_offset + 1
+              write(24,679) red(color_recv_ps_element_mesh(RGB_offset)),&
+                            green(color_recv_ps_element_mesh(RGB_offset)),&
+                            blue(color_recv_ps_element_mesh(RGB_offset))
+            endif
+          endif
+          if (meshvect) then
+            if (modelvect) then
+              write(24,*) 'Colmesh ST'
+            else
+              write(24,*) '0 setgray ST'
+            endif
+          endif
+          if (numbers == 1) then
+            if (colors == 1) write(24,*) '1 setgray'
+            buffer_offset = buffer_offset + 1
+            write(24,500) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
+            RGB_offset = RGB_offset + 1
+            write(24,502) color_recv_ps_element_mesh(RGB_offset)
+          endif
         enddo
+      enddo
+    else
+      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
 
-     enddo
-  else
-     call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
-     nb_coorg_per_elem = 1
-     if (numbers == 1) then
+      nb_coorg_per_elem = 1
+      if (numbers == 1) then
         nb_coorg_per_elem = nb_coorg_per_elem + 1
-     endif
-     if (ngnod == 4) then
+      endif
+      if (ngnod == 4) then
         nb_coorg_per_elem = nb_coorg_per_elem + 4
-     else
+      else
         nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
-     endif
-     nb_color_per_elem = 0
-     if (colors == 1) then
+      endif
+      call MPI_SEND (coorg_send_ps_element_mesh(1,1), 2*nspec*nb_coorg_per_elem, &
+                     MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
+
+      nb_color_per_elem = 0
+      if (colors == 1) then
         nb_color_per_elem = nb_color_per_elem + 1
-     endif
-     if (numbers == 1) then
+      endif
+      if (numbers == 1) then
         nb_color_per_elem = nb_color_per_elem + 1
-     endif
-     call MPI_SEND (coorg_send_ps_element_mesh(1,1), 2*nspec*nb_coorg_per_elem, &
-          MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
-     if (nb_color_per_elem > 0) then
+      endif
+      if (nb_color_per_elem > 0) then
         call MPI_SEND (color_send_ps_element_mesh(1), nspec*nb_color_per_elem, &
-             MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
-     endif
-
+                       MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
+      endif
+    endif
   endif
-
+  call synchronize_all()
 #endif
 
 !
@@ -927,185 +935,184 @@
   call any_all_l(anyabs, anyabs_glob)
 
   if (anyabs_glob .and. boundvect) then
-  if (myrank == 0) then
-  write(24,*) '%'
-  write(24,*) '% boundary conditions on the mesh'
-  write(24,*) '%'
+    if (myrank == 0) then
+      write(24,*) '%'
+      write(24,*) '% boundary conditions on the mesh'
+      write(24,*) '%'
 
-! use green color
-  write(24,*) '0 1 0 RG'
+      ! use green color
+      write(24,*) '0 1 0 RG'
+      write(24,*) '0.02 CM setlinewidth'
+    endif
 
-  write(24,*) '0.02 CM setlinewidth'
-  endif
+    buffer_offset = 0
 
-  buffer_offset = 0
+    if (anyabs) then
+      do inum = 1,nelemabs
+        ispec = numabs(inum)
 
-  if (anyabs) then
-  do inum = 1,nelemabs
-  ispec = numabs(inum)
+        do iedge = 1,4
 
-  do iedge = 1,4
+          if (codeabs(iedge,inum)) then ! codeabs(:,:) is defined as "logical" in MAIN program
 
-  if (codeabs(iedge,inum)) then ! codeabs(:,:) is defined as "logical" in MAIN program
+            if (iedge == IEDGE1) then
+              ideb = 1
+              ifin = 2
+            else if (iedge == IEDGE2) then
+              ideb = 2
+              ifin = 3
+            else if (iedge == IEDGE3) then
+              ideb = 3
+              ifin = 4
+            else if (iedge == IEDGE4) then
+              ideb = 4
+              ifin = 1
+            else
+              call exit_MPI(myrank,'Wrong codeabs() absorbing boundary code')
+            endif
 
-  if (iedge == IEDGE1) then
-    ideb = 1
-    ifin = 2
-  else if (iedge == IEDGE2) then
-    ideb = 2
-    ifin = 3
-  else if (iedge == IEDGE3) then
-    ideb = 3
-    ifin = 4
-  else if (iedge == IEDGE4) then
-    ideb = 4
-    ifin = 1
-  else
-    call exit_MPI(myrank,'Wrong codeabs() absorbing boundary code')
-  endif
+            ! draw the Stacey absorbing boundary line segment in different colors depending on its type
+            if (myrank == 0) then
+              if (typeabs(inum) == IBOTTOM) then
+                write(24,*) '0 1 0 RG'  ! Green
+              else if (typeabs(inum) == IRIGHT) then
+                write(24,*) '0 0 1 RG'  ! Blue
+              else if (typeabs(inum) == ITOP) then
+                write(24,*) '1 0.7529 0.7960 RG' ! Pink
+              else if (typeabs(inum) == ILEFT) then
+                write(24,*) '1 0.6470 0 RG' ! Orange
+              else
+                call exit_MPI(myrank,'Wrong typeabs() absorbing boundary code')
+              endif
+            endif
 
-! draw the Stacey absorbing boundary line segment in different colors depending on its type
-  if (myrank == 0) then
-  if (typeabs(inum) == IBOTTOM) then
-    write(24,*) '0 1 0 RG'  ! Green
-  else if (typeabs(inum) == IRIGHT) then
-    write(24,*) '0 0 1 RG'  ! Blue
-  else if (typeabs(inum) == ITOP) then
-    write(24,*) '1 0.7529 0.7960 RG' ! Pink
-  else if (typeabs(inum) == ILEFT) then
-    write(24,*) '1 0.6470 0 RG' ! Orange
-  else
-    call exit_MPI(myrank,'Wrong typeabs() absorbing boundary code')
-  endif
-  endif
+            x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
+            z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
+            x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
+            z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
+            x1 = x1 * centim
+            z1 = z1 * centim
+            x2 = x2 * centim
+            z2 = z2 * centim
+            if (myrank == 0) then
+               write(24,602) x1,z1,x2,z2
+            else
+               buffer_offset = buffer_offset + 1
+               coorg_send_ps_abs(1,buffer_offset) = x1
+               coorg_send_ps_abs(2,buffer_offset) = z1
+               coorg_send_ps_abs(3,buffer_offset) = x2
+               coorg_send_ps_abs(4,buffer_offset) = z2
+            endif
 
-  x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
-  z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
-  x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
-  z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if (myrank == 0) then
-     write(24,602) x1,z1,x2,z2
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_abs(1,buffer_offset) = x1
-     coorg_send_ps_abs(2,buffer_offset) = z1
-     coorg_send_ps_abs(3,buffer_offset) = x2
-     coorg_send_ps_abs(4,buffer_offset) = z2
-  endif
+          endif ! of if (codeabs(iedge,inum))
+        enddo ! of do iedge = 1,4
 
-  endif ! of if (codeabs(iedge,inum))
-  enddo ! of do iedge = 1,4
-
-  enddo
-  endif
+      enddo
+    endif ! anyabs
 
 #ifdef USE_MPI
-  if (myrank == 0) then
+    if (NPROC > 1) then
+      if (myrank == 0) then
+        ! master collects
+        do iproc = 1, NPROC-1
+          call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          if (nspec_recv > 0) then
+            call MPI_RECV (coorg_recv_ps_abs(1,1), 4*nspec_recv, &
+                           MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
-     do iproc = 1, NPROC-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-        if (nspec_recv > 0) then
-        call MPI_RECV (coorg_recv_ps_abs(1,1), 4*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-
-        buffer_offset = 0
-        do ispec = 1, nspec_recv
-           buffer_offset = buffer_offset + 1
-           write(24,602) coorg_recv_ps_abs(1,buffer_offset), coorg_recv_ps_abs(2,buffer_offset), &
-                coorg_recv_ps_abs(3,buffer_offset), coorg_recv_ps_abs(4,buffer_offset)
+            buffer_offset = 0
+            do ispec = 1, nspec_recv
+              buffer_offset = buffer_offset + 1
+              write(24,602) coorg_recv_ps_abs(1,buffer_offset), coorg_recv_ps_abs(2,buffer_offset), &
+                            coorg_recv_ps_abs(3,buffer_offset), coorg_recv_ps_abs(4,buffer_offset)
+            enddo
+          endif
         enddo
+      else
+        call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
+        if (buffer_offset > 0) then
+          call MPI_SEND (coorg_send_ps_abs(1,1), 4*buffer_offset, &
+                         MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
         endif
-     enddo
-  else
-     call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
-     if (buffer_offset > 0) then
-     call MPI_SEND (coorg_send_ps_abs(1,1), 4*buffer_offset, &
-          MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
-     endif
-
-  endif
-
+      endif
+    endif
+    call synchronize_all()
 #endif
 
-  if (myrank == 0) then
-    write(24,*) '0 setgray'
-    write(24,*) '0 setlinewidth'
-  endif
+    if (myrank == 0) then
+      write(24,*) '0 setgray'
+      write(24,*) '0 setlinewidth'
+    endif
 
-  endif
+  endif ! anyabs_glob .and. boundvect
 
 !
 !--- draw free surface with a thick color line
 !
 
   if (myrank == 0) then
-  write(24,*) '%'
-  write(24,*) '% free surface on the mesh'
-  write(24,*) '%'
+    write(24,*) '%'
+    write(24,*) '% free surface on the mesh'
+    write(24,*) '%'
 
-! use orange color
-  write(24,*) '1 0.66 0 RG'
-
-  write(24,*) '0.02 CM setlinewidth'
+    ! use orange color
+    write(24,*) '1 0.66 0 RG'
+    write(24,*) '0.02 CM setlinewidth'
   endif
 
   buffer_offset = 0
 
   if (nelem_acoustic_surface > 0) then
-  do inum = 1,nelem_acoustic_surface
-  ispec = acoustic_edges(1,inum)
+    do inum = 1,nelem_acoustic_surface
+      ispec = acoustic_edges(1,inum)
 
-  x1 = (coorg(1,acoustic_edges(3,inum))-xmin)*ratio_page + orig_x
-  z1 = (coorg(2,acoustic_edges(3,inum))-zmin)*ratio_page + orig_z
-  x2 = (coorg(1,acoustic_edges(4,inum))-xmin)*ratio_page + orig_x
-  z2 = (coorg(2,acoustic_edges(4,inum))-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if (myrank == 0) then
-     write(24,602) x1,z1,x2,z2
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_free_surface(1,buffer_offset) = x1
-     coorg_send_ps_free_surface(2,buffer_offset) = z1
-     coorg_send_ps_free_surface(3,buffer_offset) = x2
-     coorg_send_ps_free_surface(4,buffer_offset) = z2
-  endif
-
-  enddo
+      x1 = (coorg(1,acoustic_edges(3,inum))-xmin)*ratio_page + orig_x
+      z1 = (coorg(2,acoustic_edges(3,inum))-zmin)*ratio_page + orig_z
+      x2 = (coorg(1,acoustic_edges(4,inum))-xmin)*ratio_page + orig_x
+      z2 = (coorg(2,acoustic_edges(4,inum))-zmin)*ratio_page + orig_z
+      x1 = x1 * centim
+      z1 = z1 * centim
+      x2 = x2 * centim
+      z2 = z2 * centim
+      if (myrank == 0) then
+        write(24,602) x1,z1,x2,z2
+      else
+        buffer_offset = buffer_offset + 1
+        coorg_send_ps_free_surface(1,buffer_offset) = x1
+        coorg_send_ps_free_surface(2,buffer_offset) = z1
+        coorg_send_ps_free_surface(3,buffer_offset) = x2
+        coorg_send_ps_free_surface(4,buffer_offset) = z2
+      endif
+    enddo
   endif
 
 #ifdef USE_MPI
-  if (myrank == 0) then
-
-     do iproc = 1, NPROC-1
+  if (NPROC > 1) then
+    if (myrank == 0) then
+      ! master collects
+      do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if (nspec_recv > 0) then
-        call MPI_RECV (coorg_recv_ps_free_surface(1,1), 4*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call MPI_RECV (coorg_recv_ps_free_surface(1,1), 4*nspec_recv, &
+                         MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
-        buffer_offset = 0
-        do ispec = 1, nspec_recv
-           buffer_offset = buffer_offset + 1
-           write(24,602) coorg_recv_ps_free_surface(1,buffer_offset), coorg_recv_ps_free_surface(2,buffer_offset), &
-                coorg_recv_ps_free_surface(3,buffer_offset), coorg_recv_ps_free_surface(4,buffer_offset)
-        enddo
+          buffer_offset = 0
+          do ispec = 1, nspec_recv
+            buffer_offset = buffer_offset + 1
+            write(24,602) coorg_recv_ps_free_surface(1,buffer_offset), coorg_recv_ps_free_surface(2,buffer_offset), &
+                          coorg_recv_ps_free_surface(3,buffer_offset), coorg_recv_ps_free_surface(4,buffer_offset)
+          enddo
         endif
-     enddo
-  else
-     call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
-     if (buffer_offset > 0) then
-     call MPI_SEND (coorg_send_ps_free_surface(1,1), 4*buffer_offset, &
-          MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
-     endif
-
+      enddo
+    else
+      call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
+      if (buffer_offset > 0) then
+        call MPI_SEND (coorg_send_ps_free_surface(1,1), 4*buffer_offset, &
+                       MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
+      endif
+    endif
   endif
-
+  call synchronize_all()
 #endif
 
   if (myrank == 0) then
@@ -1121,100 +1128,102 @@
 
   if (coupled_acoustic_elastic_glob .and. boundvect) then
 
-  if (myrank == 0) then
-  write(24,*) '%'
-  write(24,*) '% fluid-solid coupling edges in the mesh'
-  write(24,*) '%'
+    if (myrank == 0) then
+      write(24,*) '%'
+      write(24,*) '% fluid-solid coupling edges in the mesh'
+      write(24,*) '%'
 
-  write(24,*) '0.02 CM setlinewidth'
-  endif
+      write(24,*) '0.02 CM setlinewidth'
+    endif
 
-  if (myrank /= 0 .and. num_fluid_solid_edges > 0 ) allocate(coorg_send(4,num_fluid_solid_edges))
-  buffer_offset = 0
+    if (myrank /= 0 .and. num_fluid_solid_edges > 0 ) allocate(coorg_send(4,num_fluid_solid_edges))
+    buffer_offset = 0
 
-! loop on all the coupling edges
-  do inum = 1,num_fluid_solid_edges
+    ! loop on all the coupling edges
+    do inum = 1,num_fluid_solid_edges
 
-! get the edge of the acoustic element
-   ispec = fluid_solid_acoustic_ispec(inum)
-   iedge = fluid_solid_acoustic_iedge(inum)
+      ! get the edge of the acoustic element
+      ispec = fluid_solid_acoustic_ispec(inum)
+      iedge = fluid_solid_acoustic_iedge(inum)
 
-! use pink color
-  if (myrank == 0) write(24,*) '1 0.75 0.8 RG'
+      ! use pink color
+      if (myrank == 0) write(24,*) '1 0.75 0.8 RG'
 
-  if (iedge == ITOP) then
-    ideb = 3
-    ifin = 4
-  else if (iedge == IBOTTOM) then
-    ideb = 1
-    ifin = 2
-  else if (iedge == ILEFT) then
-    ideb = 4
-    ifin = 1
-  else if (iedge == IRIGHT) then
-    ideb = 2
-    ifin = 3
-  else
-    call exit_MPI(myrank,'Wrong fluid-solid coupling edge code')
-  endif
+      if (iedge == ITOP) then
+        ideb = 3
+        ifin = 4
+      else if (iedge == IBOTTOM) then
+        ideb = 1
+        ifin = 2
+      else if (iedge == ILEFT) then
+        ideb = 4
+        ifin = 1
+      else if (iedge == IRIGHT) then
+        ideb = 2
+        ifin = 3
+      else
+        call exit_MPI(myrank,'Wrong fluid-solid coupling edge code')
+      endif
 
-  x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
-  z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
-  x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
-  z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if (myrank == 0) then
-     write(24,602) x1,z1,x2,z2
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x1
-     coorg_send(2,buffer_offset) = z1
-     coorg_send(3,buffer_offset) = x2
-     coorg_send(4,buffer_offset) = z2
-  endif
+      x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
+      z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
+      x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
+      z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
+      x1 = x1 * centim
+      z1 = z1 * centim
+      x2 = x2 * centim
+      z2 = z2 * centim
+      if (myrank == 0) then
+        write(24,602) x1,z1,x2,z2
+      else
+        buffer_offset = buffer_offset + 1
+        coorg_send(1,buffer_offset) = x1
+        coorg_send(2,buffer_offset) = z1
+        coorg_send(3,buffer_offset) = x2
+        coorg_send(4,buffer_offset) = z2
+      endif
 
-  enddo
+    enddo
 
 #ifdef USE_MPI
-  if (myrank == 0) then
+    if (NPROC > 1) then
+      if (myrank == 0) then
+        ! master collects
+        do iproc = 1, NPROC-1
+          call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          if (nspec_recv > 0) then
+            allocate(coorg_recv(4,nspec_recv))
+            call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+                           MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
-     do iproc = 1, NPROC-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-        if (nspec_recv > 0) then
-        allocate(coorg_recv(4,nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-
-        buffer_offset = 0
-        do ispec = 1, nspec_recv
-           buffer_offset = buffer_offset + 1
-           write(24,*) '1 0.75 0.8 RG'
-           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
-                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+            buffer_offset = 0
+            do ispec = 1, nspec_recv
+              buffer_offset = buffer_offset + 1
+              write(24,*) '1 0.75 0.8 RG'
+              write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
+                            coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+            enddo
+            deallocate(coorg_recv)
+          endif
         enddo
-        deallocate(coorg_recv)
+      else
+        call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
+        if (buffer_offset > 0) then
+          call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+                         MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
+          deallocate(coorg_send)
         endif
-     enddo
-  else
-     call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
-     if (buffer_offset > 0) then
-     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
-          MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
-     deallocate(coorg_send)
-     endif
-  endif
-
+      endif
+    endif
+    call synchronize_all()
 #endif
 
-  if (myrank == 0) then
-    write(24,*) '0 setgray'
-    write(24,*) '0 setlinewidth'
-  endif
+    if (myrank == 0) then
+      write(24,*) '0 setgray'
+      write(24,*) '0 setlinewidth'
+    endif
 
-  endif
+  endif ! coupled_acoustic_elastic_glob .and. boundvect
 
 !
 !----  draw the fluid-porous coupling edges with a thick color line
@@ -1224,100 +1233,102 @@
 
   if (coupled_acoustic_poro_glob .and. boundvect) then
 
-  if (myrank == 0) then
-  write(24,*) '%'
-  write(24,*) '% fluid-porous coupling edges in the mesh'
-  write(24,*) '%'
+    if (myrank == 0) then
+      write(24,*) '%'
+      write(24,*) '% fluid-porous coupling edges in the mesh'
+      write(24,*) '%'
 
-  write(24,*) '0.02 CM setlinewidth'
-  endif
+      write(24,*) '0.02 CM setlinewidth'
+    endif
 
-  if (myrank /= 0 .and. num_fluid_poro_edges > 0 ) allocate(coorg_send(4,num_fluid_poro_edges))
-  buffer_offset = 0
+    if (myrank /= 0 .and. num_fluid_poro_edges > 0 ) allocate(coorg_send(4,num_fluid_poro_edges))
+    buffer_offset = 0
 
-! loop on all the coupling edges
-  do inum = 1,num_fluid_poro_edges
+    ! loop on all the coupling edges
+    do inum = 1,num_fluid_poro_edges
 
-! get the edge of the acoustic element
-   ispec = fluid_poro_acoustic_ispec(inum)
-   iedge = fluid_poro_acoustic_iedge(inum)
+      ! get the edge of the acoustic element
+      ispec = fluid_poro_acoustic_ispec(inum)
+      iedge = fluid_poro_acoustic_iedge(inum)
 
-! use pink color
-  if (myrank == 0) write(24,*) '1 0.75 0.8 RG'
+      ! use pink color
+      if (myrank == 0) write(24,*) '1 0.75 0.8 RG'
 
-  if (iedge == ITOP) then
-    ideb = 3
-    ifin = 4
-  else if (iedge == IBOTTOM) then
-    ideb = 1
-    ifin = 2
-  else if (iedge == ILEFT) then
-    ideb = 4
-    ifin = 1
-  else if (iedge == IRIGHT) then
-    ideb = 2
-    ifin = 3
-  else
-    call exit_MPI(myrank,'Wrong fluid-solid coupling edge code')
-  endif
+      if (iedge == ITOP) then
+        ideb = 3
+        ifin = 4
+      else if (iedge == IBOTTOM) then
+        ideb = 1
+        ifin = 2
+      else if (iedge == ILEFT) then
+        ideb = 4
+        ifin = 1
+      else if (iedge == IRIGHT) then
+        ideb = 2
+        ifin = 3
+      else
+        call exit_MPI(myrank,'Wrong fluid-solid coupling edge code')
+      endif
 
-  x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
-  z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
-  x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
-  z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if (myrank == 0) then
-     write(24,602) x1,z1,x2,z2
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x1
-     coorg_send(2,buffer_offset) = z1
-     coorg_send(3,buffer_offset) = x2
-     coorg_send(4,buffer_offset) = z2
-  endif
+      x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
+      z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
+      x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
+      z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
+      x1 = x1 * centim
+      z1 = z1 * centim
+      x2 = x2 * centim
+      z2 = z2 * centim
+      if (myrank == 0) then
+        write(24,602) x1,z1,x2,z2
+      else
+        buffer_offset = buffer_offset + 1
+        coorg_send(1,buffer_offset) = x1
+        coorg_send(2,buffer_offset) = z1
+        coorg_send(3,buffer_offset) = x2
+        coorg_send(4,buffer_offset) = z2
+      endif
 
-  enddo
+    enddo
 
 #ifdef USE_MPI
-  if (myrank == 0) then
+    if (NPROC > 1) then
+      if (myrank == 0) then
+        ! master collects
+        do iproc = 1, NPROC-1
+          call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          if (nspec_recv > 0) then
+            allocate(coorg_recv(4,nspec_recv))
+            call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+                           MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
-     do iproc = 1, NPROC-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-        if (nspec_recv > 0) then
-        allocate(coorg_recv(4,nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-
-        buffer_offset = 0
-        do ispec = 1, nspec_recv
-           buffer_offset = buffer_offset + 1
-           write(24,*) '1 0.75 0.8 RG'
-           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
-                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+            buffer_offset = 0
+            do ispec = 1, nspec_recv
+              buffer_offset = buffer_offset + 1
+              write(24,*) '1 0.75 0.8 RG'
+              write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
+                            coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+            enddo
+            deallocate(coorg_recv)
+          endif
         enddo
-        deallocate(coorg_recv)
+      else
+        call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
+        if (buffer_offset > 0) then
+          call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+                         MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
+          deallocate(coorg_send)
         endif
-     enddo
-  else
-     call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
-     if (buffer_offset > 0) then
-     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
-          MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
-     deallocate(coorg_send)
-     endif
-  endif
-
+      endif
+    endif
+    call synchronize_all()
 #endif
 
-  if (myrank == 0) then
-    write(24,*) '0 setgray'
-    write(24,*) '0 setlinewidth'
-  endif
+    if (myrank == 0) then
+      write(24,*) '0 setgray'
+      write(24,*) '0 setlinewidth'
+    endif
 
-  endif
+  endif ! coupled_acoustic_poro_glob .and. boundvect
 
 !
 !----  draw the solid-porous coupling edges with a thick color line
@@ -1328,483 +1339,499 @@
 
   if (coupled_elastic_poro_glob .and. boundvect) then
 
-  if (myrank == 0) then
-  write(24,*) '%'
-  write(24,*) '% solid-porous coupling edges in the mesh'
-  write(24,*) '%'
+    if (myrank == 0) then
+      write(24,*) '%'
+      write(24,*) '% solid-porous coupling edges in the mesh'
+      write(24,*) '%'
 
-  write(24,*) '0.02 CM setlinewidth'
-  endif
+      write(24,*) '0.02 CM setlinewidth'
+    endif
 
-  if (myrank /= 0 .and. num_solid_poro_edges > 0 ) allocate(coorg_send(4,num_solid_poro_edges))
-  buffer_offset = 0
+    if (myrank /= 0 .and. num_solid_poro_edges > 0 ) allocate(coorg_send(4,num_solid_poro_edges))
+    buffer_offset = 0
 
-! loop on all the coupling edges
-  do inum = 1,num_solid_poro_edges
+    ! loop on all the coupling edges
+    do inum = 1,num_solid_poro_edges
 
-! get the edge of the poroelastic element
-   ispec = solid_poro_poroelastic_ispec(inum)
-   iedge = solid_poro_poroelastic_iedge(inum)
+      ! get the edge of the poroelastic element
+      ispec = solid_poro_poroelastic_ispec(inum)
+      iedge = solid_poro_poroelastic_iedge(inum)
 
-! use pink color
-  if (myrank == 0) write(24,*) '1 0.75 0.8 RG'
+      ! use pink color
+      if (myrank == 0) write(24,*) '1 0.75 0.8 RG'
 
-  if (iedge == ITOP) then
-    ideb = 3
-    ifin = 4
-  else if (iedge == IBOTTOM) then
-    ideb = 1
-    ifin = 2
-  else if (iedge == ILEFT) then
-    ideb = 4
-    ifin = 1
-  else if (iedge == IRIGHT) then
-    ideb = 2
-    ifin = 3
-  else
-    call exit_MPI(myrank,'Wrong fluid-solid coupling edge code')
-  endif
+      if (iedge == ITOP) then
+        ideb = 3
+        ifin = 4
+      else if (iedge == IBOTTOM) then
+        ideb = 1
+        ifin = 2
+      else if (iedge == ILEFT) then
+        ideb = 4
+        ifin = 1
+      else if (iedge == IRIGHT) then
+        ideb = 2
+        ifin = 3
+      else
+        call exit_MPI(myrank,'Wrong fluid-solid coupling edge code')
+      endif
 
-  x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
-  z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
-  x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
-  z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
-  x1 = x1 * centim
-  z1 = z1 * centim
-  x2 = x2 * centim
-  z2 = z2 * centim
-  if (myrank == 0) then
-     write(24,602) x1,z1,x2,z2
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send(1,buffer_offset) = x1
-     coorg_send(2,buffer_offset) = z1
-     coorg_send(3,buffer_offset) = x2
-     coorg_send(4,buffer_offset) = z2
-  endif
+      x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
+      z1 = (coorg(2,knods(ideb,ispec))-zmin)*ratio_page + orig_z
+      x2 = (coorg(1,knods(ifin,ispec))-xmin)*ratio_page + orig_x
+      z2 = (coorg(2,knods(ifin,ispec))-zmin)*ratio_page + orig_z
+      x1 = x1 * centim
+      z1 = z1 * centim
+      x2 = x2 * centim
+      z2 = z2 * centim
+      if (myrank == 0) then
+        write(24,602) x1,z1,x2,z2
+      else
+        buffer_offset = buffer_offset + 1
+        coorg_send(1,buffer_offset) = x1
+        coorg_send(2,buffer_offset) = z1
+        coorg_send(3,buffer_offset) = x2
+        coorg_send(4,buffer_offset) = z2
+      endif
 
-  enddo
+    enddo
 
 #ifdef USE_MPI
-  if (myrank == 0) then
+    if (NPROC > 1) then
+      if (myrank == 0) then
+        ! master collects
+        do iproc = 1, NPROC-1
+          call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          if (nspec_recv > 0) then
+            allocate(coorg_recv(4,nspec_recv))
+            call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+                           MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
-     do iproc = 1, NPROC-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-        if (nspec_recv > 0) then
-        allocate(coorg_recv(4,nspec_recv))
-        call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-
-        buffer_offset = 0
-        do ispec = 1, nspec_recv
-           buffer_offset = buffer_offset + 1
-           write(24,*) '1 0.75 0.8 RG'
-           write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
-                coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+            buffer_offset = 0
+            do ispec = 1, nspec_recv
+              buffer_offset = buffer_offset + 1
+              write(24,*) '1 0.75 0.8 RG'
+              write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
+                            coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
+            enddo
+            deallocate(coorg_recv)
+          endif
         enddo
-        deallocate(coorg_recv)
+      else
+        call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
+        if (buffer_offset > 0) then
+          call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+                         MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
+          deallocate(coorg_send)
         endif
-     enddo
-  else
-     call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
-     if (buffer_offset > 0) then
-     call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
-          MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
-     deallocate(coorg_send)
-     endif
-  endif
-
+      endif
+    endif
+    call synchronize_all()
 #endif
 
-  if (myrank == 0) then
-    write(24,*) '0 setgray'
-    write(24,*) '0 setlinewidth'
-  endif
+    if (myrank == 0) then
+      write(24,*) '0 setgray'
+      write(24,*) '0 setlinewidth'
+    endif
 
-  endif
+  endif ! coupled_elastic_poro_glob .and. boundvect
 
 !
 !----  draw the normalized vector field
 !
 
-  if (myrank == 0) then
-! return if the maximum vector equals zero (no source)
+  ! warning if the maximum vector equals zero (no source)
   if (dispmax == 0.d0) then
-    write(IMAIN,*) 'null vector: returning!'
-    return
+    if (myrank == 0) then
+      write(IMAIN,*) 'null vector: maximum vector length is zero!'
+      call flush_IMAIN()
+    endif
   endif
 
-  write(24,*) '%'
-  write(24,*) '% vector field'
-  write(24,*) '%'
+  if (myrank == 0) then
+    write(24,*) '%'
+    write(24,*) '% vector field'
+    write(24,*) '%'
 
-! color arrows if we draw the velocity model in the background
-  if (modelvect) then
-        write(24,*) 'Colvects'
-  else
-        write(24,*) '0 setgray'
-  endif
+    ! color arrows if we draw the velocity model in the background
+    if (modelvect) then
+      write(24,*) 'Colvects'
+    else
+      write(24,*) '0 setgray'
+    endif
   endif
 
   if (interpol) then
 
-  if (myrank == 0) write(IMAIN,*) '  Interpolating the vector field...'
+    if (myrank == 0) then
+      write(IMAIN,*) '  Interpolating the vector field...'
+      call flush_IMAIN()
+    endif
 
-! option to plot only lowerleft corner value to avoid very large files if dense meshes
-  if (plot_lowerleft_corner_only) then
-    pointsdisp_loop = 1
-  else
-    pointsdisp_loop = pointsdisp
-  endif
+    ! option to plot only lowerleft corner value to avoid very large files if dense meshes
+    if (plot_lowerleft_corner_only) then
+      pointsdisp_loop = 1
+    else
+      pointsdisp_loop = pointsdisp
+    endif
 
-  buffer_offset = 0
+    buffer_offset = 0
 
-  do ispec= 1,nspec
+    do ispec = 1,nspec
 
 ! interpolation on a uniform grid
 #ifdef USE_MPI
-  if (myrank == 0 .and. mod(ispec,1000) == 0) write(IMAIN,*) '  Interpolation uniform grid element ',ispec,' on processor core 0'
+      if (myrank == 0 .and. mod(ispec,1000) == 0) &
+        write(IMAIN,*) '  Interpolation uniform grid element ',ispec,' on processor core 0'
 #else
-  if (mod(ispec,1000) == 0) write(IMAIN,*) '  Interpolation uniform grid element ',ispec
+      if (mod(ispec,1000) == 0) &
+        write(IMAIN,*) '  Interpolation uniform grid element ',ispec
 #endif
 
-  do i = 1,pointsdisp_loop
-  do j = 1,pointsdisp_loop
+      do i = 1,pointsdisp_loop
+        do j = 1,pointsdisp_loop
 
-  xinterp(i,j) = 0.d0
-  zinterp(i,j) = 0.d0
-  do in = 1,ngnod
-    nnum = knods(in,ispec)
-      xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
-      zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
-  enddo
+          xinterp(i,j) = 0.d0
+          zinterp(i,j) = 0.d0
+          do in = 1,ngnod
+            nnum = knods(in,ispec)
+            xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
+            zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
+          enddo
 
-  Uxinterp(i,j) = 0.d0
-  Uzinterp(i,j) = 0.d0
+          Uxinterp(i,j) = 0.d0
+          Uzinterp(i,j) = 0.d0
 
-  do k = 1,NGLLX
-    do l= 1,NGLLX
-      if (AXISYM) then
-        if (is_on_the_axis(ispec)) then
-          Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
-          Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(2,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
-        else
-          Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-          Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(2,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-        endif
-      else
-        Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-        Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(2,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
-    endif
-  enddo
-  enddo
+          do k = 1,NGLLX
+            do l= 1,NGLLX
+              if (AXISYM) then
+                if (is_on_the_axis(ispec)) then
+                  Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
+                  Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(2,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
+                else
+                  Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+                  Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(2,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+                endif
+              else
+                Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+                Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(2,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+              endif
+            enddo
+          enddo
 
-  x1 =(xinterp(i,j)-xmin)*ratio_page
-  z1 =(zinterp(i,j)-zmin)*ratio_page
-  x2 = Uxinterp(i,j)*sizemax_arrows/dispmax
-  z2 = Uzinterp(i,j)*sizemax_arrows/dispmax
+          x1 =(xinterp(i,j)-xmin)*ratio_page
+          z1 =(zinterp(i,j)-zmin)*ratio_page
 
-  d = sqrt(x2**2 + z2**2)
+          if (dispmax > 0.d0) then
+            x2 = Uxinterp(i,j)*sizemax_arrows/dispmax
+            z2 = Uzinterp(i,j)*sizemax_arrows/dispmax
+          else
+            x2 = 0.d0
+            z2 = 0.d0
+          endif
+          d = sqrt(x2**2 + z2**2)
 
-! ignore if vector is too small
-  if (d > cutsnaps*sizemax_arrows) then
+          ! ignore if vector is too small
+          if (d > cutsnaps*sizemax_arrows) then
 
-  d1 = d * ARROW_RATIO
-  d2 = d1 * cos(ARROW_ANGLE*convert)
+            d1 = d * ARROW_RATIO
+            d2 = d1 * cos(ARROW_ANGLE*convert)
 
-  dummy = x2/d
-  if (dummy > 0.9999d0) dummy = 0.9999d0
-  if (dummy < -0.9999d0) dummy = -0.9999d0
-  theta = acos(dummy)
+            dummy = x2/d
+            if (dummy > 0.9999d0) dummy = 0.9999d0
+            if (dummy < -0.9999d0) dummy = -0.9999d0
+            theta = acos(dummy)
 
-  if (z2 < 0.d0) theta = 360.d0*convert - theta
-  thetaup = theta - ARROW_ANGLE*convert
-  thetadown = theta + ARROW_ANGLE*convert
+            if (z2 < 0.d0) theta = 360.d0*convert - theta
+            thetaup = theta - ARROW_ANGLE*convert
+            thetadown = theta + ARROW_ANGLE*convert
 
-! draw the vector
-  x1 = (orig_x+x1) * centim
-  z1 = (orig_z+z1) * centim
-  x2 = x2 * centim
-  z2 = z2 * centim
-  xa = -d2*cos(thetaup)
-  za = -d2*sin(thetaup)
-  xa = xa * centim
-  za = za * centim
-  xb = -d2*cos(thetadown)
-  zb = -d2*sin(thetadown)
-  xb = xb * centim
-  zb = zb * centim
-  if (myrank == 0) then
-  write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
-! suppress useless white spaces to make PostScript file smaller
-! suppress leading white spaces again, if any
-  postscript_line = adjustl(postscript_line)
+            ! draw the vector
+            x1 = (orig_x+x1) * centim
+            z1 = (orig_z+z1) * centim
+            x2 = x2 * centim
+            z2 = z2 * centim
+            xa = -d2*cos(thetaup)
+            za = -d2*sin(thetaup)
+            xa = xa * centim
+            za = za * centim
+            xb = -d2*cos(thetadown)
+            zb = -d2*sin(thetadown)
+            xb = xb * centim
+            zb = zb * centim
+            if (myrank == 0) then
+              write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
+              ! suppress useless white spaces to make PostScript file smaller
+              ! suppress leading white spaces again, if any
+              postscript_line = adjustl(postscript_line)
 
-  line_length = len_trim(postscript_line)
-  index_char = 1
-  first = .false.
-  do ii = 1,line_length-1
-    if (ch1(ii) /= ' ' .or. first) then
-      if (ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
-        ch2(index_char) = ch1(ii)
-        index_char = index_char + 1
-        first = .true.
-      endif
-    endif
-  enddo
-  ch2(index_char) = ch1(line_length)
-  write(24,"(100(a1))") (ch2(ii), ii= 1,index_char)
+              line_length = len_trim(postscript_line)
+              index_char = 1
+              first = .false.
+              do ii = 1,line_length-1
+                if (ch1(ii) /= ' ' .or. first) then
+                  if (ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
+                    ch2(index_char) = ch1(ii)
+                    index_char = index_char + 1
+                    first = .true.
+                  endif
+                endif
+              enddo
+              ch2(index_char) = ch1(line_length)
+              write(24,"(100(a1))") (ch2(ii), ii= 1,index_char)
+            else
+              buffer_offset = buffer_offset + 1
+              coorg_send_ps_vector_field(1,buffer_offset) = xb
+              coorg_send_ps_vector_field(2,buffer_offset) = zb
+              coorg_send_ps_vector_field(3,buffer_offset) = xa
+              coorg_send_ps_vector_field(4,buffer_offset) = za
+              coorg_send_ps_vector_field(5,buffer_offset) = x2
+              coorg_send_ps_vector_field(6,buffer_offset) = z2
+              coorg_send_ps_vector_field(7,buffer_offset) = x1
+              coorg_send_ps_vector_field(8,buffer_offset) = z1
+            endif
 
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_vector_field(1,buffer_offset) = xb
-     coorg_send_ps_vector_field(2,buffer_offset) = zb
-     coorg_send_ps_vector_field(3,buffer_offset) = xa
-     coorg_send_ps_vector_field(4,buffer_offset) = za
-     coorg_send_ps_vector_field(5,buffer_offset) = x2
-     coorg_send_ps_vector_field(6,buffer_offset) = z2
-     coorg_send_ps_vector_field(7,buffer_offset) = x1
-     coorg_send_ps_vector_field(8,buffer_offset) = z1
-  endif
+          endif
 
-  endif
+        enddo
+      enddo
 
-  enddo
-  enddo
-  enddo
+    enddo ! ispec
 
 #ifdef USE_MPI
-  if (myrank == 0) then
-
-     do iproc = 1, NPROC-1
+    if (myrank == 0) then
+      ! master collects
+      do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 46, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if (nspec_recv > 0) then
-        call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 46, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
+                         MPI_DOUBLE_PRECISION, iproc, 46, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
-        buffer_offset = 0
-        do ispec = 1, nspec_recv
-           buffer_offset = buffer_offset + 1
-             write(postscript_line,700) coorg_recv_ps_vector_field(1,buffer_offset), &
-                  coorg_recv_ps_vector_field(2,buffer_offset), &
-                  coorg_recv_ps_vector_field(3,buffer_offset), coorg_recv_ps_vector_field(4,buffer_offset), &
-                  coorg_recv_ps_vector_field(5,buffer_offset), coorg_recv_ps_vector_field(6,buffer_offset), &
-                  coorg_recv_ps_vector_field(7,buffer_offset), coorg_recv_ps_vector_field(8,buffer_offset)
+          buffer_offset = 0
+          do ispec = 1, nspec_recv
+            buffer_offset = buffer_offset + 1
+            write(postscript_line,700) coorg_recv_ps_vector_field(1,buffer_offset), &
+                                       coorg_recv_ps_vector_field(2,buffer_offset), &
+                                       coorg_recv_ps_vector_field(3,buffer_offset), coorg_recv_ps_vector_field(4,buffer_offset), &
+                                       coorg_recv_ps_vector_field(5,buffer_offset), coorg_recv_ps_vector_field(6,buffer_offset), &
+                                       coorg_recv_ps_vector_field(7,buffer_offset), coorg_recv_ps_vector_field(8,buffer_offset)
 
-             ! suppress useless white spaces to make PostScript file smaller
-             ! suppress leading white spaces again, if any
-             postscript_line = adjustl(postscript_line)
+            ! suppress useless white spaces to make PostScript file smaller
+            ! suppress leading white spaces again, if any
+            postscript_line = adjustl(postscript_line)
 
-             line_length = len_trim(postscript_line)
-             index_char = 1
-             first = .false.
-             do ii = 1,line_length-1
-                if (ch1(ii) /= ' ' .or. first) then
-                   if (ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
-                      ch2(index_char) = ch1(ii)
-                      index_char = index_char + 1
-                      first = .true.
-                   endif
+            line_length = len_trim(postscript_line)
+            index_char = 1
+            first = .false.
+            do ii = 1,line_length-1
+              if (ch1(ii) /= ' ' .or. first) then
+                if (ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
+                  ch2(index_char) = ch1(ii)
+                  index_char = index_char + 1
+                  first = .true.
                 endif
-             enddo
-             ch2(index_char) = ch1(line_length)
-             write(24,"(100(a1))") (ch2(ii), ii= 1,index_char)
+              endif
+            enddo
+            ch2(index_char) = ch1(line_length)
+            write(24,"(100(a1))") (ch2(ii), ii= 1,index_char)
           enddo
-          endif
-       enddo
+        endif
+      enddo
     else
-       call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 46, MPI_COMM_WORLD, ier)
-       if (buffer_offset > 0) then
-       call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
-            MPI_DOUBLE_PRECISION, 0, 46, MPI_COMM_WORLD, ier)
-       endif
-
-  endif
-
+      call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 46, MPI_COMM_WORLD, ier)
+      if (buffer_offset > 0) then
+        call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
+                       MPI_DOUBLE_PRECISION, 0, 46, MPI_COMM_WORLD, ier)
+      endif
+    endif
+    call synchronize_all()
 #endif
-
 
 ! draw the vectors at the nodes of the mesh if we do not interpolate the display on a regular grid
   else
 
-  buffer_offset = 0
+    buffer_offset = 0
 
-  do ipoin= 1,nglob
+    do ipoin= 1,nglob
 
-  x1 =(coord(1,ipoin)-xmin)*ratio_page
-  z1 =(coord(2,ipoin)-zmin)*ratio_page
+      x1 =(coord(1,ipoin)-xmin)*ratio_page
+      z1 =(coord(2,ipoin)-zmin)*ratio_page
 
-  x2 = vector_field_display(1,ipoin)*sizemax_arrows/dispmax
-  z2 = vector_field_display(2,ipoin)*sizemax_arrows/dispmax
-
-  d = sqrt(x2**2 + z2**2)
-
-! ignore if vector is too small
-  if (d > cutsnaps*sizemax_arrows) then
-
-  d1 = d * ARROW_RATIO
-  d2 = d1 * cos(ARROW_ANGLE*convert)
-
-  dummy = x2/d
-  if (dummy > 0.9999d0) dummy = 0.9999d0
-  if (dummy < -0.9999d0) dummy = -0.9999d0
-  theta = acos(dummy)
-
-  if (z2 < 0.d0) theta = 360.d0*convert - theta
-  thetaup = theta - ARROW_ANGLE*convert
-  thetadown = theta + ARROW_ANGLE*convert
-
-! draw the vector
-  x1 = (orig_x+x1) * centim
-  z1 = (orig_z+z1) * centim
-  x2 = x2 * centim
-  z2 = z2 * centim
-  xa = -d2*cos(thetaup)
-  za = -d2*sin(thetaup)
-  xa = xa * centim
-  za = za * centim
-  xb = -d2*cos(thetadown)
-  zb = -d2*sin(thetadown)
-  xb = xb * centim
-  zb = zb * centim
-  if (myrank == 0) then
-  write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
-
-! suppress useless white spaces to make PostScript file smaller
-! suppress leading white spaces again, if any
-  postscript_line = adjustl(postscript_line)
-
-  line_length = len_trim(postscript_line)
-  index_char = 1
-  first = .false.
-  do ii = 1,line_length-1
-    if (ch1(ii) /= ' ' .or. first) then
-      if (ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
-        ch2(index_char) = ch1(ii)
-        index_char = index_char + 1
-        first = .true.
+      if (dispmax > 0.d0) then
+        x2 = vector_field_display(1,ipoin)*sizemax_arrows/dispmax
+        z2 = vector_field_display(2,ipoin)*sizemax_arrows/dispmax
+      else
+        x2 = 0.d0
+        z2 = 0.d0
       endif
-    endif
-  enddo
-  ch2(index_char) = ch1(line_length)
-  write(24,"(100(a1))") (ch2(ii), ii= 1,index_char)
+      d = sqrt(x2**2 + z2**2)
 
-  else
-     buffer_offset = buffer_offset + 1
-     coorg_send_ps_vector_field(1,buffer_offset) = xb
-     coorg_send_ps_vector_field(2,buffer_offset) = zb
-     coorg_send_ps_vector_field(3,buffer_offset) = xa
-     coorg_send_ps_vector_field(4,buffer_offset) = za
-     coorg_send_ps_vector_field(5,buffer_offset) = x2
-     coorg_send_ps_vector_field(6,buffer_offset) = z2
-     coorg_send_ps_vector_field(7,buffer_offset) = x1
-     coorg_send_ps_vector_field(8,buffer_offset) = z1
-  endif
-  endif
+      ! ignore if vector is too small
+      if (d > cutsnaps*sizemax_arrows) then
 
-  enddo
+        d1 = d * ARROW_RATIO
+        d2 = d1 * cos(ARROW_ANGLE*convert)
+
+        dummy = x2/d
+        if (dummy > 0.9999d0) dummy = 0.9999d0
+        if (dummy < -0.9999d0) dummy = -0.9999d0
+        theta = acos(dummy)
+
+        if (z2 < 0.d0) theta = 360.d0*convert - theta
+        thetaup = theta - ARROW_ANGLE*convert
+        thetadown = theta + ARROW_ANGLE*convert
+
+        ! draw the vector
+        x1 = (orig_x+x1) * centim
+        z1 = (orig_z+z1) * centim
+        x2 = x2 * centim
+        z2 = z2 * centim
+        xa = -d2*cos(thetaup)
+        za = -d2*sin(thetaup)
+        xa = xa * centim
+        za = za * centim
+        xb = -d2*cos(thetadown)
+        zb = -d2*sin(thetadown)
+        xb = xb * centim
+        zb = zb * centim
+        if (myrank == 0) then
+          write(postscript_line,700) xb,zb,xa,za,x2,z2,x1,z1
+
+          ! suppress useless white spaces to make PostScript file smaller
+          ! suppress leading white spaces again, if any
+          postscript_line = adjustl(postscript_line)
+
+          line_length = len_trim(postscript_line)
+          index_char = 1
+          first = .false.
+          do ii = 1,line_length-1
+            if (ch1(ii) /= ' ' .or. first) then
+              if (ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
+                ch2(index_char) = ch1(ii)
+                index_char = index_char + 1
+                first = .true.
+              endif
+            endif
+          enddo
+          ch2(index_char) = ch1(line_length)
+          write(24,"(100(a1))") (ch2(ii), ii= 1,index_char)
+        else
+          buffer_offset = buffer_offset + 1
+          coorg_send_ps_vector_field(1,buffer_offset) = xb
+          coorg_send_ps_vector_field(2,buffer_offset) = zb
+          coorg_send_ps_vector_field(3,buffer_offset) = xa
+          coorg_send_ps_vector_field(4,buffer_offset) = za
+          coorg_send_ps_vector_field(5,buffer_offset) = x2
+          coorg_send_ps_vector_field(6,buffer_offset) = z2
+          coorg_send_ps_vector_field(7,buffer_offset) = x1
+          coorg_send_ps_vector_field(8,buffer_offset) = z1
+        endif
+      endif
+
+    enddo
 
 #ifdef USE_MPI
-  if (myrank == 0) then
-
-     do iproc = 1, NPROC-1
+    if (myrank == 0) then
+      ! master collects
+      do iproc = 1, NPROC-1
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 47, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
         if (nspec_recv > 0) then
-        call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
-             MPI_DOUBLE_PRECISION, iproc, 47, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
+                         MPI_DOUBLE_PRECISION, iproc, 47, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
-        buffer_offset = 0
-        do ispec = 1, nspec_recv
-           buffer_offset = buffer_offset + 1
-             write(postscript_line,700) coorg_recv_ps_vector_field(1,buffer_offset), &
-                  coorg_recv_ps_vector_field(2,buffer_offset), &
-                  coorg_recv_ps_vector_field(3,buffer_offset), coorg_recv_ps_vector_field(4,buffer_offset), &
-                  coorg_recv_ps_vector_field(5,buffer_offset), coorg_recv_ps_vector_field(6,buffer_offset), &
-                  coorg_recv_ps_vector_field(7,buffer_offset), coorg_recv_ps_vector_field(8,buffer_offset)
+          buffer_offset = 0
+          do ispec = 1, nspec_recv
+            buffer_offset = buffer_offset + 1
+            write(postscript_line,700) coorg_recv_ps_vector_field(1,buffer_offset),coorg_recv_ps_vector_field(2,buffer_offset), &
+                                       coorg_recv_ps_vector_field(3,buffer_offset),coorg_recv_ps_vector_field(4,buffer_offset), &
+                                       coorg_recv_ps_vector_field(5,buffer_offset),coorg_recv_ps_vector_field(6,buffer_offset), &
+                                       coorg_recv_ps_vector_field(7,buffer_offset),coorg_recv_ps_vector_field(8,buffer_offset)
 
-             ! suppress useless white spaces to make PostScript file smaller
-             ! suppress leading white spaces again, if any
-             postscript_line = adjustl(postscript_line)
+            ! suppress useless white spaces to make PostScript file smaller
+            ! suppress leading white spaces again, if any
+            postscript_line = adjustl(postscript_line)
 
-             line_length = len_trim(postscript_line)
-             index_char = 1
-             first = .false.
-             do ii = 1,line_length-1
-                if (ch1(ii) /= ' ' .or. first) then
-                   if (ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
-                      ch2(index_char) = ch1(ii)
-                      index_char = index_char + 1
-                      first = .true.
-                   endif
+            line_length = len_trim(postscript_line)
+            index_char = 1
+            first = .false.
+            do ii = 1,line_length-1
+              if (ch1(ii) /= ' ' .or. first) then
+                if (ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
+                  ch2(index_char) = ch1(ii)
+                  index_char = index_char + 1
+                  first = .true.
                 endif
-             enddo
-             ch2(index_char) = ch1(line_length)
-             write(24,"(100(a1))") (ch2(ii), ii= 1,index_char)
+              endif
+            enddo
+            ch2(index_char) = ch1(line_length)
+            write(24,"(100(a1))") (ch2(ii), ii= 1,index_char)
           enddo
-          endif
-       enddo
+        endif
+      enddo
     else
-       call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 47, MPI_COMM_WORLD, ier)
-       if (buffer_offset > 0) then
-       call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
-            MPI_DOUBLE_PRECISION, 0, 47, MPI_COMM_WORLD, ier)
-       endif
-  endif
-
+      call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 47, MPI_COMM_WORLD, ier)
+      if (buffer_offset > 0) then
+        call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
+                       MPI_DOUBLE_PRECISION, 0, 47, MPI_COMM_WORLD, ier)
+      endif
+    endif
+    call synchronize_all()
 #endif
 
-  endif
+  endif ! interpol
 
+  ! source/receiver marks
   if (myrank == 0) then
-  write(24,*) '0 setgray'
-
-! sources and receivers in color if velocity model
-  if (modelvect) then
-    write(24,*) 'Colreceiv'
-  else
     write(24,*) '0 setgray'
+
+    ! sources and receivers in color if velocity model
+    if (modelvect) then
+      write(24,*) 'Colreceiv'
+    else
+      write(24,*) '0 setgray'
+    endif
+
+    !
+    !----  write position of the source
+    !
+    do i = 1,NSOURCES
+      if (i == 1) write(24,*) '% beginning of source line'
+      if (i == NSOURCES) write(24,*) '% end of source line'
+      xw = x_source(i)
+      zw = z_source(i)
+      xw = (xw-xmin)*ratio_page + orig_x
+      zw = (zw-zmin)*ratio_page + orig_z
+      xw = xw * centim
+      zw = zw * centim
+      write(24,500) xw,zw
+      write(24,*) 'Cross'
+    enddo
+
+    !
+    !----  write position of the receivers
+    !
+    do i = 1,nrec
+      if (i == 1) write(24,*) '% beginning of receiver line'
+      if (i == nrec) write(24,*) '% end of receiver line'
+
+      xw = st_xval(i)
+      zw = st_zval(i)
+
+      xw = (xw-xmin)*ratio_page + orig_x
+      zw = (zw-zmin)*ratio_page + orig_z
+      xw = xw * centim
+      zw = zw * centim
+      write(24,500) xw,zw
+      write(24,*) 'Diamond'
+    enddo
+
+    write(24,*) '%'
+    write(24,*) 'grestore'
+    write(24,*) 'showpage'
+
+    close(24)
   endif
-
-!
-!----  write position of the source
-!
-  do i = 1,NSOURCES
-    if (i == 1) write(24,*) '% beginning of source line'
-    if (i == NSOURCES) write(24,*) '% end of source line'
-  xw = x_source(i)
-  zw = z_source(i)
-  xw = (xw-xmin)*ratio_page + orig_x
-  zw = (zw-zmin)*ratio_page + orig_z
-  xw = xw * centim
-  zw = zw * centim
-  write(24,500) xw,zw
-  write(24,*) 'Cross'
-  enddo
-
-!
-!----  write position of the receivers
-!
-  do i = 1,nrec
-    if (i == 1) write(24,*) '% beginning of receiver line'
-    if (i == nrec) write(24,*) '% end of receiver line'
-
-    xw = st_xval(i)
-    zw = st_zval(i)
-
-    xw = (xw-xmin)*ratio_page + orig_x
-    zw = (zw-zmin)*ratio_page + orig_z
-    xw = xw * centim
-    zw = zw * centim
-    write(24,500) xw,zw
-    write(24,*) 'Diamond'
-  enddo
-
-  write(24,*) '%'
-  write(24,*) 'grestore'
-  write(24,*) 'showpage'
-
-  close(24)
-  endif
+  call synchronize_all()
 
  10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a100,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
  600 format(f6.3,' neg CM 0 MR (Time =',f8.3,' s) show')

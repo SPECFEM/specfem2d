@@ -35,10 +35,6 @@
 
 ! check the mesh, stability and number of points per wavelength
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use specfem_par
   use specfem_par_movie
 
@@ -80,7 +76,6 @@
   double precision :: dt_suggested,dt_suggested_glob
   double precision :: avg_distance,vel_min,vel_max
 
-  integer :: ier
   integer :: i,j,ispec,material
 
 ! for histogram of number of points per wavelength
@@ -464,15 +459,12 @@
   endif
 
   ! master sends to all others
-  ier = 0
-#ifdef USE_MPI
-  call MPI_BCAST(lambdaPmin_in_fluid_histo,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(lambdaPmax_in_fluid_histo,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(lambdaSmin_histo,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(lambdaSmax_histo,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(f0max,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
-  call MPI_BCAST(create_wavelength_histogram,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
-#endif
+  call bcast_all_singledp(lambdaPmin_in_fluid_histo)
+  call bcast_all_singledp(lambdaPmax_in_fluid_histo)
+  call bcast_all_singledp(lambdaSmin_histo)
+  call bcast_all_singledp(lambdaSmax_histo)
+  call bcast_all_singledp(f0max)
+  call bcast_all_singlel(create_wavelength_histogram)
 
 !!!!!!!!!!!!!!!! DK DK: added histogram of minimum number of points per wavelength
 

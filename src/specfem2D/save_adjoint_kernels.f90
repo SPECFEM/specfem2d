@@ -58,7 +58,9 @@
 
   ! user output
   if (myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) 'Writing Kernels file'
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
@@ -109,12 +111,16 @@
             iglob = ibool(i,j,ispec)
             xx = coord(1,iglob)
             zz = coord(2,iglob)
-            if(count(ispec_is_anisotropic(:) .eqv. .true.) >= 1)then ! anisotropic
+            if(count(ispec_is_anisotropic(:) .eqv. .true.) >= 1)then
+              ! anisotropic
               write(97,'(9e15.5e4)') xx, zz, rho_kl(i,j,ispec), c11_kl(i,j,ispec),&
-                    c13_kl(i,j,ispec), c15_kl(i,j,ispec), c33_kl(i,j,ispec), c35_kl(i,j,ispec),&
-                    c55_kl(i,j,ispec)
+                                     c13_kl(i,j,ispec), c15_kl(i,j,ispec), c33_kl(i,j,ispec), c35_kl(i,j,ispec),&
+                                     c55_kl(i,j,ispec)
             else
+              ! isotropic
+              ! parameterization (rho,kappa,mu) "primary" kernels
               write(97,'(5e15.5e4)') xx,zz,rho_kl(i,j,ispec),kappa_kl(i,j,ispec),mu_kl(i,j,ispec)
+              ! parameterization (rho,Vp,Vs)
               write(98,'(5e15.5e4)') xx,zz,rhop_kl(i,j,ispec),alpha_kl(i,j,ispec),beta_kl(i,j,ispec)
             endif
           enddo

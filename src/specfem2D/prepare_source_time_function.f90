@@ -69,6 +69,7 @@
 
   ! user output
   if (myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) 'Preparing source time function'
     call flush_IMAIN()
   endif
@@ -84,6 +85,8 @@
     allocate(source_time_function(NSOURCES,NSTEP,stage_time_scheme),stat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error allocating array source_time_function')
   endif
+  ! initializes stf array
+  source_time_function(:,:,:) = 0.d0
 
   ! checks time scheme
   ! Newmark: time_stepping_scheme == 1
@@ -99,14 +102,9 @@
     c_RK(4) = 1.0d0 * deltat
   endif
 
-  ! initializes stf array
-  source_time_function(:,:,:) = 0.d0
-
   ! user output
   if (is_proc_source(1) == 1) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Saving the source time function in a text file...'
-    write(IMAIN,*)
+    write(IMAIN,*) '  saving the source time function in a text file...'
     call flush_IMAIN()
     ! opens source time file for output
     open(unit=55,file='OUTPUT_FILES/plot_source_time_function.txt',status='unknown',iostat=ier)
