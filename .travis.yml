@@ -16,26 +16,36 @@ env:
     - MPIFC=mpif90
     - CC=gcc
     - OMP_NUM_THREADS=2
+    - WORKDIR=`pwd`
 
   matrix:
     # for test cases, we use
     #   TEST    - flags used for configuration
     #   TESTCOV - determines whether or not (0/1) code coverage flags are used
 
-    # run default test
-    - TEST="" TESTCOV=0
+    # run default test with make tests
+    - TEST="" TESTCOV=0 TESTMAKE=1
 
     # run debug
-    - TEST="--enable-debug" TESTCOV=0
+    - TEST="--enable-debug" TESTCOV=0 TESTMAKE=0
 
     # run debug & double precision
-    - TEST="--enable-double-precision --enable-debug" TESTCOV=0
+    - TEST="--enable-double-precision --enable-debug" TESTCOV=0 TESTMAKE=0
 
     # run vectorization
-    - TEST="--enable-vectorization --without-mpi" TESTCOV=0
+    - TEST="--enable-vectorization --without-mpi" TESTCOV=0 TESTMAKE=0
 
     # run vectorization & mpi, using code coverage flags
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=1
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=1 TESTMAKE=0
+
+    # run example 2
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=2
+
+    # run example 3
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=3
+
+    # run example 4 (kernel)
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=4
 
 before_install:
   # informations on git
@@ -103,13 +113,24 @@ script:
   # info
   - |
     echo $TRAVIS_BUILD_DIR
+    echo $WORKDIR
     echo "configuration test:" ${TEST} ${TESTFLAGS}
 
   # bash function for checking seismogram output with reference solutions
-  - my_test(){
-    echo "testing seismograms:";
-    ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/;
-    ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}';
+  - |
+    my_test(){
+      echo "testing seismograms:"
+      ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/
+      if [[ $? -ne 0 ]]; then exit 1; fi
+      ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
+    }
+
+  - |
+    my_test_kernel(){
+      echo "testing kernels:"
+      ../../utils/compare_kernel_correlations.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat REF_KERNEL/proc000000_rho_kappa_mu_kernel.dat
+      if [[ $? -ne 0 ]]; then exit 1; fi
+      ../../utils/compare_kernel_correlations.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat REF_KERNEL/proc000000_rho_kappa_mu_kernel.dat | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
     }
 
   ###########################################################
@@ -131,11 +152,29 @@ script:
   ###########################################################
   # testing internal mesher example (short & quick for all configuration)
   - |
-    cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
-    ./run_this_example.sh
-    my_test
-    cd ../../
-
+    if [ "$TESTMAKE" == "1" ]; then
+      # runs default tests
+      make tests
+    else
+      # default
+      dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
+      if [ "$TESTMAKE" == "2" ]; then
+        dir=EXAMPLES/semi_infinite_homogeneous/
+      elif [ "$TESTMAKE" == "3" ]; then
+        dir=EXAMPLES/Gmsh_example_Stacey_MPI/
+      elif [ "$TESTMAKE" == "4" ]; then
+        dir=EXAMPLES/Tromp2005_kernel/
+      fi
+      cd $dir
+      if [ "$TESTMAKE" == "4" ]; then
+        ./run_this_example.sh
+        my_test_kernel
+      else
+        ./run_this_example.sh
+        my_test
+      fi
+      cd ../../
+    fi
   # testing example with pml (longer testing only together with mpi and code coverage)
   - |
     if [ "$TESTCOV" == "1" ]; then
@@ -155,6 +194,15 @@ script:
       my_test
       # tests mesh quality output
       awk '{if(NR==1){dy=sqrt(($2-13.3242693)^2);if(dy>1.e-5){print $0,"failed",dy;exit 1;}else{print $0,"good",dy;exit 0;}}}' OUTPUT_FILES/mesh_quality_histogram.txt
+      cd ../../
+    fi
+
+  # testing kernel example
+  - |
+    if [ "$TESTCOV" == "1" ]; then
+      cd EXAMPLES/Tromp2005_kernel/
+      ./run_this_example_kernel.sh
+      my_test_kernel
       cd ../../
     fi
 

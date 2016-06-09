@@ -95,7 +95,7 @@ else
       next
 
       # checks exit code
-      if [[ $? -ne 0 ]]; then exit 1; fi
+      if [[ $? -ne 0 ]]; then echo "***** results.log ******"; cat results.log; exit 1; fi
 
       echo >> results.log
     fi
