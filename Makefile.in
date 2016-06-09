@@ -247,6 +247,20 @@ ifeq (${USE_BUNDLED_SCOTCH},1)
 endif
 	-rm -rf $E/* $O/*
 
+# unit testing
+# If the first argument is "test"...
+ifeq (test,$(findstring test,firstword $(MAKECMDGOALS)))
+  # use the rest as arguments for "run"
+  TEST_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  # turn them into do-nothing targets
+  $(eval $(TEST_ARGS):;@:)
+endif
+
+tests:
+	@echo "testing in directory: ${S_TOP}/tests/"
+	cd ${S_TOP}/tests; ./run_all_tests.sh $(TEST_ARGS)
+	@echo ""
+
 
 help:
 	@echo "usage: make [executable]"
@@ -268,9 +282,12 @@ help:
 	@echo "- tomography tools: [make tomography]"
 	@echo "    xsum_kernels"
 	@echo ""
+	@echo "for unit testing:"
+	@echo "    tests"
+	@echo ""
 
 
-.PHONY: all default backup clean realclean help
+.PHONY: all default backup clean realclean help tests
 
 #######################################
 
@@ -301,9 +318,10 @@ endef
 
 $(foreach dir, $(SUBDIRS), $(eval $(call shortcut,$(dir))))
 
+# shortcut testing
+test : tests
 
 # Other old shortcuts
-
 mesh : $E/xmeshfem2D
 spec : $E/xspecfem2D
 .PHONY: mesh spec
