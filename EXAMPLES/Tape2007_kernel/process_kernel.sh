@@ -32,7 +32,7 @@ echo
 cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES
 
 # plot the traveltime kernel
-cp ../../utils/visualization/plot_wavefield.pl ./
+cp ../../utils/Visualization/plot_wavefield.pl ./
 ./plot_wavefield.pl 400/3000/400 400/2800/800 0/480/0/480 120/20/120/20 -8/-8/-8 1/1/1 -48.0/0.06 0/1/0/0/0 2.0/1/0 1/0/1/120 Tape2007_kernel onerec_homo
 
 

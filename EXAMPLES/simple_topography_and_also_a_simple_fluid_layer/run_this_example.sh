@@ -7,13 +7,9 @@
 echo "running example: `date`"
 currentdir=`pwd`
 
-echo
-echo "(will take about 2 minutes)"
-echo
-
 # sets up directory structure in current example directoy
 echo
-echo "   setting up example..."
+echo "setting up example..."
 echo
 
 mkdir -p OUTPUT_FILES
@@ -39,13 +35,13 @@ NPROC=`grep ^NPROC DATA/Par_file | cut -d = -f 2 | cut -d \# -f 1 | tr -d ' '`
 if [ "$NPROC" -eq 1 ]; then
   # This is a serial simulation
   echo
-  echo "  running mesher..."
+  echo "running mesher..."
   echo
   ./xmeshfem2D
 else
   # This is a MPI simulation
   echo
-  echo "  running mesher on $NPROC processors..."
+  echo "running mesher on $NPROC processors..."
   echo
   mpirun -np $NPROC ./xmeshfem2D
 fi
@@ -56,13 +52,13 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 if [ "$NPROC" -eq 1 ]; then
   # This is a serial simulation
   echo
-  echo "  running solver..."
+  echo "running solver..."
   echo
   ./xspecfem2D
 else
   # This is a MPI simulation
   echo
-  echo "  running solver on $NPROC processors..."
+  echo "running solver on $NPROC processors..."
   echo
   mpirun -np $NPROC ./xspecfem2D
 fi

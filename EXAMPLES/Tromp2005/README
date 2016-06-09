@@ -27,7 +27,7 @@ TO RUN:
 3. cd EXAMPLES/Tromp2005/
 
 4. execute script to run mesher and solver for the PSV case:
-   ./process.sh
+   ./run_this_example.sh
 
 5. check out the output files in the local directory OUTPUT_FILES
 
@@ -38,7 +38,7 @@ TO RUN:
 7. set P_SV = .false. in Par_file_Tromp2005
 
 8. execute script to run mesher and solver for the SH case:
-   ./process.sh
+   ./run_this_example.sh
 
 9. check out the output files in the local directory OUTPUT_FILES
 
