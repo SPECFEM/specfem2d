@@ -165,9 +165,10 @@ script:
       elif [ "$TESTMAKE" == "4" ]; then
         dir=EXAMPLES/Tromp2005_kernel/
       fi
+      echo "test directory: $dir"
       cd $dir
       if [ "$TESTMAKE" == "4" ]; then
-        ./run_this_example.sh
+        ./run_this_example_kernel.sh
         my_test_kernel
       else
         ./run_this_example.sh
