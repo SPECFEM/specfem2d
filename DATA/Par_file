@@ -238,7 +238,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes   # file containing t
 #-----------------------------------------------------------------------------
 
 # file containing interfaces for internal mesh
-interfacesfile                  = ../EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/interfaces_simple_topo_curved.dat
+interfacesfile                  = ../EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/DATA/interfaces_simple_topo_curved.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
