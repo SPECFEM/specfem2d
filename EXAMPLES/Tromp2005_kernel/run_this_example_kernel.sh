@@ -43,7 +43,7 @@ echo "using compiler: $FC"
 echo
 
 # creates adjoint sources
-rm -rf xadj_seismogram 
+rm -rf xadj_seismogram
 $FC adj_seismogram_Tromp2005.f90 -o xadj_seismogram
 
 echo

@@ -23,7 +23,7 @@ echo >> $testdir/results.log
 echo "$NAME in: $testdir" >> $testdir/results.log
 echo >> $testdir/results.log
 
-# checks if compilation done 
+# checks if compilation done
 if [ ! -e ./bin/xspecfem2D ]; then
   echo "no binaries found, compilation must be done before, please check..." >> $testdir/results.log
   exit 1
