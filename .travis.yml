@@ -23,9 +23,6 @@ env:
     #   TEST    - flags used for configuration
     #   TESTCOV - determines whether or not (0/1) code coverage flags are used
 
-    # run default test with make tests
-    - TEST="" TESTCOV=0 TESTMAKE=1
-
     # run debug
     - TEST="--enable-debug" TESTCOV=0 TESTMAKE=0
 
@@ -37,6 +34,9 @@ env:
 
     # run vectorization & mpi, using code coverage flags
     - TEST="--enable-vectorization --with-mpi" TESTCOV=1 TESTMAKE=0
+
+    # run default test with make tests
+    - TEST="" TESTCOV=0 TESTMAKE=1
 
     # run example 2
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=2

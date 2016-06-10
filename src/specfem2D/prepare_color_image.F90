@@ -140,7 +140,8 @@
   double precision  :: i_coord, j_coord
   double precision  :: dist_pixel, dist_min_pixel
   integer  :: min_i, min_j, max_i, max_j
-  integer  :: ispec,i,j,k,l,iglob,ier
+  integer  :: ispec,i,j,k,l,iglob,ier,pixel_k,pixel_l
+  integer  :: nb_pixel_total
   logical  :: pixel_is_in
 
   ! create all the pixels
@@ -152,10 +153,10 @@
   size_pixel_horizontal = (xmax_color_image - xmin_color_image) / dble(NX_IMAGE_color-1)
   size_pixel_vertical = (zmax_color_image - zmin_color_image) / dble(NZ_IMAGE_color-1)
 
+  ! initializes
   iglob_image_color(:,:) = -1
 
   ! checking which pixels are inside each element
-
   nb_pixel_loc = 0
   do ispec = 1, nspec
 
@@ -177,40 +178,51 @@
     if (max_i > NX_IMAGE_color) max_i = NX_IMAGE_color
     if (max_j > NZ_IMAGE_color) max_j = NZ_IMAGE_color
 
-     do j = min_j, max_j
-        do i = min_i, max_i
-           i_coord = (i-1)*size_pixel_horizontal + xmin_color_image
-           j_coord = (j-1)*size_pixel_vertical + zmin_color_image
+    do j = min_j, max_j
+      do i = min_i, max_i
+        i_coord = (i-1)*size_pixel_horizontal + xmin_color_image
+        j_coord = (j-1)*size_pixel_vertical + zmin_color_image
 
-           ! checking if the pixel is inside the element (must be a convex quadrilateral)
-           call is_in_convex_quadrilateral( elmnt_coords, i_coord, j_coord, pixel_is_in)
+        ! checking if the pixel is inside the element (must be a convex quadrilateral)
+        call is_in_convex_quadrilateral( elmnt_coords, i_coord, j_coord, pixel_is_in)
 
-           ! if inside, getting the nearest point inside the element!
-           if (pixel_is_in) then
-              dist_min_pixel = HUGEVAL
-              do k = 1, NGLLX
-                 do l = 1, NGLLZ
-                    iglob = ibool(k,l,ispec)
-                    dist_pixel = (coord(1,iglob)-i_coord)**2 + (coord(2,iglob)-j_coord)**2
-                    if (dist_pixel < dist_min_pixel) then
-                       dist_min_pixel = dist_pixel
-                       iglob_image_color(i,j) = iglob
-
-                    endif
-
-                 enddo
-              enddo
-              if (dist_min_pixel >= HUGEVAL) then
-                 call exit_MPI(myrank,'Error in detecting pixel for color image')
-
+        ! if inside, getting the nearest point inside the element!
+        if (pixel_is_in) then
+          dist_min_pixel = HUGEVAL
+          do k = 1, NGLLX
+            do l = 1, NGLLZ
+              iglob = ibool(k,l,ispec)
+              dist_pixel = (coord(1,iglob)-i_coord)**2 + (coord(2,iglob)-j_coord)**2
+              if (dist_pixel < dist_min_pixel) then
+                dist_min_pixel = dist_pixel
+                pixel_l = l
+                pixel_k = k
               endif
-              nb_pixel_loc = nb_pixel_loc + 1
+            enddo
+          enddo
+          ! checks if pixel found
+          if (dist_min_pixel >= HUGEVAL) &
+            call exit_MPI(myrank,'Error in detecting pixel for color image')
 
-           endif
-
-        enddo
-     enddo
+          ! sets closest GLL point for pixel location
+          if (iglob_image_color(i,j) == -1) then
+            ! sets new pixel
+            iglob = ibool(pixel_k,pixel_l,ispec)
+            iglob_image_color(i,j) = iglob
+            nb_pixel_loc = nb_pixel_loc + 1
+          endif
+        endif
+      enddo
+    enddo
   enddo
+
+  ! user output
+  call sum_all_i(nb_pixel_loc,nb_pixel_total)
+  if (myrank == 0) then
+    write(IMAIN,*) '  total number of image pixels = ',nb_pixel_total
+    call flush_IMAIN()
+  endif
+
 
 !
 !----  find pixel position of the sources and receivers

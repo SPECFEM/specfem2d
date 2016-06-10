@@ -516,8 +516,11 @@
           endif
        enddo
     enddo
-    if (ipixel /= nb_pixel_loc) stop 'Error invalid pixel count for color image'
-
+    ! checks
+    if (ipixel /= nb_pixel_loc) then
+      print *,'Error: pixel count ',ipixel,nb_pixel_loc
+      stop 'Error invalid pixel count for color image'
+    endif
     ! filling array iglob_image_color, containing info on which process owns which pixels.
     iproc = 0
     k = 0
