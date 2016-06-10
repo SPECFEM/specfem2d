@@ -123,6 +123,7 @@ script:
       ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/
       if [[ $? -ne 0 ]]; then exit 1; fi
       ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
+      if [[ $? -ne 0 ]]; then exit 1; fi
     }
 
   - |
@@ -131,6 +132,7 @@ script:
       ../../utils/compare_kernel_correlations.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat REF_KERNEL/proc000000_rho_kappa_mu_kernel.dat
       if [[ $? -ne 0 ]]; then exit 1; fi
       ../../utils/compare_kernel_correlations.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat REF_KERNEL/proc000000_rho_kappa_mu_kernel.dat | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
+      if [[ $? -ne 0 ]]; then exit 1; fi
     }
 
   ###########################################################

@@ -10,69 +10,6 @@ import numpy as np
 # tolerance values
 TOL_CORR = 0.8
 TOL_ERR = 0.01
-TOL_SHIFT = 0.01
-
-
-def get_cross_correlation_timeshift(x,y,dt):
-    """
-    computes the time shift of the maximum cross-correlation of signal x with respect to y
-    """
-    # checks signals
-    if len(x) != len(y):
-        print "Error: lengths in cross-correlation don't match"
-        return 1.e30
-
-    # cross-correlation length
-    signal_length = len(x)
-    length = 2 * signal_length - 1
-
-    # cross-correlation array
-    crosscorrelation = np.correlate(x, y, mode='full')
-    
-    # index of maximum (between [0,2 * signal_length - 1]
-    indexmax = np.argmax(crosscorrelation)
-
-    # position (negative -> signal shifted to right, positive -> signal shifted to left)
-    # time lag (will have steps of dt)
-    lag = (indexmax + 1) - signal_length
-    
-    # subsample precision
-    maxval = crosscorrelation[indexmax]
-
-    #debug
-    #print "xcorr: ",indexmax,maxval,len(crosscorrelation),length
-
-    # gets values left/right from maximum value
-    if indexmax >= 1 and indexmax < length-1:
-        val_left = crosscorrelation[indexmax-1]
-        val_right = crosscorrelation[indexmax+1]
-    elif indexmax == 0:
-        # wrap-around values
-        val_left = crosscorrelation[length-1]
-        val_right = crosscorrelation[1]
-    elif indexmax == length-1:
-        # wrap-around values
-        val_left = crosscorrelation[indexmax-1]
-        val_right = crosscorrelation[0]
-
-    # quadratic interpolation will give this maximum
-    # see: http://www.dsprelated.com/freebooks/sasp/Peak_Detection_Steps_3.html
-    if (val_left - 2.0*maxval + val_right) != 0.0:
-        peak_shift = 0.5 * (val_left - val_right) / (val_left - 2.0*maxval + val_right)
-    else:
-        peak_shift = 0.0
-    
-    # adds subsample shift
-    lag += peak_shift
-
-    # cross-correlation time lag
-    time_shift = lag * dt
-
-    # debug
-    #print "cross-correlation:",length,signal_length,"shift = ",indexmax,lag,time_shift
-
-    return time_shift
-
 
 def plot_correlations(syn_file,ref_file):
     """
