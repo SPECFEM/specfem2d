@@ -496,7 +496,7 @@
   integer :: ipoin,ip,id,ier
   double precision, dimension(NDIM) :: coorgread
   character(len=80) :: datlin
-
+  integer :: nspec_all,nelem_acforcing_all,nelem_acoustic_surface_all
   ! allocates nodal coordinates
   allocate(coorg(NDIM,npgeo),stat=ier)
   if (ier /= 0) stop 'Error allocating coorg array'
@@ -531,11 +531,17 @@
               num_fluid_poro_edges,num_solid_poro_edges,nnodes_tangential_curve, &
               nelem_on_the_axis
 
+  ! collects numbers
+  call sum_all_i(nspec,nspec_all)
+  call sum_all_i(nelem_acforcing,nelem_acforcing_all)
+  call sum_all_i(nelem_acoustic_surface,nelem_acoustic_surface_all)
+
   ! user output
   if (myrank == 0) then
     ! print element group main parameters
     write(IMAIN,107)
-    write(IMAIN,207) nspec,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat,nelem_acforcing,nelem_acoustic_surface
+    write(IMAIN,207) nspec_all,ngnod,NGLLX,NGLLZ,NGLLX*NGLLZ,pointsdisp,numat, &
+                     nelem_acforcing_all,nelem_acoustic_surface_all
     call flush_IMAIN()
   endif
 
@@ -554,7 +560,7 @@
 
 
   ! output formats
-107 format(/5x,'--> Spectral Elements (for mesh slice 0 only if using MPI runs) <--',//)
+107 format(/5x,'--> Spectral Elements <--',//)
 
 207 format(5x,'Number of spectral elements . . . . . . . . .  (nspec) =',i7,/5x, &
                'Number of control nodes per element . . . . . (ngnod) =',i7,/5x, &
@@ -1127,6 +1133,8 @@
 
   ! local parameters
   integer :: inum,numacforcingread,typeacforcingread
+  integer :: nelem_acforcing_all
+  integer :: nspec_left_acforcing_all,nspec_right_acforcing_all,nspec_bottom_acforcing_all,nspec_top_acforcing_all
   integer :: ier
   logical :: codeacforcingread(4)
   character(len=80) :: datlin
@@ -1245,14 +1253,22 @@
       endif
     enddo
 
+    ! collects total number
+    call sum_all_i(nelem_acforcing,nelem_acforcing_all)
+
+    call sum_all_i(nspec_left_acforcing,nspec_left_acforcing_all)
+    call sum_all_i(nspec_right_acforcing,nspec_right_acforcing_all)
+    call sum_all_i(nspec_bottom_acforcing,nspec_bottom_acforcing_all)
+    call sum_all_i(nspec_top_acforcing,nspec_top_acforcing_all)
+
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) 'Number of acoustic forcing elements: ',nelem_acforcing
-      write(IMAIN,*) '  nspec_left_acforcing = ',nspec_left_acforcing
-      write(IMAIN,*) '  nspec_right_acforcing = ',nspec_right_acforcing
-      write(IMAIN,*) '  nspec_bottom_acforcing = ',nspec_bottom_acforcing
-      write(IMAIN,*) '  nspec_top_acforcing = ',nspec_top_acforcing
+      write(IMAIN,*) 'Number of acoustic forcing elements: ',nelem_acforcing_all
+      write(IMAIN,*) '  nspec_left_acforcing = ',nspec_left_acforcing_all
+      write(IMAIN,*) '  nspec_right_acforcing = ',nspec_right_acforcing_all
+      write(IMAIN,*) '  nspec_bottom_acforcing = ',nspec_bottom_acforcing_all
+      write(IMAIN,*) '  nspec_top_acforcing = ',nspec_top_acforcing_all
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -1275,7 +1291,7 @@
   implicit none
 
   ! local parameters
-  integer :: inum,acoustic_edges_read
+  integer :: inum,acoustic_edges_read,nelem_acoustic_surface_all
   integer :: ier
   character(len=80) :: datlin
 
@@ -1310,14 +1326,19 @@
   ! resets nelem_acoustic_surface
   if (any_acoustic_edges .eqv. .false. ) nelem_acoustic_surface = 0
 
-  ! constructs acoustic surface
+  ! constructs (local) acoustic surface
   if (nelem_acoustic_surface > 0) then
     call construct_acoustic_surface ()
+  endif
 
+  ! collects total number
+  call sum_all_i(nelem_acoustic_surface,nelem_acoustic_surface_all)
+
+  if (nelem_acoustic_surface_all > 0) then
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) 'Number of free surface elements: ',nelem_acoustic_surface
+      write(IMAIN,*) 'Number of free surface elements: ',nelem_acoustic_surface_all
       call flush_IMAIN()
     endif
   endif

@@ -74,7 +74,6 @@
   ! and stores them in ibool_interfaces*** & nibool_interfaces*** (number of total points)
   call prepare_assemble_MPI()
 
-
   ! sorts ibool comm buffers lexicographically for all MPI interfaces
   num_points1 = 0
   num_points2 = 0
@@ -138,10 +137,10 @@
       ! sorts (lexicographically?) ibool_interfaces and updates value
       ! of total number of points nibool_interfaces_true(iinterface)
       call sort_array_coordinates(num_nibool,xp,zp, &
-                                ibool_dummy, &
-                                reorder_interface,locval,ifseg, &
-                                nibool_interfaces_true(iinterface), &
-                                ind,ninseg,iwork,work)
+                                  ibool_dummy, &
+                                  reorder_interface,locval,ifseg, &
+                                  nibool_interfaces_true(iinterface), &
+                                  ind,ninseg,iwork,work)
 
       ! checks that number of MPI points are still the same
       num_points1 = num_points1 + num_nibool
@@ -183,7 +182,7 @@
   call sum_all_i(num_points2,num_points1)
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'total MPI interface points: ',num_points1
+    write(IMAIN,*) '  total MPI interface points: ',num_points1
     call flush_IMAIN()
   endif
 
