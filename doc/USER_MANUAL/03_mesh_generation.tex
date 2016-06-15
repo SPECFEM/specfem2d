@@ -38,7 +38,7 @@ To create acoustic (fluid) regions, just set the S wave speed to zero and the co
 
      \item[materials\_file] is the number of the material for every element : an integer ranging from 1 to \texttt{nbmodels} on each line.
 
-     \item[free\_surface\_file] is the file describing the edges forming the acoustic free surface: number of edges on the first line, then on each line: number of the element, number of nodes forming the free surface (1 for a point, 2 for an edge), the nodes forming the free surface for this element. If you do not want any free surface, just put 0 on the first line.
+     \item[free\_surface\_file] is the file describing the edges forming the acoustic free surface: number of edges on the first line, then on each line: number of the element, number of nodes forming the free surface (1 for a point, 2 for an edge), the nodes forming the free surface for this element. If you do not want any free surface, just put 0 on the first line; you then get a rigid surface instead.
 
      \item[absorbing\_surface\_file] is the file describing the edges forming the absorbing boundaries:
 number of edges on the first line, then on each line: number of the element, number of nodes forming the absorbing edge (must always be equal to 2),
@@ -300,6 +300,10 @@ Suppose that you have created a region with a 1-meter size element, when it will
 you can enter 3.1 and it will create a PML 3 element thick. Always input a slightly larger (5-10\%) size because the element might be slightly skewed,
 or if you have not created your PML region via extrusion/webcut in CUBIT/TRELIS.
 
+To stabilize PMLs it also helps to add a transition layer of geometrically-regular non-PML elements, in which attenuation is also
+turned off (i.e. $Q_\kappa = Q_\mu = 9999$ in that layer), as in the red layer of Figure~\ref{fig:mesh_extrusion}.
+Our tools in directory in directory utils/CPML \red{should soon (Dimitri: TO DO ONE DAY)} implement that transition layer automatically.
+
 To be more precise:
 
 1/ If one wants to use PML layers, they should NOT mark the layers according to that python script - the reason is that the xmeshfem2d does not recognize those CPML flags. If whoever developed the script adjusts it to solve this problem - this might be a great relief for users; as of now no physical identifiers are needed for those layers.
@@ -323,6 +327,16 @@ that your model is 1D and thus constant along the vertical direction.
 To summarize, only use a 2D velocity and density model inside the physical region, and in
 all the PML layers extend it by continuity from its values along the
 inner PML edge.
+
+%%
+\begin{figure}[htbp]
+\noindent \begin{centering}
+\includegraphics[width=4.5in]{figures/how_to_use_a_transition_mesh_layer_to_stabilize_PML.png}
+\par\end{centering}
+\caption{Mesh extrusion for PML (green elements) and a non-PML stabilization layer (red elements).}
+\label{fig:mesh_extrusion}
+\end{figure}
+%%
 
 %%
 \begin{figure}[htbp]
