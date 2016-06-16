@@ -38,14 +38,17 @@ env:
     # run default test with make tests
     - TEST="" TESTCOV=0 TESTMAKE=1
 
-    # run example 2
+    # run example 2 (PML)
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=2
 
-    # run example 3
+    # run example 3 (MPI and Stacey)
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=3
 
     # run example 4 (kernel)
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=4
+
+    # run example 5 (poroelastic/acoustic)
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=5
 
 before_install:
   # informations on git
@@ -166,6 +169,8 @@ script:
         dir=EXAMPLES/Gmsh_example_Stacey_MPI/
       elif [ "$TESTMAKE" == "4" ]; then
         dir=EXAMPLES/Tromp2005_kernel/
+      elif [ "$TESTMAKE" == "5" ]; then
+        dir=EXAMPLES/poroelastic_acoustic/
       fi
       echo "test directory: $dir"
       cd $dir

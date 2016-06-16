@@ -15,14 +15,15 @@ TO RUN:
 2. compile:
    make all
 
-3. cd EXAMPLES/acoustic_poroelastic
+3. cd EXAMPLES/poroelastic_acoustic
 
-4. execute script to run mesher and solver for the PSV case:
-   ./process.sh
+4. execute script to run mesher and solver for P-SV case:
+   ./run_this_example.sh
 
-5. check out the output files in the local directory OUTPUT_FILES,
-the seismograms should compare to Fig.8 in Morency and Tromp, Geophys. J. Int. (2008) 175, 301-345
-with a reversed polarity due to a reversed expression of the Ricker source time function in this paper.
+5. check out the output files in the local directory OUTPUT_FILES/
+
+  the seismograms should compare to Fig.8 in Morency and Tromp, Geophys. J. Int. (2008) 175, 301-345
+  with a reversed polarity due to a reversed expression of the Ricker source time function in this paper.
 
 
 ----------------------------------------------------------------------
