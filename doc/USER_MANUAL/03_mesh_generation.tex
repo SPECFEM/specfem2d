@@ -99,8 +99,8 @@ at Gauss-Lobatto-Legendre points, as is classical in spectral-element methods.
 \section{How to use Gmsh to generate an external mesh}
 
 Gmsh%
-\footnote{freely available at the following address : http://www.geuz.org/gmsh/%
-} is a 3D finite element grid generator which can be used for the generation
+\footnote{freely available at the following address : \url{http://www.geuz.org/gmsh/}}
+is a 3D finite element grid generator which can be used for the generation
 of quadrangle and hexahedral meshes. It is therefore a good candidate
 for generating meshes which can be processed by SPECFEM2D. Only two
 modules of Gmsh are of interest for the SPECFEM2D users : the geometry
@@ -203,15 +203,17 @@ to the sides of the model are generated.
 
 \section{How to use Cubit/Trelis to generate an external mesh}
 Trelis (that was known as Cubit)%
-\footnote{available at http://www.csimsoft.com/%
-} is a 2D/3D finite element grid generator distributed by Csimsoft which can be
+\footnote{available at \url{http://www.csimsoft.com/}}
+is a 2D/3D finite element grid generator distributed by Csimsoft which can be
 used for the generation of quadrangle and hexahedral meshes. Trelis has a convenient
 interface with Python (module cubit) which allows to create meshes from Python scripts. To get
 started with Cubit/Trelis we recommend you the step-by-step tutorials available at:
-http://www.csimsoft.com/tutorials.jsp
+\url{http://www.csimsoft.com/tutorials.jsp}
 Many powerful graphical tools are available, and very useful, but we will focus here on
 the command line functionalities and especially the Python interface which is the real force of
 Cubit/Trelis.
+
+
 To get started we recommend to the inpatients to open Cubit/Trelis and to click on the
 following symbol: \includegraphics[width=0.15in]{figures/play_journal_file.png}. Then select the
 files of type Python Files (*.py) and play the following script:
@@ -228,7 +230,9 @@ play:
     utils/cubit2specfem2d/cubit2specfem2d.py
 \end{verbatim}
 This script will create (in current directory) all the mesh files necessary for a SPECFEM2D simulation.
-Another commented examples are available: \texttt{EXAMPLES/TODOpaper}, \texttt{EXAMPLES/TODOnonDestructiveTesting}. %TODO!!
+
+%TODO!!
+%Other commented examples are available: \texttt{EXAMPLES/TODOpaper}, \texttt{EXAMPLES/TODOnonDestructiveTesting}.
 Read carefully the comments in these scripts, they are helpful.
 Another way to use Python together with Cubit/Trelis is to use the script tab.
 This tab is a real Python terminal that can be used to pass command line python
@@ -240,7 +244,10 @@ In the case of the Script tab is not visible in the command line panel (at the b
 This tab will allow you to play the scripts one line after another directly in Cubit/Trelis.
 With this you should be able to understand how to create meshes and export them under SPECFEM2D format.
 
+
+%------------------------------------------------------------------------------------------------%
 \section{Notes about absorbing PMLs}
+%------------------------------------------------------------------------------------------------%
 If you use CPML, an additional file listing the CPML elements is needed.
 Its first line is the total number of
 CPML elements, and then a list of all the CPML elements, one per line.
