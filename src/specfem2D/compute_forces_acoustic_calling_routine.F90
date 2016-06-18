@@ -134,7 +134,8 @@
   endif
 
   ! multiply by the inverse of the mass matrix and update velocity
-  if (time_stepping_scheme == 1) then
+  select case (time_stepping_scheme)
+  case (1)
     ! Newmark scheme
     !! DK DK this should be vectorized
     potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
@@ -146,9 +147,8 @@
       potential_acoustic_adj_coupling(:) = potential_acoustic(:) + deltat * potential_dot_acoustic(:) + &
                                            deltatsquareover2 * potential_dot_dot_acoustic(:)
     endif
-  endif
 
-  if (time_stepping_scheme == 2) then
+  case (2)
     ! LDDRK scheme
     !! DK DK this should be vectorized
     potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
@@ -169,9 +169,8 @@
 
     !! DK DK this should be vectorized
     potential_acoustic(:) = potential_acoustic(:) + BETA_LDDRK(i_stage) * potential_acoustic_LDDRK(:)
-  endif
 
-  if (time_stepping_scheme == 3) then
+  case (3)
     ! RK scheme
     !! DK DK this should be vectorized
     potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
@@ -208,7 +207,10 @@
                                                 2.0d0 * potential_dot_acoustic_rk(:,3) + &
                                                 potential_dot_acoustic_rk(:,4) )
     endif
-  endif
+
+  case default
+    stop 'Invalid time stepping scheme for compute forces routine!'
+  end select
 
   ! free surface for an acoustic medium
   call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic)
@@ -322,12 +324,17 @@
   endif
 
   ! multiply by the inverse of the mass matrix and update velocity
-  if (time_stepping_scheme == 1) then
+  select case (time_stepping_scheme)
+  case (1)
+    ! Newmark
     !! DK DK this should be vectorized
     b_potential_dot_dot_acoustic(:) = b_potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
 
     b_potential_dot_acoustic(:) = b_potential_dot_acoustic(:) + b_deltatover2 * b_potential_dot_dot_acoustic(:)
-  endif
+
+  case default
+    stop 'Sorry, time stepping scheme not implemented yet for backward computations'
+  end select
 
   ! free surface for an acoustic medium
   call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic)

@@ -137,7 +137,7 @@ SU_FORMAT                       = .false.        # output single precision binar
 use_existing_STATIONS           = .false.
 
 # number of receiver sets (i.e. number of receiver lines to create below)
-nreceiversets                   = 1 
+nreceiversets                   = 1
 
 # orientation
 anglerec                        = 0.d0           # angle to rotate components at receivers
@@ -188,7 +188,7 @@ PERIODIC_HORIZ_DIST             = 0.3597d0
 # velocity and density models
 #
 #-----------------------------------------------------------------------------
-nbmodels                        = 1 
+nbmodels                        = 1
 # available material types (see user manual for more information)
 #   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0
 #   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0

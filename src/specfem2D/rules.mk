@@ -66,6 +66,7 @@ specfem2D_OBJECTS = \
 	$O/compute_add_sources_viscoelastic.spec.o \
 	$O/compute_arrays_source.spec.o \
 	$O/compute_attenuation_poro_fluid_part.spec.o \
+	$O/compute_attenuation_viscoelastic.spec.o \
 	$O/compute_Bielak_conditions.spec.o \
 	$O/compute_coupling_acoustic_el.spec.o \
 	$O/compute_coupling_acoustic_po.spec.o \
@@ -132,6 +133,8 @@ specfem2D_OBJECTS = \
 	$O/plot_post.spec.o \
 	$O/pml_init.spec.o \
 	$O/pml_compute.spec.o \
+	$O/pml_compute_accel_contribution.spec.o \
+	$O/pml_compute_memory_variables.spec.o \
 	$O/prepare_absorb.spec.o \
 	$O/prepare_assemble_MPI.spec.o \
 	$O/prepare_color_image.spec.o \

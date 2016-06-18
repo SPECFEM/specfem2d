@@ -94,7 +94,9 @@
 #endif
 
   ! multiply by the inverse of the mass matrix and update velocity
-  if (time_stepping_scheme == 1) then
+  select case (time_stepping_scheme)
+  case (1)
+    ! Newmark
     accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
     accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
     velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
@@ -112,9 +114,9 @@
       b_accelw_poroelastic(2,:) = b_accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
       b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
     endif
-  endif
 
-  if (time_stepping_scheme == 2) then
+  case (2)
+    ! LDDRK
     accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
     accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
 
@@ -130,9 +132,9 @@
     displw_poroelastic_LDDRK = ALPHA_LDDRK(i_stage) * displw_poroelastic_LDDRK + deltat * velocw_poroelastic
     velocw_poroelastic = velocw_poroelastic + BETA_LDDRK(i_stage) * velocw_poroelastic_LDDRK
     displw_poroelastic = displw_poroelastic + BETA_LDDRK(i_stage) * displw_poroelastic_LDDRK
-  endif
 
-  if (time_stepping_scheme == 3) then
+  case (3)
+    ! Runge-Kutta
     accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
     accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
 
@@ -210,7 +212,11 @@
       (velocw_poroelastic_rk(2,:,1) + 2.0d0 * velocw_poroelastic_rk(2,:,2) + &
        2.0d0 * velocw_poroelastic_rk(2,:,3) + velocw_poroelastic_rk(2,:,4))
     endif
-  endif
+
+  case default
+    stop 'Time stepping scheme not implemented yet for poroelastic case'
+
+  end select
 
   ! Explanation of the code below, from Christina Morency and Yang Luo, January 2012:
   !

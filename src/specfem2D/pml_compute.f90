@@ -49,11 +49,11 @@
   coef0 = exp(- bb * deltat)
 
   if (abs(bb) > 1e-5_CUSTOM_REAL) then
-    coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
-    coef2 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) * exp(-bb * deltat / 2._CUSTOM_REAL) / bb
+    coef1 = (1.0_CUSTOM_REAL - exp(-bb * deltat * 0.5_CUSTOM_REAL)) / bb
+    coef2 = (1.0_CUSTOM_REAL - exp(-bb * deltat * 0.5_CUSTOM_REAL)) * exp(-bb * deltat * 0.5_CUSTOM_REAL) / bb
   else
-    coef1 = deltat / 2._CUSTOM_REAL
-    coef2 = deltat / 2._CUSTOM_REAL
+    coef1 = deltat * 0.5_CUSTOM_REAL
+    coef2 = deltat * 0.5_CUSTOM_REAL
   endif
 
   end subroutine compute_coef_convolution
@@ -69,7 +69,7 @@
   implicit none
 
   double precision, intent(in) :: timeval
-  double precision :: deltat
+  double precision, intent(in) :: deltat
   double precision, intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local,index_ik
 
@@ -172,8 +172,8 @@
 
   implicit none
 
-  double precision :: timeval
-  double precision :: deltat
+  double precision, intent(in) :: timeval
+  double precision, intent(in) :: deltat
   double precision, intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local
 

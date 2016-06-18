@@ -272,33 +272,33 @@
         endif
       endif
 
-      rmemory_displ_elastic(:,:,:,:,:) = ZERO
-      rmemory_dux_dx(:,:,:,:) = ZERO
-      rmemory_dux_dz(:,:,:,:) = ZERO
-      rmemory_duz_dx(:,:,:,:) = ZERO
-      rmemory_duz_dz(:,:,:,:) = ZERO
+      rmemory_displ_elastic(:,:,:,:,:) = 0._CUSTOM_REAL
+      rmemory_dux_dx(:,:,:,:) = 0._CUSTOM_REAL
+      rmemory_dux_dz(:,:,:,:) = 0._CUSTOM_REAL
+      rmemory_duz_dx(:,:,:,:) = 0._CUSTOM_REAL
+      rmemory_duz_dz(:,:,:,:) = 0._CUSTOM_REAL
 
       if (any_acoustic .and. num_fluid_solid_edges > 0) then
-        rmemory_fsb_displ_elastic(:,:,:,:,:) = ZERO
-        rmemory_sfb_potential_ddot_acoustic(:,:,:,:) = ZERO
+        rmemory_fsb_displ_elastic(:,:,:,:,:) = 0._CUSTOM_REAL
+        rmemory_sfb_potential_ddot_acoustic(:,:,:,:) = 0._CUSTOM_REAL
       endif
 
       if (ROTATE_PML_ACTIVATE) then
-        rmemory_dux_dx_prime(:,:,:,:) = ZERO
-        rmemory_dux_dz_prime(:,:,:,:) = ZERO
-        rmemory_duz_dx_prime(:,:,:,:) = ZERO
-        rmemory_duz_dz_prime(:,:,:,:) = ZERO
+        rmemory_dux_dx_prime(:,:,:,:) = 0._CUSTOM_REAL
+        rmemory_dux_dz_prime(:,:,:,:) = 0._CUSTOM_REAL
+        rmemory_duz_dx_prime(:,:,:,:) = 0._CUSTOM_REAL
+        rmemory_duz_dz_prime(:,:,:,:) = 0._CUSTOM_REAL
       endif
 
       if (time_stepping_scheme == 2) then
-        rmemory_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
-        rmemory_dux_dx_LDDRK(:,:,:,:) = ZERO
-        rmemory_dux_dz_LDDRK(:,:,:,:) = ZERO
-        rmemory_duz_dx_LDDRK(:,:,:,:) = ZERO
-        rmemory_duz_dz_LDDRK(:,:,:,:) = ZERO
+        rmemory_displ_elastic_LDDRK(:,:,:,:,:) = 0._CUSTOM_REAL
+        rmemory_dux_dx_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
+        rmemory_dux_dz_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
+        rmemory_duz_dx_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
+        rmemory_duz_dz_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
         if (any_acoustic .and. num_fluid_solid_edges > 0) then
-          rmemory_fsb_displ_elastic_LDDRK(:,:,:,:,:) = ZERO
-          rmemory_sfb_potential_ddot_acoustic_LDDRK(:,:,:,:) = ZERO
+          rmemory_fsb_displ_elastic_LDDRK(:,:,:,:,:) = 0._CUSTOM_REAL
+          rmemory_sfb_potential_ddot_acoustic_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
         endif
       endif
 
@@ -336,9 +336,9 @@
       allocate(rmemory_acoustic_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
       if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
 
-      rmemory_potential_acoustic = ZERO
-      rmemory_acoustic_dux_dx = ZERO
-      rmemory_acoustic_dux_dz = ZERO
+      rmemory_potential_acoustic = 0._CUSTOM_REAL
+      rmemory_acoustic_dux_dx = 0._CUSTOM_REAL
+      rmemory_acoustic_dux_dz = 0._CUSTOM_REAL
 
       if (time_stepping_scheme == 2) then
         allocate(rmemory_potential_acoustic_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
@@ -353,9 +353,9 @@
         allocate(rmemory_acoustic_dux_dz_LDDRK(1,1,1,1),stat=ier)
       endif
 
-      rmemory_potential_acoustic_LDDRK = ZERO
-      rmemory_acoustic_dux_dx_LDDRK = ZERO
-      rmemory_acoustic_dux_dz_LDDRK = ZERO
+      rmemory_potential_acoustic_LDDRK = 0._CUSTOM_REAL
+      rmemory_acoustic_dux_dx_LDDRK = 0._CUSTOM_REAL
+      rmemory_acoustic_dux_dz_LDDRK = 0._CUSTOM_REAL
 
     else
       allocate(rmemory_potential_acoustic(1,1,1,1))
