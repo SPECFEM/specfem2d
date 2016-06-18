@@ -1,0 +1,29 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This default example creates an internal mesh with a homogeneous poroelastic medium, with an inviscid fluid.
+The model parameters are given by Morency & Tromp (2008), Table 1.
+
+
+TO RUN:
+
+0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf
+
+1. in SPECFEM2D root directory, configure, e.g. for a serial calculation,
+   ./configure FC=gfortran
+
+2. compile:
+   make all
+
+3. cd EXAMPLES/poroelastic_infinite_homogeneous
+
+4. execute script to run mesher and solver for P-SV case:
+   ./run_this_example.sh
+
+5. check out the output files in the local directory OUTPUT_FILES/
+
+   The seismograms should compare to Fig.4 in Morency and Tromp, Geophys. J. Int. (2008) 175, 301-345.
+
+
+----------------------------------------------------------------------
