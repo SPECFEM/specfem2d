@@ -79,7 +79,9 @@
   if (ier /= 0) stop 'Error allocating old elastic wavefield arrays'
 
   if (SIMULATION_TYPE == 3) then
-    allocate(accel_elastic_adj_coupling(NDIM,nglob_elastic))
+    if (coupled_acoustic_elastic) then
+      allocate(accel_elastic_adj_coupling(NDIM,nglob_elastic))
+    endif
   endif
 
   allocate(rmass_inverse_elastic(NDIM,nglob_elastic),stat=ier)

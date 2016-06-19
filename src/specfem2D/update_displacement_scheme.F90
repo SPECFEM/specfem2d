@@ -250,13 +250,15 @@
       if (time_stepping_scheme == 1) then
         ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
         ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
+        if (coupled_acoustic_elastic) then
 #ifdef FORCE_VECTORIZATION
-        do i = 1,NDIM*nglob_elastic
-          accel_elastic_adj_coupling(i,1) = - accel_elastic(i,1)
-        enddo
+          do i = 1,NDIM*nglob_elastic
+            accel_elastic_adj_coupling(i,1) = - accel_elastic(i,1)
+          enddo
 #else
-        accel_elastic_adj_coupling(:,:) = - accel_elastic(:,:)
+          accel_elastic_adj_coupling(:,:) = - accel_elastic(:,:)
 #endif
+        endif
       endif
     endif
 

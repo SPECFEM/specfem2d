@@ -354,6 +354,9 @@
 
           call update_displacement_elastic_forward()
 
+!daniel TODO: not sure if the following below is correct or needs to switch orders
+!             usually one computes first the updated pressure and afterwards computes the elastic domain
+!             and its coupling terms...please make sure...
 
           ! main solver for the elastic elements
           call compute_forces_viscoelastic_main()

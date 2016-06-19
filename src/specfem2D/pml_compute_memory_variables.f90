@@ -39,9 +39,7 @@
 ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
 
 
-  subroutine pml_compute_memory_variables_acoustic(ispec,nglob,potential_acoustic_old, &
-                                                   dux_dxl,dux_dzl, &
-                                                   PML_dux_dxl,PML_dux_dzl,PML_dux_dxl_old,PML_dux_dzl_old)
+  subroutine pml_compute_memory_variables_acoustic(ispec,nglob,potential_acoustic_old,dux_dxl,dux_dzl)
 
 ! for acoustic elements
 
@@ -66,7 +64,6 @@
   real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_acoustic_old
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(inout) :: dux_dxl,dux_dzl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(inout) :: PML_dux_dxl,PML_dux_dzl,PML_dux_dxl_old,PML_dux_dzl_old
 
   ! local parameters
   integer :: i,j,k
@@ -77,6 +74,8 @@
   integer :: ispec_PML
   integer :: CPML_region_local
   integer :: singularity_type_zx,singularity_type_xz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: PML_dux_dxl,PML_dux_dzl,PML_dux_dxl_old,PML_dux_dzl_old
+
   double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z,time_n,time_nsub1
   double precision :: A5,A6,A7
   double precision :: bb_zx_1,bb_zx_2

@@ -322,6 +322,9 @@
     stop 'USE_ENFORCE_FIELDS is not supported yet when using FORCE_VECTORIZATION'
 #endif
 
+  if (USE_ENFORCE_FIELDS .and. SIMULATION_TYPE /= 1) &
+    stop 'USE_ENFORCE_FIELDS is not supported yet for adjoint/kernel simulations'
+
 
   ! synchronizes processes
   call synchronize_all()

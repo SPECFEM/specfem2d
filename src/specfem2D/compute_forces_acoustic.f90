@@ -79,16 +79,7 @@
   real(kind=CUSTOM_REAL) :: temp1l,temp2l
 
   ! local PML parameters
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: PML_dux_dxl,PML_dux_dzl,PML_dux_dxl_old,PML_dux_dzl_old
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_dot_dot_acoustic_PML
-
-  ! PML local element array initialization
-  if (PML_BOUNDARY_CONDITIONS) then
-    PML_dux_dxl(:,:) = 0._CUSTOM_REAL
-    PML_dux_dzl(:,:) = 0._CUSTOM_REAL
-    PML_dux_dxl_old(:,:) = 0._CUSTOM_REAL
-    PML_dux_dzl_old(:,:) = 0._CUSTOM_REAL
-  endif
 
   ifirstelem = 1
   ilastelem = nspec
@@ -152,9 +143,7 @@
 
     ! derivative along x and along zbb
     if (PML_BOUNDARY_CONDITIONS) then
-      call pml_compute_memory_variables_acoustic(ispec,nglob,potential_acoustic_old, &
-                                                 dux_dxl,dux_dzl, &
-                                                 PML_dux_dxl,PML_dux_dzl,PML_dux_dxl_old,PML_dux_dzl_old)
+      call pml_compute_memory_variables_acoustic(ispec,nglob,potential_acoustic_old,dux_dxl,dux_dzl)
     endif
 
     ! first double loop to compute gradient

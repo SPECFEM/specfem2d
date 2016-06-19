@@ -44,7 +44,7 @@ module enforce_par
   implicit none
 
   ! Line which is forced
-  double precision :: xforced = 3000d0
+  double precision :: xforced = 3000.d0
   integer :: nforced = 0, nforced_sum = 0
 
 end module enforce_par
@@ -142,9 +142,11 @@ end module enforce_par
       endif  !  end of top acoustic forcing boundary
     enddo
 
-  else ! If internal mesher:
-
-    do iglob = 1,nglob ! Loop on all the GLL points
+  else
+    ! internal mesher:
+    ! Loop on all the GLL points
+    do iglob = 1,nglob
+      ! forced points along a specified x-line
       if (abs(coord(1,iglob) - xforced) < TINYVAL) then
         iglob_is_forced(iglob) = .true.
         nforced = nforced + 1
@@ -153,12 +155,14 @@ end module enforce_par
 
   endif
 
+  ! user output
   call sum_all_i(nforced, nforced_sum)
   if (myrank == 0) then
     if (nforced_sum == 0) then
       call exit_MPI(myrank,'No forced integration point found!')
     else
       write(IMAIN,*) "Number of GLL points forced:",nforced," over ",nglob
+      call flush_IMAIN()
     endif
   endif
 
@@ -197,13 +201,16 @@ end module enforce_par
   integer :: Nc = 10
 
   factor = 1.0d0
-
   omegaj = TWO*PI*f0
+
+  ! gets global node location
   x = coord(1,iglob)
   z = coord(2,iglob)
 
-  tval=(it-1)*deltat
-  tval_old=(it-2)*deltat
+  ! timing
+  tval = (it-1)*deltat
+  tval_old = (it-2)*deltat
+
   if (tval < TWO*Nc*PI/omegaj) then
     time_dependence_x = omegaj**2*cos(omegaj*tval/Nc)*sin(omegaj*tval)/Nc**2 + &
                         2*omegaj**2*sin(omegaj*tval/Nc)*cos(omegaj*tval)/Nc - &
@@ -252,14 +259,16 @@ end module enforce_par
   !print *,z,facz
 
   if (abs(z + 0.0d-3) < 1.5d-3) then
-    if (it == 1) then ! We initialize the variables
+    if (it == 1) then
+      ! We initialize the variables
       displ_elastic(1,iglob) = factor*facx*0.0d0
       displ_elastic(2,iglob) = factor*facz*0.0d0
       veloc_elastic(1,iglob) = factor*facx*0.0d0
       veloc_elastic(2,iglob) = factor*facz*0.0d0
       accel_elastic(1,iglob) = factor*facx*0.0d0
       accel_elastic(2,iglob) = factor*facz*(omegaj**2/Nc**2)
-    else ! We set what we want
+    else
+      ! We set what we want
       accel_elastic(1,iglob) = factor*facx*time_dependence_x
       accelOld(1) = factor*facx*time_dependence_x_old
       accel_elastic(2,iglob) = factor*facz*time_dependence_z

@@ -293,6 +293,8 @@
     ! todo: maybe should be b_e1,b_e11,.. here, please check...
     call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
                                               e1,e11,e13)
+!    call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
+!                                     PML_BOUNDARY_CONDITIONS,b_e1,b_e11,b_e13)
   endif
 
   ! Stacey boundary conditions
@@ -363,7 +365,13 @@
   b_accel_elastic(:,:) = b_accel_elastic(:,:) * rmass_inverse_elastic(:,:)
 
   ! time stepping
-  b_veloc_elastic(:,:) = b_veloc_elastic(:,:) + b_deltatover2 * b_accel_elastic(:,:)
+  select case (time_stepping_scheme)
+  case (1)
+    ! Newmark
+    b_veloc_elastic(:,:) = b_veloc_elastic(:,:) + b_deltatover2 * b_accel_elastic(:,:)
+  case default
+    stop 'Time stepping scheme not implemented yet in viscoelastic backward routine'
+  end select
 
   end subroutine compute_forces_viscoelastic_main_backward
 
