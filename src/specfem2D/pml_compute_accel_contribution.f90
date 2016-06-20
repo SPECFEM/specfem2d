@@ -101,9 +101,6 @@
     stop 'Sorry, time stepping scheme for PML accel contribution not implemented yet'
   end select
 
-  ! initializes
-  potential_dot_dot_acoustic_PML(:,:) = 0._CUSTOM_REAL
-
   ! local PML element
   ispec_PML = spec_to_PML(ispec)
   CPML_region_local = region_CPML(ispec)

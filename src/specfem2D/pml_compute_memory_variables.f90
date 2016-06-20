@@ -294,8 +294,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(inout) :: dux_dxl,dux_dzl,duz_dxl,duz_dzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: dux_dxl_prime,dux_dzl_prime,duz_dxl_prime,duz_dzl_prime
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(inout) :: PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(inout) :: PML_dux_dxl_old,PML_dux_dzl_old,PML_duz_dxl_old,PML_duz_dzl_old
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: PML_dux_dxl_old,PML_dux_dzl_old,PML_duz_dxl_old,PML_duz_dzl_old
 
   ! local parameters
   integer :: i,j,k

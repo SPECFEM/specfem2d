@@ -93,6 +93,7 @@
 
 
   ! Jacobian matrix and determinant
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLZ) :: deriv
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum,e13_sum
@@ -153,23 +154,10 @@
   sigma_xy = 0._CUSTOM_REAL
   sigma_zy = 0._CUSTOM_REAL
 
-  ! PML local element array initialization
-  if (PML_BOUNDARY_CONDITIONS) then
-    PML_dux_dxl(:,:) = 0._CUSTOM_REAL
-    PML_dux_dzl(:,:) = 0._CUSTOM_REAL
-    PML_duz_dxl(:,:) = 0._CUSTOM_REAL
-    PML_duz_dzl(:,:) = 0._CUSTOM_REAL
-
-    PML_dux_dxl_old(:,:) = 0._CUSTOM_REAL
-    PML_dux_dzl_old(:,:) = 0._CUSTOM_REAL
-    PML_duz_dxl_old(:,:) = 0._CUSTOM_REAL
-    PML_duz_dzl_old(:,:) = 0._CUSTOM_REAL
-  endif
-
+  ! loop over spectral elements
   ifirstelem = 1
   ilastelem = nspec
 
-  ! loop over spectral elements
   do ispec = ifirstelem,ilastelem
 
     ! only for elastic spectral elements
@@ -181,6 +169,13 @@
         iglob = ibool(i,j,ispec)
         dummy_loc(1,i,j) = displ_elastic(1,iglob)
         dummy_loc(2,i,j) = displ_elastic(2,iglob)
+
+        ! stores local array for element xi/gamma/jacobian (for better performance)
+        deriv(1,i,j) = xix(i,j,ispec)
+        deriv(2,i,j) = xiz(i,j,ispec)
+        deriv(3,i,j) = gammax(i,j,ispec)
+        deriv(4,i,j) = gammaz(i,j,ispec)
+        deriv(5,i,j) = jacobian(i,j,ispec)
       enddo
     enddo
 
@@ -207,10 +202,10 @@
     ! gets derivatives of ux and uz with respect to x and z
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        xixl = xix(i,j,ispec)
-        xizl = xiz(i,j,ispec)
-        gammaxl = gammax(i,j,ispec)
-        gammazl = gammaz(i,j,ispec)
+        xixl = deriv(1,i,j)
+        xizl = deriv(2,i,j)
+        gammaxl = deriv(3,i,j)
+        gammazl = deriv(4,i,j)
 
         ! derivatives of displacement
         dux_dxl(i,j) = dux_dxi(i,j)*xixl + dux_dgamma(i,j)*gammaxl
@@ -569,8 +564,11 @@
         endif
 
         ! weak formulation term based on stress tensor (non-symmetric form)
-        ! also add GLL integration weights
-        jacobianl = jacobian(i,j,ispec)
+        xixl = deriv(1,i,j)
+        xizl = deriv(2,i,j)
+        gammaxl = deriv(3,i,j)
+        gammazl = deriv(4,i,j)
+        jacobianl = deriv(5,i,j)
 
         !! AB AB with the notations of Komatitsch & Tromp 1999 (with 3 -> 2) :
         ! tempx1(i,j) = w.J.F_{11}^{ij}
@@ -592,7 +590,7 @@
                  &coordinates are >> TINYVAL. Maybe you should also have a look to &
                  &doc/problematic_case_that_we_exclude_for_axisymmetric.pdf"
               endif
-              tempx3(i,j) = tempx3(i,j) + wxglj(i) * jacobian(i,j,ispec) &
+              tempx3(i,j) = tempx3(i,j) + wxglj(i) * jacobianl &
                             * sigma_thetatheta(i,j)/(xiglj(i)+ONE) ! this goes to accel_x
             endif
 

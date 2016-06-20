@@ -74,27 +74,42 @@
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
 
   ! Jacobian matrix and determinant
+  real(kind=CUSTOM_REAL), dimension(6,NGLLX,NGLLZ) :: deriv
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
-  real(kind=CUSTOM_REAL) :: rhol
+
+  real(kind=CUSTOM_REAL) :: rhol,fac
   real(kind=CUSTOM_REAL) :: temp1l,temp2l
 
   ! local PML parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_dot_dot_acoustic_PML
 
+  ! loop over spectral elements
   ifirstelem = 1
   ilastelem = nspec
 
-! loop over spectral elements
   do ispec = ifirstelem,ilastelem
 
     ! only for acoustic spectral elements
     if (.not. ispec_is_acoustic(ispec)) cycle
 
     ! gets local potential for element
+    rhol = density(1,kmato(ispec))
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         potential_elem(i,j) = potential_acoustic(iglob)
+
+        ! stores local array for element xi/gamma/jacobian (for better performance)
+        deriv(1,i,j) = xix(i,j,ispec)
+        deriv(2,i,j) = xiz(i,j,ispec)
+        deriv(3,i,j) = gammax(i,j,ispec)
+        deriv(4,i,j) = gammaz(i,j,ispec)
+        deriv(5,i,j) = jacobian(i,j,ispec)
+        ! if external density model
+        if (assign_external_model) then
+          rhol = rhoext(i,j,ispec)
+        endif
+        deriv(6,i,j) = jacobian(i,j,ispec) / rhol
       enddo
     enddo
 
@@ -119,10 +134,10 @@
     ! gets derivatives of ux and uz with respect to x and z
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        xixl = xix(i,j,ispec)
-        xizl = xiz(i,j,ispec)
-        gammaxl = gammax(i,j,ispec)
-        gammazl = gammaz(i,j,ispec)
+        xixl = deriv(1,i,j)
+        xizl = deriv(2,i,j)
+        gammaxl = deriv(3,i,j)
+        gammazl = deriv(4,i,j)
 
         ! derivatives of potential
         dux_dxl(i,j) = dux_dxi(i,j) * xixl + dux_dgamma(i,j) * gammaxl
@@ -146,39 +161,62 @@
       call pml_compute_memory_variables_acoustic(ispec,nglob,potential_acoustic_old,dux_dxl,dux_dzl)
     endif
 
-    ! first double loop to compute gradient
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-        ! if external density model
-        if (assign_external_model) then
-          rhol = rhoext(i,j,ispec)
-        else
-          rhol = density(1,kmato(ispec))
-        endif
-        jacobianl = jacobian(i,j,ispec)
 
-        ! for acoustic medium also add integration weights
-        if (AXISYM) then
-          ! AXISYM case
-          if (is_on_the_axis(ispec)) then
-            if (i == 1) then ! dchi/dr=rho * u_r=0 on the axis
+    ! first double loop to compute gradient
+    if (AXISYM) then
+      ! AXISYM case
+      if (is_on_the_axis(ispec)) then
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            xixl = deriv(1,i,j)
+            xizl = deriv(2,i,j)
+            gammaxl = deriv(3,i,j)
+            gammazl = deriv(4,i,j)
+            jacobianl = deriv(5,i,j)
+            fac = deriv(6,i,j) ! jacobian/rho
+
+            if (i == 1) then
+              ! dchi/dr=rho * u_r=0 on the axis
               dux_dxl(i,j) = 0._CUSTOM_REAL
               r_xiplus1(i,j) = gammaz(i,j,ispec) * jacobianl
             else
-              r_xiplus1(i,j) = coord(1,ibool(i,j,ispec))/(xiglj(i)+ONE)
+              r_xiplus1(i,j) = coord(1,ibool(i,j,ispec))/(xiglj(i) + ONE)
             endif
-            tempx1(i,j) = r_xiplus1(i,j) * jacobianl * (xixl * dux_dxl(i,j) + xizl * dux_dzl(i,j)) / rhol
-            tempx2(i,j) = r_xiplus1(i,j) * jacobianl * (gammaxl * dux_dxl(i,j) + gammazl * dux_dzl(i,j)) / rhol
-          else
-            tempx1(i,j) = coord(1,ibool(i,j,ispec)) * jacobianl * (xixl * dux_dxl(i,j) + xizl * dux_dzl(i,j)) / rhol
-            tempx2(i,j) = coord(1,ibool(i,j,ispec)) * jacobianl * (gammaxl * dux_dxl(i,j) + gammazl * dux_dzl(i,j)) / rhol
-          endif
-        else
-          tempx1(i,j) = jacobianl * (xixl * dux_dxl(i,j) + xizl * dux_dzl(i,j)) / rhol
-          tempx2(i,j) = jacobianl * (gammaxl * dux_dxl(i,j) + gammazl * dux_dzl(i,j)) / rhol
-        endif
+            tempx1(i,j) = r_xiplus1(i,j) * fac * (xixl * dux_dxl(i,j) + xizl * dux_dzl(i,j))
+            tempx2(i,j) = r_xiplus1(i,j) * fac * (gammaxl * dux_dxl(i,j) + gammazl * dux_dzl(i,j))
+          enddo
+        enddo
+      else
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            xixl = deriv(1,i,j)
+            xizl = deriv(2,i,j)
+            gammaxl = deriv(3,i,j)
+            gammazl = deriv(4,i,j)
+            jacobianl = deriv(5,i,j)
+            fac = deriv(6,i,j) ! jacobian/rho
+
+            tempx1(i,j) = coord(1,ibool(i,j,ispec)) * fac * (xixl * dux_dxl(i,j) + xizl * dux_dzl(i,j))
+            tempx2(i,j) = coord(1,ibool(i,j,ispec)) * fac * (gammaxl * dux_dxl(i,j) + gammazl * dux_dzl(i,j))
+          enddo
+        enddo
+      endif
+    else
+      ! default case
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          xixl = deriv(1,i,j)
+          xizl = deriv(2,i,j)
+          gammaxl = deriv(3,i,j)
+          gammazl = deriv(4,i,j)
+          jacobianl = deriv(5,i,j)
+          fac = deriv(6,i,j) ! jacobian/rho
+
+          tempx1(i,j) = fac * (xixl * dux_dxl(i,j) + xizl * dux_dzl(i,j))
+          tempx2(i,j) = fac * (gammaxl * dux_dxl(i,j) + gammazl * dux_dzl(i,j))
+        enddo
       enddo
-    enddo
+    endif
 
     ! first double loop over GLL points to compute and store gradients
     if (PML_BOUNDARY_CONDITIONS) then
