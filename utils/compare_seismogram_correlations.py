@@ -263,13 +263,24 @@ def plot_correlations(out_dir,ref_dir):
         # counter
         n += 1
 
+
+    # check if any comparison done
+    if n == 0:
+        # values indicating failure
+        corr_min = 0.0
+        err_max = 1.e9
+        shift_max = 1.e9
+
     # print min(coor) max(err)
     print("|---------------------------------------------------------------------------|")
     print("|%30s| %13.5f| %13.5le| %13.5le|" % ('min/max', corr_min, err_max, shift_max))
 
     # output summary
     print("\nsummary:")
-    print("%d seismograms compared" % n)
+    print("%d seismograms compared\n" % n)
+    if n == 0:
+        print("\nno seismograms found for comparison!\n\n")
+
     print("correlations: values 1.0 perfect, < %.1f poor correlation" % TOL_CORR)
     if corr_min < TOL_CORR:
         print("              poor correlation seismograms found")
