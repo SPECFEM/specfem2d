@@ -33,6 +33,68 @@
 
 ! for viscoelastic solver
 
+  subroutine compute_attenuation_viscoelastic(displ_elastic,displ_elastic_old,ispec_is_elastic, &
+                                              PML_BOUNDARY_CONDITIONS,e1,e11,e13)
+
+  ! updates memory variable in viscoelastic simulation
+
+  ! compute forces for the elastic elements
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+
+  use specfem_par, only: nglob,nspec,nspec_allocate,ATTENUATION_VISCOELASTIC_SOLID,N_SLS, &
+                         ibool,xix,xiz,gammax,gammaz,hprime_xx,hprime_zz
+
+  ! PML arrays
+  use specfem_par, only: ispec_is_PML
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: displ_elastic,displ_elastic_old
+
+  logical,dimension(nspec),intent(in) :: ispec_is_elastic
+
+  ! CPML coefficients and memory variables
+  logical,intent(in) :: PML_BOUNDARY_CONDITIONS
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_allocate,N_SLS),intent(inout) :: e1,e11,e13
+
+  ! local parameters
+  integer :: ispec
+  ! nsub1 denotes discrete time step n-1
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_n,dux_dzl_n,duz_dxl_n,duz_dzl_n
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_nsub1,dux_dzl_nsub1,duz_dxl_nsub1,duz_dzl_nsub1
+
+  ! checks if anything to do
+  if (.not. ATTENUATION_VISCOELASTIC_SOLID) return
+
+  ! compute Grad(displ_elastic) at time step n for attenuation
+  call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
+        dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,ispec_is_elastic,hprime_xx,hprime_zz,nspec,nglob)
+
+  ! compute Grad(disp_elastic_old) at time step n-1 for attenuation
+  call compute_gradient_attenuation(displ_elastic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
+        dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,ispec_is_elastic,hprime_xx,hprime_zz,nspec,nglob)
+
+  ! loop over spectral elements
+  do ispec = 1,nspec
+
+    ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
+    if (.not. ispec_is_elastic(ispec)) cycle
+
+    if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. ispec_is_PML(ispec)))) then
+      call compute_attenuation_viscoelastic_update(ispec,e1,e11,e13, &
+                                                   dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
+                                                   dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1)
+    endif
+  enddo
+
+  end subroutine compute_attenuation_viscoelastic
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+
   subroutine compute_attenuation_viscoelastic_update(ispec,e1,e11,e13, &
                                                      dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                                                      dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1)
@@ -60,10 +122,12 @@
   ! local parameters
   integer :: i,j
   integer :: i_sls
+
   ! for attenuation
   real(kind=CUSTOM_REAL) :: phinu1,phinu2,theta_n_u,theta_nsub1_u
   double precision :: tauinvnu1,tauinvnu2
   double precision :: coef0,coef1,coef2
+
   ! temporary RK4 variable
   real(kind=CUSTOM_REAL) :: weight_rk
 

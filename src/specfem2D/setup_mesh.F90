@@ -86,6 +86,12 @@
   if (ATTENUATION_VISCOELASTIC_SOLID .and. .not. ELASTIC_SIMULATION) &
     call exit_MPI(myrank,'currently cannot have attenuation if acoustic/poroelastic simulation only')
 
+  ! safety check
+  if (POROELASTIC_SIMULATION) then
+    if (ATTENUATION_PORO_FLUID_PART .and. time_stepping_scheme /= 1) &
+      stop 'RK and LDDRK time scheme not supported for poroelastic simulations with attenuation'
+  endif
+
   ! sets up domain coupling, i.e. edge detection for domain coupling
   call get_coupling_edges()
 

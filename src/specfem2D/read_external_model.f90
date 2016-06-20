@@ -63,16 +63,19 @@
   if (tomo_material > 0) MODEL = 'tomo'
 
   if (trim(MODEL) == 'legacy') then
-
+    ! old model format
     write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_model_velocity.dat_input'
-    open(unit=1001,file=inputname,status='unknown')
+    open(unit=1001,file=inputname,status='old',action='read',iostat=ier)
+    if (ier /= 0) stop 'Error opening DATA/proc*****_model_velocity.dat_input file.'
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
+          ! format: #unused #unused #unused #rho #vp #vs
           read(1001,*) tmp1,tmp2,tmp3,rho_val,vp_val,vs_val
           rhoext(i,j,ispec) = rho_val
           vpext(i,j,ispec) = vp_val
           vsext(i,j,ispec) = vs_val
+          ! default no attenuation
           QKappa_attenuationext(i,j,ispec) = 9999.d0
           Qmu_attenuationext(i,j,ispec) = 9999.d0
         enddo
@@ -80,16 +83,20 @@
     enddo
     close(1001)
 
-  else if (trim(MODEL)=='ascii') then
+  else if (trim(MODEL) == 'ascii') then
+    ! ascii model format
     write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat'
-    open(unit=1001,file= inputname,status='unknown')
+    open(unit=1001,file=inputname,status='old',action='read',iostat=ier)
+    if (ier /= 0) stop 'Error opening DATA/proc*****_rho_vp_vs.dat file.'
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
+          ! format: #unused #unused #rho #vp #vs
           read(1001,*) tmp1,tmp2,rho_val,vp_val,vs_val
           rhoext(i,j,ispec) = rho_val
           vpext(i,j,ispec) = vp_val
           vsext(i,j,ispec) = vs_val
+          ! default no attenuation
           QKappa_attenuationext(i,j,ispec) = 9999.d0
           Qmu_attenuationext(i,j,ispec) = 9999.d0
         enddo
@@ -98,124 +105,133 @@
     close(1001)
 
   else if ((trim(MODEL) == 'binary') .or. (trim(MODEL) == 'gll')) then
-      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
-      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error opening rho.bin file.'
+    ! binary formats
+    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
+    open(unit = 1001, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) stop 'Error opening DATA/proc*****_rho.bin file.'
 
-      read(1001) rhoext
-      close(1001)
-      print *, 'rho', minval(rhoext), maxval(rhoext)
+    read(1001) rhoext
+    close(1001)
+    print *, 'rho', minval(rhoext), maxval(rhoext)
 
-      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vp.bin'
-      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error opening vp.bin file.'
+    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vp.bin'
+    open(unit = 1001, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) stop 'Error opening DATA/proc*****_vp.bin file.'
 
-      read(1001) vpext
-      close(1001)
+    read(1001) vpext
+    close(1001)
 
-      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vs.bin'
-      open(unit = 1001, file = inputname, status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error opening vs.bin file.'
+    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vs.bin'
+    open(unit = 1001, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) stop 'Error opening DATA/proc*****_vs.bin file.'
 
-      read(1001) vsext
-      close(1001)
+    read(1001) vsext
+    close(1001)
 
-      QKappa_attenuationext(:,:,:) = 9999.d0
-      Qmu_attenuationext(:,:,:) = 9999.d0
+    ! default no attenuation
+    QKappa_attenuationext(:,:,:) = 9999.d0
+    Qmu_attenuationext(:,:,:) = 9999.d0
 
-  else if (trim(MODEL)=='binary_voigt') then
-      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
-      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error opening rho.bin file.'
+  else if (trim(MODEL) == 'binary_voigt') then
+    ! Voigt model
+    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
+    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) stop 'Error opening DATA/proc*****_rho.bin file.'
 
-      read(1001) rhoext
-      close(1001)
-      print *, 'rho', minval(rhoext), maxval(rhoext)
+    read(1001) rhoext
+    close(1001)
+    print *, 'rho', minval(rhoext), maxval(rhoext)
 
-      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c11.bin'
-      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error opening c11.bin file.'
+    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c11.bin'
+    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+    if (ier /= 0) stop 'Error opening DATA/proc*****_c11.bin file.'
 
-      read(1001) c11ext
-      close(1001)
-      print *, 'c11ext', minval(c11ext), maxval(c11ext)
+    read(1001) c11ext
+    close(1001)
+    print *, 'c11ext', minval(c11ext), maxval(c11ext)
 
-      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c13.bin'
-      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error opening c13.bin file.'
+    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c13.bin'
+    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+    if (ier /= 0) stop 'Error opening DATA/proc*****_c13.bin file.'
 
-      read(1001) c13ext
-      close(1001)
-      print *, 'c13ext', minval(c13ext), maxval(c13ext)
+    read(1001) c13ext
+    close(1001)
+    print *, 'c13ext', minval(c13ext), maxval(c13ext)
 
-      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c15.bin'
-      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error opening c15.bin file.'
+    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c15.bin'
+    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+    if (ier /= 0) stop 'Error opening DATA/proc*****_c15.bin file.'
 
-      read(1001) c15ext
-      close(1001)
-      print *, 'c15ext', minval(c15ext), maxval(c15ext)
+    read(1001) c15ext
+    close(1001)
+    print *, 'c15ext', minval(c15ext), maxval(c15ext)
 
-      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c33.bin'
-      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error opening c33.bin file.'
+    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c33.bin'
+    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+    if (ier /= 0) stop 'Error opening DATA/proc*****_c33.bin file.'
 
-      read(1001) c33ext
-      close(1001)
-      print *, 'c33ext', minval(c33ext), maxval(c33ext)
+    read(1001) c33ext
+    close(1001)
+    print *, 'c33ext', minval(c33ext), maxval(c33ext)
 
-      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c35.bin'
-      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error opening c35.bin file.'
+    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c35.bin'
+    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+    if (ier /= 0) stop 'Error opening DATA/proc*****_c35.bin file.'
 
-      read(1001) c35ext
-      close(1001)
-      print *, 'c35ext', minval(c35ext), maxval(c35ext)
+    read(1001) c35ext
+    close(1001)
+    print *, 'c35ext', minval(c35ext), maxval(c35ext)
 
-      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c55.bin'
-      open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error opening c55.bin file.'
+    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c55.bin'
+    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+    if (ier /= 0) stop 'Error opening DATA/proc*****_c55.bin file.'
 
-      read(1001) c55ext
-      close(1001)
-      print *, 'c55ext', minval(c55ext), maxval(c55ext)
+    read(1001) c55ext
+    close(1001)
+    print *, 'c55ext', minval(c55ext), maxval(c55ext)
 
-      do ispec = 1,nspec
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            if(c55ext(i,j,ispec) == 0.0)then
-               c33ext(i,j,ispec) = 0.0
-               c12ext(i,j,ispec) = 0.0
-               c23ext(i,j,ispec) = 0.0
-               vpext(i,j,ispec) = 1500.0
-               vsext(i,j,ispec) = 0.0
-            else
-               c12ext(i,j,ispec) = 1.d-6
-               c23ext(i,j,ispec) = 1.d-6
-               vpext(i,j,ispec) = sqrt(c33ext(i,j,ispec)/rhoext(i,j,ispec))
-               vsext(i,j,ispec) = sqrt(c55ext(i,j,ispec)/rhoext(i,j,ispec))
-            endif
-            c25ext(i,j,ispec) = 0.0
-          enddo
+    do ispec = 1,nspec
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          if(c55ext(i,j,ispec) < TINYVAL)then
+             c33ext(i,j,ispec) = 0.0_CUSTOM_REAL
+             c12ext(i,j,ispec) = 0.0_CUSTOM_REAL
+             c23ext(i,j,ispec) = 0.0_CUSTOM_REAL
+             vpext(i,j,ispec) = 1500.0
+             vsext(i,j,ispec) = 0.0_CUSTOM_REAL
+          else
+             c12ext(i,j,ispec) = 1.d-6
+             c23ext(i,j,ispec) = 1.d-6
+             vpext(i,j,ispec) = sqrt(c33ext(i,j,ispec)/rhoext(i,j,ispec))
+             vsext(i,j,ispec) = sqrt(c55ext(i,j,ispec)/rhoext(i,j,ispec))
+          endif
+          c25ext(i,j,ispec) = 0.0_CUSTOM_REAL
         enddo
       enddo
+    enddo
 
-  else if (trim(MODEL)=='external') then
+  else if (trim(MODEL) == 'external') then
+    ! external files
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext, &
                                QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
 
-  else if (trim(MODEL)=='tomo') then
+  else if (trim(MODEL) == 'tomo') then
+    ! tomographic file
     call define_external_model_from_tomo_file()
+
+  else
+    print *,"Error: Invalid model ",trim(MODEL),", please check your Par_file settings..."
+    stop 'Invalid MODEL parameter'
   endif
 
-  if (trim(MODEL)=='external' .or. trim(MODEL)=='tomo') then
-
-    ! check that the external model that has just been defined makes sense
+  ! check that the external model that has just been defined makes sense
+  if (trim(MODEL) == 'external' .or. trim(MODEL) == 'tomo') then
+    ! checks velocities for each element
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-
+          ! anisotropic elastic
           if (c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
               c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
             ! vp, vs : assign dummy values, trick to avoid floating point errors in the case of an anisotropic medium
@@ -230,18 +246,18 @@
             stop 'Error: non anisotropic material in DATA/Par_file or &
                  &external mesh redefined as anisotropic in define_external_model()'
 
+          ! acoustic element
           if (vsext(i,j,ispec) < TINYVAL .and. (ispec_is_elastic(ispec) .or. ispec_is_anisotropic(ispec))) &
             stop 'Error: non acoustic material in DATA/Par_file or &
                  &external mesh redefined as acoustic in define_external_model()'
 
+          ! elastic element
           if (vsext(i,j,ispec) > TINYVAL .and. .not. ispec_is_elastic(ispec)) &
             stop 'Error: acoustic material in DATA/Par_file or &
                  &external mesh redefined as non acoustic in define_external_model()'
-
         enddo
       enddo
     enddo
-
   endif
 
   ! re-assigns flags
@@ -257,6 +273,61 @@
   ispec_is_elastic(:) = .false.
   ispec_is_poroelastic(:) = .false.
 
+  do ispec = 1,nspec
+    ! value at corner
+    previous_vsext = vsext(1,1,ispec)
+
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        ! checks velocities inside element
+        !print *,"vsext(i,j,ispec)",vsext(i,j,ispec)
+        !print *,"gravityext(i,j,ispec)",gravityext(i,j,ispec)
+        if (P_SV .and. (.not. (i == 1 .and. j == 1)) .and. &
+          ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
+           (vsext(i,j,ispec) < TINYVAL  .and. previous_vsext >= TINYVAL)))  &
+          call exit_MPI(myrank,'external velocity model cannot be both fluid and solid inside the same spectral element')
+
+        ! sets element type
+        if (c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
+            c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
+          ! anisotropic elastic
+          ispec_is_anisotropic(ispec) = .true.
+          ispec_is_poroelastic(ispec) = .false.
+          ispec_is_elastic(ispec) = .true.
+          any_elastic = .true.
+          QKappa_attenuationext(i,j,ispec) = 9999.d0
+          Qmu_attenuationext(i,j,ispec) = 9999.d0
+
+        else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) < TINYVAL)) then
+          ! acoustic
+          ispec_is_elastic(ispec) = .false.
+          ispec_is_poroelastic(ispec) = .false.
+          ispec_is_gravitoacoustic(ispec) = .false.
+          ispec_is_acoustic(ispec) = .true.
+          any_acoustic = .true.
+
+        else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) >= TINYVAL)) then
+          ! gravito-acoustic
+          ispec_is_elastic(ispec) = .false.
+          ispec_is_poroelastic(ispec) = .false.
+          ispec_is_acoustic(ispec)=.false.
+          ispec_is_gravitoacoustic(ispec) = .true.
+          any_gravitoacoustic = .true.
+
+        else
+          ! elastic
+          ispec_is_poroelastic(ispec) = .false.
+          ispec_is_elastic(ispec) = .true.
+          any_elastic = .true.
+        endif
+
+        ! sets new GLL point value to compare against
+        previous_vsext = vsext(i,j,ispec)
+      enddo
+    enddo
+  enddo ! ispec
+
+  ! re-assigns attenuation
   ! initialize to dummy values
   ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
   inv_tau_sigma_nu1(:,:,:,:) = -1._CUSTOM_REAL
@@ -268,45 +339,11 @@
 
   do ispec = 1,nspec
 
-    previous_vsext = vsext(1,1,ispec)
+    ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
+    if (ispec_is_acoustic(ispec)) cycle
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        !print *,"vsext(i,j,ispec)",vsext(i,j,ispec)
-        !print *,"gravityext(i,j,ispec)",gravityext(i,j,ispec)
-        if (P_SV .and. (.not. (i == 1 .and. j == 1)) .and. &
-          ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
-           (vsext(i,j,ispec) < TINYVAL  .and. previous_vsext >= TINYVAL)))  &
-          call exit_MPI(myrank,'external velocity model cannot be both fluid and solid inside the same spectral element')
-
-        if (c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
-            c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
-          ispec_is_anisotropic(ispec) = .true.
-          ispec_is_poroelastic(ispec) = .false.
-          ispec_is_elastic(ispec) = .true.
-          any_elastic = .true.
-          QKappa_attenuationext(i,j,ispec) = 9999.d0
-          Qmu_attenuationext(i,j,ispec) = 9999.d0
-        else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) < TINYVAL)) then
-          ispec_is_elastic(ispec) = .false.
-          ispec_is_poroelastic(ispec) = .false.
-          ispec_is_gravitoacoustic(ispec) = .false.
-          ispec_is_acoustic(ispec) = .true.
-          any_acoustic = .true.
-        else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) >= TINYVAL)) then
-          ispec_is_elastic(ispec) = .false.
-          ispec_is_poroelastic(ispec) = .false.
-          ispec_is_acoustic(ispec)=.false.
-          ispec_is_gravitoacoustic(ispec) = .true.
-          any_gravitoacoustic = .true.
-        else
-          ispec_is_poroelastic(ispec) = .false.
-          ispec_is_elastic(ispec) = .true.
-          any_elastic = .true.
-        endif
-
-        ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
-        if (ispec_is_acoustic(ispec)) cycle
 
         ! check that attenuation values entered by the user make sense
         if ((QKappa_attenuationext(i,j,ispec) <= 9998.999d0 .and. Qmu_attenuationext(i,j,ispec) >  9998.999d0) .or. &
@@ -327,6 +364,7 @@
         Mu_nu1(i,j,ispec) = Mu_nu1_sent
         Mu_nu2(i,j,ispec) = Mu_nu2_sent
 
+        ! velocity shift
         if (ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0) then
           if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) &
             stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, &
@@ -337,10 +375,7 @@
           rho_dummy = dble(rhoext(i,j,ispec))
 
           call shift_velocities_from_f0(vp_dummy,vs_dummy,rho_dummy,mu_dummy,lambda_dummy)
-
         endif
-
-        previous_vsext = vsext(i,j,ispec)
 
       enddo
     enddo

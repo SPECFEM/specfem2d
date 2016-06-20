@@ -53,6 +53,10 @@
     call enforce_zero_radial_displacements_on_the_axis()
   endif
 
+  ! viscous attenuation for elastic media
+  if (ATTENUATION_VISCOELASTIC_SOLID) call compute_attenuation_viscoelastic(displ_elastic,displ_elastic_old, &
+                                                                  ispec_is_elastic,PML_BOUNDARY_CONDITIONS,e1,e11,e13)
+
   ! visco-elastic term
   call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
                                    PML_BOUNDARY_CONDITIONS,e1,e11,e13)
@@ -287,12 +291,21 @@
   endif
 
   if (UNDO_ATTENUATION) then
+    ! viscous attenuation for elastic media
+    if (ATTENUATION_VISCOELASTIC_SOLID) call compute_attenuation_viscoelastic(b_displ_elastic,b_displ_elastic_old, &
+                                                                    ispec_is_elastic,.false.,b_e1,b_e11,b_e13)
+
     call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
                                      .false.,b_e1,b_e11,b_e13)
   else
     ! todo: maybe should be b_e1,b_e11,.. here, please check...
     call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
                                               e1,e11,e13)
+
+!   ! viscous attenuation for elastic media
+!   if (ATTENUATION_VISCOELASTIC_SOLID) call compute_attenuation_viscoelastic(b_displ_elastic,b_displ_elastic_old, &
+!                                                                  ispec_is_elastic,PML_BOUNDARY_CONDITIONS,b_e1,b_e11,b_e13)
+!
 !    call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
 !                                     PML_BOUNDARY_CONDITIONS,b_e1,b_e11,b_e13)
   endif

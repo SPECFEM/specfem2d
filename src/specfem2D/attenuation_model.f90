@@ -35,8 +35,11 @@
 
 ! define the attenuation constants
 
-  use specfem_par
+  use constants,only: CUSTOM_REAL,ONE
 
+  use specfem_par,only: N_SLS,f0_attenuation, &
+    tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent, &
+    phi_nu1_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent
 
   implicit none
 
@@ -113,6 +116,8 @@
 !--- other constants computed from the parameters above, do not modify
 !
 
+  ! SLS parameters
+  ! for Qkappa (set by tau**1,phi**1,Mu_nu1**) and Qmu (set by tau**1,phi**1,Mu_nu1**)
   tau_epsilon_nu1(:) = real(tau_epsilon_nu1_d(:),kind=CUSTOM_REAL)
   tau_epsilon_nu2(:) = real(tau_epsilon_nu2_d(:),kind=CUSTOM_REAL)
 
@@ -363,15 +368,15 @@
 
 !---------------------------------------------------
 
-  SUBROUTINE compute_attenuation_coeffs(N,Qref,f0,f_min,f_max,tau_epsilon,tau_sigma)
+  subroutine compute_attenuation_coeffs(N,Qref,f0,f_min,f_max,tau_epsilon,tau_sigma)
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: N
   double precision, intent(in) :: Qref,f_min,f_max,f0
   double precision, dimension(1:N), intent(out) :: tau_epsilon,tau_sigma
 
-  integer i
+  integer :: i
   double precision, dimension(1:N) :: point,weight
 
 ! nonlinear optimization with constraints
@@ -406,7 +411,7 @@
 ! enddo
 ! print *
 
-  END SUBROUTINE compute_attenuation_coeffs
+  end subroutine compute_attenuation_coeffs
 
 !---------------------------------------------------
 

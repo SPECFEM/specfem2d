@@ -44,8 +44,7 @@
   integer :: ispec_acoustic,ispec_elastic
   integer :: iedge_acoustic,iedge_elastic
   integer :: inum,ipoin1D,iglob2
-  integer :: i,j,ispec,iglob
-  integer :: ispecabs
+  integer :: i,j,iglob
 
   ! determine if coupled fluid-solid simulation
   coupled_acoustic_elastic = any_acoustic .and. any_elastic
@@ -113,8 +112,8 @@
     enddo
 
     do inum = 1, num_fluid_solid_edges
-       ispec_acoustic =  fluid_solid_acoustic_ispec(inum)
-       ispec_elastic =  fluid_solid_elastic_ispec(inum)
+       ispec_acoustic = fluid_solid_acoustic_ispec(inum)
+       ispec_elastic = fluid_solid_elastic_ispec(inum)
 
         ! one element must be acoustic and the other must be elastic
         if (ispec_acoustic /= ispec_elastic .and. .not. ispec_is_elastic(ispec_acoustic) .and. &
@@ -250,8 +249,8 @@
     enddo
 
     do inum = 1, num_fluid_poro_edges
-       ispec_acoustic =  fluid_poro_acoustic_ispec(inum)
-       ispec_poroelastic =  fluid_poro_poroelastic_ispec(inum)
+       ispec_acoustic = fluid_poro_acoustic_ispec(inum)
+       ispec_poroelastic = fluid_poro_poroelastic_ispec(inum)
 
         ! one element must be acoustic and the other must be poroelastic
         if (ispec_acoustic /= ispec_poroelastic .and. .not. ispec_is_poroelastic(ispec_acoustic) .and. &
@@ -284,7 +283,7 @@
 
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*) '  Checking fluid/solid (poroelastic) edge topology...'
+      write(IMAIN,*) '  Checking fluid/solid (poroelastic) edge topology'
       call flush_IMAIN()
     endif
 
@@ -327,117 +326,6 @@
     endif
 
   endif
-
-  ! synchronizes all processes
-  call synchronize_all()
-
-  ! exclude common points between acoustic absorbing edges and acoustic/elastic matching interfaces
-  if (coupled_acoustic_elastic .and. anyabs) then
-
-    if (myrank == 0) then
-      write(IMAIN,*) 'excluding common points between acoustic absorbing edges '// &
-                     'and acoustic/elastic matching interfaces, if any'
-      call flush_IMAIN()
-    endif
-
-    ! loop on all the absorbing elements
-    do ispecabs = 1,nelemabs
-
-      ispec = numabs(ispecabs)
-
-      ! loop on all the coupling edges
-      do inum = 1,num_fluid_solid_edges
-
-        ! get the edge of the acoustic element
-        ispec_acoustic = fluid_solid_acoustic_ispec(inum)
-        iedge_acoustic = fluid_solid_acoustic_iedge(inum)
-
-        ! if acoustic absorbing element and acoustic/elastic coupled element is the same
-        if (ispec_acoustic == ispec) then
-
-          if (iedge_acoustic == IBOTTOM) then
-            ibegin_edge4(ispecabs) = 2
-            ibegin_edge2(ispecabs) = 2
-          endif
-
-          if (iedge_acoustic == ITOP) then
-            iend_edge4(ispecabs) = NGLLZ - 1
-            iend_edge2(ispecabs) = NGLLZ - 1
-          endif
-
-          if (iedge_acoustic == ILEFT) then
-            ibegin_edge1(ispecabs) = 2
-            ibegin_edge3(ispecabs) = 2
-          endif
-
-          if (iedge_acoustic == IRIGHT) then
-            iend_edge1(ispecabs) = NGLLX - 1
-            iend_edge3(ispecabs) = NGLLX - 1
-          endif
-
-        endif
-
-      enddo
-
-    enddo
-
-  endif
-
-  ! exclude common points between acoustic absorbing edges and acoustic/poroelastic matching interfaces
-  if (coupled_acoustic_poro .and. anyabs) then
-
-    if (myrank == 0) then
-      write(IMAIN,*) 'excluding common points between acoustic absorbing edges'// &
-                     ' and acoustic/poroelastic matching interfaces, if any'
-      call flush_IMAIN()
-    endif
-    ! loop on all the absorbing elements
-    do ispecabs = 1,nelemabs
-
-      ispec = numabs(ispecabs)
-
-      ! loop on all the coupling edges
-      do inum = 1,num_fluid_poro_edges
-
-        ! get the edge of the acoustic element
-        ispec_acoustic = fluid_poro_acoustic_ispec(inum)
-        iedge_acoustic = fluid_poro_acoustic_iedge(inum)
-
-        ! if acoustic absorbing element and acoustic/poroelastic coupled element is the same
-        if (ispec_acoustic == ispec) then
-
-          if (iedge_acoustic == IBOTTOM) then
-            ibegin_edge4(ispecabs) = 2
-            ibegin_edge2(ispecabs) = 2
-          endif
-
-          if (iedge_acoustic == ITOP) then
-            iend_edge4(ispecabs) = NGLLZ - 1
-            iend_edge2(ispecabs) = NGLLZ - 1
-          endif
-
-          if (iedge_acoustic == ILEFT) then
-            ibegin_edge1(ispecabs) = 2
-            ibegin_edge3(ispecabs) = 2
-          endif
-
-          if (iedge_acoustic == IRIGHT) then
-            iend_edge1(ispecabs) = NGLLX - 1
-            iend_edge3(ispecabs) = NGLLX - 1
-          endif
-
-        endif
-
-      enddo
-
-    enddo
-
-  endif
-
-  ! safety check
-  if (ATTENUATION_PORO_FLUID_PART .and. any_poroelastic .and. &
-     (time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
-    stop 'RK and LDDRK time scheme not supported for poroelastic simulations with attenuation'
 
   ! solid/porous edge detection
   ! the two elements forming an edge are already known (computed in meshfem2D),
@@ -506,8 +394,8 @@
 
 
     do inum = 1, num_solid_poro_edges
-       ispec_elastic =  solid_poro_elastic_ispec(inum)
-       ispec_poroelastic =  solid_poro_poroelastic_ispec(inum)
+       ispec_elastic = solid_poro_elastic_ispec(inum)
+       ispec_poroelastic = solid_poro_poroelastic_ispec(inum)
 
         ! one element must be elastic and the other must be poroelastic
         if (ispec_elastic /= ispec_poroelastic .and. ispec_is_elastic(ispec_elastic) .and. &
@@ -581,22 +469,37 @@
 
   endif
 
-  ! initiation
-  if (any_poroelastic .and. anyabs) then
-    ! loop on all the absorbing elements
-    do ispecabs = 1,nelemabs
-      ibegin_edge4_poro(ispecabs) = 1
-      ibegin_edge2_poro(ispecabs) = 1
+  ! synchronizes all processes
+  call synchronize_all()
 
-      iend_edge4_poro(ispecabs) = NGLLZ
-      iend_edge2_poro(ispecabs) = NGLLZ
+  ! exclude common points between acoustic absorbing edges and acoustic/elastic matching interfaces
+  if (coupled_acoustic_elastic .and. anyabs) then
 
-      ibegin_edge1_poro(ispecabs) = 1
-      ibegin_edge3_poro(ispecabs) = 1
+    if (myrank == 0) then
+      write(IMAIN,*) 'excluding common points between acoustic absorbing edges '// &
+                     'and acoustic/elastic matching interfaces, if any'
+      call flush_IMAIN()
+    endif
+    ! excludes common points in acoustic domain
+    call get_coupling_edges_exclude_common_points(nelemabs,numabs,num_fluid_solid_edges, &
+                                                  fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
+                                                  ibegin_edge1,ibegin_edge2,ibegin_edge3,ibegin_edge4, &
+                                                  iend_edge1,iend_edge2,iend_edge3,iend_edge4)
+  endif
 
-      iend_edge1_poro(ispecabs) = NGLLX
-      iend_edge3_poro(ispecabs) = NGLLX
-    enddo
+  ! exclude common points between acoustic absorbing edges and acoustic/poroelastic matching interfaces
+  if (coupled_acoustic_poro .and. anyabs) then
+
+    if (myrank == 0) then
+      write(IMAIN,*) 'excluding common points between acoustic absorbing edges'// &
+                     ' and acoustic/poroelastic matching interfaces, if any'
+      call flush_IMAIN()
+    endif
+    ! excludes common points in acoustic domain
+    call get_coupling_edges_exclude_common_points(nelemabs,numabs,num_fluid_poro_edges, &
+                                                  fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
+                                                  ibegin_edge1,ibegin_edge2,ibegin_edge3,ibegin_edge4, &
+                                                  iend_edge1,iend_edge2,iend_edge3,iend_edge4)
   endif
 
   ! exclude common points between poroelastic absorbing edges and elastic/poroelastic matching interfaces
@@ -607,49 +510,84 @@
                      'and elastic/poroelastic matching interfaces, if any'
       call flush_IMAIN()
     endif
-
-    ! loop on all the absorbing elements
-    do ispecabs = 1,nelemabs
-
-      ispec = numabs(ispecabs)
-
-      ! loop on all the coupling edges
-      do inum = 1,num_solid_poro_edges
-
-        ! get the edge of the acoustic element
-        ispec_poroelastic = solid_poro_poroelastic_ispec(inum)
-        iedge_poroelastic = solid_poro_poroelastic_iedge(inum)
-
-        ! if poroelastic absorbing element and elastic/poroelastic coupled element is the same
-        if (ispec_poroelastic == ispec) then
-
-          if (iedge_poroelastic == IBOTTOM) then
-            ibegin_edge4_poro(ispecabs) = 2
-            ibegin_edge2_poro(ispecabs) = 2
-          endif
-
-          if (iedge_poroelastic == ITOP) then
-            iend_edge4_poro(ispecabs) = NGLLZ - 1
-            iend_edge2_poro(ispecabs) = NGLLZ - 1
-          endif
-
-          if (iedge_poroelastic == ILEFT) then
-            ibegin_edge1_poro(ispecabs) = 2
-            ibegin_edge3_poro(ispecabs) = 2
-          endif
-
-          if (iedge_poroelastic == IRIGHT) then
-            iend_edge1_poro(ispecabs) = NGLLX - 1
-            iend_edge3_poro(ispecabs) = NGLLX - 1
-          endif
-
-        endif
-
-      enddo
-
-    enddo
-
+    ! excludes common points in poroelastic domain
+    call get_coupling_edges_exclude_common_points(nelemabs,numabs,num_solid_poro_edges, &
+                                                  solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge, &
+                                                  ibegin_edge1_poro,ibegin_edge2_poro,ibegin_edge3_poro,ibegin_edge4_poro, &
+                                                  iend_edge1_poro,iend_edge2_poro,iend_edge3_poro,iend_edge4_poro)
   endif
 
   end subroutine get_coupling_edges
+
+!
+!-------------------------------------------------------------------------------
+!
+
+  subroutine get_coupling_edges_exclude_common_points(nelemabs,numabs,num_domain_edges, &
+                                                      domain_ispec,domain_iedge, &
+                                                      ibegin_edge1,ibegin_edge2,ibegin_edge3,ibegin_edge4, &
+                                                      iend_edge1,iend_edge2,iend_edge3,iend_edge4)
+
+! excludes common GLL points (in one of the domains) between coupling domains to correct absorbing boundary
+
+  use constants,only: IBOTTOM,ITOP,ILEFT,IRIGHT,NGLLX,NGLLZ
+
+  implicit none
+
+  integer,intent(in) :: nelemabs
+  integer,dimension(nelemabs),intent(in) ::numabs
+
+  integer,intent(in) :: num_domain_edges
+  integer,dimension(num_domain_edges),intent(in) :: domain_ispec,domain_iedge
+
+  integer,dimension(nelemabs),intent(inout) :: ibegin_edge1,ibegin_edge2,ibegin_edge3,ibegin_edge4
+  integer,dimension(nelemabs),intent(inout) :: iend_edge1,iend_edge2,iend_edge3,iend_edge4
+
+  ! local parameters
+  integer :: ispec,ispecabs,inum
+  integer :: ispec_domain,iedge_domain
+
+  ! loop on all the absorbing elements
+  do ispecabs = 1,nelemabs
+
+    ispec = numabs(ispecabs)
+
+    ! loop on all the coupling edges
+    do inum = 1,num_domain_edges
+
+      ! get the edge of the acoustic element
+      ispec_domain = domain_ispec(inum)
+      iedge_domain = domain_iedge(inum)
+
+      ! if acoustic absorbing element and acoustic/poroelastic coupled element is the same
+      if (ispec_domain == ispec) then
+
+        if (iedge_domain == IBOTTOM) then
+          ibegin_edge4(ispecabs) = 2
+          ibegin_edge2(ispecabs) = 2
+        endif
+
+        if (iedge_domain == ITOP) then
+          iend_edge4(ispecabs) = NGLLZ - 1
+          iend_edge2(ispecabs) = NGLLZ - 1
+        endif
+
+        if (iedge_domain == ILEFT) then
+          ibegin_edge1(ispecabs) = 2
+          ibegin_edge3(ispecabs) = 2
+        endif
+
+        if (iedge_domain == IRIGHT) then
+          iend_edge1(ispecabs) = NGLLX - 1
+          iend_edge3(ispecabs) = NGLLX - 1
+        endif
+
+      endif
+
+    enddo
+
+  enddo
+
+  end subroutine get_coupling_edges_exclude_common_points
+
 

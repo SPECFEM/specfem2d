@@ -99,10 +99,6 @@
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum,e13_sum
   integer :: i_sls
 
-  ! nsub1 denotes discrete time step n-1
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_n,dux_dzl_n,duz_dxl_n,duz_dzl_n
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_nsub1,dux_dzl_nsub1,duz_dxl_nsub1,duz_dzl_nsub1
-
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
     lambdaplus2mu_unrelaxed_elastic,cpl,csl,rhol,lambdalplusmul_unrelaxed_elastic
@@ -117,34 +113,8 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: PML_dux_dxl_old,PML_dux_dzl_old,PML_duz_dxl_old,PML_duz_dzl_old
 
-  !!!update memory variable in viscoelastic simulation
-  if (ATTENUATION_VISCOELASTIC_SOLID) then
-
-    ! compute Grad(displ_elastic) at time step n for attenuation
-    call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
-          dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,ispec_is_elastic,hprime_xx,hprime_zz,nspec,nglob)
-
-    ! compute Grad(disp_elastic_old) at time step n-1 for attenuation
-    call compute_gradient_attenuation(displ_elastic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
-          dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,ispec_is_elastic,hprime_xx,hprime_zz,nspec,nglob)
-
-    ! loop over spectral elements
-    do ispec = 1,nspec
-
-      ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
-      if (.not. ispec_is_elastic(ispec)) cycle
-
-      if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. ispec_is_PML(ispec)))) then
-        call compute_attenuation_viscoelastic_update(ispec,e1,e11,e13, &
-                                                     dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-                                                     dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1)
-      endif
-    enddo
-  endif
-  !!!! end of update memory variable in viscoelastic simulation
-
-! this to avoid a warning at execution time about an undefined variable being used
-! for the SH component in the case of a P-SV calculation, and vice versa
+  ! this to avoid a warning at execution time about an undefined variable being used
+  ! for the SH component in the case of a P-SV calculation, and vice versa
   ! P_SV-case
   sigma_xx = 0._CUSTOM_REAL
   sigma_xz = 0._CUSTOM_REAL

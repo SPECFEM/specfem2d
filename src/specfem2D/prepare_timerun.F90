@@ -1399,14 +1399,16 @@
 
     ! check that attenuation values entered by the user make sense
     if ((QKappa_attenuation(kmato(ispec)) <= 9998.999d0 .and. Qmu_attenuation(kmato(ispec)) >  9998.999d0) .or. &
-       (QKappa_attenuation(kmato(ispec)) >  9998.999d0 .and. Qmu_attenuation(kmato(ispec)) <= 9998.999d0)) stop &
-     'need to have Qkappa and Qmu both above or both below 9999 for a given material; trick: use 9998 if you want to turn off one'
+       (QKappa_attenuation(kmato(ispec)) >  9998.999d0 .and. Qmu_attenuation(kmato(ispec)) <= 9998.999d0)) &
+       stop 'need to have Qkappa and Qmu both above or both below 9999 for a given material; &
+            &trick: use 9998 if you want to turn off one'
 
     ! if no attenuation in that elastic element
     if (QKappa_attenuation(kmato(ispec)) > 9998.999d0) cycle
 
     call attenuation_model(QKappa_attenuation(kmato(ispec)),Qmu_attenuation(kmato(ispec)))
 
+    ! stores attenuation values
     do j = 1,NGLLZ
       do i = 1,NGLLX
         inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
@@ -1418,25 +1420,31 @@
       enddo
     enddo
 
-    if (ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0 .and. .not. assign_external_model) then
-      if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) &
-         stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, non gravitoacoustic materials for now'
-      n = kmato(ispec)
-      if (.not. already_shifted_velocity(n)) then
-        rhol = density(1,n)
-        lambdal = poroelastcoef(1,1,n)
-        mul = poroelastcoef(2,1,n)
+    ! shifts velocities
+    if (ATTENUATION_VISCOELASTIC_SOLID) then
+      if (READ_VELOCITIES_AT_f0 .and. .not. assign_external_model) then
+        ! safety check
+        if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) &
+           stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, &
+                &non poroelastic, non gravitoacoustic materials for now'
 
-        vp = sqrt((lambdal + TWO * mul) / rhol)
-        vs = sqrt(mul/rhol)
+        n = kmato(ispec)
+        if (.not. already_shifted_velocity(n)) then
+          rhol = density(1,n)
+          lambdal = poroelastcoef(1,1,n)
+          mul = poroelastcoef(2,1,n)
 
-        call shift_velocities_from_f0(vp,vs,rhol,mul,lambdal)
+          vp = sqrt((lambdal + TWO * mul) / rhol)
+          vs = sqrt(mul/rhol)
 
-        poroelastcoef(1,1,n) = lambdal
-        poroelastcoef(2,1,n) = mul
-        poroelastcoef(3,1,n) = lambdal + TWO * mul
+          call shift_velocities_from_f0(vp,vs,rhol,mul,lambdal)
 
-        already_shifted_velocity(n) = .true.
+          poroelastcoef(1,1,n) = lambdal
+          poroelastcoef(2,1,n) = mul
+          poroelastcoef(3,1,n) = lambdal + TWO * mul
+
+          already_shifted_velocity(n) = .true.
+        endif
       endif
     endif
   enddo

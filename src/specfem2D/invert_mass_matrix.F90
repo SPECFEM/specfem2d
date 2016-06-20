@@ -133,6 +133,12 @@
         if (ispec_is_poroelastic(ispec)) then
           ! material is poroelastic
 
+          !!! PML NOT WORKING YET !!!
+          this_element_has_PML = .false.
+          if (PML_BOUNDARY_CONDITIONS) then
+            if (ispec_is_PML(ispec)) stop 'PML not implemented yet for poroelastic case'
+          endif
+
           rho_s = density(1,kmato(ispec))
           rho_f = density(2,kmato(ispec))
           phi = porosity(kmato(ispec))

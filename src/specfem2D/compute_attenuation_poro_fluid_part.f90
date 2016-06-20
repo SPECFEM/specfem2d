@@ -59,9 +59,14 @@
   ! loop over spectral elements
   do ispec = 1,nspec
 
+    ! only for poroelastic elements
+    if (.not. ispec_is_poroelastic(ispec)) cycle
+
+    ! fluid viscosity
     eta_f = poroelastcoef(2,2,kmato(ispec))
 
-    if (ispec_is_poroelastic(ispec) .and. eta_f > 0.d0) then
+    ! only if viscous
+    if (eta_f > 0.d0) then
       permlxx = permeability(1,kmato(ispec))
       permlxz = permeability(2,kmato(ispec))
       permlzz = permeability(3,kmato(ispec))
@@ -90,7 +95,8 @@
                             velocw_poroelastic(2,iglob) * bl_unrelaxed_elastic(3)
 
           ! time stepping
-          if (time_stepping_scheme == 1) then
+          select case (time_stepping_scheme)
+          case (1)
             ! Newmark
             ! evolution rx_viscous
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
@@ -101,9 +107,8 @@
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscoz(i,j,ispec)
             Snp1 = - (1.d0 - theta_e/theta_s)/theta_s*viscoz_loc(i,j)
             rz_viscous(i,j,ispec) = alphaval * rz_viscous(i,j,ispec) + betaval * Sn + gammaval * Snp1
-          endif
 
-          if (time_stepping_scheme == 2) then
+          case (2)
             ! LDDRK
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
             rx_viscous_LDDRK(i,j,ispec) = ALPHA_LDDRK(i_stage) * rx_viscous_LDDRK(i,j,ispec) + &
@@ -114,9 +119,8 @@
             rz_viscous_LDDRK(i,j,ispec)= ALPHA_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)+&
                                          deltat * (Sn + thetainv * rz_viscous(i,j,ispec))
             rz_viscous(i,j,ispec)= rz_viscous(i,j,ispec)+BETA_LDDRK(i_stage) * rz_viscous_LDDRK(i,j,ispec)
-          endif
 
-          if (time_stepping_scheme == 3) then
+          case (3)
             ! Runge-Kutta
             ! x-component
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
@@ -161,7 +165,10 @@
                                       2.0d0 * rz_viscous_force_RK(i,j,ispec,i_stage) + &
                                       rz_viscous_force_RK(i,j,ispec,i_stage))
             endif
-          endif
+
+          case default
+            stop 'Time stepping scheme not implemented yet for poro_fluid attenuation'
+          end select
         enddo
       enddo
 
@@ -171,7 +178,8 @@
         viscoz(:,:,ispec) = viscoz_loc(:,:)
       endif
 
-    endif  ! end of poroelastic element loop
+    endif  ! viscous element
+
   enddo   ! end of spectral element loop
 
  end subroutine compute_attenuation_poro_fluid_part

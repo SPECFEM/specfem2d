@@ -105,13 +105,11 @@
 ! percentages were computed by calling the GLL points routine for each degree
   call check_grid_setup_GLLper(percent_GLL,NGLLX_MAX_STABILITY)
 
-
 !---- compute parameters for the spectral elements
-
   vpImin = HUGEVAL
   vpImax = -HUGEVAL
 
-  if (any_elastic .or. any_poroelastic) then
+  if (ELASTIC_SIMULATION .or. POROELASTIC_SIMULATION) then
     vsmin = HUGEVAL
     vsmax = -HUGEVAL
   else
@@ -119,7 +117,7 @@
     vsmax = 0.d0
   endif
 
-  if (any_poroelastic) then
+  if (POROELASTIC_SIMULATION) then
     vpIImin = HUGEVAL
     vpIImax = -HUGEVAL
   else
@@ -140,7 +138,7 @@
   lambdaPImin = HUGEVAL
   lambdaPImax = -HUGEVAL
 
-  if (any_elastic .or. any_poroelastic) then
+  if (ELASTIC_SIMULATION .or. POROELASTIC_SIMULATION) then
     lambdaSmin = HUGEVAL
     lambdaSmax = -HUGEVAL
   else
@@ -148,7 +146,7 @@
     lambdaSmax = 0.d0
   endif
 
-  if (any_poroelastic) then
+  if (POROELASTIC_SIMULATION) then
     lambdaPIImin = HUGEVAL
     lambdaPIImax = -HUGEVAL
   else
@@ -161,7 +159,7 @@
 
   any_fluid_histo = .false.
 
-  do ispec= 1,nspec
+  do ispec = 1,nspec
 
     if (ispec_is_poroelastic(ispec)) then
       ! gets poroelastic material
@@ -217,11 +215,11 @@
         vpImax = max(vpImax,cpIloc)
 
         ! ignore acoustic and elastic regions with cpII = 0
-        if (cpIIloc > 1.d-20) vpIImin = min(vpIImin,cpIIloc)
+        if (cpIIloc > TINYVAL) vpIImin = min(vpIImin,cpIIloc)
         vpIImax = max(vpIImax,cpIIloc)
 
         ! ignore fluid regions with Vs = 0
-        if (csloc > 1.d-20) vsmin = min(vsmin,csloc)
+        if (csloc > TINYVAL) vsmin = min(vsmin,csloc)
         vsmax = max(vsmax,csloc)
 
         densmin = min(densmin,denst)
@@ -280,7 +278,7 @@
     !          seismograms become just more and more inaccurate for periods shorter than this estimate.
     vel_min = min(vpImin_local,vsmin_local)
 
-    if (vel_min > 1.d-20) then
+    if (vel_min > TINYVAL) then
       pmax = max(pmax,avg_distance / vel_min * NPTS_PER_WAVELENGTH)
     else
       ! acoustic/fluid region uses vpImin_local
@@ -293,7 +291,7 @@
     dt_suggested = min(dt_suggested,COURANT_SUGGESTED * distance_min_local * percent_GLL(NGLLX) / vel_max)
 
     ! check if fluid region with Vs = 0
-    if (vsmin_local > 1.d-20) then
+    if (vsmin_local > TINYVAL) then
       lambdaSmin = min(lambdaSmin,vsmin_local / (distance_max_local / (NGLLX - 1)))
       lambdaSmax = max(lambdaSmax,vsmin_local / (distance_max_local / (NGLLX - 1)))
     else
@@ -305,7 +303,7 @@
     lambdaPImin = min(lambdaPImin,vpImin_local / (distance_max_local / (NGLLX - 1)))
     lambdaPImax = max(lambdaPImax,vpImin_local / (distance_max_local / (NGLLX - 1)))
 
-    if (cpIIloc > 1.d-20) then
+    if (cpIIloc > TINYVAL) then
       lambdaPIImin = min(lambdaPIImin,vpIImin_local / (distance_max_local / (NGLLX - 1)))
       lambdaPIImax = max(lambdaPIImax,vpIImin_local / (distance_max_local / (NGLLX - 1)))
     endif
@@ -420,25 +418,27 @@
           if (i == NSOURCES) then
             write(IMAIN,*) '----'
             write(IMAIN,*) 'Number of points per wavelength:'
+            write(IMAIN,*) '----'
+            write(IMAIN,*) '  Source ',i
             write(IMAIN,*) '  maximum dominant source frequency = ',f0max,'Hz'
             write(IMAIN,*) ''
             if (POROELASTIC_SIMULATION) then
               ! slow and fast P-waves
-              write(IMAIN,*) '  Nb pts / lambdaPI_fmax min = ',lambdaPImin/f0max
-              write(IMAIN,*) '  Nb pts / lambdaPI_fmax max = ',lambdaPImax/f0max
+              write(IMAIN,*) '  Nb pts / lambdaPI_fmax min = ',sngl(lambdaPImin/f0max)
+              write(IMAIN,*) '  Nb pts / lambdaPI_fmax max = ',sngl(lambdaPImax/f0max)
               write(IMAIN,*) ''
-              write(IMAIN,*) '  Nb pts / lambdaPII_fmax min = ',lambdaPIImin/f0max
-              write(IMAIN,*) '  Nb pts / lambdaPII_fmax max = ',lambdaPIImax/f0max
+              write(IMAIN,*) '  Nb pts / lambdaPII_fmax min = ',sngl(lambdaPIImin/f0max)
+              write(IMAIN,*) '  Nb pts / lambdaPII_fmax max = ',sngl(lambdaPIImax/f0max)
             else
-              write(IMAIN,*) '  Nb pts / lambdaP_fmax min = ',lambdaPImin/f0max
-              write(IMAIN,*) '  Nb pts / lambdaP_fmax max = ',lambdaPImax/f0max
+              write(IMAIN,*) '  Nb pts / lambdaP_fmax min = ',sngl(lambdaPImin/f0max)
+              write(IMAIN,*) '  Nb pts / lambdaP_fmax max = ',sngl(lambdaPImax/f0max)
             endif
             write(IMAIN,*) ''
 
             ! check if fluid regions
-            if (vsmin > 1.d-20) then
-              write(IMAIN,*) '  Nb pts / lambdaS_fmax min = ',lambdaSmin/f0max
-              write(IMAIN,*) '  Nb pts / lambdaS_fmax max = ',lambdaSmax/f0max
+            if (vsmin > TINYVAL) then
+              write(IMAIN,*) '  Nb pts / lambdaS_fmax min = ',sngl(lambdaSmin/f0max)
+              write(IMAIN,*) '  Nb pts / lambdaS_fmax max = ',sngl(lambdaSmax/f0max)
             else
               write(IMAIN,*) '  purely fluid regions'
             endif
@@ -643,7 +643,7 @@
 
       if (ipass == 1) then
         ! in first pass, only solid regions, thus ignore fluid regions with Vs = 0
-        if (vsmin_local > 1.d-20) then
+        if (vsmin_local > TINYVAL) then
           nb_of_points_per_wavelength = vsmin_local / (distance_max_local / (NGLLX - 1))
 
           nspec_counted = nspec_counted + 1
@@ -661,7 +661,7 @@
 
       else
         ! in second pass, only fluid regions, thus ignore solid regions with Vs > 0
-        if (abs(vsmin_local) < 1.d-20) then
+        if (abs(vsmin_local) < TINYVAL) then
           if (vpIImin_local <= ZERO) then
             nb_of_points_per_wavelength = vpImin_local / (distance_max_local / (NGLLX - 1))
           else
@@ -1580,7 +1580,7 @@
     if (ELASTIC_SIMULATION .or. POROELASTIC_SIMULATION) then
 
 ! ignore fluid regions with Vs = 0
-      if (vsmin_local > 1.d-20) then
+      if (vsmin_local > TINYVAL) then
 
         lambdaS_local = vsmin_local / (distance_max_local / (NGLLX - 1))
 

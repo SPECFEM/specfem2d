@@ -883,6 +883,19 @@
   ibegin_edge4(:) = 0
   iend_edge4(:) = 0
 
+  ! poroelastic edges (have not been set in mesher yet)
+  ibegin_edge1_poro(:) = 1
+  iend_edge1_poro(:) = NGLLX
+
+  ibegin_edge2_poro(:) = 1
+  iend_edge2_poro(:) = NGLLZ
+
+  ibegin_edge3_poro(:) = 1
+  iend_edge3_poro(:) = NGLLX
+
+  ibegin_edge4_poro(:) = 1
+  iend_edge4_poro(:) = NGLLZ
+
   nspec_left = 0
   nspec_right = 0
   nspec_bottom = 0
