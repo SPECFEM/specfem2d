@@ -349,7 +349,7 @@
                   is_acoustic_el_adj = .false.
                   is_elastic_el_adj = .false.
                 endif
-                ! adds element if neighbor element lies in next parition
+                ! adds element if neighbor element lies in next partition
                 ! and belongs to same material
                 if ((part(adjncy_g(el_adj)) == num_part_bis) .and. &
                      (is_acoustic_el .eqv. is_acoustic_el_adj) .and. &
@@ -781,8 +781,8 @@
 !! DK DK Sept 2012    enddo
 
 !! DK DK Sept 2012    if (match == 0) then
-       nb_elmnts_abs = nb_elmnts_abs + 1
-       match = nb_elmnts_abs
+    nb_elmnts_abs = nb_elmnts_abs + 1
+    match = nb_elmnts_abs
 !! DK DK Sept 2012    endif
 
     abs_surface_merge(match) = abs_surface(1,num_edge)
@@ -881,82 +881,80 @@
 !! DK DK Sept 2012: we now use a type code and thus we must not merge elements that
 !! DK DK Sept 2012: appear twice in the list any more because each occurrence now appears with a different type code.
 !! DK DK Sept 2012: But here I think we must leave it because we are just fixing the fluid/solid elements in postprocessing.
-  match = 0
-  do i = 1, nelemabs_merge
-    if (abs_surface(1,num_edge) == abs_surface_merge(i)) then
-       match = i
-       exit
-    endif
-  enddo
-
-  if (is_acoustic(num_material(abs_surface(1,num_edge)+1))) then
-
-    do iedge = 1, nedges_coupled
-
-      do inode1 = 0, 3
-        if (abs_surface(3,num_edge) == elmnts(ngnod*edges_coupled(1,iedge)+inode1)) then
-          do inode2 = 0, 3
-            if (abs_surface(3,num_edge) == elmnts(ngnod*edges_coupled(2,iedge)+inode2)) then
-
-              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1)) then
-                  ibegin_edge1(match) = 2
-              endif
-
-              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2)) then
-                  ibegin_edge2(match) = 2
-              endif
-
-              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2)) then
-                  ibegin_edge3(match) = 2
-              endif
-
-              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3)) then
-                  ibegin_edge4(match) = 2
-              endif
-
-            endif
-          enddo
-
-        endif
-
-        if (abs_surface(4,num_edge) == elmnts(ngnod*edges_coupled(1,iedge)+inode1)) then
-          do inode2 = 0, 3
-            if (abs_surface(4,num_edge) == elmnts(ngnod*edges_coupled(2,iedge)+inode2)) then
-              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1)) then
-                  iend_edge1(match) = NGLLX - 1
-              endif
-
-              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2)) then
-                  iend_edge2(match) = NGLLZ - 1
-              endif
-
-              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2)) then
-                  iend_edge3(match) = NGLLX - 1
-              endif
-
-              if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
-                   abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3)) then
-                  iend_edge4(match) = NGLLZ - 1
-              endif
-
-            endif
-          enddo
-
-        endif
-
-      enddo
-
-
+    match = 0
+    do i = 1, nelemabs_merge
+      if (abs_surface(1,num_edge) == abs_surface_merge(i)) then
+        match = i
+        exit
+      endif
     enddo
 
-  endif
+    if (is_acoustic(num_material(abs_surface(1,num_edge)+1))) then
+
+      do iedge = 1, nedges_coupled
+        do inode1 = 0, 3
+
+          if (abs_surface(3,num_edge) == elmnts(ngnod*edges_coupled(1,iedge)+inode1)) then
+            do inode2 = 0, 3
+              if (abs_surface(3,num_edge) == elmnts(ngnod*edges_coupled(2,iedge)+inode2)) then
+
+                if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                     abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1)) then
+                    ibegin_edge1(match) = 2
+                endif
+
+                if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
+                     abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2)) then
+                    ibegin_edge2(match) = 2
+                endif
+
+                if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
+                     abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2)) then
+                    ibegin_edge3(match) = 2
+                endif
+
+                if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                     abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3)) then
+                    ibegin_edge4(match) = 2
+                endif
+
+              endif
+            enddo
+
+          endif
+
+          if (abs_surface(4,num_edge) == elmnts(ngnod*edges_coupled(1,iedge)+inode1)) then
+            do inode2 = 0, 3
+              if (abs_surface(4,num_edge) == elmnts(ngnod*edges_coupled(2,iedge)+inode2)) then
+                if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                     abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1)) then
+                    iend_edge1(match) = NGLLX - 1
+                endif
+
+                if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+1) .and. &
+                     abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2)) then
+                    iend_edge2(match) = NGLLZ - 1
+                endif
+
+                if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3) .and. &
+                     abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+2)) then
+                    iend_edge3(match) = NGLLX - 1
+                endif
+
+                if (abs_surface(3,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+0) .and. &
+                     abs_surface(4,num_edge) == elmnts(ngnod*abs_surface(1,num_edge)+3)) then
+                    iend_edge4(match) = NGLLZ - 1
+                endif
+
+              endif
+            enddo
+
+          endif
+
+        enddo
+      enddo
+
+    endif
 
   enddo
 

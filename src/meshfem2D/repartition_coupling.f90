@@ -38,7 +38,7 @@
 
   subroutine acoustic_elastic_repartitioning(elmnts_l, nbmodels, phi_material, num_material, nproc)
 
-  use part_unstruct_par,only: nelmnts,edges_coupled,nedges_coupled,part
+  use part_unstruct_par,only: nelmnts,edges_coupled,nedges_coupled
 
   implicit none
   include "constants.h"
@@ -52,13 +52,13 @@
   integer, dimension(:), allocatable  :: xadj_l
   integer, dimension(:), allocatable  :: adjncy_l
   logical, dimension(nbmodels)  :: is_acoustic, is_elastic
-  integer  :: i, ier, num_edge
+  integer  :: i, ier
   integer  :: el, el_adj
-  logical  :: is_repartitioned
 
   allocate(xadj_l(0:nelmnts))
   allocate(adjncy_l(0:MAX_NEIGHBORS*nelmnts-1))
 
+  ! sets domain flags
   is_acoustic(:) = .false.
   is_elastic(:) = .false.
 
@@ -76,13 +76,16 @@
 
   nedges_coupled = 0
   do el = 0, nelmnts-1
-     if (is_acoustic(num_material(el+1))) then
-        do el_adj = xadj_l(el), xadj_l(el+1) - 1
-           if (is_elastic(num_material(adjncy_l(el_adj)+1))) then
-              nedges_coupled = nedges_coupled + 1
-           endif
-        enddo
-     endif
+    ! for acoustic element
+    if (is_acoustic(num_material(el+1))) then
+      ! loops over adjacent elements
+      do el_adj = xadj_l(el), xadj_l(el+1) - 1
+        ! adds its elastic neighbor
+        if (is_elastic(num_material(adjncy_l(el_adj)+1))) then
+          nedges_coupled = nedges_coupled + 1
+        endif
+      enddo
+    endif
   enddo
 
   ! user output
@@ -90,43 +93,19 @@
 
   allocate(edges_coupled(2,nedges_coupled),stat=ier)
   if (ier /= 0) stop 'Error allocating array edges_coupled'
+  edges_coupled(:,:) = 0
 
-  nedges_coupled = 0
-  do el = 0, nelmnts-1
-     if (is_acoustic(num_material(el+1))) then
-        do el_adj = xadj_l(el), xadj_l(el+1) - 1
-           if (is_elastic(num_material(adjncy_l(el_adj)+1))) then
-              nedges_coupled = nedges_coupled + 1
-              edges_coupled(1,nedges_coupled) = el
-              edges_coupled(2,nedges_coupled) = adjncy_l(el_adj)
-           endif
-
-        enddo
-     endif
-  enddo
-
-  do i = 1, nedges_coupled*nproc
-     is_repartitioned = .false.
-     do num_edge = 1, nedges_coupled
-        if (part(edges_coupled(1,num_edge)) /= part(edges_coupled(2,num_edge))) then
-           if (part(edges_coupled(1,num_edge)) < part(edges_coupled(2,num_edge))) then
-              part(edges_coupled(2,num_edge)) = part(edges_coupled(1,num_edge))
-           else
-              part(edges_coupled(1,num_edge)) = part(edges_coupled(2,num_edge))
-           endif
-
-           is_repartitioned = .true.
-        endif
-
-     enddo
-     if (.not. is_repartitioned) then
-        exit
-     endif
-  enddo
+  ! repartitions elements
+  if (nproc > 1 .and. nedges_coupled > 0) then
+    call repartition_coupled_edges(nproc,nedges_coupled,edges_coupled, &
+                                   num_material,nbmodels, &
+                                   is_acoustic,is_elastic,xadj_l,adjncy_l)
+  endif
 
   deallocate(xadj_l,adjncy_l)
 
   end subroutine acoustic_elastic_repartitioning
+
 
 !
 !---------------------------------------------------------------------------------------
@@ -138,7 +117,7 @@
 
   subroutine acoustic_poro_repartitioning(elmnts_l, nbmodels, phi_material, num_material, nproc)
 
-  use part_unstruct_par,only: nelmnts,edges_acporo_coupled,nedges_acporo_coupled,part
+  use part_unstruct_par,only: nelmnts,edges_acporo_coupled,nedges_acporo_coupled
 
   implicit none
   include "constants.h"
@@ -152,9 +131,8 @@
   integer, dimension(:), allocatable  :: xadj_l
   integer, dimension(:), allocatable  :: adjncy_l
   logical, dimension(nbmodels)  :: is_acoustic,is_poroelastic
-  integer  :: i, ier, num_edge
+  integer  :: i, ier
   integer  :: el, el_adj
-  logical  :: is_repartitioned
 
   allocate(xadj_l(0:nelmnts))
   allocate(adjncy_l(0:MAX_NEIGHBORS*nelmnts-1))
@@ -181,7 +159,6 @@
            if (is_poroelastic(num_material(adjncy_l(el_adj)+1))) then
               nedges_acporo_coupled = nedges_acporo_coupled + 1
            endif
-
         enddo
      endif
   enddo
@@ -191,38 +168,14 @@
 
   allocate(edges_acporo_coupled(2,nedges_acporo_coupled),stat=ier)
   if (ier /= 0) stop 'Error allocating array edges_acporo_coupled'
+  edges_acporo_coupled(:,:) = 0
 
-  nedges_acporo_coupled = 0
-  do el = 0, nelmnts-1
-     if (is_acoustic(num_material(el+1))) then
-        do el_adj = xadj_l(el), xadj_l(el+1) - 1
-           if (is_poroelastic(num_material(adjncy_l(el_adj)+1))) then
-              nedges_acporo_coupled = nedges_acporo_coupled + 1
-              edges_acporo_coupled(1,nedges_acporo_coupled) = el
-              edges_acporo_coupled(2,nedges_acporo_coupled) = adjncy_l(el_adj)
-           endif
-
-        enddo
-     endif
-  enddo
-
-  do i = 1, nedges_acporo_coupled*nproc
-     is_repartitioned = .false.
-     do num_edge = 1, nedges_acporo_coupled
-        if (part(edges_acporo_coupled(1,num_edge)) /= part(edges_acporo_coupled(2,num_edge))) then
-           if (part(edges_acporo_coupled(1,num_edge)) < part(edges_acporo_coupled(2,num_edge))) then
-              part(edges_acporo_coupled(2,num_edge)) = part(edges_acporo_coupled(1,num_edge))
-           else
-              part(edges_acporo_coupled(1,num_edge)) = part(edges_acporo_coupled(2,num_edge))
-           endif
-           is_repartitioned = .true.
-        endif
-
-     enddo
-     if (.not. is_repartitioned) then
-        exit
-     endif
-  enddo
+  ! repartitions elements
+  if (nproc > 1 .and. nedges_acporo_coupled > 0) then
+    call repartition_coupled_edges(nproc,nedges_acporo_coupled,edges_acporo_coupled, &
+                                   num_material,nbmodels, &
+                                   is_acoustic,is_poroelastic,xadj_l,adjncy_l)
+  endif
 
   deallocate(xadj_l,adjncy_l)
 
@@ -238,7 +191,7 @@
 
   subroutine poro_elastic_repartitioning(elmnts_l, nbmodels, phi_material, num_material, nproc)
 
-  use part_unstruct_par,only: nelmnts,nedges_elporo_coupled,edges_elporo_coupled,part
+  use part_unstruct_par,only: nelmnts,nedges_elporo_coupled,edges_elporo_coupled
 
   implicit none
   include "constants.h"
@@ -252,9 +205,8 @@
   integer, dimension(:), allocatable  :: xadj_l
   integer, dimension(:), allocatable  :: adjncy_l
   logical, dimension(nbmodels)  :: is_elastic,is_poroelastic
-  integer  :: i, ier, num_edge
+  integer  :: i, ier
   integer  :: el, el_adj
-  logical  :: is_repartitioned
 
   allocate(xadj_l(0:nelmnts))
   allocate(adjncy_l(0:MAX_NEIGHBORS*nelmnts-1))
@@ -281,7 +233,6 @@
            if (is_elastic(num_material(adjncy_l(el_adj)+1))) then
               nedges_elporo_coupled = nedges_elporo_coupled + 1
            endif
-
         enddo
      endif
   enddo
@@ -291,42 +242,105 @@
 
   allocate(edges_elporo_coupled(2,nedges_elporo_coupled),stat=ier)
   if (ier /= 0) stop 'Error allocating array edges_elporo_coupled'
+  edges_elporo_coupled(:,:) = 0
 
-  nedges_elporo_coupled = 0
-  do el = 0, nelmnts-1
-     if (is_poroelastic(num_material(el+1))) then
-        do el_adj = xadj_l(el), xadj_l(el+1) - 1
-           if (is_elastic(num_material(adjncy_l(el_adj)+1))) then
-              nedges_elporo_coupled = nedges_elporo_coupled + 1
-              edges_elporo_coupled(1,nedges_elporo_coupled) = el
-              edges_elporo_coupled(2,nedges_elporo_coupled) = adjncy_l(el_adj)
-           endif
-
-        enddo
-     endif
-  enddo
-
-  do i = 1, nedges_elporo_coupled*nproc
-     is_repartitioned = .false.
-     do num_edge = 1, nedges_elporo_coupled
-        if (part(edges_elporo_coupled(1,num_edge)) /= part(edges_elporo_coupled(2,num_edge))) then
-           if (part(edges_elporo_coupled(1,num_edge)) < part(edges_elporo_coupled(2,num_edge))) then
-              part(edges_elporo_coupled(2,num_edge)) = part(edges_elporo_coupled(1,num_edge))
-           else
-              part(edges_elporo_coupled(1,num_edge)) = part(edges_elporo_coupled(2,num_edge))
-           endif
-           is_repartitioned = .true.
-        endif
-
-     enddo
-     if (.not. is_repartitioned) then
-        exit
-     endif
-  enddo
+  ! repartitions elements
+  if (nproc > 1 .and. nedges_elporo_coupled > 0) then
+    call repartition_coupled_edges(nproc,nedges_elporo_coupled,edges_elporo_coupled, &
+                                   num_material,nbmodels, &
+                                   is_poroelastic,is_elastic,xadj_l,adjncy_l)
+  endif
 
   deallocate(xadj_l,adjncy_l)
 
   end subroutine poro_elastic_repartitioning
+
+!
+!---------------------------------------------------------------------------------------
+!
+
+  subroutine repartition_coupled_edges(nproc,nedges_coupled,edges_coupled, &
+                                       num_material,nbmodels, &
+                                       is_domain_A,is_domain_B,xadj_l,adjncy_l)
+
+  use part_unstruct_par,only: nelmnts,part
+
+  implicit none
+  include "constants.h"
+
+  integer, intent(in)  :: nproc, nedges_coupled
+  integer, dimension(2,nedges_coupled),intent(inout) :: edges_coupled
+
+  integer, dimension(1:nelmnts), intent(in)  :: num_material
+
+  integer,intent(in) :: nbmodels
+  logical, dimension(nbmodels),intent(in) :: is_domain_A, is_domain_B
+
+  integer, dimension(0:nelmnts),intent(in) :: xadj_l
+  integer, dimension(0:MAX_NEIGHBORS*nelmnts-1),intent(in) :: adjncy_l
+
+  ! local parameters
+  integer  :: i, iedge
+  integer  :: el, el_adj
+  logical  :: is_repartitioned
+
+  ! sets edges
+  iedge = 0
+  do el = 0, nelmnts-1
+    ! reference element
+    if (is_domain_A(num_material(el+1))) then
+      ! loops over adjacent elements
+      do el_adj = xadj_l(el), xadj_l(el+1) - 1
+        ! adds coupled edge
+        if (is_domain_B(num_material(adjncy_l(el_adj)+1))) then
+          iedge = iedge + 1
+          edges_coupled(1,iedge) = el
+          edges_coupled(2,iedge) = adjncy_l(el_adj)
+        endif
+      enddo
+    endif
+  enddo
+  if (iedge /= nedges_coupled) stop 'Error in setting domain edges, number of edges invalid'
+
+  do i = 1, nedges_coupled * nproc
+    is_repartitioned = .false.
+    do iedge = 1, nedges_coupled
+      ! puts coupled element in same partition
+      if (part(edges_coupled(1,iedge)) /= part(edges_coupled(2,iedge))) then
+        ! moves element into partition with smaller process id
+        if (part(edges_coupled(1,iedge)) < part(edges_coupled(2,iedge))) then
+          part(edges_coupled(2,iedge)) = part(edges_coupled(1,iedge))
+        else
+          part(edges_coupled(1,iedge)) = part(edges_coupled(2,iedge))
+        endif
+        is_repartitioned = .true.
+      endif
+    enddo
+    ! check if there is still work to do
+    if (.not. is_repartitioned) then
+      exit
+    endif
+  enddo
+
+  ! checks if initial coupled edges are repartitioned
+  if (is_repartitioned) then
+    ! checks count in case we need more
+    i = 0
+    do iedge = 1, nedges_coupled
+      if (part(edges_coupled(1,iedge)) /= part(edges_coupled(2,iedge))) i = i + 1
+    enddo
+    write(IMAIN,*) '  repartitioning edges left = ',i
+    if (i /= 0) then
+      write(IMAIN,*) 'Error: repartitioning edges has still edges left = ',i
+      stop 'Error: repartitioning coupled elements needs more iterations'
+    else
+      ! for user output
+      i = nedges_coupled * nproc
+    endif
+  endif
+  write(IMAIN,*) '  after iteration ',i,'repartitioning of all coupled elements done'
+
+  end subroutine repartition_coupled_edges
 
 !
 !---------------------------------------------------------------------------------------

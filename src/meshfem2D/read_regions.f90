@@ -42,25 +42,31 @@
   implicit none
   include "constants.h"
 
-  integer :: nbregion,nbmodels
-  integer, dimension(nbmodels) :: icodemat
-  double precision, dimension(nbmodels) :: rho_s,cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,QKappa,Qmu
+  integer,intent(inout) :: nbregion
 
-  integer :: nelmnts
-  integer,dimension(nelmnts) :: num_material
+  integer,intent(in) :: nbmodels
+  integer, dimension(nbmodels),intent(in) :: icodemat
+  double precision, dimension(nbmodels),intent(in) :: rho_s,cp,cs
+  double precision, dimension(nbmodels),intent(in) :: aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11
+  double precision, dimension(nbmodels),intent(in) :: QKappa,Qmu
+
+  integer,intent(in) :: nelmnts
+  integer,dimension(nelmnts),intent(inout) :: num_material
 
   ! local parameters
-  integer :: iregion,ixdebregion,ixfinregion,izdebregion,izfinregion,imaterial_number
-  integer :: i,j
+  integer :: iregion,ix_start,ix_end,iz_start,iz_end,imaterial_number
+  integer :: i,j,ielem
   double precision :: vpregion,vsregion,poisson_ratio
+  logical :: is_overwriting
+  integer :: id_already_set
+
   integer,external :: err_occurred
 
   ! read the material numbers for each region
   call read_value_integer_p(nbregion, 'mesher.nbregions')
   if (err_occurred() /= 0) stop 'error reading parameter nbregions in Par_file'
 
-
+  ! check
   if (nbregion <= 0) stop 'Negative number of regions not allowed!'
 
   ! user output
@@ -70,24 +76,29 @@
 
   do iregion = 1,nbregion
 
-    call read_region_coordinates_p(ixdebregion,ixfinregion, &
-                                   izdebregion,izfinregion,imaterial_number)
+    ! reads in region range
+    ! format: #ix start #ix end #iz start #iz end
+    call read_region_coordinates_p(ix_start,ix_end,iz_start,iz_end,imaterial_number)
 
+    ! check
     if (imaterial_number < 1) stop 'Negative material number not allowed!'
-    if (ixdebregion < 1) stop 'Left coordinate of region negative!'
-    if (ixfinregion > nxread) stop 'Right coordinate of region too high!'
-    if (izdebregion < 1) stop 'Bottom coordinate of region negative!'
-    if (izfinregion > nzread) stop 'Top coordinate of region too high!'
+    if (ix_start < 1) stop 'Left coordinate of region negative!'
+    if (ix_end > nxread) stop 'Right coordinate of region too high!'
+    if (iz_start < 1) stop 'Bottom coordinate of region negative!'
+    if (iz_end > nzread) stop 'Top coordinate of region too high!'
 
     write(IMAIN,*) 'Region ',iregion
-    write(IMAIN,*) 'IX from ',ixdebregion,' to ',ixfinregion
-    write(IMAIN,*) 'IZ from ',izdebregion,' to ',izfinregion
+    write(IMAIN,*) 'IX from ',ix_start,' to ',ix_end
+    write(IMAIN,*) 'IZ from ',iz_start,' to ',iz_end
 
+    ! determines region domain
     if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. icodemat(imaterial_number) /= POROELASTIC_MATERIAL) then
 
        ! isotropic material
        vpregion = cp(imaterial_number)
        vsregion = cs(imaterial_number)
+
+       poisson_ratio = 0.5d0*(vpregion*vpregion-2.d0*vsregion*vsregion) / (vpregion*vpregion-vsregion*vsregion)
 
        write(IMAIN,*) 'Material # ',imaterial_number,' isotropic'
        if (vsregion < TINYVAL) then
@@ -95,14 +106,14 @@
        else
           write(IMAIN,*) 'Material is solid'
        endif
-       write(IMAIN,*) 'vp = ',vpregion
-       write(IMAIN,*) 'vs = ',vsregion
-       write(IMAIN,*) 'rho = ',rho_s(imaterial_number)
-       poisson_ratio = 0.5d0*(vpregion*vpregion-2.d0*vsregion*vsregion) / (vpregion*vpregion-vsregion*vsregion)
-       write(IMAIN,*) 'Poisson''s ratio = ',poisson_ratio
+       write(IMAIN,*) 'vp     = ',sngl(vpregion)
+       write(IMAIN,*) 'vs     = ',sngl(vsregion)
+       write(IMAIN,*) 'rho    = ',sngl(rho_s(imaterial_number))
+       write(IMAIN,*) 'Poisson''s ratio = ',sngl(poisson_ratio)
+       write(IMAIN,*) 'QKappa = ',sngl(QKappa(imaterial_number))
+       write(IMAIN,*) 'Qmu    = ',sngl(Qmu(imaterial_number))
+
        if (poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
-       write(IMAIN,*) 'QKappa = ',QKappa(imaterial_number)
-       write(IMAIN,*) 'Qmu = ',Qmu(imaterial_number)
 
     else if (icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
 
@@ -114,31 +125,48 @@
 
        ! anisotropic material
        write(IMAIN,*) 'Material # ',imaterial_number,' anisotropic'
-       write(IMAIN,*) 'cp = ',cp(imaterial_number)
-       write(IMAIN,*) 'cs = ',cs(imaterial_number)
-       write(IMAIN,*) 'c11 = ',aniso3(imaterial_number)
-       write(IMAIN,*) 'c13 = ',aniso4(imaterial_number)
-       write(IMAIN,*) 'c15 = ',aniso5(imaterial_number)
-       write(IMAIN,*) 'c33 = ',aniso6(imaterial_number)
-       write(IMAIN,*) 'c35 = ',aniso7(imaterial_number)
-       write(IMAIN,*) 'c55 = ',aniso8(imaterial_number)
-       write(IMAIN,*) 'c12 = ',aniso9(imaterial_number)
-       write(IMAIN,*) 'c23 = ',aniso10(imaterial_number)
-       write(IMAIN,*) 'c25 = ',aniso11(imaterial_number)
-       write(IMAIN,*) 'rho = ',rho_s(imaterial_number)
-       write(IMAIN,*) 'QKappa = ',QKappa(imaterial_number)
-       write(IMAIN,*) 'Qmu = ',Qmu(imaterial_number)
+       write(IMAIN,*) 'cp = ',sngl(cp(imaterial_number))
+       write(IMAIN,*) 'cs = ',sngl(cs(imaterial_number))
+       write(IMAIN,*) 'c11 = ',sngl(aniso3(imaterial_number))
+       write(IMAIN,*) 'c13 = ',sngl(aniso4(imaterial_number))
+       write(IMAIN,*) 'c15 = ',sngl(aniso5(imaterial_number))
+       write(IMAIN,*) 'c33 = ',sngl(aniso6(imaterial_number))
+       write(IMAIN,*) 'c35 = ',sngl(aniso7(imaterial_number))
+       write(IMAIN,*) 'c55 = ',sngl(aniso8(imaterial_number))
+       write(IMAIN,*) 'c12 = ',sngl(aniso9(imaterial_number))
+       write(IMAIN,*) 'c23 = ',sngl(aniso10(imaterial_number))
+       write(IMAIN,*) 'c25 = ',sngl(aniso11(imaterial_number))
+       write(IMAIN,*) 'rho = ',sngl(rho_s(imaterial_number))
+       write(IMAIN,*) 'QKappa = ',sngl(QKappa(imaterial_number))
+       write(IMAIN,*) 'Qmu = ',sngl(Qmu(imaterial_number))
     endif
 
-    write(IMAIN,*) ' -----'
-    call flush_IMAIN()
-
     ! store density and velocity model
-    do j = izdebregion,izfinregion
-      do i = ixdebregion,ixfinregion
-        num_material((j-1)*nxread+i) = imaterial_number
+    is_overwriting = .false.
+    do j = iz_start,iz_end
+      do i = ix_start,ix_end
+        ! element index
+        ielem = (j-1)*nxread+i
+        ! checks if element has been already assigned
+        if (num_material(ielem) /= 0) then
+          is_overwriting = .true.
+          id_already_set = num_material(ielem)
+        endif
+        ! sets new material id for element
+        num_material(ielem) = imaterial_number
       enddo
     enddo
+
+    ! user output
+    if (is_overwriting) then
+      write(IMAIN,*) '*************************************'
+      write(IMAIN,*) 'Warning: Element range from this region is overwriting material numbers previously set on elements.'
+      write(IMAIN,*) '         This indicates that your region range is overlapping the region for material ',id_already_set
+      write(IMAIN,*) '         If your regions should be exclusive, please fix the region definitions in the Par_file!'
+      write(IMAIN,*) '*************************************'
+    endif
+    write(IMAIN,*) ' -----'
+    call flush_IMAIN()
 
   enddo
 

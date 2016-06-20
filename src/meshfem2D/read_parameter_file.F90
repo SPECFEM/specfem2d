@@ -538,6 +538,7 @@
   call read_value_logical_p(use_binary_for_wavefield_dumps, 'solver.use_binary_for_wavefield_dumps')
   if (err_occurred() /= 0) stop 'error reading parameter use_binary_for_wavefield_dumps in Par_file'
 
+  !--------------------------------------------------------------------
 
   ! checks input parameters
   call check_parameters()

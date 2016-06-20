@@ -438,8 +438,10 @@
     num_material(:) = 0
 
     if (read_external_mesh) then
+      ! material defined in external file
       call read_external_materials_file(materials_file, num_material)
     else
+      ! material regions defined in Par_file
       call read_regions(nbregion,nbmodels,icodemat,cp,cs, &
                         rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
                         nelmnts,num_material)

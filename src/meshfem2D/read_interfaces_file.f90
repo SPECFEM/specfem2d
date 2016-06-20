@@ -100,7 +100,9 @@
   if (ier /= 0) stop 'Error allocating array nz_layer'
 
   ! user output
+  write(IMAIN,*)
   write(IMAIN,*) 'Total number of layers in z direction = ', number_of_layers
+  call flush_IMAIN()
 
   ! loop on all the layers
   do ilayer = 1,number_of_layers
@@ -119,9 +121,11 @@
   ! compute total number of spectral elements in vertical direction
   nz = sum(nz_layer)
 
+  ! user output
   write(IMAIN,*)
   write(IMAIN,*) 'Total number of spectral elements along Z = ',nz
   write(IMAIN,*)
+  call flush_IMAIN()
 
   nxread = nx
   nzread = nz

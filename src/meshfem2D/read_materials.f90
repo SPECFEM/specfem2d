@@ -200,7 +200,8 @@
   do i = 1,nbmodels
      if (icodemat(i) == ISOTROPIC_MATERIAL) then
         write(IMAIN,*) 'Material #',i,' isotropic'
-        write(IMAIN,*) 'rho,cp,cs = ',rho_s(i),cp(i),cs(i),QKappa(i),Qmu(i)
+        write(IMAIN,*) 'rho,cp,cs   = ',rho_s(i),cp(i),cs(i)
+        write(IMAIN,*) 'Qkappa, Qmu = ',QKappa(i),Qmu(i)
         if (cs(i) < TINYVAL) then
            write(IMAIN,*) 'Material is fluid'
         else
@@ -208,7 +209,7 @@
         endif
      else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
         write(IMAIN,*) 'Material #',i,' anisotropic'
-        write(IMAIN,*) 'rho,cp,cs = ',rho_s(i),cp(i),cs(i)
+        write(IMAIN,*) 'rho,cp,cs    = ',rho_s(i),cp(i),cs(i)
         if (AXISYM) then
           write(IMAIN,*) 'c11,c13,c15,c33,c35,c55,c12,c23,c25,c22 = ', &
                           aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
@@ -221,10 +222,11 @@
         endif
      else if (icodemat(i) == POROELASTIC_MATERIAL) then
         write(IMAIN,*) 'Material #',i,' isotropic'
-        write(IMAIN,*) 'rho_s, kappa_s= ',rho_s(i),kappa_s(i)
-        write(IMAIN,*) 'rho_f, kappa_f, eta_f= ',rho_f(i),kappa_f(i),eta_f(i)
-        write(IMAIN,*) 'phi, tortuosity, permxx, permxz, permzz= ',phi(i),tortuosity(i),permxx(i),permxz(i),permzz(i)
-        write(IMAIN,*) 'kappa_fr, mu_fr, Qmu= ',kappa_fr(i),mu_fr(i),Qmu(i)
+        write(IMAIN,*) 'rho_s, kappa_s         = ',rho_s(i),kappa_s(i)
+        write(IMAIN,*) 'rho_f, kappa_f, eta_f  = ',rho_f(i),kappa_f(i),eta_f(i)
+        write(IMAIN,*) 'phi, tortuosity        = ',phi(i),tortuosity(i)
+        write(IMAIN,*) 'permxx, permxz, permzz = ',permxx(i),permxz(i),permzz(i)
+        write(IMAIN,*) 'kappa_fr, mu_fr, Qmu   = ',kappa_fr(i),mu_fr(i),Qmu(i)
         write(IMAIN,*) 'Material is porous'
      else if (icodemat(i) <= 0) then
         write(IMAIN,*) 'Material #',i,' will be read in an external tomography file (TOMOGRAPHY_FILE in Par_file)'
