@@ -216,6 +216,15 @@ script:
       cd ../../
     fi
 
+  # testing poroelastic example
+  - |
+    if [ "$TESTCOV" == "1" ]; then
+      cd EXAMPLES/poroelastic_acoustic/
+      ./run_this_example.sh
+      my_test
+      cd ../../
+    fi
+
   # done
   - echo `pwd`
 
