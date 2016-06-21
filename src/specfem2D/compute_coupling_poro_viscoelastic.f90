@@ -374,6 +374,38 @@
 
   subroutine compute_coupling_poro_viscoelastic_for_stabilization()
 
+! Explanation of the code below, from Christina Morency and Yang Luo, January 2012:
+!
+! Coupled elastic-poroelastic simulations imply continuity of traction and
+! displacement at the interface.
+! For the traction we pass on both sides n*(T + Te)/2 , that is, the average
+! between the total stress (from the poroelastic part) and the elastic stress.
+! For the displacement, we enforce its continuity in the assembling stage,
+! realizing that continuity of displacement correspond to the continuity of
+! the acceleration we have:
+!
+! accel_elastic = rmass_inverse_elastic * force_elastic
+! accels_poroelastic = rmass_s_inverse_poroelastic * force_poroelastic
+!
+! Therefore, continuity of acceleration gives
+!
+! accel = (force_elastic + force_poroelastic)/
+!     (1/rmass_inverse_elastic + 1/rmass_inverse_poroelastic)
+!
+! Then
+!
+! accel_elastic = accel
+! accels_poroelastic = accel
+! accelw_poroelastic = 0
+!
+! From there, the velocity and displacement are updated.
+! Note that force_elastic and force_poroelastic are the right hand sides of
+! the equations we solve, that is, the acceleration terms before the
+! division by the inverse of the mass matrices. This is why in the code below
+! we first need to recover the accelerations (which are then
+! the right hand sides forces) and the velocities before the update.
+!
+! This implementation highly helped stability especially with unstructured meshes.
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO
 
@@ -385,63 +417,78 @@
                          velocs_poroelastic,b_velocs_poroelastic, &
                          accelw_poroelastic,b_accelw_poroelastic, &
                          velocw_poroelastic,b_velocw_poroelastic, &
-                         icount,rmass_inverse_elastic, &
+                         rmass_inverse_elastic, &
                          rmass_s_inverse_poroelastic,&
-                         time_stepping_scheme,deltatover2,b_deltatover2
+                         time_stepping_scheme,deltatover2,b_deltatover2,nglob
 
   implicit none
 
   !local variables
   integer :: inum,ispec_elastic,iedge_elastic,ispec_poroelastic,iedge_poroelastic, &
              i,j,ipoin1D,iglob
+  logical,dimension(nglob) :: mask_ibool
 
-  icount(:)=ZERO
+  ! initializes
+  mask_ibool(:) = .false.
 
   ! loop on all the coupling edges
   do inum = 1,num_solid_poro_edges
-     ! get the edge of the elastic element
-     ispec_elastic = solid_poro_elastic_ispec(inum)
-     iedge_elastic = solid_poro_elastic_iedge(inum)
-     ! get the corresponding edge of the poroelastic element
-     ispec_poroelastic = solid_poro_poroelastic_ispec(inum)
-     iedge_poroelastic = solid_poro_poroelastic_iedge(inum)
+    ! get the edge of the elastic element
+    ispec_elastic = solid_poro_elastic_ispec(inum)
+    iedge_elastic = solid_poro_elastic_iedge(inum)
 
-     do ipoin1D = 1,NGLLX
-       ! recovering original velocities and accelerations on boundaries (elastic side)
-       i = ivalue(ipoin1D,iedge_poroelastic)
-       j = jvalue(ipoin1D,iedge_poroelastic)
-       iglob = ibool(i,j,ispec_poroelastic)
-       icount(iglob) = icount(iglob) + 1
+    ! get the corresponding edge of the poroelastic element
+    ispec_poroelastic = solid_poro_poroelastic_ispec(inum)
+    iedge_poroelastic = solid_poro_poroelastic_iedge(inum)
 
-       if (icount(iglob) ==1) then
-         if (time_stepping_scheme == 1) then
-           veloc_elastic(1,iglob) = veloc_elastic(1,iglob) - deltatover2*accel_elastic(1,iglob)
-           veloc_elastic(2,iglob) = veloc_elastic(2,iglob) - deltatover2*accel_elastic(2,iglob)
-           accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(1,iglob)
-           accel_elastic(2,iglob) = accel_elastic(2,iglob) / rmass_inverse_elastic(2,iglob)
-           ! recovering original velocities and accelerations on boundaries (poro side)
-           velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) - deltatover2*accels_poroelastic(1,iglob)
-           velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) - deltatover2*accels_poroelastic(2,iglob)
-           accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
-           accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
-           ! assembling accelerations
-           accel_elastic(1,iglob) = ( accel_elastic(1,iglob) + accels_poroelastic(1,iglob) ) / &
-                                    ( 1.0/rmass_inverse_elastic(1,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
-           accel_elastic(2,iglob) = ( accel_elastic(2,iglob) + accels_poroelastic(2,iglob) ) / &
-                                    ( 1.0/rmass_inverse_elastic(2,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
-           accels_poroelastic(1,iglob) = accel_elastic(1,iglob)
-           accels_poroelastic(2,iglob) = accel_elastic(2,iglob)
-           ! updating velocities
-           velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) + deltatover2*accels_poroelastic(1,iglob)
-           velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) + deltatover2*accels_poroelastic(2,iglob)
-           veloc_elastic(1,iglob) = veloc_elastic(1,iglob) + deltatover2*accel_elastic(1,iglob)
-           veloc_elastic(2,iglob) = veloc_elastic(2,iglob) + deltatover2*accel_elastic(2,iglob)
-           ! zeros w
-           accelw_poroelastic(1,iglob) = ZERO
-           accelw_poroelastic(2,iglob) = ZERO
-           velocw_poroelastic(1,iglob) = ZERO
-           velocw_poroelastic(2,iglob) = ZERO
-         endif
+    do ipoin1D = 1,NGLLX
+      ! recovering original velocities and accelerations on boundaries (elastic side)
+      i = ivalue(ipoin1D,iedge_poroelastic)
+      j = jvalue(ipoin1D,iedge_poroelastic)
+
+      ! gets global boundary node
+      iglob = ibool(i,j,ispec_poroelastic)
+
+      ! stabilization imposes continuity
+      if (.not. mask_ibool(iglob)) then
+        ! only do this once on a global node
+        mask_ibool(iglob) = .true.
+
+        if (time_stepping_scheme == 1) then
+          veloc_elastic(1,iglob) = veloc_elastic(1,iglob) - deltatover2*accel_elastic(1,iglob)
+          veloc_elastic(2,iglob) = veloc_elastic(2,iglob) - deltatover2*accel_elastic(2,iglob)
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(1,iglob)
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) / rmass_inverse_elastic(2,iglob)
+
+          ! recovering original velocities and accelerations on boundaries (poro side)
+          velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) - deltatover2*accels_poroelastic(1,iglob)
+          velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) - deltatover2*accels_poroelastic(2,iglob)
+          accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
+          accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
+
+          ! assembling accelerations
+          accel_elastic(1,iglob) = ( accel_elastic(1,iglob) + accels_poroelastic(1,iglob) ) / &
+                                  ( 1.0/rmass_inverse_elastic(1,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+          accel_elastic(2,iglob) = ( accel_elastic(2,iglob) + accels_poroelastic(2,iglob) ) / &
+                                  ( 1.0/rmass_inverse_elastic(2,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+
+          ! imposes continuity
+          accels_poroelastic(1,iglob) = accel_elastic(1,iglob)
+          accels_poroelastic(2,iglob) = accel_elastic(2,iglob)
+
+          ! updating velocities
+          velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) + deltatover2*accels_poroelastic(1,iglob)
+          velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) + deltatover2*accels_poroelastic(2,iglob)
+
+          veloc_elastic(1,iglob) = veloc_elastic(1,iglob) + deltatover2*accel_elastic(1,iglob)
+          veloc_elastic(2,iglob) = veloc_elastic(2,iglob) + deltatover2*accel_elastic(2,iglob)
+
+          ! zeros w
+          accelw_poroelastic(1,iglob) = 0._CUSTOM_REAL
+          accelw_poroelastic(2,iglob) = 0._CUSTOM_REAL
+          velocw_poroelastic(1,iglob) = 0._CUSTOM_REAL
+          velocw_poroelastic(2,iglob) = 0._CUSTOM_REAL
+        endif
 
 !         if (time_stepping_scheme == 2) then
 !        recovering original velocities and accelerations on boundaries (elastic side)
@@ -662,45 +709,46 @@
  !     endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-       if (SIMULATION_TYPE == 3) then
-         b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) - b_deltatover2*b_accel_elastic(1,iglob)
-         b_veloc_elastic(2,iglob) = b_veloc_elastic(2,iglob) - b_deltatover2*b_accel_elastic(2,iglob)
-         b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) / rmass_inverse_elastic(1,iglob)
-         b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) / rmass_inverse_elastic(2,iglob)
+        if (SIMULATION_TYPE == 3) then
+          b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) - b_deltatover2*b_accel_elastic(1,iglob)
+          b_veloc_elastic(2,iglob) = b_veloc_elastic(2,iglob) - b_deltatover2*b_accel_elastic(2,iglob)
+          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) / rmass_inverse_elastic(1,iglob)
+          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) / rmass_inverse_elastic(2,iglob)
 
-         ! recovering original velocities and accelerations on boundaries (poro side)
-         b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) - b_deltatover2*b_accels_poroelastic(1,iglob)
-         b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) - b_deltatover2*b_accels_poroelastic(2,iglob)
+          ! recovering original velocities and accelerations on boundaries (poro side)
+          b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) - b_deltatover2*b_accels_poroelastic(1,iglob)
+          b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) - b_deltatover2*b_accels_poroelastic(2,iglob)
 
-         b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
-         b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
+          b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
+          b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
 
-         ! assembling accelerations
-         b_accel_elastic(1,iglob) = ( b_accel_elastic(1,iglob) + b_accels_poroelastic(1,iglob) ) / &
+          ! assembling accelerations
+          b_accel_elastic(1,iglob) = ( b_accel_elastic(1,iglob) + b_accels_poroelastic(1,iglob) ) / &
                         ( 1.0/rmass_inverse_elastic(1,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
-         b_accel_elastic(2,iglob) = ( b_accel_elastic(2,iglob) + b_accels_poroelastic(2,iglob) ) / &
+          b_accel_elastic(2,iglob) = ( b_accel_elastic(2,iglob) + b_accels_poroelastic(2,iglob) ) / &
                         ( 1.0/rmass_inverse_elastic(2,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
 
-         b_accels_poroelastic(1,iglob) = b_accel_elastic(1,iglob)
-         b_accels_poroelastic(2,iglob) = b_accel_elastic(2,iglob)
+          ! imposes continuity
+          b_accels_poroelastic(1,iglob) = b_accel_elastic(1,iglob)
+          b_accels_poroelastic(2,iglob) = b_accel_elastic(2,iglob)
 
-         ! updating velocities
-         b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) + b_deltatover2*b_accels_poroelastic(1,iglob)
-         b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) + b_deltatover2*b_accels_poroelastic(2,iglob)
+          ! updating velocities
+          b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) + b_deltatover2*b_accels_poroelastic(1,iglob)
+          b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) + b_deltatover2*b_accels_poroelastic(2,iglob)
 
-         b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) + b_deltatover2*b_accel_elastic(1,iglob)
-         b_veloc_elastic(2,iglob) = b_veloc_elastic(2,iglob) + b_deltatover2*b_accel_elastic(2,iglob)
+          b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) + b_deltatover2*b_accel_elastic(1,iglob)
+          b_veloc_elastic(2,iglob) = b_veloc_elastic(2,iglob) + b_deltatover2*b_accel_elastic(2,iglob)
 
-         ! zeros w
-         b_accelw_poroelastic(1,iglob) = 0._CUSTOM_REAL
-         b_accelw_poroelastic(2,iglob) = 0._CUSTOM_REAL
-         b_velocw_poroelastic(1,iglob) = 0._CUSTOM_REAL
-         b_velocw_poroelastic(2,iglob) = 0._CUSTOM_REAL
-       endif !if (SIMULATION_TYPE == 3)
-     endif !if (icount(iglob) ==1)
-   enddo
+          ! zeros w
+          b_accelw_poroelastic(1,iglob) = 0._CUSTOM_REAL
+          b_accelw_poroelastic(2,iglob) = 0._CUSTOM_REAL
+          b_velocw_poroelastic(1,iglob) = 0._CUSTOM_REAL
+          b_velocw_poroelastic(2,iglob) = 0._CUSTOM_REAL
+        endif !if (SIMULATION_TYPE == 3)
+      endif ! mask
+    enddo
   enddo
 
- end subroutine compute_coupling_poro_viscoelastic_for_stabilization
+  end subroutine compute_coupling_poro_viscoelastic_for_stabilization
 
 

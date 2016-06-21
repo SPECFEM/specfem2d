@@ -252,12 +252,6 @@
 
   allocate(ratio_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
 
-  if (any_poroelastic .and. any_elastic) then
-    allocate(icount(nglob))
-  else
-    allocate(icount(1))
-  endif
-
   if (COMPUTE_INTEGRATED_ENERGY_FIELD) then ! = int_0^t v^2 dt
     allocate(integrated_cinetic_energy_field(nspec),stat=ier)
     if (ier /= 0) stop 'Error allocating integrated_cinetic_energy_field array'

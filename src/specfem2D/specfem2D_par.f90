@@ -178,13 +178,12 @@ module specfem_par
                                         fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge
 
   ! solid/porous interface
+  integer :: num_solid_poro_edges
   logical :: coupled_elastic_poro, any_solid_poro_edges
   integer, dimension(:), allocatable :: solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
                                         solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge
 
-  ! solid/porous interface
-  integer :: num_solid_poro_edges
-  integer, dimension(:), allocatable :: icount
+  ! for absorbing boundary mass matrix correction
   integer, dimension(:), allocatable :: ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,&
             iend_edge3_poro,ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro
 

@@ -31,9 +31,169 @@
 !
 !========================================================================
 
-#ifdef USE_MPI
 
   subroutine get_MPI()
+
+! sets up MPI arrays
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: ispec
+  ! inner/outer elements in the case of an MPI simulation
+  integer :: ispec_inner,ispec_outer
+  integer, dimension(:,:,:), allocatable :: ibool_outer,ibool_inner
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'setting up MPI arrays'
+    call flush_IMAIN()
+  endif
+
+#ifdef USE_MPI
+  if (NPROC > 1) then
+
+    ! preparing for MPI communications
+    allocate(mask_ispec_inner_outer(nspec))
+    mask_ispec_inner_outer(:) = .false.
+
+    call get_MPI_interfaces()
+
+    nspec_outer = count(mask_ispec_inner_outer)
+    nspec_inner = nspec - nspec_outer
+
+    allocate(ispec_outer_to_glob(nspec_outer))
+    allocate(ispec_inner_to_glob(nspec_inner))
+
+    ! building of corresponding arrays between inner/outer elements and their global number
+    num_ispec_outer = 0
+    num_ispec_inner = 0
+    do ispec = 1, nspec
+      if (mask_ispec_inner_outer(ispec)) then
+        num_ispec_outer = num_ispec_outer + 1
+        ispec_outer_to_glob(num_ispec_outer) = ispec
+      else
+        num_ispec_inner = num_ispec_inner + 1
+        ispec_inner_to_glob(num_ispec_inner) = ispec
+      endif
+    enddo
+
+    ! buffers for MPI communications
+    max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
+    max_ibool_interfaces_size_el = NDIM*maxval(nibool_interfaces_elastic(:))
+    max_ibool_interfaces_size_po = NDIM*maxval(nibool_interfaces_poroelastic(:))
+    max_nibool_interfaces_ext_mesh = maxval(nibool_interfaces_ext_mesh(:))
+
+    allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
+    allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
+    allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
+
+    allocate(tab_requests_send_recv_elastic(ninterface_elastic*2))
+    allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
+    allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
+
+    allocate(tab_requests_send_recv_poro(ninterface_poroelastic*4))
+    allocate(buffer_send_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
+    allocate(buffer_recv_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
+    allocate(buffer_send_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
+    allocate(buffer_recv_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
+
+  else
+    ! single process
+    ninterface_acoustic = 0
+    ninterface_elastic = 0
+    ninterface_poroelastic = 0
+
+    num_ispec_outer = 0
+    num_ispec_inner = 0
+    allocate(mask_ispec_inner_outer(1))
+
+    nspec_outer = 0
+    nspec_inner = nspec
+
+    allocate(ispec_inner_to_glob(nspec_inner))
+    do ispec = 1, nspec
+      ispec_inner_to_glob(ispec) = ispec
+    enddo
+
+  endif ! end of test on whether there is more than one process (NPROC > 1)
+#else
+  ! serial run
+  num_ispec_outer = 0
+  num_ispec_inner = 0
+  allocate(mask_ispec_inner_outer(1))
+
+  nspec_outer = 0
+  nspec_inner = nspec
+
+  allocate(ispec_outer_to_glob(1))
+  allocate(ispec_inner_to_glob(nspec_inner))
+  do ispec = 1, nspec
+     ispec_inner_to_glob(ispec) = ispec
+  enddo
+#endif
+
+  ! loop over spectral elements
+  do ispec_outer = 1,nspec_outer
+    ! get global numbering for inner or outer elements
+    ispec = ispec_outer_to_glob(ispec_outer)
+  enddo
+
+  ! loop over spectral elements
+  do ispec_inner = 1,nspec_inner
+    ! get global numbering for inner or outer elements
+    ispec = ispec_inner_to_glob(ispec_inner)
+  enddo
+
+  allocate(ibool_outer(NGLLX,NGLLZ,nspec_outer))
+  allocate(ibool_inner(NGLLX,NGLLZ,nspec_inner))
+
+  ! loop over spectral elements
+  do ispec_outer = 1,nspec_outer
+    ! get global numbering for inner or outer elements
+    ispec = ispec_outer_to_glob(ispec_outer)
+    ibool_outer(:,:,ispec_outer) = ibool(:,:,ispec)
+  enddo
+
+  ! loop over spectral elements
+  do ispec_inner = 1,nspec_inner
+    ! get global numbering for inner or outer elements
+    ispec = ispec_inner_to_glob(ispec_inner)
+    ibool_inner(:,:,ispec_inner) = ibool(:,:,ispec)
+  enddo
+
+  ! reduces cache misses for outer elements
+  call get_global_indirect_addressing(nspec_outer,nglob,ibool_outer,copy_ibool_ori,integer_mask_ibool)
+
+  ! the total number of points without multiples in this region is now known
+  nglob_outer = maxval(ibool_outer)
+
+  ! reduces cache misses for inner elements
+  call get_global_indirect_addressing(nspec_inner,nglob,ibool_inner,copy_ibool_ori,integer_mask_ibool)
+
+  ! the total number of points without multiples in this region is now known
+  nglob_inner = maxval(ibool_inner)
+
+  ! frees temporary arrays
+  deallocate(ibool_inner,ibool_outer)
+
+  end subroutine get_MPI
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+! only with MPI compilation...
+#ifdef USE_MPI
+
+  subroutine get_MPI_interfaces()
 
 ! sets up the MPI interface for communication between partitions
 
@@ -259,6 +419,6 @@
     call flush_IMAIN()
   endif
 
-  end subroutine get_MPI
+  end subroutine get_MPI_interfaces
 
 #endif

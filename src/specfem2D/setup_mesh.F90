@@ -95,6 +95,15 @@
   ! sets up domain coupling, i.e. edge detection for domain coupling
   call get_coupling_edges()
 
+  ! sets up MPI arrays and interfaces
+  call get_MPI()
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'mesh setup done'
+    call flush_IMAIN()
+  endif
+
   ! synchronizes all processes
   call synchronize_all()
 
@@ -641,9 +650,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'basic mesh setup is successful'
-    write(IMAIN,*)
+    write(IMAIN,*) 'basic mesh check is successful'
     call flush_IMAIN()
   endif
 
