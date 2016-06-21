@@ -172,7 +172,9 @@ script:
       elif [ "$TESTMAKE" == "5" ]; then
         dir=EXAMPLES/poroelastic_acoustic/
       fi
+      echo "##########################################################"
       echo "test directory: $dir"
+      echo "##########################################################"
       cd $dir
       if [ "$TESTMAKE" == "4" ]; then
         ./run_this_example_kernel.sh

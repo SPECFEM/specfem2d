@@ -1,26 +1,26 @@
 #
 # number of interfaces
 #
- 3
+3
 #
 # for each interface below, we give the number of points and then x,y for each point
 #
 #
 # interface number 1 (bottom of the mesh)
 #
- 2
+2
  0 0
  4800 0
 #
 # interface number 2 (topography, top of the mesh)
 #
- 2
+2
     0 2400
  4800 2400
 #
 # interface number 3 (topography, top of the mesh)
 #
- 2
+2
     0 4800
  4800 4800
 #
@@ -29,6 +29,6 @@
 #
 # layer number 1 (bottom layer)
 #
- 55 
+110 
 #
- 55
+110

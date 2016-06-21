@@ -27,7 +27,7 @@ ngnod                           = 9
 # total number of time steps
 NSTEP                           = 2500
 # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
-DT                              = 4.d-4
+DT                              = 4.2d-4
 
 # time stepping
 # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
@@ -107,7 +107,7 @@ ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoust
 #-----------------------------------------------------------------------------
 
 # receiver set parameters for recording stations (i.e. recording points)
-seismotype                      = 1              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+seismotype                      = 2              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
 
 # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
 subsamp_seismos                 = 1
@@ -129,7 +129,7 @@ USER_T0                         = 0.0d0
 
 # seismogram formats
 save_ASCII_seismograms          = .true.         # save seismograms in ASCII format or not
-save_binary_seismograms_single  = .true.         # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
+save_binary_seismograms_single  = .false.        # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
 save_binary_seismograms_double  = .false.        # save seismograms in double precision binary format or not (can be used jointly with both flags above to save all)
 SU_FORMAT                       = .false.        # output single precision binary seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 
@@ -145,18 +145,18 @@ rec_normal_to_surface           = .false.        # base anglerec normal to surfa
 
 # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
 nrec                            = 1              # number of receivers
-xdeb                            = 1700.          # first receiver x in meters
-zdeb                            = 3000.          # first receiver z in meters
-xfin                            = 1700.          # last receiver x in meters (ignored if only one receiver)
-zfin                            = 3000.          # last receiver z in meters (ignored if only one receiver)
+xdeb                            = 2000.0          # first receiver x in meters
+zdeb                            = 2934.0          # first receiver z in meters
+xfin                            = 2000.0          # last receiver x in meters (ignored if only one receiver)
+zfin                            = 2934.0          # last receiver z in meters (ignored if only one receiver)
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
 # second receiver set (in the poroelastic layer)
 nrec                            = 1              # number of receivers
-xdeb                            = 2000.          # first receiver x in meters
-zdeb                            = 1866.67        # first receiver z in meters
-xfin                            = 2000.           # last receiver x in meters (ignored if onlyone receiver)
-zfin                            = 1866.67        # last receiver z in meters (ignored if onlyone receiver)
+xdeb                            = 2000.0          # first receiver x in meters
+zdeb                            = 1867.0        # first receiver z in meters
+xfin                            = 2000.0           # last receiver x in meters (ignored if onlyone receiver)
+zfin                            = 1867.0        # last receiver z in meters (ignored if onlyone receiver)
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
 #-----------------------------------------------------------------------------
@@ -183,7 +183,7 @@ ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
 
 # Stacey ABC
-STACEY_ABSORBING_CONDITIONS     = .false.
+STACEY_ABSORBING_CONDITIONS     = .true.
 
 # periodic boundaries
 ADD_PERIODIC_CONDITIONS         = .false.
@@ -202,11 +202,15 @@ nbmodels                        = 2
 #   anistoropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
 #   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
 #   tomo:        model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
-1 3 2650.d0 880.d0 0.3d0 1.2 1d-9 0.d0 1d-9 1.22d10 1.985d9 9.6d9 10d-4 0.001 9999999999
+## table 2 (with fluid viscosity)
+#1 3 2650.d0 880.d0 0.3d0 1.2 1d-9 0.d0 1d-9 12.2d9 1.985d9 9.6d9 0.001 5.1d9 9999999999
+## table 3
+1 3 2500.d0 1020.d0 0.4d0 2.0 1d-9 0.d0 1d-9 16.0554d9 2.295d9 10.0d9 0.d0 9.63342d9 50.0
+## acoustic
 2 1 1020.d0 1500.d0 0.d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 
 # external tomography file
-TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
+TOMOGRAPHY_FILE                 = dummy
 
 # use an external mesh created by an external meshing tool or use the internal mesher
 read_external_mesh              = .false.
@@ -220,15 +224,15 @@ read_external_mesh              = .false.
 
 # data concerning mesh, when generated using third-party app (more info in README)
 # (see also absorbing_conditions above)
-mesh_file                       = ./DATA/Mesh_canyon/canyon_mesh_file   # file containing the mesh
-nodes_coords_file               = ./DATA/Mesh_canyon/canyon_nodes_coords_file   # file containing the nodes coordinates
-materials_file                  = ./DATA/Mesh_canyon/canyon_materials_file   # file containing the material number for each element
-free_surface_file               = ./DATA/Mesh_canyon/canyon_free_surface_file   # file containing the free surface
-axial_elements_file             = ./DATA/axial_elements_file   # file containing the axial elements if AXISYM is true
-absorbing_surface_file          = ./DATA/Mesh_canyon/canyon_absorbing_surface_file   # file containing the absorbing surface
-acoustic_forcing_surface_file   = ./DATA/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
-CPML_element_file               = Elements_CPML_list   # file containing the CPML element numbers
-tangential_detection_curve_file = ./DATA/courbe_eros_nodes   # file containing the curve delimiting the velocity model
+mesh_file                       = dummy   # file containing the mesh
+nodes_coords_file               = dummy   # file containing the nodes coordinates
+materials_file                  = dummy   # file containing the material number for each element
+free_surface_file               = dummy   # file containing the free surface
+axial_elements_file             = dummy   # file containing the axial elements if AXISYM is true
+absorbing_surface_file          = dummy   # file containing the absorbing surface
+acoustic_forcing_surface_file   = dummy   # file containing the acoustic forcing surface
+CPML_element_file               = dummy   # file containing the CPML element numbers
+tangential_detection_curve_file = dummy   # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------------------------
 #
@@ -242,7 +246,7 @@ interfacesfile                  = ./interfaces.dat
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
 xmax                            = 4800.d0        # abscissa of right side of the model
-nx                              = 130            # number of elements along X
+nx                              = 220            # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
 absorbbottom                    = .true.
@@ -252,8 +256,8 @@ absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 2              # then set below the different regions and model number for each region
-1 130 1 55 1
-1 130 56 110 2
+1 220 1 110 1
+1 220 111 220 2
 
 #-----------------------------------------------------------------------------
 #
@@ -262,7 +266,7 @@ nbregions                       = 2              # then set below the different 
 #-----------------------------------------------------------------------------
 
 # every how many time steps we display information about the simulation (costly, do not use a very small value)
-NSTEP_BETWEEN_OUTPUT_INFO       = 300
+NSTEP_BETWEEN_OUTPUT_INFO       = 200
 
 # meshing output
 output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
@@ -278,7 +282,7 @@ output_energy                   = .false.
 #-----------------------------------------------------------------------------
 
 # every how many time steps we draw JPEG or PostScript pictures of the simulation (costly, do not use a very small value)
-NSTEP_BETWEEN_OUTPUT_IMAGES     = 100
+NSTEP_BETWEEN_OUTPUT_IMAGES     = 200
 
 # every how many time steps we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
 NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS = 100
