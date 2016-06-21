@@ -96,7 +96,7 @@
   edges_coupled(:,:) = 0
 
   ! repartitions elements
-  if (nproc > 1 .and. nedges_coupled > 0) then
+  if (nedges_coupled > 0) then
     call repartition_coupled_edges(nproc,nedges_coupled,edges_coupled, &
                                    num_material,nbmodels, &
                                    is_acoustic,is_elastic,xadj_l,adjncy_l)
@@ -171,7 +171,7 @@
   edges_acporo_coupled(:,:) = 0
 
   ! repartitions elements
-  if (nproc > 1 .and. nedges_acporo_coupled > 0) then
+  if (nedges_acporo_coupled > 0) then
     call repartition_coupled_edges(nproc,nedges_acporo_coupled,edges_acporo_coupled, &
                                    num_material,nbmodels, &
                                    is_acoustic,is_poroelastic,xadj_l,adjncy_l)
@@ -245,7 +245,7 @@
   edges_elporo_coupled(:,:) = 0
 
   ! repartitions elements
-  if (nproc > 1 .and. nedges_elporo_coupled > 0) then
+  if (nedges_elporo_coupled > 0) then
     call repartition_coupled_edges(nproc,nedges_elporo_coupled,edges_elporo_coupled, &
                                    num_material,nbmodels, &
                                    is_poroelastic,is_elastic,xadj_l,adjncy_l)
@@ -302,43 +302,46 @@
   enddo
   if (iedge /= nedges_coupled) stop 'Error in setting domain edges, number of edges invalid'
 
-  do i = 1, nedges_coupled * nproc
-    is_repartitioned = .false.
-    do iedge = 1, nedges_coupled
-      ! puts coupled element in same partition
-      if (part(edges_coupled(1,iedge)) /= part(edges_coupled(2,iedge))) then
-        ! moves element into partition with smaller process id
-        if (part(edges_coupled(1,iedge)) < part(edges_coupled(2,iedge))) then
-          part(edges_coupled(2,iedge)) = part(edges_coupled(1,iedge))
-        else
-          part(edges_coupled(1,iedge)) = part(edges_coupled(2,iedge))
+  ! only in case we have different partitions
+  if (nproc > 1) then
+    do i = 1, nedges_coupled * nproc
+      is_repartitioned = .false.
+      do iedge = 1, nedges_coupled
+        ! puts coupled element in same partition
+        if (part(edges_coupled(1,iedge)) /= part(edges_coupled(2,iedge))) then
+          ! moves element into partition with smaller process id
+          if (part(edges_coupled(1,iedge)) < part(edges_coupled(2,iedge))) then
+            part(edges_coupled(2,iedge)) = part(edges_coupled(1,iedge))
+          else
+            part(edges_coupled(1,iedge)) = part(edges_coupled(2,iedge))
+          endif
+          is_repartitioned = .true.
         endif
-        is_repartitioned = .true.
+      enddo
+      ! check if there is still work to do
+      if (.not. is_repartitioned) then
+        exit
       endif
     enddo
-    ! check if there is still work to do
-    if (.not. is_repartitioned) then
-      exit
-    endif
-  enddo
 
-  ! checks if initial coupled edges are repartitioned
-  if (is_repartitioned) then
-    ! checks count in case we need more
-    i = 0
-    do iedge = 1, nedges_coupled
-      if (part(edges_coupled(1,iedge)) /= part(edges_coupled(2,iedge))) i = i + 1
-    enddo
-    write(IMAIN,*) '  repartitioning edges left = ',i
-    if (i /= 0) then
-      write(IMAIN,*) 'Error: repartitioning edges has still edges left = ',i
-      stop 'Error: repartitioning coupled elements needs more iterations'
-    else
-      ! for user output
-      i = nedges_coupled * nproc
+    ! checks if initial coupled edges are repartitioned
+    if (is_repartitioned) then
+      ! checks count in case we need more
+      i = 0
+      do iedge = 1, nedges_coupled
+        if (part(edges_coupled(1,iedge)) /= part(edges_coupled(2,iedge))) i = i + 1
+      enddo
+      write(IMAIN,*) '  repartitioning edges left = ',i
+      if (i /= 0) then
+        write(IMAIN,*) 'Error: repartitioning edges has still edges left = ',i
+        stop 'Error: repartitioning coupled elements needs more iterations'
+      else
+        ! for user output
+        i = nedges_coupled * nproc
+      endif
     endif
+    write(IMAIN,*) '  after iteration ',i,'repartitioning of all coupled elements done'
   endif
-  write(IMAIN,*) '  after iteration ',i,'repartitioning of all coupled elements done'
 
   end subroutine repartition_coupled_edges
 
