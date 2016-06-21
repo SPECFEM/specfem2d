@@ -49,23 +49,36 @@
   ! inner/outer elements in the case of an MPI simulation
   integer :: ispec_inner,ispec_outer
   integer, dimension(:,:,:), allocatable :: ibool_outer,ibool_inner
+  real :: percentage_edge
 
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'setting up MPI arrays'
+    write(IMAIN,*) 'Setting up MPI communication arrays'
+    write(IMAIN,*)
+    write(IMAIN,*) '  number of MPI interfaces for master process = ',ninterface
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
 #ifdef USE_MPI
   if (NPROC > 1) then
-
-    ! preparing for MPI communications
     allocate(mask_ispec_inner_outer(nspec))
     mask_ispec_inner_outer(:) = .false.
 
+    ! preparing for MPI communications
     call get_MPI_interfaces()
 
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  number of MPI interfaces in acoustic domain    = ',ninterface_acoustic
+      write(IMAIN,*) '  number of MPI interfaces in elastic domain     = ',ninterface_elastic
+      write(IMAIN,*) '  number of MPI interfaces in poroelastic domain = ',ninterface_poroelastic
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! counts number of outer elements (in this slice)
     nspec_outer = count(mask_ispec_inner_outer)
     nspec_inner = nspec - nspec_outer
 
@@ -169,6 +182,19 @@
     ibool_inner(:,:,ispec_inner) = ibool(:,:,ispec)
   enddo
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of outer elements  = ',nspec_outer
+    write(IMAIN,*) '  number of inner elements  = ',nspec_inner
+    write(IMAIN,*)
+
+    percentage_edge = 100.*nspec_inner/real(nspec)
+    write(IMAIN,*) '  percentage of outer elements ',100. - percentage_edge,'%'
+    write(IMAIN,*) '  percentage of inner elements ',percentage_edge,'%'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   ! reduces cache misses for outer elements
   call get_global_indirect_addressing(nspec_outer,nglob,ibool_outer,copy_ibool_ori,integer_mask_ibool)
 
@@ -201,14 +227,15 @@
 
   use constants,only: CUSTOM_REAL,IMAIN,NGLLX,NGLLZ
 
-  use specfem_par, only: nspec,ibool,nglob, &
-                    ninterface,ibool_interfaces_acoustic,ibool_interfaces_elastic, &
-                    ibool_interfaces_poroelastic, &
-                    nibool_interfaces_acoustic,nibool_interfaces_elastic, &
-                    nibool_interfaces_poroelastic, &
-                    ninterface_acoustic,ninterface_elastic,ninterface_poroelastic, &
-                    myrank,coord,buffer_send_faces_vector_ac,buffer_recv_faces_vector_ac,&
-                    tab_requests_send_recv_acoustic
+  use specfem_par, only: nspec,ibool,nglob,ninterface,myrank,coord,ACOUSTIC_SIMULATION
+
+  use specfem_par, only: ibool_interfaces_acoustic,ibool_interfaces_elastic, &
+    ibool_interfaces_poroelastic, &
+    nibool_interfaces_acoustic,nibool_interfaces_elastic, &
+    nibool_interfaces_poroelastic, &
+    ninterface_acoustic,ninterface_elastic,ninterface_poroelastic
+
+  use specfem_par, only: buffer_send_faces_vector_ac,buffer_recv_faces_vector_ac,tab_requests_send_recv_acoustic
 
   implicit none
 
@@ -239,6 +266,7 @@
   num_points2 = 0
   allocate(nibool_interfaces_true(ninterface))
 
+  ! acoustic/elastic/poroelastic domains
   do idomain = 1,3
 
     ! checks number of interface in this domain
@@ -341,82 +369,83 @@
   ! outputs total number of MPI interface points
   call sum_all_i(num_points2,num_points1)
   if (myrank == 0) then
-    write(IMAIN,*)
     write(IMAIN,*) '  total MPI interface points: ',num_points1
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
   ! checks interfaces in acoustic domains
-  inum = 0
-  countval = 0
-
-  if (ninterface_acoustic > 0) then
-
-    ! checks with assembly of test fields
-    allocate(test_flag_cr(nglob))
-    test_flag_cr(:) = 0._CUSTOM_REAL
+  if (ACOUSTIC_SIMULATION) then
+    inum = 0
     countval = 0
-    do ispec = 1, nspec
-      ! sets flags on global points
-      do j = 1, NGLLZ
-        do i = 1, NGLLX
-          ! global index
-          iglob = ibool(i,j,ispec)
 
-          ! counts number of unique global points to set
-          if (nint(test_flag_cr(iglob)) == 0) countval = countval + 1
+    if (ninterface_acoustic > 0) then
+      ! checks with assembly of test fields
+      allocate(test_flag_cr(nglob))
+      test_flag_cr(:) = 0._CUSTOM_REAL
+      countval = 0
+      do ispec = 1, nspec
+        ! sets flags on global points
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            ! global index
+            iglob = ibool(i,j,ispec)
 
-          ! sets identifier
-          test_flag_cr(iglob) = myrank + 1.0
+            ! counts number of unique global points to set
+            if (nint(test_flag_cr(iglob)) == 0) countval = countval + 1
+
+            ! sets identifier
+            test_flag_cr(iglob) = myrank + 1.0
+          enddo
         enddo
       enddo
-    enddo
 
-    max_nibool_interfaces = maxval(nibool_interfaces_acoustic(:))
+      max_nibool_interfaces = maxval(nibool_interfaces_acoustic(:))
 
-    allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
-    allocate(buffer_send_faces_vector_ac(max_nibool_interfaces,ninterface_acoustic))
-    allocate(buffer_recv_faces_vector_ac(max_nibool_interfaces,ninterface_acoustic))
+      allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
+      allocate(buffer_send_faces_vector_ac(max_nibool_interfaces,ninterface_acoustic))
+      allocate(buffer_recv_faces_vector_ac(max_nibool_interfaces,ninterface_acoustic))
+      inum = 0
+      do iinterface = 1, ninterface
+        inum = inum + nibool_interfaces_acoustic(iinterface)
+      enddo
+    endif
+
+    ! note: this mpi reduction awaits information from all processes.
+    !          thus, avoid an mpi deadlock in case some of the paritions have no acoustic interface
+    call sum_all_i(inum,num_points1)
+    if (myrank == 0) then
+      write(IMAIN,*) '  acoustic interface points: ',num_points1
+      call flush_IMAIN()
+    endif
+
+    ! checks if assembly works
     inum = 0
-    do iinterface = 1, ninterface
-      inum = inum + nibool_interfaces_acoustic(iinterface)
-    enddo
-  endif
+    if (ninterface_acoustic > 0) then
+      ! adds contributions from different partitions to flag arrays
+      ! custom_real arrays
+      call assemble_MPI_vector_ac(test_flag_cr)
 
-  ! note: this mpi reduction awaits information from all processes.
-  !          thus, avoid an mpi deadlock in case some of the paritions have no acoustic interface
-  call sum_all_i(inum,num_points1)
-  if (myrank == 0) then
-    write(IMAIN,*) '       acoustic interface points: ',num_points1
-    call flush_IMAIN()
-  endif
+      ! checks number of interface points
+      inum = 0
+      do iglob= 1,nglob
+        ! only counts flags with MPI contributions
+        if (nint(test_flag_cr(iglob)) > myrank + 1 ) inum = inum + 1
+      enddo
 
-  ! checks if assembly works
-  inum = 0
-  if (ninterface_acoustic > 0) then
-    ! adds contributions from different partitions to flag arrays
-    ! custom_real arrays
-    call assemble_MPI_vector_ac(test_flag_cr)
+      deallocate(tab_requests_send_recv_acoustic)
+      deallocate(buffer_send_faces_vector_ac)
+      deallocate(buffer_recv_faces_vector_ac)
+      deallocate(test_flag_cr)
+    endif
 
-    ! checks number of interface points
-    inum = 0
-    do iglob= 1,nglob
-      ! only counts flags with MPI contributions
-      if (nint(test_flag_cr(iglob)) > myrank+1 ) inum = inum + 1
-    enddo
-
-    deallocate(tab_requests_send_recv_acoustic)
-    deallocate(buffer_send_faces_vector_ac)
-    deallocate(buffer_recv_faces_vector_ac)
-    deallocate(test_flag_cr)
-  endif
-
-  ! note: this mpi reduction awaits information from all processes.
-  call sum_all_i(inum,num_points2)
-  if (myrank == 0) then
-    write(IMAIN,*) '       assembly acoustic MPI interface points:',num_points2
-    write(IMAIN,*)
-    call flush_IMAIN()
+    ! note: this mpi reduction awaits information from all processes.
+    call sum_all_i(inum,num_points2)
+    if (myrank == 0) then
+      write(IMAIN,*) '  assembly acoustic MPI interface points:',num_points2
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
   endif
 
   end subroutine get_MPI_interfaces

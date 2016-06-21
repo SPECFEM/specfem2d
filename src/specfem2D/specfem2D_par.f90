@@ -401,8 +401,8 @@ module specfem_par
   ! for acoustic and gravitoacoustic detection
   integer :: nglob_acoustic
 
-  ! number of purely acoustic elements
-  integer :: count_nspec_acoustic
+  ! number of purely acoustic elements in this slice
+  integer :: nspec_acoustic
 
   ! local flag to determine if any acoustic elements in this slice
   logical :: any_acoustic
@@ -412,7 +412,13 @@ module specfem_par
 
   logical, dimension(:), allocatable :: ispec_is_acoustic
 
+  !---------------------------------------------------------------------
+  ! for gravito-acoustic simulations
+  !---------------------------------------------------------------------
   integer :: nglob_gravitoacoustic
+
+  ! number of purely gravitoacoustic elements in this slice
+  integer :: nspec_gravitoacoustic
 
   ! local flag to determine if any gravitoacoustic elements in this slice
   logical :: any_gravitoacoustic
@@ -456,6 +462,9 @@ module specfem_par
   !---------------------------------------------------------------------
   ! number of node associated with elastic medium
   integer :: nglob_elastic
+
+  ! number of purely elastic elements in this slice
+  integer :: nspec_elastic
 
   ! local flag if any elastic element is in this slice
   logical :: any_elastic
@@ -517,6 +526,9 @@ module specfem_par
   !for by poroelastic simulation
   !---------------------------------------------------------------------
   integer :: nglob_poroelastic
+
+  ! number of purely gravitoacoustic elements in this slice
+  integer :: nspec_poroelastic
 
   ! local flag to determine if this slice has poroelastic elements
   logical :: any_poroelastic
@@ -667,30 +679,34 @@ module specfem_par
   ! parameter read from parameter file
   integer :: nproc_read_from_database
 
+  ! MPI interfaces
   integer :: ninterface
   integer :: max_interface_size
   integer, dimension(:), allocatable  :: my_neighbours
   integer, dimension(:), allocatable  :: my_nelmnts_neighbours
   integer, dimension(:,:,:), allocatable  :: my_interfaces
-  integer, dimension(:,:), allocatable  :: ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
-  integer, dimension(:), allocatable  :: nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_poroelastic
+
   integer, dimension(:), allocatable :: nibool_interfaces_ext_mesh
   integer, dimension(:,:), allocatable :: ibool_interfaces_ext_mesh_init, ibool_interfaces_ext_mesh
   integer :: max_nibool_interfaces_ext_mesh
 
+  integer, dimension(:), allocatable  :: nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_poroelastic
+  integer, dimension(:,:), allocatable  :: ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
   integer :: ninterface_acoustic, ninterface_elastic,ninterface_poroelastic
   integer, dimension(:), allocatable :: inum_interfaces_acoustic, inum_interfaces_elastic, inum_interfaces_poroelastic
+  integer :: max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, max_ibool_interfaces_size_po
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_send_faces_vector_ac
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_ac
   integer, dimension(:), allocatable  :: tab_requests_send_recv_acoustic
+
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_send_faces_vector_el
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_el
   integer, dimension(:), allocatable  :: tab_requests_send_recv_elastic
+
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_send_faces_vector_pos,buffer_send_faces_vector_pow
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow
   integer, dimension(:), allocatable  :: tab_requests_send_recv_poro
-  integer :: max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, max_ibool_interfaces_size_po
 
   ! for overlapping MPI communications with computation
   integer  :: nspec_outer, nspec_inner, num_ispec_outer, num_ispec_inner

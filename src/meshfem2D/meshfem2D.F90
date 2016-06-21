@@ -419,15 +419,12 @@
     nx = nx_param
 
     ! reads in mesh elements
+    write(IMAIN,*)
     if (read_external_mesh) then
-      write(IMAIN,*)
-      write(IMAIN,*) 'mesh from external meshing'
-      write(IMAIN,*)
+      write(IMAIN,*) 'Mesh from external meshing:'
       call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, ngnod)
     else
-      write(IMAIN,*)
-      write(IMAIN,*) 'mesh from internal meshing'
-      write(IMAIN,*)
+      write(IMAIN,*) 'Mesh from internal meshing:'
       call read_interfaces_file()
     endif
 
@@ -566,8 +563,9 @@
 
     ! compute min and max of X and Z in the grid
     write(IMAIN,*)
-    write(IMAIN,*) 'Min and max value of X in the grid = ',minval(nodes_coords(1,:)),maxval(nodes_coords(1,:))
-    write(IMAIN,*) 'Min and max value of Z in the grid = ',minval(nodes_coords(2,:)),maxval(nodes_coords(2,:))
+    write(IMAIN,*) 'Mesh dimensions: '
+    write(IMAIN,*) '  Min and max value of X in the grid = ',minval(nodes_coords(1,:)),maxval(nodes_coords(1,:))
+    write(IMAIN,*) '  Min and max value of Z in the grid = ',minval(nodes_coords(2,:)),maxval(nodes_coords(2,:))
     write(IMAIN,*)
 
     ! create a Gnuplot file that displays the grid

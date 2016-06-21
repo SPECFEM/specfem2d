@@ -59,8 +59,10 @@
 
   ! initializes material properties
   icodemat(:) = 0
+
   cp(:) = 0.d0
   cs(:) = 0.d0
+
   aniso3(:) = 0.d0
   aniso4(:) = 0.d0
   aniso5(:) = 0.d0
@@ -70,8 +72,10 @@
   aniso9(:) = 0.d0
   aniso10(:) = 0.d0
   aniso11(:) = 0.d0
+
   QKappa(:) = 9999.d0
   Qmu(:) = 9999.d0
+
   rho_s(:) = 0.d0
   rho_f(:) = 0.d0
   phi(:) = 0.d0
@@ -84,6 +88,7 @@
   kappa_fr(:) = 0.d0
   eta_f(:) = 0.d0
   mu_fr(:) = 0.d0
+
   number_of_materials_defined_by_tomo_file = 0
 
   ! reads in material parameters
@@ -100,7 +105,6 @@
 
     ! sets material properties
     if (icodemat(i) == ISOTROPIC_MATERIAL) then
-
       ! isotropic materials
       rho_s(i) = val0read
       cp(i) = val1read
@@ -123,7 +127,6 @@
       endif
 
     else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
-
       ! anisotropic materials
       rho_s(i) = val0read
       aniso3(i) = val1read
@@ -138,7 +141,6 @@
       aniso12(i) = val10read ! This value will be used only in AXISYM
 
     else if (icodemat(i) == POROELASTIC_MATERIAL) then
-
       ! poroelastic materials
       rho_s(i) = val0read
       rho_f(i) = val1read
@@ -164,7 +166,7 @@
         stop 'non-positive value of Qmu'
 
     else if (icodemat(i) <= 0) then
-
+      ! tomographic material
       number_of_materials_defined_by_tomo_file = number_of_materials_defined_by_tomo_file + 1
 
       if (number_of_materials_defined_by_tomo_file > 1) &
@@ -185,7 +187,7 @@
       endif
 
     else
-
+      ! default
       stop 'Unknown material code'
 
     endif
@@ -193,11 +195,12 @@
   enddo ! nbmodels
 
   ! user output
-  write(IMAIN,*)
-  write(IMAIN,*) 'Nb of solid, fluid or porous materials = ',nbmodels
+  write(IMAIN,*) 'Materials:'
+  write(IMAIN,*) '  Nb of solid, fluid or porous materials = ',nbmodels
   write(IMAIN,*)
 
   do i = 1,nbmodels
+     if (i == 1) write(IMAIN,*) '--------'
      if (icodemat(i) == ISOTROPIC_MATERIAL) then
         write(IMAIN,*) 'Material #',i,' isotropic'
         write(IMAIN,*) 'rho,cp,cs   = ',rho_s(i),cp(i),cs(i)
@@ -233,7 +236,7 @@
      else
         stop 'Unknown material code'
      endif
-     write(IMAIN,*)
+     write(IMAIN,*) '--------'
      call flush_IMAIN()
   enddo
 

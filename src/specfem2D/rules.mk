@@ -54,6 +54,7 @@ specfem2D_OBJECTS = \
 	$O/specfem2D_par.spec_module.o \
 	$O/acoustic_forcing_boundary.spec.o \
 	$O/add_acoustic_forcing.spec.o \
+	$O/add_manual_crack.spec.o \
 	$O/assemble_MPI.spec.o \
 	$O/attenuation_model.spec.o \
 	$O/axisymmetric_routines.spec.o \
@@ -114,6 +115,7 @@ specfem2D_OBJECTS = \
 	$O/get_MPI.spec.o \
 	$O/get_global.spec.o \
 	$O/get_poroelastic_velocities.spec.o \
+	$O/get_simulation_domains.spec.o \
 	$O/gll_library.spec.o \
 	$O/gmat01.spec.o \
 	$O/initialize_simulation.spec.o \

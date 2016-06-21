@@ -40,6 +40,13 @@
 
   implicit none
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Setting up mesh'
+    call flush_IMAIN()
+  endif
+
   ! generate the global numbering
   call setup_mesh_numbering()
 
@@ -58,39 +65,11 @@
   ! reads in external models and re-assigns material properties
   call setup_mesh_external_models()
 
-  ! synchronizes all processes
-  call synchronize_all()
-
   ! checks domain flags
   call setup_mesh_basic_check()
 
-! absorbing boundaries work, but not perfect for anisotropic
-!  if (all_anisotropic .and. anyabs) &
-!    call exit_MPI(myrank,'Cannot put absorbing boundaries if anisotropic materials along edges')
-
-  if (ATTENUATION_VISCOELASTIC_SOLID .and. all_anisotropic) then
-    call exit_MPI(myrank,'Cannot turn attenuation on in anisotropic materials')
-  endif
-
-  ! synchronizes all processes
-  call synchronize_all()
-
-  ! global domain flags
-  ! (sets global flag for all slices)
-  call any_all_l(any_elastic, ELASTIC_SIMULATION)
-  call any_all_l(any_poroelastic, POROELASTIC_SIMULATION)
-  call any_all_l(any_acoustic, ACOUSTIC_SIMULATION)
-  call any_all_l(any_gravitoacoustic, GRAVITOACOUSTIC_SIMULATION)
-
-  ! check for acoustic
-  if (ATTENUATION_VISCOELASTIC_SOLID .and. .not. ELASTIC_SIMULATION) &
-    call exit_MPI(myrank,'currently cannot have attenuation if acoustic/poroelastic simulation only')
-
-  ! safety check
-  if (POROELASTIC_SIMULATION) then
-    if (ATTENUATION_PORO_FLUID_PART .and. time_stepping_scheme /= 1) &
-      stop 'RK and LDDRK time scheme not supported for poroelastic simulations with attenuation'
-  endif
+  ! sets domain flags
+  call setup_mesh_domains()
 
   ! sets up domain coupling, i.e. edge detection for domain coupling
   call get_coupling_edges()
@@ -100,7 +79,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) 'mesh setup done'
+    write(IMAIN,*) 'All mesh setup done successfully'
     call flush_IMAIN()
   endif
 
@@ -122,7 +101,7 @@
   ! local parameters
   integer :: ier
   ! to count the number of degrees of freedom
-  integer :: count_nspec_acoustic_total,nspec_total,nglob_total
+  integer :: nspec_acoustic_total,nspec_total,nglob_total
   integer :: nb_acoustic_DOFs,nb_elastic_DOFs
   double precision :: ratio_1DOF,ratio_2DOFs
 
@@ -134,17 +113,16 @@
   endif
 
   ! gets total numbers for all slices
-  call sum_all_i(count_nspec_acoustic,count_nspec_acoustic_total)
+  call sum_all_i(nspec_acoustic,nspec_acoustic_total)
   call sum_all_i(nspec,nspec_total)
   call sum_all_i(nglob,nglob_total)
 
   if (myrank == 0) then
+    write(IMAIN,*) 'Mesh numbering:'
+    write(IMAIN,*) '  Total number of elements: ',nspec_total
     write(IMAIN,*)
-    write(IMAIN,*) 'Total number of elements: ',nspec_total
-    write(IMAIN,*) 'decomposed as follows:'
-    write(IMAIN,*)
-    write(IMAIN,*) 'Total number of elastic/visco/poro elements: ',nspec_total - count_nspec_acoustic_total
-    write(IMAIN,*) 'Total number of acoustic elements: ',count_nspec_acoustic_total
+    write(IMAIN,*) '  Total number of acoustic elements           = ',nspec_acoustic_total
+    write(IMAIN,*) '  Total number of elastic/visco/poro elements = ',nspec_total - nspec_acoustic_total
     write(IMAIN,*)
 #ifdef USE_MPI
     write(IMAIN,*) 'Approximate total number of grid points in the mesh'
@@ -154,8 +132,8 @@
 #endif
 
     ! percentage of elements with 2 degrees of freedom per point
-    ratio_2DOFs = (nspec_total - count_nspec_acoustic_total) / dble(nspec_total)
-    ratio_1DOF  = count_nspec_acoustic_total / dble(nspec_total)
+    ratio_2DOFs = (nspec_total - nspec_acoustic_total) / dble(nspec_total)
+    ratio_1DOF  = nspec_acoustic_total / dble(nspec_total)
 
     nb_acoustic_DOFs = nint(nglob_total*ratio_1DOF)
 
@@ -327,9 +305,9 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Xmin,Xmax of the whole mesh = ',xmin,xmax
-    write(IMAIN,*) 'Zmin,Zmax of the whole mesh = ',zmin,zmax
+    write(IMAIN,*) 'Mesh dimensions:'
+    write(IMAIN,*) '  Xmin,Xmax of the whole mesh = ',xmin,xmax
+    write(IMAIN,*) '  Zmin,Zmax of the whole mesh = ',zmin,zmax
     write(IMAIN,*)
   endif
 
@@ -618,12 +596,9 @@
   integer :: ispec
 
   ! performs basic checks on parameters read
-  all_anisotropic = .false.
-  if (count(ispec_is_anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
-
   ! mutually exclusive domain flags (element can only belong to a single domain)
   do ispec = 1,nspec
-
+    ! exclusive domain flags
     if (ispec_is_acoustic(ispec) .and. ispec_is_elastic(ispec)) &
       stop 'Error invalid domain element found! element is acoustic and elastic, please check...'
 
@@ -639,23 +614,99 @@
     if (ispec_is_elastic(ispec) .and. ispec_is_gravitoacoustic(ispec)) &
       stop 'Error invalid domain element found! element is elastic and gravitoacoustic, please check...'
 
+    ! un-assigned element
     if ((.not. ispec_is_acoustic(ispec)) .and. &
         (.not. ispec_is_elastic(ispec)) .and. &
         (.not. ispec_is_poroelastic(ispec)) .and. &
         (.not. ispec_is_gravitoacoustic(ispec))) &
       stop 'Error invalid domain element found! element has no domain (acoustic, elastic, poroelastic or gravitoacoustic),&
             & please check...'
-
   enddo
-
-  ! user output
-  if (myrank == 0) then
-    write(IMAIN,*) 'basic mesh check is successful'
-    call flush_IMAIN()
-  endif
 
   ! synchronizes all processes
   call synchronize_all()
 
   end subroutine setup_mesh_basic_check
 
+!
+!-----------------------------------------------------------------------------------
+!
+
+  subroutine setup_mesh_domains()
+
+! assigns global domain flags
+!
+! note: we call this routine only after we have read in a (possible) external model
+
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: nspec_acoustic_all,nspec_elastic_all,nspec_poroelastic_all,nspec_gravitoacoustic_all
+  integer :: nspec_total,nspec_in_domains
+
+  ! re-counts domain elements
+  call get_simulation_domain_counts()
+
+  ! gets total numbers for all slices (collected on master only)
+  call sum_all_i(nspec_acoustic,nspec_acoustic_all)
+  call sum_all_i(nspec_elastic,nspec_elastic_all)
+  call sum_all_i(nspec_poroelastic,nspec_poroelastic_all)
+  call sum_all_i(nspec_gravitoacoustic,nspec_gravitoacoustic_all)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Domains:'
+    write(IMAIN,*) '  total number of acoustic elements        = ',nspec_acoustic_all
+    write(IMAIN,*) '  total number of elastic elements         = ',nspec_elastic_all
+    write(IMAIN,*) '  total number of poroelastic elements     = ',nspec_poroelastic_all
+    write(IMAIN,*) '  total number of gravitoacoustic elements = ',nspec_gravitoacoustic_all
+  endif
+
+  nspec_in_domains = nspec_acoustic_all + nspec_elastic_all + nspec_poroelastic_all + nspec_gravitoacoustic_all
+
+  ! checks with total
+  call sum_all_i(nspec,nspec_total)
+  if (myrank == 0) then
+    if (nspec_total /= nspec_in_domains) then
+      write(IMAIN,*) 'Error invalid total number of elements from domains ',nspec_in_domains,'instead of',nspec_total
+      call exit_MPI(myrank,'Invalid total number of domain elements')
+    endif
+  endif
+
+  ! purely anisotropic
+  all_anisotropic = .false.
+  if (count(ispec_is_anisotropic(:) .eqv. .true.) == nspec) all_anisotropic = .true.
+
+  ! global domain flags
+  ! (sets global flag for all slices)
+  call any_all_l(any_elastic, ELASTIC_SIMULATION)
+  call any_all_l(any_poroelastic, POROELASTIC_SIMULATION)
+  call any_all_l(any_acoustic, ACOUSTIC_SIMULATION)
+  call any_all_l(any_gravitoacoustic, GRAVITOACOUSTIC_SIMULATION)
+
+  ! check for solid attenuation
+  if (.not. ELASTIC_SIMULATION) then
+    if (ATTENUATION_VISCOELASTIC_SOLID) &
+      call exit_MPI(myrank,'currently cannot have attenuation if acoustic/poroelastic simulation only')
+  endif
+
+  ! safety check
+  if (POROELASTIC_SIMULATION) then
+    if (ATTENUATION_PORO_FLUID_PART .and. time_stepping_scheme /= 1) &
+      stop 'RK and LDDRK time scheme not supported for poroelastic simulations with attenuation'
+  endif
+
+! absorbing boundaries work, but not perfect for anisotropic
+!  if (all_anisotropic .and. anyabs) &
+!    call exit_MPI(myrank,'Cannot put absorbing boundaries if anisotropic materials along edges')
+
+  if (ATTENUATION_VISCOELASTIC_SOLID .and. all_anisotropic) then
+    call exit_MPI(myrank,'Cannot turn attenuation on in anisotropic materials')
+  endif
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine setup_mesh_domains

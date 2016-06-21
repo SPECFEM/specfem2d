@@ -41,7 +41,6 @@
 
   ! local parameters
   real :: free_mb,used_mb,total_mb
-  integer :: nspec_elastic
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: cosrot_irecf, sinrot_irecf
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassz
 
@@ -55,8 +54,11 @@
   ! initializes arrays
   call init_host_to_dev_variable()
 
-  ! number of purely elastic elements
-  nspec_elastic = nspec - count_nspec_acoustic
+  ! check number of purely elastic elements
+  if (nspec_elastic /= nspec - nspec_acoustic) then
+    print *,'GPU simulation only supported for acoustic and/or elastic domain simulations'
+    stop 'Error GPU simulation'
+  endif
 
 !!!!!!!!!!! Parametres fournis
 
@@ -79,7 +81,7 @@
 ! recloc(i)                              : convertisseur numero rec local i => numero rec global
 ! ispec_selected_rec(i)                  : numero d'element spectral du receveur i
 ! nrecloc                                : nombre de receveurs locaux
-! count_nspec_acoustic                   : nombre local d'elements spectraux acoustiques
+! nspec_acoustic                         : nombre local d'elements spectraux acoustiques
 
   ! prepares general fields on GPU
   !! JC JC here we will need to add GPU support for the C-PML routines
@@ -116,7 +118,7 @@
                                 cosrot_irecf,sinrot_irecf,&
                                 SIMULATION_TYPE, &
                                 USE_MESH_COLORING_GPU, &
-                                count_nspec_acoustic,nspec_elastic,&
+                                nspec_acoustic,nspec_elastic,&
                                 myrank,SAVE_FORWARD, &
                                 xir_store_loc, &
                                 gammar_store_loc)

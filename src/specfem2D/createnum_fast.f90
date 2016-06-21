@@ -56,7 +56,6 @@
 !----  create global mesh numbering
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*)
     write(IMAIN,*) 'Generating global mesh numbering (fast version)...'
     write(IMAIN,*)
     call flush_IMAIN()

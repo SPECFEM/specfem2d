@@ -70,8 +70,8 @@
   if (nbregion <= 0) stop 'Negative number of regions not allowed!'
 
   ! user output
-  write(IMAIN,*)
-  write(IMAIN,*) 'Nb of regions in the mesh = ',nbregion
+  write(IMAIN,*) 'Regions:'
+  write(IMAIN,*) '  Nb of regions in the mesh = ',nbregion
   write(IMAIN,*)
 
   do iregion = 1,nbregion
@@ -87,6 +87,7 @@
     if (iz_start < 1) stop 'Bottom coordinate of region negative!'
     if (iz_end > nzread) stop 'Top coordinate of region too high!'
 
+    if (iregion == 1) write(IMAIN,*) '------'
     write(IMAIN,*) 'Region ',iregion
     write(IMAIN,*) 'IX from ',ix_start,' to ',ix_end
     write(IMAIN,*) 'IZ from ',iz_start,' to ',iz_end
@@ -165,7 +166,7 @@
       write(IMAIN,*) '         If your regions should be exclusive, please fix the region definitions in the Par_file!'
       write(IMAIN,*) '*************************************'
     endif
-    write(IMAIN,*) ' -----'
+    write(IMAIN,*) '------'
     call flush_IMAIN()
 
   enddo

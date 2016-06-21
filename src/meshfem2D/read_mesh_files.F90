@@ -95,7 +95,7 @@
   double precision, external :: value_spline
 
   ! get interface data from external file
-  write(IMAIN,*) 'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile))
+  write(IMAIN,*) 'Reading interface data from file: ','DATA/' // interfacesfile(1:len_trim(interfacesfile))
   open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old')
 
   ! allocate arrays for the grid

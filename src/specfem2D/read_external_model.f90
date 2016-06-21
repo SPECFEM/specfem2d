@@ -35,36 +35,44 @@
 
   subroutine read_external_model()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL
+! reads in external model files
 
-  use specfem_par, only: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN
+
+  use specfem_par, only: nspec,nglob,ibool, &
     ispec_is_acoustic,ispec_is_gravitoacoustic,ispec_is_elastic,ispec_is_poroelastic,ispec_is_anisotropic, &
-    nspec,nglob,ibool, &
     READ_VELOCITIES_AT_f0,inv_tau_sigma_nu1_sent,&
     phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
     inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
-    coord,kmato,rhoext,vpext,vsext,gravityext,Nsqext, &
-    QKappa_attenuationext,Qmu_attenuationext, &
-    c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-    MODEL,ATTENUATION_VISCOELASTIC_SOLID,P_SV,&
+    coord,kmato, &
+    MODEL,ATTENUATION_VISCOELASTIC_SOLID, &
     tomo_material,myrank
+
+  ! external model parameters
+  use specfem_par,only: rhoext,vpext,vsext,gravityext,Nsqext, &
+    QKappa_attenuationext,Qmu_attenuationext, &
+    c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   implicit none
 
   ! Local variables
   integer :: i,j,ispec
   integer :: ier
-  real(kind=CUSTOM_REAL) :: previous_vsext
   real(kind=CUSTOM_REAL) :: tmp1, tmp2,tmp3
   double precision :: rho_dummy,vp_dummy,vs_dummy,mu_dummy,lambda_dummy,vs_val,vp_val,rho_val
   character(len=150) :: inputname
 
+! note: we read in external models once the basic mesh with its geometry and GLL points has been setup.
+!       External models define new velocity/material parameters which need to be defined on all GLL points.
 
   if (tomo_material > 0) MODEL = 'tomo'
 
-  if (trim(MODEL) == 'legacy') then
+  select case (trim(MODEL))
+  case ('legacy')
     ! old model format
     write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_model_velocity.dat_input'
+    if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_model_velocity.dat_input'
+
     open(unit=1001,file=inputname,status='old',action='read',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_model_velocity.dat_input file.'
     do ispec = 1,nspec
@@ -75,17 +83,19 @@
           rhoext(i,j,ispec) = rho_val
           vpext(i,j,ispec) = vp_val
           vsext(i,j,ispec) = vs_val
-          ! default no attenuation
-          QKappa_attenuationext(i,j,ispec) = 9999.d0
-          Qmu_attenuationext(i,j,ispec) = 9999.d0
         enddo
       enddo
     enddo
     close(1001)
+    ! default no attenuation
+    QKappa_attenuationext(:,:,:) = 9999.d0
+    Qmu_attenuationext(:,:,:) = 9999.d0
 
-  else if (trim(MODEL) == 'ascii') then
+  case ('ascii')
     ! ascii model format
     write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat'
+    if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_rho_vp_vs.dat'
+
     open(unit=1001,file=inputname,status='old',action='read',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_rho_vp_vs.dat file.'
     do ispec = 1,nspec
@@ -96,17 +106,19 @@
           rhoext(i,j,ispec) = rho_val
           vpext(i,j,ispec) = vp_val
           vsext(i,j,ispec) = vs_val
-          ! default no attenuation
-          QKappa_attenuationext(i,j,ispec) = 9999.d0
-          Qmu_attenuationext(i,j,ispec) = 9999.d0
         enddo
       enddo
     enddo
     close(1001)
+    ! default no attenuation
+    QKappa_attenuationext(:,:,:) = 9999.d0
+    Qmu_attenuationext(:,:,:) = 9999.d0
 
-  else if ((trim(MODEL) == 'binary') .or. (trim(MODEL) == 'gll')) then
+  case ('binary','gll')
     ! binary formats
     write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
+    if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_rho.bin, .._vp.bin, .._vs.bin'
+
     open(unit = 1001, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_rho.bin file.'
 
@@ -132,9 +144,11 @@
     QKappa_attenuationext(:,:,:) = 9999.d0
     Qmu_attenuationext(:,:,:) = 9999.d0
 
-  else if (trim(MODEL) == 'binary_voigt') then
+  case ('binary_voigt')
     ! Voigt model
     write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
+    if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_rho.bin, .._c11.bin, .._c55.bin'
+
     open(unit = 1001, file = inputname,status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_rho.bin file.'
 
@@ -210,20 +224,26 @@
       enddo
     enddo
 
-  else if (trim(MODEL) == 'external') then
-    ! external files
+    ! default no attenuation
+    QKappa_attenuationext(:,:,:) = 9999.d0
+    Qmu_attenuationext(:,:,:) = 9999.d0
+
+  case ('external')
+    ! generic model defined in external files
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext, &
                                QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
 
-  else if (trim(MODEL) == 'tomo') then
+  case ('tomo')
     ! tomographic file
     call define_external_model_from_tomo_file()
 
-  else
-    print *,"Error: Invalid model ",trim(MODEL),", please check your Par_file settings..."
+  case default
+    print *,"Error: unrecognized model = ",trim(MODEL)
+    print *,"Invalid MODEL chosen, please check your Par_file settings..."
     stop 'Invalid MODEL parameter'
-  endif
+
+  end select
 
   ! check that the external model that has just been defined makes sense
   if (trim(MODEL) == 'external' .or. trim(MODEL) == 'tomo') then
@@ -260,72 +280,8 @@
     enddo
   endif
 
-  ! re-assigns flags
-  ! initializes
-  any_acoustic = .false.
-  any_gravitoacoustic = .false.
-  any_elastic = .false.
-  any_poroelastic = .false.
-
-  ispec_is_acoustic(:) = .false.
-  ispec_is_gravitoacoustic(:) = .false.
-  ispec_is_anisotropic(:) = .false.
-  ispec_is_elastic(:) = .false.
-  ispec_is_poroelastic(:) = .false.
-
-  do ispec = 1,nspec
-    ! value at corner
-    previous_vsext = vsext(1,1,ispec)
-
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-        ! checks velocities inside element
-        !print *,"vsext(i,j,ispec)",vsext(i,j,ispec)
-        !print *,"gravityext(i,j,ispec)",gravityext(i,j,ispec)
-        if (P_SV .and. (.not. (i == 1 .and. j == 1)) .and. &
-          ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
-           (vsext(i,j,ispec) < TINYVAL  .and. previous_vsext >= TINYVAL)))  &
-          call exit_MPI(myrank,'external velocity model cannot be both fluid and solid inside the same spectral element')
-
-        ! sets element type
-        if (c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
-            c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
-          ! anisotropic elastic
-          ispec_is_anisotropic(ispec) = .true.
-          ispec_is_poroelastic(ispec) = .false.
-          ispec_is_elastic(ispec) = .true.
-          any_elastic = .true.
-          QKappa_attenuationext(i,j,ispec) = 9999.d0
-          Qmu_attenuationext(i,j,ispec) = 9999.d0
-
-        else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) < TINYVAL)) then
-          ! acoustic
-          ispec_is_elastic(ispec) = .false.
-          ispec_is_poroelastic(ispec) = .false.
-          ispec_is_gravitoacoustic(ispec) = .false.
-          ispec_is_acoustic(ispec) = .true.
-          any_acoustic = .true.
-
-        else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) >= TINYVAL)) then
-          ! gravito-acoustic
-          ispec_is_elastic(ispec) = .false.
-          ispec_is_poroelastic(ispec) = .false.
-          ispec_is_acoustic(ispec)=.false.
-          ispec_is_gravitoacoustic(ispec) = .true.
-          any_gravitoacoustic = .true.
-
-        else
-          ! elastic
-          ispec_is_poroelastic(ispec) = .false.
-          ispec_is_elastic(ispec) = .true.
-          any_elastic = .true.
-        endif
-
-        ! sets new GLL point value to compare against
-        previous_vsext = vsext(i,j,ispec)
-      enddo
-    enddo
-  enddo ! ispec
+  ! resets domain flags
+  call get_simulation_domains_from_external_models()
 
   ! re-assigns attenuation
   ! initialize to dummy values

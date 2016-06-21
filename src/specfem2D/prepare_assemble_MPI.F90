@@ -51,17 +51,21 @@
 
   use constants,only: NGLLX,NGLLZ
 
-  use specfem_par, only: nspec,ibool,knods, ngnod,nglob, ispec_is_elastic, ispec_is_poroelastic, &
-                                ninterface, &
-                                my_nelmnts_neighbours, my_interfaces, &
-                                ibool_interfaces_acoustic, ibool_interfaces_elastic, &
-                                ibool_interfaces_poroelastic, &
-                                nibool_interfaces_acoustic, nibool_interfaces_elastic, &
-                                nibool_interfaces_poroelastic, &
-                                inum_interfaces_acoustic, inum_interfaces_elastic, &
-                                inum_interfaces_poroelastic, &
-                                ninterface_acoustic, ninterface_elastic, ninterface_poroelastic, &
-                                mask_ispec_inner_outer,nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh_init
+  use specfem_par, only: nspec,ibool,knods, ngnod,nglob, &
+    ispec_is_elastic, ispec_is_poroelastic, ispec_is_acoustic, ispec_is_gravitoacoustic
+
+  use specfem_par, only: ninterface, my_nelmnts_neighbours, my_interfaces, &
+    nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh_init, mask_ispec_inner_outer
+
+  use specfem_par, only: &
+    ibool_interfaces_acoustic, ibool_interfaces_elastic, &
+    ibool_interfaces_poroelastic, &
+    nibool_interfaces_acoustic, nibool_interfaces_elastic, &
+    nibool_interfaces_poroelastic, &
+    inum_interfaces_acoustic, inum_interfaces_elastic, &
+    inum_interfaces_poroelastic, &
+    ninterface_acoustic, ninterface_elastic, ninterface_poroelastic
+
   implicit none
 
   ! local parameters
@@ -80,41 +84,52 @@
   integer :: npoin_interface_ext_mesh
 
   ! initializes
-  ibool_interfaces_acoustic(:,:) = 0
-  nibool_interfaces_acoustic(:) = 0
-  ibool_interfaces_elastic(:,:) = 0
-  nibool_interfaces_elastic(:) = 0
-  ibool_interfaces_poroelastic(:,:) = 0
-  nibool_interfaces_poroelastic(:) = 0
+  ! for all domains
   nibool_interfaces_ext_mesh(:) = 0
   ibool_interfaces_ext_mesh_init(:,:) = 0
 
+  ! only specific domain interfaces
+  ibool_interfaces_acoustic(:,:) = 0
+  nibool_interfaces_acoustic(:) = 0
+
+  ibool_interfaces_elastic(:,:) = 0
+  nibool_interfaces_elastic(:) = 0
+
+  ibool_interfaces_poroelastic(:,:) = 0
+  nibool_interfaces_poroelastic(:) = 0
+
   do num_interface = 1, ninterface
     ! initializes interface point counters
+    npoin_interface_ext_mesh = 0
+    mask_ibool_ext_mesh(:) = .false.
+
     nglob_interface_acoustic = 0
     nglob_interface_elastic = 0
     nglob_interface_poroelastic = 0
-    npoin_interface_ext_mesh = 0
+
     mask_ibool_acoustic(:) = .false.
     mask_ibool_elastic(:) = .false.
     mask_ibool_poroelastic(:) = .false.
-    mask_ibool_ext_mesh(:) = .false.
 
     do ispec_interface = 1, my_nelmnts_neighbours(num_interface)
       ! element id
       ispec = my_interfaces(1,ispec_interface,num_interface)
+
       ! type of interface: 1 = common point, 2 = common edge
       itype = my_interfaces(2,ispec_interface,num_interface)
+
       ! element control node ids
       do k = 1, ngnod
         n(k) = knods(k,ispec)
       enddo
+
       ! common node ids
       e1 = my_interfaces(3,ispec_interface,num_interface)
       e2 = my_interfaces(4,ispec_interface,num_interface)
 
       call get_edge(ngnod, n, itype, e1, e2, ixmin, ixmax, izmin, izmax, sens)
 
+      ! sets interface points (all material domains)
       do iz = izmin, izmax, sens
         do ix = ixmin, ixmax, sens
           ! global index
@@ -127,6 +142,14 @@
             npoin_interface_ext_mesh = npoin_interface_ext_mesh + 1
             ibool_interfaces_ext_mesh_init(npoin_interface_ext_mesh,num_interface) = iglob
           endif
+        enddo
+      enddo
+
+      ! sets interface points for specific domains
+      do iz = izmin, izmax, sens
+        do ix = ixmin, ixmax, sens
+          ! global index
+          iglob = ibool(ix,iz,ispec)
 
           ! checks to which material this common interface belongs
           if (ispec_is_elastic(ispec)) then
@@ -136,6 +159,7 @@
               nglob_interface_elastic = nglob_interface_elastic + 1
               ibool_interfaces_elastic(nglob_interface_elastic,num_interface) = iglob
             endif
+
           else if (ispec_is_poroelastic(ispec)) then
             ! poroelastic element
             if (.not. mask_ibool_poroelastic(iglob)) then
@@ -143,40 +167,51 @@
               nglob_interface_poroelastic = nglob_interface_poroelastic + 1
               ibool_interfaces_poroelastic(nglob_interface_poroelastic,num_interface) = iglob
             endif
-          else
+
+          else if (ispec_is_acoustic(ispec)) then
             ! acoustic element
             if (.not. mask_ibool_acoustic(iglob)) then
               mask_ibool_acoustic(iglob) = .true.
               nglob_interface_acoustic = nglob_interface_acoustic + 1
               ibool_interfaces_acoustic(nglob_interface_acoustic,num_interface) = iglob
             endif
+
+          else if (ispec_is_gravitoacoustic(iglob)) then
+            ! gravitoacoustic element
+            stop 'Preparing assembly points with MPI not implemented yet for gravitoacoustic domains'
+
+          else
+            stop 'Invalid element type found in prepare_assemble_MPI() routine'
           endif
+
         enddo
       enddo
 
     enddo
+
+    ! stores total number of (global) points on this MPI interface
+    nibool_interfaces_ext_mesh(num_interface) = npoin_interface_ext_mesh
 
     ! stores counters for interface points
     nibool_interfaces_acoustic(num_interface) = nglob_interface_acoustic
     nibool_interfaces_elastic(num_interface) = nglob_interface_elastic
     nibool_interfaces_poroelastic(num_interface) = nglob_interface_poroelastic
-    nibool_interfaces_ext_mesh(num_interface) = npoin_interface_ext_mesh
+
     ! sets inner/outer element flags
     do ispec = 1, nspec
       do iz = 1, NGLLZ
         do ix = 1, NGLLX
-
-           if (mask_ibool_acoustic(ibool(ix,iz,ispec)) &
-            .or. mask_ibool_elastic(ibool(ix,iz,ispec)) &
-            .or. mask_ibool_poroelastic(ibool(ix,iz,ispec))) then
-               mask_ispec_inner_outer(ispec) = .true.
+           if (mask_ibool_acoustic(ibool(ix,iz,ispec)) .or. &
+               mask_ibool_elastic(ibool(ix,iz,ispec)) .or. &
+               mask_ibool_poroelastic(ibool(ix,iz,ispec))) then
+              ! sets flag for outer element (belongs to halo region)
+              mask_ispec_inner_outer(ispec) = .true.
           endif
-
         enddo
       enddo
     enddo
 
-  enddo
+  enddo ! ninterface
 
   ! sets number of interfaces for each material domain
   ninterface_acoustic = 0

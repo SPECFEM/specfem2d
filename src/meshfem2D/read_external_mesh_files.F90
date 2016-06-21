@@ -46,13 +46,18 @@
   use part_unstruct_par,only: elmnts,nelmnts,nnodes
 
   implicit none
-  !include "constants.h"
+  include "constants.h"
 
   character(len=256), intent(in)  :: filename
   integer, intent(out)  :: remove_min_to_start_at_zero
   integer, intent(in)  :: ngnod
 
   integer  :: i,ier
+
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'Reading data from external mesh file: ',trim(filename)
+  call flush_IMAIN()
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
   open(unit=990, file=trim(filename), form='unformatted' , status='old', action='read',iostat=ier)
@@ -98,6 +103,12 @@
   elmnts(:) = elmnts(:) - remove_min_to_start_at_zero
 
   nnodes = maxval(elmnts) + 1
+
+  ! user output
+  write(IMAIN,*) 'Total number of spectral elements   :',nelmnts
+  write(IMAIN,*)
+  call flush_IMAIN()
+
 
   end subroutine read_external_mesh_file
 

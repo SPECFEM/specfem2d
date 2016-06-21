@@ -52,8 +52,8 @@
 
   ! user output
   write(IMAIN,*)
-  write(IMAIN,*) 'Reading interface data from file DATA/',interfacesfile(1:len_trim(interfacesfile)), &
-                 ' to count the spectral elements'
+  write(IMAIN,*) 'Reading interface data from file: ', 'DATA/' // interfacesfile(1:len_trim(interfacesfile))
+  call flush_IMAIN()
 
   ! get interface data from external file to count the spectral elements along Z
   open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old',iostat=ier)
@@ -124,7 +124,6 @@
   ! user output
   write(IMAIN,*)
   write(IMAIN,*) 'Total number of spectral elements along Z = ',nz
-  write(IMAIN,*)
   call flush_IMAIN()
 
   nxread = nx
@@ -174,5 +173,10 @@
   else
     stop 'ngnod must be either 4 or 9'
   endif
+
+  ! user output
+  write(IMAIN,*) 'Total number of spectral elements         = ',nelmnts
+  write(IMAIN,*)
+  call flush_IMAIN()
 
   end subroutine read_interfaces_file

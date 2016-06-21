@@ -297,7 +297,8 @@ end module interpolation
 ! ----------------------------------------------------------------------------------------
 !
 
-subroutine define_external_model_from_tomo_file()
+  subroutine define_external_model_from_tomo_file()
+
 ! ----------------------------------------------------------------------------------------
 ! Read a tomo file and loop over all GLL points to set the values of vp,vs and rho
 ! ----------------------------------------------------------------------------------------
@@ -307,10 +308,12 @@ subroutine define_external_model_from_tomo_file()
                        QKappa_attenuationext,Qmu_attenuationext,poroelastcoef,density, &
                        c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext,gravityext,Nsqext
 
+  use specfem_par, only: myrank,TOMOGRAPHY_FILE
+
   use model_tomography_par
   use interpolation
 
-  use constants,only: NGLLX,NGLLZ,TINYVAL
+  use constants,only: NGLLX,NGLLZ,TINYVAL,IMAIN
 
   implicit none
 
@@ -319,61 +322,79 @@ subroutine define_external_model_from_tomo_file()
   integer :: i,j,ispec,iglob
   double precision :: xmesh,zmesh
 
-  call read_tomo_file() ! Read external tomo file TOMOGRAPHY_FILE
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  tomographic model file: ',trim(TOMOGRAPHY_FILE)
+    call flush_IMAIN()
+  endif
+
+  ! Read external tomo file TOMOGRAPHY_FILE
+  call read_tomo_file()
 
   ! remove gravity
   ! leave these arrays here even if you do not assign them to use them because they need to be cleared
   gravityext(:,:,:) = 0.d0
   Nsqext(:,:,:) = 0.d0
 
-  ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
+  ! default no attenuation
+  QKappa_attenuationext(:,:,:) = 9999.d0
+  Qmu_attenuationext(:,:,:) = 9999.d0
 
+  ! default no anisotropy
+  c11ext(:,:,:) = 0.d0
+  c13ext(:,:,:) = 0.d0
+  c15ext(:,:,:) = 0.d0
+  c33ext(:,:,:) = 0.d0
+  c35ext(:,:,:) = 0.d0
+  c55ext(:,:,:) = 0.d0
+  c12ext(:,:,:) = 0.d0
+  c23ext(:,:,:) = 0.d0
+  c25ext(:,:,:) = 0.d0
+  c22ext(:,:,:) = 0.d0
+
+  ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
   do ispec = 1,nspec
     do j = 1,NGLLZ
       do i = 1,NGLLX
-         iglob = ibool(i,j,ispec)
-         if (kmato(ispec) == tomo_material) then ! If the material has been set to <0 on the Par_file
-           xmesh = coord(1,iglob)
-           zmesh = coord(2,iglob)
-           rhoext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, rho_tomo, xmesh, zmesh,TINYVAL)
-           vpext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, vp_tomo, xmesh, zmesh,TINYVAL)
-           vsext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, vs_tomo, xmesh, zmesh,TINYVAL)
-           QKappa_attenuationext(i,j,ispec) = 9999. ! this means no attenuation
-           Qmu_attenuationext(i,j,ispec)    = 9999. ! this means no attenuation
-           c11ext(i,j,ispec) = 0.d0   ! this means no anisotropy
-           c13ext(i,j,ispec) = 0.d0
-           c15ext(i,j,ispec) = 0.d0
-           c33ext(i,j,ispec) = 0.d0
-           c35ext(i,j,ispec) = 0.d0
-           c55ext(i,j,ispec) = 0.d0
-           c12ext(i,j,ispec) = 0.d0
-           c23ext(i,j,ispec) = 0.d0
-           c25ext(i,j,ispec) = 0.d0
-           c22ext(i,j,ispec) = 0.d0
-           !! AB AB : The 3 following lines are important, otherwise PMLs won't work.
-           !! (we assign these values several times: indeed for each kmato(ispec) it can exist a lot of rhoext(i,j,ispec) )
-           density(1,kmato(ispec)) = rhoext(i,j,ispec)
-           poroelastcoef(3,1,kmato(ispec)) = rhoext(i,j,ispec) * vpext(i,j,ispec) * vpext(i,j,ispec)
-           poroelastcoef(2,1,kmato(ispec)) =  rhoext(i,j,ispec) * vsext(i,j,ispec) * vsext(i,j,ispec)
-           !! AB AB : I do the same with anisotropy and attenuation even if I don't use them (for the future) :
-           anisotropy(1,kmato(ispec)) = c11ext(i,j,ispec)
-           anisotropy(2,kmato(ispec)) = c13ext(i,j,ispec)
-           anisotropy(3,kmato(ispec)) = c15ext(i,j,ispec)
-           anisotropy(4,kmato(ispec)) = c33ext(i,j,ispec)
-           anisotropy(5,kmato(ispec)) = c35ext(i,j,ispec)
-           anisotropy(6,kmato(ispec)) = c55ext(i,j,ispec)
-           anisotropy(7,kmato(ispec)) = c12ext(i,j,ispec)
-           anisotropy(8,kmato(ispec)) = c23ext(i,j,ispec)
-           anisotropy(9,kmato(ispec)) = c25ext(i,j,ispec)
-           anisotropy(10,kmato(ispec)) = c22ext(i,j,ispec)
-           QKappa_attenuation(kmato(ispec)) = QKappa_attenuationext(i,j,ispec)
-           Qmu_attenuation(kmato(ispec)) = Qmu_attenuationext(i,j,ispec)
-         else ! Internal model
+        iglob = ibool(i,j,ispec)
+        if (kmato(ispec) == tomo_material) then
+          ! If the material has been set to <0 on the Par_file
+          xmesh = coord(1,iglob)
+          zmesh = coord(2,iglob)
+
+          rhoext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, rho_tomo, xmesh, zmesh,TINYVAL)
+          vpext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, vp_tomo, xmesh, zmesh,TINYVAL)
+          vsext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, vs_tomo, xmesh, zmesh,TINYVAL)
+
+          !! AB AB : The 3 following lines are important, otherwise PMLs won't work.
+          !! (we assign these values several times: indeed for each kmato(ispec) it can exist a lot of rhoext(i,j,ispec) )
+          density(1,kmato(ispec)) = rhoext(i,j,ispec)
+          poroelastcoef(3,1,kmato(ispec)) = rhoext(i,j,ispec) * vpext(i,j,ispec) * vpext(i,j,ispec)
+          poroelastcoef(2,1,kmato(ispec)) =  rhoext(i,j,ispec) * vsext(i,j,ispec) * vsext(i,j,ispec)
+
+          !! AB AB : I do the same with anisotropy and attenuation even if I don't use them (for the future) :
+          anisotropy(1,kmato(ispec)) = c11ext(i,j,ispec)
+          anisotropy(2,kmato(ispec)) = c13ext(i,j,ispec)
+          anisotropy(3,kmato(ispec)) = c15ext(i,j,ispec)
+          anisotropy(4,kmato(ispec)) = c33ext(i,j,ispec)
+          anisotropy(5,kmato(ispec)) = c35ext(i,j,ispec)
+          anisotropy(6,kmato(ispec)) = c55ext(i,j,ispec)
+          anisotropy(7,kmato(ispec)) = c12ext(i,j,ispec)
+          anisotropy(8,kmato(ispec)) = c23ext(i,j,ispec)
+          anisotropy(9,kmato(ispec)) = c25ext(i,j,ispec)
+          anisotropy(10,kmato(ispec)) = c22ext(i,j,ispec)
+
+          QKappa_attenuation(kmato(ispec)) = QKappa_attenuationext(i,j,ispec)
+          Qmu_attenuation(kmato(ispec)) = Qmu_attenuationext(i,j,ispec)
+        else
+          ! Internal model
            rhoext(i,j,ispec) = density(1,kmato(ispec))
            vpext(i,j,ispec) = sqrt(poroelastcoef(3,1,kmato(ispec))/rhoext(i,j,ispec))
            vsext(i,j,ispec) = sqrt(poroelastcoef(2,1,kmato(ispec))/rhoext(i,j,ispec))
+
            QKappa_attenuationext(i,j,ispec) = QKappa_attenuation(kmato(ispec))
            Qmu_attenuationext(i,j,ispec) = Qmu_attenuation(kmato(ispec))
+
            c11ext(i,j,ispec) = anisotropy(1,kmato(ispec))
            c13ext(i,j,ispec) = anisotropy(2,kmato(ispec))
            c15ext(i,j,ispec) = anisotropy(3,kmato(ispec))
@@ -389,61 +410,62 @@ subroutine define_external_model_from_tomo_file()
     enddo
   enddo
 
-end subroutine define_external_model_from_tomo_file
+  end subroutine define_external_model_from_tomo_file
 
 !
 !-------------------------------------------------------------------------------------------
 !
 
-subroutine read_tomo_file()
-  ! ----------------------------------------------------------------------------------------
-  ! This subroutine reads the external ASCII tomo file TOMOGRAPHY_FILE (path to which is
-  ! given in the Par_file).
-  ! This file format is not very clever however it is the one used in specfem3D hence
-  ! we chose to implement it here as well
-  ! The external tomographic model is represented by a grid of points with assigned material
-  ! properties and homogeneous resolution along each spatial direction x and z. The xyz file
-  ! TOMOGRAPHY_FILE that describe the tomography should be located in the TOMOGRAPHY_PATH
-  ! directory, set in the Par_file. The format of the file, as read from
-  ! define_external_model_from_xyz_file.f90 looks like :
-  !
-  ! ORIGIN_X ORIGIN_Z END_X END_Z
-  ! SPACING_X SPACING_Z
-  ! NX NZ
-  ! VP_MIN VP_MAX VS_MIN VS_MAX RHO_MIN RHO_MAX
-  ! x(1) z(1) vp vs rho
-  ! x(2) z(1) vp vs rho
-  ! ...
-  ! x(NX) z(1) vp vs rho
-  ! x(1) z(2) vp vs rho
-  ! x(2) z(2) vp vs rho
-  ! ...
-  ! x(NX) z(2) vp vs rho
-  ! x(1) z(3) vp vs rho
-  ! ...
-  ! ...
-  ! x(NX) z(NZ) vp vs rho
-  !
-  ! Where :
-  ! _x and z must be increasing
-  ! _ORIGIN_X, END_X are, respectively, the coordinates of the initial and final tomographic
-  !  grid points along the x direction (in meters)
-  ! _ORIGIN_Z, END_Z are, respectively, the coordinates of the initial and final tomographic
-  !  grid points along the z direction (in meters)
-  ! _SPACING_X, SPACING_Z are the spacing between the tomographic grid points along the x
-  !  and z directions, respectively (in meters)
-  ! _NX, NZ are the number of grid points along the spatial directions x and z,
-  !  respectively; NX is given by [(END_X - ORIGIN_X)/SPACING_X]+1; NZ is the same as NX, but
-  !  for z direction.
-  ! _VP_MIN, VP_MAX, VS_MIN, VS_MAX, RHO_MIN, RHO_MAX are the minimum and maximum values of
-  !  the wave speed vp and vs (in m.s-1) and of the density rho (in kg.m-3); these values
-  !  could be the actual limits of the tomographic parameters in the grid or the minimum
-  !  and maximum values to which we force the cut of velocity and density in the model.
-  ! _After these first four lines, in the file file_name the tomographic grid points are
-  !  listed with the corresponding values of vp, vs and rho, scanning the grid along the x
-  !  coordinate (from ORIGIN_X to END_X with step of SPACING_X) for each given z (from ORIGIN_Z
-  !  to END_Z, with step of SPACING_Z).
-  ! ----------------------------------------------------------------------------------------
+  subroutine read_tomo_file()
+
+! ----------------------------------------------------------------------------------------
+! This subroutine reads the external ASCII tomo file TOMOGRAPHY_FILE (path to which is
+! given in the Par_file).
+! This file format is not very clever however it is the one used in specfem3D hence
+! we chose to implement it here as well
+! The external tomographic model is represented by a grid of points with assigned material
+! properties and homogeneous resolution along each spatial direction x and z. The xyz file
+! TOMOGRAPHY_FILE that describe the tomography should be located in the TOMOGRAPHY_PATH
+! directory, set in the Par_file. The format of the file, as read from
+! define_external_model_from_xyz_file.f90 looks like :
+!
+! ORIGIN_X ORIGIN_Z END_X END_Z
+! SPACING_X SPACING_Z
+! NX NZ
+! VP_MIN VP_MAX VS_MIN VS_MAX RHO_MIN RHO_MAX
+! x(1) z(1) vp vs rho
+! x(2) z(1) vp vs rho
+! ...
+! x(NX) z(1) vp vs rho
+! x(1) z(2) vp vs rho
+! x(2) z(2) vp vs rho
+! ...
+! x(NX) z(2) vp vs rho
+! x(1) z(3) vp vs rho
+! ...
+! ...
+! x(NX) z(NZ) vp vs rho
+!
+! Where :
+! _x and z must be increasing
+! _ORIGIN_X, END_X are, respectively, the coordinates of the initial and final tomographic
+!  grid points along the x direction (in meters)
+! _ORIGIN_Z, END_Z are, respectively, the coordinates of the initial and final tomographic
+!  grid points along the z direction (in meters)
+! _SPACING_X, SPACING_Z are the spacing between the tomographic grid points along the x
+!  and z directions, respectively (in meters)
+! _NX, NZ are the number of grid points along the spatial directions x and z,
+!  respectively; NX is given by [(END_X - ORIGIN_X)/SPACING_X]+1; NZ is the same as NX, but
+!  for z direction.
+! _VP_MIN, VP_MAX, VS_MIN, VS_MAX, RHO_MIN, RHO_MAX are the minimum and maximum values of
+!  the wave speed vp and vs (in m.s-1) and of the density rho (in kg.m-3); these values
+!  could be the actual limits of the tomographic parameters in the grid or the minimum
+!  and maximum values to which we force the cut of velocity and density in the model.
+! _After these first four lines, in the file file_name the tomographic grid points are
+!  listed with the corresponding values of vp, vs and rho, scanning the grid along the x
+!  coordinate (from ORIGIN_X to END_X with step of SPACING_X) for each given z (from ORIGIN_Z
+!  to END_Z, with step of SPACING_Z).
+! ----------------------------------------------------------------------------------------
 
   use specfem_par, only: myrank,TOMOGRAPHY_FILE
 
@@ -453,7 +475,6 @@ subroutine read_tomo_file()
   implicit none
 
   ! local parameters
-
   integer :: ier,irecord,i,j
   character(len=150) :: string_read
 
@@ -474,18 +495,21 @@ subroutine read_tomo_file()
   ! format: #origin_x #origin_z #end_x #end_z
   call tomo_read_next_line(IIN,string_read)
   read(string_read,*) ORIGIN_X, ORIGIN_Z, END_X, END_Z
+
   ! --------------------------------------------------------------------------------------
   ! model increments
-  ! format: #dx #dy #dz
+  ! format: #dx #dz
   ! --------------------------------------------------------------------------------------
   call tomo_read_next_line(IIN,string_read)
   read(string_read,*) SPACING_X, SPACING_Z
+
   ! --------------------------------------------------------------------------------------
   ! reads in models entries
-  ! format: #nx #ny #nz
+  ! format: #nx #nz
   ! --------------------------------------------------------------------------------------
   call tomo_read_next_line(IIN,string_read)
   read(string_read,*) NX,NZ
+
   ! --------------------------------------------------------------------------------------
   ! reads in models min/max statistics
   ! format: #vp_min #vp_max #vs_min #vs_max #density_min #density_max
@@ -506,8 +530,9 @@ subroutine read_tomo_file()
   irecord = 0
   do while (irecord < nrecord)
     call tomo_read_next_line(IIN,string_read)
-    read(string_read,*) x_tomography(irecord+1),z_tomography(irecord+1),vp_tomography(irecord+1),vs_tomography(irecord+1), &
-           rho_tomography(irecord+1)
+    read(string_read,*) x_tomography(irecord+1),z_tomography(irecord+1), &
+                        vp_tomography(irecord+1),vs_tomography(irecord+1),rho_tomography(irecord+1)
+
     if (irecord < NX) x_tomo(irecord+1) = x_tomography(irecord+1)
 
     irecord = irecord + 1
@@ -540,13 +565,14 @@ subroutine read_tomo_file()
   close(IIN)
   deallocate(x_tomography,z_tomography,vp_tomography,vs_tomography,rho_tomography)
 
-end subroutine read_tomo_file
+  end subroutine read_tomo_file
 
 !
 ! ----------------------------------------------------------------------------------------
 !
 
-subroutine tomo_read_next_line(unit_in,string_read)
+  subroutine tomo_read_next_line(unit_in,string_read)
+
 ! Store next line of file unit_in in string_read
 
   implicit none
@@ -581,5 +607,5 @@ subroutine tomo_read_next_line(unit_in,string_read)
   string_read = adjustl(string_read)
   string_read = string_read(1:len_trim(string_read))
 
-end subroutine tomo_read_next_line
+  end subroutine tomo_read_next_line
 
