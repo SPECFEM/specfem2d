@@ -111,12 +111,13 @@
   ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
 #ifdef USE_MPI
   if (NPROC > 1 .and. ninterface_acoustic > 0) then
-    call assemble_MPI_vector_ac(potential_dot_dot_acoustic)
+    call assemble_MPI_scalar_ac(potential_dot_dot_acoustic)
 
     if (time_stepping_scheme == 2) then
-      if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
+      ! LDDRK
+      if (i_stage == 1 .and. it == 1 .and. (.not. initialfield)) then
         potential_dot_acoustic_temp(:) = potential_dot_acoustic(:)
-        call assemble_MPI_vector_ac(potential_dot_acoustic)
+        call assemble_MPI_scalar_ac(potential_dot_acoustic)
       endif
     endif
   endif
@@ -315,7 +316,7 @@
   ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
 #ifdef USE_MPI
   if (NPROC > 1 .and. ninterface_acoustic > 0) then
-    call assemble_MPI_vector_ac(b_potential_dot_dot_acoustic)
+    call assemble_MPI_scalar_ac(b_potential_dot_dot_acoustic)
   endif
 #endif
 

@@ -121,7 +121,7 @@
 ! assembling potential_dot_dot for gravitoacoustic elements
 !#ifdef USE_MPI
 !    if (NPROC > 1 .and. any_acoustic .and. ninterface_acoustic > 0) then
-!      call assemble_MPI_vector_ac(potential_dot_dot_gravitoacoustic)
+!      call assemble_MPI_scalar_ac(potential_dot_dot_gravitoacoustic)
 !
 !    endif
 !

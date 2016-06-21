@@ -352,15 +352,6 @@
   ! user output
   if (myrank == 0) write(IMAIN,*) '  number of mpi interfaces = ',ninterface
 
-  ! mpi interfaces
-  allocate(ibool_interfaces_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
-  ibool_interfaces_ext_mesh(:,:) = 0
-  do j = 1,ninterface
-    do i = 1,nibool_interfaces_ext_mesh(j)
-      ibool_interfaces_ext_mesh(i,j)=ibool_interfaces_ext_mesh_init(i,j)
-    enddo
-  enddo
-
   ! user output
   if (myrank == 0) write(IMAIN,*) '  number of acoustic elements at free surface = ',nelem_acoustic_surface
 
@@ -526,18 +517,6 @@
     cosrot_irecf(i) = sngl(cosrot_irec(i))
     sinrot_irecf(i) = sngl(sinrot_irec(i))
   enddo
-
-  ! determines inner elements
-  allocate(ispec_is_inner(nspec))
-  ispec_is_inner(:) = .false.
-
-  ! loop over spectral elements
-  do ispec_inner = 1,nspec_inner
-    ! get global numbering for inner or outer elements
-    ispec = ispec_inner_to_glob(ispec_inner)
-    ispec_is_inner(ispec) = .true.
-  enddo
-
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!! Init pour prepare acoustique

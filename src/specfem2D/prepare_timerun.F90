@@ -235,6 +235,13 @@
   ! for Lagrange interpolants
   double precision, external :: hgll, hglj
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Preparing image coloring'
+    call flush_IMAIN()
+  endif
+
   ! arrays for display images
   allocate(shape2D_display(ngnod,pointsdisp,pointsdisp), &
            dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp),stat=ier)
@@ -1183,7 +1190,6 @@
 
 
   subroutine prepare_timerun_attenuation()
-
 
 #ifdef USE_MPI
   use mpi

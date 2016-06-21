@@ -53,15 +53,12 @@
 
   use constants,only: CUSTOM_REAL,NDIM
 
-  use specfem_par, only: NPROC, &
-    ninterface,max_ibool_interfaces_size_ac, &
-    max_ibool_interfaces_size_el, &
-    max_ibool_interfaces_size_po, &
-    ibool_interfaces_acoustic,ibool_interfaces_elastic, &
-    ibool_interfaces_poroelastic, &
-    nibool_interfaces_acoustic,nibool_interfaces_elastic, &
-    nibool_interfaces_poroelastic,my_neighbours
+  use specfem_par, only: NPROC,ninterface,my_neighbours
 
+  ! acoustic/elastic/poroelastic interfaces
+  use specfem_par, only: max_ibool_interfaces_size_ac,max_ibool_interfaces_size_el,max_ibool_interfaces_size_po, &
+    ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic, &
+    nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_poroelastic
 
   implicit none
 
@@ -81,11 +78,11 @@
 
   ! there are now two different mass matrices for the elastic case
   ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
-  double precision, dimension(max_ibool_interfaces_size_ac+2*max_ibool_interfaces_size_el+&
-       2*max_ibool_interfaces_size_po, ninterface)  :: &
-       buffer_send_faces_scalar, &
-       buffer_recv_faces_scalar
-  integer, dimension(ninterface)  :: msg_requests
+  double precision, dimension(max_ibool_interfaces_size_ac + &
+                              NDIM * max_ibool_interfaces_size_el + &
+                              NDIM * max_ibool_interfaces_size_po, ninterface)  :: buffer_send_faces_scalar, &
+                                                                                   buffer_recv_faces_scalar
+  integer, dimension(ninterface)  :: msg_send_requests,msg_recv_requests
   integer :: ier
 
   ! assemble only if more than one partition
@@ -136,21 +133,26 @@
             2*nibool_interfaces_poroelastic(num_interface), &
             MPI_DOUBLE_PRECISION, &
             my_neighbours(num_interface), 11, &
-            MPI_COMM_WORLD, msg_requests(num_interface), ier)
-
-    enddo
-
-    do num_interface = 1, ninterface
+            MPI_COMM_WORLD, msg_send_requests(num_interface), ier)
 
        ! starts a blocking receive
-       call MPI_RECV ( buffer_recv_faces_scalar(1,num_interface), &
+       call MPI_IRECV ( buffer_recv_faces_scalar(1,num_interface), &
   ! there are now two different mass matrices for the elastic case
   ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
             nibool_interfaces_acoustic(num_interface)+2*nibool_interfaces_elastic(num_interface)+&
             2*nibool_interfaces_poroelastic(num_interface), &
             MPI_DOUBLE_PRECISION, &
             my_neighbours(num_interface), 11, &
-            MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+            MPI_COMM_WORLD, msg_recv_requests(num_interface), ier)
+    enddo
+
+    ! waits for MPI requests to complete (recv)
+    ! each wait returns once the specified MPI request completed
+    do num_interface = 1, ninterface
+      call MPI_Wait(msg_recv_requests(num_interface), MPI_STATUS_IGNORE, ier)
+    enddo
+
+    do num_interface = 1, ninterface
 
        ipoin = 0
        do i = 1, nibool_interfaces_acoustic(num_interface)
@@ -216,20 +218,18 @@
 ! Particular care should be taken concerning possible optimisations of the
 ! communication scheme.
 !-----------------------------------------------
-  subroutine assemble_MPI_vector_ac(array_val1)
+  subroutine assemble_MPI_scalar_ac(array_val1)
 
   use mpi
 
   use constants,only: CUSTOM_REAL
 
-  use specfem_par, only: NPROC, &
-    nglob,ninterface_acoustic, &
-    inum_interfaces_acoustic, &
+  use specfem_par, only: NPROC,nglob,myrank,my_neighbours
+
+  ! acoustic MPI interfaces
+  use specfem_par, only: ninterface_acoustic,inum_interfaces_acoustic, &
     ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-    tab_requests_send_recv_acoustic, &
-    buffer_send_faces_vector_ac, &
-    buffer_recv_faces_vector_ac, &
-    my_neighbours,myrank
+    tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac,buffer_recv_faces_vector_ac
 
   implicit none
 
@@ -323,7 +323,7 @@
 
   endif
 
-  end subroutine assemble_MPI_vector_ac
+  end subroutine assemble_MPI_scalar_ac
 
 #endif
 

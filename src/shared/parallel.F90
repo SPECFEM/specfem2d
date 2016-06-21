@@ -186,11 +186,17 @@
 
   integer :: countval
   integer, dimension(countval) :: buffer
+#ifndef USE_MPI
+  integer :: dummy
+#endif
 
 #ifdef USE_MPI
   integer :: ier
 
   call MPI_BCAST(buffer,countval,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+#else
+  ! to avoid compiler warning
+  dummy = buffer(1)
 #endif
 
   end subroutine bcast_all_i
@@ -208,11 +214,17 @@
   implicit none
 
   integer :: buffer
+#ifndef USE_MPI
+  integer :: dummy
+#endif
 
 #ifdef USE_MPI
   integer :: ier
 
   call MPI_BCAST(buffer,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+#else
+  ! to avoid compiler warning
+  dummy = buffer
 #endif
 
   end subroutine bcast_all_singlei
@@ -230,11 +242,17 @@
   implicit none
 
   logical :: buffer
+#ifndef USE_MPI
+  logical :: dummy
+#endif
 
 #ifdef USE_MPI
   integer :: ier
 
   call MPI_BCAST(buffer,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+#else
+  ! to avoid compiler warning
+  dummy = buffer
 #endif
 
   end subroutine bcast_all_singlel
@@ -253,11 +271,17 @@
   implicit none
 
   double precision :: buffer
+#ifndef USE_MPI
+  double precision :: dummy
+#endif
 
 #ifdef USE_MPI
   integer :: ier
 
   call MPI_BCAST(buffer,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+#else
+  ! to avoid compiler warning
+  dummy = buffer
 #endif
 
   end subroutine bcast_all_singledp

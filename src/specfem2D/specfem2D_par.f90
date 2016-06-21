@@ -687,11 +687,13 @@ module specfem_par
   integer, dimension(:,:,:), allocatable  :: my_interfaces
 
   integer, dimension(:), allocatable :: nibool_interfaces_ext_mesh
-  integer, dimension(:,:), allocatable :: ibool_interfaces_ext_mesh_init, ibool_interfaces_ext_mesh
+  integer, dimension(:,:), allocatable :: ibool_interfaces_ext_mesh_init
+  integer, dimension(:,:), allocatable :: ibool_interfaces_ext_mesh
   integer :: max_nibool_interfaces_ext_mesh
 
   integer, dimension(:), allocatable  :: nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_poroelastic
   integer, dimension(:,:), allocatable  :: ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_poroelastic
+
   integer :: ninterface_acoustic, ninterface_elastic,ninterface_poroelastic
   integer, dimension(:), allocatable :: inum_interfaces_acoustic, inum_interfaces_elastic, inum_interfaces_poroelastic
   integer :: max_ibool_interfaces_size_ac, max_ibool_interfaces_size_el, max_ibool_interfaces_size_po
@@ -709,12 +711,8 @@ module specfem_par
   integer, dimension(:), allocatable  :: tab_requests_send_recv_poro
 
   ! for overlapping MPI communications with computation
-  integer  :: nspec_outer, nspec_inner, num_ispec_outer, num_ispec_inner
-  integer, dimension(:), allocatable  :: ispec_outer_to_glob, ispec_inner_to_glob
-  logical, dimension(:), allocatable  :: mask_ispec_inner_outer
-
-  ! inner/outer elements in the case of an MPI simulation
-  integer :: nglob_outer,nglob_inner
+  integer  :: nspec_outer, nspec_inner
+  logical, dimension(:), allocatable :: ispec_is_inner
 
   ! to create a sorted version of the indirect addressing to reduce cache misses
   integer, dimension(:,:,:), allocatable :: copy_ibool_ori
@@ -876,7 +874,6 @@ module specfem_par_gpu
   real(kind=CUSTOM_REAL),  dimension(:,:), allocatable :: xir_store_loc, gammar_store_loc
 
   ! domains
-  logical, dimension(:), allocatable :: ispec_is_inner
   integer :: num_phase_ispec_elastic,nspec_inner_elastic,nspec_outer_elastic
   integer :: num_phase_ispec_acoustic,nspec_inner_acoustic,nspec_outer_acoustic
 

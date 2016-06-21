@@ -43,34 +43,46 @@
   use specfem_par
 
   implicit none
-
   ! local parameters
-  integer :: ispec
-  ! inner/outer elements in the case of an MPI simulation
-  integer :: ispec_inner,ispec_outer
-  integer, dimension(:,:,:), allocatable :: ibool_outer,ibool_inner
-  real :: percentage_edge
+  integer :: i,iinterface,imax_all
 
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Setting up MPI communication arrays'
     write(IMAIN,*)
-    write(IMAIN,*) '  number of MPI interfaces for master process = ',ninterface
+    if (NPROC == 1) &
+      write(IMAIN,*) '  This is a single process simulation, no need for MPI communication arrays'
+    call flush_IMAIN()
+  endif
+
+  ! initializes
+  ninterface_acoustic = 0
+  ninterface_elastic = 0
+  ninterface_poroelastic = 0
+
+  max_nibool_interfaces_ext_mesh = 0
+  max_ibool_interfaces_size_ac = 0
+  max_ibool_interfaces_size_el = 0
+  max_ibool_interfaces_size_po = 0
+
+  ! user output
+  call max_all_i(ninterface,imax_all)
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  maximum number of MPI interfaces (for a single slice) = ',imax_all
     write(IMAIN,*)
     call flush_IMAIN()
   endif
 
 #ifdef USE_MPI
   if (NPROC > 1) then
-    allocate(mask_ispec_inner_outer(nspec))
-    mask_ispec_inner_outer(:) = .false.
-
     ! preparing for MPI communications
     call get_MPI_interfaces()
 
     ! user output
     if (myrank == 0) then
+      write(IMAIN,*) '  master process:'
       write(IMAIN,*) '  number of MPI interfaces in acoustic domain    = ',ninterface_acoustic
       write(IMAIN,*) '  number of MPI interfaces in elastic domain     = ',ninterface_elastic
       write(IMAIN,*) '  number of MPI interfaces in poroelastic domain = ',ninterface_poroelastic
@@ -78,137 +90,57 @@
       call flush_IMAIN()
     endif
 
-    ! counts number of outer elements (in this slice)
-    nspec_outer = count(mask_ispec_inner_outer)
-    nspec_inner = nspec - nspec_outer
+    ! total MPI interfaces
+    max_nibool_interfaces_ext_mesh = maxval(nibool_interfaces_ext_mesh(:))
 
-    allocate(ispec_outer_to_glob(nspec_outer))
-    allocate(ispec_inner_to_glob(nspec_inner))
-
-    ! building of corresponding arrays between inner/outer elements and their global number
-    num_ispec_outer = 0
-    num_ispec_inner = 0
-    do ispec = 1, nspec
-      if (mask_ispec_inner_outer(ispec)) then
-        num_ispec_outer = num_ispec_outer + 1
-        ispec_outer_to_glob(num_ispec_outer) = ispec
-      else
-        num_ispec_inner = num_ispec_inner + 1
-        ispec_inner_to_glob(num_ispec_inner) = ispec
-      endif
-    enddo
-
-    ! buffers for MPI communications
+    ! domain buffers for MPI communications
     max_ibool_interfaces_size_ac = maxval(nibool_interfaces_acoustic(:))
     max_ibool_interfaces_size_el = NDIM*maxval(nibool_interfaces_elastic(:))
     max_ibool_interfaces_size_po = NDIM*maxval(nibool_interfaces_poroelastic(:))
-    max_nibool_interfaces_ext_mesh = maxval(nibool_interfaces_ext_mesh(:))
 
-    allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
-    allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
-    allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
+    if (ACOUSTIC_SIMULATION) then
+      allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
+      allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
+      allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
+    endif
 
-    allocate(tab_requests_send_recv_elastic(ninterface_elastic*2))
-    allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
-    allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
+    if (ELASTIC_SIMULATION) then
+      allocate(tab_requests_send_recv_elastic(ninterface_elastic*2))
+      allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
+      allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
+    endif
 
-    allocate(tab_requests_send_recv_poro(ninterface_poroelastic*4))
-    allocate(buffer_send_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
-    allocate(buffer_recv_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
-    allocate(buffer_send_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
-    allocate(buffer_recv_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
-
-  else
-    ! single process
-    ninterface_acoustic = 0
-    ninterface_elastic = 0
-    ninterface_poroelastic = 0
-
-    num_ispec_outer = 0
-    num_ispec_inner = 0
-    allocate(mask_ispec_inner_outer(1))
-
-    nspec_outer = 0
-    nspec_inner = nspec
-
-    allocate(ispec_inner_to_glob(nspec_inner))
-    do ispec = 1, nspec
-      ispec_inner_to_glob(ispec) = ispec
-    enddo
+    if (POROELASTIC_SIMULATION) then
+      allocate(tab_requests_send_recv_poro(ninterface_poroelastic*4))
+      allocate(buffer_send_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
+      allocate(buffer_recv_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
+      allocate(buffer_send_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
+      allocate(buffer_recv_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
+    endif
 
   endif ! end of test on whether there is more than one process (NPROC > 1)
-#else
-  ! serial run
-  num_ispec_outer = 0
-  num_ispec_inner = 0
-  allocate(mask_ispec_inner_outer(1))
-
-  nspec_outer = 0
-  nspec_inner = nspec
-
-  allocate(ispec_outer_to_glob(1))
-  allocate(ispec_inner_to_glob(nspec_inner))
-  do ispec = 1, nspec
-     ispec_inner_to_glob(ispec) = ispec
-  enddo
 #endif
 
-  ! loop over spectral elements
-  do ispec_outer = 1,nspec_outer
-    ! get global numbering for inner or outer elements
-    ispec = ispec_outer_to_glob(ispec_outer)
-  enddo
+  ! MPI interfaces array
+  allocate(ibool_interfaces_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
+  ibool_interfaces_ext_mesh(:,:) = 0
 
-  ! loop over spectral elements
-  do ispec_inner = 1,nspec_inner
-    ! get global numbering for inner or outer elements
-    ispec = ispec_inner_to_glob(ispec_inner)
-  enddo
-
-  allocate(ibool_outer(NGLLX,NGLLZ,nspec_outer))
-  allocate(ibool_inner(NGLLX,NGLLZ,nspec_inner))
-
-  ! loop over spectral elements
-  do ispec_outer = 1,nspec_outer
-    ! get global numbering for inner or outer elements
-    ispec = ispec_outer_to_glob(ispec_outer)
-    ibool_outer(:,:,ispec_outer) = ibool(:,:,ispec)
-  enddo
-
-  ! loop over spectral elements
-  do ispec_inner = 1,nspec_inner
-    ! get global numbering for inner or outer elements
-    ispec = ispec_inner_to_glob(ispec_inner)
-    ibool_inner(:,:,ispec_inner) = ibool(:,:,ispec)
+  do iinterface = 1,ninterface
+    do i = 1,nibool_interfaces_ext_mesh(iinterface)
+      ibool_interfaces_ext_mesh(i,iinterface) = ibool_interfaces_ext_mesh_init(i,iinterface)
+    enddo
   enddo
 
   ! user output
+  call max_all_i(max_nibool_interfaces_ext_mesh,imax_all)
   if (myrank == 0) then
-    write(IMAIN,*) '  number of outer elements  = ',nspec_outer
-    write(IMAIN,*) '  number of inner elements  = ',nspec_inner
-    write(IMAIN,*)
-
-    percentage_edge = 100.*nspec_inner/real(nspec)
-    write(IMAIN,*) '  percentage of outer elements ',100. - percentage_edge,'%'
-    write(IMAIN,*) '  percentage of inner elements ',percentage_edge,'%'
+    write(IMAIN,*) '  maximum length of a single MPI interface  = ',imax_all
     write(IMAIN,*)
     call flush_IMAIN()
   endif
 
-  ! reduces cache misses for outer elements
-  call get_global_indirect_addressing(nspec_outer,nglob,ibool_outer,copy_ibool_ori,integer_mask_ibool)
-
-  ! the total number of points without multiples in this region is now known
-  nglob_outer = maxval(ibool_outer)
-
-  ! reduces cache misses for inner elements
-  call get_global_indirect_addressing(nspec_inner,nglob,ibool_inner,copy_ibool_ori,integer_mask_ibool)
-
-  ! the total number of points without multiples in this region is now known
-  nglob_inner = maxval(ibool_inner)
-
-  ! frees temporary arrays
-  deallocate(ibool_inner,ibool_outer)
+  ! sets up inner and outer elements
+  call get_MPI_setup_inner_outer_elements()
 
   end subroutine get_MPI
 
@@ -244,17 +176,19 @@
   double precision, dimension(:), allocatable :: work
   integer, dimension(:), allocatable :: locval
   integer, dimension(:), allocatable :: nibool_interfaces_true
+
   ! for MPI buffers
   integer, dimension(:), allocatable :: reorder_interface,ind,ninseg,iwork
   integer, dimension(:), allocatable :: ibool_dummy
-!  integer, dimension(:,:), allocatable :: ibool_interfaces_dummy
   logical, dimension(:), allocatable :: ifseg
   integer :: iinterface,ilocnum
   integer :: num_points1, num_points2
+
   ! assembly test
-  integer :: i,j,ispec,iglob,countval,inum,idomain
+  integer :: i,j,ispec,iglob,inum,idomain
   integer :: max_nibool_interfaces,num_nibool,num_interface
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: test_flag_cr
+  logical,dimension(:),allocatable :: mask_ibool
 
   ! gets global indices for points on MPI interfaces
   ! (defined by my_interfaces) between different partitions
@@ -376,46 +310,48 @@
 
   ! checks interfaces in acoustic domains
   if (ACOUSTIC_SIMULATION) then
-    inum = 0
-    countval = 0
+    if (myrank == 0) then
+      write(IMAIN,*) '  checking acoustic interfaces:'
+      call flush_IMAIN()
+    endif
 
+    inum = 0
     if (ninterface_acoustic > 0) then
       ! checks with assembly of test fields
       allocate(test_flag_cr(nglob))
       test_flag_cr(:) = 0._CUSTOM_REAL
-      countval = 0
+
+      ! sets identifier on all global nodes in this slice
       do ispec = 1, nspec
         ! sets flags on global points
         do j = 1, NGLLZ
           do i = 1, NGLLX
             ! global index
             iglob = ibool(i,j,ispec)
-
-            ! counts number of unique global points to set
-            if (nint(test_flag_cr(iglob)) == 0) countval = countval + 1
-
             ! sets identifier
             test_flag_cr(iglob) = myrank + 1.0
           enddo
         enddo
       enddo
 
-      max_nibool_interfaces = maxval(nibool_interfaces_acoustic(:))
-
-      allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
-      allocate(buffer_send_faces_vector_ac(max_nibool_interfaces,ninterface_acoustic))
-      allocate(buffer_recv_faces_vector_ac(max_nibool_interfaces,ninterface_acoustic))
-      inum = 0
+      ! count global points on MPI interfaces to neighbors
+      allocate(mask_ibool(nglob))
+      mask_ibool(:) = .false.
       do iinterface = 1, ninterface
-        inum = inum + nibool_interfaces_acoustic(iinterface)
+        do inum = 1,nibool_interfaces_acoustic(iinterface)
+          iglob = ibool_interfaces_acoustic(inum,iinterface)
+          if (.not. mask_ibool(iglob)) mask_ibool(iglob) = .true.
+        enddo
       enddo
+      inum = count(mask_ibool(:) .eqv. .true.)
+      deallocate(mask_ibool)
     endif
 
     ! note: this mpi reduction awaits information from all processes.
     !          thus, avoid an mpi deadlock in case some of the paritions have no acoustic interface
     call sum_all_i(inum,num_points1)
     if (myrank == 0) then
-      write(IMAIN,*) '  acoustic interface points: ',num_points1
+      write(IMAIN,*) '  total number of global acoustic interface points: ',num_points1
       call flush_IMAIN()
     endif
 
@@ -423,12 +359,18 @@
     inum = 0
     if (ninterface_acoustic > 0) then
       ! adds contributions from different partitions to flag arrays
+      max_nibool_interfaces = maxval(nibool_interfaces_acoustic(:))
+
+      allocate(tab_requests_send_recv_acoustic(ninterface_acoustic*2))
+      allocate(buffer_send_faces_vector_ac(max_nibool_interfaces,ninterface_acoustic))
+      allocate(buffer_recv_faces_vector_ac(max_nibool_interfaces,ninterface_acoustic))
+
       ! custom_real arrays
-      call assemble_MPI_vector_ac(test_flag_cr)
+      call assemble_MPI_scalar_ac(test_flag_cr)
 
       ! checks number of interface points
       inum = 0
-      do iglob= 1,nglob
+      do iglob = 1,nglob
         ! only counts flags with MPI contributions
         if (nint(test_flag_cr(iglob)) > myrank + 1 ) inum = inum + 1
       enddo
@@ -442,12 +384,168 @@
     ! note: this mpi reduction awaits information from all processes.
     call sum_all_i(inum,num_points2)
     if (myrank == 0) then
-      write(IMAIN,*) '  assembly acoustic MPI interface points:',num_points2
-      write(IMAIN,*)
+      write(IMAIN,*) '  total number of global points assembled by acoustic MPI interfaces:',num_points2
       call flush_IMAIN()
     endif
+
+    ! checks
+    if (num_points1 /= num_points2) then
+      stop 'Error acoustic MPI interfaces has invalid assembly'
+    else
+      if (myrank == 0) then
+        write(IMAIN,*) '  interfaces okay'
+        write(IMAIN,*)
+        call flush_IMAIN()
+      endif
+    endif
+
   endif
 
   end subroutine get_MPI_interfaces
 
 #endif
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine get_MPI_setup_inner_outer_elements()
+
+! sets up inner and outer elements for overlapping communication
+
+  use constants,only: IMAIN,NGLLX,NGLLZ
+
+  use specfem_par,only: nspec_inner,nspec_outer,ispec_is_inner, &
+    ninterface,nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
+    ibool,copy_ibool_ori,integer_mask_ibool, &
+    myrank,nspec,nglob,NPROC
+
+  implicit none
+
+  ! local parameters
+  integer :: ispec,i,j,iglob,iinterface
+  ! inner/outer elements in the case of an MPI simulation
+  integer :: ispec_inner,ispec_outer
+  integer :: num_ispec_outer, num_ispec_inner
+
+  logical,dimension(:),allocatable :: iglob_is_inner
+  integer, dimension(:,:,:), allocatable :: ibool_outer,ibool_inner
+  integer, dimension(:), allocatable  :: ispec_outer_to_glob, ispec_inner_to_glob
+
+  real :: percentage_edge
+  integer :: nglob_outer,nglob_inner
+
+  ! initializes flags on elements (default to all inner elements)
+  allocate(ispec_is_inner(nspec))
+  ispec_is_inner(:) = .true.
+
+  ! initializes flags on global nodes
+  allocate(iglob_is_inner(nglob))
+  iglob_is_inner(:) = .true.
+
+  if (NPROC > 1) then
+    ! sets flag on shared global nodes on MPI interfaces
+    do iinterface = 1, ninterface
+      do i = 1, nibool_interfaces_ext_mesh(iinterface)
+        iglob = ibool_interfaces_ext_mesh(i,iinterface)
+        iglob_is_inner(iglob) = .false.
+      enddo
+    enddo
+  endif
+
+  ! determines flags for inner elements (purely inside the partition) which contains an "outer" global node
+  do ispec = 1, nspec
+    do j = 1, NGLLZ
+      do i = 1, NGLLX
+        iglob = ibool(i,j,ispec)
+        ispec_is_inner(ispec) = ( iglob_is_inner(iglob) .and. ispec_is_inner(ispec) )
+      enddo
+    enddo
+  enddo
+
+  ! counts number of outer elements (in this slice)
+  nspec_inner = count(ispec_is_inner(:) .eqv. .true.)
+  nspec_outer = nspec - nspec_inner
+
+  ! building of corresponding arrays between inner/outer elements and their global number
+  allocate(ispec_outer_to_glob(nspec_outer))
+  allocate(ispec_inner_to_glob(nspec_inner))
+
+  num_ispec_outer = 0
+  num_ispec_inner = 0
+  do ispec = 1, nspec
+    if (ispec_is_inner(ispec)) then
+      num_ispec_inner = num_ispec_inner + 1
+      ispec_inner_to_glob(num_ispec_inner) = ispec
+    else
+      num_ispec_outer = num_ispec_outer + 1
+      ispec_outer_to_glob(num_ispec_outer) = ispec
+    endif
+  enddo
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of outer elements  = ',nspec_outer
+    write(IMAIN,*) '  number of inner elements  = ',nspec_inner
+    write(IMAIN,*)
+
+    percentage_edge = 100.*nspec_inner/real(nspec)
+    write(IMAIN,*) '  percentage of outer elements ',100. - percentage_edge,'%'
+    write(IMAIN,*) '  percentage of inner elements ',percentage_edge,'%'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! copies ibool into separate arrays for inner/outer elements
+  allocate(ibool_outer(NGLLX,NGLLZ,nspec_outer))
+  allocate(ibool_inner(NGLLX,NGLLZ,nspec_inner))
+
+  ! loop over spectral elements
+  do ispec_outer = 1,nspec_outer
+    ! get global numbering for inner or outer elements
+    ispec = ispec_outer_to_glob(ispec_outer)
+    ibool_outer(:,:,ispec_outer) = ibool(:,:,ispec)
+  enddo
+
+  ! loop over spectral elements
+  do ispec_inner = 1,nspec_inner
+    ! get global numbering for inner or outer elements
+    ispec = ispec_inner_to_glob(ispec_inner)
+    ibool_inner(:,:,ispec_inner) = ibool(:,:,ispec)
+  enddo
+
+  ! reduces cache misses for outer elements
+  if (nspec_outer > 0) then
+    call get_global_indirect_addressing(nspec_outer,nglob,ibool_outer,copy_ibool_ori,integer_mask_ibool)
+
+    ! the total number of points without multiples in this region is now known
+    nglob_outer = maxval(ibool_outer)
+  else
+    nglob_outer = 0
+  endif
+
+
+  ! reduces cache misses for inner elements
+  if (nspec_inner > 0) then
+    call get_global_indirect_addressing(nspec_inner,nglob,ibool_inner,copy_ibool_ori,integer_mask_ibool)
+
+    ! the total number of points without multiples in this region is now known
+    nglob_inner = maxval(ibool_inner)
+  else
+    nglob_inner = 0
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of global nodes in outer elements  = ',nglob_outer
+    write(IMAIN,*) '  number of global nodes in inner elements  = ',nglob_inner
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! frees temporary arrays
+  deallocate(ibool_inner,ibool_outer)
+  deallocate(ispec_inner_to_glob,ispec_outer_to_glob)
+  deallocate(ispec_is_inner,iglob_is_inner)
+
+  end subroutine get_MPI_setup_inner_outer_elements
