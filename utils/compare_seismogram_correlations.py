@@ -207,14 +207,18 @@ def plot_correlations(out_dir,ref_dir):
         # least square test
         norm = np.linalg.norm
         sqrt = np.sqrt
+
         # normalized by power in reference solution
         fac_norm = norm(ref)
         # or normalized by power in (ref*syn)
         #fac_norm = sqrt(norm(ref)*norm(syn))
+
         if fac_norm > 0.0:
             err = norm(ref-syn)/fac_norm
         else:
             err = norm(ref-syn)
+
+        #debug
         #print('norm syn = %e norm ref = %e' % (norm(syn),fac_norm))
 
         # correlation test
@@ -222,13 +226,22 @@ def plot_correlations(out_dir,ref_dir):
         if fac_norm > 0.0:
             corr_mat = np.corrcoef(ref, syn)
         else:
-            corr_mat = np.cov(ref-syn)
+            if norm(ref-syn) > 0.0:
+                corr_mat = np.cov(ref-syn)
+            else:
+                # both zero traces
+                print("** warning: comparing zero traces")
+                corr_mat = 1.0
         corr = np.min(corr_mat)
         
         # time shift
-        # total length
-        shift = get_cross_correlation_timeshift(ref,syn,dt)
-        
+        if fac_norm > 0.0:
+          # shift (in s) by cross correlation
+          shift = get_cross_correlation_timeshift(ref,syn,dt)
+        else:
+          # no correlation with zero trace
+          shift = 0.0
+
         # correlation in moving window
         if USE_SUB_WINDOW_CORR:
             # moves window through seismogram
