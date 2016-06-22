@@ -48,7 +48,7 @@ env:
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=4
 
     # run example 5 (poroelastic/acoustic)
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=5
+    #- TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=5
 
 before_install:
   # informations on git
@@ -127,6 +127,7 @@ script:
       if [[ $? -ne 0 ]]; then exit 1; fi
       ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
       if [[ $? -ne 0 ]]; then exit 1; fi
+      rm -rf OUTPUT_FILES/
     }
 
   - |
@@ -136,6 +137,7 @@ script:
       if [[ $? -ne 0 ]]; then exit 1; fi
       ../../utils/compare_kernel_correlations.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat REF_KERNEL/proc000000_rhop_alpha_beta_kernel.dat | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
       if [[ $? -ne 0 ]]; then exit 1; fi
+      rm -rf OUTPUT_FILES/
     }
 
   ###########################################################
@@ -201,9 +203,10 @@ script:
       cd EXAMPLES/Gmsh_example_Stacey_MPI/
       sed -i "s:^NPROC .*:NPROC    = 4:" DATA/Par_file
       ./run_this_example.sh
-      my_test
       # tests mesh quality output
       awk '{if(NR==1){dy=sqrt(($2-13.3242693)^2);if(dy>1.e-5){print $0,"failed",dy;exit 1;}else{print $0,"good",dy;exit 0;}}}' OUTPUT_FILES/mesh_quality_histogram.txt
+      if [[ $? -ne 0 ]]; then exit 1; fi
+      my_test
       cd ../../
     fi
 
