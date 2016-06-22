@@ -427,7 +427,7 @@
 
           ! rescale to avoid very dark gray levels
           x1 = x1*0.7 + 0.2
-          if (x1 > 1.d0) x1=1.d0
+          if (x1 > 1.d0) x1 = 1.d0
 
           ! invert scale: white = vpImin, dark gray = vpImax
           x1 = 1.d0 - x1

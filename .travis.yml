@@ -226,7 +226,7 @@ script:
   - |
     if [ "$TESTCOV" == "1" ]; then
       cd EXAMPLES/poroelastic_acoustic/
-      sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
+      sed -i "s:^NSTEP .*:NSTEP    = 200:" DATA/Par_file
       ./run_this_example.sh
       my_test
       cd ../../
