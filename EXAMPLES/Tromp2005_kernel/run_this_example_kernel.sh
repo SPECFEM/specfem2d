@@ -36,21 +36,34 @@ rm -rf SEM/*
 # P_SV default case
 if [ ! -e OUTPUT_FILES/AA.S0001.BXX.semd ]; then echo "no traces in OUTPUT_FILES/, please run forward simulation first..."; exit 1; fi
 
-# fortran compiler (as specified in Makefile)
-FC=`grep '^FC .*' ../../Makefile | cut -d = -f 2 | sed "s/^[ \t]*//"`
-if [ "$FC" == "" ]; then echo "fortran compiler not found, exiting..."; exit 1; fi
-echo "using compiler: $FC"
-echo
+## execute this in case a local file is used instead of default in directory src/auxiliaries/
+if [ "$1" == 1 ]; then
+  my_file="adj_seismogram_Tromp2005.f90"
 
-# creates adjoint sources
-rm -rf xadj_seismogram
-$FC adj_seismogram_Tromp2005.f90 -o xadj_seismogram
+  # fortran compiler (as specified in Makefile)
+  FC=`grep '^FC .*' ../../Makefile | cut -d = -f 2 | sed "s/^[ \t]*//"`
+  if [ "$FC" == "" ]; then echo "fortran compiler not found, exiting..."; exit 1; fi
+  echo "using compiler: $FC"
+  echo
 
-echo
-echo "running adjoint source creation"
-echo
+  # creates adjoint sources
+  rm -rf xadj_seismogram
+  $FC $my_file -o xadj_seismogram
 
-./xadj_seismogram
+  echo
+  echo "running adjoint source creation"
+  echo
+  ./xadj_seismogram
+else
+  # links executable
+  rm -f xadj_seismogram
+  ln -s ../../bin/xadj_seismogram
+
+  echo
+  echo "running adjoint source creation"
+  echo
+  ./xadj_seismogram 27.0 32.0  AA.S0001  1
+fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
