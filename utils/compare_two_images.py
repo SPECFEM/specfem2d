@@ -55,18 +55,26 @@ except:
     raise Exception("Importing skimage.data failed")
 
 try:
-    import skimage as ski
-    version = ski.__version__
+    import skimage
+    version = skimage.__version__
     print("skimage version: ",version)
     v = version.split('.')
+    # determines skimage version function
+    new_version = 0
     if len(v) > 2:
         print("skimage structural similarity support: %i.%i.x" % (int(v[0]),int(v[1])))
         if int(v[1]) > 11:
-            # deprecated: from skimage.measure import structural_similarity as ssim
-            print("importing new function compare_ssim as ssim")
-            from skimage.measure import compare_ssim as ssim
+            new_version = 1
+        else:
+            new_version = 0
+    # imports structural similarity function
+    if new_version == 1:
+        # deprecated: from skimage.measure import structural_similarity as ssim
+        print("importing new function compare_ssim as ssim")
+        from skimage.measure import compare_ssim as ssim
     else:
         # older version <= 0.11.x
+        print("importing old function structural_similarity as ssim")
         from skimage.measure import structural_similarity as ssim
 except:
     print("Error importing structural similarity from skimage.measure, please install skimage package first...")
