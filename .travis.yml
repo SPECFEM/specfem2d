@@ -48,7 +48,7 @@ env:
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=4
 
     # run example 5 (poroelastic/acoustic)
-    #- TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=5
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=5
 
 before_install:
   # informations on git
@@ -191,7 +191,8 @@ script:
   - |
     if [ "$TESTCOV" == "1" ]; then
       cd EXAMPLES/semi_infinite_homogeneous/
-      sed -i "s:^NPROC .*:NPROC    = 4:" DATA/Par_file
+      sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+      sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
       ./run_this_example.sh
       my_test
       cd ../../
@@ -201,7 +202,7 @@ script:
   - |
     if [ "$TESTCOV" == "1" ]; then
       cd EXAMPLES/Gmsh_example_Stacey_MPI/
-      sed -i "s:^NPROC .*:NPROC    = 4:" DATA/Par_file
+      sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
       ./run_this_example.sh
       # tests mesh quality output
       awk '{if(NR==1){dy=sqrt(($2-13.3242693)^2);if(dy>1.e-5){print $0,"failed",dy;exit 1;}else{print $0,"good",dy;exit 0;}}}' OUTPUT_FILES/mesh_quality_histogram.txt
@@ -214,8 +215,10 @@ script:
   - |
     if [ "$TESTCOV" == "1" ]; then
       cd EXAMPLES/Tromp2005_kernel/
+      sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
       ./run_this_example_kernel.sh
-      my_test_kernel
+      # no kernel value testing: only execution failure
+      #my_test_kernel
       cd ../../
     fi
 
@@ -223,6 +226,7 @@ script:
   - |
     if [ "$TESTCOV" == "1" ]; then
       cd EXAMPLES/poroelastic_acoustic/
+      sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
       ./run_this_example.sh
       my_test
       cd ../../
