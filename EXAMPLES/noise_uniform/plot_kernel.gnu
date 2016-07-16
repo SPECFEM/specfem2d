@@ -1,1 +1,1 @@
-../../utils/visualization/plot_kernel.gnu
+../../utils/Visualization/plot_kernel.gnu
