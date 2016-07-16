@@ -50,6 +50,9 @@ env:
     # run example 5 (poroelastic/acoustic)
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=5
 
+    # run example 6 (noise)
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=6
+
 before_install:
   # informations on git
   - |
@@ -169,6 +172,7 @@ script:
     3) dir=EXAMPLES/Gmsh_example_Stacey_MPI/ ;;
     4) dir=EXAMPLES/Tromp2005_kernel/ ;;
     5) dir=EXAMPLES/poroelastic_acoustic/ ;;
+    6) dir=EXAMPLES/noise_uniform/ ;;
     *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
     esac
     # runs test
@@ -181,8 +185,12 @@ script:
       make tests
     else
       # limit time steps for testing
-      if [ "$TESTMAKE" == "5" ]; then
+      if [ "$TESTMAKE" == "5" ] ; then
         sed -i "s:^NSTEP .*:NSTEP    = 1000:" DATA/Par_file
+      fi
+      # coverage run
+      if [ "$TESTCOV" == "1" ]; then
+        sed -i "s:^NSTEP .*:NSTEP    = 400:" DATA/Par_file
       fi
       # default
       if [ "$TESTMAKE" == "4" ]; then
@@ -196,6 +204,7 @@ script:
       fi
       cd $WORKDIR
     fi
+
   # testing example with pml (longer testing only together with mpi and code coverage)
   - |
     if [ "$TESTCOV" == "1" ]; then
@@ -235,9 +244,19 @@ script:
   - |
     if [ "$TESTCOV" == "1" ]; then
       cd EXAMPLES/poroelastic_acoustic/
-      sed -i "s:^NSTEP .*:NSTEP    = 200:" DATA/Par_file
+      sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
       ./run_this_example.sh
-      my_test
+      # only for coverage, comparison would fail: my_test
+      cd $WORKDIR
+    fi
+
+  # testing noise example
+  - |
+    if [ "$TESTCOV" == "1" ]; then
+      cd EXAMPLES/noise_uniform/
+      sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file_noise_1
+      ./run_this_example.sh
+      # only for coverage, comparison would fail: my_test
       cd $WORKDIR
     fi
 
