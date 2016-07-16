@@ -31,19 +31,13 @@
 !
 !========================================================================
 
-module constants
-
-  include "constants.h"
-
-end module constants
-
-!=====================================================================
 
 module specfem_par
 
 ! main parameter module for specfem simulations
 
-  use constants
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME, &
+    NEDGES,NGLLX,NGLLZ,NGLJ,NDIM
 
   implicit none
 
@@ -54,7 +48,7 @@ module specfem_par
   !---------------------------------------------------------------------
   !for model description
   !---------------------------------------------------------------------
-  character(len=100) :: MODEL, SAVE_MODEL
+  character(len=MAX_STRING_LEN) :: MODEL, SAVE_MODEL
 
   ! 1 = forward wavefield, 3 = backward and adjoint wavefields and kernels
   integer :: SIMULATION_TYPE
@@ -193,7 +187,7 @@ module specfem_par
   ! source description
   integer :: NSOURCES
   integer, dimension(:), allocatable :: source_type,time_function_type
-  character(len=100), dimension(:), allocatable :: name_of_source_file
+  character(len=MAX_STRING_LEN), dimension(:), allocatable :: name_of_source_file
   double precision, dimension(:), allocatable :: burst_band_width
 
   ! source locations
@@ -601,7 +595,7 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_potential_ddot_acoustic_LDDRK
 
   ! for kernel computation
-  character(len=100) :: TOMOGRAPHY_FILE
+  character(len=MAX_STRING_LEN) :: TOMOGRAPHY_FILE
   integer :: tomo_material
   logical :: save_ASCII_kernels
 
@@ -909,7 +903,7 @@ module specfem_par_movie
 
 ! parameter module for noise simulations
 
-  use constants,only: CUSTOM_REAL
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN
   implicit none
 
   double precision, dimension(:,:), allocatable :: flagrange,xinterp,zinterp,Uxinterp,Uzinterp
@@ -921,7 +915,6 @@ module specfem_par_movie
   !---------------------------------------------------------------------
   ! for color image
   !---------------------------------------------------------------------
-  integer :: colors !also used in plot_post
   double precision :: cutsnaps !also used in plot_post
 
   logical :: output_color_image
@@ -967,7 +960,6 @@ module specfem_par_movie
   ! for plot_post
   !---------------------------------------------------------------------
   integer :: subsamp_postscript,imagetype_postscript
-  integer :: numbers
 
   double precision :: sizemax_arrows
   double precision :: vpImin,vpImax,vpIImin,vpIImax
@@ -978,7 +970,7 @@ module specfem_par_movie
   logical :: interpol,meshvect,modelvect,boundvect
 
   ! title of the plot
-  character(len=60) simulation_title
+  character(len=MAX_STRING_LEN) simulation_title
 
   ! US letter paper or European A4
   double precision, dimension(:,:), allocatable  :: coorg_send_ps_velocity_model

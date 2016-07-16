@@ -43,12 +43,12 @@
 
   subroutine read_external_mesh_file(filename, remove_min_to_start_at_zero, ngnod)
 
+  use constants,only: MAX_STRING_LEN,IMAIN
   use part_unstruct_par,only: elmnts,nelmnts,nnodes
 
   implicit none
-  include "constants.h"
 
-  character(len=256), intent(in)  :: filename
+  character(len=MAX_STRING_LEN), intent(in)  :: filename
   integer, intent(out)  :: remove_min_to_start_at_zero
   integer, intent(in)  :: ngnod
 
@@ -122,11 +122,12 @@
 
   subroutine read_external_materials_file(filename, num_material)
 
+  use constants,only: MAX_STRING_LEN
   use part_unstruct_par,only: nelmnts
 
   implicit none
 
-  character(len=256), intent(in)  :: filename
+  character(len=MAX_STRING_LEN), intent(in)  :: filename
   integer, dimension(1:nelmnts), intent(out)  :: num_material
 
   integer  :: i,ier
@@ -162,13 +163,12 @@
 
   subroutine read_external_pml_element(filename, region_pml_external_mesh, nspec_cpml)
 
+  use constants,only: MAX_STRING_LEN,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
   use part_unstruct_par,only: nelmnts
 
   implicit none
 
-  include "constants.h"
-
-  character(len=256), intent(in)  :: filename
+  character(len=MAX_STRING_LEN), intent(in)  :: filename
   integer, dimension(1:nelmnts), intent(out)  :: region_pml_external_mesh
   integer, intent(out)  :: nspec_cpml
 
@@ -216,11 +216,12 @@
 
   subroutine read_external_mesh_nodes_coords(filename)
 
+  use constants,only: MAX_STRING_LEN
   use part_unstruct_par,only: nodes_coords,nnodes
 
   implicit none
 
-  character(len=256), intent(in)  :: filename
+  character(len=MAX_STRING_LEN), intent(in)  :: filename
 
   integer  :: i,ier
 
@@ -266,20 +267,19 @@
   subroutine read_external_acoustic_surface(filename, num_material, &
                                             nbmodels, icodemat, phi, remove_min_to_start_at_zero)
 
+  use constants,only: MAX_STRING_LEN,ANISOTROPIC_MATERIAL
   use part_unstruct_par,only: nelmnts,nelem_acoustic_surface,acoustic_surface
 
   implicit none
 
-  include "constants.h"
-
-  character(len=256), intent(in)  :: filename
+  character(len=MAX_STRING_LEN), intent(in)  :: filename
   integer, dimension(0:nelmnts-1)  :: num_material
   integer, intent(in)  :: nbmodels
   integer, dimension(1:nbmodels), intent(in)  :: icodemat
   double precision, dimension(1:nbmodels), intent(in)  :: phi
   integer, intent(in)  :: remove_min_to_start_at_zero
 
-
+  ! local parameters
   integer, dimension(:,:), allocatable  :: acoustic_surface_tmp
   integer  :: nelmnts_surface
   integer  :: i,ier
@@ -353,12 +353,12 @@
   !-----------------------------------------------
   subroutine read_external_abs_surface(filename, remove_min_to_start_at_zero)
 
+  use constants,only: MAX_STRING_LEN
   use part_unstruct_par,only: abs_surface,nelemabs
 
   implicit none
-  !include "constants.h"
 
-  character(len=256), intent(in)  :: filename
+  character(len=MAX_STRING_LEN), intent(in)  :: filename
   integer, intent(in)  :: remove_min_to_start_at_zero
 
   integer  :: i,ier
@@ -428,12 +428,12 @@
   !-----------------------------------------------
   subroutine read_external_acoustic_forcing_surface(filename, remove_min_to_start_at_zero)
 
+  use constants,only: MAX_STRING_LEN
   use part_unstruct_par,only: acforcing_surface,nelemacforcing
 
   implicit none
-  !include "constants.h"
 
-  character(len=256), intent(in)  :: filename
+  character(len=MAX_STRING_LEN), intent(in)  :: filename
   integer, intent(in)  :: remove_min_to_start_at_zero
 
   integer  :: i,ier
@@ -505,12 +505,12 @@
 
   subroutine read_external_axial_elements_file(axial_elements_file,remove_min_to_start_at_zero)
 
+  use constants,only: MAX_STRING_LEN,IMAIN
   use part_unstruct_par,only: ispec_of_axial_elements,nelem_on_the_axis,inode1_axial_elements,inode2_axial_elements
 
   implicit none
-  include "constants.h"
 
-  character(len=256), intent(in)  :: axial_elements_file
+  character(len=MAX_STRING_LEN), intent(in)  :: axial_elements_file
   integer, intent(in)  :: remove_min_to_start_at_zero
 
   integer :: i,j,ier
@@ -583,11 +583,12 @@
 
 ! reads in tangential detection curve file
 
+  use constants,only: IIN
+
   use part_unstruct_par,only: nnodes_tangential_curve,nodes_tangential_curve
   use parameter_file_par,only: tangential_detection_curve_file
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: i,ier

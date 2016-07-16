@@ -43,6 +43,7 @@ shared_TARGETS = \
 
 
 shared_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/define_shape_functions.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/force_ftz.cc.o \
@@ -54,6 +55,8 @@ shared_OBJECTS = \
 
 
 shared_MODULES = \
+	$(FC_MODDIR)/constants.$(FC_MODEXT) \
+	$(FC_MODDIR)/shared_parameters.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 
@@ -68,10 +71,16 @@ shared_MODULES = \
 ## shared
 ##
 
-$O/%.shared.o: $S/%.f90
+$O/%.shared_module.o: $S/%.f90 ${SETUP}/constants.h
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.shared_module.o: $S/%.F90 ${SETUP}/constants.h
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.shared.o: $S/%.f90 $O/shared_par.shared_module.o
 	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.shared.o: $S/%.F90
+$O/%.shared.o: $S/%.F90 $O/shared_par.shared_module.o
 	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
 

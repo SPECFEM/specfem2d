@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine gmat01(f0)
+  subroutine read_materials(f0)
 
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
 
@@ -53,16 +53,13 @@
   double precision :: lambdaplus2mu_s,lambdaplus2mu_fr,kappa_s,kappa_f,kappa_fr
   double precision :: young_s,poisson_s,density_mat(2),phi,tortuosity_mat
   double precision :: cpIsquare,cpIIsquare,cssquare,mu_s,mu_fr,eta_f,lambda_s,lambda_fr
-  double precision :: val1,val2,val3,val4,val5,val6
-  double precision :: val7,val8,val9,val10,val11,val12,val0
   double precision :: c11,c13,c15,c33,c35,c55,c12,c23,c25,c22
+  double precision :: val0,val1,val2,val3,val4,val5,val6,val7,val8,val9,val10,val11,val12
 
   double precision :: D_biot,H_biot,C_biot,M_biot
 
   double precision :: w_c
   integer :: imat,n,indic
-  character(len=80) :: datlin
-
 
   !
   !---- loop over the different material sets
@@ -84,13 +81,9 @@
   if (myrank == 0) write(IMAIN,100) numat
 
   ! skips material sets header
-  read(IIN,"(a80)") datlin
-  read(IIN,"(a80)") datlin
-  read(IIN,"(a80)") datlin
-
   do imat = 1,numat
 
-    read(IIN,*) n,indic,val0,val1,val2,val3,val4,val5,val6,val7,val8,val9,val10,val11,val12
+    read(IIN) n,indic,val0,val1,val2,val3,val4,val5,val6,val7,val8,val9,val10,val11,val12
 
     if (n < 1 .or. n > numat) call exit_MPI(myrank,'Wrong material set number')
 
@@ -477,5 +470,5 @@
        '----------------------------------------------------',/5x, &
        'Material set number. . . . . . . . (jmat) =',i6,/5x)
 
-  end subroutine gmat01
+  end subroutine read_materials
 

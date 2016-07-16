@@ -345,13 +345,13 @@
 
   program meshfem2D
 
+  use constants,only: IMAIN,ISTANDARD_OUTPUT,TINYVAL
+
   use part_unstruct_par
   use parameter_file_par
   use source_file_par
 
   implicit none
-
-  include "constants.h"
 
   ! to store the position of pml element in array region_pml_external_mesh
   ! this is only useful when using pml together with external mesh

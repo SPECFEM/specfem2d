@@ -110,14 +110,14 @@
 
   subroutine compute_add_sources_viscoelastic_moving_source(accel_elastic,it,i_stage)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,SOURCE_IS_MOVING,TINYVAL,NGLJ
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,SOURCE_IS_MOVING,TINYVAL,NGLJ,IMAIN
 
   use specfem_par, only: P_SV,ispec_is_elastic,nglob_elastic, &
                          NSOURCES,source_time_function, &
                          is_proc_source,ispec_selected_source,sourcearrays, &
                          ibool,coord,nspec,nglob,xigll,zigll,z_source,nb_proc_source,NPROC, & !These 3 lines are for moving src
                          xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source,deltat,t0,myrank, &
-                         time_stepping_scheme,IMAIN,hxis_store,hgammas_store,tshift_src,source_type,ispec_is_acoustic, &
+                         time_stepping_scheme,hxis_store,hgammas_store,tshift_src,source_type,ispec_is_acoustic, &
                          hxis,hpxis,hgammas,hpgammas,anglesource,ispec_is_poroelastic,Mxx,Mxz,Mzz,gammax,gammaz,xix,xiz, &
                          AXISYM,xiglj,is_on_the_axis,initialfield
   implicit none

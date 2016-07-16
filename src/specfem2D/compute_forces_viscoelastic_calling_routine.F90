@@ -33,6 +33,7 @@
 
   subroutine compute_forces_viscoelastic_main()
 
+  use constants,only: SOURCE_IS_MOVING,USE_ENFORCE_FIELDS,ALPHA_LDDRK,BETA_LDDRK
   use specfem_par
   use specfem_par_noise
 
@@ -253,6 +254,7 @@
 
   subroutine compute_forces_viscoelastic_main_backward()
 
+  use constants,only: NOISE_SAVE_EVERYWHERE
   use specfem_par
   use specfem_par_noise
 

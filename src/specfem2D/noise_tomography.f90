@@ -456,7 +456,7 @@
 
   use constants,only: CUSTOM_REAL,NDIM,IMAIN
 
-  use specfem_par, only: myrank,it,NSTEP,nglob,P_SV,displ_elastic
+  use specfem_par, only: myrank,it,NSTEP,nglob,P_SV,displ_elastic,nglob_elastic
 
   use specfem_par_noise,only: NOISE_TOMOGRAPHY
 
@@ -464,9 +464,14 @@
 
   ! local parameter
   integer :: ier
+  real(kind=CUSTOM_REAL), dimension(nglob) :: wavefield
 
   ! checks if anything to do
   if (NOISE_TOMOGRAPHY /= 1 .and. NOISE_TOMOGRAPHY /= 2) return
+
+  ! safety check
+  if (nglob /= nglob_elastic) &
+    stop 'Noise simulation requires elastic simulation'
 
   if (NOISE_TOMOGRAPHY == 1) then
     ! stores forward generating wavefield
@@ -483,11 +488,13 @@
     ! stores generating wavefield
     if (P_SV) then
       ! P_SV-case
-      write(unit=501,rec=it) displ_elastic(2,:) ! only vertical component
+      wavefield(:) = displ_elastic(2,:) ! only vertical component
     else
       ! SH-case
-      write(unit=501,rec=it) displ_elastic(1,:)
+      wavefield(:) = displ_elastic(1,:)
     endif
+    ! file output
+    write(unit=501,rec=it) wavefield
 
     ! closes file at the end of simulation
     if (it == NSTEP) then

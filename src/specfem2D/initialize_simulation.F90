@@ -37,7 +37,7 @@
 #ifdef USE_MPI
   use mpi
 #endif
-
+  use constants,only: IMAIN,ISTANDARD_OUTPUT,SIZE_REAL,NSTAGE
   use specfem_par
   use specfem_par_movie,only: cutsnaps
 
@@ -227,6 +227,7 @@
 
   subroutine initialize_simulation_check()
 
+  use constants,only: IMAIN,ISTANDARD_OUTPUT,USE_ENFORCE_FIELDS
   use specfem_par
   use specfem_par_movie
 
@@ -339,6 +340,7 @@
 
 ! initialization for GPU cards
 
+  use constants,only: IMAIN
   use specfem_par
 
   implicit none

@@ -34,6 +34,7 @@
 
   subroutine prepare_timerun()
 
+  use constants,only: USE_ENFORCE_FIELDS,IOUT_ENERGY,IMAIN
   use specfem_par
   use specfem_par_movie
   use specfem_par_noise,only: NOISE_TOMOGRAPHY
@@ -129,6 +130,7 @@
 
   subroutine prepare_timerun_constants()
 
+  use constants,only: HALF,ZERO
   use specfem_par
 
   implicit none
@@ -188,6 +190,7 @@
   use mpi
 #endif
 
+  use constants,only: IMAIN
   use specfem_par
 
   implicit none
@@ -224,6 +227,7 @@
 
   subroutine prepare_timerun_postscripts()
 
+  use constants,only: IMAIN
   use specfem_par
   use specfem_par_movie
 
@@ -310,6 +314,10 @@
   use mpi
 #endif
 
+  use constants,only: IMAIN
+#ifdef USE_MPI
+  use constants,only: DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
+#endif
   use specfem_par
   use specfem_par_movie
 
@@ -484,30 +492,30 @@
 
     d1_coorg_send_ps_element_mesh=2
     if (ngnod == 4) then
-      if (numbers == 1) then
+      if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
         d2_coorg_send_ps_element_mesh=nspec*5
-        if (colors == 1) then
+        if (DISPLAY_COLORS == 1) then
           d1_color_send_ps_element_mesh=2*nspec
         else
           d1_color_send_ps_element_mesh=1*nspec
         endif
       else
         d2_coorg_send_ps_element_mesh=nspec*6
-        if (colors == 1) then
+        if (DISPLAY_COLORS == 1) then
           d1_color_send_ps_element_mesh=1*nspec
         endif
       endif
     else
-      if (numbers == 1) then
+      if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
         d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1+1)
-        if (colors == 1) then
+        if (DISPLAY_COLORS == 1) then
           d1_color_send_ps_element_mesh=2*nspec
         else
           d1_color_send_ps_element_mesh=1*nspec
         endif
       else
         d2_coorg_send_ps_element_mesh=nspec*((pointsdisp-1)*3+max(0,pointsdisp-2)+1)
-        if (colors == 1) then
+        if (DISPLAY_COLORS == 1) then
           d1_color_send_ps_element_mesh=1*nspec
         endif
       endif
@@ -612,6 +620,7 @@
 
 ! prepares adjoint runs
 
+  use constants,only: IMAIN,USE_PORO_VISCOUS_DAMPING
   use specfem_par
 
   implicit none
@@ -719,6 +728,7 @@
   use mpi
 #endif
 
+  use constants,only: IMAIN,APPROXIMATE_HESS_KL
   use specfem_par
 
   implicit none
@@ -967,6 +977,7 @@
 
 ! reads initial fields from external file if needed
 
+  use constants,only: IMAIN
   use specfem_par
 
   implicit none
@@ -1195,6 +1206,7 @@
   use mpi
 #endif
 
+  use constants,only: IMAIN,TWO,USE_PORO_VISCOUS_DAMPING,PI,FOUR_THIRDS
   use specfem_par
 
   implicit none

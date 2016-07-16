@@ -33,6 +33,8 @@
 
   subroutine determine_acoustic_surface()
 
+  use constants,only: ANISOTROPIC_MATERIAL,TINYVAL
+
   use part_unstruct_par,only: nelem_acoustic_surface,acoustic_surface, &
     nxread,nzread,elmnts
 
@@ -40,7 +42,6 @@
     absorbbottom,absorbleft,absorbright,absorbtop
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: i,j,ier

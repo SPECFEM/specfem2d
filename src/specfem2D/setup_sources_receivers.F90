@@ -178,6 +178,9 @@
   subroutine setup_receivers()
 
   use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,IIN,MAX_STRING_LEN
+#ifndef USE_MPI
+  use constants,only: IOUT
+#endif
 
   use specfem_par, only: coord,ibool,nglob,nspec, &
                          ispec_selected_rec, &
@@ -197,6 +200,7 @@
   character(len=MAX_STRING_LEN) :: dummystring
 
   ! user output
+  call synchronize_all()
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'receivers:'
@@ -253,12 +257,12 @@
   if (myrank == 0) then
      ! write out actual station locations (compare with STATIONS from meshfem2D)
      ! NOTE: this will be written out even if use_existing_STATIONS = .true.
-     open(unit=15,file='OUTPUT_FILES/for_information_STATIONS_actually_used',status='unknown')
+     open(unit=IOUT,file='OUTPUT_FILES/for_information_STATIONS_actually_used',status='unknown')
      do irec = 1,nrec
-        write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") &
+        write(IOUT,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") &
              irec,x_final_receiver(irec),z_final_receiver(irec)
      enddo
-     close(15)
+     close(IOUT)
   endif
 #endif
 
@@ -489,6 +493,7 @@
   use mpi
 #endif
 
+  use constants,only: PI,HUGEVAL
   use specfem_par
 
   implicit none

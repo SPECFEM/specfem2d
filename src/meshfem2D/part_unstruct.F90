@@ -37,10 +37,11 @@
   !-----------------------------------------------
   subroutine mesh2dual_ncommonnodes(elmnts_l,ncommonnodes,xadj,adjncy)
 
+  use constants,only: NCORNERS,MAX_NEIGHBORS,MAX_NSIZE_SHARED
+
   use part_unstruct_par,only: nelmnts,nnodes,nnodes_elmnts,nodes_elmnts
 
   implicit none
-  include "constants.h"
 
   integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
   integer, intent(in) :: ncommonnodes
@@ -56,7 +57,7 @@
 
   ! allocates memory for arrays
   if (.not. allocated(nnodes_elmnts) ) allocate(nnodes_elmnts(0:nnodes-1))
-  if (.not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:nsize*nnodes-1))
+  if (.not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:MAX_NSIZE_SHARED*nnodes-1))
 
   ! initializes
   xadj(:) = 0
@@ -67,7 +68,7 @@
 
   ! list of elements per node
   do i = 0, NCORNERS*nelmnts-1
-    nodes_elmnts(elmnts_l(i)*nsize + nnodes_elmnts(elmnts_l(i))) = i/NCORNERS
+    nodes_elmnts(elmnts_l(i)*MAX_NSIZE_SHARED + nnodes_elmnts(elmnts_l(i))) = i/NCORNERS
     nnodes_elmnts(elmnts_l(i)) = nnodes_elmnts(elmnts_l(i)) + 1
   enddo
 
@@ -77,12 +78,12 @@
       do l = k+1, nnodes_elmnts(j)-1
 
         connectivity = 0
-        elem_base = nodes_elmnts(k+j*nsize)
-        elem_target = nodes_elmnts(l+j*nsize)
+        elem_base = nodes_elmnts(k+j*MAX_NSIZE_SHARED)
+        elem_target = nodes_elmnts(l+j*MAX_NSIZE_SHARED)
         do n = 1, NCORNERS
           num_node = elmnts_l(NCORNERS*elem_base+n-1)
           do m = 0, nnodes_elmnts(num_node)-1
-            if (nodes_elmnts(m+num_node*nsize) == elem_target) then
+            if (nodes_elmnts(m+num_node*MAX_NSIZE_SHARED) == elem_target) then
               connectivity = connectivity + 1
             endif
           enddo
@@ -94,26 +95,26 @@
 
           is_neighbour = .false.
 
-          do m = 0, xadj(nodes_elmnts(k+j*nsize))
+          do m = 0, xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED))
             if (.not.is_neighbour) then
-              if (adjncy(nodes_elmnts(k+j*nsize)*MAX_NEIGHBORS+m) == nodes_elmnts(l+j*nsize)) then
+              if (adjncy(nodes_elmnts(k+j*MAX_NSIZE_SHARED)*MAX_NEIGHBORS+m) == nodes_elmnts(l+j*MAX_NSIZE_SHARED)) then
                 is_neighbour = .true.
               endif
             endif
           enddo
           if (.not.is_neighbour) then
-            adjncy(nodes_elmnts(k+j*nsize)*MAX_NEIGHBORS &
-                   + xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
+            adjncy(nodes_elmnts(k+j*MAX_NSIZE_SHARED)*MAX_NEIGHBORS &
+                   + xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED))) = nodes_elmnts(l+j*MAX_NSIZE_SHARED)
 
-            xadj(nodes_elmnts(k+j*nsize)) = xadj(nodes_elmnts(k+j*nsize)) + 1
-            if (xadj(nodes_elmnts(k+j*nsize)) > MAX_NEIGHBORS) &
+            xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED)) = xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED)) + 1
+            if (xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED)) > MAX_NEIGHBORS) &
               stop 'ERROR : too much neighbours per element, modify the mesh.'
 
-            adjncy(nodes_elmnts(l+j*nsize)*MAX_NEIGHBORS &
-                   + xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
+            adjncy(nodes_elmnts(l+j*MAX_NSIZE_SHARED)*MAX_NEIGHBORS &
+                   + xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED))) = nodes_elmnts(k+j*MAX_NSIZE_SHARED)
 
-            xadj(nodes_elmnts(l+j*nsize)) = xadj(nodes_elmnts(l+j*nsize)) + 1
-            if (xadj(nodes_elmnts(l+j*nsize))>MAX_NEIGHBORS) &
+            xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED)) = xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED)) + 1
+            if (xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED))>MAX_NEIGHBORS) &
               stop 'ERROR : too much neighbours per element, modify the mesh.'
 
           endif
@@ -205,11 +206,11 @@
   !--------------------------------------------------
   subroutine construct_glob2loc_nodes(nparts)
 
+  use constants,only: MAX_NSIZE_SHARED
   use part_unstruct_par,only: nnodes,glob2loc_nodes_nparts,glob2loc_nodes_parts,glob2loc_nodes, &
     nodes_elmnts,nnodes_elmnts,part
 
   implicit none
-  include "constants.h"
 
   integer, intent(in)  :: nparts
 
@@ -230,7 +231,7 @@
   do num_node = 0, nnodes-1
      glob2loc_nodes_nparts(num_node) = size_glob2loc_nodes
      do el = 0, nnodes_elmnts(num_node)-1
-        parts_node(part(nodes_elmnts(el+nsize*num_node))) = 1
+        parts_node(part(nodes_elmnts(el+MAX_NSIZE_SHARED*num_node))) = 1
      enddo
 
      do num_part = 0, nparts-1
@@ -256,7 +257,7 @@
 
   do num_node = 0, nnodes-1
      do el = 0, nnodes_elmnts(num_node)-1
-        parts_node(part(nodes_elmnts(el+nsize*num_node))) = 1
+        parts_node(part(nodes_elmnts(el+MAX_NSIZE_SHARED*num_node))) = 1
      enddo
      do num_part = 0, nparts-1
 
@@ -287,11 +288,12 @@
   subroutine construct_interfaces(nparts, elmnts_l,  &
                                   nbmodels, phi_material, num_material)
 
+  use constants,only: NCORNERS,TINYVAL
+
   use part_unstruct_par,only: nelmnts,ninterfaces,tab_size_interfaces,tab_interfaces,part, &
     xadj_g,adjncy_g
 
   implicit none
-  include "constants.h"
 
   integer, intent(in)  :: nparts
   integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
@@ -467,7 +469,7 @@
      do i = 0, nnodes-1
         do j = glob2loc_nodes_nparts(i), glob2loc_nodes_nparts(i+1)-1
            if (glob2loc_nodes_parts(j) == iproc) then
-              write(IIN_database,*) glob2loc_nodes(j)+1, nodes_coords(1,i+1), nodes_coords(2,i+1)
+              write(IIN_database) glob2loc_nodes(j)+1, nodes_coords(1,i+1), nodes_coords(2,i+1)
            endif
         enddo
      enddo
@@ -517,7 +519,7 @@
                  if (glob2loc_nodes_parts(k) == iproc) loc_nodes(j) = glob2loc_nodes(k)
               enddo
            enddo
-           write(IIN_database,*) glob2loc_elmnts(i)+1, num_modele(i+1), (loc_nodes(k)+1, k=0,ngnod-1), num_pml(i+1)
+           write(IIN_database) glob2loc_elmnts(i)+1, num_modele(i+1), (loc_nodes(k)+1, k=0,ngnod-1), num_pml(i+1)
         endif
      enddo
 
@@ -580,9 +582,9 @@
       do j = i+1, nparts-1
         if (my_interfaces(num_interface) == 1) then
           if (i == iproc) then
-            write(IIN_database,*) j, my_nb_interfaces(num_interface)
+            write(IIN_database) j, my_nb_interfaces(num_interface)
           else
-            write(IIN_database,*) i, my_nb_interfaces(num_interface)
+            write(IIN_database) i, my_nb_interfaces(num_interface)
           endif
 
           do k = tab_size_interfaces(num_interface), tab_size_interfaces(num_interface+1)-1
@@ -601,7 +603,7 @@
                 endif
               enddo
 
-              write(IIN_database,*) local_elmnt, tab_interfaces(k*5+2), &
+              write(IIN_database) local_elmnt, tab_interfaces(k*5+2), &
                                         local_nodes(1), -1
             else
               if (tab_interfaces(k*5+2) == 2) then
@@ -621,10 +623,11 @@
                   endif
                 enddo
 
-                write(IIN_database,*) local_elmnt, tab_interfaces(k*5+2), &
+                write(IIN_database) local_elmnt, tab_interfaces(k*5+2), &
                                            local_nodes(1), local_nodes(2)
               else
-                write(IIN_database,*) "erreur_write_interface_", tab_interfaces(k*5+2)
+                print *,"Error: write_interfaces_database", tab_interfaces(k*5+2)
+                stop 'Invalid interface found'
               endif
             endif
           enddo
@@ -693,7 +696,7 @@
             endif
           enddo
 
-          write(IIN_database,*) local_elmnt, surface(2,i), local_nodes(1), -1
+          write(IIN_database) local_elmnt, surface(2,i), local_nodes(1), -1
         endif
 
         if (surface(2,i) == 2) then
@@ -710,7 +713,7 @@
             endif
           enddo
 
-          write(IIN_database,*) local_elmnt, surface(2,i), local_nodes(1), local_nodes(2)
+          write(IIN_database) local_elmnt, surface(2,i), local_nodes(1), local_nodes(2)
         endif
 
       endif
@@ -735,13 +738,14 @@
 
   subroutine merge_abs_boundaries(nbmodels, phi_material, num_material, ngnod)
 
+  use constants,only: IEDGE1,IEDGE2,IEDGE3,IEDGE4,NGLLX,NGLLZ
+
   use part_unstruct_par,only: nelmnts,elmnts,nelemabs,nelemabs_merge,abs_surface, &
     abs_surface_char,abs_surface_merge,abs_surface_merge,abs_surface_type, &
     ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2,ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
     nedges_coupled,edges_coupled
 
   implicit none
-  include "constants.h"
 
   integer, intent(in)  :: ngnod
   integer  :: nbmodels
@@ -1000,7 +1004,7 @@
 ! and edge 4 may not correspond to the left.
 
 ! we add +1 to the "glob2loc_elmnts" number because internally in parts of our code numbers start at zero instead of one
-          write(IIN_database,*) glob2loc_elmnts(abs_surface_merge(i))+1, abs_surface_char(1,i), &
+          write(IIN_database) glob2loc_elmnts(abs_surface_merge(i))+1, abs_surface_char(1,i), &
 !! DK DK sept 2012: added absorbing element type
 !! DK DK sept 2012               abs_surface_char(2,i), abs_surface_char(3,i), abs_surface_char(4,i), &
                                 abs_surface_char(2,i), abs_surface_char(3,i), abs_surface_char(4,i), abs_surface(5,i), &
@@ -1026,6 +1030,8 @@
 
   subroutine merge_acoustic_forcing_boundaries(ngnod)
 
+  use constants,only: IEDGE1,IEDGE2,IEDGE3,IEDGE4,NGLLX,NGLLZ
+
   use part_unstruct_par,only: elmnts,nelemacforcing,acforcing_surface, &
     acforcing_surface_char,acforcing_surface_merge,acforcing_surface_type, &
     ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing, &
@@ -1033,7 +1039,6 @@
     nelemacforcing_merge
 
   implicit none
-  include "constants.h"
 
   integer, intent(in) :: ngnod
 
@@ -1185,7 +1190,7 @@
 ! and edge 4 may not correspond to the left.
 
 ! we add +1 to the "glob2loc_elmnts" number because internally in parts of our code numbers start at zero instead of one
-          write(IIN_database,*) glob2loc_elmnts(acforcing_surface_merge(i))+1, acforcing_surface_char(1,i), &
+          write(IIN_database) glob2loc_elmnts(acforcing_surface_merge(i))+1, acforcing_surface_char(1,i), &
 
                acforcing_surface_char(2,i), acforcing_surface_char(3,i), acforcing_surface_char(4,i), acforcing_surface(5,i), &
                ibegin_edge1_acforcing(i), iend_edge1_acforcing(i), &
@@ -1238,7 +1243,7 @@
   else
     do i = 1, nedges_coupled_bis
       if (part(edges_coupled_bis(1,i)) == iproc) then
-        write(IIN_database,*) glob2loc_elmnts(edges_coupled_bis(1,i))+1, glob2loc_elmnts(edges_coupled_bis(2,i))+1
+        write(IIN_database) glob2loc_elmnts(edges_coupled_bis(1,i))+1, glob2loc_elmnts(edges_coupled_bis(2,i))+1
       endif
     enddo
   endif
@@ -1291,7 +1296,7 @@
       ! endif
 
       if (part(ispec_of_axial_elements(i)) == iproc) then
-        write(IIN_database,*) glob2loc_elmnts(ispec_of_axial_elements(i)) + remove_min_to_start_at_zero
+        write(IIN_database) glob2loc_elmnts(ispec_of_axial_elements(i)) + remove_min_to_start_at_zero
       endif
     enddo
   endif

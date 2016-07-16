@@ -39,7 +39,7 @@
 #ifdef USE_MPI
   use mpi
 #endif
-
+  use constants,only: IMAIN
   use specfem_par
 
   implicit none

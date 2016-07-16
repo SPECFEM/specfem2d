@@ -89,6 +89,7 @@ xcombine_sem_OBJECTS = \
 
 xcombine_sem_SHARED_OBJECTS = \
 	$O/specfem2D_par.spec.o \
+	$O/shared_par.shared_module.o \
 	$O/exit_mpi.shared.o \
 	$O/parallel.shared.o \
 	$(EMPTY_MACRO)
@@ -118,6 +119,7 @@ xsmooth_sem_OBJECTS = \
 
 xsmooth_sem_SHARED_OBJECTS = \
 	$O/specfem2D_par.spec.o \
+	$O/shared_par.shared_module.o \
 	$O/exit_mpi.shared.o \
 	$O/parallel.shared.o \
 	$O/gll_library.spec.o \
@@ -179,7 +181,7 @@ $O/postprocess_par.postprocess_module.o: $O/specfem2D_par.spec.o
 ## postprocess
 ##
 
-$O/%.postprocess_module.o: $S/%.f90 $O/specfem2D_par.spec.o
+$O/%.postprocess_module.o: $S/%.f90 $O/specfem2D_par.spec.o $O/shared_par.shared_module.o
 	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.postprocess.o: $S/%.f90 $O/postprocess_par.postprocess_module.o

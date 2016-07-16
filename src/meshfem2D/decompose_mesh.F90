@@ -34,6 +34,8 @@
 
   subroutine decompose_mesh()
 
+  use constants,only: IMAIN,MAX_NEIGHBORS,NCORNERS,MAX_NSIZE_SHARED
+
   use parameter_file_par,only: NPROC,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
     ngnod,nbmodels,num_material,partitioning_method,phi
 
@@ -43,8 +45,6 @@
   use decompose_par
 
   implicit none
-
-  include "constants.h"
 
   ! local parameters
   integer :: i, iproc, ier
@@ -174,21 +174,21 @@
     if (allocated(nnodes_elmnts) ) deallocate(nnodes_elmnts)
     if (allocated(nodes_elmnts) ) deallocate(nodes_elmnts)
     allocate(nnodes_elmnts(0:nnodes-1))
-    allocate(nodes_elmnts(0:nsize*nnodes-1))
+    allocate(nodes_elmnts(0:MAX_NSIZE_SHARED*nnodes-1))
     nnodes_elmnts(:) = 0
     nodes_elmnts(:) = 0
     do i = 0, ngnod*nelmnts-1
-      nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
+      nodes_elmnts(elmnts(i)*MAX_NSIZE_SHARED+nnodes_elmnts(elmnts(i))) = i/ngnod
       nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
     enddo
   else
     if (NPROC < 2) then
       if (.not. allocated(nnodes_elmnts) ) allocate(nnodes_elmnts(0:nnodes-1))
-      if (.not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:nsize*nnodes-1))
+      if (.not. allocated(nodes_elmnts) ) allocate(nodes_elmnts(0:MAX_NSIZE_SHARED*nnodes-1))
       nnodes_elmnts(:) = 0
       nodes_elmnts(:) = 0
       do i = 0, ngnod*nelmnts-1
-        nodes_elmnts(elmnts(i)*nsize+nnodes_elmnts(elmnts(i))) = i/ngnod
+        nodes_elmnts(elmnts(i)*MAX_NSIZE_SHARED+nnodes_elmnts(elmnts(i))) = i/ngnod
         nnodes_elmnts(elmnts(i)) = nnodes_elmnts(elmnts(i)) + 1
       enddo
     endif

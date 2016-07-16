@@ -618,7 +618,7 @@
   do ispec = 1,nspec
     if (ispec_is_PML(ispec)) then
       if (ispec_is_acoustic(ispec)) then
-! From gmat01.f90 we know, in acoustic region
+! From read_materials.f90 we know, in acoustic region
 ! lambdalplus2mul_relaxed = kappal  = poroelastcoef(3,1,kmato(ispec)) = rhol * vp_acoustic * vp_acoustic
         lambdalplus2mul_relaxed = poroelastcoef(3,1,kmato(ispec))
         rhol = density(1,kmato(ispec))

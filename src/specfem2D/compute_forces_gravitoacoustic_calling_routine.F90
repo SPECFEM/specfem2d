@@ -33,6 +33,7 @@
 
   subroutine compute_forces_gravitoacoustic_main()
 
+  use constants,only: ZERO
   use specfem_par
 
   implicit none

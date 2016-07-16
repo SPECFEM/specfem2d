@@ -36,6 +36,7 @@
 
 ! creates mesh related properties, local to global mesh numbering and node locations
 
+  use constants,only: IMAIN
   use specfem_par
 
   implicit none
@@ -94,6 +95,7 @@
 
   subroutine setup_mesh_numbering()
 
+  use constants,only: IMAIN,FAST_NUMBERING
   use specfem_par
 
   implicit none
@@ -179,6 +181,7 @@
 
   subroutine setup_mesh_coordinates()
 
+  use constants,only: ZERO
   use specfem_par
 
   implicit none
@@ -281,6 +284,7 @@
   use mpi
 #endif
 
+  use constants,only: IMAIN
   use specfem_par
   use specfem_par_movie
 
@@ -471,6 +475,7 @@
 
 ! acoustic forcing edge detection
 
+  use constants,only: IMAIN,IBOTTOM,IRIGHT,ITOP,ILEFT
   use specfem_par
 
   implicit none
@@ -532,6 +537,7 @@
 
 ! external models
 
+  use constants,only: IMAIN
   use specfem_par
 
   implicit none
@@ -638,6 +644,7 @@
 !
 ! note: we call this routine only after we have read in a (possible) external model
 
+  use constants,only: IMAIN
   use specfem_par
 
   implicit none

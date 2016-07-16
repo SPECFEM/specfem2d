@@ -76,6 +76,7 @@ check_quality_external_mesh_auxiliaries_OBJECTS = \
 	$(EMPTY_MACRO)
 
 check_quality_external_mesh_auxiliaries_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/define_shape_functions.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/parallel.shared.o \

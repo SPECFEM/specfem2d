@@ -36,14 +36,14 @@
 
   subroutine read_interfaces_file()
 
+  use constants,only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK,HUGEVAL
+
   use part_unstruct_par,only: elmnts,nelmnts,nz_layer,number_of_layers,max_npoints_interface,number_of_interfaces, &
     nx,nz,nxread,nzread
 
   use parameter_file_par,only: ngnod,interfacesfile
 
   implicit none
-
-  include "constants.h"
 
   ! local parameters
   integer :: ier,interface_current,ipoint_current,ilayer,i,j,num_elmnt

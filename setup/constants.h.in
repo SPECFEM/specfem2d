@@ -177,6 +177,12 @@
 ! size of frame used for Postscript display in percentage of the size of the page
   double precision, parameter :: RPERCENTX = 70.0d0,RPERCENTZ = 77.0d0
 
+! color images (1==colored / 0==black&white) (both postscript and jpeg)
+  integer,parameter :: DISPLAY_COLORS = 1
+
+! adds numbers to mesh elements (1==on / 0==off)
+  integer,parameter :: DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT = 0
+
 ! for PMLs
 ! remove the PMLs from JPEG images if needed: set the vector field to zero there
   logical, parameter :: REMOVE_PMLS_FROM_JPEG_IMAGES = .true.
@@ -197,7 +203,7 @@
   integer, parameter :: MAX_NEIGHBORS = 40
 
 ! maximum number of elements that can contain the same node
-  integer, parameter :: nsize = 40
+  integer, parameter :: MAX_NSIZE_SHARED = 40
 
 !--- end of Nicolas Le Goff's constants for an unstructured CUBIT/METIS/SCOTCH mesh
 

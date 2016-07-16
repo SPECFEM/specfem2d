@@ -78,6 +78,7 @@ meshfem2D_MODULES = \
 	$(EMPTY_MACRO)
 
 meshfem2D_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/read_value_parameters.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/parallel.shared.o \
@@ -141,7 +142,7 @@ endif
 #### rule to build each .o file below
 ####
 
-$O/%.mesh_module.o: $S/%.f90 ${SETUP}/constants.h
+$O/%.mesh_module.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
 	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<
 
 $O/%.mesh.o: $S/%.f90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o

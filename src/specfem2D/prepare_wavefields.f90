@@ -34,6 +34,7 @@
 
   subroutine prepare_wavefields()
 
+  use constants,only: IMAIN,APPROXIMATE_HESS_KL
   use specfem_par
 
   implicit none

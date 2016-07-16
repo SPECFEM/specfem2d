@@ -33,6 +33,7 @@
 
   subroutine compute_forces_poroelastic_main()
 
+  use constants,only: USE_PORO_VISCOUS_DAMPING,ALPHA_LDDRK,BETA_LDDRK
   use specfem_par
 
   implicit none

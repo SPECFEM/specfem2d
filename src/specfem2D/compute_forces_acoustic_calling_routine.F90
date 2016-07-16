@@ -33,6 +33,7 @@
 
   subroutine compute_forces_acoustic_main()
 
+  use constants,only: SOURCE_IS_MOVING,USE_ENFORCE_FIELDS,ALPHA_LDDRK,BETA_LDDRK
   use specfem_par
 
   implicit none

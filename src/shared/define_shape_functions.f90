@@ -55,9 +55,9 @@
 !
 !=======================================================================
 
-  implicit none
+  use constants,only: QUARTER,HALF,ONE,TWO,TINYVAL,NDIM
 
-  include "constants.h"
+  implicit none
 
   integer,intent(in) :: ngnod
 

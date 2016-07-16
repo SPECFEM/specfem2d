@@ -35,6 +35,7 @@
 
 ! handles all domain coupling
 
+  use constants,only: IMAIN,IBOTTOM,IRIGHT,ITOP,ILEFT,TINYVAL
   use specfem_par
 
   implicit none

@@ -36,20 +36,17 @@
 
   ! reads in source file DATA/SOURCE
 
-
+  use constants,only: IMAIN,IGNORE_JUNK,NLINES_PER_SOURCE,TINYVAL,PI
   use source_file_par
-
   use parameter_file_par,only: DT
 
   implicit none
-
-  include "constants.h"
 
   integer,intent(in) :: NSOURCES
 
   ! local parameters
   integer :: ier,icounter,i_source,num_sources
-  character(len=150) string_read
+  character(len=256) string_read
   integer, parameter :: IIN_SOURCE = 22
 
   ! allocates memory arrays
@@ -140,7 +137,7 @@
     call read_value_integer(IIN_SOURCE,IGNORE_JUNK,time_function_type(i_source))
 
     ! external source time function file (sft type == 8)
-    name_of_source_file(i_source)=''
+    name_of_source_file(i_source) = ''
     call read_value_string(IIN_SOURCE,IGNORE_JUNK,name_of_source_file(i_source))
 
     ! burst (stf type == 9)

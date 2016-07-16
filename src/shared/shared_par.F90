@@ -32,40 +32,25 @@
 !========================================================================
 
 
-subroutine read_model_nspec()
+module constants
 
-! reads in nspec from database
+  include "constants.h"
 
-  use tomography_par,only: MAX_STRING_LEN,IIN,NSPEC,myrank
+end module constants
+
+!
+!========================================================================
+!
+
+module shared_parameters
+
+! holds input parameters given in DATA/Par_file
+
+  use constants,only: MAX_STRING_LEN
 
   implicit none
 
-  ! local parameters
-  integer :: ier
-  character(len=MAX_STRING_LEN) :: prname
-  character(len=MAX_STRING_LEN) :: dummy
-  integer :: idummy
-  logical :: ldummy
 
-  ! opens database file
-  write(prname,"('./OUTPUT_FILES/Database',i5.5,'.bin')") myrank
-  open(IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
-  if (ier /= 0) then
-    print *,'Error opening: ',trim(prname)
-    call exit_MPI(myrank,'file not found')
-  endif
+end module shared_parameters
 
-  ! reads lines until nspec
-  read(IIN) dummy  ! simulation_title
-  read(IIN) idummy,idummy,ldummy,ldummy  ! SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
-  read(IIN) nspec
 
-  close(IIN)
-
-  ! user output
-  if (myrank == 0) then
-    print *,'number of spectral-elements: ',nspec
-    print *,''
-  endif
-
-end subroutine read_model_nspec

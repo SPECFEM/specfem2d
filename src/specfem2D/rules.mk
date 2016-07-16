@@ -117,7 +117,6 @@ specfem2D_OBJECTS = \
 	$O/get_poroelastic_velocities.spec.o \
 	$O/get_simulation_domains.spec.o \
 	$O/gll_library.spec.o \
-	$O/gmat01.spec.o \
 	$O/initialize_simulation.spec.o \
 	$O/invert_mass_matrix.spec.o \
 	$O/is_in_convex_quadrilateral.spec.o \
@@ -146,6 +145,7 @@ specfem2D_OBJECTS = \
 	$O/prepare_source_time_function.spec.o \
 	$O/prepare_timerun.spec.o \
 	$O/prepare_wavefields.spec.o \
+	$O/read_materials.spec.o \
 	$O/read_mesh_databases.spec.o \
 	$O/read_external_model.spec.o \
 	$O/recompute_jacobian.spec.o \
@@ -181,6 +181,7 @@ specfem2D_MODULES = \
 	$(EMPTY_MACRO)
 
 specfem2D_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/define_shape_functions.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/force_ftz.cc.o \
@@ -346,7 +347,7 @@ $O/specfem2D.spec.o: $O/specfem2D_par.spec_module.o
 #### rule to build each .o file below
 ####
 
-$O/%.spec_module.o: $S/%.f90 ${SETUP}/constants.h
+$O/%.spec_module.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
 	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.spec.o: $S/%.f90 ${SETUP}/constants.h $O/specfem2D_par.spec_module.o

@@ -45,7 +45,8 @@
     DISPLAY_PML_IN_DIFFERENT_COLOR,ICOLOR_FOR_PML_DISPLAY, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4, &
     IRIGHT,ILEFT,IBOTTOM,ITOP, &
-    ORIG_X,ORIG_Z,PI,RPERCENTX,RPERCENTZ,STABILITY_THRESHOLD
+    ORIG_X,ORIG_Z,PI,RPERCENTX,RPERCENTZ,STABILITY_THRESHOLD, &
+    DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
 
   use specfem_par, only: coord,vpext,x_source,z_source,st_xval,st_zval,it,deltat,coorg,density,&
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
@@ -66,7 +67,7 @@
   ! movie images
   use specfem_par_movie,only: vector_field_display,simulation_title, &
     xinterp,zinterp,Uxinterp,Uzinterp,flagrange,shape2D_display, &
-    colors,numbers,subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
+    subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
     cutsnaps,sizemax_arrows,boundvect,plot_lowerleft_corner_only, &
     vpImin,vpImax, &
     coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
@@ -308,7 +309,7 @@
     write(24,*) '%'
     write(24,*) '/Times-Roman findfont'
     write(24,*) '.6 CM scalefont setfont'
-    if (colors == 1) write(24,*) '.4 .9 .9 setrgbcolor'
+    if (DISPLAY_COLORS == 1) write(24,*) '.4 .9 .9 setrgbcolor'
     write(24,*) '11 CM 1.1 CM MV'
     write(24,*) '(X axis) show'
     write(24,*) '%'
@@ -319,7 +320,7 @@
     write(24,*) '%'
     write(24,*) '/Times-Roman findfont'
     write(24,*) '.7 CM scalefont setfont'
-    if (colors == 1) write(24,*) '.8 0 .8 setrgbcolor'
+    if (DISPLAY_COLORS == 1) write(24,*) '.8 0 .8 setrgbcolor'
     write(24,*) '24.35 CM 18.9 CM MV'
     write(24,*) usoffset,' CM 2 div neg 0 MR'
     write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
@@ -727,7 +728,7 @@
        write(24,*) 'CO'
     endif
 
-    if (colors == 1) then
+    if (DISPLAY_COLORS == 1) then
 
       ! use a different color for each material set
       imat = kmato(ispec)
@@ -752,7 +753,6 @@
         RGB_offset = RGB_offset + 1
         color_send_ps_element_mesh(RGB_offset) = icol
       endif
-
     endif
 
     if (myrank == 0) then
@@ -766,7 +766,7 @@
     endif
 
     ! write the element number, the group number and the material number inside the element
-    if (numbers == 1) then
+    if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
 
       xw = (coorg(1,knods(1,ispec)) + coorg(1,knods(2,ispec)) + coorg(1,knods(3,ispec)) + coorg(1,knods(4,ispec))) / 4.d0
       zw = (coorg(2,knods(1,ispec)) + coorg(2,knods(2,ispec)) + coorg(2,knods(3,ispec)) + coorg(2,knods(4,ispec))) / 4.d0
@@ -776,7 +776,7 @@
       zw = zw * centim
 
       if (myrank == 0) then
-        if (colors == 1) write(24,*) '1 setgray'
+        if (DISPLAY_COLORS == 1) write(24,*) '1 setgray'
       endif
 
       if (myrank == 0) then
@@ -807,7 +807,7 @@
         call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         nb_coorg_per_elem = 1
-        if (numbers == 1) then
+        if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
           nb_coorg_per_elem = nb_coorg_per_elem + 1
         endif
         if (ngnod == 4) then
@@ -819,10 +819,10 @@
                        MPI_DOUBLE_PRECISION, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
         nb_color_per_elem = 0
-        if (colors == 1) then
+        if (DISPLAY_COLORS == 1) then
           nb_color_per_elem = nb_color_per_elem + 1
         endif
-        if (numbers == 1) then
+        if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
           nb_color_per_elem = nb_color_per_elem + 1
         endif
         if (nb_color_per_elem > 0) then
@@ -868,7 +868,7 @@
           endif
 
           write(24,*) 'CO'
-          if (colors == 1) then
+          if (DISPLAY_COLORS == 1) then
             if (meshvect) then
               RGB_offset = RGB_offset + 1
               write(24,680) red(color_recv_ps_element_mesh(RGB_offset)),&
@@ -888,8 +888,8 @@
               write(24,*) '0 setgray ST'
             endif
           endif
-          if (numbers == 1) then
-            if (colors == 1) write(24,*) '1 setgray'
+          if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
+            if (DISPLAY_COLORS == 1) write(24,*) '1 setgray'
             buffer_offset = buffer_offset + 1
             write(24,500) coorg_recv_ps_element_mesh(1,buffer_offset), coorg_recv_ps_element_mesh(2,buffer_offset)
             RGB_offset = RGB_offset + 1
@@ -901,7 +901,7 @@
       call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
 
       nb_coorg_per_elem = 1
-      if (numbers == 1) then
+      if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
         nb_coorg_per_elem = nb_coorg_per_elem + 1
       endif
       if (ngnod == 4) then
@@ -913,10 +913,10 @@
                      MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
 
       nb_color_per_elem = 0
-      if (colors == 1) then
+      if (DISPLAY_COLORS == 1) then
         nb_color_per_elem = nb_color_per_elem + 1
       endif
-      if (numbers == 1) then
+      if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
         nb_color_per_elem = nb_color_per_elem + 1
       endif
       if (nb_color_per_elem > 0) then

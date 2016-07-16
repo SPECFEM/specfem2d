@@ -40,13 +40,15 @@
   ! note 2: the filename ending is .F90 to have pre-compilation with pragmas
   !            (like #ifndef USE_MPI) working properly
 
+  use constants,only: MAX_STRING_LEN
+
   implicit none
 
   !--------------------------------------------------------------
   ! variables for preparation for compuation (simulation type, mesher, et al)
   !--------------------------------------------------------------
   ! name assigned to the running example
-  character(len=100) :: title
+  character(len=MAX_STRING_LEN) :: title
 
   ! simulation type
   integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY
@@ -58,26 +60,26 @@
   logical :: GPU_MODE
 
   ! input file name of TOMOGRAPHY
-  character(len=100) :: TOMOGRAPHY_FILE
+  character(len=MAX_STRING_LEN) :: TOMOGRAPHY_FILE
 
   ! input parameter for inner mesher
   double precision :: xmin_param,xmax_param
   integer :: nx_param
   integer :: ngnod
-  character(len=100) :: interfacesfile
+  character(len=MAX_STRING_LEN) :: interfacesfile
   logical, dimension(:),allocatable :: record_at_surface_same_vertical
 
   ! mesh files when using external mesh
-  character(len=100) :: MODEL, SAVE_MODEL
+  character(len=MAX_STRING_LEN) :: MODEL, SAVE_MODEL
 
   logical :: read_external_mesh
 
-  character(len=256) :: mesh_file, nodes_coords_file, materials_file, &
+  character(len=MAX_STRING_LEN) :: mesh_file, nodes_coords_file, materials_file, &
                         free_surface_file, acoustic_forcing_surface_file, &
                         absorbing_surface_file, CPML_element_file, &
                         axial_elements_file
 
-  character(len=256)  :: tangential_detection_curve_file
+  character(len=MAX_STRING_LEN)  :: tangential_detection_curve_file
 
   ! material file for changing the model parameter for inner mesh or updating the
   ! the material for an existed mesh
@@ -231,6 +233,8 @@
 
   module source_file_par
 
+  use constants,only: MAX_STRING_LEN
+
   implicit none
 
   ! source type parameters
@@ -243,8 +247,8 @@
   double precision, dimension(:),pointer :: f0_source,tshift_src,anglesource,factor,burst_band_width
   ! flag for fixation to surface
   logical, dimension(:),allocatable ::  source_surf
-  ! File name can't exceed 100 characters
-  character(len=100), dimension(:),allocatable :: name_of_source_file
+  ! File name can't exceed MAX_STRING_LEN characters
+  character(len=MAX_STRING_LEN), dimension(:),allocatable :: name_of_source_file
 
   end module source_file_par
 

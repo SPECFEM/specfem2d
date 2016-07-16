@@ -37,10 +37,10 @@
 
 ! reads in material definitions in DATA/Par_file
 
+  use constants,only: IMAIN,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,TINYVAL
   use part_unstruct_par,only: nxread,nzread
 
   implicit none
-  include "constants.h"
 
   integer,intent(inout) :: nbregion
 

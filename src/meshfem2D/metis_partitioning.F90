@@ -36,6 +36,7 @@
 
   subroutine metis_partitioning()
 
+  use constants,only: IMAIN
 
 #ifdef USE_METIS
   use part_unstruct_par,only: nelmnts,part,nb_edges,vwgt,adjwgt, &
@@ -45,8 +46,6 @@
 #endif
 
   implicit none
-
-  include "constants.h"
 
 !  integer, intent(in)  :: nelmnts, nparts, nb_edges
 !  integer, dimension(0:nelmnts), intent(in)  :: xadj

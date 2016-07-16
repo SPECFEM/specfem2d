@@ -36,8 +36,9 @@
 
 ! creates a Gnuplot file that displays the grid
 
+  use constants,only: IMAIN
+
   implicit none
-  include "constants.h"
 
   integer :: ngnod,nx,nz
   double precision, dimension(0:nx,0:nz) :: x,z

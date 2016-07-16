@@ -39,10 +39,9 @@
 #ifdef USE_MPI
   use mpi
 #endif
+  use constants,only: MAX_STRING_LEN,IMAIN,ISTANDARD_OUTPUT
 
   implicit none
-
-  include "constants.h"
 
   ! identifier for error message file
   integer, parameter :: IERROR = 30
@@ -78,9 +77,9 @@
 
   subroutine flush_IMAIN()
 
-  implicit none
+  use constants,only: IMAIN
 
-  include "constants.h"
+  implicit none
 
   ! only master process writes out to main output file
   ! file I/O in fortran is buffered by default

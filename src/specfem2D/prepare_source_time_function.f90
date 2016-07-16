@@ -336,8 +336,8 @@
             ! opens external file to read in source time function
             if (it == 1) then
               coeff = factor(i_source)
-              error_msg = error_msg1//name_of_source_file(i_source)
-              open(unit=num_file,file=name_of_source_file(i_source),iostat=ier)
+              error_msg = error_msg1//trim(name_of_source_file(i_source))
+              open(unit=num_file,file=trim(name_of_source_file(i_source)),iostat=ier)
               if (ier /= 0 ) call exit_MPI(myrank,error_msg)
             endif
 

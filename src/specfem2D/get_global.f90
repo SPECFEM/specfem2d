@@ -35,7 +35,7 @@
 
   subroutine get_global()
 
-  use constants,only: NGLLX,NGLLZ
+  use constants,only: NGLLX,NGLLZ,MAX_STRING_LEN
 
   use specfem_par, only : nspec,ibool,copy_ibool_ori,integer_mask_ibool,SAVE_MODEL,myrank
 
@@ -44,7 +44,7 @@
   ! local parameters
   integer :: inumber,ispec,i,j
   integer :: ier
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
 
   ! initializes temporary arrays
   integer_mask_ibool(:) = -1

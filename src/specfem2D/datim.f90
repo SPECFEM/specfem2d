@@ -35,11 +35,11 @@
 
 ! get date and time
 
-  use constants,only: IMAIN
+  use constants,only: IMAIN,MAX_STRING_LEN
 
   implicit none
 
-  character(len=50) :: string_input
+  character(len=MAX_STRING_LEN) :: string_input
 
   ! local parameters
   character(len=8) :: datein
@@ -56,7 +56,7 @@
   timeprint = timein(1:2)//':'//timein(3:4)//':'//timein(5:6)
 
   write(IMAIN,"(//1x,79('-')/1x,79('-')/1x,'Program SPECFEM2D: ')")
-  write(IMAIN,"(1x,79('-')/1x,79('-')/1x,a50)") string_input
+  write(IMAIN,"(1x,79('-')/1x,79('-')/1x,a)") trim(string_input)
   write(IMAIN,"(1x,79('-')/,1x,79('-')/' D a t e : ',a16,30x,' T i m e  : ',a8/1x,79('-'),/1x,79('-'))") dateprint,timeprint
   call flush_IMAIN()
 

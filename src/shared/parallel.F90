@@ -301,10 +301,10 @@
 
 ! standard include of the MPI library
   use mpi
+  use constants,only: CUSTOM_REAL
 
   implicit none
 
-  include "constants.h"
   include "precision.h"
 
   integer sendcount, dest, sendtag, req
@@ -328,10 +328,10 @@
 
 ! standard include of the MPI library
   use mpi
+  use constants,only: CUSTOM_REAL
 
   implicit none
 
-  include "constants.h"
   include "precision.h"
 
   integer recvcount, dest, recvtag, req
@@ -532,10 +532,10 @@
 #ifdef USE_MPI
   use mpi
 #endif
+  use constants,only: CUSTOM_REAL
 
   implicit none
 
-  include "constants.h"
 #ifdef USE_MPI
   include "precision.h"
 #endif

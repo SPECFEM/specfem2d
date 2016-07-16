@@ -35,6 +35,7 @@
 
   subroutine write_seismograms()
 
+  use constants,only: ZERO
   use specfem_par
   use specfem_par_gpu,only: Mesh_pointer
 

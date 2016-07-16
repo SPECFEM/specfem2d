@@ -35,14 +35,15 @@
 
 ! reads in DATA/Par_file
 
+  use constants,only: IMAIN
   use parameter_file_par
 
   implicit none
 
-  include "constants.h"
-
   ! local parameters
   integer :: ios,ireceiverlines
+  integer :: i,irange
+
   integer,external :: err_occurred
 
   !--------------------------------------------------------------------
@@ -431,7 +432,6 @@
     if (err_occurred() /= 0) stop 'error reading parameter absorbleft in Par_file'
 
     ! note: if internal mesh, then regions will be read in by read_regions (from meshfem2D)
-
   endif
 
 
@@ -574,6 +574,19 @@
     plot_lowerleft_corner_only = .false.
   endif
 
+  ! converts all string characters to lowercase
+  irange = iachar('a') - iachar('A')
+  do i = 1,len_trim(MODEL)
+    if (lge(MODEL(i:i),'A') .and. lle(MODEL(i:i),'Z')) then
+      MODEL(i:i) = achar(iachar(MODEL(i:i)) + irange)
+    endif
+  enddo
+  do i = 1,len_trim(SAVE_MODEL)
+    if (lge(SAVE_MODEL(i:i),'A') .and. lle(SAVE_MODEL(i:i),'Z')) then
+      SAVE_MODEL(i:i) = achar(iachar(SAVE_MODEL(i:i)) + irange)
+    endif
+  enddo
+
   end subroutine read_parameter_file
 
 !
@@ -642,7 +655,7 @@
     stop 'DT must be non-zero value'
 
   ! checks model
-  select case (MODEL)
+  select case (trim(MODEL))
   case ('default','ascii','binary','external','gll','binary_voigt')
     continue ! do nothing
   case default
@@ -651,7 +664,7 @@
   end select
 
   ! checks model
-  select case (SAVE_MODEL)
+  select case (trim(SAVE_MODEL))
   case ('default','ascii','binary','external','gll')
     continue ! do nothing
   case default

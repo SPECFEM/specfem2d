@@ -36,7 +36,7 @@
 #ifdef USE_MPI
   use mpi
 #endif
-
+  use constants,only: TWO,FOUR_THIRDS,APPROXIMATE_HESS_KL,IMAIN,IOUT_ENERGY,ISTANDARD_OUTPUT
   use specfem_par
   use specfem_par_gpu
   use specfem_par_movie,only: simulation_title,output_wavefield_dumps,mask_ibool

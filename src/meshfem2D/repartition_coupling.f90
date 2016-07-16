@@ -38,10 +38,10 @@
 
   subroutine acoustic_elastic_repartitioning(elmnts_l, nbmodels, phi_material, num_material, nproc)
 
+  use constants,only: IMAIN,NCORNERS,MAX_NEIGHBORS,TINYVAL
   use part_unstruct_par,only: nelmnts,edges_coupled,nedges_coupled
 
   implicit none
-  include "constants.h"
 
   integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
   integer, intent(in)  :: nproc, nbmodels
@@ -117,10 +117,10 @@
 
   subroutine acoustic_poro_repartitioning(elmnts_l, nbmodels, phi_material, num_material, nproc)
 
+  use constants,only: IMAIN,NCORNERS,MAX_NEIGHBORS,TINYVAL
   use part_unstruct_par,only: nelmnts,edges_acporo_coupled,nedges_acporo_coupled
 
   implicit none
-  include "constants.h"
 
   integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
   integer, intent(in)  :: nproc, nbmodels
@@ -191,10 +191,10 @@
 
   subroutine poro_elastic_repartitioning(elmnts_l, nbmodels, phi_material, num_material, nproc)
 
+  use constants,only: IMAIN,NCORNERS,MAX_NEIGHBORS,TINYVAL
   use part_unstruct_par,only: nelmnts,nedges_elporo_coupled,edges_elporo_coupled
 
   implicit none
-  include "constants.h"
 
   integer, dimension(0:NCORNERS*nelmnts-1), intent(in)  :: elmnts_l
   integer, intent(in)  :: nproc, nbmodels
@@ -263,10 +263,10 @@
                                        num_material,nbmodels, &
                                        is_domain_A,is_domain_B,xadj_l,adjncy_l)
 
+  use constants,only: IMAIN,MAX_NEIGHBORS
   use part_unstruct_par,only: nelmnts,part
 
   implicit none
-  include "constants.h"
 
   integer, intent(in)  :: nproc, nedges_coupled
   integer, dimension(2,nedges_coupled),intent(inout) :: edges_coupled
@@ -355,10 +355,10 @@
 
   subroutine periodic_edges_repartitioning(elmnts_l,nnodes,nodes_coords,PERIODIC_HORIZ_DIST)
 
+  use constants,only: IMAIN,NCORNERS,PERIODIC_HORIZ_DIST
   use part_unstruct_par,only: nelmnts,part
 
   implicit none
-  include "constants.h"
 
   integer, dimension(0:NCORNERS*nelmnts-1), intent(in) :: elmnts_l
 

@@ -37,6 +37,7 @@ subroutine iterate_time()
   use mpi
 #endif
 
+  use constants,only: IMAIN,NOISE_SAVE_EVERYWHERE
   use specfem_par
   use specfem_par_gpu
   use specfem_par_noise,only: NOISE_TOMOGRAPHY
@@ -215,6 +216,7 @@ subroutine it_transfer_from_GPU()
 
 ! transfers fields on GPU back onto CPU
 
+  use constants,only: TWO,FOUR_THIRDS
   use specfem_par
   use specfem_par_gpu
 
@@ -447,7 +449,7 @@ end subroutine it_compute_and_output_energy
 subroutine it_compute_integrated_energy_field_and_output()
   ! compute int_0^t v^2 dt and write it on file if needed
 
-  use constants,only:CUSTOM_REAL,NGLLX,NGLLZ,IIN
+  use constants,only:CUSTOM_REAL,NGLLX,NGLLZ,IIN,MAX_STRING_LEN
 
   use specfem_par,only: myrank,it,coord,nspec,ibool,integrated_cinetic_energy_field,max_cinetic_energy_field, &
                         integrated_potential_energy_field,max_potential_energy_field,cinetic_effective_duration_field, &
@@ -458,7 +460,7 @@ subroutine it_compute_integrated_energy_field_and_output()
 
   ! local variables
   integer :: ispec,iglob!,i,j
-  character(len=256)  :: filename
+  character(len=MAX_STRING_LEN)  :: filename
 
   !! Uncomment to write the velocity profile in acoustic part TODO
   !real(kind=CUSTOM_REAL) :: cpl,kappal

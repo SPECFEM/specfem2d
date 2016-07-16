@@ -36,13 +36,14 @@
 
 ! determines absorbing boundary elements
 
+  use constants,only: IBOTTOM,IRIGHT,ITOP,ILEFT
+
   use part_unstruct_par,only: nelemabs,abs_surface, &
     elmnts,nxread,nzread
 
   use parameter_file_par,only: ngnod,absorbbottom,absorbleft,absorbright,absorbtop
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: ix,iz

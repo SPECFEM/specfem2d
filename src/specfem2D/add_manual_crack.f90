@@ -33,6 +33,7 @@
 
   subroutine add_manual_crack(npgeo_ori)
 
+  use constants,only: NB_POINTS_TO_ADD_TO_NPGEO,FAST_NUMBERING
   use specfem_par
 
   implicit none

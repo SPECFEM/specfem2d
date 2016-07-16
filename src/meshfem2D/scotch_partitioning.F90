@@ -44,8 +44,6 @@
 
   implicit none
 
-  include "constants.h"
-
 #ifdef USE_SCOTCH
   include "scotchf.h"
 

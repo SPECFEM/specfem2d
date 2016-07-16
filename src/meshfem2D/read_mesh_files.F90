@@ -63,6 +63,8 @@
 
   subroutine read_mesh_nodes_coords_from_interfaces()
 
+  use constants,only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK
+
   use part_unstruct_par,only: nodes_coords,max_npoints_interface,number_of_interfaces, &
     npoints_interface_top,xinterface_top,zinterface_top,coefs_interface_top, &
     nx,nz,nxread,nzread,nz_layer,number_of_layers,nnodes,grid_point_x,grid_point_z
@@ -72,7 +74,6 @@
   use parameter_file_par,only: ngnod,interfacesfile,NSOURCES,xmin_param,xmax_param
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: ilayer,ipoint_current

@@ -35,8 +35,9 @@
                                 xinterface_top,zinterface_top,coefs_interface_top, &
                                 npoints_interface_top,max_npoints_interface)
 
+  use constants,only: IOUT,IMAIN
+
   implicit none
-  include "constants.h"
 
   integer :: nreceiversets
   integer, dimension(nreceiversets) :: nrec
@@ -69,7 +70,7 @@
   write(IMAIN,*) 'Target positions (x,z) of the ',nrec_total,' receivers'
   write(IMAIN,*)
 
-  open(unit=15,file='DATA/STATIONS',status='unknown',iostat=ios)
+  open(unit=IOUT,file='DATA/STATIONS',status='unknown',iostat=ios)
   if (ios /= 0 ) stop 'error saving STATIONS file'
 
   irec_global_number = 0
@@ -101,12 +102,12 @@
        ! display position of the receiver
        write(IMAIN,*) 'Receiver ',irec_global_number,' = ',xrec,zrec
 
-       write(15,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") irec_global_number,xrec,zrec
+       write(IOUT,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") irec_global_number,xrec,zrec
 
     enddo
   enddo
 
-  close(15)
+  close(IOUT)
 
   end subroutine save_stations_file
 

@@ -105,7 +105,7 @@
 
 ! This subroutine is the same than the previous one but with a moving source
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,TINYVAL,SOURCE_IS_MOVING
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,TINYVAL,SOURCE_IS_MOVING,IMAIN
 
   use specfem_par, only: ispec_is_acoustic,nglob_acoustic,&
                          NSOURCES,source_type,source_time_function,&
@@ -113,7 +113,7 @@
                          hxis_store,hgammas_store,ibool,kappastore,myrank,deltat,t0,tshift_src,&
                          coord,nspec,nglob,xigll,zigll,z_source,nb_proc_source,NPROC,xi_source,& !These 3 lines are for moving src
                          gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source, &
-                         time_stepping_scheme,IMAIN, &
+                         time_stepping_scheme, &
                          hxis,hpxis,hgammas,hpgammas !,AXISYM,xiglj,is_on_the_axis
   implicit none
 

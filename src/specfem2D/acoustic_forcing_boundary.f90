@@ -39,6 +39,7 @@
 
   subroutine acoustic_forcing_boundary(iglob,displ_x,displ_z)
 
+  use constants,only: TINYVAL,ZERO
   use specfem_par
 
   implicit none

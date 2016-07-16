@@ -35,12 +35,14 @@
 
   subroutine read_value_integer(iin,ignore_junk,value_to_read)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer iin
   logical ignore_junk
   integer value_to_read
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read
@@ -51,12 +53,14 @@
 
   subroutine read_value_double_precision(iin,ignore_junk,value_to_read)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer iin
   logical ignore_junk
   double precision value_to_read
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read
@@ -67,12 +71,14 @@
 
   subroutine read_value_logical(iin,ignore_junk,value_to_read)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer iin
   logical ignore_junk
   logical value_to_read
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read
@@ -83,12 +89,14 @@
 
   subroutine read_value_string(iin,ignore_junk,value_to_read)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer iin
   logical ignore_junk
-  character(len=100) value_to_read
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) value_to_read
+  character(len=MAX_STRING_LEN) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,'(a)') value_to_read
@@ -99,12 +107,14 @@
 
   subroutine read_two_interface_points(iin,ignore_junk,value_to_read_1,value_to_read_2)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer iin
   logical ignore_junk
   double precision value_to_read_1,value_to_read_2
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read_1,value_to_read_2
@@ -115,15 +125,18 @@
 
   subroutine read_next_line(iin,ignore_junk,string_read)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   logical ignore_junk
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
 
   integer ios,iin,index_equal_sign
 
   do
-    read(unit=iin,fmt="(a100)",iostat=ios) string_read
+    ! daniel: actually MAX_STRING_LEN set to 512...
+    read(unit=iin,fmt="(a256)",iostat=ios) string_read
     if (ios /= 0) stop 'error while reading input file'
 
 ! suppress leading white spaces, if any
@@ -171,11 +184,13 @@
 
   subroutine read_value_integer_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -189,11 +204,13 @@
 
   subroutine read_value_double_precision_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   double precision value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -207,11 +224,13 @@
 
   subroutine read_value_logical_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   logical value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -225,11 +244,13 @@
 
   subroutine read_value_string_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   character(len=*) value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -243,11 +264,13 @@
 
   subroutine read_value_integer_next_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -261,11 +284,13 @@
 
   subroutine read_value_double_prec_next_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   double precision value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -279,11 +304,13 @@
 
   subroutine read_value_logical_next_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   logical value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -300,6 +327,7 @@
                          val4read,val5read,val6read,val7read,val8read,val9read,val10read, &
                          val11read,val12read)
 
+  use constants, only: MAX_STRING_LEN
 
   implicit none
 
@@ -307,7 +335,7 @@
   double precision val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read,&
                    val8read,val9read,val10read,val11read,val12read
 
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -328,10 +356,12 @@
   subroutine read_region_coordinates_p(value_to_read_1,value_to_read_2, &
                           value_to_read_3,value_to_read_4,value_to_read_5)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -352,15 +382,12 @@
 
   subroutine open_parameter_file()
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
-  include 'constants.h'
   integer ierr
   common /param_err_common/ ierr
-  character(len=50) filename
-
-  ! to use fortran routines
-  !open(unit=IIN,file='DATA/Par_file',status='old',iostat=ios)
-  !if (ios /= 0 ) stop 'error opening DATA/Par_file file'
+  character(len=MAX_STRING_LEN) filename
 
   ! to use c routines
   filename = 'DATA/Par_file'
@@ -375,10 +402,6 @@
   subroutine close_parameter_file()
 
   implicit none
-  include 'constants.h'
-
-  ! to use fortran routines
-  !close(IIN)
 
   ! to use c routines
   call param_close()

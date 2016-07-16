@@ -36,6 +36,7 @@
 
 ! starts reading in parameters from input Database file
 
+  use constants,only: IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
   use specfem_par
   use specfem_par_noise,only: NOISE_TOMOGRAPHY
   use specfem_par_movie
@@ -44,195 +45,129 @@
 
   ! local parameters
   integer :: ier
-  character(len=80) :: datlin
-  character(len=256)  :: prname
+  character(len=MAX_STRING_LEN) :: prname
 
   ! opens Database file
-  write(prname,"('./OUTPUT_FILES/Database',i5.5)") myrank
-  open(unit=IIN,file=trim(prname),status='old',action='read',iostat=ier)
+  write(prname,"('./OUTPUT_FILES/Database',i5.5,'.bin')") myrank
+  open(unit=IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0 ) then
     if (myrank == 0) then
       print *,'Error opening database file: ',trim(prname)
       print *,''
       print *,'Please make sure that the mesher has been run before this solver simulation with the correct settings...'
     endif
-    call exit_MPI(myrank,'Error opening file OUTPUT_FILES/Database***')
+    call exit_MPI(myrank,'Error opening file OUTPUT_FILES/Database***.bin')
   endif
 
   !-------- starts reading init section
 
   !---  read job title and skip remaining titles of the input file
-  read(IIN,"(a80)") datlin
-  read(IIN,"(a80)") datlin
-  read(IIN,"(a80)") datlin
-  read(IIN,"(a80)") datlin
-  read(IIN,"(a80)") datlin
-  read(IIN,"(a50)") simulation_title
+  read(IIN) simulation_title
 
   !---- read parameters from input file
-  read(IIN,"(a80)") datlin
-  read(IIN,*) AXISYM
+  read(IIN) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
+  read(IIN) nspec
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) nspec
+  read(IIN) npgeo,nproc_read_from_database
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) npgeo,nproc_read_from_database
+  read(IIN) output_grid_Gnuplot,interpol
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) output_grid_Gnuplot,interpol
+  read(IIN) NSTEP_BETWEEN_OUTPUT_INFO
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) NSTEP_BETWEEN_OUTPUT_INFO
+  read(IIN) NSTEP_BETWEEN_OUTPUT_SEISMOS
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) NSTEP_BETWEEN_OUTPUT_SEISMOS
+  read(IIN) NSTEP_BETWEEN_OUTPUT_IMAGES
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) NSTEP_BETWEEN_OUTPUT_IMAGES
+  read(IIN) PML_BOUNDARY_CONDITIONS
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) PML_BOUNDARY_CONDITIONS
+  read(IIN) ROTATE_PML_ACTIVATE
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) ROTATE_PML_ACTIVATE
+  read(IIN) ROTATE_PML_ANGLE
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) ROTATE_PML_ANGLE
+  read(IIN) read_external_mesh
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) read_external_mesh
+  read(IIN) NELEM_PML_THICKNESS
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) NELEM_PML_THICKNESS
+  read(IIN) NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
+  read(IIN) subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
+  read(IIN) output_postscript_snapshot,output_color_image
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) output_postscript_snapshot,output_color_image,colors,numbers
+  read(IIN) meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows
+  read(IIN) anglerec
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) anglerec
+  read(IIN) initialfield
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) initialfield
+  read(IIN) add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) add_Bielak_conditions_bottom
+  read(IIN) seismotype,imagetype_postscript
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) add_Bielak_conditions_right
+  read(IIN) MODEL
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) add_Bielak_conditions_top
+  read(IIN) SAVE_MODEL
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) add_Bielak_conditions_left
+  read(IIN) TOMOGRAPHY_FILE
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) seismotype,imagetype_postscript
+  read(IIN) output_grid_ASCII,output_energy,output_wavefield_dumps
 
-  read(IIN,"(a80)") datlin
-  read(IIN,'(a100)') MODEL
+  read(IIN) use_binary_for_wavefield_dumps
 
-  read(IIN,"(a80)") datlin
-  read(IIN,'(a100)') SAVE_MODEL
+  read(IIN) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
 
-  read(IIN,"(a80)") datlin
-  read(IIN,'(a100)') TOMOGRAPHY_FILE
+  read(IIN) save_ASCII_seismograms
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) output_grid_ASCII,output_energy,output_wavefield_dumps
+  read(IIN) save_binary_seismograms_single,save_binary_seismograms_double
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) use_binary_for_wavefield_dumps
+  read(IIN) USE_TRICK_FOR_BETTER_PRESSURE
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
+  read(IIN) COMPUTE_INTEGRATED_ENERGY_FIELD
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) save_ASCII_seismograms
+  read(IIN) save_ASCII_kernels
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) save_binary_seismograms_single,save_binary_seismograms_double
+  read(IIN) DRAW_SOURCES_AND_RECEIVERS
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) USE_TRICK_FOR_BETTER_PRESSURE
+  read(IIN) Q0,freq0
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) COMPUTE_INTEGRATED_ENERGY_FIELD
+  read(IIN) AXISYM
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) save_ASCII_kernels
+  read(IIN) P_SV
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) DRAW_SOURCES_AND_RECEIVERS
+  read(IIN) factor_subsample_image
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) Q0,freq0
+  read(IIN) USE_CONSTANT_MAX_AMPLITUDE
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) P_SV
+  read(IIN) CONSTANT_MAX_AMPLITUDE_TO_USE
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) factor_subsample_image
+  read(IIN) USE_SNAPSHOT_NUMBER_IN_FILENAME
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) USE_CONSTANT_MAX_AMPLITUDE
+  read(IIN) DRAW_WATER_IN_BLUE
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) CONSTANT_MAX_AMPLITUDE_TO_USE
+  read(IIN) US_LETTER
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) USE_SNAPSHOT_NUMBER_IN_FILENAME
+  read(IIN) POWER_DISPLAY_COLOR
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) DRAW_WATER_IN_BLUE
+  read(IIN) SU_FORMAT
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) US_LETTER
+  read(IIN) USER_T0
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) POWER_DISPLAY_COLOR
+  read(IIN) time_stepping_scheme
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) SU_FORMAT
+  read(IIN) ADD_PERIODIC_CONDITIONS
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) USER_T0
+  read(IIN) PERIODIC_HORIZ_DIST
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) time_stepping_scheme
-
-  read(IIN,"(a80)") datlin
-  read(IIN,*) ADD_PERIODIC_CONDITIONS
-
-  read(IIN,"(a80)") datlin
-  read(IIN,*) PERIODIC_HORIZ_DIST
-
-  read(IIN,"(a80)") datlin
-  read(IIN,*) GPU_MODE
+  read(IIN) GPU_MODE
 
   !---- read time step
-  read(IIN,"(a80)") datlin
-  read(IIN,*) NSTEP,DT
+  read(IIN) NSTEP,DT
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) NT_DUMP_ATTENUATION
+  read(IIN) NT_DUMP_ATTENUATION
 
   ! read the ACOUSTIC_FORCING flag
-  read(IIN,"(a80)") datlin
-  read(IIN,*) ACOUSTIC_FORCING
+  read(IIN) ACOUSTIC_FORCING
 
   !-------- finish reading init section
   ! sets time step for time scheme
@@ -254,7 +189,7 @@
 
     ! outputs parameters read
     write(IMAIN,200) npgeo,NDIM
-    write(IMAIN,600) NSTEP_BETWEEN_OUTPUT_INFO,colors,numbers
+    write(IMAIN,600) NSTEP_BETWEEN_OUTPUT_INFO,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
     write(IMAIN,700) seismotype,anglerec
     write(IMAIN,750) initialfield, &
                  add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left, &
@@ -324,6 +259,7 @@
   use mpi
 #endif
 
+  use constants,only: IIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM,NB_POINTS_TO_ADD_TO_NPGEO
   use specfem_par
 
   implicit none
@@ -399,6 +335,7 @@
 
 ! reads source parameters
 
+  use constants,only: IIN
   use specfem_par
   use specfem_par_movie
 
@@ -406,11 +343,9 @@
 
   ! local parameters
   integer :: i_source,ier
-  character(len=80) :: datlin
 
   !----  read source information
-  read(IIN,"(a80)") datlin
-  read(IIN,*) NSOURCES
+  read(IIN) NSOURCES
 
   ! allocates source information arrays
   allocate(source_type(NSOURCES), &
@@ -465,13 +400,12 @@
 
   ! reads in source info from Database file (check with routine save_databases_sources())
   do i_source= 1,NSOURCES
-    read(IIN,"(a80)") datlin
-    read(IIN,*) source_type(i_source),time_function_type(i_source)
-    read(IIN,"(a100)") name_of_source_file(i_source)
-    read(IIN,*) burst_band_width(i_source), &
-                x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
-                factor(i_source),anglesource(i_source), &
-                Mxx(i_source),Mzz(i_source),Mxz(i_source)
+    read(IIN) source_type(i_source),time_function_type(i_source)
+    read(IIN) name_of_source_file(i_source)
+    read(IIN) burst_band_width(i_source), &
+              x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
+              factor(i_source),anglesource(i_source), &
+              Mxx(i_source),Mzz(i_source),Mxz(i_source)
   enddo
 
   !if (AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify
@@ -487,6 +421,7 @@
 
 ! reads the spectral macrobloc nodal coordinates
 
+  use constants,only: IMAIN,IIN
   use specfem_par
   use specfem_par_movie
 
@@ -495,7 +430,6 @@
   ! local parameters
   integer :: ipoin,ip,id,ier
   double precision, dimension(NDIM) :: coorgread
-  character(len=80) :: datlin
   integer :: nspec_all,nelem_acforcing_all,nelem_acoustic_surface_all
   ! allocates nodal coordinates
   allocate(coorg(NDIM,npgeo),stat=ier)
@@ -505,13 +439,12 @@
   coorg(:,:) = 0.d0
 
   ! reads the spectral macrobloc nodal coordinates
-  read(IIN,"(a80)") datlin
 
   ! reads in values
   ipoin = 0
   do ip = 1,npgeo
     ! reads coordinates
-    read(IIN,*) ipoin,(coorgread(id),id = 1,NDIM)
+    read(IIN) ipoin,(coorgread(id),id = 1,NDIM)
 
     ! checks index
     if (ipoin < 1 .or. ipoin > npgeo) call exit_MPI(myrank,'Wrong control point number')
@@ -521,13 +454,9 @@
   enddo
 
   !---- read the basic properties of the spectral elements
-  read(IIN,"(a80)") datlin
-  read(IIN,*) numat,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
+  read(IIN) numat,ngnod,nspec,pointsdisp,plot_lowerleft_corner_only
 
-  read(IIN,"(a80)") datlin
-  read(IIN,"(a80)") datlin
-  read(IIN,"(a80)") datlin
-  read(IIN,*) nelemabs,nelem_acforcing,nelem_acoustic_surface,num_fluid_solid_edges, &
+  read(IIN) nelemabs,nelem_acforcing,nelem_acoustic_surface,num_fluid_solid_edges, &
               num_fluid_poro_edges,num_solid_poro_edges,nnodes_tangential_curve, &
               nelem_on_the_axis
 
@@ -596,10 +525,9 @@
   implicit none
 
   ! local parameters
-  character(len=80) :: datlin
+  integer :: ier
 
-  read(IIN,"(a80)") datlin
-  read(IIN,*) N_SLS, f0_attenuation, READ_VELOCITIES_AT_f0
+  read(IIN) N_SLS, f0_attenuation, READ_VELOCITIES_AT_f0
 
   ! checks number of standard linear solids
   if (N_SLS < 2) stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
@@ -610,21 +538,22 @@
   endif
 
   ! attenuation
-  allocate(already_shifted_velocity(numat))
-  allocate(QKappa_attenuation(numat))
-  allocate(Qmu_attenuation(numat))
-  allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS))
-  allocate(inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS))
-  allocate(phi_nu1(NGLLX,NGLLZ,nspec,N_SLS))
-  allocate(phi_nu2(NGLLX,NGLLZ,nspec,N_SLS))
-  allocate(tau_epsilon_nu1(N_SLS))
-  allocate(tau_epsilon_nu2(N_SLS))
-  allocate(inv_tau_sigma_nu1_sent(N_SLS))
-  allocate(inv_tau_sigma_nu2_sent(N_SLS))
-  allocate(phi_nu1_sent(N_SLS))
-  allocate(phi_nu2_sent(N_SLS))
-  allocate(Mu_nu1(NGLLX,NGLLZ,nspec))
-  allocate(Mu_nu2(NGLLX,NGLLZ,nspec))
+  allocate(already_shifted_velocity(numat), &
+           QKappa_attenuation(numat), &
+           Qmu_attenuation(numat), &
+           inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS), &
+           inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS), &
+           phi_nu1(NGLLX,NGLLZ,nspec,N_SLS), &
+           phi_nu2(NGLLX,NGLLZ,nspec,N_SLS), &
+           tau_epsilon_nu1(N_SLS), &
+           tau_epsilon_nu2(N_SLS), &
+           inv_tau_sigma_nu1_sent(N_SLS), &
+           inv_tau_sigma_nu2_sent(N_SLS), &
+           phi_nu1_sent(N_SLS), &
+           phi_nu2_sent(N_SLS), &
+           Mu_nu1(NGLLX,NGLLZ,nspec), &
+           Mu_nu2(NGLLX,NGLLZ,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating attenuation arrays'
 
   already_shifted_velocity(:) = .false.
 
@@ -648,10 +577,9 @@
   integer :: n,k,ispec,kmato_read,pml_read
   integer :: ier
   integer, dimension(:), allocatable :: knods_read
-  character(len=80) :: datlin
 
   ! reads and sets the material properties
-  call gmat01(f0_source(1))
+  call read_materials(f0_source(1))
 
   ! add support for using PML in MPI mode with external mesh
   allocate(region_CPML(nspec),stat=ier)
@@ -667,13 +595,12 @@
   if (ier /= 0) stop 'Error allocating temporary knods array'
 
   ! reads spectral macrobloc data
-  read(IIN,"(a80)") datlin
 
   ! reads in values
   n = 0
   do ispec = 1,nspec
     ! format: #element_id  #material_id #node_id1 #node_id2 #...
-    read(IIN,*) n,kmato_read,(knods_read(k),k = 1,ngnod),pml_read
+    read(IIN) n,kmato_read,(knods_read(k),k = 1,ngnod),pml_read
 
     ! material association
     kmato(n) = kmato_read
@@ -696,17 +623,16 @@
 
 ! reads in interface dimensions
 
+  use constants,only: IIN
   use specfem_par
 
   implicit none
 
   ! local parameters
   integer :: num_interface,ie,my_interfaces_read
-  character(len=80) :: datlin
 
   ! reads number of interfaces
-  read(IIN,"(a80)") datlin
-  read(IIN,*) ninterface, max_interface_size
+  read(IIN) ninterface, max_interface_size
 
   ! allocates arrays for mpi/partition interfaces
   if (ninterface > 0) then
@@ -761,7 +687,7 @@
     ! where
     !     process_interface_id = rank of (neighbor) process to share MPI interface with
     !     number_of_elements_on_interface = number of interface elements
-    read(IIN,*) my_neighbours(num_interface), my_nelmnts_neighbours(num_interface)
+    read(IIN) my_neighbours(num_interface), my_nelmnts_neighbours(num_interface)
 
     ! loops over interface elements
     do ie = 1, my_nelmnts_neighbours(num_interface)
@@ -770,8 +696,8 @@
       ! interface types:
       !     1  -  corner point only
       !     2  -  element edge
-      read(IIN,*) my_interfaces_read, my_interfaces(2,ie,num_interface), &
-                  my_interfaces(3,ie,num_interface), my_interfaces(4,ie,num_interface)
+      read(IIN) my_interfaces_read, my_interfaces(2,ie,num_interface), &
+                my_interfaces(3,ie,num_interface), my_interfaces(4,ie,num_interface)
 
       my_interfaces(1,ie,num_interface) = my_interfaces_read
 
@@ -793,6 +719,7 @@
   use mpi
 #endif
 
+  use constants,only: IMAIN,IIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4
   use specfem_par
 
   implicit none
@@ -800,7 +727,6 @@
   ! local parameters
   integer :: inum,inum_duplicate,numabsread,typeabsread
   logical :: codeabsread(4)
-  character(len=80) :: datlin
 
   integer :: nelemabs_tot,nspec_left_tot,nspec_right_tot,nspec_bottom_tot,nspec_top_tot
   integer :: ier
@@ -907,9 +833,6 @@
   ib_top(:) = 0
 
   ! reads in absorbing edges
-  read(IIN,"(a80)") datlin
-
-  ! reads in values
   if (anyabs) then
 
     ! reads absorbing boundaries
@@ -919,10 +842,10 @@
       ! may have rotated elements and thus edge 1 may not correspond to the bottom,
       ! edge 2 may not correspond to the right, edge 3 may not correspond to the top,
       ! and edge 4 may not correspond to the left.
-      read(IIN,*) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),&
-                  codeabsread(4), typeabsread, ibegin_edge1(inum), iend_edge1(inum), &
-                  ibegin_edge2(inum), iend_edge2(inum), ibegin_edge3(inum), &
-                  iend_edge3(inum), ibegin_edge4(inum), iend_edge4(inum)
+      read(IIN) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),&
+                codeabsread(4), typeabsread, ibegin_edge1(inum), iend_edge1(inum), &
+                ibegin_edge2(inum), iend_edge2(inum), ibegin_edge3(inum), &
+                iend_edge3(inum), ibegin_edge4(inum), iend_edge4(inum)
 
       if (numabsread < 1 .or. numabsread > nspec) &
         call exit_MPI(myrank,'Wrong absorbing element number')
@@ -1150,7 +1073,6 @@
   integer :: nspec_left_acforcing_all,nspec_right_acforcing_all,nspec_bottom_acforcing_all,nspec_top_acforcing_all
   integer :: ier
   logical :: codeacforcingread(4)
-  character(len=80) :: datlin
 
   if (.not. ACOUSTIC_FORCING) then
     ! dummy value for allocation
@@ -1203,23 +1125,20 @@
   ib_bottom_acforcing(:) = 0
   ib_top_acforcing(:) = 0
 
-  ! reads in absorbing edges
-  read(IIN,"(a80)") datlin
-
-  ! reads in values
+  ! reads in forcing edges
   if (ACOUSTIC_FORCING) then
 
-    ! reads absorbing boundaries
+    ! reads forcing boundaries
     do inum = 1,nelem_acforcing
 
       ! beware here and below that external meshes (for instance coming from CUBIT or Gmsh)
       ! may have rotated elements and thus edge 1 may not correspond to the bottom,
       ! edge 2 may not correspond to the right, edge 3 may not correspond to the top,
       ! and edge 4 may not correspond to the left.
-      read(IIN,*) numacforcingread,codeacforcingread(1),codeacforcingread(2),codeacforcingread(3),&
-                  codeacforcingread(4), typeacforcingread, ibegin_edge1_acforcing(inum), iend_edge1_acforcing(inum), &
-                  ibegin_edge2_acforcing(inum), iend_edge2_acforcing(inum), ibegin_edge3_acforcing(inum), &
-                  iend_edge3_acforcing(inum), ibegin_edge4_acforcing(inum), iend_edge4_acforcing(inum)
+      read(IIN) numacforcingread,codeacforcingread(1),codeacforcingread(2),codeacforcingread(3),&
+                codeacforcingread(4), typeacforcingread, ibegin_edge1_acforcing(inum), iend_edge1_acforcing(inum), &
+                ibegin_edge2_acforcing(inum), iend_edge2_acforcing(inum), ibegin_edge3_acforcing(inum), &
+                iend_edge3_acforcing(inum), ibegin_edge4_acforcing(inum), iend_edge4_acforcing(inum)
 
       ! checks index
       if (numacforcingread < 1 .or. numacforcingread > nspec) &
@@ -1306,7 +1225,6 @@
   ! local parameters
   integer :: inum,acoustic_edges_read,nelem_acoustic_surface_all
   integer :: ier
-  character(len=80) :: datlin
 
   ! sets acoustic edges flag
   if (nelem_acoustic_surface > 0) then
@@ -1325,12 +1243,10 @@
   acoustic_edges(:,:) = 0
 
   ! reads in any possible free surface edges
-  read(IIN,"(a80)") datlin
-
   if (any_acoustic_edges) then
     do inum = 1,nelem_acoustic_surface
-      read(IIN,*) acoustic_edges_read, acoustic_edges(2,inum), acoustic_edges(3,inum), &
-           acoustic_edges(4,inum)
+      read(IIN) acoustic_edges_read, acoustic_edges(2,inum), acoustic_edges(3,inum), &
+                acoustic_edges(4,inum)
 
       acoustic_edges(1,inum) = acoustic_edges_read
     enddo
@@ -1388,7 +1304,6 @@
     fluid_poro_acoustic_ispec_read,fluid_poro_poro_ispec_read, &
     solid_poro_poro_ispec_read,solid_poro_elastic_ispec_read
   integer :: ier
-  character(len=80) :: datlin
 
   ! sets flags fluid-solid domains
   if (num_fluid_solid_edges > 0) then
@@ -1442,11 +1357,9 @@
   solid_poro_poroelastic_ispec(:) = 0
 
   ! reads acoustic elastic coupled edges
-  read(IIN,"(a80)") datlin
-
   if (any_fluid_solid_edges) then
     do inum = 1, num_fluid_solid_edges
-      read(IIN,*) fluid_solid_acoustic_ispec_read,fluid_solid_elastic_ispec_read
+      read(IIN) fluid_solid_acoustic_ispec_read,fluid_solid_elastic_ispec_read
 
       fluid_solid_acoustic_ispec(inum) = fluid_solid_acoustic_ispec_read
       fluid_solid_elastic_ispec(inum) = fluid_solid_elastic_ispec_read
@@ -1454,11 +1367,9 @@
   endif
 
   ! reads acoustic poroelastic coupled edges
-  read(IIN,"(a80)") datlin
-
   if (any_fluid_poro_edges) then
     do inum = 1, num_fluid_poro_edges
-      read(IIN,*) fluid_poro_acoustic_ispec_read,fluid_poro_poro_ispec_read
+      read(IIN) fluid_poro_acoustic_ispec_read,fluid_poro_poro_ispec_read
 
       fluid_poro_acoustic_ispec(inum) = fluid_poro_acoustic_ispec_read
       fluid_poro_poroelastic_ispec(inum) = fluid_poro_poro_ispec_read
@@ -1466,11 +1377,9 @@
   endif
 
   ! reads poroelastic elastic coupled edges
-  read(IIN,"(a80)") datlin
-
   if (any_solid_poro_edges) then
     do inum = 1, num_solid_poro_edges
-      read(IIN,*) solid_poro_poro_ispec_read,solid_poro_elastic_ispec_read
+      read(IIN) solid_poro_poro_ispec_read,solid_poro_elastic_ispec_read
 
       solid_poro_elastic_ispec(inum) = solid_poro_elastic_ispec_read
       solid_poro_poroelastic_ispec(inum) = solid_poro_poro_ispec_read
@@ -1503,7 +1412,6 @@
 
   ! local parameters
   integer :: i,ier
-  character(len=80) :: datlin
 
   ! sets tangential flag
   if (nnodes_tangential_curve > 0) then
@@ -1522,12 +1430,11 @@
   nodes_tangential_curve(:,:) = 0.d0
 
   ! reads tangential detection curve
-  read(IIN,"(a80)") datlin
-  read(IIN,*) force_normal_to_surface,rec_normal_to_surface
+  read(IIN) force_normal_to_surface,rec_normal_to_surface
 
   if (any_tangential_curve) then
     do i = 1, nnodes_tangential_curve
-      read(IIN,*) nodes_tangential_curve(1,i),nodes_tangential_curve(2,i)
+      read(IIN) nodes_tangential_curve(1,i),nodes_tangential_curve(2,i)
     enddo
   else
     force_normal_to_surface = .false.
@@ -1560,7 +1467,6 @@
   ! local parameters
   integer :: nelem_on_the_axis_total
   integer :: i,ier
-  character(len=80) :: datlin
 
   ! axial flags
   allocate(is_on_the_axis(nspec),stat=ier)
@@ -1580,11 +1486,9 @@
   ispec_of_axial_elements(:) = 0
 
   ! reads in any possible axial elements
-  read(IIN,"(a80)") datlin
-
   if (nelem_on_the_axis > 0) then
     do i = 1,nelem_on_the_axis
-      read(IIN,*) ispec_of_axial_elements(i)
+      read(IIN) ispec_of_axial_elements(i)
     enddo
 
     ! determines flags if element is on the axis

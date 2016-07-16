@@ -34,6 +34,7 @@
 
   subroutine prepare_GPU()
 
+  use constants,only: IMAIN,USE_MESH_COLORING_GPU,APPROXIMATE_HESS_KL
   use specfem_par
   use specfem_par_gpu
 
@@ -317,6 +318,8 @@
   subroutine init_host_to_dev_variable()
 
 ! helper routine for array initialization and time run setup
+
+  use constants,only: IMAIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IBOTTOM,IRIGHT,ITOP,ILEFT
 
   implicit none
 
