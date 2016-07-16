@@ -27,14 +27,14 @@ STEPS TO ADD A NEW OPTION TO SPECFEM2D
 
 3. Write this flag in the database with src/meshfem2d/save_databases.f90
              ...
-       write(15,*) 'a_grim_stuff'
-       write(15,*) a_grim_stuff
+       ! 'a_grim_stuff'
+       write(IOUT) a_grim_stuff
 
-       write(15,*) 'MY_WONDERFUL_FLAG'
-       write(15,*) MY_WONDERFUL_FLAG
+       ! 'MY_WONDERFUL_FLAG'
+       write(IOUT) MY_WONDERFUL_FLAG
 
-       write(15,*) 'a_gloomy_flag'
-       write(15,*) a_gloomy_flag
+       ! 'a_gloomy_flag'
+       write(IOUT) a_gloomy_flag
              ...
 
 5. Add it in src/specfem2d/specfem2D_par :
@@ -47,16 +47,13 @@ STEPS TO ADD A NEW OPTION TO SPECFEM2D
       use specfem_par, only: ...
                              ... ,MY_WONDERFUL_FLAG, ...
              ...
-      read(IIN,"(a80)") datlin
-      read(IIN,*) a_grim_stuff
+      read(IIN) a_grim_stuff
 
-      read(IIN,"(a80)") datlin
-      read(IIN,*) MY_WONDERFUL_FLAG
+      read(IIN) MY_WONDERFUL_FLAG
 
       if (MY_WONDERFUL_FLAG) write(IMAIN,*) 'IT IS WONDERFUL!! IT IS SO WONDERFUL!!' !*** To test your flag
 
-      read(IIN,"(a80)") datlin
-      read(IIN,*) a_gloomy_flag
+      read(IIN) a_gloomy_flag
              ...
 
 6. (Re)compile with make and run an example (don't forget to add your flag on the Par_file). At the beginning of
