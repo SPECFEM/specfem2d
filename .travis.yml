@@ -23,20 +23,20 @@ env:
     #   TEST    - flags used for configuration
     #   TESTCOV - determines whether or not (0/1) code coverage flags are used
 
-    # run debug
-    - TEST="--enable-debug" TESTCOV=0 TESTMAKE=0
-
-    # run debug & double precision
-    - TEST="--enable-double-precision --enable-debug" TESTCOV=0 TESTMAKE=0
-
-    # run vectorization
-    - TEST="--enable-vectorization --without-mpi" TESTCOV=0 TESTMAKE=0
+    # run default test with make tests
+    - TEST="" TESTCOV=0 TESTMAKE=0
 
     # run vectorization & mpi, using code coverage flags
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=1 TESTMAKE=0
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=1 TESTMAKE=1
 
-    # run default test with make tests
-    - TEST="" TESTCOV=0 TESTMAKE=1
+    # run debug
+    - TEST="--enable-debug" TESTCOV=0 TESTMAKE=1
+
+    # run debug & double precision
+    - TEST="--enable-double-precision --enable-debug" TESTCOV=0 TESTMAKE=1
+
+    # run vectorization
+    - TEST="--enable-vectorization --without-mpi" TESTCOV=0 TESTMAKE=1
 
     # run example 2 (PML)
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=2
@@ -123,9 +123,10 @@ script:
   - |
     my_test(){
       echo "testing seismograms:"
-      ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/
+      ln -s $WORKDIR/utils/compare_seismogram_correlations.py
+      ./compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/
       if [[ $? -ne 0 ]]; then exit 1; fi
-      ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
+      ./compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
       if [[ $? -ne 0 ]]; then exit 1; fi
       rm -rf OUTPUT_FILES/
     }
@@ -133,9 +134,10 @@ script:
   - |
     my_test_kernel(){
       echo "testing kernels:"
-      ../../utils/compare_kernel_correlations.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat REF_KERNEL/proc000000_rhop_alpha_beta_kernel.dat
+      ln -s $WORKDIR/utils/compare_kernel_correlations.py
+      ./compare_kernel_correlations.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat REF_KERNEL/proc000000_rhop_alpha_beta_kernel.dat
       if [[ $? -ne 0 ]]; then exit 1; fi
-      ../../utils/compare_kernel_correlations.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat REF_KERNEL/proc000000_rhop_alpha_beta_kernel.dat | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
+      ./compare_kernel_correlations.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat REF_KERNEL/proc000000_rhop_alpha_beta_kernel.dat | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
       if [[ $? -ne 0 ]]; then exit 1; fi
       rm -rf OUTPUT_FILES/
     }
@@ -152,40 +154,43 @@ script:
     fi
 
   # compilation
-  - make clean; make -j4 all
+  - make clean; make -j2 all
 
   ###########################################################
   # test examples
   ###########################################################
   # testing internal mesher example (short & quick for all configuration)
   - |
-    if [ "$TESTMAKE" == "1" ]; then
+    # chooses example directory
+    case "$TESTMAKE" in
+    0) dir=./ ;;
+    1) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
+    2) dir=EXAMPLES/semi_infinite_homogeneous/ ;;
+    3) dir=EXAMPLES/Gmsh_example_Stacey_MPI/ ;;
+    4) dir=EXAMPLES/Tromp2005_kernel/ ;;
+    5) dir=EXAMPLES/poroelastic_acoustic/ ;;
+    *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
+    esac
+    # runs test
+    echo "##########################################################"
+    echo "test directory: $dir"
+    echo "##########################################################"
+    cd $dir
+    if [ "$TESTMAKE" == "0" ]; then
       # runs default tests
       make tests
     else
       # default
-      dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
-      if [ "$TESTMAKE" == "2" ]; then
-        dir=EXAMPLES/semi_infinite_homogeneous/
-      elif [ "$TESTMAKE" == "3" ]; then
-        dir=EXAMPLES/Gmsh_example_Stacey_MPI/
-      elif [ "$TESTMAKE" == "4" ]; then
-        dir=EXAMPLES/Tromp2005_kernel/
-      elif [ "$TESTMAKE" == "5" ]; then
-        dir=EXAMPLES/poroelastic_acoustic/
-      fi
-      echo "##########################################################"
-      echo "test directory: $dir"
-      echo "##########################################################"
-      cd $dir
       if [ "$TESTMAKE" == "4" ]; then
+        # kernel script
         ./run_this_example_kernel.sh
         my_test_kernel
       else
+        # default script
         ./run_this_example.sh
         my_test
       fi
-      cd ../../
+      cd $WORKDIR
     fi
   # testing example with pml (longer testing only together with mpi and code coverage)
   - |
@@ -195,7 +200,7 @@ script:
       sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
       ./run_this_example.sh
       my_test
-      cd ../../
+      cd $WORKDIR
     fi
 
   # testing external mesher example with mpi and stacey
@@ -208,7 +213,7 @@ script:
       awk '{if(NR==1){dy=sqrt(($2-13.3242693)^2);if(dy>1.e-5){print $0,"failed",dy;exit 1;}else{print $0,"good",dy;exit 0;}}}' OUTPUT_FILES/mesh_quality_histogram.txt
       if [[ $? -ne 0 ]]; then exit 1; fi
       my_test
-      cd ../../
+      cd $WORKDIR
     fi
 
   # testing kernel example
@@ -219,7 +224,7 @@ script:
       ./run_this_example_kernel.sh
       # no kernel value testing: only execution failure
       #my_test_kernel
-      cd ../../
+      cd $WORKDIR
     fi
 
   # testing poroelastic example
@@ -229,7 +234,7 @@ script:
       sed -i "s:^NSTEP .*:NSTEP    = 200:" DATA/Par_file
       ./run_this_example.sh
       my_test
-      cd ../../
+      cd $WORKDIR
     fi
 
   # done
