@@ -12,9 +12,9 @@ title                           = Noise_2D
 # note: 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)
 SIMULATION_TYPE                 = 1
 # 0 = regular wave propagation simulation, 1/2/3 = noise simulation
-NOISE_TOMOGRAPHY                = 1
+NOISE_TOMOGRAPHY                = 2
 # save the last frame, needed for adjoint simulation
-SAVE_FORWARD                    = .false.
+SAVE_FORWARD                    = .true.
 
 # parameters concerning partitioning
 NPROC                           = 1              # number of processes
@@ -25,9 +25,9 @@ ngnod                           = 9
 
 # time step parameters
 # total number of time steps
-NSTEP                           = 3600
+NSTEP                           = 1600
 # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
-DT                              = 4.d-2
+DT                              = 5.d-2
 
 # time stepping
 # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta

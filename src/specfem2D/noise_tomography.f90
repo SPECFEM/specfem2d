@@ -45,10 +45,35 @@
 ! specify spatial distribution of microseismic noise sources
 ! **** USERS need to modify this subroutine **** to suit their own needs
 
+  implicit none
+
+  !local
+
+  ! parameter helps choosing between different noise distributions
+  ! users can add their own mask implementation...
+  ! (default is a uniform distribution)
+  integer,parameter :: NOISE_DIST_TYPE = 0
+
+  ! chooses noise distribution
+  select case (NOISE_DIST_TYPE)
+  case (1)
+    call create_mask_noise_nonuniform()
+  case default
+    call create_mask_noise_uniform()
+  end select
+
+  end subroutine create_mask_noise
+
+!
+!========================================================================
+!
+
+  subroutine create_mask_noise_uniform()
+
+! uniform noise distribution
+
   use constants,only: CUSTOM_REAL
-
   use specfem_par, only: nglob,coord
-
   use specfem_par_noise,only: mask_noise
 
   implicit none
@@ -62,15 +87,64 @@
     xx = coord(1,iglob)
     zz = coord(2,iglob)
 
-    ! below, the noise is assumed to be uniform; users are free to
-    ! to change this expression to one involving xx, zz
+    !below, the noise is assumed to be uniform; users are free to
+    !to change this expression to one involving xx, zz
     mask_noise(iglob) = 1.0
+
   enddo
 
-  end subroutine create_mask_noise
+  end subroutine create_mask_noise_uniform
 
+!
+!========================================================================
+!
 
-! =============================================================================================================
+  subroutine create_mask_noise_nonuniform()
+
+! example for a non-uniform noise distribution
+
+  use constants,only: CUSTOM_REAL,PI
+  use specfem_par, only: nglob,coord
+  use specfem_par_noise,only: mask_noise
+
+  implicit none
+
+  !local
+  integer :: iglob
+  real(kind=CUSTOM_REAL) :: xx,zz,aa,phi
+
+  real(kind=CUSTOM_REAL),parameter :: POS_X = 105.e3
+  real(kind=CUSTOM_REAL),parameter :: POS_Z = 92.e3
+
+  real(kind=CUSTOM_REAL),parameter :: RAD_X = 28.e3
+  real(kind=CUSTOM_REAL),parameter :: RAD_Z = 20.e3
+
+  aa = PI/8.0
+
+  ! specify distribution of noise sources as a function of xx, zz
+  do iglob = 1,nglob
+    xx = coord(1,iglob)
+    zz = coord(2,iglob)
+
+    ! distance function
+    phi = (((xx-POS_X)*cos(aa)+(zz-POS_Z)*sin(aa))/RAD_X)**2 + &
+          (((xx-POS_X)*sin(aa)-(zz-POS_Z)*cos(aa))/RAD_Z)**2
+
+    ! weighting
+    if (phi < 0.9) then
+        mask_noise(iglob) = 1.0_CUSTOM_REAL
+    elseif (phi < 1.1) then
+        mask_noise(iglob) = 0.5*(1.0 + cos(5.0*PI*(phi/1.1 - 0.8)))
+    else
+        mask_noise(iglob) = 0.0_CUSTOM_REAL
+    endif
+  enddo
+
+  end subroutine create_mask_noise_nonuniform
+
+!
+!========================================================================
+!
 
   subroutine read_parameters_noise()
 
@@ -158,8 +232,9 @@
 
   end subroutine read_parameters_noise
 
-
-! =============================================================================================================
+!
+!========================================================================
+!
 
   subroutine compute_source_array_noise()
 
@@ -325,8 +400,9 @@
 
   end subroutine compute_source_array_noise
 
-
-! =============================================================================================================
+!
+!========================================================================
+!
 
   subroutine add_point_source_noise()
 
@@ -364,8 +440,9 @@
 
   end subroutine add_point_source_noise
 
-
-! =============================================================================================================
+!
+!========================================================================
+!
 
   subroutine add_surface_movie_noise(accel_elastic)
 
@@ -447,7 +524,9 @@
 
   end subroutine add_surface_movie_noise
 
-! =============================================================================================================
+!
+!========================================================================
+!
 
   subroutine save_surface_movie_noise()
 
@@ -525,7 +604,9 @@
 
   end subroutine save_surface_movie_noise
 
-! =============================================================================================================
+!
+!========================================================================
+!
 
   subroutine read_wavefield_noise()
 
@@ -560,7 +641,9 @@
 
   end subroutine read_wavefield_noise
 
-! =============================================================================================================
+!
+!========================================================================
+!
 
   subroutine snapshots_noise(ncol,nglob,filename,array_all)
 
@@ -590,8 +673,10 @@
 
   end subroutine snapshots_noise
 
+!
+!========================================================================
+!
 
-! =============================================================================================================
 ! auxillary routine
 
   subroutine spec2glob(nspec,nglob,ibool,array_spec,array_glob)

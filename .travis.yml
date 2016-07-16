@@ -180,6 +180,10 @@ script:
       # runs default tests
       make tests
     else
+      # limit time steps for testing
+      if [ "$TESTMAKE" == "5" ]; then
+        sed -i "s:^NSTEP .*:NSTEP    = 1000:" DATA/Par_file
+      fi
       # default
       if [ "$TESTMAKE" == "4" ]; then
         # kernel script
