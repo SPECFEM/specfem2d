@@ -355,7 +355,7 @@
 
   subroutine periodic_edges_repartitioning(elmnts_l,nnodes,nodes_coords,PERIODIC_HORIZ_DIST)
 
-  use constants,only: IMAIN,NCORNERS,PERIODIC_HORIZ_DIST
+  use constants,only: IMAIN,NCORNERS
   use part_unstruct_par,only: nelmnts,part
 
   implicit none
