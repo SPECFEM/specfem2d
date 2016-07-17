@@ -133,7 +133,7 @@
     ! weighting
     if (phi < 0.9) then
         mask_noise(iglob) = 1.0_CUSTOM_REAL
-    elseif (phi < 1.1) then
+    else if (phi < 1.1) then
         mask_noise(iglob) = 0.5*(1.0 + cos(5.0*PI*(phi/1.1 - 0.8)))
     else
         mask_noise(iglob) = 0.0_CUSTOM_REAL
