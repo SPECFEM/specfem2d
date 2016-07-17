@@ -359,7 +359,6 @@
   integer :: nspec_cpml
 
   integer :: nspec
-  integer :: nbregion
 
   integer  :: remove_min_to_start_at_zero
 
@@ -419,29 +418,29 @@
     nx = nx_param
 
     ! reads in mesh elements
-    write(IMAIN,*)
     if (read_external_mesh) then
+      ! external meshing
+      ! user output
+      write(IMAIN,*)
       write(IMAIN,*) 'Mesh from external meshing:'
+
+      ! reads in mesh
       call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, ngnod)
+
+      ! reads in material defined in external file
+      call read_external_materials_file(materials_file)
+
     else
+      ! internal meshing
+      ! user output
+      write(IMAIN,*)
       write(IMAIN,*) 'Mesh from internal meshing:'
       call read_interfaces_file()
-    endif
 
-    ! assigns materials to mesh elements
-    allocate(num_material(nelmnts),stat=ier)
-    if (ier /= 0) stop 'Error allocating num_material array'
-
-    num_material(:) = 0
-
-    if (read_external_mesh) then
-      ! material defined in external file
-      call read_external_materials_file(materials_file, num_material)
-    else
       ! material regions defined in Par_file
-      call read_regions(nbregion,nbmodels,icodemat,cp,cs, &
+      call read_regions(nbregions,nbmodels,icodemat,cp,cs, &
                         rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
-                        nelmnts,num_material)
+                        nelmnts)
     endif
 
     ! closes file Par_file

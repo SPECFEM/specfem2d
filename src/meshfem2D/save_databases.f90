@@ -517,13 +517,17 @@
 
   ! local parameters
   integer :: idummy
+  integer :: max_interfaces
+
 
   if (NPROC /= 1) then
     ! counts interfaces
     call write_interfaces_database(IOUT, NPROC, iproc,my_ninterface, my_interfaces, my_nb_interfaces, 1)
 
+    max_interfaces = maxval(my_nb_interfaces)
+
     ! 'Interfaces:'
-    write(IOUT) my_ninterface, maxval(my_nb_interfaces)
+    write(IOUT) my_ninterface, max_interfaces
 
     ! writes out interface infos
     call write_interfaces_database(IOUT, NPROC, iproc,my_ninterface, my_interfaces, my_nb_interfaces, 2)

@@ -40,190 +40,39 @@
   ! note 2: the filename ending is .F90 to have pre-compilation with pragmas
   !            (like #ifndef USE_MPI) working properly
 
-  use constants,only: MAX_STRING_LEN
+  use shared_input_parameters
 
   implicit none
 
   !--------------------------------------------------------------
-  ! variables for preparation for compuation (simulation type, mesher, et al)
+  ! variables for computation
   !--------------------------------------------------------------
-  ! name assigned to the running example
-  character(len=MAX_STRING_LEN) :: title
-
-  ! simulation type
-  integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY
-  logical :: SAVE_FORWARD,UNDO_ATTENUATION
-  logical :: AXISYM
-  logical :: P_SV
-
-  ! computational platform type
-  logical :: GPU_MODE
-
-  ! input file name of TOMOGRAPHY
-  character(len=MAX_STRING_LEN) :: TOMOGRAPHY_FILE
-
-  ! input parameter for inner mesher
-  double precision :: xmin_param,xmax_param
-  integer :: nx_param
-  integer :: ngnod
-  character(len=MAX_STRING_LEN) :: interfacesfile
-  logical, dimension(:),allocatable :: record_at_surface_same_vertical
-
-  ! mesh files when using external mesh
-  character(len=MAX_STRING_LEN) :: MODEL, SAVE_MODEL
-
-  logical :: read_external_mesh
-
-  character(len=MAX_STRING_LEN) :: mesh_file, nodes_coords_file, materials_file, &
-                        free_surface_file, acoustic_forcing_surface_file, &
-                        absorbing_surface_file, CPML_element_file, &
-                        axial_elements_file
-
-  character(len=MAX_STRING_LEN)  :: tangential_detection_curve_file
 
   ! material file for changing the model parameter for inner mesh or updating the
   ! the material for an existed mesh
-  logical :: assign_external_model, READ_EXTERNAL_SEP_FILE
+  ! (obsolete in Par_file now...)
+  !logical :: assign_external_model, READ_EXTERNAL_SEP_FILE
 
-  !--------------------------------------------------------------
-  ! variables for compuation
-  !--------------------------------------------------------------
-  ! variables used for partitioning
-  integer :: NPROC, partitioning_method
+  ! for absorbing boundary condition
+  logical :: any_abs
 
-  ! variables used for attenuation
-  integer :: N_SLS
-  logical :: READ_VELOCITIES_AT_f0,ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
-  double precision  :: f0_attenuation
-  double precision :: Q0,freq0
-
-  ! variables used for plane wave incidence
-  logical :: initialfield
-  logical :: add_Bielak_conditions_left,add_Bielak_conditions_right,add_Bielak_conditions_bottom,add_Bielak_conditions_top, &
-             add_Bielak_conditions
-
-  ! variables used for absorbing boundary condition
-  logical :: any_abs,absorbbottom,absorbright,absorbtop,absorbleft
-
-  logical :: STACEY_ABSORBING_CONDITIONS
-
-  ! PML
-  integer :: NELEM_PML_THICKNESS
-  logical :: PML_BOUNDARY_CONDITIONS,ROTATE_PML_ACTIVATE
-  double precision :: ROTATE_PML_ANGLE
-
-  ! for horizontal periodic conditions: detect common points between left and right edges
-  logical :: ADD_PERIODIC_CONDITIONS
-  ! horizontal periodicity distance for periodic conditions
-  double precision :: PERIODIC_HORIZ_DIST
-
-  ! variables used for source-receiver geometry
-  integer :: NSOURCES
-
-  ! acoustic forcing of an acoustic medium at a rigid interface
-  logical :: ACOUSTIC_FORCING
-
-  logical :: force_normal_to_surface
-  logical :: use_existing_STATIONS
-
-  integer :: nreceiversets
-  double precision :: anglerec
-  logical :: rec_normal_to_surface
-  integer, dimension(:),allocatable :: nrec
-  double precision, dimension(:),allocatable :: xdeb,zdeb,xfin,zfin
-
-  ! variables used for iteration
-  integer :: NT_DUMP_ATTENUATION
-
-  ! number of time steps
-  integer :: NSTEP
-
-  ! time step size
-  double precision :: DT
-
-  ! value of time_stepping_scheme to decide which time scheme will be used
-  ! # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta)
-  ! 3 = classical 4th-order 4-stage Runge-Kutta
-  integer :: time_stepping_scheme
-
-  ! use this t0 as earliest starting time rather than the automatically calculated one
-  ! (must be positive and bigger than the automatically one to be effective;
-  !  simulation will start at t = - t0)
-  double precision :: USER_T0
+  ! for Bielak
+  logical :: add_Bielak_conditions
 
   ! to store density and velocity model
-  integer :: nbmodels
   integer, dimension(:),allocatable :: num_material
-
   integer, dimension(:),allocatable :: icodemat
 
+  ! acoustic/elastic/anisotropic
   double precision, dimension(:),allocatable :: rho_s,cp,cs, &
     aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,QKappa,Qmu
 
+  ! poroelastic
   double precision, dimension(:),allocatable :: rho_f,phi,tortuosity,permxx,permxz,&
        permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
 
-  !--------------------------------------------------------------
-  ! variables used for output
-  !--------------------------------------------------------------
-  ! for later check of the grid
-  logical :: output_grid_Gnuplot,output_grid_ASCII
-
-  ! general information during the computation
-  integer :: NSTEP_BETWEEN_OUTPUT_INFO
-
-  ! for plotting the curve of energy
-  logical :: output_energy
-
-  ! kernel output in case of adjoint simulation
-  logical :: save_ASCII_kernels
-
-  ! seismogram
-  integer :: seismotype,NSTEP_BETWEEN_OUTPUT_SEISMOS
-  integer :: subsamp_seismos
-  logical :: save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double
-  logical :: USE_TRICK_FOR_BETTER_PRESSURE
-  ! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
-  logical :: SU_FORMAT
-
-  ! Integrated energy field output
-  logical :: COMPUTE_INTEGRATED_ENERGY_FIELD
-  ! wave field
-  integer :: NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
-  logical :: output_wavefield_dumps,use_binary_for_wavefield_dumps
-  integer :: imagetype_wavefield_dumps
-
-  ! image
-  logical :: output_color_image
-  integer :: imagetype_JPEG
-  logical :: DRAW_SOURCES_AND_RECEIVERS
-  ! use snapshot number in the file name of JPG color snapshots instead of the time step
-  logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
-  ! factor to subsample color images output by the code (useful for very large models)
-  integer :: NSTEP_BETWEEN_OUTPUT_IMAGES
-  double precision :: factor_subsample_image
-  ! by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
-  logical :: USE_CONSTANT_MAX_AMPLITUDE
-  ! constant maximum amplitude to use for all color images if the USE_CONSTANT_MAX_AMPLITUDE option is true
-  double precision :: CONSTANT_MAX_AMPLITUDE_TO_USE
+  ! for interpolated snapshot
   logical :: plot_lowerleft_corner_only
-  ! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
-  ! or in the case of offshore oil industry experiments.
-  ! (if off, display them as greyscale, as for elastic or poroelastic elements)
-  logical :: DRAW_WATER_IN_BLUE
-  ! non linear display to enhance small amplitudes in color images
-  double precision :: POWER_DISPLAY_COLOR
-
-  ! postscript
-  logical :: output_postscript_snapshot
-  integer :: imagetype_postscript
-  double precision :: cutsnaps
-  logical :: meshvect,modelvect,boundvect,interpol
-  integer :: pointsdisp,subsamp_postscript
-  double precision :: sizemax_arrows
-
-  ! US letter paper or European A4
-  logical :: US_LETTER
 
   end module parameter_file_par
 

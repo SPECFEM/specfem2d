@@ -106,11 +106,11 @@
       do iv = 1,NGLLZ
         do ir = 1,NGLLX
 
-          sourcearray(1,k,m) = sourcearray(1,k,m) + hxis(ir)*hgammas(iv) &
-                                 *(G11(ir,iv)*hpxis(k)*hgammas(m) + G13(ir,iv)*hxis(k)*hpgammas(m))
+          sourcearray(1,k,m) = sourcearray(1,k,m) + &
+            real(hxis(ir)*hgammas(iv)*(G11(ir,iv)*hpxis(k)*hgammas(m) + G13(ir,iv)*hxis(k)*hpgammas(m)),kind=CUSTOM_REAL)
 
-          sourcearray(2,k,m) = sourcearray(2,k,m) + hxis(ir)*hgammas(iv) &
-                                 *(G31(ir,iv)*hpxis(k)*hgammas(m) + G33(ir,iv)*hxis(k)*hpgammas(m))
+          sourcearray(2,k,m) = sourcearray(2,k,m) + &
+            real(hxis(ir)*hgammas(iv) *(G31(ir,iv)*hpxis(k)*hgammas(m) + G33(ir,iv)*hxis(k)*hpgammas(m)),kind=CUSTOM_REAL)
 
         enddo
       enddo
@@ -223,11 +223,11 @@
   if (GPU_MODE) then
     if (P_SV) then
       ! P_SV-case
-      source_adjointe(irec_local,:,1) = adj_src_s(:,1)
-      source_adjointe(irec_local,:,2) = adj_src_s(:,3)
+      source_adjointe(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
+      source_adjointe(irec_local,:,2) = real(adj_src_s(:,3),kind=CUSTOM_REAL)
     else
       ! SH-case
-      source_adjointe(irec_local,:,1) = adj_src_s(:,2)
+      source_adjointe(irec_local,:,1) = real(adj_src_s(:,2),kind=CUSTOM_REAL)
     endif
   endif
 
@@ -379,11 +379,11 @@
       if (GPU_MODE) then
         if (P_SV) then
           ! P_SV-case
-          source_adjointe(irec_local,:,1) = adj_src_s(:,1)
-          source_adjointe(irec_local,:,2) = adj_src_s(:,2)
+          source_adjointe(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
+          source_adjointe(irec_local,:,2) = real(adj_src_s(:,2),kind=CUSTOM_REAL)
         else
           ! SH-case
-          source_adjointe(irec_local,:,1) = adj_src_s(:,1)
+          source_adjointe(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
         endif
       endif
 
@@ -393,11 +393,11 @@
           do i = 1, NGLLX
             if (P_SV) then
               ! P_SV-case
-              adj_sourcearray(:,1,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,1)
-              adj_sourcearray(:,2,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,2)
+              adj_sourcearray(:,1,i,j) = real(hxir(i) * hgammar(j) * adj_src_s(:,1),kind=CUSTOM_REAL)
+              adj_sourcearray(:,2,i,j) = real(hxir(i) * hgammar(j) * adj_src_s(:,2),kind=CUSTOM_REAL)
             else
               ! SH-case
-              adj_sourcearray(:,1,i,j) = hxir(i) * hgammar(j) * adj_src_s(:,1)
+              adj_sourcearray(:,1,i,j) = real(hxir(i) * hgammar(j) * adj_src_s(:,1),kind=CUSTOM_REAL)
             endif
           enddo
         enddo

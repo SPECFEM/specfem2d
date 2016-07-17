@@ -597,6 +597,8 @@
             ! SH-case
             tempx1(i,j) = jacobianl * (sigma_xy*xixl + sigma_zy*xizl) ! this goes to accel_x
             tempx2(i,j) = jacobianl * (sigma_xy*gammaxl + sigma_zy*gammazl) ! this goes to accel_x
+            tempz1(i,j) = 0._CUSTOM_REAL
+            tempz2(i,j) = 0._CUSTOM_REAL
           endif
         endif
       enddo

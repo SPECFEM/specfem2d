@@ -241,8 +241,10 @@ subroutine it_transfer_from_GPU()
       ! P-SV waves
       displ_elastic(1,:) = tmp_displ_2D(1,:)
       displ_elastic(2,:) = tmp_displ_2D(2,:)
+
       veloc_elastic(1,:) = tmp_veloc_2D(1,:)
       veloc_elastic(2,:) = tmp_veloc_2D(2,:)
+
       accel_elastic(1,:) = tmp_accel_2D(1,:)
       accel_elastic(2,:) = tmp_accel_2D(2,:)
     else

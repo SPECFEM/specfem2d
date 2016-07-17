@@ -46,6 +46,8 @@
 
   integer,intent(in) :: iglob
 
+  real(kind=CUSTOM_REAL) :: displ_x,displ_z
+
 ! local variables
   real, parameter :: pigrec = 3.1415927
 
@@ -58,8 +60,6 @@
   double precision :: x,z
 
   double precision :: f0 = 6000.0
-
-  real(kind=CUSTOM_REAL) :: displ_x,displ_z
 
   forcing_type = 1
 
@@ -103,12 +103,12 @@
       t_used = deltat*(it-1) - 0.0007d0
       !sin(2.0d0*pigrec*f0*t_used)
       if ((z < -1.5d0) .and. (z > -3.5d0)) then
-        displ_x =  2.0d0 * f0*f0 * (2.0d0 * f0*f0 * t_used**2 - 1.0d0) * &
-                             exp(-f0*f0*t_used**2) !(z+2.5d0)**3
-        displ_z = 0.0d0
+        displ_x =  real(2.0d0 * f0*f0 * (2.0d0 * f0*f0 * t_used**2 - 1.0d0) * &
+                             exp(-f0*f0*t_used**2),kind=CUSTOM_REAL) !(z+2.5d0)**3
+        displ_z = 0._CUSTOM_REAL
       else
-        displ_x =  0.0d0
-        displ_z = 0.0d0
+        displ_x =  0._CUSTOM_REAL
+        displ_z = 0._CUSTOM_REAL
       endif
       ! gravity wave test function
       !  displ_x = 0 !* Apo
@@ -126,9 +126,9 @@
 
   !! Second test function : moving forcing
   if (forcing_type == 2) then
-    displ_x = 0 !* Apo
-    displ_z = A * (exp(-(alpha*(deltat*it-40-t0-(x-delayed)/c)/tho)**2) &
-                 - exp(-(alpha*(deltat*it-70-t0-(x-delayed)/c)/tho)**2)) !* Apo
+    displ_x = 0._CUSTOM_REAL !* Apo
+    displ_z = real(dble(A) * (exp(-(alpha*(deltat*it-40-t0-(x-delayed)/c)/tho)**2) &
+                 - exp(-(alpha*(deltat*it-70-t0-(x-delayed)/c)/tho)**2)),kind=CUSTOM_REAL) !* Apo
   endif
 
   !! forcing external
@@ -165,15 +165,15 @@
     enddo
 
     if (x==0 .and. it==1) then
-      displ_z =  syn(1,1)
+      displ_z =  real(syn(1,1),kind=CUSTOM_REAL)
     else
       if (x==0) then
         fract = (t-goce_time(ll-1))/(goce_time(ll)-goce_time(ll-1))
-        displ_z =  (syn(1,ll-1) + fract * (syn(1,ll)-syn(1,ll-1)))
+        displ_z =  real((syn(1,ll-1) + fract * (syn(1,ll)-syn(1,ll-1))),kind=CUSTOM_REAL)
       else
         if (it==1) then
           fracx = (x-distance(kk-1))/(distance(kk)-distance(kk-1))
-          displ_z =  (syn(kk-1,1) + fracx * (syn(kk,1)-syn(kk-1,1)))
+          displ_z =  real((syn(kk-1,1) + fracx * (syn(kk,1)-syn(kk-1,1))),kind=CUSTOM_REAL)
         else
           ! interpolation in time
           fract = (t-goce_time(ll-1))/(goce_time(ll)-goce_time(ll-1))
@@ -183,16 +183,16 @@
           signal_x2 = syn(kk,ll-1) + fract * (syn(kk,ll)-syn(kk,ll-1))
           ! spatial interpolation
           fracx = (x-distance(kk-1))/(distance(kk)-distance(kk-1))
-          displ_z =  (signal_x1 + fracx * (signal_x2 - signal_x1))
+          displ_z =  real((signal_x1 + fracx * (signal_x2 - signal_x1)),kind=CUSTOM_REAL)
         endif
       endif
     endif
 
-    displ_x = 0
+    displ_x = 0._CUSTOM_REAL
 
   endif
 
-  if (abs(displ_x) < TINYVAL) displ_x=ZERO
-  if (abs(displ_z) < TINYVAL) displ_z=ZERO
+  if (abs(displ_x) < TINYVAL) displ_x = 0._CUSTOM_REAL
+  if (abs(displ_z) < TINYVAL) displ_z = 0._CUSTOM_REAL
 
   end subroutine acoustic_forcing_boundary

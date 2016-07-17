@@ -106,7 +106,7 @@ program smooth_sem
   real(kind=CUSTOM_REAL) :: norm_h, norm_v
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: norm, max_old,max_new, min_old, min_new
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: exp_val, factor, wgll_sq
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
+  double precision, dimension(NGLLX) :: wxgll
   double precision, dimension(NGLLX) :: xigll
   integer, dimension(:,:,:),allocatable :: ibool_me
   integer, dimension(:),allocatable :: imask
@@ -159,7 +159,7 @@ program smooth_sem
   !We assume NGLLX=NGLLZ
   do j = 1,NGLLZ
     do i = 1,NGLLX
-      wgll_sq(i,j) = wxgll(i)*wxgll(j)
+      wgll_sq(i,j) = real(wxgll(i)*wxgll(j),kind=CUSTOM_REAL)
     enddo
   enddo
 

@@ -222,10 +222,12 @@
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
+
               else if (region_CPML(ispec) == CPML_XZ_ONLY) then
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
+
               else if (region_CPML(ispec) == CPML_Z_ONLY) then
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
@@ -453,6 +455,8 @@
                 vy = deltatover2
                 ty = rho_vs*vy
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
+                ! ficticous for SH case, but to be save when inverting
+                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
               endif
             enddo
           endif  !  end of left absorbing boundary
@@ -501,6 +505,8 @@
                 vy = deltatover2
                 ty = rho_vs*vy
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
+                ! ficticous for SH case, but to be save when inverting
+                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
               endif
             enddo
           endif  !  end of right absorbing boundary
@@ -551,6 +557,8 @@
                 vy = deltatover2
                 ty = rho_vs*vy
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
+                ! ficticous for SH case, but to be save when inverting
+                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
               endif
             enddo
           endif  !  end of bottom absorbing boundary
@@ -601,6 +609,8 @@
                 vy = deltatover2
                 ty = rho_vs*vy
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob) + ty*weight
+                ! ficticous for SH case, but to be save when inverting
+                rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
               endif
             enddo
           endif  !  end of top absorbing boundary

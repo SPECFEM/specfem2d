@@ -120,18 +120,26 @@
   ! Read the material for each element and storing it in array 'num_materials'
   !-----------------------------------------------
 
-  subroutine read_external_materials_file(filename, num_material)
+  subroutine read_external_materials_file(filename)
 
   use constants,only: MAX_STRING_LEN
+
   use part_unstruct_par,only: nelmnts
+  use parameter_file_par,only: num_material
 
   implicit none
 
   character(len=MAX_STRING_LEN), intent(in)  :: filename
-  integer, dimension(1:nelmnts), intent(out)  :: num_material
 
+  ! local parameters
   integer  :: i,ier
 
+  ! assigns materials to mesh elements
+  allocate(num_material(nelmnts),stat=ier)
+  if (ier /= 0) stop 'Error allocating num_material array'
+  num_material(:) = 0
+
+  ! file input
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
   open(unit=992, file=trim(filename), form='unformatted' , status='old', action='read',iostat=ier)
 #else
@@ -150,6 +158,9 @@
 #endif
   enddo
   close(992)
+
+  ! quick check
+  if (any(num_material(:) == 0)) stop 'Error reading material array, some elements have zero material index'
 
   end subroutine read_external_materials_file
 

@@ -33,20 +33,30 @@
 
   subroutine define_derivation_matrices()
 
-  use specfem_par, only: xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz
+  use constants,only: GAUSSALPHA,GAUSSBETA,NGLLX,NGLLZ,ZERO,CUSTOM_REAL
 
-  use constants,only: GAUSSALPHA,GAUSSBETA,NGLLX,NGLLZ,ZERO
+  use specfem_par, only: xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz
 
   implicit none
 
-! function for calculating derivatives of Lagrange polynomials
+  ! temporary arrays
+  ! note: wxgll,wzgll from specfem_par are defined as CUSTOM_REAL
+  !       the subroutine zwgljd() works with double precision
+  double precision, dimension(NGLLX) :: wxgll_dble
+  double precision, dimension(NGLLZ) :: wzgll_dble
+
+  ! function for calculating derivatives of Lagrange polynomials
   double precision, external :: lagrange_deriv_GLL
 
   integer :: i1,i2,k1,k2
 
 ! set up coordinates of the Gauss-Lobatto-Legendre points
-  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
+  call zwgljd(xigll,wxgll_dble,NGLLX,GAUSSALPHA,GAUSSBETA)
+  call zwgljd(zigll,wzgll_dble,NGLLZ,GAUSSALPHA,GAUSSBETA)
+
+  ! converts to custom_real
+  wxgll(:) = real(wxgll_dble(:),kind=CUSTOM_REAL)
+  wzgll(:) = real(wzgll_dble(:),kind=CUSTOM_REAL)
 
 ! if number of points is odd, the middle abscissa is exactly zero
   if (mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = ZERO
@@ -57,14 +67,14 @@
 ! hprime(i,j) = h'_j(xigll_i) by definition of the derivation matrix
   do i1 = 1,NGLLX
     do i2 = 1,NGLLX
-      hprime_xx(i2,i1) = lagrange_deriv_GLL(i1-1,i2-1,xigll,NGLLX)
+      hprime_xx(i2,i1) = real(lagrange_deriv_GLL(i1-1,i2-1,xigll,NGLLX),kind=CUSTOM_REAL)
       hprimewgll_xx(i2,i1) = wxgll(i2) * hprime_xx(i2,i1)
     enddo
   enddo
 
   do k1 = 1,NGLLZ
     do k2 = 1,NGLLZ
-      hprime_zz(k2,k1) = lagrange_deriv_GLL(k1-1,k2-1,zigll,NGLLZ)
+      hprime_zz(k2,k1) = real(lagrange_deriv_GLL(k1-1,k2-1,zigll,NGLLZ),kind=CUSTOM_REAL)
       hprimewgll_zz(k2,k1) = wzgll(k2) * hprime_zz(k2,k1)
     enddo
   enddo
@@ -81,7 +91,7 @@
 
   subroutine define_GLJ_derivation_matrix()
 
-  use constants,only: NGLJ
+  use constants,only: NGLJ,CUSTOM_REAL
 
   use specfem_par, only: xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx
 
@@ -89,20 +99,27 @@
 
   double precision, parameter    :: alphaGLJ = 0.d0,betaGLJ = 1.d0
 
-! function for calculating derivatives of GLJ polynomials
+  ! note: wxglj from specfem_par are defined as CUSTOM_REAL
+  !       the subroutine zwgljd() works with double precision
+  double precision, dimension(NGLJ) :: wxglj_dble
+
+  ! function for calculating derivatives of GLJ polynomials
   double precision, external :: poly_deriv_GLJ
 
   integer i1,i2
 
 ! set up coordinates of the Gauss-Lobatto-Jacobi points
-  call zwgljd(xiglj,wxglj,NGLJ,alphaGLJ,betaGLJ)
+  call zwgljd(xiglj,wxglj_dble,NGLJ,alphaGLJ,betaGLJ)
+
+  ! converts to custom_real
+  wxglj(:) = real(wxglj_dble(:),kind=CUSTOM_REAL)
 
 ! calculate derivatives of the GLJ quadrature polynomials
 ! and precalculate some products in double precision
 ! hprimeBar(i,j) = hBar'_j(xiglj_i) by definition of the derivation matrix
   do i1 = 1,NGLJ
     do i2 = 1,NGLJ
-      hprimeBar_xx(i2,i1) = poly_deriv_GLJ(i1-1,i2-1,xiglj,NGLJ)
+      hprimeBar_xx(i2,i1) = real(poly_deriv_GLJ(i1-1,i2-1,xiglj,NGLJ),kind=CUSTOM_REAL)
       hprimeBarwglj_xx(i2,i1) = wxglj(i2) * hprimeBar_xx(i2,i1)
     enddo
   enddo

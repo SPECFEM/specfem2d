@@ -31,18 +31,19 @@
 !
 !========================================================================
 
-  subroutine read_regions(nbregion,nbmodels,icodemat,cp,cs, &
+  subroutine read_regions(nbregions,nbmodels,icodemat,cp,cs, &
                           rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
-                          nelmnts,num_material)
+                          nelmnts)
 
-! reads in material definitions in DATA/Par_file
+! reads in material definitions in DATA/Par_file and outputs to num_material
 
   use constants,only: IMAIN,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,TINYVAL
   use part_unstruct_par,only: nxread,nzread
+  use parameter_file_par,only: num_material
 
   implicit none
 
-  integer,intent(inout) :: nbregion
+  integer,intent(inout) :: nbregions
 
   integer,intent(in) :: nbmodels
   integer, dimension(nbmodels),intent(in) :: icodemat
@@ -51,30 +52,36 @@
   double precision, dimension(nbmodels),intent(in) :: QKappa,Qmu
 
   integer,intent(in) :: nelmnts
-  integer,dimension(nelmnts),intent(inout) :: num_material
 
   ! local parameters
   integer :: iregion,ix_start,ix_end,iz_start,iz_end,imaterial_number
-  integer :: i,j,ielem
+  integer :: i,j,ielem,ier
+  integer :: reread_nbregions
   double precision :: vpregion,vsregion,poisson_ratio
   logical :: is_overwriting
   integer :: id_already_set
 
   integer,external :: err_occurred
 
-  ! read the material numbers for each region
-  call read_value_integer_p(nbregion, 'mesher.nbregions')
-  if (err_occurred() /= 0) stop 'error reading parameter nbregions in Par_file'
-
-  ! check
-  if (nbregion <= 0) stop 'Negative number of regions not allowed!'
-
   ! user output
   write(IMAIN,*) 'Regions:'
-  write(IMAIN,*) '  Nb of regions in the mesh = ',nbregion
+  write(IMAIN,*) '  Nb of regions in the mesh = ',nbregions
   write(IMAIN,*)
 
-  do iregion = 1,nbregion
+  ! assigns materials to mesh elements
+  allocate(num_material(nelmnts),stat=ier)
+  if (ier /= 0) stop 'Error allocating num_material array'
+  num_material(:) = 0
+
+  ! this call positions again the read header to the line with nbregions. we can then call next line to get the table
+  call read_value_integer_p(reread_nbregions, 'mesher.nbregions')
+  if (err_occurred() /= 0) stop 'Error reading parameter nbregions in Par_file'
+
+  ! check
+  if (reread_nbregions /= nbregions) stop 'Error re-reading parameter nbregions in Par_file'
+
+  ! read the material numbers for each region
+  do iregion = 1,nbregions
 
     ! reads in region range
     ! format: #ix start #ix end #iz start #iz end

@@ -214,8 +214,7 @@
               !ZN of the new code with the old code, you will have big difference if you
               !ZN do not tune the source
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-                                                  source_time_function(i_source,it,i_stage)*hlagrange &
-                                                  / kappastore(i,j,ispec)
+                      real(source_time_function(i_source,it,i_stage)*hlagrange / kappastore(i,j,ispec),kind=CUSTOM_REAL)
             enddo
           enddo
           ! moment tensor

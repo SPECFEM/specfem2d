@@ -160,9 +160,9 @@
 
             ! fluid
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - &
-                  rho_f/rho_bar * adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
+                  real(rho_f/rho_bar * adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j),kind=CUSTOM_REAL)
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - &
-                  rho_f/rho_bar * adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j)
+                  real(rho_f/rho_bar * adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j),kind=CUSTOM_REAL)
           enddo
         enddo
 

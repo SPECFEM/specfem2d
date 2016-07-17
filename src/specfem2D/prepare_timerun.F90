@@ -1098,13 +1098,12 @@
   allocate(time_function_noise(NSTEP), &
            source_array_noise(NDIM,NGLLX,NGLLZ,NSTEP), &
            mask_noise(nglob), &
-           surface_movie_x_noise(nglob), &
-           surface_movie_z_noise(nglob),stat=ier)
+           surface_movie_y_or_z_noise(nglob),stat=ier)
   if (ier /= 0) stop 'Error allocating noise arrays'
 
   ! initializes
-  surface_movie_x_noise(:) = 0._CUSTOM_REAL
-  surface_movie_z_noise(:) = 0._CUSTOM_REAL
+  source_array_noise(:,:,:,:) = 0._CUSTOM_REAL
+  surface_movie_y_or_z_noise(:) = 0._CUSTOM_REAL
 
   ! user output
   if (myrank == 0) then

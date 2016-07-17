@@ -62,6 +62,8 @@
 
   implicit none
 
+  include "precision.h"
+
   ! array to assemble
   ! acoustic
   integer :: npoin_val1
@@ -74,13 +76,14 @@
   real(kind=CUSTOM_REAL), dimension(npoin_val3), intent(inout) :: array_val3,array_val4
 
   ! local parameters
-  integer  :: ipoin, num_interface,i
+  integer :: ipoin,iglob,i,idim,iinterface
+  integer :: nbuffer_points
 
   ! there are now two different mass matrices for the elastic case
   ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
-  double precision, dimension(max_ibool_interfaces_size_ac + &
+  real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac + &
                               NDIM * max_ibool_interfaces_size_el + &
-                              NDIM * max_ibool_interfaces_size_po, ninterface)  :: buffer_send_faces_scalar, &
+                              2 * max_ibool_interfaces_size_po, ninterface)  :: buffer_send_faces_scalar, &
                                                                                    buffer_recv_faces_scalar
   integer, dimension(ninterface)  :: msg_send_requests,msg_recv_requests
   integer :: ier
@@ -88,108 +91,94 @@
   ! assemble only if more than one partition
   if (NPROC > 1) then
 
-    buffer_send_faces_scalar(:,:) = 0.d0
-    buffer_recv_faces_scalar(:,:) = 0.d0
+    buffer_send_faces_scalar(:,:) = 0._CUSTOM_REAL
+    buffer_recv_faces_scalar(:,:) = 0._CUSTOM_REAL
 
-    do num_interface = 1, ninterface
+    do iinterface = 1, ninterface
+      ! acoustic
+      ipoin = 0
+      do i = 1, nibool_interfaces_acoustic(iinterface)
+        ipoin = ipoin + 1
+        iglob = ibool_interfaces_acoustic(i,iinterface)
+        buffer_send_faces_scalar(ipoin,iinterface) = array_val1(iglob)
+      enddo
 
-       ipoin = 0
-       do i = 1, nibool_interfaces_acoustic(num_interface)
+      ! elastic
+      ! there are now two different mass matrices for the elastic case
+      ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
+      do idim = 1,NDIM
+        do i = 1, nibool_interfaces_elastic(iinterface)
           ipoin = ipoin + 1
-          buffer_send_faces_scalar(ipoin,num_interface) = &
-               array_val1(ibool_interfaces_acoustic(i,num_interface))
-       enddo
+          iglob = ibool_interfaces_elastic(i,iinterface)
+          buffer_send_faces_scalar(ipoin,iinterface) = array_val2(idim,iglob)
+        enddo
+      enddo
 
-       do i = 1, nibool_interfaces_elastic(num_interface)
-          ipoin = ipoin + 1
-          buffer_send_faces_scalar(ipoin,num_interface) = &
-               array_val2(1,ibool_interfaces_elastic(i,num_interface))
-       enddo
+      ! poroelastic
+      do i = 1, nibool_interfaces_poroelastic(iinterface)
+        ipoin = ipoin + 1
+        iglob = ibool_interfaces_poroelastic(i,iinterface)
+        buffer_send_faces_scalar(ipoin,iinterface) = array_val3(iglob)
+      enddo
+      do i = 1, nibool_interfaces_poroelastic(iinterface)
+        ipoin = ipoin + 1
+        iglob = ibool_interfaces_poroelastic(i,iinterface)
+        buffer_send_faces_scalar(ipoin,iinterface) = array_val4(iglob)
+      enddo
 
-       do i = 1, nibool_interfaces_elastic(num_interface)
-          ipoin = ipoin + 1
-  ! there are now two different mass matrices for the elastic case
-  ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
-          buffer_send_faces_scalar(ipoin,num_interface) = &
-               array_val2(2,ibool_interfaces_elastic(i,num_interface))
-       enddo
+      ! total number of points in buffer
+      nbuffer_points = nibool_interfaces_acoustic(iinterface) &
+                      + NDIM*nibool_interfaces_elastic(iinterface) &
+                      + 2*nibool_interfaces_poroelastic(iinterface)
 
-       do i = 1, nibool_interfaces_poroelastic(num_interface)
-          ipoin = ipoin + 1
-          buffer_send_faces_scalar(ipoin,num_interface) = &
-               array_val3(ibool_interfaces_poroelastic(i,num_interface))
-       enddo
-       do i = 1, nibool_interfaces_poroelastic(num_interface)
-          ipoin = ipoin + 1
-          buffer_send_faces_scalar(ipoin,num_interface) = &
-               array_val4(ibool_interfaces_poroelastic(i,num_interface))
-       enddo
+      ! non-blocking send
+      call MPI_ISEND( buffer_send_faces_scalar(1,iinterface),nbuffer_points, &
+                      CUSTOM_MPI_TYPE, &
+                      my_neighbours(iinterface), 11, &
+                      MPI_COMM_WORLD, msg_send_requests(iinterface), ier)
 
-       ! non-blocking send
-       call MPI_ISEND( buffer_send_faces_scalar(1,num_interface), &
-  ! there are now two different mass matrices for the elastic case
-  ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
-            nibool_interfaces_acoustic(num_interface)+2*nibool_interfaces_elastic(num_interface)+&
-            2*nibool_interfaces_poroelastic(num_interface), &
-            MPI_DOUBLE_PRECISION, &
-            my_neighbours(num_interface), 11, &
-            MPI_COMM_WORLD, msg_send_requests(num_interface), ier)
-
-       ! starts a blocking receive
-       call MPI_IRECV ( buffer_recv_faces_scalar(1,num_interface), &
-  ! there are now two different mass matrices for the elastic case
-  ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
-            nibool_interfaces_acoustic(num_interface)+2*nibool_interfaces_elastic(num_interface)+&
-            2*nibool_interfaces_poroelastic(num_interface), &
-            MPI_DOUBLE_PRECISION, &
-            my_neighbours(num_interface), 11, &
-            MPI_COMM_WORLD, msg_recv_requests(num_interface), ier)
+      ! starts a blocking receive
+      call MPI_IRECV ( buffer_recv_faces_scalar(1,iinterface),nbuffer_points, &
+                       CUSTOM_MPI_TYPE, &
+                       my_neighbours(iinterface), 11, &
+                       MPI_COMM_WORLD, msg_recv_requests(iinterface), ier)
     enddo
 
     ! waits for MPI requests to complete (recv)
     ! each wait returns once the specified MPI request completed
-    do num_interface = 1, ninterface
-      call MPI_Wait(msg_recv_requests(num_interface), MPI_STATUS_IGNORE, ier)
+    do iinterface = 1, ninterface
+      call MPI_Wait(msg_recv_requests(iinterface), MPI_STATUS_IGNORE, ier)
     enddo
 
-    do num_interface = 1, ninterface
+    do iinterface = 1, ninterface
+      ! acoustic
+      ipoin = 0
+      do i = 1, nibool_interfaces_acoustic(iinterface)
+        ipoin = ipoin + 1
+        iglob = ibool_interfaces_acoustic(i,iinterface)
+        array_val1(iglob) = array_val1(iglob) + buffer_recv_faces_scalar(ipoin,iinterface)
+      enddo
 
-       ipoin = 0
-       do i = 1, nibool_interfaces_acoustic(num_interface)
+      ! elastic
+      do idim = 1,NDIM
+        do i = 1, nibool_interfaces_elastic(iinterface)
           ipoin = ipoin + 1
-          array_val1(ibool_interfaces_acoustic(i,num_interface)) = &
-              array_val1(ibool_interfaces_acoustic(i,num_interface))  &
-               + buffer_recv_faces_scalar(ipoin,num_interface)
-       enddo
+          iglob = ibool_interfaces_elastic(i,iinterface)
+          array_val2(idim,iglob) = array_val2(idim,iglob) + buffer_recv_faces_scalar(ipoin,iinterface)
+        enddo
+      enddo
 
-       do i = 1, nibool_interfaces_elastic(num_interface)
-          ipoin = ipoin + 1
-          array_val2(1,ibool_interfaces_elastic(i,num_interface)) = &
-              array_val2(1,ibool_interfaces_elastic(i,num_interface))  &
-              + buffer_recv_faces_scalar(ipoin,num_interface)
-       enddo
-
-       do i = 1, nibool_interfaces_elastic(num_interface)
-          ipoin = ipoin + 1
-  ! there are now two different mass matrices for the elastic case
-  ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
-          array_val2(2,ibool_interfaces_elastic(i,num_interface)) = &
-              array_val2(2,ibool_interfaces_elastic(i,num_interface))  &
-              + buffer_recv_faces_scalar(ipoin,num_interface)
-       enddo
-
-       do i = 1, nibool_interfaces_poroelastic(num_interface)
-          ipoin = ipoin + 1
-          array_val3(ibool_interfaces_poroelastic(i,num_interface)) = &
-              array_val3(ibool_interfaces_poroelastic(i,num_interface))  &
-              + buffer_recv_faces_scalar(ipoin,num_interface)
-       enddo
-       do i = 1, nibool_interfaces_poroelastic(num_interface)
-          ipoin = ipoin + 1
-          array_val4(ibool_interfaces_poroelastic(i,num_interface)) = &
-              array_val4(ibool_interfaces_poroelastic(i,num_interface)) &
-              + buffer_recv_faces_scalar(ipoin,num_interface)
-       enddo
+      ! poroelastic
+      do i = 1, nibool_interfaces_poroelastic(iinterface)
+        ipoin = ipoin + 1
+        iglob = ibool_interfaces_poroelastic(i,iinterface)
+        array_val3(iglob) = array_val3(iglob) + buffer_recv_faces_scalar(ipoin,iinterface)
+      enddo
+      do i = 1, nibool_interfaces_poroelastic(iinterface)
+        ipoin = ipoin + 1
+        iglob = ibool_interfaces_poroelastic(i,iinterface)
+        array_val4(iglob) = array_val4(iglob) + buffer_recv_faces_scalar(ipoin,iinterface)
+      enddo
 
     enddo
 

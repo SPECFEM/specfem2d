@@ -220,25 +220,25 @@
 
             ! source element is acoustic
             if (ispec_is_acoustic(ispec)) then
-              sourcearray(:,i,j) = hlagrange
+              sourcearray(:,i,j) = real(hlagrange,kind=CUSTOM_REAL)
             endif
 
             ! source element is elastic
             if (ispec_is_elastic(ispec)) then
               if (P_SV) then
                 ! P_SV case
-                sourcearray(1,i,j) = - sin(anglesource(i_source)) * hlagrange
-                sourcearray(2,i,j) =   cos(anglesource(i_source)) * hlagrange
+                sourcearray(1,i,j) = real(- sin(anglesource(i_source)) * hlagrange,kind=CUSTOM_REAL)
+                sourcearray(2,i,j) = real(cos(anglesource(i_source)) * hlagrange,kind=CUSTOM_REAL)
               else
                 ! SH case (membrane)
-                sourcearray(:,i,j) = hlagrange
+                sourcearray(:,i,j) = real(hlagrange,kind=CUSTOM_REAL)
               endif
             endif
 
             ! source element is poroelastic
             if (ispec_is_poroelastic(ispec)) then
-              sourcearray(1,i,j) = - sin(anglesource(i_source)) * hlagrange
-              sourcearray(2,i,j) =   cos(anglesource(i_source)) * hlagrange
+              sourcearray(1,i,j) = real(- sin(anglesource(i_source)) * hlagrange,kind=CUSTOM_REAL)
+              sourcearray(2,i,j) = real(cos(anglesource(i_source)) * hlagrange,kind=CUSTOM_REAL)
             endif
 
           enddo

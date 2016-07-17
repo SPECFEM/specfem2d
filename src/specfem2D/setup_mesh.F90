@@ -227,11 +227,11 @@
         coord(1,iglob) = x
         coord(2,iglob) = z
 
-        xix(i,j,ispec) = xixl
-        xiz(i,j,ispec) = xizl
-        gammax(i,j,ispec) = gammaxl
-        gammaz(i,j,ispec) = gammazl
-        jacobian(i,j,ispec) = jacobianl
+        xix(i,j,ispec) = real(xixl,kind=CUSTOM_REAL)
+        xiz(i,j,ispec) = real(xizl,kind=CUSTOM_REAL)
+        gammax(i,j,ispec) = real(gammaxl,kind=CUSTOM_REAL)
+        gammaz(i,j,ispec) = real(gammazl,kind=CUSTOM_REAL)
+        jacobian(i,j,ispec) = real(jacobianl,kind=CUSTOM_REAL)
 
       enddo
     enddo

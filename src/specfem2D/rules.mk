@@ -116,13 +116,11 @@ specfem2D_OBJECTS = \
 	$O/get_global.spec.o \
 	$O/get_poroelastic_velocities.spec.o \
 	$O/get_simulation_domains.spec.o \
-	$O/gll_library.spec.o \
 	$O/initialize_simulation.spec.o \
 	$O/invert_mass_matrix.spec.o \
 	$O/is_in_convex_quadrilateral.spec.o \
 	$O/iterate_time.spec.o \
 	$O/iterate_time_undoatt.spec.o \
-	$O/lagrange_poly.spec.o \
 	$O/locate_receivers.spec.o \
 	$O/locate_source_force.spec.o \
 	$O/locate_source_moment_tensor.spec.o \
@@ -185,6 +183,8 @@ specfem2D_SHARED_OBJECTS = \
 	$O/define_shape_functions.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/force_ftz.cc.o \
+	$O/gll_library.shared.o \
+	$O/lagrange_poly.shared.o \
 	$O/parallel.shared.o \
 	$O/set_color_palette.shared.o \
 	$(EMPTY_MACRO)

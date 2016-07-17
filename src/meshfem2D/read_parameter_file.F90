@@ -365,6 +365,30 @@
   !
   !--------------------------------------------------------------------
 
+  ! initializes
+  ! external meshing
+  mesh_file = ''
+  nodes_coords_file = ''
+  materials_file = ''
+  free_surface_file = ''
+  axial_elements_file = ''
+  absorbing_surface_file = ''
+  acoustic_forcing_surface_file = ''
+  CPML_element_file = ''
+  tangential_detection_curve_file = ''
+
+  ! internal meshing
+  interfacesfile = ''
+  xmin_param = 0.d0
+  xmax_param = 0.d0
+  nx_param = 0
+
+  absorbbottom = .false.
+  absorbright = .false.
+  absorbtop = .false.
+  absorbleft = .false.
+
+  nbregions = 0
 
   !-----------------
   ! external mesh parameters
@@ -431,7 +455,9 @@
     call read_value_logical_p(absorbleft, 'solver.absorbleft')
     if (err_occurred() /= 0) stop 'error reading parameter absorbleft in Par_file'
 
-    ! note: if internal mesh, then regions will be read in by read_regions (from meshfem2D)
+    call read_value_integer_p(nbregions, 'mesher.nbregions')
+    if (err_occurred() /= 0) stop 'error reading parameter nbregions in Par_file'
+    ! note: if internal mesh, then region tables will be read in by read_regions (from meshfem2D)
   endif
 
 
@@ -671,6 +697,11 @@
     print *,'Error: unknown save_model choosen ',trim(SAVE_MODEL)
     stop 'Error bad value for parameter SAVE_MODEL'
   end select
+
+  ! check regions
+  if (read_external_mesh .eqv. .false.) then
+    if (nbregions <= 0) stop 'Negative number of regions not allowed for internal meshing!'
+  endif
 
   end subroutine check_parameters
 

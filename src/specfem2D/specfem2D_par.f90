@@ -282,9 +282,11 @@ module specfem_par
 
   ! Gauss-Lobatto-Legendre points and weights
   double precision, dimension(NGLLX) :: xigll
-  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   double precision, dimension(NGLLZ) :: zigll
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX) :: wxgll
   real(kind=CUSTOM_REAL), dimension(NGLLZ) :: wzgll
+
   ! derivatives of Lagrange polynomials
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz,hprimewgll_zz
@@ -789,20 +791,21 @@ module specfem_par_noise
 
   ! master station
   integer :: ispec_noise
-  double precision :: xi_noise, gamma_noise, angle_noise
+  double precision :: xi_noise, gamma_noise
+
+  ! for P_SV case, 0 for vertical along z-direction
+  real(kind=CUSTOM_REAL) :: angle_noise
 
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: time_function_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: source_array_noise
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mask_noise
 
-  ! The following arrays are used to hold snapshots of the generating
+  ! The following array is used to hold snapshots of the generating
   ! wavefield or of the ensemble forward wavefield, depending on the type of
   ! noise simulation specified. In some cases, the entire generating wavefield
   ! or ensemble forward wavefield needs to be saved for all times steps. Since
-  ! the disk space required to do this is usually quite large, separate arrays
-  ! are used to avoid having empty arrays
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    surface_movie_x_noise, surface_movie_z_noise
+  ! the disk space required to do this is usually quite large
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: surface_movie_y_or_z_noise
 
   ! For writing noise wavefields
   integer :: noise_output_ncol

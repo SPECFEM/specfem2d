@@ -165,7 +165,7 @@
   integer :: ier,irec_master
 
   ! master noise source angle (in rad) use for P_SV-case: 0 for vertical along z-direction
-  angle_noise = 0.d0
+  angle_noise = 0._CUSTOM_REAL
 
   !define master receiver
   open(unit=500,file='NOISE_TOMOGRAPHY/irec_master_noise',status='old',action='read',iostat=ier)
@@ -478,23 +478,13 @@
   ! generating wavefield
   if (NOISE_TOMOGRAPHY == 2) then
     ! reads backward
-    if (P_SV) then
-      ! P-SV calculation
-      read(unit=501,rec=NSTEP-it+1) surface_movie_z_noise ! only vertical component as noise for now...
-    else
-      ! SH-calculation
-      read(unit=501,rec=NSTEP-it+1) surface_movie_x_noise
-    endif
+    ! for both SH- or P-SV calculation (only vertical component as noise for now...)
+    read(unit=501,rec=NSTEP-it+1) surface_movie_y_or_z_noise
   else if (NOISE_TOMOGRAPHY == 3) then
     ! for reconstructed/backward wavefield
     ! reads forward again
-    if (P_SV) then
-      ! P-SV calculation
-      read(unit=501,rec=it) surface_movie_z_noise ! only vertical component...
-    else
-      ! SH calculation
-      read(unit=501,rec=it) surface_movie_x_noise
-    endif
+    ! for both SH- or P-SV calculation (only vertical component...)
+    read(unit=501,rec=it) surface_movie_y_or_z_noise
   endif
 
   ! close file at simulation end
@@ -508,14 +498,15 @@
         iglob = ibool(i,j,ispec)
         if (P_SV) then
           ! P-SV calculation
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_x_noise(iglob) * &
-                                   mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) + surface_movie_z_noise(iglob) * &
+          !accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_x_noise(iglob) * &
+          !                         mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
+          ! only vertical for now...
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) + surface_movie_y_or_z_noise(iglob) * &
                                    mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
 
         else
           ! SH (membrane) calculation
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_x_noise(iglob) * &
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_y_or_z_noise(iglob) * &
                                    mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
         endif
       enddo

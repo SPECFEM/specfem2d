@@ -46,7 +46,7 @@
   use specfem_par_gpu,only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
 
   use specfem_par_noise,only: NOISE_TOMOGRAPHY,mask_noise, &
-                              surface_movie_x_noise,noise_output_rhokl,noise_output_array,noise_output_ncol
+                              surface_movie_y_or_z_noise,noise_output_rhokl,noise_output_array,noise_output_ncol
 
   use specfem_par_movie,only: output_postscript_snapshot,output_color_image,output_wavefield_dumps, &
     NSTEP_BETWEEN_OUTPUT_IMAGES
@@ -100,19 +100,22 @@
         if (ier /= 0) call exit_MPI(myrank,'Error opening noise eta file')
       endif
       ! for both P_SV/SH cases
-      read(unit=501,rec=it) surface_movie_x_noise ! either x (SH) or z (P_SV) component
+      read(unit=501,rec=it) surface_movie_y_or_z_noise ! either y (SH) or z (P_SV) component
 
       ! load product of fwd, adj wavefields
       call spec2glob(nspec,nglob,ibool,rho_kl,noise_output_rhokl)
 
       ! prepares array
       ! noise distribution
-      noise_output_array(1,:) = surface_movie_x_noise(:) * mask_noise(:)
+      noise_output_array(1,:) = surface_movie_y_or_z_noise(:) * mask_noise(:)
+
       ! P_SV/SH-case
       noise_output_array(2,:) = b_displ_elastic(1,:)
       noise_output_array(3,:) = accel_elastic(1,:)
+
       ! rho kernel on global nodes
       noise_output_array(4,:) = rho_k(:)
+
       ! rho kernel on global nodes from local kernel (for comparison)
       noise_output_array(5,:) = noise_output_rhokl(:)
 
@@ -121,7 +124,7 @@
       call snapshots_noise(noise_output_ncol,nglob,noise_output_file,noise_output_array)
 
       ! re-initializes noise array
-      surface_movie_x_noise(:) = 0._CUSTOM_REAL
+      surface_movie_y_or_z_noise(:) = 0._CUSTOM_REAL
     endif
   endif
 

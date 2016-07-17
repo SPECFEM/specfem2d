@@ -197,8 +197,8 @@
         if (assign_external_model) rhol = rhoext(i,j,ispec)
 
         ! derivatives of potential
-        vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol        !u_x
-        vector_field_element(2,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol        !u_z
+        vector_field_element(1,i,j) = real((tempx1l*xixl + tempx2l*gammaxl) / rhol,kind=CUSTOM_REAL)        !u_x
+        vector_field_element(2,i,j) = real((tempx1l*xizl + tempx2l*gammazl) / rhol,kind=CUSTOM_REAL)        !u_z
       enddo
     enddo
 
@@ -239,14 +239,14 @@
         endif
 
         ! derivatives of potential
-        vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol
-        vector_field_element(2,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol
+        vector_field_element(1,i,j) = real((tempx1l*xixl + tempx2l*gammaxl) / rhol,kind=CUSTOM_REAL)
+        vector_field_element(2,i,j) = real((tempx1l*xizl + tempx2l*gammazl) / rhol,kind=CUSTOM_REAL)
 
         ! add the gravito potential along the z component
         iglob = ibool(i,j,ispec)
         ! remove gravito contribution
         ! sign gravito correction
-        vector_field_element(2,i,j) = vector_field_element(2,i,j) - (field_gravito(iglob)*gravityl) / rhol
+        vector_field_element(2,i,j) = vector_field_element(2,i,j) - real((field_gravito(iglob)*gravityl) / rhol,kind=CUSTOM_REAL)
 
       enddo
     enddo

@@ -55,18 +55,15 @@
                          deltat,coord, &
                          stage_time_scheme,i_stage,ispec_is_acoustic
   ! PML arrays
-  use specfem_par, only: ispec_is_PML
+  use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
+  ! CPML coefficients and memory variables
+  ! for further optimization, we can exclude computation in PML region in the
+  ! case of backward simulation
 
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: b_accel_elastic,b_displ_elastic,b_displ_elastic_old
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_allocate,N_SLS) :: e1,e11,e13
-
-
-  ! CPML coefficients and memory variables
-  ! for further optimization, we can exclude computation in PML region in the
-  ! case of backward simulation
-  logical :: PML_BOUNDARY_CONDITIONS
 
   !---
   !--- local variables
@@ -588,6 +585,8 @@
               ! SH-case
               tempx1(i,j) = wzgll(j)*jacobianl*(sigma_xy*xixl+sigma_zy*xizl) ! this goes to accel_x
               tempx2(i,j) = wxgll(i)*jacobianl*(sigma_xy*gammaxl+sigma_zy*gammazl) ! this goes to accel_x
+              tempz1(i,j) = 0._CUSTOM_REAL
+              tempz2(i,j) = 0._CUSTOM_REAL
             endif
           endif
         enddo
