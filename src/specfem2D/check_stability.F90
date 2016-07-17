@@ -39,7 +39,7 @@
   use mpi
 #endif
 
-  use constants,only: IMAIN,STABILITY_THRESHOLD
+  use constants,only: IMAIN,STABILITY_THRESHOLD,CUSTOM_REAL
 
   use specfem_par, only: myrank,timeval,it,NSTEP,GPU_MODE, &
                          ELASTIC_SIMULATION,any_elastic,displ_elastic, &
@@ -53,7 +53,7 @@
   implicit none
 
   ! local parameters
-  double precision :: displnorm_all,displnorm_all_glob
+  real(kind=CUSTOM_REAL) :: displnorm_all,displnorm_all_glob
 
   ! timer to count elapsed time
   double precision :: tCPU,t_remain,t_total,timestamp_seconds_current
@@ -98,23 +98,24 @@
     if (any_elastic) then
       displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
     else
-      displnorm_all = 0.d0
+      displnorm_all = 0._CUSTOM_REAL
     endif
-
-    ! collects norm from all processes
-    call max_all_all_dp(displnorm_all, displnorm_all_glob)
 
     if (NOISE_TOMOGRAPHY /= 0) then
       if (myrank == 0) write(*,*) 'Noise simulation ', NOISE_TOMOGRAPHY, ' of 3'
     endif
 
+    ! master collects norm from all processes
+    call max_all_cr(displnorm_all, displnorm_all_glob)
     if (myrank == 0) &
       write(IMAIN,*) 'Max norm of vector field in solid (elastic) = ', displnorm_all_glob
 
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0 .or. displnorm_all_glob /= displnorm_all_glob) &
+    ! (is-not-a-number check is more robust when done on actual array values rather than return values from sqrt and amxval)
+    if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
+        displ_elastic(1,1) /= displ_elastic(1,1)) &
       call exit_MPI(myrank,'code became unstable and blew up in solid (elastic)')
   endif
 
@@ -123,37 +124,37 @@
     if (any_poroelastic) then
       displnorm_all = maxval(sqrt(displs_poroelastic(1,:)**2 + displs_poroelastic(2,:)**2))
     else
-      displnorm_all = 0.d0
+      displnorm_all = 0._CUSTOM_REAL
     endif
 
-    ! collects norm from all processes
-    call max_all_all_dp(displnorm_all, displnorm_all_glob)
-
+    ! master collects norm from all processes
+    call max_all_cr(displnorm_all, displnorm_all_glob)
     if (myrank == 0) &
       write(IMAIN,*) 'Max norm of vector field in solid (poroelastic) = ',displnorm_all_glob
 
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0 .or. displnorm_all_glob /= displnorm_all_glob) &
+    if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
+        displs_poroelastic(1,1) /= displs_poroelastic(1,1)) &
       call exit_MPI(myrank,'code became unstable and blew up in solid (poroelastic)')
 
     if (any_poroelastic) then
       displnorm_all = maxval(sqrt(displw_poroelastic(1,:)**2 + displw_poroelastic(2,:)**2))
     else
-      displnorm_all = 0.d0
+      displnorm_all = 0._CUSTOM_REAL
     endif
 
-    ! collects norm from all processes
-    call max_all_all_dp(displnorm_all, displnorm_all_glob)
-
+    ! master collects norm from all processes
+    call max_all_cr(displnorm_all, displnorm_all_glob)
     if (myrank == 0) &
       write(IMAIN,*) 'Max norm of vector field in fluid (poroelastic) = ',displnorm_all_glob
 
     ! check stability of the code in solid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0 .or. displnorm_all_glob /= displnorm_all_glob) &
+    if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
+        displw_poroelastic(1,1) /= displw_poroelastic(1,1)) &
       call exit_MPI(myrank,'code became unstable and blew up in fluid (poroelastic)')
   endif
 
@@ -163,19 +164,19 @@
     if (any_acoustic) then
       displnorm_all = maxval(abs(potential_acoustic(:)))
     else
-      displnorm_all = 0.d0
+      displnorm_all = 0._CUSTOM_REAL
     endif
 
-    ! collects norm from all processes
-    call max_all_all_dp(displnorm_all, displnorm_all_glob)
-
+    ! master collects norm from all processes
+    call max_all_cr(displnorm_all, displnorm_all_glob)
     if (myrank == 0) &
       write(IMAIN,*) 'Max absolute value of scalar field in fluid (acoustic) = ',displnorm_all_glob
 
     ! check stability of the code in fluid, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if (displnorm_all_glob > STABILITY_THRESHOLD .or. displnorm_all_glob < 0 .or. displnorm_all_glob /= displnorm_all_glob) &
+    if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
+        potential_acoustic(1) /= potential_acoustic(1)) &
       call exit_MPI(myrank,'code became unstable and blew up in fluid (acoustic)')
   endif
 

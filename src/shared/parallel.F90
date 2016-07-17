@@ -428,6 +428,35 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine max_all_cr(sendbuf, recvbuf)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+  use constants,only: CUSTOM_REAL
+
+  implicit none
+
+#ifdef USE_MPI
+  include "precision.h"
+#endif
+
+  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
+
+#ifdef USE_MPI
+  integer ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,0,MPI_COMM_WORLD,ier)
+#else
+  recvbuf = sendbuf
+#endif
+
+  end subroutine max_all_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine max_all_all_dp(sendbuf, recvbuf)
 
 #ifdef USE_MPI

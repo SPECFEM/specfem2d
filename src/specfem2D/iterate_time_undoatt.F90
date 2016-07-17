@@ -367,11 +367,11 @@
             ! handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
             ! adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
 #ifdef FORCE_VECTORIZATION
-              do i = 1,3*nglob_elastic
-                accel_elastic_adj_coupling(i,1) = - accel_elastic(i,1)
-              enddo
+            do i = 1,NDIM * nglob_elastic
+              accel_elastic_adj_coupling(i,1) = - accel_elastic(i,1)
+            enddo
 #else
-              accel_elastic_adj_coupling(:,:) = - accel_elastic(:,:)
+            accel_elastic_adj_coupling(:,:) = - accel_elastic(:,:)
 #endif
           endif
 

@@ -347,6 +347,7 @@
 !! DK DK uncomment this in order to force vectorization of the loops
 !! DK DK using a trick that goes out of the array bounds
 !! DK DK (then array bound checking cannot be used, thus for instance do NOT use -check all in Intel ifort)
+!! to enable, run configure with --enable-vectorization flag
 ! #define FORCE_VECTORIZATION
 
   program specfem2D
