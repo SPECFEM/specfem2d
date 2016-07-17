@@ -424,7 +424,7 @@
 !------------------------------------------------------------------------
 !
 
-  subroutine zwgjd(z,w,np,alpha,beta)
+  subroutine zwgjd_cr(z,w,np,alpha,beta)
 
 !=======================================================================
 !
@@ -487,13 +487,13 @@
     w(i) = -rcoef/(p*pdm1)
   enddo
 
-  end subroutine zwgjd
+  end subroutine zwgjd_cr
 
 !
 !------------------------------------------------------------------------
 !
 
-  subroutine zwgljd(z,w,np,alpha,beta)
+  subroutine zwgljd_cr(z,w,np,alpha,beta)
 
 !=======================================================================
 !
@@ -543,7 +543,7 @@
   if (nm1 > 0) then
     alpg  = alpha+one
     betg  = beta+one
-    call zwgjd(z(2),w(2),nm1,alpg,betg)
+    call zwgjd_cr(z(2),w(2),nm1,alpg,betg)
   endif
 
   z(1)  = - one
@@ -558,5 +558,5 @@
   call jacobf(p,pd,pm1,pdm1,pm2,pdm2,n,alpha,beta,z(np))
   w(np) = endw2(n,alpha,beta)/(two*pd)
 
-  end subroutine zwgljd
+  end subroutine zwgljd_cr
 

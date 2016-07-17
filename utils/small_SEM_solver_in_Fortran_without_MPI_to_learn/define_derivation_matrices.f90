@@ -47,7 +47,7 @@
   double precision, dimension(NGLLZ) :: zigll,wzgll
   double precision, dimension(NGLLX,NGLLX) :: hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz
 
-  integer i1,i2,k1,k2
+  integer :: i1,i2,k1,k2
 
 ! set up coordinates of the Gauss-Lobatto-Legendre points
   call zwgljd(xigll,wxgll,NGLLX,alphaGLL,betaGLL)
@@ -60,15 +60,15 @@
 ! calculate derivatives of the Lagrange polynomials
 ! and precalculate some products in double precision
 ! hprime(i,j) = h'_j(xigll_i) by definition of the derivation matrix
-  do i1=1,NGLLX
-    do i2=1,NGLLX
+  do i1 = 1,NGLLX
+    do i2 = 1,NGLLX
       hprime_xx(i2,i1) = lagrange_deriv_GLL(i1-1,i2-1,xigll,NGLLX)
       hprimewgll_xx(i2,i1) = wxgll(i2) * hprime_xx(i2,i1)
     enddo
   enddo
 
-  do k1=1,NGLLZ
-    do k2=1,NGLLZ
+  do k1 = 1,NGLLZ
+    do k2 = 1,NGLLZ
       hprime_zz(k2,k1) = lagrange_deriv_GLL(k1-1,k2-1,zigll,NGLLZ)
       hprimewgll_zz(k2,k1) = wzgll(k2) * hprime_zz(k2,k1)
     enddo

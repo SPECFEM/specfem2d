@@ -57,8 +57,8 @@
   integer i1,i2,k1,k2
 
 ! set up coordinates of the Gauss-Lobatto-Legendre points
-  call zwgljd(xigll,wxgll,NGLLX,alphaGLL,betaGLL)
-  call zwgljd(zigll,wzgll,NGLLZ,alphaGLL,betaGLL)
+  call zwgljd_cr(xigll,wxgll,NGLLX,alphaGLL,betaGLL)
+  call zwgljd_cr(zigll,wzgll,NGLLZ,alphaGLL,betaGLL)
 
 ! if number of points is odd, the middle abscissa is exactly zero
   if(mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = 0._CUSTOM_REAL
