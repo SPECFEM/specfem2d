@@ -47,6 +47,8 @@ shared_OBJECTS = \
 	$O/define_shape_functions.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/force_ftz.cc.o \
+	$O/gll_library.shared.o \
+	$O/lagrange_poly.shared.o \
 	$O/parallel.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_value_parameters.shared.o \
@@ -56,6 +58,7 @@ shared_OBJECTS = \
 
 shared_MODULES = \
 	$(FC_MODDIR)/constants.$(FC_MODEXT) \
+	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_parameters.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
