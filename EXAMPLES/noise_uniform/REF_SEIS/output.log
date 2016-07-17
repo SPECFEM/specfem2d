@@ -1,4 +1,4 @@
-running example: Sun Jul 17 01:36:28 AST 2016
+running example: Sun Jul 17 18:39:46 AST 2016
 
    setting up example...
 
@@ -122,7 +122,7 @@ running solver...
  Noise_2D
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 17 - 07 - 2016                                 T i m e  : 01:36:28
+ D a t e : 17 - 07 - 2016                                 T i m e  : 18:39:46
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
@@ -480,16 +480,16 @@ Time step number       5   t =    0.2000 s out of    1600
  ******************************************************************
  We have done   0.250156343     % of the total
  Noise simulation            1  of 3
- Max norm of vector field in solid (elastic) =    111024040.00000000     
- Elapsed time in seconds =   0.11800003051757812     
+ Max norm of vector field in solid (elastic) =    0.00000000    
+ Elapsed time in seconds =    6.2000036239624023E-002
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    2.3600006103515626E-002
+ Mean elapsed time per time step in seconds =    1.2400007247924805E-002
  Time steps remaining =         1595
- Estimated remaining time in seconds =    37.642009735107422     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 37 s
- Estimated total run time in seconds =    37.760009765625000     
- Estimated total run time in hh:mm:ss =      0 h 00 m 37 s
- The run will finish approximately on: Sun Jul 17, 2016 01:37
+ Estimated remaining time in seconds =    19.778011560440063     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 19 s
+ Estimated total run time in seconds =    19.840011596679688     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 19 s
+ The run will finish approximately on: Sun Jul 17, 2016 18:40
 
 
  Creating color image of size          722  x          608  for time step          100
@@ -505,16 +505,16 @@ Time step number     250   t =   12.4500 s out of    1600
  ******************************************************************
  We have done    15.5722322     % of the total
  Noise simulation            1  of 3
- Max norm of vector field in solid (elastic) =    435363119104.00000     
- Elapsed time in seconds =    5.4709999561309814     
- Elapsed time in hh:mm:ss =      0 h 00 m 05 s
- Mean elapsed time per time step in seconds =    2.1883999824523926E-002
+ Max norm of vector field in solid (elastic) =    0.00000000    
+ Elapsed time in seconds =    2.0020000934600830     
+ Elapsed time in hh:mm:ss =      0 h 00 m 02 s
+ Mean elapsed time per time step in seconds =    8.0080003738403314E-003
  Time steps remaining =         1350
- Estimated remaining time in seconds =    29.543399763107299     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 29 s
- Estimated total run time in seconds =    35.014399719238284     
- Estimated total run time in hh:mm:ss =      0 h 00 m 35 s
- The run will finish approximately on: Sun Jul 17, 2016 01:37
+ Estimated remaining time in seconds =    10.810800504684448     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 10 s
+ Estimated total run time in seconds =    12.812800598144531     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 12 s
+ The run will finish approximately on: Sun Jul 17, 2016 18:40
 
 
  Creating color image of size          722  x          608  for time step          300
@@ -530,16 +530,16 @@ Time step number     500   t =   24.9500 s out of    1600
  ******************************************************************
  We have done    31.2070045     % of the total
  Noise simulation            1  of 3
- Max norm of vector field in solid (elastic) =    2570769399808.0000     
- Elapsed time in seconds =    11.668999910354614     
- Elapsed time in hh:mm:ss =      0 h 00 m 11 s
- Mean elapsed time per time step in seconds =    2.3337999820709228E-002
+ Max norm of vector field in solid (elastic) =    0.00000000    
+ Elapsed time in seconds =    4.0320000648498535     
+ Elapsed time in hh:mm:ss =      0 h 00 m 04 s
+ Mean elapsed time per time step in seconds =    8.0640001296997076E-003
  Time steps remaining =         1100
- Estimated remaining time in seconds =    25.671799802780150     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 25 s
- Estimated total run time in seconds =    37.340799713134764     
- Estimated total run time in hh:mm:ss =      0 h 00 m 37 s
- The run will finish approximately on: Sun Jul 17, 2016 01:37
+ Estimated remaining time in seconds =    8.8704001426696788     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 08 s
+ Estimated total run time in seconds =    12.902400207519532     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 12 s
+ The run will finish approximately on: Sun Jul 17, 2016 18:40
 
 
  Creating color image of size          722  x          608  for time step          500
@@ -559,16 +559,16 @@ Time step number     750   t =   37.4500 s out of    1600
  ******************************************************************
  We have done    46.8417778     % of the total
  Noise simulation            1  of 3
- Max norm of vector field in solid (elastic) =    6960899424256.0000     
- Elapsed time in seconds =    19.189999818801880     
- Elapsed time in hh:mm:ss =      0 h 00 m 19 s
- Mean elapsed time per time step in seconds =    2.5586666425069172E-002
+ Max norm of vector field in solid (elastic) =    7.34457783E-09
+ Elapsed time in seconds =    6.0460000038146973     
+ Elapsed time in hh:mm:ss =      0 h 00 m 06 s
+ Mean elapsed time per time step in seconds =    8.0613333384195966E-003
  Time steps remaining =          850
- Estimated remaining time in seconds =    21.748666461308797     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 21 s
- Estimated total run time in seconds =    40.938666280110681     
- Estimated total run time in hh:mm:ss =      0 h 00 m 40 s
- The run will finish approximately on: Sun Jul 17, 2016 01:37
+ Estimated remaining time in seconds =    6.8521333376566567     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
+ Estimated total run time in seconds =    12.898133341471354     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 12 s
+ The run will finish approximately on: Sun Jul 17, 2016 18:40
 
 
  Creating color image of size          722  x          608  for time step          800
@@ -584,16 +584,16 @@ Time step number    1000   t =   49.9500 s out of    1600
  ******************************************************************
  We have done    62.4765472     % of the total
  Noise simulation            1  of 3
- Max norm of vector field in solid (elastic) =    13241209061376.000     
- Elapsed time in seconds =    25.429999828338623     
- Elapsed time in hh:mm:ss =      0 h 00 m 25 s
- Mean elapsed time per time step in seconds =    2.5429999828338622E-002
+ Max norm of vector field in solid (elastic) =    6.80842449E-09
+ Elapsed time in seconds =    8.0220000743865967     
+ Elapsed time in hh:mm:ss =      0 h 00 m 08 s
+ Mean elapsed time per time step in seconds =    8.0220000743865972E-003
  Time steps remaining =          600
- Estimated remaining time in seconds =    15.257999897003174     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 15 s
- Estimated total run time in seconds =    40.687999725341797     
- Estimated total run time in hh:mm:ss =      0 h 00 m 40 s
- The run will finish approximately on: Sun Jul 17, 2016 01:37
+ Estimated remaining time in seconds =    4.8132000446319587     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
+ Estimated total run time in seconds =    12.835200119018555     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 12 s
+ The run will finish approximately on: Sun Jul 17, 2016 18:40
 
 
  Creating color image of size          722  x          608  for time step         1000
@@ -613,16 +613,16 @@ Time step number    1250   t =   62.4500 s out of    1600
  ******************************************************************
  We have done    78.1113205     % of the total
  Noise simulation            1  of 3
- Max norm of vector field in solid (elastic) =    21776255942656.000     
- Elapsed time in seconds =    32.547999858856201     
- Elapsed time in hh:mm:ss =      0 h 00 m 32 s
- Mean elapsed time per time step in seconds =    2.6038399887084961E-002
+ Max norm of vector field in solid (elastic) =    4.48006210E-09
+ Elapsed time in seconds =    10.009999990463257     
+ Elapsed time in hh:mm:ss =      0 h 00 m 10 s
+ Mean elapsed time per time step in seconds =    8.0079999923706058E-003
  Time steps remaining =          350
- Estimated remaining time in seconds =    9.1134399604797363     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 09 s
- Estimated total run time in seconds =    41.661439819335939     
- Estimated total run time in hh:mm:ss =      0 h 00 m 41 s
- The run will finish approximately on: Sun Jul 17, 2016 01:37
+ Estimated remaining time in seconds =    2.8027999973297120     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
+ Estimated total run time in seconds =    12.812799987792969     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 12 s
+ The run will finish approximately on: Sun Jul 17, 2016 18:40
 
 
  Creating color image of size          722  x          608  for time step         1300
@@ -638,16 +638,16 @@ Time step number    1500   t =   74.9500 s out of    1600
  ******************************************************************
  We have done    93.7460938     % of the total
  Noise simulation            1  of 3
- Max norm of vector field in solid (elastic) =    32201500524544.000     
- Elapsed time in seconds =    38.828999996185303     
- Elapsed time in hh:mm:ss =      0 h 00 m 38 s
- Mean elapsed time per time step in seconds =    2.5885999997456867E-002
+ Max norm of vector field in solid (elastic) =    3.62601149E-09
+ Elapsed time in seconds =    11.950999975204468     
+ Elapsed time in hh:mm:ss =      0 h 00 m 11 s
+ Mean elapsed time per time step in seconds =    7.9673333168029780E-003
  Time steps remaining =          100
- Estimated remaining time in seconds =    2.5885999997456866     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    41.417599995930992     
- Estimated total run time in hh:mm:ss =      0 h 00 m 41 s
- The run will finish approximately on: Sun Jul 17, 2016 01:37
+ Estimated remaining time in seconds =   0.79673333168029781     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
+ Estimated total run time in seconds =    12.747733306884765     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 12 s
+ The run will finish approximately on: Sun Jul 17, 2016 18:40
 
 
  Creating color image of size          722  x          608  for time step         1500
@@ -659,15 +659,15 @@ Time step number    1600   t =   79.9500 s out of    1600
  ******************************************************************
  We have done    100.000000     % of the total
  Noise simulation            1  of 3
- Max norm of vector field in solid (elastic) =    36995950706688.000     
- Elapsed time in seconds =    41.708999872207642     
- Elapsed time in hh:mm:ss =      0 h 00 m 41 s
- Mean elapsed time per time step in seconds =    2.6068124920129776E-002
+ Max norm of vector field in solid (elastic) =    3.54321639E-09
+ Elapsed time in seconds =    12.732000112533569     
+ Elapsed time in hh:mm:ss =      0 h 00 m 12 s
+ Mean elapsed time per time step in seconds =    7.9575000703334814E-003
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    41.708999872207642     
- Estimated total run time in hh:mm:ss =      0 h 00 m 41 s
+ Estimated total run time in seconds =    12.732000112533569     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 12 s
 
 
  Creating color image of size          722  x          608  for time step         1600
@@ -683,11 +683,11 @@ Time step number    1600   t =   79.9500 s out of    1600
  Noise_2D
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 17 - 07 - 2016                                 T i m e  : 01:37:11
+ D a t e : 17 - 07 - 2016                                 T i m e  : 18:40:01
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 see results in directory: OUTPUT_FILES/
 
 done
-Sun Jul 17 01:37:11 AST 2016
+Sun Jul 17 18:40:01 AST 2016
