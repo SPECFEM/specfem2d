@@ -52,6 +52,8 @@ tomography/postprocess_sensitivity_kernels_MODULES = \
 	$(EMPTY_MACRO)
 
 tomography/postprocess_sensitivity_kernels_SHARED_OBJECTS = \
+	$(xcombine_sem_SHARED_OBJECTS) \
+	$(xsmooth_sem_SHARED_OBJECTS) \
 	$(EMPTY_MACRO)
 
 
@@ -88,7 +90,7 @@ xcombine_sem_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xcombine_sem_SHARED_OBJECTS = \
-	$O/specfem2D_par.spec.o \
+	$O/specfem2D_par.spec_module.o \
 	$O/shared_par.shared_module.o \
 	$O/exit_mpi.shared.o \
 	$O/parallel.shared.o \
@@ -111,18 +113,14 @@ xsmooth_sem_OBJECTS = \
 	$O/postprocess_par.postprocess_module.o \
 	$O/smooth_sem.postprocess.o \
 	$O/parse_kernel_names.postprocess.o \
-	$O/specfem2D_par.spec.o \
-	$O/exit_mpi.shared.o \
-	$O/parallel.shared.o \
-	$O/gll_library.spec.o \
 	$(EMPTY_MACRO)
 
 xsmooth_sem_SHARED_OBJECTS = \
-	$O/specfem2D_par.spec.o \
+	$O/specfem2D_par.spec_module.o \
 	$O/shared_par.shared_module.o \
 	$O/exit_mpi.shared.o \
+	$O/gll_library.shared.o \
 	$O/parallel.shared.o \
-	$O/gll_library.spec.o \
 	$(EMPTY_MACRO)
 
 cuda_smooth_sem_STUBS = \
@@ -161,7 +159,7 @@ ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
 	@echo ""
 	@echo $(INFO_CUDA_SEM)
 	@echo ""
-	$(FCLINK) -o ${E}/xsmooth_sem $(xsmooth_sem_OBJECTS) $(xsmooth_sem_LIBS)
+	$(FCLINK) -o $@ $+ $(xsmooth_sem_LIBS)
 	@echo ""
 
 #######################################
@@ -169,8 +167,6 @@ ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
 ###
 ### Module dependencies
 ###
-$O/postprocess_par.postprocess_module.o: $O/specfem2D_par.spec.o
-
 
 
 ####
@@ -181,7 +177,7 @@ $O/postprocess_par.postprocess_module.o: $O/specfem2D_par.spec.o
 ## postprocess
 ##
 
-$O/%.postprocess_module.o: $S/%.f90 $O/specfem2D_par.spec.o $O/shared_par.shared_module.o
+$O/%.postprocess_module.o: $S/%.f90 $O/specfem2D_par.spec_module.o $O/shared_par.shared_module.o
 	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.postprocess.o: $S/%.f90 $O/postprocess_par.postprocess_module.o

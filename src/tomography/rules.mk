@@ -91,7 +91,7 @@ xsum_kernels_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xsum_kernels_SHARED_OBJECTS = \
-	$O/specfem2D_par.spec.o \
+	$O/specfem2D_par.spec_module.o \
 	$O/shared_par.shared_module.o \
 	$O/exit_mpi.shared.o \
 	$O/parallel.shared.o \
@@ -111,13 +111,12 @@ ${E}/xsum_kernels: $(xsum_kernels_OBJECTS) $(xsum_kernels_SHARED_OBJECTS) $(COND
 ###
 ### Module dependencies
 ###
-$O/tomography_par.tomo_module.o: $O/specfem2D_par.spec.o
 
 ####
 #### rule for each .o file below
 ####
 
-$O/%.tomo_module.o: $S/%.f90 ${SETUP}/constants_tomography.h $O/specfem2D_par.spec.o 	$O/shared_par.shared_module.o
+$O/%.tomo_module.o: $S/%.f90 ${SETUP}/constants_tomography.h $O/specfem2D_par.spec_module.o $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.tomo.o: $S/%.f90 ${SETUP}/constants_tomography.h $O/tomography_par.tomo_module.o
