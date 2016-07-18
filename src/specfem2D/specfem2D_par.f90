@@ -39,32 +39,13 @@ module specfem_par
   use constants,only: CUSTOM_REAL,MAX_STRING_LEN,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME, &
     NEDGES,NGLLX,NGLLZ,NGLJ,NDIM
 
+  use shared_parameters
+
   implicit none
 
   !=====================================================================
   !input for simulation (its beginning)
   !=====================================================================
-
-  !---------------------------------------------------------------------
-  !for model description
-  !---------------------------------------------------------------------
-  character(len=MAX_STRING_LEN) :: MODEL, SAVE_MODEL
-
-  ! 1 = forward wavefield, 3 = backward and adjoint wavefields and kernels
-  integer :: SIMULATION_TYPE
-
-  ! for P-SV or SH (membrane) waves calculation
-  logical :: P_SV
-
-  ! whether or not the last frame is saved to reconstruct the forward field
-  logical :: SAVE_FORWARD
-
-  !for adjoint inversion with attenuation
-  logical :: UNDO_ATTENUATION
-  integer :: NT_DUMP_ATTENUATION
-
-  ! external mesh files
-  logical :: read_external_mesh
 
   !---------------------------------------------------------------------
   ! for material information
@@ -89,20 +70,12 @@ module specfem_par
   double precision, dimension(:,:), allocatable :: anisotropy
 
   ! for attenuation
-  logical ATTENUATION_VISCOELASTIC_SOLID, ATTENUATION_PORO_FLUID_PART
-  integer :: N_SLS
   double precision, dimension(:), allocatable  :: QKappa_attenuation
   double precision, dimension(:), allocatable  :: Qmu_attenuation
-  double precision  :: f0_attenuation
-  logical :: READ_VELOCITIES_AT_f0
-  integer nspec_allocate
+
+  integer :: nspec_ATT
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   real(kind=CUSTOM_REAL), dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
-
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: tau_epsilon_nu1,tau_epsilon_nu2, &
-                                                       inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,&
-                                                       phi_nu1_sent,phi_nu2_sent
-  real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
 
   ! material
   ! density
@@ -122,15 +95,8 @@ module specfem_par
   logical :: anyabs_glob
 
   ! PML
-  logical :: PML_BOUNDARY_CONDITIONS
   logical, dimension(:), allocatable :: ispec_is_PML
-
-  ! PML rotation
-  logical :: ROTATE_PML_ACTIVATE
-  double precision :: ROTATE_PML_ANGLE
-
-  ! PML arrays
-  integer :: nspec_PML,NELEM_PML_THICKNESS
+  integer :: nspec_PML
 
   integer, dimension(:), allocatable :: region_CPML
   integer, dimension(:), allocatable :: spec_to_PML
@@ -142,17 +108,12 @@ module specfem_par
     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   ! Stacey BC
-  logical :: STACEY_ABSORBING_CONDITIONS
   logical, dimension(:,:), allocatable  :: codeabs
   integer, dimension(:), allocatable  :: typeabs
   ! for detection of corner element on absorbing boundary
   logical, dimension(:,:), allocatable  :: codeabs_corner
 
-  ! for horizontal periodic conditions
-  logical :: ADD_PERIODIC_CONDITIONS
-
   ! horizontal periodicity distance for periodic conditions
-  double precision :: PERIODIC_HORIZ_DIST
   logical, dimension(:), allocatable :: this_ibool_is_a_periodic_edge
 
   ! edge detection
@@ -185,7 +146,6 @@ module specfem_par
   ! for source-receiver information
   !---------------------------------------------------------------------
   ! source description
-  integer :: NSOURCES
   integer, dimension(:), allocatable :: source_type,time_function_type
   character(len=MAX_STRING_LEN), dimension(:), allocatable :: name_of_source_file
   double precision, dimension(:), allocatable :: burst_band_width
@@ -206,11 +166,6 @@ module specfem_par
   ! source time function
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: source_time_function
 
-  ! use this t0 as earliest starting time rather than the automatically calculated one
-  ! (must be positive and bigger than the automatically one to be effective;
-  !  simulation will start at t = - t0)
-  double precision :: USER_T0
-
   ! for absorbing and acoustic free surface conditions
   !acoustic free surface
   integer :: nelem_acoustic_surface
@@ -219,7 +174,6 @@ module specfem_par
   logical :: any_acoustic_edges
 
   ! perform a forcing of an acoustic medium with a rigid boundary
-  logical :: ACOUSTIC_FORCING
   integer :: nelem_acforcing
   logical, dimension(:,:), allocatable  :: codeacforcing
   integer, dimension(:), allocatable  :: typeacforcing
@@ -233,10 +187,7 @@ module specfem_par
   logical, dimension(:), allocatable :: iglob_is_forced
 
   ! for plane wave incidence
-  ! to compute analytical initial plane wave field
-  logical :: initialfield
-  logical :: add_Bielak_conditions,add_Bielak_conditions_bottom,add_Bielak_conditions_right, &
-             add_Bielak_conditions_top,add_Bielak_conditions_left
+  logical :: add_Bielak_conditions
   double precision :: anglesource_refl, c_inc, c_refl
   double precision, dimension(2) :: A_plane, B_plane, C_plane
   double precision :: time_offset
@@ -252,8 +203,11 @@ module specfem_par
   character(len=MAX_LENGTH_STATION_NAME), allocatable, dimension(:) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), allocatable, dimension(:) :: network_name
 
-  integer  :: nrec,nrecloc
-  double precision :: anglerec,xirec,gammarec
+  ! total number of receiver stations
+  integer :: nrec
+  ! local receivers in this slice
+  integer :: nrecloc
+  double precision :: xirec,gammarec
   integer, dimension(:), allocatable :: recloc, which_proc_receiver
   integer, dimension(:), allocatable :: ispec_selected_rec
   double precision, dimension(:), allocatable :: xi_receiver,gamma_receiver,st_xval,st_zval
@@ -262,7 +216,6 @@ module specfem_par
   double precision, dimension(:), allocatable :: anglerec_irec
   double precision, dimension(:), allocatable :: cosrot_irec, sinrot_irec
   double precision, dimension(:), allocatable :: x_final_receiver, z_final_receiver
-  logical :: force_normal_to_surface,rec_normal_to_surface
 
   integer, dimension(:), allocatable :: source_courbe_eros
 
@@ -314,8 +267,6 @@ module specfem_par
   !---------------------------------------------------------------------
   ! AXISYM parameters
   !---------------------------------------------------------------------
-  logical :: AXISYM ! .true. if we are performing a 2.5D simulation
-
   ! Number of elements on the symmetry axis
   integer :: nelem_on_the_axis
   ! Flag to know if an element is on the axis
@@ -336,16 +287,8 @@ module specfem_par
   !---------------------------------------------------------------------
   ! for time discretization
   !---------------------------------------------------------------------
-  ! value of time_stepping_scheme to decide which time scheme will be used
-  ! 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta)
-  ! 3 = classical 4th-order 4-stage Runge-Kutta
-  integer :: time_stepping_scheme
   ! for LDDRK46
   integer :: i_stage,stage_time_scheme
-
-  ! time steps
-  integer :: NSTEP
-  double precision :: DT
 
   ! coefficients of the explicit Newmark time scheme
   double precision :: deltat,deltatover2,deltatsquareover2
@@ -573,7 +516,6 @@ module specfem_par
 
   ! for viscous attenuation in poroelastic_acoustic
   double precision :: theta_e,theta_s
-  double precision :: Q0,freq0
   double precision :: alphaval,betaval,gammaval,thetainv
 
   double precision, dimension(:,:,:), allocatable :: rx_viscous,rz_viscous,viscox,viscoz
@@ -597,9 +539,7 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_sfb_potential_ddot_acoustic_LDDRK
 
   ! for kernel computation
-  character(len=MAX_STRING_LEN) :: TOMOGRAPHY_FILE
   integer :: tomo_material
-  logical :: save_ASCII_kernels
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_ac,b_displ_ac,b_accel_ac
 
@@ -663,14 +603,9 @@ module specfem_par
 
   ! spectral-elements
   integer :: nspec
-  integer :: ngnod
-
-  ! number of interpolation points
-  integer :: pointsdisp
 
   ! for MPI and partitioning
   integer :: myrank
-  integer :: NPROC
 
   ! parameter read from parameter file
   integer :: nproc_read_from_database
@@ -714,19 +649,13 @@ module specfem_par
   integer, dimension(:,:,:), allocatable :: copy_ibool_ori
   integer, dimension(:), allocatable :: integer_mask_ibool
 
-  !---------------------------------------------------------------------
-  ! for information of the stability behavior during the simulation
-  !---------------------------------------------------------------------
-  integer :: NSTEP_BETWEEN_OUTPUT_INFO
 
   !---------------------------------------------------------------------
   ! for energy output
   !---------------------------------------------------------------------
-  logical :: output_energy
   real(kind=CUSTOM_REAL) :: kinetic_energy,potential_energy
 
   ! Integrated energy field output int_0^t v^2 dt
-  logical :: COMPUTE_INTEGRATED_ENERGY_FIELD
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: integrated_cinetic_energy_field,max_cinetic_energy_field
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: integrated_potential_energy_field,max_potential_energy_field
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: cinetic_effective_duration_field,potential_effective_duration_field
@@ -734,24 +663,10 @@ module specfem_par
   !---------------------------------------------------------------------
   ! for seismograms
   !---------------------------------------------------------------------
-  integer :: seismotype,NSTEP_BETWEEN_OUTPUT_SEISMOS
-  integer :: seismo_offset, seismo_current, subsamp_seismos
-
-  logical :: USE_TRICK_FOR_BETTER_PRESSURE
-  logical :: save_ASCII_seismograms,save_binary_seismograms_single,save_binary_seismograms_double
-
-  ! output seismograms in Seismic Unix format (adjoint traces will be read in the same format)
-  logical :: SU_FORMAT
+  integer :: seismo_offset, seismo_current
 
   ! for seismograms
   double precision, dimension(:,:), allocatable :: sisux,sisuz,siscurl
-
-  !---------------------------------------------------------------------
-  !global varable particular for computation with GPU
-  !---------------------------------------------------------------------
-
-  ! Global GPU toggle. Set in Par_file
-  logical :: GPU_MODE
 
 end module specfem_par
 
@@ -762,33 +677,12 @@ module specfem_par_noise
 ! parameter module for noise simulations
 
   use constants,only: CUSTOM_REAL
+
+  use shared_parameters
+
   implicit none
 
   ! noise simulations:
-  !
-  ! NOISE_TOMOGRAPHY = 0 - turn noise tomography subroutines off; setting
-  ! NOISE_TOMOGRAPHY equal to 0, in other words, results in an earthquake
-  ! simulation rather than a noise simulation
-
-  ! NOISE_TOMOGRAPHY = 1 - compute "generating" wavefield and store the result;
-  ! this stored wavefield is then used to compute the "ensemble forward"
-  ! wavefield in the next noise simulation
-
-  ! NOISE_TOMOGRAPHY = 2 - compute "ensemble forward" wavefield and store the
-  ! result; if an adjoint simulation is planned, users need to store
-  ! seismograms (actually, cross-correlograms) for later processing
-
-  ! NOISE_TOMOGRAPHY = 3 - carry out adjoint simulation; users need to supply
-  ! adjoint sources constructed from cross-correlograms computed during the
-  ! "ensemble forward" step
-
-
-  ! For an explanation of terms and concepts in noise tomography, see "Tromp et
-  ! al., 2011, Noise Cross-Correlation Sensitivity Kernels, Geophysical Journal
-  ! International"
-
-  integer :: NOISE_TOMOGRAPHY
-
   ! master station
   integer :: ispec_noise
   double precision :: xi_noise, gamma_noise
@@ -821,6 +715,9 @@ module specfem_par_gpu
 ! parameter module for gpu simulations
 
   use constants,only: CUSTOM_REAL
+
+  use shared_parameters
+
   implicit none
 
   ! CUDA mesh pointer<->integer wrapper
@@ -907,6 +804,9 @@ module specfem_par_movie
 ! parameter module for noise simulations
 
   use constants,only: CUSTOM_REAL,MAX_STRING_LEN
+
+  use shared_parameters
+
   implicit none
 
   double precision, dimension(:,:), allocatable :: flagrange,xinterp,zinterp,Uxinterp,Uzinterp
@@ -918,14 +818,6 @@ module specfem_par_movie
   !---------------------------------------------------------------------
   ! for color image
   !---------------------------------------------------------------------
-  double precision :: cutsnaps !also used in plot_post
-
-  logical :: output_color_image
-  logical :: DRAW_SOURCES_AND_RECEIVERS
-
-  integer :: NSTEP_BETWEEN_OUTPUT_IMAGES
-
-  integer :: imagetype_JPEG
   integer :: isnapshot_number
   integer :: nb_pixel_loc
   integer, dimension(:), allocatable :: ix_image_color_source,iy_image_color_source
@@ -935,22 +827,6 @@ module specfem_par_movie
   integer, dimension(:,:), allocatable :: num_pixel_recv
   double precision, dimension(:), allocatable :: data_pixel_recv
   double precision, dimension(:), allocatable :: data_pixel_send
-
-  ! factor to subsample color images output by the code (useful for very large models)
-  double precision :: factor_subsample_image
-  ! by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
-  logical :: USE_CONSTANT_MAX_AMPLITUDE
-  ! constant maximum amplitude to use for all color images if the USE_CONSTANT_MAX_AMPLITUDE option is true
-  double precision :: CONSTANT_MAX_AMPLITUDE_TO_USE
-  ! use snapshot number in the file name of JPG color snapshots instead of the time step
-  logical :: USE_SNAPSHOT_NUMBER_IN_FILENAME
-  ! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics
-  ! or in the case of offshore oil industry experiments.
-  ! (if off, display them as greyscale, as for elastic or poroelastic elements,
-  !  for instance for acoustic-only oil industry models of solid media)
-  logical :: DRAW_WATER_IN_BLUE
-  ! non linear display to enhance small amplitudes in color images
-  double precision :: POWER_DISPLAY_COLOR
 
   integer :: NX_IMAGE_color,NZ_IMAGE_color
   double precision :: xmin_color_image,xmax_color_image, &
@@ -962,15 +838,9 @@ module specfem_par_movie
   !---------------------------------------------------------------------
   ! for plot_post
   !---------------------------------------------------------------------
-  integer :: subsamp_postscript,imagetype_postscript
-
-  double precision :: sizemax_arrows
   double precision :: vpImin,vpImax,vpIImin,vpIImax
 
-  logical :: output_postscript_snapshot
-
-  logical :: US_LETTER,plot_lowerleft_corner_only
-  logical :: interpol,meshvect,modelvect,boundvect
+  logical :: plot_lowerleft_corner_only
 
   ! title of the plot
   character(len=MAX_STRING_LEN) simulation_title
@@ -998,20 +868,8 @@ module specfem_par_movie
   !---------------------------------------------------------------------
   ! for wavefield damp
   !---------------------------------------------------------------------
-  integer :: NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
-  integer :: imagetype_wavefield_dumps
-
-  logical :: output_wavefield_dumps
-  logical :: use_binary_for_wavefield_dumps
-
   logical :: this_is_the_first_time_we_dump
   logical, dimension(:), allocatable  :: mask_ibool
-
-
-  !---------------------------------------------------------------------
-  ! for wavefield snapshot file
-  !---------------------------------------------------------------------
-  logical :: output_grid_ASCII,output_grid_Gnuplot
 
 end module specfem_par_movie
 

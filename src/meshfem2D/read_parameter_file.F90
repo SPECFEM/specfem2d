@@ -235,7 +235,7 @@
   if (nreceiversets < 1) stop 'number of receiver lines must be greater than 1'
 
   ! allocate receiver line arrays
-  allocate(nrec(nreceiversets))
+  allocate(nrec_line(nreceiversets))
   allocate(xdeb(nreceiversets))
   allocate(zdeb(nreceiversets))
   allocate(xfin(nreceiversets))
@@ -245,7 +245,7 @@
 
   ! loop on all the receiver lines
   do ireceiverlines = 1,nreceiversets
-    call read_value_integer_next_p(nrec(ireceiverlines),'solver.nrec')
+    call read_value_integer_next_p(nrec_line(ireceiverlines),'solver.nrec')
     if (err_occurred() /= 0) stop 'error reading parameter nrec in Par_file'
 
     call read_value_double_prec_next_p(xdeb(ireceiverlines),'solver.xdeb')
@@ -346,11 +346,11 @@
   allocate(eta_f(nbmodels))
   allocate(mu_fr(nbmodels))
 
-  call read_materials(AXISYM,nbmodels,icodemat,cp,cs, &
-                      aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
-                      QKappa,Qmu,rho_s,rho_f,phi,tortuosity, &
-                      permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
-                      eta_f,mu_fr)
+  call read_material_table(AXISYM,nbmodels,icodemat,cp,cs, &
+                           aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
+                           QKappa,Qmu,rho_s,rho_f,phi,tortuosity, &
+                           permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
+                           eta_f,mu_fr)
 
   call read_value_string_p(TOMOGRAPHY_FILE, 'solver.TOMOGRAPHY_FILE')
   if (err_occurred() /= 0) stop 'error reading parameter TOMOGRAPHY_FILE in Par_file'

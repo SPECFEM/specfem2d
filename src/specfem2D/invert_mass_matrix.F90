@@ -123,7 +123,7 @@
           mu_relaxed = poroelastcoef(2,1,kmato(ispec))
 
           if (AXISYM) then ! CHECK kappa
-            kappal = lambda_relaxed + 2.d0/3.d0*mu_relaxed
+            kappal = lambda_relaxed + TWO_THIRDS * mu_relaxed
           else
             kappal = lambda_relaxed + mu_relaxed
           endif

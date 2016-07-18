@@ -36,7 +36,7 @@
 #ifdef USE_MPI
   use mpi
 #endif
-  use constants,only: TWO,FOUR_THIRDS,APPROXIMATE_HESS_KL,IMAIN,IOUT_ENERGY,ISTANDARD_OUTPUT
+  use constants,only: TWO,FOUR_THIRDS,TWO_THIRDS,APPROXIMATE_HESS_KL,IMAIN,IOUT_ENERGY,ISTANDARD_OUTPUT
   use specfem_par
   use specfem_par_gpu
   use specfem_par_movie,only: simulation_title,output_wavefield_dumps,mask_ibool
@@ -69,7 +69,7 @@
           lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
           mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
           if (AXISYM) then ! CHECK kappa
-            kappa_save(i,j,ispec) = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic/3._CUSTOM_REAL
+            kappa_save(i,j,ispec) = lambdal_unrelaxed_elastic + TWO_THIRDS * mul_unrelaxed_elastic
           else
             kappa_save(i,j,ispec) = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
           endif

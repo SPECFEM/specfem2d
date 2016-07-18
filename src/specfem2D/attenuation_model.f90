@@ -31,23 +31,32 @@
 !
 !========================================================================
 
-  subroutine attenuation_model(QKappa_att,QMu_att)
+  subroutine attenuation_model(QKappa_att,QMu_att,f0_attenuation,N_SLS, &
+                               tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
+                               tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
 
 ! define the attenuation constants
 
   use constants,only: CUSTOM_REAL,ONE
 
-  use specfem_par,only: N_SLS,f0_attenuation, &
-    tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent, &
-    phi_nu1_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent
-
   implicit none
 
-  double precision :: QKappa_att,QMu_att
+  double precision,intent(in) :: QKappa_att,QMu_att
+  double precision,intent(in) :: f0_attenuation
 
-  double precision, dimension(N_SLS) :: tau_epsilon_nu1_d,tau_sigma_nu1,tau_epsilon_nu2_d,tau_sigma_nu2
+  integer,intent(in) :: N_SLS
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu1_sent,phi_nu1_sent
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu2_sent,phi_nu2_sent
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: tau_epsilon_nu1_sent,tau_epsilon_nu2_sent
+  real(kind=CUSTOM_REAL),intent(out) :: Mu_nu1_sent,Mu_nu2_sent
 
+  ! local parameters
+  double precision, dimension(N_SLS) :: tau_epsilon_nu1_d,tau_epsilon_nu2_d
+  double precision, dimension(N_SLS) :: tau_sigma_nu1,tau_sigma_nu2
   double precision :: f_min_attenuation, f_max_attenuation
+
+  ! safety check
+  if (N_SLS < 1) stop 'Invalid N_SLS value, must be at least 1'
 
 ! attenuation constants for standard linear solids
 ! nu1 is the dilatation/incompressibility mode (QKappa)
@@ -74,7 +83,7 @@
 ! print *
 
   if (any(tau_sigma_nu1 < 0.d0) .or. any(tau_sigma_nu2 < 0.d0) .or. &
-     any(tau_epsilon_nu1_d < 0.d0) .or. any(tau_epsilon_nu2_d < 0.d0)) &
+      any(tau_epsilon_nu1_d < 0.d0) .or. any(tau_epsilon_nu2_d < 0.d0)) &
        stop 'error: negative relaxation time found for a viscoelastic material'
 
 ! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
@@ -117,17 +126,17 @@
 !
 
   ! SLS parameters
-  ! for Qkappa (set by tau**1,phi**1,Mu_nu1**) and Qmu (set by tau**1,phi**1,Mu_nu1**)
-  tau_epsilon_nu1(:) = real(tau_epsilon_nu1_d(:),kind=CUSTOM_REAL)
-  tau_epsilon_nu2(:) = real(tau_epsilon_nu2_d(:),kind=CUSTOM_REAL)
+  ! for Qkappa (set by tau**1,phi**1,Mu_nu1**) and Qmu (set by tau**2,phi**2,Mu_nu2**)
+  tau_epsilon_nu1_sent(:) = real(tau_epsilon_nu1_d(:),kind=CUSTOM_REAL)
+  tau_epsilon_nu2_sent(:) = real(tau_epsilon_nu2_d(:),kind=CUSTOM_REAL)
 
-  inv_tau_sigma_nu1_sent(:) = real(dble(ONE) / tau_sigma_nu1(:),kind=CUSTOM_REAL)
-  inv_tau_sigma_nu2_sent(:) = real(dble(ONE) / tau_sigma_nu2(:),kind=CUSTOM_REAL)
+  inv_tau_sigma_nu1_sent(:) = real(1.d0 / tau_sigma_nu1(:),kind=CUSTOM_REAL)
+  inv_tau_sigma_nu2_sent(:) = real(1.d0 / tau_sigma_nu2(:),kind=CUSTOM_REAL)
 
   ! use the right formula with 1/N included
-  phi_nu1_sent(:) = real((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
+  phi_nu1_sent(:) = real((1.d0 - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
                                                                            / sum(tau_epsilon_nu1_d/tau_sigma_nu1),kind=CUSTOM_REAL)
-  phi_nu2_sent(:) = real((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
+  phi_nu2_sent(:) = real((1.d0 - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
                                                                            / sum(tau_epsilon_nu2_d/tau_sigma_nu2),kind=CUSTOM_REAL)
 
   Mu_nu1_sent = real(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS),kind=CUSTOM_REAL)
@@ -142,7 +151,9 @@
 !--------------------------------------------------------------------------------
 !
 
-  subroutine shift_velocities_from_f0(vp,vs,rho,mu,lambda)
+  subroutine shift_velocities_from_f0(vp,vs,rho, &
+                                      f0_attenuation,N_SLS, &
+                                      tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1,inv_tau_sigma_nu2)
 
 ! From Emmanuel Chaljub, ISTerre, OSU Grenoble, France:
 
@@ -184,20 +195,27 @@
 !  A similar expression can then be established for Q_Kappa, and conversion from Q_Kappa and Q_mu to Q_P and Q_S (if needed)
 !  can be found for instance in equations (9.59) and (9.60) of the book of Dahlen and Tromp (1998).
 
-  use constants,only: ONE,TWO,PI,TWO_THIRDS
+  use constants,only: ONE,TWO,PI,TWO_THIRDS,CUSTOM_REAL
 
-  use specfem_par,only : AXISYM,f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS
+  use specfem_par,only : AXISYM
 
   implicit none
 
 ! arguments
-  double precision, intent(in) :: rho
   double precision, intent(inout) :: vp,vs
-  double precision, intent(out) :: mu,lambda
+
+  double precision, intent(in) :: rho
+  double precision, intent(in) :: f0_attenuation
+
+  integer,intent(in) :: N_SLS
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: tau_epsilon_nu1,tau_epsilon_nu2
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: inv_tau_sigma_nu1,inv_tau_sigma_nu2
 
 ! local variables
   integer :: i_sls
-  double precision :: xtmp1_nu1,xtmp1_nu2,xtmp2_nu1,xtmp2_nu2,xtmp_ak_nu1,xtmp_ak_nu2,factor_mu,kappa,factor_kappa
+  double precision :: xtmp1_nu1,xtmp1_nu2,xtmp2_nu1,xtmp2_nu2,xtmp_ak_nu1,xtmp_ak_nu2
+  double precision :: factor_mu,factor_kappa
+  double precision :: kappa,mu,lambda
 
   mu = rho * vs*vs
   lambda = rho * vp*vp - TWO * mu
@@ -207,6 +225,7 @@
   else
     kappa  = lambda + mu
   endif
+
   xtmp1_nu1 = ONE
   xtmp2_nu1 = ONE
   xtmp1_nu2 = ONE
@@ -214,14 +233,14 @@
 
   do i_sls = 1,N_SLS
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls) - ONE
-     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2_sent(i_sls) - ONE
+     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2(i_sls) - ONE
      xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/N_SLS
-     xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * f0_attenuation / inv_tau_sigma_nu2_sent(i_sls))**2)/N_SLS
+     xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * f0_attenuation / inv_tau_sigma_nu2(i_sls))**2)/N_SLS
 
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls) - ONE
-     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1_sent(i_sls) - ONE
+     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1(i_sls) - ONE
      xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/N_SLS
-     xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * f0_attenuation / inv_tau_sigma_nu1_sent(i_sls))**2)/N_SLS
+     xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * f0_attenuation / inv_tau_sigma_nu1(i_sls))**2)/N_SLS
   enddo
 
   factor_mu = xtmp1_nu2/xtmp2_nu2
@@ -236,6 +255,7 @@
     lambda = kappa - mu
   endif
 
+  ! returns shifted vp,vs
   vp = dsqrt((lambda + TWO * mu) / rho)
   vs = dsqrt(mu / rho)
 

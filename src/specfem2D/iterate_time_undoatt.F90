@@ -150,9 +150,9 @@
       allocate(b_accel_elastic_buffer(NDIM,nglob,NT_DUMP_ATTENUATION),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_accel_elastic')
 
-      allocate(b_e1(NGLLX,NGLLZ,nspec_allocate,N_SLS), &
-               b_e11(NGLLX,NGLLZ,nspec_allocate,N_SLS), &
-               b_e13(NGLLX,NGLLZ,nspec_allocate,N_SLS),stat=ier)
+      allocate(b_e1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+               b_e11(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+               b_e13(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
       if (ier /= 0) stop 'Error allocating attenuation arrays'
       b_e1(:,:,:,:) = 0._CUSTOM_REAL
       b_e11(:,:,:,:) = 0._CUSTOM_REAL

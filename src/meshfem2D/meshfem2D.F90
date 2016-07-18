@@ -511,6 +511,7 @@
 
     if (AXISYM) then
       if (read_external_mesh) then
+        ! external meshing
         call read_external_axial_elements_file(axial_elements_file,remove_min_to_start_at_zero)
         ! the mesh can have elements that are rotated, but for our GLJ axisymmetric implementation
         ! we assume that the r axis is along the i direction;
@@ -519,6 +520,7 @@
         call rotate_mesh_for_axisym(ngnod)
 
       else
+        ! internal meshing
         ! if the mesh has been made by the internal mesher
         if (xmin_param * xmax_param < 0) &
           stop 'in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis'
@@ -551,7 +553,10 @@
         endif
 
       endif ! of if (read_external_mesh) then
-
+      ! user output
+      write(IMAIN,*)
+      write(IMAIN,*) 'Axial elements: ',nelem_on_the_axis
+      write(IMAIN,*)
     else
       ! .not. AXISYM
       ! dummy allocation
@@ -611,7 +616,7 @@
         allocate(coefs_interface_top(1))
       endif
 
-      call save_stations_file(nreceiversets,nrec,xdeb,zdeb,xfin,zfin,record_at_surface_same_vertical, &
+      call save_stations_file(nreceiversets,nrec_line,xdeb,zdeb,xfin,zfin,record_at_surface_same_vertical, &
                               xinterface_top,zinterface_top,coefs_interface_top, &
                               npoints_interface_top,max_npoints_interface)
     endif

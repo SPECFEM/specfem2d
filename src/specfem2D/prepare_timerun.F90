@@ -661,7 +661,7 @@
   endif
 
   ! Files where viscous damping are saved during forward wavefield calculation
-  if (any_poroelastic .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
+  if (POROELASTIC_SIMULATION .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) then
     if (USE_PORO_VISCOUS_DAMPING) then
       ! user output
       if (myrank == 0) then
@@ -1074,7 +1074,7 @@
   use mpi
 #endif
 
-  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT
+  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS
 
   use specfem_par,only: myrank,NSTEP,nglob,nspec,ibool,coord, &
                         rhoext,vpext,vsext,density,poroelastcoef,kmato,assign_external_model
@@ -1164,7 +1164,7 @@
               iglob = ibool(i,j,ispec)
               write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
                 coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
-                poroelastcoef(1,1,kmato(ispec)) + 2.d0/3.d0*poroelastcoef(2,1,kmato(ispec)), &
+                poroelastcoef(1,1,kmato(ispec)) + TWO_THIRDS * poroelastcoef(2,1,kmato(ispec)), &
                 poroelastcoef(2,1,kmato(ispec))
 
             enddo
@@ -1205,7 +1205,7 @@
   use mpi
 #endif
 
-  use constants,only: IMAIN,TWO,USE_PORO_VISCOUS_DAMPING,PI,FOUR_THIRDS
+  use constants,only: IMAIN,TWO,PI,FOUR_THIRDS,TWO_THIRDS
   use specfem_par
 
   implicit none
@@ -1213,30 +1213,34 @@
   ! local parameters
   integer :: i,j,ispec,n,ier
   ! for shifting of velocities if needed in the case of viscoelasticity
-  double precision :: vp,vs,rhol,mul,lambdal
-  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
+  double precision :: vp,vs,rhol,mul,lambdal,kappal
+  double precision :: qkappal,qmul
+  ! attenuation factors
+  real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: tau_epsilon_nu1_sent,tau_epsilon_nu2_sent
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent, &
+                                                       phi_nu1_sent,phi_nu2_sent
 
-  ! user output
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Preparing attenuation'
-    call flush_IMAIN()
+  ! attenuation
+  if (ATTENUATION_VISCOELASTIC_SOLID) then
+    nspec_ATT = nspec
+  else
+    nspec_ATT = 1
   endif
 
   ! allocate memory variables for attenuation
-  allocate(e1(NGLLX,NGLLZ,nspec_allocate,N_SLS), &
-           e11(NGLLX,NGLLZ,nspec_allocate,N_SLS), &
-           e13(NGLLX,NGLLZ,nspec_allocate,N_SLS),stat=ier)
+  allocate(e1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+           e11(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+           e13(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
   if (ier /= 0) stop 'Error allocating attenuation arrays'
-
   e1(:,:,:,:) = 0._CUSTOM_REAL
   e11(:,:,:,:) = 0._CUSTOM_REAL
   e13(:,:,:,:) = 0._CUSTOM_REAL
 
   if (time_stepping_scheme == 2) then
-    allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-    allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-    allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_allocate,N_SLS))
+    allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
+    allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
+    allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
   else
     allocate(e1_LDDRK(1,1,1,1))
     allocate(e11_LDDRK(1,1,1,1))
@@ -1247,12 +1251,12 @@
   e13_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
 
   if (time_stepping_scheme == 3) then
-    allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-    allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-    allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS))
-    allocate(e1_force_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS,stage_time_scheme))
-    allocate(e11_force_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS,stage_time_scheme))
-    allocate(e13_force_rk(NGLLX,NGLLZ,nspec_allocate,N_SLS,stage_time_scheme))
+    allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS))
+    allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS))
+    allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS))
+    allocate(e1_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
+    allocate(e11_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
+    allocate(e13_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
   else
     allocate(e1_initial_rk(1,1,1,1))
     allocate(e11_initial_rk(1,1,1,1))
@@ -1268,105 +1272,237 @@
   e11_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
   e13_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
 
+  ! attenuation arrays
+  if (.not. assign_external_model) then
+    allocate(already_shifted_velocity(numat),stat=ier)
+    if (ier /= 0) stop 'Error allocating attenuation Qkappa,Qmu,.. arrays'
+    already_shifted_velocity(:) = .false.
+  endif
+
+  allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+           inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+           phi_nu1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+           phi_nu2(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+           Mu_nu1(NGLLX,NGLLZ,nspec_ATT), &
+           Mu_nu2(NGLLX,NGLLZ,nspec_ATT),stat=ier)
+  if (ier /= 0) stop 'Error allocating attenuation arrays'
+
+  ! temporary arrays for function argument
+  allocate(tau_epsilon_nu1_sent(N_SLS), &
+           tau_epsilon_nu2_sent(N_SLS), &
+           inv_tau_sigma_nu1_sent(N_SLS), &
+           inv_tau_sigma_nu2_sent(N_SLS), &
+           phi_nu1_sent(N_SLS), &
+           phi_nu2_sent(N_SLS),stat=ier)
+  if (ier /= 0) stop 'Error allocating attenuation coefficient arrays'
+
   ! initialize to dummy values
   ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
   inv_tau_sigma_nu1(:,:,:,:) = -1._CUSTOM_REAL
   phi_nu1(:,:,:,:) = -1._CUSTOM_REAL
+
   inv_tau_sigma_nu2(:,:,:,:) = -1._CUSTOM_REAL
   phi_nu2(:,:,:,:) = -1._CUSTOM_REAL
+
   Mu_nu1(:,:,:) = -1._CUSTOM_REAL
   Mu_nu2(:,:,:) = -1._CUSTOM_REAL
 
-  ! define the attenuation quality factors.
-  ! they can be different for each element.
+  ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
+  if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
+    f0_attenuation = f0_source(1)
+  endif
+
+  ! setup attenuation
+  if (ATTENUATION_VISCOELASTIC_SOLID) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'Preparing attenuation'
+      write(IMAIN,*) '  using external model for Qkappa & Qmu: ',assign_external_model
+      write(IMAIN,*) '  reading velocity at f0               : ',READ_VELOCITIES_AT_f0
+      write(IMAIN,*) '  using f0 attenuation = ',f0_attenuation,'Hz'
+      call flush_IMAIN()
+    endif
+
+    ! define the attenuation quality factors.
 !! DK DK if needed in the future, here the quality factor could be different for each point
-  do ispec = 1,nspec
+    do ispec = 1,nspec
 
-    ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
-    if (ispec_is_acoustic(ispec)) cycle
+      ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
+      if (ispec_is_acoustic(ispec)) cycle
 
-    ! check that attenuation values entered by the user make sense
-    if ((QKappa_attenuation(kmato(ispec)) <= 9998.999d0 .and. Qmu_attenuation(kmato(ispec)) >  9998.999d0) .or. &
-       (QKappa_attenuation(kmato(ispec)) >  9998.999d0 .and. Qmu_attenuation(kmato(ispec)) <= 9998.999d0)) &
-       stop 'need to have Qkappa and Qmu both above or both below 9999 for a given material; &
-            &trick: use 9998 if you want to turn off one'
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
 
-    ! if no attenuation in that elastic element
-    if (QKappa_attenuation(kmato(ispec)) > 9998.999d0) cycle
+          ! get values
+          if (assign_external_model) then
+            qkappal = QKappa_attenuationext(i,j,ispec)
+            qmul = Qmu_attenuationext(i,j,ispec)
+          else
+            qkappal = QKappa_attenuation(kmato(ispec))
+            qmul = Qmu_attenuation(kmato(ispec))
+          endif
 
-    call attenuation_model(QKappa_attenuation(kmato(ispec)),Qmu_attenuation(kmato(ispec)))
+          ! check that attenuation values entered by the user make sense
+          if ((qkappal <= 9998.999d0 .and. qmul >  9998.999d0) .or. &
+              (qkappal >  9998.999d0 .and. qmul <= 9998.999d0)) &
+             stop 'need to have Qkappa and Qmu both above or both below 9999 for a given material; &
+                  &trick: use 9998 if you want to turn off one'
 
-    ! stores attenuation values
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-        inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
-        phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
-        inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:)
-        phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)
-        Mu_nu1(i,j,ispec) = Mu_nu1_sent
-        Mu_nu2(i,j,ispec) = Mu_nu2_sent
+          ! if no attenuation in that elastic element
+          if (qkappal > 9998.999d0) cycle
+
+          call attenuation_model(qkappal,qmul,f0_attenuation,N_SLS, &
+                                 tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
+                                 tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
+
+          ! stores attenuation values
+          inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
+          phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
+
+          inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:)
+          phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)
+
+          Mu_nu1(i,j,ispec) = Mu_nu1_sent
+          Mu_nu2(i,j,ispec) = Mu_nu2_sent
+
+          ! shifts velocities
+          if (READ_VELOCITIES_AT_f0) then
+            ! safety check
+            if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) &
+              stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, &
+                    &non poroelastic, non gravitoacoustic materials for now'
+
+            if (.not. assign_external_model) then
+              ! internal mesh
+              n = kmato(ispec)
+              if (.not. already_shifted_velocity(n)) then
+                rhol = density(1,n)
+                lambdal = poroelastcoef(1,1,n)
+                mul = poroelastcoef(2,1,n)
+
+                vp = sqrt((lambdal + TWO * mul) / rhol)
+                vs = sqrt(mul/rhol)
+
+                ! shifts vp & vs
+                call shift_velocities_from_f0(vp,vs,rhol, &
+                                      f0_attenuation,N_SLS, &
+                                      tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
+
+                ! stores shifted mu,lambda
+                mul = rhol * vs*vs
+                lambdal = rhol * vp*vp - TWO * mul
+
+                poroelastcoef(1,1,n) = lambdal
+                poroelastcoef(2,1,n) = mul
+                poroelastcoef(3,1,n) = lambdal + TWO * mul
+
+                already_shifted_velocity(n) = .true.
+              endif
+            else
+              ! external mesh model
+              rhol = dble(rhoext(i,j,ispec))
+              vp = dble(vpext(i,j,ispec))
+              vs = dble(vsext(i,j,ispec))
+
+              call shift_velocities_from_f0(vp,vs,rhol, &
+                                    f0_attenuation,N_SLS, &
+                                    tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
+
+              ! stores shifted values
+              vpext(i,j,ispec) = vp
+              vsext(i,j,ispec) = vs
+            endif
+          endif
+        enddo
       enddo
     enddo
+  endif ! ATTENUATION_VISCOELASTIC_SOLID
 
-    ! shifts velocities
-    if (ATTENUATION_VISCOELASTIC_SOLID) then
-      if (READ_VELOCITIES_AT_f0 .and. .not. assign_external_model) then
-        ! safety check
-        if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) &
-           stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, &
-                &non poroelastic, non gravitoacoustic materials for now'
+  ! sets new material properties
+  ! note: velocities might have been shifted by attenuation
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Preparing material arrays'
+    call flush_IMAIN()
+  endif
 
-        n = kmato(ispec)
-        if (.not. already_shifted_velocity(n)) then
-          rhol = density(1,n)
-          lambdal = poroelastcoef(1,1,n)
-          mul = poroelastcoef(2,1,n)
+  ! allocates material arrays
+  allocate(kappastore(NGLLX,NGLLZ,nspec), &
+           mustore(NGLLX,NGLLZ,nspec), &
+           rhostore(NGLLX,NGLLZ,nspec), &
+           rho_vp(NGLLX,NGLLZ,nspec), &
+           rho_vs(NGLLX,NGLLZ,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating material arrays'
 
-          vp = sqrt((lambdal + TWO * mul) / rhol)
-          vs = sqrt(mul/rhol)
-
-          call shift_velocities_from_f0(vp,vs,rhol,mul,lambdal)
-
-          poroelastcoef(1,1,n) = lambdal
-          poroelastcoef(2,1,n) = mul
-          poroelastcoef(3,1,n) = lambdal + TWO * mul
-
-          already_shifted_velocity(n) = .true.
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        if (assign_external_model) then
+          ! external model
+          rhol = rhoext(i,j,ispec)
+          vp = vpext(i,j,ispec)
+          vs = vsext(i,j,ispec)
+          ! determins mu & kappa
+          mul = rhol * vs * vs
+          kappal = rhol * vp * vp - FOUR_THIRDS * mul
+        else
+          ! internal mesh
+          rhol = density(1,kmato(ispec))
+          lambdal = poroelastcoef(1,1,kmato(ispec))  ! lambdal_unrelaxed_elastic
+          mul = poroelastcoef(2,1,kmato(ispec)) ! mul_unrelaxed_elastic
+          if (AXISYM) then ! CHECK kappa
+            kappal = lambdal + TWO_THIRDS * mul
+          else
+            kappal = lambdal + mul
+          endif
         endif
-      endif
-    endif
+        ! stores moduli
+        rhostore(i,j,ispec) = rhol
+        mustore(i,j,ispec) = mul
+        kappastore(i,j,ispec) = kappal
+
+        ! stores density times vp & vs
+        vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
+        vs = sqrt(mul/rhol)
+
+        rho_vp(i,j,ispec) = rhol * vp
+        rho_vs(i,j,ispec) = rhol * vs
+      enddo
+    enddo
   enddo
 
   ! allocate memory variables for viscous attenuation (poroelastic media)
   if (ATTENUATION_PORO_FLUID_PART) then
-    if (USE_PORO_VISCOUS_DAMPING) then
-      allocate(rx_viscous(NGLLX,NGLLZ,nspec))
-      allocate(rz_viscous(NGLLX,NGLLZ,nspec))
-      allocate(viscox(NGLLX,NGLLZ,nspec))
-      allocate(viscoz(NGLLX,NGLLZ,nspec))
+    allocate(rx_viscous(NGLLX,NGLLZ,nspec))
+    allocate(rz_viscous(NGLLX,NGLLZ,nspec))
+    allocate(viscox(NGLLX,NGLLZ,nspec))
+    allocate(viscoz(NGLLX,NGLLZ,nspec))
+    ! initialize memory variables for attenuation
+    rx_viscous(:,:,:) = 0.d0
+    rz_viscous(:,:,:) = 0.d0
+    viscox(:,:,:) = 0.d0
+    viscoz(:,:,:) = 0.d0
 
-      if (time_stepping_scheme == 2) then
-        allocate(rx_viscous_LDDRK(NGLLX,NGLLZ,nspec))
-        allocate(rz_viscous_LDDRK(NGLLX,NGLLZ,nspec))
-      endif
-
-      if (time_stepping_scheme == 3) then
-        allocate(rx_viscous_initial_rk(NGLLX,NGLLZ,nspec))
-        allocate(rz_viscous_initial_rk(NGLLX,NGLLZ,nspec))
-        allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
-        allocate(rz_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
-      endif
+    if (time_stepping_scheme == 2) then
+      allocate(rx_viscous_LDDRK(NGLLX,NGLLZ,nspec))
+      allocate(rz_viscous_LDDRK(NGLLX,NGLLZ,nspec))
+      rx_viscous_LDDRK(:,:,:) = 0.d0
+      rz_viscous_LDDRK(:,:,:) = 0.d0
     endif
-  else
-    ! dummy arrays
-    allocate(rx_viscous(NGLLX,NGLLZ,1))
-    allocate(rz_viscous(NGLLX,NGLLZ,1))
-    allocate(viscox(NGLLX,NGLLZ,1))
-    allocate(viscoz(NGLLX,NGLLZ,1))
-  endif
 
-  ! Precompute Runge Kutta coefficients if viscous attenuation
-  if (ATTENUATION_PORO_FLUID_PART) then
+    if (time_stepping_scheme == 3) then
+      allocate(rx_viscous_initial_rk(NGLLX,NGLLZ,nspec))
+      allocate(rz_viscous_initial_rk(NGLLX,NGLLZ,nspec))
+      allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
+      allocate(rz_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
+      rx_viscous_initial_rk(:,:,:) = 0.d0
+      rz_viscous_initial_rk(:,:,:) = 0.d0
+      rx_viscous_force_RK(:,:,:,:) = 0.d0
+      rz_viscous_force_RK(:,:,:,:) = 0.d0
+    endif
+
+    ! Precompute Runge Kutta coefficients if viscous attenuation
     ! viscous attenuation is implemented following the memory variable formulation of
     ! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
     ! anelastic and porous media, Elsevier, p. 304-305, 2007
@@ -1378,76 +1514,7 @@
                     + deltat**3*thetainv**3 / 6.d0 + deltat**4*thetainv**4 / 24.d0
     betaval = deltat / 2.d0 + deltat**2*thetainv / 3.d0 + deltat**3*thetainv**2 / 8.d0 + deltat**4*thetainv**3 / 24.d0
     gammaval = deltat / 2.d0 + deltat**2*thetainv / 6.d0 + deltat**3*thetainv**2 / 24.d0
-
-    ! initialize memory variables for attenuation
-    viscox(:,:,:) = 0.d0
-    viscoz(:,:,:) = 0.d0
-    rx_viscous(:,:,:) = 0.d0
-    rz_viscous(:,:,:) = 0.d0
-    if (time_stepping_scheme == 2) then
-     rx_viscous_LDDRK = 0.d0
-     rz_viscous_LDDRK = 0.d0
-    endif
-
-    if (time_stepping_scheme == 3) then
-     rx_viscous_initial_rk = 0.d0
-     rz_viscous_initial_rk = 0.d0
-     rx_viscous_force_RK = 0.d0
-     rz_viscous_force_RK = 0.d0
-    endif
   endif
-
-
-  ! sets new material properties
-  ! note: velocities might have been shifted by attenuation
-
-  ! allocates material arrays
-  allocate(kappastore(NGLLX,NGLLZ,nspec))
-  allocate(mustore(NGLLX,NGLLZ,nspec))
-  allocate(rhostore(NGLLX,NGLLZ,nspec))
-  allocate(rho_vp(NGLLX,NGLLZ,nspec))
-  allocate(rho_vs(NGLLX,NGLLZ,nspec))
-
-  if (assign_external_model) then
-    ! external model
-    do ispec = 1,nspec
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          rhol = rhoext(i,j,ispec)
-          mul = rhol * vsext(i,j,ispec) * vsext(i,j,ispec)
-
-          rhostore(i,j,ispec)    = rhol
-          mustore(i,j,ispec)     = mul
-          kappastore(i,j,ispec)  = rhol * vpext(i,j,ispec) * vpext(i,j,ispec) - FOUR_THIRDS * mul
-
-          rho_vp(i,j,ispec)      = rhol * vpext(i,j,ispec)
-          rho_vs(i,j,ispec)      = rhol * vsext(i,j,ispec)
-        enddo
-      enddo
-    enddo
-  else
-    ! Internal rho vp vs model
-    do ispec = 1,nspec
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          rhol = density(1,kmato(ispec))
-          lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-          mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
-
-          rhostore(i,j,ispec) = rhol
-          mustore(i,j,ispec) = mul_unrelaxed_elastic
-          if (AXISYM) then ! CHECK kappa
-            kappastore(i,j,ispec) = lambdal_unrelaxed_elastic + TWO * mul_unrelaxed_elastic/3._CUSTOM_REAL
-          else
-            kappastore(i,j,ispec) = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
-          endif
-
-          rho_vp(i,j,ispec) = rhol * sqrt((kappastore(i,j,ispec) + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
-          rho_vs(i,j,ispec) = rhol * sqrt(mul_unrelaxed_elastic/rhol)
-        enddo
-      enddo
-    enddo
-  endif ! Internal/External model
 
   ! synchronizes all processes
   call synchronize_all()

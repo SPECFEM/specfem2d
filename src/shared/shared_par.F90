@@ -57,7 +57,30 @@ module shared_input_parameters
   character(len=MAX_STRING_LEN) :: title
 
   ! simulation type
-  integer :: SIMULATION_TYPE,NOISE_TOMOGRAPHY
+  integer :: SIMULATION_TYPE
+
+  ! NOISE_TOMOGRAPHY = 0 - turn noise tomography subroutines off; setting
+  ! NOISE_TOMOGRAPHY equal to 0, in other words, results in an earthquake
+  ! simulation rather than a noise simulation
+  !
+  ! NOISE_TOMOGRAPHY = 1 - compute "generating" wavefield and store the result;
+  ! this stored wavefield is then used to compute the "ensemble forward"
+  ! wavefield in the next noise simulation
+  !
+  ! NOISE_TOMOGRAPHY = 2 - compute "ensemble forward" wavefield and store the
+  ! result; if an adjoint simulation is planned, users need to store
+  ! seismograms (actually, cross-correlograms) for later processing
+  !
+  ! NOISE_TOMOGRAPHY = 3 - carry out adjoint simulation; users need to supply
+  ! adjoint sources constructed from cross-correlograms computed during the
+  ! "ensemble forward" step
+  !
+  ! For an explanation of terms and concepts in noise tomography, see "Tromp et
+  ! al., 2011, Noise Cross-Correlation Sensitivity Kernels, Geophysical Journal
+  ! International"
+  integer :: NOISE_TOMOGRAPHY
+
+  ! save forward arrays at the end of the simulation
   logical :: SAVE_FORWARD
 
   ! variables used for partitioning
@@ -73,7 +96,8 @@ module shared_input_parameters
   double precision :: DT
 
   ! value of time_stepping_scheme to decide which time scheme will be used
-  ! # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta)
+  ! 1 = Newmark (2nd order),
+  ! 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta),
   ! 3 = classical 4th-order 4-stage Runge-Kutta
   integer :: time_stepping_scheme
 
@@ -132,6 +156,7 @@ module shared_input_parameters
   ! subsampling
   integer :: subsamp_seismos
 
+  ! for better accuracy of pressure output (uses 2nd time-derivatives of the initial source time function)
   logical :: USE_TRICK_FOR_BETTER_PRESSURE
 
   integer :: NSTEP_BETWEEN_OUTPUT_SEISMOS
@@ -158,7 +183,7 @@ module shared_input_parameters
   logical :: rec_normal_to_surface
 
   ! receiver sets
-  integer, dimension(:),allocatable :: nrec
+  integer, dimension(:),allocatable :: nrec_line
   double precision, dimension(:),allocatable :: xdeb,zdeb,xfin,zfin
   logical, dimension(:),allocatable :: record_at_surface_same_vertical
 
@@ -197,7 +222,7 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   ! to store density and velocity model
-  ! (actual material table will be read in in src/meshfem2D/read_materials.f90)
+  ! (actual material table will be read in in src/meshfem2D/read_material_table.f90)
   integer :: nbmodels
 
   ! input file name of TOMOGRAPHY
@@ -242,7 +267,7 @@ module shared_input_parameters
   !# display parameters
   !#
   !#-----------------------------------------------------------------------------
-  ! general information during the computation
+  ! general information during the computation and for information of the stability behavior during the simulation
   integer :: NSTEP_BETWEEN_OUTPUT_INFO
 
   ! for later check of the grid
@@ -256,11 +281,11 @@ module shared_input_parameters
   !# movies/images/snaphots
   !#
   !#-----------------------------------------------------------------------------
-
+  ! time step interval for image output
   integer :: NSTEP_BETWEEN_OUTPUT_IMAGES
-
+  ! time step interval for wavefield dumps
   integer :: NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
-
+  ! threshold value
   double precision :: cutsnaps
 
   ! JPEG image
@@ -286,7 +311,10 @@ module shared_input_parameters
   logical :: output_postscript_snapshot
   integer :: imagetype_postscript
   logical :: meshvect,modelvect,boundvect,interpol
-  integer :: pointsdisp,subsamp_postscript
+  ! number of interpolation points
+  integer :: pointsdisp
+  ! subsampling
+  integer :: subsamp_postscript
   double precision :: sizemax_arrows
   ! US letter paper or European A4
   logical :: US_LETTER

@@ -38,7 +38,7 @@
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
-    ZERO,ONE,TWO,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+    ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,nspec, &
                          assign_external_model,ibool,kmato,ispec_is_acoustic, &
@@ -161,7 +161,7 @@
             lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
             mul_relaxed = poroelastcoef(2,1,kmato(ispec))
             if (AXISYM) then ! CHECK kappa
-              kappal  = lambdal_relaxed + TWO * mul_relaxed/3._CUSTOM_REAL
+              kappal  = lambdal_relaxed + TWO_THIRDS * mul_relaxed
             else
               kappal  = lambdal_relaxed + mul_relaxed
             endif

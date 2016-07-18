@@ -55,7 +55,7 @@ meshfem2D_OBJECTS = \
 	$O/part_unstruct.mesh.o \
 	$O/read_external_mesh_files.mesh.o \
 	$O/read_interfaces_file.mesh.o \
-	$O/read_materials.mesh.o \
+	$O/read_material_table.mesh.o \
 	$O/read_parameter_file.mesh.o \
 	$O/read_regions.mesh.o \
 	$O/read_source_file.mesh.o \

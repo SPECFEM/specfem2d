@@ -162,13 +162,6 @@
   ninterface_elastic = 0
   ninterface_poroelastic = 0
 
-  ! attenuation
-  if (ATTENUATION_VISCOELASTIC_SOLID) then
-    nspec_allocate = nspec
-  else
-    nspec_allocate = 1
-  endif
-
   ! time scheme
   ! defines number of stages of chosen time stepping scheme
   if (time_stepping_scheme == 1) then

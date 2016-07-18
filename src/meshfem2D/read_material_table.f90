@@ -31,11 +31,11 @@
 !
 !========================================================================
 
-  subroutine read_materials(AXISYM,nbmodels,icodemat,cp,cs, &
-                            aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
-                            QKappa,Qmu,rho_s,rho_f,phi,tortuosity, &
-                            permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
-                            eta_f,mu_fr)
+  subroutine read_material_table(AXISYM,nbmodels,icodemat,cp,cs, &
+                                 aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
+                                 QKappa,Qmu,rho_s,rho_f,phi,tortuosity, &
+                                 permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
+                                 eta_f,mu_fr)
 
 ! reads in material definitions in DATA/Par_file
 
@@ -241,4 +241,4 @@
      call flush_IMAIN()
   enddo
 
-  end subroutine read_materials
+  end subroutine read_material_table

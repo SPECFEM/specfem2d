@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine save_stations_file(nreceiversets,nrec,xdeb,zdeb,xfin,zfin,record_at_surface_same_vertical, &
+  subroutine save_stations_file(nreceiversets,nrec_line,xdeb,zdeb,xfin,zfin,record_at_surface_same_vertical, &
                                 xinterface_top,zinterface_top,coefs_interface_top, &
                                 npoints_interface_top,max_npoints_interface)
 
@@ -40,7 +40,7 @@
   implicit none
 
   integer :: nreceiversets
-  integer, dimension(nreceiversets) :: nrec
+  integer, dimension(nreceiversets) :: nrec_line
   double precision, dimension(nreceiversets) :: xdeb,zdeb,xfin,zfin
   logical, dimension(nreceiversets) :: record_at_surface_same_vertical
 
@@ -61,7 +61,7 @@
   write(IMAIN,*)
 
   ! total number of receivers in all the receiver lines
-  nrec_total = sum(nrec)
+  nrec_total = sum(nrec_line(:))
 
   write(IMAIN,*)
   write(IMAIN,*) 'There are ',nrec_total,' receivers'
@@ -79,17 +79,17 @@
   do ireceiverlines = 1,nreceiversets
 
     ! loop on all the receivers of this receiver line
-    do irec = 1,nrec(ireceiverlines)
+    do irec = 1,nrec_line(ireceiverlines)
 
        ! compute global receiver number
        irec_global_number = irec_global_number + 1
 
        ! compute coordinates of the receiver
-       if (nrec(ireceiverlines) > 1) then
+       if (nrec_line(ireceiverlines) > 1) then
           xrec = xdeb(ireceiverlines) + dble(irec-1)*(xfin(ireceiverlines) &
-                                  -xdeb(ireceiverlines))/dble(nrec(ireceiverlines)-1)
+                                  -xdeb(ireceiverlines))/dble(nrec_line(ireceiverlines)-1)
           zrec = zdeb(ireceiverlines) + dble(irec-1)*(zfin(ireceiverlines) &
-                                  -zdeb(ireceiverlines))/dble(nrec(ireceiverlines)-1)
+                                  -zdeb(ireceiverlines))/dble(nrec_line(ireceiverlines)-1)
        else
           xrec = xdeb(ireceiverlines)
           zrec = zdeb(ireceiverlines)

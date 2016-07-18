@@ -42,7 +42,7 @@
     ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: nglob,nspec,assign_external_model,P_SV, &
-                         ATTENUATION_VISCOELASTIC_SOLID,nspec_allocate,N_SLS, &
+                         ATTENUATION_VISCOELASTIC_SOLID,nspec_ATT,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
                          jacobian,vpext,vsext,rhoext, &
@@ -63,7 +63,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(inout) :: accel_elastic
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: displ_elastic_old
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_allocate,N_SLS),intent(inout) :: e1,e11,e13
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS),intent(inout) :: e1,e11,e13
 
   ! CPML coefficients and memory variables
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS

@@ -35,14 +35,14 @@
 
  subroutine compute_attenuation_poro_fluid_part()
 
-  use constants,only: ZERO,NGLLX,NGLLZ,ALPHA_LDDRK,BETA_LDDRK,USE_PORO_VISCOUS_DAMPING
+  use constants,only: ZERO,NGLLX,NGLLZ,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: nspec,ispec_is_poroelastic,poroelastcoef,kmato,permeability,ibool, &
                          velocw_poroelastic,time_stepping_scheme,deltat,i_stage,stage_time_scheme, &
                          rx_viscous,rz_viscous,viscox,viscoz, &
                          rx_viscous_force_RK,rx_viscous_initial_rk,rz_viscous_force_RK,rz_viscous_initial_rk, &
                          rx_viscous_LDDRK,rz_viscous_LDDRK, &
-                         alphaval,betaval,gammaval,theta_e,theta_s,thetainv
+                         alphaval,betaval,gammaval,theta_e,theta_s,thetainv,ATTENUATION_PORO_FLUID_PART
 
   implicit none
 
@@ -54,7 +54,7 @@
   double precision, dimension(NGLLX,NGLLZ) :: viscox_loc,viscoz_loc
 
   ! checks if anything to do
-  if (.not. USE_PORO_VISCOUS_DAMPING) return
+  if (.not. ATTENUATION_PORO_FLUID_PART) return
 
   ! loop over spectral elements
   do ispec = 1,nspec

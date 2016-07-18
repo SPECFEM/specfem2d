@@ -35,7 +35,7 @@
 
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
 
-  use constants,only: IIN,IMAIN,ZERO,FOUR_THIRDS,HALF,TINYVAL
+  use constants,only: IIN,IMAIN,ZERO,FOUR_THIRDS,TWO_THIRDS,HALF,TINYVAL
 
   use specfem_par, only : AXISYM,density,porosity,tortuosity, &
                           anisotropy,permeability,poroelastcoef, &
@@ -70,6 +70,7 @@
   anisotropy(:,:) = ZERO
   permeability(:,:) = ZERO
   poroelastcoef(:,:,:) = ZERO
+
   QKappa_attenuation(:) = 9999.
   Qmu_attenuation(:) = 9999.
 
@@ -111,7 +112,7 @@
       ! bulk modulus Kappa
 
       if (AXISYM) then ! CHECK kappa
-        kappa = lambda + two_mu/3.d0
+        kappa = lambda + TWO_THIRDS * mu
       else
         kappa = lambda + mu
       endif
@@ -155,7 +156,7 @@
       ! bulk modulus Kappa
 
       if (AXISYM) then ! CHECK kappa
-        kappa = lambda + two_mu/3.d0
+        kappa = lambda + TWO_THIRDS * mu
       else
         kappa = lambda + mu
       endif

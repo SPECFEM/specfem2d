@@ -40,13 +40,8 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN
 
   use specfem_par, only: nspec,nglob,ibool, &
-    ispec_is_acoustic,ispec_is_gravitoacoustic,ispec_is_elastic,ispec_is_poroelastic,ispec_is_anisotropic, &
-    READ_VELOCITIES_AT_f0,inv_tau_sigma_nu1_sent,&
-    phi_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu1_sent,Mu_nu2_sent, &
-    inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,Mu_nu1,Mu_nu2,&
-    coord,kmato, &
-    MODEL,ATTENUATION_VISCOELASTIC_SOLID, &
-    tomo_material,myrank
+    ispec_is_elastic,ispec_is_anisotropic, &
+    coord,kmato,MODEL,tomo_material,myrank
 
   ! external model parameters
   use specfem_par,only: rhoext,vpext,vsext,gravityext,Nsqext, &
@@ -59,7 +54,7 @@
   integer :: i,j,ispec
   integer :: ier
   real(kind=CUSTOM_REAL) :: tmp1, tmp2,tmp3
-  double precision :: rho_dummy,vp_dummy,vs_dummy,mu_dummy,lambda_dummy,vs_val,vp_val,rho_val
+  double precision :: vs_val,vp_val,rho_val
   character(len=150) :: inputname
 
 ! note: we read in external models once the basic mesh with its geometry and GLL points has been setup.
@@ -282,60 +277,6 @@
 
   ! resets domain flags
   call get_simulation_domains_from_external_models()
-
-  ! re-assigns attenuation
-  ! initialize to dummy values
-  ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
-  inv_tau_sigma_nu1(:,:,:,:) = -1._CUSTOM_REAL
-  phi_nu1(:,:,:,:) = -1._CUSTOM_REAL
-  inv_tau_sigma_nu2(:,:,:,:) = -1._CUSTOM_REAL
-  phi_nu2(:,:,:,:) = -1._CUSTOM_REAL
-  Mu_nu1(:,:,:) = -1._CUSTOM_REAL
-  Mu_nu2(:,:,:) = -1._CUSTOM_REAL
-
-  do ispec = 1,nspec
-
-    ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
-    if (ispec_is_acoustic(ispec)) cycle
-
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-
-        ! check that attenuation values entered by the user make sense
-        if ((QKappa_attenuationext(i,j,ispec) <= 9998.999d0 .and. Qmu_attenuationext(i,j,ispec) >  9998.999d0) .or. &
-            (QKappa_attenuationext(i,j,ispec) >  9998.999d0 .and. Qmu_attenuationext(i,j,ispec) <= 9998.999d0)) &
-          stop 'need to have Qkappa and Qmu both above or both below 9999 for a given material; &
-               &trick: use 9998 if you want to turn off one'
-
-        ! if no attenuation in that elastic element
-        if (QKappa_attenuationext(i,j,ispec) > 9998.999d0) cycle
-
-        ! attenuation
-        call attenuation_model(dble(QKappa_attenuationext(i,j,ispec)),dble(Qmu_attenuationext(i,j,ispec)))
-
-        inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
-        phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
-        inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:)
-        phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)
-        Mu_nu1(i,j,ispec) = Mu_nu1_sent
-        Mu_nu2(i,j,ispec) = Mu_nu2_sent
-
-        ! velocity shift
-        if (ATTENUATION_VISCOELASTIC_SOLID .and. READ_VELOCITIES_AT_f0) then
-          if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) &
-            stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic, &
-                  &non gravitoacoustic materials for now'
-
-          vp_dummy = dble(vpext(i,j,ispec))
-          vs_dummy = dble(vpext(i,j,ispec))
-          rho_dummy = dble(rhoext(i,j,ispec))
-
-          call shift_velocities_from_f0(vp_dummy,vs_dummy,rho_dummy,mu_dummy,lambda_dummy)
-        endif
-
-      enddo
-    enddo
-  enddo
 
   end subroutine read_external_model
 

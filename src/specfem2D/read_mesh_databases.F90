@@ -482,10 +482,18 @@
   ! material
   allocate(density(2,numat))
   allocate(anisotropy(10,numat)) ! don't forget c22 value (it is used for AXISYM simulations only)
-  allocate(porosity(numat))
-  allocate(tortuosity(numat))
-  allocate(permeability(3,numat))
-  allocate(poroelastcoef(4,3,numat))
+
+  allocate(porosity(numat), &
+           tortuosity(numat), &
+           permeability(3,numat),stat=ier)
+  if (ier /= 0) stop 'Error allocating porosity,.. arrays'
+
+  allocate(poroelastcoef(4,3,numat),stat=ier)
+  if (ier /= 0) stop 'Error allocating poroelastcoef arrays'
+
+  allocate(QKappa_attenuation(numat), &
+           Qmu_attenuation(numat),stat=ier)
+  if (ier /= 0) stop 'Error allocating attenuation arrays'
 
 
   ! output formats
@@ -515,47 +523,15 @@
 
   use constants,only: IIN,NGLLX,NGLLZ
 
-  use specfem_par, only : nspec,numat,N_SLS,f0_attenuation,READ_VELOCITIES_AT_f0,time_function_type,f0_source, &
-    already_shifted_velocity,QKappa_attenuation,Qmu_attenuation, &
-    inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2, &
-    inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,phi_nu1_sent,phi_nu2_sent, &
-    tau_epsilon_nu1,tau_epsilon_nu2,Mu_nu1,Mu_nu2
-
+  use specfem_par, only : N_SLS,f0_attenuation,READ_VELOCITIES_AT_f0
 
   implicit none
 
-  ! local parameters
-  integer :: ier
-
+  ! attenuation parameters
   read(IIN) N_SLS, f0_attenuation, READ_VELOCITIES_AT_f0
 
   ! checks number of standard linear solids
-  if (N_SLS < 2) stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
-
-  ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
-  if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
-    f0_attenuation = f0_source(1)
-  endif
-
-  ! attenuation
-  allocate(already_shifted_velocity(numat), &
-           QKappa_attenuation(numat), &
-           Qmu_attenuation(numat), &
-           inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec,N_SLS), &
-           inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec,N_SLS), &
-           phi_nu1(NGLLX,NGLLZ,nspec,N_SLS), &
-           phi_nu2(NGLLX,NGLLZ,nspec,N_SLS), &
-           tau_epsilon_nu1(N_SLS), &
-           tau_epsilon_nu2(N_SLS), &
-           inv_tau_sigma_nu1_sent(N_SLS), &
-           inv_tau_sigma_nu2_sent(N_SLS), &
-           phi_nu1_sent(N_SLS), &
-           phi_nu2_sent(N_SLS), &
-           Mu_nu1(NGLLX,NGLLZ,nspec), &
-           Mu_nu2(NGLLX,NGLLZ,nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating attenuation arrays'
-
-  already_shifted_velocity(:) = .false.
+  if (N_SLS < 1) stop 'must have N_SLS >= 1 even if attenuation if off because it is used to assign some arrays'
 
   end subroutine read_mesh_databases_attenuation
 
