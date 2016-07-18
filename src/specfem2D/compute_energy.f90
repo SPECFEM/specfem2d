@@ -31,7 +31,41 @@
 !
 !========================================================================
 
-subroutine compute_energy()
+
+  subroutine compute_and_output_energy()
+
+  use constants,only: IOUT_ENERGY,CUSTOM_REAL
+
+  use specfem_par,only: GPU_MODE,myrank,it,deltat,kinetic_energy,potential_energy,t0
+
+  implicit none
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: kinetic_energy_total,potential_energy_total
+
+  ! safety check
+  if (GPU_MODE) stop 'Error computing energy for output is not implemented on GPUs yet'
+
+  ! computes energy
+  call compute_energy()
+
+  ! computes total for all processes
+  call sum_all_cr(kinetic_energy,kinetic_energy_total)
+  call sum_all_cr(potential_energy,potential_energy_total)
+
+  ! saves kinetic, potential and total energy for this time step in external file
+  if (myrank == 0) then
+    write(IOUT_ENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy_total,4), &
+                         real(potential_energy_total,4),real(kinetic_energy_total + potential_energy_total,4)
+  endif
+
+  end subroutine compute_and_output_energy
+
+!
+!----------------------------------------------------------------------------------------
+!
+
+  subroutine compute_energy()
 
 ! compute kinetic and potential energy in the solid (acoustic elements are excluded)
 
@@ -309,14 +343,15 @@ subroutine compute_energy()
 
   enddo
 
-end subroutine compute_energy
+  end subroutine compute_energy
 
 !
 !----------------------------------------------------------------------------------------
 !
 
-subroutine compute_energy_fields()
-  ! computes maximum energy and integrated energy field (int_0^t v^2 dt)
+  subroutine compute_energy_fields()
+
+! computes maximum energy and integrated energy field (int_0^t v^2 dt)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,TWO,ZERO
 
@@ -565,6 +600,6 @@ subroutine compute_energy_fields()
     endif
   enddo
 
-end subroutine compute_energy_fields
+  end subroutine compute_energy_fields
 
 

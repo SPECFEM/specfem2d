@@ -40,8 +40,6 @@
 
   ! local parameters
   integer :: i
-  ! for rk44
-  double precision :: weight_rk
 
   ! checks if anything to do in this slice
   if ((.not. any_acoustic) .and. (.not. SOURCE_IS_MOVING)) return
@@ -135,81 +133,21 @@
     endif
   endif
 
-  ! multiply by the inverse of the mass matrix and update velocity
+  ! multiply by the inverse of the mass matrix
+  !! DK DK this should be vectorized
+  potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
+
+  ! update velocity
   select case (time_stepping_scheme)
   case (1)
     ! Newmark scheme
-    !! DK DK this should be vectorized
-    potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
-
-    potential_dot_acoustic(:) = potential_dot_acoustic(:) + deltatover2 * potential_dot_dot_acoustic(:)
-
-    ! update the potential field (use a new array here) for coupling terms
-    if (SIMULATION_TYPE == 3) then
-      potential_acoustic_adj_coupling(:) = potential_acoustic(:) + deltat * potential_dot_acoustic(:) + &
-                                           deltatsquareover2 * potential_dot_dot_acoustic(:)
-    endif
-
+    call update_veloc_acoustic_Newmark()
   case (2)
     ! LDDRK scheme
-    !! DK DK this should be vectorized
-    potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
-
-    potential_dot_acoustic_LDDRK(:) = ALPHA_LDDRK(i_stage) * potential_dot_acoustic_LDDRK(:) + &
-                                      deltat * potential_dot_dot_acoustic(:)
-    potential_acoustic_LDDRK(:) = ALPHA_LDDRK(i_stage) * potential_acoustic_LDDRK(:) + &
-                                  deltat * potential_dot_acoustic(:)
-
-    if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
-      !! DK DK this should be vectorized
-      potential_dot_acoustic_temp(:) = potential_dot_acoustic_temp(:) + &
-                                       BETA_LDDRK(i_stage) * potential_dot_acoustic_LDDRK(:)
-      potential_dot_acoustic(:) = potential_dot_acoustic_temp(:)
-    else
-      potential_dot_acoustic(:) = potential_dot_acoustic(:) + BETA_LDDRK(i_stage) * potential_dot_acoustic_LDDRK(:)
-    endif
-
-    !! DK DK this should be vectorized
-    potential_acoustic(:) = potential_acoustic(:) + BETA_LDDRK(i_stage) * potential_acoustic_LDDRK(:)
-
+    call update_veloc_acoustic_LDDRK()
   case (3)
     ! RK scheme
-    !! DK DK this should be vectorized
-    potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
-
-    potential_dot_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_dot_acoustic(:)
-    potential_dot_acoustic_rk(:,i_stage) = deltat * potential_dot_acoustic(:)
-
-    if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
-      if (i_stage == 1) weight_rk = 0.5d0
-      if (i_stage == 2) weight_rk = 0.5d0
-      if (i_stage == 3) weight_rk = 1.0d0
-
-      if (i_stage == 1) then
-!! DK DK this should be vectorized
-        potential_dot_acoustic_init_rk(:) = potential_dot_acoustic(:)
-        potential_acoustic_init_rk(:) = potential_acoustic(:)
-      endif
-!! DK DK this should be vectorized
-      potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &
-                                  weight_rk * potential_dot_dot_acoustic_rk(:,i_stage)
-      potential_acoustic(:) = potential_acoustic_init_rk(:) + weight_rk * potential_dot_acoustic_rk(:,i_stage)
-    else if (i_stage == 4) then
-!! DK DK this should be vectorized
-      potential_dot_acoustic(:) = potential_dot_acoustic_init_rk(:) + &
-                                  1.0d0 / 6.0d0 * ( potential_dot_dot_acoustic_rk(:,1) + &
-                                                    2.0d0 * potential_dot_dot_acoustic_rk(:,2) + &
-                                                    2.0d0 * potential_dot_dot_acoustic_rk(:,3) + &
-                                                    potential_dot_dot_acoustic_rk(:,4) )
-
-!! DK DK this should be vectorized
-      potential_acoustic(:) = potential_acoustic_init_rk(:) + &
-                              1.0d0 / 6.0d0 * ( potential_dot_acoustic_rk(:,1) + &
-                                                2.0d0 * potential_dot_acoustic_rk(:,2) + &
-                                                2.0d0 * potential_dot_acoustic_rk(:,3) + &
-                                                potential_dot_acoustic_rk(:,4) )
-    endif
-
+    call update_veloc_acoustic_RK()
   case default
     stop 'Invalid time stepping scheme for compute forces routine!'
   end select
@@ -325,15 +263,14 @@
     call rebuild_value_on_PML_interface_acoustic_accel(it_temp)
   endif
 
-  ! multiply by the inverse of the mass matrix and update velocity
+  ! multiply by the inverse of the mass matrix
+  b_potential_dot_dot_acoustic(:) = b_potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
+
+  ! update velocity
   select case (time_stepping_scheme)
   case (1)
     ! Newmark
-    !! DK DK this should be vectorized
-    b_potential_dot_dot_acoustic(:) = b_potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
-
-    b_potential_dot_acoustic(:) = b_potential_dot_acoustic(:) + b_deltatover2 * b_potential_dot_dot_acoustic(:)
-
+    call update_veloc_acoustic_Newmark_backward()
   case default
     stop 'Sorry, time stepping scheme not implemented yet for backward computations'
   end select

@@ -135,14 +135,14 @@
   if ((any_gravitoacoustic)) then
     if (time_stepping_scheme == 1) then
       !! DK DK this should be vectorized
-      potential_dot_dot_gravitoacoustic = potential_dot_dot_gravitoacoustic * rmass_inverse_gravitoacoustic
-      potential_dot_gravitoacoustic = potential_dot_gravitoacoustic + &
-                                      deltatover2*potential_dot_dot_gravitoacoustic
+      potential_dot_dot_gravitoacoustic(:) = potential_dot_dot_gravitoacoustic(:) * rmass_inverse_gravitoacoustic(:)
+      potential_dot_gravitoacoustic(:) = potential_dot_gravitoacoustic(:) + &
+                                         deltatover2 * potential_dot_dot_gravitoacoustic(:)
 
 !! line below already done in compute_forces_gravitoacoustic, because necessary
 !! for the computation of potential_dot_dot_gravitoacoustic
 !      potential_dot_dot_gravito = potential_dot_dot_gravito * rmass_inverse_gravito
-      potential_dot_gravito = potential_dot_gravito + deltatover2*potential_dot_dot_gravito
+      potential_dot_gravito(:) = potential_dot_gravito(:) + deltatover2 * potential_dot_dot_gravito(:)
     else
       stop 'Only time_stepping_scheme = 1 implemented for gravitoacoustic case'
     endif

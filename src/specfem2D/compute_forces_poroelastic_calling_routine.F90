@@ -38,10 +38,6 @@
 
   implicit none
 
-  ! local parameters
-  ! for rk44
-  double precision :: weight_rk
-
   ! checks if anything to do in this slice
   if (.not. any_poroelastic) return
 
@@ -94,129 +90,38 @@
   endif
 #endif
 
-  ! multiply by the inverse of the mass matrix and update velocity
+  ! multiply by the inverse of the mass matrix
+  ! solid
+  accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
+  accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
+  ! fluid
+  accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
+  accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
+
+  if (SIMULATION_TYPE == 3) then
+    b_accels_poroelastic(1,:) = b_accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
+    b_accels_poroelastic(2,:) = b_accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
+
+    b_accelw_poroelastic(1,:) = b_accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
+    b_accelw_poroelastic(2,:) = b_accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
+  endif
+
+  ! update velocity
   select case (time_stepping_scheme)
   case (1)
     ! Newmark
-    accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
-    accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
-    velocs_poroelastic = velocs_poroelastic + deltatover2*accels_poroelastic
-
-    accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
-    accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
-    velocw_poroelastic = velocw_poroelastic + deltatover2*accelw_poroelastic
-
-    if (SIMULATION_TYPE == 3) then
-      b_accels_poroelastic(1,:) = b_accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
-      b_accels_poroelastic(2,:) = b_accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
-      b_velocs_poroelastic = b_velocs_poroelastic + b_deltatover2*b_accels_poroelastic
-
-      b_accelw_poroelastic(1,:) = b_accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
-      b_accelw_poroelastic(2,:) = b_accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
-      b_velocw_poroelastic = b_velocw_poroelastic + b_deltatover2*b_accelw_poroelastic
-    endif
-
+    call update_veloc_poroelastic_Newmark()
+    if (SIMULATION_TYPE == 3) call update_veloc_poroelastic_Newmark_backward()
   case (2)
     ! LDDRK
-    accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
-    accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
-
-    velocs_poroelastic_LDDRK = ALPHA_LDDRK(i_stage) * velocs_poroelastic_LDDRK + deltat * accels_poroelastic
-    displs_poroelastic_LDDRK = ALPHA_LDDRK(i_stage) * displs_poroelastic_LDDRK + deltat * velocs_poroelastic
-    velocs_poroelastic = velocs_poroelastic + BETA_LDDRK(i_stage) * velocs_poroelastic_LDDRK
-    displs_poroelastic = displs_poroelastic + BETA_LDDRK(i_stage) * displs_poroelastic_LDDRK
-
-    accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
-    accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
-
-    velocw_poroelastic_LDDRK = ALPHA_LDDRK(i_stage) * velocw_poroelastic_LDDRK + deltat * accelw_poroelastic
-    displw_poroelastic_LDDRK = ALPHA_LDDRK(i_stage) * displw_poroelastic_LDDRK + deltat * velocw_poroelastic
-    velocw_poroelastic = velocw_poroelastic + BETA_LDDRK(i_stage) * velocw_poroelastic_LDDRK
-    displw_poroelastic = displw_poroelastic + BETA_LDDRK(i_stage) * displw_poroelastic_LDDRK
-
+    call update_veloc_poroelastic_LDDRK()
+    if (SIMULATION_TYPE == 3) stop 'LDDRK scheme for poroelastic kernel simulation not implemented yet'
   case (3)
     ! Runge-Kutta
-    accels_poroelastic(1,:) = accels_poroelastic(1,:) * rmass_s_inverse_poroelastic(:)
-    accels_poroelastic(2,:) = accels_poroelastic(2,:) * rmass_s_inverse_poroelastic(:)
-
-    accels_poroelastic_rk(1,:,i_stage) = deltat * accels_poroelastic(1,:)
-    accels_poroelastic_rk(2,:,i_stage) = deltat * accels_poroelastic(2,:)
-    velocs_poroelastic_rk(1,:,i_stage) = deltat * velocs_poroelastic(1,:)
-    velocs_poroelastic_rk(2,:,i_stage) = deltat * velocs_poroelastic(2,:)
-
-    accelw_poroelastic(1,:) = accelw_poroelastic(1,:) * rmass_w_inverse_poroelastic(:)
-    accelw_poroelastic(2,:) = accelw_poroelastic(2,:) * rmass_w_inverse_poroelastic(:)
-
-    accelw_poroelastic_rk(1,:,i_stage) = deltat * accelw_poroelastic(1,:)
-    accelw_poroelastic_rk(2,:,i_stage) = deltat * accelw_poroelastic(2,:)
-    velocw_poroelastic_rk(1,:,i_stage) = deltat * velocw_poroelastic(1,:)
-    velocw_poroelastic_rk(2,:,i_stage) = deltat * velocw_poroelastic(2,:)
-
-    if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
-      if (i_stage == 1) weight_rk = 0.5d0
-      if (i_stage == 2) weight_rk = 0.5d0
-      if (i_stage == 3) weight_rk = 1.0d0
-
-      if (i_stage==1) then
-        velocs_poroelastic_initial_rk(1,:) = velocs_poroelastic(1,:)
-        velocs_poroelastic_initial_rk(2,:) = velocs_poroelastic(2,:)
-        displs_poroelastic_initial_rk(1,:) = displs_poroelastic(1,:)
-        displs_poroelastic_initial_rk(2,:) = displs_poroelastic(2,:)
-
-        velocw_poroelastic_initial_rk(1,:) = velocw_poroelastic(1,:)
-        velocw_poroelastic_initial_rk(2,:) = velocw_poroelastic(2,:)
-        displw_poroelastic_initial_rk(1,:) = displw_poroelastic(1,:)
-        displw_poroelastic_initial_rk(2,:) = displw_poroelastic(2,:)
-      endif
-
-      velocs_poroelastic(1,:) = velocs_poroelastic_initial_rk(1,:) + weight_rk * accels_poroelastic_rk(1,:,i_stage)
-      velocs_poroelastic(2,:) = velocs_poroelastic_initial_rk(2,:) + weight_rk * accels_poroelastic_rk(2,:,i_stage)
-      displs_poroelastic(1,:) = displs_poroelastic_initial_rk(1,:) + weight_rk * velocs_poroelastic_rk(1,:,i_stage)
-      displs_poroelastic(2,:) = displs_poroelastic_initial_rk(2,:) + weight_rk * velocs_poroelastic_rk(2,:,i_stage)
-
-      velocw_poroelastic(1,:) = velocw_poroelastic_initial_rk(1,:) + weight_rk * accelw_poroelastic_rk(1,:,i_stage)
-      velocw_poroelastic(2,:) = velocw_poroelastic_initial_rk(2,:) + weight_rk * accelw_poroelastic_rk(2,:,i_stage)
-      displw_poroelastic(1,:) = displw_poroelastic_initial_rk(1,:) + weight_rk * velocw_poroelastic_rk(1,:,i_stage)
-      displw_poroelastic(2,:) = displw_poroelastic_initial_rk(2,:) + weight_rk * velocw_poroelastic_rk(2,:,i_stage)
-
-    else if (i_stage==4) then
-
-      velocs_poroelastic(1,:) = velocs_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-      (accels_poroelastic_rk(1,:,1) + 2.0d0 * accels_poroelastic_rk(1,:,2) + &
-      2.0d0 * accels_poroelastic_rk(1,:,3) + accels_poroelastic_rk(1,:,4))
-
-      velocs_poroelastic(2,:) = velocs_poroelastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-      (accels_poroelastic_rk(2,:,1) + 2.0d0 * accels_poroelastic_rk(2,:,2) + &
-       2.0d0 * accels_poroelastic_rk(2,:,3) + accels_poroelastic_rk(2,:,4))
-
-      displs_poroelastic(1,:) = displs_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-      (velocs_poroelastic_rk(1,:,1) + 2.0d0 * velocs_poroelastic_rk(1,:,2) + &
-       2.0d0 * velocs_poroelastic_rk(1,:,3) + velocs_poroelastic_rk(1,:,4))
-
-      displs_poroelastic(2,:) = displs_poroelastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-      (velocs_poroelastic_rk(2,:,1) + 2.0d0 * velocs_poroelastic_rk(2,:,2) + &
-       2.0d0 * velocs_poroelastic_rk(2,:,3) + velocs_poroelastic_rk(2,:,4))
-
-      velocw_poroelastic(1,:) = velocw_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-      (accelw_poroelastic_rk(1,:,1) + 2.0d0 * accelw_poroelastic_rk(1,:,2) + &
-       2.0d0 * accelw_poroelastic_rk(1,:,3) + accelw_poroelastic_rk(1,:,4))
-
-      velocw_poroelastic(2,:) = velocw_poroelastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-      (accelw_poroelastic_rk(2,:,1) + 2.0d0 * accelw_poroelastic_rk(2,:,2) + &
-       2.0d0 * accelw_poroelastic_rk(2,:,3) + accelw_poroelastic_rk(2,:,4))
-
-      displw_poroelastic(1,:) = displw_poroelastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-      (velocw_poroelastic_rk(1,:,1) + 2.0d0 * velocw_poroelastic_rk(1,:,2) + &
-       2.0d0 * velocw_poroelastic_rk(1,:,3) + velocw_poroelastic_rk(1,:,4))
-
-      displw_poroelastic(2,:) = displw_poroelastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-      (velocw_poroelastic_rk(2,:,1) + 2.0d0 * velocw_poroelastic_rk(2,:,2) + &
-       2.0d0 * velocw_poroelastic_rk(2,:,3) + velocw_poroelastic_rk(2,:,4))
-    endif
-
+    call update_veloc_poroelastic_RK()
+    if (SIMULATION_TYPE == 3) stop 'RK scheme for poroelastic kernel simulation not implemented yet'
   case default
     stop 'Time stepping scheme not implemented yet for poroelastic case'
-
   end select
 
   ! imposes continuity for stabilization

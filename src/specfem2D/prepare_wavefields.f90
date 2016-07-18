@@ -383,84 +383,84 @@
   endif
 
   ! initialize arrays to zero
-  displ_elastic = 0._CUSTOM_REAL
-  displ_elastic_old = 0._CUSTOM_REAL
-  veloc_elastic = 0._CUSTOM_REAL
-  accel_elastic = 0._CUSTOM_REAL
+  displ_elastic(:,:) = 0._CUSTOM_REAL
+  displ_elastic_old(:,:) = 0._CUSTOM_REAL
+  veloc_elastic(:,:) = 0._CUSTOM_REAL
+  accel_elastic(:,:) = 0._CUSTOM_REAL
 
   if (SIMULATION_TYPE == 3 .and. any_elastic) then
-    b_displ_elastic_old = 0._CUSTOM_REAL
-    b_displ_elastic = 0._CUSTOM_REAL
-    b_veloc_elastic = 0._CUSTOM_REAL
-    b_accel_elastic = 0._CUSTOM_REAL
+    b_displ_elastic_old(:,:) = 0._CUSTOM_REAL
+    b_displ_elastic(:,:) = 0._CUSTOM_REAL
+    b_veloc_elastic(:,:) = 0._CUSTOM_REAL
+    b_accel_elastic(:,:) = 0._CUSTOM_REAL
   endif
 
   if (time_stepping_scheme == 2) then
-    displ_elastic_LDDRK = 0._CUSTOM_REAL
-    veloc_elastic_LDDRK = 0._CUSTOM_REAL
-    veloc_elastic_LDDRK_temp = 0._CUSTOM_REAL
+    displ_elastic_LDDRK(:,:) = 0._CUSTOM_REAL
+    veloc_elastic_LDDRK(:,:) = 0._CUSTOM_REAL
+    veloc_elastic_LDDRK_temp(:,:) = 0._CUSTOM_REAL
   endif
 
   if (time_stepping_scheme == 3) then
-    accel_elastic_rk = 0._CUSTOM_REAL
-    veloc_elastic_rk = 0._CUSTOM_REAL
-    veloc_elastic_initial_rk = 0._CUSTOM_REAL
-    displ_elastic_initial_rk = 0._CUSTOM_REAL
+    accel_elastic_rk(:,:,:) = 0._CUSTOM_REAL
+    veloc_elastic_rk(:,:,:) = 0._CUSTOM_REAL
+    veloc_elastic_initial_rk(:,:) = 0._CUSTOM_REAL
+    displ_elastic_initial_rk(:,:) = 0._CUSTOM_REAL
   endif
 
-  displs_poroelastic = 0._CUSTOM_REAL
-  displs_poroelastic_old = 0._CUSTOM_REAL
-  velocs_poroelastic = 0._CUSTOM_REAL
-  accels_poroelastic = 0._CUSTOM_REAL
-  displw_poroelastic = 0._CUSTOM_REAL
-  velocw_poroelastic = 0._CUSTOM_REAL
-  accelw_poroelastic = 0._CUSTOM_REAL
+  displs_poroelastic(:,:) = 0._CUSTOM_REAL
+  displs_poroelastic_old(:,:) = 0._CUSTOM_REAL
+  velocs_poroelastic(:,:) = 0._CUSTOM_REAL
+  accels_poroelastic(:,:) = 0._CUSTOM_REAL
+  displw_poroelastic(:,:) = 0._CUSTOM_REAL
+  velocw_poroelastic(:,:) = 0._CUSTOM_REAL
+  accelw_poroelastic(:,:) = 0._CUSTOM_REAL
 
   if (time_stepping_scheme == 2) then
-    displs_poroelastic_LDDRK = 0._CUSTOM_REAL
-    velocs_poroelastic_LDDRK = 0._CUSTOM_REAL
-    displw_poroelastic_LDDRK = 0._CUSTOM_REAL
-    velocw_poroelastic_LDDRK = 0._CUSTOM_REAL
+    displs_poroelastic_LDDRK(:,:) = 0._CUSTOM_REAL
+    velocs_poroelastic_LDDRK(:,:) = 0._CUSTOM_REAL
+    displw_poroelastic_LDDRK(:,:) = 0._CUSTOM_REAL
+    velocw_poroelastic_LDDRK(:,:) = 0._CUSTOM_REAL
   endif
 
   if (time_stepping_scheme == 3) then
-    accels_poroelastic_rk = 0._CUSTOM_REAL
-    velocs_poroelastic_rk = 0._CUSTOM_REAL
+    accels_poroelastic_rk(:,:,:) = 0._CUSTOM_REAL
+    velocs_poroelastic_rk(:,:,:) = 0._CUSTOM_REAL
 
-    accelw_poroelastic_rk = 0._CUSTOM_REAL
-    velocw_poroelastic_rk = 0._CUSTOM_REAL
+    accelw_poroelastic_rk(:,:,:) = 0._CUSTOM_REAL
+    velocw_poroelastic_rk(:,:,:) = 0._CUSTOM_REAL
 
-    velocs_poroelastic_initial_rk = 0._CUSTOM_REAL
-    displs_poroelastic_initial_rk = 0._CUSTOM_REAL
+    velocs_poroelastic_initial_rk(:,:) = 0._CUSTOM_REAL
+    displs_poroelastic_initial_rk(:,:) = 0._CUSTOM_REAL
 
-    velocw_poroelastic_initial_rk = 0._CUSTOM_REAL
-    displw_poroelastic_initial_rk = 0._CUSTOM_REAL
+    velocw_poroelastic_initial_rk(:,:) = 0._CUSTOM_REAL
+    displw_poroelastic_initial_rk(:,:) = 0._CUSTOM_REAL
   endif
 
-  potential_acoustic = 0._CUSTOM_REAL
-  potential_acoustic_old = 0._CUSTOM_REAL
-  potential_dot_acoustic = 0._CUSTOM_REAL
-  potential_dot_dot_acoustic = 0._CUSTOM_REAL
+  potential_acoustic(:) = 0._CUSTOM_REAL
+  potential_acoustic_old(:) = 0._CUSTOM_REAL
+  potential_dot_acoustic(:) = 0._CUSTOM_REAL
+  potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
 
   if (time_stepping_scheme == 2) then
-    potential_acoustic_LDDRK = 0._CUSTOM_REAL
-    potential_dot_acoustic_LDDRK = 0._CUSTOM_REAL
-    potential_dot_acoustic_temp = 0._CUSTOM_REAL
+    potential_acoustic_LDDRK(:) = 0._CUSTOM_REAL
+    potential_dot_acoustic_LDDRK(:) = 0._CUSTOM_REAL
+    potential_dot_acoustic_temp(:) = 0._CUSTOM_REAL
   endif
 
   if (time_stepping_scheme == 3) then
-    potential_acoustic_init_rk = 0._CUSTOM_REAL
-    potential_dot_acoustic_init_rk = 0._CUSTOM_REAL
-    potential_dot_dot_acoustic_rk = 0._CUSTOM_REAL
-    potential_dot_acoustic_rk = 0._CUSTOM_REAL
+    potential_acoustic_init_rk(:) = 0._CUSTOM_REAL
+    potential_dot_acoustic_init_rk(:) = 0._CUSTOM_REAL
+    potential_dot_dot_acoustic_rk(:,:) = 0._CUSTOM_REAL
+    potential_dot_acoustic_rk(:,:) = 0._CUSTOM_REAL
   endif
 
-  potential_gravitoacoustic = 0._CUSTOM_REAL
-  potential_dot_gravitoacoustic = 0._CUSTOM_REAL
-  potential_dot_dot_gravitoacoustic = 0._CUSTOM_REAL
-  potential_gravito = 0._CUSTOM_REAL
-  potential_dot_gravito = 0._CUSTOM_REAL
-  potential_dot_dot_gravito = 0._CUSTOM_REAL
+  potential_gravitoacoustic(:) = 0._CUSTOM_REAL
+  potential_dot_gravitoacoustic(:) = 0._CUSTOM_REAL
+  potential_dot_dot_gravitoacoustic(:) = 0._CUSTOM_REAL
+  potential_gravito(:) = 0._CUSTOM_REAL
+  potential_dot_gravito(:) = 0._CUSTOM_REAL
+  potential_dot_dot_gravito(:) = 0._CUSTOM_REAL
 
   ! user output
   if (myrank == 0) then

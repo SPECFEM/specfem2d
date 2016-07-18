@@ -41,8 +41,6 @@
 
   ! local parameters
   integer :: i,iglob
-  ! for rk44
-  double precision :: weight_rk
 
   ! main solver for the elastic elements
 
@@ -172,78 +170,13 @@
   select case (time_stepping_scheme)
   case (1)
     ! Newmark
-    !! DK DK this should be vectorized
-    if (USE_ENFORCE_FIELDS) then
-      do iglob = 1,nglob_elastic
-        ! big loop over all the global points (not elements) in the mesh to update velocity vector (corrector).
-        if (.not. iglob_is_forced(iglob)) then
-          veloc_elastic(:,iglob) = veloc_elastic(:,iglob) + deltatover2 * accel_elastic(:,iglob)
-        endif
-      enddo
-    else
-      veloc_elastic(:,:) = veloc_elastic(:,:) + deltatover2 * accel_elastic(:,:)
-    endif
-
+    call update_veloc_elastic_Newmark()
   case (2)
     ! LDDRK
-    !! DK DK this should be vectorized
-    veloc_elastic_LDDRK(:,:) = ALPHA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:) + deltat * accel_elastic(:,:)
-    displ_elastic_LDDRK(:,:) = ALPHA_LDDRK(i_stage) * displ_elastic_LDDRK(:,:) + deltat * veloc_elastic(:,:)
-    if (i_stage == 1 .and. it == 1 .and. (.not. initialfield)) then
-      veloc_elastic_LDDRK_temp(:,:) = veloc_elastic_LDDRK_temp(:,:) + BETA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:)
-      veloc_elastic(:,:) = veloc_elastic_LDDRK_temp(:,:)
-    else
-      veloc_elastic(:,:) = veloc_elastic(:,:) + BETA_LDDRK(i_stage) * veloc_elastic_LDDRK(:,:)
-    endif
-    displ_elastic(:,:) = displ_elastic(:,:) + BETA_LDDRK(i_stage) * displ_elastic_LDDRK(:,:)
-
+    call update_veloc_elastic_LDDRK()
   case (3)
     ! RK
-    !! DK DK this should be vectorized
-    accel_elastic_rk(1,:,i_stage) = deltat * accel_elastic(1,:)
-    accel_elastic_rk(2,:,i_stage) = deltat * accel_elastic(2,:)
-
-    veloc_elastic_rk(1,:,i_stage) = deltat * veloc_elastic(1,:)
-    veloc_elastic_rk(2,:,i_stage) = deltat * veloc_elastic(2,:)
-
-    if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
-
-      if (i_stage == 1) weight_rk = 0.5d0
-      if (i_stage == 2) weight_rk = 0.5d0
-      if (i_stage == 3) weight_rk = 1.0d0
-
-      if (i_stage == 1) then
-        !! DK DK this should be vectorized
-        veloc_elastic_initial_rk(1,:) = veloc_elastic(1,:)
-        veloc_elastic_initial_rk(2,:) = veloc_elastic(2,:)
-
-        displ_elastic_initial_rk(1,:) = displ_elastic(1,:)
-        displ_elastic_initial_rk(2,:) = displ_elastic(2,:)
-      endif
-
-      !! DK DK this should be vectorized
-      veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + weight_rk * accel_elastic_rk(1,:,i_stage)
-      veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + weight_rk * accel_elastic_rk(2,:,i_stage)
-
-      displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + weight_rk * veloc_elastic_rk(1,:,i_stage)
-      displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + weight_rk * veloc_elastic_rk(2,:,i_stage)
-
-    else if (i_stage == 4) then
-      !! DK DK this should be vectorized
-      veloc_elastic(1,:) = veloc_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-                           ( accel_elastic_rk(1,:,1) + 2.0d0 * accel_elastic_rk(1,:,2) + &
-                             2.0d0 * accel_elastic_rk(1,:,3) + accel_elastic_rk(1,:,4) )
-      veloc_elastic(2,:) = veloc_elastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-                           ( accel_elastic_rk(2,:,1) + 2.0d0 * accel_elastic_rk(2,:,2) + &
-                             2.0d0 * accel_elastic_rk(2,:,3) + accel_elastic_rk(2,:,4) )
-
-      displ_elastic(1,:) = displ_elastic_initial_rk(1,:) + 1.0d0 / 6.0d0 * &
-                           ( veloc_elastic_rk(1,:,1) + 2.0d0 * veloc_elastic_rk(1,:,2) + &
-                             2.0d0 * veloc_elastic_rk(1,:,3) + veloc_elastic_rk(1,:,4) )
-      displ_elastic(2,:) = displ_elastic_initial_rk(2,:) + 1.0d0 / 6.0d0 * &
-                           ( veloc_elastic_rk(2,:,1) + 2.0d0 * veloc_elastic_rk(2,:,2) + &
-                             2.0d0 * veloc_elastic_rk(2,:,3) + veloc_elastic_rk(2,:,4))
-    endif
+    call update_veloc_elastic_RK()
   end select
 
   end subroutine compute_forces_viscoelastic_main
@@ -383,7 +316,7 @@
   select case (time_stepping_scheme)
   case (1)
     ! Newmark
-    b_veloc_elastic(:,:) = b_veloc_elastic(:,:) + b_deltatover2 * b_accel_elastic(:,:)
+    call update_veloc_elastic_Newmark_backward()
   case default
     stop 'Time stepping scheme not implemented yet in viscoelastic backward routine'
   end select

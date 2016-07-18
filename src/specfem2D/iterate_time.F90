@@ -108,7 +108,10 @@ subroutine iterate_time()
     do i_stage = 1, stage_time_scheme
 
       ! updates wavefields using Newmark time scheme
-      call update_displacement_scheme()
+      ! forward wavefield (acoustic/elastic/poroelastic)
+      call update_displ_Newmark()
+      ! reconstructed/backward wavefields
+      if (SIMULATION_TYPE == 3) call update_displ_Newmark_backward()
 
       ! acoustic domains
       if (ACOUSTIC_SIMULATION) then
@@ -156,7 +159,7 @@ subroutine iterate_time()
 
     ! reads in lastframe for adjoint/kernels calculation
     if (SIMULATION_TYPE == 3 .and. it == 1) then
-      call it_read_forward_arrays()
+      call read_forward_arrays()
     endif
 
     ! noise simulations
@@ -174,7 +177,7 @@ subroutine iterate_time()
 
     ! computes kinetic and potential energy
     if (output_energy) then
-      call it_compute_and_output_energy()
+      call compute_and_output_energy()
     endif
 
     ! computes integrated_energy_field
@@ -302,151 +305,7 @@ end subroutine it_transfer_from_GPU
 !----------------------------------------------------------------------------------------
 !
 
-subroutine it_read_forward_arrays()
 
-! restores last time snapshot saved for backward/reconstruction of wavefields
-! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
-!          and adjoint sources will become more complicated
-!          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
-
-  use specfem_par
-  use specfem_par_gpu
-
-  implicit none
-
-  ! local parameters
-  integer :: ier
-  character(len=MAX_STRING_LEN) :: outputname
-
-  ! acoustic medium
-  if (any_acoustic) then
-    write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_acoustic**.bin')
-
-    read(55) b_potential_acoustic
-    read(55) b_potential_dot_acoustic
-    read(55) b_potential_dot_dot_acoustic
-
-    close(55)
-
-    if (GPU_MODE) then
-      ! transfers fields onto GPU
-      call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
-                                          b_potential_dot_acoustic,      &
-                                          b_potential_dot_dot_acoustic,  &
-                                          Mesh_pointer)
-    else
-      ! free surface for an acoustic medium
-      call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic)
-    endif
-  endif
-
-  ! elastic medium
-  if (any_elastic) then
-    write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_elastic**.bin')
-
-    read(55) b_displ_elastic
-    read(55) b_veloc_elastic
-    read(55) b_accel_elastic
-    close(55)
-
-    !SH (membrane) waves
-    if (.not. P_SV) then
-      ! only index array(1,:) contains SH wavefield
-      b_displ_elastic(2,:) = 0._CUSTOM_REAL
-      b_veloc_elastic(2,:) = 0._CUSTOM_REAL
-      b_accel_elastic(2,:) = 0._CUSTOM_REAL
-    endif
-
-    if (GPU_MODE) then
-      ! prepares wavefields for transfering
-      if (P_SV) then
-        tmp_displ_2D(1,:) = b_displ_elastic(1,:)
-        tmp_displ_2D(2,:) = b_displ_elastic(2,:)
-        tmp_veloc_2D(1,:) = b_veloc_elastic(1,:)
-        tmp_veloc_2D(2,:) = b_veloc_elastic(2,:)
-        tmp_accel_2D(1,:) = b_accel_elastic(1,:)
-        tmp_accel_2D(2,:) = b_accel_elastic(2,:)
-      else
-        ! SH waves
-        tmp_displ_2D(1,:) = b_displ_elastic(1,:)
-        tmp_displ_2D(2,:) = 0._CUSTOM_REAL
-        tmp_veloc_2D(1,:) = b_veloc_elastic(1,:)
-        tmp_veloc_2D(2,:) = 0._CUSTOM_REAL
-        tmp_accel_2D(1,:) = b_accel_elastic(1,:)
-        tmp_accel_2D(2,:) = 0._CUSTOM_REAL
-      endif
-      call transfer_b_fields_to_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
-    endif
-  endif
-
-  ! poroelastic medium
-  if (any_poroelastic) then
-    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_s**.bin')
-
-    read(55) b_displs_poroelastic
-    read(55) b_velocs_poroelastic
-    read(55) b_accels_poroelastic
-    close(55)
-
-    write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
-    open(unit=56,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_w**.bin')
-
-    read(56) b_displw_poroelastic
-    read(56) b_velocw_poroelastic
-    read(56) b_accelw_poroelastic
-    close(56)
-
-    ! safety check
-    if (GPU_MODE) then
-      stop 'GPU_MODE error: sorry, reading lastframe from poroelastic simulation not implemented yet'
-    endif
-  endif
-
-end subroutine it_read_forward_arrays
-
-!
-!----------------------------------------------------------------------------------------
-!
-
-subroutine it_compute_and_output_energy()
-
-  use constants,only: IOUT_ENERGY,CUSTOM_REAL
-
-  use specfem_par,only: GPU_MODE,myrank,it,deltat,kinetic_energy,potential_energy,t0
-
-  implicit none
-
-  ! local parameters
-  real(kind=CUSTOM_REAL) :: kinetic_energy_total,potential_energy_total
-
-  ! safety check
-  if (GPU_MODE) stop 'Error computing energy for output is not implemented on GPUs yet'
-
-  ! computes energy
-  call compute_energy()
-
-  ! computes total for all processes
-  call sum_all_cr(kinetic_energy,kinetic_energy_total)
-  call sum_all_cr(potential_energy,potential_energy_total)
-
-  ! saves kinetic, potential and total energy for this time step in external file
-  if (myrank == 0) then
-    write(IOUT_ENERGY,*) real(dble(it-1)*deltat - t0,4),real(kinetic_energy_total,4), &
-                         real(potential_energy_total,4),real(kinetic_energy_total + potential_energy_total,4)
-  endif
-
-end subroutine it_compute_and_output_energy
-
-!
-!----------------------------------------------------------------------------------------
-!
 
 subroutine it_compute_integrated_energy_field_and_output()
   ! compute int_0^t v^2 dt and write it on file if needed

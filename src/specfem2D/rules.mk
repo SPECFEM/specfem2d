@@ -146,6 +146,7 @@ specfem2D_OBJECTS = \
 	$O/read_materials.spec.o \
 	$O/read_mesh_databases.spec.o \
 	$O/read_external_model.spec.o \
+	$O/read_forward_arrays.spec.o \
 	$O/recompute_jacobian.spec.o \
 	$O/save_adjoint_kernels.spec.o \
 	$O/save_openDX_jacobian.spec.o \
@@ -155,7 +156,9 @@ specfem2D_OBJECTS = \
 	$O/setup_sources_receivers.spec.o \
 	$O/sort_array_coordinates.spec.o \
 	$O/specfem2D.spec.o \
-	$O/update_displacement_scheme.spec.o \
+	$O/update_displacement_LDDRK.spec.o \
+	$O/update_displacement_Newmark.spec.o \
+	$O/update_displacement_RK.spec.o \
 	$O/compute_kernels.spec.o \
 	$O/write_jpeg_image.cc.o \
 	$O/write_movie_output.spec.o \

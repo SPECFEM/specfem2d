@@ -228,7 +228,7 @@
 
         do i_stage = 1, stage_time_scheme ! is equal to 1 if Newmark because only one stage then
           ! update_displacement_newmark
-          call update_displacement_forward()
+          call update_displ_Newmark()
 
           ! main solver for the acoustic elements
           call compute_forces_acoustic_main()
@@ -239,7 +239,7 @@
 
         ! computes kinetic and potential energy
         if (output_energy) then
-          call it_compute_and_output_energy()
+          call compute_and_output_energy()
         endif
 
         ! loop on all the receivers to compute and store the seismograms
@@ -281,8 +281,8 @@
         do i_stage = 1, stage_time_scheme
           ! backward_inner_loop
           ! update_displacement_newmark
-          call update_displacement_acoustic_backward()
-          call update_displacement_elastic_backward()
+          call update_displ_acoustic_backward()
+          call update_displ_elastic_backward()
 
           ! main solver for the acoustic elements
           call compute_forces_acoustic_main_backward()
@@ -344,7 +344,7 @@
         do i_stage = 1, stage_time_scheme
           ! adjoint
           ! update_displacement_newmark
-          call update_displacement_acoustic_forward()
+          call update_displ_acoustic_forward()
 
           if (any_acoustic) then
             !ZN here we remove the trick introduced by Luoyang to stabilized the adjoint simulation
@@ -353,7 +353,7 @@
             potential_acoustic_adj_coupling(:) = potential_acoustic(:)
           endif
 
-          call update_displacement_elastic_forward()
+          call update_displ_elastic_forward()
 
 !daniel TODO: not sure if the following below is correct or needs to switch orders
 !             usually one computes first the updated pressure and afterwards computes the elastic domain
@@ -381,7 +381,7 @@
 
         ! computes kinetic and potential energy
         if (output_energy) then
-          call it_compute_and_output_energy()
+          call compute_and_output_energy()
         endif
 
         ! loop on all the receivers to compute and store the seismograms

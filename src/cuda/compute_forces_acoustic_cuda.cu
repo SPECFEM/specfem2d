@@ -378,8 +378,12 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
     start_timing_cuda(&start,&stop);
   }
 
-if (mp->simulation_type==3) nb_field=2;
-else nb_field=1;
+  if (mp->simulation_type==3){
+    nb_field=2;
+  }
+  else{
+    nb_field=1;
+  }
 
   // forward wavefields -> FORWARD_OR_ADJOINT == 1
   Kernel_2_acoustic_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,

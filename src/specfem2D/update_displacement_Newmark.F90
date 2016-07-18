@@ -73,25 +73,7 @@
 
 !------------------------------------------------------------------------------------------------
 
-  subroutine update_displacement_scheme()
-
-  use specfem_par
-
-  implicit none
-
-  ! time marching
-
-  ! both forward and reconstructed/backward wavefields
-  call update_displacement_forward()
-  if (SIMULATION_TYPE == 3) call update_displacement_backward()
-
-  end subroutine update_displacement_scheme
-
-!
-!------------------------------------------------------------------------------------------------
-!
-
-  subroutine update_displacement_forward()
+  subroutine update_displ_Newmark()
 
   use specfem_par
 
@@ -100,21 +82,21 @@
   ! time marching
 
   ! acoustic domain
-  if (ACOUSTIC_SIMULATION) call update_displacement_acoustic_forward()
+  if (ACOUSTIC_SIMULATION) call update_displ_acoustic_forward()
 
   ! elastic domain
-  if (ELASTIC_SIMULATION) call update_displacement_elastic_forward()
+  if (ELASTIC_SIMULATION) call update_displ_elastic_forward()
 
   ! poroelastic domain
-  if (POROELASTIC_SIMULATION) call update_displacement_poroelastic_forward()
+  if (POROELASTIC_SIMULATION) call update_displ_poroelastic_forward()
 
-  end subroutine update_displacement_forward
+  end subroutine update_displ_Newmark
 
 !
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_backward()
+  subroutine update_displ_Newmark_backward()
 
   use specfem_par
 
@@ -123,21 +105,21 @@
   ! time marching
 
   ! acoustic domain
-  if (ACOUSTIC_SIMULATION) call update_displacement_acoustic_backward()
+  if (ACOUSTIC_SIMULATION) call update_displ_acoustic_backward()
 
   ! elastic domain
-  if (ELASTIC_SIMULATION) call update_displacement_elastic_backward()
+  if (ELASTIC_SIMULATION) call update_displ_elastic_backward()
 
   ! poroelastic domain
-  if (POROELASTIC_SIMULATION) call update_displacement_poroelastic_backward()
+  if (POROELASTIC_SIMULATION) call update_displ_poroelastic_backward()
 
-  end subroutine update_displacement_backward
+  end subroutine update_displ_Newmark_backward
 
 !
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_acoustic_forward()
+  subroutine update_displ_acoustic_forward()
 
 ! acoustic domains
 
@@ -175,13 +157,13 @@
     call update_displacement_newmark_GPU_acoustic()
   endif
 
-  end subroutine update_displacement_acoustic_forward
+  end subroutine update_displ_acoustic_forward
 
 !
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_acoustic_backward()
+  subroutine update_displ_acoustic_backward()
 
 ! acoustic domains
 
@@ -222,13 +204,13 @@
     continue
   endif
 
-  end subroutine update_displacement_acoustic_backward
+  end subroutine update_displ_acoustic_backward
 
 !
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_elastic_forward()
+  subroutine update_displ_elastic_forward()
 
 ! visco-elastic domains
 
@@ -283,13 +265,13 @@
     call update_displacement_newmark_GPU_elastic()
   endif
 
-  end subroutine update_displacement_elastic_forward
+  end subroutine update_displ_elastic_forward
 
 !
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_elastic_backward()
+  subroutine update_displ_elastic_backward()
 
 ! visco-elastic domains
 
@@ -330,13 +312,13 @@
     continue
   endif
 
-  end subroutine update_displacement_elastic_backward
+  end subroutine update_displ_elastic_backward
 
 !
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_poroelastic_forward()
+  subroutine update_displ_poroelastic_forward()
 
 ! poro-elastic domains
 
@@ -375,14 +357,14 @@
     call exit_MPI(myrank,'poroelastic time marching scheme on GPU not implemented yet...')
   endif
 
-  end subroutine update_displacement_poroelastic_forward
+  end subroutine update_displ_poroelastic_forward
 
 
 !
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_poroelastic_backward()
+  subroutine update_displ_poroelastic_backward()
 
 ! poro-elastic domains
 
@@ -414,7 +396,7 @@
     call exit_MPI(myrank,'poroelastic time marching scheme on GPU not implemented yet...')
   endif
 
-  end subroutine update_displacement_poroelastic_backward
+  end subroutine update_displ_poroelastic_backward
 
 
 !
@@ -704,3 +686,155 @@
                                 b_deltatf,b_deltatsquareover2f,b_deltatover2f)
 
   end subroutine update_displacement_newmark_GPU_elastic
+
+
+!------------------------------------------------------------------------------------------------
+!
+! corrector phase
+!
+!------------------------------------------------------------------------------------------------
+
+!------------------------------------------------------------------------------------------------
+!
+! elastic domains
+!
+!------------------------------------------------------------------------------------------------
+
+  subroutine update_veloc_elastic_Newmark()
+
+! updates velocity vector (corrector)
+
+  use constants,only: USE_ENFORCE_FIELDS
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: iglob
+
+  ! time marching
+  !! DK DK this should be vectorized
+  if (USE_ENFORCE_FIELDS) then
+    do iglob = 1,nglob_elastic
+      ! big loop over all the global points (not elements) in the mesh to update velocity vector (corrector).
+      if (.not. iglob_is_forced(iglob)) then
+        veloc_elastic(:,iglob) = veloc_elastic(:,iglob) + deltatover2 * accel_elastic(:,iglob)
+      endif
+    enddo
+  else
+    veloc_elastic(:,:) = veloc_elastic(:,:) + deltatover2 * accel_elastic(:,:)
+  endif
+
+  end subroutine update_veloc_elastic_Newmark
+
+!
+!------------------------------------------------------------------------------------------------
+!
+
+  subroutine update_veloc_elastic_Newmark_backward()
+
+! updates backward velocity vector (corrector)
+
+  use constants,only: USE_ENFORCE_FIELDS
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: iglob
+
+  ! time marching
+  !! DK DK this should be vectorized
+  if (USE_ENFORCE_FIELDS) then
+    do iglob = 1,nglob_elastic
+      ! big loop over all the global points (not elements) in the mesh to update velocity vector (corrector).
+      if (.not. iglob_is_forced(iglob)) then
+        b_veloc_elastic(:,iglob) = b_veloc_elastic(:,iglob) + b_deltatover2 * b_accel_elastic(:,iglob)
+      endif
+    enddo
+  else
+    b_veloc_elastic(:,:) = b_veloc_elastic(:,:) + b_deltatover2 * b_accel_elastic(:,:)
+  endif
+
+
+  end subroutine update_veloc_elastic_Newmark_backward
+
+
+
+!------------------------------------------------------------------------------------------------
+!
+! acoustic domains
+!
+!------------------------------------------------------------------------------------------------
+
+  subroutine update_veloc_acoustic_Newmark()
+
+! updates velocity potential (corrector)
+
+  use specfem_par
+
+  implicit none
+
+  !! DK DK this should be vectorized
+  potential_dot_acoustic(:) = potential_dot_acoustic(:) + deltatover2 * potential_dot_dot_acoustic(:)
+
+  ! update the potential field (use a new array here) for coupling terms
+  if (SIMULATION_TYPE == 3) then
+    potential_acoustic_adj_coupling(:) = potential_acoustic(:) + deltat * potential_dot_acoustic(:) + &
+                                         deltatsquareover2 * potential_dot_dot_acoustic(:)
+  endif
+
+  end subroutine update_veloc_acoustic_Newmark
+
+
+!------------------------------------------------------------------------------------------------
+
+  subroutine update_veloc_acoustic_Newmark_backward()
+
+! updates velocity potential (corrector)
+
+  use specfem_par
+
+  !! DK DK this should be vectorized
+  b_potential_dot_acoustic(:) = b_potential_dot_acoustic(:) + b_deltatover2 * b_potential_dot_dot_acoustic(:)
+
+  end subroutine update_veloc_acoustic_Newmark_backward
+
+
+!------------------------------------------------------------------------------------------------
+!
+! poroelastic domains
+!
+!------------------------------------------------------------------------------------------------
+
+  subroutine update_veloc_poroelastic_Newmark()
+
+! updates velocity (corrector)
+
+  use specfem_par
+
+  implicit none
+
+  ! solid
+  velocs_poroelastic(:,:) = velocs_poroelastic(:,:) + deltatover2 * accels_poroelastic(:,:)
+  ! fluid
+  velocw_poroelastic(:,:) = velocw_poroelastic(:,:) + deltatover2 * accelw_poroelastic(:,:)
+
+  end subroutine update_veloc_poroelastic_Newmark
+
+
+!------------------------------------------------------------------------------------------------
+
+  subroutine update_veloc_poroelastic_Newmark_backward()
+
+! updates velocity (corrector)
+
+  use specfem_par
+
+  ! solid
+  b_velocs_poroelastic(:,:) = b_velocs_poroelastic(:,:) + b_deltatover2 * b_accels_poroelastic(:,:)
+  ! fluid
+  b_velocw_poroelastic(:,:) = b_velocw_poroelastic(:,:) + b_deltatover2 * b_accelw_poroelastic(:,:)
+
+  end subroutine update_veloc_poroelastic_Newmark_backward
+
