@@ -353,17 +353,8 @@
 
   implicit none
 
-  ! to store the position of pml element in array region_pml_external_mesh
-  ! this is only useful when using pml together with external mesh
-  integer, dimension(:), allocatable :: region_pml_external_mesh
   integer :: nspec_cpml
-
-  integer :: nspec
-
-  integer  :: remove_min_to_start_at_zero
-
   integer :: i,j,i_source,ier
-
   integer :: myrank
 
   ! MPI initialization
@@ -589,7 +580,7 @@
     endif
 
     ! generate the databases for the solver
-    call save_databases(nspec,region_pml_external_mesh,remove_min_to_start_at_zero)
+    call save_databases()
 
     ! print position of the source
     do i_source= 1,NSOURCES

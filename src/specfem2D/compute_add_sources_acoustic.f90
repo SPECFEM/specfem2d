@@ -50,7 +50,7 @@
   integer :: i_source,i,j,iglob,ispec
   real(kind=CUSTOM_REAL) :: stf_used
 
-  do i_source= 1,NSOURCES
+  do i_source = 1,NSOURCES
     ! if this processor core carries the source
     if (myrank == islice_selected_source(i_source)) then
 
@@ -86,9 +86,9 @@
             enddo
           enddo
 
-        ! moment tensor
         else if (source_type(i_source) == 2) then
-           call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
+          ! moment tensor
+          call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
         endif
 
       endif

@@ -1331,30 +1331,48 @@
       ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
       if (ispec_is_acoustic(ispec)) cycle
 
+      ! get values for internal meshes
+      if (.not. assign_external_model) then
+        qkappal = QKappa_attenuation(kmato(ispec))
+        qmul = Qmu_attenuation(kmato(ispec))
+
+        ! check that attenuation values entered by the user make sense
+        if ((qkappal <= 9998.999d0 .and. qmul >  9998.999d0) .or. &
+            (qkappal >  9998.999d0 .and. qmul <= 9998.999d0)) &
+           stop 'need to have Qkappa and Qmu both above or both below 9999 for a given material; &
+                &trick: use 9998 if you want to turn off one'
+
+        ! if no attenuation in that elastic element
+        if (qkappal > 9998.999d0) cycle
+
+        ! determines attenuation factors
+        call attenuation_model(qkappal,qmul,f0_attenuation,N_SLS, &
+                               tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
+                               tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
+      endif
+
       do j = 1,NGLLZ
         do i = 1,NGLLX
 
-          ! get values
+          ! get values for external meshes
           if (assign_external_model) then
             qkappal = QKappa_attenuationext(i,j,ispec)
             qmul = Qmu_attenuationext(i,j,ispec)
-          else
-            qkappal = QKappa_attenuation(kmato(ispec))
-            qmul = Qmu_attenuation(kmato(ispec))
-          endif
 
-          ! check that attenuation values entered by the user make sense
-          if ((qkappal <= 9998.999d0 .and. qmul >  9998.999d0) .or. &
-              (qkappal >  9998.999d0 .and. qmul <= 9998.999d0)) &
-             stop 'need to have Qkappa and Qmu both above or both below 9999 for a given material; &
-                  &trick: use 9998 if you want to turn off one'
+            ! check that attenuation values entered by the user make sense
+            if ((qkappal <= 9998.999d0 .and. qmul >  9998.999d0) .or. &
+                (qkappal >  9998.999d0 .and. qmul <= 9998.999d0)) &
+               stop 'need to have Qkappa and Qmu both above or both below 9999 for a given material; &
+                    &trick: use 9998 if you want to turn off one'
 
-          ! if no attenuation in that elastic element
-          if (qkappal > 9998.999d0) cycle
+            ! if no attenuation in that elastic element
+            if (qkappal > 9998.999d0) cycle
 
-          call attenuation_model(qkappal,qmul,f0_attenuation,N_SLS, &
+            ! determines attenuation factors
+            call attenuation_model(qkappal,qmul,f0_attenuation,N_SLS, &
                                  tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
                                  tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
+          endif
 
           ! stores attenuation values
           inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
@@ -1373,7 +1391,21 @@
               stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, &
                     &non poroelastic, non gravitoacoustic materials for now'
 
-            if (.not. assign_external_model) then
+            if (assign_external_model) then
+              ! external mesh model
+              rhol = dble(rhoext(i,j,ispec))
+              vp = dble(vpext(i,j,ispec))
+              vs = dble(vsext(i,j,ispec))
+
+              ! shifts vp & vs (according to f0 and attenuation band)
+              call shift_velocities_from_f0(vp,vs,rhol, &
+                                    f0_attenuation,N_SLS, &
+                                    tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
+
+              ! stores shifted values
+              vpext(i,j,ispec) = vp
+              vsext(i,j,ispec) = vs
+            else
               ! internal mesh
               n = kmato(ispec)
               if (.not. already_shifted_velocity(n)) then
@@ -1399,19 +1431,6 @@
 
                 already_shifted_velocity(n) = .true.
               endif
-            else
-              ! external mesh model
-              rhol = dble(rhoext(i,j,ispec))
-              vp = dble(vpext(i,j,ispec))
-              vs = dble(vsext(i,j,ispec))
-
-              call shift_velocities_from_f0(vp,vs,rhol, &
-                                    f0_attenuation,N_SLS, &
-                                    tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
-
-              ! stores shifted values
-              vpext(i,j,ispec) = vp
-              vsext(i,j,ispec) = vs
             endif
           endif
         enddo

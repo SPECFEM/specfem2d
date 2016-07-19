@@ -682,7 +682,7 @@
 
   ! checks model
   select case (trim(MODEL))
-  case ('default','ascii','binary','external','gll','binary_voigt')
+  case ('default','ascii','binary','binary_voigt','gll','external')
     continue ! do nothing
   case default
     print *,'Error: unknown model choosen ',trim(MODEL)
@@ -691,7 +691,7 @@
 
   ! checks model
   select case (trim(SAVE_MODEL))
-  case ('default','ascii','binary','external','gll')
+  case ('default','ascii','binary','gll','legacy','.false.') ! 'external' not yet
     continue ! do nothing
   case default
     print *,'Error: unknown save_model choosen ',trim(SAVE_MODEL)

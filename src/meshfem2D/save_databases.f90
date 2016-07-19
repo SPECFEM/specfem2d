@@ -32,28 +32,19 @@
 !========================================================================
 
 
-  subroutine save_databases(nspec,region_pml_external_mesh,remove_min_to_start_at_zero)
+  subroutine save_databases()
 
 ! generates the databases for the solver
 
   use constants,only: IMAIN,IOUT,MAX_STRING_LEN
-  use part_unstruct_par,only: nelmnts
+  use part_unstruct_par,only: nspec,iproc
   use parameter_file_par,only: NPROC
 
   implicit none
 
-  integer :: nspec,remove_min_to_start_at_zero
-  integer, dimension(nelmnts) :: region_pml_external_mesh
-
   ! local parameters
-  integer :: iproc,i,ier
-  integer :: npgeo
-  integer :: my_ninterface
-  integer :: nedges_coupled_loc
-  integer :: nedges_acporo_coupled_loc
-  integer :: nedges_elporo_coupled_loc
+  integer :: ier
   character(len=MAX_STRING_LEN) :: prname
-
 
   do iproc = 0, NPROC-1
 
@@ -108,13 +99,16 @@
 
   enddo
 
-  contains
+  end subroutine save_databases
+
 
 !-------------------------------------------------------------------------------
 
   subroutine save_databases_init()
 
+  use constants,only: IOUT
   use parameter_file_par
+  use part_unstruct_par,only: iproc,nspec,npgeo,region_pml_external_mesh
 
   implicit none
 
@@ -295,6 +289,7 @@
 
   subroutine save_databases_sources()
 
+  use constants,only: IOUT
   use source_file_par
   use parameter_file_par
 
@@ -322,6 +317,7 @@
 
   subroutine save_databases_coorg_elem()
 
+  use constants,only: IOUT
   use part_unstruct_par
   use parameter_file_par
 
@@ -377,6 +373,7 @@
 
   subroutine save_databases_attenuation()
 
+  use constants,only: IOUT
   use part_unstruct_par
   use parameter_file_par
 
@@ -392,7 +389,7 @@
 
   subroutine save_databases_materials()
 
-  use constants,only: ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL
+  use constants,only: IOUT,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL
   use part_unstruct_par
   use parameter_file_par
 
@@ -400,7 +397,7 @@
 
   ! local parameters
   double precision :: val0,val1,val2,val3,val4,val5,val6,val7,val8,val9,val10,val11,val12
-  integer :: indic
+  integer :: i,indic
 
   ! material set header
   ! 'Material sets (num 1 rho vp vs 0 0 QKappa Qmu 0 0 0 0 0 0) or '
@@ -510,15 +507,17 @@
 
   subroutine save_databases_interfaces()
 
+  use constants,only: IOUT
   use part_unstruct_par
   use decompose_par
+  use parameter_file_par,only: NPROC
 
   implicit none
 
   ! local parameters
   integer :: idummy
   integer :: max_interfaces
-
+  integer :: my_ninterface
 
   if (NPROC /= 1) then
     ! counts interfaces
@@ -546,7 +545,9 @@
 
   subroutine save_databases_absorbing()
 
+  use constants,only: IOUT
   use parameter_file_par,only: any_abs
+  use part_unstruct_par,only: iproc
 
   implicit none
 
@@ -562,7 +563,9 @@
 
   subroutine save_databases_acoustic_forcing()
 
+  use constants,only: IOUT
   use parameter_file_par,only: ACOUSTIC_FORCING
+  use part_unstruct_par,only: iproc
 
   implicit none
 
@@ -578,6 +581,7 @@
 
   subroutine save_databases_free_surf()
 
+  use constants,only: IOUT
   use part_unstruct_par
 
   implicit none
@@ -591,6 +595,7 @@
 
   subroutine save_databases_coupled()
 
+  use constants,only: IOUT
   use part_unstruct_par
 
   implicit none
@@ -610,10 +615,14 @@
 
   subroutine save_databases_tangential()
 
+  use constants,only: IOUT
   use part_unstruct_par
   use parameter_file_par
 
   implicit none
+
+  ! local parameters
+  integer :: i
 
   ! 'List of tangential detection curve nodes:'
   write(IOUT) force_normal_to_surface,rec_normal_to_surface
@@ -630,6 +639,7 @@
 
   subroutine save_databases_axial_elements
 
+  use constants,only: IOUT
   use part_unstruct_par
 
   implicit none
@@ -640,7 +650,5 @@
 
   end subroutine save_databases_axial_elements
 
-!-------------------------------------------------------------------------------
 
-  end subroutine save_databases
 

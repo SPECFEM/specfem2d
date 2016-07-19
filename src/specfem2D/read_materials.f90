@@ -129,7 +129,7 @@
     !---- anisotropic material, c11, c13, c33 and c44 given in Pascal
     else if (indic == 2) then
 
-      density_mat(1) =val0
+      density_mat(1) = val0
 
       ! Anisotropy parameters
       c11 = val1

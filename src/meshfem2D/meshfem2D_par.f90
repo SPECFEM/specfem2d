@@ -212,4 +212,20 @@
   integer :: npoints_interface_top
   double precision, dimension(:), allocatable :: xinterface_top,zinterface_top,coefs_interface_top
 
+
+  ! local coupled edges
+  integer :: nedges_coupled_loc
+  integer :: nedges_acporo_coupled_loc
+  integer :: nedges_elporo_coupled_loc
+
+  ! to store the position of pml element in array region_pml_external_mesh
+  ! this is only useful when using pml together with external mesh
+  integer, dimension(:), allocatable :: region_pml_external_mesh
+
+  integer :: remove_min_to_start_at_zero
+
+  integer :: nspec
+  integer :: npgeo
+  integer :: iproc
+
   end module part_unstruct_par

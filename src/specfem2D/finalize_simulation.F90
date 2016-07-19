@@ -55,7 +55,8 @@
   endif
 
   ! saves model files
-  if (trim(SAVE_MODEL) /= 'default') then
+  if (trim(SAVE_MODEL) /= 'default' .and. trim(SAVE_MODEL) /= '.false.') then
+    ! allocates temporary arrays for file storage
     allocate(rho_save(NGLLX,NGLLZ,nspec))
     allocate(vp_save(NGLLX,NGLLZ,nspec))
     allocate(vs_save(NGLLX,NGLLZ,nspec))
@@ -83,7 +84,9 @@
       enddo
     enddo
 
+    ! outputs model files
     if (trim(SAVE_MODEL) == 'legacy') then
+      ! legacy format
       write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_model_velocity.dat_input'
       open(unit=1001,file=inputname,status='unknown',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_model_velocity.dat_input')
@@ -99,6 +102,7 @@
       close(1001)
 
     else if (trim(SAVE_MODEL) == 'ascii') then
+      ! ascii format
       write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat'
       open(unit=1001,file= inputname,status='unknown',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_rho_vp_vs.dat')
@@ -113,6 +117,7 @@
       close(1001)
 
     else if ((trim(SAVE_MODEL) == 'binary') .or. (trim(SAVE_MODEL) == 'gll')) then
+      ! binary and gll format
       write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
       open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_rho.bin')

@@ -275,7 +275,7 @@
           rmass_inverse_gravito(iglob) = rmass_inverse_gravito(iglob) &
                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
 
-        else
+        else if (ispec_is_acoustic(ispec)) then
           ! for acoustic medium
 
           this_element_has_PML = .false.
@@ -372,6 +372,8 @@
             endif
 
           endif
+        else
+          stop 'Invalid element type found in routine invert_mass_matrix_init()'
         endif
       enddo
     enddo
