@@ -36,7 +36,7 @@
 !----
 
   subroutine locate_receivers(ibool,coord,nspec,nglob,xigll,zigll, &
-                              nrec,nrecloc,recloc,which_proc_receiver,NPROC,myrank, &
+                              nrec,nrecloc,recloc,islice_selected_rec,NPROC,myrank, &
                               st_xval,st_zval,ispec_selected_rec, &
                               xi_receiver,gamma_receiver,station_name,network_name, &
                               x_source,z_source, &
@@ -94,7 +94,7 @@
   double precision, dimension(nrec,NPROC)  :: gather_final_distance
   double precision, dimension(nrec,NPROC)  :: gather_xi_receiver, gather_gamma_receiver
 
-  integer, dimension(nrec), intent(inout)  :: which_proc_receiver
+  integer, dimension(nrec), intent(inout)  :: islice_selected_rec
   integer, dimension(:,:), allocatable  :: gather_ispec_selected_rec
   integer  :: ier
 
@@ -236,15 +236,16 @@
   call gather_all_i(ispec_selected_rec(1),nrec,gather_ispec_selected_rec(1,1),nrec, NPROC)
 
   if (myrank == 0) then
+    ! selects best slice which minimum distance to receiver location
     do irec = 1, nrec
-      which_proc_receiver(irec:irec) = minloc(gather_final_distance(irec,:)) - 1
+      islice_selected_rec(irec:irec) = minloc(gather_final_distance(irec,:)) - 1
     enddo
   endif
-  call bcast_all_i(which_proc_receiver(1),nrec)
+  call bcast_all_i(islice_selected_rec(1),nrec)
 
   if (USE_TRICK_FOR_BETTER_PRESSURE) then
     do irec= 1,nrec
-      if (which_proc_receiver(irec) == myrank) then
+      if (myrank == islice_selected_rec(irec)) then
         if (.not. ispec_is_acoustic(ispec_selected_rec(irec))) then
           call exit_MPI(myrank,'USE_TRICK_FOR_BETTER_PRESSURE : receivers must be in acoustic elements')
         endif
@@ -254,7 +255,7 @@
 
   nrecloc = 0
   do irec = 1, nrec
-    if (which_proc_receiver(irec) == myrank) then
+    if (myrank == islice_selected_rec(irec)) then
       nrecloc = nrecloc + 1
       recloc(nrecloc) = irec
     endif
@@ -266,18 +267,18 @@
       write(IMAIN,*)
       write(IMAIN,*) 'Station # ',irec,'    ',network_name(irec),station_name(irec)
 
-      if (gather_final_distance(irec,which_proc_receiver(irec)+1) == HUGEVAL) &
+      if (gather_final_distance(irec,islice_selected_rec(irec)+1) == HUGEVAL) &
         call exit_MPI(myrank,'Error locating receiver')
 
       write(IMAIN,*) '            original x: ',sngl(st_xval(irec))
       write(IMAIN,*) '            original z: ',sngl(st_zval(irec))
       write(IMAIN,*) '  distance from source: ',sngl(distance_receiver(irec))
-      write(IMAIN,*) 'closest estimate found: ',sngl(gather_final_distance(irec,which_proc_receiver(irec)+1)), &
+      write(IMAIN,*) 'closest estimate found: ',sngl(gather_final_distance(irec,islice_selected_rec(irec)+1)), &
                     ' m away'
-      write(IMAIN,*) ' in element ',gather_ispec_selected_rec(irec,which_proc_receiver(irec)+1)
-      write(IMAIN,*) ' at process ', which_proc_receiver(irec)
-      write(IMAIN,*) ' at xi,gamma coordinates = ',gather_xi_receiver(irec,which_proc_receiver(irec)+1),&
-                                  gather_gamma_receiver(irec,which_proc_receiver(irec)+1)
+      write(IMAIN,*) ' in element ',gather_ispec_selected_rec(irec,islice_selected_rec(irec)+1)
+      write(IMAIN,*) ' in rank ', islice_selected_rec(irec)
+      write(IMAIN,*) ' at xi,gamma coordinates = ',gather_xi_receiver(irec,islice_selected_rec(irec)+1),&
+                                  gather_gamma_receiver(irec,islice_selected_rec(irec)+1)
       write(IMAIN,*)
     enddo
 

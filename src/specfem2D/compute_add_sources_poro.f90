@@ -114,7 +114,7 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: myrank,nrec,NSTEP,it, &
-                         ispec_is_poroelastic,which_proc_receiver,ispec_selected_rec, &
+                         ispec_is_poroelastic,islice_selected_rec,ispec_selected_rec, &
                          ibool,adj_sourcearrays,initialfield,SIMULATION_TYPE, &
                          kmato,porosity,density, &
                          accels_poroelastic,accelw_poroelastic
@@ -135,7 +135,7 @@
   irec_local = 0
   do irec = 1,nrec
     ! add the source (only if this proc carries the source)
-    if (myrank == which_proc_receiver(irec)) then
+    if (myrank == islice_selected_rec(irec)) then
       irec_local = irec_local + 1
 
       ! element containing adjoint source

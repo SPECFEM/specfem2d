@@ -273,7 +273,7 @@
 
   use specfem_par, only: AXISYM,xiglj,is_on_the_axis, &
                          myrank, NSTEP, nrec, &
-                         xi_receiver, gamma_receiver, which_proc_receiver, &
+                         xi_receiver, gamma_receiver, islice_selected_rec, &
                          xigll,zigll,hxir,hgammar,hpxir,hpgammar, &
                          adj_sourcearrays, &
                          GPU_MODE, ispec_selected_rec,P_SV
@@ -332,7 +332,7 @@
   do irec = 1, nrec
 
     ! only process/slice holding receiver
-    if (myrank == which_proc_receiver(irec)) then
+    if (myrank == islice_selected_rec(irec)) then
       irec_local = irec_local + 1
 
       adj_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
@@ -406,7 +406,7 @@
         adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
       endif
 
-    endif !  if (myrank == which_proc_receiver(irec))
+    endif !  if (myrank == islice_selected_rec(irec))
   enddo ! irec
 
   ! closes files

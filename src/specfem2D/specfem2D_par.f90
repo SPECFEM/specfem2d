@@ -209,7 +209,8 @@ module specfem_par
   ! local receivers in this slice
   integer :: nrecloc
   double precision :: xirec,gammarec
-  integer, dimension(:), allocatable :: recloc, which_proc_receiver
+  integer, dimension(:), allocatable :: recloc
+  integer, dimension(:), allocatable :: islice_selected_rec
   integer, dimension(:), allocatable :: ispec_selected_rec
   double precision, dimension(:), allocatable :: xi_receiver,gamma_receiver,st_xval,st_zval
 

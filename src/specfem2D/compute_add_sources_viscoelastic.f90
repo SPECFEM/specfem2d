@@ -334,7 +334,7 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: myrank,P_SV,accel_elastic,ispec_is_elastic,NSTEP,it,&
-                         nrec,which_proc_receiver,ispec_selected_rec,adj_sourcearrays,&
+                         nrec,islice_selected_rec,ispec_selected_rec,adj_sourcearrays,&
                          ibool
   implicit none
 
@@ -348,7 +348,7 @@
   irec_local = 0
   do irec = 1,nrec
     !   add the source (only if this proc carries the source)
-    if (myrank == which_proc_receiver(irec)) then
+    if (myrank == islice_selected_rec(irec)) then
       irec_local = irec_local + 1
 
       ! element containing adjoint source

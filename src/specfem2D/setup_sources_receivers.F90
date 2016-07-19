@@ -156,7 +156,7 @@
   enddo ! do i_source= 1,NSOURCES
 
 !! DK DK this below not supported in the case of MPI yet, we should do a MPI_GATHER() of the values
-!! DK DK and use "if (myrank == which_proc_receiver(irec)) then" to display the right sources
+!! DK DK and use "if (myrank == islice_selected_rec(irec)) then" to display the right sources
 !! DK DK and receivers carried by each mesh slice, and not fictitious values coming from other slices
 #ifndef USE_MPI
   if (myrank == 0) then
@@ -191,7 +191,7 @@
                          ispec_selected_rec, &
                          NPROC,myrank,coorg,knods,ngnod, &
                          xigll,zigll,npgeo, &
-                         nrec,nrecloc,recloc,which_proc_receiver,st_xval,st_zval, &
+                         nrec,nrecloc,recloc,islice_selected_rec,st_xval,st_zval, &
                          xi_receiver,gamma_receiver,station_name,network_name, &
                          x_final_receiver,z_final_receiver, &
                          x_source,z_source
@@ -240,14 +240,14 @@
            station_name(nrec), &
            network_name(nrec), &
            recloc(nrec), &
-           which_proc_receiver(nrec), &
+           islice_selected_rec(nrec), &
            x_final_receiver(nrec), &
            z_final_receiver(nrec),stat=ier)
   if (ier /= 0) stop 'Error allocating receiver arrays'
 
   ! locate receivers in the mesh
   call locate_receivers(ibool,coord,nspec,nglob,xigll,zigll, &
-                        nrec,nrecloc,recloc,which_proc_receiver,NPROC,myrank, &
+                        nrec,nrecloc,recloc,islice_selected_rec,NPROC,myrank, &
                         st_xval,st_zval,ispec_selected_rec, &
                         xi_receiver,gamma_receiver,station_name,network_name, &
                         x_source(1),z_source(1), &
@@ -255,7 +255,7 @@
                         x_final_receiver,z_final_receiver)
 
 !! DK DK this below not supported in the case of MPI yet, we should do a MPI_GATHER() of the values
-!! DK DK and use "if (myrank == which_proc_receiver(irec)) then" to display the right sources
+!! DK DK and use "if (myrank == islice_selected_rec(irec)) then" to display the right sources
 !! DK DK and receivers carried by each mesh slice, and not fictitious values coming from other slices
   irec = 0
 #ifndef USE_MPI
@@ -377,7 +377,7 @@
 
   use specfem_par,only: nadj_rec_local,nrec,nrecloc,NSTEP,NPROC,SIMULATION_TYPE,SU_FORMAT, &
                         adj_sourcearrays, &
-                        myrank,which_proc_receiver,seismotype, &
+                        myrank,islice_selected_rec,seismotype, &
                         xi_receiver,gamma_receiver, &
                         network_name,station_name,GPU_MODE
 
@@ -414,9 +414,9 @@
     ! counts number of adjoint sources in this slice
     do irec = 1,nrec
       ! counts local adjoint receiver stations
-      if (myrank == which_proc_receiver(irec)) then
+      if (myrank == islice_selected_rec(irec)) then
         ! check that the source proc number is okay
-        if (which_proc_receiver(irec) < 0 .or. which_proc_receiver(irec) > NPROC-1) then
+        if (islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROC-1) then
           call exit_MPI(myrank,'something is wrong with the source proc number in adjoint simulation')
         endif
         ! counter
@@ -447,7 +447,7 @@
       irec_local = 0
       do irec = 1, nrec
         ! compute only adjoint source arrays in the local proc
-        if (myrank == which_proc_receiver(irec)) then
+        if (myrank == islice_selected_rec(irec)) then
           irec_local = irec_local + 1
           adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
 
@@ -542,7 +542,7 @@
   if (rec_normal_to_surface) then
     irecloc = 0
     do irec = 1, nrec
-      if (which_proc_receiver(irec) == myrank) then
+      if (myrank == islice_selected_rec(irec)) then
         irecloc = irecloc + 1
         distmin = HUGEVAL
         do i = 1, nnodes_tangential_curve
@@ -681,7 +681,7 @@
     do irec = 1,nrec
 
       if (myrank == 0) then
-        if (which_proc_receiver(irec) == myrank) then
+        if (myrank == islice_selected_rec(irec)) then
           irecloc = irecloc + 1
           n1_tangential_detection_curve = rec_tangential_detection_curve(irecloc)
           x_final_receiver_dummy = x_final_receiver(irec)
@@ -690,18 +690,18 @@
         else
 
           call MPI_RECV(n1_tangential_detection_curve,1,MPI_INTEGER,&
-             which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+             islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
           call MPI_RECV(x_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
-             which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+             islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
           call MPI_RECV(z_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
-             which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+             islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
 
 #endif
         endif
 
 #ifdef USE_MPI
       else
-        if (which_proc_receiver(irec) == myrank) then
+        if (myrank == islice_selected_rec(irec)) then
           irecloc = irecloc + 1
           call MPI_SEND(rec_tangential_detection_curve(irecloc),1,MPI_INTEGER,0,irec,MPI_COMM_WORLD,ier)
           call MPI_SEND(x_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
@@ -866,7 +866,7 @@
   use constants,only: NGLLX,NGLLZ,NGLJ
 
   use specfem_par,only: myrank,nrec,nrecloc, &
-    ispec_selected_rec,which_proc_receiver, &
+    ispec_selected_rec,islice_selected_rec, &
     xigll,zigll, &
     hxir_store,hgammar_store,xi_receiver,gamma_receiver,hxir,hpxir,hgammar,hpgammar, &
     AXISYM,is_on_the_axis,xiglj
@@ -891,7 +891,7 @@
   irec_local = 0
   do irec = 1,nrec
     if (AXISYM) then
-      if (is_on_the_axis(ispec_selected_rec(irec)) .and. myrank == which_proc_receiver(irec)) then
+      if (is_on_the_axis(ispec_selected_rec(irec)) .and. myrank == islice_selected_rec(irec)) then
         call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
         !do j = 1,NGLJ ! AB AB Same result with that loop
         !  hxir(j) = hglj(j-1,xi_receiver(irec),xiglj,NGLJ)
@@ -909,7 +909,7 @@
     hgammar_store(irec,:) = hgammar(:)
 
     ! local receivers in this slice
-    if (myrank == which_proc_receiver(irec)) then
+    if (myrank == islice_selected_rec(irec)) then
       irec_local = irec_local + 1
       xir_store_loc(irec_local,:) = hxir(:)
       gammar_store_loc(irec_local,:) = hgammar(:)

@@ -229,7 +229,7 @@
   ! prepares needed receiver array for adjoint runs
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) &
     call prepare_sim2_or_3_const_device(Mesh_pointer, &
-                                which_proc_receiver,nrecloc,nrec,source_adjointe,NSTEP)
+                                        islice_selected_rec,nrecloc,nrec,source_adjointe,NSTEP)
 
 
   ! synchronizes processes

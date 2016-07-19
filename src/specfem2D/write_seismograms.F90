@@ -196,7 +196,7 @@
   use constants,only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME
 
   use specfem_par, only : station_name,network_name, &
-                          NSTEP,which_proc_receiver,nrec,myrank,deltat,seismotype,t0, &
+                          NSTEP,islice_selected_rec,nrec,myrank,deltat,seismotype,t0, &
                           NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos,nrecloc, &
                           seismo_offset,seismo_current, &
                           P_SV,SU_FORMAT,save_ASCII_seismograms, &
@@ -348,7 +348,7 @@
   do irec = 1,nrec
     if (myrank == 0) then
 
-      if (which_proc_receiver(irec) == myrank) then
+      if (myrank == islice_selected_rec(irec)) then
         irecloc = irecloc + 1
 
         ! fills buffer
@@ -365,16 +365,16 @@
       else
         ! collects seismogram components on master
         call MPI_RECV(buffer_binary(1,irec,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
-                      which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+                      islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
         if (number_of_components == 2) then
           call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
-                        which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+                        islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
         endif
         if (number_of_components == 3) then
           call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
-                        which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+                        islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
           call MPI_RECV(buffer_binary(1,irec,3),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
-                        which_proc_receiver(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+                        islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
         endif
 #endif
       endif
@@ -495,7 +495,7 @@
     else
       ! slave processes (myrank > 0)
       ! sends seismogram values to master
-      if (which_proc_receiver(irec) == myrank) then
+      if (myrank == islice_selected_rec(irec)) then
         irecloc = irecloc + 1
         call MPI_SEND(sisux(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
                       MPI_COMM_WORLD,ier)
