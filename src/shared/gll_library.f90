@@ -538,7 +538,7 @@
 
   implicit none
 
-  double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0
+  double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0,tol_zero=1.d-30
 
   integer np
   double precision alpha,beta
@@ -577,8 +577,15 @@
   z(1)  = - one
   z(np) =  one
 
-! if number of points is odd, the middle abscissa is exactly zero
-  if (mod(np,2) /= 0) z((np-1)/2+1) = zero
+! note: Jacobi polynomials with (alpha,beta) equal to zero become Legendre polynomials.
+!       for Legendre polynomials, if number of points is odd, the middle abscissa is exactly zero
+  if (abs(alpha) < tol_zero .and. abs(beta) < tol_zero) then
+    if (mod(np,2) /= 0) then
+      !print *,'zwgljd debug ',np, z((np-1)/2+1),'zero middle abscissa case'
+      z((np-1)/2+1) = zero
+    endif
+  endif
+
 
 ! weights
   do i=2,np-1

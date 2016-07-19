@@ -50,7 +50,7 @@
 
   integer :: i1,i2,k1,k2
 
-! set up coordinates of the Gauss-Lobatto-Legendre points
+  ! set up coordinates of the Gauss-Lobatto-Legendre points
   call zwgljd(xigll,wxgll_dble,NGLLX,GAUSSALPHA,GAUSSBETA)
   call zwgljd(zigll,wzgll_dble,NGLLZ,GAUSSALPHA,GAUSSBETA)
 
@@ -58,7 +58,7 @@
   wxgll(:) = real(wxgll_dble(:),kind=CUSTOM_REAL)
   wzgll(:) = real(wzgll_dble(:),kind=CUSTOM_REAL)
 
-! if number of points is odd, the middle abscissa is exactly zero
+  ! if number of points is odd, the middle abscissa is exactly zero
   if (mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = ZERO
   if (mod(NGLLZ,2) /= 0) zigll((NGLLZ-1)/2+1) = ZERO
 
@@ -108,7 +108,7 @@
 
   integer i1,i2
 
-! set up coordinates of the Gauss-Lobatto-Jacobi points
+  ! set up coordinates of the Gauss-Lobatto-Jacobi points
   call zwgljd(xiglj,wxglj_dble,NGLJ,alphaGLJ,betaGLJ)
 
   ! converts to custom_real
