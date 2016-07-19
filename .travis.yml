@@ -53,6 +53,9 @@ env:
     # run example 6 (noise)
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=6
 
+    # run example 7 (axisymmetric)
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=7
+
 before_install:
   # informations on git
   - |
@@ -173,6 +176,7 @@ script:
     4) dir=EXAMPLES/Tromp2005_kernel/ ;;
     5) dir=EXAMPLES/poroelastic_acoustic/ ;;
     6) dir=EXAMPLES/noise_uniform/ ;;
+    7) dir=EXAMPLES/axisymmetric_case_AXISYM_option/ ;;
     *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
     esac
     # runs test
@@ -187,6 +191,10 @@ script:
       # limit time steps for testing
       if [ "$TESTMAKE" == "5" ] ; then
         sed -i "s:^NSTEP .*:NSTEP    = 1000:" DATA/Par_file
+      fi
+      if [ "$TESTMAKE" == "7" ] ; then
+        sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+        sed -i "s:^NSTEP .*:NSTEP    = 1400:" DATA/Par_file
       fi
       # coverage run
       if [ "$TESTCOV" == "1" ]; then
@@ -255,6 +263,17 @@ script:
     if [ "$TESTCOV" == "1" ]; then
       cd EXAMPLES/noise_uniform/
       sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file_noise_1
+      ./run_this_example.sh
+      # only for coverage, comparison would fail: my_test
+      cd $WORKDIR
+    fi
+
+  # testing axisymmetric example
+  - |
+    if [ "$TESTCOV" == "1" ]; then
+      cd EXAMPLES/axisymmetric_case_AXISYM_option/
+      sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+      sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
       ./run_this_example.sh
       # only for coverage, comparison would fail: my_test
       cd $WORKDIR
