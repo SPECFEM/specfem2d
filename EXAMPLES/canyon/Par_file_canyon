@@ -43,14 +43,17 @@ P_SV                            = .true.
 GPU_MODE                        = .false.
 
 # available models
-#   default: define model using nbmodels below
-#   ascii: read model from ascii database file
-#   binary: read model from binary databse file
-#   external: define model using define_external_model subroutine
-#   legacy: read model from model_velocity.dat_input
+#   default       - define model using nbmodels below
+#   ascii         - read model from ascii database file
+#   binary        - read model from binary databse file
+#   binary_voigt  - read Voigt model from binary database file
+#   external      - define model using define_external_model subroutine
+#   gll           - read GLL model from binary database file
+#   legacy        - read model from model_velocity.dat_input
 MODEL                           = default
 
-# Output the model with the requested type, does not save if turn to default
+# Output the model with the requested type, does not save if turn to default or .false.
+# (available output formats: ascii,binary,gll,legacy)
 SAVE_MODEL                      = default
 
 
@@ -91,7 +94,7 @@ force_normal_to_surface         = .false.        # angleforce normal to surface 
 
 # use an existing initial wave field as source or start from zero (medium initially at rest)
 initialfield                    = .true.
-add_Bielak_conditions_bottom    = .true.        # add Bielak conditions or not if initial plane wave
+add_Bielak_conditions_bottom    = .true.         # add Bielak conditions or not if initial plane wave
 add_Bielak_conditions_right     = .true.
 add_Bielak_conditions_top       = .true.
 add_Bielak_conditions_left      = .true.
@@ -218,8 +221,8 @@ free_surface_file               = ./DATA/mesh/canyon_free_surface_file   # file 
 axial_elements_file             = ./DATA/axial_elements_file   # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = ./DATA/mesh/canyon_absorbing_surface_file   # file containing the absorbing surface
 acoustic_forcing_surface_file   = ./DATA/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
-CPML_element_file               = Elements_CPML_list   # file containing the CPML element numbers
-tangential_detection_curve_file = ./DATA/courbe_eros_nodes   # file containing the curve delimiting the velocity model
+CPML_element_file               = Elements_CPML_list        # file containing the CPML element numbers
+tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------------------------
 #

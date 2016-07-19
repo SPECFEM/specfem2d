@@ -43,14 +43,17 @@ P_SV                            = .true.
 GPU_MODE                        = .false.
 
 # available models
-#   default: define model using nbmodels below
-#   ascii: read model from ascii database file
-#   binary: read model from binary databse file
-#   external: define model using define_external_model subroutine
-#   legacy: read model from model_velocity.dat_input
+#   default       - define model using nbmodels below
+#   ascii         - read model from ascii database file
+#   binary        - read model from binary databse file
+#   binary_voigt  - read Voigt model from binary database file
+#   external      - define model using define_external_model subroutine
+#   gll           - read GLL model from binary database file
+#   legacy        - read model from model_velocity.dat_input
 MODEL                           = default
 
-# Output the model with the requested type, does not save if turn to default
+# Output the model with the requested type, does not save if turn to default or .false.
+# (available output formats: ascii,binary,gll,legacy)
 SAVE_MODEL                      = default
 
 
@@ -212,15 +215,15 @@ read_external_mesh              = .true.
 
 # data concerning mesh, when generated using third-party app (more info in README)
 # (see also absorbing_conditions above)
-mesh_file                       = MESH/Mesh_SqrCirc      # file containing the mesh
-nodes_coords_file               = MESH/Nodes_SqrCirc     # file containing the nodes coordinates
-materials_file                  = MESH/Material_SqrCirc  # file containing the material number for each element
-free_surface_file               = MESH/Surf_free_SqrCirc # file containing the free surface
-axial_elements_file             = dummy                  # file containing the axial elements if AXISYM is true
-absorbing_surface_file          = MESH/Surf_abs_SqrCirc  # file containing the absorbing surface
-acoustic_forcing_surface_file   = dummy                  # file containing the acoustic forcing surface
-CPML_element_file               = dummy                  # file containing the CPML element numbers
-tangential_detection_curve_file = dummy                  # file containing the curve delimiting the velocity model
+mesh_file                       = MESH/Mesh_SqrCirc         # file containing the mesh
+nodes_coords_file               = MESH/Nodes_SqrCirc        # file containing the nodes coordinates
+materials_file                  = MESH/Material_SqrCirc     # file containing the material number for each element
+free_surface_file               = MESH/Surf_free_SqrCirc    # file containing the free surface
+axial_elements_file             = dummy                     # file containing the axial elements if AXISYM is true
+absorbing_surface_file          = MESH/Surf_abs_SqrCirc     # file containing the absorbing surface
+acoustic_forcing_surface_file   = dummy                     # file containing the acoustic forcing surface
+CPML_element_file               = dummy                     # file containing the CPML element numbers
+tangential_detection_curve_file = dummy                     # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------------------------
 #

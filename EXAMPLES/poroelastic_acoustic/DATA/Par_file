@@ -43,14 +43,17 @@ P_SV                            = .true.
 GPU_MODE                        = .false.
 
 # available models
-#   default: define model using nbmodels below
-#   ascii: read model from ascii database file
-#   binary: read model from binary databse file
-#   external: define model using define_external_model subroutine
-#   legacy: read model from model_velocity.dat_input
+#   default       - define model using nbmodels below
+#   ascii         - read model from ascii database file
+#   binary        - read model from binary databse file
+#   binary_voigt  - read Voigt model from binary database file
+#   external      - define model using define_external_model subroutine
+#   gll           - read GLL model from binary database file
+#   legacy        - read model from model_velocity.dat_input
 MODEL                           = default
 
-# Output the model with the requested type, does not save if turn to default
+# Output the model with the requested type, does not save if turn to default or .false.
+# (available output formats: ascii,binary,gll,legacy)
 SAVE_MODEL                      = default
 
 
@@ -145,18 +148,18 @@ rec_normal_to_surface           = .false.        # base anglerec normal to surfa
 
 # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
 nrec                            = 1              # number of receivers
-xdeb                            = 2000.0          # first receiver x in meters
-zdeb                            = 2934.0          # first receiver z in meters
-xfin                            = 2000.0          # last receiver x in meters (ignored if only one receiver)
-zfin                            = 2934.0          # last receiver z in meters (ignored if only one receiver)
+xdeb                            = 2000.0         # first receiver x in meters
+zdeb                            = 2934.0         # first receiver z in meters
+xfin                            = 2000.0         # last receiver x in meters (ignored if only one receiver)
+zfin                            = 2934.0         # last receiver z in meters (ignored if only one receiver)
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
 # second receiver set (in the poroelastic layer)
 nrec                            = 1              # number of receivers
-xdeb                            = 2000.0          # first receiver x in meters
-zdeb                            = 1867.0        # first receiver z in meters
-xfin                            = 2000.0           # last receiver x in meters (ignored if onlyone receiver)
-zfin                            = 1867.0        # last receiver z in meters (ignored if onlyone receiver)
+xdeb                            = 2000.0         # first receiver x in meters
+zdeb                            = 1867.0         # first receiver z in meters
+xfin                            = 2000.0         # last receiver x in meters (ignored if onlyone receiver)
+zfin                            = 1867.0         # last receiver z in meters (ignored if onlyone receiver)
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
 #-----------------------------------------------------------------------------
@@ -224,15 +227,15 @@ read_external_mesh              = .false.
 
 # data concerning mesh, when generated using third-party app (more info in README)
 # (see also absorbing_conditions above)
-mesh_file                       = dummy   # file containing the mesh
-nodes_coords_file               = dummy   # file containing the nodes coordinates
-materials_file                  = dummy   # file containing the material number for each element
-free_surface_file               = dummy   # file containing the free surface
-axial_elements_file             = dummy   # file containing the axial elements if AXISYM is true
-absorbing_surface_file          = dummy   # file containing the absorbing surface
-acoustic_forcing_surface_file   = dummy   # file containing the acoustic forcing surface
-CPML_element_file               = dummy   # file containing the CPML element numbers
-tangential_detection_curve_file = dummy   # file containing the curve delimiting the velocity model
+mesh_file                       = dummy                     # file containing the mesh
+nodes_coords_file               = dummy                     # file containing the nodes coordinates
+materials_file                  = dummy                     # file containing the material number for each element
+free_surface_file               = dummy                     # file containing the free surface
+axial_elements_file             = dummy                     # file containing the axial elements if AXISYM is true
+absorbing_surface_file          = dummy                     # file containing the absorbing surface
+acoustic_forcing_surface_file   = dummy                     # file containing the acoustic forcing surface
+CPML_element_file               = dummy                     # file containing the CPML element numbers
+tangential_detection_curve_file = dummy                     # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------------------------
 #

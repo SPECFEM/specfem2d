@@ -364,14 +364,26 @@ def write_template_file(parameters,tmp_file,verbose=False):
         if comment:
             f.write( "%s\n" % comment )
 
+        # for slightly different output format
+        external_model_parameter = ['mesh_file','nodes_coords_file','materials_file','free_surface_file', \
+                                    'axial_elements_file','absorbing_surface_file','acoustic_forcing_surface_file', \
+                                    'CPML_element_file','tangential_detection_curve_file']
+
         # writes out line with values
         if not "PAR_FILE_DATA" in name:
             # parameter line
             if appendix:
-                if len(value) <= 17:
-                    f.write( "%s = %s %s\n" % (name.ljust(max_name_length),value.ljust(14),appendix) )
+                # special section with appendix comment moved further to the right
+                if name in external_model_parameter:
+                    if len(value) <= 25:
+                        f.write( "%s = %s %s\n" % (name.ljust(max_name_length),value.ljust(25),appendix) )
+                    else:
+                        f.write( "%s = %s   %s\n" % (name.ljust(max_name_length),value,appendix) )
                 else:
-                    f.write( "%s = %s   %s\n" % (name.ljust(max_name_length),value,appendix) )
+                    if len(value) <= 17:
+                        f.write( "%s = %s %s\n" % (name.ljust(max_name_length),value.ljust(14),appendix) )
+                    else:
+                        f.write( "%s = %s   %s\n" % (name.ljust(max_name_length),value,appendix) )
             else:
                 f.write( "%s = %s\n" % (name.ljust(max_name_length),value) )
         else:
