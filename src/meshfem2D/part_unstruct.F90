@@ -1280,7 +1280,7 @@
   integer, intent(in)  :: remove_min_to_start_at_zero
 
   ! local parameters
-  integer  :: i,index
+  integer  :: i,ispec
 
   if (num_phase == 1) then
     ! only counts elements in this partition
@@ -1298,8 +1298,8 @@
       ! endif
 
       if (part(ispec_of_axial_elements(i)) == iproc) then
-        index = glob2loc_elmnts(ispec_of_axial_elements(i)) + remove_min_to_start_at_zero
-        write(IIN_database) index
+        ispec = glob2loc_elmnts(ispec_of_axial_elements(i)) + remove_min_to_start_at_zero
+        write(IIN_database) ispec
       endif
     enddo
   endif

@@ -667,45 +667,43 @@
       if (myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) 'Preparing save forward/adjoint simulation for poroelasticity'
-        call flush_IMAIN()
-      endif
-
-      allocate(b_viscodampx(NGLLX,NGLLZ,nspec), &
-               b_viscodampz(NGLLX,NGLLZ,nspec),stat=ier)
-      if (ier /= 0) stop 'Error allocating b_viscodamp arrays'
-      b_viscodampx(:,:,:) = 0._CUSTOM_REAL
-      b_viscodampz(:,:,:) = 0._CUSTOM_REAL
-
-      ! array size
-      reclen = CUSTOM_REAL * NGLLX * NGLLZ * nspec
-
-      write(outputname,'(a,i6.6,a)') 'viscodampingx',myrank,'.bin'
-      write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
-
-      ! user output
-      if (myrank == 0) then
         write(IMAIN,*) '  using viscous damping arrays for poroelastic domain'
         call flush_IMAIN()
       endif
 
-      ! file i/o
-      if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-        open(unit=23,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted',access='direct',recl=reclen,iostat=ier)
-        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+      ! allocate only when this slice contains poroelastic elements
+      if (any_poroelastic) then
+        allocate(b_viscodampx(NGLLX,NGLLZ,nspec), &
+                 b_viscodampz(NGLLX,NGLLZ,nspec),stat=ier)
+        if (ier /= 0) stop 'Error allocating b_viscodamp arrays'
+        b_viscodampx(:,:,:) = 0._CUSTOM_REAL
+        b_viscodampz(:,:,:) = 0._CUSTOM_REAL
 
-        open(unit=24,file='OUTPUT_FILES/'//outputname2,status='unknown',&
-              form='unformatted',access='direct',recl=reclen,iostat=ier)
-        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+        ! file i/o
+        ! array size
+        reclen = CUSTOM_REAL * NGLLX * NGLLZ * nspec
 
-      else if (SIMULATION_TYPE == 3) then
-        open(unit=23,file='OUTPUT_FILES/'//outputname,status='old',&
-              action='read',form='unformatted',access='direct',recl=reclen,iostat=ier)
-        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+        write(outputname,'(a,i6.6,a)') 'viscodampingx',myrank,'.bin'
+        write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
 
-        open(unit=24,file='OUTPUT_FILES/'//outputname2,status='old',&
-              action='read',form='unformatted',access='direct',recl=reclen,iostat=ier)
-        if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+        if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+          open(unit=23,file='OUTPUT_FILES/'//outputname,status='unknown',&
+                form='unformatted',access='direct',recl=reclen,iostat=ier)
+          if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+
+          open(unit=24,file='OUTPUT_FILES/'//outputname2,status='unknown',&
+                form='unformatted',access='direct',recl=reclen,iostat=ier)
+          if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+
+        else if (SIMULATION_TYPE == 3) then
+          open(unit=23,file='OUTPUT_FILES/'//outputname,status='old',&
+                action='read',form='unformatted',access='direct',recl=reclen,iostat=ier)
+          if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+
+          open(unit=24,file='OUTPUT_FILES/'//outputname2,status='old',&
+                action='read',form='unformatted',access='direct',recl=reclen,iostat=ier)
+          if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+        endif
       endif
     endif
   endif

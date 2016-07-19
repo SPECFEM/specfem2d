@@ -313,7 +313,7 @@
 #ifdef FORCE_VECTORIZATION
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) '     using array vectorization: FORCE_VECTORIZATION'
+    write(IMAIN,*) '    using array vectorization: FORCE_VECTORIZATION'
     write(IMAIN,*)
   endif
   ! safety stop

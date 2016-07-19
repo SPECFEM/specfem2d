@@ -45,6 +45,7 @@
 
   implicit none
 
+  ! frequency used for poroelastic velocities
   double precision,intent(in) :: f0
 
   ! local parameters

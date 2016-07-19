@@ -304,10 +304,11 @@
   do i_source = 1,NSOURCES
     write(IOUT) source_type(i_source),time_function_type(i_source)
     write(IOUT) name_of_source_file(i_source)
-    write(IOUT) burst_band_width(i_source), &
-                xs(i_source),zs(i_source),f0_source(i_source),tshift_src(i_source), &
-                factor(i_source),anglesource(i_source), &
-                Mxx(i_source),Mzz(i_source),Mxz(i_source)
+    write(IOUT) burst_band_width(i_source)
+    write(IOUT) xs(i_source),zs(i_source)
+    write(IOUT) f0_source(i_source),tshift_src(i_source)
+    write(IOUT) factor(i_source),anglesource(i_source)
+    write(IOUT) Mxx(i_source),Mzz(i_source),Mxz(i_source)
   enddo
 
   end subroutine save_databases_sources

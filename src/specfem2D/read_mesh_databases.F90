@@ -347,6 +347,11 @@
   !----  read source information
   read(IIN) NSOURCES
 
+  ! safety check
+  ! note: in principle, the number of sources could be zero for noise simulations.
+  !       however, we want to make sure to have one defined at least, even if not really needed.
+  if (NSOURCES < 1) stop 'Need at least one source for running a simulation, please check...'
+
   ! allocates source information arrays
   allocate(source_type(NSOURCES), &
            time_function_type(NSOURCES), &
@@ -396,13 +401,14 @@
   sourcearrays(:,:,:,:) = 0._CUSTOM_REAL
 
   ! reads in source info from Database file (check with routine save_databases_sources())
-  do i_source= 1,NSOURCES
+  do i_source = 1,NSOURCES
     read(IIN) source_type(i_source),time_function_type(i_source)
     read(IIN) name_of_source_file(i_source)
-    read(IIN) burst_band_width(i_source), &
-              x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
-              factor(i_source),anglesource(i_source), &
-              Mxx(i_source),Mzz(i_source),Mxz(i_source)
+    read(IIN) burst_band_width(i_source)
+    read(IIN) x_source(i_source),z_source(i_source)
+    read(IIN) f0_source(i_source),tshift_src(i_source)
+    read(IIN) factor(i_source),anglesource(i_source)
+    read(IIN) Mxx(i_source),Mzz(i_source),Mxz(i_source)
   enddo
 
   !if (AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify
@@ -655,8 +661,8 @@
   my_nelmnts_neighbours(:) = 0
   my_interfaces(:,:,:) = -1
 
-  ! checks if anything to do
-  if (ninterface <= 0) return
+  ! note: for serial simulations, ninterface will be zero.
+  !       thus no further reading will be done below
 
   ! reads in interfaces
   do num_interface = 1, ninterface
@@ -1320,7 +1326,6 @@
   allocate(solid_poro_poroelastic_ispec(num_solid_poro_edges))
   allocate(solid_poro_poroelastic_iedge(num_solid_poro_edges))
 
-
   ! initializes
   fluid_solid_acoustic_ispec(:) = 0
   fluid_solid_elastic_ispec(:) = 0
@@ -1440,7 +1445,7 @@
 
   ! local parameters
   integer :: nelem_on_the_axis_total
-  integer :: i,ier
+  integer :: i,ier,ispec
 
   ! axial flags
   allocate(is_on_the_axis(nspec),stat=ier)
@@ -1462,7 +1467,13 @@
   ! reads in any possible axial elements
   if (nelem_on_the_axis > 0) then
     do i = 1,nelem_on_the_axis
-      read(IIN) ispec_of_axial_elements(i)
+      read(IIN) ispec
+
+      ! quick check
+      if (ispec < 1 .or. ispec > nspec) stop 'Invalid ispec value, out of range in reading axial elements'
+
+      ! stores element list
+      ispec_of_axial_elements(i) = ispec
     enddo
 
     ! determines flags if element is on the axis

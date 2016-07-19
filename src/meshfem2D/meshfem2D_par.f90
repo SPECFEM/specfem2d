@@ -87,13 +87,13 @@
   implicit none
 
   ! source type parameters
-  integer, dimension(:),pointer ::  source_type,time_function_type
+  integer, dimension(:),allocatable ::  source_type,time_function_type
   ! location
-  double precision, dimension(:),pointer :: xs,zs
+  double precision, dimension(:),allocatable :: xs,zs
   ! moment tensor
-  double precision, dimension(:),pointer :: Mxx,Mzz,Mxz
+  double precision, dimension(:),allocatable :: Mxx,Mzz,Mxz
   ! source parameters
-  double precision, dimension(:),pointer :: f0_source,tshift_src,anglesource,factor,burst_band_width
+  double precision, dimension(:),allocatable :: f0_source,tshift_src,anglesource,factor,burst_band_width
   ! flag for fixation to surface
   logical, dimension(:),allocatable ::  source_surf
   ! File name can't exceed MAX_STRING_LEN characters

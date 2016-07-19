@@ -50,7 +50,8 @@
   is_on_the_axis(:) = .false.
 
   do ispec = 1,nspec
-    if (any(ispec_of_axial_elements == ispec)) is_on_the_axis(ispec) = .true.
+    ! checks if ispec is contained in list ispec_of_axial_element
+    if (any(ispec_of_axial_elements(:) == ispec)) is_on_the_axis(ispec) = .true.
   enddo
 
   end subroutine build_is_on_the_axis
