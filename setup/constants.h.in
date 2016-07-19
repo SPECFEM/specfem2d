@@ -355,6 +355,14 @@
   integer, parameter :: IEDGE3 = 3
   integer, parameter :: IEDGE4 = 4
 
+! flag to indicate an element type
+! material domain ids (acoustic/elastic/poroelastic/gravitoacoustic)
+  integer, parameter :: IDOMAIN_ACOUSTIC    = 1
+  integer, parameter :: IDOMAIN_ELASTIC     = 2
+  integer, parameter :: IDOMAIN_POROELASTIC = 3
+  integer, parameter :: IDOMAIN_GRAVITOACOUSTIC = 4
+
+
 !!-----------------------------------------------------------
 !!
 !! for LDDRK high-order time scheme

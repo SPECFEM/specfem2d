@@ -37,9 +37,9 @@
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
-  use specfem_par, only: ispec_is_poroelastic,nglob_poroelastic, &
+  use specfem_par, only: myrank,ispec_is_poroelastic,nglob_poroelastic, &
                          NSOURCES,source_time_function,sourcearrays, &
-                         is_proc_source,ispec_selected_source, &
+                         islice_selected_source,ispec_selected_source, &
                          ibool,porosity,tortuosity,density,kmato
   implicit none
 
@@ -57,7 +57,7 @@
   do i_source = 1,NSOURCES
 
     ! if this processor core carries the source
-    if (is_proc_source(i_source) == 1) then
+    if (myrank == islice_selected_source(i_source)) then
 
       ! element containing source
       ispec = ispec_selected_source(i_source)

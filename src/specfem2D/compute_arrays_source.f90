@@ -86,7 +86,7 @@
 ! compute Lagrange polynomials at the source location
 
   if (AXISYM) then
-    if (is_on_the_axis(ispec_selected_source)) then ! TODO verify if we have to add : .and. is_proc_source(i)
+    if (is_on_the_axis(ispec_selected_source)) then ! TODO verify if we have to add : .and. myrank == islice_selected_source(i)
       call lagrange_any(xi_source,NGLJ,xiglj,hxis,hpxis)
     else
       call lagrange_any(xi_source,NGLLX,xigll,hxis,hpxis)

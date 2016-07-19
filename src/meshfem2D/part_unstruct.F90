@@ -555,6 +555,7 @@
 
   integer  :: i, j, k, l
   integer  :: num_interface
+  integer, parameter :: minus_one = -1
 
   num_interface = 0
 
@@ -604,7 +605,7 @@
               enddo
 
               write(IIN_database) local_elmnt, tab_interfaces(k*5+2), &
-                                        local_nodes(1), -1
+                                        local_nodes(1), minus_one
             else
               if (tab_interfaces(k*5+2) == 2) then
                 ! common edge (two nodes)
@@ -666,6 +667,7 @@
   integer  :: num_phase
 
   integer  :: i, l
+  integer, parameter :: minus_one = -1
 
   if (num_phase == 1) then
 
@@ -696,7 +698,7 @@
             endif
           enddo
 
-          write(IIN_database) local_elmnt, surface(2,i), local_nodes(1), -1
+          write(IIN_database) local_elmnt, surface(2,i), local_nodes(1), minus_one
         endif
 
         if (surface(2,i) == 2) then
@@ -1278,7 +1280,7 @@
   integer, intent(in)  :: remove_min_to_start_at_zero
 
   ! local parameters
-  integer  :: i
+  integer  :: i,index
 
   if (num_phase == 1) then
     ! only counts elements in this partition
@@ -1296,7 +1298,8 @@
       ! endif
 
       if (part(ispec_of_axial_elements(i)) == iproc) then
-        write(IIN_database) glob2loc_elmnts(ispec_of_axial_elements(i)) + remove_min_to_start_at_zero
+        index = glob2loc_elmnts(ispec_of_axial_elements(i)) + remove_min_to_start_at_zero
+        write(IIN_database) index
       endif
     enddo
   endif

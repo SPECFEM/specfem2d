@@ -72,7 +72,7 @@
                          coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface, &
                          ispec_is_elastic,ispec_is_poroelastic, &
                          x_source,z_source,ispec_selected_source, &
-                         is_proc_source,nb_proc_source, &
+                         islice_selected_source, &
                          xigll,zigll,npgeo, &
                          NPROC,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
                          iglob_source
@@ -94,13 +94,14 @@
 
     if (source_type(i_source) == 1) then
       ! collocated force source
-      call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
-                               ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
-                               NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
-                               iglob_source(i_source))
+      call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
+                         x_source(i_source),z_source(i_source), &
+                         ispec_selected_source(i_source),islice_selected_source(i_source), &
+                         NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                         iglob_source(i_source),.true.) ! flag .true. indicates force source
 
       ! check
-      if (is_proc_source(i_source) == 1) then
+      if (myrank == islice_selected_source(i_source)) then
         ! checks that acoustic source is not exactly on the free surface because pressure is zero there
         do ispec_acoustic_surface = 1,nelem_acoustic_surface
           ispec = acoustic_surface(1,ispec_acoustic_surface)
@@ -138,9 +139,13 @@
 
     else if (source_type(i_source) == 2) then
       ! moment-tensor source
-      call locate_source_moment_tensor(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
-                                       ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
-                                       NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo)
+      ! note: iglob_source is not really needed for moment-tensor sources, but left as argument since it's already allocated
+      !       and might help for future routines...
+      call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
+                         x_source(i_source),z_source(i_source), &
+                         ispec_selected_source(i_source),islice_selected_source(i_source), &
+                         NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                         iglob_source(i_source),.false.) ! flag .false. indicates moment-tensor source
 
     else if (.not.initialfield) then
 
@@ -572,7 +577,7 @@
   ! for the source
   if (force_normal_to_surface) then
     do i_source = 1,NSOURCES
-      if (is_proc_source(i_source) == 1) then
+      if (myrank == islice_selected_source(i_source)) then
         distmin = HUGEVAL
         do i = 1, nnodes_tangential_curve
           dist_current = sqrt((coord(1,iglob_source(i_source))-nodes_tangential_curve(1,i))**2 + &
@@ -601,18 +606,17 @@
                                     nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
 
         source_courbe_eros(i_source) = n1_tangential_detection_curve
-        if (myrank == 0 .and. is_proc_source(i_source) == 1 .and. nb_proc_source(i_source) == 1) then
+        if (myrank == 0 .and. myrank == islice_selected_source(i_source)) then
           source_courbe_eros(i_source) = n1_tangential_detection_curve
           anglesource_recv = anglesource(i_source)
 #ifdef USE_MPI
         else if (myrank == 0) then
-          do i = 1, nb_proc_source(i_source) - is_proc_source(i_source)
-            call MPI_recv(source_courbe_eros(i_source),1,MPI_INTEGER, &
+          call MPI_recv(source_courbe_eros(i_source),1,MPI_INTEGER, &
                         MPI_ANY_SOURCE,42,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-            call MPI_recv(anglesource_recv,1,MPI_DOUBLE_PRECISION, &
+          call MPI_recv(anglesource_recv,1,MPI_DOUBLE_PRECISION, &
                         MPI_ANY_SOURCE,43,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-          enddo
-        else if (is_proc_source(i_source) == 1) then
+
+        else if (myrank == islice_selected_source(i_source)) then
           call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,MPI_COMM_WORLD,ier)
           call MPI_send(anglesource(i_source),1,MPI_DOUBLE_PRECISION,0,43,MPI_COMM_WORLD,ier)
 #endif
@@ -622,7 +626,9 @@
         call bcast_all_singledp(anglesource_recv)
         anglesource(i_source) = anglesource_recv
 #endif
-      endif !  if (is_proc_source(i_source) == 1)
+
+
+      endif
     enddo ! do i_source= 1,NSOURCES
   endif !  if (force_normal_to_surface)
 
@@ -735,7 +741,7 @@
   use specfem_par,only: myrank,nspec,NSOURCES,source_type,anglesource,P_SV, &
     sourcearrays,Mxx,Mxz,Mzz, &
     ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic, &
-    ispec_selected_source,is_proc_source, &
+    ispec_selected_source,islice_selected_source, &
     xi_source,gamma_source, &
     xix,xiz,gammax,gammaz,xigll,zigll, &
     hxis_store,hgammas_store,hxis,hpxis,hgammas,hpgammas, &
@@ -763,7 +769,7 @@
   ! define and store Lagrange interpolators at all the sources
   do i_source = 1,NSOURCES
 
-    if (is_proc_source(i_source) == 1) then
+    if (myrank == islice_selected_source(i_source)) then
 
       ! element containing source
       ispec = ispec_selected_source(i_source)

@@ -217,7 +217,10 @@
 
   ! sets node coordinates
   nnodes = (nz+1)*(nx+1)
+
   allocate(nodes_coords(2,nnodes))
+  nodes_coords(:,:) = 0.d0
+
   if (ngnod == 4) then
     do j = 0, nz
       do i = 0, nx

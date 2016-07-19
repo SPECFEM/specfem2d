@@ -335,7 +335,7 @@
   double precision val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read,&
                    val8read,val9read,val10read,val11read,val12read
 
-  character(len=MAX_STRING_LEN) string_read
+  character(len=100) string_read
   integer ierr
   common /param_err_common/ ierr
 

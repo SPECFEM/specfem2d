@@ -362,8 +362,7 @@
            ispec_selected_source(NSOURCES), &
            iglob_source(NSOURCES), &
            source_courbe_eros(NSOURCES), &
-           is_proc_source(NSOURCES), &
-           nb_proc_source(NSOURCES), &
+           islice_selected_source(NSOURCES), &
            sourcearrays(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
   if (ier /= 0) stop 'Error allocating source arrays'
 
@@ -390,9 +389,7 @@
   x_source(:) = 0.d0
   z_source(:) = 0.d0
 
-  is_proc_source(:) = 0
-  nb_proc_source(:) = 0
-
+  islice_selected_source(:) = 0
   ispec_selected_source(:) = 0
   iglob_source(:) = 0
 
@@ -428,9 +425,13 @@
   implicit none
 
   ! local parameters
-  integer :: ipoin,ip,id,ier
+  integer :: ipoin,ip,ier
   double precision, dimension(NDIM) :: coorgread
   integer :: nspec_all,nelem_acforcing_all,nelem_acoustic_surface_all
+
+  ! safety check
+  if (NDIM /= 2) stop 'Invalid NDIM value to read coordinates, please check...'
+
   ! allocates nodal coordinates
   allocate(coorg(NDIM,npgeo),stat=ier)
   if (ier /= 0) stop 'Error allocating coorg array'
@@ -444,13 +445,13 @@
   ipoin = 0
   do ip = 1,npgeo
     ! reads coordinates
-    read(IIN) ipoin,(coorgread(id),id = 1,NDIM)
+    read(IIN) ipoin,coorgread(1),coorgread(2)
 
     ! checks index
     if (ipoin < 1 .or. ipoin > npgeo) call exit_MPI(myrank,'Wrong control point number')
 
     ! saves coordinate array
-    coorg(:,ipoin) = coorgread
+    coorg(:,ipoin) = coorgread(:)
   enddo
 
   !---- read the basic properties of the spectral elements
@@ -1199,7 +1200,7 @@
   implicit none
 
   ! local parameters
-  integer :: inum,acoustic_edges_read,nelem_acoustic_surface_all
+  integer :: inum,nelem_acoustic_surface_all
   integer :: ier
 
   ! sets acoustic edges flag
@@ -1221,10 +1222,7 @@
   ! reads in any possible free surface edges
   if (any_acoustic_edges) then
     do inum = 1,nelem_acoustic_surface
-      read(IIN) acoustic_edges_read, acoustic_edges(2,inum), acoustic_edges(3,inum), &
-                acoustic_edges(4,inum)
-
-      acoustic_edges(1,inum) = acoustic_edges_read
+      read(IIN) acoustic_edges(1,inum), acoustic_edges(2,inum), acoustic_edges(3,inum), acoustic_edges(4,inum)
     enddo
   endif
 

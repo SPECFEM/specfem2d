@@ -253,6 +253,8 @@
 #endif
 
   allocate(nodes_coords(2,nnodes))
+  nodes_coords(:,:) = 0.d0
+
   do i = 1, nnodes
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
      read(991) nodes_coords(1,i), nodes_coords(2,i)

@@ -311,7 +311,11 @@
 
   ! enforcing wavefield at global degrees-of-freedom
 #ifdef FORCE_VECTORIZATION
-  if (myrank == 0) write(IMAIN,*) 'using array vectorization'
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) '     using array vectorization: FORCE_VECTORIZATION'
+    write(IMAIN,*)
+  endif
   ! safety stop
   if (USE_ENFORCE_FIELDS) &
     stop 'USE_ENFORCE_FIELDS is not supported yet when using FORCE_VECTORIZATION'

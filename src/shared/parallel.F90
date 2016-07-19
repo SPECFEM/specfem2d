@@ -321,6 +321,54 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
+#ifdef USE_MPI
+
+  subroutine send_singlei(sendbuf, dest, sendtag)
+
+! synchronuous/blocking send
+
+  use mpi
+
+  implicit none
+
+  integer :: dest,sendtag
+  integer :: sendbuf
+
+  integer :: ier
+
+  call MPI_SEND(sendbuf,1,MPI_INTEGER,dest,sendtag,MPI_COMM_WORLD,ier)
+
+  end subroutine send_singlei
+
+#endif
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+#ifdef USE_MPI
+
+  subroutine send_singledp(sendbuf, dest, sendtag)
+
+! synchronuous/blocking send
+
+  use mpi
+
+  implicit none
+
+  integer :: dest,sendtag
+  double precision :: sendbuf
+
+  integer :: ier
+
+  call MPI_SEND(sendbuf,1,MPI_DOUBLE_PRECISION,dest,sendtag,MPI_COMM_WORLD,ier)
+
+  end subroutine send_singledp
+
+#endif
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 #ifdef USE_MPI
 
@@ -345,6 +393,54 @@
 
 #endif
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+#ifdef USE_MPI
+
+  subroutine recv_singlei(recvbuf, dest, recvtag )
+
+! synchronuous/blocking receive
+
+  use mpi
+
+  implicit none
+
+  integer :: dest,recvtag
+  integer :: recvbuf
+
+  integer :: ier
+
+  call MPI_RECV(recvbuf,1,MPI_INTEGER,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+
+  end subroutine recv_singlei
+
+#endif
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+#ifdef USE_MPI
+
+  subroutine recv_singledp(recvbuf, dest, recvtag )
+
+! synchronuous/blocking receive
+
+  use mpi
+
+  implicit none
+
+  integer :: dest,recvtag
+  double precision :: recvbuf
+
+  integer :: ier
+
+  call MPI_RECV(recvbuf,1,MPI_DOUBLE_PRECISION,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+
+  end subroutine recv_singledp
+
+#endif
 
 !-------------------------------------------------------------------------------------------------
 !
@@ -716,6 +812,33 @@
 #endif
 
   end subroutine gather_all_singlei
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gather_all_all_singlei(sendbuf, recvbuf, NPROC)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  implicit none
+
+  integer :: NPROC
+  integer :: sendbuf
+  integer, dimension(0:NPROC-1) :: recvbuf
+
+#ifdef USE_MPI
+  ! local parameters
+  integer :: ier
+
+  call MPI_ALLGATHER(sendbuf,1,MPI_INTEGER,recvbuf,1,MPI_INTEGER,MPI_COMM_WORLD,ier)
+#else
+  recvbuf(0) = sendbuf
+#endif
+
+  end subroutine gather_all_all_singlei
 
 
 !-------------------------------------------------------------------------------------------------

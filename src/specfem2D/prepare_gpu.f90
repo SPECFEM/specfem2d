@@ -477,7 +477,7 @@
   ! counts sources in this process slice
   nsources_local = 0
   do i = 1, NSOURCES
-    if (is_proc_source(i) == 1) then
+    if (myrank == islice_selected_source(i)) then
       nsources_local = nsources_local + 1
     endif
   enddo
@@ -489,7 +489,7 @@
   allocate(ispec_selected_source_loc(nsources_local))
   j = 0
   do i = 1, NSOURCES
-    if (is_proc_source(i) == 1) then
+    if (myrank == islice_selected_source(i)) then
       if (j>nsources_local) stop 'Error with the number of local sources'
       j = j + 1
       source_time_function_loc(j,:) = source_time_function(i,:,1)
@@ -505,12 +505,12 @@
 
   k = 0
   do i_source = 1,NSOURCES
-    if (is_proc_source(i_source) == 1) then
+    if (myrank == islice_selected_source(i_source)) then
       ! source belongs to this process
       k = k + 1
       sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
       sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
-    endif ! is_proc_source
+    endif
   enddo
 
   ! converts to custom_real arrays

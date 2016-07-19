@@ -122,8 +122,7 @@ specfem2D_OBJECTS = \
 	$O/iterate_time.spec.o \
 	$O/iterate_time_undoatt.spec.o \
 	$O/locate_receivers.spec.o \
-	$O/locate_source_force.spec.o \
-	$O/locate_source_moment_tensor.spec.o \
+	$O/locate_source.spec.o \
 	$O/netlib_specfun_erf.spec.o \
 	$O/noise_tomography.spec.o \
 	$O/paco_beyond_critical.spec.o \

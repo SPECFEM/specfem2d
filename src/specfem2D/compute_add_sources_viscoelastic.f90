@@ -37,9 +37,9 @@
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
-  use specfem_par, only: P_SV,ispec_is_elastic,nglob_elastic, &
+  use specfem_par, only: myrank,P_SV,ispec_is_elastic,nglob_elastic, &
                          NSOURCES,source_time_function, &
-                         is_proc_source,ispec_selected_source,sourcearrays, &
+                         islice_selected_source,ispec_selected_source,sourcearrays, &
                          ibool
   implicit none
 
@@ -54,7 +54,7 @@
   do i_source = 1,NSOURCES
 
     ! if this processor core carries the source
-    if (is_proc_source(i_source) == 1) then
+    if (myrank == islice_selected_source(i_source)) then
 
       ! element containing source
       ispec = ispec_selected_source(i_source)
@@ -114,8 +114,8 @@
 
   use specfem_par, only: P_SV,ispec_is_elastic,nglob_elastic, &
                          NSOURCES,source_time_function, &
-                         is_proc_source,ispec_selected_source,sourcearrays, &
-                         ibool,coord,nspec,nglob,xigll,zigll,z_source,nb_proc_source,NPROC, & !These 3 lines are for moving src
+                         islice_selected_source,ispec_selected_source,sourcearrays, &
+                         ibool,coord,nspec,nglob,xigll,zigll,z_source,NPROC, & !These 3 lines are for moving src
                          xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source,deltat,t0,myrank, &
                          time_stepping_scheme,hxis_store,hgammas_store,tshift_src,source_type,ispec_is_acoustic, &
                          hxis,hpxis,hgammas,hpgammas,anglesource,ispec_is_poroelastic,Mxx,Mxz,Mzz,gammax,gammaz,xix,xiz, &
@@ -156,16 +156,19 @@
 
       ! collocated force source
       if (source_type(i_source) == 1) then
-        call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
-                               ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
-                               NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
-                               iglob_source(i_source))
+        call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
+                           x_source(i_source),z_source(i_source), &
+                           ispec_selected_source(i_source),islice_selected_source(i_source), &
+                           NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                           iglob_source(i_source),.true.)
 
       else if (source_type(i_source) == 2) then
         ! moment-tensor source
-        call locate_source_moment_tensor(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
-                                       ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
-                                       NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo)
+        call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
+                           x_source(i_source),z_source(i_source), &
+                           ispec_selected_source(i_source),islice_selected_source(i_source), &
+                           NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                           iglob_source(i_source),.false.)
 
       else if (.not.initialfield) then
 
@@ -193,7 +196,7 @@
       if (mod(it,10) == 0) then
           !  write(IMAIN,*) "myrank:",myrank
           ! user output
-          if (is_proc_source(i_source) == 1) then
+          if (myrank == islice_selected_source(i_source)) then
             iglob = ibool(2,2,ispec_selected_source(i_source))
             !write(IMAIN,*) 'xcoord: ',coord(1,iglob)
             write(IMAIN,*) 'it??: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob
@@ -270,7 +273,7 @@
   do i_source = 1,NSOURCES
 
     ! if this processor core carries the source
-    if (is_proc_source(i_source) == 1) then
+    if (myrank == islice_selected_source(i_source)) then
 
       ! element containing source
       ispec = ispec_selected_source(i_source)

@@ -41,8 +41,8 @@
 
   use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0_source,tshift_src,factor, &
-                         t0,nb_proc_source,deltat, &
-                         time_stepping_scheme,stage_time_scheme,is_proc_source, &
+                         t0,deltat, &
+                         time_stepping_scheme,stage_time_scheme,islice_selected_source, &
                          USE_TRICK_FOR_BETTER_PRESSURE,myrank,initialfield
 
   implicit none
@@ -103,9 +103,11 @@
   endif
 
   ! user output
-  if (is_proc_source(1) == 1) then
-    write(IMAIN,*) '  saving the source time function in a text file...'
-    call flush_IMAIN()
+  if (myrank == islice_selected_source(1)) then
+    if (myrank == 0) then
+      write(IMAIN,*) '  saving the source time function in a text file...'
+      call flush_IMAIN()
+    endif
     ! opens source time file for output
     open(unit=55,file='OUTPUT_FILES/plot_source_time_function.txt',status='unknown',iostat=ier)
     if (ier /= 0) stop 'Error opening source time function text-file'
@@ -120,7 +122,7 @@
     ! The following lines could be needed to set absolute amplitudes.
     ! In this case variables vpext,rhoext,density,poroelastcoef,assign_external_model,ispec_selected_source,kmato
     ! and double precision :: rho, cp logical :: already_done = .false. need to be introduced
-    !    if(is_proc_source(i_source) == 1) then
+    !    if(myrank == islice_selected_source(i_source)) then
     !      if (AXISYM) then
     !        if (.not. already_done) then
     !          if(  assign_external_model ) then
@@ -174,7 +176,7 @@
         t_used = timeval - t0 - tshift_src(i_source)
 
         ! only process/partition containing source must set STF
-        if (is_proc_source(i_source) == 1 .or. SOURCE_IS_MOVING) then
+        if (myrank == islice_selected_source(i_source) .or. SOURCE_IS_MOVING) then
 
           ! determines source_time_function value for different source types
           select case (time_function_type(i_source))
@@ -446,15 +448,7 @@
   enddo
 
   ! closes STF file
-  if (is_proc_source(1) == 1) close(55)
-
-  ! nb_proc_source is the number of processes that own the source (the nearest point). It can be greater
-  ! than one if the nearest point is on the MPI interface between several partitions with an explosive source.
-  ! since source contribution is linear, the source_time_function is cut down by that number (it would have been similar
-  ! if we just had elected one of those processes).
-  do i_source = 1,NSOURCES
-    source_time_function(i_source,:,:) = source_time_function(i_source,:,:) / nb_proc_source(i_source)
-  enddo
+  if (myrank == islice_selected_source(1)) close(55)
 
   ! synchronizes all processes
   call synchronize_all()

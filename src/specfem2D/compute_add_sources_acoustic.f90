@@ -39,7 +39,7 @@
 
   use specfem_par, only: ispec_is_acoustic,nglob_acoustic,&
                          NSOURCES,source_type,source_time_function,sourcearrays, &
-                         is_proc_source,ispec_selected_source,&
+                         islice_selected_source,ispec_selected_source,&
                          ibool,kappastore,myrank
   implicit none
 
@@ -52,7 +52,7 @@
 
   do i_source= 1,NSOURCES
     ! if this processor core carries the source
-    if (is_proc_source(i_source) == 1) then
+    if (myrank == islice_selected_source(i_source)) then
 
       ! element containing source
       ispec = ispec_selected_source(i_source)
@@ -109,9 +109,9 @@
 
   use specfem_par, only: ispec_is_acoustic,nglob_acoustic,&
                          NSOURCES,source_type,source_time_function,&
-                         is_proc_source,ispec_selected_source,&
+                         islice_selected_source,ispec_selected_source,&
                          hxis_store,hgammas_store,ibool,kappastore,myrank,deltat,t0,tshift_src,&
-                         coord,nspec,nglob,xigll,zigll,z_source,nb_proc_source,NPROC,xi_source,& !These 3 lines are for moving src
+                         coord,nspec,nglob,xigll,zigll,z_source,NPROC,xi_source,& !These 3 lines are for moving src
                          gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source, &
                          time_stepping_scheme, &
                          hxis,hpxis,hgammas,hpgammas !,AXISYM,xiglj,is_on_the_axis
@@ -146,14 +146,15 @@
       x_source(i_source) = xminSource + vSource*t_used !timeval?
 
       ! collocated force source
-      call locate_source_force(ibool,coord,nspec,nglob,xigll,zigll,x_source(i_source),z_source(i_source), &
-                               ispec_selected_source(i_source),is_proc_source(i_source),nb_proc_source(i_source), &
-                               NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
-                               iglob_source(i_source))
+      call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
+                         x_source(i_source),z_source(i_source), &
+                         ispec_selected_source(i_source),islice_selected_source(i_source), &
+                         NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                         iglob_source(i_source),.true.)
 
       ! define and store Lagrange interpolators (hxis,hpxis,hgammas,hpgammas) at all the sources
       !if (AXISYM) then
-      !  if (is_on_the_axis(ispec_selected_source(i_source)) .and. is_proc_source(i_source) == 1) then
+      !  if (is_on_the_axis(ispec_selected_source(i_source)) .and. myrank == islice_selected_source(i_source)) then
       !    call lagrange_any(xi_source(i_source),NGLJ,xiglj,hxis,hpxis)
       !    !do j = 1,NGLJ ! AB AB same result with that loop
       !    !  hxis(j) = hglj(j-1,xi_source(i),xiglj,NGLJ)
@@ -173,7 +174,7 @@
 !      if (mod(it,10) == 0) then
 !          !  write(IMAIN,*) "myrank:",myrank
 !          ! user output
-!          if (is_proc_source(i_source) == 1) then
+!          if (myrank == islice_selected_source(i_source)) then
 !            iglob = ibool(2,2,ispec_selected_source(i_source))
 !            !write(IMAIN,*) 'xcoord: ',coord(1,iglob)
 !            write(IMAIN,*) 'it?: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob
@@ -190,7 +191,7 @@
   do i_source = 1,NSOURCES
     ! if this processor core carries the source and the source element is acoustic
     ! .and. acoustic(ispec_selected_source(i_source)) ??
-    if (is_proc_source(i_source) == 1) then
+    if (myrank == islice_selected_source(i_source)) then
 
       ! element containing source
       ispec = ispec_selected_source(i_source)

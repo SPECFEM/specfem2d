@@ -160,8 +160,9 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearrays
   double precision :: t0
 
-  integer, dimension(:), allocatable :: ispec_selected_source,iglob_source
-  integer, dimension(:), allocatable :: is_proc_source,nb_proc_source
+  integer, dimension(:), allocatable :: ispec_selected_source
+  integer, dimension(:), allocatable :: islice_selected_source
+  integer, dimension(:), allocatable :: iglob_source
 
   ! source time function
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: source_time_function
