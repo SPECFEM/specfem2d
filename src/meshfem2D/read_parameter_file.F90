@@ -218,7 +218,7 @@
     call bcast_all_singlel(modelvect)
     call bcast_all_singlel(boundvect)
     call bcast_all_singlel(interpol)
-    call bcast_all_singlel(pointsdisp)
+    call bcast_all_singlei(pointsdisp)
     call bcast_all_singlei(subsamp_postscript)
     call bcast_all_singledp(sizemax_arrows)
     call bcast_all_singlel(US_LETTER)
