@@ -82,7 +82,6 @@
               !ZN do not tune the source
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
                                   real(sourcearrays(i_source,1,i,j) * stf_used / kappastore(i,j,ispec),kind=CUSTOM_REAL)
-
             enddo
           enddo
 

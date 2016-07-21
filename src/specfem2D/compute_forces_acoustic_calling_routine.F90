@@ -58,17 +58,17 @@
     call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
                                  PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase)
 
+    ! PML boundary conditions enforces zero potentials on boundary
+    if (PML_BOUNDARY_CONDITIONS) then
+      call pml_boundary_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
+                                 potential_acoustic,potential_acoustic_old)
+    endif
+
     ! computes additional contributions
     if (iphase == 1) then
       ! Stacey boundary conditions
       if (STACEY_ABSORBING_CONDITIONS) then
         call compute_stacey_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic)
-      endif
-
-      ! PML boundary conditions
-      if (PML_BOUNDARY_CONDITIONS) then
-        call pml_boundary_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                   potential_acoustic,potential_acoustic_old)
       endif
 
       ! add acoustic forcing at a rigid boundary
@@ -138,6 +138,7 @@
 
   enddo ! iphase
 
+  ! PML saves interface values
   if (PML_BOUNDARY_CONDITIONS) then
     if (nglob_interface > 0) then
       if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
@@ -211,9 +212,9 @@
     istage_temp = stage_time_scheme - i_stage + 1
   endif
 
-  ! PML
+  ! PML restores interface values
   if (PML_BOUNDARY_CONDITIONS) then
-    call rebuild_value_on_PML_interface_acoustic(it_temp)
+    call rebuild_value_on_PML_interface_acoustic(it_temp,b_potential_acoustic,b_potential_dot_acoustic)
   endif
 
   ! free surface for an acoustic medium
@@ -230,6 +231,16 @@
       call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic,iphase)
     endif
 
+    ! PML boundary conditions
+    if (PML_BOUNDARY_CONDITIONS) then
+      ! enforces zero potentials on boundary
+      call pml_boundary_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                                 b_potential_acoustic,b_potential_acoustic_old)
+
+      ! restores potentials on interface
+      call rebuild_value_on_PML_interface_acoustic(it_temp,b_potential_acoustic,b_potential_dot_acoustic)
+    endif
+
     ! computes additional contributions
     if (iphase == 1) then
       ! Stacey boundary conditions
@@ -239,17 +250,6 @@
         else
           call compute_stacey_acoustic_backward(b_potential_dot_dot_acoustic)
         endif
-      endif
-
-      ! PML boundary conditions
-      if (PML_BOUNDARY_CONDITIONS) then
-        call pml_boundary_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                   b_potential_acoustic,b_potential_acoustic_old)
-      endif
-
-      ! PML
-      if (PML_BOUNDARY_CONDITIONS) then
-        call rebuild_value_on_PML_interface_acoustic(it_temp)
       endif
 
       ! add acoustic forcing at a rigid boundary
@@ -267,8 +267,9 @@
         call compute_coupling_acoustic_po_backward()
       endif
 
+      ! PML restores interface values
       if (PML_BOUNDARY_CONDITIONS) then
-        call rebuild_value_on_PML_interface_acoustic(it_temp)
+        call rebuild_value_on_PML_interface_acoustic(it_temp,b_potential_acoustic,b_potential_dot_acoustic)
       endif
 
       ! add force source
@@ -292,8 +293,9 @@
 
   enddo ! iphase
 
+  ! PML restores interface values
   if (PML_BOUNDARY_CONDITIONS) then
-    call rebuild_value_on_PML_interface_acoustic_accel(it_temp)
+    call rebuild_value_on_PML_interface_acoustic_accel(it_temp,b_potential_dot_dot_acoustic)
   endif
 
   ! multiply by the inverse of the mass matrix
