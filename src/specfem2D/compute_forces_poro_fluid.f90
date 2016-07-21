@@ -47,7 +47,7 @@
                          SIMULATION_TYPE, &
                          e11_LDDRK,e13_LDDRK, &
                          e11_initial_rk,e13_initial_rk,e11_force_RK, e13_force_RK, &
-                         stage_time_scheme,i_stage
+                         time_stepping_scheme,i_stage
 
   use specfem_par, only: displs_poroelastic_old
 
@@ -137,7 +137,8 @@
               ! Anisotropic-Medium PML for Vector FETD With Modified Basis Functions,
               ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
               ! evolution e1 ! no need since we are just considering shear attenuation
-              if (stage_time_scheme == 1) then
+              if (time_stepping_scheme == 1) then
+                ! Newmark
                 bb = tauinvnu2; coef0 = exp(-bb * deltat)
                 if (abs(bb) > 1e-5_CUSTOM_REAL) then
                    coef1 = (1._CUSTOM_REAL - exp(-bb * deltat / 2._CUSTOM_REAL)) / bb
@@ -154,11 +155,11 @@
                 e13(i,j,ispec,i_sls) = coef0 * e13(i,j,ispec,i_sls) + &
                                        phinu2 * (coef1 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) + &
                                                  coef2 * (dux_dzl_nsub1(i,j,ispec) + duz_dxl_nsub1(i,j,ispec)))
-              endif
 
               ! update e1, e11, e13 in ADE formation with LDDRK scheme
               ! evolution e1 ! no need since we are just considering shear attenuation
-              if (stage_time_scheme == 6) then
+              else if (time_stepping_scheme == 2) then
+                ! LDDRK
                 e11_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) + &
                                              deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2) - &
                                              deltat * (e11(i,j,ispec,i_sls) * tauinvnu2)
@@ -168,11 +169,11 @@
                                              deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2) - &
                                              deltat * (e13(i,j,ispec,i_sls) * tauinvnu2)
                 e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+BETA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
-              endif
 
               ! update e1, e11, e13 in ADE formation with classical Runge-Kutta scheme
               ! evolution e1 ! no need since we are just considering shear attenuation
-              if (stage_time_scheme == 4) then
+              else if (time_stepping_scheme == 3) then
+                ! RK
                 e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2 - &
                                                                    e11(i,j,ispec,i_sls) * tauinvnu2)
                 if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then

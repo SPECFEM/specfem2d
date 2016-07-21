@@ -53,7 +53,7 @@
                          AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,N_SLS, &
                          deltat,coord, &
-                         stage_time_scheme,i_stage,ispec_is_acoustic
+                         time_stepping_scheme,i_stage,ispec_is_acoustic
 
   ! overlapping communication
   use specfem_par, only: nspec_inner_elastic,nspec_outer_elastic,phase_ispec_inner_elastic
@@ -157,8 +157,8 @@
             ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
             ! Anisotropic-Medium PML for Vector FETD With Modified Basis Functions,
             ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
-            if (stage_time_scheme == 1) then
-
+            if (time_stepping_scheme == 1) then
+              ! Newmark
               call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
 
               e1(i,j,ispec,i_sls) = coef0 * e1(i,j,ispec,i_sls) + &
@@ -173,10 +173,10 @@
               e13(i,j,ispec,i_sls) = coef0 * e13(i,j,ispec,i_sls) + &
                                      phinu2 * (coef1 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) + &
                                                coef2 * (dux_dzl_nsub1(i,j,ispec) + duz_dxl_nsub1(i,j,ispec)))
-            endif
 
             ! update e1, e11, e13 in ADE formation with fourth-order LDDRK scheme
-            if (stage_time_scheme == 6) then
+            else if (time_stepping_scheme == 2) then
+              ! LDDRK
               e1_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
                                           deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
               e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + BETA_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
@@ -190,10 +190,10 @@
                                            deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2) - &
                                            deltat * (e13(i,j,ispec,i_sls) * tauinvnu2)
               e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+BETA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
-            endif
 
             ! update e1, e11, e13 in ADE formation with classical fourth-order Runge-Kutta scheme
-            if (stage_time_scheme == 4) then
+            else if (time_stepping_scheme == 3) then
+              ! RK
               e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
 
               if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
