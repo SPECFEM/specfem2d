@@ -38,7 +38,6 @@
 ! These subroutines are for the most part not used in the sequential version.
 
 
-
 #ifdef USE_MPI
 ! only supported with parallel version...
 
@@ -188,12 +187,11 @@
 
 #endif
 
-!
 !-------------------------------------------------------------------------------------------------
 !
-
-#ifdef USE_MPI
-! only supported with parallel version...
+! acoustic domains
+!
+!-------------------------------------------------------------------------------------------------
 
 
 !-----------------------------------------------
@@ -207,28 +205,24 @@
 ! Particular care should be taken concerning possible optimisations of the
 ! communication scheme.
 !-----------------------------------------------
-  subroutine assemble_MPI_scalar_ac(array_val1)
-
-  use mpi
+  subroutine assemble_MPI_scalar_ac_blocking(array_val1)
 
   use constants,only: CUSTOM_REAL
 
-  use specfem_par, only: NPROC,nglob,myrank,my_neighbours
+  use specfem_par, only: NPROC,nglob,my_neighbours
 
   ! acoustic MPI interfaces
   use specfem_par, only: ninterface_acoustic,inum_interfaces_acoustic, &
     ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
-    tab_requests_send_recv_acoustic,buffer_send_faces_vector_ac,buffer_recv_faces_vector_ac
+    request_send_recv_acoustic,buffer_send_faces_vector_ac,buffer_recv_faces_vector_ac
 
   implicit none
-
-  include "precision.h"
 
   real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
 
   ! local parameters
   integer  :: ipoin, num_interface,iinterface, iglob
-  integer :: ier
+  integer, parameter :: itag = 12
 
   ! assemble only if more than one partition
   if (NPROC > 1) then
@@ -236,7 +230,7 @@
     ! initializes buffers
     buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
     buffer_recv_faces_vector_ac(:,:) = 0._CUSTOM_REAL
-    tab_requests_send_recv_acoustic(:) = 0
+    request_send_recv_acoustic(:) = 0
 
     ! loops over acoustic interfaces only
     do iinterface = 1, ninterface_acoustic
@@ -259,34 +253,25 @@
       ! gets global interface index
       num_interface = inum_interfaces_acoustic(iinterface)
 
-
       ! non-blocking send
-      call MPI_ISEND( buffer_send_faces_vector_ac(1,iinterface), &
-                      nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
-                      my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-                      tab_requests_send_recv_acoustic(iinterface), ier)
-
-      if (ier /= MPI_SUCCESS) then
-        call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_start')
-      endif
+      call isend_cr( buffer_send_faces_vector_ac(1,iinterface), &
+                     nibool_interfaces_acoustic(num_interface), &
+                     my_neighbours(num_interface), &
+                     itag, &
+                     request_send_recv_acoustic(iinterface) )
 
       ! starts a non-blocking receive
-      call MPI_IRECV ( buffer_recv_faces_vector_ac(1,iinterface), &
-                       nibool_interfaces_acoustic(num_interface), CUSTOM_MPI_TYPE, &
-                       my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-                       tab_requests_send_recv_acoustic(ninterface_acoustic+iinterface), ier)
-
-      if (ier /= MPI_SUCCESS) then
-        call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector')
-      endif
-
+      call irecv_cr( buffer_recv_faces_vector_ac(1,iinterface), &
+                     nibool_interfaces_acoustic(num_interface), &
+                     my_neighbours(num_interface), &
+                     itag, &
+                     request_send_recv_acoustic(ninterface_acoustic+iinterface) )
     enddo
 
     ! waits for MPI requests to complete (recv)
     ! each wait returns once the specified MPI request completed
     do iinterface = 1, ninterface_acoustic
-      call MPI_Wait(tab_requests_send_recv_acoustic(ninterface_acoustic+iinterface), &
-                    MPI_STATUS_IGNORE, ier)
+      call wait_req(request_send_recv_acoustic(ninterface_acoustic+iinterface))
     enddo
 
     ! assembles the array values
@@ -307,18 +292,149 @@
     ! waits for MPI requests to complete (send)
     ! just to make sure that all sending is done
     do iinterface = 1, ninterface_acoustic
-      call MPI_Wait(tab_requests_send_recv_acoustic(iinterface), MPI_STATUS_IGNORE, ier)
+      call wait_req(request_send_recv_acoustic(iinterface))
     enddo
 
   endif
 
-  end subroutine assemble_MPI_scalar_ac
-
-#endif
+  end subroutine assemble_MPI_scalar_ac_blocking
 
 !
 !-------------------------------------------------------------------------------------------------
 !
+
+  subroutine assemble_MPI_scalar_ac_s(array_val1)
+
+! sends MPI buffers (asynchronuous) - non-blocking routine
+
+  use constants,only: CUSTOM_REAL
+
+  use specfem_par, only: NPROC,nglob,my_neighbours
+
+  ! acoustic MPI interfaces
+  use specfem_par, only: ninterface_acoustic,inum_interfaces_acoustic, &
+    ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+    request_send_recv_acoustic,buffer_send_faces_vector_ac,buffer_recv_faces_vector_ac
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
+
+  ! local parameters
+  integer  :: ipoin, num_interface,iinterface, iglob
+  integer, parameter :: itag = 12
+
+  ! assemble only if more than one partition
+  if (NPROC > 1) then
+
+    ! initializes buffers
+    buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
+    buffer_recv_faces_vector_ac(:,:) = 0._CUSTOM_REAL
+    request_send_recv_acoustic(:) = 0
+
+    ! loops over acoustic interfaces only
+    do iinterface = 1, ninterface_acoustic
+
+      ! gets interface index in the range of all interfaces [1,ninterface]
+      num_interface = inum_interfaces_acoustic(iinterface)
+
+      ! loops over all interface points
+      do ipoin = 1, nibool_interfaces_acoustic(num_interface)
+        iglob = ibool_interfaces_acoustic(ipoin,num_interface)
+
+        ! copies array values to buffer
+        buffer_send_faces_vector_ac(ipoin,iinterface) = array_val1(iglob)
+      enddo
+
+    enddo
+
+    ! send/request messages
+    do iinterface = 1, ninterface_acoustic
+
+      ! gets global interface index
+      num_interface = inum_interfaces_acoustic(iinterface)
+
+      call isend_cr( buffer_send_faces_vector_ac(1,iinterface), &
+                     nibool_interfaces_acoustic(num_interface), &
+                     my_neighbours(num_interface), &
+                     itag, &
+                     request_send_recv_acoustic(iinterface) )
+
+      call irecv_cr( buffer_recv_faces_vector_ac(1,iinterface), &
+                     nibool_interfaces_acoustic(num_interface), &
+                     my_neighbours(num_interface), &
+                     itag, &
+                     request_send_recv_acoustic(ninterface_acoustic+iinterface) )
+    enddo
+
+  endif
+
+  end subroutine assemble_MPI_scalar_ac_s
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine assemble_MPI_scalar_ac_w(array_val1)
+
+! waits for data and assembles
+
+  use constants,only: CUSTOM_REAL
+
+  use specfem_par, only: NPROC,nglob
+
+  ! acoustic MPI interfaces
+  use specfem_par, only: ninterface_acoustic,inum_interfaces_acoustic, &
+    ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+    request_send_recv_acoustic,buffer_recv_faces_vector_ac
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
+
+  ! local parameters
+  integer  :: ipoin, num_interface,iinterface, iglob
+
+  ! assemble only if more than one partition
+  if (NPROC > 1) then
+
+    ! waits for communication complection (all receive has finished)
+    do iinterface = 1, ninterface_acoustic
+      call wait_req(request_send_recv_acoustic(ninterface_acoustic+iinterface))
+    enddo
+
+    ! assembles the array values
+    do iinterface = 1, ninterface_acoustic
+
+      ! gets global interface index
+      num_interface = inum_interfaces_acoustic(iinterface)
+
+      ! loops over all interface points
+      do ipoin = 1, nibool_interfaces_acoustic(num_interface)
+        iglob = ibool_interfaces_acoustic(ipoin,num_interface)
+        ! adds buffer contribution
+        array_val1(iglob) = array_val1(iglob) + buffer_recv_faces_vector_ac(ipoin,iinterface)
+      enddo
+
+    enddo
+
+    ! waits for communication completion (all send has finished, we can clear the buffer...)
+    do iinterface = 1, ninterface_acoustic
+      call wait_req(request_send_recv_acoustic(iinterface))
+    enddo
+
+  endif
+
+  end subroutine assemble_MPI_scalar_ac_w
+
+
+
+!-------------------------------------------------------------------------------------------------
+!
+! elastic domains
+!
+!-------------------------------------------------------------------------------------------------
+
 
 #ifdef USE_MPI
 ! only supported with parallel version...
@@ -334,7 +450,10 @@
 ! Particular care should be taken concerning possible optimisations of the
 ! communication scheme.
 !-----------------------------------------------
-  subroutine assemble_MPI_vector_el(array_val)
+! note: although it uses asynchronuous isend/irecv, the routine is waiting to have all buffers transfered.
+!       the scheme is therefore similar to a blocking MPI scheme.
+
+  subroutine assemble_MPI_vector_el_blocking(array_val)
 
   use mpi
 
@@ -344,7 +463,7 @@
     nglob,ninterface_elastic, &
     inum_interfaces_elastic, &
     ibool_interfaces_elastic, nibool_interfaces_elastic, &
-    tab_requests_send_recv_elastic, &
+    request_send_recv_elastic, &
     buffer_send_faces_vector_el, &
     buffer_recv_faces_vector_el, &
     my_neighbours,myrank
@@ -382,7 +501,7 @@
       call MPI_ISEND( buffer_send_faces_vector_el(1,iinterface), &
                       NDIM * nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
                       my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-                      tab_requests_send_recv_elastic(iinterface), ier)
+                      request_send_recv_elastic(iinterface), ier)
 
       if (ier /= MPI_SUCCESS) then
         call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_el')
@@ -391,7 +510,7 @@
       call MPI_IRECV ( buffer_recv_faces_vector_el(1,iinterface), &
                        NDIM * nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
                        my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-                       tab_requests_send_recv_elastic(ninterface_elastic+iinterface), ier)
+                       request_send_recv_elastic(ninterface_elastic+iinterface), ier)
 
       if (ier /= MPI_SUCCESS) then
         call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_el')
@@ -402,7 +521,7 @@
     ! waits for all send/receive has finished
     do iinterface = 1, ninterface_elastic*2
 
-      call MPI_Wait(tab_requests_send_recv_elastic(iinterface), MPI_STATUS_IGNORE, ier)
+      call MPI_Wait(request_send_recv_elastic(iinterface), MPI_STATUS_IGNORE, ier)
 
     enddo
 
@@ -422,13 +541,139 @@
 
   endif
 
-  end subroutine assemble_MPI_vector_el
+  end subroutine assemble_MPI_vector_el_blocking
 
 #endif
 
 !
 !-------------------------------------------------------------------------------------------------
 !
+
+
+  subroutine assemble_MPI_vector_el_s(array_val)
+
+! sends MPI buffers (asynchronuous) - non-blocking routine
+
+  use constants,only: CUSTOM_REAL,NDIM
+
+  use specfem_par, only: NPROC, &
+    nglob,ninterface_elastic, &
+    inum_interfaces_elastic, &
+    ibool_interfaces_elastic, nibool_interfaces_elastic, &
+    request_send_recv_elastic, &
+    buffer_send_faces_vector_el, &
+    buffer_recv_faces_vector_el, &
+    my_neighbours
+
+  implicit none
+
+  ! array to assemble
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob), intent(inout) :: array_val
+
+  ! local parameters
+  integer  :: ipoin, num_interface, iinterface, i
+  integer, parameter :: itag = 12
+
+  ! assemble only if more than one partition
+  if (NPROC > 1) then
+
+    ! fills buffer
+    do iinterface = 1, ninterface_elastic
+
+       num_interface = inum_interfaces_elastic(iinterface)
+
+       ipoin = 0
+       do i = 1, nibool_interfaces_elastic(num_interface)
+          buffer_send_faces_vector_el(ipoin+1:ipoin+NDIM,iinterface) = array_val(:,ibool_interfaces_elastic(i,num_interface))
+          ipoin = ipoin + NDIM
+       enddo
+    enddo
+
+    ! send/request messages
+    do iinterface = 1, ninterface_elastic
+
+      num_interface = inum_interfaces_elastic(iinterface)
+
+      call isend_cr( buffer_send_faces_vector_el(1,iinterface), &
+                     NDIM * nibool_interfaces_elastic(num_interface), &
+                     my_neighbours(num_interface), &
+                     itag, &
+                     request_send_recv_elastic(iinterface) )
+
+      call irecv_cr( buffer_recv_faces_vector_el(1,iinterface), &
+                     NDIM * nibool_interfaces_elastic(num_interface), &
+                     my_neighbours(num_interface), &
+                     itag, &
+                     request_send_recv_elastic(ninterface_elastic+iinterface) )
+    enddo
+
+  endif
+
+  end subroutine assemble_MPI_vector_el_s
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine assemble_MPI_vector_el_w(array_val)
+
+! waits for data and assembles
+
+  use constants,only: CUSTOM_REAL,NDIM
+
+  use specfem_par, only: NPROC, &
+    nglob,ninterface_elastic, &
+    inum_interfaces_elastic, &
+    ibool_interfaces_elastic, nibool_interfaces_elastic, &
+    request_send_recv_elastic,buffer_recv_faces_vector_el
+
+  implicit none
+
+  ! array to assemble
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob), intent(inout) :: array_val
+
+  ! local parameters
+  integer  :: ipoin, num_interface, iinterface, i
+
+  ! assemble only if more than one partition
+  if (NPROC > 1) then
+
+    ! waits for communication complection (all receive has finished)
+    do iinterface = 1, ninterface_elastic
+      call wait_req(request_send_recv_elastic(ninterface_elastic+iinterface))
+    enddo
+
+    ! adds contributions
+    do iinterface = 1, ninterface_elastic
+
+       num_interface = inum_interfaces_elastic(iinterface)
+
+       ipoin = 0
+       do i = 1, nibool_interfaces_elastic(num_interface)
+          array_val(:,ibool_interfaces_elastic(i,num_interface)) = &
+              array_val(:,ibool_interfaces_elastic(i,num_interface)) + buffer_recv_faces_vector_el(ipoin+1:ipoin+NDIM,iinterface)
+          ipoin = ipoin + NDIM
+       enddo
+
+    enddo
+
+    ! waits for communication completion (all send has finished, we can clear the buffer...)
+    do iinterface = 1, ninterface_elastic
+      call wait_req(request_send_recv_elastic(iinterface))
+    enddo
+
+  endif
+
+  end subroutine assemble_MPI_vector_el_w
+
+
+
+!-------------------------------------------------------------------------------------------------
+!
+! poroelastic domains
+!
+!-------------------------------------------------------------------------------------------------
 
 #ifdef USE_MPI
 ! only supported with parallel version...
@@ -444,7 +689,7 @@
 ! Particular care should be taken concerning possible optimisations of the
 ! communication scheme.
 !-----------------------------------------------
-  subroutine assemble_MPI_vector_po(array_val3,array_val4)
+  subroutine assemble_MPI_vector_po_blocking(array_val3,array_val4)
 
   use mpi
 
@@ -454,7 +699,7 @@
     nglob,ninterface_poroelastic, &
     inum_interfaces_poroelastic, &
     ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
-    tab_requests_send_recv_poro, &
+    request_send_recv_poro, &
     buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
     buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
     my_neighbours,myrank
@@ -497,7 +742,7 @@
       call MPI_ISEND( buffer_send_faces_vector_pos(1,iinterface), &
                       NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
                       my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-                      tab_requests_send_recv_poro(iinterface), ier)
+                      request_send_recv_poro(iinterface), ier)
 
       if (ier /= MPI_SUCCESS) then
         call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_pos')
@@ -506,7 +751,7 @@
       call MPI_IRECV ( buffer_recv_faces_vector_pos(1,iinterface), &
                        NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
                        my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-                       tab_requests_send_recv_poro(ninterface_poroelastic+iinterface), ier)
+                       request_send_recv_poro(ninterface_poroelastic+iinterface), ier)
 
       if (ier /= MPI_SUCCESS) then
         call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_pos')
@@ -515,7 +760,7 @@
       call MPI_ISEND( buffer_send_faces_vector_pow(1,iinterface), &
                       NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
                       my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-                      tab_requests_send_recv_poro(ninterface_poroelastic*2+iinterface), ier)
+                      request_send_recv_poro(ninterface_poroelastic*2+iinterface), ier)
 
       if (ier /= MPI_SUCCESS) then
         call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_pow')
@@ -524,7 +769,7 @@
       call MPI_IRECV ( buffer_recv_faces_vector_pow(1,iinterface), &
                        NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
                        my_neighbours(num_interface), 12, MPI_COMM_WORLD, &
-                       tab_requests_send_recv_poro(ninterface_poroelastic*3+iinterface), ier)
+                       request_send_recv_poro(ninterface_poroelastic*3+iinterface), ier)
 
       if (ier /= MPI_SUCCESS) then
         call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_pow')
@@ -534,7 +779,7 @@
 
     do iinterface = 1, ninterface_poroelastic*4
 
-      call MPI_Wait (tab_requests_send_recv_poro(iinterface), MPI_STATUS_IGNORE, ier)
+      call MPI_Wait (request_send_recv_poro(iinterface), MPI_STATUS_IGNORE, ier)
 
     enddo
 
@@ -562,9 +807,161 @@
 
   endif
 
-  end subroutine assemble_MPI_vector_po
+  end subroutine assemble_MPI_vector_po_blocking
 
 #endif
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine assemble_MPI_vector_po_s(array_val3,array_val4)
+
+! sends MPI buffers (asynchronuous) - non-blocking routine
+
+  use constants,only: CUSTOM_REAL,NDIM
+
+  use specfem_par, only: NPROC, &
+    nglob,ninterface_poroelastic, &
+    inum_interfaces_poroelastic, &
+    ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
+    request_send_recv_poro, &
+    buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
+    buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
+    my_neighbours
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob), intent(inout) :: array_val3,array_val4
+
+  integer  :: ipoin, num_interface, iinterface, i
+  integer, parameter :: itag = 12
+
+  ! assemble only if more than one partition
+  if (NPROC > 1) then
+
+    do iinterface = 1, ninterface_poroelastic
+
+       num_interface = inum_interfaces_poroelastic(iinterface)
+
+       ipoin = 0
+       do i = 1, nibool_interfaces_poroelastic(num_interface)
+          buffer_send_faces_vector_pos(ipoin+1:ipoin+NDIM,iinterface) = &
+               array_val3(:,ibool_interfaces_poroelastic(i,num_interface))
+          ipoin = ipoin + NDIM
+       enddo
+
+       ipoin = 0
+       do i = 1, nibool_interfaces_poroelastic(num_interface)
+          buffer_send_faces_vector_pow(ipoin+1:ipoin+NDIM,iinterface) = &
+               array_val4(:,ibool_interfaces_poroelastic(i,num_interface))
+          ipoin = ipoin + NDIM
+       enddo
+
+    enddo
+
+    ! send/request messages
+    do iinterface = 1, ninterface_poroelastic
+
+      num_interface = inum_interfaces_poroelastic(iinterface)
+
+      ! solid
+      call isend_cr( buffer_send_faces_vector_pos(1,iinterface), &
+                     NDIM * nibool_interfaces_poroelastic(num_interface), &
+                     my_neighbours(num_interface), &
+                     itag, &
+                     request_send_recv_poro(iinterface) )
+
+      call irecv_cr( buffer_recv_faces_vector_pos(1,iinterface), &
+                     NDIM * nibool_interfaces_poroelastic(num_interface), &
+                     my_neighbours(num_interface), &
+                     itag, &
+                     request_send_recv_poro(ninterface_poroelastic+iinterface) )
+
+      ! fluid
+      call isend_cr( buffer_send_faces_vector_pow(1,iinterface), &
+                     NDIM * nibool_interfaces_poroelastic(num_interface), &
+                     my_neighbours(num_interface), &
+                     itag, &
+                     request_send_recv_poro(ninterface_poroelastic*2+iinterface) )
+
+
+      call irecv_cr( buffer_recv_faces_vector_pow(1,iinterface), &
+                     NDIM * nibool_interfaces_poroelastic(num_interface), &
+                     my_neighbours(num_interface), &
+                     itag, &
+                     request_send_recv_poro(ninterface_poroelastic*3+iinterface) )
+
+    enddo
+
+  endif
+
+  end subroutine assemble_MPI_vector_po_s
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine assemble_MPI_vector_po_w(array_val3,array_val4)
+
+! waits for data and assembles
+
+  use constants,only: CUSTOM_REAL,NDIM
+
+  use specfem_par, only: NPROC, &
+    nglob,ninterface_poroelastic, &
+    inum_interfaces_poroelastic, &
+    ibool_interfaces_poroelastic, nibool_interfaces_poroelastic, &
+    request_send_recv_poro, &
+    buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob), intent(inout) :: array_val3,array_val4
+
+  integer  :: ipoin, num_interface, iinterface, i
+
+  ! assemble only if more than one partition
+  if (NPROC > 1) then
+
+    ! waits for communication complection (all receive has finished)
+    do iinterface = 1, ninterface_poroelastic
+      call wait_req(request_send_recv_poro(ninterface_poroelastic+iinterface))
+      call wait_req(request_send_recv_poro(ninterface_poroelastic*3+iinterface))
+    enddo
+
+    do iinterface = 1, ninterface_poroelastic
+
+       num_interface = inum_interfaces_poroelastic(iinterface)
+
+       ipoin = 0
+       do i = 1, nibool_interfaces_poroelastic(num_interface)
+          array_val3(:,ibool_interfaces_poroelastic(i,num_interface)) = &
+               array_val3(:,ibool_interfaces_poroelastic(i,num_interface)) + &
+               buffer_recv_faces_vector_pos(ipoin+1:ipoin+NDIM,iinterface)
+          ipoin = ipoin + NDIM
+       enddo
+
+       ipoin = 0
+       do i = 1, nibool_interfaces_poroelastic(num_interface)
+          array_val4(:,ibool_interfaces_poroelastic(i,num_interface)) = &
+               array_val4(:,ibool_interfaces_poroelastic(i,num_interface)) + &
+               buffer_recv_faces_vector_pow(ipoin+1:ipoin+NDIM,iinterface)
+          ipoin = ipoin + NDIM
+       enddo
+
+    enddo
+
+    ! waits for communication completion (all send has finished, we can clear the buffer...)
+    do iinterface = 1, ninterface_poroelastic
+      call wait_req(request_send_recv_poro(iinterface))
+      call wait_req(request_send_recv_poro(ninterface_poroelastic*2+iinterface))
+    enddo
+
+  endif
+
+  end subroutine assemble_MPI_vector_po_w
+
 
 
 !-------------------------------------------------------------------------------------------------
@@ -575,16 +972,16 @@
 
 
  subroutine assemble_MPI_scalar_send_cuda(NPROC, &
-                                           buffer_send_scalar_ext_mesh,buffer_recv_scalar_ext_mesh, &
+                                           buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
                                            num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
                                            nibool_interfaces_ext_mesh, &
                                            my_neighbours_ext_mesh, &
-                                           tab_requests_send_recv_ext_mesh,ninterface_acoustic,inum_interfaces_acoustic)
+                                           request_send_recv_gpu,ninterface_acoustic,inum_interfaces_acoustic)
 
 ! non-blocking MPI send
 
   ! sends data
-  ! note: assembling data already filled into buffer_send_scalar_ext_mesh array
+  ! note: assembling data already filled into buffer_send_scalar_gpu array
 
   use constants
 
@@ -594,15 +991,15 @@
   integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh
 
   real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: &
-       buffer_send_scalar_ext_mesh,buffer_recv_scalar_ext_mesh
+       buffer_send_scalar_gpu,buffer_recv_scalar_gpu
 
   integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh,my_neighbours_ext_mesh
-  integer, dimension(2*num_interfaces_ext_mesh) :: tab_requests_send_recv_ext_mesh
+  integer, dimension(2*num_interfaces_ext_mesh) :: request_send_recv_gpu
 integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acoustic
   ! local parameters
   integer :: iinterface,num_interface
 
-  tab_requests_send_recv_ext_mesh(:) = 0
+  request_send_recv_gpu(:) = 0
 
 
   ! sends only if more than one partition
@@ -613,27 +1010,20 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
     ! send messages
     do iinterface = 1, ninterface_acoustic
-      num_interface=inum_interfaces_acoustic(iinterface)
+      num_interface = inum_interfaces_acoustic(iinterface)
 
-#ifdef USE_MPI
-      call isend_cr(buffer_send_scalar_ext_mesh(1,num_interface), &
+      call isend_cr(buffer_send_scalar_gpu(1,num_interface), &
                     nibool_interfaces_ext_mesh(num_interface), &
                     my_neighbours_ext_mesh(num_interface), &
                     itag, &
-                    tab_requests_send_recv_ext_mesh(num_interface) )
+                    request_send_recv_gpu(num_interface) )
 
       ! receive request
-      call irecv_cr(buffer_recv_scalar_ext_mesh(1,num_interface), &
+      call irecv_cr(buffer_recv_scalar_gpu(1,num_interface), &
                     nibool_interfaces_ext_mesh(num_interface), &
                     my_neighbours_ext_mesh(num_interface), &
                     itag, &
-                    tab_requests_send_recv_ext_mesh(num_interface+num_interfaces_ext_mesh) )
-#else
-      ! dummy statements just to avoid a compiler warning about an unused variable
-      tab_requests_send_recv_ext_mesh(num_interface+num_interfaces_ext_mesh) = my_neighbours_ext_mesh(num_interface)
-      tab_requests_send_recv_ext_mesh(num_interface+num_interfaces_ext_mesh) = nibool_interfaces_ext_mesh(num_interface)
-      buffer_recv_scalar_ext_mesh(:,num_interface) = buffer_send_scalar_ext_mesh(:,num_interface)
-#endif
+                    request_send_recv_gpu(num_interface+num_interfaces_ext_mesh) )
     enddo
 
   endif
@@ -646,9 +1036,9 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
   subroutine assemble_MPI_scalar_write_cuda(NPROC, &
                         Mesh_pointer, &
-                        buffer_recv_scalar_ext_mesh,num_interfaces_ext_mesh, &
+                        buffer_recv_scalar_gpu,num_interfaces_ext_mesh, &
                         max_nibool_interfaces_ext_mesh, &
-                        tab_requests_send_recv_ext_mesh, &
+                        request_send_recv_gpu, &
                         FORWARD_OR_ADJOINT,ninterface_acoustic,inum_interfaces_acoustic)
 
 ! waits for send/receiver to be completed and assembles contributions
@@ -664,9 +1054,9 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
   integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh
 
   real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: &
-       buffer_recv_scalar_ext_mesh
+       buffer_recv_scalar_gpu
 
-  integer, dimension(2*num_interfaces_ext_mesh) :: tab_requests_send_recv_ext_mesh
+  integer, dimension(2*num_interfaces_ext_mesh) :: request_send_recv_gpu
   integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acoustic
   integer :: FORWARD_OR_ADJOINT
 
@@ -678,26 +1068,17 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
     ! wait for communications completion (recv)
     do iinterface = 1, ninterface_acoustic
-   num_interface=inum_interfaces_acoustic(iinterface)
-
-#ifdef USE_MPI
-      call wait_req(tab_requests_send_recv_ext_mesh(num_interface+num_interfaces_ext_mesh))
-#else
-!! DK DK this dummy statement just to avoid a compiler warning about an unused variable
-      tab_requests_send_recv_ext_mesh(num_interface+num_interfaces_ext_mesh) = 0
-#endif
+      num_interface = inum_interfaces_acoustic(iinterface)
+      call wait_req(request_send_recv_gpu(num_interface + num_interfaces_ext_mesh))
     enddo
 
     ! adding contributions of neighbours
-    call transfer_asmbl_pot_to_device(Mesh_pointer,buffer_recv_scalar_ext_mesh,FORWARD_OR_ADJOINT)
+    call transfer_asmbl_pot_to_device(Mesh_pointer,buffer_recv_scalar_gpu,FORWARD_OR_ADJOINT)
 
     ! wait for communications completion (send)
-     do iinterface = 1, ninterface_acoustic
-       num_interface=inum_interfaces_acoustic(iinterface)
-
-#ifdef USE_MPI
-      call wait_req(tab_requests_send_recv_ext_mesh(num_interface))
-#endif
+    do iinterface = 1, ninterface_acoustic
+      num_interface = inum_interfaces_acoustic(iinterface)
+      call wait_req(request_send_recv_gpu(num_interface))
     enddo
 
   endif
@@ -712,14 +1093,14 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
 
   subroutine assemble_MPI_vector_send_cuda(NPROC, &
-                                          buffer_send_vector_ext_mesh,buffer_recv_vector_ext_mesh, &
+                                          buffer_send_vector_gpu,buffer_recv_vector_gpu, &
                                           num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
                                           nibool_interfaces_ext_mesh, &
                                           my_neighbours_ext_mesh, &
-                                          tab_requests_send_recv_vector,ninterface_elastic,inum_interfaces_elastic)
+                                          request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic)
 
 ! sends data
-! note: array to assemble already filled into buffer_send_vector_ext_mesh array
+! note: array to assemble already filled into buffer_send_vector_gpu array
 
   use constants
 
@@ -730,10 +1111,10 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
   integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh,ninterface_elastic
 
   real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: &
-       buffer_send_vector_ext_mesh,buffer_recv_vector_ext_mesh
+       buffer_send_vector_gpu,buffer_recv_vector_gpu
 
   integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh,my_neighbours_ext_mesh
-  integer, dimension(2*num_interfaces_ext_mesh) :: tab_requests_send_recv_vector
+  integer, dimension(2*num_interfaces_ext_mesh) :: request_send_recv_vector_gpu
   integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_elastic
   ! local parameters
   integer :: iinterface,num_interface
@@ -746,25 +1127,19 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
     ! send messages
     do iinterface = 1, ninterface_elastic
-       num_interface=inum_interfaces_elastic(iinterface)
+      num_interface=inum_interfaces_elastic(iinterface)
 
-#ifdef USE_MPI
-      call isend_cr(buffer_send_vector_ext_mesh(1,1,num_interface), &
+      call isend_cr(buffer_send_vector_gpu(1,1,num_interface), &
                      NDIM*nibool_interfaces_ext_mesh(num_interface), &
                      my_neighbours_ext_mesh(num_interface), &
                      itag, &
-                     tab_requests_send_recv_vector(num_interface) )
-      call irecv_cr(buffer_recv_vector_ext_mesh(1,1,num_interface), &
+                     request_send_recv_vector_gpu(num_interface) )
+
+      call irecv_cr(buffer_recv_vector_gpu(1,1,num_interface), &
                      NDIM*nibool_interfaces_ext_mesh(num_interface), &
                      my_neighbours_ext_mesh(num_interface), &
                      itag, &
-                     tab_requests_send_recv_vector(num_interface + num_interfaces_ext_mesh ) )
-#else
-      ! dummy statement just to avoid a compiler warning about an unused variable
-      tab_requests_send_recv_vector(num_interface+num_interfaces_ext_mesh) = my_neighbours_ext_mesh(num_interface)
-      tab_requests_send_recv_vector(num_interface+num_interfaces_ext_mesh) = nibool_interfaces_ext_mesh(num_interface)
-      buffer_recv_vector_ext_mesh(:,:,num_interface) = buffer_send_vector_ext_mesh(:,:,num_interface)
-#endif
+                     request_send_recv_vector_gpu(num_interface + num_interfaces_ext_mesh ) )
     enddo
 
   endif
@@ -777,10 +1152,10 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 !
 
   subroutine assemble_MPI_vector_write_cuda(NPROC,Mesh_pointer, &
-                                            buffer_recv_vector_ext_mesh, &
+                                            buffer_recv_vector_gpu, &
                                             num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
                                             nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
-                                            tab_requests_send_recv_vector, &
+                                            request_send_recv_vector_gpu, &
                                             FORWARD_OR_ADJOINT,ninterface_elastic,inum_interfaces_elastic )
 
 ! waits for data to receive and assembles
@@ -796,11 +1171,11 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
   integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh,ninterface_elastic
   real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: &
-       buffer_recv_vector_ext_mesh
+       buffer_recv_vector_gpu
 
   integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh
   integer, dimension(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: ibool_interfaces_ext_mesh
-  integer, dimension(2*num_interfaces_ext_mesh) :: tab_requests_send_recv_vector
+  integer, dimension(2*num_interfaces_ext_mesh) :: request_send_recv_vector_gpu
   integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_elastic
   integer :: FORWARD_OR_ADJOINT
 
@@ -814,21 +1189,14 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
 
     ! wait for communications completion (recv)
-do iinterface = 1, ninterface_elastic
-       num_interface=inum_interfaces_elastic(iinterface)
-#ifdef USE_MPI
-      call wait_req(tab_requests_send_recv_vector(num_interface + num_interfaces_ext_mesh))
-#else
-!! DK DK this dummy statement just to avoid a compiler warning about an unused variable
-      tab_requests_send_recv_vector(num_interface + num_interfaces_ext_mesh) = 0
-#endif
-enddo
-
-
+    do iinterface = 1, ninterface_elastic
+      num_interface=inum_interfaces_elastic(iinterface)
+      call wait_req(request_send_recv_vector_gpu(num_interface + num_interfaces_ext_mesh))
+    enddo
 
     ! adding contributions of neighbours
     call transfer_asmbl_accel_to_device(Mesh_pointer, &
-                                        buffer_recv_vector_ext_mesh, &
+                                        buffer_recv_vector_gpu, &
                                         max_nibool_interfaces_ext_mesh, &
                                         nibool_interfaces_ext_mesh,&
                                         ibool_interfaces_ext_mesh,FORWARD_OR_ADJOINT)
@@ -837,16 +1205,14 @@ enddo
     ! do iinterface = 1, num_interfaces_ext_mesh
     !   do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
     !     array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) = &
-    !          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_vector_ext_mesh(:,ipoin,iinterface)
+    !          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_vector_gpu(:,ipoin,iinterface)
     !   enddo
     ! enddo
 
     ! wait for communications completion (send)
     do iinterface = 1, ninterface_elastic
-       num_interface=inum_interfaces_elastic(iinterface)
-#ifdef USE_MPI
-      call wait_req(tab_requests_send_recv_vector(num_interface))
-#endif
+      num_interface=inum_interfaces_elastic(iinterface)
+      call wait_req(request_send_recv_vector_gpu(num_interface))
     enddo
 
   endif
@@ -861,9 +1227,9 @@ enddo
 ! with cuda functions...
 
   subroutine transfer_boundary_to_device(NPROC, Mesh_pointer, &
-                                            buffer_recv_vector_ext_mesh, &
+                                            buffer_recv_vector_gpu, &
                                             num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh,&
-                                            tab_requests_send_recv_vector,ninterface_elastic,inum_interfaces_elastic )
+                                            request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic )
 
   use constants
 
@@ -876,9 +1242,9 @@ enddo
   integer :: num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh,ninterface_elastic
 
   real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: &
-       buffer_recv_vector_ext_mesh
+       buffer_recv_vector_gpu
 
-  integer, dimension(2*num_interfaces_ext_mesh) :: tab_requests_send_recv_vector
+  integer, dimension(2*num_interfaces_ext_mesh) :: request_send_recv_vector_gpu
   integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_elastic
   ! local parameters
   integer :: iinterface,num_interface
@@ -891,24 +1257,19 @@ enddo
     ! wait for communications completion (recv)
     !write(IMAIN,*) "sending MPI_wait"
     do iinterface = 1, ninterface_elastic
-       num_interface=inum_interfaces_elastic(iinterface)
-#ifdef USE_MPI
-      call wait_req(tab_requests_send_recv_vector(num_interface+num_interfaces_ext_mesh))
-#else
-!! DK DK this dummy statement just to avoid a compiler warning about an unused variable
-      tab_requests_send_recv_vector(num_interface+num_interfaces_ext_mesh) = 0
-#endif
+      num_interface=inum_interfaces_elastic(iinterface)
+      call wait_req(request_send_recv_vector_gpu(num_interface + num_interfaces_ext_mesh))
     enddo
 
     ! send contributions to GPU
-    call transfer_boundary_to_device_a(Mesh_pointer, buffer_recv_vector_ext_mesh, max_nibool_interfaces_ext_mesh)
+    call transfer_boundary_to_device_a(Mesh_pointer, buffer_recv_vector_gpu, max_nibool_interfaces_ext_mesh)
   endif
 
   ! This step is done via previous function transfer_and_assemble...
   ! do iinterface = 1, num_interfaces_ext_mesh
   !   do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
   !     array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) = &
-  !          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_vector_ext_mesh(:,ipoin,iinterface)
+  !          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_vector_gpu(:,ipoin,iinterface)
   !   enddo
   ! enddo
 

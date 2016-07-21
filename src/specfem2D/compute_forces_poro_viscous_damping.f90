@@ -38,11 +38,11 @@
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,USE_PORO_VISCOUS_DAMPING
 
-  use specfem_par, only: nspec,NSTEP,it,SIMULATION_TYPE,SAVE_FORWARD, &
+  use specfem_par, only: nspec,it,SIMULATION_TYPE,SAVE_FORWARD, &
                          ATTENUATION_PORO_FLUID_PART, &
                          ibool,kmato,ispec_is_poroelastic, &
-                         accels_poroelastic,b_accels_poroelastic, &
-                         accelw_poroelastic,b_accelw_poroelastic, &
+                         accels_poroelastic, &
+                         accelw_poroelastic, &
                          velocw_poroelastic, &
                          porosity,tortuosity,permeability,poroelastcoef, &
                          jacobian,wxgll,wzgll, &
@@ -62,12 +62,6 @@
 
   ! checks if anything to do
   if (.not. USE_PORO_VISCOUS_DAMPING) return
-
-  ! reads in viscous contributions for reconstructed/backward wavefield
-  if (SIMULATION_TYPE == 3) then
-    read(23,rec=NSTEP-it+1) b_viscodampx(:,:,:)
-    read(24,rec=NSTEP-it+1) b_viscodampz(:,:,:)
-  endif
 
   ! loop over spectral elements
   do ispec = 1,nspec
@@ -146,16 +140,6 @@
             ! stores contribution
             b_viscodampx(i,j,ispec) = visc_x
             b_viscodampz(i,j,ispec) = visc_z
-          else if (SIMULATION_TYPE == 3) then
-            ! kernels simulation uses previously stored contributions
-            visc_x = b_viscodampx(i,j,ispec)
-            visc_z = b_viscodampz(i,j,ispec)
-            ! solid
-            b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + phi/tort * visc_x
-            b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + phi/tort * visc_z
-            ! fluid
-            b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - visc_x
-            b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - visc_z
           endif
 
         enddo
@@ -173,4 +157,75 @@
   endif
 
   end subroutine compute_forces_poro_viscous_damping
+
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+
+  subroutine compute_forces_poro_viscous_damping_backward()
+
+! viscous damping
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,USE_PORO_VISCOUS_DAMPING
+
+  use specfem_par, only: nspec,NSTEP,it,SIMULATION_TYPE, &
+                         ibool,kmato,ispec_is_poroelastic, &
+                         b_accels_poroelastic, &
+                         b_accelw_poroelastic, &
+                         porosity,tortuosity,poroelastcoef, &
+                         b_viscodampx,b_viscodampz
+
+  implicit none
+
+  ! local variables
+  integer :: ispec,i,j,iglob
+
+  double precision :: eta_f,phi,tort
+  double precision :: visc_x,visc_z
+
+  ! checks if anything to do
+  if (.not. USE_PORO_VISCOUS_DAMPING) return
+  if (SIMULATION_TYPE /= 3) return
+
+  ! reads in viscous contributions for reconstructed/backward wavefield
+  read(23,rec=NSTEP-it+1) b_viscodampx(:,:,:)
+  read(24,rec=NSTEP-it+1) b_viscodampz(:,:,:)
+
+  ! loop over spectral elements
+  do ispec = 1,nspec
+
+    eta_f = poroelastcoef(2,2,kmato(ispec))
+
+    if (ispec_is_poroelastic(ispec) .and. eta_f > 0.d0) then
+
+      phi = porosity(kmato(ispec))
+      tort = tortuosity(kmato(ispec))
+
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+
+          ! reconstructed/backward wavefield
+          ! viscous damping contribution
+          ! kernels simulation uses previously stored contributions
+          visc_x = b_viscodampx(i,j,ispec)
+          visc_z = b_viscodampz(i,j,ispec)
+
+          ! solid
+          b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + phi/tort * visc_x
+          b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + phi/tort * visc_z
+          ! fluid
+          b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - visc_x
+          b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - visc_z
+
+        enddo
+      enddo
+
+    endif ! end of test if poroelastic element
+
+  enddo ! end of loop over all spectral elements
+
+  end subroutine compute_forces_poro_viscous_damping_backward
 

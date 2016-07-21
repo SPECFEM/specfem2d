@@ -55,9 +55,7 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
                                                int* d_ibool,
                                                realw* rhostore,
                                                realw* kappastore,
-                                               int* ispec_is_inner,
                                                int* ispec_is_acoustic,
-                                               int phase_is_inner,
                                                int SIMULATION_TYPE,
                                                int SAVE_FORWARD,
                                                int num_abs_boundary_faces,
@@ -90,7 +88,7 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = abs_boundary_ispec[iface]-1;
 
-    if (ispec_is_inner[ispec] == phase_is_inner && ispec_is_acoustic[ispec]) {
+    if (ispec_is_acoustic[ispec]) {
 
       i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
       j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
@@ -147,7 +145,7 @@ else if (cote_abs[iface] == 4) { num_local = ib_left[iface] -1 ; b_absorb_potent
 extern "C"
 void FC_FUNC_(compute_stacey_acoustic_cuda,
               COMPUTE_STACEY_ACOUSTIC_CUDA)(long* Mesh_pointer,
-                                            int* phase_is_innerf,
+                                            int* iphasef,
                                             realw* h_b_absorb_potential_left,
                                             realw* h_b_absorb_potential_right,
                                             realw* h_b_absorb_potential_top,
@@ -160,7 +158,10 @@ TRACE("compute_stacey_acoustic_cuda");
   // checks if anything to do
   if (mp->d_num_abs_boundary_faces == 0) return;
 
-  int phase_is_inner          = *phase_is_innerf;
+  int iphase          = *iphasef;
+
+  // only add this contributions for first pass
+  if (iphase != 1) return;
 
   // way 1: Elapsed time: 4.385948e-03
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
@@ -180,7 +181,7 @@ TRACE("compute_stacey_acoustic_cuda");
 
 
   //  adjoint simulations: reads in absorbing boundary
-  if (mp->simulation_type == 3 && phase_is_inner == 0){
+  if (mp->simulation_type == 3){
     // copies array to GPU
     print_CUDA_error_if_any(cudaMemcpy(mp->d_b_absorb_potential_left,h_b_absorb_potential_left,
                                        mp->d_nspec_left*sizeof(realw)*NGLLX,cudaMemcpyHostToDevice),7700);
@@ -201,9 +202,7 @@ TRACE("compute_stacey_acoustic_cuda");
                                                    mp->d_ibool,
                                                    mp->d_rhostore,
                                                    mp->d_kappastore,
-                                                   mp->d_ispec_is_inner,
                                                    mp->d_ispec_is_acoustic,
-                                                   phase_is_inner,
                                                    mp->simulation_type,
                                                    mp->save_forward,
                                                    mp->d_num_abs_boundary_faces,
@@ -220,7 +219,7 @@ TRACE("compute_stacey_acoustic_cuda");
                                                    mp->d_cote_abs);
 
   //  adjoint simulations: stores absorbed wavefield part
-  if (mp->simulation_type == 1 && mp->save_forward && phase_is_inner==-1) {
+  if (mp->simulation_type == 1 && mp->save_forward) {
     // (cudaMemcpy implicitly synchronizes all other cuda operations)
     // copies array to CPU
     print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_potential_left,mp->d_b_absorb_potential_left,

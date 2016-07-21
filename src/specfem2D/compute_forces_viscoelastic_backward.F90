@@ -33,7 +33,7 @@
 
 
   subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                                  e1,e11,e13)
+                                                  e1,e11,e13,iphase)
 
   ! compute forces for the elastic elements
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
@@ -54,6 +54,10 @@
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,N_SLS, &
                          deltat,coord, &
                          stage_time_scheme,i_stage,ispec_is_acoustic
+
+  ! overlapping communication
+  use specfem_par, only: nspec_inner_elastic,nspec_outer_elastic,phase_ispec_inner_elastic
+
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
   ! CPML coefficients and memory variables
@@ -64,6 +68,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: b_accel_elastic,b_displ_elastic,b_displ_elastic_old
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS) :: e1,e11,e13
+
+  integer,intent(in) :: iphase
 
   !---
   !--- local variables
@@ -105,12 +111,14 @@
   ! for anisotropy
   double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25
 
-  integer :: ifirstelem,ilastelem
+  integer :: num_elements,ispec_p
 
   ! temp variable RK
   real(kind=CUSTOM_REAL) :: weight_rk
 
   !!!update memory variable in viscoelastic simulation
+  if (iphase == 1) then
+
   if (ATTENUATION_VISCOELASTIC_SOLID) then
 
     ! compute Grad(b_displ_elastic) at time step n for attenuation
@@ -238,6 +246,7 @@
       endif
     enddo
   endif
+  endif ! iphase
 !!!! end of update memory variable in viscoelastic simulation
 
 ! this to avoid a warning at execution time about an undefined variable being used
@@ -250,11 +259,18 @@
   sigma_xy = 0._CUSTOM_REAL
   sigma_zy = 0._CUSTOM_REAL
 
-  ifirstelem = 1
-  ilastelem = nspec
+  ! choses inner/outer elements
+  if (iphase == 1) then
+    num_elements = nspec_outer_elastic
+  else
+    num_elements = nspec_inner_elastic
+  endif
 
   ! loop over spectral elements
-  do ispec = ifirstelem,ilastelem
+  do ispec_p = 1,num_elements
+
+    ! returns element id from stored element list
+    ispec = phase_ispec_inner_elastic(ispec_p,iphase)
 
     tempx1(:,:) = 0._CUSTOM_REAL
     tempz1(:,:) = 0._CUSTOM_REAL

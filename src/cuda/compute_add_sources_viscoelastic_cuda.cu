@@ -54,8 +54,6 @@
 
 __global__ void compute_add_sources_kernel(realw* accel,
                                            int* d_ibool,
-                                           int* ispec_is_inner,
-                                           int phase_is_inner,
                                            realw* sourcearrays,
                                            realw* d_source_time_function,
                                            int myrank,
@@ -74,7 +72,7 @@ __global__ void compute_add_sources_kernel(realw* accel,
 
       ispec = ispec_selected_source[isource]-1;
 
-      if (ispec_is_inner[ispec] == phase_is_inner && ispec_is_elastic[ispec]) {
+      if (ispec_is_elastic[ispec]) {
 
 
         stf = d_source_time_function[INDEX2(nsources_local,isource,it)];
@@ -97,7 +95,7 @@ __global__ void compute_add_sources_kernel(realw* accel,
 extern "C"
 void FC_FUNC_(compute_add_sources_el_cuda,
               COMPUTE_ADD_SOURCES_EL_CUDA)(long* Mesh_pointer,
-                                           int* h_phase_is_inner,
+                                           int* iphasef,
                                            int* itf) {
 
   TRACE("\tcompute_add_sources_el_cuda");
@@ -107,10 +105,12 @@ void FC_FUNC_(compute_add_sources_el_cuda,
   // check if anything to do
   if (mp->nsources_local == 0) return;
 
-  int phase_is_inner = *h_phase_is_inner;
-  int it = *itf -1;
+  int iphase = *iphasef;
 
+  // only adds this contribution for first pass
+  if (iphase != 1) return;
 
+  int it = *itf - 1;
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nsources_local,&num_blocks_x,&num_blocks_y);
@@ -119,7 +119,6 @@ void FC_FUNC_(compute_add_sources_el_cuda,
   dim3 threads(5,5,1);
 
   compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel,mp->d_ibool,
-                                                                    mp->d_ispec_is_inner,phase_is_inner,
                                                                     mp->d_sourcearrays,
                                                                     mp->d_source_time_function,
                                                                     mp->myrank,
@@ -138,7 +137,7 @@ void FC_FUNC_(compute_add_sources_el_cuda,
 extern "C"
 void FC_FUNC_(compute_add_sources_el_s3_cuda,
               COMPUTE_ADD_SOURCES_EL_S3_CUDA)(long* Mesh_pointer,
-                                              int* phase_is_innerf,
+                                              int* iphasef,
                                               int* itf) {
 
   TRACE("\tcompute_add_sources_el_s3_cuda");
@@ -149,7 +148,11 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
   // check if anything to do
   if (mp->nsources_local == 0) return;
 
-  int phase_is_inner = *phase_is_innerf;
+  int iphase = *iphasef;
+
+  // only adds this contribution for first pass
+  if (iphase != 1) return;
+
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nsources_local,&num_blocks_x,&num_blocks_y);
   dim3 grid(num_blocks_x,num_blocks_y);
@@ -157,7 +160,6 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
   int it = *itf -1;
 
   compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel,mp->d_ibool,
-                                                                    mp->d_ispec_is_inner, phase_is_inner,
                                                                     mp->d_sourcearrays,
                                                                     mp->d_source_time_function,
                                                                     mp->myrank,
@@ -181,10 +183,8 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
                                                       realw* xir_store,
                                                       realw* gammar_store,
                                                       int* d_ibool,
-                                                      int* ispec_is_inner,
                                                       int* ispec_is_elastic,
                                                       int* ispec_selected_rec,
-                                                      int phase_is_inner,
                                                       int it,
                                                       int* pre_computed_irec,
                                                       int nadj_rec_local,
@@ -197,27 +197,24 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
     int irec = pre_computed_irec[irec_local];
 
     int ispec = ispec_selected_rec[irec]-1;
+
     if (ispec_is_elastic[ispec]) {
+      int i = threadIdx.x;
+      int j = threadIdx.y;
+      int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
 
-      if (ispec_is_inner[ispec] == phase_is_inner) {
-        int i = threadIdx.x;
-        int j = threadIdx.y;
-        int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
+      realw  xir = xir_store[INDEX2(nadj_rec_local,irec_local,i)];
 
-        realw  xir = xir_store[INDEX2(nadj_rec_local,irec_local,i)];
+      realw  gammar = gammar_store[INDEX2(nadj_rec_local,irec_local,j)];
 
-        realw  gammar = gammar_store[INDEX2(nadj_rec_local,irec_local,j)];
+      realw  source_adjx = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,0)];
 
-        realw  source_adjx = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,0)];
-
-        realw  source_adjz = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,1)];
+      realw  source_adjz = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,1)];
 
 
-        // atomic operations are absolutely necessary for correctness!
-        atomicAdd(&accel[2*iglob],source_adjx * gammar * xir);
-        atomicAdd(&accel[1+2*iglob], source_adjz * gammar * xir);
-
-      }
+      // atomic operations are absolutely necessary for correctness!
+      atomicAdd(&accel[2*iglob],source_adjx * gammar * xir);
+      atomicAdd(&accel[1+2*iglob], source_adjz * gammar * xir);
     } // ispec_is_elastic
   }
 
@@ -228,7 +225,7 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
 extern "C"
 void FC_FUNC_(add_sources_el_sim_type_2_or_3,
               ADD_SOURCES_EL_SIM_TYPE_2_OR_3)(long* Mesh_pointer,
-                                               int* phase_is_inner,
+                                               int* iphasef,
                                                int* it,
                                                int* nadj_rec_local,
                                                int* NSTEP) {
@@ -239,6 +236,11 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
 
   // checks
   if (*nadj_rec_local != mp->nadj_rec_local) exit_on_error("add_sources_el_sim_type_2_or_3: nadj_rec_local not equal\n");
+
+  int iphase = *iphasef;
+
+  // only add this contribution for first pass
+  if (iphase != 1) return;
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nadj_rec_local,&num_blocks_x,&num_blocks_y);
@@ -258,10 +260,8 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
                                                                                mp->d_xir_store_loc,
                                                                                mp->d_gammar_store_loc,
                                                                                mp->d_ibool,
-                                                                               mp->d_ispec_is_inner,
                                                                                mp->d_ispec_is_elastic,
                                                                                mp->d_ispec_selected_rec,
-                                                                               *phase_is_inner,
                                                                                it_index,
                                                                                mp->d_pre_computed_irec,
                                                                                mp->nadj_rec_local,

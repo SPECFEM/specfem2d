@@ -32,8 +32,6 @@
 !========================================================================
 
 
-#ifdef USE_MPI
-
 ! subroutines to sort MPI buffers to assemble between chunks
 
   subroutine sort_array_coordinates(npointot,x,z,ibool,iglob,locval,ifseg, &
@@ -227,4 +225,3 @@
 
   end subroutine swap_all_buffers
 
-#endif

@@ -38,17 +38,18 @@
     nelem_acoustic_surface,num_fluid_solid_edges, &
     STACEY_ABSORBING_CONDITIONS,any_elastic,any_poroelastic,SIMULATION_TYPE
 
-  use specfem_par_gpu, only : Mesh_pointer,nspec_outer_acoustic, nspec_inner_acoustic, &
+  use specfem_par, only: nspec_outer_acoustic, nspec_inner_acoustic
+
+  use specfem_par_gpu, only : Mesh_pointer, &
     deltatover2f,b_deltatover2f, &
-    buffer_send_scalar_ext_mesh,buffer_recv_scalar_ext_mesh, &
-    b_buffer_send_scalar_ext_mesh,b_buffer_recv_scalar_ext_mesh, &
-    tab_requests_send_recv_scalar,b_tab_requests_send_recv_scalar
+    buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
+    b_buffer_send_scalar_gpu,b_buffer_recv_scalar_gpu, &
+    request_send_recv_scalar_gpu,b_request_send_recv_scalar_gpu
 
   implicit none
 
   ! local parameters
   integer:: iphase
-  logical:: phase_is_inner
 
   if (nelem_acoustic_surface > 0) then
     !  enforces free surface (zeroes potentials at free surface)
@@ -56,80 +57,76 @@
   endif
 
   ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
-  do iphase=1,2
-
-    !first for points on MPI interfaces, thus outer elements
-    if (iphase == 1) then
-      phase_is_inner = .false.
-    else
-      phase_is_inner = .true.
-    endif
+  do iphase = 1,2
 
     ! acoustic pressure term
     ! includes code for SIMULATION_TYPE==3
     call compute_forces_acoustic_cuda(Mesh_pointer, iphase, &
                                       nspec_outer_acoustic, nspec_inner_acoustic)
 
-    ! Stacey absorbing boundary conditions
-    if (STACEY_ABSORBING_CONDITIONS) then
-      call compute_stacey_acoustic_GPU(phase_is_inner)
-    endif
-
-    ! elastic coupling
-    if (any_elastic) then
-      if (num_fluid_solid_edges > 0) then
-        ! on GPU
-        call compute_coupling_ac_el_cuda(Mesh_pointer,phase_is_inner, &
-                                         num_fluid_solid_edges)
+    ! computes additional contributions
+    if (iphase == 1) then
+      ! Stacey absorbing boundary conditions
+      if (STACEY_ABSORBING_CONDITIONS) then
+        call compute_stacey_acoustic_GPU(iphase)
       endif
-    endif
 
-    ! poroelastic coupling
-    if (any_poroelastic) then
-          stop 'poroelastic not implemented yet in GPU mode'
-    endif
+      ! elastic coupling
+      if (any_elastic) then
+        if (num_fluid_solid_edges > 0) then
+          ! on GPU
+          call compute_coupling_ac_el_cuda(Mesh_pointer,iphase, &
+                                           num_fluid_solid_edges)
+        endif
+      endif
 
-    ! sources
-    call compute_add_sources_acoustic_GPU(phase_is_inner)
+      ! poroelastic coupling
+      if (any_poroelastic) then
+            stop 'poroelastic not implemented yet in GPU mode'
+      endif
+
+      ! sources
+      call compute_add_sources_acoustic_GPU(iphase)
+    endif
 
     ! assemble all the contributions between slices using MPI
     if (ninterface_acoustic > 0) then
 
-      if (phase_is_inner .eqv. .false.) then
+      if (iphase == 1) then
         ! sends potential_dot_dot_acoustic values to corresponding MPI interface neighbors (non-blocking)
         call transfer_boun_pot_from_device(Mesh_pointer, &
-                                           buffer_send_scalar_ext_mesh, &
+                                           buffer_send_scalar_gpu, &
                                            1) ! <-- 1 == fwd accel
 
         call assemble_MPI_scalar_send_cuda(NPROC, &
-                          buffer_send_scalar_ext_mesh,buffer_recv_scalar_ext_mesh, &
+                          buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
                           ninterface,max_nibool_interfaces_ext_mesh, &
                           nibool_interfaces_ext_mesh,&
                           my_neighbours, &
-                          tab_requests_send_recv_scalar,ninterface_acoustic,inum_interfaces_acoustic)
+                          request_send_recv_scalar_gpu,ninterface_acoustic,inum_interfaces_acoustic)
 
         ! adjoint simulations
         if (SIMULATION_TYPE == 3) then
           call transfer_boun_pot_from_device(Mesh_pointer, &
-                                             b_buffer_send_scalar_ext_mesh,&
+                                             b_buffer_send_scalar_gpu,&
                                              3) ! <-- 3 == adjoint b_accel
 
           call assemble_MPI_scalar_send_cuda(NPROC, &
-                            b_buffer_send_scalar_ext_mesh,b_buffer_recv_scalar_ext_mesh, &
+                            b_buffer_send_scalar_gpu,b_buffer_recv_scalar_gpu, &
                             ninterface,max_nibool_interfaces_ext_mesh, &
                             nibool_interfaces_ext_mesh,&
                             my_neighbours, &
-                            b_tab_requests_send_recv_scalar,ninterface_acoustic,inum_interfaces_acoustic)
+                            b_request_send_recv_scalar_gpu,ninterface_acoustic,inum_interfaces_acoustic)
         endif
 
       else
         ! waits for send/receive requests to be completed and assembles values
         call assemble_MPI_scalar_write_cuda(NPROC, &
                           Mesh_pointer,&
-                          buffer_recv_scalar_ext_mesh, &
+                          buffer_recv_scalar_gpu, &
                           ninterface, &
                           max_nibool_interfaces_ext_mesh, &
-                          tab_requests_send_recv_scalar, &
+                          request_send_recv_scalar_gpu, &
                           1,ninterface_acoustic,inum_interfaces_acoustic)
 
 
@@ -138,13 +135,13 @@
         if (SIMULATION_TYPE == 3) then
           call assemble_MPI_scalar_write_cuda(NPROC, &
                           Mesh_pointer, &
-                          b_buffer_recv_scalar_ext_mesh, &
+                          b_buffer_recv_scalar_gpu, &
                           ninterface, &
                           max_nibool_interfaces_ext_mesh, &
-                          b_tab_requests_send_recv_scalar, &
+                          b_request_send_recv_scalar_gpu, &
                           3,ninterface_acoustic,inum_interfaces_acoustic)
         endif
-      endif !phase_is_inner
+      endif
 
     endif !interface_acoustic
 
@@ -168,7 +165,7 @@
 
 ! for acoustic solver on GPU
 
-  subroutine compute_stacey_acoustic_GPU(phase_is_inner)
+  subroutine compute_stacey_acoustic_GPU(iphase)
 
   use constants,only: CUSTOM_REAL,NGLLX
 
@@ -180,10 +177,10 @@
 
   implicit none
 
-! communication overlap
-  logical :: phase_is_inner
+  ! communication overlap
+  integer,intent(in) :: iphase
 
-! adjoint simulations
+  ! adjoint simulations
   real(kind=CUSTOM_REAL),dimension(NGLLX,nspec_bottom) :: b_absorb_potential_bottom_slice
   real(kind=CUSTOM_REAL),dimension(NGLLX,nspec_left) :: b_absorb_potential_left_slice
   real(kind=CUSTOM_REAL),dimension(NGLLX,nspec_right) :: b_absorb_potential_right_slice
@@ -193,27 +190,24 @@
   if (nelemabs == 0) return
 
   if (SIMULATION_TYPE == 3) then
-    if (phase_is_inner .eqv. .false.) then
-      b_absorb_potential_left_slice(:,:) = b_absorb_acoustic_left(:,:,NSTEP-it+1)
-      b_absorb_potential_right_slice(:,:) = b_absorb_acoustic_right(:,:,NSTEP-it+1)
-      b_absorb_potential_top_slice(:,:) = b_absorb_acoustic_top(:,:,NSTEP-it+1)
-      b_absorb_potential_bottom_slice(:,:) = b_absorb_acoustic_bottom(:,:,NSTEP-it+1)
-    endif
+    ! gets absorbing contributions buffers
+    b_absorb_potential_left_slice(:,:) = b_absorb_acoustic_left(:,:,NSTEP-it+1)
+    b_absorb_potential_right_slice(:,:) = b_absorb_acoustic_right(:,:,NSTEP-it+1)
+    b_absorb_potential_top_slice(:,:) = b_absorb_acoustic_top(:,:,NSTEP-it+1)
+    b_absorb_potential_bottom_slice(:,:) = b_absorb_acoustic_bottom(:,:,NSTEP-it+1)
   endif
 
   ! absorbs absorbing-boundary surface using Sommerfeld condition (vanishing field in the outer-space)
-  call compute_stacey_acoustic_cuda(Mesh_pointer, phase_is_inner,b_absorb_potential_left_slice,b_absorb_potential_right_slice,&
+  call compute_stacey_acoustic_cuda(Mesh_pointer,iphase,b_absorb_potential_left_slice,b_absorb_potential_right_slice,&
                                      b_absorb_potential_top_slice,b_absorb_potential_bottom_slice)
 
   ! adjoint simulations: stores absorbed wavefield part
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
     ! writes out absorbing boundary value only when second phase is running
-    if (phase_is_inner .eqv. .true.) then
-      b_absorb_acoustic_bottom(:,:,it) = b_absorb_potential_bottom_slice(:,:)
-      b_absorb_acoustic_right(:,:,it) = b_absorb_potential_right_slice(:,:)
-      b_absorb_acoustic_top(:,:,it) = b_absorb_potential_top_slice(:,:)
-      b_absorb_acoustic_left(:,:,it) = b_absorb_potential_left_slice(:,:)
-    endif
+    b_absorb_acoustic_bottom(:,:,it) = b_absorb_potential_bottom_slice(:,:)
+    b_absorb_acoustic_right(:,:,it) = b_absorb_potential_right_slice(:,:)
+    b_absorb_acoustic_top(:,:,it) = b_absorb_potential_top_slice(:,:)
+    b_absorb_acoustic_left(:,:,it) = b_absorb_potential_left_slice(:,:)
   endif
 
   end subroutine compute_stacey_acoustic_GPU
@@ -222,7 +216,7 @@
 !---------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_add_sources_acoustic_GPU(phase_is_inner)
+  subroutine compute_add_sources_acoustic_GPU(iphase)
 
   use specfem_par,only: it,SIMULATION_TYPE,NSTEP, nadj_rec_local
 
@@ -231,17 +225,17 @@
   implicit none
 
   ! communication overlap
-  logical :: phase_is_inner
+  integer,intent(in) :: iphase
 
   ! forward simulations
-  if (SIMULATION_TYPE == 1) call compute_add_sources_ac_cuda(Mesh_pointer,phase_is_inner,it)
+  if (SIMULATION_TYPE == 1) call compute_add_sources_ac_cuda(Mesh_pointer,iphase,it)
 
   ! adjoint simulations
   if (SIMULATION_TYPE == 3 .and. nadj_rec_local > 0 .and. it < NSTEP) then
-    call add_sources_ac_sim_2_or_3_cuda(Mesh_pointer,phase_is_inner, NSTEP -it + 1, nadj_rec_local,NSTEP)
+    call add_sources_ac_sim_2_or_3_cuda(Mesh_pointer,iphase, NSTEP -it + 1, nadj_rec_local,NSTEP)
   endif
 
   ! adjoint simulations
-  if (SIMULATION_TYPE == 3) call compute_add_sources_ac_s3_cuda(Mesh_pointer,phase_is_inner,NSTEP -it + 1)
+  if (SIMULATION_TYPE == 3) call compute_add_sources_ac_s3_cuda(Mesh_pointer,iphase,NSTEP -it + 1)
 
   end subroutine compute_add_sources_acoustic_GPU

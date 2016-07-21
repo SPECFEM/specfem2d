@@ -33,7 +33,7 @@
 
 
   subroutine compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                                     PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
+                                     PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase)
 
 
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
@@ -42,7 +42,7 @@
     ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4, &
     ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: nglob,nspec,  &
+  use specfem_par, only: nglob,  &
                          assign_external_model,ibool,kmato,ispec_is_acoustic, &
                          density,rhoext, &
                          xix,xiz,gammax,gammaz,jacobian, &
@@ -50,20 +50,24 @@
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj
 
+  ! overlapping communication
+  use specfem_par, only: nspec_inner_acoustic,nspec_outer_acoustic,phase_ispec_inner_acoustic
+
   ! PML arrays
   use specfem_par, only: ispec_is_PML
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob) :: potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                              potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: potential_dot_dot_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_dot_acoustic,potential_acoustic
 
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
   real(kind=CUSTOM_REAL), dimension(nglob) :: potential_acoustic_old
 
+  integer,intent(in) :: iphase
+
   ! local parameters
   integer :: ispec,i,j,k,iglob
-  integer :: ifirstelem,ilastelem
 
   ! spatial derivatives
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: dux_dxi,dux_dgamma
@@ -83,11 +87,20 @@
   ! local PML parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_dot_dot_acoustic_PML
 
-  ! loop over spectral elements
-  ifirstelem = 1
-  ilastelem = nspec
+  integer :: num_elements,ispec_p
 
-  do ispec = ifirstelem,ilastelem
+  ! choses inner/outer elements
+  if (iphase == 1) then
+    num_elements = nspec_outer_acoustic
+  else
+    num_elements = nspec_inner_acoustic
+  endif
+
+  ! loop over spectral elements
+  do ispec_p = 1,num_elements
+
+    ! returns element id from stored element list
+    ispec = phase_ispec_inner_acoustic(ispec_p,iphase)
 
     ! only for acoustic spectral elements
     if (.not. ispec_is_acoustic(ispec)) cycle

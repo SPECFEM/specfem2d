@@ -149,6 +149,7 @@ subroutine iterate_time()
       if (POROELASTIC_SIMULATION) then
         if (.not. GPU_MODE) then
           call compute_forces_poroelastic_main()
+          if (SIMULATION_TYPE == 3) call compute_forces_poroelastic_main_backward()
         else
           ! on GPU
           if (any_poroelastic) call exit_MPI(myrank,'poroelastic not implemented in GPU MODE yet')

@@ -41,8 +41,10 @@
 
   ! local parameters
   integer :: i,iglob
-
-  ! main solver for the elastic elements
+  ! non-blocking MPI
+  ! iphase: iphase = 1 is for computing outer elements (on MPI interface),
+  !         iphase = 2 is for computing inner elements
+  integer :: iphase
 
   ! checks if anything to do in this slice
   if ((.not. any_elastic) .and. (.not. SOURCE_IS_MOVING)) return
@@ -56,90 +58,106 @@
   if (ATTENUATION_VISCOELASTIC_SOLID) call compute_attenuation_viscoelastic(displ_elastic,displ_elastic_old, &
                                                                   ispec_is_elastic,PML_BOUNDARY_CONDITIONS,e1,e11,e13)
 
-  ! visco-elastic term
-  call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
-                                   PML_BOUNDARY_CONDITIONS,e1,e11,e13)
+  ! distinguishes two runs: for elements on MPI interfaces (outer), and elements within the partitions (inner)
+  do iphase = 1,2
 
-  ! Stacey boundary conditions
-  if (STACEY_ABSORBING_CONDITIONS) then
-    call compute_stacey_elastic(accel_elastic,veloc_elastic)
-  endif
+    ! main solver for the elastic elements
+    ! visco-elastic term
+    call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
+                                     PML_BOUNDARY_CONDITIONS,e1,e11,e13,iphase)
 
-  ! PML boundary
-  if (PML_BOUNDARY_CONDITIONS) then
-    call pml_boundary_elastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old)
-  endif
+    ! computes additional contributions to acceleration field
+    if (iphase == 1) then
 
-  ! add coupling with the acoustic side
-  if (coupled_acoustic_elastic) then
-    call compute_coupling_viscoelastic_ac()
-  endif
+      ! Stacey boundary conditions
+      if (STACEY_ABSORBING_CONDITIONS) then
+        call compute_stacey_elastic(accel_elastic,veloc_elastic)
+      endif
 
-  ! add coupling with the poroelastic side
-  if (coupled_elastic_poro) then
-    call compute_coupling_viscoelastic_po()
-  endif
+      ! PML boundary
+      if (PML_BOUNDARY_CONDITIONS) then
+        call pml_boundary_elastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old)
+      endif
 
-  ! enforces vanishing wavefields on axis
-  if (AXISYM) then
-    call enforce_zero_radial_displacements_on_the_axis()
-  endif
+      ! add coupling with the acoustic side
+      if (coupled_acoustic_elastic) then
+        call compute_coupling_viscoelastic_ac()
+      endif
 
-  ! add force source
-  if (.not. initialfield) then
+      ! add coupling with the poroelastic side
+      if (coupled_elastic_poro) then
+        call compute_coupling_viscoelastic_po()
+      endif
 
-    select case(NOISE_TOMOGRAPHY)
-    case (0)
-      ! earthquake/force source
-      if (SIMULATION_TYPE == 1) then
-        if (SOURCE_IS_MOVING) then
-          call compute_add_sources_viscoelastic_moving_source(accel_elastic,it,i_stage)
-        else
-          call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
+      ! add force source
+      if (.not. initialfield) then
+
+        select case(NOISE_TOMOGRAPHY)
+        case (0)
+          ! earthquake/force source
+          if (SIMULATION_TYPE == 1) then
+            if (SOURCE_IS_MOVING) then
+              call compute_add_sources_viscoelastic_moving_source(accel_elastic,it,i_stage)
+            else
+              call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
+            endif
+          endif
+
+        case (1)
+          ! noise source at master station
+          call add_point_source_noise()
+
+        case (2)
+          ! inject generating wavefield for noise simulations
+          call add_surface_movie_noise(accel_elastic)
+        end select
+
+        ! adjoint wavefield source
+        if (SIMULATION_TYPE == 3) then
+          ! adjoint sources
+          call compute_add_sources_viscoelastic_adjoint()
         endif
       endif
 
-    case (1)
-      ! noise source at master station
-      call add_point_source_noise()
-
-    case (2)
-      ! inject generating wavefield for noise simulations
-      call add_surface_movie_noise(accel_elastic)
-    end select
-
-    ! adjoint wavefield source
-    if (SIMULATION_TYPE == 3) then
-      ! adjoint sources
-      call compute_add_sources_viscoelastic_adjoint()
     endif
-  endif
 
-  ! enforces vanishing wavefields on axis
-  if (AXISYM) then
-    call enforce_zero_radial_displacements_on_the_axis()
-  endif
+    ! enforces vanishing wavefields on axis
+    if (AXISYM) then
+      call enforce_zero_radial_displacements_on_the_axis()
+    endif
 
-  ! daniel debug source contribution
-  !if (myrank == 1) &
-  !write(1234,*) it, dble(sourcearrays(1,1,5,5) * source_time_function(1,it,i_stage)), &
-  !              accel_elastic(1,1102),source_time_function(1,it,i_stage),sourcearrays(1,1,5,5)
-
-  ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
-  if (NPROC > 1 .and. ninterface_elastic > 0) then
     ! LDDRK
+    ! daniel: when is this needed? veloc_elastic at it == 1 and i_stage == 1 is zero for non-initialfield simulations.
+    !         todo - please check...
     if (time_stepping_scheme == 2) then
-      if (i_stage == 1 .and. it == 1 .and. (.not. initialfield)) then
+      if (i_stage == 1 .and. it == 1 .and. iphase == 2 .and. (.not. initialfield)) then
+        ! debug
+        !print *,'debug veloc min/max = ',minval(veloc_elastic(:,:)),maxval(veloc_elastic(:,:))
         veloc_elastic_LDDRK_temp(:,:) = veloc_elastic(:,:)
-        call assemble_MPI_vector_el(veloc_elastic)
+
+        ! assembles velocity
+        call assemble_MPI_vector_el_blocking(veloc_elastic)
       endif
     endif
 
-    ! collects all contributions on shared degrees of freedom
-    call assemble_MPI_vector_el(accel_elastic)
-  endif
+    ! assemble all the contributions between slices using MPI
+    if (NPROC > 1 .and. ninterface_elastic > 0) then
+      ! collects all contributions on shared degrees of freedom
+      !call assemble_MPI_vector_el_blocking(accel_elastic)
+
+      ! sends out MPI interface data
+      if (iphase == 1) then
+        ! sends accel values to corresponding MPI interface neighbors
+        call assemble_MPI_vector_el_s(accel_elastic)
+      else
+        ! waits for send/receive requests to be completed and assembles values
+        call assemble_MPI_vector_el_w(accel_elastic)
+      endif
+    endif
 #endif
+
+  enddo ! iphase
 
   ! saves boundary condition for reconstruction
   if (PML_BOUNDARY_CONDITIONS) then
@@ -195,6 +213,10 @@
 
   ! local parameters
   integer :: it_temp,istage_temp
+  ! non blocking MPI
+  ! iphase: iphase = 1 is for computing outer elements (on MPI interface),
+  !         iphase = 2 is for computing inner elements
+  integer :: iphase
 
   ! checks if anything to do
   if (SIMULATION_TYPE /= 3 ) return
@@ -228,14 +250,20 @@
   if (UNDO_ATTENUATION) then
     ! viscous attenuation for elastic media
     if (ATTENUATION_VISCOELASTIC_SOLID) call compute_attenuation_viscoelastic(b_displ_elastic,b_displ_elastic_old, &
-                                                                    ispec_is_elastic,.false.,b_e1,b_e11,b_e13)
+                                                                              ispec_is_elastic,.false.,b_e1,b_e11,b_e13)
+  endif
 
-    call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                     .false.,b_e1,b_e11,b_e13)
-  else
-    ! todo: maybe should be b_e1,b_e11,.. here, please check...
-    call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                              e1,e11,e13)
+  ! distinguishes two runs: for elements on MPI interfaces (outer), and elements within the partitions (inner)
+  do iphase = 1,2
+
+    if (UNDO_ATTENUATION) then
+      call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
+                                       .false.,b_e1,b_e11,b_e13,iphase)
+    else
+      ! todo: maybe should be b_e1,b_e11,.. here, please check...
+      call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
+                                                e1,e11,e13,iphase)
+    endif
 
 !   ! viscous attenuation for elastic media
 !   if (ATTENUATION_VISCOELASTIC_SOLID) call compute_attenuation_viscoelastic(b_displ_elastic,b_displ_elastic_old, &
@@ -243,66 +271,73 @@
 !
 !    call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
 !                                     PML_BOUNDARY_CONDITIONS,b_e1,b_e11,b_e13)
-  endif
 
-  ! Stacey boundary conditions
-  if (STACEY_ABSORBING_CONDITIONS) then
-    if (UNDO_ATTENUATION) then
-      call compute_stacey_elastic(b_accel_elastic,b_veloc_elastic)
-    else
-      call compute_stacey_elastic_backward(b_accel_elastic)
-    endif
-  endif
+    ! computes additional contributions
+    if (iphase == 1) then
+      ! Stacey boundary conditions
+      if (STACEY_ABSORBING_CONDITIONS) then
+        if (UNDO_ATTENUATION) then
+          call compute_stacey_elastic(b_accel_elastic,b_veloc_elastic)
+        else
+          call compute_stacey_elastic_backward(b_accel_elastic)
+        endif
+      endif
 
-  ! PML boundary
-  if (PML_BOUNDARY_CONDITIONS) then
-    call pml_boundary_elastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old)
-  endif
+      ! PML boundary
+      if (PML_BOUNDARY_CONDITIONS) then
+        call pml_boundary_elastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old)
+      endif
 
-  if (PML_BOUNDARY_CONDITIONS) then
-    call rebuild_value_on_PML_interface_viscoelastic(it_temp)
-  endif
+      if (PML_BOUNDARY_CONDITIONS) then
+        call rebuild_value_on_PML_interface_viscoelastic(it_temp)
+      endif
 
-  ! add coupling with the acoustic side
-  if (coupled_acoustic_elastic) then
-    call compute_coupling_viscoelastic_ac_backward()
-  endif
+      ! add coupling with the acoustic side
+      if (coupled_acoustic_elastic) then
+        call compute_coupling_viscoelastic_ac_backward()
+      endif
 
-  ! add coupling with the poroelastic side
-  if (coupled_elastic_poro) then
-    call compute_coupling_viscoelastic_po_backward()
-  endif
+      ! add coupling with the poroelastic side
+      if (coupled_elastic_poro) then
+        call compute_coupling_viscoelastic_po_backward()
+      endif
 
-  ! only on forward arrays so far implemented...
-  !if (AXISYM) then
-  !  call enforce_zero_radial_displacements_on_the_axis()
-  !endif
+      ! only on forward arrays so far implemented...
+      !if (AXISYM) then
+      !  call enforce_zero_radial_displacements_on_the_axis()
+      !endif
 
-  ! add force source
-  if (.not. initialfield) then
+      ! add force source
+      if (.not. initialfield) then
 
-    select case (NOISE_TOMOGRAPHY)
-    case (0)
-      ! earthquake/force source
-      ! for backward wavefield
-      call compute_add_sources_viscoelastic(b_accel_elastic,it_temp,istage_temp)
+        select case (NOISE_TOMOGRAPHY)
+        case (0)
+          ! earthquake/force source
+          ! for backward wavefield
+          call compute_add_sources_viscoelastic(b_accel_elastic,it_temp,istage_temp)
 
-    case (3)
-      ! noise simulation
-      ! reconstruction/backward wavefield
-      ! injects generating wavefield sources
-      if (.not. NOISE_SAVE_EVERYWHERE) call add_surface_movie_noise(b_accel_elastic)
-    end select
-  endif ! if not using an initial field
+        case (3)
+          ! noise simulation
+          ! reconstruction/backward wavefield
+          ! injects generating wavefield sources
+          if (.not. NOISE_SAVE_EVERYWHERE) call add_surface_movie_noise(b_accel_elastic)
+        end select
+      endif ! if not using an initial field
 
-  ! only on forward arrays so far implemented...
+    endif ! iphase
 
-  ! assembling accel_elastic for elastic elements
 #ifdef USE_MPI
-  if (NPROC > 1 .and. ninterface_elastic > 0) then
-    call assemble_MPI_vector_el(b_accel_elastic)
-  endif
+    ! assembling accel_elastic for elastic elements
+    if (NPROC > 1 .and. ninterface_elastic > 0) then
+      if (iphase == 1) then
+        call assemble_MPI_vector_el_s(b_accel_elastic)
+      else
+        call assemble_MPI_vector_el_w(b_accel_elastic)
+      endif
+    endif
 #endif
+
+  enddo ! iphase
 
   if (PML_BOUNDARY_CONDITIONS) then
     call rebuild_value_on_PML_interface_viscoelastic_accel(it_temp)

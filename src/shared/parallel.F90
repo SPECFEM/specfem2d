@@ -148,26 +148,34 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-#ifdef USE_MPI
 
   subroutine wait_req(req)
 
+#ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
+#endif
 
   implicit none
 
   integer :: req
 
-  integer, dimension(MPI_STATUS_SIZE) :: req_mpi_status
+#ifndef USE_MPI
+  integer :: dummy
+#endif
 
+#ifdef USE_MPI
+  ! local parameters
   integer :: ier
 
-  call mpi_wait(req,req_mpi_status,ier)
+  call MPI_WAIT(req,MPI_STATUS_IGNORE,ier)
+#else
+  ! to avoid compiler warning
+  dummy = req
+#endif
 
   end subroutine wait_req
 
-#endif
 
 !-------------------------------------------------------------------------------------------------
 !
@@ -295,28 +303,45 @@
 !-------------------------------------------------------------------------------------------------
 
 
-#ifdef USE_MPI
-
   subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
 
+! asynchronuous send
+
+#ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
+#endif
+
   use constants,only: CUSTOM_REAL
 
   implicit none
 
+#ifdef USE_MPI
   include "precision.h"
+#endif
 
-  integer sendcount, dest, sendtag, req
+  integer :: sendcount, dest, sendtag, req
   real(kind=CUSTOM_REAL), dimension(sendcount) :: sendbuf
 
-  integer ier
+#ifndef USE_MPI
+  integer :: dummy
+#endif
+
+#ifdef USE_MPI
+  integer :: ier
 
   call MPI_ISEND(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag,MPI_COMM_WORLD,req,ier)
+#else
+  stop 'isend_cr not implemented for serial code'
+  ! to avoid compiler warning
+  dummy = sendbuf(1)
+  dummy = dest
+  dummy = sendtag
+  dummy = req
+#endif
 
   end subroutine isend_cr
 
-#endif
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -370,28 +395,43 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-#ifdef USE_MPI
-
   subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
 
+! asynchronuous receive
+
+#ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
+#endif
+
   use constants,only: CUSTOM_REAL
 
   implicit none
 
+#ifdef USE_MPI
   include "precision.h"
+#endif
 
-  integer recvcount, dest, recvtag, req
+  integer :: recvcount, dest, recvtag, req
   real(kind=CUSTOM_REAL), dimension(recvcount) :: recvbuf
+#ifndef USE_MPI
+  integer :: dummy
+#endif
 
-  integer ier
+#ifdef USE_MPI
+  integer :: ier
 
   call MPI_IRECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag,MPI_COMM_WORLD,req,ier)
+#else
+  stop 'irecv_cr not implemented for serial code'
+  ! to avoid compiler warning
+  dummy = recvbuf(1)
+  dummy = dest
+  dummy = recvtag
+  dummy = req
+#endif
 
   end subroutine irecv_cr
-
-#endif
 
 !
 !-------------------------------------------------------------------------------------------------

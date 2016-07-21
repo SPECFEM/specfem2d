@@ -33,29 +33,33 @@
 
 ! for poro solver
 
- subroutine compute_coupling_poro_ac()
+ subroutine compute_coupling_poro_ac(potential_dot_dot_acoustic,accels_poroelastic,accelw_poroelastic,FORWARD_OR_ADJOINT)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
+  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
 
   use specfem_par, only: num_fluid_poro_edges,ibool,wxgll,wzgll,xix,xiz,&
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
                          fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge, &
                          porosity,tortuosity,density,kmato, &
-                         potential_dot_dot_acoustic,b_potential_dot_dot_acoustic, &
                          potential_acoustic_adj_coupling, &
-                         accels_poroelastic,accelw_poroelastic,b_accels_poroelastic,b_accelw_poroelastic, &
+                         nglob_acoustic,nglob_poroelastic, &
                          SIMULATION_TYPE
 
   implicit none
 
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic), intent(in) :: potential_dot_dot_acoustic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic), intent(inout) :: accels_poroelastic,accelw_poroelastic
+
+  ! FORWARD_OR_ADJOINT == 1 for forward wavefield, FORWARD_OR_ADJOINT == 3 for backward/reconstruction wavefield
+  integer,intent(in) :: FORWARD_OR_ADJOINT
+
   !local variable
   integer :: inum,ispec_acoustic,iedge_acoustic,ispec_poroelastic,iedge_poroelastic, &
              ipoin1D,i,j,ii2,jj2,iglob
-  real(kind=CUSTOM_REAL) :: pressure,b_pressure,&
-                            xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
-  double precision :: phi,tort,rho_f,rho_s,rho_bar
+  real(kind=CUSTOM_REAL) :: pressure,xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
   real(kind=CUSTOM_REAL) :: fac_s,fac_w
+  double precision :: phi,tort,rho_f,rho_s,rho_bar
   integer :: material
 
   ! loop on all the coupling edges
@@ -88,9 +92,7 @@
       ! compute pressure on the fluid/porous medium edge
       pressure = - potential_dot_dot_acoustic(iglob)
 
-      if (SIMULATION_TYPE == 3) then
-        b_pressure = - b_potential_dot_dot_acoustic(iglob)
-
+      if (SIMULATION_TYPE == 3 .and. FORWARD_OR_ADJOINT == 1) then
         ! new definition of adjoint displacement and adjoint potential
         ! adjoint definition: pressure^\dagger = potential^\dagger
         pressure = potential_acoustic_adj_coupling(iglob)
@@ -142,15 +144,6 @@
       ! contribution to the fluid phase
       accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) + weight*nx*pressure * fac_w
       accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) + weight*nz*pressure * fac_w
-
-      if (SIMULATION_TYPE == 3) then
-        ! contribution to the solid phase
-        b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + weight*nx*b_pressure * fac_s
-        b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + weight*nz*b_pressure * fac_s
-        ! contribution to the fluid phase
-        b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) + weight*nx*b_pressure * fac_w
-        b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) + weight*nz*b_pressure * fac_w
-      endif
     enddo
   enddo
 

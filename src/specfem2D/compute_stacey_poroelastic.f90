@@ -32,16 +32,23 @@
 !========================================================================
 
 
+!---------------------------------------------------------------------------------------------
+!
+! fluid part
+!
+!---------------------------------------------------------------------------------------------
+
+
   subroutine compute_stacey_poro_fluid(f0)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
-  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
+  use specfem_par, only: it,STACEY_ABSORBING_CONDITIONS, &
                          anyabs,nelemabs,numabs, &
                          ATTENUATION_PORO_FLUID_PART, &
                          ibool,kmato,ispec_is_poroelastic, &
                          codeabs,codeabs_corner, &
-                         accelw_poroelastic,b_accelw_poroelastic, &
+                         accelw_poroelastic, &
                          velocw_poroelastic,velocs_poroelastic, &
                          permeability,xix,xiz,gammax,gammaz, &
                          jacobian, &
@@ -141,11 +148,6 @@
             if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_w_left(1,j,ib_left(ispecabs),it) = tx*weight
               b_absorb_poro_w_left(2,j,ib_left(ispecabs),it) = tz*weight
-            else if (SIMULATION_TYPE == 3) then
-              b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
-                                              b_absorb_poro_w_left(1,j,ib_left(ispecabs),NSTEP-it+1)
-              b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
-                                              b_absorb_poro_w_left(2,j,ib_left(ispecabs),NSTEP-it+1)
             endif
 
           endif
@@ -195,11 +197,6 @@
             if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_w_right(1,j,ib_right(ispecabs),it) = tx*weight
               b_absorb_poro_w_right(2,j,ib_right(ispecabs),it) = tz*weight
-            else if (SIMULATION_TYPE == 3) then
-              b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
-                                              b_absorb_poro_w_right(1,j,ib_right(ispecabs),NSTEP-it+1)
-              b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
-                                              b_absorb_poro_w_right(2,j,ib_right(ispecabs),NSTEP-it+1)
             endif
 
           endif
@@ -253,11 +250,6 @@
             if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_w_bottom(1,i,ib_bottom(ispecabs),it) = tx*weight
               b_absorb_poro_w_bottom(2,i,ib_bottom(ispecabs),it) = tz*weight
-            else if (SIMULATION_TYPE == 3) then
-              b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
-                                              b_absorb_poro_w_bottom(1,i,ib_bottom(ispecabs),NSTEP-it+1)
-              b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
-                                              b_absorb_poro_w_bottom(2,i,ib_bottom(ispecabs),NSTEP-it+1)
             endif
 
           endif
@@ -311,11 +303,6 @@
             if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
               b_absorb_poro_w_top(1,i,ib_top(ispecabs),it) = tx*weight
               b_absorb_poro_w_top(2,i,ib_top(ispecabs),it) = tz*weight
-            else if (SIMULATION_TYPE == 3) then
-              b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
-                                              b_absorb_poro_w_top(1,i,ib_top(ispecabs),NSTEP-it+1)
-              b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
-                                              b_absorb_poro_w_top(2,i,ib_top(ispecabs),NSTEP-it+1)
             endif
 
           endif
@@ -330,10 +317,142 @@
 
   end subroutine compute_stacey_poro_fluid
 
-
 !
 !---------------------------------------------------------------------------------------------
 !
+
+  subroutine compute_stacey_poro_fluid_backward()
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
+
+  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
+                         anyabs,nelemabs,numabs, &
+                         ibool,ispec_is_poroelastic, &
+                         codeabs,codeabs_corner, &
+                         b_accelw_poroelastic, &
+                         ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro, &
+                         ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro, &
+                         SIMULATION_TYPE, &
+                         b_absorb_poro_w_left,b_absorb_poro_w_right, &
+                         b_absorb_poro_w_bottom,b_absorb_poro_w_top, &
+                         ib_left,ib_right,ib_bottom,ib_top
+
+  implicit none
+
+  ! local parameters
+  integer :: ispec,i,j,iglob
+  integer :: ispecabs,ibegin,iend,jbegin,jend
+
+  ! checks if anything to do
+  if (.not. STACEY_ABSORBING_CONDITIONS) return
+  if (.not. anyabs) return
+  if (SIMULATION_TYPE /= 3) return
+
+  ! absorbing boundaries
+  do ispecabs= 1,nelemabs
+
+    ispec = numabs(ispecabs)
+
+    if (ispec_is_poroelastic(ispec)) then
+
+!--- left absorbing boundary
+      if (codeabs(IEDGE4,ispecabs)) then
+        i = 1
+
+        jbegin = ibegin_edge4_poro(ispecabs)
+        jend = iend_edge4_poro(ispecabs)
+
+        do j = jbegin,jend
+          iglob = ibool(i,j,ispec)
+
+          if (ispec_is_poroelastic(ispec)) then
+            b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
+                                            b_absorb_poro_w_left(1,j,ib_left(ispecabs),NSTEP-it+1)
+            b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
+                                            b_absorb_poro_w_left(2,j,ib_left(ispecabs),NSTEP-it+1)
+          endif
+        enddo
+      endif  !  end of left absorbing boundary
+
+!--- right absorbing boundary
+      if (codeabs(IEDGE2,ispecabs)) then
+        i = NGLLX
+
+        jbegin = ibegin_edge2_poro(ispecabs)
+        jend = iend_edge2_poro(ispecabs)
+
+        do j = jbegin,jend
+          iglob = ibool(i,j,ispec)
+
+          if (ispec_is_poroelastic(ispec)) then
+            b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
+                                            b_absorb_poro_w_right(1,j,ib_right(ispecabs),NSTEP-it+1)
+            b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
+                                            b_absorb_poro_w_right(2,j,ib_right(ispecabs),NSTEP-it+1)
+          endif
+        enddo
+      endif  !  end of right absorbing boundary
+
+!--- bottom absorbing boundary
+      if (codeabs(IEDGE1,ispecabs)) then
+        j = 1
+
+        ibegin = ibegin_edge1_poro(ispecabs)
+        iend = iend_edge1_poro(ispecabs)
+
+        ! exclude corners to make sure there is no contradiction on the normal
+        if (codeabs_corner(1,ispecabs)) ibegin = 2
+        if (codeabs_corner(2,ispecabs)) iend = NGLLX-1
+
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+
+          if (ispec_is_poroelastic(ispec)) then
+            b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
+                                            b_absorb_poro_w_bottom(1,i,ib_bottom(ispecabs),NSTEP-it+1)
+            b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
+                                            b_absorb_poro_w_bottom(2,i,ib_bottom(ispecabs),NSTEP-it+1)
+          endif
+        enddo
+      endif  !  end of bottom absorbing boundary
+
+!--- top absorbing boundary
+      if (codeabs(IEDGE3,ispecabs)) then
+        j = NGLLZ
+
+        ibegin = ibegin_edge3_poro(ispecabs)
+        iend = iend_edge3_poro(ispecabs)
+
+        ! exclude corners to make sure there is no contradiction on the normal
+        if (codeabs_corner(3,ispecabs)) ibegin = 2
+        if (codeabs_corner(4,ispecabs)) iend = NGLLX-1
+
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+
+          if (ispec_is_poroelastic(ispec)) then
+            b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) - &
+                                            b_absorb_poro_w_top(1,i,ib_top(ispecabs),NSTEP-it+1)
+            b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) - &
+                                            b_absorb_poro_w_top(2,i,ib_top(ispecabs),NSTEP-it+1)
+          endif
+        enddo
+      endif  !  end of top absorbing boundary
+
+    endif ! if ispec_is_poroelastic(ispec)
+
+  enddo
+
+  end subroutine compute_stacey_poro_fluid_backward
+
+
+
+!---------------------------------------------------------------------------------------------
+!
+! solid part
+!
+!---------------------------------------------------------------------------------------------
+
 
   subroutine compute_stacey_poro_solid(f0)
 
@@ -637,5 +756,137 @@
   enddo
 
   end subroutine compute_stacey_poro_solid
+
+!
+!---------------------------------------------------------------------------------------------
+!
+
+  subroutine compute_stacey_poro_solid_backward()
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
+
+  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
+                         anyabs,nelemabs,numabs, &
+                         ibool,ispec_is_poroelastic, &
+                         codeabs,codeabs_corner, &
+                         b_accels_poroelastic, &
+                         ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,iend_edge3_poro, &
+                         ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro, &
+                         SIMULATION_TYPE, &
+                         b_absorb_poro_s_left,b_absorb_poro_s_right, &
+                         b_absorb_poro_s_bottom,b_absorb_poro_s_top, &
+                         ib_left,ib_right,ib_bottom,ib_top
+
+  implicit none
+
+  ! local parameters
+  integer :: ispec,i,j,iglob
+  integer :: ispecabs,ibegin,iend,jbegin,jend
+
+  ! checks if anything to do
+  if (.not. STACEY_ABSORBING_CONDITIONS) return
+  if (.not. anyabs) return
+  if (SIMULATION_TYPE /= 3) return
+
+  ! absorbing boundaries
+  do ispecabs = 1,nelemabs
+
+    ispec = numabs(ispecabs)
+
+    if (ispec_is_poroelastic(ispec)) then
+
+!--- left absorbing boundary
+      if (codeabs(IEDGE4,ispecabs)) then
+        i = 1
+
+        jbegin = ibegin_edge4_poro(ispecabs)
+        jend = iend_edge4_poro(ispecabs)
+
+        do j = jbegin,jend
+          iglob = ibool(i,j,ispec)
+
+          if (ispec_is_poroelastic(ispec)) then
+            ! reconstructed/backward wavefield
+            b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
+                                            b_absorb_poro_s_left(1,j,ib_left(ispecabs),NSTEP-it+1)
+            b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
+                                            b_absorb_poro_s_left(2,j,ib_left(ispecabs),NSTEP-it+1)
+          endif
+        enddo
+      endif  !  end of left absorbing boundary
+
+!--- right absorbing boundary
+      if (codeabs(IEDGE2,ispecabs)) then
+        i = NGLLX
+
+        jbegin = ibegin_edge2_poro(ispecabs)
+        jend = iend_edge2_poro(ispecabs)
+
+        do j = jbegin,jend
+          iglob = ibool(i,j,ispec)
+
+          if (ispec_is_poroelastic(ispec)) then
+            ! reconstructed/backward wavefield
+            b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
+                                            b_absorb_poro_s_right(1,j,ib_right(ispecabs),NSTEP-it+1)
+            b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
+                                            b_absorb_poro_s_right(2,j,ib_right(ispecabs),NSTEP-it+1)
+          endif
+        enddo
+      endif  !  end of right absorbing boundary
+
+!--- bottom absorbing boundary
+      if (codeabs(IEDGE1,ispecabs)) then
+        j = 1
+
+        ibegin = ibegin_edge1_poro(ispecabs)
+        iend = iend_edge1_poro(ispecabs)
+
+        ! exclude corners to make sure there is no contradiction on the normal
+        if (codeabs_corner(1,ispecabs)) ibegin = 2
+        if (codeabs_corner(2,ispecabs)) iend = NGLLX-1
+
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+
+          if (ispec_is_poroelastic(ispec)) then
+            ! reconstructed/backward wavefield
+            b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
+                                            b_absorb_poro_s_bottom(1,i,ib_bottom(ispecabs),NSTEP-it+1)
+            b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
+                                            b_absorb_poro_s_bottom(2,i,ib_bottom(ispecabs),NSTEP-it+1)
+          endif
+        enddo
+      endif  !  end of bottom absorbing boundary
+
+!--- top absorbing boundary
+      if (codeabs(IEDGE3,ispecabs)) then
+        j = NGLLZ
+
+        ibegin = ibegin_edge3_poro(ispecabs)
+        iend = iend_edge3_poro(ispecabs)
+
+        ! exclude corners to make sure there is no contradiction on the normal
+        if (codeabs_corner(3,ispecabs)) ibegin = 2
+        if (codeabs_corner(4,ispecabs)) iend = NGLLX-1
+
+        do i = ibegin,iend
+          iglob = ibool(i,j,ispec)
+
+          if (ispec_is_poroelastic(ispec)) then
+            ! reconstructed/backward wavefield
+            b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) - &
+                                            b_absorb_poro_s_top(1,i,ib_top(ispecabs),NSTEP-it+1)
+            b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) - &
+                                            b_absorb_poro_s_top(2,i,ib_top(ispecabs),NSTEP-it+1)
+          endif
+        enddo
+      endif  !  end of top absorbing boundary
+
+    endif ! if ispec_is_poroelastic(ispec)
+
+  enddo
+
+  end subroutine compute_stacey_poro_solid_backward
 
 

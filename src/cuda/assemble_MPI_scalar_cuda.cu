@@ -202,7 +202,7 @@ __global__ void assemble_boundary_potential_on_device(realw* d_potential_dot_dot
   // ! do iinterface = 1, num_interfaces_ext_mesh
   // !   do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
   // !     array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) = &
-  // !          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_vector_ext_mesh(:,ipoin,iinterface)
+  // !          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_vector_gpu(:,ipoin,iinterface)
   // !   enddo
   // ! enddo
 }
@@ -213,7 +213,7 @@ __global__ void assemble_boundary_potential_on_device(realw* d_potential_dot_dot
 extern "C"
 void FC_FUNC_(transfer_asmbl_pot_to_device,
               TRANSFER_ASMBL_POT_TO_DEVICE)(long* Mesh_pointer,
-                                            realw* buffer_recv_scalar_ext_mesh,
+                                            realw* buffer_recv_scalar_gpu,
                                             const int* FORWARD_OR_ADJOINT) {
 
 TRACE("transfer_asmbl_pot_to_device");
@@ -244,7 +244,7 @@ TRACE("transfer_asmbl_pot_to_device");
 
     if (*FORWARD_OR_ADJOINT == 1) {
       // copies buffer onto GPU
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_send_potential_dot_dot_buffer, buffer_recv_scalar_ext_mesh,
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_send_potential_dot_dot_buffer, buffer_recv_scalar_gpu,
                                          mp->size_mpi_buffer_potential*sizeof(realw), cudaMemcpyHostToDevice),98010);
 
       //assemble forward field
@@ -260,7 +260,7 @@ TRACE("transfer_asmbl_pot_to_device");
     }
     else if (*FORWARD_OR_ADJOINT == 3) {
       // copies buffer onto GPU
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_potential_dot_dot_buffer, buffer_recv_scalar_ext_mesh,
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_potential_dot_dot_buffer, buffer_recv_scalar_gpu,
                                          mp->size_mpi_buffer_potential*sizeof(realw), cudaMemcpyHostToDevice),98011);
 
       //assemble reconstructed/backward field

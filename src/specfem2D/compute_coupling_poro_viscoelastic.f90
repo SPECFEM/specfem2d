@@ -33,22 +33,25 @@
 
 ! for poroelastic solver
 
-  subroutine compute_coupling_poro_viscoelastic()
+  subroutine compute_coupling_poro_viscoelastic(displ_elastic,displs_poroelastic,displw_poroelastic,accels_poroelastic)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,TWO,IRIGHT,ILEFT,IBOTTOM,ITOP
+  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,ZERO,TWO,IRIGHT,ILEFT,IBOTTOM,ITOP
 
-  use specfem_par, only: SIMULATION_TYPE,num_solid_poro_edges,&
+  use specfem_par, only: num_solid_poro_edges,&
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          hprime_xx,hprime_zz, &
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,&
                          kmato,poroelastcoef, &
                          assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropy, &
-                         displ_elastic,b_displ_elastic,displs_poroelastic,displw_poroelastic, &
-                         b_displs_poroelastic,b_displw_poroelastic, &
-                         accels_poroelastic,b_accels_poroelastic
+                         nglob_elastic,nglob_poroelastic
 
   implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic), intent(in) :: displ_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic), intent(in) :: displs_poroelastic,displw_poroelastic
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic), intent(inout) :: accels_poroelastic
 
   !local variables
   integer :: inum,ispec_elastic,iedge_elastic,ispec_poroelastic,iedge_poroelastic, &
@@ -65,15 +68,10 @@
   real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
   real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   real(kind=CUSTOM_REAL) :: dwx_dxl,dwz_dxl,dwx_dzl,dwz_dzl
-  real(kind=CUSTOM_REAL) :: b_dux_dxi,b_dux_dgamma,b_duz_dxi,b_duz_dgamma
-  real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duz_dxl,b_dux_dzl,b_duz_dzl
-  real(kind=CUSTOM_REAL) :: b_dwx_dxi,b_dwx_dgamma,b_dwz_dxi,b_dwz_dgamma
-  real(kind=CUSTOM_REAL) :: b_dwx_dxl,b_dwz_dxl,b_dwx_dzl,b_dwz_dzl
   real(kind=CUSTOM_REAL) :: sigma_xx,sigma_xz,sigma_zz
-  real(kind=CUSTOM_REAL) :: b_sigma_xx,b_sigma_xz,b_sigma_zz
   real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
-  real(kind=CUSTOM_REAL) :: sigmap,b_sigmap
+  real(kind=CUSTOM_REAL) :: sigmap
 
   ! loop on all the coupling edges
   do inum = 1,num_solid_poro_edges
@@ -106,14 +104,6 @@
       dux_dgamma = ZERO
       duz_dgamma = ZERO
 
-      if (SIMULATION_TYPE == 3) then
-        b_dux_dxi = ZERO
-        b_duz_dxi = ZERO
-
-        b_dux_dgamma = ZERO
-        b_duz_dgamma = ZERO
-      endif
-
       ! first double loop over GLL points to compute and store gradients
       ! we can merge the two loops because NGLLX == NGLLZ
       do k = 1,NGLLX
@@ -121,13 +111,6 @@
         duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
         dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
         duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
-
-        if (SIMULATION_TYPE == 3) then
-          b_dux_dxi = b_dux_dxi + b_displ_elastic(1,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
-          b_duz_dxi = b_duz_dxi + b_displ_elastic(2,ibool(k,j,ispec_elastic))*hprime_xx(i,k)
-          b_dux_dgamma = b_dux_dgamma + b_displ_elastic(1,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
-          b_duz_dgamma = b_duz_dgamma + b_displ_elastic(2,ibool(i,k,ispec_elastic))*hprime_zz(j,k)
-        endif
       enddo
 
       xixl = xix(i,j,ispec_elastic)
@@ -142,13 +125,6 @@
       duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
       duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-      if (SIMULATION_TYPE == 3) then
-        b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
-        b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
-
-        b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
-        b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
-      endif
       ! compute stress tensor
       ! full anisotropy
       if (kmato(ispec_elastic) == 2) then
@@ -184,12 +160,6 @@
         sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
       endif
 
-      if (SIMULATION_TYPE == 3) then
-        b_sigma_xx = lambdaplus2mu_unrelaxed_elastic*b_dux_dxl + lambdal_unrelaxed_elastic*b_duz_dzl
-        b_sigma_xz = mul_unrelaxed_elastic*(b_duz_dxl + b_dux_dzl)
-        b_sigma_zz = lambdaplus2mu_unrelaxed_elastic*b_duz_dzl + lambdal_unrelaxed_elastic*b_dux_dxl
-      endif ! if (SIMULATION_TYPE == 3)
-
       ! get point values for the poroelastic side
       i = ivalue(ipoin1D,iedge_poroelastic)
       j = jvalue(ipoin1D,iedge_poroelastic)
@@ -219,20 +189,6 @@
       dwx_dgamma = ZERO
       dwz_dgamma = ZERO
 
-      if (SIMULATION_TYPE == 3) then
-        b_dux_dxi = ZERO
-        b_duz_dxi = ZERO
-
-        b_dux_dgamma = ZERO
-        b_duz_dgamma = ZERO
-
-        b_dwx_dxi = ZERO
-        b_dwz_dxi = ZERO
-
-        b_dwx_dgamma = ZERO
-        b_dwz_dgamma = ZERO
-      endif
-
       ! first double loop over GLL points to compute and store gradients
       ! we can merge the two loops because NGLLX == NGLLZ
       do k = 1,NGLLX
@@ -245,17 +201,6 @@
         dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
         dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
         dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
-        if (SIMULATION_TYPE == 3) then
-          b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
-          b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
-          b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
-          b_duz_dgamma = b_duz_dgamma + b_displs_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
-
-          b_dwx_dxi = b_dwx_dxi + b_displw_poroelastic(1,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
-          b_dwz_dxi = b_dwz_dxi + b_displw_poroelastic(2,ibool(k,j,ispec_poroelastic))*hprime_xx(i,k)
-          b_dwx_dgamma = b_dwx_dgamma + b_displw_poroelastic(1,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
-          b_dwz_dgamma = b_dwz_dgamma + b_displw_poroelastic(2,ibool(i,k,ispec_poroelastic))*hprime_zz(j,k)
-        endif
       enddo
 
       xixl = xix(i,j,ispec_poroelastic)
@@ -276,19 +221,6 @@
       dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
       dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
-      if (SIMULATION_TYPE == 3) then
-        b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
-        b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
-
-        b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
-        b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
-
-        b_dwx_dxl = b_dwx_dxi*xixl + b_dwx_dgamma*gammaxl
-        b_dwx_dzl = b_dwx_dxi*xizl + b_dwx_dgamma*gammazl
-
-        b_dwz_dxl = b_dwz_dxi*xixl + b_dwz_dgamma*gammaxl
-        b_dwz_dzl = b_dwz_dxi*xizl + b_dwz_dgamma*gammazl
-      endif
       ! compute stress tensor
 
       ! no attenuation
@@ -297,13 +229,6 @@
       sigma_zz = sigma_zz + lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
       sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
-
-      if (SIMULATION_TYPE == 3) then
-        b_sigma_xx = b_sigma_xx + lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
-        b_sigma_xz = b_sigma_xz + mu_G*(b_duz_dxl + b_dux_dzl)
-        b_sigma_zz = b_sigma_zz + lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
-        b_sigmap = C_biot*(b_dux_dxl + b_duz_dzl) + M_biot*(b_dwx_dxl + b_dwz_dzl)
-      endif
 
       ! compute the 1D Jacobian and the normal to the edge: for their expression see for instance
       ! O. C. Zienkiewicz and R. L. Taylor, The Finite Element Method for Solid and Structural Mechanics,
@@ -349,19 +274,6 @@
 
       ! contribution to the fluid phase
       ! w = 0
-
-      if (SIMULATION_TYPE == 3) then
-        ! contribution to the solid phase
-        b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) + &
-        weight*((b_sigma_xx*nx + b_sigma_xz*nz)/2.d0 -phi/tort*b_sigmap*nx)
-
-        b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) + &
-        weight*((b_sigma_xz*nx + b_sigma_zz*nz)/2.d0 -phi/tort*b_sigmap*nz)
-
-        ! contribution to the fluid phase
-        ! w = 0
-      endif !if (SIMULATION_TYPE == 3) then
-
     enddo
 
   enddo
@@ -372,7 +284,9 @@
 !========================================================================
 !
 
-  subroutine compute_coupling_poro_viscoelastic_for_stabilization()
+  subroutine compute_coupling_poro_viscoelastic_for_stabilization(veloc_elastic,accel_elastic, &
+                                                                  velocs_poroelastic,accels_poroelastic, &
+                                                                  velocw_poroelastic,accelw_poroelastic,deltatover2)
 
 ! Explanation of the code below, from Christina Morency and Yang Luo, January 2012:
 !
@@ -407,21 +321,25 @@
 !
 ! This implementation highly helped stability especially with unstructured meshes.
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO
+  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,ZERO
 
-  use specfem_par, only: SIMULATION_TYPE,num_solid_poro_edges,ibool,ivalue,jvalue, &
+  use specfem_par, only: num_solid_poro_edges, &
+                         ibool,ivalue,jvalue, &
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,&
-                         veloc_elastic,b_veloc_elastic,accel_elastic,b_accel_elastic, &
-                         accels_poroelastic,b_accels_poroelastic, &
-                         velocs_poroelastic,b_velocs_poroelastic, &
-                         accelw_poroelastic,b_accelw_poroelastic, &
-                         velocw_poroelastic,b_velocw_poroelastic, &
                          rmass_inverse_elastic, &
                          rmass_s_inverse_poroelastic,&
-                         time_stepping_scheme,deltatover2,b_deltatover2,nglob
+                         time_stepping_scheme,nglob, &
+                         nglob_elastic,nglob_poroelastic
+
 
   implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic), intent(inout) :: veloc_elastic,accel_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic), intent(inout) :: velocs_poroelastic,accels_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic), intent(inout) :: velocw_poroelastic,accelw_poroelastic
+
+  double precision :: deltatover2
 
   !local variables
   integer :: inum,ispec_elastic,iedge_elastic,ispec_poroelastic,iedge_poroelastic, &
@@ -457,20 +375,22 @@
         if (time_stepping_scheme == 1) then
           veloc_elastic(1,iglob) = veloc_elastic(1,iglob) - deltatover2*accel_elastic(1,iglob)
           veloc_elastic(2,iglob) = veloc_elastic(2,iglob) - deltatover2*accel_elastic(2,iglob)
+
           accel_elastic(1,iglob) = accel_elastic(1,iglob) / rmass_inverse_elastic(1,iglob)
           accel_elastic(2,iglob) = accel_elastic(2,iglob) / rmass_inverse_elastic(2,iglob)
 
           ! recovering original velocities and accelerations on boundaries (poro side)
           velocs_poroelastic(1,iglob) = velocs_poroelastic(1,iglob) - deltatover2*accels_poroelastic(1,iglob)
           velocs_poroelastic(2,iglob) = velocs_poroelastic(2,iglob) - deltatover2*accels_poroelastic(2,iglob)
+
           accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
           accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
 
           ! assembling accelerations
           accel_elastic(1,iglob) = ( accel_elastic(1,iglob) + accels_poroelastic(1,iglob) ) / &
-                                  ( 1.0/rmass_inverse_elastic(1,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+                                  ( 1.0/rmass_inverse_elastic(1,iglob) + 1.0/rmass_s_inverse_poroelastic(iglob) )
           accel_elastic(2,iglob) = ( accel_elastic(2,iglob) + accels_poroelastic(2,iglob) ) / &
-                                  ( 1.0/rmass_inverse_elastic(2,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
+                                  ( 1.0/rmass_inverse_elastic(2,iglob) + 1.0/rmass_s_inverse_poroelastic(iglob) )
 
           ! imposes continuity
           accels_poroelastic(1,iglob) = accel_elastic(1,iglob)
@@ -709,42 +629,6 @@
  !     endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        if (SIMULATION_TYPE == 3) then
-          b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) - b_deltatover2*b_accel_elastic(1,iglob)
-          b_veloc_elastic(2,iglob) = b_veloc_elastic(2,iglob) - b_deltatover2*b_accel_elastic(2,iglob)
-          b_accel_elastic(1,iglob) = b_accel_elastic(1,iglob) / rmass_inverse_elastic(1,iglob)
-          b_accel_elastic(2,iglob) = b_accel_elastic(2,iglob) / rmass_inverse_elastic(2,iglob)
-
-          ! recovering original velocities and accelerations on boundaries (poro side)
-          b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) - b_deltatover2*b_accels_poroelastic(1,iglob)
-          b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) - b_deltatover2*b_accels_poroelastic(2,iglob)
-
-          b_accels_poroelastic(1,iglob) = b_accels_poroelastic(1,iglob) / rmass_s_inverse_poroelastic(iglob)
-          b_accels_poroelastic(2,iglob) = b_accels_poroelastic(2,iglob) / rmass_s_inverse_poroelastic(iglob)
-
-          ! assembling accelerations
-          b_accel_elastic(1,iglob) = ( b_accel_elastic(1,iglob) + b_accels_poroelastic(1,iglob) ) / &
-                        ( 1.0/rmass_inverse_elastic(1,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
-          b_accel_elastic(2,iglob) = ( b_accel_elastic(2,iglob) + b_accels_poroelastic(2,iglob) ) / &
-                        ( 1.0/rmass_inverse_elastic(2,iglob) +1.0/rmass_s_inverse_poroelastic(iglob) )
-
-          ! imposes continuity
-          b_accels_poroelastic(1,iglob) = b_accel_elastic(1,iglob)
-          b_accels_poroelastic(2,iglob) = b_accel_elastic(2,iglob)
-
-          ! updating velocities
-          b_velocs_poroelastic(1,iglob) = b_velocs_poroelastic(1,iglob) + b_deltatover2*b_accels_poroelastic(1,iglob)
-          b_velocs_poroelastic(2,iglob) = b_velocs_poroelastic(2,iglob) + b_deltatover2*b_accels_poroelastic(2,iglob)
-
-          b_veloc_elastic(1,iglob) = b_veloc_elastic(1,iglob) + b_deltatover2*b_accel_elastic(1,iglob)
-          b_veloc_elastic(2,iglob) = b_veloc_elastic(2,iglob) + b_deltatover2*b_accel_elastic(2,iglob)
-
-          ! zeros w
-          b_accelw_poroelastic(1,iglob) = 0._CUSTOM_REAL
-          b_accelw_poroelastic(2,iglob) = 0._CUSTOM_REAL
-          b_velocw_poroelastic(1,iglob) = 0._CUSTOM_REAL
-          b_velocw_poroelastic(2,iglob) = 0._CUSTOM_REAL
-        endif !if (SIMULATION_TYPE == 3)
       endif ! mask
     enddo
   enddo

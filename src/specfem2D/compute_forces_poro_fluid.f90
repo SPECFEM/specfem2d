@@ -31,29 +31,37 @@
 !
 !========================================================================
 
-  subroutine compute_forces_poro_fluid()
+  subroutine compute_forces_poro_fluid(displs_poroelastic,displw_poroelastic,accelw_poroelastic,epsilondev_w,iphase)
 
 ! compute forces for the fluid poroelastic part
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,TWO,ZERO, &
+  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,TWO,ZERO, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4,ALPHA_LDDRK,BETA_LDDRK
 
-  use specfem_par, only: nglob,nspec, &
+  use specfem_par, only: nglob,nspec,nglob_poroelastic,nspec_poroelastic_b, &
                          ATTENUATION_VISCOELASTIC_SOLID,deltat, &
                          ibool,ispec_is_poroelastic, &
-                         accelw_poroelastic,displw_poroelastic,displs_poroelastic, &
-                         displs_poroelastic_old, &
-                         b_accelw_poroelastic,b_displw_poroelastic,b_displs_poroelastic, &
                          xix,xiz,gammax,gammaz,jacobian, &
                          e11,e13,hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          inv_tau_sigma_nu2,phi_nu2,Mu_nu2,N_SLS, &
-                         C_k,M_k, &
                          SIMULATION_TYPE, &
                          e11_LDDRK,e13_LDDRK, &
                          e11_initial_rk,e13_initial_rk,e11_force_RK, e13_force_RK, &
                          stage_time_scheme,i_stage
 
+  use specfem_par, only: displs_poroelastic_old
+
+  ! overlapping communication
+  use specfem_par, only: nspec_inner_poroelastic,nspec_outer_poroelastic,phase_ispec_inner_poroelastic
+
   implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic), intent(in) :: displs_poroelastic,displw_poroelastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic), intent(inout) :: accelw_poroelastic
+
+  real(kind=CUSTOM_REAL), dimension(4,NGLLX,NGLLZ,nspec_poroelastic_b),intent(out) :: epsilondev_w
+
+  integer,intent(in) :: iphase
 
   ! local variables
   integer :: ispec,i,j,k,iglob
@@ -70,20 +78,13 @@
   real(kind=CUSTOM_REAL) :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
   real(kind=CUSTOM_REAL) :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
   real(kind=CUSTOM_REAL) :: dwx_dxl,dwz_dxl,dwx_dzl,dwz_dzl
-  real(kind=CUSTOM_REAL) :: b_dux_dxi,b_dux_dgamma,b_duz_dxi,b_duz_dgamma
-  real(kind=CUSTOM_REAL) :: b_dux_dxl,b_duz_dxl,b_dux_dzl,b_duz_dzl
-  real(kind=CUSTOM_REAL) :: b_dwx_dxi,b_dwx_dgamma,b_dwz_dxi,b_dwz_dgamma
-  real(kind=CUSTOM_REAL) :: b_dwx_dxl,b_dwz_dxl,b_dwx_dzl,b_dwz_dzl
   real(kind=CUSTOM_REAL) :: sigma_xx,sigma_xz,sigma_zz
   real(kind=CUSTOM_REAL) :: sigmap
-  real(kind=CUSTOM_REAL) :: b_sigma_xx,b_sigma_xz,b_sigma_zz
-  real(kind=CUSTOM_REAL) :: b_sigmap
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempz1,tempz2
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1p,tempx2p,tempz1p,tempz2p
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: b_tempx1,b_tempx2,b_tempz1,b_tempz2
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: b_tempx1p,b_tempx2p,b_tempz1p,b_tempz2p
 
+  real(kind=CUSTOM_REAL), dimension(4,NGLLX,NGLLZ) :: epsilondev_loc
 
 ! Jacobian matrix and determinant
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
@@ -99,8 +100,14 @@
   real(kind=CUSTOM_REAL) :: phinu2,tauinvnu2,theta_n_u,theta_nsub1_u
   real(kind=CUSTOM_REAL) :: bb,coef0,coef1,coef2
 
+  integer :: num_elements,ispec_p
+
 ! implement attenuation
   if (ATTENUATION_VISCOELASTIC_SOLID) then
+
+    ! safety check
+    if (SIMULATION_TYPE == 3) &
+      stop 'ATTENUATION_VISCOELASTIC_SOLID not fully implemented yet for poroelastic kernel simulations'
 
 ! compute Grad(displs_poroelastic) at time step n for attenuation
     call compute_gradient_attenuation(displs_poroelastic,dux_dxl_n,duz_dxl_n, &
@@ -203,120 +210,88 @@
 
   endif ! end of test on attenuation
 
-! loop over spectral elements
-  do ispec = 1,nspec
+  ! choses inner/outer elements
+  if (iphase == 1) then
+    num_elements = nspec_outer_poroelastic
+  else
+    num_elements = nspec_inner_poroelastic
+  endif
+
+  ! loop over spectral elements
+  do ispec_p = 1,num_elements
+
+    ! returns element id from stored element list
+    ispec = phase_ispec_inner_poroelastic(ispec_p,iphase)
 
 !---
 !--- poroelastic spectral element
 !---
 
-    if (ispec_is_poroelastic(ispec)) then
+    if (.not. ispec_is_poroelastic(ispec)) cycle
 
-      ! get poroelastic properties of current spectral element
-      call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
+    ! get poroelastic properties of current spectral element
+    call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
 
-      ! Biot coefficients for the input phi
-      call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+    ! Biot coefficients for the input phi
+    call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
 
-      !The RHS has the form : div T_f -rho_f/rho_bar div T - eta_fk^-1.partial t w
-      !where T = G:grad u_s + C_biot div w I
-      !and T_f = C_biot div u_s I + M_biot div w I
-      mu_G = mu_fr
-      lambdal_G = H_biot - 2._CUSTOM_REAL*mu_fr
-      lambdalplus2mul_G = lambdal_G + TWO*mu_G
+    !The RHS has the form : div T_f -rho_f/rho_bar div T - eta_fk^-1.partial t w
+    !where T = G:grad u_s + C_biot div w I
+    !and T_f = C_biot div u_s I + M_biot div w I
+    mu_G = mu_fr
+    lambdal_G = H_biot - 2._CUSTOM_REAL*mu_fr
+    lambdalplus2mul_G = lambdal_G + TWO*mu_G
 
-      ! first double loop over GLL points to compute and store gradients
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          ! derivative along x and along z for u_s and w
-          dux_dxi = ZERO
-          duz_dxi = ZERO
+    ! first double loop over GLL points to compute and store gradients
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        ! derivative along x and along z for u_s and w
+        dux_dxi = ZERO
+        duz_dxi = ZERO
 
-          dux_dgamma = ZERO
-          duz_dgamma = ZERO
+        dux_dgamma = ZERO
+        duz_dgamma = ZERO
 
-          dwx_dxi = ZERO
-          dwz_dxi = ZERO
+        dwx_dxi = ZERO
+        dwz_dxi = ZERO
 
-          dwx_dgamma = ZERO
-          dwz_dgamma = ZERO
+        dwx_dgamma = ZERO
+        dwz_dgamma = ZERO
 
-          ! first double loop over GLL points to compute and store gradients
-          ! we can merge the two loops because NGLLX == NGLLZ
-          do k = 1,NGLLX
-            dux_dxi = dux_dxi + displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-            duz_dxi = duz_dxi + displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-            dux_dgamma = dux_dgamma + displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-            duz_dgamma = duz_dgamma + displs_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+        ! first double loop over GLL points to compute and store gradients
+        ! we can merge the two loops because NGLLX == NGLLZ
+        do k = 1,NGLLX
+          dux_dxi = dux_dxi + displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+          duz_dxi = duz_dxi + displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+          dux_dgamma = dux_dgamma + displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+          duz_dgamma = duz_dgamma + displs_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
 
-            dwx_dxi = dwx_dxi + displw_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-            dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-            dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-            dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-          enddo
+          dwx_dxi = dwx_dxi + displw_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
+          dwz_dxi = dwz_dxi + displw_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
+          dwx_dgamma = dwx_dgamma + displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
+          dwz_dgamma = dwz_dgamma + displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+        enddo
 
-          if (SIMULATION_TYPE == 3) then
-            ! kernels calculation
-            b_dux_dxi = ZERO
-            b_duz_dxi = ZERO
+        xixl = xix(i,j,ispec)
+        xizl = xiz(i,j,ispec)
+        gammaxl = gammax(i,j,ispec)
+        gammazl = gammaz(i,j,ispec)
 
-            b_dux_dgamma = ZERO
-            b_duz_dgamma = ZERO
+        ! derivatives of displacement
+        dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
+        dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
 
-            b_dwx_dxi = ZERO
-            b_dwz_dxi = ZERO
+        duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
+        duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-            b_dwx_dgamma = ZERO
-            b_dwz_dgamma = ZERO
+        dwx_dxl = dwx_dxi*xixl + dwx_dgamma*gammaxl
+        dwx_dzl = dwx_dxi*xizl + dwx_dgamma*gammazl
 
-            do k = 1,NGLLX
-              b_dux_dxi = b_dux_dxi + b_displs_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-              b_duz_dxi = b_duz_dxi + b_displs_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-              b_dux_dgamma = b_dux_dgamma + b_displs_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-              b_duz_dgamma = b_duz_dgamma + b_displs_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
+        dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
+        dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
-              b_dwx_dxi = b_dwx_dxi + b_displw_poroelastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-              b_dwz_dxi = b_dwz_dxi + b_displw_poroelastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
-              b_dwx_dgamma = b_dwx_dgamma + b_displw_poroelastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-              b_dwz_dgamma = b_dwz_dgamma + b_displw_poroelastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
-            enddo
-          endif
-
-          xixl = xix(i,j,ispec)
-          xizl = xiz(i,j,ispec)
-          gammaxl = gammax(i,j,ispec)
-          gammazl = gammaz(i,j,ispec)
-
-          ! derivatives of displacement
-          dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
-          dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
-
-          duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
-          duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
-
-          dwx_dxl = dwx_dxi*xixl + dwx_dgamma*gammaxl
-          dwx_dzl = dwx_dxi*xizl + dwx_dgamma*gammazl
-
-          dwz_dxl = dwz_dxi*xixl + dwz_dgamma*gammaxl
-          dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
-
-          if (SIMULATION_TYPE == 3) then
-            ! kernels calculation
-            b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
-            b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
-
-            b_duz_dxl = b_duz_dxi*xixl + b_duz_dgamma*gammaxl
-            b_duz_dzl = b_duz_dxi*xizl + b_duz_dgamma*gammazl
-
-            b_dwx_dxl = b_dwx_dxi*xixl + b_dwx_dgamma*gammaxl
-            b_dwx_dzl = b_dwx_dxi*xizl + b_dwx_dgamma*gammazl
-
-            b_dwz_dxl = b_dwz_dxi*xixl + b_dwz_dgamma*gammaxl
-            b_dwz_dzl = b_dwz_dxi*xizl + b_dwz_dgamma*gammazl
-          endif
-
-          ! compute stress tensor (include attenuation if needed)
-          if (ATTENUATION_VISCOELASTIC_SOLID) then
+        ! compute stress tensor (include attenuation if needed)
+        if (ATTENUATION_VISCOELASTIC_SOLID) then
 ! Dissipation only controlled by frame share attenuation in poroelastic (see Morency & Tromp, GJI 2008).
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
@@ -340,132 +315,108 @@
 ! vol. 95, p. 597-611 (1988) for two memory-variable mechanisms (page 604).
 
 ! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125
-            lambda_relaxed_viscoelastic = (lambdal_G + mu_G) - mu_G / Mu_nu2(i,j,ispec)
-            mu_relaxed_viscoelastic = mu_G / Mu_nu2(i,j,ispec)
-            lambdalplus2mu_relaxed_viscoel = lambda_relaxed_viscoelastic + TWO*mu_relaxed_viscoelastic
+          lambda_relaxed_viscoelastic = (lambdal_G + mu_G) - mu_G / Mu_nu2(i,j,ispec)
+          mu_relaxed_viscoelastic = mu_G / Mu_nu2(i,j,ispec)
+          lambdalplus2mu_relaxed_viscoel = lambda_relaxed_viscoelastic + TWO*mu_relaxed_viscoelastic
 
 ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
-            sigma_xx = (lambdal_G + 2.0 * mu_G)*dux_dxl + mu_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
-            sigma_xz = mu_G*(duz_dxl + dux_dzl)
-            sigma_zz = (lambdal_G + 2.0 * mu_G)*duz_dzl + mu_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
+          sigma_xx = (lambdal_G + 2.0 * mu_G)*dux_dxl + mu_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
+          sigma_xz = mu_G*(duz_dxl + dux_dzl)
+          sigma_zz = (lambdal_G + 2.0 * mu_G)*duz_dzl + mu_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
-            sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
+          sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
 ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
 ! beware: there is a bug in Carcione's equation (2c) of his 1993 paper for sigma_zz, we fixed it in the code below
-            e11_sum = 0._CUSTOM_REAL
-            e13_sum = 0._CUSTOM_REAL
+          e11_sum = 0._CUSTOM_REAL
+          e13_sum = 0._CUSTOM_REAL
 
-            do i_sls = 1,N_SLS
-              e11_sum = e11_sum + e11(i,j,ispec,i_sls)
-              e13_sum = e13_sum + e13(i,j,ispec,i_sls)
-            enddo
+          do i_sls = 1,N_SLS
+            e11_sum = e11_sum + e11(i,j,ispec,i_sls)
+            e13_sum = e13_sum + e13(i,j,ispec,i_sls)
+          enddo
 
 ! mu_G is the relaxed modulus. Note that it is defined as the
 ! frame modulus (in compute_forces_poro_solid.f90), which Christina Morency noted
 ! mu_fr, which is in her case equivalent to the solid phase shear
 ! modulus, and whose value is entered in Par_file for example
-            sigma_xx = sigma_xx + TWO * mu_relaxed_viscoelastic * e11_sum
-            sigma_xz = sigma_xz + mu_relaxed_viscoelastic * e13_sum
-            sigma_zz = sigma_zz - TWO * mu_relaxed_viscoelastic * e11_sum
+          sigma_xx = sigma_xx + TWO * mu_relaxed_viscoelastic * e11_sum
+          sigma_xz = sigma_xz + mu_relaxed_viscoelastic * e13_sum
+          sigma_zz = sigma_zz - TWO * mu_relaxed_viscoelastic * e11_sum
 
-          else
+        else
 
 ! no attenuation
-            sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
-            sigma_xz = mu_G*(duz_dxl + dux_dzl)
-            sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
+          sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
+          sigma_xz = mu_G*(duz_dxl + dux_dzl)
+          sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
-            sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
+          sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
 
-            if (SIMULATION_TYPE == 3) then ! kernels calculation
-              b_sigma_xx = lambdalplus2mul_G*b_dux_dxl + lambdal_G*b_duz_dzl + C_biot*(b_dwx_dxl + b_dwz_dzl)
-              b_sigma_xz = mu_G*(b_duz_dxl + b_dux_dzl)
-              b_sigma_zz = lambdalplus2mul_G*b_duz_dzl + lambdal_G*b_dux_dxl + C_biot*(b_dwx_dxl + b_dwz_dzl)
+        endif
 
-              b_sigmap = C_biot*(b_dux_dxl + b_duz_dzl) + M_biot*(b_dwx_dxl + b_dwz_dzl)
-            endif
-          endif
+        ! kernels calculation
+        if (SIMULATION_TYPE == 3) then
+          epsilondev_loc(1,i,j) = dux_dxl
+          epsilondev_loc(2,i,j) = duz_dzl
 
-! kernels calculation
-          if (SIMULATION_TYPE == 3) then
-            iglob = ibool(i,j,ispec)
-            C_k(iglob) =  ((dux_dxl + duz_dzl) *  (b_dwx_dxl + b_dwz_dzl) + &
-                  (dwx_dxl + dwz_dzl) *  (b_dux_dxl + b_duz_dzl)) * C_biot
-            M_k(iglob) = (dwx_dxl + dwz_dzl) *  (b_dwx_dxl + b_dwz_dzl) * M_biot
-          endif
+          epsilondev_loc(3,i,j) = dwx_dxl
+          epsilondev_loc(4,i,j) = dwz_dzl
 
-          jacobianl = jacobian(i,j,ispec)
+          ! see now in compute_kernels_po() routine...
+          !iglob = ibool(i,j,ispec)
+          !C_k(iglob) =  ((dux_dxl + duz_dzl) *  (b_dwx_dxl + b_dwz_dzl) + &
+          !                (dwx_dxl + dwz_dzl) *  (b_dux_dxl + b_duz_dzl)) * C_biot
+          !M_k(iglob) = (dwx_dxl + dwz_dzl) *  (b_dwx_dxl + b_dwz_dzl) * M_biot
+        endif
+
+        jacobianl = jacobian(i,j,ispec)
 
 ! weak formulation term based on stress tensor (symmetric form)
 ! also add GLL integration weights
-          tempx1(i,j) = wzgll(j)*jacobianl*(sigma_xx*xixl+sigma_xz*xizl)
-          tempz1(i,j) = wzgll(j)*jacobianl*(sigma_xz*xixl+sigma_zz*xizl)
+        tempx1(i,j) = wzgll(j)*jacobianl*(sigma_xx*xixl+sigma_xz*xizl)
+        tempz1(i,j) = wzgll(j)*jacobianl*(sigma_xz*xixl+sigma_zz*xizl)
 
-          tempx2(i,j) = wxgll(i)*jacobianl*(sigma_xx*gammaxl+sigma_xz*gammazl)
-          tempz2(i,j) = wxgll(i)*jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl)
+        tempx2(i,j) = wxgll(i)*jacobianl*(sigma_xx*gammaxl+sigma_xz*gammazl)
+        tempz2(i,j) = wxgll(i)*jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl)
 
-          tempx1p(i,j) = wzgll(j)*jacobianl*sigmap*xixl
-          tempz1p(i,j) = wzgll(j)*jacobianl*sigmap*xizl
+        tempx1p(i,j) = wzgll(j)*jacobianl*sigmap*xixl
+        tempz1p(i,j) = wzgll(j)*jacobianl*sigmap*xizl
 
-          tempx2p(i,j) = wxgll(i)*jacobianl*sigmap*gammaxl
-          tempz2p(i,j) = wxgll(i)*jacobianl*sigmap*gammazl
+        tempx2p(i,j) = wxgll(i)*jacobianl*sigmap*gammaxl
+        tempz2p(i,j) = wxgll(i)*jacobianl*sigmap*gammazl
 
-          if (SIMULATION_TYPE == 3) then ! kernels calculation
-            b_tempx1(i,j) = wzgll(j)*jacobianl*(b_sigma_xx*xixl+b_sigma_xz*xizl)
-            b_tempz1(i,j) = wzgll(j)*jacobianl*(b_sigma_xz*xixl+b_sigma_zz*xizl)
-
-            b_tempx2(i,j) = wxgll(i)*jacobianl*(b_sigma_xx*gammaxl+b_sigma_xz*gammazl)
-            b_tempz2(i,j) = wxgll(i)*jacobianl*(b_sigma_xz*gammaxl+b_sigma_zz*gammazl)
-
-            b_tempx1p(i,j) = wzgll(j)*jacobianl*b_sigmap*xixl
-            b_tempz1p(i,j) = wzgll(j)*jacobianl*b_sigmap*xizl
-
-            b_tempx2p(i,j) = wxgll(i)*jacobianl*b_sigmap*gammaxl
-            b_tempz2p(i,j) = wxgll(i)*jacobianl*b_sigmap*gammazl
-          endif
-
-        enddo
       enddo
+    enddo
 
 !
 ! second double-loop over GLL to compute all the terms
 !
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
 
-          iglob = ibool(i,j,ispec)
+        iglob = ibool(i,j,ispec)
 
-          ! along x direction and z direction
-          ! and assemble the contributions
-          ! we can merge the two loops because NGLLX == NGLLZ
-          do k = 1,NGLLX
-            accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) &
-              + ( (rho_f/rho_bar*tempx1(k,j) - tempx1p(k,j)) &
-              * hprimewgll_xx(k,i) + (rho_f/rho_bar*tempx2(i,k) - tempx2p(i,k))*hprimewgll_zz(k,j) )
+        ! along x direction and z direction
+        ! and assemble the contributions
+        ! we can merge the two loops because NGLLX == NGLLZ
+        do k = 1,NGLLX
+          accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) &
+            + ( (rho_f/rho_bar*tempx1(k,j) - tempx1p(k,j)) &
+            * hprimewgll_xx(k,i) + (rho_f/rho_bar*tempx2(i,k) - tempx2p(i,k))*hprimewgll_zz(k,j) )
 
-            accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) &
-              + ( (rho_f/rho_bar*tempz1(k,j) - tempz1p(k,j)) &
-              * hprimewgll_xx(k,i) + (rho_f/rho_bar*tempz2(i,k) - tempz2p(i,k))*hprimewgll_zz(k,j) )
-          enddo
+          accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) &
+            + ( (rho_f/rho_bar*tempz1(k,j) - tempz1p(k,j)) &
+            * hprimewgll_xx(k,i) + (rho_f/rho_bar*tempz2(i,k) - tempz2p(i,k))*hprimewgll_zz(k,j) )
+        enddo
 
-          if (SIMULATION_TYPE == 3) then
-            ! kernels calculation
-            do k = 1,NGLLX
-              b_accelw_poroelastic(1,iglob) = b_accelw_poroelastic(1,iglob) &
-                + ( (rho_f/rho_bar*b_tempx1(k,j) - b_tempx1p(k,j)) &
-                * hprimewgll_xx(k,i) + (rho_f/rho_bar*b_tempx2(i,k) - b_tempx2p(i,k))*hprimewgll_zz(k,j) )
+      enddo ! second loop over the GLL points
+    enddo
 
-              b_accelw_poroelastic(2,iglob) = b_accelw_poroelastic(2,iglob) &
-                + ( (rho_f/rho_bar*b_tempz1(k,j) - b_tempz1p(k,j)) &
-                * hprimewgll_xx(k,i) + (rho_f/rho_bar*b_tempz2(i,k) - b_tempz2p(i,k))*hprimewgll_zz(k,j) )
-            enddo
-          endif
-
-        enddo ! second loop over the GLL points
-      enddo
-
-    endif ! end of test if poroelastic element
+    ! save deviatoric strain for kernels
+    if (SIMULATION_TYPE == 3) then
+      epsilondev_w(:,:,:,ispec) = epsilondev_loc(:,:,:)
+    endif
 
   enddo ! end of loop over all spectral elements
 

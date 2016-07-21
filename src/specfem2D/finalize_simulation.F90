@@ -160,12 +160,13 @@
     ! frees temporary arrays
     if (any_elastic) deallocate(tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D)
 
-    deallocate(tab_requests_send_recv_scalar,b_tab_requests_send_recv_scalar)
-    deallocate(tab_requests_send_recv_vector,b_tab_requests_send_recv_vector)
-    deallocate(buffer_send_scalar_ext_mesh,b_buffer_send_scalar_ext_mesh)
-    deallocate(buffer_recv_scalar_ext_mesh,b_buffer_recv_scalar_ext_mesh)
-    deallocate(buffer_send_vector_ext_mesh,b_buffer_send_vector_ext_mesh)
-    deallocate(buffer_recv_vector_ext_mesh,b_buffer_recv_vector_ext_mesh)
+    deallocate(request_send_recv_scalar_gpu,b_request_send_recv_scalar_gpu)
+    deallocate(request_send_recv_vector_gpu,b_request_send_recv_vector_gpu)
+
+    deallocate(buffer_send_scalar_gpu,b_buffer_send_scalar_gpu)
+    deallocate(buffer_recv_scalar_gpu,b_buffer_recv_scalar_gpu)
+    deallocate(buffer_send_vector_gpu,b_buffer_send_vector_gpu)
+    deallocate(buffer_recv_vector_gpu,b_buffer_recv_vector_gpu)
 
     ! frees memory on GPU
     call prepare_cleanup_device(Mesh_pointer,any_acoustic,any_elastic, &

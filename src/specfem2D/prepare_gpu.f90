@@ -273,19 +273,23 @@
   endif
 
   ! allocates arrays for mpi transfers
-  allocate(tab_requests_send_recv_scalar(2*ninterface))
-  allocate(b_tab_requests_send_recv_scalar(2*ninterface))
-  allocate(tab_requests_send_recv_vector(2*ninterface))
-  allocate(b_tab_requests_send_recv_vector(2*ninterface))
+  allocate(request_send_recv_scalar_gpu(2*ninterface))
+  allocate(b_request_send_recv_scalar_gpu(2*ninterface))
 
-  allocate(buffer_send_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
-  allocate(b_buffer_send_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
-  allocate(buffer_recv_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
-  allocate(b_buffer_recv_scalar_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
-  allocate(buffer_send_vector_ext_mesh(2,max_nibool_interfaces_ext_mesh,ninterface))
-  allocate(b_buffer_send_vector_ext_mesh(2,max_nibool_interfaces_ext_mesh,ninterface))
-  allocate(buffer_recv_vector_ext_mesh(2,max_nibool_interfaces_ext_mesh,ninterface))
-  allocate(b_buffer_recv_vector_ext_mesh(2,max_nibool_interfaces_ext_mesh,ninterface))
+  allocate(request_send_recv_vector_gpu(2*ninterface))
+  allocate(b_request_send_recv_vector_gpu(2*ninterface))
+
+  allocate(buffer_send_scalar_gpu(max_nibool_interfaces_ext_mesh,ninterface))
+  allocate(b_buffer_send_scalar_gpu(max_nibool_interfaces_ext_mesh,ninterface))
+
+  allocate(buffer_recv_scalar_gpu(max_nibool_interfaces_ext_mesh,ninterface))
+  allocate(b_buffer_recv_scalar_gpu(max_nibool_interfaces_ext_mesh,ninterface))
+
+  allocate(buffer_send_vector_gpu(2,max_nibool_interfaces_ext_mesh,ninterface))
+  allocate(b_buffer_send_vector_gpu(2,max_nibool_interfaces_ext_mesh,ninterface))
+
+  allocate(buffer_recv_vector_gpu(2,max_nibool_interfaces_ext_mesh,ninterface))
+  allocate(b_buffer_recv_vector_gpu(2,max_nibool_interfaces_ext_mesh,ninterface))
 
   ! synchronizes processes
   call synchronize_all()
@@ -324,7 +328,7 @@
   implicit none
 
   ! local parameters
-  integer :: i_spec_free, ipoint1D, i, j, k, ispec, ispecabs, i_source, ispec_inner, ispec_outer
+  integer :: i_spec_free, ipoint1D, i, j, k, ispec, ispecabs, i_source
   integer :: ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic
   integer :: ier,inum
   real(kind=CUSTOM_REAL) :: zxi,xgamma,jacobian1D
@@ -525,53 +529,6 @@
 !!!!!!! Init pour prepare acoustique
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  ! sets up elements for loops in acoustic simulations
-  nspec_inner_acoustic = 0
-  nspec_outer_acoustic = 0
-  if (any_acoustic) then
-    ! user output
-    if (myrank == 0) write(IMAIN,*) '  determining phases for acoustic domain'
-
-    ! counts inner and outer elements
-    do ispec = 1, nspec
-      if (ispec_is_acoustic(ispec)) then
-        if (ispec_is_inner(ispec) .eqv. .true.) then
-          nspec_inner_acoustic = nspec_inner_acoustic + 1
-        else
-          nspec_outer_acoustic = nspec_outer_acoustic + 1
-        endif
-      endif
-    enddo
-
-    ! stores indices of inner and outer elements for faster(?) computation
-    num_phase_ispec_acoustic = max(nspec_inner_acoustic,nspec_outer_acoustic)
-    if (num_phase_ispec_acoustic < 0 ) stop 'Error acoustic simulation: num_phase_ispec_acoustic is < zero'
-
-    allocate( phase_ispec_inner_acoustic(num_phase_ispec_acoustic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating array phase_ispec_inner_acoustic'
-    phase_ispec_inner_acoustic(:,:) = 0
-
-    ispec_inner = 0
-    ispec_outer = 0
-    do ispec = 1, nspec
-      if (ispec_is_acoustic(ispec)) then
-        if (ispec_is_inner(ispec) .eqv. .true.) then
-          ispec_inner = ispec_inner + 1
-          phase_ispec_inner_acoustic(ispec_inner,2) = ispec
-        else
-          ispec_outer = ispec_outer + 1
-          phase_ispec_inner_acoustic(ispec_outer,1) = ispec
-        endif
-      endif
-    enddo
-  else
-    ! allocates dummy array
-    num_phase_ispec_acoustic = 0
-    allocate( phase_ispec_inner_acoustic(num_phase_ispec_acoustic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating dummy array phase_ispec_inner_acoustic'
-    phase_ispec_inner_acoustic(:,:) = 0
-  endif
-
   ! free surface
   allocate(free_surface_ij(2,NGLLX,nelem_acoustic_surface))
 
@@ -672,52 +629,6 @@
 !!! Initialisation parametres pour simulation elastique
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  ! sets up elements for loops in elastic simulations
-  nspec_inner_elastic = 0
-  nspec_outer_elastic = 0
-  if (any_elastic) then
-    ! user output
-    if (myrank == 0) write(IMAIN,*) '  determining phases for elastic domain'
-
-    ! counts inner and outer elements
-    do ispec = 1, nspec
-      if (ispec_is_elastic(ispec)) then
-        if (ispec_is_inner(ispec) .eqv. .true.) then
-          nspec_inner_elastic = nspec_inner_elastic + 1
-        else
-          nspec_outer_elastic = nspec_outer_elastic + 1
-        endif
-      endif
-    enddo
-
-    ! stores indices of inner and outer elements for faster(?) computation
-    num_phase_ispec_elastic = max(nspec_inner_elastic,nspec_outer_acoustic)
-    if (num_phase_ispec_elastic < 0 ) stop 'error elastic simulation: num_phase_ispec_elastic is < zero'
-
-    allocate( phase_ispec_inner_elastic(num_phase_ispec_elastic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating array phase_ispec_inner_elastic'
-    phase_ispec_inner_elastic(:,:) = 0
-
-    ispec_inner = 0
-    ispec_outer = 0
-    do ispec = 1, nspec
-      if (ispec_is_elastic(ispec)) then
-        if (ispec_is_inner(ispec) .eqv. .true.) then
-          ispec_inner = ispec_inner + 1
-          phase_ispec_inner_elastic(ispec_inner,2) = ispec
-        else
-          ispec_outer = ispec_outer + 1
-          phase_ispec_inner_elastic(ispec_outer,1) = ispec
-        endif
-      endif
-    enddo
-  else
-    ! allocates dummy array
-    num_phase_ispec_elastic = 0
-    allocate( phase_ispec_inner_elastic(num_phase_ispec_elastic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating dummy array phase_ispec_inner_elastic'
-    phase_ispec_inner_elastic(:,:) = 0
-  endif
 
   ! coloring (dummy)
   num_colors_outer_elastic = 0
