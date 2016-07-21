@@ -56,6 +56,9 @@ env:
     # run example 7 (axisymmetric)
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=7
 
+    # run example 8 (PML and MPI)
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=8
+
 before_install:
   # informations on git
   - |
@@ -177,6 +180,7 @@ script:
     5) dir=EXAMPLES/poroelastic_acoustic/ ;;
     6) dir=EXAMPLES/noise_uniform/ ;;
     7) dir=EXAMPLES/axisymmetric_case_AXISYM_option/ ;;
+    8) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
     *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
     esac
     # runs test
@@ -205,6 +209,12 @@ script:
         # kernel script
         ./run_this_example_kernel.sh
         my_test_kernel
+      elif [ "$TESTMAKE" == "8" ]; then
+        # default script
+        ./run_this_example_with_PML.sh
+        # replaces reference folder for comparison test
+        rm -rf REF_SEIS; mv REF_SEIS_with_PML REF_SEIS
+        my_test
       else
         # default script
         ./run_this_example.sh
@@ -275,6 +285,16 @@ script:
       sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
       sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
       ./run_this_example.sh
+      # only for coverage, comparison would fail: my_test
+      cd $WORKDIR
+    fi
+
+  # testing PML & MPI example
+  - |
+    if [ "$TESTCOV" == "1" ]; then
+      cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
+      sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file_with_PML
+      ./run_this_example_with_PML.sh
       # only for coverage, comparison would fail: my_test
       cd $WORKDIR
     fi
