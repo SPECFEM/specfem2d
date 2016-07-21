@@ -347,14 +347,14 @@
 
   use constants,only: IMAIN,ISTANDARD_OUTPUT,TINYVAL
 
+  use shared_parameters
   use part_unstruct_par
-  use parameter_file_par
   use source_file_par
 
   implicit none
 
   integer :: nspec_cpml
-  integer :: i,j,i_source,ier
+  integer :: i,j,i_source,ier,num_elmnt
   integer :: myrank
 
   ! MPI initialization
@@ -399,16 +399,10 @@
     write(IMAIN,*) 'Reading the parameter file...'
     write(IMAIN,*)
 
-    ! opens file Par_file
-    call open_parameter_file()
-
     ! reads in parameters in DATA/Par_file
-    call read_parameter_file()
+    call read_parameter_file(myrank,1,.false.)
 
-    ! sets number of elements along X for internal mesher
-    nx = nx_param
-
-    ! reads in mesh elements
+    ! reads in additional files for mesh elements
     if (read_external_mesh) then
       ! external meshing
       ! user output
@@ -423,19 +417,46 @@
 
     else
       ! internal meshing
+      allocate(elmnts(0:ngnod*nelmnts-1),stat=ier)
+      if (ier /= 0) stop 'Error allocating array elmnts'
+
+      ! stores mesh point indices in array 'elmnts'
+      if (ngnod == 4) then
+        num_elmnt = 0
+        do j = 1, nzread
+           do i = 1, nxread
+              elmnts(num_elmnt*ngnod)   = (j-1)*(nxread+1) + (i-1)
+              elmnts(num_elmnt*ngnod+1) = (j-1)*(nxread+1) + (i-1) + 1
+              elmnts(num_elmnt*ngnod+2) = j*(nxread+1) + (i-1) + 1
+              elmnts(num_elmnt*ngnod+3) = j*(nxread+1) + (i-1)
+              num_elmnt = num_elmnt + 1
+           enddo
+        enddo
+      else if (ngnod == 9) then
+        num_elmnt = 0
+        do j = 1, nzread
+           do i = 1, nxread
+              elmnts(num_elmnt*ngnod)   = (j-1)*(nxread+1) + (i-1)
+              elmnts(num_elmnt*ngnod+1) = (j-1)*(nxread+1) + (i-1) + 1
+              elmnts(num_elmnt*ngnod+2) = j*(nxread+1) + (i-1) + 1
+              elmnts(num_elmnt*ngnod+3) = j*(nxread+1) + (i-1)
+              elmnts(num_elmnt*ngnod+4) = (nxread+1)*(nzread+1) + (j-1)*nxread + (i-1)
+              elmnts(num_elmnt*ngnod+5) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2 + 2
+              elmnts(num_elmnt*ngnod+6) = (nxread+1)*(nzread+1) + j*nxread + (i-1)
+              elmnts(num_elmnt*ngnod+7) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2
+              elmnts(num_elmnt*ngnod+8) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2 + 1
+              num_elmnt = num_elmnt + 1
+           enddo
+        enddo
+      else
+        stop 'ngnod must be either 4 or 9'
+      endif
+
       ! user output
+      write(IMAIN,*) 'Total number of spectral elements         = ',nelmnts
       write(IMAIN,*)
-      write(IMAIN,*) 'Mesh from internal meshing:'
-      call read_interfaces_file()
-
-      ! material regions defined in Par_file
-      call read_regions(nbregions,nbmodels,icodemat,cp,cs, &
-                        rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
-                        nelmnts)
+      call flush_IMAIN()
     endif
-
-    ! closes file Par_file
-    call close_parameter_file()
 
     ! PML mesh elements
     allocate(region_pml_external_mesh(nelmnts),stat=ier)
@@ -474,7 +495,7 @@
 
     if (read_external_mesh) then
       call read_external_acoustic_surface(free_surface_file, num_material, &
-                                          nbmodels, icodemat, phi, remove_min_to_start_at_zero)
+                                          nbmodels, icodemat, phi_read, remove_min_to_start_at_zero)
 
       if (any_abs) then
         call read_external_abs_surface(absorbing_surface_file, remove_min_to_start_at_zero)
@@ -571,7 +592,7 @@
 
     ! setting absorbing boundaries by elements instead of edges
     if (any_abs) then
-      call merge_abs_boundaries(nbmodels, phi, num_material, ngnod)
+      call merge_abs_boundaries(nbmodels, phi_read, num_material, ngnod)
     endif
 
     ! setting acoustic forcing boundaries by elements instead of edges

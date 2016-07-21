@@ -188,7 +188,6 @@ module specfem_par
   logical, dimension(:), allocatable :: iglob_is_forced
 
   ! for plane wave incidence
-  logical :: add_Bielak_conditions
   double precision :: anglesource_refl, c_inc, c_refl
   double precision, dimension(2) :: A_plane, B_plane, C_plane
   double precision :: time_offset
@@ -858,8 +857,6 @@ module specfem_par_movie
   ! for plot_post
   !---------------------------------------------------------------------
   double precision :: vpImin,vpImax,vpIImin,vpIImax
-
-  logical :: plot_lowerleft_corner_only
 
   ! title of the plot
   character(len=MAX_STRING_LEN) simulation_title

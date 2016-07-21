@@ -38,7 +38,7 @@
 
   use constants,only: IMAIN,IOUT,MAX_STRING_LEN
   use part_unstruct_par,only: nspec,iproc
-  use parameter_file_par,only: NPROC
+  use shared_parameters,only: NPROC
 
   implicit none
 
@@ -107,7 +107,7 @@
   subroutine save_databases_init()
 
   use constants,only: IOUT
-  use parameter_file_par
+  use shared_parameters
   use part_unstruct_par,only: iproc,nspec,npgeo,region_pml_external_mesh
 
   implicit none
@@ -291,7 +291,7 @@
 
   use constants,only: IOUT
   use source_file_par
-  use parameter_file_par
+  use shared_parameters
 
   implicit none
   ! local parameters
@@ -320,7 +320,7 @@
 
   use constants,only: IOUT
   use part_unstruct_par
-  use parameter_file_par
+  use shared_parameters
 
   implicit none
 
@@ -376,7 +376,7 @@
 
   use constants,only: IOUT
   use part_unstruct_par
-  use parameter_file_par
+  use shared_parameters
 
   implicit none
 
@@ -392,7 +392,7 @@
 
   use constants,only: IOUT,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL
   use part_unstruct_par
-  use parameter_file_par
+  use shared_parameters
 
   implicit none
 
@@ -411,7 +411,7 @@
 
     if (indic == ISOTROPIC_MATERIAL) then
       ! isotropic
-      val0 = rho_s(i)
+      val0 = rho_s_read(i)
       val1 = cp(i)
       val2 = cs(i)
       val3 = 0.d0
@@ -425,11 +425,11 @@
       val11 = 0.d0
       val12 = 0.d0
       ! old
-      !write(IOUT) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
+      !write(IOUT) i,icodemat(i),rho_s_read(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
 
     else if (indic == ANISOTROPIC_MATERIAL) then
       ! anisotropic
-      val0 = rho_s(i)
+      val0 = rho_s_read(i)
       val1 = aniso3(i)
       val2 = aniso4(i)
       val3 = aniso5(i)
@@ -443,34 +443,34 @@
       val11 = 0.d0
       val12 = 0.d0
       ! old
-      !write(IOUT) i,icodemat(i),rho_s(i), &
+      !write(IOUT) i,icodemat(i),rho_s_read(i), &
       !            aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
       !            aniso7(i),aniso8(i),aniso9(i),aniso10(i),aniso11(i),aniso12(i),0,0
 
     else if (indic == POROELASTIC_MATERIAL) then
       ! poro-elastic
-      val0 = rho_s(i)
-      val1 = rho_f(i)
-      val2 = phi(i)
-      val3 = tortuosity(i)
-      val4 = permxx(i)
-      val5 = permxz(i)
-      val6 = permzz(i)
-      val7 = kappa_s(i)
-      val8 = kappa_f(i)
-      val9 = kappa_fr(i)
-      val10 = eta_f(i)
-      val11 = mu_fr(i)
+      val0 = rho_s_read(i)
+      val1 = rho_f_read(i)
+      val2 = phi_read(i)
+      val3 = tortuosity_read(i)
+      val4 = permxx_read(i)
+      val5 = permxz_read(i)
+      val6 = permzz_read(i)
+      val7 = kappa_s_read(i)
+      val8 = kappa_f_read(i)
+      val9 = kappa_fr_read(i)
+      val10 = eta_f_read(i)
+      val11 = mu_fr_read(i)
       val12 = Qmu(i)
       ! old
-      !write(IOUT) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i), &
-      !            permxx(i),permxz(i),permzz(i),kappa_s(i),&
-      !            kappa_f(i),kappa_fr(i),eta_f(i),mu_fr(i),Qmu(i)
+      !write(IOUT) i,icodemat(i),rho_s_read(i),rho_f_read(i),phi_read(i),tortuosity_read(i), &
+      !            permxx_read(i),permxz_read(i),permzz_read(i),kappa_s_read(i),&
+      !            kappa_f_read(i),kappa_fr_read(i),eta_f_read(i),mu_fr_read(i),Qmu(i)
 
     else if (indic <= 0) then
       ! external material
       ! The values will be read from an external tomo file
-      val0 = rho_s(i)
+      val0 = rho_s_read(i)
       val1 = cp(i)
       val2 = cs(i)
       val3 = 0.d0
@@ -484,7 +484,7 @@
       val11 = 0.d0
       val12 = 0.d0
       ! old
-      !write(IOUT) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
+      !write(IOUT) i,icodemat(i),rho_s_read(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
     else
       ! case should not occur
       stop 'Unknown material code'
@@ -511,7 +511,7 @@
   use constants,only: IOUT
   use part_unstruct_par
   use decompose_par
-  use parameter_file_par,only: NPROC
+  use shared_parameters,only: NPROC
 
   implicit none
 
@@ -547,7 +547,7 @@
   subroutine save_databases_absorbing()
 
   use constants,only: IOUT
-  use parameter_file_par,only: any_abs
+  use shared_parameters,only: any_abs
   use part_unstruct_par,only: iproc
 
   implicit none
@@ -565,7 +565,7 @@
   subroutine save_databases_acoustic_forcing()
 
   use constants,only: IOUT
-  use parameter_file_par,only: ACOUSTIC_FORCING
+  use shared_parameters,only: ACOUSTIC_FORCING
   use part_unstruct_par,only: iproc
 
   implicit none
@@ -618,7 +618,7 @@
 
   use constants,only: IOUT
   use part_unstruct_par
-  use parameter_file_par
+  use shared_parameters
 
   implicit none
 

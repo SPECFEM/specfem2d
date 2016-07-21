@@ -125,7 +125,7 @@
   use constants,only: MAX_STRING_LEN
 
   use part_unstruct_par,only: nelmnts
-  use parameter_file_par,only: num_material
+  use shared_parameters,only: num_material
 
   implicit none
 
@@ -278,7 +278,7 @@
   !-----------------------------------------------
 
   subroutine read_external_acoustic_surface(filename, num_material, &
-                                            nbmodels, icodemat, phi, remove_min_to_start_at_zero)
+                                            nbmodels, icodemat, phi_material, remove_min_to_start_at_zero)
 
   use constants,only: MAX_STRING_LEN,ANISOTROPIC_MATERIAL
   use part_unstruct_par,only: nelmnts,nelem_acoustic_surface,acoustic_surface
@@ -289,7 +289,7 @@
   integer, dimension(0:nelmnts-1)  :: num_material
   integer, intent(in)  :: nbmodels
   integer, dimension(1:nbmodels), intent(in)  :: icodemat
-  double precision, dimension(1:nbmodels), intent(in)  :: phi
+  double precision, dimension(1:nbmodels), intent(in)  :: phi_material
   integer, intent(in)  :: remove_min_to_start_at_zero
 
   ! local parameters
@@ -334,7 +334,7 @@
   nelem_acoustic_surface = 0
   do i = 1, nelmnts_surface
      imaterial_number = num_material(acoustic_surface_tmp(1,i))
-     if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0) then
+     if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_material(imaterial_number) >= 1.d0) then
         nelem_acoustic_surface = nelem_acoustic_surface + 1
      endif
   enddo
@@ -345,7 +345,7 @@
   nelem_acoustic_surface = 0
   do i = 1, nelmnts_surface
      imaterial_number = num_material(acoustic_surface_tmp(1,i))
-     if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0) then
+     if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_material(imaterial_number) >= 1.d0) then
         nelem_acoustic_surface = nelem_acoustic_surface + 1
         acoustic_surface(:,nelem_acoustic_surface) = acoustic_surface_tmp(:,i)
      endif
@@ -599,7 +599,7 @@
   use constants,only: IIN
 
   use part_unstruct_par,only: nnodes_tangential_curve,nodes_tangential_curve
-  use parameter_file_par,only: tangential_detection_curve_file
+  use shared_parameters,only: tangential_detection_curve_file
 
   implicit none
 

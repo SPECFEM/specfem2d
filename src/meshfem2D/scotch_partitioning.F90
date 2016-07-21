@@ -39,7 +39,7 @@
 #ifdef USE_SCOTCH
   use part_unstruct_par,only: nb_edges,part,nelmnts,xadj_g,adjncy_g,adjwgt,vwgt
 
-  use parameter_file_par,only: nparts => NPROC
+  use shared_parameters,only: nparts => NPROC
 #endif
 
   implicit none

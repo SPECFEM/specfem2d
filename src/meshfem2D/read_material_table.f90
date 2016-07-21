@@ -31,32 +31,73 @@
 !
 !========================================================================
 
-  subroutine read_material_table(AXISYM,nbmodels,icodemat,cp,cs, &
-                                 aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
-                                 QKappa,Qmu,rho_s,rho_f,phi,tortuosity, &
-                                 permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
-                                 eta_f,mu_fr)
+  subroutine read_material_table()
 
 ! reads in material definitions in DATA/Par_file
 
   use constants,only: IMAIN,TINYVAL,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL
 
+  use shared_parameters,only: AXISYM,nbmodels,icodemat,cp,cs, &
+                              aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
+                              QKappa,Qmu, &
+                              rho_s_read,rho_f_read, &
+                              phi_read,tortuosity_read, &
+                              permxx_read,permxz_read,permzz_read,kappa_s_read,kappa_f_read,kappa_fr_read, &
+                              eta_f_read,mu_fr_read
+
   implicit none
-
-  logical :: AXISYM
-  integer :: nbmodels
-
-  integer, dimension(nbmodels) :: icodemat
-
-  double precision, dimension(nbmodels) :: rho_s,cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,QKappa,Qmu
-  double precision, dimension(nbmodels) :: rho_f,phi,tortuosity,permxx,permxz,&
-       permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
 
   ! local parameters
   integer :: imaterial,i,icodematread,number_of_materials_defined_by_tomo_file
+  integer :: reread_nbmodels
   double precision :: val0read,val1read,val2read,val3read,val4read, &
-       val5read,val6read,val7read,val8read,val9read,val10read,val11read,val12read
+                      val5read,val6read,val7read,val8read,val9read,val10read,val11read,val12read
+
+  integer,external :: err_occurred
+
+
+  ! re-read number of models to reposition read-header
+  call read_value_integer_p(reread_nbmodels, 'mesher.nbmodels')
+  if (err_occurred() /= 0) stop 'error reading parameter nbmodels in Par_file'
+
+  ! check
+  if (reread_nbmodels /= nbmodels) stop 'Invalid reread value of nbmodels in reading material table'
+
+  ! safety check
+  if (nbmodels <= 0) stop 'Non-positive number of materials not allowed!'
+
+  ! allocates material tables
+  allocate(icodemat(nbmodels))
+  allocate(cp(nbmodels))
+  allocate(cs(nbmodels))
+
+  allocate(aniso3(nbmodels))
+  allocate(aniso4(nbmodels))
+  allocate(aniso5(nbmodels))
+  allocate(aniso6(nbmodels))
+  allocate(aniso7(nbmodels))
+  allocate(aniso8(nbmodels))
+  allocate(aniso9(nbmodels))
+  allocate(aniso10(nbmodels))
+  allocate(aniso11(nbmodels))
+  allocate(aniso12(nbmodels))
+
+  allocate(QKappa(nbmodels))
+  allocate(Qmu(nbmodels))
+
+  allocate(rho_s_read(nbmodels))
+  allocate(rho_f_read(nbmodels))
+
+  allocate( phi_read(nbmodels), &
+            tortuosity_read(nbmodels), &
+            permxx_read(nbmodels), &
+            permxz_read(nbmodels), &
+            permzz_read(nbmodels), &
+            kappa_s_read(nbmodels), &
+            kappa_f_read(nbmodels), &
+            kappa_fr_read(nbmodels), &
+            eta_f_read(nbmodels), &
+            mu_fr_read(nbmodels))
 
   ! initializes material properties
   icodemat(:) = 0
@@ -77,22 +118,23 @@
   QKappa(:) = 9999.d0
   Qmu(:) = 9999.d0
 
-  rho_s(:) = 0.d0
-  rho_f(:) = 0.d0
-  phi(:) = 0.d0
-  tortuosity(:) = 0.d0
-  permxx(:) = 0.d0
-  permxz(:) = 0.d0
-  permzz(:) = 0.d0
-  kappa_s(:) = 0.d0
-  kappa_f(:) = 0.d0
-  kappa_fr(:) = 0.d0
-  eta_f(:) = 0.d0
-  mu_fr(:) = 0.d0
+  rho_s_read(:) = 0.d0
+  rho_f_read(:) = 0.d0
+
+  phi_read(:) = 0.d0
+  tortuosity_read(:) = 0.d0
+  permxx_read(:) = 0.d0
+  permxz_read(:) = 0.d0
+  permzz_read(:) = 0.d0
+  kappa_s_read(:) = 0.d0
+  kappa_f_read(:) = 0.d0
+  kappa_fr_read(:) = 0.d0
+  eta_f_read(:) = 0.d0
+  mu_fr_read(:) = 0.d0
 
   number_of_materials_defined_by_tomo_file = 0
 
-  ! reads in material parameters
+  ! reads in material definitions
   do imaterial= 1,nbmodels
 
     call read_material_parameters_p(i,icodematread, &
@@ -107,14 +149,14 @@
     ! sets material properties
     if (icodemat(i) == ISOTROPIC_MATERIAL) then
       ! isotropic materials
-      rho_s(i) = val0read
+      rho_s_read(i) = val0read
       cp(i) = val1read
       cs(i) = val2read
       QKappa(i) = val5read
       Qmu(i) = val6read
 
       ! for Cs we use a less restrictive test because acoustic media have Cs exactly equal to zero
-      if (rho_s(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) &
+      if (rho_s_read(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) &
         stop 'negative value of velocity or density'
       if (QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) &
         stop 'non-positive value of QKappa or Qmu'
@@ -122,14 +164,14 @@
       aniso3(i) = val3read
       aniso4(i) = val4read
       if (abs(cs(i)) > TINYVAL) then
-        phi(i) = 0.d0           ! elastic
+        phi_read(i) = 0.d0           ! elastic
       else
-        phi(i) = 1.d0           ! acoustic
+        phi_read(i) = 1.d0           ! acoustic
       endif
 
     else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
       ! anisotropic materials
-      rho_s(i) = val0read
+      rho_s_read(i) = val0read
       aniso3(i) = val1read
       aniso4(i) = val2read
       aniso5(i) = val3read
@@ -143,25 +185,25 @@
 
     else if (icodemat(i) == POROELASTIC_MATERIAL) then
       ! poroelastic materials
-      rho_s(i) = val0read
-      rho_f(i) = val1read
-      phi(i) = val2read
-      tortuosity(i) = val3read
-      permxx(i) = val4read
-      permxz(i) = val5read
-      permzz(i) = val6read
-      kappa_s(i) = val7read
-      kappa_f(i) = val8read
-      kappa_fr(i) = val9read
-      eta_f(i) = val10read
-      mu_fr(i) = val11read
+      rho_s_read(i) = val0read
+      rho_f_read(i) = val1read
+      phi_read(i) = val2read
+      tortuosity_read(i) = val3read
+      permxx_read(i) = val4read
+      permxz_read(i) = val5read
+      permzz_read(i) = val6read
+      kappa_s_read(i) = val7read
+      kappa_f_read(i) = val8read
+      kappa_fr_read(i) = val9read
+      eta_f_read(i) = val10read
+      mu_fr_read(i) = val11read
       Qmu(i) = val12read
 
-      if (rho_s(i) <= 0.d0 .or. rho_f(i) <= 0.d0) &
+      if (rho_s_read(i) <= 0.d0 .or. rho_f_read(i) <= 0.d0) &
         stop 'non-positive value of density'
-      if (phi(i) <= 0.d0 .or. tortuosity(i) <= 0.d0) &
+      if (phi_read(i) <= 0.d0 .or. tortuosity_read(i) <= 0.d0) &
         stop 'non-positive value of porosity or tortuosity'
-      if (kappa_s(i) <= 0.d0 .or. kappa_f(i) <= 0.d0 .or. kappa_fr(i) <= 0.d0 .or. mu_fr(i) <= 0.d0) &
+      if (kappa_s_read(i) <= 0.d0 .or. kappa_f_read(i) <= 0.d0 .or. kappa_fr_read(i) <= 0.d0 .or. mu_fr_read(i) <= 0.d0) &
         stop 'non-positive value of modulus'
       if (Qmu(i) <= 0.00000001d0) &
         stop 'non-positive value of Qmu'
@@ -174,7 +216,7 @@
         stop 'Just one material can be defined by a tomo file for now (we would need to write a nummaterial_velocity_file)'
 
       ! Assign dummy values for now (they will be read by the solver). Vs must be == 0 for acoustic media anyway
-      rho_s(i) = -1.0d0
+      rho_s_read(i) = -1.0d0
       cp(i) = -1.0d0
       cs(i) = val2read
       QKappa(i) = -1.0d0
@@ -182,9 +224,9 @@
       aniso3(i) = -1.0d0
       aniso4(i) = -1.0d0
       if (abs(cs(i)) > TINYVAL) then
-        phi(i) = 0.d0           ! elastic
+        phi_read(i) = 0.d0           ! elastic
       else
-        phi(i) = 1.d0           ! acoustic
+        phi_read(i) = 1.d0           ! acoustic
       endif
 
     else
@@ -204,7 +246,7 @@
      if (i == 1) write(IMAIN,*) '--------'
      if (icodemat(i) == ISOTROPIC_MATERIAL) then
         write(IMAIN,*) 'Material #',i,' isotropic'
-        write(IMAIN,*) 'rho,cp,cs   = ',rho_s(i),cp(i),cs(i)
+        write(IMAIN,*) 'rho,cp,cs   = ',rho_s_read(i),cp(i),cs(i)
         write(IMAIN,*) 'Qkappa, Qmu = ',QKappa(i),Qmu(i)
         if (cs(i) < TINYVAL) then
            write(IMAIN,*) 'Material is fluid'
@@ -213,7 +255,7 @@
         endif
      else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
         write(IMAIN,*) 'Material #',i,' anisotropic'
-        write(IMAIN,*) 'rho,cp,cs    = ',rho_s(i),cp(i),cs(i)
+        write(IMAIN,*) 'rho,cp,cs    = ',rho_s_read(i),cp(i),cs(i)
         if (AXISYM) then
           write(IMAIN,*) 'c11,c13,c15,c33,c35,c55,c12,c23,c25,c22 = ', &
                           aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
@@ -226,11 +268,11 @@
         endif
      else if (icodemat(i) == POROELASTIC_MATERIAL) then
         write(IMAIN,*) 'Material #',i,' isotropic'
-        write(IMAIN,*) 'rho_s, kappa_s         = ',rho_s(i),kappa_s(i)
-        write(IMAIN,*) 'rho_f, kappa_f, eta_f  = ',rho_f(i),kappa_f(i),eta_f(i)
-        write(IMAIN,*) 'phi, tortuosity        = ',phi(i),tortuosity(i)
-        write(IMAIN,*) 'permxx, permxz, permzz = ',permxx(i),permxz(i),permzz(i)
-        write(IMAIN,*) 'kappa_fr, mu_fr, Qmu   = ',kappa_fr(i),mu_fr(i),Qmu(i)
+        write(IMAIN,*) 'rho_s, kappa_s         = ',rho_s_read(i),kappa_s_read(i)
+        write(IMAIN,*) 'rho_f, kappa_f, eta_f  = ',rho_f_read(i),kappa_f_read(i),eta_f_read(i)
+        write(IMAIN,*) 'phi, tortuosity        = ',phi_read(i),tortuosity_read(i)
+        write(IMAIN,*) 'permxx, permxz, permzz = ',permxx_read(i),permxz_read(i),permzz_read(i)
+        write(IMAIN,*) 'kappa_fr, mu_fr, Qmu   = ',kappa_fr_read(i),mu_fr_read(i),Qmu(i)
         write(IMAIN,*) 'Material is porous'
      else if (icodemat(i) <= 0) then
         write(IMAIN,*) 'Material #',i,' will be read in an external tomography file (TOMOGRAPHY_FILE in Par_file)'

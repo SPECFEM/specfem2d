@@ -31,54 +31,6 @@
 !
 !========================================================================
 
-  module parameter_file_par
-
-  ! note: we use this module definition only to be able to allocate
-  !          arrays for receiverlines and materials in this subroutine rather than in the main
-  !          routine in meshfem2D.F90
-
-  ! note 2: the filename ending is .F90 to have pre-compilation with pragmas
-  !            (like #ifndef USE_MPI) working properly
-
-  use shared_input_parameters
-
-  implicit none
-
-  !--------------------------------------------------------------
-  ! variables for computation
-  !--------------------------------------------------------------
-
-  ! material file for changing the model parameter for inner mesh or updating the
-  ! the material for an existed mesh
-  ! (obsolete in Par_file now...)
-  !logical :: assign_external_model, READ_EXTERNAL_SEP_FILE
-
-  ! for absorbing boundary condition
-  logical :: any_abs
-
-  ! for Bielak
-  logical :: add_Bielak_conditions
-
-  ! to store density and velocity model
-  integer, dimension(:),allocatable :: num_material
-  integer, dimension(:),allocatable :: icodemat
-
-  ! acoustic/elastic/anisotropic
-  double precision, dimension(:),allocatable :: rho_s,cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,QKappa,Qmu
-
-  ! poroelastic
-  double precision, dimension(:),allocatable :: rho_f,phi,tortuosity,permxx,permxz,&
-       permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
-
-  ! for interpolated snapshot
-  logical :: plot_lowerleft_corner_only
-
-  end module parameter_file_par
-
-!
-!---------------------------------------------------------------------------------------
-!
 
   module source_file_par
 
@@ -124,9 +76,13 @@
 ! This module contains subroutines related to unstructured meshes and partitioning of the
 ! corresponding graphs.
 
+  use shared_parameters,only: nelmnts,nxread,nzread, &
+    max_npoints_interface,number_of_interfaces, &
+    nz_layer,number_of_layers, &
+    nx,nz
+
   implicit none
 
-  integer :: nelmnts
   integer, dimension(:), allocatable  :: elmnts
   integer, dimension(:), allocatable  :: elmnts_bis
   integer, dimension(:), allocatable  :: vwgt
@@ -194,24 +150,15 @@
        ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
        ibegin_edge2_acforcing,iend_edge2_acforcing
 
-  ! vertical layers
-  integer :: number_of_layers
-  integer, dimension(:), allocatable :: nz_layer
-
   ! variables used for tangential detection
   integer ::  nnodes_tangential_curve
   double precision, dimension(:,:), allocatable  :: nodes_tangential_curve
-
-  ! interface file data
-  integer :: max_npoints_interface,number_of_interfaces
-  integer :: nx,nz,nxread,nzread
 
   ! coordinates of the grid points of the mesh
   double precision, dimension(:,:), allocatable :: grid_point_x,grid_point_z
 
   integer :: npoints_interface_top
   double precision, dimension(:), allocatable :: xinterface_top,zinterface_top,coefs_interface_top
-
 
   ! local coupled edges
   integer :: nedges_coupled_loc

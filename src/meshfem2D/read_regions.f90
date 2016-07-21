@@ -31,27 +31,16 @@
 !
 !========================================================================
 
-  subroutine read_regions(nbregions,nbmodels,icodemat,cp,cs, &
-                          rho_s,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
-                          nelmnts)
+  subroutine read_regions()
 
 ! reads in material definitions in DATA/Par_file and outputs to num_material
 
   use constants,only: IMAIN,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,TINYVAL
-  use part_unstruct_par,only: nxread,nzread
-  use parameter_file_par,only: num_material
 
+  use shared_parameters,only: nbregions,nbmodels,num_material,icodemat,cp,cs, &
+                      rho_s_read,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
+                      nelmnts,nxread,nzread
   implicit none
-
-  integer,intent(inout) :: nbregions
-
-  integer,intent(in) :: nbmodels
-  integer, dimension(nbmodels),intent(in) :: icodemat
-  double precision, dimension(nbmodels),intent(in) :: rho_s,cp,cs
-  double precision, dimension(nbmodels),intent(in) :: aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11
-  double precision, dimension(nbmodels),intent(in) :: QKappa,Qmu
-
-  integer,intent(in) :: nelmnts
 
   ! local parameters
   integer :: iregion,ix_start,ix_end,iz_start,iz_end,imaterial_number
@@ -77,8 +66,9 @@
   call read_value_integer_p(reread_nbregions, 'mesher.nbregions')
   if (err_occurred() /= 0) stop 'Error reading parameter nbregions in Par_file'
 
-  ! check
+  ! checks
   if (reread_nbregions /= nbregions) stop 'Error re-reading parameter nbregions in Par_file'
+  if (nbmodels < 1) stop 'Invalid number of model definitions'
 
   ! read the material numbers for each region
   do iregion = 1,nbregions
@@ -116,7 +106,7 @@
        endif
        write(IMAIN,*) 'vp     = ',sngl(vpregion)
        write(IMAIN,*) 'vs     = ',sngl(vsregion)
-       write(IMAIN,*) 'rho    = ',sngl(rho_s(imaterial_number))
+       write(IMAIN,*) 'rho    = ',sngl(rho_s_read(imaterial_number))
        write(IMAIN,*) 'Poisson''s ratio = ',sngl(poisson_ratio)
        write(IMAIN,*) 'QKappa = ',sngl(QKappa(imaterial_number))
        write(IMAIN,*) 'Qmu    = ',sngl(Qmu(imaterial_number))
@@ -144,7 +134,7 @@
        write(IMAIN,*) 'c12 = ',sngl(aniso9(imaterial_number))
        write(IMAIN,*) 'c23 = ',sngl(aniso10(imaterial_number))
        write(IMAIN,*) 'c25 = ',sngl(aniso11(imaterial_number))
-       write(IMAIN,*) 'rho = ',sngl(rho_s(imaterial_number))
+       write(IMAIN,*) 'rho = ',sngl(rho_s_read(imaterial_number))
        write(IMAIN,*) 'QKappa = ',sngl(QKappa(imaterial_number))
        write(IMAIN,*) 'Qmu = ',sngl(Qmu(imaterial_number))
     endif

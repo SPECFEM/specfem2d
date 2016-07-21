@@ -41,7 +41,7 @@
   use part_unstruct_par,only: nelemabs,abs_surface, &
     elmnts,nxread,nzread
 
-  use parameter_file_par,only: ngnod,absorbbottom,absorbleft,absorbright,absorbtop
+  use shared_parameters,only: ngnod,absorbbottom,absorbleft,absorbright,absorbtop
 
   implicit none
 

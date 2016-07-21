@@ -32,6 +32,9 @@
 !========================================================================
 
 
+! note: the filename ending is .F90 to have pre-compilation with pragmas
+!            (like #ifndef USE_MPI) working properly
+
 module constants
 
   include "constants.h"
@@ -338,6 +341,56 @@ module shared_parameters
   use shared_input_parameters
 
   implicit none
+
+! note: we use this module definition only to be able to allocate
+!          arrays for receiverlines and materials in this subroutine rather than in the main
+!          routine in meshfem2D.F90
+
+  ! for Bielak condition
+  logical :: add_Bielak_conditions
+
+  ! for PML or Stacey boundary condition
+  logical :: any_abs
+
+  ! for interpolated snapshot
+  logical :: plot_lowerleft_corner_only
+
+  ! material file for changing the model parameter for inner mesh or updating the
+  ! the material for an existed mesh
+  ! (obsolete in Par_file now...)
+  !logical :: assign_external_model, READ_EXTERNAL_SEP_FILE
+
+  ! to store density and velocity model
+  integer, dimension(:),allocatable :: num_material
+  integer, dimension(:),allocatable :: icodemat
+
+  double precision, dimension(:),allocatable :: rho_s_read
+  double precision, dimension(:),allocatable :: rho_f_read
+
+  ! acoustic/elastic/anisotropic
+  double precision, dimension(:),allocatable :: cp,cs, &
+    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,QKappa,Qmu
+
+  ! poroelastic
+  ! note: adds ending _read to indicate these are readin values and to distinguish from solver arrays
+  !       one could check if the solver arrays could be omitted and replaced with this ones in future...
+  double precision, dimension(:),allocatable :: phi_read,tortuosity_read,permxx_read,permxz_read,&
+       permzz_read,kappa_s_read,kappa_f_read,kappa_fr_read,eta_f_read,mu_fr_read
+
+  ! mesh setup
+  ! total number of elements
+  integer :: nelmnts
+
+  ! interface file data
+  integer :: nx,nz
+  integer :: nxread,nzread
+
+  ! from interfaces file
+  integer :: max_npoints_interface,number_of_interfaces
+
+  ! vertical layers
+  integer :: number_of_layers
+  integer, dimension(:), allocatable :: nz_layer
 
 end module shared_parameters
 

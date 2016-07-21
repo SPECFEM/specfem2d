@@ -72,7 +72,6 @@ meshfem2D_OBJECTS = \
 
 meshfem2D_MODULES = \
 	$(FC_MODDIR)/decompose_par.$(FC_MODEXT) \
-	$(FC_MODDIR)/parameter_file_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/part_unstruct_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/source_file_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)

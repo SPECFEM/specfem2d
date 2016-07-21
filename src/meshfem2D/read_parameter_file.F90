@@ -31,17 +31,223 @@
 !
 !========================================================================
 
-  subroutine read_parameter_file()
+  subroutine read_parameter_file(myrank,imesher,BROADCAST_AFTER_READ)
 
 ! reads in DATA/Par_file
 
   use constants,only: IMAIN
-  use parameter_file_par
+  use shared_parameters
+
+  implicit none
+
+  integer, intent(in) :: myrank,imesher
+  logical, intent(in) :: BROADCAST_AFTER_READ
+
+  ! initializes
+  ! external meshing
+  mesh_file = ''
+  nodes_coords_file = ''
+  materials_file = ''
+  free_surface_file = ''
+  axial_elements_file = ''
+  absorbing_surface_file = ''
+  acoustic_forcing_surface_file = ''
+  CPML_element_file = ''
+  tangential_detection_curve_file = ''
+
+  ! internal meshing
+  interfacesfile = ''
+  xmin_param = 0.d0
+  xmax_param = 0.d0
+  nx_param = 0
+
+  absorbbottom = .false.
+  absorbright = .false.
+  absorbtop = .false.
+  absorbleft = .false.
+
+  nbregions = 0
+
+  ! only master process reads in Par_file
+  if (myrank == 0) then
+    ! opens file Par_file
+    call open_parameter_file()
+
+    ! reads only parameters (without receiver-line section, material tables or region definitions)
+    call read_parameter_file_only()
+
+    ! reads receiver lines
+    call read_parameter_file_receiversets()
+
+    ! reads material definitions
+    call read_material_table()
+
+    ! mesher reads in internal region table for setting up mesh elements
+    if (imesher == 1 .and. (.not. read_external_mesh) ) then
+      ! internal meshing
+      ! user output
+      write(IMAIN,*)
+      write(IMAIN,*) 'Mesh from internal meshing:'
+      ! reads interface definitions from interface file (we need to have nxread & nzread value for checking regions)
+      call read_interfaces_file()
+
+      ! internal meshing
+      nx = nxread
+      nz = nzread
+
+      ! setup mesh array
+      ! multiply by 2 if elements have 9 nodes
+      if (ngnod == 9) then
+        nx = nx * 2
+        nz = nz * 2
+        nz_layer(:) = nz_layer(:) * 2
+      endif
+
+      ! total number of elements
+      nelmnts = nxread * nzread
+
+      ! reads material regions defined in Par_file
+      call read_regions()
+    endif
+
+    ! closes file Par_file
+    call close_parameter_file()
+  endif
+
+  ! master process broadcasts to all
+  ! note: this is only needed at the moment for the solver to setup a simulation run
+  if (BROADCAST_AFTER_READ) then
+    call bcast_all_singlei(SIMULATION_TYPE)
+    call bcast_all_singlei(NOISE_TOMOGRAPHY)
+    call bcast_all_singlel(SAVE_FORWARD)
+
+    call bcast_all_singlei(NPROC)
+    call bcast_all_singlei(partitioning_method)
+    call bcast_all_singlei(ngnod)
+
+    call bcast_all_singlei(NSTEP)
+    call bcast_all_singledp(DT)
+
+    call bcast_all_singlei(time_stepping_scheme)
+    call bcast_all_singlel(AXISYM)
+    call bcast_all_singlel(P_SV)
+    call bcast_all_singlel(GPU_MODE)
+
+    call bcast_all_string(MODEL)
+    call bcast_all_string(SAVE_MODEL)
+
+    call bcast_all_singlel(ATTENUATION_VISCOELASTIC_SOLID)
+    call bcast_all_singlel(ATTENUATION_PORO_FLUID_PART)
+    call bcast_all_singledp(Q0)
+    call bcast_all_singledp(freq0)
+    call bcast_all_singlei(N_SLS)
+    call bcast_all_singledp(f0_attenuation)
+    call bcast_all_singlel(READ_VELOCITIES_AT_f0)
+
+    call bcast_all_singlel(UNDO_ATTENUATION)
+    call bcast_all_singlei(NT_DUMP_ATTENUATION)
+
+    call bcast_all_singlei(NSOURCES)
+    call bcast_all_singlel(force_normal_to_surface)
+    call bcast_all_singlel(initialfield)
+    call bcast_all_singlel(add_Bielak_conditions_bottom)
+    call bcast_all_singlel(add_Bielak_conditions_right)
+    call bcast_all_singlel(add_Bielak_conditions_top)
+    call bcast_all_singlel(add_Bielak_conditions_left)
+    call bcast_all_singlel(ACOUSTIC_FORCING)
+
+    call bcast_all_singlei(seismotype)
+    call bcast_all_singlei(subsamp_seismos)
+    call bcast_all_singlel(USE_TRICK_FOR_BETTER_PRESSURE)
+    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_SEISMOS)
+    call bcast_all_singlel(COMPUTE_INTEGRATED_ENERGY_FIELD)
+    call bcast_all_singledp(USER_T0)
+    call bcast_all_singlel(save_ASCII_seismograms)
+    call bcast_all_singlel(save_binary_seismograms_single)
+    call bcast_all_singlel(save_binary_seismograms_double)
+    call bcast_all_singlel(SU_FORMAT)
+    call bcast_all_singlel(use_existing_STATIONS)
+    call bcast_all_singlei(nreceiversets)
+    call bcast_all_singledp(anglerec)
+    call bcast_all_singlel(rec_normal_to_surface)
+
+    call bcast_all_singlel(save_ASCII_kernels)
+
+    call bcast_all_singlel(PML_BOUNDARY_CONDITIONS)
+    call bcast_all_singlei(NELEM_PML_THICKNESS)
+    call bcast_all_singlel(ROTATE_PML_ACTIVATE)
+    call bcast_all_singledp(ROTATE_PML_ANGLE)
+
+    call bcast_all_singlel(STACEY_ABSORBING_CONDITIONS)
+    call bcast_all_singlel(ADD_PERIODIC_CONDITIONS)
+    call bcast_all_singledp(PERIODIC_HORIZ_DIST)
+
+    call bcast_all_singlei(nbmodels)
+    call bcast_all_string(TOMOGRAPHY_FILE)
+    call bcast_all_singlel(read_external_mesh)
+
+    if (.not. read_external_mesh) then
+      call bcast_all_singlel(absorbbottom)
+      call bcast_all_singlel(absorbright)
+      call bcast_all_singlel(absorbtop)
+      call bcast_all_singlel(absorbleft)
+    endif
+
+    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_INFO)
+    call bcast_all_singlel(output_grid_Gnuplot)
+    call bcast_all_singlel(output_grid_ASCII)
+    call bcast_all_singlel(output_energy)
+
+    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_IMAGES)
+    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS)
+    call bcast_all_singledp(cutsnaps)
+
+    call bcast_all_singlel(output_color_image)
+    call bcast_all_singlei(imagetype_JPEG)
+    call bcast_all_singledp(factor_subsample_image)
+    call bcast_all_singlel(USE_CONSTANT_MAX_AMPLITUDE)
+    call bcast_all_singledp(CONSTANT_MAX_AMPLITUDE_TO_USE)
+    call bcast_all_singledp(POWER_DISPLAY_COLOR)
+    call bcast_all_singlel(DRAW_SOURCES_AND_RECEIVERS)
+    call bcast_all_singlel(DRAW_WATER_IN_BLUE)
+    call bcast_all_singlel(USE_SNAPSHOT_NUMBER_IN_FILENAME)
+
+    call bcast_all_singlel(output_postscript_snapshot)
+    call bcast_all_singlei(imagetype_postscript)
+    call bcast_all_singlel(meshvect)
+    call bcast_all_singlel(modelvect)
+    call bcast_all_singlel(boundvect)
+    call bcast_all_singlel(interpol)
+    call bcast_all_singlel(pointsdisp)
+    call bcast_all_singlei(subsamp_postscript)
+    call bcast_all_singledp(sizemax_arrows)
+    call bcast_all_singlel(US_LETTER)
+
+    call bcast_all_singlel(output_wavefield_dumps)
+    call bcast_all_singlei(imagetype_wavefield_dumps)
+    call bcast_all_singlel(use_binary_for_wavefield_dumps)
+  endif
+
+  ! derive additional settings/flags based on input parameters
+  call read_parameter_file_derive_flags()
+
+  end subroutine read_parameter_file
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine read_parameter_file_only()
+
+! reads only parameters without receiver-line section and material tables
+
+  use constants,only: IMAIN
+  use shared_parameters
 
   implicit none
 
   ! local parameters
-  integer :: ios,ireceiverlines
   integer :: i,irange
 
   integer,external :: err_occurred
@@ -103,12 +309,6 @@
   call read_value_string_p(SAVE_MODEL, 'mesher.SAVE_MODEL')
   if (err_occurred() /= 0) stop 'error reading parameter SAVE_MODEL in Par_file'
 
-  ! user output
-  write(IMAIN,*) 'Title of the simulation: ',trim(title)
-  write(IMAIN,*)
-  if (AXISYM) write(IMAIN,*) 'Axisymmetric simulation'
-  write(IMAIN,*)
-
   !--------------------------------------------------------------------
   !
   ! attenuation
@@ -159,8 +359,6 @@
 
   call read_value_logical_p(initialfield, 'solver.initialfield')
   if (err_occurred() /= 0) stop 'error reading parameter initialfield in Par_file'
-  if (initialfield .and. NPROC > 1) stop 'initialfield (plane waves) currently have a bug in parallel i.e. when &
-     & NPROC > 1, see https://github.com/geodynamics/specfem2d/issues/550 , thus please run with a single processor'
 
   call read_value_logical_p(add_Bielak_conditions_bottom, 'solver.add_Bielak_conditions_bottom')
   if (err_occurred() /= 0) stop 'error reading parameter add_Bielak_conditions_bottom in Par_file'
@@ -173,9 +371,6 @@
 
   call read_value_logical_p(add_Bielak_conditions_left, 'solver.add_Bielak_conditions_left')
   if (err_occurred() /= 0) stop 'error reading parameter add_Bielak_conditions_left in Par_file'
-
-  add_Bielak_conditions = add_Bielak_conditions_bottom .or. add_Bielak_conditions_right .or. &
-                          add_Bielak_conditions_top .or. add_Bielak_conditions_left
 
   ! read acoustic forcing flag
   call read_value_logical_p(ACOUSTIC_FORCING, 'solver.ACOUSTIC_FORCING')
@@ -231,42 +426,7 @@
   call read_value_logical_p(rec_normal_to_surface, 'solver.rec_normal_to_surface')
   if (err_occurred() /= 0) stop 'error reading parameter rec_normal_to_surface in Par_file'
 
-  ! reads in receiver sets
-  if (nreceiversets < 1) stop 'number of receiver lines must be greater than 1'
-
-  ! allocate receiver line arrays
-  allocate(nrec_line(nreceiversets))
-  allocate(xdeb(nreceiversets))
-  allocate(zdeb(nreceiversets))
-  allocate(xfin(nreceiversets))
-  allocate(zfin(nreceiversets))
-  allocate(record_at_surface_same_vertical(nreceiversets),stat=ios)
-  if (ios /= 0 ) stop 'error allocating receiver lines'
-
-  ! loop on all the receiver lines
-  do ireceiverlines = 1,nreceiversets
-    call read_value_integer_next_p(nrec_line(ireceiverlines),'solver.nrec')
-    if (err_occurred() /= 0) stop 'error reading parameter nrec in Par_file'
-
-    call read_value_double_prec_next_p(xdeb(ireceiverlines),'solver.xdeb')
-    if (err_occurred() /= 0) stop 'error reading parameter xdeb in Par_file'
-
-    call read_value_double_prec_next_p(zdeb(ireceiverlines),'solver.zdeb')
-    if (err_occurred() /= 0) stop 'error reading parameter zdeb in Par_file'
-
-    call read_value_double_prec_next_p(xfin(ireceiverlines),'solver.xfin')
-    if (err_occurred() /= 0) stop 'error reading parameter xfin in Par_file'
-
-    call read_value_double_prec_next_p(zfin(ireceiverlines),'solver.zfin')
-    if (err_occurred() /= 0) stop 'error reading parameter zfin in Par_file'
-
-    call read_value_logical_next_p(record_at_surface_same_vertical(ireceiverlines),'solver.record_at_surface_same_vertical')
-    if (err_occurred() /= 0) stop 'error reading parameter record_at_surface_same_vertical in Par_file'
-
-    if (read_external_mesh .and. record_at_surface_same_vertical(ireceiverlines)) then
-      stop 'Cannot use record_at_surface_same_vertical with external meshes!'
-    endif
-  enddo
+  ! receiver sets will be read in later...
 
   !--------------------------------------------------------------------
   !
@@ -315,42 +475,7 @@
   call read_value_integer_p(nbmodels, 'mesher.nbmodels')
   if (err_occurred() /= 0) stop 'error reading parameter nbmodels in Par_file'
 
-  ! reads in material definitions
-  if (nbmodels <= 0) stop 'Non-positive number of materials not allowed!'
-
-  allocate(icodemat(nbmodels))
-  allocate(cp(nbmodels))
-  allocate(cs(nbmodels))
-  allocate(aniso3(nbmodels))
-  allocate(aniso4(nbmodels))
-  allocate(aniso5(nbmodels))
-  allocate(aniso6(nbmodels))
-  allocate(aniso7(nbmodels))
-  allocate(aniso8(nbmodels))
-  allocate(aniso9(nbmodels))
-  allocate(aniso10(nbmodels))
-  allocate(aniso11(nbmodels))
-  allocate(aniso12(nbmodels))
-  allocate(QKappa(nbmodels))
-  allocate(Qmu(nbmodels))
-  allocate(rho_s(nbmodels))
-  allocate(rho_f(nbmodels))
-  allocate(phi(nbmodels))
-  allocate(tortuosity(nbmodels))
-  allocate(permxx(nbmodels))
-  allocate(permxz(nbmodels))
-  allocate(permzz(nbmodels))
-  allocate(kappa_s(nbmodels))
-  allocate(kappa_f(nbmodels))
-  allocate(kappa_fr(nbmodels))
-  allocate(eta_f(nbmodels))
-  allocate(mu_fr(nbmodels))
-
-  call read_material_table(AXISYM,nbmodels,icodemat,cp,cs, &
-                           aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
-                           QKappa,Qmu,rho_s,rho_f,phi,tortuosity, &
-                           permxx,permxz,permzz,kappa_s,kappa_f,kappa_fr, &
-                           eta_f,mu_fr)
+  ! material definitions will be read later on...
 
   call read_value_string_p(TOMOGRAPHY_FILE, 'solver.TOMOGRAPHY_FILE')
   if (err_occurred() /= 0) stop 'error reading parameter TOMOGRAPHY_FILE in Par_file'
@@ -364,31 +489,6 @@
   ! parameters external / internal meshing
   !
   !--------------------------------------------------------------------
-
-  ! initializes
-  ! external meshing
-  mesh_file = ''
-  nodes_coords_file = ''
-  materials_file = ''
-  free_surface_file = ''
-  axial_elements_file = ''
-  absorbing_surface_file = ''
-  acoustic_forcing_surface_file = ''
-  CPML_element_file = ''
-  tangential_detection_curve_file = ''
-
-  ! internal meshing
-  interfacesfile = ''
-  xmin_param = 0.d0
-  xmax_param = 0.d0
-  nx_param = 0
-
-  absorbbottom = .false.
-  absorbright = .false.
-  absorbtop = .false.
-  absorbleft = .false.
-
-  nbregions = 0
 
   !-----------------
   ! external mesh parameters
@@ -566,39 +666,11 @@
 
   !--------------------------------------------------------------------
 
-  ! checks input parameters
-  call check_parameters()
-
-  ! boundary conditions
-  if (add_Bielak_conditions .and. .not. STACEY_ABSORBING_CONDITIONS) &
-    stop 'need STACEY_ABSORBING_CONDITIONS set to .true. in order to use add_Bielak_conditions'
-
-  ! CPML and Stacey are mutually exclusive
-  if (STACEY_ABSORBING_CONDITIONS .and. PML_BOUNDARY_CONDITIONS) &
-    stop 'STACEY_ABSORBING_CONDITIONS and PML_BOUNDARY_CONDITIONS are mutually exclusive but are both set to .true.'
-
-  ! we also set in subroutine prepare_timerun_read to make sure that STACEY_ABSORBING_CONDITIONS = .false. when
-  ! PML_BOUNDARY_CONDITIONS is used.
-
-  ! solve the conflict in value of PML_BOUNDARY_CONDITIONS and STACEY_ABSORBING_CONDITIONS
-  if (PML_BOUNDARY_CONDITIONS) any_abs = .true.
-  if (STACEY_ABSORBING_CONDITIONS) any_abs = .true.
-
-  ! initializes flags for absorbing boundaries
-  if (.not. any_abs) then
-    absorbbottom = .false.
-    absorbright = .false.
-    absorbtop = .false.
-    absorbleft = .false.
-  endif
-
-  ! can use only one point to display lower-left corner only for interpolated snapshot
-  if (pointsdisp < 3) then
-    pointsdisp = 3
-    plot_lowerleft_corner_only = .true.
-  else
-    plot_lowerleft_corner_only = .false.
-  endif
+  ! user output
+  write(IMAIN,*) 'Title of the simulation: ',trim(title)
+  write(IMAIN,*)
+  if (AXISYM) write(IMAIN,*) 'Axisymmetric simulation'
+  write(IMAIN,*)
 
   ! converts all string characters to lowercase
   irange = iachar('a') - iachar('A')
@@ -613,7 +685,10 @@
     endif
   enddo
 
-  end subroutine read_parameter_file
+  ! checks input parameters
+  call check_parameters()
+
+  end subroutine read_parameter_file_only
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -621,7 +696,7 @@
 
   subroutine check_parameters()
 
-  use parameter_file_par
+  use shared_parameters
 
   implicit none
 
@@ -677,8 +752,20 @@
             &to use external tangential_dectection_curve_file'
   endif
 
+  if (initialfield .and. NPROC > 1) &
+    stop 'initialfield (plane waves) currently have a bug in parallel i.e. when &
+          & NPROC > 1, see https://github.com/geodynamics/specfem2d/issues/550 , thus please run with a single processor'
+
   if (DT == 0.d0) &
     stop 'DT must be non-zero value'
+
+  ! reads in material definitions
+  if (nbmodels <= 0) &
+    stop 'Non-positive number of materials not allowed!'
+
+  ! CPML and Stacey are mutually exclusive
+  if (STACEY_ABSORBING_CONDITIONS .and. PML_BOUNDARY_CONDITIONS) &
+    stop 'STACEY_ABSORBING_CONDITIONS and PML_BOUNDARY_CONDITIONS are mutually exclusive but are both set to .true.'
 
   ! checks model
   select case (trim(MODEL))
@@ -705,3 +792,113 @@
 
   end subroutine check_parameters
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_parameter_file_receiversets()
+
+  use constants,only: IMAIN
+  use shared_parameters
+
+  implicit none
+
+  ! local parameters
+  integer :: ireceiverlines,ier
+  logical :: reread_rec_normal_to_surface
+
+  integer,external :: err_occurred
+
+  ! user output
+  write(IMAIN,*) 'Receiver lines:'
+  write(IMAIN,*) '  Nb of line sets = ',nreceiversets
+  write(IMAIN,*)
+
+  ! re-reads rec_normal_to_surface parameter to reposition read header for following next-line reads
+  call read_value_logical_p(reread_rec_normal_to_surface, 'solver.rec_normal_to_surface')
+  if (err_occurred() /= 0) stop 'error reading parameter rec_normal_to_surface in Par_file'
+
+  ! checks
+  if (reread_rec_normal_to_surface .neqv. rec_normal_to_surface) stop 'Invalid re-reading of rec_normal_to_surface parameter'
+
+  ! only valid if at least 1 receiver line is specified
+  if (nreceiversets < 1) stop 'number of receiver lines must be greater than 1'
+
+  ! allocate receiver line arrays
+  allocate(nrec_line(nreceiversets))
+  allocate(xdeb(nreceiversets))
+  allocate(zdeb(nreceiversets))
+  allocate(xfin(nreceiversets))
+  allocate(zfin(nreceiversets))
+  allocate(record_at_surface_same_vertical(nreceiversets),stat=ier)
+  if (ier /= 0 ) stop 'Error allocating receiver lines'
+
+  ! reads in receiver sets
+  ! loop on all the receiver lines
+  do ireceiverlines = 1,nreceiversets
+    call read_value_integer_next_p(nrec_line(ireceiverlines),'solver.nrec')
+    if (err_occurred() /= 0) stop 'error reading parameter nrec in Par_file'
+
+    call read_value_double_prec_next_p(xdeb(ireceiverlines),'solver.xdeb')
+    if (err_occurred() /= 0) stop 'error reading parameter xdeb in Par_file'
+
+    call read_value_double_prec_next_p(zdeb(ireceiverlines),'solver.zdeb')
+    if (err_occurred() /= 0) stop 'error reading parameter zdeb in Par_file'
+
+    call read_value_double_prec_next_p(xfin(ireceiverlines),'solver.xfin')
+    if (err_occurred() /= 0) stop 'error reading parameter xfin in Par_file'
+
+    call read_value_double_prec_next_p(zfin(ireceiverlines),'solver.zfin')
+    if (err_occurred() /= 0) stop 'error reading parameter zfin in Par_file'
+
+    call read_value_logical_next_p(record_at_surface_same_vertical(ireceiverlines),'solver.record_at_surface_same_vertical')
+    if (err_occurred() /= 0) stop 'error reading parameter record_at_surface_same_vertical in Par_file'
+
+    if (read_external_mesh .and. record_at_surface_same_vertical(ireceiverlines)) then
+      stop 'Cannot use record_at_surface_same_vertical with external meshes!'
+    endif
+  enddo
+
+  end subroutine read_parameter_file_receiversets
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_parameter_file_derive_flags()
+
+  use shared_parameters
+
+  implicit none
+
+  ! derives additional flags based on input parameters
+
+  ! sets overal Bielak flag
+  add_Bielak_conditions = add_Bielak_conditions_bottom .or. add_Bielak_conditions_right .or. &
+                          add_Bielak_conditions_top .or. add_Bielak_conditions_left
+
+  ! boundary conditions
+  if (add_Bielak_conditions .and. .not. STACEY_ABSORBING_CONDITIONS) &
+    stop 'need STACEY_ABSORBING_CONDITIONS set to .true. in order to use add_Bielak_conditions'
+
+  ! solve the conflict in value of PML_BOUNDARY_CONDITIONS and STACEY_ABSORBING_CONDITIONS
+  if (PML_BOUNDARY_CONDITIONS) any_abs = .true.
+  if (STACEY_ABSORBING_CONDITIONS) any_abs = .true.
+
+  ! initializes flags for absorbing boundaries
+  if (.not. any_abs) then
+    absorbbottom = .false.
+    absorbright = .false.
+    absorbtop = .false.
+    absorbleft = .false.
+  endif
+
+  ! can use only one point to display lower-left corner only for interpolated snapshot
+  if (pointsdisp < 3) then
+    pointsdisp = 3
+    plot_lowerleft_corner_only = .true.
+  else
+    plot_lowerleft_corner_only = .false.
+  endif
+
+  end subroutine read_parameter_file_derive_flags

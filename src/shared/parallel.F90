@@ -294,6 +294,36 @@
 
   end subroutine bcast_all_singledp
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_string(buffer)
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  use constants,only: MAX_STRING_LEN
+
+  implicit none
+
+  character(len=MAX_STRING_LEN) :: buffer
+
+#ifndef USE_MPI
+  character(len=MAX_STRING_LEN) :: dummy
+#endif
+
+#ifdef USE_MPI
+  integer :: ier
+
+  call MPI_BCAST(buffer,MAX_STRING_LEN,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+#else
+  ! to avoid compiler warning
+  dummy = buffer
+#endif
+
+  end subroutine bcast_all_string
 
 
 !-------------------------------------------------------------------------------------------------

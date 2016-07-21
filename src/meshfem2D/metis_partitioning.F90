@@ -42,7 +42,7 @@
   use part_unstruct_par,only: nelmnts,part,nb_edges,vwgt,adjwgt, &
     xadj => xadj_g,adjncy => adjncy_g
 
-  use parameter_file_par,only: nparts => NPROC
+  use shared_parameters,only: nparts => NPROC
 #endif
 
   implicit none

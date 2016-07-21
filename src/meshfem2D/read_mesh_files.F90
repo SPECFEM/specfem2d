@@ -37,7 +37,7 @@
 
   use part_unstruct_par,only: nnodes_tangential_curve
 
-  use parameter_file_par,only: force_normal_to_surface,rec_normal_to_surface,read_external_mesh
+  use shared_parameters,only: force_normal_to_surface,rec_normal_to_surface,read_external_mesh
 
   implicit none
 
@@ -71,7 +71,7 @@
 
   use source_file_par,only: source_surf,xs,zs
 
-  use parameter_file_par,only: ngnod,interfacesfile,NSOURCES,xmin_param,xmax_param
+  use shared_parameters,only: ngnod,interfacesfile,NSOURCES,xmin_param,xmax_param
 
   implicit none
 

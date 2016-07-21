@@ -38,15 +38,15 @@
 
   use constants,only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK,HUGEVAL
 
-  use part_unstruct_par,only: elmnts,nelmnts,nz_layer,number_of_layers,max_npoints_interface,number_of_interfaces, &
-    nx,nz,nxread,nzread
-
-  use parameter_file_par,only: ngnod,interfacesfile
+  use shared_parameters,only: interfacesfile,nx_param, &
+    nz_layer,number_of_layers, &
+    max_npoints_interface,number_of_interfaces, &
+    nxread,nzread
 
   implicit none
 
   ! local parameters
-  integer :: ier,interface_current,ipoint_current,ilayer,i,j,num_elmnt
+  integer :: ier,interface_current,ipoint_current,ilayer
   integer :: npoints_interface_bottom
   double precision :: xinterface_dummy,zinterface_dummy,xinterface_dummy_previous
 
@@ -119,63 +119,15 @@
   close(IIN_INTERFACES)
 
   ! compute total number of spectral elements in vertical direction
-  nz = sum(nz_layer)
+  nzread = sum(nz_layer)
+
+  ! sets number of elements along X for internal mesher
+  nxread = nx_param
 
   ! user output
   write(IMAIN,*)
-  write(IMAIN,*) 'Total number of spectral elements along Z = ',nz
-  call flush_IMAIN()
-
-  nxread = nx
-  nzread = nz
-
-  ! multiply by 2 if elements have 9 nodes
-  if (ngnod == 9) then
-    nx = nx * 2
-    nz = nz * 2
-    nz_layer(:) = nz_layer(:) * 2
-  endif
-
-  ! stores mesh point indices in array 'elmnts'
-  nelmnts = nxread * nzread
-  allocate(elmnts(0:ngnod*nelmnts-1),stat=ier)
-  if (ier /= 0) stop 'Error allocating array elmnts'
-
-  if (ngnod == 4) then
-    num_elmnt = 0
-    do j = 1, nzread
-       do i = 1, nxread
-          elmnts(num_elmnt*ngnod)   = (j-1)*(nxread+1) + (i-1)
-          elmnts(num_elmnt*ngnod+1) = (j-1)*(nxread+1) + (i-1) + 1
-          elmnts(num_elmnt*ngnod+2) = j*(nxread+1) + (i-1) + 1
-          elmnts(num_elmnt*ngnod+3) = j*(nxread+1) + (i-1)
-          num_elmnt = num_elmnt + 1
-       enddo
-    enddo
-
-  else if (ngnod == 9) then
-    num_elmnt = 0
-    do j = 1, nzread
-       do i = 1, nxread
-          elmnts(num_elmnt*ngnod)   = (j-1)*(nxread+1) + (i-1)
-          elmnts(num_elmnt*ngnod+1) = (j-1)*(nxread+1) + (i-1) + 1
-          elmnts(num_elmnt*ngnod+2) = j*(nxread+1) + (i-1) + 1
-          elmnts(num_elmnt*ngnod+3) = j*(nxread+1) + (i-1)
-          elmnts(num_elmnt*ngnod+4) = (nxread+1)*(nzread+1) + (j-1)*nxread + (i-1)
-          elmnts(num_elmnt*ngnod+5) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2 + 2
-          elmnts(num_elmnt*ngnod+6) = (nxread+1)*(nzread+1) + j*nxread + (i-1)
-          elmnts(num_elmnt*ngnod+7) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2
-          elmnts(num_elmnt*ngnod+8) = (nxread+1)*(nzread+1) + nxread*(nzread+1) + (j-1)*(nxread*2+1) + (i-1)*2 + 1
-          num_elmnt = num_elmnt + 1
-       enddo
-    enddo
-
-  else
-    stop 'ngnod must be either 4 or 9'
-  endif
-
-  ! user output
-  write(IMAIN,*) 'Total number of spectral elements         = ',nelmnts
+  write(IMAIN,*) 'Total number of spectral elements along X = ',nxread
+  write(IMAIN,*) 'Total number of spectral elements along Z = ',nzread
   write(IMAIN,*)
   call flush_IMAIN()
 

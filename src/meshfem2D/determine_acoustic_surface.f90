@@ -38,7 +38,7 @@
   use part_unstruct_par,only: nelem_acoustic_surface,acoustic_surface, &
     nxread,nzread,elmnts
 
-  use parameter_file_par,only: AXISYM,ngnod,num_material,icodemat,phi,xmin_param, &
+  use shared_parameters,only: AXISYM,ngnod,num_material,icodemat,phi_read,xmin_param, &
     absorbbottom,absorbleft,absorbright,absorbtop
 
   implicit none
@@ -55,7 +55,7 @@
     j = nzread
     do i = 1,nxread
        imaterial_number = num_material((j-1)*nxread+i)
-       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0) then
+       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >= 1.d0) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
        endif
     enddo
@@ -64,7 +64,7 @@
     j = 1
     do i = 1,nxread
        imaterial_number = num_material((j-1)*nxread+i)
-       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0) then
+       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >= 1.d0) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
        endif
     enddo
@@ -74,7 +74,7 @@
     i = 1
     do j = 1,nzread
        imaterial_number = num_material((j-1)*nxread+i)
-       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0) then
+       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >= 1.d0) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
        endif
     enddo
@@ -83,7 +83,7 @@
     i = nxread
     do j = 1,nzread
        imaterial_number = num_material((j-1)*nxread+i)
-       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >= 1.d0) then
+       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >= 1.d0) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
        endif
     enddo
@@ -99,7 +99,7 @@
     j = nzread
     do i = 1,nxread
        imaterial_number = num_material((j-1)*nxread+i)
-       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0) then
+       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >=1.d0) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
           acoustic_surface(2,nelem_acoustic_surface) = 2
@@ -112,7 +112,7 @@
     j = 1
     do i = 1,nxread
        imaterial_number = num_material((j-1)*nxread+i)
-       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0) then
+       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >=1.d0) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
           acoustic_surface(2,nelem_acoustic_surface) = 2
@@ -126,7 +126,7 @@
     i = 1
     do j = 1,nzread
        imaterial_number = num_material((j-1)*nxread+i)
-       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0) then
+       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >=1.d0) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
           acoustic_surface(2,nelem_acoustic_surface) = 2
@@ -139,7 +139,7 @@
     i = nxread
     do j = 1,nzread
        imaterial_number = num_material((j-1)*nxread+i)
-       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi(imaterial_number) >=1.d0) then
+       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >=1.d0) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
           acoustic_surface(2,nelem_acoustic_surface) = 2

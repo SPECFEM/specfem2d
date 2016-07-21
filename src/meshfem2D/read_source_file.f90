@@ -38,7 +38,7 @@
 
   use constants,only: IMAIN,IGNORE_JUNK,NLINES_PER_SOURCE,TINYVAL,PI
   use source_file_par
-  use parameter_file_par,only: DT
+  use shared_parameters,only: DT
 
   implicit none
 
