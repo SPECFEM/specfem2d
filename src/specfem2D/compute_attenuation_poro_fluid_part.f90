@@ -38,7 +38,7 @@
   use constants,only: ZERO,NGLLX,NGLLZ,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: nspec,ispec_is_poroelastic,poroelastcoef,kmato,permeability,ibool, &
-                         velocw_poroelastic,time_stepping_scheme,deltat,i_stage,stage_time_scheme, &
+                         velocw_poroelastic,time_stepping_scheme,deltat,i_stage,time_stepping_scheme, &
                          rx_viscous,rz_viscous,viscox,viscoz, &
                          rx_viscous_force_RK,rx_viscous_initial_rk,rz_viscous_force_RK,rz_viscous_initial_rk, &
                          rx_viscous_LDDRK,rz_viscous_LDDRK, &
@@ -172,7 +172,8 @@
         enddo
       enddo
 
-      if (stage_time_scheme == 1) then
+      if (time_stepping_scheme == 1) then
+        ! Newmark
         ! save visco for Runge-Kutta scheme when used together with Newmark
         viscox(:,:,ispec) = viscox_loc(:,:)
         viscoz(:,:,ispec) = viscoz_loc(:,:)

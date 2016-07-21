@@ -41,7 +41,6 @@
 
   ! local parameters
   integer :: nglob_acoustic_b,nglob_elastic_b,nglob_poroelastic_b
-  integer :: nspec_acoustic_b,nspec_elastic_b,nspec_poroelastic_b
   integer :: ier
 
   ! displacement, velocity, acceleration and inverse of the mass matrix for elastic elements
@@ -218,6 +217,11 @@
   allocate(b_displw_poroelastic(NDIM,nglob_poroelastic_b))
   allocate(b_velocw_poroelastic(NDIM,nglob_poroelastic_b))
   allocate(b_accelw_poroelastic(NDIM,nglob_poroelastic_b))
+  ! strain
+  allocate(epsilondev_s(4,NGLLX,NGLLZ,nspec_poroelastic_b), &
+           epsilondev_w(4,NGLLX,NGLLZ,nspec_poroelastic_b))
+  allocate(b_epsilondev_s(4,NGLLX,NGLLZ,nspec_poroelastic_b), &
+           b_epsilondev_w(4,NGLLX,NGLLZ,nspec_poroelastic_b))
   ! kernels
   ! on global nodes
   allocate(rhot_k(nglob_poroelastic_b))

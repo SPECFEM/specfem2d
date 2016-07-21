@@ -245,7 +245,7 @@ void FC_FUNC_(prepare_boundary_on_device,
 extern "C"
 void FC_FUNC_(transfer_boundary_to_device_a,
               TRANSFER_BOUNDARY_TO_DEVICE_A)(long* Mesh_pointer,
-                                             realw* buffer_recv_vector_ext_mesh,
+                                             realw* buffer_recv_vector_gpu,
                                              const int* max_nibool_interfaces_ext_mesh) {
 
 // asynchronous transfer from host to device
@@ -256,7 +256,7 @@ void FC_FUNC_(transfer_boundary_to_device_a,
 
   if (mp->size_mpi_buffer > 0) {
     // copy on host memory
-    memcpy(mp->h_recv_accel_buffer,buffer_recv_vector_ext_mesh,mp->size_mpi_buffer*sizeof(realw));
+    memcpy(mp->h_recv_accel_buffer,buffer_recv_vector_gpu,mp->size_mpi_buffer*sizeof(realw));
 
     // asynchronous copy to GPU using copy_stream
     cudaMemcpyAsync(mp->d_send_accel_buffer,mp->h_recv_accel_buffer,
@@ -308,7 +308,7 @@ __global__ void assemble_boundary_accel_on_device(realw* d_accel, realw* d_send_
   // ! do iinterface = 1, num_interfaces_ext_mesh
   // !   do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
   // !     array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) = &
-  // !          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_vector_ext_mesh(:,ipoin,iinterface)
+  // !          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_vector_gpu(:,ipoin,iinterface)
   // !   enddo
   // ! enddo
 }
@@ -320,7 +320,7 @@ __global__ void assemble_boundary_accel_on_device(realw* d_accel, realw* d_send_
 extern "C"
 void FC_FUNC_(transfer_asmbl_accel_to_device,
               TRANSFER_ASMBL_ACCEL_TO_DEVICE)(long* Mesh_pointer,
-                                              realw* buffer_recv_vector_ext_mesh,
+                                              realw* buffer_recv_vector_gpu,
                                               const int* max_nibool_interfaces_ext_mesh,
                                               const int* nibool_interfaces_ext_mesh,
                                               const int* ibool_interfaces_ext_mesh,
@@ -341,7 +341,7 @@ TRACE("\ttransfer_asmbl_accel_to_device");
       // (cudaMemcpy implicitly synchronizes all other cuda operations)
       synchronize_cuda();
 
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_accel_buffer, buffer_recv_vector_ext_mesh,
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_accel_buffer, buffer_recv_vector_gpu,
                               mp->size_mpi_buffer*sizeof(realw),cudaMemcpyHostToDevice),97001);
     }
 

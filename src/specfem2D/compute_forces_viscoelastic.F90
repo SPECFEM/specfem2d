@@ -33,7 +33,7 @@
 
 
   subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
-                                         PML_BOUNDARY_CONDITIONS,e1,e11,e13)
+                                         PML_BOUNDARY_CONDITIONS,e1,e11,e13,iphase)
 
   ! compute forces for the elastic elements
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
@@ -41,7 +41,7 @@
     IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL,FOUR_THIRDS, &
     ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: nglob,nspec,assign_external_model,P_SV, &
+  use specfem_par, only: nglob,assign_external_model,P_SV, &
                          ATTENUATION_VISCOELASTIC_SOLID,nspec_ATT,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
@@ -50,6 +50,9 @@
                          ispec_is_anisotropic,anisotropy, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          it,coord,iglob_is_forced
+
+  ! overlapping communication
+  use specfem_par, only: nspec_inner_elastic,nspec_outer_elastic,phase_ispec_inner_elastic
 
   ! AXISYM
   use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj
@@ -67,6 +70,8 @@
 
   ! CPML coefficients and memory variables
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
+
+  integer,intent(in) :: iphase
 
   !---
   !--- local variables
@@ -106,12 +111,12 @@
   ! for anisotropy
   double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25,c22
 
-  integer :: ifirstelem,ilastelem
-
   ! CPML coefficients and memory variables
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: accel_elastic_PML
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: PML_dux_dxl_old,PML_dux_dzl_old,PML_duz_dxl_old,PML_duz_dzl_old
+
+  integer :: num_elements,ispec_p
 
   ! this to avoid a warning at execution time about an undefined variable being used
   ! for the SH component in the case of a P-SV calculation, and vice versa
@@ -124,11 +129,18 @@
   sigma_xy = 0._CUSTOM_REAL
   sigma_zy = 0._CUSTOM_REAL
 
-  ! loop over spectral elements
-  ifirstelem = 1
-  ilastelem = nspec
+  ! choses inner/outer elements
+  if (iphase == 1) then
+    num_elements = nspec_outer_elastic
+  else
+    num_elements = nspec_inner_elastic
+  endif
 
-  do ispec = ifirstelem,ilastelem
+  ! loop over spectral elements
+  do ispec_p = 1,num_elements
+
+    ! returns element id from stored element list
+    ispec = phase_ispec_inner_elastic(ispec_p,iphase)
 
     ! only for elastic spectral elements
     if (.not. ispec_is_elastic(ispec)) cycle

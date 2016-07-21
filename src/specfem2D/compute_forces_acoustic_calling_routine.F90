@@ -40,6 +40,10 @@
 
   ! local parameters
   integer :: i
+  ! non-blocking MPI
+  ! iphase: iphase = 1 is for computing outer elements (on MPI interface),
+  !         iphase = 2 is for computing inner elements
+  integer :: iphase
 
   ! checks if anything to do in this slice
   if ((.not. any_acoustic) .and. (.not. SOURCE_IS_MOVING)) return
@@ -47,81 +51,94 @@
   ! free surface for an acoustic medium
   call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic)
 
-  ! main solver for the acoustic elements
-  call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                               PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
+  ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
+  do iphase = 1,2
 
-  ! Stacey boundary conditions
-  if (STACEY_ABSORBING_CONDITIONS) then
-    call compute_stacey_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic)
-  endif
+    ! main solver for the acoustic elements
+    call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
+                                 PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase)
 
-  ! PML boundary conditions
-  if (PML_BOUNDARY_CONDITIONS) then
-    call pml_boundary_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                               potential_acoustic,potential_acoustic_old)
-  endif
-
-  ! add acoustic forcing at a rigid boundary
-  if (ACOUSTIC_FORCING .and. (.not. USE_ENFORCE_FIELDS)) then
-    call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
-  endif
-
-  ! applies to coupling in case of MPI partitioning:
-  !   coupling interfaces might not be properly detected if one material domain is only in an another slice.
-  !   in such a case, the common nodes would not be detected as belonging to a coupling interface.
-  !   something to do in future...
-
-  ! add coupling with the elastic side
-  if (coupled_acoustic_elastic) then
-    if (SIMULATION_TYPE == 1) then
-      call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
+    ! PML boundary conditions enforces zero potentials on boundary
+    if (PML_BOUNDARY_CONDITIONS) then
+      call pml_boundary_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
+                                 potential_acoustic,potential_acoustic_old)
     endif
 
-    ! coupling for adjoint wavefields
-    if (SIMULATION_TYPE == 3) then
-      ! note: handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
-      !       adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
-      !
-      ! coupling with adjoint wavefields
-      call compute_coupling_acoustic_el(accel_elastic_adj_coupling,displ_elastic_old,potential_dot_dot_acoustic)
-    endif
-  endif
-
-  ! add coupling with the poroelastic side
-  if (coupled_acoustic_poro) then
-    call compute_coupling_acoustic_po()
-  endif
-
-  ! add force source
-  if (.not. initialfield) then
-    if (SIMULATION_TYPE == 1) then
-      if (SOURCE_IS_MOVING) then
-        call compute_add_sources_acoustic_moving_source(potential_dot_dot_acoustic,it,i_stage)
-      else
-        call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
+    ! computes additional contributions
+    if (iphase == 1) then
+      ! Stacey boundary conditions
+      if (STACEY_ABSORBING_CONDITIONS) then
+        call compute_stacey_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic)
       endif
-    else if (SIMULATION_TYPE == 3) then
-      ! adjoint sources
-      call compute_add_sources_acoustic_adjoint()
-    endif
-  endif
 
-  ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
+      ! add acoustic forcing at a rigid boundary
+      if (ACOUSTIC_FORCING .and. (.not. USE_ENFORCE_FIELDS)) then
+        call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
+      endif
+
+      ! applies to coupling in case of MPI partitioning:
+      !   coupling interfaces might not be properly detected if one material domain is only in an another slice.
+      !   in such a case, the common nodes would not be detected as belonging to a coupling interface.
+      !   something to do in future...
+
+      ! add coupling with the elastic side
+      if (coupled_acoustic_elastic) then
+        if (SIMULATION_TYPE == 1) then
+          call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
+        endif
+
+        ! coupling for adjoint wavefields
+        if (SIMULATION_TYPE == 3) then
+          ! note: handles adjoint runs coupling between adjoint potential and adjoint elastic wavefield
+          !       adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
+          !
+          ! coupling with adjoint wavefields
+          call compute_coupling_acoustic_el(accel_elastic_adj_coupling,displ_elastic_old,potential_dot_dot_acoustic)
+        endif
+      endif
+
+      ! add coupling with the poroelastic side
+      if (coupled_acoustic_poro) then
+        call compute_coupling_acoustic_po()
+      endif
+
+      ! add force source
+      if (.not. initialfield) then
+        if (SIMULATION_TYPE == 1) then
+          if (SOURCE_IS_MOVING) then
+            call compute_add_sources_acoustic_moving_source(potential_dot_dot_acoustic,it,i_stage)
+          else
+            call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
+          endif
+        else if (SIMULATION_TYPE == 3) then
+          ! adjoint sources
+          call compute_add_sources_acoustic_adjoint()
+        endif
+      endif
+    endif ! iphase == 1
+
 #ifdef USE_MPI
-  if (NPROC > 1 .and. ninterface_acoustic > 0) then
-    call assemble_MPI_scalar_ac(potential_dot_dot_acoustic)
+    ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
+    if (NPROC > 1 .and. ninterface_acoustic > 0) then
+      if (iphase == 1) then
+        call assemble_MPI_scalar_ac_s(potential_dot_dot_acoustic)
+      else
+        call assemble_MPI_scalar_ac_w(potential_dot_dot_acoustic)
+      endif
 
-    if (time_stepping_scheme == 2) then
-      ! LDDRK
-      if (i_stage == 1 .and. it == 1 .and. (.not. initialfield)) then
-        potential_dot_acoustic_temp(:) = potential_dot_acoustic(:)
-        call assemble_MPI_scalar_ac(potential_dot_acoustic)
+      if (time_stepping_scheme == 2) then
+        ! LDDRK
+        if (i_stage == 1 .and. it == 1 .and. iphase == 2 .and. (.not. initialfield)) then
+          potential_dot_acoustic_temp(:) = potential_dot_acoustic(:)
+          call assemble_MPI_scalar_ac_blocking(potential_dot_acoustic)
+        endif
       endif
     endif
-  endif
 #endif
 
+  enddo ! iphase
+
+  ! PML saves interface values
   if (PML_BOUNDARY_CONDITIONS) then
     if (nglob_interface > 0) then
       if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
@@ -169,6 +186,10 @@
 
   ! local parameters
   integer :: it_temp,istage_temp
+  ! non-blocking MPI
+  ! iphase: iphase = 1 is for computing outer elements (on MPI interface),
+  !         iphase = 2 is for computing inner elements
+  integer :: iphase
 
   ! checks
   if (SIMULATION_TYPE /= 3 ) return
@@ -191,76 +212,90 @@
     istage_temp = stage_time_scheme - i_stage + 1
   endif
 
-  ! PML
+  ! PML restores interface values
   if (PML_BOUNDARY_CONDITIONS) then
-    call rebuild_value_on_PML_interface_acoustic(it_temp)
+    call rebuild_value_on_PML_interface_acoustic(it_temp,b_potential_acoustic,b_potential_dot_acoustic)
   endif
 
   ! free surface for an acoustic medium
   call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic)
 
-  ! main solver for the acoustic elements
-  if (UNDO_ATTENUATION) then
-    call compute_forces_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
-                                 .false.,b_potential_acoustic_old)
-  else
-    call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic)
-  endif
+  ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
+  do iphase = 1,2
 
-  ! Stacey boundary conditions
-  if (STACEY_ABSORBING_CONDITIONS) then
+    ! main solver for the acoustic elements
     if (UNDO_ATTENUATION) then
-      call compute_stacey_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic)
+      call compute_forces_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
+                                   .false.,b_potential_acoustic_old,iphase)
     else
-      call compute_stacey_acoustic_backward(b_potential_dot_dot_acoustic)
+      call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic,iphase)
     endif
-  endif
 
-  ! PML boundary conditions
-  if (PML_BOUNDARY_CONDITIONS) then
-    call pml_boundary_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                               b_potential_acoustic,b_potential_acoustic_old)
-  endif
+    ! PML boundary conditions
+    if (PML_BOUNDARY_CONDITIONS) then
+      ! enforces zero potentials on boundary
+      call pml_boundary_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+                                 b_potential_acoustic,b_potential_acoustic_old)
 
-  ! PML
-  if (PML_BOUNDARY_CONDITIONS) then
-    call rebuild_value_on_PML_interface_acoustic(it_temp)
-  endif
+      ! restores potentials on interface
+      call rebuild_value_on_PML_interface_acoustic(it_temp,b_potential_acoustic,b_potential_dot_acoustic)
+    endif
 
-  ! add acoustic forcing at a rigid boundary
-  if (ACOUSTIC_FORCING) then
-    call add_acoustic_forcing_at_rigid_boundary(b_potential_dot_dot_acoustic)
-  endif
+    ! computes additional contributions
+    if (iphase == 1) then
+      ! Stacey boundary conditions
+      if (STACEY_ABSORBING_CONDITIONS) then
+        if (UNDO_ATTENUATION) then
+          call compute_stacey_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic)
+        else
+          call compute_stacey_acoustic_backward(b_potential_dot_dot_acoustic)
+        endif
+      endif
 
-  ! add coupling with the elastic side
-  if (coupled_acoustic_elastic) then
-    call compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
-  endif
+      ! add acoustic forcing at a rigid boundary
+      if (ACOUSTIC_FORCING) then
+        call add_acoustic_forcing_at_rigid_boundary(b_potential_dot_dot_acoustic)
+      endif
 
-  ! add coupling with the poroelastic side
-  if (coupled_acoustic_poro) then
-    call compute_coupling_acoustic_po_backward()
-  endif
+      ! add coupling with the elastic side
+      if (coupled_acoustic_elastic) then
+        call compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
+      endif
 
-  if (PML_BOUNDARY_CONDITIONS) then
-    call rebuild_value_on_PML_interface_acoustic(it_temp)
-  endif
+      ! add coupling with the poroelastic side
+      if (coupled_acoustic_poro) then
+        call compute_coupling_acoustic_po_backward()
+      endif
 
-  ! add force source
-  if (.not. initialfield) then
-    ! backward wavefield
-    call compute_add_sources_acoustic(b_potential_dot_dot_acoustic,it_temp,istage_temp)
-  endif
+      ! PML restores interface values
+      if (PML_BOUNDARY_CONDITIONS) then
+        call rebuild_value_on_PML_interface_acoustic(it_temp,b_potential_acoustic,b_potential_dot_acoustic)
+      endif
 
-  ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
+      ! add force source
+      if (.not. initialfield) then
+        ! backward wavefield
+        call compute_add_sources_acoustic(b_potential_dot_dot_acoustic,it_temp,istage_temp)
+      endif
+
+    endif ! iphase == 1
+
 #ifdef USE_MPI
-  if (NPROC > 1 .and. ninterface_acoustic > 0) then
-    call assemble_MPI_scalar_ac(b_potential_dot_dot_acoustic)
-  endif
+    ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
+    if (NPROC > 1 .and. ninterface_acoustic > 0) then
+      if (iphase == 1) then
+        call assemble_MPI_scalar_ac_s(b_potential_dot_dot_acoustic)
+      else
+        call assemble_MPI_scalar_ac_w(b_potential_dot_dot_acoustic)
+      endif
+    endif
 #endif
 
+  enddo ! iphase
+
+  ! PML restores interface values
   if (PML_BOUNDARY_CONDITIONS) then
-    call rebuild_value_on_PML_interface_acoustic_accel(it_temp)
+    call rebuild_value_on_PML_interface_acoustic_accel(it_temp,b_potential_dot_dot_acoustic)
   endif
 
   ! multiply by the inverse of the mass matrix

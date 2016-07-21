@@ -44,7 +44,7 @@
                          fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj,&
                          rmemory_fsb_displ_elastic,timeval,deltat,&
-                         rmemory_fsb_displ_elastic_LDDRK,i_stage,stage_time_scheme, &
+                         rmemory_fsb_displ_elastic_LDDRK,i_stage,time_stepping_scheme, &
                          nglob_acoustic,nglob_elastic
 
   ! PML arrays
@@ -116,14 +116,15 @@
             stop 'PML do not support a fluid-solid boundary in corner PML region'
           endif
 
-          if (stage_time_scheme == 1) then
+          if (time_stepping_scheme == 1) then
+            ! Newmark
             rmemory_fsb_displ_elastic(1,1,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,1,i,j,inum) + &
                    coef1_xz_1 * displ_elastic(1,iglob) + coef2_xz_1 * displ_elastic_old(1,iglob)
             rmemory_fsb_displ_elastic(1,2,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,2,i,j,inum) + &
                    coef1_xz_1 * displ_elastic(2,iglob) + coef2_xz_1 * displ_elastic_old(2,iglob)
-          endif
 
-          if (stage_time_scheme == 6) then
+          else if (time_stepping_scheme == 2) then
+            ! LDDRK
             rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) = &
                    ALPHA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) + &
                    deltat * ( - bb_xz_1 * rmemory_fsb_displ_elastic(1,1,i,j,inum) + displ_elastic(1,iglob) )

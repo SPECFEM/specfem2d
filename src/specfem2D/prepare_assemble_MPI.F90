@@ -37,8 +37,6 @@
 ! These subroutines are for the most part not used in the sequential version.
 !
 
-#ifdef USE_MPI
-
 !-----------------------------------------------
 ! Determines the points that are on the interfaces with other partitions, to help
 ! build the communication buffers, and determines which elements are considered 'inner'
@@ -57,7 +55,7 @@
   use specfem_par, only: ninterface, my_nelmnts_neighbours, my_interfaces, &
     nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh_init
 
-  use specfem_par, only: &
+  use specfem_par, only: NPROC, &
     ibool_interfaces_acoustic, ibool_interfaces_elastic, &
     ibool_interfaces_poroelastic, &
     nibool_interfaces_acoustic, nibool_interfaces_elastic, &
@@ -84,6 +82,9 @@
   integer  :: nglob_interface_elastic
   integer  :: nglob_interface_poroelastic
   integer :: npoin_interface_ext_mesh
+
+  ! checks if anything to do
+  if (NPROC <= 1) return
 
   ! initializes
   ! for all domains
@@ -344,5 +345,3 @@
   endif
 
   end subroutine get_edge
-
-#endif

@@ -295,11 +295,11 @@ module specfem_par
   ! coefficients of the explicit Newmark time scheme
   double precision :: deltat,deltatover2,deltatsquareover2
 
-  ! current time
-  double precision :: timeval
-
   ! for backward simulation in adjoint inversion
   double precision :: b_deltatover2,b_deltatsquareover2,b_deltat ! coefficients of the explicit Newmark time scheme
+
+  ! current time
+  double precision :: timeval
 
   ! UNDO_ATTENUATION
   integer :: NSUBSET_ITERATIONS
@@ -344,6 +344,7 @@ module specfem_par
 
   ! number of purely acoustic elements in this slice
   integer :: nspec_acoustic
+  integer :: nspec_acoustic_b
 
   ! local flag to determine if any acoustic elements in this slice
   logical :: any_acoustic
@@ -352,6 +353,11 @@ module specfem_par
   logical :: ACOUSTIC_SIMULATION
 
   logical, dimension(:), allocatable :: ispec_is_acoustic
+
+  ! MPI inner/outer
+  integer :: nspec_inner_acoustic,nspec_outer_acoustic
+  integer :: num_phase_ispec_acoustic
+  integer, dimension(:,:), allocatable :: phase_ispec_inner_acoustic
 
   !---------------------------------------------------------------------
   ! for gravito-acoustic simulations
@@ -406,6 +412,7 @@ module specfem_par
 
   ! number of purely elastic elements in this slice
   integer :: nspec_elastic
+  integer :: nspec_elastic_b
 
   ! local flag if any elastic element is in this slice
   logical :: any_elastic
@@ -463,6 +470,11 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interface_history_veloc
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: pml_interface_history_accel
 
+  ! MPI inner/outer
+  integer :: nspec_inner_elastic,nspec_outer_elastic
+  integer :: num_phase_ispec_elastic
+  integer, dimension(:,:), allocatable :: phase_ispec_inner_elastic
+
   !---------------------------------------------------------------------
   !for by poroelastic simulation
   !---------------------------------------------------------------------
@@ -470,6 +482,7 @@ module specfem_par
 
   ! number of purely gravitoacoustic elements in this slice
   integer :: nspec_poroelastic
+  integer :: nspec_poroelastic_b
 
   ! local flag to determine if this slice has poroelastic elements
   logical :: any_poroelastic
@@ -533,6 +546,17 @@ module specfem_par
 
   ! viscous damping
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_viscodampx,b_viscodampz
+
+  ! strain
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: epsilondev_s,epsilondev_w
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: b_epsilondev_s,b_epsilondev_w
+
+  ! MPI inner/outer
+  integer :: nspec_inner_poroelastic,nspec_outer_poroelastic
+  integer :: num_phase_ispec_poroelastic
+  integer, dimension(:,:), allocatable :: phase_ispec_inner_poroelastic
+
+  !---------------------------------------------------------------------
 
   ! PML parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_fsb_displ_elastic
@@ -633,15 +657,15 @@ module specfem_par
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_send_faces_vector_ac
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_ac
-  integer, dimension(:), allocatable  :: tab_requests_send_recv_acoustic
+  integer, dimension(:), allocatable  :: request_send_recv_acoustic
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_send_faces_vector_el
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_el
-  integer, dimension(:), allocatable  :: tab_requests_send_recv_elastic
+  integer, dimension(:), allocatable :: request_send_recv_elastic
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_send_faces_vector_pos,buffer_send_faces_vector_pow
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable  :: buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow
-  integer, dimension(:), allocatable  :: tab_requests_send_recv_poro
+  integer, dimension(:), allocatable  :: request_send_recv_poro
 
   ! for overlapping MPI communications with computation
   integer  :: nspec_outer, nspec_inner
@@ -769,13 +793,6 @@ module specfem_par_gpu
   ! receivers
   real(kind=CUSTOM_REAL),  dimension(:,:), allocatable :: xir_store_loc, gammar_store_loc
 
-  ! domains
-  integer :: num_phase_ispec_elastic,nspec_inner_elastic,nspec_outer_elastic
-  integer :: num_phase_ispec_acoustic,nspec_inner_acoustic,nspec_outer_acoustic
-
-  integer, dimension(:,:), allocatable :: phase_ispec_inner_elastic
-  integer, dimension(:,:), allocatable :: phase_ispec_inner_acoustic
-
   ! coupling
   integer, dimension(:), allocatable :: coupling_ac_el_ispec
   integer, dimension(:,:,:), allocatable :: coupling_ac_el_ij
@@ -783,19 +800,19 @@ module specfem_par_gpu
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: coupling_ac_el_jacobian1Dw
 
   ! buffers
-  integer, dimension(:), allocatable  :: tab_requests_send_recv_scalar
-  integer, dimension(:), allocatable  :: b_tab_requests_send_recv_scalar
-  integer, dimension(:), allocatable  :: tab_requests_send_recv_vector
-  integer, dimension(:), allocatable  :: b_tab_requests_send_recv_vector
+  integer, dimension(:), allocatable  :: request_send_recv_scalar_gpu
+  integer, dimension(:), allocatable  :: b_request_send_recv_scalar_gpu
+  integer, dimension(:), allocatable  :: request_send_recv_vector_gpu
+  integer, dimension(:), allocatable  :: b_request_send_recv_vector_gpu
 
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar_ext_mesh
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_send_scalar_ext_mesh
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_recv_scalar_ext_mesh
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_recv_scalar_ext_mesh
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_ext_mesh
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_vector_ext_mesh
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_recv_vector_ext_mesh
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_recv_vector_ext_mesh
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar_gpu
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_send_scalar_gpu
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_recv_scalar_gpu
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_buffer_recv_scalar_gpu
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_gpu
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_send_vector_gpu
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_recv_vector_gpu
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_buffer_recv_vector_gpu
 
 end module specfem_par_gpu
 

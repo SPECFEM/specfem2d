@@ -149,7 +149,6 @@
           duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
-
           b_dux_dxl = b_dux_dxi*xixl + b_dux_dgamma*gammaxl
           b_dux_dzl = b_dux_dxi*xizl + b_dux_dgamma*gammazl
 
@@ -169,7 +168,7 @@
             b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
             b_dszz =  b_duz_dzl
 
-            kappa_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl)
+            kappa_k(iglob) = (dsxx + dszz) *  (b_dsxx + b_dszz)
             mu_k(iglob) = dsxx * b_dsxx + dszz * b_dszz + &
                           2._CUSTOM_REAL * dsxz * b_dsxz - 1._CUSTOM_REAL/3._CUSTOM_REAL * kappa_k(iglob)
           else
@@ -391,6 +390,8 @@
                          kmato,permeability, &
                          accels_poroelastic,accelw_poroelastic,velocw_poroelastic, &
                          b_displs_poroelastic,b_displw_poroelastic, &
+                         epsilondev_s,b_epsilondev_s, &
+                         epsilondev_w,b_epsilondev_w, &
                          rhot_k,rhof_k,sm_k,eta_k,B_k,C_k, &
                          rhot_kl,rhof_kl,sm_kl,eta_kl,B_kl,C_kl,M_kl,M_k, &
                          mufr_kl,mufr_k,rhob_kl,rhofb_kl, &
@@ -402,6 +403,9 @@
   integer :: i,j,ispec,iglob
   real(kind=CUSTOM_REAL) :: rholb,dd1
   real(kind=CUSTOM_REAL) :: ratio
+  real(kind=CUSTOM_REAL) :: dsxx,dsxz,dszz,dszx_xz
+  real(kind=CUSTOM_REAL) :: b_dsxx,b_dsxz,b_dszz,b_dszx_xz
+  real(kind=CUSTOM_REAL) :: dwxx,dwzz,b_dwxx,b_dwzz
 
   ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
   double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
@@ -469,7 +473,6 @@
 
       ratio = HALF*(gamma1 - gamma3)/gamma4 + HALF*sqrt((gamma1-gamma3)**2/gamma4**2 + 4.d0 * gamma2/gamma4)
 
-
       do j = 1, NGLLZ
         do i = 1, NGLLX
           iglob = ibool(i,j,ispec)
@@ -480,6 +483,57 @@
 
           !at the moment works with constant permeability
           eta_kl(i,j,ispec) = eta_kl(i,j,ispec) - deltat * eta_f/perm_xx * eta_k(iglob)
+
+          ! for B_k & mufr_k
+          dsxx = epsilondev_s(1,i,j,ispec) ! dux_dxl
+          dszz = epsilondev_s(2,i,j,ispec) ! duz_dzl
+          dsxz = epsilondev_s(3,i,j,ispec) ! dux_dzl
+          dszx_xz = epsilondev_s(4,i,j,ispec) ! 0.5_CUSTOM_REAL * (duz_dxl + dux_dzl)
+
+          b_dsxx = b_epsilondev_s(1,i,j,ispec) ! b_dux_dxl
+          b_dszz = b_epsilondev_s(2,i,j,ispec) ! b_duz_dzl
+          b_dsxz = b_epsilondev_s(3,i,j,ispec) ! b_dux_dzl
+          b_dszx_xz = b_epsilondev_s(4,i,j,ispec) ! 0.5_CUSTOM_REAL * (b_duz_dxl + b_dux_dzl)
+
+          B_k(iglob) = (dsxx + dszz) *  (b_dsxx + b_dszz) * (H_biot - FOUR_THIRDS * mu_fr)
+
+          mufr_k(iglob) = (dsxx * b_dsxx + dszz * b_dszz + &
+                          2._CUSTOM_REAL * dszx_xz * b_dszx_xz - &
+                          1._CUSTOM_REAL/3._CUSTOM_REAL * (dsxx + dszz) * (b_dsxx + b_dszz) ) * mu_fr
+
+          ! from older compute_forces_poro_solid ...
+          !  iglob = ibool(i,j,ispec)
+          !  dsxx =  dux_dxl
+          !  dsxz = HALF * (duz_dxl + dux_dzl)
+          !  dszz =  duz_dzl
+          !
+          !  b_dsxx =  b_dux_dxl
+          !  b_dsxz = HALF * (b_duz_dxl + b_dux_dzl)
+          !  b_dszz =  b_duz_dzl
+          !
+          !  B_k(iglob) = (dux_dxl + duz_dzl) *  (b_dux_dxl + b_duz_dzl) * (H_biot - FOUR_THIRDS * mu_fr)
+          !  mufr_k(iglob) = (dsxx * b_dsxx + dszz * b_dszz + &
+          !                  2._CUSTOM_REAL * dsxz * b_dsxz - &
+          !                  1._CUSTOM_REAL/3._CUSTOM_REAL * (dux_dxl + duz_dzl) * (b_dux_dxl + b_duz_dzl) ) * mu_fr
+
+          ! for C_k & M_k
+          dsxx = epsilondev_w(1,i,j,ispec) ! dux_dxl
+          dszz = epsilondev_w(2,i,j,ispec) ! duz_dzl
+          dwxx = epsilondev_w(3,i,j,ispec) ! dwx_dxl
+          dwzz = epsilondev_w(4,i,j,ispec) ! dwz_dzl
+
+          b_dsxx = b_epsilondev_w(1,i,j,ispec) ! b_dux_dxl
+          b_dszz = b_epsilondev_w(2,i,j,ispec) ! b_duz_dzl
+          b_dwxx = b_epsilondev_w(3,i,j,ispec) ! b_dwx_dxl
+          b_dwzz = b_epsilondev_w(4,i,j,ispec) ! b_dwz_dzl
+
+          C_k(iglob) =  ( (dsxx + dszz)*(b_dwxx + b_dwzz) + (dwxx + dwzz)*(b_dsxx + b_dszz) ) * C_biot
+          M_k(iglob) = (dwxx + dwzz)*(b_dwxx + b_dwzz) * M_biot
+
+          ! from older compute_forces_poro_fluid ...
+          !C_k(iglob) =  ((dux_dxl + duz_dzl) *  (b_dwx_dxl + b_dwz_dzl) + &
+          !                (dwx_dxl + dwz_dzl) *  (b_dux_dxl + b_duz_dzl)) * C_biot
+          !M_k(iglob) = (dwx_dxl + dwz_dzl) *  (b_dwx_dxl + b_dwz_dzl) * M_biot
 
           B_kl(i,j,ispec) = B_kl(i,j,ispec) - deltat * B_k(iglob)
           C_kl(i,j,ispec) = C_kl(i,j,ispec) - deltat * C_k(iglob)

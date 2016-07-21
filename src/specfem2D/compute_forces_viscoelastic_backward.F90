@@ -33,7 +33,7 @@
 
 
   subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                                  e1,e11,e13)
+                                                  e1,e11,e13,iphase)
 
   ! compute forces for the elastic elements
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
@@ -53,7 +53,11 @@
                          AXISYM,is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj, &
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,N_SLS, &
                          deltat,coord, &
-                         stage_time_scheme,i_stage,ispec_is_acoustic
+                         time_stepping_scheme,i_stage,ispec_is_acoustic
+
+  ! overlapping communication
+  use specfem_par, only: nspec_inner_elastic,nspec_outer_elastic,phase_ispec_inner_elastic
+
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
   ! CPML coefficients and memory variables
@@ -64,6 +68,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: b_accel_elastic,b_displ_elastic,b_displ_elastic_old
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS) :: e1,e11,e13
+
+  integer,intent(in) :: iphase
 
   !---
   !--- local variables
@@ -105,12 +111,14 @@
   ! for anisotropy
   double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25
 
-  integer :: ifirstelem,ilastelem
+  integer :: num_elements,ispec_p
 
   ! temp variable RK
   real(kind=CUSTOM_REAL) :: weight_rk
 
   !!!update memory variable in viscoelastic simulation
+  if (iphase == 1) then
+
   if (ATTENUATION_VISCOELASTIC_SOLID) then
 
     ! compute Grad(b_displ_elastic) at time step n for attenuation
@@ -149,8 +157,8 @@
             ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
             ! Anisotropic-Medium PML for Vector FETD With Modified Basis Functions,
             ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
-            if (stage_time_scheme == 1) then
-
+            if (time_stepping_scheme == 1) then
+              ! Newmark
               call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
 
               e1(i,j,ispec,i_sls) = coef0 * e1(i,j,ispec,i_sls) + &
@@ -165,10 +173,10 @@
               e13(i,j,ispec,i_sls) = coef0 * e13(i,j,ispec,i_sls) + &
                                      phinu2 * (coef1 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) + &
                                                coef2 * (dux_dzl_nsub1(i,j,ispec) + duz_dxl_nsub1(i,j,ispec)))
-            endif
 
             ! update e1, e11, e13 in ADE formation with fourth-order LDDRK scheme
-            if (stage_time_scheme == 6) then
+            else if (time_stepping_scheme == 2) then
+              ! LDDRK
               e1_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
                                           deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
               e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + BETA_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
@@ -182,10 +190,10 @@
                                            deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2) - &
                                            deltat * (e13(i,j,ispec,i_sls) * tauinvnu2)
               e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+BETA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
-            endif
 
             ! update e1, e11, e13 in ADE formation with classical fourth-order Runge-Kutta scheme
-            if (stage_time_scheme == 4) then
+            else if (time_stepping_scheme == 3) then
+              ! RK
               e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
 
               if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
@@ -238,6 +246,7 @@
       endif
     enddo
   endif
+  endif ! iphase
 !!!! end of update memory variable in viscoelastic simulation
 
 ! this to avoid a warning at execution time about an undefined variable being used
@@ -250,11 +259,18 @@
   sigma_xy = 0._CUSTOM_REAL
   sigma_zy = 0._CUSTOM_REAL
 
-  ifirstelem = 1
-  ilastelem = nspec
+  ! choses inner/outer elements
+  if (iphase == 1) then
+    num_elements = nspec_outer_elastic
+  else
+    num_elements = nspec_inner_elastic
+  endif
 
   ! loop over spectral elements
-  do ispec = ifirstelem,ilastelem
+  do ispec_p = 1,num_elements
+
+    ! returns element id from stored element list
+    ispec = phase_ispec_inner_elastic(ispec_p,iphase)
 
     tempx1(:,:) = 0._CUSTOM_REAL
     tempz1(:,:) = 0._CUSTOM_REAL

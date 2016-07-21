@@ -59,9 +59,7 @@ __global__ void compute_coupling_acoustic_el_kernel(realw* displ,
                                                     int* coupling_ac_el_ij,
                                                     realw* coupling_ac_el_normal,
                                                     realw* coupling_ac_el_jacobian1Dw,
-                                                    int* d_ibool,
-                                                    int* ispec_is_inner,
-                                                    int phase_is_inner) {
+                                                    int* d_ibool) {
 
   int igll = threadIdx.x;
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
@@ -80,41 +78,38 @@ __global__ void compute_coupling_acoustic_el_kernel(realw* displ,
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = coupling_ac_el_ispec[iface] - 1;
 
-    if (ispec_is_inner[ispec] == phase_is_inner) {
+    i = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
+    j = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
 
-      i = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
-      j = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
+    iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
-      iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
+    // elastic displacement on global point
+    displ_x = displ[iglob*2] ; // (1,iglob)
+    displ_z = displ[iglob*2+1] ; // (2,iglob)
 
-      // elastic displacement on global point
-      displ_x = displ[iglob*2] ; // (1,iglob)
-      displ_z = displ[iglob*2+1] ; // (2,iglob)
+    // gets associated normal on GLL point
+    nx = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,0,igll,iface)]; // (1,igll,iface)
+    nz = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,1,igll,iface)]; // (2,igll,iface)
 
-      // gets associated normal on GLL point
-      nx = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,0,igll,iface)]; // (1,igll,iface)
-      nz = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,1,igll,iface)]; // (2,igll,iface)
+    // calculates displacement component along normal
+    // (normal points outwards of acoustic element)
+    displ_n = displ_x*nx + displ_z*nz;
 
-      // calculates displacement component along normal
-      // (normal points outwards of acoustic element)
-      displ_n = displ_x*nx + displ_z*nz;
+    // gets associated, weighted jacobian
+    jacobianw = coupling_ac_el_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
 
-      // gets associated, weighted jacobian
-      jacobianw = coupling_ac_el_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
+    // continuity of pressure and normal displacement on global point
 
-      // continuity of pressure and normal displacement on global point
+    // note: Newmark time scheme together with definition of scalar potential:
+    //          pressure = - chi_dot_dot
+    //          requires that this coupling term uses the updated displacement at time step [t+delta_t],
+    //          which is done at the very beginning of the time loop
+    //          (see e.g. Chaljub & Vilotte, Nissen-Meyer thesis...)
+    //          it also means you have to calculate and update this here first before
+    //          calculating the coupling on the elastic side for the acceleration...
+    atomicAdd(&potential_dot_dot_acoustic[iglob],+ jacobianw*displ_n);
 
-      // note: Newmark time scheme together with definition of scalar potential:
-      //          pressure = - chi_dot_dot
-      //          requires that this coupling term uses the updated displacement at time step [t+delta_t],
-      //          which is done at the very beginning of the time loop
-      //          (see e.g. Chaljub & Vilotte, Nissen-Meyer thesis...)
-      //          it also means you have to calculate and update this here first before
-      //          calculating the coupling on the elastic side for the acceleration...
-      atomicAdd(&potential_dot_dot_acoustic[iglob],+ jacobianw*displ_n);
-
-    }
-  //  }
+    //  }
   }
 }
 
@@ -123,13 +118,17 @@ __global__ void compute_coupling_acoustic_el_kernel(realw* displ,
 extern "C"
 void FC_FUNC_(compute_coupling_ac_el_cuda,
               COMPUTE_COUPLING_AC_EL_CUDA)(long* Mesh_pointer,
-                                           int* phase_is_innerf,
+                                           int* iphasef,
                                            int* num_coupling_ac_el_facesf) {
   TRACE("compute_coupling_ac_el_cuda");
   //double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
-  int phase_is_inner            = *phase_is_innerf;
+  int iphase            = *iphasef;
+
+  // only adds this contribution for first pass
+  if (iphase != 1) return;
+
   int num_coupling_ac_el_faces  = *num_coupling_ac_el_facesf;
 
   // way 1: exact blocksize to match NGLLSQUARE
@@ -141,8 +140,6 @@ void FC_FUNC_(compute_coupling_ac_el_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-
-
   // launches GPU kernel
   compute_coupling_acoustic_el_kernel<<<grid,threads>>>(mp->d_displ,
                                                        mp->d_potential_dot_dot_acoustic,
@@ -151,9 +148,7 @@ void FC_FUNC_(compute_coupling_ac_el_cuda,
                                                        mp->d_coupling_ac_el_ijk,
                                                        mp->d_coupling_ac_el_normal,
                                                        mp->d_coupling_ac_el_jacobian2Dw,
-                                                       mp->d_ibool,
-                                                       mp->d_ispec_is_inner,
-                                                       phase_is_inner);
+                                                       mp->d_ibool);
 
   //  adjoint simulations
   if (mp->simulation_type == 3) {
@@ -164,10 +159,7 @@ void FC_FUNC_(compute_coupling_ac_el_cuda,
                                                           mp->d_coupling_ac_el_ijk,
                                                           mp->d_coupling_ac_el_normal,
                                                           mp->d_coupling_ac_el_jacobian2Dw,
-                                                          mp->d_ibool,
-                                                          mp->d_ispec_is_inner,
-                                                          phase_is_inner);
-
+                                                          mp->d_ibool);
   }
 
 
@@ -192,9 +184,7 @@ __global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acou
                                                     int* coupling_ac_el_ij,
                                                     realw* coupling_ac_el_normal,
                                                     realw* coupling_ac_el_jacobian1Dw,
-                                                    int* d_ibool,
-                                                    int* ispec_is_inner,
-                                                    int phase_is_inner) {
+                                                    int* d_ibool) {
 
   int igll = threadIdx.x;
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
@@ -214,38 +204,35 @@ __global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acou
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = coupling_ac_el_ispec[iface] - 1;
 
-    if (ispec_is_inner[ispec] == phase_is_inner) {
+    i = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
+    j = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
 
-      i = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,0,igll,iface)] - 1;
-      j = coupling_ac_el_ij[INDEX3(NDIM,NGLLX,1,igll,iface)] - 1;
+    iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
+    // gets associated normal on GLL point
+    // note: normal points away from acoustic element
+    nx = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,0,igll,iface)]; // (1,igll,iface)
+    nz = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,1,igll,iface)]; // (2,igll,iface)
 
-      iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
-
-      // gets associated normal on GLL point
-      // note: normal points away from acoustic element
-      nx = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,0,igll,iface)]; // (1,igll,iface)
-      nz = coupling_ac_el_normal[INDEX3(NDIM,NGLLX,1,igll,iface)]; // (2,igll,iface)
-
-      // gets associated, weighted jacobian
-      jacobianw = coupling_ac_el_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
+    // gets associated, weighted jacobian
+    jacobianw = coupling_ac_el_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
 
 
-        pressure = - potential_dot_dot_acoustic[iglob];
+      pressure = - potential_dot_dot_acoustic[iglob];
 
 
-      // continuity of displacement and pressure on global point
-      //
-      // note: Newmark time scheme together with definition of scalar potential:
-      //          pressure = - chi_dot_dot
-      //          requires that this coupling term uses the *UPDATED* pressure (chi_dot_dot), i.e.
-      //          pressure at time step [t + delta_t]
-      //          (see e.g. Chaljub & Vilotte, Nissen-Meyer thesis...)
-      //          it means you have to calculate and update the acoustic pressure first before
-      //          calculating this term...
-      atomicAdd(&accel[iglob*2],+ jacobianw*nx*pressure);
-      atomicAdd(&accel[iglob*2+1],+ jacobianw*nz*pressure);
-    }
+    // continuity of displacement and pressure on global point
+    //
+    // note: Newmark time scheme together with definition of scalar potential:
+    //          pressure = - chi_dot_dot
+    //          requires that this coupling term uses the *UPDATED* pressure (chi_dot_dot), i.e.
+    //          pressure at time step [t + delta_t]
+    //          (see e.g. Chaljub & Vilotte, Nissen-Meyer thesis...)
+    //          it means you have to calculate and update the acoustic pressure first before
+    //          calculating this term...
+    atomicAdd(&accel[iglob*2],+ jacobianw*nx*pressure);
+    atomicAdd(&accel[iglob*2+1],+ jacobianw*nz*pressure);
+
     //  }
   }
 }
@@ -255,13 +242,17 @@ __global__ void compute_coupling_elastic_ac_kernel(realw* potential_dot_dot_acou
 extern "C"
 void FC_FUNC_(compute_coupling_el_ac_cuda,
               COMPUTE_COUPLING_EL_AC_CUDA)(long* Mesh_pointer,
-                                           int* phase_is_innerf,
+                                           int* iphasef,
                                            int* num_coupling_ac_el_facesf) {
   TRACE("compute_coupling_el_ac_cuda");
   //double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
-  int phase_is_inner            = *phase_is_innerf;
+  int iphase            = *iphasef;
+
+  // only adds this contribution for first pass
+  if (iphase != 1) return;
+
   int num_coupling_ac_el_faces  = *num_coupling_ac_el_facesf;
 
   // way 1: exact blocksize to match NGLLX
@@ -281,9 +272,7 @@ void FC_FUNC_(compute_coupling_el_ac_cuda,
                                                        mp->d_coupling_ac_el_ijk,
                                                        mp->d_coupling_ac_el_normal,
                                                        mp->d_coupling_ac_el_jacobian2Dw,
-                                                       mp->d_ibool,
-                                                       mp->d_ispec_is_inner,
-                                                       phase_is_inner);
+                                                       mp->d_ibool);
 
   //  adjoint simulations
   if (mp->simulation_type == 3) {
@@ -294,10 +283,7 @@ void FC_FUNC_(compute_coupling_el_ac_cuda,
                                                          mp->d_coupling_ac_el_ijk,
                                                          mp->d_coupling_ac_el_normal,
                                                          mp->d_coupling_ac_el_jacobian2Dw,
-                                                         mp->d_ibool,
-                                                         mp->d_ispec_is_inner,
-                                                         phase_is_inner);
-
+                                                         mp->d_ibool);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

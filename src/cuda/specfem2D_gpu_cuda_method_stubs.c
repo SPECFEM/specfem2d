@@ -55,7 +55,7 @@ void FC_FUNC_(transfer_boun_pot_from_device,
 
 void FC_FUNC_(transfer_asmbl_pot_to_device,
               TRANSFER_ASMBL_POT_TO_DEVICE)(long* Mesh_pointer,
-                                            realw* buffer_recv_scalar_ext_mesh,
+                                            realw* buffer_recv_scalar_gpu,
                                             const int* FORWARD_OR_ADJOINT) {}
 
 
@@ -76,12 +76,12 @@ void FC_FUNC_(prepare_boundary_on_device,
 
 void FC_FUNC_(transfer_boundary_to_device_a,
               TRANSFER_BOUNDARY_TO_DEVICE_A)(long* Mesh_pointer,
-                                             realw* buffer_recv_vector_ext_mesh,
+                                             realw* buffer_recv_vector_gpu,
                                              const int* max_nibool_interfaces_ext_mesh) {}
 
 void FC_FUNC_(transfer_asmbl_accel_to_device,
               TRANSFER_ASMBL_ACCEL_TO_DEVICE)(long* Mesh_pointer,
-                                              realw* buffer_recv_vector_ext_mesh,
+                                              realw* buffer_recv_vector_gpu,
                                               const int* max_nibool_interfaces_ext_mesh,
                                               const int* nibool_interfaces_ext_mesh,
                                               const int* ibool_interfaces_ext_mesh,
@@ -150,17 +150,17 @@ void FC_FUNC_(check_error_vectors,
 
 void FC_FUNC_(compute_add_sources_ac_cuda,
               COMPUTE_ADD_SOURCES_AC_CUDA)(long* Mesh_pointer,
-                                           int* phase_is_innerf,
+                                           int* iphasef,
                                            int * itf) {}
 
 void FC_FUNC_(compute_add_sources_ac_s3_cuda,
               COMPUTE_ADD_SOURCES_AC_s3_CUDA)(long* Mesh_pointer,
-                                              int* phase_is_innerf,
+                                              int* iphasef,
                                               int* itf) {}
 
 void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
               ADD_SOURCES_AC_SIM_2_OR_3_CUDA)(long* Mesh_pointer,
-                                               int* phase_is_inner,
+                                               int* iphasef,
                                                int* it,
                                                int* nadj_rec_local,
                                                int* NSTEP) {}
@@ -172,17 +172,17 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
 
 void FC_FUNC_(compute_add_sources_el_cuda,
               COMPUTE_ADD_SOURCES_EL_CUDA)(long* Mesh_pointer,
-                                           int* h_phase_is_inner,
+                                           int* iphasef,
                                            int* itf) {}
 
 void FC_FUNC_(compute_add_sources_el_s3_cuda,
               COMPUTE_ADD_SOURCES_EL_S3_CUDA)(long* Mesh_pointer,
-                                              int* phase_is_innerf,
+                                              int* iphasef,
                                               int* itf) {}
 
 void FC_FUNC_(add_sources_el_sim_type_2_or_3,
               ADD_SOURCES_EL_SIM_TYPE_2_OR_3)(long* Mesh_pointer,
-                                               int* phase_is_inner,
+                                               int* iphasef,
                                                int* it,
                                                int* nadj_rec_local,
                                                int* NSTEP) {}
@@ -194,12 +194,12 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
 
 void FC_FUNC_(compute_coupling_ac_el_cuda,
               COMPUTE_COUPLING_AC_EL_CUDA)(long* Mesh_pointer,
-                                           int* phase_is_innerf,
+                                           int* iphasef,
                                            int* num_coupling_ac_el_facesf) {}
 
 void FC_FUNC_(compute_coupling_el_ac_cuda,
               COMPUTE_COUPLING_EL_AC_CUDA)(long* Mesh_pointer,
-                                           int* phase_is_innerf,
+                                           int* iphasef,
                                            int* num_coupling_ac_el_facesf) {}
 
 
@@ -252,7 +252,7 @@ void FC_FUNC_(compute_kernels_hess_cuda,
 
 void FC_FUNC_(compute_stacey_acoustic_cuda,
               COMPUTE_STACEY_ACOUSTIC_CUDA)(long* Mesh_pointer,
-                                            int* phase_is_innerf,
+                                            int* iphasef,
                                             realw* h_b_absorb_potential_left,
                                             realw* h_b_absorb_potential_right,
                                             realw* h_b_absorb_potential_top,
@@ -265,7 +265,7 @@ void FC_FUNC_(compute_stacey_acoustic_cuda,
 
 void FC_FUNC_(compute_stacey_viscoelastic_cuda,
               COMPUTE_STACEY_VISCOELASTIC_CUDA)(long* Mesh_pointer,
-                                           int* phase_is_innerf,
+                                           int* iphasef,
                                            realw* h_b_absorb_elastic_left,
                                            realw* h_b_absorb_elastic_right,
                                            realw* h_b_absorb_elastic_top,

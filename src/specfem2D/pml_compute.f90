@@ -264,18 +264,20 @@
 
 !=====================================================================
 
-  subroutine rebuild_value_on_PML_interface_acoustic(it)
+  subroutine rebuild_value_on_PML_interface_acoustic(it,b_potential_acoustic,b_potential_dot_acoustic)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 
-  use specfem_par, only: nspec,ispec_is_acoustic,any_acoustic,ibool,nglob_interface,point_interface, &
-                         b_potential_dot_acoustic,b_potential_acoustic
+  use specfem_par, only: nspec,nglob,ispec_is_acoustic,any_acoustic,ibool,nglob_interface,point_interface
+
   ! PML arrays
   use specfem_par,only: ispec_is_PML,pml_interface_history_potential_dot,pml_interface_history_potential
 
   implicit none
 
   integer,intent(in) :: it
+
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(out) :: b_potential_acoustic,b_potential_dot_acoustic
 
   !local variables
   integer :: i,j,ispec
@@ -304,18 +306,20 @@
 
 !=====================================================================
 
-  subroutine rebuild_value_on_PML_interface_acoustic_accel(it)
+  subroutine rebuild_value_on_PML_interface_acoustic_accel(it,b_potential_dot_dot_acoustic)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 
-  use specfem_par, only: any_acoustic,nglob_interface,point_interface, &
-                         b_potential_dot_dot_acoustic
+  use specfem_par, only: any_acoustic,nglob,nglob_interface,point_interface
+
   ! PML arrays
   use specfem_par,only: pml_interface_history_potential_dot_dot
 
   implicit none
 
   integer,intent(in) :: it
+
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(out) :: b_potential_dot_dot_acoustic
 
   !local variables
   integer :: i
@@ -417,7 +421,7 @@
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: potential_dot_dot_acoustic,potential_dot_acoustic, &
-    potential_acoustic,potential_acoustic_old
+                                                            potential_acoustic,potential_acoustic_old
 
   ! local parameters
   integer :: i,j,ispecabs,ispec,iglob,ibegin,iend
