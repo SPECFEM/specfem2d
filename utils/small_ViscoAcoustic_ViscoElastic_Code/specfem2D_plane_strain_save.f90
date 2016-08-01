@@ -375,7 +375,7 @@
       ! draw the displacement vector field in a PostScript file
       call plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,st_xval,st_zval,it,deltat,NGLLX,NGLLZ,NDIM,nrec)
     endif
- 
+
     do iglob = 1,NGLOB
       if (forced(iglob)) then
         if (abs(coord(2,iglob) - 1500.0d0) < 500.0d0) then
@@ -394,7 +394,7 @@
             velocOld(:) = veloc(:,iglob)
             ! big loop over all the global points (not elements) in the mesh to update
             ! the displacement and velocity vectors and clear the acceleration vector
-            veloc(:,iglob) = veloc(:,iglob) + deltatover2*(accelOld(:) + accel(:,iglob)) 
+            veloc(:,iglob) = veloc(:,iglob) + deltatover2*(accelOld(:) + accel(:,iglob))
             displ(:,iglob) = displ(:,iglob) + deltat*velocOld(:) + deltatsqover2*accelOld(:)
           endif
         else
@@ -426,7 +426,7 @@
   ! to the acceleration vector of each element of the finite-element mesh
 
   do ispec = 1,NSPEC
-    
+
     tempx1(:,:) = 0.
     tempz1(:,:) = 0.
     tempx2(:,:) = 0.
@@ -518,7 +518,7 @@
     if (.not. forced(iglob)) then
       accel(2,iglob) = accel(2,iglob) - factor_amplitude * (1.-2.*a*(time-t0)**2) * exp(-a*(time-t0)**2)
     endif
-    
+
     do iglob = 1,NGLOB
       ! big loop over all the global points (not elements) in the mesh to update
       ! the acceleration and velocity vectors.

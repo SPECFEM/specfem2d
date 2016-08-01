@@ -32,32 +32,32 @@
 !========================================================================
 
 subroutine build_forced(xforced,coord,NGLOB,forced,nb_forced)
-  ! This subroutine compute which global point is forced and which is not 
+  ! This subroutine compute which global point is forced and which is not
   ! depending on what we want
 
   implicit none
 
   ! Input variables
-  integer, intent(in) :: NGLOB 
+  integer, intent(in) :: NGLOB
   double precision, intent(in) :: xforced
   double precision, dimension(2,NGLOB), intent(in) :: coord
 
   ! Output variables
   logical, dimension(NGLOB), intent(out) :: forced
-  integer, intent(out) :: nb_forced 
+  integer, intent(out) :: nb_forced
 
   ! Local variables
   integer :: iglob
   double precision :: TINYVAL = 1.0d-30
 
-  nb_forced=0  
+  nb_forced=0
   do iglob = 1,NGLOB
      if (abs(coord(1,iglob) - xforced) < TINYVAL) then
         forced(iglob) = .false.
         nb_forced=nb_forced+1
      endif
   enddo
-   
+
 end subroutine build_forced
 
 ! =======================================================================
@@ -103,7 +103,7 @@ subroutine enforce_elastic_forcing(NGLOB,iglob,it,deltat,deltatover2,deltatsqove
       !print *,"OK"
       displ(1,iglob) = displ(1,iglob) + deltat*velocOld(1) + deltatsqover2*accelOld(1)
       velocOld(2) = veloc(2,iglob)
-      veloc(2,iglob) = veloc(2,iglob) + deltatover2*(accelOld(2) + accel(2,iglob)) 
+      veloc(2,iglob) = veloc(2,iglob) + deltatover2*(accelOld(2) + accel(2,iglob))
       displ(2,iglob) = displ(2,iglob) + deltat*velocOld(2) + deltatsqover2*accelOld(2)
     endif
   !else !nodes clamped
@@ -141,9 +141,9 @@ subroutine enforce_acoustic_forcing(NGLOB,iglob,it,deltat,deltatover2,deltatsqov
   if (it == 1) then ! We initialize the variables
      potential_acoustic(iglob) = factor*(-1.0d0)
      potential_dot_acoustic(iglob) = factor*0.0d0
-     potential_dot_dot_acoustic(iglob) = factor*900.0d0     
-     
-     
+     potential_dot_dot_acoustic(iglob) = factor*900.0d0
+
+
   else ! We set what we want
      potential_dot_dot_acoustic(iglob) = factor*30.0**2*cos(30.0*(it-1)*deltat)
      potential_dot_dot_acousticOld = factor*30.0**2*cos(30.0*(it-2)*deltat)
@@ -152,7 +152,7 @@ subroutine enforce_acoustic_forcing(NGLOB,iglob,it,deltat,deltatover2,deltatsqov
      potential_dot_acoustic(iglob) = potential_dot_acoustic(iglob) + &
           deltatover2*(potential_dot_dot_acousticOld + potential_dot_dot_acoustic(iglob))
      potential_acoustic(iglob) = potential_acoustic(iglob) + &
-          deltat* potential_dot_acousticOld + deltatsqover2*potential_dot_dot_acousticOld       
+          deltat* potential_dot_acousticOld + deltatsqover2*potential_dot_dot_acousticOld
   endif
   !else !nodes clamped
   !  potential_acoustic(iglob) = 0.0d0

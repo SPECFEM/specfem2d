@@ -42,10 +42,10 @@ subroutine prepare_timerun_attenuation(e1,e11,e13,inv_tau_sigma_nu1, &
         do i = 1,NGLLX
            inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
            phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
-           inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:) !0 si acoustique 
-           phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)!0 si acoustique 
+           inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:) !0 si acoustique
+           phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)!0 si acoustique
            Mu_nu1(i,j,ispec) = Mu_nu1_sent
-           Mu_nu2(i,j,ispec) = Mu_nu2_sent !0 si acoustique 
+           Mu_nu2(i,j,ispec) = Mu_nu2_sent !0 si acoustique
         enddo
      enddo
 
@@ -137,14 +137,14 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
            sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
                     sigma_xz = mul_unrelaxed_elastic*(duz_dxl + dux_dzl)
                     sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl + lambdal_unrelaxed_elastic*dux_dx
-                    
+
            ! use the right formula with 1/N included
            ! i.e. use the unrelaxed moduli here (see Carcione's book, third edition, equation (3.189))
            sigma_xx = sigma_xx + lambdalplusmul_unrelaxed_elastic * e1_sum + TWO * mul_unrelaxed_elastic * e11_sum
            sigma_xz = sigma_xz + mul_unrelaxed_elastic * e13_sum
            sigma_zz = sigma_zz + lambdalplusmul_unrelaxed_elastic * e1_sum - TWO * mul_unrelaxed_elastic * e11_sum
            sigma_zx = sigma_xz
-           
+
         enddo
      enddo
   enddo
@@ -180,7 +180,7 @@ subroutine attenuation_model(QKappa_att,QMu_att)
   f_min_attenuation = f0_attenuation / 10.d0
   f_max_attenuation = f0_attenuation * 10.d0
 
-  ! si mileu acoustique cette fonction est apellee q'une seule fois avec QKappa uniquement et nu=nu1 
+  ! si mileu acoustique cette fonction est apellee q'une seule fois avec QKappa uniquement et nu=nu1
 
   call compute_attenuation_coeffs(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
        tau_epsilon_nu1_d,tau_sigma_nu1)
@@ -217,20 +217,20 @@ subroutine attenuation_model(QKappa_att,QMu_att)
   !--- other constants computed from the parameters above, do not modify
   !
 
-  tau_epsilon_nu1(:) = real(tau_epsilon_nu1_d(:),kind=CUSTOM_REAL) 
-  tau_epsilon_nu2(:) = real(tau_epsilon_nu2_d(:),kind=CUSTOM_REAL) !0 en acoustique 
+  tau_epsilon_nu1(:) = real(tau_epsilon_nu1_d(:),kind=CUSTOM_REAL)
+  tau_epsilon_nu2(:) = real(tau_epsilon_nu2_d(:),kind=CUSTOM_REAL) !0 en acoustique
 
   inv_tau_sigma_nu1_sent(:) = real(dble(ONE) / tau_sigma_nu1(:),kind=CUSTOM_REAL)
-  inv_tau_sigma_nu2_sent(:) = real(dble(ONE) / tau_sigma_nu2(:),kind=CUSTOM_REAL) ! 0 en acoustique 
+  inv_tau_sigma_nu2_sent(:) = real(dble(ONE) / tau_sigma_nu2(:),kind=CUSTOM_REAL) ! 0 en acoustique
 
   ! use the right formula with 1/N included
   phi_nu1_sent(:) = real((dble(ONE) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
        / sum(tau_epsilon_nu1_d/tau_sigma_nu1),kind=CUSTOM_REAL)
   phi_nu2_sent(:) = real((dble(ONE) - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
-       / sum(tau_epsilon_nu2_d/tau_sigma_nu2),kind=CUSTOM_REAL) !zero en acoustique 
+       / sum(tau_epsilon_nu2_d/tau_sigma_nu2),kind=CUSTOM_REAL) !zero en acoustique
 
   Mu_nu1_sent = real(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS),kind=CUSTOM_REAL)
-  Mu_nu2_sent = real(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS),kind=CUSTOM_REAL) !zero en acoustique 
+  Mu_nu2_sent = real(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS),kind=CUSTOM_REAL) !zero en acoustique
 
   if (Mu_nu1_sent < 1. .or. Mu_nu2_sent < 1.) &
        stop 'error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one'

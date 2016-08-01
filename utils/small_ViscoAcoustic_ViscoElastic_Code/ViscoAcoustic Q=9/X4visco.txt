@@ -1,500 +1,593 @@
-   0.00000000       0.00000000    
-   1.09999999E-03   9.05869424E-36
-   2.19999999E-03   1.54313194E-11
-   3.29999998E-03   4.69340235E-12
-   4.39999998E-03  -4.28460496E-11
-   5.49999997E-03   2.64147679E-11
-   6.59999996E-03   2.85630658E-10
-   7.69999996E-03   3.53362478E-10
-   8.79999995E-03  -2.56530297E-10
-   9.89999995E-03  -1.15594945E-09
-   1.09999999E-02  -9.52720680E-10
-   1.20999999E-02   1.24870059E-09
-   1.31999999E-02   4.29802816E-09
-   1.42999999E-02   5.53429969E-09
-   1.53999999E-02   2.98101743E-09
-   1.64999999E-02  -3.45428175E-09
-   1.75999999E-02  -1.30245974E-08
-   1.86999999E-02  -2.55910901E-08
-   1.97999999E-02  -4.13162304E-08
-   2.08999999E-02  -5.92038596E-08
-   2.19999999E-02  -7.67995303E-08
-   2.30999999E-02  -9.18180803E-08
-   2.41999999E-02  -1.04247697E-07
-   2.52999999E-02  -1.17379379E-07
-   2.63999999E-02  -1.37265530E-07
-   2.74999999E-02  -1.70467459E-07
-   2.85999998E-02  -2.20585349E-07
-   2.96999998E-02  -2.86072407E-07
-   3.07999998E-02  -3.62423407E-07
-   3.18999998E-02  -4.47923298E-07
-   3.29999998E-02  -5.47203001E-07
-   3.40999998E-02  -6.68238386E-07
-   3.51999998E-02  -8.16244381E-07
-   3.62999998E-02  -9.92363312E-07
-   3.73999998E-02  -1.19919673E-06
-   3.84999998E-02  -1.44615490E-06
-   3.95999998E-02  -1.74755110E-06
-   4.06999998E-02  -2.11577844E-06
-   4.17999998E-02  -2.55799864E-06
-   4.28999998E-02  -3.07968821E-06
-   4.39999998E-02  -3.68990595E-06
-   4.50999998E-02  -4.40274698E-06
-   4.61999997E-02  -5.23578638E-06
-   4.72999997E-02  -6.20914761E-06
-   4.83999997E-02  -7.34532387E-06
-   4.94999997E-02  -8.66777464E-06
-   5.05999997E-02  -1.01995865E-05
-   5.16999997E-02  -1.19656988E-05
-   5.27999997E-02  -1.39971025E-05
-   5.38999997E-02  -1.63308268E-05
-   5.49999997E-02  -1.90042174E-05
-   5.60999997E-02  -2.20506554E-05
-   5.71999997E-02  -2.55036412E-05
-   5.82999997E-02  -2.94041765E-05
-   5.93999997E-02  -3.38006976E-05
-   6.04999997E-02  -3.87411928E-05
-   6.15999997E-02  -4.42681376E-05
-   6.27000034E-02  -5.04237651E-05
-   6.37999997E-02  -5.72574245E-05
-   6.48999959E-02  -6.48227870E-05
-   6.59999996E-02  -7.31670661E-05
-   6.71000034E-02  -8.23252049E-05
-   6.81999996E-02  -9.23260959E-05
-   6.92999959E-02  -1.03200218E-04
-   7.03999996E-02  -1.14978386E-04
-   7.15000033E-02  -1.27681895E-04
-   7.25999996E-02  -1.41316719E-04
-   7.36999959E-02  -1.55875678E-04
-   7.47999996E-02  -1.71340114E-04
-   7.59000033E-02  -1.87676837E-04
-   7.69999996E-02  -2.04835669E-04
-   7.80999959E-02  -2.22750547E-04
-   7.91999996E-02  -2.41339469E-04
-   8.03000033E-02  -2.60498316E-04
-   8.13999996E-02  -2.80091597E-04
-   8.24999958E-02  -2.99954729E-04
-   8.35999995E-02  -3.19906627E-04
-   8.47000033E-02  -3.39754653E-04
-   8.57999995E-02  -3.59285594E-04
-   8.68999958E-02  -3.78248369E-04
-   8.79999995E-02  -3.96357675E-04
-   8.91000032E-02  -4.13312722E-04
-   9.01999995E-02  -4.28807834E-04
-   9.12999958E-02  -4.42526245E-04
-   9.23999995E-02  -4.54128720E-04
-   9.35000032E-02  -4.63262520E-04
-   9.45999995E-02  -4.69569495E-04
-   9.56999958E-02  -4.72699176E-04
-   9.67999995E-02  -4.72311192E-04
-   9.79000032E-02  -4.68074315E-04
-   9.89999995E-02  -4.59676230E-04
-  0.100099996      -4.46834514E-04
-  0.101199999      -4.29301668E-04
-  0.102300003      -4.06864128E-04
-  0.103399999      -3.79350153E-04
-  0.104499996      -3.46645509E-04
-  0.105599999      -3.08703835E-04
-  0.106700003      -2.65539886E-04
-  0.107799999      -2.17228153E-04
-  0.108899996      -1.63916455E-04
-  0.109999999      -1.05833577E-04
-  0.111100003      -4.32908419E-05
-  0.112199999       2.33247374E-05
-  0.113299996       9.35594217E-05
-  0.114399999       1.66888320E-04
-  0.115500003       2.42711394E-04
-  0.116599999       3.20351450E-04
-  0.117699996       3.99087614E-04
-  0.118799999       4.78152535E-04
-  0.119900003       5.56740968E-04
-  0.120999999       6.34013792E-04
-  0.122099996       7.09114538E-04
-  0.123199999       7.81179871E-04
-  0.124300003       8.49360891E-04
-  0.125400007       9.12830059E-04
-  0.126499996       9.70795401E-04
-  0.127599999       1.02251209E-03
-  0.128700003       1.06729753E-03
-  0.129799992       1.10454252E-03
-  0.130899996       1.13371934E-03
-  0.131999999       1.15439110E-03
-  0.133100003       1.16622390E-03
-  0.134200007       1.16900320E-03
-  0.135299996       1.16261991E-03
-  0.136399999       1.14707532E-03
-  0.137500003       1.12248713E-03
-  0.138599992       1.08908967E-03
-  0.139699996       1.04723661E-03
-  0.140799999       9.97390482E-04
-  0.141900003       9.40099650E-04
-  0.143000007       8.76002421E-04
-  0.144099995       8.05827614E-04
-  0.145199999       7.30371743E-04
-  0.146300003       6.50483242E-04
-  0.147399992       5.67053910E-04
-  0.148499995       4.80998977E-04
-  0.149599999       3.93254857E-04
-  0.150700003       3.04762740E-04
-  0.151800007       2.16445085E-04
-  0.152899995       1.29182052E-04
-  0.153999999       4.38232128E-05
-  0.155100003      -3.88164553E-05
-  0.156199992      -1.17999050E-04
-  0.157299995      -1.93062398E-04
-  0.158399999      -2.63414491E-04
-  0.159500003      -3.28539638E-04
-  0.160600007      -3.88017244E-04
-  0.161699995      -4.41517303E-04
-  0.162799999      -4.88811464E-04
-  0.163900003      -5.29739773E-04
-  0.164999992      -5.64224785E-04
-  0.166099995      -5.92285243E-04
-  0.167199999      -6.14031509E-04
-  0.168300003      -6.29642222E-04
-  0.169400007      -6.39341713E-04
-  0.170499995      -6.43411709E-04
-  0.171599999      -6.42196275E-04
-  0.172700003      -6.36088545E-04
-  0.173799992      -6.25511922E-04
-  0.174899995      -6.10900519E-04
-  0.175999999      -5.92705212E-04
-  0.177100003      -5.71396202E-04
-  0.178200006      -5.47448231E-04
-  0.179299995      -5.21320966E-04
-  0.180399999      -4.93456260E-04
-  0.181500003      -4.64285666E-04
-  0.182599992      -4.34229325E-04
-  0.183699995      -4.03674087E-04
-  0.184799999      -3.72964219E-04
-  0.185900003      -3.42409272E-04
-  0.187000006      -3.12299031E-04
-  0.188099995      -2.82903115E-04
-  0.189199999      -2.54446815E-04
-  0.190300003      -2.27107099E-04
-  0.191399992      -2.01026778E-04
-  0.192499995      -1.76325600E-04
-  0.193599999      -1.53103232E-04
-  0.194700003      -1.31424706E-04
-  0.195800006      -1.11321446E-04
-  0.196899995      -9.28007139E-05
-  0.197999999      -7.58567185E-05
-  0.199100003      -6.04699926E-05
-  0.200199991      -4.65973826E-05
-  0.201299995      -3.41763916E-05
-  0.202399999      -2.31411141E-05
-  0.203500003      -1.34269894E-05
-  0.204600006      -4.95911490E-06
-  0.205699995       2.35318043E-06
-  0.206799999       8.60716045E-06
-  0.207900003       1.38897203E-05
-  0.208999991       1.82776239E-05
-  0.210099995       2.18511177E-05
-  0.211199999       2.46999007E-05
-  0.212300003       2.69117263E-05
-  0.213400006       2.85593615E-05
-  0.214499995       2.97049355E-05
-  0.215599999       3.04125770E-05
-  0.216700003       3.07497503E-05
-  0.217799991       3.07777700E-05
-  0.218899995       3.05435933E-05
-  0.219999999       3.00864158E-05
-  0.221100003       2.94480251E-05
-  0.222200006       2.86722025E-05
-  0.223299995       2.77925665E-05
-  0.224399999       2.68302938E-05
-  0.225500003       2.58040764E-05
-  0.226599991       2.47384796E-05
-  0.227699995       2.36582291E-05
-  0.228799999       2.25770509E-05
-  0.229900002       2.14989723E-05
-  0.231000006       2.04309581E-05
-  0.232099995       1.93875148E-05
-  0.233199999       1.83813354E-05
-  0.234300002       1.74134966E-05
-  0.235399991       1.64781959E-05
-  0.236499995       1.55761900E-05
-  0.237599999       1.47160463E-05
-  0.238700002       1.39037711E-05
-  0.239800006       1.31357519E-05
-  0.240899995       1.24044982E-05
-  0.241999999       1.17097889E-05
-  0.243100002       1.10566943E-05
-  0.244199991       1.04459377E-05
-  0.245299995       9.87020940E-06
-  0.246399999       9.32306011E-06
-  0.247500002       8.80699190E-06
-  0.248600006       8.32725891E-06
-  0.249699995       7.88137368E-06
-  0.250800014       7.46001751E-06
-  0.251899987       7.05785715E-06
-  0.252999991       6.67913901E-06
-  0.254099995       6.32935235E-06
-  0.255199999       6.00517888E-06
-  0.256300002       5.69792519E-06
-  0.257400006       5.40432620E-06
-  0.258500010       5.12887982E-06
-  0.259599984       4.87420493E-06
-  0.260699987       4.63519336E-06
-  0.261799991       4.40584836E-06
-  0.262899995       4.18781701E-06
-  0.263999999       3.98674547E-06
-  0.265100002       3.80149731E-06
-  0.266200006       3.62399555E-06
-  0.267300010       3.44956857E-06
-  0.268400013       3.28404894E-06
-  0.269499987       3.13461351E-06
-  0.270599991       2.99880321E-06
-  0.271699995       2.86669479E-06
-  0.272799999       2.73422961E-06
-  0.273900002       2.60731554E-06
-  0.275000006       2.49264053E-06
-  0.276100010       2.38800612E-06
-  0.277199984       2.28612726E-06
-  0.278299987       2.18520631E-06
-  0.279399991       2.09035807E-06
-  0.280499995       2.00428576E-06
-  0.281599998       1.92268021E-06
-  0.282700002       1.84123166E-06
-  0.283800006       1.76236142E-06
-  0.284900010       1.69129783E-06
-  0.286000013       1.62677463E-06
-  0.287099987       1.56235706E-06
-  0.288199991       1.49615141E-06
-  0.289299995       1.43433022E-06
-  0.290399998       1.38197220E-06
-  0.291500002       1.33479080E-06
-  0.292600006       1.28450188E-06
-  0.293700010       1.23058351E-06
-  0.294799984       1.18112473E-06
-  0.295899987       1.14105762E-06
-  0.296999991       1.10484325E-06
-  0.298099995       1.06460834E-06
-  0.299199998       1.02123886E-06
-  0.300300002       9.82272354E-07
-  0.301400006       9.50909055E-07
-  0.302500010       9.21802382E-07
-  0.303600013       8.89243722E-07
-  0.304699987       8.55352539E-07
-  0.305799991       8.25701363E-07
-  0.306899995       8.00488294E-07
-  0.307999998       7.74803482E-07
-  0.309100002       7.46831347E-07
-  0.310200006       7.20722767E-07
-  0.311300009       6.99359191E-07
-  0.312399983       6.79020843E-07
-  0.313499987       6.55022006E-07
-  0.314599991       6.29465944E-07
-  0.315699995       6.08853270E-07
-  0.316799998       5.94310904E-07
-  0.317900002       5.79159916E-07
-  0.319000006       5.58404111E-07
-  0.320100009       5.36190157E-07
-  0.321200013       5.20029857E-07
-  0.322299987       5.09746826E-07
-  0.323399991       4.97613087E-07
-  0.324499995       4.79378798E-07
-  0.325599998       4.60203609E-07
-  0.326700002       4.47115866E-07
-  0.327800006       4.39166627E-07
-  0.328900009       4.29422926E-07
-  0.329999983       4.15119615E-07
-  0.331099987       4.00683433E-07
-  0.332199991       3.90324089E-07
-  0.333299994       3.82071420E-07
-  0.334399998       3.71780260E-07
-  0.335500002       3.59985961E-07
-  0.336600006       3.50515506E-07
-  0.337700009       3.43611390E-07
-  0.338800013       3.35207432E-07
-  0.339899987       3.23721110E-07
-  0.340999991       3.13343264E-07
-  0.342099994       3.07831158E-07
-  0.343199998       3.04071392E-07
-  0.344300002       2.95904073E-07
-  0.345400006       2.83178707E-07
-  0.346500009       2.72650112E-07
-  0.347599983       2.68770776E-07
-  0.348699987       2.67307939E-07
-  0.349799991       2.61309367E-07
-  0.350899994       2.50634287E-07
-  0.351999998       2.41597007E-07
-  0.353100002       2.37756566E-07
-  0.354200006       2.35374927E-07
-  0.355300009       2.29544582E-07
-  0.356400013       2.21163333E-07
-  0.357499987       2.14818570E-07
-  0.358599991       2.11694271E-07
-  0.359699994       2.08421795E-07
-  0.360799998       2.02838777E-07
-  0.361900002       1.97151110E-07
-  0.363000005       1.93835859E-07
-  0.364100009       1.91316502E-07
-  0.365199983       1.86495043E-07
-  0.366299987       1.80123450E-07
-  0.367399991       1.75971508E-07
-  0.368499994       1.74856950E-07
-  0.369599998       1.72898140E-07
-  0.370700002       1.67256687E-07
-  0.371800005       1.60712887E-07
-  0.372900009       1.57921178E-07
-  0.374000013       1.58433380E-07
-  0.375099987       1.57036837E-07
-  0.376199991       1.51057776E-07
-  0.377299994       1.44264320E-07
-  0.378399998       1.41585019E-07
-  0.379500002       1.42307385E-07
-  0.380600005       1.41407227E-07
-  0.381700009       1.36591041E-07
-  0.382799983       1.30995119E-07
-  0.383899987       1.28228564E-07
-  0.384999990       1.27637549E-07
-  0.386099994       1.26131425E-07
-  0.387199998       1.22921250E-07
-  0.388300002       1.19824421E-07
-  0.389400005       1.17721342E-07
-  0.390500009       1.15342125E-07
-  0.391600013       1.12080045E-07
-  0.392699987       1.09621105E-07
-  0.393799990       1.09264491E-07
-  0.394899994       1.09119476E-07
-  0.395999998       1.06346462E-07
-  0.397100002       1.01582145E-07
-  0.398200005       9.86423458E-08
-  0.399300009       9.93624596E-08
-  0.400399983       1.00692105E-07
-  0.401499987       9.86700073E-08
-  0.402599990       9.37237132E-08
-  0.403699994       9.00463917E-08
-  0.404799998       9.00053010E-08
-  0.405900002       9.13168918E-08
-  0.407000005       9.05117474E-08
-  0.408100009       8.73499815E-08
-  0.409200013       8.43574739E-08
-  0.410299987       8.30350828E-08
-  0.411399990       8.24009945E-08
-  0.412499994       8.12707626E-08
-  0.413599998       7.99243907E-08
-  0.414700001       7.89032342E-08
-  0.415800005       7.75439446E-08
-  0.416900009       7.51358513E-08
-  0.417999983       7.26852960E-08
-  0.419099987       7.19462960E-08
-  0.420199990       7.26958191E-08
-  0.421299994       7.25325364E-08
-  0.422399998       6.99862923E-08
-  0.423500001       6.66882940E-08
-  0.424600005       6.53049952E-08
-  0.425700009       6.60436115E-08
-  0.426800013       6.65155468E-08
-  0.427899987       6.50035261E-08
-  0.428999990       6.25000638E-08
-  0.430099994       6.09634299E-08
-  0.431199998       6.06696062E-08
-  0.432300001       6.03206232E-08
-  0.433400005       5.92601523E-08
-  0.434500009       5.81931516E-08
-  0.435599983       5.76644545E-08
-  0.436699986       5.70652823E-08
-  0.437799990       5.57279165E-08
-  0.438899994       5.42631113E-08
-  0.439999998       5.37573399E-08
-  0.441100001       5.40529719E-08
-  0.442200005       5.38055431E-08
-  0.443300009       5.23235357E-08
-  0.444400012       5.05313622E-08
-  0.445499986       4.96656654E-08
-  0.446599990       4.95998691E-08
-  0.447699994       4.92709944E-08
-  0.448799998       4.82771121E-08
-  0.449900001       4.72746571E-08
-  0.451000005       4.67389292E-08
-  0.452100009       4.62351437E-08
-  0.453199983       4.52691218E-08
-  0.454299986       4.42418440E-08
-  0.455399990       4.38733245E-08
-  0.456499994       4.39707684E-08
-  0.457599998       4.35487735E-08
-  0.458700001       4.22427533E-08
-  0.459800005       4.08964986E-08
-  0.460900009       4.04239060E-08
-  0.462000012       4.05802894E-08
-  0.463099986       4.03727789E-08
-  0.464199990       3.94240693E-08
-  0.465299994       3.83646679E-08
-  0.466399997       3.77887517E-08
-  0.467500001       3.74827742E-08
-  0.468600005       3.69890714E-08
-  0.469700009       3.64411115E-08
-  0.470799983       3.62662469E-08
-  0.471899986       3.63490713E-08
-  0.472999990       3.60080286E-08
-  0.474099994       3.49986493E-08
-  0.475199997       3.39319008E-08
-  0.476300001       3.35218360E-08
-  0.477400005       3.36423085E-08
-  0.478500009       3.35482504E-08
-  0.479600012       3.29091989E-08
-  0.480699986       3.21090816E-08
-  0.481799990       3.15873585E-08
-  0.482899994       3.12817399E-08
-  0.483999997       3.09718047E-08
-  0.485100001       3.07276196E-08
-  0.486200005       3.06828696E-08
-  0.487300009       3.05040153E-08
-  0.488399982       2.97135347E-08
-  0.489499986       2.84918791E-08
-  0.490599990       2.77240346E-08
-  0.491699994       2.79515397E-08
-  0.492799997       2.85455002E-08
-  0.493900001       2.83880865E-08
-  0.495000005       2.72461538E-08
-  0.496100008       2.60731454E-08
-  0.497200012       2.58007997E-08
-  0.498299986       2.62229385E-08
-  0.499399990       2.63936553E-08
-  0.500500023       2.58418940E-08
-  0.501600027       2.50015653E-08
-  0.502699971       2.44771563E-08
-  0.503799975       2.43529374E-08
-  0.504899979       2.42995366E-08
-  0.505999982       2.41241320E-08
-  0.507099986       2.38585756E-08
-  0.508199990       2.35065549E-08
-  0.509299994       2.30300881E-08
-  0.510399997       2.25997123E-08
-  0.511500001       2.24847732E-08
-  0.512600005       2.26198633E-08
-  0.513700008       2.25090151E-08
-  0.514800012       2.19020286E-08
-  0.515900016       2.12860396E-08
-  0.517000020       2.13219238E-08
-  0.518100023       2.18479013E-08
-  0.519199967       2.18559357E-08
-  0.520299971       2.07695123E-08
-  0.521399975       1.93465457E-08
-  0.522499979       1.89488034E-08
-  0.523599982       1.98722780E-08
-  0.524699986       2.08860946E-08
-  0.525799990       2.06191793E-08
-  0.526899993       1.91395095E-08
-  0.527999997       1.78160118E-08
-  0.529100001       1.77477322E-08
-  0.530200005       1.86355269E-08
-  0.531300008       1.92846024E-08
-  0.532400012       1.88982483E-08
-  0.533500016       1.77090183E-08
-  0.534600019       1.65451404E-08
-  0.535700023       1.61340310E-08
-  0.536800027       1.66639857E-08
-  0.537899971       1.76141235E-08
-  0.538999975       1.80135391E-08
-  0.540099978       1.72041545E-08
-  0.541199982       1.56421880E-08
-  0.542299986       1.47234926E-08
-  0.543399990       1.53804045E-08
-  0.544499993       1.69048135E-08
-  0.545599997       1.75375163E-08
-  0.546700001       1.64304605E-08
-  0.547800004       1.46697019E-08
-  0.548900008       1.40275072E-08
+!========================================================================
+!
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
+
+  program serial_specfem2D
+
+  implicit none
+
+!!!!!!!!!!
+!!!!!!!!!! NGLLX and NGLLZ are set equal to 5,
+!!!!!!!!!! therefore each element contains NGLLX * NGLLZ = 25 points.
+!!!!!!!!!!
+
+!!!!!!!!!!
+!!!!!!!!!! All the calculations are done in single precision.
+!!!!!!!!!! We do not need double precision in SPECFEM2D.
+!!!!!!!!!!
+
+! density, P wave velocity and S wave velocity of the geophysical medium under study
+  real(kind=4), parameter :: rho = 2700.
+  real(kind=4), parameter :: cp = 3000.
+  real(kind=4), parameter :: cs = cp / 1.732
+
+! to create the mesh
+! geometry of the model (origin lower-left corner = 0,0) and mesh description
+  double precision, parameter :: xmin = 0.d0           ! abscissa of left side of the model
+  double precision, parameter :: xmax = 4000.d0        ! abscissa of right side of the model
+  double precision, parameter :: zmin = 0.d0           ! abscissa of bottom side of the model
+  double precision, parameter :: zmax = 3000.d0        ! abscissa of top side of the model
+  integer, parameter :: nx = 80             ! number of spectral elements along X
+  integer, parameter :: nz = 60             ! number of spectral elements along Z
+
+! number of GLL integration points in each direction of an element (degree plus one)
+  integer, parameter :: NGLLX = 5
+  integer, parameter :: NGLLZ = NGLLX
+
+! use 4-node elements to describe the geometry of the mesh
+  integer, parameter :: ngnod = 4
+
+! number of spectral elements and of unique grid points of the mesh
+  integer, parameter :: NSPEC = nx * nz
+  integer, parameter :: NGLOB = (nx*(NGLLX-1) + 1) * (nz*(NGLLZ-1) + 1)
+
+! constant value of the time step in the main time loop, and total number of time steps to simulate
+  real, parameter :: deltat = 1.1d-3
+  integer, parameter :: NSTEP = 1600
+
+! we locate the source and the receiver in arbitrary elements here for this demo code
+  integer, parameter :: NSPEC_SOURCE = NSPEC/2 - nx/2, IGLL_SOURCE = 2, JGLL_SOURCE = 2
+  integer, parameter :: NSPEC_RECEIVER = 2721, IGLL_RECEIVER = 1, JGLL_RECEIVER = 1
+
+! for the source time function
+  real, parameter :: f0 = 10.
+  real, parameter :: t0 = 1.2 / f0
+  real, parameter :: factor_amplitude = 0.0d0 !1.e+10
+  real, parameter :: pi = 3.141592653589793
+  real, parameter :: a = pi*pi*f0*f0
+
+  integer, parameter :: NTSTEP_BETWEEN_OUTPUT_INFO = 100
+
+  integer, parameter :: IIN = 40
+
+! 2-D simulation
+  integer, parameter :: NDIM = 2
+
+  real(kind=4), parameter :: deltatover2 = 0.5*deltat, deltatsqover2 = 0.5*deltat*deltat
+
+! real(kind=4), parameter :: VERYSMALLVAL = 1.e-24
+
+! displacement threshold above which we consider that the code became unstable
+  real(kind=4), parameter :: STABILITY_THRESHOLD = 1.e+25
+
+! global displacement, velocity and acceleration vectors
+  real(kind=4), dimension(NDIM,NGLOB) :: displ,veloc,accel
+
+! global diagonal mass matrix
+  real(kind=4), dimension(NGLOB) :: rmass_inverse
+
+! time step
+  integer it
+
+! arrays with mesh parameters per slice
+  integer, dimension(NGLLX,NGLLZ,NSPEC) :: ibool
+  real(kind=4), dimension(NGLLX,NGLLZ,NSPEC) :: xix,xiz,gammax,gammaz,jacobian
+
+! arrays with the mesh in double precision
+  double precision, dimension(NDIM,NGLOB) :: coord
+
+  double precision :: x_source,z_source
+  double precision :: x_receiver,z_receiver
+
+! array with derivatives of Lagrange polynomials and precalculated products
+  double precision, dimension(NGLLX) :: xigll,wxgll
+  double precision, dimension(NGLLZ) :: zigll,wzgll
+  double precision, dimension(NGLLX,NGLLX) :: hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz
+
+  real(kind=4), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempz1,tempz2
+
+  integer :: ispec,iglob,i,j,k,ix,iz,ipoin
+  integer :: nglob_to_compute
+
+  double precision :: xi,gamma,x,z
+  double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
+
+  real(kind=4) dux_dxi,duz_dxi,dux_dgamma,duz_dgamma
+  real(kind=4) dux_dxl,dux_dzl,duz_dxl,duz_dzl
+
+  real(kind=4) sigma_xx,sigma_zz,sigma_xz,sigma_zx
+  real(kind=4) lambda,mu,lambdaplus2mu
+
+  real(kind=4) Usolidnorm,current_value,time
+
+! parameters and arrays needed for the simple mesh creation routine
+  integer, parameter :: npgeo = (nx+1)*(nz+1) ! total number of geometrical points that describe the geometry
+  integer, dimension(ngnod,NSPEC) :: knods ! numbering of the four corners of each mesh element
+  double precision, dimension(0:nx,0:nz) :: xgrid,zgrid ! coordinates of all the corners of the mesh elements in a first format
+  double precision, dimension(NDIM,npgeo) :: coorg ! coordinates of all the corners of the mesh elements in another format
+  integer, external :: num ! function that numbers the mesh points with a unique number
+
+! timer to count elapsed time
+  character(len=8) datein
+  character(len=10) timein
+  character(len=5)  :: zone
+  integer, dimension(8) :: time_values
+  integer ihours,iminutes,iseconds,int_tCPU
+  double precision :: time_start,time_end,tCPU
+
+! variables for locate receivers
+  integer :: nrec = 7
+  integer :: irec
+  double precision :: hlagrange,dx,dz
+  integer,dimension(:), allocatable :: ispec_selected_rec
+  double precision, dimension(:), allocatable :: xi_receiver,gamma_receiver
+  double precision, dimension(:), allocatable :: st_xval,st_zval
+  double precision, dimension(:), allocatable  :: x_final_receiver, z_final_receiver
+  ! record a seismogram to check that the simulation went well
+  real(kind=4), dimension(:,:), allocatable :: seismogramX,seismogramZ
+  character(len=100),dimension(:), allocatable :: seisNameX,seisNameZ
+  ! Lagrange interpolators at receivers
+  double precision, dimension(:), allocatable :: hxir,hgammar,hpxir,hpgammar
+  double precision, dimension(:,:), allocatable :: hxir_store,hgammar_store
+
+! Variables for forcing
+  logical, dimension(:), allocatable :: forced
+  double precision :: xforced = 0.0d0
+  double precision, dimension(2) :: accelOld,velocOld
+  double precision :: TINYVAL = 1.0d-30
+
+  ! allocate Lagrange interpolators for receivers
+  allocate(ispec_selected_rec(nrec),xi_receiver(nrec),gamma_receiver(nrec),st_xval(nrec),st_zval(nrec))
+  allocate(x_final_receiver(nrec),z_final_receiver(nrec),seisNameX(nrec),seisNameZ(nrec))
+  allocate(hxir_store(nrec,NGLLX),hgammar_store(nrec,NGLLZ),seismogramX(NSTEP,nrec),seismogramZ(NSTEP,nrec))
+  allocate(hxir(NGLLX),hgammar(NGLLZ))
+  allocate(hpxir(NGLLX),hpgammar(NGLLZ))
+  allocate(forced(NGLOB))
+  forced(:) = .false.
+
+  seisNameX(1) = "X1.txt"
+  seisNameX(2) = "X2.txt"
+  seisNameX(3) = "X3.txt"
+  seisNameX(4) = "X4.txt"
+  seisNameX(5) = "X5.txt"
+  seisNameX(6) = "X6.txt"
+  seisNameX(7) = "X7.txt"
+  seisNameZ(1) = "Z1.txt"
+  seisNameZ(2) = "Z2.txt"
+  seisNameZ(3) = "Z3.txt"
+  seisNameZ(4) = "Z4.txt"
+  seisNameZ(5) = "Z5.txt"
+  seisNameZ(6) = "Z6.txt"
+  seisNameZ(7) = "Z7.txt"
+
+  print *
+  print *,'NSPEC = ',NSPEC
+  print *,'NGLOB = ',NGLOB
+  print *
+
+  print *,'NSTEP = ',NSTEP
+  print *,'deltat = ',deltat
+  print *
+
+! set up Gauss-Lobatto-Legendre points, weights and also derivation matrices
+  call define_derivation_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz,NGLLX,NGLLZ)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!--- definition of the mesh
+  do iz = 0,nz
+    do ix = 0,nx
+        ! coordinates of the grid points (evenly spaced points along X and Z)
+        xgrid(ix,iz) = xmin + (xmax - xmin) * dble(ix) / dble(nx)
+        zgrid(ix,iz) = zmin + (zmax - zmin) * dble(iz) / dble(nz)
+     enddo
+  enddo
+
+! create the coorg array
+  do j = 0,nz
+    do i = 0,nx
+      ipoin = num(i,j,nx)
+      coorg(1,ipoin) = xgrid(i,j)
+      coorg(2,ipoin) = zgrid(i,j)
+    enddo
+  enddo
+
+! create the knods array
+  k = 0
+  do j=0,nz-1
+    do i=0,nx-1
+      k = k + 1
+      knods(1,k) = num(i,j,nx)
+      knods(2,k) = num(i+1,j,nx)
+      knods(3,k) = num(i+1,j+1,nx)
+      knods(4,k) = num(i,j+1,nx)
+    enddo
+  enddo
+
+!
+!---- generate the global numbering
+!
+
+  call createnum_slow(knods,ibool,nglob_to_compute,nspec,NGLLX,NGLLZ,ngnod) ! Create ibool and recompute nglob for checking
+  if(nglob_to_compute /= NGLOB) stop 'error: incorrect total number of unique grid points found'
+  if(minval(ibool) /= 1) stop 'error: incorrect minimum value of ibool'
+  if(maxval(ibool) /= NGLOB) stop 'error: incorrect maximum value of ibool'
+
+!
+!----  set the coordinates of the points of the global grid
+!
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        xi = xigll(i)
+        gamma = zigll(j)
+
+        call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
+                        jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo,NDIM)
+        if(jacobianl <= 0.d0) stop 'error: negative Jacobian found'
+
+        coord(1,ibool(i,j,ispec)) = x
+        coord(2,ibool(i,j,ispec)) = z
+
+        xix(i,j,ispec) = xixl
+        xiz(i,j,ispec) = xizl
+        gammax(i,j,ispec) = gammaxl
+        gammaz(i,j,ispec) = gammazl
+        jacobian(i,j,ispec) = jacobianl
+
+      enddo
+    enddo
+  enddo
+
+
+  do iglob = 1,NGLOB
+    if (abs(coord(1,iglob) - xforced) < TINYVAL) then
+      forced(iglob) = .true.
+    endif
+  enddo
+
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! build the mass matrix
+  rmass_inverse(:) = 0.
+  do ispec = 1,NSPEC
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        iglob = ibool(i,j,ispec)
+        rmass_inverse(iglob) = rmass_inverse(iglob) + wxgll(i)*wzgll(j)*rho*jacobian(i,j,ispec)
+      enddo
+    enddo
+  enddo
+
+! we have built the real exactly diagonal mass matrix (not its inverse)
+! therefore invert it here once and for all
+  do i = 1,NGLOB
+    rmass_inverse(i) = 1. / rmass_inverse(i)
+  enddo
+
+! compute the position of the source and of the receiver
+  x_source = coord(1,ibool(IGLL_SOURCE,JGLL_SOURCE,NSPEC_SOURCE))
+  z_source = coord(2,ibool(IGLL_SOURCE,JGLL_SOURCE,NSPEC_SOURCE))
+  x_receiver = coord(1,ibool(IGLL_RECEIVER,JGLL_RECEIVER,NSPEC_RECEIVER))
+  z_receiver = coord(2,ibool(IGLL_RECEIVER,JGLL_RECEIVER,NSPEC_RECEIVER))
+
+  call locate_receivers(ibool,coord,nspec,NGLOB,xigll,zigll, &
+                              nrec,st_xval,st_zval,ispec_selected_rec, &
+                              xi_receiver,gamma_receiver,x_source,z_source, &
+                              coorg,knods,ngnod,npgeo, &
+                              x_final_receiver, z_final_receiver,NDIM,NGLLX,NGLLZ)
+
+! clear initial vectors before starting the time loop
+  displ(:,:) = 0. !!!!!!!!!! VERYSMALLVAL
+  veloc(:,:) = 0.
+  accel(:,:) = 0.
+
+! count elapsed wall-clock time
+  call date_and_time(datein,timein,zone,time_values)
+! time_values(3): day of the month
+! time_values(5): hour of the day
+! time_values(6): minutes of the hour
+! time_values(7): seconds of the minute
+! time_values(8): milliseconds of the second
+! this fails if we cross the end of the month
+  time_start = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
+               60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
+
+! start of the time loop (which must remain serial obviously)
+  do it = 1,NSTEP
+
+! compute maximum of norm of displacement from time to time and display it
+! in order to monitor the simulation
+    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 2 .or. it == NSTEP) then
+      Usolidnorm = -1.
+      do iglob = 1,NGLOB
+        current_value = sqrt(displ(1,iglob)**2 + displ(2,iglob)**2)
+        if(current_value > Usolidnorm) Usolidnorm = current_value
+      enddo
+      write(*,*) 'Time step # ',it,' out of ',NSTEP
+! compute current time
+      time = (it-1)*deltat
+      write(*,*) 'Max norm displacement vector U in the solid (m) = ',Usolidnorm
+! check stability of the code, exit if unstable
+      if(Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) stop 'code became unstable and blew up'
+      ! count elapsed wall-clock time
+        call date_and_time(datein,timein,zone,time_values)
+      ! time_values(3): day of the month
+      ! time_values(5): hour of the day
+      ! time_values(6): minutes of the hour
+      ! time_values(7): seconds of the minute
+      ! time_values(8): milliseconds of the second
+      ! this fails if we cross the end of the month
+        time_end = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
+                   60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
+
+      ! elapsed time since beginning of the simulation
+      tCPU = time_end - time_start
+      int_tCPU = int(tCPU)
+      ihours = int_tCPU / 3600
+      iminutes = (int_tCPU - 3600*ihours) / 60
+      iseconds = int_tCPU - 3600*ihours - 60*iminutes
+      write(*,*) 'Elapsed time in seconds = ',tCPU
+      write(*,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+      write(*,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+      write(*,*)
+
+      ! draw the displacement vector field in a PostScript file
+      call plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,st_xval,st_zval,it,deltat,NGLLX,NGLLZ,NDIM,nrec)
+    endif
+
+    do iglob = 1,NGLOB
+      if (forced(iglob)) then
+        if (abs(coord(2,iglob) - 1500.0d0) < 500.0d0) then
+          if (it == 1) then
+            displ(1,iglob) = (coord(2,iglob) - 1500.0d0)**2*(-1.0d0)
+            displ(2,iglob) = (coord(2,iglob) - 1500.0d0)**2*0.0d0
+            veloc(1,iglob) = (coord(2,iglob) - 1500.0d0)**2*0.0d0
+            veloc(2,iglob) = (coord(2,iglob) - 1500.0d0)**2*0.0d0
+            accel(1,iglob) = (coord(2,iglob) - 1500.0d0)**2*900.0d0
+            accel(2,iglob) = (coord(2,iglob) - 1500.0d0)**2*0.0d0
+          else
+            accel(1,iglob) = (coord(2,iglob) - 1500.0d0)**2*30.0**2*cos(30.0*(it-1)*deltat) !0.0d0
+            accelOld(1) = (coord(2,iglob) - 1500.0d0)**2*30.0**2*cos(30.0*(it-2)*deltat) !0.0d0
+            accel(2,iglob) = 0.0d0
+            accelOld(2) = 0.0d0
+            velocOld(:) = veloc(:,iglob)
+            ! big loop over all the global points (not elements) in the mesh to update
+            ! the displacement and velocity vectors and clear the acceleration vector
+            veloc(:,iglob) = veloc(:,iglob) + deltatover2*(accelOld(:) + accel(:,iglob))
+            displ(:,iglob) = displ(:,iglob) + deltat*velocOld(:) + deltatsqover2*accelOld(:)
+          endif
+        else
+          displ(:,iglob) = 0.0d0
+          veloc(:,iglob) = 0.0d0
+          accel(:,iglob) = 0.0d0
+        endif
+      else
+        ! big loop over all the global points (not elements) in the mesh to update
+        ! the displacement and velocity vectors and clear the acceleration vector
+        displ(:,iglob) = displ(:,iglob) + deltat*veloc(:,iglob) + deltatsqover2*accel(:,iglob)
+        veloc(:,iglob) = veloc(:,iglob) + deltatover2*accel(:,iglob) ! Predictor
+        accel(:,iglob) = 0.
+      endif
+    enddo
+
+  !! big loop over all the global points (not elements) in the mesh to update
+  !! the displacement and velocity vectors and clear the acceleration vector
+  !  displ(:,:) = displ(:,:) + deltat*veloc(:,:) + deltatsqover2*accel(:,:)
+  !  veloc(:,:) = veloc(:,:) + deltatover2*accel(:,:) ! Predictor
+  !  accel(:,:) = 0.
+  !.... accel(:,:) = F(u(:,:))
+  !  veloc(:,:) = veloc(:,:) + deltatover2*accel(:,:)
+
+  ! big loop over all the elements in the mesh to localize data
+  ! from the global vectors to the local mesh
+  ! using indirect addressing (contained in array ibool)
+  ! and then to compute the elemental contribution
+  ! to the acceleration vector of each element of the finite-element mesh
+
+  do ispec = 1,NSPEC
+
+    tempx1(:,:) = 0.
+    tempz1(:,:) = 0.
+    tempx2(:,:) = 0.
+    tempz2(:,:) = 0.
+
+    !--- elastic spectral element
+
+      ! get elastic parameters of current spectral element
+      mu = rho*cs*cs
+      lambda = rho*cp*cp - 2.*mu
+      lambdaplus2mu = lambda + 2.*mu
+
+      ! first double loop over GLL points to compute and store gradients
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+
+          ! derivative along x and along z
+          dux_dxi = 0.
+          duz_dxi = 0.
+          dux_dgamma = 0.
+          duz_dgamma = 0.
+
+          ! first double loop over GLL points to compute and store gradients
+          ! we can merge the two loops because NGLLX == NGLLZ
+          do k = 1,NGLLX
+            dux_dxi = dux_dxi + displ(1,ibool(k,j,ispec))*hprime_xx(i,k)
+            duz_dxi = duz_dxi + displ(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            dux_dgamma = dux_dgamma + displ(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + displ(2,ibool(i,k,ispec))*hprime_zz(j,k)
+          enddo
+
+          xixl = xix(i,j,ispec)
+          xizl = xiz(i,j,ispec)
+          gammaxl = gammax(i,j,ispec)
+          gammazl = gammaz(i,j,ispec)
+
+          ! derivatives of displacement
+          dux_dxl = dux_dxi*xixl + dux_dgamma*gammaxl
+          dux_dzl = dux_dxi*xizl + dux_dgamma*gammazl
+
+          duz_dxl = duz_dxi*xixl + duz_dgamma*gammaxl
+          duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
+
+          ! no attenuation
+          sigma_xx = lambdaplus2mu*dux_dxl + lambda*duz_dzl
+          sigma_xz = mu*(duz_dxl + dux_dzl)
+          sigma_zz = lambdaplus2mu*duz_dzl + lambda*dux_dxl
+          sigma_zx = sigma_xz
+
+          ! weak formulation term based on stress tensor (non-symmetric form)
+          ! also add GLL integration weights
+          jacobianl = jacobian(i,j,ispec)
+
+          tempx1(i,j) = wzgll(j)*jacobianl*(sigma_xx*xixl+sigma_zx*xizl) ! this goes to accel_x
+          tempz1(i,j) = wzgll(j)*jacobianl*(sigma_xz*xixl+sigma_zz*xizl) ! this goes to accel_z
+
+          tempx2(i,j) = wxgll(i)*jacobianl*(sigma_xx*gammaxl+sigma_zx*gammazl) ! this goes to accel_x
+          tempz2(i,j) = wxgll(i)*jacobianl*(sigma_xz*gammaxl+sigma_zz*gammazl) ! this goes to accel_z
+
+        enddo
+      enddo  ! end of the loops on the collocation points i,j
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      !
+      ! second double-loop over GLL to compute all the terms
+      !
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          ! along x direction and z direction
+          ! and assemble the contributions
+          ! we can merge the two loops because NGLLX == NGLLZ
+          do k = 1,NGLLX
+            if (.not. forced(iglob)) then
+              accel(1,iglob) = accel(1,iglob) - (tempx1(k,j)*hprimewgll_xx(k,i) + tempx2(i,k)*hprimewgll_zz(k,j))
+              accel(2,iglob) = accel(2,iglob) - (tempz1(k,j)*hprimewgll_xx(k,i) + tempz2(i,k)*hprimewgll_zz(k,j))
+            endif
+          enddo
+        enddo
+      enddo ! second loop over the GLL points
+
+  enddo   ! end of main loop on all the elements
+
+! add the force source at a given grid point
+    iglob = ibool(IGLL_SOURCE,JGLL_SOURCE,NSPEC_SOURCE)
+! compute current time
+    time = (it-1)*deltat
+    if (.not. forced(iglob)) then
+      accel(2,iglob) = accel(2,iglob) - factor_amplitude * (1.-2.*a*(time-t0)**2) * exp(-a*(time-t0)**2)
+    endif
+
+    do iglob = 1,NGLOB
+      ! big loop over all the global points (not elements) in the mesh to update
+      ! the acceleration and velocity vectors.
+     ! To compute acceleration from the elastic forces we need to divide them by the mass matrix, i.e. multiply by its inverse
+      if (.not. forced(iglob)) then
+        accel(1,iglob) = accel(1,iglob)*rmass_inverse(iglob)
+        accel(2,iglob) = accel(2,iglob)*rmass_inverse(iglob)
+        veloc(:,iglob) = veloc(:,iglob) + deltatover2*accel(:,iglob)
+      endif
+    enddo
+
+    ! record a seismogram to check that the simulation went well
+    do irec = 1,nrec
+      ! initializes interpolated values
+      dx = 0.d0
+      dz = 0.d0
+      ispec = ispec_selected_rec(irec)
+      call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+      call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
+      hxir_store(irec,:) = hxir(:)
+      hgammar_store(irec,:) = hgammar(:)
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          hlagrange = hxir_store(irec,i)*hgammar_store(irec,j)
+          ! computes interpolated field
+          dx = dx + displ(1,iglob)*hlagrange
+          dz = dz + displ(2,iglob)*hlagrange
+        enddo
+      enddo
+      seismogramX(it,irec) = dx
+      seismogramZ(it,irec) = dz
+    enddo
+
+    !seismogramX(it,1) = displ(1,50400)
+    !seismogramX(it,2) = veloc(1,50400)
+    !seismogramX(it,3) = accel(1,50400)
+
+  enddo ! end of the serial time loop
+
+! save the seismogram at the end of the run
+  do irec = 1,nrec
+    open(unit=IIN,file=seisNameX(irec),status='unknown')
+    do it = 1,NSTEP
+      write(IIN,*) (it-1)*deltat,seismogramX(it,irec)
+    enddo
+    close(IIN)
+    open(unit=IIN,file=seisNameZ(irec),status='unknown')
+    do it = 1,NSTEP
+      write(IIN,*) (it-1)*deltat,seismogramZ(it,irec)
+    enddo
+    close(IIN)
+  enddo
+
+  end program serial_specfem2D
+
+! ******************
+! meshing subroutine
+! ******************
+
+!--- global node number
+
+  integer function num(i,j,nx)
+
+  implicit none
+
+  integer i,j,nx
+
+    num = j*(nx+1) + i + 1
+
+  end function num
+

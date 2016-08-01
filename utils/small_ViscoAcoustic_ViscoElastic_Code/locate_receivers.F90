@@ -80,7 +80,7 @@
   integer, dimension(nrec) :: ix_initial_guess,iz_initial_guess
 
   double precision :: HUGEVAL = 1.0d30
-  integer :: NUM_ITER = 10  
+  integer :: NUM_ITER = 10
 
   ! user output
     write(*,*)

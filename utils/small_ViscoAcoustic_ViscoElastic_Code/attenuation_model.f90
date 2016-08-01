@@ -53,7 +53,7 @@ subroutine viscoelastic_attenuation_model()
 
 
   !Local variables
-  !real(kind=4), dimension(N_SLS):: tau_epsilon_nu1,tau_epsilon_nu2      
+  !real(kind=4), dimension(N_SLS):: tau_epsilon_nu1,tau_epsilon_nu2
   double precision, dimension(N_SLS) :: tau_epsilon_nu1_d,tau_sigma_nu1,tau_epsilon_nu2_d,tau_sigma_nu2
   double precision :: f_min_attenuation, f_max_attenuation,f0_attenuation
 
@@ -166,7 +166,7 @@ subroutine viscoacoustic_attenuation_model()
 
   use small_specfem_par
   implicit none
-  
+
   !Local variables
   double precision, dimension(N_SLS) :: tau_epsilon_nu1_d,tau_sigma_nu1,tau_epsilon_nu2_d,tau_sigma_nu2
   double precision :: f_min_attenuation, f_max_attenuation,f0_attenuation
@@ -194,7 +194,7 @@ subroutine viscoacoustic_attenuation_model()
 
 
 !  print *
-!  print *,'N_SLS, QKappa, ',N_SLS, QKappa, 
+!  print *,'N_SLS, QKappa, ',N_SLS, QKappa,
 !  print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
 !  print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
 !  print *,'tau_sigma_nu1 = ',tau_sigma_nu1
@@ -243,15 +243,15 @@ subroutine viscoacoustic_attenuation_model()
 
 
   tau_epsilon_nu1(:) = real(tau_epsilon_nu1_d(:),kind=4)
-  
+
 
   inv_tau_sigma_nu1_sent(:) = real(dble(1.d0) / tau_sigma_nu1(:),kind=4)
-  
+
   ! use the right formula with 1/N included
   phi_nu1_sent(:) = real((dble(1.d0) - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
        / sum(tau_epsilon_nu1_d/tau_sigma_nu1),kind=4)
   Mu_nu1_sent = real(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS),kind=4)
-  
+
 
   ! print *,''
   ! print *, 'inv_tau_sigma_nu1_sent= ', inv_tau_sigma_nu1_sent, 'inv_tau_sigma_nu2_sent= ', inv_tau_sigma_nu2_sent

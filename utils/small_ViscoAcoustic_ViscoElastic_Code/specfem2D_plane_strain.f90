@@ -33,15 +33,15 @@
 
 
 ! 21 juin 2016 introduction att calcul des varaibles tau_eps tau_sigma ...
-! reste le calcul des variables a memoire et de la matrice de rigidite modifiee des variables a memoire 
-! sauvegarde avant de depoter le calcul des int de regidite dans un fichier a part 
+! reste le calcul des variables a memoire et de la matrice de rigidite modifiee des variables a memoire
+! sauvegarde avant de depoter le calcul des int de regidite dans un fichier a part
 
 program serial_specfem2D
 
   use small_specfem_par
 
   implicit none
- 
+
   logical ::  is_viscoelastic, is_viscoacoustic
 
 
@@ -55,10 +55,10 @@ program serial_specfem2D
 !!!!!!!!!! We do not need double precision in SPECFEM2D.
 !!!!!!!!!!
 
-  
-  
- 
- 
+
+
+
+
 
   ! allocate Lagrange interpolators for receivers
   allocate(ispec_selected_rec(nrec),xi_receiver(nrec),gamma_receiver(nrec),st_xval(nrec),st_zval(nrec))
@@ -72,8 +72,8 @@ program serial_specfem2D
   seisNameX(1) = "X1.txt" ;  seisNameX(2) = "X2.txt" ;  seisNameX(3) = "X3.txt";  seisNameX(4) = "X4.txt";  seisNameX(5) = "X5.txt"
   seisNameX(6) = "X6.txt";  seisNameX(7) = "X7.txt";  seisNameZ(1) = "Z1.txt";  seisNameZ(2) = "Z2.txt";  seisNameZ(3) = "Z3.txt"
   seisNameZ(4) = "Z4.txt";  seisNameZ(5) = "Z5.txt";  seisNameZ(6) = "Z6.txt";  seisNameZ(7) = "Z7.txt";
-  
-  
+
+
   print *
   print *,'NSPEC = ',NSPEC
   print *,'NGLOB = ',NGLOB
@@ -82,16 +82,16 @@ program serial_specfem2D
   print *,'NSTEP = ',NSTEP
   print *,'deltat = ',deltat
   print *
-  
-  
-  
+
+
+
   ! set up Gauss-Lobatto-Legendre points, weights and also derivation matrices
-  
+
     call define_derivation_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz,NGLLX,NGLLZ)
 
-   
 
-    
+
+
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -160,15 +160,15 @@ program serial_specfem2D
         enddo
      enddo
   enddo
-  
-  
-   
+
+
+
     ! must be call here  because we need to compute the displacmetn gradient and we need : xix, xiz, gammax, gammaz, jacobian
-    call  check_attenuation(is_viscoelastic,is_viscoacoustic) !check the type of simulation acoustic, viscoacoustic, elastic or viscoelastic ? 
+    call  check_attenuation(is_viscoelastic,is_viscoacoustic) !check the type of simulation acoustic, viscoacoustic, elastic or viscoelastic ?
     if (is_viscoelastic .or. is_viscoacoustic) then
-     call prepare_timerun_attenuation(is_viscoelastic,is_viscoacoustic) 
+     call prepare_timerun_attenuation(is_viscoelastic,is_viscoacoustic)
     endif
-  
+
 
   call build_forced(xforced,coord,NGLOB,forced,nb_forced)
   print *,'nb_forced', nb_forced
@@ -288,7 +288,7 @@ program serial_specfem2D
         if(.not.is_acoustic) then !elastic
            ! draw the displacement vector field in a PostScript file
            call plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,st_xval,st_zval,it,deltat,NGLLX,NGLLZ,NDIM,nrec)
-        else              
+        else
            call plot_post(acoustic_displ, &
                 coord,ibool,NGLOB,NSPEC,x_source,z_source,st_xval,st_zval,it,deltat,NGLLX,NGLLZ,NDIM,nrec)
         endif
@@ -312,18 +312,18 @@ program serial_specfem2D
         do iglob = 1,NGLOB
            if (forced(iglob)) then !acoustic and forced
               call enforce_acoustic_forcing(NGLOB,iglob,it,deltat,deltatover2,deltatsqover2,coord,&
-                   potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic)      
+                   potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic)
            else !acoustic not forced
-              !time sheme for acoustic media 
+              !time sheme for acoustic media
               potential_acoustic(iglob) = potential_acoustic(iglob) + deltat * potential_dot_acoustic(iglob) &
                    + deltatsqover2 * potential_dot_dot_acoustic(iglob)
               potential_dot_acoustic(iglob) = potential_dot_acoustic(iglob) + deltatover2 * potential_dot_dot_acoustic(iglob) ! Predictor @ (it-1/2)*deltat
-              potential_dot_dot_acoustic(iglob) = 0.   
-              
+              potential_dot_dot_acoustic(iglob) = 0.
+
 !              if(iglob==3000) then
 !              print *,'********************************************************************************'
-!              print *,'avant calcul force it = ' ,it , "potential_acoustic(3000)=  ", potential_acoustic(3000)   
-!              endif  
+!              print *,'avant calcul force it = ' ,it , "potential_acoustic(3000)=  ", potential_acoustic(3000)
+!              endif
            endif !end acoustic
         enddo
      endif
@@ -337,31 +337,31 @@ program serial_specfem2D
 
      ! Start compute forces
      if(.not.is_acoustic) then !elastic
-        ! get elastic parameters of current spectral element pas dasn la boucle car constant 
+        ! get elastic parameters of current spectral element pas dasn la boucle car constant
         mu = rho*cs*cs
         lambda = rho*cp*cp - 2.*mu
         lambdaplus2mu = lambda + 2.*mu
         lambdaplusmu = lambda + mu
-        
-        if (is_viscoelastic) call update_memory_variable(is_viscoelastic,is_viscoacoustic)        
+
+        if (is_viscoelastic) call update_memory_variable(is_viscoelastic,is_viscoacoustic)
         call compute_viscoelastic_forces(is_viscoelastic)
-        
+
      else !end elastic then it an acoustic media
-      
-        if (is_viscoacoustic) call update_memory_variable(is_viscoelastic,is_viscoacoustic) 
-        call compute_viscoacoustic_forces(is_viscoacoustic)     
+
+        if (is_viscoacoustic) call update_memory_variable(is_viscoelastic,is_viscoacoustic)
+        call compute_viscoacoustic_forces(is_viscoacoustic)
 
      endif !end compute forces
 
 
      ! add the force source at a given grid point
-     iglob_source = ibool(IGLL_SOURCE,JGLL_SOURCE,NSPEC_SOURCE) ! determine the global (grid) point at which the source is located    
+     iglob_source = ibool(IGLL_SOURCE,JGLL_SOURCE,NSPEC_SOURCE) ! determine the global (grid) point at which the source is located
      time = (it-1)*deltat ! compute current time
      if (.not. is_acoustic) then !elastic
         accel(2,iglob_source) = accel(2,iglob_source) - factor_amplitude * (1.-2.*a*(time-t0)**2) * exp(-a*(time-t0)**2)
      else !acoustic
         potential_dot_dot_acoustic(iglob_source) = potential_dot_dot_acoustic(iglob_source) - &
-             factor_amplitude * (1.-2.*a*(time-t0)**2) * exp(-a*(time-t0)**2)/kappal 
+             factor_amplitude * (1.-2.*a*(time-t0)**2) * exp(-a*(time-t0)**2)/kappal
 
         ! ligne 158-160 prepare_source_time_function
         !aval(i_source) = PI*PI*f0_source(i_source)*f0_source(i_source) ! set_source_parameters.f90:98:
@@ -474,7 +474,7 @@ contains
 
 
 
- 
+
     subroutine check_attenuation(is_viscoelastic,is_viscoacoustic)
     ! subroutine check_attenuation()
     ! check that attenuation values entered by the user make sense
@@ -482,11 +482,11 @@ contains
     ! if is_acoustic=.true.  an Qkappa < 9999 then it is an viscoacoustic simulation
     ! if is_acoustic=.false. an Qkappa and Qmu are >9999 then is is an elastic simulation
     ! if is_acoustic=.false. an Qkappa and Qmu are both < 9999 then is is an viscoelastic simulation
-    
-    
+
+
     use small_specfem_par
     implicit none
-    logical, intent(inout) :: is_viscoelastic,is_viscoacoustic 
+    logical, intent(inout) :: is_viscoelastic,is_viscoacoustic
 
     !imput variable : is_acoustic
     !logical, intent(out)  :: is_viscoelastic, is_viscoacoustic
@@ -497,7 +497,7 @@ contains
 
           if ((QKappa <= 9998.999d0 .and. Qmu >  9998.999d0) &
                .or. (QKappa > 9998.999d0 .and. Qmu <= 9998.999d0)) then
-             print *, 'QKappa and Qmu the both must be above or below 9999' 
+             print *, 'QKappa and Qmu the both must be above or below 9999'
           endif
 
           is_viscoelastic=.false.
@@ -526,12 +526,12 @@ contains
 
 
   ! --------------------- --------------------- --------------------- ---------------------
-    
+
   subroutine prepare_timerun_attenuation(is_viscoelastic,is_viscoacoustic )
-       
+
     use small_specfem_par
     implicit none
-    logical, intent(in) :: is_viscoelastic,is_viscoacoustic 
+    logical, intent(in) :: is_viscoelastic,is_viscoacoustic
 
 
     ! allocate memory variables for attenuation
@@ -578,27 +578,27 @@ contains
               do i = 1,NGLLX
                  inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
                  phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
-                 inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:) !0 si acoustique 
-                 phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)!0 si acoustique 
+                 inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:) !0 si acoustique
+                 phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)!0 si acoustique
                  Mu_nu1(i,j,ispec) = Mu_nu1_sent
-                 Mu_nu2(i,j,ispec) = Mu_nu2_sent !0 si acoustique 
+                 Mu_nu2(i,j,ispec) = Mu_nu2_sent !0 si acoustique
     !             if (mod(ispec,2000)==0) then
     !                print *,'ipsec= ', ispec, 'Qmu= ',  Qmu
     !             endif
               enddo
            enddo
         enddo
-    endif 
-    
+    endif
+
     if (is_viscoacoustic) then
         print *,"prepare time_run ViscoAcoustic !"
-    
+
     ! initialize to dummy values
         ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
         inv_tau_sigma_nu1(:,:,:,:) = -1.0
         phi_nu1(:,:,:,:) = -1.0
-!       inv_tau_sigma_nu2(:,:,:,:) = -1.0 ! not used in this case but variables are allocate 
-!       phi_nu2(:,:,:,:) = -1.0           ! not used in this case but variables are allocate 
+!       inv_tau_sigma_nu2(:,:,:,:) = -1.0 ! not used in this case but variables are allocate
+!       phi_nu2(:,:,:,:) = -1.0           ! not used in this case but variables are allocate
         Mu_nu1(:,:,:) = -1.0
 !       Mu_nu2(:,:,:) = -1.0
 
@@ -613,16 +613,16 @@ contains
                  inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
                  phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
                  Mu_nu1(i,j,ispec) = Mu_nu1_sent
-                
+
 !                 if (mod(ispec,2000)==0) then
 !                    print *,'ipsec= ', ispec, 'phi_nu1 = ', phi_nu1(1,1,ispec,1)
 !                 endif
               enddo
            enddo
-        enddo   
+        enddo
     endif
 
-   
+
 
     ! todo
     !   call shift_velocities_from_f0(vp,vs,rhol,mul,lambdal)

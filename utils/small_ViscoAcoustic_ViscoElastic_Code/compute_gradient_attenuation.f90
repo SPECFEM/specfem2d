@@ -113,7 +113,7 @@ subroutine compute_gradient_attenuation(displ_elastic,dux_dxl,duz_dxl,dux_dzl,du
                  enddo
               endif
 
-              
+
               xixl = xix(i,j,ispec)
               xizl = xiz(i,j,ispec)
               gammaxl = gammax(i,j,ispec)

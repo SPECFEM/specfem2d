@@ -2,9 +2,9 @@ module small_specfem_par
 
   implicit none
 
-  ! Parameter for simulation 
-  
-  logical :: is_acoustic=.true. 
+  ! Parameter for simulation
+
+  logical :: is_acoustic=.true.
   ! if is_acoustic=.true.  an Qkappa > 9999 then it is an acoustic simulation
   ! if is_acoustic=.true.  an Qkappa < 9999 then it is an viscoacoustic simulation
   ! if is_acoustic=.false. an Qkappa and Qmu are >9999 then is is an elastic simulation
@@ -79,7 +79,7 @@ module small_specfem_par
   real(kind=4), dimension(NGLOB) :: rmass_inverse_elastic
   ! for stiffness matrix
   real(kind=4), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempz1,tempz2
-  ! elastic stress 
+  ! elastic stress
   real(kind=4) sigma_xx,sigma_zz,sigma_xz,sigma_zx
   real(kind=4) lambda,mu,lambdaplus2mu,lambdaplusmu
 
@@ -92,7 +92,7 @@ module small_specfem_par
   real(kind=4), dimension(2,NGLOB) :: acoustic_displ
 
 
-  ! for attenuation 
+  ! for attenuation
   integer,  parameter :: N_SLS=3
 
   real(kind=4), dimension(:,:,:,:), allocatable :: e1,e11,e13
@@ -120,7 +120,7 @@ module small_specfem_par
   double precision :: xi,gamma,x,z
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
 
-  ! for gradient 
+  ! for gradient
   real(kind=4) dux_dxi,duz_dxi,dux_dgamma,duz_dgamma
   real(kind=4) dux_dxl,dux_dzl,duz_dxl,duz_dzl
 
