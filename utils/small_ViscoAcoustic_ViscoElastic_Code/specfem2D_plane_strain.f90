@@ -33,8 +33,8 @@
 
 
 ! 21 juin 2016 introduction att calcul des varaibles tau_eps tau_sigma ...
-! reste le calcul des variables à mémoire et de la matrice de rigidité modifiée des variables à mémoire 
-! sauvegarde avant de dépoter le calcul des int de régidité dasn un fichier à part 
+! reste le calcul des variables a memoire et de la matrice de rigidite modifiee des variables a memoire 
+! sauvegarde avant de depoter le calcul des int de regidite dans un fichier a part 
 
 program serial_specfem2D
 

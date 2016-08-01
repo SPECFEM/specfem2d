@@ -180,7 +180,7 @@ subroutine attenuation_model(QKappa_att,QMu_att)
   f_min_attenuation = f0_attenuation / 10.d0
   f_max_attenuation = f0_attenuation * 10.d0
 
-  ! si mileu acoustique cette fonction est apellée q'une seule fois avec QKappa uniquement et nu=nu1 
+  ! si mileu acoustique cette fonction est apellee q'une seule fois avec QKappa uniquement et nu=nu1 
 
   call compute_attenuation_coeffs(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
        tau_epsilon_nu1_d,tau_sigma_nu1)

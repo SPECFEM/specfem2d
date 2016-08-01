@@ -24,7 +24,7 @@ subroutine compute_viscoelastic_forces(is_viscoelastic)
            tempz1(:,:) = 0.
            tempx2(:,:) = 0.
            tempz2(:,:) = 0.   
-  ! il vaudrait mieux déclarer i et j k en local 
+  ! il vaudrait mieux declarer i et j k en local 
   do j = 1,NGLLZ
      do i = 1,NGLLX
      
@@ -221,7 +221,7 @@ subroutine compute_viscoacoustic_forces(is_viscoacoustic)
              
 !              if(mod(ispec,3000)==0) then
 !             if (i==1 .and. j==1) print *,"  "
-!             if (i==1 .and. j==1) print *,"là calcul visco forces"
+!             if (i==1 .and. j==1) print *,"la calcul visco forces"
 !             if (i==1 .and. j==1) print *, "dux_dxi,dux_dgamma =", dux_dxi,dux_dgamma
 !             if (i==1 .and. j==1) print *, "e1_sum =", e1_sum
 !             if (i==1 .and. j==1) print *,"potential_acoustic(3000)", potential_acoustic (3000)
@@ -400,9 +400,9 @@ subroutine update_memory_variable(is_viscoelastic,is_viscoacoustic)
              dux_dxl = dux_dxi * xixl + dux_dgamma * gammaxl
              dux_dzl = dux_dxi * xizl + dux_dgamma * gammazl
         
-            !à vérifier
-            theta_n_u = dux_dxl ! + dux_dzl !!! à verifier theta__u= dux_dxl 
-            !à vérifier
+            !a verifier
+            theta_n_u = dux_dxl ! + dux_dzl !!! a verifier theta__u= dux_dxl 
+            !a verifier
             
           
             
