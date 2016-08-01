@@ -284,7 +284,7 @@ class mesh(object,mesh_tools):
         self.nforc = 4 # Maximum number of forcing surfaces (4)
         self.nabs = 4 # Maximum number of absorbing surfaces (4)
         self.rec = 'receivers'
-        self.block_definition() # import blocks features from Cubit
+        self.block_definition() # Import blocks features from Cubit
         self.ngll = 5
         self.percent_gll = 0.172
         self.point_wavelength = 5
