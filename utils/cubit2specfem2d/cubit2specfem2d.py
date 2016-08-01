@@ -27,8 +27,7 @@
 #      !! Warning !! pml blocks don't have faces in common
 #      !! Warning !! you must create the corresponding absorbing surface blocks (abs_bottom, abs_right, abs_left, abs_top)!
 #
-# Ideas to improve that script (ctrl+f for TODO also): _Make a real python module
-#                                                      _Allow 2D models built in XY and ZY planes
+# Ideas to improve that script (ctrl+f for TODO also): _Allow 2D models built in XY and ZY planes
 #
 # The names of the block and the entities types must match the ones given during the definition of the class mesh on this file :
 # Below :
