@@ -531,7 +531,7 @@ class mesh(object,mesh_tools):
                         nodes = self.jac_check(list(nodes)) # Check the jacobian of the quad
                         for e in intersection: # For each edge on the free surface
                             node_edge = cubit.get_connectivity('edge',e) # Import the nodes describing the edge
-                            #print "    edge",e,"is composed of nodes",node_edge
+                            #print "      edge",e,"is composed of nodes",node_edge
                             nodes_ok = []
                             for i in nodes: # Loop on the nodes of the quad
                                 if i in node_edge: # If this node is belonging to the free surface
