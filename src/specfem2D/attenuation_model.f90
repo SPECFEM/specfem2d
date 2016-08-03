@@ -220,7 +220,7 @@
   mu = rho * vs*vs
   lambda = rho * vp*vp - TWO * mu
 
-  if (AXISYM) then
+  if (AXISYM) then ! CHECK kappa
     kappa  = lambda + TWO_THIRDS*mu
   else
     kappa  = lambda + mu

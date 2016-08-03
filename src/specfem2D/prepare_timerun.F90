@@ -1074,7 +1074,7 @@
 
   use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS
 
-  use specfem_par,only: myrank,NSTEP,nglob,nspec,ibool,coord, &
+  use specfem_par,only: myrank,AXISYM,NSTEP,nglob,nspec,ibool,coord, &
                         rhoext,vpext,vsext,density,poroelastcoef,kmato,assign_external_model
   use specfem_par_noise
 
@@ -1160,11 +1160,17 @@
           do j = 1, NGLLZ
             do i = 1, NGLLX
               iglob = ibool(i,j,ispec)
-              write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
-                coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
-                poroelastcoef(1,1,kmato(ispec)) + TWO_THIRDS * poroelastcoef(2,1,kmato(ispec)), &
-                poroelastcoef(2,1,kmato(ispec))
-
+              if (AXISYM) then ! CHECK kappa
+                write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
+                  coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
+                  poroelastcoef(1,1,kmato(ispec)) + TWO_THIRDS * poroelastcoef(2,1,kmato(ispec)), &
+                  poroelastcoef(2,1,kmato(ispec))
+              else
+                write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
+                  coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
+                  poroelastcoef(1,1,kmato(ispec)) + poroelastcoef(2,1,kmato(ispec)), &
+                  poroelastcoef(2,1,kmato(ispec))
+              endif 
             enddo
           enddo
         enddo
@@ -1462,7 +1468,11 @@
           vs = vsext(i,j,ispec)
           ! determins mu & kappa
           mul = rhol * vs * vs
-          kappal = rhol * vp * vp - FOUR_THIRDS * mul
+          if (AXISYM) then ! CHECK kappa
+            kappal = rhol * vp * vp - FOUR_THIRDS * mul
+          else
+            kappal = rhol * vp * vp - mul
+          endif
         else
           ! internal mesh
           rhol = density(1,kmato(ispec))
@@ -1470,8 +1480,10 @@
           mul = poroelastcoef(2,1,kmato(ispec)) ! mul_unrelaxed_elastic
           if (AXISYM) then ! CHECK kappa
             kappal = lambdal + TWO_THIRDS * mul
+            vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
           else
             kappal = lambdal + mul
+            vp = sqrt((kappal + mul)/rhol)
           endif
         endif
         ! stores moduli
@@ -1480,7 +1492,7 @@
         kappastore(i,j,ispec) = kappal
 
         ! stores density times vp & vs
-        vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
+
         vs = sqrt(mul/rhol)
 
         rho_vp(i,j,ispec) = rhol * vp

@@ -162,7 +162,7 @@
 
   use constants,only: FOUR_THIRDS
 
-  use specfem_par,only: porosity,tortuosity,poroelastcoef,density,kmato
+  use specfem_par,only: AXISYM,porosity,tortuosity,poroelastcoef,density,kmato
 
   implicit none
 
@@ -183,7 +183,11 @@
 
   ! solid properties
   mu_s = poroelastcoef(2,1,material)
-  kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS * mu_s
+  !if (AXISYM) then ! ABAB !! Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
+    kappa_s = poroelastcoef(3,1,material) - FOUR_THIRDS * mu_s
+  !else
+  !kappa_s = poroelastcoef(3,1,material) - mu_s
+  !endif
   rho_s = density(1,material)
 
   ! fluid properties
@@ -193,8 +197,11 @@
 
   ! frame properties
   mu_fr = poroelastcoef(2,3,material)
-  kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS * mu_fr
-
+  !if (AXISYM) then ! ABAB !! Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
+    kappa_fr = poroelastcoef(3,3,material) - FOUR_THIRDS * mu_fr
+  !else
+  !  kappa_fr = poroelastcoef(3,3,material) - mu_fr
+  !endif
   ! rho bar
   rho_bar =  (1.d0 - phi) * rho_s + phi * rho_f
 
@@ -215,8 +222,11 @@
 
   ! Biot coefficients for the input phi
   D_biot = kappa_s*(1.d0 + phi*(kappa_s/kappa_f - 1.d0))
-
-  H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+  !if (AXISYM) then ! ABAB !! Warning !! This is possibly false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
+    H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + FOUR_THIRDS*mu_fr
+  !else
+  !  H_biot = (kappa_s - kappa_fr)*(kappa_s - kappa_fr)/(D_biot - kappa_fr) + kappa_fr + mu_fr
+  !endif
   C_biot = kappa_s*(kappa_s - kappa_fr)/(D_biot - kappa_fr)
   M_biot = kappa_s*kappa_s/(D_biot - kappa_fr)
 

@@ -34,6 +34,7 @@
 ! ----------------------------------------------------------------------------------------
 ! This file contains all the subroutines used to enforce a displacement at
 ! a given position.
+! !!! Warning given lines need double precision (look for "warning") !!! TODO
 ! ----------------------------------------------------------------------------------------
 
 module enforce_par
@@ -174,7 +175,7 @@ end module enforce_par
 
   subroutine enforce_fields(iglob,it)
 ! ----------------------------------------------------------------------------------------
-! This subroutine impose the fields at a given GLL point and at a given time step
+! This subroutine impose the fields at given GLL points and at a given time steps
 ! ----------------------------------------------------------------------------------------
 
   use specfem_par, only: coord,displ_elastic,veloc_elastic,accel_elastic,deltat,deltatover2, &
@@ -188,8 +189,8 @@ end module enforce_par
   integer, intent(in) :: iglob,it
 
   ! Local variables
-  real(kind=CUSTOM_REAL) :: f0 = 0.5d6 ! frequency
-  real(kind=CUSTOM_REAL) :: h = 1.5d-3 ! half width of the plate
+  real(kind=CUSTOM_REAL) :: f0 = 0.5236d6 ! frequency
+  real(kind=CUSTOM_REAL) :: h = 1.0d-3 ! half width of the plate
   real(kind=CUSTOM_REAL) :: cp = 5960.0d0 ! Compressional waves velocity
   real(kind=CUSTOM_REAL) :: cs = 3260.d0 ! Shear waves velocity
   real(kind=CUSTOM_REAL), dimension(2) :: accelOld,velocOld
@@ -258,7 +259,7 @@ end module enforce_par
 
   !print *,z,facz
 
-  if (abs(z + 0.0d-3) < 1.5d-3) then
+  if (abs(z + 0.0d-3) < 1.0d-3) then
     if (it == 1) then
       ! We initialize the variables
       displ_elastic(1,iglob) = factor*facx*0.0d0
@@ -314,7 +315,7 @@ end module enforce_par
   complex :: alpha,beta,k,k2,alpha2,beta2
   complex :: jj = (0.0,1.0)
 
-  call calculateCphase(cphase,omegaj,antisym)
+  call calculateCphase(cphase,omegaj,antisym,h)
   k2 = (omegaj/cphase)**2
   alpha2 = (omegaj/cp)**2 - k2
   beta2 = (omegaj/cs)**2 - k2
@@ -340,7 +341,7 @@ end module enforce_par
 ! ----------------------------------------------------------------------------------------
 !
 
-  subroutine calculateCphase(cphase,omegaj,antisym) !,cp,cs,h)
+  subroutine calculateCphase(cphase,omegaj,antisym,h) !,cp,cs,h)
   ! ----------------------------------------------------------------------------------------
   ! This is not trivial !! We use here an approximate value
   ! do something clever here
@@ -353,23 +354,47 @@ end module enforce_par
 
   ! Inputs
   logical, intent(in) :: antisym
-  real(kind=CUSTOM_REAL), intent(in) :: omegaj !,cp,cs,h
+  real(kind=CUSTOM_REAL), intent(in) :: omegaj,h !,cp,cs
 
   ! Outputs
   real(kind=CUSTOM_REAL), intent(out) :: cphase
 
   ! Local variables
-  real(kind=CUSTOM_REAL) :: calculated = TWO*PI*0.5d6
+  real(kind=CUSTOM_REAL) :: calculated1 = 0.5d6 * 1.5d-3
+  real(kind=CUSTOM_REAL) :: calculated2 = 2.087d6 * 1.0d-3
+  real(kind=CUSTOM_REAL) :: calculated3 = 0.5236d6 * 1.0d-3
+  real(kind=CUSTOM_REAL) :: calculated4 = 2.3113d6 * 1.0d-3
+  real(kind=CUSTOM_REAL) :: freq
 
-  if (abs(omegaj - calculated) < TINYVAL) then
+  freq = omegaj / (TWO*PI)
+  
+  if (abs(freq*h - calculated1) < TINYVAL) then ! warning this line need double precision
     if (antisym) then
-      cphase = 2611.4d0
+      cphase = 2611.4d0 ! A0 at fd = 0.75 Mhz.mm
     else
-      cphase = 5300.0d0
+      cphase = 5300.0d0 ! S0 at fd = 0.75 Mhz.mm
+    endif
+  else if (abs(freq*h - calculated2) < TINYVAL) then ! warning this line need double precision
+    if (antisym) then
+      cphase = 5234.0d0 ! A1 at fd = 2.087 Mhz.mm
+    else
+      cphase = 5883.0d0 ! S1 at fd = 2.087 Mhz.mm
+    endif
+  else if (abs(freq*h - calculated3) < TINYVAL) then ! warning this line need double precision
+    if (antisym) then
+      cphase = 1937.0d0 ! A0 at fd = 0.5236 Mhz.mm
+    else
+      cphase = 5445.0d0 ! S0 at fd = 0.5236 Mhz.mm
+    endif
+  else if (abs(freq*h - calculated4) < TINYVAL) then ! warning this line need double precision
+    if (antisym) then
+      cphase = 4595.0d0 ! A1 at fd = 2.3113 Mhz.mm
+    else
+      cphase = 5780.0d0 ! S1 at fd = 2.3113 Mhz.mm
     endif
   else
-    print *,omegaj,TWO*PI*0.5d6
-    call exit_MPI(myrank,'Phase speed not calculated for this frequency')
+    print *,"f*d = ",freq*h,"Hz*m",calculated3
+    call exit_MPI(myrank,'Phase speed not calculated for this f*d product')
   endif
 
   end subroutine calculateCphase

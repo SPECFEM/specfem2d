@@ -50,7 +50,7 @@
     ispec_is_elastic,ispec_is_acoustic,ispec_is_gravitoacoustic,ispec_is_poroelastic, &
     assign_external_model, &
     density,poroelastcoef,porosity,tortuosity, &
-    vpext,rhoext, &
+    vpext,rhoext,vsext, &
     numabs,deltat,codeabs,codeabs_corner,&
     ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
     ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
@@ -74,7 +74,7 @@
                             weight,xxi,zxi,xgamma,zgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: deltatover2
 
-  double precision :: rhol,kappal,mu_relaxed,lambda_relaxed
+  double precision :: rhol,mul,kappal,mu_relaxed,lambda_relaxed
   double precision :: rho_s,rho_f,rho_bar,phi,tort
 
   integer :: ispec_PML
@@ -116,7 +116,12 @@
         ! if external density model (elastic or acoustic)
         if (assign_external_model) then
           rhol = rhoext(i,j,ispec)
-          kappal = rhol * vpext(i,j,ispec)**2 ! CHECK Kappa
+          mul = rhol * vsext(i,j,ispec)
+          if (AXISYM) then ! CHECK kappa mm
+            kappal = rhol * vpext(i,j,ispec)**2 - TWO_THIRDS * mul ! CHECK Kappa
+          else
+            kappal = rhol * vpext(i,j,ispec)**2 - mul ! CHECK Kappa
+          endif
         else
           rhol = density(1,kmato(ispec))
           lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
@@ -408,11 +413,12 @@
 
           if (AXISYM) then ! CHECK kappa
             kappal  = lambdal_unrelaxed_elastic + TWO_THIRDS*mul_unrelaxed_elastic
+            cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
           else
             kappal  = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
+            cpl = sqrt((kappal + mul_unrelaxed_elastic)/rhol)
           endif
 
-          cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol) ! Check kappa
           csl = sqrt(mul_unrelaxed_elastic/rhol)
 
           !--- left absorbing boundary

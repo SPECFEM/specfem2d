@@ -104,11 +104,12 @@
 
     if (AXISYM) then ! CHECK kappa
       kappal  = lambdal_unrelaxed_elastic + TWO_THIRDS*mul_unrelaxed_elastic
+      cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol) ! CHECK kappa
     else
       kappal  = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
+      cpl = sqrt((kappal + mul_unrelaxed_elastic)/rhol) ! CHECK kappa
     endif
 
-    cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol) ! CHECK kappa
     csl = sqrt(mul_unrelaxed_elastic/rhol)
 
     !--- left absorbing boundary

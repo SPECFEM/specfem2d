@@ -191,10 +191,17 @@
       mu_fr = val11
 
       ! Lame parameters for the solid phase and the frame
-      lambdaplus2mu_s = kappa_s + FOUR_THIRDS*mu_s
-      lambda_s = lambdaplus2mu_s - 2.d0*mu_s
-      lambdaplus2mu_fr = kappa_fr + FOUR_THIRDS*mu_fr
-      lambda_fr = lambdaplus2mu_fr - 2.d0*mu_fr
+      !if (AXISYM) then ! ABAB !! Warning !! This is false for plane strain (look for: bulk modulus plane strain) Check Kappa
+        lambdaplus2mu_s = kappa_s + FOUR_THIRDS*mu_s
+        lambda_s = lambdaplus2mu_s - 2.d0*mu_s
+        lambdaplus2mu_fr = kappa_fr + FOUR_THIRDS*mu_fr
+        lambda_fr = lambdaplus2mu_fr - 2.d0*mu_fr
+      !else ! Correct lines:
+      !  lambdaplus2mu_s = kappa_s - mu_s
+      !  lambda_s = lambdaplus2mu_s - 2.d0*mu_s
+      !  lambdaplus2mu_fr = kappa_fr - mu_fr
+      !  lambda_fr = lambdaplus2mu_fr - 2.d0*mu_fr      
+      !endif
 
       ! Biot coefficients for the input phi
       call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
