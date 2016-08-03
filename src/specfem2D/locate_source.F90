@@ -131,7 +131,7 @@
       jmin = 2
       jmax = NGLLZ - 1
     else
-      ! search best gll location
+      ! search best GLL location
       imin = 1
       imax = NGLLX
       jmin = 1

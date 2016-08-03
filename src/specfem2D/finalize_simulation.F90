@@ -117,7 +117,7 @@
       close(1001)
 
     else if ((trim(SAVE_MODEL) == 'binary') .or. (trim(SAVE_MODEL) == 'gll')) then
-      ! binary and gll format
+      ! binary and GLL format
       write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
       open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_rho.bin')
