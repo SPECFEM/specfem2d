@@ -114,7 +114,7 @@ subroutine compute_viscoelastic_forces(is_viscoelastic)
         endif
         ! end of computing the constitutive law
 
-        ! compute the stiffness integral and forces at each gll points
+        ! compute the stiffness integral and forces at each GLL points
         ! weak formulation term based on stress tensor (non-symmetric form)
         ! also add GLL integration weights
         jacobianl = jacobian(i,j,ispec)

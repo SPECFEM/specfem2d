@@ -367,7 +367,7 @@ end module enforce_par
   real(kind=CUSTOM_REAL) :: freq
 
   freq = omegaj / (TWO*PI)
-  
+
   if (abs(freq*h - calculated1) < TINYVAL) then ! warning this line need double precision
     if (antisym) then
       cphase = 2611.4d0 ! A0 at fd = 0.75 Mhz.mm

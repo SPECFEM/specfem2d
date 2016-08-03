@@ -200,7 +200,7 @@
       !  lambdaplus2mu_s = kappa_s - mu_s
       !  lambda_s = lambdaplus2mu_s - 2.d0*mu_s
       !  lambdaplus2mu_fr = kappa_fr - mu_fr
-      !  lambda_fr = lambdaplus2mu_fr - 2.d0*mu_fr      
+      !  lambda_fr = lambdaplus2mu_fr - 2.d0*mu_fr
       !endif
 
       ! Biot coefficients for the input phi

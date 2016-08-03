@@ -1170,7 +1170,7 @@
                   coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
                   poroelastcoef(1,1,kmato(ispec)) + poroelastcoef(2,1,kmato(ispec)), &
                   poroelastcoef(2,1,kmato(ispec))
-              endif 
+              endif
             enddo
           enddo
         enddo
