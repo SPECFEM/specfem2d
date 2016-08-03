@@ -258,21 +258,21 @@
   allocate(ratio_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
 
   if (COMPUTE_INTEGRATED_ENERGY_FIELD) then ! = int_0^t v^2 dt
-    allocate(integrated_cinetic_energy_field(nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating integrated_cinetic_energy_field array'
-    integrated_cinetic_energy_field(:) = 0._CUSTOM_REAL
-    allocate(max_cinetic_energy_field(nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating max_cinetic_energy_field array'
-    max_cinetic_energy_field(:) = 0._CUSTOM_REAL
+    allocate(integrated_kinetic_energy_field(nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating integrated_kinetic_energy_field array'
+    integrated_kinetic_energy_field(:) = 0._CUSTOM_REAL
+    allocate(max_kinetic_energy_field(nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating max_kinetic_energy_field array'
+    max_kinetic_energy_field(:) = 0._CUSTOM_REAL
     allocate(integrated_potential_energy_field(nspec),stat=ier)
     if (ier /= 0) stop 'Error allocating integrated_potential_energy_field array'
     integrated_potential_energy_field(:) = 0._CUSTOM_REAL
     allocate(max_potential_energy_field(nspec),stat=ier)
     if (ier /= 0) stop 'Error allocating max_potential_energy_field array'
     max_potential_energy_field(:) = 0._CUSTOM_REAL
-    allocate(cinetic_effective_duration_field(nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating cinetic_effective_duration_field array'
-    cinetic_effective_duration_field(:) = 0._CUSTOM_REAL
+    allocate(kinetic_effective_duration_field(nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating kinetic_effective_duration_field array'
+    kinetic_effective_duration_field(:) = 0._CUSTOM_REAL
     allocate(potential_effective_duration_field(nspec),stat=ier)
     if (ier /= 0) stop 'Error allocating potential_effective_duration_field array'
     potential_effective_duration_field(:) = 0._CUSTOM_REAL

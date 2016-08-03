@@ -162,7 +162,7 @@
 
   use constants,only: FOUR_THIRDS
 
-  use specfem_par,only: AXISYM,porosity,tortuosity,poroelastcoef,density,kmato
+  use specfem_par,only: porosity,tortuosity,poroelastcoef,density,kmato ! AXISYM
 
   implicit none
 
@@ -213,6 +213,7 @@
 
   subroutine get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
 
+  ! use specfem_par,only: AXISYM
   use constants,only: FOUR_THIRDS
 
   implicit none

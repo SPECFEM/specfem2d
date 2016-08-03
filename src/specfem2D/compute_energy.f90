@@ -356,8 +356,8 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,TWO,ZERO
 
   use specfem_par,only: AXISYM,is_on_the_axis,nspec,ibool,deltat,veloc_elastic,potential_dot_acoustic,ispec_is_elastic, &
-                        ispec_is_poroelastic,integrated_cinetic_energy_field,max_cinetic_energy_field, &
-                        integrated_potential_energy_field,max_potential_energy_field,cinetic_effective_duration_field, &
+                        ispec_is_poroelastic,integrated_kinetic_energy_field,max_kinetic_energy_field, &
+                        integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
                         potential_effective_duration_field,potential_dot_gravitoacoustic,potential_dot_gravito,velocs_poroelastic, &
                         poroelastcoef,vsext,vpext,rhoext,density,kmato,assign_external_model,jacobian,wxgll,wzgll,displ_elastic, &
                         hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz,wxglj
@@ -457,16 +457,16 @@
 
       ! compute total integrated energy ! = int_0^t v^2 dt
       ! We record just one point per element (i=2, j=2)
-      integrated_cinetic_energy_field(ispec) = integrated_cinetic_energy_field(ispec)  &
+      integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
           +  (veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) ! &
             !*wxgll(i)*wzgll(j)*jacobianl / TWO
 
-      if (max_cinetic_energy_field(ispec) < veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) then
-        max_cinetic_energy_field(ispec) = veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2
+      if (max_kinetic_energy_field(ispec) < veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) then
+        max_kinetic_energy_field(ispec) = veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2
       endif
 
-      if (max_cinetic_energy_field(ispec) > ZERO) then
-        cinetic_effective_duration_field(ispec) = TWO*integrated_cinetic_energy_field(ispec)*deltat/max_cinetic_energy_field(ispec)
+      if (max_kinetic_energy_field(ispec) > ZERO) then
+        kinetic_effective_duration_field(ispec) = TWO*integrated_kinetic_energy_field(ispec)*deltat/max_kinetic_energy_field(ispec)
       endif
 
 
@@ -557,16 +557,16 @@
       jacobianl = jacobian(i,j,ispec)
 
       ! compute total integrated energy ! = int_0^t v^2 dt
-      integrated_cinetic_energy_field(ispec) = integrated_cinetic_energy_field(ispec)  &
+      integrated_kinetic_energy_field(ispec) = integrated_kinetic_energy_field(ispec)  &
            +  vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2 ! &
            !*wxgll(i)*wzgll(j)*jacobianl / TWO
 
-      if (max_cinetic_energy_field(ispec) < vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) then
-        max_cinetic_energy_field(ispec) = vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2
+      if (max_kinetic_energy_field(ispec) < vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) then
+        max_kinetic_energy_field(ispec) = vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2
       endif
 
-      if (max_cinetic_energy_field(ispec) > ZERO) then
-        cinetic_effective_duration_field(ispec) = TWO*integrated_cinetic_energy_field(ispec)*deltat/max_cinetic_energy_field(ispec)
+      if (max_kinetic_energy_field(ispec) > ZERO) then
+        kinetic_effective_duration_field(ispec) = TWO*integrated_kinetic_energy_field(ispec)*deltat/max_kinetic_energy_field(ispec)
       endif
 
       ! compute potential energy

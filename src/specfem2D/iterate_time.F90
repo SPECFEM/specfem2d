@@ -313,8 +313,8 @@ subroutine it_compute_integrated_energy_field_and_output()
 
   use constants,only:CUSTOM_REAL,NGLLX,NGLLZ,IIN,MAX_STRING_LEN
 
-  use specfem_par,only: myrank,it,coord,nspec,ibool,integrated_cinetic_energy_field,max_cinetic_energy_field, &
-                        integrated_potential_energy_field,max_potential_energy_field,cinetic_effective_duration_field, &
+  use specfem_par,only: myrank,it,coord,nspec,ibool,integrated_kinetic_energy_field,max_kinetic_energy_field, &
+                        integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
                         potential_effective_duration_field,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
                         !poroelastcoef,kmato,density,assign_external_model,vpext,ispec_is_acoustic ! TODO
 
@@ -333,9 +333,9 @@ subroutine it_compute_integrated_energy_field_and_output()
   ! computes maximum energy and integrated energy fields
   call compute_energy_fields()
 
-  ! write integrated cinetic energy field in external file
+  ! write integrated kinetic energy field in external file
 
-  write(filename,"('./OUTPUT_FILES/integrated_cinetic_energy_field',i5.5)") myrank
+  write(filename,"('./OUTPUT_FILES/integrated_kinetic_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
 
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
@@ -343,14 +343,14 @@ subroutine it_compute_integrated_energy_field_and_output()
     do ispec = 1,nspec
       iglob = ibool(2,2,ispec)
       write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(integrated_cinetic_energy_field(ispec),4)
+                   real(coord(2,iglob),4),real(integrated_kinetic_energy_field(ispec),4)
     enddo
   endif
   close(IIN)
 
-  ! write max cinetic energy field in external file
+  ! write max kinetic energy field in external file
 
-  write(filename,"('./OUTPUT_FILES/max_cinetic_energy_field',i5.5)") myrank
+  write(filename,"('./OUTPUT_FILES/max_kinetic_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
 
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
@@ -358,7 +358,7 @@ subroutine it_compute_integrated_energy_field_and_output()
     do ispec = 1,nspec
       iglob = ibool(2,2,ispec)
       write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(max_cinetic_energy_field(ispec),4)
+                   real(coord(2,iglob),4),real(max_kinetic_energy_field(ispec),4)
     enddo
   endif
   close(IIN)
@@ -408,9 +408,9 @@ subroutine it_compute_integrated_energy_field_and_output()
   endif
   close(IIN)
 
-  ! write cinetic effective duration field in external file
+  ! write kinetic effective duration field in external file
 
-  write(filename,"('./OUTPUT_FILES/cinetic_effective_duration_field',i5.5)") myrank
+  write(filename,"('./OUTPUT_FILES/kinetic_effective_duration_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
 
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
@@ -418,7 +418,7 @@ subroutine it_compute_integrated_energy_field_and_output()
     do ispec = 1,nspec
       iglob = ibool(2,2,ispec)
       write(IIN,*) real(coord(1,iglob),4), &
-                   real(coord(2,iglob),4),real(cinetic_effective_duration_field(ispec),4)
+                   real(coord(2,iglob),4),real(kinetic_effective_duration_field(ispec),4)
     enddo
   endif
   close(IIN)
