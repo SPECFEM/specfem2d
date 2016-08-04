@@ -164,7 +164,7 @@ program smooth_sem
   enddo
 
   ! check smoothing radii
-  sigma_h2_inv = ( 1.0 / (2.0 * (sigma_h ** 2)) ) ! factor two for gaussian distribution with standard variance sigma
+  sigma_h2_inv = ( 1.0 / (2.0 * (sigma_h ** 2)) ) ! factor two for Gaussian distribution with standard variance sigma
   sigma_v2_inv = ( 1.0 / (2.0 * (sigma_v ** 2)) )
 
   if ((1.0 / sigma_h2_inv) < 1.e-18) stop 'Error sigma_h2 zero, must non-zero'
@@ -179,7 +179,7 @@ program smooth_sem
 
   ! theoretic normal value
   ! (see integral over -inf to +inf of exp[- x*x/(2*sigma) ] = sigma * sqrt(2*pi) )
-  ! note: smoothing is using a gaussian (ellipsoid for sigma_h /= sigma_v),
+  ! note: smoothing is using a Gaussian (ellipsoid for sigma_h /= sigma_v),
   norm_h = 2.0*PI*sigma_h**2
   norm_v = sqrt(2.0*PI) * sigma_v
 
@@ -187,7 +187,7 @@ program smooth_sem
   if (myrank == 0) then
     print *,"command line arguments:"
     print *,"  smoothing sigma_h , sigma_v                : ",sigma_h,sigma_v
-    ! scalelength: approximately S ~ sigma * sqrt(8.0) for a gaussian smoothing
+    ! scalelength: approximately S ~ sigma * sqrt(8.0) for a Gaussian smoothing
     print *,"  smoothing scalelengths horizontal, vertical: ",sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
     print *,"  input dir : ",trim(input_dir)
     print *,"  output dir: ",trim(output_dir)
@@ -245,7 +245,7 @@ program smooth_sem
 
 
 ! loops over slices
-! each process reads all the other slices and gaussian filters the values
+! each process reads all the other slices and Gaussian filters the values
   allocate(tk(nglob_me,nker), bk(nglob_me),stat=ier)
   if (ier /= 0) stop 'Error allocating array tk and bk'
 
@@ -346,7 +346,7 @@ program smooth_sem
                 iglob = ibool_me(i,j,ispec)
                 if (imask(iglob)==1) cycle
 
-                ! calculate weights based on gaussian smoothing
+                ! calculate weights based on Gaussian smoothing
                 exp_val = 0.0_CUSTOM_REAL
 
                 call smoothing_weights_vec(xstore_me(i,j,ispec),zstore_me(i,j,ispec),sigma_h2_inv,sigma_v2_inv,exp_val,&
@@ -358,7 +358,7 @@ program smooth_sem
                 do iker= 1, nker
                 tk(iglob,iker) = tk(iglob,iker) + sum(exp_val(:,:) * dat_store(:,:,ispec2,iker))
                 enddo
-                ! normalization, integrated values of gaussian smoothing function
+                ! normalization, integrated values of Gaussian smoothing function
                 bk(iglob) = bk(iglob) + sum(exp_val(:,:))
 
               enddo
@@ -399,7 +399,7 @@ program smooth_sem
    !           print *, 'Problem norm here --- ', ispec, i, j, bk(i,j,ispec)
     !        endif
                 iglob = ibool_me(i,j,ispec)
-            ! normalizes smoothed kernel values by integral value of gaussian weighting
+            ! normalizes smoothed kernel values by integral value of Gaussian weighting
             dat_smooth(i,j,ispec,:) = tk(iglob,:) / bk(iglob)
           enddo
         enddo
@@ -498,7 +498,7 @@ end program smooth_sem
     do ii = 1, NGLLX
       ! gets vertical and horizontal distance
       call get_distance_square_vec(dist_h,dist_v,x0,z0,xx_elem(ii,jj),zz_elem(ii,jj))
-       ! gaussian function
+       ! Gaussian function
       exp_val(ii,jj) = exp(- sigma_h2_inv*dist_h - sigma_v2_inv*dist_v)
     enddo
   enddo

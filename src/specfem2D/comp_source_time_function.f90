@@ -52,7 +52,7 @@
   double precision, intent(in) :: t,hdur
   double precision :: hdur_decay,a
 
-  ! note: hdur given is hdur_gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
+  ! note: hdur given is hdur_Gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
   !           and SOURCE_DECAY_MIMIC_TRIANGLE ~ 1.68
   hdur_decay = hdur
 
@@ -83,7 +83,7 @@
   double precision, intent(in) :: t,hdur
   double precision :: hdur_decay,a
 
-  ! note: hdur given is hdur_gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
+  ! note: hdur given is hdur_Gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
   !           and SOURCE_DECAY_MIMIC_TRIANGLE ~ 1.68
   hdur_decay = hdur
 
@@ -113,7 +113,7 @@
   double precision, intent(in) :: t,hdur
   double precision :: hdur_decay,a
 
-  ! note: hdur given is hdur_gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
+  ! note: hdur given is hdur_Gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
   !           and SOURCE_DECAY_MIMIC_TRIANGLE ~ 1.68
   hdur_decay = hdur
 
@@ -147,7 +147,7 @@
   ! Gaussian wavelet
   a = PI**2 * f0**2
 
-  ! modified gaussian
+  ! modified Gaussian
   comp_source_time_function_gaussB = exp(-a * t**2)
 
   end function comp_source_time_function_gaussB
@@ -168,7 +168,7 @@
   ! Gaussian wavelet
   a = PI**2 * f0**2
 
-  ! modified gaussian
+  ! modified Gaussian
   comp_source_time_function_dgaussB = - 2.d0 * a * t * exp(-a * t**2)
 
   end function comp_source_time_function_dgaussB
@@ -189,7 +189,7 @@
   ! Gaussian wavelet
   a = PI**2 * f0**2
 
-  ! modified gaussian
+  ! modified Gaussian
   comp_source_time_function_d2gaussB = 2.0d0 * a * (2.0d0 * a * t**2 - 1.0d0) * exp(-a * t**2)
 
   end function comp_source_time_function_d2gaussB
@@ -211,7 +211,7 @@
   ! Gaussian wavelet
   a = PI**2 * f0**2
 
-  ! modified gaussian
+  ! modified Gaussian
   comp_source_time_function_d3gaussB = 4.0d0 * a**2 * t * (3.0d0 - 2.d0 * a * t**2) * exp(-a * t**2)
 
   end function comp_source_time_function_d3gaussB

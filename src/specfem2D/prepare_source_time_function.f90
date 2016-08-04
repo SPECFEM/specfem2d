@@ -250,7 +250,7 @@
             hdur = 1.d0 / f0_source(i_source)
             hdur_gauss = hdur * 5.d0 / 3.d0
 
-            ! convert the half duration for triangle STF to the one for gaussian STF
+            ! convert the half duration for triangle STF to the one for Gaussian STF
             hdur_gauss = hdur_gauss / SOURCE_DECAY_MIMIC_TRIANGLE
 
             ! quasi-Heaviside
