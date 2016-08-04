@@ -182,7 +182,7 @@
       if (AXISYM) then
         if (is_on_the_axis(ispec)) then
           call lagrange_any(xi_source(i_source),NGLJ,xiglj,hxis,hpxis)
-          !do j = 1,NGLJ ! AB AB same result with that loop
+          !do j = 1,NGLJ ! ABAB same result with that loop, this is good
           !  hxis(j) = hglj(j-1,xi_source(i_source),xiglj,NGLJ)
           !enddo
         else

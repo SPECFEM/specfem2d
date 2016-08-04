@@ -366,13 +366,13 @@ end module interpolation
           vpext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, vp_tomo, xmesh, zmesh,TINYVAL)
           vsext(i,j,ispec) = interpolate(NX, x_tomo, NZ, z_tomo, vs_tomo, xmesh, zmesh,TINYVAL)
 
-          !! AB AB : The 3 following lines are important, otherwise PMLs won't work.
+          !! ABAB : The 3 following lines are important, otherwise PMLs won't work. TODO check that
           !! (we assign these values several times: indeed for each kmato(ispec) it can exist a lot of rhoext(i,j,ispec) )
           density(1,kmato(ispec)) = rhoext(i,j,ispec)
           poroelastcoef(3,1,kmato(ispec)) = rhoext(i,j,ispec) * vpext(i,j,ispec) * vpext(i,j,ispec)
           poroelastcoef(2,1,kmato(ispec)) =  rhoext(i,j,ispec) * vsext(i,j,ispec) * vsext(i,j,ispec)
 
-          !! AB AB : I do the same with anisotropy and attenuation even if I don't use them (for the future) :
+          !! ABAB : I do the same with anisotropy and attenuation even if I don't use them (for the future) :
           anisotropy(1,kmato(ispec)) = c11ext(i,j,ispec)
           anisotropy(2,kmato(ispec)) = c13ext(i,j,ispec)
           anisotropy(3,kmato(ispec)) = c15ext(i,j,ispec)

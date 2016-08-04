@@ -552,7 +552,7 @@
         gammazl = deriv(4,i,j)
         jacobianl = deriv(5,i,j)
 
-        !! AB AB with the notations of Komatitsch & Tromp 1999 (with 3 -> 2) :
+        !! ABAB with the notations of Komatitsch & Tromp 1999 (with 3 -> 2) :
         ! tempx1(i,j) = w.J.F_{11}^{ij}
         ! tempz1(i,j) = w.J.F_{21}^{ij}
         ! tempx2(i,j) = w.J.F_{12}^{ij}

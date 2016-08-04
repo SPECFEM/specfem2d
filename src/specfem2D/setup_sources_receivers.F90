@@ -509,9 +509,6 @@
   integer :: irecloc
   double precision :: x_final_receiver_dummy, z_final_receiver_dummy
 
-  ! for Lagrange interpolants
-  double precision, external :: hgll, hglj
-
   ! receiver arrays
   if (nrecloc > 0) then
     nrec_alloc = nrecloc
@@ -778,7 +775,7 @@
       if (AXISYM) then
         if (is_on_the_axis(ispec)) then
           call lagrange_any(xi_source(i_source),NGLJ,xiglj,hxis,hpxis)
-          !do j = 1,NGLJ ! AB AB same result with that loop
+          !do j = 1,NGLJ ! ABAB same result with that loop, this is good
           !  hxis(j) = hglj(j-1,xi_source(i_source),xiglj,NGLJ)
           !enddo
         else
@@ -893,14 +890,22 @@
     if (AXISYM) then
       if (is_on_the_axis(ispec_selected_rec(irec)) .and. myrank == islice_selected_rec(irec)) then
         call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
-        !do j = 1,NGLJ ! AB AB Same result with that loop
-        !  hxir(j) = hglj(j-1,xi_receiver(irec),xiglj,NGLJ)
+        !do j = 1,NGLJ ! ABAB Exactly same result with that loop. This is good
+        !  hxir2(j) = hglj(j-1,xi_receiver(irec),xiglj,NGLJ)
+        !  print *,hxir(j),' = ',hxir2(j)
         !enddo
       else
         call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
       endif
     else
       call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
+      !do j = 1,NGLLX !do j = 1,NGLJ ! ABAB Exactly same result with that loop. This is good
+      !  hxir2(j) = hgll(j-1,xi_receiver(irec),xigll,NGLLX)
+      !  print *,hxir(j),' = ',hxir2(j)
+      !enddo
+      ! Defined:
+      !  double precision, dimension(NGLL) :: hxir2
+      !  double precision, external :: hglj,hgll
     endif
     call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
 

@@ -684,6 +684,8 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: integrated_kinetic_energy_field,max_kinetic_energy_field
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: integrated_potential_energy_field,max_potential_energy_field
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: kinetic_effective_duration_field,potential_effective_duration_field
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: total_integrated_energy_field,max_total_energy_field
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: total_effective_duration_field
 
   !---------------------------------------------------------------------
   ! for seismograms
