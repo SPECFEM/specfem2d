@@ -174,7 +174,6 @@
       call pml_compute_memory_variables_acoustic(ispec,nglob,potential_acoustic_old,dux_dxl,dux_dzl)
     endif
 
-
     ! first double loop to compute gradient
     if (AXISYM) then
       ! AXISYM case

@@ -306,8 +306,6 @@ end subroutine it_transfer_from_GPU
 !----------------------------------------------------------------------------------------
 !
 
-
-
 subroutine it_compute_integrated_energy_field_and_output()
   ! compute int_0^t v^2 dt and write it on file if needed
 
@@ -315,27 +313,56 @@ subroutine it_compute_integrated_energy_field_and_output()
 
   use specfem_par,only: myrank,it,coord,nspec,ibool,integrated_kinetic_energy_field,max_kinetic_energy_field, &
                         integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
-                        potential_effective_duration_field,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
-                        !poroelastcoef,kmato,density,assign_external_model,vpext,ispec_is_acoustic ! TODO
+                        potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
+                        total_effective_duration_field,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
+                        !poroelastcoef,kmato,density,assign_external_model,vpext,ispec_is_acoustic ! ABAB
 
   implicit none
 
   ! local variables
-  integer :: ispec,iglob!,i,j
+  integer :: ispec,iglob,statMkdir,system !i,j
   character(len=MAX_STRING_LEN)  :: filename
 
-  !! Uncomment to write the velocity profile in acoustic part TODO
+  !! ABAB Uncomment to write the velocity profile in acoustic part
   !real(kind=CUSTOM_REAL) :: cpl,kappal
   !double precision :: rhol
   !double precision :: lambdal_unrelaxed_elastic
-  !! TODO
+  !! ABAB
 
   ! computes maximum energy and integrated energy fields
   call compute_energy_fields()
 
+  ! Create directories
+  ! TODO replace by execute_command_line or makedirqq (change compilation)
+  if (it == 1) then
+    if (myrank == 0) then
+      statMkdir = system('mkdir -p ./OUTPUT_FILES/energyFields')
+      if(statMkdir .ne. 0) then
+        call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields')
+      endif
+     statMkdir = system('mkdir -p ./OUTPUT_FILES/energyFields/kinetic')
+     if(statMkdir .ne. 0) then
+       call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/kinetic')
+     endif
+     statMkdir = system('mkdir -p ./OUTPUT_FILES/energyFields/potential')
+     if(statMkdir .ne. 0) then
+       call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/potential')
+     endif
+     statMkdir = system('mkdir -p ./OUTPUT_FILES/energyFields/total')
+     if(statMkdir .ne. 0) then
+       call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/total')
+     endif
+     !if(.not. makedirqq("./OUTPUT_FILES/energyFields/total")) then ! ABAB This would be better
+     !  call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/total')
+     !endif
+    endif
+  endif
+
+  call synchronize_all() ! Wait for first proc to create directories
+
   ! write integrated kinetic energy field in external file
 
-  write(filename,"('./OUTPUT_FILES/integrated_kinetic_energy_field',i5.5)") myrank
+  write(filename,"('./OUTPUT_FILES/energyFields/kinetic/integrated_kinetic_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
 
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
@@ -350,7 +377,7 @@ subroutine it_compute_integrated_energy_field_and_output()
 
   ! write max kinetic energy field in external file
 
-  write(filename,"('./OUTPUT_FILES/max_kinetic_energy_field',i5.5)") myrank
+  write(filename,"('./OUTPUT_FILES/energyFields/kinetic/max_kinetic_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
 
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
@@ -365,7 +392,7 @@ subroutine it_compute_integrated_energy_field_and_output()
 
   ! write integrated potential energy field in external file
 
-  write(filename,"('./OUTPUT_FILES/integrated_potential_energy_field',i5.5)") myrank
+  write(filename,"('./OUTPUT_FILES/energyFields/potential/integrated_potential_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
 
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
@@ -380,7 +407,7 @@ subroutine it_compute_integrated_energy_field_and_output()
 
   ! write max potential energy field in external file
 
-  write(filename,"('./OUTPUT_FILES/max_potential_energy_field',i5.5)") myrank
+  write(filename,"('./OUTPUT_FILES/energyFields/potential/max_potential_energy_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
 
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
@@ -395,7 +422,7 @@ subroutine it_compute_integrated_energy_field_and_output()
 
   ! write potential effective duration field in external file
 
-  write(filename,"('./OUTPUT_FILES/potential_effective_duration_field',i5.5)") myrank
+  write(filename,"('./OUTPUT_FILES/energyFields/potential/potential_effective_duration_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
 
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
@@ -410,7 +437,7 @@ subroutine it_compute_integrated_energy_field_and_output()
 
   ! write kinetic effective duration field in external file
 
-  write(filename,"('./OUTPUT_FILES/kinetic_effective_duration_field',i5.5)") myrank
+  write(filename,"('./OUTPUT_FILES/energyFields/kinetic/kinetic_effective_duration_field',i5.5)") myrank
   open(unit=IIN,file=trim(filename),status='unknown',action='write')
 
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
@@ -423,7 +450,52 @@ subroutine it_compute_integrated_energy_field_and_output()
   endif
   close(IIN)
 
-  ! Uncomment to write the velocity profile in the acoustic part in file
+  ! write total integrated energy field in external file
+
+  write(filename,"('./OUTPUT_FILES/energyFields/total/total_integrated_energy_field',i5.5)") myrank
+  open(unit=IIN,file=trim(filename),status='unknown',action='write')
+
+  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(total_integrated_energy_field(ispec),4)
+    enddo
+  endif
+  close(IIN)
+
+  ! write max total energy field in external file
+
+  write(filename,"('./OUTPUT_FILES/energyFields/total/max_total_energy_field',i5.5)") myrank
+  open(unit=IIN,file=trim(filename),status='unknown',action='write')
+
+  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(max_total_energy_field(ispec),4)
+    enddo
+  endif
+  close(IIN)
+
+  ! write total effective duration field in external file
+
+  write(filename,"('./OUTPUT_FILES/energyFields/total/total_effective_duration_field',i5.5)") myrank
+  open(unit=IIN,file=trim(filename),status='unknown',action='write')
+
+  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+    ! loop over spectral elements
+    do ispec = 1,nspec
+      iglob = ibool(2,2,ispec)
+      write(IIN,*) real(coord(1,iglob),4), &
+                   real(coord(2,iglob),4),real(total_effective_duration_field(ispec),4)
+    enddo
+  endif
+  close(IIN)
+
+  ! ABAB Uncomment to write the velocity profile in the acoustic part in file
   !
   !  write(filename,"('./OUTPUT_FILES/velocities',i5.5)") myrank
   !  open(unit=IIN,file=trim(filename),status='unknown',action='write')

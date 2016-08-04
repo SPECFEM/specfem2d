@@ -134,11 +134,11 @@
           stop 'wrong flag number in external model; exiting...'
         endif
 
-        !! AB AB Do not forget these 3 lines otherwise PML may not work !!
+        !! ABAB Do not forget these 3 lines otherwise PML may not work !! TODO check that
         density(1,kmato(ispec)) = rho(i,j,ispec)
         poroelastcoef(3,1,kmato(ispec)) = rho(i,j,ispec) * vp(i,j,ispec) * vp(i,j,ispec)
         poroelastcoef(2,1,kmato(ispec)) =  rho(i,j,ispec) * vs(i,j,ispec) * vs(i,j,ispec)
-        !! AB AB Do not forget these 3 lines otherwise PML may not work !!
+        !! ABAB Do not forget these 3 lines otherwise PML may not work !! TODO check that
 
       enddo
     enddo

@@ -155,13 +155,12 @@
     ! end of loop on all the spectral elements
     enddo
 
-
     ! ****************************************
     ! find the best (xi,gamma) for each receiver
     ! ****************************************
     ! use initial guess in xi and gamma
 
-    if (AXISYM) then ! TODO
+    if (AXISYM) then
       if (is_on_the_axis(ispec_selected_rec(irec))) then
         xi = xiglj(ix_initial_guess)
       else

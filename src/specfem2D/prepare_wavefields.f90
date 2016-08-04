@@ -257,7 +257,16 @@
 
   allocate(ratio_kl(NGLLX,NGLLZ,nspec_poroelastic_b))
 
-  if (COMPUTE_INTEGRATED_ENERGY_FIELD) then ! = int_0^t v^2 dt
+  if (COMPUTE_INTEGRATED_ENERGY_FIELD) then
+    allocate(total_integrated_energy_field(nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating total_integrated_energy_field array'
+    total_integrated_energy_field(:) = 0._CUSTOM_REAL
+    allocate(max_total_energy_field(nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating max_total_energy_field array'
+    max_total_energy_field(:) = 0._CUSTOM_REAL
+    allocate(total_effective_duration_field(nspec),stat=ier)
+    if (ier /= 0) stop 'Error allocating total_effective_duration_field array'
+    total_effective_duration_field(:) = 0._CUSTOM_REAL
     allocate(integrated_kinetic_energy_field(nspec),stat=ier)
     if (ier /= 0) stop 'Error allocating integrated_kinetic_energy_field array'
     integrated_kinetic_energy_field(:) = 0._CUSTOM_REAL
