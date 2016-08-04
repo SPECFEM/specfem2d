@@ -146,7 +146,7 @@
 !  Compute the value of the Lagrangian interpolant L through
 !  the NZ Gauss-Lobatto Legendre points ZGLL at point Z
 ! See Nissen & Meyer 2007 A two-dimensional spectral-element method for computing
-! spherical-earth seismograms – I. Moment-tensor source GJI p.1087 eq. A19
+! spherical-earth seismograms - I. Moment-tensor source GJI p.1087 eq. A19
 !
 !-------------------------------------------------------------
 
@@ -191,7 +191,7 @@
 !  Compute the value of the Lagrangian interpolant L through
 !  the NZ Gauss-Lobatto Jacobi points ZGLJ at point Z
 !  See Nissen & Meyer 2007 A two-dimensional spectral-element method for computing
-!  spherical-earth seismograms – I. Moment-tensor source GJI p.1088 eq. A26
+!  spherical-earth seismograms - I. Moment-tensor source GJI p.1088 eq. A26
 !
 !-------------------------------------------------------------
 
@@ -242,7 +242,7 @@
 !  polynomial interpolant of the GLJ quadrature through the
 !  NZ Gauss-Lobatto-Jacobi (0,1) points ZGLJ at point ZGLJ(j)
 !  See Nissen & Meyer 2007 A two-dimensional spectral-element method for computing
-!  spherical-earth seismograms – I. Moment-tensor source GJI p.1088 eq. A27
+!  spherical-earth seismograms - I. Moment-tensor source GJI p.1088 eq. A27
 !  WARNING there is an error at line 7 of this equation
 !  \partial_{\xi}\overline{l}_{i}(\overline{\xi}_{I})=\dfrac{1}{\overline{P}_{N}(\overline{\xi}_{i})(1-\overline{\xi}_{i})}
 !

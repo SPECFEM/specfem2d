@@ -337,19 +337,19 @@ subroutine it_compute_integrated_energy_field_and_output()
   if (it == 1) then
     if (myrank == 0) then
       statMkdir = system('mkdir -p ./OUTPUT_FILES/energyFields')
-      if(statMkdir .ne. 0) then
+      if(statMkdir /= 0) then
         call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields')
       endif
      statMkdir = system('mkdir -p ./OUTPUT_FILES/energyFields/kinetic')
-     if(statMkdir .ne. 0) then
+     if(statMkdir /= 0) then
        call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/kinetic')
      endif
      statMkdir = system('mkdir -p ./OUTPUT_FILES/energyFields/potential')
-     if(statMkdir .ne. 0) then
+     if(statMkdir /= 0) then
        call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/potential')
      endif
      statMkdir = system('mkdir -p ./OUTPUT_FILES/energyFields/total')
-     if(statMkdir .ne. 0) then
+     if(statMkdir /= 0) then
        call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/total')
      endif
      !if(.not. makedirqq("./OUTPUT_FILES/energyFields/total")) then ! ABAB This would be better
