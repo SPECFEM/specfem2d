@@ -84,7 +84,9 @@ program adj_seismogram
   ! reads in file arguments
   do i = 1,4
     call get_command_argument(i,arg)
-    if (trim(arg) == '' .or. command_argument_count() /= 4) then
+!! DK DK suppressed because null strings are not part of the Fortran standard, thus the IBM xlf compiler rejects them for instance
+!   if (trim(arg) == '' .or. command_argument_count() /= 4) then
+    if (command_argument_count() /= 4) then
       print *,'Usage: '
       print *,'  xadj_seismogram t1 t2 station-name adj_comp[1-3]'
       print *,'with'
@@ -162,23 +164,23 @@ program adj_seismogram
 
   ! user output
   print *,'adjoint source - seismogram:'
-  print *,''
+  print *
   print *,'setup:'
   print *,'  number of adjoint stations (nrec)   = ',nrec
   do irec = 1,nrec
     print *,'  station name ',irec,':    ',station_name(irec)
   enddo
-  print *,''
+  print *
   print *,'  seismogram components   = ',NDIMr
   if (NDIMr == 1) then
     print *,'  seismogram label        = ',compr(1)
   else
     print *,'  seismogram labels       = ',compr(1),' / ',compr(2)
   endif
-  print *,''
+  print *
   print *,'  time window start/end                           = ',tstart(1),tend(1)
   print *,'  adjoint source trace component (1==X/2==Y/3==Z) = ',adj_comp
-  print *,''
+  print *
 
   ! basic check
   do irec = 1,nrec
@@ -269,11 +271,11 @@ program adj_seismogram
   ! user output
   print *,'reading input traces:'
   print *,'  number of time steps (NSTEP)  = ',NSTEP
-  print *,''
+  print *
   print *,'  start time (t0)               = ',t0
   print *,'  end time                      = ',(NSTEP-1)*deltat + t0
   print *,'  time step size (deltat)       = ',deltat
-  print *,''
+  print *
 
   ! allocates trace arrays
   allocate( time_window(NSTEP), &
@@ -333,7 +335,7 @@ program adj_seismogram
     print *,'time window:'
     print *,'  index      : istart =',istart, 'iend =', iend
     print *,'  time window: tstart =',(istart-1)*deltat + t0, 'tend =',(iend-1)*deltat + t0
-    print *,''
+    print *
 
     if(istart >= iend) then
       print *,"Error start/end index: ",istart,iend
@@ -396,7 +398,7 @@ program adj_seismogram
          print *,'Norm =', Nnorm
          ft_bar(:) = 0.d0
       endif
-      print *,''
+      print *
 
       do itime = 1,NSTEP
          if(icomp == adj_comp) then

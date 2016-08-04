@@ -86,7 +86,7 @@
   sep_header_file_complete=trim(adjustl(sep_directory))//trim(adjustl(sep_header_file))
 
   open(unit=13,file=trim(adjustl(sep_header_file_complete)),status='old',iostat=ier)
-  print *, ''
+  print *
   print *, '*******************************************************************************'
   print *, 'reading sep header file: '
   print *, trim(adjustl(sep_header_file_complete))
@@ -108,7 +108,7 @@
   sep_file=trim(adjustl(sep_directory))//trim(adjustl(sep_file))
   data_format=data_format(1:len_trim(adjustl(data_format))-1)
 
-  print *, ''
+  print *
   print *, 'sep file specified in the header file is: ', trim(adjustl(sep_file))
   print *, 'NX,NY,NZ = ', NX,NY,NZ
   print *, 'OX,OY,OZ = ', OX,OY,OZ
@@ -116,7 +116,7 @@
   print *, 'esize = ', esize
   print *, 'data_format = ', trim(adjustl(data_format))
   print *, '*******************************************************************************'
-  print *, ''
+  print *
 
   end subroutine READ_SEP_HEADER
 
@@ -158,7 +158,7 @@
   if (ier/=0) stop 'ERROR: reading sep file'
   print *, 'done reading sucessfully'
   print *, '*******************************************************************************'
-  print *, ''
+  print *
 
   end subroutine READ_SEP_MODEL_2D
 

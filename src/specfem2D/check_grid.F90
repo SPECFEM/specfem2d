@@ -422,19 +422,19 @@
             write(IMAIN,*) '----'
             write(IMAIN,*) '  Source ',i
             write(IMAIN,*) '  maximum dominant source frequency = ',f0max,'Hz'
-            write(IMAIN,*) ''
+            write(IMAIN,*)
             if (POROELASTIC_SIMULATION) then
               ! slow and fast P-waves
               write(IMAIN,*) '  Nb pts / lambdaPI_fmax min = ',sngl(lambdaPImin/f0max)
               write(IMAIN,*) '  Nb pts / lambdaPI_fmax max = ',sngl(lambdaPImax/f0max)
-              write(IMAIN,*) ''
+              write(IMAIN,*)
               write(IMAIN,*) '  Nb pts / lambdaPII_fmax min = ',sngl(lambdaPIImin/f0max)
               write(IMAIN,*) '  Nb pts / lambdaPII_fmax max = ',sngl(lambdaPIImax/f0max)
             else
               write(IMAIN,*) '  Nb pts / lambdaP_fmax min = ',sngl(lambdaPImin/f0max)
               write(IMAIN,*) '  Nb pts / lambdaP_fmax max = ',sngl(lambdaPImax/f0max)
             endif
-            write(IMAIN,*) ''
+            write(IMAIN,*)
 
             ! check if fluid regions
             if (vsmin > TINYVAL) then

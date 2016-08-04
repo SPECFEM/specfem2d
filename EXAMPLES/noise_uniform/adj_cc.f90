@@ -61,7 +61,7 @@ program adj_cc
   call getinc(file_in,nt,dt)
   nthalf = (nt+1)/2
 
-  write(*,*) ''
+  print *
   write(*,*) 'This routine works only for evenly sampled cross-correlograms.'
   write(*,*) 'Reading from file: '//trim(file_in)
   write(*,'(a,i10)')   ' nt: ', nt
@@ -187,14 +187,14 @@ program adj_cc
     seismo_adj(:) = 0.0
   endif
 
-  write(*,*) ''
+  print *
   write(*,*) 'adjoint source norm = ',sngl(norm_adj)
 
   !!!!!!!!!! WRITE ADJOINT SOURCE !!!!!!!!!!!!!!!!!!!!
   open(unit=1002,file=trim(file_in)//'.adj',status='unknown',iostat=ios)
   if (ios /= 0) write(*,*) 'Error opening output file.'
 
-  write(*,*) ''
+  print *
   write(*,*) 'Writing to file: '//trim(file_in)//'.adj'
 
   do it = 1,nt
@@ -204,7 +204,7 @@ program adj_cc
   close(1002)
 
   write(*,*) 'Finished writing to file.'
-  write(*,*) ''
+  print *
 
 
 end program adj_cc

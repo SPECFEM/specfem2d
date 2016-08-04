@@ -93,7 +93,7 @@
 
   print *,'Xmin and Xmax of the mesh read = ',xmin,xmax
   print *,'Zmin and Zmax of the mesh read = ',zmin,zmax
-  print *, ''
+  print *
 
   print *,'What is the exact thickness of the PML layer that you want'
   print *,'on the Xmin and Xmax faces of your mesh? (it needs to correspond exactly'

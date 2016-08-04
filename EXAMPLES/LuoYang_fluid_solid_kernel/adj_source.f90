@@ -48,9 +48,9 @@
   enddo
   rewind(1)
 
-  print *,''
+  print *
   print *,'number of time steps in trace file: ',nstep
-  print *,''
+  print *
 
   do i = 1,nstep
     ! reads in trace values

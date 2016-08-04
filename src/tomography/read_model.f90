@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
 subroutine read_model_nspec()
 
 ! reads in nspec from database
@@ -64,8 +63,8 @@ subroutine read_model_nspec()
 
   ! user output
   if (myrank == 0) then
-    print *,'number of spectral-elements: ',nspec
-    print *,''
+    print *,'number of spectral elements: ',nspec
+    print *
   endif
 
 end subroutine read_model_nspec

@@ -147,11 +147,11 @@ subroutine viscoelastic_attenuation_model()
   Mu_nu1_sent = real(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS),kind=4)
   Mu_nu2_sent = real(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS),kind=4)
 
-  ! print *,''
+  ! print *
   ! print *, 'inv_tau_sigma_nu1_sent= ', inv_tau_sigma_nu1_sent, 'inv_tau_sigma_nu2_sent= ', inv_tau_sigma_nu2_sent
   ! print *, 'phi_nu1_sent= ', phi_nu1_sent, 'phi_nu2_sent= ', phi_nu2_sent
   ! print *, 'Mu_nu1_sent= ', Mu_nu1_sent, 'Mu_nu2_sent= ', Mu_nu2_sent
-  ! print *,''
+  ! print *
 
 
   if (Mu_nu1_sent < 1. .or. Mu_nu2_sent < 1.) &
@@ -253,11 +253,11 @@ subroutine viscoacoustic_attenuation_model()
   Mu_nu1_sent = real(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS),kind=4)
 
 
-  ! print *,''
+  ! print *
   ! print *, 'inv_tau_sigma_nu1_sent= ', inv_tau_sigma_nu1_sent, 'inv_tau_sigma_nu2_sent= ', inv_tau_sigma_nu2_sent
   ! print *, 'phi_nu1_sent= ', phi_nu1_sent, 'phi_nu2_sent= ', phi_nu2_sent
   ! print *, 'Mu_nu1_sent= ', Mu_nu1_sent, 'Mu_nu2_sent= ', Mu_nu2_sent
-  ! print *,''
+  ! print *
 
 
   if (Mu_nu1_sent < 1.) &

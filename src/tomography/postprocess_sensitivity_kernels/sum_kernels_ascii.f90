@@ -83,7 +83,7 @@ program sum_kernels_ascii
 
   if (command_argument_count() /= NARGS) then
     print *, 'USAGE: bin/xsum_kernels_ascii INPUT_FILE OUTPUT_DIR'
-    print *, ''
+    print *
     stop 'Please check command line arguments'
   endif
 

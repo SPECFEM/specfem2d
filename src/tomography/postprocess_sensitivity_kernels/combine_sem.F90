@@ -86,7 +86,7 @@ program combine_sem
 
     if (command_argument_count() /= 3) then
       print *, 'mpirun -n NPROC bin/xcombine_sem KERNEL_NAMES INPUT_FILE OUTPUT_DIR'
-      print *, ''
+      print *
       stop 'Please check command line arguments'
     endif
   endif

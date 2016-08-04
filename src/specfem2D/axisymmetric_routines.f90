@@ -118,14 +118,14 @@
           if (((anglesource(isource) > TINYVAL) .and. (anglesource(isource) < PI) ) &    ! ... and has a radial component.
             .or. ( (anglesource(isource) > PI) .and. (anglesource(isource) < TWO*PI))) then
             print *, '***** WARNING *****'
-            print *, 'Axisymmetry : U_r(r=0)=0, Radial component of axial source will be ignored (anglesource /= 0 modulo 180)'
-            print *, ''
+            print *, 'Axisymmetry: U_r(r=0)=0, Radial component of axial source will be ignored (anglesource /= 0 modulo 180)'
+            print *
           endif
         endif
       else                                                      !   If the source is not on an axial element
         print *, '***** WARNING *****'
-        print *, 'Axisymmetry : physically a non axial source is a circular source!'
-        print *, ''
+        print *, 'Axisymmetry: physically a non axial source is a circular source!'
+        print *
       endif
     endif
   enddo

@@ -171,10 +171,10 @@
   open(unit=500,file='NOISE_TOMOGRAPHY/irec_master_noise',status='old',action='read',iostat=ier)
   if (ier /= 0) then
     ! we will be strict on input format
-    write(*,*) ''
+    print *
     write(*,*) 'Error opening NOISE_TOMOGRAPHY/irec_master_noise file'
     write(*,*) 'Please make sure all noise setup files exist in NOISE_TOMOGRAPHY/ directory...'
-    write(*,*) ''
+    print *
     stop 'Error opening NOISE_TOMOGRAPHY/irec_master_noise file'
   endif
 

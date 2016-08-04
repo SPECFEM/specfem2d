@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
 module specfem_par
 
 ! main parameter module for specfem simulations
@@ -626,7 +625,7 @@ module specfem_par
   ! global points
   integer :: nglob,npgeo
 
-  ! spectral-elements
+  ! spectral elements
   integer :: nspec
 
   ! for MPI and partitioning

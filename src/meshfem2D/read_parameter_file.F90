@@ -44,19 +44,22 @@
   logical, intent(in) :: BROADCAST_AFTER_READ
 
   ! initializes
+
   ! external meshing
-  mesh_file = ''
-  nodes_coords_file = ''
-  materials_file = ''
-  free_surface_file = ''
-  axial_elements_file = ''
-  absorbing_surface_file = ''
-  acoustic_forcing_surface_file = ''
-  CPML_element_file = ''
-  tangential_detection_curve_file = ''
+!! DK DK suppressed because null strings are not part of the Fortran standard, thus the IBM xlf compiler rejects them for instance
+! mesh_file = ''
+! nodes_coords_file = ''
+! materials_file = ''
+! free_surface_file = ''
+! axial_elements_file = ''
+! absorbing_surface_file = ''
+! acoustic_forcing_surface_file = ''
+! CPML_element_file = ''
+! tangential_detection_curve_file = ''
 
   ! internal meshing
-  interfacesfile = ''
+!! DK DK suppressed because null strings are not part of the Fortran standard, thus the IBM xlf compiler rejects them for instance
+! interfacesfile = ''
   xmin_param = 0.d0
   xmax_param = 0.d0
   nx_param = 0

@@ -90,21 +90,21 @@ program adj_seismogram
 
   ! user output
   print *,'adjoint source - seismogram:'
-  print *,''
+  print *
   print *,'parameters:'
   print *,'  NSTEP  = ',NSTEP
   print *,'  deltat = ',deltat
   print *,'  nrec   = ',nrec
   print *,'  t0     = ',t0
-  print *,''
+  print *
   print *,'setup:'
   print *,'  seismogram components   = ',NDIMr
   print *,'  seismogram labels       = ',compr(1),' / ',compr(2)
   print *,'  station name            = ',trim(station_name(1))
-  print *,''
+  print *
   print *,'  time window start/end                           = ',tstart(1),tend(1)
   print *,'  adjoint source trace component (1==X/2==Y/3==Z) = ',adj_comp
-  print *,''
+  print *
 
   do irec = 1,nrec
 

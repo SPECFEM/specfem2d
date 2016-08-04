@@ -53,7 +53,7 @@
   if (ier /= 0 ) then
     if (myrank == 0) then
       print *,'Error opening database file: ',trim(prname)
-      print *,''
+      print *
       print *,'Please make sure that the mesher has been run before this solver simulation with the correct settings...'
     endif
     call exit_MPI(myrank,'Error opening file OUTPUT_FILES/Database***.bin')
