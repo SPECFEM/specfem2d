@@ -84,11 +84,13 @@ def interpolateValue(array,xil,zil,x,z):
 # Here we read the argument given and we check them
 
 parser = argparse.ArgumentParser(
-    description="This script plot the files integrated_cinetic_energy_fieldXXXXX representing the energy that have crossed each point")
+    description="This script plot the files total_integrated_energy_fieldXXXXX representing the energy that have crossed each point")
 parser.add_argument("--input_directory","-d",type=str,default="./",
-    help="input_directory: directory where we can find the files integrated_energy_fieldXXXXX")
-parser.add_argument("--name_of_files","-n",type=str,default="integrated_cinetic_energy_field",
-    help="name_of_files: to plot something different than integrated_cinetic_energy_fieldXXXXX")
+    help="input_directory: directory where we can find the files total_integrated_energy_fieldXXXXX")
+parser.add_argument("--par_file_directory",type=str,default="../../",
+    help="par_file_directory: directory where we can find the Par_file of the run. Default: input_directory/../../")
+parser.add_argument("--name_of_files","-n",type=str,default="total_integrated_energy_field",
+    help="name_of_files: to plot something different than total_integrated_energy_fieldXXXXX")
 parser.add_argument('-p','--profiles', action='store_true',
     help='profiles: calculate energy profiles')
 parser.add_argument('-nc','--no_concatenate_files', action='store_true',
@@ -125,8 +127,8 @@ directory=args.input_directory
 
 fontsize = 14
 zminProfiles = -5000
-zmaxProfiles = -650 # TODO (-650m for 0.5Hz, -300m for 2Hz...)
-xsp = 500000
+zmaxProfiles = -200 # TODO (-650m for 0.5Hz, -300m for 2Hz...)
+xsp = 50000
 
 # Check
 if not os.path.isdir(directory):
@@ -135,6 +137,14 @@ if not os.path.isdir(directory):
 
 if directory[-1] != '/': #If the path given don't finish by slash...
     directory=directory+'/' #... we add one
+
+if args.par_file_directory:
+    if args.par_file_directory[-1] != '/': #If the path given don't finish by slash...
+        par_file_directory=args.par_file_directory+'/' #... we add one
+    else:
+        par_file_directory = args.par_file_directory
+else:
+    par_file_directory = directory+"../../"
 
 if not glob.glob(directory+args.name_of_files+"*"): # If we don't find any matching energy file...
     print("No files "+directory+args.name_of_files+"* were found!")
@@ -160,6 +170,7 @@ plt.close('all')
 if args.verbose:
     print("Load data in "+directory+args.name_of_files+"All")
 x,z,intEnergy=np.loadtxt(directory+args.name_of_files+"All").T
+
 #if args.verbose:
 #    print("Load seismograms "+directory+"AA.S0001.BXX.semv AA.S0001.BXZ.semv at 300m from the source")
 #t,vx0=np.loadtxt(directory+"AA.S0001.BXX.semv").T
@@ -169,7 +180,9 @@ if args.verbose:
 
 if "integrated" in args.name_of_files: # We have to multiply by dt
     #scalingFactor = (vx0**2+vz0**2).sum()
-    par_file=ParFile(directory+'Par_file') # Open and read the Par_file
+    if args.verbose:
+        print("Opening Par_file in ",par_file_directory,"...")
+    par_file=ParFile(par_file_directory+'Par_file') # Open and read the Par_file
     intEnergy = intEnergy * par_file.dt * x
     #intEnergy = intEnergy/scalingFactor
 
