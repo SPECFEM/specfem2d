@@ -45,12 +45,20 @@ subroutine iterate_time()
   implicit none
 
   ! local parameters
+
+! time the code in order to compute element weights, which can then be used to define typical weights
+! for the SCOTCH domain decomposer (this is crucial, in particular in the presence of PML elements
+! and/or for mixed simulations, for instance fluid/solid and so on)
+  logical, parameter :: TIME_THE_COST_TO_COMPUTE_WEIGHTS_FOR_THE_DOMAIN_DECOMPOSER = .false.
+
   ! time
   character(len=8) :: datein
   character(len=10) :: timein
   character(len=5) :: zone
   integer, dimension(8) :: time_values
   integer :: year,mon,day,hr,minutes,timestamp
+
+  real :: start_time_of_time_loop,finish_time_of_time_loop,duration_of_time_loop_in_seconds
 
   if (myrank == 0) write(IMAIN,400) ! Write = T i m e  e v o l u t i o n  l o o p =
 !
@@ -95,6 +103,33 @@ subroutine iterate_time()
   ! initialize variables for writing seismograms
   seismo_offset = 0
   seismo_current = 0
+
+  if (TIME_THE_COST_TO_COMPUTE_WEIGHTS_FOR_THE_DOMAIN_DECOMPOSER) then
+    if (NPROC /= 1) call exit_MPI(myrank,'timing for element weights should be done in serial mode')
+    if (NSTEP < 1000) call exit_MPI(myrank,'timing for element weights should be done with at least 1000 time steps')
+    if (NSTEP > 10000) call exit_MPI(myrank,'timing for element weights does not need to be done with more than 10000 time steps')
+    if (NSTEP_BETWEEN_OUTPUT_INFO < NSTEP / 5) &
+       call exit_MPI(myrank,'timing for element weights should be done with NSTEP_BETWEEN_OUTPUT_INFO not smaller than NSTEP / 5')
+    if (SIMULATION_TYPE /= 1) call exit_MPI(myrank,'timing for element weights should be done with SIMULATION_TYPE = 1')
+    if (.not. P_SV) call exit_MPI(myrank,'timing for element weights should be done with P_SV set to true')
+    if (GPU_MODE) call exit_MPI(myrank,'timing for element weights should be done with GPU_MODE turned off')
+    if (save_ASCII_seismograms) &
+       call exit_MPI(myrank,'timing for element weights should be done with save_ASCII_seismograms turned off')
+    if (save_binary_seismograms_single) &
+       call exit_MPI(myrank,'timing for element weights should be done with save_binary_seismograms_single turned off')
+    if (save_binary_seismograms_double) &
+       call exit_MPI(myrank,'timing for element weights should be done with save_binary_seismograms_double turned off')
+    if (output_color_image) call exit_MPI(myrank,'timing for element weights should be done with output_color_image turned off')
+    if (output_postscript_snapshot) &
+       call exit_MPI(myrank,'timing for element weights should be done with output_postscript_snapshot turned off')
+    if (output_wavefield_dumps) &
+       call exit_MPI(myrank,'timing for element weights should be done with output_wavefield_dumps turned off')
+    if (output_energy) call exit_MPI(myrank,'timing for element weights should be done with output_energy turned off')
+    if (COMPUTE_INTEGRATED_ENERGY_FIELD) &
+       call exit_MPI(myrank,'timing for element weights should be done with COMPUTE_INTEGRATED_ENERGY_FIELD turned off')
+  endif
+
+  call cpu_time(start_time_of_time_loop)
 
   do it = 1,NSTEP
     ! compute current time
@@ -198,6 +233,25 @@ subroutine iterate_time()
     call write_movie_output()
 
   enddo ! end of the main time loop
+
+  call cpu_time(finish_time_of_time_loop)
+
+  if (TIME_THE_COST_TO_COMPUTE_WEIGHTS_FOR_THE_DOMAIN_DECOMPOSER) then
+    if (myrank == 0) then
+      duration_of_time_loop_in_seconds = finish_time_of_time_loop - start_time_of_time_loop
+      write(IMAIN,*)
+      write(IMAIN,*) 'Total duration of the time loop in seconds = ',duration_of_time_loop_in_seconds,' s'
+      write(IMAIN,*) 'Total number of time steps = ',NSTEP
+      write(IMAIN,*) 'Average duration of a time step of the time loop = ',duration_of_time_loop_in_seconds / real(NSTEP),' s'
+      write(IMAIN,*) 'Total number of spectral elements in the mesh = ',NSPEC
+      write(IMAIN,*) '    of which ',NSPEC - count(ispec_is_PML),' are regular elements'
+      write(IMAIN,*) '    and ',count(ispec_is_PML),' are PML elements.'
+      write(IMAIN,*) 'Average duration of the calculation per spectral element = ', &
+                           duration_of_time_loop_in_seconds / real(NSTEP * NSPEC),' s'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+  endif
 
 ! *********************************************************
 ! ************* END MAIN LOOP OVER THE TIME STEPS *********
