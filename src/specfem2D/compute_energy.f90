@@ -376,8 +376,8 @@
   use specfem_par,only: AXISYM,is_on_the_axis,nspec,ibool,deltat,veloc_elastic,potential_dot_acoustic,ispec_is_elastic, &
                         ispec_is_poroelastic,integrated_kinetic_energy_field,max_kinetic_energy_field, &
                         integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
-                        potential_effective_duration_field, &
-                        potential_dot_gravitoacoustic,potential_dot_gravito,velocs_poroelastic, &
+                        potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
+                        total_effective_duration_field,potential_dot_gravitoacoustic,potential_dot_gravito,velocs_poroelastic, &
                         poroelastcoef,vsext,vpext,rhoext,density,kmato,assign_external_model,jacobian,displ_elastic, &
                         hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz
 
@@ -507,6 +507,18 @@
                                                     max_potential_energy_field(ispec)
       endif
 
+      if (max_total_energy_field(ispec) < (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+            + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
+            + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
+            + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO + &
+            rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / TWO) then
+        max_total_energy_field(ispec) = (lambdaplus2mu_unrelaxed_elastic*dux_dxl**2 &
+            + lambdaplus2mu_unrelaxed_elastic*duz_dzl**2 &
+            + TWO*lambdal_unrelaxed_elastic*dux_dxl*duz_dzl &
+            + mul_unrelaxed_elastic*(dux_dzl + duz_dxl)**2) / TWO + &
+            rhol*(veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) / TWO
+      endif
+
     !---
     !--- poroelastic spectral element
     !---
@@ -562,7 +574,20 @@
                                                     max_potential_energy_field(ispec)
       endif
 
+      if (max_total_energy_field(ispec) < pressure_element(i,j)**2 / (TWO*rhol*cpl**2) + &
+            rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) / TWO) then
+        max_total_energy_field(ispec) = pressure_element(i,j)**2 / (TWO*rhol*cpl**2) + &
+            rhol * (vector_field_element(1,i,j)**2 + vector_field_element(2,i,j)**2) / TWO
+      endif
+
     endif
+
+    total_integrated_energy_field(ispec) = integrated_kinetic_energy_field(ispec) + integrated_potential_energy_field(ispec)
+
+    if (max_total_energy_field(ispec) > ZERO) then
+      total_effective_duration_field(ispec) = TWO*total_integrated_energy_field(ispec) / max_total_energy_field(ispec)
+    endif
+
   enddo
 
   end subroutine compute_energy_fields
