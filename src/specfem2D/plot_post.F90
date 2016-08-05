@@ -353,7 +353,7 @@
     write(24,*) '25.35 CM 18.9 CM MV'
     write(24,*) usoffset,' CM 2 div neg 0 MR'
     write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
-    write(24,*) '(',simulation_title,') show'
+    write(24,15) simulation_title
     write(24,*) 'grestore'
     write(24,*) '26.45 CM 18.9 CM MV'
     write(24,*) usoffset,' CM 2 div neg 0 MR'
@@ -1891,6 +1891,7 @@
   call synchronize_all()
 
  10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a100,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
+ 15  format('(',a100,') show')
  600 format(f6.3,' neg CM 0 MR (Time =',f8.3,' s) show')
  601 format(f6.3,' neg CM 0 MR (Time =',1pe12.3,' s) show')
  610 format(f6.3,' neg CM 0 MR (Time step = ',i7,') show')
