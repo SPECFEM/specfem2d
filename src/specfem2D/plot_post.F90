@@ -80,6 +80,16 @@
 
   implicit none
 
+  ! flag to display a deformed mesh instead of the displacement vector, can be useful for instance
+  ! in non-destructive testing, for Lamb waves and so on.
+  logical, parameter :: DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR = .true.
+
+  ! to compute the deformed mesh we take the original mesh and add the displacement of the current point
+  ! to the coordinates of that original (undeformed) mesh point, with this scaling factor that the user
+  ! can make different from 1 if he/she wants in order to reduce or increase the visual effect of the deformation
+  ! for display purposes
+  double precision, parameter :: SCALING_FACTOR_FOR_DEFORMED_MESH = 1000.d0 ! 1.d0
+
   ! color palette
   integer, parameter :: NUM_COLORS = 236
   double precision, dimension(NUM_COLORS) :: red,green,blue
@@ -324,6 +334,10 @@
     write(24,*) '24.35 CM 18.9 CM MV'
     write(24,*) usoffset,' CM 2 div neg 0 MR'
     write(24,*) 'currentpoint gsave translate -90 rotate 0 0 moveto'
+
+  if (DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
+    write(24,*) '(Deformed mesh) show'
+  else
     if (imagetype_postscript == 1) then
       write(24,*) '(Displacement vector field) show'
     else if (imagetype_postscript == 2) then
@@ -333,6 +347,8 @@
     else
       call exit_MPI(myrank,'Bad field code in PostScript display')
     endif
+  endif
+
     write(24,*) 'grestore'
     write(24,*) '25.35 CM 18.9 CM MV'
     write(24,*) usoffset,' CM 2 div neg 0 MR'
@@ -576,6 +592,7 @@
 
     do i = 1,pointsdisp
       do j = 1,pointsdisp
+
         xinterp(i,j) = 0.d0
         zinterp(i,j) = 0.d0
         do in = 1,ngnod
@@ -583,6 +600,38 @@
           xinterp(i,j) = xinterp(i,j) + shape2D_display(in,i,j)*coorg(1,nnum)
           zinterp(i,j) = zinterp(i,j) + shape2D_display(in,i,j)*coorg(2,nnum)
         enddo
+
+        if (DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
+
+          Uxinterp(i,j) = 0.d0
+          Uzinterp(i,j) = 0.d0
+
+          do k = 1,NGLLX
+            do l= 1,NGLLX
+              if (AXISYM) then
+                if (is_on_the_axis(ispec)) then
+                  Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
+                  Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(2,ibool(k,l,ispec))*flagrange_GLJ(k,i)*flagrange_GLJ(l,j)
+                else
+                  Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+                  Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(2,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+                endif
+              else
+                Uxinterp(i,j) = Uxinterp(i,j) + vector_field_display(1,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+                Uzinterp(i,j) = Uzinterp(i,j) + vector_field_display(2,ibool(k,l,ispec))*flagrange(k,i)*flagrange(l,j)
+              endif
+            enddo
+          enddo
+
+          ! to compute the deformed mesh we take the original mesh and add the displacement of the current point
+          ! to the coordinates of that original (undeformed) mesh point, with a scaling factor that the user
+          ! can make different from 1 if he/she wants in order to reduce or increase the visual effect of the deformation
+          ! for display purposes
+          xinterp(i,j) = xinterp(i,j) + Uxinterp(i,j) * SCALING_FACTOR_FOR_DEFORMED_MESH
+          zinterp(i,j) = zinterp(i,j) + Uzinterp(i,j) * SCALING_FACTOR_FOR_DEFORMED_MESH
+
+        endif ! of if (DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
+
       enddo
     enddo
 
@@ -934,7 +983,7 @@
   ! sets global flag for all slices
   call any_all_l(anyabs, anyabs_glob)
 
-  if (anyabs_glob .and. boundvect) then
+  if (anyabs_glob .and. boundvect .and. .not. DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
     if (myrank == 0) then
       write(24,*) '%'
       write(24,*) '% boundary conditions on the mesh'
@@ -1050,6 +1099,8 @@
 !--- draw free surface with a thick color line
 !
 
+  if (.not. DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
+
   if (myrank == 0) then
     write(24,*) '%'
     write(24,*) '% free surface on the mesh'
@@ -1120,13 +1171,15 @@
     write(24,*) '0 setlinewidth'
   endif
 
+  endif ! of if (.not. DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
+
 !
 !----  draw the fluid-solid coupling edges with a thick color line
 !
   ! sets global flag for all slices
   call any_all_l(coupled_acoustic_elastic, coupled_acoustic_elastic_glob)
 
-  if (coupled_acoustic_elastic_glob .and. boundvect) then
+  if (coupled_acoustic_elastic_glob .and. boundvect .and. .not. DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
 
     if (myrank == 0) then
       write(24,*) '%'
@@ -1231,7 +1284,7 @@
   ! sets global flag for all slices
   call any_all_l(coupled_acoustic_poro, coupled_acoustic_poro_glob)
 
-  if (coupled_acoustic_poro_glob .and. boundvect) then
+  if (coupled_acoustic_poro_glob .and. boundvect .and. .not. DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
 
     if (myrank == 0) then
       write(24,*) '%'
@@ -1337,7 +1390,7 @@
   call any_all_l(coupled_elastic_poro, coupled_elastic_poro_glob)
 
 
-  if (coupled_elastic_poro_glob .and. boundvect) then
+  if (coupled_elastic_poro_glob .and. boundvect .and. .not. DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
 
     if (myrank == 0) then
       write(24,*) '%'
@@ -1439,6 +1492,8 @@
 !
 !----  draw the normalized vector field
 !
+
+  if (.not. DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
 
   ! warning if the maximum vector equals zero (no source)
   if (dispmax == 0.d0) then
@@ -1778,7 +1833,9 @@
     call synchronize_all()
 #endif
 
-  endif ! interpol
+  endif ! of interpolated values or values at GLL points
+
+  endif ! of if (.not. DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
 
   ! source/receiver marks
   if (myrank == 0) then
