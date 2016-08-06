@@ -1,0 +1,49 @@
+
+Pour Alexis Bottero :
+
+Pour te servir de la routine de timing, apres avoir compile le code tu tournes l'exemple par defaut, i.e. dans la racine du code tu tapes :
+
+./bin/xmeshfem2D
+./bin/xspecfem2D
+
+Remplace le fichier DATA/Par_file de la racine du code par celui ci-joint sinon ma routine te demandera de changer des trucs.
+
+Il faut compiler avec Intel ifort et *sans* --enable-debug bien sur, vu qu'on veut mesurer des temps d'execution.
+
+Avant de compiler il faut changer
+
+! time the code in order to compute element weights, which can then be used to define typical weights
+! for the SCOTCH domain decomposer (this is crucial, in particular in the presence of PML elements
+! and/or for mixed simulations, for instance fluid/solid and so on)
+  logical, parameter :: TIME_THE_COST_TO_COMPUTE_WEIGHTS_FOR_THE_DOMAIN_DECOMPOSER = .false.
+
+de false en true dans src/specfem2D/iterate_time.F90.
+
+A la fin de l'execution ca t'affichera ceci typiquement :
+
+ Total duration of the time loop in seconds =    13.44668      s
+ Total number of time steps =         1600
+ Average duration of a time step of the time loop =   8.4041776E-03  s
+ Total number of spectral elements in the mesh =         4800
+     of which         4218  are regular elements
+     and          582  are PML elements.
+ Average duration of the calculation per spectral element = 1.7508703E-06  s
+
+donc pour calculer les couts relatifs des elements (elastique sans PML, elastique avec PML, acoustique sans PML, acoustique avec PML, viscoelastique sans PML, viscoelastique avec PML) il te faut tourner cet exemple six fois, en changeant le Par_file:
+
+1/ tu tournes celui ci-joint, qui est elastique + PML
+
+2/ tu tournes le meme cas que 1/ mais en mettant PML a false dans le Par_file
+
+3 et 4/ pareil que 1 et 2/ mais tu changes le materiau de elastique en acoustique dans le Par_file
+
+5 et 6/ idem mais pour viscoelastique au lieu de acoustique.
+
+Quand tu auras ces six resultats, on pourra calculer les couts relatifs de chacun des 6 types d'elements (elastique sans PML, elastique avec PML, acoustique sans PML, acoustique avec PML, viscoelastique sans PML, viscoelastique avec PML).
+
+Pour les cas avec PML, comme PML n'est que dans une partie du modele faudra faire des regles de trois par rapport au meme cas sans PML (qui te donnera directement le cout des elements sans PML) pour trouver le vrai cout des elements purement PML (le code en sortie brute te donnera la moyenne entre les elements PML et les elements non PML, qui ne veut pas dire grand chose).
+
+Une fois qu'on aura ces 6 couts stp dis-le moi et alors on modifiera la routine de decomposition de domaine de SCOTCH pour mettre ces 6 poids (ce n'est pas difficile).
+
+Dimitri.
+
