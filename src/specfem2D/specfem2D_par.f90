@@ -580,9 +580,9 @@ module specfem_par
 
   double precision, dimension(:,:,:),allocatable:: rho_local,vp_local,vs_local
 
-  ! approximate hessians
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_el_hessian_final1, rhorho_el_hessian_final2
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_ac_hessian_final1, rhorho_ac_hessian_final2
+  ! approximate Hessians
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_el_Hessian_final1, rhorho_el_Hessian_final2
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhorho_ac_Hessian_final1, rhorho_ac_Hessian_final2
 
   ! poro-elastic kernels
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &

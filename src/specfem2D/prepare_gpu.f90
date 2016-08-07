@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
   subroutine prepare_GPU()
 
   use constants,only: IMAIN,USE_MESH_COLORING_GPU,APPROXIMATE_HESS_KL
@@ -165,7 +164,7 @@
     if (SIMULATION_TYPE == 3) then
       ! safety check
       if (APPROXIMATE_HESS_KL) then
-        stop 'Sorry, approximate acoustic hessian kernels not yet fully implemented for GPU simulations!'
+        stop 'Sorry, approximate acoustic Hessian kernels not yet fully implemented for GPU simulations!'
       endif
       call prepare_fields_acoustic_adj_dev(Mesh_pointer,APPROXIMATE_HESS_KL)
     endif
@@ -211,7 +210,7 @@
     if (SIMULATION_TYPE == 3) then
       ! safety check
       if (APPROXIMATE_HESS_KL) then
-        stop 'Sorry, approximate elastic hessian kernels not yet fully implemented for GPU simulations!'
+        stop 'Sorry, approximate elastic Hessian kernels not yet fully implemented for GPU simulations!'
       endif
       call prepare_fields_elastic_adj_dev(Mesh_pointer,NDIM*NGLOB_AB,APPROXIMATE_HESS_KL)
     endif

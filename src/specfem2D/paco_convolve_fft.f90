@@ -162,7 +162,7 @@
   A=PI*(dt*(J-1)-ts)/tp
   A=A*A
   RIC=0.0d0
-  if (A>30.0d0) RETURN
+  if (A>30.0d0) return
   RIC=(A-0.5)*EXP(-A)
 
   end function RIC
@@ -183,7 +183,7 @@
   A=A*A
   A_dot=2*(PI/tp)**2*(dt*(J-1)-ts)
   deRIC=0.0d0
-  if (A>30.0d0) RETURN
+  if (A>30.0d0) return
   deRIC=A_dot*(1.5-A)*EXP(-A)
 
   end function deRIC
@@ -205,7 +205,7 @@
   A_dot=2*(PI/tp)**2*(dt*(J-1)-ts)
   A_dot_dot=2*(PI/tp)**2
   de2RIC=0.0d0
-  if (A>30.0d0) RETURN
+  if (A>30.0d0) return
   de2RIC=(A_dot_dot*(1.5-A)-A_dot*A_dot-A_dot*(1.5-A)*A_dot)*EXP(-A)
 
   end function de2RIC

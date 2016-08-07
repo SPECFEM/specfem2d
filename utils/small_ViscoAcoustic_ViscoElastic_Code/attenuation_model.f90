@@ -918,7 +918,7 @@ subroutine solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,the
   !    *options(8)= lower bound for the stepsize used for the difference
   !        approximation of gradients (1.d-11 by default,see the manual for more).
   !   (* ... changes should be done with care)
-  ! Returned optional values:
+  ! returned optional values:
   !     options(9),  the number of iterations, if positive,
   !         or an abnormal stop code, if negative (see manual for more),
   !                -1: allocation error,

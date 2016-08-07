@@ -491,7 +491,7 @@
      AM=AQB+ZER
      A2=(-1.0d0+ZER)/AQB
      B2=ZER
-     RETURN
+     return
   endif
 
   CA=1.0d0/SIN(GP)

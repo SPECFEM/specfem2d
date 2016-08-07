@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
   subroutine prepare_wavefields()
 
   use constants,only: IMAIN,APPROXIMATE_HESS_KL
@@ -146,8 +145,8 @@
   allocate(c35_kl(NGLLX,NGLLZ,nspec_elastic_b))
   allocate(c55_kl(NGLLX,NGLLZ,nspec_elastic_b))
   if (APPROXIMATE_HESS_KL) then
-    allocate(rhorho_el_hessian_final2(NGLLX,NGLLZ,nspec_elastic_b))
-    allocate(rhorho_el_hessian_final1(NGLLX,NGLLZ,nspec_elastic_b))
+    allocate(rhorho_el_Hessian_final2(NGLLX,NGLLZ,nspec_elastic_b))
+    allocate(rhorho_el_Hessian_final1(NGLLX,NGLLZ,nspec_elastic_b))
   endif
 
   !
@@ -351,8 +350,8 @@
   allocate(rhop_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
   allocate(alpha_ac_kl(NGLLX,NGLLZ,nspec_acoustic_b))
   if (APPROXIMATE_HESS_KL) then
-    allocate(rhorho_ac_hessian_final2(NGLLX,NGLLZ,nspec_acoustic_b))
-    allocate(rhorho_ac_hessian_final1(NGLLX,NGLLZ,nspec_acoustic_b))
+    allocate(rhorho_ac_Hessian_final2(NGLLX,NGLLZ,nspec_acoustic_b))
+    allocate(rhorho_ac_Hessian_final1(NGLLX,NGLLZ,nspec_acoustic_b))
   endif
 
   !

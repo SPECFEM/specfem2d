@@ -31,7 +31,6 @@
 !
 !=====================================================================
 
-
   subroutine compute_kernels()
 
 ! computes adjoint sensitivity kernel contributions
@@ -60,9 +59,9 @@
     call compute_kernels_po()
   endif
 
-  ! computes an approximative hessian for preconditioning kernels
+  ! computes an approximative Hessian for preconditioning kernels
   if (APPROXIMATE_HESS_KL) then
-    call compute_kernels_hessian()
+    call compute_kernels_Hessian()
   endif
 
   end subroutine compute_kernels
@@ -674,15 +673,15 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_kernels_hessian()
+  subroutine compute_kernels_Hessian()
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: nglob,nspec,ibool,ispec_is_acoustic,ispec_is_elastic, &
                          any_elastic,any_acoustic, &
                          accel_elastic,b_accel_elastic,accel_ac,b_accel_ac, &
-                         rhorho_el_hessian_final1,rhorho_el_hessian_final2, &
-                         rhorho_ac_hessian_final1,rhorho_ac_hessian_final2, &
+                         rhorho_el_Hessian_final1,rhorho_el_Hessian_final2, &
+                         rhorho_ac_Hessian_final1,rhorho_ac_Hessian_final2, &
                          deltat,GPU_MODE
 
   use specfem_par_gpu,only: Mesh_pointer
@@ -690,19 +689,19 @@
   implicit none
 
   !local variables
-  real(kind=CUSTOM_REAL), dimension(nglob) :: rhorho_el_hessian_temp1, rhorho_el_hessian_temp2
+  real(kind=CUSTOM_REAL), dimension(nglob) :: rhorho_el_Hessian_temp1, rhorho_el_Hessian_temp2
   integer :: i,j,ispec,iglob
 
 
   if (.not. GPU_MODE) then
     ! elastic domains
     if (any_elastic) then
-      ! approximate hessians
+      ! approximate Hessians
       ! pre-computes contributions on global points
       do iglob = 1,nglob
-        rhorho_el_hessian_temp1(iglob) = b_accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
+        rhorho_el_Hessian_temp1(iglob) = b_accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
                                          b_accel_elastic(2,iglob)*b_accel_elastic(2,iglob)
-        rhorho_el_hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
+        rhorho_el_Hessian_temp2(iglob) = accel_elastic(1,iglob)*b_accel_elastic(1,iglob) + &
                                          accel_elastic(2,iglob)*b_accel_elastic(2,iglob)
       enddo
 
@@ -712,8 +711,8 @@
           do j = 1, NGLLZ
             do i = 1, NGLLX
               iglob = ibool(i,j,ispec)
-              rhorho_el_hessian_final1(i,j,ispec) = rhorho_el_hessian_final1(i,j,ispec) + rhorho_el_hessian_temp1(iglob) * deltat
-              rhorho_el_hessian_final2(i,j,ispec) = rhorho_el_hessian_final2(i,j,ispec) + rhorho_el_hessian_temp2(iglob) * deltat
+              rhorho_el_Hessian_final1(i,j,ispec) = rhorho_el_Hessian_final1(i,j,ispec) + rhorho_el_Hessian_temp1(iglob) * deltat
+              rhorho_el_Hessian_final2(i,j,ispec) = rhorho_el_Hessian_final2(i,j,ispec) + rhorho_el_Hessian_temp2(iglob) * deltat
             enddo
           enddo
         endif
@@ -728,9 +727,9 @@
           do j = 1, NGLLZ
             do i = 1, NGLLX
               iglob = ibool(i,j,ispec)
-              rhorho_ac_hessian_final1(i,j,ispec) = rhorho_ac_hessian_final1(i,j,ispec) + &
+              rhorho_ac_Hessian_final1(i,j,ispec) = rhorho_ac_Hessian_final1(i,j,ispec) + &
                                                     dot_product(accel_ac(:,iglob),accel_ac(:,iglob)) * deltat
-              rhorho_ac_hessian_final2(i,j,ispec) = rhorho_ac_hessian_final2(i,j,ispec) + &
+              rhorho_ac_Hessian_final2(i,j,ispec) = rhorho_ac_Hessian_final2(i,j,ispec) + &
                                                     dot_product(accel_ac(:,iglob),b_accel_ac(:,iglob)) * deltat
             enddo
           enddo
@@ -744,5 +743,5 @@
     call compute_kernels_hess_cuda(Mesh_pointer,any_elastic,any_acoustic)
   endif
 
-  end subroutine compute_kernels_hessian
+  end subroutine compute_kernels_Hessian
 

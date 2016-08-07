@@ -42,8 +42,8 @@
                           rho_ac_kl, kappa_ac_kl, alpha_ac_kl, rhop_ac_kl, &
                           rho_kl, kappa_kl, mu_kl, rhop_kl, alpha_kl, beta_kl, &
                           bulk_c_kl, bulk_beta_kl, &
-                          rhorho_ac_hessian_final1, rhorho_ac_hessian_final2, &
-                          rhorho_el_hessian_final1, rhorho_el_hessian_final2, &
+                          rhorho_ac_Hessian_final1, rhorho_ac_Hessian_final2, &
+                          rhorho_el_Hessian_final1, rhorho_el_Hessian_final2, &
                           rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
                           C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, mufrb_kl, &
                           rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, GPU_MODE
@@ -91,10 +91,10 @@
       close(201)
       close(202)
       close(203)
-      ! hessian kernels
+      ! Hessian kernels
       if (APPROXIMATE_HESS_KL) then
-        write(212) rhorho_ac_hessian_final1
-        write(213) rhorho_ac_hessian_final2
+        write(212) rhorho_ac_Hessian_final1
+        write(213) rhorho_ac_Hessian_final2
         close(212)
         close(213)
       endif
@@ -155,10 +155,10 @@
       close(208)
       close(209)
       close(210)
-      ! hessian kernels
+      ! Hessian kernels
       if (APPROXIMATE_HESS_KL) then
-        write(214) rhorho_el_hessian_final1
-        write(215) rhorho_el_hessian_final2
+        write(214) rhorho_el_Hessian_final1
+        write(215) rhorho_el_Hessian_final2
         close(214)
         close(215)
       endif

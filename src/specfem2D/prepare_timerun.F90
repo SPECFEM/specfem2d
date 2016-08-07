@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
   subroutine prepare_timerun()
 
   use constants,only: USE_ENFORCE_FIELDS,IOUT_ENERGY,IMAIN
@@ -823,11 +822,11 @@
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         if (APPROXIMATE_HESS_KL) then
-          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_kernel.bin'
+          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian1_kernel.bin'
           open(unit =214,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
           if (ier /= 0) stop 'Error writing kernel file to disk'
 
-          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian2_kernel.bin'
+          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian2_kernel.bin'
           open(unit=215,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
           if (ier /= 0) stop 'Error writing kernel file to disk'
         endif
@@ -846,8 +845,8 @@
     bulk_beta_kl(:,:,:) = 0._CUSTOM_REAL
 
     if (APPROXIMATE_HESS_KL) then
-      rhorho_el_hessian_final2(:,:,:) = 0._CUSTOM_REAL
-      rhorho_el_hessian_final1(:,:,:) = 0._CUSTOM_REAL
+      rhorho_el_Hessian_final2(:,:,:) = 0._CUSTOM_REAL
+      rhorho_el_Hessian_final1(:,:,:) = 0._CUSTOM_REAL
     endif
   endif
 
@@ -942,11 +941,11 @@
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       if (APPROXIMATE_HESS_KL) then
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian1_acoustic_kernel.bin'
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian1_acoustic_kernel.bin'
         open(unit=212,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
-        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_hessian2_acoustic_kernel.bin'
+        write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian2_acoustic_kernel.bin'
         open(unit=213,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
       endif
@@ -959,8 +958,8 @@
     alpha_ac_kl(:,:,:) = 0._CUSTOM_REAL
 
     if (APPROXIMATE_HESS_KL) then
-      rhorho_ac_hessian_final2(:,:,:) = 0._CUSTOM_REAL
-      rhorho_ac_hessian_final1(:,:,:) = 0._CUSTOM_REAL
+      rhorho_ac_Hessian_final2(:,:,:) = 0._CUSTOM_REAL
+      rhorho_ac_Hessian_final1(:,:,:) = 0._CUSTOM_REAL
     endif
   endif
 
