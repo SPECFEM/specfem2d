@@ -88,7 +88,7 @@
   ! to the coordinates of that original (undeformed) mesh point, with this scaling factor that the user
   ! can make different from 1 if he/she wants in order to reduce or increase the visual effect of the deformation
   ! for display purposes
-  double precision, parameter :: SCALING_FACTOR_FOR_DEFORMED_MESH = 1000.d0 ! 1.d0
+  double precision, parameter :: SCALING_FACTOR_FOR_DEFORMED_MESH = 1.d0 ! 1000.d0
 
   ! color palette
   integer, parameter :: NUM_COLORS = 236
