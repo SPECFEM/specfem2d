@@ -89,7 +89,7 @@ subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic
               ! update e1, e11, e13 in convolution formation with modified recursive convolution scheme on basis of
               ! second-order accurate convolution term calculation from equation (21) of
               ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
-              ! Anisotropic-Medium PML for Vector FETD With Modified Basis Functions,
+              ! Anisotropic-Medium PML for Vector FETD With Modified Basis functions,
               ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
 
               if (CONVOLUTION_MEMORY_VARIABLES) then

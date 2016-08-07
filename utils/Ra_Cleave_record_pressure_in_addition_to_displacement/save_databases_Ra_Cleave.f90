@@ -72,7 +72,7 @@
     ! opens Database file
     write(prname, "('./OUTPUT_FILES/Database',i5.5)") iproc
     open(unit=15,file=trim(prname),status='unknown',iostat=ios)
-    if( ios /= 0 ) stop 'error saving databases; check that directory OUTPUT_FILES exists'
+    if ( ios /= 0 ) stop 'error saving databases; check that directory OUTPUT_FILES exists'
 
     write(15,*) '#'
     write(15,*) '# Database for SPECFEM2D'
@@ -254,7 +254,7 @@
     do i=1,nb_materials
       if (icodemat(i) == ISOTROPIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
-      else if(icodemat(i) == POROELASTIC_MATERIAL) then
+      else if (icodemat(i) == POROELASTIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i), &
                     permxx(i),permxz(i),permzz(i),kappa_s(i),&
                     kappa_f(i),kappa_fr(i),eta_f(i),mu_fr(i),Qmu(i)

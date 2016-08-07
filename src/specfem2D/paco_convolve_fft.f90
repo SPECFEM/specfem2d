@@ -88,9 +88,9 @@
 
   CALL SINTER(Field,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
 
-  END subroutine paco_convolve_fft
+  end subroutine paco_convolve_fft
 
-  SUBROUTINE SINTER(V,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
+  subroutine SINTER(V,output_field,NSTEP,CR,RAIZ,NFREC,label,dt)
 
   implicit none
 
@@ -144,12 +144,12 @@
      output_field(J)=VT(mult*J+delay)
   enddo
 
-  END SUBROUTINE SINTER
+  end subroutine SINTER
 
 !
 ! Ricker time function
 !
-  FUNCTION RIC(J,tp,ts,dt)
+  function RIC(J,tp,ts,dt)
 
   use constants,only: PI
 
@@ -165,12 +165,12 @@
   if (A>30.0d0) RETURN
   RIC=(A-0.5)*EXP(-A)
 
-  END FUNCTION RIC
+  end function RIC
 
 !
 ! first time derivative of Ricker time function
 !
-  FUNCTION deRIC(J,tp,ts,dt)
+  function deRIC(J,tp,ts,dt)
 
   use constants,only: PI
 
@@ -186,12 +186,12 @@
   if (A>30.0d0) RETURN
   deRIC=A_dot*(1.5-A)*EXP(-A)
 
-  END FUNCTION deRIC
+  end function deRIC
 
 !
 ! second time derivative of Ricker time function
 !
-  FUNCTION de2RIC(J,tp,ts,dt)
+  function de2RIC(J,tp,ts,dt)
 
   use constants,only: PI
 
@@ -208,11 +208,11 @@
   if (A>30.0d0) RETURN
   de2RIC=(A_dot_dot*(1.5-A)-A_dot*A_dot-A_dot*(1.5-A)*A_dot)*EXP(-A)
 
-  END FUNCTION de2RIC
+  end function de2RIC
 
 
 ! Fourier transform
-  SUBROUTINE fourier_transform(LX,CX,SIGNI)
+  subroutine fourier_transform(LX,CX,SIGNI)
 
   use constants,only: PI
 
@@ -229,7 +229,7 @@
   J=1
   SC=SQRT(1.0d0/LX)
   do I = 1,LX
-     IF (I<=J) then
+     if (I<=J) then
         CTEMP=CX(J)*SC
         CX(J)=CX(I)*SC
         CX(I)=CTEMP
@@ -258,5 +258,5 @@
      L=ISTEP
   enddo
 
-  END SUBROUTINE fourier_transform
+  end subroutine fourier_transform
 

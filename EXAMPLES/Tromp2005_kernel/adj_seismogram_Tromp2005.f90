@@ -165,7 +165,7 @@ program adj_seismogram
      print *,'istart =',istart, 'iend =', iend
      print *,'tstart =',istart*deltat, 'tend =', iend*deltat
 
-     if(istart >= iend) stop 'check istart,iend'
+     if (istart >= iend) stop 'check istart,iend'
      nlen = iend - istart +1
 
      do icomp = 1, NDIM
@@ -211,7 +211,7 @@ program adj_seismogram
 
         !Nnorm = deltat * sum(time_window(:) * seism_veloc(:) * seism_veloc(:))
 
-        if(abs(Nnorm) > EPS) then
+        if (abs(Nnorm) > EPS) then
            !ft_bar(:) = -seism_veloc(:) * time_window(:) / Nnorm
            ft_bar(:) = seism_veloc(:) * time_window(:) / Nnorm
            print *,'Norm =', Nnorm
@@ -222,7 +222,7 @@ program adj_seismogram
         endif
 
         do itime =1,NSTEP
-           if(icomp == adj_comp) then
+           if (icomp == adj_comp) then
               write(11,*) (itime-1)*deltat - t0, ft_bar(itime)
            else
               write(11,*) (itime-1)*deltat - t0, 0.d0

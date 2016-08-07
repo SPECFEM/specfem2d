@@ -146,13 +146,13 @@
 ! compute the distance between the two points
           dist = sqrt((x(iglob,myrank)-x(iglob2,myrank2))**2 + (y(iglob,myrank)-y(iglob2,myrank2))**2)
 ! if the distance is zero (down to roundoff noise) then it is the same point and thus it is a duplicate
-          if(dist < TINYVAL) this_point_is_a_duplicate(iglob,myrank) = .true.
+          if (dist < TINYVAL) this_point_is_a_duplicate(iglob,myrank) = .true.
         enddo
       enddo
     enddo
   enddo
   number_of_duplicates_found = count(this_point_is_a_duplicate == .true.)
-  if(number_of_duplicates_found <= 0) stop 'error: found no duplicates, while there must be some'
+  if (number_of_duplicates_found <= 0) stop 'error: found no duplicates, while there must be some'
   print *
   print *,'total number of duplicates found and removed = ',number_of_duplicates_found
 
@@ -170,14 +170,14 @@
 ! slices are numbered from 0 to NPROC-1
         do myrank = 0,NPROC-1
           do iglob = 1,nglob(myrank)
-            if(.not. this_point_is_a_duplicate(iglob,myrank)) then
+            if (.not. this_point_is_a_duplicate(iglob,myrank)) then
               icounter = icounter + 1
               write(27,*) x(iglob,myrank),y(iglob,myrank)
             endif
           enddo
         enddo
         close(27)
-        if(icounter /= nglob_recombined_no_duplicates) stop 'error: should have icounter == nglob_recombined_no_duplicates'
+        if (icounter /= nglob_recombined_no_duplicates) stop 'error: should have icounter == nglob_recombined_no_duplicates'
 
   print *
   print *,'Recombining the dumped wave fields from the different files'
@@ -187,7 +187,7 @@
   do it = 1,NSTEP
 
 ! determine if a dump exists for this time step
-    if(mod(it,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS) == 0 .or. it == 5 .or. it == NSTEP) then
+    if (mod(it,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS) == 0 .or. it == 5 .or. it == NSTEP) then
 
         print *
         print *,'recombining files for time step ',it
@@ -213,14 +213,14 @@
 ! slices are numbered from 0 to NPROC-1
         do myrank = 0,NPROC-1
           do iglob = 1,nglob(myrank)
-            if(.not. this_point_is_a_duplicate(iglob,myrank)) then
+            if (.not. this_point_is_a_duplicate(iglob,myrank)) then
               icounter = icounter + 1
               write(27,*) pressure(iglob,myrank)
             endif
           enddo
         enddo
         close(27)
-        if(icounter /= nglob_recombined_no_duplicates) stop 'error: should have icounter == nglob_recombined_no_duplicates'
+        if (icounter /= nglob_recombined_no_duplicates) stop 'error: should have icounter == nglob_recombined_no_duplicates'
 
     endif
 

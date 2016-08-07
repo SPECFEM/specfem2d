@@ -36,7 +36,7 @@
   ! compute coefficient used in second order convolution scheme, from
   ! second-order accurate convolution term calculation from equation (21) of
   ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
-  ! Anisotropic-Medium PML for Vector FETD With Modified Basis Functions,
+  ! Anisotropic-medium PML for vector FETD with modified basis functions,
   ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
 
   use constants,only: CUSTOM_REAL

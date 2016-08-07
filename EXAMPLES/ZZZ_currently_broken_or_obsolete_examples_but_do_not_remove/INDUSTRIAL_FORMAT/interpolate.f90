@@ -207,8 +207,8 @@
         rho_new(i)=rho(ix,iz)
         vp_new(i)=vp(ix,iz)
         vs_new(i)=vs(ix,iz)
-        if(vs_temp<1000.0) vs_new(i)=0.0
-        if(vs_temp<1000.0) rho_new(i)=1000.0
+        if (vs_temp<1000.0) vs_new(i)=0.0
+        if (vs_temp<1000.0) rho_new(i)=1000.0
      enddo
      if (ier==0) then
      do i=1,NGLLX*NGLLZ

@@ -381,13 +381,13 @@
            cote_abs(nelemabs),stat=ier)
   if (ier /= 0 ) stop 'error allocating array abs_boundary_ispec etc.'
 
-  if(STACEY_ABSORBING_CONDITIONS) then
+  if (STACEY_ABSORBING_CONDITIONS) then
 
     do ispecabs = 1,nelemabs
       ispec = numabs(ispecabs)
 
       !--- left absorbing boundary
-      if(codeabs(IEDGE4,ispecabs)) then
+      if (codeabs(IEDGE4,ispecabs)) then
         i = 1
         do j = 1,NGLLZ
           abs_boundary_ij(1,j,ispecabs) = i
@@ -408,7 +408,7 @@
         if (iend_edge4(ispecabs)==4) abs_boundary_ij(2,5,ispecabs) = 6
 
       !--- right absorbing boundary
-      else if(codeabs(IEDGE2,ispecabs)) then
+      else if (codeabs(IEDGE2,ispecabs)) then
         i = NGLLX
         do j = 1,NGLLZ
           abs_boundary_ij(1,j,ispecabs) = i
@@ -429,7 +429,7 @@
         if (iend_edge2(ispecabs)==4) abs_boundary_ij(2,5,ispecabs) = 6
 
       !--- bottom absorbing boundary
-      else if(codeabs(IEDGE1,ispecabs)) then
+      else if (codeabs(IEDGE1,ispecabs)) then
         j = 1
         do i = 1,NGLLX
           abs_boundary_ij(1,i,ispecabs) = i
@@ -451,7 +451,7 @@
         if (iend_edge1(ispecabs)==4 .or. codeabs_corner(2,ispecabs))    abs_boundary_ij(1,5,ispecabs) = 6
 
       !--- top absorbing boundary
-      else if(codeabs(IEDGE3,ispecabs)) then
+      else if (codeabs(IEDGE3,ispecabs)) then
         j = NGLLZ
         do i = 1,NGLLX
           abs_boundary_ij(1,i,ispecabs) = i

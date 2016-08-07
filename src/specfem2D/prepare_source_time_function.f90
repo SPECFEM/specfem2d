@@ -122,10 +122,10 @@
     ! The following lines could be needed to set absolute amplitudes.
     ! In this case variables vpext,rhoext,density,poroelastcoef,assign_external_model,ispec_selected_source,kmato
     ! and double precision :: rho, cp logical :: already_done = .false. need to be introduced
-    !    if(myrank == islice_selected_source(i_source)) then
+    !    if (myrank == islice_selected_source(i_source)) then
     !      if (AXISYM) then
     !        if (.not. already_done) then
-    !          if(  assign_external_model ) then
+    !          if (  assign_external_model ) then
     !            cp = vpext(0,0,ispec_selected_source(i_source))
     !            TODO (above): We must interpolate to find the exact cp value at source location
     !          else

@@ -245,9 +245,9 @@
 ! first handle the particular case of zero frequency
 !
         TOTO=0.01d0
-        IF (source_type==1) CALL ONDASP(GAMR,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
-        IF (source_type==2) CALL ONDASS(GAMR,TOTO,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
-        IF (source_type==3) CALL ONDASR(0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+        if (source_type==1) CALL ONDASP(GAMR,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+        if (source_type==2) CALL ONDASS(GAMR,TOTO,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+        if (source_type==3) CALL ONDASR(0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
 
         TOTO=0.0d0
@@ -286,9 +286,9 @@
               CAQA=CMPLX(AQA,0)
            endif
 
-           IF (source_type==1) CALL ONDASP(GAMR,AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
-           IF (source_type==2) CALL ONDASS(GAMR,AKA,AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
-           IF (source_type==3) CALL ONDASR(AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+           if (source_type==1) CALL ONDASP(GAMR,AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+           if (source_type==2) CALL ONDASS(GAMR,AKA,AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+           if (source_type==3) CALL ONDASR(AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
            CALL DESFXY(X,Z,source_type,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
@@ -375,7 +375,7 @@
 
 !---
 
-  SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
+  subroutine DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
   implicit none
 
@@ -415,7 +415,7 @@
 !     FAC ES PARA TENER CONSISTENCIA CON AKI & RICHARDS (1980)
 !
   FAC=UI
-  IF (ICAS==2)FAC=-UI
+  if (ICAS==2)FAC=-UI
 
   UX=(-UI*AL*FI1+UI*AK*PS2)*FAC
 
@@ -431,9 +431,9 @@
 ! Paco's convention for vertical coordinate axis is inverted
   SXZ = - SXZ
 
-  END SUBROUTINE DESFXY
+  end subroutine DESFXY
 
-  SUBROUTINE FAFB(CA,CB,FA,FB)
+  subroutine FAFB(CA,CB,FA,FB)
 
   implicit none
 
@@ -445,21 +445,21 @@
   A=CA*CA-1.0d0
   B=CB*CB-1.0d0
 
-  IF (CA<1.0d0) then
+  if (CA<1.0d0) then
      FA=-UI*SQRT(-A)
   else
      FA=SQRT(A)+ZER
   endif
 
-  IF (CB<1.0d0) then
+  if (CB<1.0d0) then
      FB=-UI*SQRT(-B)
   else
      FB=CMPLX(SQRT(B),0.0d0)
   endif
 
-  END SUBROUTINE FAFB
+  end subroutine FAFB
 
-  SUBROUTINE A2B2(FA,FB,A2,B2)
+  subroutine A2B2(FA,FB,A2,B2)
 
   implicit none
 
@@ -470,10 +470,10 @@
   A2=(4.0d0*FA*FB-AUX*AUX)/DEN
   B2=4.0d0*FA*AUX/DEN
 
-  END SUBROUTINE A2B2
+  end subroutine A2B2
 
 ! calculation of P waves
-  SUBROUTINE ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+  subroutine ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
   implicit none
 
@@ -485,7 +485,7 @@
   A1=1.0d0/AQB
   B1=0.0d0
 
-  IF (GP==0.0d0) then
+  if (GP==0.0d0) then
      AL=ZER
      AK=ZER
      AM=AQB+ZER
@@ -504,10 +504,10 @@
   A2=A2/AQB
   B2=B2/AQB
 
-  END SUBROUTINE ONDASP
+  end subroutine ONDASP
 
 ! calculation of S waves
-  SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+  subroutine ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
   implicit none
 
@@ -519,7 +519,7 @@
   A1=0.0d0
   B1=1.0d0/AKB
 
-  IF (GS==0.0d0) then
+  if (GS==0.0d0) then
      AL=ZER
      AK=AKB+ZER
      AM=ZER
@@ -534,7 +534,7 @@
 !
 ! case of the critical angle
 !
-  IF (CA==1.d0) then
+  if (CA==1.d0) then
     AL=AQB+ZER
     AM=ZER
     CALL FAFB(CA,CB,FA,FB)
@@ -554,10 +554,10 @@
     B2=B2/AKB
   endif
 
-  END SUBROUTINE ONDASS
+  end subroutine ONDASS
 
 ! calculation of Rayleigh waves
-  SUBROUTINE ONDASR(AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+  subroutine ONDASR(AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
   implicit none
 
@@ -584,9 +584,9 @@
   B2=B2/(AL*A2+AK)
   A2=A2*B2
 
-  END SUBROUTINE ONDASR
+  end subroutine ONDASR
 
-  FUNCTION CRB(BEALF)
+  function CRB(BEALF)
 
   use constants,only: PI
 
@@ -599,15 +599,15 @@
   P=8.0d0/3.0d0-16.0d0*BA2
   Q=272.0d0/27.0d0-80.0d0/3.0d0*BA2
   FIND=Q*Q/4.0d0+P*P*P/27.0d0
-  IF (FIND>=0.0d0) then
+  if (FIND>=0.0d0) then
      F1=SQRT(FIND)-Q/2.0d0
-     IF (F1>0.0d0) then
+     if (F1>0.0d0) then
         F1=F1**U3
      else
         F1=-(-F1)**U3
      endif
      F2=-SQRT(FIND)-Q/2.0d0
-     IF (F2>0.0d0) then
+     if (F2>0.0d0) then
         F2=F2**U3
      else
         F2=-(-F2)**U3
@@ -617,7 +617,7 @@
   else
      F1=-27.0d0*Q*Q/(4.0d0*P*P*P)
      F1=SQRT(F1)
-     IF (Q<0.0d0) then
+     if (Q<0.0d0) then
         F1=COS((PI-ACOS(F1))/3.0d0)
      else
         F1=COS(ACOS(F1)/3.0d0)
@@ -628,5 +628,5 @@
      CRB=SQRT(F12)
   endif
 
-  END FUNCTION CRB
+  end function CRB
 

@@ -131,9 +131,9 @@ program serial_specfem2D
   !
 
   call createnum_slow(knods,ibool,nglob_to_compute,nspec,NGLLX,NGLLZ,ngnod) ! Create ibool and recompute nglob for checking
-  if(nglob_to_compute /= NGLOB) stop 'error: incorrect total number of unique grid points found'
-  if(minval(ibool) /= 1) stop 'error: incorrect minimum value of ibool'
-  if(maxval(ibool) /= NGLOB) stop 'error: incorrect maximum value of ibool'
+  if (nglob_to_compute /= NGLOB) stop 'error: incorrect total number of unique grid points found'
+  if (minval(ibool) /= 1) stop 'error: incorrect minimum value of ibool'
+  if (maxval(ibool) /= NGLOB) stop 'error: incorrect maximum value of ibool'
 
   !
   !----  set the coordinates of the points of the global grid
@@ -146,7 +146,7 @@ program serial_specfem2D
 
            call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
                 jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo,NDIM)
-           if(jacobianl <= 0.d0) stop 'error: negative Jacobian found'
+           if (jacobianl <= 0.d0) stop 'error: negative Jacobian found'
 
            coord(1,ibool(i,j,ispec)) = x
            coord(2,ibool(i,j,ispec)) = z
@@ -179,7 +179,7 @@ program serial_specfem2D
   rmass_inverse_elastic(:) = 0.
   rmass_inverse_acoustic(:) = 0.
 
-  if(.not. is_acoustic) then
+  if (.not. is_acoustic) then
      do ispec = 1,NSPEC
         do j = 1,NGLLZ
            do i = 1,NGLLX
@@ -205,7 +205,7 @@ program serial_specfem2D
   ! we have built the real exactly diagonal mass matrix (not its inverse)
   ! therefore invert it here once and for all
 
-  if(.not. is_acoustic) then
+  if (.not. is_acoustic) then
      do i = 1,NGLOB
         rmass_inverse_elastic(i) = 1. / rmass_inverse_elastic(i)
      enddo
@@ -257,18 +257,18 @@ program serial_specfem2D
 
      ! compute maximum of norm of displacement from time to time and display it
      ! in order to monitor the simulation
-     if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 2 .or. it == NSTEP) then
+     if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 2 .or. it == NSTEP) then
         Usolidnorm = -1.
         do iglob = 1,NGLOB
            current_value = sqrt(displ(1,iglob)**2 + displ(2,iglob)**2)
-           if(current_value > Usolidnorm) Usolidnorm = current_value
+           if (current_value > Usolidnorm) Usolidnorm = current_value
         enddo
         write(*,*) 'Time step # ',it,' out of ',NSTEP
         ! compute current time
         time = (it-1)*deltat
         write(*,*) 'Max norm displacement vector U in the solid (m) = ',Usolidnorm
         ! check stability of the code, exit if unstable
-        if(Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) stop 'code became unstable and blew up'
+        if (Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) stop 'code became unstable and blew up'
         ! count elapsed wall-clock time
         call date_and_time(datein,timein,zone,time_values)
         time_end = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
@@ -285,7 +285,7 @@ program serial_specfem2D
         write(*,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
         write(*,*)
 
-        if(.not.is_acoustic) then !elastic
+        if (.not.is_acoustic) then !elastic
            ! draw the displacement vector field in a PostScript file
            call plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,st_xval,st_zval,it,deltat,NGLLX,NGLLZ,NDIM,nrec)
         else
@@ -296,7 +296,7 @@ program serial_specfem2D
      endif
 
 
-     if(.not.is_acoustic) then !elastic
+     if (.not.is_acoustic) then !elastic
         do iglob = 1,NGLOB
            if (forced(iglob)) then
               call enforce_elastic_forcing(NGLOB,iglob,it,deltat,deltatover2,deltatsqover2,coord,displ,veloc,accel)
@@ -320,7 +320,7 @@ program serial_specfem2D
               potential_dot_acoustic(iglob) = potential_dot_acoustic(iglob) + deltatover2 * potential_dot_dot_acoustic(iglob) ! Predictor @ (it-1/2)*deltat
               potential_dot_dot_acoustic(iglob) = 0.
 
-!              if(iglob==3000) then
+!              if (iglob==3000) then
 !              print *,'********************************************************************************'
 !              print *,'avant calcul force it = ' ,it , "potential_acoustic(3000)=  ", potential_acoustic(3000)
 !              endif
@@ -336,7 +336,7 @@ program serial_specfem2D
      ! to the acceleration vector of each element of the finite-element mesh
 
      ! Start compute forces
-     if(.not.is_acoustic) then !elastic
+     if (.not.is_acoustic) then !elastic
         ! get elastic parameters of current spectral element pas dasn la boucle car constant
         mu = rho*cs*cs
         lambda = rho*cp*cp - 2.*mu
@@ -491,7 +491,7 @@ contains
     !imput variable : is_acoustic
     !logical, intent(out)  :: is_viscoelastic, is_viscoacoustic
 
-    if(.not. is_acoustic) then
+    if (.not. is_acoustic) then
 
        if (QKappa > 9998.999d0 .or. Qmu >  9998.999d0) then
 
@@ -510,7 +510,7 @@ contains
        endif
 
     else
-       if (QKappa > 9998.999d0)  then
+       if (QKappa > 9998.999d0) then
           is_viscoacoustic=.false.
           print *,'Acoustic simulation without attenuation : &
                &is_viscoacoustic= ' ,is_viscoacoustic

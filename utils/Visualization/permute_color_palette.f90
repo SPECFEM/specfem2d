@@ -22,9 +22,9 @@ do i=1,N
 777 continue
   call random_number(random_val)
   irandom_color = nint(random_val * (N+3)) - 1
-  if(irandom_color < 1) irandom_color = 1
-  if(irandom_color > N) irandom_color = N
-if(done(irandom_color) /= -1) goto 777
+  if (irandom_color < 1) irandom_color = 1
+  if (irandom_color > N) irandom_color = N
+if (done(irandom_color) /= -1) goto 777
 
 perm(i) = irandom_color
 done(irandom_color) = 100

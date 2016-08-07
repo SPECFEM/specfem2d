@@ -206,9 +206,9 @@
 !
 
   call createnum_slow(knods,ibool,nglob_to_compute,nspec,NGLLX,NGLLZ,ngnod) ! Create ibool and recompute nglob for checking
-  if(nglob_to_compute /= NGLOB) stop 'error: incorrect total number of unique grid points found'
-  if(minval(ibool) /= 1) stop 'error: incorrect minimum value of ibool'
-  if(maxval(ibool) /= NGLOB) stop 'error: incorrect maximum value of ibool'
+  if (nglob_to_compute /= NGLOB) stop 'error: incorrect total number of unique grid points found'
+  if (minval(ibool) /= 1) stop 'error: incorrect minimum value of ibool'
+  if (maxval(ibool) /= NGLOB) stop 'error: incorrect maximum value of ibool'
 
 !
 !----  set the coordinates of the points of the global grid
@@ -221,7 +221,7 @@
 
           call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
                           jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo,NDIM)
-          if(jacobianl <= 0.d0) stop 'error: negative Jacobian found'
+          if (jacobianl <= 0.d0) stop 'error: negative Jacobian found'
 
           coord(1,ibool(i,j,ispec)) = x
           coord(2,ibool(i,j,ispec)) = z
@@ -282,18 +282,18 @@
 
 ! compute maximum of norm of displacement from time to time and display it
 ! in order to monitor the simulation
-    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+    if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
       Usolidnorm = -1.
       do iglob = 1,NGLOB
         current_value = sqrt(displ(1,iglob)**2 + displ(2,iglob)**2)
-        if(current_value > Usolidnorm) Usolidnorm = current_value
+        if (current_value > Usolidnorm) Usolidnorm = current_value
       enddo
       write(*,*) 'Time step # ',it,' out of ',NSTEP
 ! compute current time
       time = (it-1)*deltat
       write(*,*) 'Max norm displacement vector U in the solid (m) = ',Usolidnorm
 ! check stability of the code, exit if unstable
-      if(Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) stop 'code became unstable and blew up'
+      if (Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) stop 'code became unstable and blew up'
 
 ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)

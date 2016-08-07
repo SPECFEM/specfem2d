@@ -84,7 +84,7 @@
   jacobian = xxi*zgamma - xgamma*zxi
 
 ! if the Jacobian is negative there is an error in the mesh
-  if(jacobian <= ZERO) stop 'error: negative Jacobian found, the mesh is not correct'
+  if (jacobian <= ZERO) stop 'error: negative Jacobian found, the mesh is not correct'
 
 ! invert the relation
   xix = zgamma / jacobian

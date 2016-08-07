@@ -61,8 +61,8 @@
   call zwgljd_cr(zigll,wzgll,NGLLZ,alphaGLL,betaGLL)
 
 ! if number of points is odd, the middle abscissa is exactly zero
-  if(mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = 0._CUSTOM_REAL
-  if(mod(NGLLZ,2) /= 0) zigll((NGLLZ-1)/2+1) = 0._CUSTOM_REAL
+  if (mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = 0._CUSTOM_REAL
+  if (mod(NGLLZ,2) /= 0) zigll((NGLLZ-1)/2+1) = 0._CUSTOM_REAL
 
 ! calculate derivatives of the Lagrange polynomials
 ! and precalculate some products in double precision

@@ -202,7 +202,7 @@
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          if(c55ext(i,j,ispec) < TINYVAL)then
+          if (c55ext(i,j,ispec) < TINYVAL) then
              c33ext(i,j,ispec) = 0.0_CUSTOM_REAL
              c12ext(i,j,ispec) = 0.0_CUSTOM_REAL
              c23ext(i,j,ispec) = 0.0_CUSTOM_REAL

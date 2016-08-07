@@ -136,7 +136,7 @@
 
           ! reconstructed/backward wavefield
           ! viscous damping contribution
-          if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)  then
+          if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
             ! stores contribution
             b_viscodampx(i,j,ispec) = visc_x
             b_viscodampz(i,j,ispec) = visc_z

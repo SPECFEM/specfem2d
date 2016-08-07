@@ -76,7 +76,7 @@
   ! we use the default strategy for partitioning
   ! thus no need to define an explicit strategy
   call scotchfstratinit (SCOTCHSTRAT(1), ier)
-   IF (ier /= 0) THEN
+   if (ier /= 0) then
      print *, 'ERROR : MAIN : Cannot initialize strategy'
      stop 'Error scotch init'
   endif
@@ -86,7 +86,7 @@
 
   ! initializes graph
   call scotchfgraphinit (SCOTCHGRAPH (1), ier)
-  IF (ier /= 0) THEN
+  if (ier /= 0) then
      print *, 'ERROR : MAIN : Cannot initialize graph'
      stop 'Error scotch graph'
   endif
@@ -102,31 +102,31 @@
                           vwgt(0), xadj_g(0), &
                           nb_edges, &
                           adjncy_g(0), adjwgt (0), ier)
-  IF (ier /= 0) THEN
+  if (ier /= 0) then
      print *, 'ERROR : MAIN : Cannot build graph'
      stop 'Error scotch graphbuild'
   endif
 
   call scotchfgraphcheck (SCOTCHGRAPH (1), ier)
-  IF (ier /= 0) THEN
+  if (ier /= 0) then
      print *, 'ERROR : MAIN : Invalid check'
      stop 'Error scotch graphcheck'
   endif
 
   call scotchfgraphpart (SCOTCHGRAPH (1), nparts, SCOTCHSTRAT(1), part(0), ier)
-  IF (ier /= 0) THEN
+  if (ier /= 0) then
      print *, 'ERROR : MAIN : Cannot part graph'
      stop 'Error scotch graphpart'
   endif
 
   call SCOTCHFGRAPHEXIT (SCOTCHGRAPH (1), ier)
-  IF (ier /= 0) THEN
+  if (ier /= 0) then
      print *, 'ERROR : MAIN : Cannot destroy graph'
      stop 'Error scotch graphexit'
   endif
 
   call scotchfstratexit (SCOTCHSTRAT(1), ier)
-  IF (ier /= 0) THEN
+  if (ier /= 0) then
      print *, 'ERROR : MAIN : Cannot destroy strat'
      stop 'Error scotch exit'
   endif

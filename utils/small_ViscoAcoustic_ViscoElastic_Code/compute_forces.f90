@@ -150,7 +150,7 @@ subroutine compute_viscoelastic_forces(is_viscoelastic)
      enddo   ! end of main loop on all the elements
 
 
-end     subroutine compute_viscoelastic_forces
+end subroutine compute_viscoelastic_forces
 !--------------- --------------- --------------- --------------- --------------- ---------------
 
 subroutine compute_viscoacoustic_forces(is_viscoacoustic)
@@ -198,7 +198,7 @@ subroutine compute_viscoacoustic_forces(is_viscoacoustic)
                 e1_sum = 0.
                 do i_sls = 1,N_SLS
                 ! sum on memory variables
-!                if(mod(ispec,3000)==0) then
+!                if (mod(ispec,3000)==0) then
 !                if (i==1 .and. j==1) print *,"! sum on memory variables e1_sum = ", e1_sum
 !                if (i==1 .and. j==1) print *, "e1(i=1,j=1,ispec=3000,i_sls) =", e1(i,j,ispec,i_sls)
 !                endif
@@ -219,7 +219,7 @@ subroutine compute_viscoacoustic_forces(is_viscoacoustic)
              acoustic_displ(1,iglob) = dux_dxl / rho        !u_x
              acoustic_displ(2,iglob) = dux_dzl / rho        !u_z
 
-!              if(mod(ispec,3000)==0) then
+!              if (mod(ispec,3000)==0) then
 !             if (i==1 .and. j==1) print *,"  "
 !             if (i==1 .and. j==1) print *,"la calcul visco forces"
 !             if (i==1 .and. j==1) print *, "dux_dxi,dux_dgamma =", dux_dxi,dux_dgamma
@@ -277,7 +277,7 @@ subroutine compute_viscoacoustic_forces(is_viscoacoustic)
 
  enddo !end ispec end acoustics
 
-end     subroutine compute_viscoacoustic_forces
+end subroutine compute_viscoacoustic_forces
 !--------------- --------------- --------------- --------------- --------------- ---------------
 
 
@@ -308,7 +308,7 @@ subroutine update_memory_variable(is_viscoelastic,is_viscoacoustic)
 
   !update memory variable in viscoelastic simulation
   ! loop over spectral elements and GLL points
-  if(is_viscoelastic) then
+  if (is_viscoelastic) then
   do ispec = 1,nspec
      do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -367,7 +367,7 @@ subroutine update_memory_variable(is_viscoelastic,is_viscoacoustic)
     enddo
   enddo
   endif
-  if(is_viscoacoustic) then
+  if (is_viscoacoustic) then
 
     do ispec = 1,nspec
      do j = 1,NGLLZ

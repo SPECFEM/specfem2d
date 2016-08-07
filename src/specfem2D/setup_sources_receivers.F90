@@ -425,7 +425,7 @@
     enddo
 
     ! array for all adjoint sources
-    if (nadj_rec_local > 0)  then
+    if (nadj_rec_local > 0) then
       allocate(adj_sourcearrays(nadj_rec_local,NSTEP,NDIM,NGLLX,NGLLZ))
     else
       allocate(adj_sourcearrays(1,1,1,1,1))

@@ -227,10 +227,10 @@
     enddo
   enddo
 
-  if(ispec /= NSPEC) stop 'the total number of spectral elements created is not correct'
+  if (ispec /= NSPEC) stop 'the total number of spectral elements created is not correct'
 
 ! check that the numbering created is correct
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= NGLOB) stop 'the grid numbering created is not correct'
+  if (minval(ibool) /= 1 .or. maxval(ibool) /= NGLOB) stop 'the grid numbering created is not correct'
 
 ! print *,'x of anchor points min, max = ',minval(coord_of_anchor_points(1,:,:)),maxval(coord_of_anchor_points(1,:,:))
 ! print *,'z of anchor points min, max = ',minval(coord_of_anchor_points(2,:,:)),maxval(coord_of_anchor_points(2,:,:))
@@ -356,7 +356,7 @@
            dist = sqrt((x_receiver-dble(coord(1,iglob)))**2 + (z_receiver-dble(coord(2,iglob)))**2)
 
 !          keep this point if it is closer to the receiver
-           if(dist < distmin) then
+           if (dist < distmin) then
               distmin = dist
               ispec_selected_receiver = ispec
               ix_initial_guess = i
@@ -421,7 +421,7 @@
   print *
   print *,'Location of the receiver:'
 
-  if(final_distance == HUGEVAL) stop 'error locating the receiver'
+  if (final_distance == HUGEVAL) stop 'error locating the receiver'
 
   print *,'            original x: ',sngl(x_receiver)
   print *,'            original z: ',sngl(z_receiver)

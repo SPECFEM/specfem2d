@@ -152,8 +152,8 @@
 
   L=n/2+1
   ir=n
-  100 CONTINUE
-   if (l>1) THEN
+  100 continue
+   if (l>1) then
       l=l-1
       indx=IND(l)
       q=A(indx)
@@ -169,12 +169,12 @@
    endif
    i=l
    j=l+l
-  200    CONTINUE
-   if (j <= ir) THEN
-      if (j < ir) THEN
+  200    continue
+   if (j <= ir) then
+      if (j < ir) then
          if (A(IND(j)) < A(IND(j+1))) j=j+1
       endif
-      IF (q < A(IND(j))) THEN
+      if (q < A(IND(j))) then
          IND(i)=IND(j)
          i=j
          j=j+j

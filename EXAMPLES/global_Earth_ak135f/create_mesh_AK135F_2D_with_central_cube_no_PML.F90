@@ -227,15 +227,15 @@
   print *,'Generating the grid for SPECFEM2D...'
 
 ! generate only half the mesh or the whole mesh
-  if(factor_divide_mesh < 1 .or. factor_divide_mesh > 2) stop 'incorrect value of factor_divide_mesh'
+  if (factor_divide_mesh < 1 .or. factor_divide_mesh > 2) stop 'incorrect value of factor_divide_mesh'
 
-  if(factor_divide_mesh == 1) then
+  if (factor_divide_mesh == 1) then
     generate_only_half_the_mesh = .false.
   else
     generate_only_half_the_mesh = .true.
   endif
 
-  if(generate_only_half_the_mesh) then
+  if (generate_only_half_the_mesh) then
     print *,'generating only half the mesh'
   else
     print *,'generating the whole mesh'
@@ -245,15 +245,15 @@
 ! verification de la coherence des parametres entres
 
 ! --- pour pouvoir generer des elements 9 noeuds
-  if(mod(nspec_rad_670_surf,2) /= 0) stop 'nspec_rad_670_surf should be a multiple of 2'
-  if(mod(nspec_rad_CMB_670,4) /= 0) stop 'nspec_rad_CMB_670 should be a multiple of 4'
-  if(mod(nspec_rad_ICB_to_doubling_OC,4) /= 0) stop 'nspec_rad_ICB_to_doubling_OC should be a multiple of 4'
-  if(mod(nspec_rad_Cube_ICB,4) /= 0) stop 'nspec_rad_Cube_ICB should be a multiple of 4'
+  if (mod(nspec_rad_670_surf,2) /= 0) stop 'nspec_rad_670_surf should be a multiple of 2'
+  if (mod(nspec_rad_CMB_670,4) /= 0) stop 'nspec_rad_CMB_670 should be a multiple of 4'
+  if (mod(nspec_rad_ICB_to_doubling_OC,4) /= 0) stop 'nspec_rad_ICB_to_doubling_OC should be a multiple of 4'
+  if (mod(nspec_rad_Cube_ICB,4) /= 0) stop 'nspec_rad_Cube_ICB should be a multiple of 4'
 
 ! --- pour permettre le deraffinement
-  if(mod(nspec_surf_whole_circle,16) /= 0) stop 'nspec_surf_whole_circle should be a multiple of 16'
-  if(nspec_rad_CMB_670 < 6) stop 'nspec_rad_CMB_670 should be greater than 6'
-  if(nspec_rad_ICB_to_doubling_OC < 6) stop 'nspec_rad_ICB_to_doubling_OC should be greater than 6'
+  if (mod(nspec_surf_whole_circle,16) /= 0) stop 'nspec_surf_whole_circle should be a multiple of 16'
+  if (nspec_rad_CMB_670 < 6) stop 'nspec_rad_CMB_670 should be greater than 6'
+  if (nspec_rad_ICB_to_doubling_OC < 6) stop 'nspec_rad_ICB_to_doubling_OC should be greater than 6'
 
 ! %%%% zone d670 -> surface %%%%
 
@@ -860,20 +860,20 @@
 
 !---- Cube
 
-  if(thetacoord > pi/4) thetacoord = thetacoord - 2*pi
+  if (thetacoord > pi/4) thetacoord = thetacoord - 2*pi
 
 ! Xmax face (right)
-  if(thetacoord >= - pi/4 .and. thetacoord <= + pi/4) then
+  if (thetacoord >= - pi/4 .and. thetacoord <= + pi/4) then
       ratio_x = +1
       ratio_y = (thetacoord - (-pi/4)) / (pi/2)
 
 ! Ymin face (bottom)
-  else if(thetacoord >= - 3*pi/4 .and. thetacoord <= - pi/4) then
+  else if (thetacoord >= - 3*pi/4 .and. thetacoord <= - pi/4) then
       ratio_x = (thetacoord - (-3*pi/4)) / (pi/2)
       ratio_y = 0
 
 ! Xmin face (left)
-  else if(thetacoord >= - 5*pi/4 .and. thetacoord <= - 3*pi/4) then
+  else if (thetacoord >= - 5*pi/4 .and. thetacoord <= - 3*pi/4) then
       ratio_x = 0
       ratio_y = 1 - (thetacoord - (-5*pi/4)) / (pi/2)
 
@@ -971,7 +971,7 @@
 
   enddo
 
-  if(generate_only_half_the_mesh) then
+  if (generate_only_half_the_mesh) then
     icentral_cube1 = nspec_surf_whole_circle/factor_divide_mesh/16
     icentral_cube2 = nspec_surf_whole_circle/16-2
   else
@@ -1016,7 +1016,7 @@
   print *,'Total number of spectral elements = ',nspec
   print *
 
-  if(nspec /= nspec_exact) stop 'incorrect number of spectral elements generated'
+  if (nspec /= nspec_exact) stop 'incorrect number of spectral elements generated'
 
 !
 !---- generation de la numerotation pour SPECFEM90
@@ -1130,11 +1130,11 @@
 ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ! verifier la coherence du nombre de points generes
-  if(npoin > npoin_max) stop 'Too many points generated'
+  if (npoin > npoin_max) stop 'Too many points generated'
 
 ! verification de la coherence de la numerotation generee
 ! conversion from iglob() to ibool() is handled automatically by the "equivalence" statement
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= npoin) stop 'Error when generating global numbering'
+  if (minval(ibool) /= 1 .or. maxval(ibool) /= npoin) stop 'Error when generating global numbering'
 
   print *,'Total number of points of the global mesh: ',npoin
   print *
@@ -1246,15 +1246,15 @@
   do ispec=1,nspec
     i = 0
 
-    if(xcoord(1,ispec) < 0.001d0) i = i + 1
-    if(xcoord(2,ispec) < 0.001d0) i = i + 1
-    if(xcoord(3,ispec) < 0.001d0) i = i + 1
-    if(xcoord(4,ispec) < 0.001d0) i = i + 1
+    if (xcoord(1,ispec) < 0.001d0) i = i + 1
+    if (xcoord(2,ispec) < 0.001d0) i = i + 1
+    if (xcoord(3,ispec) < 0.001d0) i = i + 1
+    if (xcoord(4,ispec) < 0.001d0) i = i + 1
 
-    if(i > 0) then
+    if (i > 0) then
 ! we know in advance from the way the mesh is designed that single points can never be detected, only a full edge,
 ! and a single edge can of course be detected otherwise that element would have a 180-degree angle
-      if(i /= 2) stop 'error: element in contact with the symmetry axis by incorrect number of points'
+      if (i /= 2) stop 'error: element in contact with the symmetry axis by incorrect number of points'
       ispec_count = ispec_count + 1
     endif
   enddo
@@ -1272,15 +1272,15 @@
 
   do ispec=1,nspec
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
-    if(xcoord(1,ispec) < 0.001d0 .and. xcoord(2,ispec) < 0.001d0) write(22) ispec,' 2 ',ibool(1,ispec),ibool(2,ispec),IBOTTOM
-    if(xcoord(2,ispec) < 0.001d0 .and. xcoord(3,ispec) < 0.001d0) write(22) ispec,' 2 ',ibool(2,ispec),ibool(3,ispec),IRIGHT
-    if(xcoord(3,ispec) < 0.001d0 .and. xcoord(4,ispec) < 0.001d0) write(22) ispec,' 2 ',ibool(3,ispec),ibool(4,ispec),ITOP
-    if(xcoord(4,ispec) < 0.001d0 .and. xcoord(1,ispec) < 0.001d0) write(22) ispec,' 2 ',ibool(4,ispec),ibool(1,ispec),ILEFT
+    if (xcoord(1,ispec) < 0.001d0 .and. xcoord(2,ispec) < 0.001d0) write(22) ispec,' 2 ',ibool(1,ispec),ibool(2,ispec),IBOTTOM
+    if (xcoord(2,ispec) < 0.001d0 .and. xcoord(3,ispec) < 0.001d0) write(22) ispec,' 2 ',ibool(2,ispec),ibool(3,ispec),IRIGHT
+    if (xcoord(3,ispec) < 0.001d0 .and. xcoord(4,ispec) < 0.001d0) write(22) ispec,' 2 ',ibool(3,ispec),ibool(4,ispec),ITOP
+    if (xcoord(4,ispec) < 0.001d0 .and. xcoord(1,ispec) < 0.001d0) write(22) ispec,' 2 ',ibool(4,ispec),ibool(1,ispec),ILEFT
 #else
-    if(xcoord(1,ispec) < 0.001d0 .and. xcoord(2,ispec) < 0.001d0) write(22,*) ispec,' 2 ',ibool(1,ispec),ibool(2,ispec),IBOTTOM
-    if(xcoord(2,ispec) < 0.001d0 .and. xcoord(3,ispec) < 0.001d0) write(22,*) ispec,' 2 ',ibool(2,ispec),ibool(3,ispec),IRIGHT
-    if(xcoord(3,ispec) < 0.001d0 .and. xcoord(4,ispec) < 0.001d0) write(22,*) ispec,' 2 ',ibool(3,ispec),ibool(4,ispec),ITOP
-    if(xcoord(4,ispec) < 0.001d0 .and. xcoord(1,ispec) < 0.001d0) write(22,*) ispec,' 2 ',ibool(4,ispec),ibool(1,ispec),ILEFT
+    if (xcoord(1,ispec) < 0.001d0 .and. xcoord(2,ispec) < 0.001d0) write(22,*) ispec,' 2 ',ibool(1,ispec),ibool(2,ispec),IBOTTOM
+    if (xcoord(2,ispec) < 0.001d0 .and. xcoord(3,ispec) < 0.001d0) write(22,*) ispec,' 2 ',ibool(2,ispec),ibool(3,ispec),IRIGHT
+    if (xcoord(3,ispec) < 0.001d0 .and. xcoord(4,ispec) < 0.001d0) write(22,*) ispec,' 2 ',ibool(3,ispec),ibool(4,ispec),ITOP
+    if (xcoord(4,ispec) < 0.001d0 .and. xcoord(1,ispec) < 0.001d0) write(22,*) ispec,' 2 ',ibool(4,ispec),ibool(1,ispec),ILEFT
 #endif
   enddo
 
@@ -1292,7 +1292,7 @@
 ! *** generer un fichier 'GNUPLOT' pour le controle de la grille ***
 ! ***
 
-  if(output_gnuplot_grid) then
+  if (output_gnuplot_grid) then
 
   print *
   print *,'Writing the grid in GNUPLOT format...'
@@ -1369,11 +1369,11 @@
    IND(j)=j
   enddo
 
-  if(n == 1) return
+  if (n == 1) return
   L=n/2+1
   ir=n
   100 continue
-   IF(l > 1) THEN
+   if (l > 1) then
      l=l-1
      indx=ind(l)
      q=a(indx)
@@ -1382,7 +1382,7 @@
      q=a(indx)
      ind(ir)=ind(1)
      ir=ir-1
-     if(ir == 1) then
+     if (ir == 1) then
        ind(1)=indx
        return
      endif
@@ -1390,21 +1390,21 @@
    i=l
    j=l+l
   200 continue
-   IF(J <= IR) THEN
-      IF(J < IR) THEN
-         IF(A(IND(j)) < A(IND(j+1))) j=j+1
+   if (J <= IR) then
+      if (J < IR) then
+         if (A(IND(j)) < A(IND(j+1))) j=j+1
       endif
-      IF(q < A(IND(j))) THEN
+      if (q < A(IND(j))) then
          IND(I)=IND(J)
          I=J
          J=J+J
       ELSE
          J=IR+1
       endif
-   GOTO 200
+   goto 200
    endif
    IND(I)=INDX
-  GOTO 100
+  goto 100
 
   end subroutine rank
 

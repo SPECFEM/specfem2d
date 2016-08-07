@@ -437,9 +437,9 @@
 
 ! classical calculation of the coefficients based on linear least squares
 
-  SUBROUTINE decomposition_LU(a,i_min,n,indx,d)
+  subroutine decomposition_LU(a,i_min,n,indx,d)
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: i_min,n
   double precision, intent(out) :: d
@@ -513,11 +513,11 @@
     endif
   enddo
 
-  END SUBROUTINE decomposition_LU
+  end subroutine decomposition_LU
 
-  SUBROUTINE LUbksb(a,i_min,n,indx,b,m)
+  subroutine LUbksb(a,i_min,n,indx,b,m)
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: i_min,n,m
   integer, dimension(i_min:n), intent(in) :: indx
@@ -554,11 +554,11 @@
     enddo
   enddo
 
-  END SUBROUTINE LUbksb
+  end subroutine LUbksb
 
-  SUBROUTINE syst_LU(a,i_min,n,b,m)
+  subroutine syst_LU(a,i_min,n,b,m)
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: i_min,n,m
   double precision, dimension(i_min:n,i_min:n), intent(in) :: a
@@ -579,13 +579,13 @@
   call decomposition_LU(aux,i_min,n,indx,d)
   call LUbksb(aux,i_min,n,indx,b,m)
 
-  END SUBROUTINE syst_LU
+  end subroutine syst_LU
 
-  SUBROUTINE lfit_zener(x,y,sig,ndat,poids,ia,covar,chisq,ma,Qref,point)
+  subroutine lfit_zener(x,y,sig,ndat,poids,ia,covar,chisq,ma,Qref,point)
 ! ma = nombre de variable diffusive
 ! ndat = m = K nombre d'abcisse freq_k
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: ndat,ma
   logical, dimension(1:ma), intent(in) :: ia
@@ -661,11 +661,11 @@
     chisq=chisq+((y(i)-dot_product(poids(1:ma),afunc(1:ma)))/sig(i))**2
   enddo
 
-  END SUBROUTINE lfit_zener
+  end subroutine lfit_zener
 
-  SUBROUTINE func_zener(x,afunc,N,Qref,point)
+  subroutine func_zener(x,afunc,N,Qref,point)
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: N
   double precision, intent(in) :: x,Qref
@@ -681,13 +681,13 @@
     afunc(k) = num / deno
   enddo
 
-  END SUBROUTINE func_zener
+  end subroutine func_zener
 
-  SUBROUTINE remplit_point(fmin,fmax,N,point)
+  subroutine remplit_point(fmin,fmax,N,point)
 
   use constants,only: TWO_PI_OR_ONE
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: N
   double precision, intent(in) :: fmin,fmax
@@ -695,7 +695,7 @@
 
   integer l
 
-  IF (N == 1) THEN
+  if (N == 1) then
     point(1) = sqrt(fmin * fmax)
   ELSE
     do l = 1, N, 1
@@ -704,13 +704,13 @@
     enddo
   endif
 
-  END SUBROUTINE remplit_point
+  end subroutine remplit_point
 
-  SUBROUTINE classical_linear_least_squares(Qref,poids,point,N,fmin,fmax)
+  subroutine classical_linear_least_squares(Qref,poids,point,N,fmin,fmax)
 
   use constants,only: TWO_PI_OR_ONE
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: N
   double precision, intent(in) :: Qref,fmin,fmax
@@ -742,11 +742,11 @@
 
   call lfit_zener(x,y_ref,sig,m,poids,ia,covar,chi2,N,Qref,point)
 
-  END SUBROUTINE classical_linear_least_squares
+  end subroutine classical_linear_least_squares
 
 ! Calcul des coefficients par optimisation non-lineaire avec contraintes
 
-  SUBROUTINE solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,theta_min,theta_max,f_min,f_max)
+  subroutine solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,theta_min,theta_max,f_min,f_max)
 !-----------------------------------------------------------------------------
 ! The subroutine SOLVOPT performs a modified version of Shor's r-algorithm in
 ! order to find a local minimum resp. maximum of a nonlinear function
@@ -819,9 +819,9 @@
 !                -9: iterations limit exceeded,
 !               -11: Premature stop is possible,
 !               -12: Result may not provide the true optimum,
-!               -13: Function is flat: result may be inaccurate
+!               -13: function is flat: result may be inaccurate
 !                   in view of a point.
-!               -14: Function is steep: result may be inaccurate
+!               -14: function is steep: result may be inaccurate
 !                    in view of a function value,
 !       options(10), the number of objective function evaluations, and
 !       options(11), the number of gradient evaluations.
@@ -829,7 +829,7 @@
 !       options(13), the number of constraint gradient evaluations.
 ! ____________________________________________________________________________
 !
-      IMPLICIT NONE
+      implicit none
       !include 'messages.inc'
 
       integer, intent(in) :: Kopt
@@ -1071,13 +1071,12 @@
 ! ----}  End of setting constants
 ! ----}  End of the preamble
 !--------------------------------------------------------------------
-! COMPUTE THE FUNCTION  ( FIRST TIME ) ----{
+! Compute the function  ( first time ) ----{
       call fun(x,f,Qref,n/2,n,Kopt,f_min,f_max)
       options(10)=options(10)+one
       if (dabs(f)>=infty) then
          if (dispwarn) then
-            print *,'SolvOpt error:'
-            print *,'Function equals infinity at the point.'
+            print *,'SolvOpt error: function equals infinity at the point.'
             print *,'Choose another starting point.'
          endif
          options(9)=-three
@@ -1088,7 +1087,7 @@
       enddo
       frec=f     !! record point and function value
 ! Constrained problem
-      if (constr)  then
+      if (constr) then
           kless=0
           fp=f
           call func(x,fc,n/2,n,theta_min,theta_max)
@@ -1275,7 +1274,7 @@
           endwarn='Premature stop is possible. Try to re-run the routine from the obtained point.'
           do i = 1,n
             if (dabs(x(i)-xx(i))<epsnorm*dabs(x(i))) then
-             if (dispwarn)  then
+             if (dispwarn) then
                 print *,'SolvOpt warning:'
                 print *,'Ravine with a flat bottom is detected.'
              endif
@@ -1398,13 +1397,12 @@
            do i = 1,n
             if (dabs(x(i)-x1(i))<dabs(x(i))*epsnorm) ii=ii+1
            enddo
-! FUNCTION VALUE
+! function value
          call fun(x,f,Qref,n/2,n,Kopt,f_min,f_max)
          options(10)=options(10)+one
          if (h1*f>=infty) then
             if (dispwarn) then
-              print *,'SolvOpt error:'
-              print *,'Function is unbounded.'
+              print *,'SolvOpt error: function is unbounded.'
             endif
             options(9)=-seven
             goto 999
@@ -1450,8 +1448,7 @@
          endif
          if (dabs(f)>=infty) then
              if (dispwarn) then
-               print *,'SolvOpt warning:'
-               print *,'Function equals infinity at the point.'
+               print *,'SolvOpt warning: function equals infinity at the point.'
              endif
              if (ksm.or.kc>=mxtc) then
                 options(9)=-three
@@ -1531,7 +1528,7 @@
         enddo
         dx=dsqrt(dx)
         if (kg<kstore)  kg=kg+1
-        if (kg>=2)  then
+        if (kg>=2) then
            do i =kg,2,-1
              nsteps(i)=nsteps(i-1)
            enddo
@@ -1550,7 +1547,7 @@
            kk=kk+nsteps(i)*dd
         enddo
         kk=kk/d
-        if     (kk>des) then
+        if (kk>des) then
              if (kg==1) then
                 h=h*(kk-des+one)
              else
@@ -1572,7 +1569,7 @@
             endif
           enddo
           obj=.true.
-          !if (constr)  then
+          !if (constr) then
              !call apprgrdn()
           !else
              !call apprgrdn()
@@ -1679,7 +1676,7 @@
 ! ----}
        if (ng>ZeroGrad) then
         if (knorms<10)  knorms=knorms+1
-        if (knorms>=2)  then
+        if (knorms>=2) then
           do i =knorms,2,-1
            gnorms(i)=gnorms(i-1)
           enddo
@@ -1701,7 +1698,7 @@
 ! DISPLAY THE CURRENT VALUES ----{
        if (k==ld) then
          print *, &
-             'Iteration # ..... Function Value ..... ', &
+             'Iteration # ..... function value ..... ', &
              'Step Value ..... Gradient Norm'
          print '(5x,i5,7x,g13.5,6x,g13.5,7x,g13.5)', k,f,dx,ng
          ld=k+dispdata
@@ -1727,7 +1724,7 @@
                 endif
              endif
            enddo
-           if (ii==0 .or. stopping)  then
+           if (ii==0 .or. stopping) then
                 stopping=.true.
                 termx=termx+1
                 d=zero
@@ -1735,7 +1732,7 @@
                   d=d+(x(i)-xrec(i))**2
                 enddo
                 d=dsqrt(d)
-! FUNCTION
+! function
                 if (dabs(f-frec)>detfr*dabs(f) .and. &
                   dabs(f-fopt)<=options(3)*dabs(f) .and. &
                   krerun<=3 .and. .not. constr) then
@@ -1865,8 +1862,7 @@
                options(10)=options(10)+one
                if (dabs(f)>=infty) then
                  if (dispwarn) then
-                   print *,'SolvOpt error:'
-                   print *,'Function equals infinity at the point.'
+                   print *,'SolvOpt error: function equals infinity at the point.'
                  endif
                  options(9)=-three
                  goto 999
@@ -1914,7 +1910,7 @@
             endif
           endif
 ! ----}
-! FUNCTION IS FLAT AT THE POINT ----{
+! function is flat at the point ----{
           if (.not.constr .and. &
              dabs(f-fopt)<dabs(fopt)*options(3) .and. &
              kcheck>5  .and. ng<one) then
@@ -2007,13 +2003,13 @@
 ! deallocate working arrays:
       deallocate (idx,deltax,xx,grec,xrec,xopt,x1,z,gc,gt,g1,g0,g,B)
 
-  END SUBROUTINE solvopt
+  end subroutine solvopt
 
-  SUBROUTINE soptions(default)
+  subroutine soptions(default)
 ! SOPTIONS returns the default values for the optional parameters
 ! used by SolvOpt.
 
-  IMPLICIT NONE
+  implicit none
 
   double precision default(13)
 
@@ -2031,11 +2027,11 @@
   default(12) = 0.d0
   default(13) = 0.d0
 
-  END SUBROUTINE soptions
+  end subroutine soptions
 
-  SUBROUTINE func_objective(x,res,freq,Qref,N,Nopt)
+  subroutine func_objective(x,res,freq,Qref,N,Nopt)
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: N,Nopt
   double precision, intent(in) :: freq,Qref
@@ -2052,15 +2048,15 @@
     res = res + num/deno
   enddo
 
-  END SUBROUTINE func_objective
+  end subroutine func_objective
 
-  SUBROUTINE func_mini(x,res,Qref,N,Nopt,K,f_min,f_max)
+  subroutine func_mini(x,res,Qref,N,Nopt,K,f_min,f_max)
 
 ! Nopt=2*N : nombre de coefficients a optimiser
 
   use constants,only: TWO_PI_OR_ONE
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: N,Nopt,K
   double precision, intent(in) :: Qref,f_min,f_max
@@ -2078,13 +2074,13 @@
     res = res + d*d
   enddo
 
-  END SUBROUTINE func_mini
+  end subroutine func_mini
 
-  SUBROUTINE grad_func_mini(x,grad,Qref,N,Nopt,K,f_min,f_max)
+  subroutine grad_func_mini(x,grad,Qref,N,Nopt,K,f_min,f_max)
 
   use constants,only: TWO_PI_OR_ONE
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: N,Nopt,K
   double precision, intent(in) :: Qref,f_min,f_max
@@ -2133,11 +2129,11 @@
     enddo
   enddo
 
-  END SUBROUTINE grad_func_mini
+  end subroutine grad_func_mini
 
-  SUBROUTINE max_residu(x,res,N,Nopt,theta_min,theta_max)
+  subroutine max_residu(x,res,N,Nopt,theta_min,theta_max)
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: N,Nopt
   double precision, intent(in) :: theta_min,theta_max
@@ -2156,11 +2152,11 @@
     res = max(temp,aux)
   enddo
 
-  END SUBROUTINE max_residu
+  end subroutine max_residu
 
-  SUBROUTINE grad_max_residu(x,grad,N,Nopt,theta_min,theta_max)
+  subroutine grad_max_residu(x,grad,N,Nopt,theta_min,theta_max)
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: N,Nopt
   double precision, intent(in) :: theta_min,theta_max
@@ -2202,13 +2198,13 @@
     endif
   enddo
 
-  END SUBROUTINE grad_max_residu
+  end subroutine grad_max_residu
 
-  SUBROUTINE nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
+  subroutine nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
 
   use constants,only: USE_SOLVOPT
 
-  IMPLICIT NONE
+  implicit none
 
   integer, intent(in) :: N
   double precision, intent(in) :: Qref,f0,f_min,f_max
@@ -2250,5 +2246,5 @@
     poids(i) = x(N+i)*x(N+i)
   enddo
 
-  END SUBROUTINE nonlinear_optimization
+  end subroutine nonlinear_optimization
 

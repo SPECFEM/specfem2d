@@ -88,7 +88,7 @@
 
 ! the Jacobian is negative, so far this means that there is an error in the mesh
 ! therefore print the coordinates of the mesh points of this element
-  if(jacobian <= 0.d0) then
+  if (jacobian <= 0.d0) then
 ! print the coordinates of the mesh points of this element
     print *, 'ispec = ', ispec
     print *, 'ngnod = ', ngnod

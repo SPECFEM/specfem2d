@@ -134,7 +134,7 @@
               ! update e1, e11, e13 in convolution formation with modified recursive convolution scheme on basis of
               ! second-order accurate convolution term calculation from equation (21) of
               ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
-              ! Anisotropic-Medium PML for Vector FETD With Modified Basis Functions,
+              ! Anisotropic-medium PML for vector FETD with modified basis functions,
               ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
               ! evolution e1 ! no need since we are just considering shear attenuation
               if (time_stepping_scheme == 1) then

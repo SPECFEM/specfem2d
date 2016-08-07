@@ -120,7 +120,7 @@
 !
 ! default value 4 is chosen to reproduce the time function from Fig 2a of
 ! "Tromp et al., 2010, Noise Cross-Correlation Sensitivity Kernels"
-  integer, parameter :: NOISE_SOURCE_TIME_FUNCTION_TYPE = 4
+  integer, parameter :: noise_source_time_function_type = 4
 
 ! For noise tomography only - specify whether to reconstruct ensemble forward
 ! wavefield by saving everywhere or by saving only at the boundaries (the

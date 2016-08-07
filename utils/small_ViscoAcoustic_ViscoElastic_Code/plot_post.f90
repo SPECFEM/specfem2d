@@ -97,7 +97,7 @@
   double precision ratio_page,dispmax,xmin,zmin
 
 ! A4 or US letter paper
-  if(US_LETTER) then
+  if (US_LETTER) then
     usoffset = 1.75d0
     sizex = 27.94d0
     sizez = 21.59d0
@@ -215,7 +215,7 @@
 
   write(24,*) '24. CM 1.95 CM MV'
   timeval = it*deltat
-  if(timeval >= 1.d-3 .and. timeval < 1000.d0) then
+  if (timeval >= 1.d-3 .and. timeval < 1000.d0) then
     write(24,600) usoffset,timeval
   else
     write(24,601) usoffset,timeval
@@ -329,7 +329,7 @@
 !
 
 ! return if the maximum vector equals zero (no source)
-  if(dispmax == 0.d0) then
+  if (dispmax == 0.d0) then
     write(*,*) 'null vector: returning!'
     return
   endif
@@ -352,17 +352,17 @@
   d = sqrt(x2**2 + z2**2)
 
 ! ignore if vector is too small
-  if(d > cutsnaps*sizemax_arrows/100.d0) then
+  if (d > cutsnaps*sizemax_arrows/100.d0) then
 
   d1 = d * ARROW_RATIO
   d2 = d1 * cos(ARROW_ANGLE*convert)
 
   dummy = x2/d
-  if(dummy > 0.9999d0) dummy = 0.9999d0
-  if(dummy < -0.9999d0) dummy = -0.9999d0
+  if (dummy > 0.9999d0) dummy = 0.9999d0
+  if (dummy < -0.9999d0) dummy = -0.9999d0
   theta = acos(dummy)
 
-  if(z2 < 0.d0) theta = 360.d0*convert - theta
+  if (z2 < 0.d0) theta = 360.d0*convert - theta
   thetaup = theta - ARROW_ANGLE*convert
   thetadown = theta + ARROW_ANGLE*convert
 
@@ -390,8 +390,8 @@
   index_char = 1
   first = .false.
   do ii = 1,line_length-1
-    if(ch1(ii) /= ' ' .or. first) then
-      if(ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
+    if (ch1(ii) /= ' ' .or. first) then
+      if (ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
         ch2(index_char) = ch1(ii)
         index_char = index_char + 1
         first = .true.

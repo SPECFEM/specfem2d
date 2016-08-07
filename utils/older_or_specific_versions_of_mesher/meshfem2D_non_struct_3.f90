@@ -150,9 +150,9 @@
   initialfield = .false.
 
 ! pour le non structure, verifier la coherence du maillage
-  if(nx < 2) stop 'nx must be greater or equal to 2'
-  if(nz < 2) stop 'nz must be greater or equal to 2'
-  if(mod(nx,2) /= 0) stop 'nx must be even'
+  if (nx < 2) stop 'nx must be greater or equal to 2'
+  if (nz < 2) stop 'nz must be greater or equal to 2'
+  if (mod(nx,2) /= 0) stop 'nx must be even'
 
 ! multiplier par 3 pour implementer le deraffinement non conforme
   nx = nx * 3
@@ -269,9 +269,9 @@
   read(10,1)junk,factorana
 
 ! determination et affichage position ligne de receivers
-  if(nrec2 < 0) stop 'negative value of nrec2 !'
+  if (nrec2 < 0) stop 'negative value of nrec2 !'
 
-  if(nrec2 == 0) then
+  if (nrec2 == 0) then
     nrec = nrec1
   else
     nrec = nrec1 + nrec2
@@ -284,7 +284,7 @@
   allocate(xrec(nrec))
   allocate(zrec(nrec))
 
-  if(nrec2 == 0) then
+  if (nrec2 == 0) then
   print *
   print *,'There are ',nrec,' receivers on a single line'
   xspacerec=(xfin-xdeb)/dble(nrec-1)
@@ -357,7 +357,7 @@
 ! lecture des differents modeles de materiaux
 
   read(10,2)junk,nbmodeles
-  if(nbmodeles <= 0) stop 'Negative number of models not allowed !!'
+  if (nbmodeles <= 0) stop 'Negative number of models not allowed !!'
 
   allocate(rho(nbmodeles))
   allocate(cp(nbmodeles))
@@ -369,7 +369,7 @@
 
   do imodele=1,nbmodeles
       read(10,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
-      if(i<1 .or. i>nbmodeles) stop 'Wrong material set number'
+      if (i<1 .or. i>nbmodeles) stop 'Wrong material set number'
       rho(i) = rhoread
       cp(i) = cpread
       cs(i) = csread
@@ -412,7 +412,7 @@
 
 ! quelques verifications de base a faire
 
-  if(ngnod /= 9) stop 'erreur ngnod different de 9 !!'
+  if (ngnod /= 9) stop 'erreur ngnod different de 9 !!'
 
 ! calcul du nombre total d'elements spectraux, absorbants et periodiques
   nspecvolume = (nx/2/3)*((nz-6)/2/3)
@@ -420,7 +420,7 @@
   nspec = nspecvolume + nspecWz
   nelemperio = 0
 
-  if(absgauche .or. absdroite .or. absbas) then
+  if (absgauche .or. absdroite .or. absbas) then
     nelemabs = 2 * (nz/6 - 2) + nx/6 + 3 + 3
   else
     nelemabs = 0
@@ -492,7 +492,7 @@
 ! DK DK DK Elf : position source donnee en profondeur par rapport a la topo
    zs(i) = spl(xs(i),xtopo,ztopo,coefs_topo,ntopo) - zs(i)
 
-   if(isources_surf) zs(i) = spl(xs(i),xtopo,ztopo,coefs_topo,ntopo)
+   if (isources_surf) zs(i) = spl(xs(i),xtopo,ztopo,coefs_topo,ntopo)
    print *, 'Source ',i,' = ',xs(i),zs(i)
   enddo
 
@@ -503,10 +503,10 @@
   do irec=1,nrec
 
 ! DK DK DK Elf : distinguer les deux lignes de recepteurs
-  if(irec <= nrec1) then
-   if(ienreg_surf) zrec(irec) = spl(xrec(irec),xtopo,ztopo,coefs_topo,ntopo)
+  if (irec <= nrec1) then
+   if (ienreg_surf) zrec(irec) = spl(xrec(irec),xtopo,ztopo,coefs_topo,ntopo)
   else
-   if(ienreg_surf2) zrec(irec) = spl(xrec(irec),xtopo,ztopo,coefs_topo,ntopo)
+   if (ienreg_surf2) zrec(irec) = spl(xrec(irec),xtopo,ztopo,coefs_topo,ntopo)
   endif
    print *, 'Receiver ',irec,' = ',xrec(irec),zrec(irec)
 
@@ -523,8 +523,8 @@
 
 ! DK DK DK densification sinusoidale ici en vertical
   valeta(iz) = eta(iz) + ratio * sin(3.14159265 * eta(iz))
-  if(valeta(iz) < zero) valeta(iz) = zero
-  if(valeta(iz) > one ) valeta(iz) = one
+  if (valeta(iz) < zero) valeta(iz) = zero
+  if (valeta(iz) > one ) valeta(iz) = one
 ! DK DK DK densification sinusoidale ici en vertical
 
   a00(iz) = 1-valeta(iz)
@@ -608,7 +608,7 @@
   write(15,*) ireadmodel,ioutputgrid,iavs,ivisual3
 
   write(15,*) 'iexec iecho'
-  if(iexec) then
+  if (iexec) then
     write(15,*) '1       1'
   else
     write(15,*) '0       1'
@@ -670,7 +670,7 @@
   enddo
   enddo
 
-  if(k /= nspecvolume) stop 'nombre d''elements incoherent dans le volume'
+  if (k /= nspecvolume) stop 'nombre d''elements incoherent dans le volume'
 
 ! zone non structuree dans la couche Wz
   j=nz-6
@@ -738,7 +738,7 @@
 
   enddo
 
-  if(k /= nspec) stop 'nombre d''elements incoherent dans la couche Wz'
+  if (k /= nspec) stop 'nombre d''elements incoherent dans la couche Wz'
 
 !
 !--- sauvegarde des bords absorbants
@@ -758,7 +758,7 @@
   print *
 
 ! generer la liste des elements absorbants
-  if(nelemabs > 0) then
+  if (nelemabs > 0) then
   write(15,*) 'Liste des elements absorbants (haut bas gauche droite) :'
 
 ! repasser aux vrais valeurs de nx et nz
@@ -843,7 +843,7 @@
     write(15,*) inumabs,inumelem,icodehaut,icodebas,icodegauche,icodedroite
   enddo
 
-  if(inumabs /= nelemabs) stop 'nombre d''elements absorbants incoherent'
+  if (inumabs /= nelemabs) stop 'nombre d''elements absorbants incoherent'
 
   endif
 
@@ -954,7 +954,7 @@
 ! --------------
 
 ! routine d'evaluation du spline (Numerical Recipes)
-  SUBROUTINE SPLINT(XA,YA,Y2A,N,X,Y)
+  subroutine SPLINT(XA,YA,Y2A,N,X,Y)
   implicit none
 
   integer n
@@ -968,14 +968,14 @@
   KHI=N
   do while (KHI-KLO > 1)
       K=(KHI+KLO)/2
-      IF(XA(K) > X)THEN
+      if (XA(K) > X) then
             KHI=K
       ELSE
             KLO=K
       endif
   enddo
   H=XA(KHI)-XA(KLO)
-  IF (H == 0.d0) stop 'Bad input in spline evaluation'
+  if (H == 0.d0) stop 'Bad input in spline evaluation'
   A=(XA(KHI)-X)/H
   B=(X-XA(KLO))/H
 

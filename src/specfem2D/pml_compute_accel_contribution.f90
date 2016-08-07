@@ -35,7 +35,7 @@
 
 ! second-order accurate convolution term calculation from equation (21) of
 ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
-! Anisotropic-Medium PML for Vector FETD With Modified Basis Functions,
+! Anisotropic-medium PML for vector FETD with modified basis functions,
 ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
 
 

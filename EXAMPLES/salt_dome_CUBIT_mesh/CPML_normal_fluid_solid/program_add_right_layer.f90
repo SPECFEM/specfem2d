@@ -29,7 +29,7 @@ integer, dimension(ngnod,nspec) :: ibool
 
 open(unit=27,file='modelY1_nodes_coords_file',status='old')
 read(27,*) npoin_read
-!!!!!!!if(npoin_read /= npoin) stop 'incorrect value of npoin'
+!!!!!!!if (npoin_read /= npoin) stop 'incorrect value of npoin'
 do i = 1,npoin
  read(27,*) x(i),z(i)
 enddo
@@ -43,7 +43,7 @@ close(27)
 
 open(unit=27,file='modelY1_mesh_file',status='old')
 read(27,*) nspec_read
-!!!!!!!if(nspec_read /= nspec) stop 'incorrect value of nspec'
+!!!!!!!if (nspec_read /= nspec) stop 'incorrect value of nspec'
 do ispec = 1,nspec
  read(27,*) ibool(1,ispec),ibool(2,ispec),ibool(3,ispec),ibool(4,ispec)
 enddo
@@ -65,8 +65,8 @@ ibool_right_edge_copy(:) = ibool_right_edge(:)
 do i2 = 1,npoin_to_add
 zmin = + 100000000000000.d0
 do i = 1,npoin_to_add
- if(ibool_right_edge_copy(i) /= -1) then ! not already sorted
-   if(z_right_edge(i) < zmin) then
+ if (ibool_right_edge_copy(i) /= -1) then ! not already sorted
+   if (z_right_edge(i) < zmin) then
      zmin = z_right_edge(i)
      i3 = i
    endif
@@ -149,12 +149,12 @@ do ispec2 = 1,nspec_to_add
     first_point_found = .false.
     second_point_found = .false.
     do inode = 1,ngnod
-      if(ibool(inode,ispec) == ibool_right_edge_sorted(ispec2)) first_point_found = .true.
+      if (ibool(inode,ispec) == ibool_right_edge_sorted(ispec2)) first_point_found = .true.
     enddo
     do inode = 1,ngnod
-      if(ibool(inode,ispec) == ibool_right_edge_sorted(ispec2+1)) second_point_found = .true.
+      if (ibool(inode,ispec) == ibool_right_edge_sorted(ispec2+1)) second_point_found = .true.
     enddo
-    if(first_point_found .and. second_point_found) goto 777
+    if (first_point_found .and. second_point_found) goto 777
   enddo
   stop 'error: spectral element to which PML should be added never found'
 777 continue

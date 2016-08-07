@@ -237,13 +237,13 @@
 !---- Build the symmetry axis (ispec_of_axial_elements, is_on_the_axis)
 !
 
-  if(AXISYM) then
+  if (AXISYM) then
 
-    if(xmin * xmax < 0) stop 'in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis'
-    if(xmin < 0) stop 'in axisymmetric mode, case of symmetry axis on the right edge instead of left not supported yet'
+    if (xmin * xmax < 0) stop 'in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis'
+    if (xmin < 0) stop 'in axisymmetric mode, case of symmetry axis on the right edge instead of left not supported yet'
 
     ! test if the left edge is on the symmetry axis
-    if(abs(xmin) < TINYVAL) then
+    if (abs(xmin) < TINYVAL) then
 
       !all the elements on the left edge are axial because that edge is vertical and located in x = 0
 
@@ -274,9 +274,9 @@
 !---- generate the global numbering
 !
   call createnum_slow(knods,ibool,nglob_to_compute,nspec,NGLLX,NGLLZ,ngnod) ! Create ibool and recompute nglob for checking
-  if(nglob_to_compute /= NGLOB) stop 'error: incorrect total number of unique grid points found'
-  if(minval(ibool) /= 1) stop 'error: incorrect minimum value of ibool'
-  if(maxval(ibool) /= NGLOB) stop 'error: incorrect maximum value of ibool'
+  if (nglob_to_compute /= NGLOB) stop 'error: incorrect total number of unique grid points found'
+  if (minval(ibool) /= 1) stop 'error: incorrect minimum value of ibool'
+  if (maxval(ibool) /= NGLOB) stop 'error: incorrect maximum value of ibool'
 
 !
 !----  set the coordinates of the points of the global grid
@@ -286,7 +286,7 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
 
-        if(AXISYM) then
+        if (AXISYM) then
           if (is_on_the_axis(ispec)) then
             xi = xiglj(i)
           else
@@ -300,7 +300,7 @@
 
         call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
                         jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo,NDIM)
-        if(jacobianl <= 0.d0) stop 'error: negative Jacobian found'
+        if (jacobianl <= 0.d0) stop 'error: negative Jacobian found'
 
         coord(1,ibool(i,j,ispec)) = x
         coord(2,ibool(i,j,ispec)) = z
@@ -374,18 +374,18 @@
 
 ! compute maximum of norm of displacement from time to time and display it
 ! in order to monitor the simulation
-    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+    if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
       Usolidnorm = -1.
       do iglob = 1,NGLOB
         current_value = sqrt(displ(1,iglob)**2 + displ(2,iglob)**2)
-        if(current_value > Usolidnorm) Usolidnorm = current_value
+        if (current_value > Usolidnorm) Usolidnorm = current_value
       enddo
       write(*,*) 'Time step # ',it,' out of ',NSTEP
 ! compute current time
       time = (it-1)*deltat
       write(*,*) 'Max norm displacement vector U in the solid (m) = ',Usolidnorm
 ! check stability of the code, exit if unstable
-      if(Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) stop 'code became unstable and blew up'
+      if (Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) stop 'code became unstable and blew up'
 
 ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)
@@ -452,7 +452,7 @@
           ! first double loop over GLL points to compute and store gradients
           ! we can merge the two loops because NGLLX == NGLLZ
 
-          if( AXISYM ) then
+          if ( AXISYM ) then
             if (is_on_the_axis(ispec) ) then
               do k = 1,NGLJ
                 dux_dxi = dux_dxi + displ(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
@@ -490,14 +490,14 @@
           duz_dzl = duz_dxi*xizl + duz_dgamma*gammazl
 
           if (AXISYM) then
-            if(is_on_the_axis(ispec) .and. i == 1) then ! d_uz/dr=0 on the axis
+            if (is_on_the_axis(ispec) .and. i == 1) then ! d_uz/dr=0 on the axis
               duz_dxl = 0.d0
             endif
           endif
 
           ! no attenuation
 
-          if( AXISYM ) then
+          if ( AXISYM ) then
             if (is_on_the_axis(ispec) ) then
               if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                 sigma_xx = 0.0d0

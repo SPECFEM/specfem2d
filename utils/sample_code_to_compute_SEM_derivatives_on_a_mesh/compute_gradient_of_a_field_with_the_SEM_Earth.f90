@@ -251,10 +251,10 @@
     enddo
   enddo
 
-  if(ispec /= NSPEC) stop 'the total number of spectral elements created is not correct'
+  if (ispec /= NSPEC) stop 'the total number of spectral elements created is not correct'
 
 ! check that the numbering created is correct
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= NGLOB) stop 'the grid numbering created is not correct'
+  if (minval(ibool) /= 1 .or. maxval(ibool) /= NGLOB) stop 'the grid numbering created is not correct'
 
 ! define the geometrical coordinates of the points of the global grid
 ! and compute the 2D Jacobian at a given point in a 4-control-node or 9-control-node geometrical element
@@ -379,7 +379,7 @@
            dist = sqrt((x_receiver-dble(coord(1,iglob)))**2 + (z_receiver-dble(coord(2,iglob)))**2)
 
 !          keep this point if it is closer to the receiver
-           if(dist < distmin) then
+           if (dist < distmin) then
               distmin = dist
               ispec_selected_receiver = ispec
               ix_initial_guess = i
@@ -444,7 +444,7 @@
   print *
   print *,'Location of the receiver:'
 
-  if(final_distance == HUGEVAL) stop 'error locating the receiver'
+  if (final_distance == HUGEVAL) stop 'error locating the receiver'
 
   print *,'            original x: ',sngl(x_receiver)
   print *,'            original z: ',sngl(z_receiver)

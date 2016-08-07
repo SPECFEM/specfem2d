@@ -151,7 +151,7 @@
 ! read noise parameters and check for consistency
 
   use constants,only: IMAIN,PI, &
-    NOISE_SOURCE_TIME_FUNCTION_TYPE,NOISE_MOVIE_OUTPUT,NOISE_SAVE_EVERYWHERE
+    noise_source_time_function_type,NOISE_MOVIE_OUTPUT,NOISE_SAVE_EVERYWHERE
 
   use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD, &
                          any_acoustic,any_poroelastic,P_SV, &
@@ -184,7 +184,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  noise simulation type           = ',NOISE_TOMOGRAPHY
-    write(IMAIN,*) '  noise source time function type = ',NOISE_SOURCE_TIME_FUNCTION_TYPE
+    write(IMAIN,*) '  noise source time function type = ',noise_source_time_function_type
     write(IMAIN,*)
     write(IMAIN,*) '  master station is #',irec_master,': ',trim(network_name(irec_master))//'.'//trim(station_name(irec_master))
     if (P_SV) then
@@ -241,7 +241,7 @@
 ! reads in time series based on noise spectrum and construct noise "source" array
 
 ! ---------------------------------------------------------------------------------
-! A NOTE ABOUT TIME FUNCTIONS FOR NOISE SIMULATIONS
+! A note about time functions for noise simulations
 !
 ! In noise forward modeling and inversion, "time function" is used to refer
 ! to the source time function that drives the first noise simulation.
@@ -254,8 +254,8 @@
 ! region.
 !
 ! FOR A REALISTIC MODEL OF THE SEISMIC NOISE FIELD,
-! THE VARIABE "NOISE_SOURCE_TIME_FUNCTION_TYPE" (SET IN setup/constants.h) SHOULD BE SET TO 0
-! AND A TIME FUNCTION FOR THE DESIRED NOISE SPECTRUM SHOULD BE
+! THE VARIABE "noise_source_time_function_type" (SET IN setup/constants.h) SHOULD BE SET TO 0
+! AND A TIME function FOR THE DESIRED NOISE SPECTRUM SHOULD BE
 ! ***SUPPLIED BY THE USER*** IN THE FILE "NOISE_TOMOGRAPHY/S_squared"
 !
 ! The alternative--setting "time_function_type" to a value other than
@@ -265,7 +265,7 @@
 !
 ! ----------------------------------------------------------------------------------
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,IMAIN,NOISE_SOURCE_TIME_FUNCTION_TYPE
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,IMAIN,noise_source_time_function_type
 
   use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,deltat, &
                          xigll,zigll,myrank
@@ -288,7 +288,7 @@
   a_val = 0.6_CUSTOM_REAL
   factor_noise = 1.e3_CUSTOM_REAL
 
-  if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 0) then
+  if (noise_source_time_function_type == 0) then
     !read in time function from file S_squared
     ! user output
     if (myrank == 0) then
@@ -301,7 +301,7 @@
     enddo
     close(500)
 
-  else if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 1) then
+  else if (noise_source_time_function_type == 1) then
     !Ricker (second derivative of a Gaussian) time function
     ! user output
     if (myrank == 0) then
@@ -313,7 +313,7 @@
                                  exp(-a_val*(t-t0)**2.)
     enddo
 
-  else if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 2) then
+  else if (noise_source_time_function_type == 2) then
     !first derivative of a Gaussian time function
     ! user output
     if (myrank == 0) then
@@ -325,7 +325,7 @@
     enddo
 
 
-  else if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 3) then
+  else if (noise_source_time_function_type == 3) then
     !Gaussian time function
     ! user output
     if (myrank == 0) then
@@ -337,7 +337,7 @@
     enddo
 
 
-  else if (NOISE_SOURCE_TIME_FUNCTION_TYPE == 4) then
+  else if (noise_source_time_function_type == 4) then
     !reproduce time function from Figure 2a of Tromp et al. 2010
     ! user output
     if (myrank == 0) then
@@ -351,7 +351,7 @@
     enddo
 
   else
-    call exit_MPI(myrank,'Bad NOISE_SOURCE_TIME_FUNCTION_TYPE in compute_source_array_noise.')
+    call exit_MPI(myrank,'Bad noise_source_time_function_type in compute_source_array_noise.')
   endif
 
   ! saves source time function

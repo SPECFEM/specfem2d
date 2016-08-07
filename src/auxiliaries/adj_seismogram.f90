@@ -337,7 +337,7 @@ program adj_seismogram
     print *,'  time window: tstart =',(istart-1)*deltat + t0, 'tend =',(iend-1)*deltat + t0
     print *
 
-    if(istart >= iend) then
+    if (istart >= iend) then
       print *,"Error start/end index: ",istart,iend
       stop 11
     endif
@@ -389,7 +389,7 @@ program adj_seismogram
 
       !Nnorm = deltat * sum(time_window(:) * seism_veloc(:) * seism_veloc(:))
 
-      if(abs(Nnorm) > EPS) then
+      if (abs(Nnorm) > EPS) then
          !ft_bar(:) = -seism_veloc(:) * time_window(:) / Nnorm
          ft_bar(:) = seism_veloc(:) * time_window(:) / Nnorm
          print *,'Norm =', Nnorm
@@ -401,7 +401,7 @@ program adj_seismogram
       print *
 
       do itime = 1,NSTEP
-         if(icomp == adj_comp) then
+         if (icomp == adj_comp) then
             write(11,*) (itime-1)*deltat - t0, ft_bar(itime)
          else
             write(11,*) (itime-1)*deltat - t0, 0.d0

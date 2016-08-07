@@ -150,7 +150,7 @@
   endif
 
   !--- bottom absorbing boundary
-  if (nspec_bottom > 0)  then
+  if (nspec_bottom > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_poro_s_bottom',myrank,'.bin'
     write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_bottom',myrank,'.bin'
     open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)

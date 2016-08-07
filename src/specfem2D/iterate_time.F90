@@ -395,16 +395,16 @@ subroutine it_compute_integrated_energy_field_and_output()
 !!!! DK DK commenting this out for now because "call execute_command_line" is Fortran 2008
 !!!! DK DK and some older compilers do not support it yet. We can probably put it back in a few years.
 !     call execute_command_line('mkdir -p ./OUTPUT_FILES/energyFields',wait = .true.,cmdstat = statMkdir)
-!     if(statMkdir /= 0) call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields')
+!     if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields')
 
 !     call execute_command_line('mkdir -p ./OUTPUT_FILES/energyFields/kinetic',wait = .true.,cmdstat = statMkdir)
-!     if(statMkdir /= 0) call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/kinetic')
+!     if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/kinetic')
 
 !     call execute_command_line('mkdir -p ./OUTPUT_FILES/energyFields/potential',wait = .true.,cmdstat = statMkdir)
-!     if(statMkdir /= 0) call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/potential')
+!     if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/potential')
 
 !     call execute_command_line('mkdir -p ./OUTPUT_FILES/energyFields/total',wait = .true.,cmdstat = statMkdir)
-!     if(statMkdir /= 0) call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/total')
+!     if (statMkdir /= 0) call exit_MPI(myrank,'Impossible to create ./OUTPUT_FILES/energyFields/total')
     endif
   endif
 

@@ -111,7 +111,7 @@
             iglob = ibool(i,j,ispec)
             xx = coord(1,iglob)
             zz = coord(2,iglob)
-            if(count(ispec_is_anisotropic(:) .eqv. .true.) >= 1)then
+            if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then
               ! anisotropic
               write(97,'(9e15.5e4)') xx, zz, rho_kl(i,j,ispec), c11_kl(i,j,ispec),&
                                      c13_kl(i,j,ispec), c15_kl(i,j,ispec), c33_kl(i,j,ispec), c35_kl(i,j,ispec),&
@@ -131,7 +131,7 @@
     else
       ! binary format
       write(204) rho_kl
-      if(count(ispec_is_anisotropic(:) .eqv. .true.) >= 1)then ! anisotropic
+      if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
         write(205) c11_kl
         write(206) c13_kl
         write(207) c15_kl

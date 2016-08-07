@@ -750,7 +750,7 @@
 
     if (save_ASCII_kernels) then
       ! ascii format
-      if(count(ispec_is_anisotropic(:) .eqv. .true.) >= 1)then ! anisotropic
+      if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_cijkl_kernel.dat'
         open(unit = 97, file='OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
@@ -769,7 +769,7 @@
       open(unit = 204, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
-      if(count(ispec_is_anisotropic(:) .eqv. .true.) >= 1)then ! anisotropic
+      if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
          write(outputname,'(a,i6.6,a)')'proc',myrank,'_c11_kernel.bin'
          open(unit = 205,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'

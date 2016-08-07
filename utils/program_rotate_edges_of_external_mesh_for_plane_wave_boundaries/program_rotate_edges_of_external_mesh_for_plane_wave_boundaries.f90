@@ -48,22 +48,22 @@ write(12,*) nspec
 counter = 0
 do ispec = 1,nspec
 
-  if(abs(x(ibool(1,ispec)) - x_left_edge) < tol .and. abs(x(ibool(2,ispec)) - x_left_edge) < tol) then
+  if (abs(x(ibool(1,ispec)) - x_left_edge) < tol .and. abs(x(ibool(2,ispec)) - x_left_edge) < tol) then
     print *,'elem ',ispec,' is on left edge with edge 1'
     counter = counter + 1
     write(12,*) ibool(2,ispec),ibool(3,ispec),ibool(4,ispec),ibool(1,ispec)
 
-  else if(abs(x(ibool(2,ispec)) - x_left_edge) < tol .and. abs(x(ibool(3,ispec)) - x_left_edge) < tol) then
+  else if (abs(x(ibool(2,ispec)) - x_left_edge) < tol .and. abs(x(ibool(3,ispec)) - x_left_edge) < tol) then
     print *,'elem ',ispec,' is on left edge with edge 2'
     counter = counter + 1
     write(12,*) ibool(3,ispec),ibool(4,ispec),ibool(1,ispec),ibool(2,ispec)
 
-  else if(abs(x(ibool(3,ispec)) - x_left_edge) < tol .and. abs(x(ibool(4,ispec)) - x_left_edge) < tol) then
+  else if (abs(x(ibool(3,ispec)) - x_left_edge) < tol .and. abs(x(ibool(4,ispec)) - x_left_edge) < tol) then
     print *,'elem ',ispec,' is on left edge with edge 3'
     counter = counter + 1
     write(12,*) ibool(4,ispec),ibool(1,ispec),ibool(2,ispec),ibool(3,ispec)
 
-  else if(abs(x(ibool(4,ispec)) - x_left_edge) < tol .and. abs(x(ibool(1,ispec)) - x_left_edge) < tol) then
+  else if (abs(x(ibool(4,ispec)) - x_left_edge) < tol .and. abs(x(ibool(1,ispec)) - x_left_edge) < tol) then
     print *,'elem ',ispec,' is on left edge with edge 4'
     counter = counter + 1
     write(12,*) ibool(1,ispec),ibool(2,ispec),ibool(3,ispec),ibool(4,ispec)
@@ -116,22 +116,22 @@ write(12,*) nspec
 counter = 0
 do ispec = 1,nspec
 
-  if(abs(x(ibool(1,ispec)) - x_right_edge) < tol .and. abs(x(ibool(2,ispec)) - x_right_edge) < tol) then
+  if (abs(x(ibool(1,ispec)) - x_right_edge) < tol .and. abs(x(ibool(2,ispec)) - x_right_edge) < tol) then
     print *,'elem ',ispec,' is on right edge with edge 1'
     counter = counter + 1
     write(12,*) ibool(4,ispec),ibool(1,ispec),ibool(2,ispec),ibool(3,ispec)
 
-  else if(abs(x(ibool(2,ispec)) - x_right_edge) < tol .and. abs(x(ibool(3,ispec)) - x_right_edge) < tol) then
+  else if (abs(x(ibool(2,ispec)) - x_right_edge) < tol .and. abs(x(ibool(3,ispec)) - x_right_edge) < tol) then
     print *,'elem ',ispec,' is on right edge with edge 2'
     counter = counter + 1
     write(12,*) ibool(1,ispec),ibool(2,ispec),ibool(3,ispec),ibool(4,ispec)
 
-  else if(abs(x(ibool(3,ispec)) - x_right_edge) < tol .and. abs(x(ibool(4,ispec)) - x_right_edge) < tol) then
+  else if (abs(x(ibool(3,ispec)) - x_right_edge) < tol .and. abs(x(ibool(4,ispec)) - x_right_edge) < tol) then
     print *,'elem ',ispec,' is on right edge with edge 3'
     counter = counter + 1
     write(12,*) ibool(2,ispec),ibool(3,ispec),ibool(4,ispec),ibool(1,ispec)
 
-  else if(abs(x(ibool(4,ispec)) - x_right_edge) < tol .and. abs(x(ibool(1,ispec)) - x_right_edge) < tol) then
+  else if (abs(x(ibool(4,ispec)) - x_right_edge) < tol .and. abs(x(ibool(1,ispec)) - x_right_edge) < tol) then
     print *,'elem ',ispec,' is on right edge with edge 4'
     counter = counter + 1
     write(12,*) ibool(3,ispec),ibool(4,ispec),ibool(1,ispec),ibool(2,ispec)

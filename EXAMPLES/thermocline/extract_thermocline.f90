@@ -27,7 +27,7 @@
       read(*,*) G
       read(*,*) B
 ! if pixel is red
-      if((R > 240 .and. G < 180 .and. B < 180 .and. first_red_pixel_in_this_line) .or. &
+      if ((R > 240 .and. G < 180 .and. B < 180 .and. first_red_pixel_in_this_line) .or. &
          (ix == NX .and. first_red_pixel_in_this_line)) then
 
         first_red_pixel_in_this_line = .false.
@@ -35,7 +35,7 @@
         cp = 1472.5d0 + (1495.d0 - 1472.5d0) * dble(ix-1)/ dble(NX-1)
         depth = -2000 + 2000 * dble(iy-1)/ dble(NY-1)
 
-        if(ix < NX) then
+        if (ix < NX) then
           print *, depth,cp
         else
           print *, depth,'UNDEF'
