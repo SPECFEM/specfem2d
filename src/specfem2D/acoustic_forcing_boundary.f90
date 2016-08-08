@@ -164,14 +164,14 @@
       ll = ll+1
     enddo
 
-    if (x==0 .and. it==1) then
+    if (x == 0 .and. it == 1) then
       displ_z =  real(syn(1,1),kind=CUSTOM_REAL)
     else
-      if (x==0) then
+      if (x == 0) then
         fract = (t-goce_time(ll-1))/(goce_time(ll)-goce_time(ll-1))
         displ_z =  real((syn(1,ll-1) + fract * (syn(1,ll)-syn(1,ll-1))),kind=CUSTOM_REAL)
       else
-        if (it==1) then
+        if (it == 1) then
           fracx = (x-distance(kk-1))/(distance(kk)-distance(kk-1))
           displ_z =  real((syn(kk-1,1) + fracx * (syn(kk,1)-syn(kk-1,1))),kind=CUSTOM_REAL)
         else

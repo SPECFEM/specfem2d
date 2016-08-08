@@ -1340,8 +1340,8 @@
         qmul = Qmu_attenuation(kmato(ispec))
 
         ! check that attenuation values entered by the user make sense
-        if ((qkappal <= 9998.999d0 .and. qmul >  9998.999d0) .or. &
-            (qkappal >  9998.999d0 .and. qmul <= 9998.999d0)) &
+        if ((qkappal <= 9998.999d0 .and. qmul > 9998.999d0) .or. &
+            (qkappal > 9998.999d0 .and. qmul <= 9998.999d0)) &
            stop 'need to have Qkappa and Qmu both above or both below 9999 for a given material; &
                 &trick: use 9998 if you want to turn off one'
 
@@ -1363,8 +1363,8 @@
             qmul = Qmu_attenuationext(i,j,ispec)
 
             ! check that attenuation values entered by the user make sense
-            if ((qkappal <= 9998.999d0 .and. qmul >  9998.999d0) .or. &
-                (qkappal >  9998.999d0 .and. qmul <= 9998.999d0)) &
+            if ((qkappal <= 9998.999d0 .and. qmul > 9998.999d0) .or. &
+                (qkappal > 9998.999d0 .and. qmul <= 9998.999d0)) &
                stop 'need to have Qkappa and Qmu both above or both below 9999 for a given material; &
                     &trick: use 9998 if you want to turn off one'
 

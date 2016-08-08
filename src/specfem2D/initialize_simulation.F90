@@ -250,7 +250,7 @@
   endif
 
   ! time scheme
-  if (SIMULATION_TYPE == 3 .and.(time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
+  if (SIMULATION_TYPE == 3 .and. (time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
     stop 'RK and LDDRK time scheme not supported for adjoint inversion'
 
   ! standard RK scheme

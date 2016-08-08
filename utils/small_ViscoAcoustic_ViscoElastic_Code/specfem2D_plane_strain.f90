@@ -285,7 +285,7 @@ program serial_specfem2D
         write(*,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
         write(*,*)
 
-        if (.not.is_acoustic) then !elastic
+        if (.not. is_acoustic) then !elastic
            ! draw the displacement vector field in a PostScript file
            call plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,st_xval,st_zval,it,deltat,NGLLX,NGLLZ,NDIM,nrec)
         else
@@ -296,7 +296,7 @@ program serial_specfem2D
      endif
 
 
-     if (.not.is_acoustic) then !elastic
+     if (.not. is_acoustic) then !elastic
         do iglob = 1,NGLOB
            if (forced(iglob)) then
               call enforce_elastic_forcing(NGLOB,iglob,it,deltat,deltatover2,deltatsqover2,coord,displ,veloc,accel)
@@ -336,7 +336,7 @@ program serial_specfem2D
      ! to the acceleration vector of each element of the finite-element mesh
 
      ! Start compute forces
-     if (.not.is_acoustic) then !elastic
+     if (.not. is_acoustic) then !elastic
         ! get elastic parameters of current spectral element pas dasn la boucle car constant
         mu = rho*cs*cs
         lambda = rho*cp*cp - 2.*mu
@@ -493,9 +493,9 @@ contains
 
     if (.not. is_acoustic) then
 
-       if (QKappa > 9998.999d0 .or. Qmu >  9998.999d0) then
+       if (QKappa > 9998.999d0 .or. Qmu > 9998.999d0) then
 
-          if ((QKappa <= 9998.999d0 .and. Qmu >  9998.999d0) &
+          if ((QKappa <= 9998.999d0 .and. Qmu > 9998.999d0) &
                .or. (QKappa > 9998.999d0 .and. Qmu <= 9998.999d0)) then
              print *, 'QKappa and Qmu the both must be above or below 9999'
           endif

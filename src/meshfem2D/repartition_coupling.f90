@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
   !--------------------------------------------------
   ! repartitioning: coupled acoustic/elastic elements are transferred to the same partition
   !--------------------------------------------------
@@ -141,10 +140,10 @@
   is_poroelastic(:) = .false.
 
   do i = 1, nbmodels
-     if (phi_material(i) >=1.d0) then
+     if (phi_material(i) >= 1.d0) then
         is_acoustic(i) = .true.
      endif
-     if (phi_material(i) <1.d0 .and. phi_material(i) > TINYVAL) then
+     if (phi_material(i) < 1.d0 .and. phi_material(i) > TINYVAL) then
         is_poroelastic(i) = .true.
      endif
   enddo
@@ -218,7 +217,7 @@
      if (phi_material(i) < TINYVAL) then
         is_elastic(i) = .true.
      endif
-     if (phi_material(i) <1.d0 .and. phi_material(i) > TINYVAL) then
+     if (phi_material(i) < 1.d0 .and. phi_material(i) > TINYVAL) then
         is_poroelastic(i) = .true.
      endif
   enddo

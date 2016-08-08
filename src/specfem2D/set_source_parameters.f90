@@ -195,7 +195,7 @@
           call exit_MPI(myrank,'Onset time too small')
         else
           if (myrank == 0) then
-            write(IMAIN,*) '    --> onset time ok'
+            write(IMAIN,*) '    The onset time is ok'
           endif
         endif
       endif

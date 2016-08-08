@@ -104,7 +104,7 @@
       index_edge=2
       ibool(:,:) = ibool_rotated(:,:)
     else
-      stop 'j should be >=1 and <=4'
+      stop 'j should be >= 1 and <= 4'
     endif
 
     if (index_edge == 1) then
@@ -328,15 +328,15 @@
   !            1 . . 5 . . 2
   ! --> we just create a copy in an easier format for ease of use in this routine
     if (ngnod == 4) then
-      ibool(1,ispec) = elmnts((ispec-1)*ngnod)    ! -> Have to be zero if ispec is on the axis
+      ibool(1,ispec) = elmnts((ispec-1)*ngnod)    ! Have to be zero if ispec is on the axis
       ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
       ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
-      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)  ! -> Have to be zero if ispec is on the axis
+      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)  ! Have to be zero if ispec is on the axis
     else if (ngnod == 9) then
-      ibool(1,ispec) = elmnts((ispec-1)*ngnod)    ! -> Have to be zero if ispec is on the axis
+      ibool(1,ispec) = elmnts((ispec-1)*ngnod)    ! Have to be zero if ispec is on the axis
       ibool(2,ispec) = elmnts((ispec-1)*ngnod+1)
       ibool(3,ispec) = elmnts((ispec-1)*ngnod+2)
-      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)  ! -> Have to be zero if ispec is on the axis
+      ibool(4,ispec) = elmnts((ispec-1)*ngnod+3)  ! Have to be zero if ispec is on the axis
       ibool(5,ispec) = elmnts((ispec-1)*ngnod+4)
       ibool(6,ispec) = elmnts((ispec-1)*ngnod+5)
       ibool(7,ispec) = elmnts((ispec-1)*ngnod+6)
@@ -562,7 +562,7 @@
       index_edge=2
       ibool(:,:) = ibool_rotated(:,:)
     else
-      stop 'j should be >=1 and <=4'
+      stop 'j should be >= 1 and <= 4'
     endif
 
     if (index_edge == 1) then

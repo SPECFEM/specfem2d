@@ -563,7 +563,7 @@
                 if ( i == 1 ) then
                   write(*,*) "Element number:",ispec
                   stop 'error: an axial element is rotated. The code should have been stopped before. Check that your &
-                   &coordinates are >> TINYVAL. Maybe you should also have a look to &
+                   &coordinates are >  > TINYVAL. Maybe you should also have a look to &
                    &doc/problematic_case_that_we_exclude_for_axisymmetric.pdf '
                 endif
                 tempx3(i,j) = tempx3(i,j) + wzgll(j)*wxglj(i)*jacobian(i,j,ispec) &

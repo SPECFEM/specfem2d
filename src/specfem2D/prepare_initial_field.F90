@@ -32,7 +32,6 @@
 !
 !========================================================================
 
-
   subroutine prepare_initial_field(cploc,csloc)
 
   use constants,only: IMAIN,PI,SMALLVALTOL
@@ -166,7 +165,7 @@
     c_refl = cploc
 
     ! if this coefficient is greater than 1, we are beyond the critical SV wave angle and there cannot be a converted P wave
-    if (p*c_refl<=1.d0) then
+    if (p*c_refl <= 1.d0) then
       anglesource_refl = asin(p*c_refl)
 
       ! from formulas (5.30) and (5.31) p 140 in Aki & Richards (1980)
@@ -183,7 +182,7 @@
       endif
 
     ! SV45 degree incident plane wave is a particular case
-    else if (anglesource_abs>pi/4.d0-1.0d-11 .and. anglesource_abs<pi/4.d0+1.0d-11) then
+    else if (anglesource_abs > pi/4.d0-1.0d-11 .and. anglesource_abs < pi/4.d0+1.0d-11) then
       anglesource_refl = 0.d0
       SS = -1.0d0
       SP = 0.d0

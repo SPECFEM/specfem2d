@@ -153,7 +153,7 @@
   L=n/2+1
   ir=n
   100 continue
-   if (l>1) then
+   if (l > 1) then
       l=l-1
       indx=IND(l)
       q=A(indx)

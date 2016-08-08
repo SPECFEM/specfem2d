@@ -210,7 +210,7 @@
       weight_rk = 1.0d0
     endif
 
-    if (i_stage==1) then
+    if (i_stage == 1) then
       ! solid
       velocs_poroelastic_initial_rk(1,:) = velocs_poroelastic(1,:)
       velocs_poroelastic_initial_rk(2,:) = velocs_poroelastic(2,:)

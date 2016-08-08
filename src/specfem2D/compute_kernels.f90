@@ -355,7 +355,7 @@
         do j = 1, NGLLZ
           do i = 1, NGLLX
             iglob = ibool(i,j,ispec)
-            !<YANGL
+            ! YANGL
             !!!! old expression (from elastic kernels)
             !!!rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) - rhol_ac_global(iglob)  * &
             !!!      dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
@@ -369,7 +369,7 @@
             kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) + kappal_ac_global(iglob) * &
                                      potential_acoustic(iglob)/kappal_ac_global(iglob) * &
                                      b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * deltat
-            !>YANGL
+            ! YANGL
             rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)
             alpha_ac_kl(i,j,ispec) = TWO *  kappa_ac_kl(i,j,ispec)
           enddo

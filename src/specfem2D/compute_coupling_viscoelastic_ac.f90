@@ -184,7 +184,7 @@
           weight = jacobian1D * wxgll(i)
         endif
 
-      else if (iedge_acoustic == ILEFT ) then
+      else if (iedge_acoustic == ILEFT) then
 
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
@@ -201,7 +201,7 @@
           weight = jacobian1D * wzgll(j)
         endif
 
-      else if (iedge_acoustic ==IRIGHT ) then
+      else if (iedge_acoustic == IRIGHT) then
 
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
@@ -333,7 +333,7 @@
         else
           weight = jacobian1D * wzgll(j)
         endif
-      else if (iedge_acoustic ==IRIGHT ) then
+      else if (iedge_acoustic == IRIGHT) then
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)

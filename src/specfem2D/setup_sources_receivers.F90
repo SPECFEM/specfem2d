@@ -111,21 +111,21 @@
           izmax = acoustic_surface(5,ispec_acoustic_surface)
           if (.not. ispec_is_elastic(ispec) .and. .not. ispec_is_poroelastic(ispec) .and. &
             ispec == ispec_selected_source(i_source)) then
-            if ((izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
-                gamma_source(i_source) < -0.99d0) .or.&
-                (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==NGLLX .and. &
-                gamma_source(i_source) > 0.99d0) .or.&
-                (izmin==1 .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
-                xi_source(i_source) < -0.99d0) .or.&
-                (izmin==1 .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
-                xi_source(i_source) > 0.99d0) .or.&
-                (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==1 .and. &
-                gamma_source(i_source) < -0.99d0 .and. xi_source(i_source) < -0.99d0) .or.&
-                (izmin==1 .and. izmax==1 .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
-                gamma_source(i_source) < -0.99d0 .and. xi_source(i_source) > 0.99d0) .or.&
-                (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
-                gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) < -0.99d0) .or.&
-                (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+            if ((izmin == 1 .and. izmax == 1 .and. ixmin == 1 .and. ixmax == NGLLX .and. &
+                gamma_source(i_source) < -0.99d0) .or. &
+                (izmin == NGLLZ .and. izmax == NGLLZ .and. ixmin == 1 .and. ixmax == NGLLX .and. &
+                gamma_source(i_source) > 0.99d0) .or. &
+                (izmin == 1 .and. izmax == NGLLZ .and. ixmin == 1 .and. ixmax == 1 .and. &
+                xi_source(i_source) < -0.99d0) .or. &
+                (izmin == 1 .and. izmax == NGLLZ .and. ixmin == NGLLX .and. ixmax == NGLLX .and. &
+                xi_source(i_source) > 0.99d0) .or. &
+                (izmin == 1 .and. izmax == 1 .and. ixmin == 1 .and. ixmax == 1 .and. &
+                gamma_source(i_source) < -0.99d0 .and. xi_source(i_source) < -0.99d0) .or. &
+                (izmin == 1 .and. izmax == 1 .and. ixmin == NGLLX .and. ixmax == NGLLX .and. &
+                gamma_source(i_source) < -0.99d0 .and. xi_source(i_source) > 0.99d0) .or. &
+                (izmin == NGLLZ .and. izmax == NGLLZ .and. ixmin == 1 .and. ixmax == 1 .and. &
+                gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) < -0.99d0) .or. &
+                (izmin == NGLLZ .and. izmax == NGLLZ .and. ixmin == NGLLX .and. ixmax == NGLLX .and. &
                 gamma_source(i_source) > 0.99d0 .and. xi_source(i_source) > 0.99d0)) then
               call exit_MPI(myrank,'an acoustic source cannot be located exactly '// &
                             'on the free surface because pressure is zero there')
@@ -147,7 +147,7 @@
                          NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
                          iglob_source(i_source),.false.) ! flag .false. indicates moment-tensor source
 
-    else if (.not.initialfield) then
+    else if (.not. initialfield) then
 
       call exit_MPI(myrank,'incorrect source type')
 
@@ -329,21 +329,21 @@
     do irecloc = 1,nrecloc
       irec = recloc(irecloc)
       if (ispec_is_acoustic(ispec) .and. ispec == ispec_selected_rec(irec)) then
-        if ((izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==NGLLX .and. &
-        gamma_receiver(irec) < -0.99d0) .or.&
-        (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==NGLLX .and. &
-        gamma_receiver(irec) > 0.99d0) .or.&
-        (izmin==1 .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
-        xi_receiver(irec) < -0.99d0) .or.&
-        (izmin==1 .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
-        xi_receiver(irec) > 0.99d0) .or.&
-        (izmin==1 .and. izmax==1 .and. ixmin==1 .and. ixmax==1 .and. &
-        gamma_receiver(irec) < -0.99d0 .and. xi_receiver(irec) < -0.99d0) .or.&
-        (izmin==1 .and. izmax==1 .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
-        gamma_receiver(irec) < -0.99d0 .and. xi_receiver(irec) > 0.99d0) .or.&
-        (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==1 .and. ixmax==1 .and. &
-        gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) < -0.99d0) .or.&
-        (izmin==NGLLZ .and. izmax==NGLLZ .and. ixmin==NGLLX .and. ixmax==NGLLX .and. &
+        if ((izmin == 1 .and. izmax == 1 .and. ixmin == 1 .and. ixmax == NGLLX .and. &
+        gamma_receiver(irec) < -0.99d0) .or. &
+        (izmin == NGLLZ .and. izmax == NGLLZ .and. ixmin == 1 .and. ixmax == NGLLX .and. &
+        gamma_receiver(irec) > 0.99d0) .or. &
+        (izmin == 1 .and. izmax == NGLLZ .and. ixmin == 1 .and. ixmax == 1 .and. &
+        xi_receiver(irec) < -0.99d0) .or. &
+        (izmin == 1 .and. izmax == NGLLZ .and. ixmin == NGLLX .and. ixmax == NGLLX .and. &
+        xi_receiver(irec) > 0.99d0) .or. &
+        (izmin == 1 .and. izmax == 1 .and. ixmin == 1 .and. ixmax == 1 .and. &
+        gamma_receiver(irec) < -0.99d0 .and. xi_receiver(irec) < -0.99d0) .or. &
+        (izmin == 1 .and. izmax == 1 .and. ixmin == NGLLX .and. ixmax == NGLLX .and. &
+        gamma_receiver(irec) < -0.99d0 .and. xi_receiver(irec) > 0.99d0) .or. &
+        (izmin == NGLLZ .and. izmax == NGLLZ .and. ixmin == 1 .and. ixmax == 1 .and. &
+        gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) < -0.99d0) .or. &
+        (izmin == NGLLZ .and. izmax == NGLLZ .and. ixmin == NGLLX .and. ixmax == NGLLX .and. &
         gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) > 0.99d0)) then
           ! checks
           if (seismotype == 4) then

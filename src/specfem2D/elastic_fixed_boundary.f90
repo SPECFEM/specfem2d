@@ -110,7 +110,7 @@
      endif
 
   else
-     if (e1 ==  n(1)) then
+     if (e1 == n(1)) then
         ixmin = 1
         izmin = 1
         if (e2 == n(2)) then

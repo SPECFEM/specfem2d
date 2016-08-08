@@ -179,7 +179,7 @@ program adj_seismogram
   endif
   print *
   print *,'  time window start/end                           = ',tstart(1),tend(1)
-  print *,'  adjoint source trace component (1==X/2==Y/3==Z) = ',adj_comp
+  print *,'  adjoint source trace component (1 == X / 2 == Y / 3 == Z) = ',adj_comp
   print *
 
   ! basic check

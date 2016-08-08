@@ -499,8 +499,8 @@
 
       ! debugging
       !write(*,*) 'ispec detection =',ispec
-      !if ((ispec==2000).and.(mod(it,100)==0)) then
-      if ((ispec==800) .and. (mod(it,100)==0)) then
+      !if ((ispec==2000) .and. (mod(it,100)==0)) then
+      if ((ispec == 800) .and. (mod(it,100) == 0)) then
       !if ((ispec==800)) then
         iglobzero=iglob
         write(*,*) ispec,it,Nsql,rhol,displ_n, &

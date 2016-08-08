@@ -96,7 +96,7 @@
         ! sends potential_dot_dot_acoustic values to corresponding MPI interface neighbors (non-blocking)
         call transfer_boun_pot_from_device(Mesh_pointer, &
                                            buffer_send_scalar_gpu, &
-                                           1) ! <-- 1 == fwd accel
+                                           1) ! -- 1 == fwd accel
 
         call assemble_MPI_scalar_send_cuda(NPROC, &
                           buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
@@ -109,7 +109,7 @@
         if (SIMULATION_TYPE == 3) then
           call transfer_boun_pot_from_device(Mesh_pointer, &
                                              b_buffer_send_scalar_gpu,&
-                                             3) ! <-- 3 == adjoint b_accel
+                                             3) ! -- 3 == adjoint b_accel
 
           call assemble_MPI_scalar_send_cuda(NPROC, &
                             b_buffer_send_scalar_gpu,b_buffer_recv_scalar_gpu, &

@@ -163,10 +163,10 @@ program adj_cc
     k=k+1
     beta = real(k-1)/(it_end-it_begin)
 
-    if (beta<alpha/2.) then
+    if (beta < alpha/2.) then
       w(it) = 0.5*(1.+cos(2.*pi/alpha*(beta-alpha/2.)))
 
-    else if (beta>alpha/2. .and. beta<1.-alpha/2.) then
+    else if (beta > alpha/2. .and. beta < 1.-alpha/2.) then
       w(it) = 1.0
 
     else
@@ -231,7 +231,7 @@ end program adj_cc
   len=0
   do i=1,IMAX
       read(1001,*,iostat=ios) dummy1, dummy2
-      if (ios==-1) exit
+      if (ios == -1) exit
       len=len+1
   enddo
   close(1001)
@@ -340,7 +340,7 @@ end program adj_cc
 !     IG = 1  one pass
 !     ig = 2  two passes
 
-      if (ISW==1) goto 31
+      if (ISW == 1) goto 31
       WRITE (6,6)
     6 FORMAT ('1BNDPAS MUST BE CALLED BEFORE FILTER')
       return
@@ -385,7 +385,7 @@ end program adj_cc
    39 X(I)=XE(M)-XE(M2)-D(7)*X(I-1)-D(8)*X(I-2)
 !
 !
-      if (ig==1) goto 3333
+      if (ig == 1) goto 3333
       XM2=X(N)
       XM1=X(N-1)
       XM=X(N-2)
@@ -424,7 +424,7 @@ end program adj_cc
       XE(M)=XD(M)-XD(M2)-D(5)*XE(M1)-D(6)*XE(M2)
    49 X(J)=XE(M)-XE(M2)-D(7)*X(J+1)-D(8)*X(J+2)
  3333 continue
-      if (ig==1) then
+      if (ig == 1) then
         gg=sqrt(g)   ! if only pass once, modify gain
       else
         gg=g

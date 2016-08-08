@@ -358,7 +358,7 @@ end module interpolation
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         if (kmato(ispec) == tomo_material) then
-          ! If the material has been set to <0 on the Par_file
+          ! If the material has been set to < 0 on the Par_file
           xmesh = coord(1,iglob)
           zmesh = coord(2,iglob)
 

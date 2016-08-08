@@ -171,7 +171,7 @@ program subdivide_mesh
                     do inode = 1, 4
                        if ( sqrt( (temporary_nodes(1,ix,iz)-nodes_coords_new(1,elmnts_new(inode,ispec_neighbours_new)))**2 + &
                             (temporary_nodes(2,ix,iz)-nodes_coords_new(2,elmnts_new(inode,ispec_neighbours_new)))**2 ) &
-                            < xtol ) then
+ < xtol ) then
                           temporary_nodes_lookup(ix,iz) = elmnts_new(inode,ispec_neighbours_new)
 
 
@@ -319,19 +319,19 @@ end program subdivide_mesh
                 enddo
              enddo
 
-             if ( connectivity >=  ncommonnodes) then
+             if ( connectivity >= ncommonnodes) then
 
                 is_neighbour = .false.
 
                 do m = 0, xadj(nodes_elmnts(k+j*nsize))
-                   if ( .not.is_neighbour ) then
+                   if (.not. is_neighbour ) then
                       if ( adjncy(nodes_elmnts(k+j*nsize)*max_neighbour+m) == nodes_elmnts(l+j*nsize) ) then
                          is_neighbour = .true.
 
                       endif
                    endif
                 enddo
-                if ( .not.is_neighbour ) then
+                if (.not. is_neighbour ) then
                    adjncy(nodes_elmnts(k+j*nsize)*max_neighbour+xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
                    xadj(nodes_elmnts(k+j*nsize)) = xadj(nodes_elmnts(k+j*nsize)) + 1
                    adjncy(nodes_elmnts(l+j*nsize)*max_neighbour+xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)

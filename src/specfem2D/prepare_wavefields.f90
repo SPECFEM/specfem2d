@@ -86,7 +86,7 @@
   allocate(rmass_inverse_elastic(NDIM,nglob_elastic),stat=ier)
   if (ier /= 0) stop 'Error allocating elastic mass matrix array'
 
-  if (time_stepping_scheme==2) then
+  if (time_stepping_scheme == 2) then
     allocate(displ_elastic_LDDRK(NDIM,nglob_elastic), &
              veloc_elastic_LDDRK(NDIM,nglob_elastic), &
              veloc_elastic_LDDRK_temp(NDIM,nglob_elastic),stat=ier)

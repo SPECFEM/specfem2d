@@ -260,7 +260,7 @@ subroutine bwfilt (x, y, dt, n, irek, norder, f1, f2)
 
   ! norder: order of butterworth filter
   ! norder=0: only filtering, no determination of coefficients
-  ! norder<0: no starplots of transfer function and impulse response
+  ! norder < 0: no starplots of transfer function and impulse response
 
   ! f1: low cutoff frequency (Hz)
   ! f1=0: low pass filter
@@ -278,11 +278,11 @@ subroutine bwfilt (x, y, dt, n, irek, norder, f1, f2)
 
    iunit = 3
 
-   if (norder/=0) then
+   if (norder /= 0) then
       npoles=iabs(norder)
       !determination of filter coefficients
       call bpcoeff(f1,f2,npoles, dt, a,b1, b2)
-      if (norder>=0) then
+      if (norder >= 0) then
          !plot of transfer function and impuulse response
          lx = 100
          !filtering
@@ -290,7 +290,7 @@ subroutine bwfilt (x, y, dt, n, irek, norder, f1, f2)
    endif
 
 
-   if (n/=0) then
+   if (n /= 0) then
       call rekurs(x,y,n,a,b1,b2,npoles,irek)
    endif
    return
@@ -305,7 +305,7 @@ subroutine rekurs(x,y,ndat,a,b1,b2,npoles,iflag)
   ! a, b1, b2 are the filtercoefficients previously determined in bwcoef
   ! npoles is the number of poles
   ! iflag=0: forward filtering only
-  ! iflag/=0: forward and backward filtering
+  ! iflag /= 0: forward and backward filtering
 
   implicit none
 
@@ -338,7 +338,7 @@ subroutine rekurs(x,y,ndat,a,b1,b2,npoles,iflag)
      y(n) = z(npoles)
   enddo
 
-  if (iflag==0) then
+  if (iflag == 0) then
      return
   endif
 
@@ -384,7 +384,7 @@ subroutine bpcoeff(f1,f2,npoles,dt,a,b1,b2)
   integer :: i,npol2,n,npoles
 
 
-  if (npoles>10) then
+  if (npoles > 10) then
      stop ' npoles greater than 10: STOP '
   endif
 

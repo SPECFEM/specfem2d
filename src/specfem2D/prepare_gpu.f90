@@ -403,8 +403,8 @@
 
           cote_abs(ispecabs) = 4
         enddo
-        if (ibegin_edge4(ispecabs)==2) abs_boundary_ij(2,1,ispecabs) = 6
-        if (iend_edge4(ispecabs)==4) abs_boundary_ij(2,5,ispecabs) = 6
+        if (ibegin_edge4(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = 6
+        if (iend_edge4(ispecabs) == 4) abs_boundary_ij(2,5,ispecabs) = 6
 
       !--- right absorbing boundary
       else if (codeabs(IEDGE2,ispecabs)) then
@@ -424,8 +424,8 @@
 
           cote_abs(ispecabs) = 2
         enddo
-        if (ibegin_edge2(ispecabs)==2) abs_boundary_ij(2,1,ispecabs) = 6
-        if (iend_edge2(ispecabs)==4) abs_boundary_ij(2,5,ispecabs) = 6
+        if (ibegin_edge2(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = 6
+        if (iend_edge2(ispecabs) == 4) abs_boundary_ij(2,5,ispecabs) = 6
 
       !--- bottom absorbing boundary
       else if (codeabs(IEDGE1,ispecabs)) then
@@ -446,8 +446,8 @@
           cote_abs(ispecabs) = 1
 
         enddo
-        if (ibegin_edge1(ispecabs)==2  .or. codeabs_corner(1,ispecabs)) abs_boundary_ij(1,1,ispecabs) = 6
-        if (iend_edge1(ispecabs)==4 .or. codeabs_corner(2,ispecabs))    abs_boundary_ij(1,5,ispecabs) = 6
+        if (ibegin_edge1(ispecabs) == 2 .or. codeabs_corner(1,ispecabs)) abs_boundary_ij(1,1,ispecabs) = 6
+        if (iend_edge1(ispecabs) == 4 .or. codeabs_corner(2,ispecabs)) abs_boundary_ij(1,5,ispecabs) = 6
 
       !--- top absorbing boundary
       else if (codeabs(IEDGE3,ispecabs)) then
@@ -467,8 +467,8 @@
 
           cote_abs(ispecabs) = 3
         enddo
-        if (ibegin_edge3(ispecabs)==2 .or. codeabs_corner(3,ispecabs)) abs_boundary_ij(1,1,ispecabs) = 6
-        if (iend_edge3(ispecabs)==4 .or. codeabs_corner(4,ispecabs))   abs_boundary_ij(1,5,ispecabs) = 6
+        if (ibegin_edge3(ispecabs) == 2 .or. codeabs_corner(3,ispecabs)) abs_boundary_ij(1,1,ispecabs) = 6
+        if (iend_edge3(ispecabs) == 4 .or. codeabs_corner(4,ispecabs)) abs_boundary_ij(1,5,ispecabs) = 6
 
       endif
     enddo
@@ -493,7 +493,7 @@
   j = 0
   do i = 1, NSOURCES
     if (myrank == islice_selected_source(i)) then
-      if (j>nsources_local) stop 'Error with the number of local sources'
+      if (j > nsources_local) stop 'Error with the number of local sources'
       j = j + 1
       source_time_function_loc(j,:) = source_time_function(i,:,1)
       ispec_selected_source_loc(j)  = ispec_selected_source(i)
@@ -599,7 +599,7 @@
         coupling_ac_el_normal(2,ipoint1D,inum) = - xxi / jacobian1D
         coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wxgll(i)
 
-      else if (iedge_acoustic ==ILEFT) then
+      else if (iedge_acoustic == ILEFT) then
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -607,7 +607,7 @@
         coupling_ac_el_normal(2,ipoint1D,inum) = + xgamma / jacobian1D
         coupling_ac_el_jacobian1Dw(ipoint1D,inum) = jacobian1D * wzgll(j)
 
-      else if (iedge_acoustic ==IRIGHT) then
+      else if (iedge_acoustic == IRIGHT) then
         xgamma = - xiz(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         zgamma = + xix(i,j,ispec_acoustic) * jacobian(i,j,ispec_acoustic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)

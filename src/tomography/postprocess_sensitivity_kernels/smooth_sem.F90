@@ -344,7 +344,7 @@ program smooth_sem
           do j = 1, NGLLZ
               do i = 1, NGLLX
                 iglob = ibool_me(i,j,ispec)
-                if (imask(iglob)==1) cycle
+                if (imask(iglob) == 1) cycle
 
                 ! calculate weights based on Gaussian smoothing
                 exp_val = 0.0_CUSTOM_REAL
@@ -429,7 +429,7 @@ program smooth_sem
   call synchronize_all()
 
 #ifdef USE_MPI
-  if (NPROC>1) then
+  if (NPROC > 1) then
 
     ! the maximum value for the smoothed kernel
     norm(:) = max_old(:)

@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
   !-----------------------------------------------
   ! Creating dual graph (adjacency is defined by 'ncommonnodes' between two elements).
   !-----------------------------------------------
@@ -91,18 +90,18 @@
 
         ! sets adjacency (adjncy) and number of neighbors (xadj)
         ! according to ncommonnodes criteria
-        if (connectivity >=  ncommonnodes) then
+        if (connectivity >= ncommonnodes) then
 
           is_neighbour = .false.
 
           do m = 0, xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED))
-            if (.not.is_neighbour) then
+            if (.not. is_neighbour) then
               if (adjncy(nodes_elmnts(k+j*MAX_NSIZE_SHARED)*MAX_NEIGHBORS+m) == nodes_elmnts(l+j*MAX_NSIZE_SHARED)) then
                 is_neighbour = .true.
               endif
             endif
           enddo
-          if (.not.is_neighbour) then
+          if (.not. is_neighbour) then
             adjncy(nodes_elmnts(k+j*MAX_NSIZE_SHARED)*MAX_NEIGHBORS &
                    + xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED))) = nodes_elmnts(l+j*MAX_NSIZE_SHARED)
 
@@ -114,7 +113,7 @@
                    + xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED))) = nodes_elmnts(k+j*MAX_NSIZE_SHARED)
 
             xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED)) = xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED)) + 1
-            if (xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED))>MAX_NEIGHBORS) &
+            if (xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED)) > MAX_NEIGHBORS) &
               stop 'ERROR : too much neighbours per element, modify the mesh.'
 
           endif

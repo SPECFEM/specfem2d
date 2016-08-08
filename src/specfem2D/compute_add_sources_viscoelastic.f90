@@ -170,7 +170,7 @@
                            NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
                            iglob_source(i_source),.false.)
 
-      else if (.not.initialfield) then
+      else if (.not. initialfield) then
 
         call exit_MPI(myrank,'incorrect source type')
 

@@ -27,8 +27,8 @@ subroutine prepare_timerun_attenuation(e1,e11,e13,inv_tau_sigma_nu1, &
 
 
      ! check that attenuation values entered by the user make sense
-     if ((QKappa_attenuation(kmato(ispec)) <= 9998.999d0 .and. Qmu_attenuation(kmato(ispec)) >  9998.999d0) .or. &
-          (QKappa_attenuation(kmato(ispec)) >  9998.999d0 .and. Qmu_attenuation(kmato(ispec)) <= 9998.999d0)) stop &
+     if ((QKappa_attenuation(kmato(ispec)) <= 9998.999d0 .and. Qmu_attenuation(kmato(ispec)) > 9998.999d0) .or. &
+          (QKappa_attenuation(kmato(ispec)) > 9998.999d0 .and. Qmu_attenuation(kmato(ispec)) <= 9998.999d0)) stop &
           'need to have Qkappa and Qmu both above or both below 9999 for a given material; trick: use 9998 if you want to turn off one'
 
      ! if no attenuation in that elastic element

@@ -100,7 +100,7 @@
   potential_acoustic_LDDRK(:) = ALPHA_LDDRK(i_stage) * potential_acoustic_LDDRK(:) + &
                                 deltat * potential_dot_acoustic(:)
 
-  if (i_stage==1 .and. it == 1 .and. (.not. initialfield)) then
+  if (i_stage == 1 .and. it == 1 .and. (.not. initialfield)) then
     !! DK DK this should be vectorized
     potential_dot_acoustic_temp(:) = potential_dot_acoustic_temp(:) + &
                                      BETA_LDDRK(i_stage) * potential_dot_acoustic_LDDRK(:)

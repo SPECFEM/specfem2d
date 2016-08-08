@@ -746,7 +746,7 @@ module specfem_par_gpu
 
   implicit none
 
-  ! CUDA mesh pointer<->integer wrapper
+  ! CUDA mesh pointer to integer wrapper
   integer(kind=8) :: Mesh_pointer
 
   ! wavefield transfers

@@ -99,7 +99,7 @@
     j = nzread
     do i = 1,nxread
        imaterial_number = num_material((j-1)*nxread+i)
-       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >=1.d0) then
+       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >= 1.d0) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
           acoustic_surface(2,nelem_acoustic_surface) = 2
@@ -112,7 +112,7 @@
     j = 1
     do i = 1,nxread
        imaterial_number = num_material((j-1)*nxread+i)
-       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >=1.d0) then
+       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >= 1.d0) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
           acoustic_surface(2,nelem_acoustic_surface) = 2
@@ -126,7 +126,7 @@
     i = 1
     do j = 1,nzread
        imaterial_number = num_material((j-1)*nxread+i)
-       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >=1.d0) then
+       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >= 1.d0) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
           acoustic_surface(2,nelem_acoustic_surface) = 2
@@ -139,7 +139,7 @@
     i = nxread
     do j = 1,nzread
        imaterial_number = num_material((j-1)*nxread+i)
-       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >=1.d0) then
+       if (icodemat(imaterial_number) /= ANISOTROPIC_MATERIAL .and. phi_read(imaterial_number) >= 1.d0) then
           nelem_acoustic_surface = nelem_acoustic_surface + 1
           acoustic_surface(1,nelem_acoustic_surface) = (j-1)*nxread + (i-1)
           acoustic_surface(2,nelem_acoustic_surface) = 2

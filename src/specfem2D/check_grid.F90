@@ -1273,7 +1273,7 @@
         write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
         write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
         write(24,*) 'CO'
-        if (RGB_recv(ispec)  == 1) then
+        if (RGB_recv(ispec) == 1) then
           write(24,*) '1 0 0 RG GF 0 setgray ST'
         else
           write(24,*) 'ST'
@@ -1678,13 +1678,13 @@
         write(24,681) coorg_recv(1,(ispec-1)*5+4), coorg_recv(2,(ispec-1)*5+4)
         write(24,681) coorg_recv(1,(ispec-1)*5+5), coorg_recv(2,(ispec-1)*5+5)
         write(24,*) 'CO'
-        if (RGB_recv(ispec)  == 1) then
+        if (RGB_recv(ispec) == 1) then
           write(24,*) '1 0 0 RG GF 0 setgray ST'
         endif
-        if (RGB_recv(ispec)  == 3) then
+        if (RGB_recv(ispec) == 3) then
           write(24,*) '0 0 1 RG GF 0 setgray ST'
         endif
-        if (RGB_recv(ispec)  == 0) then
+        if (RGB_recv(ispec) == 0) then
           write(24,*) 'ST'
         endif
 

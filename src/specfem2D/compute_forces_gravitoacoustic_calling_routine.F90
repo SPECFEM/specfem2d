@@ -50,7 +50,7 @@
 ! *********************************************************
 
   if ((any_gravitoacoustic)) then
-    if (time_stepping_scheme==1) then
+    if (time_stepping_scheme == 1) then
       ! Newmark time scheme
       !! DK DK this should be vectorized
       potential_gravitoacoustic = potential_gravitoacoustic + deltat*potential_dot_gravitoacoustic + &
@@ -99,7 +99,7 @@
                                         potential_gravito,.false.)
 
     ! debugging
-    if ((mod(it,100)==0)) then
+    if ((mod(it,100) == 0)) then
       iglob=iglobzero
       write(*,*)it, & ! Nsql,gravityl,
                 maxval(potential_dot_dot_gravito),potential_dot_dot_gravito(iglob), &

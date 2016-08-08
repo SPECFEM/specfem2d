@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
   subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old, &
                                          PML_BOUNDARY_CONDITIONS,e1,e11,e13,iphase)
 
@@ -434,7 +433,7 @@
             if (ispec_is_PML(ispec) .and. nspec_PML > 0) then
               if (ROTATE_PML_ACTIVATE) then
                 theta = - ROTATE_PML_ANGLE/180._CUSTOM_REAL*PI
-                if (it==1) write(*,*)theta,ROTATE_PML_ACTIVATE,cos(theta),sin(theta)
+                if (it == 1) write(*,*) theta,ROTATE_PML_ACTIVATE,cos(theta),sin(theta)
                 ct = cos(theta)
                 st = sin(theta)
                 sigma_xx_prime = lambdaplus2mu_unrelaxed_elastic * (ct**2*dux_dxl(i,j) + ct*st*duz_dxl(i,j) + &
@@ -569,7 +568,7 @@
               if (i == 1) then
                 write(*,*) "Element number:",ispec
                 stop "Error: an axial element is rotated. The code should have been stopped before. Check that your &
-                 &coordinates are >> TINYVAL. Maybe you should also have a look to &
+                 &coordinates are greater than TINYVAL. Maybe you should also have a look to &
                  &doc/problematic_case_that_we_exclude_for_axisymmetric.pdf"
               endif
               tempx3(i,j) = tempx3(i,j) + wxglj(i) * jacobianl &

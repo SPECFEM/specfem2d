@@ -1085,7 +1085,7 @@
 !  Sort within each segment
    ioff=1
    do iseg=1,nseg
-      if (j==1) then
+      if (j == 1) then
          call rank(xp(ioff),ind,ninseg(iseg))
       else
          call rank(yp(ioff),ind,ninseg(iseg))
@@ -1096,7 +1096,7 @@
       ioff=ioff+ninseg(iseg)
    enddo
 !  Check for jumps in current coordinate
-   if (j==1) then
+   if (j == 1) then
      do i=2,npoin_max
        if (abs(xp(i)-xp(i-1)) > xtol) ifseg(i)=.true.
      enddo

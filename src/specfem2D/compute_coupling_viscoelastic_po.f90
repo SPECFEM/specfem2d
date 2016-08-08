@@ -321,14 +321,14 @@
         nx = + zxi / jacobian1D
         nz = - xxi / jacobian1D
         weight = jacobian1D * wxgll(i)
-      else if (iedge_poroelastic ==ILEFT) then
+      else if (iedge_poroelastic == ILEFT) then
         xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
         nx = - zgamma / jacobian1D
         nz = + xgamma / jacobian1D
         weight = jacobian1D * wzgll(j)
-      else if (iedge_poroelastic ==IRIGHT) then
+      else if (iedge_poroelastic == IRIGHT) then
         xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
@@ -631,14 +631,14 @@
         nx = + zxi / jacobian1D
         nz = - xxi / jacobian1D
         weight = jacobian1D * wxgll(i)
-      else if (iedge_poroelastic ==ILEFT) then
+      else if (iedge_poroelastic == ILEFT) then
         xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)
         nx = - zgamma / jacobian1D
         nz = + xgamma / jacobian1D
         weight = jacobian1D * wzgll(j)
-      else if (iedge_poroelastic ==IRIGHT) then
+      else if (iedge_poroelastic == IRIGHT) then
         xgamma = - xiz(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         zgamma = + xix(i,j,ispec_poroelastic) * jacobian(i,j,ispec_poroelastic)
         jacobian1D = sqrt(xgamma**2 + zgamma**2)

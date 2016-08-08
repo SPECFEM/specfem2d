@@ -87,7 +87,7 @@ program adj_seismogram
 
      enddo
 
-     if (NDIMr==2) then
+     if (NDIMr == 2) then
         seism(:,3) = seism(:,2)
         seism(:,2) = 0.d0
      else

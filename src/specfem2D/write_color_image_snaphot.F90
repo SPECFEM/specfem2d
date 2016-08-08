@@ -174,7 +174,7 @@
     if (P_SV) then
       ! P-SH waves, plot a component of vector, its norm, or else pressure
       if (iglob_image_color(i,j) /= -1) then
-        if (imagetype_JPEG == 1  .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7 .or. &
+        if (imagetype_JPEG == 1 .or. imagetype_JPEG == 4 .or. imagetype_JPEG == 7 .or. &
             imagetype_JPEG == 11 .or. imagetype_JPEG == 14) then
           ! draw the X component of the vector
           image_color_data(i,j) = vector_field_display(1,iglob_image_color(i,j))

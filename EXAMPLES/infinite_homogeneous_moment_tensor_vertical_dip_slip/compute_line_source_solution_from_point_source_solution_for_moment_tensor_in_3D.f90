@@ -206,7 +206,7 @@ double precision function stf(ts_stf,te_stf,amplitude,t,dp)
  double precision :: pi = 3.141592653589793238462643d0
 
 ! Ricker wavelet source
- if ( t>= ts_stf .and. t <= te_stf ) then
+ if ( t >= ts_stf .and. t <= te_stf ) then
    stf = amplitude * (1.d0 - 2.0*(pi*dp*(t + ts_stf))**2)*dexp(-(pi*dp*(t + ts_stf))**2)
  else
    stf = 0.0d0
@@ -220,7 +220,7 @@ double precision function stf_differential(ts_stf,te_stf,amplitude,t,dp)
  double precision :: pi = 3.141592653589793238462643d0
 
 ! Ricker wavelet source
- if ( t>= ts_stf .and. t <= te_stf ) then
+ if ( t >= ts_stf .and. t <= te_stf ) then
    stf_differential = amplitude * (-2.d0) * (pi*dp)**2 * (t + ts_stf) * &
                       (3.d0 - 2.0*(pi*dp*(t + ts_stf))**2)*dexp(-(pi*dp*(t + ts_stf))**2)
  else

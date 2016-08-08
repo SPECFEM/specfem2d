@@ -211,15 +211,15 @@
   if ((NOISE_TOMOGRAPHY /= 0) .and. (P_SV)) write(*,*) 'Warning: For P-SV case, noise tomography subroutines not yet fully tested'
 
   if (NOISE_TOMOGRAPHY == 1) then
-     if (SIMULATION_TYPE /= 1) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=1 requires SIMULATION_TYPE=1    -> check DATA/Par_file')
+     if (SIMULATION_TYPE /= 1) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=1 requires SIMULATION_TYPE=1, check DATA/Par_file')
 
   else if (NOISE_TOMOGRAPHY == 2) then
-     if (SIMULATION_TYPE /= 1) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=2 requires SIMULATION_TYPE=1    -> check DATA/Par_file')
-     if (.not. SAVE_FORWARD) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=2 requires SAVE_FORWARD=.true.  -> check DATA/Par_file')
+     if (SIMULATION_TYPE /= 1) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=2 requires SIMULATION_TYPE=1, check DATA/Par_file')
+     if (.not. SAVE_FORWARD) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=2 requires SAVE_FORWARD=.true., check DATA/Par_file')
 
   else if (NOISE_TOMOGRAPHY == 3) then
-     if (SIMULATION_TYPE /= 3) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=3 requires SIMULATION_TYPE=3    -> check DATA/Par_file')
-     if (SAVE_FORWARD)       call exit_MPI(myrank,'NOISE_TOMOGRAPHY=3 requires SAVE_FORWARD=.false. -> check DATA/Par_file')
+     if (SIMULATION_TYPE /= 3) call exit_MPI(myrank,'NOISE_TOMOGRAPHY=3 requires SIMULATION_TYPE=3, check DATA/Par_file')
+     if (SAVE_FORWARD)       call exit_MPI(myrank,'NOISE_TOMOGRAPHY=3 requires SAVE_FORWARD=.false., check DATA/Par_file')
   endif
 
   ! check model parameters
@@ -553,7 +553,7 @@
       ! opens file
       open(unit=501,file='OUTPUT_FILES/noise_eta.bin',access='direct',recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error saving generating wavefield.')
-    endif ! (it==1)
+    endif
 
     ! stores generating wavefield
     if (P_SV) then
@@ -581,7 +581,7 @@
       ! opens file
       open(unit=502,file='OUTPUT_FILES/noise_phi.bin',access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='write',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error saving ensemble forward wavefield.')
-    endif ! (it==1)
+    endif
 
     ! stores complete wavefield
     write(unit=502,rec=it) displ_elastic(1,:),displ_elastic(2,:)

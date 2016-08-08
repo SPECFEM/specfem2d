@@ -64,21 +64,21 @@
   AN  = N
 
 !
-! label=1 <=> champ U en entree =>convolution par un ricker pour U
-! label=2 <=> champ U en entree =>convolution par la derivee de ricker pour V
-! label=3 <=> champ U en entree =>convolution par la derivee seconde de ricker pour A
-! label=4 <=> champ T en entree =>convolution par un ricker
+! label=1, champ U en entree, convolution par un ricker pour U
+! label=2, champ U en entree, convolution par la derivee de ricker pour V
+! label=3, champ U en entree, convolution par la derivee seconde de ricker pour A
+! label=4, champ T en entree, convolution par un ricker
 !
-! flag=0 on a besoin de U, V et A (pas T)
-! flag/=0 on a besoin de T et V (pas U ni A)
+! flag = 0 on a besoin de U, V et A (pas T)
+! flag /= 0 on a besoin de T et V (pas U ni A)
 !
-! NSTEP==1 <=> FLAG==0 (flags: interior=0, left= 1, right= 2, bottom=3)
+! NSTEP==1, FLAG==0 (flags: interior=0, left= 1, right= 2, bottom=3)
 !
 
   do j = 1,N
-     if (label==1 .or. label==4) FUN=ric(j,tp,ts,dt)
-     if (label==2) FUN=deric(j,tp,ts,dt)
-     if (label==3) FUN=de2ric(j,tp,ts,dt)
+     if (label == 1 .or. label == 4) FUN=ric(j,tp,ts,dt)
+     if (label == 2) FUN=deric(j,tp,ts,dt)
+     if (label == 3) FUN=de2ric(j,tp,ts,dt)
      CR(j)=CMPLX(FUN,0.0d0)
   enddo
 
@@ -124,15 +124,15 @@
 
   CALL fourier_transform(N,CY,1.0d0)
 
-  if (label==1 .or. label==3 .or. (label==2 .and. NSTEP==1)) then
+  if (label == 1 .or. label == 3 .or. (label == 2 .and. NSTEP == 1)) then
 ! coefficients to take time steps needed (t=0: first time step)
      mult=1
      delay=0
-  else if (label==2 .and. NSTEP>1) then
+  else if (label == 2 .and. NSTEP > 1) then
 ! coefficients to take time steps needed (t=i*deltat+1/2: one step on two starting at 1/2)
      mult=2
      delay=0
-  else if (label==4) then
+  else if (label == 4) then
 ! coefficients to take time steps needed (t=i*deltat+1: one step on two starting at 1)
      mult=2
      delay=1
@@ -162,7 +162,7 @@
   A=PI*(dt*(J-1)-ts)/tp
   A=A*A
   RIC=0.0d0
-  if (A>30.0d0) return
+  if (A > 30.0d0) return
   RIC=(A-0.5)*EXP(-A)
 
   end function RIC
@@ -183,7 +183,7 @@
   A=A*A
   A_dot=2*(PI/tp)**2*(dt*(J-1)-ts)
   deRIC=0.0d0
-  if (A>30.0d0) return
+  if (A > 30.0d0) return
   deRIC=A_dot*(1.5-A)*EXP(-A)
 
   end function deRIC
@@ -205,7 +205,7 @@
   A_dot=2*(PI/tp)**2*(dt*(J-1)-ts)
   A_dot_dot=2*(PI/tp)**2
   de2RIC=0.0d0
-  if (A>30.0d0) return
+  if (A > 30.0d0) return
   de2RIC=(A_dot_dot*(1.5-A)-A_dot*A_dot-A_dot*(1.5-A)*A_dot)*EXP(-A)
 
   end function de2RIC
@@ -229,13 +229,13 @@
   J=1
   SC=SQRT(1.0d0/LX)
   do I = 1,LX
-     if (I<=J) then
+     if (I <= J) then
         CTEMP=CX(J)*SC
         CX(J)=CX(I)*SC
         CX(I)=CTEMP
      endif
      M=LX/2
-     do while (M>=1 .and. M<J)
+     do while (M >= 1 .and. M < J)
         J=J-M
         M=M/2
      enddo
@@ -243,7 +243,7 @@
   enddo
   L=1
 
-  do while(L<LX)
+  do while(L < LX)
      ISTEP=2*L
      DO  M= 1,L
         CARG=(0.0d0,1.0d0)*(PI*SIGNI*(M-1))/L

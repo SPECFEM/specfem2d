@@ -126,7 +126,7 @@
             Sn   = - (1.d0 - theta_e/theta_s)/theta_s*viscox(i,j,ispec)
             rx_viscous_force_RK(i,j,ispec,i_stage) = deltat * (Sn + thetainv * rx_viscous(i,j,ispec))
 
-            if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+            if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
               if (i_stage == 1) weight_rk = 0.5d0
               if (i_stage == 2) weight_rk = 0.5d0
               if (i_stage == 3) weight_rk = 1.0d0

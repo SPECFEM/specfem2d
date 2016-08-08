@@ -336,7 +336,7 @@
     ! checks
     if (ATTENUATION_VISCOELASTIC_SOLID .or. ATTENUATION_PORO_FLUID_PART) &
       stop 'Attenuation not supported for mixed elastic/poroelastic simulations'
-    if (time_stepping_scheme == 2.or. time_stepping_scheme == 3) &
+    if (time_stepping_scheme == 2 .or. time_stepping_scheme == 3) &
       stop 'RK and LDDRK time scheme not supported for mixed elastic/poroelastic simulations'
 
     if (myrank == 0) then

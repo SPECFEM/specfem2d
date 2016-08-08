@@ -572,7 +572,7 @@ contains
   endif
 
   ! checks absorbing boundaries
-  if ( .not. any_abs ) then
+  if (.not. any_abs ) then
      absbottom = .false.
      absright = .false.
      abstop = .false.

@@ -103,7 +103,7 @@ program adj_seismogram
   print *,'  station name            = ',trim(station_name(1))
   print *
   print *,'  time window start/end                           = ',tstart(1),tend(1)
-  print *,'  adjoint source trace component (1==X/2==Y/3==Z) = ',adj_comp
+  print *,'  adjoint source trace component (1 == X/2 == Y/3 == Z) = ',adj_comp
   print *
 
   do irec = 1,nrec

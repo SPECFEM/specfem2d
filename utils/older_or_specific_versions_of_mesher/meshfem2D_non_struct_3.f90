@@ -369,7 +369,7 @@
 
   do imodele=1,nbmodeles
       read(10,*) i,icodematread,rhoread,cpread,csread,aniso3read,aniso4read
-      if (i<1 .or. i>nbmodeles) stop 'Wrong material set number'
+      if (i < 1 .or. i > nbmodeles) stop 'Wrong material set number'
       rho(i) = rhoread
       cp(i) = cpread
       cs(i) = csread

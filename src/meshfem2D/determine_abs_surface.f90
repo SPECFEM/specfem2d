@@ -66,7 +66,7 @@
     do iz = 1,nzread
        do ix = 1,nxread
           inumelem = (iz-1)*nxread + ix
-          if (absorbbottom    .and. iz == 1) then
+          if (absorbbottom .and. iz == 1) then
              nelemabs = nelemabs + 1
              abs_surface(1,nelemabs) = inumelem-1
              abs_surface(2,nelemabs) = 2
@@ -82,7 +82,7 @@
              abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1))
              abs_surface(5,nelemabs) = IRIGHT
           endif
-          if (absorbtop   .and. iz == nzread) then
+          if (absorbtop .and. iz == nzread) then
              nelemabs = nelemabs + 1
              abs_surface(1,nelemabs) = inumelem-1
              abs_surface(2,nelemabs) = 2

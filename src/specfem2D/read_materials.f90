@@ -90,7 +90,7 @@
     if (n < 1 .or. n > numat) call exit_MPI(myrank,'Wrong material set number')
 
     !---- isotropic material, P and S velocities given, allows for declaration of elastic/acoustic material
-    !---- elastic (cs/=0) and acoustic (cs=0)
+    !---- elastic (cs /= 0) and acoustic (cs = 0)
     if (indic == 1) then
       density_mat(1) = val0
 
@@ -169,7 +169,7 @@
       poisson = HALF * (3.d0*kappa-two_mu)/(3.d0*kappa+mu)
 
     !---- isotropic material, moduli are given, allows for declaration of poroelastic material
-    !---- poroelastic (0<phi<1)
+    !---- poroelastic (0 < phi < 1)
     else if (indic == 3) then
       ! Qmu values
       Qmu = val12

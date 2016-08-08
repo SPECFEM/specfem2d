@@ -138,7 +138,7 @@
         if (SIMULATION_TYPE == 3) then
            call transfer_boun_accel_from_device(Mesh_pointer,&
                         b_buffer_send_vector_gpu,&
-                        3) ! <-- 3 == adjoint b_accel
+                        3) ! -- 3 == adjoint b_accel
            call assemble_MPI_vector_send_cuda(NPROC, &
                         b_buffer_send_vector_gpu,b_buffer_recv_vector_gpu, &
                         ninterface,max_nibool_interfaces_ext_mesh, &

@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
   subroutine compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
                                                   e1,e11,e13,iphase)
 
@@ -196,14 +195,14 @@
               ! RK
               e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
 
-              if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+              if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
                 if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
                 if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
                 if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
 
-                if (i_stage==1) e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
+                if (i_stage == 1) e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
                 e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
-              else if (i_stage==4) then
+              else if (i_stage == 4) then
                 e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                       (e1_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,2) + &
                                        2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
@@ -212,14 +211,14 @@
               e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2 - &
                                                                  e11(i,j,ispec,i_sls) * tauinvnu2)
 
-              if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+              if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
                 if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
                 if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
                 if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
 
-                if (i_stage==1) e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
+                if (i_stage == 1) e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
                 e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
-              else if (i_stage==4) then
+              else if (i_stage == 4) then
                 e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                        (e11_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,2) + &
                                         2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
@@ -227,14 +226,14 @@
 
               e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2 - &
                                                                  e13(i,j,ispec,i_sls) * tauinvnu2)
-              if (i_stage==1 .or. i_stage==2 .or. i_stage==3) then
+              if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
                 if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
                 if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
                 if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
 
-                if (i_stage==1) e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
+                if (i_stage == 1) e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
                 e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
-              else if (i_stage==4) then
+              else if (i_stage == 4) then
                 e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                        (e13_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,2) + &
                                         2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
@@ -564,7 +563,7 @@
               if (abs(coord(1,ibool(i,j,ispec))) > TINYVAL) then ! Not first GLJ point
                 if (i == 1) then
                   stop "error: an axial element is rotated. The code should have been stopped before. Check that your &
-                   &coordinates are >> TINYVAL. Maybe you should also have a look to &
+                   &coordinates are greater than TINYVAL. Maybe you should also have a look to &
                    &doc/problematic_case_that_we_exclude_for_axisymmetric.pdf"
                 endif
                 tempx3(i,j) = tempx3(i,j) + wzgll(j)*wxglj(i)*jacobian(i,j,ispec) &

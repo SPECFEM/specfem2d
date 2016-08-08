@@ -182,9 +182,9 @@
     if (AXISYM) then
       write(IMAIN,*)
       write(IMAIN,*)
-      write(IMAIN,*) '====================================================='
-      write(IMAIN,*) '=== A x i s y m m e t r i c   S i m u l a t i o n ==='
-      write(IMAIN,*) '====================================================='
+      write(IMAIN,*) '-----------------------------------------------------'
+      write(IMAIN,*) '--- A x i s y m m e t r i c   S i m u l a t i o n ---'
+      write(IMAIN,*) '-----------------------------------------------------'
     endif
 
     ! outputs parameters read
@@ -214,11 +214,11 @@
 600 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) = ',i6/ 5x, &
   'Color display . . . . . . . . . . . . . . . (colors) = ',i6/ 5x, &
-  '        ==  0     black and white display              ',  / 5x, &
-  '        ==  1     color display                        ',  /5x, &
+  ' == 0     black and white display              ',  / 5x, &
+  ' == 1     color display                        ',  /5x, &
   'Numbered mesh . . . . . . . . . . . . . . .(numbers) = ',i6/ 5x, &
-  '        ==  0     do not number the mesh               ',  /5x, &
-  '        ==  1     number the mesh                      ')
+  ' == 0     do not number the mesh               ',  /5x, &
+  ' == 1     number the mesh                      ')
 
 700 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Seismograms recording type . . . . . . .(seismotype) = ',i6/5x, &
@@ -504,7 +504,7 @@
 
 
   ! output formats
-107 format(/5x,'--> Spectral Elements <--',//)
+107 format(/5x,'-- Spectral Elements --',//)
 
 207 format(5x,'Number of spectral elements . . . . . . . . .  (nspec) =',i7,/5x, &
                'Number of control nodes per element . . . . . (ngnod) =',i7,/5x, &

@@ -136,7 +136,7 @@
         !print *,"gravityext(i,j,ispec)",gravityext(i,j,ispec)
         if (P_SV .and. (.not. (i == 1 .and. j == 1)) .and. &
           ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
-           (vsext(i,j,ispec) < TINYVAL  .and. previous_vsext >= TINYVAL)))  &
+           (vsext(i,j,ispec) < TINYVAL .and. previous_vsext >= TINYVAL)))  &
           call exit_MPI(myrank,'external velocity model cannot be both fluid and solid inside the same spectral element')
 
         ! sets element type
@@ -234,11 +234,11 @@
     endif
 
     ! checks if domain is unique
-    if ((ispec_is_acoustic(ispec)    .and. ispec_is_elastic(ispec)) .or. &
-        (ispec_is_acoustic(ispec)    .and. ispec_is_poroelastic(ispec)) .or. &
-        (ispec_is_acoustic(ispec)    .and. ispec_is_gravitoacoustic(ispec)) .or. &
-        (ispec_is_elastic(ispec)     .and. ispec_is_poroelastic(ispec)) .or. &
-        (ispec_is_elastic(ispec)     .and. ispec_is_gravitoacoustic(ispec)) .or. &
+    if ((ispec_is_acoustic(ispec) .and. ispec_is_elastic(ispec)) .or. &
+        (ispec_is_acoustic(ispec) .and. ispec_is_poroelastic(ispec)) .or. &
+        (ispec_is_acoustic(ispec) .and. ispec_is_gravitoacoustic(ispec)) .or. &
+        (ispec_is_elastic(ispec) .and. ispec_is_poroelastic(ispec)) .or. &
+        (ispec_is_elastic(ispec) .and. ispec_is_gravitoacoustic(ispec)) .or. &
         (ispec_is_poroelastic(ispec) .and. ispec_is_gravitoacoustic(ispec))) then
       print *,'Error material domain assigned twice to element:',ispec
       print *,'acoustic       : ',ispec_is_acoustic(ispec)
