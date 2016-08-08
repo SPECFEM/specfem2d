@@ -54,7 +54,7 @@
   call zwgljd(xigll,wxgll_dble,NGLLX,GAUSSALPHA,GAUSSBETA)
   call zwgljd(zigll,wzgll_dble,NGLLZ,GAUSSALPHA,GAUSSBETA)
 
-  ! converts to custom_real
+  ! converts to CUSTOM_REAL
   wxgll(:) = real(wxgll_dble(:),kind=CUSTOM_REAL)
   wzgll(:) = real(wzgll_dble(:),kind=CUSTOM_REAL)
 
@@ -111,7 +111,7 @@
   ! set up coordinates of the Gauss-Lobatto-Jacobi points
   call zwgljd(xiglj,wxglj_dble,NGLJ,alphaGLJ,betaGLJ)
 
-  ! converts to custom_real
+  ! converts to CUSTOM_REAL
   wxglj(:) = real(wxglj_dble(:),kind=CUSTOM_REAL)
 
 ! calculate derivatives of the GLJ quadrature polynomials

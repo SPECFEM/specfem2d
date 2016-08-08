@@ -343,7 +343,7 @@
     call flush_IMAIN()
   endif
 
-  ! converts to custom_real
+  ! converts to CUSTOM_REAL
   deltatf = sngl(deltat)
   deltatover2f = sngl(deltatover2)
   deltatsquareover2f = sngl(deltatsquareover2)
@@ -516,7 +516,7 @@
     endif
   enddo
 
-  ! converts to custom_real arrays
+  ! converts to CUSTOM_REAL arrays
   allocate(cosrot_irecf(nrecloc), &
            sinrot_irecf(nrecloc))
   do i = 1,nrecloc

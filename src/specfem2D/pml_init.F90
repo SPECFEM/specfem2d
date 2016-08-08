@@ -187,35 +187,35 @@
    do ispec= 1,nspec
      if (ispec_is_PML(ispec)) then
 ! element is in the left cpml layer
-       if ((which_PML_elem(ILEFT,ispec).eqv. .true.) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
-          (which_PML_elem(ITOP,ispec)  .eqv. .false.) .and. (which_PML_elem(IBOTTOM,ispec).eqv. .false.)) then
+       if ((which_PML_elem(ILEFT,ispec) .eqv. .true.) .and. (which_PML_elem(IRIGHT,ispec) .eqv. .false.) .and. &
+          (which_PML_elem(ITOP,ispec) .eqv. .false.) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
          region_CPML(ispec) = CPML_X_ONLY
 ! element is in the right cpml layer
-       else if ((which_PML_elem(ILEFT,ispec).eqv. .false.) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .true.) .and. &
+       else if ((which_PML_elem(ILEFT,ispec) .eqv. .false.) .and. (which_PML_elem(IRIGHT,ispec) .eqv. .true.) .and. &
                (which_PML_elem(ITOP,ispec) .eqv. .false.) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
          region_CPML(ispec) = CPML_X_ONLY
 ! element is in the top cpml layer
-       else if ((which_PML_elem(ILEFT,ispec).eqv. .false.) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
+       else if ((which_PML_elem(ILEFT,ispec) .eqv. .false.) .and. (which_PML_elem(IRIGHT,ispec) .eqv. .false.) .and. &
                (which_PML_elem(ITOP,ispec) .eqv. .true. ) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
          region_CPML(ispec) = CPML_Z_ONLY
 ! element is in the bottom cpml layer
-       else if ((which_PML_elem(ILEFT,ispec).eqv. .false.) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
+       else if ((which_PML_elem(ILEFT,ispec) .eqv. .false.) .and. (which_PML_elem(IRIGHT,ispec) .eqv. .false.) .and. &
                (which_PML_elem(ITOP,ispec) .eqv. .false.) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .true. )) then
          region_CPML(ispec) = CPML_Z_ONLY
 ! element is in the left-top cpml corner
-       else if ((which_PML_elem(ILEFT,ispec).eqv. .true. ) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
+       else if ((which_PML_elem(ILEFT,ispec) .eqv. .true. ) .and. (which_PML_elem(IRIGHT,ispec) .eqv. .false.) .and. &
                (which_PML_elem(ITOP,ispec) .eqv. .true. ) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
          region_CPML(ispec) = CPML_XZ_ONLY
 ! element is in the right-top cpml corner
-       else if ((which_PML_elem(ILEFT,ispec).eqv. .false. ) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .true. ) .and. &
+       else if ((which_PML_elem(ILEFT,ispec) .eqv. .false. ) .and. (which_PML_elem(IRIGHT,ispec) .eqv. .true. ) .and. &
                (which_PML_elem(ITOP,ispec) .eqv. .true.  ) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .false.)) then
          region_CPML(ispec) = CPML_XZ_ONLY
 ! element is in the left-bottom cpml corner
-       else if ((which_PML_elem(ILEFT,ispec).eqv. .true.  ) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .false.) .and. &
+       else if ((which_PML_elem(ILEFT,ispec) .eqv. .true.  ) .and. (which_PML_elem(IRIGHT,ispec) .eqv. .false.) .and. &
                (which_PML_elem(ITOP,ispec) .eqv. .false. ) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .true. )) then
          region_CPML(ispec) = CPML_XZ_ONLY
 ! element is in the right-bottom cpml corner
-       else if ((which_PML_elem(ILEFT,ispec).eqv. .false. ) .and. (which_PML_elem(IRIGHT,ispec)  .eqv. .true.) .and. &
+       else if ((which_PML_elem(ILEFT,ispec) .eqv. .false. ) .and. (which_PML_elem(IRIGHT,ispec) .eqv. .true.) .and. &
                (which_PML_elem(ITOP,ispec) .eqv. .false. ) .and. (which_PML_elem(IBOTTOM,ispec) .eqv. .true.)) then
          region_CPML(ispec) = CPML_XZ_ONLY
        else
