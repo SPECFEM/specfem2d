@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
   subroutine get_MPI()
 
 ! sets up MPI arrays
@@ -372,7 +371,7 @@
       allocate(buffer_send_faces_vector_ac(max_nibool_interfaces,ninterface_acoustic))
       allocate(buffer_recv_faces_vector_ac(max_nibool_interfaces,ninterface_acoustic))
 
-      ! custom_real arrays
+      ! CUSTOM_REAL arrays
       call assemble_MPI_scalar_ac_blocking(test_flag_cr)
 
       ! checks number of interface points
