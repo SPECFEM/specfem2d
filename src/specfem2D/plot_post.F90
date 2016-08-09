@@ -88,7 +88,12 @@
   ! to the coordinates of that original (undeformed) mesh point, with this scaling factor that the user
   ! can make different from 1 if he/she wants in order to reduce or increase the visual effect of the deformation
   ! for display purposes
-  double precision, parameter :: SCALING_FACTOR_FOR_DEFORMED_MESH = 1.d0 ! 1000.d0
+  double precision, parameter :: SCALING_FACTOR_FOR_DEFORMED_MESH = 1.d0  !  0.05d0 !  1000.d0
+
+  ! suppress the display of the receivers with diamonds or not if drawing the deformed mesh
+  ! (can be useful e.g. when showing Lamb waves i.e. when the mesh is very elongated and a lot of diamonds
+  !  on the display would make it hard to see the deformed mesh behind)
+  logical, parameter :: SUPPRESS_DISPLAY_OF_RECEIVERS_IF_DEFORMED_MESH = .true.
 
   ! color palette
   integer, parameter :: NUM_COLORS = 236
@@ -1867,6 +1872,8 @@
     !
     !----  write position of the receivers
     !
+
+  if (.not. (DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR .and. SUPPRESS_DISPLAY_OF_RECEIVERS_IF_DEFORMED_MESH)) then
     do i = 1,nrec
       if (i == 1) write(24,*) '% beginning of receiver line'
       if (i == nrec) write(24,*) '% end of receiver line'
@@ -1881,13 +1888,16 @@
       write(24,500) xw,zw
       write(24,*) 'Diamond'
     enddo
+  endif
 
     write(24,*) '%'
     write(24,*) 'grestore'
     write(24,*) 'showpage'
 
     close(24)
+
   endif
+
   call synchronize_all()
 
  10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a100,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
