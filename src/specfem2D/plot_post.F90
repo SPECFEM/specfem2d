@@ -82,7 +82,7 @@
 
   ! flag to display a deformed mesh instead of the displacement vector, can be useful for instance
   ! in non-destructive testing, for Lamb waves and so on.
-  logical, parameter :: DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR = .true.
+  logical, parameter :: DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR = .false.
 
   ! to compute the deformed mesh we take the original mesh and add the displacement of the current point
   ! to the coordinates of that original (undeformed) mesh point, with this scaling factor that the user
