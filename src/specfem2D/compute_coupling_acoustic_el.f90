@@ -35,7 +35,7 @@
 
   subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
     CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
@@ -249,7 +249,7 @@
 
   subroutine compute_coupling_acoustic_el_backward(b_displ_elastic,b_potential_dot_dot_acoustic)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
     CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
 
   use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&

@@ -33,7 +33,7 @@
 
   subroutine write_output_SU(x_source,z_source,irec,buffer_binary,number_of_components)
 
-  use specfem_par, only : NSTEP,nrec,deltat,seismotype,st_xval, &
+  use specfem_par, only: NSTEP,nrec,deltat,seismotype,st_xval, &
                           NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,P_SV, &
                           st_zval,subsamp_seismos
 

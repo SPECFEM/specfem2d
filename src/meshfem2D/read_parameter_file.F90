@@ -35,7 +35,7 @@
 
 ! reads in DATA/Par_file
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
   use shared_parameters
 
   implicit none
@@ -240,12 +240,11 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine read_parameter_file_only()
 
 ! reads only parameters without receiver-line section and material tables
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
   use shared_parameters
 
   implicit none
@@ -801,7 +800,8 @@
 
   subroutine read_parameter_file_receiversets()
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
+
   use shared_parameters
 
   implicit none

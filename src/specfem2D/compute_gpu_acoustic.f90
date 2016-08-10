@@ -33,15 +33,14 @@
 
   subroutine compute_forces_acoustic_GPU()
 
-  use specfem_par, only : NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
+  use specfem_par, only: NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbours,ninterface_acoustic,inum_interfaces_acoustic, &
     nelem_acoustic_surface,num_fluid_solid_edges, &
     STACEY_ABSORBING_CONDITIONS,any_elastic,any_poroelastic,SIMULATION_TYPE
 
   use specfem_par, only: nspec_outer_acoustic, nspec_inner_acoustic
 
-  use specfem_par_gpu, only : Mesh_pointer, &
-    deltatover2f,b_deltatover2f, &
+  use specfem_par_gpu, only: Mesh_pointer,deltatover2f,b_deltatover2f, &
     buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
     b_buffer_send_scalar_gpu,b_buffer_recv_scalar_gpu, &
     request_send_recv_scalar_gpu,b_request_send_recv_scalar_gpu
@@ -167,13 +166,13 @@
 
   subroutine compute_stacey_acoustic_GPU(iphase)
 
-  use constants,only: CUSTOM_REAL,NGLLX
+  use constants, only: CUSTOM_REAL,NGLLX
 
-  use specfem_par, only : nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_acoustic_left,b_absorb_acoustic_right,&
+  use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_acoustic_left,b_absorb_acoustic_right,&
                           b_absorb_acoustic_bottom, b_absorb_acoustic_top,it,NSTEP,SIMULATION_TYPE,SAVE_FORWARD,&
                           nelemabs
 
-  use specfem_par_gpu,only: Mesh_pointer
+  use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
 
@@ -218,9 +217,9 @@
 
   subroutine compute_add_sources_acoustic_GPU(iphase)
 
-  use specfem_par,only: it,SIMULATION_TYPE,NSTEP, nadj_rec_local
+  use specfem_par, only: it,SIMULATION_TYPE,NSTEP, nadj_rec_local
 
-  use specfem_par_gpu,only: Mesh_pointer
+  use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
 

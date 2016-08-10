@@ -31,10 +31,9 @@
 !
 !========================================================================
 
-
   subroutine parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
 
-  use postprocess_par,only: MAX_STRING_LEN, MAX_KERNEL_NAMES
+  use postprocess_par, only: MAX_STRING_LEN, MAX_KERNEL_NAMES
 
   implicit none
 
@@ -104,7 +103,7 @@
 !     LIMITATIONS:
 !     can not be called with a different string until current string is totally processed, even from different procedures
 
-  use postprocess_par,only: MAX_STRING_LEN
+  use postprocess_par, only: MAX_STRING_LEN
 
   !     PARAMETERS:
   character(len=MAX_STRING_LEN), intent(in)  :: source_string

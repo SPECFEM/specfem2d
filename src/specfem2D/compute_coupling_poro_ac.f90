@@ -35,7 +35,7 @@
 
  subroutine compute_coupling_poro_ac(potential_dot_dot_acoustic,accels_poroelastic,accelw_poroelastic,FORWARD_OR_ADJOINT)
 
-  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
 
   use specfem_par, only: num_fluid_poro_edges,ibool,wxgll,wzgll,xix,xiz,&
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&

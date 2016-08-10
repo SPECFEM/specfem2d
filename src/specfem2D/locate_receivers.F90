@@ -43,10 +43,10 @@
                               coorg,knods,ngnod,npgeo, &
                               x_final_receiver, z_final_receiver)
 
-  use constants,only: NDIM,NGLLX,NGLLZ,MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME, &
+  use constants, only: NDIM,NGLLX,NGLLZ,MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME, &
     IMAIN,HUGEVAL,TINYVAL,NUM_ITER
 
-  use specfem_par, only : AXISYM,is_on_the_axis,xiglj,ispec_is_acoustic,USE_TRICK_FOR_BETTER_PRESSURE
+  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,ispec_is_acoustic,USE_TRICK_FOR_BETTER_PRESSURE
 
   implicit none
 

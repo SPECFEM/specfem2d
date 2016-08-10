@@ -316,9 +316,9 @@ end subroutine viscoacoustic_attenuation_model
 !  A similar expression can then be established for Q_Kappa, and conversion from Q_Kappa and Q_mu to Q_P and Q_S (if needed)
 !  can be found for instance in equations (9.59) and (9.60) of the book of Dahlen and Tromp (1998).
 ! *****
-! use constants,only: ONE,TWO,PI,TWO_THIRDS
+! use constants, only: ONE,TWO,PI,TWO_THIRDS
 
-! use specfem_par,only : AXISYM,f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS
+! use specfem_par, only: AXISYM,f0_attenuation,tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,N_SLS
 
 ! implicit none
 
@@ -2176,7 +2176,7 @@ subroutine func_mini(x,res,Qref,N,Nopt,K,f_min,f_max)
 
 
   implicit none
-  ! use constants,only: TWO_PI_OR_ONE
+  ! use constants, only: TWO_PI_OR_ONE
   ! to compute optimized weights for attenuation (1 means we work in frequency, 2 PI means we work in angular frequency)
   double precision, parameter :: TWO_PI_OR_ONE = 1.d0 ! TWO_PI
 
@@ -2200,11 +2200,11 @@ end subroutine func_mini
 
 subroutine grad_func_mini(x,grad,Qref,N,Nopt,K,f_min,f_max)
 
-  ! use constants,only: TWO_PI_OR_ONE
+  ! use constants, only: TWO_PI_OR_ONE
 
   implicit none
 
-  ! use constants,only: TWO_PI_OR_ONE
+  ! use constants, only: TWO_PI_OR_ONE
   ! to compute optimized weights for attenuation (1 means we work in frequency, 2 PI means we work in angular frequency)
   double precision, parameter :: TWO_PI_OR_ONE = 1.d0 ! TWO_PI
 
@@ -2329,7 +2329,7 @@ end subroutine grad_max_residu
 
 subroutine nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
 
-  !use constants,only: USE_SOLVOPT
+  !use constants, only: USE_SOLVOPT
 
   implicit none
 

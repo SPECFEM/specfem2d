@@ -56,7 +56,7 @@
 
 ! updates acceleration,velocity and displacement in elastic regions (crust/mantle,inner core)
 
-  use constants,only: ALPHA_LDDRK,BETA_LDDRK
+  use constants, only: ALPHA_LDDRK,BETA_LDDRK
   use specfem_par
 
   implicit none
@@ -89,7 +89,7 @@
 
 ! updates velocity potential (corrector)
 
-  use constants,only: ALPHA_LDDRK,BETA_LDDRK
+  use constants, only: ALPHA_LDDRK,BETA_LDDRK
   use specfem_par
 
   implicit none
@@ -124,7 +124,7 @@
 
 ! updates velocity potential (corrector)
 
-  use constants,only: ALPHA_LDDRK,BETA_LDDRK
+  use constants, only: ALPHA_LDDRK,BETA_LDDRK
   use specfem_par
 
   implicit none

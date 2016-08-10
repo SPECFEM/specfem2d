@@ -35,7 +35,7 @@
 
 ! check the mesh, stability and number of points per wavelength
 
-  use constants,only: IMAIN,HUGEVAL,TINYVAL,ZERO
+  use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO
   use specfem_par
   use specfem_par_movie
 
@@ -501,7 +501,7 @@
   use mpi
 #endif
 
-  use constants,only: IMAIN,HUGEVAL,TINYVAL,ZERO
+  use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO
   use specfem_par
   use specfem_par_movie
 
@@ -807,10 +807,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine check_grid_setup_GLLper(percent_GLL,NGLLX_MAX_STABILITY)
 
-  use constants,only: NGLLX
+  use constants, only: NGLLX
 
   implicit none
 
@@ -852,15 +851,13 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine check_grid_create_postscript(courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaSmin,lambdaSmax)
 
 #ifdef USE_MPI
   use mpi
 #endif
 
-  use constants,only: IMAIN,TINYVAL,HUGEVAL, &
-    DISPLAY_SUBSET_OPTION,NSPEC_DISPLAY_SUBSET, &
+  use constants, only: IMAIN,TINYVAL,HUGEVAL,DISPLAY_SUBSET_OPTION,NSPEC_DISPLAY_SUBSET, &
     RPERCENTX,RPERCENTZ,ORIG_X,ORIG_Z,CENTIM,THRESHOLD_POSTSCRIPT
   use specfem_par
   use specfem_par_movie

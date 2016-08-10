@@ -36,9 +36,9 @@
 
 ! starts reading in parameters from input Database file
 
-  use constants,only: IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
+  use constants, only: IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
   use specfem_par
-  use specfem_par_noise,only: NOISE_TOMOGRAPHY
+  use specfem_par_noise, only: NOISE_TOMOGRAPHY
   use specfem_par_movie
 
   implicit none
@@ -251,15 +251,13 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine read_mesh_databases()
-
 
 #ifdef USE_MPI
   use mpi
 #endif
 
-  use constants,only: IIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM,NB_POINTS_TO_ADD_TO_NPGEO
+  use constants, only: IIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM,NB_POINTS_TO_ADD_TO_NPGEO
   use specfem_par
 
   implicit none
@@ -325,8 +323,6 @@
 
   end subroutine read_mesh_databases
 
-
-
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -335,7 +331,7 @@
 
 ! reads source parameters
 
-  use constants,only: IIN
+  use constants, only: IIN
   use specfem_par
   use specfem_par_movie
 
@@ -419,12 +415,11 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine read_mesh_databases_coorg_elem()
 
 ! reads the spectral macrobloc nodal coordinates
 
-  use constants,only: IMAIN,IIN
+  use constants, only: IMAIN,IIN
   use specfem_par
   use specfem_par_movie
 
@@ -518,19 +513,17 @@
 
   end subroutine read_mesh_databases_coorg_elem
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine read_mesh_databases_attenuation()
 
 ! reads attenuation information
 
-  use constants,only: IIN,NGLLX,NGLLZ
+  use constants, only: IIN,NGLLX,NGLLZ
 
-  use specfem_par, only : N_SLS,f0_attenuation,READ_VELOCITIES_AT_f0
+  use specfem_par, only: N_SLS,f0_attenuation,READ_VELOCITIES_AT_f0
 
   implicit none
 
@@ -550,9 +543,9 @@
 
 ! reads spectral macrobloc data
 
-  use constants,only: IIN
+  use constants, only: IIN
 
-  use specfem_par, only : nspec,ngnod,kmato,knods,region_CPML,f0_source
+  use specfem_par, only: nspec,ngnod,kmato,knods,region_CPML,f0_source
 
   implicit none
 
@@ -606,7 +599,7 @@
 
 ! reads in interface dimensions
 
-  use constants,only: IIN
+  use constants, only: IIN
   use specfem_par
 
   implicit none
@@ -702,7 +695,7 @@
   use mpi
 #endif
 
-  use constants,only: IMAIN,IIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: IMAIN,IIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4
   use specfem_par
 
   implicit none
@@ -1039,14 +1032,14 @@
 
 ! reads in absorbing edges
 
-  use constants,only: IIN,IRIGHT,ILEFT,IBOTTOM,ITOP,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IMAIN
+  use constants, only: IIN,IRIGHT,ILEFT,IBOTTOM,ITOP,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IMAIN
 
-  use specfem_par, only : myrank,nelem_acforcing,nspec,ACOUSTIC_FORCING, &
-                          ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing, &
-                          ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
-                          numacforcing,codeacforcing,typeacforcing, &
-                          nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing, &
-                          ib_right_acforcing,ib_left_acforcing,ib_bottom_acforcing,ib_top_acforcing
+  use specfem_par, only: myrank,nelem_acforcing,nspec,ACOUSTIC_FORCING, &
+                         ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing, &
+                         ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
+                         numacforcing,codeacforcing,typeacforcing, &
+                         nspec_left_acforcing,nspec_right_acforcing,nspec_bottom_acforcing,nspec_top_acforcing, &
+                         ib_right_acforcing,ib_left_acforcing,ib_bottom_acforcing,ib_top_acforcing
 
   implicit none
 
@@ -1199,9 +1192,9 @@
 
 ! reads acoustic free surface data
 
-  use constants,only: IIN,IMAIN
+  use constants, only: IIN,IMAIN
 
-  use specfem_par, only : myrank,nelem_acoustic_surface,acoustic_edges,acoustic_surface,any_acoustic_edges
+  use specfem_par, only: myrank,nelem_acoustic_surface,acoustic_edges,acoustic_surface,any_acoustic_edges
 
   implicit none
 
@@ -1264,17 +1257,17 @@
 ! reads acoustic poroelastic coupled edges
 ! reads poroelastic elastic coupled edges
 
-  use constants,only: IIN
+  use constants, only: IIN
 
-  use specfem_par, only : num_fluid_solid_edges,any_fluid_solid_edges, &
-                          fluid_solid_acoustic_ispec,fluid_solid_elastic_ispec, &
-                          fluid_solid_acoustic_iedge,fluid_solid_elastic_iedge, &
-                          num_fluid_poro_edges,any_fluid_poro_edges, &
-                          fluid_poro_acoustic_ispec,fluid_poro_poroelastic_ispec, &
-                          fluid_poro_acoustic_iedge,fluid_poro_poroelastic_iedge, &
-                          num_solid_poro_edges,any_solid_poro_edges, &
-                          solid_poro_elastic_ispec,solid_poro_poroelastic_ispec, &
-                          solid_poro_elastic_iedge,solid_poro_poroelastic_iedge
+  use specfem_par, only: num_fluid_solid_edges,any_fluid_solid_edges, &
+                         fluid_solid_acoustic_ispec,fluid_solid_elastic_ispec, &
+                         fluid_solid_acoustic_iedge,fluid_solid_elastic_iedge, &
+                         num_fluid_poro_edges,any_fluid_poro_edges, &
+                         fluid_poro_acoustic_ispec,fluid_poro_poroelastic_ispec, &
+                         fluid_poro_acoustic_iedge,fluid_poro_poroelastic_iedge, &
+                         num_solid_poro_edges,any_solid_poro_edges, &
+                         solid_poro_elastic_ispec,solid_poro_poroelastic_ispec, &
+                         solid_poro_elastic_iedge,solid_poro_poroelastic_iedge
 
   implicit none
 
@@ -1380,12 +1373,11 @@
 
 ! reads tangential detection curve
 
-  use constants,only: IIN
+  use constants, only: IIN
 
-  use specfem_par, only : nnodes_tangential_curve,nodes_tangential_curve, &
+  use specfem_par, only: nnodes_tangential_curve,nodes_tangential_curve, &
                           force_normal_to_surface,rec_normal_to_surface, &
-                          any_tangential_curve, &
-                          dist_tangential_detection_curve
+                          any_tangential_curve,dist_tangential_detection_curve
 
   implicit none
 
@@ -1437,9 +1429,9 @@
   use mpi
 #endif
 
-  use constants,only: IIN,IMAIN
+  use constants, only: IIN,IMAIN
 
-  use specfem_par, only : myrank,nspec,nelem_on_the_axis,ispec_of_axial_elements,is_on_the_axis,AXISYM
+  use specfem_par, only: myrank,nspec,nelem_on_the_axis,ispec_of_axial_elements,is_on_the_axis,AXISYM
 
   implicit none
 

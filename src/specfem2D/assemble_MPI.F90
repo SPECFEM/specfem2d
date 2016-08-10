@@ -50,7 +50,7 @@
 
   use mpi
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM
 
   use specfem_par, only: NPROC,ninterface,my_neighbours
 
@@ -207,7 +207,7 @@
 !-----------------------------------------------
   subroutine assemble_MPI_scalar_ac_blocking(array_val1)
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   use specfem_par, only: NPROC,nglob,my_neighbours
 
@@ -307,7 +307,7 @@
 
 ! sends MPI buffers (asynchronuous) - non-blocking routine
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   use specfem_par, only: NPROC,nglob,my_neighbours
 
@@ -379,7 +379,7 @@
 
 ! waits for data and assembles
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   use specfem_par, only: NPROC,nglob
 
@@ -457,7 +457,7 @@
 
   use mpi
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM
 
   use specfem_par, only: NPROC, &
     nglob,ninterface_elastic, &
@@ -554,7 +554,7 @@
 
 ! sends MPI buffers (asynchronuous) - non-blocking routine
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM
 
   use specfem_par, only: NPROC, &
     nglob,ninterface_elastic, &
@@ -620,7 +620,7 @@
 
 ! waits for data and assembles
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM
 
   use specfem_par, only: NPROC, &
     nglob,ninterface_elastic, &
@@ -693,7 +693,7 @@
 
   use mpi
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM
 
   use specfem_par, only: NPROC, &
     nglob,ninterface_poroelastic, &
@@ -819,7 +819,7 @@
 
 ! sends MPI buffers (asynchronuous) - non-blocking routine
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM
 
   use specfem_par, only: NPROC, &
     nglob,ninterface_poroelastic, &
@@ -906,7 +906,7 @@
 
 ! waits for data and assembles
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM
 
   use specfem_par, only: NPROC, &
     nglob,ninterface_poroelastic, &

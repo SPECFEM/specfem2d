@@ -34,8 +34,8 @@
   subroutine compute_interpolated_dva(irec,ispec,vector_field_element,pressure_element,curl_element, &
                                       vx,vz,vcurl)
 
-  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ
-  use specfem_par,only: hxir_store,hgammar_store,ibool,seismotype
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ
+  use specfem_par, only: hxir_store,hgammar_store,ibool,seismotype
 
   implicit none
 

@@ -35,21 +35,20 @@
 
 ! saves adjoint sensitivity kernels to file
 
-  use constants,only: NGLLX,NGLLZ,IMAIN,APPROXIMATE_HESS_KL
+  use constants, only: NGLLX,NGLLZ,IMAIN,APPROXIMATE_HESS_KL
 
-  use specfem_par, only : myrank, nspec, ibool, coord, save_ASCII_kernels, &
-                          any_acoustic, any_elastic, any_poroelastic, &
-                          rho_ac_kl, kappa_ac_kl, alpha_ac_kl, rhop_ac_kl, &
-                          rho_kl, kappa_kl, mu_kl, rhop_kl, alpha_kl, beta_kl, &
-                          bulk_c_kl, bulk_beta_kl, &
-                          rhorho_ac_Hessian_final1, rhorho_ac_Hessian_final2, &
-                          rhorho_el_Hessian_final1, rhorho_el_Hessian_final2, &
-                          rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
-                          C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, mufrb_kl, &
-                          rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, GPU_MODE
+  use specfem_par, only: myrank, nspec, ibool, coord, save_ASCII_kernels, &
+                         any_acoustic, any_elastic, any_poroelastic, &
+                         rho_ac_kl, kappa_ac_kl, alpha_ac_kl, rhop_ac_kl, &
+                         rho_kl, kappa_kl, mu_kl, rhop_kl, alpha_kl, beta_kl, &
+                         bulk_c_kl, bulk_beta_kl, &
+                         rhorho_ac_Hessian_final1, rhorho_ac_Hessian_final2, &
+                         rhorho_el_Hessian_final1, rhorho_el_Hessian_final2, &
+                         rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
+                         C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, mufrb_kl, &
+                         rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, GPU_MODE
 
-  use specfem_par, only : ispec_is_anisotropic, c11_kl, c13_kl, c15_kl, c33_kl, &
-                          c35_kl, c55_kl
+  use specfem_par, only: ispec_is_anisotropic, c11_kl, c13_kl, c15_kl, c33_kl, c35_kl, c55_kl
 
   implicit none
 

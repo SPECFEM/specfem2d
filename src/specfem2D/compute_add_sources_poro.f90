@@ -35,7 +35,7 @@
 
   subroutine compute_add_sources_poro(accels_poroelastic,accelw_poroelastic,it,i_stage)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
   use specfem_par, only: myrank,ispec_is_poroelastic,nglob_poroelastic, &
                          NSOURCES,source_time_function,sourcearrays, &
@@ -111,7 +111,7 @@
 
   subroutine compute_add_sources_poro_adjoint()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: myrank,nrec,NSTEP,it, &
                          ispec_is_poroelastic,islice_selected_rec,ispec_selected_rec, &

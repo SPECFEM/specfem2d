@@ -32,7 +32,6 @@
 !
 !========================================================================
 
-
   subroutine setup_sources_receivers()
 
   implicit none
@@ -66,7 +65,7 @@
 
   subroutine setup_sources()
 
-  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,IIN,MAX_STRING_LEN
+  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,IIN,MAX_STRING_LEN
 
   use specfem_par, only: NSOURCES,initialfield,source_type, &
                          coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface, &
@@ -182,9 +181,9 @@
 
   subroutine setup_receivers()
 
-  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,IIN,MAX_STRING_LEN
+  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,IIN,MAX_STRING_LEN
 #ifndef USE_MPI
-  use constants,only: IOUT
+  use constants, only: IOUT
 #endif
 
   use specfem_par, only: coord,ibool,nglob,nspec, &
@@ -307,7 +306,7 @@
 
 ! checks if acoustic receiver is exactly on the free surface because pressure is zero there
 
-  use constants,only: NGLLX,NGLLZ,IMAIN
+  use constants, only: NGLLX,NGLLZ,IMAIN
 
   use specfem_par, only: myrank,ispec_selected_rec,nrecloc,recloc, &
                          xi_receiver,gamma_receiver,seismotype, &
@@ -373,15 +372,15 @@
 
 ! compute source array for adjoint source
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,MAX_STRING_LEN,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,MAX_STRING_LEN,IMAIN
 
-  use specfem_par,only: nadj_rec_local,nrec,nrecloc,NSTEP,NPROC,SIMULATION_TYPE,SU_FORMAT, &
+  use specfem_par, only: nadj_rec_local,nrec,nrecloc,NSTEP,NPROC,SIMULATION_TYPE,SU_FORMAT, &
                         adj_sourcearrays, &
                         myrank,islice_selected_rec,seismotype, &
                         xi_receiver,gamma_receiver, &
                         network_name,station_name,GPU_MODE
 
-  use specfem_par_gpu,only: source_adjointe
+  use specfem_par_gpu, only: source_adjointe
 
   implicit none
 
@@ -498,7 +497,7 @@
   use mpi
 #endif
 
-  use constants,only: PI,HUGEVAL
+  use constants, only: PI,HUGEVAL
   use specfem_par
 
   implicit none
@@ -733,9 +732,9 @@
 
   subroutine setup_source_interpolation()
 
-  use constants,only: NDIM,NGLLX,NGLLZ,NGLJ,ZERO,CUSTOM_REAL
+  use constants, only: NDIM,NGLLX,NGLLZ,NGLJ,ZERO,CUSTOM_REAL
 
-  use specfem_par,only: myrank,nspec,NSOURCES,source_type,anglesource,P_SV, &
+  use specfem_par, only: myrank,nspec,NSOURCES,source_type,anglesource,P_SV, &
     sourcearrays,Mxx,Mxz,Mzz, &
     ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic, &
     ispec_selected_source,islice_selected_source, &
@@ -860,15 +859,15 @@
 
   subroutine setup_receiver_interpolation()
 
-  use constants,only: NGLLX,NGLLZ,NGLJ
+  use constants, only: NGLLX,NGLLZ,NGLJ
 
-  use specfem_par,only: myrank,nrec,nrecloc, &
+  use specfem_par, only: myrank,nrec,nrecloc, &
     ispec_selected_rec,islice_selected_rec, &
     xigll,zigll, &
     hxir_store,hgammar_store,xi_receiver,gamma_receiver,hxir,hpxir,hgammar,hpgammar, &
     AXISYM,is_on_the_axis,xiglj
 
-  use specfem_par_gpu,only: xir_store_loc,gammar_store_loc
+  use specfem_par_gpu, only: xir_store_loc,gammar_store_loc
 
   implicit none
 

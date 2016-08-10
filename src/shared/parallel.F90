@@ -304,7 +304,7 @@
   use mpi
 #endif
 
-  use constants,only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN
 
   implicit none
 
@@ -342,7 +342,7 @@
   use mpi
 #endif
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -434,7 +434,7 @@
   use mpi
 #endif
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -599,7 +599,7 @@
 #ifdef USE_MPI
   use mpi
 #endif
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -727,7 +727,7 @@
 #ifdef USE_MPI
   use mpi
 #endif
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 

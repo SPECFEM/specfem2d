@@ -35,7 +35,7 @@
                                 xinterface_top,zinterface_top,coefs_interface_top, &
                                 npoints_interface_top,max_npoints_interface)
 
-  use constants,only: IOUT,IMAIN
+  use constants, only: IOUT,IMAIN
 
   implicit none
 

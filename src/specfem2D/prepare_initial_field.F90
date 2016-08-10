@@ -34,7 +34,7 @@
 
   subroutine prepare_initial_field(cploc,csloc)
 
-  use constants,only: IMAIN,PI,SMALLVALTOL
+  use constants, only: IMAIN,PI,SMALLVALTOL
 
   use specfem_par, only: myrank,any_acoustic,any_poroelastic,over_critical_angle, &
                          NSOURCES,source_type,anglesource,x_source,z_source,f0_source,t0, &
@@ -317,7 +317,7 @@ end subroutine prepare_initial_field
 
   subroutine prepare_initial_field_paco()
 
-  use constants,only: IMAIN,IEDGE1,IEDGE2,IEDGE4,NGLLX,NGLLZ,PI
+  use constants, only: IMAIN,IEDGE1,IEDGE2,IEDGE4,NGLLX,NGLLZ,PI
 
   use specfem_par, only: myrank,nelemabs,left_bound,right_bound,bot_bound, &
                                     numabs,codeabs,ibool, &

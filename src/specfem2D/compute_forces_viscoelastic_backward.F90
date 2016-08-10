@@ -35,7 +35,7 @@
                                                   e1,e11,e13,iphase)
 
   ! compute forces for the elastic elements
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
     CONVOLUTION_MEMORY_VARIABLES, &
     ONE,TWO,PI,TINYVAL, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4,ALPHA_LDDRK,BETA_LDDRK

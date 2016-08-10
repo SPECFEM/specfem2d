@@ -35,15 +35,15 @@
 
 ! compute curl in (poro)elastic elements (for rotational study)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO
 
-  use specfem_par, only: displ_elastic, &
-                         displs_poroelastic,ispec_is_elastic,ispec_is_poroelastic, &
+  use specfem_par, only: displ_elastic,displs_poroelastic,ispec_is_elastic,ispec_is_poroelastic, &
                          xix,xiz,gammax,gammaz,ibool,hprime_xx,hprime_zz,myrank
 
   implicit none
 
   integer,intent(in) :: ispec
+
   ! curl in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: curl_element
 

@@ -72,14 +72,14 @@
 !   poroelasticity, anisotropy, Stacey absorbing boundaries, time stepping scheme /= 1, PML rotated, adjoint
 !   simulations, periodic conditions, noise tomographies
 
-  use constants,only: PI,TWO,TINYVAL
+  use constants, only: PI,TWO,TINYVAL
 
   use specfem_par, only: any_poroelastic, ROTATE_PML_ACTIVATE, &
                          STACEY_ABSORBING_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD,time_stepping_scheme, &
                          NSOURCES, source_type, ispec_selected_source, ADD_PERIODIC_CONDITIONS, &
                          anglesource, is_on_the_axis, ispec_is_elastic, islice_selected_source,myrank
 
-  use specfem_par_noise,only: NOISE_TOMOGRAPHY
+  use specfem_par_noise, only: NOISE_TOMOGRAPHY
 
   implicit none
 
@@ -142,7 +142,7 @@
 ! for acoustic elements we do not need to do anything, some gradient components
 ! will be set to zero on the axis later in the code, when they are computed
 
-  use constants,only: NGLJ,NGLLZ,ZERO
+  use constants, only: NGLJ,NGLLZ,ZERO
 
   use specfem_par, only: ispec_is_elastic, ibool, nelem_on_the_axis, ispec_of_axial_elements, is_on_the_axis, &
           displ_elastic, veloc_elastic, accel_elastic

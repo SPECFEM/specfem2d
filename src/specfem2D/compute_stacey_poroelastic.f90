@@ -31,17 +31,15 @@
 !
 !========================================================================
 
-
 !---------------------------------------------------------------------------------------------
 !
 ! fluid part
 !
 !---------------------------------------------------------------------------------------------
 
-
   subroutine compute_stacey_poro_fluid(f0)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
   use specfem_par, only: it,STACEY_ABSORBING_CONDITIONS, &
                          anyabs,nelemabs,numabs, &
@@ -323,7 +321,7 @@
 
   subroutine compute_stacey_poro_fluid_backward()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
   use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
                          anyabs,nelemabs,numabs, &
@@ -445,18 +443,15 @@
 
   end subroutine compute_stacey_poro_fluid_backward
 
-
-
 !---------------------------------------------------------------------------------------------
 !
 ! solid part
 !
 !---------------------------------------------------------------------------------------------
 
-
   subroutine compute_stacey_poro_solid(f0)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
   use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
                          anyabs,nelemabs,numabs, &
@@ -763,7 +758,7 @@
 
   subroutine compute_stacey_poro_solid_backward()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
   use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
                          anyabs,nelemabs,numabs, &

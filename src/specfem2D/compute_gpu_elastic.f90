@@ -35,17 +35,16 @@
 
   subroutine compute_forces_viscoelastic_GPU()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NDIM
 
-  use specfem_par, only : myrank,NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
+  use specfem_par, only: myrank,NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbours,ninterface_elastic,inum_interfaces_elastic,ibool_interfaces_ext_mesh, &
     num_fluid_solid_edges,nspec_bottom,nspec_left,nspec_right,nspec_top, &
     STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS,any_poroelastic,any_acoustic,SIMULATION_TYPE
 
   use specfem_par, only: nspec_outer_elastic,nspec_inner_elastic
 
-  use specfem_par_gpu, only : Mesh_pointer,ANY_ANISOTROPY, &
-    deltatf,deltatover2f,b_deltatover2f, &
+  use specfem_par_gpu, only: Mesh_pointer,ANY_ANISOTROPY,deltatf,deltatover2f,b_deltatover2f, &
     buffer_send_vector_gpu,buffer_recv_vector_gpu, &
     b_buffer_send_vector_gpu,b_buffer_recv_vector_gpu, &
     request_send_recv_vector_gpu,b_request_send_recv_vector_gpu
@@ -82,7 +81,7 @@
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_gpu)
 
-        ! sends mpi buffers
+        ! sends MPI buffers
         call assemble_MPI_vector_send_cuda(NPROC, &
                     buffer_send_vector_gpu,buffer_recv_vector_gpu, &
                     ninterface,max_nibool_interfaces_ext_mesh, &
@@ -90,7 +89,7 @@
                     my_neighbours, &
                     request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic)
 
-        ! transfers mpi buffers onto GPU
+        ! transfers MPI buffers onto GPU
         call transfer_boundary_to_device(NPROC,Mesh_pointer,buffer_recv_vector_gpu, &
                     ninterface,max_nibool_interfaces_ext_mesh, &
                     request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic)
@@ -184,13 +183,13 @@
   subroutine compute_stacey_viscoelastic_GPU(iphase,b_absorb_elastic_bottom_slice,b_absorb_elastic_left_slice, &
                                              b_absorb_elastic_right_slice, b_absorb_elastic_top_slice)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NDIM
 
-  use specfem_par, only : nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_elastic_left,b_absorb_elastic_right, &
+  use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_elastic_left,b_absorb_elastic_right, &
                           b_absorb_elastic_bottom, b_absorb_elastic_top,SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &
                           nelemabs
 
-  use specfem_par_gpu,only: Mesh_pointer
+  use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
 
@@ -245,9 +244,9 @@
 
   subroutine compute_add_sources_viscoelastic_GPU(iphase)
 
-  use specfem_par,only: NSTEP,SIMULATION_TYPE,nadj_rec_local,it
+  use specfem_par, only: NSTEP,SIMULATION_TYPE,nadj_rec_local,it
 
-  use specfem_par_gpu,only: Mesh_pointer
+  use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
 

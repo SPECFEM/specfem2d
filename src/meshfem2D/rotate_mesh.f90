@@ -40,7 +40,7 @@
 
   subroutine rotate_mesh_for_plane_wave(ngnod)
 
-  use part_unstruct_par,only: elmnts,nelmnts,nelemabs,abs_surface
+  use part_unstruct_par, only: elmnts,nelmnts,nelemabs,abs_surface
 
   implicit none
 
@@ -50,7 +50,7 @@
   integer :: i,j,ispec,i1,i2,inode,iswap
   logical :: found_this_point
   integer, dimension(:,:), allocatable :: ibool,ibool_rotated
-!! DK DK be careful here, "ibool" applies to the mesh corners (4 or 9 points) only,
+!! DK DK beware here, "ibool" applies to the mesh corners (4 or 9 points) only,
 !! DK DK not to the GLL points because there are no GLL points in the Gmsh mesh files
   integer :: index_rotation1,index_rotation2,index_rotation3,index_rotation4,&
              index_rotation5,index_rotation6,index_rotation7,index_rotation8,index_edge
@@ -274,6 +274,7 @@
 ! From axisymmetric elements mesh file with just know the ispec of the elements on the axis and the ibool of
 ! the two points that describe it :
 ! Ex :
+!
 !   x=0
 !   ...
 !    |
@@ -286,9 +287,11 @@
 !    O ibool = 423   ---> We want that index to be saved in ibool(4,ispec) or ibool(1,ispec)
 !    |
 !    ...
+!
 ! Indeed when we are using external mesher for axisymmetric simulations we do not control how the elements
 ! will be orientated. We could have code everything taking that into account but we have preferred
-! to rotate the mesh. After that for each element on the axis we have got :
+! to rotate the mesh. After that for each element on the axis we have got:
+!
 !           r=0
 !            |
 !            4 . . 7 . . 3
@@ -301,7 +304,7 @@
 !            |
 !           r=0
 
-  use part_unstruct_par,only: elmnts,nelmnts,nelem_on_the_axis,ispec_of_axial_elements, &
+  use part_unstruct_par, only: elmnts,nelmnts,nelem_on_the_axis,ispec_of_axial_elements, &
     inode1_axial_elements,inode2_axial_elements
 
   implicit none
@@ -471,6 +474,7 @@
 
 ! This routine is almost the same than the one at the top but for the acoustic forced elements
 ! Ex :
+!
 !   x=0
 !   ...
 !    |
@@ -483,9 +487,11 @@
 !    O ibool = 423   ---> We want that index to be saved in ibool(4,ispec) or ibool(1,ispec)
 !    |
 !    ...
+!
 ! Indeed when we are using external mesher we do not control how the elements
 ! will be orientated. We could have code everything taking that into account but we have preferred
-! to rotate the mesh. After that for each element on the axis we have got :
+! to rotate the mesh. After that for each element on the axis we have got:
+!
 !           r=0
 !            |
 !            4 . . 7 . . 3
@@ -498,7 +504,7 @@
 !            |
 !           r=0
 
-  use part_unstruct_par,only: elmnts,nelmnts,nelemacforcing,acforcing_surface
+  use part_unstruct_par, only: elmnts,nelmnts,nelemacforcing,acforcing_surface
 
   implicit none
 

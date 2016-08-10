@@ -35,7 +35,7 @@
 
   subroutine compute_coupling_viscoelastic_po()
 
-  use constants,only: CUSTOM_REAL,IRIGHT,ILEFT,IBOTTOM,ITOP,NGLLX,NGLLZ,TWO,ZERO
+  use constants, only: CUSTOM_REAL,IRIGHT,ILEFT,IBOTTOM,ITOP,NGLLX,NGLLZ,TWO,ZERO
 
   use specfem_par, only: SIMULATION_TYPE,num_solid_poro_edges,&
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
@@ -358,7 +358,7 @@
 
   subroutine compute_coupling_viscoelastic_po_backward()
 
-  use constants,only: CUSTOM_REAL,IRIGHT,ILEFT,IBOTTOM,ITOP,NGLLX,NGLLZ,TWO,ZERO
+  use constants, only: CUSTOM_REAL,IRIGHT,ILEFT,IBOTTOM,ITOP,NGLLX,NGLLZ,TWO,ZERO
 
   use specfem_par, only: SIMULATION_TYPE,num_solid_poro_edges,&
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &

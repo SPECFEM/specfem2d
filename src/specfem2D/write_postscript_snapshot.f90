@@ -31,10 +31,9 @@
 !
 !========================================================================
 
-
   subroutine write_postscript_snapshot()
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
 
   use specfem_par, only: myrank,P_SV,it, &
                          potential_acoustic,potential_gravitoacoustic, &
@@ -44,7 +43,7 @@
                          potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
                          potential_dot_dot_gravito,accel_elastic,accels_poroelastic
 
-  use specfem_par_movie,only: imagetype_postscript
+  use specfem_par_movie, only: imagetype_postscript
 
   implicit none
 

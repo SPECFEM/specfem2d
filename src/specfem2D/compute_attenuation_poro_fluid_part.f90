@@ -35,7 +35,7 @@
 
  subroutine compute_attenuation_poro_fluid_part()
 
-  use constants,only: ZERO,NGLLX,NGLLZ,ALPHA_LDDRK,BETA_LDDRK
+  use constants, only: ZERO,NGLLX,NGLLZ,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: nspec,ispec_is_poroelastic,poroelastcoef,kmato,permeability,ibool, &
                          velocw_poroelastic,time_stepping_scheme,deltat,i_stage,time_stepping_scheme, &

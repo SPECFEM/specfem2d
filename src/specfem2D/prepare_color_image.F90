@@ -32,14 +32,13 @@
 !
 !========================================================================
 
-
   subroutine prepare_color_image_init()
 
-  use constants,only: NX_NZ_IMAGE_MAX,NGLLX
+  use constants, only: NX_NZ_IMAGE_MAX,NGLLX
 
-  use specfem_par, only : coord,npgeo,myrank
+  use specfem_par, only: coord,npgeo,myrank
 
-  use specfem_par_movie,only: NX_IMAGE_color,NZ_IMAGE_color, &
+  use specfem_par_movie, only: NX_IMAGE_color,NZ_IMAGE_color, &
                           xmin_color_image,xmax_color_image, &
                           zmin_color_image,zmax_color_image,factor_subsample_image
   implicit none
@@ -119,13 +118,13 @@
 
   subroutine prepare_color_image_pixels()
 
-  use constants,only: IMAIN,HUGEVAL,NGLLX,NGLLZ
+  use constants, only: IMAIN,HUGEVAL,NGLLX,NGLLZ
 
-  use specfem_par, only : myrank,coord,coorg,nspec,knods,ibool, &
+  use specfem_par, only: myrank,coord,coorg,nspec,knods,ibool, &
                           NSOURCES,nrec,x_source,z_source,st_xval,st_zval
 
 
-  use specfem_par_movie,only: NX_IMAGE_color,NZ_IMAGE_color, &
+  use specfem_par_movie, only: NX_IMAGE_color,NZ_IMAGE_color, &
                               xmin_color_image,xmax_color_image, &
                               zmin_color_image,zmax_color_image, &
                               nb_pixel_loc,iglob_image_color, &
@@ -281,14 +280,14 @@
   use mpi
 #endif
 
-  use constants,only: NGLLX,NGLLZ,HALF,TWO,IMAIN
+  use constants, only: NGLLX,NGLLZ,HALF,TWO,IMAIN
 
-  use specfem_par, only : nglob,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
-    density,poroelastcoef, &
-    NPROC,myrank,assign_external_model,vpext
+  use specfem_par, only: nglob,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
+    density,poroelastcoef,NPROC,myrank,assign_external_model,vpext
 
-  use specfem_par_movie,only: image_color_vp_display,iglob_image_color, &
+  use specfem_par_movie, only: image_color_vp_display,iglob_image_color, &
     NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc,num_pixel_loc,DRAW_WATER_IN_BLUE
+
   implicit none
 
   ! local parameters

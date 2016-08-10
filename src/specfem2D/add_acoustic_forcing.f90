@@ -33,7 +33,7 @@
 
   subroutine add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob_acoustic,nelem_acforcing,codeacforcing,numacforcing,ispec_is_acoustic,&
                          ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll
@@ -191,7 +191,7 @@
 
   subroutine add_acoustic_forcing_at_rigid_boundary_gravitoacoustic()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TINYVAL
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TINYVAL
 
   use specfem_par, only: nelem_acforcing,codeacforcing,numacforcing, &
                          ispec_is_gravitoacoustic,potential_dot_dot_gravito, &

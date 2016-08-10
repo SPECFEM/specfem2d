@@ -35,7 +35,7 @@
 
 ! output the Gauss-Lobatto-Legendre mesh in a gnuplot file
 
-  use constants,only: IMAIN,NGLLX,NGLLZ
+  use constants, only: IMAIN,NGLLX,NGLLZ
 
   use specfem_par, only: knods,ibool,coorg,coord,ngnod,nspec
 

@@ -31,10 +31,9 @@
 !
 !========================================================================
 
-
   subroutine write_wavefield_dumps()
 
-  use constants,only: IMAIN,SIZE_REAL,NGLLX,NGLLZ
+  use constants, only: IMAIN,SIZE_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: myrank,nglob,nspec, &
                          ibool,coord,P_SV,it,SIMULATION_TYPE, &
@@ -43,7 +42,7 @@
                          potential_dot_acoustic,veloc_elastic,velocs_poroelastic,  &
                          potential_dot_dot_acoustic,accel_elastic,accels_poroelastic
 
-  use specfem_par_movie,only: this_is_the_first_time_we_dump,mask_ibool,imagetype_wavefield_dumps, &
+  use specfem_par_movie, only: this_is_the_first_time_we_dump,mask_ibool,imagetype_wavefield_dumps, &
     use_binary_for_wavefield_dumps,vector_field_display
 
   implicit none

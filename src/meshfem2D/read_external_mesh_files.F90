@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
 ! in the case of very large meshes, this option can be useful to switch from ASCII to binary for the mesh files
 ! #define USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
 
@@ -43,8 +42,8 @@
 
   subroutine read_external_mesh_file(filename, remove_min_to_start_at_zero, ngnod)
 
-  use constants,only: MAX_STRING_LEN,IMAIN
-  use part_unstruct_par,only: elmnts,nelmnts,nnodes
+  use constants, only: MAX_STRING_LEN,IMAIN
+  use part_unstruct_par, only: elmnts,nelmnts,nnodes
 
   implicit none
 
@@ -122,10 +121,10 @@
 
   subroutine read_external_materials_file(filename)
 
-  use constants,only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN
 
-  use part_unstruct_par,only: nelmnts
-  use shared_parameters,only: num_material
+  use part_unstruct_par, only: nelmnts
+  use shared_parameters, only: num_material
 
   implicit none
 
@@ -174,8 +173,8 @@
 
   subroutine read_external_pml_element(filename, region_pml_external_mesh, nspec_cpml)
 
-  use constants,only: MAX_STRING_LEN,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
-  use part_unstruct_par,only: nelmnts
+  use constants, only: MAX_STRING_LEN,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
+  use part_unstruct_par, only: nelmnts
 
   implicit none
 
@@ -227,8 +226,8 @@
 
   subroutine read_external_mesh_nodes_coords(filename)
 
-  use constants,only: MAX_STRING_LEN
-  use part_unstruct_par,only: nodes_coords,nnodes
+  use constants, only: MAX_STRING_LEN
+  use part_unstruct_par, only: nodes_coords,nnodes
 
   implicit none
 
@@ -280,8 +279,8 @@
   subroutine read_external_acoustic_surface(filename, num_material, &
                                             nbmodels, icodemat, phi_material, remove_min_to_start_at_zero)
 
-  use constants,only: MAX_STRING_LEN,ANISOTROPIC_MATERIAL
-  use part_unstruct_par,only: nelmnts,nelem_acoustic_surface,acoustic_surface
+  use constants, only: MAX_STRING_LEN,ANISOTROPIC_MATERIAL
+  use part_unstruct_par, only: nelmnts,nelem_acoustic_surface,acoustic_surface
 
   implicit none
 
@@ -366,8 +365,8 @@
   !-----------------------------------------------
   subroutine read_external_abs_surface(filename, remove_min_to_start_at_zero)
 
-  use constants,only: MAX_STRING_LEN
-  use part_unstruct_par,only: abs_surface,nelemabs
+  use constants, only: MAX_STRING_LEN
+  use part_unstruct_par, only: abs_surface,nelemabs
 
   implicit none
 
@@ -439,10 +438,11 @@
   ! 3/ first node on the acforcing surface, 4/ second node on the acforcing surface
   ! 5/ 1=IBOTTOME, 2=IRIGHT, 3=ITOP, 4=ILEFT
   !-----------------------------------------------
+
   subroutine read_external_acoustic_forcing_surface(filename, remove_min_to_start_at_zero)
 
-  use constants,only: MAX_STRING_LEN
-  use part_unstruct_par,only: acforcing_surface,nelemacforcing
+  use constants, only: MAX_STRING_LEN
+  use part_unstruct_par, only: acforcing_surface,nelemacforcing
 
   implicit none
 
@@ -518,8 +518,8 @@
 
   subroutine read_external_axial_elements_file(axial_elements_file,remove_min_to_start_at_zero)
 
-  use constants,only: MAX_STRING_LEN,IMAIN
-  use part_unstruct_par,only: ispec_of_axial_elements,nelem_on_the_axis,inode1_axial_elements,inode2_axial_elements
+  use constants, only: MAX_STRING_LEN,IMAIN
+  use part_unstruct_par, only: ispec_of_axial_elements,nelem_on_the_axis,inode1_axial_elements,inode2_axial_elements
 
   implicit none
 
@@ -596,10 +596,10 @@
 
 ! reads in tangential detection curve file
 
-  use constants,only: IIN
+  use constants, only: IIN
 
-  use part_unstruct_par,only: nnodes_tangential_curve,nodes_tangential_curve
-  use shared_parameters,only: tangential_detection_curve_file
+  use part_unstruct_par, only: nnodes_tangential_curve,nodes_tangential_curve
+  use shared_parameters, only: tangential_detection_curve_file
 
   implicit none
 

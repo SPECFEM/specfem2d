@@ -149,14 +149,12 @@
 
 ! reads in saved wavefields
 
-  use constants,only: IIN_UNDO_ATT,MAX_STRING_LEN
+  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN
 
-  use specfem_par,only: myrank, &
-    iteration_on_subset,NSUBSET_ITERATIONS, &
+  use specfem_par, only: myrank,iteration_on_subset,NSUBSET_ITERATIONS, &
     any_acoustic,any_elastic,ATTENUATION_VISCOELASTIC_SOLID, &
     b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
-    b_displ_elastic,b_veloc_elastic,b_accel_elastic, &
-    b_e1,b_e11,b_e13
+    b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_e1,b_e11,b_e13
 
   implicit none
 

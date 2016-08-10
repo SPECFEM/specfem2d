@@ -37,7 +37,7 @@
                                        x0_source, z0_source, A_plane, B_plane, C_plane, anglesource, anglesource_refl, &
                                        c_inc, c_refl, time_offset,f0)
 
-  use constants,only: NDIM
+  use constants, only: NDIM
 
   implicit none
 
@@ -157,7 +157,7 @@
 ! compute time variation of the source for analytical initial plane wave
   double precision function ricker_Bielak_integrale_displ(t,f0)
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 
@@ -175,7 +175,7 @@
 ! compute time variation of the source for analytical initial plane wave
   double precision function ricker_Bielak_displ(t,f0)
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 
@@ -193,7 +193,7 @@
 ! compute time variation of the source for analytical initial plane wave
   double precision function ricker_Bielak_veloc(t,f0)
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 
@@ -211,7 +211,7 @@
 ! compute time variation of the source for analytical initial plane wave
   double precision function ricker_Bielak_accel(t,f0)
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 

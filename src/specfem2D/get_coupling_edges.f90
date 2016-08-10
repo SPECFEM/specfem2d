@@ -35,7 +35,7 @@
 
 ! handles all domain coupling
 
-  use constants,only: IMAIN,IBOTTOM,IRIGHT,ITOP,ILEFT,TINYVAL
+  use constants, only: IMAIN,IBOTTOM,IRIGHT,ITOP,ILEFT,TINYVAL
   use specfem_par
 
   implicit none
@@ -531,7 +531,7 @@
 
 ! excludes common GLL points (in one of the domains) between coupling domains to correct absorbing boundary
 
-  use constants,only: IBOTTOM,ITOP,ILEFT,IRIGHT,NGLLX,NGLLZ
+  use constants, only: IBOTTOM,ITOP,ILEFT,IRIGHT,NGLLX,NGLLZ
 
   implicit none
 

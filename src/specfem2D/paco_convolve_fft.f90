@@ -151,7 +151,7 @@
 !
   function RIC(J,tp,ts,dt)
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 
@@ -172,7 +172,7 @@
 !
   function deRIC(J,tp,ts,dt)
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 
@@ -193,7 +193,7 @@
 !
   function de2RIC(J,tp,ts,dt)
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 
@@ -214,7 +214,7 @@
 ! Fourier transform
   subroutine fourier_transform(LX,CX,SIGNI)
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 

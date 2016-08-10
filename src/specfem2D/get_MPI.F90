@@ -35,8 +35,8 @@
 
 ! sets up MPI arrays
 
-  use constants,only: IMAIN
-  use shared_parameters,only: NPROC
+  use constants, only: IMAIN
+  use shared_parameters, only: NPROC
   use specfem_par
 
   implicit none
@@ -158,9 +158,9 @@
 
 ! sets up the MPI interface for communication between partitions
 
-  use constants,only: CUSTOM_REAL,IMAIN,NGLLX,NGLLZ
+  use constants, only: CUSTOM_REAL,IMAIN,NGLLX,NGLLZ
 
-  use shared_parameters,only: NPROC
+  use shared_parameters, only: NPROC
 
   use specfem_par, only: nspec,ibool,nglob,ninterface,myrank,coord,ACOUSTIC_SIMULATION
 
@@ -353,8 +353,8 @@
       deallocate(mask_ibool)
     endif
 
-    ! note: this mpi reduction awaits information from all processes.
-    !          thus, avoid an mpi deadlock in case some of the paritions have no acoustic interface
+    ! note: this MPI reduction awaits information from all processes.
+    !          thus, avoid an MPI deadlock in case some of the paritions have no acoustic interface
     call sum_all_i(inum,num_points1)
     if (myrank == 0) then
       write(IMAIN,*) '  total number of global acoustic interface points: ',num_points1
@@ -387,7 +387,7 @@
       deallocate(test_flag_cr)
     endif
 
-    ! note: this mpi reduction awaits information from all processes.
+    ! note: this MPI reduction awaits information from all processes.
     call sum_all_i(inum,num_points2)
     if (myrank == 0) then
       write(IMAIN,*) '  total number of global points assembled by acoustic MPI interfaces:',num_points2
@@ -417,9 +417,9 @@
 
 ! sets up inner and outer elements for overlapping communication
 
-  use constants,only: IMAIN,NGLLX,NGLLZ
+  use constants, only: IMAIN,NGLLX,NGLLZ
 
-  use specfem_par,only: nspec_inner,nspec_outer,ispec_is_inner, &
+  use specfem_par, only: nspec_inner,nspec_outer,ispec_is_inner, &
     ninterface,nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
     ibool,copy_ibool_ori,integer_mask_ibool, &
     myrank,nspec,nglob,NPROC
@@ -561,7 +561,7 @@
 
   subroutine get_MPI_phase_domains()
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
   use specfem_par
 
   implicit none

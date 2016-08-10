@@ -31,15 +31,14 @@
 !
 !========================================================================
 
-
 ! Partitioning using SCOTCH
 
   subroutine scotch_partitioning()
 
 #ifdef USE_SCOTCH
-  use part_unstruct_par,only: nb_edges,part,nelmnts,xadj_g,adjncy_g,adjwgt,vwgt
+  use part_unstruct_par, only: nb_edges,part,nelmnts,xadj_g,adjncy_g,adjwgt,vwgt
 
-  use shared_parameters,only: nparts => NPROC
+  use shared_parameters, only: nparts => NPROC
 #endif
 
   implicit none

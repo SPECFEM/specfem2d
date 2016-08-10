@@ -31,14 +31,13 @@
 !
 !========================================================================
 
-
   subroutine compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
                                      PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase)
 
 
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
     ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4, &
     ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
@@ -342,8 +341,7 @@
 !        enddo
 !      enddo
 
-
-  use constants,only: NGLLX,NGLLZ,CUSTOM_REAL
+  use constants, only: NGLLX,NGLLZ,CUSTOM_REAL
 
   implicit none
 

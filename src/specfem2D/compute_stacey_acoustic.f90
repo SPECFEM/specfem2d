@@ -36,7 +36,7 @@
 ! absorbing boundaries
 ! for Stacey paraxial absorbing conditions (more precisely: Sommerfeld in the case of a fluid) we implement them here
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: AXISYM,nglob,nelemabs,it,any_acoustic, &
                          assign_external_model,ibool,kmato,numabs,ispec_is_acoustic, &
@@ -216,7 +216,7 @@
 ! absorbing boundaries
 ! uses contributions stored in forward simulation
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,nelemabs,it,NSTEP,any_acoustic, &
                          ibool,numabs,ispec_is_acoustic, &

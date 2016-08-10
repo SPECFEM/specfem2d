@@ -31,12 +31,11 @@
 !
 !========================================================================
 
-
   subroutine save_gnuplot_file(ngnod,nx,nz,x,z)
 
 ! creates a Gnuplot file that displays the grid
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
 
   implicit none
 

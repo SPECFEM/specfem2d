@@ -35,7 +35,7 @@
 
   subroutine compute_coupling_poro_viscoelastic(displ_elastic,displs_poroelastic,displw_poroelastic,accels_poroelastic)
 
-  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,ZERO,TWO,IRIGHT,ILEFT,IBOTTOM,ITOP
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,ZERO,TWO,IRIGHT,ILEFT,IBOTTOM,ITOP
 
   use specfem_par, only: num_solid_poro_edges,&
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
@@ -321,7 +321,7 @@
 !
 ! This implementation highly helped stability especially with unstructured meshes.
 
-  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,ZERO
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,ZERO
 
   use specfem_par, only: num_solid_poro_edges, &
                          ibool,ivalue,jvalue, &

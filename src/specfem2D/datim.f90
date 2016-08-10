@@ -35,7 +35,7 @@
 
 ! get date and time
 
-  use constants,only: IMAIN,MAX_STRING_LEN
+  use constants, only: IMAIN,MAX_STRING_LEN
 
   implicit none
 

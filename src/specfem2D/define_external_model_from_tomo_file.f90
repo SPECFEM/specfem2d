@@ -313,7 +313,7 @@ end module interpolation
   use model_tomography_par
   use interpolation
 
-  use constants,only: NGLLX,NGLLZ,TINYVAL,IMAIN
+  use constants, only: NGLLX,NGLLZ,TINYVAL,IMAIN
 
   implicit none
 
@@ -470,7 +470,7 @@ end module interpolation
   use specfem_par, only: myrank,TOMOGRAPHY_FILE
 
   use model_tomography_par
-  use constants,only: IIN,IMAIN
+  use constants, only: IIN,IMAIN
 
   implicit none
 

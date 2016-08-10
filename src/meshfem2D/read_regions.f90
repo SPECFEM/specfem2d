@@ -35,9 +35,9 @@
 
 ! reads in material definitions in DATA/Par_file and outputs to num_material
 
-  use constants,only: IMAIN,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,TINYVAL
+  use constants, only: IMAIN,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,TINYVAL
 
-  use shared_parameters,only: nbregions,nbmodels,num_material,icodemat,cp,cs, &
+  use shared_parameters, only: nbregions,nbmodels,num_material,icodemat,cp,cs, &
                       rho_s_read,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
                       nelmnts,nxread,nzread
   implicit none

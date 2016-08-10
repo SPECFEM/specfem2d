@@ -34,7 +34,7 @@
 
   module source_file_par
 
-  use constants,only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN
 
   implicit none
 
@@ -76,10 +76,8 @@
 ! This module contains subroutines related to unstructured meshes and partitioning of the
 ! corresponding graphs.
 
-  use shared_parameters,only: nelmnts,nxread,nzread, &
-    max_npoints_interface,number_of_interfaces, &
-    nz_layer,number_of_layers, &
-    nx,nz
+  use shared_parameters, only: nelmnts,nxread,nzread,max_npoints_interface,number_of_interfaces, &
+    nz_layer,number_of_layers,nx,nz
 
   implicit none
 
@@ -165,8 +163,8 @@
   integer :: nedges_acporo_coupled_loc
   integer :: nedges_elporo_coupled_loc
 
-  ! to store the position of pml element in array region_pml_external_mesh
-  ! this is only useful when using pml together with external mesh
+  ! to store the position of PML element in array region_pml_external_mesh
+  ! this is only useful when using PML together with external mesh
   integer, dimension(:), allocatable :: region_pml_external_mesh
 
   integer :: remove_min_to_start_at_zero

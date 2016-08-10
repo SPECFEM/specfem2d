@@ -37,7 +37,7 @@
 
   subroutine construct_elastic_fixed_surface ()
 
-  use specfem_par, only : ngnod, knods, nelem_elastic_fixed_surface, elastic_fixed_edges, elastic_fixed_surface
+  use specfem_par, only: ngnod, knods, nelem_elastic_fixed_surface, elastic_fixed_edges, elastic_fixed_surface
 
   implicit none
 
@@ -73,7 +73,7 @@
 !-----------------------------------------------
   subroutine get_elastic_fixed_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax )
 
-  use constants,only: NGLLX,NGLLZ
+  use constants, only: NGLLX,NGLLZ
 
   implicit none
 
@@ -182,7 +182,7 @@
 
   subroutine enforce_elastic_fixed_surface(accel_elastic,veloc_elastic,displ_elastic)
 
-  use constants,only: CUSTOM_REAL,ZERO,NDIM
+  use constants, only: CUSTOM_REAL,ZERO,NDIM
 
   use specfem_par, only: elastic_fixed_surface,ibool,nelem_elastic_fixed_surface,nglob,&
                          this_ibool_is_a_periodic_edge

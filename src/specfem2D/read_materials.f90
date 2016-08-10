@@ -35,13 +35,11 @@
 
 ! reads properties of a 2D isotropic or anisotropic linear elastic element
 
-  use constants,only: IIN,IMAIN,ZERO,FOUR_THIRDS,TWO_THIRDS,HALF,TINYVAL
+  use constants, only: IIN,IMAIN,ZERO,FOUR_THIRDS,TWO_THIRDS,HALF,TINYVAL
 
-  use specfem_par, only : AXISYM,density,porosity,tortuosity, &
-                          anisotropy,permeability,poroelastcoef, &
+  use specfem_par, only: AXISYM,density,porosity,tortuosity,anisotropy,permeability,poroelastcoef, &
                           numat,myrank,QKappa_attenuation,Qmu_attenuation, &
-                          freq0,Q0,ATTENUATION_PORO_FLUID_PART,assign_external_model, &
-                          tomo_material,myrank
+                          freq0,Q0,ATTENUATION_PORO_FLUID_PART,assign_external_model,tomo_material,myrank
 
   implicit none
 

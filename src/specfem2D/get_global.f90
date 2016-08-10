@@ -35,9 +35,9 @@
 
   subroutine get_global()
 
-  use constants,only: NGLLX,NGLLZ,MAX_STRING_LEN
+  use constants, only: NGLLX,NGLLZ,MAX_STRING_LEN
 
-  use specfem_par, only : nspec,ibool,copy_ibool_ori,integer_mask_ibool,SAVE_MODEL,myrank
+  use specfem_par, only: nspec,ibool,copy_ibool_ori,integer_mask_ibool,SAVE_MODEL,myrank
 
   implicit none
 
@@ -90,7 +90,7 @@
 
   subroutine get_global_indirect_addressing(nspec,nglob,ibool,copy_ibool_ori,integer_mask_ibool)
 
-  use constants,only: NGLLX,NGLLZ
+  use constants, only: NGLLX,NGLLZ
 
   implicit none
 

@@ -408,7 +408,7 @@
                                                   potential_acoustic, &
                                                   PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
 
-  use specfem_par, only : nglob_acoustic,CUSTOM_REAL
+  use specfem_par, only: nglob_acoustic,CUSTOM_REAL
 
   implicit none
 
@@ -465,13 +465,13 @@
                                                  displ_elastic,displ_elastic_old,&
                                                  PML_BOUNDARY_CONDITIONS)
 
-  use constants,only: CUSTOM_REAL,NDIM,TWO
+  use constants, only: CUSTOM_REAL,NDIM,TWO
 
-  use specfem_par,only : nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID
+  use specfem_par, only: nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID
 
 #ifndef FORCE_VECTORIZATION
-  use constants,only: USE_ENFORCE_FIELDS
-  use specfem_par,only: iglob_is_forced,it
+  use constants, only: USE_ENFORCE_FIELDS
+  use specfem_par, only: iglob_is_forced,it
 #endif
 
   implicit none
@@ -547,9 +547,9 @@
                                                      displs_poroelastic,accelw_poroelastic,&
                                                      velocw_poroelastic,displw_poroelastic)
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM
 
-  use specfem_par, only : nglob_poroelastic,PML_BOUNDARY_CONDITIONS
+  use specfem_par, only: nglob_poroelastic,PML_BOUNDARY_CONDITIONS
 
   implicit none
 
@@ -605,7 +605,7 @@
 
   subroutine update_displacement_newmark_GPU()
 
-  use specfem_par, only : any_acoustic,any_elastic,any_poroelastic,myrank
+  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic,myrank
 
   implicit none
 
@@ -634,9 +634,9 @@
 
   subroutine update_displacement_newmark_GPU_acoustic()
 
-  use specfem_par, only : SIMULATION_TYPE,PML_BOUNDARY_CONDITIONS,myrank
+  use specfem_par, only: SIMULATION_TYPE,PML_BOUNDARY_CONDITIONS,myrank
 
-  use specfem_par_gpu, only : Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
+  use specfem_par_gpu, only: Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
     b_deltatsquareover2f
 
   implicit none
@@ -663,9 +663,9 @@
 
   subroutine update_displacement_newmark_GPU_elastic()
 
-  use specfem_par, only : SIMULATION_TYPE,PML_BOUNDARY_CONDITIONS,myrank
+  use specfem_par, only: SIMULATION_TYPE,PML_BOUNDARY_CONDITIONS,myrank
 
-  use specfem_par_gpu, only : Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
+  use specfem_par_gpu, only: Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
     b_deltatsquareover2f
 
   implicit none
@@ -704,7 +704,7 @@
 
 ! updates velocity vector (corrector)
 
-  use constants,only: USE_ENFORCE_FIELDS
+  use constants, only: USE_ENFORCE_FIELDS
   use specfem_par
 
   implicit none
@@ -735,7 +735,7 @@
 
 ! updates backward velocity vector (corrector)
 
-  use constants,only: USE_ENFORCE_FIELDS
+  use constants, only: USE_ENFORCE_FIELDS
   use specfem_par
 
   implicit none

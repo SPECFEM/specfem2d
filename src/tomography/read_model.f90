@@ -35,7 +35,7 @@ subroutine read_model_nspec()
 
 ! reads in nspec from database
 
-  use tomography_par,only: MAX_STRING_LEN,IIN,NSPEC,myrank
+  use tomography_par, only: MAX_STRING_LEN,IIN,NSPEC,myrank
 
   implicit none
 

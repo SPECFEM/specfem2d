@@ -35,12 +35,11 @@
 
   subroutine compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
-  use specfem_par, only: ispec_is_acoustic,nglob_acoustic,&
+  use specfem_par, only: ispec_is_acoustic,nglob_acoustic, &
                          NSOURCES,source_type,source_time_function,sourcearrays, &
-                         islice_selected_source,ispec_selected_source,&
-                         ibool,kappastore,myrank
+                         islice_selected_source,ispec_selected_source,ibool,kappastore,myrank
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_dot_dot_acoustic
@@ -104,7 +103,7 @@
 
 ! This subroutine is the same than the previous one but with a moving source
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,TINYVAL,SOURCE_IS_MOVING,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,TINYVAL,SOURCE_IS_MOVING,IMAIN
 
   use specfem_par, only: ispec_is_acoustic,nglob_acoustic,&
                          NSOURCES,source_type,source_time_function,&
@@ -235,7 +234,7 @@
 
   subroutine compute_add_sources_acoustic_adjoint()
 
-  use constants,only: NGLLX,NGLLZ
+  use constants, only: NGLLX,NGLLZ
 
   use specfem_par, only: myrank,potential_dot_dot_acoustic,ispec_is_acoustic,NSTEP,it,&
                          nrec,islice_selected_rec,ispec_selected_rec,adj_sourcearrays,&

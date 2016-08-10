@@ -35,9 +35,9 @@
 
 ! reads in material definitions in DATA/Par_file
 
-  use constants,only: IMAIN,TINYVAL,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL
+  use constants, only: IMAIN,TINYVAL,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL
 
-  use shared_parameters,only: AXISYM,nbmodels,icodemat,cp,cs, &
+  use shared_parameters, only: AXISYM,nbmodels,icodemat,cp,cs, &
                               aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
                               QKappa,Qmu, &
                               rho_s_read,rho_f_read, &

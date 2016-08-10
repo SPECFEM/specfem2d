@@ -37,8 +37,8 @@
 
   subroutine acoustic_elastic_repartitioning(elmnts_l, nbmodels, phi_material, num_material, nproc)
 
-  use constants,only: IMAIN,NCORNERS,MAX_NEIGHBORS,TINYVAL
-  use part_unstruct_par,only: nelmnts,edges_coupled,nedges_coupled
+  use constants, only: IMAIN,NCORNERS,MAX_NEIGHBORS,TINYVAL
+  use part_unstruct_par, only: nelmnts,edges_coupled,nedges_coupled
 
   implicit none
 
@@ -116,8 +116,8 @@
 
   subroutine acoustic_poro_repartitioning(elmnts_l, nbmodels, phi_material, num_material, nproc)
 
-  use constants,only: IMAIN,NCORNERS,MAX_NEIGHBORS,TINYVAL
-  use part_unstruct_par,only: nelmnts,edges_acporo_coupled,nedges_acporo_coupled
+  use constants, only: IMAIN,NCORNERS,MAX_NEIGHBORS,TINYVAL
+  use part_unstruct_par, only: nelmnts,edges_acporo_coupled,nedges_acporo_coupled
 
   implicit none
 
@@ -190,8 +190,8 @@
 
   subroutine poro_elastic_repartitioning(elmnts_l, nbmodels, phi_material, num_material, nproc)
 
-  use constants,only: IMAIN,NCORNERS,MAX_NEIGHBORS,TINYVAL
-  use part_unstruct_par,only: nelmnts,nedges_elporo_coupled,edges_elporo_coupled
+  use constants, only: IMAIN,NCORNERS,MAX_NEIGHBORS,TINYVAL
+  use part_unstruct_par, only: nelmnts,nedges_elporo_coupled,edges_elporo_coupled
 
   implicit none
 
@@ -262,8 +262,8 @@
                                        num_material,nbmodels, &
                                        is_domain_A,is_domain_B,xadj_l,adjncy_l)
 
-  use constants,only: IMAIN,MAX_NEIGHBORS
-  use part_unstruct_par,only: nelmnts,part
+  use constants, only: IMAIN,MAX_NEIGHBORS
+  use part_unstruct_par, only: nelmnts,part
 
   implicit none
 
@@ -354,8 +354,8 @@
 
   subroutine periodic_edges_repartitioning(elmnts_l,nnodes,nodes_coords,PERIODIC_HORIZ_DIST)
 
-  use constants,only: IMAIN,NCORNERS
-  use part_unstruct_par,only: nelmnts,part
+  use constants, only: IMAIN,NCORNERS
+  use part_unstruct_par, only: nelmnts,part
 
   implicit none
 

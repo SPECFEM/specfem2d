@@ -34,12 +34,11 @@
 ! define the forcing applied at the bottom boundary
 ! programmer Florian Cachoux and Raphael F. Garcia
 ! in collaboration with D. Komatitsch and R. Martin
-! variable forcing_type should be passed as a parameter
-! in future versions
+! variable forcing_type should be passed as a parameter in future versions
 
   subroutine acoustic_forcing_boundary(iglob,displ_x,displ_z)
 
-  use constants,only: TINYVAL,ZERO
+  use constants, only: TINYVAL,ZERO
   use specfem_par
 
   implicit none

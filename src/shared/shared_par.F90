@@ -31,7 +31,6 @@
 !
 !========================================================================
 
-
 ! note: the filename ending is .F90 to have pre-compilation with pragmas
 !            (like #ifndef USE_MPI) working properly
 
@@ -49,7 +48,7 @@ module shared_input_parameters
 
 ! holds input parameters given in DATA/Par_file
 
-  use constants,only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN
 
   implicit none
 

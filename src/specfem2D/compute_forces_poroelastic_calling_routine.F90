@@ -33,7 +33,7 @@
 
   subroutine compute_forces_poroelastic_main()
 
-  use constants,only: USE_PORO_VISCOUS_DAMPING,ALPHA_LDDRK,BETA_LDDRK
+  use constants, only: USE_PORO_VISCOUS_DAMPING,ALPHA_LDDRK,BETA_LDDRK
   use specfem_par
 
   implicit none
@@ -139,10 +139,9 @@
 !-------------------------------------------------------------------------------------
 !
 
-
   subroutine compute_forces_poroelastic_main_backward()
 
-  use constants,only: USE_PORO_VISCOUS_DAMPING,ALPHA_LDDRK,BETA_LDDRK
+  use constants, only: USE_PORO_VISCOUS_DAMPING,ALPHA_LDDRK,BETA_LDDRK
   use specfem_par
 
   implicit none

@@ -36,9 +36,9 @@
   !-----------------------------------------------
   subroutine mesh2dual_ncommonnodes(elmnts_l,ncommonnodes,xadj,adjncy)
 
-  use constants,only: NCORNERS,MAX_NEIGHBORS,MAX_NSIZE_SHARED
+  use constants, only: NCORNERS,MAX_NEIGHBORS,MAX_NSIZE_SHARED
 
-  use part_unstruct_par,only: nelmnts,nnodes,nnodes_elmnts,nodes_elmnts
+  use part_unstruct_par, only: nelmnts,nnodes,nnodes_elmnts,nodes_elmnts
 
   implicit none
 
@@ -145,7 +145,7 @@
   !-----------------------------------------------
   subroutine read_weights()
 
-  use part_unstruct_par,only: nelmnts,vwgt,adjwgt,nb_edges
+  use part_unstruct_par, only: nelmnts,vwgt,adjwgt,nb_edges
 
   implicit none
 
@@ -171,7 +171,7 @@
   !--------------------------------------------------
   subroutine construct_glob2loc_elmnts(nparts)
 
-  use part_unstruct_par,only: glob2loc_elmnts,nelmnts,part
+  use part_unstruct_par, only: glob2loc_elmnts,nelmnts,part
 
   implicit none
   integer, intent(in)  :: nparts
@@ -205,8 +205,8 @@
   !--------------------------------------------------
   subroutine construct_glob2loc_nodes(nparts)
 
-  use constants,only: MAX_NSIZE_SHARED
-  use part_unstruct_par,only: nnodes,glob2loc_nodes_nparts,glob2loc_nodes_parts,glob2loc_nodes, &
+  use constants, only: MAX_NSIZE_SHARED
+  use part_unstruct_par, only: nnodes,glob2loc_nodes_nparts,glob2loc_nodes_parts,glob2loc_nodes, &
     nodes_elmnts,nnodes_elmnts,part
 
   implicit none
@@ -287,9 +287,9 @@
   subroutine construct_interfaces(nparts, elmnts_l,  &
                                   nbmodels, phi_material, num_material)
 
-  use constants,only: NCORNERS,TINYVAL
+  use constants, only: NCORNERS,TINYVAL
 
-  use part_unstruct_par,only: nelmnts,ninterfaces,tab_size_interfaces,tab_interfaces,part, &
+  use part_unstruct_par, only: nelmnts,ninterfaces,tab_size_interfaces,tab_interfaces,part, &
     xadj_g,adjncy_g
 
   implicit none
@@ -444,7 +444,7 @@
   !--------------------------------------------------
   subroutine write_glob2loc_nodes_database(IIN_database, iproc, npgeo, num_phase)
 
-  use part_unstruct_par,only: nnodes,glob2loc_nodes_nparts,glob2loc_nodes_parts,glob2loc_nodes,nodes_coords
+  use part_unstruct_par, only: nnodes,glob2loc_nodes_nparts,glob2loc_nodes_parts,glob2loc_nodes,nodes_coords
 
   implicit none
 
@@ -486,7 +486,7 @@
   subroutine write_partition_database(IIN_database, iproc, nspec, &
                                       num_modele, num_pml, ngnod, num_phase)
 
-  use part_unstruct_par,only: nelmnts,elmnts,part, &
+  use part_unstruct_par, only: nelmnts,elmnts,part, &
     glob2loc_nodes_nparts,glob2loc_nodes_parts,glob2loc_nodes,glob2loc_elmnts
 
   implicit none
@@ -536,7 +536,7 @@
   subroutine write_interfaces_database(IIN_database, nparts, iproc, &
                         my_ninterface, my_interfaces, my_nb_interfaces, num_phase)
 
-  use part_unstruct_par,only: ninterfaces,tab_size_interfaces,tab_interfaces, &
+  use part_unstruct_par, only: ninterfaces,tab_size_interfaces,tab_interfaces, &
     glob2loc_elmnts,glob2loc_nodes_nparts,glob2loc_nodes_parts,glob2loc_nodes
 
   implicit none
@@ -652,7 +652,7 @@
   subroutine write_surface_database(IIN_database, nsurface, surface, &
                                     nsurface_loc, iproc, num_phase)
 
-  use part_unstruct_par,only: part,glob2loc_elmnts,glob2loc_nodes_nparts,glob2loc_nodes_parts,glob2loc_nodes
+  use part_unstruct_par, only: part,glob2loc_elmnts,glob2loc_nodes_nparts,glob2loc_nodes_parts,glob2loc_nodes
 
   implicit none
   integer, intent(in)  :: IIN_database
@@ -739,9 +739,9 @@
 
   subroutine merge_abs_boundaries(nbmodels, phi_material, num_material, ngnod)
 
-  use constants,only: IEDGE1,IEDGE2,IEDGE3,IEDGE4,NGLLX,NGLLZ
+  use constants, only: IEDGE1,IEDGE2,IEDGE3,IEDGE4,NGLLX,NGLLZ
 
-  use part_unstruct_par,only: nelmnts,elmnts,nelemabs,nelemabs_merge,abs_surface, &
+  use part_unstruct_par, only: nelmnts,elmnts,nelemabs,nelemabs_merge,abs_surface, &
     abs_surface_char,abs_surface_merge,abs_surface_merge,abs_surface_type, &
     ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2,ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4, &
     nedges_coupled,edges_coupled
@@ -975,9 +975,8 @@
 
   subroutine write_abs_merge_database(IIN_database, iproc, num_phase)
 
-  use part_unstruct_par,only: part,nelemabs_loc,nelemabs_merge,abs_surface_merge,abs_surface_char,abs_surface, &
-    glob2loc_elmnts, &
-    ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2,ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4
+  use part_unstruct_par, only: part,nelemabs_loc,nelemabs_merge,abs_surface_merge,abs_surface_char,abs_surface, &
+    glob2loc_elmnts,ibegin_edge1,iend_edge1,ibegin_edge2,iend_edge2,ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4
 
   implicit none
 
@@ -1031,9 +1030,9 @@
 
   subroutine merge_acoustic_forcing_boundaries(ngnod)
 
-  use constants,only: IEDGE1,IEDGE2,IEDGE3,IEDGE4,NGLLX,NGLLZ
+  use constants, only: IEDGE1,IEDGE2,IEDGE3,IEDGE4,NGLLX,NGLLZ
 
-  use part_unstruct_par,only: elmnts,nelemacforcing,acforcing_surface, &
+  use part_unstruct_par, only: elmnts,nelemacforcing,acforcing_surface, &
     acforcing_surface_char,acforcing_surface_merge,acforcing_surface_type, &
     ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing, &
     ibegin_edge3_acforcing,iend_edge3_acforcing,ibegin_edge4_acforcing,iend_edge4_acforcing, &
@@ -1158,7 +1157,7 @@
 
   subroutine write_acoustic_forcing_merge_database(IIN_database, iproc, num_phase)
 
-  use part_unstruct_par,only: part,nelemacforcing_loc,nelemacforcing_merge, &
+  use part_unstruct_par, only: part,nelemacforcing_loc,nelemacforcing_merge, &
     acforcing_surface_merge,acforcing_surface_char,acforcing_surface, &
     glob2loc_elmnts, &
     ibegin_edge1_acforcing,iend_edge1_acforcing,ibegin_edge2_acforcing,iend_edge2_acforcing, &
@@ -1216,7 +1215,7 @@
   subroutine write_fluidsolid_edges_database(IIN_database, nedges_coupled_bis, edges_coupled_bis, &
                                              nedges_coupled_loc_bis, iproc, num_phase)
 
-  use part_unstruct_par,only: part,glob2loc_elmnts
+  use part_unstruct_par, only: part,glob2loc_elmnts
 
   implicit none
 
@@ -1262,7 +1261,7 @@
   subroutine write_axial_elements_database(IIN_database, nelem_on_the_axis, ispec_of_axial_elements, &
                                            nelem_on_the_axis_loc, iproc, num_phase, remove_min_to_start_at_zero)
 
-  use part_unstruct_par,only: part,glob2loc_elmnts
+  use part_unstruct_par, only: part,glob2loc_elmnts
 
   implicit none
 

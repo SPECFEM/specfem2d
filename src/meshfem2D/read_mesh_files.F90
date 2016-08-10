@@ -35,9 +35,9 @@
 
 ! reads in tangential detection
 
-  use part_unstruct_par,only: nnodes_tangential_curve
+  use part_unstruct_par, only: nnodes_tangential_curve
 
-  use shared_parameters,only: force_normal_to_surface,rec_normal_to_surface,read_external_mesh
+  use shared_parameters, only: force_normal_to_surface,rec_normal_to_surface,read_external_mesh
 
   implicit none
 
@@ -63,15 +63,15 @@
 
   subroutine read_mesh_nodes_coords_from_interfaces()
 
-  use constants,only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK
+  use constants, only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK
 
-  use part_unstruct_par,only: nodes_coords,max_npoints_interface,number_of_interfaces, &
+  use part_unstruct_par, only: nodes_coords,max_npoints_interface,number_of_interfaces, &
     npoints_interface_top,xinterface_top,zinterface_top,coefs_interface_top, &
     nx,nz,nxread,nzread,nz_layer,number_of_layers,nnodes,grid_point_x,grid_point_z
 
-  use source_file_par,only: source_surf,xs,zs
+  use source_file_par, only: source_surf,xs,zs
 
-  use shared_parameters,only: ngnod,interfacesfile,NSOURCES,xmin_param,xmax_param
+  use shared_parameters, only: ngnod,interfacesfile,NSOURCES,xmin_param,xmax_param
 
   implicit none
 

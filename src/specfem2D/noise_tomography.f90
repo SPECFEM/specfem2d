@@ -72,9 +72,9 @@
 
 ! uniform noise distribution
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
   use specfem_par, only: nglob,coord
-  use specfem_par_noise,only: mask_noise
+  use specfem_par_noise, only: mask_noise
 
   implicit none
 
@@ -103,9 +103,9 @@
 
 ! example for a non-uniform noise distribution
 
-  use constants,only: CUSTOM_REAL,PI
+  use constants, only: CUSTOM_REAL,PI
   use specfem_par, only: nglob,coord
-  use specfem_par_noise,only: mask_noise
+  use specfem_par_noise, only: mask_noise
 
   implicit none
 
@@ -150,8 +150,7 @@
 
 ! read noise parameters and check for consistency
 
-  use constants,only: IMAIN,PI, &
-    noise_source_time_function_type,NOISE_MOVIE_OUTPUT,NOISE_SAVE_EVERYWHERE
+  use constants, only: IMAIN,PI,noise_source_time_function_type,NOISE_MOVIE_OUTPUT,NOISE_SAVE_EVERYWHERE
 
   use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD, &
                          any_acoustic,any_poroelastic,P_SV, &
@@ -265,7 +264,7 @@
 !
 ! ----------------------------------------------------------------------------------
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,IMAIN,noise_source_time_function_type
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,IMAIN,noise_source_time_function_type
 
   use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,deltat, &
                          xigll,zigll,myrank
@@ -408,11 +407,11 @@
 
 ! inject the "source" that drives the "generating wavefield"
 
-  use constants,only: NGLLX,NGLLZ
+  use constants, only: NGLLX,NGLLZ
 
   use specfem_par, only: P_SV,it,ibool,accel_elastic
 
-  use specfem_par_noise,only: ispec_noise,angle_noise,source_array_noise
+  use specfem_par_noise, only: ispec_noise,angle_noise,source_array_noise
 
   implicit none
 
@@ -449,7 +448,7 @@
 ! read in and inject the "source" that drives the "enemble forward wavefield"
 ! (recall that the ensemble forward wavefield has a spatially distributed source)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,NOISE_SAVE_EVERYWHERE
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,NOISE_SAVE_EVERYWHERE
 
   use specfem_par, only: P_SV,it,NSTEP,nspec,nglob,ibool,jacobian,wxgll,wzgll,myrank
 
@@ -524,11 +523,11 @@
 ! save a snapshot of the "generating wavefield" eta that will be used to drive
 ! the "ensemble forward wavefield"
 
-  use constants,only: CUSTOM_REAL,NDIM,IMAIN
+  use constants, only: CUSTOM_REAL,NDIM,IMAIN
 
   use specfem_par, only: myrank,it,NSTEP,nglob,P_SV,displ_elastic,nglob_elastic
 
-  use specfem_par_noise,only: NOISE_TOMOGRAPHY
+  use specfem_par_noise, only: NOISE_TOMOGRAPHY
 
   implicit none
 
@@ -603,11 +602,11 @@
 
 ! reads in backward wavefield
 
-  use constants,only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM
 
   use specfem_par, only: myrank,it,NSTEP,nglob,b_displ_elastic
 
-  use specfem_par_noise,only: NOISE_TOMOGRAPHY
+  use specfem_par_noise, only: NOISE_TOMOGRAPHY
 
   implicit none
   ! local parameters
@@ -638,7 +637,7 @@
 
   subroutine snapshots_noise(ncol,nglob,filename,array_all)
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN
 
   implicit none
 
@@ -674,7 +673,7 @@
 
 ! converts local basis array(i,j,ispec) to global array(iglob)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
   implicit none
 

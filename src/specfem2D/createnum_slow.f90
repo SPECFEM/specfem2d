@@ -35,9 +35,9 @@
 
 ! generate the global numbering
 
-  use constants,only: IMAIN,NGLLX,NGLLZ,NEDGES
+  use constants, only: IMAIN,NGLLX,NGLLZ,NEDGES
 
-  use specfem_par, only : knods,ibool,nglob,nspec,myrank
+  use specfem_par, only: knods,ibool,nglob,nspec,myrank
 
   implicit none
 

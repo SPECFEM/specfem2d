@@ -35,9 +35,9 @@
 
   subroutine write_seismograms()
 
-  use constants,only: ZERO
+  use constants, only: ZERO
   use specfem_par
-  use specfem_par_gpu,only: Mesh_pointer
+  use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
 
@@ -193,15 +193,12 @@
   use mpi
 #endif
 
-  use constants,only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME
+  use constants, only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME
 
-  use specfem_par, only : station_name,network_name, &
-                          NSTEP,islice_selected_rec,nrec,myrank,deltat,seismotype,t0, &
-                          NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos,nrecloc, &
-                          seismo_offset,seismo_current, &
-                          P_SV,SU_FORMAT,save_ASCII_seismograms, &
-                          save_binary_seismograms_single,save_binary_seismograms_double, &
-                          x_source,z_source
+  use specfem_par, only: station_name,network_name,NSTEP,islice_selected_rec,nrec,myrank,deltat,seismotype,t0, &
+                         NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos,nrecloc, &
+                         seismo_offset,seismo_current,P_SV,SU_FORMAT,save_ASCII_seismograms, &
+                         save_binary_seismograms_single,save_binary_seismograms_double,x_source,z_source
 
 ! uncomment this to save the ASCII *.sem* seismograms in binary instead, to save disk space and/or writing time
 ! we could/should move this flag to DATA/Par_file one day.

@@ -37,11 +37,11 @@
 
 ! to display the snapshots : display image*.jpg
 
-  use constants,only: TINYVAL,HUGEVAL,STABILITY_THRESHOLD
+  use constants, only: TINYVAL,HUGEVAL,STABILITY_THRESHOLD
 
   use specfem_par, only: myrank,it,NSOURCES,P_SV,nrec
 
-  use specfem_par_movie,only: image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color, &
+  use specfem_par_movie, only: image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color, &
     isnapshot_number,cutsnaps,image_color_vp_display, &
     USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
     DRAW_SOURCES_AND_RECEIVERS, &

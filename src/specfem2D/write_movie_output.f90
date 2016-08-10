@@ -35,20 +35,20 @@
 
 ! outputs snapshots for movies
 
-  use constants,only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,NOISE_MOVIE_OUTPUT
+  use constants, only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,NOISE_MOVIE_OUTPUT
 
-  use specfem_par,only: myrank,it,NSTEP,nspec,nglob,ibool, &
+  use specfem_par, only: myrank,it,NSTEP,nspec,nglob,ibool, &
     potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
     b_displ_elastic,rho_k,rho_kl, &
     any_acoustic,any_elastic,GPU_MODE,P_SV
 
-  use specfem_par_gpu,only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
+  use specfem_par_gpu, only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
 
-  use specfem_par_noise,only: NOISE_TOMOGRAPHY,mask_noise, &
+  use specfem_par_noise, only: NOISE_TOMOGRAPHY,mask_noise, &
                               surface_movie_y_or_z_noise,noise_output_rhokl,noise_output_array,noise_output_ncol
 
-  use specfem_par_movie,only: output_postscript_snapshot,output_color_image,output_wavefield_dumps, &
+  use specfem_par_movie, only: output_postscript_snapshot,output_color_image,output_wavefield_dumps, &
     NSTEP_BETWEEN_OUTPUT_IMAGES
 
   implicit none

@@ -39,7 +39,7 @@
 #ifdef USE_MPI
   use mpi
 #endif
-  use constants,only: MAX_STRING_LEN,IMAIN,ISTANDARD_OUTPUT
+  use constants, only: MAX_STRING_LEN,IMAIN,ISTANDARD_OUTPUT
 
   implicit none
 
@@ -77,7 +77,7 @@
 
   subroutine flush_IMAIN()
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
 
   implicit none
 

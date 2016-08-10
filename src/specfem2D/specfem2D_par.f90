@@ -35,7 +35,7 @@ module specfem_par
 
 ! main parameter module for specfem simulations
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME, &
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME, &
     NEDGES,NGLLX,NGLLZ,NGLJ,NDIM
 
   use shared_parameters
@@ -702,7 +702,7 @@ module specfem_par_noise
 
 ! parameter module for noise simulations
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   use shared_parameters
 
@@ -740,7 +740,7 @@ module specfem_par_gpu
 
 ! parameter module for gpu simulations
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   use shared_parameters
 
@@ -822,7 +822,7 @@ module specfem_par_movie
 
 ! parameter module for noise simulations
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN
 
   use shared_parameters
 

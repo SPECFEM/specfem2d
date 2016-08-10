@@ -33,10 +33,10 @@
 
   subroutine prepare_timerun()
 
-  use constants,only: USE_ENFORCE_FIELDS,IOUT_ENERGY,IMAIN
+  use constants, only: USE_ENFORCE_FIELDS,IOUT_ENERGY,IMAIN
   use specfem_par
   use specfem_par_movie
-  use specfem_par_noise,only: NOISE_TOMOGRAPHY
+  use specfem_par_noise, only: NOISE_TOMOGRAPHY
 
   implicit none
 
@@ -126,10 +126,9 @@
 !-------------------------------------------------------------------------------------
 !
 
-
   subroutine prepare_timerun_constants()
 
-  use constants,only: HALF,ZERO
+  use constants, only: HALF,ZERO
   use specfem_par
 
   implicit none
@@ -182,14 +181,13 @@
 !-------------------------------------------------------------------------------------
 !
 
-
   subroutine prepare_timerun_mass_matrix()
 
 #ifdef USE_MPI
   use mpi
 #endif
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
   use specfem_par
 
   implicit none
@@ -226,7 +224,7 @@
 
   subroutine prepare_timerun_postscripts()
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
   use specfem_par
   use specfem_par_movie
 
@@ -306,16 +304,15 @@
 !-------------------------------------------------------------------------------------
 !
 
-
   subroutine prepare_timerun_image_coloring()
 
 #ifdef USE_MPI
   use mpi
 #endif
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
 #ifdef USE_MPI
-  use constants,only: DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
+  use constants, only: DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
 #endif
   use specfem_par
   use specfem_par_movie
@@ -619,7 +616,7 @@
 
 ! prepares adjoint runs
 
-  use constants,only: IMAIN,USE_PORO_VISCOUS_DAMPING
+  use constants, only: IMAIN,USE_PORO_VISCOUS_DAMPING
   use specfem_par
 
   implicit none
@@ -717,7 +714,6 @@
 !-------------------------------------------------------------------------------------
 !
 
-
   subroutine prepare_timerun_kernels()
 
 
@@ -725,7 +721,7 @@
   use mpi
 #endif
 
-  use constants,only: IMAIN,APPROXIMATE_HESS_KL
+  use constants, only: IMAIN,APPROXIMATE_HESS_KL
   use specfem_par
 
   implicit none
@@ -974,7 +970,7 @@
 
 ! reads initial fields from external file if needed
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
   use specfem_par
 
   implicit none
@@ -1062,7 +1058,6 @@
 !-------------------------------------------------------------------------------------
 !
 
-
   subroutine prepare_timerun_noise()
 
 ! for noise simulations
@@ -1071,10 +1066,10 @@
   use mpi
 #endif
 
-  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS
+  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS
 
-  use specfem_par,only: myrank,AXISYM,NSTEP,nglob,nspec,ibool,coord, &
-                        rhoext,vpext,vsext,density,poroelastcoef,kmato,assign_external_model
+  use specfem_par, only: myrank,AXISYM,NSTEP,nglob,nspec,ibool,coord, &
+                         rhoext,vpext,vsext,density,poroelastcoef,kmato,assign_external_model
   use specfem_par_noise
 
   implicit none
@@ -1208,7 +1203,7 @@
   use mpi
 #endif
 
-  use constants,only: IMAIN,TWO,PI,FOUR_THIRDS,TWO_THIRDS
+  use constants, only: IMAIN,TWO,PI,FOUR_THIRDS,TWO_THIRDS
   use specfem_par
 
   implicit none

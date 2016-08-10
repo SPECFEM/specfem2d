@@ -31,14 +31,13 @@
 !
 !========================================================================
 
-
   subroutine compute_forces_gravitoacoustic(potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
                                             potential_gravitoacoustic,potential_dot_dot_gravito, &
                                             potential_gravito,IS_BACKWARD_FIELD)
 
 ! compute forces for the gravitoacoustic elements
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   use specfem_par, only: codeabs,ispec_is_gravitoacoustic,nglob,nspec,nelemabs,numat,it,NSTEP, &
                          anyabs,assign_external_model,ibool,kmato,numabs, &

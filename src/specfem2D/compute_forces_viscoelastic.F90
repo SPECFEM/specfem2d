@@ -35,9 +35,8 @@
                                          PML_BOUNDARY_CONDITIONS,e1,e11,e13,iphase)
 
   ! compute forces for the elastic elements
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
-    CONVOLUTION_MEMORY_VARIABLES, &
-    IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL,FOUR_THIRDS, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
+    CONVOLUTION_MEMORY_VARIABLES,IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL,FOUR_THIRDS, &
     ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: nglob,assign_external_model,P_SV, &
@@ -758,7 +757,7 @@
 !        enddo
 !      enddo
 
-  use constants,only: NDIM,NGLLX,NGLLZ,CUSTOM_REAL
+  use constants, only: NDIM,NGLLX,NGLLZ,CUSTOM_REAL
 
   implicit none
 

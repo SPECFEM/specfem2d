@@ -31,16 +31,15 @@
 !
 !========================================================================
 
-
   subroutine write_color_image_snaphot()
 
 #ifdef USE_MPI
   use mpi
 #endif
 
-  use constants,only: IMAIN,NGLLX,NGLLZ,REMOVE_PMLS_FROM_JPEG_IMAGES
+  use constants, only: IMAIN,NGLLX,NGLLZ,REMOVE_PMLS_FROM_JPEG_IMAGES
 
-  use specfem_par,only: myrank,nspec,it,NPROC, &
+  use specfem_par, only: myrank,nspec,it,NPROC, &
                         assign_external_model,ibool,kmato,density,rhoext,P_SV, &
                         potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
                         potential_gravito,potential_dot_gravito,potential_dot_dot_gravito, &
@@ -49,15 +48,15 @@
                         displs_poroelastic,velocs_poroelastic,accels_poroelastic
 
   ! PML arrays
-  use specfem_par,only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
+  use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
 
-  use specfem_par_movie,only: vector_field_display,image_color_data,iglob_image_color, &
+  use specfem_par_movie, only: vector_field_display,image_color_data,iglob_image_color, &
     imagetype_JPEG,nb_pixel_loc, &
     NX_IMAGE_color,NZ_IMAGE_color, &
     num_pixel_loc
 
 #ifdef USE_MPI
-  use specfem_par_movie,only: data_pixel_recv,data_pixel_send,nb_pixel_per_proc,num_pixel_recv
+  use specfem_par_movie, only: data_pixel_recv,data_pixel_send,nb_pixel_per_proc,num_pixel_recv
 #endif
 
   implicit none

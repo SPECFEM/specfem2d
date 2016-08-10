@@ -40,7 +40,7 @@
                                         tort,rho_s,rho_f,eta_f,perm_xx, &
                                         fi,f0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 
@@ -160,9 +160,9 @@
 
   subroutine get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
 
-  use constants,only: FOUR_THIRDS
+  use constants, only: FOUR_THIRDS
 
-  use specfem_par,only: porosity,tortuosity,poroelastcoef,density,kmato ! AXISYM
+  use specfem_par, only: porosity,tortuosity,poroelastcoef,density,kmato ! AXISYM
 
   implicit none
 
@@ -213,8 +213,8 @@
 
   subroutine get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
 
-  ! use specfem_par,only: AXISYM
-  use constants,only: FOUR_THIRDS
+  ! use specfem_par, only: AXISYM
+  use constants, only: FOUR_THIRDS
 
   implicit none
 

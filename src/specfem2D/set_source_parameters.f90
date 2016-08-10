@@ -32,16 +32,15 @@
 !
 !========================================================================
 
-
   subroutine set_source_parameters()
 
 ! gets source parameters and determines simulation start/onset time
 
-  use constants,only: NGLLX,NGLLZ,NDIM,IMAIN,TINYVAL,PI
+  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,TINYVAL,PI
 
-  use specfem_par, only : myrank,NSOURCES,source_type,time_function_type, &
-                          x_source,z_source,Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource, &
-                          t0,initialfield,USER_T0
+  use specfem_par, only: myrank,NSOURCES,source_type,time_function_type, &
+                         x_source,z_source,Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource, &
+                         t0,initialfield,USER_T0
 
   implicit none
 

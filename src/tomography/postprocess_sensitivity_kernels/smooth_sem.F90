@@ -120,7 +120,7 @@ program smooth_sem
   real(kind=CUSTOM_REAL), PARAMETER :: PI = 3.1415927
   real t1,t2
 
-  ! mpi initialization
+  ! MPI initialization
   call init_mpi()
   call world_size(NPROC)
   call world_rank(myrank)

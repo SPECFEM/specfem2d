@@ -45,7 +45,7 @@
 
   double precision function comp_source_time_function_gauss(t,hdur)
 
-  use constants, only : PI
+  use constants, only: PI
 
   implicit none
 
@@ -69,14 +69,13 @@
 
   end function comp_source_time_function_gauss
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
 
   double precision function comp_source_time_function_dgau(t,hdur)
 
-  use constants, only : PI
+  use constants, only: PI
 
   implicit none
 
@@ -106,7 +105,7 @@
 
   double precision function comp_source_time_function_d2gau(t,hdur)
 
-  use constants, only : PI
+  use constants, only: PI
 
   implicit none
 
@@ -137,7 +136,7 @@
 
   double precision function comp_source_time_function_gaussB(t,f0)
 
-  use constants, only : PI
+  use constants, only: PI
 
   implicit none
 
@@ -158,7 +157,7 @@
 
   double precision function comp_source_time_function_dgaussB(t,f0)
 
-  use constants, only : PI
+  use constants, only: PI
 
   implicit none
 
@@ -179,7 +178,7 @@
 
   double precision function comp_source_time_function_d2gaussB(t,f0)
 
-  use constants, only : PI
+  use constants, only: PI
 
   implicit none
 
@@ -201,7 +200,7 @@
 
   double precision function comp_source_time_function_d3gaussB(t,f0)
 
-  use constants, only : PI
+  use constants, only: PI
 
   implicit none
 
@@ -226,7 +225,7 @@
 
 !  Ricker (second derivative of a Gaussian)
 
-  use constants, only : PI
+  use constants, only: PI
 
   implicit none
 
@@ -252,7 +251,7 @@
 
   double precision function comp_source_time_function_drck(t,f0)
 
-  use constants, only : PI
+  use constants, only: PI
 
   implicit none
 
@@ -273,7 +272,7 @@
 
   double precision function comp_source_time_function_d2rck(t,f0)
 
-  use constants, only : PI
+  use constants, only: PI
 
   implicit none
 

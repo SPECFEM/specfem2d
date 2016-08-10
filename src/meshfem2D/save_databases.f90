@@ -31,14 +31,13 @@
 !
 !========================================================================
 
-
   subroutine save_databases()
 
 ! generates the databases for the solver
 
-  use constants,only: IMAIN,IOUT,MAX_STRING_LEN
-  use part_unstruct_par,only: nspec,iproc
-  use shared_parameters,only: NPROC
+  use constants, only: IMAIN,IOUT,MAX_STRING_LEN
+  use part_unstruct_par, only: nspec,iproc
+  use shared_parameters, only: NPROC
 
   implicit none
 
@@ -106,9 +105,9 @@
 
   subroutine save_databases_init()
 
-  use constants,only: IOUT
+  use constants, only: IOUT
   use shared_parameters
-  use part_unstruct_par,only: iproc,nspec,npgeo,region_pml_external_mesh
+  use part_unstruct_par, only: iproc,nspec,npgeo,region_pml_external_mesh
 
   implicit none
 
@@ -117,7 +116,7 @@
   call write_glob2loc_nodes_database(IOUT, iproc, npgeo, 1)
 
   ! only counts number of elements (nspec) for this partition (iproc)
-  !   DK DK add support for using pml in mpi mode with external mesh
+  !   DK DK add support for using PML in MPI mode with external mesh
   !   call write_partition_database(IOUT, iproc, nspec, num_material, ngnod, 1)
   call write_partition_database(IOUT, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 1)
 
@@ -289,7 +288,7 @@
 
   subroutine save_databases_sources()
 
-  use constants,only: IOUT
+  use constants, only: IOUT
   use source_file_par
   use shared_parameters
 
@@ -318,7 +317,7 @@
 
   subroutine save_databases_coorg_elem()
 
-  use constants,only: IOUT
+  use constants, only: IOUT
   use part_unstruct_par
   use shared_parameters
 
@@ -374,7 +373,7 @@
 
   subroutine save_databases_attenuation()
 
-  use constants,only: IOUT
+  use constants, only: IOUT
   use part_unstruct_par
   use shared_parameters
 
@@ -390,7 +389,7 @@
 
   subroutine save_databases_materials()
 
-  use constants,only: IOUT,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL
+  use constants, only: IOUT,ISOTROPIC_MATERIAL,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL
   use part_unstruct_par
   use shared_parameters
 
@@ -508,10 +507,10 @@
 
   subroutine save_databases_interfaces()
 
-  use constants,only: IOUT
+  use constants, only: IOUT
   use part_unstruct_par
   use decompose_par
-  use shared_parameters,only: NPROC
+  use shared_parameters, only: NPROC
 
   implicit none
 
@@ -546,9 +545,9 @@
 
   subroutine save_databases_absorbing()
 
-  use constants,only: IOUT
-  use shared_parameters,only: any_abs
-  use part_unstruct_par,only: iproc
+  use constants, only: IOUT
+  use shared_parameters, only: any_abs
+  use part_unstruct_par, only: iproc
 
   implicit none
 
@@ -564,9 +563,9 @@
 
   subroutine save_databases_acoustic_forcing()
 
-  use constants,only: IOUT
-  use shared_parameters,only: ACOUSTIC_FORCING
-  use part_unstruct_par,only: iproc
+  use constants, only: IOUT
+  use shared_parameters, only: ACOUSTIC_FORCING
+  use part_unstruct_par, only: iproc
 
   implicit none
 
@@ -582,7 +581,7 @@
 
   subroutine save_databases_free_surf()
 
-  use constants,only: IOUT
+  use constants, only: IOUT
   use part_unstruct_par
 
   implicit none
@@ -596,7 +595,7 @@
 
   subroutine save_databases_coupled()
 
-  use constants,only: IOUT
+  use constants, only: IOUT
   use part_unstruct_par
 
   implicit none
@@ -616,7 +615,7 @@
 
   subroutine save_databases_tangential()
 
-  use constants,only: IOUT
+  use constants, only: IOUT
   use part_unstruct_par
   use shared_parameters
 
@@ -640,7 +639,7 @@
 
   subroutine save_databases_axial_elements
 
-  use constants,only: IOUT
+  use constants, only: IOUT
   use part_unstruct_par
 
   implicit none

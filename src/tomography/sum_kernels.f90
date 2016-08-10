@@ -56,12 +56,10 @@
 ! some the subroutines, will be merged with src/tomography/xcombine_sem
 !
 
-
 program sum_kernels
 
-  use tomography_par,only: MAX_STRING_LEN,MAX_KERNEL_PATHS,KERNEL_FILE_LIST,IIN, &
-    myrank,sizeprocs, &
-    USE_ALPHA_BETA_RHO,USE_ISO_KERNELS
+  use tomography_par, only: MAX_STRING_LEN,MAX_KERNEL_PATHS,KERNEL_FILE_LIST,IIN, &
+                            myrank,sizeprocs,USE_ALPHA_BETA_RHO,USE_ISO_KERNELS
 
   implicit none
 

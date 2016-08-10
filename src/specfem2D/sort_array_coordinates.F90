@@ -42,7 +42,7 @@
 !
 ! returns: sorted indexing array (ibool),  reordering array (iglob) & number of global points (nglob)
 
-  use constants,only: NGLLX,NGLLZ,NDIM,SMALLVALTOL
+  use constants, only: NGLLX,NGLLZ,NDIM,SMALLVALTOL
 
   implicit none
 

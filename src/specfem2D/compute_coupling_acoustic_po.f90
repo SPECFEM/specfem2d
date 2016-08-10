@@ -35,7 +35,7 @@
 
  subroutine compute_coupling_acoustic_po()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
 
   use specfem_par, only: num_fluid_poro_edges,ibool,wxgll,wzgll,xix,xiz,&
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
@@ -136,11 +136,12 @@
  end subroutine compute_coupling_acoustic_po
 
 !========================================================================
+
 ! for acoustic solver
 
  subroutine compute_coupling_acoustic_po_backward()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
 
   use specfem_par, only: num_fluid_poro_edges,ibool,wxgll,wzgll,xix,xiz,&
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&

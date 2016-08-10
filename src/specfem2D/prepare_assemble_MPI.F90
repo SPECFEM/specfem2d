@@ -47,7 +47,7 @@
 !-----------------------------------------------
   subroutine prepare_assemble_MPI()
 
-  use constants,only: NGLLX,NGLLZ
+  use constants, only: NGLLX,NGLLZ
 
   use specfem_par, only: ibool, knods, ngnod, nglob, &
     ispec_is_elastic, ispec_is_poroelastic, ispec_is_acoustic, ispec_is_gravitoacoustic
@@ -235,7 +235,7 @@
 !-----------------------------------------------
   subroutine get_edge ( ngnod, n, itype, e1, e2, ixmin, ixmax, izmin, izmax, sens )
 
-  use constants,only: NGLLX,NGLLZ
+  use constants, only: NGLLX,NGLLZ
 
   implicit none
 

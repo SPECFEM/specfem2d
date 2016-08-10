@@ -35,7 +35,7 @@
 
   subroutine compute_coupling_viscoelastic_ac()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,ONE,TWO, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,ONE,TWO, &
     IRIGHT,ILEFT,IBOTTOM,ITOP,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: SIMULATION_TYPE,num_fluid_solid_edges,&
@@ -233,7 +233,7 @@
 
   subroutine compute_coupling_viscoelastic_ac_backward()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,ONE,TWO,IRIGHT,ILEFT,IBOTTOM,ITOP
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,ONE,TWO,IRIGHT,ILEFT,IBOTTOM,ITOP
 
   use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,gammax,gammaz, &
                          jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &

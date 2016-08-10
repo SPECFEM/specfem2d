@@ -33,7 +33,7 @@
 
   subroutine add_manual_crack(npgeo_ori)
 
-  use constants,only: NB_POINTS_TO_ADD_TO_NPGEO,FAST_NUMBERING
+  use constants, only: NB_POINTS_TO_ADD_TO_NPGEO,FAST_NUMBERING
   use specfem_par
 
   implicit none
@@ -46,8 +46,7 @@
   logical :: already_found_a_crack_element
 
   ! safety check
-  if (NPROC > 1) &
-    stop 'currently only serial runs are handled when adding a crack manually'
+  if (NPROC > 1) stop 'currently only serial runs are handled when adding a crack manually'
 
 !! DK DK material number 2 indicates the spectral elements that form the left vertical side of the crack
   check_nb_points_to_add_to_npgeo = count(kmato == 2)

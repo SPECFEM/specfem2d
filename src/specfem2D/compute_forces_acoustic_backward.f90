@@ -31,13 +31,12 @@
 !
 !========================================================================
 
-
   subroutine compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic,iphase)
 
 
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
     ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob, &

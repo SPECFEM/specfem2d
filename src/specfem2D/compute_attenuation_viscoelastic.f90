@@ -39,7 +39,7 @@
   ! updates memory variable in viscoelastic simulation
 
   ! compute forces for the elastic elements
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
   use specfem_par, only: nglob,nspec,nspec_ATT,ATTENUATION_VISCOELASTIC_SOLID,N_SLS, &
                          ibool,xix,xiz,gammax,gammaz,hprime_xx,hprime_zz
@@ -94,13 +94,11 @@
 !-------------------------------------------------------------------------------------
 !
 
-
   subroutine compute_attenuation_viscoelastic_update(ispec,e1,e11,e13, &
                                                      dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                                                      dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1)
 
-  use constants,only: NGLLX,NGLLZ,CUSTOM_REAL,TWO, &
-    CONVOLUTION_MEMORY_VARIABLES,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
+  use constants, only: NGLLX,NGLLZ,CUSTOM_REAL,TWO,CONVOLUTION_MEMORY_VARIABLES,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: nspec,nspec_ATT,N_SLS, &
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2, &

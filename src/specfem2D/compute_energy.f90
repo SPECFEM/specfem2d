@@ -31,12 +31,11 @@
 !
 !========================================================================
 
-
   subroutine compute_and_output_energy()
 
-  use constants,only: IOUT_ENERGY,CUSTOM_REAL
+  use constants, only: IOUT_ENERGY,CUSTOM_REAL
 
-  use specfem_par,only: GPU_MODE,myrank,it,deltat,kinetic_energy,potential_energy,t0
+  use specfem_par, only: GPU_MODE,myrank,it,deltat,kinetic_energy,potential_energy,t0
 
   implicit none
 
@@ -69,9 +68,9 @@
 
 ! compute kinetic and potential energy in the solid (acoustic elements are excluded)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM,ZERO,TWO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM,ZERO,TWO
 
-  use specfem_par,only: AXISYM,is_on_the_axis,myrank,nspec,kinetic_energy,potential_energy, &
+  use specfem_par, only: AXISYM,is_on_the_axis,myrank,nspec,kinetic_energy,potential_energy, &
     ibool,hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz,jacobian,wxgll,wzgll, &
     displ_elastic,veloc_elastic, &
     displs_poroelastic,displw_poroelastic,velocs_poroelastic,velocw_poroelastic, &
@@ -371,9 +370,9 @@
 
   ! computes maximum, integrated energy and duration fields
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,TWO,ZERO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,TWO,ZERO
 
-  use specfem_par,only: AXISYM,is_on_the_axis,nspec,ibool,deltat,veloc_elastic,potential_dot_acoustic,ispec_is_elastic, &
+  use specfem_par, only: AXISYM,is_on_the_axis,nspec,ibool,deltat,veloc_elastic,potential_dot_acoustic,ispec_is_elastic, &
                         ispec_is_poroelastic,integrated_kinetic_energy_field,max_kinetic_energy_field, &
                         integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
                         potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &

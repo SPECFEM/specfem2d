@@ -37,7 +37,7 @@
 
   subroutine construct_acoustic_surface ()
 
-  use specfem_par, only : ngnod, knods, nelem_acoustic_surface, acoustic_edges, acoustic_surface
+  use specfem_par, only: ngnod, knods, nelem_acoustic_surface, acoustic_edges, acoustic_surface
 
   implicit none
 
@@ -74,7 +74,7 @@
 !-----------------------------------------------
   subroutine get_acoustic_edge ( ngnod, n, type, e1, e2, ixmin, ixmax, izmin, izmax )
 
-  use constants,only: NGLLX,NGLLZ
+  use constants, only: NGLLX,NGLLZ
 
   implicit none
 

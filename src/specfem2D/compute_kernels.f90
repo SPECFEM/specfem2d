@@ -38,7 +38,7 @@
 ! see e.g. Tromp et al. (2005) for elastic calculation
 ! and Morency et al. (2009) for poroelastic calculation
 
-  use constants,only: APPROXIMATE_HESS_KL
+  use constants, only: APPROXIMATE_HESS_KL
 
   use specfem_par, only: any_acoustic,any_elastic,any_poroelastic
 
@@ -70,12 +70,12 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine compute_kernels_el()
 
 ! elastic kernel calculations
 ! see e.g. Tromp et al. (2005)
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,HALF,TWO,FOUR_THIRDS
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,HALF,TWO,FOUR_THIRDS
 
   use specfem_par, only: ispec_is_elastic,rho_k, & ! AXISYM,
                          rho_kl,mu_kl,kappa_kl,rhop_kl,beta_kl,alpha_kl,bulk_c_kl,bulk_beta_kl, &
@@ -85,7 +85,7 @@
                          mu_k,kappa_k,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
                          GPU_MODE
 
-  use specfem_par_gpu,only: Mesh_pointer,deltatf
+  use specfem_par_gpu, only: Mesh_pointer,deltatf
 
   use specfem_par, only: c11_k,c13_k,c15_k,c33_k,c35_k,c55_k,ispec_is_anisotropic,&
                          rho_kl,c11_kl,c13_kl,c15_kl,c33_kl,c35_kl,c55_kl
@@ -278,17 +278,17 @@
 
 ! acoustic kernel calculations
 ! see e.g. Tromp et al. (2005)
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,HALF,TWO
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,HALF,TWO
 
   use specfem_par, only: nspec,ispec_is_acoustic,ibool,kappal_ac_global,rhol_ac_global,&
                          poroelastcoef,density,kmato,assign_external_model,rhoext,vpext,deltat,&
                          hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,&
                          potential_acoustic,b_potential_acoustic,b_potential_dot_dot_acoustic,&
                          accel_ac,b_accel_ac,b_displ_ac,&
-                         rho_ac_kl,kappa_ac_kl,rhop_ac_kl,alpha_ac_kl, &
-                         GPU_MODE
+                         rho_ac_kl,kappa_ac_kl,rhop_ac_kl,alpha_ac_kl,GPU_MODE
 
-  use specfem_par_gpu,only: Mesh_pointer,deltatf
+  use specfem_par_gpu, only: Mesh_pointer,deltatf
 
   implicit none
 
@@ -392,7 +392,7 @@
 ! kernel calculations
 ! see e.g. Morency et al. (2009)
 
-  use constants,only: CUSTOM_REAL,FOUR_THIRDS,NGLLX,NGLLZ,TWO,HALF
+  use constants, only: CUSTOM_REAL,FOUR_THIRDS,NGLLX,NGLLZ,TWO,HALF
 
   use specfem_par, only: nglob,nspec,ispec_is_poroelastic,ibool,deltat, &
                          kmato,permeability, &
@@ -675,7 +675,7 @@
 
   subroutine compute_kernels_Hessian()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: nglob,nspec,ibool,ispec_is_acoustic,ispec_is_elastic, &
                          any_elastic,any_acoustic, &
@@ -684,7 +684,7 @@
                          rhorho_ac_Hessian_final1,rhorho_ac_Hessian_final2, &
                          deltat,GPU_MODE
 
-  use specfem_par_gpu,only: Mesh_pointer
+  use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
 

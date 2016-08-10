@@ -37,11 +37,11 @@
 ! compute Grad(potential) in acoustic elements
 ! and combine with existing velocity vector field in elastic elements
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
-  use specfem_par,only: nspec,ibool, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+  use specfem_par, only: nspec,ibool, &
     nglob_acoustic,nglob_elastic,nglob_gravitoacoustic,nglob_poroelastic
 
-  use specfem_par_movie,only: vector_field_display
+  use specfem_par_movie, only: vector_field_display
 
   implicit none
 
@@ -82,9 +82,9 @@
 
 ! compute Grad(potential) if acoustic element or copy existing vector if elastic element
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
-  use specfem_par,only: nglob_acoustic,nglob_elastic,nglob_gravitoacoustic,nglob_poroelastic, &
+  use specfem_par, only: nglob_acoustic,nglob_elastic,nglob_gravitoacoustic,nglob_poroelastic, &
     assign_external_model,density,kmato,gravityext,rhoext, &
     hprimeBar_xx,hprime_xx,hprime_zz, &
     xix,xiz,gammax,gammaz,ibool, &

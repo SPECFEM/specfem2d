@@ -34,12 +34,12 @@
 
   subroutine decompose_mesh()
 
-  use constants,only: IMAIN,MAX_NEIGHBORS,NCORNERS,MAX_NSIZE_SHARED
+  use constants, only: IMAIN,MAX_NEIGHBORS,NCORNERS,MAX_NSIZE_SHARED
 
-  use shared_parameters,only: NPROC,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
+  use shared_parameters, only: NPROC,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
     ngnod,nbmodels,num_material,partitioning_method,phi_read
 
-  use part_unstruct_par,only: part,nelmnts,xadj_g,adjncy_g,elmnts,elmnts_bis,nb_edges, &
+  use part_unstruct_par, only: part,nelmnts,xadj_g,adjncy_g,elmnts,elmnts_bis,nb_edges, &
     nnodes_elmnts,nnodes,nodes_elmnts,nodes_coords,ninterfaces
 
   use decompose_par

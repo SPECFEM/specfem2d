@@ -39,7 +39,7 @@
   ! Anisotropic-medium PML for vector FETD with modified basis functions,
   ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -64,7 +64,7 @@
                                       CPML_region_local,index_ik,A_0,A_1,A_2,singularity_type_2,bb_1,bb_2, &
                                       coef0_1,coef1_1,coef2_1,coef0_2,coef1_2,coef2_2)
 
-  use constants,only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
+  use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
 
   implicit none
 
@@ -168,7 +168,7 @@
                                      CPML_region_local,A_0,A_1,A_2,A_3,A_4,singularity_type,&
                                      bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
-  use constants,only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
+  use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
 
   implicit none
 
@@ -266,12 +266,12 @@
 
   subroutine rebuild_value_on_PML_interface_acoustic(it,b_potential_acoustic,b_potential_dot_acoustic)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: nspec,nglob,ispec_is_acoustic,any_acoustic,ibool,nglob_interface,point_interface
 
   ! PML arrays
-  use specfem_par,only: ispec_is_PML,pml_interface_history_potential_dot,pml_interface_history_potential
+  use specfem_par, only: ispec_is_PML,pml_interface_history_potential_dot,pml_interface_history_potential
 
   implicit none
 
@@ -308,12 +308,12 @@
 
   subroutine rebuild_value_on_PML_interface_acoustic_accel(it,b_potential_dot_dot_acoustic)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: any_acoustic,nglob,nglob_interface,point_interface
 
   ! PML arrays
-  use specfem_par,only: pml_interface_history_potential_dot_dot
+  use specfem_par, only: pml_interface_history_potential_dot_dot
 
   implicit none
 
@@ -337,7 +337,7 @@
 
   subroutine rebuild_value_on_PML_interface_viscoelastic(it)
 
-  use constants,only: NGLLX,NGLLZ,CUSTOM_REAL
+  use constants, only: NGLLX,NGLLZ,CUSTOM_REAL
 
   use specfem_par, only: nspec,ispec_is_elastic,any_elastic,ibool,nglob_interface,point_interface, &
                          b_veloc_elastic,b_displ_elastic
@@ -380,7 +380,7 @@
 
   subroutine rebuild_value_on_PML_interface_viscoelastic_accel(it)
 
-  use constants,only: NGLLX,NGLLZ,CUSTOM_REAL
+  use constants, only: NGLLX,NGLLZ,CUSTOM_REAL
 
   use specfem_par, only: any_elastic,nglob_interface,point_interface, &
                          b_accel_elastic
@@ -414,7 +414,7 @@
 ! There is something to enforce explicitly only in the case of elastic elements, for which a Dirichlet
 ! condition is needed for the displacement vector, which is the vectorial unknown for these elements.
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML
 
@@ -492,7 +492,7 @@
 
   subroutine pml_boundary_elastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML,nspec_PML
 

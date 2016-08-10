@@ -35,8 +35,8 @@
 
 ! compute pressure in acoustic elements and in elastic elements
 
-  use specfem_par,only: CUSTOM_REAL,NGLLX,NGLLZ,nspec,ibool
-  use specfem_par_movie,only: vector_field_display
+  use specfem_par, only: CUSTOM_REAL,NGLLX,NGLLZ,nspec,ibool
+  use specfem_par_movie, only: vector_field_display
 
   implicit none
 
@@ -69,22 +69,18 @@
 
   subroutine compute_pressure_one_element(ispec,pressure_element)
 
-
 ! compute pressure in acoustic elements and in elastic elements
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,TWO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,TWO
 
-  use specfem_par,only: N_SLS, &
-    ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic,ispec_is_gravitoacoustic,ispec_is_anisotropic, &
+  use specfem_par, only: N_SLS,ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic,ispec_is_gravitoacoustic,ispec_is_anisotropic, &
     kmato,poroelastcoef,assign_external_model,vpext,vsext,rhoext, &
     ATTENUATION_VISCOELASTIC_SOLID,AXISYM,is_on_the_axis, &
     displ_elastic,displs_poroelastic,displw_poroelastic, &
     potential_dot_dot_acoustic,potential_acoustic,potential_dot_dot_gravitoacoustic,potential_gravitoacoustic, &
     anisotropy,c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext,c55ext, &
     hprimebar_xx,hprime_xx,hprime_zz, &
-    xix,xiz,gammax,gammaz,jacobian,ibool,coord, &
-    e1,e11, &
-    USE_TRICK_FOR_BETTER_PRESSURE
+    xix,xiz,gammax,gammaz,jacobian,ibool,coord,e1,e11,USE_TRICK_FOR_BETTER_PRESSURE
 
   implicit none
 

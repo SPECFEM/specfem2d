@@ -50,8 +50,7 @@
 ! relatively fine grid, then the above effect will be small.
 
 
-  use constants,only: IMAIN,NGLLX,NGLLZ, &
-    IRIGHT,ILEFT,IBOTTOM,ITOP,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
+  use constants, only: IMAIN,NGLLX,NGLLZ,IRIGHT,ILEFT,IBOTTOM,ITOP,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
 
   use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool, &
     anyabs,nelemabs,codeabs,numabs, &
@@ -293,9 +292,9 @@
 
   subroutine determin_interface_pml_interior()
 
-  use constants,only: NGLLX,NGLLZ,IRIGHT,ILEFT,IBOTTOM,ITOP
+  use constants, only: NGLLX,NGLLZ,IRIGHT,ILEFT,IBOTTOM,ITOP
 
-  use specfem_par, only: nglob_interface,nspec,ibool,PML_interior_interface,&
+  use specfem_par, only: nglob_interface,nspec,ibool,PML_interior_interface, &
                          which_PML_elem,point_interface,read_external_mesh,mask_ibool_PML,region_CPML
   implicit none
 
@@ -417,7 +416,7 @@
 
  subroutine define_PML_coefficients()
 
-  use constants,only: PI,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY,PML_parameter_adjustment
+  use constants, only: PI,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY,PML_parameter_adjustment
 
   use specfem_par, only: f0_source,ispec_is_elastic,ispec_is_acoustic, &
                          NSOURCES,ispec_selected_source, &

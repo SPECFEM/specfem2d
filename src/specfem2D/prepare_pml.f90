@@ -33,7 +33,7 @@
 
   subroutine prepare_PML()
 
-  use constants,only: IMAIN,ZERO
+  use constants, only: IMAIN,ZERO
   use specfem_par
 
   implicit none

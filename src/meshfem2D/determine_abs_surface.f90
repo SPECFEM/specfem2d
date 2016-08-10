@@ -36,12 +36,12 @@
 
 ! determines absorbing boundary elements
 
-  use constants,only: IBOTTOM,IRIGHT,ITOP,ILEFT
+  use constants, only: IBOTTOM,IRIGHT,ITOP,ILEFT
 
-  use part_unstruct_par,only: nelemabs,abs_surface, &
+  use part_unstruct_par, only: nelemabs,abs_surface, &
     elmnts,nxread,nzread
 
-  use shared_parameters,only: ngnod,absorbbottom,absorbleft,absorbright,absorbtop
+  use shared_parameters, only: ngnod,absorbbottom,absorbleft,absorbright,absorbtop
 
   implicit none
 

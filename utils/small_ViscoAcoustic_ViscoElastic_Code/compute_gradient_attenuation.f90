@@ -34,7 +34,7 @@
 subroutine compute_gradient_attenuation(displ_elastic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
      xix,xiz,gammax,gammaz,ibool,ispec_is_elastic,hprime_xx,hprime_zz,nspec,nglob)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM,ZERO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM,ZERO
 
   use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx
 

@@ -33,14 +33,13 @@
 
   subroutine save_forward_arrays_undoatt()
 
-  use constants,only: IOUT_UNDO_ATT,MAX_STRING_LEN
+  use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN
 
-  use specfem_par,only: myrank,iteration_on_subset, &
+  use specfem_par, only: myrank,iteration_on_subset, &
     any_acoustic,any_elastic,ATTENUATION_VISCOELASTIC_SOLID, &
     potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
     e1,e11,e13
-
 
   implicit none
 

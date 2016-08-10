@@ -35,7 +35,7 @@
 
 ! compute forces for the solid poroelastic part
 
-  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,NGLJ, &
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,NGLJ, &
     CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
     TWO,ONE,HALF,ZERO,FOUR_THIRDS, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4,ALPHA_LDDRK,BETA_LDDRK
@@ -51,7 +51,7 @@
                          e11_initial_rk,e13_initial_rk,e11_force_RK, e13_force_RK, &
                          time_stepping_scheme,i_stage
 
-  use specfem_par,only: displs_poroelastic_old
+  use specfem_par, only: displs_poroelastic_old
 
   ! overlapping communication
   use specfem_par, only: nspec_inner_poroelastic,nspec_outer_poroelastic,phase_ispec_inner_poroelastic

@@ -45,7 +45,7 @@
 
 ! for acoustic elements
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK, &
     NGLJ,TWO_THIRDS
 
   use specfem_par, only: time_stepping_scheme,i_stage,it,deltat, &
@@ -216,7 +216,7 @@
                                                      accel_elastic_PML,r_xiplus1)
 ! for elastic elements
 
-  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK, &
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK, &
     NGLJ,TWO_THIRDS
 
   use specfem_par, only: time_stepping_scheme,i_stage,it,deltat, &

@@ -33,7 +33,7 @@
 
   subroutine prepare_GPU()
 
-  use constants,only: IMAIN,USE_MESH_COLORING_GPU,APPROXIMATE_HESS_KL
+  use constants, only: IMAIN,USE_MESH_COLORING_GPU,APPROXIMATE_HESS_KL
   use specfem_par
   use specfem_par_gpu
 
@@ -271,7 +271,7 @@
     endif
   endif
 
-  ! allocates arrays for mpi transfers
+  ! allocates arrays for MPI transfers
   allocate(request_send_recv_scalar_gpu(2*ninterface))
   allocate(b_request_send_recv_scalar_gpu(2*ninterface))
 
@@ -322,7 +322,7 @@
 
 ! helper routine for array initialization and time run setup
 
-  use constants,only: IMAIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IBOTTOM,IRIGHT,ITOP,ILEFT
+  use constants, only: IMAIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IBOTTOM,IRIGHT,ITOP,ILEFT
 
   implicit none
 
@@ -356,7 +356,7 @@
   NGLOB_AB = nglob
 
   ! user output
-  if (myrank == 0) write(IMAIN,*) '  number of mpi interfaces = ',ninterface
+  if (myrank == 0) write(IMAIN,*) '  number of MPI interfaces = ',ninterface
 
   ! user output
   if (myrank == 0) write(IMAIN,*) '  number of acoustic elements at free surface = ',nelem_acoustic_surface

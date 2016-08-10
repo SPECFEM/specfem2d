@@ -36,9 +36,9 @@
 
   subroutine read_interfaces_file()
 
-  use constants,only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK,HUGEVAL
+  use constants, only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK,HUGEVAL
 
-  use shared_parameters,only: interfacesfile,nx_param, &
+  use shared_parameters, only: interfacesfile,nx_param, &
     nz_layer,number_of_layers, &
     max_npoints_interface,number_of_interfaces, &
     nxread,nzread

@@ -33,7 +33,7 @@
 
   subroutine define_derivation_matrices()
 
-  use constants,only: GAUSSALPHA,GAUSSBETA,NGLLX,NGLLZ,ZERO,CUSTOM_REAL
+  use constants, only: GAUSSALPHA,GAUSSBETA,NGLLX,NGLLZ,ZERO,CUSTOM_REAL
 
   use specfem_par, only: xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz
 
@@ -91,7 +91,7 @@
 
   subroutine define_GLJ_derivation_matrix()
 
-  use constants,only: NGLJ,CUSTOM_REAL
+  use constants, only: NGLJ,CUSTOM_REAL
 
   use specfem_par, only: xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx
 

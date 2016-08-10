@@ -37,7 +37,7 @@
 
 ! define the attenuation constants
 
-  use constants,only: CUSTOM_REAL,ONE
+  use constants, only: CUSTOM_REAL,ONE
 
   implicit none
 
@@ -195,9 +195,9 @@
 !  A similar expression can then be established for Q_Kappa, and conversion from Q_Kappa and Q_mu to Q_P and Q_S (if needed)
 !  can be found for instance in equations (9.59) and (9.60) of the book of Dahlen and Tromp (1998).
 
-  use constants,only: ONE,TWO,PI,TWO_THIRDS,CUSTOM_REAL
+  use constants, only: ONE,TWO,PI,TWO_THIRDS,CUSTOM_REAL
 
-  use specfem_par,only : AXISYM
+  use specfem_par, only: AXISYM
 
   implicit none
 
@@ -685,7 +685,7 @@
 
   subroutine remplit_point(fmin,fmax,N,point)
 
-  use constants,only: TWO_PI_OR_ONE
+  use constants, only: TWO_PI_OR_ONE
 
   implicit none
 
@@ -708,7 +708,7 @@
 
   subroutine classical_linear_least_squares(Qref,poids,point,N,fmin,fmax)
 
-  use constants,only: TWO_PI_OR_ONE
+  use constants, only: TWO_PI_OR_ONE
 
   implicit none
 
@@ -2045,9 +2045,9 @@
 
   subroutine func_mini(x,res,Qref,N,Nopt,K,f_min,f_max)
 
-! Nopt=2*N : nombre de coefficients a optimiser
+! Nopt = 2*N : nombre de coefficients a optimiser
 
-  use constants,only: TWO_PI_OR_ONE
+  use constants, only: TWO_PI_OR_ONE
 
   implicit none
 
@@ -2071,7 +2071,7 @@
 
   subroutine grad_func_mini(x,grad,Qref,N,Nopt,K,f_min,f_max)
 
-  use constants,only: TWO_PI_OR_ONE
+  use constants, only: TWO_PI_OR_ONE
 
   implicit none
 
@@ -2195,7 +2195,7 @@
 
   subroutine nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
 
-  use constants,only: USE_SOLVOPT
+  use constants, only: USE_SOLVOPT
 
   implicit none
 

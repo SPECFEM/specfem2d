@@ -31,13 +31,12 @@
 !
 !========================================================================
 
-
   subroutine compute_arrays_source(ispec_selected_source,xi_source,gamma_source,sourcearray, &
                                    Mxx,Mzz,Mxz,xix,xiz,gammax,gammaz,xigll,zigll,nspec)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM,ZERO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM,ZERO
 
-  use specfem_par, only : AXISYM,is_on_the_axis,xiglj
+  use specfem_par, only: AXISYM,is_on_the_axis,xiglj
 
   implicit none
 
@@ -128,14 +127,13 @@
 
 ! reads in adjoint source file and computes source arrays for receiver location
 
-  use constants,only: IIN,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,CUSTOM_REAL,NDIM
+  use constants, only: IIN,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,CUSTOM_REAL,NDIM
 
-  use specfem_par,only: myrank,NSTEP,P_SV, &
-                        AXISYM,is_on_the_axis, &
+  use specfem_par, only: myrank,NSTEP,P_SV,AXISYM,is_on_the_axis, &
                         xigll,zigll,hxir,hpxir,hgammar,hpgammar,xiglj, &
                         ispec_selected_rec,seismotype,GPU_MODE
 
-  use specfem_par_gpu,only: source_adjointe
+  use specfem_par_gpu, only: source_adjointe
 
   implicit none
 
@@ -269,7 +267,7 @@
 
 ! reads in all adjoint sources in SU-file format and computes source arrays for receiver locations
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,NDIM
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,NDIM
 
   use specfem_par, only: AXISYM,xiglj,is_on_the_axis, &
                          myrank, NSTEP, nrec, &
@@ -278,7 +276,7 @@
                          adj_sourcearrays, &
                          GPU_MODE, ispec_selected_rec,P_SV
 
-  use specfem_par_gpu,only: source_adjointe
+  use specfem_par_gpu, only: source_adjointe
 
   implicit none
 

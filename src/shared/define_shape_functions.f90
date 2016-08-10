@@ -55,7 +55,7 @@
 !
 !=======================================================================
 
-  use constants,only: QUARTER,HALF,ONE,TWO,TINYVAL,NDIM
+  use constants, only: QUARTER,HALF,ONE,TWO,TINYVAL,NDIM
 
   implicit none
 

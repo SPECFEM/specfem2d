@@ -39,7 +39,7 @@
   use mpi
 #endif
 
-  use constants,only: IMAIN,STABILITY_THRESHOLD,CUSTOM_REAL
+  use constants, only: IMAIN,STABILITY_THRESHOLD,CUSTOM_REAL
 
   use specfem_par, only: myrank,timeval,it,NSTEP,GPU_MODE, &
                          ELASTIC_SIMULATION,any_elastic,displ_elastic, &
@@ -48,7 +48,7 @@
                          ACOUSTIC_SIMULATION,any_acoustic,potential_acoustic, &
                          timestamp_seconds_start
 
-  use specfem_par_noise,only: NOISE_TOMOGRAPHY
+  use specfem_par_noise, only: NOISE_TOMOGRAPHY
 
   implicit none
 

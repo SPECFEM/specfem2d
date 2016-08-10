@@ -345,7 +345,7 @@
 
   program meshfem2D
 
-  use constants,only: IMAIN,ISTANDARD_OUTPUT,TINYVAL
+  use constants, only: IMAIN,ISTANDARD_OUTPUT,TINYVAL
 
   use shared_parameters
   use part_unstruct_par
@@ -657,7 +657,7 @@
   ! slave processes wait
   call synchronize_all()
 
-  ! mpi finish
+  ! MPI finish
   call finalize_mpi()
 
   end program meshfem2D

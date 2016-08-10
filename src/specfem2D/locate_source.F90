@@ -41,10 +41,10 @@
                            NPROC,myrank, &
                            xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source,is_force_source)
 
-  use constants,only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,USE_BEST_LOCATION_FOR_SOURCE,SOURCE_IS_MOVING, &
+  use constants, only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,USE_BEST_LOCATION_FOR_SOURCE,SOURCE_IS_MOVING, &
     IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC,IDOMAIN_GRAVITOACOUSTIC
 
-  use specfem_par, only : AXISYM,is_on_the_axis,xiglj, &
+  use specfem_par, only: AXISYM,is_on_the_axis,xiglj, &
     ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic,ispec_is_gravitoacoustic
 
 #ifdef USE_MPI

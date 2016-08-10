@@ -49,9 +49,9 @@
   subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_bound,&
                                   bot_bound,nleft,nright,nbot,x_source,cploc,csloc)
 
-  use constants,only: PI
+  use constants, only: PI
 
-  use specfem_par,only : coord,nglob,deltat,NSTEP,ATTENUATION_VISCOELASTIC_SOLID, &
+  use specfem_par, only: coord,nglob,deltat,NSTEP,ATTENUATION_VISCOELASTIC_SOLID, &
     displ_elastic,veloc_elastic,accel_elastic, &
     v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
     t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
@@ -586,9 +586,13 @@
 
   end subroutine ONDASR
 
+!
+!---------
+!
+
   function CRB(BEALF)
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 

@@ -31,12 +31,11 @@
 !
 !========================================================================
 
-
   subroutine compute_forces_poro_viscous_damping()
 
 ! viscous damping
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,USE_PORO_VISCOUS_DAMPING
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,USE_PORO_VISCOUS_DAMPING
 
   use specfem_par, only: nspec,it,SIMULATION_TYPE,SAVE_FORWARD, &
                          ATTENUATION_PORO_FLUID_PART, &
@@ -163,12 +162,11 @@
 !-------------------------------------------------------------------------------------
 !
 
-
   subroutine compute_forces_poro_viscous_damping_backward()
 
 ! viscous damping
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,USE_PORO_VISCOUS_DAMPING
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,USE_PORO_VISCOUS_DAMPING
 
   use specfem_par, only: nspec,NSTEP,it,SIMULATION_TYPE, &
                          ibool,kmato,ispec_is_poroelastic, &

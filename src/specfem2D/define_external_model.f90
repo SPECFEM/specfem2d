@@ -35,7 +35,7 @@
                                          rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
                                          c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
 
   use specfem_par, only: poroelastcoef,density,kmato,myrank
 
@@ -156,16 +156,16 @@
                                    rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
                                    c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
 
-  use specfem_par,only: myrank
+  use specfem_par, only: myrank
 
   implicit none
 
 !--------------------------------------------------------------------------------------------------
 !
-!          taken from S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
-!          -------------------------------------------------------------
+!          taken from   S p e c f e m 3 D  G l o b e
+!          -----------------------------------------
 
 ! Modified AK135 model:
 !
@@ -1164,9 +1164,9 @@
                                                                  rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
                                                                  c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
 
-  use specfem_par,only: myrank
+  use specfem_par, only: myrank
 
   implicit none
 

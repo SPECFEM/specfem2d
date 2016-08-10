@@ -35,7 +35,7 @@
 
 ! compute forces for the fluid poroelastic part
 
-  use constants,only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,TWO,ZERO, &
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,TWO,ZERO, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: nglob,nspec,nglob_poroelastic,nspec_poroelastic_b, &

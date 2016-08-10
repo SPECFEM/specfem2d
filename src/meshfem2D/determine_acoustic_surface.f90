@@ -33,12 +33,12 @@
 
   subroutine determine_acoustic_surface()
 
-  use constants,only: ANISOTROPIC_MATERIAL,TINYVAL
+  use constants, only: ANISOTROPIC_MATERIAL,TINYVAL
 
-  use part_unstruct_par,only: nelem_acoustic_surface,acoustic_surface, &
+  use part_unstruct_par, only: nelem_acoustic_surface,acoustic_surface, &
     nxread,nzread,elmnts
 
-  use shared_parameters,only: AXISYM,ngnod,num_material,icodemat,phi_read,xmin_param, &
+  use shared_parameters, only: AXISYM,ngnod,num_material,icodemat,phi_read,xmin_param, &
     absorbbottom,absorbleft,absorbright,absorbtop
 
   implicit none

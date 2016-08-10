@@ -41,7 +41,7 @@
   use mpi
 #endif
 
-  use constants,only: IMAIN,NGLLX,NGLLZ,ARROW_ANGLE,ARROW_RATIO,CENTIM, &
+  use constants, only: IMAIN,NGLLX,NGLLZ,ARROW_ANGLE,ARROW_RATIO,CENTIM, &
     DISPLAY_PML_IN_DIFFERENT_COLOR,ICOLOR_FOR_PML_DISPLAY, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4, &
     IRIGHT,ILEFT,IBOTTOM,ITOP, &
@@ -62,10 +62,10 @@
                          ispec_is_poroelastic,myrank,NPROC
 
   ! PML arrays
-  use specfem_par,only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
+  use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
 
   ! movie images
-  use specfem_par_movie,only: vector_field_display,simulation_title, &
+  use specfem_par_movie, only: vector_field_display,simulation_title, &
     xinterp,zinterp,Uxinterp,Uzinterp,flagrange,shape2D_display, &
     subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
     cutsnaps,sizemax_arrows,boundvect,plot_lowerleft_corner_only, &
@@ -130,7 +130,7 @@
 
   double precision :: afactor,bfactor,cfactor
   double precision :: xmax,zmax,height,xw,zw,usoffset,sizex,sizez,timeval
-  ! for mpi collection
+  ! for MPI collection
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision :: dispmax_glob
 
@@ -200,7 +200,7 @@
   call max_all_all_dp(dispmax, dispmax_glob)
   dispmax = dispmax_glob
 
-  ! checks value (isNaN)
+  ! checks maximum value
   if (dispmax > STABILITY_THRESHOLD .or. dispmax < 0 .or. dispmax /= dispmax) then
     print *,'Warning: failed creating postscript image, maximum value of display is invalid'
     print *,'display max = ',dispmax,' with threshold at ', STABILITY_THRESHOLD
@@ -439,7 +439,7 @@
 
               endif
 
-              x1 = (cpIloc-vpImin)/(vpImax-vpImin)
+              x1 = (cpIloc-vpImin) / (vpImax-vpImin)
 
             endif
 

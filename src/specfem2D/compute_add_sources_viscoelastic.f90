@@ -35,7 +35,7 @@
 
   subroutine compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
   use specfem_par, only: myrank,P_SV,ispec_is_elastic,nglob_elastic, &
                          NSOURCES,source_time_function, &
@@ -110,7 +110,7 @@
 
   subroutine compute_add_sources_viscoelastic_moving_source(accel_elastic,it,i_stage)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,SOURCE_IS_MOVING,TINYVAL,NGLJ,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,SOURCE_IS_MOVING,TINYVAL,NGLJ,IMAIN
 
   use specfem_par, only: P_SV,ispec_is_elastic,nglob_elastic, &
                          NSOURCES,source_time_function, &
@@ -331,7 +331,7 @@
 
   subroutine compute_add_sources_viscoelastic_adjoint()
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: myrank,P_SV,accel_elastic,ispec_is_elastic,NSTEP,it,&
                          nrec,islice_selected_rec,ispec_selected_rec,adj_sourcearrays,&

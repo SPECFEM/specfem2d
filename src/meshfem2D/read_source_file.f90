@@ -31,14 +31,13 @@
 !
 !========================================================================
 
-
   subroutine read_source_file(NSOURCES)
 
   ! reads in source file DATA/SOURCE
 
-  use constants,only: IMAIN,IGNORE_JUNK,NLINES_PER_SOURCE,TINYVAL,PI
+  use constants, only: IMAIN,IGNORE_JUNK,NLINES_PER_SOURCE,TINYVAL,PI
   use source_file_par
-  use shared_parameters,only: DT
+  use shared_parameters, only: DT
 
   implicit none
 

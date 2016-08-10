@@ -35,7 +35,7 @@
 
 ! same as subroutine "createnum_slow" but with a faster algorithm
 
-  use constants,only: IMAIN,NGLLX,NGLLZ,NDIM,HUGEVAL,SMALLVALTOL,ZERO
+  use constants, only: IMAIN,NGLLX,NGLLZ,NDIM,HUGEVAL,SMALLVALTOL,ZERO
 
   use specfem_par, only: knods,ibool,shape2D,coorg,nglob,nspec,ngnod,myrank
 

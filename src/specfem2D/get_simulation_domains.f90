@@ -33,9 +33,9 @@
 
   subroutine get_simulation_domains()
 
-  use constants,only: TINYVAL
+  use constants, only: TINYVAL
 
-  use specfem_par, only : any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
+  use specfem_par, only: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
     ispec_is_anisotropic,ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic,ispec_is_gravitoacoustic, &
     nspec,porosity,anisotropy,kmato
 
@@ -96,15 +96,14 @@
 
   subroutine get_simulation_domains_from_external_models()
 
-  use constants,only: TINYVAL,NGLLX,NGLLZ,CUSTOM_REAL
+  use constants, only: TINYVAL,NGLLX,NGLLZ,CUSTOM_REAL
 
-  use specfem_par, only : any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
+  use specfem_par, only: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
     ispec_is_anisotropic,ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic,ispec_is_gravitoacoustic, &
     nspec,myrank,P_SV
 
   ! external model parameters
-  use specfem_par,only: vsext,gravityext, &
-    c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
+  use specfem_par, only: vsext,gravityext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
 
   implicit none
 

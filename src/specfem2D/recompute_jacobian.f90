@@ -31,13 +31,13 @@
 !
 !========================================================================
 
-! Recompute 2D jacobian at a given point in a 4-node or 9-node element
-! Compute also the global coordinates of the point defined by: (xi,gamma,ispec)
+! Recompute 2D jacobian at a given point in a 4-node or 9-node element.
+! Compute also the global coordinates of the point defined by: (xi,gamma,ispec).
 
   subroutine recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian,coorg,knods,ispec,ngnod,nspec,npgeo, &
                       stop_if_negative_jacobian)
 
-  use constants,only: NDIM,ZERO
+  use constants, only: NDIM,ZERO
 
   implicit none
 

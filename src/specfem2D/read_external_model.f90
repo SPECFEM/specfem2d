@@ -32,21 +32,19 @@
 !
 !========================================================================
 
-
   subroutine read_external_model()
 
 ! reads in external model files
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN
 
   use specfem_par, only: nspec,nglob,ibool, &
     ispec_is_elastic,ispec_is_anisotropic, &
     coord,kmato,MODEL,tomo_material,myrank
 
   ! external model parameters
-  use specfem_par,only: rhoext,vpext,vsext,gravityext,Nsqext, &
-    QKappa_attenuationext,Qmu_attenuationext, &
-    c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
+  use specfem_par, only: rhoext,vpext,vsext,gravityext,Nsqext, &
+    QKappa_attenuationext,Qmu_attenuationext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   implicit none
 

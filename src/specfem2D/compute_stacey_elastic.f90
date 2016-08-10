@@ -37,7 +37,7 @@
 !
 ! Clayton-Engquist condition if elastic
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
     ZERO,ONE,TWO,TWO_THIRDS,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: AXISYM,nglob,nelemabs,it,any_elastic, &
@@ -51,7 +51,7 @@
                          STACEY_ABSORBING_CONDITIONS,deltat
 
   ! initialfield
-  use specfem_par,only: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
+  use specfem_par, only: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
                         t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot, &
                         add_Bielak_conditions_bottom,add_Bielak_conditions_right, &
                         add_Bielak_conditions_top,add_Bielak_conditions_left, &
@@ -536,15 +536,13 @@
   subroutine compute_stacey_elastic_backward(b_accel_elastic)
 
 ! absorbing boundaries
-!
+
 ! Clayton-Engquist condition if elastic
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
-    IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,any_elastic,ibool,ispec_is_elastic, &
-                         NSTEP,it, &
-                         nelemabs,numabs,codeabs, &
+                         NSTEP,it,nelemabs,numabs,codeabs, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top, &
                          ib_left,ib_right,ib_bottom,ib_top, &
