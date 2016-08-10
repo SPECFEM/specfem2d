@@ -361,14 +361,15 @@ end subroutine it_transfer_from_GPU
 !
 
 subroutine it_compute_integrated_energy_field_and_output()
+
   ! compute int_0^t v^2 dt and write it on file if needed
 
-  use constants, only:CUSTOM_REAL,NGLLX,NGLLZ,IIN,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IIN,MAX_STRING_LEN
 
   use specfem_par, only: myrank,it,coord,nspec,ibool,integrated_kinetic_energy_field,max_kinetic_energy_field, &
-                        integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
-                        potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
-                        total_effective_duration_field,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
+                         integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
+                         potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
+                         total_effective_duration_field,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
                         !poroelastcoef,kmato,density,assign_external_model,vpext,ispec_is_acoustic ! ABAB
 
   implicit none
