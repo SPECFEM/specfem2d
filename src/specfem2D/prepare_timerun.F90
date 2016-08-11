@@ -110,9 +110,9 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) ""
+    write(IMAIN,*)
     write(IMAIN,*) "done, preparation successful"
-    write(IMAIN,*) ""
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
