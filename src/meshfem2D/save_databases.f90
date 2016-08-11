@@ -363,7 +363,7 @@
   ! 'num_fluid_poro_edges num_solid_poro_edges'
   ! 'nnodes_tangential_curve nelem_on_the_axis'
   write(IOUT) nelemabs_loc,nelemacforcing_loc,nelem_acoustic_surface_loc, &
-              nedges_coupled_loc,nedges_acporo_coupled_loc,&
+              nedges_coupled_loc,nedges_acporo_coupled_loc, &
               nedges_elporo_coupled_loc,nnodes_tangential_curve, &
               nelem_on_the_axis_loc
 
@@ -443,7 +443,7 @@
       val12 = 0.d0
       ! old
       !write(IOUT) i,icodemat(i),rho_s_read(i), &
-      !            aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
+      !            aniso3(i),aniso4(i),aniso5(i),aniso6(i), &
       !            aniso7(i),aniso8(i),aniso9(i),aniso10(i),aniso11(i),aniso12(i),0,0
 
     else if (indic == POROELASTIC_MATERIAL) then
@@ -463,7 +463,7 @@
       val12 = Qmu(i)
       ! old
       !write(IOUT) i,icodemat(i),rho_s_read(i),rho_f_read(i),phi_read(i),tortuosity_read(i), &
-      !            permxx_read(i),permxz_read(i),permzz_read(i),kappa_s_read(i),&
+      !            permxx_read(i),permxz_read(i),permzz_read(i),kappa_s_read(i), &
       !            kappa_f_read(i),kappa_fr_read(i),eta_f_read(i),mu_fr_read(i),Qmu(i)
 
     else if (indic <= 0) then

@@ -94,12 +94,12 @@
                                 ninterface, max_nibool_interfaces_ext_mesh, &
                                 nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh, &
                                 hprime_xx,hprimewgll_xx, &
-                                wxgll,&
+                                wxgll, &
                                 STACEY_ABSORBING_CONDITIONS, &
-                                nspec_bottom,&
-                                nspec_left,&
-                                nspec_right,&
-                                nspec_top,&
+                                nspec_bottom, &
+                                nspec_left, &
+                                nspec_right, &
+                                nspec_top, &
                                 numabs, abs_boundary_ij, &
                                 abs_boundary_normal, &
                                 abs_boundary_jacobian1Dw, &
@@ -111,14 +111,14 @@
                                 ib_top, &
                                 ispec_is_inner, &
                                 nsources_local, &
-                                sourcearray_loc,source_time_function_loc,&
+                                sourcearray_loc,source_time_function_loc, &
                                 NSTEP,ispec_selected_source_loc, &
                                 recloc, ispec_selected_rec, &
                                 nrec, nrecloc, &
-                                cosrot_irecf,sinrot_irecf,&
+                                cosrot_irecf,sinrot_irecf, &
                                 SIMULATION_TYPE, &
                                 USE_MESH_COLORING_GPU, &
-                                nspec_acoustic,nspec_elastic,&
+                                nspec_acoustic,nspec_elastic, &
                                 myrank,SAVE_FORWARD, &
                                 xir_store_loc, &
                                 gammar_store_loc)
@@ -194,10 +194,10 @@
                                 rho_vp,rho_vs, &
                                 num_phase_ispec_elastic,phase_ispec_inner_elastic, &
                                 ispec_is_elastic, &
-                                nspec_left,&
-                                nspec_right,&
-                                nspec_top,&
-                                nspec_bottom,&
+                                nspec_left, &
+                                nspec_right, &
+                                nspec_top, &
+                                nspec_bottom, &
                                 any_acoustic, &
                                 num_colors_outer_elastic,num_colors_inner_elastic, &
                                 num_elem_colors_elastic, &
@@ -376,7 +376,7 @@
 
   allocate(abs_boundary_ij(2,NGLLX,nelemabs), &
            abs_boundary_jacobian1Dw(NGLLX,nelemabs), &
-           abs_boundary_normal(NDIM,NGLLX,nelemabs),&
+           abs_boundary_normal(NDIM,NGLLX,nelemabs), &
            cote_abs(nelemabs),stat=ier)
   if (ier /= 0 ) stop 'error allocating array abs_boundary_ispec etc.'
 

@@ -51,7 +51,7 @@
     assign_external_model, &
     density,poroelastcoef,porosity,tortuosity, &
     vpext,rhoext,vsext, &
-    numabs,deltat,codeabs,codeabs_corner,&
+    numabs,deltat,codeabs,codeabs_corner, &
     ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
     ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
     nelemabs,vsext,xix,xiz,gammaz,gammax, &
@@ -70,7 +70,7 @@
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
   real(kind=CUSTOM_REAL) :: cpl,csl
-  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz,&
+  real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz, &
                             weight,xxi,zxi,xgamma,zgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: deltatover2
 

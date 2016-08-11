@@ -353,7 +353,7 @@
           write(IMAIN,*)
         endif
         write(IMAIN,700) density_mat(2),kappa_f,eta_f
-        write(IMAIN,800) lambda_fr,mu_fr,kappa_fr,porosity(n),tortuosity(n),&
+        write(IMAIN,800) lambda_fr,mu_fr,kappa_fr,porosity(n),tortuosity(n), &
                          permeability(1,n),permeability(2,n),permeability(3,n),Qmu
         write(IMAIN,900) D_biot,H_biot,C_biot,M_biot,w_c
 
@@ -456,11 +456,11 @@
        'First Lame parameter Lambda. . . (lambda_fr) =',1pe15.8,/5x, &
        'Second Lame parameter Mu. . . . . . .(mu_fr) =',1pe15.8,/5x, &
        'Frame bulk modulus Kappa . . . . .(kappa_fr) =',1pe15.8,/5x, &
-       'Porosity. . . . . . . . . . . . . . . .(phi) =',1pe15.8,/5x,&
-       'Tortuosity. . . . . . . . . . . . . . . .(c) =',1pe15.8,/5x,&
-       'Permeability xx component. . . . . . . . . . =',1pe15.8,/5x,&
-       'Permeability zx component. . . . . . . . . . =',1pe15.8,/5x,&
-       'Permeability zz component. . . . . . . . . . =',1pe15.8,/5x,&
+       'Porosity. . . . . . . . . . . . . . . .(phi) =',1pe15.8,/5x, &
+       'Tortuosity. . . . . . . . . . . . . . . .(c) =',1pe15.8,/5x, &
+       'Permeability xx component. . . . . . . . . . =',1pe15.8,/5x, &
+       'Permeability zx component. . . . . . . . . . =',1pe15.8,/5x, &
+       'Permeability zz component. . . . . . . . . . =',1pe15.8,/5x, &
        'Qmu_attenuation. . . . . . . . . . . . (Qmu) =',1pe15.8)
 
 900 format(//5x,'-------------------------------',/5x, &

@@ -465,11 +465,11 @@
   double precision :: d0_z_bottom_elastic, d0_x_right_elastic, d0_z_top_elastic, d0_x_left_elastic
   double precision :: abscissa_in_PML, abscissa_normalized
 
-  double precision :: thickness_PML_z_min_bottom,thickness_PML_z_max_bottom,&
-                      thickness_PML_x_min_right,thickness_PML_x_max_right,&
-                      thickness_PML_z_min_top,thickness_PML_z_max_top,&
-                      thickness_PML_x_min_left,thickness_PML_x_max_left,&
-                      thickness_PML_z_bottom,thickness_PML_x_right,&
+  double precision :: thickness_PML_z_min_bottom,thickness_PML_z_max_bottom, &
+                      thickness_PML_x_min_right,thickness_PML_x_max_right, &
+                      thickness_PML_z_min_top,thickness_PML_z_max_top, &
+                      thickness_PML_x_min_left,thickness_PML_x_max_left, &
+                      thickness_PML_z_bottom,thickness_PML_x_right, &
                       thickness_PML_z_top,thickness_PML_x_left
 
   double precision :: xmin, xmax, zmin, zmax, xorigin, zorigin, xval, zval
@@ -482,9 +482,9 @@
 
 ! for MPI and partitioning
   double precision :: f0_max_glob
-  double precision :: thickness_PML_z_min_bottom_glob,thickness_PML_z_max_bottom_glob,&
-                      thickness_PML_x_min_right_glob,thickness_PML_x_max_right_glob,&
-                      thickness_PML_z_min_top_glob,thickness_PML_z_max_top_glob,&
+  double precision :: thickness_PML_z_min_bottom_glob,thickness_PML_z_max_bottom_glob, &
+                      thickness_PML_x_min_right_glob,thickness_PML_x_max_right_glob, &
+                      thickness_PML_z_min_top_glob,thickness_PML_z_max_top_glob, &
                       thickness_PML_x_min_left_glob,thickness_PML_x_max_left_glob
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision :: vpmax_glob_acoustic, vpmax_glob_elastic
@@ -846,7 +846,7 @@
                 abscissa_normalized = abscissa_in_PML / thickness_PML_z_bottom
 !ZN                d_z = d0_z_bottom / damping_modified_factor * abscissa_normalized**NPOWER
                 rough_estimate_incident_angle = &
-                      max(abs(xmin-averagex_source)/abs(averagez_source-zoriginbottom),&
+                      max(abs(xmin-averagex_source)/abs(averagez_source-zoriginbottom), &
                           abs(xmax-averagex_source)/abs(averagez_source-zoriginbottom))
                 if (rough_estimate_incident_angle <= 1.0d0) then
                   damping_modified_factor_acoustic = 0.5d0
@@ -923,7 +923,7 @@
                 abscissa_normalized = abscissa_in_PML / thickness_PML_z_top
 !ZN                d_z = d0_z_top / damping_modified_factor * abscissa_normalized**NPOWER
                 rough_estimate_incident_angle =  &
-                      max(abs(xmin-averagex_source)/abs(averagez_source-zorigintop),&
+                      max(abs(xmin-averagex_source)/abs(averagez_source-zorigintop), &
                           abs(xmax-averagex_source)/abs(averagez_source-zorigintop))
                 if (rough_estimate_incident_angle <= 1.0d0) then
                   damping_modified_factor_acoustic = 0.5d0
@@ -1000,7 +1000,7 @@
                 abscissa_normalized = abscissa_in_PML / thickness_PML_x_right
 !ZN                d_x = d0_x_right / damping_modified_factor * abscissa_normalized**NPOWER
                 rough_estimate_incident_angle = &
-                      max(abs(zmin-averagez_source)/abs(averagex_source-xoriginright),&
+                      max(abs(zmin-averagez_source)/abs(averagex_source-xoriginright), &
                           abs(zmax-averagez_source)/abs(averagex_source-xoriginright))
                 if (rough_estimate_incident_angle <= 1.0d0) then
                   damping_modified_factor_acoustic = 0.5d0
@@ -1077,7 +1077,7 @@
                 abscissa_normalized = abscissa_in_PML / thickness_PML_x_left
 !ZN                d_x = d0_x_left / damping_modified_factor * abscissa_normalized**NPOWER
                 rough_estimate_incident_angle =  &
-                      max(abs(zmin-averagez_source)/abs(averagex_source-xoriginleft),&
+                      max(abs(zmin-averagez_source)/abs(averagex_source-xoriginleft), &
                           abs(zmax-averagez_source)/abs(averagex_source-xoriginleft))
                 if (rough_estimate_incident_angle <= 1.0d0) then
                   damping_modified_factor_acoustic = 0.5d0

@@ -311,7 +311,7 @@ program serial_specfem2D
      else !acoustic
         do iglob = 1,NGLOB
            if (forced(iglob)) then !acoustic and forced
-              call enforce_acoustic_forcing(NGLOB,iglob,it,deltat,deltatover2,deltatsqover2,coord,&
+              call enforce_acoustic_forcing(NGLOB,iglob,it,deltat,deltatover2,deltatsqover2,coord, &
                    potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic)
            else !acoustic not forced
               !time sheme for acoustic media

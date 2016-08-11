@@ -297,7 +297,7 @@
       beta_z = alpha_z + d_z / kappa_z
 
       call l_parameter_computation(time_n,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
-                                   CPML_region_local,A0,A1,A2,A3,A4,singularity_type,&
+                                   CPML_region_local,A0,A1,A2,A3,A4,singularity_type, &
                                    bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
       select case (time_stepping_scheme)

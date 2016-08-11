@@ -207,7 +207,7 @@
 
   ! -------------- formatting
   ! output formats
-200 format(//1x,'C o n t r o l',/1x,13('='),//5x,&
+200 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Number of spectral element control nodes. . .(npgeo) =',i8/5x, &
   'Number of space dimensions. . . . . . . . . . (NDIM) =',i8)
 
@@ -818,7 +818,7 @@
       ! may have rotated elements and thus edge 1 may not correspond to the bottom,
       ! edge 2 may not correspond to the right, edge 3 may not correspond to the top,
       ! and edge 4 may not correspond to the left.
-      read(IIN) numabsread,codeabsread(1),codeabsread(2),codeabsread(3),&
+      read(IIN) numabsread,codeabsread(1),codeabsread(2),codeabsread(3), &
                 codeabsread(4), typeabsread, ibegin_edge1(inum), iend_edge1(inum), &
                 ibegin_edge2(inum), iend_edge2(inum), ibegin_edge3(inum), &
                 iend_edge3(inum), ibegin_edge4(inum), iend_edge4(inum)
@@ -1111,7 +1111,7 @@
       ! may have rotated elements and thus edge 1 may not correspond to the bottom,
       ! edge 2 may not correspond to the right, edge 3 may not correspond to the top,
       ! and edge 4 may not correspond to the left.
-      read(IIN) numacforcingread,codeacforcingread(1),codeacforcingread(2),codeacforcingread(3),&
+      read(IIN) numacforcingread,codeacforcingread(1),codeacforcingread(2),codeacforcingread(3), &
                 codeacforcingread(4), typeacforcingread, ibegin_edge1_acforcing(inum), iend_edge1_acforcing(inum), &
                 ibegin_edge2_acforcing(inum), iend_edge2_acforcing(inum), ibegin_edge3_acforcing(inum), &
                 iend_edge3_acforcing(inum), ibegin_edge4_acforcing(inum), iend_edge4_acforcing(inum)

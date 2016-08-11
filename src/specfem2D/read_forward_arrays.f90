@@ -63,8 +63,8 @@
     if (GPU_MODE) then
       ! transfers fields onto GPU
       call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
-                                          b_potential_dot_acoustic,      &
-                                          b_potential_dot_dot_acoustic,  &
+                                          b_potential_dot_acoustic, &
+                                          b_potential_dot_dot_acoustic, &
                                           Mesh_pointer)
     else
       ! free surface for an acoustic medium

@@ -685,11 +685,11 @@
 #ifdef USE_MPI
         else
 
-          call MPI_RECV(n1_tangential_detection_curve,1,MPI_INTEGER,&
+          call MPI_RECV(n1_tangential_detection_curve,1,MPI_INTEGER, &
              islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-          call MPI_RECV(x_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
+          call MPI_RECV(x_final_receiver_dummy,1,MPI_DOUBLE_PRECISION, &
              islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-          call MPI_RECV(z_final_receiver_dummy,1,MPI_DOUBLE_PRECISION,&
+          call MPI_RECV(z_final_receiver_dummy,1,MPI_DOUBLE_PRECISION, &
              islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
 
 #endif

@@ -1198,7 +1198,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
     call transfer_asmbl_accel_to_device(Mesh_pointer, &
                                         buffer_recv_vector_gpu, &
                                         max_nibool_interfaces_ext_mesh, &
-                                        nibool_interfaces_ext_mesh,&
+                                        nibool_interfaces_ext_mesh, &
                                         ibool_interfaces_ext_mesh,FORWARD_OR_ADJOINT)
 
     ! This step is done via previous function transfer_and_assemble...
@@ -1228,7 +1228,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
   subroutine transfer_boundary_to_device(NPROC, Mesh_pointer, &
                                             buffer_recv_vector_gpu, &
-                                            num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh,&
+                                            num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
                                             request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic )
 
   use constants

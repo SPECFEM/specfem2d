@@ -208,7 +208,7 @@
                     ' m away'
       write(*,*) ' in element ',ispec_selected_rec(irec)
       write(*,*) ' closest point :',ix_initial_guess(irec),iz_initial_guess(irec)
-      write(*,*) ' at xi,gamma coordinates = ',xi_receiver(irec),&
+      write(*,*) ' at xi,gamma coordinates = ',xi_receiver(irec), &
                                   gamma_receiver(irec)
       write(*,*)
     enddo

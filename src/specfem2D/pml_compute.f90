@@ -165,7 +165,7 @@
 !========================================================================
 
   subroutine l_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
-                                     CPML_region_local,A_0,A_1,A_2,A_3,A_4,singularity_type,&
+                                     CPML_region_local,A_0,A_1,A_2,A_3,A_4,singularity_type, &
                                      bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
   use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY

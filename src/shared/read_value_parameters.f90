@@ -332,7 +332,7 @@
   implicit none
 
   integer i,icodematread
-  double precision val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read,&
+  double precision val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read, &
                    val8read,val9read,val10read,val11read,val12read
 
   character(len=MAX_STRING_LEN) string_read
@@ -344,7 +344,7 @@
 
   !print *,trim(string_read)
 
-  read(string_read,*,iostat=ierr) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read,&
+  read(string_read,*,iostat=ierr) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read, &
                       val6read,val7read,val8read,val9read,val10read,val11read,val12read
 
   if (ierr /= 0) stop 'error reading material parameters line'

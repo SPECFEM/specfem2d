@@ -138,7 +138,7 @@ module specfem_par
                                         solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge
 
   ! for absorbing boundary mass matrix correction
-  integer, dimension(:), allocatable :: ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro,&
+  integer, dimension(:), allocatable :: ibegin_edge1_poro,iend_edge1_poro,ibegin_edge3_poro, &
             iend_edge3_poro,ibegin_edge4_poro,iend_edge4_poro,ibegin_edge2_poro,iend_edge2_poro
 
   !---------------------------------------------------------------------
@@ -429,7 +429,7 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: displ_elastic_old
 
   ! LDDRK
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_LDDRK,displ_elastic_LDDRK,&
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: veloc_elastic_LDDRK,displ_elastic_LDDRK, &
                                                          veloc_elastic_LDDRK_temp
 
   ! RK

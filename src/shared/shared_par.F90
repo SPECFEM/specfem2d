@@ -373,7 +373,7 @@ module shared_parameters
   ! poroelastic
   ! note: adds ending _read to indicate these are readin values and to distinguish from solver arrays
   !       one could check if the solver arrays could be omitted and replaced with this ones in future...
-  double precision, dimension(:),allocatable :: phi_read,tortuosity_read,permxx_read,permxz_read,&
+  double precision, dimension(:),allocatable :: phi_read,tortuosity_read,permxx_read,permxz_read, &
        permzz_read,kappa_s_read,kappa_f_read,kappa_fr_read,eta_f_read,mu_fr_read
 
   ! mesh setup

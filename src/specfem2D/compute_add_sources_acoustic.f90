@@ -105,10 +105,10 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,TINYVAL,SOURCE_IS_MOVING,IMAIN
 
-  use specfem_par, only: ispec_is_acoustic,nglob_acoustic,&
-                         NSOURCES,source_type,source_time_function,&
-                         islice_selected_source,ispec_selected_source,&
-                         hxis_store,hgammas_store,ibool,kappastore,myrank,deltat,t0,tshift_src,&
+  use specfem_par, only: ispec_is_acoustic,nglob_acoustic, &
+                         NSOURCES,source_type,source_time_function, &
+                         islice_selected_source,ispec_selected_source, &
+                         hxis_store,hgammas_store,ibool,kappastore,myrank,deltat,t0,tshift_src, &
                          coord,nspec,nglob,xigll,zigll,z_source,NPROC,xi_source,& !These 3 lines are for moving src
                          gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source, &
                          time_stepping_scheme, &
@@ -236,8 +236,8 @@
 
   use constants, only: NGLLX,NGLLZ
 
-  use specfem_par, only: myrank,potential_dot_dot_acoustic,ispec_is_acoustic,NSTEP,it,&
-                         nrec,islice_selected_rec,ispec_selected_rec,adj_sourcearrays,&
+  use specfem_par, only: myrank,potential_dot_dot_acoustic,ispec_is_acoustic,NSTEP,it, &
+                         nrec,islice_selected_rec,ispec_selected_rec,adj_sourcearrays, &
                          ibool,kappastore
   implicit none
 

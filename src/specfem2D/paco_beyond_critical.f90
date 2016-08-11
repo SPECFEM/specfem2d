@@ -46,7 +46,7 @@
 ! modified by Dimitri Komatitsch and Ronan Madec in March 2008
 ! in particular, converted to Fortran90 and to double precision
 
-  subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_bound,&
+  subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_bound, &
                                   bot_bound,nleft,nright,nbot,x_source,cploc,csloc)
 
   use constants, only: PI

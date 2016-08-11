@@ -37,15 +37,15 @@
 
   use constants, only: CUSTOM_REAL,IRIGHT,ILEFT,IBOTTOM,ITOP,NGLLX,NGLLZ,TWO,ZERO
 
-  use specfem_par, only: SIMULATION_TYPE,num_solid_poro_edges,&
+  use specfem_par, only: SIMULATION_TYPE,num_solid_poro_edges, &
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          hprime_xx,hprime_zz, &
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
-                         solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,&
+                         solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge, &
                          kmato,poroelastcoef, &
                          assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropy, &
                          displ_elastic,b_displ_elastic,displs_poroelastic,displw_poroelastic, &
-                         b_displs_poroelastic,b_displw_poroelastic,&
+                         b_displs_poroelastic,b_displw_poroelastic, &
                          accel_elastic,b_accel_elastic
 
   implicit none
@@ -360,15 +360,15 @@
 
   use constants, only: CUSTOM_REAL,IRIGHT,ILEFT,IBOTTOM,ITOP,NGLLX,NGLLZ,TWO,ZERO
 
-  use specfem_par, only: SIMULATION_TYPE,num_solid_poro_edges,&
+  use specfem_par, only: SIMULATION_TYPE,num_solid_poro_edges, &
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          hprime_xx,hprime_zz, &
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
-                         solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,&
+                         solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge, &
                          kmato,poroelastcoef, &
                          assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropy, &
                          displ_elastic,b_displ_elastic,displs_poroelastic,displw_poroelastic, &
-                         b_displs_poroelastic,b_displw_poroelastic,&
+                         b_displs_poroelastic,b_displw_poroelastic, &
                          accel_elastic,b_accel_elastic
 
   implicit none

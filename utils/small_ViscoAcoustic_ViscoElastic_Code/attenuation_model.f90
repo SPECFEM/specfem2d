@@ -31,9 +31,9 @@
 !
 !========================================================================
 
-!subroutine attenuation_model(QKappa_att,QMu_att,f0_attenuation,N_SLS,&
-!     inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,&
-!     phi_nu1_sent, phi_nu2_sent,&
+!subroutine attenuation_model(QKappa_att,QMu_att,f0_attenuation,N_SLS, &
+!     inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent, &
+!     phi_nu1_sent, phi_nu2_sent, &
 !     Mu_nu1_sent,Mu_nu2_sent )
 subroutine viscoelastic_attenuation_model()
 
@@ -46,7 +46,7 @@ subroutine viscoelastic_attenuation_model()
   ! double precision, intent(in) :: QKappa_att,QMu_att,f0_attenuation
   !  integer, intent(in) :: N_SLS
 
-  !real(kind=4), dimension(N_SLS), intent(out)  :: inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,&
+  !real(kind=4), dimension(N_SLS), intent(out)  :: inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent, &
   !    phi_nu1_sent,phi_nu2_sent
   ! real(kind=4), intent(out) :: Mu_nu1_sent,Mu_nu2_sent
 

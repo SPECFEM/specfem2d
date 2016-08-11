@@ -112,8 +112,8 @@
             zz = coord(2,iglob)
             if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then
               ! anisotropic
-              write(97,'(9e15.5e4)') xx, zz, rho_kl(i,j,ispec), c11_kl(i,j,ispec),&
-                                     c13_kl(i,j,ispec), c15_kl(i,j,ispec), c33_kl(i,j,ispec), c35_kl(i,j,ispec),&
+              write(97,'(9e15.5e4)') xx, zz, rho_kl(i,j,ispec), c11_kl(i,j,ispec), &
+                                     c13_kl(i,j,ispec), c15_kl(i,j,ispec), c33_kl(i,j,ispec), c35_kl(i,j,ispec), &
                                      c55_kl(i,j,ispec)
             else
               ! isotropic

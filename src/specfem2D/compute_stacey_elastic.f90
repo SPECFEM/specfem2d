@@ -46,7 +46,7 @@
                          vpext,vsext,rhoext,wxgll,wzgll,P_SV, &
                          SIMULATION_TYPE,SAVE_FORWARD, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
-                         b_absorb_elastic_bottom,b_absorb_elastic_top,&
+                         b_absorb_elastic_bottom,b_absorb_elastic_top, &
                          ib_left,ib_right,ib_bottom,ib_top, &
                          STACEY_ABSORBING_CONDITIONS,deltat
 

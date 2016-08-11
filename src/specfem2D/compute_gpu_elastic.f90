@@ -85,7 +85,7 @@
         call assemble_MPI_vector_send_cuda(NPROC, &
                     buffer_send_vector_gpu,buffer_recv_vector_gpu, &
                     ninterface,max_nibool_interfaces_ext_mesh, &
-                    nibool_interfaces_ext_mesh,&
+                    nibool_interfaces_ext_mesh, &
                     my_neighbours, &
                     request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic)
 
@@ -100,7 +100,7 @@
     if (iphase == 1) then
       ! adds elastic absorbing boundary term to acceleration (Stacey conditions)
       if (STACEY_ABSORBING_CONDITIONS) then
-        call compute_stacey_viscoelastic_GPU(iphase,b_absorb_elastic_bottom_slice,b_absorb_elastic_left_slice,&
+        call compute_stacey_viscoelastic_GPU(iphase,b_absorb_elastic_bottom_slice,b_absorb_elastic_left_slice, &
                                              b_absorb_elastic_right_slice,b_absorb_elastic_top_slice)
       endif
 
@@ -135,21 +135,21 @@
 
         ! adjoint simulations
         if (SIMULATION_TYPE == 3) then
-           call transfer_boun_accel_from_device(Mesh_pointer,&
-                        b_buffer_send_vector_gpu,&
+           call transfer_boun_accel_from_device(Mesh_pointer, &
+                        b_buffer_send_vector_gpu, &
                         3) ! -- 3 == adjoint b_accel
            call assemble_MPI_vector_send_cuda(NPROC, &
                         b_buffer_send_vector_gpu,b_buffer_recv_vector_gpu, &
                         ninterface,max_nibool_interfaces_ext_mesh, &
-                        nibool_interfaces_ext_mesh,&
+                        nibool_interfaces_ext_mesh, &
                         my_neighbours, &
                         b_request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic)
         endif !adjoint
 
       else
         ! waits for send/receive requests to be completed and assembles values
-        call assemble_MPI_vector_write_cuda(NPROC,Mesh_pointer,&
-                                            buffer_recv_vector_gpu,ninterface,&
+        call assemble_MPI_vector_write_cuda(NPROC,Mesh_pointer, &
+                                            buffer_recv_vector_gpu,ninterface, &
                                             max_nibool_interfaces_ext_mesh, &
                                             nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
                                             request_send_recv_vector_gpu, &
@@ -157,8 +157,8 @@
 
         ! adjoint simulations
         if (SIMULATION_TYPE == 3) then
-          call assemble_MPI_vector_write_cuda(NPROC,Mesh_pointer,&
-                                              b_buffer_recv_vector_gpu,ninterface,&
+          call assemble_MPI_vector_write_cuda(NPROC,Mesh_pointer, &
+                                              b_buffer_recv_vector_gpu,ninterface, &
                                               max_nibool_interfaces_ext_mesh, &
                                               nibool_interfaces_ext_mesh,ibool_interfaces_ext_mesh, &
                                               b_request_send_recv_vector_gpu, &
@@ -217,7 +217,7 @@
     b_absorb_elastic_top_slice(2,:,:) = b_absorb_elastic_top(2,:,:,NSTEP-it+1)
   endif
 
-  call compute_stacey_viscoelastic_cuda(Mesh_pointer,iphase,b_absorb_elastic_left_slice,&
+  call compute_stacey_viscoelastic_cuda(Mesh_pointer,iphase,b_absorb_elastic_left_slice, &
                    b_absorb_elastic_right_slice,b_absorb_elastic_top_slice,b_absorb_elastic_bottom_slice)
 
   ! adjoint simulations: stores absorbed wavefield part

@@ -37,12 +37,12 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
 
-  use specfem_par, only: num_fluid_poro_edges,ibool,wxgll,wzgll,xix,xiz,&
-                         gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
+  use specfem_par, only: num_fluid_poro_edges,ibool,wxgll,wzgll,xix,xiz, &
+                         gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
                          fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge, &
                          displs_poroelastic,displw_poroelastic, &
-                         accels_poroelastic_adj_coupling,accelw_poroelastic_adj_coupling,&
+                         accels_poroelastic_adj_coupling,accelw_poroelastic_adj_coupling, &
                          potential_dot_dot_acoustic,SIMULATION_TYPE
 
   implicit none
@@ -143,8 +143,8 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
 
-  use specfem_par, only: num_fluid_poro_edges,ibool,wxgll,wzgll,xix,xiz,&
-                         gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
+  use specfem_par, only: num_fluid_poro_edges,ibool,wxgll,wzgll,xix,xiz, &
+                         gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          fluid_poro_acoustic_ispec,fluid_poro_acoustic_iedge, &
                          fluid_poro_poroelastic_ispec,fluid_poro_poroelastic_iedge, &
                          b_displs_poroelastic,b_displw_poroelastic, &

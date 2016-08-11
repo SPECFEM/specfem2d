@@ -164,8 +164,8 @@
     if (nglob_interface > 0) then
       if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
         do i = 1, nglob_interface
-          write(71) accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)),&
-                    veloc_elastic(1,point_interface(i)),veloc_elastic(2,point_interface(i)),&
+          write(71) accel_elastic(1,point_interface(i)),accel_elastic(2,point_interface(i)), &
+                    veloc_elastic(1,point_interface(i)),veloc_elastic(2,point_interface(i)), &
                     displ_elastic(1,point_interface(i)),displ_elastic(2,point_interface(i))
         enddo
       endif

@@ -48,7 +48,7 @@
     ORIG_X,ORIG_Z,PI,RPERCENTX,RPERCENTZ,STABILITY_THRESHOLD, &
     DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
 
-  use specfem_par, only: coord,vpext,x_source,z_source,st_xval,st_zval,it,deltat,coorg,density,&
+  use specfem_par, only: coord,vpext,x_source,z_source,st_xval,st_zval,it,deltat,coorg,density, &
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
                          poroelastcoef,knods,kmato,ibool, &
                          numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
@@ -71,7 +71,7 @@
     cutsnaps,sizemax_arrows,boundvect,plot_lowerleft_corner_only, &
     vpImin,vpImax, &
     coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
-    coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model,&
+    coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model, &
     coorg_send_ps_element_mesh,color_send_ps_element_mesh, &
     coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
     coorg_send_ps_abs,coorg_recv_ps_abs, &
@@ -925,13 +925,13 @@
           if (DISPLAY_COLORS == 1) then
             if (meshvect) then
               RGB_offset = RGB_offset + 1
-              write(24,680) red(color_recv_ps_element_mesh(RGB_offset)),&
-                            green(color_recv_ps_element_mesh(RGB_offset)),&
+              write(24,680) red(color_recv_ps_element_mesh(RGB_offset)), &
+                            green(color_recv_ps_element_mesh(RGB_offset)), &
                             blue(color_recv_ps_element_mesh(RGB_offset))
             else
               RGB_offset = RGB_offset + 1
-              write(24,679) red(color_recv_ps_element_mesh(RGB_offset)),&
-                            green(color_recv_ps_element_mesh(RGB_offset)),&
+              write(24,679) red(color_recv_ps_element_mesh(RGB_offset)), &
+                            green(color_recv_ps_element_mesh(RGB_offset)), &
                             blue(color_recv_ps_element_mesh(RGB_offset))
             endif
           endif

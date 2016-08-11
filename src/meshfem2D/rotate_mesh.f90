@@ -52,7 +52,7 @@
   integer, dimension(:,:), allocatable :: ibool,ibool_rotated
 !! DK DK beware here, "ibool" applies to the mesh corners (4 or 9 points) only,
 !! DK DK not to the GLL points because there are no GLL points in the Gmsh mesh files
-  integer :: index_rotation1,index_rotation2,index_rotation3,index_rotation4,&
+  integer :: index_rotation1,index_rotation2,index_rotation3,index_rotation4, &
              index_rotation5,index_rotation6,index_rotation7,index_rotation8,index_edge
 
   allocate(ibool(ngnod,nelmnts))
@@ -516,7 +516,7 @@
   integer, dimension(:,:), allocatable :: ibool,ibool_rotated
 !! DK DK be careful here, "ibool" applies to the mesh corners (4 or 9 points) only,
 !! DK DK not to the GLL points because there are no GLL points in the Gmsh mesh files
-  integer :: index_rotation1,index_rotation2,index_rotation3,index_rotation4,&
+  integer :: index_rotation1,index_rotation2,index_rotation3,index_rotation4, &
              index_rotation5,index_rotation6,index_rotation7,index_rotation8,index_edge
 
   allocate(ibool(ngnod,nelmnts))

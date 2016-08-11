@@ -259,7 +259,7 @@ program smooth_sem
     if (ier /= 0) stop 'Error opening ibool file'
     read(IIN) nspec_other
     close(IIN)
-    allocate(xstore_other(NGLLX,NGLLZ,NSPEC_other),zstore_other(NGLLX,NGLLZ,NSPEC_other),&
+    allocate(xstore_other(NGLLX,NGLLZ,NSPEC_other),zstore_other(NGLLX,NGLLZ,NSPEC_other), &
              jacobian(NGLLX,NGLLZ,NSPEC_other),stat=ier)
     if (ier /= 0) stop 'Error allocating array xstore_other etc.'
 
@@ -330,7 +330,7 @@ program smooth_sem
         do ispec2 = 1, nspec_other
 
           ! calculates horizontal and vertical distance between two element centers
-          call get_distance_square_vec(dist_h,dist_v,xstore_me(1,1,ispec),zstore_me(1,1,ispec),&
+          call get_distance_square_vec(dist_h,dist_v,xstore_me(1,1,ispec),zstore_me(1,1,ispec), &
                             xstore_other(1,1,ispec2),zstore_other(1,1,ispec2))
 
           ! checks distance between centers of elements
@@ -349,7 +349,7 @@ program smooth_sem
                 ! calculate weights based on Gaussian smoothing
                 exp_val = 0.0_CUSTOM_REAL
 
-                call smoothing_weights_vec(xstore_me(i,j,ispec),zstore_me(i,j,ispec),sigma_h2_inv,sigma_v2_inv,exp_val,&
+                call smoothing_weights_vec(xstore_me(i,j,ispec),zstore_me(i,j,ispec),sigma_h2_inv,sigma_v2_inv,exp_val, &
                         xstore_other(:,:,ispec2),zstore_other(:,:,ispec2))
 
                 exp_val(:,:) = exp_val(:,:) * factor(:,:)

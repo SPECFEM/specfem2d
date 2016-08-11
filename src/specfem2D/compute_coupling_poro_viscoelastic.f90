@@ -37,11 +37,11 @@
 
   use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,ZERO,TWO,IRIGHT,ILEFT,IBOTTOM,ITOP
 
-  use specfem_par, only: num_solid_poro_edges,&
+  use specfem_par, only: num_solid_poro_edges, &
                          ibool,wxgll,wzgll,xix,xiz,gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          hprime_xx,hprime_zz, &
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
-                         solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,&
+                         solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge, &
                          kmato,poroelastcoef, &
                          assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropy, &
                          nglob_elastic,nglob_poroelastic
@@ -326,9 +326,9 @@
   use specfem_par, only: num_solid_poro_edges, &
                          ibool,ivalue,jvalue, &
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
-                         solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,&
+                         solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge, &
                          rmass_inverse_elastic, &
-                         rmass_s_inverse_poroelastic,&
+                         rmass_s_inverse_poroelastic, &
                          time_stepping_scheme,nglob, &
                          nglob_elastic,nglob_poroelastic
 

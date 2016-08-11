@@ -35,7 +35,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: nglob_acoustic,nelem_acforcing,codeacforcing,numacforcing,ispec_is_acoustic,&
+  use specfem_par, only: nglob_acoustic,nelem_acforcing,codeacforcing,numacforcing,ispec_is_acoustic, &
                          ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll
 
   ! PML arrays
@@ -47,7 +47,7 @@
 
   !local variables
   integer :: inum,ispec,i,j,iglob
-  real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight,&
+  real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight, &
                             displ_x,displ_z,displ_n
 
   ! loop on all the forced edges
@@ -206,7 +206,7 @@
 
   !local variables
   integer :: inum,ispec,i,j,k,iglob
-  real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight,&
+  real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight, &
                             tempx1l,hp1,tempx2l,hp2,xixl,xizl,gammaxl,gammazl, &
                             rhol,gravityl,Nsql,displ_x,displ_z,displ_n
 

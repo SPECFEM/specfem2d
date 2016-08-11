@@ -333,8 +333,8 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
-  use specfem_par, only: myrank,P_SV,accel_elastic,ispec_is_elastic,NSTEP,it,&
-                         nrec,islice_selected_rec,ispec_selected_rec,adj_sourcearrays,&
+  use specfem_par, only: myrank,P_SV,accel_elastic,ispec_is_elastic,NSTEP,it, &
+                         nrec,islice_selected_rec,ispec_selected_rec,adj_sourcearrays, &
                          ibool
   implicit none
 

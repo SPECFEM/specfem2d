@@ -47,7 +47,7 @@
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                          ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
-                         SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
+                         SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right, &
                          nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top
@@ -74,19 +74,19 @@
   print *, nglob,nspec,nelemabs,numat,it,NSTEP, &
                anyabs,assign_external_model,ibool,kmato,numabs,ispec_is_gravitoacoustic, &
                codeabs,potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic, &
-               potential_gravitoacoustic,potential_dot_dot_gravito,&
+               potential_gravitoacoustic,potential_dot_dot_gravito, &
                !potential_dot_gravito, &
-               potential_gravito,rmass_inverse_gravito,&
+               potential_gravito,rmass_inverse_gravito, &
                !stage_time_scheme, i_stage, &
                density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                vpext,rhoext,gravityext,Nsqext,hprime_xx,hprimewgll_xx, &
                hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
-               SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right,&
+               SIMULATION_TYPE,SAVE_FORWARD,nspec_left,nspec_right, &
                nspec_bottom,nspec_top,ib_left,ib_right,ib_bottom,ib_top, &
                b_absorb_acoustic_left,b_absorb_acoustic_right, &
-               b_absorb_acoustic_bottom,b_absorb_acoustic_top,IS_BACKWARD_FIELD,&
+               b_absorb_acoustic_bottom,b_absorb_acoustic_top,IS_BACKWARD_FIELD, &
                ispec_is_PML,PML_BOUNDARY_CONDITIONS
 
   end subroutine compute_forces_gravitoacoustic

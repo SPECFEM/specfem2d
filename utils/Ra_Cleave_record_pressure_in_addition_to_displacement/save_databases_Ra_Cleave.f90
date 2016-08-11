@@ -245,7 +245,7 @@
     write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges num_fluid_poro_edges'
     write(15,*) 'num_solid_poro_edges nnodes_tangential_curve'
     write(15,*) nelemabs_loc,nelem_acoustic_surface_loc, &
-                nedges_coupled_loc,nedges_acporo_coupled_loc,&
+                nedges_coupled_loc,nedges_acporo_coupled_loc, &
                 nedges_elporo_coupled_loc,nnodes_tangential_curve
 
     write(15,*) 'Material sets (num 1 rho vp vs 0 0 QKappa Qmu 0 0 0 0 0 0) or '
@@ -256,11 +256,11 @@
          write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
       else if (icodemat(i) == POROELASTIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i), &
-                    permxx(i),permxz(i),permzz(i),kappa_s(i),&
+                    permxx(i),permxz(i),permzz(i),kappa_s(i), &
                     kappa_f(i),kappa_fr(i),eta_f(i),mu_fr(i),Qmu(i)
       else
          write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i), &
-                    aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
+                    aniso3(i),aniso4(i),aniso5(i),aniso6(i), &
                     aniso7(i),aniso8(i),QKappa(i),Qmu(i),0,0
       endif
     enddo

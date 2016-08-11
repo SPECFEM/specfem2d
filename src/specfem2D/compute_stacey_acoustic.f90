@@ -46,10 +46,10 @@
                          wxgll,wzgll, &
                          ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                          ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
-                         SAVE_FORWARD,&
+                         SAVE_FORWARD, &
                          ib_left,ib_right,ib_bottom,ib_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
-                         b_absorb_acoustic_bottom,b_absorb_acoustic_top,&
+                         b_absorb_acoustic_bottom,b_absorb_acoustic_top, &
                          STACEY_ABSORBING_CONDITIONS
 
   implicit none

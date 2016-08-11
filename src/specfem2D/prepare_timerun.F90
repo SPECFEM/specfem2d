@@ -683,20 +683,20 @@
         write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
 
         if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-          open(unit=23,file='OUTPUT_FILES/'//outputname,status='unknown',&
+          open(unit=23,file='OUTPUT_FILES/'//outputname,status='unknown', &
                 form='unformatted',access='direct',recl=reclen,iostat=ier)
           if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
 
-          open(unit=24,file='OUTPUT_FILES/'//outputname2,status='unknown',&
+          open(unit=24,file='OUTPUT_FILES/'//outputname2,status='unknown', &
                 form='unformatted',access='direct',recl=reclen,iostat=ier)
           if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
 
         else if (SIMULATION_TYPE == 3) then
-          open(unit=23,file='OUTPUT_FILES/'//outputname,status='old',&
+          open(unit=23,file='OUTPUT_FILES/'//outputname,status='old', &
                 action='read',form='unformatted',access='direct',recl=reclen,iostat=ier)
           if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
 
-          open(unit=24,file='OUTPUT_FILES/'//outputname2,status='old',&
+          open(unit=24,file='OUTPUT_FILES/'//outputname2,status='old', &
                 action='read',form='unformatted',access='direct',recl=reclen,iostat=ier)
           if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
         endif
@@ -1025,8 +1025,8 @@
       allocate(t0z_bot(count_bottom,NSTEP))
 
       ! call Paco's routine to compute in frequency and convert to time by Fourier transform
-      call paco_beyond_critical(anglesource(1),&
-                                f0_source(1),QKappa_attenuation(1),source_type(1),left_bound(1:count_left),&
+      call paco_beyond_critical(anglesource(1), &
+                                f0_source(1),QKappa_attenuation(1),source_type(1),left_bound(1:count_left), &
                                 right_bound(1:count_right),bot_bound(1:count_bottom), &
                                 count_left,count_right,count_bottom,x_source(1),cploc,csloc)
 

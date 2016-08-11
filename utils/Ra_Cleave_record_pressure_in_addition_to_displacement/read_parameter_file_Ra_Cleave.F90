@@ -48,7 +48,7 @@ module parameter_file
   logical :: SAVE_FORWARD,read_external_mesh
 
   character(len=256) :: mesh_file, nodes_coords_file, materials_file, &
-                        free_surface_file, absorbing_surface_file,&
+                        free_surface_file, absorbing_surface_file, &
                         CPML_element_file
   character(len=256)  :: tangential_detection_curve_file
 
@@ -105,7 +105,7 @@ module parameter_file
   integer, dimension(:),pointer :: icodemat
   double precision, dimension(:),pointer :: rho_s,cp,cs, &
     aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,QKappa,Qmu
-  double precision, dimension(:),pointer :: rho_f,phi,tortuosity,permxx,permxz,&
+  double precision, dimension(:),pointer :: rho_f,phi,tortuosity,permxx,permxz, &
        permzz,kappa_s,kappa_f,kappa_fr,eta_f,mu_fr
 
 ! factor to subsample color images output by the code (useful for very large models)

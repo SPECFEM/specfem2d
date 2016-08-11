@@ -184,7 +184,7 @@
 
   use constants, only: CUSTOM_REAL,ZERO,NDIM
 
-  use specfem_par, only: elastic_fixed_surface,ibool,nelem_elastic_fixed_surface,nglob,&
+  use specfem_par, only: elastic_fixed_surface,ibool,nelem_elastic_fixed_surface,nglob, &
                          this_ibool_is_a_periodic_edge
 
   implicit none

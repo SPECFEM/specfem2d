@@ -98,8 +98,8 @@ module small_specfem_par
   real(kind=4), dimension(:,:,:,:), allocatable :: e1,e11,e13
   real(kind=4), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   real(kind=4), dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
-  real(kind=4), dimension(:), allocatable :: tau_epsilon_nu1,tau_epsilon_nu2,&
-       inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent,&
+  real(kind=4), dimension(:), allocatable :: tau_epsilon_nu1,tau_epsilon_nu2, &
+       inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent, &
        phi_nu1_sent,phi_nu2_sent
   real(kind=4) :: Mu_nu1_sent,Mu_nu2_sent
 

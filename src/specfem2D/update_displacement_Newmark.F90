@@ -137,8 +137,8 @@
   if (.not. GPU_MODE) then
 
     if (time_stepping_scheme == 1) then
-      call update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2,&
-                                                potential_dot_dot_acoustic,potential_dot_acoustic,&
+      call update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2, &
+                                                potential_dot_dot_acoustic,potential_dot_acoustic, &
                                                 potential_acoustic, &
                                                 PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
     else
@@ -185,8 +185,8 @@
     !Since we do not do anything in PML region in case of backward simulation, thus we set
     !PML_BOUNDARY_CONDITIONS = .false.
     if (time_stepping_scheme == 1) then
-      call update_displacement_newmark_acoustic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                b_potential_dot_dot_acoustic,b_potential_dot_acoustic,&
+      call update_displacement_newmark_acoustic(b_deltat,b_deltatover2,b_deltatsquareover2, &
+                                                b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
                                                 b_potential_acoustic, &
                                                 .false.,b_potential_acoustic_old)
     else
@@ -246,9 +246,9 @@
 
     ! updates elastic wavefields
     if (time_stepping_scheme == 1) then
-      call update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                               accel_elastic,veloc_elastic,&
-                                               displ_elastic,displ_elastic_old,&
+      call update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2, &
+                                               accel_elastic,veloc_elastic, &
+                                               displ_elastic,displ_elastic_old, &
                                                PML_BOUNDARY_CONDITIONS)
     else
 #ifdef FORCE_VECTORIZATION
@@ -293,9 +293,9 @@
     !Since we do not do anything in PML region in case of backward simulation, thus we set
     !PML_BOUNDARY_CONDITIONS = .false.
     if (time_stepping_scheme == 1) then
-      call update_displacement_newmark_elastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                               b_accel_elastic,b_veloc_elastic,&
-                                               b_displ_elastic,b_displ_elastic_old,&
+      call update_displacement_newmark_elastic(b_deltat,b_deltatover2,b_deltatsquareover2, &
+                                               b_accel_elastic,b_veloc_elastic, &
+                                               b_displ_elastic,b_displ_elastic_old, &
                                                .false.)
     else
 #ifdef FORCE_VECTORIZATION
@@ -343,9 +343,9 @@
 
     ! updates poroelastic wavefields
     if (time_stepping_scheme == 1) then
-      call update_displacement_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
-                                                   accels_poroelastic,velocs_poroelastic,&
-                                                   displs_poroelastic,accelw_poroelastic,&
+      call update_displacement_newmark_poroelastic(deltat,deltatover2,deltatsquareover2, &
+                                                   accels_poroelastic,velocs_poroelastic, &
+                                                   displs_poroelastic,accelw_poroelastic, &
                                                    velocw_poroelastic,displw_poroelastic)
     else
       accels_poroelastic(:,:) = 0._CUSTOM_REAL
@@ -382,9 +382,9 @@
 
     if (time_stepping_scheme == 1) then
       !PML not implemented for poroelastic simulation
-      call update_displacement_newmark_poroelastic(b_deltat,b_deltatover2,b_deltatsquareover2,&
-                                                   b_accels_poroelastic,b_velocs_poroelastic,&
-                                                   b_displs_poroelastic,b_accelw_poroelastic,&
+      call update_displacement_newmark_poroelastic(b_deltat,b_deltatover2,b_deltatsquareover2, &
+                                                   b_accels_poroelastic,b_velocs_poroelastic, &
+                                                   b_displs_poroelastic,b_accelw_poroelastic, &
                                                    b_velocw_poroelastic,b_displw_poroelastic)
     else
       b_accels_poroelastic(:,:) = 0._CUSTOM_REAL
@@ -413,7 +413,7 @@
   implicit none
 
   double precision,intent(in) :: deltat,deltatover2,deltatsquareover2
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_acoustic,potential_dot_acoustic,&
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_acoustic,potential_dot_acoustic, &
                                                                      potential_dot_dot_acoustic
 
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
@@ -460,9 +460,9 @@
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2,&
-                                                 accel_elastic,veloc_elastic,&
-                                                 displ_elastic,displ_elastic_old,&
+  subroutine update_displacement_newmark_elastic(deltat,deltatover2,deltatsquareover2, &
+                                                 accel_elastic,veloc_elastic, &
+                                                 displ_elastic,displ_elastic_old, &
                                                  PML_BOUNDARY_CONDITIONS)
 
   use constants, only: CUSTOM_REAL,NDIM,TWO
@@ -542,9 +542,9 @@
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_newmark_poroelastic(deltat,deltatover2,deltatsquareover2,&
-                                                     accels_poroelastic,velocs_poroelastic,&
-                                                     displs_poroelastic,accelw_poroelastic,&
+  subroutine update_displacement_newmark_poroelastic(deltat,deltatover2,deltatsquareover2, &
+                                                     accels_poroelastic,velocs_poroelastic, &
+                                                     displs_poroelastic,accelw_poroelastic, &
                                                      velocw_poroelastic,displw_poroelastic)
 
   use constants, only: CUSTOM_REAL,NDIM
@@ -636,7 +636,7 @@
 
   use specfem_par, only: SIMULATION_TYPE,PML_BOUNDARY_CONDITIONS,myrank
 
-  use specfem_par_gpu, only: Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
+  use specfem_par_gpu, only: Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f, &
     b_deltatsquareover2f
 
   implicit none
@@ -652,7 +652,7 @@
   endif
 
   ! updates acoustic potentials
-  call update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f,&
+  call update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f, &
                                    b_deltatf,b_deltatsquareover2f,b_deltatover2f)
 
   end subroutine update_displacement_newmark_GPU_acoustic
@@ -665,7 +665,7 @@
 
   use specfem_par, only: SIMULATION_TYPE,PML_BOUNDARY_CONDITIONS,myrank
 
-  use specfem_par_gpu, only: Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f,&
+  use specfem_par_gpu, only: Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f, &
     b_deltatsquareover2f
 
   implicit none
@@ -682,7 +682,7 @@
 
   ! updates elastic displacement and velocity
   ! Includes SIM_TYPE 1 & 3 (for noise tomography)
-  call update_displacement_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f,&
+  call update_displacement_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f, &
                                 b_deltatf,b_deltatsquareover2f,b_deltatover2f)
 
   end subroutine update_displacement_newmark_GPU_elastic

@@ -96,7 +96,7 @@
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
-            write(1001,'(6e15.5e4)') x_save(i,j,ispec), x_save(i,j,ispec),z_save(i,j,ispec),rho_save(i,j,ispec),&
+            write(1001,'(6e15.5e4)') x_save(i,j,ispec), x_save(i,j,ispec),z_save(i,j,ispec),rho_save(i,j,ispec), &
                                      vp_save(i,j,ispec),vs_save(i,j,ispec)
           enddo
         enddo

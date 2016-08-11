@@ -100,20 +100,20 @@
         call assemble_MPI_scalar_send_cuda(NPROC, &
                           buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
                           ninterface,max_nibool_interfaces_ext_mesh, &
-                          nibool_interfaces_ext_mesh,&
+                          nibool_interfaces_ext_mesh, &
                           my_neighbours, &
                           request_send_recv_scalar_gpu,ninterface_acoustic,inum_interfaces_acoustic)
 
         ! adjoint simulations
         if (SIMULATION_TYPE == 3) then
           call transfer_boun_pot_from_device(Mesh_pointer, &
-                                             b_buffer_send_scalar_gpu,&
+                                             b_buffer_send_scalar_gpu, &
                                              3) ! -- 3 == adjoint b_accel
 
           call assemble_MPI_scalar_send_cuda(NPROC, &
                             b_buffer_send_scalar_gpu,b_buffer_recv_scalar_gpu, &
                             ninterface,max_nibool_interfaces_ext_mesh, &
-                            nibool_interfaces_ext_mesh,&
+                            nibool_interfaces_ext_mesh, &
                             my_neighbours, &
                             b_request_send_recv_scalar_gpu,ninterface_acoustic,inum_interfaces_acoustic)
         endif
@@ -121,7 +121,7 @@
       else
         ! waits for send/receive requests to be completed and assembles values
         call assemble_MPI_scalar_write_cuda(NPROC, &
-                          Mesh_pointer,&
+                          Mesh_pointer, &
                           buffer_recv_scalar_gpu, &
                           ninterface, &
                           max_nibool_interfaces_ext_mesh, &
@@ -168,8 +168,8 @@
 
   use constants, only: CUSTOM_REAL,NGLLX
 
-  use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_acoustic_left,b_absorb_acoustic_right,&
-                          b_absorb_acoustic_bottom, b_absorb_acoustic_top,it,NSTEP,SIMULATION_TYPE,SAVE_FORWARD,&
+  use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_acoustic_left,b_absorb_acoustic_right, &
+                          b_absorb_acoustic_bottom, b_absorb_acoustic_top,it,NSTEP,SIMULATION_TYPE,SAVE_FORWARD, &
                           nelemabs
 
   use specfem_par_gpu, only: Mesh_pointer
@@ -197,7 +197,7 @@
   endif
 
   ! absorbs absorbing-boundary surface using Sommerfeld condition (vanishing field in the outer-space)
-  call compute_stacey_acoustic_cuda(Mesh_pointer,iphase,b_absorb_potential_left_slice,b_absorb_potential_right_slice,&
+  call compute_stacey_acoustic_cuda(Mesh_pointer,iphase,b_absorb_potential_left_slice,b_absorb_potential_right_slice, &
                                      b_absorb_potential_top_slice,b_absorb_potential_bottom_slice)
 
   ! adjoint simulations: stores absorbed wavefield part

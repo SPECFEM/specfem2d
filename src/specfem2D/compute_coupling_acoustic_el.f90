@@ -38,12 +38,12 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
     CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE,ALPHA_LDDRK,BETA_LDDRK
 
-  use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
-                         gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
+  use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz, &
+                         gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
-                         fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
-                         AXISYM,coord,is_on_the_axis,xiglj,wxglj,&
-                         rmemory_fsb_displ_elastic,timeval,deltat,&
+                         fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
+                         AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
+                         rmemory_fsb_displ_elastic,timeval,deltat, &
                          rmemory_fsb_displ_elastic_LDDRK,i_stage,time_stepping_scheme, &
                          nglob_acoustic,nglob_elastic
 
@@ -59,7 +59,7 @@
   !local variable
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
   integer :: inum,ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,i,j,iglob
-  real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,&
+  real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n, &
                             xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
   ! PML
   integer :: ispec_PML,CPML_region_local,singularity_type_xz
@@ -104,12 +104,12 @@
           beta_z = alpha_z + d_z / kappa_z
 
           if (CPML_region_local == CPML_X_ONLY) then
-            call lik_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z,&
-                                           CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
+            call lik_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+                                           CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2, &
                                            coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
           else if (CPML_region_local == CPML_Z_ONLY) then
-            call lik_parameter_computation(timeval,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x,&
-                                           CPML_region_local,31,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
+            call lik_parameter_computation(timeval,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
+                                           CPML_region_local,31,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2, &
                                            coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
 
           else
@@ -252,11 +252,11 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
     CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
 
-  use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz,&
-                         gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse,&
+  use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz, &
+                         gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
-                         fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
-                         AXISYM,coord,is_on_the_axis,xiglj,wxglj,&
+                         fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
+                         AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
                          nglob_acoustic,nglob_elastic
 
   implicit none
@@ -267,7 +267,7 @@
   !local variable
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
   integer :: inum,ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,i,j,iglob
-  real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n,&
+  real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n, &
                             xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
 
   ! loop on all the coupling edges

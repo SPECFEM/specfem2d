@@ -361,16 +361,16 @@
 #ifdef USE_MPI
       else
         ! collects seismogram components on master
-        call MPI_RECV(buffer_binary(1,irec,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
+        call MPI_RECV(buffer_binary(1,irec,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
                       islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
         if (number_of_components == 2) then
-          call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
+          call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
                         islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
         endif
         if (number_of_components == 3) then
-          call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
+          call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
                         islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-          call MPI_RECV(buffer_binary(1,irec,3),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,&
+          call MPI_RECV(buffer_binary(1,irec,3),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
                         islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
         endif
 #endif

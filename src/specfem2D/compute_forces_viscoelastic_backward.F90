@@ -44,7 +44,7 @@
                          ATTENUATION_VISCOELASTIC_SOLID,nspec_ATT,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
-                         jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,&
+                         jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
                          ispec_is_anisotropic,anisotropy, &
                          e1_LDDRK,e11_LDDRK,e13_LDDRK, &
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &

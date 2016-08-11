@@ -256,7 +256,7 @@
 ! draw position of the receivers with green squares
     do i = 1,nrec
 ! avoid edge effects for source or receiver symbols that can be partly outside of the image
-      do iy = max(iy_image_color_receiver(i) - half_size_square,1),&
+      do iy = max(iy_image_color_receiver(i) - half_size_square,1), &
                                           min(iy_image_color_receiver(i) + half_size_square,NZ_IMAGE_color)
         do ix = max(ix_image_color_receiver(i) - half_size_square,1), &
                                           min(ix_image_color_receiver(i) + half_size_square,NX_IMAGE_color)

@@ -623,7 +623,7 @@
         (.not. ispec_is_elastic(ispec)) .and. &
         (.not. ispec_is_poroelastic(ispec)) .and. &
         (.not. ispec_is_gravitoacoustic(ispec))) &
-      stop 'Error invalid domain element found! element has no domain (acoustic, elastic, poroelastic or gravitoacoustic),&
+      stop 'Error invalid domain element found! element has no domain (acoustic, elastic, poroelastic or gravitoacoustic), &
             & please check...'
   enddo
 

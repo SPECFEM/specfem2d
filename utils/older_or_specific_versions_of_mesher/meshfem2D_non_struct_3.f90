@@ -732,7 +732,7 @@
 
 ! element 10 du raccord
       k = k + 1
-      write(15,*) k,imatnum,num(i+10,j+4,nx),num(i+12,j+4,nx),num(i+12,j+6,nx),&
+      write(15,*) k,imatnum,num(i+10,j+4,nx),num(i+12,j+4,nx),num(i+12,j+6,nx), &
               num(i+10,j+6,nx),num(i+11,j+4,nx),num(i+12,j+5,nx), &
               num(i+11,j+6,nx),num(i+10,j+5,nx),num(i+11,j+5,nx)
 

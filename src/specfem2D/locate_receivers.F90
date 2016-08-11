@@ -276,7 +276,7 @@
                     ' m away'
       write(IMAIN,*) ' in element ',gather_ispec_selected_rec(irec,islice_selected_rec(irec)+1)
       write(IMAIN,*) ' in rank ', islice_selected_rec(irec)
-      write(IMAIN,*) ' at xi,gamma coordinates = ',gather_xi_receiver(irec,islice_selected_rec(irec)+1),&
+      write(IMAIN,*) ' at xi,gamma coordinates = ',gather_xi_receiver(irec,islice_selected_rec(irec)+1), &
                                   gather_gamma_receiver(irec,islice_selected_rec(irec)+1)
       write(IMAIN,*)
     enddo

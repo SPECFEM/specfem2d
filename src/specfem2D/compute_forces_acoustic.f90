@@ -41,7 +41,7 @@
     ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4, &
     ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: nglob,  &
+  use specfem_par, only: nglob, &
                          assign_external_model,ibool,kmato,ispec_is_acoustic, &
                          density,rhoext, &
                          xix,xiz,gammax,gammaz,jacobian, &

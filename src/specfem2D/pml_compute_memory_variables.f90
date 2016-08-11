@@ -48,8 +48,8 @@
   use specfem_par, only: time_stepping_scheme,i_stage,it,deltat, &
                          ibool,xix,xiz,gammax,gammaz, &
                          hprime_xx,hprime_zz, &
-                         rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz,&
-                         rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK,&
+                         rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz, &
+                         rmemory_acoustic_dux_dx_LDDRK,rmemory_acoustic_dux_dz_LDDRK, &
                          AXISYM,is_on_the_axis,hprimeBar_xx
 
   ! PML arrays
@@ -167,12 +167,12 @@
 
       ! gets PML coefficients
       ! the subroutine of lik_parameter_computation is located at the end of compute_forces_viscoelastic.F90
-      call lik_parameter_computation(time_n,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x,&
-                                     CPML_region_local,31,A5,A6,A7,singularity_type_zx,bb_zx_1,bb_zx_2,&
+      call lik_parameter_computation(time_n,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
+                                     CPML_region_local,31,A5,A6,A7,singularity_type_zx,bb_zx_1,bb_zx_2, &
                                      coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2)
 
-      call lik_parameter_computation(time_n,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z,&
-                                     CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
+      call lik_parameter_computation(time_n,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+                                     CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2, &
                                      coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
 
       select case (time_stepping_scheme)
@@ -407,12 +407,12 @@
       beta_z = alpha_z + d_z / kappa_z
 
       ! gets PML coefficients
-      call lik_parameter_computation(time_n,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x,&
-                                     CPML_region_local,31,A5,A6,A7,singularity_type_zx,bb_zx_1,bb_zx_2,&
+      call lik_parameter_computation(time_n,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
+                                     CPML_region_local,31,A5,A6,A7,singularity_type_zx,bb_zx_1,bb_zx_2, &
                                      coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2)
 
-      call lik_parameter_computation(time_n,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z,&
-                                     CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2,&
+      call lik_parameter_computation(time_n,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+                                     CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2, &
                                      coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
 
       select case (time_stepping_scheme)

@@ -284,7 +284,7 @@
   ! 5/ second node, if relevant.
   ! No interface between acoustic, elastic, and poroelastic elements.
   !--------------------------------------------------
-  subroutine construct_interfaces(nparts, elmnts_l,  &
+  subroutine construct_interfaces(nparts, elmnts_l, &
                                   nbmodels, phi_material, num_material)
 
   use constants, only: NCORNERS,TINYVAL

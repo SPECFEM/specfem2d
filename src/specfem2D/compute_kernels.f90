@@ -80,14 +80,14 @@
   use specfem_par, only: ispec_is_elastic,rho_k, & ! AXISYM,
                          rho_kl,mu_kl,kappa_kl,rhop_kl,beta_kl,alpha_kl,bulk_c_kl,bulk_beta_kl, &
                          nglob,nspec,ibool,accel_elastic,b_displ_elastic, &
-                         density,poroelastcoef,kmato,assign_external_model,rhoext,vsext,vpext,&
-                         deltat,P_SV,displ_elastic,&
+                         density,poroelastcoef,kmato,assign_external_model,rhoext,vsext,vpext, &
+                         deltat,P_SV,displ_elastic, &
                          mu_k,kappa_k,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
                          GPU_MODE
 
   use specfem_par_gpu, only: Mesh_pointer,deltatf
 
-  use specfem_par, only: c11_k,c13_k,c15_k,c33_k,c35_k,c55_k,ispec_is_anisotropic,&
+  use specfem_par, only: c11_k,c13_k,c15_k,c33_k,c35_k,c55_k,ispec_is_anisotropic, &
                          rho_kl,c11_kl,c13_kl,c15_kl,c33_kl,c35_kl,c55_kl
 
   implicit none
@@ -281,11 +281,11 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,HALF,TWO
 
-  use specfem_par, only: nspec,ispec_is_acoustic,ibool,kappal_ac_global,rhol_ac_global,&
-                         poroelastcoef,density,kmato,assign_external_model,rhoext,vpext,deltat,&
-                         hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,&
-                         potential_acoustic,b_potential_acoustic,b_potential_dot_dot_acoustic,&
-                         accel_ac,b_accel_ac,b_displ_ac,&
+  use specfem_par, only: nspec,ispec_is_acoustic,ibool,kappal_ac_global,rhol_ac_global, &
+                         poroelastcoef,density,kmato,assign_external_model,rhoext,vpext,deltat, &
+                         hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
+                         potential_acoustic,b_potential_acoustic,b_potential_dot_dot_acoustic, &
+                         accel_ac,b_accel_ac,b_displ_ac, &
                          rho_ac_kl,kappa_ac_kl,rhop_ac_kl,alpha_ac_kl,GPU_MODE
 
   use specfem_par_gpu, only: Mesh_pointer,deltatf
