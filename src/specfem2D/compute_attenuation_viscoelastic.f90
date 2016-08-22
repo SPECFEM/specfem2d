@@ -41,7 +41,7 @@
   ! compute forces for the elastic elements
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
-  use specfem_par, only: nglob,nspec,nspec_ATT,ATTENUATION_VISCOELASTIC_SOLID,N_SLS, &
+  use specfem_par, only: nglob,nspec,nspec_ATT,ATTENUATION_VISCOELASTIC,N_SLS, &
                          ibool,xix,xiz,gammax,gammaz,hprime_xx,hprime_zz
 
   ! PML arrays
@@ -65,7 +65,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_nsub1,dux_dzl_nsub1,duz_dxl_nsub1,duz_dzl_nsub1
 
   ! checks if anything to do
-  if (.not. ATTENUATION_VISCOELASTIC_SOLID) return
+  if (.not. ATTENUATION_VISCOELASTIC) return
 
   ! compute Grad(displ_elastic) at time step n for attenuation
   call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &

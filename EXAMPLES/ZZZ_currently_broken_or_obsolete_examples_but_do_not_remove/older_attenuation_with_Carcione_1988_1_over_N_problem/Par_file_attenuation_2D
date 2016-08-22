@@ -28,7 +28,7 @@ add_Bielak_conditions_left      = .false.
 
 assign_external_model           = .false.        # define external earth model or not
 READ_EXTERNAL_SEP_FILE          = .false.        # Read external model from DATA/model_velocity.dat_input, or use routine
-ATTENUATION_VISCOELASTIC_SOLID  = .true.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
+ATTENUATION_VISCOELASTIC        = .true.         # turn attenuation (viscoelasticity) on or off for non-poroelastic solid or fluid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
 Q0                              =  1             # quality factor for viscous attenuation
 freq0                           =  10            # frequency for viscous attenuation
@@ -36,7 +36,7 @@ p_sv                            = .true.         # set the type of calculation (
 
 # time step parameters
 nt                              = 1400           # total number of time steps
-deltat                          = 4e-4         # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
+deltat                          = 4e-4           # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
 USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
 time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
 

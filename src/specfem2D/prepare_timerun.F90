@@ -1220,7 +1220,7 @@
                                                        phi_nu1_sent,phi_nu2_sent
 
   ! attenuation
-  if (ATTENUATION_VISCOELASTIC_SOLID) then
+  if (ATTENUATION_VISCOELASTIC) then
     nspec_ATT = nspec
   else
     nspec_ATT = 1
@@ -1311,7 +1311,7 @@
   endif
 
   ! setup attenuation
-  if (ATTENUATION_VISCOELASTIC_SOLID) then
+  if (ATTENUATION_VISCOELASTIC) then
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)
@@ -1434,7 +1434,7 @@
         enddo
       enddo
     enddo
-  endif ! ATTENUATION_VISCOELASTIC_SOLID
+  endif ! ATTENUATION_VISCOELASTIC
 
   ! sets new material properties
   ! note: velocities might have been shifted by attenuation

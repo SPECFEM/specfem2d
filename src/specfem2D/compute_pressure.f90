@@ -75,7 +75,7 @@
 
   use specfem_par, only: N_SLS,ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
     ispec_is_gravitoacoustic,ispec_is_anisotropic,kmato,poroelastcoef,assign_external_model,vpext,vsext,rhoext, &
-    ATTENUATION_VISCOELASTIC_SOLID,AXISYM,is_on_the_axis,displ_elastic,displs_poroelastic,displw_poroelastic, &
+    ATTENUATION_VISCOELASTIC,AXISYM,is_on_the_axis,displ_elastic,displs_poroelastic,displw_poroelastic, &
     potential_dot_dot_acoustic,potential_acoustic,potential_dot_dot_gravitoacoustic,potential_gravitoacoustic, &
     anisotropy,c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext,c55ext, &
     hprimebar_xx,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,jacobian,ibool,coord,e1,e11,USE_TRICK_FOR_BETTER_PRESSURE
@@ -214,7 +214,7 @@
 
 ! compute diagonal components of the stress tensor (include attenuation or anisotropy if needed)
 
-        if (ATTENUATION_VISCOELASTIC_SOLID) then
+        if (ATTENUATION_VISCOELASTIC) then
 
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
@@ -459,7 +459,7 @@
 
 ! compute diagonal components of the stress tensor (include attenuation if needed)
 
-        if (ATTENUATION_VISCOELASTIC_SOLID) then
+        if (ATTENUATION_VISCOELASTIC) then
 
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,

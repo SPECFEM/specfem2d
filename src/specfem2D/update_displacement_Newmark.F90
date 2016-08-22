@@ -467,7 +467,7 @@
 
   use constants, only: CUSTOM_REAL,NDIM,TWO
 
-  use specfem_par, only: nglob_elastic,ATTENUATION_VISCOELASTIC_SOLID
+  use specfem_par, only: nglob_elastic,ATTENUATION_VISCOELASTIC
 
 #ifndef FORCE_VECTORIZATION
   use constants, only: USE_ENFORCE_FIELDS
@@ -490,7 +490,7 @@
 #endif
 
   ! attenuation/PML simulations
-  if (PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOELASTIC_SOLID) then
+  if (PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOELASTIC) then
 
     ! note: todo - there is an additional factor 1/TWO to the default deltasquareover2 for the acceleration term
     !       find explanations where?

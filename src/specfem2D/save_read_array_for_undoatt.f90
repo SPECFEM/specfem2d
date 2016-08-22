@@ -36,7 +36,7 @@
   use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN
 
   use specfem_par, only: myrank,iteration_on_subset, &
-    any_acoustic,any_elastic,ATTENUATION_VISCOELASTIC_SOLID, &
+    any_acoustic,any_elastic,ATTENUATION_VISCOELASTIC, &
     potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
     e1,e11,e13
@@ -69,7 +69,7 @@
     write(IOUT_UNDO_ATT) veloc_elastic
     write(IOUT_UNDO_ATT) displ_elastic
 
-    if (ATTENUATION_VISCOELASTIC_SOLID) then
+    if (ATTENUATION_VISCOELASTIC) then
       write(IOUT_UNDO_ATT) e1
       write(IOUT_UNDO_ATT) e11
       write(IOUT_UNDO_ATT) e13

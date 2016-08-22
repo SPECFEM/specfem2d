@@ -115,7 +115,7 @@
 
   read(IIN) use_binary_for_wavefield_dumps
 
-  read(IIN) ATTENUATION_VISCOELASTIC_SOLID,ATTENUATION_PORO_FLUID_PART
+  read(IIN) ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART
 
   read(IIN) save_ASCII_seismograms
 
@@ -193,8 +193,7 @@
     write(IMAIN,700) seismotype,anglerec
     write(IMAIN,750) initialfield, &
                  add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left, &
-                 ATTENUATION_VISCOELASTIC_SOLID, &
-                 output_grid_ASCII,output_energy
+                 ATTENUATION_VISCOELASTIC,output_grid_ASCII,output_energy
     write(IMAIN,800) imagetype_postscript,cutsnaps,subsamp_postscript
 
     ! time step
@@ -230,7 +229,7 @@
   'Add Bielak conditions .(add_Bielak_conditions_right) = ',l6/5x, &
   'Add Bielak conditions . .(add_Bielak_conditions_top) = ',l6/5x, &
   'Add Bielak conditions. .(add_Bielak_conditions_left) = ',l6/5x, &
-  'Attenuation on/off .(ATTENUATION_VISCOELASTIC_SOLID) = ',l6/5x, &
+  'Attenuation on/off . . . .(ATTENUATION_VISCOELASTIC) = ',l6/5x, &
   'Save grid in ASCII file or not . (output_grid_ASCII) = ',l6/5x, &
   'Save a file with total energy or not.(output_energy) = ',l6)
 

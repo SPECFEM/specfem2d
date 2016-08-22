@@ -55,7 +55,7 @@
   endif
 
   ! viscous attenuation for elastic media
-  if (ATTENUATION_VISCOELASTIC_SOLID) call compute_attenuation_viscoelastic(displ_elastic,displ_elastic_old, &
+  if (ATTENUATION_VISCOELASTIC) call compute_attenuation_viscoelastic(displ_elastic,displ_elastic_old, &
                                                                   ispec_is_elastic,PML_BOUNDARY_CONDITIONS,e1,e11,e13)
 
   ! distinguishes two runs: for elements on MPI interfaces (outer), and elements within the partitions (inner)
@@ -249,7 +249,7 @@
 
   if (UNDO_ATTENUATION) then
     ! viscous attenuation for elastic media
-    if (ATTENUATION_VISCOELASTIC_SOLID) call compute_attenuation_viscoelastic(b_displ_elastic,b_displ_elastic_old, &
+    if (ATTENUATION_VISCOELASTIC) call compute_attenuation_viscoelastic(b_displ_elastic,b_displ_elastic_old, &
                                                                               ispec_is_elastic,.false.,b_e1,b_e11,b_e13)
   endif
 
@@ -266,7 +266,7 @@
     endif
 
 !   ! viscous attenuation for elastic media
-!   if (ATTENUATION_VISCOELASTIC_SOLID) call compute_attenuation_viscoelastic(b_displ_elastic,b_displ_elastic_old, &
+!   if (ATTENUATION_VISCOELASTIC) call compute_attenuation_viscoelastic(b_displ_elastic,b_displ_elastic_old, &
 !                                                                  ispec_is_elastic,PML_BOUNDARY_CONDITIONS,b_e1,b_e11,b_e13)
 !
 !    call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &

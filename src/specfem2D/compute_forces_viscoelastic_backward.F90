@@ -41,7 +41,7 @@
     IEDGE1,IEDGE2,IEDGE3,IEDGE4,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: nglob,nspec,assign_external_model,P_SV, &
-                         ATTENUATION_VISCOELASTIC_SOLID,nspec_ATT,N_SLS, &
+                         ATTENUATION_VISCOELASTIC,nspec_ATT,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
                          jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
@@ -118,7 +118,7 @@
   !!!update memory variable in viscoelastic simulation
   if (iphase == 1) then
 
-  if (ATTENUATION_VISCOELASTIC_SOLID) then
+  if (ATTENUATION_VISCOELASTIC) then
 
     ! compute Grad(b_displ_elastic) at time step n for attenuation
     call compute_gradient_attenuation(b_displ_elastic,dux_dxl_n,duz_dxl_n, &
@@ -353,7 +353,7 @@
           endif
 
           ! compute stress tensor (include attenuation or anisotropy if needed)
-          if (ATTENUATION_VISCOELASTIC_SOLID) then
+          if (ATTENUATION_VISCOELASTIC) then
             ! attenuation is implemented following the memory variable formulation of
             ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
             ! vol. 58(1), p. 110-120 (1993). More details can be found in

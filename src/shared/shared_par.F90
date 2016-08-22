@@ -120,7 +120,7 @@ module shared_input_parameters
   !#
   !#-----------------------------------------------------------------------------
   ! variables used for attenuation
-  logical :: ATTENUATION_VISCOELASTIC_SOLID
+  logical :: ATTENUATION_VISCOELASTIC
   logical :: ATTENUATION_PORO_FLUID_PART
   double precision :: Q0,freq0
 

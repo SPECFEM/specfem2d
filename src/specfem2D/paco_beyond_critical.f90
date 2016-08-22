@@ -51,12 +51,10 @@
 
   use constants, only: PI
 
-  use specfem_par, only: coord,nglob,deltat,NSTEP,ATTENUATION_VISCOELASTIC_SOLID, &
+  use specfem_par, only: coord,nglob,deltat,NSTEP,ATTENUATION_VISCOELASTIC, &
     displ_elastic,veloc_elastic,accel_elastic, &
     v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
     t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
-
-
 
   implicit none
 
@@ -278,7 +276,7 @@
            AQA=AKA*BEALF
 
 ! exclude attenuation completely if needed
-           if (ATTENUATION_VISCOELASTIC_SOLID) then
+           if (ATTENUATION_VISCOELASTIC) then
               CAKA=CMPLX(AKA,-AKA/(2.0d0*QD))
               CAQA=CMPLX(AQA,-AQA/(2.0d0*QD))
            else

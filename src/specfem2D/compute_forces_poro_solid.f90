@@ -41,7 +41,7 @@
     IEDGE1,IEDGE2,IEDGE3,IEDGE4,ALPHA_LDDRK,BETA_LDDRK
 
   use specfem_par, only: nglob,nspec,nglob_poroelastic,nspec_poroelastic_b, &
-                         ATTENUATION_VISCOELASTIC_SOLID,deltat, &
+                         ATTENUATION_VISCOELASTIC,deltat, &
                          ibool,ispec_is_poroelastic, &
                          xix,xiz,gammax,gammaz,jacobian, &
                          e11,e13,hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -107,11 +107,11 @@
   integer :: num_elements,ispec_p
 
 ! implement attenuation
-  if (ATTENUATION_VISCOELASTIC_SOLID) then
+  if (ATTENUATION_VISCOELASTIC) then
 
     ! safety check
     if (SIMULATION_TYPE == 3) &
-      stop 'ATTENUATION_VISCOELASTIC_SOLID not fully implemented yet for poroelastic kernel simulations'
+      stop 'ATTENUATION_VISCOELASTIC not fully implemented yet for poroelastic kernel simulations'
 
 ! compute Grad(displs_poroelastic) at time step n for attenuation
     call compute_gradient_attenuation(displs_poroelastic,dux_dxl_n,duz_dxl_n, &
@@ -295,7 +295,7 @@
         dwz_dzl = dwz_dxi*xizl + dwz_dgamma*gammazl
 
         ! compute stress tensor (include attenuation or anisotropy if needed)
-        if (ATTENUATION_VISCOELASTIC_SOLID) then
+        if (ATTENUATION_VISCOELASTIC) then
 ! Dissipation only controlled by frame share attenuation in poroelastic (see Morency & Tromp, GJI 2008).
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,

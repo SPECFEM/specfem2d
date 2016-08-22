@@ -139,7 +139,7 @@
     call bcast_all_string(MODEL)
     call bcast_all_string(SAVE_MODEL)
 
-    call bcast_all_singlel(ATTENUATION_VISCOELASTIC_SOLID)
+    call bcast_all_singlel(ATTENUATION_VISCOELASTIC)
     call bcast_all_singlel(ATTENUATION_PORO_FLUID_PART)
     call bcast_all_singledp(Q0)
     call bcast_all_singledp(freq0)
@@ -317,8 +317,8 @@
   !
   !--------------------------------------------------------------------
 
-  call read_value_logical_p(ATTENUATION_VISCOELASTIC_SOLID, 'solver.ATTENUATION_VISCOELASTIC_SOLID')
-  if (err_occurred() /= 0) stop 'error reading parameter ATTENUATION_VISCOELASTIC_SOLID in Par_file'
+  call read_value_logical_p(ATTENUATION_VISCOELASTIC, 'solver.ATTENUATION_VISCOELASTIC')
+  if (err_occurred() /= 0) stop 'error reading parameter ATTENUATION_VISCOELASTIC in Par_file'
 
   ! read viscous attenuation parameters (poroelastic media)
   call read_value_logical_p(ATTENUATION_PORO_FLUID_PART, 'solver.ATTENUATION_PORO_FLUID_PART')

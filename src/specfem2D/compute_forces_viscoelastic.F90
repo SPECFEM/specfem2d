@@ -40,7 +40,7 @@
     ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: nglob,assign_external_model,P_SV, &
-                         ATTENUATION_VISCOELASTIC_SOLID,nspec_ATT,N_SLS, &
+                         ATTENUATION_VISCOELASTIC,nspec_ATT,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
                          jacobian,vpext,vsext,rhoext, &
@@ -250,7 +250,7 @@
         endif
 
         ! compute stress tensor (include attenuation or anisotropy if needed)
-        if (ATTENUATION_VISCOELASTIC_SOLID) then
+        if (ATTENUATION_VISCOELASTIC) then
           ! attenuation is implemented following the memory variable formulation of
           ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
           ! vol. 58(1), p. 110-120 (1993). More details can be found in

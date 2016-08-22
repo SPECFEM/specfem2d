@@ -693,7 +693,7 @@
 
   ! check for solid attenuation
   if (.not. ELASTIC_SIMULATION) then
-    if (ATTENUATION_VISCOELASTIC_SOLID) &
+    if (ATTENUATION_VISCOELASTIC) &
       call exit_MPI(myrank,'currently cannot have attenuation if acoustic/poroelastic simulation only')
   endif
 
@@ -707,7 +707,7 @@
 !  if (all_anisotropic .and. anyabs) &
 !    call exit_MPI(myrank,'Cannot put absorbing boundaries if anisotropic materials along edges')
 
-  if (ATTENUATION_VISCOELASTIC_SOLID .and. all_anisotropic) then
+  if (ATTENUATION_VISCOELASTIC .and. all_anisotropic) then
     call exit_MPI(myrank,'Cannot turn attenuation on in anisotropic materials')
   endif
 
