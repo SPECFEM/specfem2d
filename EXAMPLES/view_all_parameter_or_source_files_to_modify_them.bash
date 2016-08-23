@@ -3,6 +3,13 @@
 # I get the list of files using " ls */Par_fi* */*/Par_fi* */*/*/Par_fi* */*/*/*/Par_fi* | grep -v "~" | tr '\n' ' ' "
 # and I add ../DATA/Par_file manually
 
+#
+# Note that if you want to change the name of a parameter or anything else in all the Par_files below in an automatic way
+# you can also use a "find" command combined with a "sed" command, here is an example:
+#
+#     find . -type f -name "*ar_file*" -exec sed -i 's/ATTENUATION_VISCOELASTIC_SOLID/ATTENUATION_VISCOELASTIC/g' {} \;
+#
+
 if [ -z "$EDITOR" ]
 then
 EDITOR=vi
