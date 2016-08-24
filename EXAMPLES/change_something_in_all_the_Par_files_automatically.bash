@@ -8,5 +8,5 @@
 # However this will *not* make the change in ../DATA/Par_file, which you will need to do separately.
 #
 
-find . -type f -name "*ar_file*" -exec sed -i 's/ATTENUATION_VISCOELASTIC_SOLID/ATTENUATION_VISCOELASTIC/g' {} \;
+find . -type f -iname "Par_file*" -exec sed -i 's/ATTENUATION_VISCOELASTIC_SOLID/ATTENUATION_VISCOELASTIC/g' {} \;
 
