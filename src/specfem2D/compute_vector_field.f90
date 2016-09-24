@@ -197,8 +197,8 @@
         if (assign_external_model) rhol = rhoext(i,j,ispec)
 
         ! derivatives of potential
-        vector_field_element(1,i,j) = real((tempx1l*xixl + tempx2l*gammaxl) / rhol,kind=CUSTOM_REAL) !u_x = 1/rho (dkhi/dx)
-        vector_field_element(2,i,j) = real((tempx1l*xizl + tempx2l*gammazl) / rhol,kind=CUSTOM_REAL) !u_z = 1/rho (dkhi/dz)
+        vector_field_element(1,i,j) = real((tempx1l*xixl + tempx2l*gammaxl) / rhol,kind=CUSTOM_REAL) ! u_x = 1/rho dChi/dx
+        vector_field_element(2,i,j) = real((tempx1l*xizl + tempx2l*gammazl) / rhol,kind=CUSTOM_REAL) ! u_z = 1/rho dChi/dz
       enddo
     enddo
 

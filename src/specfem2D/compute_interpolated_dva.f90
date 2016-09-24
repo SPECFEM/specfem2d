@@ -62,6 +62,7 @@
 
       ! displacement/velocity/acceleration/pressure value (depending on seismotype)
       select case (seismotype)
+
       case (1,2,3)
         ! displacement/velocity/acceleration
         dxd = vector_field_element(1,i,j)
