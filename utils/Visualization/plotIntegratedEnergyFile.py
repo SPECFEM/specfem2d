@@ -128,7 +128,7 @@ directory=args.input_directory
 fontsize = 14
 zminProfiles = -5000
 zmaxProfiles = -200 # TODO (-650m for 0.5Hz, -300m for 2Hz...)
-xsp = 50000
+xsp = 50000 # range of profile to be saved (if option --sp given)
 
 # Check
 if not os.path.isdir(directory):
