@@ -42,8 +42,6 @@
 
   use shared_parameters, only: ngnod,absorbbottom,absorbleft,absorbright,absorbtop
 
-  use compute_elements_load_par, only: is_pml
-
   implicit none
 
   ! local parameters
