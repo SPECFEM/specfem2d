@@ -175,6 +175,7 @@
 
   use constants, only: MAX_STRING_LEN,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
   use part_unstruct_par, only: nelmnts
+  use compute_elements_load_par, only: is_pml
 
   implicit none
 
@@ -210,6 +211,7 @@
        stop 'error: incorrect CPML element flag found, should be CPML_X_ONLY or CPML_Z_ONLY or CPML_XZ_ONLY only'
 
      region_pml_external_mesh(ispec) = pml_flag
+     is_pml(ispec-1) = .true.
   enddo
 
   close(992)
