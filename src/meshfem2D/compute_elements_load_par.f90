@@ -62,7 +62,7 @@ contains
     !----------------------------------------------------------------------------------------------
 
     implicit none
-    
+
     ! local parameters
     integer :: ier,ispec,nelem_elastic,nelem_acoustic,nelem_viscoelastic,nelem_elastic_pml,nelem_acoustic_pml,nelem_viscoelastic_pml
 
@@ -91,7 +91,7 @@ contains
     ! Loop on the elements to determine which element is elastic, acoustic or viscoelastic
     call determine_elements_type()
 
-    ! Determine which element is pml and which is not when the mesh has been made by internal mesher.
+    ! Determine which element is PML and which is not when the mesh has been made by internal mesher.
     ! For external meshes the detection is made directly when reading the absorbing elements file in
     ! read_external_mesh_file.F90
     if (PML_BOUNDARY_CONDITIONS .and. (.not. read_external_mesh)) then
@@ -184,12 +184,12 @@ contains
 
   subroutine locate_pml_elements_internal()
     !----------------------------------------------------------------------------------------------
-    ! Determine which element is pml and which is not when the mesh has been made by the internal 
+    ! Determine which element is PML and which is not when the mesh has been made by the internal
     ! mesher.
     ! The elements are numbered like this :
     !
     !                              nxread
-    !     <----------------------------------------------------->
+    ! <----------------------------------------------------->
     !      ______________________________________________________
     !     |          |          |    |           | nxread*nzread | ^
     !     |__________|__________|____|___________|_______________| |
@@ -205,7 +205,7 @@ contains
     !----------------------------------------------------------------------------------------------
 
     implicit none
-    
+
     ! local parameters
     integer :: i,j
 
@@ -243,6 +243,6 @@ contains
       endif
 
   end subroutine locate_pml_elements_internal
-    
+
 end module compute_elements_load_par
 
