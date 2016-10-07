@@ -43,6 +43,7 @@
     nnodes_elmnts,nnodes,nodes_elmnts,nodes_coords,ninterfaces
 
   use decompose_par
+  use compute_elements_load_par
 
   implicit none
 
@@ -98,12 +99,8 @@
     ! number of common edges
     nb_edges = xadj_g(nelmnts)
 
-    ! giving weight to edges and vertices. Currently not used.
-!! DK DK
-!! DK DK could be used to define different weights for acoustic, elastic and poroelastic elements
-!! DK DK and also to define different weights for acoustic PML and elastic PML elements
-!! DK DK
-    call read_weights()
+    ! compute elements load for efficient partitioning (a PML element take more time to calculate than a fluid element for ex)
+    call compute_elements_load()
 
     ! partitioning
     select case (partitioning_method)

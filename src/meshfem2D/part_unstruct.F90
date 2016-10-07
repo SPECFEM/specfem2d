@@ -140,32 +140,6 @@
 !---------------------------------------------------------------------------------------
 !
 
-  !-----------------------------------------------
-  ! Read the weight for each vertices and edges of the graph (not curretly used)
-  !-----------------------------------------------
-  subroutine read_weights()
-
-  use part_unstruct_par, only: nelmnts,vwgt,adjwgt,nb_edges
-
-  implicit none
-
-  ! local parameters
-  integer :: ier
-
-  allocate(vwgt(0:nelmnts-1), &
-           adjwgt(0:nb_edges-1),stat=ier)
-  if (ier /= 0) stop 'Error allocating arrays for weights'
-
-  ! uniform weighting (feature not really used so far...)
-  vwgt(:) = 1
-  adjwgt(:) = 1
-
-  end subroutine read_weights
-
-!
-!---------------------------------------------------------------------------------------
-!
-
   !--------------------------------------------------
   ! construct local numbering for the elements in each partition
   !--------------------------------------------------

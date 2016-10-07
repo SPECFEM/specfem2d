@@ -350,12 +350,12 @@
   use shared_parameters
   use part_unstruct_par
   use source_file_par
+  use compute_elements_load_par
 
   implicit none
 
   integer :: nspec_cpml
   integer :: i,j,i_source,ier,num_elmnt
-  integer :: myrank
 
   ! MPI initialization
   call init_mpi()
@@ -461,6 +461,10 @@
     ! PML mesh elements
     allocate(region_pml_external_mesh(nelmnts),stat=ier)
     if (ier /= 0) stop 'Error allocating array region_pml_external_mesh'
+
+    allocate(is_pml(0:nelmnts-1),stat=ier)
+    if (ier /= 0) stop 'Error allocating array is_pml'
+    is_pml(:) = .false.
 
     region_pml_external_mesh(:) = 0
 

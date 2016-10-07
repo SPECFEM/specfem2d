@@ -81,14 +81,13 @@
 
   implicit none
 
+  integer :: myrank
   integer, dimension(:), allocatable  :: elmnts
   integer, dimension(:), allocatable  :: elmnts_bis
-  integer, dimension(:), allocatable  :: vwgt
   integer, dimension(:), allocatable  :: glob2loc_elmnts
   integer, dimension(:), allocatable  :: part
 
   integer :: nb_edges
-  integer, dimension(:), allocatable  :: adjwgt
 
   integer, dimension(:), allocatable  :: xadj_g
   integer, dimension(:), allocatable  :: adjncy_g

@@ -39,8 +39,9 @@
   use constants, only: IMAIN
 
 #ifdef USE_METIS
-  use part_unstruct_par, only: nelmnts,part,nb_edges,vwgt,adjwgt, &
+  use part_unstruct_par, only: nelmnts,part,nb_edges, &
     xadj => xadj_g,adjncy => adjncy_g
+  use compute_elements_load_par, only: elmnts_load,adjwgt
 
   use shared_parameters, only: nparts => NPROC
 #endif
@@ -50,7 +51,7 @@
 !  integer, intent(in)  :: nelmnts, nparts, nb_edges
 !  integer, dimension(0:nelmnts), intent(in)  :: xadj
 !  integer, dimension(0:MAX_NEIGHBORS*nelmnts-1), intent(in)  :: adjncy
-!  integer, dimension(0:nelmnts-1), intent(in)  :: vwgt
+!  integer, dimension(0:nelmnts-1), intent(in)  :: elmnts_load
 !  integer, dimension(0:nb_edges-1), intent(in)  :: adjwgt
 !  integer, dimension(:), pointer  :: part
 
@@ -71,10 +72,10 @@
   edgecut = 0
 
 #ifdef USE_METIS
-  call METIS_PartGraphRecursive(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, remove_min_to_start_at_zero, nparts, &
+  call METIS_PartGraphRecursive(nelmnts, xadj(0), adjncy(0), elmnts_load(0), adjwgt(0), wgtflag, remove_min_to_start_at_zero, nparts, &
       metis_options, edgecut, part(0))
 
-  !call METIS_PartGraphVKway(nelmnts, xadj(0), adjncy(0), vwgt(0), adjwgt(0), wgtflag, remove_min_to_start_at_zero, nparts, &
+  !call METIS_PartGraphVKway(nelmnts, xadj(0), adjncy(0), elmnts_load(0), adjwgt(0), wgtflag, remove_min_to_start_at_zero, nparts, &
   !     options, edgecut, part(0))
 #else
   ! safety stop

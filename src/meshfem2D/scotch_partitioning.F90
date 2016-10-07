@@ -36,7 +36,8 @@
   subroutine scotch_partitioning()
 
 #ifdef USE_SCOTCH
-  use part_unstruct_par, only: nb_edges,part,nelmnts,xadj_g,adjncy_g,adjwgt,vwgt
+  use part_unstruct_par, only: nb_edges,part,nelmnts,xadj_g,adjncy_g
+  use compute_elements_load_par, only: elmnts_load,adjwgt
 
   use shared_parameters, only: nparts => NPROC
 #endif
@@ -98,7 +99,7 @@
   !                    #(9) arc_load_array (optional)      #(10) ierror
   call scotchfgraphbuild (SCOTCHGRAPH (1), 0, nelmnts, &
                           xadj_g(0), xadj_g(0), &
-                          vwgt(0), xadj_g(0), &
+                          elmnts_load(0), xadj_g(0), &
                           nb_edges, &
                           adjncy_g(0), adjwgt (0), ier)
   if (ier /= 0) then

@@ -38,10 +38,11 @@
 
   use constants, only: IBOTTOM,IRIGHT,ITOP,ILEFT
 
-  use part_unstruct_par, only: nelemabs,abs_surface, &
-    elmnts,nxread,nzread
+  use part_unstruct_par, only: nelemabs,abs_surface,elmnts,nxread,nzread
 
   use shared_parameters, only: ngnod,absorbbottom,absorbleft,absorbright,absorbtop
+
+  use compute_elements_load_par, only: is_pml
 
   implicit none
 
@@ -73,6 +74,7 @@
              abs_surface(3,nelemabs) = elmnts(0+ngnod*(inumelem-1))
              abs_surface(4,nelemabs) = elmnts(1+ngnod*(inumelem-1))
              abs_surface(5,nelemabs) = IBOTTOM
+             !is_abs_surf(inumelem) = .true.
           endif
           if (absorbright .and. ix == nxread) then
              nelemabs = nelemabs + 1
@@ -81,6 +83,7 @@
              abs_surface(3,nelemabs) = elmnts(1+ngnod*(inumelem-1))
              abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1))
              abs_surface(5,nelemabs) = IRIGHT
+             !is_abs_surf(inumelem) = .true.
           endif
           if (absorbtop .and. iz == nzread) then
              nelemabs = nelemabs + 1
@@ -89,6 +92,7 @@
              abs_surface(3,nelemabs) = elmnts(3+ngnod*(inumelem-1))
              abs_surface(4,nelemabs) = elmnts(2+ngnod*(inumelem-1))
              abs_surface(5,nelemabs) = ITOP
+             !is_abs_surf(inumelem) = .true.
           endif
           if (absorbleft .and. ix == 1) then
              nelemabs = nelemabs + 1
@@ -97,6 +101,7 @@
              abs_surface(3,nelemabs) = elmnts(0+ngnod*(inumelem-1))
              abs_surface(4,nelemabs) = elmnts(3+ngnod*(inumelem-1))
              abs_surface(5,nelemabs) = ILEFT
+             !is_abs_surf(inumelem) = .true.
           endif
        enddo
     enddo

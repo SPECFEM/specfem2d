@@ -47,6 +47,7 @@ meshfem2D_TARGETS = \
 
 meshfem2D_OBJECTS = \
 	$O/meshfem2D_par.mesh_module.o \
+  $O/compute_elements_load_par.mesh.o \
 	$O/decompose_mesh.mesh.o \
 	$O/determine_abs_surface.mesh.o \
 	$O/determine_acoustic_surface.mesh.o \
@@ -73,6 +74,7 @@ meshfem2D_OBJECTS = \
 meshfem2D_MODULES = \
 	$(FC_MODDIR)/decompose_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/part_unstruct_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/compute_elements_load_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/source_file_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
