@@ -31,6 +31,7 @@
 !
 !========================================================================
 
+! subroutines to sort indexing arrays based on geometrical coordinates instead of based on topology (because that is much faster)
 
 ! subroutines to sort MPI buffers to assemble between chunks
 
@@ -46,41 +47,40 @@
 
   implicit none
 
-  integer,intent(in) :: npointot
-  integer,intent(out) :: nglob
+  integer, intent(in) :: npointot
+  integer, intent(out) :: nglob
 
-  integer,intent(inout) :: ibool(npointot)
+  integer, intent(inout) :: ibool(npointot)
 
   integer iglob(npointot),locval(npointot)
   integer ind(npointot),ninseg(npointot)
   logical ifseg(npointot)
-  double precision,intent(in) :: x(npointot),z(npointot)
+  double precision, intent(in) :: x(npointot),z(npointot)
   integer iwork(npointot)
   double precision work(npointot)
 
   ! local parameters
-  integer ipoin,i,j
-  integer nseg,ioff,iseg,ig
+  integer :: ipoin, i, j
+  integer :: nseg, ioff, iseg, ig
   ! define a tolerance, normalized radius is 1., so let's use a small value
   double precision,parameter :: xtol = SMALLVALTOL
 
   ! establish initial pointers
-  do ipoin= 1,npointot
-    locval(ipoin)=ipoin
+  do ipoin = 1,npointot
+    locval(ipoin) = ipoin
   enddo
 
-  ifseg(:)=.false.
+  ifseg(:) = .false.
 
-  nseg=1
-  ifseg(1)=.true.
-  ninseg(1)=npointot
+  nseg = 1
+  ifseg(1) = .true.
+  ninseg(1) = npointot
 
   do j = 1,NDIM
 
     ! sort within each segment
-    ioff=1
+    ioff = 1
     do iseg = 1,nseg
-
       if (j == 1) then
         call rank_buffers(x(ioff),ind,ninseg(iseg))
       else if (j == 2) then
@@ -90,42 +90,52 @@
       call swap_all_buffers(ibool(ioff),locval(ioff), &
                   x(ioff),z(ioff),iwork,work,ind,ninseg(iseg))
 
-      ioff=ioff+ninseg(iseg)
+      ioff = ioff + ninseg(iseg)
     enddo
 
     ! check for jumps in current coordinate
+    ! define a tolerance, normalized radius is 1., so let's use a small value
     if (j == 1) then
       do i = 2,npointot
-        if (dabs(x(i)-x(i-1)) > xtol) ifseg(i)=.true.
+        if (dabs(x(i) - x(i-1)) > xtol) ifseg(i) = .true.
       enddo
     else if (j == 2) then
       do i = 2,npointot
-        if (dabs(z(i)-z(i-1)) > xtol) ifseg(i)=.true.
+        if (dabs(z(i) - z(i-1)) > xtol) ifseg(i) = .true.
       enddo
     endif
 
     ! count up number of different segments
-    nseg=0
+    nseg = 0
     do i = 1,npointot
       if (ifseg(i)) then
-        nseg=nseg+1
-        ninseg(nseg)=1
+        nseg = nseg + 1
+        ninseg(nseg) = 1
       else
-        ninseg(nseg)=ninseg(nseg)+1
+        ninseg(nseg) = ninseg(nseg) + 1
       endif
     enddo
+
   enddo
 
   ! assign global node numbers (now sorted lexicographically)
-  ig=0
+  ig = 0
   do i = 1,npointot
-    if (ifseg(i)) ig=ig+1
-    iglob(locval(i))=ig
+    ! eliminate the multiples by using a single (new) point number for all the points that have the same X Y Z after sorting
+    if (ifseg(i)) ig = ig + 1
+    iglob(locval(i)) = ig
   enddo
 
-  nglob=ig
+  nglob = ig
 
   end subroutine sort_array_coordinates
+
+!
+!--------------------
+!
+
+
+! sorting routine left here for inlining
 
 ! -------------------- library for sorting routine ------------------
 
