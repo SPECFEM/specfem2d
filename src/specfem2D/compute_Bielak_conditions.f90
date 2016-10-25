@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -14,28 +13,19 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -43,29 +33,30 @@
 
 ! compute analytical initial plane wave for Bielak's conditions
 
-subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
-     x0_source, z0_source, A_plane, B_plane, C_plane, anglesource, anglesource_refl, &
-     c_inc, c_refl, time_offset,f0)
+  subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert, &
+                                       x0_source, z0_source, A_plane, B_plane, C_plane, anglesource, anglesource_refl, &
+                                       c_inc, c_refl, time_offset,f0)
+
+  use constants, only: NDIM
 
   implicit none
 
-  include "constants.h"
-
   integer, intent(in) :: iglob,nglob,it
 
+  double precision, dimension(NDIM,nglob), intent(in) :: coord
   double precision, intent(in) :: deltat
 
   double precision, intent(out) :: dxUx,dxUz,dzUx,dzUz,veloc_horiz,veloc_vert
+  double precision, intent(in) :: x0_source, z0_source
 
-  double precision, dimension(NDIM,nglob), intent(in) :: coord
+  double precision, dimension(NDIM),intent(in) :: A_plane, B_plane, C_plane
+  double precision, intent(in) :: anglesource, anglesource_refl
 
+  double precision :: c_inc, c_refl, time_offset, f0
+
+  ! local parameters
   double precision :: time_veloc,time_traction,t,x,z
-
   double precision, external :: ricker_Bielak_veloc
-
-  double precision x0_source, z0_source, anglesource, anglesource_refl
-  double precision c_inc, c_refl, time_offset, f0
-  double precision, dimension(NDIM) :: A_plane, B_plane, C_plane
 
 ! get the coordinates of the mesh point
   x = coord(1,iglob) - x0_source
@@ -159,16 +150,16 @@ subroutine compute_Bielak_conditions(coord,iglob,nglob,it,deltat,dxUx,dxUz,dzUx,
        + B_plane(2) * ricker_Bielak_veloc(t - sin(anglesource)*x/c_inc - cos(anglesource)*z/c_inc,f0) &
        + C_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0)
 
-end subroutine compute_Bielak_conditions
+  end subroutine compute_Bielak_conditions
 
 ! ********
 
 ! compute time variation of the source for analytical initial plane wave
-double precision function ricker_Bielak_integrale_displ(t,f0)
+  double precision function ricker_Bielak_integrale_displ(t,f0)
+
+  use constants, only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision :: t,f0,a
 
@@ -177,16 +168,16 @@ double precision function ricker_Bielak_integrale_displ(t,f0)
 ! Ricker
   ricker_Bielak_integrale_displ = t*exp(-a*t**2)
 
-end function ricker_Bielak_integrale_displ
+  end function ricker_Bielak_integrale_displ
 
 ! ********
 
 ! compute time variation of the source for analytical initial plane wave
-double precision function ricker_Bielak_displ(t,f0)
+  double precision function ricker_Bielak_displ(t,f0)
+
+  use constants, only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision :: t,f0,a
 
@@ -195,16 +186,16 @@ double precision function ricker_Bielak_displ(t,f0)
 ! Ricker
   ricker_Bielak_displ = (1 - 2*a*t**2)*exp(-a*t**2)
 
-end function ricker_Bielak_displ
+  end function ricker_Bielak_displ
 
 ! *******
 
 ! compute time variation of the source for analytical initial plane wave
-double precision function ricker_Bielak_veloc(t,f0)
+  double precision function ricker_Bielak_veloc(t,f0)
+
+  use constants, only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision :: t,f0,a
 
@@ -213,16 +204,16 @@ double precision function ricker_Bielak_veloc(t,f0)
 ! first time derivative of a Ricker
   ricker_Bielak_veloc = - 2*a*t*(3 - 2*a*t**2)*exp(-a*t**2)
 
-end function ricker_Bielak_veloc
+  end function ricker_Bielak_veloc
 
 ! *******
 
 ! compute time variation of the source for analytical initial plane wave
-double precision function ricker_Bielak_accel(t,f0)
+  double precision function ricker_Bielak_accel(t,f0)
+
+  use constants, only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision :: t,f0,a
 
@@ -231,5 +222,5 @@ double precision function ricker_Bielak_accel(t,f0)
 ! second time derivative of a Ricker
   ricker_Bielak_accel = - 2*a*(3 - 12*a*t**2 + 4*a**2*t**4)* exp(-a*t**2)
 
-end function ricker_Bielak_accel
+  end function ricker_Bielak_accel
 

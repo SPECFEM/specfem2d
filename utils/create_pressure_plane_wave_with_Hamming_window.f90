@@ -11,18 +11,18 @@
 ! pi
   double precision, parameter :: PI = 3.141592653589793d0
 
-  integer, parameter :: NSOURCES = 1000
+  integer, parameter :: NSOURCES = 100
 
 ! the plane wave will extend in the vertical direction from zmin to zmax
 ! and its amplitude in between will vary as a Hamming apodization window
-  double precision, parameter :: xs_center = -0.1d0
-  double precision, parameter :: zs_center = 0.07d0
-  double precision, parameter :: zs_size   = 0.43d0
+  double precision, parameter :: xs_center = 0.18d0
+  double precision, parameter :: zs_center = 0.065d0
+  double precision, parameter :: zs_size   = 0.1d0
   double precision, parameter :: zs_min = zs_center - zs_size/2.d0
   double precision, parameter :: zs_max = zs_center + zs_size/2.d0
 
 ! angle in degrees by which we rotate the plane wave
-  double precision, parameter :: angle_rotate_source = -45.d0 * (PI / 180.d0)
+  double precision, parameter :: angle_rotate_source = 45.d0 * (PI / 180.d0)
 
   double precision, parameter :: factor_max = 1.d10
 
@@ -59,9 +59,11 @@
     write(*,*) 'zs                              = ',zprime
     write(*,*) 'source_type                     = 1'
     write(*,*) 'time_function_type              = 1'
+    write(*,*) 'name_of_source_file             = /zoinef/ozef'
+    write(*,*) 'burst_band_width                = 10'
     write(*,*) 'f0                              = 1.d6'
-    write(*,*) 't0                              = 0.d0'
-    write(*,*) 'angleforce                      = 0.0'
+    write(*,*) 'tshift                          = 0.d0'
+    write(*,*) 'anglesource                      = 0.0'
     write(*,*) 'Mxx                             = 1.'
     write(*,*) 'Mzz                             = 1.'
     write(*,*) 'Mxz                             = 0.'

@@ -21,7 +21,7 @@ program compute_solution
 ! The algorithm for computation of convolution
 ! y_k = sumi_p1^p2 (h_i*x_{k-i})
 ! The meaning of the variable
-! Function:  stf[t] source time function
+! function:  stf[t] source time function
 !
 ! Variable:  A:   the amplitude of the source time function
 !            ts_stf: start time of the source time function
@@ -34,7 +34,7 @@ program compute_solution
 ! line.
 ! thus V_2D(x,z,t) = Int_{y_min}^{y_max} V_3D(x,y,z,t) dy
 
-Implicit none
+implicit none
 
 double precision :: amplitude, ts_stf, te_stf, ts_integrate, te_integrate
 double precision, external :: stf, stf_integration, stf_convolution, dirac_function, stf_differential
@@ -193,7 +193,7 @@ end program compute_solution
 
 double precision function dirac_function(i,j)
  integer :: i,j
- if(i /= j) then
+ if (i /= j) then
    dirac_function = 0.0d0
  else
    dirac_function = 1.0d0
@@ -206,7 +206,7 @@ double precision function stf(ts_stf,te_stf,amplitude,t,dp)
  double precision :: pi = 3.141592653589793238462643d0
 
 ! Ricker wavelet source
- if( t>= ts_stf .and. t <= te_stf ) then
+ if ( t >= ts_stf .and. t <= te_stf ) then
    stf = amplitude * (1.d0 - 2.0*(pi*dp*(t + ts_stf))**2)*dexp(-(pi*dp*(t + ts_stf))**2)
  else
    stf = 0.0d0
@@ -220,7 +220,7 @@ double precision function stf_differential(ts_stf,te_stf,amplitude,t,dp)
  double precision :: pi = 3.141592653589793238462643d0
 
 ! Ricker wavelet source
- if( t>= ts_stf .and. t <= te_stf ) then
+ if ( t >= ts_stf .and. t <= te_stf ) then
    stf_differential = amplitude * (-2.d0) * (pi*dp)**2 * (t + ts_stf) * &
                       (3.d0 - 2.0*(pi*dp*(t + ts_stf))**2)*dexp(-(pi*dp*(t + ts_stf))**2)
  else

@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -14,28 +13,19 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -43,39 +33,48 @@
 
   subroutine define_derivation_matrices()
 
+  use constants, only: GAUSSALPHA,GAUSSBETA,NGLLX,NGLLZ,ZERO,CUSTOM_REAL
+
   use specfem_par, only: xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz
+
   implicit none
 
-  include "constants.h"
+  ! temporary arrays
+  ! note: wxgll,wzgll from specfem_par are defined as CUSTOM_REAL
+  !       the subroutine zwgljd() works with double precision
+  double precision, dimension(NGLLX) :: wxgll_dble
+  double precision, dimension(NGLLZ) :: wzgll_dble
 
-  double precision, parameter :: alphaGLL = 0.d0, betaGLL = 0.d0
-
-! function for calculating derivatives of Lagrange polynomials
+  ! function for calculating derivatives of Lagrange polynomials
   double precision, external :: lagrange_deriv_GLL
 
-  integer i1,i2,k1,k2
+  integer :: i1,i2,k1,k2
 
-! set up coordinates of the Gauss-Lobatto-Legendre points
-  call zwgljd(xigll,wxgll,NGLLX,alphaGLL,betaGLL)
-  call zwgljd(zigll,wzgll,NGLLZ,alphaGLL,betaGLL)
+  ! set up coordinates of the Gauss-Lobatto-Legendre points
+  call zwgljd(xigll,wxgll_dble,NGLLX,GAUSSALPHA,GAUSSBETA)
+  call zwgljd(zigll,wzgll_dble,NGLLZ,GAUSSALPHA,GAUSSBETA)
 
-! if number of points is odd, the middle abscissa is exactly zero
-  if(mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = ZERO
-  if(mod(NGLLZ,2) /= 0) zigll((NGLLZ-1)/2+1) = ZERO
+  ! converts to CUSTOM_REAL
+  wxgll(:) = real(wxgll_dble(:),kind=CUSTOM_REAL)
+  wzgll(:) = real(wzgll_dble(:),kind=CUSTOM_REAL)
+
+  ! if number of points is odd, the middle abscissa is exactly zero
+  if (mod(NGLLX,2) /= 0) xigll((NGLLX-1)/2+1) = ZERO
+  if (mod(NGLLZ,2) /= 0) zigll((NGLLZ-1)/2+1) = ZERO
 
 ! calculate derivatives of the Lagrange polynomials
 ! and precalculate some products in double precision
 ! hprime(i,j) = h'_j(xigll_i) by definition of the derivation matrix
-  do i1=1,NGLLX
-    do i2=1,NGLLX
-      hprime_xx(i2,i1) = lagrange_deriv_GLL(i1-1,i2-1,xigll,NGLLX)
+  do i1 = 1,NGLLX
+    do i2 = 1,NGLLX
+      hprime_xx(i2,i1) = real(lagrange_deriv_GLL(i1-1,i2-1,xigll,NGLLX),kind=CUSTOM_REAL)
       hprimewgll_xx(i2,i1) = wxgll(i2) * hprime_xx(i2,i1)
     enddo
   enddo
 
-  do k1=1,NGLLZ
-    do k2=1,NGLLZ
-      hprime_zz(k2,k1) = lagrange_deriv_GLL(k1-1,k2-1,zigll,NGLLZ)
+  do k1 = 1,NGLLZ
+    do k2 = 1,NGLLZ
+      hprime_zz(k2,k1) = real(lagrange_deriv_GLL(k1-1,k2-1,zigll,NGLLZ),kind=CUSTOM_REAL)
       hprimewgll_zz(k2,k1) = wzgll(k2) * hprime_zz(k2,k1)
     enddo
   enddo
@@ -92,27 +91,35 @@
 
   subroutine define_GLJ_derivation_matrix()
 
+  use constants, only: NGLJ,CUSTOM_REAL
+
   use specfem_par, only: xiglj,wxglj,hprimeBar_xx,hprimeBarwglj_xx
+
   implicit none
 
-  include "constants.h"
+  double precision, parameter    :: alphaGLJ = 0.d0,betaGLJ = 1.d0
 
-  double precision, parameter    :: alphaGLJ=0.d0,betaGLJ=1.d0
+  ! note: wxglj from specfem_par are defined as CUSTOM_REAL
+  !       the subroutine zwgljd() works with double precision
+  double precision, dimension(NGLJ) :: wxglj_dble
 
-! function for calculating derivatives of GLJ polynomials
+  ! function for calculating derivatives of GLJ polynomials
   double precision, external :: poly_deriv_GLJ
 
   integer i1,i2
 
-! set up coordinates of the Gauss-Lobatto-Jacobi points
-  call zwgljd(xiglj,wxglj,NGLJ,alphaGLJ,betaGLJ)
+  ! set up coordinates of the Gauss-Lobatto-Jacobi points
+  call zwgljd(xiglj,wxglj_dble,NGLJ,alphaGLJ,betaGLJ)
+
+  ! converts to CUSTOM_REAL
+  wxglj(:) = real(wxglj_dble(:),kind=CUSTOM_REAL)
 
 ! calculate derivatives of the GLJ quadrature polynomials
 ! and precalculate some products in double precision
 ! hprimeBar(i,j) = hBar'_j(xiglj_i) by definition of the derivation matrix
-  do i1=1,NGLJ
-    do i2=1,NGLJ
-      hprimeBar_xx(i2,i1) = poly_deriv_GLJ(i1-1,i2-1,xiglj,NGLJ)
+  do i1 = 1,NGLJ
+    do i2 = 1,NGLJ
+      hprimeBar_xx(i2,i1) = real(poly_deriv_GLJ(i1-1,i2-1,xiglj,NGLJ),kind=CUSTOM_REAL)
       hprimeBarwglj_xx(i2,i1) = wxglj(i2) * hprimeBar_xx(i2,i1)
     enddo
   enddo

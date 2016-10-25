@@ -14,34 +14,25 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
+
 #include <stdio.h>
 #include <cuda.h>
 //#include <cublas.h>
@@ -49,10 +40,11 @@
 #include "config.h"
 #include "mesh_constants_cuda.h"
 
-
+/*
 //#define CUBLAS_ERROR(s,n)  if (s != CUBLAS_STATUS_SUCCESS) {  \
 //fprintf (stderr, "CUBLAS Memory Write Error @ %d\n",n); \
 //exit(EXIT_FAILURE); }
+*/
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -74,7 +66,7 @@ __global__ void UpdateDispVeloc_kernel(realw* displ,
 
   // because of block and grid sizing problems, there is a small
   // amount of buffer at the end of the calculation
-  if(id < size) {
+  if (id < size) {
     displ[id] = displ[id] + deltat*veloc[id] + deltatsqover2*accel[id];
     veloc[id] = veloc[id] + deltatover2*accel[id];
     accel[id] = 0.0f; // can do this using memset...not sure if faster,probably not
@@ -123,7 +115,7 @@ void FC_FUNC_(update_displacement_cuda,
 
   // Cuda timing
   cudaEvent_t start,stop;
-  if( CUDA_TIMING_UPDATE ){
+  if (CUDA_TIMING_UPDATE) {
     start_timing_cuda(&start,&stop);
   }
 
@@ -139,7 +131,7 @@ void FC_FUNC_(update_displacement_cuda,
                                                                 size,deltat,deltatsqover2,deltatover2);
 
   // kernel for backward fields
-  if(mp->simulation_type == 3) {
+  if (mp->simulation_type == 3) {
     realw b_deltat = *b_deltat_F;
     realw b_deltatsqover2 = *b_deltatsqover2_F;
     realw b_deltatover2 = *b_deltatover2_F;
@@ -149,7 +141,7 @@ void FC_FUNC_(update_displacement_cuda,
   }
 
   // Cuda timing
-  if( CUDA_TIMING_UPDATE ){
+  if (CUDA_TIMING_UPDATE) {
     realw flops,time;
     stop_timing_cuda(&start,&stop,"UpdateDispVeloc_kernel",&time);
     // time in seconds
@@ -172,7 +164,7 @@ void FC_FUNC_(update_displacement_cuda,
 // KERNEL 1
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void UpdatePotential_kernel(realw* potential_acoustic,
+__global__ void UpdatePotential_kernel(realw_p potential_acoustic,
                                        realw* potential_dot_acoustic,
                                        realw* potential_dot_dot_acoustic,
                                        int size,
@@ -184,13 +176,12 @@ __global__ void UpdatePotential_kernel(realw* potential_acoustic,
 
   // because of block and grid sizing problems, there is a small
   // amount of buffer at the end of the calculation
-  if(id < size) {
-    potential_acoustic[id] = potential_acoustic[id]
-                            + deltat*potential_dot_acoustic[id]
-                            + deltatsqover2*potential_dot_dot_acoustic[id];
+  if (id < size) {
+    realw p_dot_dot = potential_dot_dot_acoustic[id];
 
-    potential_dot_acoustic[id] = potential_dot_acoustic[id]
-                                + deltatover2*potential_dot_dot_acoustic[id];
+    potential_acoustic[id] += deltat*potential_dot_acoustic[id] + deltatsqover2*p_dot_dot;
+
+    potential_dot_acoustic[id] += deltatover2*p_dot_dot;
 
     potential_dot_dot_acoustic[id] = 0.0f;
   }
@@ -214,15 +205,15 @@ __global__ void UpdatePotential_kernel(realw* potential_acoustic,
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(it_update_displacement_ac_cuda,
-              it_update_displacement_ac_cuda)(long* Mesh_pointer,
-                                               realw* deltat_F,
-                                               realw* deltatsqover2_F,
-                                               realw* deltatover2_F,
-                                               realw* b_deltat_F,
-                                               realw* b_deltatsqover2_F,
-                                               realw* b_deltatover2_F) {
-  TRACE("\tit_update_displacement_ac_cuda");
+void FC_FUNC_(update_displacement_ac_cuda,
+              UPDATE_DISPLACEMENT_AC_CUDA)(long* Mesh_pointer,
+                                           realw* deltat_F,
+                                           realw* deltatsqover2_F,
+                                           realw* deltatover2_F,
+                                           realw* b_deltat_F,
+                                           realw* b_deltatsqover2_F,
+                                           realw* b_deltatover2_F) {
+  TRACE("\tupdate_displacement_ac_cuda");
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
   int size = mp->NGLOB_AB;
@@ -244,7 +235,7 @@ void FC_FUNC_(it_update_displacement_ac_cuda,
 
   // Cuda timing
   cudaEvent_t start,stop;
-  if( CUDA_TIMING_UPDATE ){
+  if (CUDA_TIMING_UPDATE) {
     start_timing_cuda(&start,&stop);
   }
 
@@ -254,7 +245,7 @@ void FC_FUNC_(it_update_displacement_ac_cuda,
                                                                  size,deltat,deltatsqover2,deltatover2);
 
   // backward/reconstructed wavefields
-  if(mp->simulation_type == 3) {
+  if (mp->simulation_type == 3) {
     realw b_deltat = *b_deltat_F;
     realw b_deltatsqover2 = *b_deltatsqover2_F;
     realw b_deltatover2 = *b_deltatover2_F;
@@ -266,7 +257,7 @@ void FC_FUNC_(it_update_displacement_ac_cuda,
   }
 
   // Cuda timing
-  if( CUDA_TIMING_UPDATE ){
+  if (CUDA_TIMING_UPDATE) {
     realw flops,time;
     stop_timing_cuda(&start,&stop,"UpdatePotential_kernel",&time);
     // time in seconds
@@ -282,7 +273,7 @@ void FC_FUNC_(it_update_displacement_ac_cuda,
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //printf("checking updatedispl_kernel launch...with %dx%d blocks\n",num_blocks_x,num_blocks_y);
-  exit_on_cuda_error("it_update_displacement_ac_cuda");
+  exit_on_cuda_error("update_displacement_ac_cuda");
 #endif
 }
 
@@ -306,7 +297,7 @@ __global__ void kernel_3_cuda_device(realw* veloc,
 
   // because of block and grid sizing problems, there is a small
   // amount of buffer at the end of the calculation
-  if(id < size) {
+  if (id < size) {
     accel[2*id] = accel[2*id]*rmassx[id];
     accel[2*id+1] = accel[2*id+1]*rmassz[id];
 
@@ -336,7 +327,7 @@ __global__ void kernel_3_accel_cuda_device(realw* accel,
 
   // because of block and grid sizing problems, there is a small
   // amount of buffer at the end of the calculation
-  if(id < size) {
+  if (id < size) {
     accel[2*id] = accel[2*id]*rmassx[id];
     accel[2*id+1] = accel[2*id+1]*rmassz[id];
   }
@@ -353,7 +344,7 @@ __global__ void kernel_3_veloc_cuda_device(realw* veloc,
 
   // because of block and grid sizing problems, there is a small
   // amount of buffer at the end of the calculation
-  if(id < size) {
+  if (id < size) {
     veloc[2*id] = veloc[2*id] + deltatover2*accel[2*id];
     veloc[2*id+1] = veloc[2*id+1] + deltatover2*accel[2*id+1];
 
@@ -390,7 +381,7 @@ void FC_FUNC_(kernel_3_a_cuda,
                                                                  mp->d_accel,
                                                                  size, deltatover2,
                                                                  mp->d_rmassx,mp->d_rmassz);
-   if(mp->simulation_type == 3) {
+   if (mp->simulation_type == 3) {
      realw b_deltatover2 = *b_deltatover2_F;
      kernel_3_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_b_veloc,
                                                                    mp->d_b_accel,
@@ -432,7 +423,7 @@ void FC_FUNC_(kernel_3_b_cuda,
                                                                       mp->d_accel,
                                                                       size,deltatover2);
 
-  if(mp->simulation_type == 3) {
+  if (mp->simulation_type == 3) {
     realw b_deltatover2 = *b_deltatover2_F;
     kernel_3_veloc_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_b_veloc,
                                                                         mp->d_b_accel,
@@ -455,83 +446,48 @@ void FC_FUNC_(kernel_3_b_cuda,
 /* ----------------------------------------------------------------------------------------------- */
 
 
-__global__ void kernel_3_a_acoustic_cuda_device(realw* potential_dot_dot_acoustic,
+__global__ void kernel_3_acoustic_cuda_device(realw* potential_dot_dot_acoustic,
+                                                realw* b_potential_dot_dot_acoustic,
+                                                realw* potential_dot_acoustic,
+                                                realw* b_potential_dot_acoustic,
                                                 int size,
-                                                realw* rmass_acoustic) {
-
-  int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
-
-  // because of block and grid sizing problems, there is a small
-  // amount of buffer at the end of the calculation
-  if(id < size) {
-    // multiplies pressure with the inverse of the mass matrix
-    potential_dot_dot_acoustic[id] = potential_dot_dot_acoustic[id]*rmass_acoustic[id];
-  }
-}
-
-/* ----------------------------------------------------------------------------------------------- */
-
-__global__ void kernel_3_b_acoustic_cuda_device(realw* potential_dot_acoustic,
-                                                realw* potential_dot_dot_acoustic,
-                                                int size,
+                                                int simulation_type,
                                                 realw deltatover2,
+                                                realw b_deltatover2,
                                                 realw* rmass_acoustic) {
+
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
 
   // because of block and grid sizing problems, there is a small
   // amount of buffer at the end of the calculation
-  if(id < size) {
-    // Newmark time scheme: corrector term
-    potential_dot_acoustic[id] = potential_dot_acoustic[id] + deltatover2*potential_dot_dot_acoustic[id];
+  if (id < size) {
+    // multiplies pressure with the inverse of the mass matrix
+    realw rmass = rmass_acoustic[id];
+    realw p_dot_dot = potential_dot_dot_acoustic[id]*rmass;
+    potential_dot_dot_acoustic[id] = p_dot_dot;
+    // corrector:
+    // updates the chi_dot term which requires chi_dot_dot(t+delta)
+    potential_dot_acoustic[id] += deltatover2*p_dot_dot;
+
+    if (simulation_type==3){
+      p_dot_dot = b_potential_dot_dot_acoustic[id]*rmass;
+      b_potential_dot_dot_acoustic[id] = p_dot_dot;
+      // corrector:
+      // updates the chi_dot term which requires chi_dot_dot(t+delta)
+      b_potential_dot_acoustic[id] += b_deltatover2*p_dot_dot;}
+
   }
 }
 
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
-void FC_FUNC_(kernel_3_a_acoustic_cuda,
-              KERNEL_3_ACOUSTIC_CUDA)(long* Mesh_pointer ) {
-
-TRACE("kernel_3_a_acoustic_cuda");
-
-  Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
-
-  int size = mp->NGLOB_AB;
-
-  int blocksize = BLOCKSIZE_KERNEL1;
-  int size_padded = ((int)ceil(((double)size)/((double)blocksize)))*blocksize;
-
-  int num_blocks_x, num_blocks_y;
-  get_blocks_xy(size_padded/blocksize,&num_blocks_x,&num_blocks_y);
-
-  dim3 grid(num_blocks_x,num_blocks_y);
-  dim3 threads(blocksize,1,1);
-
-  kernel_3_a_acoustic_cuda_device<<< grid, threads>>>(mp->d_potential_dot_dot_acoustic,
-                                                     size,
-                                                     mp->d_rmass_acoustic);
-
-  if(mp->simulation_type == 3) {
-   kernel_3_a_acoustic_cuda_device<<< grid, threads>>>(mp->d_b_potential_dot_dot_acoustic,
-                                                       size,
-                                                       mp->d_rmass_acoustic);
-  }
-
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  //printf("checking updatedispl_kernel launch...with %dx%d blocks\n",num_blocks_x,num_blocks_y);
-  exit_on_cuda_error("after kernel 3 a");
-#endif
-}
-
-/* ----------------------------------------------------------------------------------------------- */
-
-extern "C"
-void FC_FUNC_(kernel_3_b_acoustic_cuda,
+void FC_FUNC_(kernel_3_acoustic_cuda,
               KERNEL_3_ACOUSTIC_CUDA)(long* Mesh_pointer,
-                                      realw* deltatover2_F,
-                                      realw* b_deltatover2_F) {
+                                      realw* deltatover2,
+                                      realw* b_deltatover2) {
 
-TRACE("kernel_3_b_acoustic_cuda");
+TRACE("kernel_3_acoustic_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
@@ -546,25 +502,20 @@ TRACE("kernel_3_b_acoustic_cuda");
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  realw deltatover2 = *deltatover2_F;
+  kernel_3_acoustic_cuda_device<<< grid, threads>>>(mp->d_potential_dot_dot_acoustic,
+                                                    mp->d_b_potential_dot_dot_acoustic,
+                                                    mp->d_potential_dot_acoustic,
+                                                    mp->d_b_potential_dot_acoustic,
+                                                    size,
+                                                    mp->simulation_type,
+                                                    *deltatover2,
+                                                    *b_deltatover2,
+                                                    mp->d_rmass_acoustic);
 
-  kernel_3_b_acoustic_cuda_device<<< grid, threads>>>(mp->d_potential_dot_acoustic,
-                                                      mp->d_potential_dot_dot_acoustic,
-                                                      size, deltatover2,
-                                                      mp->d_rmass_acoustic);
-
-  if(mp->simulation_type == 3) {
-    realw b_deltatover2 = *b_deltatover2_F;
-
-    kernel_3_b_acoustic_cuda_device<<< grid, threads>>>(mp->d_b_potential_dot_acoustic,
-                                                        mp->d_b_potential_dot_dot_acoustic,
-                                                        size, b_deltatover2,
-                                                        mp->d_rmass_acoustic);
-  }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //printf("checking updatedispl_kernel launch...with %dx%d blocks\n",num_blocks_x,num_blocks_y);
-  exit_on_cuda_error("after kernel 3 b");
+  exit_on_cuda_error("after kernel 3");
 #endif
 }
 

@@ -1,0 +1,5 @@
+
+Example designed by Ting Yu and Dimitri Komatitsch:
+
+adds an example to show that the code is ready and accurate for seismic simulation with a plane wave source in an infinite medium (i.e., the top surface is not a free surface but rather a fictitious edge).
+

@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -14,28 +13,19 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -45,23 +35,27 @@
 
 ! compute pressure in acoustic elements and in elastic elements
 
-  use specfem_par
+  use specfem_par, only: CUSTOM_REAL,NGLLX,NGLLZ,nspec,ibool
+  use specfem_par_movie, only: vector_field_display
 
   implicit none
 
-  integer i,j,ispec,iglob
+  ! local parameters
+  integer :: i,j,ispec,iglob
+  ! pressure in an element
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: pressure_element
 
-! loop over spectral elements
+  ! loop over spectral elements
   do ispec = 1,nspec
 
-! compute pressure in this element
-    call compute_pressure_one_element(ispec)
+    ! compute pressure in this element
+    call compute_pressure_one_element(ispec,pressure_element)
 
-! use vector_field_display as temporary storage, store pressure in its second component
+    ! use vector_field_display as temporary storage, store pressure in its second component
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
-        vector_field_display(3,iglob) = pressure_element(i,j)
+        vector_field_display(2,iglob) = pressure_element(i,j)
       enddo
     enddo
 
@@ -73,33 +67,55 @@
 !=====================================================================
 !
 
-  subroutine compute_pressure_one_element(ispec)
-
+  subroutine compute_pressure_one_element(ispec,pressure_element)
 
 ! compute pressure in acoustic elements and in elastic elements
 
-  use specfem_par
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,TWO
+
+  use specfem_par, only: N_SLS,ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
+    ispec_is_gravitoacoustic,ispec_is_anisotropic,kmato,poroelastcoef,assign_external_model,vpext,vsext,rhoext, &
+    ATTENUATION_VISCOELASTIC,AXISYM,is_on_the_axis,displ_elastic,displs_poroelastic,displw_poroelastic, &
+    potential_dot_dot_acoustic,potential_acoustic,potential_dot_dot_gravitoacoustic,potential_gravitoacoustic, &
+    anisotropy,c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext,c55ext, &
+    hprimebar_xx,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,jacobian,ibool,coord,e1,e11,USE_TRICK_FOR_BETTER_PRESSURE
 
   implicit none
 
+  integer,intent(in) :: ispec
+  ! pressure in an element
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: pressure_element
 
-  integer ispec
-
+  ! local variables
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum
-
   integer :: i_sls
-
-! local variables
   integer :: i,j,k,iglob
-
   real(kind=CUSTOM_REAL) :: sigma_yy !! ,sigmap
   real(kind=CUSTOM_REAL) :: sigma_thetatheta
-
-
-! material properties of the elastic medium
+  ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: denst
-  real(kind=CUSTOM_REAL) :: mul_relaxed_viscoelastic,lambdal_relaxed_viscoelastic,lambdalplus2mul_relaxed_viscoel,cpl,csl
+  real(kind=CUSTOM_REAL) :: cpl,csl
+  real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
 
+  ! for anisotropy
+  double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25
+  ! Jacobian matrix and determinant
+  double precision :: xixl,xizl,gammaxl,gammazl
+  ! to evaluate cpI, cpII, and cs, and rI (poroelastic medium)
+  double precision :: phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar
+  double precision :: D_biot,H_biot,C_biot,M_biot
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic
+  double precision :: sigma_xx,sigma_zz
+
+  double precision :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
+  double precision :: dwx_dxi,dwx_dgamma,dwz_dxi,dwz_dgamma
+  double precision :: dux_dxl,duz_dxl,dux_dzl,duz_dzl
+  double precision :: dwx_dxl,dwz_dzl
+
+  double precision :: xxi
+
+  ! initializes
+  pressure_element(:,:) = 0._CUSTOM_REAL
 
 ! if elastic element
 !
@@ -128,7 +144,8 @@
 ! sigma_zz = lambda * (epsilon_xx + epsilon_yy)
 ! pressure = - trace(sigma) / 3 = - (lambda + 2*mu/3) (epsilon_xx + epsilon_yy)
 
-  if(elastic(ispec)) then
+  if (ispec_is_elastic(ispec)) then
+    ! elastic element
 
     ! get relaxed elastic parameters of current spectral element
     lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
@@ -139,7 +156,7 @@
       do i = 1,NGLLX
 
         !--- if external medium, get elastic parameters of current grid point
-        if(assign_external_model) then
+        if (assign_external_model) then
           cpl = vpext(i,j,ispec)
           csl = vsext(i,j,ispec)
           denst = rhoext(i,j,ispec)
@@ -157,28 +174,28 @@
         ! first double loop over GLL points to compute and store gradients
         ! we can merge the two loops because NGLLX == NGLLZ
 
-        if(AXISYM) then
+        if (AXISYM) then
           if (is_on_the_axis(ispec)) then
             do k = 1,NGLJ
               dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
-              duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+              duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprimeBar_xx(i,k)
               dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-              duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+              duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
             enddo
           else
             do k = 1,NGLJ
               dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-              duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+              duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
               dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-              duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+              duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
             enddo
           endif
         else
           do k = 1,NGLLX
             dux_dxi = dux_dxi + displ_elastic(1,ibool(k,j,ispec))*hprime_xx(i,k)
-            duz_dxi = duz_dxi + displ_elastic(3,ibool(k,j,ispec))*hprime_xx(i,k)
+            duz_dxi = duz_dxi + displ_elastic(2,ibool(k,j,ispec))*hprime_xx(i,k)
             dux_dgamma = dux_dgamma + displ_elastic(1,ibool(i,k,ispec))*hprime_zz(j,k)
-            duz_dgamma = duz_dgamma + displ_elastic(3,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + displ_elastic(2,ibool(i,k,ispec))*hprime_zz(j,k)
           enddo
         endif
 
@@ -197,7 +214,7 @@
 
 ! compute diagonal components of the stress tensor (include attenuation or anisotropy if needed)
 
-        if(ATTENUATION_VISCOELASTIC_SOLID) then
+        if (ATTENUATION_VISCOELASTIC) then
 
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
@@ -205,22 +222,22 @@
 ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-! When implementing viscoelasticity according to Carcione 1993 paper, the attenuation is
-! non-causal rather than causal. We fixed the problem by using equations in Carcione's
-! 2004 paper and his 2007 book (Carcione 2007 page 125).
+! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
+! non-causal rather than causal i.e. wave speed up instead of slowing down
+! when attenuation is turned on. We fixed that issue (which is not incorrect but non traditional)
+! by taking the unrelaxed state (infinite frequency) as a reference instead of the relaxed state (zero frequency)
+! and also using equations in Carcione's 2007 book.
+! See file doc/old_problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
+! and doc/how_we_modified_Carcione_1993_to_make_it_causal_and_include_the_missing_1_over_L_factor.pdf
 
-! J. M. Carcione, H. B. Helle, The physics and simulation of wave propagation at the ocean
-!  bottom, Geophysics, vol. 69(3), p. 825-839, 2004
-! J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
-!  and porous media, Elsevier, p. 124-125, 2007
+! See also J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
+! vol. 58(1), p. 110-120 (1993) for two memory-variable mechanisms (page 112).
 
-          ! compute unrelaxed elastic coefficients from formulas in Carcione 2007 page 125
-          lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
-                            - mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-          mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-          lambdalplus2mul_relaxed_viscoel = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
+! and J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation
+! in a linear viscoelastic medium, Geophysical Journal International,
+! vol. 95, p. 597-611 (1988) for two memory-variable mechanisms (page 604).
 
-          if(AXISYM) then
+          if (AXISYM) then
             if (is_on_the_axis(ispec)) then
               if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                 sigma_xx = 0._CUSTOM_REAL
@@ -275,18 +292,18 @@
             e11_sum = e11_sum + e11(i,j,ispec,i_sls)
           enddo
 
-          sigma_xx = sigma_xx + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
+          sigma_xx = sigma_xx + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
                       + TWO * mul_unrelaxed_elastic * e11_sum
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
-          sigma_yy = sigma_yy + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum
-          sigma_zz = sigma_zz + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
-                      - TWO * mul_relaxed_viscoelastic * e11_sum
+          sigma_yy = sigma_yy + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum
+          sigma_zz = sigma_zz + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
+                      - TWO * mul_unrelaxed_elastic * e11_sum
 
         else
 
           ! no attenuation
 
-          if(AXISYM) then
+          if (AXISYM) then
             if (is_on_the_axis(ispec)) then
               if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                 sigma_xx = 0._CUSTOM_REAL
@@ -333,8 +350,8 @@
         endif
 
         ! full anisotropy
-        if(anisotropic(ispec)) then
-          if(assign_external_model) then
+        if (ispec_is_anisotropic(ispec)) then
+          if (assign_external_model) then
             c11 = c11ext(i,j,ispec)
             c15 = c15ext(i,j,ispec)
             c13 = c13ext(i,j,ispec)
@@ -366,7 +383,7 @@
           ! implement anisotropy in 2D
           sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
-          if(c12 < 1.e-7 .or. c23 < 1.e-7) stop 'cannot compute pressure for an anisotropic material if c12 or c23 are zero'
+          if (c12 < 1.e-7 .or. c23 < 1.e-7) stop 'cannot compute pressure for an anisotropic material if c12 or c23 are zero'
           sigma_yy = c12*dux_dxl + c23*duz_dzl + c25*(duz_dxl + dux_dzl)
           sigma_zz = c13*dux_dxl + c33*duz_dzl + c35*(duz_dxl + dux_dzl)
 
@@ -379,37 +396,24 @@
       enddo
     enddo
 
-  else if(poroelastic(ispec)) then
+  else if (ispec_is_poroelastic(ispec)) then
+    ! poro-elastic element
 
     lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
     mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
 
     ! get poroelastic parameters of current spectral element
-    phil = porosity(kmato(ispec))
-    tortl = tortuosity(kmato(ispec))
-    ! solid properties
-    mul_s = poroelastcoef(2,1,kmato(ispec))
-    kappal_s = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS*mul_s
-    rhol_s = density(1,kmato(ispec))
-    ! fluid properties
-    kappal_f = poroelastcoef(1,2,kmato(ispec))
-    rhol_f = density(2,kmato(ispec))
-    ! frame properties
-    mul_fr = poroelastcoef(2,3,kmato(ispec))
-    kappal_fr = poroelastcoef(3,3,kmato(ispec)) - FOUR_THIRDS*mul_fr
-    rhol_bar =  (1.d0 - phil)*rhol_s + phil*rhol_f
+    call get_poroelastic_material(ispec,phi,tort,mu_s,kappa_s,rho_s,kappa_f,rho_f,eta_f,mu_fr,kappa_fr,rho_bar)
+
     ! Biot coefficients for the input phi
-    D_biot = kappal_s*(1.d0 + phil*(kappal_s/kappal_f - 1.d0))
-    H_biot = (kappal_s - kappal_fr)*(kappal_s - kappal_fr)/(D_biot - kappal_fr) &
-            + kappal_fr + FOUR_THIRDS*mul_fr
-    C_biot = kappal_s*(kappal_s - kappal_fr)/(D_biot - kappal_fr)
-    M_biot = kappal_s*kappal_s/(D_biot - kappal_fr)
+    call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
+
     ! where T = G:grad u_s + C div w I
     ! and T_f = C div u_s I + M div w I
     ! we are expressing lambdaplus2mu, lambda, and mu for G, C, and M
-    mul_G = mul_fr
-    lambdal_G = H_biot - TWO*mul_fr
-    lambdalplus2mul_G = lambdal_G + TWO*mul_G
+    mu_G = mu_fr
+    lambdal_G = H_biot - TWO*mu_fr
+    lambdalplus2mul_G = lambdal_G + TWO*mu_G
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -455,8 +459,7 @@
 
 ! compute diagonal components of the stress tensor (include attenuation if needed)
 
-        if(ATTENUATION_VISCOELASTIC_SOLID) then
-!-------------------- ATTENTION TO BE DEFINED ------------------------------!
+        if (ATTENUATION_VISCOELASTIC) then
 
 ! attenuation is implemented following the memory variable formulation of
 ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
@@ -464,20 +467,20 @@
 ! J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
 ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
 
-! When implement viscoelasticity according to Carcione 1993 paper, the attenuation is
-! non-causal rather than causal. We fixed the problem by using equations in Carcione's
-! 2004 paper and his 2007 book (Carcione 2007 page 125).
+! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
+! non-causal rather than causal i.e. wave speed up instead of slowing down
+! when attenuation is turned on. We fixed that issue (which is not incorrect but non traditional)
+! by taking the unrelaxed state (infinite frequency) as a reference instead of the relaxed state (zero frequency)
+! and also using equations in Carcione's 2007 book.
+! See file doc/old_problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
+! and doc/how_we_modified_Carcione_1993_to_make_it_causal_and_include_the_missing_1_over_L_factor.pdf
 
-! J. M. Carcione, H B. Helle, The physics and simulation of wave propagation at the ocean
-!  bottom, Geophysics, vol. 69(3), p. 825-839, 2004
-! J. M. Carcione, Wave fields in real media: wave propagation in anisotropic, anelastic
-!  and porous media, Elsevier, p. 124-125, 2007
+! See also J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
+! vol. 58(1), p. 110-120 (1993) for two memory-variable mechanisms (page 112).
 
-          ! compute relaxed elastic coefficients from formulas in Carcione 2007 page 125
-          lambdal_relaxed_viscoelastic = (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) / Mu_nu1(i,j,ispec) &
-                            - mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-          mul_relaxed_viscoelastic = mul_unrelaxed_elastic / Mu_nu2(i,j,ispec)
-          lambdalplus2mul_relaxed_viscoel = lambdal_relaxed_viscoelastic + TWO*mul_relaxed_viscoelastic
+! and J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation
+! in a linear viscoelastic medium, Geophysical Journal International,
+! vol. 95, p. 597-611 (1988) for two memory-variable mechanisms (page 604).
 
           ! compute the stress using the unrelaxed Lame parameters (Carcione 2007 page 125)
           sigma_xx = (lambdal_unrelaxed_elastic + 2.0 * mul_unrelaxed_elastic)*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
@@ -496,13 +499,13 @@
             e11_sum = e11_sum + e11(i,j,ispec,i_sls)
           enddo
 
-          sigma_xx = sigma_xx + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
-                    + TWO * mul_relaxed_viscoelastic * e11_sum
+          sigma_xx = sigma_xx + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
+                    + TWO * mul_unrelaxed_elastic * e11_sum
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
 !         sigma_yy = ...  ! it is not zero because of the plane strain formulation, thus it should be computed here
           stop 'pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here'
-          sigma_zz = sigma_zz + (lambdal_relaxed_viscoelastic + mul_relaxed_viscoelastic) * e1_sum &
-                    - TWO * mul_relaxed_viscoelastic * e11_sum
+          sigma_zz = sigma_zz + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
+                    - TWO * mul_unrelaxed_elastic * e11_sum
 
         else
 
@@ -525,31 +528,63 @@
     enddo
 
 ! pressure = - Chi_dot_dot if acoustic element
-  else if(acoustic(ispec)) then
+  else if (ispec_is_acoustic(ispec)) then
+    ! acoustic element
 
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-
-        iglob = ibool(i,j,ispec)
-
-        ! store pressure
-        pressure_element(i,j) = - potential_dot_dot_acoustic(iglob)
-
+    if (USE_TRICK_FOR_BETTER_PRESSURE) then
+      ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
+      ! use the second derivative of the source for the source time function instead of the source itself,
+      ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+      ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
+      ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
+      ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+      ! is accurate at second order and thus contains significantly less numerical noise.
+      ! compute pressure on the fluid/porous medium edge
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          ! store pressure
+          pressure_element(i,j) = - potential_acoustic(iglob)
+        enddo
       enddo
-    enddo
-
-  else if(gravitoacoustic(ispec)) then
-
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-
-        iglob = ibool(i,j,ispec)
-
-        ! store pressure
-        pressure_element(i,j) = - potential_dot_dot_gravitoacoustic(iglob)
-
+    else
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          ! store pressure
+          pressure_element(i,j) = - potential_dot_dot_acoustic(iglob)
+        enddo
       enddo
-    enddo
+    endif
+
+  else if (ispec_is_gravitoacoustic(ispec)) then
+    ! gravito-acoustic element
+
+    if (USE_TRICK_FOR_BETTER_PRESSURE) then
+      ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
+      ! use the second derivative of the source for the source time function instead of the source itself,
+      ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
+      ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
+      ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
+      ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
+      ! is accurate at second order and thus contains significantly less numerical noise.
+      ! compute pressure on the fluid/porous medium edge
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          ! store pressure
+          pressure_element(i,j) = - potential_gravitoacoustic(iglob)
+        enddo
+      enddo
+    else
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          ! store pressure
+          pressure_element(i,j) = - potential_dot_dot_gravitoacoustic(iglob)
+        enddo
+      enddo
+    endif
 
   endif ! end of test if acoustic or elastic or gravito element
 

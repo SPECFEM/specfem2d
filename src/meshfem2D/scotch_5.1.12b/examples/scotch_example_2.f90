@@ -5,7 +5,7 @@
 !*   AUTHOR     : Francois PELLEGRINI                     **
 !*                Frederic COUDERC                        **
 !*                                                        **
-!*   FUNCTION   : FORTRAN testbed for the LibSCOTCH       **
+!*   function   : FORTRAN testbed for the LibSCOTCH       **
 !*                library routines.                       **
 !*                                                        **
 !*   DATES      : # Version 5.1  : from : 24 jul 2010     **
@@ -20,7 +20,7 @@
 !*                # To be compiled with : gfortran        **
 !*                  scotch_example_2.f90                  **
 !*                  -L/scotch/lib/path/ -lscotch          **
-!*                  -lscotcherr -lz -lpthread -lrt        **
+!*                  -lscotcherr -lz -lpthread             **
 !*                                                        **
 !234567*****************************************************
 

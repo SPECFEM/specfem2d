@@ -1,0 +1,27 @@
+
+HOWTO produce acoustic sensitivity kernels, from Etienne Bachmann to Vadim and Dimitri, April 2016:
+---------------------------------------------------------------------------------------------------
+
+L'issue que j'avais ouverte https://github.com/geodynamics/specfem2d/issues/521 c'est pour signifier qu'il est impossible a present de faire une simulation de kernel, acoustique ou elastique avec Specfem2D quand il y a plusieurs partitions MPI. Je sais quoi faire pour le reparer (imiter le 3D en laissant xspecfem2d lire le Par_file, et non la database creee par xmeshfem2d), mais je manque cruellement de temps en ce moment! L'astuce pour l'instant est effectivement de ne pas utiliser scotch, mais le partitionneur interne french fries (partionning method =1 dans le Par_file).
+
+Donc dans specfem2D les kernels peuvent etre sortis en ascii, binaire, et new_binary_format. Ce dernier enregistre un seul kernel par fichier, et je ferai reference dans la suite a l'utilisation de cette derniere option.
+
+Pour les kernels en acoustique, il y a deux choix :
+
+-Une parametrisation du couple (rho, kappa (qui vaut rho*vp*vp en acoustique) ) c'est la 'vieille ' formulation, qui imite le cas elastique, ce sont les 'rho_ac_kl' et 'kappa_ac_kl' dans le code. Ils sortent dans rho_acoustic_kernel.bin et _kappa_acoustic_kernel.bin.
+
+- Une parametrisation  du couple (rho, vp) : c'est la nouvelle formulation, de Yang Luo (Princeton) sur laquelle Jeroen m'a suggere de travailler, et qui m'a donne de bons resultats jusque ici. Ce sont les rhop_ac_kl et alpha_ac_kl, sortis dans rhop_acoustic_kernel.bin et _c_acoustic_kernel.bin. Par rapport a la parametrisation d'avant, on a les liens :
+rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
+  alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
+
+
+Donc personnellement pour faire l'inversion j'ai utilise ce dernier fichier _c_acoustic_kernel.bin,  pour des inversions avec seulement la vitesse. Si j'ai bien compris ce que Jeroen me disait, cette parametrisation presente l'avantage de concentrer les infos de 'reflectivite' dans le premier noyau. Les parametres sont plus independants que la parametrisation d'avant, et ca marche mieux.
+
+Ainsi, pas d'autre option a changer dans le Par_file pour avoir ces kernels, ils sortent par defaut (le new_binary_format est par defaut dans le setup je crois).
+
+
+Note from Dimitri:
+------------------
+
+Attention a un truc, la definition de Kappa est fausse a plusieurs endroits du code 2D ; faudrait la reparer; c'est explique a https://github.com/geodynamics/specfem2d/issues/561
+

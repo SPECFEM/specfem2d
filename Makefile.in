@@ -13,28 +13,19 @@
 # the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 # using a spectral-element method (SEM).
 #
-# This software is governed by the CeCILL license under French law and
-# abiding by the rules of distribution of free software. You can use,
-# modify and/or redistribute the software under the terms of the CeCILL
-# license as circulated by CEA, CNRS and Inria at the following URL
-# "http://www.cecill.info".
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 #
-# As a counterpart to the access to the source code and rights to copy,
-# modify and redistribute granted by the license, users are provided only
-# with a limited warranty and the software's author, the holder of the
-# economic rights, and the successive licensors have only limited
-# liability.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-# In this respect, the user's attention is drawn to the risks associated
-# with loading, using, modifying and/or developing or reproducing the
-# software by the user in light of its specific status of free software,
-# that may mean that it is complicated to manipulate, and that also
-# therefore means that it is reserved for developers and experienced
-# professionals having in-depth computer knowledge. Users are therefore
-# encouraged to load and test the software's suitability as regards their
-# requirements in conditions enabling the security of their systems and/or
-# data to be ensured and, more generally, to use and operate it in the
-# same conditions as regards security.
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 # The full text of the license is available in file "LICENSE".
 #
@@ -47,32 +38,67 @@ FC = @FC@
 FCFLAGS = @FCFLAGS@
 MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
-CC = @CC@
 
-DEF_FFLAGS = @DEF_FFLAGS@ -I${SETUP}
-CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
-CFLAGS = @CFLAGS@ $(CPPFLAGS) -I${SETUP}
+FLAGS_CHECK = @FLAGS_CHECK@
+
+FCFLAGS_f90 = @FCFLAGS_f90@ -I${SETUP}
 
 FC_MODEXT = @FC_MODEXT@
 FC_MODDIR = @FC_MODDIR@
 
+FCCOMPILE_CHECK =@FCENV@ ${FC} ${FCFLAGS} $(FLAGS_CHECK)
+
+MPIFCCOMPILE_CHECK =@FCENV@ ${MPIFC} ${FCFLAGS} $(FLAGS_CHECK)
+
+CC = @CC@
+CFLAGS = @CFLAGS@ $(CPPFLAGS) -I${SETUP}
+CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
+
+# all linker flags
+MPILIBS += @LDFLAGS@ @LIBS@
+
+
+#######################################
+####
+#### MPI
+####
+#######################################
+
 ## serial or parallel
-@COND_MPI_TRUE@F90 = $(MPIFC) $(FCFLAGS) @FC_DEFINE@USE_MPI @FC_DEFINE@USE_SCOTCH -I"@SCOTCH_INCLUDEDIR@" $(MPILIBS)
-@COND_MPI_FALSE@F90 = $(FC) $(FCFLAGS)
+@COND_MPI_TRUE@MPI = yes
+@COND_MPI_FALSE@MPI = no
+
+@COND_MPI_TRUE@FCLINK = $(MPIFCCOMPILE_CHECK)
+@COND_MPI_FALSE@FCLINK = $(FCCOMPILE_CHECK)
+
+@COND_MPI_TRUE@COND_MPI_CPPFLAGS = -DWITH_MPI
+@COND_MPI_FALSE@COND_MPI_CPPFLAGS =
+
+MPI_INCLUDES = @MPI_INCLUDES@
+
+# fortran compiler setting
+@COND_MPI_TRUE@F90 = $(MPIFCCOMPILE_CHECK) @FC_DEFINE@USE_MPI
+@COND_MPI_FALSE@F90 = $(FCCOMPILE_CHECK)
+
+#######################################
+####
+#### SCOTCH
+####
+#######################################
+
+@COND_SCOTCH_TRUE@SCOTCH=yes
+@COND_SCOTCH_FALSE@SCOTCH=no
 
 USE_BUNDLED_SCOTCH = @USE_BUNDLED_SCOTCH@
+
 SCOTCH_DIR = @SCOTCH_DIR@
-SCOTCH_INCLUDEDIR = @SCOTCH_INCLUDEDIR@
+SCOTCH_INCDIR = @SCOTCH_INCLUDEDIR@
 SCOTCH_LIBDIR = @SCOTCH_LIBDIR@
 
-LIB =
+SCOTCH_INC = -I${SCOTCH_INCDIR}
+SCOTCH_LIBS = -L${SCOTCH_LIBDIR} -lscotch -lscotcherr
 
-## scotch libraries
-@COND_MPI_TRUE@LIB += -L"@SCOTCH_LIBDIR@" -lscotch -lscotcherr
-@COND_MPI_FALSE@LIB +=
-
-LINK = $(F90)
-
+SCOTCH_FLAGS = @FC_DEFINE@USE_SCOTCH $(SCOTCH_INC)
 
 #######################################
 ####
@@ -84,15 +110,26 @@ LINK = $(F90)
 @COND_CUDA_TRUE@CUDA = yes
 @COND_CUDA_FALSE@CUDA = no
 
+# CUDA version 5x & 6x
 @COND_CUDA5_TRUE@CUDA5 = yes
 @COND_CUDA5_FALSE@CUDA5 = no
+
+@COND_CUDA6_TRUE@CUDA6 = yes
+@COND_CUDA6_FALSE@CUDA6 = no
+
+@COND_CUDA7_TRUE@CUDA7 = yes
+@COND_CUDA7_FALSE@CUDA7 = no
+
+# CUDA compilation with linking
+@COND_CUDA_PLUS_TRUE@CUDA_PLUS = yes
+@COND_CUDA_PLUS_FALSE@CUDA_PLUS = no
 
 # default cuda libraries
 # runtime library -lcudart -lcuda and -lcublas needed
 
 CUDA_FLAGS = @CUDA_FLAGS@ 
 CUDA_INC = @CUDA_CPPFLAGS@ -I${SETUP}
-CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@
+CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@ -lstdc++
 
 @COND_CUDA_TRUE@NVCC = nvcc
 @COND_CUDA_FALSE@NVCC = @CC@
@@ -104,25 +141,33 @@ CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@
 # Tesla (default): -gencode=arch=compute_20,code=sm_20
 # Geforce GT 650m: -gencode=arch=compute_30,code=sm_30
 # Kepler (cuda5) : -gencode=arch=compute_35,code=sm_35
+# Kepler (cuda6.5,K80): -gencode=arch=compute_37,code=sm_37
+# Maxwell (cuda6.5+/cuda7,Quadro K2200): -gencode=arch=compute_50,code=sm_50
 GENCODE_20 = -gencode=arch=compute_20,code=\"sm_20,compute_20\"
 GENCODE_30 = -gencode=arch=compute_30,code=\"sm_30,compute_30\"
 GENCODE_35 = -gencode=arch=compute_35,code=\"sm_35,compute_35\"
+GENCODE_37 = -gencode=arch=compute_37,code=\"sm_37\"
+GENCODE_50 = -gencode=arch=compute_50,code=\"sm_50\"
 
+# CUDA version 7.x
+@COND_CUDA_TRUE@@COND_CUDA7_TRUE@GENCODE = $(GENCODE_50)
+# CUDA version 6.5
+@COND_CUDA_TRUE@@COND_CUDA6_TRUE@GENCODE = $(GENCODE_37)
 # CUDA version 5.x
 @COND_CUDA_TRUE@@COND_CUDA5_TRUE@GENCODE = $(GENCODE_35)
 # CUDA version 4.x
-@COND_CUDA_TRUE@@COND_CUDA5_FALSE@GENCODE = $(GENCODE_20)
+@COND_CUDA_TRUE@@COND_CUDA_PLUS_FALSE@GENCODE = $(GENCODE_20)
 
 # CUDA flags and linking
-@COND_CUDA_TRUE@NVCC_FLAGS_BASE = $(CUDA_FLAGS) $(CUDA_INC) $(COND_MPI_CPPFLAGS)
-@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -DCUDA $(GENCODE) -ftz=true
-@COND_CUDA_TRUE@@COND_CUDA5_FALSE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -DCUDA -DUSE_OLDER_CUDA4_GPU $(GENCODE)
+@COND_CUDA_TRUE@NVCC_FLAGS_BASE = $(CUDA_FLAGS) $(CUDA_INC) $(MPI_INCLUDES) $(COND_MPI_CPPFLAGS)
+@COND_CUDA_TRUE@@COND_CUDA_PLUS_TRUE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -dc -DCUDA $(GENCODE) -ftz=true
+@COND_CUDA_TRUE@@COND_CUDA_PLUS_FALSE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -DCUDA -DUSE_OLDER_CUDA4_GPU $(GENCODE)
 
-@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCCLINK_BASE = $(NVCC) $(CUDA_INC) $(COND_MPI_CPPFLAGS) -DCUDA
-@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCCLINK = $(NVCCLINK_BASE) -dlink $(GENCODE)
-@COND_CUDA_TRUE@@COND_CUDA5_FALSE@NVCCLINK = $(NVCCLINK_BASE) -DUSE_OLDER_CUDA4_GPU $(GENCODE)
+@COND_CUDA_TRUE@@COND_CUDA_PLUS_TRUE@NVCCLINK_BASE = $(NVCC) $(CUDA_INC) $(MPI_INCLUDES) $(COND_MPI_CPPFLAGS) -DCUDA
+@COND_CUDA_TRUE@@COND_CUDA_PLUS_TRUE@NVCCLINK = $(NVCCLINK_BASE) -dlink $(GENCODE)
+@COND_CUDA_TRUE@@COND_CUDA_PLUS_FALSE@NVCCLINK = $(NVCCLINK_BASE) -DUSE_OLDER_CUDA4_GPU $(GENCODE)
 
-@COND_CUDA_FALSE@NVCC_FLAGS = $(COND_MPI_CPPFLAGS)
+@COND_CUDA_FALSE@NVCC_FLAGS = $(MPI_INCLUDES) $(COND_MPI_CPPFLAGS)
 @COND_CUDA_FALSE@NVCCLINK = $(NVCC) $(NVCC_FLAGS)
 
 
@@ -139,14 +184,14 @@ B = @top_builddir@
 E = $B/bin
 # O : objects directory
 O = $B/obj
+# S_TOP : source file root directory
+S_TOP = @top_srcdir@
 # L : libraries directory
 L = $B/lib
 # setup file directory
 SETUP = $B/setup
 # output file directory
 OUTPUT = $B/OUTPUT_FILES
-# S_TOP : source file root directory
-S_TOP = @top_srcdir@
 
 
 #######################################
@@ -157,12 +202,13 @@ S_TOP = @top_srcdir@
 
 # code subdirectories
 SUBDIRS = \
+	auxiliaries \
+	cuda \
 	meshfem2D \
 	shared \
-	cuda \
 	specfem2D \
 	tomography/postprocess_sensitivity_kernels \
-	auxiliaries \
+	tomography \
 	$(EMPTY_MACRO)
 
 # default targets for the pure Fortran version
@@ -177,7 +223,7 @@ DEFAULT = \
 
 default: $(DEFAULT)
 
-all: default auxiliaries postprocess
+all: default auxiliaries postprocess tomography
 
 
 ifdef CLEAN
@@ -195,24 +241,53 @@ clean:
 endif
 
 realclean: clean
+ifeq (${USE_BUNDLED_SCOTCH},1)
 	@echo "cleaning bundled Scotch in directory: ${SCOTCH_DIR}/src"
 	$(MAKE) -C ${SCOTCH_DIR}/src realclean
+endif
 	-rm -rf $E/* $O/*
+
+# unit testing
+# If the first argument is "test"...
+ifeq (test,$(findstring test,firstword $(MAKECMDGOALS)))
+  # use the rest as arguments for "run"
+  TEST_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  # turn them into do-nothing targets
+  $(eval $(TEST_ARGS):;@:)
+endif
+
+tests:
+	@echo "testing in directory: ${S_TOP}/tests/"
+	cd ${S_TOP}/tests; ./run_all_tests.sh $(TEST_ARGS)
+	@echo ""
 
 
 help:
 	@echo "usage: make [executable]"
 	@echo ""
-	@echo "supported executables:"
+	@echo "supported main executables:"
 	@echo "    xspecfem2D"
 	@echo "    xmeshfem2D"
+	@echo ""
+	@echo "additional executables:"
+	@echo "- auxiliary executables: [make aux]"
 	@echo "    xadj_seismogram"
 	@echo "    xcheck_quality_external_mesh"
 	@echo "    xconvolve_source_timefunction"
 	@echo ""
+	@echo "- sensitivity kernel postprocessing tools: [make postprocess]"
+	@echo "    xcombine_sem"
+	@echo "    xsmooth_sem"
+	@echo ""
+	@echo "- tomography tools: [make tomography]"
+	@echo "    xsum_kernels"
+	@echo ""
+	@echo "for unit testing:"
+	@echo "    tests"
+	@echo ""
 
 
-.PHONY: all default backup clean realclean help
+.PHONY: all default backup clean realclean help tests
 
 #######################################
 
@@ -243,9 +318,10 @@ endef
 
 $(foreach dir, $(SUBDIRS), $(eval $(call shortcut,$(dir))))
 
+# shortcut testing
+test : tests
 
 # Other old shortcuts
-
 mesh : $E/xmeshfem2D
 spec : $E/xspecfem2D
 .PHONY: mesh spec

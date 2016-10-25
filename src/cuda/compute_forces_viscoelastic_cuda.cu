@@ -14,34 +14,25 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
+
 #include <stdio.h>
 #include <cuda.h>
 #include <cublas.h>
@@ -55,11 +46,11 @@
 
 #ifdef USE_TEXTURES_FIELDS
 
- realw_texture d_displ_tex;
- realw_texture d_accel_tex;
-  // backward/reconstructed
- realw_texture d_b_displ_tex;
- realw_texture d_b_accel_tex;
+realw_texture d_displ_tex;
+realw_texture d_accel_tex;
+// backward/reconstructed
+realw_texture d_b_displ_tex;
+realw_texture d_b_accel_tex;
 
 //note: texture variables are implicitly static, and cannot be passed as arguments to cuda kernels;
 //      thus, 1) we thus use if-statements (FORWARD_OR_ADJOINT) to determine from which texture to fetch from
@@ -83,7 +74,7 @@ template<> __device__ float texfetch_accel<3>(int x) { return tex1Dfetch(d_b_acc
 
 #ifdef USE_TEXTURES_CONSTANTS
 realw_texture d_hprime_xx_tex;
-realw_texture d_hprimewgll_xx_tex;
+//realw_texture d_hprimewgll_xx_tex;
 realw_texture d_wxgll_xx_tex;
 #endif
 
@@ -166,7 +157,7 @@ __device__  __forceinline__ void load_shared_memory_wxgll(const int* tx,
 
 __device__  __forceinline__ void load_shared_memory_hprimewgll(const int* tx,
                                                                realw_const_p d_hprimewgll_xx,
-                                                               realw* sh_hprimewgll_xx ){
+                                                               realw* sh_hprimewgll_xx) {
 
   // each thread reads its corresponding value
   // weighted hprime
@@ -184,7 +175,7 @@ __device__  __forceinline__ void load_shared_memory_hprimewgll(const int* tx,
 
 __device__  __forceinline__ void sum_hprime_xi(int I, int J,
                                               realw* tempxl,realw* tempzl,
-                                              realw* sh_tempx,realw* sh_tempz, realw* sh_hprime ){
+                                              realw* sh_tempx,realw* sh_tempz, realw* sh_hprime) {
 
   realw fac;
 
@@ -215,7 +206,7 @@ __device__  __forceinline__ void sum_hprime_xi(int I, int J,
 
 __device__  __forceinline__ void sum_hprime_gamma(int I, int J,
                                                  realw* tempxl,realw* tempzl,
-                                                 realw* sh_tempx,realw* sh_tempz, realw* sh_hprime ){
+                                                 realw* sh_tempx,realw* sh_tempz, realw* sh_hprime) {
 
   realw fac;
 
@@ -242,7 +233,7 @@ __device__  __forceinline__ void sum_hprime_gamma(int I, int J,
 
 __device__  __forceinline__ void sum_hprimewgll_xi(int I, int J,
                                                    realw* tempxl,realw* tempzl,
-                                                   realw* sh_tempx,realw* sh_tempz, realw* sh_hprimewgll ){
+                                                   realw* sh_tempx,realw* sh_tempz, realw* sh_hprimewgll) {
 
   realw fac;
 
@@ -270,7 +261,7 @@ __device__  __forceinline__ void sum_hprimewgll_xi(int I, int J,
 
 __device__  __forceinline__ void sum_hprimewgll_gamma(int I, int J,
                                                  realw* tempxl,realw* tempzl,
-                                                 realw* sh_tempx,realw* sh_tempz, realw* sh_hprimewgll ){
+                                                 realw* sh_tempx,realw* sh_tempz, realw* sh_hprimewgll) {
 
   realw fac;
 
@@ -387,11 +378,11 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
 // 2 FLOP
 
   // checks if anything to do
-  if( bx >= nb_blocks_to_compute ) return;
+  if (bx >= nb_blocks_to_compute ) return;
 
 
   // limits thread ids to range [0,25-1]
-  if( tx >= NGLL2 ) tx = tx - NGLL2 ;
+  if (tx >= NGLL2 ) tx = tx - NGLL2 ;
 
 
 // counts:
@@ -400,14 +391,14 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
 // + 0 BYTE
 
   // loads hprime's into shared memory
-  if( threadIdx.x < NGLL2 ) {
+  if (threadIdx.x < NGLL2) {
     // copy hprime from global memory to shared memory
     load_shared_memory_hprime(&tx,d_hprime_xx,sh_hprime_xx);
 
     // copy hprimewgll from global memory to shared memory
     load_shared_memory_hprimewgll(&tx,d_hprimewgll_xx,sh_hprimewgll_xx);
   }
-  else if ( threadIdx.x < NGLL2 + NGLLX ) load_shared_memory_wxgll(&tx,wxgll,sh_wxgll);
+  else if (threadIdx.x < NGLL2 + NGLLX ) load_shared_memory_wxgll(&tx,wxgll,sh_wxgll);
 
 
 
@@ -434,7 +425,7 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
 
   // copy from global memory to shared memory
   // each thread writes one of the NGLL^2 = 25 data points
-  if( threadIdx.x < NGLL2 ){
+  if (threadIdx.x < NGLL2) {
     // copy displacement from global memory to shared memory
     load_shared_memory_displ<FORWARD_OR_ADJOINT>(&tx,&iglob,d_displ,sh_tempx,sh_tempz);
   }
@@ -536,7 +527,7 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
   // form dot product with test vector, non-symmetric form
   // 1. cut-plane xi
   __syncthreads();
-  if( threadIdx.x < NGLL2 ) {
+  if (threadIdx.x < NGLL2) {
     sh_tempx[tx] = sh_wxgll[J] *jacobianl * (sigma_xx*xixl + sigma_xz*xizl); // sh_tempx1
     sh_tempz[tx] = sh_wxgll[J] *jacobianl * (sigma_xz*xixl + sigma_zz*xizl); // sh_tempz1
   }
@@ -546,7 +537,7 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
 
 
   __syncthreads();
-  if( threadIdx.x < NGLL2 ) {
+  if (threadIdx.x < NGLL2) {
     sh_tempx[tx] = sh_wxgll[I] * jacobianl * (sigma_xx*gammaxl +  sigma_xz*gammazl); // sh_tempx3
     sh_tempz[tx] = sh_wxgll[I] * jacobianl * (sigma_xz*gammaxl +  sigma_zz*gammazl); // sh_tempz3
   }
@@ -560,7 +551,7 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
   sum_terms3= -tempz1l - tempz3l;
 
   // assembles acceleration array
-  if(threadIdx.x < NGLL2) {
+  if (threadIdx.x < NGLL2) {
     atomicAdd(&d_accel[iglob*2], sum_terms1);
     atomicAdd(&d_accel[iglob*2+1], sum_terms3);
   }
@@ -651,7 +642,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
                         realw* d_c23store,
                         realw* d_c25store,realw* d_c33store,
                         realw* d_c35store,
-                        realw* d_c55store ){
+                        realw* d_c55store) {
 
 // elastic compute kernel without attenuation for anisotropic elements
 //
@@ -665,7 +656,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
 
   // checks if anything to do
-  if( bx >= nb_blocks_to_compute ) return;
+  if (bx >= nb_blocks_to_compute ) return;
 
   // thread-id == GLL node id
   // note: use only NGLL^3 = 125 active threads, plus 3 inactive/ghost threads,
@@ -673,7 +664,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
   //       to avoid execution branching and the need of registers to store an active state variable,
   //       the thread ids are put in valid range
   int tx = threadIdx.x;
-  if( tx >= NGLL2 ) tx = NGLL2-1;
+  if (tx >= NGLL2 ) tx = NGLL2-1;
 
   int J = (tx/NGLLX);
   int I = (tx-J*NGLLX);
@@ -706,7 +697,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
   __shared__ realw sh_hprimewgll_xx[NGLL2];
 
   // loads hprime's into shared memory
-  if( tx < NGLL2 ) {
+  if (tx < NGLL2) {
     // copy hprime from global memory to shared memory
     load_shared_memory_hprime(&tx,d_hprime_xx,sh_hprime_xx);
     // copy hprime from global memory to shared memory
@@ -719,7 +710,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
   working_element = bx;
 #else
   //mesh coloring
-  if( use_mesh_coloring_gpu ){
+  if (use_mesh_coloring_gpu) {
     working_element = bx;
   }else{
     // iphase-1 and working_element-1 for Fortran->C array conventions
@@ -734,7 +725,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
 
   // copy from global memory to shared memory
   // each thread writes one of the NGLL^3 = 125 data points
-  if( threadIdx.x < NGLL2 ){
+  if (threadIdx.x < NGLL2) {
     // copy displacement from global memory to shared memory
     load_shared_memory_displ<FORWARD_OR_ADJOINT>(&tx,&iglob,d_displ,sh_tempx,sh_tempz);
   }
@@ -779,7 +770,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
   duzdxl_plus_duxdzl = duzdxl + duxdzl;
 
   // full anisotropic case, stress calculations
-  if(ANISOTROPY){
+  if (ANISOTROPY){
     c11 = d_c11store[offset];
     c13 = d_c13store[offset];
     c15 = d_c15store[offset];
@@ -815,7 +806,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
   // form dot product with test vector, non-symmetric form
   // 1. cut-plane xi
   __syncthreads();
-  if( threadIdx.x < NGLL2 ) {
+  if (threadIdx.x < NGLL2) {
     sh_tempx[tx] = wxgll[J] *jacobianl * (sigma_xx*xixl + sigma_xz*xizl); // sh_tempx1
     sh_tempz[tx] = wxgll[J] *jacobianl * (sigma_xz*xixl + sigma_zz*xizl); // sh_tempz1
   }
@@ -825,7 +816,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
 
   // 3. cut-plane gamma
   __syncthreads();
-  if( threadIdx.x < NGLL2 ) {
+  if (threadIdx.x < NGLL2) {
     sh_tempx[tx] =wxgll[I] * jacobianl * (sigma_xx*gammaxl +  sigma_xz*gammazl); // sh_tempx3
     sh_tempz[tx] =wxgll[I] * jacobianl * (sigma_xz*gammaxl +  sigma_zz*gammazl); // sh_tempz3
   }
@@ -840,7 +831,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
 
 
   // assembles acceleration array
-  if(threadIdx.x < NGLL2) {
+  if (threadIdx.x < NGLL2) {
 
 #ifdef USE_MESH_COLORING_GPU
     // no atomic operation needed, colors don't share global points between elements
@@ -856,7 +847,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
 #else // MESH_COLORING
 
     //mesh coloring
-    if( use_mesh_coloring_gpu ){
+    if (use_mesh_coloring_gpu) {
 
       // no atomic operation needed, colors don't share global points between elements
 #ifdef USE_TEXTURES_FIELDS
@@ -870,7 +861,7 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
     }else {
       atomicAdd(&d_accel[iglob*2], sum_terms1);
       atomicAdd(&d_accel[iglob*2+1], sum_terms3);
-    } // if(use_mesh_coloring_gpu)
+    } // if (use_mesh_coloring_gpu)
 
 #endif // MESH_COLORING
 
@@ -891,8 +882,7 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
               realw* d_muv,
               realw* d_c11store,realw* d_c12store,realw* d_c13store,
               realw* d_c15store,realw* d_c23store,realw* d_c25store,
-              realw* d_c33store,realw* d_c35store,realw* d_c55store
-              ){
+              realw* d_c33store,realw* d_c35store,realw* d_c55store) {
 
   TRACE("\tKernel_2");
 
@@ -914,14 +904,14 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
 
   // Cuda timing
   cudaEvent_t start,stop;
-  if( CUDA_TIMING ){
+  if (CUDA_TIMING) {
     start_timing_cuda(&start,&stop);
   }
 
 
 
     // compute kernels without attenuation
-    if( ANISOTROPY ){
+    if (ANISOTROPY) {
       // full anisotropy
       // forward wavefields -> FORWARD_OR_ADJOINT == 1
       Kernel_2_noatt_ani_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
@@ -947,7 +937,7 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
                                                                         d_c55store);
 
       // backward/reconstructed wavefield
-      if(mp->simulation_type == 3) {
+      if (mp->simulation_type == 3) {
         // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
         Kernel_2_noatt_ani_impl<3><<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                         d_ibool,
@@ -994,7 +984,7 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
 
 
             // backward/reconstructed wavefield
-            if(mp->simulation_type == 3) {
+            if (mp->simulation_type == 3) {
               // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
               Kernel_2_noatt_iso_impl<3><<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                                  d_ibool,
@@ -1018,9 +1008,9 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
 
 
   // Cuda timing
-  if( CUDA_TIMING ){
+  if (CUDA_TIMING) {
 
-      if( ANISOTROPY ){
+      if (ANISOTROPY) {
         stop_timing_cuda(&start,&stop,"Kernel_2_noatt_ani_impl");
        }else{
 
@@ -1063,76 +1053,18 @@ void FC_FUNC_(compute_forces_viscoelastic_cuda,
   //double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
-
-
- #ifdef USE_TEXTURES_FIELDS
-  {
-    int size = NDIM * mp->NGLOB_AB;
-    #ifdef USE_OLDER_CUDA4_GPU
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      const textureReference* d_displ_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_displ_tex_ref_ptr, "d_displ_tex"), 4001);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_displ_tex_ref_ptr, mp->d_displ, &channelDesc, sizeof(realw)*size), 4001);
-      if( mp->use_mesh_coloring_gpu ){
-      const textureReference* d_accel_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_accel_tex_ref_ptr, "d_accel_tex"), 4003);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_accel_tex_ref_ptr, mp->d_accel, &channelDesc, sizeof(realw)*size), 4003);
-                                     }
-      if(mp->simulation_type == 3) {
-      const textureReference* d_b_displ_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_displ_tex_ref_ptr, "d_b_displ_tex"), 4001);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_b_displ_tex_ref_ptr, mp->d_b_displ, &channelDesc, sizeof(realw)*size), 4001);
-      if( mp->use_mesh_coloring_gpu ){
-      const textureReference* d_b_accel_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_accel_tex_ref_ptr, "d_b_accel_tex"), 4003);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_b_accel_tex_ref_ptr, mp->d_b_accel, &channelDesc, sizeof(realw)*size), 4003);
-                                   }}
-    #else
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_displ_tex, mp->d_displ, &channelDesc, sizeof(realw)*size), 4001);
-      if( mp->use_mesh_coloring_gpu ) print_CUDA_error_if_any(cudaBindTexture(0, &d_accel_tex, mp->d_accel, &channelDesc, sizeof(realw)*size), 4003);
-
-      if(mp->simulation_type == 3) {
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_b_displ_tex, mp->d_b_displ, &channelDesc, sizeof(realw)*size), 4001);
-      if( mp->use_mesh_coloring_gpu ) print_CUDA_error_if_any(cudaBindTexture(0, &d_b_accel_tex, mp->d_b_accel, &channelDesc, sizeof(realw)*size), 4003);
-                                   }
-    #endif
-  }
-  #endif
-
-
-  #ifdef USE_TEXTURES_CONSTANTS
-  {
-    #ifdef USE_OLDER_CUDA4_GPU
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      const textureReference* d_hprime_xx_tex_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_hprime_xx_tex_ptr, "d_hprime_xx_tex"), 4101);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_hprime_xx_tex_ptr, mp->d_hprime_xx, &channelDesc, sizeof(realw)*(NGLL2)), 4001);
-      const textureReference* d_wxgll_xx_tex_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_wxgll_xx_tex_ptr, "d_wxgll_xx_tex"), 4101);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_wxgll_xx_tex_ptr, mp->d_wxgll, &channelDesc, sizeof(realw)*(NGLL2)), 4001);
-   #else
-      cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_hprime_xx_tex, mp->d_hprime_xx, &channelDesc, sizeof(realw)*(NGLL2)), 4001);
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_wxgll_xx_tex, mp->d_wxgll, &channelDesc, sizeof(realw)*(NGLLX)), 40013);
- //     print_CUDA_error_if_any(cudaBindTexture(0, &d_hprimewgll_xx_tex, mp->d_hprimewgll_xx, &channelDesc, sizeof(realw)*(NGLL2)), 40010);
-
-   #endif
-  }
-  #endif
-
   int num_elements;
 
-  if( *iphase == 1 )
+  if (*iphase == 1)
     num_elements = *nspec_outer_elastic;
   else
     num_elements = *nspec_inner_elastic;
 
   // checks if anything to do
-  if( num_elements == 0 ) return;
+  if (num_elements == 0) return;
 
   // mesh coloring
-  if( mp->use_mesh_coloring_gpu ){
+  if (mp->use_mesh_coloring_gpu) {
     // note: array offsets require sorted arrays, such that e.g. ibool starts with elastic elements
     //         and followed by acoustic ones.
     //         elastic elements also start with outer than inner element ordering
@@ -1141,7 +1073,7 @@ void FC_FUNC_(compute_forces_viscoelastic_cuda,
     int offset,offset_nonpadded;
 
     // sets up color loop
-    if( *iphase == 1 ){
+    if (*iphase == 1) {
       // outer elements
       nb_colors = mp->num_colors_outer_elastic;
       istart = 0;
@@ -1165,7 +1097,7 @@ void FC_FUNC_(compute_forces_viscoelastic_cuda,
       nb_blocks_to_compute = mp->h_num_elem_colors_elastic[icolor];
 
       // checks
-      //if( nb_blocks_to_compute <= 0 ){
+      //if (nb_blocks_to_compute <= 0) {
       //  printf("error number of elastic color blocks: %d -- color = %d \n",nb_blocks_to_compute,icolor);
       //  exit(EXIT_FAILURE);
       //}
@@ -1194,7 +1126,7 @@ void FC_FUNC_(compute_forces_viscoelastic_cuda,
 
   }else{
     // no mesh coloring: uses atomic updates
-Kernel_2(num_elements,mp,*iphase,*deltat,*ANISOTROPY,
+    Kernel_2(num_elements,mp,*iphase,*deltat,*ANISOTROPY,
                mp->d_ibool,
                mp->d_xix,mp->d_xiz,
                mp->d_gammax,mp->d_gammaz,

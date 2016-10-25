@@ -1,42 +1,31 @@
-
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 6 . 2
-!                   ------------------------------
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
 !
-! Copyright Universite de Pau, CNRS and INRIA, France,
-! and Princeton University / California Institute of Technology, USA.
-! Contributors: Dimitri Komatitsch, dimitri DOT komatitsch aT univ-pau DOT fr
-!               Nicolas Le Goff, nicolas DOT legoff aT univ-pau DOT fr
-!               Roland Martin, roland DOT martin aT univ-pau DOT fr
-!               Christina Morency, cmorency aT princeton DOT edu
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and INRIA at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -64,8 +53,9 @@ program adj_seismogram
   double precision :: seism_veloc(NSTEP),seism_accel(NSTEP),ft_bar(NSTEP)
   character(len=3) :: compr(2),comp(3)
   character(len=150) :: filename
+  integer :: ier
 
-  NDIM=3
+  NDIM = 3
   comp = (/"BXX","BXY","BXZ"/)
 
   ! number of components
@@ -87,8 +77,9 @@ program adj_seismogram
 
      do icomp = 1, NDIMr
 
-        filename = 'OUTPUT_FILES/'//trim(station_name(irec))//'.AA.'// compr(icomp) // '.semd'
-        open(unit = 10, file = trim(filename))
+        filename = 'OUTPUT_FILES/'//'AA.'//trim(station_name(irec))//'.'// compr(icomp) // '.semd'
+        open(unit = 10, file = trim(filename),status='old',iostat=ier)
+        if (ier /= 0) stop 'Error opening trace file'
 
         do itime = 1,NSTEP
            read(10,*) time , seism(itime,icomp)
@@ -96,7 +87,7 @@ program adj_seismogram
 
      enddo
 
-     if(NDIMr==2)then
+     if (NDIMr == 2) then
         seism(:,3) = seism(:,2)
         seism(:,2) = 0.d0
      else
@@ -112,15 +103,16 @@ program adj_seismogram
      iend = min(floor(tend(irec)/deltat),NSTEP)
      print *,'istart =',istart, 'iend =', iend
      print *,'tstart =',istart*deltat, 'tend =', iend*deltat
-     if(istart >= iend) stop 'check istart,iend'
+     if (istart >= iend) stop 'check istart,iend'
      nlen = iend - istart +1
 
      do icomp = 1, NDIM
 
         print *,comp(icomp)
 
-        filename = 'SEM/'//trim(station_name(irec))//'.AA.'// comp(icomp) // '.adj'
-        open(unit = 11, file = trim(filename))
+        filename = 'SEM/'//'AA.'//trim(station_name(irec))//'.'// comp(icomp) // '.adj'
+        open(unit = 11, file = trim(filename),status='unknown',iostat=ier)
+        if (ier /= 0) stop 'Error opening SEM adjoint source file'
 
         time_window(:) = 0.d0
         seism_win(:) = seism(:,icomp)
@@ -147,7 +139,7 @@ program adj_seismogram
         ! cross-correlation traveltime adjoint source
         Nnorm = deltat * sum(time_window(:) * seism_win(:) * seism_accel(:))
         !Nnorm = deltat * sum(time_window(:) * seism_veloc(:) * seism_veloc(:))
-        if(abs(Nnorm) > EPS) then
+        if (abs(Nnorm) > EPS) then
            !ft_bar(:) = -seism_veloc(:) * time_window(:) / Nnorm
            ft_bar(:) = seism_veloc(:) * time_window(:) / Nnorm
            print *,'Norm =', Nnorm
@@ -158,7 +150,7 @@ program adj_seismogram
         endif
 
         do itime =1,NSTEP
-           if(icomp == adj_comp) then
+           if (icomp == adj_comp) then
               write(11,*) (itime-1)*deltat - t0, ft_bar(itime)
            else
               write(11,*) (itime-1)*deltat - t0, 0.d0
@@ -170,7 +162,7 @@ program adj_seismogram
 
   enddo
   print *,'*************************'
-  print *,'The input files (S****.AA.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in SEM'
+  print *,'The input files (AA.S****.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in SEM'
   print *,'*************************'
 
 end program adj_seismogram

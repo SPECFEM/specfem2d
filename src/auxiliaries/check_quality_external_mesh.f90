@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -15,28 +14,19 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -107,7 +97,7 @@
 
   integer ia
 
-  if(NGNOD /= 4) stop 'NGNOD must be 4'
+  if (NGNOD /= 4) stop 'NGNOD must be 4'
 
   ! ***
   ! *** read the parameter file
@@ -120,15 +110,15 @@
 
   ! read info about external mesh
   call read_value_logical_p(read_external_mesh, 'mesher.read_external_mesh')
-  if(err_occurred() /= 0) stop 'error reading parameter read_external_mesh in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter read_external_mesh in Par_file'
 
-  if(.not. read_external_mesh) stop 'this program is designed for read_external_mesh = .true.'
+  if (.not. read_external_mesh) stop 'this program is designed for read_external_mesh = .true.'
 
   call read_value_string_p(mesh_file, 'mesher.mesh_file')
-  if(err_occurred() /= 0) stop 'error reading parameter mesh_file in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter mesh_file in Par_file'
 
   call read_value_string_p(nodes_coords_file, 'mesher.nodes_coords_file')
-  if(err_occurred() /= 0) stop 'error reading parameter nodes_coords_file in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter nodes_coords_file in Par_file'
 
   call close_parameter_file()
 
@@ -141,9 +131,9 @@
   print *,'enter value:'
   read(5,*) iformat
 
-  if(iformat < 1 .or. iformat > 3) stop 'exiting...'
+  if (iformat < 1 .or. iformat > 3) stop 'exiting...'
 
-  if(iformat == 1 .or. iformat == 2) then
+  if (iformat == 1 .or. iformat == 2) then
     USE_OPENDX = .true.
   else
     USE_OPENDX = .false.
@@ -170,29 +160,29 @@
 
   allocate(ibool(NGNOD,NSPEC))
 
-  if(USE_OPENDX) then
+  if (USE_OPENDX) then
 
-  if(iformat == 1) then
+  if (iformat == 1) then
 
 ! read range of skewness used for elements
   print *
   print *,'enter minimum skewness for OpenDX (between 0. and 0.99):'
   read(5,*) skewness_AVS_DX_min
-  if(skewness_AVS_DX_min < 0.d0) skewness_AVS_DX_min = 0.d0
-  if(skewness_AVS_DX_min > 0.99999d0) skewness_AVS_DX_min = 0.99999d0
+  if (skewness_AVS_DX_min < 0.d0) skewness_AVS_DX_min = 0.d0
+  if (skewness_AVS_DX_min > 0.99999d0) skewness_AVS_DX_min = 0.99999d0
 
 !!!!!!!!  print *,'enter maximum skewness for OpenDX (between 0. and 1.):'
 !!!!!!!!!!!!!  read(5,*) skewness_AVS_DX_max
   skewness_AVS_DX_max = 0.99999d0 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if(skewness_AVS_DX_max < 0.d0) skewness_AVS_DX_max = 0.d0
-  if(skewness_AVS_DX_max > 0.99999d0) skewness_AVS_DX_max = 0.99999d0
+  if (skewness_AVS_DX_max < 0.d0) skewness_AVS_DX_max = 0.d0
+  if (skewness_AVS_DX_max > 0.99999d0) skewness_AVS_DX_max = 0.99999d0
 
-  if(skewness_AVS_DX_min > skewness_AVS_DX_max) stop 'incorrect skewness range'
+  if (skewness_AVS_DX_min > skewness_AVS_DX_max) stop 'incorrect skewness range'
 
   else
     print *,'enter the element number to output in OpenDX format between 1 and ',NSPEC
     read(5,*) ispec_to_output
-    if(ispec_to_output < 1 .or. ispec_to_output > NSPEC) stop 'incorrect element number to output'
+    if (ispec_to_output < 1 .or. ispec_to_output > NSPEC) stop 'incorrect element number to output'
   endif
 
   endif
@@ -228,21 +218,21 @@
   xgamma = ZERO
   zgamma = ZERO
 
-  do ia=1,ngnod
+  do ia = 1,ngnod
     xelm = x(ibool(ia,i))
     zelm = y(ibool(ia,i))
 
 ! create the 2D shape functions
-    if(ia == 1) then
+    if (ia == 1) then
       xi    = -1.d0
       gamma = -1.d0
-    else if(ia == 2) then
+    else if (ia == 2) then
       xi    = +1.d0
       gamma = -1.d0
-    else if(ia == 3) then
+    else if (ia == 3) then
       xi    = +1.d0
       gamma = +1.d0
-    else if(ia == 4) then
+    else if (ia == 4) then
       xi    = -1.d0
       gamma = +1.d0
     else
@@ -260,7 +250,7 @@
   jacobian = xxi*zgamma - xgamma*zxi
 
 ! the Jacobian is negative, this means that there is an error in the mesh
-  if(jacobian <= ZERO) then
+  if (jacobian <= ZERO) then
     print *,'element ',i,' has a negative Jacobian'
     stop 'negative Jacobian found'
   endif
@@ -291,14 +281,14 @@
 ! loop on all the elements
   do ispec = 1,NSPEC
 
-    if(mod(ispec,100000) == 0) print *,'processed ',ispec,' elements out of ',NSPEC
+    if (mod(ispec,100000) == 0) print *,'processed ',ispec,' elements out of ',NSPEC
 
       call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
 ! store element number in which the edge of minimum or maximum length is located
-    if(distmin < distance_min) ispec_min_edge_length = ispec
-    if(distmax > distance_max) ispec_max_edge_length = ispec
+    if (distmin < distance_min) ispec_min_edge_length = ispec
+    if (distmax > distance_max) ispec_max_edge_length = ispec
 
 ! compute minimum and maximum of quality numbers
     equiangle_skewness_min = min(equiangle_skewness_min,equiangle_skewness)
@@ -306,7 +296,7 @@
     diagonal_aspect_ratio_min = min(diagonal_aspect_ratio_min,diagonal_aspect_ratio)
     distance_min = min(distance_min,distmin)
 
-    if(equiangle_skewness > equiangle_skewness_max) ispec_equiangle_skewness_max = ispec
+    if (equiangle_skewness > equiangle_skewness_max) ispec_equiangle_skewness_max = ispec
     equiangle_skewness_max = max(equiangle_skewness_max,equiangle_skewness)
     edge_aspect_ratio_max = max(edge_aspect_ratio_max,edge_aspect_ratio)
     diagonal_aspect_ratio_max = max(diagonal_aspect_ratio_max,diagonal_aspect_ratio)
@@ -360,8 +350,8 @@
 
 ! store skewness in histogram
     iclass = int(equiangle_skewness * dble(NCLASSES))
-    if(iclass < 0) iclass = 0
-    if(iclass > NCLASSES-1) iclass = NCLASSES-1
+    if (iclass < 0) iclass = 0
+    if (iclass > NCLASSES-1) iclass = NCLASSES-1
     classes_skewness(iclass) = classes_skewness(iclass) + 1
 
   enddo
@@ -371,7 +361,7 @@
   print *,'histogram of skewness (0. good - 1. bad):'
   print *
   total_percent = 0.
-  open(unit=14,file='mesh_quality_histogram.txt',status='unknown')
+  open(unit=14,file='OUTPUT_FILES/mesh_quality_histogram.txt',status='unknown')
   do iclass = 0,NCLASSES-1
     current_percent = 100.*dble(classes_skewness(iclass))/dble(NSPEC)
     total_percent = total_percent + current_percent
@@ -382,7 +372,7 @@
   close(14)
 
 ! create script for Gnuplot histogram file
-  open(unit=14,file='plot_mesh_quality_histogram.gnu',status='unknown')
+  open(unit=14,file='OUTPUT_FILES/plot_mesh_quality_histogram.gnu',status='unknown')
   write(14,*) 'set term wxt'
   write(14,*) '#set term gif'
   write(14,*) '#set output "mesh_quality_histogram.gif"'
@@ -392,6 +382,7 @@
   write(14,*) 'set boxwidth ',1./real(NCLASSES)
   write(14,*) 'set xlabel "Skewness range"'
   write(14,*) 'set ylabel "Percentage of elements (%)"'
+  write(14,*) 'set loadpath "./OUTPUT_FILES"'
   write(14,*) 'plot "mesh_quality_histogram.txt" with boxes'
   write(14,*) 'pause -1 "hit any key..."'
   close(14)
@@ -401,7 +392,7 @@
   print *
 
 ! display warning if maximum skewness is too high
-  if(equiangle_skewness_max >= 0.75d0) then
+  if (equiangle_skewness_max >= 0.75d0) then
     print *
     print *,'*********************************************'
     print *,'*********************************************'
@@ -411,17 +402,17 @@
     print *
   endif
 
-  if(total_percent < 99.9d0 .or. total_percent > 100.1d0) then
+  if (total_percent < 99.9d0 .or. total_percent > 100.1d0) then
     print *,'total percentage = ',total_percent,' %'
     stop 'total percentage should be 100%'
   endif
 
 ! ************* create OpenDX file with elements in a certain range of skewness
 
-  if(USE_OPENDX) then
+  if (USE_OPENDX) then
 
   print *
-  if(iformat == 1) then
+  if (iformat == 1) then
     print *,'creating OpenDX file with subset of elements in skewness range'
     print *,'between ',skewness_AVS_DX_min,' and ',skewness_AVS_DX_max
   else
@@ -435,7 +426,7 @@
   ntotspecAVS_DX = 0
 
 ! loop on all the elements
-  if(iformat == 1) then
+  if (iformat == 1) then
 
   do ispec = 1,NSPEC
 
@@ -443,7 +434,7 @@
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
 ! check if element belongs to requested skewness range
-    if(equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max) &
+    if (equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max) &
         ntotspecAVS_DX = ntotspecAVS_DX + 1
 
   enddo
@@ -453,9 +444,9 @@
     ntotspecAVS_DX = 1
   endif
 
-  if(ntotspecAVS_DX == 0) then
+  if (ntotspecAVS_DX == 0) then
     stop 'no elements in skewness range, no file created'
-  else if(iformat == 1) then
+  else if (iformat == 1) then
     print *
     print *,'there are ',ntotspecAVS_DX,' elements in AVS or DX skewness range ',skewness_AVS_DX_min,skewness_AVS_DX_max
     print *
@@ -471,7 +462,7 @@
   mask_ibool(:) = .false.
 
 ! loop on all the elements
-  if(iformat == 1) then
+  if (iformat == 1) then
     ispec_begin = 1
     ispec_end = NSPEC
   else
@@ -485,28 +476,28 @@
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
 ! check if element needs to be output
-    if(iformat == 2 .or. (iformat == 1 .and. &
+    if (iformat == 2 .or. (iformat == 1 .and. &
        equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max)) then
 ! create point for first corner of the element
-       if(.not. mask_ibool(ibool(1,ispec))) then
+       if (.not. mask_ibool(ibool(1,ispec))) then
          mask_ibool(ibool(1,ispec)) = .true.
          NPOIN_unique_needed = NPOIN_unique_needed + 1
        endif
 
 ! create point for second corner of the element
-       if(.not. mask_ibool(ibool(2,ispec))) then
+       if (.not. mask_ibool(ibool(2,ispec))) then
          mask_ibool(ibool(2,ispec)) = .true.
          NPOIN_unique_needed = NPOIN_unique_needed + 1
        endif
 
 ! create point for third corner of the element
-       if(.not. mask_ibool(ibool(3,ispec))) then
+       if (.not. mask_ibool(ibool(3,ispec))) then
          mask_ibool(ibool(3,ispec)) = .true.
          NPOIN_unique_needed = NPOIN_unique_needed + 1
        endif
 
 ! create point for fourth corner of the element
-       if(.not. mask_ibool(ibool(4,ispec))) then
+       if (.not. mask_ibool(ibool(4,ispec))) then
          mask_ibool(ibool(4,ispec)) = .true.
          NPOIN_unique_needed = NPOIN_unique_needed + 1
        endif
@@ -528,7 +519,7 @@
   mask_ibool(:) = .false.
 
 ! loop on all the elements
-  if(iformat == 1) then
+  if (iformat == 1) then
     ispec_begin = 1
     ispec_end = NSPEC
   else
@@ -542,10 +533,10 @@
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
 ! check if element needs to be output
-    if(iformat == 2 .or. (iformat == 1 .and. &
+    if (iformat == 2 .or. (iformat == 1 .and. &
        equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max)) then
 ! create point for first corner of the element
-       if(.not. mask_ibool(ibool(1,ispec))) then
+       if (.not. mask_ibool(ibool(1,ispec))) then
          mask_ibool(ibool(1,ispec)) = .true.
          ibool_reduced(ibool(1,ispec)) = NPOIN_unique_needed
          write(11,*) sngl(x(ibool(1,ispec))),sngl(y(ibool(1,ispec))),sngl(z(ibool(1,ispec)))
@@ -553,7 +544,7 @@
        endif
 
 ! create point for second corner of the element
-       if(.not. mask_ibool(ibool(2,ispec))) then
+       if (.not. mask_ibool(ibool(2,ispec))) then
          mask_ibool(ibool(2,ispec)) = .true.
          ibool_reduced(ibool(2,ispec)) = NPOIN_unique_needed
          write(11,*) sngl(x(ibool(2,ispec))),sngl(y(ibool(2,ispec))),sngl(z(ibool(2,ispec)))
@@ -561,7 +552,7 @@
        endif
 
 ! create point for third corner of the element
-       if(.not. mask_ibool(ibool(3,ispec))) then
+       if (.not. mask_ibool(ibool(3,ispec))) then
          mask_ibool(ibool(3,ispec)) = .true.
          ibool_reduced(ibool(3,ispec)) = NPOIN_unique_needed
          write(11,*) sngl(x(ibool(3,ispec))),sngl(y(ibool(3,ispec))),sngl(z(ibool(3,ispec)))
@@ -569,7 +560,7 @@
        endif
 
 ! create point for fourth corner of the element
-       if(.not. mask_ibool(ibool(4,ispec))) then
+       if (.not. mask_ibool(ibool(4,ispec))) then
          mask_ibool(ibool(4,ispec)) = .true.
          ibool_reduced(ibool(4,ispec)) = NPOIN_unique_needed
          write(11,*) sngl(x(ibool(4,ispec))),sngl(y(ibool(4,ispec))),sngl(z(ibool(4,ispec)))
@@ -587,7 +578,7 @@
   write(11,*) 'object 2 class array type int rank 1 shape ',NGNOD,' items ',ntotspecAVS_DX,' data follows'
 
 ! loop on all the elements
-  if(iformat == 1) then
+  if (iformat == 1) then
     ispec_begin = 1
     ispec_end = NSPEC
   else
@@ -601,7 +592,7 @@
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
 ! check if element needs to be output
-    if(iformat == 2 .or. (iformat == 1 .and. &
+    if (iformat == 2 .or. (iformat == 1 .and. &
        equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max)) then
 ! point order in OpenDX in 2D is 1,4,2,3 *not* 1,2,3,4 as in AVS
 ! point order in OpenDX in 3D is 4,1,8,5,3,2,7,6, *not* 1,2,3,4,5,6,7,8 as in AVS
@@ -609,7 +600,7 @@
       write(11,"(i9,1x,i9,1x,i9,1x,i9,1x,i9,1x,i9,1x,i9,1x,i9)") &
             ibool_reduced(ibool(1,ispec)), ibool_reduced(ibool(4,ispec)), &
             ibool_reduced(ibool(2,ispec)), ibool_reduced(ibool(3,ispec))
-      if(iformat == 1) print *,'element ',ispec,' belongs to the range and has skewness = ',sngl(equiangle_skewness)
+      if (iformat == 1) print *,'element ',ispec,' belongs to the range and has skewness = ',sngl(equiangle_skewness)
     endif
 
   enddo
@@ -628,7 +619,7 @@
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
 ! check if element needs to be output
-    if(iformat == 2 .or. (iformat == 1 .and. &
+    if (iformat == 2 .or. (iformat == 1 .and. &
        equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max)) &
     write(11,*) sngl(equiangle_skewness)
 
@@ -744,20 +735,4 @@
    diagonal_aspect_ratio = max(dist1,dist2) / min(dist1,dist2)
 
   end subroutine create_mesh_quality_data_2D
-
-!========================================================================
-
-! dummy version needed to compile and link the call to "define_shape_functions" above
-
-subroutine exit_MPI(error_msg)
-
-  implicit none
-
-  character(len=*) error_msg
-
-  write(*,*) error_msg(1:len(error_msg))
-  write(*,*) 'Error detected'
-  stop 'error, program ended in exit_MPI'
-
-end subroutine exit_MPI
 

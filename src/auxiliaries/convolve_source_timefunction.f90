@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -14,28 +13,19 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -85,7 +75,7 @@
   dt = timeval(2) - timeval(1)
 
 ! number of integers for which the source wavelet is different from zero
-  if(triangle) then
+  if (triangle) then
     N_j = ceiling(half_duration_triangle/dt)
   else
     N_j = ceiling(1.5d0*half_duration_triangle/dt)
@@ -97,14 +87,14 @@
 
     do j = -N_j,N_j
 
-      if(i > j .and. i-j <= nlines) then
+      if (i > j .and. i-j <= nlines) then
 
       tau_j = dble(j)*dt
 
 ! convolve with a triangle
-    if(triangle) then
+    if (triangle) then
        height = 1.d0 / half_duration_triangle
-       if(abs(tau_j) > half_duration_triangle) then
+       if (abs(tau_j) > half_duration_triangle) then
          source = 0.d0
        else if (tau_j < 0.d0) then
          t1 = - N_j * dt
@@ -126,7 +116,7 @@
 
 ! convolve with a Gaussian
         exponentval = alpha**2 * tau_j**2
-        if(exponentval < 50.d0) then
+        if (exponentval < 50.d0) then
           source = alpha*exp(-exponentval)/sqrt(PI)
         else
           source = 0.d0
@@ -143,7 +133,7 @@
 
 ! compute number of samples to remove from end of seismograms
   number_remove = N_j + 1
-  do i=1,nlines - number_remove
+  do i = 1,nlines - number_remove
     write(*,*) sngl(timeval(i)),' ',sngl(sem_fil(i))
   enddo
 

@@ -14,33 +14,23 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -77,7 +67,7 @@ __global__ void prepare_boundary_accel_on_device(realw* d_accel, realw* d_send_a
 
      num_int=inum_inter_elastic[iinterface]-1;
 
-      if( id < d_nibool_interfaces_ext_mesh[num_int] ) {
+      if (id < d_nibool_interfaces_ext_mesh[num_int]) {
 
 
       // entry in interface array
@@ -107,7 +97,7 @@ TRACE("\ttransfer_boun_accel_from_device");
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
   // checks if anything to do
-  if( mp->size_mpi_buffer > 0 ){
+  if (mp->size_mpi_buffer > 0) {
 
     int blocksize = BLOCKSIZE_TRANSFER;
     int size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_ext_mesh)/((double)blocksize)))*blocksize;
@@ -122,7 +112,7 @@ TRACE("\ttransfer_boun_accel_from_device");
     //cudaEvent_t start, stop;
     //start_timing_cuda(&start,&stop);
 
-    if(*FORWARD_OR_ADJOINT == 1) {
+    if (*FORWARD_OR_ADJOINT == 1) {
 
       prepare_boundary_accel_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel,mp->d_send_accel_buffer,
                                                                               mp->ninterface_elastic,
@@ -143,7 +133,7 @@ TRACE("\ttransfer_boun_accel_from_device");
                               mp->size_mpi_buffer*sizeof(realw),cudaMemcpyDeviceToHost),97001);
 
     }
-    else if(*FORWARD_OR_ADJOINT == 3) {
+    else if (*FORWARD_OR_ADJOINT == 3) {
       prepare_boundary_accel_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel,mp->d_b_send_accel_buffer,
                                                                               mp->ninterface_elastic,
                                                                               mp->max_nibool_interfaces_ext_mesh,
@@ -183,7 +173,7 @@ void FC_FUNC_(transfer_boundary_from_device_a,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
-  if( mp->size_mpi_buffer > 0 ){
+  if (mp->size_mpi_buffer > 0) {
 
     int blocksize = BLOCKSIZE_TRANSFER;
     int size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_ext_mesh)/((double)blocksize)))*blocksize;
@@ -222,7 +212,7 @@ void FC_FUNC_(prepare_boundary_on_device,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
-  if( mp->size_mpi_buffer > 0 ){
+  if (mp->size_mpi_buffer > 0) {
 
     int blocksize = BLOCKSIZE_TRANSFER;
     int size_padded = ((int)ceil(((double)mp->max_nibool_interfaces_ext_mesh)/((double)blocksize)))*blocksize;
@@ -255,7 +245,7 @@ void FC_FUNC_(prepare_boundary_on_device,
 extern "C"
 void FC_FUNC_(transfer_boundary_to_device_a,
               TRANSFER_BOUNDARY_TO_DEVICE_A)(long* Mesh_pointer,
-                                             realw* buffer_recv_vector_ext_mesh,
+                                             realw* buffer_recv_vector_gpu,
                                              const int* max_nibool_interfaces_ext_mesh) {
 
 // asynchronous transfer from host to device
@@ -264,9 +254,9 @@ void FC_FUNC_(transfer_boundary_to_device_a,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
-  if( mp->size_mpi_buffer > 0 ){
+  if (mp->size_mpi_buffer > 0) {
     // copy on host memory
-    memcpy(mp->h_recv_accel_buffer,buffer_recv_vector_ext_mesh,mp->size_mpi_buffer*sizeof(realw));
+    memcpy(mp->h_recv_accel_buffer,buffer_recv_vector_gpu,mp->size_mpi_buffer*sizeof(realw));
 
     // asynchronous copy to GPU using copy_stream
     cudaMemcpyAsync(mp->d_send_accel_buffer,mp->h_recv_accel_buffer,
@@ -298,7 +288,7 @@ __global__ void assemble_boundary_accel_on_device(realw* d_accel, realw* d_send_
 
      num_int=inum_inter_elastic[iinterface]-1;
 
-     if( id < d_nibool_interfaces_ext_mesh[num_int] ) {
+     if (id < d_nibool_interfaces_ext_mesh[num_int]) {
 
       // entry in interface array
       ientry = id + max_nibool_interfaces_ext_mesh*num_int;
@@ -318,7 +308,7 @@ __global__ void assemble_boundary_accel_on_device(realw* d_accel, realw* d_send_
   // ! do iinterface = 1, num_interfaces_ext_mesh
   // !   do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
   // !     array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) = &
-  // !          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_vector_ext_mesh(:,ipoin,iinterface)
+  // !          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_vector_gpu(:,ipoin,iinterface)
   // !   enddo
   // ! enddo
 }
@@ -330,7 +320,7 @@ __global__ void assemble_boundary_accel_on_device(realw* d_accel, realw* d_send_
 extern "C"
 void FC_FUNC_(transfer_asmbl_accel_to_device,
               TRANSFER_ASMBL_ACCEL_TO_DEVICE)(long* Mesh_pointer,
-                                              realw* buffer_recv_vector_ext_mesh,
+                                              realw* buffer_recv_vector_gpu,
                                               const int* max_nibool_interfaces_ext_mesh,
                                               const int* nibool_interfaces_ext_mesh,
                                               const int* ibool_interfaces_ext_mesh,
@@ -339,19 +329,19 @@ TRACE("\ttransfer_asmbl_accel_to_device");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
-  if( mp->size_mpi_buffer > 0 ){
+  if (mp->size_mpi_buffer > 0) {
 
     //daniel: todo - check if this copy is only needed for adjoint simulation, otherwise it is called asynchronously?
-    if(*FORWARD_OR_ADJOINT == 1 ){
+    if (*FORWARD_OR_ADJOINT == 1) {
       // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
       cudaStreamSynchronize(mp->copy_stream);
     }
-    else if(*FORWARD_OR_ADJOINT == 3 ){
+    else if (*FORWARD_OR_ADJOINT == 3) {
       // explicitly synchronizes
       // (cudaMemcpy implicitly synchronizes all other cuda operations)
       synchronize_cuda();
 
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_accel_buffer, buffer_recv_vector_ext_mesh,
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_accel_buffer, buffer_recv_vector_gpu,
                               mp->size_mpi_buffer*sizeof(realw),cudaMemcpyHostToDevice),97001);
     }
 
@@ -374,7 +364,7 @@ TRACE("\ttransfer_asmbl_accel_to_device");
     // cudaEventCreate(&stop);
     // cudaEventRecord( start, 0 );
 
-    if(*FORWARD_OR_ADJOINT == 1) {
+    if (*FORWARD_OR_ADJOINT == 1) {
       //assemble forward accel
 
 
@@ -387,7 +377,7 @@ TRACE("\ttransfer_asmbl_accel_to_device");
 
 
     }
-    else if(*FORWARD_OR_ADJOINT == 3) {
+    else if (*FORWARD_OR_ADJOINT == 3) {
       //assemble adjoint accel
       assemble_boundary_accel_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel, mp->d_b_send_accel_buffer,
                                                                                mp->ninterface_elastic,
@@ -426,9 +416,9 @@ void FC_FUNC_(sync_copy_from_device,
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
   // Wait until async-memcpy of outer elements is finished and start MPI.
-  if( *iphase != 2 ){ exit_on_cuda_error("sync_copy_from_device must be called for iphase == 2"); }
+  if (*iphase != 2) { exit_on_cuda_error("sync_copy_from_device must be called for iphase == 2"); }
 
-  if( mp->size_mpi_buffer > 0 ){
+  if (mp->size_mpi_buffer > 0) {
     // waits for asynchronous copy to finish
     cudaStreamSynchronize(mp->copy_stream);
 

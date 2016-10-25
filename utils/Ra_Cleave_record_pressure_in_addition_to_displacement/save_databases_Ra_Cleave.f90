@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -15,28 +14,19 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -82,7 +72,7 @@
     ! opens Database file
     write(prname, "('./OUTPUT_FILES/Database',i5.5)") iproc
     open(unit=15,file=trim(prname),status='unknown',iostat=ios)
-    if( ios /= 0 ) stop 'error saving databases; check that directory OUTPUT_FILES exists'
+    if ( ios /= 0 ) stop 'error saving databases; check that directory OUTPUT_FILES exists'
 
     write(15,*) '#'
     write(15,*) '# Database for SPECFEM2D'
@@ -97,7 +87,7 @@
 
     call write_glob2loc_nodes_database(15, iproc, npgeo, 1)
 
-!   DK DK add support for using pml in mpi mode with external mesh
+!   DK DK add support for using PML in MPI mode with external mesh
 !   call write_partition_database(15, iproc, nspec, num_material, ngnod, 1)
     call write_partition_database(15, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 1)
 
@@ -170,8 +160,8 @@
     write(15,*) 'Q0 freq0'
     write(15,*) Q0,freq0
 
-    write(15,*) 'p_sv'
-    write(15,*) p_sv
+    write(15,*) 'P_SV'
+    write(15,*) P_SV
 
     write(15,*) 'factor_subsample_image'
     write(15,*) factor_subsample_image
@@ -200,9 +190,6 @@
     write(15,*) 'time_stepping_scheme'
     write(15,*) time_stepping_scheme
 
-    write(15,*) 'ADD_SPRING_TO_STACEY'
-    write(15,*) ADD_SPRING_TO_STACEY
-
     write(15,*) 'ADD_PERIODIC_CONDITIONS'
     write(15,*) ADD_PERIODIC_CONDITIONS
 
@@ -220,7 +207,7 @@
     do i_source=1,NSOURCES
       write(15,*) 'source', i_source
       write(15,*) source_type(i_source),time_function_type(i_source), &
-                  xs(i_source),zs(i_source),f0(i_source),tshift_src(i_source), &
+                  xs(i_source),zs(i_source),f0_source(i_source),tshift_src(i_source), &
                   factor(i_source),anglesource(i_source), &
                   Mxx(i_source),Mzz(i_source),Mxz(i_source)
     enddo
@@ -258,7 +245,7 @@
     write(15,*) 'nelemabs nelem_acoustic_surface num_fluid_solid_edges num_fluid_poro_edges'
     write(15,*) 'num_solid_poro_edges nnodes_tangential_curve'
     write(15,*) nelemabs_loc,nelem_acoustic_surface_loc, &
-                nedges_coupled_loc,nedges_acporo_coupled_loc,&
+                nedges_coupled_loc,nedges_acporo_coupled_loc, &
                 nedges_elporo_coupled_loc,nnodes_tangential_curve
 
     write(15,*) 'Material sets (num 1 rho vp vs 0 0 QKappa Qmu 0 0 0 0 0 0) or '
@@ -267,24 +254,24 @@
     do i=1,nb_materials
       if (icodemat(i) == ISOTROPIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
-      else if(icodemat(i) == POROELASTIC_MATERIAL) then
+      else if (icodemat(i) == POROELASTIC_MATERIAL) then
          write(15,*) i,icodemat(i),rho_s(i),rho_f(i),phi(i),tortuosity(i), &
-                    permxx(i),permxz(i),permzz(i),kappa_s(i),&
+                    permxx(i),permxz(i),permzz(i),kappa_s(i), &
                     kappa_f(i),kappa_fr(i),eta_f(i),mu_fr(i),Qmu(i)
       else
          write(15,*) i,icodemat(i),rho_s(i),cp(i),cs(i), &
-                    aniso3(i),aniso4(i),aniso5(i),aniso6(i),&
+                    aniso3(i),aniso4(i),aniso5(i),aniso6(i), &
                     aniso7(i),aniso8(i),QKappa(i),Qmu(i),0,0
       endif
     enddo
 
     write(15,*) 'Arrays kmato and knods for each bloc:'
 
-!   DK DK add support for using pml in mpi mode with external mesh
+!   DK DK add support for using PML in MPI mode with external mesh
 !   call write_partition_database(15, iproc, nspec, num_material, ngnod, 2)
     call write_partition_database(15, iproc, nspec, num_material, region_pml_external_mesh, ngnod, 2)
 
-    if ( nproc /= 1 ) then
+    if (nproc /= 1) then
       call write_interfaces_database(15, nproc, iproc, &
                               my_ninterface, my_interfaces, my_nb_interfaces, 1)
 
@@ -301,7 +288,7 @@
 
 
     write(15,*) 'List of absorbing elements (edge1 edge2 edge3 edge4 type):'
-    if ( any_abs ) then
+    if (any_abs) then
       call write_abs_merge_database(15, iproc, 2)
     endif
 

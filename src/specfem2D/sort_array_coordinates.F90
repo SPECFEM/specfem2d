@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -14,35 +13,25 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
 
-
-#ifdef USE_MPI
+! subroutines to sort indexing arrays based on geometrical coordinates instead of based on topology (because that is much faster)
 
 ! subroutines to sort MPI buffers to assemble between chunks
 
@@ -54,90 +43,99 @@
 !
 ! returns: sorted indexing array (ibool),  reordering array (iglob) & number of global points (nglob)
 
+  use constants, only: NGLLX,NGLLZ,NDIM,SMALLVALTOL
+
   implicit none
 
-  include "constants.h"
+  integer, intent(in) :: npointot
+  integer, intent(out) :: nglob
 
-  integer,intent(in) :: npointot
-  integer,intent(out) :: nglob
-
-  integer,intent(inout) :: ibool(npointot)
+  integer, intent(inout) :: ibool(npointot)
 
   integer iglob(npointot),locval(npointot)
   integer ind(npointot),ninseg(npointot)
   logical ifseg(npointot)
-  double precision,intent(in) :: x(npointot),z(npointot)
+  double precision, intent(in) :: x(npointot),z(npointot)
   integer iwork(npointot)
   double precision work(npointot)
 
   ! local parameters
-  integer ipoin,i,j
-  integer nseg,ioff,iseg,ig
+  integer :: ipoin, i, j
+  integer :: nseg, ioff, iseg, ig
   ! define a tolerance, normalized radius is 1., so let's use a small value
   double precision,parameter :: xtol = SMALLVALTOL
 
   ! establish initial pointers
-  do ipoin=1,npointot
-    locval(ipoin)=ipoin
+  do ipoin = 1,npointot
+    locval(ipoin) = ipoin
   enddo
 
-  ifseg(:)=.false.
+  ifseg(:) = .false.
 
-  nseg=1
-  ifseg(1)=.true.
-  ninseg(1)=npointot
+  nseg = 1
+  ifseg(1) = .true.
+  ninseg(1) = npointot
 
-  do j=1,NDIM
+  do j = 1,NDIM
 
     ! sort within each segment
-    ioff=1
-    do iseg=1,nseg
-
-      if(j == 1) then
+    ioff = 1
+    do iseg = 1,nseg
+      if (j == 1) then
         call rank_buffers(x(ioff),ind,ninseg(iseg))
-      else if(j == 2) then
+      else if (j == 2) then
         call rank_buffers(z(ioff),ind,ninseg(iseg))
       endif
 
       call swap_all_buffers(ibool(ioff),locval(ioff), &
                   x(ioff),z(ioff),iwork,work,ind,ninseg(iseg))
 
-      ioff=ioff+ninseg(iseg)
+      ioff = ioff + ninseg(iseg)
     enddo
 
     ! check for jumps in current coordinate
-    if(j == 1) then
-      do i=2,npointot
-        if(dabs(x(i)-x(i-1)) > xtol) ifseg(i)=.true.
+    ! define a tolerance, normalized radius is 1., so let's use a small value
+    if (j == 1) then
+      do i = 2,npointot
+        if (dabs(x(i) - x(i-1)) > xtol) ifseg(i) = .true.
       enddo
-    else if(j == 2) then
-      do i=2,npointot
-        if(dabs(z(i)-z(i-1)) > xtol) ifseg(i)=.true.
+    else if (j == 2) then
+      do i = 2,npointot
+        if (dabs(z(i) - z(i-1)) > xtol) ifseg(i) = .true.
       enddo
     endif
 
     ! count up number of different segments
-    nseg=0
-    do i=1,npointot
-      if(ifseg(i)) then
-        nseg=nseg+1
-        ninseg(nseg)=1
+    nseg = 0
+    do i = 1,npointot
+      if (ifseg(i)) then
+        nseg = nseg + 1
+        ninseg(nseg) = 1
       else
-        ninseg(nseg)=ninseg(nseg)+1
+        ninseg(nseg) = ninseg(nseg) + 1
       endif
     enddo
+
   enddo
 
   ! assign global node numbers (now sorted lexicographically)
-  ig=0
-  do i=1,npointot
-    if(ifseg(i)) ig=ig+1
-    iglob(locval(i))=ig
+  ig = 0
+  do i = 1,npointot
+    ! eliminate the multiples by using a single (new) point number for all the points that have the same X Y Z after sorting
+    if (ifseg(i)) ig = ig + 1
+    iglob(locval(i)) = ig
   enddo
 
-  nglob=ig
+  nglob = ig
 
   end subroutine sort_array_coordinates
+
+!
+!--------------------
+!
+
+
+! sorting routine left here for inlining
 
 ! -------------------- library for sorting routine ------------------
 
@@ -156,46 +154,46 @@
   integer i,j,l,ir,indx
   double precision q
 
-  do j=1,n
+  do j = 1,n
     IND(j)=j
   enddo
 
-  if(n == 1) return
+  if (n == 1) return
 
   L=n/2+1
   ir=n
-  100 CONTINUE
-   IF(l>1) THEN
+  100 continue
+   if (l > 1) then
       l=l-1
-      indx=ind(l)
-      q=a(indx)
+      indx=IND(l)
+      q=A(indx)
    ELSE
-      indx=ind(ir)
-      q=a(indx)
-      ind(ir)=ind(1)
+      indx=IND(ir)
+      q=A(indx)
+      IND(ir)=IND(1)
       ir=ir-1
       if (ir == 1) then
-         ind(1)=indx
+         IND(1)=indx
          return
       endif
    endif
    i=l
    j=l+l
-  200    CONTINUE
-   IF(J <= IR) THEN
-      IF(J < IR) THEN
-         IF(A(IND(j)) < A(IND(j+1))) j=j+1
+  200    continue
+   if (j <= ir) then
+      if (j < ir) then
+         if (A(IND(j)) < A(IND(j+1))) j=j+1
       endif
-      IF (q < A(IND(j))) THEN
-         IND(I)=IND(J)
-         I=J
-         J=J+J
+      if (q < A(IND(j))) then
+         IND(i)=IND(j)
+         i=j
+         j=j+j
       ELSE
-         J=IR+1
+         j=ir+1
       endif
    goto 200
    endif
-   IND(I)=INDX
+   IND(i)=indx
   goto 100
   end subroutine rank_buffers
 
@@ -215,26 +213,25 @@
 
   integer i
 
-  do i=1,n
+  do i = 1,n
     W(i)=A(i)
     IW(i)=IA(i)
   enddo
 
-  do i=1,n
+  do i = 1,n
     A(i)=W(ind(i))
     IA(i)=IW(ind(i))
   enddo
 
-  do i=1,n
+  do i = 1,n
     W(i)=B(i)
     IW(i)=IB(i)
   enddo
 
-  do i=1,n
+  do i = 1,n
     B(i)=W(ind(i))
     IB(i)=IW(ind(i))
   enddo
 
   end subroutine swap_all_buffers
 
-#endif

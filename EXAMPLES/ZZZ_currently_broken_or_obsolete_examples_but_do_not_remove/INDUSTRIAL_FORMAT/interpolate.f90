@@ -13,11 +13,11 @@
 
      ! creating mesh/grid
      print *, 'generating mesh/grid...'
-     write(system_command,"('sed -e ""s#^SIMULATION_TYPE.*#SIMULATION_TYPE = 1 #g""                     < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
-     write(system_command,"('sed -e ""s#^SAVE_FORWARD.*#SAVE_FORWARD = .false. #g""                     < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
-     write(system_command,"('sed -e ""s#^assign_external_model.*#assign_external_model = .false. #g""   < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
+     write(system_command,"('sed -e ""s#^SIMULATION_TYPE.*#SIMULATION_TYPE = 1 #g"" < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
+     write(system_command,"('sed -e ""s#^SAVE_FORWARD.*#SAVE_FORWARD = .false. #g"" < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
+     write(system_command,"('sed -e ""s#^assign_external_model.*#assign_external_model = .false. #g"" < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
      write(system_command,"('sed -e ""s#^READ_EXTERNAL_SEP_FILE.*#READ_EXTERNAL_SEP_FILE = .false. #g"" < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
-     write(system_command,"('sed -e ""s#^nt.*#nt = 5 #g""                                               < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
+     write(system_command,"('sed -e ""s#^nt.*#nt = 5 #g"" < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
      write(system_command,"('./xmeshfem2D')"); call system(system_command)
      write(system_command,"('./xspecfem2D')"); call system(system_command)
 
@@ -86,11 +86,11 @@
   sep_header_file_complete=trim(adjustl(sep_directory))//trim(adjustl(sep_header_file))
 
   open(unit=13,file=trim(adjustl(sep_header_file_complete)),status='old',iostat=ier)
-  print *, ''
+  print *
   print *, '*******************************************************************************'
   print *, 'reading sep header file: '
   print *, trim(adjustl(sep_header_file_complete))
-  if (ier/=0) stop 'ERROR: cannot open sep header file'
+  if (ier /= 0) stop 'ERROR: cannot open sep header file'
 
   read(13,'(a3a)')     junk, sep_file
   read(13,'(a3i10)')     junk, NX
@@ -108,7 +108,7 @@
   sep_file=trim(adjustl(sep_directory))//trim(adjustl(sep_file))
   data_format=data_format(1:len_trim(adjustl(data_format))-1)
 
-  print *, ''
+  print *
   print *, 'sep file specified in the header file is: ', trim(adjustl(sep_file))
   print *, 'NX,NY,NZ = ', NX,NY,NZ
   print *, 'OX,OY,OZ = ', OX,OY,OZ
@@ -116,7 +116,7 @@
   print *, 'esize = ', esize
   print *, 'data_format = ', trim(adjustl(data_format))
   print *, '*******************************************************************************'
-  print *, ''
+  print *
 
   end subroutine READ_SEP_HEADER
 
@@ -144,21 +144,21 @@
   integer :: ier
 
   ! check whether the model is 2D (NY==1)
-  if (NY/=1) stop 'ERROR: this only works for 2D problems (NY/n2 must be 1)'
+  if (NY /= 1) stop 'ERROR: this only works for 2D problems (NY/n2 must be 1)'
 
   ! note that we keep NY as general in the following (for 3D problems in the future)
   open(unit=14,file=trim(adjustl(sep_file)),access='direct',status='old',recl=4*NX*NY*NZ,iostat=ier)
   print *, '*******************************************************************************'
   print *, 'reading sep file: '
   print *, trim(adjustl(sep_file))
-  if (ier/=0) stop 'ERROR: cannot open sep file'
+  if (ier /= 0) stop 'ERROR: cannot open sep file'
 
   read(14,rec=1,iostat=ier) model(:,:)
   close(14)
-  if (ier/=0) stop 'ERROR: reading sep file'
+  if (ier /= 0) stop 'ERROR: reading sep file'
   print *, 'done reading sucessfully'
   print *, '*******************************************************************************'
-  print *, ''
+  print *
 
   end subroutine READ_SEP_MODEL_2D
 
@@ -195,22 +195,22 @@
   open(unit=15,file=trim(adjustl(mesh_file)),status='old')
   open(unit=16,file=trim(adjustl(wavespeed_file)),status='unknown')
   ier=0
-  do while (ier==0)
+  do while (ier == 0)
      do i=1,NGLLX*NGLLZ
         read(15,'(I10, 5F13.4)',iostat=ier)  iglob(i),x(i),z(i),rho_temp,vp_temp,vs_temp
         ix=NINT((x(i)-OX)/DX)+1
         iz=NINT((z(i)-OZ)/DZ)+1
-        if (ix>NX-2) ix=NX-2
-        if (ix<1)  ix=1
-        if (iz>NZ) iz=NZ
-        if (iz<1)  iz=1
+        if (ix > NX-2) ix=NX-2
+        if (ix < 1)  ix=1
+        if (iz > NZ) iz=NZ
+        if (iz < 1)  iz=1
         rho_new(i)=rho(ix,iz)
         vp_new(i)=vp(ix,iz)
         vs_new(i)=vs(ix,iz)
-        if(vs_temp<1000.0) vs_new(i)=0.0
-        if(vs_temp<1000.0) rho_new(i)=1000.0
+        if (vs_temp < 1000.0) vs_new(i)=0.0
+        if (vs_temp < 1000.0) rho_new(i)=1000.0
      enddo
-     if (ier==0) then
+     if (ier == 0) then
      do i=1,NGLLX*NGLLZ
         write(16,'(I10, 5F13.4)') iglob(i),x(i),z(i),rho_new(i),vp_new(i),vs_new(i)
      enddo

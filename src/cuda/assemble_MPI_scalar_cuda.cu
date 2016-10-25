@@ -14,33 +14,23 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -77,7 +67,7 @@ __global__ void prepare_boundary_potential_on_device(realw* d_potential_dot_dot_
 
    num_int=inum_inter_acoustic[iinterface]-1;
 
-    if(id<d_nibool_interfaces_ext_mesh[num_int]) {
+    if (id<d_nibool_interfaces_ext_mesh[num_int]) {
 
       // entry in interface array
       ientry = id + max_nibool_interfaces_ext_mesh*num_int;
@@ -105,7 +95,7 @@ TRACE("transfer_boun_pot_from_device");
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
   // checks if anything to do
-  if( mp->size_mpi_buffer_potential > 0 ){
+  if (mp->size_mpi_buffer_potential > 0) {
 
     int blocksize = BLOCKSIZE_TRANSFER;
     int size_padded = ((int)ceil(((double)(mp->max_nibool_interfaces_ext_mesh))/((double)blocksize)))*blocksize;
@@ -116,7 +106,7 @@ TRACE("transfer_boun_pot_from_device");
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    if(*FORWARD_OR_ADJOINT == 1) {
+    if (*FORWARD_OR_ADJOINT == 1) {
 
      prepare_boundary_potential_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
                                                                                    mp->d_send_potential_dot_dot_buffer,
@@ -135,7 +125,7 @@ TRACE("transfer_boun_pot_from_device");
       print_CUDA_error_if_any(cudaMemcpy(send_potential_dot_dot_buffer,mp->d_send_potential_dot_dot_buffer,
                                          mp->size_mpi_buffer_potential*sizeof(realw),cudaMemcpyDeviceToHost),98000);
     }
-    else if(*FORWARD_OR_ADJOINT == 3) {
+    else if (*FORWARD_OR_ADJOINT == 3) {
       // backward/reconstructed wavefield buffer
       prepare_boundary_potential_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_dot_acoustic,
                                                                                    mp->d_b_send_potential_dot_dot_buffer,
@@ -195,7 +185,7 @@ __global__ void assemble_boundary_potential_on_device(realw* d_potential_dot_dot
    num_int=inum_inter_acoustic[iinterface]-1;
 
 
-    if(id<d_nibool_interfaces_ext_mesh[num_int]) {
+    if (id<d_nibool_interfaces_ext_mesh[num_int]) {
 
       // entry in interface array
       ientry = id + max_nibool_interfaces_ext_mesh*num_int;
@@ -212,7 +202,7 @@ __global__ void assemble_boundary_potential_on_device(realw* d_potential_dot_dot
   // ! do iinterface = 1, num_interfaces_ext_mesh
   // !   do ipoin = 1, nibool_interfaces_ext_mesh(iinterface)
   // !     array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) = &
-  // !          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_vector_ext_mesh(:,ipoin,iinterface)
+  // !          array_val(:,ibool_interfaces_ext_mesh(ipoin,iinterface)) + buffer_recv_vector_gpu(:,ipoin,iinterface)
   // !   enddo
   // ! enddo
 }
@@ -223,7 +213,7 @@ __global__ void assemble_boundary_potential_on_device(realw* d_potential_dot_dot
 extern "C"
 void FC_FUNC_(transfer_asmbl_pot_to_device,
               TRANSFER_ASMBL_POT_TO_DEVICE)(long* Mesh_pointer,
-                                            realw* buffer_recv_scalar_ext_mesh,
+                                            realw* buffer_recv_scalar_gpu,
                                             const int* FORWARD_OR_ADJOINT) {
 
 TRACE("transfer_asmbl_pot_to_device");
@@ -235,7 +225,7 @@ TRACE("transfer_asmbl_pot_to_device");
   //start_timing_cuda(&start,&stop);
 
   // checks if anything to do
-  if( mp->size_mpi_buffer_potential > 0 ){
+  if (mp->size_mpi_buffer_potential > 0) {
 
 
     // assembles on GPU
@@ -252,9 +242,9 @@ TRACE("transfer_asmbl_pot_to_device");
     // synchronizes
     synchronize_cuda();
 
-    if(*FORWARD_OR_ADJOINT == 1) {
+    if (*FORWARD_OR_ADJOINT == 1) {
       // copies buffer onto GPU
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_send_potential_dot_dot_buffer, buffer_recv_scalar_ext_mesh,
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_send_potential_dot_dot_buffer, buffer_recv_scalar_gpu,
                                          mp->size_mpi_buffer_potential*sizeof(realw), cudaMemcpyHostToDevice),98010);
 
       //assemble forward field
@@ -268,9 +258,9 @@ TRACE("transfer_asmbl_pot_to_device");
 
 
     }
-    else if(*FORWARD_OR_ADJOINT == 3) {
+    else if (*FORWARD_OR_ADJOINT == 3) {
       // copies buffer onto GPU
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_potential_dot_dot_buffer, buffer_recv_scalar_ext_mesh,
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_potential_dot_dot_buffer, buffer_recv_scalar_gpu,
                                          mp->size_mpi_buffer_potential*sizeof(realw), cudaMemcpyHostToDevice),98011);
 
       //assemble reconstructed/backward field

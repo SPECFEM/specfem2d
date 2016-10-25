@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -14,28 +13,19 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -47,32 +37,38 @@
 ! compute Grad(potential) in acoustic elements
 ! and combine with existing velocity vector field in elastic elements
 
-  use specfem_par
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+  use specfem_par, only: nspec,ibool, &
+    nglob_acoustic,nglob_elastic,nglob_gravitoacoustic,nglob_poroelastic
+
+  use specfem_par_movie, only: vector_field_display
 
   implicit none
 
-  integer :: i,j,ispec,iglob
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: field_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravitoacoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravito
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: field_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic) :: field_elastic
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: fields_poroelastic
+  ! vector field in an element
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: vector_field_element
 
-! loop over spectral elements
+  ! local parameters
+  integer :: i,j,ispec,iglob
+
+  ! loop over spectral elements
   do ispec = 1,nspec
-
-! compute vector field in this element
+    ! computes vector field in this element
     call compute_vector_one_element(field_acoustic,field_gravitoacoustic, &
-                                    field_gravito,field_elastic,fields_poroelastic,ispec)
+                                    field_gravito,field_elastic,fields_poroelastic,ispec,vector_field_element)
 
-! store the result
+    ! stores the result on global nodes
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         vector_field_display(:,iglob) = vector_field_element(:,i,j)
       enddo
     enddo
-
   enddo
 
   end subroutine compute_vector_whole_medium
@@ -82,58 +78,84 @@
 !
 
   subroutine compute_vector_one_element(field_acoustic,field_gravitoacoustic, &
-                                        field_gravito,field_elastic,fields_poroelastic,ispec)
+                                        field_gravito,field_elastic,fields_poroelastic,ispec,vector_field_element)
 
 ! compute Grad(potential) if acoustic element or copy existing vector if elastic element
 
-  use specfem_par
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+
+  use specfem_par, only: nglob_acoustic,nglob_elastic,nglob_gravitoacoustic,nglob_poroelastic, &
+    assign_external_model,density,kmato,gravityext,rhoext, &
+    hprimeBar_xx,hprime_xx,hprime_zz, &
+    xix,xiz,gammax,gammaz,ibool, &
+    ispec_is_elastic,ispec_is_poroelastic,ispec_is_acoustic,ispec_is_gravitoacoustic, &
+    AXISYM,is_on_the_axis, &
+    P_SV
 
   implicit none
-
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: field_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravitoacoustic
   real(kind=CUSTOM_REAL), dimension(nglob_gravitoacoustic) :: field_gravito
-  real(kind=CUSTOM_REAL), dimension(3,nglob_elastic) :: field_elastic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic) :: field_elastic
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob_poroelastic) :: fields_poroelastic
-  integer ispec
 
-! local variables
+  integer,intent(in) :: ispec
+
+  ! vector field in an element
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ),intent(out) :: vector_field_element
+
+  ! local variables
   integer i,j,k,iglob
+  ! Jacobian matrix and determinant
+  double precision :: xixl,xizl,gammaxl,gammazl
+  double precision :: gravityl,hp1,hp2
+  double precision :: rhol
+  double precision :: tempx1l,tempx2l
 
-! simple copy of existing vector if elastic element
-  if(elastic(ispec)) then
+  ! initializes
+  vector_field_element(:,:,:) = 0._CUSTOM_REAL
 
+  ! determines vector field
+  if (ispec_is_elastic(ispec)) then
+    ! elastic element
+    ! simple copy of existing vector if elastic element
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
-        vector_field_element(1,i,j) = field_elastic(1,iglob)
-        vector_field_element(2,i,j) = field_elastic(2,iglob)
-        vector_field_element(3,i,j) = field_elastic(3,iglob)
+        if (P_SV) then
+          ! P_SV case
+          vector_field_element(1,i,j) = field_elastic(1,iglob)
+          vector_field_element(2,i,j) = field_elastic(2,iglob)
+        else
+          ! SH case
+          vector_field_element(1,i,j) = field_elastic(1,iglob)
+        endif
       enddo
     enddo
 
-  else if(poroelastic(ispec)) then
-     do j = 1,NGLLZ
+  else if (ispec_is_poroelastic(ispec)) then
+    ! poro-elastic element
+    ! simple copy of existing vector if poroelastic element
+    do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         vector_field_element(1,i,j) = fields_poroelastic(1,iglob)
-        vector_field_element(2,i,j) = 0._CUSTOM_REAL
-        vector_field_element(3,i,j) = fields_poroelastic(2,iglob)
+        vector_field_element(2,i,j) = fields_poroelastic(2,iglob)
       enddo
     enddo
 
-! compute gradient of potential to calculate vector if acoustic element
-! we then need to divide by density because the potential is a potential of (density * displacement)
-    else if (acoustic(ispec)) then
+  else if (ispec_is_acoustic(ispec)) then
+    ! acoustic element
 
-      rhol = density(1,kmato(ispec))
+    ! compute gradient of potential to calculate vector if acoustic element
+    ! we then need to divide by density because the potential is a potential of (density * displacement)
+    rhol = density(1,kmato(ispec))
 
-! double loop over GLL points to compute and store gradients
+    ! double loop over GLL points to compute and store gradients
     do j = 1,NGLLZ
       do i = 1,NGLLX
-
-! derivative along x
+        ! derivative along x
         tempx1l = 0._CUSTOM_REAL
         if (AXISYM) then
           if (is_on_the_axis(ispec)) then
@@ -142,14 +164,16 @@
               iglob = ibool(k,j,ispec)
               tempx1l = tempx1l + field_acoustic(iglob)*hp1
             enddo
-          else !AXISYM but not on the axis
+          else
+            !AXISYM but not on the axis
             do k = 1,NGLLX
               hp1 = hprime_xx(i,k)
               iglob = ibool(k,j,ispec)
               tempx1l = tempx1l + field_acoustic(iglob)*hp1
             enddo
           endif
-        else !not AXISYM
+        else
+          !not AXISYM
           do k = 1,NGLLX
             hp1 = hprime_xx(i,k)
             iglob = ibool(k,j,ispec)
@@ -157,7 +181,7 @@
           enddo
         endif
 
-! derivative along z
+        ! derivative along z
         tempx2l = 0._CUSTOM_REAL
         do k = 1,NGLLZ
           hp2 = hprime_zz(j,k)
@@ -170,26 +194,25 @@
         gammaxl = gammax(i,j,ispec)
         gammazl = gammaz(i,j,ispec)
 
-        if(assign_external_model) rhol = rhoext(i,j,ispec)
+        if (assign_external_model) rhol = rhoext(i,j,ispec)
 
-! derivatives of potential
-        vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol        !u_x
-        vector_field_element(2,i,j) = 0._CUSTOM_REAL
-        vector_field_element(3,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol        !u_z
+        ! derivatives of potential
+        vector_field_element(1,i,j) = real((tempx1l*xixl + tempx2l*gammaxl) / rhol,kind=CUSTOM_REAL) ! u_x = 1/rho dChi/dx
+        vector_field_element(2,i,j) = real((tempx1l*xizl + tempx2l*gammazl) / rhol,kind=CUSTOM_REAL) ! u_z = 1/rho dChi/dz
       enddo
     enddo
 
-! compute gradient of potential to calculate vector if acoustic element
-! we then need to divide by density because the potential is a potential of (density * displacement)
-    else if (gravitoacoustic(ispec)) then
+  else if (ispec_is_gravitoacoustic(ispec)) then
+    ! gravito-acoustic element
 
-      rhol = density(1,kmato(ispec))
+    ! compute gradient of potential to calculate vector if gravitoacoustic element
+    ! we then need to divide by density because the potential is a potential of (density * displacement)
+    rhol = density(1,kmato(ispec))
 
-! double loop over GLL points to compute and store gradients
+    ! double loop over GLL points to compute and store gradients
     do j = 1,NGLLZ
       do i = 1,NGLLX
-
-! derivative along x
+        ! derivative along x
         tempx1l = 0._CUSTOM_REAL
         do k = 1,NGLLX
           hp1 = hprime_xx(i,k)
@@ -197,7 +220,7 @@
           tempx1l = tempx1l + field_gravitoacoustic(iglob)*hp1
         enddo
 
-! derivative along z
+        ! derivative along z
         tempx2l = 0._CUSTOM_REAL
         do k = 1,NGLLZ
           hp2 = hprime_zz(j,k)
@@ -210,21 +233,20 @@
         gammaxl = gammax(i,j,ispec)
         gammazl = gammaz(i,j,ispec)
 
-        if(assign_external_model) then
-           rhol = rhoext(i,j,ispec)
-           gravityl = gravityext(i,j,ispec)
+        if (assign_external_model) then
+          rhol = rhoext(i,j,ispec)
+          gravityl = gravityext(i,j,ispec)
         endif
 
-! derivatives of potential
-        vector_field_element(1,i,j) = (tempx1l*xixl + tempx2l*gammaxl) / rhol
-        vector_field_element(2,i,j) = 0._CUSTOM_REAL
-        vector_field_element(3,i,j) = (tempx1l*xizl + tempx2l*gammazl) / rhol
+        ! derivatives of potential
+        vector_field_element(1,i,j) = real((tempx1l*xixl + tempx2l*gammaxl) / rhol,kind=CUSTOM_REAL)
+        vector_field_element(2,i,j) = real((tempx1l*xizl + tempx2l*gammazl) / rhol,kind=CUSTOM_REAL)
 
-! add the gravito potential along the z component
-        iglob=ibool(i,j,ispec)
-! remove gravito contribution
-! sign gravito correction
-        vector_field_element(3,i,j) = vector_field_element(3,i,j) - (field_gravito(iglob)*gravityl) / rhol
+        ! add the gravito potential along the z component
+        iglob = ibool(i,j,ispec)
+        ! remove gravito contribution
+        ! sign gravito correction
+        vector_field_element(2,i,j) = vector_field_element(2,i,j) - real((field_gravito(iglob)*gravityl) / rhol,kind=CUSTOM_REAL)
 
       enddo
     enddo

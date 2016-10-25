@@ -1,7 +1,7 @@
 
-! create a gaussian profile for bathymetry
+! create a Gaussian profile for bathymetry
 
-  program create_gaussian_profile
+  program create_Gaussian_profile
 
   implicit none
 
@@ -20,5 +20,5 @@
     print *,x, -3000.d0 + height * exp(-(x-x0)**2/(2*sigma**2))
   enddo
 
- end program create_gaussian_profile
+ end program create_Gaussian_profile
 

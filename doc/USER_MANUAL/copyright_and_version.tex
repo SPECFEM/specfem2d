@@ -1,0 +1,82 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter*{Copyright}
+\addcontentsline{toc}{chapter}{Copyright}
+
+Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+
+Princeton University, USA, and CNRS / University of Marseille, France\\
+$\copyright$ Princeton University and CNRS / University of Marseille, July 2012\\
+
+\noindent
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published
+by the Free Software Foundation (see Appendix \ref{cha:License}).\\
+
+\noindent
+Please note that by contributing to this code, the developer understands and agrees that this project and contribution
+are public and fall under the open source license mentioned above.\\
+
+\noindent
+\textbf{\underline{Evolution of the code:}}\\
+
+version 7.0, Dimitri Komatitsch, Zhinan Xie, Paul Cristini, Roland Martin and Rene Matzen, July 2012:\\
+added support for Convolution PML absorbing layers;
+added higher-order time schemes (4th order Runge-Kutta and LDDRK4-6);
+many small or moderate bug fixes\\
+
+version 6.2, many developers, April 2011:\\
+restructured package source code into separate src/ directories;
+added configure \& Makefile scripts and a PDF manual in doc/;
+added user examples in EXAMPLES/;
+added a USER\_T0 parameter to fix the onset time in simulation\\
+
+version 6.1, Christina Morency and Pieyre Le Loher, March 2010:\\
+added SH (membrane) waves calculation for elastic media;
+added support for external fully anisotropic media;
+fixed some bugs in acoustic kernels\\
+
+version 6.0, Christina Morency and Yang Luo, August 2009:\\
+support for poroelastic media;
+adjoint method for acoustic/elastic/poroelastic\\
+
+version 5.2, Dimitri Komatitsch, Nicolas Le Goff and Roland Martin, February 2008:\\
+support for CUBIT and GiD meshes;
+MPI implementation of the code based on domain decomposition with METIS or SCOTCH;
+general fluid/solid implementation with any number, shape and orientation of matching edges;
+fluid potential of density $*$ displacement instead of displacement;
+absorbing edges with any normal vector;
+general numbering of absorbing and acoustic free surface edges;
+cleaned implementation of attenuation as in Carcione (1993);
+merged loops in the solver for efficiency;
+simplified input of external model;
+added CPU time information;
+translated many comments from French to English\\
+
+version 5.1, Dimitri Komatitsch, January 2005:\\
+more general mesher with any number of curved layers;
+Dirac and Gaussian time sources and corresponding convolution routine;
+option for acoustic medium instead of elastic;
+receivers at any location, not only grid points;
+moment-tensor source at any location, not only a grid point;
+color snapshots;
+more flexible DATA/Par\_file with any number of comment lines;
+Xsu scripts for seismograms;
+subtract t0 from seismograms;
+seismograms and snapshots in pressure in addition to vector field\\
+
+version 5.0, Dimitri Komatitsch, May 2004:\\
+got rid of useless routines, suppressed commons etc.;
+weak formulation based explicitly on stress tensor;
+implementation of full anisotropy;
+implementation of attenuation based on memory variables\\
+
+based on SPECFEM2D version 4.2, June 1998\\
+(c) by Dimitri Komatitsch, Harvard University, USA
+and Jean-Pierre Vilotte, Institut de Physique du Globe de Paris, France
+
+itself based on SPECFEM2D version 1.0, 1995\\
+(c) by Dimitri Komatitsch and Jean-Pierre Vilotte,
+Institut de Physique du Globe de Paris, France
+
+

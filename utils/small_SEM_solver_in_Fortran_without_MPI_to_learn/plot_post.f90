@@ -1,13 +1,33 @@
-
 !========================================================================
 !
-!                   S P E C F E M 2 D  Version 5.2
-!                   ------------------------------
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
 !
-!                         Dimitri Komatitsch
-!                     University of Pau, France
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
-!                          (c) April 2007
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
 
@@ -56,7 +76,7 @@
   double precision :: x_source,z_source
   double precision :: x_receiver,z_receiver
 
-  double precision xmax,zmax,xw,zw,usoffset,sizex,sizez
+  double precision :: xmax,zmax,xw,zw,usoffset,sizex,sizez
 
 ! for the file name
   character(len=100) :: file_name
@@ -76,7 +96,7 @@
   double precision ratio_page,dispmax,xmin,zmin
 
 ! A4 or US letter paper
-  if(US_LETTER) then
+  if (US_LETTER) then
     usoffset = 1.75d0
     sizex = 27.94d0
     sizez = 21.59d0
@@ -194,7 +214,7 @@
 
   write(24,*) '24. CM 1.95 CM MV'
   timeval = it*deltat
-  if(timeval >= 1.d-3 .and. timeval < 1000.d0) then
+  if (timeval >= 1.d-3 .and. timeval < 1000.d0) then
     write(24,600) usoffset,timeval
   else
     write(24,601) usoffset,timeval
@@ -308,7 +328,7 @@
 !
 
 ! return if the maximum vector equals zero (no source)
-  if(dispmax == 0.d0) then
+  if (dispmax == 0.d0) then
     write(*,*) 'null vector: returning!'
     return
   endif
@@ -331,17 +351,17 @@
   d = sqrt(x2**2 + z2**2)
 
 ! ignore if vector is too small
-  if(d > cutsnaps*sizemax_arrows/100.d0) then
+  if (d > cutsnaps*sizemax_arrows/100.d0) then
 
   d1 = d * ARROW_RATIO
   d2 = d1 * cos(ARROW_ANGLE*convert)
 
   dummy = x2/d
-  if(dummy > 0.9999d0) dummy = 0.9999d0
-  if(dummy < -0.9999d0) dummy = -0.9999d0
+  if (dummy > 0.9999d0) dummy = 0.9999d0
+  if (dummy < -0.9999d0) dummy = -0.9999d0
   theta = acos(dummy)
 
-  if(z2 < 0.d0) theta = 360.d0*convert - theta
+  if (z2 < 0.d0) theta = 360.d0*convert - theta
   thetaup = theta - ARROW_ANGLE*convert
   thetadown = theta + ARROW_ANGLE*convert
 
@@ -369,8 +389,8 @@
   index_char = 1
   first = .false.
   do ii = 1,line_length-1
-    if(ch1(ii) /= ' ' .or. first) then
-      if(ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
+    if (ch1(ii) /= ' ' .or. first) then
+      if (ch1(ii) /= ' ' .or. ch1(ii+1) /= ' ') then
         ch2(index_char) = ch1(ii)
         index_char = index_char + 1
         first = .true.

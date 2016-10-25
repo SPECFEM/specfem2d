@@ -21,10 +21,14 @@ partitioning_method             = 3              # SCOTCH = 3, ascending order (
 
 ngnod                           = 4              # number of control nodes per element (4 or 9)
 initialfield                    = .false.        # use a plane wave as source or not
-add_Bielak_conditions           = .false.        # add Bielak conditions or not if initial plane wave
+add_Bielak_conditions_bottom    = .false.        # add Bielak conditions or not if initial plane wave
+add_Bielak_conditions_right     = .false.
+add_Bielak_conditions_top       = .false.
+add_Bielak_conditions_left      = .false.
+
 assign_external_model           = .false.        # define external earth model or not
 READ_EXTERNAL_SEP_FILE          = .false.        # Read external model from DATA/model_velocity.dat_input, or use routine
-ATTENUATION_VISCOELASTIC_SOLID  = .true.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
+ATTENUATION_VISCOELASTIC        = .true.         # turn attenuation (viscoelasticity) on or off for non-poroelastic solid or fluid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
 Q0                              =  1             # quality factor for viscous attenuation
 freq0                           =  10            # frequency for viscous attenuation
@@ -32,7 +36,7 @@ p_sv                            = .true.         # set the type of calculation (
 
 # time step parameters
 nt                              = 1400           # total number of time steps
-deltat                          = 4e-4         # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
+deltat                          = 4e-4           # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
 USER_T0                         = 0.0d0          # use this t0 as earliest starting time rather than the automatically calculated one
 time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
 
@@ -40,12 +44,12 @@ time_stepping_scheme            = 1              # 1 = Newmark (2nd order), 2 = 
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
 
 # source parameters
-NSOURCES                        = 1              # number of sources (source info read from DATA/CMTSOLUTION file)
+NSOURCES                        = 1              # number of sources
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
 # for viscoelastic attenuation
 N_SLS                           = 2                      # number of standard linear solids for attenuation
-f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the CMTSOLUTION file
+f0_attenuation                  = 5.196152422706633      # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
 # shift (i.e. change) velocities read from the input file to take average physical dispersion into account,
 # i.e. if needed change the reference frequency at which these velocities are defined internally in the code:
 # by default, the seismic velocity values that are read at the end of this Par_file of the code are supposed to be the unrelaxed values,
@@ -74,7 +78,7 @@ xdeb                            = 1500.d0        # first receiver x in meters
 zdeb                            = 1500.d0        # first receiver z in meters
 xfin                            = 99999.d0       # last receiver x in meters (ignored if only one receiver)
 zfin                            = 99999.d0       # last receiver z in meters (ignored if only one receiver)
-enreg_surf_same_vertical        = .false.        # receivers inside the medium or at the surface
+record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
 # display parameters
 NSTEP_BETWEEN_OUTPUT_INFO       = 100            # every how many time steps we display information about the simulation (costly, do not use a very small value)
@@ -149,7 +153,6 @@ NELEM_PML_THICKNESS             = 3
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
 STACEY_ABSORBING_CONDITIONS     = .false.
-ADD_SPRING_TO_STACEY            = .true.
 
 # for horizontal periodic conditions: detect common points between left and right edges
 ADD_PERIODIC_CONDITIONS         = .false.

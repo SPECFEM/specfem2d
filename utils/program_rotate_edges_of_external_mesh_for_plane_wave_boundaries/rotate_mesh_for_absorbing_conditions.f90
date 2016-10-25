@@ -48,33 +48,33 @@ do i = 1,nabs
 
   found_this_point = .false.
   do inode = 1,4
-    if(ibool(inode,ispec) == iglob1(i)) then
+    if (ibool(inode,ispec) == iglob1(i)) then
       i1 = inode
       found_this_point = .true.
       exit
     endif
   enddo
-  if(.not. found_this_point) stop 'point not found'
+  if (.not. found_this_point) stop 'point not found'
 
   found_this_point = .false.
   do inode = 1,4
-    if(ibool(inode,ispec) == iglob2(i)) then
+    if (ibool(inode,ispec) == iglob2(i)) then
       i2 = inode
       found_this_point = .true.
       exit
     endif
   enddo
-  if(.not. found_this_point) stop 'point not found'
+  if (.not. found_this_point) stop 'point not found'
 
 ! swap points if needed for clarity, to avoid testing both cases each time below
-  if(i1 > i2) then
+  if (i1 > i2) then
     iswap = i1
     i1 = i2
     i2 = iswap
   endif
 
 ! test orientation
-  if(i1 == 3 .and. i2 == 4) then
+  if (i1 == 3 .and. i2 == 4) then
     print *,'orientation of element ',i,' is already good'
 
   else if (i1 == 1 .and. i2 == 4) then ! for this one, remember that we have swapped, thus 4 1 is 1 4
@@ -144,33 +144,33 @@ do i = 1,nabs
 
   found_this_point = .false.
   do inode = 1,4
-    if(ibool(inode,ispec) == iglob1(i)) then
+    if (ibool(inode,ispec) == iglob1(i)) then
       i1 = inode
       found_this_point = .true.
       exit
     endif
   enddo
-  if(.not. found_this_point) stop 'point not found'
+  if (.not. found_this_point) stop 'point not found'
 
   found_this_point = .false.
   do inode = 1,4
-    if(ibool(inode,ispec) == iglob2(i)) then
+    if (ibool(inode,ispec) == iglob2(i)) then
       i2 = inode
       found_this_point = .true.
       exit
     endif
   enddo
-  if(.not. found_this_point) stop 'point not found'
+  if (.not. found_this_point) stop 'point not found'
 
 ! swap points if needed for clarity, to avoid testing both cases each time below
-  if(i1 > i2) then
+  if (i1 > i2) then
     iswap = i1
     i1 = i2
     i2 = iswap
   endif
 
 ! test orientation
-  if(i1 == 1 .and. i2 == 2) then
+  if (i1 == 1 .and. i2 == 2) then
     print *,'orientation of element ',i,' is already good'
 
   else if (i1 == 2 .and. i2 == 3) then
@@ -240,33 +240,33 @@ do i = 1,nabs
 
   found_this_point = .false.
   do inode = 1,4
-    if(ibool(inode,ispec) == iglob1(i)) then
+    if (ibool(inode,ispec) == iglob1(i)) then
       i1 = inode
       found_this_point = .true.
       exit
     endif
   enddo
-  if(.not. found_this_point) stop 'point not found'
+  if (.not. found_this_point) stop 'point not found'
 
   found_this_point = .false.
   do inode = 1,4
-    if(ibool(inode,ispec) == iglob2(i)) then
+    if (ibool(inode,ispec) == iglob2(i)) then
       i2 = inode
       found_this_point = .true.
       exit
     endif
   enddo
-  if(.not. found_this_point) stop 'point not found'
+  if (.not. found_this_point) stop 'point not found'
 
 ! swap points if needed for clarity, to avoid testing both cases each time below
-  if(i1 > i2) then
+  if (i1 > i2) then
     iswap = i1
     i1 = i2
     i2 = iswap
   endif
 
 ! test orientation
-  if(i1 == 1 .and. i2 == 4) then ! for this one, remember that we have swapped, thus 4 1 is 1 4
+  if (i1 == 1 .and. i2 == 4) then ! for this one, remember that we have swapped, thus 4 1 is 1 4
     print *,'orientation of element ',i,' is already good'
 
   else if (i1 == 1 .and. i2 == 2) then
@@ -336,33 +336,33 @@ do i = 1,nabs
 
   found_this_point = .false.
   do inode = 1,4
-    if(ibool(inode,ispec) == iglob1(i)) then
+    if (ibool(inode,ispec) == iglob1(i)) then
       i1 = inode
       found_this_point = .true.
       exit
     endif
   enddo
-  if(.not. found_this_point) stop 'point not found'
+  if (.not. found_this_point) stop 'point not found'
 
   found_this_point = .false.
   do inode = 1,4
-    if(ibool(inode,ispec) == iglob2(i)) then
+    if (ibool(inode,ispec) == iglob2(i)) then
       i2 = inode
       found_this_point = .true.
       exit
     endif
   enddo
-  if(.not. found_this_point) stop 'point not found'
+  if (.not. found_this_point) stop 'point not found'
 
 ! swap points if needed for clarity, to avoid testing both cases each time below
-  if(i1 > i2) then
+  if (i1 > i2) then
     iswap = i1
     i1 = i2
     i2 = iswap
   endif
 
 ! test orientation
-  if(i1 == 2 .and. i2 == 3) then
+  if (i1 == 2 .and. i2 == 3) then
     print *,'orientation of element ',i,' is already good'
 
   else if (i1 == 3 .and. i2 == 4) then

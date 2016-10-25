@@ -13,28 +13,19 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -166,7 +157,6 @@
   integer ihours,iminutes,iseconds,int_tCPU
   double precision :: time_start,time_end,tCPU
 
-! estimate of total memory size used
   print *
   print *,'NSPEC = ',NSPEC
   print *,'NGLOB = ',NGLOB
@@ -214,10 +204,11 @@
 !
 !---- generate the global numbering
 !
-  call createnum_slow(knods,ibool,nglob_to_compute,nspec,NGLLX,NGLLZ,ngnod)
-  if(nglob_to_compute /= NGLOB) stop 'error: incorrect total number of unique grid points found'
-  if(minval(ibool) /= 1) stop 'error: incorrect minimum value of ibool'
-  if(maxval(ibool) /= NGLOB) stop 'error: incorrect maximum value of ibool'
+
+  call createnum_slow(knods,ibool,nglob_to_compute,nspec,NGLLX,NGLLZ,ngnod) ! Create ibool and recompute nglob for checking
+  if (nglob_to_compute /= NGLOB) stop 'error: incorrect total number of unique grid points found'
+  if (minval(ibool) /= 1) stop 'error: incorrect minimum value of ibool'
+  if (maxval(ibool) /= NGLOB) stop 'error: incorrect maximum value of ibool'
 
 !
 !----  set the coordinates of the points of the global grid
@@ -230,7 +221,7 @@
 
           call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
                           jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo,NDIM)
-          if(jacobianl <= 0.d0) stop 'error: negative Jacobian found'
+          if (jacobianl <= 0.d0) stop 'error: negative Jacobian found'
 
           coord(1,ibool(i,j,ispec)) = x
           coord(2,ibool(i,j,ispec)) = z
@@ -291,18 +282,18 @@
 
 ! compute maximum of norm of displacement from time to time and display it
 ! in order to monitor the simulation
-    if(mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
+    if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
       Usolidnorm = -1.
       do iglob = 1,NGLOB
         current_value = sqrt(displ(1,iglob)**2 + displ(2,iglob)**2)
-        if(current_value > Usolidnorm) Usolidnorm = current_value
+        if (current_value > Usolidnorm) Usolidnorm = current_value
       enddo
       write(*,*) 'Time step # ',it,' out of ',NSTEP
 ! compute current time
       time = (it-1)*deltat
       write(*,*) 'Max norm displacement vector U in the solid (m) = ',Usolidnorm
 ! check stability of the code, exit if unstable
-      if(Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) stop 'code became unstable and blew up'
+      if (Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) stop 'code became unstable and blew up'
 
 ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)
@@ -433,7 +424,8 @@
     accel(2,iglob) = accel(2,iglob) - factor_amplitude * (1.-2.*a*(time-t0)**2) * exp(-a*(time-t0)**2)
 
 ! big loop over all the global points (not elements) in the mesh to update
-! the acceleration and velocity vectors
+! the acceleration and velocity vectors.
+! To compute acceleration from the elastic forces we need to divide them by the mass matrix, i.e. multiply by its inverse
     accel(1,:) = accel(1,:)*rmass_inverse(:)
     accel(2,:) = accel(2,:)*rmass_inverse(:)
 

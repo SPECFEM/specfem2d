@@ -17,28 +17,19 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -155,13 +146,13 @@
 ! compute the distance between the two points
           dist = sqrt((x(iglob,myrank)-x(iglob2,myrank2))**2 + (y(iglob,myrank)-y(iglob2,myrank2))**2)
 ! if the distance is zero (down to roundoff noise) then it is the same point and thus it is a duplicate
-          if(dist < TINYVAL) this_point_is_a_duplicate(iglob,myrank) = .true.
+          if (dist < TINYVAL) this_point_is_a_duplicate(iglob,myrank) = .true.
         enddo
       enddo
     enddo
   enddo
   number_of_duplicates_found = count(this_point_is_a_duplicate == .true.)
-  if(number_of_duplicates_found <= 0) stop 'error: found no duplicates, while there must be some'
+  if (number_of_duplicates_found <= 0) stop 'error: found no duplicates, while there must be some'
   print *
   print *,'total number of duplicates found and removed = ',number_of_duplicates_found
 
@@ -179,14 +170,14 @@
 ! slices are numbered from 0 to NPROC-1
         do myrank = 0,NPROC-1
           do iglob = 1,nglob(myrank)
-            if(.not. this_point_is_a_duplicate(iglob,myrank)) then
+            if (.not. this_point_is_a_duplicate(iglob,myrank)) then
               icounter = icounter + 1
               write(27,*) x(iglob,myrank),y(iglob,myrank)
             endif
           enddo
         enddo
         close(27)
-        if(icounter /= nglob_recombined_no_duplicates) stop 'error: should have icounter == nglob_recombined_no_duplicates'
+        if (icounter /= nglob_recombined_no_duplicates) stop 'error: should have icounter == nglob_recombined_no_duplicates'
 
   print *
   print *,'Recombining the dumped wave fields from the different files'
@@ -196,7 +187,7 @@
   do it = 1,NSTEP
 
 ! determine if a dump exists for this time step
-    if(mod(it,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS) == 0 .or. it == 5 .or. it == NSTEP) then
+    if (mod(it,NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS) == 0 .or. it == 5 .or. it == NSTEP) then
 
         print *
         print *,'recombining files for time step ',it
@@ -222,14 +213,14 @@
 ! slices are numbered from 0 to NPROC-1
         do myrank = 0,NPROC-1
           do iglob = 1,nglob(myrank)
-            if(.not. this_point_is_a_duplicate(iglob,myrank)) then
+            if (.not. this_point_is_a_duplicate(iglob,myrank)) then
               icounter = icounter + 1
               write(27,*) pressure(iglob,myrank)
             endif
           enddo
         enddo
         close(27)
-        if(icounter /= nglob_recombined_no_duplicates) stop 'error: should have icounter == nglob_recombined_no_duplicates'
+        if (icounter /= nglob_recombined_no_duplicates) stop 'error: should have icounter == nglob_recombined_no_duplicates'
 
     endif
 

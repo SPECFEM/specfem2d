@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -14,162 +13,237 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
 
-module source_file
-
-  implicit none
-
-  ! source parameters
-  integer, dimension(:),pointer ::  source_type,time_function_type
-  double precision, dimension(:),pointer :: xs,zs,f0,tshift_src,anglesource, &
-    Mxx,Mzz,Mxz,factor,burst_band_width
-  logical, dimension(:),pointer ::  source_surf
-  character(len=150), dimension(:),pointer :: name_of_source_file ! File name can't exceed 150 characters
-
-contains
-
   subroutine read_source_file(NSOURCES)
 
   ! reads in source file DATA/SOURCE
 
-    implicit none
-    include "constants.h"
+  use constants, only: IMAIN,IGNORE_JUNK,NLINES_PER_SOURCE,TINYVAL,PI
+  use source_file_par
+  use shared_parameters, only: DT
 
-    integer :: NSOURCES
+  implicit none
 
-    ! local parameters
-    integer :: ios,icounter,i_source,num_sources
-    character(len=150) string_read
-    integer, parameter :: IIN_SOURCE = 22
+  integer,intent(in) :: NSOURCES
 
-    ! allocates memory arrays
-    allocate(source_surf(NSOURCES))
-    allocate(xs(NSOURCES))
-    allocate(zs(NSOURCES))
-    allocate(source_type(NSOURCES))
-    allocate(time_function_type(NSOURCES))
-    allocate(name_of_source_file(NSOURCES))
-    allocate(burst_band_width(NSOURCES))
-    allocate(f0(NSOURCES))
-    allocate(tshift_src(NSOURCES))
-    allocate(anglesource(NSOURCES))
-    allocate(Mxx(NSOURCES))
-    allocate(Mxz(NSOURCES))
-    allocate(Mzz(NSOURCES))
-    allocate(factor(NSOURCES))
+  ! local parameters
+  integer :: ier,icounter,i_source,num_sources
+  character(len=256) string_read
+  integer, parameter :: IIN_SOURCE = 22
 
-    ! counts lines
-    open(unit=IIN_SOURCE,file='DATA/SOURCE',iostat=ios,status='old',action='read')
-    if(ios /= 0) stop 'error opening DATA/SOURCE file'
+  ! allocates memory arrays
+  allocate(source_surf(NSOURCES), &
+           xs(NSOURCES), &
+           zs(NSOURCES), &
+           source_type(NSOURCES), &
+           time_function_type(NSOURCES), &
+           name_of_source_file(NSOURCES), &
+           burst_band_width(NSOURCES), &
+           f0_source(NSOURCES), &
+           tshift_src(NSOURCES), &
+           anglesource(NSOURCES), &
+           Mxx(NSOURCES), &
+           Mxz(NSOURCES), &
+           Mzz(NSOURCES), &
+           factor(NSOURCES),stat=ier)
+  if (ier /= 0) stop 'Error allocating source arrays'
 
-    icounter = 0
-    do while(ios == 0)
-       read(IIN_SOURCE,"(a)",iostat=ios) string_read
+  ! initializes
+  xs(:) = 0.d0
+  zs(:) = 0.d0
 
-       if(ios == 0) then
+  source_type(:) = 0
+  time_function_type(:) = 0
 
-  ! suppress trailing carriage return (ASCII code 13) if any (e.g. if input text file coming from Windows/DOS)
-         if(index(string_read,achar(13)) > 0) string_read = string_read(1:index(string_read,achar(13))-1)
+  f0_source(:) = 0.d0
+  tshift_src(:) = 0.d0
+  anglesource(:) = 0.d0
+  Mxx(:) = 0.d0
+  Mxz(:) = 0.d0
+  Mzz(:) = 0.d0
 
-  ! suppress leading and trailing white spaces, if any
-         string_read = adjustl(string_read)
-         string_read = string_read(1:len_trim(string_read))
+  ! counts lines
+  open(unit=IIN_SOURCE,file='DATA/SOURCE',status='old',action='read',iostat=ier)
+  if (ier /= 0) stop 'Error opening file DATA/SOURCE, please make sure file exists...'
 
-  ! if the line is not empty and is not a comment, count it
-         if(len_trim(string_read) > 0 .and. (index(string_read,'#') == 0 .or. index(string_read,'#') > 1)) icounter = icounter + 1
+  ! counts number of lines
+  icounter = 0
+  do while(ier == 0)
+    read(IIN_SOURCE,"(a)",iostat=ier) string_read
 
-       endif
+    if (ier == 0) then
+      ! suppress trailing carriage return (ASCII code 13) if any (e.g. if input text file coming from Windows/DOS)
+      if (index(string_read,achar(13)) > 0) string_read = string_read(1:index(string_read,achar(13))-1)
 
-    enddo
-    close(IIN_SOURCE)
+      ! suppress leading and trailing white spaces, if any
+      string_read = adjustl(string_read)
+      string_read = string_read(1:len_trim(string_read))
 
-    ! checks counter
-    if(mod(icounter,NLINES_PER_SOURCE) /= 0) &
-      stop 'total number of non blank and non comment lines in SOURCE file should be a multiple of NLINES_PER_SOURCE'
+      ! if the line is not empty and is not a comment, count it
+      if (len_trim(string_read) > 0 .and. (index(string_read,'#') == 0 .or. index(string_read,'#') > 1)) icounter = icounter + 1
+    endif
+  enddo
+  close(IIN_SOURCE)
 
-    ! total number of sources
-    num_sources = icounter / NLINES_PER_SOURCE
+  ! checks counter
+  if (mod(icounter,NLINES_PER_SOURCE) /= 0) &
+    stop 'total number of non blank and non comment lines in SOURCE file should be a multiple of NLINES_PER_SOURCE'
 
-    if(num_sources < 1) stop 'need at least one source in SOURCE file'
-    if(num_sources /= NSOURCES) then
-         print *,'num_sources :',num_sources
-         print *,'NSOURCES :',NSOURCES
-         stop 'error: Total number of sources read is different from that declared in the Par_file'
+  ! total number of sources
+  num_sources = icounter / NLINES_PER_SOURCE
+
+  ! checks number of sources
+  if (num_sources < 1) stop 'need at least one source in SOURCE file'
+  if (num_sources /= NSOURCES) then
+       print *,'Error invalid num_sources :',num_sources
+       print *,'NSOURCES :',NSOURCES
+       stop 'Error: Total number of sources in DATA/SOURCE is different from that declared in the Par_file, please check...'
+  endif
+
+  ! reads in source parameters
+  open(unit=IIN_SOURCE,file='DATA/SOURCE',status='old',action='read',iostat=ier)
+  if (ier /= 0) stop 'Error opening file DATA/SOURCE'
+
+  ! reads in all source informations
+  do  i_source= 1,NSOURCES
+
+    ! source set to surface
+    call read_value_logical(IIN_SOURCE,IGNORE_JUNK,source_surf(i_source))
+
+    ! x/z location
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,xs(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,zs(i_source))
+
+    ! source and source time function type
+    call read_value_integer(IIN_SOURCE,IGNORE_JUNK,source_type(i_source))
+    call read_value_integer(IIN_SOURCE,IGNORE_JUNK,time_function_type(i_source))
+
+    ! external source time function file (sft type == 8)
+!! DK DK suppressed because null strings are not part of the Fortran standard, thus the IBM xlf compiler rejects them for instance
+!   name_of_source_file(i_source) = ''
+    call read_value_string(IIN_SOURCE,IGNORE_JUNK,name_of_source_file(i_source))
+
+    ! burst (stf type == 9)
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,burst_band_width(i_source))
+
+    ! dominant frequency
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,f0_source(i_source))
+
+    ! time shift
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,tshift_src(i_source))
+
+    ! force source angle
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,anglesource(i_source))
+
+    ! moment tensor
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxx(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mzz(i_source))
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxz(i_source))
+
+    ! amplification factor
+    call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,factor(i_source))
+
+
+    ! Dirac/Heaviside
+    ! if Dirac source time function, use a very thin Gaussian instead
+    ! if Heaviside source time function, use a very thin error function instead
+    if (time_function_type(i_source) == 4 .or. time_function_type(i_source) == 5) then
+      f0_source(i_source) = 1.d0 / (10.d0 * DT)
     endif
 
-    ! reads in source parameters
-    open(unit=IIN_SOURCE,file='DATA/SOURCE',status='old',action='read')
-    do  i_source=1,NSOURCES
-      call read_value_logical(IIN_SOURCE,IGNORE_JUNK,source_surf(i_source))
-      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,xs(i_source))
-      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,zs(i_source))
-      call read_value_integer(IIN_SOURCE,IGNORE_JUNK,source_type(i_source))
-      call read_value_integer(IIN_SOURCE,IGNORE_JUNK,time_function_type(i_source))
-      call read_value_string(IIN_SOURCE,IGNORE_JUNK,name_of_source_file(i_source))
-      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,burst_band_width(i_source))
-      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,f0(i_source))
-      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,tshift_src(i_source))
-      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,anglesource(i_source))
-      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxx(i_source))
-      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mzz(i_source))
-      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,Mxz(i_source))
-      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,factor(i_source))
+    ! checks source frequency
+    if (abs(f0_source(i_source)) < TINYVAL) then
+      call exit_MPI(0,'Error source frequency is zero')
+    endif
 
-      ! note: we will further process source info in solver,
-      !         here we just read in the given specifics and show them
+    ! convert angle from degrees to radians
+    anglesource(i_source) = anglesource(i_source) * PI / 180.d0
 
-      print *
-      print *,'Source', i_source
-      print *,'Position xs, zs = ',xs(i_source),zs(i_source)
-      print *,'Source type (1=force, 2=explosion): ',source_type(i_source)
-      print *,'Angle of the source if force = ',anglesource(i_source)
-      print *,'Multiplying factor = ',factor(i_source)
-      if (time_function_type(i_source) == 8) then
-        print *,"Source read from file:", name_of_source_file(i_source)
-      else
-        if (time_function_type(i_source) == 9) then
-          print *,'Burst wavelet'
-          print *,'Burst band width: ',burst_band_width(i_source)
-        else
-          print *,'Frequency, delay = ',f0(i_source),tshift_src(i_source)
-          print *,'Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 8=Read from file, 9=burst):'&
-                 ,time_function_type(i_source)
-          print *,'Mxx of the source if moment tensor = ',Mxx(i_source)
-          print *,'Mzz of the source if moment tensor = ',Mzz(i_source)
-          print *,'Mxz of the source if moment tensor = ',Mxz(i_source)
-        endif
-      endif
+    ! user output
+    ! note: we will further process source info in solver,
+    !         here we just read in the given specifics and show them
+    write(IMAIN,*) 'Source', i_source
+    write(IMAIN,*) '  Position xs, zs = ',xs(i_source),zs(i_source)
+    write(IMAIN,*)
 
-    enddo ! do i_source=1,NSOURCES
-    close(IIN_SOURCE)
+    ! source type
+    write(IMAIN,*) '  Source type (1=force, 2=moment tensor): ',source_type(i_source)
+    select case (source_type(i_source))
+    case (1)
+      ! force
+      write(IMAIN,*) '  Force source:'
+      write(IMAIN,*) '  Angle of the source (deg) = ',anglesource(i_source)
+      write(IMAIN,*) '  Multiplying factor  = ',factor(i_source)
+    case (2)
+      ! moment tensor
+      write(IMAIN,*) '  Moment tensor source:'
+      write(IMAIN,*) '  Mxx of the source = ',Mxx(i_source)
+      write(IMAIN,*) '  Mzz of the source = ',Mzz(i_source)
+      write(IMAIN,*) '  Mxz of the source = ',Mxz(i_source)
+    case default
+      ! not supported yet
+      stop 'Error invalid source type! must be 1 or 2, exiting...'
+    end select
+    write(IMAIN,*)
+
+    ! STF
+    write(IMAIN,*) '  Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, &
+                   &8=Read from file, 9=burst):',time_function_type(i_source)
+    select case (time_function_type(i_source))
+    case (1)
+      write(IMAIN,*) '  Ricker wavelet (second-derivative):'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+    case (2)
+      write(IMAIN,*) '  Ricker wavelet (first-derivative):'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+    case (3)
+      write(IMAIN,*) '  Gaussian:'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+    case (4)
+      write(IMAIN,*) '  Dirac:'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+    case (5)
+      write(IMAIN,*) '  Heaviside:'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+    case (6)
+      write(IMAIN,*) '  Ocean acoustics (type I):'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+    case (7)
+      write(IMAIN,*) '  Ocean acoustics (type II):'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+    case (8)
+      write(IMAIN,*) '  External source time function file:'
+      write(IMAIN,*) '  Source read from file:',trim(name_of_source_file(i_source))
+    case (9)
+      write(IMAIN,*) '  Burst wavelet:'
+      write(IMAIN,*) '  Burst band width: ',burst_band_width(i_source)
+    case (10)
+      write(IMAIN,*) '  Sinus source time function:'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+    case default
+      stop 'Error invalid source time function type! must be between 1 and 9, exiting...'
+    end select
+    write(IMAIN,*)
+
+  enddo ! do i_source= 1,NSOURCES
+  close(IIN_SOURCE)
 
   end subroutine read_source_file
-
-end module source_file
 

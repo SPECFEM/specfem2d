@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -14,37 +13,29 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
 
-
   subroutine save_gnuplot_file(ngnod,nx,nz,x,z)
 
 ! creates a Gnuplot file that displays the grid
+
+  use constants, only: IMAIN
 
   implicit none
 
@@ -52,18 +43,24 @@
   double precision, dimension(0:nx,0:nz) :: x,z
 
   ! local parameters
-  integer :: ios,istepx,istepz,ili,icol
+  integer :: ier,istepx,istepz,ili,icol
 
-  print *
-  print *,'Saving the grid in Gnuplot format...'
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'Saving the grid in Gnuplot format...'
+  write(IMAIN,*)
 
-  open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown',iostat=ios)
-  if( ios /= 0 ) stop 'error saving gnuplot file'
+  open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown',iostat=ier)
+  if (ier /= 0 ) then
+    print *,'Error opening gnuplot file for writing: OUTPUT_FILES/gridfile.gnu'
+    print *,'Please make sure directory OUTPUT_FILES/ exists...'
+    stop 'Error saving gnuplot file'
+  endif
 
   ! draw horizontal lines of the grid
-  print *,'drawing horizontal lines of the grid'
+  write(IMAIN,*) 'drawing horizontal lines of the grid'
   istepx = 1
-  if(ngnod == 4) then
+  if (ngnod == 4) then
     istepz = 1
   else
     istepz = 2
@@ -77,8 +74,8 @@
   enddo
 
   ! draw vertical lines of the grid
-  print *,'drawing vertical lines of the grid'
-  if(ngnod == 4) then
+  write(IMAIN,*) 'drawing vertical lines of the grid'
+  if (ngnod == 4) then
     istepx = 1
   else
     istepx = 2
@@ -97,21 +94,22 @@
   close(20)
 
   ! create a Gnuplot script to display the grid
-  open(unit=20,file='OUTPUT_FILES/plotgnu',status='unknown',iostat=ios)
-  if( ios /= 0 ) stop 'error saving plotgnu file'
+  open(unit=20,file='OUTPUT_FILES/plot_gridfile.gnu',status='unknown',iostat=ier)
+  if (ier /= 0 ) stop 'Error saving plotgnu file'
 
   write(20,*) '#set term wxt'
   write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
-  write(20,*) 'set output "grid.ps"'
+  write(20,*) 'set output "OUTPUT_FILES/gridfile.ps"'
   write(20,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
   write(20,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
   ! use same unit length on both X and Y axes
   write(20,*) 'set size ratio -1'
+  write(20,*) 'set loadpath "./OUTPUT_FILES"'
   write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
   write(20,*) 'pause -1 "Hit any key..."'
   close(20)
 
-  print *,'Grid saved in Gnuplot format...'
-  print *
+  write(IMAIN,*) 'Grid saved in Gnuplot format...'
+  write(IMAIN,*)
 
   end subroutine save_gnuplot_file

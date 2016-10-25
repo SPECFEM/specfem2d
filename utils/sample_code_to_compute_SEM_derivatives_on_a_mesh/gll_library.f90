@@ -21,13 +21,13 @@
 
   f3 = zero
   apb = alpha+beta
-  if(n == 0) then
+  if (n == 0) then
     endw1 = zero
     return
   endif
   f1 = gammaf(alpha+two)*gammaf(beta+one)/gammaf(apb+three)
   f1 = f1*(apb+two)*two**(apb+two)/two
-  if(n == 1) then
+  if (n == 1) then
    endw1 = f1
    return
   endif
@@ -36,7 +36,7 @@
   fint2 = gammaf(alpha+two)*gammaf(beta+two)/gammaf(apb+four)
   fint2 = fint2*two**(apb+three)
   f2    = (-two*(beta+two)*fint1 + (apb+four)*fint2) * (apb+three)/four
-  if(n == 2) then
+  if (n == 2) then
    endw1 = f2
    return
   endif
@@ -124,16 +124,16 @@
   gammaf = one
 
   if (x == -half) gammaf = -two*sqrt(pi)
-  if (x ==  half) gammaf =  sqrt(pi)
-  if (x ==  one ) gammaf =  one
-  if (x ==  two ) gammaf =  one
-  if (x ==  1.5d0) gammaf =  sqrt(pi)/2.d0
-  if (x ==  2.5d0) gammaf =  1.5d0*sqrt(pi)/2.d0
-  if (x ==  3.5d0) gammaf =  2.5d0*1.5d0*sqrt(pi)/2.d0
-  if (x ==  3.d0 ) gammaf =  2.d0
-  if (x ==  4.d0 ) gammaf = 6.d0
-  if (x ==  5.d0 ) gammaf = 24.d0
-  if (x ==  6.d0 ) gammaf = 120.d0
+  if (x == half) gammaf =  sqrt(pi)
+  if (x == one ) gammaf =  one
+  if (x == two ) gammaf =  one
+  if (x == 1.5d0) gammaf =  sqrt(pi)/2.d0
+  if (x == 2.5d0) gammaf =  1.5d0*sqrt(pi)/2.d0
+  if (x == 3.5d0) gammaf =  2.5d0*1.5d0*sqrt(pi)/2.d0
+  if (x == 3.d0 ) gammaf =  2.d0
+  if (x == 4.d0 ) gammaf = 6.d0
+  if (x == 5.d0 ) gammaf = 24.d0
+  if (x == 6.d0 ) gammaf = 120.d0
 
   end function gammaf
 
@@ -178,7 +178,7 @@
   pd = 0.d0
   jmin = 0
   do j=1,np
-   if(j == 1) then
+   if (j == 1) then
       x = cos((2.d0*(dble(j)-1.d0)+1.d0)*dth)
    else
       x1 = cos((2.d0*(dble(j)-1.d0)+1.d0)*dth)
@@ -194,7 +194,7 @@
       enddo
       delx = -p/(pd-recsum*p)
       x    = x+delx
-      if(abs(delx) < eps) goto 31
+      if (abs(delx) < eps) goto 31
    enddo
  31      continue
    xjac(np-j+1) = x
@@ -203,12 +203,12 @@
   do i=1,np
    xmin = 2.d0
    do j=i,np
-      if(xjac(j) < xmin) then
+      if (xjac(j) < xmin) then
          xmin = xjac(j)
          jmin = j
       endif
    enddo
-   if(jmin /= i) then
+   if (jmin /= i) then
       swap = xjac(i)
       xjac(i) = xjac(jmin)
       xjac(jmin) = swap
@@ -279,7 +279,7 @@
 !------------------------------------------------------------------------
 !
 
-  double precision FUNCTION PNDLEG (Z,N)
+  double precision function PNDLEG (Z,N)
 
 !------------------------------------------------------------------------
 !
@@ -319,7 +319,7 @@
 !------------------------------------------------------------------------
 !
 
-  double precision FUNCTION PNLEG (Z,N)
+  double precision function PNLEG (Z,N)
 
 !------------------------------------------------------------------------
 !
@@ -424,7 +424,7 @@
 !------------------------------------------------------------------------
 !
 
-  subroutine zwgjd(z,w,np,alpha,beta)
+  subroutine zwgjd_cr(z,w,np,alpha,beta)
 
 !=======================================================================
 !
@@ -487,13 +487,13 @@
     w(i) = -rcoef/(p*pdm1)
   enddo
 
-  end subroutine zwgjd
+  end subroutine zwgjd_cr
 
 !
 !------------------------------------------------------------------------
 !
 
-  subroutine zwgljd(z,w,np,alpha,beta)
+  subroutine zwgljd_cr(z,w,np,alpha,beta)
 
 !=======================================================================
 !
@@ -543,7 +543,7 @@
   if (nm1 > 0) then
     alpg  = alpha+one
     betg  = beta+one
-    call zwgjd(z(2),w(2),nm1,alpg,betg)
+    call zwgjd_cr(z(2),w(2),nm1,alpg,betg)
   endif
 
   z(1)  = - one
@@ -558,5 +558,5 @@
   call jacobf(p,pd,pm1,pdm1,pm2,pdm2,n,alpha,beta,z(np))
   w(np) = endw2(n,alpha,beta)/(two*pd)
 
-  end subroutine zwgljd
+  end subroutine zwgljd_cr
 

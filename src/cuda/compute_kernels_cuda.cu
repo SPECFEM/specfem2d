@@ -14,33 +14,23 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 #include <stdio.h>
@@ -91,10 +81,10 @@ __global__ void compute_kernels_ani_cudakernel(int* ispec_is_elastic,
   int i,j;
 
   // handles case when there is 1 extra block (due to rectangular grid)
-  if(ispec < NSPEC_AB) {
+  if (ispec < NSPEC_AB) {
 
     // elastic elements only
-    if( ispec_is_elastic[ispec] ) {
+    if (ispec_is_elastic[ispec]) {
       int iglob = d_ibool[ijk + NGLL3_PADDED*ispec] - 1;
 
       // anisotropic kernels:
@@ -147,11 +137,11 @@ __global__ void compute_kernels_ani_cudakernel(int* ispec_is_elastic,
       for( i=0; i<6; i++){
         for( j=i; j<6; j++){
           prod[p] = eps[i] * b_eps[j];
-          if( j > i ){
+          if (j > i) {
             prod[p] = prod[p] + eps[j]*b_eps[i];
-            if( j > 2 && i < 3 ){ prod[p] = prod[p]*2; }
+            if (j > 2 && i < 3) { prod[p] = prod[p]*2; }
           }
-          if(i > 2 ){ prod[p] = prod[p]*4; }
+          if (i > 2) { prod[p] = prod[p]*4; }
           p++;
         }
       }
@@ -189,10 +179,10 @@ __global__ void compute_kernels_cudakernel(int* ispec_is_elastic,
 
 
   // handles case when there is 1 extra block (due to rectangular grid)
-  if(ispec < NSPEC_AB) {
+  if (ispec < NSPEC_AB) {
 
     // elastic elements only
-    if( ispec_is_elastic[ispec] ) {
+    if (ispec_is_elastic[ispec]) {
       int iglob = d_ibool[ij + NGLL2_PADDED*ispec] - 1 ;
 
       // isotropic kernels:
@@ -280,7 +270,6 @@ __device__ void compute_gradient_kernel(int ij,
 
   const int NGLL2_ALIGN = NGLL2_PADDED;
 
-
   int J = (ij/NGLLX);
   int I = (ij-J*NGLLX);
 
@@ -308,13 +297,11 @@ __device__ void compute_gradient_kernel(int ij,
   gammaxl = d_gammax[offset];
   gammazl = d_gammaz[offset];
 
-
-    rho_invl = 1.0f / rhol;
+  rho_invl = 1.0f / rhol;
 
   // derivatives of acoustic scalar potential field on GLL points
   vector_field_element[0] = (temp1l*xixl + temp3l*gammaxl) * rho_invl;
   vector_field_element[1] = (temp1l*xizl + temp3l*gammazl) * rho_invl;
-
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -350,9 +337,9 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
   int active = 0;
 
   // handles case when there is 1 extra block (due to rectangular grid)
-  if( ispec < NSPEC_AB ){
+  if (ispec < NSPEC_AB) {
     // acoustic elements only
-    if( ispec_is_acoustic[ispec] ){
+    if (ispec_is_acoustic[ispec]) {
       active = 1;
 
       // copy field values
@@ -365,7 +352,7 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
   // synchronizes threads
   __syncthreads();
 
-  if( active ){
+  if (active) {
     realw accel_elm[2];
     realw b_displ_elm[2];
     realw rhol,kappal;
@@ -451,10 +438,10 @@ __global__ void compute_kernels_hess_el_cudakernel(int* ispec_is_elastic,
   int ij = threadIdx.x;
 
   // handles case when there is 1 extra block (due to rectangular grid)
-  if(ispec < NSPEC_AB) {
+  if (ispec < NSPEC_AB) {
 
     // elastic elements only
-    if( ispec_is_elastic[ispec] ) {
+    if (ispec_is_elastic[ispec]) {
       int iglob = d_ibool[ij + NGLL2_PADDED*ispec] - 1;
 
       // approximate hessian
@@ -489,10 +476,10 @@ __global__ void compute_kernels_hess_ac_cudakernel(int* ispec_is_acoustic,
   int active = 0;
 
   // handles case when there is 1 extra block (due to rectangular grid)
-  if(ispec < NSPEC_AB) {
+  if (ispec < NSPEC_AB) {
 
     // acoustic elements only
-    if( ispec_is_acoustic[ispec] ){
+    if (ispec_is_acoustic[ispec]) {
       active = 1;
 
       // global indices
@@ -507,7 +494,7 @@ __global__ void compute_kernels_hess_ac_cudakernel(int* ispec_is_acoustic,
   // synchronizes threads
   __syncthreads();
 
-  if( active ){
+  if (active) {
     realw accel_elm[2];
     realw b_accel_elm[2];
     realw rhol;
@@ -554,7 +541,7 @@ void FC_FUNC_(compute_kernels_hess_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  if( *ELASTIC_SIMULATION ) {
+  if (*ELASTIC_SIMULATION) {
     compute_kernels_hess_el_cudakernel<<<grid,threads>>>(mp->d_ispec_is_elastic,
                                                          mp->d_ibool,
                                                          mp->d_accel,
@@ -563,7 +550,7 @@ void FC_FUNC_(compute_kernels_hess_cuda,
                                                          mp->NSPEC_AB);
   }
 
-  if( *ACOUSTIC_SIMULATION ) {
+  if (*ACOUSTIC_SIMULATION) {
     compute_kernels_hess_ac_cudakernel<<<grid,threads>>>(mp->d_ispec_is_acoustic,
                                                          mp->d_ibool,
                                                          mp->d_potential_dot_dot_acoustic,

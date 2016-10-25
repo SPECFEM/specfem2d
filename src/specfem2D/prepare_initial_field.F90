@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -15,73 +14,62 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
 
+  subroutine prepare_initial_field(cploc,csloc)
 
-  subroutine prepare_initialfield()
-
-#ifdef USE_MPI
-  use mpi
-#endif
+  use constants, only: IMAIN,PI,SMALLVALTOL
 
   use specfem_par, only: myrank,any_acoustic,any_poroelastic,over_critical_angle, &
-                         NSOURCES,source_type,anglesource,x_source,z_source,f0,t0, &
+                         NSOURCES,source_type,anglesource,x_source,z_source,f0_source,t0, &
                          nglob,numat,poroelastcoef,density,coord, &
-                         anglesource_refl,c_inc,c_refl,cploc,csloc,time_offset, &
+                         anglesource_refl,c_inc,c_refl,time_offset, &
                          A_plane, B_plane, C_plane, &
-                         accel_elastic,veloc_elastic,displ_elastic
+                         accel_elastic,veloc_elastic,displ_elastic,myrank
 
   implicit none
-  include "constants.h"
+
+  double precision,intent(out) :: cploc, csloc
 
   ! local parameters
   integer :: numat_local,i
   double precision :: denst,lambdaplus2mu,mu,p,x0_source,z0_source
   double precision :: PP,PS,SP,SS,anglesource_abs
   double precision :: xmax, xmin, zmax, zmin,x,z,t
-#ifdef USE_MPI
   double precision :: xmax_glob, xmin_glob, zmax_glob, zmin_glob
-  integer :: ier
-#endif
+
   double precision, external :: ricker_Bielak_displ,ricker_Bielak_veloc,ricker_Bielak_accel
 
   ! user output
   if (myrank == 0) then
-    write(IOUT,*)
+    write(IMAIN,*)
     !! DK DK reading of an initial field from an external file has been suppressed
     !! DK DK and replaced with the implementation of an analytical plane wave
-    !! DK DK     write(IOUT,*) 'Reading initial fields from external file...'
-    write(IOUT,*) 'Implementing an analytical initial plane wave...'
-    write(IOUT,*)
+    !! DK DK     write(IMAIN,*) 'Reading initial fields from external file...'
+    write(IMAIN,*) 'Implementing an analytical initial plane wave...'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
-  if(any_acoustic .or. any_poroelastic) &
-    call exit_MPI('initial field currently implemented for purely elastic simulation only')
+  ! safety check
+  if (any_acoustic .or. any_poroelastic) &
+    call exit_MPI(myrank,'initial field currently implemented for purely elastic simulation only')
 
   !=======================================================================
   !
@@ -90,44 +78,45 @@
   !=======================================================================
 
   if (myrank == 0) then
-    write(IOUT,*) 'Number of grid points: ',nglob
-    write(IOUT,*)
-    write(IOUT,*) '*** calculation of the initial plane wave ***'
-    write(IOUT,*)
-    write(IOUT,*)  'To change the initial plane wave, change source_type in DATA/SOURCE'
-    write(IOUT,*)  'and use 1 or 4 for a plane P wave, 2 or 5 for a plane SV wave, 3 for a Rayleigh wave'
-    write(IOUT,*)
+    write(IMAIN,*) 'Number of grid points: ',nglob
+    write(IMAIN,*)
+    write(IMAIN,*) '*** calculation of the initial plane wave ***'
+    write(IMAIN,*)
+    write(IMAIN,*)  'To change the initial plane wave, change source_type in DATA/SOURCE'
+    write(IMAIN,*)  'and use 1 or 4 for a plane P wave, 2 or 5 for a plane SV wave, 3 for a Rayleigh wave'
+    write(IMAIN,*)
 
   ! only implemented for one source
-    if(NSOURCES > 1) call exit_MPI('calculation of the initial wave is only implemented for one source')
+    if (NSOURCES > 1) call exit_MPI(myrank,'calculation of the initial wave is only implemented for one source')
     if (source_type(1) == 1 .or. source_type(1) == 4) then
-      write(IOUT,*) 'initial P wave of', anglesource(1)*180.d0/pi, 'degrees introduced.'
+      write(IMAIN,*) 'initial P wave of', anglesource(1)*180.d0/pi, 'degrees introduced.'
     else if (source_type(1) == 2 .or. source_type(1) == 5) then
-      write(IOUT,*) 'initial SV wave of', anglesource(1)*180.d0/pi, ' degrees introduced.'
+      write(IMAIN,*) 'initial SV wave of', anglesource(1)*180.d0/pi, ' degrees introduced.'
     else if (source_type(1) == 3) then
-      write(IOUT,*) 'Rayleigh wave introduced.'
+      write(IMAIN,*) 'Rayleigh wave introduced.'
     else
-      call exit_MPI('Unrecognized source_type: should be 1 or 4 for plane P waves, 2 or 5 for plane SV waves, 3 for Rayleigh wave')
+      call exit_MPI(myrank, &
+        'Unrecognized source_type: should be 1 or 4 for plane P waves, 2 or 5 for plane SV waves, 3 for Rayleigh wave')
     endif
   endif
 
   ! allow negative anglesource(1): incidence from the right side of the domain
   ! anglesource has been converted from degrees to radians before
-    anglesource_abs=abs(anglesource(1))
+    anglesource_abs = abs(anglesource(1))
     if (anglesource_abs > pi/2.d0 .and. source_type(1) /= 3) &
-      call exit_MPI("incorrect anglesource: must have 0 <= anglesource < 90")
+      call exit_MPI(myrank,"incorrect anglesource: must have 0 <= anglesource < 90")
 
   ! only implemented for homogeneous media therefore only one material supported
   numat_local = numat
   if (numat /= 1) then
      if (myrank == 0) then
-        write(IOUT,*)
-        write(IOUT,*) 'It is not possible to have several materials with a plane wave, thus using the first material.'
-        write(IOUT,*) 'This is not a homogenous model, it contains ',numat,' materials'
-        write(IOUT,*) 'but the plane wave initial and boundary fields'
-        write(IOUT,*) 'are computed by analytical formulas for a homogenous model.'
-        write(IOUT,*) 'Thus use at your own risk!'
-        write(IOUT,*)
+        write(IMAIN,*)
+        write(IMAIN,*) 'It is not possible to have several materials with a plane wave, thus using the first material.'
+        write(IMAIN,*) 'This is not a homogenous model, it contains ',numat,' materials'
+        write(IMAIN,*) 'but the plane wave initial and boundary fields'
+        write(IMAIN,*) 'are computed by analytical formulas for a homogenous model.'
+        write(IMAIN,*) 'Thus use at your own risk!'
+        write(IMAIN,*)
      endif
      numat_local = 1
   endif
@@ -142,7 +131,7 @@
   ! P wave case
   if (source_type(1) == 1 .or. source_type(1) == 4) then
 
-    p=sin(anglesource_abs)/cploc
+    p = sin(anglesource_abs)/cploc
     c_inc  = cploc
     c_refl = csloc
 
@@ -159,7 +148,7 @@
                +4.d0*p**2*cos(anglesource_abs)*cos(anglesource_refl)/cploc))
 
     if (myrank == 0) then
-      write(IOUT,*) 'reflected convert plane wave angle: ', anglesource_refl*180.d0/pi
+      write(IMAIN,*) 'reflected convert plane wave angle: ', anglesource_refl*180.d0/pi
     endif
 
     ! from Table 5.1 p141 in Aki & Richards (1980)
@@ -176,7 +165,7 @@
     c_refl = cploc
 
     ! if this coefficient is greater than 1, we are beyond the critical SV wave angle and there cannot be a converted P wave
-    if (p*c_refl<=1.d0) then
+    if (p*c_refl <= 1.d0) then
       anglesource_refl = asin(p*c_refl)
 
       ! from formulas (5.30) and (5.31) p 140 in Aki & Richards (1980)
@@ -189,11 +178,11 @@
             +4.d0*p**2*cos(anglesource_refl)*cos(anglesource_abs)/cploc))
 
       if (myrank == 0) then
-        write(IOUT,*) 'reflected convert plane wave angle: ', anglesource_refl*180.d0/pi
+        write(IMAIN,*) 'reflected convert plane wave angle: ', anglesource_refl*180.d0/pi
       endif
 
     ! SV45 degree incident plane wave is a particular case
-    else if (anglesource_abs>pi/4.d0-1.0d-11 .and. anglesource_abs<pi/4.d0+1.0d-11) then
+    else if (anglesource_abs > pi/4.d0-1.0d-11 .and. anglesource_abs < pi/4.d0+1.0d-11) then
       anglesource_refl = 0.d0
       SS = -1.0d0
       SP = 0.d0
@@ -226,7 +215,7 @@
   endif
 
 ! to suppress the reflected and converted plane wave fields
-  if(source_type(1) == 4 .or. source_type(1) == 5) then
+  if (source_type(1) == 4 .or. source_type(1) == 5) then
     B_plane(:) = 0
     C_plane(:) = 0
   endif
@@ -237,16 +226,16 @@
   xmax = maxval(coord(1,:))
   zmax = maxval(coord(2,:))
 
-#ifdef USE_MPI
-  call MPI_ALLREDUCE (xmin, xmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (zmin, zmin_glob, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (xmax, xmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
-  call MPI_ALLREDUCE (zmax, zmax_glob, 1, MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ier)
+  ! collects min/max on all slices
+  call min_all_all_dp(xmin, xmin_glob)
+  call max_all_all_dp(xmax, xmax_glob)
+  call min_all_all_dp(zmin, zmin_glob)
+  call max_all_all_dp(zmax, zmax_glob)
+
   xmin = xmin_glob
   zmin = zmin_glob
   xmax = xmax_glob
   zmax = zmax_glob
-#endif
 
   ! check if zs = zmax (free surface)
   if (myrank == 0 .and. abs(z_source(1)-zmax) > SMALLVALTOL) then
@@ -261,10 +250,11 @@
   z0_source = z_source(1)
 
   if (myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*) 'You can modify the location of the initial plane wave by changing xs and zs in DATA/SOURCE.'
-    write(IOUT,*) '   for instance: xs=',x_source(1),'   zs=',z_source(1), ' (zs can/should be the height of the free surface)'
-    write(IOUT,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'You can modify the location of the initial plane wave by changing xs and zs in DATA/SOURCE.'
+    write(IMAIN,*) '   for instance: xs=',x_source(1),'   zs=',z_source(1), ' (zs can/should be the height of the free surface)'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   if (.not. over_critical_angle) then
@@ -287,45 +277,47 @@
 
       ! formulas for the initial displacement for a plane wave from Aki & Richards (1980)
       displ_elastic(1,i) = &
-          A_plane(1) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + B_plane(1) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + C_plane(1) * ricker_Bielak_displ(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
-      displ_elastic(3,i) = &
-          A_plane(2) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + B_plane(2) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + C_plane(2) * ricker_Bielak_displ(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
+          A_plane(1) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + B_plane(1) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + C_plane(1) * ricker_Bielak_displ(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
+      displ_elastic(2,i) = &
+          A_plane(2) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + B_plane(2) * ricker_Bielak_displ(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + C_plane(2) * ricker_Bielak_displ(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
 
       ! formulas for the initial velocity for a plane wave (first derivative in time of the displacement)
       veloc_elastic(1,i) = &
-          A_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + B_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + C_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
-      veloc_elastic(3,i) = &
-          A_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + B_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + C_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
+          A_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + B_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + C_plane(1) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
+      veloc_elastic(2,i) = &
+          A_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + B_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + C_plane(2) * ricker_Bielak_veloc(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
 
       ! formulas for the initial acceleration for a plane wave (second derivative in time of the displacement)
       accel_elastic(1,i) = &
-          A_plane(1) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + B_plane(1) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + C_plane(1) * ricker_Bielak_accel(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
-      accel_elastic(3,i) = &
-          A_plane(2) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + B_plane(2) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0(1)) &
-        + C_plane(2) * ricker_Bielak_accel(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0(1))
+          A_plane(1) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + B_plane(1) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + C_plane(1) * ricker_Bielak_accel(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
+      accel_elastic(2,i) = &
+          A_plane(2) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + B_plane(2) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
+        + C_plane(2) * ricker_Bielak_accel(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
 
    enddo
 
 endif
 
-end subroutine prepare_initialfield
+end subroutine prepare_initial_field
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_initialfield_paco()
+  subroutine prepare_initial_field_paco()
+
+  use constants, only: IMAIN,IEDGE1,IEDGE2,IEDGE4,NGLLX,NGLLZ,PI
 
   use specfem_par, only: myrank,nelemabs,left_bound,right_bound,bot_bound, &
                                     numabs,codeabs,ibool, &
@@ -333,27 +325,27 @@ end subroutine prepare_initialfield
                                     count_bottom,count_left,count_right
 
   implicit none
-  include "constants.h"
 
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob,ibegin,iend
 
   if (myrank == 0) then
     if (source_type(1) /= 3 ) &
-      write(IOUT,*) 'You are beyond the critical angle ( > ',asin(c_inc/c_refl)*180d0/pi,')'
+      write(IMAIN,*) 'You are beyond the critical angle ( > ',asin(c_inc/c_refl)*180d0/pi,')'
 
-    write(IOUT,*)  '*************'
-    write(IOUT,*)  'We have to compute the initial field in the frequency domain'
-    write(IOUT,*)  'and then convert it to the time domain (can be long... be patient...)'
-    write(IOUT,*)  '*************'
+    write(IMAIN,*)  '*************'
+    write(IMAIN,*)  'We have to compute the initial field in the frequency domain'
+    write(IMAIN,*)  'and then convert it to the time domain (can be long... be patient...)'
+    write(IMAIN,*)  '*************'
+    call flush_IMAIN()
   endif
 
   count_bottom=0
   count_left=0
   count_right=0
-  do ispecabs=1,nelemabs
+  do ispecabs= 1,nelemabs
     ispec=numabs(ispecabs)
-    if(codeabs(IEDGE4,ispecabs)) then
+    if (codeabs(IEDGE4,ispecabs)) then
        i = 1
        do j = 1,NGLLZ
           count_left=count_left+1
@@ -361,7 +353,7 @@ end subroutine prepare_initialfield
           left_bound(count_left)=iglob
        enddo
     endif
-    if(codeabs(IEDGE2,ispecabs)) then
+    if (codeabs(IEDGE2,ispecabs)) then
        i = NGLLX
        do j = 1,NGLLZ
           count_right=count_right+1
@@ -369,13 +361,13 @@ end subroutine prepare_initialfield
           right_bound(count_right)=iglob
        enddo
     endif
-    if(codeabs(IEDGE1,ispecabs)) then
+    if (codeabs(IEDGE1,ispecabs)) then
        j = 1
 !! DK DK not needed       ! exclude corners to make sure there is no contradiction regarding the normal
        ibegin = 1
        iend = NGLLX
-!! DK DK not needed       if(codeabs(IEDGE4,ispecabs)) ibegin = 2
-!! DK DK not needed       if(codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
+!! DK DK not needed       if (codeabs(IEDGE4,ispecabs)) ibegin = 2
+!! DK DK not needed       if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
        do i = ibegin,iend
           count_bottom=count_bottom+1
           iglob = ibool(i,j,ispec)
@@ -384,5 +376,5 @@ end subroutine prepare_initialfield
     endif
   enddo
 
-  end subroutine prepare_initialfield_paco
+  end subroutine prepare_initial_field_paco
 

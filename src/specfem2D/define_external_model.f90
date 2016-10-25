@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -14,42 +13,33 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
 
   subroutine define_external_model_dummy(coord,material_element,ibool, &
-              rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
-              c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+                                         rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+                                         c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
-  use specfem_par, only: poroelastcoef,density,kmato
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
+
+  use specfem_par, only: poroelastcoef,density,kmato,myrank
 
   implicit none
-
-  include "constants.h"
 
 ! -------------------------------------------------------------------------------------
 ! Dummy example of this routine, to be used as a template that users can modify.
@@ -68,9 +58,12 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
-                                                                 c11,c15,c13,c33,c35,c55,c12,c23,c25
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: QKappa_attenuation,Qmu_attenuation
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: gravity,Nsq
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: c11,c15,c13,c33,c35,c55,c12,c23,c25
 
+  ! local parameters
   integer :: i,j,ispec,iglob
 
   double precision :: x,z
@@ -78,10 +71,20 @@
 ! dummy routine here, just to demonstrate how the model can be assigned
 ! and how such a routine can be written
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  external model: ','dummy example'
+    call flush_IMAIN()
+  endif
+
 ! remove gravity
 ! leave these arrays here even if you do not assign them to use them because they need to be cleared
   gravity(:,:,:) = 0.d0
   Nsq(:,:,:) = 0.d0
+
+  ! default no attenuation
+  QKappa_attenuation(:,:,:) = 9999.d0
+  Qmu_attenuation(:,:,:) = 9999.d0
 
 ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
   do ispec = 1,nspec
@@ -93,9 +96,9 @@
         x = coord(1,iglob)
         z = coord(2,iglob)
 
-        if(material_element(ispec) == 1 .or. x < 1700.d0 .or. z >= 2300.d0) then
-          rho(i,j,ispec) = 2000.d0
-          vp(i,j,ispec) = 3000.d0
+        if (material_element(ispec) == 1 .or. x < 1700.d0 .or. z >= 2300.d0) then
+          rho(i,j,ispec) = 2000.d0 + 10.d0*x - 32.17d0*z**3
+          vp(i,j,ispec) = 3000.d0 - 7.12d0*cos(x)
           vs(i,j,ispec) = vp(i,j,ispec) / sqrt(3.d0)
           QKappa_attenuation(i,j,ispec) = 9999. ! this means no attenuation
           Qmu_attenuation(i,j,ispec)    = 9999. ! this means no attenuation
@@ -109,7 +112,7 @@
           c23(i,j,ispec) = 0.d0
           c25(i,j,ispec) = 0.d0
 
-        else if(material_element(ispec) == 2) then
+        else if (material_element(ispec) == 2) then
           rho(i,j,ispec) = 2500.d0
           vp(i,j,ispec) = 3600.d0
           vs(i,j,ispec) = vp(i,j,ispec) / 2.d0
@@ -126,15 +129,16 @@
           c25(i,j,ispec) = 0.d0
 
         else
-          write(IOUT,*) 'flag number in external model is equal to ',material_element(ispec)
+          ! this case should not occur
+          write(IMAIN,*) 'Error: invalid flag number in external model is equal to ',material_element(ispec)
           stop 'wrong flag number in external model; exiting...'
         endif
 
-        !! AB AB Do not forget these 3 lines otherwise PML may not work !!
+        !! ABAB Do not forget these 3 lines otherwise PML may not work !! TODO check that
         density(1,kmato(ispec)) = rho(i,j,ispec)
         poroelastcoef(3,1,kmato(ispec)) = rho(i,j,ispec) * vp(i,j,ispec) * vp(i,j,ispec)
         poroelastcoef(2,1,kmato(ispec)) =  rho(i,j,ispec) * vs(i,j,ispec) * vs(i,j,ispec)
-        !! AB AB Do not forget these 3 lines otherwise PML may not work !!
+        !! ABAB Do not forget these 3 lines otherwise PML may not work !! TODO check that
 
       enddo
     enddo
@@ -149,17 +153,19 @@
 !
 !========================================================================
   subroutine define_external_model(coord,material_element,ibool, &
-              rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
-              c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+                                   rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+                                   c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
+
+  use specfem_par, only: myrank
 
   implicit none
 
-  include "constants.h"
-
 !--------------------------------------------------------------------------------------------------
 !
-!          taken from S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1
-!          -------------------------------------------------------------
+!          taken from   S p e c f e m 3 D  G l o b e
+!          -----------------------------------------
 
 ! Modified AK135 model:
 !
@@ -192,9 +198,12 @@
 
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
-                                                                 c11,c15,c13,c33,c35,c55,c12,c23,c25
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: QKappa_attenuation,Qmu_attenuation
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: gravity,Nsq
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: c11,c15,c13,c33,c35,c55,c12,c23,c25
 
+  ! local parameters
 ! number of layers in ak135-f
   integer, parameter :: NR_AK135F_NO_MUD = 136
 
@@ -215,10 +224,31 @@
 
   double precision :: x,z,r,frac
 
-! remove gravity
-! leave these arrays here even if you do not assign them to use them because they need to be cleared
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  external model: ','ak135-f'
+    call flush_IMAIN()
+  endif
+
+  ! remove gravity
+  ! leave these arrays here even if you do not assign them to use them because they need to be cleared
   gravity(:,:,:) = 0.d0
   Nsq(:,:,:)     = 0.d0
+
+  ! default no attenuation
+  QKappa_attenuation(:,:,:) = 9999.d0
+  Qmu_attenuation(:,:,:) = 9999.d0
+
+  ! default no anisotropy
+  c11(:,:,:) = 0.d0
+  c13(:,:,:) = 0.d0
+  c15(:,:,:) = 0.d0
+  c33(:,:,:) = 0.d0
+  c35(:,:,:) = 0.d0
+  c55(:,:,:) = 0.d0
+  c12(:,:,:) = 0.d0
+  c23(:,:,:) = 0.d0
+  c25(:,:,:) = 0.d0
 
 ! define all the values in the model once and for all
 
@@ -1056,7 +1086,7 @@
 ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
   do ispec = 1,nspec
 
-  if(material_element(ispec) /= IREGION_MANTLE_CRUST_ABOVE_d670 .and. &
+  if (material_element(ispec) /= IREGION_MANTLE_CRUST_ABOVE_d670 .and. &
      material_element(ispec) /= IREGION_MANTLE_BELOW_d670 .and. &
      material_element(ispec) /= IREGION_OUTER_CORE .and. &
      material_element(ispec) /= IREGION_INNER_CORE) stop 'wrong flag number in external model'
@@ -1064,76 +1094,63 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
 
-   iglob = ibool(i,j,ispec)
+        iglob = ibool(i,j,ispec)
 
-   x = coord(1,iglob)
-   z = coord(2,iglob)
+        x = coord(1,iglob)
+        z = coord(2,iglob)
 
-! compute the radius
-  r = sqrt(x**2 + z**2)
+        ! compute the radius
+        r = sqrt(x**2 + z**2)
 
-  ii = 1
-  do while(r >= radius_ak135(ii) .and. ii /= NR_AK135F_NO_MUD)
-    ii = ii + 1
-  enddo
+        ii = 1
+        do while(r >= radius_ak135(ii) .and. ii /= NR_AK135F_NO_MUD)
+          ii = ii + 1
+        enddo
 
-! make sure we stay in the right region and never take a point above
-! and a point below the ICB or the CMB and interpolate between them,
-! which would lead to a wrong value (keeping in mind that we interpolate
-! between points i-1 and i below)
-  if(material_element(ispec) == IREGION_INNER_CORE .and. ii > 24) ii = 24
+        ! make sure we stay in the right region and never take a point above
+        ! and a point below the ICB or the CMB and interpolate between them,
+        ! which would lead to a wrong value (keeping in mind that we interpolate
+        ! between points i-1 and i below)
+        if (material_element(ispec) == IREGION_INNER_CORE .and. ii > 24) ii = 24
 
-  if(material_element(ispec) == IREGION_OUTER_CORE .and. ii < 26) ii = 26
-  if(material_element(ispec) == IREGION_OUTER_CORE .and. ii > 69) ii = 69
+        if (material_element(ispec) == IREGION_OUTER_CORE .and. ii < 26) ii = 26
+        if (material_element(ispec) == IREGION_OUTER_CORE .and. ii > 69) ii = 69
 
-  if((material_element(ispec) == IREGION_MANTLE_CRUST_ABOVE_d670 .or. &
-      material_element(ispec) == IREGION_MANTLE_BELOW_d670) .and. ii < 71) ii = 71
+        if ((material_element(ispec) == IREGION_MANTLE_CRUST_ABOVE_d670 .or. &
+            material_element(ispec) == IREGION_MANTLE_BELOW_d670) .and. ii < 71) ii = 71
 
-  if(ii == 1) then
-    rho(i,j,ispec) = density_ak135(1)
-    vp(i,j,ispec) = vp_ak135(1)
-    vs(i,j,ispec) = vs_ak135(1)
-    Qmu_attenuation(i,j,ispec) = Qmu_ak135(1)
-    Qkappa_attenuation(i,j,ispec) = Qkappa_ak135(1)
-  else
+        if (ii == 1) then
+          rho(i,j,ispec) = density_ak135(1)
+          vp(i,j,ispec) = vp_ak135(1)
+          vs(i,j,ispec) = vs_ak135(1)
+          Qmu_attenuation(i,j,ispec) = Qmu_ak135(1)
+          Qkappa_attenuation(i,j,ispec) = Qkappa_ak135(1)
+        else
+          ! interpolate from radius_ak135(ii-1) to r using the values at ii-1 and ii
+          frac = (r-radius_ak135(ii-1))/(radius_ak135(ii)-radius_ak135(ii-1))
 
-! interpolate from radius_ak135(ii-1) to r using the values at ii-1 and ii
-    frac = (r-radius_ak135(ii-1))/(radius_ak135(ii)-radius_ak135(ii-1))
+          rho(i,j,ispec) = density_ak135(ii-1) + frac * (density_ak135(ii)-density_ak135(ii-1))
+          vp(i,j,ispec) = vp_ak135(ii-1) + frac * (vp_ak135(ii)-vp_ak135(ii-1))
+          vs(i,j,ispec) = vs_ak135(ii-1) + frac * (vs_ak135(ii)-vs_ak135(ii-1))
+          Qmu_attenuation(i,j,ispec) = Qmu_ak135(ii-1) + frac * (Qmu_ak135(ii)-Qmu_ak135(ii-1))
+          Qkappa_attenuation(i,j,ispec) = Qkappa_ak135(ii-1) + frac * (Qkappa_ak135(ii)-Qkappa_ak135(ii-1))
+        endif
 
-    rho(i,j,ispec) = density_ak135(ii-1) + frac * (density_ak135(ii)-density_ak135(ii-1))
-    vp(i,j,ispec) = vp_ak135(ii-1) + frac * (vp_ak135(ii)-vp_ak135(ii-1))
-    vs(i,j,ispec) = vs_ak135(ii-1) + frac * (vs_ak135(ii)-vs_ak135(ii-1))
-    Qmu_attenuation(i,j,ispec) = Qmu_ak135(ii-1) + frac * (Qmu_ak135(ii)-Qmu_ak135(ii-1))
-    Qkappa_attenuation(i,j,ispec) = Qkappa_ak135(ii-1) + frac * (Qkappa_ak135(ii)-Qkappa_ak135(ii-1))
-
-  endif
-
-! make sure Vs is zero in the outer core even if roundoff errors on depth
-! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
-  if(material_element(ispec) == IREGION_OUTER_CORE) then
-    vs(i,j,ispec) = 0.d0
-    Qkappa_attenuation(i,j,ispec) = 9999.d0
-    Qmu_attenuation(i,j,ispec) = 9999.d0
-  endif
+        ! make sure Vs is zero in the outer core even if roundoff errors on depth
+        ! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
+        if (material_element(ispec) == IREGION_OUTER_CORE) then
+          vs(i,j,ispec) = 0.d0
+          Qkappa_attenuation(i,j,ispec) = 9999.d0
+          Qmu_attenuation(i,j,ispec) = 9999.d0
+        endif
 
       enddo
     enddo
   enddo
 
-! convert to m/s
-  vp(:,:,:)=vp(:,:,:)*1000.0d0
-  vs(:,:,:)=vs(:,:,:)*1000.0d0
-
-! no anisotropy
-  c11(:,:,:) = 0.d0
-  c13(:,:,:) = 0.d0
-  c15(:,:,:) = 0.d0
-  c33(:,:,:) = 0.d0
-  c35(:,:,:) = 0.d0
-  c55(:,:,:) = 0.d0
-  c12(:,:,:) = 0.d0
-  c23(:,:,:) = 0.d0
-  c25(:,:,:) = 0.d0
+  ! convert to m/s
+  vp(:,:,:) = vp(:,:,:)*1000.0d0
+  vs(:,:,:) = vs(:,:,:)*1000.0d0
 
   end subroutine define_external_model
 
@@ -1144,12 +1161,14 @@
 !========================================================================
 
   subroutine define_external_model_atmos_tabular_gravitoacoustic(coord,material_element,ibool, &
-              rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
-                              c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+                                                                 rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+                                                                 c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
+
+  use specfem_par, only: myrank
 
   implicit none
-
-  include "constants.h"
 
 !--------------------------------------------------------------------------------------------------
 !
@@ -1189,71 +1208,17 @@
 
   double precision :: x,z,frac,tmp2
 
-! read all the values in the 1D model once and for all
-  open(10,file='EXAMPLES/gravitoacoustic_forcing_bottom/1D_isothermal_atmosphere_model_N2const.txt', &
-  form='formatted')
-
-  do i = 1,NR_LAYER
-
-  read(10,*) z_atmos(i),density_atmos(i),vp_atmos(i),gravity_atmos(i),Nsq_atmos(i),tmp2
-!  write(*,'(6e16.7)') z_atmos(i),density_atmos(i),vp_atmos(i),gravity_atmos(i),tmp1,tmp2
-  enddo
-
-  close(10)
-
-! loop on all the elements of the mesh, and inside each element loop on all the GLL points
-  do ispec = 1,nspec
-
-  if(material_element(ispec) /= IREGION_AIR ) stop 'error: Wrong flag number in external model'
-
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-
-   iglob = ibool(i,j,ispec)
-
-   x = coord(1,iglob)
-   z = coord(2,iglob)
-
-  ii = 1
-  do while(z >= z_atmos(ii) .and. ii /= NR_LAYER)
-    ii = ii + 1
-  enddo
-
-  if(ii == 1) then
-    rho(i,j,ispec) = density_atmos(1)
-    vp(i,j,ispec) = vp_atmos(1)
-    gravity(i,j,ispec) = gravity_atmos(1)
-    vs(i,j,ispec) = 0.d0
-    Qmu_attenuation(i,j,ispec) = 9999.d0
-    Qkappa_attenuation(i,j,ispec) = 9999.d0
-  else
-
-! interpolate from radius_ak135(ii-1) to r using the values at ii-1 and ii
-    frac = (z-z_atmos(ii-1))/(z_atmos(ii)-z_atmos(ii-1))
-
-    rho(i,j,ispec) = exp(log(density_atmos(ii-1)) + frac * (log(density_atmos(ii))-log(density_atmos(ii-1))))
-    vp(i,j,ispec) = vp_atmos(ii-1) + frac * (vp_atmos(ii)-vp_atmos(ii-1))
-    gravity(i,j,ispec) = gravity_atmos(ii-1) + frac * (gravity_atmos(ii)-gravity_atmos(ii-1))
-    Nsq(i,j,ispec) = Nsq_atmos(ii-1) + frac * (Nsq_atmos(ii)-Nsq_atmos(ii-1))
-    if (Nsq(i,j,ispec) <= 0.0) then
-       write(*,*) 'STOP Negative Nsquare !!! :', &
-       i,j,coord(1,iglob),coord(2,iglob),Nsq(i,j,ispec),gravity(i,j,ispec),vp(i,j,ispec)
-       stop
-    endif
-    vs(i,j,ispec) = 0.d0
-    Qmu_attenuation(i,j,ispec) = 9999.d0
-    Qkappa_attenuation(i,j,ispec) = 9999.d0
-
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  external model: ','atmos_tabular_gravitoacoustic'
+    call flush_IMAIN()
   endif
 
-      enddo
-    enddo
-  enddo
+  ! default no attenuation
+  Qmu_attenuation(:,:,:) = 9999.d0
+  Qkappa_attenuation(:,:,:) = 9999.d0
 
-! remove gravity for acoustic-only simulations
-  gravity(:,:,:) = 0.d0
-
-! no anisotropy
+  ! default no anisotropy
   c11(:,:,:) = 0.d0
   c13(:,:,:) = 0.d0
   c15(:,:,:) = 0.d0
@@ -1263,6 +1228,63 @@
   c12(:,:,:) = 0.d0
   c23(:,:,:) = 0.d0
   c25(:,:,:) = 0.d0
+
+  ! read all the values in the 1D model once and for all
+  open(10,file='EXAMPLES/gravitoacoustic_forcing_bottom/1D_isothermal_atmosphere_model_N2const.txt', &
+  form='formatted')
+
+  do i = 1,NR_LAYER
+    read(10,*) z_atmos(i),density_atmos(i),vp_atmos(i),gravity_atmos(i),Nsq_atmos(i),tmp2
+    !  write(*,'(6e16.7)') z_atmos(i),density_atmos(i),vp_atmos(i),gravity_atmos(i),tmp1,tmp2
+  enddo
+
+  close(10)
+
+! loop on all the elements of the mesh, and inside each element loop on all the GLL points
+  do ispec = 1,nspec
+
+    if (material_element(ispec) /= IREGION_AIR ) stop 'error: Wrong flag number in external model'
+
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+
+        iglob = ibool(i,j,ispec)
+
+        x = coord(1,iglob)
+        z = coord(2,iglob)
+
+        ii = 1
+        do while(z >= z_atmos(ii) .and. ii /= NR_LAYER)
+          ii = ii + 1
+        enddo
+
+        if (ii == 1) then
+          rho(i,j,ispec) = density_atmos(1)
+          vp(i,j,ispec) = vp_atmos(1)
+          gravity(i,j,ispec) = gravity_atmos(1)
+          vs(i,j,ispec) = 0.d0
+        else
+          ! interpolate from radius_ak135(ii-1) to r using the values at ii-1 and ii
+          frac = (z-z_atmos(ii-1))/(z_atmos(ii)-z_atmos(ii-1))
+
+          rho(i,j,ispec) = exp(log(density_atmos(ii-1)) + frac * (log(density_atmos(ii))-log(density_atmos(ii-1))))
+          vp(i,j,ispec) = vp_atmos(ii-1) + frac * (vp_atmos(ii)-vp_atmos(ii-1))
+          gravity(i,j,ispec) = gravity_atmos(ii-1) + frac * (gravity_atmos(ii)-gravity_atmos(ii-1))
+          Nsq(i,j,ispec) = Nsq_atmos(ii-1) + frac * (Nsq_atmos(ii)-Nsq_atmos(ii-1))
+          if (Nsq(i,j,ispec) <= 0.0) then
+            write(*,*) 'STOP Negative Nsquare !!! :', &
+            i,j,coord(1,iglob),coord(2,iglob),Nsq(i,j,ispec),gravity(i,j,ispec),vp(i,j,ispec)
+            stop
+          endif
+          vs(i,j,ispec) = 0.d0
+        endif
+
+      enddo
+    enddo
+  enddo
+
+  ! remove gravity for acoustic-only simulations
+  gravity(:,:,:) = 0.d0
 
   end subroutine define_external_model_atmos_tabular_gravitoacoustic
 

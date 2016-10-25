@@ -1,4 +1,36 @@
+!========================================================================
 !
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
+
 ! This subroutine was written by Paco Sanchez-Sesma and his colleagues
 ! from the Autonomous University of Mexico (UNAM), Mexico City, Mexico
 !
@@ -14,19 +46,21 @@
 ! modified by Dimitri Komatitsch and Ronan Madec in March 2008
 ! in particular, converted to Fortran90 and to double precision
 
-subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_bound,&
-                                bot_bound,nleft,nright,nbot,x_source)
+  subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_bound, &
+                                  bot_bound,nleft,nright,nbot,x_source,cploc,csloc)
 
-  use specfem_par,only : coord,nglob,deltat,NSTEP,cploc,csloc,ATTENUATION_VISCOELASTIC_SOLID,v0x_left,&
-                         v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot,t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot,&
-                         displ_elastic,veloc_elastic,accel_elastic
+  use constants, only: PI
 
+  use specfem_par, only: coord,nglob,deltat,NSTEP,ATTENUATION_VISCOELASTIC, &
+    displ_elastic,veloc_elastic,accel_elastic, &
+    v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
+    t0x_left,t0z_left,t0x_right,t0z_right,t0x_bot,t0z_bot
 
   implicit none
 
-  include "constants.h"
-
   double precision :: f0,dt,TP,anglesource,QD,delta_in_period
+  double precision,intent(in) :: cploc,csloc
+
   integer :: npt,source_type,nleft,nright,nbot
 
   integer, dimension(nleft) :: left_bound
@@ -71,16 +105,16 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
 ! find optimal period
 ! if period is too small, you should see several initial plane wave on your initial field
   delta_in_period=2.d0
-  do while(delta_in_period<1.5*abs(xmax-xmin)/csloc)
+  do while(delta_in_period < 1.5*abs(xmax-xmin)/csloc)
      delta_in_period=2.d0*delta_in_period
   enddo
 
 ! test Deltat compatibility
   DT=256.d0
-  do while(DT>deltat)
+  do while(DT > deltat)
      DT=DT/2.d0
   enddo
-  if (abs(DT-deltat)>1.0d-13) then
+  if (abs(DT-deltat) > 1.0d-13) then
      print *, "you must take a deltat that is a power of two (power can be negative)"
      print *, "for example you can take", DT
      stop "cannot go further, restart with new deltat"
@@ -89,11 +123,11 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
   DT=deltat/2.d0
 
   N=2
-  do while(N<2*NSTEP+1)
+  do while(N < 2*NSTEP+1)
      N=2*N
   enddo
 
-  do while(DT<(delta_in_period/N))
+  do while(DT < (delta_in_period/N))
      N=2*N
   enddo
 
@@ -125,30 +159,30 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
   ALFBE=1.0d0/BEALF
   RLM=ALFBE**2-2.0d0
 
-! flags: interior=0, left=1, right=2, bottom=3
+! flags: interior=0, left= 1, right= 2, bottom=3
   do FLAG=0,3
 
-     if (FLAG==0) then
+     if (FLAG == 0) then
         print *,"calculation of the initial field for every point of the mesh"
         npt=nglob
         allocate(local_pt(npt))
-        do inode=1,npt
+        do inode= 1,npt
            local_pt(inode)=inode
         enddo
         NSTEP_local=1
-     else if(FLAG==1) then
+     else if (FLAG == 1) then
         print *,"calculation of every time step on the left absorbing boundary"
         npt=nleft
         allocate(local_pt(npt))
         local_pt=left_bound
         NSTEP_local=NSTEP
-     else if(FLAG==2) then
+     else if (FLAG == 2) then
         print *,"calculation of every time step on the right absorbing boundary"
         npt=nright
         allocate(local_pt(npt))
         local_pt=right_bound
         NSTEP_local=NSTEP
-     else if(FLAG==3) then
+     else if (FLAG == 3) then
         print *,"calculation of every time step on the bottom absorbing boundary"
         npt=nbot
         allocate(local_pt(npt))
@@ -165,18 +199,18 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
      allocate(Field_Tz(NFREC1))
 
 
-     if(mod(N,2) /= 0) stop 'N must be a multiple of 2'
+     if (mod(N,2) /= 0) stop 'N must be a multiple of 2'
 
 ! normal vector to the edge at this grid point
 ! therefore corners between two grid edges must be computed twice
 ! because the normal will change
-     if (FLAG==1) then
+     if (FLAG == 1) then
         VNZ = 0.d0
         VNX = 1.d0
-     else if (FLAG==2) then
+     else if (FLAG == 2) then
         VNZ = 0.d0
         VNX = 1.d0
-     else if (FLAG==3) then
+     else if (FLAG == 3) then
         VNZ = 1.d0
         VNX = 0.d0
      else
@@ -185,9 +219,9 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
      endif
 
 
-     do indice=1,npt
+     do indice= 1,npt
 
-        if (FLAG==0) then
+        if (FLAG == 0) then
            inode=indice
            X=coord(1,indice) - offset
 ! specfem coordinate axes are implemented from bottom to top whereas for this code
@@ -201,7 +235,7 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
            Z=zmax-coord(2,inode)
         endif
 
-        if (mod(indice,500)==0) then
+        if (mod(indice,500) == 0) then
            print *,indice,"points have been computed out of ",npt
         endif
 
@@ -209,9 +243,9 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
 ! first handle the particular case of zero frequency
 !
         TOTO=0.01d0
-        IF (source_type==1) CALL ONDASP(GAMR,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
-        IF (source_type==2) CALL ONDASS(GAMR,TOTO,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
-        IF (source_type==3) CALL ONDASR(0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+        if (source_type == 1) CALL ONDASP(GAMR,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+        if (source_type == 2) CALL ONDASS(GAMR,TOTO,0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+        if (source_type == 3) CALL ONDASR(0.01d0*BEALF,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
 
         TOTO=0.0d0
@@ -223,7 +257,7 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
 
         Field_Ux(1)=UX
         Field_Uz(1)=UZ
-        if (FLAG/=0) then
+        if (FLAG /= 0) then
            Field_Tx(1)=TX
            Field_Tz(1)=TZ
         endif
@@ -231,7 +265,7 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
 !
 ! then loop on all the other discrete frequencies
 !
-        do J=1,N/2
+        do J = 1,N/2
 
 ! compute the value of the frequency (= index * delta in frequency = index * 1/delta in period)
            FJ = dble(J) * 1.d0 / delta_in_period
@@ -242,7 +276,7 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
            AQA=AKA*BEALF
 
 ! exclude attenuation completely if needed
-           if(ATTENUATION_VISCOELASTIC_SOLID) then
+           if (ATTENUATION_VISCOELASTIC) then
               CAKA=CMPLX(AKA,-AKA/(2.0d0*QD))
               CAQA=CMPLX(AQA,-AQA/(2.0d0*QD))
            else
@@ -250,9 +284,9 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
               CAQA=CMPLX(AQA,0)
            endif
 
-           IF (source_type==1) CALL ONDASP(GAMR,AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
-           IF (source_type==2) CALL ONDASS(GAMR,AKA,AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
-           IF (source_type==3) CALL ONDASR(AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+           if (source_type == 1) CALL ONDASP(GAMR,AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+           if (source_type == 2) CALL ONDASS(GAMR,AKA,AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+           if (source_type == 3) CALL ONDASR(AQA,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
            CALL DESFXY(X,Z,source_type,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
@@ -262,7 +296,7 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
 
            Field_Ux(J+1)=UX
            Field_Uz(J+1)=UZ
-           if (FLAG/=0) then
+           if (FLAG /= 0) then
               Field_Tx(J+1)=TX
               Field_Tz(J+1)=TZ
            endif
@@ -274,24 +308,24 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
 ! in the case of the traction we fill only one file per call)
 
 ! global model case for initial field
-        if (FLAG==0) then
+        if (FLAG == 0) then
            call paco_convolve_fft(Field_Ux,1,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            displ_elastic(1,indice)=temp_field(1)
            call paco_convolve_fft(Field_Uz,1,NSTEP_local,dt,NFREC,temp_field,TP,TS)
-           displ_elastic(3,indice)=temp_field(1)
+           displ_elastic(2,indice)=temp_field(1)
            call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            veloc_elastic(1,indice)=temp_field(1)
            call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
-           veloc_elastic(3,indice)=temp_field(1)
+           veloc_elastic(2,indice)=temp_field(1)
            call paco_convolve_fft(Field_Ux,3,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            accel_elastic(1,indice)=temp_field(1)
            call paco_convolve_fft(Field_Uz,3,NSTEP_local,dt,NFREC,temp_field,TP,TS)
-           accel_elastic(3,indice)=temp_field(1)
+           accel_elastic(2,indice)=temp_field(1)
 
 ! absorbing boundaries
 
 ! left case
-        else if (FLAG==1) then
+        else if (FLAG == 1) then
            call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            v0x_left(indice,:)=temp_field(:)
            call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
@@ -302,7 +336,7 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
            t0z_left(indice,:)=temp_field(:)
 
 ! right case
-        else if (FLAG==2) then
+        else if (FLAG == 2) then
            call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            v0x_right(indice,:)=temp_field(:)
            call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
@@ -313,7 +347,7 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
            t0z_right(indice,:)=temp_field(:)
 
 ! bottom case
-        else if (FLAG==3) then
+        else if (FLAG == 3) then
            call paco_convolve_fft(Field_Ux,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
            v0x_bot(indice,:)=temp_field(:)
            call paco_convolve_fft(Field_Uz,2,NSTEP_local,dt,NFREC,temp_field,TP,TS)
@@ -335,11 +369,11 @@ subroutine paco_beyond_critical(anglesource,f0,QD,source_type,left_bound,right_b
 
   enddo
 
-end subroutine paco_beyond_critical
+  end subroutine paco_beyond_critical
 
 !---
 
-SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
+  subroutine DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 
   implicit none
 
@@ -350,24 +384,24 @@ SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
   complex(selected_real_kind(15,300)) :: AUX1,AUX2,FI1,FI2,PS1,PS2
 
   UI=(0.0d0,1.0d0)
-  if (A1/=0.0d0) then
+  if (A1 /= 0.0d0) then
      AUX1=A1*EXP(UI*(AM*Z-AL*X))         ! campo P incidente
   else
      AUX1=CMPLX(0.0d0)
   endif
-  if (A2/=0.0d0) then
+  if (A2 /= 0.0d0) then
      AUX2=A2*EXP(-UI*(AM*Z+AL*X)) *1.0d0      ! campo P reflejado
   else
      AUX2=CMPLX(0.0d0)
   endif
   FI1=AUX1+AUX2
   FI2=AUX1-AUX2
-  if (B1/=0.0d0) then
+  if (B1 /= 0.0d0) then
      AUX1=B1*EXP(UI*(AK*Z-AL*X))            ! campo S incidente
   else
      AUX1=CMPLX(0.0d0)
   endif
-  if (B2/=0.0d0) then
+  if (B2 /= 0.0d0) then
      AUX2=B2*EXP(-UI*(AK*Z+AL*X)) *1.0d0      ! campo S reflejado
   else
      AUX2=CMPLX(0.0d0)
@@ -379,7 +413,7 @@ SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 !     FAC ES PARA TENER CONSISTENCIA CON AKI & RICHARDS (1980)
 !
   FAC=UI
-  IF (ICAS==2)FAC=-UI
+  if (ICAS == 2) FAC=-UI
 
   UX=(-UI*AL*FI1+UI*AK*PS2)*FAC
 
@@ -395,9 +429,9 @@ SUBROUTINE DESFXY(X,Z,ICAS,UX,UZ,SX,SZ,SXZ,A1,B1,A2,B2,AL,AK,AM,RLM)
 ! Paco's convention for vertical coordinate axis is inverted
   SXZ = - SXZ
 
-END SUBROUTINE DESFXY
+  end subroutine DESFXY
 
-SUBROUTINE FAFB(CA,CB,FA,FB)
+  subroutine FAFB(CA,CB,FA,FB)
 
   implicit none
 
@@ -409,21 +443,21 @@ SUBROUTINE FAFB(CA,CB,FA,FB)
   A=CA*CA-1.0d0
   B=CB*CB-1.0d0
 
-  IF (CA<1.0d0) then
+  if (CA < 1.0d0) then
      FA=-UI*SQRT(-A)
   else
      FA=SQRT(A)+ZER
   endif
 
-  IF (CB<1.0d0) then
+  if (CB < 1.0d0) then
      FB=-UI*SQRT(-B)
   else
      FB=CMPLX(SQRT(B),0.0d0)
   endif
 
-END SUBROUTINE FAFB
+  end subroutine FAFB
 
-SUBROUTINE A2B2(FA,FB,A2,B2)
+  subroutine A2B2(FA,FB,A2,B2)
 
   implicit none
 
@@ -434,10 +468,10 @@ SUBROUTINE A2B2(FA,FB,A2,B2)
   A2=(4.0d0*FA*FB-AUX*AUX)/DEN
   B2=4.0d0*FA*AUX/DEN
 
-END SUBROUTINE A2B2
+  end subroutine A2B2
 
 ! calculation of P waves
-SUBROUTINE ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+  subroutine ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
   implicit none
 
@@ -449,13 +483,13 @@ SUBROUTINE ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
   A1=1.0d0/AQB
   B1=0.0d0
 
-  IF (GP==0.0d0) then
+  if (GP == 0.0d0) then
      AL=ZER
      AK=ZER
      AM=AQB+ZER
      A2=(-1.0d0+ZER)/AQB
      B2=ZER
-     RETURN
+     return
   endif
 
   CA=1.0d0/SIN(GP)
@@ -468,10 +502,10 @@ SUBROUTINE ONDASP(GP,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
   A2=A2/AQB
   B2=B2/AQB
 
-END SUBROUTINE ONDASP
+  end subroutine ONDASP
 
 ! calculation of S waves
-SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+  subroutine ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
   implicit none
 
@@ -483,7 +517,7 @@ SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
   A1=0.0d0
   B1=1.0d0/AKB
 
-  IF (GS==0.0d0) then
+  if (GS == 0.0d0) then
      AL=ZER
      AK=AKB+ZER
      AM=ZER
@@ -498,7 +532,7 @@ SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 !
 ! case of the critical angle
 !
-  IF (CA==1.d0) then
+  if (CA == 1.d0) then
     AL=AQB+ZER
     AM=ZER
     CALL FAFB(CA,CB,FA,FB)
@@ -518,10 +552,10 @@ SUBROUTINE ONDASS(GS,AKB,AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
     B2=B2/AKB
   endif
 
-END SUBROUTINE ONDASS
+  end subroutine ONDASS
 
 ! calculation of Rayleigh waves
-SUBROUTINE ONDASR(AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
+  subroutine ONDASR(AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
 
   implicit none
 
@@ -548,13 +582,17 @@ SUBROUTINE ONDASR(AQB,A1,B1,A2,B2,AL,AK,AM,ANU,BEALF)
   B2=B2/(AL*A2+AK)
   A2=A2*B2
 
-END SUBROUTINE ONDASR
+  end subroutine ONDASR
 
-FUNCTION CRB(BEALF)
+!
+!---------
+!
+
+  function CRB(BEALF)
+
+  use constants, only: PI
 
   implicit none
-
-  include "constants.h"
 
   double precision U3,BA2,P,Q,FIND,F1,F2,F12,FACT,CRB,BEALF
 
@@ -563,15 +601,15 @@ FUNCTION CRB(BEALF)
   P=8.0d0/3.0d0-16.0d0*BA2
   Q=272.0d0/27.0d0-80.0d0/3.0d0*BA2
   FIND=Q*Q/4.0d0+P*P*P/27.0d0
-  IF (FIND>=0.0d0) then
+  if (FIND >= 0.0d0) then
      F1=SQRT(FIND)-Q/2.0d0
-     IF (F1>0.0d0) then
+     if (F1 > 0.0d0) then
         F1=F1**U3
      else
         F1=-(-F1)**U3
      endif
      F2=-SQRT(FIND)-Q/2.0d0
-     IF (F2>0.0d0) then
+     if (F2 > 0.0d0) then
         F2=F2**U3
      else
         F2=-(-F2)**U3
@@ -581,7 +619,7 @@ FUNCTION CRB(BEALF)
   else
      F1=-27.0d0*Q*Q/(4.0d0*P*P*P)
      F1=SQRT(F1)
-     IF (Q<0.0d0) then
+     if (Q < 0.0d0) then
         F1=COS((PI-ACOS(F1))/3.0d0)
      else
         F1=COS(ACOS(F1)/3.0d0)
@@ -592,5 +630,5 @@ FUNCTION CRB(BEALF)
      CRB=SQRT(F12)
   endif
 
-END FUNCTION CRB
+  end function CRB
 

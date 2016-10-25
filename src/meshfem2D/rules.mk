@@ -13,28 +13,19 @@
 # the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 # using a spectral-element method (SEM).
 #
-# This software is governed by the CeCILL license under French law and
-# abiding by the rules of distribution of free software. You can use,
-# modify and/or redistribute the software under the terms of the CeCILL
-# license as circulated by CEA, CNRS and Inria at the following URL
-# "http://www.cecill.info".
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
 #
-# As a counterpart to the access to the source code and rights to copy,
-# modify and redistribute granted by the license, users are provided only
-# with a limited warranty and the software's author, the holder of the
-# economic rights, and the successive licensors have only limited
-# liability.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
 #
-# In this respect, the user's attention is drawn to the risks associated
-# with loading, using, modifying and/or developing or reproducing the
-# software by the user in light of its specific status of free software,
-# that may mean that it is complicated to manipulate, and that also
-# therefore means that it is reserved for developers and experienced
-# professionals having in-depth computer knowledge. Users are therefore
-# encouraged to load and test the software's suitability as regards their
-# requirements in conditions enabling the security of their systems and/or
-# data to be ensured and, more generally, to use and operate it in the
-# same conditions as regards security.
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 # The full text of the license is available in file "LICENSE".
 #
@@ -55,41 +46,56 @@ meshfem2D_TARGETS = \
 	$(EMPTY_MACRO)
 
 meshfem2D_OBJECTS = \
+	$O/meshfem2D_par.mesh_module.o \
+  $O/compute_elements_load_par.mesh.o \
+	$O/decompose_mesh.mesh.o \
+	$O/determine_abs_surface.mesh.o \
+	$O/determine_acoustic_surface.mesh.o \
 	$O/get_node_number.mesh.o \
+	$O/metis_partitioning.mesh.o \
 	$O/part_unstruct.mesh.o \
+	$O/read_external_mesh_files.mesh.o \
 	$O/read_interfaces_file.mesh.o \
-	$O/read_materials.mesh.o \
+	$O/read_material_table.mesh.o \
 	$O/read_parameter_file.mesh.o \
 	$O/read_regions.mesh.o \
 	$O/read_source_file.mesh.o \
+	$O/read_mesh_files.mesh.o \
+	$O/repartition_coupling.mesh.o \
+	$O/rotate_mesh.mesh.o \
 	$O/save_databases.mesh.o \
 	$O/save_gnuplot_file.mesh.o \
 	$O/save_stations_file.mesh.o \
+	$O/scotch_partitioning.mesh.o \
 	$O/spline_routines.mesh.o \
 	$O/meshfem2D.mesh.o \
 	$(EMPTY_MACRO)
 
 meshfem2D_MODULES = \
-	$(FC_MODDIR)/interfaces_file.$(FC_MODEXT) \
-	$(FC_MODDIR)/parameter_file.$(FC_MODEXT) \
-	$(FC_MODDIR)/part_unstruct.$(FC_MODEXT) \
-	$(FC_MODDIR)/source_file.$(FC_MODEXT) \
+	$(FC_MODDIR)/decompose_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/part_unstruct_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/compute_elements_load_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/source_file_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 meshfem2D_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/read_value_parameters.shared.o \
+	$O/exit_mpi.shared.o \
+	$O/parallel.shared.o \
 	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 
-$(SCOTCH_INCLUDEDIR)/scotchf.h: scotch_library
-scotch_library:
-ifeq ($(USE_BUNDLED_SCOTCH),1)
-	@echo "Using bundled Scotch"
-	$(MAKE) -C "$(SCOTCH_DIR)/src"
-else
-	@echo "Not using bundled Scotch"
-endif
+# default mesher flags
+FCFLAGS_f90_MESH = $(FCFLAGS_f90)
+MPILIBS_MESH = $(MPILIBS)
 
+# only mesher needs scotch for compilation of parallel version
+ifeq ($(SCOTCH),yes)
+  FCFLAGS_f90_MESH += $(SCOTCH_FLAGS)
+  ## scotch libraries
+  MPILIBS_MESH = $(MPILIBS) $(SCOTCH_LIBS)
+endif
 
 #######################################
 
@@ -103,7 +109,21 @@ meshfem2D: xmeshfem2D
 xmeshfem2D: $E/xmeshfem2D
 
 $E/xmeshfem2D: $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS)
-	$(LINK) $(DEF_FFLAGS) -o ${E}/xmeshfem2D $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS) $(LIB)
+	@echo ""
+	@echo "building xmeshfem2D"
+	@echo ""
+	$(FCLINK) -o ${E}/xmeshfem2D $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS) $(MPILIBS_MESH)
+	@echo ""
+
+# target for SCOTCH
+$(SCOTCH_INCDIR)/scotchf.h: scotch_library
+scotch_library:
+ifeq ($(USE_BUNDLED_SCOTCH),1)
+	@echo "Using bundled Scotch"
+	$(MAKE) -C "$(SCOTCH_DIR)/src"
+else
+	@echo "Not using bundled Scotch"
+endif
 
 
 #######################################
@@ -112,20 +132,22 @@ $E/xmeshfem2D: $(meshfem2D_OBJECTS) $(meshfem2D_SHARED_OBJECTS)
 ### Module dependencies
 ###
 
-$O/meshfem2D.mesh.o: $O/part_unstruct.mesh.o $O/read_interfaces_file.mesh.o $O/read_parameter_file.mesh.o $O/read_source_file.mesh.o
+$O/meshfem2D.mesh.o: $O/meshfem2D_par.mesh_module.o
 
-ifdef SCOTCH_INCLUDEDIR
-$O/part_unstruct.mesh.o: $(SCOTCH_INCLUDEDIR)/scotchf.h
+ifdef SCOTCH_INCDIR
+$O/scotch_partitioning.mesh.o: $(SCOTCH_INCDIR)/scotchf.h
 endif
 
-$O/save_databases.mesh.o: $O/part_unstruct.mesh.o $O/read_parameter_file.mesh.o $O/read_source_file.mesh.o
 
 ####
 #### rule to build each .o file below
 ####
 
-$O/%.mesh.o: $S/%.f90 ${SETUP}/constants.h
-	${F90} ${DEF_FFLAGS} -c -o $@ $<
+$O/%.mesh_module.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
+	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<
 
-$O/%.mesh.o: $S/%.F90 ${SETUP}/constants.h
-	${F90} ${DEF_FFLAGS} -c -o $@ $<
+$O/%.mesh.o: $S/%.f90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o
+	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<
+
+$O/%.mesh.o: $S/%.F90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o
+	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<

@@ -14,33 +14,23 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
-
 */
 
 /* trivia
@@ -53,12 +43,12 @@
   ifort / gfortran caveat:
     to check whether it is true or false, do not check for == 1 to test for true values since ifort just uses
     non-zero values for true (e.g. can be -1 for true). however, false will be always == 0.
-  thus, rather use: if( var ) {...}  for testing if true instead of if( var == 1){...} (alternative: one could use if( var != 0 ){...}
+  thus, rather use: if (var) {...}  for testing if true instead of if (var == 1){...} (alternative: one could use if (var != 0) {...}
 
 */
 
-#ifndef GPU_MESH_
-#define GPU_MESH_
+#ifndef MESH_CONSTANTS_CUDA_H
+#define MESH_CONSTANTS_CUDA_H
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -80,8 +70,8 @@
 #if MAXDEBUG == 1
 #define LOG(x) printf("%s\n",x)
 #define PRINT5(var,offset) for(;print_count<5;print_count++) printf("var(%d)=%2.20f\n",print_count,var[offset+print_count]);
-#define PRINT10(var) if(print_count<10) { printf("var=%1.20e\n",var); print_count++; }
-#define PRINT10i(var) if(print_count<10) { printf("var=%d\n",var); print_count++; }
+#define PRINT10(var) if (print_count<10) { printf("var=%1.20e\n",var); print_count++; }
+#define PRINT10i(var) if (print_count<10) { printf("var=%d\n",var); print_count++; }
 #else
 #define LOG(x) // printf("%s\n",x);
 #define PRINT5(var,offset) // for(i=0;i<10;i++) printf("var(%d)=%f\n",i,var[offset+i]);
@@ -108,7 +98,6 @@
 #define NDIM 2
 
 // Gauss-Lobatto-Legendre
-#define NGLL 5
 #define NGLLX 5
 #define NGLL2 25
 #define NGLL3 125 // no padding: requires same size as in fortran for NGLLX * NGLLY * NGLLZ
@@ -122,9 +111,11 @@
 // number of standard linear solids
 #define N_SLS 3
 
+/* ----------------------------------------------------------------------------------------------- */
 
 //For Cuda aware MPI
 #define ENV_LOCAL_RANK "OMPI_COMM_WORLD_LOCAL_RANK"
+
 /* ----------------------------------------------------------------------------------------------- */
 
 // Output paths, see setup/constants.h
@@ -137,6 +128,16 @@
 //#define USE_MESH_COLORING_GPU
 
 /* ----------------------------------------------------------------------------------------------- */
+
+// macros for version output
+#define VALUE_TO_STRING(x) #x
+#define VALUE(x) VALUE_TO_STRING(x)
+#define VAR_NAME_VALUE(var) #var " = "  VALUE(var)
+
+#pragma message ("Compiling with: " VAR_NAME_VALUE(CUDA_VERSION) "\n")
+#if defined(__CUDA_ARCH__)
+#pragma message ("Compiling with: " VAR_NAME_VALUE(__CUDA_ARCH__) "\n")
+#endif
 
 // Texture memory usage:
 // requires CUDA version >= 4.0, see check below
@@ -156,10 +157,10 @@
 #endif
 
 #ifdef USE_TEXTURES_FIELDS
-#pragma message ("\nCompiling with: USE_TEXTURES_FIELDS enabled\n")
+#pragma message ("Compiling with: USE_TEXTURES_FIELDS enabled\n")
 #endif
 #ifdef USE_TEXTURES_CONSTANTS
-#pragma message ("\nCompiling with: USE_TEXTURES_CONSTANTS enabled\n")
+#pragma message ("Compiling with: USE_TEXTURES_CONSTANTS enabled\n")
 #endif
 
 // (optional) unrolling loops
@@ -251,7 +252,7 @@ typedef realw* __restrict__ realw_p;
 
 // wrapper for global memory load function
 // usage:  val = get_global_cr( &A[index] );
-#if __CUDA_ARCH__ >= 350
+#if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ >= 350)
 // Device has ldg
 __device__ __forceinline__ realw get_global_cr(realw_const_p ptr) { return __ldg(ptr); }
 #else
@@ -301,17 +302,12 @@ typedef struct mesh_ {
   int use_mesh_coloring_gpu;
   int absorbing_conditions;
 
-
-
-
-
   // ------------------------------------------------------------------ //
   // GLL points & weights
   // ------------------------------------------------------------------ //
 
   // interpolators
   realw* d_xix; realw* d_xiz;
-
   realw* d_gammax; realw* d_gammaz;
 
   // model parameters
@@ -371,10 +367,6 @@ typedef struct mesh_ {
   int ninterface_elastic;
   int * d_inum_interfaces_elastic;
 
-
-
-
-
   // mesh coloring
   int* h_num_elem_colors_elastic;
   int num_colors_outer_elastic,num_colors_inner_elastic;
@@ -413,9 +405,6 @@ typedef struct mesh_ {
   realw* d_b_absorb_elastic_right;
   realw* d_b_absorb_elastic_top;
 
-
-
-
   realw* d_rho_vp;
   realw* d_rho_vs;
 
@@ -449,7 +438,6 @@ typedef struct mesh_ {
   int* d_free_surface_ijk;
   int num_free_surface_faces;
 
-
   // anisotropy
   realw* d_c11store;
   realw* d_c12store;
@@ -460,8 +448,6 @@ typedef struct mesh_ {
   realw* d_c33store;
   realw* d_c35store;
   realw* d_c55store;
-
-
 
   // sensitivity kernels
   realw* d_rho_kl;
@@ -474,7 +460,6 @@ typedef struct mesh_ {
   realw* d_b_dsxx;
   realw* d_b_dsxz;
   realw* d_b_dszz;
-
 
 
   // JC JC here we will need to add GPU support for the new C-PML routines
@@ -494,8 +479,6 @@ typedef struct mesh_ {
   int num_phase_ispec_acoustic;
   int ninterface_acoustic;
   int * d_inum_interfaces_acoustic;
-
-
 
   // mesh coloring
   int* h_num_elem_colors_acoustic;

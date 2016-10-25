@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -14,28 +13,19 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -65,17 +55,18 @@
 !
 !=======================================================================
 
+  use constants, only: QUARTER,HALF,ONE,TWO,TINYVAL,NDIM
+
   implicit none
 
-  include "constants.h"
+  integer,intent(in) :: ngnod
 
-  integer ngnod
+  double precision,intent(out) :: shape2D(ngnod)
+  double precision,intent(out) :: dershape2D(NDIM,ngnod)
+  double precision,intent(in) :: xi,gamma
 
-  double precision shape2D(ngnod)
-  double precision dershape2D(NDIM,ngnod)
-  double precision xi,gamma
-
-  double precision s,t,sp,sm,tp,tm,s2,t2,ss,tt,st
+  ! local parameters
+  double precision :: s,t,sp,sm,tp,tm,s2,t2,ss,tt,st
 
 !
 !---- set up the shape functions and their local derivatives
@@ -84,7 +75,7 @@
   t  = gamma
 
 !----    4-node element
-  if(ngnod == 4) then
+  if (ngnod == 4) then
        sp = s + ONE
        sm = s - ONE
        tp = t + ONE
@@ -107,7 +98,7 @@
        dershape2D(2,4) = - QUARTER * sm
 
 !----    9-node element
-  else if(ngnod == 9) then
+  else if (ngnod == 9) then
 
        sp = s + ONE
        sm = s - ONE
@@ -158,15 +149,16 @@
        dershape2D(2,9) = -ONE * t2 * (ONE - ss)
 
   else
-     call exit_MPI('Error: wrong number of control nodes')
+     stop 'Error: wrong number of control nodes'
   endif
 
 !--- check the shape functions and their derivatives
-! sum of shape functions should be one
-! sum of derivatives of shape functions should be zero
-  if(abs(sum(shape2D)-ONE) > TINYVAL) call exit_MPI('error shape functions')
-  if(abs(sum(dershape2D(1,:))) > TINYVAL) call exit_MPI('error deriv xi shape functions')
-  if(abs(sum(dershape2D(2,:))) > TINYVAL) call exit_MPI('error deriv gamma shape functions')
+  ! sum of shape functions should be one
+  if (abs(sum(shape2D)-ONE) > TINYVAL) stop 'Error shape functions'
+
+  ! sum of derivatives of shape functions should be zero
+  if (abs(sum(dershape2D(1,:))) > TINYVAL) stop 'Error deriv xi shape functions'
+  if (abs(sum(dershape2D(2,:))) > TINYVAL) stop 'Error deriv gamma shape functions'
 
   end subroutine define_shape_functions
 

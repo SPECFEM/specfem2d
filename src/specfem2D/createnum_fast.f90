@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -14,28 +13,19 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -45,10 +35,11 @@
 
 ! same as subroutine "createnum_slow" but with a faster algorithm
 
-  use specfem_par, only: knods,ibool,shape2D,coorg,nglob,nspec,ngnod,myrank
-  implicit none
+  use constants, only: IMAIN,NGLLX,NGLLZ,NDIM,HUGEVAL,SMALLVALTOL,ZERO
 
-  include "constants.h"
+  use specfem_par, only: knods,ibool,shape2D,coorg,nglob,nspec,ngnod,myrank
+
+  implicit none
 
 ! additional arrays needed for this fast version
   integer, dimension(:), allocatable :: locval,ind,ninseg,iglob,iwork
@@ -63,11 +54,11 @@
 
 
 !----  create global mesh numbering
-  if(myrank == 0) then
-    write(IOUT,*)
-    write(IOUT,*)
-    write(IOUT,*) 'Generating global mesh numbering (fast version)...'
-    write(IOUT,*)
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Generating global mesh numbering (fast version)...'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   nxyz = NGLLX*NGLLZ
@@ -151,11 +142,11 @@
   ifseg(1) = .true.
   ninseg(1) = ntot
 
-  do j=1,NDIM
+  do j = 1,NDIM
 !  Sort within each segment
    ioff=1
-   do iseg=1,nseg
-      if(j == 1) then
+   do iseg= 1,nseg
+      if (j == 1) then
         call rank (xp(ioff),ind,ninseg(iseg))
       else
         call rank (yp(ioff),ind,ninseg(iseg))
@@ -167,17 +158,17 @@
    enddo
 !  Check for jumps in current coordinate
    if (j == 1) then
-     do i=2,ntot
+     do i = 2,ntot
      if (abs(xp(i)-xp(i-1)) > xtol) ifseg(i)=.true.
      enddo
    else
-     do i=2,ntot
+     do i = 2,ntot
      if (abs(yp(i)-yp(i-1)) > xtol) ifseg(i)=.true.
      enddo
    endif
 !  Count up number of different segments
    nseg = 0
-   do i=1,ntot
+   do i = 1,ntot
       if (ifseg(i)) then
          nseg = nseg+1
          ninseg(nseg) = 1
@@ -190,7 +181,7 @@
 !  Assign global node numbers (now sorted lexicographically!)
 !
   ig = 0
-  do i=1,ntot
+  do i = 1,ntot
    if (ifseg(i)) ig=ig+1
    iglob(locval(i)) = ig
   enddo
@@ -200,7 +191,7 @@
 ! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ! get result in my format
-  do ispec=1,nspec
+  do ispec= 1,nspec
    ieoff = nxyz*(ispec - 1)
    ilocnum = 0
   do iy = 1,NGLLX
@@ -222,7 +213,7 @@
   deallocate(iwork)
 
 ! check the numbering obtained
-  if(minval(ibool) /= 1 .or. maxval(ibool) /= nglob) call exit_MPI('Error while generating global numbering')
+  if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) call exit_MPI(myrank,'Error while generating global numbering')
 
   end subroutine createnum_fast
 
@@ -242,15 +233,15 @@
   integer i,j,l,ir,indx
   double precision q
 
-  do J=1,N
+  do j = 1,N
    IND(j)=j
   enddo
 
-  if(n == 1) return
+  if (n == 1) return
   L=n/2+1
   ir=n
   100 continue
-   IF(l > 1) THEN
+   if (l > 1) then
      l=l-1
      indx=ind(l)
      q=a(indx)
@@ -259,7 +250,7 @@
      q=a(indx)
      ind(ir)=ind(1)
      ir=ir-1
-     if(ir == 1) then
+     if (ir == 1) then
        ind(1)=indx
        return
      endif
@@ -267,21 +258,21 @@
    i=l
    j=l+l
   200 continue
-   IF(J <= IR) THEN
-      IF(J < IR) THEN
-         IF(A(IND(j)) < A(IND(j+1))) j=j+1
+   if (J <= IR) then
+      if (J < IR) then
+         if (A(IND(j)) < A(IND(j+1))) j=j+1
       endif
-      IF(q < A(IND(j))) THEN
+      if (q < A(IND(j))) then
          IND(I)=IND(J)
          I=J
          J=J+J
       ELSE
          J=IR+1
       endif
-   GOTO 200
+   goto 200
    endif
    IND(I)=INDX
-  GOTO 100
+  goto 100
 
   end subroutine rank
 
@@ -301,7 +292,7 @@
 
   W(:) = A(:)
 
-  do J=1,N
+  do j = 1,N
     A(j) = W(ind(j))
   enddo
 
@@ -322,7 +313,7 @@
 
   W(:) = A(:)
 
-  do J=1,N
+  do j = 1,N
     A(j) = W(ind(j))
   enddo
 

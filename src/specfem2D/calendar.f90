@@ -1,3 +1,35 @@
+!========================================================================
+!
+!                   S P E C F E M 2 D  Version 7 . 0
+!                   --------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This software is a computer program whose purpose is to solve
+! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+! using a spectral-element method (SEM).
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
 
   integer function julian_day(yr,mo,da)
 
@@ -10,7 +42,7 @@
   data mon /0,31,59,90,120,151,181,212,243,273,304,334/
 
   julian_day = da + mon(mo)
-  if(mo>2) julian_day = julian_day + lpyr(yr)
+  if (mo > 2) julian_day = julian_day + lpyr(yr)
 
   end function julian_day
 
@@ -25,11 +57,11 @@
 !---- returns 1 if leap year
 !
   lpyr=0
-  if(mod(yr,400) == 0) then
+  if (mod(yr,400) == 0) then
     lpyr=1
-  else if(mod(yr,4) == 0) then
+  else if (mod(yr,4) == 0) then
     lpyr=1
-    if(mod(yr,100) == 0) lpyr=0
+    if (mod(yr,100) == 0) lpyr=0
   endif
 
   end function lpyr
@@ -46,7 +78,7 @@
   integer, external :: lpyr
 
 !---- function lpyr above returns 1 if leap year
-  if(lpyr(yr) == 1) then
+  if (lpyr(yr) == 1) then
     is_leap_year = .true.
   else
     is_leap_year = .false.
@@ -91,7 +123,7 @@
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ! If you find any errors, please notify:
-! Jon Ahlquist <ahlquist@met.fsu.edu>
+! Jon Ahlquist
 ! Dept of Meteorology
 ! Florida State University
 ! Tallahassee, FL 32306-4520
@@ -140,7 +172,7 @@
 
 !----------
 !
-! Subroutine calndr() performs calendar calculations using either
+! subroutine calndr() performs calendar calculations using either
 ! the standard Gregorian calendar or the old Julian calendar.
 ! This subroutine extends the definitions of these calendar systems
 ! to any arbitrary year.  The algorithms in this subroutine
@@ -154,7 +186,7 @@
 !
 !----------
 !
-! INPUT/OUTPUT ARGUMENTS FOR SUBROUTINE CALNDR()
+! input/output arguments for subroutine CALNDR()
 !
 ! "ioptn" is the desired calendar conversion option explained below.
 ! Positive option values use the standard modern Gregorian calendar.
@@ -170,7 +202,7 @@
 ! For BC years, iyear should be negative, so 45 BC would be iyear=-45.
 ! By convention, there is no year 0 under the BC/AD year numbering
 ! scheme.  That is, years proceed as 2 BC, 1 BC, 1 AD, 2 AD, etc.,
-! without including 0.  Subroutine calndr() will print an error message
+! without including 0. The subroutine calndr() will print an error message
 ! and stop if you specify iyear=0.
 !
 ! "idayct" is a day count.  It is either the day number during the
@@ -260,7 +292,7 @@
 ! for Julian Day number 2299161.
 !     ioptn = 5
 !     call calndr (ioptn, iday, month, iyear, 2299161)
-! calndr() should return iday=288, month=1, iyear=1582
+! calndr() should return iday=288, month= 1, iyear=1582
 !
 ! Given 15 October 1582 under the Gregorian calendar,
 ! find the date (idayJ,imonthJ,iyearJ) under the Julian calendar.
@@ -413,7 +445,7 @@
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ! If you find any errors, please notify:
-! Jon Ahlquist <ahlquist@met.fsu.edu>
+! Jon Ahlquist
 ! Dept of Meteorology
 ! Florida State University
 ! Tallahassee, FL 32306-4520
@@ -489,9 +521,9 @@
    if ((jyear/4)*4 == jyear) then
       leap = 1
    endif
-   if ((ioptn > 0)               .and. &
+   if ((ioptn > 0) .and. &
          ((jyear/100)*100 == jyear) .and. &
-         ((jyear/400)*400 /= jyear)      ) then
+         ((jyear/400)*400 /= jyear)     ) then
          leap = 0
    endif
   endif
@@ -692,7 +724,7 @@
 !
 ! This code handles abs(ioptn)=5, finding the day number during the year.
   else
-!        ioptn=5 always returns month=1, which we set now.
+!        ioptn=5 always returns month= 1, which we set now.
    month = 1
 !
 !        We need to determine whether this is a leap year.
@@ -700,16 +732,16 @@
    if ((jyear/4)*4 == jyear) then
       leap = 1
    endif
-   if ((ioptn > 0)               .and. &
+   if ((ioptn > 0) .and. &
       ((jyear/100)*100 == jyear) .and. &
-      ((jyear/400)*400 /= jyear)      ) then
+      ((jyear/400)*400 /= jyear)     ) then
          leap = 0
    endif
 !
 !        Now find the day number "iday".
 !        ndays is the number of days since the most recent 1 March,
 !        so ndays=0 on 1 March.
-   if (ndays <=305) then
+   if (ndays <= 305) then
       iday  = ndays + 60 + leap
    else
       iday  = ndays - 305

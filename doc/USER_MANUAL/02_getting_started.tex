@@ -1,0 +1,101 @@
+%------------------------------------------------------------------------------------------------%
+
+\chapter{Getting Started}\label{cha:Getting-Started}
+
+%------------------------------------------------------------------------------------------------%
+
+To download the SPECFEM2D software package, type this:
+\begin{verbatim}
+git clone --recursive --branch devel https://github.com/geodynamics/specfem2d.git
+\end{verbatim}
+
+We recommend that you add \texttt{ulimit -S -s unlimited} to your \texttt{.bash\_profile} file and/or \texttt{limit stacksize unlimited} to your \texttt{.cshrc} file to suppress any potential limit to the size of the Unix stack.
+
+Then, to configure the software for your system, run the
+\texttt{configure} shell script. This script will attempt to guess
+the appropriate configuration values for your system. However, at
+a minimum, it is recommended that you explicitly specify the appropriate
+command names for your Fortran compiler (another option is to define FC, CC and MPIF90 in your .bash\_profile
+or your .cshrc file):
+%
+\begin{verbatim}
+    ./configure FC=gfortran CC=gcc
+\end{verbatim}
+%
+If you want to run in parallel, i.e., using more than one processor core, then you would type
+%
+\begin{verbatim}
+    ./configure FC=gfortran CC=gcc MPIFC=mpif90 --with-mpi
+\end{verbatim}
+
+You can replace the GNU compilers above (gfortran and gcc) with other compilers if you want to; for instance for Intel ifort and icc use FC=ifort CC=icc instead.
+
+Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
+
+\begin{description}[font=\ttfamily]
+\item [Intel ifort compiler] See if you need to add \texttt{-assume byterecl} for your machine. \textbf{In the case of that compiler, we have noticed that versions dot zero sometimes have bugs or issues that can lead to wrong results when running the code, thus we \emph{strongly} recommend using versions dot one or above (for instance version 13.1 instead of 13.0, version 14.1 instead of 14.0 and so on)}.
+\item [IBM compiler] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
+\item [Mac OS] You will probably need to install \texttt{XCODE}.
+\item [IBM Blue Gene machines] Please refer to the manual of SPECFEM3D\_Cartesian, which contains detailed instructions on how to run on Blue Gene.
+\end{description}
+
+The SPECFEM2D software package relies on the SCOTCH library to partition meshes.
+The SCOTCH library \citep{PeRo96}
+provides efficient static mapping, graph and mesh partitioning routines. SCOTCH is a free software package developed by
+Fran\c{c}ois Pellegrini et al. from LaBRI and Inria in Bordeaux, France, downloadable from the web page \url{https://gforge.inria.fr/projects/scotch/}.
+In case no SCOTCH libraries can be found on the system, the configuration will bundle the version provided with the source code for compilation.
+The path to an existing SCOTCH installation can to be set explicitly with the option \texttt{-{}-with-scotch-dir}.
+Just as an example:
+%
+\begin{verbatim}
+    ./configure FC=ifort MPIFC=mpif90 --with-mpi --with-scotch-dir=/opt/scotch
+\end{verbatim}
+%
+If you use the Intel ifort compiler to compile the code, we recommend that you use the Intel icc C compiler to compile Scotch, i.e., use:
+%
+\begin{verbatim}
+    ./configure CC=icc FC=ifort MPIFC=mpif90
+\end{verbatim}
+%
+For further details about the installation of SCOTCH,
+go to subdirectory \texttt{scotch\_5.1.11/} and read \texttt{INSTALL.txt}. You may want to download more recent versions of SCOTCH in the future from \urlwithparentheses{http://www.labri.fr/perso/pelegrin/scotch/scotch_en.html} . Support for the METIS graph partitioner has been discontinued because SCOTCH is more recent and performs better.
+
+When compiling the SCOTCH source code, if you get a message such as: "ld: cannot find -lz",
+the Zlib compression development library is probably missing on your machine and you will need to install it or ask your system administrator to
+do so. On Linux machines the package is often called "zlib1g-dev" or similar. (thus "sudo apt-get install zlib1g-dev" would install it)
+
+You may edit the \texttt{Makefile} for more specific modifications. Especially, there are several options available:
+%
+\begin{itemize}
+\item \texttt{-DUSE\_MPI} compiles with use of an MPI library.
+\item \texttt{-DUSE\_SCOTCH} enables use of graph partitioner SCOTCH.
+\end{itemize}
+%
+After these steps, go back to the main directory of SPECFEM2D/ and type
+%
+\begin{verbatim}
+    make
+\end{verbatim}
+%
+to create all executables which will be placed into the folder \texttt{./bin/}.
+
+By default, the solver runs in single precision. This is fine for most application, but if for some reason
+you want to run the solver in double precision, run the \texttt{configure} script with option ``\texttt{-{}-enable-double-precision}''.
+Keep in mind that this will of course double total memory size and will also make the solver around 20 to 30\% slower
+on many processors.
+
+If your compiler has problems with the \texttt{use mpi} statements that are used in the code, use the script called
+\texttt{replace\_use\_mpi\_with\_include\_mpif\_dot\_h.pl} in the root directory to replace all of them with \texttt{include `mpif.h'} automatically.
+
+\section{Visualizing the subroutine calling tree of the source code}
+
+Packages such as \texttt{doxywizard} can be used to visualize the subroutine calling tree of the source code.
+\texttt{Doxywizard} is a GUI front-end for configuring and running \texttt{doxygen}.
+
+\section{Becoming a developer of the code, or making small modifications in the source code}
+
+If you want to develop new features in the code, and/or if you want to make small changes, improvements, or bug fixes, you are very welcome to contribute. To do so, i.e. to access the development branch of the source code with read/write access (in a safe way, no need to worry too much about breaking the package, there is a robot called BuildBot that is in charge of checking and validating all new contributions and changes), please visit this Web page: \url{https://github.com/geodynamics/specfem2d/wiki/Using-Hub}.
+
+To visualize the call tree (calling tree) of the source code, you can see the Doxygen tool available in directory \texttt{doc/call\_trees\_of\_the\_source\_code}.
+
+

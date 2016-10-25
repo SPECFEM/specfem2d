@@ -16,17 +16,23 @@ TO RUN:
 
 3. run mesher and solver for forward wavefield:
    > cd EXAMPLES/Tromp2005_kernel/
-   > ./process.sh
+   > ./run_this_example.sh
 
 4. compute adjoint source:
-   > rm -rf xadj_seismogram ; gfortran adj_seismogram_Tromp2005.f90 -o xadj_seismogram
-   > xadj_seismogram
+   > rm -rf xadj_seismogram ; ln -s ../../bin/xadj_seismogram
+   > ./xadj_seismogram 27.0 32.0  AA.S0001  1
 
 5. change Par_file with save_forward = .false. and SIMULATION_TYPE = 3
 
-6. run adjoint simulation:
-   > ./process_kernel.sh
+6. run adjoint simulation and plot the traveltime kernel:
+   > ./run_this_example.sh noclean
 
-7. plot kernel with utils/visualization/plot_wavefield.pl
+
+note: steps 3. to 6. are called when running the script:
+      > ./run_this_example_kernel.sh
+
+      For visualization of the resulting kernels, you can plot a ps-file 
+      (containing by default the kernels rho/vp/vs) by:
+      > ./plot_Tromp2005_kernel_PSV.sh
 
 ---------------------------

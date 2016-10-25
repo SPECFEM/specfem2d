@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -15,483 +14,234 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
 !========================================================================
 
 
-  subroutine prepare_absorb_files()
+  subroutine prepare_absorb_read_elastic()
 
-  use specfem_par, only: myrank,any_elastic,any_poroelastic,any_acoustic, &
-                         nspec_left,nspec_right,nspec_bottom,nspec_top,SIMULATION_TYPE
+! reads in previously stored Stacey boundary contributions
 
-
-  implicit none
-  include "constants.h"
-
-  ! local parameters
-  character(len=150) :: outputname,outputname2
-
-
-  if(any_elastic) then
-
-    !--- left absorbing boundary
-    if( nspec_left >0 ) then
-      write(outputname,'(a,i6.6,a)') 'absorb_elastic_left',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',&
-              form='unformatted')
-      else
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted')
-      endif
-
-    endif  !  end of left absorbing boundary
-
-    !--- right absorbing boundary
-    if( nspec_right >0 ) then
-      write(outputname,'(a,i6.6,a)') 'absorb_elastic_right',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
-        open(unit=36,file='OUTPUT_FILES/'//outputname,status='old',&
-              form='unformatted')
-      else
-        open(unit=36,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted')
-      endif
-
-    endif  !  end of right absorbing boundary
-
-    !--- bottom absorbing boundary
-    if( nspec_bottom >0 ) then
-      write(outputname,'(a,i6.6,a)') 'absorb_elastic_bottom',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
-        open(unit=37,file='OUTPUT_FILES/'//outputname,status='old',&
-              form='unformatted')
-      else
-        open(unit=37,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted')
-      endif
-
-    endif  !  end of bottom absorbing boundary
-
-    !--- top absorbing boundary
-    if( nspec_top >0 ) then
-        write(outputname,'(a,i6.6,a)') 'absorb_elastic_top',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
-        open(unit=38,file='OUTPUT_FILES/'//outputname,status='old',&
-              form='unformatted')
-      else
-        open(unit=38,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted')
-      endif
-
-    endif ! end of top absorbing boundary
-
-  endif ! any_elastic
-
-  if(any_poroelastic) then
-
-    !--- left absorbing boundary
-    if( nspec_left >0 ) then
-      write(outputname,'(a,i6.6,a)') 'absorb_poro_s_left',myrank,'.bin'
-      write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_left',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
-        open(unit=45,file='OUTPUT_FILES/'//outputname,status='old',&
-              form='unformatted')
-        open(unit=25,file='OUTPUT_FILES/'//outputname2,status='old',&
-              form='unformatted')
-      else
-        open(unit=45,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted')
-        open(unit=25,file='OUTPUT_FILES/'//outputname2,status='unknown',&
-              form='unformatted')
-      endif
-
-    endif  !  end of left absorbing boundary
-
-    !--- right absorbing boundary
-    if( nspec_right >0 ) then
-      write(outputname,'(a,i6.6,a)') 'absorb_poro_s_right',myrank,'.bin'
-      write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_right',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
-        open(unit=46,file='OUTPUT_FILES/'//outputname,status='old',&
-              form='unformatted')
-        open(unit=26,file='OUTPUT_FILES/'//outputname2,status='old',&
-              form='unformatted')
-      else
-        open(unit=46,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted')
-        open(unit=26,file='OUTPUT_FILES/'//outputname2,status='unknown',&
-              form='unformatted')
-      endif
-
-    endif  !  end of right absorbing boundary
-
-    !--- bottom absorbing boundary
-    if( nspec_bottom >0 ) then
-      write(outputname,'(a,i6.6,a)') 'absorb_poro_s_bottom',myrank,'.bin'
-      write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_bottom',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
-        open(unit=47,file='OUTPUT_FILES/'//outputname,status='old',&
-              form='unformatted')
-        open(unit=29,file='OUTPUT_FILES/'//outputname2,status='old',&
-              form='unformatted')
-      else
-        open(unit=47,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted')
-        open(unit=29,file='OUTPUT_FILES/'//outputname2,status='unknown',&
-              form='unformatted')
-      endif
-
-    endif  !  end of bottom absorbing boundary
-
-    !--- top absorbing boundary
-    if( nspec_top >0 ) then
-      write(outputname,'(a,i6.6,a)') 'absorb_poro_s_top',myrank,'.bin'
-      write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_top',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
-        open(unit=48,file='OUTPUT_FILES/'//outputname,status='old',&
-              form='unformatted')
-        open(unit=28,file='OUTPUT_FILES/'//outputname2,status='old',&
-              form='unformatted')
-      else
-        open(unit=48,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted')
-        open(unit=28,file='OUTPUT_FILES/'//outputname2,status='unknown',&
-              form='unformatted')
-      endif
-
-    endif ! end of top absorbing boundary
-
-  endif !any_poroelastic
-
-  if(any_acoustic) then
-
-    !--- left absorbing boundary
-    if( nspec_left >0 ) then
-      write(outputname,'(a,i6.6,a)') 'absorb_acoustic_left',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
-        open(unit=65,file='OUTPUT_FILES/'//outputname,status='old',&
-              form='unformatted')
-      else
-        open(unit=65,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted')
-      endif
-
-    endif  !  end of left absorbing boundary
-
-    !--- right absorbing boundary
-    if( nspec_right >0 ) then
-      write(outputname,'(a,i6.6,a)') 'absorb_acoustic_right',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
-        open(unit=66,file='OUTPUT_FILES/'//outputname,status='old',&
-              form='unformatted')
-      else
-        open(unit=66,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted')
-      endif
-
-    endif  !  end of right absorbing boundary
-
-    !--- bottom absorbing boundary
-    if( nspec_bottom >0 ) then
-      write(outputname,'(a,i6.6,a)') 'absorb_acoustic_bottom',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
-        open(unit=67,file='OUTPUT_FILES/'//outputname,status='old',&
-              form='unformatted')
-      else
-        open(unit=67,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted')
-      endif
-
-    endif  !  end of bottom absorbing boundary
-
-    !--- top absorbing boundary
-    if( nspec_top >0 ) then
-      write(outputname,'(a,i6.6,a)') 'absorb_acoustic_top',myrank,'.bin'
-      if(SIMULATION_TYPE == 3) then
-        open(unit=68,file='OUTPUT_FILES/'//outputname,status='old',&
-              form='unformatted')
-      else
-        open(unit=68,file='OUTPUT_FILES/'//outputname,status='unknown',&
-              form='unformatted')
-      endif
-
-    endif ! end of top absorbing boundary
-
-  endif !any_acoustic
-
-
-  end subroutine prepare_absorb_files
-
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine prepare_absorb_elastic()
-
-  use specfem_par, only: NSTEP,p_sv, &
+  use specfem_par, only: myrank,any_elastic,SIMULATION_TYPE, &
                          nspec_left,nspec_right,nspec_bottom,nspec_top, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top
 
   implicit none
-  include "constants.h"
-
   ! local parameters
-  integer :: ispec,i,it
+  integer :: ier
+  character(len=150) :: outputname
 
-  do it =1, NSTEP
+  ! checks if anything to do in this slice
+  if (.not. any_elastic) return
 
-    !--- left absorbing boundary
-    if(nspec_left >0) then
-      do ispec = 1,nspec_left
+  ! checks if anything to do
+  if (SIMULATION_TYPE /= 3) return
 
-        if(p_sv)then!P-SV waves
-          do i=1,NGLLZ
-            read(35) b_absorb_elastic_left(1,i,ispec,it)
-          enddo
-          do i=1,NGLLZ
-            read(35) b_absorb_elastic_left(3,i,ispec,it)
-          enddo
-          b_absorb_elastic_left(2,:,ispec,it) = ZERO
-        else!SH (membrane) waves
-          do i=1,NGLLZ
-            read(35) b_absorb_elastic_left(2,i,ispec,it)
-          enddo
-          b_absorb_elastic_left(1,:,ispec,it) = ZERO
-          b_absorb_elastic_left(3,:,ispec,it) = ZERO
-        endif
+  !--- left absorbing boundary
+  if (nspec_left > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_elastic_left',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_elastic_left
+    close(35)
+  endif
 
-      enddo
-    endif
+  !--- right absorbing boundary
+  if (nspec_right > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_elastic_right',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_elastic_right
+    close(35)
+  endif
 
-    !--- right absorbing boundary
-    if(nspec_right >0) then
-      do ispec = 1,nspec_right
+  !--- bottom absorbing boundary
+  if (nspec_bottom > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_elastic_bottom',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_elastic_bottom
+    close(35)
+  endif
 
-        if(p_sv)then!P-SV waves
-          do i=1,NGLLZ
-            read(36) b_absorb_elastic_right(1,i,ispec,it)
-          enddo
-          do i=1,NGLLZ
-            read(36) b_absorb_elastic_right(3,i,ispec,it)
-          enddo
-          b_absorb_elastic_right(2,:,ispec,it) = ZERO
-        else!SH (membrane) waves
-          do i=1,NGLLZ
-            read(36) b_absorb_elastic_right(2,i,ispec,it)
-          enddo
-          b_absorb_elastic_right(1,:,ispec,it) = ZERO
-          b_absorb_elastic_right(3,:,ispec,it) = ZERO
-        endif
+  !--- top absorbing boundary
+  if (nspec_top > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_elastic_top',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_elastic_top
+    close(35)
+  endif
 
-      enddo
-    endif
-
-    !--- bottom absorbing boundary
-    if(nspec_bottom >0) then
-      do ispec = 1,nspec_bottom
-
-        if(p_sv)then!P-SV waves
-          do i=1,NGLLX
-            read(37) b_absorb_elastic_bottom(1,i,ispec,it)
-          enddo
-          do i=1,NGLLX
-            read(37) b_absorb_elastic_bottom(3,i,ispec,it)
-          enddo
-          b_absorb_elastic_bottom(2,:,ispec,it) = ZERO
-        else!SH (membrane) waves
-          do i=1,NGLLZ
-            read(37) b_absorb_elastic_bottom(2,i,ispec,it)
-          enddo
-          b_absorb_elastic_bottom(1,:,ispec,it) = ZERO
-          b_absorb_elastic_bottom(3,:,ispec,it) = ZERO
-        endif
-
-      enddo
-    endif
-
-    !--- top absorbing boundary
-    if(nspec_top >0) then
-      do ispec = 1,nspec_top
-
-        if(p_sv)then!P-SV waves
-          do i=1,NGLLX
-            read(38) b_absorb_elastic_top(1,i,ispec,it)
-          enddo
-          do i=1,NGLLX
-            read(38) b_absorb_elastic_top(3,i,ispec,it)
-          enddo
-          b_absorb_elastic_top(2,:,ispec,it) = ZERO
-        else!SH (membrane) waves
-          do i=1,NGLLZ
-            read(38) b_absorb_elastic_top(2,i,ispec,it)
-          enddo
-          b_absorb_elastic_top(1,:,ispec,it) = ZERO
-          b_absorb_elastic_top(3,:,ispec,it) = ZERO
-        endif
-
-      enddo
-    endif
-
-  enddo
-
-  end subroutine prepare_absorb_elastic
+  end subroutine prepare_absorb_read_elastic
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_absorb_poroelastic()
+  subroutine prepare_absorb_read_poroelastic()
 
-  use specfem_par, only:NSTEP, &
-                        nspec_left,nspec_right,nspec_bottom,nspec_top, &
-                        b_absorb_poro_s_left,b_absorb_poro_w_left, &
-                        b_absorb_poro_s_right,b_absorb_poro_w_right, &
-                        b_absorb_poro_s_bottom,b_absorb_poro_w_bottom, &
-                        b_absorb_poro_s_top,b_absorb_poro_w_top
+  use specfem_par, only: myrank,any_poroelastic,SIMULATION_TYPE, &
+                         nspec_left,nspec_right,nspec_bottom,nspec_top, &
+                         b_absorb_poro_s_left,b_absorb_poro_w_left, &
+                         b_absorb_poro_s_right,b_absorb_poro_w_right, &
+                         b_absorb_poro_s_bottom,b_absorb_poro_w_bottom, &
+                         b_absorb_poro_s_top,b_absorb_poro_w_top
 
   implicit none
-  include "constants.h"
-
   ! local parameters
-  integer :: ispec,i,it,id
+  integer :: ier
+  character(len=150) :: outputname,outputname2
 
-  do it =1, NSTEP
+  ! checks if anything to do in this slice
+  if (.not. any_poroelastic) return
 
-    !--- left absorbing boundary
-    if(nspec_left >0) then
-      do ispec = 1,nspec_left
-       do id =1,2
-         do i=1,NGLLZ
-          read(45) b_absorb_poro_s_left(id,i,ispec,it)
-          read(25) b_absorb_poro_w_left(id,i,ispec,it)
-         enddo
-       enddo
-      enddo
-    endif
+  ! checks if anything to do
+  if (SIMULATION_TYPE /= 3) return
 
-    !--- right absorbing boundary
-    if(nspec_right >0) then
-      do ispec = 1,nspec_right
-       do id =1,2
-         do i=1,NGLLZ
-          read(46) b_absorb_poro_s_right(id,i,ispec,it)
-          read(26) b_absorb_poro_w_right(id,i,ispec,it)
-         enddo
-       enddo
-      enddo
-    endif
+  !--- left absorbing boundary
+  if (nspec_left > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_poro_s_left',myrank,'.bin'
+    write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_left',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    open(unit=36,file='OUTPUT_FILES/'//outputname2,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_poro_s_left
+    read(36) b_absorb_poro_w_left
+    close(35)
+    close(36)
+  endif
 
-    !--- bottom absorbing boundary
-    if(nspec_bottom >0) then
-      do ispec = 1,nspec_bottom
-       do id =1,2
-         do i=1,NGLLX
-          read(47) b_absorb_poro_s_bottom(id,i,ispec,it)
-          read(29) b_absorb_poro_w_bottom(id,i,ispec,it)
-         enddo
-       enddo
-      enddo
-    endif
+  !--- right absorbing boundary
+  if (nspec_right > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_poro_s_right',myrank,'.bin'
+    write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_right',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    open(unit=36,file='OUTPUT_FILES/'//outputname2,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_poro_s_right
+    read(36) b_absorb_poro_w_right
+    close(35)
+    close(36)
+  endif
 
-    !--- top absorbing boundary
-    if(nspec_top >0) then
-      do ispec = 1,nspec_top
-       do id =1,2
-         do i=1,NGLLX
-          read(48) b_absorb_poro_s_top(id,i,ispec,it)
-          read(28) b_absorb_poro_w_top(id,i,ispec,it)
-         enddo
-       enddo
-      enddo
-    endif
+  !--- bottom absorbing boundary
+  if (nspec_bottom > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_poro_s_bottom',myrank,'.bin'
+    write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_bottom',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    open(unit=36,file='OUTPUT_FILES/'//outputname2,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_poro_s_bottom
+    read(36) b_absorb_poro_w_bottom
+    close(35)
+    close(36)
+  endif
 
-  enddo
+  !--- top absorbing boundary
+  if (nspec_top > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_poro_s_top',myrank,'.bin'
+    write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_top',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    open(unit=36,file='OUTPUT_FILES/'//outputname2,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_poro_s_top
+    read(36) b_absorb_poro_w_top
+    close(35)
+    close(36)
+  endif
 
-  end subroutine prepare_absorb_poroelastic
+  end subroutine prepare_absorb_read_poroelastic
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine prepare_absorb_acoustic()
+  subroutine prepare_absorb_read_acoustic()
 
-  use specfem_par, only: NSTEP, &
+  use specfem_par, only: myrank,any_acoustic,SIMULATION_TYPE, &
                          nspec_left,nspec_right,nspec_bottom,nspec_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top
 
   implicit none
-  include "constants.h"
 
   ! local parameters
-  integer :: ispec,i,it
+  integer :: ier
+  character(len=150) :: outputname
 
-  do it =1, NSTEP
+  ! checks if anything to do in this slice
+  if (.not. any_acoustic) return
 
-    !--- left absorbing boundary
-    if(nspec_left >0) then
-      do ispec = 1,nspec_left
-         do i=1,NGLLZ
-          read(65) b_absorb_acoustic_left(i,ispec,it)
-         enddo
-      enddo
-    endif
+  ! checks if anything to do
+  if (SIMULATION_TYPE /= 3) return
 
-    !--- right absorbing boundary
-    if(nspec_right >0) then
-      do ispec = 1,nspec_right
-         do i=1,NGLLZ
-          read(66) b_absorb_acoustic_right(i,ispec,it)
-         enddo
-      enddo
-    endif
+  !--- left absorbing boundary
+  if (nspec_left > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_acoustic_left',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_acoustic_left
+    close(35)
+  endif
 
-    !--- bottom absorbing boundary
-    if(nspec_bottom >0) then
-      do ispec = 1,nspec_bottom
-         do i=1,NGLLX
-          read(67) b_absorb_acoustic_bottom(i,ispec,it)
-         enddo
-      enddo
-    endif
+  !--- right absorbing boundary
+  if (nspec_right > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_acoustic_right',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_acoustic_right
+    close(35)
+  endif
 
-    !--- top absorbing boundary
-    if(nspec_top >0) then
-      do ispec = 1,nspec_top
-         do i=1,NGLLX
-          read(68) b_absorb_acoustic_top(i,ispec,it)
-         enddo
-      enddo
-    endif
+  !--- bottom absorbing boundary
+  if (nspec_bottom > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_acoustic_bottom',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_acoustic_bottom
+    close(35)
+  endif
 
-  enddo
+  !--- top absorbing boundary
+  if (nspec_top > 0) then
+    write(outputname,'(a,i6.6,a)') 'absorb_acoustic_top',myrank,'.bin'
+    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
+    ! reads in boundary contributions
+    read(35) b_absorb_acoustic_top
+    close(35)
+  endif
 
-  end subroutine prepare_absorb_acoustic
-
+  end subroutine prepare_absorb_read_acoustic

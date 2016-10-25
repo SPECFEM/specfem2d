@@ -1,4 +1,3 @@
-
 !========================================================================
 !
 !                   S P E C F E M 2 D  Version 7 . 0
@@ -14,28 +13,19 @@
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
 ! using a spectral-element method (SEM).
 !
-! This software is governed by the CeCILL license under French law and
-! abiding by the rules of distribution of free software. You can use,
-! modify and/or redistribute the software under the terms of the CeCILL
-! license as circulated by CEA, CNRS and Inria at the following URL
-! "http://www.cecill.info".
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
 !
-! As a counterpart to the access to the source code and rights to copy,
-! modify and redistribute granted by the license, users are provided only
-! with a limited warranty and the software's author, the holder of the
-! economic rights, and the successive licensors have only limited
-! liability.
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+! GNU General Public License for more details.
 !
-! In this respect, the user's attention is drawn to the risks associated
-! with loading, using, modifying and/or developing or reproducing the
-! software by the user in light of its specific status of free software,
-! that may mean that it is complicated to manipulate, and that also
-! therefore means that it is reserved for developers and experienced
-! professionals having in-depth computer knowledge. Users are therefore
-! encouraged to load and test the software's suitability as regards their
-! requirements in conditions enabling the security of their systems and/or
-! data to be ensured and, more generally, to use and operate it in the
-! same conditions as regards security.
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 ! The full text of the license is available in file "LICENSE".
 !
@@ -45,12 +35,14 @@
 
   subroutine read_value_integer(iin,ignore_junk,value_to_read)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer iin
   logical ignore_junk
   integer value_to_read
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read
@@ -61,12 +53,14 @@
 
   subroutine read_value_double_precision(iin,ignore_junk,value_to_read)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer iin
   logical ignore_junk
   double precision value_to_read
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read
@@ -77,12 +71,14 @@
 
   subroutine read_value_logical(iin,ignore_junk,value_to_read)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer iin
   logical ignore_junk
   logical value_to_read
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read
@@ -93,15 +89,17 @@
 
   subroutine read_value_string(iin,ignore_junk,value_to_read)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer iin
   logical ignore_junk
-  character(len=100) value_to_read
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) value_to_read
+  character(len=MAX_STRING_LEN) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
-  read(string_read,*) value_to_read
+  read(string_read,'(a)') value_to_read
 
   end subroutine read_value_string
 
@@ -109,12 +107,14 @@
 
   subroutine read_two_interface_points(iin,ignore_junk,value_to_read_1,value_to_read_2)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer iin
   logical ignore_junk
   double precision value_to_read_1,value_to_read_2
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
 
   call read_next_line(iin,ignore_junk,string_read)
   read(string_read,*) value_to_read_1,value_to_read_2
@@ -125,26 +125,29 @@
 
   subroutine read_next_line(iin,ignore_junk,string_read)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   logical ignore_junk
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
 
   integer ios,iin,index_equal_sign
 
   do
-    read(unit=iin,fmt="(a100)",iostat=ios) string_read
-    if(ios /= 0) stop 'error while reading input file'
+    ! daniel: actually MAX_STRING_LEN set to 512...
+    read(unit=iin,fmt="(a256)",iostat=ios) string_read
+    if (ios /= 0) stop 'error while reading input file'
 
 ! suppress leading white spaces, if any
     string_read = adjustl(string_read)
 
 ! suppress trailing carriage return (ASCII code 13) if any (e.g. if input text file coming from Windows/DOS)
-    if(index(string_read,achar(13)) > 0) string_read = string_read(1:index(string_read,achar(13))-1)
+    if (index(string_read,achar(13)) > 0) string_read = string_read(1:index(string_read,achar(13))-1)
 
 ! exit loop when we find the first line that is not a comment or a white line
-    if(len_trim(string_read) == 0) cycle
-    if(string_read(1:1) /= '#') exit
+    if (len_trim(string_read) == 0) cycle
+    if (string_read(1:1) /= '#') exit
 
   enddo
 
@@ -152,12 +155,12 @@
   string_read = string_read(1:len_trim(string_read))
 
 ! suppress trailing comments, if any
-  if(index(string_read,'#') > 0) string_read = string_read(1:index(string_read,'#')-1)
+  if (index(string_read,'#') > 0) string_read = string_read(1:index(string_read,'#')-1)
 
 ! suppress leading junk (up to the first equal sign, included) if needed
-  if(ignore_junk) then
+  if (ignore_junk) then
     index_equal_sign = index(string_read,'=')
-    if(index_equal_sign <= 1 .or. index_equal_sign == len_trim(string_read)) stop 'incorrect syntax detected in DATA/Par_file'
+    if (index_equal_sign <= 1 .or. index_equal_sign == len_trim(string_read)) stop 'incorrect syntax detected in DATA/Par_file'
     string_read = string_read(index_equal_sign + 1:len_trim(string_read))
   endif
 
@@ -181,11 +184,13 @@
 
   subroutine read_value_integer_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -199,11 +204,13 @@
 
   subroutine read_value_double_precision_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   double precision value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -217,11 +224,13 @@
 
   subroutine read_value_logical_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   logical value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -235,11 +244,13 @@
 
   subroutine read_value_string_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   character(len=*) value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -253,11 +264,13 @@
 
   subroutine read_value_integer_next_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -271,11 +284,13 @@
 
   subroutine read_value_double_prec_next_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   double precision value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -289,11 +304,13 @@
 
   subroutine read_value_logical_next_p(value_to_read, name)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   logical value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
@@ -310,24 +327,27 @@
                          val4read,val5read,val6read,val7read,val8read,val9read,val10read, &
                          val11read,val12read)
 
+  use constants, only: MAX_STRING_LEN
 
   implicit none
 
   integer i,icodematread
-  double precision val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read,&
+  double precision val0read,val1read,val2read,val3read,val4read,val5read,val6read,val7read, &
                    val8read,val9read,val10read,val11read,val12read
 
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
   call param_read_nextline(string_read, len(string_read), ierr)
   if (ierr /= 0) stop 'error reading material parameter'
-  print *,trim(string_read)
-  read(string_read,*,iostat=ierr) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read,&
+
+  !print *,trim(string_read)
+
+  read(string_read,*,iostat=ierr) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read, &
                       val6read,val7read,val8read,val9read,val10read,val11read,val12read
 
-  if( ierr /= 0) stop 'error reading material parameters line'
+  if (ierr /= 0) stop 'error reading material parameters line'
 
   end subroutine read_material_parameters_p
 
@@ -336,20 +356,23 @@
   subroutine read_region_coordinates_p(value_to_read_1,value_to_read_2, &
                           value_to_read_3,value_to_read_4,value_to_read_5)
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
 
   integer value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
-  character(len=100) string_read
+  character(len=MAX_STRING_LEN) string_read
   integer ierr
   common /param_err_common/ ierr
 
   call param_read_nextline(string_read, len(string_read), ierr)
   if (ierr /= 0) stop 'error reading region coordinates'
+
   !print *,string_read
 
   read(string_read,*,iostat=ierr) value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
 
-  if( ierr /= 0) stop 'error reading region coordinates line'
+  if (ierr /= 0) stop 'error reading region coordinates line'
 
   end subroutine read_region_coordinates_p
 
@@ -359,21 +382,18 @@
 
   subroutine open_parameter_file()
 
+  use constants, only: MAX_STRING_LEN
+
   implicit none
-  include 'constants.h'
   integer ierr
   common /param_err_common/ ierr
-  character(len=50) filename
-
-  ! to use fortran routines
-  !open(unit=IIN,file='DATA/Par_file',status='old',iostat=ios)
-  !if( ios /= 0 ) stop 'error opening DATA/Par_file file'
+  character(len=MAX_STRING_LEN) filename
 
   ! to use c routines
   filename = 'DATA/Par_file'
 
   call param_open(filename, len_trim(filename), ierr)
-  if( ierr /= 0 ) stop 'error opening DATA/Par_file file'
+  if (ierr /= 0 ) stop 'error opening DATA/Par_file file'
 
   end subroutine open_parameter_file
 
@@ -382,10 +402,6 @@
   subroutine close_parameter_file()
 
   implicit none
-  include 'constants.h'
-
-  ! to use fortran routines
-  !close(IIN)
 
   ! to use c routines
   call param_close()
