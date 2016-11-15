@@ -40,6 +40,7 @@ To create acoustic (fluid) regions, just set the S wave speed to zero and the co
 
      \item[free\_surface\_file] is the file describing the edges forming the acoustic free surface: number of edges on the first line, then on each line: number of the element, number of nodes forming the free surface (1 for a point, 2 for an edge), the nodes forming the free surface for this element. If you do not want any free surface, just put 0 on the first line; you then get a rigid surface instead.
 
+     \item[axial\_elements\_file] is the file describing the axial elements in the case of an axisymmetric simulation. See Section~\ref{sec:axisym}.
      \item[absorbing\_surface\_file] is the file describing the edges forming the absorbing boundaries:
 number of edges on the first line, then on each line: number of the element, number of nodes forming the absorbing edge (must always be equal to 2),
 the two nodes forming the absorbing edge for this element, and then the type of absorbing edge: 1 for BOTTOM, 2 for RIGHT, 3 for TOP and 4 for LEFT.
@@ -213,7 +214,6 @@ Many powerful graphical tools are available, and very useful, but we will focus 
 the command line functionalities and especially the Python interface which is the real force of
 Cubit/Trelis.
 
-
 To get started we recommend to the inpatients to open Cubit/Trelis and to click on the
 following symbol: \includegraphics[width=0.15in]{figures/play_journal_file.png}. Then select the
 files of type Python Files (*.py) and play the following script:
@@ -230,20 +230,43 @@ play:
     utils/cubit2specfem2d/cubit2specfem2d.py
 \end{verbatim}
 This script will create (in current directory) all the mesh files necessary for a SPECFEM2D simulation.
-
-%TODO!!
-%Other commented examples are available: \texttt{EXAMPLES/TODOpaper}, \texttt{EXAMPLES/TODOnonDestructiveTesting}.
+Other commented examples are available. We particularly recommend you to look at the folder \\ \texttt{EXAMPLES/paper\_axisymmetry\_example}
+beginning by reading the README available there.
 Read carefully the comments in these scripts, they are helpful.
 Another way to use Python together with Cubit/Trelis is to use the script tab.
 This tab is a real Python terminal that can be used to pass command line python
-instruction to cubit through the cubit module.
+instruction to Cubit/Trelis through the cubit module.
 In the case of the Script tab is not visible in the command line panel (at the bottom of the screen) do:
 \begin{verbatim}
-    Tools -> Options... -> Layout -> Cubit Layout -> Show script tab
+    Tools -> Options... -> Layout [-> Cubit Layout] -> Show script tab
 \end{verbatim}
 This tab will allow you to play the scripts one line after another directly in Cubit/Trelis.
 With this you should be able to understand how to create meshes and export them under SPECFEM2D format.
 
+\subsection{Note about Cubit/Trelis built-in Python}
+Beware, there are some (annoying) differences between cubit built-in Python and the actual Python langage:
+\begin{itemize}
+\item \texttt{"aString" + 'anotherString'} can cause problems even after being stored: \\
+      \texttt{a = "aString"} \\
+      \texttt{b = a + 'anotherString'} \\
+      Example which is not working:
+\begin{verbatim}
+pathToMeshDir = pathToSpecfem + 'EXAMPLES/paper_axisymmetry_example/MESH'
+cubit.cmd('cd \"'+pathToMeshDir+'\"')
+\end{verbatim}
+\item No comments after double dots: \\
+      Example which is not working:
+\begin{verbatim}
+if True: # Just a dummy comment
+    print "Ok!"
+\end{verbatim}
+      This example works without the comment.
+\item \texttt{os.makedirs("\texttildelow/aDirectory/")} does not work. It creates a directory named \texttt{\texttildelow} \\
+       !!!!! To remove that do: \texttt{rm -R ./\texttildelow} AND NEVER \texttt{rm -rf \texttildelow} !!!!!
+\item \texttt{sys.argv} can not be used
+\item No comments \texttt{""" """} at the beginning of a script
+\end{itemize}
+And probably many others! Think about that before getting mad.
 
 %------------------------------------------------------------------------------------------------%
 \section{Notes about absorbing PMLs}
