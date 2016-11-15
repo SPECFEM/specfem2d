@@ -1,0 +1,58 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This example contains the example shown in the paper:
+
+Bottero Alexis, Cristini Paul, Komatitsch Dimitri, Asch Mark. An axisymmetric time-domain spectral-element
+method for full-wave simulations: Application to ocean acoustics. J. Acoust. Soc. Am. 140, 3520 (2016).
+http://scitation.aip.org/content/asa/journal/jasa/140/5/10.1121/1.4965964?aemail=author
+
+ This is how it looks:
+ 
+ ^ Symmetry axis
+ |
+ |________________________________v__________________________________
+ | ^     water  __________________|______________________________|   | ^
+ | | d1      __/                  ^                              | C | |
+ |_v________/                     d2                             | P | | lz
+ |<-------->--->                                                 | M | |
+ |   l1     l2            viscoelastic bottom                    | L | |
+ |_______________________________________________________________|   | v
+ |_____________________________C_P_M_L_______________________________| 
+ | <------------------------------------------------------------->
+ |                                 lx
+
+By default: lx = 15000.0m, lz = 3000.0m, d1 = 600.0m, d2 = 100.0m, l1 = 2000.0m, l2 = 6000.0m
+
+It uses of AXISYM option with an external mesh whose files under specfem2d format are already available in MESH_SMALL.
+This mesh has been created with Cubit/Trelis (http://www.csimsoft.com/trelis) with the script JensenMesh.py which is called by
+make_mesh.sh. Have a look to the comments in these files if you want to recreate the mesh or just to learn how it is done.
+
+In this example the domain studied is a water layer lying above a viscoelastic seabed with a slope.
+The source is an explosion in the water, the domain is bounded with PMLs below and at the right.
+
+This example is defined by two files : _Par_file -> contains all the parameters of the run + receivers positions
+                                       _SOURCE   -> contains the information about the source
+
+To run the example, type:
+
+  ./run_this_example.sh
+  
+in this directory. This script is designed for serial and parallel simulations. If specfem2d has been built correctly (with --with-mpi option) 
+just change the number of processes in Par_file_axisym.
+
+Then see the results in OUTPUT_FILES/.
+
+In the article the results are compared in term of transmission losses at 5Hz (frequency domain) with a commercial finite element
+code (COMSOL) and a parabolic equation solver (ROTVARS).
+For this purpose we have put 1000 receivers at z=-30m to compute transmission losses. This is done by the script make_comparison.sh
+that has to be run after run_this_example.sh
+
+To speed up the results the calculation are made at low resolution, you can obtain the number of receiver in the file Par_file (look for TODO)
+If you change the number of receivers you will have to change the factor at the beginning of the script in make_comparison.sh
+It is just a multiplying factor that set the reference.
+
+To clean this directory : rm -rf DATA/ OUTPUT_FILES/ x* *~
+
+If you have any questions feel free to contact me : alexis dot bottero at gmail doT com
