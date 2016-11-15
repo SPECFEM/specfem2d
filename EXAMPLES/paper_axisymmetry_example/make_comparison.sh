@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# This script make the FFTs in order to benchmark specfem2d with COMSOL and ROTVARS. 
+# This script make the FFTs in order to benchmark specfem2d with COMSOL and ROTVARS.
 # It compute transmission losses for specfem seismograms and compare them to the ones computed with COMSOL
 # This script has to be run from the directory specfem2d/EXAMPLES/paper_axisymmetry_example
-# 
+#
 
 factor=0.00000000000055 # TODO change that to obtain a good fit, it is just a multiplying factor
 

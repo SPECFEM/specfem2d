@@ -284,17 +284,17 @@ args = parser.parse_args()
 plot_legend = False
 default_legend = False
 legend_loc = 0
-#‘best’ 	0
-#‘upper right’ 	1
-#‘upper left’ 	2
-#‘lower left’ 	3
-#‘lower right’ 	4
-#‘right’ 	5
-#‘center left’ 	6
-#‘center right’ 	7
-#‘lower center’ 	8
-#‘upper center’ 	9
-#‘center’ 	10
+#'best' 	0
+#'upper right' 	1
+#'upper left' 	2
+#'lower left' 	3
+#'lower right' 	4
+#'right' 	5
+#'center left' 	6
+#'center right' 	7
+#'lower center' 	8
+#'upper center' 	9
+#'center' 	10
 user_labels = []
 default_colors = True
 user_colors = []
