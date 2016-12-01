@@ -200,7 +200,7 @@
       write(IMAIN,*) '  Mxz of the source = ',Mxz(i_source)
     case (3)
       ! Rayleigh wave
-      write(IMAIN,*) '  Rayleigh wave source:'  
+      write(IMAIN,*) '  Rayleigh wave source:'
     case (4)
       ! plane P wave without converted/refracted phases
       write(IMAIN,*) '  Plane P-wave source without converted/refracted phases:'
