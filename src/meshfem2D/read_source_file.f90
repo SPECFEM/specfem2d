@@ -184,7 +184,8 @@
     write(IMAIN,*)
 
     ! source type
-    write(IMAIN,*) '  Source type (1=force, 2=moment tensor): ',source_type(i_source)
+    write(IMAIN,*) '  Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, &
+                   &5=plane incident S): ',source_type(i_source)
     select case (source_type(i_source))
     case (1)
       ! force
@@ -197,9 +198,20 @@
       write(IMAIN,*) '  Mxx of the source = ',Mxx(i_source)
       write(IMAIN,*) '  Mzz of the source = ',Mzz(i_source)
       write(IMAIN,*) '  Mxz of the source = ',Mxz(i_source)
+    case (3)
+      ! Rayleigh wave
+      write(IMAIN,*) '  Rayleigh wave source:'  
+    case (4)
+      ! plane P wave without converted/refracted phases
+      write(IMAIN,*) '  Plane P-wave source without converted/refracted phases:'
+      write(IMAIN,*) '  Angle of the incident wave (deg) = ',anglesource(i_source)
+    case (5)
+      ! plane S wave without converted/refracted phases
+      write(IMAIN,*) '  Plane S-wave source without converted/refracted phases:'
+      write(IMAIN,*) '  Angle of the incident wave (deg) = ',anglesource(i_source)
     case default
       ! not supported yet
-      stop 'Error invalid source type! must be 1 or 2, exiting...'
+      stop 'Error invalid source type! must be 1, 2, 3, 4 or 5, exiting...'
     end select
     write(IMAIN,*)
 
