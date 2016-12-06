@@ -1,0 +1,4 @@
+<map id="prepare_gpu" name="prepare_gpu">
+<area shape="rect" id="node2" href="$dc/d2e/prepare__gpu_8f90.html#a0890c6cea810ee00a42f07c4f0400eb1" title="init_host_to_dev_variable" alt="" coords="151,5,324,32"/>
+<area shape="rect" id="node3" href="$db/d1a/parallel_8_f90.html#a5c0b8ddb524981fa08f6346a2d42e7b9" title="synchronize_all" alt="" coords="181,56,294,83"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="compute_energy" name="compute_energy">
+<area shape="rect" id="node2" href="$da/df3/get__poroelastic__velocities_8f90.html#ab2410762dbfaadb70b727354ad9362da" title="get_poroelastic_material" alt="" coords="385,11,552,38"/>
+<area shape="rect" id="node3" href="$da/df3/get__poroelastic__velocities_8f90.html#ae47a66a2b6c218a6c277a7209c7fedde" title="get_poroelastic_biot\l_coeff" alt="" coords="398,77,539,118"/>
+<area shape="rect" id="node4" href="$d3/d1e/compute__pressure_8f90.html#a823987b59a2a8d1b4029c4d7b51f2ce1" title="compute_pressure_one\l_element" alt="" coords="175,33,337,74"/>
+<area shape="rect" id="node5" href="$d1/d8c/compute__vector__field_8f90.html#ad8af91f9e7ce2c3a593c82621a764eb3" title="compute_vector_one\l_element" alt="" coords="183,150,329,192"/>
+</map>

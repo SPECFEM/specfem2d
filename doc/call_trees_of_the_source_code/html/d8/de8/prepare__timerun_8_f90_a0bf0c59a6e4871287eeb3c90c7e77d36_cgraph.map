@@ -1,0 +1,7 @@
+<map id="prepare_timerun_adjoint" name="prepare_timerun_adjoint">
+<area shape="rect" id="node2" href="$d8/de8/prepare__timerun_8_f90.html#a9101340afebf0221f596079e80624585" title="prepare_timerun_kernels" alt="" coords="220,5,391,32"/>
+<area shape="rect" id="node3" href="$db/d07/prepare__absorb_8f90.html#ad35298cda6999d2c7ab03cf87046ebf8" title="prepare_absorb_read\l_acoustic" alt="" coords="230,57,381,98"/>
+<area shape="rect" id="node4" href="$db/d07/prepare__absorb_8f90.html#a5360b0e5a787b27ae090f64180735bd5" title="prepare_absorb_read\l_elastic" alt="" coords="230,122,381,163"/>
+<area shape="rect" id="node5" href="$db/d07/prepare__absorb_8f90.html#aeb7c257fd6867674837ea1746f0a56ac" title="prepare_absorb_read\l_poroelastic" alt="" coords="230,187,381,229"/>
+<area shape="rect" id="node6" href="$db/d1a/parallel_8_f90.html#a5c0b8ddb524981fa08f6346a2d42e7b9" title="synchronize_all" alt="" coords="249,253,362,280"/>
+</map>

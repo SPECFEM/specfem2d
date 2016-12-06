@@ -1,0 +1,5 @@
+<map id="repartition_coupled_edges" name="repartition_coupled_edges">
+<area shape="rect" id="node2" href="$d0/dee/repartition__coupling_8f90.html#aeb43ec99e9dda1bcfa1391d6b77b5125" title="acoustic_elastic_repartitioning" alt="" coords="189,5,389,32"/>
+<area shape="rect" id="node3" href="$d0/dee/repartition__coupling_8f90.html#a01810c45b7520a6e9df93de6b948b531" title="acoustic_poro_repartitioning" alt="" coords="195,56,384,83"/>
+<area shape="rect" id="node4" href="$d0/dee/repartition__coupling_8f90.html#aea15e0e4308bf0f79bf320256ac4a3a0" title="poro_elastic_repartitioning" alt="" coords="200,107,379,133"/>
+</map>

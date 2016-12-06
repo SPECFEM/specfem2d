@@ -1,0 +1,6 @@
+<map id="prepare_timerun_image_coloring" name="prepare_timerun_image_coloring">
+<area shape="rect" id="node2" href="$da/dc3/prepare__color__image_8_f90.html#a592d5f3026091d31dc3ab37ff66e26de" title="prepare_color_image_init" alt="" coords="217,5,389,32"/>
+<area shape="rect" id="node3" href="$da/dc3/prepare__color__image_8_f90.html#a9a582925c74f0a9bafc40ca7b853d6f1" title="prepare_color_image\l_pixels" alt="" coords="229,57,377,98"/>
+<area shape="rect" id="node4" href="$db/d1a/parallel_8_f90.html#a5c0b8ddb524981fa08f6346a2d42e7b9" title="synchronize_all" alt="" coords="247,123,360,149"/>
+<area shape="rect" id="node5" href="$da/dc3/prepare__color__image_8_f90.html#aa8efb95959b6a758ee4202b17dc25257" title="prepare_color_image_vp" alt="" coords="219,173,388,200"/>
+</map>

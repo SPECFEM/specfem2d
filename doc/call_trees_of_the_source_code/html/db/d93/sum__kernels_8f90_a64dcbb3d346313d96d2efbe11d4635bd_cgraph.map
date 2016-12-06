@@ -1,0 +1,7 @@
+<map id="sum_kernels" name="sum_kernels">
+<area shape="rect" id="node2" href="$db/d1a/parallel_8_f90.html#a0f27a8b922f3b4c44530e0c923bf38e5" title="init_mpi" alt="" coords="185,5,253,32"/>
+<area shape="rect" id="node3" href="$db/d1a/parallel_8_f90.html#a5c0b8ddb524981fa08f6346a2d42e7b9" title="synchronize_all" alt="" coords="162,56,275,83"/>
+<area shape="rect" id="node4" href="$d5/d8b/read__model_8f90.html#abd62ee7ece44839eb5a8d3f060835b5a" title="read_model_nspec" alt="" coords="151,107,287,133"/>
+<area shape="rect" id="node5" href="$db/d93/sum__kernels_8f90.html#aef7a3d2050ae71638d99cbd415a42c80" title="sum_kernel" alt="" coords="173,157,264,184"/>
+<area shape="rect" id="node6" href="$db/d1a/parallel_8_f90.html#ac422b103fe555bf7e5c01684fc30634b" title="finalize_mpi" alt="" coords="173,208,265,235"/>
+</map>

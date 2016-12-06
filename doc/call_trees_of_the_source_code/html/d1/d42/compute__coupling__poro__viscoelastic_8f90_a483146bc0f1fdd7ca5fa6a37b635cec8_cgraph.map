@@ -1,0 +1,4 @@
+<map id="compute_coupling_poro_viscoelastic" name="compute_coupling_poro_viscoelastic">
+<area shape="rect" id="node2" href="$da/df3/get__poroelastic__velocities_8f90.html#ab2410762dbfaadb70b727354ad9362da" title="get_poroelastic_material" alt="" coords="217,5,384,32"/>
+<area shape="rect" id="node3" href="$da/df3/get__poroelastic__velocities_8f90.html#ae47a66a2b6c218a6c277a7209c7fedde" title="get_poroelastic_biot\l_coeff" alt="" coords="230,57,371,98"/>
+</map>
