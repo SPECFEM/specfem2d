@@ -62,6 +62,7 @@
   double precision, dimension(NGLLZ) :: hgammas,hpgammas
 
   integer :: k,m
+  integer :: ir,iv
 
 ! calculate G_ij for general source location
 ! the source does not necessarily correspond to a Gauss-Lobatto point
@@ -94,16 +95,24 @@
   endif
   call lagrange_any(gamma_source,NGLLZ,zigll,hgammas,hpgammas)
 
-! Youshan Liu's simplified version with two nested loops instead of four
 ! calculate source array
   sourcearray(:,:,:) = ZERO
 
   do m = 1,NGLLZ
     do k = 1,NGLLX
+
+      do iv = 1,NGLLZ
+        do ir = 1,NGLLX
+
           sourcearray(1,k,m) = sourcearray(1,k,m) + &
-            real(G11(k,m)*hpxis(k)*hgammas(m) + G13(k,m)*hxis(k)*hpgammas(m),kind=CUSTOM_REAL)
+            real(hxis(ir)*hgammas(iv)*(G11(ir,iv)*hpxis(k)*hgammas(m) + G13(ir,iv)*hxis(k)*hpgammas(m)),kind=CUSTOM_REAL)
+
           sourcearray(2,k,m) = sourcearray(2,k,m) + &
-            real(G31(k,m)*hpxis(k)*hgammas(m) + G33(k,m)*hxis(k)*hpgammas(m),kind=CUSTOM_REAL)
+            real(hxis(ir)*hgammas(iv) *(G31(ir,iv)*hpxis(k)*hgammas(m) + G33(ir,iv)*hxis(k)*hpgammas(m)),kind=CUSTOM_REAL)
+
+        enddo
+      enddo
+
     enddo
   enddo
 
