@@ -197,15 +197,13 @@
 
 !--- detecter un eventuel defaut dans la structure topologique du maillage
 
-  if ((knods(ngnod_begin(nedgeother),num2) == knods(ngnod_begin(nedgeloc),numelem)) &
-       .and. &
+  if ((knods(ngnod_begin(nedgeother),num2) == knods(ngnod_begin(nedgeloc),numelem)) .and. &
     (knods(ngnod_end(nedgeother),num2) == knods(ngnod_end(nedgeloc),numelem))) then
      stop 'Improper topology of the input mesh detected'
 
 !--- sinon voir si cette arete a deja ete generee
 
-  else if ((knods(ngnod_begin(nedgeother),num2) == knods(ngnod_end(nedgeloc),numelem)) &
-       .and. &
+  else if ((knods(ngnod_begin(nedgeother),num2) == knods(ngnod_end(nedgeloc),numelem)) .and. &
     (knods(ngnod_end(nedgeother),num2) == knods(ngnod_begin(nedgeloc),numelem))) then
 
         alreadyexist = .true.

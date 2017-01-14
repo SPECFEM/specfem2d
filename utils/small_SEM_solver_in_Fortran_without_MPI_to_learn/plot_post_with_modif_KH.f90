@@ -31,7 +31,8 @@
 !
 !========================================================================
 
-  subroutine plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,x_receiver,z_receiver,it,deltat,NGLLX,NGLLZ,NDIM)
+  subroutine plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,x_receiver,z_receiver,it,deltat,NGLLX,NGLLZ,NDIM, &
+        is_on_left_edge_of_KH_contour,is_on_right_edge_of_KH_contour,is_on_bottom_edge_of_KH_contour,is_on_top_edge_of_KH_contour)
 
 !
 ! PostScript display routine
@@ -68,6 +69,12 @@
   integer :: it,NSPEC,NGLOB,NGLLX,NGLLZ,NDIM
 
   integer ibool(NGLLX,NGLLZ,NSPEC)
+
+!! DK DK added this for KH
+  logical, dimension(NSPEC) :: is_on_left_edge_of_KH_contour
+  logical, dimension(NSPEC) :: is_on_right_edge_of_KH_contour
+  logical, dimension(NSPEC) :: is_on_bottom_edge_of_KH_contour
+  logical, dimension(NSPEC) :: is_on_top_edge_of_KH_contour
 
   real(kind=CUSTOM_REAL) :: deltat
   double precision :: timeval
@@ -324,6 +331,107 @@
   write(24,*) '0 setgray ST'
 
   enddo
+
+!
+!---- draw the KH box on the mesh
+!
+
+!! DK DK added this for KH
+
+  write(24,*) '%'
+  write(24,*) '% KH box'
+  write(24,*) '%'
+
+  write(24,*) '0.05 CM setlinewidth'
+
+  do ispec=1,NSPEC
+
+  write(24,*) '% elem ',ispec
+
+  if (is_on_left_edge_of_KH_contour(ispec)) then
+    write(24,*) '1 0.6470 0 RG' ! Orange
+
+    is = 1
+    ir = 1
+    x1 = (coord(1,ibool(ir,is,ispec))-xmin)*ratio_page + orig_x
+    z1 = (coord(2,ibool(ir,is,ispec))-zmin)*ratio_page + orig_z
+    x1 = x1 * centim
+    z1 = z1 * centim
+
+    is = NGLLZ
+    ir = 1
+    x2 = (coord(1,ibool(ir,is,ispec))-xmin)*ratio_page + orig_x
+    z2 = (coord(2,ibool(ir,is,ispec))-zmin)*ratio_page + orig_z
+    x2 = x2 * centim
+    z2 = z2 * centim
+
+    write(24,602) x1,z1,x2,z2
+  endif
+
+  if (is_on_right_edge_of_KH_contour(ispec)) then
+    write(24,*) '0 0 1 RG'  ! Blue
+
+    is = 1
+    ir = NGLLX
+    x1 = (coord(1,ibool(ir,is,ispec))-xmin)*ratio_page + orig_x
+    z1 = (coord(2,ibool(ir,is,ispec))-zmin)*ratio_page + orig_z
+    x1 = x1 * centim
+    z1 = z1 * centim
+
+    is = NGLLZ
+    ir = NGLLX
+    x2 = (coord(1,ibool(ir,is,ispec))-xmin)*ratio_page + orig_x
+    z2 = (coord(2,ibool(ir,is,ispec))-zmin)*ratio_page + orig_z
+    x2 = x2 * centim
+    z2 = z2 * centim
+
+    write(24,602) x1,z1,x2,z2
+  endif
+
+  if (is_on_bottom_edge_of_KH_contour(ispec)) then
+    write(24,*) '0 1 0 RG'  ! Green
+
+    is = 1
+    ir = 1
+    x1 = (coord(1,ibool(ir,is,ispec))-xmin)*ratio_page + orig_x
+    z1 = (coord(2,ibool(ir,is,ispec))-zmin)*ratio_page + orig_z
+    x1 = x1 * centim
+    z1 = z1 * centim
+
+    is = 1
+    ir = NGLLX
+    x2 = (coord(1,ibool(ir,is,ispec))-xmin)*ratio_page + orig_x
+    z2 = (coord(2,ibool(ir,is,ispec))-zmin)*ratio_page + orig_z
+    x2 = x2 * centim
+    z2 = z2 * centim
+
+    write(24,602) x1,z1,x2,z2
+  endif
+
+  if (is_on_top_edge_of_KH_contour(ispec)) then
+    write(24,*) '1 0.7529 0.7960 RG' ! Pink
+
+    is = NGLLZ
+    ir = 1
+    x1 = (coord(1,ibool(ir,is,ispec))-xmin)*ratio_page + orig_x
+    z1 = (coord(2,ibool(ir,is,ispec))-zmin)*ratio_page + orig_z
+    x1 = x1 * centim
+    z1 = z1 * centim
+
+    is = NGLLZ
+    ir = NGLLX
+    x2 = (coord(1,ibool(ir,is,ispec))-xmin)*ratio_page + orig_x
+    z2 = (coord(2,ibool(ir,is,ispec))-zmin)*ratio_page + orig_z
+    x2 = x2 * centim
+    z2 = z2 * centim
+
+    write(24,602) x1,z1,x2,z2
+  endif
+
+  enddo
+
+  write(24,*) '0.01 CM setlinewidth'
+  write(24,*) '0 setgray'
 
 !
 !----  draw the normalized vector field
