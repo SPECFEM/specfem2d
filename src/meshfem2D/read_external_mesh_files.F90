@@ -173,7 +173,7 @@
 
   subroutine read_external_pml_element(filename, region_pml_external_mesh, nspec_cpml)
 
-  use constants, only: MAX_STRING_LEN,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
+  use constants, only: MAX_STRING_LEN,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
   use part_unstruct_par, only: nelmnts
   use compute_elements_load_par, only: is_pml
 
@@ -207,8 +207,8 @@
 #else
      read(992,*) ispec, pml_flag
 #endif
-     if (pml_flag /= CPML_X_ONLY .and. pml_flag /= CPML_Z_ONLY .and. pml_flag /= CPML_XZ_ONLY) &
-       stop 'error: incorrect CPML element flag found, should be CPML_X_ONLY or CPML_Z_ONLY or CPML_XZ_ONLY only'
+     if (pml_flag /= CPML_X_ONLY .and. pml_flag /= CPML_Z_ONLY .and. pml_flag /= CPML_XZ) &
+       stop 'error: incorrect CPML element flag found, should be CPML_X_ONLY or CPML_Z_ONLY or CPML_XZ only'
 
      region_pml_external_mesh(ispec) = pml_flag
      is_pml(ispec-1) = .true.

@@ -996,7 +996,7 @@
 
       ! use green color
       write(24,*) '0 1 0 RG'
-      write(24,*) '0.02 CM setlinewidth'
+      write(24,*) '0.05 CM setlinewidth'
     endif
 
     buffer_offset = 0
@@ -1113,7 +1113,7 @@
 
     ! use orange color
     write(24,*) '1 0.66 0 RG'
-    write(24,*) '0.02 CM setlinewidth'
+    write(24,*) '0.05 CM setlinewidth'
   endif
 
   buffer_offset = 0
@@ -1191,7 +1191,7 @@
       write(24,*) '% fluid-solid coupling edges in the mesh'
       write(24,*) '%'
 
-      write(24,*) '0.02 CM setlinewidth'
+      write(24,*) '0.05 CM setlinewidth'
     endif
 
     if (myrank /= 0 .and. num_fluid_solid_edges > 0 ) allocate(coorg_send(4,num_fluid_solid_edges))
@@ -1296,7 +1296,7 @@
       write(24,*) '% fluid-porous coupling edges in the mesh'
       write(24,*) '%'
 
-      write(24,*) '0.02 CM setlinewidth'
+      write(24,*) '0.05 CM setlinewidth'
     endif
 
     if (myrank /= 0 .and. num_fluid_poro_edges > 0 ) allocate(coorg_send(4,num_fluid_poro_edges))
@@ -1402,7 +1402,7 @@
       write(24,*) '% solid-porous coupling edges in the mesh'
       write(24,*) '%'
 
-      write(24,*) '0.02 CM setlinewidth'
+      write(24,*) '0.05 CM setlinewidth'
     endif
 
     if (myrank /= 0 .and. num_solid_poro_edges > 0 ) allocate(coorg_send(4,num_solid_poro_edges))

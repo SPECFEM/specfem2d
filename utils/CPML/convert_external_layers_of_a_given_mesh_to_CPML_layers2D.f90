@@ -10,7 +10,7 @@
 
   implicit none
 
-! tested for QUAD4 but should work equally for QUAD8
+! tested for QUAD4 but should work equally for QUAD9
 
   integer, parameter :: NGNOD = 8 !unused
 
@@ -37,7 +37,7 @@
 ! flags for the seven CPML regions
   integer, parameter :: CPML_X_ONLY = 1
   integer, parameter :: CPML_Z_ONLY = 2
-  integer, parameter :: CPML_XZ_ONLY = 3
+  integer, parameter :: CPML_XZ = 3
 
   print *
   print *,'IMPORTANT: it is your responsibility to make sure that in the input CUBIT (or similar) mesh'
@@ -178,7 +178,7 @@
   do ispec=1,nspec
 
     if (is_X_CPML(ispec) .and. is_Z_CPML(ispec)) then
-      write(24,*) ispec,CPML_XZ_ONLY
+      write(24,*) ispec,CPML_XZ
 
     else if (is_Z_CPML(ispec)) then
       write(24,*) ispec,CPML_Z_ONLY
