@@ -59,7 +59,7 @@
   character(len=MAX_STRING_LEN) :: noise_output_file
 
   ! checks if anything to do
-  if (.not. (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 1 .or. it == NSTEP)) return
+  if (.not. (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP)) return
 
   ! transfers arrays from GPU to CPU
   if (GPU_MODE) then

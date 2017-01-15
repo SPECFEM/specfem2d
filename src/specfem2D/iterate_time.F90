@@ -124,7 +124,7 @@ subroutine iterate_time()
        call exit_MPI(myrank,'timing for element weights should be done with output_postscript_snapshot turned off')
     if (output_wavefield_dumps) &
        call exit_MPI(myrank,'timing for element weights should be done with output_wavefield_dumps turned off')
-    if (output_energy) call exit_MPI(myrank,'timing for element weights should be done with output_energy turned off')
+    if (OUTPUT_ENERGY) call exit_MPI(myrank,'timing for element weights should be done with OUTPUT_ENERGY turned off')
     if (COMPUTE_INTEGRATED_ENERGY_FIELD) &
        call exit_MPI(myrank,'timing for element weights should be done with COMPUTE_INTEGRATED_ENERGY_FIELD turned off')
   endif
@@ -212,9 +212,7 @@ subroutine iterate_time()
     end select
 
     ! computes kinetic and potential energy
-    if (output_energy) then
-      call compute_and_output_energy()
-    endif
+    if (OUTPUT_ENERGY .and. mod(it,NTSTEP_BETWEEN_OUTPUT_ENERGY) == 0) call compute_and_output_energy()
 
     ! computes integrated_energy_field
     if (COMPUTE_INTEGRATED_ENERGY_FIELD) then

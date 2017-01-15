@@ -85,7 +85,7 @@
   !-------------------------------------------------------------
 
   ! creates a Gnuplot script to display the energy curve in log scale
-  if (output_energy .and. myrank == 0) then
+  if (OUTPUT_ENERGY .and. myrank == 0) then
     close(IOUT_ENERGY)
     open(unit=IOUT_ENERGY,file='OUTPUT_FILES/plot_energy.gnu',status='unknown',action='write')
     write(IOUT_ENERGY,*) 'set term wxt'
@@ -103,7 +103,7 @@
   endif
 
   ! open the file in which we will store the energy curve
-  if (output_energy .and. myrank == 0) open(unit=IOUT_ENERGY,file='OUTPUT_FILES/energy.dat',status='unknown',action='write')
+  if (OUTPUT_ENERGY .and. myrank == 0) open(unit=IOUT_ENERGY,file='OUTPUT_FILES/energy.dat',status='unknown',action='write')
 
   ! synchronizes all processes
   call synchronize_all()

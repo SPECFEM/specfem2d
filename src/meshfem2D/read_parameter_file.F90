@@ -54,7 +54,7 @@
 ! axial_elements_file = ''
 ! absorbing_surface_file = ''
 ! acoustic_forcing_surface_file = ''
-! CPML_element_file = ''
+! absorbing_cpml_file = ''
 ! tangential_detection_curve_file = ''
 
   ! internal meshing
@@ -199,7 +199,8 @@
     call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_INFO)
     call bcast_all_singlel(output_grid_Gnuplot)
     call bcast_all_singlel(output_grid_ASCII)
-    call bcast_all_singlel(output_energy)
+    call bcast_all_singlel(OUTPUT_ENERGY)
+    call bcast_all_singlei(NTSTEP_BETWEEN_OUTPUT_ENERGY)
 
     call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_IMAGES)
     call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS)
@@ -519,8 +520,8 @@
     call read_value_string_p(acoustic_forcing_surface_file, 'mesher.acoustic_forcing_surface_file')
     if (err_occurred() /= 0) stop 'error reading parameter acoustic_forcing_surface_file in Par_file'
 
-    call read_value_string_p(CPML_element_file, 'mesher.CPML_element_file')
-    if (err_occurred() /= 0) stop 'error reading parameter CPML_element_file in Par_file'
+    call read_value_string_p(absorbing_cpml_file, 'mesher.absorbing_cpml_file')
+    if (err_occurred() /= 0) stop 'error reading parameter absorbing_cpml_file in Par_file'
 
     call read_value_string_p(tangential_detection_curve_file, 'mesher.tangential_detection_curve_file')
     if (err_occurred() /= 0) stop 'error reading parameter tangential_detection_curve_file in Par_file'
@@ -579,8 +580,11 @@
   call read_value_logical_p(output_grid_ASCII, 'solver.output_grid_ASCII')
   if (err_occurred() /= 0) stop 'error reading parameter output_grid_ASCII in Par_file'
 
-  call read_value_logical_p(output_energy, 'solver.output_energy')
-  if (err_occurred() /= 0) stop 'error reading parameter output_energy in Par_file'
+  call read_value_logical_p(OUTPUT_ENERGY, 'solver.OUTPUT_ENERGY')
+  if (err_occurred() /= 0) stop 'error reading parameter OUTPUT_ENERGY in Par_file'
+
+  call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_ENERGY, 'solver.NTSTEP_BETWEEN_OUTPUT_ENERGY')
+  if (err_occurred() /= 0) stop 'error reading parameter NTSTEP_BETWEEN_OUTPUT_ENERGY in Par_file'
 
   !--------------------------------------------------------------------
   !
