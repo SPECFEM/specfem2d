@@ -47,7 +47,7 @@ meshfem2D_TARGETS = \
 
 meshfem2D_OBJECTS = \
 	$O/meshfem2D_par.mesh_module.o \
-  $O/compute_elements_load_par.mesh.o \
+	$O/compute_elements_load_par.mesh.o \
 	$O/decompose_mesh.mesh.o \
 	$O/determine_abs_surface.mesh.o \
 	$O/determine_acoustic_surface.mesh.o \
@@ -132,7 +132,11 @@ endif
 ### Module dependencies
 ###
 
-$O/meshfem2D.mesh.o: $O/meshfem2D_par.mesh_module.o
+$O/decompose_mesh.mesh.o: $O/compute_elements_load_par.mesh.o
+$O/meshfem2D.mesh.o: $O/compute_elements_load_par.mesh.o
+$O/metis_partitioning.mesh.o: $O/compute_elements_load_par.mesh.o
+$O/read_external_mesh_files.mesh.o: $O/compute_elements_load_par.mesh.o
+$O/scotch_partitioning.mesh.o: $O/compute_elements_load_par.mesh.o
 
 ifdef SCOTCH_INCDIR
 $O/scotch_partitioning.mesh.o: $(SCOTCH_INCDIR)/scotchf.h
