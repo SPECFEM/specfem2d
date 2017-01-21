@@ -46,20 +46,18 @@
   ! initializes
 
   ! external meshing
-!! DK DK suppressed because null strings are not part of the Fortran standard, thus the IBM xlf compiler rejects them for instance
-! mesh_file = ''
-! nodes_coords_file = ''
-! materials_file = ''
-! free_surface_file = ''
-! axial_elements_file = ''
-! absorbing_surface_file = ''
-! acoustic_forcing_surface_file = ''
-! absorbing_cpml_file = ''
-! tangential_detection_curve_file = ''
+  mesh_file = '\0'
+  nodes_coords_file = '\0'
+  materials_file = '\0'
+  free_surface_file = '\0'
+  axial_elements_file = '\0'
+  absorbing_surface_file = '\0'
+  acoustic_forcing_surface_file = '\0'
+  absorbing_cpml_file = '\0'
+  tangential_detection_curve_file = '\0'
 
   ! internal meshing
-!! DK DK suppressed because null strings are not part of the Fortran standard, thus the IBM xlf compiler rejects them for instance
-! interfacesfile = ''
+  interfacesfile = '\0'
   xmin_param = 0.d0
   xmax_param = 0.d0
   nx_param = 0

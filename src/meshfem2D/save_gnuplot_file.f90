@@ -89,7 +89,7 @@
     enddo
   enddo
 
-10   format('')
+10   format('\0')
 
   close(20)
 
