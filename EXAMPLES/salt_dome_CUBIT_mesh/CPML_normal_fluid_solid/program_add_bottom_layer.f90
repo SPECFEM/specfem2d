@@ -109,7 +109,7 @@ print *
 ! integer, parameter :: ITOP = 3
 ! integer, parameter :: ILEFT = 4
 print *
-print *,'in absorbing edge list, replace all lines that end with '\0' 1'\0' with this:'
+print *,'in absorbing edge list, replace all lines that end with " 1" with this:'
 ispec = nspec
 do i = 1,NPML
 do ispec2 = 1,nspec_to_add

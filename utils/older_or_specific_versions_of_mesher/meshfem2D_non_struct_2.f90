@@ -94,7 +94,7 @@
 
   print *
   print *,' *** Version optimisee avec maillage non structure ***'
-  print *,' *** Raffinement d'\0'un facteur 2 en surface ***'
+  print *,' *** Densification of the mesh by a factor of 2 at the surface ***'
   print *
 
 ! ***
@@ -670,7 +670,7 @@
   enddo
   enddo
 
-  if (k /= nspecvolume) stop 'nombre d'\0'elements incoherent dans le volume'
+  if (k /= nspecvolume) stop 'number of elements is inconsistent in the volume'
 
 ! zone non structuree dans la couche Wz
   j=nz-4
@@ -714,7 +714,7 @@
 
   enddo
 
-  if (k /= nspec) stop 'nombre d'\0'elements incoherent dans la couche Wz'
+  if (k /= nspec) stop 'number of elements is inconsistent in the Wz layer'
 
 !
 !--- sauvegarde des bords absorbants
@@ -819,7 +819,7 @@
     write(15,*) inumabs,inumelem,icodehaut,icodebas,icodegauche,icodedroite
   enddo
 
-  if (inumabs /= nelemabs) stop 'nombre d'\0'elements absorbants incoherent'
+  if (inumabs /= nelemabs) stop 'number of absorbing elements is inconsistent'
 
   endif
 

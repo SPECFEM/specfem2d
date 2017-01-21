@@ -109,8 +109,8 @@
   logical imeshcolor, imodelvect, iboundvect, interpol, isymbols, initialfield
   logical usletter,compenergy
 
-  print *,'Nombre d'\0'elements = ',nelem
-  print *,'Nombre max de points = ',npoin
+  print *,'Number of elements = ',nelem
+  print *,'Max number of points = ',npoin
 
   nx = mnx
   nz = mnz
@@ -554,7 +554,7 @@
     enddo
   enddo
 
-  print *,'nb d'\0'elements stockes = ',numerocourant - 1
+  print *,'Number of elements stored = ',numerocourant - 1
 
 ! ***
 ! *** creation des elements sous forme topologique

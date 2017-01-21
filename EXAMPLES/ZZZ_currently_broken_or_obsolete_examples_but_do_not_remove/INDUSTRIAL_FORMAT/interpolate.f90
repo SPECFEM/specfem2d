@@ -13,11 +13,11 @@
 
      ! creating mesh/grid
      print *, 'generating mesh/grid...'
-     write(system_command,"('sed -e '\0's#^SIMULATION_TYPE.*#SIMULATION_TYPE = 1 #g'\0' < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
-     write(system_command,"('sed -e '\0's#^SAVE_FORWARD.*#SAVE_FORWARD = .false. #g'\0' < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
-     write(system_command,"('sed -e '\0's#^assign_external_model.*#assign_external_model = .false. #g'\0' < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
-     write(system_command,"('sed -e '\0's#^READ_EXTERNAL_SEP_FILE.*#READ_EXTERNAL_SEP_FILE = .false. #g'\0' < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
-     write(system_command,"('sed -e '\0's#^nt.*#nt = 5 #g'\0' < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
+     write(system_command,"('sed -e "s#^SIMULATION_TYPE.*#SIMULATION_TYPE = 1 #g" < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
+     write(system_command,"('sed -e "s#^SAVE_FORWARD.*#SAVE_FORWARD = .false. #g" < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
+     write(system_command,"('sed -e "s#^assign_external_model.*#assign_external_model = .false. #g" < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
+     write(system_command,"('sed -e "s#^READ_EXTERNAL_SEP_FILE.*#READ_EXTERNAL_SEP_FILE = .false. #g" < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
+     write(system_command,"('sed -e "s#^nt.*#nt = 5 #g" < ./DATA/Par_file > temp; mv temp ./DATA/Par_file')"); call system(system_command)
      write(system_command,"('./xmeshfem2D')"); call system(system_command)
      write(system_command,"('./xspecfem2D')"); call system(system_command)
 
