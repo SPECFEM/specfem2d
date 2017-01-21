@@ -109,7 +109,7 @@
   logical imeshcolor, imodelvect, iboundvect, interpol, isymbols, initialfield
   logical usletter,compenergy
 
-  print *,'Nombre d''elements = ',nelem
+  print *,'Nombre d'\0'elements = ',nelem
   print *,'Nombre max de points = ',npoin
 
   nx = mnx
@@ -369,7 +369,7 @@
   write(*,*) 'Fin ecriture de la grille format GNUPLOT'
   write(*,*)
 
- 100  format('')
+ 100  format('\0')
 
 ! ***
 ! *** generer la liste des points geometriques
@@ -554,7 +554,7 @@
     enddo
   enddo
 
-  print *,'nb d''elements stockes = ',numerocourant - 1
+  print *,'nb d'\0'elements stockes = ',numerocourant - 1
 
 ! ***
 ! *** creation des elements sous forme topologique

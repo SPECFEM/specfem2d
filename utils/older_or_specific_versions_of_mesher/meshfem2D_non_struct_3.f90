@@ -94,7 +94,7 @@
 
   print *
   print *,' *** Version optimisee avec maillage non structure ***'
-  print *,' *** Raffinement d''un facteur 3 en surface ***'
+  print *,' *** Raffinement d'\0'un facteur 3 en surface ***'
   print *
 
 ! ***
@@ -670,7 +670,7 @@
   enddo
   enddo
 
-  if (k /= nspecvolume) stop 'nombre d''elements incoherent dans le volume'
+  if (k /= nspecvolume) stop 'nombre d'\0'elements incoherent dans le volume'
 
 ! zone non structuree dans la couche Wz
   j=nz-6
@@ -738,7 +738,7 @@
 
   enddo
 
-  if (k /= nspec) stop 'nombre d''elements incoherent dans la couche Wz'
+  if (k /= nspec) stop 'nombre d'\0'elements incoherent dans la couche Wz'
 
 !
 !--- sauvegarde des bords absorbants
@@ -843,7 +843,7 @@
     write(15,*) inumabs,inumelem,icodehaut,icodebas,icodegauche,icodedroite
   enddo
 
-  if (inumabs /= nelemabs) stop 'nombre d''elements absorbants incoherent'
+  if (inumabs /= nelemabs) stop 'nombre d'\0'elements absorbants incoherent'
 
   endif
 

@@ -53,15 +53,15 @@ program filter_input_trace
   !=============== Help message ===============!
   200 format(/5x,'This program is used to filter signals with a Butterworth bandpass filter.',/5x, &
        'It has been initially written by Vadim Monteiller and has been adapted by Alexis Bottero.',/5x, &
-       '',/5x, &
+       '\0',/5x, &
        'usage: filter [-h] [-v] [--norder FILTER_ORDER] [--output PATH_TO_FILTERED_SIGNAL]',/5x, &
        '              PATH_TO_SIGNALS -f1 F1 -f2 F2',/5x, &
-       '',/5x, &
+       '\0',/5x, &
        'Positional arguments :',/5x, &
        '  PATH_TO_SIGNALS                  Paths to signal to filter (two columns file time,amplitude)',/5x, &
        '  -f1 F1                           Inferior cutoff frequency',/5x, &
        '  -f2 F2                           Superior cutoff frequency',/5x, &
-       '',/5x, &
+       '\0',/5x, &
        'Optional arguments :',/5x, &
        '  -h, --help                       Show this help message and exit',/5x, &
        '  --norder FILTER_ORDER            Order of the filter (default 4)',/5x, &
