@@ -17,7 +17,7 @@
 ###########################################################################################################################
 ###########################################################################################################################
 
-# You can add -DFORCE_VECTORIZATION to the options below (for all compilers, except for IBM for which the syntax is -WF,-DFORCE_VECTORIZATION )
+# You can add -DFORCE_VECTORIZATION to the options below (for all compilers, except for IBM for which the syntax is -WF,-DFORCE_VECTORIZATION)
 # to speed up the code in the fluid (acoustic) parts (only; FORCE_VECTORIZATION support for elastic parts has been discontinued in the source code).
 # This works fine if (and only if) your computer always allocates a contiguous memory block for each allocatable array;
 # this is the case for most machines and most compilers, but not all. For more details see https://github.com/geodynamics/specfem3d/issues/81 .
@@ -69,7 +69,6 @@ case $my_FC in
         OPT_FFLAGS="-O3 -Onoaggress -Oipa0 -hfp2 -Ovector3 -Oscalar3 -Ocache2 -Ounroll2 -Ofusion2"
         # -Oaggress -Oipa4 would make it even more aggressive
         DEBUG_FFLAGS="-eC -eD -ec -en -eI -ea -g -G0"
-        #
         ;;
     pgf95|*/pgf95|pgf90|*/pgf90|pgfortran|*/pgfortran)
         #
@@ -98,18 +97,11 @@ case $my_FC in
         #
         # GNU gfortran
         #
+        # optimization report: "-fopt-info" or very verbose: "-fopt-info-all"
         DEF_FFLAGS="-std=f2008 -fimplicit-none -frange-check -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -ffpe-trap=invalid,zero,overflow -Wunused -Werror" # -mcmodel=medium
-        OPT_FFLAGS="-O3"
+        OPT_FFLAGS="-O3 -finline-functions"
         DEBUG_FFLAGS="-g -O0 -ggdb -fbacktrace -fbounds-check"
         # useful to track loss of accuracy because of automatic double to single precision conversion:  -Wconversion  (this may generate many warnings...)
-        ;;
-    g95|*/g95)
-        #
-        # g95 (free f95 compiler from http://www.g95.org)
-        #
-        DEF_FFLAGS="-fimplicit-none"
-        OPT_FFLAGS="-O"
-        DEBUG_FFLAGS="-g -O0 -fbounds-check -ftrace"
         ;;
     f90|*/f90)
         case $host_os in
@@ -122,7 +114,7 @@ case $my_FC in
                         DEF_FFLAGS="-W132 -s -cpu:p7 -v -YDEALLOC=ALL"
                         OPT_FFLAGS="-O3"
                         DEBUG_FFLAGS=""
-                    ;;
+                        ;;
                 esac
                 ;;
             irix)
@@ -180,7 +172,7 @@ case $my_FC in
         # when encountering errors: ...relocation truncated to fit: R_PPC_LOCAL24PC...
         # one should also use additional flags:
         # CFLAGS = -Wl,-relax
-        # Note that the above message would only occur on a linux machine not on AIX.
+        # Note that the above message would only occur on a Linux machine not on AIX.
         # "relax" is not an option for the AIX linker and is interpreted in ways that will
         # in binaries that are not executable.
         #
@@ -189,7 +181,8 @@ case $my_FC in
         # The -qstrict option prevents some minor differences of results between xlf and
         # other compilers. There is a small decrease in performance, but generally
         # it is small or negligible compared to other issues like slow I/O.
-        DEF_FFLAGS="-qassert=contig -qhot -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2008std -g -qsuppress=1518-234 -qsuppress=1518-317 -qsuppress=1518-318 -qsuppress=1500-036"
+        #
+        DEF_FFLAGS="-qassert=contig -qhot -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2008std -qzerosize -g -qsuppress=1518-234 -qsuppress=1518-317 -qsuppress=1518-318 -qsuppress=1500-036"
         OPT_FFLAGS="-O4 -qstrict"
         # Options -qreport -qsource -qlist create a *.lst file containing detailed information about vectorization.
         DEBUG_FFLAGS="-g -O0 -C -qddim -qfullpath -qflttrap=overflow:zerodivide:invalid:enable -qfloat=nans -qinitauto=7FBFFFFF"
@@ -223,6 +216,11 @@ case $build_os in
         ;;
 esac
 
+# If you wish, set CFLAGS here instead of on the command-line.
+# This will then be persistent across calls to configure.
+# If you don't set it, then the default value will be determined by autoconf.
+#DEF_CFLAGS="-g -O3"
+
 if test "x$FLAGS_CHECK" = "x"; then
     if test "x$COND_DEBUG_TRUE" = "x"; then
         FLAGS_CHECK="$DEF_FFLAGS $DEBUG_FFLAGS"
@@ -241,6 +239,11 @@ echo MPIFC=\"$MPIFC\" | sed 's/\$/\\\$/g'
 echo MPILIBS=\"$MPILIBS\" | sed 's/\$/\\\$/g'
 echo FLAGS_CHECK=\"$FLAGS_CHECK\" | sed 's/\$/\\\$/g'
 echo FCENV=\"$FCENV\" | sed 's/\$/\\\$/g'
+if [ -n "${DEF_CFLAGS+set}" -a -z "${CFLAGS+set}" ]; then
+# We only set this if it's set in this file and the user hasn't
+# overridden it on the command-line.
+echo CFLAGS=\"$DEF_CFLAGS\" | sed 's/\$/\\\$/g'
+fi
 
 # Added by IDRIS: set to default values if not passed as arguments
 if [ "X${AR}" == "X" ]; then AR="ar"; fi
