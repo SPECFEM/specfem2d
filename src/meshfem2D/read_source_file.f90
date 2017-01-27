@@ -136,7 +136,7 @@
     call read_value_integer(IIN_SOURCE,IGNORE_JUNK,time_function_type(i_source))
 
     ! external source time function file (sft type == 8)
-    name_of_source_file(i_source) = '\0'
+    name_of_source_file(i_source) = ''
     call read_value_string(IIN_SOURCE,IGNORE_JUNK,name_of_source_file(i_source))
 
     ! burst (stf type == 9)
