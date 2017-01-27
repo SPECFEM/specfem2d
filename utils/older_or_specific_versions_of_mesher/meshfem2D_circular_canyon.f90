@@ -369,7 +369,7 @@
   write(*,*) 'Fin ecriture de la grille format GNUPLOT'
   write(*,*)
 
- 100  format('\0')
+ 100  format('')
 
 ! ***
 ! *** generer la liste des points geometriques

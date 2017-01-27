@@ -46,18 +46,18 @@
   ! initializes
 
   ! external meshing
-  mesh_file = '\0'
-  nodes_coords_file = '\0'
-  materials_file = '\0'
-  free_surface_file = '\0'
-  axial_elements_file = '\0'
-  absorbing_surface_file = '\0'
-  acoustic_forcing_surface_file = '\0'
-  absorbing_cpml_file = '\0'
-  tangential_detection_curve_file = '\0'
+  mesh_file = ''
+  nodes_coords_file = ''
+  materials_file = ''
+  free_surface_file = ''
+  axial_elements_file = ''
+  absorbing_surface_file = ''
+  acoustic_forcing_surface_file = ''
+  absorbing_cpml_file = ''
+  tangential_detection_curve_file = ''
 
   ! internal meshing
-  interfacesfile = '\0'
+  interfacesfile = ''
   xmin_param = 0.d0
   xmax_param = 0.d0
   nx_param = 0
