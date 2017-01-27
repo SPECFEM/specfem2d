@@ -1343,7 +1343,7 @@
   print *,'Done writing the grid in GNUPLOT format'
   print *
 
- 10   format('')
+ 10   format('\0')
  15   format(e12.5,1x,e12.5)
 
   endif

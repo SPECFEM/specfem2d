@@ -65,14 +65,14 @@
 
   name='macros2.gnu'
   open(unit=31,file='OUTPUT_FILES/'//trim(name),status='unknown')
-  write(31,"('')")
+  write(31,"('\0')")
 
   name='gllmesh1.gnu'
   open(unit=20,file='OUTPUT_FILES/'//trim(name),status='unknown')
 
   name='gllmesh2.gnu'
   open(unit=21,file='OUTPUT_FILES/'//trim(name),status='unknown')
-  write(21,"('')")
+  write(21,"('\0')")
 
   do ispec = 1,nspec
 
@@ -92,12 +92,12 @@
 
         write(20,*) coord(1,iglobnum),coord(2,iglobnum)
         write(20,*) coord(1,iglobnum2),coord(2,iglobnum2)
-        write(20,"('')")
+        write(20,"('\0')")
 
         if (iy == 1 .or. iy == NGLLZ) then
           write(21,*) coord(1,iglobnum),coord(2,iglobnum)
           write(21,*) coord(1,iglobnum2),coord(2,iglobnum2)
-          write(21,"('')")
+          write(21,"('\0')")
         endif
 
       enddo
@@ -119,12 +119,12 @@
 
         write(20,*) coord(1,iglobnum),coord(2,iglobnum)
         write(20,*) coord(1,iglobnum2),coord(2,iglobnum2)
-        write(20,"('')")
+        write(20,"('\0')")
 
         if (ix == 1 .or. ix == NGLLX) then
           write(21,*) coord(1,iglobnum),coord(2,iglobnum)
           write(21,*) coord(1,iglobnum2),coord(2,iglobnum2)
-          write(21,"('')")
+          write(21,"('\0')")
         endif
 
       enddo
@@ -150,16 +150,16 @@
 ! draw the edges of the element using one color
       write(30,*) xval(1),zval(1)
       write(30,*) xval(2),zval(2)
-      write(30,"('')")
+      write(30,"('\0')")
       write(30,*) xval(2),zval(2)
       write(30,*) xval(3),zval(3)
-      write(30,"('')")
+      write(30,"('\0')")
       write(30,*) xval(3),zval(3)
       write(30,*) xval(4),zval(4)
-      write(30,"('')")
+      write(30,"('\0')")
       write(30,*) xval(4),zval(4)
       write(30,*) xval(1),zval(1)
-      write(30,"('')")
+      write(30,"('\0')")
 
     else
 
@@ -170,42 +170,42 @@
 ! draw the edges of the element using one color
       write(30,*) xval(1),zval(1)
       write(30,*) xval(5),zval(5)
-      write(30,"('')")
+      write(30,"('\0')")
       write(30,*) xval(5),zval(5)
       write(30,*) xval(2),zval(2)
-      write(30,"('')")
+      write(30,"('\0')")
       write(30,*) xval(2),zval(2)
       write(30,*) xval(6),zval(6)
-      write(30,"('')")
+      write(30,"('\0')")
       write(30,*) xval(6),zval(6)
       write(30,*) xval(3),zval(3)
-      write(30,"('')")
+      write(30,"('\0')")
       write(30,*) xval(3),zval(3)
       write(30,*) xval(7),zval(7)
-      write(30,"('')")
+      write(30,"('\0')")
       write(30,*) xval(7),zval(7)
       write(30,*) xval(4),zval(4)
-      write(30,"('')")
+      write(30,"('\0')")
       write(30,*) xval(4),zval(4)
       write(30,*) xval(8),zval(8)
-      write(30,"('')")
+      write(30,"('\0')")
       write(30,*) xval(8),zval(8)
       write(30,*) xval(1),zval(1)
-      write(30,"('')")
+      write(30,"('\0')")
 
 ! draw middle lines using another color
       write(31,*) xval(5),zval(5)
       write(31,*) xval(9),zval(9)
-      write(31,"('')")
+      write(31,"('\0')")
       write(31,*) xval(9),zval(9)
       write(31,*) xval(7),zval(7)
-      write(31,"('')")
+      write(31,"('\0')")
       write(31,*) xval(8),zval(8)
       write(31,*) xval(9),zval(9)
-      write(31,"('')")
+      write(31,"('\0')")
       write(31,*) xval(9),zval(9)
       write(31,*) xval(6),zval(6)
-      write(31,"('')")
+      write(31,"('\0')")
 
     endif
 

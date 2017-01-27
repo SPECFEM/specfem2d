@@ -84,7 +84,7 @@ program adj_seismogram
   ! reads in file arguments
   do i = 1,4
     call get_command_argument(i,arg)
-    if (trim(arg) == '' .or. command_argument_count() /= 4) then
+    if (trim(arg) == '\0' .or. command_argument_count() /= 4) then
       print *,'Usage: '
       print *,'  xadj_seismogram t1 t2 station-name adj_comp[1-3]'
       print *,'with'
