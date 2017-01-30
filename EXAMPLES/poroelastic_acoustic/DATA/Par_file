@@ -234,7 +234,7 @@ free_surface_file               = dummy                     # file containing th
 axial_elements_file             = dummy                     # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = dummy                     # file containing the absorbing surface
 acoustic_forcing_surface_file   = dummy                     # file containing the acoustic forcing surface
-CPML_element_file               = dummy                     # file containing the CPML element numbers
+absorbing_cpml_file             = dummy                     # file containing the CPML element numbers
 tangential_detection_curve_file = dummy                     # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------------------------
@@ -276,7 +276,10 @@ output_grid_Gnuplot             = .false.        # generate a GNUPLOT file conta
 output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 
 # compute and output total acoustic and elastic energy curves (slows down the code significantly)
-output_energy                   = .false.
+OUTPUT_ENERGY                   = .false.
+
+# every how many time steps we compute energy (which is a bit expensive to compute)
+NTSTEP_BETWEEN_OUTPUT_ENERGY    = 10
 
 #-----------------------------------------------------------------------------
 #

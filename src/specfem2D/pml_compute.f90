@@ -64,7 +64,7 @@
                                       CPML_region_local,index_ik,A_0,A_1,A_2,singularity_type_2,bb_1,bb_2, &
                                       coef0_1,coef1_1,coef2_1,coef0_2,coef1_2,coef2_2)
 
-  use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
+  use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
 
   implicit none
 
@@ -79,23 +79,23 @@
 
   ! local variables
   double precision :: bar_A_0,bar_A_1,bar_A_2,alpha_0,bb_1,bb_2
-  integer :: CPML_X_ONLY_TEMP,CPML_Z_ONLY_TEMP,CPML_XZ_ONLY_TEMP
+  integer :: CPML_X_ONLY_TEMP,CPML_Z_ONLY_TEMP,CPML_XZ_TEMP
 
   logical,parameter :: FIRST_ORDER_CONVOLUTION = .false.
 
   if (index_ik == 13) then
     CPML_X_ONLY_TEMP = CPML_X_ONLY
     CPML_Z_ONLY_TEMP = CPML_Z_ONLY
-    CPML_XZ_ONLY_TEMP = CPML_XZ_ONLY
+    CPML_XZ_TEMP = CPML_XZ
   else if (index_ik == 31) then
     CPML_X_ONLY_TEMP = CPML_Z_ONLY
     CPML_Z_ONLY_TEMP = CPML_X_ONLY
-    CPML_XZ_ONLY_TEMP = CPML_XZ_ONLY
+    CPML_XZ_TEMP = CPML_XZ
   else
     stop 'In lik_parameter_computation index_ik must be equal to 13 or 31'
   endif
 
-  if (CPML_region_local == CPML_XZ_ONLY_TEMP) then
+  if (CPML_region_local == CPML_XZ_TEMP) then
   !----------------A0-------------------------
     bar_A_0 = kappa_x / kappa_z
     A_0 = bar_A_0
@@ -168,7 +168,7 @@
                                      CPML_region_local,A_0,A_1,A_2,A_3,A_4,singularity_type, &
                                      bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
-  use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
+  use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
 
   implicit none
 
@@ -188,7 +188,7 @@
   beta_xyz_1 = beta_x + beta_z
   beta_xyz_2 = beta_x * beta_z
 
-  if (CPML_region_local == CPML_XZ_ONLY) then
+  if (CPML_region_local == CPML_XZ) then
     bar_A_0 = kappa_x * kappa_z
     bar_A_1 = bar_A_0 * (beta_x + beta_z - alpha_x - alpha_z)
     bar_A_2 = bar_A_0 * (beta_x - alpha_x) * (beta_z - alpha_z - alpha_x) &

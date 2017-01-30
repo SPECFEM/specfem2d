@@ -16,6 +16,7 @@ import matplotlib.mlab as mlab  # Numerical python functions written for compata
 import matplotlib.cm as cm      # This module provides a large set of colormaps and other related tools
 from pylab import specgram
 from numpy.fft import rfftfreq, rfft
+import os
 from sys import exit
 import math as M
 from matplotlib.colors import Normalize
@@ -238,6 +239,8 @@ parser.add_argument('--specgram', nargs='?',type=int,default=-1,
     help='show spectrogram (the resolution res (sampling=Fs/res) can be given in option, default: sampling = Fs/100)')
 parser.add_argument('--hold', action='store_true',
     help='plot all on the same figure')
+parser.add_argument('--semilogy', action='store_true',
+    help='Y axis in log scale')
 parser.add_argument('-n','--normalize', action='store_true',
     help='_if --hold is chosen and if the number of traces is 2 rescale the second trace for comparison of the first one \
           _if --hold is not chosen rescale every trace so that the absolute maximum is one')
@@ -251,7 +254,7 @@ parser.add_argument('--fontsize',  type=float, default=16.0,
 parser.add_argument('--xlabel',  type=str, default="",
     help='set xlabel on plots: ex \"r\'time ($s$)\'\"')
 parser.add_argument('--ylabel',  type=str, default="",
-    help='set ylabel on plots: ex \"r\'time ($s$)\'\"')   
+    help='set ylabel on plots: ex \"r\'time ($s$)\'\"')
 parser.add_argument('-g','--grid', action='store_true',
     help='show a grid on the plot')
 parser.add_argument('files', nargs='+', type=argparse.FileType('r'),
@@ -264,11 +267,15 @@ parser.add_argument('--shift', type=float,
           first one",default=0.0)
 parser.add_argument('--invert_yaxis', action='store_true',default=False,
     help='Invert y axis')
+parser.add_argument('--invert_axis', action='store_true',default=False,
+    help='Invert axis (first column becomes ordinates, second becomes abscissa)')
 parser.add_argument('-l','--legend', nargs='?',type=str,
     help='Add a legend. Labels must be given separated by commas. By default, if no label is given the name of the files will \
     be used',default='99')
 parser.add_argument('-c','--colors', nargs=1,type=str,
     help='Use this option to set curves colors (RGB). Labels must be given separated by +. Ex:0,0,0.8+0.8,0,0',default='99')
+parser.add_argument('--writeFFT', action='store_true',
+    help='Write FFT in file')
 parser.add_argument('-v','--verbose', action='store_true',
     help='show more details')
 
@@ -276,6 +283,18 @@ args = parser.parse_args()
 
 plot_legend = False
 default_legend = False
+legend_loc = 0
+#'best' 	0
+#'upper right' 	1
+#'upper left' 	2
+#'lower left' 	3
+#'lower right' 	4
+#'right' 	5
+#'center left' 	6
+#'center right' 	7
+#'lower center' 	8
+#'upper center' 	9
+#'center' 	10
 user_labels = []
 default_colors = True
 user_colors = []
@@ -336,10 +355,12 @@ factorFirstFile = 1.0 # If scaleFilesWithFirstOne this will be used to scale the
 factorSecondFile = 1.0
 
 for idx,seismo in enumerate(args.files):      # Loop on the files given
+    if os.stat(seismo.name).st_size == 0:
+        exit(seismo.name+" is empty!")
     data = np.loadtxt(seismo)  # Load the seismogram
     if len(np.shape(data)) == 1:
         if plot_spectrum or plot_specgram:
-            exit("Just one column in",seismo.name,"! Impossible de calculate a spectrum...")
+            exit("Just one column in",seismo.name,"! Impossible to calculate a spectrum...")
         else:
             t_seismo = np.arange(len(data))
             ampl_seismo = data[:]
@@ -384,16 +405,22 @@ for idx,seismo in enumerate(args.files):      # Loop on the files given
         if default_colors:
             plt.plot(freq_seismo,Sf*factorFirstFile/factorSecondFile,args.plot_option,label=user_labels[idx],
             linewidth=args.linewidth)
+            if args.writeFFT:
+                np.savetxt(seismo.name+".fft",np.dstack((freq_seismo,Sf*factorFirstFile/factorSecondFile))[0])
+                print(seismo.name+".fft has been written.")
         else:
             plt.plot(freq_seismo,Sf*factorFirstFile/factorSecondFile,args.plot_option,label=user_labels[idx],color=user_colors[idx],
             linewidth=args.linewidth)
+            if args.writeFFT:
+                np.savetxt(seismo.name+".fft",np.dstack((freq_seismo,Sf*factorFirstFile/factorSecondFile))[0])
+                print(seismo.name+".fft has been written.")
         plt.xlim(freq_seismo[0], freq_seismo[-1])
         if args.invert_yaxis:
             plt.gca().invert_yaxis()
         plt.grid(args.grid)
         plt.hold(args.hold)
         if plot_legend:
-            plt.legend(fontsize=args.fontsize)
+            plt.legend(fontsize=args.fontsize,loc=legend_loc)
         if not default_legend:
            plt.rc('text', usetex=True)
         plt.rc('font', family='serif')
@@ -403,7 +430,7 @@ for idx,seismo in enumerate(args.files):      # Loop on the files given
         plt.rc('font', **font)
         plt.xlabel(args.xlabel,fontsize=args.fontsize+2)
         plt.ylabel(args.ylabel,fontsize=args.fontsize+2)
-        
+
     elif plot_specgram:
         # Pxx is the segments x freqs array of instantaneous power, freqs is
         # the frequency vector, bins are the centers of the time bins in which
@@ -426,7 +453,7 @@ for idx,seismo in enumerate(args.files):      # Loop on the files given
                 y_axis_already_inverted = True
         plt.ylim(0,Fs/2.0)
         if plot_legend:
-            plt.legend()
+            plt.legend(loc=legend_loc)
 
     else:
         if args.verbose:
@@ -446,13 +473,39 @@ for idx,seismo in enumerate(args.files):      # Loop on the files given
             else:
                 factorSecondFile = 1.0/args.factor
         if default_colors:
-            plt.plot(t_seismo+t_shift, ampl_seismo*factorFirstFile/factorSecondFile,args.plot_option,
-            linewidth=args.linewidth,label=user_labels[idx])
+            if args.invert_axis:
+                if not args.semilogy:
+                    plt.plot(ampl_seismo*factorFirstFile/factorSecondFile,t_seismo+t_shift,args.plot_option,
+                    linewidth=args.linewidth,label=user_labels[idx])
+                else:
+                    plt.semilogy(ampl_seismo*factorFirstFile/factorSecondFile,t_seismo+t_shift,args.plot_option,
+                    linewidth=args.linewidth,label=user_labels[idx])
+            else:
+                if not args.semilogy:
+                    plt.plot(t_seismo+t_shift, ampl_seismo*factorFirstFile/factorSecondFile,args.plot_option,
+                    linewidth=args.linewidth,label=user_labels[idx])
+                else:
+                    plt.semilogy(t_seismo+t_shift, ampl_seismo*factorFirstFile/factorSecondFile,args.plot_option,
+                    linewidth=args.linewidth,label=user_labels[idx])
         else:
-            plt.plot(t_seismo+t_shift, ampl_seismo*factorFirstFile/factorSecondFile,args.plot_option,color=user_colors[idx],
-            linewidth=args.linewidth,label=user_labels[idx])
-            
-        plt.xlim(tmin, tmax)
+            if args.invert_axis:
+                if not args.semilogy:
+                    plt.plot(ampl_seismo*factorFirstFile/factorSecondFile,t_seismo+t_shift,args.plot_option,color=user_colors[idx],
+                    linewidth=args.linewidth,label=user_labels[idx])
+                else:
+                    plt.semilogy(ampl_seismo*factorFirstFile/factorSecondFile,t_seismo+t_shift,args.plot_option,color=user_colors[idx],
+                    linewidth=args.linewidth,label=user_labels[idx])
+            else:
+                if not args.semilogy:
+                    plt.plot(t_seismo+t_shift, ampl_seismo*factorFirstFile/factorSecondFile,args.plot_option,color=user_colors[idx],
+                    linewidth=args.linewidth,label=user_labels[idx])
+                else:
+                    plt.semilogy(t_seismo+t_shift, ampl_seismo*factorFirstFile/factorSecondFile,args.plot_option,color=user_colors[idx],
+                    linewidth=args.linewidth,label=user_labels[idx])
+        if not args.invert_axis:
+            plt.xlim(tmin, tmax)
+        else:
+            plt.ylim(tmin, tmax)
         plt.grid(args.grid)
         plt.hold(args.hold)
         font = {'family' : 'serif',
@@ -461,9 +514,10 @@ for idx,seismo in enumerate(args.files):      # Loop on the files given
         plt.xlabel(args.xlabel,fontsize=args.fontsize+2)
         plt.ylabel(args.ylabel,fontsize=args.fontsize+2)
         if plot_legend:
-            plt.legend(fontsize=args.fontsize)
+            plt.legend(loc=legend_loc)
         if not default_legend:
-           plt.rc('text', usetex=True)
+           if args.hold or plot_specgram:
+               plt.rc('text', usetex=True)
         if args.invert_yaxis:
             if not y_axis_already_inverted:
                 plt.gca().invert_yaxis()

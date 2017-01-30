@@ -234,7 +234,7 @@
 ! flags for CPML absorbing boundaries
   integer, parameter :: CPML_X_ONLY = 1
   integer, parameter :: CPML_Z_ONLY = 2
-  integer, parameter :: CPML_XZ_ONLY = 3
+  integer, parameter :: CPML_XZ = 3
 
 ! flags decide that do PML_parameter_adjustment implemented in pml_init.F90 or not
   logical, parameter :: PML_parameter_adjustment = .false.

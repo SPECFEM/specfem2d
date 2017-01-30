@@ -470,7 +470,7 @@
 
     if (read_external_mesh) then
       if (PML_BOUNDARY_CONDITIONS) then
-        call read_external_pml_element(CPML_element_file, region_pml_external_mesh, nspec_cpml)
+        call read_external_pml_element(absorbing_cpml_file, region_pml_external_mesh, nspec_cpml)
       endif
     endif
 

@@ -57,33 +57,18 @@
   double precision, dimension(NGLLZ) :: zigll
 
 ! source arrays
-  double precision, dimension(NGLLX,NGLLZ) :: G11,G13,G31,G33
   double precision, dimension(NGLLX) :: hxis,hpxis
   double precision, dimension(NGLLZ) :: hgammas,hpgammas
 
   integer :: k,m
-  integer :: ir,iv
 
-! calculate G_ij for general source location
-! the source does not necessarily correspond to a Gauss-Lobatto point
-  do m = 1,NGLLZ
-      do k = 1,NGLLX
-
-        xixd    = xix(k,m,ispec_selected_source)
-        xizd    = xiz(k,m,ispec_selected_source)
-        gammaxd = gammax(k,m,ispec_selected_source)
-        gammazd = gammaz(k,m,ispec_selected_source)
-
-        G11(k,m) = Mxx*xixd + Mxz*xizd
-        G13(k,m) = Mxx*gammaxd + Mxz*gammazd
-        G31(k,m) = Mxz*xixd + Mzz*xizd
-        G33(k,m) = Mxz*gammaxd + Mzz*gammazd
-
-      enddo
-  enddo
+  double precision :: hlagrange
+  double precision :: dsrc_dx,dsrc_dz
+  double precision :: dxis_dx,dgammas_dx
+  double precision :: dxis_dz,dgammas_dz
 
 ! compute Lagrange polynomials at the source location
-
+! the source does not necessarily correspond to a Gauss-Lobatto point
   if (AXISYM) then
     if (is_on_the_axis(ispec_selected_source)) then ! TODO verify if we have to add : .and. myrank == islice_selected_source(i)
       call lagrange_any(xi_source,NGLJ,xiglj,hxis,hpxis)
@@ -95,6 +80,28 @@
   endif
   call lagrange_any(gamma_source,NGLLZ,zigll,hgammas,hpgammas)
 
+  dxis_dx = ZERO
+  dxis_dz = ZERO
+  dgammas_dx = ZERO
+  dgammas_dz = ZERO
+
+  do m = 1,NGLLZ
+    do k = 1,NGLLX
+
+        xixd    = xix(k,m,ispec_selected_source)
+        xizd    = xiz(k,m,ispec_selected_source)
+        gammaxd = gammax(k,m,ispec_selected_source)
+        gammazd = gammaz(k,m,ispec_selected_source)
+
+        hlagrange = hxis(k) * hgammas(m)
+
+        dxis_dx = dxis_dx + hlagrange * xixd
+        dxis_dz = dxis_dz + hlagrange * xizd
+        dgammas_dx = dgammas_dx + hlagrange * gammaxd
+        dgammas_dz = dgammas_dz + hlagrange * gammazd
+
+    enddo
+  enddo
 
 ! calculate source array
   sourcearray(:,:,:) = ZERO
@@ -102,17 +109,11 @@
   do m = 1,NGLLZ
     do k = 1,NGLLX
 
-      do iv = 1,NGLLZ
-        do ir = 1,NGLLX
+        dsrc_dx = (hpxis(k)*dxis_dx)*hgammas(m) + hxis(k)*(hpgammas(m)*dgammas_dx)
+        dsrc_dz = (hpxis(k)*dxis_dz)*hgammas(m) + hxis(k)*(hpgammas(m)*dgammas_dz)
 
-          sourcearray(1,k,m) = sourcearray(1,k,m) + &
-            real(hxis(ir)*hgammas(iv)*(G11(ir,iv)*hpxis(k)*hgammas(m) + G13(ir,iv)*hxis(k)*hpgammas(m)),kind=CUSTOM_REAL)
-
-          sourcearray(2,k,m) = sourcearray(2,k,m) + &
-            real(hxis(ir)*hgammas(iv) *(G31(ir,iv)*hpxis(k)*hgammas(m) + G33(ir,iv)*hxis(k)*hpgammas(m)),kind=CUSTOM_REAL)
-
-        enddo
-      enddo
+        sourcearray(1,k,m) = sourcearray(1,k,m) + real(Mxx*dsrc_dx + Mxz*dsrc_dx,kind=CUSTOM_REAL)
+        sourcearray(2,k,m) = sourcearray(2,k,m) + real(Mxz*dsrc_dx + Mzz*dsrc_dz,kind=CUSTOM_REAL)
 
     enddo
   enddo

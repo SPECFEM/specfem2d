@@ -410,7 +410,7 @@
   endif
 
   ! close energy file
-  if (output_energy .and. myrank == 0) close(IOUT_ENERGY)
+  if (OUTPUT_ENERGY .and. myrank == 0) close(IOUT_ENERGY)
 
   ! print exit banner
   if (myrank == 0) call datim(simulation_title)

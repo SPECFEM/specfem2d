@@ -123,10 +123,6 @@ USE_TRICK_FOR_BETTER_PRESSURE   = .false.
 #  of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
 NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000
 
-# Compute the field int_0^t v^2 dt for a set of GLL points and write it to file. Use
-# the script utils/visualisation/plotIntegratedEnergyFile.py to watch. It is refreshed at the same time than the seismograms
-COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
-
 # use this t0 as earliest starting time rather than the automatically calculated one
 USER_T0                         = 0.0d0
 
@@ -224,14 +220,14 @@ read_external_mesh              = .false.
 
 # data concerning mesh, when generated using third-party app (more info in README)
 # (see also absorbing_conditions above)
-mesh_file                       = ./DATA/Mesh_canyon/canyon_mesh_file   # file containing the mesh
-nodes_coords_file               = ./DATA/Mesh_canyon/canyon_nodes_coords_file   # file containing the nodes coordinates
-materials_file                  = ./DATA/Mesh_canyon/canyon_materials_file   # file containing the material number for each element
-free_surface_file               = ./DATA/Mesh_canyon/canyon_free_surface_file   # file containing the free surface
+mesh_file                       = ./DATA/mesh_file  # file containing the mesh
+nodes_coords_file               = ./DATA/nodes_coords_file   # file containing the nodes coordinates
+materials_file                  = ./DATA/materials_file   # file containing the material number for each element
+free_surface_file               = ./DATA/free_surface_file   # file containing the free surface
 axial_elements_file             = ./DATA/axial_elements_file   # file containing the axial elements if AXISYM is true
-absorbing_surface_file          = ./DATA/Mesh_canyon/canyon_absorbing_surface_file   # file containing the absorbing surface
+absorbing_surface_file          = ./DATA/absorbing_surface_file   # file containing the absorbing surface
 acoustic_forcing_surface_file   = ./DATA/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
-CPML_element_file               = Elements_CPML_list        # file containing the CPML element numbers
+absorbing_cpml_file             = ./DATA/absorbing_cpml_file # file containing the CPML element numbers
 tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------------------------
@@ -275,8 +271,16 @@ NSTEP_BETWEEN_OUTPUT_INFO       = 100
 output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
 output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 
-# compute and output total acoustic and elastic energy curves (slows down the code significantly)
-output_energy                   = .false.
+# to plot total energy curves, for instance to monitor how CPML absorbing layers behave;
+# should be turned OFF in most cases because a bit expensive
+OUTPUT_ENERGY                   = .false.
+
+# every how many time steps we compute energy (which is a bit expensive to compute)
+NTSTEP_BETWEEN_OUTPUT_ENERGY    = 10
+
+# Compute the field int_0^t v^2 dt for a set of GLL points and write it to file. Use
+# the script utils/visualisation/plotIntegratedEnergyFile.py to watch. It is refreshed at the same time than the seismograms
+COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
 
 #-----------------------------------------------------------------------------
 #
@@ -288,7 +292,7 @@ output_energy                   = .false.
 NSTEP_BETWEEN_OUTPUT_IMAGES     = 100
 
 # every how many time steps we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
-NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS = 100
+NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS = 1000
 
 # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
 cutsnaps                        = 1.
