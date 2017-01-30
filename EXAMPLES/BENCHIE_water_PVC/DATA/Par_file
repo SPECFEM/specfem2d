@@ -157,7 +157,7 @@ record_at_surface_same_vertical = .false.        # receivers inside the medium o
 #-----------------------------------------------------------------------------
 
 # save sensitivity kernels in ASCII format (much bigger files, but compatible with current GMT scripts) or in binary format
-save_ASCII_kernels              = .true.
+save_ASCII_kernels              = .false.
 
 
 #-----------------------------------------------------------------------------
@@ -275,7 +275,7 @@ nbregions                       = 7              # then set below the different 
 #-----------------------------------------------------------------------------
 
 # every how many time steps we display information about the simulation (costly, do not use a very small value)
-NSTEP_BETWEEN_OUTPUT_INFO       = 100
+NSTEP_BETWEEN_OUTPUT_INFO       = 1000
 
 # meshing output
 output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
@@ -299,7 +299,7 @@ COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
 #-----------------------------------------------------------------------------
 
 # every how many time steps we draw JPEG or PostScript pictures of the simulation (costly, do not use a very small value)
-NSTEP_BETWEEN_OUTPUT_IMAGES     = 100
+NSTEP_BETWEEN_OUTPUT_IMAGES     = 1000
 
 # every how many time steps we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
 NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS = 1000000
