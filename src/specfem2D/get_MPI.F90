@@ -40,8 +40,9 @@
   use specfem_par
 
   implicit none
+
   ! local parameters
-  integer :: i,iinterface,imax_all
+  integer :: i,iinterface,imax_all,ier
 
   ! user output
   if (myrank == 0) then
@@ -93,24 +94,36 @@
     max_ibool_interfaces_size_po = NDIM*maxval(nibool_interfaces_poroelastic(:))
 
     if (ACOUSTIC_SIMULATION) then
-      allocate(request_send_recv_acoustic(ninterface_acoustic*2))
-      allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
-      allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic))
+      allocate(request_send_recv_acoustic(ninterface_acoustic*2),stat=ier)
+      if (ier /= 0) stop 'error in allocation of array request_send_recv_acoustic'
+      allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic),stat=ier)
+      if (ier /= 0) stop 'error in allocation of array buffer_send_faces_vector_ac'
+      allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic),stat=ier)
+      if (ier /= 0) stop 'error in allocation of array buffer_recv_faces_vector_ac'
     endif
 
     if (ELASTIC_SIMULATION) then
-      allocate(request_send_recv_elastic(ninterface_elastic*2))
-      allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
-      allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic))
+      allocate(request_send_recv_elastic(ninterface_elastic*2),stat=ier)
+      if (ier /= 0) stop 'error in allocation of array request_send_recv_elastic'
+      allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic),stat=ier)
+      if (ier /= 0) stop 'error in allocation of array buffer_send_faces_vector_el'
+      allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic),stat=ier)
+      if (ier /= 0) stop 'error in allocation of array buffer_recv_faces_vector_el'
     endif
 
     if (POROELASTIC_SIMULATION) then
-      allocate(request_send_recv_poro(ninterface_poroelastic*4))
-      allocate(buffer_send_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
-      allocate(buffer_recv_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic))
-      allocate(buffer_send_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
-      allocate(buffer_recv_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic))
+      allocate(request_send_recv_poro(ninterface_poroelastic*4),stat=ier)
+      if (ier /= 0) stop 'error in allocation of array request_send_recv_poro'
+      allocate(buffer_send_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic),stat=ier)
+      if (ier /= 0) stop 'error in allocation of array buffer_send_faces_vector_pos'
+      allocate(buffer_recv_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic),stat=ier)
+      if (ier /= 0) stop 'error in allocation of array buffer_recv_faces_vector_pos'
+      allocate(buffer_send_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic),stat=ier)
+      if (ier /= 0) stop 'error in allocation of array buffer_send_faces_vector_pow'
+      allocate(buffer_recv_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic),stat=ier)
+      if (ier /= 0) stop 'error in allocation of array buffer_recv_faces_vector_pow'
     endif
+
   else
     ! safety check
     if (myrank /= 0) stop 'Invalid myrank for serial simulation'
@@ -123,7 +136,9 @@
 
   ! MPI interfaces arrays
   if (ninterface > 0) then
-    allocate(ibool_interfaces_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface))
+
+    allocate(ibool_interfaces_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface),stat=ier)
+    if (ier /= 0) stop 'error in allocation of array ibool_interfaces_ext_mesh'
     ibool_interfaces_ext_mesh(:,:) = 0
 
     do iinterface = 1,ninterface
@@ -132,13 +147,6 @@
       enddo
     enddo
 
-    ! user output
-    call max_all_i(max_nibool_interfaces_ext_mesh,imax_all)
-    if (myrank == 0) then
-      write(IMAIN,*) '  maximum length of a single MPI interface  = ',imax_all
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
   endif
 
   ! sets up inner and outer elements
