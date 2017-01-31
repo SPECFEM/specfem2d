@@ -408,12 +408,6 @@
   subroutine pml_boundary_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                    potential_acoustic,potential_acoustic_old)
 
-! The outer boundary condition to use for PML elements in fluid layers is Neumann for the potential
-! because we need Dirichlet conditions for the displacement vector, which means Neumann for the potential.
-! Thus, there is nothing to enforce explicitly here.
-! There is something to enforce explicitly only in the case of elastic elements, for which a Dirichlet
-! condition is needed for the displacement vector, which is the vectorial unknown for these elements.
-
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML
@@ -424,7 +418,16 @@
                                                             potential_acoustic,potential_acoustic_old
 
   ! local parameters
-  integer :: i,j,ispecabs,ispec,iglob,ibegin,iend
+  integer :: i,j,ispecabs,ispec,iglob
+
+!!!!!!!!!!!!!! THIS subroutine IS USELESS, THUS PUTTING A return STATEMENT INSTEAD !!!!!!!!!!!!!!
+! The outer boundary condition to use for PML elements in fluid layers is Neumann for the potential
+! because we need Dirichlet conditions for the displacement vector, which means Neumann for the potential.
+! Thus, there is nothing to enforce explicitly here.
+! There is something to enforce explicitly only in the case of elastic elements, for which a Dirichlet
+! condition is needed for the displacement vector, which is the vectorial unknown for these elements.
+  return
+!!!!!!!!!!!!!! THIS subroutine IS USELESS, THUS PUTTING A return STATEMENT INSTEAD !!!!!!!!!!!!!!
 
   ! checks if anything to do
   if (.not. anyabs) return
@@ -459,9 +462,7 @@
 !--- bottom absorbing boundary
       if (codeabs(IEDGE1,ispecabs)) then
         j = 1
-        ibegin = 1
-        iend = NGLLX
-        do i = ibegin,iend
+        do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           potential_acoustic_old(iglob) = 0._CUSTOM_REAL
           potential_acoustic(iglob) = 0._CUSTOM_REAL
@@ -472,10 +473,7 @@
 !--- top absorbing boundary
       if (codeabs(IEDGE3,ispecabs)) then
         j = NGLLZ
-! exclude corners to make sure there is no contradiction on the normal
-        ibegin = 1
-        iend = NGLLX
-        do i = ibegin,iend
+        do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           potential_acoustic_old(iglob) = 0._CUSTOM_REAL
           potential_acoustic(iglob) = 0._CUSTOM_REAL
@@ -501,7 +499,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
 
   ! local parameters
-  integer :: i,j,ispecabs,ispec,iglob,ibegin,iend
+  integer :: i,j,ispecabs,ispec,iglob
 
   ! checks if anything to do
   if (.not. anyabs) return
@@ -542,9 +540,7 @@
 !--- bottom absorbing boundary
       if (codeabs(IEDGE1,ispecabs)) then
         j = 1
-        ibegin = 1
-        iend = NGLLX
-        do i = ibegin,iend
+        do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
           displ_elastic(:,iglob) = 0._CUSTOM_REAL
@@ -556,9 +552,7 @@
 !--- top absorbing boundary
       if (codeabs(IEDGE3,ispecabs)) then
         j = NGLLZ
-        ibegin = 1
-        iend = NGLLX
-        do i = ibegin,iend
+        do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
           displ_elastic(:,iglob) = 0._CUSTOM_REAL

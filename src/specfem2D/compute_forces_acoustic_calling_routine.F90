@@ -58,11 +58,17 @@
     call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
                                  PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase)
 
-    ! PML boundary conditions enforces zero potentials on boundary
-    if (PML_BOUNDARY_CONDITIONS) then
-      call pml_boundary_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                 potential_acoustic,potential_acoustic_old)
-    endif
+!!!!!!!!!!!!!! THIS subroutine IS USELESS, THUS COMMENTING IT OUT !!!!!!!!!!!!!!
+! The outer boundary condition to use for PML elements in fluid layers is Neumann for the potential
+! because we need Dirichlet conditions for the displacement vector, which means Neumann for the potential.
+! Thus, there is nothing to enforce explicitly here.
+! There is something to enforce explicitly only in the case of elastic elements, for which a Dirichlet
+! condition is needed for the displacement vector, which is the vectorial unknown for these elements.
+!   ! PML boundary conditions enforces zero potentials on boundary
+!   if (PML_BOUNDARY_CONDITIONS) then
+!     call pml_boundary_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
+!                                potential_acoustic,potential_acoustic_old)
+!   endif
 
     ! computes additional contributions
     if (iphase == 1) then
@@ -233,9 +239,16 @@
 
     ! PML boundary conditions
     if (PML_BOUNDARY_CONDITIONS) then
-      ! enforces zero potentials on boundary
-      call pml_boundary_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
-                                 b_potential_acoustic,b_potential_acoustic_old)
+
+!!!!!!!!!!!!!! THIS subroutine IS USELESS, THUS COMMENTING IT OUT !!!!!!!!!!!!!!
+! The outer boundary condition to use for PML elements in fluid layers is Neumann for the potential
+! because we need Dirichlet conditions for the displacement vector, which means Neumann for the potential.
+! Thus, there is nothing to enforce explicitly here.
+! There is something to enforce explicitly only in the case of elastic elements, for which a Dirichlet
+! condition is needed for the displacement vector, which is the vectorial unknown for these elements.
+!     ! enforces zero potentials on boundary
+!     call pml_boundary_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic, &
+!                                b_potential_acoustic,b_potential_acoustic_old)
 
       ! restores potentials on interface
       call rebuild_value_on_PML_interface_acoustic(it_temp,b_potential_acoustic,b_potential_dot_acoustic)
