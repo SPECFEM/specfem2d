@@ -461,12 +461,11 @@
     ! PML mesh elements
     allocate(region_pml_external_mesh(nelmnts),stat=ier)
     if (ier /= 0) stop 'Error allocating array region_pml_external_mesh'
+    region_pml_external_mesh(:) = 0
 
     allocate(is_pml(0:nelmnts-1),stat=ier)
     if (ier /= 0) stop 'Error allocating array is_pml'
     is_pml(:) = .false.
-
-    region_pml_external_mesh(:) = 0
 
     if (read_external_mesh) then
       if (PML_BOUNDARY_CONDITIONS) then
