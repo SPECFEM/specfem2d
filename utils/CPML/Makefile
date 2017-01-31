@@ -5,6 +5,9 @@ F90 = gfortran
 
 FFLAGS = -O3
 
+# for Intel ifort
+#FFLAGS = -xHost -fpe0 -ftz -assume buffered_io -assume byterecl -align sequence -std08 -diag-disable 6477 -implicitnone -gen-interfaces -warn all -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv
+
 .NOTPARALLEL:
 
 default: xconvert_external_layers_of_a_given_mesh_to_CPML_layers xadd_CPML_layers_to_an_existing_mesh cleanobj

@@ -56,10 +56,10 @@
   double precision :: SIZE_OF_XMIN_ELEMENT_TO_ADD,SIZE_OF_ZMIN_ELEMENT_TO_ADD
   double precision :: SIZE_OF_XMAX_ELEMENT_TO_ADD,SIZE_OF_ZMAX_ELEMENT_TO_ADD
 
-  integer :: nspec,npoin,npoin_new,nspec_new,count_elem_faces_to_extend,iextend
+  integer :: nspec,npoin,npoin_new_max,npoin_new_real,nspec_new,count_elem_faces_to_extend,iextend
   integer :: factor_x,factor_z
   integer :: i,k,ispec,ipoin,iloop_on_X_Z_faces,iloop_on_min_face_then_max_face
-  integer :: i1,i2,i3,i4,elem_counter,ibool_counter,ia,iflag,icompute_size
+  integer :: i1,i2,i3,i4,elem_counter,ia,iflag,icompute_size
   integer :: p1,p2
 
   double precision, dimension(:), allocatable, target :: x,z
@@ -365,12 +365,15 @@
   print *,'Total number of elements in the mesh before extension = ',nspec
   print *,'Number of element faces to extend  = ',count_elem_faces_to_extend
   if (count_elem_faces_to_extend == 0) stop 'error: number of element faces to extend detected is zero!'
+
 ! we will add TOTAL_NUMBER_OF_LAYERS_TO_ADD to each of the element faces detected that need to be extended
   nspec_new = nspec + count_elem_faces_to_extend * TOTAL_NUMBER_OF_LAYERS_TO_ADD
-! and each of these elements will have NGNOD points
-! (some of them shared with other elements, but we do not care because they will be removed automatically by xdecompose_mesh)
-  npoin_new = npoin + count_elem_faces_to_extend * TOTAL_NUMBER_OF_LAYERS_TO_ADD * NGNOD
   print *,'Total number of elements in the mesh after extension = ',nspec_new
+
+! and each of these elements will have NGNOD points
+! (some of them shared with other elements, but we will remove the multiples below, thus here it is a maximum
+  npoin_new_max = npoin + count_elem_faces_to_extend * TOTAL_NUMBER_OF_LAYERS_TO_ADD * NGNOD
+
   if (icompute_size == 1) then
     mean_distance = sum_of_distances / dble(count_elem_faces_to_extend)
     print *,'Computed mean size of the elements to extend = ',mean_distance
@@ -393,8 +396,8 @@
   if (minval(ibool) /= 1) stop 'error in minval(ibool)'
 
 ! allocate a new set of points, with multiples
-  allocate(x_new(npoin_new))
-  allocate(z_new(npoin_new))
+  allocate(x_new(npoin_new_max))
+  allocate(z_new(npoin_new_max))
 
 ! copy the original points into the new set
   x_new(1:npoin) = x(1:npoin)
@@ -402,7 +405,7 @@
 
 ! position after which to start to create the new elements
   elem_counter = nspec
-  ibool_counter = npoin
+  npoin_new_real = npoin
 
 ! loop on the whole original mesh
   do ispec = 1,nspec
@@ -530,28 +533,28 @@
         imaterial_new(elem_counter) = imaterial(ispec)
 
         ! create a new point
-        ibool_counter = ibool_counter + 1
-        ibool_new(1,elem_counter) = ibool_counter
-        x_new(ibool_counter) = x(p1) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*(iextend-1)
-        z_new(ibool_counter) = z(p1) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*(iextend-1)
+        npoin_new_real = npoin_new_real + 1
+        ibool_new(1,elem_counter) = npoin_new_real
+        x_new(npoin_new_real) = x(p1) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*(iextend-1)
+        z_new(npoin_new_real) = z(p1) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*(iextend-1)
 
         ! create a new point
-        ibool_counter = ibool_counter + 1
-        ibool_new(2,elem_counter) = ibool_counter
-        x_new(ibool_counter) = x(p1) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*iextend
-        z_new(ibool_counter) = z(p1) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*iextend
+        npoin_new_real = npoin_new_real + 1
+        ibool_new(2,elem_counter) = npoin_new_real
+        x_new(npoin_new_real) = x(p1) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*iextend
+        z_new(npoin_new_real) = z(p1) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*iextend
 
         ! create a new point
-        ibool_counter = ibool_counter + 1
-        ibool_new(3,elem_counter) = ibool_counter
-        x_new(ibool_counter) = x(p2) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*iextend
-        z_new(ibool_counter) = z(p2) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*iextend
+        npoin_new_real = npoin_new_real + 1
+        ibool_new(3,elem_counter) = npoin_new_real
+        x_new(npoin_new_real) = x(p2) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*iextend
+        z_new(npoin_new_real) = z(p2) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*iextend
 
         ! create a new point
-        ibool_counter = ibool_counter + 1
-        ibool_new(4,elem_counter) = ibool_counter
-        x_new(ibool_counter) = x(p2) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*(iextend-1)
-        z_new(ibool_counter) = z(p2) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*(iextend-1)
+        npoin_new_real = npoin_new_real + 1
+        ibool_new(4,elem_counter) = npoin_new_real
+        x_new(npoin_new_real) = x(p2) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*(iextend-1)
+        z_new(npoin_new_real) = z(p2) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*(iextend-1)
 
 ! now we need to test if the element created is flipped i.e. it has a negative Jacobian,
 ! and if so we will use the mirrored version of that element, which will then have a positive Jacobian
@@ -611,6 +614,7 @@
   enddo
 
   if (minval(ibool_new) /= 1) stop 'error in minval(ibool_new)'
+  if (maxval(ibool_new) > npoin_new_max) stop 'error in maxval(ibool_new)'
 
 ! deallocate the original arrays
   deallocate(x,z)
@@ -618,21 +622,21 @@
   deallocate(imaterial)
 
 ! reallocate them with the new size
-  allocate(x(npoin_new))
-  allocate(z(npoin_new))
+  allocate(x(npoin_new_real))
+  allocate(z(npoin_new_real))
   allocate(imaterial(nspec_new))
   allocate(ibool(NGNOD,nspec_new))
 
 ! make the new ones become the old ones, to prepare for the next iteration of the two nested loops we are in,
 ! i.e. to make sure the next loop will extend the mesh from the new arrays rather than from the old ones
-  x(:) = x_new(:)
-  z(:) = z_new(:)
+  x(:) = x_new(1:npoin_new_real)
+  z(:) = z_new(1:npoin_new_real)
   imaterial(:) = imaterial_new(:)
   ibool(:,:) = ibool_new(:,:)
 
 ! the new number of elements and points becomes the old one, for the same reason
   nspec = nspec_new
-  npoin = npoin_new
+  npoin = npoin_new_real
 
 ! deallocate the new ones, to make sure they can be allocated again in the next iteration of the nested loops we are in
   deallocate(x_new,z_new)
