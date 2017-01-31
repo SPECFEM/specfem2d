@@ -1028,13 +1028,13 @@
             ! draw the Stacey absorbing boundary line segment in different colors depending on its type
             if (myrank == 0) then
               if (typeabs(inum) == IBOTTOM) then
-                write(24,*) '0 1 0 RG'  ! Green
+                write(24,*) '0 1 0 RG'  ! green
               else if (typeabs(inum) == IRIGHT) then
-                write(24,*) '0 0 1 RG'  ! Blue
+                write(24,*) '0 0 1 RG'  ! blue
               else if (typeabs(inum) == ITOP) then
-                write(24,*) '1 0.7529 0.7960 RG' ! Pink
+                write(24,*) '1 0.7529 0.7960 RG' ! pink
               else if (typeabs(inum) == ILEFT) then
-                write(24,*) '1 0.6470 0 RG' ! Orange
+                write(24,*) '1 0.6470 0 RG' ! orange
               else
                 call exit_MPI(myrank,'Wrong typeabs() absorbing boundary code')
               endif
@@ -1204,8 +1204,8 @@
       ispec = fluid_solid_acoustic_ispec(inum)
       iedge = fluid_solid_acoustic_iedge(inum)
 
-      ! use pink color
-      if (myrank == 0) write(24,*) '1 0.75 0.8 RG'
+      ! use grey color
+      if (myrank == 0) write(24,*) '0.5 0.5 0.5 RG'
 
       if (iedge == ITOP) then
         ideb = 3
@@ -1309,8 +1309,8 @@
       ispec = fluid_poro_acoustic_ispec(inum)
       iedge = fluid_poro_acoustic_iedge(inum)
 
-      ! use pink color
-      if (myrank == 0) write(24,*) '1 0.75 0.8 RG'
+      ! use grey color
+      if (myrank == 0) write(24,*) '0.5 0.5 0.5 RG'
 
       if (iedge == ITOP) then
         ideb = 3
@@ -1415,8 +1415,8 @@
       ispec = solid_poro_poroelastic_ispec(inum)
       iedge = solid_poro_poroelastic_iedge(inum)
 
-      ! use pink color
-      if (myrank == 0) write(24,*) '1 0.75 0.8 RG'
+      ! use grey color
+      if (myrank == 0) write(24,*) '0.5 0.5 0.5 RG'
 
       if (iedge == ITOP) then
         ideb = 3
