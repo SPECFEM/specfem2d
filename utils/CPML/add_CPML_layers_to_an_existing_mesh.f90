@@ -378,7 +378,7 @@
   npoin_new_max = npoin + count_elem_faces_to_extend * TOTAL_NUMBER_OF_LAYERS_TO_ADD * NGNOD
 
   mean_distance = sum_of_distances / dble(count_elem_faces_to_extend)
-  very_small_distance = mean_distance / 100000.d0
+  very_small_distance = mean_distance / 10000.d0
   if (icompute_size == 1) print *,'Computed mean size of the elements to extend = ',mean_distance
   print *
 

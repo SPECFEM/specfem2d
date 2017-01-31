@@ -989,13 +989,12 @@
   call any_all_l(anyabs, anyabs_glob)
 
   if (anyabs_glob .and. boundvect .and. .not. DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
+
     if (myrank == 0) then
       write(24,*) '%'
       write(24,*) '% boundary conditions on the mesh'
       write(24,*) '%'
 
-      ! use green color
-      write(24,*) '0 1 0 RG'
       write(24,*) '0.05 CM setlinewidth'
     endif
 
@@ -1191,6 +1190,8 @@
       write(24,*) '% fluid-solid coupling edges in the mesh'
       write(24,*) '%'
 
+      ! use grey color
+      write(24,*) '0.65 0.65 0.65 RG'
       write(24,*) '0.05 CM setlinewidth'
     endif
 
@@ -1203,9 +1204,6 @@
       ! get the edge of the acoustic element
       ispec = fluid_solid_acoustic_ispec(inum)
       iedge = fluid_solid_acoustic_iedge(inum)
-
-      ! use grey color
-      if (myrank == 0) write(24,*) '0.5 0.5 0.5 RG'
 
       if (iedge == ITOP) then
         ideb = 3
@@ -1257,7 +1255,6 @@
             buffer_offset = 0
             do ispec = 1, nspec_recv
               buffer_offset = buffer_offset + 1
-              write(24,*) '1 0.75 0.8 RG'
               write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
                             coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
             enddo
@@ -1296,6 +1293,8 @@
       write(24,*) '% fluid-porous coupling edges in the mesh'
       write(24,*) '%'
 
+      ! use grey color
+      write(24,*) '0.65 0.65 0.65 RG'
       write(24,*) '0.05 CM setlinewidth'
     endif
 
@@ -1308,9 +1307,6 @@
       ! get the edge of the acoustic element
       ispec = fluid_poro_acoustic_ispec(inum)
       iedge = fluid_poro_acoustic_iedge(inum)
-
-      ! use grey color
-      if (myrank == 0) write(24,*) '0.5 0.5 0.5 RG'
 
       if (iedge == ITOP) then
         ideb = 3
@@ -1362,7 +1358,6 @@
             buffer_offset = 0
             do ispec = 1, nspec_recv
               buffer_offset = buffer_offset + 1
-              write(24,*) '1 0.75 0.8 RG'
               write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
                             coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
             enddo
@@ -1402,6 +1397,8 @@
       write(24,*) '% solid-porous coupling edges in the mesh'
       write(24,*) '%'
 
+      ! use grey color
+      write(24,*) '0.65 0.65 0.65 RG'
       write(24,*) '0.05 CM setlinewidth'
     endif
 
@@ -1414,9 +1411,6 @@
       ! get the edge of the poroelastic element
       ispec = solid_poro_poroelastic_ispec(inum)
       iedge = solid_poro_poroelastic_iedge(inum)
-
-      ! use grey color
-      if (myrank == 0) write(24,*) '0.5 0.5 0.5 RG'
 
       if (iedge == ITOP) then
         ideb = 3
@@ -1468,7 +1462,6 @@
             buffer_offset = 0
             do ispec = 1, nspec_recv
               buffer_offset = buffer_offset + 1
-              write(24,*) '1 0.75 0.8 RG'
               write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
                             coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
             enddo
