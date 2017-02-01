@@ -408,6 +408,17 @@
   subroutine pml_boundary_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic, &
                                    potential_acoustic,potential_acoustic_old)
 
+! The outer boundary condition to use for PML elements in fluid layers is Neumann for the potential
+! because we need Dirichlet conditions for the displacement vector, which means Neumann for the potential.
+! Thus, there is nothing to enforce explicitly here.
+! There is something to enforce explicitly only in the case of elastic elements, for which a Dirichlet
+! condition is needed for the displacement vector, which is the vectorial unknown for these elements.
+
+!! DK DK this paragraph seems to be from Zhinan or from ChangHua:
+! However, enforcing explicitly potential_dot_dot_acoustic, potential_dot_acoustic, potential_acoustic
+! to be zero on outer boundary of PML help to improve the accuracy of absorbing low-frequency wave components
+! in case of long-time simulation.
+
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML
@@ -419,15 +430,6 @@
 
   ! local parameters
   integer :: i,j,ispecabs,ispec,iglob
-
-!!!!!!!!!!!!!! THIS subroutine IS USELESS, THUS PUTTING A return STATEMENT INSTEAD !!!!!!!!!!!!!!
-! The outer boundary condition to use for PML elements in fluid layers is Neumann for the potential
-! because we need Dirichlet conditions for the displacement vector, which means Neumann for the potential.
-! Thus, there is nothing to enforce explicitly here.
-! There is something to enforce explicitly only in the case of elastic elements, for which a Dirichlet
-! condition is needed for the displacement vector, which is the vectorial unknown for these elements.
-  return
-!!!!!!!!!!!!!! THIS subroutine IS USELESS, THUS PUTTING A return STATEMENT INSTEAD !!!!!!!!!!!!!!
 
   ! checks if anything to do
   if (.not. anyabs) return
