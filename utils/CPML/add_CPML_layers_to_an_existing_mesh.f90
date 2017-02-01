@@ -534,6 +534,10 @@
         x_value_to_create = x(p1) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*(iextend-1)
         z_value_to_create = z(p1) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*(iextend-1)
         point_already_exists = .false.
+        ! this loop to avoid creating multiples is slow because it is a large loop for each point
+        ! inside an existing loop on all the new points to create; it is usually OK for 2D meshes though.
+        ! for a much faster version based on a quick sorting routine, see utils/CPML/add_CPML_layers_to_an_existing_mesh.f90
+        ! in the 3D package (SPECFEM3D).
         do ipoin = 1,npoin_new_real
           distance = sqrt((x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2)
           if (distance < very_small_distance) then
@@ -554,6 +558,10 @@
         x_value_to_create = x(p1) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*iextend
         z_value_to_create = z(p1) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*iextend
          point_already_exists = .false.
+        ! this loop to avoid creating multiples is slow because it is a large loop for each point
+        ! inside an existing loop on all the new points to create; it is usually OK for 2D meshes though.
+        ! for a much faster version based on a quick sorting routine, see utils/CPML/add_CPML_layers_to_an_existing_mesh.f90
+        ! in the 3D package (SPECFEM3D).
         do ipoin = 1,npoin_new_real
           distance = sqrt((x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2)
           if (distance < very_small_distance) then
@@ -574,6 +582,10 @@
         x_value_to_create = x(p2) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*iextend
         z_value_to_create = z(p2) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*iextend
         point_already_exists = .false.
+        ! this loop to avoid creating multiples is slow because it is a large loop for each point
+        ! inside an existing loop on all the new points to create; it is usually OK for 2D meshes though.
+        ! for a much faster version based on a quick sorting routine, see utils/CPML/add_CPML_layers_to_an_existing_mesh.f90
+        ! in the 3D package (SPECFEM3D).
         do ipoin = 1,npoin_new_real
           distance = sqrt((x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2)
           if (distance < very_small_distance) then
@@ -594,6 +606,10 @@
         x_value_to_create = x(p2) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*(iextend-1)
         z_value_to_create = z(p2) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*(iextend-1)
         point_already_exists = .false.
+        ! this loop to avoid creating multiples is slow because it is a large loop for each point
+        ! inside an existing loop on all the new points to create; it is usually OK for 2D meshes though.
+        ! for a much faster version based on a quick sorting routine, see utils/CPML/add_CPML_layers_to_an_existing_mesh.f90
+        ! in the 3D package (SPECFEM3D).
         do ipoin = 1,npoin_new_real
           distance = sqrt((x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2)
           if (distance < very_small_distance) then
