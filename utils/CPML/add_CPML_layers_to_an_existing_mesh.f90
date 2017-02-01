@@ -698,6 +698,7 @@
   deallocate(imaterial_new)
 
   if (minval(ibool) /= 1) stop 'error in minval(ibool)'
+  if (maxval(ibool) > npoin) stop 'error in maxval(ibool)'
 
     enddo ! of iloop_on_min_face_then_max_face loop on Xmin then Xmax, or Zmin then Zmax
 
