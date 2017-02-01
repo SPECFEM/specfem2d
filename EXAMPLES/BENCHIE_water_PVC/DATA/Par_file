@@ -17,7 +17,7 @@ NOISE_TOMOGRAPHY                = 0
 SAVE_FORWARD                    = .false.
 
 # parameters concerning partitioning
-NPROC                           = 1              # number of processes
+NPROC                           = 4 # 1          # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 # number of control nodes per element (4 or 9)
@@ -25,7 +25,7 @@ ngnod                           = 4
 
 # time step parameters
 # total number of time steps
-NSTEP                           = 12000 # 60000
+NSTEP                           = 60000
 # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
 DT                              = 4.5d-8 # 5.00e-8
 
