@@ -989,14 +989,13 @@
   call any_all_l(anyabs, anyabs_glob)
 
   if (anyabs_glob .and. boundvect .and. .not. DISPLAY_DEFORMED_MESH_INSTEAD_OF_DISPLACEMENT_VECTOR) then
+
     if (myrank == 0) then
       write(24,*) '%'
       write(24,*) '% boundary conditions on the mesh'
       write(24,*) '%'
 
-      ! use green color
-      write(24,*) '0 1 0 RG'
-      write(24,*) '0.02 CM setlinewidth'
+      write(24,*) '0.05 CM setlinewidth'
     endif
 
     buffer_offset = 0
@@ -1022,22 +1021,7 @@
               ideb = 4
               ifin = 1
             else
-              call exit_MPI(myrank,'Wrong codeabs() absorbing boundary code')
-            endif
-
-            ! draw the Stacey absorbing boundary line segment in different colors depending on its type
-            if (myrank == 0) then
-              if (typeabs(inum) == IBOTTOM) then
-                write(24,*) '0 1 0 RG'  ! Green
-              else if (typeabs(inum) == IRIGHT) then
-                write(24,*) '0 0 1 RG'  ! Blue
-              else if (typeabs(inum) == ITOP) then
-                write(24,*) '1 0.7529 0.7960 RG' ! Pink
-              else if (typeabs(inum) == ILEFT) then
-                write(24,*) '1 0.6470 0 RG' ! Orange
-              else
-                call exit_MPI(myrank,'Wrong typeabs() absorbing boundary code')
-              endif
+              call exit_MPI(myrank,'Wrong absorbing boundary code')
             endif
 
             x1 = (coorg(1,knods(ideb,ispec))-xmin)*ratio_page + orig_x
@@ -1048,14 +1032,28 @@
             z1 = z1 * centim
             x2 = x2 * centim
             z2 = z2 * centim
+
             if (myrank == 0) then
-               write(24,602) x1,z1,x2,z2
+            ! draw the Stacey absorbing boundary line segment in different colors depending on its type
+              if (typeabs(inum) == IBOTTOM) then
+                write(24,*) '0 1 0 RG'  ! green
+              else if (typeabs(inum) == IRIGHT) then
+                write(24,*) '0 0 1 RG'  ! blue
+              else if (typeabs(inum) == ITOP) then
+                write(24,*) '1 0.7529 0.7960 RG' ! pink
+              else if (typeabs(inum) == ILEFT) then
+                write(24,*) '1 0.6470 0 RG' ! orange
+              else
+                call exit_MPI(myrank,'Wrong absorbing boundary code')
+              endif
+              write(24,602) x1,z1,x2,z2
             else
-               buffer_offset = buffer_offset + 1
-               coorg_send_ps_abs(1,buffer_offset) = x1
-               coorg_send_ps_abs(2,buffer_offset) = z1
-               coorg_send_ps_abs(3,buffer_offset) = x2
-               coorg_send_ps_abs(4,buffer_offset) = z2
+              buffer_offset = buffer_offset + 1
+              coorg_send_ps_abs(1,buffer_offset) = x1
+              coorg_send_ps_abs(2,buffer_offset) = z1
+              coorg_send_ps_abs(3,buffer_offset) = x2
+              coorg_send_ps_abs(4,buffer_offset) = z2
+              coorg_send_ps_abs(5,buffer_offset) = typeabs(inum)
             endif
 
           endif ! of if (codeabs(iedge,inum))
@@ -1071,12 +1069,24 @@
         do iproc = 1, NPROC-1
           call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
           if (nspec_recv > 0) then
-            call MPI_RECV (coorg_recv_ps_abs(1,1), 4*nspec_recv, &
+            call MPI_RECV (coorg_recv_ps_abs(1,1), 5*nspec_recv, &
                            MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
 
             buffer_offset = 0
             do ispec = 1, nspec_recv
               buffer_offset = buffer_offset + 1
+            ! draw the Stacey absorbing boundary line segment in different colors depending on its type
+              if (coorg_recv_ps_abs(5,buffer_offset) == IBOTTOM) then
+                write(24,*) '0 1 0 RG'  ! green
+              else if (coorg_recv_ps_abs(5,buffer_offset) == IRIGHT) then
+                write(24,*) '0 0 1 RG'  ! blue
+              else if (coorg_recv_ps_abs(5,buffer_offset) == ITOP) then
+                write(24,*) '1 0.7529 0.7960 RG' ! pink
+              else if (coorg_recv_ps_abs(5,buffer_offset) == ILEFT) then
+                write(24,*) '1 0.6470 0 RG' ! orange
+              else
+                call exit_MPI(myrank,'Wrong absorbing boundary code')
+              endif
               write(24,602) coorg_recv_ps_abs(1,buffer_offset), coorg_recv_ps_abs(2,buffer_offset), &
                             coorg_recv_ps_abs(3,buffer_offset), coorg_recv_ps_abs(4,buffer_offset)
             enddo
@@ -1085,7 +1095,7 @@
       else
         call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
         if (buffer_offset > 0) then
-          call MPI_SEND (coorg_send_ps_abs(1,1), 4*buffer_offset, &
+          call MPI_SEND (coorg_send_ps_abs(1,1), 5*buffer_offset, &
                          MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
         endif
       endif
@@ -1113,7 +1123,7 @@
 
     ! use orange color
     write(24,*) '1 0.66 0 RG'
-    write(24,*) '0.02 CM setlinewidth'
+    write(24,*) '0.05 CM setlinewidth'
   endif
 
   buffer_offset = 0
@@ -1191,7 +1201,9 @@
       write(24,*) '% fluid-solid coupling edges in the mesh'
       write(24,*) '%'
 
-      write(24,*) '0.02 CM setlinewidth'
+      ! use grey color
+      write(24,*) '0.65 0.65 0.65 RG'
+      write(24,*) '0.05 CM setlinewidth'
     endif
 
     if (myrank /= 0 .and. num_fluid_solid_edges > 0 ) allocate(coorg_send(4,num_fluid_solid_edges))
@@ -1203,9 +1215,6 @@
       ! get the edge of the acoustic element
       ispec = fluid_solid_acoustic_ispec(inum)
       iedge = fluid_solid_acoustic_iedge(inum)
-
-      ! use pink color
-      if (myrank == 0) write(24,*) '1 0.75 0.8 RG'
 
       if (iedge == ITOP) then
         ideb = 3
@@ -1257,7 +1266,6 @@
             buffer_offset = 0
             do ispec = 1, nspec_recv
               buffer_offset = buffer_offset + 1
-              write(24,*) '1 0.75 0.8 RG'
               write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
                             coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
             enddo
@@ -1296,7 +1304,9 @@
       write(24,*) '% fluid-porous coupling edges in the mesh'
       write(24,*) '%'
 
-      write(24,*) '0.02 CM setlinewidth'
+      ! use grey color
+      write(24,*) '0.65 0.65 0.65 RG'
+      write(24,*) '0.05 CM setlinewidth'
     endif
 
     if (myrank /= 0 .and. num_fluid_poro_edges > 0 ) allocate(coorg_send(4,num_fluid_poro_edges))
@@ -1308,9 +1318,6 @@
       ! get the edge of the acoustic element
       ispec = fluid_poro_acoustic_ispec(inum)
       iedge = fluid_poro_acoustic_iedge(inum)
-
-      ! use pink color
-      if (myrank == 0) write(24,*) '1 0.75 0.8 RG'
 
       if (iedge == ITOP) then
         ideb = 3
@@ -1362,7 +1369,6 @@
             buffer_offset = 0
             do ispec = 1, nspec_recv
               buffer_offset = buffer_offset + 1
-              write(24,*) '1 0.75 0.8 RG'
               write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
                             coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
             enddo
@@ -1402,7 +1408,9 @@
       write(24,*) '% solid-porous coupling edges in the mesh'
       write(24,*) '%'
 
-      write(24,*) '0.02 CM setlinewidth'
+      ! use grey color
+      write(24,*) '0.65 0.65 0.65 RG'
+      write(24,*) '0.05 CM setlinewidth'
     endif
 
     if (myrank /= 0 .and. num_solid_poro_edges > 0 ) allocate(coorg_send(4,num_solid_poro_edges))
@@ -1414,9 +1422,6 @@
       ! get the edge of the poroelastic element
       ispec = solid_poro_poroelastic_ispec(inum)
       iedge = solid_poro_poroelastic_iedge(inum)
-
-      ! use pink color
-      if (myrank == 0) write(24,*) '1 0.75 0.8 RG'
 
       if (iedge == ITOP) then
         ideb = 3
@@ -1468,7 +1473,6 @@
             buffer_offset = 0
             do ispec = 1, nspec_recv
               buffer_offset = buffer_offset + 1
-              write(24,*) '1 0.75 0.8 RG'
               write(24,602) coorg_recv(1,buffer_offset), coorg_recv(2,buffer_offset), &
                             coorg_recv(3,buffer_offset), coorg_recv(4,buffer_offset)
             enddo

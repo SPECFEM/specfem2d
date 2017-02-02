@@ -238,9 +238,7 @@
         enddo
 
         ! computes kinetic and potential energy
-        if (output_energy) then
-          call compute_and_output_energy()
-        endif
+        if (OUTPUT_ENERGY .and. mod(it,NTSTEP_BETWEEN_OUTPUT_ENERGY) == 0) call compute_and_output_energy()
 
         ! loop on all the receivers to compute and store the seismograms
         call write_seismograms()
@@ -380,9 +378,7 @@
         enddo
 
         ! computes kinetic and potential energy
-        if (output_energy) then
-          call compute_and_output_energy()
-        endif
+        if (OUTPUT_ENERGY .and. mod(it,NTSTEP_BETWEEN_OUTPUT_ENERGY) == 0) call compute_and_output_energy()
 
         ! loop on all the receivers to compute and store the seismograms
         call write_seismograms()

@@ -61,8 +61,8 @@
   double precision, parameter :: ZERO = 0.d0,ONE = 1.d0
   double precision, parameter :: HALF = 0.5d0,TWO = 2.d0,QUARTER = 0.25d0
 
-! very large and very small values
-  double precision, parameter :: HUGEVAL = 1.d+30,TINYVAL = 1.d-9
+! very small value
+  double precision, parameter :: TINYVAL = 1.d-9
 
   integer ngnod,NDIM
 

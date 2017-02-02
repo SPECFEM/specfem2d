@@ -198,8 +198,8 @@
   ! 'TOMOGRAPHY_FILE'
   write(IOUT) TOMOGRAPHY_FILE
 
-  ! 'output_grid_ASCII output_energy output_wavefield_dumps'
-  write(IOUT) output_grid_ASCII,output_energy,output_wavefield_dumps
+  ! 'output_grid_ASCII OUTPUT_ENERGY NTSTEP_BETWEEN_OUTPUT_ENERGY output_wavefield_dumps'
+  write(IOUT) output_grid_ASCII,OUTPUT_ENERGY,NTSTEP_BETWEEN_OUTPUT_ENERGY,output_wavefield_dumps
 
   ! 'use_binary_for_wavefield_dumps'
   write(IOUT) use_binary_for_wavefield_dumps

@@ -85,7 +85,7 @@
   !-------------------------------------------------------------
 
   ! creates a Gnuplot script to display the energy curve in log scale
-  if (output_energy .and. myrank == 0) then
+  if (OUTPUT_ENERGY .and. myrank == 0) then
     close(IOUT_ENERGY)
     open(unit=IOUT_ENERGY,file='OUTPUT_FILES/plot_energy.gnu',status='unknown',action='write')
     write(IOUT_ENERGY,*) 'set term wxt'
@@ -96,14 +96,14 @@
     write(IOUT_ENERGY,*) 'set xlabel "Time (s)"'
     write(IOUT_ENERGY,*) 'set ylabel "Energy (J)"'
     write(IOUT_ENERGY,*) 'set loadpath "./OUTPUT_FILES"'
-    write(IOUT_ENERGY,'(A)') &
-      'plot "energy.dat" us 1:4 t ''Total Energy'' w l lc 1, "energy.dat" us 1:3 t ''Potential Energy'' w l lc 2'
+    write(IOUT_ENERGY,'(a)') &
+      'plot "energy.dat" us 1:4 t "Total Energy" w l lc 1, "energy.dat" us 1:3 t "Potential Energy" w l lc 2'
     write(IOUT_ENERGY,*) 'pause -1 "Hit any key..."'
     close(IOUT_ENERGY)
   endif
 
   ! open the file in which we will store the energy curve
-  if (output_energy .and. myrank == 0) open(unit=IOUT_ENERGY,file='OUTPUT_FILES/energy.dat',status='unknown',action='write')
+  if (OUTPUT_ENERGY .and. myrank == 0) open(unit=IOUT_ENERGY,file='OUTPUT_FILES/energy.dat',status='unknown',action='write')
 
   ! synchronizes all processes
   call synchronize_all()
@@ -521,7 +521,7 @@
     call mpi_allreduce(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
     call mpi_allreduce(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
 
-    d1_coorg_send_ps_abs=4
+    d1_coorg_send_ps_abs=5
     d2_coorg_send_ps_abs=4*nelemabs
     call mpi_allreduce(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
     call mpi_allreduce(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)

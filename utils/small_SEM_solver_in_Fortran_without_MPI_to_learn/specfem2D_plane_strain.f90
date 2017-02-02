@@ -41,14 +41,16 @@
 !!!!!!!!!!
 
 !!!!!!!!!!
-!!!!!!!!!! All the calculations are done in single precision.
-!!!!!!!!!! We do not need double precision in SPECFEM2D.
+!!!!!!!!!! All the calculations can be done in single precision.
+!!!!!!!!!! We do not really need double precision in SPECFEM2D.
+!!!!!!!!!! If you thus want to use single precision, just change the value in the include file from 8 to 4
 !!!!!!!!!!
+  include "precision.h"
 
 ! density, P wave velocity and S wave velocity of the geophysical medium under study
-  real(kind=4), parameter :: rho = 2700.
-  real(kind=4), parameter :: cp = 3000.
-  real(kind=4), parameter :: cs = cp / 1.732
+  real(kind=CUSTOM_REAL), parameter :: rho = 2700.
+  real(kind=CUSTOM_REAL), parameter :: cp = 3000.
+  real(kind=CUSTOM_REAL), parameter :: cs = cp / 1.732
 
 ! to create the mesh
 ! geometry of the model (origin lower-left corner = 0,0) and mesh description
@@ -56,8 +58,8 @@
   double precision, parameter :: xmax = 4000.d0        ! abscissa of right side of the model
   double precision, parameter :: zmin = 0.d0           ! abscissa of bottom side of the model
   double precision, parameter :: zmax = 3000.d0        ! abscissa of top side of the model
-  integer, parameter :: nx = 80             ! number of spectral elements along X
-  integer, parameter :: nz = 60             ! number of spectral elements along Z
+  integer, parameter :: nelem_x = 80             ! number of spectral elements along X
+  integer, parameter :: nelem_z = 60             ! number of spectral elements along Z
 
 ! number of GLL integration points in each direction of an element (degree plus one)
   integer, parameter :: NGLLX = 5
@@ -67,23 +69,25 @@
   integer, parameter :: ngnod = 4
 
 ! number of spectral elements and of unique grid points of the mesh
-  integer, parameter :: NSPEC = nx * nz
-  integer, parameter :: NGLOB = (nx*(NGLLX-1) + 1) * (nz*(NGLLZ-1) + 1)
+  integer, parameter :: NSPEC = nelem_x * nelem_z
+  integer, parameter :: NGLOB = (nelem_x*(NGLLX-1) + 1) * (nelem_z*(NGLLZ-1) + 1)
 
 ! constant value of the time step in the main time loop, and total number of time steps to simulate
-  real, parameter :: deltat = 1.1e-3
+  real(kind=CUSTOM_REAL), parameter :: deltat = 1.1e-3_CUSTOM_REAL
   integer, parameter :: NSTEP = 1600
 
 ! we locate the source and the receiver in arbitrary elements here for this demo code
-  integer, parameter :: NSPEC_SOURCE = NSPEC/2 - nx/2, IGLL_SOURCE = 2, JGLL_SOURCE = 2
-  integer, parameter :: NSPEC_RECEIVER = 2*NSPEC/3 - nx/4, IGLL_RECEIVER = 2, JGLL_RECEIVER = 2
+! the source is placed exactly in the middle of the grid here
+  integer, parameter :: NSPEC_SOURCE = NSPEC/2 - nelem_x/2, IGLL_SOURCE = NGLLX, JGLL_SOURCE = NGLLZ
+
+  integer, parameter :: NSPEC_RECEIVER = 2*NSPEC/3 - nelem_x/4, IGLL_RECEIVER = 1, JGLL_RECEIVER = 1
 
 ! for the source time function
-  real, parameter :: f0 = 10.
-  real, parameter :: t0 = 1.2 / f0
-  real, parameter :: factor_amplitude = 1.e+10
-  real, parameter :: pi = 3.141592653589793
-  real, parameter :: a = pi*pi*f0*f0
+  real(kind=CUSTOM_REAL), parameter :: f0 = 10.
+  real(kind=CUSTOM_REAL), parameter :: t0 = 1.2 / f0
+  real(kind=CUSTOM_REAL), parameter :: factor_amplitude = 1.e+10
+  real(kind=CUSTOM_REAL), parameter :: pi = 3.141592653589793
+  real(kind=CUSTOM_REAL), parameter :: a = pi*pi*f0*f0
 
   integer, parameter :: NTSTEP_BETWEEN_OUTPUT_INFO = 100
 
@@ -92,28 +96,28 @@
 ! 2-D simulation
   integer, parameter :: NDIM = 2
 
-  real(kind=4), parameter :: deltatover2 = 0.5*deltat, deltatsqover2 = 0.5*deltat*deltat
+  real(kind=CUSTOM_REAL), parameter :: deltatover2 = 0.5*deltat, deltatsqover2 = 0.5*deltat*deltat
 
-! real(kind=4), parameter :: VERYSMALLVAL = 1.e-24
+! real(kind=CUSTOM_REAL), parameter :: VERYSMALLVAL = 1.e-24
 
 ! displacement threshold above which we consider that the code became unstable
-  real(kind=4), parameter :: STABILITY_THRESHOLD = 1.e+25
+  real(kind=CUSTOM_REAL), parameter :: STABILITY_THRESHOLD = 1.e+25
 
 ! global displacement, velocity and acceleration vectors
-  real(kind=4), dimension(NDIM,NGLOB) :: displ,veloc,accel
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: displ,veloc,accel
 
 ! global diagonal mass matrix
-  real(kind=4), dimension(NGLOB) :: rmass_inverse
+  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmass_inverse
 
 ! record a seismogram to check that the simulation went well
-  real(kind=4), dimension(NSTEP) :: seismogram
+  real(kind=CUSTOM_REAL), dimension(NSTEP) :: seismogram
 
 ! time step
   integer it
 
 ! arrays with mesh parameters per slice
   integer, dimension(NGLLX,NGLLZ,NSPEC) :: ibool
-  real(kind=4), dimension(NGLLX,NGLLZ,NSPEC) :: xix,xiz,gammax,gammaz,jacobian
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC) :: xix,xiz,gammax,gammaz,jacobian
 
 ! arrays with the mesh in double precision
   double precision, dimension(NDIM,NGLOB) :: coord
@@ -126,7 +130,7 @@
   double precision, dimension(NGLLZ) :: zigll,wzgll
   double precision, dimension(NGLLX,NGLLX) :: hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz
 
-  real(kind=4), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempz1,tempz2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempz1,tempz2
 
   integer :: ispec,iglob,i,j,k,ix,iz,ipoin
   integer :: nglob_to_compute
@@ -134,20 +138,26 @@
   double precision :: xi,gamma,x,z
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
 
-  real(kind=4) dux_dxi,duz_dxi,dux_dgamma,duz_dgamma
-  real(kind=4) dux_dxl,dux_dzl,duz_dxl,duz_dzl
+  real(kind=CUSTOM_REAL) dux_dxi,duz_dxi,dux_dgamma,duz_dgamma
+  real(kind=CUSTOM_REAL) dux_dxl,dux_dzl,duz_dxl,duz_dzl
 
-  real(kind=4) sigma_xx,sigma_zz,sigma_xz,sigma_zx
-  real(kind=4) lambda,mu,lambdaplus2mu
+  real(kind=CUSTOM_REAL) sigma_xx,sigma_zz,sigma_xz,sigma_zx
+  real(kind=CUSTOM_REAL) lambda,mu,lambdaplus2mu
 
-  real(kind=4) Usolidnorm,current_value,time
+  real(kind=CUSTOM_REAL) Usolidnorm,current_value,time
 
 ! parameters and arrays needed for the simple mesh creation routine
-  integer, parameter :: npgeo = (nx+1)*(nz+1) ! total number of geometrical points that describe the geometry
-  integer, dimension(ngnod,NSPEC) :: knods ! numbering of the four corners of each mesh element
-  double precision, dimension(0:nx,0:nz) :: xgrid,zgrid ! coordinates of all the corners of the mesh elements in a first format
-  double precision, dimension(NDIM,npgeo) :: coorg ! coordinates of all the corners of the mesh elements in another format
-  integer, external :: num ! function that numbers the mesh points with a unique number
+
+! total number of geometrical points that describe the geometry
+  integer, parameter :: npgeo = (nelem_x+1)*(nelem_z+1)
+! numbering of the four corners of each mesh element
+  integer, dimension(ngnod,NSPEC) :: knods
+! coordinates of all the corners of the mesh elements in a first format
+  double precision, dimension(0:nelem_x,0:nelem_z) :: xgrid,zgrid
+! coordinates of all the corners of the mesh elements in another format
+  double precision, dimension(NDIM,npgeo) :: coorg
+! function that numbers the mesh points with a unique number
+  integer, external :: num
 
 ! timer to count elapsed time
   character(len=8) datein
@@ -172,32 +182,32 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !--- definition of the mesh
-  do iz = 0,nz
-    do ix = 0,nx
+  do iz = 0,nelem_z
+    do ix = 0,nelem_x
         ! coordinates of the grid points (evenly spaced points along X and Z)
-        xgrid(ix,iz) = xmin + (xmax - xmin) * dble(ix) / dble(nx)
-        zgrid(ix,iz) = zmin + (zmax - zmin) * dble(iz) / dble(nz)
+        xgrid(ix,iz) = xmin + (xmax - xmin) * dble(ix) / dble(nelem_x)
+        zgrid(ix,iz) = zmin + (zmax - zmin) * dble(iz) / dble(nelem_z)
      enddo
   enddo
 
 ! create the coorg array
-  do j = 0,nz
-    do i = 0,nx
-      ipoin = num(i,j,nx)
+  do j = 0,nelem_z
+    do i = 0,nelem_x
+      ipoin = num(i,j,nelem_x)
       coorg(1,ipoin) = xgrid(i,j)
       coorg(2,ipoin) = zgrid(i,j)
     enddo
   enddo
 
 ! create the knods array
-  k = 0
-  do j=0,nz-1
-    do i=0,nx-1
-      k = k + 1
-      knods(1,k) = num(i,j,nx)
-      knods(2,k) = num(i+1,j,nx)
-      knods(3,k) = num(i+1,j+1,nx)
-      knods(4,k) = num(i,j+1,nx)
+  ispec = 0
+  do j=0,nelem_z-1
+    do i=0,nelem_x-1
+      ispec = ispec + 1
+      knods(1,ispec) = num(i,j,nelem_x)
+      knods(2,ispec) = num(i+1,j,nelem_x)
+      knods(3,ispec) = num(i+1,j+1,nelem_x)
+      knods(4,ispec) = num(i,j+1,nelem_x)
     enddo
   enddo
 
@@ -258,8 +268,17 @@
 ! compute the position of the source and of the receiver
   x_source = coord(1,ibool(IGLL_SOURCE,JGLL_SOURCE,NSPEC_SOURCE))
   z_source = coord(2,ibool(IGLL_SOURCE,JGLL_SOURCE,NSPEC_SOURCE))
+
   x_receiver = coord(1,ibool(IGLL_RECEIVER,JGLL_RECEIVER,NSPEC_RECEIVER))
   z_receiver = coord(2,ibool(IGLL_RECEIVER,JGLL_RECEIVER,NSPEC_RECEIVER))
+
+  print *
+  print *,'x_source = ',x_source
+  print *,'z_source = ',z_source
+  print *
+  print *,'x_receiver = ',x_receiver
+  print *,'z_receiver = ',z_receiver
+  print *
 
 ! clear initial vectors before starting the time loop
   displ(:,:) = 0. !!!!!!!!!! VERYSMALLVAL

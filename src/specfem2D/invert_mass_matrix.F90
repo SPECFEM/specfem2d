@@ -37,7 +37,7 @@
 !  builds the global mass matrix
 
   use constants, only: IMAIN,CUSTOM_REAL,NGLLX,NGLLZ,ONE,TWO,TWO_THIRDS,FOUR_THIRDS, &
-    CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY, &
+    CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: myrank,any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
@@ -180,7 +180,7 @@
                  endif
                  rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
 
-              else if (region_CPML(ispec) == CPML_XZ_ONLY) then
+              else if (region_CPML(ispec) == CPML_XZ) then
                 if (AXISYM) then  ! This corner can't be on the axis
                    rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                         + coord(1,iglob)*wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) &
@@ -228,7 +228,7 @@
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
 
-              else if (region_CPML(ispec) == CPML_XZ_ONLY) then
+              else if (region_CPML(ispec) == CPML_XZ) then
                 rmass_inverse_elastic(1,iglob) = rmass_inverse_elastic(1,iglob)  &
                      + wxgll(i)*wzgll(j)*rhol*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
                 rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
@@ -301,7 +301,7 @@
                        + d_x_store(i,j,ispec_PML) * deltatover2)
                 endif
 
-              else if (region_CPML(ispec) == CPML_XZ_ONLY) then
+              else if (region_CPML(ispec) == CPML_XZ) then
                 if (AXISYM) then   !! ABAB: This corner cannot be on the axis
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                        + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) &
@@ -344,7 +344,7 @@
               if (region_CPML(ispec) == CPML_X_ONLY) then
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
-              else if (region_CPML(ispec) == CPML_XZ_ONLY) then
+              else if (region_CPML(ispec) == CPML_XZ) then
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob)  &
                      + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
               else if (region_CPML(ispec) == CPML_Z_ONLY) then

@@ -243,7 +243,7 @@ module shared_input_parameters
   character(len=MAX_STRING_LEN) :: absorbing_surface_file
   character(len=MAX_STRING_LEN) :: acoustic_forcing_surface_file
   character(len=MAX_STRING_LEN) :: axial_elements_file
-  character(len=MAX_STRING_LEN) :: CPML_element_file
+  character(len=MAX_STRING_LEN) :: absorbing_cpml_file
   character(len=MAX_STRING_LEN) :: tangential_detection_curve_file
 
   !#-----------------------------------------------------------------------------
@@ -276,7 +276,8 @@ module shared_input_parameters
   logical :: output_grid_Gnuplot,output_grid_ASCII
 
   ! for plotting the curve of energy
-  logical :: output_energy
+  logical :: OUTPUT_ENERGY
+  integer :: NTSTEP_BETWEEN_OUTPUT_ENERGY
 
   !#-----------------------------------------------------------------------------
   !#

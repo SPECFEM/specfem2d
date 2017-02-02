@@ -111,7 +111,7 @@
 
   read(IIN) TOMOGRAPHY_FILE
 
-  read(IIN) output_grid_ASCII,output_energy,output_wavefield_dumps
+  read(IIN) output_grid_ASCII,OUTPUT_ENERGY,NTSTEP_BETWEEN_OUTPUT_ENERGY,output_wavefield_dumps
 
   read(IIN) use_binary_for_wavefield_dumps
 
@@ -193,7 +193,7 @@
     write(IMAIN,700) seismotype,anglerec
     write(IMAIN,750) initialfield, &
                  add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left, &
-                 ATTENUATION_VISCOELASTIC,output_grid_ASCII,output_energy
+                 ATTENUATION_VISCOELASTIC,output_grid_ASCII,OUTPUT_ENERGY
     write(IMAIN,800) imagetype_postscript,cutsnaps,subsamp_postscript
 
     ! time step
@@ -231,7 +231,7 @@
   'Add Bielak conditions. .(add_Bielak_conditions_left) = ',l6/5x, &
   'Attenuation on/off . . . .(ATTENUATION_VISCOELASTIC) = ',l6/5x, &
   'Save grid in ASCII file or not . (output_grid_ASCII) = ',l6/5x, &
-  'Save a file with total energy or not.(output_energy) = ',l6)
+  'Save a file with total energy or not.(OUTPUT_ENERGY) = ',l6)
 
 800 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
   'Vector display type . . . . . . . . .(imagetype_postscript) = ',i6/5x, &

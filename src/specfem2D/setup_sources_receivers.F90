@@ -198,8 +198,12 @@
   implicit none
 
   ! Local variables
-  integer :: irec,nrec_tot_found
+  integer :: nrec_tot_found
   integer :: ier
+
+#ifndef USE_MPI
+  integer :: irec
+#endif
 
   character(len=MAX_STRING_LEN) :: dummystring
 
@@ -256,7 +260,6 @@
 !! DK DK this below not supported in the case of MPI yet, we should do a MPI_GATHER() of the values
 !! DK DK and use "if (myrank == islice_selected_rec(irec)) then" to display the right sources
 !! DK DK and receivers carried by each mesh slice, and not fictitious values coming from other slices
-  irec = 0
 #ifndef USE_MPI
   if (myrank == 0) then
      ! write out actual station locations (compare with STATIONS from meshfem2D)
@@ -278,6 +281,7 @@
   if (myrank == 0) then
     ! checks total
     if (nrec_tot_found /= nrec) then
+      print *,'nrec_tot_found,nrec (should be equal) = ',nrec_tot_found,nrec
       call exit_MPI(myrank,'problem when dispatching the receivers')
     endif
 

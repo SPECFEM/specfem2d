@@ -84,9 +84,7 @@ program adj_seismogram
   ! reads in file arguments
   do i = 1,4
     call get_command_argument(i,arg)
-!! DK DK suppressed because null strings are not part of the Fortran standard, thus the IBM xlf compiler rejects them for instance
-!   if (trim(arg) == '' .or. command_argument_count() /= 4) then
-    if (command_argument_count() /= 4) then
+    if (trim(arg) == '' .or. command_argument_count() /= 4) then
       print *,'Usage: '
       print *,'  xadj_seismogram t1 t2 station-name adj_comp[1-3]'
       print *,'with'

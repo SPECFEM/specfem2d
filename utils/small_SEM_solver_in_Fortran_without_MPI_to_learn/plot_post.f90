@@ -39,6 +39,8 @@
 
   implicit none
 
+  include "precision.h"
+
   double precision :: cutsnaps = 1.d0        ! minimum amplitude in % for snapshots
   double precision :: sizemax_arrows = 1.d0  ! maximum size of arrows on vector plots in cm
   double precision :: height = 0.25d0        ! height of domain numbers in centimeters
@@ -67,10 +69,10 @@
 
   integer ibool(NGLLX,NGLLZ,NSPEC)
 
-  real :: deltat
+  real(kind=CUSTOM_REAL) :: deltat
   double precision :: timeval
 
-  real :: displ(NDIM,NGLOB)
+  real(kind=CUSTOM_REAL) :: displ(NDIM,NGLOB)
   double precision :: coord(NDIM,NGLOB)
 
   double precision :: x_source,z_source
@@ -442,6 +444,7 @@
  10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
  600 format(f6.3,' neg CM 0 MR (Time =',f8.3,' s) show')
  601 format(f6.3,' neg CM 0 MR (Time =',1pe12.3,' s) show')
+ 602 format(f6.2,1x,f6.2,' M ',f6.2,1x,f6.2,' L ST')
  610 format(f6.3,' neg CM 0 MR (Time step = ',i7,') show')
  640 format(f6.3,' neg CM 0 MR (Max norm =',1pe12.3,') show')
 

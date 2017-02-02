@@ -64,7 +64,7 @@
                                       CPML_region_local,index_ik,A_0,A_1,A_2,singularity_type_2,bb_1,bb_2, &
                                       coef0_1,coef1_1,coef2_1,coef0_2,coef1_2,coef2_2)
 
-  use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
+  use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
 
   implicit none
 
@@ -79,23 +79,23 @@
 
   ! local variables
   double precision :: bar_A_0,bar_A_1,bar_A_2,alpha_0,bb_1,bb_2
-  integer :: CPML_X_ONLY_TEMP,CPML_Z_ONLY_TEMP,CPML_XZ_ONLY_TEMP
+  integer :: CPML_X_ONLY_TEMP,CPML_Z_ONLY_TEMP,CPML_XZ_TEMP
 
   logical,parameter :: FIRST_ORDER_CONVOLUTION = .false.
 
   if (index_ik == 13) then
     CPML_X_ONLY_TEMP = CPML_X_ONLY
     CPML_Z_ONLY_TEMP = CPML_Z_ONLY
-    CPML_XZ_ONLY_TEMP = CPML_XZ_ONLY
+    CPML_XZ_TEMP = CPML_XZ
   else if (index_ik == 31) then
     CPML_X_ONLY_TEMP = CPML_Z_ONLY
     CPML_Z_ONLY_TEMP = CPML_X_ONLY
-    CPML_XZ_ONLY_TEMP = CPML_XZ_ONLY
+    CPML_XZ_TEMP = CPML_XZ
   else
     stop 'In lik_parameter_computation index_ik must be equal to 13 or 31'
   endif
 
-  if (CPML_region_local == CPML_XZ_ONLY_TEMP) then
+  if (CPML_region_local == CPML_XZ_TEMP) then
   !----------------A0-------------------------
     bar_A_0 = kappa_x / kappa_z
     A_0 = bar_A_0
@@ -168,7 +168,7 @@
                                      CPML_region_local,A_0,A_1,A_2,A_3,A_4,singularity_type, &
                                      bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
-  use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ_ONLY
+  use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
 
   implicit none
 
@@ -188,7 +188,7 @@
   beta_xyz_1 = beta_x + beta_z
   beta_xyz_2 = beta_x * beta_z
 
-  if (CPML_region_local == CPML_XZ_ONLY) then
+  if (CPML_region_local == CPML_XZ) then
     bar_A_0 = kappa_x * kappa_z
     bar_A_1 = bar_A_0 * (beta_x + beta_z - alpha_x - alpha_z)
     bar_A_2 = bar_A_0 * (beta_x - alpha_x) * (beta_z - alpha_z - alpha_x) &
@@ -414,6 +414,11 @@
 ! There is something to enforce explicitly only in the case of elastic elements, for which a Dirichlet
 ! condition is needed for the displacement vector, which is the vectorial unknown for these elements.
 
+!! DK DK this paragraph seems to be from Zhinan or from ChangHua:
+! However, enforcing explicitly potential_dot_dot_acoustic, potential_dot_acoustic, potential_acoustic
+! to be zero on outer boundary of PML help to improve the accuracy of absorbing low-frequency wave components
+! in case of long-time simulation.
+
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML
@@ -424,7 +429,7 @@
                                                             potential_acoustic,potential_acoustic_old
 
   ! local parameters
-  integer :: i,j,ispecabs,ispec,iglob,ibegin,iend
+  integer :: i,j,ispecabs,ispec,iglob
 
   ! checks if anything to do
   if (.not. anyabs) return
@@ -459,9 +464,7 @@
 !--- bottom absorbing boundary
       if (codeabs(IEDGE1,ispecabs)) then
         j = 1
-        ibegin = 1
-        iend = NGLLX
-        do i = ibegin,iend
+        do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           potential_acoustic_old(iglob) = 0._CUSTOM_REAL
           potential_acoustic(iglob) = 0._CUSTOM_REAL
@@ -472,10 +475,7 @@
 !--- top absorbing boundary
       if (codeabs(IEDGE3,ispecabs)) then
         j = NGLLZ
-! exclude corners to make sure there is no contradiction on the normal
-        ibegin = 1
-        iend = NGLLX
-        do i = ibegin,iend
+        do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           potential_acoustic_old(iglob) = 0._CUSTOM_REAL
           potential_acoustic(iglob) = 0._CUSTOM_REAL
@@ -501,7 +501,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
 
   ! local parameters
-  integer :: i,j,ispecabs,ispec,iglob,ibegin,iend
+  integer :: i,j,ispecabs,ispec,iglob
 
   ! checks if anything to do
   if (.not. anyabs) return
@@ -542,9 +542,7 @@
 !--- bottom absorbing boundary
       if (codeabs(IEDGE1,ispecabs)) then
         j = 1
-        ibegin = 1
-        iend = NGLLX
-        do i = ibegin,iend
+        do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
           displ_elastic(:,iglob) = 0._CUSTOM_REAL
@@ -556,9 +554,7 @@
 !--- top absorbing boundary
       if (codeabs(IEDGE3,ispecabs)) then
         j = NGLLZ
-        ibegin = 1
-        iend = NGLLX
-        do i = ibegin,iend
+        do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
           displ_elastic_old(:,iglob) = 0._CUSTOM_REAL
           displ_elastic(:,iglob) = 0._CUSTOM_REAL
