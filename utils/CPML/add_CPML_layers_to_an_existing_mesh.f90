@@ -84,7 +84,7 @@
   double precision, dimension(NGNOD) :: xelm,zelm
 
   double precision :: xmin,xmax,zmin,zmax,limit,xsize,zsize
-  double precision :: value_min,value_max,value_size,distance,sum_of_distances,mean_distance,very_small_distance
+  double precision :: value_min,value_max,value_size,sum_of_distances,mean_distance,distance_squared,very_small_distance_squared
 
   logical :: ADD_ON_THE_XMIN_SURFACE,ADD_ON_THE_XMAX_SURFACE
   logical :: ADD_ON_THE_ZMIN_SURFACE,ADD_ON_THE_ZMAX_SURFACE
@@ -378,7 +378,7 @@
   npoin_new_max = npoin + count_elem_faces_to_extend * TOTAL_NUMBER_OF_LAYERS_TO_ADD * NGNOD
 
   mean_distance = sum_of_distances / dble(count_elem_faces_to_extend)
-  very_small_distance = mean_distance / 10000.d0
+  very_small_distance_squared = (mean_distance / 10000.d0)**2
   if (icompute_size == 1) print *,'Computed mean size of the elements to extend = ',mean_distance
   print *
 
@@ -539,8 +539,8 @@
         ! for a much faster version based on a quick sorting routine, see utils/CPML/add_CPML_layers_to_an_existing_mesh.f90
         ! in the 3D package (SPECFEM3D).
         do ipoin = 1,npoin_new_real
-          distance = sqrt((x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2)
-          if (distance < very_small_distance) then
+          distance_squared = (x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2
+          if (distance_squared < very_small_distance_squared) then
             point_already_exists = .true.
             exit
           endif
@@ -563,8 +563,8 @@
         ! for a much faster version based on a quick sorting routine, see utils/CPML/add_CPML_layers_to_an_existing_mesh.f90
         ! in the 3D package (SPECFEM3D).
         do ipoin = 1,npoin_new_real
-          distance = sqrt((x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2)
-          if (distance < very_small_distance) then
+          distance_squared = (x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2
+          if (distance_squared < very_small_distance_squared) then
             point_already_exists = .true.
             exit
           endif
@@ -587,8 +587,8 @@
         ! for a much faster version based on a quick sorting routine, see utils/CPML/add_CPML_layers_to_an_existing_mesh.f90
         ! in the 3D package (SPECFEM3D).
         do ipoin = 1,npoin_new_real
-          distance = sqrt((x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2)
-          if (distance < very_small_distance) then
+          distance_squared = (x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2
+          if (distance_squared < very_small_distance_squared) then
             point_already_exists = .true.
             exit
           endif
@@ -611,8 +611,8 @@
         ! for a much faster version based on a quick sorting routine, see utils/CPML/add_CPML_layers_to_an_existing_mesh.f90
         ! in the 3D package (SPECFEM3D).
         do ipoin = 1,npoin_new_real
-          distance = sqrt((x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2)
-          if (distance < very_small_distance) then
+          distance_squared = (x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2
+          if (distance_squared < very_small_distance_squared) then
             point_already_exists = .true.
             exit
           endif
