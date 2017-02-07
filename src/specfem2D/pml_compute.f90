@@ -421,11 +421,11 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: nglob,ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML
+  use specfem_par, only: ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML,nglob_acoustic,ispec_is_acoustic
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: potential_dot_dot_acoustic,potential_dot_acoustic, &
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_dot_dot_acoustic,potential_dot_acoustic, &
                                                             potential_acoustic,potential_acoustic_old
 
   ! local parameters
@@ -437,6 +437,7 @@
   ! set Dirichelet boundary condition on outer boundary of CFS-PML
   do ispecabs = 1,nelemabs
     ispec = numabs(ispecabs)
+    if (.not. ispec_is_acoustic(ispec)) cycle
 
     if (ispec_is_PML(ispec)) then
 !--- left absorbing boundary
@@ -494,11 +495,11 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: nglob,ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML,nspec_PML
+  use specfem_par, only: nglob_elastic,ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML,nspec_PML,ispec_is_elastic
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob_elastic) :: accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old
 
   ! local parameters
   integer :: i,j,ispecabs,ispec,iglob
@@ -512,6 +513,7 @@
   ! we have to put Dirichlet on the boundary of the PML
   do ispecabs = 1,nelemabs
     ispec = numabs(ispecabs)
+    if (.not. ispec_is_elastic(ispec)) cycle
 
     if (ispec_is_PML(ispec)) then
 
