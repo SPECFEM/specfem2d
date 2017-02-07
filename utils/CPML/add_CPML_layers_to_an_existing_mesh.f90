@@ -56,11 +56,14 @@
   double precision :: SIZE_OF_XMIN_ELEMENT_TO_ADD,SIZE_OF_ZMIN_ELEMENT_TO_ADD
   double precision :: SIZE_OF_XMAX_ELEMENT_TO_ADD,SIZE_OF_ZMAX_ELEMENT_TO_ADD
 
-  integer :: nspec,npoin,npoin_new,nspec_new,count_elem_faces_to_extend,iextend
+  integer :: nspec,npoin,npoin_new_max,npoin_new_real,nspec_new,count_elem_faces_to_extend,iextend
   integer :: factor_x,factor_z
   integer :: i,k,ispec,ipoin,iloop_on_X_Z_faces,iloop_on_min_face_then_max_face
-  integer :: i1,i2,i3,i4,elem_counter,ibool_counter,ia,iflag,icompute_size
+  integer :: i1,i2,i3,i4,elem_counter,ia,iflag,icompute_size
   integer :: p1,p2
+
+  double precision :: x_value_to_create,z_value_to_create
+  logical :: point_already_exists
 
   double precision, dimension(:), allocatable, target :: x,z
   double precision, dimension(:), allocatable :: x_new,z_new
@@ -81,7 +84,7 @@
   double precision, dimension(NGNOD) :: xelm,zelm
 
   double precision :: xmin,xmax,zmin,zmax,limit,xsize,zsize
-  double precision :: value_min,value_max,value_size,sum_of_distances,mean_distance
+  double precision :: value_min,value_max,value_size,sum_of_distances,mean_distance,distance_squared,very_small_distance_squared
 
   logical :: ADD_ON_THE_XMIN_SURFACE,ADD_ON_THE_XMAX_SURFACE
   logical :: ADD_ON_THE_ZMIN_SURFACE,ADD_ON_THE_ZMAX_SURFACE
@@ -365,16 +368,18 @@
   print *,'Total number of elements in the mesh before extension = ',nspec
   print *,'Number of element faces to extend  = ',count_elem_faces_to_extend
   if (count_elem_faces_to_extend == 0) stop 'error: number of element faces to extend detected is zero!'
+
 ! we will add TOTAL_NUMBER_OF_LAYERS_TO_ADD to each of the element faces detected that need to be extended
   nspec_new = nspec + count_elem_faces_to_extend * TOTAL_NUMBER_OF_LAYERS_TO_ADD
-! and each of these elements will have NGNOD points
-! (some of them shared with other elements, but we do not care because they will be removed automatically by xdecompose_mesh)
-  npoin_new = npoin + count_elem_faces_to_extend * TOTAL_NUMBER_OF_LAYERS_TO_ADD * NGNOD
   print *,'Total number of elements in the mesh after extension = ',nspec_new
-  if (icompute_size == 1) then
-    mean_distance = sum_of_distances / dble(count_elem_faces_to_extend)
-    print *,'Computed mean size of the elements to extend = ',mean_distance
-  endif
+
+! and each of these elements will have NGNOD points
+! (some of them shared with other elements, but we will remove the multiples below, thus here it is a maximum
+  npoin_new_max = npoin + count_elem_faces_to_extend * TOTAL_NUMBER_OF_LAYERS_TO_ADD * NGNOD
+
+  mean_distance = sum_of_distances / dble(count_elem_faces_to_extend)
+  very_small_distance_squared = (mean_distance / 10000.d0)**2
+  if (icompute_size == 1) print *,'Computed mean size of the elements to extend = ',mean_distance
   print *
 
 ! allocate a new set of elements, i.e. a new ibool()
@@ -393,8 +398,8 @@
   if (minval(ibool) /= 1) stop 'error in minval(ibool)'
 
 ! allocate a new set of points, with multiples
-  allocate(x_new(npoin_new))
-  allocate(z_new(npoin_new))
+  allocate(x_new(npoin_new_max))
+  allocate(z_new(npoin_new_max))
 
 ! copy the original points into the new set
   x_new(1:npoin) = x(1:npoin)
@@ -402,7 +407,7 @@
 
 ! position after which to start to create the new elements
   elem_counter = nspec
-  ibool_counter = npoin
+  npoin_new_real = npoin
 
 ! loop on the whole original mesh
   do ispec = 1,nspec
@@ -487,10 +492,6 @@
 
 ! create the TOTAL_NUMBER_OF_LAYERS_TO_ADD new elements
 
-! very important remark: it is OK to create duplicates of the mesh points in the loop below (i.e. not to tell the code
-! that many of these points created are in fact shared between adjacent elements) because "xdecompose_mesh" will remove
-! them automatically later on, thus no need to remove them here; this makes this PML mesh extrusion code much simpler to write.
-
     factor_x = 0
     factor_z = 0
 
@@ -529,29 +530,101 @@
         ! use the same material property for the extended elements as for the element being extended
         imaterial_new(elem_counter) = imaterial(ispec)
 
-        ! create a new point
-        ibool_counter = ibool_counter + 1
-        ibool_new(1,elem_counter) = ibool_counter
-        x_new(ibool_counter) = x(p1) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*(iextend-1)
-        z_new(ibool_counter) = z(p1) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*(iextend-1)
+        ! create a new point if it does not exist yet, otherwise use the existing one to avoid creating multiples
+        x_value_to_create = x(p1) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*(iextend-1)
+        z_value_to_create = z(p1) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*(iextend-1)
+        point_already_exists = .false.
+        ! this loop to avoid creating multiples is slow because it is a large loop for each point
+        ! inside an existing loop on all the new points to create; it is usually OK for 2D meshes though.
+        ! for a much faster version based on a quick sorting routine, see utils/CPML/add_CPML_layers_to_an_existing_mesh.f90
+        ! in the 3D package (SPECFEM3D).
+        do ipoin = 1,npoin_new_real
+          distance_squared = (x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2
+          if (distance_squared < very_small_distance_squared) then
+            point_already_exists = .true.
+            exit
+          endif
+        enddo
+        if (point_already_exists) then
+          ibool_new(1,elem_counter) = ipoin
+        else
+          npoin_new_real = npoin_new_real + 1
+          ibool_new(1,elem_counter) = npoin_new_real
+          x_new(npoin_new_real) = x_value_to_create
+          z_new(npoin_new_real) = z_value_to_create
+        endif
 
-        ! create a new point
-        ibool_counter = ibool_counter + 1
-        ibool_new(2,elem_counter) = ibool_counter
-        x_new(ibool_counter) = x(p1) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*iextend
-        z_new(ibool_counter) = z(p1) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*iextend
+        ! create a new point if it does not exist yet, otherwise use the existing one to avoid creating multiples
+        x_value_to_create = x(p1) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*iextend
+        z_value_to_create = z(p1) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*iextend
+         point_already_exists = .false.
+        ! this loop to avoid creating multiples is slow because it is a large loop for each point
+        ! inside an existing loop on all the new points to create; it is usually OK for 2D meshes though.
+        ! for a much faster version based on a quick sorting routine, see utils/CPML/add_CPML_layers_to_an_existing_mesh.f90
+        ! in the 3D package (SPECFEM3D).
+        do ipoin = 1,npoin_new_real
+          distance_squared = (x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2
+          if (distance_squared < very_small_distance_squared) then
+            point_already_exists = .true.
+            exit
+          endif
+        enddo
+        if (point_already_exists) then
+          ibool_new(2,elem_counter) = ipoin
+        else
+          npoin_new_real = npoin_new_real + 1
+          ibool_new(2,elem_counter) = npoin_new_real
+          x_new(npoin_new_real) = x_value_to_create
+          z_new(npoin_new_real) = z_value_to_create
+        endif
 
-        ! create a new point
-        ibool_counter = ibool_counter + 1
-        ibool_new(3,elem_counter) = ibool_counter
-        x_new(ibool_counter) = x(p2) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*iextend
-        z_new(ibool_counter) = z(p2) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*iextend
+        ! create a new point if it does not exist yet, otherwise use the existing one to avoid creating multiples
+        x_value_to_create = x(p2) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*iextend
+        z_value_to_create = z(p2) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*iextend
+        point_already_exists = .false.
+        ! this loop to avoid creating multiples is slow because it is a large loop for each point
+        ! inside an existing loop on all the new points to create; it is usually OK for 2D meshes though.
+        ! for a much faster version based on a quick sorting routine, see utils/CPML/add_CPML_layers_to_an_existing_mesh.f90
+        ! in the 3D package (SPECFEM3D).
+        do ipoin = 1,npoin_new_real
+          distance_squared = (x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2
+          if (distance_squared < very_small_distance_squared) then
+            point_already_exists = .true.
+            exit
+          endif
+        enddo
+        if (point_already_exists) then
+          ibool_new(3,elem_counter) = ipoin
+        else
+          npoin_new_real = npoin_new_real + 1
+          ibool_new(3,elem_counter) = npoin_new_real
+          x_new(npoin_new_real) = x_value_to_create
+          z_new(npoin_new_real) = z_value_to_create
+        endif
 
-        ! create a new point
-        ibool_counter = ibool_counter + 1
-        ibool_new(4,elem_counter) = ibool_counter
-        x_new(ibool_counter) = x(p2) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*(iextend-1)
-        z_new(ibool_counter) = z(p2) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*(iextend-1)
+        ! create a new point if it does not exist yet, otherwise use the existing one to avoid creating multiples
+        x_value_to_create = x(p2) + factor_x*SIZE_OF_X_ELEMENT_TO_ADD*(iextend-1)
+        z_value_to_create = z(p2) + factor_z*SIZE_OF_Z_ELEMENT_TO_ADD*(iextend-1)
+        point_already_exists = .false.
+        ! this loop to avoid creating multiples is slow because it is a large loop for each point
+        ! inside an existing loop on all the new points to create; it is usually OK for 2D meshes though.
+        ! for a much faster version based on a quick sorting routine, see utils/CPML/add_CPML_layers_to_an_existing_mesh.f90
+        ! in the 3D package (SPECFEM3D).
+        do ipoin = 1,npoin_new_real
+          distance_squared = (x_new(ipoin) - x_value_to_create)**2 + (z_new(ipoin) - z_value_to_create)**2
+          if (distance_squared < very_small_distance_squared) then
+            point_already_exists = .true.
+            exit
+          endif
+        enddo
+        if (point_already_exists) then
+          ibool_new(4,elem_counter) = ipoin
+        else
+          npoin_new_real = npoin_new_real + 1
+          ibool_new(4,elem_counter) = npoin_new_real
+          x_new(npoin_new_real) = x_value_to_create
+          z_new(npoin_new_real) = z_value_to_create
+        endif
 
 ! now we need to test if the element created is flipped i.e. it has a negative Jacobian,
 ! and if so we will use the mirrored version of that element, which will then have a positive Jacobian
@@ -611,6 +684,7 @@
   enddo
 
   if (minval(ibool_new) /= 1) stop 'error in minval(ibool_new)'
+  if (maxval(ibool_new) > npoin_new_max) stop 'error in maxval(ibool_new)'
 
 ! deallocate the original arrays
   deallocate(x,z)
@@ -618,21 +692,21 @@
   deallocate(imaterial)
 
 ! reallocate them with the new size
-  allocate(x(npoin_new))
-  allocate(z(npoin_new))
+  allocate(x(npoin_new_real))
+  allocate(z(npoin_new_real))
   allocate(imaterial(nspec_new))
   allocate(ibool(NGNOD,nspec_new))
 
 ! make the new ones become the old ones, to prepare for the next iteration of the two nested loops we are in,
 ! i.e. to make sure the next loop will extend the mesh from the new arrays rather than from the old ones
-  x(:) = x_new(:)
-  z(:) = z_new(:)
+  x(:) = x_new(1:npoin_new_real)
+  z(:) = z_new(1:npoin_new_real)
   imaterial(:) = imaterial_new(:)
   ibool(:,:) = ibool_new(:,:)
 
 ! the new number of elements and points becomes the old one, for the same reason
   nspec = nspec_new
-  npoin = npoin_new
+  npoin = npoin_new_real
 
 ! deallocate the new ones, to make sure they can be allocated again in the next iteration of the nested loops we are in
   deallocate(x_new,z_new)
@@ -640,6 +714,7 @@
   deallocate(imaterial_new)
 
   if (minval(ibool) /= 1) stop 'error in minval(ibool)'
+  if (maxval(ibool) > npoin) stop 'error in maxval(ibool)'
 
     enddo ! of iloop_on_min_face_then_max_face loop on Xmin then Xmax, or Zmin then Zmax
 

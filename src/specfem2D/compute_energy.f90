@@ -327,11 +327,13 @@
       call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
                                       potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
 
-      ! get density of current spectral element
-      lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
-      rhol  = density(1,kmato(ispec))
-      kappal  = lambdal_unrelaxed_elastic
-      cpl = sqrt(kappal/rhol)
+      ! get velocity and density in current spectral element
+      if (.not. assign_external_model) then
+        lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
+        rhol  = density(1,kmato(ispec))
+        kappal  = lambdal_unrelaxed_elastic
+        cpl = sqrt(kappal/rhol)
+      endif
 
       ! double loop over GLL points
       do j = 1,NGLLZ
