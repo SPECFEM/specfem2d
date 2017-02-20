@@ -22,8 +22,8 @@ mkdir -p DATA
 # sets up local DATA/ directory
 cd DATA/
 rm -f Par_file SOURCE
-ln -s ../Par_file_Slave Par_file
-ln -s ../SOURCE_Slave SOURCE
+ln -s ../Par_file Par_file
+ln -s ../SOURCE SOURCE
 cd ../
 
 # cleans output files

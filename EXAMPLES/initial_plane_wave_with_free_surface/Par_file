@@ -5,19 +5,19 @@
 #-----------------------------------------------------------------------------
 
 # title of job
-title                           = Slave Craton
+title                           = Plane wave with free surface
 
 # forward or adjoint simulation
 # 1 = forward, 2 = adjoint, 3 = both simultaneously
 # note: 2 is purposely UNUSED (for compatibility with the numbering of our 3D codes)
-SIMULATION_TYPE                 = 3
+SIMULATION_TYPE                 = 1
 # 0 = regular wave propagation simulation, 1/2/3 = noise simulation
 NOISE_TOMOGRAPHY                = 0
 # save the last frame, needed for adjoint simulation
 SAVE_FORWARD                    = .false.
 
 # parameters concerning partitioning
-NPROC                           = 1              # number of processes
+NPROC                           = 1  # 16             # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 # number of control nodes per element (4 or 9)
@@ -93,11 +93,11 @@ NSOURCES                        = 1              # number of sources (source inf
 force_normal_to_surface         = .false.        # angleforce normal to surface (external mesh and curve file needed)
 
 # use an existing initial wave field as source or start from zero (medium initially at rest)
-initialfield                    = .false.
-add_Bielak_conditions_bottom    = .false.        # add Bielak conditions or not if initial plane wave
-add_Bielak_conditions_right     = .false.
+initialfield                    = .true.
+add_Bielak_conditions_bottom    = .true.        # add Bielak conditions or not if initial plane wave
+add_Bielak_conditions_right     = .true.
 add_Bielak_conditions_top       = .false.
-add_Bielak_conditions_left      = .false.
+add_Bielak_conditions_left      = .true.
 
 # acoustic forcing
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
@@ -178,7 +178,7 @@ ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
 
 # Stacey ABC
-STACEY_ABSORBING_CONDITIONS     = .false.
+STACEY_ABSORBING_CONDITIONS     = .true.
 
 # periodic boundaries
 ADD_PERIODIC_CONDITIONS         = .false.
@@ -190,7 +190,7 @@ PERIODIC_HORIZ_DIST             = 0.3597d0
 # velocity and density models
 #
 #-----------------------------------------------------------------------------
-nbmodels                        = 2
+nbmodels                        = 1
 # available material types (see user manual for more information)
 #   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0
 #   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
@@ -198,7 +198,6 @@ nbmodels                        = 2
 #   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
 #   tomo:        model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
 1 1 2800.d0 6500.d0 3700d0 0 0 10.d0 10.d0 0 0 0 0 0 0
-2 1 3200.d0 8300.d0 4700d0 0 0 10.d0 10.d0 0 0 0 0 0 0
 
 # external tomography file
 TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
@@ -232,7 +231,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 #-----------------------------------------------------------------------------
 
 # file containing interfaces for internal mesh
-interfacesfile                  = ../interfaces_Slave.dat
+interfacesfile                  = ../interfaces.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
@@ -246,9 +245,8 @@ absorbtop                       = .false.
 absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
-nbregions                       = 2              # then set below the different regions and model number for each region
-1 120  43 50 1
-1 120   1  42  2
+nbregions                       = 1             # then set below the different regions and model number for each region
+1 120  1 50 1
 
 #-----------------------------------------------------------------------------
 #
