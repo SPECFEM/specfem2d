@@ -756,16 +756,10 @@
             &to use external tangential_dectection_curve_file'
   endif
 
-  if (initialfield .and. NPROC > 1) &
-    stop 'initialfield (plane waves) currently have a bug in parallel i.e. when &
-          & NPROC > 1, see https://github.com/geodynamics/specfem2d/issues/550 , thus please run with a single processor'
-
-  if (DT == 0.d0) &
-    stop 'DT must be non-zero value'
+  if (DT == 0.d0) stop 'DT must be non-zero value'
 
   ! reads in material definitions
-  if (nbmodels <= 0) &
-    stop 'Non-positive number of materials not allowed!'
+  if (nbmodels <= 0) stop 'Non-positive number of materials not allowed!'
 
   ! CPML and Stacey are mutually exclusive
   if (STACEY_ABSORBING_CONDITIONS .and. PML_BOUNDARY_CONDITIONS) &
