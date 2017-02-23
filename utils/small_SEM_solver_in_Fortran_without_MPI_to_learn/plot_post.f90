@@ -444,7 +444,6 @@
  10  format('%!PS-Adobe-2.0',/,'%%',/,'%% Title: ',a50,/,'%% Created by: Specfem2D',/,'%% Author: Dimitri Komatitsch',/,'%%')
  600 format(f6.3,' neg CM 0 MR (Time =',f8.3,' s) show')
  601 format(f6.3,' neg CM 0 MR (Time =',1pe12.3,' s) show')
- 602 format(f6.2,1x,f6.2,' M ',f6.2,1x,f6.2,' L ST')
  610 format(f6.3,' neg CM 0 MR (Time step = ',i7,') show')
  640 format(f6.3,' neg CM 0 MR (Max norm =',1pe12.3,') show')
 
