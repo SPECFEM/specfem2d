@@ -195,7 +195,7 @@
 
 ! comment from Clement Durochat to DK:
 !
-! Attention à la formule (23) du papier de Pao and Varatharajulu, c'est celle qui m'avait induit en erreur
+! Attention ? la formule (23) du papier de Pao and Varatharajulu, c'est celle qui m'avait induit en erreur
 ! (elle n'est pas dans le bon ordre).
 !
 
