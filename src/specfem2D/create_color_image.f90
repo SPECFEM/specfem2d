@@ -99,7 +99,7 @@
     where(image_color_data < -CONSTANT_MAX_AMPLITUDE_TO_USE) image_color_data = -CONSTANT_MAX_AMPLITUDE_TO_USE
   endif
 
-  ! checks value (isNaN)
+! this trick checks for NaN (Not a Number), which is not even equal to itself
   if (amplitude_max > STABILITY_THRESHOLD .or. amplitude_max < 0 .or. amplitude_max /= amplitude_max) then
     print *,'Warning: failed creating color image, maximum value of amplitude in image color is invalid'
     print *,'amplitude max = ',amplitude_max,' with threshold at ', STABILITY_THRESHOLD

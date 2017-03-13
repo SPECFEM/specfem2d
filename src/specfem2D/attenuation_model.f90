@@ -685,7 +685,7 @@
 
   subroutine remplit_point(fmin,fmax,N,point)
 
-  use constants, only: TWO_PI_OR_ONE
+  use constants, only: TWO_PI
 
   implicit none
 
@@ -700,7 +700,8 @@
   ELSE
     do l = 1, N, 1
       point(l) = (fmax/fmin) ** ((l-1.)/(N-1.))
-      point(l) = TWO_PI_OR_ONE * point(l) * fmin
+! we work in angular frequency, not frequency
+      point(l) = TWO_PI * point(l) * fmin
     enddo
   endif
 
@@ -708,7 +709,7 @@
 
   subroutine classical_linear_least_squares(Qref,poids,point,N,fmin,fmax)
 
-  use constants, only: TWO_PI_OR_ONE
+  use constants, only: TWO_PI
 
   implicit none
 
@@ -730,7 +731,8 @@
 
   do k = 1,m
     freq = (fmax/fmin) ** ((k - 1.)/(m - 1.))
-    freq = TWO_PI_OR_ONE * fmin * freq
+! we work in angular frequency, not frequency
+    freq = TWO_PI * fmin * freq
     x(k) = freq
     y_ref(k) = ref
     sig(k) = 1.
@@ -2047,7 +2049,7 @@
 
 ! Nopt = 2*N : nombre de coefficients a optimiser
 
-  use constants, only: TWO_PI_OR_ONE
+  use constants, only: TWO_PI
 
   implicit none
 
@@ -2061,7 +2063,8 @@
 
   res = 0.d0
   do i = 1,K
-    freq = TWO_PI_OR_ONE * f_min*((f_max/f_min)**((i-1.d0)/(K-1.d0)))
+! we work in angular frequency, not frequency
+    freq = TWO_PI * f_min*((f_max/f_min)**((i-1.d0)/(K-1.d0)))
     call func_objective(x,aux,freq,Qref,N,Nopt)
     d = aux - 1.d0
     res = res + d*d
@@ -2071,7 +2074,7 @@
 
   subroutine grad_func_mini(x,grad,Qref,N,Nopt,K,f_min,f_max)
 
-  use constants, only: TWO_PI_OR_ONE
+  use constants, only: TWO_PI
 
   implicit none
 
@@ -2086,7 +2089,8 @@
   double precision, dimension(1:K) :: freq
 
   do i = 1,K
-    freq(i) = TWO_PI_OR_ONE * f_min*((f_max/f_min)**((i-1.d0)/(K-1.d0)))
+! we work in angular frequency, not frequency
+    freq(i) = TWO_PI * f_min*((f_max/f_min)**((i-1.d0)/(K-1.d0)))
   enddo
 
   do l= 1,N

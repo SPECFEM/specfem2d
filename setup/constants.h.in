@@ -91,9 +91,6 @@
 ! use SolvOpt nonlinear optimization with constraints or less accurate classical linear least squares
   logical, parameter :: USE_SOLVOPT = .true.
 
-! to compute optimized weights for attenuation (1 means we work in frequency, 2 PI means we work in angular frequency)
-  double precision, parameter :: TWO_PI_OR_ONE = 1.d0 ! TWO_PI
-
 ! update the memory variables using a convolution or using a differential equation
   logical, parameter :: CONVOLUTION_MEMORY_VARIABLES = .false.
 

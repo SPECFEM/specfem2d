@@ -115,6 +115,7 @@
     ! than the greatest possible floating-point number of the machine
     ! (is-not-a-number check is more robust when done on actual array values rather than return values from sqrt and amxval)
     if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
+! this trick checks for NaN (Not a Number), which is not even equal to itself
         displ_elastic(1,1) /= displ_elastic(1,1)) &
       call exit_MPI(myrank,'code became unstable and blew up in solid (elastic)')
   endif
@@ -136,6 +137,7 @@
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
     if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
+! this trick checks for NaN (Not a Number), which is not even equal to itself
         displs_poroelastic(1,1) /= displs_poroelastic(1,1)) &
       call exit_MPI(myrank,'code became unstable and blew up in solid (poroelastic)')
 
@@ -154,6 +156,7 @@
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
     if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
+! this trick checks for NaN (Not a Number), which is not even equal to itself
         displw_poroelastic(1,1) /= displw_poroelastic(1,1)) &
       call exit_MPI(myrank,'code became unstable and blew up in fluid (poroelastic)')
   endif
@@ -176,6 +179,7 @@
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
     if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
+! this trick checks for NaN (Not a Number), which is not even equal to itself
         potential_acoustic(1) /= potential_acoustic(1)) &
       call exit_MPI(myrank,'code became unstable and blew up in fluid (acoustic)')
   endif
