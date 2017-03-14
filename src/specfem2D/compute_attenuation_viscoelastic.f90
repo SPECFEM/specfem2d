@@ -98,7 +98,7 @@
                                                      dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
                                                      dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1)
 
-  use constants, only: NGLLX,NGLLZ,CUSTOM_REAL,TWO,CONVOLUTION_MEMORY_VARIABLES,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
+  use constants, only: NGLLX,NGLLZ,CUSTOM_REAL,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: nspec,nspec_ATT,N_SLS, &
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2, &
@@ -109,6 +109,10 @@
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK
 
   implicit none
+
+! update the memory variables using a convolution or using a differential equation
+! (tests made by Ting Yu and also by Zhinan Xie, CNRS Marseille, France, show that it is better to leave it to .true.)
+  logical, parameter :: CONVOLUTION_MEMORY_VARIABLES = .true.
 
   integer,intent(in) :: ispec
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS),intent(inout) :: e1,e11,e13
