@@ -193,6 +193,14 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+! comment from Clement Durochat to DK:
+!
+! Attention ? la formule (23) du papier de Pao and Varatharajulu, c'est celle qui m'avait induit en erreur
+! (elle n'est pas dans le bon ordre).
+!
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 !! DK DK added this for KH
   is_on_left_edge_of_KH_contour(:) = .false.
   is_on_right_edge_of_KH_contour(:) = .false.

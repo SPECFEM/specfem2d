@@ -201,6 +201,7 @@
   dispmax = dispmax_glob
 
   ! checks maximum value
+! this trick checks for NaN (Not a Number), which is not even equal to itself
   if (dispmax > STABILITY_THRESHOLD .or. dispmax < 0 .or. dispmax /= dispmax) then
     print *,'Warning: failed creating postscript image, maximum value of display is invalid'
     print *,'display max = ',dispmax,' with threshold at ', STABILITY_THRESHOLD

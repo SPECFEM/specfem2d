@@ -1,12 +1,19 @@
 
   program conversion
 
-! Dimitri Komatitsch, CNRS Marseille, France, October 2015
+! Dimitri Komatitsch, CNRS Marseille, France, October 2015 and March 2017
 
 ! see formulas 9.59 and 9.60 in the book of Dahlen and Tromp, 1998
-! (in that book, P is called alpha and S is called beta)
+! (in that book, P is called alpha and S is called beta).
+! The formulas in Dahlen and Tromp, 1998 are for the 3D case,
+! in the 2D plane strain case the 4/3 coefficient must be changed to 1,
+! see more details in file doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf
 
   implicit none
+
+! coefficient for the 3D case is 4/3, for the 2D plane strain case it is 1,
+! see more details in file doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf
+  double precision, parameter :: coefficient = 1.d0   !!  4.d0/3.d0
 
   double precision :: Qkappa,Qmu,Qp,Qs,inverse_of_Qp,cp,cs
 
@@ -34,16 +41,8 @@
   Qs = Qmu
 
 ! for Qp the formula is more complex
-  inverse_of_Qp = (1.d0 - (4.d0/3.d0)*(cs**2)/(cp**2))/Qkappa + (4.d0/3.d0)*(cs**2)/(cp**2)/Qmu
+  inverse_of_Qp = (1.d0 - coefficient*(cs**2)/(cp**2))/Qkappa + coefficient*(cs**2)/(cp**2)/Qmu
   Qp = 1.d0/inverse_of_Qp
-
-! In 2D plane strain, one spatial dimension is much greater than the others
-! (see for example: http://www.engineering.ucsb.edu/~hpscicom/projects/stress/introge.pdf)
-! and thus kappa = lambda + mu in 2D plane strain (instead of kappa = lambda + 2/3 mu in 3D).
-! See for example equation 6 in http://cherrypit.princeton.edu/papers/paper-99.pdf.
-! In 2D axisymmetric I think the 2/3 coefficient is OK, but it would be worth doublechecking.
-  stop 'error: this code is currently wrong because it uses the 3D formulas instead of 2D plane strain formulas for Kappa. &
-    & See comments about this in the source code of this program as well as in the users manual.'
 
 ! print the result
   print *,'Qp = ',Qp
