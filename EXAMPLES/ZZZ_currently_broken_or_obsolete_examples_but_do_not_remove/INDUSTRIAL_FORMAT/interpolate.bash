@@ -1,15 +1,18 @@
 #!/bin/bash -eu
 
-DIR_SEM="../../"
+DIR_SEM="../../.."
 
-cp Par_file                      $DIR_SEM/DATA/
-cp interfaces_M2_UPPA_curved.dat $DIR_SEM/DATA/
-cp SOURCE                        $DIR_SEM/DATA/
-cp constants.h                   $DIR_SEM/setup/
+cp $DIR_SEM/bin/xspecfem2D $DIR_SEM/bin/xmeshfem2D ./
 
-ifort interpolate.f90 -o $DIR_SEM/xinterpolate
-cd $DIR_SEM
+rm -r DATA
+rm -r OUTPUT_FILES
 
-make
-cp bin/* ./
+mkdir DATA
+mkdir OUTPUT_FILES
+
+cp Par_file                      ./DATA/
+cp SOURCE                        ./DATA/
+
+gfortran interpolate.f90 -o xinterpolate -lm -O4
+
 ./xinterpolate
