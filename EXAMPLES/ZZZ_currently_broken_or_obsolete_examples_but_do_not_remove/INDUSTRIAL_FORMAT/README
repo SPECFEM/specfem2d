@@ -3,3 +3,11 @@
 
 2. run interpolation:
 	./interpolate.bash
+
+3. MPI has been included.
+
+ when running xinterpolate, please input the number of processes
+ 
+ run in serial if the number of processes is 0
+ 
+ 
