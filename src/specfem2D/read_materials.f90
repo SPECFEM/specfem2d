@@ -47,7 +47,7 @@
   double precision,intent(in) :: f0
 
   ! local parameters
-  double precision :: lambdaplus2mu,kappa
+  double precision :: lambdaplus2mu,kappa,compaction_grad
   double precision :: young,poisson,cp,cs,mu,two_mu,lambda,QKappa,Qmu
   double precision :: lambdaplus2mu_s,lambdaplus2mu_fr,kappa_s,kappa_f,kappa_fr
   double precision :: young_s,poisson_s,density_mat(2),phi,tortuosity_mat
@@ -81,6 +81,7 @@
   if (myrank == 0) write(IMAIN,100) numat
 
   ! skips material sets header
+
   do imat = 1,numat
 
     read(IIN) n,indic,val0,val1,val2,val3,val4,val5,val6,val7,val8,val9,val10,val11,val12
@@ -95,7 +96,7 @@
       ! P and S velocity
       cp = val1
       cs = val2
-
+      compaction_grad = val3
       ! QKappa and Qmu values
       QKappa = val5
       Qmu = val6
@@ -243,7 +244,7 @@
       poroelastcoef(1,1,n) = lambda
       poroelastcoef(2,1,n) = mu
       poroelastcoef(3,1,n) = lambdaplus2mu
-      poroelastcoef(4,1,n) = ZERO
+      poroelastcoef(4,1,n) = compaction_grad
       QKappa_attenuation(n) = QKappa
       Qmu_attenuation(n) = Qmu
       if (mu > TINYVAL) then
@@ -288,6 +289,7 @@
       poroelastcoef(2,3,n) = mu_fr
       poroelastcoef(3,3,n) = lambdaplus2mu_fr
       poroelastcoef(4,3,n) = ZERO
+
 
     else if (indic <= 0) then
       ! Assign dummy values for now (for acoustic medium vs must be 0 anyway), these values will be read in read_external_model

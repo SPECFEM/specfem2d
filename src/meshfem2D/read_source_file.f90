@@ -248,6 +248,9 @@
     case (10)
       write(IMAIN,*) '  Sinus source time function:'
       write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+    case (11)
+      write(IMAIN,*) '  Ormsby source time function:'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case default
       stop 'Error invalid source time function type! must be between 1 and 9, exiting...'
     end select

@@ -413,7 +413,7 @@
       val0 = rho_s_read(i)
       val1 = cp(i)
       val2 = cs(i)
-      val3 = 0.d0
+      val3 = comp_g(i)
       val4 = 0.d0
       val5 = QKappa(i)
       val6 = Qmu(i)
@@ -491,7 +491,6 @@
 
     ! check format with file src/specfem2D/read_materials.f90
     write(IOUT) i,indic,val0,val1,val2,val3,val4,val5,val6,val7,val8,val9,val10,val11,val12
-
   enddo
 
   ! writes out material properties

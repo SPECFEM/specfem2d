@@ -49,9 +49,9 @@
   implicit none
 
   ! Local variables
-  integer :: i,j,ispec
+  integer :: i,j,ispec,itmp
   integer :: ier
-  real(kind=CUSTOM_REAL) :: tmp1, tmp2,tmp3
+  real(kind=CUSTOM_REAL) :: tmp1, tmp2 
   double precision :: vs_val,vp_val,rho_val
   character(len=150) :: inputname
 
@@ -72,7 +72,7 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           ! format: #unused #unused #unused #rho #vp #vs
-          read(1001,*) tmp1,tmp2,tmp3,rho_val,vp_val,vs_val
+          read(1001,*) itmp,tmp1,tmp2,rho_val,vp_val,vs_val
           rhoext(i,j,ispec) = rho_val
           vpext(i,j,ispec) = vp_val
           vsext(i,j,ispec) = vs_val
@@ -226,6 +226,11 @@
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext, &
                                QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
+  case ('marmousi')
+    ! marmousi type model
+    call define_external_model_from_marmousi(coord,kmato,ibool,rhoext,vpext,vsext, &
+                                             QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
+                                             c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
 
   case ('tomo')
     ! tomographic file
@@ -239,7 +244,7 @@
   end select
 
   ! check that the external model that has just been defined makes sense
-  if (trim(MODEL) == 'external' .or. trim(MODEL) == 'tomo') then
+  if (trim(MODEL) == 'external' .or. trim(MODEL) == 'tomo' .or. trim(MODEL) == 'marmousi') then
     ! checks velocities for each element
     do ispec = 1,nspec
       do j = 1,NGLLZ

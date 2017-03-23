@@ -108,6 +108,7 @@ specfem2D_OBJECTS = \
 	$O/define_derivation_matrices.spec.o \
 	$O/define_external_model.spec.o \
 	$O/define_external_model_from_tomo_file.spec.o \
+	$O/define_external_model_from_marmousi.spec.o \
 	$O/enforce_acoustic_free_surface.spec.o \
 	$O/enforce_fields.spec.o \
 	$O/finalize_simulation.spec.o \

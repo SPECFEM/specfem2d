@@ -63,7 +63,7 @@
   ! external functions
   double precision, external :: comp_source_time_function_heavi
   double precision, external :: comp_source_time_function_gaussB,comp_source_time_function_dgaussB, &
-    comp_source_time_function_d2gaussB,comp_source_time_function_d3gaussB
+    comp_source_time_function_d2gaussB,comp_source_time_function_d3gaussB,marmousi_ormsby_wavelet, cos_taper
   double precision, external :: comp_source_time_function_rickr,comp_source_time_function_d2rck
 
   ! user output
@@ -426,6 +426,13 @@
               source_time_function(i_source,it,i_stage) = factor(i_source) * sin(omega_coa*t_used)
             endif
 
+          case (11)
+              ! Marmousi_ormsby_wavelet
+              hdur = 1.0 / 35.0
+              !print *,'it,t0,timeval,t_used,hdur=', it,t0,timeval,t_used,hdur
+              source_time_function(i_source,it,i_stage) = factor(i_source) * &
+                        cos_taper(t_used,hdur) * marmousi_ormsby_wavelet(PI*t_used)
+              !print *,'it,t0,cos_taper,t_used=', it,t0,cos_taper(t_used,hdur),t_used
           case default
             call exit_MPI(myrank,'unknown source time function')
 

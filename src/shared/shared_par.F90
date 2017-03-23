@@ -369,7 +369,7 @@ module shared_parameters
 
   ! acoustic/elastic/anisotropic
   double precision, dimension(:),allocatable :: cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,QKappa,Qmu
+    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,comp_g,QKappa,Qmu
 
   ! poroelastic
   ! note: adds ending _read to indicate these are readin values and to distinguish from solver arrays
