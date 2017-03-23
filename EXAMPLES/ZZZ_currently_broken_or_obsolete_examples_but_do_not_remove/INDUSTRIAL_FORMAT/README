@@ -4,11 +4,4 @@
 2. run interpolation:
 	./interpolate.bash
 
-3. then the model will be saved in "DATA/model_velocity.dat_input"
-   you can then run simulations in that model by setting in "DATA/Par_file"
-	assign_external_model           = .true.
-	READ_EXTERNAL_SEP_FILE          = .true.
-
-   a simple example can be done by:
-	./run.bash
 
