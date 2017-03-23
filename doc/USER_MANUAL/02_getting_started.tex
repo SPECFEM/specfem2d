@@ -87,6 +87,9 @@ on many processors.
 If your compiler has problems with the \texttt{use mpi} statements that are used in the code, use the script called
 \texttt{replace\_use\_mpi\_with\_include\_mpif\_dot\_h.pl} in the root directory to replace all of them with \texttt{include `mpif.h'} automatically.
 
+If you have problems configuring the code on a Cray machine, i.e. for instance if you get an error message from the \texttt{configure} script, try exporting these two variables:
+\texttt{MPI\_INC=\${CRAY\_MPICH2\_DIR}/include and FCLIBS=" "}, and for more details if needed you can refer to the \texttt{utils/Cray\_compiler\_information} directory.
+
 \section{Visualizing the subroutine calling tree of the source code}
 
 Packages such as \texttt{doxywizard} can be used to visualize the subroutine calling tree of the source code.
