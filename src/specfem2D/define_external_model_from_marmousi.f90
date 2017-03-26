@@ -101,7 +101,7 @@
         rho(i,j,ispec) = rho0
         vp(i,j,ispec) = vp0 + comp_grad*z
 
-	! assumes Poisson solids	
+  ! assumes Poisson solids
         vs(i,j,ispec) = vp(i,j,ispec) / sqrt(3.d0)
 
         QKappa_attenuation(i,j,ispec) = 9999. ! this means no attenuation

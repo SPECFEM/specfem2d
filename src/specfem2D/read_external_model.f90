@@ -51,7 +51,7 @@
   ! Local variables
   integer :: i,j,ispec,itmp
   integer :: ier
-  real(kind=CUSTOM_REAL) :: tmp1, tmp2 
+  real(kind=CUSTOM_REAL) :: tmp1, tmp2
   double precision :: vs_val,vp_val,rho_val
   character(len=150) :: inputname
 

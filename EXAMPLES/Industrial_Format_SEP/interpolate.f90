@@ -8,15 +8,15 @@
   character(len=512),parameter :: sep_header_file_rho='rho.H' ! not used
   integer :: NX,NY,NZ,esize,nproc,scalar
   real :: OX,OY,OZ,DX,DY,DZ
-  real,dimension(:,:),a<<<llocatable :: vp_SEP,vs_SEP,rho_SEP
+  real,dimension(:,:),a <  <  < llocatable :: vp_SEP,vs_SEP,rho_SEP
   character(len=512) :: system_command,sep_file,data_format,mesh_file,wavespeed_file
   character(len=40) :: tmpstring
   character(len=20) :: numstring
   character(len=3) ::num
-  logical :: closest_point  
+  logical :: closest_point
 
   ! Two options: closest_point ('closet_point=.true.') or bilinear interpolation ('closet_point=.false.')
-  closest_point = .true. 
+  closest_point = .true.
 
   ! Option for interpolation points: 1 == corners only / 2 == corner & midpoints used for interpolation
   scalar = 1
@@ -53,9 +53,9 @@
 
   open(unit=15,file='./DATA/interface_industry.dat',status='unknown')
   write(15,*)'#'
-  write(15,*)'# number of interfaces'     
+  write(15,*)'# number of interfaces'
   write(15,*)'#'
-  write(15,*)' 2'     
+  write(15,*)' 2'
   write(15,*)'#'
   write(15,*)'# for each interface below, we give the number of points and then x,z for each point'
   write(15,*)'#'
@@ -82,21 +82,21 @@
 
   print *,'OX=',OX
   write(numstring,*) OX
-  write(tmpstring,*) 'xmin			=',numstring
+  write(tmpstring,*) 'xmin      =',numstring
   write(system_command,*) tmpstring
   write(system_command,*) 'sed -i "/xmin/c',tmpstring,'" ./DATA/Par_file'
   write (*,*) system_command
-  call system(system_command)    
+  call system(system_command)
 
   write(numstring,*) OX+(NX-1)*DX
-  write(tmpstring,*) 'xmax			=',numstring
+  write(tmpstring,*) 'xmax      =',numstring
   write(*,*) tmpstring
   write(system_command,*) 'sed -i "/xmax/c',tmpstring,'" ./DATA/Par_file'
   write (*,*) system_command
   call system(system_command)
 
   write(numstring,*) (NX-1)/scalar
-  write(tmpstring,*) 'nx			 =',numstring
+  write(tmpstring,*) 'nx       =',numstring
   write(*,*) tmpstring
   write(system_command,*) 'sed -i "/^nx/c',tmpstring,'" ./DATA/Par_file'
   write (*,*) system_command
@@ -111,7 +111,7 @@
   call system(system_command)
 
 
-  write(tmpstring,*) 'NPROC			 =',nproc
+  write(tmpstring,*) 'NPROC      =',nproc
   write(*,*) tmpstring
   write(system_command,*) 'sed -i "/^NPROC/c',tmpstring,'" ./DATA/Par_file'
   write (*,*) system_command
@@ -121,10 +121,10 @@
 
   write(num,'(i2.2)') nproc
   print *,'call xmeshfem2d'
-  call system('./xmeshfem2D >OUTPUT_FILES/output_mesher.txt') 
+  call system('./xmeshfem2D > OUTPUT_FILES/output_mesher.txt')
 
   print *,'call xspecfem2d'
-  call system('mpirun -np ' //num//' ./xspecfem2D>OUTPUT_FILES/output_solver.txt')
+  call system('mpirun -np ' //num//' ./xspecfem2D > OUTPUT_FILES/output_solver.txt')
 
   call system('sed -i "/^MODEL   /c MODEL                              = legacy" ./DATA/Par_file')
   call system('sed -i "/^SAVE_MODEL   /c SAVE_MODEL                              = default" ./DATA/Par_file')
@@ -314,7 +314,7 @@
     do while (ier == 0)
       do i=1,NGLLX*NGLLZ
         read(15,'(I10,5e15.5e4)',iostat=ier)  iglob(i),x(i),z(i),rho_temp,vp_temp,vs_temp
-        if(closest_point) then       
+        if (closest_point) then
           ix=NINT((x(i)-OX)/DX)+1
           iz=NINT((z(i)-OZ)/DZ)+1
 
@@ -329,31 +329,31 @@
         else
           ix=INT((x(i)-OX)/DX)+1
           iz=INT((z(i)-OZ)/DZ)+1
-	  ix1=ix+1
-	  iz1=iz+1
+    ix1=ix+1
+    iz1=iz+1
 
           if (ix1 > NX) ix1=NX
           if (iz1 > NZ) iz1=NZ
 
-	  a1=x(i)-OX-(ix-1)*DX
-	  a1=a1/DX
-	  b1=z(i)-OZ-(iz-1)*DZ
-	  b1=b1/DZ
+    a1=x(i)-OX-(ix-1)*DX
+    a1=a1/DX
+    b1=z(i)-OZ-(iz-1)*DZ
+    b1=b1/DZ
 
-	  tmp1=(1-a1)*vp(ix,iz)+a1*vp(ix1,iz)
-	  tmp2=(1-a1)*vp(ix,iz1)+a1*vp(ix1,iz1)
-	  tmp1=(1-b1)*tmp1+b1*tmp2
-	  vp_new(i)=tmp1
+    tmp1=(1-a1)*vp(ix,iz)+a1*vp(ix1,iz)
+    tmp2=(1-a1)*vp(ix,iz1)+a1*vp(ix1,iz1)
+    tmp1=(1-b1)*tmp1+b1*tmp2
+    vp_new(i)=tmp1
 
-	  tmp1=(1-a1)/vs(ix,iz)+a1/vs(ix1,iz)
-	  tmp2=(1-a1)/vs(ix,iz1)+a1/vs(ix1,iz1)
-	  tmp1=(1-b1)*tmp1+b1*tmp2
-	  vs_new(i)=1/tmp1
+    tmp1=(1-a1)/vs(ix,iz)+a1/vs(ix1,iz)
+    tmp2=(1-a1)/vs(ix,iz1)+a1/vs(ix1,iz1)
+    tmp1=(1-b1)*tmp1+b1*tmp2
+    vs_new(i)=1/tmp1
 
-	  tmp1=(1-a1)*rho(ix,iz)+a1*rho(ix1,iz)
-	  tmp2=(1-a1)*rho(ix,iz1)+a1*rho(ix1,iz1)
-	  tmp1=(1-b1)*tmp1+b1*tmp2
-      	  rho_new(i)=tmp1
+    tmp1=(1-a1)*rho(ix,iz)+a1*rho(ix1,iz)
+    tmp2=(1-a1)*rho(ix,iz1)+a1*rho(ix1,iz1)
+    tmp1=(1-b1)*tmp1+b1*tmp2
+          rho_new(i)=tmp1
         endif
       enddo
       if (ier == 0) then

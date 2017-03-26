@@ -115,7 +115,7 @@
   aniso9(:) = 0.d0
   aniso10(:) = 0.d0
   aniso11(:) = 0.d0
-  
+
   comp_g(:) = 0.0d0
   QKappa(:) = 9999.d0
   Qmu(:) = 9999.d0

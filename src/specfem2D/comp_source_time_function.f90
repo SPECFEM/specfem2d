@@ -298,7 +298,7 @@
 
   ! sinc function defined here
 
-  if(abs(a) < 1.0d-10) then
+  if (abs(a) < 1.0d-10) then
     sinc = 1.0d0
   else
     sinc = sin(a)/a
@@ -323,9 +323,9 @@
   b = abs(a)
   cos_taper = 0.0
 
-  if(b <= hdur) then
+  if (b <= hdur) then
     cos_taper = 1.0;
-  else if(b > hdur .and. b < 2.0 * hdur) then
+  else if (b > hdur .and. b < 2.0 * hdur) then
     cos_taper = cos( PI*0.5*(b-hdur)/hdur )
   endif
 
