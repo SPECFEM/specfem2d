@@ -767,7 +767,7 @@
 
   ! checks model
   select case (trim(MODEL))
-  case ('default','ascii','binary','binary_voigt','external','gll','legacy')
+  case ('default','ascii','binary','binary_voigt','external','gll','legacy','marmousi')
     continue ! do nothing
   case default
     print *,'Error: unknown model choosen ',trim(MODEL)
