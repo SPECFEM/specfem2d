@@ -43,9 +43,8 @@
   implicit none
 
   ! local parameters
-  integer :: ier
+  integer :: ier,int_dummy
   character(len=MAX_STRING_LEN) :: prname, dummy
-  logical :: bool_dummy
 
   ! starts reading SIMULATION_TYPE and SAVE_FORWARD from Par_file
 
@@ -55,7 +54,7 @@
   ! read type of simulation
   call read_value_integer_p(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
   if (ier /= 0) stop 'error reading parameter SIMULATION_TYPE in Par_file'
-  call read_value_integer_p(bool_dummy, 'solver.NOISE_TOMOGRAPHY')
+  call read_value_integer_p(int_dummy, 'solver.NOISE_TOMOGRAPHY')
   if (ier /= 0) stop 'error reading parameter NOISE_TOMOGRAPHY in Par_file'
   call read_value_logical_p(SAVE_FORWARD, 'solver.SAVE_FORWARD')
   if (ier /= 0) stop 'error reading parameter SAVE_FORWARD in Par_file'
