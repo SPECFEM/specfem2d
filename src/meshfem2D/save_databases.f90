@@ -130,7 +130,7 @@
   write(IOUT) title
 
   ! 'Type of simulation'
-  write(IOUT) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
+  write(IOUT) NOISE_TOMOGRAPHY, UNDO_ATTENUATION
 
   ! 'nspec'
   write(IOUT) nspec

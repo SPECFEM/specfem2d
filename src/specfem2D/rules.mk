@@ -190,6 +190,8 @@ specfem2D_SHARED_OBJECTS = \
 	$O/lagrange_poly.shared.o \
 	$O/parallel.shared.o \
 	$O/set_color_palette.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 
 JPEGLIB_OBJECTS = \

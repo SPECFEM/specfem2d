@@ -34,7 +34,6 @@
 
   subroutine read_mesh_for_init()
 
-! starts reading in parameters from input Database file
 
   use constants, only: IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
   use specfem_par
@@ -45,7 +44,24 @@
 
   ! local parameters
   integer :: ier
-  character(len=MAX_STRING_LEN) :: prname
+  character(len=MAX_STRING_LEN) :: prname, dummy
+  logical :: bool_dummy
+
+  ! starts reading SIMULATION_TYPE and SAVE_FORWARD from Par_file
+
+  call open_parameter_file()
+  call read_value_string_p(dummy, 'solver.title')
+  if (ier /= 0) stop 'error reading parameter title in Par_file'
+  ! read type of simulation
+  call read_value_integer_p(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
+  if (ier /= 0) stop 'error reading parameter SIMULATION_TYPE in Par_file'
+  call read_value_integer_p(bool_dummy, 'solver.NOISE_TOMOGRAPHY')
+  if (ier /= 0) stop 'error reading parameter NOISE_TOMOGRAPHY in Par_file'
+  call read_value_logical_p(SAVE_FORWARD, 'solver.SAVE_FORWARD')
+  if (ier /= 0) stop 'error reading parameter SAVE_FORWARD in Par_file'
+  call close_parameter_file()
+
+  ! starts reading in parameters from input Database file
 
   ! opens Database file
   write(prname,"('./OUTPUT_FILES/Database',i5.5,'.bin')") myrank
@@ -65,7 +81,7 @@
   read(IIN) simulation_title
 
   !---- read parameters from input file
-  read(IIN) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
+  read(IIN) NOISE_TOMOGRAPHY, UNDO_ATTENUATION
 
   read(IIN) nspec
 
