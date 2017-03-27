@@ -237,7 +237,7 @@
   use constants, only: NGLLX,NGLLZ,CUSTOM_REAL
 
   use specfem_par, only: potential_dot_dot_acoustic,ispec_is_acoustic,NSTEP,it, &
-                         nrecloc,ispec_selected_rec_loc,&
+                         nrecloc,ispec_selected_rec_loc, &
                          ibool,kappastore,source_adjointe,xir_store_loc,gammar_store_loc
   implicit none
 

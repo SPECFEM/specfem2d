@@ -117,7 +117,7 @@
                          ispec_is_poroelastic,ispec_selected_rec_loc, &
                          ibool,initialfield,SIMULATION_TYPE, &
                          kmato,porosity,density, &
-                         accels_poroelastic,accelw_poroelastic,&
+                         accels_poroelastic,accelw_poroelastic, &
                          source_adjointe,xir_store_loc,gammar_store_loc
 
   implicit none

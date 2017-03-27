@@ -334,7 +334,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: P_SV,accel_elastic,ispec_is_elastic,NSTEP,it, &
-                         nrecloc,ispec_selected_rec_loc,ibool,&
+                         nrecloc,ispec_selected_rec_loc,ibool, &
                          source_adjointe,xir_store_loc,gammar_store_loc
   implicit none
 
