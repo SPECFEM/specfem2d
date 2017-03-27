@@ -415,8 +415,7 @@ typedef struct mesh_ {
   realw* d_source_time_function;
 
   // receivers
-  int* d_number_receiver_global;
-  int* d_ispec_selected_rec;
+  int* d_ispec_selected_rec_loc;
   int nrec_local;
 
   realw* h_seismograms;
@@ -428,7 +427,6 @@ typedef struct mesh_ {
   int nadj_rec_local;
   realw* d_adj_sourcearrays;
   realw* h_adj_sourcearrays_slice;
-  int* d_pre_computed_irec;
   realw* d_source_adjointe;
   realw* d_xir_store_loc;
   realw* d_gammar_store_loc;

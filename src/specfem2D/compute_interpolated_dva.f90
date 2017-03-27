@@ -31,15 +31,15 @@
 !
 !=====================================================================
 
-  subroutine compute_interpolated_dva(irec,ispec,vector_field_element,pressure_element,curl_element, &
+  subroutine compute_interpolated_dva(irecloc,ispec,vector_field_element,pressure_element,curl_element, &
                                       vx,vz,vcurl)
 
   use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ
-  use specfem_par, only: hxir_store,hgammar_store,ibool,seismotype
+  use specfem_par, only: xir_store_loc,gammar_store_loc,ibool,seismotype
 
   implicit none
 
-  integer,intent(in) :: irec,ispec
+  integer,intent(in) :: irecloc,ispec
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ),intent(in) :: vector_field_element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(in) :: pressure_element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(in) :: curl_element
@@ -58,7 +58,7 @@
   do j = 1,NGLLZ
     do i = 1,NGLLX
       iglob = ibool(i,j,ispec)
-      hlagrange = hxir_store(irec,i)*hgammar_store(irec,j)
+      hlagrange = xir_store_loc(irecloc,i)*gammar_store_loc(irecloc,j)
 
       ! displacement/velocity/acceleration/pressure value (depending on seismotype)
       select case (seismotype)
@@ -95,5 +95,3 @@
   enddo
 
   end subroutine compute_interpolated_dva
-
-

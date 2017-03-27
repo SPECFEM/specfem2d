@@ -124,17 +124,13 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine compute_arrays_adj_source(xi_rec,gamma_rec,irec_local,adj_source_file,adj_sourcearray)
+  subroutine read_adj_source(xi_rec,gamma_rec,irec_local,adj_source_file)
 
-! reads in adjoint source file and computes source arrays for receiver location
+! reads in adjoint source file
 
-  use constants, only: IIN,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,CUSTOM_REAL,NDIM
+  use constants, only: IIN,MAX_STRING_LEN,CUSTOM_REAL,NDIM
 
-  use specfem_par, only: myrank,NSTEP,P_SV,AXISYM,is_on_the_axis, &
-                        xigll,zigll,hxir,hpxir,hgammar,hpgammar,xiglj, &
-                        ispec_selected_rec,seismotype,GPU_MODE
-
-  use specfem_par_gpu, only: source_adjointe
+  use specfem_par, only: myrank,NSTEP,P_SV,seismotype,source_adjointe
 
   implicit none
 
@@ -143,10 +139,8 @@
 
   character(len=MAX_STRING_LEN),intent(in) :: adj_source_file
 
-  real(kind=CUSTOM_REAL),dimension(NSTEP,NDIM,NGLLX,NGLLZ),intent(out) :: adj_sourcearray
-
   ! local parameters
-  integer :: icomp, itime, i, k
+  integer :: icomp, itime
   integer :: ier
   double precision :: junk
   double precision,dimension(NSTEP,3) :: adj_src_s
@@ -218,73 +212,36 @@
 
   endif
 
-  ! gpu arrays
-  if (GPU_MODE) then
-    if (P_SV) then
-      ! P_SV-case
-      source_adjointe(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
-      source_adjointe(irec_local,:,2) = real(adj_src_s(:,3),kind=CUSTOM_REAL)
-    else
-      ! SH-case
-      source_adjointe(irec_local,:,1) = real(adj_src_s(:,2),kind=CUSTOM_REAL)
-    endif
-  endif
-
-  ! location interpolation
-  if (AXISYM) then
-    if (is_on_the_axis(ispec_selected_rec(irec_local))) then ! TODO verify irec_local...
-      call lagrange_any(xi_rec,NGLJ,xiglj,hxir,hpxir)
-    else
-      call lagrange_any(xi_rec,NGLLX,xigll,hxir,hpxir)
-    endif
+  if (P_SV) then
+    ! P_SV-case
+    source_adjointe(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
+    source_adjointe(irec_local,:,2) = real(adj_src_s(:,3),kind=CUSTOM_REAL)
   else
-    call lagrange_any(xi_rec,NGLLX,xigll,hxir,hpxir)
+    ! SH-case
+    source_adjointe(irec_local,:,1) = real(adj_src_s(:,2),kind=CUSTOM_REAL)
   endif
-  call lagrange_any(gamma_rec,NGLLZ,zigll,hgammar,hpgammar)
 
-  ! fills into full adjoint source array (NSTEP,NDIM,NGLLX,NGLLZ)
-  ! note: adj_sourcearray is defined as CUSTOM_REAL
-  adj_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
-  do k = 1, NGLLZ
-    do i = 1, NGLLX
-      if (P_SV) then
-        ! P_SV-case
-        adj_sourcearray(:,1,i,k) = real(hxir(i) * hgammar(k) * adj_src_s(:,1),kind=CUSTOM_REAL)
-        adj_sourcearray(:,2,i,k) = real(hxir(i) * hgammar(k) * adj_src_s(:,3),kind=CUSTOM_REAL)
-      else
-        ! SH-case
-        adj_sourcearray(:,1,i,k) = real(hxir(i) * hgammar(k) * adj_src_s(:,2),kind=CUSTOM_REAL)
-      endif
-    enddo
-  enddo
-
-  end subroutine compute_arrays_adj_source
+  end subroutine read_adj_source
 
 !
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine compute_arrays_adj_source_SU(seismotype)
+  subroutine read_adj_source_SU(seismotype)
 
-! reads in all adjoint sources in SU-file format and computes source arrays for receiver locations
+! reads in all adjoint sources in SU-file format
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,NGLJ,NDIM
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NDIM
 
-  use specfem_par, only: AXISYM,xiglj,is_on_the_axis, &
-                         myrank, NSTEP, nrec, &
-                         xi_receiver, gamma_receiver, islice_selected_rec, &
-                         xigll,zigll,hxir,hgammar,hpxir,hpgammar, &
-                         adj_sourcearrays, &
-                         GPU_MODE, ispec_selected_rec,P_SV
-
-  use specfem_par_gpu, only: source_adjointe
+  use specfem_par, only: myrank, NSTEP, nrec, &
+                         islice_selected_rec, P_SV,source_adjointe
 
   implicit none
 
   integer,intent(in) :: seismotype
 
   ! local parameters
-  integer :: i, j, irec, irec_local, ier
+  integer :: irec, irec_local, ier
   character(len=MAX_STRING_LEN) :: filename
 
   ! SU
@@ -292,8 +249,6 @@
   integer(kind=2) :: header2(2)
 
   real(kind=4),dimension(:,:),allocatable :: adj_src_s
-
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
 
   ! opens adjoint source files in SU format
   if (seismotype == 4 .or. seismotype == 6) then
@@ -324,9 +279,6 @@
   ! allocates temporary array
   allocate(adj_src_s(NSTEP,NDIM))
 
-  ! temporary array
-  allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLZ))
-
   irec_local = 0
   do irec = 1, nrec
 
@@ -334,7 +286,6 @@
     if (myrank == islice_selected_rec(irec)) then
       irec_local = irec_local + 1
 
-      adj_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
       adj_src_s(:,:) = 0.0
 
       if (seismotype == 4 .or. seismotype == 6) then
@@ -359,50 +310,14 @@
       endif
 
       header2 = int(r4head(29), kind=2)
-      if (irec == 1) print *, r4head(1),r4head(19),r4head(20),r4head(21),r4head(22),header2(2)
 
-      ! location interpolation
-      if (AXISYM) then
-        if (is_on_the_axis(ispec_selected_rec(irec))) then ! TODO verify ispec_selected_rec and not ispec_selected_source
-          call lagrange_any(xi_receiver(irec),NGLJ,xiglj,hxir,hpxir)
-        else
-          call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
-        endif
+      if (P_SV) then
+        ! P_SV-case
+        source_adjointe(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
+        source_adjointe(irec_local,:,2) = real(adj_src_s(:,2),kind=CUSTOM_REAL)
       else
-        call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
-      endif
-
-      call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
-
-      ! gpu arrays
-      if (GPU_MODE) then
-        if (P_SV) then
-          ! P_SV-case
-          source_adjointe(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
-          source_adjointe(irec_local,:,2) = real(adj_src_s(:,2),kind=CUSTOM_REAL)
-        else
-          ! SH-case
-          source_adjointe(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
-        endif
-      endif
-
-      ! adjoint source interpolated on element
-      if (.not. GPU_MODE) then
-        do j = 1, NGLLZ
-          do i = 1, NGLLX
-            if (P_SV) then
-              ! P_SV-case
-              adj_sourcearray(:,1,i,j) = real(hxir(i) * hgammar(j) * adj_src_s(:,1),kind=CUSTOM_REAL)
-              adj_sourcearray(:,2,i,j) = real(hxir(i) * hgammar(j) * adj_src_s(:,2),kind=CUSTOM_REAL)
-            else
-              ! SH-case
-              adj_sourcearray(:,1,i,j) = real(hxir(i) * hgammar(j) * adj_src_s(:,1),kind=CUSTOM_REAL)
-            endif
-          enddo
-        enddo
-
-        ! stores all local adjoint sources
-        adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+        ! SH-case
+        source_adjointe(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
       endif
 
     endif !  if (myrank == islice_selected_rec(irec))
@@ -424,6 +339,5 @@
 
   ! frees memory
   deallocate(adj_src_s)
-  deallocate(adj_sourcearray)
 
-  end subroutine compute_arrays_adj_source_SU
+  end subroutine read_adj_source_SU

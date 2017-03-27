@@ -113,16 +113,17 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
-  use specfem_par, only: myrank,nrec,NSTEP,it, &
-                         ispec_is_poroelastic,islice_selected_rec,ispec_selected_rec, &
-                         ibool,adj_sourcearrays,initialfield,SIMULATION_TYPE, &
+  use specfem_par, only: nrecloc,NSTEP,it, &
+                         ispec_is_poroelastic,ispec_selected_rec_loc, &
+                         ibool,initialfield,SIMULATION_TYPE, &
                          kmato,porosity,density, &
-                         accels_poroelastic,accelw_poroelastic
+                         accels_poroelastic,accelw_poroelastic,&
+                         source_adjointe,xir_store_loc,gammar_store_loc
 
   implicit none
 
   ! local parameters
-  integer :: irec_local,irec,i,j,iglob,ispec
+  integer :: irec_local,i,j,iglob,ispec
   double precision :: phi,rho_s,rho_f,rho_bar
 
   ! checks if anything to do
@@ -131,43 +132,41 @@
   ! only for adjoint/kernel simulations
   if (.not. SIMULATION_TYPE == 3) return
 
-  ! adjoint wavefield
-  irec_local = 0
-  do irec = 1,nrec
-    ! add the source (only if this proc carries the source)
-    if (myrank == islice_selected_rec(irec)) then
-      irec_local = irec_local + 1
+  do irec_local = 1,nrecloc
+    ! element containing adjoint source
+    ispec = ispec_selected_rec_loc(irec_local)
 
-      ! element containing adjoint source
-      ispec = ispec_selected_rec(irec)
+    if (ispec_is_poroelastic(ispec)) then
 
-      if (ispec_is_poroelastic(ispec)) then
+      phi = porosity(kmato(ispec))
+      rho_s = density(1,kmato(ispec))
+      rho_f = density(2,kmato(ispec))
 
-        phi = porosity(kmato(ispec))
-        rho_s = density(1,kmato(ispec))
-        rho_f = density(2,kmato(ispec))
+      rho_bar = (1.d0 - phi)*rho_s + phi*rho_f
 
-        rho_bar = (1.d0 - phi)*rho_s + phi*rho_f
+      ! add source array
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
 
-        ! add source array
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            iglob = ibool(i,j,ispec)
+          ! solid contribution
+          accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + real(xir_store_loc(irec_local,i)*&
+            gammar_store_loc(irec_local,j)*source_adjointe(irec_local,NSTEP-it+1,1),kind=CUSTOM_REAL)
+          accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + real(xir_store_loc(irec_local,i)*&
+            gammar_store_loc(irec_local,j)*source_adjointe(irec_local,NSTEP-it+1,2),kind=CUSTOM_REAL)
 
-            ! solid contribution
-            accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j)
-            accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j)
-
-            ! fluid
-            accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - &
-                  real(rho_f/rho_bar * adj_sourcearrays(irec_local,NSTEP-it+1,1,i,j),kind=CUSTOM_REAL)
-            accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - &
-                  real(rho_f/rho_bar * adj_sourcearrays(irec_local,NSTEP-it+1,2,i,j),kind=CUSTOM_REAL)
-          enddo
+          ! fluid
+          accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - &
+                real(rho_f/rho_bar * xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
+                source_adjointe(irec_local,NSTEP-it+1,1),kind=CUSTOM_REAL)
+          accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - &
+                real(rho_f/rho_bar * xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
+                source_adjointe(irec_local,NSTEP-it+1,2),kind=CUSTOM_REAL)
         enddo
+      enddo
 
-      endif ! if element is poroelastic
-    endif ! if this processor core carries the adjoint source and the source element is poroelastic
-  enddo ! irec = 1,nrec
+    endif ! if element is poroelastic
+
+  enddo ! irec_local = 1,nrecloc
 
   end subroutine compute_add_sources_poro_adjoint
