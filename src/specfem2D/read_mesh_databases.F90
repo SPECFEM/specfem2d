@@ -43,6 +43,7 @@
   implicit none
 
   ! local parameters
+  integer, external :: err_occurred
   integer :: ier,int_dummy
   character(len=MAX_STRING_LEN) :: prname, dummy
 
@@ -50,14 +51,14 @@
 
   call open_parameter_file()
   call read_value_string_p(dummy, 'solver.title')
-  if (ier /= 0) stop 'error reading parameter title in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter title in Par_file'
   ! read type of simulation
   call read_value_integer_p(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
-  if (ier /= 0) stop 'error reading parameter SIMULATION_TYPE in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter SIMULATION_TYPE in Par_file'
   call read_value_integer_p(int_dummy, 'solver.NOISE_TOMOGRAPHY')
-  if (ier /= 0) stop 'error reading parameter NOISE_TOMOGRAPHY in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter NOISE_TOMOGRAPHY in Par_file'
   call read_value_logical_p(SAVE_FORWARD, 'solver.SAVE_FORWARD')
-  if (ier /= 0) stop 'error reading parameter SAVE_FORWARD in Par_file'
+  if (err_occurred() /= 0) stop 'error reading parameter SAVE_FORWARD in Par_file'
   call close_parameter_file()
 
   ! starts reading in parameters from input Database file
