@@ -100,7 +100,7 @@
 
   use specfem_par, only: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
     ispec_is_anisotropic,ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic,ispec_is_gravitoacoustic, &
-    nspec,myrank,P_SV
+    nspec,myrank,P_SV,MODEL
 
   ! external model parameters
   use specfem_par, only: vsext,gravityext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
@@ -138,36 +138,29 @@
            (vsext(i,j,ispec) < TINYVAL .and. previous_vsext >= TINYVAL)))  &
           call exit_MPI(myrank,'external velocity model cannot be both fluid and solid inside the same spectral element')
 
-        ! sets element type
-        if (c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
-            c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
-          ! anisotropic elastic
-          ispec_is_anisotropic(ispec) = .true.
-          ispec_is_poroelastic(ispec) = .false.
-          ispec_is_elastic(ispec) = .true.
-          any_elastic = .true.
-
-        else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) < TINYVAL)) then
+        if (vsext(i,j,ispec) < TINYVAL) then
           ! acoustic
-          ispec_is_elastic(ispec) = .false.
-          ispec_is_poroelastic(ispec) = .false.
-          ispec_is_gravitoacoustic(ispec) = .false.
           ispec_is_acoustic(ispec) = .true.
-          any_acoustic = .true.
-
-        else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) >= TINYVAL)) then
-          ! gravito-acoustic
-          ispec_is_elastic(ispec) = .false.
-          ispec_is_poroelastic(ispec) = .false.
-          ispec_is_acoustic(ispec)=.false.
-          ispec_is_gravitoacoustic(ispec) = .true.
-          any_gravitoacoustic = .true.
-
         else
           ! elastic
-          ispec_is_poroelastic(ispec) = .false.
           ispec_is_elastic(ispec) = .true.
-          any_elastic = .true.
+        endif
+
+        if ( trim(MODEL) == 'external' .or. trim(MODEL) == 'tomo' .or. trim(MODEL) == 'binary_voigt' ) then
+
+          ! sets element type
+          if (c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
+              c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) then
+            ! anisotropic elastic
+            ispec_is_anisotropic(ispec) = .true.
+            ispec_is_elastic(ispec) = .true.
+            ispec_is_acoustic(ispec) = .false.
+          else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) >= TINYVAL)) then
+            ! gravito-acoustic
+            ispec_is_gravitoacoustic(ispec) = .true.
+            ispec_is_acoustic(ispec) = .false.
+          endif
+
         endif
 
         ! sets new GLL point value to compare against
@@ -176,11 +169,11 @@
     enddo
   enddo ! ispec
 
-  ! safety check
-  call get_simulation_domain_check()
-
   ! sets domain numbers
   call get_simulation_domain_counts()
+
+  ! safety check
+  call get_simulation_domain_check()
 
   end subroutine get_simulation_domains_from_external_models
 
@@ -266,17 +259,21 @@
   ! acoustic
   ! number of acoustic elements in this partition
   nspec_acoustic = count(ispec_is_acoustic(:))
+  if (nspec_acoustic > 0 ) any_acoustic = .true.
 
   ! elastic
   ! number of elastic elements in this partition
   nspec_elastic = count(ispec_is_elastic(:))
+  if (nspec_elastic > 0 ) any_elastic = .true.
 
   ! poroelastic
   ! number of elastic elements in this partition
   nspec_poroelastic = count(ispec_is_poroelastic(:))
+  if (nspec_poroelastic > 0 ) any_poroelastic = .true.
 
   ! gravito-acoustic
   ! number of elastic elements in this partition
   nspec_gravitoacoustic = count(ispec_is_gravitoacoustic(:))
+  if (nspec_gravitoacoustic > 0 ) any_gravitoacoustic = .true.
 
   end subroutine get_simulation_domain_counts
