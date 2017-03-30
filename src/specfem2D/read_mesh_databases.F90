@@ -179,8 +179,6 @@
 
   read(IIN) setup_with_binary_database
 
-print *,'yeshhhh',setup_with_binary_database
-
   !---- read time step
   read(IIN) NSTEP,DT
 

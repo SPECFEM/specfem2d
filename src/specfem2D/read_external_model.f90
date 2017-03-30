@@ -40,7 +40,7 @@
 
   use specfem_par, only: nspec,nglob,ibool, &
     ispec_is_elastic,ispec_is_anisotropic, &
-    coord,kmato,MODEL,tomo_material,myrank
+    coord,kmato,MODEL,tomo_material,myrank,setup_with_binary_database
 
   ! external model parameters
   use specfem_par, only: rhoext,vpext,vsext,gravityext,Nsqext, &
@@ -279,7 +279,9 @@
   endif
 
   ! resets domain flags
-  call get_simulation_domains_from_external_models()
+  if (setup_with_binary_database /= 2) then 
+    call get_simulation_domains_from_external_models()
+  endif
 
   end subroutine read_external_model
 

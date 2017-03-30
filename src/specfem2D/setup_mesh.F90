@@ -545,7 +545,7 @@
   ! local parameters
   integer :: nspec_ext,ier
 
-  ! allocates material arrays for vp vs rho
+  ! allocates material arrays for vp vs rho QKappa Qmu
   if (assign_external_model) then
     nspec_ext = nspec
   else
@@ -560,7 +560,7 @@
            Qmu_attenuationext(NGLLX,NGLLZ,nspec_ext),stat=ier)
   if (ier /= 0) stop 'Error allocating external model arrays for vp vs rho attenuation'
 
-  ! allocates material arrays for gravity Nsq QKappa Qmu c11 c13 c15 c33 c35 c55 c12 c23 c25 c22
+  ! allocates material arrays for gravity Nsq c11 c13 c15 c33 c35 c55 c12 c23 c25 c22
   if (assign_external_model .and. ( trim(MODEL) == 'external' .or. &
                                     trim(MODEL) == 'tomo' .or. trim(MODEL) == 'binary_voigt' ) ) then
     nspec_ext = nspec
@@ -581,7 +581,7 @@
            c23ext(NGLLX,NGLLZ,nspec_ext), &
            c25ext(NGLLX,NGLLZ,nspec_ext), &
            c22ext(NGLLX,NGLLZ,nspec_ext),stat=ier)
-  if (ier /= 0) stop 'Error allocating external model arrays for gravity Nsq attenuation anisotropy'
+  if (ier /= 0) stop 'Error allocating external model arrays for gravity Nsq anisotropy'
 
   ! reads in external models
   if (assign_external_model) then
