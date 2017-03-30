@@ -42,8 +42,8 @@
 
   if (setup_with_binary_database == 2 ) then
    call setup_mesh_external_models()
-   call read_sources_receivers()   
-   if (SIMULATION_TYPE==3) call setup_adjoint_sources()
+   call read_sources_receivers()
+   if (SIMULATION_TYPE == 3) call setup_adjoint_sources()
    call read_binary_database_part1()
   endif
 
@@ -91,7 +91,7 @@
     if (setup_with_binary_database == 1 ) call save_binary_database()
 
   else
-  
+
     call read_binary_database_part2()
 
   endif

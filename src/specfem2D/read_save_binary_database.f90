@@ -48,17 +48,17 @@
         open(unit = 2040, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing data file to disk'
 
-  write(2040) nglob,ELASTIC_SIMULATION,POROELASTIC_SIMULATION,&
-              ACOUSTIC_SIMULATION,GRAVITOACOUSTIC_SIMULATION,coupled_acoustic_elastic,&
+  write(2040) nglob,ELASTIC_SIMULATION,POROELASTIC_SIMULATION, &
+              ACOUSTIC_SIMULATION,GRAVITOACOUSTIC_SIMULATION,coupled_acoustic_elastic, &
               any_acoustic,any_elastic,any_poroelastic,any_gravitoacoustic
- 
-  write(2040) coord,jacobian,xix,xiz,gammax,gammaz,&
+
+  write(2040) coord,jacobian,xix,xiz,gammax,gammaz, &
               this_ibool_is_a_periodic_edge,ibool,ispec_is_inner
 
   if (GPU_MODE) then
-    write (2040) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw,&
+    write (2040) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw, &
                  free_ac_ispec,cote_abs,free_surface_ij,ANY_ANISOTROPY
-  endif 
+  endif
 
   if (any_acoustic) then
     write(2040) rmass_inverse_acoustic,num_phase_ispec_acoustic
@@ -71,14 +71,14 @@
   endif
 
   if (coupled_acoustic_elastic) then
-    write(2040) fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge,&
+    write(2040) fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
                 ivalue_inverse,jvalue_inverse,ivalue,jvalue
     if (GPU_MODE) write(2040) coupling_ac_el_ispec,coupling_ac_el_ij,coupling_ac_el_normal,coupling_ac_el_jacobian1Dw
   endif
 
-  if (NPROC>1) then
-    write(2040) ninterface_acoustic,ninterface_elastic,inum_interfaces_acoustic,inum_interfaces_elastic,&
-                nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_ext_mesh,&
+  if (NPROC > 1) then
+    write(2040) ninterface_acoustic,ninterface_elastic,inum_interfaces_acoustic,inum_interfaces_elastic, &
+                nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_ext_mesh, &
                 ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_ext_mesh
   endif
 
@@ -87,7 +87,7 @@
   ! saves all data regarding sources in a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_sources_info.bin'
       open(unit = 2040, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing sources info file to disk' 
+      if (ier /= 0) stop 'Error writing sources info file to disk'
 
   write(2040) source_time_function,nsources_local,sourcearrays,islice_selected_source,ispec_selected_source
 
@@ -99,7 +99,7 @@
       if (ier /= 0) stop 'Error writing receivers info data file to disk'
 
   write(2040) nrecloc,nrec
-  write(2040) recloc,ispec_selected_rec_loc,cosrot_irec,sinrot_irec,xir_store_loc,gammar_store_loc,st_xval,st_zval,&
+  write(2040) recloc,ispec_selected_rec_loc,cosrot_irec,sinrot_irec,xir_store_loc,gammar_store_loc,st_xval,st_zval, &
               station_name,network_name,islice_selected_rec
 
   close(2040)
@@ -122,15 +122,15 @@
   integer ier
   character(len=MAX_STRING_LEN) :: outputname
 
-  ! read setup data from a binary file that need to be known in advance (for allocations purpose) 
+  ! read setup data from a binary file that need to be known in advance (for allocations purpose)
   write(outputname,'(a,i6.6,a)') 'OUTPUT_FILES/proc',myrank,'_data.bin'
       open(unit=2040,file=outputname,status='old',form='unformatted',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_data.bin')
 
-  read(2040) nglob,ELASTIC_SIMULATION,POROELASTIC_SIMULATION,&
-             ACOUSTIC_SIMULATION,GRAVITOACOUSTIC_SIMULATION,coupled_acoustic_elastic,&
+  read(2040) nglob,ELASTIC_SIMULATION,POROELASTIC_SIMULATION, &
+             ACOUSTIC_SIMULATION,GRAVITOACOUSTIC_SIMULATION,coupled_acoustic_elastic, &
              any_acoustic,any_elastic,any_poroelastic,any_gravitoacoustic
- 
+
   if (any_poroelastic .or. any_gravitoacoustic) &
       call exit_MPI(myrank,'currently cannot have database mode if gravitoacoustic/poroelastic simulation')
   if (PML_BOUNDARY_CONDITIONS) &
@@ -163,11 +163,11 @@
   allocate(ispec_is_inner(nspec))
   allocate(this_ibool_is_a_periodic_edge(nglob),coord(NDIM,nglob),stat=ier)
 
-  read(2040) coord,jacobian,xix,xiz,gammax,gammaz,&
+  read(2040) coord,jacobian,xix,xiz,gammax,gammaz, &
              this_ibool_is_a_periodic_edge,ibool,ispec_is_inner
 
   if (GPU_MODE) then
-    read (2040) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw,&
+    read (2040) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw, &
                 free_ac_ispec,cote_abs,free_surface_ij,ANY_ANISOTROPY
   endif
 
@@ -187,7 +187,7 @@
 
   if (any_elastic) then
     read(2040) rmass_inverse_elastic,num_phase_ispec_elastic
-    
+
     allocate( phase_ispec_inner_elastic(num_phase_ispec_elastic,2),stat=ier)
     if (ier /= 0 ) stop 'Error allocating array phase_ispec_inner_elastic'
 
@@ -205,9 +205,9 @@
     if (GPU_MODE) read(2040) coupling_ac_el_ispec,coupling_ac_el_ij,coupling_ac_el_normal,coupling_ac_el_jacobian1Dw
   endif
 
-  if (NPROC>1) then
-    read(2040) ninterface_acoustic,ninterface_elastic,inum_interfaces_acoustic,inum_interfaces_elastic,&
-               nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_ext_mesh,&
+  if (NPROC > 1) then
+    read(2040) ninterface_acoustic,ninterface_elastic,inum_interfaces_acoustic,inum_interfaces_elastic, &
+               nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_ext_mesh, &
                ibool_interfaces_acoustic,ibool_interfaces_elastic,ibool_interfaces_ext_mesh
 
     max_nibool_interfaces_ext_mesh = maxval(nibool_interfaces_ext_mesh(:))
@@ -263,7 +263,7 @@
       open(unit = 2040, file = 'OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error reading sources info from disk'
 
- 
+
   if (initialfield) then
     allocate(source_time_function(1,1,1))
   else
@@ -308,7 +308,7 @@
            rec_tangential_detection_curve(nrecloc),stat=ier)
   if (ier /= 0) stop 'Error allocating tangential arrays'
 
-  read(2040) recloc,ispec_selected_rec_loc,cosrot_irec,sinrot_irec,xir_store_loc,gammar_store_loc,st_xval,st_zval,&
+  read(2040) recloc,ispec_selected_rec_loc,cosrot_irec,sinrot_irec,xir_store_loc,gammar_store_loc,st_xval,st_zval, &
              station_name,network_name,islice_selected_rec
 
   close(2040)

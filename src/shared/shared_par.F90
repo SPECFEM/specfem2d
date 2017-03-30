@@ -115,7 +115,7 @@ module shared_input_parameters
   ! 0 = does not read/create database
   ! 1 = creates database
   ! 2 = reads database
-  integer :: setup_with_binary_database  
+  integer :: setup_with_binary_database
 
   ! mesh files when using external mesh
   character(len=MAX_STRING_LEN) :: MODEL, SAVE_MODEL
