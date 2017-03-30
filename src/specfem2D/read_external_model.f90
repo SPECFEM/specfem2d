@@ -279,7 +279,7 @@
   endif
 
   ! resets domain flags
-  if (setup_with_binary_database /= 2) then 
+  if (setup_with_binary_database /= 2) then
     call get_simulation_domains_from_external_models()
   endif
 
