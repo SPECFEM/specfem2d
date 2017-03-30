@@ -147,6 +147,7 @@ specfem2D_OBJECTS = \
 	$O/read_mesh_databases.spec.o \
 	$O/read_external_model.spec.o \
 	$O/read_forward_arrays.spec.o \
+	$O/read_save_binary_database.spec.o \
 	$O/recompute_jacobian.spec.o \
 	$O/save_adjoint_kernels.spec.o \
 	$O/save_openDX_jacobian.spec.o \

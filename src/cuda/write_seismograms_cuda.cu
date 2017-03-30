@@ -146,7 +146,7 @@ __global__ void compute_acoustic_seismogram_kernel(int nrec_local,
 
   if (irec_local < nrec_local) {
 
-    int ispec = ispec_selected_rec[irec_local]-1;
+    int ispec = ispec_selected_rec_loc[irec_local]-1;
 
    sh_dxd[tx] = 0;
 realw hlagrange;

@@ -40,6 +40,8 @@
 
   implicit none
 
+  if (setup_with_binary_database == 2) return
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)

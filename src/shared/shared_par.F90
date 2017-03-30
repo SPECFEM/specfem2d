@@ -111,6 +111,12 @@ module shared_input_parameters
   ! computational platform type
   logical :: GPU_MODE
 
+  ! creates/reads a binary database that allows to skip all time consuming setup steps in initialization
+  ! 0 = does not read/create database
+  ! 1 = creates database
+  ! 2 = reads database
+  integer :: setup_with_binary_database  
+
   ! mesh files when using external mesh
   character(len=MAX_STRING_LEN) :: MODEL, SAVE_MODEL
 

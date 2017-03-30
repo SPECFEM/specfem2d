@@ -273,6 +273,9 @@
   ! 'GPU_MODE'
   write(IOUT) GPU_MODE
 
+  ! 'setup_with_binary_database"
+  write(IOUT) setup_with_binary_database
+
   ! 'NSTEP DT'
   write(IOUT) NSTEP,DT
 

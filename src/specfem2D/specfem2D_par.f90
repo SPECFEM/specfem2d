@@ -258,7 +258,6 @@ module specfem_par
 
   ! Lagrange interpolators at receivers
   double precision, dimension(:), allocatable :: hxir,hgammar,hpxir,hpgammar
-  double precision, dimension(:,:), allocatable :: hxir_store,hgammar_store
 
   ! Lagrange interpolators at sources
   double precision, dimension(:), allocatable :: hxis,hgammas,hpxis,hpgammas

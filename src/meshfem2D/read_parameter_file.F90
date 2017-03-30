@@ -133,6 +133,7 @@
     call bcast_all_singlel(AXISYM)
     call bcast_all_singlel(P_SV)
     call bcast_all_singlel(GPU_MODE)
+    call bcast_all_singlei(setup_with_binary_database)
 
     call bcast_all_string(MODEL)
     call bcast_all_string(SAVE_MODEL)
@@ -303,6 +304,9 @@
 
   call read_value_logical_p(GPU_MODE, 'solver.GPU_MODE')
   if (err_occurred() /= 0) stop 'error reading parameter GPU_MODE in Par_file'
+
+  call read_value_integer_p(setup_with_binary_database, 'solver.setup_with_binary_database')
+  if (err_occurred() /= 0) stop 'error reading parameter setup_with_binary_database in Par_file'
 
   call read_value_string_p(MODEL, 'mesher.MODEL')
   if (err_occurred() /= 0) stop 'error reading parameter MODEL in Par_file'

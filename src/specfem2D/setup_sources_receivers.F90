@@ -34,7 +34,11 @@
 
   subroutine setup_sources_receivers()
 
+  use specfem_par
+
   implicit none
+
+  if (setup_with_binary_database == 2) return
 
   ! locates sources and determines simulation start time t0
   call setup_sources()
