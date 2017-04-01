@@ -31,8 +31,7 @@
 !
 !========================================================================
 
-  subroutine define_external_model_from_marmousi(coord,material_element,ibool, &
-                                                 rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+  subroutine define_external_model_from_marmousi(coord,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
                                                  c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
 ! reads in external model using a marmousi format which defines a compaction gradient
@@ -47,8 +46,6 @@
   integer, intent(in) :: nspec,nglob
 
   double precision, dimension(NDIM,nglob), intent(in) :: coord
-
-  integer, dimension(nspec), intent(in) :: material_element
 
   integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
 

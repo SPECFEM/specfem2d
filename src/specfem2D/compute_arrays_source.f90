@@ -124,7 +124,7 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine read_adj_source(xi_rec,gamma_rec,irec_local,adj_source_file)
+  subroutine read_adj_source(irec_local,adj_source_file)
 
 ! reads in adjoint source file
 
@@ -134,7 +134,6 @@
 
   implicit none
 
-  double precision,intent(in) :: xi_rec, gamma_rec
   integer,intent(in) :: irec_local
 
   character(len=MAX_STRING_LEN),intent(in) :: adj_source_file

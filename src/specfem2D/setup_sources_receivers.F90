@@ -447,7 +447,7 @@
         if (myrank == islice_selected_rec(irec)) then
           irec_local = irec_local + 1
           adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
-          call read_adj_source(xi_receiver(irec),gamma_receiver(irec),irec_local,adj_source_file)
+          call read_adj_source(irec_local,adj_source_file)
         endif
       enddo
       ! checks

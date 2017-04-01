@@ -228,7 +228,7 @@
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
   case ('marmousi')
     ! marmousi type model
-    call define_external_model_from_marmousi(coord,kmato,ibool,rhoext,vpext,vsext, &
+    call define_external_model_from_marmousi(coord,ibool,rhoext,vpext,vsext, &
                                              QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                              c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
 
