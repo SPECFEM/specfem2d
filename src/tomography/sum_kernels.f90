@@ -215,7 +215,7 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
   if (ier /= 0) stop 'Error allocating kernel arrays'
 
   if (USE_SOURCE_MASK) then
-    allocate( mask_source(NGLLX,NGLLZ,NSPEC) )
+    allocate(mask_source(NGLLX,NGLLZ,NSPEC))
     mask_source(:,:,:) = 1.0_CUSTOM_REAL
   endif
 
