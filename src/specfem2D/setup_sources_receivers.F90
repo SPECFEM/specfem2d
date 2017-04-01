@@ -383,7 +383,6 @@
 !-----------------------------------------------------------------------------------------
 !
 
-
   subroutine setup_adjoint_sources
 
 ! compute source array for adjoint source
@@ -392,7 +391,6 @@
 
   use specfem_par, only: nadj_rec_local,nrec,nrecloc,NSTEP,NPROC,SIMULATION_TYPE,SU_FORMAT, &
                         myrank,islice_selected_rec,seismotype, &
-                        xi_receiver,gamma_receiver, &
                         network_name,station_name,source_adjointe
 
   implicit none
