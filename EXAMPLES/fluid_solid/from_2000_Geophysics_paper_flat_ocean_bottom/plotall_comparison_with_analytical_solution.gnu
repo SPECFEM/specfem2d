@@ -19,9 +19,9 @@ set xrange [1.3:2.1]
 
 amplitude_of_source = 44705882000.
 
-plot "OUTPUT_FILES/AA.S0040.BXX.semv" using ($1 + 0.104):(- amplitude_of_source * $2) w l lc 1, "trace2an.dat" us 1:2 w l lc 3
+plot "OUTPUT_FILES/AA.S0040.BXX.semv" using ($1 + 0.104):(- amplitude_of_source * $2) title 'Ux SEM' w l lc 1, "trace2an.dat" using 1:2 title 'Ux analytical' w l lc 3
 pause -1 "Hit any key..."
 
-plot "OUTPUT_FILES/AA.S0040.BXZ.semv" using ($1 + 0.104):(+ amplitude_of_source * $2) w l lc 1, "trace2an.dat" us 1:3 w l lc 3
+plot "OUTPUT_FILES/AA.S0040.BXZ.semv" using ($1 + 0.104):(+ amplitude_of_source * $2) title 'Uz SEM' w l lc 1, "trace2an.dat" using 1:3 title 'Uz analytical' w l lc 3
 pause -1 "Hit any key..."
 
