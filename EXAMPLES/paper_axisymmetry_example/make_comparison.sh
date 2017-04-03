@@ -18,10 +18,10 @@ factor=0.00000000000055 # TODO change that to obtain a good fit, it is just a mu
 awk '{ print $1/1000," ",$2}' TLcomsol.txt > TLcomsolKM.txt
 
 # Scale amplitudes:
-./processAmplitudes.py OUTPUT_FILES/lossesGOODampl.txt --ref $factor --noplot
+./processAmplitudes.py OUTPUT_FILES/lossesGOODampl --ref $factor --noplot
 
 # Shift range (rotvars starts at range >0):
 awk '{ print $1-0.03386," ",-$2}' rotvars_Jensen_2007_Figure7a.txt > rotvars_Jensen_2007_Figure7a2.txt
 
 # Plot comparison
-../../utils/Visualization/plot.py rotvars_Jensen_2007_Figure7a2.txt TLcomsolKM.txt OUTPUT_FILES/lossesGOODampl.txtLosses --hold -w 3 --fontsize 16 --xlabel "Range (km)" --ylabel "Transmission losses (dB)" --invert_yaxis -l 'ROTVARS','COMSOL','Spectral elements' -c 0,0,0.8+0,0.8,0+0.8,0,0
+../../utils/Visualization/plot.py rotvars_Jensen_2007_Figure7a2.txt TLcomsolKM.txt OUTPUT_FILES/lossesGOODamplLosses --hold -w 3 --fontsize 16 --xlabel "Range (km)" --ylabel "Transmission losses (dB)" --invert_yaxis -l 'ROTVARS','COMSOL','Spectral elements' -c 0,0,0.8+0,0.8,0+0.8,0,0
