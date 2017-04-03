@@ -171,7 +171,7 @@ void FC_FUNC_(prepare_constants_device,
                                         realw* h_sourcearrays, realw * h_source_time_function,
                                         int* NSTEP,
                                         int* h_ispec_selected_source,
-                                        int* h_number_receiver_global, int* h_ispec_selected_rec,
+                                        int* h_ispec_selected_rec_loc,
                                         int* nrec,int* nrec_local,
                                         realw * h_cosrot,realw * h_sinrot,
                                         int* SIMULATION_TYPE,
@@ -333,16 +333,14 @@ void FC_FUNC_(prepare_constants_device,
   // receiver stations
   mp->nrec_local = *nrec_local; // number of receiver located in this partition
   // note that:
-  // size(number_receiver_global) = nrec_local
-  // size(ispec_selected_rec) = nrec
+  // size(ispec_selected_rec_loc) = nrec_local
   if (mp->nrec_local > 0) {
-    copy_todevice_int((void**)&mp->d_number_receiver_global,h_number_receiver_global,mp->nrec_local);
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms,(mp->nrec_local)*sizeof(realw)*2),1303);
     print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms),sizeof(float)*(mp->nrec_local)*2),8004);
     copy_todevice_realw((void**)&mp->d_cosrot,h_cosrot,mp->nrec_local);
     copy_todevice_realw((void**)&mp->d_sinrot,h_sinrot,mp->nrec_local);
   }
-  copy_todevice_int((void**)&mp->d_ispec_selected_rec,h_ispec_selected_rec,(*nrec));
+  copy_todevice_int((void**)&mp->d_ispec_selected_rec_loc,h_ispec_selected_rec_loc,mp->nrec_local);
 
 
 #ifdef USE_MESH_COLORING_GPU
@@ -923,7 +921,6 @@ void FC_FUNC_(prepare_fields_elastic_adj_dev,
 extern "C"
 void FC_FUNC_(prepare_sim2_or_3_const_device,
               PREPARE_SIM2_OR_3_CONST_DEVICE)(long* Mesh_pointer,
-                                              int* islice_selected_rec,
                                               int* nadj_rec_local,
                                               int* nrec,realw* h_source_adjointe,int* NSTEP) {
 
@@ -937,32 +934,7 @@ void FC_FUNC_(prepare_sim2_or_3_const_device,
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_adj_sourcearrays,
                                        (mp->nadj_rec_local)*2*NGLL2*sizeof(realw)),6003);
 
-    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_pre_computed_irec,
-                                       (mp->nadj_rec_local)*sizeof(int)),6004);
-
-    // prepares local irec array:
-    // the irec_local variable needs to be precomputed (as
-    // h_pre_comp..), because normally it is in the loop updating accel,
-    // and due to how it's incremented, it cannot be parallelized
-    int* h_pre_computed_irec = (int*) malloc( (mp->nadj_rec_local)*sizeof(int) );
-    if (h_pre_computed_irec == NULL ) exit_on_error("prepare_sim2_or_3_const_device: h_pre_computed_irec not allocated\n");
-
-    int irec_local = 0;
-    for(int irec = 0; irec < *nrec; irec++) {
-      if (mp->myrank == islice_selected_rec[irec]) {
-        irec_local++;
-        h_pre_computed_irec[irec_local-1] = irec;
-      }
-    }
-    // checks if all local receivers have been found
-    if (irec_local != mp->nadj_rec_local ) exit_on_error("prepare_sim2_or_3_const_device: irec_local not equal\n");
-
-    // copies values onto GPU
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_pre_computed_irec,h_pre_computed_irec,
-                                       (mp->nadj_rec_local)*sizeof(int),cudaMemcpyHostToDevice),6010);
-    free(h_pre_computed_irec);
-
-    copy_todevice_realw((void**)&mp->d_source_adjointe,h_source_adjointe,(*NSTEP)*(*nadj_rec_local)*NDIM);
+   copy_todevice_realw((void**)&mp->d_source_adjointe,h_source_adjointe,(*NSTEP)*(*nadj_rec_local)*NDIM);
 
 
 
@@ -1039,11 +1011,11 @@ TRACE("prepare_cleanup_device");
 
   // receivers
   if (mp->nrec_local > 0) {
-  cudaFree(mp->d_number_receiver_global);cudaFree(mp->d_seismograms);
+  cudaFree(mp->d_seismograms);
   cudaFree(mp->d_cosrot),cudaFree(mp->d_sinrot);
   }
 
-  cudaFree(mp->d_ispec_selected_rec);
+  cudaFree(mp->d_ispec_selected_rec_loc);
 
   cudaFree(mp->d_gammar_store_loc);
   cudaFree(mp->d_xir_store_loc);
@@ -1147,7 +1119,6 @@ TRACE("prepare_cleanup_device");
   if (mp->simulation_type == 3) {
     if (mp->nadj_rec_local > 0) {
       cudaFree(mp->d_adj_sourcearrays);
-      cudaFree(mp->d_pre_computed_irec);
     }
   }
 

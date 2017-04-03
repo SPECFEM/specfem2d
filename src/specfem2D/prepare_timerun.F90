@@ -40,6 +40,13 @@
 
   implicit none
 
+  if (setup_with_binary_database == 2 ) then
+   call setup_mesh_external_models()
+   call read_sources_receivers()
+   if (SIMULATION_TYPE == 3) call setup_adjoint_sources()
+   call read_binary_database_part1()
+  endif
+
   ! Test compatibility with axisymmetric formulation
   if (AXISYM) call check_compatibility_axisym()
 
@@ -52,35 +59,48 @@
   ! PML preparation
   call prepare_PML()
 
-  ! prepares mass matrices
-  call prepare_timerun_mass_matrix()
+  if (setup_with_binary_database /= 2 ) then
 
-  ! check which GLL will be forced or not
-  if (USE_ENFORCE_FIELDS) call build_forced()
+    ! prepares mass matrices
+    call prepare_timerun_mass_matrix()
 
-  ! postscript images for grids and snapshots
-  call prepare_timerun_postscripts()
+    ! check which GLL will be forced or not
+    if (USE_ENFORCE_FIELDS) call build_forced()
+
+    ! postscript images for grids and snapshots
+    call prepare_timerun_postscripts()
+
+    ! for adjoint kernel runs
+    call prepare_timerun_adjoint()
+
+    ! reads initial fields from external file if needed
+    call prepare_timerun_initialfield
+
+    ! compute the source time function and stores it in a text file
+    call prepare_source_time_function()
+
+    ! prepares noise simulations
+    if (NOISE_TOMOGRAPHY /= 0) call prepare_timerun_noise()
+
+    ! attenuation
+    call prepare_timerun_attenuation()
+
+    ! prepares GPU arrays
+    if (GPU_MODE) call prepare_GPU()
+
+    if (setup_with_binary_database == 1 ) call save_binary_database()
+
+  else
+
+    call read_binary_database_part2()
+
+  endif
+
+  ! compute material property arrays
+  call prepare_material_arrays()
 
   ! jpeg images
   call prepare_timerun_image_coloring()
-
-  ! for adjoint kernel runs
-  call prepare_timerun_adjoint()
-
-  ! reads initial fields from external file if needed
-  call prepare_timerun_initialfield
-
-  ! compute the source time function and stores it in a text file
-  call prepare_source_time_function()
-
-  ! prepares noise simulations
-  if (NOISE_TOMOGRAPHY /= 0) call prepare_timerun_noise()
-
-  ! attenuation
-  call prepare_timerun_attenuation()
-
-  ! prepares GPU arrays
-  if (GPU_MODE) call prepare_GPU()
 
   !-------------------------------------------------------------
 
@@ -1211,7 +1231,7 @@
   ! local parameters
   integer :: i,j,ispec,n,ier
   ! for shifting of velocities if needed in the case of viscoelasticity
-  double precision :: vp,vs,rhol,mul,lambdal,kappal
+  double precision :: vp,vs,rhol,mul,lambdal
   double precision :: qkappal,qmul
   ! attenuation factors
   real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
@@ -1436,6 +1456,76 @@
     enddo
   endif ! ATTENUATION_VISCOELASTIC
 
+
+  ! allocate memory variables for viscous attenuation (poroelastic media)
+  if (ATTENUATION_PORO_FLUID_PART) then
+    allocate(rx_viscous(NGLLX,NGLLZ,nspec))
+    allocate(rz_viscous(NGLLX,NGLLZ,nspec))
+    allocate(viscox(NGLLX,NGLLZ,nspec))
+    allocate(viscoz(NGLLX,NGLLZ,nspec))
+    ! initialize memory variables for attenuation
+    rx_viscous(:,:,:) = 0.d0
+    rz_viscous(:,:,:) = 0.d0
+    viscox(:,:,:) = 0.d0
+    viscoz(:,:,:) = 0.d0
+
+    if (time_stepping_scheme == 2) then
+      allocate(rx_viscous_LDDRK(NGLLX,NGLLZ,nspec))
+      allocate(rz_viscous_LDDRK(NGLLX,NGLLZ,nspec))
+      rx_viscous_LDDRK(:,:,:) = 0.d0
+      rz_viscous_LDDRK(:,:,:) = 0.d0
+    endif
+
+    if (time_stepping_scheme == 3) then
+      allocate(rx_viscous_initial_rk(NGLLX,NGLLZ,nspec))
+      allocate(rz_viscous_initial_rk(NGLLX,NGLLZ,nspec))
+      allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
+      allocate(rz_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
+      rx_viscous_initial_rk(:,:,:) = 0.d0
+      rz_viscous_initial_rk(:,:,:) = 0.d0
+      rx_viscous_force_RK(:,:,:,:) = 0.d0
+      rz_viscous_force_RK(:,:,:,:) = 0.d0
+    endif
+
+    ! Precompute Runge Kutta coefficients if viscous attenuation
+    ! viscous attenuation is implemented following the memory variable formulation of
+    ! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
+    ! anelastic and porous media, Elsevier, p. 304-305, 2007
+    theta_e = (sqrt(Q0**2+1.d0) +1.d0)/(2.d0*pi*freq0*Q0)
+    theta_s = (sqrt(Q0**2+1.d0) -1.d0)/(2.d0*pi*freq0*Q0)
+
+    thetainv = - 1.d0 / theta_s
+    alphaval = 1.d0 + deltat*thetainv + deltat**2*thetainv**2 / 2.d0 &
+                    + deltat**3*thetainv**3 / 6.d0 + deltat**4*thetainv**4 / 24.d0
+    betaval = deltat / 2.d0 + deltat**2*thetainv / 3.d0 + deltat**3*thetainv**2 / 8.d0 + deltat**4*thetainv**3 / 24.d0
+    gammaval = deltat / 2.d0 + deltat**2*thetainv / 6.d0 + deltat**3*thetainv**2 / 24.d0
+  endif
+
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine prepare_timerun_attenuation
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_material_arrays()
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  use constants, only: IMAIN,FOUR_THIRDS,TWO_THIRDS
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: i,j,ispec,ier
+  ! for shifting of velocities if needed in the case of viscoelasticity
+  double precision :: vp,vs,rhol,mul,lambdal,kappal
+
   ! sets new material properties
   ! note: velocities might have been shifted by attenuation
   if (myrank == 0) then
@@ -1495,52 +1585,4 @@
     enddo
   enddo
 
-  ! allocate memory variables for viscous attenuation (poroelastic media)
-  if (ATTENUATION_PORO_FLUID_PART) then
-    allocate(rx_viscous(NGLLX,NGLLZ,nspec))
-    allocate(rz_viscous(NGLLX,NGLLZ,nspec))
-    allocate(viscox(NGLLX,NGLLZ,nspec))
-    allocate(viscoz(NGLLX,NGLLZ,nspec))
-    ! initialize memory variables for attenuation
-    rx_viscous(:,:,:) = 0.d0
-    rz_viscous(:,:,:) = 0.d0
-    viscox(:,:,:) = 0.d0
-    viscoz(:,:,:) = 0.d0
-
-    if (time_stepping_scheme == 2) then
-      allocate(rx_viscous_LDDRK(NGLLX,NGLLZ,nspec))
-      allocate(rz_viscous_LDDRK(NGLLX,NGLLZ,nspec))
-      rx_viscous_LDDRK(:,:,:) = 0.d0
-      rz_viscous_LDDRK(:,:,:) = 0.d0
-    endif
-
-    if (time_stepping_scheme == 3) then
-      allocate(rx_viscous_initial_rk(NGLLX,NGLLZ,nspec))
-      allocate(rz_viscous_initial_rk(NGLLX,NGLLZ,nspec))
-      allocate(rx_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
-      allocate(rz_viscous_force_RK(NGLLX,NGLLZ,nspec,stage_time_scheme))
-      rx_viscous_initial_rk(:,:,:) = 0.d0
-      rz_viscous_initial_rk(:,:,:) = 0.d0
-      rx_viscous_force_RK(:,:,:,:) = 0.d0
-      rz_viscous_force_RK(:,:,:,:) = 0.d0
-    endif
-
-    ! Precompute Runge Kutta coefficients if viscous attenuation
-    ! viscous attenuation is implemented following the memory variable formulation of
-    ! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
-    ! anelastic and porous media, Elsevier, p. 304-305, 2007
-    theta_e = (sqrt(Q0**2+1.d0) +1.d0)/(2.d0*pi*freq0*Q0)
-    theta_s = (sqrt(Q0**2+1.d0) -1.d0)/(2.d0*pi*freq0*Q0)
-
-    thetainv = - 1.d0 / theta_s
-    alphaval = 1.d0 + deltat*thetainv + deltat**2*thetainv**2 / 2.d0 &
-                    + deltat**3*thetainv**3 / 6.d0 + deltat**4*thetainv**4 / 24.d0
-    betaval = deltat / 2.d0 + deltat**2*thetainv / 3.d0 + deltat**3*thetainv**2 / 8.d0 + deltat**4*thetainv**3 / 24.d0
-    gammaval = deltat / 2.d0 + deltat**2*thetainv / 6.d0 + deltat**3*thetainv**2 / 24.d0
-  endif
-
-  ! synchronizes all processes
-  call synchronize_all()
-
-  end subroutine prepare_timerun_attenuation
-
+  end subroutine prepare_material_arrays

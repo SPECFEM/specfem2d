@@ -108,6 +108,7 @@ specfem2D_OBJECTS = \
 	$O/define_derivation_matrices.spec.o \
 	$O/define_external_model.spec.o \
 	$O/define_external_model_from_tomo_file.spec.o \
+	$O/define_external_model_from_marmousi.spec.o \
 	$O/enforce_acoustic_free_surface.spec.o \
 	$O/enforce_fields.spec.o \
 	$O/finalize_simulation.spec.o \
@@ -146,6 +147,7 @@ specfem2D_OBJECTS = \
 	$O/read_mesh_databases.spec.o \
 	$O/read_external_model.spec.o \
 	$O/read_forward_arrays.spec.o \
+	$O/read_save_binary_database.spec.o \
 	$O/recompute_jacobian.spec.o \
 	$O/save_adjoint_kernels.spec.o \
 	$O/save_openDX_jacobian.spec.o \
@@ -189,6 +191,8 @@ specfem2D_SHARED_OBJECTS = \
 	$O/lagrange_poly.shared.o \
 	$O/parallel.shared.o \
 	$O/set_color_palette.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 
 JPEGLIB_OBJECTS = \

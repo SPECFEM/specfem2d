@@ -42,6 +42,12 @@ P_SV                            = .true.
 # set to true to use GPUs
 GPU_MODE                        = .false.
 
+# creates/reads a binary database that allows to skip all time consuming setup steps in initialization
+# 0 = does not read/create database
+# 1 = creates database
+# 2 = reads database
+setup_with_binary_database = 0
+
 # available models
 #   default       - define model using nbmodels below
 #   ascii         - read model from ascii database file

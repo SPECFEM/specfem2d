@@ -111,6 +111,12 @@ module shared_input_parameters
   ! computational platform type
   logical :: GPU_MODE
 
+  ! creates/reads a binary database that allows to skip all time consuming setup steps in initialization
+  ! 0 = does not read/create database
+  ! 1 = creates database
+  ! 2 = reads database
+  integer :: setup_with_binary_database
+
   ! mesh files when using external mesh
   character(len=MAX_STRING_LEN) :: MODEL, SAVE_MODEL
 
@@ -369,7 +375,7 @@ module shared_parameters
 
   ! acoustic/elastic/anisotropic
   double precision, dimension(:),allocatable :: cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,QKappa,Qmu
+    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,comp_g,QKappa,Qmu
 
   ! poroelastic
   ! note: adds ending _read to indicate these are readin values and to distinguish from solver arrays

@@ -20,7 +20,7 @@ awk '{ print $1/1000," ",$2}' TLcomsol.txt > TLcomsolKM.txt
 # Scale amplitudes:
 ./processAmplitudes.py OUTPUT_FILES/lossesGOODampl --ref $factor --noplot
 
-# Shift range (rotvars starts at range >0): 
+# Shift range (rotvars starts at range >0):
 awk '{ print $1-0.03386," ",-$2}' rotvars_Jensen_2007_Figure7a.txt > rotvars_Jensen_2007_Figure7a2.txt
 
 # Plot comparison

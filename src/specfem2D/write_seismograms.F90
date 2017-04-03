@@ -42,7 +42,7 @@
   implicit none
 
   ! local parameters
-  integer :: i, j, iglob, irecloc, irec, ispec
+  integer :: i, j, iglob, irecloc, ispec
   double precision :: valux,valuz,valcurl
 
   ! vector field in an element
@@ -70,8 +70,7 @@
         ! on CPU
         do irecloc = 1,nrecloc
 
-          irec = recloc(irecloc)
-          ispec = ispec_selected_rec(irec)
+          ispec = ispec_selected_rec_loc(irecloc)
 
           ! initializes local element arrays
           vector_field_element(:,:,:) = 0._CUSTOM_REAL
@@ -131,7 +130,7 @@
           end select
 
           ! perform the general interpolation using Lagrange polynomials
-          call compute_interpolated_dva(irec,ispec,vector_field_element,pressure_element,curl_element, &
+          call compute_interpolated_dva(irecloc,ispec,vector_field_element,pressure_element,curl_element, &
                                         valux,valuz,valcurl)
 
           ! rotate seismogram components if needed, except if recording pressure, which is a scalar

@@ -269,7 +269,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
   double precision function comp_source_time_function_d2rck(t,f0)
 
   use constants, only: PI
@@ -286,4 +285,102 @@
   comp_source_time_function_d2rck = - 2.d0 * a * (3.d0 - 12.d0 * a * t*t + 4.d0 * a**2 * t*t*t*t) * exp( -a * t*t )
 
   end function comp_source_time_function_d2rck
+
+!-------------------------------------------------------------------------------------------------
+
+  double precision function sinc(a)
+
+  use constants, only: PI
+
+  implicit none
+
+  double precision, intent(in) :: a
+
+  ! sinc function defined here
+
+  if (abs(a) < 1.0d-10) then
+    sinc = 1.0d0
+  else
+    sinc = sin(a)/a
+  endif
+
+  end function sinc
+
+!-------------------------------------------------------------------------------------------------
+
+  double precision function cos_taper(a,hdur)
+
+  use constants, only: PI
+
+  implicit none
+
+  double precision, intent(in) :: a,hdur
+
+  double precision :: b
+
+  ! cos_taper function defined here
+
+  b = abs(a)
+  cos_taper = 0.0
+
+  if (b <= hdur) then
+    cos_taper = 1.0;
+  else if (b > hdur .and. b < 2.0 * hdur) then
+    cos_taper = cos( PI*0.5*(b-hdur)/hdur )
+  endif
+
+  end function cos_taper
+
+!-----------------------------------------------------------------------------------------------------
+
+  double precision function marmousi_ormsby_wavelet(a)
+
+  use constants, only: PI
+
+  implicit none
+
+  double precision :: sinc
+
+  double precision, intent(in) :: a
+
+  double precision :: f1,f2,f3,f4,b,c,tmp
+
+  ! 5-10-60-80 Hz Ormsby Wavelet for Marmousi2 Model (Gray S. Martin, 2006)
+  ! Please find the Ormsby Wavelet here http://subsurfwiki.org/wiki/Ormsby_filter
+
+  f1 = 5.0d0;  ! low-cut frequency
+  f2 = 10.0d0; ! low-pass frequency
+  f3 = 60.0d0; ! high-pass frequency
+  f4 = 80.0d0; ! high-cut frequency
+
+  b = sinc( f1 * a )
+  tmp = PI * f1
+  tmp = tmp * tmp
+  tmp = tmp / PI /( f2 - f1 )
+  c = b * b * tmp
+
+  b = sinc( f2 * a )
+  tmp = PI * f2
+  tmp = tmp * tmp
+  tmp = tmp / PI /( f2 - f1 )
+  c = c - b * b * tmp
+
+  b = sinc( f3 * a )
+  tmp = PI * f3
+  tmp = tmp * tmp
+  tmp = tmp / PI /( f4 - f3 )
+  c = c - b * b * tmp
+
+  b = sinc( f4 * a )
+  tmp = PI * f4
+  tmp = tmp * tmp
+  tmp = tmp / PI /( f4 - f3 )
+  c = c + b * b * tmp
+
+  marmousi_ormsby_wavelet = c
+
+  end function marmousi_ormsby_wavelet
+
+!-------------------------------------------------------------------------------------------------
+
 

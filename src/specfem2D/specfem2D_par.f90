@@ -209,7 +209,7 @@ module specfem_par
   double precision :: xirec,gammarec
   integer, dimension(:), allocatable :: recloc
   integer, dimension(:), allocatable :: islice_selected_rec
-  integer, dimension(:), allocatable :: ispec_selected_rec
+  integer, dimension(:), allocatable :: ispec_selected_rec,ispec_selected_rec_loc
   double precision, dimension(:), allocatable :: xi_receiver,gamma_receiver,st_xval,st_zval
 
   ! tangential detection for source or receivers
@@ -258,7 +258,6 @@ module specfem_par
 
   ! Lagrange interpolators at receivers
   double precision, dimension(:), allocatable :: hxir,hgammar,hpxir,hpgammar
-  double precision, dimension(:,:), allocatable :: hxir_store,hgammar_store
 
   ! Lagrange interpolators at sources
   double precision, dimension(:), allocatable :: hxis,hgammas,hpxis,hpgammas
@@ -595,6 +594,8 @@ module specfem_par
   ! adjoint sources
   integer :: nadj_rec_local
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearrays
+  real(kind=CUSTOM_REAL),  dimension(:,:,:), allocatable :: source_adjointe
+  real(kind=CUSTOM_REAL),  dimension(:,:), allocatable :: xir_store_loc, gammar_store_loc
 
   ! absorbing boundary
   logical :: anyabs
@@ -787,11 +788,6 @@ module specfem_par_gpu
   integer, dimension(:), allocatable :: ispec_selected_source_loc
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray_loc
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable ::  source_time_function_loc
-
-  real(kind=CUSTOM_REAL),  dimension(:,:,:), allocatable :: source_adjointe
-
-  ! receivers
-  real(kind=CUSTOM_REAL),  dimension(:,:), allocatable :: xir_store_loc, gammar_store_loc
 
   ! coupling
   integer, dimension(:), allocatable :: coupling_ac_el_ispec

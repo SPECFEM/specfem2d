@@ -88,8 +88,7 @@ __global__ void compute_elastic_seismogram_kernel(int nrec_local,
                                                          realw* seismograms,
                                                          realw* cosrot,
                                                          realw* sinrot,
-                                                         int* number_receiver_global,
-                                                         int* ispec_selected_rec) {
+                                                         int* ispec_selected_rec_loc) {
 
 
   int irec_local = blockIdx.x + blockIdx.y*gridDim.x;
@@ -103,8 +102,7 @@ __global__ void compute_elastic_seismogram_kernel(int nrec_local,
 
   if (irec_local < nrec_local) {
 
-    int irec = number_receiver_global[irec_local]-1;
-    int ispec = ispec_selected_rec[irec]-1;
+    int ispec = ispec_selected_rec_loc[irec_local]-1;
 
    sh_dxd[tx] = 0;
    sh_dzd[tx] = 0;
@@ -136,8 +134,7 @@ __global__ void compute_acoustic_seismogram_kernel(int nrec_local,
                                                          int* d_ibool,
                                                          realw* hxir, realw* hgammar,
                                                          realw* seismograms,
-                                                         int* number_receiver_global,
-                                                         int* ispec_selected_rec) {
+                                                         int* ispec_selected_rec_loc) {
   int irec_local = blockIdx.x + blockIdx.y*gridDim.x;
   int tx = threadIdx.x;
   int J = (tx/NGLLX);
@@ -149,8 +146,7 @@ __global__ void compute_acoustic_seismogram_kernel(int nrec_local,
 
   if (irec_local < nrec_local) {
 
-    int irec = number_receiver_global[irec_local]-1;
-    int ispec = ispec_selected_rec[irec]-1;
+    int ispec = ispec_selected_rec_loc[irec_local]-1;
 
    sh_dxd[tx] = 0;
 realw hlagrange;
@@ -214,8 +210,7 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                   mp->d_seismograms,
                                                                                   mp->d_cosrot,
                                                                                   mp->d_sinrot,
-                                                                                  mp->d_number_receiver_global,
-                                                                                  mp->d_ispec_selected_rec
+                                                                                  mp->d_ispec_selected_rec_loc
                                                                                   );
 
   break;
@@ -230,8 +225,7 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                   mp->d_seismograms,
                                                                                   mp->d_cosrot,
                                                                                   mp->d_sinrot,
-                                                                                  mp->d_number_receiver_global,
-                                                                                  mp->d_ispec_selected_rec
+                                                                                  mp->d_ispec_selected_rec_loc
                                                                                   );
   break;
 
@@ -245,8 +239,7 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                   mp->d_seismograms,
                                                                                   mp->d_cosrot,
                                                                                   mp->d_sinrot,
-                                                                                  mp->d_number_receiver_global,
-                                                                                  mp->d_ispec_selected_rec
+                                                                                  mp->d_ispec_selected_rec_loc
                                                                                   );
   break;
 
@@ -259,8 +252,7 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                   mp->d_ibool,
                                                                                   mp->d_xir_store_loc, mp->d_gammar_store_loc,
                                                                                   mp->d_seismograms,
-                                                                                  mp->d_number_receiver_global,
-                                                                                  mp->d_ispec_selected_rec
+                                                                                  mp->d_ispec_selected_rec_loc
                                                                                   );
   else
   compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(      mp->nrec_local,
@@ -268,8 +260,7 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                   mp->d_ibool,
                                                                                   mp->d_xir_store_loc, mp->d_gammar_store_loc,
                                                                                   mp->d_seismograms,
-                                                                                  mp->d_number_receiver_global,
-                                                                                  mp->d_ispec_selected_rec
+                                                                                  mp->d_ispec_selected_rec_loc
                                                                                   );
 
   break;

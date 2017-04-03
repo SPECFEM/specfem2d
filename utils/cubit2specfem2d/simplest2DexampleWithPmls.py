@@ -6,7 +6,28 @@
 #### specfem files
 ###########################################################################
 
-import cubit
+# to run this script from command line, python must have its PATH environment set such that it
+# includes the path to CUBIT/Trelis (cubit.py).
+#
+# you can also explicitly set it here e.g. like:
+#sys.path.append('/opt/Trelis-15.0/bin/')
+import sys
+try:
+    import cubit
+except ImportError:
+    print "Error: Importing cubit as python module failed"
+    print "could not import cubit, please check your PYTHONPATH settings..."
+    print ""
+    print "current path: "
+    print sys.path
+    print ""
+    print "try to include path to directory which includes file cubit.py, e.g. /opt/Trelis-15.0/bin/"
+    print ""
+    sys.exit("Import cubit failed")
+
+#print sys.path
+
+cubit.init([""])
 
 elementSize=0.5
 nPml=3

@@ -78,8 +78,7 @@
 ! sourcearray_loc(i_src,dim,i,j)         : tableau de ponderation de l'intensite de la source pour chaque point GLL (i,j)
 !                                          de l'element spectral qui contient la source locale i_src
 ! ispec_selected_source(i)               : numero d'element spectral contenant la source locale i
-! recloc(i)                              : convertisseur numero rec local i => numero rec global
-! ispec_selected_rec(i)                  : numero d'element spectral du receveur i
+! ispec_selected_rec_loc(i)              : numero d'element spectral du receveur local i
 ! nrecloc                                : nombre de receveurs locaux
 ! nspec_acoustic                         : nombre local d'elements spectraux acoustiques
 
@@ -113,7 +112,7 @@
                                 nsources_local, &
                                 sourcearray_loc,source_time_function_loc, &
                                 NSTEP,ispec_selected_source_loc, &
-                                recloc, ispec_selected_rec, &
+                                ispec_selected_rec_loc, &
                                 nrec, nrecloc, &
                                 cosrot_irecf,sinrot_irecf, &
                                 SIMULATION_TYPE, &

@@ -195,9 +195,8 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
                                                       realw* gammar_store,
                                                       int* d_ibool,
                                                       int* ispec_is_acoustic,
-                                                      int* ispec_selected_rec,
+                                                      int* ispec_selected_rec_loc,
                                                       int it,
-                                                      int* pre_computed_irec,
                                                       int nadj_rec_local,
                                                       realw* kappastore,
                                                       int NSTEP ) {
@@ -207,9 +206,7 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
   // because of grid shape, irec_local can be too big
   if (irec_local < nadj_rec_local) {
 
-    int irec = pre_computed_irec[irec_local];
-
-    int ispec = ispec_selected_rec[irec]-1;
+    int ispec = ispec_selected_rec_loc[irec_local]-1;
     if (ispec_is_acoustic[ispec]) {
 
       int i = threadIdx.x;
@@ -280,9 +277,8 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
                                                                                 mp->d_gammar_store_loc,
                                                                                 mp->d_ibool,
                                                                                 mp->d_ispec_is_acoustic,
-                                                                                mp->d_ispec_selected_rec,
+                                                                                mp->d_ispec_selected_rec_loc,
                                                                                 it_index,
-                                                                                mp->d_pre_computed_irec,
                                                                                 mp->nadj_rec_local,
                                                                                 mp->d_kappastore,
                                                                                 *NSTEP);

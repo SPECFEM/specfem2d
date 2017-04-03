@@ -82,6 +82,11 @@
 ! was found by trial and error
   double precision, parameter :: SOURCE_DECAY_MIMIC_TRIANGLE = 1.628d0
 
+! Ormbsy wavelet dominant frequency
+! (for Marmousi2 modeling, dominant frequency must be 35 Hz)
+  double precision, parameter :: F_ORMSBY = 35.0
+
+
 !!-----------------------------------------------------------
 !!
 !! for attenuation

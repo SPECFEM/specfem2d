@@ -34,7 +34,11 @@
 
   subroutine setup_sources_receivers()
 
+  use specfem_par
+
   implicit none
+
+  if (setup_with_binary_database == 2) return
 
   ! locates sources and determines simulation start time t0
   call setup_sources()
@@ -187,7 +191,7 @@
 #endif
 
   use specfem_par, only: coord,ibool,nglob,nspec, &
-                         ispec_selected_rec, &
+                         ispec_selected_rec,ispec_selected_rec_loc, &
                          NPROC,myrank,coorg,knods,ngnod, &
                          xigll,zigll,npgeo, &
                          nrec,nrecloc,recloc,islice_selected_rec,st_xval,st_zval, &
@@ -200,10 +204,7 @@
   ! Local variables
   integer :: nrec_tot_found
   integer :: ier
-
-#ifndef USE_MPI
-  integer :: irec
-#endif
+  integer :: irec,irec_local
 
   character(len=MAX_STRING_LEN) :: dummystring
 
@@ -299,6 +300,17 @@
   ! checks if acoustic receiver is exactly on the free surface because pressure is zero there
   call setup_receivers_check_acoustic()
 
+  ! create a local array for receivers
+  allocate(ispec_selected_rec_loc(nrecloc))
+  irec_local = 0
+  do irec = 1, nrec
+    if (myrank == islice_selected_rec(irec)) then
+      if (irec_local > nrecloc) stop 'Error with the number of local sources'
+      irec_local = irec_local + 1
+      ispec_selected_rec_loc(irec_local)  = ispec_selected_rec(irec)
+    endif
+  enddo
+
   end subroutine setup_receivers
 
 
@@ -371,7 +383,6 @@
 !-----------------------------------------------------------------------------------------
 !
 
-
   subroutine setup_adjoint_sources
 
 ! compute source array for adjoint source
@@ -379,18 +390,13 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,MAX_STRING_LEN,IMAIN
 
   use specfem_par, only: nadj_rec_local,nrec,nrecloc,NSTEP,NPROC,SIMULATION_TYPE,SU_FORMAT, &
-                        adj_sourcearrays, &
                         myrank,islice_selected_rec,seismotype, &
-                        xi_receiver,gamma_receiver, &
-                        network_name,station_name,GPU_MODE
-
-  use specfem_par_gpu, only: source_adjointe
+                        network_name,station_name,source_adjointe
 
   implicit none
 
   ! local parameters
   integer :: irec,irec_local
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
   character(len=MAX_STRING_LEN) :: adj_source_file
 
   ! number of adjoint receivers in this slice
@@ -409,10 +415,7 @@
       call flush_IMAIN()
     endif
 
-    ! for GPU-version
-    if (GPU_MODE) then
-      allocate(source_adjointe(nrecloc,NSTEP,2))
-    endif
+    allocate(source_adjointe(nrecloc,NSTEP,2))
 
     ! counts number of adjoint sources in this slice
     do irec = 1,nrec
@@ -427,14 +430,6 @@
       endif
     enddo
 
-    ! array for all adjoint sources
-    if (nadj_rec_local > 0) then
-      allocate(adj_sourcearrays(nadj_rec_local,NSTEP,NDIM,NGLLX,NGLLZ))
-    else
-      allocate(adj_sourcearrays(1,1,1,1,1))
-    endif
-    adj_sourcearrays(:,:,:,:,:) = 0._CUSTOM_REAL
-
     ! reads in adjoint source files
     if (.not. SU_FORMAT) then
       ! user output
@@ -443,9 +438,6 @@
         call flush_IMAIN()
       endif
 
-      ! temporary array
-      allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLZ))
-
       ! reads in ascii adjoint source files **.adj
       irec_local = 0
       do irec = 1, nrec
@@ -453,16 +445,11 @@
         if (myrank == islice_selected_rec(irec)) then
           irec_local = irec_local + 1
           adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
-
-          call compute_arrays_adj_source(xi_receiver(irec),gamma_receiver(irec),irec_local,adj_source_file,adj_sourcearray)
-
-          adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+          call read_adj_source(irec_local,adj_source_file)
         endif
       enddo
       ! checks
       if (irec_local /= nadj_rec_local) stop 'Error invalid number of local adjoint sources found'
-      ! frees temporary array
-      deallocate(adj_sourcearray)
     else
       ! user output
       if (myrank == 0) then
@@ -471,7 +458,7 @@
       endif
 
       ! (SU_FORMAT)
-      call compute_arrays_adj_source_SU(seismotype)
+      call read_adj_source_SU(seismotype)
     endif
 
     ! user output
@@ -479,9 +466,6 @@
       write(IMAIN,*) '  number of adjoint sources = ',nrec
       call flush_IMAIN()
     endif
-  else
-    ! dummy allocation
-    allocate(adj_sourcearrays(1,1,1,1,1))
   endif ! SIMULATION_TYPE == 3
 
   ! synchronizes all processes
@@ -868,10 +852,8 @@
   use specfem_par, only: myrank,nrec,nrecloc, &
     ispec_selected_rec,islice_selected_rec, &
     xigll,zigll, &
-    hxir_store,hgammar_store,xi_receiver,gamma_receiver,hxir,hpxir,hgammar,hpgammar, &
-    AXISYM,is_on_the_axis,xiglj
-
-  use specfem_par_gpu, only: xir_store_loc,gammar_store_loc
+    xi_receiver,gamma_receiver,hxir,hpxir,hgammar,hpgammar, &
+    AXISYM,is_on_the_axis,xiglj,xir_store_loc,gammar_store_loc
 
   implicit none
 
@@ -879,10 +861,6 @@
   integer :: irec,irec_local,ier
 
   ! allocate Lagrange interpolators for receivers
-  allocate(hxir_store(nrec,NGLLX), &
-           hgammar_store(nrec,NGLLZ),stat=ier)
-  if (ier /= 0) stop 'Error allocating receiver h**_store arrays'
-
   allocate(xir_store_loc(nrecloc,NGLLX), &
            gammar_store_loc(nrecloc,NGLLZ),stat=ier)
   if (ier /= 0) stop 'Error allocating local receiver h**_store arrays'
@@ -911,10 +889,6 @@
       !  double precision, external :: hglj,hgll
     endif
     call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
-
-    ! stores Lagrangians for receiver
-    hxir_store(irec,:) = hxir(:)
-    hgammar_store(irec,:) = hgammar(:)
 
     ! local receivers in this slice
     if (myrank == islice_selected_rec(irec)) then

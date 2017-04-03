@@ -184,9 +184,8 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
                                                       realw* gammar_store,
                                                       int* d_ibool,
                                                       int* ispec_is_elastic,
-                                                      int* ispec_selected_rec,
+                                                      int* ispec_selected_rec_loc,
                                                       int it,
-                                                      int* pre_computed_irec,
                                                       int nadj_rec_local,
                                                       int NSTEP) {
 
@@ -194,9 +193,7 @@ __global__ void add_sources_el_SIM_TYPE_2_OR_3_kernel(realw* accel,
 
   if (irec_local < nadj_rec_local) { // when nrec > 65535, but mod(nspec_top,2) > 0, we end up with an extra block.
 
-    int irec = pre_computed_irec[irec_local];
-
-    int ispec = ispec_selected_rec[irec]-1;
+    int ispec = ispec_selected_rec_loc[irec_local]-1;
 
     if (ispec_is_elastic[ispec]) {
       int i = threadIdx.x;
@@ -261,9 +258,8 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
                                                                                mp->d_gammar_store_loc,
                                                                                mp->d_ibool,
                                                                                mp->d_ispec_is_elastic,
-                                                                               mp->d_ispec_selected_rec,
+                                                                               mp->d_ispec_selected_rec_loc,
                                                                                it_index,
-                                                                               mp->d_pre_computed_irec,
                                                                                mp->nadj_rec_local,
                                                                                *NSTEP);
 

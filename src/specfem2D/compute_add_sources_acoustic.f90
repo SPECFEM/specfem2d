@@ -234,46 +234,42 @@
 
   subroutine compute_add_sources_acoustic_adjoint()
 
-  use constants, only: NGLLX,NGLLZ
+  use constants, only: NGLLX,NGLLZ,CUSTOM_REAL
 
-  use specfem_par, only: myrank,potential_dot_dot_acoustic,ispec_is_acoustic,NSTEP,it, &
-                         nrec,islice_selected_rec,ispec_selected_rec,adj_sourcearrays, &
-                         ibool,kappastore
+  use specfem_par, only: potential_dot_dot_acoustic,ispec_is_acoustic,NSTEP,it, &
+                         nrecloc,ispec_selected_rec_loc, &
+                         ibool,kappastore,source_adjointe,xir_store_loc,gammar_store_loc
   implicit none
 
   !local variables
-  integer :: irec_local,irec,i,j,iglob,ispec
+  integer :: irec_local,i,j,iglob,ispec
   integer :: it_tmp
 
   ! time step index
   it_tmp = NSTEP - it + 1
 
-  irec_local = 0
-  do irec = 1,nrec
-    ! add the source (only if this proc carries the source)
-    if (myrank == islice_selected_rec(irec)) then
-      irec_local = irec_local + 1
+  do irec_local = 1,nrecloc
 
-      ! element containing adjoint source
-      ispec = ispec_selected_rec(irec)
+    ! element containing adjoint source
+    ispec = ispec_selected_rec_loc(irec_local)
 
-      if (ispec_is_acoustic(ispec)) then
-        ! add source array
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            iglob = ibool(i,j,ispec)
+    if (ispec_is_acoustic(ispec)) then
+      ! add source array
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
 
-            !ZN becareful the following line is new added, thus when do comparison
-            !ZN of the new code with the old code, you will have big difference if you
-            !ZN do not tune the source
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
-                                                adj_sourcearrays(irec_local,it_tmp,1,i,j) &
-                                                / kappastore(i,j,ispec)
-          enddo
+          !ZN becareful the following line is new added, thus when do comparison
+          !ZN of the new code with the old code, you will have big difference if you
+          !ZN do not tune the source
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
+                                              real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
+                                              source_adjointe(irec_local,it_tmp,1),kind=CUSTOM_REAL) &
+                                              / kappastore(i,j,ispec)
         enddo
-      endif ! if element acoustic
-    endif ! if this processor core carries the adjoint source
-  enddo ! irec = 1,nrec
+      enddo
+    endif ! if element acoustic
+  enddo ! irec_local = 1,nrecloc
 
   end subroutine compute_add_sources_acoustic_adjoint
 

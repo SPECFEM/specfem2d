@@ -36,7 +36,7 @@
 
 ! gets source parameters and determines simulation start/onset time
 
-  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,TINYVAL,PI
+  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,TINYVAL,PI,F_ORMSBY
 
   use specfem_par, only: myrank,NSOURCES,source_type,time_function_type, &
                          x_source,z_source,Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource, &
@@ -53,6 +53,16 @@
 
   ! checks the input
   do i_source = 1,NSOURCES
+
+    ! half-duration of the marmousi_ormsby_wavelet whose freq signature is 5-10-60-80
+    ! so here we choose 35Hz as dominant frequency
+    if (time_function_type(i_source) == 11) then
+      ! warning
+      if (f0_source(i_source) /= F_ORMSBY) then
+        print *,'warning: Marmousi Ormsby wavelet dominant frequency will be set to 35 Hz'
+        f0_source(i_source) = F_ORMSBY
+      endif
+    endif
 
     ! checks source type
     if (.not. initialfield) then
@@ -79,8 +89,8 @@
     hdur = 1.d0 / f0_source(i_source)
 
     ! sets source start times, shifted by the given (non-zero) time-shift
-    if (time_function_type(i_source) == 5) then
-      ! Heaviside
+    if (time_function_type(i_source) == 5 .or. time_function_type(i_source) == 11) then
+      ! Heaviside or Ormsby
       t0_source(i_source) = 2.0d0 * hdur + tshift_src(i_source)
     else
       t0_source(i_source) = 1.20d0 * hdur + tshift_src(i_source)

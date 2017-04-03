@@ -333,51 +333,49 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
-  use specfem_par, only: myrank,P_SV,accel_elastic,ispec_is_elastic,NSTEP,it, &
-                         nrec,islice_selected_rec,ispec_selected_rec,adj_sourcearrays, &
-                         ibool
+  use specfem_par, only: P_SV,accel_elastic,ispec_is_elastic,NSTEP,it, &
+                         nrecloc,ispec_selected_rec_loc,ibool, &
+                         source_adjointe,xir_store_loc,gammar_store_loc
   implicit none
 
   !local variables
-  integer :: irec_local,irec,i,j,iglob,ispec
+  integer :: irec_local,i,j,iglob,ispec
   integer :: it_tmp
 
   ! time step index
   it_tmp = NSTEP - it + 1
 
-  irec_local = 0
-  do irec = 1,nrec
-    !   add the source (only if this proc carries the source)
-    if (myrank == islice_selected_rec(irec)) then
-      irec_local = irec_local + 1
+  do irec_local = 1,nrecloc
 
-      ! element containing adjoint source
-      ispec = ispec_selected_rec(irec)
+    ! element containing adjoint source
+    ispec = ispec_selected_rec_loc(irec_local)
 
-      if (ispec_is_elastic(ispec)) then
-        ! add source array
-        if (P_SV) then
-          ! P-SH waves
-          do j = 1,NGLLZ
-            do i = 1,NGLLX
-              iglob = ibool(i,j,ispec)
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,it_tmp,1,i,j)
-              accel_elastic(2,iglob) = accel_elastic(2,iglob) + adj_sourcearrays(irec_local,it_tmp,2,i,j)
-            enddo
+    if (ispec_is_elastic(ispec)) then
+      ! add source array
+      if (P_SV) then
+        ! P-SH waves
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            iglob = ibool(i,j,ispec)
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) + real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
+                                        source_adjointe(irec_local,it_tmp,1),kind=CUSTOM_REAL)
+            accel_elastic(2,iglob) = accel_elastic(2,iglob) + real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
+                                        source_adjointe(irec_local,it_tmp,2),kind=CUSTOM_REAL)
           enddo
-        else
-          ! SH (membrane) wavescompute_forces_v
-          do j = 1,NGLLZ
-            do i = 1,NGLLX
-              iglob = ibool(i,j,ispec)
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + adj_sourcearrays(irec_local,it_tmp,1,i,j)
-            enddo
+        enddo
+      else
+        ! SH (membrane) wavescompute_forces_v
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            iglob = ibool(i,j,ispec)
+            accel_elastic(1,iglob) = accel_elastic(1,iglob) +  real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
+                                        source_adjointe(irec_local,it_tmp,1),kind=CUSTOM_REAL)
           enddo
-        endif
-      endif ! if element is elastic
-    endif ! if this processor core carries the adjoint source and the source element is elastic
+        enddo
+      endif
+    endif ! if element is elastic
 
-  enddo ! irec = 1,nrec
+  enddo ! irec_local = 1,nrecloc
 
   end subroutine compute_add_sources_viscoelastic_adjoint
 
