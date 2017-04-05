@@ -39,9 +39,17 @@
 
   use constants, only: CUSTOM_REAL,ZERO
 
-  use specfem_par, only: acoustic_surface,ibool,nelem_acoustic_surface,nglob,this_ibool_is_a_periodic_edge
+  use specfem_par, only: acoustic_surface,ibool,nelem_acoustic_surface,nglob,this_ibool_is_a_periodic_edge,coord
 
   implicit none
+
+!! DK DK added this to exclude the bottom surface of the mesh for Laurent Guillon in order not to create
+!! DK DK a Dirichlet condition for the potential, i.e. in order to create a Neumann condition for the potential
+!! DK DK i.e. in order to create a rigid bottom surface instead of a free surface; I test the Z coordinate of the mesh point
+  logical, parameter :: ENFORCE_RIGID_SURFACE_BOTTOM = .false.
+! this should be a bit bigger than the Z coordinate of the bottom; since it is Z = 0 in Laurent Guillon's test
+! we use this small value (its actual value does not matter as long as it is smaller than the Z coordinate of the top surface)
+  double precision, parameter :: Zlimit = 0.0000001d0  
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
 
@@ -63,9 +71,14 @@
         iglob = ibool(i,j,ispec)
         ! make sure that an acoustic free surface is not enforced on periodic edges
         if (.not. this_ibool_is_a_periodic_edge(iglob)) then
+!! DK DK added this to exclude the bottom surface of the mesh for Laurent Guillon in order not to create
+!! DK DK a Dirichlet condition for the potential, i.e. in order to create a Neumann condition for the potential
+!! DK DK i.e. in order to create a rigid bottom surface instead of a free surface; I test the Z coordinate of the mesh point
+        if (.not. ENFORCE_RIGID_SURFACE_BOTTOM .or. coord(2,iglob) >= Zlimit) then
           potential_acoustic(iglob) = ZERO
           potential_dot_acoustic(iglob) = ZERO
           potential_dot_dot_acoustic(iglob) = ZERO
+        endif
         endif
       enddo
     enddo
