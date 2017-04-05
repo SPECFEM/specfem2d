@@ -49,7 +49,7 @@
   logical, parameter :: ENFORCE_RIGID_SURFACE_BOTTOM = .false.
 ! this should be a bit bigger than the Z coordinate of the bottom; since it is Z = 0 in Laurent Guillon's test
 ! we use this small value (its actual value does not matter as long as it is smaller than the Z coordinate of the top surface)
-  double precision, parameter :: Zlimit = 0.0000001d0  
+  double precision, parameter :: Zlimit = 0.0000001d0
 
   real(kind=CUSTOM_REAL), dimension(nglob) :: potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic
 
