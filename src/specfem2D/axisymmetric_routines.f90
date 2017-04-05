@@ -75,7 +75,7 @@
   use constants, only: PI,TWO,TINYVAL
 
   use specfem_par, only: any_poroelastic, ROTATE_PML_ACTIVATE, &
-                         STACEY_ABSORBING_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD,time_stepping_scheme, &
+                         STACEY_ABSORBING_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD, &
                          NSOURCES, source_type, ispec_selected_source, ADD_PERIODIC_CONDITIONS, &
                          anglesource, is_on_the_axis, ispec_is_elastic, islice_selected_source,myrank
 
