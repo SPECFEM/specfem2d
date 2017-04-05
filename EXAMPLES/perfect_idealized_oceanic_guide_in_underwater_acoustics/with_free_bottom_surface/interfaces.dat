@@ -1,0 +1,27 @@
+#
+# Number of interfaces
+#
+ 2
+#
+# For each interface below, we give the number of points and then x,z for each point
+#
+#
+# Interface number 1 (bottom of the mesh)
+#
+ 2
+ 0 0
+ 7000 0
+#
+# Interface number 2 (ocean surface)
+#
+ 2
+    0 25
+ 7000 25
+#
+# For each layer, we give the number of spectral elements in the vertical direction
+#
+#
+# Layer number 1 (water)
+#
+ 6
+
