@@ -102,7 +102,7 @@
       write(IMAIN,*) '*******************************'
       write(IMAIN,*)
       call flush_IMAIN()
-    else
+    else if (.not. SOURCE_IS_MOVING) then
       write(IMAIN,*)
       write(IMAIN,*) '*******************************'
       write(IMAIN,*) ' locating moment-tensor source'

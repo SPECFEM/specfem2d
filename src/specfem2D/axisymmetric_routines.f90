@@ -96,8 +96,6 @@
     call exit_MPI(myrank,'Just axisymmetric FORWARD simulations are possible so far')
   if (SAVE_FORWARD) &
     call exit_MPI(myrank,'SAVE_FORWARD has presently not been tested with axisymmetric simulations')
-  if (time_stepping_scheme /= 1) &
-    call exit_MPI(myrank,'Just Newmark scheme is possible for axisymmetric simulation')
   if (ADD_PERIODIC_CONDITIONS) &
     call exit_MPI(myrank,'Periodic conditions (ADD_PERIODIC_CONDITIONS) are not implemented for axisymmetric simulations')
   if (NOISE_TOMOGRAPHY /= 0) &
