@@ -70,7 +70,8 @@ SAVE_MODEL                      = default
 #-----------------------------------------------------------------------------
 
 # attenuation parameters
-ATTENUATION_VISCOELASTIC        = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid or fluid parts of the model
+ATTENUATION_VISCOELASTIC        = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
+ATTENUATION_FLUID               = .false.        # turn attenuation (viscoacousticity) on or off for non-poroelastic fluid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
 Q0                              = 1              # quality factor for viscous attenuation
 freq0                           = 10             # frequency for viscous attenuation
@@ -127,7 +128,7 @@ USE_TRICK_FOR_BETTER_PRESSURE   = .false.
 # every how many time steps we save the seismograms
 # (costly, do not use a very small value; if you use a very large value that is larger than the total number
 #  of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
-NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000
+NSTEP_BETWEEN_OUTPUT_SEISMOS    = 100
 
 # use this t0 as earliest starting time rather than the automatically calculated one
 USER_T0                         = 0.0d0
@@ -142,7 +143,7 @@ SU_FORMAT                       = .false.        # output single precision binar
 use_existing_STATIONS           = .false.
 
 # number of receiver sets (i.e. number of receiver lines to create below)
-nreceiversets                   = 1
+nreceiversets                   = 2
 
 # orientation
 anglerec                        = 0.d0           # angle to rotate components at receivers
@@ -155,6 +156,15 @@ zdeb                            = 2200.          # first receiver z in meters
 xfin                            = 3700.          # last receiver x in meters (ignored if only one receiver)
 zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
 record_at_surface_same_vertical = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
+
+# first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
+nrec                            = 11             # number of receivers
+xdeb                            = 2500.          # first receiver x in meters
+zdeb                            = 2500.          # first receiver z in meters
+xfin                            = 2500.          # last receiver x in meters (ignored if only one receiver)
+zfin                            = 0.             # last receiver z in meters (ignored if only one receiver)
+record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
+
 
 #-----------------------------------------------------------------------------
 #
@@ -330,3 +340,4 @@ US_LETTER                       = .false.        # use US letter or European A4 
 output_wavefield_dumps          = .false.        # output wave field to a text file every NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS time steps (creates very big files)
 imagetype_wavefield_dumps       = 1              # display 1=displ vector 2=veloc vector 3=accel vector 4=pressure
 use_binary_for_wavefield_dumps  = .false.        # use ASCII or single-precision binary format for the wave field dumps
+
