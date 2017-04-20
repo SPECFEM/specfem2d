@@ -78,6 +78,7 @@ specfem2D_OBJECTS = \
 	$O/compute_curl_one_element.spec.o \
 	$O/compute_energy.spec.o \
 	$O/compute_forces_acoustic.spec.o \
+	$O/compute_attenuation_acoustic.spec.o \
 	$O/compute_forces_acoustic_backward.spec.o \
 	$O/compute_forces_acoustic_calling_routine.spec.o \
 	$O/compute_forces_gravitoacoustic.spec.o \

@@ -45,7 +45,8 @@
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
                          rmemory_fsb_displ_elastic,timeval,deltat, &
                          rmemory_fsb_displ_elastic_LDDRK,i_stage,time_stepping_scheme, &
-                         nglob_acoustic,nglob_elastic
+                         nglob_acoustic,nglob_elastic,veloc_elastic,assign_external_model, &
+                         kmato,rhoext,etaext,vpext,poroelastcoef,eta,density
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML,nspec_PML,spec_to_PML,region_CPML, &
@@ -66,6 +67,10 @@
   double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &
                       A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2
 
+  real(kind=CUSTOM_REAL) :: rhol,cpl,etal,lambda_relaxed,mu_relaxed,kappal
+  real(kind=CUSTOM_REAL) :: veloc_x,veloc_z,veloc_n,displ_n_max
+
+  displ_n_max = 0.
   ! loop on all the coupling edges
   do inum = 1,num_fluid_solid_edges
 
@@ -87,6 +92,8 @@
 
       displ_x = displ_elastic(1,iglob)
       displ_z = displ_elastic(2,iglob)
+      veloc_x = veloc_elastic(1,iglob)
+      veloc_z = veloc_elastic(2,iglob)
 
       ! PML elements
       ! overwrites displ_x and displ_z
@@ -237,7 +244,29 @@
 
       ! compute dot product
       displ_n = displ_x*nx + displ_z*nz
-      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+      veloc_n = veloc_x*nx + veloc_z*nz
+      ! Bulk viscosity
+      rhol = density(1,kmato(ispec_acoustic))
+      etal = eta(1,kmato(ispec_acoustic))
+      lambda_relaxed = poroelastcoef(1,1,kmato(ispec_acoustic))
+      mu_relaxed = poroelastcoef(2,1,kmato(ispec_acoustic))
+      kappal = lambda_relaxed + mu_relaxed
+      if (assign_external_model) then
+          rhol = rhoext(i,j,ispec_acoustic)
+          etal = etaext(i,j,ispec_acoustic)
+          cpl  = vpext(i,j,ispec_acoustic)
+          kappal  = rhol*cpl**2
+      endif
+      etal = 0. !! DK DK and Quentin Brissaud: viscosity "eta" is ignored for now
+
+! Note from Quentin Brissaud, ISAE, France, April 2017 about the case of viscoacoustic fluids:
+! Il est important de noter qu'une nouvelle condition de couplage est presente entre les milieux elastiques et acoustiques.
+! En effet les termes de bord (Gamm_FS) de l'equation (42) du rapport impliquent maintenant
+! la contribution du deplacement normal ainsi que de la vitesse normale. Je l'ai aussi rajoute dans la routine adequate.
+! En revanche il faudrait se pencher sur le cas des milieux poreux.
+
+      if (abs(displ_n) > displ_n_max) displ_n_max =  abs(displ_n)
+      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*(displ_n + (etal/kappal)*veloc_n)
 
     enddo
   enddo

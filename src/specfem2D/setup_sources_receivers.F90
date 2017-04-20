@@ -391,7 +391,7 @@
 
   use specfem_par, only: nadj_rec_local,nrec,nrecloc,NSTEP,NPROC,SIMULATION_TYPE,SU_FORMAT, &
                         myrank,islice_selected_rec,seismotype, &
-                        network_name,station_name,source_adjointe
+                        network_name,station_name,source_adjoint
 
   implicit none
 
@@ -415,7 +415,7 @@
       call flush_IMAIN()
     endif
 
-    allocate(source_adjointe(nrecloc,NSTEP,2))
+    allocate(source_adjoint(nrecloc,NSTEP,2))
 
     ! counts number of adjoint sources in this slice
     do irec = 1,nrec
@@ -860,12 +860,12 @@
   ! local parameters
   integer :: irec,irec_local,ier
 
-  ! allocate Lagrange interpolators for receivers
+  ! allocate Lagrange interpolants for receivers
   allocate(xir_store_loc(nrecloc,NGLLX), &
            gammar_store_loc(nrecloc,NGLLZ),stat=ier)
   if (ier /= 0) stop 'Error allocating local receiver h**_store arrays'
 
-  ! define and store Lagrange interpolators at all the receivers
+  ! define and store Lagrange interpolants at all the receivers
   irec_local = 0
   do irec = 1,nrec
     if (AXISYM) then

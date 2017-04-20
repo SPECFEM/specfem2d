@@ -335,7 +335,7 @@
 
   use specfem_par, only: P_SV,accel_elastic,ispec_is_elastic,NSTEP,it, &
                          nrecloc,ispec_selected_rec_loc,ibool, &
-                         source_adjointe,xir_store_loc,gammar_store_loc
+                         source_adjoint,xir_store_loc,gammar_store_loc
   implicit none
 
   !local variables
@@ -358,9 +358,9 @@
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
             accel_elastic(1,iglob) = accel_elastic(1,iglob) + real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                                        source_adjointe(irec_local,it_tmp,1),kind=CUSTOM_REAL)
+                                        source_adjoint(irec_local,it_tmp,1),kind=CUSTOM_REAL)
             accel_elastic(2,iglob) = accel_elastic(2,iglob) + real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                                        source_adjointe(irec_local,it_tmp,2),kind=CUSTOM_REAL)
+                                        source_adjoint(irec_local,it_tmp,2),kind=CUSTOM_REAL)
           enddo
         enddo
       else
@@ -369,7 +369,7 @@
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
             accel_elastic(1,iglob) = accel_elastic(1,iglob) +  real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                                        source_adjointe(irec_local,it_tmp,1),kind=CUSTOM_REAL)
+                                        source_adjoint(irec_local,it_tmp,1),kind=CUSTOM_REAL)
           enddo
         enddo
       endif

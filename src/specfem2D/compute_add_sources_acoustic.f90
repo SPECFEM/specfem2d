@@ -238,7 +238,7 @@
 
   use specfem_par, only: potential_dot_dot_acoustic,ispec_is_acoustic,NSTEP,it, &
                          nrecloc,ispec_selected_rec_loc, &
-                         ibool,kappastore,source_adjointe,xir_store_loc,gammar_store_loc
+                         ibool,kappastore,source_adjoint,xir_store_loc,gammar_store_loc
   implicit none
 
   !local variables
@@ -264,7 +264,7 @@
           !ZN do not tune the source
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
                                               real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                                              source_adjointe(irec_local,it_tmp,1),kind=CUSTOM_REAL) &
+                                              source_adjoint(irec_local,it_tmp,1),kind=CUSTOM_REAL) &
                                               / kappastore(i,j,ispec)
         enddo
       enddo

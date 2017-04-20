@@ -118,7 +118,7 @@
                          ibool,initialfield,SIMULATION_TYPE, &
                          kmato,porosity,density, &
                          accels_poroelastic,accelw_poroelastic, &
-                         source_adjointe,xir_store_loc,gammar_store_loc
+                         source_adjoint,xir_store_loc,gammar_store_loc
 
   implicit none
 
@@ -151,17 +151,17 @@
 
           ! solid contribution
           accels_poroelastic(1,iglob) = accels_poroelastic(1,iglob) + real(xir_store_loc(irec_local,i)*&
-            gammar_store_loc(irec_local,j)*source_adjointe(irec_local,NSTEP-it+1,1),kind=CUSTOM_REAL)
+            gammar_store_loc(irec_local,j)*source_adjoint(irec_local,NSTEP-it+1,1),kind=CUSTOM_REAL)
           accels_poroelastic(2,iglob) = accels_poroelastic(2,iglob) + real(xir_store_loc(irec_local,i)*&
-            gammar_store_loc(irec_local,j)*source_adjointe(irec_local,NSTEP-it+1,2),kind=CUSTOM_REAL)
+            gammar_store_loc(irec_local,j)*source_adjoint(irec_local,NSTEP-it+1,2),kind=CUSTOM_REAL)
 
           ! fluid
           accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - &
                 real(rho_f/rho_bar * xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                source_adjointe(irec_local,NSTEP-it+1,1),kind=CUSTOM_REAL)
+                source_adjoint(irec_local,NSTEP-it+1,1),kind=CUSTOM_REAL)
           accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - &
                 real(rho_f/rho_bar * xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
-                source_adjointe(irec_local,NSTEP-it+1,2),kind=CUSTOM_REAL)
+                source_adjoint(irec_local,NSTEP-it+1,2),kind=CUSTOM_REAL)
         enddo
       enddo
 

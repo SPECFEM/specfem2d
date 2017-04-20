@@ -54,8 +54,8 @@ module specfem_par
 
   ! poroelastic and elastic coefficients
   double precision, dimension(:,:,:), allocatable :: poroelastcoef
-  logical, dimension(:), allocatable :: already_shifted_velocity
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: vpext,vsext,rhoext,gravityext,Nsqext
+  logical, dimension(:), allocatable :: already_shifted_velocity,already_shifted_velocity_fluid
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: vpext,vsext,rhoext,gravityext,Nsqext,etaext
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
 
   ! anisotropy parameters
@@ -75,6 +75,9 @@ module specfem_par
   integer :: nspec_ATT
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   real(kind=CUSTOM_REAL), dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu_fluid,phi_nu_fluid
+  real(kind=CUSTOM_REAL), dimension(:,:,:) , allocatable :: Mu_nu_fluid
 
   ! material
   ! density
@@ -442,6 +445,11 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_force_rk,e11_force_rk,e13_force_rk
 
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_fluid, dot_e1_fluid
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_fluid_LDDRK
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_fluid_initial_rk
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_fluid_force_rk
+
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
 
   ! the variable for PML
@@ -525,6 +533,7 @@ module specfem_par
 
   double precision, dimension(:), allocatable :: porosity,tortuosity
   double precision, dimension(:,:), allocatable :: density,permeability
+  double precision, dimension(:,:), allocatable :: eta
 
   ! for viscous attenuation in poroelastic_acoustic
   double precision :: theta_e,theta_s
@@ -594,8 +603,8 @@ module specfem_par
   ! adjoint sources
   integer :: nadj_rec_local
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: adj_sourcearrays
-  real(kind=CUSTOM_REAL),  dimension(:,:,:), allocatable :: source_adjointe
-  real(kind=CUSTOM_REAL),  dimension(:,:), allocatable :: xir_store_loc, gammar_store_loc
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: source_adjoint
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: xir_store_loc, gammar_store_loc
 
   ! absorbing boundary
   logical :: anyabs

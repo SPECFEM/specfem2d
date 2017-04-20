@@ -43,7 +43,7 @@
     coord,kmato,MODEL,tomo_material,myrank,setup_with_binary_database
 
   ! external model parameters
-  use specfem_par, only: rhoext,vpext,vsext,gravityext,Nsqext, &
+  use specfem_par, only: rhoext,vpext,vsext,gravityext,Nsqext,etaext, &
     QKappa_attenuationext,Qmu_attenuationext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
 
   implicit none
@@ -51,7 +51,7 @@
   ! Local variables
   integer :: i,j,ispec,itmp
   integer :: ier
-  real(kind=CUSTOM_REAL) :: tmp1, tmp2
+  real(kind=CUSTOM_REAL) :: tmp1,tmp2
   double precision :: vs_val,vp_val,rho_val
   character(len=150) :: inputname
 
@@ -224,7 +224,7 @@
   case ('external')
     ! generic model defined in external files
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext, &
-                               QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
+                               QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext,etaext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
   case ('marmousi')
     ! marmousi type model

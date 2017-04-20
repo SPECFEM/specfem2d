@@ -130,7 +130,7 @@
 
   use constants, only: IIN,MAX_STRING_LEN,CUSTOM_REAL,NDIM
 
-  use specfem_par, only: myrank,NSTEP,P_SV,seismotype,source_adjointe
+  use specfem_par, only: myrank,NSTEP,P_SV,seismotype,source_adjoint
 
   implicit none
 
@@ -213,11 +213,11 @@
 
   if (P_SV) then
     ! P_SV-case
-    source_adjointe(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
-    source_adjointe(irec_local,:,2) = real(adj_src_s(:,3),kind=CUSTOM_REAL)
+    source_adjoint(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
+    source_adjoint(irec_local,:,2) = real(adj_src_s(:,3),kind=CUSTOM_REAL)
   else
     ! SH-case
-    source_adjointe(irec_local,:,1) = real(adj_src_s(:,2),kind=CUSTOM_REAL)
+    source_adjoint(irec_local,:,1) = real(adj_src_s(:,2),kind=CUSTOM_REAL)
   endif
 
   end subroutine read_adj_source
@@ -233,7 +233,7 @@
   use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NDIM
 
   use specfem_par, only: myrank, NSTEP, nrec, &
-                         islice_selected_rec, P_SV,source_adjointe
+                         islice_selected_rec, P_SV,source_adjoint
 
   implicit none
 
@@ -312,11 +312,11 @@
 
       if (P_SV) then
         ! P_SV-case
-        source_adjointe(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
-        source_adjointe(irec_local,:,2) = real(adj_src_s(:,2),kind=CUSTOM_REAL)
+        source_adjoint(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
+        source_adjoint(irec_local,:,2) = real(adj_src_s(:,2),kind=CUSTOM_REAL)
       else
         ! SH-case
-        source_adjointe(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
+        source_adjoint(irec_local,:,1) = real(adj_src_s(:,1),kind=CUSTOM_REAL)
       endif
 
     endif !  if (myrank == islice_selected_rec(irec))

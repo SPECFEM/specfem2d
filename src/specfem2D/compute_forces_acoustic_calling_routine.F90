@@ -54,6 +54,10 @@
   ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
   do iphase = 1,2
 
+    ! viscous attenuation for fluid media
+    if (ATTENUATION_FLUID) call compute_attenuation_acoustic(potential_acoustic,potential_acoustic_old, &
+                                                                  ispec_is_acoustic,PML_BOUNDARY_CONDITIONS,e1)
+
     ! main solver for the acoustic elements
     call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
                                  PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase)

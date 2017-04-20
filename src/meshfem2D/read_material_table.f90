@@ -137,7 +137,6 @@
   number_of_materials_defined_by_tomo_file = 0
 
   ! reads in material definitions
-  !print *,'nbmodels=',nbmodels
   do imaterial= 1,nbmodels
 
     call read_material_parameters_p(i,icodematread, &

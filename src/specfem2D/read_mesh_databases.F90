@@ -34,7 +34,6 @@
 
   subroutine read_mesh_for_init()
 
-
   use constants, only: IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
   use specfem_par
   use specfem_par_noise, only: NOISE_TOMOGRAPHY
@@ -131,7 +130,7 @@
 
   read(IIN) use_binary_for_wavefield_dumps
 
-  read(IIN) ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART
+  read(IIN) ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART,ATTENUATION_FLUID
 
   read(IIN) save_ASCII_seismograms
 
@@ -500,6 +499,7 @@
 
   ! material
   allocate(density(2,numat))
+  allocate(eta(2,numat))
   allocate(anisotropy(10,numat)) ! don't forget c22 value (it is used for AXISYM simulations only)
 
   allocate(porosity(numat), &
