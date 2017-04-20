@@ -165,9 +165,6 @@
   ! 'NELEM_PML_THICKNESS'
   write(IOUT) NELEM_PML_THICKNESS
 
-  ! 'NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS'
-  write(IOUT) NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
-
   ! 'subsamp_seismos imagetype_JPEG imagetype_wavefield_dumps'
   write(IOUT) subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
 

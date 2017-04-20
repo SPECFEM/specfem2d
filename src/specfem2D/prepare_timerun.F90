@@ -365,7 +365,7 @@
              d1_coorg_recv_ps_vector_field, d2_coorg_recv_ps_vector_field
 
   ! checks if anything to do
-  if (.not. (output_color_image .or. output_postscript_snapshot)) return
+  if (.not. (output_color_image .or. output_postscript_snapshot .or. output_wavefield_dumps)) return
 
   ! user output
   if (myrank == 0) then
@@ -625,6 +625,9 @@
     ! to dump the wave field
     this_is_the_first_time_we_dump = .true.
 
+  else if (output_wavefield_dumps) then
+     this_is_the_first_time_we_dump = .true.
+ 
   endif ! postscript
 
   end subroutine prepare_timerun_image_coloring

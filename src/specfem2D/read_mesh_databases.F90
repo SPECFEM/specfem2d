@@ -104,8 +104,6 @@
 
   read(IIN) NELEM_PML_THICKNESS
 
-  read(IIN) NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
-
   read(IIN) subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
 
   read(IIN) output_postscript_snapshot,output_color_image

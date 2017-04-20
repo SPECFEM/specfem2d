@@ -701,14 +701,13 @@
   ! global domain flags
   ! (sets global flag for all slices)
   call any_all_l(any_elastic, ELASTIC_SIMULATION)
-  call any_all_l(any_poroelastic, POROELASTIC_SIMULATION)
   call any_all_l(any_acoustic, ACOUSTIC_SIMULATION)
+  call any_all_l(any_poroelastic, POROELASTIC_SIMULATION)
   call any_all_l(any_gravitoacoustic, GRAVITOACOUSTIC_SIMULATION)
 
   ! check for solid attenuation
-  if (.not. ELASTIC_SIMULATION) then
-    if (ATTENUATION_VISCOELASTIC) &
-      call exit_MPI(myrank,'currently cannot have attenuation if acoustic/poroelastic simulation only')
+  if (.not. ELASTIC_SIMULATION .and. .not. ACOUSTIC_SIMULATION .and. .not. GRAVITOACOUSTIC_SIMULATION) then
+    if (ATTENUATION_VISCOELASTIC) call exit_MPI(myrank,'currently cannot have attenuation if poroelastic simulation only')
   endif
 
   ! safety check

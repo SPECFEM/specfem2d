@@ -203,7 +203,6 @@
     call bcast_all_singlei(NTSTEP_BETWEEN_OUTPUT_ENERGY)
 
     call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_IMAGES)
-    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS)
     call bcast_all_singledp(cutsnaps)
 
     call bcast_all_singlel(output_color_image)
@@ -601,9 +600,6 @@
 
   call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_IMAGES, 'solver.NSTEP_BETWEEN_OUTPUT_IMAGES')
   if (err_occurred() /= 0) stop 'error reading parameter NSTEP_BETWEEN_OUTPUT_IMAGES in Par_file'
-
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS, 'solver.NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS')
-  if (err_occurred() /= 0) stop 'error reading parameter NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS in Par_file'
 
   call read_value_double_precision_p(cutsnaps, 'solver.cutsnaps')
   if (err_occurred() /= 0) stop 'error reading parameter cutsnaps in Par_file'

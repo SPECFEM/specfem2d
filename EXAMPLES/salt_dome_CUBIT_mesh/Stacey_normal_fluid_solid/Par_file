@@ -293,11 +293,9 @@ NTSTEP_BETWEEN_OUTPUT_ENERGY    = 10
 #
 #-----------------------------------------------------------------------------
 
-# every how many time steps we draw JPEG or PostScript pictures of the simulation (costly, do not use a very small value)
+# every how many time steps we draw JPEG or PostScript pictures of the simulation
+# and/or we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
 NSTEP_BETWEEN_OUTPUT_IMAGES     = 100
-
-# every how many time steps we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
-NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS = 100
 
 # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
 cutsnaps                        = 1.
@@ -326,7 +324,7 @@ sizemax_arrows                  = 1.d0           # maximum size of arrows on Pos
 US_LETTER                       = .false.        # use US letter or European A4 paper for PostScript plots
 
 #### for wavefield dumps ####
-output_wavefield_dumps          = .false.        # output wave field to a text file every NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS time steps (creates very big files)
+output_wavefield_dumps          = .false.        # output wave field to a text file (creates very big files)
 imagetype_wavefield_dumps       = 1              # display 1=displ vector 2=veloc vector 3=accel vector 4=pressure
 use_binary_for_wavefield_dumps  = .false.        # use ASCII or single-precision binary format for the wave field dumps
 

@@ -293,8 +293,6 @@ module shared_input_parameters
   !#-----------------------------------------------------------------------------
   ! time step interval for image output
   integer :: NSTEP_BETWEEN_OUTPUT_IMAGES
-  ! time step interval for wavefield dumps
-  integer :: NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
   ! threshold value
   double precision :: cutsnaps
 
