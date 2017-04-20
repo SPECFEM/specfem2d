@@ -627,7 +627,7 @@
 
   else if (output_wavefield_dumps) then
      this_is_the_first_time_we_dump = .true.
- 
+
   endif ! postscript
 
   end subroutine prepare_timerun_image_coloring
