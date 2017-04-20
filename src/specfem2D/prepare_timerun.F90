@@ -1633,9 +1633,6 @@
       if (.not. assign_external_model) then
         qkappal = QKappa_attenuation(kmato(ispec))
 
-        ! QUENTIN - MODIF UNTIL  QKappa_attenuation is added in "Par_file"
-        qkappal = 9990.
-
         ! check that attenuation values entered by the user make sense
         if (qkappal > 9998.999d0) &
            stop 'need to have Qkappa above or both below 9999 for a given fluid; &
