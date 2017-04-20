@@ -83,7 +83,7 @@
     if (NOISE_TOMOGRAPHY /= 0) call prepare_timerun_noise()
 
     ! attenuation
-    call prepare_timerun_attenuation()
+    call prepare_timerun_attenuation_solid()
     call prepare_timerun_attenuation_fluid()
 
     ! prepares GPU arrays
