@@ -23,16 +23,3 @@ TO RUN:
 
 ----------------------------------------------------------------------
 
-
-note: for convenience, a second parameter file DATA/Par_file_with_PML is provided
-      which changes the setup to use PMLs. 
-
-      it is the same setup as given in the package root DATA/ directory.
-      in order to run this modified setup, just:
-
-      > cp DATA/Par_file_with_PML DATA/Par_file
-
-      and rerun the above steps (mainly 4. and 5.)
-
-
-
