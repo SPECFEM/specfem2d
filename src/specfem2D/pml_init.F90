@@ -416,7 +416,7 @@
 
  subroutine define_PML_coefficients()
 
-  use constants, only: PI,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ,PML_parameter_adjustment
+  use constants, only: PI,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
 
   use specfem_par, only: f0_source,ispec_is_elastic,ispec_is_acoustic, &
                          NSOURCES,ispec_selected_source, &
@@ -443,8 +443,8 @@
 !ZN  we do not proved and we can not ensure that such an adjustment is optimum, since we do the adjustment based on
 !ZN  our own experience in numerical simulation.
 
+  logical :: PML_parameter_adjustment
 
-!ZN  double precision :: f0_temp
   double precision :: f0_max
 
 ! PML fixed parameters to compute parameter in PML
@@ -488,6 +488,14 @@
                       thickness_PML_x_min_left_glob,thickness_PML_x_max_left_glob
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision :: vpmax_glob_acoustic, vpmax_glob_elastic
+
+! The simple code implemented for PML_parameter_adjustment only works fine for one source.
+! If the sources are distributed widely when NSOURCES > 1, then it is hard to optimize the PML and thus we turn it off
+  if (NSOURCES == 1) then
+    PML_parameter_adjustment = .true.
+  else
+    PML_parameter_adjustment = .false.
+  endif
 
 ! compute the maximum dominant frequency of all sources
   f0_max = maxval(f0_source(:))
