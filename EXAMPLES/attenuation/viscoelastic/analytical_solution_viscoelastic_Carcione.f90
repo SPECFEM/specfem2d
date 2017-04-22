@@ -41,7 +41,7 @@
   double precision x1,x2
 
 ! Definition source Dimitri
-  double precision f0,t0,eta
+  double precision f0,t0
   parameter(f0 = 18.d0)
   parameter(t0 = 1.2d0 / f0)
 
@@ -51,6 +51,9 @@
 ! parameter(t0 = 0.075d0)
 ! parameter(epsil = 1.d0)
 ! parameter(eta = 0.5d0)
+
+! number of Zener standard linear solids in parallel
+  integer, parameter :: Lnu = 2
 
 ! attenuation constants from Carcione 1988 GJI vol 95 p 604
 ! two mechanisms for the moment
@@ -83,8 +86,6 @@
 ! parameter(tau_epsilon_nu2_mech2 = 0.0033257d0)
 ! parameter(tau_sigma_nu2_mech1   = 0.0304655d0)
 ! parameter(tau_sigma_nu2_mech2   = 0.0030465d0)
-
-  integer Lnu
 
   double precision M1,M2
 ! these values come from Carcione et al. 1998, Table 1
@@ -143,16 +144,11 @@
 
 ! definir le spectre du Ricker de Carcione avec cos()
 ! d'apres Carcione GJI vol 93 p 401 (1988)
-!            fomega(ifreq) = pi * dsqrt(pi/eta) * (1.d0/omega0)
-!     .        * cdexp(comparg) *
-!     .    ( dexp(- (pi*pi/eta) * (epsil/2 - omega/omega0)**2)
-!     .    + dexp(- (pi*pi/eta) * (epsil/2 + omega/omega0)**2) )
+!     fomega(ifreq) = pi * dsqrt(pi/eta) * (1.d0/omega0) * cdexp(comparg) * ( dexp(- (pi*pi/eta) * (epsil/2 - omega/omega0)**2) &
+!         + dexp(- (pi*pi/eta) * (epsil/2 + omega/omega0)**2) )
 
-! definir le spectre du Ricker de Carcione avec cos()
-! d'apres Carcione GJI vol 93 p 401 (1988)
-      fomega(ifreq) = - omega**2 * 2.d0 * (dsqrt(pi)/omega0) &
-! DK DK          * cdexp(comparg) * dexp(- (omega/omega0)**2)
-                 * cdexp(-comparg) * dexp(- (omega/omega0)**2)
+! definir le spectre d'un Ricker classique
+      fomega(ifreq) = - omega**2 * 2.d0 * (dsqrt(pi)/omega0) * cdexp(-comparg) * dexp(- (omega/omega0)**2)
 
       ra(ifreq) = dreal(fomega(ifreq))
       rb(ifreq) = dimag(fomega(ifreq))
@@ -161,7 +157,7 @@
   enddo
 
 ! sauvegarde du spectre d'amplitude de la source en Hz au format Gnuplot
-  open(unit=10,file='spectre.gnu',status='unknown')
+  open(unit=10,file='spectrum.gnu',status='unknown')
   do ifreq = 0,nfreq
       freq = deltafreq * dble(ifreq)
       write(10,*) sngl(freq),sngl(ampli(ifreq))
@@ -178,15 +174,12 @@
 ! critere ad-hoc pour eviter singularite en zero
   if(freq < freqseuil) omega = 2.d0 * pi * freqseuil
 
-! modules elastiques complexes
-  Lnu = 2
-
 ! use more standard infinite frequency (unrelaxed) reference,
 ! in which waves slow down when attenuation is turned on,
 ! or use far less standard zero frequency (relaxed) reference,
 ! in which waves speed up when attenuation is turned on
   if (FIX_ATTENUATION_CAUSALITY) then
-    M1C = M1 /(1.d0 - Lnu+tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1 + &
+    M1C = M1 /(1.d0 - Lnu + tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1 + &
       tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2) &
         * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu1_mech1) &
                     / dcmplx(1.d0,omega*tau_sigma_nu1_mech1) &
@@ -230,7 +223,7 @@
   do ifreq=0,nfreq
       if(cdabs(phi1(ifreq)) > 0.d0) goto 180
       do ifreq2=ifreq,nfreq
-            if(cdabs(phi1(ifreq2)) > 0.d0) goto 181
+        if(cdabs(phi1(ifreq2)) > 0.d0) goto 181
       enddo
  181 continue
       phi1(ifreq) = phi1(ifreq2)
@@ -246,14 +239,12 @@
   enddo
 
 ! save the result in the frequency domain
-  open(unit=11,file='cmplx_phi',status='unknown')
-  do ifreq=-nfreq,nfreq
-      freq = deltafreq * dble(ifreq)
-      write(11,*) sngl(freq), &
-          sngl(dreal(phi1(ifreq))),sngl(dimag(phi1(ifreq))), &
-          sngl(dreal(phi2(ifreq))),sngl(dimag(phi2(ifreq)))
-  enddo
-  close(11)
+! open(unit=11,file='cmplx_phi',status='unknown')
+! do ifreq=-nfreq,nfreq
+!     freq = deltafreq * dble(ifreq)
+!     write(11,*) sngl(freq), sngl(dreal(phi1(ifreq))),sngl(dimag(phi1(ifreq))), sngl(dreal(phi2(ifreq))),sngl(dimag(phi2(ifreq)))
+! enddo
+! close(11)
 
 ! Calculation of the time domain solution using Netlib
 
@@ -283,8 +274,9 @@
   do it=1,nt
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
         time = dble(it)*deltat - t0
-        if(time<=2.d0) &
-                write(11,*) sngl(time),real(c(it)),imag(c(it))
+! the seismograms are very long due to the very large number of FFT points used,
+! thus keeping the useful part of the signal only (the first two seconds of the seismogram)
+        if(time <= 2.d0) write(11,*) sngl(time),real(c(it)),imag(c(it))
   enddo
   close(11)
 
@@ -308,8 +300,9 @@
   do it=1,nt
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
         time = dble(it)*deltat - t0
-        if(time<=2.d0) &
-                write(11,*) sngl(time),real(c(it)),imag(c(it))
+! the seismograms are very long due to the very large number of FFT points used,
+! thus keeping the useful part of the signal only (the first two seconds of the seismogram)
+        if(time <= 2.d0) write(11,*) sngl(time),real(c(it)),imag(c(it))
   enddo
   close(11)
 
