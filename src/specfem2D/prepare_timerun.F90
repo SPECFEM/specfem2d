@@ -1527,9 +1527,11 @@
 
   ! local parameters
   integer :: i,j,ispec,n,ier
+
   ! for shifting of velocities if needed in the case of viscoelasticity
   double precision :: vp,vs,rhol,mul,lambdal
   double precision :: qkappal
+
   ! attenuation factors
   real(kind=CUSTOM_REAL) :: Mu_nu1_sent
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: tau_epsilon_nu1_sent,tau_epsilon_nu2_sent
@@ -1670,7 +1672,6 @@
           ! stores attenuation values
           inv_tau_sigma_nu_fluid(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
           phi_nu_fluid(i,j,ispec,:) = phi_nu1_sent(:)
-
           Mu_nu_fluid(i,j,ispec) = Mu_nu1_sent
 
           ! shifts velocities
@@ -1693,7 +1694,7 @@
               ! stores shifted values
               vpext(i,j,ispec) = vp
             else
-              ! internal mesh
+              ! not using an external model
               n = kmato(ispec)
               if (.not. already_shifted_velocity_fluid(n)) then
                 rhol = density(1,n)
@@ -1720,11 +1721,12 @@
               endif
             endif
           endif
-        enddo
-      enddo
-    enddo
+        enddo ! of loop on i
+      enddo ! of loop on j
 
-    ! UPDATE INVERSE MASS MATRIX
+    enddo ! of loop on ispec
+
+    ! update inverse mass matrix
     if ( ATTENUATION_FLUID ) then
     rmass_inverse_acoustic_old(:) = rmass_inverse_acoustic
     rmass_inverse_acoustic(:)     = 0.
