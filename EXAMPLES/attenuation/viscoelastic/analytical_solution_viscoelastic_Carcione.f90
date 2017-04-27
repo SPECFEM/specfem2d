@@ -172,7 +172,7 @@
       omega = 2.d0 * pi * freq
 
 ! critere ad-hoc pour eviter singularite en zero
-  if(freq < freqseuil) omega = 2.d0 * pi * freqseuil
+  if (freq < freqseuil) omega = 2.d0 * pi * freqseuil
 
 ! use more standard infinite frequency (unrelaxed) reference,
 ! in which waves slow down when attenuation is turned on,
@@ -211,7 +211,7 @@
   phi2(ifreq) = u2(omega,V1,V2,x1,x2,rho) * fomega(ifreq)
 
 ! a nouveau critere ad-hoc pour eviter singularite en zero
-  if(freq < freqseuil) then
+  if (freq < freqseuil) then
       phi1(ifreq) = dcmplx(0.d0,0.d0)
       phi2(ifreq) = dcmplx(0.d0,0.d0)
   endif
@@ -219,11 +219,11 @@
   enddo
 
 ! pour eviter singularite en zero, prendre premiere valeur non nulle
-  if(correction_f0) then
+  if (correction_f0) then
   do ifreq=0,nfreq
-      if(cdabs(phi1(ifreq)) > 0.d0) goto 180
+      if (cdabs(phi1(ifreq)) > 0.d0) goto 180
       do ifreq2=ifreq,nfreq
-        if(cdabs(phi1(ifreq2)) > 0.d0) goto 181
+        if (cdabs(phi1(ifreq2)) > 0.d0) goto 181
       enddo
  181 continue
       phi1(ifreq) = phi1(ifreq2)
@@ -276,7 +276,7 @@
         time = dble(it)*deltat - t0
 ! the seismograms are very long due to the very large number of FFT points used,
 ! thus keeping the useful part of the signal only (the first two seconds of the seismogram)
-        if(time <= 2.d0) write(11,*) sngl(time),real(c(it)),imag(c(it))
+        if (time <= 2.d0) write(11,*) sngl(time),real(c(it)),imag(c(it))
   enddo
   close(11)
 
@@ -302,7 +302,7 @@
         time = dble(it)*deltat - t0
 ! the seismograms are very long due to the very large number of FFT points used,
 ! thus keeping the useful part of the signal only (the first two seconds of the seismogram)
-        if(time <= 2.d0) write(11,*) sngl(time),real(c(it)),imag(c(it))
+        if (time <= 2.d0) write(11,*) sngl(time),real(c(it)),imag(c(it))
   enddo
   close(11)
 
@@ -421,8 +421,8 @@
 
   ifail = -1
   call S17DLE(2,0.0,cmplx(z),1,'U',result,nz,ifail)
-  if(ifail /= 0) stop 'S17DLE failed in hankel0'
-  if(nz > 0) print *,nz,' termes mis a zero par underflow'
+  if (ifail /= 0) stop 'S17DLE failed in hankel0'
+  if (nz > 0) print *,nz,' termes mis a zero par underflow'
 
   hankel0 = dcmplx(result)
 
@@ -443,8 +443,8 @@
 
   ifail = -1
   call S17DLE(2,1.0,cmplx(z),1,'U',result,nz,ifail)
-  if(ifail /= 0) stop 'S17DLE failed in hankel1'
-  if(nz > 0) print *,nz,' termes mis a zero par underflow'
+  if (ifail /= 0) stop 'S17DLE failed in hankel1'
+  if (nz > 0) print *,nz,' termes mis a zero par underflow'
 
   hankel1 = dcmplx(result)
 
@@ -454,15 +454,15 @@
 
 ! FFT routine taken from Netlib
 
-  SUBROUTINE CFFTB (N,C,WSAVE)
+  subroutine CFFTB (N,C,WSAVE)
   DIMENSION       C(1)       ,WSAVE(1)
-  IF (N == 1) RETURN
+  if (N == 1) return
   IW1 = N+N+1
   IW2 = IW1+N+N
   CALL CFFTB1 (N,C,WSAVE,WSAVE(IW1),WSAVE(IW2))
-  RETURN
+  return
   END
-  SUBROUTINE CFFTB1 (N,C,CH,WA,IFAC)
+  subroutine CFFTB1 (N,C,CH,WA,IFAC)
   DIMENSION       CH(1)      ,C(1)       ,WA(1)      ,IFAC(1)
   NF = IFAC(2)
   NA = 0
@@ -474,57 +474,57 @@
    IDO = N/L2
    IDOT = IDO+IDO
    IDL1 = IDOT*L1
-   IF (IP /= 4) GO TO 103
+   if (IP /= 4) goto 103
    IX2 = IW+IDOT
    IX3 = IX2+IDOT
-   IF (NA /= 0) GO TO 101
+   if (NA /= 0) goto 101
    CALL PASSB4 (IDOT,L1,C,CH,WA(IW),WA(IX2),WA(IX3))
-   GO TO 102
+   goto 102
   101    CALL PASSB4 (IDOT,L1,CH,C,WA(IW),WA(IX2),WA(IX3))
   102    NA = 1-NA
-   GO TO 115
-  103    IF (IP /= 2) GO TO 106
-   IF (NA /= 0) GO TO 104
+   goto 115
+  103    if (IP /= 2) goto 106
+   if (NA /= 0) goto 104
    CALL PASSB2 (IDOT,L1,C,CH,WA(IW))
-   GO TO 105
+   goto 105
   104    CALL PASSB2 (IDOT,L1,CH,C,WA(IW))
   105    NA = 1-NA
-   GO TO 115
-  106    IF (IP /= 3) GO TO 109
+   goto 115
+  106    if (IP /= 3) goto 109
    IX2 = IW+IDOT
-   IF (NA /= 0) GO TO 107
+   if (NA /= 0) goto 107
    CALL PASSB3 (IDOT,L1,C,CH,WA(IW),WA(IX2))
-   GO TO 108
+   goto 108
   107    CALL PASSB3 (IDOT,L1,CH,C,WA(IW),WA(IX2))
   108    NA = 1-NA
-   GO TO 115
-  109    IF (IP /= 5) GO TO 112
+   goto 115
+  109    if (IP /= 5) goto 112
    IX2 = IW+IDOT
    IX3 = IX2+IDOT
    IX4 = IX3+IDOT
-   IF (NA /= 0) GO TO 110
+   if (NA /= 0) goto 110
    CALL PASSB5 (IDOT,L1,C,CH,WA(IW),WA(IX2),WA(IX3),WA(IX4))
-   GO TO 111
+   goto 111
   110    CALL PASSB5 (IDOT,L1,CH,C,WA(IW),WA(IX2),WA(IX3),WA(IX4))
   111    NA = 1-NA
-   GO TO 115
-  112    IF (NA /= 0) GO TO 113
+   goto 115
+  112    if (NA /= 0) goto 113
    CALL PASSB (NAC,IDOT,IP,L1,IDL1,C,C,C,CH,CH,WA(IW))
-   GO TO 114
+   goto 114
   113    CALL PASSB (NAC,IDOT,IP,L1,IDL1,CH,CH,CH,C,C,WA(IW))
-  114    IF (NAC /= 0) NA = 1-NA
+  114    if (NAC /= 0) NA = 1-NA
   115    L1 = L2
    IW = IW+(IP-1)*IDOT
-  116 CONTINUE
-  IF (NA == 0) RETURN
+  116 continue
+  if (NA == 0) return
   N2 = N+N
   DO 117 I=1,N2
    C(I) = CH(I)
-  117 CONTINUE
-  RETURN
+  117 continue
+  return
   END
-  SUBROUTINE PASSB (NAC,IDO,IP,L1,IDL1,CC,C1,C2,CH,CH2,WA)
-  DIMENSION       CH(IDO,L1,IP)          ,CC(IDO,IP,L1)          , &
+  subroutine PASSB (NAC,IDO,IP,L1,IDL1,CC,C1,C2,CH,CH2,WA)
+  DIMENSION       CH(IDO,L1,IP)          ,CC(IDO,IP,L1), &
                   C1(IDO,L1,IP)          ,WA(1)      ,C2(IDL1,IP), &
                   CH2(IDL1,IP)
   IDOT = IDO/2
@@ -533,36 +533,36 @@
   IPPH = (IP+1)/2
   IDP = IP*IDO
 !
-  IF (IDO < L1) GO TO 106
+  if (IDO < L1) goto 106
   DO 103 J=2,IPPH
    JC = IPP2-J
    DO 102 K=1,L1
       DO 101 I=1,IDO
          CH(I,K,J) = CC(I,J,K)+CC(I,JC,K)
          CH(I,K,JC) = CC(I,J,K)-CC(I,JC,K)
-  101       CONTINUE
-  102    CONTINUE
-  103 CONTINUE
+  101       continue
+  102    continue
+  103 continue
   DO 105 K=1,L1
    DO 104 I=1,IDO
       CH(I,K,1) = CC(I,1,K)
-  104    CONTINUE
-  105 CONTINUE
-  GO TO 112
+  104    continue
+  105 continue
+  goto 112
   106 DO 109 J=2,IPPH
    JC = IPP2-J
    DO 108 I=1,IDO
       DO 107 K=1,L1
          CH(I,K,J) = CC(I,J,K)+CC(I,JC,K)
          CH(I,K,JC) = CC(I,J,K)-CC(I,JC,K)
-  107       CONTINUE
-  108    CONTINUE
-  109 CONTINUE
+  107       continue
+  108    continue
+  109 continue
   DO 111 I=1,IDO
    DO 110 K=1,L1
       CH(I,K,1) = CC(I,1,K)
-  110    CONTINUE
-  111 CONTINUE
+  110    continue
+  111 continue
   112 IDL = 2-IDO
   INC = 0
   DO 116 L=2,IPPH
@@ -571,26 +571,26 @@
    DO 113 IK=1,IDL1
       C2(IK,L) = CH2(IK,1)+WA(IDL-1)*CH2(IK,2)
       C2(IK,LC) = WA(IDL)*CH2(IK,IP)
-  113    CONTINUE
+  113    continue
    IDLJ = IDL
    INC = INC+IDO
    DO 115 J=3,IPPH
       JC = IPP2-J
       IDLJ = IDLJ+INC
-      IF (IDLJ > IDP) IDLJ = IDLJ-IDP
+      if (IDLJ > IDP) IDLJ = IDLJ-IDP
       WAR = WA(IDLJ-1)
       WAI = WA(IDLJ)
       DO 114 IK=1,IDL1
          C2(IK,L) = C2(IK,L)+WAR*CH2(IK,J)
          C2(IK,LC) = C2(IK,LC)+WAI*CH2(IK,JC)
-  114       CONTINUE
-  115    CONTINUE
-  116 CONTINUE
+  114       continue
+  115    continue
+  116 continue
   DO 118 J=2,IPPH
    DO 117 IK=1,IDL1
       CH2(IK,1) = CH2(IK,1)+CH2(IK,J)
-  117    CONTINUE
-  118 CONTINUE
+  117    continue
+  118 continue
   DO 120 J=2,IPPH
    JC = IPP2-J
    DO 119 IK=2,IDL1,2
@@ -598,21 +598,21 @@
       CH2(IK-1,JC) = C2(IK-1,J)+C2(IK,JC)
       CH2(IK,J) = C2(IK,J)+C2(IK-1,JC)
       CH2(IK,JC) = C2(IK,J)-C2(IK-1,JC)
-  119    CONTINUE
-  120 CONTINUE
+  119    continue
+  120 continue
   NAC = 1
-  IF (IDO == 2) RETURN
+  if (IDO == 2) return
   NAC = 0
   DO 121 IK=1,IDL1
    C2(IK,1) = CH2(IK,1)
-  121 CONTINUE
+  121 continue
   DO 123 J=2,IP
    DO 122 K=1,L1
       C1(1,K,J) = CH(1,K,J)
       C1(2,K,J) = CH(2,K,J)
-  122    CONTINUE
-  123 CONTINUE
-  IF (IDOT > L1) GO TO 127
+  122    continue
+  123 continue
+  if (IDOT > L1) goto 127
   IDIJ = 0
   DO 126 J=2,IP
    IDIJ = IDIJ+2
@@ -621,10 +621,10 @@
       DO 124 K=1,L1
          C1(I-1,K,J) = WA(IDIJ-1)*CH(I-1,K,J)-WA(IDIJ)*CH(I,K,J)
          C1(I,K,J) = WA(IDIJ-1)*CH(I,K,J)+WA(IDIJ)*CH(I-1,K,J)
-  124       CONTINUE
-  125    CONTINUE
-  126 CONTINUE
-  RETURN
+  124       continue
+  125    continue
+  126 continue
+  return
   127 IDJ = 2-IDO
   DO 130 J=2,IP
    IDJ = IDJ+IDO
@@ -634,22 +634,22 @@
          IDIJ = IDIJ+2
          C1(I-1,K,J) = WA(IDIJ-1)*CH(I-1,K,J)-WA(IDIJ)*CH(I,K,J)
          C1(I,K,J) = WA(IDIJ-1)*CH(I,K,J)+WA(IDIJ)*CH(I-1,K,J)
-  128       CONTINUE
-  129    CONTINUE
-  130 CONTINUE
-  RETURN
+  128       continue
+  129    continue
+  130 continue
+  return
   END
-  SUBROUTINE PASSB2 (IDO,L1,CC,CH,WA1)
-  DIMENSION       CC(IDO,2,L1)           ,CH(IDO,L1,2)           , &
+  subroutine PASSB2 (IDO,L1,CC,CH,WA1)
+  DIMENSION       CC(IDO,2,L1)           ,CH(IDO,L1,2), &
                   WA1(1)
-  IF (IDO > 2) GO TO 102
+  if (IDO > 2) goto 102
   DO 101 K=1,L1
    CH(1,K,1) = CC(1,1,K)+CC(1,2,K)
    CH(1,K,2) = CC(1,1,K)-CC(1,2,K)
    CH(2,K,1) = CC(2,1,K)+CC(2,2,K)
    CH(2,K,2) = CC(2,1,K)-CC(2,2,K)
-  101 CONTINUE
-  RETURN
+  101 continue
+  return
   102 DO 104 K=1,L1
    DO 103 I=2,IDO,2
       CH(I-1,K,1) = CC(I-1,1,K)+CC(I-1,2,K)
@@ -658,15 +658,15 @@
       TI2 = CC(I,1,K)-CC(I,2,K)
       CH(I,K,2) = WA1(I-1)*TI2+WA1(I)*TR2
       CH(I-1,K,2) = WA1(I-1)*TR2-WA1(I)*TI2
-  103    CONTINUE
-  104 CONTINUE
-  RETURN
+  103    continue
+  104 continue
+  return
   END
-  SUBROUTINE PASSB3 (IDO,L1,CC,CH,WA1,WA2)
-  DIMENSION       CC(IDO,3,L1)           ,CH(IDO,L1,3)           , &
+  subroutine PASSB3 (IDO,L1,CC,CH,WA1,WA2)
+  DIMENSION       CC(IDO,3,L1)           ,CH(IDO,L1,3), &
                   WA1(1)     ,WA2(1)
   DATA TAUR,TAUI /-.5,.866025403784439/
-  IF (IDO /= 2) GO TO 102
+  if (IDO /= 2) goto 102
   DO 101 K=1,L1
    TR2 = CC(1,2,K)+CC(1,3,K)
    CR2 = CC(1,1,K)+TAUR*TR2
@@ -680,8 +680,8 @@
    CH(1,K,3) = CR2+CI3
    CH(2,K,2) = CI2+CR3
    CH(2,K,3) = CI2-CR3
-  101 CONTINUE
-  RETURN
+  101 continue
+  return
   102 DO 104 K=1,L1
    DO 103 I=2,IDO,2
       TR2 = CC(I-1,2,K)+CC(I-1,3,K)
@@ -700,14 +700,14 @@
       CH(I-1,K,2) = WA1(I-1)*DR2-WA1(I)*DI2
       CH(I,K,3) = WA2(I-1)*DI3+WA2(I)*DR3
       CH(I-1,K,3) = WA2(I-1)*DR3-WA2(I)*DI3
-  103    CONTINUE
-  104 CONTINUE
-  RETURN
+  103    continue
+  104 continue
+  return
   END
-  SUBROUTINE PASSB4 (IDO,L1,CC,CH,WA1,WA2,WA3)
-  DIMENSION       CC(IDO,4,L1)           ,CH(IDO,L1,4)           , &
+  subroutine PASSB4 (IDO,L1,CC,CH,WA1,WA2,WA3)
+  DIMENSION       CC(IDO,4,L1)           ,CH(IDO,L1,4), &
                   WA1(1)     ,WA2(1)     ,WA3(1)
-  IF (IDO /= 2) GO TO 102
+  if (IDO /= 2) goto 102
   DO 101 K=1,L1
    TI1 = CC(2,1,K)-CC(2,3,K)
    TI2 = CC(2,1,K)+CC(2,3,K)
@@ -725,8 +725,8 @@
    CH(1,K,4) = TR1-TR4
    CH(2,K,2) = TI1+TI4
    CH(2,K,4) = TI1-TI4
-  101 CONTINUE
-  RETURN
+  101 continue
+  return
   102 DO 104 K=1,L1
    DO 103 I=2,IDO,2
       TI1 = CC(I,1,K)-CC(I,3,K)
@@ -751,16 +751,16 @@
       CH(I,K,3) = WA2(I-1)*CI3+WA2(I)*CR3
       CH(I-1,K,4) = WA3(I-1)*CR4-WA3(I)*CI4
       CH(I,K,4) = WA3(I-1)*CI4+WA3(I)*CR4
-  103    CONTINUE
-  104 CONTINUE
-  RETURN
+  103    continue
+  104 continue
+  return
   END
-  SUBROUTINE PASSB5 (IDO,L1,CC,CH,WA1,WA2,WA3,WA4)
-  DIMENSION       CC(IDO,5,L1)           ,CH(IDO,L1,5)           , &
+  subroutine PASSB5 (IDO,L1,CC,CH,WA1,WA2,WA3,WA4)
+  DIMENSION       CC(IDO,5,L1)           ,CH(IDO,L1,5), &
                   WA1(1)     ,WA2(1)     ,WA3(1)     ,WA4(1)
   DATA TR11,TI11,TR12,TI12 /.309016994374947,.951056516295154, &
   -.809016994374947,.587785252292473/
-  IF (IDO /= 2) GO TO 102
+  if (IDO /= 2) goto 102
   DO 101 K=1,L1
    TI5 = CC(2,2,K)-CC(2,5,K)
    TI2 = CC(2,2,K)+CC(2,5,K)
@@ -788,8 +788,8 @@
    CH(1,K,4) = CR3+CI4
    CH(2,K,4) = CI3-CR4
    CH(2,K,5) = CI2-CR5
-  101 CONTINUE
-  RETURN
+  101 continue
+  return
   102 DO 104 K=1,L1
    DO 103 I=2,IDO,2
       TI5 = CC(I,2,K)-CC(I,5,K)
@@ -826,46 +826,46 @@
       CH(I,K,4) = WA3(I-1)*DI4+WA3(I)*DR4
       CH(I-1,K,5) = WA4(I-1)*DR5-WA4(I)*DI5
       CH(I,K,5) = WA4(I-1)*DI5+WA4(I)*DR5
-  103    CONTINUE
-  104 CONTINUE
-  RETURN
+  103    continue
+  104 continue
+  return
   END
 
 
 
-  SUBROUTINE CFFTI (N,WSAVE)
+  subroutine CFFTI (N,WSAVE)
   DIMENSION       WSAVE(1)
-  IF (N == 1) RETURN
+  if (N == 1) return
   IW1 = N+N+1
   IW2 = IW1+N+N
   CALL CFFTI1 (N,WSAVE(IW1),WSAVE(IW2))
-  RETURN
+  return
   END
-  SUBROUTINE CFFTI1 (N,WA,IFAC)
+  subroutine CFFTI1 (N,WA,IFAC)
   DIMENSION       WA(1)      ,IFAC(1)    ,NTRYH(4)
   DATA NTRYH(1),NTRYH(2),NTRYH(3),NTRYH(4)/3,4,2,5/
   NL = N
   NF = 0
   J = 0
   101 J = J+1
-  IF (J-4) 102,102,103
+  if (J-4) 102,102,103
   102 NTRY = NTRYH(J)
-  GO TO 104
+  goto 104
   103 NTRY = NTRY+2
   104 NQ = NL/NTRY
   NR = NL-NTRY*NQ
-  IF (NR) 101,105,101
+  if (NR) 101,105,101
   105 NF = NF+1
   IFAC(NF+2) = NTRY
   NL = NQ
-  IF (NTRY /= 2) GO TO 107
-  IF (NF == 1) GO TO 107
+  if (NTRY /= 2) goto 107
+  if (NF == 1) goto 107
   DO 106 I=2,NF
    IB = NF-I+2
    IFAC(IB+2) = IFAC(IB+1)
-  106 CONTINUE
+  106 continue
   IFAC(3) = 2
-  107 IF (NL /= 1) GO TO 104
+  107 if (NL /= 1) goto 104
   IFAC(1) = N
   IFAC(2) = NF
   TPI = 6.28318530717959
@@ -892,29 +892,29 @@
          ARG = FI*ARGLD
          WA(I-1) = COS(ARG)
          WA(I) = SIN(ARG)
-  108       CONTINUE
-      IF (IP <= 5) GO TO 109
+  108       continue
+      if (IP <= 5) goto 109
       WA(I1-1) = WA(I-1)
       WA(I1) = WA(I)
-  109    CONTINUE
+  109    continue
    L1 = L2
-  110 CONTINUE
-  RETURN
+  110 continue
+  return
   END
 
 
 
 
 
-  SUBROUTINE CFFTF (N,C,WSAVE)
+  subroutine CFFTF (N,C,WSAVE)
   DIMENSION       C(1)       ,WSAVE(1)
-  IF (N == 1) RETURN
+  if (N == 1) return
   IW1 = N+N+1
   IW2 = IW1+N+N
   CALL CFFTF1 (N,C,WSAVE,WSAVE(IW1),WSAVE(IW2))
-  RETURN
+  return
   END
-  SUBROUTINE CFFTF1 (N,C,CH,WA,IFAC)
+  subroutine CFFTF1 (N,C,CH,WA,IFAC)
   DIMENSION       CH(1)      ,C(1)       ,WA(1)      ,IFAC(1)
   NF = IFAC(2)
   NA = 0
@@ -926,57 +926,57 @@
    IDO = N/L2
    IDOT = IDO+IDO
    IDL1 = IDOT*L1
-   IF (IP /= 4) GO TO 103
+   if (IP /= 4) goto 103
    IX2 = IW+IDOT
    IX3 = IX2+IDOT
-   IF (NA /= 0) GO TO 101
+   if (NA /= 0) goto 101
    CALL PASSF4 (IDOT,L1,C,CH,WA(IW),WA(IX2),WA(IX3))
-   GO TO 102
+   goto 102
   101    CALL PASSF4 (IDOT,L1,CH,C,WA(IW),WA(IX2),WA(IX3))
   102    NA = 1-NA
-   GO TO 115
-  103    IF (IP /= 2) GO TO 106
-   IF (NA /= 0) GO TO 104
+   goto 115
+  103    if (IP /= 2) goto 106
+   if (NA /= 0) goto 104
    CALL PASSF2 (IDOT,L1,C,CH,WA(IW))
-   GO TO 105
+   goto 105
   104    CALL PASSF2 (IDOT,L1,CH,C,WA(IW))
   105    NA = 1-NA
-   GO TO 115
-  106    IF (IP /= 3) GO TO 109
+   goto 115
+  106    if (IP /= 3) goto 109
    IX2 = IW+IDOT
-   IF (NA /= 0) GO TO 107
+   if (NA /= 0) goto 107
    CALL PASSF3 (IDOT,L1,C,CH,WA(IW),WA(IX2))
-   GO TO 108
+   goto 108
   107    CALL PASSF3 (IDOT,L1,CH,C,WA(IW),WA(IX2))
   108    NA = 1-NA
-   GO TO 115
-  109    IF (IP /= 5) GO TO 112
+   goto 115
+  109    if (IP /= 5) goto 112
    IX2 = IW+IDOT
    IX3 = IX2+IDOT
    IX4 = IX3+IDOT
-   IF (NA /= 0) GO TO 110
+   if (NA /= 0) goto 110
    CALL PASSF5 (IDOT,L1,C,CH,WA(IW),WA(IX2),WA(IX3),WA(IX4))
-   GO TO 111
+   goto 111
   110    CALL PASSF5 (IDOT,L1,CH,C,WA(IW),WA(IX2),WA(IX3),WA(IX4))
   111    NA = 1-NA
-   GO TO 115
-  112    IF (NA /= 0) GO TO 113
+   goto 115
+  112    if (NA /= 0) goto 113
    CALL PASSF (NAC,IDOT,IP,L1,IDL1,C,C,C,CH,CH,WA(IW))
-   GO TO 114
+   goto 114
   113    CALL PASSF (NAC,IDOT,IP,L1,IDL1,CH,CH,CH,C,C,WA(IW))
-  114    IF (NAC /= 0) NA = 1-NA
+  114    if (NAC /= 0) NA = 1-NA
   115    L1 = L2
    IW = IW+(IP-1)*IDOT
-  116 CONTINUE
-  IF (NA == 0) RETURN
+  116 continue
+  if (NA == 0) return
   N2 = N+N
   DO 117 I=1,N2
    C(I) = CH(I)
-  117 CONTINUE
-  RETURN
+  117 continue
+  return
   END
-  SUBROUTINE PASSF (NAC,IDO,IP,L1,IDL1,CC,C1,C2,CH,CH2,WA)
-  DIMENSION       CH(IDO,L1,IP)          ,CC(IDO,IP,L1)          , &
+  subroutine PASSF (NAC,IDO,IP,L1,IDL1,CC,C1,C2,CH,CH2,WA)
+  DIMENSION       CH(IDO,L1,IP)          ,CC(IDO,IP,L1), &
                   C1(IDO,L1,IP)          ,WA(1)      ,C2(IDL1,IP), &
                   CH2(IDL1,IP)
   IDOT = IDO/2
@@ -985,36 +985,36 @@
   IPPH = (IP+1)/2
   IDP = IP*IDO
 !
-  IF (IDO < L1) GO TO 106
+  if (IDO < L1) goto 106
   DO 103 J=2,IPPH
    JC = IPP2-J
    DO 102 K=1,L1
       DO 101 I=1,IDO
          CH(I,K,J) = CC(I,J,K)+CC(I,JC,K)
          CH(I,K,JC) = CC(I,J,K)-CC(I,JC,K)
-  101       CONTINUE
-  102    CONTINUE
-  103 CONTINUE
+  101       continue
+  102    continue
+  103 continue
   DO 105 K=1,L1
    DO 104 I=1,IDO
       CH(I,K,1) = CC(I,1,K)
-  104    CONTINUE
-  105 CONTINUE
-  GO TO 112
+  104    continue
+  105 continue
+  goto 112
   106 DO 109 J=2,IPPH
    JC = IPP2-J
    DO 108 I=1,IDO
       DO 107 K=1,L1
          CH(I,K,J) = CC(I,J,K)+CC(I,JC,K)
          CH(I,K,JC) = CC(I,J,K)-CC(I,JC,K)
-  107       CONTINUE
-  108    CONTINUE
-  109 CONTINUE
+  107       continue
+  108    continue
+  109 continue
   DO 111 I=1,IDO
    DO 110 K=1,L1
       CH(I,K,1) = CC(I,1,K)
-  110    CONTINUE
-  111 CONTINUE
+  110    continue
+  111 continue
   112 IDL = 2-IDO
   INC = 0
   DO 116 L=2,IPPH
@@ -1023,26 +1023,26 @@
    DO 113 IK=1,IDL1
       C2(IK,L) = CH2(IK,1)+WA(IDL-1)*CH2(IK,2)
       C2(IK,LC) = -WA(IDL)*CH2(IK,IP)
-  113    CONTINUE
+  113    continue
    IDLJ = IDL
    INC = INC+IDO
    DO 115 J=3,IPPH
       JC = IPP2-J
       IDLJ = IDLJ+INC
-      IF (IDLJ > IDP) IDLJ = IDLJ-IDP
+      if (IDLJ > IDP) IDLJ = IDLJ-IDP
       WAR = WA(IDLJ-1)
       WAI = WA(IDLJ)
       DO 114 IK=1,IDL1
          C2(IK,L) = C2(IK,L)+WAR*CH2(IK,J)
          C2(IK,LC) = C2(IK,LC)-WAI*CH2(IK,JC)
-  114       CONTINUE
-  115    CONTINUE
-  116 CONTINUE
+  114       continue
+  115    continue
+  116 continue
   DO 118 J=2,IPPH
    DO 117 IK=1,IDL1
       CH2(IK,1) = CH2(IK,1)+CH2(IK,J)
-  117    CONTINUE
-  118 CONTINUE
+  117    continue
+  118 continue
   DO 120 J=2,IPPH
    JC = IPP2-J
    DO 119 IK=2,IDL1,2
@@ -1050,21 +1050,21 @@
       CH2(IK-1,JC) = C2(IK-1,J)+C2(IK,JC)
       CH2(IK,J) = C2(IK,J)+C2(IK-1,JC)
       CH2(IK,JC) = C2(IK,J)-C2(IK-1,JC)
-  119    CONTINUE
-  120 CONTINUE
+  119    continue
+  120 continue
   NAC = 1
-  IF (IDO == 2) RETURN
+  if (IDO == 2) return
   NAC = 0
   DO 121 IK=1,IDL1
    C2(IK,1) = CH2(IK,1)
-  121 CONTINUE
+  121 continue
   DO 123 J=2,IP
    DO 122 K=1,L1
       C1(1,K,J) = CH(1,K,J)
       C1(2,K,J) = CH(2,K,J)
-  122    CONTINUE
-  123 CONTINUE
-  IF (IDOT > L1) GO TO 127
+  122    continue
+  123 continue
+  if (IDOT > L1) goto 127
   IDIJ = 0
   DO 126 J=2,IP
    IDIJ = IDIJ+2
@@ -1073,10 +1073,10 @@
       DO 124 K=1,L1
          C1(I-1,K,J) = WA(IDIJ-1)*CH(I-1,K,J)+WA(IDIJ)*CH(I,K,J)
          C1(I,K,J) = WA(IDIJ-1)*CH(I,K,J)-WA(IDIJ)*CH(I-1,K,J)
-  124       CONTINUE
-  125    CONTINUE
-  126 CONTINUE
-  RETURN
+  124       continue
+  125    continue
+  126 continue
+  return
   127 IDJ = 2-IDO
   DO 130 J=2,IP
    IDJ = IDJ+IDO
@@ -1086,22 +1086,22 @@
          IDIJ = IDIJ+2
          C1(I-1,K,J) = WA(IDIJ-1)*CH(I-1,K,J)+WA(IDIJ)*CH(I,K,J)
          C1(I,K,J) = WA(IDIJ-1)*CH(I,K,J)-WA(IDIJ)*CH(I-1,K,J)
-  128       CONTINUE
-  129    CONTINUE
-  130 CONTINUE
-  RETURN
+  128       continue
+  129    continue
+  130 continue
+  return
   END
-  SUBROUTINE PASSF2 (IDO,L1,CC,CH,WA1)
-  DIMENSION       CC(IDO,2,L1)           ,CH(IDO,L1,2)           , &
+  subroutine PASSF2 (IDO,L1,CC,CH,WA1)
+  DIMENSION       CC(IDO,2,L1)           ,CH(IDO,L1,2), &
                   WA1(1)
-  IF (IDO > 2) GO TO 102
+  if (IDO > 2) goto 102
   DO 101 K=1,L1
    CH(1,K,1) = CC(1,1,K)+CC(1,2,K)
    CH(1,K,2) = CC(1,1,K)-CC(1,2,K)
    CH(2,K,1) = CC(2,1,K)+CC(2,2,K)
    CH(2,K,2) = CC(2,1,K)-CC(2,2,K)
-  101 CONTINUE
-  RETURN
+  101 continue
+  return
   102 DO 104 K=1,L1
    DO 103 I=2,IDO,2
       CH(I-1,K,1) = CC(I-1,1,K)+CC(I-1,2,K)
@@ -1110,15 +1110,15 @@
       TI2 = CC(I,1,K)-CC(I,2,K)
       CH(I,K,2) = WA1(I-1)*TI2-WA1(I)*TR2
       CH(I-1,K,2) = WA1(I-1)*TR2+WA1(I)*TI2
-  103    CONTINUE
-  104 CONTINUE
-  RETURN
+  103    continue
+  104 continue
+  return
   END
-  SUBROUTINE PASSF3 (IDO,L1,CC,CH,WA1,WA2)
-  DIMENSION       CC(IDO,3,L1)           ,CH(IDO,L1,3)           , &
+  subroutine PASSF3 (IDO,L1,CC,CH,WA1,WA2)
+  DIMENSION       CC(IDO,3,L1)           ,CH(IDO,L1,3), &
                   WA1(1)     ,WA2(1)
   DATA TAUR,TAUI /-.5,-.866025403784439/
-  IF (IDO /= 2) GO TO 102
+  if (IDO /= 2) goto 102
   DO 101 K=1,L1
    TR2 = CC(1,2,K)+CC(1,3,K)
    CR2 = CC(1,1,K)+TAUR*TR2
@@ -1132,8 +1132,8 @@
    CH(1,K,3) = CR2+CI3
    CH(2,K,2) = CI2+CR3
    CH(2,K,3) = CI2-CR3
-  101 CONTINUE
-  RETURN
+  101 continue
+  return
   102 DO 104 K=1,L1
    DO 103 I=2,IDO,2
       TR2 = CC(I-1,2,K)+CC(I-1,3,K)
@@ -1152,14 +1152,14 @@
       CH(I-1,K,2) = WA1(I-1)*DR2+WA1(I)*DI2
       CH(I,K,3) = WA2(I-1)*DI3-WA2(I)*DR3
       CH(I-1,K,3) = WA2(I-1)*DR3+WA2(I)*DI3
-  103    CONTINUE
-  104 CONTINUE
-  RETURN
+  103    continue
+  104 continue
+  return
   END
-  SUBROUTINE PASSF4 (IDO,L1,CC,CH,WA1,WA2,WA3)
-  DIMENSION       CC(IDO,4,L1)           ,CH(IDO,L1,4)           , &
+  subroutine PASSF4 (IDO,L1,CC,CH,WA1,WA2,WA3)
+  DIMENSION       CC(IDO,4,L1)           ,CH(IDO,L1,4), &
                   WA1(1)     ,WA2(1)     ,WA3(1)
-  IF (IDO /= 2) GO TO 102
+  if (IDO /= 2) goto 102
   DO 101 K=1,L1
    TI1 = CC(2,1,K)-CC(2,3,K)
    TI2 = CC(2,1,K)+CC(2,3,K)
@@ -1177,8 +1177,8 @@
    CH(1,K,4) = TR1-TR4
    CH(2,K,2) = TI1+TI4
    CH(2,K,4) = TI1-TI4
-  101 CONTINUE
-  RETURN
+  101 continue
+  return
   102 DO 104 K=1,L1
    DO 103 I=2,IDO,2
       TI1 = CC(I,1,K)-CC(I,3,K)
@@ -1203,16 +1203,16 @@
       CH(I,K,3) = WA2(I-1)*CI3-WA2(I)*CR3
       CH(I-1,K,4) = WA3(I-1)*CR4+WA3(I)*CI4
       CH(I,K,4) = WA3(I-1)*CI4-WA3(I)*CR4
-  103    CONTINUE
-  104 CONTINUE
-  RETURN
+  103    continue
+  104 continue
+  return
   END
-  SUBROUTINE PASSF5 (IDO,L1,CC,CH,WA1,WA2,WA3,WA4)
-  DIMENSION       CC(IDO,5,L1)           ,CH(IDO,L1,5)           , &
+  subroutine PASSF5 (IDO,L1,CC,CH,WA1,WA2,WA3,WA4)
+  DIMENSION       CC(IDO,5,L1)           ,CH(IDO,L1,5), &
                   WA1(1)     ,WA2(1)     ,WA3(1)     ,WA4(1)
   DATA TR11,TI11,TR12,TI12 /.309016994374947,-.951056516295154, &
   -.809016994374947,-.587785252292473/
-  IF (IDO /= 2) GO TO 102
+  if (IDO /= 2) goto 102
   DO 101 K=1,L1
    TI5 = CC(2,2,K)-CC(2,5,K)
    TI2 = CC(2,2,K)+CC(2,5,K)
@@ -1240,8 +1240,8 @@
    CH(1,K,4) = CR3+CI4
    CH(2,K,4) = CI3-CR4
    CH(2,K,5) = CI2-CR5
-  101 CONTINUE
-  RETURN
+  101 continue
+  return
   102 DO 104 K=1,L1
    DO 103 I=2,IDO,2
       TI5 = CC(I,2,K)-CC(I,5,K)
@@ -1278,16 +1278,16 @@
       CH(I,K,4) = WA3(I-1)*DI4-WA3(I)*DR4
       CH(I-1,K,5) = WA4(I-1)*DR5+WA4(I)*DI5
       CH(I,K,5) = WA4(I-1)*DI5-WA4(I)*DR5
-  103    CONTINUE
-  104 CONTINUE
-  RETURN
+  103    continue
+  104 continue
+  return
   END
 
 ! !!!!!!!! DK DK NAG routines included below
 
 ! DK DK march99 : routines recuperees sur le Cray (simple precision)
 
-  SUBROUTINE ABZP01
+  subroutine ABZP01
 !     MARK 11.5(F77) RELEASE. NAG COPYRIGHT 1986.
 !
 !     Terminates execution when a hard failure occurs.
@@ -1301,7 +1301,7 @@
   STOP
   END
 
-  SUBROUTINE DCYS18(Z,FNU,KODE,MR,N,Y,NZ,TOL,ELIM,ALIM)
+  subroutine DCYS18(Z,FNU,KODE,MR,N,Y,NZ,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-785 (DEC 1989).
 !
@@ -1336,12 +1336,12 @@
   COMPLEX           ARG(2), ASUM(2), BSUM(2), CIP(4), CSR(3), &
                     CSS(3), CY(2), PHI(2), ZETA1(2), ZETA2(2)
   REAL              BRY(3)
-!     .. External Functions ..
+!     .. External functions ..
   REAL              X02AME, X02ALE
   EXTERNAL          X02AME, X02ALE
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DEUS17, S17DGE, DGSS17, DGVS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, CONJG, COS, EXP, INT, LOG, &
                     MAX, MOD, REAL, SIGN, SIN
 !     .. Data statements ..
@@ -1375,7 +1375,7 @@
   BRY(3) = X02ALE()
   X = REAL(Z)
   ZR = Z
-  IF (X<0.0E0) ZR = -Z
+  if (X < 0.0E0) ZR = -Z
   YY = AIMAG(ZR)
   ZN = -ZR*CI
   ZB = ZR
@@ -1389,14 +1389,14 @@
   C2 = CMPLX(-SPN,CPN)
   KK = MOD(INU,4) + 1
   CS = CR1*C2*CIP(KK)
-  IF (YY<=0.0E0) THEN
+  if (YY <= 0.0E0) then
    ZN = CONJG(-ZN)
    ZB = CONJG(ZB)
   endif
 !     ------------------------------------------------------------------
 !     K(FNU,Z) IS COMPUTED FROM H(2,FNU,-I*Z) WHERE Z IS IN THE FIRST
-!     QUADRANT. FOURTH QUADRANT VALUES (YY<=0.0E0) ARE COMPUTED BY
-!     CONJUGATION SINCE THE K FUNCTION IS REAL ON THE POSITIVE REAL AXIS
+!     QUADRANT. FOURTH QUADRANT VALUES (YY <= 0.0E0) ARE COMPUTED BY
+!     CONJUGATION SINCE THE K function IS REAL ON THE POSITIVE REAL AXIS
 !     ------------------------------------------------------------------
   J = 2
   DO 40 I = 1, N
@@ -1407,7 +1407,7 @@
    FN = FNU + I - 1
    CALL DEUS17(ZN,FN,0,TOL,PHI(J),ARG(J),ZETA1(J),ZETA2(J),ASUM(J) &
                  ,BSUM(J),ELIM)
-   IF (KODE==1) THEN
+   if (KODE == 1) then
       S1 = ZETA1(J) - ZETA2(J)
    ELSE
       CFN = CMPLX(FN,0.0E0)
@@ -1417,21 +1417,21 @@
 !        TEST FOR UNDERFLOW AND OVERFLOW
 !        ---------------------------------------------------------------
    RS1 = REAL(S1)
-   IF (ABS(RS1)<=ELIM) THEN
-      IF (KDFLG==1) KFLAG = 2
-      IF (ABS(RS1)>=ALIM) THEN
+   if (ABS(RS1) <= ELIM) then
+      if (KDFLG == 1) KFLAG = 2
+      if (ABS(RS1) >= ALIM) then
 !              ---------------------------------------------------------
 !              REFINE  TEST AND SCALE
 !              ---------------------------------------------------------
          APHI = ABS(PHI(J))
          AARG = ABS(ARG(J))
          RS1 = RS1 + LOG(APHI) - 0.25E0*LOG(AARG) - AIC
-         IF (ABS(RS1)>ELIM) THEN
-            GO TO 20
+         if (ABS(RS1) > ELIM) then
+            goto 20
          ELSE
-            IF (KDFLG==1) KFLAG = 1
-            IF (RS1>=0.0E0) THEN
-               IF (KDFLG==1) KFLAG = 3
+            if (KDFLG == 1) KFLAG = 1
+            if (RS1 >= 0.0E0) then
+               if (KDFLG == 1) KFLAG = 3
             endif
          endif
       endif
@@ -1451,71 +1451,71 @@
       C2M = EXP(C2R)*REAL(CSS(KFLAG))
       S1 = CMPLX(C2M,0.0E0)*CMPLX(COS(C2I),SIN(C2I))
       S2 = S2*S1
-      IF (KFLAG==1) THEN
+      if (KFLAG == 1) then
          CALL DGVS17(S2,NW,BRY(1),TOL)
-         IF (NW/=0) GO TO 20
+         if (NW /= 0) goto 20
       endif
-      IF (YY<=0.0E0) S2 = CONJG(S2)
+      if (YY <= 0.0E0) S2 = CONJG(S2)
       CY(KDFLG) = S2
       Y(I) = S2*CSR(KFLAG)
       CS = -CI*CS
-      IF (KDFLG==2) THEN
-         GO TO 60
+      if (KDFLG == 2) then
+         goto 60
       ELSE
          KDFLG = 2
-         GO TO 40
+         goto 40
       endif
    endif
-   20    IF (RS1>0.0E0) THEN
-      GO TO 280
+   20    if (RS1 > 0.0E0) then
+      goto 280
 !           ------------------------------------------------------------
-!           FOR X<0.0, THE I FUNCTION TO BE ADDED WILL OVERFLOW
+!           FOR X < 0.0, THE I function TO BE ADDED WILL OVERFLOW
 !           ------------------------------------------------------------
-   ELSE IF (X<0.0E0) THEN
-      GO TO 280
+   else if (X < 0.0E0) then
+      goto 280
    ELSE
       KDFLG = 1
       Y(I) = CZERO
       CS = -CI*CS
       NZ = NZ + 1
-      IF (I/=1) THEN
-         IF (Y(I-1)/=CZERO) THEN
+      if (I /= 1) then
+         if (Y(I-1) /= CZERO) then
             Y(I-1) = CZERO
             NZ = NZ + 1
          endif
       endif
    endif
-   40 CONTINUE
+   40 continue
   I = N
    60 RZ = CMPLX(2.0E0,0.0E0)/ZR
   CK = CMPLX(FN,0.0E0)*RZ
   IB = I + 1
-  IF (N>=IB) THEN
+  if (N >= IB) then
 !        ---------------------------------------------------------------
 !        TEST LAST MEMBER FOR UNDERFLOW AND OVERFLOW, SET SEQUENCE TO
 !        ZERO ON UNDERFLOW
 !        ---------------------------------------------------------------
    FN = FNU + N - 1
    IPARD = 1
-   IF (MR/=0) IPARD = 0
+   if (MR /= 0) IPARD = 0
    CALL DEUS17(ZN,FN,IPARD,TOL,PHID,ARGD,ZETA1D,ZETA2D,ASUMD, &
                  BSUMD,ELIM)
-   IF (KODE==1) THEN
+   if (KODE == 1) then
       S1 = ZETA1D - ZETA2D
    ELSE
       CFN = CMPLX(FN,0.0E0)
       S1 = ZETA1D - CFN*(CFN/(ZB+ZETA2D))
    endif
    RS1 = REAL(S1)
-   IF (ABS(RS1)<=ELIM) THEN
-      IF (ABS(RS1)>=ALIM) THEN
+   if (ABS(RS1) <= ELIM) then
+      if (ABS(RS1) >= ALIM) then
 !              ---------------------------------------------------------
 !              REFINE ESTIMATE AND TEST
 !              ---------------------------------------------------------
          APHI = ABS(PHID)
          AARG = ABS(ARGD)
          RS1 = RS1 + LOG(APHI) - 0.25E0*LOG(AARG) - AIC
-         IF (ABS(RS1)>=ELIM) GO TO 100
+         if (ABS(RS1) >= ELIM) goto 100
       endif
 !           ------------------------------------------------------------
 !           SCALED FORWARD RECURRENCE FOR REMAINDER OF THE SEQUENCE
@@ -1531,13 +1531,13 @@
          CK = CK + RZ
          C2 = S2*C1
          Y(I) = C2
-         IF (KFLAG<3) THEN
+         if (KFLAG < 3) then
             C2R = REAL(C2)
             C2I = AIMAG(C2)
             C2R = ABS(C2R)
             C2I = ABS(C2I)
             C2M = MAX(C2R,C2I)
-            IF (C2M>ASCLE) THEN
+            if (C2M > ASCLE) then
                KFLAG = KFLAG + 1
                ASCLE = BRY(KFLAG)
                S1 = S1*C1
@@ -1547,49 +1547,49 @@
                C1 = CSR(KFLAG)
             endif
          endif
-   80       CONTINUE
-      GO TO 140
+   80       continue
+      goto 140
    endif
-  100    IF (RS1>0.0E0) THEN
-      GO TO 280
+  100    if (RS1 > 0.0E0) then
+      goto 280
 !           ------------------------------------------------------------
-!           FOR X<0.0, THE I FUNCTION TO BE ADDED WILL OVERFLOW
+!           FOR X < 0.0, THE I function TO BE ADDED WILL OVERFLOW
 !           ------------------------------------------------------------
-   ELSE IF (X<0.0E0) THEN
-      GO TO 280
+   else if (X < 0.0E0) then
+      goto 280
    ELSE
       NZ = N
       DO 120 I = 1, N
          Y(I) = CZERO
-  120       CONTINUE
-      RETURN
+  120       continue
+      return
    endif
   endif
-  140 IF (MR==0) THEN
-   RETURN
+  140 if (MR == 0) then
+   return
   ELSE
 !        ---------------------------------------------------------------
-!        ANALYTIC CONTINUATION FOR RE(Z)<0.0E0
+!        ANALYTIC CONTINUATION FOR RE(Z) < 0.0E0
 !        ---------------------------------------------------------------
    NZ = 0
    FMR = MR
    SGN = -SIGN(PI,FMR)
 !        ---------------------------------------------------------------
-!        CSPN AND CSGN ARE COEFF OF K AND I FUNCTIONS RESP.
+!        CSPN AND CSGN ARE COEFF OF K AND I functionS RESP.
 !        ---------------------------------------------------------------
    CSGN = CMPLX(0.0E0,SGN)
-   IF (YY<=0.0E0) CSGN = CONJG(CSGN)
+   if (YY <= 0.0E0) CSGN = CONJG(CSGN)
    IFN = INU + N - 1
    ANG = FNF*SGN
    CPN = COS(ANG)
    SPN = SIN(ANG)
    CSPN = CMPLX(CPN,SPN)
-   IF (MOD(IFN,2)==1) CSPN = -CSPN
+   if (MOD(IFN,2) == 1) CSPN = -CSPN
 !        ---------------------------------------------------------------
-!        CS=COEFF OF THE J FUNCTION TO GET THE I FUNCTION. I(FNU,Z) IS
+!        CS=COEFF OF THE J function TO GET THE I function. I(FNU,Z) IS
 !        COMPUTED FROM EXP(I*FNU*HPI)*J(FNU,-I*Z) WHERE Z IS IN THE
-!        FIRST QUADRANT. FOURTH QUADRANT VALUES (YY<=0.0E0) ARE
-!        COMPUTED BY CONJUGATION SINCE THE I FUNCTION IS REAL ON THE
+!        FIRST QUADRANT. FOURTH QUADRANT VALUES (YY <= 0.0E0) ARE
+!        COMPUTED BY CONJUGATION SINCE THE I function IS REAL ON THE
 !        POSITIVE REAL AXIS
 !        ---------------------------------------------------------------
    CS = CMPLX(CAR,-SAR)*CSGN
@@ -1605,16 +1605,16 @@
    DO 220 K = 1, N
 !           ------------------------------------------------------------
 !           LOGIC TO SORT OUT CASES WHOSE PARAMETERS WERE SET FOR THE K
-!           FUNCTION ABOVE
+!           function ABOVE
 !           ------------------------------------------------------------
       FN = FNU + KK - 1
-      IF (N>2) THEN
-         IF ((KK==N) .and. (IB<N)) THEN
-            GO TO 160
-         ELSE IF ((KK/=IB) .and. (KK/=IC)) THEN
+      if (N > 2) then
+         if ((KK == N) .and. (IB < N)) then
+            goto 160
+         else if ((KK /= IB) .and. (KK /= IC)) then
             CALL DEUS17(ZN,FN,0,TOL,PHID,ARGD,ZETA1D,ZETA2D,ASUMD, &
                           BSUMD,ELIM)
-            GO TO 160
+            goto 160
          endif
       endif
       PHID = PHI(J)
@@ -1624,7 +1624,7 @@
       ASUMD = ASUM(J)
       BSUMD = BSUM(J)
       J = 3 - J
-  160       IF (KODE==1) THEN
+  160       if (KODE == 1) then
          S1 = -ZETA1D + ZETA2D
       ELSE
          CFN = CMPLX(FN,0.0E0)
@@ -1634,21 +1634,21 @@
 !           TEST FOR UNDERFLOW AND OVERFLOW
 !           ------------------------------------------------------------
       RS1 = REAL(S1)
-      IF (ABS(RS1)<=ELIM) THEN
-         IF (KDFLG==1) IFLAG = 2
-         IF (ABS(RS1)>=ALIM) THEN
+      if (ABS(RS1) <= ELIM) then
+         if (KDFLG == 1) IFLAG = 2
+         if (ABS(RS1) >= ALIM) then
 !                 ------------------------------------------------------
 !                 REFINE  TEST AND SCALE
 !                 ------------------------------------------------------
             APHI = ABS(PHID)
             AARG = ABS(ARGD)
             RS1 = RS1 + LOG(APHI) - 0.25E0*LOG(AARG) - AIC
-            IF (ABS(RS1)>ELIM) THEN
-               GO TO 180
+            if (ABS(RS1) > ELIM) then
+               goto 180
             ELSE
-               IF (KDFLG==1) IFLAG = 1
-               IF (RS1>=0.0E0) THEN
-                  IF (KDFLG==1) IFLAG = 3
+               if (KDFLG == 1) IFLAG = 1
+               if (RS1 >= 0.0E0) then
+                  if (KDFLG == 1) IFLAG = 3
                endif
             endif
          endif
@@ -1663,26 +1663,26 @@
          C2M = EXP(C2R)*REAL(CSS(IFLAG))
          S1 = CMPLX(C2M,0.0E0)*CMPLX(COS(C2I),SIN(C2I))
          S2 = S2*S1
-         IF (IFLAG==1) THEN
+         if (IFLAG == 1) then
             CALL DGVS17(S2,NW,BRY(1),TOL)
-            IF (NW/=0) S2 = CMPLX(0.0E0,0.0E0)
+            if (NW /= 0) S2 = CMPLX(0.0E0,0.0E0)
          endif
-         GO TO 200
+         goto 200
       endif
-  180       IF (RS1>0.0E0) THEN
-         GO TO 280
+  180       if (RS1 > 0.0E0) then
+         goto 280
       ELSE
          S2 = CZERO
       endif
-  200       IF (YY<=0.0E0) S2 = CONJG(S2)
+  200       if (YY <= 0.0E0) S2 = CONJG(S2)
       CY(KDFLG) = S2
       C2 = S2
       S2 = S2*CSR(IFLAG)
 !           ------------------------------------------------------------
-!           ADD I AND K FUNCTIONS, K SEQUENCE IN Y(I), I=1,N
+!           ADD I AND K functionS, K SEQUENCE IN Y(I), I=1,N
 !           ------------------------------------------------------------
       S1 = Y(KK)
-      IF (KODE/=1) THEN
+      if (KODE /= 1) then
          CALL DGSS17(ZR,S1,S2,NW,ASC,ALIM,IUF)
          NZ = NZ + NW
       endif
@@ -1690,20 +1690,20 @@
       KK = KK - 1
       CSPN = -CSPN
       CS = -CS*CI
-      IF (C2==CZERO) THEN
+      if (C2 == CZERO) then
          KDFLG = 1
-      ELSE IF (KDFLG==2) THEN
-         GO TO 240
+      else if (KDFLG == 2) then
+         goto 240
       ELSE
          KDFLG = 2
       endif
-  220    CONTINUE
+  220    continue
    K = N
   240    IL = N - K
-   IF (IL/=0) THEN
+   if (IL /= 0) then
 !           ------------------------------------------------------------
 !           RECUR BACKWARD FOR REMAINDER OF I SEQUENCE AND ADD IN THE
-!           K FUNCTIONS, SCALING THE I SEQUENCE DURING RECURRENCE TO
+!           K functionS, SCALING THE I SEQUENCE DURING RECURRENCE TO
 !           KEEP INTERMEDIATE ARITHMETIC ON SCALE NEAR EXPONENT
 !           EXTREMES.
 !           ------------------------------------------------------------
@@ -1720,20 +1720,20 @@
          C2 = S2*CS
          CK = C2
          C1 = Y(KK)
-         IF (KODE/=1) THEN
+         if (KODE /= 1) then
             CALL DGSS17(ZR,C1,C2,NW,ASC,ALIM,IUF)
             NZ = NZ + NW
          endif
          Y(KK) = C1*CSPN + C2
          KK = KK - 1
          CSPN = -CSPN
-         IF (IFLAG<3) THEN
+         if (IFLAG < 3) then
             C2R = REAL(CK)
             C2I = AIMAG(CK)
             C2R = ABS(C2R)
             C2I = ABS(C2I)
             C2M = MAX(C2R,C2I)
-            IF (C2M>ASCLE) THEN
+            if (C2M > ASCLE) then
                IFLAG = IFLAG + 1
                ASCLE = BRY(IFLAG)
                S1 = S1*CS
@@ -1743,14 +1743,14 @@
                CS = CSR(IFLAG)
             endif
          endif
-  260       CONTINUE
+  260       continue
    endif
-   RETURN
+   return
   endif
   280 NZ = -1
-  RETURN
+  return
   END
-  SUBROUTINE DCZS18(Z,FNU,KODE,MR,N,Y,NZ,TOL,ELIM,ALIM)
+  subroutine DCZS18(Z,FNU,KODE,MR,N,Y,NZ,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-786 (DEC 1989).
 !
@@ -1781,12 +1781,12 @@
                     SUM(2), ZETA1(2), ZETA2(2)
   REAL              BRY(3)
   INTEGER           INIT(2)
-!     .. External Functions ..
+!     .. External functions ..
   REAL              X02AME, X02ALE
   EXTERNAL          X02AME, X02ALE
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DEWS17, DGSS17, DGVS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, COS, EXP, INT, LOG, MAX, MOD, &
                     REAL, SIGN, SIN
 !     .. Data statements ..
@@ -1813,7 +1813,7 @@
   BRY(3) = X02ALE()
   X = REAL(Z)
   ZR = Z
-  IF (X<0.0E0) ZR = -Z
+  if (X < 0.0E0) ZR = -Z
   J = 2
   DO 40 I = 1, N
 !        ---------------------------------------------------------------
@@ -1824,7 +1824,7 @@
    INIT(J) = 0
    CALL DEWS17(ZR,FN,2,0,TOL,INIT(J),PHI(J),ZETA1(J),ZETA2(J), &
                  SUM(J),CWRK(1,J),ELIM)
-   IF (KODE==1) THEN
+   if (KODE == 1) then
       S1 = ZETA1(J) - ZETA2(J)
    ELSE
       CFN = CMPLX(FN,0.0E0)
@@ -1834,20 +1834,20 @@
 !        TEST FOR UNDERFLOW AND OVERFLOW
 !        ---------------------------------------------------------------
    RS1 = REAL(S1)
-   IF (ABS(RS1)<=ELIM) THEN
-      IF (KDFLG==1) KFLAG = 2
-      IF (ABS(RS1)>=ALIM) THEN
+   if (ABS(RS1) <= ELIM) then
+      if (KDFLG == 1) KFLAG = 2
+      if (ABS(RS1) >= ALIM) then
 !              ---------------------------------------------------------
 !              REFINE  TEST AND SCALE
 !              ---------------------------------------------------------
          APHI = ABS(PHI(J))
          RS1 = RS1 + LOG(APHI)
-         IF (ABS(RS1)>ELIM) THEN
-            GO TO 20
+         if (ABS(RS1) > ELIM) then
+            goto 20
          ELSE
-            IF (KDFLG==1) KFLAG = 1
-            IF (RS1>=0.0E0) THEN
-               IF (KDFLG==1) KFLAG = 3
+            if (KDFLG == 1) KFLAG = 1
+            if (RS1 >= 0.0E0) then
+               if (KDFLG == 1) KFLAG = 3
             endif
          endif
       endif
@@ -1861,68 +1861,68 @@
       C2M = EXP(C2R)*REAL(CSS(KFLAG))
       S1 = CMPLX(C2M,0.0E0)*CMPLX(COS(C2I),SIN(C2I))
       S2 = S2*S1
-      IF (KFLAG==1) THEN
+      if (KFLAG == 1) then
          CALL DGVS17(S2,NW,BRY(1),TOL)
-         IF (NW/=0) GO TO 20
+         if (NW /= 0) goto 20
       endif
       CY(KDFLG) = S2
       Y(I) = S2*CSR(KFLAG)
-      IF (KDFLG==2) THEN
-         GO TO 60
+      if (KDFLG == 2) then
+         goto 60
       ELSE
          KDFLG = 2
-         GO TO 40
+         goto 40
       endif
    endif
-   20    IF (RS1>0.0E0) THEN
-      GO TO 280
+   20    if (RS1 > 0.0E0) then
+      goto 280
 !           ------------------------------------------------------------
-!           FOR X<0.0, THE I FUNCTION TO BE ADDED WILL OVERFLOW
+!           FOR X < 0.0, THE I function TO BE ADDED WILL OVERFLOW
 !           ------------------------------------------------------------
-   ELSE IF (X<0.0E0) THEN
-      GO TO 280
+   else if (X < 0.0E0) then
+      goto 280
    ELSE
       KDFLG = 1
       Y(I) = CZERO
       NZ = NZ + 1
-      IF (I/=1) THEN
-         IF (Y(I-1)/=CZERO) THEN
+      if (I /= 1) then
+         if (Y(I-1) /= CZERO) then
             Y(I-1) = CZERO
             NZ = NZ + 1
          endif
       endif
    endif
-   40 CONTINUE
+   40 continue
   I = N
    60 RZ = CMPLX(2.0E0,0.0E0)/ZR
   CK = CMPLX(FN,0.0E0)*RZ
   IB = I + 1
-  IF (N>=IB) THEN
+  if (N >= IB) then
 !        ---------------------------------------------------------------
 !        TEST LAST MEMBER FOR UNDERFLOW AND OVERFLOW, SET SEQUENCE TO
 !        ZERO ON UNDERFLOW
 !        ---------------------------------------------------------------
    FN = FNU + N - 1
    IPARD = 1
-   IF (MR/=0) IPARD = 0
+   if (MR /= 0) IPARD = 0
    INITD = 0
    CALL DEWS17(ZR,FN,2,IPARD,TOL,INITD,PHID,ZETA1D,ZETA2D,SUMD, &
                  CWRK(1,3),ELIM)
-   IF (KODE==1) THEN
+   if (KODE == 1) then
       S1 = ZETA1D - ZETA2D
    ELSE
       CFN = CMPLX(FN,0.0E0)
       S1 = ZETA1D - CFN*(CFN/(ZR+ZETA2D))
    endif
    RS1 = REAL(S1)
-   IF (ABS(RS1)<=ELIM) THEN
-      IF (ABS(RS1)>=ALIM) THEN
+   if (ABS(RS1) <= ELIM) then
+      if (ABS(RS1) >= ALIM) then
 !              ---------------------------------------------------------
 !              REFINE ESTIMATE AND TEST
 !              ---------------------------------------------------------
          APHI = ABS(PHID)
          RS1 = RS1 + LOG(APHI)
-         IF (ABS(RS1)>=ELIM) GO TO 100
+         if (ABS(RS1) >= ELIM) goto 100
       endif
 !           ------------------------------------------------------------
 !           RECUR FORWARD FOR REMAINDER OF THE SEQUENCE
@@ -1938,13 +1938,13 @@
          CK = CK + RZ
          C2 = S2*C1
          Y(I) = C2
-         IF (KFLAG<3) THEN
+         if (KFLAG < 3) then
             C2R = REAL(C2)
             C2I = AIMAG(C2)
             C2R = ABS(C2R)
             C2I = ABS(C2I)
             C2M = MAX(C2R,C2I)
-            IF (C2M>ASCLE) THEN
+            if (C2M > ASCLE) then
                KFLAG = KFLAG + 1
                ASCLE = BRY(KFLAG)
                S1 = S1*C1
@@ -1954,29 +1954,29 @@
                C1 = CSR(KFLAG)
             endif
          endif
-   80       CONTINUE
-      GO TO 140
+   80       continue
+      goto 140
    endif
-  100    IF (RS1>0.0E0) THEN
-      GO TO 280
+  100    if (RS1 > 0.0E0) then
+      goto 280
 !           ------------------------------------------------------------
-!           FOR X<0.0, THE I FUNCTION TO BE ADDED WILL OVERFLOW
+!           FOR X < 0.0, THE I function TO BE ADDED WILL OVERFLOW
 !           ------------------------------------------------------------
-   ELSE IF (X<0.0E0) THEN
-      GO TO 280
+   else if (X < 0.0E0) then
+      goto 280
    ELSE
       NZ = N
       DO 120 I = 1, N
          Y(I) = CZERO
-  120       CONTINUE
-      RETURN
+  120       continue
+      return
    endif
   endif
-  140 IF (MR==0) THEN
-   RETURN
+  140 if (MR == 0) then
+   return
   ELSE
 !        ---------------------------------------------------------------
-!        ANALYTIC CONTINUATION FOR RE(Z)<0.0E0
+!        ANALYTIC CONTINUATION FOR RE(Z) < 0.0E0
 !        ---------------------------------------------------------------
    NZ = 0
    FMR = MR
@@ -1992,7 +1992,7 @@
    CPN = COS(ANG)
    SPN = SIN(ANG)
    CSPN = CMPLX(CPN,SPN)
-   IF (MOD(IFN,2)==1) CSPN = -CSPN
+   if (MOD(IFN,2) == 1) CSPN = -CSPN
    ASC = BRY(1)
    KK = N
    IUF = 0
@@ -2003,15 +2003,15 @@
       FN = FNU + KK - 1
 !           ------------------------------------------------------------
 !           LOGIC TO SORT OUT CASES WHOSE PARAMETERS WERE SET FOR THE K
-!           FUNCTION ABOVE
+!           function ABOVE
 !           ------------------------------------------------------------
       M = 3
-      IF (N>2) THEN
-         IF ((KK==N) .and. (IB<N)) THEN
-            GO TO 160
-         ELSE IF ((KK/=IB) .and. (KK/=IC)) THEN
+      if (N > 2) then
+         if ((KK == N) .and. (IB < N)) then
+            goto 160
+         else if ((KK /= IB) .and. (KK /= IC)) then
             INITD = 0
-            GO TO 160
+            goto 160
          endif
       endif
       INITD = INIT(J)
@@ -2023,7 +2023,7 @@
       J = 3 - J
   160       CALL DEWS17(ZR,FN,1,0,TOL,INITD,PHID,ZETA1D,ZETA2D,SUMD, &
                     CWRK(1,M),ELIM)
-      IF (KODE==1) THEN
+      if (KODE == 1) then
          S1 = -ZETA1D + ZETA2D
       ELSE
          CFN = CMPLX(FN,0.0E0)
@@ -2033,20 +2033,20 @@
 !           TEST FOR UNDERFLOW AND OVERFLOW
 !           ------------------------------------------------------------
       RS1 = REAL(S1)
-      IF (ABS(RS1)<=ELIM) THEN
-         IF (KDFLG==1) IFLAG = 2
-         IF (ABS(RS1)>=ALIM) THEN
+      if (ABS(RS1) <= ELIM) then
+         if (KDFLG == 1) IFLAG = 2
+         if (ABS(RS1) >= ALIM) then
 !                 ------------------------------------------------------
 !                 REFINE  TEST AND SCALE
 !                 ------------------------------------------------------
             APHI = ABS(PHID)
             RS1 = RS1 + LOG(APHI)
-            IF (ABS(RS1)>ELIM) THEN
-               GO TO 180
+            if (ABS(RS1) > ELIM) then
+               goto 180
             ELSE
-               IF (KDFLG==1) IFLAG = 1
-               IF (RS1>=0.0E0) THEN
-                  IF (KDFLG==1) IFLAG = 3
+               if (KDFLG == 1) IFLAG = 1
+               if (RS1 >= 0.0E0) then
+                  if (KDFLG == 1) IFLAG = 3
                endif
             endif
          endif
@@ -2056,14 +2056,14 @@
          C2M = EXP(C2R)*REAL(CSS(IFLAG))
          S1 = CMPLX(C2M,0.0E0)*CMPLX(COS(C2I),SIN(C2I))
          S2 = S2*S1
-         IF (IFLAG==1) THEN
+         if (IFLAG == 1) then
             CALL DGVS17(S2,NW,BRY(1),TOL)
-            IF (NW/=0) S2 = CMPLX(0.0E0,0.0E0)
+            if (NW /= 0) S2 = CMPLX(0.0E0,0.0E0)
          endif
-         GO TO 200
+         goto 200
       endif
-  180       IF (RS1>0.0E0) THEN
-         GO TO 280
+  180       if (RS1 > 0.0E0) then
+         goto 280
       ELSE
          S2 = CZERO
       endif
@@ -2071,30 +2071,30 @@
       C2 = S2
       S2 = S2*CSR(IFLAG)
 !           ------------------------------------------------------------
-!           ADD I AND K FUNCTIONS, K SEQUENCE IN Y(I), I=1,N
+!           ADD I AND K functionS, K SEQUENCE IN Y(I), I=1,N
 !           ------------------------------------------------------------
       S1 = Y(KK)
-      IF (KODE/=1) THEN
+      if (KODE /= 1) then
          CALL DGSS17(ZR,S1,S2,NW,ASC,ALIM,IUF)
          NZ = NZ + NW
       endif
       Y(KK) = S1*CSPN + S2
       KK = KK - 1
       CSPN = -CSPN
-      IF (C2==CZERO) THEN
+      if (C2 == CZERO) then
          KDFLG = 1
-      ELSE IF (KDFLG==2) THEN
-         GO TO 240
+      else if (KDFLG == 2) then
+         goto 240
       ELSE
          KDFLG = 2
       endif
-  220    CONTINUE
+  220    continue
    K = N
   240    IL = N - K
-   IF (IL/=0) THEN
+   if (IL /= 0) then
 !           ------------------------------------------------------------
 !           RECUR BACKWARD FOR REMAINDER OF I SEQUENCE AND ADD IN THE
-!           K FUNCTIONS, SCALING THE I SEQUENCE DURING RECURRENCE TO
+!           K functionS, SCALING THE I SEQUENCE DURING RECURRENCE TO
 !           KEEP INTERMEDIATE ARITHMETIC ON SCALE NEAR EXPONENT
 !           EXTREMES.
 !           ------------------------------------------------------------
@@ -2111,20 +2111,20 @@
          C2 = S2*CS
          CK = C2
          C1 = Y(KK)
-         IF (KODE/=1) THEN
+         if (KODE /= 1) then
             CALL DGSS17(ZR,C1,C2,NW,ASC,ALIM,IUF)
             NZ = NZ + NW
          endif
          Y(KK) = C1*CSPN + C2
          KK = KK - 1
          CSPN = -CSPN
-         IF (IFLAG<3) THEN
+         if (IFLAG < 3) then
             C2R = REAL(CK)
             C2I = AIMAG(CK)
             C2R = ABS(C2R)
             C2I = ABS(C2I)
             C2M = MAX(C2R,C2I)
-            IF (C2M>ASCLE) THEN
+            if (C2M > ASCLE) then
                IFLAG = IFLAG + 1
                ASCLE = BRY(IFLAG)
                S1 = S1*CS
@@ -2134,24 +2134,24 @@
                CS = CSR(IFLAG)
             endif
          endif
-  260       CONTINUE
+  260       continue
    endif
-   RETURN
+   return
   endif
   280 NZ = -1
-  RETURN
+  return
   END
-  SUBROUTINE DERS17(Z,FNU,N,CY,TOL)
+  subroutine DERS17(Z,FNU,N,CY,TOL)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-761 (DEC 1989).
 !
 !     Original name: CRATI
 !
-!     DERS17 COMPUTES RATIOS OF I BESSEL FUNCTIONS BY BACKWARD
+!     DERS17 COMPUTES RATIOS OF I BESSEL functionS BY BACKWARD
 !     RECURRENCE.  THE STARTING INDEX IS DETERMINED BY FORWARD
 !     RECURRENCE AS DESCRIBED IN J. RES. OF NAT. BUR. OF STANDARDS-B,
 !     MATHEMATICAL SCIENCES, VOL 77B, P111-114, SEPTEMBER, 1973,
-!     BESSEL FUNCTIONS I AND J OF COMPLEX ARGUMENT AND INTEGER ORDER,
+!     BESSEL functionS I AND J OF COMPLEX ARGUMENT AND INTEGER ORDER,
 !     BY D. J. SOOKNE.
 !
 !     .. Scalar Arguments ..
@@ -2165,7 +2165,7 @@
   REAL              AK, AMAGZ, AP1, AP2, ARG, AZ, DFNU, FDNU, FLAM, &
                     FNUP, RAP1, RHO, TEST, TEST1
   INTEGER           I, ID, IDNU, INU, ITIME, K, KK, MAGZ
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, INT, MAX, MIN, REAL, SQRT
 !     .. Data statements ..
   DATA              CZERO, CONE/(0.0E0,0.0E0), (1.0E0,0.0E0)/
@@ -2186,7 +2186,7 @@
   P2 = -T1
   P1 = CONE
   T1 = T1 + RZ
-  IF (ID>0) ID = 0
+  if (ID > 0) ID = 0
   AP2 = ABS(P2)
   AP1 = ABS(P1)
 !     ------------------------------------------------------------------
@@ -2202,7 +2202,7 @@
   P1 = P1*CMPLX(RAP1,0.0E0)
   P2 = P2*CMPLX(RAP1,0.0E0)
   AP2 = AP2*RAP1
-   20 CONTINUE
+   20 continue
   K = K + 1
   AP1 = AP2
   PT = P2
@@ -2210,15 +2210,15 @@
   P1 = PT
   T1 = T1 + RZ
   AP2 = ABS(P2)
-  IF (AP1<=TEST) THEN
-   GO TO 20
-  ELSE IF (ITIME/=2) THEN
+  if (AP1 <= TEST) then
+   goto 20
+  else if (ITIME /= 2) then
    AK = ABS(T1)*0.5E0
    FLAM = AK + SQRT(AK*AK-1.0E0)
    RHO = MIN(AP2/AP1,FLAM)
    TEST = TEST1*SQRT(RHO/(RHO*RHO-1.0E0))
    ITIME = 2
-   GO TO 20
+   goto 20
   endif
   KK = K + 1 - ID
   AK = KK
@@ -2232,34 +2232,34 @@
    P1 = RZ*(CDFNU+T1)*P1 + P2
    P2 = PT
    T1 = T1 - CONE
-   40 CONTINUE
-  IF (REAL(P1)==0.0E0 .and. AIMAG(P1)==0.0E0) P1 = CMPLX(TOL, &
+   40 continue
+  if (REAL(P1) == 0.0E0 .and. AIMAG(P1) == 0.0E0) P1 = CMPLX(TOL, &
       TOL)
   CY(N) = P2/P1
-  IF (N/=1) THEN
+  if (N /= 1) then
    K = N - 1
    AK = K
    T1 = CMPLX(AK,0.0E0)
    CDFNU = CMPLX(FNU,0.0E0)*RZ
    DO 60 I = 2, N
       PT = CDFNU + T1*RZ + CY(K+1)
-      IF (REAL(PT)==0.0E0 .and. AIMAG(PT)==0.0E0) &
+      if (REAL(PT) == 0.0E0 .and. AIMAG(PT) == 0.0E0) &
             PT = CMPLX(TOL,TOL)
       CY(K) = CONE/PT
       T1 = T1 - CONE
       K = K - 1
-   60    CONTINUE
+   60    continue
   endif
-  RETURN
+  return
   END
-  SUBROUTINE DESS17(ZR,FNU,KODE,N,Y,NZ,CW,TOL,ELIM,ALIM)
+  subroutine DESS17(ZR,FNU,KODE,N,Y,NZ,CW,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-762 (DEC 1989).
 !
 !     Original name: CWRSK
 !
-!     DESS17 COMPUTES THE I BESSEL FUNCTION FOR RE(Z)>=0.0 BY
-!     NORMALIZING THE I FUNCTION RATIOS FROM DERS17 BY THE WRONSKIAN
+!     DESS17 COMPUTES THE I BESSEL function FOR RE(Z) >= 0.0 BY
+!     NORMALIZING THE I function RATIOS FROM DERS17 BY THE WRONSKIAN
 !
 !     .. Scalar Arguments ..
   COMPLEX           ZR
@@ -2271,12 +2271,12 @@
   COMPLEX           C1, C2, CINU, CSCL, CT, RCT, ST
   REAL              ACT, ACW, ASCLE, S1, S2, YY
   INTEGER           I, NW
-!     .. External Functions ..
+!     .. External functions ..
   REAL              X02AME
   EXTERNAL          X02AME
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DERS17, DGXS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, CONJG, COS, SIN
 !     .. Executable Statements ..
 !     ------------------------------------------------------------------
@@ -2286,10 +2286,10 @@
 !     ------------------------------------------------------------------
   NZ = 0
   CALL DGXS17(ZR,FNU,KODE,2,CW,NW,TOL,ELIM,ALIM)
-  IF (NW/=0) THEN
+  if (NW /= 0) then
    NZ = -1
-   IF (NW==(-2)) NZ = -2
-   IF (NW==(-3)) NZ = -3
+   if (NW == (-2)) NZ = -2
+   if (NW == (-3)) NZ = -3
   ELSE
    CALL DERS17(ZR,FNU,N,Y,TOL)
 !        ---------------------------------------------------------------
@@ -2297,14 +2297,14 @@
 !        R(FNU+J-1,Z)=Y(J),  J=1,...,N
 !        ---------------------------------------------------------------
    CINU = CMPLX(1.0E0,0.0E0)
-   IF (KODE/=1) THEN
+   if (KODE /= 1) then
       YY = AIMAG(ZR)
       S1 = COS(YY)
       S2 = SIN(YY)
       CINU = CMPLX(S1,S2)
    endif
 !        ---------------------------------------------------------------
-!        ON LOW EXPONENT MACHINES THE K FUNCTIONS CAN BE CLOSE TO BOTH
+!        ON LOW EXPONENT MACHINES THE K functionS CAN BE CLOSE TO BOTH
 !        THE UNDER AND OVERFLOW LIMITS AND THE NORMALIZATION MUST BE
 !        SCALED TO PREVENT OVER OR UNDERFLOW. DEVS17 HAS DETERMINED THAT
 !        THE RESULT IS ON SCALE.
@@ -2312,9 +2312,9 @@
    ACW = ABS(CW(2))
    ASCLE = (1.0E+3*X02AME())/TOL
    CSCL = CMPLX(1.0E0,0.0E0)
-   IF (ACW>ASCLE) THEN
+   if (ACW > ASCLE) then
       ASCLE = 1.0E0/ASCLE
-      IF (ACW>=ASCLE) CSCL = CMPLX(TOL,0.0E0)
+      if (ACW >= ASCLE) CSCL = CMPLX(TOL,0.0E0)
    ELSE
       CSCL = CMPLX(1.0E0/TOL,0.0E0)
    endif
@@ -2331,17 +2331,17 @@
    CT = CONJG(CT)*RCT
    CINU = CINU*RCT*CT
    Y(1) = CINU*CSCL
-   IF (N/=1) THEN
+   if (N /= 1) then
       DO 20 I = 2, N
          CINU = ST*CINU
          ST = Y(I)
          Y(I) = CINU*CSCL
-   20       CONTINUE
+   20       continue
    endif
   endif
-  RETURN
+  return
   END
-  SUBROUTINE DETS17(Z,FNU,KODE,N,Y,NZ,NLAST,FNUL,TOL,ELIM,ALIM)
+  subroutine DETS17(Z,FNU,KODE,N,Y,NZ,NLAST,FNUL,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-763 (DEC 1989).
 !
@@ -2353,8 +2353,8 @@
 !
 !     FNUL IS THE SMALLEST ORDER PERMITTED FOR THE ASYMPTOTIC
 !     EXPANSION. NLAST=0 MEANS ALL OF THE Y VALUES WERE SET.
-!     NLAST/=0 IS THE NUMBER LEFT TO BE COMPUTED BY ANOTHER
-!     FORMULA FOR ORDERS FNU TO FNU+NLAST-1 BECAUSE FNU+NLAST-1<FNUL.
+!     NLAST /= 0 IS THE NUMBER LEFT TO BE COMPUTED BY ANOTHER
+!     FORMULA FOR ORDERS FNU TO FNU+NLAST-1 BECAUSE FNU+NLAST-1 < FNUL.
 !     Y(I)=CZERO FOR I=NLAST+1,N
 !
 !     .. Scalar Arguments ..
@@ -2374,12 +2374,12 @@
 !     .. Local Arrays ..
   COMPLEX           CIP(4), CSR(3), CSS(3), CY(2)
   REAL              BRY(3)
-!     .. External Functions ..
+!     .. External functions ..
   REAL              X02AME, X02ALE
   EXTERNAL          X02AME, X02ALE
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DEUS17, DEVS17, S17DGE, DGVS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, CONJG, COS, EXP, INT, LOG, &
                     MAX, MIN, MOD, REAL, SIN
 !     .. Data statements ..
@@ -2423,7 +2423,7 @@
   IN = INU + N - 1
   IN = MOD(IN,4)
   C2 = C2*CIP(IN+1)
-  IF (YY<=0.0E0) THEN
+  if (YY <= 0.0E0) then
    ZN = CONJG(-ZN)
    ZB = CONJG(ZB)
    CID = -CID
@@ -2434,20 +2434,20 @@
 !     ------------------------------------------------------------------
   FN = MAX(FNU,1.0E0)
   CALL DEUS17(ZN,FN,1,TOL,PHI,ARG,ZETA1,ZETA2,ASUM,BSUM,ELIM)
-  IF (KODE==1) THEN
+  if (KODE == 1) then
    S1 = -ZETA1 + ZETA2
   ELSE
    CFN = CMPLX(FNU,0.0E0)
    S1 = -ZETA1 + CFN*(CFN/(ZB+ZETA2))
   endif
   RS1 = REAL(S1)
-  IF (ABS(RS1)<=ELIM) THEN
-   20    CONTINUE
+  if (ABS(RS1) <= ELIM) then
+   20    continue
    NN = MIN(2,ND)
    DO 40 I = 1, NN
       FN = FNU + ND - I
       CALL DEUS17(ZN,FN,0,TOL,PHI,ARG,ZETA1,ZETA2,ASUM,BSUM,ELIM)
-      IF (KODE==1) THEN
+      if (KODE == 1) then
          S1 = -ZETA1 + ZETA2
       ELSE
          CFN = CMPLX(FN,0.0E0)
@@ -2458,11 +2458,11 @@
 !           TEST FOR UNDERFLOW AND OVERFLOW
 !           ------------------------------------------------------------
       RS1 = REAL(S1)
-      IF (ABS(RS1)>ELIM) THEN
-         GO TO 60
+      if (ABS(RS1) > ELIM) then
+         goto 60
       ELSE
-         IF (I==1) IFLAG = 2
-         IF (ABS(RS1)>=ALIM) THEN
+         if (I == 1) IFLAG = 2
+         if (ABS(RS1) >= ALIM) then
 !                 ------------------------------------------------------
 !                 REFINE  TEST AND SCALE
 !                 ------------------------------------------------------
@@ -2470,12 +2470,12 @@
             APHI = ABS(PHI)
             AARG = ABS(ARG)
             RS1 = RS1 + LOG(APHI) - 0.25E0*LOG(AARG) - AIC
-            IF (ABS(RS1)>ELIM) THEN
-               GO TO 60
+            if (ABS(RS1) > ELIM) then
+               goto 60
             ELSE
-               IF (I==1) IFLAG = 1
-               IF (RS1>=0.0E0) THEN
-                  IF (I==1) IFLAG = 3
+               if (I == 1) IFLAG = 1
+               if (RS1 >= 0.0E0) then
+                  if (I == 1) IFLAG = 3
                endif
             endif
          endif
@@ -2494,21 +2494,21 @@
          C2M = EXP(C2R)*REAL(CSS(IFLAG))
          S1 = CMPLX(C2M,0.0E0)*CMPLX(COS(C2I),SIN(C2I))
          S2 = S2*S1
-         IF (IFLAG==1) THEN
+         if (IFLAG == 1) then
             CALL DGVS17(S2,NW,BRY(1),TOL)
-            IF (NW/=0) GO TO 60
+            if (NW /= 0) goto 60
          endif
-         IF (YY<=0.0E0) S2 = CONJG(S2)
+         if (YY <= 0.0E0) S2 = CONJG(S2)
          J = ND - I + 1
          S2 = S2*C2
          CY(I) = S2
          Y(J) = S2*CSR(IFLAG)
          C2 = C2*CID
       endif
-   40    CONTINUE
-   GO TO 80
-   60    IF (RS1>0.0E0) THEN
-      GO TO 160
+   40    continue
+   goto 80
+   60    if (RS1 > 0.0E0) then
+      goto 160
    ELSE
 !           ------------------------------------------------------------
 !           SET UNDERFLOW AND UPDATE PARAMETERS
@@ -2516,27 +2516,27 @@
       Y(ND) = CZERO
       NZ = NZ + 1
       ND = ND - 1
-      IF (ND==0) THEN
-         RETURN
+      if (ND == 0) then
+         return
       ELSE
          CALL DEVS17(Z,FNU,KODE,1,ND,Y,NUF,TOL,ELIM,ALIM)
-         IF (NUF<0) THEN
-            GO TO 160
+         if (NUF < 0) then
+            goto 160
          ELSE
             ND = ND - NUF
             NZ = NZ + NUF
-            IF (ND==0) THEN
-               RETURN
+            if (ND == 0) then
+               return
             ELSE
                FN = FNU + ND - 1
-               IF (FN<FNUL) THEN
-                  GO TO 120
+               if (FN < FNUL) then
+                  goto 120
                ELSE
 !                        FN = AIMAG(CID)
 !                        J = NUF + 1
 !                        K = MOD(J,4) + 1
 !                        S1 = CIP(K)
-!                        IF (FN<0.0E0) S1 = CONJG(S1)
+!                        if (FN < 0.0E0) S1 = CONJG(S1)
 !                        C2 = C2*S1
 !                   The above 6 lines were replaced by the 5 below
 !                   to fix a bug discovered during implementation
@@ -2546,14 +2546,14 @@
                   IN = INU + ND - 1
                   IN = MOD(IN,4) + 1
                   C2 = C2*CIP(IN)
-                  IF (YY<=0.0E0) C2 = CONJG(C2)
-                  GO TO 20
+                  if (YY <= 0.0E0) C2 = CONJG(C2)
+                  goto 20
                endif
             endif
          endif
       endif
    endif
-   80    IF (ND>2) THEN
+   80    if (ND > 2) then
       RZ = CMPLX(2.0E0,0.0E0)/Z
       BRY(2) = 1.0E0/BRY(1)
       BRY(3) = X02ALE()
@@ -2571,13 +2571,13 @@
          Y(K) = C2
          K = K - 1
          FN = FN - 1.0E0
-         IF (IFLAG<3) THEN
+         if (IFLAG < 3) then
             C2R = REAL(C2)
             C2I = AIMAG(C2)
             C2R = ABS(C2R)
             C2I = ABS(C2I)
             C2M = MAX(C2R,C2I)
-            IF (C2M>ASCLE) THEN
+            if (C2M > ASCLE) then
                IFLAG = IFLAG + 1
                ASCLE = BRY(IFLAG)
                S1 = S1*C1
@@ -2587,22 +2587,22 @@
                C1 = CSR(IFLAG)
             endif
          endif
-  100       CONTINUE
+  100       continue
    endif
-   RETURN
+   return
   120    NLAST = ND
-   RETURN
-  ELSE IF (RS1<=0.0E0) THEN
+   return
+  else if (RS1 <= 0.0E0) then
    NZ = N
    DO 140 I = 1, N
       Y(I) = CZERO
-  140    CONTINUE
-   RETURN
+  140    continue
+   return
   endif
   160 NZ = -1
-  RETURN
+  return
   END
-  SUBROUTINE DEUS17(Z,FNU,IPMTR,TOL,PHI,ARG,ZETA1,ZETA2,ASUM,BSUM, &
+  subroutine DEUS17(Z,FNU,IPMTR,TOL,PHI,ARG,ZETA1,ZETA2,ASUM,BSUM, &
                     ELIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-764 (DEC 1989).
@@ -2610,29 +2610,29 @@
 !     Original name: CUNHJ
 !
 !     REFERENCES
-!         HANDBOOK OF MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ AND I.A.
+!         HANDBOOK OF MATHEMATICAL functionS BY M. ABRAMOWITZ AND I.A.
 !         STEGUN, AMS55, NATIONAL BUREAU OF STANDARDS, 1965, CHAPTER 9.
 !
-!         ASYMPTOTICS AND SPECIAL FUNCTIONS BY F.W.J. OLVER, ACADEMIC
+!         ASYMPTOTICS AND SPECIAL functionS BY F.W.J. OLVER, ACADEMIC
 !         PRESS, N.Y., 1974, PAGE 420
 !
 !     ABSTRACT
-!         DEUS17 COMPUTES PARAMETERS FOR BESSEL FUNCTIONS C(FNU,Z) =
+!         DEUS17 COMPUTES PARAMETERS FOR BESSEL functionS C(FNU,Z) =
 !         J(FNU,Z), Y(FNU,Z) OR H(I,FNU,Z) I=1,2 FOR LARGE ORDERS FNU
 !         BY MEANS OF THE UNIFORM ASYMPTOTIC EXPANSION
 !
 !         C(FNU,Z)=C1*PHI*( ASUM*AIRY(ARG) + C2*BSUM*DAIRY(ARG) )
 !
 !         FOR PROPER CHOICES OF C1, C2, AIRY AND DAIRY WHERE AIRY IS
-!         AN AIRY FUNCTION AND DAIRY IS ITS DERIVATIVE.
+!         AN AIRY function AND DAIRY IS ITS DERIVATIVE.
 !
 !               (2/3)*FNU*ZETA**1.5 = ZETA1-ZETA2,
 !
 !         ZETA1=0.5*FNU*CLOG((1+W)/(1-W)), ZETA2=FNU*W FOR SCALING
-!         PURPOSES IN AIRY FUNCTIONS FROM S17DGE OR S17DHE.
+!         PURPOSES IN AIRY functionS FROM S17DGE OR S17DHE.
 !
 !         MCONJ=SIGN OF AIMAG(Z), BUT IS AMBIGUOUS WHEN Z IS REAL AND
-!         MUST BE SPECIFIED. IPMTR=0 RETURNS ALL PARAMETERS. IPMTR=
+!         MUST BE SPECIFIED. IPMTR=0 returnS ALL PARAMETERS. IPMTR=
 !         1 COMPUTES ALL EXCEPT ASUM AND BSUM.
 !
 !     .. Scalar Arguments ..
@@ -2653,7 +2653,7 @@
   COMPLEX           CR(14), DR(14), P(30), UP(14)
   REAL              ALFA(180), AP(30), AR(14), BETA(210), BR(14), &
                     C(105), GAMA(30)
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, ATAN, CMPLX, COS, EXP, LOG, REAL, &
                     SIN, SQRT
 !     .. Data statements ..
@@ -3338,14 +3338,14 @@
   TSTR = REAL(Z)
   TSTI = AIMAG(Z)
   TEST = FNU*EXP(-ELIM)
-  IF (ABS(TSTR)<TEST) TSTR = 0.0E0
-  IF (ABS(TSTI)<TEST) TSTI = 0.0E0
-  IF (TSTR==0.0E0 .and. TSTI==0.0E0) THEN
+  if (ABS(TSTR) < TEST) TSTR = 0.0E0
+  if (ABS(TSTI) < TEST) TSTI = 0.0E0
+  if (TSTR == 0.0E0 .and. TSTI == 0.0E0) then
    ZETA1 = CMPLX(ELIM+ELIM+FNU,0.0E0)
    ZETA2 = CMPLX(FNU,0.0E0)
    PHI = CONE
    ARG = CONE
-   RETURN
+   return
   endif
   ZB = CMPLX(TSTR,TSTI)*CMPLX(RFNU,0.0E0)
   RFNU2 = RFNU*RFNU
@@ -3357,23 +3357,23 @@
   RFN13 = CMPLX(1.0E0/FN13,0.0E0)
   W2 = CONE - ZB*ZB
   AW2 = ABS(W2)
-  IF (AW2>0.25E0) THEN
+  if (AW2 > 0.25E0) then
 !        ---------------------------------------------------------------
 !        CABS(W2)>0.25E0
 !        ---------------------------------------------------------------
    W = SQRT(W2)
    WR = REAL(W)
    WI = AIMAG(W)
-   IF (WR<0.0E0) WR = 0.0E0
-   IF (WI<0.0E0) WI = 0.0E0
+   if (WR < 0.0E0) WR = 0.0E0
+   if (WI < 0.0E0) WI = 0.0E0
    W = CMPLX(WR,WI)
    ZA = (CONE+W)/ZB
    ZC = LOG(ZA)
    ZCR = REAL(ZC)
    ZCI = AIMAG(ZC)
-   IF (ZCI<0.0E0) ZCI = 0.0E0
-   IF (ZCI>HPI) ZCI = HPI
-   IF (ZCR<0.0E0) ZCR = 0.0E0
+   if (ZCI < 0.0E0) ZCI = 0.0E0
+   if (ZCI > HPI) ZCI = HPI
+   if (ZCR < 0.0E0) ZCR = 0.0E0
    ZC = CMPLX(ZCR,ZCI)
    ZTH = (ZC-W)*CMPLX(1.5E0,0.0E0)
    CFNU = CMPLX(FNU,0.0E0)
@@ -3383,24 +3383,24 @@
    ZTHR = REAL(ZTH)
    ZTHI = AIMAG(ZTH)
    ANG = THPI
-   IF (ZTHR<0.0E0 .or. ZTHI>=0.0E0) THEN
+   if (ZTHR < 0.0E0 .or. ZTHI >= 0.0E0) then
       ANG = HPI
-      IF (ZTHR/=0.0E0) THEN
+      if (ZTHR /= 0.0E0) then
          ANG = ATAN(ZTHI/ZTHR)
-         IF (ZTHR<0.0E0) ANG = ANG + PI
+         if (ZTHR < 0.0E0) ANG = ANG + PI
       endif
    endif
    PP = AZTH**EX2
    ANG = ANG*EX2
    ZETAR = PP*COS(ANG)
    ZETAI = PP*SIN(ANG)
-   IF (ZETAI<0.0E0) ZETAI = 0.0E0
+   if (ZETAI < 0.0E0) ZETAI = 0.0E0
    ZETA = CMPLX(ZETAR,ZETAI)
    ARG = ZETA*CMPLX(FN23,0.0E0)
    RTZTA = ZTH/ZETA
    ZA = RTZTA/W
    PHI = SQRT(ZA+ZA)*RFN13
-   IF (IPMTR/=1) THEN
+   if (IPMTR /= 1) then
       TFN = CMPLX(RFNU,0.0E0)/W
       RZTH = CMPLX(RFNU,0.0E0)/ZTH
       ZC = RZTH*CMPLX(AR(2),0.0E0)
@@ -3408,7 +3408,7 @@
       UP(2) = (T2*CMPLX(C(2),0.0E0)+CMPLX(C(3),0.0E0))*TFN
       BSUM = UP(2) + ZC
       ASUM = CZERO
-      IF (RFNU>=TOL) THEN
+      if (RFNU >= TOL) then
          PRZTH = RZTH
          PTFN = TFN
          UP(1) = CONE
@@ -3435,61 +3435,61 @@
                DO 20 J = 2, KP1
                   L = L + 1
                   ZA = ZA*T2 + CMPLX(C(L),0.0E0)
-   20                CONTINUE
+   20                continue
                PTFN = PTFN*TFN
                UP(KP1) = PTFN*ZA
                CR(KS) = PRZTH*CMPLX(BR(KS+1),0.0E0)
                PRZTH = PRZTH*RZTH
                DR(KS) = PRZTH*CMPLX(AR(KS+2),0.0E0)
-   40             CONTINUE
+   40             continue
             PP = PP*RFNU2
-            IF (IAS/=1) THEN
+            if (IAS /= 1) then
                SUMA = UP(LRP1)
                JU = LRP1
                DO 60 JR = 1, LR
                   JU = JU - 1
                   SUMA = SUMA + CR(JR)*UP(JU)
-   60                CONTINUE
+   60                continue
                ASUM = ASUM + SUMA
                ASUMR = REAL(ASUM)
                ASUMI = AIMAG(ASUM)
                TEST = ABS(ASUMR) + ABS(ASUMI)
-               IF (PP<TOL .and. TEST<TOL) IAS = 1
+               if (PP < TOL .and. TEST < TOL) IAS = 1
             endif
-            IF (IBS/=1) THEN
+            if (IBS /= 1) then
                SUMB = UP(LR+2) + UP(LRP1)*ZC
                JU = LRP1
                DO 80 JR = 1, LR
                   JU = JU - 1
                   SUMB = SUMB + DR(JR)*UP(JU)
-   80                CONTINUE
+   80                continue
                BSUM = BSUM + SUMB
                BSUMR = REAL(BSUM)
                BSUMI = AIMAG(BSUM)
                TEST = ABS(BSUMR) + ABS(BSUMI)
-               IF (PP<BTOL .and. TEST<TOL) IBS = 1
+               if (PP < BTOL .and. TEST < TOL) IBS = 1
             endif
-            IF (IAS==1 .and. IBS==1) GO TO 120
-  100          CONTINUE
+            if (IAS == 1 .and. IBS == 1) goto 120
+  100          continue
       endif
   120       ASUM = ASUM + CONE
       BSUM = -BSUM*RFN13/RTZTA
    endif
   ELSE
 !        ---------------------------------------------------------------
-!        POWER SERIES FOR CABS(W2)<=0.25E0
+!        POWER SERIES FOR CABS(W2) <= 0.25E0
 !        ---------------------------------------------------------------
    K = 1
    P(1) = CONE
    SUMA = CMPLX(GAMA(1),0.0E0)
    AP(1) = 1.0E0
-   IF (AW2>=TOL) THEN
+   if (AW2 >= TOL) then
       DO 140 K = 2, 30
          P(K) = P(K-1)*W2
          SUMA = SUMA + P(K)*CMPLX(GAMA(K),0.0E0)
          AP(K) = AP(K-1)*AW2
-         IF (AP(K)<TOL) GO TO 160
-  140       CONTINUE
+         if (AP(K) < TOL) goto 160
+  140       continue
       K = 30
    endif
   160    KMAX = K
@@ -3500,14 +3500,14 @@
    ZETA1 = ZETA2*(CONE+ZETA*ZA*CMPLX(EX2,0.0E0))
    ZA = ZA + ZA
    PHI = SQRT(ZA)*RFN13
-   IF (IPMTR/=1) THEN
+   if (IPMTR /= 1) then
 !           ------------------------------------------------------------
 !           SUM SERIES FOR ASUM AND BSUM
 !           ------------------------------------------------------------
       SUMB = CZERO
       DO 180 K = 1, KMAX
          SUMB = SUMB + P(K)*CMPLX(BETA(K),0.0E0)
-  180       CONTINUE
+  180       continue
       ASUM = CZERO
       BSUM = SUMB
       L1 = 0
@@ -3517,55 +3517,55 @@
       PP = 1.0E0
       IAS = 0
       IBS = 0
-      IF (RFNU2>=TOL) THEN
+      if (RFNU2 >= TOL) then
          DO 280 IS = 2, 7
             ATOL = ATOL/RFNU2
             PP = PP*RFNU2
-            IF (IAS/=1) THEN
+            if (IAS /= 1) then
                SUMA = CZERO
                DO 200 K = 1, KMAX
                   M = L1 + K
                   SUMA = SUMA + P(K)*CMPLX(ALFA(M),0.0E0)
-                  IF (AP(K)<ATOL) GO TO 220
-  200                CONTINUE
+                  if (AP(K) < ATOL) goto 220
+  200                continue
   220                ASUM = ASUM + SUMA*CMPLX(PP,0.0E0)
-               IF (PP<TOL) IAS = 1
+               if (PP < TOL) IAS = 1
             endif
-            IF (IBS/=1) THEN
+            if (IBS /= 1) then
                SUMB = CZERO
                DO 240 K = 1, KMAX
                   M = L2 + K
                   SUMB = SUMB + P(K)*CMPLX(BETA(M),0.0E0)
-                  IF (AP(K)<ATOL) GO TO 260
-  240                CONTINUE
+                  if (AP(K) < ATOL) goto 260
+  240                continue
   260                BSUM = BSUM + SUMB*CMPLX(PP,0.0E0)
-               IF (PP<BTOL) IBS = 1
+               if (PP < BTOL) IBS = 1
             endif
-            IF (IAS==1 .and. IBS==1) THEN
-               GO TO 300
+            if (IAS == 1 .and. IBS == 1) then
+               goto 300
             ELSE
                L1 = L1 + 30
                L2 = L2 + 30
             endif
-  280          CONTINUE
+  280          continue
       endif
   300       ASUM = ASUM + CONE
       PP = RFNU*REAL(RFN13)
       BSUM = BSUM*CMPLX(PP,0.0E0)
    endif
   endif
-  RETURN
+  return
   END
-  SUBROUTINE DEVS17(Z,FNU,KODE,IKFLG,N,Y,NUF,TOL,ELIM,ALIM)
+  subroutine DEVS17(Z,FNU,KODE,IKFLG,N,Y,NUF,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-765 (DEC 1989).
 !
 !     Original name: CUOIK
 !
 !     DEVS17 COMPUTES THE LEADING TERMS OF THE UNIFORM ASYMPTOTIC
-!     EXPANSIONS FOR THE I AND K FUNCTIONS AND COMPARES THEM
+!     EXPANSIONS FOR THE I AND K functionS AND COMPARES THEM
 !     (IN LOGARITHMIC FORM) TO ALIM AND ELIM FOR OVER AND UNDERFLOW
-!     WHERE ALIM<ELIM. IF THE MAGNITUDE, BASED ON THE LEADING
+!     WHERE ALIM < ELIM. IF THE MAGNITUDE, BASED ON THE LEADING
 !     EXPONENTIAL, IS LESS THAN ALIM OR GREATER THAN -ALIM, THEN
 !     THE RESULT IS ON SCALE. IF NOT, THEN A REFINED TEST USING OTHER
 !     MULTIPLIERS (IN LOGARITHMIC FORM) IS MADE BASED ON ELIM. HERE
@@ -3579,7 +3579,7 @@
 !     IKFLG=1 AND NUF>0 MEANS THE LAST NUF Y VALUES WERE SET TO ZERO
 !             THE FIRST N-NUF VALUES MUST BE SET BY ANOTHER ROUTINE
 !     IKFLG=2 AND NUF==N MEANS ALL Y VALUES WERE SET TO ZERO
-!     IKFLG=2 AND 0<NUF<N NOT CONSIDERED. Y MUST BE SET BY
+!     IKFLG=2 AND 0 < NUF < N NOT CONSIDERED. Y MUST BE SET BY
 !             ANOTHER ROUTINE
 !
 !     .. Scalar Arguments ..
@@ -3596,12 +3596,12 @@
   INTEGER           I, IFORM, INIT, NN, NW
 !     .. Local Arrays ..
   COMPLEX           CWRK(16)
-!     .. External Functions ..
+!     .. External functions ..
   REAL              X02AME
   EXTERNAL          X02AME
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DEUS17, DEWS17, DGVS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, CONJG, COS, EXP, LOG, MAX, &
                     REAL, SIN
 !     .. Data statements ..
@@ -3613,15 +3613,15 @@
   NN = N
   X = REAL(Z)
   ZR = Z
-  IF (X<0.0E0) ZR = -Z
+  if (X < 0.0E0) ZR = -Z
   ZB = ZR
   YY = AIMAG(ZR)
   AX = ABS(X)*1.7321E0
   AY = ABS(YY)
   IFORM = 1
-  IF (AY>AX) IFORM = 2
+  if (AY > AX) IFORM = 2
   GNU = MAX(FNU,1.0E0)
-  IF (IKFLG/=1) THEN
+  if (IKFLG /= 1) then
    FNN = NN
    GNN = FNU + FNN - 1.0E0
    GNU = MAX(GNN,FNN)
@@ -3631,9 +3631,9 @@
 !     REAL PARTS OF ZETA1, ZETA2 AND ZB. NO ATTEMPT IS MADE TO GET
 !     THE SIGN OF THE IMAGINARY PART CORRECT.
 !     ------------------------------------------------------------------
-  IF (IFORM==2) THEN
+  if (IFORM == 2) then
    ZN = -ZR*CMPLX(0.0E0,1.0E0)
-   IF (YY<=0.0E0) ZN = CONJG(-ZN)
+   if (YY <= 0.0E0) ZN = CONJG(-ZN)
    CALL DEUS17(ZN,GNU,1,TOL,PHI,ARG,ZETA1,ZETA2,ASUM,BSUM,ELIM)
    CZ = -ZETA1 + ZETA2
    AARG = ABS(ARG)
@@ -3643,55 +3643,55 @@
                  ELIM)
    CZ = -ZETA1 + ZETA2
   endif
-  IF (KODE==2) CZ = CZ - ZB
-  IF (IKFLG==2) CZ = -CZ
+  if (KODE == 2) CZ = CZ - ZB
+  if (IKFLG == 2) CZ = -CZ
   APHI = ABS(PHI)
   RCZ = REAL(CZ)
 !     ------------------------------------------------------------------
 !     OVERFLOW TEST
 !     ------------------------------------------------------------------
-  IF (RCZ<=ELIM) THEN
-   IF (RCZ<ALIM) THEN
+  if (RCZ <= ELIM) then
+   if (RCZ < ALIM) then
 !           ------------------------------------------------------------
 !           UNDERFLOW TEST
 !           ------------------------------------------------------------
-      IF (RCZ>=(-ELIM)) THEN
-         IF (RCZ>(-ALIM)) THEN
-            GO TO 40
+      if (RCZ >= (-ELIM)) then
+         if (RCZ > (-ALIM)) then
+            goto 40
          ELSE
             RCZ = RCZ + LOG(APHI)
-            IF (IFORM==2) RCZ = RCZ - 0.25E0*LOG(AARG) - AIC
-            IF (RCZ>(-ELIM)) THEN
+            if (IFORM == 2) RCZ = RCZ - 0.25E0*LOG(AARG) - AIC
+            if (RCZ > (-ELIM)) then
                ASCLE = (1.0E+3*X02AME())/TOL
                CZ = CZ + LOG(PHI)
-               IF (IFORM/=1) CZ = CZ - CMPLX(0.25E0,0.0E0) &
+               if (IFORM /= 1) CZ = CZ - CMPLX(0.25E0,0.0E0) &
                                       *LOG(ARG) - CMPLX(AIC,0.0E0)
                AX = EXP(RCZ)/TOL
                AY = AIMAG(CZ)
                CZ = CMPLX(AX,0.0E0)*CMPLX(COS(AY),SIN(AY))
                CALL DGVS17(CZ,NW,ASCLE,TOL)
-               IF (NW/=1) GO TO 40
+               if (NW /= 1) goto 40
             endif
          endif
       endif
       DO 20 I = 1, NN
          Y(I) = CZERO
-   20       CONTINUE
+   20       continue
       NUF = NN
-      RETURN
+      return
    ELSE
       RCZ = RCZ + LOG(APHI)
-      IF (IFORM==2) RCZ = RCZ - 0.25E0*LOG(AARG) - AIC
-      IF (RCZ>ELIM) GO TO 80
+      if (IFORM == 2) RCZ = RCZ - 0.25E0*LOG(AARG) - AIC
+      if (RCZ > ELIM) goto 80
    endif
-   40    IF (IKFLG/=2) THEN
-      IF (N/=1) THEN
-   60          CONTINUE
+   40    if (IKFLG /= 2) then
+      if (N /= 1) then
+   60          continue
 !              ---------------------------------------------------------
 !              SET UNDERFLOWS ON I SEQUENCE
 !              ---------------------------------------------------------
          GNU = FNU + NN - 1
-         IF (IFORM==2) THEN
+         if (IFORM == 2) then
             CALL DEUS17(ZN,GNU,1,TOL,PHI,ARG,ZETA1,ZETA2,ASUM, &
                           BSUM,ELIM)
             CZ = -ZETA1 + ZETA2
@@ -3702,41 +3702,41 @@
                           SUM,CWRK,ELIM)
             CZ = -ZETA1 + ZETA2
          endif
-         IF (KODE==2) CZ = CZ - ZB
+         if (KODE == 2) CZ = CZ - ZB
          APHI = ABS(PHI)
          RCZ = REAL(CZ)
-         IF (RCZ>=(-ELIM)) THEN
-            IF (RCZ>(-ALIM)) THEN
-               RETURN
+         if (RCZ >= (-ELIM)) then
+            if (RCZ > (-ALIM)) then
+               return
             ELSE
                RCZ = RCZ + LOG(APHI)
-               IF (IFORM==2) RCZ = RCZ - 0.25E0*LOG(AARG) - AIC
-               IF (RCZ>(-ELIM)) THEN
+               if (IFORM == 2) RCZ = RCZ - 0.25E0*LOG(AARG) - AIC
+               if (RCZ > (-ELIM)) then
                   ASCLE = (1.0E+3*X02AME())/TOL
                   CZ = CZ + LOG(PHI)
-                  IF (IFORM/=1) CZ = CZ - CMPLX(0.25E0,0.0E0) &
+                  if (IFORM /= 1) CZ = CZ - CMPLX(0.25E0,0.0E0) &
                                          *LOG(ARG) - CMPLX(AIC, &
                                          0.0E0)
                   AX = EXP(RCZ)/TOL
                   AY = AIMAG(CZ)
                   CZ = CMPLX(AX,0.0E0)*CMPLX(COS(AY),SIN(AY))
                   CALL DGVS17(CZ,NW,ASCLE,TOL)
-                  IF (NW/=1) RETURN
+                  if (NW /= 1) return
                endif
             endif
          endif
          Y(NN) = CZERO
          NN = NN - 1
          NUF = NUF + 1
-         IF (NN/=0) GO TO 60
+         if (NN /= 0) goto 60
       endif
    endif
-   RETURN
+   return
   endif
    80 NUF = -1
-  RETURN
+  return
   END
-  SUBROUTINE DEWS17(ZR,FNU,IKFLG,IPMTR,TOL,INIT,PHI,ZETA1,ZETA2,SUM, &
+  subroutine DEWS17(ZR,FNU,IKFLG,IPMTR,TOL,INIT,PHI,ZETA1,ZETA2,SUM, &
                     CWRK,ELIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-766 (DEC 1989).
@@ -3744,7 +3744,7 @@
 !     Original name: CUNIK
 !
 !        DEWS17 COMPUTES PARAMETERS FOR THE UNIFORM ASYMPTOTIC
-!        EXPANSIONS OF THE I AND K FUNCTIONS ON IKFLG= 1 OR 2
+!        EXPANSIONS OF THE I AND K functionS ON IKFLG= 1 OR 2
 !        RESPECTIVELY BY
 !
 !        W(FNU,ZR) = PHI*EXP(ZETA)*SUM
@@ -3753,7 +3753,7 @@
 !                          ZETA1 - ZETA2
 !
 !        THE FIRST CALL MUST HAVE INIT=0. SUBSEQUENT CALLS WITH THE
-!        SAME ZR AND FNU WILL RETURN THE I OR K FUNCTION ON IKFLG=
+!        SAME ZR AND FNU WILL return THE I OR K function ON IKFLG=
 !        1 OR 2 WITH NO CHANGE IN INIT. CWRK IS A COMPLEX WORK
 !        ARRAY. IPMTR=0 COMPUTES ALL PARAMETERS. IPMTR=1 COMPUTES PHI,
 !        ZETA1,ZETA2.
@@ -3772,10 +3772,10 @@
   COMPLEX           CON(2)
   REAL              C(120)
 !bc
-!     .. external Functions ..
+!     .. external functions ..
   real              x02ane
   external          x02ane
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, EXP, LOG, REAL, SQRT
 !     .. Data statements ..
   DATA              CZERO, CONE/(0.0E0,0.0E0), (1.0E0,0.0E0)/
@@ -3919,7 +3919,7 @@
                     1.18838426256783253E+05/
 !     .. Executable Statements ..
 !
-  IF (INIT==0) THEN
+  if (INIT == 0) then
 !        ---------------------------------------------------------------
 !        INITIALIZE ALL VARIABLES
 !        ---------------------------------------------------------------
@@ -3928,14 +3928,14 @@
    TSTR = REAL(ZR)
    TSTI = AIMAG(ZR)
    TEST = FNU*EXP(-ELIM)
-   IF (ABS(TSTR)<TEST) TSTR = 0.0E0
-   IF (ABS(TSTI)<TEST) TSTI = 0.0E0
-!bc         IF (TSTR==0.0E0 .and. TSTI==0.0E0) THEN
-   IF (abs(tstr)<=x02ane().and.abs(tsti)<=x02ane()) then
+   if (ABS(TSTR) < TEST) TSTR = 0.0E0
+   if (ABS(TSTI) < TEST) TSTI = 0.0E0
+!bc         if (TSTR==0.0E0 .and. TSTI==0.0E0) then
+   if (abs(tstr) <= x02ane() .and. abs(tsti) <= x02ane()) then
       ZETA1 = CMPLX(ELIM+ELIM+FNU,0.0E0)
       ZETA2 = CMPLX(FNU,0.0E0)
       PHI = CONE
-      RETURN
+      return
    endif
    T = CMPLX(TSTR,TSTI)*CRFN
    S = CONE + T*T
@@ -3948,8 +3948,8 @@
    SR = T*CRFN
    CWRK(16) = SQRT(SR)
    PHI = CWRK(16)*CON(IKFLG)
-   IF (IPMTR/=0) THEN
-      RETURN
+   if (IPMTR /= 0) then
+      return
    ELSE
       T2 = CONE/S
       CWRK(1) = CONE
@@ -3961,57 +3961,57 @@
          DO 20 J = 1, K
             L = L + 1
             S = S*T2 + CMPLX(C(L),0.0E0)
-   20          CONTINUE
+   20          continue
          CRFN = CRFN*SR
          CWRK(K) = CRFN*S
          AC = AC*RFN
          TSTR = REAL(CWRK(K))
          TSTI = AIMAG(CWRK(K))
          TEST = ABS(TSTR) + ABS(TSTI)
-         IF (AC<TOL .and. TEST<TOL) GO TO 60
-   40       CONTINUE
+         if (AC < TOL .and. TEST < TOL) goto 60
+   40       continue
       K = 15
    60       INIT = K
    endif
   endif
-  IF (IKFLG==2) THEN
+  if (IKFLG == 2) then
 !        ---------------------------------------------------------------
-!        COMPUTE SUM FOR THE K FUNCTION
+!        COMPUTE SUM FOR THE K function
 !        ---------------------------------------------------------------
    S = CZERO
    T = CONE
    DO 80 I = 1, INIT
       S = S + T*CWRK(I)
       T = -T
-   80    CONTINUE
+   80    continue
    SUM = S
    PHI = CWRK(16)*CON(2)
   ELSE
 !        ---------------------------------------------------------------
-!        COMPUTE SUM FOR THE I FUNCTION
+!        COMPUTE SUM FOR THE I function
 !        ---------------------------------------------------------------
    S = CZERO
    DO 100 I = 1, INIT
       S = S + CWRK(I)
-  100    CONTINUE
+  100    continue
    SUM = S
    PHI = CWRK(16)*CON(1)
   endif
-  RETURN
+  return
   END
-  SUBROUTINE DEXS17(Z,FNU,KODE,N,Y,NZ,NLAST,FNUL,TOL,ELIM,ALIM)
+  subroutine DEXS17(Z,FNU,KODE,N,Y,NZ,NLAST,FNUL,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-767 (DEC 1989).
 !
 !     Original name: CUNI1
 !
 !     DEXS17 COMPUTES I(FNU,Z)  BY MEANS OF THE UNIFORM ASYMPTOTIC
-!     EXPANSION FOR I(FNU,Z) IN -PI/3<=ARG Z<=PI/3.
+!     EXPANSION FOR I(FNU,Z) IN -PI/3 <= ARG Z <= PI/3.
 !
 !     FNUL IS THE SMALLEST ORDER PERMITTED FOR THE ASYMPTOTIC
 !     EXPANSION. NLAST=0 MEANS ALL OF THE Y VALUES WERE SET.
-!     NLAST/=0 IS THE NUMBER LEFT TO BE COMPUTED BY ANOTHER
-!     FORMULA FOR ORDERS FNU TO FNU+NLAST-1 BECAUSE FNU+NLAST-1<FNUL.
+!     NLAST /= 0 IS THE NUMBER LEFT TO BE COMPUTED BY ANOTHER
+!     FORMULA FOR ORDERS FNU TO FNU+NLAST-1 BECAUSE FNU+NLAST-1 < FNUL.
 !     Y(I)=CZERO FOR I=NLAST+1,N
 !
 !     .. Scalar Arguments ..
@@ -4028,12 +4028,12 @@
 !     .. Local Arrays ..
   COMPLEX           CSR(3), CSS(3), CWRK(16), CY(2)
   REAL              BRY(3)
-!     .. External Functions ..
+!     .. External functions ..
   REAL              X02AME, X02ALE
   EXTERNAL          X02AME, X02ALE
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DEVS17, DEWS17, DGVS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, COS, EXP, LOG, MAX, MIN, &
                     REAL, SIN
 !     .. Data statements ..
@@ -4063,21 +4063,21 @@
   FN = MAX(FNU,1.0E0)
   INIT = 0
   CALL DEWS17(Z,FN,1,1,TOL,INIT,PHI,ZETA1,ZETA2,SUM,CWRK,ELIM)
-  IF (KODE==1) THEN
+  if (KODE == 1) then
    S1 = -ZETA1 + ZETA2
   ELSE
    CFN = CMPLX(FN,0.0E0)
    S1 = -ZETA1 + CFN*(CFN/(Z+ZETA2))
   endif
   RS1 = REAL(S1)
-  IF (ABS(RS1)<=ELIM) THEN
-   20    CONTINUE
+  if (ABS(RS1) <= ELIM) then
+   20    continue
    NN = MIN(2,ND)
    DO 40 I = 1, NN
       FN = FNU + ND - I
       INIT = 0
       CALL DEWS17(Z,FN,1,0,TOL,INIT,PHI,ZETA1,ZETA2,SUM,CWRK,ELIM)
-      IF (KODE==1) THEN
+      if (KODE == 1) then
          S1 = -ZETA1 + ZETA2
       ELSE
          CFN = CMPLX(FN,0.0E0)
@@ -4088,27 +4088,27 @@
 !           TEST FOR UNDERFLOW AND OVERFLOW
 !           ------------------------------------------------------------
       RS1 = REAL(S1)
-      IF (ABS(RS1)>ELIM) THEN
-         GO TO 60
+      if (ABS(RS1) > ELIM) then
+         goto 60
       ELSE
-         IF (I==1) IFLAG = 2
-         IF (ABS(RS1)>=ALIM) THEN
+         if (I == 1) IFLAG = 2
+         if (ABS(RS1) >= ALIM) then
 !                 ------------------------------------------------------
 !                 REFINE  TEST AND SCALE
 !                 ------------------------------------------------------
             APHI = ABS(PHI)
             RS1 = RS1 + LOG(APHI)
-            IF (ABS(RS1)>ELIM) THEN
-               GO TO 60
+            if (ABS(RS1) > ELIM) then
+               goto 60
             ELSE
-               IF (I==1) IFLAG = 1
-               IF (RS1>=0.0E0) THEN
-                  IF (I==1) IFLAG = 3
+               if (I == 1) IFLAG = 1
+               if (RS1 >= 0.0E0) then
+                  if (I == 1) IFLAG = 3
                endif
             endif
          endif
 !              ---------------------------------------------------------
-!              SCALE S1 IF CABS(S1)<ASCLE
+!              SCALE S1 IF CABS(S1) < ASCLE
 !              ---------------------------------------------------------
          S2 = PHI*SUM
          C2R = REAL(S1)
@@ -4116,49 +4116,49 @@
          C2M = EXP(C2R)*REAL(CSS(IFLAG))
          S1 = CMPLX(C2M,0.0E0)*CMPLX(COS(C2I),SIN(C2I))
          S2 = S2*S1
-         IF (IFLAG==1) THEN
+         if (IFLAG == 1) then
             CALL DGVS17(S2,NW,BRY(1),TOL)
-            IF (NW/=0) GO TO 60
+            if (NW /= 0) goto 60
          endif
          M = ND - I + 1
          CY(I) = S2
          Y(M) = S2*CSR(IFLAG)
       endif
-   40    CONTINUE
-   GO TO 80
+   40    continue
+   goto 80
 !        ---------------------------------------------------------------
 !        SET UNDERFLOW AND UPDATE PARAMETERS
 !        ---------------------------------------------------------------
-   60    CONTINUE
-   IF (RS1>0.0E0) THEN
-      GO TO 160
+   60    continue
+   if (RS1 > 0.0E0) then
+      goto 160
    ELSE
       Y(ND) = CZERO
       NZ = NZ + 1
       ND = ND - 1
-      IF (ND==0) THEN
-         RETURN
+      if (ND == 0) then
+         return
       ELSE
          CALL DEVS17(Z,FNU,KODE,1,ND,Y,NUF,TOL,ELIM,ALIM)
-         IF (NUF<0) THEN
-            GO TO 160
+         if (NUF < 0) then
+            goto 160
          ELSE
             ND = ND - NUF
             NZ = NZ + NUF
-            IF (ND==0) THEN
-               RETURN
+            if (ND == 0) then
+               return
             ELSE
                FN = FNU + ND - 1
-               IF (FN>=FNUL) THEN
-                  GO TO 20
+               if (FN >= FNUL) then
+                  goto 20
                ELSE
-                  GO TO 120
+                  goto 120
                endif
             endif
          endif
       endif
    endif
-   80    IF (ND>2) THEN
+   80    if (ND > 2) then
       RZ = CMPLX(2.0E0,0.0E0)/Z
       BRY(2) = 1.0E0/BRY(1)
       BRY(3) = X02ALE()
@@ -4176,13 +4176,13 @@
          Y(K) = C2
          K = K - 1
          FN = FN - 1.0E0
-         IF (IFLAG<3) THEN
+         if (IFLAG < 3) then
             C2R = REAL(C2)
             C2I = AIMAG(C2)
             C2R = ABS(C2R)
             C2I = ABS(C2I)
             C2M = MAX(C2R,C2I)
-            IF (C2M>ASCLE) THEN
+            if (C2M > ASCLE) then
                IFLAG = IFLAG + 1
                ASCLE = BRY(IFLAG)
                S1 = S1*C1
@@ -4192,29 +4192,29 @@
                C1 = CSR(IFLAG)
             endif
          endif
-  100       CONTINUE
+  100       continue
    endif
-   RETURN
+   return
   120    NLAST = ND
-   RETURN
-  ELSE IF (RS1<=0.0E0) THEN
+   return
+  else if (RS1 <= 0.0E0) then
    NZ = N
    DO 140 I = 1, N
       Y(I) = CZERO
-  140    CONTINUE
-   RETURN
+  140    continue
+   return
   endif
   160 NZ = -1
-  RETURN
+  return
   END
-  SUBROUTINE DEYS17(Z,FNU,KODE,N,Y,NZ,NUI,NLAST,FNUL,TOL,ELIM,ALIM)
+  subroutine DEYS17(Z,FNU,KODE,N,Y,NZ,NUI,NLAST,FNUL,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-768 (DEC 1989).
 !
 !     Original name: CBUNI
 !
-!     DEYS17 COMPUTES THE I BESSEL FUNCTION FOR LARGE CABS(Z)>
-!     FNUL AND FNU+N-1<FNUL. THE ORDER IS INCREASED FROM
+!     DEYS17 COMPUTES THE I BESSEL function FOR LARGE CABS(Z)>
+!     FNUL AND FNU+N-1 < FNUL. THE ORDER IS INCREASED FROM
 !     FNU+N-1 GREATER THAN FNUL BY ADDING NUI AND COMPUTING
 !     ACCORDING TO THE UNIFORM ASYMPTOTIC EXPANSION FOR I(FNU,Z)
 !     ON IFORM=1 AND THE EXPANSION FOR J(FNU,Z) ON IFORM=2
@@ -4233,12 +4233,12 @@
 !     .. Local Arrays ..
   COMPLEX           CY(2)
   REAL              BRY(3)
-!     .. External Functions ..
+!     .. External functions ..
   REAL              X02AME
   EXTERNAL          X02AME
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DETS17, DEXS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, MAX, REAL
 !     .. Executable Statements ..
 !
@@ -4248,46 +4248,46 @@
   AX = ABS(XX)*1.7321E0
   AY = ABS(YY)
   IFORM = 1
-  IF (AY>AX) IFORM = 2
-  IF (NUI==0) THEN
-   IF (IFORM==2) THEN
+  if (AY > AX) IFORM = 2
+  if (NUI == 0) then
+   if (IFORM == 2) then
 !           ------------------------------------------------------------
 !           ASYMPTOTIC EXPANSION FOR J(FNU,Z*EXP(M*HPI)) FOR LARGE FNU
-!           APPLIED IN PI/3<ABS(ARG(Z))<=PI/2 WHERE M=+I OR -I
+!           APPLIED IN PI/3 < ABS(ARG(Z)) <= PI/2 WHERE M=+I OR -I
 !           AND HPI=PI/2
 !           ------------------------------------------------------------
       CALL DETS17(Z,FNU,KODE,N,Y,NW,NLAST,FNUL,TOL,ELIM,ALIM)
    ELSE
 !           ------------------------------------------------------------
 !           ASYMPTOTIC EXPANSION FOR I(FNU,Z) FOR LARGE FNU APPLIED IN
-!           -PI/3<=ARG(Z)<=PI/3
+!           -PI/3 <= ARG(Z) <= PI/3
 !           ------------------------------------------------------------
       CALL DEXS17(Z,FNU,KODE,N,Y,NW,NLAST,FNUL,TOL,ELIM,ALIM)
    endif
-   IF (NW>=0) THEN
+   if (NW >= 0) then
       NZ = NW
-      RETURN
+      return
    endif
   ELSE
    FNUI = NUI
    DFNU = FNU + N - 1
    GNU = DFNU + FNUI
-   IF (IFORM==2) THEN
+   if (IFORM == 2) then
 !           ------------------------------------------------------------
 !           ASYMPTOTIC EXPANSION FOR J(FNU,Z*EXP(M*HPI)) FOR LARGE FNU
-!           APPLIED IN PI/3<ABS(ARG(Z))<=PI/2 WHERE M=+I OR -I
+!           APPLIED IN PI/3 < ABS(ARG(Z)) <= PI/2 WHERE M=+I OR -I
 !           AND HPI=PI/2
 !           ------------------------------------------------------------
       CALL DETS17(Z,GNU,KODE,2,CY,NW,NLAST,FNUL,TOL,ELIM,ALIM)
    ELSE
 !           ------------------------------------------------------------
 !           ASYMPTOTIC EXPANSION FOR I(FNU,Z) FOR LARGE FNU APPLIED IN
-!           -PI/3<=ARG(Z)<=PI/3
+!           -PI/3 <= ARG(Z) <= PI/3
 !           ------------------------------------------------------------
       CALL DEXS17(Z,GNU,KODE,2,CY,NW,NLAST,FNUL,TOL,ELIM,ALIM)
    endif
-   IF (NW>=0) THEN
-      IF (NW/=0) THEN
+   if (NW >= 0) then
+      if (NW /= 0) then
          NLAST = N
       ELSE
          AY = ABS(CY(1))
@@ -4302,12 +4302,12 @@
          ASCLE = BRY(2)
          AX = 1.0E0
          CSCL = CMPLX(AX,0.0E0)
-         IF (AY<=BRY(1)) THEN
+         if (AY <= BRY(1)) then
             IFLAG = 1
             ASCLE = BRY(1)
             AX = 1.0E0/TOL
             CSCL = CMPLX(AX,0.0E0)
-         ELSE IF (AY>=BRY(2)) THEN
+         else if (AY >= BRY(2)) then
             IFLAG = 3
             ASCLE = BRY(3)
             AX = TOL
@@ -4323,14 +4323,14 @@
             S2 = CMPLX(DFNU+FNUI,0.0E0)*RZ*S2 + S1
             S1 = ST
             FNUI = FNUI - 1.0E0
-            IF (IFLAG<3) THEN
+            if (IFLAG < 3) then
                ST = S2*CSCR
                STR = REAL(ST)
                STI = AIMAG(ST)
                STR = ABS(STR)
                STI = ABS(STI)
                STM = MAX(STR,STI)
-               IF (STM>ASCLE) THEN
+               if (STM > ASCLE) then
                   IFLAG = IFLAG + 1
                   ASCLE = BRY(IFLAG)
                   S1 = S1*CSCR
@@ -4343,9 +4343,9 @@
                   S2 = S2*CSCL
                endif
             endif
-   20          CONTINUE
+   20          continue
          Y(N) = S2*CSCR
-         IF (N/=1) THEN
+         if (N /= 1) then
             NL = N - 1
             FNUI = NL
             K = NL
@@ -4357,13 +4357,13 @@
                Y(K) = ST
                FNUI = FNUI - 1.0E0
                K = K - 1
-               IF (IFLAG<3) THEN
+               if (IFLAG < 3) then
                   STR = REAL(ST)
                   STI = AIMAG(ST)
                   STR = ABS(STR)
                   STI = ABS(STI)
                   STM = MAX(STR,STI)
-                  IF (STM>ASCLE) THEN
+                  if (STM > ASCLE) then
                      IFLAG = IFLAG + 1
                      ASCLE = BRY(IFLAG)
                      S1 = S1*CSCR
@@ -4376,23 +4376,23 @@
                      S2 = S2*CSCL
                   endif
                endif
-   40             CONTINUE
+   40             continue
          endif
       endif
-      RETURN
+      return
    endif
   endif
   NZ = -1
-  IF (NW==(-2)) NZ = -2
-  RETURN
+  if (NW == (-2)) NZ = -2
+  return
   END
-  SUBROUTINE DEZS17(Z,FNU,KODE,N,CY,NZ,RL,FNUL,TOL,ELIM,ALIM)
+  subroutine DEZS17(Z,FNU,KODE,N,CY,NZ,RL,FNUL,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-769 (DEC 1989).
 !
 !     Original name: CBINU
 !
-!     DEZS17 COMPUTES THE I FUNCTION IN THE RIGHT HALF Z PLANE
+!     DEZS17 COMPUTES THE I function IN THE RIGHT HALF Z PLANE
 !
 !     .. Scalar Arguments ..
   COMPLEX           Z
@@ -4406,9 +4406,9 @@
   INTEGER           I, INW, NLAST, NN, NUI, NW
 !     .. Local Arrays ..
   COMPLEX           CW(2)
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DESS17, DEVS17, DEYS17, DGRS17, DGTS17, DGYS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, INT, MAX
 !     .. Data statements ..
   DATA              CZERO/(0.0E0,0.0E0)/
@@ -4418,8 +4418,8 @@
   AZ = ABS(Z)
   NN = N
   DFNU = FNU + N - 1
-  IF (AZ>2.0E0) THEN
-   IF (AZ*AZ*0.25E0>DFNU+1.0E0) GO TO 20
+  if (AZ > 2.0E0) then
+   if (AZ*AZ*0.25E0 > DFNU+1.0E0) goto 20
   endif
 !     ------------------------------------------------------------------
 !     POWER SERIES
@@ -4428,44 +4428,44 @@
   INW = ABS(NW)
   NZ = NZ + INW
   NN = NN - INW
-  IF (NN==0) THEN
-   RETURN
-  ELSE IF (NW>=0) THEN
-   RETURN
+  if (NN == 0) then
+   return
+  else if (NW >= 0) then
+   return
   ELSE
    DFNU = FNU + NN - 1
   endif
-   20 IF (AZ>=RL) THEN
-   IF (DFNU>1.0E0) THEN
-      IF (AZ+AZ<DFNU*DFNU) GO TO 40
+   20 if (AZ >= RL) then
+   if (DFNU > 1.0E0) then
+      if (AZ+AZ < DFNU*DFNU) goto 40
    endif
 !        ---------------------------------------------------------------
 !        ASYMPTOTIC EXPANSION FOR LARGE Z
 !        ---------------------------------------------------------------
    CALL DGYS17(Z,FNU,KODE,NN,CY,NW,RL,TOL,ELIM,ALIM)
-   IF (NW<0) THEN
-      GO TO 120
+   if (NW < 0) then
+      goto 120
    ELSE
-      RETURN
+      return
    endif
-  ELSE IF (DFNU<=1.0E0) THEN
-   GO TO 100
+  else if (DFNU <= 1.0E0) then
+   goto 100
   endif
 !     ------------------------------------------------------------------
 !     OVERFLOW AND UNDERFLOW TEST ON I SEQUENCE FOR MILLER ALGORITHM
 !     ------------------------------------------------------------------
    40 CALL DEVS17(Z,FNU,KODE,1,NN,CY,NW,TOL,ELIM,ALIM)
-  IF (NW<0) THEN
-   GO TO 120
+  if (NW < 0) then
+   goto 120
   ELSE
    NZ = NZ + NW
    NN = NN - NW
-   IF (NN==0) THEN
-      RETURN
+   if (NN == 0) then
+      return
    ELSE
       DFNU = FNU + NN - 1
-      IF (DFNU<=FNUL) THEN
-         IF (AZ<=FNUL) GO TO 60
+      if (DFNU <= FNUL) then
+         if (AZ <= FNUL) goto 60
       endif
 !           ------------------------------------------------------------
 !           INCREMENT FNU+NN-1 UP TO FNUL, COMPUTE AND RECUR BACKWARD
@@ -4474,38 +4474,38 @@
       NUI = MAX(NUI,0)
       CALL DEYS17(Z,FNU,KODE,NN,CY,NW,NUI,NLAST,FNUL,TOL,ELIM, &
                     ALIM)
-      IF (NW<0) THEN
-         GO TO 120
+      if (NW < 0) then
+         goto 120
       ELSE
          NZ = NZ + NW
-         IF (NLAST==0) THEN
-            RETURN
+         if (NLAST == 0) then
+            return
          ELSE
             NN = NLAST
          endif
       endif
-   60       IF (AZ>RL) THEN
+   60       if (AZ > RL) then
 !              ---------------------------------------------------------
 !              MILLER ALGORITHM NORMALIZED BY THE WRONSKIAN
 !              ---------------------------------------------------------
 !              ---------------------------------------------------------
-!              OVERFLOW TEST ON K FUNCTIONS USED IN WRONSKIAN
+!              OVERFLOW TEST ON K functionS USED IN WRONSKIAN
 !              ---------------------------------------------------------
          CALL DEVS17(Z,FNU,KODE,2,2,CW,NW,TOL,ELIM,ALIM)
-         IF (NW<0) THEN
+         if (NW < 0) then
             NZ = NN
             DO 80 I = 1, NN
                CY(I) = CZERO
-   80             CONTINUE
-            RETURN
-         ELSE IF (NW>0) THEN
-            GO TO 120
+   80             continue
+            return
+         else if (NW > 0) then
+            goto 120
          ELSE
             CALL DESS17(Z,FNU,KODE,NN,CY,NW,CW,TOL,ELIM,ALIM)
-            IF (NW<0) THEN
-               GO TO 120
+            if (NW < 0) then
+               goto 120
             ELSE
-               RETURN
+               return
             endif
          endif
       endif
@@ -4515,24 +4515,24 @@
 !     MILLER ALGORITHM NORMALIZED BY THE SERIES
 !     ------------------------------------------------------------------
   100 CALL DGTS17(Z,FNU,KODE,NN,CY,NW,TOL)
-  IF (NW>=0) RETURN
+  if (NW >= 0) return
   120 NZ = -1
-  IF (NW==(-2)) NZ = -2
-  IF (NW==(-3)) NZ = -3
-  RETURN
+  if (NW == (-2)) NZ = -2
+  if (NW == (-3)) NZ = -3
+  return
   END
-  SUBROUTINE DGRS17(Z,FNU,KODE,N,Y,NZ,TOL,ELIM,ALIM)
+  subroutine DGRS17(Z,FNU,KODE,N,Y,NZ,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-771 (DEC 1989).
 !
 !     Original name: CSERI
 !
-!     DGRS17 COMPUTES THE I BESSEL FUNCTION FOR REAL(Z)>=0.0 BY
+!     DGRS17 COMPUTES THE I BESSEL function FOR REAL(Z) >= 0.0 BY
 !     MEANS OF THE POWER SERIES FOR LARGE CABS(Z) IN THE
-!     REGION CABS(Z)<=2*SQRT(FNU+1). NZ=0 IS A NORMAL RETURN.
+!     REGION CABS(Z) <= 2*SQRT(FNU+1). NZ=0 IS A NORMAL return.
 !     NZ>0 MEANS THAT THE LAST NZ COMPONENTS WERE SET TO ZERO
-!     DUE TO UNDERFLOW. NZ<0 MEANS UNDERFLOW OCCURRED, BUT THE
-!     CONDITION CABS(Z)<=2*SQRT(FNU+1) WAS VIOLATED AND THE
+!     DUE TO UNDERFLOW. NZ < 0 MEANS UNDERFLOW OCCURRED, BUT THE
+!     CONDITION CABS(Z) <= 2*SQRT(FNU+1) WAS VIOLATED AND THE
 !     COMPUTATION MUST BE COMPLETED IN ANOTHER ROUTINE WITH N=N-ABS(NZ).
 !
 !     .. Scalar Arguments ..
@@ -4549,12 +4549,12 @@
   INTEGER           I, IB, IDUM, IFLAG, IL, K, L, M, NN, NW
 !     .. Local Arrays ..
   COMPLEX           W(2)
-!     .. External Functions ..
+!     .. External functions ..
   REAL              S14ABE, X02AME
   EXTERNAL          S14ABE, X02AME
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DGVS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, COS, EXP, LOG, MIN, REAL, &
                     SIN, SQRT
 !     .. Data statements ..
@@ -4563,23 +4563,23 @@
 !
   NZ = 0
   AZ = ABS(Z)
-  IF (AZ/=0.0E0) THEN
+  if (AZ /= 0.0E0) then
    X = REAL(Z)
    ARM = 1.0E+3*X02AME()
    RTR1 = SQRT(ARM)
    CRSC = CMPLX(1.0E0,0.0E0)
    IFLAG = 0
-   IF (AZ<ARM) THEN
+   if (AZ < ARM) then
       NZ = N
-      IF (FNU==0.0E0) NZ = NZ - 1
+      if (FNU == 0.0E0) NZ = NZ - 1
    ELSE
       HZ = Z*CMPLX(0.5E0,0.0E0)
       CZ = CZERO
-      IF (AZ>RTR1) CZ = HZ*HZ
+      if (AZ > RTR1) CZ = HZ*HZ
       ACZ = ABS(CZ)
       NN = N
       CK = LOG(HZ)
-   20       CONTINUE
+   20       continue
       DFNU = FNU + NN - 1
       FNUP = DFNU + 1.0E0
 !           ------------------------------------------------------------
@@ -4590,10 +4590,10 @@
 !           S14ABE assumed not to fail, therefore IDUM set to zero.
       AK = S14ABE(FNUP,IDUM)
       AK1 = AK1 - CMPLX(AK,0.0E0)
-      IF (KODE==2) AK1 = AK1 - CMPLX(X,0.0E0)
+      if (KODE == 2) AK1 = AK1 - CMPLX(X,0.0E0)
       RAK1 = REAL(AK1)
-      IF (RAK1>(-ELIM)) THEN
-         IF (RAK1<=(-ALIM)) THEN
+      if (RAK1 > (-ELIM)) then
+         if (RAK1 <= (-ALIM)) then
             IFLAG = 1
             SS = 1.0E0/TOL
             CRSC = CMPLX(TOL,0.0E0)
@@ -4601,7 +4601,7 @@
          endif
          AK = AIMAG(AK1)
          AA = EXP(RAK1)
-         IF (IFLAG==1) AA = AA*SS
+         if (IFLAG == 1) AA = AA*SS
          COEF = CMPLX(AA,0.0E0)*CMPLX(COS(AK),SIN(AK))
          ATOL = TOL*ACZ/FNUP
          IL = MIN(2,NN)
@@ -4609,49 +4609,49 @@
             DFNU = FNU + NN - I
             FNUP = DFNU + 1.0E0
             S1 = CONE
-            IF (ACZ>=TOL*FNUP) THEN
+            if (ACZ >= TOL*FNUP) then
                AK1 = CONE
                AK = FNUP + 2.0E0
                S = FNUP
                AA = 2.0E0
-   40                CONTINUE
+   40                continue
                RS = 1.0E0/S
                AK1 = AK1*CZ*CMPLX(RS,0.0E0)
                S1 = S1 + AK1
                S = S + AK
                AK = AK + 2.0E0
                AA = AA*ACZ*RS
-               IF (AA>ATOL) GO TO 40
+               if (AA > ATOL) goto 40
             endif
             M = NN - I + 1
             S2 = S1*COEF
             W(I) = S2
-            IF (IFLAG/=0) THEN
+            if (IFLAG /= 0) then
                CALL DGVS17(S2,NW,ASCLE,TOL)
-               IF (NW/=0) GO TO 80
+               if (NW /= 0) goto 80
             endif
             Y(M) = S2*CRSC
-            IF (I/=IL) COEF = COEF*CMPLX(DFNU,0.0E0)/HZ
-   60          CONTINUE
-         GO TO 100
+            if (I /= IL) COEF = COEF*CMPLX(DFNU,0.0E0)/HZ
+   60          continue
+         goto 100
       endif
    80       NZ = NZ + 1
       Y(NN) = CZERO
-      IF (ACZ>DFNU) THEN
-         GO TO 180
+      if (ACZ > DFNU) then
+         goto 180
       ELSE
          NN = NN - 1
-         IF (NN==0) THEN
-            RETURN
+         if (NN == 0) then
+            return
          ELSE
-            GO TO 20
+            goto 20
          endif
       endif
-  100       IF (NN>2) THEN
+  100       if (NN > 2) then
          K = NN - 2
          AK = K
          RZ = (CONE+CONE)/Z
-         IF (IFLAG==1) THEN
+         if (IFLAG == 1) then
 !                 ------------------------------------------------------
 !                 RECUR BACKWARD WITH SCALED VALUES
 !                 ------------------------------------------------------
@@ -4669,11 +4669,11 @@
                Y(K) = CK
                AK = AK - 1.0E0
                K = K - 1
-               IF (ABS(CK)>ASCLE) GO TO 140
-  120             CONTINUE
-            RETURN
+               if (ABS(CK) > ASCLE) goto 140
+  120             continue
+            return
   140             IB = L + 1
-            IF (IB>NN) RETURN
+            if (IB > NN) return
          ELSE
             IB = 3
          endif
@@ -4681,37 +4681,37 @@
             Y(K) = CMPLX(AK+FNU,0.0E0)*RZ*Y(K+1) + Y(K+2)
             AK = AK - 1.0E0
             K = K - 1
-  160          CONTINUE
+  160          continue
       endif
-      RETURN
+      return
 !           ------------------------------------------------------------
-!           RETURN WITH NZ<0 IF CABS(Z*Z/4)>FNU+N-NZ-1 COMPLETE
+!           return WITH NZ < 0 IF CABS(Z*Z/4)>FNU+N-NZ-1 COMPLETE
 !           THE CALCULATION IN DEZS17 WITH N=N-IABS(NZ)
 !           ------------------------------------------------------------
-  180       CONTINUE
+  180       continue
       NZ = -NZ
-      RETURN
+      return
    endif
   endif
   Y(1) = CZERO
-  IF (FNU==0.0E0) Y(1) = CONE
-  IF (N/=1) THEN
+  if (FNU == 0.0E0) Y(1) = CONE
+  if (N /= 1) then
    DO 200 I = 2, N
       Y(I) = CZERO
-  200    CONTINUE
+  200    continue
   endif
-  RETURN
+  return
   END
-  SUBROUTINE DGSS17(ZR,S1,S2,NZ,ASCLE,ALIM,IUF)
+  subroutine DGSS17(ZR,S1,S2,NZ,ASCLE,ALIM,IUF)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-772 (DEC 1989).
 !
 !     Original name: CS1S2
 !
 !     DGSS17 TESTS FOR A POSSIBLE UNDERFLOW RESULTING FROM THE
-!     ADDITION OF THE I AND K FUNCTIONS IN THE ANALYTIC CON-
-!     TINUATION FORMULA WHERE S1=K FUNCTION AND S2=I FUNCTION.
-!     ON KODE=1 THE I AND K FUNCTIONS ARE DIFFERENT ORDERS OF
+!     ADDITION OF THE I AND K functionS IN THE ANALYTIC CON-
+!     TINUATION FORMULA WHERE S1=K function AND S2=I function.
+!     ON KODE=1 THE I AND K functionS ARE DIFFERENT ORDERS OF
 !     MAGNITUDE, BUT FOR KODE=2 THEY CAN BE OF THE SAME ORDER
 !     OF MAGNITUDE AND THE MAXIMUM MUST BE AT LEAST ONE
 !     PRECISION ABOVE THE UNDERFLOW LIMIT.
@@ -4724,10 +4724,10 @@
   COMPLEX           C1, CZERO, S1D
   REAL              AA, ALN, AS1, AS2, XX
   INTEGER           IF1
-!     .. External Functions ..
+!     .. External functions ..
   COMPLEX           S01EAE
   EXTERNAL          S01EAE
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, LOG, MAX, REAL
 !     .. Data statements ..
   DATA              CZERO/(0.0E0,0.0E0)/
@@ -4738,14 +4738,14 @@
   AS2 = ABS(S2)
   AA = REAL(S1)
   ALN = AIMAG(S1)
-  IF (AA/=0.0E0 .or. ALN/=0.0E0) THEN
-   IF (AS1/=0.0E0) THEN
+  if (AA /= 0.0E0 .or. ALN /= 0.0E0) then
+   if (AS1 /= 0.0E0) then
       XX = REAL(ZR)
       ALN = -XX - XX + LOG(AS1)
       S1D = S1
       S1 = CZERO
       AS1 = 0.0E0
-      IF (ALN>=(-ALIM)) THEN
+      if (ALN >= (-ALIM)) then
          C1 = LOG(S1D) - ZR - ZR
 !               S1 = EXP(C1)
          IF1 = 1
@@ -4756,22 +4756,22 @@
    endif
   endif
   AA = MAX(AS1,AS2)
-  IF (AA<=ASCLE) THEN
+  if (AA <= ASCLE) then
    S1 = CZERO
    S2 = CZERO
    NZ = 1
    IUF = 0
   endif
-  RETURN
+  return
   END
-  SUBROUTINE DGTS17(Z,FNU,KODE,N,Y,NZ,TOL)
+  subroutine DGTS17(Z,FNU,KODE,N,Y,NZ,TOL)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-773 (DEC 1989).
 !     Mark 17 REVISED. IER-1703 (JUN 1995).
 !
 !     Original name: CMLRI
 !
-!     DGTS17 COMPUTES THE I BESSEL FUNCTION FOR RE(Z)>=0.0 BY THE
+!     DGTS17 COMPUTES THE I BESSEL function FOR RE(Z) >= 0.0 BY THE
 !     MILLER ALGORITHM NORMALIZED BY A NEUMANN SERIES.
 !
 !     .. Scalar Arguments ..
@@ -4787,11 +4787,11 @@
                     RHO, RHO2, SCLE, TFNF, TST, X
   INTEGER           I, IAZ, IDUM, IFL, IFNU, INU, ITIME, K, KK, KM, &
                     M
-!     .. External Functions ..
+!     .. External functions ..
   COMPLEX           S01EAE
   REAL              S14ABE, X02ANE
   EXTERNAL          S14ABE, S01EAE, X02ANE
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, CMPLX, CONJG, EXP, INT, LOG, MAX, MIN, &
                     REAL, SQRT
 !     .. Data statements ..
@@ -4826,16 +4826,16 @@
    P1 = PT
    CK = CK + RZ
    AP = ABS(P2)
-   IF (AP>TST*AK*AK) THEN
-      GO TO 40
+   if (AP > TST*AK*AK) then
+      goto 40
    ELSE
       AK = AK + 1.0E0
    endif
-   20 CONTINUE
-  GO TO 180
+   20 continue
+  goto 180
    40 I = I + 1
   K = 0
-  IF (INU>=IAZ) THEN
+  if (INU >= IAZ) then
 !        ---------------------------------------------------------------
 !        COMPUTE RELATIVE TRUNCATION ERROR FOR RATIOS
 !        ---------------------------------------------------------------
@@ -4852,9 +4852,9 @@
       P1 = PT
       CK = CK + RZ
       AP = ABS(P2)
-      IF (AP>=TST) THEN
-         IF (ITIME==2) THEN
-            GO TO 80
+      if (AP >= TST) then
+         if (ITIME == 2) then
+            goto 80
          ELSE
             ACK = ABS(CK)
             FLAM = ACK + SQRT(ACK*ACK-1.0E0)
@@ -4864,8 +4864,8 @@
             ITIME = 2
          endif
       endif
-   60    CONTINUE
-   GO TO 180
+   60    continue
+   goto 180
   endif
 !     ------------------------------------------------------------------
 !     BACKWARD RECURRENCE AND SUM NORMALIZING RELATION
@@ -4896,9 +4896,9 @@
    SUM = SUM + CMPLX(ACK+BK,0.0E0)*P1
    BK = ACK
    FKK = FKK - 1.0E0
-  100 CONTINUE
+  100 continue
   Y(N) = P2
-  IF (N/=1) THEN
+  if (N /= 1) then
    DO 120 I = 2, N
       PT = P2
       P2 = P1 + CMPLX(FKK+FNF,0.0E0)*RZ*P2
@@ -4910,9 +4910,9 @@
       FKK = FKK - 1.0E0
       M = N - I + 1
       Y(M) = P2
-  120    CONTINUE
+  120    continue
   endif
-  IF (IFNU>0) THEN
+  if (IFNU > 0) then
    DO 140 I = 1, IFNU
       PT = P2
       P2 = P1 + CMPLX(FKK+FNF,0.0E0)*RZ*P2
@@ -4922,10 +4922,10 @@
       SUM = SUM + CMPLX(ACK+BK,0.0E0)*P1
       BK = ACK
       FKK = FKK - 1.0E0
-  140    CONTINUE
+  140    continue
   endif
   PT = Z
-  IF (KODE==2) PT = PT - CMPLX(X,0.0E0)
+  if (KODE == 2) PT = PT - CMPLX(X,0.0E0)
   P1 = -CMPLX(FNF,0.0E0)*LOG(RZ) + PT
   IDUM = 0
 !     S14ABE assumed not to fail, therefore IDUM set to zero.
@@ -4941,32 +4941,32 @@
 !      CK = EXP(PT)*P1
   IFL = 1
   CK = S01EAE(PT,IFL)*P1
-  IF ((IFL>=1 .and. IFL<=3) .or. IFL==5) GO TO 200
+  if ((IFL >= 1 .and. IFL <= 3) .or. IFL == 5) goto 200
   PT = CONJG(P2)*P1
   CNORM = CK*PT
   DO 160 I = 1, N
    Y(I) = Y(I)*CNORM
-  160 CONTINUE
-  RETURN
+  160 continue
+  return
   180 NZ = -2
-  RETURN
+  return
   200 NZ = -3
-  RETURN
+  return
   END
-  SUBROUTINE DGUS17(Z,CSH,CCH)
+  subroutine DGUS17(Z,CSH,CCH)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-774 (DEC 1989).
 !
 !     Original name: CSHCH
 !
-!     DGUS17 COMPUTES THE COMPLEX HYPERBOLIC FUNCTIONS CSH=SINH(X+I*Y)
+!     DGUS17 COMPUTES THE COMPLEX HYPERBOLIC functionS CSH=SINH(X+I*Y)
 !     AND CCH=COSH(X+I*Y), WHERE I**2=-1.
 !
 !     .. Scalar Arguments ..
   COMPLEX           CCH, CSH, Z
 !     .. Local Scalars ..
   REAL              CCHI, CCHR, CH, CN, CSHI, CSHR, SH, SN, X, Y
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         AIMAG, CMPLX, COS, COSH, REAL, SIN, SINH
 !     .. Executable Statements ..
 !
@@ -4982,9 +4982,9 @@
   CCHR = CH*CN
   CCHI = SH*SN
   CCH = CMPLX(CCHR,CCHI)
-  RETURN
+  return
   END
-  SUBROUTINE DGVS17(Y,NZ,ASCLE,TOL)
+  subroutine DGVS17(Y,NZ,ASCLE,TOL)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-775 (DEC 1989).
 !
@@ -5004,7 +5004,7 @@
   INTEGER           NZ
 !     .. Local Scalars ..
   REAL              SS, ST, YI, YR
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, MAX, MIN, REAL
 !     .. Executable Statements ..
 !
@@ -5014,22 +5014,22 @@
   YR = ABS(YR)
   YI = ABS(YI)
   ST = MIN(YR,YI)
-  IF (ST<=ASCLE) THEN
+  if (ST <= ASCLE) then
    SS = MAX(YR,YI)
    ST = ST/TOL
-   IF (SS<ST) NZ = 1
+   if (SS < ST) NZ = 1
   endif
-  RETURN
+  return
   END
-  SUBROUTINE DGWS17(ZR,FNU,N,Y,NZ,RZ,ASCLE,TOL,ELIM)
+  subroutine DGWS17(ZR,FNU,N,Y,NZ,RZ,ASCLE,TOL,ELIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-776 (DEC 1989).
 !
 !     Original name: CKSCL
 !
-!     SET K FUNCTIONS TO ZERO ON UNDERFLOW, CONTINUE RECURRENCE
-!     ON SCALED FUNCTIONS UNTIL TWO MEMBERS COME ON SCALE, THEN
-!     RETURN WITH MIN(NZ+2,N) VALUES SCALED BY 1/TOL.
+!     SET K functionS TO ZERO ON UNDERFLOW, continue RECURRENCE
+!     ON SCALED functionS UNTIL TWO MEMBERS COME ON SCALE, THEN
+!     return WITH MIN(NZ+2,N) VALUES SCALED BY 1/TOL.
 !
 !     .. Scalar Arguments ..
   COMPLEX           RZ, ZR
@@ -5044,9 +5044,9 @@
   INTEGER           I, IC, K, KK, NN, NW
 !     .. Local Arrays ..
   COMPLEX           CY(2)
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DGVS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, COS, EXP, LOG, MIN, REAL, SIN
 !     .. Data statements ..
   DATA              CZERO/(0.0E0,0.0E0)/
@@ -5063,27 +5063,27 @@
    ACS = -XX + LOG(AS)
    NZ = NZ + 1
    Y(I) = CZERO
-   IF (ACS>=(-ELIM)) THEN
+   if (ACS >= (-ELIM)) then
       CS = -ZR + LOG(S1)
       CSR = REAL(CS)
       CSI = AIMAG(CS)
       AA = EXP(CSR)/TOL
       CS = CMPLX(AA,0.0E0)*CMPLX(COS(CSI),SIN(CSI))
       CALL DGVS17(CS,NW,ASCLE,TOL)
-      IF (NW==0) THEN
+      if (NW == 0) then
          Y(I) = CS
          NZ = NZ - 1
          IC = I
       endif
    endif
-   20 CONTINUE
-  IF (N/=1) THEN
-   IF (IC<=1) THEN
+   20 continue
+  if (N /= 1) then
+   if (IC <= 1) then
       Y(1) = CZERO
       NZ = 2
    endif
-   IF (N/=2) THEN
-      IF (NZ/=0) THEN
+   if (N /= 2) then
+      if (NZ /= 0) then
          FN = FNU + 1.0E0
          CK = CMPLX(FN,0.0E0)*RZ
          S1 = CY(1)
@@ -5108,50 +5108,50 @@
             ACS = -XX + ALAS
             NZ = NZ + 1
             Y(I) = CZERO
-            IF (ACS>=(-ELIM)) THEN
+            if (ACS >= (-ELIM)) then
                CS = -ZD + LOG(S2)
                CSR = REAL(CS)
                CSI = AIMAG(CS)
                AA = EXP(CSR)/TOL
                CS = CMPLX(AA,0.0E0)*CMPLX(COS(CSI),SIN(CSI))
                CALL DGVS17(CS,NW,ASCLE,TOL)
-               IF (NW==0) THEN
+               if (NW == 0) then
                   Y(I) = CS
                   NZ = NZ - 1
-                  IF (IC==(KK-1)) THEN
-                     GO TO 60
+                  if (IC == (KK-1)) then
+                     goto 60
                   ELSE
                      IC = KK
-                     GO TO 40
+                     goto 40
                   endif
                endif
             endif
-            IF (ALAS>=HELIM) THEN
+            if (ALAS >= HELIM) then
                XX = XX - ELIM
                S1 = S1*CELM
                S2 = S2*CELM
                ZD = CMPLX(XX,ZRI)
             endif
-   40          CONTINUE
+   40          continue
          NZ = N
-         IF (IC==N) NZ = N - 1
-         GO TO 80
+         if (IC == N) NZ = N - 1
+         goto 80
    60          NZ = KK - 2
    80          DO 100 K = 1, NZ
             Y(K) = CZERO
-  100          CONTINUE
+  100          continue
       endif
    endif
   endif
-  RETURN
+  return
   END
-  SUBROUTINE DGXS17(Z,FNU,KODE,N,Y,NZ,TOL,ELIM,ALIM)
+  subroutine DGXS17(Z,FNU,KODE,N,Y,NZ,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-777 (DEC 1989).
 !
 !     Original name: CBKNU
 !
-!     DGXS17 COMPUTES THE K BESSEL FUNCTION IN THE RIGHT HALF Z PLANE
+!     DGXS17 COMPUTES THE K BESSEL function IN THE RIGHT HALF Z PLANE
 !
 !     .. Scalar Arguments ..
   COMPLEX           Z
@@ -5172,14 +5172,14 @@
 !     .. Local Arrays ..
   COMPLEX           CSR(3), CSS(3), CY(2)
   REAL              BRY(3), CC(8)
-!     .. External Functions ..
+!     .. External functions ..
   COMPLEX           S01EAE
   REAL              S14ABE, X02AME, X02ALE
   INTEGER           X02BHE, X02BJE
   EXTERNAL          S14ABE, S01EAE, X02AME, X02ALE, X02BHE, X02BJE
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DGUS17, DGVS17, DGWS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, ATAN, CMPLX, CONJG, COS, EXP, INT, &
                     LOG, LOG10, MAX, MIN, REAL, SIN, SQRT
 !     .. Data statements ..
@@ -5226,18 +5226,18 @@
   RZ = CTWO/Z
   INU = INT(FNU+0.5E0)
   DNU = FNU - INU
-  IF (ABS(DNU)/=0.5E0) THEN
+  if (ABS(DNU) /= 0.5E0) then
    DNU2 = 0.0E0
-   IF (ABS(DNU)>TOL) DNU2 = DNU*DNU
-   IF (CAZ<=R1) THEN
+   if (ABS(DNU) > TOL) DNU2 = DNU*DNU
+   if (CAZ <= R1) then
 !           ------------------------------------------------------------
-!           SERIES FOR CABS(Z)<=R1
+!           SERIES FOR CABS(Z) <= R1
 !           ------------------------------------------------------------
       FC = 1.0E0
       SMU = LOG(RZ)
       FMU = SMU*CMPLX(DNU,0.0E0)
       CALL DGUS17(FMU,CSH,CCH)
-      IF (DNU/=0.0E0) THEN
+      if (DNU /= 0.0E0) then
          FC = DNU*PI
          FC = FC/SIN(FC)
          SMU = CSH*CMPLX(1.0E0/DNU,0.0E0)
@@ -5251,7 +5251,7 @@
 !           S14ABE assumed not to fail, therefore IDUM set to zero.
       T2 = EXP(-S14ABE(A2,IDUM))
       T1 = 1.0E0/(T2*FC)
-      IF (ABS(DNU)>0.1E0) THEN
+      if (ABS(DNU) > 0.1E0) then
          G1 = (T1-T2)/(DNU+DNU)
       ELSE
 !              ---------------------------------------------------------
@@ -5263,8 +5263,8 @@
             AK = AK*DNU2
             TM = CC(K)*AK
             S = S + TM
-            IF (ABS(TM)<TOL) GO TO 40
-   20          CONTINUE
+            if (ABS(TM) < TOL) goto 40
+   20          continue
    40          G1 = -S
       endif
       G2 = 0.5E0*(T1+T2)*FC
@@ -5272,7 +5272,7 @@
       F = CMPLX(G1,0.0E0)*CCH + SMU*CMPLX(G2,0.0E0)
       IFL = 1
       PT = S01EAE(FMU,IFL)
-      IF ((IFL>=1 .and. IFL<=3) .or. IFL==5) GO TO 320
+      if ((IFL >= 1 .and. IFL <= 3) .or. IFL == 5) goto 320
       P = CMPLX(0.5E0/T2,0.0E0)*PT
       Q = CMPLX(0.5E0/T1,0.0E0)/PT
       S1 = F
@@ -5281,14 +5281,14 @@
       A1 = 1.0E0
       CK = CONE
       BK = 1.0E0 - DNU2
-      IF (INU>0 .or. N>1) THEN
+      if (INU > 0 .or. N > 1) then
 !              ---------------------------------------------------------
 !              GENERATE K(DNU,Z) AND K(DNU+1,Z) FOR FORWARD RECURRENCE
 !              ---------------------------------------------------------
-         IF (CAZ>=TOL) THEN
+         if (CAZ >= TOL) then
             CZ = Z*Z*CMPLX(0.25E0,0.0E0)
             T1 = 0.25E0*CAZ*CAZ
-   60             CONTINUE
+   60             continue
             F = (F*CMPLX(AK,0.0E0)+P+Q)*CMPLX(1.0E0/BK,0.0E0)
             P = P*CMPLX(1.0E0/(AK-DNU),0.0E0)
             Q = Q*CMPLX(1.0E0/(AK+DNU),0.0E0)
@@ -5299,33 +5299,33 @@
             A1 = A1*T1*RK
             BK = BK + AK + AK + 1.0E0
             AK = AK + 1.0E0
-            IF (A1>TOL) GO TO 60
+            if (A1 > TOL) goto 60
          endif
          KFLAG = 2
          BK = REAL(SMU)
          A1 = FNU + 1.0E0
          AK = A1*ABS(BK)
-         IF (AK>ALIM) KFLAG = 3
+         if (AK > ALIM) KFLAG = 3
          P2 = S2*CSS(KFLAG)
          S2 = P2*RZ
          S1 = S1*CSS(KFLAG)
-         IF (KODED/=1) THEN
+         if (KODED /= 1) then
 !                  F = EXP(Z)
             IFL = 1
             F = S01EAE(Z,IFL)
-            IF ((IFL>=1 .and. IFL<=3) .or. IFL==5) GO TO 320
+            if ((IFL >= 1 .and. IFL <= 3) .or. IFL == 5) goto 320
             S1 = S1*F
             S2 = S2*F
          endif
-         GO TO 160
+         goto 160
       ELSE
 !              ---------------------------------------------------------
 !              GENERATE K(FNU,Z), 0.0D0 <= FNU < 0.5D0 AND N=1
 !              ---------------------------------------------------------
-         IF (CAZ>=TOL) THEN
+         if (CAZ >= TOL) then
             CZ = Z*Z*CMPLX(0.25E0,0.0E0)
             T1 = 0.25E0*CAZ*CAZ
-   80             CONTINUE
+   80             continue
             F = (F*CMPLX(AK,0.0E0)+P+Q)*CMPLX(1.0E0/BK,0.0E0)
             P = P*CMPLX(1.0E0/(AK-DNU),0.0E0)
             Q = Q*CMPLX(1.0E0/(AK+DNU),0.0E0)
@@ -5335,17 +5335,17 @@
             A1 = A1*T1*RK
             BK = BK + AK + AK + 1.0E0
             AK = AK + 1.0E0
-            IF (A1>TOL) GO TO 80
+            if (A1 > TOL) goto 80
          endif
          Y(1) = S1
-!               IF (KODED/=1) Y(1) = S1*EXP(Z)
-         IF (KODED/=1) THEN
+!               if (KODED /= 1) Y(1) = S1*EXP(Z)
+         if (KODED /= 1) then
             IFL = 1
             Y(1) = S01EAE(Z,IFL)
-            IF ((IFL>=1 .and. IFL<=3) .or. IFL==5) GO TO 320
+            if ((IFL >= 1 .and. IFL <= 3) .or. IFL == 5) goto 320
             Y(1) = S1*Y(1)
          endif
-         RETURN
+         return
       endif
    endif
   endif
@@ -5357,8 +5357,8 @@
 !     ------------------------------------------------------------------
   COEF = CMPLX(RTHPI,0.0E0)/SQRT(Z)
   KFLAG = 2
-  IF (KODED/=2) THEN
-   IF (XX>ALIM) THEN
+  if (KODED /= 2) then
+   if (XX > ALIM) then
 !           ------------------------------------------------------------
 !           SCALE BY EXP(Z), IFLAG = 1 CASES
 !           ------------------------------------------------------------
@@ -5371,24 +5371,24 @@
 !            PT = CMPLX(A1,0.0E0)*CMPLX(COS(YY),-SIN(YY))
       IFL = 1
       PT = S01EAE(CMPLX(-XX,-YY),IFL)
-      IF ((IFL>=1 .and. IFL<=3) .or. IFL==5) GO TO 320
+      if ((IFL >= 1 .and. IFL <= 3) .or. IFL == 5) goto 320
       PT = PT*REAL(CSS(KFLAG))
       COEF = COEF*PT
    endif
   endif
-  IF (ABS(DNU)/=0.5E0) THEN
+  if (ABS(DNU) /= 0.5E0) then
 !        ---------------------------------------------------------------
 !        MILLER ALGORITHM FOR CABS(Z)>R1
 !        ---------------------------------------------------------------
    AK = COS(PI*DNU)
    AK = ABS(AK)
-   IF (AK/=0.0E0) THEN
+   if (AK /= 0.0E0) then
       FHS = ABS(0.25E0-DNU2)
-      IF (FHS/=0.0E0) THEN
+      if (FHS /= 0.0E0) then
 !              ---------------------------------------------------------
-!              COMPUTE R2=F(E). IF CABS(Z)>=R2, USE FORWARD RECURRENCE
+!              COMPUTE R2=F(E). IF CABS(Z) >= R2, USE FORWARD RECURRENCE
 !              TO DETERMINE THE BACKWARD INDEX K. R2=F(E) IS A STRAIGHT
-!              LINE ON 12<=E<=60. E IS COMPUTED FROM
+!              LINE ON 12 <= E <= 60. E IS COMPUTED FROM
 !              2**(-E)=B**(1-X02BJE())=TOL WHERE B IS THE BASE OF THE
 !              ARITHMETIC.
 !              ---------------------------------------------------------
@@ -5396,15 +5396,15 @@
          T1 = MAX(T1,12.0E0)
          T1 = MIN(T1,60.0E0)
          T2 = TTH*T1 - 6.0E0
-         IF (XX/=0.0E0) THEN
+         if (XX /= 0.0E0) then
             T1 = ATAN(YY/XX)
             T1 = ABS(T1)
          ELSE
             T1 = HPI
          endif
-         IF (T2>CAZ) THEN
+         if (T2 > CAZ) then
 !                 ------------------------------------------------------
-!                 COMPUTE BACKWARD INDEX K FOR CABS(Z)<R2
+!                 COMPUTE BACKWARD INDEX K FOR CABS(Z) < R2
 !                 ------------------------------------------------------
             A2 = SQRT(CAZ)
             AK = FPI*AK/(TOL*SQRT(A2))
@@ -5414,11 +5414,11 @@
             FK = 0.12125E0*AK*AK/CAZ + 1.5E0
          ELSE
 !                 ------------------------------------------------------
-!                 FORWARD RECURRENCE LOOP WHEN CABS(Z)>=R2
+!                 FORWARD RECURRENCE LOOP WHEN CABS(Z) >= R2
 !                 ------------------------------------------------------
             ETEST = AK/(PI*CAZ*TOL)
             FK = 1.0E0
-            IF (ETEST>=1.0E0) THEN
+            if (ETEST >= 1.0E0) then
                FKS = 2.0E0
                RK = CAZ + CAZ + 2.0E0
                A1 = 0.0E0
@@ -5434,10 +5434,10 @@
                   FHS = FHS + FK + FK
                   FK = FK + 1.0E0
                   TM = ABS(A2)*FK
-                  IF (ETEST<TM) GO TO 120
-  100                CONTINUE
+                  if (ETEST < TM) goto 120
+  100                continue
                NZ = -2
-               RETURN
+               return
   120                FK = FK + SPI*T1*SQRT(T2/CAZ)
                FHS = ABS(0.25E0-DNU2)
             endif
@@ -5463,7 +5463,7 @@
             CS = CS + P2
             FKS = A1 - FK + 1.0E0
             FK = FK - 1.0E0
-  140          CONTINUE
+  140          continue
 !              ---------------------------------------------------------
 !              COMPUTE (P2/CS)=(P2/CABS(CS))*(CONJG(CS)/CABS(CS)) FOR
 !              BETTER SCALING
@@ -5473,7 +5473,7 @@
          S1 = PT*P2
          CS = CONJG(CS)*PT
          S1 = COEF*S1*CS
-         IF (INU>0 .or. N>1) THEN
+         if (INU > 0 .or. N > 1) then
 !                 ------------------------------------------------------
 !                 COMPUTE P1/P2=(P1/CABS(P2)*CONJG(P2)/CABS(P2) FOR
 !                 SCALING
@@ -5484,13 +5484,13 @@
             P2 = CONJG(P2)*PT
             PT = P1*P2
             S2 = S1*(CONE+(CMPLX(DNU+0.5E0,0.0E0)-PT)/Z)
-            GO TO 160
+            goto 160
          ELSE
             ZD = Z
-            IF (IFLAG==1) THEN
-               GO TO 240
+            if (IFLAG == 1) then
+               goto 240
             ELSE
-               GO TO 260
+               goto 260
             endif
          endif
       endif
@@ -5505,12 +5505,12 @@
 !     FORWARD RECURSION ON THE THREE TERM RECURSION RELATION WITH
 !     SCALING NEAR EXPONENT EXTREMES ON KFLAG=1 OR KFLAG=3
 !     ------------------------------------------------------------------
-  160 CONTINUE
+  160 continue
   CK = CMPLX(DNU+1.0E0,0.0E0)*RZ
-  IF (N==1) INU = INU - 1
-  IF (INU>0) THEN
+  if (N == 1) INU = INU - 1
+  if (INU > 0) then
    INUB = 1
-   IF (IFLAG==1) THEN
+   if (IFLAG == 1) then
 !           ------------------------------------------------------------
 !           IFLAG=1 CASES, FORWARD RECURRENCE ON SCALED VALUES ON
 !           UNDERFLOW
@@ -5532,41 +5532,41 @@
          AS = ABS(S2)
          ALAS = LOG(AS)
          P2R = -XD + ALAS
-         IF (P2R>=(-ELIM)) THEN
+         if (P2R >= (-ELIM)) then
             P2 = -ZD + LOG(S2)
             P2R = REAL(P2)
             P2I = AIMAG(P2)
             P2M = EXP(P2R)/TOL
             P1 = CMPLX(P2M,0.0E0)*CMPLX(COS(P2I),SIN(P2I))
             CALL DGVS17(P1,NW,ASCLE,TOL)
-            IF (NW==0) THEN
+            if (NW == 0) then
                J = 3 - J
                CY(J) = P1
-               IF (IC==(I-1)) THEN
-                  GO TO 200
+               if (IC == (I-1)) then
+                  goto 200
                ELSE
                   IC = I
-                  GO TO 180
+                  goto 180
                endif
             endif
          endif
-         IF (ALAS>=HELIM) THEN
+         if (ALAS >= HELIM) then
             XD = XD - ELIM
             S1 = S1*CELM
             S2 = S2*CELM
             ZD = CMPLX(XD,YD)
          endif
-  180       CONTINUE
-      IF (N==1) S1 = S2
-      GO TO 240
+  180       continue
+      if (N == 1) S1 = S2
+      goto 240
   200       KFLAG = 1
       INUB = I + 1
       S2 = CY(J)
       J = 3 - J
       S1 = CY(J)
-      IF (INUB>INU) THEN
-         IF (N==1) S1 = S2
-         GO TO 260
+      if (INUB > INU) then
+         if (N == 1) S1 = S2
+         goto 260
       endif
    endif
    P1 = CSR(KFLAG)
@@ -5576,14 +5576,14 @@
       S2 = CK*S2 + S1
       S1 = ST
       CK = CK + RZ
-      IF (KFLAG<3) THEN
+      if (KFLAG < 3) then
          P2 = S2*P1
          P2R = REAL(P2)
          P2I = AIMAG(P2)
          P2R = ABS(P2R)
          P2I = ABS(P2I)
          P2M = MAX(P2R,P2I)
-         IF (P2M>ASCLE) THEN
+         if (P2M > ASCLE) then
             KFLAG = KFLAG + 1
             ASCLE = BRY(KFLAG)
             S1 = S1*P1
@@ -5593,54 +5593,54 @@
             P1 = CSR(KFLAG)
          endif
       endif
-  220    CONTINUE
-   IF (N==1) S1 = S2
-   GO TO 260
+  220    continue
+   if (N == 1) S1 = S2
+   goto 260
   ELSE
-   IF (N==1) S1 = S2
+   if (N == 1) S1 = S2
    ZD = Z
-   IF (IFLAG/=1) GO TO 260
+   if (IFLAG /= 1) goto 260
   endif
   240 Y(1) = S1
-  IF (N/=1) Y(2) = S2
+  if (N /= 1) Y(2) = S2
   ASCLE = BRY(1)
   CALL DGWS17(ZD,FNU,N,Y,NZ,RZ,ASCLE,TOL,ELIM)
   INU = N - NZ
-  IF (INU<=0) THEN
-   RETURN
+  if (INU <= 0) then
+   return
   ELSE
    KK = NZ + 1
    S1 = Y(KK)
    Y(KK) = S1*CSR(1)
-   IF (INU==1) THEN
-      RETURN
+   if (INU == 1) then
+      return
    ELSE
       KK = NZ + 2
       S2 = Y(KK)
       Y(KK) = S2*CSR(1)
-      IF (INU==2) THEN
-         RETURN
+      if (INU == 2) then
+         return
       ELSE
          T2 = FNU + KK - 1
          CK = CMPLX(T2,0.0E0)*RZ
          KFLAG = 1
-         GO TO 280
+         goto 280
       endif
    endif
   endif
   260 Y(1) = S1*CSR(KFLAG)
-  IF (N==1) THEN
-   RETURN
+  if (N == 1) then
+   return
   ELSE
    Y(2) = S2*CSR(KFLAG)
-   IF (N==2) THEN
-      RETURN
+   if (N == 2) then
+      return
    ELSE
       KK = 2
    endif
   endif
   280 KK = KK + 1
-  IF (KK<=N) THEN
+  if (KK <= N) then
    P1 = CSR(KFLAG)
    ASCLE = BRY(KFLAG)
    DO 300 I = KK, N
@@ -5650,13 +5650,13 @@
       CK = CK + RZ
       P2 = S2*P1
       Y(I) = P2
-      IF (KFLAG<3) THEN
+      if (KFLAG < 3) then
          P2R = REAL(P2)
          P2I = AIMAG(P2)
          P2R = ABS(P2R)
          P2I = ABS(P2I)
          P2M = MAX(P2R,P2I)
-         IF (P2M>ASCLE) THEN
+         if (P2M > ASCLE) then
             KFLAG = KFLAG + 1
             ASCLE = BRY(KFLAG)
             S1 = S1*P1
@@ -5666,22 +5666,22 @@
             P1 = CSR(KFLAG)
          endif
       endif
-  300    CONTINUE
+  300    continue
   endif
-  RETURN
+  return
   320 NZ = -3
-  RETURN
+  return
   END
-  SUBROUTINE DGYS17(Z,FNU,KODE,N,Y,NZ,RL,TOL,ELIM,ALIM)
+  subroutine DGYS17(Z,FNU,KODE,N,Y,NZ,RL,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-778 (DEC 1989).
 !
 !     Original name: CASYI
 !
-!     DGYS17 COMPUTES THE I BESSEL FUNCTION FOR REAL(Z)>=0.0 BY
+!     DGYS17 COMPUTES THE I BESSEL function FOR REAL(Z) >= 0.0 BY
 !     MEANS OF THE ASYMPTOTIC EXPANSION FOR LARGE CABS(Z) IN THE
-!     REGION CABS(Z)>MAX(RL,FNU*FNU/2). NZ=0 IS A NORMAL RETURN.
-!     NZ<0 INDICATES AN OVERFLOW ON KODE=1.
+!     REGION CABS(Z)>MAX(RL,FNU*FNU/2). NZ=0 IS A NORMAL return.
+!     NZ < 0 INDICATES AN OVERFLOW ON KODE=1.
 !
 !     .. Scalar Arguments ..
   COMPLEX           Z
@@ -5696,11 +5696,11 @@
                     DFNU, DNU2, FDN, PI, RTPI, RTR1, S, SGN, SQK, X, &
                     YY
   INTEGER           I, IB, IERR1, IL, INU, J, JL, K, KODED, M, NN
-!     .. External Functions ..
+!     .. External functions ..
   COMPLEX           S01EAE
   REAL              X02AME
   EXTERNAL          S01EAE, X02AME
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, COS, EXP, INT, MIN, MOD, &
                     REAL, SIN, SQRT
 !     .. Data statements ..
@@ -5722,22 +5722,22 @@
   AK1 = CMPLX(RTPI,0.0E0)/Z
   AK1 = SQRT(AK1)
   CZ = Z
-  IF (KODE==2) CZ = Z - CMPLX(X,0.0E0)
+  if (KODE == 2) CZ = Z - CMPLX(X,0.0E0)
   ACZ = REAL(CZ)
-  IF (ABS(ACZ)>ELIM) THEN
+  if (ABS(ACZ) > ELIM) then
    NZ = -1
   ELSE
    DNU2 = DFNU + DFNU
    KODED = 1
-   IF ((ABS(ACZ)<=ALIM) .or. (N<=2)) THEN
+   if ((ABS(ACZ) <= ALIM) .or. (N <= 2)) then
       KODED = 0
       IERR1 = 1
       AK1 = AK1*S01EAE(CZ,IERR1)
 !        Allow reduced precision from S01EAE, but disallow other errors.
-      IF ((IERR1>=1 .and. IERR1<=3) .or. IERR1==5) GO TO 140
+      if ((IERR1 >= 1 .and. IERR1 <= 3) .or. IERR1 == 5) goto 140
    endif
    FDN = 0.0E0
-   IF (DNU2>RTR1) FDN = DNU2*DNU2
+   if (DNU2 > RTR1) FDN = DNU2*DNU2
    EZ = Z*CMPLX(8.0E0,0.0E0)
 !        ---------------------------------------------------------------
 !        WHEN Z IS IMAGINARY, THE ERROR TEST MUST BE MADE RELATIVE TO
@@ -5749,7 +5749,7 @@
    JL = INT(RL+RL) + 2
    YY = AIMAG(Z)
    P1 = CZERO
-   IF (YY/=0.0E0) THEN
+   if (YY /= 0.0E0) then
 !           ------------------------------------------------------------
 !           CALCULATE EXP(PI*(0.5+FNU+N-IL)*I) TO MINIMIZE LOSSES OF
 !           SIGNIFICANCE WHEN FNU OR N IS LARGE
@@ -5759,9 +5759,9 @@
       INU = INU + N - IL
       AK = -SIN(ARG)
       BK = COS(ARG)
-      IF (YY<0.0E0) BK = -BK
+      if (YY < 0.0E0) BK = -BK
       P1 = CMPLX(AK,BK)
-      IF (MOD(INU,2)==1) P1 = -P1
+      if (MOD(INU,2) == 1) P1 = -P1
    endif
    DO 60 K = 1, IL
       SQK = FDN - 1.0E0
@@ -5784,22 +5784,22 @@
          BB = BB + AEZ
          AK = AK + 8.0E0
          SQK = SQK - AK
-         IF (AA<=ATOL) GO TO 40
-   20       CONTINUE
-      GO TO 120
+         if (AA <= ATOL) goto 40
+   20       continue
+      goto 120
    40       S2 = CS1
-      IF (X+X<ELIM) THEN
+      if (X+X < ELIM) then
          IERR1 = 1
          S2 = S2 + P1*CS2*S01EAE(-Z-Z,IERR1)
-         IF ((IERR1>=1 .and. IERR1<=3) .or. IERR1==5) &
-               GO TO 140
+         if ((IERR1 >= 1 .and. IERR1 <= 3) .or. IERR1 == 5) &
+               goto 140
       endif
       FDN = FDN + 8.0E0*DFNU + 4.0E0
       P1 = -P1
       M = N - IL + K
       Y(M) = S2*AK1
-   60    CONTINUE
-   IF (N>2) THEN
+   60    continue
+   if (N > 2) then
       NN = N
       K = NN - 2
       AK = K
@@ -5809,25 +5809,25 @@
          Y(K) = CMPLX(AK+FNU,0.0E0)*RZ*Y(K+1) + Y(K+2)
          AK = AK - 1.0E0
          K = K - 1
-   80       CONTINUE
-      IF (KODED/=0) THEN
+   80       continue
+      if (KODED /= 0) then
          IERR1 = 1
          CK = S01EAE(CZ,IERR1)
-         IF ((IERR1>=1 .and. IERR1<=3) .or. IERR1==5) &
-               GO TO 140
+         if ((IERR1 >= 1 .and. IERR1 <= 3) .or. IERR1 == 5) &
+               goto 140
          DO 100 I = 1, NN
             Y(I) = Y(I)*CK
-  100          CONTINUE
+  100          continue
       endif
    endif
-   RETURN
+   return
   120    NZ = -2
-   RETURN
+   return
   140    NZ = -3
   endif
-  RETURN
+  return
   END
-  SUBROUTINE DGZS17(Z,FNU,KODE,MR,N,Y,NZ,RL,TOL,ELIM,ALIM)
+  subroutine DGZS17(Z,FNU,KODE,MR,N,Y,NZ,RL,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-779 (DEC 1989).
 !
@@ -5838,7 +5838,7 @@
 !         K(FNU,ZN*EXP(MP))=K(FNU,ZN)*EXP(-MP*FNU) - MP*I(FNU,ZN)
 !                 MP=PI*MR*CMPLX(0.0,1.0)
 !
-!     TO CONTINUE THE K FUNCTION FROM THE RIGHT HALF TO THE LEFT
+!     TO continue THE K function FROM THE RIGHT HALF TO THE LEFT
 !     HALF Z PLANE FOR USE WITH S17DGE WHERE FNU=1/3 OR 2/3 AND N=1.
 !     DGZS17 IS THE SAME AS DLZS17 WITH THE PARTS FOR LARGER ORDERS AND
 !     RECURRENCE REMOVED. A RECURSIVE CALL TO DLZS17 CAN RESULT IF S17DL
@@ -5856,12 +5856,12 @@
   INTEGER           INU, IUF, NN, NW
 !     .. Local Arrays ..
   COMPLEX           CY(2)
-!     .. External Functions ..
+!     .. External functions ..
   REAL              X02AME
   EXTERNAL          X02AME
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DGRS17, DGSS17, DGTS17, DGXS17, DGYS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, COS, INT, MOD, SIGN, SIN
 !     .. Data statements ..
   DATA              PI/3.14159265358979324E0/
@@ -5872,45 +5872,45 @@
   AZ = ABS(Z)
   NN = N
   DFNU = FNU + N - 1
-  IF (AZ>2.0E0) THEN
-   IF (AZ*AZ*0.25E0>DFNU+1.0E0) THEN
-      IF (AZ<RL) THEN
+  if (AZ > 2.0E0) then
+   if (AZ*AZ*0.25E0 > DFNU+1.0E0) then
+      if (AZ < RL) then
 !              ---------------------------------------------------------
 !              MILLER ALGORITHM NORMALIZED BY THE SERIES FOR THE I
-!              FUNCTION
+!              function
 !              ---------------------------------------------------------
          CALL DGTS17(ZN,FNU,KODE,NN,Y,NW,TOL)
-         IF (NW<0) THEN
-            GO TO 40
+         if (NW < 0) then
+            goto 40
          ELSE
-            GO TO 20
+            goto 20
          endif
       ELSE
 !              ---------------------------------------------------------
-!              ASYMPTOTIC EXPANSION FOR LARGE Z FOR THE I FUNCTION
+!              ASYMPTOTIC EXPANSION FOR LARGE Z FOR THE I function
 !              ---------------------------------------------------------
          CALL DGYS17(ZN,FNU,KODE,NN,Y,NW,RL,TOL,ELIM,ALIM)
-         IF (NW<0) THEN
-            GO TO 40
+         if (NW < 0) then
+            goto 40
          ELSE
-            GO TO 20
+            goto 20
          endif
       endif
    endif
   endif
 !     ------------------------------------------------------------------
-!     POWER SERIES FOR THE I FUNCTION
+!     POWER SERIES FOR THE I function
 !     ------------------------------------------------------------------
   CALL DGRS17(ZN,FNU,KODE,NN,Y,NW,TOL,ELIM,ALIM)
 !     ------------------------------------------------------------------
-!     ANALYTIC CONTINUATION TO THE LEFT HALF PLANE FOR THE K FUNCTION
+!     ANALYTIC CONTINUATION TO THE LEFT HALF PLANE FOR THE K function
 !     ------------------------------------------------------------------
    20 CALL DGXS17(ZN,FNU,KODE,1,CY,NW,TOL,ELIM,ALIM)
-  IF (NW==0) THEN
+  if (NW == 0) then
    FMR = MR
    SGN = -SIGN(PI,FMR)
    CSGN = CMPLX(0.0E0,SGN)
-   IF (KODE/=1) THEN
+   if (KODE /= 1) then
       YY = -AIMAG(ZN)
       CPN = COS(YY)
       SPN = SIN(YY)
@@ -5925,30 +5925,30 @@
    CPN = COS(ARG)
    SPN = SIN(ARG)
    CSPN = CMPLX(CPN,SPN)
-   IF (MOD(INU,2)==1) CSPN = -CSPN
+   if (MOD(INU,2) == 1) CSPN = -CSPN
    C1 = CY(1)
    C2 = Y(1)
-   IF (KODE/=1) THEN
+   if (KODE /= 1) then
       IUF = 0
       ASCLE = (1.0E+3*X02AME())/TOL
       CALL DGSS17(ZN,C1,C2,NW,ASCLE,ALIM,IUF)
       NZ = NZ + NW
    endif
    Y(1) = CSPN*C1 + CSGN*C2
-   RETURN
+   return
   endif
    40 NZ = -1
-  IF (NW==(-2)) NZ = -2
-  IF (NW==(-3)) NZ = -3
-  RETURN
+  if (NW == (-2)) NZ = -2
+  if (NW == (-3)) NZ = -3
+  return
   END
-  SUBROUTINE DLYS17(Z,FNU,KODE,MR,N,Y,NZ,TOL,ELIM,ALIM)
+  subroutine DLYS17(Z,FNU,KODE,MR,N,Y,NZ,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-782 (DEC 1989).
 !
 !     Original name: CBUNK
 !
-!     DLYS17 COMPUTES THE K BESSEL FUNCTION FOR FNU>FNUL.
+!     DLYS17 COMPUTES THE K BESSEL function FOR FNU>FNUL.
 !     ACCORDING TO THE UNIFORM ASYMPTOTIC EXPANSION FOR K(FNU,Z)
 !     IN DCZS18 AND THE EXPANSION FOR H(2,FNU,Z) IN DCYS18
 !
@@ -5960,9 +5960,9 @@
   COMPLEX           Y(N)
 !     .. Local Scalars ..
   REAL              AX, AY, XX, YY
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DCYS18, DCZS18
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, REAL
 !     .. Executable Statements ..
 !
@@ -5971,23 +5971,23 @@
   YY = AIMAG(Z)
   AX = ABS(XX)*1.7321E0
   AY = ABS(YY)
-  IF (AY>AX) THEN
+  if (AY > AX) then
 !        ---------------------------------------------------------------
 !        ASYMPTOTIC EXPANSION FOR H(2,FNU,Z*EXP(M*HPI)) FOR LARGE FNU
-!        APPLIED IN PI/3<ABS(ARG(Z))<=PI/2 WHERE M=+I OR -I
+!        APPLIED IN PI/3 < ABS(ARG(Z)) <= PI/2 WHERE M=+I OR -I
 !        AND HPI=PI/2
 !        ---------------------------------------------------------------
    CALL DCYS18(Z,FNU,KODE,MR,N,Y,NZ,TOL,ELIM,ALIM)
   ELSE
 !        ---------------------------------------------------------------
 !        ASYMPTOTIC EXPANSION FOR K(FNU,Z) FOR LARGE FNU APPLIED IN
-!        -PI/3<=ARG(Z)<=PI/3
+!        -PI/3 <= ARG(Z) <= PI/3
 !        ---------------------------------------------------------------
    CALL DCZS18(Z,FNU,KODE,MR,N,Y,NZ,TOL,ELIM,ALIM)
   endif
-  RETURN
+  return
   END
-  SUBROUTINE DLZS17(Z,FNU,KODE,MR,N,Y,NZ,RL,FNUL,TOL,ELIM,ALIM)
+  subroutine DLZS17(Z,FNU,KODE,MR,N,Y,NZ,RL,FNUL,TOL,ELIM,ALIM)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-783 (DEC 1989).
 !
@@ -5998,7 +5998,7 @@
 !         K(FNU,ZN*EXP(MP))=K(FNU,ZN)*EXP(-MP*FNU) - MP*I(FNU,ZN)
 !                 MP=PI*MR*CMPLX(0.0,1.0)
 !
-!     TO CONTINUE THE K FUNCTION FROM THE RIGHT HALF TO THE LEFT
+!     TO continue THE K function FROM THE RIGHT HALF TO THE LEFT
 !     HALF Z PLANE
 !
 !     .. Scalar Arguments ..
@@ -6016,12 +6016,12 @@
 !     .. Local Arrays ..
   COMPLEX           CSR(3), CSS(3), CY(2)
   REAL              BRY(3)
-!     .. External Functions ..
+!     .. External functions ..
   REAL              X02AME, X02ALE
   EXTERNAL          X02AME, X02ALE
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DEZS17, DGSS17, DGXS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, COS, INT, MAX, MIN, MOD, &
                     REAL, SIGN, SIN
 !     .. Data statements ..
@@ -6033,18 +6033,18 @@
   ZN = -Z
   NN = N
   CALL DEZS17(ZN,FNU,KODE,NN,Y,NW,RL,FNUL,TOL,ELIM,ALIM)
-  IF (NW>=0) THEN
+  if (NW >= 0) then
 !        ---------------------------------------------------------------
-!        ANALYTIC CONTINUATION TO THE LEFT HALF PLANE FOR THE K FUNCTION
+!        ANALYTIC CONTINUATION TO THE LEFT HALF PLANE FOR THE K function
 !        ---------------------------------------------------------------
    NN = MIN(2,N)
    CALL DGXS17(ZN,FNU,KODE,NN,CY,NW,TOL,ELIM,ALIM)
-   IF (NW==0) THEN
+   if (NW == 0) then
       S1 = CY(1)
       FMR = MR
       SGN = -SIGN(PI,FMR)
       CSGN = CMPLX(0.0E0,SGN)
-      IF (KODE/=1) THEN
+      if (KODE /= 1) then
          YY = -AIMAG(ZN)
          CPN = COS(YY)
          SPN = SIN(YY)
@@ -6059,35 +6059,35 @@
       CPN = COS(ARG)
       SPN = SIN(ARG)
       CSPN = CMPLX(CPN,SPN)
-      IF (MOD(INU,2)==1) CSPN = -CSPN
+      if (MOD(INU,2) == 1) CSPN = -CSPN
       IUF = 0
       C1 = S1
       C2 = Y(1)
       ASCLE = (1.0E+3*X02AME())/TOL
-      IF (KODE/=1) THEN
+      if (KODE /= 1) then
          CALL DGSS17(ZN,C1,C2,NW,ASCLE,ALIM,IUF)
          NZ = NZ + NW
          SC1 = C1
       endif
       Y(1) = CSPN*C1 + CSGN*C2
-      IF (N/=1) THEN
+      if (N /= 1) then
          CSPN = -CSPN
          S2 = CY(2)
          C1 = S2
          C2 = Y(2)
-         IF (KODE/=1) THEN
+         if (KODE /= 1) then
             CALL DGSS17(ZN,C1,C2,NW,ASCLE,ALIM,IUF)
             NZ = NZ + NW
             SC2 = C1
          endif
          Y(2) = CSPN*C1 + CSGN*C2
-         IF (N/=2) THEN
+         if (N /= 2) then
             CSPN = -CSPN
             RZ = CMPLX(2.0E0,0.0E0)/ZN
             CK = CMPLX(FNU+1.0E0,0.0E0)*RZ
 !                 ------------------------------------------------------
 !                 SCALE NEAR EXPONENT EXTREMES DURING RECURRENCE ON
-!                 K FUNCTIONS
+!                 K functionS
 !                 ------------------------------------------------------
             CSCL = CMPLX(1.0E0/TOL,0.0E0)
             CSCR = CMPLX(TOL,0.0E0)
@@ -6102,9 +6102,9 @@
             BRY(3) = X02ALE()
             AS2 = ABS(S2)
             KFLAG = 2
-            IF (AS2<=BRY(1)) THEN
+            if (AS2 <= BRY(1)) then
                KFLAG = 1
-            ELSE IF (AS2>=BRY(2)) THEN
+            else if (AS2 >= BRY(2)) then
                KFLAG = 3
             endif
             BSCLE = BRY(KFLAG)
@@ -6118,13 +6118,13 @@
                C1 = S2*CS
                ST = C1
                C2 = Y(I)
-               IF (KODE/=1) THEN
-                  IF (IUF>=0) THEN
+               if (KODE /= 1) then
+                  if (IUF >= 0) then
                      CALL DGSS17(ZN,C1,C2,NW,ASCLE,ALIM,IUF)
                      NZ = NZ + NW
                      SC1 = SC2
                      SC2 = C1
-                     IF (IUF==3) THEN
+                     if (IUF == 3) then
                         IUF = -4
                         S1 = SC1*CSS(KFLAG)
                         S2 = SC2*CSS(KFLAG)
@@ -6135,13 +6135,13 @@
                Y(I) = CSPN*C1 + CSGN*C2
                CK = CK + RZ
                CSPN = -CSPN
-               IF (KFLAG<3) THEN
+               if (KFLAG < 3) then
                   C1R = REAL(C1)
                   C1I = AIMAG(C1)
                   C1R = ABS(C1R)
                   C1I = ABS(C1I)
                   C1M = MAX(C1R,C1I)
-                  IF (C1M>BSCLE) THEN
+                  if (C1M > BSCLE) then
                      KFLAG = KFLAG + 1
                      BSCLE = BRY(KFLAG)
                      S1 = S1*CS
@@ -6151,18 +6151,18 @@
                      CS = CSR(KFLAG)
                   endif
                endif
-   20             CONTINUE
+   20             continue
          endif
       endif
-      RETURN
+      return
    endif
   endif
   NZ = -1
-  IF (NW==(-2)) NZ = -2
-  IF (NW==(-3)) NZ = -3
-  RETURN
+  if (NW == (-2)) NZ = -2
+  if (NW == (-3)) NZ = -3
+  return
   END
-  INTEGER FUNCTION P01ABE(IFAIL,IERROR,SRNAME,NREC,REC)
+  INTEGER function P01ABE(IFAIL,IERROR,SRNAME,NREC,REC)
 !     MARK 11.5(F77) RELEASE. NAG COPYRIGHT 1986.
 !     MARK 13 REVISED. IER-621 (APR 1988).
 !     MARK 13B REVISED. IER-668 (AUG 1988).
@@ -6207,24 +6207,24 @@
 !     .. Local Scalars ..
   INTEGER                 I, NERR
   CHARACTER*72            MESS
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL                ABZP01, X04AAE, X04BAE
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC               ABS, MOD
 !     .. Executable Statements ..
-  IF (IERROR/=0) THEN
+  if (IERROR /= 0) then
 !        Abnormal exit from calling routine
-   IF (IFAIL==-1 .or. IFAIL==0 .or. IFAIL==-13 .or. &
-         (IFAIL>0 .and. MOD(IFAIL/10,10)/=0)) THEN
+   if (IFAIL == -1 .or. IFAIL == 0 .or. IFAIL == -13 .or. &
+         (IFAIL > 0 .and. MOD(IFAIL/10,10) /= 0)) then
 !           Noisy exit
       CALL X04AAE(0,NERR)
       DO 20 I = 1, NREC
          CALL X04BAE(NERR,REC(I))
-   20       CONTINUE
-      IF (IFAIL/=-13) THEN
+   20       continue
+      if (IFAIL /= -13) then
          WRITE (MESS,FMT=99999) SRNAME, IERROR
          CALL X04BAE(NERR,MESS)
-         IF (ABS(MOD(IFAIL,10))/=1) THEN
+         if (ABS(MOD(IFAIL,10)) /= 1) then
 !                 Hard failure
             CALL X04BAE(NERR, &
                        ' ** NAG hard failure - execution terminated' &
@@ -6239,14 +6239,14 @@
    endif
   endif
   P01ABE = IERROR
-  RETURN
+  return
 !
   99999 FORMAT (' ** ABNORMAL EXIT from NAG Library routine ',A,': IFAIL', &
          ' =',I6)
   END
-  COMPLEX FUNCTION S01EAE(Z,IFAIL)
+  COMPLEX function S01EAE(Z,IFAIL)
 !     MARK 14 RELEASE. NAG COPYRIGHT 1989.
-!     Returns exp(Z) for complex Z.
+!     returns exp(Z) for complex Z.
 !     .. Parameters ..
   REAL                    ONE, ZERO
   PARAMETER               (ONE=1.0E0,ZERO=0.0E0)
@@ -6263,11 +6263,11 @@
   LOGICAL                 FIRST
 !     .. Local Arrays ..
   CHARACTER*80            REC(2)
-!     .. External Functions ..
+!     .. External functions ..
   REAL                    X02AHE, X02AJE, X02AME
   INTEGER                 P01ABE
   EXTERNAL                X02AHE, X02AJE, X02AME, P01ABE
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC               ABS, AIMAG, CMPLX, COS, EXP, LOG, MIN, &
                           REAL, SIGN, SIN, SQRT
 !     .. Save statement ..
@@ -6275,13 +6275,13 @@
 !     .. Data statements ..
   DATA                    FIRST/.true./
 !     .. Executable Statements ..
-  IF (FIRST) THEN
+  if (FIRST) then
    FIRST = .false.
    SAFE = ONE/X02AME()
    LNSAFE = LOG(SAFE)
    RECEPS = ONE/X02AJE()
    SAFSIN = MIN(X02AHE(ONE),RECEPS)
-   IF (SAFSIN<RECEPS**0.75E0) THEN
+   if (SAFSIN < RECEPS**0.75E0) then
 !         Assume that SAFSIN is approximately sqrt(RECEPS), in which
 !         case IFAIL=4 cannot occur.
       RTSAFS = SAFSIN
@@ -6296,7 +6296,7 @@
   IER = 0
   X = REAL(Z)
   Y = AIMAG(Z)
-  IF (ABS(Y)>SAFSIN) THEN
+  if (ABS(Y) > SAFSIN) then
    IER = 5
    NREC = 2
    WRITE (REC,FMT=99995) Z
@@ -6304,23 +6304,23 @@
   ELSE
    COSY = COS(Y)
    SINY = SIN(Y)
-   IF (X>LNSAFE) THEN
-      IF (COSY==ZERO) THEN
+   if (X > LNSAFE) then
+      if (COSY == ZERO) then
          RESR = ZERO
       ELSE
          XPLNCY = X + LOG(ABS(COSY))
-         IF (XPLNCY>LNSAFE) THEN
+         if (XPLNCY > LNSAFE) then
             IER = 1
             RESR = SIGN(SAFE,COSY)
          ELSE
             RESR = SIGN(EXP(XPLNCY),COSY)
          endif
       endif
-      IF (SINY==ZERO) THEN
+      if (SINY == ZERO) then
          RESI = ZERO
       ELSE
          XPLNSY = X + LOG(ABS(SINY))
-         IF (XPLNSY>LNSAFE) THEN
+         if (XPLNSY > LNSAFE) then
             IER = IER + 2
             RESI = SIGN(SAFE,SINY)
          ELSE
@@ -6333,23 +6333,23 @@
       RESI = EXPX*SINY
    endif
    S01EAE = CMPLX(RESR,RESI)
-   IF (IER==3) THEN
+   if (IER == 3) then
       NREC = 2
       WRITE (REC,FMT=99997) Z
-   ELSE IF (ABS(Y)>RTSAFS) THEN
+   else if (ABS(Y) > RTSAFS) then
       IER = 4
       NREC = 2
       WRITE (REC,FMT=99996) Z
-   ELSE IF (IER==1) THEN
+   else if (IER == 1) then
       NREC = 2
       WRITE (REC,FMT=99999) Z
-   ELSE IF (IER==2) THEN
+   else if (IER == 2) then
       NREC = 2
       WRITE (REC,FMT=99998) Z
    endif
   endif
   IFAIL = P01ABE(IFAIL,IER,SRNAME,NREC,REC)
-  RETURN
+  return
 !
   99999 FORMAT (1X,'** Argument Z causes overflow in real part of result:' &
          ,/4X,'Z = (',1P,E13.5,',',E13.5,')')
@@ -6364,10 +6364,10 @@
          ' the result has no',/4X,'precision: Z = (',1P,E13.5,',', &
          E13.5,')')
   END
-  REAL FUNCTION S14ABE(X,IFAIL)
+  REAL function S14ABE(X,IFAIL)
 !     MARK 8 RELEASE. NAG COPYRIGHT 1979.
 !     MARK 11.5(F77) REVISED. (SEPT 1985.)
-!        LNGAMMA(X) FUNCTION
+!        LNGAMMA(X) function
 !        ABRAMOWITZ AND STEGUN  CH.6
 !
 !     **************************************************************
@@ -6391,11 +6391,11 @@
 !
 !        IMPLEMENTATION DEPENDENT CONSTANTS
 !
-!        IF(X<XSMALL)GAMMA(X)=1/X
-!             I.E.   XSMALL*EULGAM<=XRELPR
-!        LNGAM(XVBIG)=GBIG<=XOVFLO
+!        if (X < XSMALL)GAMMA(X)=1/X
+!             I.E.   XSMALL*EULGAM <= XRELPR
+!        LNGAM(XVBIG)=GBIG <= XOVFLO
 !        LNR2PI=LN(SQRT(2*PI))
-!        IF(X>XBIG)LNGAM(X)=(X-0.5)LN(X)-X+LNR2PI
+!        if (X>XBIG)LNGAM(X)=(X-0.5)LN(X)-X+LNR2PI
 !
 !     .. Parameters ..
   CHARACTER*6          SRNAME
@@ -6408,10 +6408,10 @@
   INTEGER              I, M
 !     .. Local Arrays ..
   CHARACTER*1          P01REC(1)
-!     .. External Functions ..
+!     .. External functions ..
   INTEGER              P01ABE
   EXTERNAL             P01ABE
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC            LOG, REAL
 !     .. Data statements ..
 !08   DATA XSMALL,XBIG,LNR2PI/
@@ -6445,25 +6445,25 @@
 !     FOR IEEE DOUBLE PRECISION
 !R7   DATA XVBIG,GBIG/2.54D+305,1.79D+308/
 !     .. Executable Statements ..
-  IF (X>XSMALL) GO TO 20
+  if (X > XSMALL) goto 20
 !        VERY SMALL RANGE
-  IF (X<=0.0) GO TO 160
+  if (X <= 0.0) goto 160
   IFAIL = 0
   S14ABE = -LOG(X)
-  GO TO 200
+  goto 200
 !
-   20 IF (X>15.0) GO TO 120
+   20 if (X > 15.0) goto 120
 !        MAIN SMALL X RANGE
   M = X
   T = X - FLOAT(M)
   M = M - 1
   G = 1.0
-  IF (M) 40, 100, 60
+  if (M) 40, 100, 60
    40 G = G/X
-  GO TO 100
+  goto 100
    60 DO 80 I = 1, M
    G = (X-FLOAT(I))*G
-   80 CONTINUE
+   80 continue
   100 T = 2.0*T - 1.0
 !
 !      * EXPANSION (0026) *
@@ -6541,9 +6541,9 @@
 !
   S14ABE = LOG(Y*G)
   IFAIL = 0
-  GO TO 200
+  goto 200
 !
-  120 IF (X>XBIG) GO TO 140
+  120 if (X > XBIG) goto 140
 !        MAIN LARGE X RANGE
   T = 450.0/(X*X) - 1.0
 !
@@ -6577,58 +6577,58 @@
 !
   S14ABE = (X-0.5)*LOG(X) - X + LNR2PI + Y/X
   IFAIL = 0
-  GO TO 200
+  goto 200
 !
-  140 IF (X>XVBIG) GO TO 180
+  140 if (X > XVBIG) goto 180
 !        ASYMPTOTIC LARGE X RANGE
   S14ABE = (X-0.5)*LOG(X) - X + LNR2PI
   IFAIL = 0
-  GO TO 200
+  goto 200
 !
 !        FAILURE EXITS
   160 IFAIL = P01ABE(IFAIL,1,SRNAME,0,P01REC)
   S14ABE = 0.0
-  GO TO 200
+  goto 200
   180 IFAIL = P01ABE(IFAIL,2,SRNAME,0,P01REC)
   S14ABE = GBIG
 !
-  200 RETURN
+  200 return
 !
   END
-  SUBROUTINE S17DGE(DERIV,Z,SCALE,AI,NZ,IFAIL)
+  subroutine S17DGE(DERIV,Z,SCALE,AI,NZ,IFAIL)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-770 (DEC 1989).
 !
 !     Original name: CAIRY
 !
-!     PURPOSE  TO COMPUTE AIRY FUNCTIONS AI(Z) AND DAI(Z) FOR COMPLEX Z
+!     PURPOSE  TO COMPUTE AIRY functionS AI(Z) AND DAI(Z) FOR COMPLEX Z
 !
 !     DESCRIPTION
 !     ===========
 !
-!         ON SCALE='U', S17DGE COMPUTES THE COMPLEX AIRY FUNCTION AI(Z)
+!         ON SCALE='U', S17DGE COMPUTES THE COMPLEX AIRY function AI(Z)
 !         OR ITS DERIVATIVE DAI(Z)/DZ ON DERIV='F' OR DERIV='D'
 !         RESPECTIVELY. ON SCALE='S', A SCALING OPTION
 !         CEXP(ZTA)*AI(Z) OR CEXP(ZTA)*DAI(Z)/DZ IS PROVIDED TO REMOVE
-!         THE EXPONENTIAL DECAY IN -PI/3<ARG(Z)<PI/3 AND THE
-!         EXPONENTIAL GROWTH IN PI/3<ABS(ARG(Z))<PI WHERE
+!         THE EXPONENTIAL DECAY IN -PI/3 < ARG(Z) < PI/3 AND THE
+!         EXPONENTIAL GROWTH IN PI/3 < ABS(ARG(Z)) < PI WHERE
 !         ZTA=(2/3)*Z*CSQRT(Z)
 !
-!         WHILE THE AIRY FUNCTIONS AI(Z) AND DAI(Z)/DZ ARE ANALYTIC IN
-!         THE WHOLE Z PLANE, THE CORRESPONDING SCALED FUNCTIONS DEFINED
+!         WHILE THE AIRY functionS AI(Z) AND DAI(Z)/DZ ARE ANALYTIC IN
+!         THE WHOLE Z PLANE, THE CORRESPONDING SCALED functionS DEFINED
 !         FOR SCALE='S' HAVE A CUT ALONG THE NEGATIVE REAL AXIS.
 !         DEFINITIONS AND NOTATION ARE FOUND IN THE NBS HANDBOOK OF
-!         MATHEMATICAL FUNCTIONS (REF. 1).
+!         MATHEMATICAL functionS (REF. 1).
 !
 !         INPUT
 !           Z      - Z=CMPLX(X,Y)
-!           DERIV  - RETURN FUNCTION (DERIV='F') OR DERIVATIVE
+!           DERIV  - return function (DERIV='F') OR DERIVATIVE
 !                    (DERIV='D')
 !           SCALE  - A PARAMETER TO INDICATE THE SCALING OPTION
-!                    SCALE = 'U' OR 'u' RETURNS
+!                    SCALE = 'U' OR 'u' returnS
 !                             AI=AI(Z)                ON DERIV='F' OR
 !                             AI=DAI(Z)/DZ            ON DERIV='D'
-!                    SCALE = 'S' OR 's' RETURNS
+!                    SCALE = 'S' OR 's' returnS
 !                             AI=CEXP(ZTA)*AI(Z)      ON DERIV='F' OR
 !                             AI=CEXP(ZTA)*DAI(Z)/DZ  ON DERIV='D' WHERE
 !                             ZTA=(2/3)*Z*CSQRT(Z)
@@ -6637,11 +6637,11 @@
 !           AI     - COMPLEX ANSWER DEPENDING ON THE CHOICES FOR DERIV
 !                    AND SCALE
 !           NZ     - UNDERFLOW INDICATOR
-!                    NZ= 0   , NORMAL RETURN
+!                    NZ= 0   , NORMAL return
 !                    NZ= 1   , AI=CMPLX(0.0,0.0) DUE TO UNDERFLOW IN
-!                              -PI/3<ARG(Z)<PI/3 ON SCALE='U'
+!                              -PI/3 < ARG(Z) < PI/3 ON SCALE='U'
 !           IFAIL  - ERROR FLAG
-!                   IFAIL=0, NORMAL RETURN - COMPUTATION COMPLETED
+!                   IFAIL=0, NORMAL return - COMPUTATION COMPLETED
 !                   IFAIL=1, INPUT ERROR   - NO COMPUTATION
 !                   IFAIL=2, OVERFLOW      - NO COMPUTATION, REAL(ZTA)
 !                            TOO LARGE WITH SCALE = 'U'
@@ -6658,23 +6658,23 @@
 !     ================
 !
 !         AI AND DAI ARE COMPUTED FOR CABS(Z)>1.0 FROM THE K BESSEL
-!         FUNCTIONS BY
+!         functionS BY
 !
 !            AI(Z)=C*SQRT(Z)*K(1/3,ZTA) , DAI(Z)=-C*Z*K(2/3,ZTA)
 !                           C=1.0/(PI*SQRT(3.0))
 !                           ZTA=(2/3)*Z**(3/2)
 !
-!         WITH THE POWER SERIES FOR CABS(Z)<=1.0.
+!         WITH THE POWER SERIES FOR CABS(Z) <= 1.0.
 !
 !         IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST EVALUATE ELE-
-!         MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z IS LARGE, LOSSES
+!         MENTARY functionS. WHEN THE MAGNITUDE OF Z IS LARGE, LOSSES
 !         OF SIGNIFICANCE BY ARGUMENT REDUCTION OCCUR. CONSEQUENTLY, IF
 !         THE MAGNITUDE OF ZETA=(2/3)*Z**1.5 EXCEEDS U1=SQRT(0.5/UR),
 !         THEN LOSSES EXCEEDING HALF PRECISION ARE LIKELY AND AN ERROR
 !         FLAG IFAIL=3 IS TRIGGERED WHERE UR=X02AJE()=UNIT ROUNDOFF.
 !         ALSO, IF THE MAGNITUDE OF ZETA IS LARGER THAN U2=0.5/UR, THEN
 !         ALL SIGNIFICANCE IS LOST AND IFAIL=4. IN ORDER TO USE THE INT
-!         FUNCTION, ZETA MUST BE FURTHER RESTRICTED NOT TO EXCEED THE
+!         function, ZETA MUST BE FURTHER RESTRICTED NOT TO EXCEED THE
 !         LARGEST INTEGER, U3=X02BBE(). THUS, THE MAGNITUDE OF ZETA
 !         MUST BE RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2,
 !         AND U3 ARE APPROXIMATELY 2.0E+3, 4.2E+6, 2.1E+9 IN SINGLE
@@ -6689,10 +6689,10 @@
 !         MACHINES.
 !
 !         THE APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A COMPLEX
-!         BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT
+!         BESSEL function CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT
 !         ROUNDOFF,1.0E-18) IS THE NOMINAL PRECISION AND 10**S REPRE-
 !         SENTS THE INCREASE IN ERROR DUE TO ARGUMENT REDUCTION IN THE
-!         ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))),
+!         ELEMENTARY functionS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))),
 !         ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF
 !         CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY
 !         HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST LIKELY TO OCCUR WHEN
@@ -6710,18 +6710,18 @@
 !
 !     REFERENCES
 !     ==========
-!               HANDBOOK OF MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ
+!               HANDBOOK OF MATHEMATICAL functionS BY M. ABRAMOWITZ
 !                 AND I. A. STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF
 !                 COMMERCE, 1955.
 !
-!               COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT
+!               COMPUTATION OF BESSEL functionS OF COMPLEX ARGUMENT
 !                 AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983
 !
-!               A SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
+!               A subroutine PACKAGE FOR BESSEL functionS OF A COMPLEX
 !                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85-
 !                 1018, MAY, 1985
 !
-!               A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
+!               A PORTABLE PACKAGE FOR BESSEL functionS OF A COMPLEX
 !                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, TRANS.
 !                 MATH. SOFTWARE, 1986
 !
@@ -6747,15 +6747,15 @@
 !     .. Local Arrays ..
   COMPLEX           CY(1)
   CHARACTER*80      REC(1)
-!     .. External Functions ..
+!     .. External functions ..
   COMPLEX           S01EAE
   REAL              X02AHE, X02AJE, X02AME
   INTEGER           P01ABE, X02BBE, X02BHE, X02BJE, X02BKE, X02BLE
   EXTERNAL          S01EAE, X02AHE, X02AJE, X02AME, P01ABE, X02BBE, &
                     X02BHE, X02BJE, X02BKE, X02BLE
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DGXS17, DGZS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, LOG, LOG10, MAX, MIN, REAL, &
                     SQRT
 !     .. Data statements ..
@@ -6768,34 +6768,34 @@
   IERR = 0
   NREC = 0
   NZ = 0
-  IF (DERIV=='F' .or. DERIV=='f') THEN
+  if (DERIV == 'F' .or. DERIV == 'f') then
    ID = 0
-  ELSE IF (DERIV=='D' .or. DERIV=='d') THEN
+  else if (DERIV == 'D' .or. DERIV == 'd') then
    ID = 1
   ELSE
    ID = -1
   endif
-  IF (SCALE=='U' .or. SCALE=='u') THEN
+  if (SCALE == 'U' .or. SCALE == 'u') then
    KODE = 1
-  ELSE IF (SCALE=='S' .or. SCALE=='s') THEN
+  else if (SCALE == 'S' .or. SCALE == 's') then
    KODE = 2
   ELSE
    KODE = -1
   endif
-  IF (ID==-1) THEN
+  if (ID == -1) then
    IERR = 1
    NREC = 1
    WRITE (REC,FMT=99999) DERIV
-  ELSE IF (KODE==-1) THEN
+  else if (KODE == -1) then
    IERR = 1
    NREC = 1
    WRITE (REC,FMT=99998) SCALE
   endif
-  IF (IERR==0) THEN
+  if (IERR == 0) then
    AZ = ABS(Z)
    TOL = MAX(X02AJE(),1.0E-18)
    FID = ID
-   IF (AZ>1.0E0) THEN
+   if (AZ > 1.0E0) then
 !           ------------------------------------------------------------
 !           CASE FOR CABS(Z)>1.0
 !           ------------------------------------------------------------
@@ -6805,7 +6805,7 @@
 !           TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18.
 !           ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW
 !           LIMIT.
-!           EXP(-ELIM)<EXP(-ALIM)=EXP(-ELIM)/TOL    AND
+!           EXP(-ELIM) < EXP(-ALIM)=EXP(-ELIM)/TOL    AND
 !           EXP(ELIM)>EXP(ALIM)=EXP(ELIM)*TOL       ARE INTERVALS
 !           NEAR UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC
 !           IS DONE.
@@ -6832,7 +6832,7 @@
       BB = X02BBE(1.0E0)*0.5E0
       AA = MIN(AA,BB,X02AHE(1.0E0))
       AA = AA**TTH
-      IF (AZ>AA) THEN
+      if (AZ > AA) then
          NZ = 0
          IERR = 4
          NREC = 1
@@ -6840,7 +6840,7 @@
       ELSE
          AA = SQRT(AA)
          SAVAA = AA
-         IF (AZ>AA) THEN
+         if (AZ > AA) then
             IERR = 3
             NREC = 1
             WRITE (REC,FMT=99996) AZ, AA
@@ -6848,7 +6848,7 @@
          CSQ = SQRT(Z)
          ZTA = Z*CSQ*CMPLX(TTH,0.0E0)
 !              ---------------------------------------------------------
-!              RE(ZTA)<=0 WHEN RE(Z)<0, ESPECIALLY WHEN IM(Z) IS
+!              RE(ZTA) <= 0 WHEN RE(Z) < 0, ESPECIALLY WHEN IM(Z) IS
 !              SMALL
 !              ---------------------------------------------------------
          IFLAG = 0
@@ -6856,87 +6856,87 @@
          ZI = AIMAG(Z)
          ZR = REAL(Z)
          AK = AIMAG(ZTA)
-         IF (ZR<0.0E0) THEN
+         if (ZR < 0.0E0) then
             BK = REAL(ZTA)
             CK = -ABS(BK)
             ZTA = CMPLX(CK,AK)
          endif
-         IF (ZI==0.0E0) THEN
-            IF (ZR<=0.0E0) ZTA = CMPLX(0.0E0,AK)
+         if (ZI == 0.0E0) then
+            if (ZR <= 0.0E0) ZTA = CMPLX(0.0E0,AK)
          endif
          AA = REAL(ZTA)
-         IF (AA>=0.0E0 .and. ZR>0.0E0) THEN
-            IF (KODE/=2) THEN
+         if (AA >= 0.0E0 .and. ZR > 0.0E0) then
+            if (KODE /= 2) then
 !                    ---------------------------------------------------
 !                    UNDERFLOW TEST
 !                    ---------------------------------------------------
-               IF (AA>=ALIM) THEN
+               if (AA >= ALIM) then
                   AA = -AA - 0.25E0*ALAZ
                   IFLAG = 2
                   SFAC = 1.0E0/TOL
-                  IF (AA<(-ELIM)) THEN
+                  if (AA < (-ELIM)) then
                      NZ = 1
                      AI = CMPLX(0.0E0,0.0E0)
                      IFAIL = P01ABE(IFAIL,IERR,SRNAME,NREC,REC)
-                     RETURN
+                     return
                   endif
                endif
             endif
             CALL DGXS17(ZTA,FNU,KODE,1,CY,NZ,TOL,ELIM,ALIM)
          ELSE
-            IF (KODE/=2) THEN
+            if (KODE /= 2) then
 !                    ---------------------------------------------------
 !                    OVERFLOW TEST
 !                    ---------------------------------------------------
-               IF (AA<=(-ALIM)) THEN
+               if (AA <= (-ALIM)) then
                   AA = -AA + 0.25E0*ALAZ
                   IFLAG = 1
                   SFAC = TOL
-                  IF (AA>ELIM) GO TO 20
+                  if (AA > ELIM) goto 20
                endif
             endif
 !                 ------------------------------------------------------
-!                 DGXS17 AND DGZS17 RETURN EXP(ZTA)*K(FNU,ZTA) ON KODE=2
+!                 DGXS17 AND DGZS17 return EXP(ZTA)*K(FNU,ZTA) ON KODE=2
 !                 ------------------------------------------------------
             MR = 1
-            IF (ZI<0.0E0) MR = -1
+            if (ZI < 0.0E0) MR = -1
             CALL DGZS17(ZTA,FNU,KODE,MR,1,CY,NN,RL,TOL,ELIM,ALIM)
-            IF (NN>=0) THEN
+            if (NN >= 0) then
                NZ = NZ + NN
-               GO TO 40
-            ELSE IF (NN==(-3)) THEN
+               goto 40
+            else if (NN == (-3)) then
                NZ = 0
                IERR = 4
                NREC = 1
                WRITE (REC,FMT=99997) AZ, SAVAA
                IFAIL = P01ABE(IFAIL,IERR,SRNAME,NREC,REC)
-               RETURN
-            ELSE IF (NN/=(-1)) THEN
+               return
+            else if (NN /= (-1)) then
                NZ = 0
                IERR = 5
                NREC = 1
                WRITE (REC,FMT=99995)
                IFAIL = P01ABE(IFAIL,IERR,SRNAME,NREC,REC)
-               RETURN
+               return
             endif
    20             NZ = 0
             IERR = 2
             NREC = 1
             WRITE (REC,FMT=99994)
             IFAIL = P01ABE(IFAIL,IERR,SRNAME,NREC,REC)
-            RETURN
+            return
          endif
    40          S1 = CY(1)*CMPLX(COEF,0.0E0)
-         IF (IFLAG/=0) THEN
+         if (IFLAG /= 0) then
             S1 = S1*CMPLX(SFAC,0.0E0)
-            IF (ID==1) THEN
+            if (ID == 1) then
                S1 = -S1*Z
                AI = S1*CMPLX(1.0E0/SFAC,0.0E0)
             ELSE
                S1 = S1*CSQ
                AI = S1*CMPLX(1.0E0/SFAC,0.0E0)
             endif
-         ELSE IF (ID==1) THEN
+         else if (ID == 1) then
             AI = -Z*S1
          ELSE
             AI = CSQ*S1
@@ -6944,25 +6944,25 @@
       endif
    ELSE
 !           ------------------------------------------------------------
-!           POWER SERIES FOR CABS(Z)<=1.
+!           POWER SERIES FOR CABS(Z) <= 1.
 !           ------------------------------------------------------------
       S1 = CONE
       S2 = CONE
-      IF (AZ<TOL) THEN
+      if (AZ < TOL) then
          AA = 1.0E+3*X02AME()
          S1 = CMPLX(0.0E0,0.0E0)
-         IF (ID==1) THEN
+         if (ID == 1) then
             AI = -CMPLX(C2,0.0E0)
             AA = SQRT(AA)
-            IF (AZ>AA) S1 = Z*Z*CMPLX(0.5E0,0.0E0)
+            if (AZ > AA) S1 = Z*Z*CMPLX(0.5E0,0.0E0)
             AI = AI + S1*CMPLX(C1,0.0E0)
          ELSE
-            IF (AZ>AA) S1 = CMPLX(C2,0.0E0)*Z
+            if (AZ > AA) S1 = CMPLX(C2,0.0E0)*Z
             AI = CMPLX(C1,0.0E0) - S1
          endif
       ELSE
          AA = AZ*AZ
-         IF (AA>=TOL/AZ) THEN
+         if (AA >= TOL/AZ) then
             TRM1 = CONE
             TRM2 = CONE
             ATRM = 1.0E0
@@ -6988,19 +6988,19 @@
                D1 = D1 + AK
                D2 = D2 + BK
                AD = MIN(D1,D2)
-               IF (ATRM<TOL*AD) THEN
-                  GO TO 80
+               if (ATRM < TOL*AD) then
+                  goto 80
                ELSE
                   AK = AK + 18.0E0
                   BK = BK + 18.0E0
                endif
-   60             CONTINUE
+   60             continue
          endif
-   80          IF (ID==1) THEN
+   80          if (ID == 1) then
             AI = -S2*CMPLX(C2,0.0E0)
-            IF (AZ>TOL) AI = AI + Z*Z*S1*CMPLX(C1/(1.0E0+FID), &
+            if (AZ > TOL) AI = AI + Z*Z*S1*CMPLX(C1/(1.0E0+FID), &
                                   0.0E0)
-            IF (KODE/=1) THEN
+            if (KODE /= 1) then
                ZTA = Z*SQRT(Z)*CMPLX(TTH,0.0E0)
 !                     AI = AI*EXP(ZTA)
                IFL = 1
@@ -7008,7 +7008,7 @@
             endif
          ELSE
             AI = S1*CMPLX(C1,0.0E0) - Z*S2*CMPLX(C2,0.0E0)
-            IF (KODE/=1) THEN
+            if (KODE /= 1) then
                ZTA = Z*SQRT(Z)*CMPLX(TTH,0.0E0)
 !                     AI = AI*EXP(ZTA)
                IFL = 1
@@ -7019,55 +7019,55 @@
    endif
   endif
   IFAIL = P01ABE(IFAIL,IERR,SRNAME,NREC,REC)
-  RETURN
+  return
 !
   99999 FORMAT (1X,'** On entry, DERIV has illegal value: DERIV = ''',A, &
          '''')
   99998 FORMAT (1X,'** On entry, SCALE has illegal value: SCALE = ''',A, &
          '''')
-  99997 FORMAT (1X,'** No computation because abs(Z) =',1P,E13.5,' >', &
+  99997 FORMAT (1X,'** No computation because abs(Z) =',1P,E13.5,' > ', &
          E13.5)
   99996 FORMAT (1X,'** Results lack precision because abs(Z) =',1P,E13.5, &
-         ' >',E13.5)
+         ' > ',E13.5)
   99995 FORMAT (1X,'** No computation - algorithm termination condition ', &
          'not met.')
   99994 FORMAT (1X,'** No computation because real(ZTA) too large, where', &
          ' ZTA = (2/3)*Z**(3/2).')
   END
-  SUBROUTINE S17DLE(M,FNU,Z,N,SCALE,CY,NZ,IFAIL)
+  subroutine S17DLE(M,FNU,Z,N,SCALE,CY,NZ,IFAIL)
 !     MARK 13 RELEASE. NAG COPYRIGHT 1988.
 !     MARK 14 REVISED. IER-781 (DEC 1989).
 !
 !     Original name: CBESH
 !
-!     PURPOSE  TO COMPUTE THE H-BESSEL FUNCTIONS OF A COMPLEX ARGUMENT
+!     PURPOSE  TO COMPUTE THE H-BESSEL functionS OF A COMPLEX ARGUMENT
 !
 !     DESCRIPTION
 !     ===========
 !
 !         ON SCALE='U', S17DLE COMPUTES AN N MEMBER SEQUENCE OF COMPLEX
-!         HANKEL (BESSEL) FUNCTIONS CY(J)=H(M,FNU+J-1,Z) FOR KINDS M=1
+!         HANKEL (BESSEL) functionS CY(J)=H(M,FNU+J-1,Z) FOR KINDS M=1
 !         OR 2, REAL, NONNEGATIVE ORDERS FNU+J-1, J=1,...,N, AND COMPLEX
-!         Z/=CMPLX(0.0E0,0.0E0) IN THE CUT PLANE -PI<ARG(Z)<=PI.
-!         ON SCALE='S', S17DLE COMPUTES THE SCALED HANKEL FUNCTIONS
+!         Z /= CMPLX(0.0E0,0.0E0) IN THE CUT PLANE -PI < ARG(Z) <= PI.
+!         ON SCALE='S', S17DLE COMPUTES THE SCALED HANKEL functionS
 !
 !         CY(I)=H(M,FNU+J-1,Z)*EXP(-MM*Z*I)       MM=3-2M,      I**2=-1.
 !
 !         WHICH REMOVES THE EXPONENTIAL BEHAVIOR IN BOTH THE UPPER
 !         AND LOWER HALF PLANES. DEFINITIONS AND NOTATION ARE FOUND IN
-!         THE NBS HANDBOOK OF MATHEMATICAL FUNCTIONS (REF. 1).
+!         THE NBS HANDBOOK OF MATHEMATICAL functionS (REF. 1).
 !
 !         INPUT
-!           Z      - Z=CMPLX(X,Y), Z/=CMPLX(0.,0.),-PI<ARG(Z)<=PI
-!           FNU    - ORDER OF INITIAL H FUNCTION, FNU>=0.0E0
+!           Z      - Z=CMPLX(X,Y), Z /= CMPLX(0.,0.),-PI < ARG(Z) <= PI
+!           FNU    - ORDER OF INITIAL H function, FNU >= 0.0E0
 !           SCALE  - A PARAMETER TO INDICATE THE SCALING OPTION
-!                    SCALE = 'U' OR SCALE = 'u' RETURNS
+!                    SCALE = 'U' OR SCALE = 'u' returnS
 !                             CY(J)=H(M,FNU+J-1,Z),      J=1,...,N
-!                          = 'S' OR SCALE = 's' RETURNS
+!                          = 'S' OR SCALE = 's' returnS
 !                             CY(J)=H(M,FNU+J-1,Z)*EXP(-I*Z*(3-2M))
 !                                  J=1,...,N  ,  I**2=-1
-!           M      - KIND OF HANKEL FUNCTION, M=1 OR 2
-!           N      - NUMBER OF MEMBERS OF THE SEQUENCE, N>=1
+!           M      - KIND OF HANKEL function, M=1 OR 2
+!           N      - NUMBER OF MEMBERS OF THE SEQUENCE, N >= 1
 !
 !         OUTPUT
 !           CY     - A COMPLEX VECTOR WHOSE FIRST N COMPONENTS CONTAIN
@@ -7076,15 +7076,15 @@
 !                    CY(J)=H(M,FNU+J-1,Z)*EXP(-I*Z*(3-2M))  J=1,...,N
 !                    DEPENDING ON SCALE, I**2=-1.
 !           NZ     - NUMBER OF COMPONENTS SET TO ZERO DUE TO UNDERFLOW,
-!                    NZ= 0   , NORMAL RETURN
+!                    NZ= 0   , NORMAL return
 !                    NZ>0 , FIRST NZ COMPONENTS OF CY SET TO ZERO
 !                              DUE TO UNDERFLOW, CY(J)=CMPLX(0.0,0.0)
 !                              J=1,...,NZ WHEN Y>0.0 AND M=1 OR
-!                              Y<0.0 AND M=2. FOR THE COMPLMENTARY
+!                              Y < 0.0 AND M=2. FOR THE COMPLMENTARY
 !                              HALF PLANES, NZ STATES ONLY THE NUMBER
 !                              OF UNDERFLOWS.
 !           IERR    -ERROR FLAG
-!                    IERR=0, NORMAL RETURN - COMPUTATION COMPLETED
+!                    IERR=0, NORMAL return - COMPUTATION COMPLETED
 !                    IERR=1, INPUT ERROR   - NO COMPUTATION
 !                    IERR=2, OVERFLOW      - NO COMPUTATION,
 !                            CABS(Z) TOO SMALL
@@ -7108,14 +7108,14 @@
 !         H(M,FNU,Z)=(1/MP)*EXP(-MP*FNU)*K(FNU,Z*EXP(-MP))
 !             MP=MM*HPI*I,  MM=3-2*M,  HPI=PI/2,  I**2=-1
 !
-!         FOR M=1 OR 2 WHERE THE K BESSEL FUNCTION IS COMPUTED FOR THE
-!         RIGHT HALF PLANE RE(Z)>=0.0. THE K FUNCTION IS CONTINUED
+!         FOR M=1 OR 2 WHERE THE K BESSEL function IS COMPUTED FOR THE
+!         RIGHT HALF PLANE RE(Z) >= 0.0. THE K function IS continueD
 !         TO THE LEFT HALF PLANE BY THE RELATION
 !
 !         K(FNU,Z*EXP(MP)) = EXP(-MP*FNU)*K(FNU,Z)-MP*I(FNU,Z)
 !         MP=MR*PI*I, MR=+1 OR -1, RE(Z)>0, I**2=-1
 !
-!         WHERE I(FNU,Z) IS THE I BESSEL FUNCTION.
+!         WHERE I(FNU,Z) IS THE I BESSEL function.
 !
 !         EXPONENTIAL DECAY OF H(M,FNU,Z) OCCURS IN THE UPPER HALF Z
 !         PLANE FOR M=1 AND THE LOWER HALF Z PLANE FOR M=2.  EXPONENTIAL
@@ -7132,13 +7132,13 @@
 !         CAN BE USED.
 !
 !         IN MOST COMPLEX VARIABLE COMPUTATION, ONE MUST EVALUATE ELE-
-!         MENTARY FUNCTIONS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS
+!         MENTARY functionS. WHEN THE MAGNITUDE OF Z OR FNU+N-1 IS
 !         LARGE, LOSSES OF SIGNIFICANCE BY ARGUMENT REDUCTION OCCUR.
 !         CONSEQUENTLY, IF EITHER ONE EXCEEDS U1=SQRT(0.5/UR), THEN
 !         LOSSES EXCEEDING HALF PRECISION ARE LIKELY AND AN ERROR FLAG
 !         IERR=4 IS TRIGGERED WHERE UR=X02AJE()=UNIT ROUNDOFF. ALSO
 !         IF EITHER IS LARGER THAN U2=0.5/UR, THEN ALL SIGNIFICANCE IS
-!         LOST AND IERR=5. IN ORDER TO USE THE INT FUNCTION, ARGUMENTS
+!         LOST AND IERR=5. IN ORDER TO USE THE INT function, ARGUMENTS
 !         MUST BE FURTHER RESTRICTED NOT TO EXCEED THE LARGEST MACHINE
 !         INTEGER, U3=X02BBE(). THUS, THE MAGNITUDE OF Z AND FNU+N-1 IS
 !         RESTRICTED BY MIN(U2,U3). ON 32 BIT MACHINES, U1,U2, AND U3
@@ -7151,10 +7151,10 @@
 !         SIMILAR CONSIDERATIONS HOLD FOR OTHER MACHINES.
 !
 !         THE APPROXIMATE RELATIVE ERROR IN THE MAGNITUDE OF A COMPLEX
-!         BESSEL FUNCTION CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT
+!         BESSEL function CAN BE EXPRESSED BY P*10**S WHERE P=MAX(UNIT
 !         ROUNDOFF,1.0E-18) IS THE NOMINAL PRECISION AND 10**S REPRE-
 !         SENTS THE INCREASE IN ERROR DUE TO ARGUMENT REDUCTION IN THE
-!         ELEMENTARY FUNCTIONS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))),
+!         ELEMENTARY functionS. HERE, S=MAX(1,ABS(LOG10(CABS(Z))),
 !         ABS(LOG10(FNU))) APPROXIMATELY (I.E. S=MAX(1,ABS(EXPONENT OF
 !         CABS(Z),ABS(EXPONENT OF FNU)) ). HOWEVER, THE PHASE ANGLE MAY
 !         HAVE ONLY ABSOLUTE ACCURACY. THIS IS MOST LIKELY TO OCCUR WHEN
@@ -7172,21 +7172,21 @@
 !
 !     REFERENCES
 !     ==========
-!               HANDBOOK OF MATHEMATICAL FUNCTIONS BY M. ABRAMOWITZ
+!               HANDBOOK OF MATHEMATICAL functionS BY M. ABRAMOWITZ
 !                 AND I. A. STEGUN, NBS AMS SERIES 55, U.S. DEPT. OF
 !                 COMMERCE, 1955.
 !
-!               COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT
+!               COMPUTATION OF BESSEL functionS OF COMPLEX ARGUMENT
 !                 BY D. E. AMOS, SAND83-0083, MAY, 1983.
 !
-!               COMPUTATION OF BESSEL FUNCTIONS OF COMPLEX ARGUMENT
+!               COMPUTATION OF BESSEL functionS OF COMPLEX ARGUMENT
 !                 AND LARGE ORDER BY D. E. AMOS, SAND83-0643, MAY, 1983
 !
-!               A SUBROUTINE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
+!               A subroutine PACKAGE FOR BESSEL functionS OF A COMPLEX
 !                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, SAND85-
 !                 1018, MAY, 1985
 !
-!               A PORTABLE PACKAGE FOR BESSEL FUNCTIONS OF A COMPLEX
+!               A PORTABLE PACKAGE FOR BESSEL functionS OF A COMPLEX
 !                 ARGUMENT AND NONNEGATIVE ORDER BY D. E. AMOS, TRANS.
 !                 MATH. SOFTWARE, 1986
 !
@@ -7213,14 +7213,14 @@
                     NN, NREC, NUF, NW
 !     .. Local Arrays ..
   CHARACTER*80      REC(1)
-!     .. External Functions ..
+!     .. External functions ..
   REAL              X02AHE, X02AJE
   INTEGER           P01ABE, X02BBE, X02BHE, X02BJE, X02BKE, X02BLE
   EXTERNAL          X02AHE, X02AJE, P01ABE, X02BBE, X02BHE, X02BJE, &
                     X02BKE, X02BLE
-!     .. External Subroutines ..
+!     .. External subroutines ..
   EXTERNAL          DEVS17, DGXS17, DLYS17, DLZS17
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         ABS, AIMAG, CMPLX, COS, EXP, INT, LOG, LOG10, &
                     MAX, MIN, MOD, REAL, SIGN, SIN, SQRT
 !     .. Data statements ..
@@ -7232,41 +7232,41 @@
   XX = REAL(Z)
   YY = AIMAG(Z)
   IERR = 0
-  IF (SCALE=='U' .or. SCALE=='u') THEN
+  if (SCALE == 'U' .or. SCALE == 'u') then
    KODE = 1
-  ELSE IF (SCALE=='S' .or. SCALE=='s') THEN
+  else if (SCALE == 'S' .or. SCALE == 's') then
    KODE = 2
   ELSE
    KODE = -1
   endif
-  IF (XX==0.0E0 .and. YY==0.0E0) THEN
+  if (XX == 0.0E0 .and. YY == 0.0E0) then
    IERR = 1
    NREC = 1
    WRITE (REC,FMT=99999)
-  ELSE IF (FNU<0.0E0) THEN
+  else if (FNU < 0.0E0) then
    IERR = 1
    NREC = 1
    WRITE (REC,FMT=99998) FNU
-  ELSE IF (KODE==-1) THEN
+  else if (KODE == -1) then
    IERR = 1
    NREC = 1
    WRITE (REC,FMT=99997) SCALE
-  ELSE IF (N<1) THEN
+  else if (N < 1) then
    IERR = 1
    NREC = 1
    WRITE (REC,FMT=99996) N
-  ELSE IF (M<1 .or. M>2) THEN
+  else if (M < 1 .or. M > 2) then
    IERR = 1
    NREC = 1
    WRITE (REC,FMT=99995) M
   endif
-  IF (IERR==0) THEN
+  if (IERR == 0) then
    NN = N
 !        ---------------------------------------------------------------
 !        SET PARAMETERS RELATED TO MACHINE CONSTANTS.
 !        TOL IS THE APPROXIMATE UNIT ROUNDOFF LIMITED TO 1.0E-18.
 !        ELIM IS THE APPROXIMATE EXPONENTIAL OVER- AND UNDERFLOW LIMIT.
-!        EXP(-ELIM)<EXP(-ALIM)=EXP(-ELIM)/TOL    AND
+!        EXP(-ELIM) < EXP(-ALIM)=EXP(-ELIM)/TOL    AND
 !        EXP(ELIM)>EXP(ALIM)=EXP(ELIM)*TOL       ARE INTERVALS NEAR
 !        UNDERFLOW AND OVERFLOW LIMITS WHERE SCALED ARITHMETIC IS DONE.
 !        RL IS THE LOWER BOUNDARY OF THE ASYMPTOTIC EXPANSION FOR
@@ -7301,14 +7301,14 @@
    AA = 0.5E0/TOL
    BB = X02BBE(1.0E0)*0.5E0
    AA = MIN(AA,BB,X02AHE(1.0E0))
-   IF (AZ<=AA) THEN
-      IF (FN<=AA) THEN
+   if (AZ <= AA) then
+      if (FN <= AA) then
          AA = SQRT(AA)
-         IF (AZ>AA) THEN
+         if (AZ > AA) then
             IERR = 4
             NREC = 1
             WRITE (REC,FMT=99994) AZ, AA
-         ELSE IF (FN>AA) THEN
+         else if (FN > AA) then
             IERR = 4
             NREC = 1
             WRITE (REC,FMT=99993) FN, AA
@@ -7317,71 +7317,71 @@
 !              OVERFLOW TEST ON THE LAST MEMBER OF THE SEQUENCE
 !              ---------------------------------------------------------
          UFL = EXP(-ELIM)
-         IF (AZ>=UFL) THEN
-            IF (FNU>FNUL) THEN
+         if (AZ >= UFL) then
+            if (FNU > FNUL) then
 !                    ---------------------------------------------------
 !                    UNIFORM ASYMPTOTIC EXPANSIONS FOR FNU>FNUL
 !                    ---------------------------------------------------
                MR = 0
-               IF ((XN<0.0E0) .or. (XN==0.0E0 .and. YN< &
-                     0.0E0 .and. M==2)) THEN
+               if ((XN < 0.0E0) .or. (XN == 0.0E0 .and. YN <&
+                     0.0E0 .and. M == 2)) then
                   MR = -MM
-                  IF (XN==0.0E0 .and. YN<0.0E0) ZN = -ZN
+                  if (XN == 0.0E0 .and. YN < 0.0E0) ZN = -ZN
                endif
                CALL DLYS17(ZN,FNU,KODE,MR,NN,CY,NW,TOL,ELIM,ALIM)
-               IF (NW<0) THEN
-                  GO TO 40
+               if (NW < 0) then
+                  goto 40
                ELSE
                   NZ = NZ + NW
                endif
             ELSE
-               IF (FN>1.0E0) THEN
-                  IF (FN>2.0E0) THEN
+               if (FN > 1.0E0) then
+                  if (FN > 2.0E0) then
                      CALL DEVS17(ZN,FNU,KODE,2,NN,CY,NUF,TOL,ELIM, &
                                    ALIM)
-                     IF (NUF<0) THEN
-                        GO TO 60
+                     if (NUF < 0) then
+                        goto 60
                      ELSE
                         NZ = NZ + NUF
                         NN = NN - NUF
 !                             ------------------------------------------
 !                             HERE NN=N OR NN=0 SINCE NUF=0,NN, OR -1
-!                             ON RETURN FROM DEVS17
+!                             ON return FROM DEVS17
 !                             IF NUF=NN, THEN CY(I)=CZERO FOR ALL I
 !                             ------------------------------------------
-                        IF (NN==0) THEN
-                           IF (XN<0.0E0) THEN
-                              GO TO 60
+                        if (NN == 0) then
+                           if (XN < 0.0E0) then
+                              goto 60
                            ELSE
                               IFAIL = P01ABE(IFAIL,IERR,SRNAME, &
                                         NREC,REC)
-                              RETURN
+                              return
                            endif
                         endif
                      endif
-                  ELSE IF (AZ<=TOL) THEN
+                  else if (AZ <= TOL) then
                      ARG = 0.5E0*AZ
                      ALN = -FN*LOG(ARG)
-                     IF (ALN>ELIM) GO TO 60
+                     if (ALN > ELIM) goto 60
                   endif
                endif
-               IF ((XN<0.0E0) .or. (XN==0.0E0 .and. YN< &
-                     0.0E0 .and. M==2)) THEN
+               if ((XN < 0.0E0) .or. (XN == 0.0E0 .and. YN <&
+                     0.0E0 .and. M == 2)) then
 !                       ------------------------------------------------
 !                       LEFT HALF PLANE COMPUTATION
 !                       ------------------------------------------------
                   MR = -MM
                   CALL DLZS17(ZN,FNU,KODE,MR,NN,CY,NW,RL,FNUL,TOL, &
                                 ELIM,ALIM)
-                  IF (NW<0) THEN
-                     GO TO 40
+                  if (NW < 0) then
+                     goto 40
                   ELSE
                      NZ = NW
                   endif
                ELSE
 !                       ------------------------------------------------
-!                       RIGHT HALF PLANE COMPUTATION, XN>=0. .and.
-!                       (XN/=0. .or.  YN>=0. .or. M=1)
+!                       RIGHT HALF PLANE COMPUTATION, XN >= 0. .and.
+!                       (XN /= 0. .or. YN >= 0. .or. M=1)
 !                       ------------------------------------------------
                   CALL DGXS17(ZN,FNU,KODE,NN,CY,NZ,TOL,ELIM,ALIM)
                endif
@@ -7405,8 +7405,8 @@
             SPN = RHPI*SIN(ARG)
 !                 ZN = CMPLX(-SPN,CPN)
             CSGN = CMPLX(-SPN,CPN)
-!                 IF (MOD(INUH,2)==1) ZN = -ZN
-            IF (MOD(INUH,2)==1) CSGN = -CSGN
+!                 if (MOD(INUH,2)==1) ZN = -ZN
+            if (MOD(INUH,2) == 1) CSGN = -CSGN
             ZT = CMPLX(0.0E0,-FMM)
             RTOL = 1.0E0/TOL
             ASCLE = UFL*RTOL
@@ -7417,44 +7417,44 @@
                AA = REAL(ZN)
                BB = AIMAG(ZN)
                ATOL = 1.0E0
-               IF (MAX(ABS(AA),ABS(BB))<=ASCLE) THEN
+               if (MAX(ABS(AA),ABS(BB)) <= ASCLE) then
                   ZN = ZN*RTOL
                   ATOL = TOL
                endif
                ZN = ZN*CSGN
                CY(I) = ZN*ATOL
                CSGN = CSGN*ZT
-   20             CONTINUE
+   20             continue
             IFAIL = P01ABE(IFAIL,IERR,SRNAME,NREC,REC)
-            RETURN
-   40             IF (NW==(-3)) THEN
+            return
+   40             if (NW == (-3)) then
                NZ = 0
                IERR = 5
                NREC = 1
                WRITE (REC,FMT=99988) AZ, AA
                IFAIL = P01ABE(IFAIL,IERR,SRNAME,NREC,REC)
-               RETURN
-            ELSE IF (NW/=(-1)) THEN
+               return
+            else if (NW /= (-1)) then
                NZ = 0
                IERR = 6
                NREC = 1
                WRITE (REC,FMT=99992)
                IFAIL = P01ABE(IFAIL,IERR,SRNAME,NREC,REC)
-               RETURN
+               return
             endif
    60             IERR = 3
             NZ = 0
             NREC = 1
             WRITE (REC,FMT=99991) FN
             IFAIL = P01ABE(IFAIL,IERR,SRNAME,NREC,REC)
-            RETURN
+            return
          ELSE
             IERR = 2
             NZ = 0
             NREC = 1
             WRITE (REC,FMT=99990) AZ, UFL
             IFAIL = P01ABE(IFAIL,IERR,SRNAME,NREC,REC)
-            RETURN
+            return
          endif
       ELSE
          NZ = 0
@@ -7470,7 +7470,7 @@
    endif
   endif
   IFAIL = P01ABE(IFAIL,IERR,SRNAME,NREC,REC)
-  RETURN
+  return
 !
   99999 FORMAT (1X,'** On entry, Z = (0.0,0.0)')
   99998 FORMAT (1X,'** On entry, FNU < 0: FNU = ',E13.5)
@@ -7479,26 +7479,26 @@
   99996 FORMAT (1X,'** On entry, N <= 0: N = ',I16)
   99995 FORMAT (1X,'** On entry, M has illegal value: M = ',I16)
   99994 FORMAT (1X,'** Results lack precision because abs(Z) =',1P,E13.5, &
-         ' >',E13.5)
+         ' > ',E13.5)
   99993 FORMAT (1X,'** Results lack precision, FNU+N-1 =',1P,E13.5, &
-         ' >',E13.5)
+         ' > ',E13.5)
   99992 FORMAT (1X,'** No computation - algorithm termination condition ', &
          'not met.')
   99991 FORMAT (1X,'** No computation because FNU+N-1 =',1P,E13.5,' is t', &
          'oo large.')
   99990 FORMAT (1X,'** No computation because abs(Z) =',1P,E13.5,' < ', &
          E13.5)
-  99989 FORMAT (1X,'** No computation because FNU+N-1 =',1P,E13.5,' >', &
+  99989 FORMAT (1X,'** No computation because FNU+N-1 =',1P,E13.5,' > ', &
          E13.5)
-  99988 FORMAT (1X,'** No computation because abs(Z) =',1P,E13.5,' >', &
+  99988 FORMAT (1X,'** No computation because abs(Z) =',1P,E13.5,' > ', &
          E13.5)
   END
-  REAL FUNCTION X02AHE(X)
+  REAL function X02AHE(X)
 !     MARK 9 RELEASE. NAG COPYRIGHT 1981.
 !     MARK 11.5(F77) REVISED. (SEPT 1985.)
 !
 !     * MAXIMUM ARGUMENT FOR SIN AND COS *
-!     RETURNS THE LARGEST POSITIVE REAL NUMBER MAXSC SUCH THAT
+!     returnS THE LARGEST POSITIVE REAL NUMBER MAXSC SUCH THAT
 !     SIN(MAXSC) AND COS(MAXSC) CAN BE SUCCESSFULLY COMPUTED
 !     BY THE COMPILER SUPPLIED SIN AND COS ROUTINES.
 !
@@ -7508,25 +7508,25 @@
   DATA CONX02 /1.677721600000E+7 /
 !     .. Executable Statements ..
   X02AHE = CONX02
-  RETURN
+  return
   END
-  REAL FUNCTION X02AJE()
+  REAL function X02AJE()
 !     MARK 12 RELEASE. NAG COPYRIGHT 1986.
 !
-!     RETURNS  (1/2)*B**(1-P)  IF ROUNDS IS .true.
-!     RETURNS  B**(1-P)  OTHERWISE
+!     returnS  (1/2)*B**(1-P)  IF ROUNDS IS .true.
+!     returnS  B**(1-P)  OTHERWISE
 !
   REAL CONX02
   DATA CONX02 /1.4210854715202E-14 /
 !bc      DATA CONX02 /1.421090000020E-14 /
 !     .. Executable Statements ..
   X02AJE = CONX02
-  RETURN
+  return
   END
-  REAL FUNCTION X02ALE()
+  REAL function X02ALE()
 !     MARK 12 RELEASE. NAG COPYRIGHT 1986.
 !
-!     RETURNS  (1 - B**(-P)) * B**EMAX  (THE LARGEST POSITIVE MODEL
+!     returnS  (1 - B**(-P)) * B**EMAX  (THE LARGEST POSITIVE MODEL
 !     NUMBER)
 !
   REAL CONX02
@@ -7534,14 +7534,14 @@
   DATA CONX02 /1.e30/
 !     .. Executable Statements ..
   X02ALE = CONX02
-  RETURN
+  return
   END
-  REAL FUNCTION X02AME()
+  REAL function X02AME()
 !     MARK 12 RELEASE. NAG COPYRIGHT 1986.
 !
-!     RETURNS THE 'SAFE RANGE' PARAMETER
+!     returnS THE 'SAFE RANGE' PARAMETER
 !     I.E. THE SMALLEST POSITIVE MODEL NUMBER Z SUCH THAT
-!     FOR ANY X WHICH SATISFIES X>=Z AND X<=1/Z
+!     FOR ANY X WHICH SATISFIES X >= Z AND X <= 1/Z
 !     THE FOLLOWING CAN BE COMPUTED WITHOUT OVERFLOW, UNDERFLOW OR OTHER
 !     ERROR
 !
@@ -7557,14 +7557,14 @@
   DATA CONX02 /1.e-27/
 !     .. Executable Statements ..
   X02AME = CONX02
-  RETURN
+  return
   END
-  REAL FUNCTION X02ANE()
+  REAL function X02ANE()
 !     MARK 15 RELEASE. NAG COPYRIGHT 1991.
 !
-!     Returns the 'safe range' parameter for complex numbers,
+!     returns the 'safe range' parameter for complex numbers,
 !     i.e. the smallest positive model number Z such that
-!     for any X which satisfies X>=Z and X<=1/Z
+!     for any X which satisfies X >= Z and X <= 1/Z
 !     the following can be computed without overflow, underflow or other
 !     error
 !
@@ -7585,14 +7585,14 @@
   DATA CONX02 / 2.708212596942E-30 /
 !     .. Executable Statements ..
   X02ANE = CONX02
-  RETURN
+  return
   END
-  INTEGER FUNCTION X02BBE(X)
+  INTEGER function X02BBE(X)
 !     NAG COPYRIGHT 1975
 !     MARK 4.5 RELEASE
 !     MARK 11.5(F77) REVISED. (SEPT 1985.)
 !     * MAXINT *
-!     RETURNS THE LARGEST INTEGER REPRESENTABLE ON THE COMPUTER
+!     returnS THE LARGEST INTEGER REPRESENTABLE ON THE COMPUTER
 !     THE X PARAMETER IS NOT USED
 !     .. Scalar Arguments ..
   REAL                    X
@@ -7601,45 +7601,45 @@
 !     X02BBE = 8388607
 ! DK DK DK      X02BBE =       70368744177663
   X02BBE =       744177663
-  RETURN
+  return
   END
-  INTEGER FUNCTION X02BHE()
+  INTEGER function X02BHE()
 !     MARK 12 RELEASE. NAG COPYRIGHT 1986.
 !
-!     RETURNS THE MODEL PARAMETER, B.
+!     returnS THE MODEL PARAMETER, B.
 !
 !     .. Executable Statements ..
   X02BHE =     2
-  RETURN
+  return
   END
-  INTEGER FUNCTION X02BJE()
+  INTEGER function X02BJE()
 !     MARK 12 RELEASE. NAG COPYRIGHT 1986.
 !
-!     RETURNS THE MODEL PARAMETER, p.
+!     returnS THE MODEL PARAMETER, p.
 !
 !     .. Executable Statements ..
   X02BJE =    47
-  RETURN
+  return
   END
-  INTEGER FUNCTION X02BKE()
+  INTEGER function X02BKE()
 !     MARK 12 RELEASE. NAG COPYRIGHT 1986.
 !
-!     RETURNS THE MODEL PARAMETER, EMIN.
+!     returnS THE MODEL PARAMETER, EMIN.
 !
 !     .. Executable Statements ..
   X02BKE =  -8192
-  RETURN
+  return
   END
-  INTEGER FUNCTION X02BLE()
+  INTEGER function X02BLE()
 !     MARK 12 RELEASE. NAG COPYRIGHT 1986.
 !
-!     RETURNS THE MODEL PARAMETER, EMAX.
+!     returnS THE MODEL PARAMETER, EMAX.
 !
 !     .. Executable Statements ..
   X02BLE =  8189
-  RETURN
+  return
   END
-  SUBROUTINE X04AAE(I,NERR)
+  subroutine X04AAE(I,NERR)
 !     MARK 7 RELEASE. NAG COPYRIGHT 1978
 !     MARK 7C REVISED IER-190 (MAY 1979)
 !     MARK 11.5(F77) REVISED. (SEPT 1985.)
@@ -7658,18 +7658,18 @@
 !     .. Data statements ..
   DATA              NERR1/0/
 !     .. Executable Statements ..
-  IF (I==0) NERR = NERR1
-  IF (I==1) NERR1 = NERR
-  RETURN
+  if (I == 0) NERR = NERR1
+  if (I == 1) NERR1 = NERR
+  return
   END
-  SUBROUTINE X04BAE(NOUT,REC)
+  subroutine X04BAE(NOUT,REC)
 !     MARK 11.5(F77) RELEASE. NAG COPYRIGHT 1986.
 !
 !     X04BAE writes the contents of REC to the unit defined by NOUT.
 !
 !     Trailing blanks are not output, except that if REC is entirely
 !     blank, a single blank character is output.
-!     If NOUT<0, i.e. if NOUT is not a valid Fortran unit identifier,
+!     If NOUT < 0, i.e. if NOUT is not a valid Fortran unit identifier,
 !     then no output occurs.
 !
 !     .. Scalar Arguments ..
@@ -7677,18 +7677,18 @@
   CHARACTER*(*)     REC
 !     .. Local Scalars ..
   INTEGER           I
-!     .. Intrinsic Functions ..
+!     .. Intrinsic functions ..
   INTRINSIC         LEN
 !     .. Executable Statements ..
-  IF (NOUT>=0) THEN
+  if (NOUT >= 0) then
 !        Remove trailing blanks
    DO 20 I = LEN(REC), 2, -1
-      IF (REC(I:I)/=' ') GO TO 40
-   20    CONTINUE
+      if (REC(I:I) /= ' ') goto 40
+   20    continue
 !        Write record to external file
    40    WRITE (NOUT,FMT=99999) REC(1:I)
   endif
-  RETURN
+  return
 !
   99999 FORMAT (A)
   END
