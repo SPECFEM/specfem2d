@@ -152,10 +152,13 @@
   integer, parameter :: npgeo = (nelem_x+1)*(nelem_z+1)
 ! numbering of the four corners of each mesh element
   integer, dimension(ngnod,NSPEC) :: knods
+
 ! coordinates of all the corners of the mesh elements in a first format
   double precision, dimension(0:nelem_x,0:nelem_z) :: xgrid,zgrid
+
 ! coordinates of all the corners of the mesh elements in another format
   double precision, dimension(NDIM,npgeo) :: coorg
+
 ! function that numbers the mesh points with a unique number
   integer, external :: num
 
@@ -180,6 +183,11 @@
   call define_derivation_matrices(xigll,zigll,wxgll,wzgll,hprime_xx,hprime_zz,hprimewgll_xx,hprimewgll_zz,NGLLX,NGLLZ)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  knods(:,:) = 0
+
+  xgrid(:,:) = 0
+  zgrid(:,:) = 0
 
 !--- definition of the mesh
   do iz = 0,nelem_z
@@ -210,6 +218,8 @@
       knods(4,ispec) = num(i,j+1,nelem_x)
     enddo
   enddo
+
+  if (ispec /= NSPEC) stop 'error in the total number of spectral elements created in the mesh'
 
 !
 !---- generate the global numbering

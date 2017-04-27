@@ -55,15 +55,11 @@
 ! to create the mesh
 ! geometry of the model (origin lower-left corner = 0,0) and mesh description
   double precision, parameter :: xmin = 0.d0           ! abscissa of left side of the model
-  double precision, parameter :: xmax = 8000.d0        ! abscissa of right side of the model
+  double precision, parameter :: xmax = 4000.d0        ! abscissa of right side of the model
   double precision, parameter :: zmin = 0.d0           ! abscissa of bottom side of the model
-  double precision, parameter :: zmax = 6000.d0        ! abscissa of top side of the model
-  integer, parameter :: nelem_x = 160             ! number of spectral elements along X
-  integer, parameter :: nelem_z = 120             ! number of spectral elements along Z
-
-!! DK DK added this for KH
-  integer, parameter :: EXTERNAL_SIZE_X = 50
-  integer, parameter :: EXTERNAL_SIZE_Z = 40
+  double precision, parameter :: zmax = 3000.d0        ! abscissa of top side of the model
+  integer, parameter :: nelem_x = 80             ! number of spectral elements along X
+  integer, parameter :: nelem_z = 60             ! number of spectral elements along Z
 
 ! number of GLL integration points in each direction of an element (degree plus one)
   integer, parameter :: NGLLX = 5
@@ -74,7 +70,8 @@
 
 ! number of spectral elements and of unique grid points of the mesh
   integer, parameter :: NSPEC = nelem_x * nelem_z
-  integer, parameter :: NGLOB = (nelem_x*(NGLLX-1) + 1) * (nelem_z*(NGLLZ-1) + 1)
+  integer, parameter :: NGLOB = (nelem_x*(NGLLX-1) + 1) * (nelem_z*(NGLLZ-1) + 1) &
+               + nelem_x*(NGLLX-1) + 1  !! we now add this second line because the points on the ITZ interface are duplicated
 
 ! constant value of the time step in the main time loop, and total number of time steps to simulate
   real(kind=CUSTOM_REAL), parameter :: deltat = 1.1e-3_CUSTOM_REAL
@@ -82,9 +79,9 @@
 
 ! we locate the source and the receiver in arbitrary elements here for this demo code
 ! the source is placed exactly in the middle of the grid here
-  integer, parameter :: NSPEC_SOURCE = NSPEC/2 - nelem_x/2, IGLL_SOURCE = NGLLX, JGLL_SOURCE = NGLLZ
+  integer, parameter :: NSPEC_SOURCE = NSPEC/4 - nelem_x/2, IGLL_SOURCE = NGLLX, JGLL_SOURCE = NGLLZ
 
-  integer, parameter :: NSPEC_RECEIVER = 2*NSPEC/3 + 20*nelem_x - nelem_x/3 - 3, IGLL_RECEIVER = 1, JGLL_RECEIVER = 1
+  integer, parameter :: NSPEC_RECEIVER = 2*NSPEC/3 - nelem_x/4, IGLL_RECEIVER = 1, JGLL_RECEIVER = 1
 
 ! for the source time function
   real(kind=CUSTOM_REAL), parameter :: f0 = 10.
@@ -126,14 +123,6 @@
 ! arrays with the mesh in double precision
   double precision, dimension(NDIM,NGLOB) :: coord
 
-!! DK DK added this for KH
-  logical, dimension(NSPEC) :: is_on_left_edge_of_KH_contour
-  logical, dimension(NSPEC) :: is_on_right_edge_of_KH_contour
-  logical, dimension(NSPEC) :: is_on_bottom_edge_of_KH_contour
-  logical, dimension(NSPEC) :: is_on_top_edge_of_KH_contour
-  real(kind=CUSTOM_REAL) :: nx,nz,xxi,zxi,xgamma,zgamma,weight,jacobian1D
-  real(kind=CUSTOM_REAL) :: my_function_to_integrate,test_integral_x,test_integral_z,exact
-
   double precision :: x_source,z_source
   double precision :: x_receiver,z_receiver
 
@@ -161,7 +150,9 @@
 ! parameters and arrays needed for the simple mesh creation routine
 
 ! total number of geometrical points that describe the geometry
-  integer, parameter :: npgeo = (nelem_x+1)*(nelem_z+1)
+  integer, parameter :: npgeo = (nelem_x+1)*(nelem_z+1) &
+               + nelem_x+1  !! we now add this second line because the points on the ITZ interface are duplicated
+
 ! numbering of the four corners of each mesh element
   integer, dimension(ngnod,NSPEC) :: knods
 
@@ -173,6 +164,12 @@
 
 ! function that numbers the mesh points with a unique number
   integer, external :: num
+
+!! height of the ITZ interface to create
+  double precision :: h
+
+  integer :: value_to_add_to_ipoin,value_to_add_to_knods
+  double precision :: value_to_add_to_zgrid
 
 ! timer to count elapsed time
   character(len=8) datein
@@ -196,27 +193,17 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! comment from Clement Durochat to DK:
-!
-! Attention a la formule (23) du papier de Pao and Varatharajulu, c'est celle qui m'avait induit en erreur
-! (elle n'est pas dans le bon ordre).
-!
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-!! DK DK added this for KH
-  is_on_left_edge_of_KH_contour(:) = .false.
-  is_on_right_edge_of_KH_contour(:) = .false.
-  is_on_bottom_edge_of_KH_contour(:) = .false.
-  is_on_top_edge_of_KH_contour(:) = .false.
+!!!! create the first half of the mesh (the bottom part)
 
   knods(:,:) = 0
 
   xgrid(:,:) = 0
   zgrid(:,:) = 0
 
+  value_to_add_to_ipoin = 0
+
 !--- definition of the mesh
-  do iz = 0,nelem_z
+  do iz = 0,nelem_z/2
     do ix = 0,nelem_x
         ! coordinates of the grid points (evenly spaced points along X and Z)
         xgrid(ix,iz) = xmin + (xmax - xmin) * dble(ix) / dble(nelem_x)
@@ -225,9 +212,10 @@
   enddo
 
 ! create the coorg array
-  do j = 0,nelem_z
+  do j = 0,nelem_z/2
     do i = 0,nelem_x
       ipoin = num(i,j,nelem_x)
+      value_to_add_to_ipoin = max(value_to_add_to_ipoin,ipoin)
       coorg(1,ipoin) = xgrid(i,j)
       coorg(2,ipoin) = zgrid(i,j)
     enddo
@@ -235,26 +223,53 @@
 
 ! create the knods array
   ispec = 0
-  do j=0,nelem_z-1
+  do j=0,nelem_z/2-1
     do i=0,nelem_x-1
       ispec = ispec + 1
       knods(1,ispec) = num(i,j,nelem_x)
       knods(2,ispec) = num(i+1,j,nelem_x)
       knods(3,ispec) = num(i+1,j+1,nelem_x)
       knods(4,ispec) = num(i,j+1,nelem_x)
+    enddo
+  enddo
 
-!! DK DK added this for KH
-!! DK DK create a rectangle around the source, which will be the KH contour
-      if (i == EXTERNAL_SIZE_X .and. (j >= EXTERNAL_SIZE_Z .and. j <= nelem_z-1 - EXTERNAL_SIZE_Z)) &
-                                                           is_on_left_edge_of_KH_contour(ispec) = .true.
-      if (i == nelem_x-1 - EXTERNAL_SIZE_X .and. (j >= EXTERNAL_SIZE_Z .and. j <= nelem_z-1 - EXTERNAL_SIZE_Z)) &
-                                                           is_on_right_edge_of_KH_contour(ispec) = .true.
+!!!! create the second half of the mesh (the top part)
 
-      if (j == EXTERNAL_SIZE_Z .and. (i >= EXTERNAL_SIZE_X .and. i <= nelem_x-1 - EXTERNAL_SIZE_X)) &
-                                                           is_on_bottom_edge_of_KH_contour(ispec) = .true.
-      if (j == nelem_z-1 - EXTERNAL_SIZE_Z .and. (i >= EXTERNAL_SIZE_X .and. i <= nelem_x-1 - EXTERNAL_SIZE_X)) &
-                                                           is_on_top_edge_of_KH_contour(ispec) = .true.
+  value_to_add_to_knods = maxval(knods)
 
+! total height of the first half of the mesh
+  value_to_add_to_zgrid = maxval(zgrid)
+
+!! height of the ITZ interface to create (set to 20% of the vertical size of an element here)
+  h = 0.20d0 * (zmax - zmin) / dble(nelem_z)
+
+!--- definition of the mesh
+  do iz = 0,nelem_z/2
+    do ix = 0,nelem_x
+        ! coordinates of the grid points (evenly spaced points along X and Z)
+        xgrid(ix,iz) = xmin + (xmax - xmin) * dble(ix) / dble(nelem_x)
+        !! here is where we add the thickness of the ITZ interface
+        zgrid(ix,iz) = zmin + (zmax - zmin) * dble(iz) / dble(nelem_z) + value_to_add_to_zgrid + h
+     enddo
+  enddo
+
+! create the coorg array
+  do j = 0,nelem_z/2
+    do i = 0,nelem_x
+      ipoin = num(i,j,nelem_x) + value_to_add_to_ipoin
+      coorg(1,ipoin) = xgrid(i,j)
+      coorg(2,ipoin) = zgrid(i,j)
+    enddo
+  enddo
+
+! create the knods array
+  do j=0,nelem_z/2-1
+    do i=0,nelem_x-1
+      ispec = ispec + 1
+      knods(1,ispec) = num(i,j,nelem_x) + value_to_add_to_knods
+      knods(2,ispec) = num(i+1,j,nelem_x) + value_to_add_to_knods
+      knods(3,ispec) = num(i+1,j+1,nelem_x) + value_to_add_to_knods
+      knods(4,ispec) = num(i,j+1,nelem_x) + value_to_add_to_knods
     enddo
   enddo
 
@@ -329,98 +344,6 @@
   print *,'z_receiver = ',z_receiver
   print *
 
-!
-!---- compute a test 1D integral along the KH box edges for validation purposes
-!
-
-!! DK DK added this for KH
-
-  test_integral_x = 0.
-  test_integral_z = 0.
-
-  do ispec = 1,nspec
-
-  if (is_on_left_edge_of_KH_contour(ispec)) then
-    i = 1
-    do j = 1,NGLLZ
-        xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-        zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xgamma**2 + zgamma**2)
-        nx = - zgamma / jacobian1D
-        nz = + xgamma / jacobian1D
-        weight = jacobian1D * wzgll(j)
-
-        x = coord(1,ibool(i,j,ispec))
-        z = coord(2,ibool(i,j,ispec))
-        my_function_to_integrate = 12.*z
-        test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
-        test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
-    enddo
-  endif
-
-  if (is_on_right_edge_of_KH_contour(ispec)) then
-    i = NGLLX
-    do j = 1,NGLLZ
-        xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-        zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xgamma**2 + zgamma**2)
-        nx = + zgamma / jacobian1D
-        nz = - xgamma / jacobian1D
-        weight = jacobian1D * wzgll(j)
-
-        x = coord(1,ibool(i,j,ispec))
-        z = coord(2,ibool(i,j,ispec))
-        my_function_to_integrate = 27.*z
-        test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
-        test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
-    enddo
-  endif
-
-  if (is_on_bottom_edge_of_KH_contour(ispec)) then
-    j = 1
-    do i = 1,NGLLX
-        xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-        zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xxi**2 + zxi**2)
-        nx = + zxi / jacobian1D
-        nz = - xxi / jacobian1D
-        weight = jacobian1D * wxgll(i)
-
-        x = coord(1,ibool(i,j,ispec))
-        z = coord(2,ibool(i,j,ispec))
-        my_function_to_integrate = 12.*x
-        test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
-        test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
-    enddo
-  endif
-
-  if (is_on_top_edge_of_KH_contour(ispec)) then
-    j = NGLLZ
-    do i = 1,NGLLX
-        xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-        zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xxi**2 + zxi**2)
-        nx = - zxi / jacobian1D
-        nz = + xxi / jacobian1D
-        weight = jacobian1D * wxgll(i)
-
-        x = coord(1,ibool(i,j,ispec))
-        z = coord(2,ibool(i,j,ispec))
-        my_function_to_integrate = 27.*x
-        test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
-        test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
-    enddo
-  endif
-
-  enddo
-
-  print *
-  exact = (27-12)*(4000**2 - 2000**2)/2
-  print *,'Value of test_integral_x  numerical = ',test_integral_x,'  exact = ',exact,'  difference = ',test_integral_x - exact
-  exact = (27-12)*(5500**2 - 2500**2)/2
-  print *,'Value of test_integral_z  numerical = ',test_integral_z,'  exact = ',exact,'  difference = ',test_integral_z - exact
-  print *
-
 ! clear initial vectors before starting the time loop
   displ(:,:) = 0. !!!!!!!!!! VERYSMALLVAL
   veloc(:,:) = 0.
@@ -478,8 +401,7 @@
   write(*,*)
 
 ! draw the displacement vector field in a PostScript file
-      call plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,x_receiver,z_receiver,it,deltat,NGLLX,NGLLZ,NDIM, &
-        is_on_left_edge_of_KH_contour,is_on_right_edge_of_KH_contour,is_on_bottom_edge_of_KH_contour,is_on_top_edge_of_KH_contour)
+      call plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,x_receiver,z_receiver,it,deltat,NGLLX,NGLLZ,NDIM)
 
     endif
 
