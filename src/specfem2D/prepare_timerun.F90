@@ -84,7 +84,7 @@
 
     ! attenuation
     call prepare_timerun_attenuation_solid()
-    call prepare_timerun_attenuation_fluid()
+!!! DK DK 27 April 2017: this introduces a bug    call prepare_timerun_attenuation_fluid()
 
     ! prepares GPU arrays
     if (GPU_MODE) call prepare_GPU()
