@@ -282,6 +282,12 @@
   ! 'ACOUSTIC_FORCING'
   write(IOUT) ACOUSTIC_FORCING
 
+  ! 'NUMBER_OF_SIMULTANEOUS_RUNS'
+  write(IOUT) NUMBER_OF_SIMULTANEOUS_RUNS
+
+  ! 'BROADCAST_SAME_MESH_AND_MODEL'
+  write(IOUT) BROADCAST_SAME_MESH_AND_MODEL
+
   end subroutine save_databases_init
 
 !-------------------------------------------------------------------------------

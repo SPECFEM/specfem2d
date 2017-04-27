@@ -464,7 +464,7 @@
 
         if (ispec_is_elastic(ispec)) then
 
-          ! get elastic parameters of current spectral elemegammaznt
+          ! get elastic parameters of current spectral element
           lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
           mul_unrelaxed_elastic = poroelastcoef(2,1,kmato(ispec))
 

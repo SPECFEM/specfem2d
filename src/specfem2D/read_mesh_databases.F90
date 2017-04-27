@@ -184,6 +184,12 @@
   ! read the ACOUSTIC_FORCING flag
   read(IIN) ACOUSTIC_FORCING
 
+  ! 'NUMBER_OF_SIMULTANEOUS_RUNS'
+  read(IIN) NUMBER_OF_SIMULTANEOUS_RUNS
+
+  ! 'BROADCAST_SAME_MESH_AND_MODEL'
+  read(IIN) BROADCAST_SAME_MESH_AND_MODEL
+
   !-------- finish reading init section
   ! sets time step for time scheme
   deltat = DT

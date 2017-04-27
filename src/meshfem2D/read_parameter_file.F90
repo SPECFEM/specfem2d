@@ -229,6 +229,9 @@
     call bcast_all_singlel(output_wavefield_dumps)
     call bcast_all_singlei(imagetype_wavefield_dumps)
     call bcast_all_singlel(use_binary_for_wavefield_dumps)
+
+    call bcast_all_singlei(NUMBER_OF_SIMULTANEOUS_RUNS)
+    call bcast_all_singlel(BROADCAST_SAME_MESH_AND_MODEL)
   endif
 
   ! derive additional settings/flags based on input parameters
@@ -672,6 +675,12 @@
 
   call read_value_logical_p(use_binary_for_wavefield_dumps, 'solver.use_binary_for_wavefield_dumps')
   if (err_occurred() /= 0) stop 'error reading parameter use_binary_for_wavefield_dumps in Par_file'
+
+  call read_value_integer_p(NUMBER_OF_SIMULTANEOUS_RUNS, 'mesher.NUMBER_OF_SIMULTANEOUS_RUNS')
+  if (err_occurred() /= 0) stop 'error reading parameter NUMBER_OF_SIMULTANEOUS_RUNS in Par_file'
+
+  call read_value_logical_p(BROADCAST_SAME_MESH_AND_MODEL, 'solver.BROADCAST_SAME_MESH_AND_MODEL')
+  if (err_occurred() /= 0) stop 'error reading parameter BROADCAST_SAME_MESH_AND_MODEL in Par_file'
 
   !--------------------------------------------------------------------
 

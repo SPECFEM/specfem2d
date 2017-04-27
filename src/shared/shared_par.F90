@@ -332,6 +332,10 @@ module shared_input_parameters
   integer :: imagetype_wavefield_dumps
   logical :: use_binary_for_wavefield_dumps
 
+  ! NUMBER_OF_SIMULTANEOUS_RUNS
+  integer :: NUMBER_OF_SIMULTANEOUS_RUNS
+  logical :: BROADCAST_SAME_MESH_AND_MODEL
+
 end module shared_input_parameters
 
 !
