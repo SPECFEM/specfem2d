@@ -61,6 +61,10 @@
   integer, parameter :: nelem_x = 80             ! number of spectral elements along X
   integer, parameter :: nelem_z = 60             ! number of spectral elements along Z
 
+!! DK DK added this for example of contour integral for Ting
+  integer, parameter :: EXTERNAL_SIZE_X = 6
+  integer, parameter :: EXTERNAL_SIZE_Z = 6
+
 ! number of GLL integration points in each direction of an element (degree plus one)
   integer, parameter :: NGLLX = 5
   integer, parameter :: NGLLZ = NGLLX
@@ -122,6 +126,14 @@
 
 ! arrays with the mesh in double precision
   double precision, dimension(NDIM,NGLOB) :: coord
+
+!! DK DK added this for example of contour integral for Ting
+  logical, dimension(NSPEC) :: is_on_left_edge_of_integral_contour
+  logical, dimension(NSPEC) :: is_on_right_edge_of_integral_contour
+  logical, dimension(NSPEC) :: is_on_bottom_edge_of_integral_contour
+  logical, dimension(NSPEC) :: is_on_top_edge_of_integral_contour
+  real(kind=CUSTOM_REAL) :: nx,nz,xxi,zxi,xgamma,zgamma,weight,jacobian1D
+  real(kind=CUSTOM_REAL) :: my_function_to_integrate,test_integral_x,test_integral_z,exact
 
   double precision :: x_source,z_source
   double precision :: x_receiver,z_receiver
@@ -193,6 +205,12 @@
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+!! DK DK added this for example of contour integral for Ting
+  is_on_left_edge_of_integral_contour(:) = .false.
+  is_on_right_edge_of_integral_contour(:) = .false.
+  is_on_bottom_edge_of_integral_contour(:) = .false.
+  is_on_top_edge_of_integral_contour(:) = .false.
+
 !!!! create the first half of the mesh (the bottom part)
 
   knods(:,:) = 0
@@ -230,6 +248,19 @@
       knods(2,ispec) = num(i+1,j,nelem_x)
       knods(3,ispec) = num(i+1,j+1,nelem_x)
       knods(4,ispec) = num(i,j+1,nelem_x)
+
+!! DK DK added this for example of contour integral for Ting
+!! DK DK create a rectangle around the source, which will be the contour
+      if (i == EXTERNAL_SIZE_X .and. (j >= EXTERNAL_SIZE_Z .and. j <= nelem_z/2-1 - EXTERNAL_SIZE_Z)) &
+                                                           is_on_left_edge_of_integral_contour(ispec) = .true.
+      if (i == nelem_x-1 - EXTERNAL_SIZE_X .and. (j >= EXTERNAL_SIZE_Z .and. j <= nelem_z/2-1 - EXTERNAL_SIZE_Z)) &
+                                                           is_on_right_edge_of_integral_contour(ispec) = .true.
+
+      if (j == EXTERNAL_SIZE_Z .and. (i >= EXTERNAL_SIZE_X .and. i <= nelem_x-1 - EXTERNAL_SIZE_X)) &
+                                                           is_on_bottom_edge_of_integral_contour(ispec) = .true.
+      if (j == nelem_z/2-1 - EXTERNAL_SIZE_Z .and. (i >= EXTERNAL_SIZE_X .and. i <= nelem_x-1 - EXTERNAL_SIZE_X)) &
+                                                           is_on_top_edge_of_integral_contour(ispec) = .true.
+
     enddo
   enddo
 
@@ -343,6 +374,102 @@
   print *,'x_receiver = ',x_receiver
   print *,'z_receiver = ',z_receiver
   print *
+
+!
+!---- compute a test 1D integral along the contour to create an example for Ting
+!
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!! DK DK added this for example of contour integral for Ting
+
+  test_integral_x = 0.
+  test_integral_z = 0.
+
+  do ispec = 1,nspec
+
+  if (is_on_left_edge_of_integral_contour(ispec)) then
+    i = 1
+    do j = 1,NGLLZ
+        xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+        zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+        jacobian1D = sqrt(xgamma**2 + zgamma**2)
+        nx = - zgamma / jacobian1D
+        nz = + xgamma / jacobian1D
+        weight = jacobian1D * wzgll(j)
+
+        x = coord(1,ibool(i,j,ispec))
+        z = coord(2,ibool(i,j,ispec))
+        my_function_to_integrate = 12.*z
+        test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
+        test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
+    enddo
+  endif
+
+  if (is_on_right_edge_of_integral_contour(ispec)) then
+    i = NGLLX
+    do j = 1,NGLLZ
+        xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+        zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+        jacobian1D = sqrt(xgamma**2 + zgamma**2)
+        nx = + zgamma / jacobian1D
+        nz = - xgamma / jacobian1D
+        weight = jacobian1D * wzgll(j)
+
+        x = coord(1,ibool(i,j,ispec))
+        z = coord(2,ibool(i,j,ispec))
+        my_function_to_integrate = 27.*z
+        test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
+        test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
+    enddo
+  endif
+
+  if (is_on_bottom_edge_of_integral_contour(ispec)) then
+    j = 1
+    do i = 1,NGLLX
+        xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+        zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+        jacobian1D = sqrt(xxi**2 + zxi**2)
+        nx = + zxi / jacobian1D
+        nz = - xxi / jacobian1D
+        weight = jacobian1D * wxgll(i)
+
+        x = coord(1,ibool(i,j,ispec))
+        z = coord(2,ibool(i,j,ispec))
+        my_function_to_integrate = 12.*x
+        test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
+        test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
+    enddo
+  endif
+
+  if (is_on_top_edge_of_integral_contour(ispec)) then
+    j = NGLLZ
+    do i = 1,NGLLX
+        xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+        zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+        jacobian1D = sqrt(xxi**2 + zxi**2)
+        nx = - zxi / jacobian1D
+        nz = + xxi / jacobian1D
+        weight = jacobian1D * wxgll(i)
+
+        x = coord(1,ibool(i,j,ispec))
+        z = coord(2,ibool(i,j,ispec))
+        my_function_to_integrate = 27.*x
+        test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
+        test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
+    enddo
+  endif
+
+  enddo
+
+  print *
+  exact = (27-12)*(1200**2 - 300**2)/2
+  print *,'Value of test_integral_x  numerical = ',test_integral_x,'  exact = ',exact,'  difference = ',test_integral_x - exact
+  exact = (27-12)*(3700**2 - 300**2)/2
+  print *,'Value of test_integral_z  numerical = ',test_integral_z,'  exact = ',exact,'  difference = ',test_integral_z - exact
+  print *
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! clear initial vectors before starting the time loop
   displ(:,:) = 0. !!!!!!!!!! VERYSMALLVAL
