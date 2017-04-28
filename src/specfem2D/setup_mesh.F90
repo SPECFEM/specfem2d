@@ -561,6 +561,8 @@
            Qmu_attenuationext(NGLLX,NGLLZ,nspec_ext),stat=ier)
   if (ier /= 0) stop 'Error allocating external model arrays for vp vs rho attenuation'
 
+  if (tomo_material > 0) MODEL = 'tomo'
+
   ! allocates material arrays for gravity Nsq c11 c13 c15 c33 c35 c55 c12 c23 c25 c22
   if (assign_external_model .and. ( trim(MODEL) == 'external' .or. &
                                     trim(MODEL) == 'tomo' .or. trim(MODEL) == 'binary_voigt' ) ) then

@@ -38,9 +38,8 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN
 
-  use specfem_par, only: nspec,nglob,ibool, &
-    ispec_is_elastic,ispec_is_anisotropic, &
-    coord,kmato,MODEL,tomo_material,myrank,setup_with_binary_database
+  use specfem_par, only: nspec,nglob,ibool,ispec_is_elastic,ispec_is_anisotropic, &
+    coord,kmato,MODEL,myrank,setup_with_binary_database
 
   ! external model parameters
   use specfem_par, only: rhoext,vpext,vsext,gravityext,Nsqext,etaext, &
@@ -55,10 +54,8 @@
   double precision :: vs_val,vp_val,rho_val
   character(len=150) :: inputname
 
-! note: we read in external models once the basic mesh with its geometry and GLL points has been setup.
-!       External models define new velocity/material parameters which need to be defined on all GLL points.
-
-  if (tomo_material > 0) MODEL = 'tomo'
+  ! note: we read in external models once the basic mesh with its geometry and GLL points has been setup.
+  !       External models define new velocity/material parameters which need to be defined on all GLL points.
 
   select case (trim(MODEL))
   case ('legacy')
