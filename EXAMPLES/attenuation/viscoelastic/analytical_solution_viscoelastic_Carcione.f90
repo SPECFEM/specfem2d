@@ -1,7 +1,9 @@
 
-  program analytical_sol
+  program analytical_solution
 
   implicit none
+
+!! DK DK Dimitri Komatitsch, CNRS Marseille, France, April 2017: added the elastic reference calculation.
 
 !! DK DK Dimitri Komatitsch, CNRS Marseille, France, October 2015:
 !! DK DK by default I turned off the fix for attenuation causality (using the unrelaxed velocities
@@ -9,6 +11,9 @@
 !! DK DK this modification was not consistent with the calculations of the tau values
 !! DK DK made by Carcione et al. 1988 and by Carcione 1993.
   logical, parameter :: FIX_ATTENUATION_CAUSALITY = .false.
+
+! compute the elastic solution instead of the viscoelastic one
+  logical, parameter :: COMPUTE_ELASTIC_CASE_INSTEAD = .false.
 
   integer iratio
   parameter(iratio = 32)
@@ -55,42 +60,48 @@
 ! number of Zener standard linear solids in parallel
   integer, parameter :: Lnu = 2
 
-! attenuation constants from Carcione 1988 GJI vol 95 p 604
+! attenuation constants from Carcione et al. 1988 GJI vol 95 p 604
 ! two mechanisms for the moment
   double precision tau_epsilon_nu1_mech1, tau_sigma_nu1_mech1, tau_epsilon_nu2_mech1, tau_sigma_nu2_mech1, &
     tau_epsilon_nu1_mech2, tau_sigma_nu1_mech2, tau_epsilon_nu2_mech2, tau_sigma_nu2_mech2
 
-! IMPORTANT: for this analytical code the weights to use must be defined with
+! VERY IMPORTANT: for this analytical code the weights to use must be defined with
 !   tau_epsilon(i) = tau_sigma(i) * (1.d0 + weight(i))
 ! instead of
 !   tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * weight(i))
 ! in file src/specfem2D/attenuation_model.f90
 ! because the analytical formulas of Carcione et al. 1998 do not include the 1/N factor
-  parameter(tau_epsilon_nu1_mech1 = 0.267810177764254)
-  parameter(tau_epsilon_nu1_mech2 = 1.163370309896023E-002)
-  parameter(tau_sigma_nu1_mech1   = 0.243596771493927)
-  parameter(tau_sigma_nu1_mech2   = 1.049004095935143E-002)
 
-  parameter(tau_epsilon_nu2_mech1 = 0.267684299903122d0)
-  parameter(tau_epsilon_nu2_mech2 = 1.166365166210135d-002)
-  parameter(tau_sigma_nu2_mech1   = 0.240851555587848d0)
-  parameter(tau_sigma_nu2_mech2   = 1.038145073000886d-002)
-
-! this below is from another paper by Carcione
+! this below is from Carcione et al. 1988 GJI vol 95 p 604 Table 1
 ! parameter(tau_epsilon_nu1_mech1 = 0.0325305d0)
 ! parameter(tau_epsilon_nu1_mech2 = 0.0032530d0)
 ! parameter(tau_sigma_nu1_mech1   = 0.0311465d0)
 ! parameter(tau_sigma_nu1_mech2   = 0.0031146d0)
-!
+
 ! parameter(tau_epsilon_nu2_mech1 = 0.0332577d0)
 ! parameter(tau_epsilon_nu2_mech2 = 0.0033257d0)
 ! parameter(tau_sigma_nu2_mech1   = 0.0304655d0)
 ! parameter(tau_sigma_nu2_mech2   = 0.0030465d0)
 
-  double precision M1,M2
-! these values come from Carcione et al. 1998, Table 1
-  parameter(M1 = 20.d9)
-  parameter(M2 = 16.d9)
+  parameter(tau_epsilon_nu1_mech1 = 4.262332253966861E-002)
+  parameter(tau_epsilon_nu1_mech2 = 1.851561240017022E-003)
+  parameter(tau_sigma_nu1_mech1   = 3.876976972195918E-002)
+  parameter(tau_sigma_nu1_mech2   = 1.669539210862250E-003)
+
+  parameter(tau_epsilon_nu2_mech1 = 4.260395276908462E-002)
+  parameter(tau_epsilon_nu2_mech2 = 1.856317437490798E-003)
+  parameter(tau_sigma_nu2_mech1   = 3.833318400245433E-002)
+  parameter(tau_sigma_nu2_mech2   = 1.652248125544272E-003)
+
+! these values come from Carcione et al. 1988 GJI vol 95 p 604 Table 1
+
+! unrelaxed (f = +infinity) values, i.e. slower Vp and Vs velocities
+  double precision, parameter :: M1_unrelaxed = 20.d9
+  double precision, parameter :: M2_unrelaxed = 16.d9
+
+! relaxed (f = 0) values, i.e. faster Vp and Vs velocities
+  double precision, parameter :: M1_relaxed = 23744567022.0200d0
+  double precision, parameter :: M2_relaxed = 19758665085.1840d0
 
   integer ifreq,ifreq2
   double precision deltafreq,freq,omega,omega0,deltat,time
@@ -179,32 +190,37 @@
 ! or use far less standard zero frequency (relaxed) reference,
 ! in which waves speed up when attenuation is turned on
   if (FIX_ATTENUATION_CAUSALITY) then
-    M1C = M1 /(1.d0 - Lnu + tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1 + &
+    M1C = M1_unrelaxed /(1.d0 - Lnu + tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1 + &
       tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2) &
         * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu1_mech1) &
                     / dcmplx(1.d0,omega*tau_sigma_nu1_mech1) &
               + dcmplx(1.d0,omega*tau_epsilon_nu1_mech2) &
                     / dcmplx(1.d0,omega*tau_sigma_nu1_mech2) )
-    M2C = M2 /(1.d0 - Lnu+tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1 + &
+    M2C = M2_unrelaxed /(1.d0 - Lnu+tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1 + &
       tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2) &
         * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu2_mech1) &
                     / dcmplx(1.d0,omega*tau_sigma_nu2_mech1) &
               + dcmplx(1.d0,omega*tau_epsilon_nu2_mech2) &
                     / dcmplx(1.d0,omega*tau_sigma_nu2_mech2) )
   else
-    M1C = M1 * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu1_mech1) &
+    M1C = M1_unrelaxed * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu1_mech1) &
                     / dcmplx(1.d0,omega*tau_sigma_nu1_mech1) &
               + dcmplx(1.d0,omega*tau_epsilon_nu1_mech2) &
                     / dcmplx(1.d0,omega*tau_sigma_nu1_mech2) )
-    M2C = M2 * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu2_mech1) &
+    M2C = M2_unrelaxed * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu2_mech1) &
                     / dcmplx(1.d0,omega*tau_sigma_nu2_mech1) &
               + dcmplx(1.d0,omega*tau_epsilon_nu2_mech2) &
                     / dcmplx(1.d0,omega*tau_sigma_nu2_mech2) )
   endif
 
+  if (COMPUTE_ELASTIC_CASE_INSTEAD) then
+    M1C = M1_relaxed
+    M2C = M2_relaxed
+  endif
+
   E = (M1C + M2C) / 2
-  V1 = cdsqrt(E / rho)
-  V2 = cdsqrt(M2C / (2.d0 * rho))
+  V1 = cdsqrt(E / rho)  !! DK DK this is Vp
+  V2 = cdsqrt(M2C / (2.d0 * rho))  !! DK DK this is Vs
 
 ! calcul de la solution analytique en frequence
   phi1(ifreq) = u1(omega,V1,V2,x1,x2,rho) * fomega(ifreq)
@@ -270,7 +286,11 @@
   deltat = 1.d0 / (freqmax*dble(iratio))
 
 ! save time result inverse FFT for Ux
-  open(unit=11,file='Ux_time_analytical_solution_viscoelastic.dat',status='unknown')
+  if (COMPUTE_ELASTIC_CASE_INSTEAD) then
+    open(unit=11,file='Ux_time_analytical_solution_elastic.dat',status='unknown')
+  else
+    open(unit=11,file='Ux_time_analytical_solution_viscoelastic.dat',status='unknown')
+  endif
   do it=1,nt
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
         time = dble(it)*deltat - t0
@@ -296,7 +316,11 @@
   call cfftb(nt,c,wsave)
 
 ! save time result inverse FFT for Uz
-  open(unit=11,file='Uz_time_analytical_solution_viscoelastic.dat',status='unknown')
+  if (COMPUTE_ELASTIC_CASE_INSTEAD) then
+    open(unit=11,file='Uz_time_analytical_solution_elastic.dat',status='unknown')
+  else
+    open(unit=11,file='Uz_time_analytical_solution_viscoelastic.dat',status='unknown')
+  endif
   do it=1,nt
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
         time = dble(it)*deltat - t0
