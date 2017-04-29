@@ -42,6 +42,12 @@ P_SV                            = .true.
 # set to true to use GPUs
 GPU_MODE                        = .false.
 
+# creates/reads a binary database that allows to skip all time consuming setup steps in initialization
+# 0 = does not read/create database
+# 1 = creates database
+# 2 = reads database
+setup_with_binary_database = 0
+
 # available models
 #   default       - define model using nbmodels below
 #   ascii         - read model from ascii database file
@@ -64,14 +70,15 @@ SAVE_MODEL                      = default
 #-----------------------------------------------------------------------------
 
 # attenuation parameters
-ATTENUATION_VISCOELASTIC        = .true.         # turn attenuation (viscoelasticity) on or off for non-poroelastic solid or fluid parts of the model
+ATTENUATION_VISCOELASTIC        = .true.         # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
+ATTENUATION_FLUID               = .false.        # turn attenuation (viscoacousticity) on or off for non-poroelastic fluid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
 Q0                              = 1              # quality factor for viscous attenuation
 freq0                           = 10             # frequency for viscous attenuation
 
 # for viscoelastic attenuation
 N_SLS                           = 2              # number of standard linear solids for attenuation (3 is usually the minimum)
-f0_attenuation                  = 5.196152422706633 # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
+f0_attenuation                  = 5.196          # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
 READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
@@ -123,10 +130,6 @@ USE_TRICK_FOR_BETTER_PRESSURE   = .false.
 #  of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
 NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000
 
-# Compute the field int_0^t v^2 dt for a set of GLL points and write it to file. Use
-# the script utils/visualisation/plotIntegratedEnergyFile.py to watch. It is refreshed at the same time than the seismograms
-COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
-
 # use this t0 as earliest starting time rather than the automatically calculated one
 USER_T0                         = 0.0d0
 
@@ -172,7 +175,7 @@ save_ASCII_kernels              = .true.
 
 # Perfectly Matched Layer (PML) boundaries
 # absorbing boundary active or not
-PML_BOUNDARY_CONDITIONS         = .false.
+PML_BOUNDARY_CONDITIONS         = .true.
 NELEM_PML_THICKNESS             = 3
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
@@ -192,9 +195,16 @@ PERIODIC_HORIZ_DIST             = 0.3597d0
 #-----------------------------------------------------------------------------
 nbmodels                        = 1
 # available material types (see user manual for more information)
-#   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0
-#   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
-#   anistoropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
+#   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
+#### currently acoustic media have no attenuation and thus QKappa and Qmu are ignored, but this will or should change soon
+# when viscoelasticity is turned on, the Vp and Vs values that are read here are the UNRELAXED ones i.e. the values at infinite frequency
+# unless the READ_VELOCITIES_AT_f0 parameter above is set to true, in which case they are the values at frequency f0.
+# Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
+# To convert one to the other see doc/Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf and
+# utils/attenuation/conversion_from_Qkappa_Qmu_to_Qp_Qs_from_Dahlen_Tromp_959_960.f90.
+#   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
+#   anisotropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
+#   anisotropic in AXISYM: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 c22 0 0
 #   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
 #   tomo:        model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
 1 1 2000.d0  3297.849 2222.536 0 0 22.3 20. 0 0 0 0 0 0
@@ -214,12 +224,12 @@ read_external_mesh              = .false.
 
 # data concerning mesh, when generated using third-party app (more info in README)
 # (see also absorbing_conditions above)
-mesh_file                       = ./DATA/Mesh_canyon/canyon_mesh_file   # file containing the mesh
-nodes_coords_file               = ./DATA/Mesh_canyon/canyon_nodes_coords_file   # file containing the nodes coordinates
-materials_file                  = ./DATA/Mesh_canyon/canyon_materials_file   # file containing the material number for each element
-free_surface_file               = ./DATA/Mesh_canyon/canyon_free_surface_file   # file containing the free surface
+mesh_file                       = ./DATA/mesh_file  # file containing the mesh
+nodes_coords_file               = ./DATA/nodes_coords_file   # file containing the nodes coordinates
+materials_file                  = ./DATA/materials_file   # file containing the material number for each element
+free_surface_file               = ./DATA/free_surface_file   # file containing the free surface
 axial_elements_file             = ./DATA/axial_elements_file   # file containing the axial elements if AXISYM is true
-absorbing_surface_file          = ./DATA/Mesh_canyon/canyon_absorbing_surface_file   # file containing the absorbing surface
+absorbing_surface_file          = ./DATA/absorbing_surface_file   # file containing the absorbing surface
 acoustic_forcing_surface_file   = ./DATA/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
 absorbing_cpml_file             = ./DATA/absorbing_cpml_file # file containing the CPML element numbers
 tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing the curve delimiting the velocity model
@@ -239,13 +249,14 @@ xmax                            = 2000.d0        # abscissa of right side of the
 nx                              = 44             # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
-absorbbottom                    = .false.
-absorbright                     = .false.
-absorbtop                       = .false.
-absorbleft                      = .false.
+absorbbottom                    = .true.
+absorbright                     = .true.
+absorbtop                       = .true.
+absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 1              # then set below the different regions and model number for each region
+# format of each line: nxmin nxmax nzmin nzmax material_number
 1 44 1   44 1
 
 #-----------------------------------------------------------------------------
@@ -261,11 +272,16 @@ NSTEP_BETWEEN_OUTPUT_INFO       = 100
 output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
 output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 
-# compute and output total acoustic and elastic energy curves (slows down the code significantly)
+# to plot total energy curves, for instance to monitor how CPML absorbing layers behave;
+# should be turned OFF in most cases because a bit expensive
 OUTPUT_ENERGY                   = .false.
 
 # every how many time steps we compute energy (which is a bit expensive to compute)
 NTSTEP_BETWEEN_OUTPUT_ENERGY    = 10
+
+# Compute the field int_0^t v^2 dt for a set of GLL points and write it to file. Use
+# the script utils/visualisation/plotIntegratedEnergyFile.py to watch. It is refreshed at the same time than the seismograms
+COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
 
 #-----------------------------------------------------------------------------
 #
@@ -273,11 +289,9 @@ NTSTEP_BETWEEN_OUTPUT_ENERGY    = 10
 #
 #-----------------------------------------------------------------------------
 
-# every how many time steps we draw JPEG or PostScript pictures of the simulation (costly, do not use a very small value)
+# every how many time steps we draw JPEG or PostScript pictures of the simulation
+# and/or we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
 NSTEP_BETWEEN_OUTPUT_IMAGES     = 100
-
-# every how many time steps we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
-NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS = 100
 
 # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
 cutsnaps                        = 1.
@@ -285,7 +299,7 @@ cutsnaps                        = 1.
 #### for JPEG color images ####
 output_color_image              = .true.         # output JPEG color image of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
 imagetype_JPEG                  = 3              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
-factor_subsample_image          = 1.0d0          # (double precision) factor to subsample color images output by the code (useful for very large models)
+factor_subsample_image          = 1.0d0          # (double precision) factor to subsample or oversample (if set to e.g. 0.5) color images output by the code (useful for very large models, or to get nicer looking denser pictures)
 USE_CONSTANT_MAX_AMPLITUDE      = .false.        # by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
 CONSTANT_MAX_AMPLITUDE_TO_USE   = 1.17d4         # constant maximum amplitude to use for all color images if the above USE_CONSTANT_MAX_AMPLITUDE option is true
 POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in JPEG color images
@@ -306,7 +320,56 @@ sizemax_arrows                  = 1.d0           # maximum size of arrows on Pos
 US_LETTER                       = .false.        # use US letter or European A4 paper for PostScript plots
 
 #### for wavefield dumps ####
-output_wavefield_dumps          = .false.        # output wave field to a text file every NSTEP_BETWEEN_OUTPUT_TEXT_DUMPS time steps (creates very big files)
+output_wavefield_dumps          = .false.        # output wave field to a text file (creates very big files)
 imagetype_wavefield_dumps       = 1              # display 1=displ vector 2=veloc vector 3=accel vector 4=pressure
 use_binary_for_wavefield_dumps  = .false.        # use ASCII or single-precision binary format for the wave field dumps
 
+#-----------------------------------------------------------
+
+# Ability to run several calculations (several earthquakes)
+# in an embarrassingly-parallel fashion from within the same run;
+# this can be useful when using a very large supercomputer to compute
+# many earthquakes in a catalog, in which case it can be better from
+# a batch job submission point of view to start fewer and much larger jobs,
+# each of them computing several earthquakes in parallel.
+# To turn that option on, set parameter NUMBER_OF_SIMULTANEOUS_RUNS to a value greater than 1.
+# To implement that, we create NUMBER_OF_SIMULTANEOUS_RUNS MPI sub-communicators,
+# each of them being labeled "my_local_mpi_comm_world", and we use them
+# in all the routines in "src/shared/parallel.f90", except in MPI_ABORT() because in that case
+# we need to kill the entire run.
+# When that option is on, of course the number of processor cores used to start
+# the code in the batch system must be a multiple of NUMBER_OF_SIMULTANEOUS_RUNS,
+# all the individual runs must use the same number of processor cores,
+# which as usual is NPROC in the Par_file,
+# and thus the total number of processor cores to request from the batch system
+# should be NUMBER_OF_SIMULTANEOUS_RUNS * NPROC.
+# All the runs to perform must be placed in directories called run0001, run0002, run0003 and so on
+# (with exactly four digits).
+#
+# Imagine you have 10 independent calculations to do, each of them on 100 cores; you have three options:
+#
+# 1/ submit 10 jobs to the batch system
+#
+# 2/ submit a single job on 1000 cores to the batch, and in that script create a sub-array of jobs to start 10 jobs,
+# each running on 100 cores (see e.g. http://www.schedmd.com/slurmdocs/job_array.html )
+#
+# 3/ submit a single job on 1000 cores to the batch, start SPECFEM2D on 1000 cores, create 10 sub-communicators,
+# cd into one of 10 subdirectories (called e.g. run0001, run0002,... run0010) depending on the sub-communicator
+# your MPI rank belongs to, and run normally on 100 cores using that sub-communicator.
+#
+# The option below implements 3/.
+#
+NUMBER_OF_SIMULTANEOUS_RUNS     = 1
+
+# if we perform simultaneous runs in parallel, if only the source and receivers vary between these runs
+# but not the mesh nor the model (velocity and density) then we can also read the mesh and model files
+# from a single run in the beginning and broadcast them to all the others; for a large number of simultaneous
+# runs for instance when solving inverse problems iteratively this can DRASTICALLY reduce I/Os to disk in the solver
+# (by a factor equal to NUMBER_OF_SIMULTANEOUS_RUNS), and reducing I/Os is crucial in the case of huge runs.
+# Thus, always set this option to .true. if the mesh and the model are the same for all simultaneous runs.
+# In that case there is no need to duplicate the mesh and model file database (the content of the DATABASES_MPI
+# directories) in each of the run0001, run0002,... directories, it is sufficient to have one in run0001
+# and the code will broadcast it to the others)
+BROADCAST_SAME_MESH_AND_MODEL   = .true.
+
+#-----------------------------------------------------------
