@@ -196,7 +196,6 @@ PERIODIC_HORIZ_DIST             = 0.3597d0
 nbmodels                        = 1
 # available material types (see user manual for more information)
 #   acoustic:    model_number 1 rho Vp 0  0 0 QKappa Qmu 0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
-#### currently acoustic media have no attenuation and thus QKappa and Qmu are ignored, but this will or should change soon
 # when viscoelasticity is turned on, the Vp and Vs values that are read here are the UNRELAXED ones i.e. the values at infinite frequency
 # unless the READ_VELOCITIES_AT_f0 parameter above is set to true, in which case they are the values at frequency f0.
 # Please also note that Qmu is always equal to Qs, but Qkappa is in general not equal to Qp.
