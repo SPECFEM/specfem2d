@@ -34,7 +34,6 @@
   subroutine compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
                                      PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase)
 
-
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
@@ -242,10 +241,8 @@
     ! compute stress tensor (include attenuation if needed)
     if (ATTENUATION_FLUID) then
       ! attenuation is implemented following the memory variable formulation of
-      ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
-      ! vol. 58(1), p. 110-120 (1993), adapted by us to the simpler viscoacoustic case here.
-      ! More details can be found in J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
-      ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
+      ! Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
+      ! Geophysical Journal, vol. 93, p. 393-407 (1988)
 
       ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY il faudra ajouter un peu de code ici
       ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY il faudra ajouter un peu de code ici
