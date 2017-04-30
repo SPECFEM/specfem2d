@@ -100,8 +100,9 @@
   potential_acoustic_LDDRK(:) = ALPHA_LDDRK(i_stage) * potential_acoustic_LDDRK(:) + &
                                 deltat * potential_dot_acoustic(:)
 
-  e1_fluid_LDDRK(:,:,:,:) = ALPHA_LDDRK(i_stage) * e1_fluid_LDDRK(:,:,:,:) + &
-                                    deltat * dot_e1_fluid(:,:,:,:)
+!! DK DK QUENTIN visco begin
+  e1_fluid_LDDRK(:,:,:,:) = ALPHA_LDDRK(i_stage) * e1_fluid_LDDRK(:,:,:,:) + deltat * dot_e1_fluid(:,:,:,:)
+!! DK DK QUENTIN visco end
 
   if (i_stage == 1 .and. it == 1 .and. (.not. initialfield)) then
     !! DK DK this should be vectorized
@@ -109,12 +110,15 @@
                                      BETA_LDDRK(i_stage) * potential_dot_acoustic_LDDRK(:)
     potential_dot_acoustic(:) = potential_dot_acoustic_temp(:)
 
-    e1_fluid(:,:,:,:) = e1_fluid(:,:,:,:) + &
-                                     BETA_LDDRK(i_stage) * e1_fluid_LDDRK(:,:,:,:)
+!! DK DK QUENTIN visco begin
+    e1_fluid(:,:,:,:) = e1_fluid(:,:,:,:) + BETA_LDDRK(i_stage) * e1_fluid_LDDRK(:,:,:,:)
+!! DK DK QUENTIN visco end
   else
     potential_dot_acoustic(:) = potential_dot_acoustic(:) + BETA_LDDRK(i_stage) * potential_dot_acoustic_LDDRK(:)
 
+!! DK DK QUENTIN visco begin
     e1_fluid(:,:,:,:) = e1_fluid(:,:,:,:) + BETA_LDDRK(i_stage) * e1_fluid_LDDRK(:,:,:,:)
+!! DK DK QUENTIN visco end
   endif
 
   !! DK DK this should be vectorized

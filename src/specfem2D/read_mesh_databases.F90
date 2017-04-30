@@ -503,7 +503,6 @@
 
   ! material
   allocate(density(2,numat))
-  allocate(eta(2,numat))
   allocate(anisotropy(10,numat)) ! don't forget c22 value (it is used for AXISYM simulations only)
 
   allocate(porosity(numat), &

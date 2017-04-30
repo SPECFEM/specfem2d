@@ -37,7 +37,7 @@
 
   use constants, only: IIN,IMAIN,ZERO,FOUR_THIRDS,TWO_THIRDS,HALF,TINYVAL
 
-  use specfem_par, only: AXISYM,density,porosity,tortuosity,anisotropy,permeability,poroelastcoef,eta, &
+  use specfem_par, only: AXISYM,density,porosity,tortuosity,anisotropy,permeability,poroelastcoef, &
                           numat,myrank,QKappa_attenuation,Qmu_attenuation, &
                           freq0,Q0,ATTENUATION_PORO_FLUID_PART,assign_external_model,tomo_material,myrank
 
@@ -69,7 +69,6 @@
   anisotropy(:,:) = ZERO
   permeability(:,:) = ZERO
   poroelastcoef(:,:,:) = ZERO
-  eta(:,:) = ZERO
 
   QKappa_attenuation(:) = 9999.
   Qmu_attenuation(:) = 9999.
@@ -291,7 +290,7 @@
       poroelastcoef(4,3,n) = ZERO
 
     else if (indic <= 0) then
-      ! Assign dummy values for now (for acoustic medium vs must be 0 anyway), these values will be read in read_external_model
+      ! assign dummy values for now (for acoustic medium vs must be 0 anyway), these values will be read in read_external_model
       density(1,n) = -1.0d0
       poroelastcoef(1,1,n) = -1.0d0
       poroelastcoef(2,1,n) = mu

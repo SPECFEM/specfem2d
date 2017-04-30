@@ -77,10 +77,10 @@ specfem2D_OBJECTS = \
 	$O/compute_coupling_viscoelastic_po.spec.o \
 	$O/compute_curl_one_element.spec.o \
 	$O/compute_energy.spec.o \
-	$O/compute_forces_acoustic.spec.o \
+	$O/compute_forces_viscoacoustic.spec.o \
 	$O/compute_attenuation_acoustic.spec.o \
-	$O/compute_forces_acoustic_backward.spec.o \
-	$O/compute_forces_acoustic_calling_routine.spec.o \
+	$O/compute_forces_viscoacoustic_backward.spec.o \
+	$O/compute_forces_viscoacoustic_calling_routine.spec.o \
 	$O/compute_forces_gravitoacoustic.spec.o \
 	$O/compute_forces_gravitoacoustic_calling_routine.spec.o \
 	$O/compute_forces_poroelastic_calling_routine.spec.o \
@@ -259,7 +259,7 @@ cuda_specfem2D_OBJECTS = \
 	$O/compute_add_sources_acoustic_cuda.cuda.o \
 	$O/compute_add_sources_viscoelastic_cuda.cuda.o \
 	$O/compute_coupling_cuda.cuda.o \
-	$O/compute_forces_acoustic_cuda.cuda.o \
+	$O/compute_forces_viscoacoustic_cuda.cuda.o \
 	$O/compute_forces_viscoelastic_cuda.cuda.o \
 	$O/compute_kernels_cuda.cuda.o \
 	$O/compute_stacey_acoustic_cuda.cuda.o \

@@ -84,7 +84,14 @@
 
     ! attenuation
     call prepare_timerun_attenuation_solid()
+!! DK DK QUENTIN visco begin
+!! DK DK QUENTIN ici quand j'enleve le commentaire ca casse des exemples existants du code
+!! DK DK QUENTIN (par exemple EXAMPLES/axisymmetric_case_AXISYM_option) donc dans la routine
+!! DK DK QUENTIN il doit y avoir un truc qui casse la memoire ou qui casse des tableaux ou qui re-modifie
+!! DK DK QUENTIN des trucs deja modifies par l'appel call prepare_timerun_attenuation_solid() de la ligne
+!! DK DK QUENTIN ci-dessus ou quelque chose comme ca) ; du coup pour l'instant j'ai comment'e l'appel
 !!! DK DK 27 April 2017: this introduces a bug    call prepare_timerun_attenuation_fluid()
+!! DK DK QUENTIN visco end
 
     ! prepares GPU arrays
     if (GPU_MODE) call prepare_GPU()
@@ -1514,6 +1521,7 @@
 !-------------------------------------------------------------------------------------
 !
 
+!! DK DK QUENTIN visco begin
   subroutine prepare_timerun_attenuation_fluid()
 
 #ifdef USE_MPI
@@ -1787,8 +1795,7 @@
   call synchronize_all()
 
   end subroutine prepare_timerun_attenuation_fluid
-
-
+!! DK DK QUENTIN visco end
 
 !
 !-------------------------------------------------------------------------------------

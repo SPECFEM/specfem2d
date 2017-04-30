@@ -43,11 +43,11 @@
 
   use specfem_par, only: nglob, &
                          assign_external_model,ibool,kmato,ispec_is_acoustic, &
-                         density,poroelastcoef,eta,rhoext,vpext,etaext, &
+                         density,rhoext, &
                          xix,xiz,gammax,gammaz,jacobian, &
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-                         AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj
+                         AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj,ATTENUATION_FLUID
 
   ! overlapping communication
   use specfem_par, only: nspec_inner_acoustic,nspec_outer_acoustic,phase_ispec_inner_acoustic
@@ -71,28 +71,17 @@
   ! spatial derivatives
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: dux_dxi,dux_dgamma
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: dux_dxl,dux_dzl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: dvx_dxi,dvx_dgamma
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: dvx_dxl,dvx_dzl
-
-  ! Bulk viscosity derivatives
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: deta_dxi,deta_dgamma
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: deta_dxl,deta_dzl
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_elem
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: d_potential_elem
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1_visco,tempx2_visco
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: eta_on_rhocsquare
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: temp3_visco
-
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
 
   ! Jacobian matrix and determinant
-  real(kind=CUSTOM_REAL), dimension(8,NGLLX,NGLLZ) :: deriv
+  real(kind=CUSTOM_REAL), dimension(6,NGLLX,NGLLZ) :: deriv
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
-  real(kind=CUSTOM_REAL) :: rhol,cpl,etal,lambda_relaxed,mu_relaxed,kappal,fac
-  real(kind=CUSTOM_REAL) :: temp1l,temp2l,temp1l_visco,temp2l_visco
+  real(kind=CUSTOM_REAL) :: rhol,fac
+  real(kind=CUSTOM_REAL) :: temp1l,temp2l
 
   ! local PML parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_dot_dot_acoustic_PML
@@ -117,23 +106,10 @@
 
     ! gets local potential for element
     rhol = density(1,kmato(ispec))
-    etal = eta(1,kmato(ispec))
-
-    lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
-    mu_relaxed = poroelastcoef(2,1,kmato(ispec))
-    kappal = lambda_relaxed + mu_relaxed
-
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         potential_elem(i,j) = potential_acoustic(iglob)
-        d_potential_elem(i,j) = potential_dot_acoustic(iglob)
-
-! Note from Quentin Brissaud, ISAE, France, April 2017 about viscoacoustic fluids:
-! De la meme maniere que pour la partie viscoelastique, on realise le calul d'un facteur Q constant,
-! en revanche je n'utilise que les solides correspondant a une geometrie isotropique
-! (tout est donc sur la diagonale du tenseur des contraintes) et il n'y a que Qkappa
-! car il n'y a pas d'ondes de cisaillement dans le fluide.
 
         ! stores local array for element xi/gamma/jacobian (for better performance)
         deriv(1,i,j) = xix(i,j,ispec)
@@ -144,48 +120,13 @@
         ! if external density model
         if (assign_external_model) then
           rhol = rhoext(i,j,ispec)
-          etal = etaext(i,j,ispec)
-          cpl  = vpext(i,j,ispec)
-          kappal  = rhol*cpl**2
         endif
-        ! viscosity
-        etal = 0. !! DK DK and Quentin Brissaud: viscosity "eta" is ignored for now
         deriv(6,i,j) = jacobian(i,j,ispec) / rhol
-        deriv(7,i,j) = jacobian(i,j,ispec) * etal/(rhol*kappal)
-        ! deriv(8,i,j) = jacobian(i,j,ispec) * ( tau_eps_fluid(i,j,ispec) /  tau_sig_fluid(i,j,ispec) )
-
-        eta_on_rhocsquare(i,j) = etal/kappal
-
-! Note from Quentin Brissaud, ISAE, France, April 2017 about viscosity "eta" for fluids, which is ignored for now:
-! DK DK the comment below is now a bit obsolete, the new implementation of viscoacoustic fluids based
-! on N_SLS Zener bodies put in parallel, as in solid regions, being much better for most applications.
-!
-! Pour inclure la bulk viscosity pour les fluides, il faut regarder mon rapport de stage d'il y a quelques annees
-! qui montre comment est implementee la viscosite (voir equation (41) du rapport).
-! La viscosite telle qu'implementee peut varier selon z (profondeur ou altitude).
-! J'ai rajoute deux variables globales: eta et etaext qui correspondent respectivement a la viscosite
-! si aucun fichier externe de modele n'est fourni et a la viscosit& provenant d'un modele externe.
-! Je n'ai pas fait les modifications afin de mettre la viscosite dans le fichier de "Par_file"
-! (lorsqu'on definit les modeles a la main). J'ai simplement fait un test avec une viscosite constante
-! que j'avais defini a la main dans le fichier "compute_forces_acoustic.f90" et dans le fichier "compute_coupling_acoustic_el.f90"
-! et cela dampe bien l'amplitude (ainsi qu'implique un shift en frequence).
-!
-! Dans ce code officiel fusionn'e de SPECFEM2D, J'ai laisse la possibilite d'ajouter un jour la viscosite bulk (facteur "eta")
-! mais je n'ai pas mis l'option dans le "Par_file", c'est pour l'instant mis a la main dans les fichiers
-! "compute_forces_acoustic" et "coupling_acoustic_el". Il faudrait donc realiser trois etapes:
-!   - Il faut creer une variable globale correspondant a la viscosite bulk et remplacer dans les fichiers
-!       "compute_forces_acoustic" et "coupling_acoustic_el" les variables locales "eta"
-!   - Il faut modifier la lecture de fichiers externes "define_external_model" afin de lire la viscosite bulk
-!   - Pour l'ajouter en tant que parametre dans le "Par_file" il serait necessaire de modifier un peu la creation
-!       de modele afin qu'on puisse indiquer la viscosite bulk (a la place de Qmu par exemple).
-
       enddo
     enddo
 
     ! first double loop over GLL points to compute and store gradients
     call mxm_2comp_singleA(dux_dxi,dux_dgamma,potential_elem,hprime_xx,hprime_zz)
-    call mxm_2comp_singleA(dvx_dxi,dvx_dgamma,d_potential_elem,hprime_xx,hprime_zz)
-    call mxm_2comp_singleA(deta_dxi,deta_dgamma,eta_on_rhocsquare,hprime_xx,hprime_zz)
 
     ! AXISYM case overwrites dux_dxi
     if (AXISYM) then
@@ -213,12 +154,6 @@
         ! derivatives of potential
         dux_dxl(i,j) = dux_dxi(i,j) * xixl + dux_dgamma(i,j) * gammaxl
         dux_dzl(i,j) = dux_dxi(i,j) * xizl + dux_dgamma(i,j) * gammazl
-
-        dvx_dxl(i,j) = dvx_dxi(i,j) * xixl + dvx_dgamma(i,j) * gammaxl
-        dvx_dzl(i,j) = dvx_dxi(i,j) * xizl + dvx_dgamma(i,j) * gammazl
-
-        deta_dxl(i,j) = deta_dxi(i,j) * xixl + deta_dgamma(i,j) * gammaxl
-        deta_dzl(i,j) = deta_dxi(i,j) * xizl + deta_dgamma(i,j) * gammazl
       enddo
     enddo
 
@@ -290,13 +225,6 @@
 
           tempx1(i,j) = fac * (xixl * dux_dxl(i,j) + xizl * dux_dzl(i,j))
           tempx2(i,j) = fac * (gammaxl * dux_dxl(i,j) + gammazl * dux_dzl(i,j))
-
-          temp3_visco(i,j)  = fac * (dvx_dxl(i,j)*deta_dxl(i,j) + dvx_dzl(i,j)*deta_dzl(i,j))
-
-          fac = deriv(7,i,j)
-          tempx1_visco(i,j) = fac * (xixl * dvx_dxl(i,j) + xizl * dvx_dzl(i,j))
-          tempx2_visco(i,j) = fac * (gammaxl * dvx_dxl(i,j) + gammazl * dvx_dzl(i,j))
-
         enddo
       enddo
     endif
@@ -308,6 +236,23 @@
                                                    potential_acoustic,potential_acoustic_old,potential_dot_acoustic, &
                                                    potential_dot_dot_acoustic_PML,r_xiplus1)
     endif
+
+!! DK DK QUENTIN visco begin vers ici ou vers un peu plus haut dans cette routine il manque quelque chose comme ci-dessous
+!! DK DK QUENTIN pris de la routine compute_forces_viscoelastic() et qui utilisera e1_fluid() pour modifier le stress tensor
+    ! compute stress tensor (include attenuation if needed)
+    if (ATTENUATION_FLUID) then
+      ! attenuation is implemented following the memory variable formulation of
+      ! J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
+      ! vol. 58(1), p. 110-120 (1993), adapted by us to the simpler viscoacoustic case here.
+      ! More details can be found in J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation in a linear
+      ! viscoelastic medium, Geophysical Journal International, vol. 95, p. 597-611 (1988).
+
+      ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY il faudra ajouter un peu de code ici
+      ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY il faudra ajouter un peu de code ici
+      ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY il faudra ajouter un peu de code ici
+      ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY il faudra ajouter un peu de code ici
+    endif
+!! DK DK QUENTIN visco end
 
 !
 ! second double-loop over GLL to compute all the terms
@@ -357,21 +302,14 @@
           ! assembles the contributions
           temp1l = 0._CUSTOM_REAL
           temp2l = 0._CUSTOM_REAL
-          temp1l_visco = 0._CUSTOM_REAL
-          temp2l_visco = 0._CUSTOM_REAL
           do k = 1,NGLLX
             temp1l = temp1l + tempx1(k,j) * hprimewgll_xx(k,i)
             temp2l = temp2l + tempx2(i,k) * hprimewgll_zz(k,j)
-
-            temp1l_visco = temp1l_visco + tempx1_visco(k,j) * hprimewgll_xx(k,i)
-            temp2l_visco = temp2l_visco + tempx2_visco(i,k) * hprimewgll_zz(k,j)
           enddo
           ! sums contributions from each element to the global values
           iglob = ibool(i,j,ispec)
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                              - (wzgll(j) * temp1l + wxgll(i) * temp2l) &
-                                              - (wzgll(j) * temp1l_visco + wxgll(i) * temp2l_visco) &
-                                              - wzgll(j) * wxgll(i) * temp3_visco(i,j)
+                                              - (wzgll(j) * temp1l + wxgll(i) * temp2l)
         enddo
       enddo
     endif
