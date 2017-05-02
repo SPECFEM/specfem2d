@@ -167,7 +167,7 @@
 ! From Zhinan Xie and Dimitri Komatitsch:
 ! For cases in which a value of tau_sigma is small, then its inverse is large,
 ! which may result in a in stiff ordinary differential equation to solve;
-! in such a case, resorting to the convolution formulation may be better (?)
+! in such a case, resorting to the convolution formulation is better.
           if (CONVOLUTION_MEMORY_VARIABLES) then
             call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
 
@@ -175,6 +175,7 @@
                                   phinu1 * (coef1 * theta_n_u + coef2 * theta_nsub1_u)
 
           else
+            stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
             e1_fluid(i,j,ispec,i_sls) = e1_fluid(i,j,ispec,i_sls) + deltat * &
                  (- e1_fluid(i,j,ispec,i_sls)*tauinvnu1 + phinu1 * theta_n_u)
 

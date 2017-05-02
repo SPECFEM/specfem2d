@@ -556,7 +556,6 @@
   allocate(vpext(NGLLX,NGLLZ,nspec_ext), &
            vsext(NGLLX,NGLLZ,nspec_ext), &
            rhoext(NGLLX,NGLLZ,nspec_ext), &
-           etaext(NGLLX,NGLLZ,nspec_ext), &
            QKappa_attenuationext(NGLLX,NGLLZ,nspec_ext), &
            Qmu_attenuationext(NGLLX,NGLLZ,nspec_ext),stat=ier)
   if (ier /= 0) stop 'Error allocating external model arrays for vp vs rho attenuation'

@@ -151,6 +151,7 @@
 !--------------------------------------------------------------------------------
 !
 
+!! DK DK QUENTIN visco begin
 subroutine attenuation_model_fluid(QKappa_att,f0_attenuation,N_SLS, &
                                tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent)
 
@@ -246,6 +247,7 @@ subroutine attenuation_model_fluid(QKappa_att,f0_attenuation,N_SLS, &
     stop 'error in Zener fluid viscoelasticity: must have Mu_nu1 greater than one'
 
   end subroutine attenuation_model_fluid
+!! DK DK QUENTIN visco end
 
 !
 !--------------------------------------------------------------------------------

@@ -293,6 +293,7 @@ module shared_input_parameters
   !#-----------------------------------------------------------------------------
   ! time step interval for image output
   integer :: NSTEP_BETWEEN_OUTPUT_IMAGES
+
   ! threshold value
   double precision :: cutsnaps
 
