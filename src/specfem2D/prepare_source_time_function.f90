@@ -36,7 +36,7 @@
 
   ! prepares source_time_function array
 
-  use constants, only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE,SOURCE_IS_MOVING,C_LDDRK
+  use constants, only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE,SOURCE_IS_MOVING,C_LDDRK,OUTPUT_FILES
 
   use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0_source,tshift_src,factor, &
@@ -108,7 +108,7 @@
       call flush_IMAIN()
     endif
     ! opens source time file for output
-    open(unit=55,file='OUTPUT_FILES/plot_source_time_function.txt',status='unknown',iostat=ier)
+    open(unit=55,file=trim(OUTPUT_FILES)//'plot_source_time_function.txt',status='unknown',iostat=ier)
     if (ier /= 0) stop 'Error opening source time function text-file'
   endif
 

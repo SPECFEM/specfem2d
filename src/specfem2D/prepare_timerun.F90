@@ -33,7 +33,7 @@
 
   subroutine prepare_timerun()
 
-  use constants, only: USE_ENFORCE_FIELDS,IOUT_ENERGY,IMAIN
+  use constants, only: USE_ENFORCE_FIELDS,IOUT_ENERGY,IMAIN,OUTPUT_FILES
   use specfem_par
   use specfem_par_movie
   use specfem_par_noise, only: NOISE_TOMOGRAPHY
@@ -115,7 +115,7 @@
   ! creates a Gnuplot script to display the energy curve in log scale
   if (OUTPUT_ENERGY .and. myrank == 0) then
     close(IOUT_ENERGY)
-    open(unit=IOUT_ENERGY,file='OUTPUT_FILES/plot_energy.gnu',status='unknown',action='write')
+    open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'plot_energy.gnu',status='unknown',action='write')
     write(IOUT_ENERGY,*) 'set term wxt'
     write(IOUT_ENERGY,*) '#set term postscript landscape color solid "Helvetica" 22'
     write(IOUT_ENERGY,*) '#set output "energy.ps"'
@@ -123,7 +123,7 @@
     write(IOUT_ENERGY,*) 'set logscale y'
     write(IOUT_ENERGY,*) 'set xlabel "Time (s)"'
     write(IOUT_ENERGY,*) 'set ylabel "Energy (J)"'
-    write(IOUT_ENERGY,*) 'set loadpath "./OUTPUT_FILES"'
+    write(IOUT_ENERGY,*) 'set loadpath "'//trim(OUTPUT_FILES)//'"'
     write(IOUT_ENERGY,'(a)') &
       'plot "energy.dat" us 1:4 t "Total Energy" w l lc 1, "energy.dat" us 1:3 t "Potential Energy" w l lc 2'
     write(IOUT_ENERGY,*) 'pause -1 "Hit any key..."'
@@ -131,7 +131,7 @@
   endif
 
   ! open the file in which we will store the energy curve
-  if (OUTPUT_ENERGY .and. myrank == 0) open(unit=IOUT_ENERGY,file='OUTPUT_FILES/energy.dat',status='unknown',action='write')
+  if (OUTPUT_ENERGY .and. myrank == 0) open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'energy.dat',status='unknown',action='write')
 
   ! synchronizes all processes
   call synchronize_all()
@@ -449,8 +449,9 @@
       if (myrank == 0) then
         ! master collects
         do iproc = 1, NPROC-1
-          call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc), MPI_INTEGER, &
-                        iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_i(num_pixel_recv(1,iproc+1), nb_pixel_per_proc(iproc), iproc, 42)
+          !call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc), MPI_INTEGER, &
+          !              iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
           do k = 1, nb_pixel_per_proc(iproc)
             j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
             i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
@@ -468,7 +469,8 @@
         enddo
 
       else
-        call MPI_SEND(num_pixel_loc(1),nb_pixel_loc,MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+        call send_i(num_pixel_loc(1), nb_pixel_loc, 0, 42)
+        !call MPI_SEND(num_pixel_loc(1),nb_pixel_loc,MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
       endif
     endif
     call synchronize_all()
@@ -500,11 +502,13 @@
 #ifdef USE_MPI
     if (modelvect) then
       d1_coorg_recv_ps_velocity_model=2
-      call mpi_allreduce(nspec,d2_coorg_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+      call max_all_all_i(nspec,d2_coorg_recv_ps_velocity_model)
+      !call mpi_allreduce(nspec,d2_coorg_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
       d2_coorg_recv_ps_velocity_model=d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
          ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
       d1_RGB_recv_ps_velocity_model=1
-      call mpi_allreduce(nspec,d2_RGB_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+      call max_all_all_i(nspec,d2_RGB_recv_ps_velocity_model)
+      !call mpi_allreduce(nspec,d2_RGB_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
       d2_RGB_recv_ps_velocity_model=d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
          ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
     else
@@ -545,19 +549,31 @@
       endif
     endif
 
-    call mpi_allreduce(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-    call mpi_allreduce(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-    call mpi_allreduce(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call max_all_all_i(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh)
+    call max_all_all_i(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh)
+    call max_all_all_i(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh)
+    !call mpi_allreduce(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh,1, &
+    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
+    !call mpi_allreduce(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh,1, &
+    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
+    !call mpi_allreduce(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh,1, &
+    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
 
     d1_coorg_send_ps_abs=5
     d2_coorg_send_ps_abs=4*nelemabs
-    call mpi_allreduce(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-    call mpi_allreduce(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call max_all_all_i(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs)
+    call max_all_all_i(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs)
+    !call mpi_allreduce(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
+    !call mpi_allreduce(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
 
     d1_coorg_send_ps_free_surface=4
     d2_coorg_send_ps_free_surface=4*nelem_acoustic_surface
-    call mpi_allreduce(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-    call mpi_allreduce(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call max_all_all_i(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface)
+    call max_all_all_i(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface)
+    !call mpi_allreduce(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface,1, &
+    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
+    !call mpi_allreduce(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface,1, &
+    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
 
     d1_coorg_send_ps_vector_field=8
     if (interpol) then
@@ -569,8 +585,12 @@
     else
       d2_coorg_send_ps_vector_field=nglob
     endif
-    call mpi_allreduce(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-    call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call max_all_all_i(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field)
+    call max_all_all_i(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field)
+    !call mpi_allreduce(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,1, &
+    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
+    !call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1, &
+    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
 
 #else
     ! dummy values
@@ -647,7 +667,7 @@
 
 ! prepares adjoint runs
 
-  use constants, only: IMAIN,USE_PORO_VISCOUS_DAMPING
+  use constants, only: IMAIN,USE_PORO_VISCOUS_DAMPING,OUTPUT_FILES
   use specfem_par
 
   implicit none
@@ -714,22 +734,22 @@
         write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
 
         if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-          open(unit=23,file='OUTPUT_FILES/'//outputname,status='unknown', &
+          open(unit=23,file=trim(OUTPUT_FILES)//outputname,status='unknown', &
                 form='unformatted',access='direct',recl=reclen,iostat=ier)
-          if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+          if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'viscodampingx**.bin')
 
-          open(unit=24,file='OUTPUT_FILES/'//outputname2,status='unknown', &
+          open(unit=24,file=trim(OUTPUT_FILES)//outputname2,status='unknown', &
                 form='unformatted',access='direct',recl=reclen,iostat=ier)
-          if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+          if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'viscodampingz**.bin')
 
         else if (SIMULATION_TYPE == 3) then
-          open(unit=23,file='OUTPUT_FILES/'//outputname,status='old', &
+          open(unit=23,file=trim(OUTPUT_FILES)//outputname,status='old', &
                 action='read',form='unformatted',access='direct',recl=reclen,iostat=ier)
-          if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+          if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'viscodampingx**.bin')
 
-          open(unit=24,file='OUTPUT_FILES/'//outputname2,status='old', &
+          open(unit=24,file=trim(OUTPUT_FILES)//outputname2,status='old', &
                 action='read',form='unformatted',access='direct',recl=reclen,iostat=ier)
-          if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+          if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'viscodampingz**.bin')
         endif
       endif
     endif
@@ -752,7 +772,7 @@
   use mpi
 #endif
 
-  use constants, only: IMAIN,APPROXIMATE_HESS_KL
+  use constants, only: IMAIN,APPROXIMATE_HESS_KL,OUTPUT_FILES
   use specfem_par
 
   implicit none
@@ -778,83 +798,83 @@
       ! ascii format
       if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_cijkl_kernel.dat'
-        open(unit = 97, file='OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+        open(unit = 97, file=trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
       else
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
-        open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+        open(unit = 97, file = trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
-        open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+        open(unit = 98, file = trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
       endif
     else
       ! binary format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kernel.bin'
-      open(unit = 204, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      open(unit = 204, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
          write(outputname,'(a,i6.6,a)')'proc',myrank,'_c11_kernel.bin'
-         open(unit = 205,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         open(unit = 205,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c13_kernel.bin'
-         open(unit = 206,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         open(unit = 206,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c15_kernel.bin'
-         open(unit = 207,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         open(unit = 207,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c33_kernel.bin'
-         open(unit = 208,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         open(unit = 208,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c35_kernel.bin'
-         open(unit = 209,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         open(unit = 209,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c55_kernel.bin'
-         open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         open(unit = 210,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'
       else
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_kernel.bin'
-        open(unit = 205, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        open(unit = 205, file =trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_kernel.bin'
-        open(unit = 206, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        open(unit = 206, file =trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_kernel.bin'
-        open(unit = 207, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        open(unit = 207, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_alpha_kernel.bin'
-        open(unit = 208, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        open(unit = 208, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_beta_kernel.bin'
-        open(unit = 209, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        open(unit = 209, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
-        open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        open(unit = 210,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
-        open(unit = 211,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        open(unit = 211,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         if (APPROXIMATE_HESS_KL) then
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian1_kernel.bin'
-          open(unit =214,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+          open(unit =214,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
           if (ier /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian2_kernel.bin'
-          open(unit=215,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+          open(unit=215,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
           if (ier /= 0) stop 'Error writing kernel file to disk'
         endif
       endif
@@ -884,33 +904,33 @@
 
     ! Primary kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_B_C_kernel.dat'
-    open(unit = 144, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 144, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_M_rho_rhof_kernel.dat'
-    open(unit = 155, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 155, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_m_eta_kernel.dat'
-    open(unit = 16, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 16, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     ! Wavespeed kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_cpI_cpII_cs_kernel.dat'
-    open(unit = 20, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 20, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhobb_rhofbb_ratio_kernel.dat'
-    open(unit = 21, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 21, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_phib_eta_kernel.dat'
-    open(unit = 22, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 22, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     ! Density normalized kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mub_Bb_Cb_kernel.dat'
-    open(unit = 17, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 17, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Mb_rhob_rhofb_kernel.dat'
-    open(unit = 18, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 18, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mb_etab_kernel.dat'
-    open(unit = 19, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 19, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
 
     rhot_kl(:,:,:) = 0._CUSTOM_REAL
@@ -942,38 +962,38 @@
     if (save_ASCII_kernels) then
       ! ascii format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.dat'
-      open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status ='unknown',iostat=ier)
+      open(unit = 95, file = trim(OUTPUT_FILES)//outputname,status ='unknown',iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_c_kernel.dat'
-      open(unit = 96, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+      open(unit = 96, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
     else
       ! binary format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_acoustic_kernel.bin'
-      open(unit = 200, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      open(unit = 200, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_acoustic_kernel.bin'
-      open(unit = 201, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      open(unit = 201, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_acoustic_kernel.bin'
-      open(unit = 202, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      open(unit = 202, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c_acoustic_kernel.bin'
-      open(unit = 203, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      open(unit = 203, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       if (APPROXIMATE_HESS_KL) then
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian1_acoustic_kernel.bin'
-        open(unit=212,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        open(unit=212,file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian2_acoustic_kernel.bin'
-        open(unit=213,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        open(unit=213,file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
       endif
     endif
@@ -1097,7 +1117,7 @@
   use mpi
 #endif
 
-  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS
+  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS,OUTPUT_FILES
 
   use specfem_par, only: myrank,AXISYM,NSTEP,nglob,nspec,ibool,coord, &
                          rhoext,vpext,vsext,density,poroelastcoef,kmato,assign_external_model
@@ -1141,7 +1161,7 @@
     call compute_source_array_noise()
 
     ! write out coordinates of mesh
-    open(unit=504,file='OUTPUT_FILES/mesh_spec',status='unknown',action='write')
+    open(unit=504,file=trim(OUTPUT_FILES)//'mesh_spec',status='unknown',action='write')
       do ispec = 1, nspec
         do j = 1, NGLLZ
           do i = 1, NGLLX
@@ -1152,7 +1172,7 @@
       enddo
     close(504)
 
-    open(unit=504,file='OUTPUT_FILES/mesh_glob',status='unknown',action='write')
+    open(unit=504,file=trim(OUTPUT_FILES)//'mesh_glob',status='unknown',action='write')
       do iglob = 1, nglob
         write(504,'(1pe11.3,1pe11.3,i7)') coord(1,iglob), coord(2,iglob), iglob
       enddo
@@ -1160,7 +1180,7 @@
 
     ! write out spatial distribution of noise sources
     call create_mask_noise()
-    open(unit=504,file='OUTPUT_FILES/mask_noise',status='unknown',action='write')
+    open(unit=504,file=trim(OUTPUT_FILES)//'mask_noise',status='unknown',action='write')
       do iglob = 1, nglob
             write(504,'(1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), mask_noise(iglob)
       enddo
@@ -1168,7 +1188,7 @@
 
     ! write out velocity model
     if (assign_external_model) then
-      open(unit=504,file='OUTPUT_FILES/model_rho_vp_vs',status='unknown',action='write')
+      open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_vp_vs',status='unknown',action='write')
         do ispec = 1, nspec
           do j = 1, NGLLZ
             do i = 1, NGLLX
@@ -1180,7 +1200,7 @@
         enddo
       close(504)
     else
-      open(unit=504,file='OUTPUT_FILES/model_rho_kappa_mu',status='unknown',action='write')
+      open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_kappa_mu',status='unknown',action='write')
         do ispec = 1, nspec
           do j = 1, NGLLZ
             do i = 1, NGLLX

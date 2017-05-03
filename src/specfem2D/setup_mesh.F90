@@ -284,7 +284,7 @@
   use mpi
 #endif
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,OUTPUT_FILES
   use specfem_par
   use specfem_par_movie
 
@@ -331,7 +331,7 @@
      write(IMAIN,*)
      write(IMAIN,*) 'Saving the grid in an ASCII text file...'
      write(IMAIN,*)
-     open(unit=55,file='OUTPUT_FILES/ASCII_dump_of_grid_points.txt',status='unknown')
+     open(unit=55,file=trim(OUTPUT_FILES)//'ASCII_dump_of_grid_points.txt',status='unknown')
      write(55,*) nglob
      do n = 1,nglob
         write(55,*) (coord(i,n), i = 1,NDIM)
@@ -560,6 +560,9 @@
            Qmu_attenuationext(NGLLX,NGLLZ,nspec_ext),stat=ier)
   if (ier /= 0) stop 'Error allocating external model arrays for vp vs rho attenuation'
 
+  ! The following line is important. For external model defined from tomography file ; material line in Par_file like that:
+  ! model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
+  ! because in that case MODEL = "default" but nspec_ext = nspec
   if (tomo_material > 0) MODEL = 'tomo'
 
   ! allocates material arrays for gravity Nsq c11 c13 c15 c33 c35 c55 c12 c23 c25 c22

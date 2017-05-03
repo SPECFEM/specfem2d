@@ -63,7 +63,6 @@
 
   !local variables
   integer :: i,j,k,ispec,iglob,iproc
-  integer :: ier
   double precision :: rhol
 
   if (myrank == 0) then
@@ -209,8 +208,9 @@
   if (NPROC > 1) then
     if (myrank == 0) then
       do iproc = 1, NPROC-1
-        call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc), MPI_DOUBLE_PRECISION, &
-                      iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+        call recv_dp(data_pixel_recv(1), nb_pixel_per_proc(iproc), iproc, 43)
+        !call MPI_RECV(data_pixel_recv(1),nb_pixel_per_proc(iproc), MPI_DOUBLE_PRECISION, &
+        !              iproc, 43, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
         do k = 1, nb_pixel_per_proc(iproc)
           j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
@@ -265,13 +265,13 @@
           if (iglob_image_color(i,j) /= -1) data_pixel_send(k) = vector_field_display(1,iglob_image_color(i,j))
         endif
       enddo
-      call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
+      call send_dp(data_pixel_send(1), nb_pixel_loc, 0, 43)
+      !call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, 0, 43, my_local_mpi_comm_world, ier) ! TODO remove
     endif
   endif
   call synchronize_all()
 #else
   ! dummy to avoid compiler warning
-  ier = 0
   iproc = NPROC
 #endif
 

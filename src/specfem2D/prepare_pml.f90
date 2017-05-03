@@ -33,7 +33,7 @@
 
   subroutine prepare_PML()
 
-  use constants, only: IMAIN,ZERO
+  use constants, only: IMAIN,ZERO,OUTPUT_FILES
   use specfem_par
 
   implicit none
@@ -115,12 +115,12 @@
 
       if (any_elastic .and. nglob_interface > 0) then
         write(outputname,'(a,i6.6,a)') 'pml_interface_elastic',myrank,'.bin'
-        open(unit=71,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+        open(unit=71,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted')
       endif
 
       if (any_acoustic .and. nglob_interface > 0) then
         write(outputname,'(a,i6.6,a)') 'pml_interface_acoustic',myrank,'.bin'
-        open(unit=72,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted')
+        open(unit=72,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted')
       endif
     else
       allocate(point_interface(1))

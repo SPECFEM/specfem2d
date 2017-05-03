@@ -37,7 +37,7 @@
 #ifdef USE_MPI
   use mpi
 #endif
-  use constants, only: IMAIN,ISTANDARD_OUTPUT,SIZE_REAL,NSTAGE
+  use constants, only: IMAIN,ISTANDARD_OUTPUT,SIZE_REAL,NSTAGE,OUTPUT_FILES
   use specfem_par
   use specfem_par_movie, only: cutsnaps
 
@@ -51,6 +51,8 @@
 !             i n i t i a l i z a t i o n    p h a s e
 !
 !***********************************************************************
+
+  OUTPUT_FILES = trim(OUTPUT_FILES) ! TODO OUTPUT_FILES!
 
   ! number of MPI processes
   call world_size(NPROC)
@@ -75,8 +77,8 @@
   if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
     ! sets main output file name
     ! opens for simulation output
-    open(IMAIN,file='OUTPUT_FILES/'//'output_solver.txt',status='unknown',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/output_solver.txt')
+    open(IMAIN,file=trim(OUTPUT_FILES)//'output_solver.txt',status='unknown',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'output_solver.txt')
   endif
 
   ! user output

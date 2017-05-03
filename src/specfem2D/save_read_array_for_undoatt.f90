@@ -33,7 +33,7 @@
 
   subroutine save_forward_arrays_undoatt()
 
-  use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN
+  use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES
 
   use specfem_par, only: myrank,iteration_on_subset, &
     any_acoustic,any_elastic,ATTENUATION_VISCOELASTIC, &
@@ -54,7 +54,7 @@
   ! saves frame of the forward simulation
 
   write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
-  open(unit=IOUT_UNDO_ATT  ,file='OUTPUT_FILES/'//outputname, &
+  open(unit=IOUT_UNDO_ATT  ,file=trim(OUTPUT_FILES)//outputname, &
        status='unknown',form='unformatted',action='write',iostat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for writing')
 

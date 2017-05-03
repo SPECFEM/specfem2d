@@ -45,7 +45,7 @@
 
   ! saves data in a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_data.bin'
-        open(unit = 2040, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing data file to disk'
 
   write(2040) nglob,ELASTIC_SIMULATION,POROELASTIC_SIMULATION, &
@@ -86,7 +86,7 @@
 
   ! saves all data regarding sources in a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_sources_info.bin'
-      open(unit = 2040, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing sources info file to disk'
 
   write(2040) source_time_function,nsources_local,sourcearrays,islice_selected_source,ispec_selected_source
@@ -95,7 +95,7 @@
 
   ! saves all data regarding receivers in a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_receivers_info.bin'
-      open(unit = 2040, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing receivers info data file to disk'
 
   write(2040) nrecloc,nrec
@@ -123,7 +123,7 @@
   character(len=MAX_STRING_LEN) :: outputname
 
   ! read setup data from a binary file that need to be known in advance (for allocations purpose)
-  write(outputname,'(a,i6.6,a)') 'OUTPUT_FILES/proc',myrank,'_data.bin'
+  write(outputname,'(a,i6.6,a)') trim(OUTPUT_FILES)//'proc',myrank,'_data.bin'
       open(unit=2040,file=outputname,status='old',form='unformatted',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_data.bin')
 
@@ -260,7 +260,7 @@
 
   ! reads all data regarding sources from a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_sources_info.bin'
-      open(unit = 2040, file = 'OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted', iostat=ier)
+      open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='old',action='read',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error reading sources info from disk'
 
 
@@ -281,7 +281,7 @@
 
   ! reads all data from receivers a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_receivers_info.bin'
-      open(unit = 2040, file = 'OUTPUT_FILES/'//outputname,status='old',action='read',form='unformatted', iostat=ier)
+      open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='old',action='read',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error reading receivers info from disk'
 
   read(2040) nrecloc,nrec

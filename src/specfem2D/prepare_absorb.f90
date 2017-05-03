@@ -37,6 +37,7 @@
 
 ! reads in previously stored Stacey boundary contributions
 
+  use constants, only: OUTPUT_FILES
   use specfem_par, only: myrank,any_elastic,SIMULATION_TYPE, &
                          nspec_left,nspec_right,nspec_bottom,nspec_top, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
@@ -56,7 +57,7 @@
   !--- left absorbing boundary
   if (nspec_left > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_elastic_left',myrank,'.bin'
-    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
     ! reads in boundary contributions
     read(35) b_absorb_elastic_left
@@ -66,7 +67,7 @@
   !--- right absorbing boundary
   if (nspec_right > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_elastic_right',myrank,'.bin'
-    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
     ! reads in boundary contributions
     read(35) b_absorb_elastic_right
@@ -76,7 +77,7 @@
   !--- bottom absorbing boundary
   if (nspec_bottom > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_elastic_bottom',myrank,'.bin'
-    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
     ! reads in boundary contributions
     read(35) b_absorb_elastic_bottom
@@ -86,7 +87,7 @@
   !--- top absorbing boundary
   if (nspec_top > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_elastic_top',myrank,'.bin'
-    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
     ! reads in boundary contributions
     read(35) b_absorb_elastic_top
@@ -101,6 +102,7 @@
 
   subroutine prepare_absorb_read_poroelastic()
 
+  use constants, only: OUTPUT_FILES
   use specfem_par, only: myrank,any_poroelastic,SIMULATION_TYPE, &
                          nspec_left,nspec_right,nspec_bottom,nspec_top, &
                          b_absorb_poro_s_left,b_absorb_poro_w_left, &
@@ -123,9 +125,9 @@
   if (nspec_left > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_poro_s_left',myrank,'.bin'
     write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_left',myrank,'.bin'
-    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    open(unit=36,file='OUTPUT_FILES/'//outputname2,status='old',form='unformatted',iostat=ier)
+    open(unit=36,file=trim(OUTPUT_FILES)//outputname2,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
     ! reads in boundary contributions
     read(35) b_absorb_poro_s_left
@@ -138,9 +140,9 @@
   if (nspec_right > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_poro_s_right',myrank,'.bin'
     write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_right',myrank,'.bin'
-    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    open(unit=36,file='OUTPUT_FILES/'//outputname2,status='old',form='unformatted',iostat=ier)
+    open(unit=36,file=trim(OUTPUT_FILES)//outputname2,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
     ! reads in boundary contributions
     read(35) b_absorb_poro_s_right
@@ -153,9 +155,9 @@
   if (nspec_bottom > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_poro_s_bottom',myrank,'.bin'
     write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_bottom',myrank,'.bin'
-    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    open(unit=36,file='OUTPUT_FILES/'//outputname2,status='old',form='unformatted',iostat=ier)
+    open(unit=36,file=trim(OUTPUT_FILES)//outputname2,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
     ! reads in boundary contributions
     read(35) b_absorb_poro_s_bottom
@@ -168,9 +170,9 @@
   if (nspec_top > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_poro_s_top',myrank,'.bin'
     write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_top',myrank,'.bin'
-    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-    open(unit=36,file='OUTPUT_FILES/'//outputname2,status='old',form='unformatted',iostat=ier)
+    open(unit=36,file=trim(OUTPUT_FILES)//outputname2,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
     ! reads in boundary contributions
     read(35) b_absorb_poro_s_top
@@ -187,6 +189,7 @@
 
   subroutine prepare_absorb_read_acoustic()
 
+  use constants, only: OUTPUT_FILES
   use specfem_par, only: myrank,any_acoustic,SIMULATION_TYPE, &
                          nspec_left,nspec_right,nspec_bottom,nspec_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
@@ -207,7 +210,7 @@
   !--- left absorbing boundary
   if (nspec_left > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_acoustic_left',myrank,'.bin'
-    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
     ! reads in boundary contributions
     read(35) b_absorb_acoustic_left
@@ -217,7 +220,7 @@
   !--- right absorbing boundary
   if (nspec_right > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_acoustic_right',myrank,'.bin'
-    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
     ! reads in boundary contributions
     read(35) b_absorb_acoustic_right
@@ -227,7 +230,7 @@
   !--- bottom absorbing boundary
   if (nspec_bottom > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_acoustic_bottom',myrank,'.bin'
-    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
     ! reads in boundary contributions
     read(35) b_absorb_acoustic_bottom
@@ -237,7 +240,7 @@
   !--- top absorbing boundary
   if (nspec_top > 0) then
     write(outputname,'(a,i6.6,a)') 'absorb_acoustic_top',myrank,'.bin'
-    open(unit=35,file='OUTPUT_FILES/'//outputname,status='old',form='unformatted',iostat=ier)
+    open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='old',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
     ! reads in boundary contributions
     read(35) b_absorb_acoustic_top

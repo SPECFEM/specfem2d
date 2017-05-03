@@ -124,12 +124,12 @@
         PML_dux_dxl_old(i,j) = dux_dxi * xixl + dux_dgamma * gammaxl
         PML_dux_dzl_old(i,j) = dux_dxi * xizl + dux_dgamma * gammazl
 
-        if (AXISYM) then
-          if (is_on_the_axis(ispec) .and. i == 1) then
-            ! dchi/dr=rho * u_r=0 on the axis
-            PML_dux_dxl_old(i,j) = 0._CUSTOM_REAL
-          endif
-        endif
+!        if (AXISYM) then ! TODO LDDRK
+!          if (is_on_the_axis(ispec) .and. i == 1) then
+!            ! dchi/dr=rho * u_r=0 on the axis
+!            PML_dux_dxl_old(i,j) = 0._CUSTOM_REAL
+!          endif
+!        endif
       end select
     enddo
   enddo
@@ -325,6 +325,13 @@
       PML_duz_dzl(i,j) = duz_dzl(i,j)
       PML_duz_dxl(i,j) = duz_dxl(i,j)
 
+      if (AXISYM) then ! TODO LDDRK
+        if (is_on_the_axis(ispec) .and. i == 1) then
+          ! d_uz/dr=0 on the axis
+          PML_duz_dxl(i,j) = 0._CUSTOM_REAL
+        endif
+      endif
+
       ! derivative along x and along z
       !
       ! first double loop over GLL points to compute and store gradients
@@ -363,7 +370,7 @@
       PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl !duz_dxl_old
       PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl !duz_dzl_old
 
-      if (AXISYM) then
+      if (AXISYM) then ! TODO LDDRK
         if (is_on_the_axis(ispec) .and. i == 1) then
           ! d_uz/dr=0 on the axis
           PML_duz_dxl_old(i,j) = 0._CUSTOM_REAL
@@ -610,19 +617,21 @@
     enddo
   enddo
 
-  ! AXISYM enforces zero derivatives on axis
-  if (AXISYM) then
+  ! AXISYM enforces zero derivatives on axis ! TODO LDDRK
+  if (AXISYM) then 
     if (is_on_the_axis(ispec)) then
       ! d_uz/dr=0 on the axis
       ! i == 1
       do j = 1,NGLLZ
         rmemory_duz_dx(1,j,ispec_PML,1) = 0._CUSTOM_REAL
         rmemory_duz_dx(1,j,ispec_PML,2) = 0._CUSTOM_REAL
+        duz_dxl(1,j) = 0._CUSTOM_REAL
         if (time_stepping_scheme == 2) then
           rmemory_duz_dx_LDDRK(1,j,ispec_PML,1) = 0._CUSTOM_REAL
           rmemory_duz_dx_LDDRK(1,j,ispec_PML,2) = 0._CUSTOM_REAL
         endif
         if (ROTATE_PML_ACTIVATE) then
+          duz_dxl_prime(1,j) = 0._CUSTOM_REAL
           rmemory_duz_dx_prime(1,j,ispec_PML,1) = 0._CUSTOM_REAL
           rmemory_duz_dx_prime(1,j,ispec_PML,2) = 0._CUSTOM_REAL
         endif

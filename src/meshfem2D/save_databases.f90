@@ -35,7 +35,7 @@
 
 ! generates the databases for the solver
 
-  use constants, only: IMAIN,IOUT,MAX_STRING_LEN
+  use constants, only: IMAIN,IOUT,MAX_STRING_LEN,OUTPUT_FILES
   use part_unstruct_par, only: nspec,iproc
   use shared_parameters, only: NPROC
 
@@ -48,7 +48,7 @@
   do iproc = 0, NPROC-1
 
     ! opens Database file
-    write(prname, "('./OUTPUT_FILES/Database',i5.5,'.bin')") iproc
+    write(prname, "(a,i5.5,a)") './'//trim(OUTPUT_FILES)//'Database',iproc,'.bin'
     open(unit=IOUT,file=trim(prname),status='unknown',action='write',form='unformatted',iostat=ier)
     if (ier /= 0 ) stop 'Error saving databases; check that directory OUTPUT_FILES exists'
 

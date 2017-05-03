@@ -36,7 +36,7 @@
 
 ! reads in external model files
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN,IN_DATA_FILES
 
   use specfem_par, only: nspec,nglob,ibool,ispec_is_elastic,ispec_is_anisotropic, &
     coord,kmato,MODEL,myrank,setup_with_binary_database
@@ -60,7 +60,7 @@
   select case (trim(MODEL))
   case ('legacy')
     ! old model format
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_model_velocity.dat_input'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_model_velocity.dat_input'
     if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_model_velocity.dat_input'
 
     open(unit=1001,file=inputname,status='old',action='read',iostat=ier)
@@ -83,7 +83,7 @@
 
   case ('ascii')
     ! ascii model format
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_rho_vp_vs.dat'
     if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_rho_vp_vs.dat'
 
     open(unit=1001,file=inputname,status='old',action='read',iostat=ier)
@@ -106,7 +106,7 @@
 
   case ('binary','gll')
     ! binary formats
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_rho.bin'
     if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_rho.bin, .._vp.bin, .._vs.bin'
 
     open(unit = 1001, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
@@ -116,14 +116,14 @@
     close(1001)
     print *, 'rho', minval(rhoext), maxval(rhoext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vp.bin'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_vp.bin'
     open(unit = 1001, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_vp.bin file.'
 
     read(1001) vpext
     close(1001)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vs.bin'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_vs.bin'
     open(unit = 1001, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_vs.bin file.'
 
@@ -136,7 +136,7 @@
 
   case ('binary_voigt')
     ! Voigt model
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_rho.bin'
     if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_rho.bin, .._c11.bin, .._c55.bin'
 
     open(unit = 1001, file = inputname,status='old',action='read',form='unformatted',iostat=ier)
@@ -146,7 +146,7 @@
     close(1001)
     print *, 'rho', minval(rhoext), maxval(rhoext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c11.bin'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c11.bin'
     open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_c11.bin file.'
 
@@ -154,7 +154,7 @@
     close(1001)
     print *, 'c11ext', minval(c11ext), maxval(c11ext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c13.bin'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c13.bin'
     open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_c13.bin file.'
 
@@ -162,7 +162,7 @@
     close(1001)
     print *, 'c13ext', minval(c13ext), maxval(c13ext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c15.bin'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c15.bin'
     open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_c15.bin file.'
 
@@ -170,7 +170,7 @@
     close(1001)
     print *, 'c15ext', minval(c15ext), maxval(c15ext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c33.bin'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c33.bin'
     open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_c33.bin file.'
 
@@ -178,7 +178,7 @@
     close(1001)
     print *, 'c33ext', minval(c33ext), maxval(c33ext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c35.bin'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c35.bin'
     open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_c35.bin file.'
 
@@ -186,7 +186,7 @@
     close(1001)
     print *, 'c35ext', minval(c35ext), maxval(c35ext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c55.bin'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c55.bin'
     open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_c55.bin file.'
 

@@ -37,7 +37,7 @@
 
 ! to display the snapshots : display image*.jpg
 
-  use constants, only: TINYVAL,HUGEVAL,STABILITY_THRESHOLD
+  use constants, only: TINYVAL,HUGEVAL,STABILITY_THRESHOLD,OUTPUT_FILES
 
   use specfem_par, only: myrank,it,NSOURCES,P_SV,nrec
 
@@ -84,9 +84,9 @@
 ! slightly change the beginning of the file name depending if we use the time step of the image number, to avoid confusion
   if (USE_SNAPSHOT_NUMBER_IN_FILENAME) then
     isnapshot_number = isnapshot_number + 1
-    write(filename,"('OUTPUT_FILES/img',i7.7,'.jpg')") isnapshot_number
+    write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'img',isnapshot_number,'.jpg'
   else
-    write(filename,"('OUTPUT_FILES/image',i7.7,'.jpg')") it
+    write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'image',it,'.jpg'
   endif
 
 ! compute maximum amplitude

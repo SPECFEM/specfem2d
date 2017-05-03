@@ -46,7 +46,7 @@
     IEDGE1,IEDGE2,IEDGE3,IEDGE4, &
     IRIGHT,ILEFT,IBOTTOM,ITOP, &
     ORIG_X,ORIG_Z,PI,RPERCENTX,RPERCENTZ,STABILITY_THRESHOLD, &
-    DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
+    DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT,OUTPUT_FILES
 
   use specfem_par, only: coord,vpext,x_source,z_source,st_xval,st_zval,it,deltat,coorg,density, &
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
@@ -220,7 +220,7 @@
 !---- open PostScript file
 !
   if (myrank == 0) then
-    write(file_name,"('OUTPUT_FILES/vect',i7.7,'.ps')") it
+    write(file_name,"(a,i7.7,a)") trim(OUTPUT_FILES)//'vect',it,'.ps'
     open(unit=24,file=file_name,status='unknown',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening postscript file for image output')
 
@@ -528,15 +528,22 @@
       if (myrank == 0) then
         ! master collects
         do iproc = 1, NPROC-1
-          call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_singlei(nspec_recv, iproc, 42)
+          !call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
-          call MPI_RECV (coorg_recv_ps_velocity_model(1,1), &
+          call recv_dp(coorg_recv_ps_velocity_model(1,1), &
                2*nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
-               MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+               iproc, 42)
+          !call MPI_RECV (coorg_recv_ps_velocity_model(1,1), &
+          !     2*nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)*((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
+          !     MPI_DOUBLE_PRECISION, iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
-          call MPI_RECV (RGB_recv_ps_velocity_model(1,1), nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+          call recv_dp(RGB_recv_ps_velocity_model(1,1), nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
                ((NGLLX-subsamp_postscript)/subsamp_postscript), &
-               MPI_DOUBLE_PRECISION, iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+               iproc, 42)
+          !call MPI_RECV (RGB_recv_ps_velocity_model(1,1), nspec_recv*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+          !     ((NGLLX-subsamp_postscript)/subsamp_postscript), &
+          !     MPI_DOUBLE_PRECISION, iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
           buffer_offset = 0
           RGB_offset = 0
@@ -562,15 +569,22 @@
           enddo
         enddo
       else
-        call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+        call send_singlei(nspec, 0, 42)
+        !call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
 
-        call MPI_SEND (coorg_send_ps_velocity_model(1,1), 2*nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-                        ((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
-                        MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+        call send_dp(coorg_send_ps_velocity_model(1,1), 2*nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+                     ((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
+                     0, 42)
+        !call MPI_SEND (coorg_send_ps_velocity_model(1,1), 2*nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+        !                ((NGLLX-subsamp_postscript)/subsamp_postscript)*4, &
+        !                MPI_DOUBLE_PRECISION, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
 
-        call MPI_SEND (RGB_send_ps_velocity_model(1,1), nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
-                        ((NGLLX-subsamp_postscript)/subsamp_postscript), &
-                        MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
+        call send_dp(RGB_send_ps_velocity_model(1,1), nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+                     ((NGLLX-subsamp_postscript)/subsamp_postscript), &
+                     0, 42)
+        !call MPI_SEND (RGB_send_ps_velocity_model(1,1), nspec*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+        !                ((NGLLX-subsamp_postscript)/subsamp_postscript), &
+        !                MPI_DOUBLE_PRECISION, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
       endif
     endif
     call synchronize_all()
@@ -859,7 +873,8 @@
     if (myrank == 0) then
       ! master collects
       do iproc = 1, NPROC-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+        call recv_singlei(nspec_recv,iproc,43)
+        !call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 43, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
         nb_coorg_per_elem = 1
         if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
@@ -870,8 +885,9 @@
         else
           nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
         endif
-        call MPI_RECV (coorg_recv_ps_element_mesh(1,1), 2*nspec_recv*nb_coorg_per_elem, &
-                       MPI_DOUBLE_PRECISION, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+        call recv_dp(coorg_recv_ps_element_mesh(1,1), 2*nspec_recv*nb_coorg_per_elem, iproc, 43)
+        !call MPI_RECV (coorg_recv_ps_element_mesh(1,1), 2*nspec_recv*nb_coorg_per_elem, &
+        !               MPI_DOUBLE_PRECISION, iproc, 43, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
         nb_color_per_elem = 0
         if (DISPLAY_COLORS == 1) then
@@ -881,8 +897,9 @@
           nb_color_per_elem = nb_color_per_elem + 1
         endif
         if (nb_color_per_elem > 0) then
-          call MPI_RECV (color_recv_ps_element_mesh(1), nspec_recv*nb_color_per_elem, &
-                         MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_i(color_recv_ps_element_mesh(1), nspec_recv*nb_color_per_elem, iproc, 43)
+          !call MPI_RECV (color_recv_ps_element_mesh(1), nspec_recv*nb_color_per_elem, &
+          !               MPI_INTEGER, iproc, 43, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
         endif
 
         buffer_offset = 0
@@ -953,7 +970,8 @@
         enddo
       enddo
     else
-      call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
+      call send_singlei(nspec, 0, 43)
+      !call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 43, my_local_mpi_comm_world, ier) ! TODO remove
 
       nb_coorg_per_elem = 1
       if (DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT == 1) then
@@ -964,8 +982,9 @@
       else
         nb_coorg_per_elem = nb_coorg_per_elem + 3*(pointsdisp-1)+(pointsdisp-2)
       endif
-      call MPI_SEND (coorg_send_ps_element_mesh(1,1), 2*nspec*nb_coorg_per_elem, &
-                     MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
+      call send_dp(coorg_send_ps_element_mesh(1,1), 2*nspec*nb_coorg_per_elem, 0, 43)
+      !call MPI_SEND (coorg_send_ps_element_mesh(1,1), 2*nspec*nb_coorg_per_elem, &
+      !               MPI_DOUBLE_PRECISION, 0, 43, my_local_mpi_comm_world, ier) ! TODO remove
 
       nb_color_per_elem = 0
       if (DISPLAY_COLORS == 1) then
@@ -975,8 +994,9 @@
         nb_color_per_elem = nb_color_per_elem + 1
       endif
       if (nb_color_per_elem > 0) then
-        call MPI_SEND (color_send_ps_element_mesh(1), nspec*nb_color_per_elem, &
-                       MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
+        call send_i(color_send_ps_element_mesh(1), nspec*nb_color_per_elem, 0, 43)
+        !call MPI_SEND (color_send_ps_element_mesh(1), nspec*nb_color_per_elem, &
+        !               MPI_INTEGER, 0, 43, my_local_mpi_comm_world, ier) ! TODO remove
       endif
     endif
   endif
@@ -1068,10 +1088,12 @@
       if (myrank == 0) then
         ! master collects
         do iproc = 1, NPROC-1
-          call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_singlei(nspec_recv,iproc, 44)
+          !call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
           if (nspec_recv > 0) then
-            call MPI_RECV (coorg_recv_ps_abs(1,1), 5*nspec_recv, &
-                           MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+            call recv_dp(coorg_recv_ps_abs(1,1), 5*nspec_recv, iproc, 44)
+            !call MPI_RECV (coorg_recv_ps_abs(1,1), 5*nspec_recv, &
+            !               MPI_DOUBLE_PRECISION, iproc, 44, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
             buffer_offset = 0
             do ispec = 1, nspec_recv
@@ -1094,10 +1116,12 @@
           endif
         enddo
       else
-        call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
+        call send_singlei(buffer_offset, 0, 44)
+        !call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, my_local_mpi_comm_world, ier) ! TODO remove
         if (buffer_offset > 0) then
-          call MPI_SEND (coorg_send_ps_abs(1,1), 5*buffer_offset, &
-                         MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
+          call send_dp(coorg_send_ps_abs(1,1), 5*buffer_offset, 0, 44)
+          !call MPI_SEND (coorg_send_ps_abs(1,1), 5*buffer_offset, &
+          !               MPI_DOUBLE_PRECISION, 0, 44, my_local_mpi_comm_world, ier) ! TODO remove
         endif
       endif
     endif
@@ -1158,10 +1182,12 @@
     if (myrank == 0) then
       ! master collects
       do iproc = 1, NPROC-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+        call recv_singlei(nspec_recv, iproc, 44)
+        !call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 44, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
         if (nspec_recv > 0) then
-          call MPI_RECV (coorg_recv_ps_free_surface(1,1), 4*nspec_recv, &
-                         MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_dp(coorg_recv_ps_free_surface(1,1), 4*nspec_recv,iproc, 44)
+          !call MPI_RECV (coorg_recv_ps_free_surface(1,1), 4*nspec_recv, &
+          !               MPI_DOUBLE_PRECISION, iproc, 44, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
           buffer_offset = 0
           do ispec = 1, nspec_recv
@@ -1172,10 +1198,12 @@
         endif
       enddo
     else
-      call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, MPI_COMM_WORLD, ier)
+      call send_singlei(buffer_offset, 0, 44)
+      !call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 44, my_local_mpi_comm_world, ier) ! TODO remove
       if (buffer_offset > 0) then
-        call MPI_SEND (coorg_send_ps_free_surface(1,1), 4*buffer_offset, &
-                       MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
+        call send_dp(coorg_send_ps_free_surface(1,1), 4*buffer_offset, 0, 44)
+        !call MPI_SEND (coorg_send_ps_free_surface(1,1), 4*buffer_offset, &
+        !               MPI_DOUBLE_PRECISION, 0, 44, my_local_mpi_comm_world, ier) ! TODO remove
       endif
     endif
   endif
@@ -1258,11 +1286,13 @@
       if (myrank == 0) then
         ! master collects
         do iproc = 1, NPROC-1
-          call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_singlei(nspec_recv, iproc, 45)
+          !call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
           if (nspec_recv > 0) then
             allocate(coorg_recv(4,nspec_recv))
-            call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
-                           MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+            call recv_dp(coorg_recv(1,1), 4*nspec_recv, iproc, 45)
+            !call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+            !               MPI_DOUBLE_PRECISION, iproc, 45, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
             buffer_offset = 0
             do ispec = 1, nspec_recv
@@ -1274,10 +1304,12 @@
           endif
         enddo
       else
-        call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
+        call send_singlei(buffer_offset, 0, 45)
+        !call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, my_local_mpi_comm_world, ier) ! TODO remove
         if (buffer_offset > 0) then
-          call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
-                         MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
+          call send_dp(coorg_send(1,1), 4*buffer_offset, 0, 45)
+          !call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+          !               MPI_DOUBLE_PRECISION, 0, 45, my_local_mpi_comm_world, ier) ! TODO remove
           deallocate(coorg_send)
         endif
       endif
@@ -1361,11 +1393,13 @@
       if (myrank == 0) then
         ! master collects
         do iproc = 1, NPROC-1
-          call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_singlei(nspec_recv, iproc, 45)
+          !call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
           if (nspec_recv > 0) then
             allocate(coorg_recv(4,nspec_recv))
-            call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
-                           MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+            call recv_dp(coorg_recv(1,1), 4*nspec_recv, iproc, 45)
+            !call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+            !               MPI_DOUBLE_PRECISION, iproc, 45, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
             buffer_offset = 0
             do ispec = 1, nspec_recv
@@ -1377,10 +1411,12 @@
           endif
         enddo
       else
-        call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
+        call send_singlei(buffer_offset, 0, 45)
+        !call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, my_local_mpi_comm_world, ier) ! TODO remove
         if (buffer_offset > 0) then
-          call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
-                         MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
+          call send_dp(coorg_send(1,1), 4*buffer_offset, 0, 45)
+          !call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+          !               MPI_DOUBLE_PRECISION, 0, 45, my_local_mpi_comm_world, ier) ! TODO remove
           deallocate(coorg_send)
         endif
       endif
@@ -1465,11 +1501,13 @@
       if (myrank == 0) then
         ! master collects
         do iproc = 1, NPROC-1
-          call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_singlei(nspec_recv, iproc, 45)
+          !call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 45, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
           if (nspec_recv > 0) then
             allocate(coorg_recv(4,nspec_recv))
-            call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
-                           MPI_DOUBLE_PRECISION, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+            call recv_dp(coorg_recv(1,1), 4*nspec_recv, iproc, 45)
+            !call MPI_RECV (coorg_recv(1,1), 4*nspec_recv, &
+            !               MPI_DOUBLE_PRECISION, iproc, 45, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
             buffer_offset = 0
             do ispec = 1, nspec_recv
@@ -1481,10 +1519,12 @@
           endif
         enddo
       else
-        call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, MPI_COMM_WORLD, ier)
+        call send_singlei(buffer_offset, 0, 45)
+        !call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 45, my_local_mpi_comm_world, ier) ! TODO remove
         if (buffer_offset > 0) then
-          call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
-                         MPI_DOUBLE_PRECISION, 0, 45, MPI_COMM_WORLD, ier)
+          call send_dp(coorg_send(1,1), 4*buffer_offset, 0, 45)
+          !call MPI_SEND (coorg_send(1,1), 4*buffer_offset, &
+          !               MPI_DOUBLE_PRECISION, 0, 45, my_local_mpi_comm_world, ier) ! TODO remove
           deallocate(coorg_send)
         endif
       endif
@@ -1667,10 +1707,12 @@
     if (myrank == 0) then
       ! master collects
       do iproc = 1, NPROC-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 46, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+        call recv_singlei(nspec_recv, iproc, 46)
+        !call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 46, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
         if (nspec_recv > 0) then
-          call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
-                         MPI_DOUBLE_PRECISION, iproc, 46, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_dp(coorg_recv_ps_vector_field(1,1), 8*nspec_recv, iproc, 46)
+          !call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
+          !               MPI_DOUBLE_PRECISION, iproc, 46, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
           buffer_offset = 0
           do ispec = 1, nspec_recv
@@ -1703,10 +1745,12 @@
         endif
       enddo
     else
-      call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 46, MPI_COMM_WORLD, ier)
+      call send_singlei(buffer_offset, 0, 46)
+      !call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 46, my_local_mpi_comm_world, ier) ! TODO remove
       if (buffer_offset > 0) then
-        call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
-                       MPI_DOUBLE_PRECISION, 0, 46, MPI_COMM_WORLD, ier)
+        call send_dp(coorg_send_ps_vector_field(1,1), 8*buffer_offset, 0, 46)
+        !call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
+        !               MPI_DOUBLE_PRECISION, 0, 46, my_local_mpi_comm_world, ier) ! TODO remove
       endif
     endif
     call synchronize_all()
@@ -1799,10 +1843,12 @@
     if (myrank == 0) then
       ! master collects
       do iproc = 1, NPROC-1
-        call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 47, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+        call recv_singlei(nspec_recv, iproc, 47)
+        !call MPI_RECV (nspec_recv, 1, MPI_INTEGER, iproc, 47, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
         if (nspec_recv > 0) then
-          call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
-                         MPI_DOUBLE_PRECISION, iproc, 47, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_dp(coorg_recv_ps_vector_field(1,1), 8*nspec_recv, iproc, 47)
+          !call MPI_RECV (coorg_recv_ps_vector_field(1,1), 8*nspec_recv, &
+          !               MPI_DOUBLE_PRECISION, iproc, 47, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
           buffer_offset = 0
           do ispec = 1, nspec_recv
@@ -1834,10 +1880,12 @@
         endif
       enddo
     else
-      call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 47, MPI_COMM_WORLD, ier)
+      call send_singlei(buffer_offset, 0, 47)
+      !call MPI_SEND (buffer_offset, 1, MPI_INTEGER, 0, 47, my_local_mpi_comm_world, ier) ! TODO remove
       if (buffer_offset > 0) then
-        call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
-                       MPI_DOUBLE_PRECISION, 0, 47, MPI_COMM_WORLD, ier)
+        call send_dp(coorg_send_ps_vector_field(1,1), 8*buffer_offset, 0, 47)
+        !call MPI_SEND (coorg_send_ps_vector_field(1,1), 8*buffer_offset, &
+        !               MPI_DOUBLE_PRECISION, 0, 47, my_local_mpi_comm_world, ier) ! TODO remove
       endif
     endif
     call synchronize_all()
