@@ -284,7 +284,7 @@
   use mpi
 #endif
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,OUTPUT_FILES
   use specfem_par
   use specfem_par_movie
 
@@ -331,7 +331,7 @@
      write(IMAIN,*)
      write(IMAIN,*) 'Saving the grid in an ASCII text file...'
      write(IMAIN,*)
-     open(unit=55,file='OUTPUT_FILES/ASCII_dump_of_grid_points.txt',status='unknown')
+     open(unit=55,file=trim(OUTPUT_FILES)//'ASCII_dump_of_grid_points.txt',status='unknown')
      write(55,*) nglob
      do n = 1,nglob
         write(55,*) (coord(i,n), i = 1,NDIM)

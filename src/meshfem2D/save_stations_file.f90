@@ -35,7 +35,8 @@
                                 xinterface_top,zinterface_top,coefs_interface_top, &
                                 npoints_interface_top,max_npoints_interface)
 
-  use constants, only: IOUT,IMAIN
+  use constants, only: IOUT,IMAIN,MAX_STRING_LEN,mygroup,IN_DATA_FILES
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
 
@@ -54,10 +55,18 @@
   integer :: nrec_total
   double precision :: xrec,zrec
   double precision, external :: value_spline
+  character(len=MAX_STRING_LEN) :: stations_filename,path_to_add
+
+  stations_filename = trim(IN_DATA_FILES)//'STATIONS'
+
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    stations_filename = path_to_add(1:len_trim(path_to_add))//stations_filename(1:len_trim(stations_filename))
+  endif
 
   ! user output
   write(IMAIN,*)
-  write(IMAIN,*) 'writing the DATA/STATIONS file'
+  write(IMAIN,*) 'writing the '//trim(stations_filename)//' file'
   write(IMAIN,*)
 
   ! total number of receivers in all the receiver lines
@@ -70,7 +79,7 @@
   write(IMAIN,*) 'Target positions (x,z) of the ',nrec_total,' receivers'
   write(IMAIN,*)
 
-  open(unit=IOUT,file='DATA/STATIONS',status='unknown',iostat=ios)
+  open(unit=IOUT,file=trim(stations_filename),status='unknown',iostat=ios)
   if (ios /= 0 ) stop 'error saving STATIONS file'
 
   irec_global_number = 0

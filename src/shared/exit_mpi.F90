@@ -39,7 +39,7 @@
 #ifdef USE_MPI
   use mpi
 #endif
-  use constants, only: MAX_STRING_LEN,IMAIN,ISTANDARD_OUTPUT
+  use constants, only: MAX_STRING_LEN,IMAIN,ISTANDARD_OUTPUT,OUTPUT_FILES
 
   implicit none
 
@@ -57,7 +57,7 @@
 
 ! write error message to file
   write(outputname,"('/error_message',i6.6,'.txt')") myrank
-  open(unit=IERROR,file='OUTPUT_FILES'//outputname,status='unknown')
+  open(unit=IERROR,file=trim(OUTPUT_FILES)//outputname,status='unknown')
   write(IERROR,*) error_msg(1:len(error_msg))
   write(IERROR,*) 'Error detected, aborting MPI... proc ',myrank
   close(IERROR)

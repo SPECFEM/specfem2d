@@ -767,7 +767,10 @@
   if (force_normal_to_surface .or. rec_normal_to_surface) then
     if (.not. read_external_mesh) &
       stop 'Error read_external_mesh must be set to .true. for force_normal_to_surface or rec_normal_to_surface &
-            &to use external tangential_dectection_curve_file'
+            &to use external tangential_detection_curve_file'
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1) &
+      stop 'NUMBER_OF_SIMULTANEOUS_RUNS not compatible with force_normal_to_surface or rec_normal_to_surface for now &
+            & (look for FN2SNSR in the source code)'
   endif
 
   if (DT == 0.d0) stop 'DT must be non-zero value'
@@ -801,6 +804,13 @@
   if (read_external_mesh .eqv. .false.) then
     if (nbregions <= 0) stop 'Negative number of regions not allowed for internal meshing!'
   endif
+
+  if (NUMBER_OF_SIMULTANEOUS_RUNS <= 0) stop 'NUMBER_OF_SIMULTANEOUS_RUNS <= 0 makes no sense'
+  
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. NPROC == 1) stop 'Serial runs require NUMBER_OF_SIMULTANEOUS_RUNS == 1'
+
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. trim(SAVE_MODEL) /= 'default' .and. trim(SAVE_MODEL) /= '.false.') &
+    stop 'NUMBER_OF_SIMULTANEOUS_RUNS not compatible yet with SAVE_MODEL. Look for SMNSR in the source code'
 
   end subroutine check_parameters
 

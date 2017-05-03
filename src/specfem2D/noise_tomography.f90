@@ -264,7 +264,7 @@
 !
 ! ----------------------------------------------------------------------------------
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,IMAIN,noise_source_time_function_type
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,IMAIN,noise_source_time_function_type,OUTPUT_FILES
 
   use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,deltat, &
                          xigll,zigll,myrank
@@ -354,7 +354,7 @@
   endif
 
   ! saves source time function
-  open(500,file='OUTPUT_FILES/plot_source_time_function_noise.txt',status='unknown',iostat=ier)
+  open(500,file=trim(OUTPUT_FILES)//'plot_source_time_function_noise.txt',status='unknown',iostat=ier)
   if (ier /= 0) stop 'Error opening noise source time function text-file'
   do it = 1,NSTEP
     t = it*deltat
@@ -448,7 +448,7 @@
 ! read in and inject the "source" that drives the "enemble forward wavefield"
 ! (recall that the ensemble forward wavefield has a spatially distributed source)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,NOISE_SAVE_EVERYWHERE
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,NOISE_SAVE_EVERYWHERE,OUTPUT_FILES
 
   use specfem_par, only: P_SV,it,NSTEP,nspec,nglob,ibool,jacobian,wxgll,wzgll,myrank
 
@@ -469,7 +469,7 @@
 
   ! opens noise source file
   if (it == 1) then
-    open(unit=501,file='OUTPUT_FILES/noise_eta.bin',access='direct', &
+    open(unit=501,file=trim(OUTPUT_FILES)//'noise_eta.bin',access='direct', &
          recl=nglob*CUSTOM_REAL,action='read',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error retrieving generating wavefield.')
   endif
@@ -523,7 +523,7 @@
 ! save a snapshot of the "generating wavefield" eta that will be used to drive
 ! the "ensemble forward wavefield"
 
-  use constants, only: CUSTOM_REAL,NDIM,IMAIN
+  use constants, only: CUSTOM_REAL,NDIM,IMAIN,OUTPUT_FILES
 
   use specfem_par, only: myrank,it,NSTEP,nglob,P_SV,displ_elastic,nglob_elastic
 
@@ -550,7 +550,7 @@
       ! user output
       if (myrank == 0) write(IMAIN,*) 'noise simulation: storing generating wavefield in file noise_eta.bin'
       ! opens file
-      open(unit=501,file='OUTPUT_FILES/noise_eta.bin',access='direct',recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
+      open(unit=501,file=trim(OUTPUT_FILES)//'noise_eta.bin',access='direct',recl=nglob*CUSTOM_REAL,action='write',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error saving generating wavefield.')
     endif
 
@@ -578,7 +578,7 @@
       ! user output
       if (myrank == 0) write(IMAIN,*) 'noise simulation: storing forward wavefield in file noise_phi.bin'
       ! opens file
-      open(unit=502,file='OUTPUT_FILES/noise_phi.bin',access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='write',iostat=ier)
+      open(unit=502,file=trim(OUTPUT_FILES)//'noise_phi.bin',access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='write',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error saving ensemble forward wavefield.')
     endif
 
@@ -602,7 +602,7 @@
 
 ! reads in backward wavefield
 
-  use constants, only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM,OUTPUT_FILES
 
   use specfem_par, only: myrank,it,NSTEP,nglob,b_displ_elastic
 
@@ -617,7 +617,7 @@
 
   ! opens noise file
   if (it == 1) then
-    open(unit=503,file='OUTPUT_FILES/noise_phi.bin',access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='read',iostat=ier)
+    open(unit=503,file=trim(OUTPUT_FILES)//'noise_phi.bin',access='direct',recl=NDIM*nglob*CUSTOM_REAL,action='read',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error retrieving noise ensemble forward wavefield')
   endif
 

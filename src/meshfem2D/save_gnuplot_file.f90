@@ -35,7 +35,7 @@
 
 ! creates a Gnuplot file that displays the grid
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,OUTPUT_FILES
 
   implicit none
 
@@ -50,10 +50,10 @@
   write(IMAIN,*) 'Saving the grid in Gnuplot format...'
   write(IMAIN,*)
 
-  open(unit=20,file='OUTPUT_FILES/gridfile.gnu',status='unknown',iostat=ier)
+  open(unit=20,file=trim(OUTPUT_FILES)//'gridfile.gnu',status='unknown',iostat=ier)
   if (ier /= 0 ) then
-    print *,'Error opening gnuplot file for writing: OUTPUT_FILES/gridfile.gnu'
-    print *,'Please make sure directory OUTPUT_FILES/ exists...'
+    print *,'Error opening gnuplot file for writing: ',trim(OUTPUT_FILES)//'gridfile.gnu'
+    print *,'Please make sure directory ',trim(OUTPUT_FILES),' exists...'
     stop 'Error saving gnuplot file'
   endif
 
@@ -94,17 +94,17 @@
   close(20)
 
   ! create a Gnuplot script to display the grid
-  open(unit=20,file='OUTPUT_FILES/plot_gridfile.gnu',status='unknown',iostat=ier)
+  open(unit=20,file=trim(OUTPUT_FILES)//'plot_gridfile.gnu',status='unknown',iostat=ier)
   if (ier /= 0 ) stop 'Error saving plotgnu file'
 
   write(20,*) '#set term wxt'
   write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'
-  write(20,*) 'set output "OUTPUT_FILES/gridfile.ps"'
+  write(20,*) 'set output "',trim(OUTPUT_FILES)//'gridfile.ps"'
   write(20,*) '#set xrange [',sngl(minval(x)),':',sngl(maxval(x)),']'
   write(20,*) '#set yrange [',sngl(minval(z)),':',sngl(maxval(z)),']'
   ! use same unit length on both X and Y axes
   write(20,*) 'set size ratio -1'
-  write(20,*) 'set loadpath "./OUTPUT_FILES"'
+  write(20,*) 'set loadpath "'//trim(OUTPUT_FILES)//'"'
   write(20,*) 'plot "gridfile.gnu" title "Macrobloc mesh" w l'
   write(20,*) 'pause -1 "Hit any key..."'
   close(20)

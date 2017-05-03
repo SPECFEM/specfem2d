@@ -192,7 +192,7 @@
   use mpi
 #endif
 
-  use constants, only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME
+  use constants, only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME,OUTPUT_FILES
 
   use specfem_par, only: station_name,network_name,NSTEP,islice_selected_rec,nrec,myrank,deltat,seismotype,t0, &
                          NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos,nrecloc, &
@@ -270,45 +270,45 @@
 
     ! deletes old files
     if (seismo_offset == 0) then
-      open(unit=12,file='OUTPUT_FILES/Ux_file_single'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_single'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Ux_file_double'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_double'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Uy_file_single'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_single'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Uy_file_double'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_double'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Uz_file_single'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Uz_file_single'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Up_file_single'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_single'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Up_file_double'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_double'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Uc_file_single'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Uc_file_single'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Uc_file_double'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Uc_file_double'//suffix,status='unknown')
       close(12,status='delete')
     endif
 
     ! write the new files
     if (save_binary_seismograms_single) then
       if (seismotype == 4 .or. seismotype == 6) then
-        open(unit=12,file='OUTPUT_FILES/Up_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_single'//suffix,status='unknown',access='direct',recl=4)
       else if (.not. P_SV) then
-        open(unit=12,file='OUTPUT_FILES/Uy_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_single'//suffix,status='unknown',access='direct',recl=4)
       else
-        open(unit=12,file='OUTPUT_FILES/Ux_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_single'//suffix,status='unknown',access='direct',recl=4)
       endif
     endif
 
@@ -316,26 +316,26 @@
       if (seismotype == 4 .or. seismotype == 6) then
         ! continue without output
       else if (.not. P_SV) then
-        open(unit=13,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
+        open(unit=13,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
       else
-        open(unit=13,file='OUTPUT_FILES/Ux_file_double'//suffix,status='unknown',access='direct',recl=8)
+        open(unit=13,file=trim(OUTPUT_FILES)//'Ux_file_double'//suffix,status='unknown',access='direct',recl=8)
       endif
     endif
 
     ! no Z component seismogram if pressure
     if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
       if (save_binary_seismograms_single) &
-        open(unit=14,file='OUTPUT_FILES/Uz_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=14,file=trim(OUTPUT_FILES)//'Uz_file_single'//suffix,status='unknown',access='direct',recl=4)
       if (save_binary_seismograms_double) &
-        open(unit=15,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
+        open(unit=15,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
     endif
 
     ! curl output
     if (seismotype == 5) then
       if (save_binary_seismograms_single) &
-        open(unit=16,file='OUTPUT_FILES/Uc_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=16,file=trim(OUTPUT_FILES)//'Uc_file_single'//suffix,status='unknown',access='direct',recl=4)
       if (save_binary_seismograms_double) &
-        open(unit=17,file='OUTPUT_FILES/Uc_file_double'//suffix,status='unknown',access='direct',recl=8)
+        open(unit=17,file=trim(OUTPUT_FILES)//'Uc_file_double'//suffix,status='unknown',access='direct',recl=8)
     endif
   endif ! save_binary_seismograms
 
@@ -360,17 +360,21 @@
 #ifdef USE_MPI
       else
         ! collects seismogram components on master
-        call MPI_RECV(buffer_binary(1,irec,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
-                      islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+        call recv_dp(buffer_binary(1,irec,1), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, islice_selected_rec(irec), irec)
+        !call MPI_RECV(buffer_binary(1,irec,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
+        !              islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
         if (number_of_components == 2) then
-          call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
-                        islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+          call recv_dp(buffer_binary(1,irec,2), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, islice_selected_rec(irec), irec)
+          !call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
+          !              islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
         endif
         if (number_of_components == 3) then
-          call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
-                        islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-          call MPI_RECV(buffer_binary(1,irec,3),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
-                        islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+          call recv_dp(buffer_binary(1,irec,2), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, islice_selected_rec(irec), irec)
+          !call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
+          !              islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
+          call recv_dp(buffer_binary(1,irec,3), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, islice_selected_rec(irec), irec)
+          !call MPI_RECV(buffer_binary(1,irec,3),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
+          !              islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
         endif
 #endif
       endif
@@ -417,8 +421,8 @@
               call exit_MPI(myrank,'wrong length of network name')
             endif
 
-            write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") &
-                  network_name(irec)(1:length_network_name),station_name(irec)(1:length_station_name),channel,component
+            write(sisname,"(a,a,'.',a,'.',a3,'.sem',a1)") &
+            trim(OUTPUT_FILES),network_name(irec)(1:length_network_name),station_name(irec)(1:length_station_name),channel,component
 
             ! deletes old seismogram file when starting to write output
             if (seismo_offset == 0) then
@@ -493,15 +497,18 @@
       ! sends seismogram values to master
       if (myrank == islice_selected_rec(irec)) then
         irecloc = irecloc + 1
-        call MPI_SEND(sisux(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
-                      MPI_COMM_WORLD,ier)
+        call send_dp(sisux(1,irecloc), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, 0, irec)
+        !call MPI_SEND(sisux(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
+        !              my_local_mpi_comm_world,ier) ! TODO remove
         if (number_of_components >= 2) then
-          call MPI_SEND(sisuz(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
-                        MPI_COMM_WORLD,ier)
+          call send_dp(sisuz(1,irecloc), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, 0, irec)
+          !call MPI_SEND(sisuz(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
+          !              my_local_mpi_comm_world,ier) ! TODO remove
         endif
         if (number_of_components == 3) then
-          call MPI_SEND(siscurl(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
-                        MPI_COMM_WORLD,ier)
+          call send_dp(siscurl(1,irecloc), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, 0, irec)
+          !call MPI_SEND(siscurl(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
+          !              my_local_mpi_comm_world,ier) ! TODO remove
         endif
       endif
 #endif

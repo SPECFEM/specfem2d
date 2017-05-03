@@ -36,7 +36,7 @@
 #ifdef USE_MPI
   use mpi
 #endif
-  use constants, only: TWO,FOUR_THIRDS,TWO_THIRDS,APPROXIMATE_HESS_KL,IMAIN,IOUT_ENERGY,ISTANDARD_OUTPUT
+  use constants, only: TWO,FOUR_THIRDS,TWO_THIRDS,APPROXIMATE_HESS_KL,IMAIN,IOUT_ENERGY,ISTANDARD_OUTPUT,IN_DATA_FILES,OUTPUT_FILES
   use specfem_par
   use specfem_par_gpu
   use specfem_par_movie, only: simulation_title,output_wavefield_dumps,mask_ibool
@@ -86,10 +86,12 @@
       enddo
     enddo
 
+    ! SMNSR For compatibility with NUMBER_OF_SIMULTANEOUS_RUNS we have to change the lines trim(IN_DATA_FILES)//'proc'
+
     ! outputs model files
     if (trim(SAVE_MODEL) == 'legacy') then
       ! legacy format
-      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_model_velocity.dat_input'
+      write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_model_velocity.dat_input'
       open(unit=1001,file=inputname,status='unknown',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_model_velocity.dat_input')
       do ispec = 1,nspec
@@ -105,7 +107,7 @@
 
     else if (trim(SAVE_MODEL) == 'ascii') then
       ! ascii format
-      write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat'
+      write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_rho_vp_vs.dat'
       open(unit=1001,file= inputname,status='unknown',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_rho_vp_vs.dat')
       do ispec = 1,nspec
@@ -120,33 +122,33 @@
 
     else if ((trim(SAVE_MODEL) == 'binary') .or. (trim(SAVE_MODEL) == 'gll')) then
       ! binary and GLL format
-      write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
+      write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_rho.bin'
       open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_rho.bin')
       write(172) rho_save
       close(172)
-      write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vp.bin'
+      write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_vp.bin'
       open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_vp.bin')
       write(172) vp_save
       close(172)
-      write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vs.bin'
+      write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_vs.bin'
       open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_vs.bin')
       write(172) vs_save
       close(172)
-      write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_x.bin'
+      write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_x.bin'
       open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_x.bin')
       write(172) x_save
       close(172)
-      write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_z.bin'
+      write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_z.bin'
       open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_z.bin')
       write(172) z_save
       close(172)
 
-      write(outputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_jacobian.bin'
+      write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_jacobian.bin'
       open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_jacobian.bin')
       write(172) jacobian
@@ -187,7 +189,7 @@
       if (nspec_left > 0) then
         ! opens file
         write(outputname,'(a,i6.6,a)') 'absorb_acoustic_left',myrank,'.bin'
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
         ! writes boundary contributions
         write(35) b_absorb_acoustic_left
@@ -196,7 +198,7 @@
       !--- right absorbing boundary
       if (nspec_right > 0) then
         write(outputname,'(a,i6.6,a)') 'absorb_acoustic_right',myrank,'.bin'
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
         ! writes boundary contributions
         write(35) b_absorb_acoustic_right
@@ -205,7 +207,7 @@
       !--- bottom absorbing boundary
       if (nspec_bottom > 0) then
         write(outputname,'(a,i6.6,a)') 'absorb_acoustic_bottom',myrank,'.bin'
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
         ! writes boundary contributions
         write(35) b_absorb_acoustic_bottom
@@ -214,7 +216,7 @@
       !--- top absorbing boundary
       if (nspec_top > 0) then
         write(outputname,'(a,i6.6,a)') 'absorb_acoustic_top',myrank,'.bin'
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
         ! writes boundary contributions
         write(35) b_absorb_acoustic_top
@@ -226,7 +228,7 @@
       !--- left absorbing boundary
       if (nspec_left > 0) then
         write(outputname,'(a,i6.6,a)') 'absorb_elastic_left',myrank,'.bin'
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
         ! writes boundary contributions
         write(35) b_absorb_elastic_left
@@ -235,7 +237,7 @@
       !--- right absorbing boundary
       if (nspec_right > 0) then
         write(outputname,'(a,i6.6,a)') 'absorb_elastic_right',myrank,'.bin'
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
         ! writes boundary contributions
         write(35) b_absorb_elastic_right
@@ -244,7 +246,7 @@
       !--- bottom absorbing boundary
       if (nspec_bottom > 0) then
         write(outputname,'(a,i6.6,a)') 'absorb_elastic_bottom',myrank,'.bin'
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
         ! writes boundary contributions
         write(35) b_absorb_elastic_bottom
@@ -253,7 +255,7 @@
       !--- top absorbing boundary
       if (nspec_top > 0) then
         write(outputname,'(a,i6.6,a)') 'absorb_elastic_top',myrank,'.bin'
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
         ! writes boundary contributions
         write(35) b_absorb_elastic_top
@@ -267,9 +269,9 @@
       if (nspec_left > 0) then
         write(outputname,'(a,i6.6,a)') 'absorb_poro_s_left',myrank,'.bin'
         write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_left',myrank,'.bin'
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-        open(unit=36,file='OUTPUT_FILES/'//outputname2,status='unknown',form='unformatted',iostat=ier)
+        open(unit=36,file=trim(OUTPUT_FILES)//outputname2,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
         ! writes boundary contributions
         write(35) b_absorb_poro_s_left
@@ -281,9 +283,9 @@
       if (nspec_right > 0) then
         write(outputname,'(a,i6.6,a)') 'absorb_poro_s_right',myrank,'.bin'
         write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_right',myrank,'.bin'
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-        open(unit=36,file='OUTPUT_FILES/'//outputname2,status='unknown',form='unformatted',iostat=ier)
+        open(unit=36,file=trim(OUTPUT_FILES)//outputname2,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
         ! writes boundary contributions
         write(35) b_absorb_poro_s_right
@@ -295,9 +297,9 @@
       if (nspec_bottom > 0) then
         write(outputname,'(a,i6.6,a)') 'absorb_poro_s_bottom',myrank,'.bin'
         write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_bottom',myrank,'.bin'
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-        open(unit=36,file='OUTPUT_FILES/'//outputname2,status='unknown',form='unformatted',iostat=ier)
+        open(unit=36,file=trim(OUTPUT_FILES)//outputname2,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
         ! writes boundary contributions
         write(35) b_absorb_poro_s_bottom
@@ -309,9 +311,9 @@
       if (nspec_top > 0) then
         write(outputname,'(a,i6.6,a)') 'absorb_poro_s_top',myrank,'.bin'
         write(outputname2,'(a,i6.6,a)') 'absorb_poro_w_top',myrank,'.bin'
-        open(unit=35,file='OUTPUT_FILES/'//outputname,status='unknown',form='unformatted',iostat=ier)
+        open(unit=35,file=trim(OUTPUT_FILES)//outputname,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
-        open(unit=36,file='OUTPUT_FILES/'//outputname2,status='unknown',form='unformatted',iostat=ier)
+        open(unit=36,file=trim(OUTPUT_FILES)//outputname2,status='unknown',form='unformatted',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening absorbing boundary file')
         ! writes boundary contributions
         write(35) b_absorb_poro_s_top
@@ -338,7 +340,7 @@
     endif
 
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_elastic**.bin')
 
     write(55) displ_elastic
@@ -356,7 +358,7 @@
     endif
 
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_poroelastic_s**.bin')
 
     write(55) displs_poroelastic
@@ -365,7 +367,7 @@
     close(55)
 
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
-    open(unit=56,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=56,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_poroelastic_w**.bin')
 
     write(56) displw_poroelastic
@@ -383,7 +385,7 @@
     endif
 
     write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
+    open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file lastframe_acoustic**.bin')
 
     write(55) potential_acoustic

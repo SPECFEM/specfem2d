@@ -501,7 +501,7 @@
   use mpi
 #endif
 
-  use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO
+  use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO,OUTPUT_FILES
   use specfem_par
   use specfem_par_movie
 
@@ -529,7 +529,6 @@
   double precision :: distance_min_local,distance_max_local
   double precision :: distance_1,distance_2,distance_3,distance_4
 
-  integer :: ier
   integer :: i,j,ispec,material
 
 ! for histogram of number of points per wavelength
@@ -687,9 +686,11 @@
     enddo
 
 #ifdef USE_MPI
-    call MPI_REDUCE(classes_wavelength, classes_wavelength_all, NCLASSES, MPI_INTEGER, MPI_SUM, 0, MPI_COMM_WORLD, ier)
+    call sum_all_1Darray_i(classes_wavelength, classes_wavelength_all, NCLASSES)
+    ! TODO remove:
+    ! call MPI_REDUCE(classes_wavelength, classes_wavelength_all, NCLASSES, MPI_INTEGER, MPI_SUM, 0, my_local_mpi_comm_world, ier)
 #else
-    ier = 0
+    !ier = 0
     classes_wavelength_all(:) = classes_wavelength(:)
 #endif
 
@@ -730,10 +731,10 @@
       scaling_factor = max_nb_of_points_per_wavelength - min_nb_of_points_per_wavelength
 
       if (ipass == 1) then
-        open(unit=14,file='OUTPUT_FILES/points_per_wavelength_histogram_S_in_solid.txt',status='unknown')
+        open(unit=14,file=trim(OUTPUT_FILES)//'points_per_wavelength_histogram_S_in_solid.txt',status='unknown')
         scaling_factor_S = scaling_factor
       else
-        open(unit=14,file='OUTPUT_FILES/points_per_wavelength_histogram_P_in_fluid.txt',status='unknown')
+        open(unit=14,file=trim(OUTPUT_FILES)//'points_per_wavelength_histogram_P_in_fluid.txt',status='unknown')
         scaling_factor_P = scaling_factor
       endif
       do iclass = 0,NCLASSES-1
@@ -762,7 +763,7 @@
   ! create script for Gnuplot histogram file
   if (myrank == 0) then
 
-    open(unit=14,file='OUTPUT_FILES/plot_points_per_wavelength_histogram.gnu',status='unknown')
+    open(unit=14,file=trim(OUTPUT_FILES)//'plot_points_per_wavelength_histogram.gnu',status='unknown')
     write(14,*) 'set term wxt'
 
     if (nspec_counted_all_solid > 0) then
@@ -772,7 +773,7 @@
       write(14,*) 'set boxwidth ',real(scaling_factor_S/NCLASSES)
       write(14,*) 'set xlabel "Range of min number of points per S wavelength in solid"'
       write(14,*) 'set ylabel "Percentage of elements (%)"'
-      write(14,*) 'set loadpath "./OUTPUT_FILES"'
+      write(14,*) 'set loadpath "'//trim(OUTPUT_FILES)//'"'
       write(14,*) 'plot "points_per_wavelength_histogram_S_in_solid.txt" with boxes'
       write(14,*) 'pause -1 "hit any key..."'
     endif
@@ -784,7 +785,7 @@
       write(14,*) 'set boxwidth ',real(scaling_factor_P/NCLASSES)
       write(14,*) 'set xlabel "Range of min number of points per P wavelength in fluid"'
       write(14,*) 'set ylabel "Percentage of elements (%)"'
-      write(14,*) 'set loadpath "./OUTPUT_FILES"'
+      write(14,*) 'set loadpath "'//trim(OUTPUT_FILES)//'"'
       write(14,*) 'plot "points_per_wavelength_histogram_P_in_fluid.txt" with boxes'
       write(14,*) 'pause -1 "hit any key..."'
     endif
@@ -858,7 +859,7 @@
 #endif
 
   use constants, only: IMAIN,TINYVAL,HUGEVAL,DISPLAY_SUBSET_OPTION,NSPEC_DISPLAY_SUBSET, &
-    RPERCENTX,RPERCENTZ,ORIG_X,ORIG_Z,CENTIM,THRESHOLD_POSTSCRIPT
+    RPERCENTX,RPERCENTZ,ORIG_X,ORIG_Z,CENTIM,THRESHOLD_POSTSCRIPT,OUTPUT_FILES
   use specfem_par
   use specfem_par_movie
 
@@ -905,12 +906,11 @@
   double precision, dimension(:,:), allocatable  :: coorg_recv
   integer, dimension(nspec)  :: RGB_send
   integer, dimension(:), allocatable  :: RGB_recv
-  real, dimension(nspec)  :: greyscale_send
-  real, dimension(:), allocatable  :: greyscale_recv
+  double precision, dimension(nspec)  :: greyscale_send
+  double precision, dimension(:), allocatable  :: greyscale_recv
   integer :: nspec_recv
   integer :: num_ispec
   integer :: iproc
-  integer :: ier
   integer :: i,j,ispec,material
   integer :: is,ir,in,nnum
   integer :: UPPER_LIMIT_DISPLAY
@@ -980,7 +980,7 @@
 !
 !---- open PostScript file
 !
-    open(unit=24,file='OUTPUT_FILES/mesh_stability.ps',status='unknown')
+    open(unit=24,file=trim(OUTPUT_FILES)//'mesh_stability.ps',status='unknown')
 
 !
 !---- write PostScript header
@@ -1251,14 +1251,16 @@
   if (myrank == 0) then
 
     do iproc = 1, NPROC-1
-      call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
-              iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+      call recv_singlei(nspec_recv,iproc,42)
+      !MPI_RECV (nspec_recv, 1, MPI_INTEGER,iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
       allocate(coorg_recv(2,nspec_recv*5))
       allocate(RGB_recv(nspec_recv))
-      call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
-              iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-      call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, &
-              iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+      call recv_dp(coorg_recv(1,1),nspec_recv*5*2,iproc,42)
+      !call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, & ! TODO remove
+      !iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier)
+      call recv_i(RGB_recv(1),nspec_recv,iproc,42)
+      !call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, & ! TODO remove
+      !        iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier)
 
       do ispec = 1, nspec_recv
         num_ispec = num_ispec + 1
@@ -1282,9 +1284,12 @@
     enddo
 
   else
-    call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-    call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-    call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+    call send_singlei (nspec, 0, 42)
+    !call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
+    call send_dp(coorg_send, nspec*5*2, 0, 42)
+    !call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, my_local_mpi_comm_world, ier)  ! TODO remove
+    call send_i(RGB_send, nspec, 0, 42)
+    !call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier)  ! TODO remove
   endif
 #else
   ! dummy statements to avoid compiler warnings
@@ -1320,9 +1325,9 @@
 !---- open PostScript file
 !
     if (ELASTIC_SIMULATION .or. POROELASTIC_SIMULATION) then
-      open(unit=24,file='OUTPUT_FILES/mesh_S_wave_dispersion.ps',status='unknown')
+      open(unit=24,file=trim(OUTPUT_FILES)//'mesh_S_wave_dispersion.ps',status='unknown')
     else
-      open(unit=24,file='OUTPUT_FILES/mesh_P_wave_dispersion.ps',status='unknown')
+      open(unit=24,file=trim(OUTPUT_FILES)//'mesh_P_wave_dispersion.ps',status='unknown')
     endif
 
 !
@@ -1657,13 +1662,16 @@
 #ifdef USE_MPI
   if (myrank == 0) then
     do iproc = 1, NPROC-1
-      call MPI_RECV (nspec_recv, 1, MPI_INTEGER,iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+      call recv_singlei(nspec_recv,iproc,42)
+      !call MPI_RECV (nspec_recv, 1, MPI_INTEGER,iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
       allocate(coorg_recv(2,nspec_recv*5))
       allocate(RGB_recv(nspec_recv))
-      call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
-            iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-      call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, &
-            iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+      call recv_dp(coorg_recv(1,1),nspec_recv*5*2,iproc,42)
+      !call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
+      !      iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
+      call recv_i(RGB_recv(1),nspec_recv,iproc,42)
+      !call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, &
+      !      iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
       do ispec = 1, nspec_recv
         num_ispec = num_ispec + 1
@@ -1690,9 +1698,12 @@
       deallocate(RGB_recv)
     enddo
   else
-    call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-    call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-    call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+    call send_singlei (nspec, 0, 42)
+    !call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
+    call send_dp (coorg_send, nspec*5*2, 0, 42)
+    !call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
+    call send_i (RGB_send, nspec, 0, 42)
+    !call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
   endif
 #endif
 
@@ -1715,7 +1726,7 @@
 !
 !---- open PostScript file
 !
-    open(unit=24,file='OUTPUT_FILES/P_velocity_model.ps',status='unknown')
+    open(unit=24,file=trim(OUTPUT_FILES)//'P_velocity_model.ps',status='unknown')
 
 !
 !---- write PostScript header
@@ -1957,13 +1968,16 @@
 #ifdef USE_MPI
   if (myrank == 0) then
     do iproc = 1, NPROC-1
-      call MPI_RECV (nspec_recv, 1, MPI_INTEGER,iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+      call recv_singlei(nspec_recv, iproc, 42)
+      !call MPI_RECV (nspec_recv, 1, MPI_INTEGER,iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
       allocate(coorg_recv(2,nspec_recv*5))
       allocate(greyscale_recv(nspec_recv))
-      call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
-            iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-      call MPI_RECV (greyscale_recv(1), nspec_recv, MPI_REAL, &
-            iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+      call recv_dp(coorg_recv(1,1), nspec_recv*5*2, iproc, 42)
+      !call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
+      !      iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier)  ! TODO remove
+      call recv_dp(greyscale_recv(1), nspec_recv, iproc, 42)
+      !call MPI_RECV (greyscale_recv(1), nspec_recv, MPI_REAL, &
+      !      iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier)  ! TODO remove
 
       do ispec = 1, nspec_recv
         num_ispec = num_ispec + 1
@@ -1981,9 +1995,12 @@
       deallocate(greyscale_recv)
     enddo
   else
-    call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
-    call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION, 0, 42, MPI_COMM_WORLD, ier)
-    call MPI_SEND (greyscale_send, UPPER_LIMIT_DISPLAY, MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+    call send_singlei (UPPER_LIMIT_DISPLAY, 0, 42)
+    !call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
+    call send_dp (coorg_send, UPPER_LIMIT_DISPLAY*5*2, 0, 42)
+    !call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
+    call send_dp (greyscale_send, UPPER_LIMIT_DISPLAY, 0, 42)
+    !call MPI_SEND (greyscale_send, UPPER_LIMIT_DISPLAY, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
   endif
 #else
   ! dummy statements to avoid compiler warnings
@@ -2012,7 +2029,7 @@
 !
 !---- open PostScript file
 !
-    open(unit=24,file='OUTPUT_FILES/mesh_partitioning.ps',status='unknown')
+    open(unit=24,file=trim(OUTPUT_FILES)//'mesh_partitioning.ps',status='unknown')
 
 !
 !---- write PostScript header
@@ -2214,11 +2231,13 @@
       ! use a different color for each material set
       icol = mod(iproc, NUM_COLORS) + 1
 
-      call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
-          iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+      call recv_singlei(nspec_recv,iproc,42)
+      !call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
+      !    iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
       allocate(coorg_recv(2,nspec_recv*5))
-      call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
-          iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+      call recv_dp(coorg_recv(1,1), nspec_recv*5*2,iproc,42)
+      !call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
+      !    iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
       do ispec = 1, nspec_recv
          num_ispec = num_ispec + 1
@@ -2237,8 +2256,10 @@
     enddo
 
   else
-    call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER,0, 42, MPI_COMM_WORLD, ier)
-    call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION,0, 42, MPI_COMM_WORLD, ier)
+    call send_singlei (UPPER_LIMIT_DISPLAY, 0, 42)
+    !call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER,0, 42, my_local_mpi_comm_world, ier) ! TODO remove
+    call send_dp (coorg_send, UPPER_LIMIT_DISPLAY*5*2, 0, 42)
+    !call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION,0, 42, my_local_mpi_comm_world, ier) ! TODO remove
   endif
 #endif
 

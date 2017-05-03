@@ -110,11 +110,12 @@ FC_FUNC_(param_open,PARAM_OPEN)(char * filename, int * length, int * ierr)
     fncopy[blank - fncopy] = '\0';
   }
   if ((fid = fopen(fncopy, "r")) == NULL) {
-    printf("Can't open '%s'\n", fncopy);
+   // AB AB purposely suppressed this for NUMBER_OF_SIMULTANEOUS_RUNS     printf("Can't open '%s'\n", fncopy);
     *ierr = 1;
     return;
   }
   free(fncopy);
+  *ierr = 0;
 }
 
 void

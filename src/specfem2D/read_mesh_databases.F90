@@ -34,7 +34,7 @@
 
   subroutine read_mesh_for_init()
 
-  use constants, only: IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
+  use constants, only: IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT,OUTPUT_FILES
   use specfem_par
   use specfem_par_noise, only: NOISE_TOMOGRAPHY
   use specfem_par_movie
@@ -63,7 +63,7 @@
   ! starts reading in parameters from input Database file
 
   ! opens Database file
-  write(prname,"('./OUTPUT_FILES/Database',i5.5,'.bin')") myrank
+  write(prname,"(a,i5.5,a)") trim(OUTPUT_FILES)//'Database',myrank,'.bin'
   open(unit=IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0 ) then
     if (myrank == 0) then
@@ -71,7 +71,7 @@
       print *
       print *,'Please make sure that the mesher has been run before this solver simulation with the correct settings...'
     endif
-    call exit_MPI(myrank,'Error opening file OUTPUT_FILES/Database***.bin')
+    call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'Database***.bin')
   endif
 
   !-------- starts reading init section

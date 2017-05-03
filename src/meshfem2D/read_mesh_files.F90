@@ -63,7 +63,7 @@
 
   subroutine read_mesh_nodes_coords_from_interfaces()
 
-  use constants, only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK
+  use constants, only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK,MAX_STRING_LEN,mygroup,IN_DATA_FILES
 
   use part_unstruct_par, only: nodes_coords,max_npoints_interface,number_of_interfaces, &
     npoints_interface_top,xinterface_top,zinterface_top,coefs_interface_top, &
@@ -71,7 +71,7 @@
 
   use source_file_par, only: source_surf,xs,zs
 
-  use shared_parameters, only: ngnod,interfacesfile,NSOURCES,xmin_param,xmax_param
+  use shared_parameters, only: ngnod,interfacesfile,NSOURCES,xmin_param,xmax_param,NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
 
@@ -94,10 +94,18 @@
   ! external functions
   integer, external :: num_4, num_9
   double precision, external :: value_spline
+  character(len=MAX_STRING_LEN) :: interfaces_filename,path_to_add
+
+  interfaces_filename = trim(IN_DATA_FILES)//trim(interfacesfile)
+
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    interfaces_filename = path_to_add(1:len_trim(path_to_add))//interfaces_filename(1:len_trim(interfaces_filename))
+  endif
 
   ! get interface data from external file
-  write(IMAIN,*) 'Reading interface data from file: ','DATA/' // interfacesfile(1:len_trim(interfacesfile))
-  open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old')
+  write(IMAIN,*) 'Reading interface data from file: '//trim(IN_DATA_FILES)//interfacesfile(1:len_trim(interfacesfile))
+  open(unit=IIN_INTERFACES,file=trim(interfaces_filename),status='old')
 
   ! allocate arrays for the grid
   allocate(grid_point_x(0:nx,0:nz))
