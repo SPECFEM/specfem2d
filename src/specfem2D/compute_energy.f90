@@ -101,7 +101,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: vector_field_element
   ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: pressure_element
-  
+
   ! loop over spectral elements
   do ispec = 1,nspec ! TODO uncomment
     !---

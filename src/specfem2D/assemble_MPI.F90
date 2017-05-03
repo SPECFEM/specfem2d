@@ -144,7 +144,7 @@
       !                 CUSTOM_MPI_TYPE, &
       !                 my_neighbours(iinterface), 11, &
       !                 my_local_mpi_comm_world, msg_recv_requests(iinterface), ier) ! TODO remove
-                 
+
     enddo
 
     ! waits for MPI requests to complete (recv)
@@ -471,7 +471,7 @@
     request_send_recv_elastic, &
     buffer_send_faces_vector_el, &
     buffer_recv_faces_vector_el, &
-    my_neighbours,myrank
+    my_neighbours
 
   implicit none
 
@@ -712,7 +712,7 @@
     request_send_recv_poro, &
     buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
     buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
-    my_neighbours,myrank
+    my_neighbours
 
   implicit none
 

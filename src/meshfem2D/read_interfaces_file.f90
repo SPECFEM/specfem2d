@@ -50,7 +50,7 @@
   integer :: npoints_interface_bottom
   double precision :: xinterface_dummy,zinterface_dummy,xinterface_dummy_previous
   character(len=MAX_STRING_LEN) :: interfaces_filename,path_to_add
-  
+
   interfaces_filename = trim(IN_DATA_FILES)//trim(interfacesfile)
 
  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
