@@ -87,9 +87,10 @@ end module my_mpi
 
   implicit none
 
+  integer :: myrank
 #ifdef USE_MPI
   ! local parameters
-  integer :: sizeprocs,myrank
+  integer :: sizeprocs
   integer :: ier
 
   ! parallel version
@@ -123,8 +124,9 @@ end module my_mpi
 ! create sub-communicators if needed, if running more than one earthquake from the same job
   call world_split()
 #else
-
   logical :: BROADCAST_AFTER_READ = .false.
+  NUMBER_OF_SIMULTANEOUS_RUNS = NUMBER_OF_SIMULTANEOUS_RUNS ! To avoid compiler warning
+  BROADCAST_SAME_MESH_AND_MODEL = BROADCAST_SAME_MESH_AND_MODEL ! To avoid compiler warning
   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS is read, thus read the parameter file
   myrank = 0
   BROADCAST_AFTER_READ = .false.
@@ -174,10 +176,9 @@ end module my_mpi
   use my_mpi
 #ifdef USE_MPI
   use mpi
-#endif
-
   use constants, only: MAX_STRING_LEN,mygroup
   use shared_input_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
+#endif
 
   implicit none
 
@@ -443,22 +444,27 @@ end module my_mpi
 #ifdef USE_MPI
   use mpi
 #endif
-
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
 
   implicit none
-
-  integer countval
+  integer :: countval
   ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
   ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   integer :: buffer
-
+#ifdef USE_MPI
   integer ier
+#endif
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
+#ifdef USE_MPI
   call MPI_BCAST(buffer,countval,MPI_INTEGER,0,my_local_mpi_comm_for_bcast,ier)
+#else
+  ! to avoid compiler warning
+  buffer = buffer
+  countval = countval
+#endif
 
   end subroutine bcast_all_i_for_database
 
@@ -485,11 +491,19 @@ end module my_mpi
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   logical :: buffer
 
+#ifdef USE_MPI
   integer ier
+#endif
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
+#ifdef USE_MPI
   call MPI_BCAST(buffer,countval,MPI_INTEGER,0,my_local_mpi_comm_for_bcast,ier)
+#else
+  ! to avoid compiler warning
+  buffer = buffer
+  countval = countval
+#endif
 
   end subroutine bcast_all_l_for_database
 
@@ -509,6 +523,7 @@ end module my_mpi
   implicit none
 #ifdef USE_MPI
   include "precision.h"
+#endif
 
   integer countval
   ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
@@ -516,6 +531,7 @@ end module my_mpi
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   real(kind=CUSTOM_REAL) :: buffer
 
+#ifdef USE_MPI
   integer ier
 #endif
 
@@ -523,6 +539,10 @@ end module my_mpi
 
 #ifdef USE_MPI
   call MPI_BCAST(buffer,countval,CUSTOM_MPI_TYPE,0,my_local_mpi_comm_for_bcast,ier)
+#else
+  ! to avoid compiler warning
+  buffer = buffer
+  countval = countval
 #endif
 
   end subroutine bcast_all_cr_for_database
@@ -546,12 +566,19 @@ end module my_mpi
   ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   double precision :: buffer
-
+#ifdef USE_MP
   integer ier
+#endif
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
+#ifdef USE_MP
   call MPI_BCAST(buffer,countval,MPI_DOUBLE_PRECISION,0,my_local_mpi_comm_for_bcast,ier)
+#else
+  ! to avoid compiler warning
+  buffer = buffer
+  countval = countval
+#endif
 
   end subroutine bcast_all_dp_for_database
 
@@ -575,11 +602,19 @@ end module my_mpi
   ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
   real :: buffer
 
+#ifdef USE_MPI
   integer ier
+#endif
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
+#ifdef USE_MPI
   call MPI_BCAST(buffer,countval,MPI_REAL,0,my_local_mpi_comm_for_bcast,ier)
+#else
+  ! to avoid compiler warning
+  buffer = buffer
+  countval = countval
+#endif
 
   end subroutine bcast_all_r_for_database
 
@@ -895,9 +930,16 @@ end module my_mpi
 
   integer :: nx
   integer, dimension(nx) :: sendbuf, recvbuf
+
+#ifdef USE_MPI
   integer :: ier
 
   call MPI_REDUCE(sendbuf,recvbuf,nx,MPI_INTEGER,MPI_SUM,0,my_local_mpi_comm_world,ier)
+#else
+  ! to avoid compiler warning
+  recvbuf = sendbuf
+  nx = nx
+#endif
 
   end subroutine sum_all_1Darray_i
 
@@ -1417,10 +1459,15 @@ end module my_mpi
   implicit none
 
   integer,intent(out) :: comm
+
+#ifdef USE_MPI
   integer :: ier
 
   call MPI_COMM_DUP(my_local_mpi_comm_world,comm,ier)
   if (ier /= 0) stop 'error duplicating my_local_mpi_comm_world communicator'
+#else
+  comm = comm
+#endif
 
   end subroutine world_duplicate
 
@@ -1448,6 +1495,7 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
+#ifdef USE_MPI
 ! create sub-communicators if needed, if running more than one earthquake from the same job.
 ! create a sub-communicator for each independent run;
 ! if there is a single run to do, then just copy the default communicator to the new one
@@ -1455,10 +1503,8 @@ end module my_mpi
   subroutine world_split()
 
   use my_mpi
-#ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
-#endif
 
   use constants, only: MAX_STRING_LEN,OUTPUT_FILES, &
     IMAIN,ISTANDARD_OUTPUT,mygroup,I_should_read_the_database
@@ -1493,8 +1539,6 @@ end module my_mpi
     my_local_mpi_comm_for_bcast = MPI_COMM_NULL
 
   else
-
-#ifdef USE_MPI
 
 !--- create a subcommunicator for each independent run
 
@@ -1538,18 +1582,13 @@ end module my_mpi
       my_group_for_bcast = 0
       my_local_mpi_comm_for_bcast = MPI_COMM_NULL
 
-#else
-
-    mygroup = 0
-
-#endif
-
     endif
 
   endif
 
   end subroutine world_split
 
+#endif
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -1561,7 +1600,6 @@ end module my_mpi
 #ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
-#endif
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
 
   implicit none
@@ -1572,6 +1610,7 @@ end module my_mpi
     call MPI_COMM_FREE(my_local_mpi_comm_world,ier)
     if (BROADCAST_SAME_MESH_AND_MODEL) call MPI_COMM_FREE(my_local_mpi_comm_for_bcast,ier)
   endif
+#endif
 
   end subroutine world_unsplit
 
