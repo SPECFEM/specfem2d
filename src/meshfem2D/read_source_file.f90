@@ -79,7 +79,7 @@
   Mxx(:) = 0.d0
   Mxz(:) = 0.d0
   Mzz(:) = 0.d0
-  
+
   source_filename = trim(IN_DATA_FILES)//'SOURCE'
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then

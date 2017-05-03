@@ -618,7 +618,7 @@
   enddo
 
   ! AXISYM enforces zero derivatives on axis ! TODO LDDRK
-  if (AXISYM) then 
+  if (AXISYM) then
     if (is_on_the_axis(ispec)) then
       ! d_uz/dr=0 on the axis
       ! i == 1

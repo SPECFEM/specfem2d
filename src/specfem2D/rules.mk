@@ -191,9 +191,13 @@ specfem2D_SHARED_OBJECTS = \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/parallel.shared.o \
-	$O/set_color_palette.shared.o \
+	$O/read_parameter_file.mesh.o \
 	$O/read_value_parameters.shared.o \
+	$O/read_material_table.mesh.o \
+	$O/read_interfaces_file.mesh.o \
+	$O/read_regions.mesh.o \
 	$O/param_reader.cc.o \
+	$O/set_color_palette.shared.o \
 	$(EMPTY_MACRO)
 
 JPEGLIB_OBJECTS = \

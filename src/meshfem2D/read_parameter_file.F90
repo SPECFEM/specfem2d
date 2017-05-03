@@ -806,7 +806,7 @@
   endif
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS <= 0) stop 'NUMBER_OF_SIMULTANEOUS_RUNS <= 0 makes no sense'
-  
+
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. NPROC == 1) stop 'Serial runs require NUMBER_OF_SIMULTANEOUS_RUNS == 1'
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. trim(SAVE_MODEL) /= 'default' .and. trim(SAVE_MODEL) /= '.false.') &

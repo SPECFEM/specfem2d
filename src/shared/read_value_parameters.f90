@@ -437,7 +437,7 @@ subroutine open_parameter_file_from_master_only(ier)
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
-  
+
   integer ierr
   common /param_err_common/ ierr
   character(len=MAX_STRING_LEN) filename,path_to_add

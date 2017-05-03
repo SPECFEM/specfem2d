@@ -69,7 +69,11 @@
 
   subroutine setup_sources()
 
-  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,IIN,MAX_STRING_LEN,OUTPUT_FILES
+  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,IIN, &
+#ifndef USE_MPI
+     OUTPUT_FILES, &
+#endif
+     MAX_STRING_LEN
 
   use specfem_par, only: NSOURCES,initialfield,source_type, &
                          coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface, &
@@ -136,8 +140,6 @@
           endif
         enddo
 
-        ! daniel debug
-        !open(unit=1234,file=trim(OUTPUT_FILES)//'debug_source_contribution.txt',status='unknown')
       endif
 
     else if (source_type(i_source) == 2) then
@@ -186,7 +188,7 @@
   subroutine setup_receivers()
 
 #ifdef USE_MPI
-  use constants, only: IMAIN,IIN,mygroup,IN_DATA_FILES,OUTPUT_FILES
+  use constants, only: IMAIN,IIN,mygroup,IN_DATA_FILES
 #else
   use constants, only: IMAIN,IIN,mygroup,IN_DATA_FILES,OUTPUT_FILES,IOUT
 #endif
