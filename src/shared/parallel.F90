@@ -61,7 +61,7 @@ module my_mpi
 
 ! main parameter module for specfem simulations
 
-  !use mpi ! TODO
+  !use MPI ! TODO
 
   implicit none
 
