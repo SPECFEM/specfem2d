@@ -507,7 +507,7 @@ end module my_mpi
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
 
   implicit none
-
+#ifdef USE_MPI
   include "precision.h"
 
   integer countval
@@ -517,10 +517,13 @@ end module my_mpi
   real(kind=CUSTOM_REAL) :: buffer
 
   integer ier
+#endif
 
   if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
 
+#ifdef USE_MPI
   call MPI_BCAST(buffer,countval,CUSTOM_MPI_TYPE,0,my_local_mpi_comm_for_bcast,ier)
+#endif
 
   end subroutine bcast_all_cr_for_database
 
