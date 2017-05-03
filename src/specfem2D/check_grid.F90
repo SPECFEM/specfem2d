@@ -1296,7 +1296,6 @@
   allocate(coorg_recv(1,1))
   allocate(RGB_recv(1))
   nspec_recv = 0
-  ier = 0
   iproc = NPROC
   deallocate(coorg_recv)
   deallocate(RGB_recv)
@@ -2005,7 +2004,6 @@
 #else
   ! dummy statements to avoid compiler warnings
   allocate(greyscale_recv(1))
-  ier = 0
   deallocate(greyscale_recv)
 #endif
 

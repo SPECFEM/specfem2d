@@ -185,7 +185,11 @@
 
   subroutine setup_receivers()
 
+#ifdef USE_MPI
   use constants, only: IMAIN,IIN,mygroup,IN_DATA_FILES,OUTPUT_FILES
+#else
+  use constants, only: IMAIN,IIN,mygroup,IN_DATA_FILES,OUTPUT_FILES,IOUT
+#endif
   use specfem_par
 
   implicit none

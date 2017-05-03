@@ -272,7 +272,6 @@
   call synchronize_all()
 #else
   ! dummy to avoid compiler warning
-  ier = 0
   iproc = NPROC
 #endif
 
