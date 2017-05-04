@@ -44,30 +44,7 @@
   logical, intent(in) :: BROADCAST_AFTER_READ
 
   ! initializes
-
-  ! external meshing
-  mesh_file = ''
-  nodes_coords_file = ''
-  materials_file = ''
-  free_surface_file = ''
-  axial_elements_file = ''
-  absorbing_surface_file = ''
-  acoustic_forcing_surface_file = ''
-  absorbing_cpml_file = ''
-  tangential_detection_curve_file = ''
-
-  ! internal meshing
-  interfacesfile = ''
-  xmin_param = 0.d0
-  xmax_param = 0.d0
-  nx_param = 0
-
-  absorbbottom = .false.
-  absorbright = .false.
-  absorbtop = .false.
-  absorbleft = .false.
-
-  nbregions = 0
+  call read_parameter_file_init()
 
   ! only master process reads in Par_file
   if (myrank == 0) then
@@ -238,6 +215,44 @@
   call read_parameter_file_derive_flags()
 
   end subroutine read_parameter_file
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_parameter_file_init()
+
+! initializes the variables
+
+  use shared_parameters
+
+  implicit none
+
+  ! external meshing
+  mesh_file = ''
+  nodes_coords_file = ''
+  materials_file = ''
+  free_surface_file = ''
+  axial_elements_file = ''
+  absorbing_surface_file = ''
+  acoustic_forcing_surface_file = ''
+  absorbing_cpml_file = ''
+  tangential_detection_curve_file = ''
+
+  ! internal meshing
+  interfacesfile = ''
+  xmin_param = 0.d0
+  xmax_param = 0.d0
+  nx_param = 0
+
+  absorbbottom = .false.
+  absorbright = .false.
+  absorbtop = .false.
+  absorbleft = .false.
+
+  nbregions = 0
+
+  end subroutine read_parameter_file_init
 
 !
 !-------------------------------------------------------------------------------------------------
