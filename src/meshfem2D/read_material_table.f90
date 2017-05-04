@@ -56,7 +56,6 @@
   integer,external :: err_occurred
 
 
-  print *,"Enter read_material_table"  ! TODO remove
   ! re-read number of models to reposition read-header
   call read_value_integer_p(reread_nbmodels, 'mesher.nbmodels')
   if (err_occurred() /= 0) stop 'error reading parameter nbmodels in Par_file'
@@ -67,49 +66,29 @@
   ! safety check
   if (nbmodels <= 0) stop 'Non-positive number of materials not allowed!'
 
-
   ! allocates material tables
-  print *,"before allocate(icodemat(nbmodels))" ! TODO remove
   allocate(icodemat(nbmodels))
-  print *,"before allocate(cp(nbmodels))" ! TODO remove
   allocate(cp(nbmodels))
-  print *,"before allocate(cs(nbmodels))" ! TODO remove
   allocate(cs(nbmodels))
 
-print *,"before allocate(aniso3(nbmodels))" ! TODO remove
   allocate(aniso3(nbmodels))
-print *,"before allocate(aniso4(nbmodels))" ! TODO remove
   allocate(aniso4(nbmodels))
-print *,"before allocate(aniso5(nbmodels))" ! TODO remove
   allocate(aniso5(nbmodels))
-print *,"before allocate(aniso6(nbmodels))" ! TODO remove
   allocate(aniso6(nbmodels))
-print *,"before allocate(aniso7(nbmodels))" ! TODO remove
   allocate(aniso7(nbmodels))
-print *,"before allocate(aniso8(nbmodels))" ! TODO remove
   allocate(aniso8(nbmodels))
-print *,"before allocate(aniso9(nbmodels))" ! TODO remove
   allocate(aniso9(nbmodels))
-print *,"before allocate(aniso10(nbmodels))" ! TODO remove
   allocate(aniso10(nbmodels))
-print *,"before allocate(aniso11(nbmodels))" ! TODO remove
   allocate(aniso11(nbmodels))
-print *,"before allocate(aniso12(nbmodels))" ! TODO remove
   allocate(aniso12(nbmodels))
 
-print *,"before allocate(comp_g(nbmodels))" ! TODO remove
   allocate(comp_g(nbmodels))
-print *,"before allocate(QKappa(nbmodels))" ! TODO remove
   allocate(QKappa(nbmodels))
-print *,"before allocate(Qmu(nbmodels))" ! TODO remove
   allocate(Qmu(nbmodels))
 
-print *,"before allocate(rho_s_read(nbmodels))" ! TODO remove
   allocate(rho_s_read(nbmodels))
-print *,"before allocate(rho_f_read(nbmodels))" ! TODO remove
   allocate(rho_f_read(nbmodels))
 
-print *,"before   allocate( phi_read(nbmodels), ..."  ! TODO remove
   allocate( phi_read(nbmodels), &
             tortuosity_read(nbmodels), &
             permxx_read(nbmodels), &
@@ -120,7 +99,7 @@ print *,"before   allocate( phi_read(nbmodels), ..."  ! TODO remove
             kappa_fr_read(nbmodels), &
             eta_f_read(nbmodels), &
             mu_fr_read(nbmodels))
-  print *,"Alloc done"  ! TODO remove
+
   ! initializes material properties
   icodemat(:) = 0
 
@@ -156,27 +135,21 @@ print *,"before   allocate( phi_read(nbmodels), ..."  ! TODO remove
   mu_fr_read(:) = 0.d0
 
   number_of_materials_defined_by_tomo_file = 0
-  
-  print *,"Before loop"  ! TODO remove
 
   ! reads in material definitions
   do imaterial= 1,nbmodels
 
-    print *,"  Enter loop. imaterial:",imaterial  ! TODO remove
     call read_material_parameters_p(i,icodematread, &
                                     val0read,val1read,val2read,val3read, &
                                     val4read,val5read,val6read,val7read, &
                                     val8read,val9read,val10read,val11read,val12read)
-    print *,"  waypoint1 icodematread:",icodematread  ! TODO remove
 
     ! checks material id
     if (i < 1 .or. i > nbmodels) stop 'Wrong material number!'
     icodemat(i) = icodematread
-    print *,"  waypoint2" ! TODO remove
 
     ! sets material properties
     if (icodemat(i) == ISOTROPIC_MATERIAL) then
-      print *,"    case 1"  ! TODO remove
       ! isotropic materials
       rho_s_read(i) = val0read
       cp(i) = val1read
@@ -201,11 +174,9 @@ print *,"before   allocate( phi_read(nbmodels), ..."  ! TODO remove
       else
         phi_read(i) = 1.d0           ! acoustic
       endif
-            print *,"    case 1 end"  ! TODO remove
 
     else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
       ! anisotropic materials
-            print *,"    case 2"  ! TODO remove
       rho_s_read(i) = val0read
       aniso3(i) = val1read
       aniso4(i) = val2read
@@ -217,9 +188,8 @@ print *,"before   allocate( phi_read(nbmodels), ..."  ! TODO remove
       aniso10(i) = val8read
       aniso11(i) = val9read
       aniso12(i) = val10read ! This value will be used only in AXISYM
-            print *,"    case 2 end"  ! TODO remove
+
     else if (icodemat(i) == POROELASTIC_MATERIAL) then
-          print *,"    case 3"  ! TODO remove
       ! poroelastic materials
       rho_s_read(i) = val0read
       rho_f_read(i) = val1read
@@ -243,9 +213,8 @@ print *,"before   allocate( phi_read(nbmodels), ..."  ! TODO remove
         stop 'non-positive value of modulus'
       if (Qmu(i) <= 0.00000001d0) &
         stop 'non-positive value of Qmu'
-            print *,"    case 3 end"  ! TODO remove
+
     else if (icodemat(i) <= 0) then
-          print *,"    case 4"  ! TODO remove
       ! tomographic material
       number_of_materials_defined_by_tomo_file = number_of_materials_defined_by_tomo_file + 1
 
@@ -273,8 +242,6 @@ print *,"before   allocate( phi_read(nbmodels), ..."  ! TODO remove
     endif
 
   enddo ! nbmodels
-
-  print *,"End of loop" ! TODO remove
 
   ! user output
   write(IMAIN,*) 'Materials:'
