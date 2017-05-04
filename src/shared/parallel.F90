@@ -87,8 +87,8 @@ end module my_mpi
 
   implicit none
 
-  integer :: myrank
 #ifdef USE_MPI
+  integer :: myrank
   ! local parameters
   integer :: sizeprocs
   integer :: ier
@@ -124,14 +124,15 @@ end module my_mpi
 ! create sub-communicators if needed, if running more than one earthquake from the same job
   call world_split()
 #else
-  logical :: BROADCAST_AFTER_READ = .false.
   NUMBER_OF_SIMULTANEOUS_RUNS = NUMBER_OF_SIMULTANEOUS_RUNS ! To avoid compiler warning
   BROADCAST_SAME_MESH_AND_MODEL = BROADCAST_SAME_MESH_AND_MODEL ! To avoid compiler warning
   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS is read, thus read the parameter file
-  myrank = 0
-  BROADCAST_AFTER_READ = .false.
-  call read_parameter_file(myrank,1,BROADCAST_AFTER_READ)
-
+  ! initialize
+  call read_parameter_file_init()
+  ! open the Par_file
+  call open_parameter_file()
+  ! read only parameters (without receiver-line section, material tables or region definitions)
+  call read_parameter_file_only()
 #endif
 
   end subroutine init_mpi
