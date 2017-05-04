@@ -100,13 +100,12 @@ end module my_mpi
   ! checks if getting size works
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
   if (ier /= 0 ) stop 'Error getting MPI size'
-
   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read before calling world_split()
   ! thus read the parameter file
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
   if (ier /= 0 ) stop 'Error getting MPI rank'
   if (myrank == 0) then
-    call open_parameter_file_from_master_only(ier)
+    call open_parameter_file_from_master_only()
     ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read
     call read_value_integer_p(NUMBER_OF_SIMULTANEOUS_RUNS, 'NUMBER_OF_SIMULTANEOUS_RUNS')!, ier)
     !if (ier /= 0) stop 'Error reading Par_file parameter NUMBER_OF_SIMULTANEOUS_RUNS' ! TODO remove
@@ -115,12 +114,10 @@ end module my_mpi
     ! close parameter file
     call close_parameter_file()
   endif
-
   ! broadcast parameters read from master to all processes
   my_local_mpi_comm_world = MPI_COMM_WORLD
   call bcast_all_singlei(NUMBER_OF_SIMULTANEOUS_RUNS)
   call bcast_all_singlel(BROADCAST_SAME_MESH_AND_MODEL)
-
 ! create sub-communicators if needed, if running more than one earthquake from the same job
   call world_split()
 #else
@@ -1525,7 +1522,7 @@ end module my_mpi
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mod(sizeval,NUMBER_OF_SIMULTANEOUS_RUNS) /= 0) then
     if (myrank == 0) print *,'Error: the number of MPI processes ',sizeval, &
                             ' is not a multiple of NUMBER_OF_SIMULTANEOUS_RUNS = ',NUMBER_OF_SIMULTANEOUS_RUNS
-    stop 'the number of MPI processes is not a multiple of NUMBER_OF_SIMULTANEOUS_RUNS'
+    stop 'the number of MPI processes is not a multiple of NUMBER_OF_SIMULTANEOUS_RUNS. Make sure you call meshfem2D with mpirun.'
   endif
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. IMAIN == ISTANDARD_OUTPUT) &

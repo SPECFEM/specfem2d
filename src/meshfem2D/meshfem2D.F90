@@ -362,8 +362,6 @@
   call world_size(NPROC)
   call world_rank(myrank)
 
-  OUTPUT_FILES = trim(OUTPUT_FILES)
-
   ! open main output file, only written to by process 0
   if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
     open(unit=IMAIN,file=trim(OUTPUT_FILES)//'output_meshfem2D.txt',status='unknown',iostat=ier)
