@@ -54,11 +54,15 @@
     ! reads only parameters (without receiver-line section, material tables or region definitions)
     call read_parameter_file_only()
 
+    print *,"Before read_parameter_file_receiversets" ! TODO remove 
     ! reads receiver lines
     call read_parameter_file_receiversets()
+    print *,"After read_parameter_file_receiversets" ! TODO remove 
 
+    print *,"Before read_material_table" ! TODO remove 
     ! reads material definitions
     call read_material_table()
+    print *,"After read_material_table" ! TODO remove 
 
     ! mesher reads in internal region table for setting up mesh elements
     if (imesher == 1 .and. (.not. read_external_mesh) ) then
@@ -852,28 +856,36 @@
   write(IMAIN,*) '  Nb of line sets = ',nreceiversets
   write(IMAIN,*)
 
+    print *,"read_parameter_file_receiversets 1" ! TODO remove 
   ! re-reads rec_normal_to_surface parameter to reposition read header for following next-line reads
   call read_value_logical_p(reread_rec_normal_to_surface, 'solver.rec_normal_to_surface')
   if (err_occurred() /= 0) stop 'error reading parameter rec_normal_to_surface in Par_file'
-
+    print *,"read_parameter_file_receiversets 2" ! TODO remove 
   ! checks
   if (reread_rec_normal_to_surface .neqv. rec_normal_to_surface) stop 'Invalid re-reading of rec_normal_to_surface parameter'
 
   ! only valid if at least 1 receiver line is specified
   if (nreceiversets < 1) stop 'number of receiver lines must be greater than 1'
-
+    print *,"read_parameter_file_receiversets 3" ! TODO remove 
   ! allocate receiver line arrays
+      print *,"before allocate(nrec_line(nreceiversets))" ! TODO remove 
   allocate(nrec_line(nreceiversets))
+  print *,"before allocate(xdeb(nreceiversets))" ! TODO remove 
   allocate(xdeb(nreceiversets))
+    print *,"before allocate(zdeb(nreceiversets))" ! TODO remove 
   allocate(zdeb(nreceiversets))
+    print *,"before allocate(xfin(nreceiversets))" ! TODO remove 
   allocate(xfin(nreceiversets))
+    print *,"before allocate(zfin(nreceiversets))" ! TODO remove 
   allocate(zfin(nreceiversets))
+    print *,"allocate(record_at_surface_same_vertical(nreceiversets),stat=ier)" ! TODO remove 
   allocate(record_at_surface_same_vertical(nreceiversets),stat=ier)
   if (ier /= 0 ) stop 'Error allocating receiver lines'
-
+    print *,"read_parameter_file_receiversets 4" ! TODO remove 
   ! reads in receiver sets
   ! loop on all the receiver lines
   do ireceiverlines = 1,nreceiversets
+      print *,"  enter loop",ireceiverlines ! TODO remove 
     call read_value_integer_next_p(nrec_line(ireceiverlines),'solver.nrec')
     if (err_occurred() /= 0) stop 'error reading parameter nrec in Par_file'
 
@@ -896,6 +908,7 @@
       stop 'Cannot use record_at_surface_same_vertical with external meshes!'
     endif
   enddo
+      print *,"read_parameter_file_receiversets 5" ! TODO remove 
 
   end subroutine read_parameter_file_receiversets
 
