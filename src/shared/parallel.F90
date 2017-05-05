@@ -57,7 +57,7 @@
 !
 !-------------------------------------------------------------------------------------------------
 
-module my_mpi
+module my_mpi_communicator
 
 ! main parameter module for specfem simulations
 
@@ -67,7 +67,7 @@ module my_mpi
 
   integer :: my_local_mpi_comm_world, my_local_mpi_comm_for_bcast
 
-end module my_mpi
+end module my_mpi_communicator
 
 !-------------------------------------------------------------------------------------------------
 !
@@ -77,7 +77,7 @@ end module my_mpi
 
   subroutine init_mpi()
 
-  use my_mpi
+  use my_mpi_communicator
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
 
 #ifdef USE_MPI
@@ -138,7 +138,7 @@ end module my_mpi
 
   subroutine finalize_mpi()
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   ! standard include of the MPI library
   use mpi
@@ -169,7 +169,7 @@ end module my_mpi
 
   subroutine abort_mpi()
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
   use constants, only: MAX_STRING_LEN,mygroup
@@ -226,7 +226,7 @@ end module my_mpi
 
   subroutine synchronize_all()
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
@@ -286,7 +286,7 @@ end module my_mpi
 
   subroutine bcast_all_i(buffer, countval)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -316,7 +316,7 @@ end module my_mpi
 
   subroutine bcast_all_singlei(buffer)
 
- use my_mpi
+ use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -345,7 +345,7 @@ end module my_mpi
 
   subroutine bcast_all_singlel(buffer)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -375,7 +375,7 @@ end module my_mpi
 
   subroutine bcast_all_singledp(buffer)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -404,7 +404,7 @@ end module my_mpi
 
   subroutine bcast_all_string(buffer)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -436,7 +436,7 @@ end module my_mpi
 
   subroutine bcast_all_i_for_database(buffer, countval)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -473,7 +473,7 @@ end module my_mpi
 
   subroutine bcast_all_l_for_database(buffer, countval)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -509,7 +509,7 @@ end module my_mpi
 
   subroutine bcast_all_cr_for_database(buffer, countval)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -549,7 +549,7 @@ end module my_mpi
 
   subroutine bcast_all_dp_for_database(buffer, countval)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -584,7 +584,7 @@ end module my_mpi
 
   subroutine bcast_all_r_for_database(buffer, countval)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -622,7 +622,7 @@ end module my_mpi
 
   subroutine min_all_i(sendbuf, recvbuf)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -648,7 +648,7 @@ end module my_mpi
 
   subroutine max_all_i(sendbuf, recvbuf)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -674,7 +674,7 @@ end module my_mpi
 
   subroutine min_all_all_dp(sendbuf, recvbuf)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -699,7 +699,7 @@ end module my_mpi
 
   subroutine max_all_cr(sendbuf, recvbuf)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -729,7 +729,7 @@ end module my_mpi
 
   subroutine max_all_all_i(sendbuf, recvbuf)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -755,7 +755,7 @@ end module my_mpi
 
   subroutine max_all_all_dp(sendbuf, recvbuf)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -780,7 +780,7 @@ end module my_mpi
 
   subroutine any_all_l(sendbuf, recvbuf)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -807,7 +807,7 @@ end module my_mpi
 
   subroutine sum_all_i(sendbuf, recvbuf)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -833,7 +833,7 @@ end module my_mpi
 
   subroutine sum_all_all_i(sendbuf, recvbuf)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -859,7 +859,7 @@ end module my_mpi
 
   subroutine sum_all_cr(sendbuf, recvbuf)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -890,7 +890,7 @@ end module my_mpi
 
   subroutine sum_all_dp(sendbuf, recvbuf)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -917,7 +917,7 @@ end module my_mpi
 
   subroutine sum_all_1Darray_i(sendbuf, recvbuf, nx)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -945,7 +945,7 @@ end module my_mpi
 
   subroutine sum_all_all_dp(sendbuf, recvbuf)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -975,7 +975,7 @@ end module my_mpi
 
   subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
@@ -1020,7 +1020,7 @@ end module my_mpi
 
  ! asynchronuous receive
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
@@ -1066,7 +1066,7 @@ end module my_mpi
 
 ! synchronuous/blocking send
 
-  use my_mpi
+  use my_mpi_communicator
   use mpi
 
   implicit none
@@ -1091,7 +1091,7 @@ end module my_mpi
 
 ! synchronuous/blocking send
 
-  use my_mpi
+  use my_mpi_communicator
   use mpi
 
   implicit none
@@ -1115,7 +1115,7 @@ end module my_mpi
   subroutine recv_singlei(recvbuf, dest, recvtag )
 
 ! synchronuous/blocking receive
-  use my_mpi
+  use my_mpi_communicator
   use mpi
 
   implicit none
@@ -1140,7 +1140,7 @@ end module my_mpi
   subroutine recv_singledp(recvbuf, dest, recvtag )
 
 ! synchronuous/blocking receive
-  use my_mpi
+  use my_mpi_communicator
   use mpi
 
   implicit none
@@ -1167,7 +1167,7 @@ end module my_mpi
 
 ! synchronuous/blocking send
 
-  use my_mpi
+  use my_mpi_communicator
   use mpi
 
   implicit none
@@ -1194,7 +1194,7 @@ end module my_mpi
 
 ! synchronuous/blocking send
 
-  use my_mpi
+  use my_mpi_communicator
   use mpi
 
   implicit none
@@ -1220,7 +1220,7 @@ end module my_mpi
   subroutine recv_i(recvbuf,recvcount, dest, recvtag )
 
 ! synchronuous/blocking receive
-  use my_mpi
+  use my_mpi_communicator
   use mpi
 
   implicit none
@@ -1246,7 +1246,7 @@ end module my_mpi
   subroutine recv_dp(recvbuf,recvcount, dest, recvtag )
 
 ! synchronuous/blocking receive
-  use my_mpi
+  use my_mpi_communicator
   use mpi
 
   implicit none
@@ -1272,7 +1272,7 @@ end module my_mpi
 
   subroutine gather_all_i(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -1300,7 +1300,7 @@ end module my_mpi
 
   subroutine gather_all_dp(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -1328,7 +1328,7 @@ end module my_mpi
 
   subroutine gather_all_singlei(sendbuf, recvbuf, NPROC)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -1356,7 +1356,7 @@ end module my_mpi
 
   subroutine gather_all_all_singlei(sendbuf, recvbuf, NPROC)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -1389,7 +1389,7 @@ end module my_mpi
 
   subroutine world_size(sizeval)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
   use mpi
 #endif
@@ -1417,7 +1417,7 @@ end module my_mpi
 
   subroutine world_rank(rank)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
@@ -1446,7 +1446,7 @@ end module my_mpi
 
   subroutine world_duplicate(comm)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
@@ -1473,7 +1473,7 @@ end module my_mpi
 
   subroutine world_get_comm(comm)
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
@@ -1498,7 +1498,7 @@ end module my_mpi
 
   subroutine world_split()
 
-  use my_mpi
+  use my_mpi_communicator
 ! standard include of the MPI library
   use mpi
 
@@ -1592,7 +1592,7 @@ end module my_mpi
 ! close sub-communicators if needed, if running more than one earthquake from the same job.
   subroutine world_unsplit()
 
-  use my_mpi
+  use my_mpi_communicator
 #ifdef USE_MPI
 ! standard include of the MPI library
   use mpi
