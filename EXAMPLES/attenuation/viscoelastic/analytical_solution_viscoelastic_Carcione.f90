@@ -15,23 +15,19 @@
 ! compute the elastic solution instead of the viscoelastic one
   logical, parameter :: COMPUTE_ELASTIC_CASE_INSTEAD = .false.
 
-  integer iratio
-  parameter(iratio = 32)
+  integer, parameter :: iratio = 32
 
-  integer nfreq,nt
-! DK DK parameter (nfreq = 4096)
-  parameter (nfreq = 8*65536)
-  parameter (nt = iratio * nfreq)
+  integer, parameter :: nfreq = 524288
+  integer, parameter :: nt = iratio * nfreq
 
-  double precision freqmax
-  parameter (freqmax = 80.d0)
+  double precision, parameter :: freqmax = 80.d0
+!! DK DK to print the velocity if we want to display the curve of how velocity varies with frequency
+!! DK DK for instance to compute the unrelaxed velocity in the Zener model
+! double precision, parameter :: freqmax = 20000.d0
 
-  double precision freqseuil
-! DK DK parameter (freqseuil = 0.25d0)
-  parameter (freqseuil = 0.05d0)
+  double precision, parameter :: freqseuil = 0.05d0
 
-  double precision pi
-  parameter (pi = 3.141592653589793d0)
+  double precision, parameter :: pi = 3.141592653589793d0
 
 ! for the solution in time domain
   integer it
@@ -46,9 +42,8 @@
   double precision x1,x2
 
 ! Definition source Dimitri
-  double precision f0,t0
-  parameter(f0 = 18.d0)
-  parameter(t0 = 1.2d0 / f0)
+  double precision, parameter :: f0 = 18.d0
+  double precision, parameter :: t0 = 1.2d0 / f0
 
 ! Definition source Carcione
 ! double precision f0,t0,eta,epsil
@@ -220,7 +215,13 @@
 
   E = (M1C + M2C) / 2
   V1 = cdsqrt(E / rho)  !! DK DK this is Vp
+!! DK DK print the velocity if we want to display the curve of how velocity varies with frequency
+!! DK DK for instance to compute the unrelaxed velocity in the Zener model
+! print *,freq,dsqrt(real(V1)**2 + imag(V1)**2)
   V2 = cdsqrt(M2C / (2.d0 * rho))  !! DK DK this is Vs
+!! DK DK print the velocity if we want to display the curve of how velocity varies with frequency
+!! DK DK for instance to compute the unrelaxed velocity in the Zener model
+! print *,freq,dsqrt(real(V2)**2 + imag(V2)**2)
 
 ! calcul de la solution analytique en frequence
   phi1(ifreq) = u1(omega,V1,V2,x1,x2,rho) * fomega(ifreq)
