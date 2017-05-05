@@ -199,11 +199,6 @@
                          seismo_offset,seismo_current,P_SV,SU_FORMAT,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,x_source,z_source
 
-! uncomment this to save the ASCII *.sem* seismograms in binary instead, to save disk space and/or writing time
-! we could/should move this flag to DATA/Par_file one day.
-!
-! #define PAUL_SAVE_ASCII_IN_BINARY
-
   implicit none
 
   double precision,dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),intent(in) :: sisux,sisuz,siscurl
@@ -221,8 +216,6 @@
   double precision, dimension(:,:,:), allocatable :: buffer_binary
   double precision :: time_t
 
-  ! scaling factor for Seismic Unix xsu dislay
-  double precision, parameter :: FACTORXSU = 1.d0
   integer :: irecloc
   integer :: ier
 
@@ -255,6 +248,7 @@
 
   allocate(buffer_binary(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrec,number_of_components),stat=ier)
   if (ier /= 0) stop 'Error allocating array buffer_binary'
+  buffer_binary(:,:,:) = 0.d0
 
   ! see if we need to save any seismogram in binary format
   save_binary_seismograms = save_binary_seismograms_single .or. save_binary_seismograms_double
@@ -424,32 +418,18 @@
               close(11,status='delete')
             endif
 
-            ! save seismograms in text format with no subsampling.
-            ! Because we do not subsample the output, this can result in large files
-            ! if the simulation uses many time steps. However, subsampling the output
-            ! here would result in a loss of accuracy when one later convolves
-            ! the results with the source time function
-#ifndef PAUL_SAVE_ASCII_IN_BINARY
             open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown',position='append')
-#else
-            open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown',form='unformatted',position='append')
-#endif
 
             ! make sure we never write more than the maximum number of time steps
             ! subtract offset of the source to make sure travel time is correct
-#ifndef PAUL_SAVE_ASCII_IN_BINARY
             do isample = 1,seismo_current
 
               ! forward time
               time_t = dble(seismo_offset + isample - 1) * deltat - t0
 
-              ! distinguish between single and double precision for reals
-              write(11,"(E14.7,A,E14.7)") sngl(time_t),' ',sngl(buffer_binary(isample,irec,iorientation))
-              !write(11,*) sngl(time_t),' ',sngl(buffer_binary(isample,irec,iorientation))
+              write(11,"(E14.7,A,E14.7)") time_t,' ',buffer_binary(isample,irec,iorientation)
+              ! write(11,*) sngl(time_t),' ',sngl(buffer_binary(isample,irec,iorientation))
             enddo
-#else
-            write(11) sngl(buffer_binary(:,irec,iorientation))
-#endif
 
             close(11)
           enddo ! iorientation
