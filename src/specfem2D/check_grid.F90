@@ -687,10 +687,7 @@
 
 #ifdef USE_MPI
     call sum_all_1Darray_i(classes_wavelength, classes_wavelength_all, NCLASSES)
-    ! TODO remove:
-    ! call MPI_REDUCE(classes_wavelength, classes_wavelength_all, NCLASSES, MPI_INTEGER, MPI_SUM, 0, my_local_mpi_comm_world, ier)
 #else
-    !ier = 0
     classes_wavelength_all(:) = classes_wavelength(:)
 #endif
 
@@ -1252,15 +1249,10 @@
 
     do iproc = 1, NPROC-1
       call recv_singlei(nspec_recv,iproc,42)
-      !MPI_RECV (nspec_recv, 1, MPI_INTEGER,iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
       allocate(coorg_recv(2,nspec_recv*5))
       allocate(RGB_recv(nspec_recv))
       call recv_dp(coorg_recv(1,1),nspec_recv*5*2,iproc,42)
-      !call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, & ! TODO remove
-      !iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier)
       call recv_i(RGB_recv(1),nspec_recv,iproc,42)
-      !call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, & ! TODO remove
-      !        iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier)
 
       do ispec = 1, nspec_recv
         num_ispec = num_ispec + 1
@@ -1285,11 +1277,8 @@
 
   else
     call send_singlei (nspec, 0, 42)
-    !call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
     call send_dp(coorg_send, nspec*5*2, 0, 42)
-    !call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, my_local_mpi_comm_world, ier)  ! TODO remove
     call send_i(RGB_send, nspec, 0, 42)
-    !call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier)  ! TODO remove
   endif
 #else
   ! dummy statements to avoid compiler warnings
@@ -1662,15 +1651,10 @@
   if (myrank == 0) then
     do iproc = 1, NPROC-1
       call recv_singlei(nspec_recv,iproc,42)
-      !call MPI_RECV (nspec_recv, 1, MPI_INTEGER,iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
       allocate(coorg_recv(2,nspec_recv*5))
       allocate(RGB_recv(nspec_recv))
       call recv_dp(coorg_recv(1,1),nspec_recv*5*2,iproc,42)
-      !call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
-      !      iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
       call recv_i(RGB_recv(1),nspec_recv,iproc,42)
-      !call MPI_RECV (RGB_recv(1), nspec_recv, MPI_INTEGER, &
-      !      iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
       do ispec = 1, nspec_recv
         num_ispec = num_ispec + 1
@@ -1698,11 +1682,8 @@
     enddo
   else
     call send_singlei (nspec, 0, 42)
-    !call MPI_SEND (nspec, 1, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
     call send_dp (coorg_send, nspec*5*2, 0, 42)
-    !call MPI_SEND (coorg_send, nspec*5*2, MPI_DOUBLE_PRECISION, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
     call send_i (RGB_send, nspec, 0, 42)
-    !call MPI_SEND (RGB_send, nspec, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
   endif
 #endif
 
@@ -1968,15 +1949,10 @@
   if (myrank == 0) then
     do iproc = 1, NPROC-1
       call recv_singlei(nspec_recv, iproc, 42)
-      !call MPI_RECV (nspec_recv, 1, MPI_INTEGER,iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
       allocate(coorg_recv(2,nspec_recv*5))
       allocate(greyscale_recv(nspec_recv))
       call recv_dp(coorg_recv(1,1), nspec_recv*5*2, iproc, 42)
-      !call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
-      !      iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier)  ! TODO remove
       call recv_dp(greyscale_recv(1), nspec_recv, iproc, 42)
-      !call MPI_RECV (greyscale_recv(1), nspec_recv, MPI_REAL, &
-      !      iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier)  ! TODO remove
 
       do ispec = 1, nspec_recv
         num_ispec = num_ispec + 1
@@ -1995,11 +1971,8 @@
     enddo
   else
     call send_singlei (UPPER_LIMIT_DISPLAY, 0, 42)
-    !call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
     call send_dp (coorg_send, UPPER_LIMIT_DISPLAY*5*2, 0, 42)
-    !call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
     call send_dp (greyscale_send, UPPER_LIMIT_DISPLAY, 0, 42)
-    !call MPI_SEND (greyscale_send, UPPER_LIMIT_DISPLAY, MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
   endif
 #else
   ! dummy statements to avoid compiler warnings
@@ -2230,12 +2203,8 @@
       icol = mod(iproc, NUM_COLORS) + 1
 
       call recv_singlei(nspec_recv,iproc,42)
-      !call MPI_RECV (nspec_recv, 1, MPI_INTEGER, &
-      !    iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
       allocate(coorg_recv(2,nspec_recv*5))
       call recv_dp(coorg_recv(1,1), nspec_recv*5*2,iproc,42)
-      !call MPI_RECV (coorg_recv(1,1), nspec_recv*5*2, MPI_DOUBLE_PRECISION, &
-      !    iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
       do ispec = 1, nspec_recv
          num_ispec = num_ispec + 1
@@ -2255,9 +2224,7 @@
 
   else
     call send_singlei (UPPER_LIMIT_DISPLAY, 0, 42)
-    !call MPI_SEND (UPPER_LIMIT_DISPLAY, 1, MPI_INTEGER,0, 42, my_local_mpi_comm_world, ier) ! TODO remove
     call send_dp (coorg_send, UPPER_LIMIT_DISPLAY*5*2, 0, 42)
-    !call MPI_SEND (coorg_send, UPPER_LIMIT_DISPLAY*5*2, MPI_DOUBLE_PRECISION,0, 42, my_local_mpi_comm_world, ier) ! TODO remove
   endif
 #endif
 

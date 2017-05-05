@@ -132,18 +132,10 @@
       ! non-blocking send
       call isend_cr(buffer_send_faces_scalar(1,iinterface), nbuffer_points, my_neighbours(iinterface),11, &
                     msg_send_requests(iinterface))
-      !call MPI_ISEND( buffer_send_faces_scalar(1,iinterface),nbuffer_points, &
-      !                CUSTOM_MPI_TYPE, &
-      !                my_neighbours(iinterface), 11, &
-      !                my_local_mpi_comm_world, msg_send_requests(iinterface), ier) ! TODO remove
 
       ! starts a blocking receive
       call irecv_cr(buffer_recv_faces_scalar(1,iinterface),nbuffer_points,my_neighbours(iinterface),11, &
                     msg_recv_requests(iinterface))
-      !call MPI_IRECV ( buffer_recv_faces_scalar(1,iinterface),nbuffer_points, &
-      !                 CUSTOM_MPI_TYPE, &
-      !                 my_neighbours(iinterface), 11, &
-      !                 my_local_mpi_comm_world, msg_recv_requests(iinterface), ier) ! TODO remove
 
     enddo
 
@@ -151,7 +143,6 @@
     ! each wait returns once the specified MPI request completed
     do iinterface = 1, ninterface
       call wait_req(msg_recv_requests(iinterface))
-      !call MPI_Wait(msg_recv_requests(iinterface), MPI_STATUS_IGNORE, ier) ! TODO remove
     enddo
 
     do iinterface = 1, ninterface
@@ -505,34 +496,15 @@
 
       call isend_cr(buffer_send_faces_vector_el(1,iinterface),NDIM * nibool_interfaces_elastic(num_interface), &
                       my_neighbours(num_interface),12,request_send_recv_elastic(iinterface))
-      !call MPI_ISEND( buffer_send_faces_vector_el(1,iinterface), &
-      !                NDIM * nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
-      !                my_neighbours(num_interface), 12, my_local_mpi_comm_world, &
-      !                request_send_recv_elastic(iinterface), ier) ! TODO remove
-
-      !if (ier /= MPI_SUCCESS) then
-      !  call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_el')
-      !endif
 
       call irecv_cr(buffer_recv_faces_vector_el(1,iinterface),NDIM * nibool_interfaces_elastic(num_interface), &
                     my_neighbours(num_interface), 12, request_send_recv_elastic(ninterface_elastic+iinterface))
-      !call MPI_IRECV ( buffer_recv_faces_vector_el(1,iinterface), &
-      !                 NDIM * nibool_interfaces_elastic(num_interface), CUSTOM_MPI_TYPE, &
-      !                 my_neighbours(num_interface), 12, my_local_mpi_comm_world, &
-      !                 request_send_recv_elastic(ninterface_elastic+iinterface), ier) ! TODO remove
-
-      !if (ier /= MPI_SUCCESS) then
-      !  call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_el')
-      !endif
 
     enddo
 
     ! waits for all send/receive has finished
     do iinterface = 1, ninterface_elastic*2
-
       call wait_req(request_send_recv_elastic(iinterface))
-      ! call MPI_Wait(request_send_recv_elastic(iinterface), MPI_STATUS_IGNORE, ier) ! TODO remove
-
     enddo
 
     ! adds contributions
@@ -751,55 +723,20 @@
 
       call isend_cr(buffer_send_faces_vector_pos(1,iinterface),NDIM*nibool_interfaces_poroelastic(num_interface), &
                     my_neighbours(num_interface),12,request_send_recv_poro(iinterface))
-      !call MPI_ISEND( buffer_send_faces_vector_pos(1,iinterface), &
-      !                NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
-      !                my_neighbours(num_interface), 12, my_local_mpi_comm_world, &
-      !                request_send_recv_poro(iinterface), ier)  ! TODO remove
-
-      !if (ier /= MPI_SUCCESS) then
-      !  call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_pos')
-      !endif
 
       call irecv_cr(buffer_recv_faces_vector_pos(1,iinterface),NDIM*nibool_interfaces_poroelastic(num_interface), &
                        my_neighbours(num_interface),12,request_send_recv_poro(ninterface_poroelastic+iinterface))
-      !call MPI_IRECV ( buffer_recv_faces_vector_pos(1,iinterface), &
-      !                 NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
-      !                 my_neighbours(num_interface), 12, my_local_mpi_comm_world, &
-      !                 request_send_recv_poro(ninterface_poroelastic+iinterface), ier)  ! TODO remove
-
-      !if (ier /= MPI_SUCCESS) then
-      !  call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_pos')
-      !endif
 
       call isend_cr(buffer_send_faces_vector_pow(1,iinterface),NDIM*nibool_interfaces_poroelastic(num_interface), &
                     my_neighbours(num_interface),12,request_send_recv_poro(ninterface_poroelastic*2+iinterface))
-      !call MPI_ISEND( buffer_send_faces_vector_pow(1,iinterface), &
-      !                NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
-      !                my_neighbours(num_interface), 12, my_local_mpi_comm_world, &
-      !                request_send_recv_poro(ninterface_poroelastic*2+iinterface), ier)  ! TODO remove
-
-      !if (ier /= MPI_SUCCESS) then
-      !  call exit_MPI(myrank,'MPI_ISEND unsuccessful in assemble_MPI_vector_pow')
-      !endif
 
       call irecv_cr(buffer_recv_faces_vector_pow(1,iinterface),NDIM*nibool_interfaces_poroelastic(num_interface), &
                        my_neighbours(num_interface),12,request_send_recv_poro(ninterface_poroelastic*3+iinterface))
-      !call MPI_IRECV ( buffer_recv_faces_vector_pow(1,iinterface), &
-      !                 NDIM*nibool_interfaces_poroelastic(num_interface), CUSTOM_MPI_TYPE, &
-      !                 my_neighbours(num_interface), 12, my_local_mpi_comm_world, &
-      !                 request_send_recv_poro(ninterface_poroelastic*3+iinterface), ier)  ! TODO remove
-
-      !if (ier /= MPI_SUCCESS) then
-      !  call exit_MPI(myrank,'MPI_IRECV unsuccessful in assemble_MPI_vector_pow')
-      !endif
 
     enddo
 
     do iinterface = 1, ninterface_poroelastic*4
-
       call wait_req(request_send_recv_poro(iinterface))
-      ! call MPI_Wait (request_send_recv_poro(iinterface), MPI_STATUS_IGNORE, ier) ! TODO remove
-
     enddo
 
     do iinterface = 1, ninterface_poroelastic

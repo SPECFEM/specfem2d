@@ -361,20 +361,14 @@
       else
         ! collects seismogram components on master
         call recv_dp(buffer_binary(1,irec,1), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, islice_selected_rec(irec), irec)
-        !call MPI_RECV(buffer_binary(1,irec,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
-        !              islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
+
         if (number_of_components == 2) then
           call recv_dp(buffer_binary(1,irec,2), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, islice_selected_rec(irec), irec)
-          !call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
-          !              islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
         endif
+
         if (number_of_components == 3) then
           call recv_dp(buffer_binary(1,irec,2), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, islice_selected_rec(irec), irec)
-          !call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
-          !              islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
           call recv_dp(buffer_binary(1,irec,3), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, islice_selected_rec(irec), irec)
-          !call MPI_RECV(buffer_binary(1,irec,3),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
-          !              islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
         endif
 #endif
       endif
@@ -498,18 +492,15 @@
       if (myrank == islice_selected_rec(irec)) then
         irecloc = irecloc + 1
         call send_dp(sisux(1,irecloc), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, 0, irec)
-        !call MPI_SEND(sisux(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
-        !              my_local_mpi_comm_world,ier) ! TODO remove
+
         if (number_of_components >= 2) then
           call send_dp(sisuz(1,irecloc), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, 0, irec)
-          !call MPI_SEND(sisuz(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
-          !              my_local_mpi_comm_world,ier) ! TODO remove
         endif
+
         if (number_of_components == 3) then
           call send_dp(siscurl(1,irecloc), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, 0, irec)
-          !call MPI_SEND(siscurl(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
-          !              my_local_mpi_comm_world,ier) ! TODO remove
         endif
+
       endif
 #endif
 

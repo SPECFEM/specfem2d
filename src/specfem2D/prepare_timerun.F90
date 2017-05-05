@@ -450,8 +450,7 @@
         ! master collects
         do iproc = 1, NPROC-1
           call recv_i(num_pixel_recv(1,iproc+1), nb_pixel_per_proc(iproc), iproc, 42)
-          !call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc), MPI_INTEGER, &
-          !              iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
+
           do k = 1, nb_pixel_per_proc(iproc)
             j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
             i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
@@ -470,7 +469,6 @@
 
       else
         call send_i(num_pixel_loc(1), nb_pixel_loc, 0, 42)
-        !call MPI_SEND(num_pixel_loc(1),nb_pixel_loc,MPI_INTEGER, 0, 42, my_local_mpi_comm_world, ier) ! TODO remove
       endif
     endif
     call synchronize_all()
@@ -501,15 +499,14 @@
     ! allocate arrays for postscript output
 #ifdef USE_MPI
     if (modelvect) then
-      d1_coorg_recv_ps_velocity_model=2
+      d1_coorg_recv_ps_velocity_model = 2
       call max_all_all_i(nspec,d2_coorg_recv_ps_velocity_model)
-      !call mpi_allreduce(nspec,d2_coorg_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
-      d2_coorg_recv_ps_velocity_model=d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+      d2_coorg_recv_ps_velocity_model = d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
          ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
-      d1_RGB_recv_ps_velocity_model=1
+      d1_RGB_recv_ps_velocity_model = 1
+
       call max_all_all_i(nspec,d2_RGB_recv_ps_velocity_model)
-      !call mpi_allreduce(nspec,d2_RGB_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
-      d2_RGB_recv_ps_velocity_model=d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+      d2_RGB_recv_ps_velocity_model = d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
          ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
     else
       d1_coorg_recv_ps_velocity_model=1
@@ -552,28 +549,16 @@
     call max_all_all_i(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh)
     call max_all_all_i(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh)
     call max_all_all_i(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh)
-    !call mpi_allreduce(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh,1, &
-    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
-    !call mpi_allreduce(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh,1, &
-    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
-    !call mpi_allreduce(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh,1, &
-    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
 
     d1_coorg_send_ps_abs=5
     d2_coorg_send_ps_abs=4*nelemabs
     call max_all_all_i(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs)
     call max_all_all_i(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs)
-    !call mpi_allreduce(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
-    !call mpi_allreduce(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
 
     d1_coorg_send_ps_free_surface=4
     d2_coorg_send_ps_free_surface=4*nelem_acoustic_surface
     call max_all_all_i(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface)
     call max_all_all_i(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface)
-    !call mpi_allreduce(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface,1, &
-    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
-    !call mpi_allreduce(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface,1, &
-    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
 
     d1_coorg_send_ps_vector_field=8
     if (interpol) then
@@ -587,10 +572,6 @@
     endif
     call max_all_all_i(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field)
     call max_all_all_i(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field)
-    !call mpi_allreduce(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,1, &
-    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
-    !call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1, &
-    !                   MPI_INTEGER,MPI_MAX,my_local_mpi_comm_world,ier) ! TODO remove
 
 #else
     ! dummy values

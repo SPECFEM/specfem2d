@@ -422,12 +422,7 @@
       do iproc = 1, NPROC-1
 
         call recv_i(num_pixel_recv(1,iproc+1), tmp_nb_pixel_per_proc(iproc), iproc, 42)
-        !call MPI_RECV(num_pixel_recv(1,iproc+1),tmp_nb_pixel_per_proc(iproc), MPI_INTEGER, &
-        !        iproc, 42, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
-
         call recv_dp(data_pixel_recv(1),tmp_nb_pixel_per_proc(iproc), iproc, 43)
-        !call MPI_RECV(data_pixel_recv(1),tmp_nb_pixel_per_proc(iproc), MPI_DOUBLE_PRECISION, &
-        !        iproc, 43, my_local_mpi_comm_world, MPI_STATUS_IGNORE, ier) ! TODO remove
 
         do k = 1, tmp_nb_pixel_per_proc(iproc)
           j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
@@ -460,12 +455,7 @@
       enddo
 
       call send_i(num_pixel_loc(1), nb_pixel_loc, 0, 42)
-      !call MPI_SEND(num_pixel_loc(1),nb_pixel_loc,MPI_INTEGER, &
-      !        0, 42, my_local_mpi_comm_world, ier)  ! TODO remove
-
       call send_dp(data_pixel_send(1), nb_pixel_loc, 0, 43)
-      !call MPI_SEND(data_pixel_send(1),nb_pixel_loc,MPI_DOUBLE_PRECISION, &
-      !        0, 43, my_local_mpi_comm_world, ier)  ! TODO remove
 
     endif
   endif
