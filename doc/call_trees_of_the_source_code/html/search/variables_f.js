@@ -14,6 +14,7 @@ var searchData=
   ['phi_5fkl',['phi_kl',['../db/da6/namespacespecfem__par.html#a673dd2531f8f4bb14e2fdf395277256a',1,'specfem_par']]],
   ['phi_5fnu1',['phi_nu1',['../db/da6/namespacespecfem__par.html#a07187dda0dd90a5a35f484ed9796ad8a',1,'specfem_par']]],
   ['phi_5fnu2',['phi_nu2',['../db/da6/namespacespecfem__par.html#afa4d221f1bf9a1e47e1850437050513b',1,'specfem_par']]],
+  ['phi_5fnu_5ffluid',['phi_nu_fluid',['../db/da6/namespacespecfem__par.html#ae083a5c4be6779968b55a9b8b88ae0d1',1,'specfem_par']]],
   ['phi_5fread',['phi_read',['../d5/d7b/namespaceshared__parameters.html#a4d58af6a9e622d710524f4f9da708ecd',1,'shared_parameters']]],
   ['phib_5fkl',['phib_kl',['../db/da6/namespacespecfem__par.html#ae72af60e09abd9fc96270b044c978f07',1,'specfem_par']]],
   ['plot_5flowerleft_5fcorner_5fonly',['plot_lowerleft_corner_only',['../d5/d7b/namespaceshared__parameters.html#a8bf898a7a8cc81af319a89495f387b0b',1,'shared_parameters']]],

@@ -10,5 +10,8 @@ var comp__source__time__function_8f90 =
     [ "comp_source_time_function_gauss", "dc/df3/comp__source__time__function_8f90.html#a4faa13f73c5986253a2d2ed560530573", null ],
     [ "comp_source_time_function_gaussb", "dc/df3/comp__source__time__function_8f90.html#a9b3361516ae2956c55e8ad1ddc1e62a4", null ],
     [ "comp_source_time_function_heavi", "dc/df3/comp__source__time__function_8f90.html#a9b98d1bc936c983f7cc8102d2c1cad65", null ],
-    [ "comp_source_time_function_rickr", "dc/df3/comp__source__time__function_8f90.html#a2d71b6360832896067e56f7d879e5e0c", null ]
+    [ "comp_source_time_function_rickr", "dc/df3/comp__source__time__function_8f90.html#a2d71b6360832896067e56f7d879e5e0c", null ],
+    [ "cos_taper", "dc/df3/comp__source__time__function_8f90.html#a75086cf650a9bce58c8f53f66b6969de", null ],
+    [ "marmousi_ormsby_wavelet", "dc/df3/comp__source__time__function_8f90.html#a99eaa926c14c74f0d94c4b789099bfe7", null ],
+    [ "sinc", "dc/df3/comp__source__time__function_8f90.html#ac38f3269d16fc3d9fc5854b5942444df", null ]
 ];

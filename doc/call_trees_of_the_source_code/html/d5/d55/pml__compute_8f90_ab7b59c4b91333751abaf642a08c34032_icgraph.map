@@ -1,6 +1,7 @@
 <map id="compute_coef_convolution" name="compute_coef_convolution">
-<area shape="rect" id="node2" href="$d0/d44/compute__attenuation__viscoelastic_8f90.html#ac9e59ad41ae35b03683c639c65204a21" title="compute_attenuation\l_viscoelastic_update" alt="" coords="256,5,403,47"/>
-<area shape="rect" id="node3" href="$d2/db8/compute__forces__viscoelastic__backward_8_f90.html#a5a649800fcdd171392da2947270f5e77" title="compute_forces_viscoelastic\l_backward" alt="" coords="233,71,425,112"/>
-<area shape="rect" id="node4" href="$d5/d55/pml__compute_8f90.html#aec84924268eb4f2d84aed9e73ad23155" title="lik_parameter_computation" alt="" coords="238,137,421,163"/>
-<area shape="rect" id="node5" href="$d5/d55/pml__compute_8f90.html#a15a0150d3417c87e9674f6e23d485f18" title="l_parameter_computation" alt="" coords="243,187,416,214"/>
+<area shape="rect" id="node2" href="$d9/db9/compute__attenuation__acoustic_8f90.html#a9f8ac3e283bc826f95ff6a5d78b02cf9" title="compute_attenuation\l_acoustic_update" alt="" coords="256,5,403,47"/>
+<area shape="rect" id="node3" href="$d0/d44/compute__attenuation__viscoelastic_8f90.html#aea3f526d494adaece3fdb00eaa16aed0" title="compute_attenuation\l_viscoelastic_update" alt="" coords="256,71,403,112"/>
+<area shape="rect" id="node4" href="$d2/db8/compute__forces__viscoelastic__backward_8_f90.html#aa3e56c7c265146a9366e954efc36f88c" title="compute_forces_viscoelastic\l_backward" alt="" coords="233,136,425,177"/>
+<area shape="rect" id="node5" href="$d5/d55/pml__compute_8f90.html#ab4cbe044be6ff4f6aba253ba89616011" title="lik_parameter_computation" alt="" coords="238,202,421,229"/>
+<area shape="rect" id="node6" href="$d5/d55/pml__compute_8f90.html#abde325048d5f9465a5003b19c43bc903" title="l_parameter_computation" alt="" coords="243,253,416,279"/>
 </map>

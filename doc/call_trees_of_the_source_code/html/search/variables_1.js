@@ -58,6 +58,7 @@ var searchData=
   ['betaval',['betaval',['../db/da6/namespacespecfem__par.html#a67bba4d90147124815842da40e773f06',1,'specfem_par']]],
   ['bot_5fbound',['bot_bound',['../db/da6/namespacespecfem__par.html#a7ca2fd6389d78235acbea7f8f10eeee7',1,'specfem_par']]],
   ['boundvect',['boundvect',['../d1/d30/namespaceshared__input__parameters.html#aba6785cb47109a712b6dc61358dc011f',1,'shared_input_parameters']]],
+  ['broadcast_5fsame_5fmesh_5fand_5fmodel',['broadcast_same_mesh_and_model',['../d1/d30/namespaceshared__input__parameters.html#ae168845f35882044acd293be062eed51',1,'shared_input_parameters']]],
   ['buffer_5frecv_5ffaces_5fvector_5fac',['buffer_recv_faces_vector_ac',['../db/da6/namespacespecfem__par.html#a48c61e198b8a86363013b4e8701e27b2',1,'specfem_par']]],
   ['buffer_5frecv_5ffaces_5fvector_5fel',['buffer_recv_faces_vector_el',['../db/da6/namespacespecfem__par.html#ab015b26d1514d70f78aab822f1278c26',1,'specfem_par']]],
   ['buffer_5frecv_5ffaces_5fvector_5fpos',['buffer_recv_faces_vector_pos',['../db/da6/namespacespecfem__par.html#a2a301e561c5607d5f16e48de51060603',1,'specfem_par']]],

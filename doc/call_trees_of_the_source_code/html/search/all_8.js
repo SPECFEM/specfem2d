@@ -10,7 +10,6 @@ var searchData=
   ['h_5fsend_5faccel_5fbuffer',['h_send_accel_buffer',['../d2/d88/structmesh__.html#a227ebfa2815105c3b65607e176e38ea1',1,'mesh_']]],
   ['h_5fsend_5fb_5faccel_5fbuffer',['h_send_b_accel_buffer',['../d2/d88/structmesh__.html#af042a5b6374402095bb738c816099bad',1,'mesh_']]],
   ['hgammar',['hgammar',['../db/da6/namespacespecfem__par.html#ad583ce5d5a649a090459807203c451c8',1,'specfem_par']]],
-  ['hgammar_5fstore',['hgammar_store',['../db/da6/namespacespecfem__par.html#a1fb4a870de05a29c276a5486a38d7c50',1,'specfem_par']]],
   ['hgammas',['hgammas',['../db/da6/namespacespecfem__par.html#a2b15bedf37f56b4011ea69df42bbe1ae',1,'specfem_par']]],
   ['hgammas_5fstore',['hgammas_store',['../db/da6/namespacespecfem__par.html#a44a327d24d8abb573f205f8470364bfe',1,'specfem_par']]],
   ['hglj',['hglj',['../dc/d7c/lagrange__poly_8f90.html#ae4470ca1ec2ccb4ef145058dbe2e6d83',1,'lagrange_poly.f90']]],
@@ -26,7 +25,6 @@ var searchData=
   ['hpxir',['hpxir',['../db/da6/namespacespecfem__par.html#a2fd5ac5f40ea82fcdabb79a0aaa0da5b',1,'specfem_par']]],
   ['hpxis',['hpxis',['../db/da6/namespacespecfem__par.html#abd9bd3f09f0b26277665de553d2e8196',1,'specfem_par']]],
   ['hxir',['hxir',['../db/da6/namespacespecfem__par.html#a6406eb85f4b59b82939b93f867eb443d',1,'specfem_par']]],
-  ['hxir_5fstore',['hxir_store',['../db/da6/namespacespecfem__par.html#abd1daedff3e9767589000519b470cbe2',1,'specfem_par']]],
   ['hxis',['hxis',['../db/da6/namespacespecfem__par.html#ab4507967e5bcabab3a063a413dd41574',1,'specfem_par']]],
   ['hxis_5fstore',['hxis_store',['../db/da6/namespacespecfem__par.html#ad0d78d12f62d7903e68fe2e161b220b7',1,'specfem_par']]]
 ];

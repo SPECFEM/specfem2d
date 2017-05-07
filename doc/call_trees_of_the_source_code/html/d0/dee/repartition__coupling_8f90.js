@@ -4,5 +4,5 @@ var repartition__coupling_8f90 =
     [ "acoustic_poro_repartitioning", "d0/dee/repartition__coupling_8f90.html#a01810c45b7520a6e9df93de6b948b531", null ],
     [ "periodic_edges_repartitioning", "d0/dee/repartition__coupling_8f90.html#af67becbf59807bc16204c5ad8ceb80a5", null ],
     [ "poro_elastic_repartitioning", "d0/dee/repartition__coupling_8f90.html#aea15e0e4308bf0f79bf320256ac4a3a0", null ],
-    [ "repartition_coupled_edges", "d0/dee/repartition__coupling_8f90.html#a814c1fda3fd2f3f12ee6a31dfd426efc", null ]
+    [ "repartition_coupled_edges", "d0/dee/repartition__coupling_8f90.html#a5a1379cad21003789d6724b26734edcc", null ]
 ];

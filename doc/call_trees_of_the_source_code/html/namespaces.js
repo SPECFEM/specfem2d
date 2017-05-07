@@ -6,6 +6,7 @@ var namespaces =
     [ "enforce_par", "d7/dcf/namespaceenforce__par.html", null ],
     [ "interpolation", "d9/da0/namespaceinterpolation.html", null ],
     [ "model_tomography_par", "d5/d10/namespacemodel__tomography__par.html", null ],
+    [ "my_mpi_communicator", "d8/d0a/namespacemy__mpi__communicator.html", null ],
     [ "part_unstruct_par", "dc/d0c/namespacepart__unstruct__par.html", null ],
     [ "postprocess_par", "d1/d36/namespacepostprocess__par.html", null ],
     [ "shared_input_parameters", "d1/d30/namespaceshared__input__parameters.html", null ],

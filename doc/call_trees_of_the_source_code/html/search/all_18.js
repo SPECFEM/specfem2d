@@ -16,7 +16,7 @@ var searchData=
   ['xigll',['xigll',['../db/da6/namespacespecfem__par.html#a6585707c9d56d78e238e79ce0ef52da4',1,'specfem_par']]],
   ['xinterface_5ftop',['xinterface_top',['../dc/d0c/namespacepart__unstruct__par.html#aa9ae0486bcfb36f2ea661362f9cc72a5',1,'part_unstruct_par']]],
   ['xinterp',['xinterp',['../d6/d7c/namespacespecfem__par__movie.html#a8e09f38502679620f3f7dd85950ccaad',1,'specfem_par_movie']]],
-  ['xir_5fstore_5floc',['xir_store_loc',['../d6/d0d/namespacespecfem__par__gpu.html#a2756940546681b94c885bd8ee55f8968',1,'specfem_par_gpu']]],
+  ['xir_5fstore_5floc',['xir_store_loc',['../db/da6/namespacespecfem__par.html#a47641ff0ce991e61c3ca420e77d131f7',1,'specfem_par']]],
   ['xirec',['xirec',['../db/da6/namespacespecfem__par.html#a372c02602de95f83c7e41660978367f6',1,'specfem_par']]],
   ['xix',['xix',['../db/da6/namespacespecfem__par.html#af66d56763a780ecbf064af595eb5a570',1,'specfem_par']]],
   ['xiz',['xiz',['../db/da6/namespacespecfem__par.html#a25f96a4fe3de158b2b0f1346a6a5f26c',1,'specfem_par']]],

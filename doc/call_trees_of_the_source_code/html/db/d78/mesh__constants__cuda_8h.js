@@ -18,7 +18,7 @@ var mesh__constants__cuda_8h =
     [ "LAUNCH_MIN_BLOCKS", "db/d78/mesh__constants__cuda_8h.html#abbfb05078721935b8cdd42ad92c15fe8", null ],
     [ "LAUNCH_MIN_BLOCKS_ACOUSTIC", "db/d78/mesh__constants__cuda_8h.html#a02cf20ef83038d930a7faef18d25edfc", null ],
     [ "LOG", "db/d78/mesh__constants__cuda_8h.html#af855c94dc540e943632089ce7496faac", null ],
-    [ "MAX", "db/d78/mesh__constants__cuda_8h.html#a36aefbf1f3a83fff3efe260cd00d0a8f", null ],
+    [ "MAX", "db/d78/mesh__constants__cuda_8h.html#aacc3ee1a7f283f8ef65cea31f4436a95", null ],
     [ "MAXDEBUG", "db/d78/mesh__constants__cuda_8h.html#a37ae8f02f0dc580f53836cff2155bfed", null ],
     [ "MAXIMUM_GRID_DIM", "db/d78/mesh__constants__cuda_8h.html#ad5e818ab0890c2ba8677b19a0179e09a", null ],
     [ "N_SLS", "db/d78/mesh__constants__cuda_8h.html#ad009abf4d7e24545954b35f38b2193ae", null ],

@@ -42,6 +42,7 @@ var searchData=
   ['coefs_5finterface_5ftop',['coefs_interface_top',['../dc/d0c/namespacepart__unstruct__par.html#a76885f0254f47099ce02913ce9f39a14',1,'part_unstruct_par']]],
   ['color_5frecv_5fps_5felement_5fmesh',['color_recv_ps_element_mesh',['../d6/d7c/namespacespecfem__par__movie.html#ad52c9dd4e8dcf0433e9402791f5f72b8',1,'specfem_par_movie']]],
   ['color_5fsend_5fps_5felement_5fmesh',['color_send_ps_element_mesh',['../d6/d7c/namespacespecfem__par__movie.html#a4c26fbd70167012763cc9592810eb1e2',1,'specfem_par_movie']]],
+  ['comp_5fg',['comp_g',['../d5/d7b/namespaceshared__parameters.html#a6caa00851d2fe27b75a7c18a29f5a990',1,'shared_parameters']]],
   ['compute_5fintegrated_5fenergy_5ffield',['compute_integrated_energy_field',['../d1/d30/namespaceshared__input__parameters.html#aeaedaf686cdbc005186296d12ca8f76d',1,'shared_input_parameters']]],
   ['compute_5fstream',['compute_stream',['../d2/d88/structmesh__.html#a735e7f1f6e94bbc6aca7b5976ac49f65',1,'mesh_']]],
   ['constant_5fmax_5famplitude_5fto_5fuse',['constant_max_amplitude_to_use',['../d1/d30/namespaceshared__input__parameters.html#a737c6374d01cb63e1848eda523b944d2',1,'shared_input_parameters']]],
@@ -75,7 +76,6 @@ var searchData=
   ['cp',['cp',['../d5/d7b/namespaceshared__parameters.html#a3a81339a39dae2bd2e3defdccde71322',1,'shared_parameters']]],
   ['cpi_5fkl',['cpi_kl',['../db/da6/namespacespecfem__par.html#a77174b960647314f4d8865988f8174bb',1,'specfem_par']]],
   ['cpii_5fkl',['cpii_kl',['../db/da6/namespacespecfem__par.html#a4244edae597aa5ddcbe0a5e9c4b5d08a',1,'specfem_par']]],
-  ['cpml_5felement_5ffile',['cpml_element_file',['../d1/d30/namespaceshared__input__parameters.html#ad6d95093f9011becba1d0444a035ff64',1,'shared_input_parameters']]],
   ['cs',['cs',['../d5/d7b/namespaceshared__parameters.html#a3ccfaaedaa6e9bc7541a8f69ac76d0cf',1,'shared_parameters']]],
   ['cs_5fkl',['cs_kl',['../db/da6/namespacespecfem__par.html#a29fdadcb06b7560c6fca3060083f6656',1,'specfem_par']]],
   ['cutsnaps',['cutsnaps',['../d1/d30/namespaceshared__input__parameters.html#a848cf941484b97484fe17e7b2c1924c1',1,'shared_input_parameters']]]

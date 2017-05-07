@@ -1,5 +1,0 @@
-<map id="prepare_timerun_attenuation" name="prepare_timerun_attenuation">
-<area shape="rect" id="node2" href="$df/d64/attenuation__model_8f90.html#aaa90b4cd5cc418b7935cd9de684f1f52" title="attenuation_model" alt="" coords="261,5,393,32"/>
-<area shape="rect" id="node3" href="$df/d64/attenuation__model_8f90.html#a69e0b1b62c3b8085bafeeaed9858229c" title="shift_velocities_from_f0" alt="" coords="247,56,408,83"/>
-<area shape="rect" id="node4" href="$db/d1a/parallel_8_f90.html#a5c0b8ddb524981fa08f6346a2d42e7b9" title="synchronize_all" alt="" coords="271,107,384,133"/>
-</map>

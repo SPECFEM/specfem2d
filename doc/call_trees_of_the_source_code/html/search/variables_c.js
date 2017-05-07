@@ -28,6 +28,7 @@ var searchData=
   ['mu_5fkl',['mu_kl',['../db/da6/namespacespecfem__par.html#a7c3ee3da0f7045570cf3866898f782ea',1,'specfem_par']]],
   ['mu_5fnu1',['mu_nu1',['../db/da6/namespacespecfem__par.html#aa75eb4faff090090882a35a235d9bcdb',1,'specfem_par']]],
   ['mu_5fnu2',['mu_nu2',['../db/da6/namespacespecfem__par.html#adb2d99818dec7703580998ed94707e4d',1,'specfem_par']]],
+  ['mu_5fnu_5ffluid',['mu_nu_fluid',['../db/da6/namespacespecfem__par.html#a3342c91245849f70d29c653cce6f865f',1,'specfem_par']]],
   ['mufr_5fk',['mufr_k',['../db/da6/namespacespecfem__par.html#a0b8056d2f2e1df0e7e0612f73fd22b30',1,'specfem_par']]],
   ['mufr_5fkl',['mufr_kl',['../db/da6/namespacespecfem__par.html#ab092810ee9f2987ac45d232142abc889',1,'specfem_par']]],
   ['mufrb_5fkl',['mufrb_kl',['../db/da6/namespacespecfem__par.html#a6516d7335ca7ffa9f6c5ca299a90c3e6',1,'specfem_par']]],
@@ -35,9 +36,12 @@ var searchData=
   ['mxx',['mxx',['../dd/d29/namespacesource__file__par.html#aa54c05951dd3ab5ca01ec085c70f4928',1,'source_file_par::mxx()'],['../db/da6/namespacespecfem__par.html#a5edc3619b524473b584934496cf6bb7b',1,'specfem_par::mxx()']]],
   ['mxz',['mxz',['../dd/d29/namespacesource__file__par.html#ab090e194977eb47e99291ebeca4d87db',1,'source_file_par::mxz()'],['../db/da6/namespacespecfem__par.html#ad4073c94092d898745783283c3d5fffc',1,'specfem_par::mxz()']]],
   ['my_5finterfaces',['my_interfaces',['../db/d6a/namespacedecompose__par.html#a066675bfd483c6795cd249d5bf1273b4',1,'decompose_par::my_interfaces()'],['../db/da6/namespacespecfem__par.html#a8d588a2cff1f10a0178cc9ce583ed8ac',1,'specfem_par::my_interfaces()']]],
+  ['my_5flocal_5fmpi_5fcomm_5ffor_5fbcast',['my_local_mpi_comm_for_bcast',['../d8/d0a/namespacemy__mpi__communicator.html#a0aab6b82476a8cf0efb6bbc877cec0d5',1,'my_mpi_communicator']]],
+  ['my_5flocal_5fmpi_5fcomm_5fworld',['my_local_mpi_comm_world',['../d8/d0a/namespacemy__mpi__communicator.html#a47a6046bab294a7582e9c94c55a224d7',1,'my_mpi_communicator']]],
   ['my_5fnb_5finterfaces',['my_nb_interfaces',['../db/d6a/namespacedecompose__par.html#adb6d0a40fbcd524c6a71cbee5e4906b7',1,'decompose_par']]],
   ['my_5fneighbours',['my_neighbours',['../db/da6/namespacespecfem__par.html#aa7dcad792d0098be097de44b47015072',1,'specfem_par']]],
   ['my_5fnelmnts_5fneighbours',['my_nelmnts_neighbours',['../db/da6/namespacespecfem__par.html#a2a03c967ce533058ae1d4b3c456db850',1,'specfem_par']]],
+  ['mygroup',['mygroup',['../d7/d28/namespaceconstants.html#acbc59502912ab72aa7e78a609a0cbd7d',1,'constants']]],
   ['myrank',['myrank',['../d2/d88/structmesh__.html#a820d5ac890b8ec1089e1817a68510b0d',1,'mesh_::myrank()'],['../dc/d0c/namespacepart__unstruct__par.html#a2c587e031599054e806945324a0bcefc',1,'part_unstruct_par::myrank()'],['../db/da6/namespacespecfem__par.html#a7a1b580ac383ff5c8731025449fb41e2',1,'specfem_par::myrank()'],['../d6/d5c/namespacetomography__par.html#a52a977cd554aade8c57dc0a4a900ee59',1,'tomography_par::myrank()']]],
   ['mzz',['mzz',['../dd/d29/namespacesource__file__par.html#a99501432f1acea57fb97d2c7fd8f9e83',1,'source_file_par::mzz()'],['../db/da6/namespacespecfem__par.html#a12b01c9fad8c7f75cf6ad366613369dd',1,'specfem_par::mzz()']]]
 ];

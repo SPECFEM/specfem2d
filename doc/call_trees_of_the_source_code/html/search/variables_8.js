@@ -2,6 +2,7 @@ var searchData=
 [
   ['i_5fbegin',['i_begin',['../db/da6/namespacespecfem__par.html#a0dbff5df14dddeb2c49f00bcb969d0c0',1,'specfem_par']]],
   ['i_5fend',['i_end',['../db/da6/namespacespecfem__par.html#a17f748a10eb65dd91c5526086c5d12f4',1,'specfem_par']]],
+  ['i_5fshould_5fread_5fthe_5fdatabase',['i_should_read_the_database',['../d7/d28/namespaceconstants.html#af79a504071aee78f0a439e2507744ae1',1,'constants']]],
   ['i_5fstage',['i_stage',['../db/da6/namespacespecfem__par.html#a09ccd89987c7869cd4f0142f5ad90b84',1,'specfem_par']]],
   ['ib_5fbottom',['ib_bottom',['../db/da6/namespacespecfem__par.html#a3a768abb0a7b26369c492dd901db0a03',1,'specfem_par']]],
   ['ib_5fbottom_5facforcing',['ib_bottom_acforcing',['../db/da6/namespacespecfem__par.html#a45da28fb96779b798c5f1b70f8f951b4',1,'specfem_par']]],
@@ -64,6 +65,7 @@ var searchData=
   ['inum_5finterfaces_5fporoelastic',['inum_interfaces_poroelastic',['../db/da6/namespacespecfem__par.html#a3e421b687088cbb3180e949afded8242',1,'specfem_par']]],
   ['inv_5ftau_5fsigma_5fnu1',['inv_tau_sigma_nu1',['../db/da6/namespacespecfem__par.html#a253d1234360ad34509040a601316f2a2',1,'specfem_par']]],
   ['inv_5ftau_5fsigma_5fnu2',['inv_tau_sigma_nu2',['../db/da6/namespacespecfem__par.html#a1f335ec003d23238877c7b0c3b2946a1',1,'specfem_par']]],
+  ['inv_5ftau_5fsigma_5fnu_5ffluid',['inv_tau_sigma_nu_fluid',['../db/da6/namespacespecfem__par.html#a0581b4e82844cd840a66ff45c729141c',1,'specfem_par']]],
   ['iproc',['iproc',['../dc/d0c/namespacepart__unstruct__par.html#aa84dc5306b7bc60fc347dd7fb80396ed',1,'part_unstruct_par']]],
   ['is_5facoustic',['is_acoustic',['../d2/d39/namespacecompute__elements__load__par.html#adac09cba419560f4cfdb446100ca00d4',1,'compute_elements_load_par']]],
   ['is_5felastic',['is_elastic',['../d2/d39/namespacecompute__elements__load__par.html#a5bcaed42c3dbcb391edecacf82232a30',1,'compute_elements_load_par']]],
@@ -83,6 +85,7 @@ var searchData=
   ['ispec_5fnoise',['ispec_noise',['../df/daf/namespacespecfem__par__noise.html#a1cbb9946bc83a3cc776cc202e06726b2',1,'specfem_par_noise']]],
   ['ispec_5fof_5faxial_5felements',['ispec_of_axial_elements',['../dc/d0c/namespacepart__unstruct__par.html#a8afdbe1237b8fe14fb0be1675316a614',1,'part_unstruct_par::ispec_of_axial_elements()'],['../db/da6/namespacespecfem__par.html#ab785c4c72ef24b7566435d11db7e4f86',1,'specfem_par::ispec_of_axial_elements()']]],
   ['ispec_5fselected_5frec',['ispec_selected_rec',['../db/da6/namespacespecfem__par.html#a1b9027d47f19656a3a823b04671c34ed',1,'specfem_par']]],
+  ['ispec_5fselected_5frec_5floc',['ispec_selected_rec_loc',['../db/da6/namespacespecfem__par.html#a68431bc7b156f3de9e746e1ee640886b',1,'specfem_par']]],
   ['ispec_5fselected_5fsource',['ispec_selected_source',['../db/da6/namespacespecfem__par.html#a6c65f005d56dee1b51c0bd8543795765',1,'specfem_par']]],
   ['ispec_5fselected_5fsource_5floc',['ispec_selected_source_loc',['../d6/d0d/namespacespecfem__par__gpu.html#a43924a663d4af2599bddb4118499ae73',1,'specfem_par_gpu']]],
   ['it',['it',['../db/da6/namespacespecfem__par.html#a35e6a06cc458fd67b6aab328d77dd69c',1,'specfem_par']]],

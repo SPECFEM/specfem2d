@@ -3,7 +3,7 @@ var dir_e0cfded80ab7ee9783197be811e5bec6 =
     [ "assemble_MPI_scalar_cuda.cu", "d0/d1c/assemble___m_p_i__scalar__cuda_8cu.html", null ],
     [ "assemble_MPI_vector_cuda.cu", "de/d15/assemble___m_p_i__vector__cuda_8cu.html", null ],
     [ "check_fields_cuda.cu", "df/dec/check__fields__cuda_8cu.html", null ],
-    [ "compute_add_sources_acoustic_cuda.cu", "dc/d0b/compute__add__sources__acoustic__cuda_8cu.html", null ],
+    [ "compute_add_sources_viscoacoustic_cuda.cu", "d9/db4/compute__add__sources__viscoacoustic__cuda_8cu.html", null ],
     [ "compute_add_sources_viscoelastic_cuda.cu", "de/df7/compute__add__sources__viscoelastic__cuda_8cu.html", null ],
     [ "compute_coupling_cuda.cu", "db/dbc/compute__coupling__cuda_8cu.html", null ],
     [ "compute_forces_acoustic_cuda.cu", "d7/dcb/compute__forces__acoustic__cuda_8cu.html", null ],
