@@ -46,7 +46,7 @@ GPU_MODE                        = .false.
 # 0 = does not read/create database
 # 1 = creates database
 # 2 = reads database
-setup_with_binary_database = 0
+setup_with_binary_database      = 0
 
 # available models
 #   default       - define model using nbmodels below
@@ -130,10 +130,6 @@ USE_TRICK_FOR_BETTER_PRESSURE   = .false.
 #  of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
 NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000
 
-# Compute the field int_0^t v^2 dt for a set of GLL points and write it to file. Use
-# the script utils/visualisation/plotIntegratedEnergyFile.py to watch. It is refreshed at the same time than the seismograms
-COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
-
 # use this t0 as earliest starting time rather than the automatically calculated one
 USER_T0                         = 0.0d0
 
@@ -168,6 +164,7 @@ zdeb                            = 1867.0         # first receiver z in meters
 xfin                            = 2000.0         # last receiver x in meters (ignored if onlyone receiver)
 zfin                            = 1867.0         # last receiver z in meters (ignored if onlyone receiver)
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
+
 
 #-----------------------------------------------------------------------------
 #
@@ -241,7 +238,7 @@ free_surface_file               = dummy                     # file containing th
 axial_elements_file             = dummy                     # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = dummy                     # file containing the absorbing surface
 acoustic_forcing_surface_file   = dummy                     # file containing the acoustic forcing surface
-absorbing_cpml_file             = dummy                     # file containing the CPML element numbers
+absorbing_cpml_file             = dummy          # file containing the CPML element numbers
 tangential_detection_curve_file = dummy                     # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------------------------
@@ -282,11 +279,16 @@ NSTEP_BETWEEN_OUTPUT_INFO       = 200
 output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
 output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 
-# compute and output total acoustic and elastic energy curves (slows down the code significantly)
+# to plot total energy curves, for instance to monitor how CPML absorbing layers behave;
+# should be turned OFF in most cases because a bit expensive
 OUTPUT_ENERGY                   = .false.
 
 # every how many time steps we compute energy (which is a bit expensive to compute)
 NTSTEP_BETWEEN_OUTPUT_ENERGY    = 10
+
+# Compute the field int_0^t v^2 dt for a set of GLL points and write it to file. Use
+# the script utils/visualisation/plotIntegratedEnergyFile.py to watch. It is refreshed at the same time than the seismograms
+COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
 
 #-----------------------------------------------------------------------------
 #
@@ -304,7 +306,7 @@ cutsnaps                        = 1.
 #### for JPEG color images ####
 output_color_image              = .true.         # output JPEG color image of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
 imagetype_JPEG                  = 2              # display 1=displ_Ux 2=displ_Uz 3=displ_norm 4=veloc_Vx 5=veloc_Vz 6=veloc_norm 7=accel_Ax 8=accel_Az 9=accel_norm 10=pressure
-factor_subsample_image          = 1.0d0          # (double precision) factor to subsample color images output by the code (useful for very large models)
+factor_subsample_image          = 1.0d0          # (double precision) factor to subsample or oversample (if set to e.g. 0.5) color images output by the code (useful for very large models, or to get nicer looking denser pictures)
 USE_CONSTANT_MAX_AMPLITUDE      = .false.        # by default the code normalizes each image independently to its maximum; use this option to use the global maximum below instead
 CONSTANT_MAX_AMPLITUDE_TO_USE   = 1.17d4         # constant maximum amplitude to use for all color images if the above USE_CONSTANT_MAX_AMPLITUDE option is true
 POWER_DISPLAY_COLOR             = 0.30d0         # non linear display to enhance small amplitudes in JPEG color images
@@ -377,4 +379,3 @@ NUMBER_OF_SIMULTANEOUS_RUNS     = 1
 # and the code will broadcast it to the others)
 BROADCAST_SAME_MESH_AND_MODEL   = .true.
 
-#-----------------------------------------------------------

@@ -20,7 +20,8 @@ DEPRECATED_RENAMED_PARAMETERS = [ \
   ("p_sv","P_SV"), \
   ("nt","NSTEP"), \
   ("deltat","DT"), \
-  ("nproc","NPROC") \
+  ("nproc","NPROC"), \
+  ("CPML_element_file","absorbing_cpml_file") \
 ]
 
 # exclude other possible files with similar name, but with different format
