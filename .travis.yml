@@ -209,12 +209,6 @@ script:
         # kernel script
         ./run_this_example_kernel.sh
         my_test_kernel
-      elif [ "$TESTMAKE" == "8" ]; then
-        # default script
-        ./run_this_example_with_PML.sh
-        # replaces reference folder for comparison test
-        rm -rf REF_SEIS; mv REF_SEIS_with_PML REF_SEIS
-        my_test
       else
         # default script
         ./run_this_example.sh
