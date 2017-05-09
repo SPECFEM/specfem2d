@@ -761,11 +761,9 @@
   if (NOISE_TOMOGRAPHY < 0 .or. NOISE_TOMOGRAPHY > 3) &
     stop 'NOISE_TOMOGRAPHY can only be set to 0, 1, 2 or 3 in the Par_file; exiting'
 
-  if (N_SLS < 2) &
-    stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
+  if (N_SLS < 2) stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
 
-  if (ngnod /= 4 .and. ngnod /= 9) &
-    stop 'ngnod should be either 4 or 9!'
+  if (ngnod /= 4 .and. ngnod /= 9) stop 'ngnod should be either 4 or 9!'
 
   if (seismotype < 1 .or. seismotype > 6) &
     stop 'seismotype should be 1(=displ), 2(=veloc), 3(=accel), 4(=pressure), 5(=curl of displ) or 6(=the fluid potential)'
@@ -773,8 +771,7 @@
   if (USE_TRICK_FOR_BETTER_PRESSURE .and. seismotype /= 4) &
     stop 'USE_TRICK_FOR_BETTER_PRESSURE : seismograms must record pressure'
 
-  if (subsamp_seismos < 1) &
-    stop 'Error: subsamp_seismos must be >= 1'
+  if (subsamp_seismos < 1) stop 'Error: subsamp_seismos must be >= 1'
 
   if (output_color_image .and. USE_CONSTANT_MAX_AMPLITUDE .and. CONSTANT_MAX_AMPLITUDE_TO_USE < 0.d0) &
     stop 'CONSTANT_MAX_AMPLITUDE_TO_USE must be strictly positive'
