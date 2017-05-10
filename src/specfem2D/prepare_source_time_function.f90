@@ -442,10 +442,8 @@
             stf_used = source_time_function(i_source,it,i_stage)
 
             ! note: earliest start time of the simulation is: (it-1)*deltat - t0 - tshift_src(i_source)
-            write(55,"(E14.7,A,E14.7)") sngl(timeval-t0)," ",sngl(stf_used) !," ",sngl(timeval)
+            write(55,*) timeval-t0,' ',stf_used
 
-            ! output relative time in third column, in case user wants to check it as well
-            ! write(55,*) sngl(t_used),sngl(stf_used),sngl(timeval)
           endif
         endif
       enddo

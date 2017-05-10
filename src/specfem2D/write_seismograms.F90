@@ -427,8 +427,7 @@
               ! forward time
               time_t = dble(seismo_offset + isample - 1) * deltat - t0
 
-              write(11,"(E14.7,A,E14.7)") time_t,' ',buffer_binary(isample,irec,iorientation)
-              ! write(11,*) sngl(time_t),' ',sngl(buffer_binary(isample,irec,iorientation))
+              write(11,*) time_t,' ',buffer_binary(isample,irec,iorientation)
             enddo
 
             close(11)
