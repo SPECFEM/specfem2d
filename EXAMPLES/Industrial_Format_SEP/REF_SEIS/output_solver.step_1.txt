@@ -1,0 +1,516 @@
+
+ **********************************************
+ **** Specfem 2-D Solver - MPI version     ****
+ **********************************************
+
+ There are            4  MPI processes
+ Processes are numbered from 0 to            3
+
+ There is a total of            4  slices
+
+ NDIM =            2
+
+ NGLLX =            5
+ NGLLZ =            5
+
+ using single precision for the calculations
+
+ smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
+
+
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ Program SPECFEM2D:
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ SALT2D
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ D a t e : 11 - 05 - 2017                                 T i m e  : 15:24:42
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+
+
+ C o n t r o l
+ =============
+
+     Number of spectral element control nodes. . .(npgeo) =   23860
+     Number of space dimensions. . . . . . . . . . (NDIM) =       2
+
+
+ C o n t r o l
+ =============
+
+     Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) =    500
+     Color display . . . . . . . . . . . . . . . (colors) =      1
+      == 0     black and white display
+      == 1     color display
+     Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
+      == 0     do not number the mesh
+      == 1     number the mesh
+
+
+ C o n t r o l
+ =============
+
+     Seismograms recording type . . . . . . .(seismotype) =      1
+     Angle for first line of receivers. . . . .(anglerec) =   0.00
+
+
+ C o n t r o l
+ =============
+
+     Read external initial field. . . . . .(initialfield) =      F
+     Add Bielak conditions (add_Bielak_conditions_bottom) =      F
+     Add Bielak conditions .(add_Bielak_conditions_right) =      F
+     Add Bielak conditions . .(add_Bielak_conditions_top) =      F
+     Add Bielak conditions. .(add_Bielak_conditions_left) =      F
+     Attenuation on/off . . . .(ATTENUATION_VISCOELASTIC) =      F
+     Save grid in ASCII file or not . (output_grid_ASCII) =      F
+     Save a file with total energy or not.(OUTPUT_ENERGY) =      F
+
+
+ C o n t r o l
+ =============
+
+     Vector display type . . . . . . . . .(imagetype_postscript) =      1
+     Percentage of cut for vector plots. . . . . . . .(cutsnaps) =   1.00
+     Subsampling of velocity model display. (subsamp_postscript) =      1
+
+
+ I t e r a t i o n s
+ ===================
+
+     Number of time iterations . . . . .(NSTEP) =       5
+     Time step increment. . . . . . . . . .(DT) =   5.000000E-04
+     Total simulation duration . . . . . (ttot) =   2.500000E-03
+
+
+     Source Type. . . . . . . . . . . . . . = Collocated Force
+     X-position (meters). . . . . . . . . . =    2.9520000000E+04
+     Y-position (meters). . . . . . . . . . =    1.0000000000E+04
+     Fundamental frequency (Hz) . . . . . . =    1.0000000000E+01
+     Time delay (s) . . . . . . . . . . . . =    0.0000000000E+00
+     Multiplying factor . . . . . . . . . . =    1.0000000000E+10
+     Angle from vertical direction (deg). . =    0.0000000000E+00
+
+     Onset time. . . . . . =  -0.12000000000000000
+     Fundamental period. . =   0.10000000000000001
+     Fundamental frequency =    10.000000000000000
+     The onset time is ok
+
+     -- Spectral Elements --
+
+
+     Number of spectral elements . . . . . . . . .  (nspec) =  95956
+     Number of control nodes per element . . . . . (ngnod) =      4
+     Number of points in X-direction . . . . . . . (NGLLX) =      5
+     Number of points in Y-direction . . . . . . . (NGLLZ) =      5
+     Number of points per element. . . . . . (NGLLX*NGLLZ) =     25
+     Number of points for display . . . . . . (pointsdisp) =      3
+     Number of element material sets . . . . . . . (numat) =      1
+     Number of acoustic forcing elements (nelem_acforcing) =      0
+     Number of acoustic free surf (nelem_acoustic_surface) =      0
+
+
+ M a t e r i a l   s e t s :   2 D  (p o r o) e l a s t i c i t y
+ ======================================================
+
+     Number of material sets . . . . . . (numat) =     1
+
+
+     ----------------------------------------
+     -- Elastic (solid) isotropic material --
+     ----------------------------------------
+     Material set number. . . . . . . . (jmat) =     1
+     P-wave velocity. . . . . . . . . . . (cp) = 2.50000000E+03
+     S-wave velocity. . . . . . . . . . . (cs) = 2.00000000E+03
+     Mass density. . . . . . . . . . (density) = 4.00000000E+03
+     Poisson's ratio. . . . . . . . .(poisson) =-5.81395349E-02
+     First Lame parameter Lambda. . . (lambda) =-7.00000000E+09
+     Second Lame parameter Mu. . . . . . .(mu) = 1.60000000E+10
+     Bulk modulus Kappa . . . . . . . .(kappa) = 9.00000000E+09
+     Young's modulus E. . . . . . . . .(young) = 3.01395349E+10
+     QKappa_attenuation .  . . . . . .(QKappa) = 9.99900000E+03
+     Qmu_attenuation . . . . . . . . . . (Qmu) = 9.99900000E+03
+
+ Materials with a negative Poisson's ratio can exist,
+ see e.g. R. Lakes, "Science" vol. 235, p. 1038-1040 (1987),
+ but are extremely rare.
+ Hope you know what you are doing...
+
+
+ Absorbing boundaries:
+   using Stacey absorbing boundary conditions
+
+ Number of absorbing elements:          942
+   nspec_left   =          149
+   nspec_right  =          149
+   nspec_bottom =          644
+   nspec_top    =            0
+
+
+ Setting up mesh
+
+ Generating global mesh numbering (fast version)...
+
+ Mesh numbering:
+   Total number of elements:        95956
+
+   Total number of acoustic elements           =            0
+   Total number of elastic/visco/poro elements =        95956
+
+ Approximate total number of grid points in the mesh
+ (with a few duplicates coming from MPI buffers):      1540496
+
+ Approximate number of acoustic degrees of freedom in the mesh:            0
+ Approximate number of elastic degrees of freedom in the mesh:      3080992
+   (there are 2 degrees of freedom per point for elastic elements)
+
+ Approximate total number of degrees of freedom in the mesh
+ (sum of the two values above):      3080992
+
+  (for simplicity viscoelastic or poroelastic elements, if any,
+   are counted as elastic in the above three estimates;
+   in reality they have more degrees of freedom)
+
+ Mesh dimensions:
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        51520.000000000000
+   Zmin,Zmax of the whole mesh =    0.0000000000000000        11920.000000000002
+
+ Domains:
+   total number of acoustic elements        =            0
+   total number of elastic elements         =        95956
+   total number of poroelastic elements     =            0
+   total number of gravitoacoustic elements =            0
+
+ Setting up MPI communication arrays
+
+   maximum number of MPI interfaces (for a single slice) =            2
+
+   total MPI interface points:         4054
+
+   master process:
+   number of MPI interfaces in acoustic domain    =            0
+   number of MPI interfaces in elastic domain     =            1
+   number of MPI interfaces in poroelastic domain =            0
+
+   number of outer elements  =          169
+   number of inner elements  =        23371
+
+   percentage of outer elements   0.717926025     %
+   percentage of inner elements    99.2820740     %
+
+   number of global nodes in outer elements  =         3385
+   number of global nodes in inner elements  =       375209
+
+   determining communication phases:
+   elastic domains:
+   total number of outer/inner elements =         1012       94944
+   total percentage of outer elements    1.05464935     %
+   total percentage of inner elements    98.9453506     %
+
+ All mesh setup done successfully
+
+ sources:
+
+ *******************************
+  locating force source
+ *******************************
+
+
+ Force source:
+             original x:    29520.0000
+             original z:    10000.0000
+ closest estimate found:    0.00000000      m away
+  in rank            3
+  in element        20603
+  in elastic domain
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000
+
+
+ end of force source detection
+
+
+ receivers:
+
+ Total number of receivers =           12
+
+
+ ********************
+  locating receivers
+ ********************
+
+ reading receiver information from the ./DATA/STATIONS file
+
+
+ Station #            1     AA      S0001
+             original x:    8000.00000
+             original z:    3000.00000
+   distance from source:    22629.8555
+ closest estimate found:    1.28621972E-12  m away
+  in element         6136
+  in rank            0
+  at xi,gamma coordinates =    1.0000000000000104        1.9563750449481093E-028
+
+
+ Station #            2     AA      S0002
+             original x:    9000.00000
+             original z:    3000.00000
+   distance from source:    21681.1074
+ closest estimate found:    0.00000000      m away
+  in element         6149
+  in rank            0
+  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
+
+
+ Station #            3     AA      S0003
+             original x:    10000.0000
+             original z:    3000.00000
+   distance from source:    20737.1738
+ closest estimate found:    3.66629036E-12  m away
+  in element         6161
+  in rank            0
+  at xi,gamma coordinates =    1.0000000000000104       -1.1368683772161556E-014
+
+
+ Station #            4     AA      S0004
+             original x:    11000.0000
+             original z:    3000.00000
+   distance from source:    19798.7480
+ closest estimate found:    0.00000000      m away
+  in element         6174
+  in rank            0
+  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
+
+
+ Station #            5     AA      S0005
+             original x:    12000.0000
+             original z:    3000.00000
+   distance from source:    18866.6484
+ closest estimate found:    9.09494702E-13  m away
+  in element         6187
+  in rank            0
+  at xi,gamma coordinates =   -1.0000000000000104        0.0000000000000000
+
+
+ Station #            6     AA      S0006
+             original x:    13000.0000
+             original z:    3000.00000
+   distance from source:    17941.8613
+ closest estimate found:    0.00000000      m away
+  in element         5299
+  in rank            1
+  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
+
+
+ Station #            7     AA      S0007
+             original x:    14000.0000
+             original z:    3000.00000
+   distance from source:    17025.5801
+ closest estimate found:    1.87497132E-12  m away
+  in element         5311
+  in rank            1
+  at xi,gamma coordinates =    1.0000000000000104       -1.1368683772161593E-014
+
+
+ Station #            8     AA      S0008
+             original x:    15000.0000
+             original z:    3000.00000
+   distance from source:    16119.2559
+ closest estimate found:    0.00000000      m away
+  in element         5324
+  in rank            1
+  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
+
+
+ Station #            9     AA      S0009
+             original x:    16000.0000
+             original z:    3000.00000
+   distance from source:    15224.6641
+ closest estimate found:    1.87497132E-12  m away
+  in element         5336
+  in rank            1
+  at xi,gamma coordinates =    1.0000000000000104       -9.4056171673626152E-015
+
+
+ Station #           10     AA      S0010
+             original x:    17000.0000
+             original z:    3000.00000
+   distance from source:    14344.0020
+ closest estimate found:    0.00000000      m away
+  in element         5349
+  in rank            1
+  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
+
+
+ Station #           11     AA      S0011
+             original x:    18000.0000
+             original z:    3000.00000
+   distance from source:    13480.0000
+ closest estimate found:    0.00000000      m away
+  in element         5361
+  in rank            1
+  at xi,gamma coordinates =    1.0000000000000560       -2.9976714398398449E-029
+
+
+ Station #           12     AA      S0012
+             original x:    19000.0000
+             original z:    3000.00000
+   distance from source:    12636.0752
+ closest estimate found:    0.00000000      m away
+  in element         5374
+  in rank            1
+  at xi,gamma coordinates =    0.0000000000000000        0.0000000000000000
+
+
+ end of receiver detection
+
+ found a total of           12  receivers, this is okay
+
+
+ Preparing array allocations
+   arrays for elastic domains
+   wavefield initialization
+   done initialization
+
+ Preparing mass matrices
+   initializing mass matrices
+   inverting mass matrices
+
+ Preparing image coloring
+
+ Checking mesh and stability
+
+ ********
+ Model: P (or PI) velocity min,max =    2500.0000000000000        2500.0000000000000
+ Model: S velocity min,max         =    2000.0000000000000        2000.0000000000000
+ Model: density min,max            =    4000.0000000000000        4000.0000000000000
+ ********
+
+
+ *********************************************
+ *** Verification of simulation parameters ***
+ *********************************************
+
+ *** Max grid size =    80.000000000001819
+ *** Min grid size =    79.999999999998181
+ *** Max/min ratio =    1.0000000000000455
+
+ *** Minimum GLL point distance  =    13.813853171680599
+ *** Average GLL point distance  =    19.999999999999545
+
+ *** Minimum period resolved     =    5.0000000000001141E-002
+ *** Maximum frequency resolved  =    19.999999999999545      Hz
+
+ *** Maximum suggested time step                 =    2.7627706343361196E-003
+ *** Maximum suggested (Ricker) source frequency =    7.9999999999998188
+
+ *** for DT :    5.0000000000000001E-004
+ *** Max CFL stability condition of the time scheme based on P wave velocity (must be below about 0.50 or so) =    9.0488872616844573E-002
+
+ ----
+ Number of points per wavelength:
+ ----
+   Source            1
+   maximum dominant source frequency =    25.000000000000000      Hz
+
+   Nb pts / lambdaP_fmax min =    5.00000000
+   Nb pts / lambdaP_fmax max =    5.00000000
+
+   Nb pts / lambdaS_fmax min =    4.00000000
+   Nb pts / lambdaS_fmax max =    4.00000000
+
+ -----------------------------------------
+
+ histogram of min number of points per S wavelength in solid regions:
+
+ there are        95956  elements out of        95956  in solid regions
+   (i.e.,    100.000000     % of the total)
+
+ (too small = poor resolution of calculations -
+  too big = wasting memory and CPU time)
+ (threshold value is around 4.5 points per S wavelength
+  in elastic regions and 5.5 per P wavelength in fluid regions):
+
+   3.96000004      -    3.96399999               0     0.00000000      %
+   3.96399999      -    3.96799994               0     0.00000000      %
+   3.96799994      -    3.97199988               0     0.00000000      %
+   3.97199988      -    3.97600007               0     0.00000000      %
+   3.97600007      -    3.98000002               0     0.00000000      %
+   3.98000002      -    3.98399997               0     0.00000000      %
+   3.98399997      -    3.98799992               0     0.00000000      %
+   3.98799992      -    3.99200010               0     0.00000000      %
+   3.99200010      -    3.99600005               0     0.00000000      %
+   3.99600005      -    4.00000000            2912     3.03472424      %
+   4.00000000      -    4.00400019           93044     96.9652786      %
+   4.00400019      -    4.00799990               0     0.00000000      %
+   4.00799990      -    4.01200008               0     0.00000000      %
+   4.01200008      -    4.01599979               0     0.00000000      %
+   4.01599979      -    4.01999998               0     0.00000000      %
+   4.01999998      -    4.02400017               0     0.00000000      %
+   4.02400017      -    4.02799988               0     0.00000000      %
+   4.02799988      -    4.03200006               0     0.00000000      %
+   4.03200006      -    4.03599977               0     0.00000000      %
+   4.03599977      -    4.03999996               0     0.00000000      %
+
+ total percentage =    100.00000000000000       %
+
+
+ total number of elements in fluid and solid regions =        95956
+
+
+ Preparing source time function
+
+ Preparing material arrays
+
+ Preparing image coloring
+   allocating color image arrays
+   locating all the pixels of color images
+   total number of image pixels =       361250
+   done locating all the pixels of color images
+   coloring image background based on vp
+
+ done, preparation successful
+
+
+ =========================================
+ =  T i m e  e v o l u t i o n  l o o p  =
+ =========================================
+
+
+ Starting time iteration loop ...
+
+
+ ******************************************************************
+Time step number       5   t =    0.0020 s out of       5
+ ******************************************************************
+ We have done    100.000000     % of the total
+ Max norm of vector field in solid (elastic) =    1.11535576E-06
+ Elapsed time in seconds =   0.14299988746643066
+ Elapsed time in hh:mm:ss =      0 h 00 m 00 s
+ Mean elapsed time per time step in seconds =    2.8599977493286133E-002
+ Time steps remaining =            0
+ Estimated remaining time in seconds =    0.0000000000000000
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
+ Estimated total run time in seconds =   0.14299988746643066
+ Estimated total run time in hh:mm:ss =      0 h 00 m 00 s
+
+
+ Creating color image of size         1250  x          304  for time step            5
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    1.2149314443377079E-008
+ Color image created
+
+
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ Program SPECFEM2D:
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ SALT2D
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------
+ D a t e : 11 - 05 - 2017                                 T i m e  : 15:24:45
+ -------------------------------------------------------------------------------
+ -------------------------------------------------------------------------------

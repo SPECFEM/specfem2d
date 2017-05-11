@@ -1,8 +1,8 @@
 # The components of a moment tensor source must be given in N.m, not in dyne.cm as in the DATA/CMTSOLUTION source file of the 3D version of the code.
 # source 1
 source_surf                     = .false.        # source inside the medium, or source automatically moved exactly at the surface by the solver
-xs                              = 29520.          # source location x in meters
-zs                              = 10000.          # source location z in meters (zs is ignored if source_surf is set to true, it is replaced with the topography height)
+xs                              = 29520.         # source location x in meters
+zs                              = 10000.         # source location z in meters (zs is ignored if source_surf is set to true, it is replaced with the topography height)
 # source type: elastic force or acoustic pressure = 1 or moment tensor = 2;
 # for a plane wave including converted and reflected waves at the free surface, P wave = 1, S wave = 2, Rayleigh wave = 3
 # for a plane wave without converted nor reflected waves at the free surface, i.e. with the incident wave only, P wave = 4, S wave = 5
@@ -19,4 +19,4 @@ anglesource                     = 0.0            # angle of the source (for a fo
 Mxx                             = 1.             # Mxx component (for a moment tensor source only)
 Mzz                             = 1.             # Mzz component (for a moment tensor source only)
 Mxz                             = 0.             # Mxz component (for a moment tensor source only)
-factor                          = 1.d0          # amplification factor
+factor                          = 1.d10          # amplification factor

@@ -1,0 +1,125 @@
+
+ **********************************************
+ *** Specfem 2-D Mesher - MPI version       ***
+ **********************************************
+
+ Reading the parameter file...
+
+ Title of the simulation: SALT2D
+
+
+ Receiver lines:
+   Nb of line sets =            1
+
+ Materials:
+   Nb of solid, fluid or porous materials =            1
+
+ --------
+ Material #           1  isotropic
+ rho,cp,cs   =    4000.0000000000000        2500.0000000000000        2000.0000000000000
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000
+ Material is solid
+ --------
+
+ Mesh from internal meshing:
+
+ Reading interface data from file: ./DATA/interface_industry.dat
+ Reading            2  points for interface            1
+ Reading            2  points for interface            2
+
+ Total number of layers in z direction =            1
+ There are          149  spectral elements along Z in layer            1
+
+ Total number of spectral elements along X =          644
+ Total number of spectral elements along Z =          149
+
+ Regions:
+   Nb of regions in the mesh =            1
+
+ ------
+ Region            1
+ IX from            1  to          644
+ IZ from            1  to          149
+ Material #            1  isotropic
+ Material is solid
+ vp     =    2500.00000
+ vs     =    2000.00000
+ rho    =    4000.00000
+ Poisson's ratio =  -0.388888896
+ QKappa =    9999.00000
+ Qmu    =    9999.00000
+ ------
+ Total number of spectral elements         =        95956
+
+
+ Parameter file successfully read
+
+ The mesh contains        95956  elements
+
+ Control elements have            4  nodes
+
+ Source           1
+   Position xs, zs =    29520.000000000000        10000.000000000000
+
+   Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            1
+   Force source:
+   Angle of the source (deg) =    0.0000000000000000
+   Multiplying factor  =    10000000000.000000
+
+   Time function type (1=Ricker, 2=First derivative, 3=Gaussian, 4=Dirac, 5=Heaviside, 8=Read from file, 9=burst):           1
+   Ricker wavelet (second-derivative):
+   Frequency, delay =    10.000000000000000        0.0000000000000000
+
+ Reading interface data from file: ./DATA/interface_industry.dat
+
+ Mesh dimensions:
+   Min and max value of X in the grid =    0.0000000000000000        51520.000000000000
+   Min and max value of Z in the grid =    0.0000000000000000        11920.000000000002
+
+
+ ************ Computing elements load ************
+ Number of elastic elements :       95956
+ Number of acoustic elements :           0
+ Number of viscoelastic elements :           0
+ Number of elastic PML elements :           0
+ Number of acoustic PML elements :           0
+ Number of viscoelastic PML elements :           0
+ *************************************************
+
+
+ Partitioning method: SCOTCH
+
+ nedges_coupled (acoustic/elastic)     =            0
+ nedges_coupled (acoustic/poroelastic) =            0
+ nedges_coupled (poroelastic/elastic)  =            0
+
+ slice            0  has number of spectral elements =       23540
+ slice            1  has number of spectral elements =       23531
+ slice            2  has number of spectral elements =       24426
+ slice            3  has number of spectral elements =       24459
+
+ Position (x,z) of the source =    29520.000000000000        10000.000000000000
+
+
+ writing the ./DATA/STATIONS file
+
+
+ There are           12  receivers
+
+ Target positions (x,z) of the           12  receivers
+
+ Receiver            1  =    8000.0000000000000        3000.0000000000000
+ Receiver            2  =    9000.0000000000000        3000.0000000000000
+ Receiver            3  =    10000.000000000000        3000.0000000000000
+ Receiver            4  =    11000.000000000000        3000.0000000000000
+ Receiver            5  =    12000.000000000000        3000.0000000000000
+ Receiver            6  =    13000.000000000000        3000.0000000000000
+ Receiver            7  =    14000.000000000000        3000.0000000000000
+ Receiver            8  =    15000.000000000000        3000.0000000000000
+ Receiver            9  =    16000.000000000000        3000.0000000000000
+ Receiver           10  =    17000.000000000000        3000.0000000000000
+ Receiver           11  =    18000.000000000000        3000.0000000000000
+ Receiver           12  =    19000.000000000000        3000.0000000000000
+
+ This will be a parallel simulation on            4  processor cores
+
