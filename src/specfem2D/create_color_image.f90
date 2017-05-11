@@ -37,7 +37,7 @@
 
 ! to display the snapshots : display image*.jpg
 
-  use constants, only: TINYVAL,HUGEVAL,STABILITY_THRESHOLD,OUTPUT_FILES
+  use constants, only: TINYVAL,HUGEVAL,STABILITY_THRESHOLD,OUTPUT_FILES,IMAIN
 
   use specfem_par, only: myrank,it,NSOURCES,P_SV,nrec
 
@@ -98,6 +98,9 @@
     where(image_color_data > +CONSTANT_MAX_AMPLITUDE_TO_USE) image_color_data = +CONSTANT_MAX_AMPLITUDE_TO_USE
     where(image_color_data < -CONSTANT_MAX_AMPLITUDE_TO_USE) image_color_data = -CONSTANT_MAX_AMPLITUDE_TO_USE
   endif
+  ! user output
+  write(IMAIN,*) 'Color image maximum amplitude = ',amplitude_max
+
 
 ! this trick checks for NaN (Not a Number), which is not even equal to itself
   if (amplitude_max > STABILITY_THRESHOLD .or. amplitude_max < 0 .or. amplitude_max /= amplitude_max) then
