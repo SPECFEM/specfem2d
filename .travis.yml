@@ -24,43 +24,47 @@ env:
     #   TESTCOV - determines whether or not (0/1) code coverage flags are used
 
     # run default test with make tests
-    - TEST="" TESTCOV=0 TESTMAKE=0
+    - TEST="" TESTCOV=0 TESTMAKE=0 CUDA=false
 
     # run vectorization & mpi, using code coverage flags
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=1 TESTMAKE=1
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=1 TESTMAKE=1 CUDA=false
 
     # run debug
-    - TEST="--enable-debug" TESTCOV=0 TESTMAKE=1
+    - TEST="--enable-debug" TESTCOV=0 TESTMAKE=1 CUDA=false
 
     # run debug & double precision
-    - TEST="--enable-double-precision --enable-debug" TESTCOV=0 TESTMAKE=1
+    - TEST="--enable-double-precision --enable-debug" TESTCOV=0 TESTMAKE=1 CUDA=false
 
     # run vectorization
-    - TEST="--enable-vectorization --without-mpi" TESTCOV=0 TESTMAKE=1
+    - TEST="--enable-vectorization --without-mpi" TESTCOV=0 TESTMAKE=1 CUDA=false
 
     # run example 2 (PML)
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=2
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=2 CUDA=false
 
     # run example 3 (MPI and Stacey)
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=3
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=3 CUDA=false
 
     # run example 4 (kernel)
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=4
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=4 CUDA=false
 
     # run example 5 (poroelastic/acoustic)
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=5
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=5 CUDA=false
 
     # run example 6 (noise)
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=6
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=6 CUDA=false
 
     # run example 7 (axisymmetric)
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=7
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=7 CUDA=false
 
     # run example 8 (PML and MPI)
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=8
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=8 CUDA=false
 
     # run example 9 (MPI, SEP format)
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=9
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=9 CUDA=false
+
+    # run example 10 (CUDA)
+    - TEST="--with-cuda=cuda5 --with-mpi" TESTCOV=0 TESTMAKE=10 CUDA=true CUDA_VERSION=6.5-14
+
 
 before_install:
   # informations on git
@@ -121,6 +125,35 @@ install:
   - ${MPIFC} --version
   - ${CC} --version
 
+  # installs the CUDA toolkit
+  - |
+    if [ "$CUDA" == "true" ]; then
+      echo "Installing CUDA library"
+      # gets packages
+      # from ubuntu 14.04
+      #wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_${CUDA_VERSION}_amd64.deb";
+      #sudo dpkg -i cuda-repo-ubuntu1404_${CUDA_VERSION}_amd64.deb;
+      # from ubuntu 12.04
+      wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1204/x86_64/cuda-repo-ubuntu1204_${CUDA_VERSION}_amd64.deb";
+      sudo dpkg -i cuda-repo-ubuntu1204_${CUDA_VERSION}_amd64.deb;
+      # update
+      sudo apt-get update -qq;
+      export CUDA_APT=${CUDA_VERSION:0:3};
+      export CUDA_APT=${CUDA_APT/./-};
+      # installs packages
+      CUDA_PACKAGES="cuda-drivers cuda-core-${CUDA_APT} cuda-cudart-dev-${CUDA_APT} cuda-cufft-dev-${CUDA_APT}";
+      echo "Installing ${CUDA_PACKAGES}"
+      sudo apt-get install -y ${CUDA_PACKAGES};
+      sudo apt-get clean;
+      export CUDA_HOME=/usr/local/cuda-${CUDA_VERSION:0:3};
+      export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:${LD_LIBRARY_PATH};
+      export PATH=${CUDA_HOME}/bin:${PATH};
+      echo "";
+      echo "exports:"
+      export ;
+      echo "";
+    fi
+
 script:
   ###########################################################
   # setup
@@ -162,7 +195,11 @@ script:
     if [ "$TESTCOV" == "1" ]; then
       ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0"
     else
-      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST}
+      if [ "$CUDA" == "true" ]; then
+        ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} CUDA_LIB="${CUDA_HOME}/lib" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable -g"
+      else
+        ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST}
+      fi
     fi
 
   # compilation
@@ -197,12 +234,16 @@ script:
       make tests
     else
       # limit time steps for testing
-      if [ "$TESTMAKE" == "5" ] ; then
+      if [ "$TESTMAKE" == "5" ]; then
         sed -i "s:^NSTEP .*:NSTEP    = 1000:" DATA/Par_file
       fi
-      if [ "$TESTMAKE" == "7" ] ; then
+      if [ "$TESTMAKE" == "7" ]; then
         sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
         sed -i "s:^NSTEP .*:NSTEP    = 1400:" DATA/Par_file
+      fi
+      if [ "$TESTMAKE" == "9" ]; then
+        sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+        sed -i "s:^NSTEP .*:NSTEP    = 3000:" DATA/Par_file
       fi
       # coverage run
       if [ "$TESTCOV" == "1" ]; then
