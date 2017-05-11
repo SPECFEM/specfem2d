@@ -145,7 +145,7 @@ void FC_FUNC_(check_error_vectors,
 
 
 //
-// src/cuda/compute_add_sources_acoustic_cuda.cu
+// src/cuda/compute_add_sources_viscoacoustic_cuda.cu
 //
 
 void FC_FUNC_(compute_add_sources_ac_cuda,
@@ -320,7 +320,7 @@ void FC_FUNC_(prepare_constants_device,
                                         realw* h_sourcearrays, realw * h_source_time_function,
                                         int* NSTEP,
                                         int* h_ispec_selected_source,
-                                        int* h_number_receiver_global, int* h_ispec_selected_rec,
+                                        int* h_ispec_selected_rec_loc,
                                         int* nrec,int* nrec_local,
                                         realw * h_cosrot,realw * h_sinrot,
                                         int* SIMULATION_TYPE,
@@ -383,7 +383,6 @@ void FC_FUNC_(prepare_fields_elastic_adj_dev,
 
 void FC_FUNC_(prepare_sim2_or_3_const_device,
               PREPARE_SIM2_OR_3_CONST_DEVICE)(long* Mesh_pointer,
-                                              int* islice_selected_rec,
                                               int* nadj_rec_local,
                                               int* nrec,realw* h_source_adjointe,int* NSTEP) {}
 

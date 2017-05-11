@@ -49,10 +49,10 @@ shared_OBJECTS = \
 	$O/force_ftz.cc.o \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \
+	$O/parallel.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_value_parameters.shared.o \
 	$O/set_color_palette.shared.o \
-	$O/parallel.shared.o \
 	$(EMPTY_MACRO)
 
 
@@ -60,6 +60,7 @@ shared_MODULES = \
 	$(FC_MODDIR)/constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_parameters.$(FC_MODEXT) \
+	$(FC_MODDIR)/my_mpi_communicator.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 
