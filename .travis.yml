@@ -59,6 +59,9 @@ env:
     # run example 8 (PML and MPI)
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=8
 
+    # run example 9 (MPI, SEP format)
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=9
+
 before_install:
   # informations on git
   - |
@@ -181,6 +184,7 @@ script:
     6) dir=EXAMPLES/noise_uniform/ ;;
     7) dir=EXAMPLES/axisymmetric_case_AXISYM_option/ ;;
     8) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
+    9) dir=EXAMPLES/Industrial_Format_SEP/ ;;
     *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
     esac
     # runs test
@@ -287,8 +291,18 @@ script:
   - |
     if [ "$TESTCOV" == "1" ]; then
       cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
-      sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file_with_PML
-      ./run_this_example_with_PML.sh
+      sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+      ./run_this_example.sh
+      # only for coverage, comparison would fail: my_test
+      cd $WORKDIR
+    fi
+
+  # testing MPI, SEP example
+  - |
+    if [ "$TESTCOV" == "1" ]; then
+      cd EXAMPLES/Industrial_Format_SEP/
+      sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+      ./run_this_example.sh
       # only for coverage, comparison would fail: my_test
       cd $WORKDIR
     fi
