@@ -88,9 +88,6 @@
     call prepare_timerun_attenuation_fluid()
 !! DK DK QUENTIN visco end
 
-    ! prepares GPU arrays
-    if (GPU_MODE) call prepare_GPU()
-
     if (setup_with_binary_database == 1 ) call save_binary_database()
 
   else
@@ -127,6 +124,9 @@
 
   ! open the file in which we will store the energy curve
   if (OUTPUT_ENERGY .and. myrank == 0) open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'energy.dat',status='unknown',action='write')
+
+  ! prepares GPU arrays
+  if (GPU_MODE) call prepare_GPU()
 
   ! synchronizes all processes
   call synchronize_all()
