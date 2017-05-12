@@ -85,7 +85,7 @@
     ! attenuation
     call prepare_timerun_attenuation_solid()
 !! DK DK QUENTIN visco begin
-    call prepare_timerun_ATTENUATION_VISCOACOUSTIC()
+    call prepare_timerun_attenuation_fluid()
 !! DK DK QUENTIN visco end
 
     ! prepares GPU arrays
@@ -1518,7 +1518,7 @@
 !
 
 !! DK DK QUENTIN visco begin
-  subroutine prepare_timerun_ATTENUATION_VISCOACOUSTIC()
+  subroutine prepare_timerun_attenuation_fluid()
 
 #ifdef USE_MPI
   use mpi
@@ -1818,7 +1818,7 @@
   ! synchronizes all processes
   call synchronize_all()
 
-  end subroutine prepare_timerun_ATTENUATION_VISCOACOUSTIC
+  end subroutine prepare_timerun_attenuation_fluid
 !! DK DK QUENTIN visco end
 
 !

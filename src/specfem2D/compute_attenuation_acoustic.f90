@@ -67,12 +67,12 @@
   ! checks if anything to do
   if (.not. ATTENUATION_VISCOACOUSTIC) return
 
-  ! compute Grad(displ_elastic) at time step n for attenuation
-  call compute_gradient_ATTENUATION_VISCOACOUSTIC(potential_acoustic,dux_dxl_n,duz_dxl_n, &
+  ! compute gradient at time step n for attenuation
+  call compute_gradient_attenuation_fluid(potential_acoustic,dux_dxl_n,duz_dxl_n, &
         dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,ispec_is_acoustic,hprime_xx,hprime_zz,nspec,nglob)
 
-  ! compute Grad(disp_elastic_old) at time step n-1 for attenuation
-  call compute_gradient_ATTENUATION_VISCOACOUSTIC(potential_acoustic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
+  ! compute gradient at time step n-1 for attenuation
+  call compute_gradient_attenuation_fluid(potential_acoustic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
         dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,ispec_is_acoustic,hprime_xx,hprime_zz,nspec,nglob)
 
   ! loop over spectral elements

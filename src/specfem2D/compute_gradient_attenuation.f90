@@ -140,7 +140,7 @@
 
   ! -------------------------------------------------------
 
-  subroutine compute_gradient_ATTENUATION_VISCOACOUSTIC(potential_acoustic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
+  subroutine compute_gradient_attenuation_fluid(potential_acoustic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
          xix,xiz,gammax,gammaz,ibool,ispec_is_acoustic,hprime_xx,hprime_zz,nspec,nglob)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO
@@ -278,5 +278,5 @@
 
   enddo
 
-  end subroutine compute_gradient_ATTENUATION_VISCOACOUSTIC
+  end subroutine compute_gradient_attenuation_fluid
 
