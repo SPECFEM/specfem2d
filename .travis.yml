@@ -4,7 +4,7 @@
 #       this is using C as a base and installs gfortran in the test environment
 
 language: c
-
+dist: trusty
 sudo: required
 
 os: linux
@@ -28,6 +28,9 @@ env:
 
     # run vectorization & mpi, using code coverage flags
     - TEST="--enable-vectorization --with-mpi" TESTCOV=1 TESTMAKE=1 CUDA=false
+
+    # run compilation w/ CUDA
+    - TEST="--with-cuda=cuda5 --with-mpi" TESTCOV=0 TESTMAKE=1 CUDA=true CUDA_VERSION=6.5-14
 
     # run debug
     - TEST="--enable-debug" TESTCOV=0 TESTMAKE=1 CUDA=false
@@ -61,9 +64,6 @@ env:
 
     # run example 9 (MPI, SEP format)
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=9 CUDA=false
-
-    # run example 10 (CUDA)
-    - TEST="--with-cuda=cuda5 --with-mpi" TESTCOV=0 TESTMAKE=10 CUDA=true CUDA_VERSION=6.5-14
 
 
 before_install:
@@ -113,35 +113,27 @@ before_install:
   - sudo apt-get update
 
 install:
-  # fortran/openMPI compiler
-  - sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
-
-  # python script needs numpy
-  - sudo apt-get install -qq python-numpy #python-scipy
-
-  # version infos
-  - echo "compiler versions:" ${FC} ${MPIFC} ${CC}
-  - ${FC} --version
-  - ${MPIFC} --version
-  - ${CC} --version
-
   # installs the CUDA toolkit
   - |
     if [ "$CUDA" == "true" ]; then
       echo "Installing CUDA library"
+      # remove old nvidia-cuda packages
+      #sudo apt-get remove nvidia-cuda-* ;
       # gets packages
-      # from ubuntu 14.04
-      #wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_${CUDA_VERSION}_amd64.deb";
-      #sudo dpkg -i cuda-repo-ubuntu1404_${CUDA_VERSION}_amd64.deb;
-      # from ubuntu 12.04
-      wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1204/x86_64/cuda-repo-ubuntu1204_${CUDA_VERSION}_amd64.deb";
-      sudo dpkg -i cuda-repo-ubuntu1204_${CUDA_VERSION}_amd64.deb;
+      ## distribution trusty: from ubuntu 14.04
+      wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64/cuda-repo-ubuntu1404_${CUDA_VERSION}_amd64.deb;
+      sudo dpkg -i cuda-repo-ubuntu1404_${CUDA_VERSION}_amd64.deb;
+      ## distribution precise: from ubuntu 12.04
+      #wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1204/x86_64/cuda-repo-ubuntu1204_${CUDA_VERSION}_amd64.deb;
+      #sudo dpkg -i cuda-repo-ubuntu1204_${CUDA_VERSION}_amd64.deb;
       # update
       sudo apt-get update -qq;
+      dpkg -l | grep cuda ;
       export CUDA_APT=${CUDA_VERSION:0:3};
       export CUDA_APT=${CUDA_APT/./-};
       # installs packages
-      CUDA_PACKAGES="cuda-drivers cuda-core-${CUDA_APT} cuda-cudart-dev-${CUDA_APT} cuda-cufft-dev-${CUDA_APT}";
+      # CUDA_PACKAGES="cuda-drivers cuda-core-${CUDA_APT} cuda-cudart-dev-${CUDA_APT} cuda-cufft-dev-${CUDA_APT}";
+      CUDA_PACKAGES="cuda-drivers cuda-core-${CUDA_APT} cuda-cudart-dev-${CUDA_APT}";
       echo "Installing ${CUDA_PACKAGES}"
       sudo apt-get install -y ${CUDA_PACKAGES};
       sudo apt-get clean;
@@ -152,7 +144,30 @@ install:
       echo "exports:"
       export ;
       echo "";
+      nvcc --version
     fi
+
+  # fortran/openMPI compiler
+  - sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
+
+  # python script needs numpy
+  - |
+    echo "Python on path: `which python`"
+    echo "pip on path: $(which pip)"
+    # for distribution precise
+    sudo apt-get install -qq python-numpy #python-scipy
+    # trusty:
+    pip install --upgrade pip setuptools wheel
+    pip install --only-binary=numpy numpy
+    # version info
+    python --version
+
+  # version infos
+  - echo "compiler versions:" ${FC} ${MPIFC} ${CC}
+  - ${FC} --version
+  - ${MPIFC} --version
+  - ${CC} --version
+
 
 script:
   ###########################################################
@@ -193,11 +208,14 @@ script:
   # configuration
   - |
     if [ "$TESTCOV" == "1" ]; then
+      echo "configuration: for coverage"
       ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0"
     else
       if [ "$CUDA" == "true" ]; then
-        ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} CUDA_LIB="${CUDA_HOME}/lib" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable -g"
+        echo "configuration: for cuda"
+        ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} CUDA_LIB="${CUDA_HOME}/lib64" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable -g"
       else
+        echo "configuration: default"
         ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST}
       fi
     fi
