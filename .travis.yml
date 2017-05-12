@@ -155,7 +155,7 @@ install:
     echo "Python on path: `which python`"
     echo "pip on path: $(which pip)"
     # for distribution precise
-    sudo apt-get install -qq python-numpy #python-scipy
+    #sudo apt-get install -qq python-numpy #python-scipy
     # trusty:
     pip install --upgrade pip setuptools wheel
     pip install --only-binary=numpy numpy
@@ -163,10 +163,11 @@ install:
     python --version
 
   # version infos
-  - echo "compiler versions:" ${FC} ${MPIFC} ${CC}
-  - ${FC} --version
-  - ${MPIFC} --version
-  - ${CC} --version
+  - |
+    echo "compiler versions:" ${FC} ${MPIFC} ${CC}
+    ${FC} --version
+    ${MPIFC} --version
+    ${CC} --version
 
 
 script:

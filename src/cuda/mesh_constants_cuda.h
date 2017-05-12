@@ -51,7 +51,21 @@
 #define MESH_CONSTANTS_CUDA_H
 
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <unistd.h>
+#include <stdio.h>
+
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
+
+#include <cuda.h>
+//#include <cuda_runtime.h>
+//#include <cublas.h>
+
+#include "config.h"
+
 
 /* ----------------------------------------------------------------------------------------------- */
 

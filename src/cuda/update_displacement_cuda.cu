@@ -33,11 +33,6 @@
 !========================================================================
 */
 
-#include <stdio.h>
-#include <cuda.h>
-//#include <cublas.h>
-
-#include "config.h"
 #include "mesh_constants_cuda.h"
 
 /*

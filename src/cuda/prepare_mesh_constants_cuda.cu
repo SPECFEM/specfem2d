@@ -33,18 +33,6 @@
 !========================================================================
 */
 
-#include <stdio.h>
-#include <cuda.h>
-#include <cublas.h>
-
-#ifdef USE_MPI
-#include <mpi.h>
-#endif
-
-#include <sys/time.h>
-#include <sys/resource.h>
-
-#include "config.h"
 #include "mesh_constants_cuda.h"
 #include "prepare_constants_cuda.h"
 
