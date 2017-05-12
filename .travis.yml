@@ -30,6 +30,9 @@ env:
     - TEST="--enable-vectorization --with-mpi" TESTCOV=1 TESTMAKE=1 CUDA=false
 
     # run compilation w/ CUDA
+    - TEST="--with-cuda=cuda5 --without-mpi" TESTCOV=0 TESTMAKE=1 CUDA=true CUDA_VERSION=6.5-14
+
+    # run compilation w/ CUDA and MPI
     - TEST="--with-cuda=cuda5 --with-mpi" TESTCOV=0 TESTMAKE=1 CUDA=true CUDA_VERSION=6.5-14
 
     # run debug
