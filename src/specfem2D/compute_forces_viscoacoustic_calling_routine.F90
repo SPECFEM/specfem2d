@@ -53,7 +53,7 @@
 
 !! DK DK QUENTIN visco begin
   ! viscoacoustic attenuation for fluid media
-  if (ATTENUATION_FLUID) call compute_attenuation_acoustic(potential_acoustic,potential_acoustic_old, &
+  if (ATTENUATION_VISCOACOUSTIC) call compute_attenuation_acoustic(potential_acoustic,potential_acoustic_old, &
                                                                   ispec_is_acoustic,PML_BOUNDARY_CONDITIONS,e1_fluid)
 !! DK DK QUENTIN visco end
 

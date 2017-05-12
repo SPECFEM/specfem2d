@@ -46,7 +46,7 @@
                          xix,xiz,gammax,gammaz,jacobian, &
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-                         AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj,ATTENUATION_FLUID, &
+                         AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj,ATTENUATION_VISCOACOUSTIC, &
        nspec_ATT, N_SLS
 
   ! overlapping communication
@@ -242,7 +242,7 @@
     endif
 
 !! DK DK QUENTIN visco begin
-    if (ATTENUATION_FLUID) then
+    if (ATTENUATION_VISCOACOUSTIC) then
       ! attenuation is implemented following the memory variable formulation of
       ! Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
       ! Geophysical Journal, vol. 93, p. 393-407 (1988)
@@ -333,7 +333,7 @@
       endif
     endif
 
-    if (ATTENUATION_FLUID) then
+    if (ATTENUATION_VISCOACOUSTIC) then
       do j = 1,NGLLZ
         do i = 1,NGLLX
           ! sums contributions from each element to the global values

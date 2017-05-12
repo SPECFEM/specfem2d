@@ -85,7 +85,7 @@
     ! attenuation
     call prepare_timerun_attenuation_solid()
 !! DK DK QUENTIN visco begin
-    call prepare_timerun_attenuation_fluid()
+    call prepare_timerun_ATTENUATION_VISCOACOUSTIC()
 !! DK DK QUENTIN visco end
 
     ! prepares GPU arrays
@@ -1518,7 +1518,7 @@
 !
 
 !! DK DK QUENTIN visco begin
-  subroutine prepare_timerun_attenuation_fluid()
+  subroutine prepare_timerun_ATTENUATION_VISCOACOUSTIC()
 
 #ifdef USE_MPI
   use mpi
@@ -1549,7 +1549,7 @@
   rmass_inverse_acoustic_old = 0.
 
   ! attenuation
-  if (ATTENUATION_FLUID) then
+  if (ATTENUATION_VISCOACOUSTIC) then
     nspec_ATT = nspec
   else
     nspec_ATT = 1
@@ -1612,7 +1612,7 @@
   endif
 
   ! setup attenuation
-  if (ATTENUATION_FLUID) then
+  if (ATTENUATION_VISCOACOUSTIC) then
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)
@@ -1759,7 +1759,7 @@
     enddo ! of loop on ispec
 
     ! update inverse mass matrix
-    if ( ATTENUATION_FLUID ) then
+    if ( ATTENUATION_VISCOACOUSTIC ) then
     rmass_inverse_acoustic_old(:) = rmass_inverse_acoustic
     rmass_inverse_acoustic(:)     = 0.
     do ispec = 1,nspec
@@ -1805,7 +1805,7 @@
     endif
     endif
 
-  endif ! of ATTENUATION_FLUID
+  endif ! of ATTENUATION_VISCOACOUSTIC
 
   ! sets new material properties
   ! note: velocities might have been shifted by attenuation
@@ -1818,7 +1818,7 @@
   ! synchronizes all processes
   call synchronize_all()
 
-  end subroutine prepare_timerun_attenuation_fluid
+  end subroutine prepare_timerun_ATTENUATION_VISCOACOUSTIC
 !! DK DK QUENTIN visco end
 
 !

@@ -41,7 +41,7 @@
   ! compute forces for the elastic elements
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
-  use specfem_par, only: nglob,nspec,nspec_ATT,ATTENUATION_FLUID,N_SLS, &
+  use specfem_par, only: nglob,nspec,nspec_ATT,ATTENUATION_VISCOACOUSTIC,N_SLS, &
                          ibool,xix,xiz,gammax,gammaz,hprime_xx,hprime_zz
 
   ! PML arrays
@@ -65,14 +65,14 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_nsub1,dux_dzl_nsub1,duz_dxl_nsub1,duz_dzl_nsub1
 
   ! checks if anything to do
-  if (.not. ATTENUATION_FLUID) return
+  if (.not. ATTENUATION_VISCOACOUSTIC) return
 
   ! compute Grad(displ_elastic) at time step n for attenuation
-  call compute_gradient_attenuation_fluid(potential_acoustic,dux_dxl_n,duz_dxl_n, &
+  call compute_gradient_ATTENUATION_VISCOACOUSTIC(potential_acoustic,dux_dxl_n,duz_dxl_n, &
         dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,ispec_is_acoustic,hprime_xx,hprime_zz,nspec,nglob)
 
   ! compute Grad(disp_elastic_old) at time step n-1 for attenuation
-  call compute_gradient_attenuation_fluid(potential_acoustic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
+  call compute_gradient_ATTENUATION_VISCOACOUSTIC(potential_acoustic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
         dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,ispec_is_acoustic,hprime_xx,hprime_zz,nspec,nglob)
 
   ! loop over spectral elements
