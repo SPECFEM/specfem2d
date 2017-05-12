@@ -1,6 +1,9 @@
 
   program analytical_solution
 
+! this program implements the analytical solution for a viscoelastic medium
+! from Carcione et al.
+
   implicit none
 
 !! DK DK Dimitri Komatitsch, CNRS Marseille, France, April 2017: added the elastic reference calculation.
@@ -98,9 +101,9 @@
   double precision, parameter :: M1_relaxed = 23744567022.0200d0
   double precision, parameter :: M2_relaxed = 19758665085.1840d0
 
-  integer ifreq,ifreq2
-  double precision deltafreq,freq,omega,omega0,deltat,time
-  double complex comparg
+  integer :: ifreq,ifreq2
+  double precision :: deltafreq,freq,omega,omega0,deltat,time
+  double complex :: comparg
 
 ! Fourier transform of the Ricker wavelet source
   double complex fomega(0:nfreq)
@@ -116,13 +119,12 @@
   double complex phi2(-nfreq:nfreq)
 
 ! external functions
-  double complex u1,u2
-  external u1,u2
+  double complex, external :: u1,u2
 
 ! modules elastiques
-  double complex M1C, M2C, E, V1, V2
+  double complex :: M1C, M2C, E, V1, V2
 
-  logical correction_f0
+  logical :: correction_f0
 
 ! ********** end of variable declarations ************
 
@@ -146,15 +148,19 @@
       freq = deltafreq * dble(ifreq)
       omega = 2.d0 * pi * freq
       omega0 = 2.d0 * pi * f0
-      comparg = dcmplx(0.d0,omega*t0)
+! typo in equation (B10) of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
+! Geophysical Journal, vol. 93, p. 393-407 (1988), the exponential is of -i omega t0,
+! fixed here by adding the minus sign
+      comparg = dcmplx(0.d0,-omega*t0)
 
 ! definir le spectre du Ricker de Carcione avec cos()
-! d'apres Carcione GJI vol 93 p 401 (1988)
+! equation (B10) of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
+! Geophysical Journal, vol. 93, p. 393-407 (1988)
 !     fomega(ifreq) = pi * dsqrt(pi/eta) * (1.d0/omega0) * cdexp(comparg) * ( dexp(- (pi*pi/eta) * (epsil/2 - omega/omega0)**2) &
 !         + dexp(- (pi*pi/eta) * (epsil/2 + omega/omega0)**2) )
 
 ! definir le spectre d'un Ricker classique
-      fomega(ifreq) = - omega**2 * 2.d0 * (dsqrt(pi)/omega0) * cdexp(-comparg) * dexp(- (omega/omega0)**2)
+      fomega(ifreq) = - omega**2 * 2.d0 * (dsqrt(pi)/omega0) * cdexp(comparg) * dexp(- (omega/omega0)**2)
 
       ra(ifreq) = dreal(fomega(ifreq))
       rb(ifreq) = dimag(fomega(ifreq))
@@ -259,7 +265,7 @@
 ! open(unit=11,file='cmplx_phi',status='unknown')
 ! do ifreq=-nfreq,nfreq
 !     freq = deltafreq * dble(ifreq)
-!     write(11,*) sngl(freq), sngl(dreal(phi1(ifreq))),sngl(dimag(phi1(ifreq))), sngl(dreal(phi2(ifreq))),sngl(dimag(phi2(ifreq)))
+!     write(11,*) sngl(freq),sngl(dreal(phi1(ifreq))),sngl(dimag(phi1(ifreq))),sngl(dreal(phi2(ifreq))),sngl(dimag(phi2(ifreq)))
 ! enddo
 ! close(11)
 
@@ -283,10 +289,11 @@
 ! perform the inverse FFT for Ux
   call cfftb(nt,c,wsave)
 
-! valeur d'un pas de temps
+! value of a time step
   deltat = 1.d0 / (freqmax*dble(iratio))
 
 ! save time result inverse FFT for Ux
+
   if (COMPUTE_ELASTIC_CASE_INSTEAD) then
     open(unit=11,file='Ux_time_analytical_solution_elastic.dat',status='unknown')
   else

@@ -32,7 +32,7 @@
 !========================================================================
 
   subroutine compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                                     PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase)
+                                     PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1_fluid)
 
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
@@ -46,7 +46,8 @@
                          xix,xiz,gammax,gammaz,jacobian, &
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-                         AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj,ATTENUATION_FLUID
+                         AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj,ATTENUATION_FLUID, &
+       nspec_ATT, N_SLS
 
   ! overlapping communication
   use specfem_par, only: nspec_inner_acoustic,nspec_outer_acoustic,phase_ispec_inner_acoustic
@@ -72,7 +73,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: dux_dxl,dux_dzl
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_elem
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempx3
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
 
   ! Jacobian matrix and determinant
@@ -85,7 +86,11 @@
   ! local PML parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_dot_dot_acoustic_PML
 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS) :: e1_fluid
+
   integer :: num_elements,ispec_p
+
+  integer :: i_sls
 
   ! choses inner/outer elements
   if (iphase == 1) then
@@ -236,18 +241,23 @@
                                                    potential_dot_dot_acoustic_PML,r_xiplus1)
     endif
 
-!! DK DK QUENTIN visco begin vers ici ou vers un peu plus haut dans cette routine il manque quelque chose comme ci-dessous
-!! DK DK QUENTIN pris de la routine compute_forces_viscoelastic() et qui utilisera e1_fluid() pour modifier le stress tensor
-    ! compute stress tensor (include attenuation if needed)
+!! DK DK QUENTIN visco begin
     if (ATTENUATION_FLUID) then
       ! attenuation is implemented following the memory variable formulation of
       ! Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
       ! Geophysical Journal, vol. 93, p. 393-407 (1988)
 
-      ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY il faudra ajouter un peu de code ici
-      ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY il faudra ajouter un peu de code ici
-      ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY il faudra ajouter un peu de code ici
-      ! YYYYYYYYYYYYYYYYYYYYYYYYYYYYYY il faudra ajouter un peu de code ici
+      tempx3 = 0._CUSTOM_REAL
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          ! loop on all the standard linear solids
+          do i_sls = 1,N_SLS
+                tempx3(i,j) = tempx3(i,j) + e1_fluid(i,j,ispec,i_sls)
+          enddo
+          tempx3(i,j) = jacobian(i,j,ispec)  * tempx3(i,j)
+        enddo
+      enddo
+
     endif
 !! DK DK QUENTIN visco end
 
@@ -321,6 +331,16 @@
           enddo
         enddo
       endif
+    endif
+
+    if (ATTENUATION_FLUID) then
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          ! sums contributions from each element to the global values
+          iglob = ibool(i,j,ispec)
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + wzgll(j) * wxgll(i) * tempx3(i,j)
+        enddo
+      enddo
     endif
 
   enddo ! end of loop over all spectral elements

@@ -243,8 +243,7 @@ subroutine attenuation_model_fluid(QKappa_att,f0_attenuation,N_SLS, &
   Mu_nu1_sent = real(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS),kind=CUSTOM_REAL)
 
 
-  if (Mu_nu1_sent < 1.) &
-    stop 'error in Zener fluid viscoelasticity: must have Mu_nu1 greater than one'
+  if (Mu_nu1_sent < 1.) stop 'error in Zener fluid viscoelasticity: must have Mu_nu1 greater than one'
 
   end subroutine attenuation_model_fluid
 !! DK DK QUENTIN visco end

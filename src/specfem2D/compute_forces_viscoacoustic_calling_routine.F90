@@ -51,18 +51,18 @@
   ! free surface for an acoustic medium
   call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic)
 
+!! DK DK QUENTIN visco begin
+  ! viscoacoustic attenuation for fluid media
+  if (ATTENUATION_FLUID) call compute_attenuation_acoustic(potential_acoustic,potential_acoustic_old, &
+                                                                  ispec_is_acoustic,PML_BOUNDARY_CONDITIONS,e1_fluid)
+!! DK DK QUENTIN visco end
+
   ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
   do iphase = 1,2
 
-!! DK DK QUENTIN visco begin
-    ! viscoacoustic attenuation for fluid media
-    if (ATTENUATION_FLUID) call compute_attenuation_acoustic(potential_acoustic,potential_acoustic_old, &
-                                                                  ispec_is_acoustic,PML_BOUNDARY_CONDITIONS,e1)
-!! DK DK QUENTIN visco end
-
     ! main solver for the acoustic elements
     call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                                 PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase)
+                                 PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1_fluid)
 
     ! PML boundary conditions enforces zero potentials on boundary
     if (PML_BOUNDARY_CONDITIONS) then
@@ -232,7 +232,7 @@
     ! main solver for the acoustic elements
     if (UNDO_ATTENUATION) then
       call compute_forces_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
-                                   .false.,b_potential_acoustic_old,iphase)
+                                   .false.,b_potential_acoustic_old,iphase,e1_fluid)
     else
       call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic,iphase)
     endif

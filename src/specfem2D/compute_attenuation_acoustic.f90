@@ -39,7 +39,7 @@
   ! updates memory variable in viscoelastic simulation
 
   ! compute forces for the elastic elements
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
 
   use specfem_par, only: nglob,nspec,nspec_ATT,ATTENUATION_FLUID,N_SLS, &
                          ibool,xix,xiz,gammax,gammaz,hprime_xx,hprime_zz
@@ -49,7 +49,7 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: potential_acoustic,potential_acoustic_old
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_acoustic,potential_acoustic_old
 
   logical,dimension(nspec),intent(in) :: ispec_is_acoustic
 
@@ -68,11 +68,11 @@
   if (.not. ATTENUATION_FLUID) return
 
   ! compute Grad(displ_elastic) at time step n for attenuation
-  call compute_gradient_attenuation(potential_acoustic,dux_dxl_n,duz_dxl_n, &
+  call compute_gradient_attenuation_fluid(potential_acoustic,dux_dxl_n,duz_dxl_n, &
         dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,ispec_is_acoustic,hprime_xx,hprime_zz,nspec,nglob)
 
   ! compute Grad(disp_elastic_old) at time step n-1 for attenuation
-  call compute_gradient_attenuation(potential_acoustic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
+  call compute_gradient_attenuation_fluid(potential_acoustic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
         dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,ispec_is_acoustic,hprime_xx,hprime_zz,nspec,nglob)
 
   ! loop over spectral elements
@@ -102,7 +102,7 @@
 
   use specfem_par, only: nspec,nspec_ATT,N_SLS, &
                          phi_nu_fluid, inv_tau_sigma_nu_fluid, &
-                         time_stepping_scheme,i_stage,deltat,assign_external_model,kmato, density, rhoext
+                         time_stepping_scheme,i_stage,deltat
 
   ! LDDRK & RK
   use specfem_par, only: e1_fluid_LDDRK, e1_fluid_initial_rk, e1_fluid_force_RK
@@ -125,15 +125,12 @@
   integer :: i_sls
 
   ! for attenuation
-  real(kind=CUSTOM_REAL) :: phinu1,theta_n_u,theta_nsub1_u,rhol
+  real(kind=CUSTOM_REAL) :: phinu1,theta_n_u,theta_nsub1_u
   double precision :: tauinvnu1
   double precision :: coef0,coef1,coef2
 
   ! temporary RK4 variable
   real(kind=CUSTOM_REAL) :: weight_rk
-
-  ! gets local potential for element
-  rhol = density(1,kmato(ispec))
 
   do j = 1,NGLLZ
     do i = 1,NGLLX
@@ -141,13 +138,8 @@
       ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
       if (inv_tau_sigma_nu_fluid(i,j,ispec,1) < 0.) cycle
 
-      ! if external density model
-      if (assign_external_model) then
-          rhol = rhoext(i,j,ispec)
-      endif
-
-      theta_n_u     = (dux_dxl_n(i,j,ispec) + duz_dzl_n(i,j,ispec))/rhol
-      theta_nsub1_u = (dux_dxl_nsub1(i,j,ispec) + duz_dzl_nsub1(i,j,ispec))/rhol
+      theta_n_u     = (dux_dxl_n(i,j,ispec) + duz_dzl_n(i,j,ispec))
+      theta_nsub1_u = (dux_dxl_nsub1(i,j,ispec) + duz_dzl_nsub1(i,j,ispec))
 
       ! loop on all the standard linear solids
       do i_sls = 1,N_SLS

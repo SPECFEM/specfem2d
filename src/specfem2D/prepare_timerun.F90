@@ -85,12 +85,7 @@
     ! attenuation
     call prepare_timerun_attenuation_solid()
 !! DK DK QUENTIN visco begin
-!! DK DK QUENTIN ici quand j'enleve le commentaire ca casse des exemples existants du code
-!! DK DK QUENTIN (par exemple EXAMPLES/axisymmetric_case_AXISYM_option) donc dans la routine
-!! DK DK QUENTIN il doit y avoir un truc qui casse la memoire ou qui casse des tableaux ou qui re-modifie
-!! DK DK QUENTIN des trucs deja modifies par l'appel call prepare_timerun_attenuation_solid() de la ligne
-!! DK DK QUENTIN ci-dessus ou quelque chose comme ca) ; du coup pour l'instant j'ai comment'e l'appel
-!!! DK DK 27 April 2017: this introduces a bug    call prepare_timerun_attenuation_fluid()
+    call prepare_timerun_attenuation_fluid()
 !! DK DK QUENTIN visco end
 
     ! prepares GPU arrays
@@ -1535,7 +1530,7 @@
   implicit none
 
   ! local parameters
-  integer :: i,j,ispec,n,ier
+  integer :: i,j,ispec,n,ier,i_first,i_last,j_first,j_last
 
   ! for shifting of velocities if needed in the case of viscoelasticity
   double precision :: vp,vs,rhol,mul,lambdal
@@ -1655,11 +1650,24 @@
         ! determines attenuation factors
         call attenuation_model_fluid(qkappal,f0_attenuation,N_SLS, &
                                tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent)
-
       endif
 
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
+      ! for now Q factors are constant per element if we do not use an external model,
+      ! thus we compute the first point only here because computing the relaxation times below is a costly process
+      if (.not. assign_external_model) then
+        i_first = 1
+        i_last = 1
+        j_first = 1
+        j_last = 1
+      else
+        i_first = 1
+        i_last = NGLLX
+        j_first = 1
+        j_last = NGLLZ
+      endif
+
+      do j = j_first,j_last
+        do i = i_first,i_last
 
           ! get values for external meshes
           if (assign_external_model) then
@@ -1711,6 +1719,7 @@
                 mul = poroelastcoef(2,1,n)
 
                 vp = sqrt((lambdal + TWO * mul) / rhol)
+                vs = 0.d0
 
                 ! shifts vp and vs
                 call shift_velocities_from_f0(vp,vs,rhol, &
@@ -1732,6 +1741,20 @@
           endif
         enddo ! of loop on i
       enddo ! of loop on j
+
+      ! for now Q factors are constant per element if we do not use an external model,
+      ! thus above we computed the first point only because computing the relaxation times below is a costly process,
+      ! and here we copy it to the rest of the element
+      if (.not. assign_external_model) then
+        do j = 2,NGLLZ
+          do i = 2,NGLLX
+            ! stores attenuation values
+            inv_tau_sigma_nu_fluid(i,j,ispec,:) = inv_tau_sigma_nu_fluid(1,1,ispec,:)
+            phi_nu_fluid(i,j,ispec,:) = phi_nu_fluid(1,1,ispec,:)
+            Mu_nu_fluid(i,j,ispec) = Mu_nu_fluid(1,1,ispec)
+          enddo
+        enddo
+      endif
 
     enddo ! of loop on ispec
 
@@ -1782,7 +1805,7 @@
     endif
     endif
 
-  endif ! ATTENUATION_VISCOELASTIC
+  endif ! of ATTENUATION_FLUID
 
   ! sets new material properties
   ! note: velocities might have been shifted by attenuation
