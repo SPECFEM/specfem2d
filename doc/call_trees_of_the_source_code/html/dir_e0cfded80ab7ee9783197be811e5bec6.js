@@ -16,6 +16,7 @@ var dir_e0cfded80ab7ee9783197be811e5bec6 =
     [ "prepare_constants_cuda.h", "da/d8f/prepare__constants__cuda_8h.html", "da/d8f/prepare__constants__cuda_8h" ],
     [ "prepare_mesh_constants_cuda.cu", "da/da6/prepare__mesh__constants__cuda_8cu.html", null ],
     [ "specfem2D_gpu_cuda_method_stubs.c", "df/d70/specfem2_d__gpu__cuda__method__stubs_8c.html", "df/d70/specfem2_d__gpu__cuda__method__stubs_8c" ],
+    [ "specfem2D_gpu_cuda_method_stubs.c.bak", "d5/d64/specfem2_d__gpu__cuda__method__stubs_8c_8bak.html", null ],
     [ "transfer_fields_cuda.cu", "d9/dd1/transfer__fields__cuda_8cu.html", null ],
     [ "update_displacement_cuda.cu", "d2/d13/update__displacement__cuda_8cu.html", null ],
     [ "write_seismograms_cuda.cu", "db/db5/write__seismograms__cuda_8cu.html", null ]

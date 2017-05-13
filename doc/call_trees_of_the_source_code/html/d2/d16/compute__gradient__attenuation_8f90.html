@@ -95,6 +95,8 @@ $(document).ready(function(){initNavTree('d2/d16/compute__gradient__attenuation_
 Functions/Subroutines</h2></td></tr>
 <tr class="memitem:a2c3c355194732d54f826b4e9e1bce9cc"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d16/compute__gradient__attenuation_8f90.html#a2c3c355194732d54f826b4e9e1bce9cc">compute_gradient_attenuation</a> (displ_elastic, dux_dxl, duz_dxl, dux_dzl, duz_dzl, xix, xiz, gammax, gammaz, ibool, ispec_is_elastic, hprime_xx, hprime_zz, nspec, nglob)</td></tr>
 <tr class="separator:a2c3c355194732d54f826b4e9e1bce9cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af66ff7355d0aa7c8703ad30dacb9b105"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d16/compute__gradient__attenuation_8f90.html#af66ff7355d0aa7c8703ad30dacb9b105">compute_gradient_attenuation_fluid</a> (potential_acoustic, dux_dxl, duz_dxl, dux_dzl, duz_dzl, xix, xiz, gammax, gammaz, ibool, ispec_is_acoustic, hprime_xx, hprime_zz, nspec, nglob)</td></tr>
+<tr class="separator:af66ff7355d0aa7c8703ad30dacb9b105"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function/Subroutine Documentation</h2>
 <a id="a2c3c355194732d54f826b4e9e1bce9cc"></a>
@@ -207,11 +209,126 @@ Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="../../d2/d16/compute__gradient__attenuation_8f90_a2c3c355194732d54f826b4e9e1bce9cc_icgraph.png" border="0" usemap="#d2/d16/compute__gradient__attenuation_8f90_a2c3c355194732d54f826b4e9e1bce9cc_icgraph" alt=""/></div>
 <map name="d2/d16/compute__gradient__attenuation_8f90_a2c3c355194732d54f826b4e9e1bce9cc_icgraph" id="d2/d16/compute__gradient__attenuation_8f90_a2c3c355194732d54f826b4e9e1bce9cc_icgraph">
-<area shape="rect" id="node2" href="../../d9/db9/compute__attenuation__acoustic_8f90.html#a7db470042e5f21cbe4acf0e5ca1e0538" title="compute_attenuation\l_acoustic" alt="" coords="279,5,425,47"/>
-<area shape="rect" id="node3" href="../../d0/d44/compute__attenuation__viscoelastic_8f90.html#a09af3728d714464070f8ad120840f5cb" title="compute_attenuation\l_viscoelastic" alt="" coords="279,71,425,112"/>
-<area shape="rect" id="node4" href="../../de/d17/compute__forces__poro__fluid_8f90.html#a39657190992ce83fb2fc3fc30ec66bf4" title="compute_forces_poro\l_fluid" alt="" coords="277,136,427,177"/>
-<area shape="rect" id="node5" href="../../dc/d2c/compute__forces__poro__solid_8f90.html#a7484382db3722b44039f1331570f00c0" title="compute_forces_poro\l_solid" alt="" coords="277,201,427,243"/>
-<area shape="rect" id="node6" href="../../d2/db8/compute__forces__viscoelastic__backward_8_f90.html#aa3e56c7c265146a9366e954efc36f88c" title="compute_forces_viscoelastic\l_backward" alt="" coords="256,267,448,308"/>
+<area shape="rect" id="node2" href="../../d0/d44/compute__attenuation__viscoelastic_8f90.html#a09af3728d714464070f8ad120840f5cb" title="compute_attenuation\l_viscoelastic" alt="" coords="279,5,425,47"/>
+<area shape="rect" id="node3" href="../../de/d17/compute__forces__poro__fluid_8f90.html#a39657190992ce83fb2fc3fc30ec66bf4" title="compute_forces_poro\l_fluid" alt="" coords="277,71,427,112"/>
+<area shape="rect" id="node4" href="../../dc/d2c/compute__forces__poro__solid_8f90.html#a7484382db3722b44039f1331570f00c0" title="compute_forces_poro\l_solid" alt="" coords="277,136,427,177"/>
+<area shape="rect" id="node5" href="../../d2/db8/compute__forces__viscoelastic__backward_8_f90.html#aa3e56c7c265146a9366e954efc36f88c" title="compute_forces_viscoelastic\l_backward" alt="" coords="256,201,448,243"/>
+</map>
+</div>
+
+</div>
+</div>
+<a id="af66ff7355d0aa7c8703ad30dacb9b105"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af66ff7355d0aa7c8703ad30dacb9b105">&#9670;&nbsp;</a></span>compute_gradient_attenuation_fluid()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">subroutine compute_gradient_attenuation_fluid </td>
+          <td>(</td>
+          <td class="paramtype">real(kind=custom_real), dimension(nglob)&#160;</td>
+          <td class="paramname"><em>potential_acoustic</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ngllx,ngllz,nspec)&#160;</td>
+          <td class="paramname"><em>dux_dxl</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ngllx,ngllz,nspec)&#160;</td>
+          <td class="paramname"><em>duz_dxl</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ngllx,ngllz,nspec)&#160;</td>
+          <td class="paramname"><em>dux_dzl</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ngllx,ngllz,nspec)&#160;</td>
+          <td class="paramname"><em>duz_dzl</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ngllx,ngllz,nspec)&#160;</td>
+          <td class="paramname"><em>xix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ngllx,ngllz,nspec)&#160;</td>
+          <td class="paramname"><em>xiz</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ngllx,ngllz,nspec)&#160;</td>
+          <td class="paramname"><em>gammax</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ngllx,ngllz,nspec)&#160;</td>
+          <td class="paramname"><em>gammaz</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, dimension(ngllx,ngllz,nspec)&#160;</td>
+          <td class="paramname"><em>ibool</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">logical, dimension(nspec)&#160;</td>
+          <td class="paramname"><em>ispec_is_acoustic</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ngllx,ngllx)&#160;</td>
+          <td class="paramname"><em>hprime_xx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ngllz,ngllz)&#160;</td>
+          <td class="paramname"><em>hprime_zz</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer&#160;</td>
+          <td class="paramname"><em>nspec</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer&#160;</td>
+          <td class="paramname"><em>nglob</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="../../d2/d16/compute__gradient__attenuation_8f90_source.html#l00145">145</a> of file <a class="el" href="../../d2/d16/compute__gradient__attenuation_8f90_source.html">compute_gradient_attenuation.f90</a>.</p>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="../../d2/d16/compute__gradient__attenuation_8f90_af66ff7355d0aa7c8703ad30dacb9b105_icgraph.png" border="0" usemap="#d2/d16/compute__gradient__attenuation_8f90_af66ff7355d0aa7c8703ad30dacb9b105_icgraph" alt=""/></div>
+<map name="d2/d16/compute__gradient__attenuation_8f90_af66ff7355d0aa7c8703ad30dacb9b105_icgraph" id="d2/d16/compute__gradient__attenuation_8f90_af66ff7355d0aa7c8703ad30dacb9b105_icgraph">
+<area shape="rect" id="node2" href="../../d9/db9/compute__attenuation__acoustic_8f90.html#a7db470042e5f21cbe4acf0e5ca1e0538" title="compute_attenuation\l_acoustic" alt="" coords="256,5,403,47"/>
 </map>
 </div>
 

@@ -40,7 +40,6 @@ var searchData=
   ['use_5fmesh_5fcoloring_5fgpu',['use_mesh_coloring_gpu',['../d2/d88/structmesh__.html#a8f5791decaebb152fd8a4dc8bcc36889',1,'mesh_']]],
   ['use_5folder_5fcuda4_5fgpu',['USE_OLDER_CUDA4_GPU',['../da/d8f/prepare__constants__cuda_8h.html#ac856108cc7c9f869e76240ae49544011',1,'prepare_constants_cuda.h']]],
   ['use_5fsnapshot_5fnumber_5fin_5ffilename',['use_snapshot_number_in_filename',['../d1/d30/namespaceshared__input__parameters.html#adc7e529302a5f87aaa47a0e724710897',1,'shared_input_parameters']]],
-  ['use_5ftextures_5fconstants',['USE_TEXTURES_CONSTANTS',['../db/d78/mesh__constants__cuda_8h.html#ab6ffd4314cc10850c463295a7728323d',1,'mesh_constants_cuda.h']]],
   ['use_5ftextures_5ffields',['USE_TEXTURES_FIELDS',['../db/d78/mesh__constants__cuda_8h.html#ab25509de1662083d32b3ecfd2a0a88d2',1,'mesh_constants_cuda.h']]],
   ['use_5ftrick_5ffor_5fbetter_5fpressure',['use_trick_for_better_pressure',['../d1/d30/namespaceshared__input__parameters.html#a2437813b4169c1d94fdef08f6de21dd5',1,'shared_input_parameters']]],
   ['user_5ft0',['user_t0',['../d1/d30/namespaceshared__input__parameters.html#a769226c753d18940ca3750e9b7bb923d',1,'shared_input_parameters']]],

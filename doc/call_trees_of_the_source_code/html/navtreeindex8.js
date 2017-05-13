@@ -1,5 +1,7 @@
 var NAVTREEINDEX8 =
 {
+"dd/d47/setup___g_l_l__points_8f90.html":[2,0,0,1,4,104],
+"dd/d47/setup___g_l_l__points_8f90.html#adeb236a60c37a3d4de6d8e67d787bb07":[2,0,0,1,4,104,0],
 "dd/d47/setup___g_l_l__points_8f90_source.html":[2,0,0,1,4,104],
 "dd/da1/acoustic__forcing__boundary_8f90.html":[2,0,0,1,4,0],
 "dd/da1/acoustic__forcing__boundary_8f90.html#ac658d55c81ddb534efbb40ee61dcfbb1":[2,0,0,1,4,0,0],
@@ -247,7 +249,5 @@ var NAVTREEINDEX8 =
 "files.html":[2,0],
 "functions.html":[1,2,0],
 "functions_vars.html":[1,2,1],
-"globals.html":[2,1,0,0],
-"globals.html":[2,1,0],
-"globals_a.html":[2,1,0,1]
+"globals.html":[2,1,0]
 };

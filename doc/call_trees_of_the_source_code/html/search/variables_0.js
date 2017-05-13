@@ -84,8 +84,8 @@ var searchData=
   ['anyabs',['anyabs',['../db/da6/namespacespecfem__par.html#acc8506c58b91ad7d4ef8d911180b138e',1,'specfem_par']]],
   ['anyabs_5fglob',['anyabs_glob',['../db/da6/namespacespecfem__par.html#a905fbe3cddcbc800c5ceb751a4d0a985',1,'specfem_par']]],
   ['assign_5fexternal_5fmodel',['assign_external_model',['../db/da6/namespacespecfem__par.html#aaae8b650760130346c7e81009443fe37',1,'specfem_par']]],
-  ['attenuation_5ffluid',['attenuation_fluid',['../d1/d30/namespaceshared__input__parameters.html#adc71b276f0fcd024f05907036558e1e7',1,'shared_input_parameters']]],
   ['attenuation_5fporo_5ffluid_5fpart',['attenuation_poro_fluid_part',['../d1/d30/namespaceshared__input__parameters.html#aa4b14180d8f58590333ff520029ba861',1,'shared_input_parameters']]],
+  ['attenuation_5fviscoacoustic',['attenuation_viscoacoustic',['../d1/d30/namespaceshared__input__parameters.html#aa4094c6514e0cc65de89e005ad357484',1,'shared_input_parameters']]],
   ['attenuation_5fviscoelastic',['attenuation_viscoelastic',['../d1/d30/namespaceshared__input__parameters.html#a9ffacccebaccc9380585029c092e0756',1,'shared_input_parameters']]],
   ['axial_5felements_5ffile',['axial_elements_file',['../d1/d30/namespaceshared__input__parameters.html#a2969cec259bb79d04edbd4f98e01b515',1,'shared_input_parameters']]],
   ['axisym',['axisym',['../d1/d30/namespaceshared__input__parameters.html#a7548340028caf2b2320c10689c7933c8',1,'shared_input_parameters']]]

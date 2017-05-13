@@ -93,14 +93,14 @@ $(document).ready(function(){initNavTree('d9/df5/compute__forces__viscoacoustic_
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions/Subroutines</h2></td></tr>
-<tr class="memitem:a6db4a7ec6e654d9c21d72c4daf4789e4"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/df5/compute__forces__viscoacoustic_8f90.html#a6db4a7ec6e654d9c21d72c4daf4789e4">compute_forces_acoustic</a> (potential_dot_dot_acoustic, potential_dot_acoustic, potential_acoustic, PML_BOUNDARY_CONDITIONS, potential_acoustic_old, iphase)</td></tr>
-<tr class="separator:a6db4a7ec6e654d9c21d72c4daf4789e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a68da506f594fbda1b06240695f4585d0"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/df5/compute__forces__viscoacoustic_8f90.html#a68da506f594fbda1b06240695f4585d0">compute_forces_acoustic</a> (potential_dot_dot_acoustic, potential_dot_acoustic, potential_acoustic, PML_BOUNDARY_CONDITIONS, potential_acoustic_old, iphase, e1_fluid)</td></tr>
+<tr class="separator:a68da506f594fbda1b06240695f4585d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29abce2e538f9046d29734f7025cd27c"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/df5/compute__forces__viscoacoustic_8f90.html#a29abce2e538f9046d29734f7025cd27c">mxm_2comp_singlea</a> (x, z, A, B, C)</td></tr>
 <tr class="separator:a29abce2e538f9046d29734f7025cd27c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function/Subroutine Documentation</h2>
-<a id="a6db4a7ec6e654d9c21d72c4daf4789e4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6db4a7ec6e654d9c21d72c4daf4789e4">&#9670;&nbsp;</a></span>compute_forces_acoustic()</h2>
+<a id="a68da506f594fbda1b06240695f4585d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a68da506f594fbda1b06240695f4585d0">&#9670;&nbsp;</a></span>compute_forces_acoustic()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -139,7 +139,13 @@ Functions/Subroutines</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>iphase</em>&#160;</td>
+          <td class="paramname"><em>iphase</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ngllx,ngllz,nspec_att,n_sls)&#160;</td>
+          <td class="paramname"><em>e1_fluid</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -153,8 +159,8 @@ Functions/Subroutines</h2></td></tr>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../d9/df5/compute__forces__viscoacoustic_8f90_a6db4a7ec6e654d9c21d72c4daf4789e4_cgraph.png" border="0" usemap="#d9/df5/compute__forces__viscoacoustic_8f90_a6db4a7ec6e654d9c21d72c4daf4789e4_cgraph" alt=""/></div>
-<map name="d9/df5/compute__forces__viscoacoustic_8f90_a6db4a7ec6e654d9c21d72c4daf4789e4_cgraph" id="d9/df5/compute__forces__viscoacoustic_8f90_a6db4a7ec6e654d9c21d72c4daf4789e4_cgraph">
+<div class="center"><img src="../../d9/df5/compute__forces__viscoacoustic_8f90_a68da506f594fbda1b06240695f4585d0_cgraph.png" border="0" usemap="#d9/df5/compute__forces__viscoacoustic_8f90_a68da506f594fbda1b06240695f4585d0_cgraph" alt=""/></div>
+<map name="d9/df5/compute__forces__viscoacoustic_8f90_a68da506f594fbda1b06240695f4585d0_cgraph" id="d9/df5/compute__forces__viscoacoustic_8f90_a68da506f594fbda1b06240695f4585d0_cgraph">
 <area shape="rect" id="node2" href="../../d9/df5/compute__forces__viscoacoustic_8f90.html#a29abce2e538f9046d29734f7025cd27c" title="mxm_2comp_singlea" alt="" coords="261,5,409,32"/>
 <area shape="rect" id="node3" href="../../d4/d40/pml__compute__memory__variables_8f90.html#a287bf716ab5c027478c7f1082ab51f95" title="pml_compute_memory\l_variables_acoustic" alt="" coords="257,57,414,98"/>
 <area shape="rect" id="node4" href="../../d4/d9e/pml__compute__accel__contribution_8f90.html#a091c36cadacf6ab783361df30865beb0" title="pml_compute_accel_contribution\l_acoustic" alt="" coords="227,122,444,163"/>
@@ -163,8 +169,8 @@ Here is the call graph for this function:</div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../d9/df5/compute__forces__viscoacoustic_8f90_a6db4a7ec6e654d9c21d72c4daf4789e4_icgraph.png" border="0" usemap="#d9/df5/compute__forces__viscoacoustic_8f90_a6db4a7ec6e654d9c21d72c4daf4789e4_icgraph" alt=""/></div>
-<map name="d9/df5/compute__forces__viscoacoustic_8f90_a6db4a7ec6e654d9c21d72c4daf4789e4_icgraph" id="d9/df5/compute__forces__viscoacoustic_8f90_a6db4a7ec6e654d9c21d72c4daf4789e4_icgraph">
+<div class="center"><img src="../../d9/df5/compute__forces__viscoacoustic_8f90_a68da506f594fbda1b06240695f4585d0_icgraph.png" border="0" usemap="#d9/df5/compute__forces__viscoacoustic_8f90_a68da506f594fbda1b06240695f4585d0_icgraph" alt=""/></div>
+<map name="d9/df5/compute__forces__viscoacoustic_8f90_a68da506f594fbda1b06240695f4585d0_icgraph" id="d9/df5/compute__forces__viscoacoustic_8f90_a68da506f594fbda1b06240695f4585d0_icgraph">
 <area shape="rect" id="node2" href="../../d4/d54/compute__forces__viscoacoustic__calling__routine_8_f90.html#a15c6f834c4672b6775ec72fc6ca142e0" title="compute_forces_acoustic_main" alt="" coords="227,5,436,32"/>
 <area shape="rect" id="node3" href="../../d4/d54/compute__forces__viscoacoustic__calling__routine_8_f90.html#ace007c7c310d198acafcc10f25d7249e" title="compute_forces_acoustic\l_main_backward" alt="" coords="245,57,418,98"/>
 </map>
@@ -216,13 +222,13 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../d9/df5/compute__forces__viscoacoustic_8f90_source.html#l00333">333</a> of file <a class="el" href="../../d9/df5/compute__forces__viscoacoustic_8f90_source.html">compute_forces_viscoacoustic.f90</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../d9/df5/compute__forces__viscoacoustic_8f90_source.html#l00353">353</a> of file <a class="el" href="../../d9/df5/compute__forces__viscoacoustic_8f90_source.html">compute_forces_viscoacoustic.f90</a>.</p>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="../../d9/df5/compute__forces__viscoacoustic_8f90_a29abce2e538f9046d29734f7025cd27c_icgraph.png" border="0" usemap="#d9/df5/compute__forces__viscoacoustic_8f90_a29abce2e538f9046d29734f7025cd27c_icgraph" alt=""/></div>
 <map name="d9/df5/compute__forces__viscoacoustic_8f90_a29abce2e538f9046d29734f7025cd27c_icgraph" id="d9/df5/compute__forces__viscoacoustic_8f90_a29abce2e538f9046d29734f7025cd27c_icgraph">
-<area shape="rect" id="node2" href="../../d9/df5/compute__forces__viscoacoustic_8f90.html#a6db4a7ec6e654d9c21d72c4daf4789e4" title="compute_forces_acoustic" alt="" coords="201,5,375,32"/>
+<area shape="rect" id="node2" href="../../d9/df5/compute__forces__viscoacoustic_8f90.html#a68da506f594fbda1b06240695f4585d0" title="compute_forces_acoustic" alt="" coords="201,5,375,32"/>
 </map>
 </div>
 

@@ -20,6 +20,7 @@ var searchData=
   ['sort_5farray_5fcoordinates_2ef90',['sort_array_coordinates.F90',['../de/d6c/sort__array__coordinates_8_f90.html',1,'']]],
   ['specfem2d_2ef90',['specfem2D.F90',['../df/d4c/specfem2_d_8_f90.html',1,'']]],
   ['specfem2d_5fgpu_5fcuda_5fmethod_5fstubs_2ec',['specfem2D_gpu_cuda_method_stubs.c',['../df/d70/specfem2_d__gpu__cuda__method__stubs_8c.html',1,'']]],
+  ['specfem2d_5fgpu_5fcuda_5fmethod_5fstubs_2ec_2ebak',['specfem2D_gpu_cuda_method_stubs.c.bak',['../d5/d64/specfem2_d__gpu__cuda__method__stubs_8c_8bak.html',1,'']]],
   ['specfem2d_5fpar_2ef90',['specfem2D_par.f90',['../d4/da6/specfem2_d__par_8f90.html',1,'']]],
   ['spline_5froutines_2ef90',['spline_routines.f90',['../de/d92/spline__routines_8f90.html',1,'']]],
   ['sum_5fkernels_2ef90',['sum_kernels.f90',['../db/d93/sum__kernels_8f90.html',1,'']]],

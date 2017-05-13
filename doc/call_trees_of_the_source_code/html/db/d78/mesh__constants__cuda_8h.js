@@ -32,7 +32,6 @@ var mesh__constants__cuda_8h =
     [ "PRINT5", "db/d78/mesh__constants__cuda_8h.html#ae022134c371fef31d014b5a4bd3c7acd", null ],
     [ "TRACE", "db/d78/mesh__constants__cuda_8h.html#a494d31903e7b0333dfa03b0778679113", null ],
     [ "USE_LAUNCH_BOUNDS", "db/d78/mesh__constants__cuda_8h.html#a380c1d70e981558a2a5b63b3e70635f4", null ],
-    [ "USE_TEXTURES_CONSTANTS", "db/d78/mesh__constants__cuda_8h.html#ab6ffd4314cc10850c463295a7728323d", null ],
     [ "USE_TEXTURES_FIELDS", "db/d78/mesh__constants__cuda_8h.html#ab25509de1662083d32b3ecfd2a0a88d2", null ],
     [ "VALUE", "db/d78/mesh__constants__cuda_8h.html#ad705dc78222473228fa826e42eca95f1", null ],
     [ "VALUE_TO_STRING", "db/d78/mesh__constants__cuda_8h.html#ad15c9a08925b1c0365fb1bd9ac826670", null ],

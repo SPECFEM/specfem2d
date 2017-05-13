@@ -92,7 +92,12 @@ $(document).ready(function(){initNavTree('db/d78/mesh__constants__cuda_8h.html',
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><code>#include &lt;sys/types.h&gt;</code><br />
+<code>#include &lt;sys/time.h&gt;</code><br />
+<code>#include &lt;sys/resource.h&gt;</code><br />
 <code>#include &lt;unistd.h&gt;</code><br />
+<code>#include &lt;stdio.h&gt;</code><br />
+<code>#include &lt;cuda.h&gt;</code><br />
+<code>#include &quot;config.h&quot;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for mesh_constants_cuda.h:</div>
 <div class="dyncontent">
@@ -152,8 +157,6 @@ Macros</h2></td></tr>
 <tr class="separator:a9a89328d94ddd2cdd4b39db22da01f79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab25509de1662083d32b3ecfd2a0a88d2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d78/mesh__constants__cuda_8h.html#ab25509de1662083d32b3ecfd2a0a88d2">USE_TEXTURES_FIELDS</a></td></tr>
 <tr class="separator:ab25509de1662083d32b3ecfd2a0a88d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab6ffd4314cc10850c463295a7728323d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d78/mesh__constants__cuda_8h.html#ab6ffd4314cc10850c463295a7728323d">USE_TEXTURES_CONSTANTS</a></td></tr>
-<tr class="separator:ab6ffd4314cc10850c463295a7728323d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a380c1d70e981558a2a5b63b3e70635f4"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d78/mesh__constants__cuda_8h.html#a380c1d70e981558a2a5b63b3e70635f4">USE_LAUNCH_BOUNDS</a></td></tr>
 <tr class="separator:a380c1d70e981558a2a5b63b3e70635f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abbfb05078721935b8cdd42ad92c15fe8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d78/mesh__constants__cuda_8h.html#abbfb05078721935b8cdd42ad92c15fe8">LAUNCH_MIN_BLOCKS</a>&#160;&#160;&#160;10</td></tr>
@@ -240,7 +243,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00204">204</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00218">218</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -256,7 +259,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00205">205</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00219">219</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -272,7 +275,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00206">206</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00220">220</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -288,7 +291,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00081">81</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00095">95</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -304,7 +307,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00082">82</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00096">96</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -320,7 +323,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00062">62</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00076">76</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -336,7 +339,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00117">117</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00131">131</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -372,7 +375,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00214">214</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00228">228</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -420,7 +423,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00215">215</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00229">229</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -468,7 +471,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00221">221</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00235">235</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -528,7 +531,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00216">216</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00230">230</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -588,7 +591,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00222">222</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00236">236</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -660,7 +663,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00217">217</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00231">231</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -744,7 +747,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00218">218</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00232">232</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -760,7 +763,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00189">189</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00203">203</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -776,7 +779,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00198">198</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00212">212</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -796,7 +799,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00076">76</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00090">90</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -826,7 +829,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00089">89</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00103">103</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -842,7 +845,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00069">69</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00083">83</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -858,7 +861,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00209">209</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00223">223</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -874,7 +877,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00112">112</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00126">126</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -890,7 +893,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00098">98</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00112">112</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -906,7 +909,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00102">102</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00116">116</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -922,7 +925,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00107">107</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00121">121</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -938,7 +941,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00103">103</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00117">117</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -954,7 +957,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00106">106</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00120">120</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -970,7 +973,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00101">101</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00115">115</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -986,7 +989,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00122">122</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00136">136</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -1016,7 +1019,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00077">77</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00091">91</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -1036,7 +1039,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00066">66</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00080">80</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -1052,23 +1055,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00174">174</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
-
-</div>
-</div>
-<a id="ab6ffd4314cc10850c463295a7728323d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab6ffd4314cc10850c463295a7728323d">&#9670;&nbsp;</a></span>USE_TEXTURES_CONSTANTS</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define USE_TEXTURES_CONSTANTS</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00151">151</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00188">188</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -1084,7 +1071,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00145">145</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00159">159</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -1104,7 +1091,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00134">134</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00148">148</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -1124,7 +1111,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00133">133</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00147">147</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -1144,7 +1131,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00135">135</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00149">149</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -1175,7 +1162,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00233">233</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00247">247</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -1191,7 +1178,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00246">246</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00260">260</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -1207,7 +1194,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00251">251</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00265">265</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -1223,7 +1210,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00236">236</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00250">250</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 
 </div>
 </div>
@@ -1416,7 +1403,7 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00260">260</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html#l00274">274</a> of file <a class="el" href="../../db/d78/mesh__constants__cuda_8h_source.html">mesh_constants_cuda.h</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">

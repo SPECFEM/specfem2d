@@ -124,6 +124,7 @@ var searchData=
   ['specfem2d',['specfem2d',['../df/d4c/specfem2_d_8_f90.html#a69026dd59fca851006fa47c48efaec18',1,'specfem2D.F90']]],
   ['specfem2d_2ef90',['specfem2D.F90',['../df/d4c/specfem2_d_8_f90.html',1,'']]],
   ['specfem2d_5fgpu_5fcuda_5fmethod_5fstubs_2ec',['specfem2D_gpu_cuda_method_stubs.c',['../df/d70/specfem2_d__gpu__cuda__method__stubs_8c.html',1,'']]],
+  ['specfem2d_5fgpu_5fcuda_5fmethod_5fstubs_2ec_2ebak',['specfem2D_gpu_cuda_method_stubs.c.bak',['../d5/d64/specfem2_d__gpu__cuda__method__stubs_8c_8bak.html',1,'']]],
   ['specfem2d_5fpar_2ef90',['specfem2D_par.f90',['../d4/da6/specfem2_d__par_8f90.html',1,'']]],
   ['specfem_5fpar',['specfem_par',['../db/da6/namespacespecfem__par.html',1,'']]],
   ['specfem_5fpar_5fgpu',['specfem_par_gpu',['../d6/d0d/namespacespecfem__par__gpu.html',1,'']]],
