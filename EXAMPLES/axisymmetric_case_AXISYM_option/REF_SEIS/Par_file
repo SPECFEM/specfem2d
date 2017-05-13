@@ -71,7 +71,7 @@ SAVE_MODEL                      = default
 
 # attenuation parameters
 ATTENUATION_VISCOELASTIC        = .true.         # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
-ATTENUATION_FLUID               = .false.        # turn attenuation (viscoacousticity) on or off for non-poroelastic fluid parts of the model
+ATTENUATION_VISCOACOUSTIC       = .false.        # turn attenuation (viscoacousticity) on or off for non-poroelastic fluid parts of the model
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
 Q0                              = 1              # quality factor for viscous attenuation
 freq0                           = 10             # frequency for viscous attenuation

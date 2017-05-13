@@ -21,7 +21,8 @@ DEPRECATED_RENAMED_PARAMETERS = [ \
   ("nt","NSTEP"), \
   ("deltat","DT"), \
   ("nproc","NPROC"), \
-  ("CPML_element_file","absorbing_cpml_file") \
+  ("CPML_element_file","absorbing_cpml_file"), \
+  ("ATTENUATION_FLUID","ATTENUATION_VISCOACOUSTIC") \
 ]
 
 # exclude other possible files with similar name, but with different format
