@@ -260,6 +260,7 @@
     enddo
   endif
 
+  ! counts local receivers in this slice
   nrecloc = 0
   do irec = 1, nrec
     if (myrank == islice_selected_rec(irec)) then
@@ -268,8 +269,8 @@
     endif
   enddo
 
+  ! user output
   if (myrank == 0) then
-
     do irec = 1, nrec
       write(IMAIN,*)
       write(IMAIN,*) 'Station # ',irec,'    ',network_name(irec),station_name(irec)
@@ -293,7 +294,6 @@
     write(IMAIN,*) 'end of receiver detection'
     write(IMAIN,*)
     call flush_IMAIN()
-
   endif
 
   ! deallocate arrays

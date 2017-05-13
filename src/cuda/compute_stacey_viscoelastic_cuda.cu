@@ -205,7 +205,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
                                            realw* h_b_absorb_elastic_top,
                                            realw* h_b_absorb_elastic_bottom) {
 
-  TRACE("\tcompute_stacey_viscoelastic_cuda");
+  TRACE("compute_stacey_viscoelastic_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 

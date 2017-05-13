@@ -217,7 +217,7 @@ script:
     else
       if [ "$CUDA" == "true" ]; then
         echo "configuration: for cuda"
-        ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} CUDA_LIB="${CUDA_HOME}/lib64" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable -g"
+        ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} CUDA_LIB="${CUDA_HOME}/lib64" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable,-Wfatal-errors -g -G"
       else
         echo "configuration: default"
         ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST}

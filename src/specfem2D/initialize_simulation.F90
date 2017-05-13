@@ -361,7 +361,9 @@
   if (CUSTOM_REAL /= 4 ) &
     stop 'GPU mode runs only with CUSTOM_REAL == 4'
   if (UNDO_ATTENUATION) &
-    stop 'for undo_attenuation, GPU_MODE is not supported'
+    stop 'for undo_attenuation, GPU_MODE is not supported yet'
+  if (PML_BOUNDARY_CONDITIONS) &
+    stop 'for PML boundaries, GPU_MODE is not supported yet'
 
   ! initializes GPU and outputs info to files for all processes
   call initialize_cuda_device(myrank,ncuda_devices)

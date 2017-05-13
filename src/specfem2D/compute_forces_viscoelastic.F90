@@ -465,7 +465,8 @@
                 sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j) + duz_dxl(i,j))
               endif
             endif
-          endif
+          endif ! PML_BOUNDARY_CONDITION
+
         endif
 
         ! full anisotropy

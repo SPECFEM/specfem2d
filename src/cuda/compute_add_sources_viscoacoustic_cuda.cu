@@ -106,9 +106,7 @@ void FC_FUNC_(compute_add_sources_ac_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(5,5,1);
 
-  int it = *itf -1;
-
-
+  int it = *itf - 1;
 
   compute_add_sources_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
                                                                               mp->d_ibool,
@@ -152,7 +150,8 @@ void FC_FUNC_(compute_add_sources_ac_s3_cuda,
   get_blocks_xy(mp->nsources_local,&num_blocks_x,&num_blocks_y);
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(5,5,1);
-  int it = *itf -1;
+
+  int it = *itf - 1;
 
   compute_add_sources_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_dot_acoustic,
                                                                               mp->d_ibool,
@@ -259,7 +258,6 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
 
   int it_index = (*it) - 1;
 
-
   // launches cuda kernel for acoustic adjoint sources
   add_sources_ac_SIM_TYPE_2_OR_3_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
                                                                                 mp->d_source_adjointe,
@@ -272,7 +270,6 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
                                                                                 mp->nadj_rec_local,
                                                                                 mp->d_kappastore,
                                                                                 *NSTEP);
-
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("add_sources_acoustic_SIM_TYPE_2_OR_3_kernel");

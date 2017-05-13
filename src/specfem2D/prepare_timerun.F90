@@ -84,6 +84,7 @@
 
     ! attenuation
     call prepare_timerun_attenuation_solid()
+
 !! DK DK QUENTIN visco begin
     call prepare_timerun_attenuation_fluid()
 !! DK DK QUENTIN visco end
@@ -101,6 +102,9 @@
 
   ! jpeg images
   call prepare_timerun_image_coloring()
+
+  ! prepares GPU arrays
+  if (GPU_MODE) call prepare_GPU()
 
   !-------------------------------------------------------------
 
@@ -124,9 +128,6 @@
 
   ! open the file in which we will store the energy curve
   if (OUTPUT_ENERGY .and. myrank == 0) open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'energy.dat',status='unknown',action='write')
-
-  ! prepares GPU arrays
-  if (GPU_MODE) call prepare_GPU()
 
   ! synchronizes all processes
   call synchronize_all()
@@ -1395,8 +1396,8 @@
 
             ! determines attenuation factors
             call attenuation_model(qkappal,qmul,f0_attenuation,N_SLS, &
-                                 tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
-                                 tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
+                                   tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
+                                   tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
           endif
 
           ! stores attenuation values
@@ -1649,7 +1650,7 @@
 
         ! determines attenuation factors
         call attenuation_model_fluid(qkappal,f0_attenuation,N_SLS, &
-                               tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent)
+                                     tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent)
       endif
 
       ! for now Q factors are constant per element if we do not use an external model,
@@ -1683,7 +1684,7 @@
 
             ! determines attenuation factors
             call attenuation_model_fluid(qkappal,f0_attenuation,N_SLS, &
-                               tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent)
+                                         tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent)
           endif
 
           ! stores attenuation values
@@ -1760,49 +1761,47 @@
 
     ! update inverse mass matrix
     if ( ATTENUATION_VISCOACOUSTIC ) then
-    rmass_inverse_acoustic_old(:) = rmass_inverse_acoustic
-    rmass_inverse_acoustic(:)     = 0.
-    do ispec = 1,nspec
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-        iglob = ibool(i,j,ispec)
+      rmass_inverse_acoustic_old(:) = rmass_inverse_acoustic
+      rmass_inverse_acoustic(:)     = 0.
+      do ispec = 1,nspec
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            iglob = ibool(i,j,ispec)
 
-              if (ispec_is_acoustic(ispec)) then
+            if (ispec_is_acoustic(ispec)) then
               ! if external density model (elastic or acoustic)
               if (assign_external_model) then
-                  rhol = rhoext(i,j,ispec)
-                  mul = rhol * vsext(i,j,ispec)
-                  if (AXISYM) then ! CHECK kappa mm
-                    kappal = rhol * vpext(i,j,ispec)**2 - TWO_THIRDS * mul ! CHECK Kappa
-                  else
-                    kappal = rhol * vpext(i,j,ispec)**2 - mul ! CHECK Kappa
-                  endif
+                rhol = rhoext(i,j,ispec)
+                mul = rhol * vsext(i,j,ispec)
+                if (AXISYM) then ! CHECK kappa mm
+                  kappal = rhol * vpext(i,j,ispec)**2 - TWO_THIRDS * mul ! CHECK Kappa
+                else
+                  kappal = rhol * vpext(i,j,ispec)**2 - mul ! CHECK Kappa
+                endif
               else
-                  rhol = density(1,kmato(ispec))
-                  lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
-                  mu_relaxed = poroelastcoef(2,1,kmato(ispec))
+                rhol = density(1,kmato(ispec))
+                lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
+                mu_relaxed = poroelastcoef(2,1,kmato(ispec))
 
-                  if (AXISYM) then ! CHECK kappa
-                    kappal = lambda_relaxed + TWO_THIRDS * mu_relaxed
-                  else
-                    kappal = lambda_relaxed + mu_relaxed
-                  endif
-
+                if (AXISYM) then ! CHECK kappa
+                  kappal = lambda_relaxed + TWO_THIRDS * mu_relaxed
+                else
+                  kappal = lambda_relaxed + mu_relaxed
+                endif
               endif
 
-              kappal_temp = kappal*Mu_nu_fluid(i,j,ispec)
+              kappal_temp = kappal * Mu_nu_fluid(i,j,ispec)
               rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal_temp
-              endif
-
+                                              + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal_temp
+            endif
+          enddo
         enddo
       enddo
-    enddo
 
-    if (any_acoustic) then
-      where(rmass_inverse_acoustic <= 0._CUSTOM_REAL) rmass_inverse_acoustic = 1._CUSTOM_REAL
-      rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
-    endif
+      if (any_acoustic) then
+        where(rmass_inverse_acoustic <= 0._CUSTOM_REAL) rmass_inverse_acoustic = 1._CUSTOM_REAL
+        rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
+      endif
     endif
 
   endif ! of ATTENUATION_VISCOACOUSTIC
@@ -1885,13 +1884,13 @@
             vp = sqrt((kappal + mul)/rhol)
           endif
         endif
+
         ! stores moduli
         rhostore(i,j,ispec) = rhol
         mustore(i,j,ispec) = mul
         kappastore(i,j,ispec) = kappal
 
         ! stores density times vp and vs
-
         vs = sqrt(mul/rhol)
 
         rho_vp(i,j,ispec) = rhol * vp

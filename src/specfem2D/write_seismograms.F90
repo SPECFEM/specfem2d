@@ -72,6 +72,10 @@
 
           ispec = ispec_selected_rec_loc(irecloc)
 
+          !debug
+          !print *,'ispec',ispec,ispec_is_acoustic(ispec),ispec_is_elastic(ispec), &
+          !                ispec_is_gravitoacoustic(ispec),ispec_is_poroelastic(ispec)
+
           ! initializes local element arrays
           vector_field_element(:,:,:) = 0._CUSTOM_REAL
           pressure_element(:,:) = 0._CUSTOM_REAL

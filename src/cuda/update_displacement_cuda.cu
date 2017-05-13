@@ -482,7 +482,7 @@ void FC_FUNC_(kernel_3_acoustic_cuda,
                                       realw* deltatover2,
                                       realw* b_deltatover2) {
 
-TRACE("kernel_3_acoustic_cuda");
+  TRACE("\tkernel_3_acoustic_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 

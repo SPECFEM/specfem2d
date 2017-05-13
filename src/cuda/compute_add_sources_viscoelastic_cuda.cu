@@ -88,7 +88,7 @@ void FC_FUNC_(compute_add_sources_el_cuda,
                                            int* iphasef,
                                            int* itf) {
 
-  TRACE("\tcompute_add_sources_el_cuda");
+  TRACE("compute_add_sources_el_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
@@ -130,7 +130,7 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
                                               int* iphasef,
                                               int* itf) {
 
-  TRACE("\tcompute_add_sources_el_s3_cuda");
+  TRACE("compute_add_sources_el_s3_cuda");
   // EPIK_TRACER("compute_add_sources_el_s3_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
@@ -217,7 +217,7 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
                                                int* nadj_rec_local,
                                                int* NSTEP) {
 
-  TRACE("\tadd_sources_el_sim_type_2_or_3");
+  TRACE("add_sources_el_sim_type_2_or_3");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
