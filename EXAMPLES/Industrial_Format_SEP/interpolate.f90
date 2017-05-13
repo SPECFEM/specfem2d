@@ -234,7 +234,7 @@
   ! interpolating model values onto all GLL points
   ! (uses slowness values for interpolation)
   vp_SEP(:,:) = 1.0/vp_SEP(:,:)
-  vs_SEP(:,:) = 1.0/vs_SEP(:,:)
+  !vs_SEP(:,:) = 1.0/vs_SEP(:,:)
   rho_SEP(:,:) = 1.0/rho_SEP(:,:)
 
   call interpolate_gll(vp_SEP,vs_SEP,rho_SEP,NX,NY,NZ,DX,DY,DZ,OX,OY,OZ,INTERPOLATE_FROM_CLOSEST_POINT,nproc)
@@ -475,7 +475,7 @@
       ! (converting from slowness to wave speed values again)
       if (ier == 0) then
         do i = 1,NGLLX*NGLLZ
-          write(16,'(I10,5e15.5e4)') iglob(i),x(i),z(i), 1.d0/rho_new(i), 1.d0/vp_new(i), 1.d0/vs_new(i)
+          write(16,'(I10,5e15.5e4)') iglob(i),x(i),z(i), 1.d0/rho_new(i), 1.d0/vp_new(i), vs_new(i)
         enddo
       endif
     enddo
