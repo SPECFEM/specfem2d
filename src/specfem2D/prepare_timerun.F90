@@ -86,7 +86,7 @@
     call prepare_timerun_attenuation_solid()
 
 !! DK DK QUENTIN visco begin
-    call prepare_timerun_attenuation_fluid()
+!!    call prepare_timerun_attenuation_fluid()
 !! DK DK QUENTIN visco end
 
     if (setup_with_binary_database == 1 ) call save_binary_database()
