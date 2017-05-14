@@ -78,7 +78,6 @@
   ! loop over spectral elements
   do ispec = 1,nspec
 
-    ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
     if (.not. ispec_is_elastic(ispec)) cycle
 
     if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. ispec_is_PML(ispec)))) then

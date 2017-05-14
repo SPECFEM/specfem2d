@@ -31,8 +31,8 @@
 !
 !========================================================================
 
-  subroutine compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                                     PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1_fluid)
+  subroutine compute_forces_viscoacoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
+                                     PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1)
 
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
@@ -86,7 +86,7 @@
   ! local PML parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_dot_dot_acoustic_PML
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS) :: e1_fluid
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS) :: e1
 
   integer :: num_elements,ispec_p
 
@@ -252,7 +252,7 @@
         do i = 1,NGLLX
           ! loop on all the standard linear solids
           do i_sls = 1,N_SLS
-                tempx3(i,j) = tempx3(i,j) + e1_fluid(i,j,ispec,i_sls)
+            tempx3(i,j) = tempx3(i,j) + e1(i,j,ispec,i_sls)
           enddo
           tempx3(i,j) = jacobian(i,j,ispec)  * tempx3(i,j)
         enddo
@@ -410,4 +410,4 @@
 
   end subroutine mxm_2comp_singleA
 
-  end subroutine compute_forces_acoustic
+  end subroutine compute_forces_viscoacoustic

@@ -54,9 +54,7 @@ module specfem_par
 
   ! poroelastic and elastic coefficients
   double precision, dimension(:,:,:), allocatable :: poroelastcoef
-!! DK DK QUENTIN visco begin
-  logical, dimension(:), allocatable :: already_shifted_velocity,already_shifted_velocity_fluid
-!! DK DK QUENTIN visco end
+  logical, dimension(:), allocatable :: already_shifted_velocity
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: vpext,vsext,rhoext,gravityext,Nsqext
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
 
@@ -77,11 +75,6 @@ module specfem_par
   integer :: nspec_ATT
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   real(kind=CUSTOM_REAL), dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
-
-!! DK DK QUENTIN visco begin
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu_fluid,phi_nu_fluid
-  real(kind=CUSTOM_REAL), dimension(:,:,:) , allocatable :: Mu_nu_fluid
-!! DK DK QUENTIN visco end
 
   ! material
   ! density
@@ -448,13 +441,6 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_LDDRK,e11_LDDRK,e13_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_force_rk,e11_force_rk,e13_force_rk
-
-!! DK DK QUENTIN visco begin
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_fluid, dot_e1_fluid
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_fluid_LDDRK
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_fluid_initial_rk
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_fluid_force_rk
-!! DK DK QUENTIN visco end
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
 

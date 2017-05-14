@@ -231,7 +231,7 @@
           call update_displ_Newmark()
 
           ! main solver for the acoustic elements
-          call compute_forces_acoustic_main()
+          call compute_forces_viscoacoustic_main()
 
           ! main solver for the elastic elements
           call compute_forces_viscoelastic_main()
@@ -283,7 +283,7 @@
           call update_displ_elastic_backward()
 
           ! main solver for the acoustic elements
-          call compute_forces_acoustic_main_backward()
+          call compute_forces_viscoacoustic_main_backward()
 
           ! main solver for the elastic elements
           call compute_forces_viscoelastic_main_backward()
@@ -374,7 +374,7 @@
           endif
 
           ! main solver for the acoustic elements
-          call compute_forces_acoustic_main()
+          call compute_forces_viscoacoustic_main()
         enddo
 
         ! computes kinetic and potential energy

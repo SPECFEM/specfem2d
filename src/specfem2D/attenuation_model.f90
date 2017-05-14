@@ -151,107 +151,6 @@
 !--------------------------------------------------------------------------------
 !
 
-!! DK DK QUENTIN visco begin
-subroutine attenuation_model_fluid(QKappa_att,f0_attenuation,N_SLS, &
-                               tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent)
-
-! define the attenuation constants
-
-  use constants, only: CUSTOM_REAL,ONE
-
-  implicit none
-
-  double precision,intent(in) :: QKappa_att
-  double precision,intent(in) :: f0_attenuation
-
-  integer,intent(in) :: N_SLS
-  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu1_sent,phi_nu1_sent
-  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: tau_epsilon_nu1_sent
-  real(kind=CUSTOM_REAL),intent(out) :: Mu_nu1_sent
-
-  ! local parameters
-  double precision, dimension(N_SLS) :: tau_epsilon_nu1_d
-  double precision, dimension(N_SLS) :: tau_sigma_nu1
-  double precision :: f_min_attenuation, f_max_attenuation
-
-  ! safety check
-  if (N_SLS < 1) stop 'Invalid N_SLS value, must be at least 1'
-
-! attenuation constants for standard linear solids
-! nu1 is the dilatation/incompressibility mode (QKappa)
-! nu2 is the shear mode (Qmu)
-! array index (1) is the first standard linear solid, (2) is the second etc.
-
-! use a wide bandwidth (always OK when using three or more Standard Linear Solids, can be a bit inaccurate if using only two)
-  f_min_attenuation = f0_attenuation / 10.d0
-  f_max_attenuation = f0_attenuation * 10.d0
-
-  call compute_attenuation_coeffs(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
-                                        tau_epsilon_nu1_d,tau_sigma_nu1)
-
-
-  if (any(tau_sigma_nu1 < 0.d0) .or. any(tau_epsilon_nu1_d < 0.d0) ) &
-       stop 'error: negative relaxation time found for a viscoelastic material'
-
-! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
-! and thus this does not apply; it only applies to the right formula with 1/N included
-  if (minval(tau_epsilon_nu1_d / tau_sigma_nu1) < 0.999d0 ) then
-       print *
-       print *,'*******************************************************************************'
-       print *,'*******************************************************************************'
-       print *,'*******************************************************************************'
-       print *,'*******************************************************************************'
-       print *,'*******************************************************************************'
-       print *,'minval(tau_epsilon_nu1 / tau_sigma_nu1) = ',minval(tau_epsilon_nu1_d / tau_sigma_nu1)
-       print *,'WARNING: tau_epsilon should never be smaller than tau_sigma for fluid viscoelasticity in fluids'
-       print *,'*******************************************************************************'
-       print *,'*******************************************************************************'
-       print *,'*******************************************************************************'
-       print *,'*******************************************************************************'
-       print *,'*******************************************************************************'
-  endif
-
-! When implementing viscoelasticity according to the Carcione 1993 paper, attenuation is
-! non-causal rather than causal i.e. wave speed up instead of slowing down
-! when attenuation is turned on. We fixed that issue (which is not incorrect but non traditional)
-! by taking the unrelaxed state (infinite frequency) as a reference instead of the relaxed state (zero frequency)
-! and also using equations in Carcione's 2007 book.
-! See file doc/old_problem_attenuation_reference_Specfem2D_fixed_by_Xie_Zhinan.pdf
-! and doc/how_we_modified_Carcione_1993_to_make_it_causal_and_include_the_missing_1_over_L_factor.pdf
-
-! See also J. M. Carcione, Seismic modeling in viscoelastic media, Geophysics,
-! vol. 58(1), p. 110-120 (1993) for two memory-variable mechanisms (page 112).
-
-! and J. M. Carcione, D. Kosloff and R. Kosloff, Wave propagation simulation
-! in a linear viscoelastic medium, Geophysical Journal International,
-! vol. 95, p. 597-611 (1988) for two memory-variable mechanisms (page 604).
-
-!
-!--- other constants computed from the parameters above, do not modify
-!
-
-  ! SLS parameters
-  ! for Qkappa (set by tau**1,phi**1,Mu_nu1**) and Qmu (set by tau**2,phi**2,Mu_nu2**)
-  tau_epsilon_nu1_sent(:) = real(tau_epsilon_nu1_d(:),kind=CUSTOM_REAL)
-
-  inv_tau_sigma_nu1_sent(:) = real(1.d0 / tau_sigma_nu1(:),kind=CUSTOM_REAL)
-
-  ! use the right formula with 1/N included
-  phi_nu1_sent(:) = real((1.d0 - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
-                                                                           / sum(tau_epsilon_nu1_d/tau_sigma_nu1),kind=CUSTOM_REAL)
-
-  Mu_nu1_sent = real(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS),kind=CUSTOM_REAL)
-
-
-  if (Mu_nu1_sent < 1.) stop 'error in Zener fluid viscoelasticity: must have Mu_nu1 greater than one'
-
-  end subroutine attenuation_model_fluid
-!! DK DK QUENTIN visco end
-
-!
-!--------------------------------------------------------------------------------
-!
-
   subroutine shift_velocities_from_f0(vp,vs,rho, &
                                       f0_attenuation,N_SLS, &
                                       tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1,inv_tau_sigma_nu2)
@@ -485,7 +384,6 @@ subroutine attenuation_model_fluid(QKappa_att,f0_attenuation,N_SLS, &
 ! et non pas theta_max=2*pi*100*f0. En effet, dans le programme, on
 ! travaille sur les frequences, et non pas sur les frequences angulaires.
 ! Cela dit, dans les deux cas j'obtiens les memes coefficients...
-
 
 !---------------------------------------------------
 

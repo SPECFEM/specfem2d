@@ -31,10 +31,12 @@
 !
 !========================================================================
 
-! for viscoelastic solver
+! for viscoacoustic solver
+
+!! DK DK QUENTIN visco begin
 
   subroutine compute_attenuation_acoustic(potential_acoustic,potential_acoustic_old,ispec_is_acoustic, &
-                                              PML_BOUNDARY_CONDITIONS,e1_fluid)
+                                              PML_BOUNDARY_CONDITIONS,e1)
 
   ! updates memory variable in viscoelastic simulation
 
@@ -56,7 +58,7 @@
   ! CPML coefficients and memory variables
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS),intent(inout) :: e1_fluid
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS),intent(inout) :: e1
 
   ! local parameters
   integer :: ispec
@@ -78,13 +80,10 @@
   ! loop over spectral elements
   do ispec = 1,nspec
 
-    ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
     if (.not. ispec_is_acoustic(ispec)) cycle
 
     if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. ispec_is_PML(ispec)))) then
-      call compute_attenuation_acoustic_update(ispec,e1_fluid, &
-                                                   dux_dxl_n,duz_dzl_n, &
-                                                   dux_dxl_nsub1,duz_dzl_nsub1)
+      call compute_attenuation_acoustic_update(ispec,e1,dux_dxl_n,duz_dzl_n,dux_dxl_nsub1,duz_dzl_nsub1)
     endif
   enddo
 
@@ -94,18 +93,18 @@
 !-------------------------------------------------------------------------------------
 !
 
-  subroutine compute_attenuation_acoustic_update(ispec,e1_fluid, &
+  subroutine compute_attenuation_acoustic_update(ispec,e1, &
                                                      dux_dxl_n,duz_dzl_n, &
                                                      dux_dxl_nsub1,duz_dzl_nsub1)
 
   use constants, only: NGLLX,NGLLZ,CUSTOM_REAL,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: nspec,nspec_ATT,N_SLS, &
-                         phi_nu_fluid, inv_tau_sigma_nu_fluid, &
+                         phi_nu1, inv_tau_sigma_nu1, &
                          time_stepping_scheme,i_stage,deltat
 
   ! LDDRK & RK
-  use specfem_par, only: e1_fluid_LDDRK, e1_fluid_initial_rk, e1_fluid_force_RK
+  use specfem_par, only: e1_LDDRK, e1_initial_rk, e1_force_RK
 
   implicit none
 
@@ -114,7 +113,7 @@
   logical, parameter :: CONVOLUTION_MEMORY_VARIABLES = .true.
 
   integer,intent(in) :: ispec
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS),intent(inout) :: e1_fluid
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS),intent(inout) :: e1
 
   ! gradient of displacements (nsub1 denotes discrete time step n-1)
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec),intent(in) :: dux_dxl_n,duz_dzl_n
@@ -136,15 +135,15 @@
     do i = 1,NGLLX
 
       ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
-      if (inv_tau_sigma_nu_fluid(i,j,ispec,1) < 0.) cycle
+      if (inv_tau_sigma_nu1(i,j,ispec,1) < 0.) cycle
 
       theta_n_u     = (dux_dxl_n(i,j,ispec) + duz_dzl_n(i,j,ispec))
       theta_nsub1_u = (dux_dxl_nsub1(i,j,ispec) + duz_dzl_nsub1(i,j,ispec))
 
       ! loop on all the standard linear solids
       do i_sls = 1,N_SLS
-        phinu1    = phi_nu_fluid(i,j,ispec,i_sls)
-        tauinvnu1 = inv_tau_sigma_nu_fluid(i,j,ispec,i_sls)
+        phinu1    = phi_nu1(i,j,ispec,i_sls)
+        tauinvnu1 = inv_tau_sigma_nu1(i,j,ispec,i_sls)
 
         ! update e1, e11, e13 in convolution formation with modified recursive convolution scheme on basis of
         ! second-order accurate convolution term calculation from equation (21) of
@@ -163,40 +162,40 @@
           if (CONVOLUTION_MEMORY_VARIABLES) then
             call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
 
-            e1_fluid(i,j,ispec,i_sls) = coef0 * e1_fluid(i,j,ispec,i_sls) + &
+            e1(i,j,ispec,i_sls) = coef0 * e1(i,j,ispec,i_sls) + &
                                   phinu1 * (coef1 * theta_n_u + coef2 * theta_nsub1_u)
 
           else
             stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
-            e1_fluid(i,j,ispec,i_sls) = e1_fluid(i,j,ispec,i_sls) + deltat * &
-                 (- e1_fluid(i,j,ispec,i_sls)*tauinvnu1 + phinu1 * theta_n_u)
+            e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + deltat * &
+                 (- e1(i,j,ispec,i_sls)*tauinvnu1 + phinu1 * theta_n_u)
 
           endif
 
         case (2)
           ! LDDRK
           ! update e1, e11, e13 in ADE formation with fourth-order LDDRK scheme
-          e1_fluid_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e1_fluid_LDDRK(i,j,ispec,i_sls) + &
-                                      deltat * (theta_n_u * phinu1 - e1_fluid(i,j,ispec,i_sls) * tauinvnu1)
-          e1_fluid(i,j,ispec,i_sls) = e1_fluid(i,j,ispec,i_sls) + BETA_LDDRK(i_stage) * e1_fluid_LDDRK(i,j,ispec,i_sls)
+          e1_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
+                                      deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
+          e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + BETA_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
 
         case (3)
           ! Runge-Kutta
           ! update e1, e11, e13 in ADE formation with classical fourth-order Runge-Kutta scheme
-          e1_fluid_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n_u * phinu1 - e1_fluid(i,j,ispec,i_sls) * tauinvnu1)
+          e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
 
           if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
             if (i_stage == 1) weight_rk = 0.5_CUSTOM_REAL
             if (i_stage == 2) weight_rk = 0.5_CUSTOM_REAL
             if (i_stage == 3) weight_rk = 1._CUSTOM_REAL
 
-            if (i_stage == 1) e1_fluid_initial_rk(i,j,ispec,i_sls) = e1_fluid(i,j,ispec,i_sls)
-            e1_fluid(i,j,ispec,i_sls) = e1_fluid_initial_rk(i,j,ispec,i_sls) &
-                + weight_rk * e1_fluid_force_RK(i,j,ispec,i_sls,i_stage)
+            if (i_stage == 1) e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
+            e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) &
+                + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
           else if (i_stage == 4) then
-            e1_fluid(i,j,ispec,i_sls) = e1_fluid_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
-                                  (e1_fluid_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e1_fluid_force_RK(i,j,ispec,i_sls,2) + &
-                                   2._CUSTOM_REAL * e1_fluid_force_RK(i,j,ispec,i_sls,3) + e1_fluid_force_RK(i,j,ispec,i_sls,4))
+            e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+                                  (e1_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,2) + &
+                                   2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
           endif
 
         case default
@@ -209,3 +208,6 @@
   enddo
 
   end subroutine compute_attenuation_acoustic_update
+
+!! DK DK QUENTIN visco end
+

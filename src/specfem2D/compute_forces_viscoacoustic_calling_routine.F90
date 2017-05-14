@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine compute_forces_acoustic_main()
+  subroutine compute_forces_viscoacoustic_main()
 
   use constants, only: SOURCE_IS_MOVING,USE_ENFORCE_FIELDS,ALPHA_LDDRK,BETA_LDDRK
   use specfem_par
@@ -54,15 +54,15 @@
 !! DK DK QUENTIN visco begin
   ! viscoacoustic attenuation for fluid media
   if (ATTENUATION_VISCOACOUSTIC) call compute_attenuation_acoustic(potential_acoustic,potential_acoustic_old, &
-                                                                  ispec_is_acoustic,PML_BOUNDARY_CONDITIONS,e1_fluid)
+                                                                  ispec_is_acoustic,PML_BOUNDARY_CONDITIONS,e1)
 !! DK DK QUENTIN visco end
 
   ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
   do iphase = 1,2
 
     ! main solver for the acoustic elements
-    call compute_forces_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                                 PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1_fluid)
+    call compute_forces_viscoacoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
+                                 PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1)
 
     ! PML boundary conditions enforces zero potentials on boundary
     if (PML_BOUNDARY_CONDITIONS) then
@@ -178,13 +178,13 @@
   ! free surface for an acoustic medium
   call enforce_acoustic_free_surface(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic)
 
-  end subroutine compute_forces_acoustic_main
+  end subroutine compute_forces_viscoacoustic_main
 
 !
 !-------------------------------------------------------------------------------------
 !
 
-  subroutine compute_forces_acoustic_main_backward()
+  subroutine compute_forces_viscoacoustic_main_backward()
 
   use specfem_par
 
@@ -231,10 +231,10 @@
 
     ! main solver for the acoustic elements
     if (UNDO_ATTENUATION) then
-      call compute_forces_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
-                                   .false.,b_potential_acoustic_old,iphase,e1_fluid)
+      call compute_forces_viscoacoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
+                                   .false.,b_potential_acoustic_old,iphase,e1)
     else
-      call compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic,iphase)
+      call compute_forces_viscoacoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic,iphase)
     endif
 
     ! PML boundary conditions
@@ -319,7 +319,7 @@
   ! free surface for an acoustic medium
   call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic)
 
-  end subroutine compute_forces_acoustic_main_backward
+  end subroutine compute_forces_viscoacoustic_main_backward
 
 
 

@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine compute_forces_acoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic,iphase)
+  subroutine compute_forces_viscoacoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic,iphase)
 
 
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
@@ -212,4 +212,4 @@
 
   enddo ! end of loop over all spectral elements
 
-  end subroutine compute_forces_acoustic_backward
+  end subroutine compute_forces_viscoacoustic_backward
