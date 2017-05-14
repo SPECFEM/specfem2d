@@ -32,14 +32,22 @@
   real,dimension(:,:),allocatable :: vp_SEP,vs_SEP,rho_SEP
 
   character(len=512) :: system_command,sep_file,data_format,line
-  character(len=40) :: tmpstring
-  character(len=20) :: numstring
+  character(len=128) :: tmpstring
+  character(len=128) :: numstring
   character(len=3) ::num
+
+  ! user output
+  print *
+  print *, '***********************************************************'
+  print *, 'Model Interpolation'
+  print *, '***********************************************************'
+  print *
 
   ! user input
   if (USER_INPUT) then
     print *, 'please input the number of processes:'
     read(*,*) nproc
+    print *
   else
     ! reads from default Par_file
     nproc = 0
@@ -61,12 +69,23 @@
       endif
     enddo
     close(15)
-    print *,'using number of processes: ',nproc
     if (nproc < 1) stop 'Error could not read nproc from Par_file'
   endif
 
-  ! reading SEP models
+  ! user output
+  print *, 'setting:'
+  print *, '  SEP model from directory : ',trim(sep_directory)
+  print *, '  using number of processes: ',nproc
+  if (INTERPOLATE_FROM_CLOSEST_POINT) then
+    print *, '  interpolation type       : from closest point'
+  else
+    print *, '  interpolation type       : bilinear'
+  endif
+  print *, '  interpolation points set : ',INTERPOLATION_POINTS
+  print *, '  using scaling from Vp    : ',SCALE_FROM_VP
   print *
+
+  ! reading SEP models
   print *, 'reading SEP models...'
 
   ! VP model
@@ -133,44 +152,50 @@
 
   ! model geometry
   print *
-  print *, 'Preparing Par_file'
+  print *, '************ Preparing Par_file ************ '
   print *
+
   !print *, 'OX = ',OX
   write(numstring,*) OX
-  write(tmpstring,*) 'xmin      =',numstring
-  write(*,*) trim(tmpstring)
-  write(system_command,*) 'sed -i "s/^xmin .*/',tmpstring,'/" ./DATA/Par_file'
+  write(tmpstring,*) 'xmin                            =',trim(numstring)
+  tmpstring = adjustl(tmpstring)
+  !write(*,*) trim(tmpstring)
+  write(system_command,*) 'sed -i "s/^xmin .*/',trim(tmpstring),'/" ./DATA/Par_file'
   write (*,*) trim(system_command)
   call system(trim(system_command))
 
   write(numstring,*) OX+(NX-1)*DX
-  write(tmpstring,*) 'xmax      =',numstring
-  write(*,*) trim(tmpstring)
-  write(system_command,*) 'sed -i "s/^xmax .*/',tmpstring,'/" ./DATA/Par_file'
+  write(tmpstring,*) 'xmax                            =',trim(numstring)
+  tmpstring = adjustl(tmpstring)
+  !write(*,*) trim(tmpstring)
+  write(system_command,*) 'sed -i "s/^xmax .*/',trim(tmpstring),'/" ./DATA/Par_file'
   write (*,*) trim(system_command)
   call system(system_command)
 
   write(numstring,*) (NX-1)/INTERPOLATION_POINTS
-  write(tmpstring,*) 'nx       =',numstring
-  write(*,*) trim(tmpstring)
-  write(system_command,*) 'sed -i "s/^nx .*/',tmpstring,'/" ./DATA/Par_file'
+  write(tmpstring,*) 'nx                              =',trim(numstring)
+  tmpstring = adjustl(tmpstring)
+  !write(*,*) trim(tmpstring)
+  write(system_command,*) 'sed -i "s/^nx .*/',trim(tmpstring),'/" ./DATA/Par_file'
   write (*,*) trim(system_command)
   call system(trim(system_command))
 
   ! nbregions
   call system('sed -i "$ d" ./DATA/Par_file')
   write(tmpstring,*) '1',(NX-1)/INTERPOLATION_POINTS,'1',(NZ-1)/INTERPOLATION_POINTS,'1'
-  write (*,*) trim(tmpstring)
-  write(system_command,*) 'sed -i "/nbregions   /a',tmpstring,'" ./DATA/Par_file'
+  tmpstring = adjustl(tmpstring)
+  !write (*,*) trim(tmpstring)
+  write(system_command,*) 'sed -i "/nbregions   /a',trim(tmpstring),'" ./DATA/Par_file'
      !write(system_command,*) 'echo ${tmpstring}'
   write (*,*) trim(system_command)
   call system(trim(system_command))
 
   ! number of processes
   if (USER_INPUT) then
-    write(tmpstring,*) 'NPROC      =',nproc
-    write(*,*) trim(tmpstring)
-    write(system_command,*) 'sed -i "s/^NPROC .*/',tmpstring,'/" ./DATA/Par_file'
+    write(tmpstring,*) 'NPROC                           =',nproc
+    tmpstring = adjustl(tmpstring)
+    !write(*,*) trim(tmpstring)
+    write(system_command,*) 'sed -i "s/^NPROC .*/',trim(tmpstring),'/" ./DATA/Par_file'
     write (*,*) trim(system_command)
     call system(trim(system_command))
   endif
@@ -181,11 +206,19 @@
 
   call sleep(1)
 
+  ! note: first simulation is used to create a mesh and initial model files,
+  !       which will be read in a second run for interpolation
+
+  ! user output
+  print *
+  print *, '************ Setting up first simulation ************ '
+  print *
+
   ! Par_file flags to create new mesh files
   call system('cp ./DATA/Par_file.org ./DATA/Par_file')
-  call system('sed -i "s/^MODEL .*/MODEL                      = default/" ./DATA/Par_file')
-  call system('sed -i "s/^SAVE_MODEL .*/SAVE_MODEL            = legacy/" ./DATA/Par_file')
-  call system('sed -i "s/^NSTEP .*/NSTEP                      = 5 /" ./DATA/Par_file')
+  call system('sed -i "s/^MODEL .*/MODEL                            = default/" ./DATA/Par_file')
+  call system('sed -i "s/^SAVE_MODEL .*/SAVE_MODEL                  = legacy/" ./DATA/Par_file')
+  call system('sed -i "s/^NSTEP .*/NSTEP                            = 5 /" ./DATA/Par_file')
   call system('cp ./DATA/Par_file ./OUTPUT_FILES/Par_file.step_1')
 
   ! runs mesher
@@ -198,27 +231,26 @@
   call system('mpirun -np ' //num//' ./xspecfem2D > OUTPUT_FILES/output_solver.step_1.txt')
 
   print *
-  print *, 'Setting up new simulation'
+  print *, '************ Setting up new simulation ************ '
   print *
 
   ! now uses default specfem file format
   ! backup Par_file
   call system('cp ./DATA/Par_file.org ./DATA/Par_file')
-  call system('sed -i "s/^MODEL .*/MODEL                     = legacy/" ./DATA/Par_file')
-  call system('sed -i "s/^SAVE_MODEL .*/SAVE_MODEL           = default/" ./DATA/Par_file')
+  call system('sed -i "s/^MODEL .*/MODEL                            = legacy/" ./DATA/Par_file')
+  call system('sed -i "s/^SAVE_MODEL .*/SAVE_MODEL                  = default/" ./DATA/Par_file')
   call system('cp ./DATA/Par_file ./OUTPUT_FILES/Par_file.step_2')
 
   ! runs mesher
   print *,'call xmeshfem2d'
   call system('./xmeshfem2D')
 
-  ! VS model, scaled or in SEP format
+  ! scaling model values
   if (SCALE_FROM_VP) then
+    ! VS model, scaled or in SEP format
     vs_SEP(:,:) = vp_SEP(:,:) / 1.732
-  endif
 
-  ! RHO model, scaled or in SEP format
-  if (SCALE_FROM_VP) then
+    ! RHO model, scaled or in SEP format
     ! note: by default, just assumes constant density
     ! constant density
     rho_SEP(:,:) =  1000.0
@@ -231,13 +263,22 @@
     !             +0.000106*(vp_SEP/14500*4500 / 1000.0)**5 )*1000.0
   endif
 
-  ! interpolating model values onto all GLL points
-  ! (uses slowness values for interpolation)
-  vp_SEP(:,:) = 1.0/vp_SEP(:,:)
-  !vs_SEP(:,:) = 1.0/vs_SEP(:,:)
-  rho_SEP(:,:) = 1.0/rho_SEP(:,:)
+  ! user output
+  print *
+  print *, '************ Interpolating model ************'
+  print *
 
-  call interpolate_gll(vp_SEP,vs_SEP,rho_SEP,NX,NY,NZ,DX,DY,DZ,OX,OY,OZ,INTERPOLATE_FROM_CLOSEST_POINT,nproc)
+  print *, 'input model:'
+  print *, '  Vp min/max  = ',minval(vp_SEP(:,:)),maxval(vp_SEP(:,:))
+  print *, '  Vs min/max  = ',minval(vs_SEP(:,:)),maxval(vs_SEP(:,:))
+  print *, '  rho min/max = ',minval(rho_SEP(:,:)),maxval(rho_SEP(:,:))
+
+  call interpolate_slowness_gll(vp_SEP,vs_SEP,rho_SEP,NX,NY,NZ,DX,DY,DZ,OX,OY,OZ,INTERPOLATE_FROM_CLOSEST_POINT,nproc)
+
+  ! user output
+  print *
+  print *, 'Interpolation done'
+  print *
 
   ! runs forward simulation
   print *,'call xspecfem2d'
@@ -361,13 +402,13 @@
 !-----------------------------------------------------------------------------------
 !
 
-  subroutine interpolate_gll(vp,vs,rho,NX,NY,NZ,DX,DY,DZ,OX,OY,OZ,closest_point,nproc)
+  subroutine interpolate_slowness_gll(vp,vs,rho,NX,NY,NZ,DX,DY,DZ,OX,OY,OZ,closest_point,nproc)
 
   implicit none
 
   !!! constants
   integer, parameter :: NGLLX = 5, NGLLZ = 5
-  double precision, parameter :: vp_water = 5500 ! upper bound
+  !double precision, parameter :: vp_water = 5500 ! upper bound
 
   !!! input
   integer,intent(in) :: NX,NY,NZ
@@ -380,16 +421,16 @@
   !!! output
   ! currently no output, all information is saved in output file
 
-  !!! local
+  ! local parameters
   integer :: iproc
-  integer :: ier,ix,iz,ix1,iz1,i
+  integer :: ier,ix,iz,ix1,iz1,i,npoints
   integer, dimension(NGLLX*NGLLZ) :: iglob
-  double precision :: rho_temp,vp_temp,vs_temp,a1,b1,tmp1,tmp2
   double precision, dimension(NGLLX*NGLLZ) :: rho_new,vp_new,vs_new,x,z
-  real :: rdummy
-  character(len=512) :: input_file
-  character(len=512) :: output_file
+  double precision :: rho_temp,vp_temp,vs_temp,a1,b1,tmp1,tmp2,tmp3
+  character(len=512) :: input_file,output_file
   character(len=512) :: system_command
+  double precision :: vp_min,vp_max,vs_min,vs_max,rho_min,rho_max
+  real :: rdummy
 
   ! to avoid compiler warning
   rdummy = OY * DY * NY
@@ -397,6 +438,14 @@
   print *
   print *, 'Interpolating GLL model values'
   print *
+
+  ! interpolating model values onto all GLL points
+  vp_min = 1.d30
+  vp_max = -1.d30
+  vs_min = 1.d30
+  vs_max = - 1.d30
+  rho_min = 1.d30
+  rho_max = - 1.d30
 
   ! for each process
   do iproc = 1,nproc
@@ -406,23 +455,47 @@
 
     ! input file
     write(input_file,'(a,i6.6,a)') 'DATA/proc',iproc-1,'_model_velocity.dat_input'
-    ! output file
-    write(output_file,'(a,i6.6,a)') 'DATA/proc',iproc-1,'_model_velocity.dat_tmp'
-
     open(unit=15,file=trim(adjustl(input_file)),status='old',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_model_velocity.dat_input file.'
-    open(unit=16,file=trim(adjustl(output_file)),status='unknown',iostat=ier)
 
-    ier = 0
+    ! counts number of points
+    npoints = 0
     do while (ier == 0)
       ! loops over GLL points of every element
       do i = 1,NGLLX*NGLLZ
-        ! reads model point
-        read(15,'(I10,5e15.5e4)',iostat=ier)  iglob(i),x(i),z(i),rho_temp,vp_temp,vs_temp
+          ! reads model point
+          read(15,'(I10,5e15.5e4)',iostat=ier)  iglob(i),x(i),z(i),rho_temp,vp_temp,vs_temp
+          if (ier /= 0) exit
 
-        ! interpolation
-        if (closest_point) then
-          ! takes value from closest point
+          npoints = npoints + 1
+      enddo
+    enddo
+    rewind(15)
+    print *, 'number of points = ',npoints
+
+    ! number of lines must be a multiple of NGLLX * NGLLZ
+    if (mod(npoints,(NGLLX*NGLLZ)) /= 0) then
+      print *,'Error: invalid number of lines in input file '//trim(input_file)
+      print *,'  number of points = ',npoints,' should be a multiple of NGLLX * NGLLZ = ',NGLLX,' * ',NGLLZ
+      stop 'Error invalid number of lines in input file'
+    endif
+
+    ! output file
+    write(output_file,'(a,i6.6,a)') 'DATA/proc',iproc-1,'_model_velocity.dat_tmp'
+    open(unit=16,file=trim(adjustl(output_file)),status='unknown',iostat=ier)
+    if (ier /= 0) stop 'Error opening output file DATA/proc****_model_velocity.dat_tmp for interpolation.'
+
+    ! interpolation
+    if (closest_point) then
+
+      ! takes value from closest point
+      do while (ier == 0)
+        ! loops over GLL points of every element
+        do i = 1,NGLLX*NGLLZ
+          ! reads model point
+          read(15,'(I10,5e15.5e4)',iostat=ier)  iglob(i),x(i),z(i),rho_temp,vp_temp,vs_temp
+          if (ier /= 0) exit
+
           ix = NINT((x(i)-OX)/DX) + 1
           iz = NINT((z(i)-OZ)/DZ) + 1
 
@@ -431,11 +504,50 @@
           if (iz > NZ) iz = NZ
           if (iz < 1)  iz = 1
 
+          ! closest point values
           rho_new(i) = rho(ix,iz)
           vp_new(i) = vp(ix,iz)
           vs_new(i) = vs(ix,iz)
-        else
-          ! bilinear interpolation
+
+          ! statistics
+          if (rho_new(i) < rho_min) rho_min = rho_new(i)
+          if (rho_new(i) > rho_max) rho_max = rho_new(i)
+
+          if (vp_new(i) < vp_min) vp_min = vp_new(i)
+          if (vp_new(i) > vp_max) vp_max = vp_new(i)
+
+          if (vs_new(i) < vs_min) vs_min = vs_new(i)
+          if (vs_new(i) > vs_max) vs_max = vs_new(i)
+        enddo
+
+        ! writes out interpolated values
+        ! converting from slowness to wave speed values again & buoyancy to density
+        if (ier == 0) then
+          do i = 1,NGLLX*NGLLZ
+            write(16,'(I10,5e15.5e4)') iglob(i),x(i),z(i), rho_new(i), vp_new(i), vs_new(i)
+          enddo
+        endif
+      enddo
+
+    else
+
+      ! bilinear interpolation
+      !
+      !  (ix,iz)    (ix+1,iz)
+      !   x---------- x
+      !   |   *       |
+      !   |           |
+      !   |           |
+      !   x-----------x
+      !  (ix,iz+1)   (ix+1,iz+1)
+      !
+      do while (ier == 0)
+        ! loops over GLL points of every element
+        do i = 1,NGLLX*NGLLZ
+          ! reads model point
+          read(15,'(I10,5e15.5e4)',iostat=ier)  iglob(i),x(i),z(i),rho_temp,vp_temp,vs_temp
+          if (ier /= 0) exit
+
           ix = INT((x(i)-OX)/DX) + 1
           iz = INT((z(i)-OZ)/DZ) + 1
           ix1 = ix+1
@@ -449,37 +561,55 @@
           b1 = z(i)-OZ-(iz-1)*DZ
           b1 = b1/DZ
 
-          ! interpolates vp
-          tmp1 = (1.d0-a1)*vp(ix,iz) + a1*vp(ix1,iz)
-          tmp2 = (1.d0-a1)*vp(ix,iz1) + a1*vp(ix1,iz1)
-          tmp1 = (1.d0-b1)*tmp1 + b1*tmp2
-          vp_new(i) = tmp1
+          ! note:
+          ! - Vp: we use slowness values for interpolation. this garantees better interpolation results for traveltimes.
+          ! - Vs: shear speeds might be zero in a coupled fluid-elastic model, so it is inverted directly.
+          ! - density: it will be inverted to have "lightness" or "buoyancy" for interpolation.
+          !            this is also done in a staggered-grid approach, see e.g.,
+          !            Virieux 1987, "P-SV wave propagation in heterogeneous media: Velocity-stress finite-difference method",
+          !            Geophysics, 51, p. 889 - 901.
 
-          ! interpolates vs
-          ! note: not sure why inverted vs values are used again here...
-          !       vp above uses slowness values for interpolations
-          tmp1 = (1.d0-a1)/vs(ix,iz) + a1/vs(ix1,iz)
-          tmp2 = (1.d0-a1)/vs(ix,iz1) + a1/vs(ix1,iz1)
-          tmp1 = (1.d0-b1)*tmp1 + b1*tmp2
-          vs_new(i) = 1.d0/tmp1
+          ! slowness
+          tmp1 = (1.d0-a1)*1.d0/vp(ix,iz) + a1*1.d0/vp(ix1,iz)
+          tmp2 = (1.d0-a1)*1.d0/vp(ix,iz1) + a1*1.d0/vp(ix1,iz1)
+          tmp3 = (1.d0-b1)*tmp1 + b1*tmp2
+          ! converts back to Vp
+          vp_new(i) = 1.d0/tmp3
 
-          ! interpolates rho
-          tmp1 = (1.d0-a1)*rho(ix,iz) + a1*rho(ix1,iz)
-          tmp2 = (1.d0-a1)*rho(ix,iz1) + a1*rho(ix1,iz1)
-          tmp1 = (1.d0-b1)*tmp1 + b1*tmp2
-          rho_new(i) = tmp1
+          ! Vs
+          tmp1 = (1.d0-a1)*vs(ix,iz) + a1*vs(ix1,iz)
+          tmp2 = (1.d0-a1)*vs(ix,iz1) + a1*vs(ix1,iz1)
+          tmp3 = (1.d0-b1)*tmp1 + b1*tmp2
+          vs_new(i) = tmp3
+
+          ! buoyancy
+          tmp1 = (1.d0-a1)*1.d0/rho(ix,iz) + a1*1.d0/rho(ix1,iz)
+          tmp2 = (1.d0-a1)*1.d0/rho(ix,iz1) + a1*1.d0/rho(ix1,iz1)
+          tmp3 = (1.d0-b1)*tmp1 + b1*tmp2
+          ! converts back to density
+          rho_new(i) = 1.d0/tmp3
+
+          ! statistics
+          if (rho_new(i) < rho_min) rho_min = rho_new(i)
+          if (rho_new(i) > rho_max) rho_max = rho_new(i)
+
+          if (vp_new(i) < vp_min) vp_min = vp_new(i)
+          if (vp_new(i) > vp_max) vp_max = vp_new(i)
+
+          if (vs_new(i) < vs_min) vs_min = vs_new(i)
+          if (vs_new(i) > vs_max) vs_max = vs_new(i)
+        enddo
+
+        ! writes out interpolated values
+        if (ier == 0) then
+          do i = 1,NGLLX*NGLLZ
+            write(16,'(I10,5e15.5e4)') iglob(i),x(i),z(i), rho_new(i), vp_new(i), vs_new(i)
+          enddo
         endif
       enddo
+    endif
 
-      ! writes out interpolated values
-      ! (converting from slowness to wave speed values again)
-      if (ier == 0) then
-        do i = 1,NGLLX*NGLLZ
-          write(16,'(I10,5e15.5e4)') iglob(i),x(i),z(i), 1.d0/rho_new(i), 1.d0/vp_new(i), vs_new(i)
-        enddo
-      endif
-    enddo
-
+    ! closes files
     close(15)
     close(16)
 
@@ -491,8 +621,16 @@
     write(system_command,*) 'mv -f ',trim(adjustl(output_file)),' ',trim(adjustl(input_file))
     write(*,*) trim(system_command)
     call system(trim(system_command))
-  enddo
+
+  enddo ! iproc
+
+  ! user output
+  print *
+  print *, 'interpolated output model:'
+  print *, '  Vp min/max  = ',sngl(vp_min),sngl(vp_max)
+  print *, '  Vs min/max  = ',sngl(vs_min),sngl(vs_max)
+  print *, '  rho min/max = ',sngl(rho_min),sngl(rho_max)
   print *
 
-  end subroutine interpolate_gll
+  end subroutine interpolate_slowness_gll
 

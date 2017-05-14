@@ -1,4 +1,4 @@
-running example: Thu May 11 15:24:40 AST 2017
+running example: Sun May 14 14:00:22 AST 2017
 
 setting up example...
 
@@ -8,14 +8,24 @@ compiling xinterpolate...
 
 running interpolation...
 
- using number of processes:            4
+ 
+ ***********************************************************
+ Model Interpolation
+ ***********************************************************
+ 
+ setting:
+   SEP model from directory : ./SEG_2D_SALT/
+   using number of processes:            4
+   interpolation type       : from closest point
+   interpolation points set :            1
+   using scaling from Vp    :  T
  
  reading SEP models...
-
+ 
  *******************************************************************************
  reading sep header file: 
  ./SEG_2D_SALT/vp.H
-
+ 
  sep file specified in the header file is: ./SEG_2D_SALT/./vp.bin
  NX,NY,NZ =          645           1         150
  OX,OY,OZ =    0.00000000       0.00000000       0.00000000    
@@ -23,32 +33,31 @@ running interpolation...
  esize =            4
  data_format = native_float
  *******************************************************************************
-
+ 
  *******************************************************************************
  reading sep file: 
  ./SEG_2D_SALT/./vp.bin
  done reading sucessfully
  *******************************************************************************
-
+ 
  
  Writing interface data to file DATA/interface_industry.dat
  
  
- Preparing Par_file
+ ************ Preparing Par_file ************ 
  
-  xmin      =   0.00000000
-  sed -i "s/^xmin .*/ xmin      =   0.00000000               /" ./DATA/Par_file
-  xmax      =   51520.0000
-  sed -i "s/^xmax .*/ xmax      =   51520.0000               /" ./DATA/Par_file
-  nx       =         644
-  sed -i "s/^nx .*/ nx       =         644                 /" ./DATA/Par_file
-  1         644 1         149 1
-  sed -i "/nbregions   /a 1         644 1         149 1          " ./DATA/Par_file
+  sed -i "s/^xmin .*/xmin                            =   0.00000000/" ./DATA/Par_file
+  sed -i "s/^xmax .*/xmax                            =   51520.0000/" ./DATA/Par_file
+  sed -i "s/^nx .*/nx                              =         644/" ./DATA/Par_file
+  sed -i "/nbregions   /a1         644 1         149 1" ./DATA/Par_file
+ 
+ 
+ ************ Setting up first simulation ************ 
  
  call xmeshfem2d
  call xspecfem2d
  
- Setting up new simulation
+ ************ Setting up new simulation ************ 
  
  call xmeshfem2d
 
@@ -177,24 +186,43 @@ running interpolation...
  This will be a parallel simulation on            4  processor cores
 
  
+ ************ Interpolating model ************
+ 
+ input model:
+   Vp min/max  =    5000.00000       14700.0000    
+   Vs min/max  =    2886.83594       8487.29785    
+   rho min/max =    1000.00000       1000.00000    
+ 
  Interpolating GLL model values
  
  iproc =            1
+ number of points =       588500
  replacing model file
   mv -f DATA/proc000000_model_velocity.dat_input DATA/proc000000_model_velocity.dat_input.org
   mv -f DATA/proc000000_model_velocity.dat_tmp DATA/proc000000_model_velocity.dat_input
  iproc =            2
+ number of points =       588275
  replacing model file
   mv -f DATA/proc000001_model_velocity.dat_input DATA/proc000001_model_velocity.dat_input.org
   mv -f DATA/proc000001_model_velocity.dat_tmp DATA/proc000001_model_velocity.dat_input
  iproc =            3
+ number of points =       610650
  replacing model file
   mv -f DATA/proc000002_model_velocity.dat_input DATA/proc000002_model_velocity.dat_input.org
   mv -f DATA/proc000002_model_velocity.dat_tmp DATA/proc000002_model_velocity.dat_input
  iproc =            4
+ number of points =       611475
  replacing model file
   mv -f DATA/proc000003_model_velocity.dat_input DATA/proc000003_model_velocity.dat_input.org
   mv -f DATA/proc000003_model_velocity.dat_tmp DATA/proc000003_model_velocity.dat_input
+ 
+ interpolated output model:
+   Vp min/max  =    5000.00000       14700.0000    
+   Vs min/max  =    2886.83594       8487.29785    
+   rho min/max =    1000.00000       1000.00000    
+ 
+ 
+ Interpolation done
  
  call xspecfem2d
 
@@ -225,7 +253,7 @@ running interpolation...
  SALT2D
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 11 - 05 - 2017                                 T i m e  : 15:24:58
+ D a t e : 14 - 05 - 2017                                 T i m e  : 14:00:43
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
@@ -688,15 +716,15 @@ Time step number       5   t =    0.0020 s out of    5000
  ******************************************************************
  We have done    8.00160021E-02 % of the total
  Max norm of vector field in solid (elastic) =    3.20568438E-06
- Elapsed time in seconds =   0.21099996566772461     
+ Elapsed time in seconds =   0.15500020980834961     
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    4.2199993133544923E-002
+ Mean elapsed time per time step in seconds =    3.1000041961669923E-002
  Time steps remaining =         4995
- Estimated remaining time in seconds =    210.78896570205688     
- Estimated remaining time in hh:mm:ss =      0 h 03 m 30 s
- Estimated total run time in seconds =    210.99996566772461     
- Estimated total run time in hh:mm:ss =      0 h 03 m 30 s
- The run will finish approximately on: Thu May 11, 2017 15:29
+ Estimated remaining time in seconds =    154.84520959854126     
+ Estimated remaining time in hh:mm:ss =      0 h 02 m 34 s
+ Estimated total run time in seconds =    155.00020980834961     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 35 s
+ The run will finish approximately on: Sun May 14, 2017 14:03
 
 
  Creating color image of size         1250  x          304  for time step            5
@@ -706,69 +734,69 @@ Time step number       5   t =    0.0020 s out of    5000
 
  Creating color image of size         1250  x          304  for time step          200
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    4.4487066566944122E-002
+ Color image maximum amplitude =    4.4487059116363525E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step          400
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    3.7031047046184540E-002
+ Color image maximum amplitude =    3.7031028419733047E-002
  Color image created
 
  ******************************************************************
 Time step number     500   t =    0.2495 s out of    5000
  ******************************************************************
  We have done    9.98199654     % of the total
- Max norm of vector field in solid (elastic) =    3.20033431E-02
- Elapsed time in seconds =    26.575999975204468     
- Elapsed time in hh:mm:ss =      0 h 00 m 26 s
- Mean elapsed time per time step in seconds =    5.3151999950408937E-002
+ Max norm of vector field in solid (elastic) =    3.20032686E-02
+ Elapsed time in seconds =    16.567000150680542     
+ Elapsed time in hh:mm:ss =      0 h 00 m 16 s
+ Mean elapsed time per time step in seconds =    3.3134000301361086E-002
  Time steps remaining =         4500
- Estimated remaining time in seconds =    239.18399977684021     
- Estimated remaining time in hh:mm:ss =      0 h 03 m 59 s
- Estimated total run time in seconds =    265.75999975204468     
- Estimated total run time in hh:mm:ss =      0 h 04 m 25 s
- The run will finish approximately on: Thu May 11, 2017 15:29
+ Estimated remaining time in seconds =    149.10300135612488     
+ Estimated remaining time in hh:mm:ss =      0 h 02 m 29 s
+ Estimated total run time in seconds =    165.67000150680542     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 45 s
+ The run will finish approximately on: Sun May 14, 2017 14:04
 
 
  Creating color image of size         1250  x          304  for time step          600
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    2.7692321687936783E-002
+ Color image maximum amplitude =    2.7692275121808052E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step          800
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    2.2246405482292175E-002
+ Color image maximum amplitude =    2.2246416658163071E-002
  Color image created
 
  ******************************************************************
 Time step number    1000   t =    0.4995 s out of    5000
  ******************************************************************
  We have done    19.9839973     % of the total
- Max norm of vector field in solid (elastic) =    1.97972823E-02
- Elapsed time in seconds =    53.631000041961670     
- Elapsed time in hh:mm:ss =      0 h 00 m 53 s
- Mean elapsed time per time step in seconds =    5.3631000041961668E-002
+ Max norm of vector field in solid (elastic) =    1.97972730E-02
+ Elapsed time in seconds =    32.837000131607056     
+ Elapsed time in hh:mm:ss =      0 h 00 m 32 s
+ Mean elapsed time per time step in seconds =    3.2837000131607057E-002
  Time steps remaining =         4000
- Estimated remaining time in seconds =    214.52400016784668     
- Estimated remaining time in hh:mm:ss =      0 h 03 m 34 s
- Estimated total run time in seconds =    268.15500020980835     
- Estimated total run time in hh:mm:ss =      0 h 04 m 28 s
- The run will finish approximately on: Thu May 11, 2017 15:30
+ Estimated remaining time in seconds =    131.34800052642822     
+ Estimated remaining time in hh:mm:ss =      0 h 02 m 11 s
+ Estimated total run time in seconds =    164.18500065803528     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 44 s
+ The run will finish approximately on: Sun May 14, 2017 14:04
 
 
  Creating color image of size         1250  x          304  for time step         1000
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.9043553620576859E-002
+ Color image maximum amplitude =    1.9043590873479843E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step         1200
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.8018297851085663E-002
+ Color image maximum amplitude =    1.8018288537859917E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step         1400
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.7176177352666855E-002
+ Color image maximum amplitude =    1.7176184803247452E-002
  Color image created
 
  ******************************************************************
@@ -776,216 +804,216 @@ Time step number    1500   t =    0.7495 s out of    5000
  ******************************************************************
  We have done    29.9859962     % of the total
  Max norm of vector field in solid (elastic) =    1.80279072E-02
- Elapsed time in seconds =    77.656000137329102     
- Elapsed time in hh:mm:ss =      0 h 01 m 17 s
- Mean elapsed time per time step in seconds =    5.1770666758219404E-002
+ Elapsed time in seconds =    49.491000175476074     
+ Elapsed time in hh:mm:ss =      0 h 00 m 49 s
+ Mean elapsed time per time step in seconds =    3.2994000116984050E-002
  Time steps remaining =         3500
- Estimated remaining time in seconds =    181.19733365376791     
- Estimated remaining time in hh:mm:ss =      0 h 03 m 01 s
- Estimated total run time in seconds =    258.85333379109704     
- Estimated total run time in hh:mm:ss =      0 h 04 m 18 s
- The run will finish approximately on: Thu May 11, 2017 15:29
+ Estimated remaining time in seconds =    115.47900040944417     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 55 s
+ Estimated total run time in seconds =    164.97000058492023     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 44 s
+ The run will finish approximately on: Sun May 14, 2017 14:04
 
 
  Creating color image of size         1250  x          304  for time step         1600
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.5707768499851227E-002
+ Color image maximum amplitude =    1.5707794576883316E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step         1800
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.4458240941166878E-002
+ Color image maximum amplitude =    1.4458260498940945E-002
  Color image created
 
  ******************************************************************
 Time step number    2000   t =    0.9995 s out of    5000
  ******************************************************************
  We have done    39.9879990     % of the total
- Max norm of vector field in solid (elastic) =    1.45898685E-02
- Elapsed time in seconds =    100.73300004005432     
- Elapsed time in hh:mm:ss =      0 h 01 m 40 s
- Mean elapsed time per time step in seconds =    5.0366500020027162E-002
+ Max norm of vector field in solid (elastic) =    1.45898908E-02
+ Elapsed time in seconds =    66.216000080108643     
+ Elapsed time in hh:mm:ss =      0 h 01 m 06 s
+ Mean elapsed time per time step in seconds =    3.3108000040054320E-002
  Time steps remaining =         3000
- Estimated remaining time in seconds =    151.09950006008148     
- Estimated remaining time in hh:mm:ss =      0 h 02 m 31 s
- Estimated total run time in seconds =    251.83250010013580     
- Estimated total run time in hh:mm:ss =      0 h 04 m 11 s
- The run will finish approximately on: Thu May 11, 2017 15:29
+ Estimated remaining time in seconds =    99.324000120162964     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 39 s
+ Estimated total run time in seconds =    165.54000020027161     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 45 s
+ The run will finish approximately on: Sun May 14, 2017 14:04
 
 
  Creating color image of size         1250  x          304  for time step         2000
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.3870489783585072E-002
+ Color image maximum amplitude =    1.3870493508875370E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step         2200
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.5847977250814438E-002
+ Color image maximum amplitude =    1.5847964212298393E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step         2400
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.8429255113005638E-002
+ Color image maximum amplitude =    1.8429307267069817E-002
  Color image created
 
  ******************************************************************
 Time step number    2500   t =    1.2495 s out of    5000
  ******************************************************************
  We have done    49.9899979     % of the total
- Max norm of vector field in solid (elastic) =    1.75957941E-02
- Elapsed time in seconds =    124.26500010490417     
- Elapsed time in hh:mm:ss =      0 h 02 m 04 s
- Mean elapsed time per time step in seconds =    4.9706000041961670E-002
+ Max norm of vector field in solid (elastic) =    1.75958406E-02
+ Elapsed time in seconds =    83.132000207901001     
+ Elapsed time in hh:mm:ss =      0 h 01 m 23 s
+ Mean elapsed time per time step in seconds =    3.3252800083160401E-002
  Time steps remaining =         2500
- Estimated remaining time in seconds =    124.26500010490417     
- Estimated remaining time in hh:mm:ss =      0 h 02 m 04 s
- Estimated total run time in seconds =    248.53000020980835     
- Estimated total run time in hh:mm:ss =      0 h 04 m 08 s
- The run will finish approximately on: Thu May 11, 2017 15:29
+ Estimated remaining time in seconds =    83.132000207901001     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 23 s
+ Estimated total run time in seconds =    166.26400041580200     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 46 s
+ The run will finish approximately on: Sun May 14, 2017 14:04
 
 
  Creating color image of size         1250  x          304  for time step         2600
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.6547584906220436E-002
+ Color image maximum amplitude =    1.6547610983252525E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step         2800
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.6724726185202599E-002
+ Color image maximum amplitude =    1.6724739223718643E-002
  Color image created
 
  ******************************************************************
 Time step number    3000   t =    1.4995 s out of    5000
  ******************************************************************
  We have done    59.9919968     % of the total
- Max norm of vector field in solid (elastic) =    1.37829725E-02
- Elapsed time in seconds =    144.58899998664856     
- Elapsed time in hh:mm:ss =      0 h 02 m 24 s
- Mean elapsed time per time step in seconds =    4.8196333328882852E-002
+ Max norm of vector field in solid (elastic) =    1.37829753E-02
+ Elapsed time in seconds =    100.02300000190735     
+ Elapsed time in hh:mm:ss =      0 h 01 m 40 s
+ Mean elapsed time per time step in seconds =    3.3341000000635786E-002
  Time steps remaining =         2000
- Estimated remaining time in seconds =    96.392666657765702     
- Estimated remaining time in hh:mm:ss =      0 h 01 m 36 s
- Estimated total run time in seconds =    240.98166664441425     
- Estimated total run time in hh:mm:ss =      0 h 04 m 00 s
- The run will finish approximately on: Thu May 11, 2017 15:29
+ Estimated remaining time in seconds =    66.682000001271575     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 06 s
+ Estimated total run time in seconds =    166.70500000317892     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 46 s
+ The run will finish approximately on: Sun May 14, 2017 14:04
 
 
  Creating color image of size         1250  x          304  for time step         3000
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.3323325663805008E-002
+ Color image maximum amplitude =    1.3323304243385792E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step         3200
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.3634166680276394E-002
+ Color image maximum amplitude =    1.3634134083986282E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step         3400
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.4019579626619816E-002
+ Color image maximum amplitude =    1.4019553549587727E-002
  Color image created
 
  ******************************************************************
 Time step number    3500   t =    1.7495 s out of    5000
  ******************************************************************
  We have done    69.9939957     % of the total
- Max norm of vector field in solid (elastic) =    1.63894184E-02
- Elapsed time in seconds =    162.08500003814697     
- Elapsed time in hh:mm:ss =      0 h 02 m 42 s
- Mean elapsed time per time step in seconds =    4.6310000010899133E-002
+ Max norm of vector field in solid (elastic) =    1.63894333E-02
+ Elapsed time in seconds =    117.05000019073486     
+ Elapsed time in hh:mm:ss =      0 h 01 m 57 s
+ Mean elapsed time per time step in seconds =    3.3442857197352821E-002
  Time steps remaining =         1500
- Estimated remaining time in seconds =    69.465000016348696     
- Estimated remaining time in hh:mm:ss =      0 h 01 m 09 s
- Estimated total run time in seconds =    231.55000005449568     
- Estimated total run time in hh:mm:ss =      0 h 03 m 51 s
- The run will finish approximately on: Thu May 11, 2017 15:29
+ Estimated remaining time in seconds =    50.164285796029233     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 50 s
+ Estimated total run time in seconds =    167.21428598676408     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 47 s
+ The run will finish approximately on: Sun May 14, 2017 14:04
 
 
  Creating color image of size         1250  x          304  for time step         3600
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.4927485026419163E-002
+ Color image maximum amplitude =    1.4927499927580357E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step         3800
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.5443949960172176E-002
+ Color image maximum amplitude =    1.5443979762494564E-002
  Color image created
 
  ******************************************************************
 Time step number    4000   t =    1.9995 s out of    5000
  ******************************************************************
  We have done    79.9960022     % of the total
- Max norm of vector field in solid (elastic) =    1.67987309E-02
- Elapsed time in seconds =    180.00200009346008     
- Elapsed time in hh:mm:ss =      0 h 03 m 00 s
- Mean elapsed time per time step in seconds =    4.5000500023365024E-002
+ Max norm of vector field in solid (elastic) =    1.67986993E-02
+ Elapsed time in seconds =    133.97500014305115     
+ Elapsed time in hh:mm:ss =      0 h 02 m 13 s
+ Mean elapsed time per time step in seconds =    3.3493750035762784E-002
  Time steps remaining =         1000
- Estimated remaining time in seconds =    45.000500023365021     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 45 s
- Estimated total run time in seconds =    225.00250011682510     
- Estimated total run time in hh:mm:ss =      0 h 03 m 45 s
- The run will finish approximately on: Thu May 11, 2017 15:29
+ Estimated remaining time in seconds =    33.493750035762787     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 33 s
+ Estimated total run time in seconds =    167.46875017881393     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 47 s
+ The run will finish approximately on: Sun May 14, 2017 14:04
 
 
  Creating color image of size         1250  x          304  for time step         4000
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.6142573207616806E-002
+ Color image maximum amplitude =    1.6142534092068672E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step         4200
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.6329426318407059E-002
+ Color image maximum amplitude =    1.6329379752278328E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step         4400
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.6050359234213829E-002
+ Color image maximum amplitude =    1.6050338745117188E-002
  Color image created
 
  ******************************************************************
 Time step number    4500   t =    2.2495 s out of    5000
  ******************************************************************
  We have done    89.9980011     % of the total
- Max norm of vector field in solid (elastic) =    1.62443034E-02
- Elapsed time in seconds =    197.93600010871887     
- Elapsed time in hh:mm:ss =      0 h 03 m 17 s
- Mean elapsed time per time step in seconds =    4.3985777801937527E-002
+ Max norm of vector field in solid (elastic) =    1.62442904E-02
+ Elapsed time in seconds =    150.95900011062622     
+ Elapsed time in hh:mm:ss =      0 h 02 m 30 s
+ Mean elapsed time per time step in seconds =    3.3546444469028047E-002
  Time steps remaining =          500
- Estimated remaining time in seconds =    21.992888900968765     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 21 s
- Estimated total run time in seconds =    219.92888900968762     
- Estimated total run time in hh:mm:ss =      0 h 03 m 39 s
- The run will finish approximately on: Thu May 11, 2017 15:29
+ Estimated remaining time in seconds =    16.773222234514023     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 16 s
+ Estimated total run time in seconds =    167.73222234514026     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 47 s
+ The run will finish approximately on: Sun May 14, 2017 14:04
 
 
  Creating color image of size         1250  x          304  for time step         4600
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.6367852687835693E-002
+ Color image maximum amplitude =    1.6367832198739052E-002
  Color image created
 
  Creating color image of size         1250  x          304  for time step         4800
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.5249003656208515E-002
+ Color image maximum amplitude =    1.5248976647853851E-002
  Color image created
 
  ******************************************************************
 Time step number    5000   t =    2.4995 s out of    5000
  ******************************************************************
  We have done    100.000000     % of the total
- Max norm of vector field in solid (elastic) =    1.74843259E-02
- Elapsed time in seconds =    215.82100009918213     
- Elapsed time in hh:mm:ss =      0 h 03 m 35 s
- Mean elapsed time per time step in seconds =    4.3164200019836424E-002
+ Max norm of vector field in solid (elastic) =    1.74842905E-02
+ Elapsed time in seconds =    167.94200015068054     
+ Elapsed time in hh:mm:ss =      0 h 02 m 47 s
+ Mean elapsed time per time step in seconds =    3.3588400030136106E-002
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    215.82100009918213     
- Estimated total run time in hh:mm:ss =      0 h 03 m 35 s
+ Estimated total run time in seconds =    167.94200015068054     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 47 s
 
 
  Creating color image of size         1250  x          304  for time step         5000
  drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.4066858217120171E-002
+ Color image maximum amplitude =    1.4066866599023342E-002
  Color image created
 
 
@@ -997,12 +1025,11 @@ Time step number    5000   t =    2.4995 s out of    5000
  SALT2D
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 11 - 05 - 2017                                 T i m e  : 15:28:38
+ D a t e : 14 - 05 - 2017                                 T i m e  : 14:03:34
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 see results in directory: OUTPUT_FILES/
 
 done
-Thu May 11 15:28:38 AST 2017
-
+Sun May 14 14:03:34 AST 2017
