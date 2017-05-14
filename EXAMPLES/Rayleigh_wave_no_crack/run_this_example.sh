@@ -17,19 +17,8 @@ echo "   setting up example..."
 echo
 
 mkdir -p OUTPUT_FILES
-mkdir -p DATA
-
-# sets up local DATA/ directory
-cd DATA/
-cp ../Par_file_Rayleigh_2D Par_file
-cp ../interfaces_Rayleigh_flat.dat .
-cp ../SOURCE_Rayleigh_2D SOURCE
-cd ../
-
 # cleans output files
 rm -rf OUTPUT_FILES/*
-
-cd $currentdir
 
 # links executables
 rm -f xmeshfem2D xspecfem2D
@@ -48,6 +37,8 @@ echo
 echo "  running mesher..."
 echo
 ./xmeshfem2D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # runs simulation
 if [ "$NPROC" -eq 1 ]; then # This is a serial simulation
@@ -61,6 +52,8 @@ else # This is a MPI simulation
   echo
   mpirun -np $NPROC ./xspecfem2D
 fi
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # stores output
 cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES

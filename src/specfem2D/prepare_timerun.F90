@@ -1023,14 +1023,19 @@
 
   ! Calculation of the initial field for a plane wave
   if (any_elastic) then
+
+    ! calculates initial plane wave coefficients
     call prepare_initial_field(cploc,csloc)
 
+    ! special case for Rayleigh waves, SV waves above critical angle
     if (over_critical_angle) then
 
+      ! allocates boundaries
       allocate(left_bound(nelemabs*NGLLX))
       allocate(right_bound(nelemabs*NGLLX))
       allocate(bot_bound(nelemabs*NGLLZ))
 
+      ! sets up boundary points
       call prepare_initial_field_paco()
 
       allocate(v0x_left(count_left,NSTEP))
@@ -1049,19 +1054,24 @@
       allocate(t0z_bot(count_bottom,NSTEP))
 
       ! call Paco's routine to compute in frequency and convert to time by Fourier transform
-      call paco_beyond_critical(anglesource(1), &
-                                f0_source(1),QKappa_attenuation(1),source_type(1),left_bound(1:count_left), &
-                                right_bound(1:count_right),bot_bound(1:count_bottom), &
-                                count_left,count_right,count_bottom,x_source(1),cploc,csloc)
+      call paco_beyond_critical(anglesource(1),f0_source(1), &
+                                QKappa_attenuation(1),source_type(1), &
+                                left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom), &
+                                count_left,count_right,count_bottom, &
+                                x_source(1),cploc,csloc)
 
+      ! frees memory
       deallocate(left_bound)
       deallocate(right_bound)
       deallocate(bot_bound)
 
+      ! user output
       if (myrank == 0) then
+        write(IMAIN,*)
         write(IMAIN,*)  '***********'
         write(IMAIN,*)  'done calculating the initial wave field'
         write(IMAIN,*)  '***********'
+        write(IMAIN,*)
         call flush_IMAIN()
       endif
 

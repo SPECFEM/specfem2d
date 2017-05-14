@@ -22,51 +22,57 @@ env:
     # for test cases, we use
     #   TEST    - flags used for configuration
     #   TESTCOV - determines whether or not (0/1) code coverage flags are used
+    #   CUDA    - flag for compilation with CUDA
+    #   CUDA_VERSION - specifies CUDA toolkit version
 
-    # run default test with make tests
+    # default test with make tests
     - TEST="" TESTCOV=0 TESTMAKE=0 CUDA=false
 
-    # run vectorization & mpi, using code coverage flags
+    # vectorization & mpi, using code coverage flags
     - TEST="--enable-vectorization --with-mpi" TESTCOV=1 TESTMAKE=1 CUDA=false
 
-    # run compilation w/ CUDA
+    # compilation w/ CUDA
     - TEST="--with-cuda=cuda5 --without-mpi" TESTCOV=0 TESTMAKE=1 CUDA=true CUDA_VERSION=6.5-14
 
-    # run compilation w/ CUDA and MPI
+    # compilation w/ CUDA and MPI
     - TEST="--with-cuda=cuda5 --with-mpi" TESTCOV=0 TESTMAKE=1 CUDA=true CUDA_VERSION=6.5-14
 
-    # run debug
+    # debug flags
     - TEST="--enable-debug" TESTCOV=0 TESTMAKE=1 CUDA=false
 
-    # run debug & double precision
+    # debug & double precision
     - TEST="--enable-double-precision --enable-debug" TESTCOV=0 TESTMAKE=1 CUDA=false
 
-    # run vectorization
+    # vectorization
     - TEST="--enable-vectorization --without-mpi" TESTCOV=0 TESTMAKE=1 CUDA=false
 
-    # run example 2 (PML)
+    # example w/ PML
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=2 CUDA=false
 
-    # run example 3 (MPI and Stacey)
+    # example w/ MPI and Stacey
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=3 CUDA=false
 
-    # run example 4 (kernel)
+    # example w/ kernel calculation
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=4 CUDA=false
 
-    # run example 5 (poroelastic/acoustic)
+    # example w/ poroelastic/acoustic media
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=5 CUDA=false
 
-    # run example 6 (noise)
+    # example w/ noise
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=6 CUDA=false
 
-    # run example 7 (axisymmetric)
+    # example w/ axisymmetric & attenuation
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=7 CUDA=false
 
-    # run example 8 (PML and MPI)
+    # example w/ PML and MPI
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=8 CUDA=false
 
-    # run example 9 (MPI, SEP format)
+    # example w/ MPI and SEP format
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=9 CUDA=false
+
+    # example w/ initialfield Rayleigh wave
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=10 CUDA=false
+
 
 
 before_install:
@@ -244,6 +250,7 @@ script:
     7) dir=EXAMPLES/axisymmetric_case_AXISYM_option/ ;;
     8) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
     9) dir=EXAMPLES/Industrial_Format_SEP/ ;;
+    10) dir=EXAMPLES/Rayleigh_wave_no_crack/ ;;
     *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
     esac
     # runs test
