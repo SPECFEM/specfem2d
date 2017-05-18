@@ -333,6 +333,7 @@
       endif
     endif
 
+!! DK DK QUENTIN visco begin
     if (ATTENUATION_VISCOACOUSTIC) then
       do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -342,6 +343,7 @@
         enddo
       enddo
     endif
+!! DK DK QUENTIN visco end
 
   enddo ! end of loop over all spectral elements
 

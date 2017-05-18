@@ -1,0 +1,40 @@
+
+From: Dimitri Komatitsch
+Date: 05/18/2017 01:53 PM
+To: Rene Matzen
+CC: Vadim Monteiller
+
+Hi Rene,
+
+I have talked to Vadim and we now remember how to reproduce the salt dome kernel example that I sent you in PDF:
+
+1/ let us know if you have CUBIT/Trelis version 15 or above (otherwise we can send it to you)
+
+2/ get the attached file and also https://www.lma.cnrs-mrs.fr/Filez/ak7 and open one of them in CUBIT; this will create the salt dome mesh
+
+3/ Vadim has also kept the final SPECFEM2D mesh obtained (i.e. the output of CUBIT converted to SPECFEM2D format using cubit2specfem); he is going to send it to us.
+
+4/ Regarding smoothing of the initial velocity model (so that the inversion process is not trapped in local minima), Vadim used Matlab (functions "smooth" and "imagesc"). He says he has the script somewhere and can probably find it if needed.
+
+5/ Vadim then has a batch script to launch SPECFEM2D to compute the gradient image that I sent you using 19 seismic sources; he is going to send it to us.
+
+Thanks,
+Best wishes,
+
+Dimitri.
+
+------------------------------
+
+On 05/16/2017 10:44 AM, Vadim Monteiller wrote:
+
+Salut Dimitri,
+
+Je n'ai garde que le fichier que tu m'a envoye. J'ai cubit 15.1b et ca marche tres bien chez moi. J'ai pas d'autres scripts pour mailler le modele.
+
+Mais j'ai aussi garde le mesh au format specfem2d et le script de lancement du calcul pour 19 sources.
+
+Pour le lissage et l'affichage c'est du matlab. Juste les fonctions smooth et imagesc, la j'ai pas retrouve de script pour ca. Il faut que je cherche plus.
+
+a+
+Vadim.
+
