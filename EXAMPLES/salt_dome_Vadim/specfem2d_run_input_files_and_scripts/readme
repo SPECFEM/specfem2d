@@ -1,0 +1,4 @@
+
+compile the tool :  
+ifort compute_adjoint_source.f90 -o compute_adjoint_source.x 
+run_adj.sh to lauch the kenel computation

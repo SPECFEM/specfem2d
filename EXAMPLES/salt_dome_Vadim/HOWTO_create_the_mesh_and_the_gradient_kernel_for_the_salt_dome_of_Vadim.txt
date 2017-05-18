@@ -6,17 +6,21 @@ CC: Vadim Monteiller
 
 Hi Rene,
 
-I have talked to Vadim and we now remember how to reproduce the salt dome kernel example that I sent you in PDF:
+Here is how to reproduce the salt dome kernel example:
 
-1/ let us know if you have CUBIT/Trelis version 15 or above (otherwise we can send it to you)
+1/ Uncompress the two compressed files by typing this:
 
-2/ get the attached file and also https://www.lma.cnrs-mrs.fr/Filez/ak7 and open one of them in CUBIT; this will create the salt dome mesh
+  bunzip2 MATLAB_scripts/model_init_smooth_200m.bz2 specfem2d_run_input_files_and_scripts/tomo_initial.txt.bz2
 
-3/ Vadim has also kept the final SPECFEM2D mesh obtained (i.e. the output of CUBIT converted to SPECFEM2D format using cubit2specfem); he is going to send it to us.
+2/ make sure that you have CUBIT/Trelis version 15 or above (or else switch to Step 4 below).
 
-4/ Regarding smoothing of the initial velocity model (so that the inversion process is not trapped in local minima), Vadim used Matlab (functions "smooth" and "imagesc"). He says he has the script somewhere and can probably find it if needed.
+3/ get the files CUBIT_instructions_Vadim_to_build_salt_dome_example_mesh.* in this directory and open one of them in CUBIT; this will create the salt dome mesh.
 
-5/ Vadim then has a batch script to launch SPECFEM2D to compute the gradient image that I sent you using 19 seismic sources; he is going to send it to us.
+4/ You can also find the final SPECFEM2D mesh obtained (i.e. the output of CUBIT converted to SPECFEM2D format using cubit2specfem) in directory "specfem2d_run_input_files_and_scripts".
+
+5/ Regarding smoothing of the initial velocity model (so that the inversion process is not trapped in local minima), Vadim used Matlab (functions "smooth" and "imagesc"). The scripts are in directory "MATLAB_scripts".
+
+6/ There is a batch script to launch SPECFEM2D to compute the gradient image that I sent you using 19 seismic sources; the script is in directory "specfem2d_run_input_files_and_scripts".
 
 Thanks,
 Best wishes,
@@ -33,7 +37,7 @@ Je n'ai garde que le fichier que tu m'a envoye. J'ai cubit 15.1b et ca marche tr
 
 Mais j'ai aussi garde le mesh au format specfem2d et le script de lancement du calcul pour 19 sources.
 
-Pour le lissage et l'affichage c'est du matlab. Juste les fonctions smooth et imagesc, la j'ai pas retrouve de script pour ca. Il faut que je cherche plus.
+Pour le lissage et l'affichage c'est du matlab. Juste les fonctions "smooth" et "imagesc", la j'ai pas retrouve de script pour ca. Il faut que je cherche plus.
 
 a+
 Vadim.
