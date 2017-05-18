@@ -12,9 +12,9 @@
     do i = 1, 3
        call getarg(i, arg(i))
        write (*,*) arg(i)
-    end do
+    enddo
     dir_data=arg(1)
-    dir_synth=arg(2) 
+    dir_synth=arg(2)
     dir_adj=arg(3)
 
 
@@ -34,22 +34,22 @@
        nt=0
        do
           read(11,*,end=97) t,z
-          nt = nt + 1 
-       end do
+          nt = nt + 1
+       enddo
        97 close(11)
-    
+
        allocate(time(nt), pressure_synth(nt), pressure_data(nt), adjoint_source(nt))
        open(11,file=trim(file_data))
-       do ii=1,nt 
+       do ii=1,nt
           read(11,*) t,z
           read(12,*) t,x
           time(i)=t
           pressure_synth(i)=z
           pressure_data(i)=x
           !! need to compute 2nd time derivative of pressure residual
-          
+
           !write(13,*)       t,z-x
-       end do
+       enddo
        98 continue
        close(11)
        close(12)
@@ -59,12 +59,12 @@
        write(13,*) time(1),0.
        do it=2,nt-1
           write(13,*) time(it), adjoint_source(it-1) + adjoint_source(it+1) - 2.*adjoint_source(it) / dt_square
-       end do
+       enddo
        write(13,*) time(nt),0.
        close(13)
        deallocate(time, adjoint_source, pressure_synth, pressure_data)
-    end do
+    enddo
     99 close(10)
-    
+
 
   end program adjoit_source

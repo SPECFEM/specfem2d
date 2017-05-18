@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 #OAR -l nodes=4,walltime=20:00:00
 #OAR -n test_48_cores
 
@@ -6,7 +6,7 @@ module load intel/13.0
 module load openmpi/intel/1.6.3
 module list
 ulimit -s unlimited
-echo ${OAR_NODEFILE} 
+echo ${OAR_NODEFILE}
 
 SEM=/home/vmonteil/progs/specfem2d/bin/
 
@@ -15,7 +15,7 @@ MPIRUN=mpirun
 OPTION_MPI=" -np 48  -machinefile "${OAR_NODEFILE}" -bysocket -bind-to-core"
 
 
-declare -i i n 
+declare -i i n
 
 i=1
 n=19
