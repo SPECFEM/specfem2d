@@ -36,7 +36,7 @@
   use constants, only: &
     NDIM,IMAIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM,NB_POINTS_TO_ADD_TO_NPGEO,FAST_NUMBERING
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     myrank,NPROC,nspec,kmato,knods,coorg,ngnod,npgeo
 
   implicit none
