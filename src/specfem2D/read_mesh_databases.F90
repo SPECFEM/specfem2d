@@ -275,18 +275,10 @@
   use mpi
 #endif
 
-  use constants, only: IIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM,NB_POINTS_TO_ADD_TO_NPGEO
+  use constants, only: IIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM
   use specfem_par
 
   implicit none
-
-  ! local parameters
-  ! for small crack case
-  integer :: npgeo_ori
-
-  ! add a small crack (discontinuity) in the medium manually
-  npgeo_ori = npgeo
-  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
 
   ! continues reading database files
   ! note: we opened the database file in read_mesh_for_init() and will continue reading from its current position
@@ -309,7 +301,7 @@
   call read_mesh_databases_mato()
 
   ! add a small crack (discontinuity) in the medium manually
-  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) call add_manual_crack(npgeo_ori)
+  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) call add_manual_crack()
 
   ! determines if each spectral element is elastic, poroelastic, or acoustic
   call get_simulation_domains()
@@ -467,7 +459,11 @@
     read(IIN) ipoin,coorgread(1),coorgread(2)
 
     ! checks index
-    if (ipoin < 1 .or. ipoin > npgeo) call exit_MPI(myrank,'Wrong control point number')
+    if (ipoin < 1 .or. ipoin > npgeo) then
+      print *, 'Error reading coordinates: invalid point number',ipoin,coorgread(1),coorgread(2), &
+               'at position',ip,'out of',npgeo
+      call exit_MPI(myrank,'Wrong control point number')
+    endif
 
     ! saves coordinate array
     coorg(:,ipoin) = coorgread(:)

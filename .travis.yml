@@ -25,11 +25,11 @@ env:
     #   CUDA    - flag for compilation with CUDA
     #   CUDA_VERSION - specifies CUDA toolkit version
 
+    # code coverage: vectorization & mpi, using code coverage flags
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=1 TESTMAKE=1 CUDA=false
+
     # default test with make tests
     - TEST="" TESTCOV=0 TESTMAKE=0 CUDA=false
-
-    # vectorization & mpi, using code coverage flags
-    - TEST="--enable-vectorization --with-mpi" TESTCOV=1 TESTMAKE=1 CUDA=false
 
     # compilation w/ CUDA
     - TEST="--with-cuda=cuda5 --without-mpi" TESTCOV=0 TESTMAKE=1 CUDA=true CUDA_VERSION=6.5-14
@@ -72,6 +72,9 @@ env:
 
     # example w/ initialfield Rayleigh wave
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=10 CUDA=false
+
+    # example w/ initialfield Rayleigh wave and manual crack
+    - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=11 CUDA=false
 
 
 
@@ -230,6 +233,13 @@ script:
       fi
     fi
 
+  # specific example setup
+  - |
+    if [ "$TESTMAKE" == "11" ]; then
+      sed -i "s:FAST_NUMBERING .*:FAST_NUMBERING = .false.:" setup/constants.h
+      sed -i "s:ADD_A_SMALL_CRACK_IN_THE_MEDIUM .*:ADD_A_SMALL_CRACK_IN_THE_MEDIUM = .true.:" setup/constants.h
+    fi
+
   # compilation
   - make clean; make -j2 all
 
@@ -251,6 +261,7 @@ script:
     8) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
     9) dir=EXAMPLES/Industrial_Format_SEP/ ;;
     10) dir=EXAMPLES/Rayleigh_wave_no_crack/ ;;
+    11) dir=EXAMPLES/Rayleigh_wave_with_crack/ ;;
     *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
     esac
     # runs test
@@ -262,7 +273,11 @@ script:
       # runs default tests
       make tests
     else
-      # limit time steps for testing
+      # limit time steps for testing in coverage run
+      if [ "$TESTCOV" == "1" ]; then
+        sed -i "s:^NSTEP .*:NSTEP    = 400:" DATA/Par_file
+      fi
+      # specific example settings needed for testing
       if [ "$TESTMAKE" == "5" ]; then
         sed -i "s:^NSTEP .*:NSTEP    = 1000:" DATA/Par_file
       fi
@@ -273,10 +288,6 @@ script:
       if [ "$TESTMAKE" == "9" ]; then
         sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
         sed -i "s:^NSTEP .*:NSTEP    = 3000:" DATA/Par_file
-      fi
-      # coverage run
-      if [ "$TESTCOV" == "1" ]; then
-        sed -i "s:^NSTEP .*:NSTEP    = 400:" DATA/Par_file
       fi
       # default
       if [ "$TESTMAKE" == "4" ]; then
@@ -291,20 +302,21 @@ script:
       cd $WORKDIR
     fi
 
-  # testing example with pml (longer testing only together with mpi and code coverage)
+  # code coverage: https://codecov.io/gh/geodynamics/specfem2d/
   - |
     if [ "$TESTCOV" == "1" ]; then
+      ##
+      ## testing example with pml (longer testing only together with mpi and code coverage)
+      ##
       cd EXAMPLES/semi_infinite_homogeneous/
       sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
       sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
       ./run_this_example.sh
       my_test
       cd $WORKDIR
-    fi
-
-  # testing external mesher example with mpi and stacey
-  - |
-    if [ "$TESTCOV" == "1" ]; then
+      ##
+      ## testing external mesher example with mpi and stacey
+      ##
       cd EXAMPLES/Gmsh_example_Stacey_MPI/
       sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
       ./run_this_example.sh
@@ -313,65 +325,65 @@ script:
       if [[ $? -ne 0 ]]; then exit 1; fi
       my_test
       cd $WORKDIR
-    fi
-
-  # testing kernel example
-  - |
-    if [ "$TESTCOV" == "1" ]; then
+      ##
+      ## testing kernel example
+      ##
       cd EXAMPLES/Tromp2005_kernel/
       sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
       ./run_this_example_kernel.sh
       # no kernel value testing: only execution failure
       #my_test_kernel
       cd $WORKDIR
-    fi
-
-  # testing poroelastic example
-  - |
-    if [ "$TESTCOV" == "1" ]; then
+      ##
+      ## testing poroelastic example
+      ##
       cd EXAMPLES/poroelastic_acoustic/
       sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
       ./run_this_example.sh
       # only for coverage, comparison would fail: my_test
       cd $WORKDIR
-    fi
-
-  # testing noise example
-  - |
-    if [ "$TESTCOV" == "1" ]; then
+      ##
+      ## testing noise example
+      ##
       cd EXAMPLES/noise_uniform/
       sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file_noise_1
       ./run_this_example.sh
       # only for coverage, comparison would fail: my_test
       cd $WORKDIR
-    fi
-
-  # testing axisymmetric example
-  - |
-    if [ "$TESTCOV" == "1" ]; then
+      ##
+      ## testing axisymmetric example
+      ##
       cd EXAMPLES/axisymmetric_case_AXISYM_option/
       sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
       sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
       ./run_this_example.sh
       # only for coverage, comparison would fail: my_test
       cd $WORKDIR
-    fi
-
-  # testing PML & MPI example
-  - |
-    if [ "$TESTCOV" == "1" ]; then
+      ##
+      ## testing PML & MPI example
+      ##
       cd EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/
       sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
       ./run_this_example.sh
       # only for coverage, comparison would fail: my_test
       cd $WORKDIR
-    fi
-
-  # testing MPI, SEP example
-  - |
-    if [ "$TESTCOV" == "1" ]; then
+      ##
+      ## testing MPI, SEP example
+      ##
       cd EXAMPLES/Industrial_Format_SEP/
       sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+      ./run_this_example.sh
+      # only for coverage, comparison would fail: my_test
+      cd $WORKDIR
+      ##
+      ## testing plane wave example
+      ##
+      cd EXAMPLES/Rayleigh_wave_no_crack/
+      sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+      # coarser resolution
+      sed -i "s:60:15:g" DATA/Par_file
+      sed -i "s:28:7:g" DATA/Par_file
+      sed -i "s:28:7:g" DATA/interfaces_Rayleigh_flat.dat
       ./run_this_example.sh
       # only for coverage, comparison would fail: my_test
       cd $WORKDIR
