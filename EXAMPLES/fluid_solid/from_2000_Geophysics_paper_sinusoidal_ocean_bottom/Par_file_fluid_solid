@@ -125,11 +125,6 @@ subsamp_seismos                 = 1
 # so far, this option can only be used if all the receivers are in acoustic elements
 USE_TRICK_FOR_BETTER_PRESSURE   = .false.
 
-# every how many time steps we save the seismograms
-# (costly, do not use a very small value; if you use a very large value that is larger than the total number
-#  of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
-NSTEP_BETWEEN_OUTPUT_SEISMOS    = 5000000
-
 # use this t0 as earliest starting time rather than the automatically calculated one
 USER_T0                         = 0.0d0
 

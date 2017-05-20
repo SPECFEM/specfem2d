@@ -59,7 +59,7 @@
     seismo_current = seismo_current + 1
 
     ! check for edge effects
-    if (seismo_current < 1 .or. seismo_current > NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos) &
+    if (seismo_current < 1 .or. seismo_current > NSTEP/subsamp_seismos) &
       stop 'Error: seismo_current out of bounds in recording of seismograms'
 
     ! updates local receiver records
@@ -161,11 +161,11 @@
           ! Simulating seismograms
           if (USE_TRICK_FOR_BETTER_PRESSURE) then
             call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current, &
-                                                       NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
+                                                       NSTEP/subsamp_seismos, &
                                                        ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,1)
           else
             call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current, &
-                                                       NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
+                                                       NSTEP/subsamp_seismos, &
                                                        ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,0)
           endif
           ! note: curl not implemented yet
@@ -177,8 +177,7 @@
   endif ! subsamp_seismos
 
   ! save temporary or final seismograms
-  ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
-  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+  if (it == NSTEP) then
     call write_seismograms_to_file(sisux,sisuz,siscurl)
 
     ! updates current seismogram offsets
@@ -199,13 +198,13 @@
   use constants, only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME,OUTPUT_FILES
 
   use specfem_par, only: station_name,network_name,NSTEP,islice_selected_rec,nrec,myrank,deltat,seismotype,t0, &
-                         NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos,nrecloc, &
+                         subsamp_seismos,nrecloc, &
                          seismo_offset,seismo_current,P_SV,SU_FORMAT,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,x_source,z_source
 
   implicit none
 
-  double precision,dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),intent(in) :: sisux,sisuz,siscurl
+  double precision,dimension(NSTEP/subsamp_seismos,nrecloc),intent(in) :: sisux,sisuz,siscurl
 
   ! local parameters
   logical :: save_binary_seismograms
@@ -250,7 +249,7 @@
     number_of_components = NDIM
   endif
 
-  allocate(buffer_binary(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrec,number_of_components),stat=ier)
+  allocate(buffer_binary(NSTEP/subsamp_seismos,nrec,number_of_components),stat=ier)
   if (ier /= 0) stop 'Error allocating array buffer_binary'
   buffer_binary(:,:,:) = 0.d0
 
@@ -358,15 +357,15 @@
 #ifdef USE_MPI
       else
         ! collects seismogram components on master
-        call recv_dp(buffer_binary(1,irec,1), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, islice_selected_rec(irec), irec)
+        call recv_dp(buffer_binary(1,irec,1), NSTEP/subsamp_seismos, islice_selected_rec(irec), irec)
 
         if (number_of_components == 2) then
-          call recv_dp(buffer_binary(1,irec,2), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, islice_selected_rec(irec), irec)
+          call recv_dp(buffer_binary(1,irec,2), NSTEP/subsamp_seismos, islice_selected_rec(irec), irec)
         endif
 
         if (number_of_components == 3) then
-          call recv_dp(buffer_binary(1,irec,2), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, islice_selected_rec(irec), irec)
-          call recv_dp(buffer_binary(1,irec,3), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, islice_selected_rec(irec), irec)
+          call recv_dp(buffer_binary(1,irec,2), NSTEP/subsamp_seismos, islice_selected_rec(irec), irec)
+          call recv_dp(buffer_binary(1,irec,3), NSTEP/subsamp_seismos, islice_selected_rec(irec), irec)
         endif
 #endif
       endif
@@ -474,14 +473,14 @@
       ! sends seismogram values to master
       if (myrank == islice_selected_rec(irec)) then
         irecloc = irecloc + 1
-        call send_dp(sisux(1,irecloc), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, 0, irec)
+        call send_dp(sisux(1,irecloc), NSTEP/subsamp_seismos, 0, irec)
 
         if (number_of_components >= 2) then
-          call send_dp(sisuz(1,irecloc), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, 0, irec)
+          call send_dp(sisuz(1,irecloc), NSTEP/subsamp_seismos, 0, irec)
         endif
 
         if (number_of_components == 3) then
-          call send_dp(siscurl(1,irecloc), NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, 0, irec)
+          call send_dp(siscurl(1,irecloc), NSTEP/subsamp_seismos, 0, irec)
         endif
 
       endif

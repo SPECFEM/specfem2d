@@ -139,7 +139,6 @@
     call bcast_all_singlei(seismotype)
     call bcast_all_singlei(subsamp_seismos)
     call bcast_all_singlel(USE_TRICK_FOR_BETTER_PRESSURE)
-    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_SEISMOS)
     call bcast_all_singlel(COMPUTE_INTEGRATED_ENERGY_FIELD)
     call bcast_all_singledp(USER_T0)
     call bcast_all_singlel(save_ASCII_seismograms)
@@ -419,9 +418,6 @@
 
   call read_value_logical_p(USE_TRICK_FOR_BETTER_PRESSURE, 'solver.USE_TRICK_FOR_BETTER_PRESSURE')
   if (err_occurred() /= 0) stop 'error reading parameter USE_TRICK_FOR_BETTER_PRESSURE in Par_file'
-
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NSTEP_BETWEEN_OUTPUT_SEISMOS')
-  if (err_occurred() /= 0) stop 'error reading parameter NSTEP_BETWEEN_OUTPUT_SEISMOS in Par_file'
 
   call read_value_logical_p(COMPUTE_INTEGRATED_ENERGY_FIELD, 'solver.COMPUTE_INTEGRATED_ENERGY_FIELD')
   if (err_occurred() /= 0) stop 'error reading parameter COMPUTE_INTEGRATED_ENERGY_FIELD in Par_file'

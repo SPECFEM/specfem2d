@@ -182,9 +182,9 @@
 
   ! seismograms
   ! allocate seismogram arrays
-  allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
-           sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
-           siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),stat=ier)
+  allocate(sisux(NSTEP/subsamp_seismos,nrecloc), &
+           sisuz(NSTEP/subsamp_seismos,nrecloc), &
+           siscurl(NSTEP/subsamp_seismos,nrecloc),stat=ier)
   if (ier /= 0) stop 'Error allocating seismogram arrays'
 
   sisux(:,:) = ZERO ! double precision zero
