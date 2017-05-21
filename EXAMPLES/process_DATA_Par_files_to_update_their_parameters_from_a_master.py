@@ -21,7 +21,9 @@ DEPRECATED_RENAMED_PARAMETERS = [ \
   ("nt","NSTEP"), \
   ("deltat","DT"), \
   ("nproc","NPROC"), \
+  ("output_energy","OUTPUT_ENERGY"), \
   ("CPML_element_file","absorbing_cpml_file"), \
+  ("ATTENUATION_VISCOELASTIC_SOLID","ATTENUATION_VISCOELASTIC"), \
   ("ATTENUATION_FLUID","ATTENUATION_VISCOACOUSTIC") \
 ]
 
