@@ -828,15 +828,16 @@
 
   subroutine read_parameter_file_receiversets()
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,IIN,IN_DATA_FILES,mygroup
 
   use shared_parameters
 
   implicit none
 
   ! local parameters
-  integer :: ireceiverlines,ier
+  integer :: ireceiverlines,ier,nrec
   logical :: reread_rec_normal_to_surface
+  character(len=MAX_STRING_LEN) :: stations_filename,path_to_add,dummystring
 
   integer,external :: err_occurred
 
@@ -853,7 +854,7 @@
   if (reread_rec_normal_to_surface .neqv. rec_normal_to_surface) stop 'Invalid re-reading of rec_normal_to_surface parameter'
 
   ! only valid if at least 1 receiver line is specified
-  if (nreceiversets < 1) stop 'number of receiver lines must be greater than 1'
+  if (nreceiversets < 1) stop 'number of receiver sets must be greater than 1'
 
   ! allocate receiver line arrays
   allocate(nrec_line(nreceiversets))
@@ -864,31 +865,70 @@
   allocate(record_at_surface_same_vertical(nreceiversets),stat=ier)
   if (ier /= 0 ) stop 'Error allocating receiver lines'
 
+  nrec_line(:) = 0
+  xdeb(:) = 0.d0
+  zdeb(:) = 0.d0
+  xfin(:) = 0.d0
+  zfin(:) = 0.d0
+  record_at_surface_same_vertical(:) = .false.
+
   ! reads in receiver sets
-  ! loop on all the receiver lines
-  do ireceiverlines = 1,nreceiversets
-    call read_value_integer_next_p(nrec_line(ireceiverlines),'solver.nrec')
-    if (err_occurred() /= 0) stop 'error reading parameter nrec in Par_file'
+  if (use_existing_STATIONS) then
+    write(IMAIN,*) '  using existing STATIONS file '
 
-    call read_value_double_prec_next_p(xdeb(ireceiverlines),'solver.xdeb')
-    if (err_occurred() /= 0) stop 'error reading parameter xdeb in Par_file'
+    ! checks if STATIONS file exisits
+    stations_filename = trim(IN_DATA_FILES)//'STATIONS'
 
-    call read_value_double_prec_next_p(zdeb(ireceiverlines),'solver.zdeb')
-    if (err_occurred() /= 0) stop 'error reading parameter zdeb in Par_file'
-
-    call read_value_double_prec_next_p(xfin(ireceiverlines),'solver.xfin')
-    if (err_occurred() /= 0) stop 'error reading parameter xfin in Par_file'
-
-    call read_value_double_prec_next_p(zfin(ireceiverlines),'solver.zfin')
-    if (err_occurred() /= 0) stop 'error reading parameter zfin in Par_file'
-
-    call read_value_logical_next_p(record_at_surface_same_vertical(ireceiverlines),'solver.record_at_surface_same_vertical')
-    if (err_occurred() /= 0) stop 'error reading parameter record_at_surface_same_vertical in Par_file'
-
-    if (read_external_mesh .and. record_at_surface_same_vertical(ireceiverlines)) then
-      stop 'Cannot use record_at_surface_same_vertical with external meshes!'
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+      stations_filename = path_to_add(1:len_trim(path_to_add))//stations_filename(1:len_trim(stations_filename))
     endif
-  enddo
+
+    ! counts entries
+    open(unit=IIN,file=trim(stations_filename),status='old',action='read',iostat=ier)
+    if (ier /= 0 ) then
+      print *, 'Error could not open existing STATIONS file:'
+      print *, trim(stations_filename)
+      print *, 'Please check if file exists.'
+      stop 'Error opening STATIONS file'
+    endif
+    nrec = 0
+    do while(ier == 0)
+      read(IIN,"(a)",iostat=ier) dummystring
+      if (ier == 0) nrec = nrec + 1
+    enddo
+    close(IIN)
+
+    write(IMAIN,*) '  file name is ',trim(stations_filename)
+    write(IMAIN,*) '  found ',nrec,' receivers'
+    write(IMAIN,*)
+
+  else
+    ! loop on all the receiver lines
+    do ireceiverlines = 1,nreceiversets
+      call read_value_integer_next_p(nrec_line(ireceiverlines),'solver.nrec')
+      if (err_occurred() /= 0) stop 'error reading parameter nrec in Par_file'
+
+      call read_value_double_prec_next_p(xdeb(ireceiverlines),'solver.xdeb')
+      if (err_occurred() /= 0) stop 'error reading parameter xdeb in Par_file'
+
+      call read_value_double_prec_next_p(zdeb(ireceiverlines),'solver.zdeb')
+      if (err_occurred() /= 0) stop 'error reading parameter zdeb in Par_file'
+
+      call read_value_double_prec_next_p(xfin(ireceiverlines),'solver.xfin')
+      if (err_occurred() /= 0) stop 'error reading parameter xfin in Par_file'
+
+      call read_value_double_prec_next_p(zfin(ireceiverlines),'solver.zfin')
+      if (err_occurred() /= 0) stop 'error reading parameter zfin in Par_file'
+
+      call read_value_logical_next_p(record_at_surface_same_vertical(ireceiverlines),'solver.record_at_surface_same_vertical')
+      if (err_occurred() /= 0) stop 'error reading parameter record_at_surface_same_vertical in Par_file'
+
+      if (read_external_mesh .and. record_at_surface_same_vertical(ireceiverlines)) then
+        stop 'Cannot use record_at_surface_same_vertical with external meshes!'
+      endif
+    enddo
+  endif
 
   end subroutine read_parameter_file_receiversets
 

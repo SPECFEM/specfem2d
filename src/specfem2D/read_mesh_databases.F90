@@ -861,38 +861,42 @@
     ! detection of the corner element
     do inum = 1,nelemabs
       if (codeabs(IEDGE1,inum)) then
+        ! bottom
         do inum_duplicate = 1,nelemabs
-           if (inum == inum_duplicate) then
-             ! left for blank, since no operation is needed.
-           else
-             if (numabs(inum) == numabs(inum_duplicate)) then
-                if (codeabs(IEDGE4,inum_duplicate)) then
-                   codeabs_corner(1,inum) = .true.
-                endif
-
-                if (codeabs(IEDGE2,inum_duplicate)) then
-                   codeabs_corner(2,inum) = .true.
-                endif
-
-             endif
-           endif
+          if (inum == inum_duplicate) then
+            ! left for blank, since no operation is needed.
+            continue
+          else
+            if (numabs(inum) == numabs(inum_duplicate)) then
+              if (codeabs(IEDGE4,inum_duplicate)) then
+                ! left
+                codeabs_corner(1,inum) = .true.
+              endif
+              if (codeabs(IEDGE2,inum_duplicate)) then
+                ! right
+                codeabs_corner(2,inum) = .true.
+              endif
+            endif
+          endif
         enddo
       endif
 
       if (codeabs(IEDGE3,inum)) then
+        ! top
         do inum_duplicate = 1,nelemabs
-           if (inum == inum_duplicate) then
-             ! left for blank, since no operation is needed.
-           else
-             if (numabs(inum) == numabs(inum_duplicate)) then
-                if (codeabs(IEDGE4,inum_duplicate)) then
-                   codeabs_corner(3,inum) = .true.
-                endif
-
-                if (codeabs(IEDGE2,inum_duplicate)) then
-                   codeabs_corner(4,inum) = .true.
-                endif
-
+          if (inum == inum_duplicate) then
+            ! left for blank, since no operation is needed.
+            continue
+          else
+            if (numabs(inum) == numabs(inum_duplicate)) then
+              if (codeabs(IEDGE4,inum_duplicate)) then
+                ! left
+                codeabs_corner(3,inum) = .true.
+              endif
+              if (codeabs(IEDGE2,inum_duplicate)) then
+                ! right
+                codeabs_corner(4,inum) = .true.
+              endif
              endif
            endif
         enddo
@@ -903,18 +907,22 @@
     ! boundary element numbering
     do inum = 1,nelemabs
       if (codeabs(IEDGE1,inum)) then
+        ! bottom
         nspec_bottom = nspec_bottom + 1
         ib_bottom(inum) =  nspec_bottom
 
       else if (codeabs(IEDGE2,inum)) then
+        ! right
         nspec_right = nspec_right + 1
         ib_right(inum) =  nspec_right
 
       else if (codeabs(IEDGE3,inum)) then
+        ! top
         nspec_top = nspec_top + 1
         ib_top(inum) = nspec_top
 
       else if (codeabs(IEDGE4,inum)) then
+        ! left
         nspec_left = nspec_left + 1
         ib_left(inum) =  nspec_left
 

@@ -1003,15 +1003,19 @@
           if (codeabs(iedge,inum)) then ! codeabs(:,:) is defined as "logical" in MAIN program
 
             if (iedge == IEDGE1) then
+              ! bottom
               ideb = 1
               ifin = 2
             else if (iedge == IEDGE2) then
+              ! right
               ideb = 2
               ifin = 3
             else if (iedge == IEDGE3) then
+              ! top
               ideb = 3
               ifin = 4
             else if (iedge == IEDGE4) then
+              ! left
               ideb = 4
               ifin = 1
             else

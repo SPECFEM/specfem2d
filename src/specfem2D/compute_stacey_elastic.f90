@@ -84,9 +84,9 @@
   if (.not. any_elastic) return
 
   ! Clayton-Engquist condition if elastic
-  count_left=1
-  count_right=1
-  count_bottom=1
+  count_left = 1
+  count_right = 1
+  count_bottom = 1
   do ispecabs = 1,nelemabs
 
     ispec = numabs(ispecabs)

@@ -37,7 +37,7 @@
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
-    ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4, &
+    ZERO,ONE,TWO,TWO_THIRDS, &
     ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: nglob, &

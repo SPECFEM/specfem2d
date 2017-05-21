@@ -345,10 +345,10 @@
   integer, parameter :: ITOP = 3
   integer, parameter :: ILEFT = 4
 
-  integer, parameter :: IEDGE1 = 1
-  integer, parameter :: IEDGE2 = 2
-  integer, parameter :: IEDGE3 = 3
-  integer, parameter :: IEDGE4 = 4
+  integer, parameter :: IEDGE1 = 1  ! bottom
+  integer, parameter :: IEDGE2 = 2  ! right
+  integer, parameter :: IEDGE3 = 3  ! top
+  integer, parameter :: IEDGE4 = 4  ! left
 
 ! flag to indicate an element type
 ! material domain ids (acoustic/elastic/poroelastic/gravitoacoustic)
