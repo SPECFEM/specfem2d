@@ -5,12 +5,12 @@
 #
 # interface number 1 (bottom of the mesh)
  2
- 0 0
- 480000 0
+ 0.0 0.0
+ 480000.0 0.0
 # interface number 5 (topography, top of the mesh)
  2
- 0 480000
- 480000 480000
+ 0.0 480000.0
+ 480000.0 480000.0
 #
 # for each layer, we give the number of spectral elements in the vertical direction
 #

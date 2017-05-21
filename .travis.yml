@@ -76,6 +76,8 @@ env:
     # example w/ initialfield Rayleigh wave and manual crack
     - TEST="--enable-vectorization --with-mpi" TESTCOV=0 TESTMAKE=11 CUDA=false
 
+    # example w/ SH waves and checkerboard model
+    - TEST="--without-mpi" TESTCOV=0 TESTMAKE=12 CUDA=false
 
 
 before_install:
@@ -262,6 +264,7 @@ script:
     9) dir=EXAMPLES/Industrial_Format_SEP/ ;;
     10) dir=EXAMPLES/Rayleigh_wave_no_crack/ ;;
     11) dir=EXAMPLES/Rayleigh_wave_with_crack/ ;;
+    12) dir=EXAMPLES/Tape2007/ ;;
     *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
     esac
     # runs test
@@ -384,6 +387,14 @@ script:
       sed -i "s:60:15:g" DATA/Par_file
       sed -i "s:28:7:g" DATA/Par_file
       sed -i "s:28:7:g" DATA/interfaces_Rayleigh_flat.dat
+      ./run_this_example.sh
+      # only for coverage, comparison would fail: my_test
+      cd $WORKDIR
+      ##
+      ## testing Tape2007 example
+      ##
+      cd EXAMPLES/Tape2007/
+      sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
       ./run_this_example.sh
       # only for coverage, comparison would fail: my_test
       cd $WORKDIR

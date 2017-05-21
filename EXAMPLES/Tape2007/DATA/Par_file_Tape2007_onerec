@@ -25,7 +25,7 @@ ngnod                           = 4
 
 # time step parameters
 # total number of time steps
-NSTEP                           = 4800
+NSTEP                           = 5000
 # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
 DT                              = 6.0d-2
 
@@ -56,7 +56,7 @@ setup_with_binary_database      = 0
 #   external      - define model using define_external_model subroutine
 #   gll           - read GLL model from binary database file
 #   legacy        - read model from model_velocity.dat_input
-MODEL                           = legacy
+MODEL                           = default
 
 # Output the model with the requested type, does not save if turn to default or .false.
 # (available output formats: ascii,binary,gll,legacy)
@@ -130,26 +130,26 @@ USER_T0                         = 48.0d0
 
 # seismogram formats
 save_ASCII_seismograms          = .true.         # save seismograms in ASCII format or not
-save_binary_seismograms_single  = .true.         # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
+save_binary_seismograms_single  = .false.        # save seismograms in single precision binary format or not (can be used jointly with ASCII above to save both)
 save_binary_seismograms_double  = .false.        # save seismograms in double precision binary format or not (can be used jointly with both flags above to save all)
 SU_FORMAT                       = .false.        # output single precision binary seismograms in Seismic Unix format (adjoint traces will be read in the same format)
 
 # use an existing STATION file found in ./DATA or create a new one from the receiver positions below in this Par_file
-use_existing_STATIONS           = .true.
+use_existing_STATIONS           = .false.
 
 # number of receiver sets (i.e. number of receiver lines to create below)
-nreceiversets                   = 132
+nreceiversets                   = 1
 
 # orientation
 anglerec                        = 0.d0           # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
-# dummy values
+# first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
 nrec                            = 1              # number of receivers
-xdeb                            = 0              # first receiver x in meters
-zdeb                            = 0              # first receiver z in meters
-xfin                            = 0              # last receiver x in meters (ignored if only one receiver)
-zfin                            = 0              # last receiver z in meters (ignored if only one receiver)
+xdeb                            = 180081.41      # first receiver x in meters
+zdeb                            = 388768.71      # first receiver z in meters
+xfin                            = 450000.        # last receiver x in meters (ignored if only one receiver)
+zfin                            = 10000.         # last receiver z in meters (ignored if only one receiver)
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
 
 
@@ -177,7 +177,7 @@ ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
 
 # Stacey ABC
-STACEY_ABSORBING_CONDITIONS     = .false.
+STACEY_ABSORBING_CONDITIONS     = .true.
 
 # periodic boundaries
 ADD_PERIODIC_CONDITIONS         = .false.
@@ -230,7 +230,7 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 #-----------------------------------------------------------------------------
 
 # file containing interfaces for internal mesh
-interfacesfile                  = ../interfaces_Tape2007.dat
+interfacesfile                  = interfaces_Tape2007.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
@@ -279,7 +279,7 @@ COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
 
 # every how many time steps we draw JPEG or PostScript pictures of the simulation
 # and/or we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
-NSTEP_BETWEEN_OUTPUT_IMAGES     = 100
+NSTEP_BETWEEN_OUTPUT_IMAGES     = 200
 
 # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
 cutsnaps                        = 1.

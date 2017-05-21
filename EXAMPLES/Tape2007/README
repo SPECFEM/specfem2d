@@ -4,11 +4,16 @@ README
 
 Example for Tape-Liu-Tromp (GJI 2007)
 
+- single receiver example:
+
 Par_file_Tape2007_onerec
 1 source, 1 receiver
 Source index: 1
 Receiver index: 126
 homogeneous model
+
+
+- checkerboard example:
 
 Par_file_Tape2007_132rec_checker
 1 source, 132 receivers
@@ -33,13 +38,14 @@ TO RUN:
 3. cd EXAMPLES/Tape2007/
 
 4. execute script to run mesher and solver for the SH/membrane case:
-   ./process.sh
+   ./run_this_example.sh
 
 5. check out the output files in the local directory OUTPUT_FILES
 
 ---------------------------
 
-After running the example above, try the second example:
-  ./process_checker.sh
+By default, the script runs the checkerboard example.
+You can also try the second example for a single receiver setup, with a homogeneous background model:
+  ./run_this_example_onerec.sh
 
 ---------------------------
