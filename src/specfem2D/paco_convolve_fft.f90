@@ -73,10 +73,6 @@
 ! NSTEP==1, FLAG==0 (flags: interior=0, left= 1, right= 2, bottom=3)
 !
 
-  ! debug
-  !print *,'paco_convolve_fft: time step = ',dt," Ricker period (s) = ",tp," start/onset time = ",ts
-
-
   do j = 1,N
     select case (label)
     case (1,4)

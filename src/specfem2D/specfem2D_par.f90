@@ -307,13 +307,13 @@ module specfem_par
   double precision :: timestamp_seconds_start
 
   !---------------------------------------------------------------------
-  !global variable shared by acoustic/elastic/poroelastic simulation
+  ! global variable shared by acoustic/elastic/poroelastic simulation
   !---------------------------------------------------------------------
   double precision, dimension(:,:), allocatable :: coord
   double precision, dimension(:,:), allocatable :: coorg
 
   !---------------------------------------------------------------------
-  !for acoustic simulation
+  ! for acoustic simulation
   !---------------------------------------------------------------------
   ! for acoustic medium
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
