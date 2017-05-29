@@ -420,7 +420,7 @@
 
   use specfem_par, only: f0_source,ispec_is_elastic,ispec_is_acoustic, &
                          NSOURCES,ispec_selected_source, &
-                         nspec,kmato,density,poroelastcoef,ibool,coord
+                         nspec,kmato,density,poroelastcoef,ibool,coord,islice_selected_source,myrank
 
   ! PML arrays
   use specfem_par, only: ispec_is_PML,spec_to_PML,region_CPML, &
@@ -647,13 +647,16 @@
     averagez_source = 0.0d0
 
     do i_source = 1, NSOURCES
-      ispec = ispec_selected_source(i_source)
-      do i = 1, NGLLX
-        do j = 1, NGLLZ
-           averagex_source = averagex_source + coord(1,ibool(i,j,ispec))
-           averagez_source = averagez_source + coord(2,ibool(i,j,ispec))
+      ! check
+      if (myrank == islice_selected_source(i_source)) then
+        ispec = ispec_selected_source(i_source)
+        do i = 1, NGLLX
+          do j = 1, NGLLZ
+             averagex_source = averagex_source + coord(1,ibool(i,j,ispec))
+             averagez_source = averagez_source + coord(2,ibool(i,j,ispec))
+          enddo
         enddo
-      enddo
+      endif
     enddo
 
     ! collects sum of all on all processes
