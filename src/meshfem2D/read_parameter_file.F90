@@ -44,30 +44,7 @@
   logical, intent(in) :: BROADCAST_AFTER_READ
 
   ! initializes
-
-  ! external meshing
-  mesh_file = ''
-  nodes_coords_file = ''
-  materials_file = ''
-  free_surface_file = ''
-  axial_elements_file = ''
-  absorbing_surface_file = ''
-  acoustic_forcing_surface_file = ''
-  absorbing_cpml_file = ''
-  tangential_detection_curve_file = ''
-
-  ! internal meshing
-  interfacesfile = ''
-  xmin_param = 0.d0
-  xmax_param = 0.d0
-  nx_param = 0
-
-  absorbbottom = .false.
-  absorbright = .false.
-  absorbtop = .false.
-  absorbleft = .false.
-
-  nbregions = 0
+  call read_parameter_file_init()
 
   ! only master process reads in Par_file
   if (myrank == 0) then
@@ -133,11 +110,13 @@
     call bcast_all_singlel(AXISYM)
     call bcast_all_singlel(P_SV)
     call bcast_all_singlel(GPU_MODE)
+    call bcast_all_singlei(setup_with_binary_database)
 
     call bcast_all_string(MODEL)
     call bcast_all_string(SAVE_MODEL)
 
     call bcast_all_singlel(ATTENUATION_VISCOELASTIC)
+    call bcast_all_singlel(ATTENUATION_VISCOACOUSTIC)
     call bcast_all_singlel(ATTENUATION_PORO_FLUID_PART)
     call bcast_all_singledp(Q0)
     call bcast_all_singledp(freq0)
@@ -160,7 +139,6 @@
     call bcast_all_singlei(seismotype)
     call bcast_all_singlei(subsamp_seismos)
     call bcast_all_singlel(USE_TRICK_FOR_BETTER_PRESSURE)
-    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_SEISMOS)
     call bcast_all_singlel(COMPUTE_INTEGRATED_ENERGY_FIELD)
     call bcast_all_singledp(USER_T0)
     call bcast_all_singlel(save_ASCII_seismograms)
@@ -201,7 +179,6 @@
     call bcast_all_singlei(NTSTEP_BETWEEN_OUTPUT_ENERGY)
 
     call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_IMAGES)
-    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS)
     call bcast_all_singledp(cutsnaps)
 
     call bcast_all_singlel(output_color_image)
@@ -228,12 +205,53 @@
     call bcast_all_singlel(output_wavefield_dumps)
     call bcast_all_singlei(imagetype_wavefield_dumps)
     call bcast_all_singlel(use_binary_for_wavefield_dumps)
+
+    call bcast_all_singlei(NUMBER_OF_SIMULTANEOUS_RUNS)
+    call bcast_all_singlel(BROADCAST_SAME_MESH_AND_MODEL)
   endif
 
   ! derive additional settings/flags based on input parameters
   call read_parameter_file_derive_flags()
 
   end subroutine read_parameter_file
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_parameter_file_init()
+
+! initializes the variables
+
+  use shared_parameters
+
+  implicit none
+
+  ! external meshing
+  mesh_file = ''
+  nodes_coords_file = ''
+  materials_file = ''
+  free_surface_file = ''
+  axial_elements_file = ''
+  absorbing_surface_file = ''
+  acoustic_forcing_surface_file = ''
+  absorbing_cpml_file = ''
+  tangential_detection_curve_file = ''
+
+  ! internal meshing
+  interfacesfile = ''
+  xmin_param = 0.d0
+  xmax_param = 0.d0
+  nx_param = 0
+
+  absorbbottom = .false.
+  absorbright = .false.
+  absorbtop = .false.
+  absorbleft = .false.
+
+  nbregions = 0
+
+  end subroutine read_parameter_file_init
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -304,6 +322,9 @@
   call read_value_logical_p(GPU_MODE, 'solver.GPU_MODE')
   if (err_occurred() /= 0) stop 'error reading parameter GPU_MODE in Par_file'
 
+  call read_value_integer_p(setup_with_binary_database, 'solver.setup_with_binary_database')
+  if (err_occurred() /= 0) stop 'error reading parameter setup_with_binary_database in Par_file'
+
   call read_value_string_p(MODEL, 'mesher.MODEL')
   if (err_occurred() /= 0) stop 'error reading parameter MODEL in Par_file'
 
@@ -318,6 +339,10 @@
 
   call read_value_logical_p(ATTENUATION_VISCOELASTIC, 'solver.ATTENUATION_VISCOELASTIC')
   if (err_occurred() /= 0) stop 'error reading parameter ATTENUATION_VISCOELASTIC in Par_file'
+
+  ! read viscous attenuation parameters (acoustic media)
+  call read_value_logical_p(ATTENUATION_VISCOACOUSTIC, 'solver.ATTENUATION_VISCOACOUSTIC')
+  if (err_occurred() /= 0) stop 'error reading parameter ATTENUATION_VISCOACOUSTIC in Par_file'
 
   ! read viscous attenuation parameters (poroelastic media)
   call read_value_logical_p(ATTENUATION_PORO_FLUID_PART, 'solver.ATTENUATION_PORO_FLUID_PART')
@@ -393,9 +418,6 @@
 
   call read_value_logical_p(USE_TRICK_FOR_BETTER_PRESSURE, 'solver.USE_TRICK_FOR_BETTER_PRESSURE')
   if (err_occurred() /= 0) stop 'error reading parameter USE_TRICK_FOR_BETTER_PRESSURE in Par_file'
-
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_SEISMOS, 'solver.NSTEP_BETWEEN_OUTPUT_SEISMOS')
-  if (err_occurred() /= 0) stop 'error reading parameter NSTEP_BETWEEN_OUTPUT_SEISMOS in Par_file'
 
   call read_value_logical_p(COMPUTE_INTEGRATED_ENERGY_FIELD, 'solver.COMPUTE_INTEGRATED_ENERGY_FIELD')
   if (err_occurred() /= 0) stop 'error reading parameter COMPUTE_INTEGRATED_ENERGY_FIELD in Par_file'
@@ -593,9 +615,6 @@
   call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_IMAGES, 'solver.NSTEP_BETWEEN_OUTPUT_IMAGES')
   if (err_occurred() /= 0) stop 'error reading parameter NSTEP_BETWEEN_OUTPUT_IMAGES in Par_file'
 
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS, 'solver.NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS')
-  if (err_occurred() /= 0) stop 'error reading parameter NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS in Par_file'
-
   call read_value_double_precision_p(cutsnaps, 'solver.cutsnaps')
   if (err_occurred() /= 0) stop 'error reading parameter cutsnaps in Par_file'
 
@@ -668,6 +687,12 @@
   call read_value_logical_p(use_binary_for_wavefield_dumps, 'solver.use_binary_for_wavefield_dumps')
   if (err_occurred() /= 0) stop 'error reading parameter use_binary_for_wavefield_dumps in Par_file'
 
+  call read_value_integer_p(NUMBER_OF_SIMULTANEOUS_RUNS, 'mesher.NUMBER_OF_SIMULTANEOUS_RUNS')
+  if (err_occurred() /= 0) stop 'error reading parameter NUMBER_OF_SIMULTANEOUS_RUNS in Par_file'
+
+  call read_value_logical_p(BROADCAST_SAME_MESH_AND_MODEL, 'solver.BROADCAST_SAME_MESH_AND_MODEL')
+  if (err_occurred() /= 0) stop 'error reading parameter BROADCAST_SAME_MESH_AND_MODEL in Par_file'
+
   !--------------------------------------------------------------------
 
   ! user output
@@ -732,11 +757,9 @@
   if (NOISE_TOMOGRAPHY < 0 .or. NOISE_TOMOGRAPHY > 3) &
     stop 'NOISE_TOMOGRAPHY can only be set to 0, 1, 2 or 3 in the Par_file; exiting'
 
-  if (N_SLS < 2) &
-    stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
+  if (N_SLS < 2) stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
 
-  if (ngnod /= 4 .and. ngnod /= 9) &
-    stop 'ngnod should be either 4 or 9!'
+  if (ngnod /= 4 .and. ngnod /= 9) stop 'ngnod should be either 4 or 9!'
 
   if (seismotype < 1 .or. seismotype > 6) &
     stop 'seismotype should be 1(=displ), 2(=veloc), 3(=accel), 4(=pressure), 5(=curl of displ) or 6(=the fluid potential)'
@@ -744,8 +767,7 @@
   if (USE_TRICK_FOR_BETTER_PRESSURE .and. seismotype /= 4) &
     stop 'USE_TRICK_FOR_BETTER_PRESSURE : seismograms must record pressure'
 
-  if (subsamp_seismos < 1) &
-    stop 'Error: subsamp_seismos must be >= 1'
+  if (subsamp_seismos < 1) stop 'Error: subsamp_seismos must be >= 1'
 
   if (output_color_image .and. USE_CONSTANT_MAX_AMPLITUDE .and. CONSTANT_MAX_AMPLITUDE_TO_USE < 0.d0) &
     stop 'CONSTANT_MAX_AMPLITUDE_TO_USE must be strictly positive'
@@ -753,7 +775,10 @@
   if (force_normal_to_surface .or. rec_normal_to_surface) then
     if (.not. read_external_mesh) &
       stop 'Error read_external_mesh must be set to .true. for force_normal_to_surface or rec_normal_to_surface &
-            &to use external tangential_dectection_curve_file'
+            &to use external tangential_detection_curve_file'
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1) &
+      stop 'NUMBER_OF_SIMULTANEOUS_RUNS not compatible with force_normal_to_surface or rec_normal_to_surface for now &
+            & (look for FN2SNSR in the source code)'
   endif
 
   if (DT == 0.d0) stop 'DT must be non-zero value'
@@ -767,7 +792,7 @@
 
   ! checks model
   select case (trim(MODEL))
-  case ('default','ascii','binary','binary_voigt','external','gll')
+  case ('default','ascii','binary','binary_voigt','external','gll','legacy','marmousi')
     continue ! do nothing
   case default
     print *,'Error: unknown model choosen ',trim(MODEL)
@@ -788,6 +813,13 @@
     if (nbregions <= 0) stop 'Negative number of regions not allowed for internal meshing!'
   endif
 
+  if (NUMBER_OF_SIMULTANEOUS_RUNS <= 0) stop 'NUMBER_OF_SIMULTANEOUS_RUNS <= 0 makes no sense'
+
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. NPROC == 1) stop 'Serial runs require NUMBER_OF_SIMULTANEOUS_RUNS == 1'
+
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. trim(SAVE_MODEL) /= 'default' .and. trim(SAVE_MODEL) /= '.false.') &
+    stop 'NUMBER_OF_SIMULTANEOUS_RUNS not compatible yet with SAVE_MODEL. Look for SMNSR in the source code'
+
   end subroutine check_parameters
 
 !
@@ -796,15 +828,16 @@
 
   subroutine read_parameter_file_receiversets()
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,IIN,IN_DATA_FILES,mygroup
 
   use shared_parameters
 
   implicit none
 
   ! local parameters
-  integer :: ireceiverlines,ier
+  integer :: ireceiverlines,ier,nrec
   logical :: reread_rec_normal_to_surface
+  character(len=MAX_STRING_LEN) :: stations_filename,path_to_add,dummystring
 
   integer,external :: err_occurred
 
@@ -821,7 +854,7 @@
   if (reread_rec_normal_to_surface .neqv. rec_normal_to_surface) stop 'Invalid re-reading of rec_normal_to_surface parameter'
 
   ! only valid if at least 1 receiver line is specified
-  if (nreceiversets < 1) stop 'number of receiver lines must be greater than 1'
+  if (nreceiversets < 1) stop 'number of receiver sets must be greater than 1'
 
   ! allocate receiver line arrays
   allocate(nrec_line(nreceiversets))
@@ -832,31 +865,70 @@
   allocate(record_at_surface_same_vertical(nreceiversets),stat=ier)
   if (ier /= 0 ) stop 'Error allocating receiver lines'
 
+  nrec_line(:) = 0
+  xdeb(:) = 0.d0
+  zdeb(:) = 0.d0
+  xfin(:) = 0.d0
+  zfin(:) = 0.d0
+  record_at_surface_same_vertical(:) = .false.
+
   ! reads in receiver sets
-  ! loop on all the receiver lines
-  do ireceiverlines = 1,nreceiversets
-    call read_value_integer_next_p(nrec_line(ireceiverlines),'solver.nrec')
-    if (err_occurred() /= 0) stop 'error reading parameter nrec in Par_file'
+  if (use_existing_STATIONS) then
+    write(IMAIN,*) '  using existing STATIONS file '
 
-    call read_value_double_prec_next_p(xdeb(ireceiverlines),'solver.xdeb')
-    if (err_occurred() /= 0) stop 'error reading parameter xdeb in Par_file'
+    ! checks if STATIONS file exisits
+    stations_filename = trim(IN_DATA_FILES)//'STATIONS'
 
-    call read_value_double_prec_next_p(zdeb(ireceiverlines),'solver.zdeb')
-    if (err_occurred() /= 0) stop 'error reading parameter zdeb in Par_file'
-
-    call read_value_double_prec_next_p(xfin(ireceiverlines),'solver.xfin')
-    if (err_occurred() /= 0) stop 'error reading parameter xfin in Par_file'
-
-    call read_value_double_prec_next_p(zfin(ireceiverlines),'solver.zfin')
-    if (err_occurred() /= 0) stop 'error reading parameter zfin in Par_file'
-
-    call read_value_logical_next_p(record_at_surface_same_vertical(ireceiverlines),'solver.record_at_surface_same_vertical')
-    if (err_occurred() /= 0) stop 'error reading parameter record_at_surface_same_vertical in Par_file'
-
-    if (read_external_mesh .and. record_at_surface_same_vertical(ireceiverlines)) then
-      stop 'Cannot use record_at_surface_same_vertical with external meshes!'
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+      stations_filename = path_to_add(1:len_trim(path_to_add))//stations_filename(1:len_trim(stations_filename))
     endif
-  enddo
+
+    ! counts entries
+    open(unit=IIN,file=trim(stations_filename),status='old',action='read',iostat=ier)
+    if (ier /= 0 ) then
+      print *, 'Error could not open existing STATIONS file:'
+      print *, trim(stations_filename)
+      print *, 'Please check if file exists.'
+      stop 'Error opening STATIONS file'
+    endif
+    nrec = 0
+    do while(ier == 0)
+      read(IIN,"(a)",iostat=ier) dummystring
+      if (ier == 0) nrec = nrec + 1
+    enddo
+    close(IIN)
+
+    write(IMAIN,*) '  file name is ',trim(stations_filename)
+    write(IMAIN,*) '  found ',nrec,' receivers'
+    write(IMAIN,*)
+
+  else
+    ! loop on all the receiver lines
+    do ireceiverlines = 1,nreceiversets
+      call read_value_integer_next_p(nrec_line(ireceiverlines),'solver.nrec')
+      if (err_occurred() /= 0) stop 'error reading parameter nrec in Par_file'
+
+      call read_value_double_prec_next_p(xdeb(ireceiverlines),'solver.xdeb')
+      if (err_occurred() /= 0) stop 'error reading parameter xdeb in Par_file'
+
+      call read_value_double_prec_next_p(zdeb(ireceiverlines),'solver.zdeb')
+      if (err_occurred() /= 0) stop 'error reading parameter zdeb in Par_file'
+
+      call read_value_double_prec_next_p(xfin(ireceiverlines),'solver.xfin')
+      if (err_occurred() /= 0) stop 'error reading parameter xfin in Par_file'
+
+      call read_value_double_prec_next_p(zfin(ireceiverlines),'solver.zfin')
+      if (err_occurred() /= 0) stop 'error reading parameter zfin in Par_file'
+
+      call read_value_logical_next_p(record_at_surface_same_vertical(ireceiverlines),'solver.record_at_surface_same_vertical')
+      if (err_occurred() /= 0) stop 'error reading parameter record_at_surface_same_vertical in Par_file'
+
+      if (read_external_mesh .and. record_at_surface_same_vertical(ireceiverlines)) then
+        stop 'Cannot use record_at_surface_same_vertical with external meshes!'
+      endif
+    enddo
+  endif
 
   end subroutine read_parameter_file_receiversets
 

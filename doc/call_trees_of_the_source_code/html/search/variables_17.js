@@ -1,0 +1,28 @@
+var searchData=
+[
+  ['x',['x',['../d6/d5c/namespacetomography__par.html#a5669649e658de659db82a16eacd997bd',1,'tomography_par']]],
+  ['x_5ffinal_5freceiver',['x_final_receiver',['../db/da6/namespacespecfem__par.html#acc01ddd02a34b28bf27fbe84771a43f1',1,'specfem_par']]],
+  ['x_5fme',['x_me',['../d5/d1b/struct_smooth__data__.html#a08a0465845b8fe0eb07bba4b99a02df7',1,'Smooth_data_']]],
+  ['x_5fsource',['x_source',['../db/da6/namespacespecfem__par.html#a1ac8e64b02fe01527d14cbc5f2dc1285',1,'specfem_par']]],
+  ['x_5ftomo',['x_tomo',['../d5/d10/namespacemodel__tomography__par.html#a700ef103c978376997b8f590be02f30c',1,'model_tomography_par']]],
+  ['xadj_5fg',['xadj_g',['../dc/d0c/namespacepart__unstruct__par.html#aa95480d52de4aa20f28ba7e14ecb7d45',1,'part_unstruct_par']]],
+  ['xdeb',['xdeb',['../d1/d30/namespaceshared__input__parameters.html#a7c677a5f4bfe01555b10e65931ef9aa6',1,'shared_input_parameters']]],
+  ['xfin',['xfin',['../d1/d30/namespaceshared__input__parameters.html#a7f85c4f6dd842ae2b18cc1a6e9bedd2f',1,'shared_input_parameters']]],
+  ['xforced',['xforced',['../d7/dcf/namespaceenforce__par.html#a2c6dbaa584fee51f7b4da94a8f1f45fb',1,'enforce_par']]],
+  ['xi_5fnoise',['xi_noise',['../df/daf/namespacespecfem__par__noise.html#aa9229e7e1069c34967836bbabc8b0e3a',1,'specfem_par_noise']]],
+  ['xi_5freceiver',['xi_receiver',['../db/da6/namespacespecfem__par.html#ab343c23b9777039632d56fc5b0b95a55',1,'specfem_par']]],
+  ['xi_5fsource',['xi_source',['../db/da6/namespacespecfem__par.html#ae334fe8836e907a2708f6e41a4d4cf70',1,'specfem_par']]],
+  ['xiglj',['xiglj',['../db/da6/namespacespecfem__par.html#a834a91f759bd5b53e5da78cf8f6c7f3d',1,'specfem_par']]],
+  ['xigll',['xigll',['../db/da6/namespacespecfem__par.html#a6585707c9d56d78e238e79ce0ef52da4',1,'specfem_par']]],
+  ['xinterface_5ftop',['xinterface_top',['../dc/d0c/namespacepart__unstruct__par.html#aa9ae0486bcfb36f2ea661362f9cc72a5',1,'part_unstruct_par']]],
+  ['xinterp',['xinterp',['../d6/d7c/namespacespecfem__par__movie.html#a8e09f38502679620f3f7dd85950ccaad',1,'specfem_par_movie']]],
+  ['xir_5fstore_5floc',['xir_store_loc',['../db/da6/namespacespecfem__par.html#a47641ff0ce991e61c3ca420e77d131f7',1,'specfem_par']]],
+  ['xirec',['xirec',['../db/da6/namespacespecfem__par.html#a372c02602de95f83c7e41660978367f6',1,'specfem_par']]],
+  ['xix',['xix',['../db/da6/namespacespecfem__par.html#af66d56763a780ecbf064af595eb5a570',1,'specfem_par']]],
+  ['xiz',['xiz',['../db/da6/namespacespecfem__par.html#a25f96a4fe3de158b2b0f1346a6a5f26c',1,'specfem_par']]],
+  ['xmax_5fcolor_5fimage',['xmax_color_image',['../d6/d7c/namespacespecfem__par__movie.html#a6ca295e819e785043ad8397873d764ca',1,'specfem_par_movie']]],
+  ['xmax_5fparam',['xmax_param',['../d1/d30/namespaceshared__input__parameters.html#a3de923148d1370b4af0e595715b975e3',1,'shared_input_parameters']]],
+  ['xmin_5fcolor_5fimage',['xmin_color_image',['../d6/d7c/namespacespecfem__par__movie.html#a70e4f78f807cea3e0cc1a594f5aa3f7f',1,'specfem_par_movie']]],
+  ['xmin_5fparam',['xmin_param',['../d1/d30/namespaceshared__input__parameters.html#aa05a15dccad69c6b018aca487e284b70',1,'shared_input_parameters']]],
+  ['xs',['xs',['../dd/d29/namespacesource__file__par.html#a7a26dc6ebca902752d66c8e04ce7fae0',1,'source_file_par']]]
+];

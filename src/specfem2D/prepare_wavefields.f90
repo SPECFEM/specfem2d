@@ -454,6 +454,11 @@
   potential_dot_acoustic(:) = 0._CUSTOM_REAL
   potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
 
+  b_potential_acoustic(:) = 0._CUSTOM_REAL
+  b_potential_acoustic_old(:) = 0._CUSTOM_REAL
+  b_potential_dot_acoustic(:) = 0._CUSTOM_REAL
+  b_potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+
   if (time_stepping_scheme == 2) then
     potential_acoustic_LDDRK(:) = 0._CUSTOM_REAL
     potential_dot_acoustic_LDDRK(:) = 0._CUSTOM_REAL

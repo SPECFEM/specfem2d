@@ -60,6 +60,7 @@ shared_MODULES = \
 	$(FC_MODDIR)/constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_parameters.$(FC_MODEXT) \
+	$(FC_MODDIR)/my_mpi_communicator.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 

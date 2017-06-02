@@ -42,7 +42,7 @@
   implicit none
 
   ! local parameters
-  integer :: i, j, iglob, irecloc, irec, ispec
+  integer :: i, j, iglob, irecloc, ispec
   double precision :: valux,valuz,valcurl
 
   ! vector field in an element
@@ -59,7 +59,7 @@
     seismo_current = seismo_current + 1
 
     ! check for edge effects
-    if (seismo_current < 1 .or. seismo_current > NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos) &
+    if (seismo_current < 1 .or. seismo_current > NSTEP/subsamp_seismos) &
       stop 'Error: seismo_current out of bounds in recording of seismograms'
 
     ! updates local receiver records
@@ -70,8 +70,11 @@
         ! on CPU
         do irecloc = 1,nrecloc
 
-          irec = recloc(irecloc)
-          ispec = ispec_selected_rec(irec)
+          ispec = ispec_selected_rec_loc(irecloc)
+
+          !debug
+          !print *,'ispec',ispec,ispec_is_acoustic(ispec),ispec_is_elastic(ispec), &
+          !                ispec_is_gravitoacoustic(ispec),ispec_is_poroelastic(ispec)
 
           ! initializes local element arrays
           vector_field_element(:,:,:) = 0._CUSTOM_REAL
@@ -131,7 +134,7 @@
           end select
 
           ! perform the general interpolation using Lagrange polynomials
-          call compute_interpolated_dva(irec,ispec,vector_field_element,pressure_element,curl_element, &
+          call compute_interpolated_dva(irecloc,ispec,vector_field_element,pressure_element,curl_element, &
                                         valux,valuz,valcurl)
 
           ! rotate seismogram components if needed, except if recording pressure, which is a scalar
@@ -158,11 +161,11 @@
           ! Simulating seismograms
           if (USE_TRICK_FOR_BETTER_PRESSURE) then
             call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current, &
-                                                       NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
+                                                       NSTEP/subsamp_seismos, &
                                                        ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,1)
           else
             call compute_seismograms_cuda(Mesh_pointer,seismotype,sisux,sisuz,seismo_current, &
-                                                       NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
+                                                       NSTEP/subsamp_seismos, &
                                                        ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,0)
           endif
           ! note: curl not implemented yet
@@ -174,8 +177,7 @@
   endif ! subsamp_seismos
 
   ! save temporary or final seismograms
-  ! suppress seismograms if we generate traces of the run for analysis with "ParaVer", because time consuming
-  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+  if (it == NSTEP) then
     call write_seismograms_to_file(sisux,sisuz,siscurl)
 
     ! updates current seismogram offsets
@@ -193,21 +195,16 @@
   use mpi
 #endif
 
-  use constants, only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME
+  use constants, only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME,OUTPUT_FILES
 
   use specfem_par, only: station_name,network_name,NSTEP,islice_selected_rec,nrec,myrank,deltat,seismotype,t0, &
-                         NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos,nrecloc, &
+                         subsamp_seismos,nrecloc, &
                          seismo_offset,seismo_current,P_SV,SU_FORMAT,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,x_source,z_source
 
-! uncomment this to save the ASCII *.sem* seismograms in binary instead, to save disk space and/or writing time
-! we could/should move this flag to DATA/Par_file one day.
-!
-! #define PAUL_SAVE_ASCII_IN_BINARY
-
   implicit none
 
-  double precision,dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),intent(in) :: sisux,sisuz,siscurl
+  double precision,dimension(NSTEP/subsamp_seismos,nrecloc),intent(in) :: sisux,sisuz,siscurl
 
   ! local parameters
   logical :: save_binary_seismograms
@@ -222,8 +219,6 @@
   double precision, dimension(:,:,:), allocatable :: buffer_binary
   double precision :: time_t
 
-  ! scaling factor for Seismic Unix xsu dislay
-  double precision, parameter :: FACTORXSU = 1.d0
   integer :: irecloc
   integer :: ier
 
@@ -254,8 +249,9 @@
     number_of_components = NDIM
   endif
 
-  allocate(buffer_binary(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrec,number_of_components),stat=ier)
+  allocate(buffer_binary(NSTEP/subsamp_seismos,nrec,number_of_components),stat=ier)
   if (ier /= 0) stop 'Error allocating array buffer_binary'
+  buffer_binary(:,:,:) = 0.d0
 
   ! see if we need to save any seismogram in binary format
   save_binary_seismograms = save_binary_seismograms_single .or. save_binary_seismograms_double
@@ -271,45 +267,45 @@
 
     ! deletes old files
     if (seismo_offset == 0) then
-      open(unit=12,file='OUTPUT_FILES/Ux_file_single'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_single'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Ux_file_double'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_double'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Uy_file_single'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_single'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Uy_file_double'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_double'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Uz_file_single'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Uz_file_single'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Up_file_single'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_single'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Up_file_double'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_double'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Uc_file_single'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Uc_file_single'//suffix,status='unknown')
       close(12,status='delete')
 
-      open(unit=12,file='OUTPUT_FILES/Uc_file_double'//suffix,status='unknown')
+      open(unit=12,file=trim(OUTPUT_FILES)//'Uc_file_double'//suffix,status='unknown')
       close(12,status='delete')
     endif
 
     ! write the new files
     if (save_binary_seismograms_single) then
       if (seismotype == 4 .or. seismotype == 6) then
-        open(unit=12,file='OUTPUT_FILES/Up_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_single'//suffix,status='unknown',access='direct',recl=4)
       else if (.not. P_SV) then
-        open(unit=12,file='OUTPUT_FILES/Uy_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_single'//suffix,status='unknown',access='direct',recl=4)
       else
-        open(unit=12,file='OUTPUT_FILES/Ux_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_single'//suffix,status='unknown',access='direct',recl=4)
       endif
     endif
 
@@ -317,26 +313,26 @@
       if (seismotype == 4 .or. seismotype == 6) then
         ! continue without output
       else if (.not. P_SV) then
-        open(unit=13,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
+        open(unit=13,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
       else
-        open(unit=13,file='OUTPUT_FILES/Ux_file_double'//suffix,status='unknown',access='direct',recl=8)
+        open(unit=13,file=trim(OUTPUT_FILES)//'Ux_file_double'//suffix,status='unknown',access='direct',recl=8)
       endif
     endif
 
     ! no Z component seismogram if pressure
     if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
       if (save_binary_seismograms_single) &
-        open(unit=14,file='OUTPUT_FILES/Uz_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=14,file=trim(OUTPUT_FILES)//'Uz_file_single'//suffix,status='unknown',access='direct',recl=4)
       if (save_binary_seismograms_double) &
-        open(unit=15,file='OUTPUT_FILES/Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
+        open(unit=15,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
     endif
 
     ! curl output
     if (seismotype == 5) then
       if (save_binary_seismograms_single) &
-        open(unit=16,file='OUTPUT_FILES/Uc_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=16,file=trim(OUTPUT_FILES)//'Uc_file_single'//suffix,status='unknown',access='direct',recl=4)
       if (save_binary_seismograms_double) &
-        open(unit=17,file='OUTPUT_FILES/Uc_file_double'//suffix,status='unknown',access='direct',recl=8)
+        open(unit=17,file=trim(OUTPUT_FILES)//'Uc_file_double'//suffix,status='unknown',access='direct',recl=8)
     endif
   endif ! save_binary_seismograms
 
@@ -361,17 +357,15 @@
 #ifdef USE_MPI
       else
         ! collects seismogram components on master
-        call MPI_RECV(buffer_binary(1,irec,1),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
-                      islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+        call recv_dp(buffer_binary(1,irec,1), NSTEP/subsamp_seismos, islice_selected_rec(irec), irec)
+
         if (number_of_components == 2) then
-          call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
-                        islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+          call recv_dp(buffer_binary(1,irec,2), NSTEP/subsamp_seismos, islice_selected_rec(irec), irec)
         endif
+
         if (number_of_components == 3) then
-          call MPI_RECV(buffer_binary(1,irec,2),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
-                        islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-          call MPI_RECV(buffer_binary(1,irec,3),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION, &
-                        islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+          call recv_dp(buffer_binary(1,irec,2), NSTEP/subsamp_seismos, islice_selected_rec(irec), irec)
+          call recv_dp(buffer_binary(1,irec,3), NSTEP/subsamp_seismos, islice_selected_rec(irec), irec)
         endif
 #endif
       endif
@@ -418,8 +412,8 @@
               call exit_MPI(myrank,'wrong length of network name')
             endif
 
-            write(sisname,"('OUTPUT_FILES/',a,'.',a,'.',a3,'.sem',a1)") &
-                  network_name(irec)(1:length_network_name),station_name(irec)(1:length_station_name),channel,component
+            write(sisname,"(a,a,'.',a,'.',a3,'.sem',a1)") &
+            trim(OUTPUT_FILES),network_name(irec)(1:length_network_name),station_name(irec)(1:length_station_name),channel,component
 
             ! deletes old seismogram file when starting to write output
             if (seismo_offset == 0) then
@@ -427,32 +421,17 @@
               close(11,status='delete')
             endif
 
-            ! save seismograms in text format with no subsampling.
-            ! Because we do not subsample the output, this can result in large files
-            ! if the simulation uses many time steps. However, subsampling the output
-            ! here would result in a loss of accuracy when one later convolves
-            ! the results with the source time function
-#ifndef PAUL_SAVE_ASCII_IN_BINARY
             open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown',position='append')
-#else
-            open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown',form='unformatted',position='append')
-#endif
 
             ! make sure we never write more than the maximum number of time steps
             ! subtract offset of the source to make sure travel time is correct
-#ifndef PAUL_SAVE_ASCII_IN_BINARY
             do isample = 1,seismo_current
 
               ! forward time
               time_t = dble(seismo_offset + isample - 1) * deltat - t0
 
-              ! distinguish between single and double precision for reals
-              write(11,"(E14.7,A,E14.7)") sngl(time_t),' ',sngl(buffer_binary(isample,irec,iorientation))
-              !write(11,*) sngl(time_t),' ',sngl(buffer_binary(isample,irec,iorientation))
+              write(11,*) time_t,' ',buffer_binary(isample,irec,iorientation)
             enddo
-#else
-            write(11) sngl(buffer_binary(:,irec,iorientation))
-#endif
 
             close(11)
           enddo ! iorientation
@@ -494,16 +473,16 @@
       ! sends seismogram values to master
       if (myrank == islice_selected_rec(irec)) then
         irecloc = irecloc + 1
-        call MPI_SEND(sisux(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
-                      MPI_COMM_WORLD,ier)
+        call send_dp(sisux(1,irecloc), NSTEP/subsamp_seismos, 0, irec)
+
         if (number_of_components >= 2) then
-          call MPI_SEND(sisuz(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
-                        MPI_COMM_WORLD,ier)
+          call send_dp(sisuz(1,irecloc), NSTEP/subsamp_seismos, 0, irec)
         endif
+
         if (number_of_components == 3) then
-          call MPI_SEND(siscurl(1,irecloc),NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,MPI_DOUBLE_PRECISION,0,irec, &
-                        MPI_COMM_WORLD,ier)
+          call send_dp(siscurl(1,irecloc), NSTEP/subsamp_seismos, 0, irec)
         endif
+
       endif
 #endif
 

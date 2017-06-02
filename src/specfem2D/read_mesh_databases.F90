@@ -34,9 +34,7 @@
 
   subroutine read_mesh_for_init()
 
-! starts reading in parameters from input Database file
-
-  use constants, only: IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
+  use constants, only: IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT,OUTPUT_FILES
   use specfem_par
   use specfem_par_noise, only: NOISE_TOMOGRAPHY
   use specfem_par_movie
@@ -44,11 +42,28 @@
   implicit none
 
   ! local parameters
-  integer :: ier
-  character(len=MAX_STRING_LEN) :: prname
+  integer, external :: err_occurred
+  integer :: ier,int_dummy
+  character(len=MAX_STRING_LEN) :: prname, dummy
+
+  ! starts reading SIMULATION_TYPE and SAVE_FORWARD from Par_file
+
+  call open_parameter_file()
+  call read_value_string_p(dummy, 'solver.title')
+  if (err_occurred() /= 0) stop 'error reading parameter title in Par_file'
+  ! read type of simulation
+  call read_value_integer_p(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
+  if (err_occurred() /= 0) stop 'error reading parameter SIMULATION_TYPE in Par_file'
+  call read_value_integer_p(int_dummy, 'solver.NOISE_TOMOGRAPHY')
+  if (err_occurred() /= 0) stop 'error reading parameter NOISE_TOMOGRAPHY in Par_file'
+  call read_value_logical_p(SAVE_FORWARD, 'solver.SAVE_FORWARD')
+  if (err_occurred() /= 0) stop 'error reading parameter SAVE_FORWARD in Par_file'
+  call close_parameter_file()
+
+  ! starts reading in parameters from input Database file
 
   ! opens Database file
-  write(prname,"('./OUTPUT_FILES/Database',i5.5,'.bin')") myrank
+  write(prname,"(a,i5.5,a)") trim(OUTPUT_FILES)//'Database',myrank,'.bin'
   open(unit=IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0 ) then
     if (myrank == 0) then
@@ -56,7 +71,7 @@
       print *
       print *,'Please make sure that the mesher has been run before this solver simulation with the correct settings...'
     endif
-    call exit_MPI(myrank,'Error opening file OUTPUT_FILES/Database***.bin')
+    call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'Database***.bin')
   endif
 
   !-------- starts reading init section
@@ -65,7 +80,7 @@
   read(IIN) simulation_title
 
   !---- read parameters from input file
-  read(IIN) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
+  read(IIN) NOISE_TOMOGRAPHY, UNDO_ATTENUATION
 
   read(IIN) nspec
 
@@ -74,8 +89,6 @@
   read(IIN) output_grid_Gnuplot,interpol
 
   read(IIN) NSTEP_BETWEEN_OUTPUT_INFO
-
-  read(IIN) NSTEP_BETWEEN_OUTPUT_SEISMOS
 
   read(IIN) NSTEP_BETWEEN_OUTPUT_IMAGES
 
@@ -88,8 +101,6 @@
   read(IIN) read_external_mesh
 
   read(IIN) NELEM_PML_THICKNESS
-
-  read(IIN) NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
 
   read(IIN) subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
 
@@ -115,7 +126,7 @@
 
   read(IIN) use_binary_for_wavefield_dumps
 
-  read(IIN) ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART
+  read(IIN) ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART,ATTENUATION_VISCOACOUSTIC
 
   read(IIN) save_ASCII_seismograms
 
@@ -161,6 +172,8 @@
 
   read(IIN) GPU_MODE
 
+  read(IIN) setup_with_binary_database
+
   !---- read time step
   read(IIN) NSTEP,DT
 
@@ -168,6 +181,12 @@
 
   ! read the ACOUSTIC_FORCING flag
   read(IIN) ACOUSTIC_FORCING
+
+  ! 'NUMBER_OF_SIMULTANEOUS_RUNS'
+  read(IIN) NUMBER_OF_SIMULTANEOUS_RUNS
+
+  ! 'BROADCAST_SAME_MESH_AND_MODEL'
+  read(IIN) BROADCAST_SAME_MESH_AND_MODEL
 
   !-------- finish reading init section
   ! sets time step for time scheme
@@ -256,18 +275,10 @@
   use mpi
 #endif
 
-  use constants, only: IIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM,NB_POINTS_TO_ADD_TO_NPGEO
+  use constants, only: IIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM
   use specfem_par
 
   implicit none
-
-  ! local parameters
-  ! for small crack case
-  integer :: npgeo_ori
-
-  ! add a small crack (discontinuity) in the medium manually
-  npgeo_ori = npgeo
-  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) npgeo = npgeo + NB_POINTS_TO_ADD_TO_NPGEO
 
   ! continues reading database files
   ! note: we opened the database file in read_mesh_for_init() and will continue reading from its current position
@@ -290,7 +301,7 @@
   call read_mesh_databases_mato()
 
   ! add a small crack (discontinuity) in the medium manually
-  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) call add_manual_crack(npgeo_ori)
+  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM) call add_manual_crack()
 
   ! determines if each spectral element is elastic, poroelastic, or acoustic
   call get_simulation_domains()
@@ -448,7 +459,11 @@
     read(IIN) ipoin,coorgread(1),coorgread(2)
 
     ! checks index
-    if (ipoin < 1 .or. ipoin > npgeo) call exit_MPI(myrank,'Wrong control point number')
+    if (ipoin < 1 .or. ipoin > npgeo) then
+      print *, 'Error reading coordinates: invalid point number',ipoin,coorgread(1),coorgread(2), &
+               'at position',ip,'out of',npgeo
+      call exit_MPI(myrank,'Wrong control point number')
+    endif
 
     ! saves coordinate array
     coorg(:,ipoin) = coorgread(:)
@@ -846,38 +861,42 @@
     ! detection of the corner element
     do inum = 1,nelemabs
       if (codeabs(IEDGE1,inum)) then
+        ! bottom
         do inum_duplicate = 1,nelemabs
-           if (inum == inum_duplicate) then
-             ! left for blank, since no operation is needed.
-           else
-             if (numabs(inum) == numabs(inum_duplicate)) then
-                if (codeabs(IEDGE4,inum_duplicate)) then
-                   codeabs_corner(1,inum) = .true.
-                endif
-
-                if (codeabs(IEDGE2,inum_duplicate)) then
-                   codeabs_corner(2,inum) = .true.
-                endif
-
-             endif
-           endif
+          if (inum == inum_duplicate) then
+            ! left for blank, since no operation is needed.
+            continue
+          else
+            if (numabs(inum) == numabs(inum_duplicate)) then
+              if (codeabs(IEDGE4,inum_duplicate)) then
+                ! left
+                codeabs_corner(1,inum) = .true.
+              endif
+              if (codeabs(IEDGE2,inum_duplicate)) then
+                ! right
+                codeabs_corner(2,inum) = .true.
+              endif
+            endif
+          endif
         enddo
       endif
 
       if (codeabs(IEDGE3,inum)) then
+        ! top
         do inum_duplicate = 1,nelemabs
-           if (inum == inum_duplicate) then
-             ! left for blank, since no operation is needed.
-           else
-             if (numabs(inum) == numabs(inum_duplicate)) then
-                if (codeabs(IEDGE4,inum_duplicate)) then
-                   codeabs_corner(3,inum) = .true.
-                endif
-
-                if (codeabs(IEDGE2,inum_duplicate)) then
-                   codeabs_corner(4,inum) = .true.
-                endif
-
+          if (inum == inum_duplicate) then
+            ! left for blank, since no operation is needed.
+            continue
+          else
+            if (numabs(inum) == numabs(inum_duplicate)) then
+              if (codeabs(IEDGE4,inum_duplicate)) then
+                ! left
+                codeabs_corner(3,inum) = .true.
+              endif
+              if (codeabs(IEDGE2,inum_duplicate)) then
+                ! right
+                codeabs_corner(4,inum) = .true.
+              endif
              endif
            endif
         enddo
@@ -888,18 +907,22 @@
     ! boundary element numbering
     do inum = 1,nelemabs
       if (codeabs(IEDGE1,inum)) then
+        ! bottom
         nspec_bottom = nspec_bottom + 1
         ib_bottom(inum) =  nspec_bottom
 
       else if (codeabs(IEDGE2,inum)) then
+        ! right
         nspec_right = nspec_right + 1
         ib_right(inum) =  nspec_right
 
       else if (codeabs(IEDGE3,inum)) then
+        ! top
         nspec_top = nspec_top + 1
         ib_top(inum) = nspec_top
 
       else if (codeabs(IEDGE4,inum)) then
+        ! left
         nspec_left = nspec_left + 1
         ib_left(inum) =  nspec_left
 

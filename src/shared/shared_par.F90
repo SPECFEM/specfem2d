@@ -38,6 +38,17 @@ module constants
 
   include "constants.h"
 
+  ! a negative initial value is a convention that indicates that groups (i.e. sub-communicators, one per run) are off by default
+  integer :: mygroup = -1
+
+  ! create a copy of the original output file path, to which we may add a "run0001/", "run0002/", "run0003/" prefix later
+  ! if NUMBER_OF_SIMULTANEOUS_RUNS > 1
+  character(len=MAX_STRING_LEN) :: OUTPUT_FILES = OUTPUT_FILES_BASE
+
+  ! if doing simultaneous runs for the same mesh and model, see who should read the mesh and the model and broadcast it to others
+  ! we put a default value here
+  logical :: I_should_read_the_database = .true.
+
 end module constants
 
 !
@@ -111,6 +122,12 @@ module shared_input_parameters
   ! computational platform type
   logical :: GPU_MODE
 
+  ! creates/reads a binary database that allows to skip all time consuming setup steps in initialization
+  ! 0 = does not read/create database
+  ! 1 = creates database
+  ! 2 = reads database
+  integer :: setup_with_binary_database
+
   ! mesh files when using external mesh
   character(len=MAX_STRING_LEN) :: MODEL, SAVE_MODEL
 
@@ -122,6 +139,7 @@ module shared_input_parameters
   ! variables used for attenuation
   logical :: ATTENUATION_VISCOELASTIC
   logical :: ATTENUATION_PORO_FLUID_PART
+  logical :: ATTENUATION_VISCOACOUSTIC
   double precision :: Q0,freq0
 
   integer :: N_SLS
@@ -160,8 +178,6 @@ module shared_input_parameters
 
   ! for better accuracy of pressure output (uses 2nd time-derivatives of the initial source time function)
   logical :: USE_TRICK_FOR_BETTER_PRESSURE
-
-  integer :: NSTEP_BETWEEN_OUTPUT_SEISMOS
 
   ! Integrated energy field output
   logical :: COMPUTE_INTEGRATED_ENERGY_FIELD
@@ -286,8 +302,7 @@ module shared_input_parameters
   !#-----------------------------------------------------------------------------
   ! time step interval for image output
   integer :: NSTEP_BETWEEN_OUTPUT_IMAGES
-  ! time step interval for wavefield dumps
-  integer :: NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
+
   ! threshold value
   double precision :: cutsnaps
 
@@ -326,6 +341,10 @@ module shared_input_parameters
   logical :: output_wavefield_dumps
   integer :: imagetype_wavefield_dumps
   logical :: use_binary_for_wavefield_dumps
+
+  ! NUMBER_OF_SIMULTANEOUS_RUNS
+  integer :: NUMBER_OF_SIMULTANEOUS_RUNS
+  logical :: BROADCAST_SAME_MESH_AND_MODEL
 
 end module shared_input_parameters
 
@@ -369,7 +388,7 @@ module shared_parameters
 
   ! acoustic/elastic/anisotropic
   double precision, dimension(:),allocatable :: cp,cs, &
-    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,QKappa,Qmu
+    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12,comp_g,QKappa,Qmu
 
   ! poroelastic
   ! note: adds ending _read to indicate these are readin values and to distinguish from solver arrays

@@ -78,16 +78,15 @@
   !=======================================================================
 
   if (myrank == 0) then
-    write(IMAIN,*) 'Number of grid points: ',nglob
     write(IMAIN,*)
     write(IMAIN,*) '*** calculation of the initial plane wave ***'
     write(IMAIN,*)
-    write(IMAIN,*)  'To change the initial plane wave, change source_type in DATA/SOURCE'
-    write(IMAIN,*)  'and use 1 or 4 for a plane P wave, 2 or 5 for a plane SV wave, 3 for a Rayleigh wave'
+    write(IMAIN,*)  'To change the initial plane wave, change source_type in DATA/SOURCE and use:'
+    write(IMAIN,*)  '  1 or 4 - for a plane P wave'
+    write(IMAIN,*)  '  2 or 5 - for a plane SV wave'
+    write(IMAIN,*)  '  3      - for a Rayleigh wave'
     write(IMAIN,*)
-
-  ! only implemented for one source
-    if (NSOURCES > 1) call exit_MPI(myrank,'calculation of the initial wave is only implemented for one source')
+    ! plane wave type
     if (source_type(1) == 1 .or. source_type(1) == 4) then
       write(IMAIN,*) 'initial P wave of', anglesource(1)*180.d0/pi, 'degrees introduced.'
     else if (source_type(1) == 2 .or. source_type(1) == 5) then
@@ -98,13 +97,21 @@
       call exit_MPI(myrank, &
         'Unrecognized source_type: should be 1 or 4 for plane P waves, 2 or 5 for plane SV waves, 3 for Rayleigh wave')
     endif
+    write(IMAIN,*)
+    write(IMAIN,*) 'angle source          = ',anglesource(1)
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
+
+  ! only implemented for one source
+  if (NSOURCES > 1) &
+    call exit_MPI(myrank,'calculation of the initial wave is only implemented for one source')
 
   ! allow negative anglesource(1): incidence from the right side of the domain
   ! anglesource has been converted from degrees to radians before
-    anglesource_abs = abs(anglesource(1))
-    if (anglesource_abs > pi/2.d0 .and. source_type(1) /= 3) &
-      call exit_MPI(myrank,"incorrect anglesource: must have 0 <= anglesource < 90")
+  anglesource_abs = abs(anglesource(1))
+  if (anglesource_abs > pi/2.d0 .and. source_type(1) /= 3) &
+    call exit_MPI(myrank,"incorrect anglesource: must have 0 <= anglesource < 90")
 
   ! only implemented for homogeneous media therefore only one material supported
   numat_local = numat
@@ -128,9 +135,10 @@
   cploc = sqrt(lambdaplus2mu/denst)
   csloc = sqrt(mu/denst)
 
-  ! P wave case
+  ! plane wave type
   if (source_type(1) == 1 .or. source_type(1) == 4) then
 
+    ! P wave case
     p = sin(anglesource_abs)/cploc
     c_inc  = cploc
     c_refl = csloc
@@ -157,10 +165,10 @@
     B_plane(1) = PP * sin(anglesource_abs);      B_plane(2) = - PP * cos(anglesource_abs)
     C_plane(1) = PS * cos(anglesource_refl);     C_plane(2) = PS * sin(anglesource_refl)
 
-  ! SV wave case
   else if (source_type(1) == 2 .or. source_type(1) == 5) then
 
-    p=sin(anglesource_abs)/csloc
+    ! SV wave case
+    p = sin(anglesource_abs)/csloc
     c_inc  = csloc
     c_refl = cploc
 
@@ -187,7 +195,7 @@
       SS = -1.0d0
       SP = 0.d0
     else
-      over_critical_angle=.true.
+      over_critical_angle = .true.
       anglesource_refl = 0.d0
       SS = 0.0d0
       SP = 0.d0
@@ -199,31 +207,32 @@
     B_plane(1) = SS * cos(anglesource_abs);      B_plane(2) = SS * sin(anglesource_abs)
     C_plane(1) = SP * sin(anglesource_refl);     C_plane(2) = - SP * cos(anglesource_refl)
 
-  ! Rayleigh case
   else if (source_type(1) == 3) then
-    over_critical_angle=.true.
-    A_plane(1)=0.d0; A_plane(2)=0.d0
-    B_plane(1)=0.d0; B_plane(2)=0.d0
-    C_plane(1)=0.d0; C_plane(2)=0.d0
+
+    ! Rayleigh case
+    over_critical_angle = .true.
+    A_plane(1) = 0.d0; A_plane(2) = 0.d0
+    B_plane(1) = 0.d0; B_plane(2) = 0.d0
+    C_plane(1) = 0.d0; C_plane(2) = 0.d0
   endif
 
-   ! correct A_plane, B_plane and C_plane according to incident direction
-  if (anglesource(1) < 0.) then
-     A_plane(1)=-A_plane(1)
-     B_plane(1)=-B_plane(1)
-     C_plane(1)=-C_plane(1)
+  ! correct A_plane, B_plane and C_plane according to incident direction
+  if (anglesource(1) < 0.d0) then
+    A_plane(1) = -A_plane(1)
+    B_plane(1) = -B_plane(1)
+    C_plane(1) = -C_plane(1)
   endif
 
-! to suppress the reflected and converted plane wave fields
+  ! to suppress the reflected and converted plane wave fields
   if (source_type(1) == 4 .or. source_type(1) == 5) then
-    B_plane(:) = 0
-    C_plane(:) = 0
+    B_plane(:) = 0.d0
+    C_plane(:) = 0.d0
   endif
 
   ! get minimum and maximum values of mesh coordinates
   xmin = minval(coord(1,:))
-  zmin = minval(coord(2,:))
   xmax = maxval(coord(1,:))
+  zmin = minval(coord(2,:))
   zmax = maxval(coord(2,:))
 
   ! collects min/max on all slices
@@ -236,6 +245,14 @@
   zmin = zmin_glob
   xmax = xmax_glob
   zmax = zmax_glob
+  if (myrank == 0) then
+    write(IMAIN,*) 'mesh dimensions:'
+    write(IMAIN,*) '  x min/max = ',sngl(xmin),sngl(xmax)
+    write(IMAIN,*) '  z min/max = ',sngl(zmin),sngl(zmax)
+    write(IMAIN,*)
+    write(IMAIN,*) 'Number of grid points = ',nglob
+    call flush_IMAIN()
+  endif
 
   ! check if zs = zmax (free surface)
   if (myrank == 0 .and. abs(z_source(1)-zmax) > SMALLVALTOL) then
@@ -257,8 +274,10 @@
     call flush_IMAIN()
   endif
 
+  ! sets initial displacement/velocity/acceleration for a plane wave
   if (.not. over_critical_angle) then
 
+    ! P/SV case
     do i = 1,nglob
 
       x = coord(1,i)
@@ -267,7 +286,7 @@
       ! z is from bottom to top therefore we take -z to make parallel with Aki & Richards
 
       z = z0_source - z
-      if (anglesource(1) >= 0.) then
+      if (anglesource(1) >= 0.d0) then
          x = x - x0_source
       else
          x = x0_source -x
@@ -304,12 +323,10 @@
           A_plane(2) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc + cos(anglesource_abs)*z/c_inc,f0_source(1)) &
         + B_plane(2) * ricker_Bielak_accel(t - sin(anglesource_abs)*x/c_inc - cos(anglesource_abs)*z/c_inc,f0_source(1)) &
         + C_plane(2) * ricker_Bielak_accel(t - sin(anglesource_refl)*x/c_refl - cos(anglesource_refl)*z/c_refl,f0_source(1))
-
    enddo
+  endif
 
-endif
-
-end subroutine prepare_initial_field
+  end subroutine prepare_initial_field
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -329,6 +346,7 @@ end subroutine prepare_initial_field
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob,ibegin,iend
 
+  ! user output
   if (myrank == 0) then
     if (source_type(1) /= 3 ) &
       write(IMAIN,*) 'You are beyond the critical angle ( > ',asin(c_inc/c_refl)*180d0/pi,')'
@@ -340,27 +358,31 @@ end subroutine prepare_initial_field
     call flush_IMAIN()
   endif
 
-  count_bottom=0
-  count_left=0
-  count_right=0
-  do ispecabs= 1,nelemabs
-    ispec=numabs(ispecabs)
+  ! sets up boundary points
+  count_bottom = 0
+  count_left = 0
+  count_right = 0
+  do ispecabs = 1,nelemabs
+    ispec = numabs(ispecabs)
+    ! left boundary
     if (codeabs(IEDGE4,ispecabs)) then
        i = 1
        do j = 1,NGLLZ
-          count_left=count_left+1
+          count_left = count_left + 1
           iglob = ibool(i,j,ispec)
-          left_bound(count_left)=iglob
+          left_bound(count_left) = iglob
        enddo
     endif
+    ! right boundary
     if (codeabs(IEDGE2,ispecabs)) then
        i = NGLLX
        do j = 1,NGLLZ
-          count_right=count_right+1
+          count_right = count_right+1
           iglob = ibool(i,j,ispec)
-          right_bound(count_right)=iglob
+          right_bound(count_right) = iglob
        enddo
     endif
+    ! bottom
     if (codeabs(IEDGE1,ispecabs)) then
        j = 1
 !! DK DK not needed       ! exclude corners to make sure there is no contradiction regarding the normal
@@ -369,12 +391,21 @@ end subroutine prepare_initial_field
 !! DK DK not needed       if (codeabs(IEDGE4,ispecabs)) ibegin = 2
 !! DK DK not needed       if (codeabs(IEDGE2,ispecabs)) iend = NGLLX-1
        do i = ibegin,iend
-          count_bottom=count_bottom+1
+          count_bottom = count_bottom+1
           iglob = ibool(i,j,ispec)
-          bot_bound(count_bottom)=iglob
+          bot_bound(count_bottom) = iglob
        enddo
     endif
   enddo
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'boundary points:'
+    write(IMAIN,*) '  left    = ',count_left
+    write(IMAIN,*) '  right   = ',count_right
+    write(IMAIN,*) '  bottom  = ',count_bottom
+    call flush_IMAIN()
+  endif
 
   end subroutine prepare_initial_field_paco
 

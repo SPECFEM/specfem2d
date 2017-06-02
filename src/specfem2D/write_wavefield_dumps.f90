@@ -33,7 +33,7 @@
 
   subroutine write_wavefield_dumps()
 
-  use constants, only: IMAIN,SIZE_REAL,NGLLX,NGLLZ
+  use constants, only: IMAIN,SIZE_REAL,NGLLX,NGLLZ,OUTPUT_FILES
 
   use specfem_par, only: myrank,nglob,nspec, &
                          ibool,coord,P_SV,it,SIMULATION_TYPE, &
@@ -65,12 +65,12 @@
 
 ! save the grid separately once and for all
     if (use_binary_for_wavefield_dumps) then
-      write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_for_dumps_',i3.3,'.bin')") myrank
+      write(wavefield_file,"(a,i3.3,a)") trim(OUTPUT_FILES)//'wavefield_grid_for_dumps_',myrank,'.bin'
       open(unit=27,file=wavefield_file,form='unformatted',access='direct',status='unknown', &
            action='write',recl=2*SIZE_REAL,iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield_grid_for_dumps_**.bin')
     else
-      write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_for_dumps_',i3.3,'.txt')") myrank
+      write(wavefield_file,"(a,i3.3,a)") trim(OUTPUT_FILES)//'wavefield_grid_for_dumps_',myrank,'.txt'
       open(unit=27,file=wavefield_file,status='unknown',action='write',iostat=ier)
       if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield_grid_for_dumps_**.txt')
     endif
@@ -97,7 +97,7 @@
     close(27)
 
     ! save nglob to a file once and for all
-    write(wavefield_file,"('OUTPUT_FILES/wavefield_grid_value_of_nglob_',i3.3,'.txt')") myrank
+    write(wavefield_file,"(a,i3.3,a)") trim(OUTPUT_FILES)//'wavefield_grid_value_of_nglob_',myrank,'.txt'
     open(unit=27,file=wavefield_file,status='unknown',action='write',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield_grid_value_of_nglob_**.txt')
     write(27,*) icounter
@@ -139,12 +139,12 @@
     else
       nb_of_values_to_save = 1
     endif
-    write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.bin')") it,SIMULATION_TYPE,myrank
+    write(wavefield_file,"(a,i7.7,'_',i2.2,'_',i3.3,a)") trim(OUTPUT_FILES)//'wavefield',it,SIMULATION_TYPE,myrank,'.bin'
     open(unit=27,file=wavefield_file,form='unformatted',access='direct',status='unknown', &
              action='write',recl=nb_of_values_to_save*SIZE_REAL,iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield**.bin')
   else
-    write(wavefield_file,"('OUTPUT_FILES/wavefield',i7.7,'_',i2.2,'_',i3.3,'.txt')") it,SIMULATION_TYPE,myrank
+    write(wavefield_file,"(a,i7.7,'_',i2.2,'_',i3.3,a)") trim(OUTPUT_FILES)//'wavefield',it,SIMULATION_TYPE,myrank,'.txt'
     open(unit=27,file=wavefield_file,status='unknown',action='write',iostat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield**.txt')
   endif

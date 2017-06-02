@@ -452,3 +452,63 @@
 
   end subroutine periodic_edges_repartitioning
 
+!
+!---------------------------------------------------------------------------------------
+!
+
+  subroutine manual_crack_repartitioning(num_material,NPROC)
+
+! puts elements along manual crack into the same partition
+!
+! note: For now, elements material numbers are hard-coded and must be 2 (for left side) and 3 (right side)
+!       to indicate an element along the crack.
+!       To split nodes, see routine in add_manual_crack.f90
+
+  use constants, only: IMAIN,NCORNERS,ADD_A_SMALL_CRACK_IN_THE_MEDIUM
+  use part_unstruct_par, only: nelmnts,part
+
+  implicit none
+
+  integer, intent(in) :: nproc
+  integer, dimension(1:nelmnts), intent(in)  :: num_material
+
+  ! local parameters
+  logical, dimension(0:nelmnts-1) :: is_crack_element
+  integer  :: ipartition_crack
+  integer  :: el
+
+  ! checks if anything to do
+  if (.not. ADD_A_SMALL_CRACK_IN_THE_MEDIUM) return
+
+  ! user output
+  write(IMAIN,*)
+  write(IMAIN,*) 'detecting elements for manual crack.'
+
+  ! sets flags for elements along the crack (material number 2 and 3)
+  is_crack_element(:) = .false.
+  ipartition_crack = nproc + 1
+  do el = 0, nelmnts-1
+    ! crack between material number 2 and 3
+    if (num_material(el+1) == 2 .or. num_material(el+1) == 3) then
+      is_crack_element(el) = .true.
+      ! puts all crack elements into lowest partition possible
+      if (part(el) < ipartition_crack) ipartition_crack = part(el)
+    endif
+  enddo
+
+  ! user output
+  write(IMAIN,*) 'number of crack elements ',count(is_crack_element),' found and grouped in the same partition ',ipartition_crack
+  call flush_IMAIN()
+
+  if (count(is_crack_element) == 0) &
+    stop 'Error: no crack element found, even though ADD_A_SMALL_CRACK_IN_THE_MEDIUM is set'
+  if (ipartition_crack > nproc) &
+    stop 'Error: invalid partition number for crack elements'
+
+  ! we will put all crack elements into the same partition
+  do el = 0, nelmnts-1
+    if (is_crack_element(el)) part(el) = ipartition_crack
+  enddo
+
+  end subroutine manual_crack_repartitioning
+

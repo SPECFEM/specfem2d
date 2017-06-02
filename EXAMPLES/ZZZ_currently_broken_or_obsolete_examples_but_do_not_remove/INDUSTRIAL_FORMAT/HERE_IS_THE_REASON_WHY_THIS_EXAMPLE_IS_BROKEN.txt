@@ -1,3 +1,0 @@
-
-* `INDUSTRIAL_FORMAT`: `interpolate.f90` fails to compile.
-

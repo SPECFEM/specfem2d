@@ -220,6 +220,13 @@
 
       endif
 
+!! DK DK QUENTIN visco begin ici comme tu disais il faudrait coupler la composante tangentielle
+!! DK DK QUENTIN en plus de la composante normale je suppose, mais c'est peut-etre deja bon
+!! DK DK QUENTIN i.e. deja le cas avec les deux equations ci-dessous, j'ai pas encore verifie
+!! DK DK QUENTIN (de maniere sure on ajoute un truc aux deux composantes du vecteur acceleration
+!! DK DK QUENTIN cot'e solide, donc on ajoute bien aussi a la composante tangentielle, mais je ne
+!! DK DK QUENTIN sais pas si le fait de ne mettre que "pressure" dans le truc a ajouter est suffisant
+!! DK DK QUENTIN dans le cas viscoacoustique comme il l'est dans le cas acoustique non dissipatif)
       accel_elastic(1,iglob) = accel_elastic(1,iglob) + weight*nx*pressure
       accel_elastic(2,iglob) = accel_elastic(2,iglob) + weight*nz*pressure
 

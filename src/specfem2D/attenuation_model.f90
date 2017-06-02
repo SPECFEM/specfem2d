@@ -179,8 +179,7 @@
 !  Hybrid modeling of P-SV seismic motion at inhomogeneous viscoelastic topographic structures,
 !  Bulletin of the Seismological Society of Americal, vol. 87, p. 1305-1323 (1997).
 !
-!  See also file doc/how_we_modified_Carcione_1993_to_make_it_causal_and_include_the_missing_1_over_L_factor.pdf
-!  in the "doc/" directory of the code (in which the ak are denoted kappa_k).
+!  See also some of the PDF files in the "doc/" directory of the code.
 !
 !  The above formulas are for a Zener-body approximation of a Q(f) model, which is what SPECFEM uses.
 !  If one wants to use exact formulas for a truly constant Q model instead (i.e., not approximated by a set of Zener bodies),
@@ -193,7 +192,8 @@
 !  (the formula to scale Vs is the same except for the factor of 2, which needs to be removed because mu is related to Vs squared.
 !
 !  A similar expression can then be established for Q_Kappa, and conversion from Q_Kappa and Q_mu to Q_P and Q_S (if needed)
-!  can be found for instance in equations (9.59) and (9.60) of the book of Dahlen and Tromp (1998).
+!  can be found for instance in file "Qkappa_Qmu_versus_Qp_Qs_relationship_in_2D_plane_strain.pdf"
+!  in the "doc" directory of the code.
 
   use constants, only: ONE,TWO,PI,TWO_THIRDS,CUSTOM_REAL
 
@@ -384,7 +384,6 @@
 ! et non pas theta_max=2*pi*100*f0. En effet, dans le programme, on
 ! travaille sur les frequences, et non pas sur les frequences angulaires.
 ! Cela dit, dans les deux cas j'obtiens les memes coefficients...
-
 
 !---------------------------------------------------
 

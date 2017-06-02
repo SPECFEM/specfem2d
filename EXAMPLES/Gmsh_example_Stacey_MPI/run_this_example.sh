@@ -75,7 +75,8 @@ ln -s ../../bin/xcheck_quality_external_mesh
 ./xcheck_quality_external_mesh <<EOF
 3
 EOF
-
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo
 echo "see results in directory: OUTPUT_FILES/"

@@ -76,8 +76,7 @@
     displs_poroelastic,displw_poroelastic,velocs_poroelastic,velocw_poroelastic, &
     potential_dot_acoustic,potential_dot_gravitoacoustic,potential_dot_gravito, &
     vsext,vpext,rhoext,poroelastcoef,density,kmato,assign_external_model, &
-    ispec_is_poroelastic,ispec_is_elastic, &
-    P_SV
+    ispec_is_poroelastic,ispec_is_elastic,P_SV
 
   implicit none
 
@@ -103,13 +102,8 @@
   ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: pressure_element
 
-  ! initializes
-  kinetic_energy = ZERO
-  potential_energy = ZERO
-
-! loop over spectral elements
-  do ispec = 1,nspec
-
+  ! loop over spectral elements
+  do ispec = 1,nspec ! TODO uncomment
     !---
     !--- elastic spectral element
     !---
@@ -191,7 +185,7 @@
           ! compute kinetic energy ! TODO ABAB This integral over space should be adapted for axisym geometries if needed
           kinetic_energy = kinetic_energy  &
               + rhol * (veloc_elastic(1,ibool(i,j,ispec))**2 + veloc_elastic(2,ibool(i,j,ispec))**2) &
-                *wxgll(i)*wzgll(j)*jacobianl / TWO
+              *wxgll(i)*wzgll(j)*jacobianl / TWO
 
           ! compute potential energy ! TODO ABAB This integral over space should be adapted for axisym geometries if needed
           potential_energy = potential_energy &
@@ -359,7 +353,6 @@
       enddo
 
     endif
-
   enddo
 
   end subroutine compute_energy

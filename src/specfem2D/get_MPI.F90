@@ -146,7 +146,9 @@
         ibool_interfaces_ext_mesh(i,iinterface) = ibool_interfaces_ext_mesh_init(i,iinterface)
       enddo
     enddo
-
+  else
+    ! dummy array
+    allocate(ibool_interfaces_ext_mesh(1,1))
   endif
 
   ! sets up inner and outer elements

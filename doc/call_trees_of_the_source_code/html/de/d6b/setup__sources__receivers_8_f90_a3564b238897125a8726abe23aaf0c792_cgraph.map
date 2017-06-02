@@ -1,0 +1,5 @@
+<map id="setup_receivers" name="setup_receivers">
+<area shape="rect" id="node2" href="$db/d1a/parallel_8_f90.html#a5c0b8ddb524981fa08f6346a2d42e7b9" title="synchronize_all" alt="" coords="192,5,305,32"/>
+<area shape="rect" id="node3" href="$d5/df1/locate__receivers_8_f90.html#a4b549e593daf60a4598cccb5bafffe41" title="locate_receivers" alt="" coords="189,56,308,83"/>
+<area shape="rect" id="node4" href="$de/d6b/setup__sources__receivers_8_f90.html#a7ed07856d4439184e46aefce528746be" title="setup_receivers_check\l_acoustic" alt="" coords="169,107,328,149"/>
+</map>

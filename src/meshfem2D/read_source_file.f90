@@ -35,9 +35,9 @@
 
   ! reads in source file DATA/SOURCE
 
-  use constants, only: IMAIN,IGNORE_JUNK,NLINES_PER_SOURCE,TINYVAL,PI
+  use constants, only: IMAIN,IGNORE_JUNK,NLINES_PER_SOURCE,TINYVAL,PI,mygroup,IN_DATA_FILES
   use source_file_par
-  use shared_parameters, only: DT
+  use shared_parameters, only: DT,NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
 
@@ -46,6 +46,7 @@
   ! local parameters
   integer :: ier,icounter,i_source,num_sources
   character(len=256) string_read
+  character(len=MAX_STRING_LEN) :: source_filename,path_to_add
   integer, parameter :: IIN_SOURCE = 22
 
   ! allocates memory arrays
@@ -79,9 +80,16 @@
   Mxz(:) = 0.d0
   Mzz(:) = 0.d0
 
+  source_filename = trim(IN_DATA_FILES)//'SOURCE'
+
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    source_filename = path_to_add(1:len_trim(path_to_add))//source_filename(1:len_trim(source_filename))
+  endif
+
   ! counts lines
-  open(unit=IIN_SOURCE,file='DATA/SOURCE',status='old',action='read',iostat=ier)
-  if (ier /= 0) stop 'Error opening file DATA/SOURCE, please make sure file exists...'
+  open(unit=IIN_SOURCE,file=trim(source_filename),status='old',action='read',iostat=ier)
+  if (ier /= 0) stop 'Error opening source file, please make sure file exists...'
 
   ! counts number of lines
   icounter = 0
@@ -118,8 +126,8 @@
   endif
 
   ! reads in source parameters
-  open(unit=IIN_SOURCE,file='DATA/SOURCE',status='old',action='read',iostat=ier)
-  if (ier /= 0) stop 'Error opening file DATA/SOURCE'
+  open(unit=IIN_SOURCE,file=trim(source_filename),status='old',action='read',iostat=ier)
+  if (ier /= 0) stop 'Error opening source file, please make sure file exists...'
 
   ! reads in all source informations
   do  i_source= 1,NSOURCES
@@ -247,6 +255,9 @@
       write(IMAIN,*) '  Burst band width: ',burst_band_width(i_source)
     case (10)
       write(IMAIN,*) '  Sinus source time function:'
+      write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
+    case (11)
+      write(IMAIN,*) '  Ormsby source time function:'
       write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case default
       stop 'Error invalid source time function type! must be between 1 and 9, exiting...'

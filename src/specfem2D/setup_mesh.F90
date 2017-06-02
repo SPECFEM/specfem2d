@@ -40,6 +40,8 @@
 
   implicit none
 
+  if (setup_with_binary_database == 2) return
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
@@ -282,7 +284,7 @@
   use mpi
 #endif
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,OUTPUT_FILES
   use specfem_par
   use specfem_par_movie
 
@@ -329,7 +331,7 @@
      write(IMAIN,*)
      write(IMAIN,*) 'Saving the grid in an ASCII text file...'
      write(IMAIN,*)
-     open(unit=55,file='OUTPUT_FILES/ASCII_dump_of_grid_points.txt',status='unknown')
+     open(unit=55,file=trim(OUTPUT_FILES)//'ASCII_dump_of_grid_points.txt',status='unknown')
      write(55,*) nglob
      do n = 1,nglob
         write(55,*) (coord(i,n), i = 1,NDIM)
@@ -543,7 +545,7 @@
   ! local parameters
   integer :: nspec_ext,ier
 
-  ! allocates material arrays
+  ! allocates material arrays for vp vs rho QKappa Qmu
   if (assign_external_model) then
     nspec_ext = nspec
   else
@@ -554,10 +556,26 @@
   allocate(vpext(NGLLX,NGLLZ,nspec_ext), &
            vsext(NGLLX,NGLLZ,nspec_ext), &
            rhoext(NGLLX,NGLLZ,nspec_ext), &
-           gravityext(NGLLX,NGLLZ,nspec_ext), &
-           Nsqext(NGLLX,NGLLZ,nspec_ext), &
            QKappa_attenuationext(NGLLX,NGLLZ,nspec_ext), &
-           Qmu_attenuationext(NGLLX,NGLLZ,nspec_ext), &
+           Qmu_attenuationext(NGLLX,NGLLZ,nspec_ext),stat=ier)
+  if (ier /= 0) stop 'Error allocating external model arrays for vp vs rho attenuation'
+
+  ! The following line is important. For external model defined from tomography file ; material line in Par_file like that:
+  ! model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
+  ! because in that case MODEL = "default" but nspec_ext = nspec
+  if (tomo_material > 0) MODEL = 'tomo'
+
+  ! allocates material arrays for gravity Nsq c11 c13 c15 c33 c35 c55 c12 c23 c25 c22
+  if (assign_external_model .and. ( trim(MODEL) == 'external' .or. &
+                                    trim(MODEL) == 'tomo' .or. trim(MODEL) == 'binary_voigt' ) ) then
+    nspec_ext = nspec
+  else
+    ! dummy allocations
+    nspec_ext = 1
+  endif
+
+  allocate(gravityext(NGLLX,NGLLZ,nspec_ext), &
+           Nsqext(NGLLX,NGLLZ,nspec_ext), &
            c11ext(NGLLX,NGLLZ,nspec_ext), &
            c13ext(NGLLX,NGLLZ,nspec_ext), &
            c15ext(NGLLX,NGLLZ,nspec_ext), &
@@ -568,7 +586,7 @@
            c23ext(NGLLX,NGLLZ,nspec_ext), &
            c25ext(NGLLX,NGLLZ,nspec_ext), &
            c22ext(NGLLX,NGLLZ,nspec_ext),stat=ier)
-  if (ier /= 0) stop 'Error allocating external model arrays'
+  if (ier /= 0) stop 'Error allocating external model arrays for gravity Nsq anisotropy'
 
   ! reads in external models
   if (assign_external_model) then
@@ -687,14 +705,13 @@
   ! global domain flags
   ! (sets global flag for all slices)
   call any_all_l(any_elastic, ELASTIC_SIMULATION)
-  call any_all_l(any_poroelastic, POROELASTIC_SIMULATION)
   call any_all_l(any_acoustic, ACOUSTIC_SIMULATION)
+  call any_all_l(any_poroelastic, POROELASTIC_SIMULATION)
   call any_all_l(any_gravitoacoustic, GRAVITOACOUSTIC_SIMULATION)
 
   ! check for solid attenuation
-  if (.not. ELASTIC_SIMULATION) then
-    if (ATTENUATION_VISCOELASTIC) &
-      call exit_MPI(myrank,'currently cannot have attenuation if acoustic/poroelastic simulation only')
+  if (.not. ELASTIC_SIMULATION .and. .not. ACOUSTIC_SIMULATION .and. .not. GRAVITOACOUSTIC_SIMULATION) then
+    if (ATTENUATION_VISCOELASTIC) call exit_MPI(myrank,'currently cannot have attenuation if poroelastic simulation only')
   endif
 
   ! safety check

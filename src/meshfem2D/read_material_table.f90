@@ -39,7 +39,7 @@
 
   use shared_parameters, only: AXISYM,nbmodels,icodemat,cp,cs, &
                               aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11,aniso12, &
-                              QKappa,Qmu, &
+                              comp_g,QKappa,Qmu, &
                               rho_s_read,rho_f_read, &
                               phi_read,tortuosity_read, &
                               permxx_read,permxz_read,permzz_read,kappa_s_read,kappa_f_read,kappa_fr_read, &
@@ -82,6 +82,7 @@
   allocate(aniso11(nbmodels))
   allocate(aniso12(nbmodels))
 
+  allocate(comp_g(nbmodels))
   allocate(QKappa(nbmodels))
   allocate(Qmu(nbmodels))
 
@@ -115,6 +116,7 @@
   aniso10(:) = 0.d0
   aniso11(:) = 0.d0
 
+  comp_g(:) = 0.0d0
   QKappa(:) = 9999.d0
   Qmu(:) = 9999.d0
 
@@ -135,7 +137,7 @@
   number_of_materials_defined_by_tomo_file = 0
 
   ! reads in material definitions
-  do imaterial= 1,nbmodels
+  do imaterial = 1,nbmodels
 
     call read_material_parameters_p(i,icodematread, &
                                     val0read,val1read,val2read,val3read, &
@@ -152,14 +154,18 @@
       rho_s_read(i) = val0read
       cp(i) = val1read
       cs(i) = val2read
+      comp_g(i) = val3read
       QKappa(i) = val5read
       Qmu(i) = val6read
 
       ! for Cs we use a less restrictive test because acoustic media have Cs exactly equal to zero
-      if (rho_s_read(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) &
+      if (rho_s_read(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) then
+        write(*,*) 'rho,cp,cs=',rho_s_read(i),cp(i),cs(i)
         stop 'negative value of velocity or density'
-      if (QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) &
+      endif
+      if (QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) then
         stop 'non-positive value of QKappa or Qmu'
+      endif
 
       aniso3(i) = val3read
       aniso4(i) = val4read

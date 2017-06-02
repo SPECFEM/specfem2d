@@ -36,7 +36,7 @@
 
   ! compute forces for the elastic elements
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
-    IEDGE1,IEDGE2,IEDGE3,IEDGE4,ONE,TWO,PI,TINYVAL,FOUR_THIRDS,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
+    ONE,TWO,PI,TINYVAL,FOUR_THIRDS,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: nglob,assign_external_model,P_SV, &
                          ATTENUATION_VISCOELASTIC,nspec_ATT,N_SLS, &
@@ -417,8 +417,8 @@
             if (P_SV) then
               ! P_SV case
               sigma_xx = lambdaplus2mu_unrelaxed_elastic*dux_dxl(i,j) + lambdal_unrelaxed_elastic*duz_dzl(i,j)
-              sigma_xz = mul_unrelaxed_elastic*(duz_dxl(i,j) + dux_dzl(i,j))
               sigma_zz = lambdaplus2mu_unrelaxed_elastic*duz_dzl(i,j) + lambdal_unrelaxed_elastic*dux_dxl(i,j)
+              sigma_xz = mul_unrelaxed_elastic*(duz_dxl(i,j) + dux_dzl(i,j))
               sigma_zx = sigma_xz
             else
               ! SH-case
@@ -465,7 +465,8 @@
                 sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j) + duz_dxl(i,j))
               endif
             endif
-          endif
+          endif ! PML_BOUNDARY_CONDITION
+
         endif
 
         ! full anisotropy

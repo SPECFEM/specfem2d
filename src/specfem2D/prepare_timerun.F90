@@ -33,12 +33,19 @@
 
   subroutine prepare_timerun()
 
-  use constants, only: USE_ENFORCE_FIELDS,IOUT_ENERGY,IMAIN
+  use constants, only: USE_ENFORCE_FIELDS,IOUT_ENERGY,IMAIN,OUTPUT_FILES
   use specfem_par
   use specfem_par_movie
   use specfem_par_noise, only: NOISE_TOMOGRAPHY
 
   implicit none
+
+  if (setup_with_binary_database == 2 ) then
+   call setup_mesh_external_models()
+   call read_sources_receivers()
+   if (SIMULATION_TYPE == 3) call setup_adjoint_sources()
+   call read_binary_database_part1()
+  endif
 
   ! Test compatibility with axisymmetric formulation
   if (AXISYM) call check_compatibility_axisym()
@@ -52,32 +59,45 @@
   ! PML preparation
   call prepare_PML()
 
-  ! prepares mass matrices
-  call prepare_timerun_mass_matrix()
+  if (setup_with_binary_database /= 2 ) then
 
-  ! check which GLL will be forced or not
-  if (USE_ENFORCE_FIELDS) call build_forced()
+    ! prepares mass matrices
+    call prepare_timerun_mass_matrix()
 
-  ! postscript images for grids and snapshots
-  call prepare_timerun_postscripts()
+    ! check which GLL will be forced or not
+    if (USE_ENFORCE_FIELDS) call build_forced()
+
+    ! postscript images for grids and snapshots
+    call prepare_timerun_postscripts()
+
+    ! for adjoint kernel runs
+    call prepare_timerun_adjoint()
+
+    ! reads initial fields from external file if needed
+    call prepare_timerun_initialfield
+
+    ! compute the source time function and stores it in a text file
+    call prepare_source_time_function()
+
+    ! prepares noise simulations
+    if (NOISE_TOMOGRAPHY /= 0) call prepare_timerun_noise()
+
+    ! attenuation
+    call prepare_timerun_attenuation()
+
+    if (setup_with_binary_database == 1 ) call save_binary_database()
+
+  else
+
+    call read_binary_database_part2()
+
+  endif
+
+  ! compute material property arrays
+  call prepare_material_arrays()
 
   ! jpeg images
   call prepare_timerun_image_coloring()
-
-  ! for adjoint kernel runs
-  call prepare_timerun_adjoint()
-
-  ! reads initial fields from external file if needed
-  call prepare_timerun_initialfield
-
-  ! compute the source time function and stores it in a text file
-  call prepare_source_time_function()
-
-  ! prepares noise simulations
-  if (NOISE_TOMOGRAPHY /= 0) call prepare_timerun_noise()
-
-  ! attenuation
-  call prepare_timerun_attenuation()
 
   ! prepares GPU arrays
   if (GPU_MODE) call prepare_GPU()
@@ -87,7 +107,7 @@
   ! creates a Gnuplot script to display the energy curve in log scale
   if (OUTPUT_ENERGY .and. myrank == 0) then
     close(IOUT_ENERGY)
-    open(unit=IOUT_ENERGY,file='OUTPUT_FILES/plot_energy.gnu',status='unknown',action='write')
+    open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'plot_energy.gnu',status='unknown',action='write')
     write(IOUT_ENERGY,*) 'set term wxt'
     write(IOUT_ENERGY,*) '#set term postscript landscape color solid "Helvetica" 22'
     write(IOUT_ENERGY,*) '#set output "energy.ps"'
@@ -95,7 +115,7 @@
     write(IOUT_ENERGY,*) 'set logscale y'
     write(IOUT_ENERGY,*) 'set xlabel "Time (s)"'
     write(IOUT_ENERGY,*) 'set ylabel "Energy (J)"'
-    write(IOUT_ENERGY,*) 'set loadpath "./OUTPUT_FILES"'
+    write(IOUT_ENERGY,*) 'set loadpath "'//trim(OUTPUT_FILES)//'"'
     write(IOUT_ENERGY,'(a)') &
       'plot "energy.dat" us 1:4 t "Total Energy" w l lc 1, "energy.dat" us 1:3 t "Potential Energy" w l lc 2'
     write(IOUT_ENERGY,*) 'pause -1 "Hit any key..."'
@@ -103,7 +123,7 @@
   endif
 
   ! open the file in which we will store the energy curve
-  if (OUTPUT_ENERGY .and. myrank == 0) open(unit=IOUT_ENERGY,file='OUTPUT_FILES/energy.dat',status='unknown',action='write')
+  if (OUTPUT_ENERGY .and. myrank == 0) open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'energy.dat',status='unknown',action='write')
 
   ! synchronizes all processes
   call synchronize_all()
@@ -162,9 +182,9 @@
 
   ! seismograms
   ! allocate seismogram arrays
-  allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
-           sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
-           siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),stat=ier)
+  allocate(sisux(NSTEP/subsamp_seismos,nrecloc), &
+           sisuz(NSTEP/subsamp_seismos,nrecloc), &
+           siscurl(NSTEP/subsamp_seismos,nrecloc),stat=ier)
   if (ier /= 0) stop 'Error allocating seismogram arrays'
 
   sisux(:,:) = ZERO ! double precision zero
@@ -344,7 +364,7 @@
              d1_coorg_recv_ps_vector_field, d2_coorg_recv_ps_vector_field
 
   ! checks if anything to do
-  if (.not. (output_color_image .or. output_postscript_snapshot)) return
+  if (.not. (output_color_image .or. output_postscript_snapshot .or. output_wavefield_dumps)) return
 
   ! user output
   if (myrank == 0) then
@@ -421,8 +441,8 @@
       if (myrank == 0) then
         ! master collects
         do iproc = 1, NPROC-1
-          call MPI_RECV(num_pixel_recv(1,iproc+1),nb_pixel_per_proc(iproc), MPI_INTEGER, &
-                        iproc, 42, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_i(num_pixel_recv(1,iproc+1), nb_pixel_per_proc(iproc), iproc, 42)
+
           do k = 1, nb_pixel_per_proc(iproc)
             j = ceiling(real(num_pixel_recv(k,iproc+1)) / real(NX_IMAGE_color))
             i = num_pixel_recv(k,iproc+1) - (j-1)*NX_IMAGE_color
@@ -440,7 +460,7 @@
         enddo
 
       else
-        call MPI_SEND(num_pixel_loc(1),nb_pixel_loc,MPI_INTEGER, 0, 42, MPI_COMM_WORLD, ier)
+        call send_i(num_pixel_loc(1), nb_pixel_loc, 0, 42)
       endif
     endif
     call synchronize_all()
@@ -471,13 +491,14 @@
     ! allocate arrays for postscript output
 #ifdef USE_MPI
     if (modelvect) then
-      d1_coorg_recv_ps_velocity_model=2
-      call mpi_allreduce(nspec,d2_coorg_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-      d2_coorg_recv_ps_velocity_model=d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+      d1_coorg_recv_ps_velocity_model = 2
+      call max_all_all_i(nspec,d2_coorg_recv_ps_velocity_model)
+      d2_coorg_recv_ps_velocity_model = d2_coorg_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
          ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
-      d1_RGB_recv_ps_velocity_model=1
-      call mpi_allreduce(nspec,d2_RGB_recv_ps_velocity_model,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-      d2_RGB_recv_ps_velocity_model=d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
+      d1_RGB_recv_ps_velocity_model = 1
+
+      call max_all_all_i(nspec,d2_RGB_recv_ps_velocity_model)
+      d2_RGB_recv_ps_velocity_model = d2_RGB_recv_ps_velocity_model*((NGLLX-subsamp_postscript)/subsamp_postscript)* &
          ((NGLLX-subsamp_postscript)/subsamp_postscript)*4
     else
       d1_coorg_recv_ps_velocity_model=1
@@ -517,19 +538,19 @@
       endif
     endif
 
-    call mpi_allreduce(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-    call mpi_allreduce(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-    call mpi_allreduce(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call max_all_all_i(d1_coorg_send_ps_element_mesh,d1_coorg_recv_ps_element_mesh)
+    call max_all_all_i(d2_coorg_send_ps_element_mesh,d2_coorg_recv_ps_element_mesh)
+    call max_all_all_i(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh)
 
     d1_coorg_send_ps_abs=5
     d2_coorg_send_ps_abs=4*nelemabs
-    call mpi_allreduce(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-    call mpi_allreduce(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call max_all_all_i(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs)
+    call max_all_all_i(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs)
 
     d1_coorg_send_ps_free_surface=4
     d2_coorg_send_ps_free_surface=4*nelem_acoustic_surface
-    call mpi_allreduce(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-    call mpi_allreduce(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call max_all_all_i(d1_coorg_send_ps_free_surface,d1_coorg_recv_ps_free_surface)
+    call max_all_all_i(d2_coorg_send_ps_free_surface,d2_coorg_recv_ps_free_surface)
 
     d1_coorg_send_ps_vector_field=8
     if (interpol) then
@@ -541,8 +562,8 @@
     else
       d2_coorg_send_ps_vector_field=nglob
     endif
-    call mpi_allreduce(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-    call mpi_allreduce(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+    call max_all_all_i(d1_coorg_send_ps_vector_field,d1_coorg_recv_ps_vector_field)
+    call max_all_all_i(d2_coorg_send_ps_vector_field,d2_coorg_recv_ps_vector_field)
 
 #else
     ! dummy values
@@ -604,6 +625,9 @@
     ! to dump the wave field
     this_is_the_first_time_we_dump = .true.
 
+  else if (output_wavefield_dumps) then
+     this_is_the_first_time_we_dump = .true.
+
   endif ! postscript
 
   end subroutine prepare_timerun_image_coloring
@@ -616,7 +640,7 @@
 
 ! prepares adjoint runs
 
-  use constants, only: IMAIN,USE_PORO_VISCOUS_DAMPING
+  use constants, only: IMAIN,USE_PORO_VISCOUS_DAMPING,OUTPUT_FILES
   use specfem_par
 
   implicit none
@@ -683,22 +707,22 @@
         write(outputname2,'(a,i6.6,a)') 'viscodampingz',myrank,'.bin'
 
         if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-          open(unit=23,file='OUTPUT_FILES/'//outputname,status='unknown', &
+          open(unit=23,file=trim(OUTPUT_FILES)//outputname,status='unknown', &
                 form='unformatted',access='direct',recl=reclen,iostat=ier)
-          if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+          if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'viscodampingx**.bin')
 
-          open(unit=24,file='OUTPUT_FILES/'//outputname2,status='unknown', &
+          open(unit=24,file=trim(OUTPUT_FILES)//outputname2,status='unknown', &
                 form='unformatted',access='direct',recl=reclen,iostat=ier)
-          if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+          if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'viscodampingz**.bin')
 
         else if (SIMULATION_TYPE == 3) then
-          open(unit=23,file='OUTPUT_FILES/'//outputname,status='old', &
+          open(unit=23,file=trim(OUTPUT_FILES)//outputname,status='old', &
                 action='read',form='unformatted',access='direct',recl=reclen,iostat=ier)
-          if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingx**.bin')
+          if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'viscodampingx**.bin')
 
-          open(unit=24,file='OUTPUT_FILES/'//outputname2,status='old', &
+          open(unit=24,file=trim(OUTPUT_FILES)//outputname2,status='old', &
                 action='read',form='unformatted',access='direct',recl=reclen,iostat=ier)
-          if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/viscodampingz**.bin')
+          if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'viscodampingz**.bin')
         endif
       endif
     endif
@@ -721,7 +745,7 @@
   use mpi
 #endif
 
-  use constants, only: IMAIN,APPROXIMATE_HESS_KL
+  use constants, only: IMAIN,APPROXIMATE_HESS_KL,OUTPUT_FILES
   use specfem_par
 
   implicit none
@@ -747,83 +771,83 @@
       ! ascii format
       if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_cijkl_kernel.dat'
-        open(unit = 97, file='OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+        open(unit = 97, file=trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
       else
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
-        open(unit = 97, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+        open(unit = 97, file = trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
-        open(unit = 98, file = 'OUTPUT_FILES/'//outputname,status='unknown',iostat=ier)
+        open(unit = 98, file = trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
       endif
     else
       ! binary format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kernel.bin'
-      open(unit = 204, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      open(unit = 204, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
          write(outputname,'(a,i6.6,a)')'proc',myrank,'_c11_kernel.bin'
-         open(unit = 205,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         open(unit = 205,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c13_kernel.bin'
-         open(unit = 206,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         open(unit = 206,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c15_kernel.bin'
-         open(unit = 207,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         open(unit = 207,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c33_kernel.bin'
-         open(unit = 208,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         open(unit = 208,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c35_kernel.bin'
-         open(unit = 209,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         open(unit = 209,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c55_kernel.bin'
-         open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+         open(unit = 210,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
          if (ier /= 0) stop 'Error writing kernel file to disk'
       else
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_kernel.bin'
-        open(unit = 205, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        open(unit = 205, file =trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_kernel.bin'
-        open(unit = 206, file ='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        open(unit = 206, file =trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_kernel.bin'
-        open(unit = 207, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        open(unit = 207, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_alpha_kernel.bin'
-        open(unit = 208, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        open(unit = 208, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_beta_kernel.bin'
-        open(unit = 209, file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+        open(unit = 209, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
-        open(unit = 210,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        open(unit = 210,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
-        open(unit = 211,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        open(unit = 211,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         if (APPROXIMATE_HESS_KL) then
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian1_kernel.bin'
-          open(unit =214,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+          open(unit =214,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
           if (ier /= 0) stop 'Error writing kernel file to disk'
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian2_kernel.bin'
-          open(unit=215,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+          open(unit=215,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
           if (ier /= 0) stop 'Error writing kernel file to disk'
         endif
       endif
@@ -853,33 +877,33 @@
 
     ! Primary kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_B_C_kernel.dat'
-    open(unit = 144, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 144, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_M_rho_rhof_kernel.dat'
-    open(unit = 155, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 155, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_m_eta_kernel.dat'
-    open(unit = 16, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 16, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     ! Wavespeed kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_cpI_cpII_cs_kernel.dat'
-    open(unit = 20, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 20, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhobb_rhofbb_ratio_kernel.dat'
-    open(unit = 21, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 21, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_phib_eta_kernel.dat'
-    open(unit = 22, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 22, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     ! Density normalized kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mub_Bb_Cb_kernel.dat'
-    open(unit = 17, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 17, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Mb_rhob_rhofb_kernel.dat'
-    open(unit = 18, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 18, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mb_etab_kernel.dat'
-    open(unit = 19, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+    open(unit = 19, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
     if (ier /= 0) stop 'Error writing kernel file to disk'
 
     rhot_kl(:,:,:) = 0._CUSTOM_REAL
@@ -911,38 +935,38 @@
     if (save_ASCII_kernels) then
       ! ascii format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.dat'
-      open(unit = 95, file = 'OUTPUT_FILES/'//outputname,status ='unknown',iostat=ier)
+      open(unit = 95, file = trim(OUTPUT_FILES)//outputname,status ='unknown',iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_c_kernel.dat'
-      open(unit = 96, file = 'OUTPUT_FILES/'//outputname,status = 'unknown',iostat=ier)
+      open(unit = 96, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
     else
       ! binary format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_acoustic_kernel.bin'
-      open(unit = 200, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      open(unit = 200, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_acoustic_kernel.bin'
-      open(unit = 201, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      open(unit = 201, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_acoustic_kernel.bin'
-      open(unit = 202, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      open(unit = 202, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c_acoustic_kernel.bin'
-      open(unit = 203, file = 'OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
+      open(unit = 203, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
       if (ier /= 0) stop 'Error writing kernel file to disk'
 
       if (APPROXIMATE_HESS_KL) then
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian1_acoustic_kernel.bin'
-        open(unit=212,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        open(unit=212,file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian2_acoustic_kernel.bin'
-        open(unit=213,file='OUTPUT_FILES/'//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+        open(unit=213,file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
         if (ier /= 0) stop 'Error writing kernel file to disk'
       endif
     endif
@@ -999,14 +1023,19 @@
 
   ! Calculation of the initial field for a plane wave
   if (any_elastic) then
+
+    ! calculates initial plane wave coefficients
     call prepare_initial_field(cploc,csloc)
 
+    ! special case for Rayleigh waves, SV waves above critical angle
     if (over_critical_angle) then
 
+      ! allocates boundaries
       allocate(left_bound(nelemabs*NGLLX))
       allocate(right_bound(nelemabs*NGLLX))
       allocate(bot_bound(nelemabs*NGLLZ))
 
+      ! sets up boundary points
       call prepare_initial_field_paco()
 
       allocate(v0x_left(count_left,NSTEP))
@@ -1025,19 +1054,24 @@
       allocate(t0z_bot(count_bottom,NSTEP))
 
       ! call Paco's routine to compute in frequency and convert to time by Fourier transform
-      call paco_beyond_critical(anglesource(1), &
-                                f0_source(1),QKappa_attenuation(1),source_type(1),left_bound(1:count_left), &
-                                right_bound(1:count_right),bot_bound(1:count_bottom), &
-                                count_left,count_right,count_bottom,x_source(1),cploc,csloc)
+      call paco_beyond_critical(anglesource(1),f0_source(1), &
+                                QKappa_attenuation(1),source_type(1), &
+                                left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom), &
+                                count_left,count_right,count_bottom, &
+                                x_source(1),cploc,csloc)
 
+      ! frees memory
       deallocate(left_bound)
       deallocate(right_bound)
       deallocate(bot_bound)
 
+      ! user output
       if (myrank == 0) then
+        write(IMAIN,*)
         write(IMAIN,*)  '***********'
         write(IMAIN,*)  'done calculating the initial wave field'
         write(IMAIN,*)  '***********'
+        write(IMAIN,*)
         call flush_IMAIN()
       endif
 
@@ -1066,7 +1100,7 @@
   use mpi
 #endif
 
-  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS
+  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS,OUTPUT_FILES
 
   use specfem_par, only: myrank,AXISYM,NSTEP,nglob,nspec,ibool,coord, &
                          rhoext,vpext,vsext,density,poroelastcoef,kmato,assign_external_model
@@ -1110,7 +1144,7 @@
     call compute_source_array_noise()
 
     ! write out coordinates of mesh
-    open(unit=504,file='OUTPUT_FILES/mesh_spec',status='unknown',action='write')
+    open(unit=504,file=trim(OUTPUT_FILES)//'mesh_spec',status='unknown',action='write')
       do ispec = 1, nspec
         do j = 1, NGLLZ
           do i = 1, NGLLX
@@ -1121,7 +1155,7 @@
       enddo
     close(504)
 
-    open(unit=504,file='OUTPUT_FILES/mesh_glob',status='unknown',action='write')
+    open(unit=504,file=trim(OUTPUT_FILES)//'mesh_glob',status='unknown',action='write')
       do iglob = 1, nglob
         write(504,'(1pe11.3,1pe11.3,i7)') coord(1,iglob), coord(2,iglob), iglob
       enddo
@@ -1129,7 +1163,7 @@
 
     ! write out spatial distribution of noise sources
     call create_mask_noise()
-    open(unit=504,file='OUTPUT_FILES/mask_noise',status='unknown',action='write')
+    open(unit=504,file=trim(OUTPUT_FILES)//'mask_noise',status='unknown',action='write')
       do iglob = 1, nglob
             write(504,'(1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), mask_noise(iglob)
       enddo
@@ -1137,7 +1171,7 @@
 
     ! write out velocity model
     if (assign_external_model) then
-      open(unit=504,file='OUTPUT_FILES/model_rho_vp_vs',status='unknown',action='write')
+      open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_vp_vs',status='unknown',action='write')
         do ispec = 1, nspec
           do j = 1, NGLLZ
             do i = 1, NGLLX
@@ -1149,7 +1183,7 @@
         enddo
       close(504)
     else
-      open(unit=504,file='OUTPUT_FILES/model_rho_kappa_mu',status='unknown',action='write')
+      open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_kappa_mu',status='unknown',action='write')
         do ispec = 1, nspec
           do j = 1, NGLLZ
             do i = 1, NGLLX
@@ -1196,7 +1230,6 @@
 !-------------------------------------------------------------------------------------
 !
 
-
   subroutine prepare_timerun_attenuation()
 
 #ifdef USE_MPI
@@ -1211,7 +1244,7 @@
   ! local parameters
   integer :: i,j,ispec,n,ier
   ! for shifting of velocities if needed in the case of viscoelasticity
-  double precision :: vp,vs,rhol,mul,lambdal,kappal
+  double precision :: vp,vs,rhol,mul,lambdal
   double precision :: qkappal,qmul
   ! attenuation factors
   real(kind=CUSTOM_REAL) :: Mu_nu1_sent,Mu_nu2_sent
@@ -1220,7 +1253,7 @@
                                                        phi_nu1_sent,phi_nu2_sent
 
   ! attenuation
-  if (ATTENUATION_VISCOELASTIC) then
+  if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC) then
     nspec_ATT = nspec
   else
     nspec_ATT = 1
@@ -1311,13 +1344,13 @@
   endif
 
   ! setup attenuation
-  if (ATTENUATION_VISCOELASTIC) then
+  if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC) then
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) 'Preparing attenuation'
-      write(IMAIN,*) '  using external model for Qkappa & Qmu: ',assign_external_model
-      write(IMAIN,*) '  reading velocity at f0               : ',READ_VELOCITIES_AT_f0
+      write(IMAIN,*) 'Preparing attenuation in viscoelastic or viscoacoustic parts of the model:'
+      write(IMAIN,*) '  using external model for Qkappa and Qmu: ',assign_external_model
+      write(IMAIN,*) '  reading velocity at f0                 : ',READ_VELOCITIES_AT_f0
       write(IMAIN,*) '  using f0 attenuation = ',f0_attenuation,'Hz'
       call flush_IMAIN()
     endif
@@ -1326,22 +1359,13 @@
 !! DK DK if needed in the future, here the quality factor could be different for each point
     do ispec = 1,nspec
 
-      ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
-      if (ispec_is_acoustic(ispec)) cycle
-
       ! get values for internal meshes
       if (.not. assign_external_model) then
         qkappal = QKappa_attenuation(kmato(ispec))
         qmul = Qmu_attenuation(kmato(ispec))
 
-        ! check that attenuation values entered by the user make sense
-        if ((qkappal <= 9998.999d0 .and. qmul > 9998.999d0) .or. &
-            (qkappal > 9998.999d0 .and. qmul <= 9998.999d0)) &
-           stop 'need to have Qkappa and Qmu both above or both below 9999 for a given material; &
-                &trick: use 9998 if you want to turn off one'
-
         ! if no attenuation in that elastic element
-        if (qkappal > 9998.999d0) cycle
+        if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
 
         ! determines attenuation factors
         call attenuation_model(qkappal,qmul,f0_attenuation,N_SLS, &
@@ -1357,19 +1381,13 @@
             qkappal = QKappa_attenuationext(i,j,ispec)
             qmul = Qmu_attenuationext(i,j,ispec)
 
-            ! check that attenuation values entered by the user make sense
-            if ((qkappal <= 9998.999d0 .and. qmul > 9998.999d0) .or. &
-                (qkappal > 9998.999d0 .and. qmul <= 9998.999d0)) &
-               stop 'need to have Qkappa and Qmu both above or both below 9999 for a given material; &
-                    &trick: use 9998 if you want to turn off one'
-
             ! if no attenuation in that elastic element
-            if (qkappal > 9998.999d0) cycle
+            if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
 
             ! determines attenuation factors
             call attenuation_model(qkappal,qmul,f0_attenuation,N_SLS, &
-                                 tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
-                                 tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
+                                   tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
+                                   tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
           endif
 
           ! stores attenuation values
@@ -1384,10 +1402,18 @@
 
           ! shifts velocities
           if (READ_VELOCITIES_AT_f0) then
+
             ! safety check
             if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) &
               stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, &
                     &non poroelastic, non gravitoacoustic materials for now'
+
+            if (ispec_is_acoustic(ispec)) then
+              do n = 1,100
+                print *,'WARNING: READ_VELOCITIES_AT_f0 in viscoacoustic elements may imply having to rebuild the mass matrix &
+                   &with the shifted velocities, since the fluid mass matrix contains Kappa; not implemented yet, BEWARE!!'
+              enddo
+            endif
 
             if (assign_external_model) then
               ! external mesh model
@@ -1395,7 +1421,7 @@
               vp = dble(vpext(i,j,ispec))
               vs = dble(vsext(i,j,ispec))
 
-              ! shifts vp & vs (according to f0 and attenuation band)
+              ! shifts vp and vs (according to f0 and attenuation band)
               call shift_velocities_from_f0(vp,vs,rhol, &
                                     f0_attenuation,N_SLS, &
                                     tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
@@ -1414,7 +1440,7 @@
                 vp = sqrt((lambdal + TWO * mul) / rhol)
                 vs = sqrt(mul/rhol)
 
-                ! shifts vp & vs
+                ! shifts vp and vs
                 call shift_velocities_from_f0(vp,vs,rhol, &
                                       f0_attenuation,N_SLS, &
                                       tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
@@ -1434,66 +1460,7 @@
         enddo
       enddo
     enddo
-  endif ! ATTENUATION_VISCOELASTIC
-
-  ! sets new material properties
-  ! note: velocities might have been shifted by attenuation
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Preparing material arrays'
-    call flush_IMAIN()
-  endif
-
-  ! allocates material arrays
-  allocate(kappastore(NGLLX,NGLLZ,nspec), &
-           mustore(NGLLX,NGLLZ,nspec), &
-           rhostore(NGLLX,NGLLZ,nspec), &
-           rho_vp(NGLLX,NGLLZ,nspec), &
-           rho_vs(NGLLX,NGLLZ,nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating material arrays'
-
-  do ispec = 1,nspec
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-        if (assign_external_model) then
-          ! external model
-          rhol = rhoext(i,j,ispec)
-          vp = vpext(i,j,ispec)
-          vs = vsext(i,j,ispec)
-          ! determins mu & kappa
-          mul = rhol * vs * vs
-          if (AXISYM) then ! CHECK kappa
-            kappal = rhol * vp * vp - FOUR_THIRDS * mul
-          else
-            kappal = rhol * vp * vp - mul
-          endif
-        else
-          ! internal mesh
-          rhol = density(1,kmato(ispec))
-          lambdal = poroelastcoef(1,1,kmato(ispec))  ! lambdal_unrelaxed_elastic
-          mul = poroelastcoef(2,1,kmato(ispec)) ! mul_unrelaxed_elastic
-          if (AXISYM) then ! CHECK kappa
-            kappal = lambdal + TWO_THIRDS * mul
-            vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
-          else
-            kappal = lambdal + mul
-            vp = sqrt((kappal + mul)/rhol)
-          endif
-        endif
-        ! stores moduli
-        rhostore(i,j,ispec) = rhol
-        mustore(i,j,ispec) = mul
-        kappastore(i,j,ispec) = kappal
-
-        ! stores density times vp & vs
-
-        vs = sqrt(mul/rhol)
-
-        rho_vp(i,j,ispec) = rhol * vp
-        rho_vs(i,j,ispec) = rhol * vs
-      enddo
-    enddo
-  enddo
+  endif ! of if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC)
 
   ! allocate memory variables for viscous attenuation (poroelastic media)
   if (ATTENUATION_PORO_FLUID_PART) then
@@ -1544,3 +1511,83 @@
 
   end subroutine prepare_timerun_attenuation
 
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_material_arrays()
+
+#ifdef USE_MPI
+  use mpi
+#endif
+
+  use constants, only: IMAIN,FOUR_THIRDS,TWO_THIRDS
+  use specfem_par
+
+  implicit none
+
+  ! local parameters
+  integer :: i,j,ispec,ier
+  ! for shifting of velocities if needed in the case of viscoelasticity
+  double precision :: vp,vs,rhol,mul,lambdal,kappal
+
+  ! sets new material properties
+  ! note: velocities might have been shifted by attenuation
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Preparing material arrays'
+    call flush_IMAIN()
+  endif
+
+  ! allocates material arrays
+  allocate(kappastore(NGLLX,NGLLZ,nspec), &
+           mustore(NGLLX,NGLLZ,nspec), &
+           rhostore(NGLLX,NGLLZ,nspec), &
+           rho_vp(NGLLX,NGLLZ,nspec), &
+           rho_vs(NGLLX,NGLLZ,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating material arrays'
+
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        if (assign_external_model) then
+          ! external model
+          rhol = rhoext(i,j,ispec)
+          vp = vpext(i,j,ispec)
+          vs = vsext(i,j,ispec)
+          ! determins mu and kappa
+          mul = rhol * vs * vs
+          if (AXISYM) then ! CHECK kappa
+            kappal = rhol * vp * vp - FOUR_THIRDS * mul
+          else
+            kappal = rhol * vp * vp - mul
+          endif
+        else
+          ! internal mesh
+          rhol = density(1,kmato(ispec))
+          lambdal = poroelastcoef(1,1,kmato(ispec))  ! lambdal_unrelaxed_elastic
+          mul = poroelastcoef(2,1,kmato(ispec)) ! mul_unrelaxed_elastic
+          if (AXISYM) then ! CHECK kappa
+            kappal = lambdal + TWO_THIRDS * mul
+            vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
+          else
+            kappal = lambdal + mul
+            vp = sqrt((kappal + mul)/rhol)
+          endif
+        endif
+
+        ! stores moduli
+        rhostore(i,j,ispec) = rhol
+        mustore(i,j,ispec) = mul
+        kappastore(i,j,ispec) = kappal
+
+        ! stores density times vp and vs
+        vs = sqrt(mul/rhol)
+
+        rho_vp(i,j,ispec) = rhol * vp
+        rho_vs(i,j,ispec) = rhol * vs
+      enddo
+    enddo
+  enddo
+
+  end subroutine prepare_material_arrays

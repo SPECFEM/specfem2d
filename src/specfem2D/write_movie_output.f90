@@ -35,7 +35,7 @@
 
 ! outputs snapshots for movies
 
-  use constants, only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,NOISE_MOVIE_OUTPUT
+  use constants, only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,NOISE_MOVIE_OUTPUT,OUTPUT_FILES
 
   use specfem_par, only: myrank,it,NSTEP,nspec,nglob,ibool, &
     potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
@@ -95,7 +95,7 @@
       ! load ensemble forward source
       inquire(unit=501,exist=ex,opened=is_opened)
       if (.not. is_opened) then
-        open(unit=501,file='OUTPUT_FILES/noise_eta.bin',access='direct', &
+        open(unit=501,file=trim(OUTPUT_FILES)//'noise_eta.bin',access='direct', &
              recl=nglob*CUSTOM_REAL,action='read',iostat=ier)
         if (ier /= 0) call exit_MPI(myrank,'Error opening noise eta file')
       endif
@@ -120,7 +120,7 @@
       noise_output_array(5,:) = noise_output_rhokl(:)
 
       ! writes out to text file
-      write(noise_output_file,"('OUTPUT_FILES/noise_snapshot_all_',i6.6,'.txt')") it
+      write(noise_output_file,"(a,i6.6,a)") trim(OUTPUT_FILES)//'noise_snapshot_all_',it,'.txt'
       call snapshots_noise(noise_output_ncol,nglob,noise_output_file,noise_output_array)
 
       ! re-initializes noise array

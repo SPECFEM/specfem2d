@@ -44,12 +44,21 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: cosrot_irecf, sinrot_irecf
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmassx,rmassz
 
+  ! checks if anything to do
+  if (.not. GPU_MODE) return
+
   ! GPU_MODE now defined in Par_file
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) "Preparing GPU Fields and Constants on Device."
     call flush_IMAIN()
   endif
+
+  ! safety checks
+  if (any_elastic .and. (.not. P_SV)) stop 'Invalid GPU simulation, SH waves not implemented yet. Please use P_SV instead.'
+  if (PML_BOUNDARY_CONDITIONS ) stop 'PML not implemented on GPU mode. Please use Stacey instead.'
+  if (AXISYM) stop 'Axisym not implemented on GPU yet.'
+  if (NGLLX /= NGLLZ) stop 'GPU simulations require NGLLX == NGLLZ'
 
   ! initializes arrays
   call init_host_to_dev_variable()
@@ -78,8 +87,7 @@
 ! sourcearray_loc(i_src,dim,i,j)         : tableau de ponderation de l'intensite de la source pour chaque point GLL (i,j)
 !                                          de l'element spectral qui contient la source locale i_src
 ! ispec_selected_source(i)               : numero d'element spectral contenant la source locale i
-! recloc(i)                              : convertisseur numero rec local i => numero rec global
-! ispec_selected_rec(i)                  : numero d'element spectral du receveur i
+! ispec_selected_rec_loc(i)              : numero d'element spectral du receveur local i
 ! nrecloc                                : nombre de receveurs locaux
 ! nspec_acoustic                         : nombre local d'elements spectraux acoustiques
 
@@ -113,8 +121,8 @@
                                 nsources_local, &
                                 sourcearray_loc,source_time_function_loc, &
                                 NSTEP,ispec_selected_source_loc, &
-                                recloc, ispec_selected_rec, &
-                                nrec, nrecloc, &
+                                ispec_selected_rec_loc, &
+                                nrecloc, &
                                 cosrot_irecf,sinrot_irecf, &
                                 SIMULATION_TYPE, &
                                 USE_MESH_COLORING_GPU, &
@@ -149,17 +157,17 @@
   ! prepares fields on GPU for acoustic simulations
   if (any_acoustic) then
     call prepare_fields_acoustic_device(Mesh_pointer, &
-                                rmass_inverse_acoustic,rhostore,kappastore, &
-                                num_phase_ispec_acoustic,phase_ispec_inner_acoustic, &
-                                ispec_is_acoustic, &
-                                nelem_acoustic_surface, &
-                                free_ac_ispec,free_surface_ij, &
-                                any_elastic, num_fluid_solid_edges, &
-                                coupling_ac_el_ispec,coupling_ac_el_ij, &
-                                coupling_ac_el_normal,coupling_ac_el_jacobian1Dw, &
-                                ninterface_acoustic,inum_interfaces_acoustic, &
-                                num_colors_outer_acoustic,num_colors_inner_acoustic, &
-                                num_elem_colors_acoustic)
+                                        rmass_inverse_acoustic,rhostore,kappastore, &
+                                        num_phase_ispec_acoustic,phase_ispec_inner_acoustic, &
+                                        ispec_is_acoustic, &
+                                        nelem_acoustic_surface, &
+                                        free_ac_ispec,free_surface_ij, &
+                                        any_elastic, num_fluid_solid_edges, &
+                                        coupling_ac_el_ispec,coupling_ac_el_ij, &
+                                        coupling_ac_el_normal,coupling_ac_el_jacobian1Dw, &
+                                        ninterface_acoustic,inum_interfaces_acoustic, &
+                                        num_colors_outer_acoustic,num_colors_inner_acoustic, &
+                                        num_elem_colors_acoustic)
 
     if (SIMULATION_TYPE == 3) then
       ! safety check
@@ -190,21 +198,21 @@
     rmassz(:) = rmass_inverse_elastic(2,:)
 
     call prepare_fields_elastic_device(Mesh_pointer, &
-                                rmassx,rmassz, &
-                                rho_vp,rho_vs, &
-                                num_phase_ispec_elastic,phase_ispec_inner_elastic, &
-                                ispec_is_elastic, &
-                                nspec_left, &
-                                nspec_right, &
-                                nspec_top, &
-                                nspec_bottom, &
-                                any_acoustic, &
-                                num_colors_outer_elastic,num_colors_inner_elastic, &
-                                num_elem_colors_elastic, &
-                                ANY_ANISOTROPY, &
-                                c11store,c12store,c13store, &
-                                c15store,c23store, &
-                                c25store,c33store,c35store,c55store,ninterface_elastic,inum_interfaces_elastic)
+                                       rmassx,rmassz, &
+                                       rho_vp,rho_vs, &
+                                       num_phase_ispec_elastic,phase_ispec_inner_elastic, &
+                                       ispec_is_elastic, &
+                                       nspec_left, &
+                                       nspec_right, &
+                                       nspec_top, &
+                                       nspec_bottom, &
+                                       num_colors_outer_elastic,num_colors_inner_elastic, &
+                                       num_elem_colors_elastic, &
+                                       ANY_ANISOTROPY, &
+                                       c11store,c12store,c13store, &
+                                       c15store,c23store, &
+                                       c25store,c33store,c35store,c55store, &
+                                       ninterface_elastic,inum_interfaces_elastic)
 
 
     if (SIMULATION_TYPE == 3) then
@@ -224,16 +232,12 @@
     stop 'todo poroelastic simulations on GPU'
   endif
 
-
   ! prepares needed receiver array for adjoint runs
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) &
-    call prepare_sim2_or_3_const_device(Mesh_pointer, &
-                                        islice_selected_rec,nrecloc,nrec,source_adjointe,NSTEP)
-
+    call prepare_sim2_or_3_const_device(Mesh_pointer,nrecloc,source_adjoint,NSTEP)
 
   ! synchronizes processes
   call synchronize_all()
-
 
   ! puts acoustic initial fields onto GPU
   if (any_acoustic) then
@@ -356,10 +360,11 @@
   NGLOB_AB = nglob
 
   ! user output
-  if (myrank == 0) write(IMAIN,*) '  number of MPI interfaces = ',ninterface
-
-  ! user output
-  if (myrank == 0) write(IMAIN,*) '  number of acoustic elements at free surface = ',nelem_acoustic_surface
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of MPI interfaces                        = ',ninterface
+    write(IMAIN,*) '  number of acoustic elements at free surface     = ',nelem_acoustic_surface
+    call flush_IMAIN()
+  endif
 
   ! acoustic elements at free surface
   allocate(free_ac_ispec(nelem_acoustic_surface))
@@ -474,9 +479,7 @@
     enddo
   endif ! STACEY_ABSORBING_CONDITIONS
 
-  ! user output
-  if (myrank == 0) write(IMAIN,*) '  number of sources = ',NSOURCES
-
+  ! sources
   ! counts sources in this process slice
   nsources_local = 0
   do i = 1, NSOURCES
@@ -486,7 +489,11 @@
   enddo
 
   ! user output
-  if (myrank == 0) write(IMAIN,*) '  number of sources in this process slice = ',nsources_local
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of sources                               = ',NSOURCES
+    write(IMAIN,*) '  number of sources in this process slice         = ',nsources_local
+    call flush_IMAIN()
+  endif
 
   allocate(source_time_function_loc(nsources_local,NSTEP))
   allocate(ispec_selected_source_loc(nsources_local))
@@ -515,6 +522,13 @@
       sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
     endif
   enddo
+
+  ! receivers
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of local receivers in this process slice = ',nrecloc
+    call flush_IMAIN()
+  endif
 
   ! converts to CUSTOM_REAL arrays
   allocate(cosrot_irecf(nrecloc), &
@@ -628,12 +642,11 @@
 !!! Initialisation parametres pour simulation elastique
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-
   ! coloring (dummy)
   num_colors_outer_elastic = 0
   num_colors_inner_elastic = 0
   allocate(num_elem_colors_elastic(1))
-  num_elem_colors_elastic(1)=0
+  num_elem_colors_elastic(1) = 0
 
   ! anisotropy
   ANY_ANISOTROPY = .false.

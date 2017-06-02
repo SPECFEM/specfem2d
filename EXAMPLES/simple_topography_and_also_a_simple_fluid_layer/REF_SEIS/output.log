@@ -1,9 +1,10 @@
-running example: Thu Jul 21 16:22:40 AST 2016
+DATA/Par_file_with_PML -> DATA/Par_file
+running example: Thu Jul 21 16:32:35 AST 2016
 
 setting up example...
 
 
-running mesher...
+running mesher on 4 processors...
 
 
  **********************************************
@@ -12,7 +13,7 @@ running mesher...
 
  Reading the parameter file...
 
- Title of the simulation: Test of SPECFEM2D with curved interfaces (without PML)
+ Title of the simulation: Test of SPECFEM2D with curved interfaces
 
 
  Materials:
@@ -138,11 +139,18 @@ running mesher...
    Min and max value of X in the grid =    0.0000000000000000        4000.0000000000000     
    Min and max value of Z in the grid =    0.0000000000000000        3355.8363405549972     
 
+
+ Partitioning method: SCOTCH
+
  nedges_coupled (acoustic/elastic)     =          178
+   after iteration            1 repartitioning of all coupled elements done
  nedges_coupled (acoustic/poroelastic) =            0
  nedges_coupled (poroelastic/elastic)  =            0
 
- slice            0  has number of spectral elements =        4800
+ slice            0  has number of spectral elements =        1200
+ slice            1  has number of spectral elements =        1200
+ slice            2  has number of spectral elements =        1203
+ slice            3  has number of spectral elements =        1197
 
  Position (x,z) of the source =    2500.0000000000000        2500.0000000000000     
 
@@ -166,20 +174,20 @@ running mesher...
  Receiver           10  =    3360.0000000000000        3042.8523748190692     
  Receiver           11  =    3700.0000000000000        3020.6886767662263     
 
- This will be a serial simulation
+ This will be a parallel simulation on            4  processor cores
 
 
-running solver...
+running solver on 4 processors...
 
 
  **********************************************
  **** Specfem 2-D Solver - MPI version     ****
  **********************************************
 
- There are            1  MPI processes
- Processes are numbered from 0 to            0
+ There are            4  MPI processes
+ Processes are numbered from 0 to            3
 
- There is a total of            1  slices
+ There is a total of            4  slices
 
  NDIM =            2
 
@@ -196,10 +204,10 @@ running solver...
  Program SPECFEM2D: 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Test of SPECFEM2D with curved interfaces (without PML)
+ Test of SPECFEM2D with curved interfaces
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 21 - 07 - 2016                                 T i m e  : 16:22:41
+ D a t e : 21 - 07 - 2016                                 T i m e  : 16:32:35
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
@@ -207,7 +215,7 @@ running solver...
  C o n t r o l
  =============
 
-     Number of spectral element control nodes. . .(npgeo) =   19481
+     Number of spectral element control nodes. . .(npgeo) =    4941
      Number of space dimensions. . . . . . . . . . (NDIM) =       2
 
 
@@ -283,7 +291,7 @@ running solver...
      Number of points for display . . . . . . (pointsdisp) =      6
      Number of element material sets . . . . . . . (numat) =      4
      Number of acoustic forcing elements (nelem_acforcing) =      0
-     Number of acoustic free surf (nelem_acoustic_surface) =     40
+     Number of acoustic free surf (nelem_acoustic_surface) =      0
 
 
  M a t e r i a l   s e t s :   2 D  (p o r o) e l a s t i c i t y
@@ -350,8 +358,8 @@ running solver...
      QKappa_attenuation .  . . . . . .(QKappa) = 9.99900000E+03
      Qmu_attenuation . . . . . . . . . . (Qmu) = 9.99900000E+03
 
-
- Number of free surface elements:           40
+ Absorbing boundaries:
+   using PML boundary conditions
 
  Setting up mesh
 
@@ -364,14 +372,14 @@ running solver...
    Total number of elastic/visco/poro elements =         3420
 
  Approximate total number of grid points in the mesh
- (with a few duplicates coming from MPI buffers):        77361
+ (with a few duplicates coming from MPI buffers):        77944
 
- Approximate number of acoustic degrees of freedom in the mesh:        22241
- Approximate number of elastic degrees of freedom in the mesh:       110239
+ Approximate number of acoustic degrees of freedom in the mesh:        22409
+ Approximate number of elastic degrees of freedom in the mesh:       111070
    (there are 2 degrees of freedom per point for elastic elements)
 
  Approximate total number of degrees of freedom in the mesh
- (sum of the two values above):       132480
+ (sum of the two values above):       133479
 
   (for simplicity viscoelastic or poroelastic elements, if any,
    are counted as elastic in the above three estimates;
@@ -393,32 +401,45 @@ running solver...
    Checking fluid/solid edge topology...
    End of fluid/solid edge detection
 
+ excluding common points between acoustic absorbing edges and acoustic/elastic matching interfaces, if any
 
  Setting up MPI communication arrays
 
-   maximum number of MPI interfaces (for a single slice) =            0
+   maximum number of MPI interfaces (for a single slice) =            3
 
-   This is a single process simulation, no need for MPI communication
+   total MPI interface points:         1178
 
-   number of outer elements  =            0
-   number of inner elements  =         4800
+   checking acoustic interfaces:
+   total number of global acoustic interface points:          758
+   total number of global points assembled by acoustic MPI interfaces:         758
+   interfaces okay
 
-   percentage of outer elements    0.00000000     %
-   percentage of inner elements    100.000000     %
+   master process:
+   number of MPI interfaces in acoustic domain    =            3
+   number of MPI interfaces in elastic domain     =            2
+   number of MPI interfaces in poroelastic domain =            0
 
-   number of global nodes in outer elements  =            0
-   number of global nodes in inner elements  =        77361
+   maximum length of a single MPI interface  =          181
+
+   number of outer elements  =           69
+   number of inner elements  =         1131
+
+   percentage of outer elements    5.75000000     %
+   percentage of inner elements    94.2500000     %
+
+   number of global nodes in outer elements  =         1385
+   number of global nodes in inner elements  =        18369
 
    determining communication phases:
    elastic domains:
-   total number of outer/inner elements =            0        3420
-   total percentage of outer elements    0.00000000     %
-   total percentage of inner elements    100.000000     %
+   total number of outer/inner elements =          102        3318
+   total percentage of outer elements    2.98245239     %
+   total percentage of inner elements    97.0175476     %
 
    acoustic domains:
-   total number of outer/inner elements =            0        1380
-   total percentage of outer elements    0.00000000     %
-   total percentage of inner elements    100.000000     %
+   total number of outer/inner elements =          184        1196
+   total percentage of outer elements    13.3333359     %
+   total percentage of inner elements    86.6666641     %
 
  All mesh setup done successfully
 
@@ -434,7 +455,7 @@ running solver...
              original z:    2500.00000    
  closest estimate found:    0.00000000      m away
   in rank            0
-  in element         3890
+  in element          730
   in elastic domain
   at xi,gamma coordinates =    1.0000000000000000       -5.0847457627118647E-002
 
@@ -459,8 +480,8 @@ running solver...
              original z:    2997.72998    
    distance from source:    2255.60083    
  closest estimate found:    5.68434189E-14  m away
-  in element         4726
-  in rank            0
+  in element         1163
+  in rank            3
   at xi,gamma coordinates =   0.99999999999999689        1.0000000013196164     
 
 
@@ -469,8 +490,8 @@ running solver...
              original z:    3008.04297    
    distance from source:    1928.13586    
  closest estimate found:    4.68742829E-13  m away
-  in element         4733
-  in rank            0
+  in element         1170
+  in rank            3
   at xi,gamma coordinates =   0.59999999999999643       0.99990160152473540     
 
 
@@ -479,8 +500,8 @@ running solver...
              original z:    3090.82251    
    distance from source:    1630.78845    
  closest estimate found:    0.00000000      m away
-  in element         4740
-  in rank            0
+  in element         1177
+  in rank            3
   at xi,gamma coordinates =   0.19999999999999463       0.99995735754259063     
 
 
@@ -489,8 +510,8 @@ running solver...
              original z:    3283.03027    
    distance from source:    1416.16968    
  closest estimate found:    0.00000000      m away
-  in element         4747
-  in rank            0
+  in element         1184
+  in rank            3
   at xi,gamma coordinates =  -0.19999999999999687       0.99988142896112253     
 
 
@@ -499,8 +520,8 @@ running solver...
              original z:    3347.87695    
    distance from source:    1193.52222    
  closest estimate found:    1.01684600E-12  m away
-  in element         4754
-  in rank            0
+  in element         1191
+  in rank            3
   at xi,gamma coordinates =  -0.60000000000000719        1.0001975779557553     
 
 
@@ -509,8 +530,8 @@ running solver...
              original z:    3250.00000    
    distance from source:    901.387817    
  closest estimate found:    2.27373675E-13  m away
-  in element         4760
-  in rank            0
+  in element         1197
+  in rank            3
   at xi,gamma coordinates =   0.99999999999998312       0.99999999999998790     
 
 
@@ -519,7 +540,7 @@ running solver...
              original z:    3197.31372    
    distance from source:    715.434509    
  closest estimate found:    0.00000000      m away
-  in element         4767
+  in element         1167
   in rank            0
   at xi,gamma coordinates =   0.60000000000001941        1.0000902964320573     
 
@@ -529,7 +550,7 @@ running solver...
              original z:    3150.96191    
    distance from source:    675.389893    
  closest estimate found:    0.00000000      m away
-  in element         4774
+  in element         1174
   in rank            0
   at xi,gamma coordinates =   0.20000000000000537       0.99997538602696479     
 
@@ -539,7 +560,7 @@ running solver...
              original z:    3086.59399    
    distance from source:    783.895691    
  closest estimate found:    0.00000000      m away
-  in element         4781
+  in element         1181
   in rank            0
   at xi,gamma coordinates =  -0.19999999999999277       0.99999615023787902     
 
@@ -549,7 +570,7 @@ running solver...
              original z:    3042.85229    
    distance from source:    1016.99988    
  closest estimate found:    0.00000000      m away
-  in element         4788
+  in element         1188
   in rank            0
   at xi,gamma coordinates =  -0.60000000000000142       0.99999230657136873     
 
@@ -559,7 +580,7 @@ running solver...
              original z:    3020.68872    
    distance from source:    1308.09656    
  closest estimate found:    0.00000000      m away
-  in element         4794
+  in element         1194
   in rank            0
   at xi,gamma coordinates =   0.99999999999999556        1.0000000013165316     
 
@@ -574,6 +595,10 @@ running solver...
    arrays for acoustic domains
    wavefield initialization
    done initialization
+
+ Preparing PML
+ Total number of PML spectral elements:          582
+
 
  Preparing mass matrices
    initializing mass matrices
@@ -696,26 +721,12 @@ running solver...
  total number of elements in fluid and solid regions =         4800
 
 
- Creating PostScript file with stability condition
- End of creation of PostScript file with stability condition
-
- Creating PostScript file with mesh dispersion
- End of creation of PostScript file with mesh dispersion
-
- Creating PostScript file with velocity model
- End of creation of PostScript file with velocity model
-
- Creating PostScript file with mesh partitioning
- End of creation of PostScript file with partitioning
-
-
  Preparing image coloring
    allocating color image arrays
    locating all the pixels of color images
-   total number of image pixels =       246659
+   total number of image pixels =       250398
    done locating all the pixels of color images
    coloring image background based on vp
-   allocating postscript image arrays
 
  Preparing source time function
    saving the source time function in a text file...
@@ -733,20 +744,7 @@ running solver...
  Starting time iteration loop ...
 
 
- Writing PostScript vector plot for time step            1
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    0.0000000000000000     
- null vector: maximum vector length is zero!
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step            1
+ Creating color image of size          566  x          500  for time step            1
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -756,15 +754,15 @@ Time step number       5   t =    0.0044 s out of    1600
  We have done   0.250156343     % of the total
  Max norm of vector field in solid (elastic) =    5.90507716E-06
  Max absolute value of scalar field in fluid (acoustic) =    0.00000000    
- Elapsed time in seconds =   0.17600011825561523     
+ Elapsed time in seconds =    2.6999950408935547E-002
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    3.5200023651123048E-002
+ Mean elapsed time per time step in seconds =    5.3999900817871095E-003
  Time steps remaining =         1595
- Estimated remaining time in seconds =    56.144037723541260     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 56 s
- Estimated total run time in seconds =    56.320037841796875     
- Estimated total run time in hh:mm:ss =      0 h 00 m 56 s
- The run will finish approximately on: Thu Jul 21, 2016 16:24
+ Estimated remaining time in seconds =    8.6129841804504395     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 08 s
+ Estimated total run time in seconds =    8.6399841308593750     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
  ******************************************************************
@@ -772,31 +770,19 @@ Time step number     100   t =    0.1089 s out of    1600
  ******************************************************************
  We have done    6.19136953     % of the total
  Max norm of vector field in solid (elastic) =   0.149366736    
- Max absolute value of scalar field in fluid (acoustic) =    2.81995153E-06
- Elapsed time in seconds =   0.58500003814697266     
+ Max absolute value of scalar field in fluid (acoustic) =    2.81995176E-06
+ Elapsed time in seconds =   0.26699995994567871     
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    5.8500003814697266E-003
+ Mean elapsed time per time step in seconds =    2.6699995994567873E-003
  Time steps remaining =         1500
- Estimated remaining time in seconds =    8.7750005722045898     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 08 s
- Estimated total run time in seconds =    9.3600006103515625     
- Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =    4.0049993991851807     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
+ Estimated total run time in seconds =    4.2719993591308594     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step          100
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =   0.14857121793213957     
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step          100
+ Creating color image of size          566  x          500  for time step          100
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -804,32 +790,20 @@ Time step number     100   t =    0.1089 s out of    1600
 Time step number     200   t =    0.2189 s out of    1600
  ******************************************************************
  We have done    12.4452782     % of the total
- Max norm of vector field in solid (elastic) =   0.152609393    
- Max absolute value of scalar field in fluid (acoustic) =    1.32673788    
- Elapsed time in seconds =    1.2200000286102295     
- Elapsed time in hh:mm:ss =      0 h 00 m 01 s
- Mean elapsed time per time step in seconds =    6.1000001430511477E-003
+ Max norm of vector field in solid (elastic) =   0.152609318    
+ Max absolute value of scalar field in fluid (acoustic) =    1.32673764    
+ Elapsed time in seconds =   0.53099989891052246     
+ Elapsed time in hh:mm:ss =      0 h 00 m 00 s
+ Mean elapsed time per time step in seconds =    2.6549994945526123E-003
  Time steps remaining =         1400
- Estimated remaining time in seconds =    8.5400002002716064     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 08 s
- Estimated total run time in seconds =    9.7600002288818359     
- Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =    3.7169992923736572     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
+ Estimated total run time in seconds =    4.2479991912841797     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step          200
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =   0.15335719441879239     
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step          200
+ Creating color image of size          566  x          500  for time step          200
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -837,32 +811,20 @@ Time step number     200   t =    0.2189 s out of    1600
 Time step number     300   t =    0.3289 s out of    1600
  ******************************************************************
  We have done    18.6991863     % of the total
- Max norm of vector field in solid (elastic) =   0.111685440    
- Max absolute value of scalar field in fluid (acoustic) =    5132.20508    
- Elapsed time in seconds =    1.9119999408721924     
- Elapsed time in hh:mm:ss =      0 h 00 m 01 s
- Mean elapsed time per time step in seconds =    6.3733331362406413E-003
+ Max norm of vector field in solid (elastic) =   0.111685410    
+ Max absolute value of scalar field in fluid (acoustic) =    5132.20459    
+ Elapsed time in seconds =   0.79799985885620117     
+ Elapsed time in hh:mm:ss =      0 h 00 m 00 s
+ Mean elapsed time per time step in seconds =    2.6599995295206705E-003
  Time steps remaining =         1300
- Estimated remaining time in seconds =    8.2853330771128331     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 08 s
- Estimated total run time in seconds =    10.197333017985025     
- Estimated total run time in hh:mm:ss =      0 h 00 m 10 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =    3.4579993883768716     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
+ Estimated total run time in seconds =    4.2559992472330723     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step          300
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =   0.11073309413653107     
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step          300
+ Creating color image of size          566  x          500  for time step          300
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -871,31 +833,19 @@ Time step number     400   t =    0.4389 s out of    1600
  ******************************************************************
  We have done    24.9530964     % of the total
  Max norm of vector field in solid (elastic) =    9.42512602E-02
- Max absolute value of scalar field in fluid (acoustic) =    3958.40649    
- Elapsed time in seconds =    2.6640000343322754     
- Elapsed time in hh:mm:ss =      0 h 00 m 02 s
- Mean elapsed time per time step in seconds =    6.6600000858306882E-003
+ Max absolute value of scalar field in fluid (acoustic) =    3958.40625    
+ Elapsed time in seconds =    1.0669999122619629     
+ Elapsed time in hh:mm:ss =      0 h 00 m 01 s
+ Mean elapsed time per time step in seconds =    2.6674997806549073E-003
  Time steps remaining =         1200
- Estimated remaining time in seconds =    7.9920001029968262     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
- Estimated total run time in seconds =    10.656000137329102     
- Estimated total run time in hh:mm:ss =      0 h 00 m 10 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =    3.2009997367858887     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
+ Estimated total run time in seconds =    4.2679996490478516     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step          400
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    9.4570764725986994E-002
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step          400
+ Creating color image of size          566  x          500  for time step          400
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -903,32 +853,20 @@ Time step number     400   t =    0.4389 s out of    1600
 Time step number     500   t =    0.5489 s out of    1600
  ******************************************************************
  We have done    31.2070045     % of the total
- Max norm of vector field in solid (elastic) =    9.34775770E-02
- Max absolute value of scalar field in fluid (acoustic) =    5218.37500    
- Elapsed time in seconds =    3.5190000534057617     
- Elapsed time in hh:mm:ss =      0 h 00 m 03 s
- Mean elapsed time per time step in seconds =    7.0380001068115232E-003
+ Max norm of vector field in solid (elastic) =    9.34775695E-02
+ Max absolute value of scalar field in fluid (acoustic) =    5218.37012    
+ Elapsed time in seconds =    1.3350000381469727     
+ Elapsed time in hh:mm:ss =      0 h 00 m 01 s
+ Mean elapsed time per time step in seconds =    2.6700000762939452E-003
  Time steps remaining =         1100
- Estimated remaining time in seconds =    7.7418001174926756     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
- Estimated total run time in seconds =    11.260800170898438     
- Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =    2.9370000839233397     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
+ Estimated total run time in seconds =    4.2720001220703123     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step          500
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    9.2918922860115494E-002
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step          500
+ Creating color image of size          566  x          500  for time step          500
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -936,32 +874,20 @@ Time step number     500   t =    0.5489 s out of    1600
 Time step number     600   t =    0.6589 s out of    1600
  ******************************************************************
  We have done    37.4609146     % of the total
- Max norm of vector field in solid (elastic) =    8.33311602E-02
- Max absolute value of scalar field in fluid (acoustic) =    4839.91650    
- Elapsed time in seconds =    4.5120000839233398     
- Elapsed time in hh:mm:ss =      0 h 00 m 04 s
- Mean elapsed time per time step in seconds =    7.5200001398722334E-003
+ Max norm of vector field in solid (elastic) =    8.33310932E-02
+ Max absolute value of scalar field in fluid (acoustic) =    4839.91748    
+ Elapsed time in seconds =    1.6110000610351562     
+ Elapsed time in hh:mm:ss =      0 h 00 m 01 s
+ Mean elapsed time per time step in seconds =    2.6850001017252605E-003
  Time steps remaining =         1000
- Estimated remaining time in seconds =    7.5200001398722334     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
- Estimated total run time in seconds =    12.032000223795574     
- Estimated total run time in hh:mm:ss =      0 h 00 m 12 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =    2.6850001017252603     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
+ Estimated total run time in seconds =    4.2960001627604161     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step          600
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    8.4212654194688832E-002
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step          600
+ Creating color image of size          566  x          500  for time step          600
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -969,32 +895,20 @@ Time step number     600   t =    0.6589 s out of    1600
 Time step number     700   t =    0.7689 s out of    1600
  ******************************************************************
  We have done    43.7148209     % of the total
- Max norm of vector field in solid (elastic) =    8.56302604E-02
- Max absolute value of scalar field in fluid (acoustic) =    4481.51270    
- Elapsed time in seconds =    5.6660001277923584     
- Elapsed time in hh:mm:ss =      0 h 00 m 05 s
- Mean elapsed time per time step in seconds =    8.0942858968462254E-003
+ Max norm of vector field in solid (elastic) =    8.56302083E-02
+ Max absolute value of scalar field in fluid (acoustic) =    4481.51318    
+ Elapsed time in seconds =    1.8910000324249268     
+ Elapsed time in hh:mm:ss =      0 h 00 m 01 s
+ Mean elapsed time per time step in seconds =    2.7014286177498956E-003
  Time steps remaining =          900
- Estimated remaining time in seconds =    7.2848573071616025     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
- Estimated total run time in seconds =    12.950857434953960     
- Estimated total run time in hh:mm:ss =      0 h 00 m 12 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =    2.4312857559749061     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
+ Estimated total run time in seconds =    4.3222857883998334     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step          700
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    8.6832472069633460E-002
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step          700
+ Creating color image of size          566  x          500  for time step          700
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -1002,32 +916,20 @@ Time step number     700   t =    0.7689 s out of    1600
 Time step number     800   t =    0.8789 s out of    1600
  ******************************************************************
  We have done    49.9687309     % of the total
- Max norm of vector field in solid (elastic) =    8.42889994E-02
- Max absolute value of scalar field in fluid (acoustic) =    4429.25000    
- Elapsed time in seconds =    6.9089999198913574     
- Elapsed time in hh:mm:ss =      0 h 00 m 06 s
- Mean elapsed time per time step in seconds =    8.6362498998641974E-003
+ Max norm of vector field in solid (elastic) =    8.42890069E-02
+ Max absolute value of scalar field in fluid (acoustic) =    4429.24219    
+ Elapsed time in seconds =    2.1649999618530273     
+ Elapsed time in hh:mm:ss =      0 h 00 m 02 s
+ Mean elapsed time per time step in seconds =    2.7062499523162840E-003
  Time steps remaining =          800
- Estimated remaining time in seconds =    6.9089999198913583     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
- Estimated total run time in seconds =    13.817999839782715     
- Estimated total run time in hh:mm:ss =      0 h 00 m 13 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =    2.1649999618530273     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
+ Estimated total run time in seconds =    4.3299999237060547     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step          800
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    8.4135018885117513E-002
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step          800
+ Creating color image of size          566  x          500  for time step          800
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -1035,32 +937,20 @@ Time step number     800   t =    0.8789 s out of    1600
 Time step number     900   t =    0.9889 s out of    1600
  ******************************************************************
  We have done    56.2226410     % of the total
- Max norm of vector field in solid (elastic) =    8.25265273E-02
- Max absolute value of scalar field in fluid (acoustic) =    5129.15332    
- Elapsed time in seconds =    8.2739999294281006     
- Elapsed time in hh:mm:ss =      0 h 00 m 08 s
- Mean elapsed time per time step in seconds =    9.1933332549201125E-003
+ Max norm of vector field in solid (elastic) =    8.25263262E-02
+ Max absolute value of scalar field in fluid (acoustic) =    5129.15186    
+ Elapsed time in seconds =    2.4429998397827148     
+ Elapsed time in hh:mm:ss =      0 h 00 m 02 s
+ Mean elapsed time per time step in seconds =    2.7144442664252385E-003
  Time steps remaining =          700
- Estimated remaining time in seconds =    6.4353332784440784     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
- Estimated total run time in seconds =    14.709333207872179     
- Estimated total run time in hh:mm:ss =      0 h 00 m 14 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =    1.9001109864976671     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
+ Estimated total run time in seconds =    4.3431108262803821     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step          900
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    8.4582957564824549E-002
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step          900
+ Creating color image of size          566  x          500  for time step          900
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -1068,32 +958,20 @@ Time step number     900   t =    0.9889 s out of    1600
 Time step number    1000   t =    1.0989 s out of    1600
  ******************************************************************
  We have done    62.4765472     % of the total
- Max norm of vector field in solid (elastic) =    8.70458633E-02
- Max absolute value of scalar field in fluid (acoustic) =    4269.07715    
- Elapsed time in seconds =    9.7730000019073486     
- Elapsed time in hh:mm:ss =      0 h 00 m 09 s
- Mean elapsed time per time step in seconds =    9.7730000019073480E-003
+ Max norm of vector field in solid (elastic) =    8.70450139E-02
+ Max absolute value of scalar field in fluid (acoustic) =    4269.07764    
+ Elapsed time in seconds =    2.7139999866485596     
+ Elapsed time in hh:mm:ss =      0 h 00 m 02 s
+ Mean elapsed time per time step in seconds =    2.7139999866485597E-003
  Time steps remaining =          600
- Estimated remaining time in seconds =    5.8638000011444085     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    15.636800003051757     
- Estimated total run time in hh:mm:ss =      0 h 00 m 15 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =    1.6283999919891359     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
+ Estimated total run time in seconds =    4.3423999786376957     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step         1000
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    8.7151202616105192E-002
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step         1000
+ Creating color image of size          566  x          500  for time step         1000
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -1101,32 +979,20 @@ Time step number    1000   t =    1.0989 s out of    1600
 Time step number    1100   t =    1.2089 s out of    1600
  ******************************************************************
  We have done    68.7304535     % of the total
- Max norm of vector field in solid (elastic) =   0.117852837    
- Max absolute value of scalar field in fluid (acoustic) =    3895.14038    
- Elapsed time in seconds =    11.337000131607056     
- Elapsed time in hh:mm:ss =      0 h 00 m 11 s
- Mean elapsed time per time step in seconds =    1.0306363756006414E-002
+ Max norm of vector field in solid (elastic) =    9.37750787E-02
+ Max absolute value of scalar field in fluid (acoustic) =    4083.19824    
+ Elapsed time in seconds =    2.9979999065399170     
+ Elapsed time in hh:mm:ss =      0 h 00 m 02 s
+ Mean elapsed time per time step in seconds =    2.7254544604908338E-003
  Time steps remaining =          500
- Estimated remaining time in seconds =    5.1531818780032070     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    16.490182009610262     
- Estimated total run time in hh:mm:ss =      0 h 00 m 16 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =    1.3627272302454170     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
+ Estimated total run time in seconds =    4.3607271367853340     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step         1100
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =   0.11679719451919685     
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step         1100
+ Creating color image of size          566  x          500  for time step         1100
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -1134,32 +1000,20 @@ Time step number    1100   t =    1.2089 s out of    1600
 Time step number    1200   t =    1.3189 s out of    1600
  ******************************************************************
  We have done    74.9843674     % of the total
- Max norm of vector field in solid (elastic) =    9.17199031E-02
- Max absolute value of scalar field in fluid (acoustic) =    5069.37061    
- Elapsed time in seconds =    12.860000133514404     
- Elapsed time in hh:mm:ss =      0 h 00 m 12 s
- Mean elapsed time per time step in seconds =    1.0716666777928671E-002
+ Max norm of vector field in solid (elastic) =    8.67054462E-02
+ Max absolute value of scalar field in fluid (acoustic) =    4800.44531    
+ Elapsed time in seconds =    3.2709999084472656     
+ Elapsed time in hh:mm:ss =      0 h 00 m 03 s
+ Mean elapsed time per time step in seconds =    2.7258332570393880E-003
  Time steps remaining =          400
- Estimated remaining time in seconds =    4.2866667111714687     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    17.146666844685875     
- Estimated total run time in hh:mm:ss =      0 h 00 m 17 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =    1.0903333028157551     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
+ Estimated total run time in seconds =    4.3613332112630205     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step         1200
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    9.6220588235105181E-002
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step         1200
+ Creating color image of size          566  x          500  for time step         1200
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -1167,32 +1021,20 @@ Time step number    1200   t =    1.3189 s out of    1600
 Time step number    1300   t =    1.4289 s out of    1600
  ******************************************************************
  We have done    81.2382736     % of the total
- Max norm of vector field in solid (elastic) =    7.42858127E-02
- Max absolute value of scalar field in fluid (acoustic) =    3257.73950    
- Elapsed time in seconds =    14.508000135421753     
- Elapsed time in hh:mm:ss =      0 h 00 m 14 s
- Mean elapsed time per time step in seconds =    1.1160000104170580E-002
+ Max norm of vector field in solid (elastic) =    7.35722706E-02
+ Max absolute value of scalar field in fluid (acoustic) =    3210.04541    
+ Elapsed time in seconds =    3.5550000667572021     
+ Elapsed time in hh:mm:ss =      0 h 00 m 03 s
+ Mean elapsed time per time step in seconds =    2.7346154359670785E-003
  Time steps remaining =          300
- Estimated remaining time in seconds =    3.3480000312511740     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    17.856000166672928     
- Estimated total run time in hh:mm:ss =      0 h 00 m 17 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =   0.82038463079012358     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
+ Estimated total run time in seconds =    4.3753846975473261     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step         1300
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    7.4450534071846500E-002
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step         1300
+ Creating color image of size          566  x          500  for time step         1300
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -1200,32 +1042,20 @@ Time step number    1300   t =    1.4289 s out of    1600
 Time step number    1400   t =    1.5389 s out of    1600
  ******************************************************************
  We have done    87.4921799     % of the total
- Max norm of vector field in solid (elastic) =    8.65961909E-02
- Max absolute value of scalar field in fluid (acoustic) =    3130.01929    
- Elapsed time in seconds =    16.286000013351440     
- Elapsed time in hh:mm:ss =      0 h 00 m 16 s
- Mean elapsed time per time step in seconds =    1.1632857152393886E-002
+ Max norm of vector field in solid (elastic) =    8.74082372E-02
+ Max absolute value of scalar field in fluid (acoustic) =    3000.16528    
+ Elapsed time in seconds =    3.8269999027252197     
+ Elapsed time in hh:mm:ss =      0 h 00 m 03 s
+ Mean elapsed time per time step in seconds =    2.7335713590894428E-003
  Time steps remaining =          200
- Estimated remaining time in seconds =    2.3265714304787770     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    18.612571443830216     
- Estimated total run time in hh:mm:ss =      0 h 00 m 18 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =   0.54671427181788856     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
+ Estimated total run time in seconds =    4.3737141745431085     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step         1400
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    8.6644295542663174E-002
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step         1400
+ Creating color image of size          566  x          500  for time step         1400
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -1233,32 +1063,20 @@ Time step number    1400   t =    1.5389 s out of    1600
 Time step number    1500   t =    1.6489 s out of    1600
  ******************************************************************
  We have done    93.7460938     % of the total
- Max norm of vector field in solid (elastic) =    8.02759156E-02
- Max absolute value of scalar field in fluid (acoustic) =    2789.48608    
- Elapsed time in seconds =    18.058000087738037     
- Elapsed time in hh:mm:ss =      0 h 00 m 18 s
- Mean elapsed time per time step in seconds =    1.2038666725158692E-002
+ Max norm of vector field in solid (elastic) =    7.94998407E-02
+ Max absolute value of scalar field in fluid (acoustic) =    2824.02026    
+ Elapsed time in seconds =    4.1050000190734863     
+ Elapsed time in hh:mm:ss =      0 h 00 m 04 s
+ Mean elapsed time per time step in seconds =    2.7366666793823243E-003
  Time steps remaining =          100
- Estimated remaining time in seconds =    1.2038666725158691     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
- Estimated total run time in seconds =    19.261866760253906     
- Estimated total run time in hh:mm:ss =      0 h 00 m 19 s
- The run will finish approximately on: Thu Jul 21, 2016 16:23
+ Estimated remaining time in seconds =   0.27366666793823241     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
+ Estimated total run time in seconds =    4.3786666870117186     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
+ The run will finish approximately on: Thu Jul 21, 2016 16:33
 
 
- Writing PostScript vector plot for time step         1500
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    8.0722513561953160E-002
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step         1500
+ Creating color image of size          566  x          500  for time step         1500
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -1266,31 +1084,19 @@ Time step number    1500   t =    1.6489 s out of    1600
 Time step number    1600   t =    1.7589 s out of    1600
  ******************************************************************
  We have done    100.000000     % of the total
- Max norm of vector field in solid (elastic) =    8.50415453E-02
- Max absolute value of scalar field in fluid (acoustic) =    4814.45703    
- Elapsed time in seconds =    19.891000032424927     
- Elapsed time in hh:mm:ss =      0 h 00 m 19 s
- Mean elapsed time per time step in seconds =    1.2431875020265579E-002
+ Max norm of vector field in solid (elastic) =    8.50227177E-02
+ Max absolute value of scalar field in fluid (acoustic) =    3912.46484    
+ Elapsed time in seconds =    4.3789999485015869     
+ Elapsed time in hh:mm:ss =      0 h 00 m 04 s
+ Mean elapsed time per time step in seconds =    2.7368749678134919E-003
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    19.891000032424927     
- Estimated total run time in hh:mm:ss =      0 h 00 m 19 s
+ Estimated total run time in seconds =    4.3789999485015869     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 04 s
 
 
- Writing PostScript vector plot for time step         1600
- drawing displacement vector as small arrows...
-   X min, max =    0.0000000000000000        4000.0000000000005     
-   Z min, max =    0.0000000000000000        3355.8363405549972     
-   Max norm =    8.4750506215544336E-002
-   Interpolating the vector field...
-   Interpolation uniform grid element         1000  on processor core 0
-   Interpolation uniform grid element         2000  on processor core 0
-   Interpolation uniform grid element         3000  on processor core 0
-   Interpolation uniform grid element         4000  on processor core 0
- PostScript file written
-
- Creating color image of size          562  x          496  for time step         1600
+ Creating color image of size          566  x          500  for time step         1600
  drawing scalar image of part of the displacement vector...
  Color image created
 
@@ -1300,14 +1106,14 @@ Time step number    1600   t =    1.7589 s out of    1600
  Program SPECFEM2D: 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Test of SPECFEM2D with curved interfaces (without PML)
+ Test of SPECFEM2D with curved interfaces
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 21 - 07 - 2016                                 T i m e  : 16:23:02
+ D a t e : 21 - 07 - 2016                                 T i m e  : 16:32:40
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 see results in directory: OUTPUT_FILES/
 
 done
-Thu Jul 21 16:23:02 AST 2016
+Thu Jul 21 16:32:40 AST 2016

@@ -39,6 +39,7 @@
 !          and adjoint sources will become more complicated
 !          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
 
+  use constants, only: OUTPUT_FILES
   use specfem_par
   use specfem_par_gpu
 
@@ -51,8 +52,8 @@
   ! acoustic medium
   if (any_acoustic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_acoustic**.bin')
+    open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_acoustic**.bin')
 
     read(55) b_potential_acoustic
     read(55) b_potential_dot_acoustic
@@ -75,8 +76,8 @@
   ! elastic medium
   if (any_elastic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_elastic**.bin')
+    open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_elastic**.bin')
 
     read(55) b_displ_elastic
     read(55) b_veloc_elastic
@@ -116,8 +117,8 @@
   ! poroelastic medium
   if (any_poroelastic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
-    open(unit=55,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_s**.bin')
+    open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_poroelastic_s**.bin')
 
     read(55) b_displs_poroelastic
     read(55) b_velocs_poroelastic
@@ -125,8 +126,8 @@
     close(55)
 
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
-    open(unit=56,file='OUTPUT_FILES/'//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error opening file OUTPUT_FILES/lastframe_poroelastic_w**.bin')
+    open(unit=56,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_poroelastic_w**.bin')
 
     read(56) b_displw_poroelastic
     read(56) b_velocw_poroelastic
@@ -149,7 +150,7 @@
 
 ! reads in saved wavefields
 
-  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN
+  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES
 
   use specfem_par, only: myrank,iteration_on_subset,NSUBSET_ITERATIONS, &
     any_acoustic,any_elastic,ATTENUATION_VISCOELASTIC, &
@@ -170,7 +171,7 @@
   write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
 
   ! opens corresponding snapshot file for reading
-  open(unit=IIN_UNDO_ATT,file='OUTPUT_FILES/'//outputname, &
+  open(unit=IIN_UNDO_ATT,file=trim(OUTPUT_FILES)//outputname, &
        status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for reading')
 

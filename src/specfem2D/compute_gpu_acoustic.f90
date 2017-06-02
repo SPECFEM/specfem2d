@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine compute_forces_acoustic_GPU()
+  subroutine compute_forces_viscoacoustic_GPU()
 
   use specfem_par, only: NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbours,ninterface_acoustic,inum_interfaces_acoustic, &
@@ -156,7 +156,7 @@
   ! enforces free surface (zeroes potentials at free surface)
   call acoustic_enforce_free_surf_cuda(Mesh_pointer)
 
-  end subroutine compute_forces_acoustic_GPU
+  end subroutine compute_forces_viscoacoustic_GPU
 
 !
 !---------------------------------------------------------------------------------------------

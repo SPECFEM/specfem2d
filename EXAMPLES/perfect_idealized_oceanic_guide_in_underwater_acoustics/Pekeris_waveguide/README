@@ -1,0 +1,18 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This example contains a simple example of the use of SPECFEM2D for underwater acoustics simulations. It computes signal that propagates in a Pekeris waveguide: pressure release surface and semi-infinite bottom. Sound-speed in the sediment is 1800 m/s and density is 1800 kg/m3.
+
+The water depth is 25 m, the total range is 7 km, the source is 4 m below the surface and the receiver is 13 m below the surface. The signals are recorded each km from 1 km to 6 km.
+The source is a Ricker (i.e. second derivative of a Gaussian) with a dominant frequency of 90 Hz.
+
+This example is defined by three files : Par_file -> contains all the parameters of the run + receivers positions
+                                         interfaces -> contains the geometry
+                                         SOURCE -> contains the informations about the source
+
+To run the example, type ./run_this_example.sh in this directory. Then see the results in OUTPUT_FILES/. 
+
+In the main directory you will also find three figures with signals and their spectrograms at 1 km, 3 km, and 6 km. The spectrograms are computed with short-term Fourier transform. The white curves plotted on the spectrograms are the theoretical arrival times of the different modes. 
+ 
+If you have any questions feel free to contact the author of this example: Laurent dot Guillon at ecole-navale dot fr

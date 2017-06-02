@@ -34,7 +34,7 @@
   subroutine write_output_SU(x_source,z_source,irec,buffer_binary,number_of_components)
 
   use specfem_par, only: NSTEP,nrec,deltat,seismotype,st_xval, &
-                          NSTEP_BETWEEN_OUTPUT_SEISMOS,seismo_offset,seismo_current,P_SV, &
+                          seismo_offset,seismo_current,P_SV, &
                           st_zval,subsamp_seismos
 
   implicit none
@@ -43,7 +43,7 @@
   integer,intent(in) :: irec,number_of_components
 
   ! to write seismograms in single precision SEP and double precision binary
-  double precision, dimension(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrec,number_of_components),intent(in) :: buffer_binary
+  double precision, dimension(NSTEP/subsamp_seismos,nrec,number_of_components),intent(in) :: buffer_binary
 
   ! local parameters
   integer :: deltat_int2

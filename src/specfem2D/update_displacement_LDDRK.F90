@@ -145,5 +145,3 @@
 
   end subroutine update_veloc_poroelastic_LDDRK
 
-
-

@@ -1,0 +1,7 @@
+<map id="finalize_mpi" name="finalize_mpi">
+<area shape="rect" id="node2" href="$d6/de6/meshfem2_d_8_f90.html#abfaf4ae1715afc5df90b41f79211746c" title="meshfem2d" alt="" coords="152,5,244,32"/>
+<area shape="rect" id="node3" href="$df/d4c/specfem2_d_8_f90.html#a69026dd59fca851006fa47c48efaec18" title="specfem2d" alt="" coords="155,56,241,83"/>
+<area shape="rect" id="node4" href="$d1/d7c/combine__sem_8_f90.html#a7ad6a4bf39f3ae7aa5b3a7d54dc66470" title="combine_sem" alt="" coords="145,107,251,133"/>
+<area shape="rect" id="node5" href="$d6/d9e/smooth__sem_8_f90.html#a41b13b8e9a779789c6a070473589a699" title="smooth_sem" alt="" coords="149,157,247,184"/>
+<area shape="rect" id="node6" href="$db/d93/sum__kernels_8f90.html#a64dcbb3d346313d96d2efbe11d4635bd" title="sum_kernels" alt="" coords="149,208,247,235"/>
+</map>

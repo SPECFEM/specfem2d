@@ -1,0 +1,6 @@
+<map id="compute_forces_acoustic_gpu" name="compute_forces_acoustic_gpu">
+<area shape="rect" id="node2" href="$da/df0/compute__gpu__acoustic_8f90.html#afeac7a4df265b7032e3b236cb7660fd1" title="compute_stacey_acoustic_gpu" alt="" coords="256,5,461,32"/>
+<area shape="rect" id="node3" href="$da/df0/compute__gpu__acoustic_8f90.html#a3dcc27e72a7082a782510e2ff5e219e7" title="compute_add_sources\l_acoustic_gpu" alt="" coords="280,57,437,98"/>
+<area shape="rect" id="node4" href="$d7/d45/assemble___m_p_i_8_f90.html#aba8b07651715c0744afa3f09da8cecfd" title="assemble_mpi_scalar\l_send_cuda" alt="" coords="283,122,434,163"/>
+<area shape="rect" id="node5" href="$d7/d45/assemble___m_p_i_8_f90.html#a41294fe745b5dd2967b7067e20ad4e1d" title="assemble_mpi_scalar\l_write_cuda" alt="" coords="283,187,434,229"/>
+</map>

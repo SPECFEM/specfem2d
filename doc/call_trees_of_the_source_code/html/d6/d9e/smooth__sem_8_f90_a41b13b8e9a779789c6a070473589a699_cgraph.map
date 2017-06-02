@@ -1,0 +1,9 @@
+<map id="smooth_sem" name="smooth_sem">
+<area shape="rect" id="node2" href="$db/d1a/parallel_8_f90.html#a0f27a8b922f3b4c44530e0c923bf38e5" title="init_mpi" alt="" coords="200,5,268,32"/>
+<area shape="rect" id="node3" href="$db/d1a/parallel_8_f90.html#a5c0b8ddb524981fa08f6346a2d42e7b9" title="synchronize_all" alt="" coords="177,56,291,83"/>
+<area shape="rect" id="node4" href="$d1/d74/parse__kernel__names_8f90.html#a1c8ea1b1802aea8dd62529b5b2acbc8a" title="parse_kernel_names" alt="" coords="161,107,307,133"/>
+<area shape="rect" id="node5" href="$d9/d8b/gll__library_8f90.html#a68aedab4dc03cb19ac8e993e358555c5" title="zwgljd" alt="" coords="205,157,263,184"/>
+<area shape="rect" id="node6" href="$d6/d9e/smooth__sem_8_f90.html#aa2a1318beddca02aadc529e10729a115" title="get_distance_square_vec" alt="" coords="364,233,537,260"/>
+<area shape="rect" id="node7" href="$d6/d9e/smooth__sem_8_f90.html#a46c32a69ab7fe51566794f0da2633d78" title="smoothing_weights_vec" alt="" coords="152,259,316,285"/>
+<area shape="rect" id="node8" href="$db/d1a/parallel_8_f90.html#ac422b103fe555bf7e5c01684fc30634b" title="finalize_mpi" alt="" coords="188,309,280,336"/>
+</map>

@@ -36,7 +36,7 @@
 
   ! prepares source_time_function array
 
-  use constants, only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE,SOURCE_IS_MOVING,C_LDDRK
+  use constants, only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE,SOURCE_IS_MOVING,C_LDDRK,OUTPUT_FILES
 
   use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0_source,tshift_src,factor, &
@@ -63,7 +63,7 @@
   ! external functions
   double precision, external :: comp_source_time_function_heavi
   double precision, external :: comp_source_time_function_gaussB,comp_source_time_function_dgaussB, &
-    comp_source_time_function_d2gaussB,comp_source_time_function_d3gaussB
+    comp_source_time_function_d2gaussB,comp_source_time_function_d3gaussB,marmousi_ormsby_wavelet,cos_taper
   double precision, external :: comp_source_time_function_rickr,comp_source_time_function_d2rck
 
   ! user output
@@ -108,7 +108,7 @@
       call flush_IMAIN()
     endif
     ! opens source time file for output
-    open(unit=55,file='OUTPUT_FILES/plot_source_time_function.txt',status='unknown',iostat=ier)
+    open(unit=55,file=trim(OUTPUT_FILES)//'plot_source_time_function.txt',status='unknown',iostat=ier)
     if (ier /= 0) stop 'Error opening source time function text-file'
   endif
 
@@ -426,6 +426,12 @@
               source_time_function(i_source,it,i_stage) = factor(i_source) * sin(omega_coa*t_used)
             endif
 
+          case (11)
+              ! Marmousi_ormsby_wavelet
+              hdur = 1.0 / 35.0
+              source_time_function(i_source,it,i_stage) = factor(i_source) * &
+                        cos_taper(t_used,hdur) * marmousi_ormsby_wavelet(PI*t_used)
+
           case default
             call exit_MPI(myrank,'unknown source time function')
 
@@ -436,10 +442,8 @@
             stf_used = source_time_function(i_source,it,i_stage)
 
             ! note: earliest start time of the simulation is: (it-1)*deltat - t0 - tshift_src(i_source)
-            write(55,"(E14.7,A,E14.7)") sngl(timeval-t0)," ",sngl(stf_used) !," ",sngl(timeval)
+            write(55,*) timeval-t0,' ',stf_used
 
-            ! output relative time in third column, in case user wants to check it as well
-            ! write(55,*) sngl(t_used),sngl(stf_used),sngl(timeval)
           endif
         endif
       enddo

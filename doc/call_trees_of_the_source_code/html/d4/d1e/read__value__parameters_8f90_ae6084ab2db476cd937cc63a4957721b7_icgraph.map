@@ -1,0 +1,7 @@
+<map id="read_value_logical_p" name="read_value_logical_p">
+<area shape="rect" id="node2" href="$d3/de4/check__quality__external__mesh_8f90.html#af4637657608dd075d1ddb733c72982f5" title="check_quality_external_mesh" alt="" coords="201,5,399,32"/>
+<area shape="rect" id="node3" href="$d2/dc9/read__parameter__file_8_f90.html#a9ffbe302d23f7bb718efcedaea7a1e14" title="read_parameter_file_only" alt="" coords="213,56,387,83"/>
+<area shape="rect" id="node4" href="$db/d1a/parallel_8_f90.html#a0f27a8b922f3b4c44530e0c923bf38e5" title="init_mpi" alt="" coords="447,81,515,108"/>
+<area shape="rect" id="node5" href="$d2/dc9/read__parameter__file_8_f90.html#ac444ff848b7165e954a022bbcd597204" title="read_parameter_file\l_receiversets" alt="" coords="229,158,371,199"/>
+<area shape="rect" id="node6" href="$d6/d3d/read__mesh__databases_8_f90.html#a316a543c3db626ded40853b6f75eb88f" title="read_mesh_for_init" alt="" coords="232,224,368,251"/>
+</map>

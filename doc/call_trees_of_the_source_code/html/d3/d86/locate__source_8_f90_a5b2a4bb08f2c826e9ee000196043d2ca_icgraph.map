@@ -1,0 +1,5 @@
+<map id="locate_source" name="locate_source">
+<area shape="rect" id="node2" href="$d3/d5c/compute__add__sources__acoustic_8f90.html#afe7f71cffcadb6f12cf2722d94727377" title="compute_add_sources\l_acoustic_moving_source" alt="" coords="159,5,335,47"/>
+<area shape="rect" id="node3" href="$d8/d7b/compute__add__sources__viscoelastic_8f90.html#a3e5ed311f743992c1acd61239f912922" title="compute_add_sources\l_viscoelastic_moving\l_source" alt="" coords="168,71,325,127"/>
+<area shape="rect" id="node4" href="$de/d6b/setup__sources__receivers_8_f90.html#afe21871cbd5751b9a1a47216ef7189ff" title="setup_sources" alt="" coords="192,151,301,178"/>
+</map>

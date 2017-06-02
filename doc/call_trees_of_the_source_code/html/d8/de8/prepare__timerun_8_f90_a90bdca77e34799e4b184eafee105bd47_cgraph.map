@@ -1,0 +1,25 @@
+<map id="prepare_timerun" name="prepare_timerun">
+<area shape="rect" id="node2" href="$d8/d44/setup__mesh_8_f90.html#a8e5151e01c8dd0249f3248542d956a7e" title="setup_mesh_external\l_models" alt="" coords="195,5,345,47"/>
+<area shape="rect" id="node3" href="$db/d1a/parallel_8_f90.html#a5c0b8ddb524981fa08f6346a2d42e7b9" title="synchronize_all" alt="" coords="415,650,528,677"/>
+<area shape="rect" id="node4" href="$d1/d42/read__save__binary__database_8f90.html#ac082aff9b43ec1e30dba3a49ef01aa8f" title="read_sources_receivers" alt="" coords="188,122,352,149"/>
+<area shape="rect" id="node5" href="$de/d6b/setup__sources__receivers_8_f90.html#a2b73d68fad08627327bfa3f8246f16f9" title="setup_adjoint_sources" alt="" coords="192,173,348,199"/>
+<area shape="rect" id="node6" href="$d1/d42/read__save__binary__database_8f90.html#a162941b185a990577450036bd8aaf7fb" title="read_binary_database\l_part1" alt="" coords="193,224,347,265"/>
+<area shape="rect" id="node7" href="$db/dac/axisymmetric__routines_8f90.html#a56c303c15479226a714ee94b9102b874" title="check_compatibility\l_axisym" alt="" coords="201,289,339,331"/>
+<area shape="rect" id="node8" href="$d8/de8/prepare__timerun_8_f90.html#a25fc64b8e0f88949216f7888daca5384" title="prepare_timerun_constants" alt="" coords="178,355,362,382"/>
+<area shape="rect" id="node9" href="$d7/d38/prepare__wavefields_8f90.html#a42f01ea021d1052f49b7ad4e01b9a590" title="prepare_wavefields" alt="" coords="201,406,339,433"/>
+<area shape="rect" id="node10" href="$d5/db4/prepare__pml_8f90.html#a9621fd67a56f2ff4b574cd4ea5f8e4ed" title="prepare_pml" alt="" coords="221,457,319,483"/>
+<area shape="rect" id="node11" href="$d8/de8/prepare__timerun_8_f90.html#a6bdc162bab6d219ace84f839b8ae53ff" title="prepare_timerun_mass\l_matrix" alt="" coords="191,508,349,549"/>
+<area shape="rect" id="node12" href="$d6/dfd/enforce__fields_8f90.html#a356af6f9250175e1ad0a49d7762ce606" title="build_forced" alt="" coords="223,574,317,601"/>
+<area shape="rect" id="node13" href="$d8/de8/prepare__timerun_8_f90.html#abbf23ec0e989695c7de7575ac306dd57" title="prepare_timerun_postscripts" alt="" coords="175,625,365,651"/>
+<area shape="rect" id="node14" href="$d8/de8/prepare__timerun_8_f90.html#a0bf0c59a6e4871287eeb3c90c7e77d36" title="prepare_timerun_adjoint" alt="" coords="187,675,353,702"/>
+<area shape="rect" id="node15" href="$d8/de8/prepare__timerun_8_f90.html#a74553a219cd7939d812145a9cda1ad2c" title="prepare_timerun_initialfield" alt="" coords="179,726,361,753"/>
+<area shape="rect" id="node16" href="$da/df2/prepare__source__time__function_8f90.html#addcd2af3eec8e2aa6a3cb83ba5477865" title="prepare_source_time\l_function" alt="" coords="196,777,344,819"/>
+<area shape="rect" id="node17" href="$d8/de8/prepare__timerun_8_f90.html#a131216132501c7a6884efec0318c1c0a" title="prepare_timerun_noise" alt="" coords="191,843,349,870"/>
+<area shape="rect" id="node18" href="$d8/de8/prepare__timerun_8_f90.html#a20844b7d52bfd636d642ca9571cccf89" title="prepare_timerun_attenuation\l_solid" alt="" coords="173,895,367,936"/>
+<area shape="rect" id="node19" href="$d8/de8/prepare__timerun_8_f90.html#a33c6ceafb01c1588376f5e9d49b4380f" title="prepare_timerun_attenuation\l_fluid" alt="" coords="173,960,367,1001"/>
+<area shape="rect" id="node20" href="$d1/d42/read__save__binary__database_8f90.html#a59e60ddf7a77dc3e143cdd553785c7ab" title="save_binary_database" alt="" coords="192,1026,348,1053"/>
+<area shape="rect" id="node21" href="$d1/d42/read__save__binary__database_8f90.html#a7887a1c366e711fba26b841e9973a2b5" title="read_binary_database\l_part2" alt="" coords="193,1077,347,1119"/>
+<area shape="rect" id="node22" href="$d8/de8/prepare__timerun_8_f90.html#a0e3ee94a6da2354cc05da9c1c5c8989f" title="prepare_material_arrays" alt="" coords="187,1143,353,1170"/>
+<area shape="rect" id="node23" href="$d8/de8/prepare__timerun_8_f90.html#aaf4a8a01bc8e475ecb72513082799c5b" title="prepare_timerun_image\l_coloring" alt="" coords="188,1195,352,1236"/>
+<area shape="rect" id="node24" href="$dc/d2e/prepare__gpu_8f90.html#a3eea934d1b9daeb579de7a879b36c07a" title="prepare_gpu" alt="" coords="221,1261,319,1287"/>
+</map>

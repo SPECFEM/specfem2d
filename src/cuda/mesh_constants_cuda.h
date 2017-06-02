@@ -51,7 +51,21 @@
 #define MESH_CONSTANTS_CUDA_H
 
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <unistd.h>
+#include <stdio.h>
+
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
+
+#include <cuda.h>
+//#include <cuda_runtime.h>
+//#include <cublas.h>
+
+#include "config.h"
+
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -148,7 +162,7 @@
 // Fermi generation hardware, but *may* be faster on Kepler
 // generation.
 // Use textures for hprime_xx
-#define USE_TEXTURES_CONSTANTS
+//#define USE_TEXTURES_CONSTANTS  // might not working properly yet, please test on your card...
 
 // CUDA version >= 4.0 needed for cudaTextureType1D and cudaDeviceSynchronize()
 #if CUDA_VERSION < 4000
@@ -333,7 +347,7 @@ typedef struct mesh_ {
   float* send_buffer;
   float* h_recv_accel_buffer;
   float* h_recv_b_accel_buffer;
-  float* recv_buffer;
+  //float* recv_buffer;
 
   int size_mpi_buffer;
   int size_mpi_buffer_potential;
@@ -349,6 +363,28 @@ typedef struct mesh_ {
   cudaStream_t copy_stream;
   //cudaStream_t b_copy_stream;
 
+  // sources
+  int nsources_local;
+  realw* d_sourcearrays;
+  int* d_ispec_selected_source;
+  realw* d_source_time_function;
+
+  // receivers
+  int nrec_local;
+  int* d_ispec_selected_rec_loc;
+  realw* h_seismograms;
+  realw* d_seismograms;
+  realw* d_cosrot;
+  realw* d_sinrot;
+
+  // adjoint receivers/sources
+  int nadj_rec_local;
+  realw* d_adj_sourcearrays;
+  realw* h_adj_sourcearrays_slice;
+  realw* d_source_adjointe;
+  realw* d_xir_store_loc;
+  realw* d_gammar_store_loc;
+
   // ------------------------------------------------------------------ //
   // elastic wavefield parameters
   // ------------------------------------------------------------------ //
@@ -359,6 +395,7 @@ typedef struct mesh_ {
   realw* d_b_displ; realw* d_b_veloc; realw* d_b_accel;
 
   // elastic elements
+  int nspec_elastic;
   int* d_ispec_is_elastic;
 
   // elastic domain parameters
@@ -370,7 +407,6 @@ typedef struct mesh_ {
   // mesh coloring
   int* h_num_elem_colors_elastic;
   int num_colors_outer_elastic,num_colors_inner_elastic;
-  int nspec_elastic;
 
   realw* d_rmassx;
   realw* d_rmassz;
@@ -407,31 +443,6 @@ typedef struct mesh_ {
 
   realw* d_rho_vp;
   realw* d_rho_vs;
-
-  // sources
-  int nsources_local;
-  realw* d_sourcearrays;
-  int* d_ispec_selected_source;
-  realw* d_source_time_function;
-
-  // receivers
-  int* d_number_receiver_global;
-  int* d_ispec_selected_rec;
-  int nrec_local;
-
-  realw* h_seismograms;
-  realw* d_seismograms;
-  realw* d_cosrot;
-  realw* d_sinrot;
-
-  // adjoint receivers/sources
-  int nadj_rec_local;
-  realw* d_adj_sourcearrays;
-  realw* h_adj_sourcearrays_slice;
-  int* d_pre_computed_irec;
-  realw* d_source_adjointe;
-  realw* d_xir_store_loc;
-  realw* d_gammar_store_loc;
 
   // surface elements (to save for noise tomography and acoustic simulations)
   int* d_free_surface_ispec;
@@ -473,6 +484,7 @@ typedef struct mesh_ {
   realw* d_b_potential_acoustic; realw* d_b_potential_dot_acoustic; realw* d_b_potential_dot_dot_acoustic;
 
   // acoustic domain parameters
+  int nspec_acoustic;
   int* d_ispec_is_acoustic;
 
   int* d_phase_ispec_inner_acoustic;
@@ -483,7 +495,6 @@ typedef struct mesh_ {
   // mesh coloring
   int* h_num_elem_colors_acoustic;
   int num_colors_outer_acoustic,num_colors_inner_acoustic;
-  int nspec_acoustic;
 
   realw* d_rhostore;
   realw* d_kappastore;

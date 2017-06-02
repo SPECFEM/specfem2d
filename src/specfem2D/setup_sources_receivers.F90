@@ -34,7 +34,11 @@
 
   subroutine setup_sources_receivers()
 
+  use specfem_par
+
   implicit none
+
+  if (setup_with_binary_database == 2) return
 
   ! locates sources and determines simulation start time t0
   call setup_sources()
@@ -65,7 +69,11 @@
 
   subroutine setup_sources()
 
-  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,IIN,MAX_STRING_LEN
+  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,IIN, &
+#ifndef USE_MPI
+     OUTPUT_FILES, &
+#endif
+     MAX_STRING_LEN
 
   use specfem_par, only: NSOURCES,initialfield,source_type, &
                          coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface, &
@@ -132,8 +140,6 @@
           endif
         enddo
 
-        ! daniel debug
-        !open(unit=1234,file='OUTPUT_FILES/debug_source_contribution.txt',status='unknown')
       endif
 
     else if (source_type(i_source) == 2) then
@@ -162,7 +168,7 @@
      ! write actual source locations to file
      ! note that these may differ from input values, especially if source_surf = .true. in SOURCE
      ! note that the exact source locations are determined from (ispec,xi,gamma) values
-     open(unit=14,file='OUTPUT_FILES/for_information_SOURCE_actually_used',status='unknown')
+     open(unit=14,file=trim(OUTPUT_FILES)//'for_information_SOURCE_actually_used',status='unknown')
      do i_source= 1,NSOURCES
         write(14,*) x_source(i_source), z_source(i_source)
      enddo
@@ -181,31 +187,21 @@
 
   subroutine setup_receivers()
 
-  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,IIN,MAX_STRING_LEN
-#ifndef USE_MPI
-  use constants, only: IOUT
+#ifdef USE_MPI
+  use constants, only: IMAIN,IIN,mygroup,IN_DATA_FILES
+#else
+  use constants, only: IMAIN,IIN,mygroup,IN_DATA_FILES,OUTPUT_FILES,IOUT
 #endif
-
-  use specfem_par, only: coord,ibool,nglob,nspec, &
-                         ispec_selected_rec, &
-                         NPROC,myrank,coorg,knods,ngnod, &
-                         xigll,zigll,npgeo, &
-                         nrec,nrecloc,recloc,islice_selected_rec,st_xval,st_zval, &
-                         xi_receiver,gamma_receiver,station_name,network_name, &
-                         x_final_receiver,z_final_receiver, &
-                         x_source,z_source
+  use specfem_par
 
   implicit none
 
   ! Local variables
   integer :: nrec_tot_found
   integer :: ier
+  integer :: irec,irec_local
 
-#ifndef USE_MPI
-  integer :: irec
-#endif
-
-  character(len=MAX_STRING_LEN) :: dummystring
+  character(len=MAX_STRING_LEN) :: stations_filename,path_to_add,dummystring
 
   ! user output
   call synchronize_all()
@@ -215,9 +211,20 @@
     call flush_IMAIN()
   endif
 
+  stations_filename = trim(IN_DATA_FILES)//'STATIONS'
+
+  ! see if we are running several independent runs in parallel
+  ! if so, add the right directory for that run
+  ! (group numbers start at zero, but directory names start at run0001, thus we add one)
+  ! a negative value for "mygroup" is a convention that indicates that groups (i.e. sub-communicators, one per run) are off
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    stations_filename = path_to_add(1:len_trim(path_to_add))//stations_filename(1:len_trim(stations_filename))
+  endif
+
   ! get number of stations from receiver file
-  open(unit=IIN,file='DATA/STATIONS',status='old',action='read',iostat=ier)
-  if (ier /= 0) call exit_MPI(myrank,'Error opening DATA/STATIONS file')
+  open(unit=IIN,file=trim(stations_filename),status='old',action='read',iostat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'No file '//trim(stations_filename)//', exit')
   nrec = 0
   do while(ier == 0)
     read(IIN,"(a)",iostat=ier) dummystring
@@ -264,7 +271,7 @@
   if (myrank == 0) then
      ! write out actual station locations (compare with STATIONS from meshfem2D)
      ! NOTE: this will be written out even if use_existing_STATIONS = .true.
-     open(unit=IOUT,file='OUTPUT_FILES/for_information_STATIONS_actually_used',status='unknown')
+     open(unit=IOUT,file=trim(OUTPUT_FILES)//'for_information_STATIONS_actually_used',status='unknown')
      do irec = 1,nrec
         write(IOUT,"('S',i4.4,'    AA ',f20.7,1x,f20.7,'       0.0         0.0')") &
              irec,x_final_receiver(irec),z_final_receiver(irec)
@@ -298,6 +305,17 @@
 
   ! checks if acoustic receiver is exactly on the free surface because pressure is zero there
   call setup_receivers_check_acoustic()
+
+  ! create a local array for receivers
+  allocate(ispec_selected_rec_loc(nrecloc))
+  irec_local = 0
+  do irec = 1, nrec
+    if (myrank == islice_selected_rec(irec)) then
+      if (irec_local > nrecloc) stop 'Error with the number of local sources'
+      irec_local = irec_local + 1
+      ispec_selected_rec_loc(irec_local)  = ispec_selected_rec(irec)
+    endif
+  enddo
 
   end subroutine setup_receivers
 
@@ -371,7 +389,6 @@
 !-----------------------------------------------------------------------------------------
 !
 
-
   subroutine setup_adjoint_sources
 
 ! compute source array for adjoint source
@@ -379,18 +396,13 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,MAX_STRING_LEN,IMAIN
 
   use specfem_par, only: nadj_rec_local,nrec,nrecloc,NSTEP,NPROC,SIMULATION_TYPE,SU_FORMAT, &
-                        adj_sourcearrays, &
                         myrank,islice_selected_rec,seismotype, &
-                        xi_receiver,gamma_receiver, &
-                        network_name,station_name,GPU_MODE
-
-  use specfem_par_gpu, only: source_adjointe
+                        network_name,station_name,source_adjoint
 
   implicit none
 
   ! local parameters
   integer :: irec,irec_local
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: adj_sourcearray
   character(len=MAX_STRING_LEN) :: adj_source_file
 
   ! number of adjoint receivers in this slice
@@ -409,10 +421,7 @@
       call flush_IMAIN()
     endif
 
-    ! for GPU-version
-    if (GPU_MODE) then
-      allocate(source_adjointe(nrecloc,NSTEP,2))
-    endif
+    allocate(source_adjoint(nrecloc,NSTEP,2))
 
     ! counts number of adjoint sources in this slice
     do irec = 1,nrec
@@ -427,14 +436,6 @@
       endif
     enddo
 
-    ! array for all adjoint sources
-    if (nadj_rec_local > 0) then
-      allocate(adj_sourcearrays(nadj_rec_local,NSTEP,NDIM,NGLLX,NGLLZ))
-    else
-      allocate(adj_sourcearrays(1,1,1,1,1))
-    endif
-    adj_sourcearrays(:,:,:,:,:) = 0._CUSTOM_REAL
-
     ! reads in adjoint source files
     if (.not. SU_FORMAT) then
       ! user output
@@ -443,9 +444,6 @@
         call flush_IMAIN()
       endif
 
-      ! temporary array
-      allocate(adj_sourcearray(NSTEP,NDIM,NGLLX,NGLLZ))
-
       ! reads in ascii adjoint source files **.adj
       irec_local = 0
       do irec = 1, nrec
@@ -453,16 +451,11 @@
         if (myrank == islice_selected_rec(irec)) then
           irec_local = irec_local + 1
           adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
-
-          call compute_arrays_adj_source(xi_receiver(irec),gamma_receiver(irec),irec_local,adj_source_file,adj_sourcearray)
-
-          adj_sourcearrays(irec_local,:,:,:,:) = adj_sourcearray(:,:,:,:)
+          call read_adj_source(irec_local,adj_source_file)
         endif
       enddo
       ! checks
       if (irec_local /= nadj_rec_local) stop 'Error invalid number of local adjoint sources found'
-      ! frees temporary array
-      deallocate(adj_sourcearray)
     else
       ! user output
       if (myrank == 0) then
@@ -471,7 +464,7 @@
       endif
 
       ! (SU_FORMAT)
-      call compute_arrays_adj_source_SU(seismotype)
+      call read_adj_source_SU(seismotype)
     endif
 
     ! user output
@@ -479,9 +472,6 @@
       write(IMAIN,*) '  number of adjoint sources = ',nrec
       call flush_IMAIN()
     endif
-  else
-    ! dummy allocation
-    allocate(adj_sourcearrays(1,1,1,1,1))
   endif ! SIMULATION_TYPE == 3
 
   ! synchronizes all processes
@@ -501,7 +491,7 @@
   use mpi
 #endif
 
-  use constants, only: PI,HUGEVAL
+  use constants, only: PI,HUGEVAL,OUTPUT_FILES
   use specfem_par
 
   implicit none
@@ -611,14 +601,18 @@
           anglesource_recv = anglesource(i_source)
 #ifdef USE_MPI
         else if (myrank == 0) then
-          call MPI_recv(source_courbe_eros(i_source),1,MPI_INTEGER, &
-                        MPI_ANY_SOURCE,42,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-          call MPI_recv(anglesource_recv,1,MPI_DOUBLE_PRECISION, &
-                        MPI_ANY_SOURCE,43,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+          call recv_singlei(source_courbe_eros(i_source), MPI_ANY_SOURCE, 42)
+          !call MPI_recv(source_courbe_eros(i_source),1,MPI_INTEGER, &
+          !              MPI_ANY_SOURCE,42,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
+          call recv_singledp(anglesource_recv, MPI_ANY_SOURCE, 43)
+          !call MPI_recv(anglesource_recv,1,MPI_DOUBLE_PRECISION, &
+          !              MPI_ANY_SOURCE,43,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
 
         else if (myrank == islice_selected_source(i_source)) then
-          call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,MPI_COMM_WORLD,ier)
-          call MPI_send(anglesource(i_source),1,MPI_DOUBLE_PRECISION,0,43,MPI_COMM_WORLD,ier)
+          call send_singlei(n1_tangential_detection_curve, 0, 42)
+          call send_singledp(anglesource(i_source), 0, 43)
+          !call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,my_local_mpi_comm_world,ier) ! TODO remove
+          !call MPI_send(anglesource(i_source),1,MPI_DOUBLE_PRECISION,0,43,my_local_mpi_comm_world,ier) ! TODO remove
 #endif
         endif
 
@@ -672,8 +666,10 @@
       endif
     enddo
 
+   ! Don't remove that comment: FN2SNSR. The following lines would have to be modified for compatibility with
+   ! NUMBER_OF_SIMULTANEOUS_RUNS
     if (myrank == 0) then
-      open(unit=11,file='OUTPUT_FILES/dist_rec_tangential_detection_curve', &
+      open(unit=11,file=trim(OUTPUT_FILES)//'dist_rec_tangential_detection_curve', &
             form='formatted', status='unknown')
     endif
 
@@ -688,13 +684,15 @@
           z_final_receiver_dummy = z_final_receiver(irec)
 #ifdef USE_MPI
         else
-
-          call MPI_RECV(n1_tangential_detection_curve,1,MPI_INTEGER, &
-             islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-          call MPI_RECV(x_final_receiver_dummy,1,MPI_DOUBLE_PRECISION, &
-             islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
-          call MPI_RECV(z_final_receiver_dummy,1,MPI_DOUBLE_PRECISION, &
-             islice_selected_rec(irec),irec,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+          call recv_singlei(n1_tangential_detection_curve, islice_selected_rec(irec), irec)
+          call recv_singledp(x_final_receiver_dummy, islice_selected_rec(irec), irec)
+          call recv_singledp(z_final_receiver_dummy, islice_selected_rec(irec), irec)
+          !call MPI_RECV(n1_tangential_detection_curve,1,MPI_INTEGER, &
+          !   islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
+          !call MPI_RECV(x_final_receiver_dummy,1,MPI_DOUBLE_PRECISION, &
+          !   islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
+          !call MPI_RECV(z_final_receiver_dummy,1,MPI_DOUBLE_PRECISION, &
+          !   islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
 
 #endif
         endif
@@ -703,9 +701,12 @@
       else
         if (myrank == islice_selected_rec(irec)) then
           irecloc = irecloc + 1
-          call MPI_SEND(rec_tangential_detection_curve(irecloc),1,MPI_INTEGER,0,irec,MPI_COMM_WORLD,ier)
-          call MPI_SEND(x_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
-          call MPI_SEND(z_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,MPI_COMM_WORLD,ier)
+          call send_singlei(rec_tangential_detection_curve(irecloc), 0, irec)
+          call send_singledp(x_final_receiver(irec), 0, irec)
+          call send_singledp(z_final_receiver(irec), 0, irec)
+          !call MPI_SEND(rec_tangential_detection_curve(irecloc),1,MPI_INTEGER,0,irec,my_local_mpi_comm_world,ier) ! TODO remove
+          !call MPI_SEND(x_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,my_local_mpi_comm_world,ier) ! TODO remove
+          !call MPI_SEND(z_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,my_local_mpi_comm_world,ier) ! TODO remove
         endif
 #endif
 
@@ -868,26 +869,20 @@
   use specfem_par, only: myrank,nrec,nrecloc, &
     ispec_selected_rec,islice_selected_rec, &
     xigll,zigll, &
-    hxir_store,hgammar_store,xi_receiver,gamma_receiver,hxir,hpxir,hgammar,hpgammar, &
-    AXISYM,is_on_the_axis,xiglj
-
-  use specfem_par_gpu, only: xir_store_loc,gammar_store_loc
+    xi_receiver,gamma_receiver,hxir,hpxir,hgammar,hpgammar, &
+    AXISYM,is_on_the_axis,xiglj,xir_store_loc,gammar_store_loc
 
   implicit none
 
   ! local parameters
   integer :: irec,irec_local,ier
 
-  ! allocate Lagrange interpolators for receivers
-  allocate(hxir_store(nrec,NGLLX), &
-           hgammar_store(nrec,NGLLZ),stat=ier)
-  if (ier /= 0) stop 'Error allocating receiver h**_store arrays'
-
+  ! allocate Lagrange interpolants for receivers
   allocate(xir_store_loc(nrecloc,NGLLX), &
            gammar_store_loc(nrecloc,NGLLZ),stat=ier)
   if (ier /= 0) stop 'Error allocating local receiver h**_store arrays'
 
-  ! define and store Lagrange interpolators at all the receivers
+  ! define and store Lagrange interpolants at all the receivers
   irec_local = 0
   do irec = 1,nrec
     if (AXISYM) then
@@ -911,10 +906,6 @@
       !  double precision, external :: hglj,hgll
     endif
     call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
-
-    ! stores Lagrangians for receiver
-    hxir_store(irec,:) = hxir(:)
-    hgammar_store(irec,:) = hgammar(:)
 
     ! local receivers in this slice
     if (myrank == islice_selected_rec(irec)) then

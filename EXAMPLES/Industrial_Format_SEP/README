@@ -1,0 +1,7 @@
+1. modify interpolate.f90
+   mainly to change the location/names of your SEP/SU models
+
+2. run interpolation:
+	./interpolate.bash
+
+

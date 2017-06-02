@@ -36,11 +36,10 @@
 
 ! reads in external model files
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN,IN_DATA_FILES,IIN,MAX_STRING_LEN
 
-  use specfem_par, only: nspec,nglob,ibool, &
-    ispec_is_elastic,ispec_is_anisotropic, &
-    coord,kmato,MODEL,tomo_material,myrank
+  use specfem_par, only: nspec,nglob,ibool,ispec_is_elastic,ispec_is_anisotropic, &
+    coord,kmato,MODEL,myrank,setup_with_binary_database
 
   ! external model parameters
   use specfem_par, only: rhoext,vpext,vsext,gravityext,Nsqext, &
@@ -49,89 +48,111 @@
   implicit none
 
   ! Local variables
-  integer :: i,j,ispec
+  integer :: i,j,ispec,itmp
   integer :: ier
-  real(kind=CUSTOM_REAL) :: tmp1, tmp2,tmp3
+  real(kind=CUSTOM_REAL) :: tmp1,tmp2
   double precision :: vs_val,vp_val,rho_val
-  character(len=150) :: inputname
+  character(len=MAX_STRING_LEN) :: inputname, line
+  logical :: read_next_line
 
-! note: we read in external models once the basic mesh with its geometry and GLL points has been setup.
-!       External models define new velocity/material parameters which need to be defined on all GLL points.
-
-  if (tomo_material > 0) MODEL = 'tomo'
+  ! note: we read in external models once the basic mesh with its geometry and GLL points has been setup.
+  !       External models define new velocity/material parameters which need to be defined on all GLL points.
+  if (myrank == 0) write(IMAIN,*) '  model: ',trim(MODEL)
 
   select case (trim(MODEL))
   case ('legacy')
     ! old model format
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_model_velocity.dat_input'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_model_velocity.dat_input'
     if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_model_velocity.dat_input'
 
-    open(unit=1001,file=inputname,status='old',action='read',iostat=ier)
+    open(unit=IIN,file=inputname,status='old',action='read',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_model_velocity.dat_input file.'
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          ! format: #unused #unused #unused #rho #vp #vs
-          read(1001,*) tmp1,tmp2,tmp3,rho_val,vp_val,vs_val
+          ! reads next data line
+          read_next_line = .true.
+          do while (read_next_line)
+            ! format: #unused #unused #unused #rho #vp #vs
+            read(IIN,'(a256)',iostat=ier) line
+            if (ier /= 0) stop 'Error reading file model_velocity.dat_input'
+
+            ! left adjust
+            line = adjustl(line)
+
+            ! trim white space
+            line = trim(line)
+
+            ! skip comment lines
+            if (line(1:1) == '#') then
+              read_next_line = .true.
+            else
+              read_next_line = .false.
+            endif
+          enddo
+
+          ! reads in values
+          read(line,*) itmp,tmp1,tmp2,rho_val,vp_val,vs_val
           rhoext(i,j,ispec) = rho_val
           vpext(i,j,ispec) = vp_val
           vsext(i,j,ispec) = vs_val
         enddo
       enddo
     enddo
-    close(1001)
+    close(IIN)
+
     ! default no attenuation
     QKappa_attenuationext(:,:,:) = 9999.d0
     Qmu_attenuationext(:,:,:) = 9999.d0
 
   case ('ascii')
     ! ascii model format
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho_vp_vs.dat'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_rho_vp_vs.dat'
     if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_rho_vp_vs.dat'
 
-    open(unit=1001,file=inputname,status='old',action='read',iostat=ier)
+    open(unit=IIN,file=inputname,status='old',action='read',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_rho_vp_vs.dat file.'
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
           ! format: #unused #unused #rho #vp #vs
-          read(1001,*) tmp1,tmp2,rho_val,vp_val,vs_val
+          read(IIN,*) tmp1,tmp2,rho_val,vp_val,vs_val
           rhoext(i,j,ispec) = rho_val
           vpext(i,j,ispec) = vp_val
           vsext(i,j,ispec) = vs_val
         enddo
       enddo
     enddo
-    close(1001)
+    close(IIN)
     ! default no attenuation
     QKappa_attenuationext(:,:,:) = 9999.d0
     Qmu_attenuationext(:,:,:) = 9999.d0
 
   case ('binary','gll')
     ! binary formats
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_rho.bin'
     if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_rho.bin, .._vp.bin, .._vs.bin'
 
-    open(unit = 1001, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
+    open(unit = IIN, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_rho.bin file.'
 
-    read(1001) rhoext
-    close(1001)
+    read(IIN) rhoext
+    close(IIN)
     print *, 'rho', minval(rhoext), maxval(rhoext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vp.bin'
-    open(unit = 1001, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_vp.bin'
+    open(unit = IIN, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_vp.bin file.'
 
-    read(1001) vpext
-    close(1001)
+    read(IIN) vpext
+    close(IIN)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_vs.bin'
-    open(unit = 1001, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_vs.bin'
+    open(unit = IIN, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_vs.bin file.'
 
-    read(1001) vsext
-    close(1001)
+    read(IIN) vsext
+    close(IIN)
 
     ! default no attenuation
     QKappa_attenuationext(:,:,:) = 9999.d0
@@ -139,62 +160,62 @@
 
   case ('binary_voigt')
     ! Voigt model
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_rho.bin'
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_rho.bin'
     if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_rho.bin, .._c11.bin, .._c55.bin'
 
-    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted',iostat=ier)
+    open(unit = IIN, file = inputname,status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_rho.bin file.'
 
-    read(1001) rhoext
-    close(1001)
+    read(IIN) rhoext
+    close(IIN)
     print *, 'rho', minval(rhoext), maxval(rhoext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c11.bin'
-    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c11.bin'
+    open(unit = IIN, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_c11.bin file.'
 
-    read(1001) c11ext
-    close(1001)
+    read(IIN) c11ext
+    close(IIN)
     print *, 'c11ext', minval(c11ext), maxval(c11ext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c13.bin'
-    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c13.bin'
+    open(unit = IIN, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_c13.bin file.'
 
-    read(1001) c13ext
-    close(1001)
+    read(IIN) c13ext
+    close(IIN)
     print *, 'c13ext', minval(c13ext), maxval(c13ext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c15.bin'
-    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c15.bin'
+    open(unit = IIN, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_c15.bin file.'
 
-    read(1001) c15ext
-    close(1001)
+    read(IIN) c15ext
+    close(IIN)
     print *, 'c15ext', minval(c15ext), maxval(c15ext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c33.bin'
-    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c33.bin'
+    open(unit = IIN, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_c33.bin file.'
 
-    read(1001) c33ext
-    close(1001)
+    read(IIN) c33ext
+    close(IIN)
     print *, 'c33ext', minval(c33ext), maxval(c33ext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c35.bin'
-    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c35.bin'
+    open(unit = IIN, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_c35.bin file.'
 
-    read(1001) c35ext
-    close(1001)
+    read(IIN) c35ext
+    close(IIN)
     print *, 'c35ext', minval(c35ext), maxval(c35ext)
 
-    write(inputname,'(a,i6.6,a)') 'DATA/proc',myrank,'_c55.bin'
-    open(unit = 1001, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
+    write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c55.bin'
+    open(unit = IIN, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
     if (ier /= 0) stop 'Error opening DATA/proc*****_c55.bin file.'
 
-    read(1001) c55ext
-    close(1001)
+    read(IIN) c55ext
+    close(IIN)
     print *, 'c55ext', minval(c55ext), maxval(c55ext)
 
     do ispec = 1,nspec
@@ -226,6 +247,11 @@
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext, &
                                QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
                                c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
+  case ('marmousi')
+    ! marmousi type model
+    call define_external_model_from_marmousi(coord,ibool,rhoext,vpext,vsext, &
+                                             QKappa_attenuationext,Qmu_attenuationext,gravityext,Nsqext, &
+                                             c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
 
   case ('tomo')
     ! tomographic file
@@ -239,7 +265,7 @@
   end select
 
   ! check that the external model that has just been defined makes sense
-  if (trim(MODEL) == 'external' .or. trim(MODEL) == 'tomo') then
+  if (trim(MODEL) == 'external' .or. trim(MODEL) == 'tomo' .or. trim(MODEL) == 'marmousi') then
     ! checks velocities for each element
     do ispec = 1,nspec
       do j = 1,NGLLZ
@@ -274,7 +300,16 @@
   endif
 
   ! resets domain flags
-  call get_simulation_domains_from_external_models()
+  if (setup_with_binary_database /= 2) then
+    call get_simulation_domains_from_external_models()
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  done'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   end subroutine read_external_model
 

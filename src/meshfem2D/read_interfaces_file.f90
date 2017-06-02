@@ -36,12 +36,12 @@
 
   subroutine read_interfaces_file()
 
-  use constants, only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK,HUGEVAL
+  use constants, only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK,HUGEVAL,mygroup,MAX_STRING_LEN,IN_DATA_FILES
 
   use shared_parameters, only: interfacesfile,nx_param, &
     nz_layer,number_of_layers, &
     max_npoints_interface,number_of_interfaces, &
-    nxread,nzread
+    nxread,nzread,NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
 
@@ -49,16 +49,25 @@
   integer :: ier,interface_current,ipoint_current,ilayer
   integer :: npoints_interface_bottom
   double precision :: xinterface_dummy,zinterface_dummy,xinterface_dummy_previous
+  character(len=MAX_STRING_LEN) :: interfaces_filename,path_to_add
+
+  interfaces_filename = trim(IN_DATA_FILES)//trim(interfacesfile)
+
+ if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    interfaces_filename = path_to_add(1:len_trim(path_to_add))//interfaces_filename(1:len_trim(interfaces_filename))
+  endif
 
   ! user output
   write(IMAIN,*)
-  write(IMAIN,*) 'Reading interface data from file: ', 'DATA/' // interfacesfile(1:len_trim(interfacesfile))
+  write(IMAIN,*) 'Reading interface data from file: '//interfaces_filename
+  !'Reading interface data from file: '//trim(IN_DATA_FILES)//interfacesfile(1:len_trim(interfacesfile))
   call flush_IMAIN()
 
   ! get interface data from external file to count the spectral elements along Z
-  open(unit=IIN_INTERFACES,file='DATA/'//interfacesfile,status='old',iostat=ier)
+  open(unit=IIN_INTERFACES,file=interfaces_filename,status='old',iostat=ier)
   if (ier /= 0) then
-    print *,'Error opening file: ',trim('DATA/'//interfacesfile)
+    print *,'Error opening file: '//interfaces_filename
     call exit_MPI(0,'Error read interface file in meshfem2D')
   endif
 

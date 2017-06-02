@@ -52,8 +52,7 @@
   endif
 
   ! shape arrays
-  allocate(shape2D(ngnod,NGLLX,NGLLZ), &
-           dershape2D(NDIM,ngnod,NGLLX,NGLLZ),stat=ier)
+  allocate(shape2D(ngnod,NGLLX,NGLLZ),dershape2D(NDIM,ngnod,NGLLX,NGLLZ),stat=ier)
   if (ier /= 0) stop 'Error allocating shape arrays'
 
   do j = 1,NGLLZ

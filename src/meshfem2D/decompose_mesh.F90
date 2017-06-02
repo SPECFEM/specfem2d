@@ -34,7 +34,7 @@
 
   subroutine decompose_mesh()
 
-  use constants, only: IMAIN,MAX_NEIGHBORS,NCORNERS,MAX_NSIZE_SHARED
+  use constants, only: IMAIN,MAX_NEIGHBORS,NCORNERS,MAX_NSIZE_SHARED,ADD_A_SMALL_CRACK_IN_THE_MEDIUM
 
   use shared_parameters, only: NPROC,ADD_PERIODIC_CONDITIONS,PERIODIC_HORIZ_DIST, &
     ngnod,nbmodels,num_material,partitioning_method,phi_read
@@ -161,6 +161,16 @@
        call periodic_edges_repartitioning(elmnts_bis,nnodes,nodes_coords,PERIODIC_HORIZ_DIST)
     else
        call periodic_edges_repartitioning(elmnts,nnodes,nodes_coords,PERIODIC_HORIZ_DIST)
+    endif
+  endif
+
+  ! manual crack elements
+  if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM .and. NPROC > 1) then
+    ! safety check
+    if (ngnod /= 4) then
+      stop 'must currently have ngnod == 4 when adding a crack manually'
+    else
+      call manual_crack_repartitioning(num_material,NPROC)
     endif
   endif
 

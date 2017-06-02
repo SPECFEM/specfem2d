@@ -44,9 +44,9 @@
                               x_final_receiver, z_final_receiver)
 
   use constants, only: NDIM,NGLLX,NGLLZ,MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME, &
-    IMAIN,HUGEVAL,TINYVAL,NUM_ITER
+    IMAIN,HUGEVAL,TINYVAL,NUM_ITER,mygroup,MAX_STRING_LEN,IN_DATA_FILES
 
-  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,ispec_is_acoustic,USE_TRICK_FOR_BETTER_PRESSURE
+  use specfem_par, only: AXISYM,is_on_the_axis,xiglj,ispec_is_acoustic,USE_TRICK_FOR_BETTER_PRESSURE,NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
 
@@ -97,6 +97,14 @@
   integer, dimension(nrec), intent(inout)  :: islice_selected_rec
   integer, dimension(:,:), allocatable  :: gather_ispec_selected_rec
   integer  :: ier
+  character(len=MAX_STRING_LEN) :: stations_filename,path_to_add
+
+  stations_filename = trim(IN_DATA_FILES)//'STATIONS'
+
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    stations_filename = path_to_add(1:len_trim(path_to_add))//stations_filename(1:len_trim(stations_filename))
+  endif
 
   ! user output
   if (myrank == 0) then
@@ -105,12 +113,12 @@
     write(IMAIN,*) ' locating receivers'
     write(IMAIN,*) '********************'
     write(IMAIN,*)
-    write(IMAIN,*) 'reading receiver information from the DATA/STATIONS file'
+    write(IMAIN,*) 'reading receiver information from the '//trim(stations_filename)//' file'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
 
-  open(unit= 1,file='DATA/STATIONS',status='old',action='read')
+  open(unit= 1,file=trim(stations_filename),status='old',action='read')
 
 ! allocate memory for arrays using number of stations
   allocate(final_distance(nrec))
@@ -252,6 +260,7 @@
     enddo
   endif
 
+  ! counts local receivers in this slice
   nrecloc = 0
   do irec = 1, nrec
     if (myrank == islice_selected_rec(irec)) then
@@ -260,8 +269,8 @@
     endif
   enddo
 
+  ! user output
   if (myrank == 0) then
-
     do irec = 1, nrec
       write(IMAIN,*)
       write(IMAIN,*) 'Station # ',irec,'    ',network_name(irec),station_name(irec)
@@ -285,7 +294,6 @@
     write(IMAIN,*) 'end of receiver detection'
     write(IMAIN,*)
     call flush_IMAIN()
-
   endif
 
   ! deallocate arrays

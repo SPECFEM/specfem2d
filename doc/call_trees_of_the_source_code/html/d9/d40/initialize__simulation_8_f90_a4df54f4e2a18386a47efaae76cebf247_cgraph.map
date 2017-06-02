@@ -1,0 +1,5 @@
+<map id="initialize_simulation" name="initialize_simulation">
+<area shape="rect" id="node2" href="$d6/d3d/read__mesh__databases_8_f90.html#a316a543c3db626ded40853b6f75eb88f" title="read_mesh_for_init" alt="" coords="191,5,327,32"/>
+<area shape="rect" id="node3" href="$d9/d40/initialize__simulation_8_f90.html#adba7413b5a22e1b6bf57c12ba6635ecf" title="initialize_simulation\l_check" alt="" coords="191,57,328,98"/>
+<area shape="rect" id="node4" href="$d9/d40/initialize__simulation_8_f90.html#afe650aee6019b23f5b5acf3a885ddc70" title="initialize_gpu" alt="" coords="210,123,309,149"/>
+</map>

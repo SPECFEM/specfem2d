@@ -1,0 +1,9 @@
+<map id="setup_sources_receivers" name="setup_sources_receivers">
+<area shape="rect" id="node2" href="$de/d6b/setup__sources__receivers_8_f90.html#afe21871cbd5751b9a1a47216ef7189ff" title="setup_sources" alt="" coords="264,5,373,32"/>
+<area shape="rect" id="node3" href="$db/d1a/parallel_8_f90.html#a5c0b8ddb524981fa08f6346a2d42e7b9" title="synchronize_all" alt="" coords="461,157,575,184"/>
+<area shape="rect" id="node4" href="$de/d6b/setup__sources__receivers_8_f90.html#a3564b238897125a8726abe23aaf0c792" title="setup_receivers" alt="" coords="261,107,377,133"/>
+<area shape="rect" id="node5" href="$de/d6b/setup__sources__receivers_8_f90.html#a2b73d68fad08627327bfa3f8246f16f9" title="setup_adjoint_sources" alt="" coords="241,157,397,184"/>
+<area shape="rect" id="node6" href="$de/d6b/setup__sources__receivers_8_f90.html#a9d2aef4b95ae4e2c466f13c504bad5d5" title="setup_source_receiver\l_tangentials" alt="" coords="240,209,397,250"/>
+<area shape="rect" id="node7" href="$de/d6b/setup__sources__receivers_8_f90.html#a02cde4b724eda82bffbe8a9d0de9a6ff" title="setup_source_interpolation" alt="" coords="227,275,410,301"/>
+<area shape="rect" id="node8" href="$de/d6b/setup__sources__receivers_8_f90.html#afe8868df60ae5432a1f90464e011945c" title="setup_receiver_interpolation" alt="" coords="224,325,413,352"/>
+</map>

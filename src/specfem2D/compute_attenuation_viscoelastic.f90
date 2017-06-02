@@ -78,7 +78,6 @@
   ! loop over spectral elements
   do ispec = 1,nspec
 
-    ! attenuation is not implemented in acoustic (i.e. fluid) media for now, only in viscoelastic (i.e. solid) media
     if (.not. ispec_is_elastic(ispec)) cycle
 
     if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. ispec_is_PML(ispec)))) then
@@ -162,7 +161,7 @@
 ! From Zhinan Xie and Dimitri Komatitsch:
 ! For cases in which a value of tau_sigma is small, then its inverse is large,
 ! which may result in a in stiff ordinary differential equation to solve;
-! in such a case, resorting to the convolution formulation may be better (?)
+! in such a case, resorting to the convolution formulation is better.
           if (CONVOLUTION_MEMORY_VARIABLES) then
             call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
 
@@ -179,6 +178,7 @@
                                    phinu2 * (coef1 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) + &
                                              coef2 * (dux_dzl_nsub1(i,j,ispec) + duz_dxl_nsub1(i,j,ispec)))
           else
+            stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
             e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + deltat * &
                  (- e1(i,j,ispec,i_sls)*tauinvnu1 + phinu1 * theta_n_u)
 

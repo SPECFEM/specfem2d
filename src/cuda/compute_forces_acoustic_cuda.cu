@@ -33,15 +33,8 @@
 !========================================================================
 */
 
-#include <stdio.h>
-#include <cuda.h>
-#include <cublas.h>
-
-#include <sys/time.h>
-#include <sys/resource.h>
-
-#include "config.h"
 #include "mesh_constants_cuda.h"
+
 
 #ifdef USE_TEXTURES_FIELDS
 realw_texture d_potential_tex;
@@ -130,8 +123,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
                        realw_const_p d_hprimewgll_xx,
                        realw_const_p d_wxgll,
                        const realw* d_rhostore,
-                       const int use_mesh_coloring_gpu,
-                       const realw* d_kappastore){
+                       const int use_mesh_coloring_gpu){
 
   // block-id == number of local element id in phase_ispec array
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
@@ -354,8 +346,7 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                        int* d_ibool,
                        realw* d_xix,realw* d_xiz,
                        realw* d_gammax,realw* d_gammaz,
-                       realw* d_rhostore,
-                       realw* d_kappastore){
+                       realw* d_rhostore){
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("before acoustic kernel Kernel 2");
@@ -400,8 +391,7 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                     mp->d_hprimewgll_xx,
                                                                     mp->d_wxgll,
                                                                     d_rhostore,
-                                                                    mp->use_mesh_coloring_gpu,
-                                                                    d_kappastore);
+                                                                    mp->use_mesh_coloring_gpu);
 
 
   // Cuda timing
@@ -460,8 +450,7 @@ void FC_FUNC_(compute_forces_acoustic_cuda,
                     mp->d_ibool,
                     mp->d_xix,mp->d_xiz,
                     mp->d_gammax,mp->d_gammaz,
-                    mp->d_rhostore,
-                    mp->d_kappastore);
+                    mp->d_rhostore);
 }
 
 
@@ -473,18 +462,14 @@ void FC_FUNC_(compute_forces_acoustic_cuda,
 /* ----------------------------------------------------------------------------------------------- */
 
 
-__global__ void enforce_free_surface_cuda_kernel(
-                                       realw_p potential_acoustic,
-                                       realw_p potential_dot_acoustic,
-                                       realw_p potential_dot_dot_acoustic,
-                                       realw_p b_potential_acoustic,
-                                       realw_p b_potential_dot_acoustic,
-                                       realw_p b_potential_dot_dot_acoustic,
-                                       const int num_free_surface_faces,
-                                       const int* free_surface_ispec,
-                                       const int* free_surface_ij,
-                                       const int* d_ibool,
-                                       const int* ispec_is_acoustic,const int simu_type) {
+__global__ void enforce_free_surface_cuda_kernel(realw_p potential_acoustic,
+                                                 realw_p potential_dot_acoustic,
+                                                 realw_p potential_dot_dot_acoustic,
+                                                 const int num_free_surface_faces,
+                                                 const int* free_surface_ispec,
+                                                 const int* free_surface_ij,
+                                                 const int* d_ibool,
+                                                 const int* ispec_is_acoustic) {
   // gets spectral element face id
   int iface = blockIdx.x + gridDim.x*blockIdx.y;
 
@@ -508,11 +493,6 @@ __global__ void enforce_free_surface_cuda_kernel(
       potential_acoustic[iglob] = 0;
       potential_dot_acoustic[iglob] = 0;
       potential_dot_dot_acoustic[iglob] = 0;
-if (simu_type==3){
-      b_potential_acoustic[iglob] = 0;
-      b_potential_dot_acoustic[iglob] = 0;
-      b_potential_dot_dot_acoustic[iglob] = 0;}
-
     }
   }
 }
@@ -524,35 +504,44 @@ extern "C"
 void FC_FUNC_(acoustic_enforce_free_surf_cuda,
               ACOUSTIC_ENFORCE_FREE_SURF_CUDA)(long* Mesh_pointer) {
 
-TRACE("acoustic_enforce_free_surf_cuda");
+  TRACE("acoustic_enforce_free_surf_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
 
+  // does not absorb free surface, thus we enforce the potential to be zero at surface
 
-    // does not absorb free surface, thus we enforce the potential to be zero at surface
+  // checks if anything to do
+  if (mp->num_free_surface_faces == 0) return;
 
-    // block sizes
-    int num_blocks_x, num_blocks_y;
-    get_blocks_xy(mp->num_free_surface_faces,&num_blocks_x,&num_blocks_y);
+  // block sizes
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy(mp->num_free_surface_faces,&num_blocks_x,&num_blocks_y);
 
-    dim3 grid(num_blocks_x,num_blocks_y,1);
-    dim3 threads(NGLLX,1,1);
+  dim3 grid(num_blocks_x,num_blocks_y,1);
+  dim3 threads(NGLLX,1,1);
 
 
-    // sets potentials to zero at free surface
-    enforce_free_surface_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_acoustic,
-                                                                             mp->d_potential_dot_acoustic,
-                                                                             mp->d_potential_dot_dot_acoustic,
-                                                                             mp->d_b_potential_acoustic,
-                                                                             mp->d_b_potential_dot_acoustic,
-                                                                             mp->d_b_potential_dot_dot_acoustic,
-                                                                             mp->num_free_surface_faces,
-                                                                             mp->d_free_surface_ispec,
-                                                                             mp->d_free_surface_ijk,
-                                                                             mp->d_ibool,
-                                                                             mp->d_ispec_is_acoustic,
-                                                                             mp->simulation_type);
+  // sets potentials to zero at free surface
+  enforce_free_surface_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_acoustic,
+                                                                          mp->d_potential_dot_acoustic,
+                                                                          mp->d_potential_dot_dot_acoustic,
+                                                                          mp->num_free_surface_faces,
+                                                                          mp->d_free_surface_ispec,
+                                                                          mp->d_free_surface_ijk,
+                                                                          mp->d_ibool,
+                                                                          mp->d_ispec_is_acoustic);
 
+  // for backward/reconstructed potentials
+  if (mp->simulation_type == 3) {
+    enforce_free_surface_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_acoustic,
+                                                                            mp->d_b_potential_dot_acoustic,
+                                                                            mp->d_b_potential_dot_dot_acoustic,
+                                                                            mp->num_free_surface_faces,
+                                                                            mp->d_free_surface_ispec,
+                                                                            mp->d_free_surface_ijk,
+                                                                            mp->d_ibool,
+                                                                            mp->d_ispec_is_acoustic);
+  }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("enforce_free_surface_cuda");

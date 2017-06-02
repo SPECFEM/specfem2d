@@ -35,7 +35,7 @@
 
 ! generates the databases for the solver
 
-  use constants, only: IMAIN,IOUT,MAX_STRING_LEN
+  use constants, only: IMAIN,IOUT,MAX_STRING_LEN,OUTPUT_FILES
   use part_unstruct_par, only: nspec,iproc
   use shared_parameters, only: NPROC
 
@@ -48,7 +48,7 @@
   do iproc = 0, NPROC-1
 
     ! opens Database file
-    write(prname, "('./OUTPUT_FILES/Database',i5.5,'.bin')") iproc
+    write(prname, "(a,i5.5,a)") './'//trim(OUTPUT_FILES)//'Database',iproc,'.bin'
     open(unit=IOUT,file=trim(prname),status='unknown',action='write',form='unformatted',iostat=ier)
     if (ier /= 0 ) stop 'Error saving databases; check that directory OUTPUT_FILES exists'
 
@@ -130,7 +130,7 @@
   write(IOUT) title
 
   ! 'Type of simulation'
-  write(IOUT) SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
+  write(IOUT) NOISE_TOMOGRAPHY, UNDO_ATTENUATION
 
   ! 'nspec'
   write(IOUT) nspec
@@ -143,9 +143,6 @@
 
   ! 'NSTEP_BETWEEN_OUTPUT_INFO'
   write(IOUT) NSTEP_BETWEEN_OUTPUT_INFO
-
-  ! 'NSTEP_BETWEEN_OUTPUT_SEISMOS'
-  write(IOUT) NSTEP_BETWEEN_OUTPUT_SEISMOS
 
   ! 'NSTEP_BETWEEN_OUTPUT_IMAGES'
   write(IOUT) NSTEP_BETWEEN_OUTPUT_IMAGES
@@ -164,9 +161,6 @@
 
   ! 'NELEM_PML_THICKNESS'
   write(IOUT) NELEM_PML_THICKNESS
-
-  ! 'NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS'
-  write(IOUT) NSTEP_BETWEEN_OUTPUT_WAVE_DUMPS
 
   ! 'subsamp_seismos imagetype_JPEG imagetype_wavefield_dumps'
   write(IOUT) subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
@@ -205,7 +199,7 @@
   write(IOUT) use_binary_for_wavefield_dumps
 
   ! 'ATTENUATION_VISCOELASTIC ATTENUATION_PORO_FLUID_PART'
-  write(IOUT) ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART
+  write(IOUT) ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART,ATTENUATION_VISCOACOUSTIC
 
   ! 'save_ASCII_seismograms'
   write(IOUT) save_ASCII_seismograms
@@ -273,6 +267,9 @@
   ! 'GPU_MODE'
   write(IOUT) GPU_MODE
 
+  ! 'setup_with_binary_database"
+  write(IOUT) setup_with_binary_database
+
   ! 'NSTEP DT'
   write(IOUT) NSTEP,DT
 
@@ -281,6 +278,12 @@
 
   ! 'ACOUSTIC_FORCING'
   write(IOUT) ACOUSTIC_FORCING
+
+  ! 'NUMBER_OF_SIMULTANEOUS_RUNS'
+  write(IOUT) NUMBER_OF_SIMULTANEOUS_RUNS
+
+  ! 'BROADCAST_SAME_MESH_AND_MODEL'
+  write(IOUT) BROADCAST_SAME_MESH_AND_MODEL
 
   end subroutine save_databases_init
 
@@ -413,7 +416,7 @@
       val0 = rho_s_read(i)
       val1 = cp(i)
       val2 = cs(i)
-      val3 = 0.d0
+      val3 = comp_g(i)
       val4 = 0.d0
       val5 = QKappa(i)
       val6 = Qmu(i)
@@ -491,7 +494,6 @@
 
     ! check format with file src/specfem2D/read_materials.f90
     write(IOUT) i,indic,val0,val1,val2,val3,val4,val5,val6,val7,val8,val9,val10,val11,val12
-
   enddo
 
   ! writes out material properties

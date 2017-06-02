@@ -82,6 +82,11 @@
 ! was found by trial and error
   double precision, parameter :: SOURCE_DECAY_MIMIC_TRIANGLE = 1.628d0
 
+! Ormbsy wavelet dominant frequency
+! (for Marmousi2 modeling, dominant frequency must be 35 Hz)
+  double precision, parameter :: F_ORMSBY = 35.0
+
+
 !!-----------------------------------------------------------
 !!
 !! for attenuation
@@ -229,9 +234,6 @@
   integer, parameter :: CPML_Z_ONLY = 2
   integer, parameter :: CPML_XZ = 3
 
-! flags decide that do PML_parameter_adjustment implemented in pml_init.F90 or not
-  logical, parameter :: PML_parameter_adjustment = .false.
-
 !!-----------------------------------------------------------
 !!
 !! mesh coloring for GPUs (not needed any more, obsolete)
@@ -343,10 +345,10 @@
   integer, parameter :: ITOP = 3
   integer, parameter :: ILEFT = 4
 
-  integer, parameter :: IEDGE1 = 1
-  integer, parameter :: IEDGE2 = 2
-  integer, parameter :: IEDGE3 = 3
-  integer, parameter :: IEDGE4 = 4
+  integer, parameter :: IEDGE1 = 1  ! bottom
+  integer, parameter :: IEDGE2 = 2  ! right
+  integer, parameter :: IEDGE3 = 3  ! top
+  integer, parameter :: IEDGE4 = 4  ! left
 
 ! flag to indicate an element type
 ! material domain ids (acoustic/elastic/poroelastic/gravitoacoustic)
@@ -387,5 +389,16 @@
   real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: C_LDDRK = &
     (/0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,0.249351723343_CUSTOM_REAL, &
       0.466911705055_CUSTOM_REAL,0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/)
+
+!!-----------------------------------------------------------
+!!
+!! directory structure
+!!
+!!-----------------------------------------------------------
+
+! paths for inputs and outputs files
+  character(len=*), parameter :: IN_DATA_FILES = './DATA/'
+  character(len=*), parameter :: OUTPUT_FILES_BASE = './OUTPUT_FILES/'
+
 
 

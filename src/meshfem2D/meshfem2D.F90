@@ -345,7 +345,7 @@
 
   program meshfem2D
 
-  use constants, only: IMAIN,ISTANDARD_OUTPUT,TINYVAL
+  use constants, only: IMAIN,ISTANDARD_OUTPUT,TINYVAL,OUTPUT_FILES
 
   use shared_parameters
   use part_unstruct_par
@@ -364,9 +364,9 @@
 
   ! open main output file, only written to by process 0
   if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
-    open(unit=IMAIN,file='OUTPUT_FILES/'//'output_meshfem2D.txt',status='unknown',iostat=ier)
+    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'output_meshfem2D.txt',status='unknown',iostat=ier)
     if (ier /= 0) then
-      print *,'Error could not open output file :','OUTPUT_FILES/'//'output_meshfem2D.txt'
+      print *,'Error could not open output file :',trim(OUTPUT_FILES)//'output_meshfem2D.txt'
       stop 'Error opening output file'
     endif
   endif

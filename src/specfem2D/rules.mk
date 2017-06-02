@@ -77,9 +77,10 @@ specfem2D_OBJECTS = \
 	$O/compute_coupling_viscoelastic_po.spec.o \
 	$O/compute_curl_one_element.spec.o \
 	$O/compute_energy.spec.o \
-	$O/compute_forces_acoustic.spec.o \
-	$O/compute_forces_acoustic_backward.spec.o \
-	$O/compute_forces_acoustic_calling_routine.spec.o \
+	$O/compute_forces_viscoacoustic.spec.o \
+	$O/compute_attenuation_viscoacoustic.spec.o \
+	$O/compute_forces_viscoacoustic_backward.spec.o \
+	$O/compute_forces_viscoacoustic_calling_routine.spec.o \
 	$O/compute_forces_gravitoacoustic.spec.o \
 	$O/compute_forces_gravitoacoustic_calling_routine.spec.o \
 	$O/compute_forces_poroelastic_calling_routine.spec.o \
@@ -108,6 +109,7 @@ specfem2D_OBJECTS = \
 	$O/define_derivation_matrices.spec.o \
 	$O/define_external_model.spec.o \
 	$O/define_external_model_from_tomo_file.spec.o \
+	$O/define_external_model_from_marmousi.spec.o \
 	$O/enforce_acoustic_free_surface.spec.o \
 	$O/enforce_fields.spec.o \
 	$O/finalize_simulation.spec.o \
@@ -146,6 +148,7 @@ specfem2D_OBJECTS = \
 	$O/read_mesh_databases.spec.o \
 	$O/read_external_model.spec.o \
 	$O/read_forward_arrays.spec.o \
+	$O/read_save_binary_database.spec.o \
 	$O/recompute_jacobian.spec.o \
 	$O/save_adjoint_kernels.spec.o \
 	$O/save_openDX_jacobian.spec.o \
@@ -188,6 +191,12 @@ specfem2D_SHARED_OBJECTS = \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/parallel.shared.o \
+	$O/read_parameter_file.mesh.o \
+	$O/read_value_parameters.shared.o \
+	$O/read_material_table.mesh.o \
+	$O/read_interfaces_file.mesh.o \
+	$O/read_regions.mesh.o \
+	$O/param_reader.cc.o \
 	$O/set_color_palette.shared.o \
 	$(EMPTY_MACRO)
 
@@ -251,7 +260,7 @@ cuda_specfem2D_OBJECTS = \
 	$O/assemble_MPI_scalar_cuda.cuda.o \
 	$O/assemble_MPI_vector_cuda.cuda.o \
 	$O/check_fields_cuda.cuda.o \
-	$O/compute_add_sources_acoustic_cuda.cuda.o \
+	$O/compute_add_sources_viscoacoustic_cuda.cuda.o \
 	$O/compute_add_sources_viscoelastic_cuda.cuda.o \
 	$O/compute_coupling_cuda.cuda.o \
 	$O/compute_forces_acoustic_cuda.cuda.o \

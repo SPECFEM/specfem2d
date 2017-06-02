@@ -1,4 +1,4 @@
-running example: Sun Jun 19 00:10:30 AST 2016
+running example: Fri May 12 10:24:57 AST 2017
 
 setting up example...
 
@@ -16,58 +16,68 @@ running mesher on 16 processors...
 
  Axisymmetric simulation
 
+ Receiver lines:
+   Nb of line sets =            3
 
- Nb of solid, fluid or porous materials =            2
+ Materials:
+   Nb of solid, fluid or porous materials =            2
 
+ --------
  Material #           1  isotropic
- rho,cp,cs =    2500.0000000000000        3400.0000000000000        1963.0000000000000        100.00000000000000        100.00000000000000     
+ rho,cp,cs   =    2500.0000000000000        3400.0000000000000        1963.0000000000000     
+ Qkappa, Qmu =    100.00000000000000        100.00000000000000     
  Material is solid
-
+ --------
  Material #           2  isotropic
- rho,cp,cs =    1020.0000000000000        1500.0000000000000        0.0000000000000000        9999.0000000000000        9999.0000000000000     
+ rho,cp,cs   =    1020.0000000000000        1500.0000000000000        0.0000000000000000     
+ Qkappa, Qmu =    9999.0000000000000        9999.0000000000000     
  Material is fluid
+ --------
 
+ Mesh from internal meshing:
 
- mesh from internal meshing
-
-
- Reading interface data from file DATA/./interfaces_axisym.dat to count the spectral elements
+ Reading interface data from file: ./DATA/./interfaces_axisym.dat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
  Reading            2  points for interface            1
  Reading            2  points for interface            2
  Reading            2  points for interface            3
+
  Total number of layers in z direction =            2
  There are           60  spectral elements along Z in layer            1
  There are           60  spectral elements along Z in layer            2
 
+ Total number of spectral elements along X =          180
  Total number of spectral elements along Z =          120
 
+ Regions:
+   Nb of regions in the mesh =            2
 
- Nb of regions in the mesh =            2
-
+ ------
  Region            1
  IX from            1  to          180
  IZ from            1  to           60
  Material #            1  isotropic
  Material is solid
- vp =    3400.0000000000000     
- vs =    1963.0000000000000     
- rho =    2500.0000000000000     
- Poisson's ratio =   0.24999652896317470     
- QKappa =    100.00000000000000     
- Qmu =    100.00000000000000     
-  -----
+ vp     =    3400.00000    
+ vs     =    1963.00000    
+ rho    =    2500.00000    
+ Poisson's ratio =   0.249996528    
+ QKappa =    100.000000    
+ Qmu    =    100.000000    
+ ------
  Region            2
  IX from            1  to          180
  IZ from           61  to          120
  Material #            2  isotropic
  Material is fluid
- vp =    1500.0000000000000     
- vs =    0.0000000000000000     
- rho =    1020.0000000000000     
- Poisson's ratio =   0.50000000000000000     
- QKappa =    9999.0000000000000     
- Qmu =    9999.0000000000000     
-  -----
+ vp     =    1500.00000    
+ vs     =    0.00000000    
+ rho    =    1020.00000    
+ Poisson's ratio =   0.500000000    
+ QKappa =    9999.00000    
+ Qmu    =    9999.00000    
+ ------
+ Total number of spectral elements         =        21600
+
 
  Parameter file successfully read 
 
@@ -78,7 +88,7 @@ running mesher on 16 processors...
  Source           1
    Position xs, zs =    0.0000000000000000        2500.0000000000000     
 
-   Source type (1=force, 2=moment tensor):            1
+   Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            1
    Force source:
    Angle of the source (deg) =    0.0000000000000000     
    Multiplying factor  =    10000000000.000000     
@@ -87,39 +97,54 @@ running mesher on 16 processors...
    Ricker wavelet (second-derivative):
    Frequency, delay =    10.000000000000000        0.0000000000000000     
 
- Reading interface data from file DATA/./interfaces_axisym.dat
+ Reading interface data from file: ./DATA/./interfaces_axisym.dat
 
- Min and max value of X in the grid =    0.0000000000000000        6400.0000000000000     
- Min and max value of Z in the grid =    0.0000000000000000        4800.0000000000009     
+ Axial elements:          120
+
+
+ Mesh dimensions: 
+   Min and max value of X in the grid =    0.0000000000000000        6400.0000000000000     
+   Min and max value of Z in the grid =    0.0000000000000000        4800.0000000000009     
+
+
+ ************ Computing elements load ************
+ Number of elastic elements :           0
+ Number of acoustic elements :        9625
+ Number of viscoelastic elements :        9625
+ Number of elastic PML elements :           0
+ Number of acoustic PML elements :        1175
+ Number of viscoelastic PML elements :        1175
+ *************************************************
 
 
  Partitioning method: SCOTCH
 
  nedges_coupled (acoustic/elastic)     =          180
+   after iteration            2 repartitioning of all coupled elements done
  nedges_coupled (acoustic/poroelastic) =            0
  nedges_coupled (poroelastic/elastic)  =            0
 
- slice            0  has number of spectral elements =        1341
- slice            1  has number of spectral elements =        1341
- slice            2  has number of spectral elements =        1340
- slice            3  has number of spectral elements =        1341
- slice            4  has number of spectral elements =        1306
- slice            5  has number of spectral elements =        1307
- slice            6  has number of spectral elements =        1411
- slice            7  has number of spectral elements =        1413
- slice            8  has number of spectral elements =        1305
- slice            9  has number of spectral elements =        1323
- slice           10  has number of spectral elements =        1387
- slice           11  has number of spectral elements =        1386
- slice           12  has number of spectral elements =        1350
- slice           13  has number of spectral elements =        1350
- slice           14  has number of spectral elements =        1350
- slice           15  has number of spectral elements =        1349
+ slice            0  has number of spectral elements =        3182
+ slice            1  has number of spectral elements =        1293
+ slice            2  has number of spectral elements =        2908
+ slice            3  has number of spectral elements =        3346
+ slice            4  has number of spectral elements =        1353
+ slice            5  has number of spectral elements =        1342
+ slice            6  has number of spectral elements =         868
+ slice            7  has number of spectral elements =         642
+ slice            8  has number of spectral elements =        1256
+ slice            9  has number of spectral elements =         651
+ slice           10  has number of spectral elements =         716
+ slice           11  has number of spectral elements =         513
+ slice           12  has number of spectral elements =         950
+ slice           13  has number of spectral elements =         591
+ slice           14  has number of spectral elements =        1284
+ slice           15  has number of spectral elements =         705
 
  Position (x,z) of the source =    0.0000000000000000        2500.0000000000000     
 
 
- writing the DATA/STATIONS file
+ writing the ./DATA/STATIONS file
 
 
  There are            3  receivers
@@ -160,23 +185,23 @@ running solver on 16 processors...
  Program SPECFEM2D: 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Axisymmetric simple simulation                    
+ Axisymmetric simple simulation
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 19 - 06 - 2016                                 T i m e  : 00:10:31
+ D a t e : 12 - 05 - 2017                                 T i m e  : 10:24:58
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 
- =====================================================
- === A x i s y m m e t r i c   S i m u l a t i o n ===
- =====================================================
+ -----------------------------------------------------
+ --- A x i s y m m e t r i c   S i m u l a t i o n ---
+ -----------------------------------------------------
 
 
  C o n t r o l
  =============
 
-     Number of spectral element control nodes. . .(npgeo) =    1435
+     Number of spectral element control nodes. . .(npgeo) =    3297
      Number of space dimensions. . . . . . . . . . (NDIM) =       2
 
 
@@ -185,11 +210,11 @@ running solver on 16 processors...
 
      Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) =    500
      Color display . . . . . . . . . . . . . . . (colors) =      1
-             ==  0     black and white display              
-             ==  1     color display                        
+      == 0     black and white display              
+      == 1     color display                        
      Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
-             ==  0     do not number the mesh               
-             ==  1     number the mesh                      
+      == 0     do not number the mesh               
+      == 1     number the mesh                      
 
 
  C o n t r o l
@@ -207,9 +232,9 @@ running solver on 16 processors...
      Add Bielak conditions .(add_Bielak_conditions_right) =      F
      Add Bielak conditions . .(add_Bielak_conditions_top) =      F
      Add Bielak conditions. .(add_Bielak_conditions_left) =      F
-     Attenuation on/off .(ATTENUATION_VISCOELASTIC_SOLID) =      T
+     Attenuation on/off . . . .(ATTENUATION_VISCOELASTIC) =      T
      Save grid in ASCII file or not . (output_grid_ASCII) =      F
-     Save a file with total energy or not.(output_energy) =      F
+     Save a file with total energy or not.(OUTPUT_ENERGY) =      F
 
 
  C o n t r o l
@@ -239,9 +264,9 @@ running solver on 16 processors...
      Onset time. . . . . . =  -0.12000000000000000     
      Fundamental period. . =   0.10000000000000001     
      Fundamental frequency =    10.000000000000000     
-     --> onset time ok
+     The onset time is ok
 
-     --> Spectral Elements <--
+     -- Spectral Elements --
 
 
      Number of spectral elements . . . . . . . . .  (nspec) =  21600
@@ -292,37 +317,39 @@ running solver on 16 processors...
 
  Total number of elements on the axis :          120
 
+ Setting up mesh
 
  Generating global mesh numbering (fast version)...
 
+ Mesh numbering:
+   Total number of elements:        21600
 
- Total number of elements:        21600
- decomposed as follows:
-
- Total number of elastic/visco/poro elements:        10800
- Total number of acoustic elements:        10800
+   Total number of acoustic elements           =        10800
+   Total number of elastic/visco/poro elements =        10800
 
  Approximate total number of grid points in the mesh
- (with a few duplicates coming from MPI buffers):       351056
+ (with a few duplicates coming from MPI buffers):       350600
 
- Approximate number of acoustic degrees of freedom in the mesh:       175528
- Approximate number of elastic degrees of freedom in the mesh:       351056
+ Approximate number of acoustic degrees of freedom in the mesh:       175300
+ Approximate number of elastic degrees of freedom in the mesh:       350600
    (there are 2 degrees of freedom per point for elastic elements)
 
  Approximate total number of degrees of freedom in the mesh
- (sum of the two values above):       526584
+ (sum of the two values above):       525900
 
   (for simplicity viscoelastic or poroelastic elements, if any,
    are counted as elastic in the above three estimates;
    in reality they have more degrees of freedom)
 
+ Mesh dimensions:
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        6400.0000000000000     
+   Zmin,Zmax of the whole mesh =    0.0000000000000000        4800.0000000000009     
 
- Xmin,Xmax of the whole mesh =    0.0000000000000000        6400.0000000000000     
- Zmin,Zmax of the whole mesh =    0.0000000000000000        4800.0000000000009     
-
-
- basic mesh setup is successful
-
+ Domains:
+   total number of acoustic elements        =        10800
+   total number of elastic elements         =        10800
+   total number of poroelastic elements     =            0
+   total number of gravitoacoustic elements =            0
 
  Mixed acoustic/elastic simulation
 
@@ -331,6 +358,44 @@ running solver on 16 processors...
    End of fluid/solid edge detection
 
  excluding common points between acoustic absorbing edges and acoustic/elastic matching interfaces, if any
+
+ Setting up MPI communication arrays
+
+   maximum number of MPI interfaces (for a single slice) =            7
+
+   total MPI interface points:         7644
+
+   checking acoustic interfaces:
+   total number of global acoustic interface points:         2490
+   total number of global points assembled by acoustic MPI interfaces:        2490
+   interfaces okay
+
+   master process:
+   number of MPI interfaces in acoustic domain    =            3
+   number of MPI interfaces in elastic domain     =            3
+   number of MPI interfaces in poroelastic domain =            0
+
+   number of outer elements  =          173
+   number of inner elements  =         3009
+
+   percentage of outer elements    5.43682861     %
+   percentage of inner elements    94.5631714     %
+
+   number of global nodes in outer elements  =         3465
+   number of global nodes in inner elements  =        48589
+
+   determining communication phases:
+   elastic domains:
+   total number of outer/inner elements =         1244        9556
+   total percentage of outer elements    11.5185165     %
+   total percentage of inner elements    88.4814835     %
+
+   acoustic domains:
+   total number of outer/inner elements =          612       10188
+   total percentage of outer elements    5.66666412     %
+   total percentage of inner elements    94.3333359     %
+
+ All mesh setup done successfully
 
  sources:
 
@@ -343,8 +408,9 @@ running solver on 16 processors...
              original x:    0.00000000    
              original z:    2500.00000    
  closest estimate found:    0.00000000      m away
-  in rank            2
-  in element          541
+  in rank            4
+  in element         1270
+  in acoustic domain
   at xi,gamma coordinates =   -1.0000000000000000        0.0000000000000000     
 
 
@@ -360,7 +426,7 @@ running solver on 16 processors...
   locating receivers
  ********************
 
- reading receiver information from the DATA/STATIONS file
+ reading receiver information from the ./DATA/STATIONS file
 
 
  Station #            1     AA      S0001                           
@@ -368,8 +434,8 @@ running solver on 16 processors...
              original z:    2500.00000    
    distance from source:    0.00000000    
  closest estimate found:    0.00000000      m away
-  in element          541
-  at process            2
+  in element         1270
+  in rank            4
   at xi,gamma coordinates =   -1.0000000000000000        0.0000000000000000     
 
 
@@ -378,8 +444,8 @@ running solver on 16 processors...
              original z:    2500.00000    
    distance from source:    2500.00000    
  closest estimate found:    0.00000000      m away
-  in element         1064
-  at process            5
+  in element          303
+  in rank            2
   at xi,gamma coordinates =  -0.37499999999998851        0.0000000000000000     
 
 
@@ -388,8 +454,8 @@ running solver on 16 processors...
              original z:    1500.00000    
    distance from source:    2692.58252    
  closest estimate found:    0.00000000      m away
-  in element          119
-  at process            5
+  in element          876
+  in rank           12
   at xi,gamma coordinates =  -0.37499999999998851        0.0000000000000000     
 
 
@@ -410,18 +476,15 @@ running solver on 16 processors...
 
  Preparing mass matrices
    initializing mass matrices
-
-   total MPI interface points:         8554
-        acoustic interface points:         4384
-        assembly acoustic MPI interface points:        4357
-
    inverting mass matrices
+
+ Preparing image coloring
 
  Checking mesh and stability
 
  ********
  Model: P (or PI) velocity min,max =    1500.0000000000000        3400.0000000000000     
- Model: S velocity min,max         =    0.0000000000000000        1963.0000000000000     
+ Model: S velocity min,max         =    1963.0000000000000        1963.0000000000000     
  Model: density min,max            =    1020.0000000000000        2500.0000000000000     
  ********
 
@@ -448,12 +511,15 @@ running solver on 16 processors...
 
  ----
  Number of points per wavelength:
+ ----
+   Source            1
    maximum dominant source frequency =    25.000000000000000      Hz
- 
-   Nb pts / lambdaP_fmax min =    5.9999999999999316     
-   Nb pts / lambdaP_fmax max =    13.600000000000078     
- 
-   purely fluid regions
+
+   Nb pts / lambdaP_fmax min =    6.00000000    
+   Nb pts / lambdaP_fmax max =    13.6000004    
+
+   Nb pts / lambdaS_fmax min =    7.85200024    
+   Nb pts / lambdaS_fmax max =    7.85200024    
 
  -----------------------------------------
 
@@ -467,26 +533,26 @@ running solver on 16 processors...
  (threshold value is around 4.5 points per S wavelength
   in elastic regions and 5.5 per P wavelength in fluid regions):
 
-   0.00000000      -   0.392600000               0     0.00000000      %
-  0.392600000      -   0.785200000               0     0.00000000      %
-  0.785200000      -    1.17780006               0     0.00000000      %
-   1.17780006      -    1.57040000               0     0.00000000      %
-   1.57040000      -    1.96300006               0     0.00000000      %
-   1.96300006      -    2.35560012               0     0.00000000      %
-   2.35560012      -    2.74819994               0     0.00000000      %
-   2.74819994      -    3.14080000               0     0.00000000      %
-   3.14080000      -    3.53340006               0     0.00000000      %
-   3.53340006      -    3.92600012               0     0.00000000      %
-   3.92600012      -    4.31860018               0     0.00000000      %
-   4.31860018      -    4.71120024               0     0.00000000      %
-   4.71120024      -    5.10379982               0     0.00000000      %
-   5.10379982      -    5.49639988               0     0.00000000      %
-   5.49639988      -    5.88899994               0     0.00000000      %
-   5.88899994      -    6.28160000               0     0.00000000      %
-   6.28160000      -    6.67420006               0     0.00000000      %
-   6.67420006      -    7.06680012               0     0.00000000      %
-   7.06680012      -    7.45940018               0     0.00000000      %
-   7.45940018      -    7.85200024           10800     100.000000      %
+   7.77347994      -    7.78133202               0     0.00000000      %
+   7.78133202      -    7.78918409               0     0.00000000      %
+   7.78918409      -    7.79703617               0     0.00000000      %
+   7.79703617      -    7.80488777               0     0.00000000      %
+   7.80488777      -    7.81273985               0     0.00000000      %
+   7.81273985      -    7.82059193               0     0.00000000      %
+   7.82059193      -    7.82844400               0     0.00000000      %
+   7.82844400      -    7.83629608               0     0.00000000      %
+   7.83629608      -    7.84414816               0     0.00000000      %
+   7.84414816      -    7.85200024             998     9.24074078      %
+   7.85200024      -    7.85985184            9802     90.7592621      %
+   7.85985184      -    7.86770391               0     0.00000000      %
+   7.86770391      -    7.87555599               0     0.00000000      %
+   7.87555599      -    7.88340807               0     0.00000000      %
+   7.88340807      -    7.89126015               0     0.00000000      %
+   7.89126015      -    7.89911222               0     0.00000000      %
+   7.89911222      -    7.90696383               0     0.00000000      %
+   7.90696383      -    7.91481590               0     0.00000000      %
+   7.91481590      -    7.92266798               0     0.00000000      %
+   7.92266798      -    7.93052006               0     0.00000000      %
 
  total percentage =    100.00000000000000       %
 
@@ -529,20 +595,24 @@ running solver on 16 processors...
  total number of elements in fluid and solid regions =        21600
 
 
+ Preparing source time function
+
+ Preparing attenuation in solid parts of the model:
+   using external model for Qkappa and Qmu:  F
+   reading velocity at f0                 :  F
+   using f0 attenuation =    10.000000000000000      Hz
+
+ Preparing material arrays
+
  Preparing image coloring
    allocating color image arrays
    locating all the pixels of color images
-   total number of image pixels =       279990
+   total number of image pixels =       275745
    done locating all the pixels of color images
    coloring image background based on vp
 
- Preparing source time function
-   saving the source time function in a text file...
-
- Preparing attenuation
- 
  done, preparation successful
- 
+
 
  =========================================
  =  T i m e  e v o l u t i o n  l o o p  =
@@ -552,213 +622,403 @@ running solver on 16 processors...
  Starting time iteration loop ...
 
 
- Creating color image of size          610  x          482  for time step            1
- drawing scalar image of part of the displacement vector...
- Color image created
-
  ******************************************************************
 Time step number       5   t =    0.0024 s out of    4500
  ******************************************************************
  We have done    8.89086500E-02 % of the total
- Max norm of vector field in solid (elastic) =    0.0000000000000000     
- Max absolute value of scalar field in fluid (acoustic) =    7.0548905059695244E-003
- Elapsed time in seconds =    9.5999956130981445E-002
+ Max norm of vector field in solid (elastic) =    0.00000000    
+ Max absolute value of scalar field in fluid (acoustic) =    7.05489051E-03
+ Elapsed time in seconds =   0.11500000953674316     
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    1.9199991226196290E-002
+ Mean elapsed time per time step in seconds =    2.3000001907348633E-002
  Time steps remaining =         4495
- Estimated remaining time in seconds =    86.303960561752319     
- Estimated remaining time in hh:mm:ss =      0 h 01 m 26 s
- Estimated total run time in seconds =    86.399960517883301     
- Estimated total run time in hh:mm:ss =      0 h 01 m 26 s
- The run will finish approximately on: Sun Jun 19, 2016 00:12
+ Estimated remaining time in seconds =    103.38500857353210     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 43 s
+ Estimated total run time in seconds =    103.50000858306885     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 43 s
+ The run will finish approximately on: Fri May 12, 2017 10:27
 
+
+ Creating color image of size          606  x          478  for time step            5
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    1.4761794773221482E-006
+ Color image created
+
+ Creating color image of size          606  x          478  for time step          100
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    1.9975773990154266E-002
+ Color image created
+
+ Creating color image of size          606  x          478  for time step          200
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =   0.13451237976551056     
+ Color image created
+
+ Creating color image of size          606  x          478  for time step          300
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.2399332374334335E-002
+ Color image created
+
+ Creating color image of size          606  x          478  for time step          400
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    5.5765913566574454E-004
+ Color image created
 
  ******************************************************************
 Time step number     500   t =    0.2994 s out of    4500
  ******************************************************************
  We have done    11.0913534     % of the total
- Max norm of vector field in solid (elastic) =    2.6672708918340504E-004
- Max absolute value of scalar field in fluid (acoustic) =    9.0238332748413086     
- Elapsed time in seconds =    8.3509998321533203     
- Elapsed time in hh:mm:ss =      0 h 00 m 08 s
- Mean elapsed time per time step in seconds =    1.6701999664306640E-002
+ Max norm of vector field in solid (elastic) =    2.66623247E-04
+ Max absolute value of scalar field in fluid (acoustic) =    8.87459564    
+ Elapsed time in seconds =    12.953000068664551     
+ Elapsed time in hh:mm:ss =      0 h 00 m 12 s
+ Mean elapsed time per time step in seconds =    2.5906000137329101E-002
  Time steps remaining =         4000
- Estimated remaining time in seconds =    66.807998657226562     
- Estimated remaining time in hh:mm:ss =      0 h 01 m 06 s
- Estimated total run time in seconds =    75.158998489379883     
- Estimated total run time in hh:mm:ss =      0 h 01 m 15 s
- The run will finish approximately on: Sun Jun 19, 2016 00:12
+ Estimated remaining time in seconds =    103.62400054931641     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 43 s
+ Estimated total run time in seconds =    116.57700061798096     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 56 s
+ The run will finish approximately on: Fri May 12, 2017 10:27
 
 
- Creating color image of size          610  x          482  for time step          500
+ Creating color image of size          606  x          478  for time step          500
  drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    3.5124778514727950E-004
+ Color image created
+
+ Creating color image of size          606  x          478  for time step          600
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.6245851768180728E-004
+ Color image created
+
+ Creating color image of size          606  x          478  for time step          700
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.0262367615941912E-004
+ Color image created
+
+ Creating color image of size          606  x          478  for time step          800
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    1.7088954336941242E-004
+ Color image created
+
+ Creating color image of size          606  x          478  for time step          900
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    1.4369176642503589E-004
  Color image created
 
  ******************************************************************
 Time step number    1000   t =    0.5994 s out of    4500
  ******************************************************************
  We have done    22.2049351     % of the total
- Max norm of vector field in solid (elastic) =    6.6759923356585205E-005
- Max absolute value of scalar field in fluid (acoustic) =    5.1014938354492188     
- Elapsed time in seconds =    17.480000019073486     
- Elapsed time in hh:mm:ss =      0 h 00 m 17 s
- Mean elapsed time per time step in seconds =    1.7480000019073485E-002
+ Max norm of vector field in solid (elastic) =    6.53214956E-05
+ Max absolute value of scalar field in fluid (acoustic) =    4.93901634    
+ Elapsed time in seconds =    27.569000005722046     
+ Elapsed time in hh:mm:ss =      0 h 00 m 27 s
+ Mean elapsed time per time step in seconds =    2.7569000005722048E-002
  Time steps remaining =         3500
- Estimated remaining time in seconds =    61.180000066757195     
- Estimated remaining time in hh:mm:ss =      0 h 01 m 01 s
- Estimated total run time in seconds =    78.660000085830688     
- Estimated total run time in hh:mm:ss =      0 h 01 m 18 s
- The run will finish approximately on: Sun Jun 19, 2016 00:12
+ Estimated remaining time in seconds =    96.491500020027161     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 36 s
+ Estimated total run time in seconds =    124.06050002574921     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 04 s
+ The run will finish approximately on: Fri May 12, 2017 10:27
 
 
- Creating color image of size          610  x          482  for time step         1000
+ Creating color image of size          606  x          478  for time step         1000
  drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    1.2743796105496585E-004
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         1100
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    1.1143274605274200E-004
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         1200
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    1.0151288734050468E-004
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         1300
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    9.1151749074924737E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         1400
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    8.4195395174901932E-005
  Color image created
 
  ******************************************************************
 Time step number    1500   t =    0.8994 s out of    4500
  ******************************************************************
  We have done    33.3185158     % of the total
- Max norm of vector field in solid (elastic) =    3.9055194065440446E-005
- Max absolute value of scalar field in fluid (acoustic) =    3.1650207042694092     
- Elapsed time in seconds =    26.843999862670898     
- Elapsed time in hh:mm:ss =      0 h 00 m 26 s
- Mean elapsed time per time step in seconds =    1.7895999908447265E-002
+ Max norm of vector field in solid (elastic) =    3.79081721E-05
+ Max absolute value of scalar field in fluid (acoustic) =    3.09915495    
+ Elapsed time in seconds =    41.925999879837036     
+ Elapsed time in hh:mm:ss =      0 h 00 m 41 s
+ Mean elapsed time per time step in seconds =    2.7950666586558023E-002
  Time steps remaining =         3000
- Estimated remaining time in seconds =    53.687999725341797     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 53 s
- Estimated total run time in seconds =    80.531999588012695     
- Estimated total run time in hh:mm:ss =      0 h 01 m 20 s
- The run will finish approximately on: Sun Jun 19, 2016 00:12
+ Estimated remaining time in seconds =    83.851999759674072     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 23 s
+ Estimated total run time in seconds =    125.77799963951111     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 05 s
+ The run will finish approximately on: Fri May 12, 2017 10:27
 
 
- Creating color image of size          610  x          482  for time step         1500
+ Creating color image of size          606  x          478  for time step         1500
  drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    7.6845331932418048E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         1600
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    7.2245420597027987E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         1700
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    6.6777291067410260E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         1800
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    6.2881561461836100E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         1900
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    5.8722798712551594E-005
  Color image created
 
  ******************************************************************
 Time step number    2000   t =    1.1994 s out of    4500
  ******************************************************************
  We have done    44.4320946     % of the total
- Max norm of vector field in solid (elastic) =    3.3977787097683176E-005
- Max absolute value of scalar field in fluid (acoustic) =    2.5876393318176270     
- Elapsed time in seconds =    36.451999902725220     
- Elapsed time in hh:mm:ss =      0 h 00 m 36 s
- Mean elapsed time per time step in seconds =    1.8225999951362610E-002
+ Max norm of vector field in solid (elastic) =    3.27947346E-05
+ Max absolute value of scalar field in fluid (acoustic) =    2.53349543    
+ Elapsed time in seconds =    56.401999950408936     
+ Elapsed time in hh:mm:ss =      0 h 00 m 56 s
+ Mean elapsed time per time step in seconds =    2.8200999975204467E-002
  Time steps remaining =         2500
- Estimated remaining time in seconds =    45.564999878406525     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 45 s
- Estimated total run time in seconds =    82.016999781131744     
- Estimated total run time in hh:mm:ss =      0 h 01 m 22 s
- The run will finish approximately on: Sun Jun 19, 2016 00:12
+ Estimated remaining time in seconds =    70.502499938011169     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 10 s
+ Estimated total run time in seconds =    126.90449988842010     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 06 s
+ The run will finish approximately on: Fri May 12, 2017 10:27
 
 
- Creating color image of size          610  x          482  for time step         2000
+ Creating color image of size          606  x          478  for time step         2000
  drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    5.6078901252476498E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         2100
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    5.2072435209993273E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         2200
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    5.0185408326797187E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         2300
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    4.7470195568166673E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         2400
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    4.5827200665371493E-005
  Color image created
 
  ******************************************************************
 Time step number    2500   t =    1.4994 s out of    4500
  ******************************************************************
  We have done    55.5456772     % of the total
- Max norm of vector field in solid (elastic) =    2.9740049285464920E-005
- Max absolute value of scalar field in fluid (acoustic) =    2.2445743083953857     
- Elapsed time in seconds =    46.111999988555908     
- Elapsed time in hh:mm:ss =      0 h 00 m 46 s
- Mean elapsed time per time step in seconds =    1.8444799995422364E-002
+ Max norm of vector field in solid (elastic) =    2.84267153E-05
+ Max absolute value of scalar field in fluid (acoustic) =    2.20361543    
+ Elapsed time in seconds =    71.102999925613403     
+ Elapsed time in hh:mm:ss =      0 h 01 m 11 s
+ Mean elapsed time per time step in seconds =    2.8441199970245360E-002
  Time steps remaining =         2000
- Estimated remaining time in seconds =    36.889599990844729     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 36 s
- Estimated total run time in seconds =    83.001599979400638     
- Estimated total run time in hh:mm:ss =      0 h 01 m 23 s
- The run will finish approximately on: Sun Jun 19, 2016 00:12
+ Estimated remaining time in seconds =    56.882399940490721     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 56 s
+ Estimated total run time in seconds =    127.98539986610413     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 07 s
+ The run will finish approximately on: Fri May 12, 2017 10:27
 
 
- Creating color image of size          610  x          482  for time step         2500
+ Creating color image of size          606  x          478  for time step         2500
  drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    4.3564745283219963E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         2600
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    4.0873095713322982E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         2700
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    3.7600446376018226E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         2800
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    3.4840799344237894E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         2900
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    3.3049527701223269E-005
  Color image created
 
  ******************************************************************
 Time step number    3000   t =    1.7994 s out of    4500
  ******************************************************************
  We have done    66.6592560     % of the total
- Max norm of vector field in solid (elastic) =    2.6022167730843648E-005
- Max absolute value of scalar field in fluid (acoustic) =    1.9774813652038574     
- Elapsed time in seconds =    55.896999835968018     
- Elapsed time in hh:mm:ss =      0 h 00 m 55 s
- Mean elapsed time per time step in seconds =    1.8632333278656005E-002
+ Max norm of vector field in solid (elastic) =    2.48901306E-05
+ Max absolute value of scalar field in fluid (acoustic) =    1.94524574    
+ Elapsed time in seconds =    85.914000034332275     
+ Elapsed time in hh:mm:ss =      0 h 01 m 25 s
+ Mean elapsed time per time step in seconds =    2.8638000011444092E-002
  Time steps remaining =         1500
- Estimated remaining time in seconds =    27.948499917984009     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 27 s
- Estimated total run time in seconds =    83.845499753952026     
- Estimated total run time in hh:mm:ss =      0 h 01 m 23 s
- The run will finish approximately on: Sun Jun 19, 2016 00:12
+ Estimated remaining time in seconds =    42.957000017166138     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 42 s
+ Estimated total run time in seconds =    128.87100005149841     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 08 s
+ The run will finish approximately on: Fri May 12, 2017 10:27
 
 
- Creating color image of size          610  x          482  for time step         3000
+ Creating color image of size          606  x          478  for time step         3000
  drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    3.1956875318428501E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         3100
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    3.0773036996833980E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         3200
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.9505732527468354E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         3300
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.8389937142492272E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         3400
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.7326923373038881E-005
  Color image created
 
  ******************************************************************
 Time step number    3500   t =    2.0994 s out of    4500
  ******************************************************************
  We have done    77.7728348     % of the total
- Max norm of vector field in solid (elastic) =    2.3060858438839205E-005
- Max absolute value of scalar field in fluid (acoustic) =    1.7641766071319580     
- Elapsed time in seconds =    65.639999866485596     
- Elapsed time in hh:mm:ss =      0 h 01 m 05 s
- Mean elapsed time per time step in seconds =    1.8754285676138741E-002
+ Max norm of vector field in solid (elastic) =    2.22084764E-05
+ Max absolute value of scalar field in fluid (acoustic) =    1.73907781    
+ Elapsed time in seconds =    100.70099997520447     
+ Elapsed time in hh:mm:ss =      0 h 01 m 40 s
+ Mean elapsed time per time step in seconds =    2.8771714278629849E-002
  Time steps remaining =         1000
- Estimated remaining time in seconds =    18.754285676138743     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 18 s
- Estimated total run time in seconds =    84.394285542624345     
- Estimated total run time in hh:mm:ss =      0 h 01 m 24 s
- The run will finish approximately on: Sun Jun 19, 2016 00:12
+ Estimated remaining time in seconds =    28.771714278629847     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 28 s
+ Estimated total run time in seconds =    129.47271425383431     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 09 s
+ The run will finish approximately on: Fri May 12, 2017 10:27
 
 
- Creating color image of size          610  x          482  for time step         3500
+ Creating color image of size          606  x          478  for time step         3500
  drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.6406147298985161E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         3600
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.5356590413139202E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         3700
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.4588425731053576E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         3800
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.3616797989234328E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         3900
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.2889189494890161E-005
  Color image created
 
  ******************************************************************
 Time step number    4000   t =    2.3994 s out of    4500
  ******************************************************************
  We have done    88.8864212     % of the total
- Max norm of vector field in solid (elastic) =    2.0680623492808081E-005
- Max absolute value of scalar field in fluid (acoustic) =    1.5907744169235229     
- Elapsed time in seconds =    75.450999975204468     
- Elapsed time in hh:mm:ss =      0 h 01 m 15 s
- Mean elapsed time per time step in seconds =    1.8862749993801116E-002
+ Max norm of vector field in solid (elastic) =    2.00231534E-05
+ Max absolute value of scalar field in fluid (acoustic) =    1.56951737    
+ Elapsed time in seconds =    115.00199985504150     
+ Elapsed time in hh:mm:ss =      0 h 01 m 55 s
+ Mean elapsed time per time step in seconds =    2.8750499963760376E-002
  Time steps remaining =          500
- Estimated remaining time in seconds =    9.4313749969005585     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 09 s
- Estimated total run time in seconds =    84.882374972105026     
- Estimated total run time in hh:mm:ss =      0 h 01 m 24 s
- The run will finish approximately on: Sun Jun 19, 2016 00:12
+ Estimated remaining time in seconds =    14.375249981880188     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 14 s
+ Estimated total run time in seconds =    129.37724983692169     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 09 s
+ The run will finish approximately on: Fri May 12, 2017 10:27
 
 
- Creating color image of size          610  x          482  for time step         4000
+ Creating color image of size          606  x          478  for time step         4000
  drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.2156367776915431E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         4100
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.1306954295141622E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         4200
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.0768160538864322E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         4300
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    2.0097468222957104E-005
+ Color image created
+
+ Creating color image of size          606  x          478  for time step         4400
+ drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    1.9437233277130872E-005
  Color image created
 
  ******************************************************************
 Time step number    4500   t =    2.6994 s out of    4500
  ******************************************************************
  We have done    100.000000     % of the total
- Max norm of vector field in solid (elastic) =    1.8713653844315559E-005
- Max absolute value of scalar field in fluid (acoustic) =    1.4468283653259277     
- Elapsed time in seconds =    85.075999975204468     
- Elapsed time in hh:mm:ss =      0 h 01 m 25 s
- Mean elapsed time per time step in seconds =    1.8905777772267658E-002
+ Max norm of vector field in solid (elastic) =    1.81909545E-05
+ Max absolute value of scalar field in fluid (acoustic) =    1.42662859    
+ Elapsed time in seconds =    129.52399992942810     
+ Elapsed time in hh:mm:ss =      0 h 02 m 09 s
+ Mean elapsed time per time step in seconds =    2.8783111095428467E-002
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    85.075999975204468     
- Estimated total run time in hh:mm:ss =      0 h 01 m 25 s
+ Estimated total run time in seconds =    129.52399992942810     
+ Estimated total run time in hh:mm:ss =      0 h 02 m 09 s
 
 
- Creating color image of size          610  x          482  for time step         4500
+ Creating color image of size          606  x          478  for time step         4500
  drawing scalar image of part of the displacement vector...
+ Color image maximum amplitude =    1.8910357539425604E-005
  Color image created
 
 
@@ -767,14 +1027,14 @@ Time step number    4500   t =    2.6994 s out of    4500
  Program SPECFEM2D: 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- Axisymmetric simple simulation                    
+ Axisymmetric simple simulation
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 19 - 06 - 2016                                 T i m e  : 00:11:58
+ D a t e : 12 - 05 - 2017                                 T i m e  : 10:27:10
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 see results in directory: OUTPUT_FILES/
 
 done
-Sun Jun 19 00:11:58 AST 2016
+Fri May 12 10:27:10 AST 2017

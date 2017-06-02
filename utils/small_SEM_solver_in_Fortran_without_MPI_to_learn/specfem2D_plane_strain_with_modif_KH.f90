@@ -164,10 +164,13 @@
   integer, parameter :: npgeo = (nelem_x+1)*(nelem_z+1)
 ! numbering of the four corners of each mesh element
   integer, dimension(ngnod,NSPEC) :: knods
+
 ! coordinates of all the corners of the mesh elements in a first format
   double precision, dimension(0:nelem_x,0:nelem_z) :: xgrid,zgrid
+
 ! coordinates of all the corners of the mesh elements in another format
   double precision, dimension(NDIM,npgeo) :: coorg
+
 ! function that numbers the mesh points with a unique number
   integer, external :: num
 
@@ -195,7 +198,7 @@
 
 ! comment from Clement Durochat to DK:
 !
-! Attention ? la formule (23) du papier de Pao and Varatharajulu, c'est celle qui m'avait induit en erreur
+! Attention a la formule (23) du papier de Pao and Varatharajulu, c'est celle qui m'avait induit en erreur
 ! (elle n'est pas dans le bon ordre).
 !
 
@@ -206,6 +209,11 @@
   is_on_right_edge_of_KH_contour(:) = .false.
   is_on_bottom_edge_of_KH_contour(:) = .false.
   is_on_top_edge_of_KH_contour(:) = .false.
+
+  knods(:,:) = 0
+
+  xgrid(:,:) = 0
+  zgrid(:,:) = 0
 
 !--- definition of the mesh
   do iz = 0,nelem_z
@@ -249,6 +257,8 @@
 
     enddo
   enddo
+
+  if (ispec /= NSPEC) stop 'error in the total number of spectral elements created in the mesh'
 
 !
 !---- generate the global numbering

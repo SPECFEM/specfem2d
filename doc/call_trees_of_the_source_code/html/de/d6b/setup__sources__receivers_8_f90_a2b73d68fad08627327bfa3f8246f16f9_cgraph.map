@@ -1,0 +1,5 @@
+<map id="setup_adjoint_sources" name="setup_adjoint_sources">
+<area shape="rect" id="node2" href="$da/d19/compute__arrays__source_8f90.html#a33aa0d8eaaaf0ba26c7cc4e485d9378c" title="read_adj_source" alt="" coords="220,5,341,32"/>
+<area shape="rect" id="node3" href="$da/d19/compute__arrays__source_8f90.html#a04030f4e380bfda0e96b074cd8ceb90f" title="read_adj_source_su" alt="" coords="209,56,352,83"/>
+<area shape="rect" id="node4" href="$db/d1a/parallel_8_f90.html#a5c0b8ddb524981fa08f6346a2d42e7b9" title="synchronize_all" alt="" coords="224,107,337,133"/>
+</map>

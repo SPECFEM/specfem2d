@@ -33,7 +33,7 @@ You can replace the GNU compilers above (gfortran and gcc) with other compilers 
 Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
 
 \begin{description}[font=\ttfamily]
-\item [Intel ifort compiler] See if you need to add \texttt{-assume byterecl} for your machine. \textbf{In the case of that compiler, we have noticed that versions dot zero sometimes have bugs or issues that can lead to wrong results when running the code, thus we \emph{strongly} recommend using versions dot one or above (for instance version 13.1 instead of 13.0, version 14.1 instead of 14.0 and so on)}.
+\item [Intel ifort compiler] See if you need to add \texttt{-assume byterecl} for your machine. \textbf{In the case of that compiler, we have noticed that initial release versions sometimes have bugs or issues that can lead to wrong results when running the code, thus we \emph{strongly} recommend using a version for which at least one service pack or update has been installed.}
 \item [IBM compiler] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
 \item [Mac OS] You will probably need to install \texttt{XCODE}.
 \item [IBM Blue Gene machines] Please refer to the manual of SPECFEM3D\_Cartesian, which contains detailed instructions on how to run on Blue Gene.
@@ -86,6 +86,9 @@ on many processors.
 
 If your compiler has problems with the \texttt{use mpi} statements that are used in the code, use the script called
 \texttt{replace\_use\_mpi\_with\_include\_mpif\_dot\_h.pl} in the root directory to replace all of them with \texttt{include `mpif.h'} automatically.
+
+If you have problems configuring the code on a Cray machine, i.e. for instance if you get an error message from the \texttt{configure} script, try exporting these two variables:
+\texttt{MPI\_INC=\${CRAY\_MPICH2\_DIR}/include and FCLIBS=" "}, and for more details if needed you can refer to the \texttt{utils/Cray\_compiler\_information} directory.
 
 \section{Visualizing the subroutine calling tree of the source code}
 

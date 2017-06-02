@@ -1,0 +1,13 @@
+<map id="decompose_mesh" name="decompose_mesh">
+<area shape="rect" id="node2" href="$d3/d54/part__unstruct_8_f90.html#a15ef60f46a524aec5111aeafc01d8a7e" title="mesh2dual_ncommonnodes" alt="" coords="433,245,623,272"/>
+<area shape="rect" id="node3" href="$d2/d39/namespacecompute__elements__load__par.html#ac55cac58af0162a71805ffdb50a30d2b" title="compute_elements_load\l_par::compute_elements_load" alt="" coords="184,52,385,94"/>
+<area shape="rect" id="node4" href="$d7/de1/metis__partitioning_8_f90.html#a735fc679f77c77d57ee65d44f208f963" title="metis_partitioning" alt="" coords="221,118,348,145"/>
+<area shape="rect" id="node5" href="$d9/d9f/scotch__partitioning_8_f90.html#a2bd4bb35df2e28a91bce657d70c118f1" title="scotch_partitioning" alt="" coords="218,169,351,196"/>
+<area shape="rect" id="node6" href="$d0/dee/repartition__coupling_8f90.html#aeb43ec99e9dda1bcfa1391d6b77b5125" title="acoustic_elastic_repartitioning" alt="" coords="185,220,385,246"/>
+<area shape="rect" id="node7" href="$d0/dee/repartition__coupling_8f90.html#a01810c45b7520a6e9df93de6b948b531" title="acoustic_poro_repartitioning" alt="" coords="190,270,379,297"/>
+<area shape="rect" id="node8" href="$d0/dee/repartition__coupling_8f90.html#aea15e0e4308bf0f79bf320256ac4a3a0" title="poro_elastic_repartitioning" alt="" coords="195,321,374,348"/>
+<area shape="rect" id="node9" href="$d0/dee/repartition__coupling_8f90.html#af67becbf59807bc16204c5ad8ceb80a5" title="periodic_edges_repartitioning" alt="" coords="186,372,383,398"/>
+<area shape="rect" id="node10" href="$d3/d54/part__unstruct_8_f90.html#a241a6b55b6b9d88abb1d478baf5eeebd" title="construct_glob2loc\l_elmnts" alt="" coords="218,423,351,464"/>
+<area shape="rect" id="node11" href="$d3/d54/part__unstruct_8_f90.html#ac0d272850ee539ed7c2f6c6395bd9506" title="construct_glob2loc\l_nodes" alt="" coords="218,488,351,530"/>
+<area shape="rect" id="node12" href="$d3/d54/part__unstruct_8_f90.html#a609d76ef735e0a92476dac8380ebd248" title="construct_interfaces" alt="" coords="214,554,355,581"/>
+</map>

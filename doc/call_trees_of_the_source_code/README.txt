@@ -11,3 +11,10 @@ To visualize the calling tree of SPECFEM3D:
 
       firefox html/index.html
 
+
+
+
+note:
+for generating call tree graphs, you also need graphviz installed (type "sudo apt-get install graphviz" or similar)
+
+

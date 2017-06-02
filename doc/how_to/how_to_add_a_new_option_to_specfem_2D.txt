@@ -1,0 +1,68 @@
+STEPS TO ADD A NEW OPTION TO SPECFEM2D
+======================================
+
+1. Choose a flag for your option and add it to DATA/Par_file :
+            ...
+      a_dull_integer = 42
+      MY_WONDERFUL_FLAG  = .true.
+      other_boring_float = 123.456
+            ...
+
+2. Add this flag at a clever location in src/shared/shared_par.f90 with a comment
+
+             ...
+      ! What this flag is for
+      logical :: MY_WONDERFUL_FLAG
+             ...
+
+2. Add this flag to src/meshfem2d/read_parameter_file.F90 :
+
+      call bcast_all_singlel(MY_WONDERFUL_FLAG)
+
+      ...
+
+      call read_value_integer_p(a_dull_integer, 'solver.a_dull_integer')
+      if(err_occurred() /= 0) stop 'error reading parameter 23 in Par_file'
+      call read_value_logical_p(MY_WONDERFUL_FLAG, 'solver.MY_WONDERFUL_FLAG')
+      if(err_occurred() /= 0) stop 'error reading parameter 22b in Par_file'
+      call read_value_double_precision_p(other_boring_float, 'solver.other_boring_float')
+      if(err_occurred() /= 0) stop 'error reading parameter 22 in Par_file'
+             ...
+
+3. Write this flag in the database with src/meshfem2d/save_databases.f90
+             ...
+       ! 'a_grim_stuff'
+       write(IOUT) a_grim_stuff
+
+       ! 'MY_WONDERFUL_FLAG'
+       write(IOUT) MY_WONDERFUL_FLAG
+
+       ! 'a_gloomy_flag'
+       write(IOUT) a_gloomy_flag
+             ...
+
+4. Read this flag from the database with src/specfem2d/read_mesh_databases.F90 :
+             ...
+      use specfem_par, only: ...
+                             ... ,MY_WONDERFUL_FLAG, ...
+             ...
+      read(IIN) a_grim_stuff
+
+      read(IIN) MY_WONDERFUL_FLAG
+
+      if (MY_WONDERFUL_FLAG) write(IMAIN,*) 'IT IS WONDERFUL!! IT IS SO WONDERFUL!!' !*** To test your flag
+
+      read(IIN) a_gloomy_flag
+             ...
+
+6. (Re)compile with make and run an example (don't forget to add your flag on the Par_file). At the beginning of
+   solver's outputs you should see :
+
+      *********************
+      ****             ****
+      ****  SPECFEM2D  ****
+      ****             ****
+      *********************
+      IT IS WONDERFUL!! IT IS SO WONDERFUL!!
+
+7. Remove that ridiculous line *** in src/specfem2d/read_databases.F90 and make your flag wonderful for real

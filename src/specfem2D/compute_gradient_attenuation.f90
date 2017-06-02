@@ -54,7 +54,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: displ_elastic
 
 ! array with derivatives of Lagrange polynomials
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx!,hprimeBar_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
 ! local variables
@@ -137,4 +137,146 @@
   enddo
 
   end subroutine compute_gradient_attenuation
+
+  ! -------------------------------------------------------
+
+  subroutine compute_gradient_attenuation_fluid(potential_acoustic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
+         xix,xiz,gammax,gammaz,ibool,ispec_is_acoustic,hprime_xx,hprime_zz,nspec,nglob)
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO
+
+  use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx,rhoext,density,assign_external_model,kmato
+
+! compute gradient for attenuation
+
+  implicit none
+
+  integer :: nspec,nglob
+
+  integer, dimension(NGLLX,NGLLZ,nspec) :: ibool
+
+  logical, dimension(nspec) :: ispec_is_acoustic
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl,dux_dzl,duz_dxl,duz_dzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec)  :: xix,xiz,gammax,gammaz
+
+  real(kind=CUSTOM_REAL), dimension(nglob) :: potential_acoustic
+
+! array with derivatives of Lagrange polynomials
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
+
+! local variables
+  integer :: i,j,k,ispec,i_step
+
+  real(kind=CUSTOM_REAL), dimension(2,nglob) :: gradient_temp
+
+! spatial derivatives
+  real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
+
+! jacobian
+  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,rhol
+
+  gradient_temp(1,:) = potential_acoustic(:)
+  gradient_temp(2,:) = potential_acoustic(:)
+
+  do i_step = 1,2
+
+! loop over spectral elements
+  do ispec = 1,nspec
+
+!---
+!--- acoustic spectral element
+!---
+    if (ispec_is_acoustic(ispec)) then
+
+! first double loop over GLL points to compute and store gradients
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+
+! derivative along x and along z
+          dux_dxi = ZERO
+          duz_dxi = ZERO
+
+          dux_dgamma = ZERO
+          duz_dgamma = ZERO
+
+! first double loop over GLL points to compute and store gradients
+! we can merge the two loops because NGLLX == NGLLZ
+
+          if (AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              do k = 1,NGLJ
+                dux_dxi = dux_dxi + gradient_temp(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                duz_dxi = duz_dxi + gradient_temp(2,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                dux_dgamma = dux_dgamma + gradient_temp(1,ibool(i,k,ispec))*hprime_zz(j,k)
+                duz_dgamma = duz_dgamma + gradient_temp(2,ibool(i,k,ispec))*hprime_zz(j,k)
+              enddo
+            else
+              do k = 1,NGLJ
+                dux_dxi = dux_dxi + gradient_temp(1,ibool(k,j,ispec))*hprime_xx(i,k)
+                duz_dxi = duz_dxi + gradient_temp(2,ibool(k,j,ispec))*hprime_xx(i,k)
+                dux_dgamma = dux_dgamma + gradient_temp(1,ibool(i,k,ispec))*hprime_zz(j,k)
+                duz_dgamma = duz_dgamma + gradient_temp(2,ibool(i,k,ispec))*hprime_zz(j,k)
+              enddo
+            endif
+          else
+            do k = 1,NGLLX
+              dux_dxi = dux_dxi + gradient_temp(1,ibool(k,j,ispec))*hprime_xx(i,k)
+              duz_dxi = duz_dxi + gradient_temp(2,ibool(k,j,ispec))*hprime_xx(i,k)
+              dux_dgamma = dux_dgamma + gradient_temp(1,ibool(i,k,ispec))*hprime_zz(j,k)
+              duz_dgamma = duz_dgamma + gradient_temp(2,ibool(i,k,ispec))*hprime_zz(j,k)
+            enddo
+          endif
+
+          xixl = xix(i,j,ispec)
+          xizl = xiz(i,j,ispec)
+          gammaxl = gammax(i,j,ispec)
+          gammazl = gammaz(i,j,ispec)
+
+! derivatives of displacement
+          dux_dxl(i,j,ispec) = dux_dxi*xixl + dux_dgamma*gammaxl
+          dux_dzl(i,j,ispec) = 0._CUSTOM_REAL
+
+          duz_dxl(i,j,ispec) = 0._CUSTOM_REAL
+          duz_dzl(i,j,ispec) = duz_dxi*xizl + duz_dgamma*gammazl
+
+          if (i_step == 1) then
+            rhol = density(1,kmato(ispec))
+            if (assign_external_model) rhol = rhoext(i,j,ispec)
+            dux_dxl(i,j,ispec) = dux_dxl(i,j,ispec) / rhol
+            duz_dzl(i,j,ispec) = duz_dzl(i,j,ispec) / rhol
+          endif
+
+        enddo
+      enddo
+
+    endif
+
+  enddo
+
+  if (i_step == 1) then
+
+    ! loop over spectral elements
+  do ispec = 1,nspec
+
+!---
+!--- acoustic spectral element
+!---
+    if (ispec_is_acoustic(ispec)) then
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          gradient_temp(1,ibool(i,j,ispec)) = dux_dxl(i,j,ispec)
+          gradient_temp(2,ibool(i,j,ispec)) = duz_dzl(i,j,ispec)
+        enddo
+      enddo
+    endif
+
+  enddo
+
+  endif
+
+  enddo
+
+  end subroutine compute_gradient_attenuation_fluid
 
