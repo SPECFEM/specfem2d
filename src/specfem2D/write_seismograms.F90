@@ -177,14 +177,8 @@
   endif ! subsamp_seismos
 
   ! save temporary or final seismograms
-  if (it == NSTEP) then
-    call write_seismograms_to_file(sisux,sisuz,siscurl)
-
-    ! updates current seismogram offsets
-    seismo_offset = seismo_offset + seismo_current
-    seismo_current = 0
-  endif
-
+  if (it == NSTEP)  call write_seismograms_to_file(sisux,sisuz,siscurl)
+  
   end subroutine write_seismograms
 
 !================================================================
@@ -199,7 +193,7 @@
 
   use specfem_par, only: station_name,network_name,NSTEP,islice_selected_rec,nrec,myrank,deltat,seismotype,t0, &
                          subsamp_seismos,nrecloc, &
-                         seismo_offset,seismo_current,P_SV,SU_FORMAT,save_ASCII_seismograms, &
+                         seismo_current,P_SV,SU_FORMAT,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,x_source,z_source
 
   implicit none
@@ -218,9 +212,11 @@
   ! to write seismograms in single precision SEP and double precision binary format
   double precision, dimension(:,:,:), allocatable :: buffer_binary
   double precision :: time_t
+  real, dimension(:), allocatable :: single_precision_seismo
 
   integer :: irecloc
   integer :: ier
+  integer :: length_seismo_bin
 
 ! write seismograms
 
@@ -250,6 +246,7 @@
   endif
 
   allocate(buffer_binary(NSTEP/subsamp_seismos,nrec,number_of_components),stat=ier)
+  allocate(single_precision_seismo(NSTEP/subsamp_seismos),stat=ier)
   if (ier /= 0) stop 'Error allocating array buffer_binary'
   buffer_binary(:,:,:) = 0.d0
 
@@ -261,51 +258,51 @@
     ! filename extension
     if (.not. SU_FORMAT) then
       suffix = '.bin'
+      length_seismo_bin = NSTEP
     else
       suffix = '.su'
+      length_seismo_bin = NSTEP + 60
     endif
 
     ! deletes old files
-    if (seismo_offset == 0) then
-      open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_single'//suffix,status='unknown')
-      close(12,status='delete')
+    open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_single'//suffix,status='unknown')
+    close(12,status='delete')
 
-      open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_double'//suffix,status='unknown')
-      close(12,status='delete')
+    open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_double'//suffix,status='unknown')
+    close(12,status='delete')
 
-      open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_single'//suffix,status='unknown')
-      close(12,status='delete')
+    open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_single'//suffix,status='unknown')
+    close(12,status='delete')
 
-      open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_double'//suffix,status='unknown')
-      close(12,status='delete')
+    open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_double'//suffix,status='unknown')
+    close(12,status='delete')
 
-      open(unit=12,file=trim(OUTPUT_FILES)//'Uz_file_single'//suffix,status='unknown')
-      close(12,status='delete')
+    open(unit=12,file=trim(OUTPUT_FILES)//'Uz_file_single'//suffix,status='unknown')
+    close(12,status='delete')
 
-      open(unit=12,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status='unknown')
-      close(12,status='delete')
+    open(unit=12,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status='unknown')
+    close(12,status='delete')
 
-      open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_single'//suffix,status='unknown')
-      close(12,status='delete')
+    open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_single'//suffix,status='unknown')
+    close(12,status='delete')
 
-      open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_double'//suffix,status='unknown')
-      close(12,status='delete')
+    open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_double'//suffix,status='unknown')
+    close(12,status='delete')
 
-      open(unit=12,file=trim(OUTPUT_FILES)//'Uc_file_single'//suffix,status='unknown')
-      close(12,status='delete')
+    open(unit=12,file=trim(OUTPUT_FILES)//'Uc_file_single'//suffix,status='unknown')
+    close(12,status='delete')
 
-      open(unit=12,file=trim(OUTPUT_FILES)//'Uc_file_double'//suffix,status='unknown')
-      close(12,status='delete')
-    endif
+    open(unit=12,file=trim(OUTPUT_FILES)//'Uc_file_double'//suffix,status='unknown')
+    close(12,status='delete')
 
     ! write the new files
     if (save_binary_seismograms_single) then
       if (seismotype == 4 .or. seismotype == 6) then
-        open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_single'//suffix,status='unknown',access='direct',recl=4*length_seismo_bin)
       else if (.not. P_SV) then
-        open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_single'//suffix,status='unknown',access='direct',recl=4*length_seismo_bin)
       else
-        open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_single'//suffix,status='unknown',access='direct',recl=4*length_seismo_bin)
       endif
     endif
 
@@ -313,26 +310,26 @@
       if (seismotype == 4 .or. seismotype == 6) then
         ! continue without output
       else if (.not. P_SV) then
-        open(unit=13,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
+        open(unit=13,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status='unknown',access='direct',recl=8*length_seismo_bin)
       else
-        open(unit=13,file=trim(OUTPUT_FILES)//'Ux_file_double'//suffix,status='unknown',access='direct',recl=8)
+        open(unit=13,file=trim(OUTPUT_FILES)//'Ux_file_double'//suffix,status='unknown',access='direct',recl=8*length_seismo_bin)
       endif
     endif
 
     ! no Z component seismogram if pressure
     if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
       if (save_binary_seismograms_single) &
-        open(unit=14,file=trim(OUTPUT_FILES)//'Uz_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=14,file=trim(OUTPUT_FILES)//'Uz_file_single'//suffix,status='unknown',access='direct',recl=4*length_seismo_bin)
       if (save_binary_seismograms_double) &
-        open(unit=15,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status='unknown',access='direct',recl=8)
+        open(unit=15,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status='unknown',access='direct',recl=8*length_seismo_bin)
     endif
 
     ! curl output
     if (seismotype == 5) then
       if (save_binary_seismograms_single) &
-        open(unit=16,file=trim(OUTPUT_FILES)//'Uc_file_single'//suffix,status='unknown',access='direct',recl=4)
+        open(unit=16,file=trim(OUTPUT_FILES)//'Uc_file_single'//suffix,status='unknown',access='direct',recl=4*length_seismo_bin)
       if (save_binary_seismograms_double) &
-        open(unit=17,file=trim(OUTPUT_FILES)//'Uc_file_double'//suffix,status='unknown',access='direct',recl=8)
+        open(unit=17,file=trim(OUTPUT_FILES)//'Uc_file_double'//suffix,status='unknown',access='direct',recl=8*length_seismo_bin)
     endif
   endif ! save_binary_seismograms
 
@@ -416,10 +413,8 @@
             trim(OUTPUT_FILES),network_name(irec)(1:length_network_name),station_name(irec)(1:length_station_name),channel,component
 
             ! deletes old seismogram file when starting to write output
-            if (seismo_offset == 0) then
-              open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown')
-              close(11,status='delete')
-            endif
+            open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown')
+            close(11,status='delete')
 
             open(unit=11,file=sisname(1:len_trim(sisname)),status='unknown',position='append')
 
@@ -428,7 +423,7 @@
             do isample = 1,seismo_current
 
               ! forward time
-              time_t = dble(seismo_offset + isample - 1) * deltat - t0
+              time_t = dble(isample - 1) * deltat - t0
 
               write(11,*) time_t,' ',buffer_binary(isample,irec,iorientation)
             enddo
@@ -440,26 +435,38 @@
 
         ! write binary seismogram
         if (save_binary_seismograms) then
-          do isample = 1, seismo_current
-            if (save_binary_seismograms_single) &
-              write(12,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,1))
+
+          if (save_binary_seismograms_single) then
+            do isample = 1, NSTEP
+              single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,1)) 
+            enddo  
+            write(12,rec=(irec-1)*NSTEP) single_precision_seismo
+          endif
+          if (save_binary_seismograms_double) &
+            write(13,rec=(irec-1)*NSTEP) buffer_binary(:,irec,1)
+
+          if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
+            if (save_binary_seismograms_single) then
+              do isample = 1, NSTEP
+                single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,2))
+              enddo 
+              write(14,rec=(irec-1)*NSTEP) single_precision_seismo
+            endif
             if (save_binary_seismograms_double) &
-              write(13,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,irec,1)
+              write(15,rec=(irec-1)*NSTEP) buffer_binary(:,irec,2)
+          endif
 
-            if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
-              if (save_binary_seismograms_single) &
-                write(14,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,2))
-              if (save_binary_seismograms_double) &
-                write(15,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,irec,2)
+          if (seismotype == 5) then
+            if (save_binary_seismograms_single) then
+              do isample = 1, NSTEP
+                single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,3))
+              enddo
+              write(16,rec=(irec-1)*NSTEP+isample) single_precision_seismo
             endif
+            if (save_binary_seismograms_double) &
+              write(17,rec=(irec-1)*NSTEP+isample) buffer_binary(:,irec,3)
+          endif
 
-            if (seismotype == 5) then
-              if (save_binary_seismograms_single) &
-                write(16,rec=(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,3))
-              if (save_binary_seismograms_double) &
-                write(17,rec=(irec-1)*NSTEP+seismo_offset+isample) buffer_binary(isample,irec,3)
-            endif
-          enddo
         endif
 
       else

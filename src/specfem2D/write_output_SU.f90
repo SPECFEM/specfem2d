@@ -34,8 +34,7 @@
   subroutine write_output_SU(x_source,z_source,irec,buffer_binary,number_of_components)
 
   use specfem_par, only: NSTEP,nrec,deltat,seismotype,st_xval, &
-                          seismo_offset,seismo_current,P_SV, &
-                          st_zval,subsamp_seismos
+                         P_SV,st_zval,subsamp_seismos
 
   implicit none
 
@@ -48,61 +47,42 @@
   ! local parameters
   integer :: deltat_int2
   integer :: isample
+  integer, dimension(28) :: header1
+  real(kind=4), dimension(30) :: header4
+  integer(kind=2) :: header2(2),header3(2)
+  real(kind=4), dimension(NSTEP/subsamp_seismos) :: single_precision_seismo
 
-  ! scaling factor for Seismic Unix xsu dislay
-  double precision, parameter :: FACTORXSU = 1.d0
-
-  integer(kind=2) :: header2(2)
-
-  if (seismo_offset == 0) then
-
-     if (deltat*1.0d6 > 2**15) then
-        deltat_int2 = 0
-     else
-        deltat_int2 = NINT(deltat*1.0d6, kind=2) ! deltat (unit: 10^{-6} second)
-     endif
-
-     ! write SU headers (refer to Seismic Unix for details)
-     write(12,rec=(irec-1)*60+(irec-1)*NSTEP+1)  irec                          ! receiver ID
-     write(12,rec=(irec-1)*60+(irec-1)*NSTEP+10) NINT(st_xval(irec)-x_source)  ! offset
-     write(12,rec=(irec-1)*60+(irec-1)*NSTEP+19) NINT(x_source)                ! source location xs
-     write(12,rec=(irec-1)*60+(irec-1)*NSTEP+20) NINT(z_source)                ! source location zs
-     write(12,rec=(irec-1)*60+(irec-1)*NSTEP+21) NINT(st_xval(irec))           ! receiver location xr
-     write(12,rec=(irec-1)*60+(irec-1)*NSTEP+22) NINT(st_zval(irec))           ! receiver location zr
-     if (nrec > 1) write(12,rec=(irec-1)*60+(irec-1)*NSTEP+48) SNGL(st_xval(2)-st_xval(1)) ! receiver interval
-     header2(1)=0  ! dummy
-     header2(2)=int(NSTEP, kind=2)
-     write(12,rec=(irec-1)*60+(irec-1)*NSTEP+29) header2
-     header2(1)=deltat_int2
-     header2(2)=0  ! dummy
-     write(12,rec=(irec-1)*60+(irec-1)*NSTEP+30) header2
-     if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
-        ! headers
-        if (seismo_offset == 0) then
-           write(14,rec=(irec-1)*60+(irec-1)*NSTEP+1)  irec
-           write(14,rec=(irec-1)*60+(irec-1)*NSTEP+10) NINT(st_xval(irec)-x_source)
-           write(14,rec=(irec-1)*60+(irec-1)*NSTEP+19) NINT(x_source)
-           write(14,rec=(irec-1)*60+(irec-1)*NSTEP+20) NINT(z_source)
-           write(14,rec=(irec-1)*60+(irec-1)*NSTEP+21) NINT(st_xval(irec))
-           write(14,rec=(irec-1)*60+(irec-1)*NSTEP+22) NINT(st_zval(irec))
-           if (nrec > 1) write(14,rec=(irec-1)*60+(irec-1)*NSTEP+48) SNGL(st_xval(2)-st_xval(1))
-           header2(1)=0  ! dummy
-           header2(2)=int(NSTEP, kind=2)
-           write(14,rec=(irec-1)*60+(irec-1)*NSTEP+29) header2
-           header2(1)=deltat_int2
-           header2(2)=0  ! dummy
-           write(14,rec=(irec-1)*60+(irec-1)*NSTEP+30) header2
-        endif
-     endif
-
+  if (deltat*1.0d6 > 2**15) then
+    deltat_int2 = 0
+  else
+    deltat_int2 = NINT(deltat*1.0d6, kind=2) ! deltat (unit: 10^{-6} second)
   endif
 
-  ! the "60" in the following corresponds to 240 bytes header (note the reclength is 4 bytes)
-  do isample = 1, seismo_current
-     write(12,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,1))
-     if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
-        write(14,rec=irec*60+(irec-1)*NSTEP+seismo_offset+isample) sngl(buffer_binary(isample,irec,2))
-     endif
+  header1(:) = 0
+  header4(:) = 0
+  ! write SU headers (refer to Seismic Unix for details)
+  header1(1) =  irec                          ! receiver ID
+  header1(10)=NINT(st_xval(irec)-x_source)  ! offset
+  header1(19)=NINT(x_source)                ! source location xs
+  header1(20)=NINT(z_source)                ! source location zs
+  header1(21)=NINT(st_xval(irec))           ! receiver location xr
+  header1(22)=NINT(st_zval(irec))           ! receiver location zr
+  if (nrec > 1) header4(18)=SNGL(st_xval(2)-st_xval(1)) ! receiver interval
+  header2(1)=0  ! dummy
+  header2(2)=int(NSTEP, kind=2)
+  header3(1)=deltat_int2
+  header3(2)=0  ! dummy
+
+  do isample = 1,NSTEP
+    single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,1))
   enddo
+  write(12,rec=irec) header1,header2,header3,header4,single_precision_seismo
+
+  if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
+    do isample = 1,NSTEP
+      single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,2))
+    enddo
+    write(14,rec=irec) header1,header2,header3,header4,single_precision_seismo
+  endif
 
   end subroutine write_output_SU
