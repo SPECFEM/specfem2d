@@ -440,20 +440,20 @@
             do isample = 1, NSTEP
               single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,1)) 
             enddo  
-            write(12,rec=(irec-1)*NSTEP) single_precision_seismo
+            write(12,rec=(irec-1)*NSTEP+1) single_precision_seismo
           endif
           if (save_binary_seismograms_double) &
-            write(13,rec=(irec-1)*NSTEP) buffer_binary(:,irec,1)
+            write(13,rec=(irec-1)*NSTEP+1) buffer_binary(:,irec,1)
 
           if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
             if (save_binary_seismograms_single) then
               do isample = 1, NSTEP
                 single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,2))
               enddo 
-              write(14,rec=(irec-1)*NSTEP) single_precision_seismo
+              write(14,rec=(irec-1)*NSTEP+1) single_precision_seismo
             endif
             if (save_binary_seismograms_double) &
-              write(15,rec=(irec-1)*NSTEP) buffer_binary(:,irec,2)
+              write(15,rec=(irec-1)*NSTEP+1) buffer_binary(:,irec,2)
           endif
 
           if (seismotype == 5) then
@@ -461,10 +461,10 @@
               do isample = 1, NSTEP
                 single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,3))
               enddo
-              write(16,rec=(irec-1)*NSTEP+isample) single_precision_seismo
+              write(16,rec=(irec-1)*NSTEP+1) single_precision_seismo
             endif
             if (save_binary_seismograms_double) &
-              write(17,rec=(irec-1)*NSTEP+isample) buffer_binary(:,irec,3)
+              write(17,rec=(irec-1)*NSTEP+1) buffer_binary(:,irec,3)
           endif
 
         endif
