@@ -79,7 +79,10 @@ __global__ void compute_elastic_seismogram_kernel(int nrec_local,
                                                   realw* seismograms,
                                                   realw* cosrot,
                                                   realw* sinrot,
-                                                  int* ispec_selected_rec_loc) {
+                                                  int* ispec_selected_rec_loc,
+                                                  int it,
+                                                  int NSTEP)
+{
 
 
   int irec_local = blockIdx.x + blockIdx.y*gridDim.x;
@@ -117,8 +120,8 @@ __global__ void compute_elastic_seismogram_kernel(int nrec_local,
       __syncthreads();
     }
 
-    if (tx == 0) {seismograms[irec_local]            =   cosrot[irec_local]*sh_dxd[0] + sinrot[irec_local]*sh_dzd[0];}
-    if (tx == 1) {seismograms[irec_local+nrec_local] = - sinrot[irec_local]*sh_dxd[0] + cosrot[irec_local]*sh_dzd[0];}
+    if (tx == 0) {seismograms[irec_local*NSTEP + it]                    = cosrot[irec_local]*sh_dxd[0]  + sinrot[irec_local]*sh_dzd[0];}
+    if (tx == 1) {seismograms[irec_local*NSTEP + it + nrec_local*NSTEP] = cosrot[irec_local]*sh_dzd[0]  - sinrot[irec_local]*sh_dxd[0];}
 
     /*
     // simple, single-thread reduction
@@ -144,7 +147,9 @@ __global__ void compute_acoustic_seismogram_kernel(int nrec_local,
                                                    int* d_ibool,
                                                    realw* hxir, realw* hgammar,
                                                    realw* seismograms,
-                                                   int* ispec_selected_rec_loc) {
+                                                   int* ispec_selected_rec_loc,
+                                                   int it,
+                                                   int NSTEP){
   int irec_local = blockIdx.x + blockIdx.y*gridDim.x;
   int tx = threadIdx.x;
 
@@ -174,8 +179,8 @@ __global__ void compute_acoustic_seismogram_kernel(int nrec_local,
     }
 
     // Signe moins car pression = -potential_dot_dot
-    if (tx == 0) {seismograms[irec_local] = -sh_dxd[0];}
-    if (tx == 1) {seismograms[irec_local+nrec_local] = 0;}
+   if (tx == 0) {seismograms[irec_local*NSTEP + it ]                   = -sh_dxd[0];}
+   if (tx == 1) {seismograms[irec_local*NSTEP + it + nrec_local*NSTEP] = 0;}
   }
 }
 
@@ -187,7 +192,7 @@ void FC_FUNC_(compute_seismograms_cuda,
                                         int* seismotypef,
                                         double* sisux, double* sisuz,
                                         int* seismo_currentf,
-                                        int* NSTEP_BETWEEN_OUTPUT_SEISMOS_over_subsamp_seismosf,
+                                        int* NSTEPf,
                                         int* ELASTIC_SIMULATION,
                                         int* ACOUSTIC_SIMULATION,
                                         int* USE_TRICK_FOR_BETTER_PRESSURE) {
@@ -196,7 +201,7 @@ void FC_FUNC_(compute_seismograms_cuda,
   TRACE("compute_seismograms_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
-  int i;
+  int i,j;
 
   //checks if anything to do
   if (mp->nrec_local == 0) return;
@@ -209,7 +214,7 @@ void FC_FUNC_(compute_seismograms_cuda,
 
   int seismotype = *seismotypef;
   int seismo_current = *seismo_currentf - 1 ;
-  int nstep_over_subsamp = *NSTEP_BETWEEN_OUTPUT_SEISMOS_over_subsamp_seismosf;
+  int NSTEP = *NSTEPf;
 
   // warnings
   if (seismo_current == 0){
@@ -260,7 +265,9 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                mp->d_seismograms,
                                                                                mp->d_cosrot,
                                                                                mp->d_sinrot,
-                                                                               mp->d_ispec_selected_rec_loc);
+                                                                               mp->d_ispec_selected_rec_loc,
+                                                                               seismo_current,
+                                                                               NSTEP);
 
       break;
 
@@ -273,7 +280,10 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                mp->d_seismograms,
                                                                                mp->d_cosrot,
                                                                                mp->d_sinrot,
-                                                                               mp->d_ispec_selected_rec_loc);
+                                                                               mp->d_ispec_selected_rec_loc,
+                                                                               seismo_current,
+                                                                               NSTEP);
+
       break;
 
     case 3 :
@@ -285,7 +295,10 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                mp->d_seismograms,
                                                                                mp->d_cosrot,
                                                                                mp->d_sinrot,
-                                                                               mp->d_ispec_selected_rec_loc);
+                                                                               mp->d_ispec_selected_rec_loc,
+                                                                               seismo_current,
+                                                                               NSTEP);
+
       break;
 
     case 4 :
@@ -296,29 +309,36 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                   mp->d_ibool,
                                                                                   mp->d_xir_store_loc, mp->d_gammar_store_loc,
                                                                                   mp->d_seismograms,
-                                                                                  mp->d_ispec_selected_rec_loc);
+                                                                                  mp->d_ispec_selected_rec_loc,
+                                                                                  seismo_current,
+                                                                                  NSTEP);
+
       }else{
         compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
                                                                                   mp->d_potential_dot_dot_acoustic,
                                                                                   mp->d_ibool,
                                                                                   mp->d_xir_store_loc, mp->d_gammar_store_loc,
                                                                                   mp->d_seismograms,
-                                                                                  mp->d_ispec_selected_rec_loc);
+                                                                                  mp->d_ispec_selected_rec_loc,
+                                                                                  seismo_current,
+                                                                                  NSTEP);
+
       }
       break;
   }
 
-  int size = mp->nrec_local;
+  if (seismo_current == NSTEP - 1 ){
+    int size = mp->nrec_local*NSTEP;
+    // (cudaMemcpy implicitly synchronizes all other cuda operations)
+    print_CUDA_error_if_any(cudaMemcpy(mp->h_seismograms,mp->d_seismograms,sizeof(realw)* 2 * size,cudaMemcpyDeviceToHost),72001);
 
-  // (cudaMemcpy implicitly synchronizes all other cuda operations)
-  print_CUDA_error_if_any(cudaMemcpy(mp->h_seismograms,mp->d_seismograms,sizeof(realw)* 2 * size,cudaMemcpyDeviceToHost),72001);
-
-  for (i=0;i<size;i++){
-    sisux[seismo_current + nstep_over_subsamp * i ] = (double) mp->h_seismograms[i];
-    sisuz[seismo_current + nstep_over_subsamp * i ] = (double) mp->h_seismograms[i+size];
-
-    // debug
-    //printf("seismo %d - nrec_local %d sis %f %f\n",seismo_current,i,sisux[seismo_current + nstep_over_subsamp * i ],mp->h_seismograms[i]);
+    for (i=0;i < mp->nrec_local;i++)
+      for (j=0;j<NSTEP;j++)
+     {    sisux[j + NSTEP * i ] = (double)*(mp->h_seismograms + j + NSTEP * i);
+          sisuz[j + NSTEP * i ] = (double)*(mp->h_seismograms + j + NSTEP * i + size);
+      }
+      //debug
+      //printf("seismo %d - nrec_local %d sis %f %f\n",seismo_current,i,sisux[seismo_current + nstep_over_subsamp * i ],mp->h_seismograms[i]);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

@@ -335,9 +335,9 @@ void FC_FUNC_(prepare_constants_device,
   mp->nrec_local = *nrec_local; // number of receiver located in this partition
   // note that: size of size(ispec_selected_rec_loc) = nrec_local
   if (mp->nrec_local > 0) {
-    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms,sizeof(realw)*(mp->nrec_local)*2),1303);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms,2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),1303);
     // pinned memory
-    print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms),sizeof(realw)*(mp->nrec_local)*2),8004);
+    print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms),2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),8004);
     // host memory
     //mp->h_seismograms = (float*)malloc((mp->nrec_local)*2*sizeof(float));
     //if (mp->h_seismograms == NULL) exit_on_error("h_seismograms not allocated \n");
