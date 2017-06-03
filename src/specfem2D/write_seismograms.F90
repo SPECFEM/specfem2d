@@ -178,7 +178,7 @@
 
   ! save temporary or final seismograms
   if (it == NSTEP)  call write_seismograms_to_file(sisux,sisuz,siscurl)
-  
+
   end subroutine write_seismograms
 
 !================================================================
@@ -438,8 +438,8 @@
 
           if (save_binary_seismograms_single) then
             do isample = 1, NSTEP/subsamp_seismos
-              single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,1)) 
-            enddo  
+              single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,1))
+            enddo
             write(12,rec=irec) single_precision_seismo
           endif
           if (save_binary_seismograms_double) &
@@ -449,7 +449,7 @@
             if (save_binary_seismograms_single) then
               do isample = 1, NSTEP/subsamp_seismos
                 single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,2))
-              enddo 
+              enddo
               write(14,rec=irec) single_precision_seismo
             endif
             if (save_binary_seismograms_double) &
