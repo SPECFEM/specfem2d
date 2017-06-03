@@ -178,7 +178,7 @@
 
   ! save temporary or final seismograms
   if (it == NSTEP)  call write_seismograms_to_file(sisux,sisuz,siscurl)
-
+  
   end subroutine write_seismograms
 
 !================================================================
@@ -193,7 +193,7 @@
 
   use specfem_par, only: station_name,network_name,NSTEP,islice_selected_rec,nrec,myrank,deltat,seismotype,t0, &
                          subsamp_seismos,nrecloc, &
-                         seismo_current,P_SV,SU_FORMAT,save_ASCII_seismograms, &
+                         P_SV,SU_FORMAT,save_ASCII_seismograms, &
                          save_binary_seismograms_single,save_binary_seismograms_double,x_source,z_source
 
   implicit none
@@ -258,10 +258,10 @@
     ! filename extension
     if (.not. SU_FORMAT) then
       suffix = '.bin'
-      length_seismo_bin = NSTEP
+      length_seismo_bin = NSTEP/subsamp_seismos
     else
       suffix = '.su'
-      length_seismo_bin = NSTEP + 60
+      length_seismo_bin = NSTEP/subsamp_seismos + 60
     endif
 
     ! deletes old files
@@ -420,7 +420,7 @@
 
             ! make sure we never write more than the maximum number of time steps
             ! subtract offset of the source to make sure travel time is correct
-            do isample = 1,seismo_current
+            do isample = 1,NSTEP/subsamp_seismos
 
               ! forward time
               time_t = dble(isample - 1) * deltat - t0
@@ -437,34 +437,34 @@
         if (save_binary_seismograms) then
 
           if (save_binary_seismograms_single) then
-            do isample = 1, NSTEP
-              single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,1))
-            enddo
-            write(12,rec=(irec-1)*NSTEP+1) single_precision_seismo
+            do isample = 1, NSTEP/subsamp_seismos
+              single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,1)) 
+            enddo  
+            write(12,rec=irec) single_precision_seismo
           endif
           if (save_binary_seismograms_double) &
-            write(13,rec=(irec-1)*NSTEP+1) buffer_binary(:,irec,1)
+            write(13,rec=irec) buffer_binary(:,irec,1)
 
           if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
             if (save_binary_seismograms_single) then
-              do isample = 1, NSTEP
+              do isample = 1, NSTEP/subsamp_seismos
                 single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,2))
-              enddo
-              write(14,rec=(irec-1)*NSTEP+1) single_precision_seismo
+              enddo 
+              write(14,rec=irec) single_precision_seismo
             endif
             if (save_binary_seismograms_double) &
-              write(15,rec=(irec-1)*NSTEP+1) buffer_binary(:,irec,2)
+              write(15,rec=irec) buffer_binary(:,irec,2)
           endif
 
           if (seismotype == 5) then
             if (save_binary_seismograms_single) then
-              do isample = 1, NSTEP
+              do isample = 1, NSTEP/subsamp_seismos
                 single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,3))
               enddo
-              write(16,rec=(irec-1)*NSTEP+1) single_precision_seismo
+              write(16,rec=irec) single_precision_seismo
             endif
             if (save_binary_seismograms_double) &
-              write(17,rec=(irec-1)*NSTEP+1) buffer_binary(:,irec,3)
+              write(17,rec=irec) buffer_binary(:,irec,3)
           endif
 
         endif

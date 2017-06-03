@@ -69,17 +69,17 @@
   header1(22)=NINT(st_zval(irec))           ! receiver location zr
   if (nrec > 1) header4(18)=SNGL(st_xval(2)-st_xval(1)) ! receiver interval
   header2(1)=0  ! dummy
-  header2(2)=int(NSTEP, kind=2)
+  header2(2)=int(NSTEP/subsamp_seismos, kind=2)
   header3(1)=deltat_int2
   header3(2)=0  ! dummy
 
-  do isample = 1,NSTEP
+  do isample = 1,NSTEP/subsamp_seismos
     single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,1))
   enddo
   write(12,rec=irec) header1,header2,header3,header4,single_precision_seismo
 
   if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
-    do isample = 1,NSTEP
+    do isample = 1,NSTEP/subsamp_seismos
       single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,2))
     enddo
     write(14,rec=irec) header1,header2,header3,header4,single_precision_seismo
