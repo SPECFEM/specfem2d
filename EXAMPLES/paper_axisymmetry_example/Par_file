@@ -175,6 +175,10 @@ PML_BOUNDARY_CONDITIONS         = .true.
 NELEM_PML_THICKNESS             = 9
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
+# set to .false. unless you know what you are doing; this implements automatic adjustment of the PML parameters for elongated models.
+# The goal is to improve the absorbing efficiency of PML for waves with large incidence angles, but this can lead to artefacts.
+# In particular, this option is efficient only when the number of sources NSOURCES is equal to one.
+PML_PARAMETER_ADJUSTMENT        = .false.
 
 # Stacey ABC
 STACEY_ABSORBING_CONDITIONS     = .false.

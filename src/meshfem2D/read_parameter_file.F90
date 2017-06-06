@@ -156,6 +156,7 @@
     call bcast_all_singlei(NELEM_PML_THICKNESS)
     call bcast_all_singlel(ROTATE_PML_ACTIVATE)
     call bcast_all_singledp(ROTATE_PML_ANGLE)
+    call bcast_all_singlel(PML_PARAMETER_ADJUSTMENT)
 
     call bcast_all_singlel(STACEY_ABSORBING_CONDITIONS)
     call bcast_all_singlel(ADD_PERIODIC_CONDITIONS)
@@ -477,6 +478,9 @@
 
   call read_value_double_precision_p(ROTATE_PML_ANGLE, 'solver.ROTATE_PML_ANGLE')
   if (err_occurred() /= 0) stop 'error reading parameter ROTATE_PML_ANGLE in Par_file'
+
+  call read_value_logical_p(PML_PARAMETER_ADJUSTMENT, 'solver.PML_PARAMETER_ADJUSTMENT')
+  if (err_occurred() /= 0) stop 'error reading parameter PML_PARAMETER_ADJUSTMENT in Par_file'
 
   ! boolean defining whether to use any absorbing boundaries
   call read_value_logical_p(STACEY_ABSORBING_CONDITIONS, 'solver.STACEY_ABSORBING_CONDITIONS')

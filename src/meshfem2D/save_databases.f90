@@ -156,6 +156,9 @@
   ! 'ROTATE_PML_ANGLE'
   write(IOUT) ROTATE_PML_ANGLE
 
+  ! 'PML_PARAMETER_ADJUSTMENT'
+  write(IOUT) PML_PARAMETER_ADJUSTMENT
+
   ! 'read_external_mesh'
   write(IOUT) read_external_mesh
 

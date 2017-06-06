@@ -98,6 +98,8 @@
 
   read(IIN) ROTATE_PML_ANGLE
 
+  read(IIN) PML_PARAMETER_ADJUSTMENT
+
   read(IIN) read_external_mesh
 
   read(IIN) NELEM_PML_THICKNESS

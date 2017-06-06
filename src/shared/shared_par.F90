@@ -225,6 +225,7 @@ module shared_input_parameters
   integer :: NELEM_PML_THICKNESS
   logical :: ROTATE_PML_ACTIVATE
   double precision :: ROTATE_PML_ANGLE
+  logical :: PML_PARAMETER_ADJUSTMENT
 
   ! Stacey
   logical :: STACEY_ABSORBING_CONDITIONS

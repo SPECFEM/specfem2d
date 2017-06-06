@@ -424,26 +424,23 @@
 
   ! PML arrays
   use specfem_par, only: ispec_is_PML,spec_to_PML,region_CPML, &
-                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
-
+                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,PML_PARAMETER_ADJUSTMENT
 
   implicit none
 
-!ZN  an automatic adjustment of PML parameter for elongated model.
+!ZN  Automatic adjustment of PML parameter for elongated model.
 !ZN  The goal here is to improve the absorbing efficiency of PML for waves with large incident angle,
 !ZN  while keep the layer thickness of PML constant.
 !ZN  The idea behind this optimization is illustrated at the top the this file.
 
 !ZN  we start this simple automatic adjustment only when you allow to do it, that is
-!ZN  The flag PML_parameter_adjustment_for_elongated_model = .true.
+!ZN  the flag PML_PARAMETER_ADJUSTMENT = .true. for elongated models.
 !ZN  Since an bigger K only works when the mesh resolution in PML are fine enough,
-!ZN  we require an fine mesh to do PML_parameter_adjustment, that is the maximum elment size in PML
+!ZN  we require an fine mesh to do PML_PARAMETER_ADJUSTMENT, that is the maximum elment size in PML
 !ZN  should be K_MIN_PML times less than the minimum wave velocity divided by dominate frequency.
 
-!ZN  we do not proved and we can not ensure that such an adjustment is optimum, since we do the adjustment based on
+!ZN  we did not prove and we can not ensure that such an adjustment is optimum, since we do the adjustment based on
 !ZN  our own experience in numerical simulation.
-
-  logical :: PML_parameter_adjustment
 
   double precision :: f0_max
 
@@ -488,16 +485,6 @@
                       thickness_PML_x_min_left_glob,thickness_PML_x_max_left_glob
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision :: vpmax_glob_acoustic, vpmax_glob_elastic
-
-! The simple code implemented for PML_parameter_adjustment only works fine for one source.
-! If the sources are distributed widely when NSOURCES > 1, then it is hard to optimize the PML and thus we turn it off
-! if (NSOURCES == 1) then
-!   PML_parameter_adjustment = .true.
-! else
-!   PML_parameter_adjustment = .false.
-! endif
-!! DK DK that option is dangerous, turning it off for now (following tests made by Alexis Bottero)
-  PML_parameter_adjustment = .false.
 
 ! compute the maximum dominant frequency of all sources
   f0_max = maxval(f0_source(:))
@@ -644,7 +631,7 @@
   enddo
 
 ! compute the average position of all sources (not the plane wave incident)
-  if (PML_parameter_adjustment) then
+  if (PML_PARAMETER_ADJUSTMENT) then
     averagex_source = 0.0d0
     averagez_source = 0.0d0
 
@@ -695,10 +682,10 @@
   alpha_z_store = 0.d0
 
 !!!----------------------------------------------------------------------------
-!!! without PML_parameter_adjustment
+!!! without PML_PARAMETER_ADJUSTMENT
 !!!----------------------------------------------------------------------------
   ! define damping profile at the grid points
-  if (.not. PML_parameter_adjustment) then
+  if (.not. PML_PARAMETER_ADJUSTMENT) then
     do ispec = 1,nspec
       ispec_PML = spec_to_PML(ispec)
       if (ispec_is_PML(ispec)) then
@@ -829,14 +816,14 @@
     enddo
   endif
 !!!----------------------------------------------------------------------------
-!!! without PML_parameter_adjustment
+!!! without PML_PARAMETER_ADJUSTMENT
 !!!----------------------------------------------------------------------------
 
 !!!----------------------------------------------------------------------------
-!!! with PML_parameter_adjustment
+!!! with PML_PARAMETER_ADJUSTMENT
 !!!----------------------------------------------------------------------------
   ! define damping profile at the grid points
-  if (PML_parameter_adjustment) then
+  if (PML_PARAMETER_ADJUSTMENT) then
     do ispec = 1,nspec
       ispec_PML = spec_to_PML(ispec)
       if (ispec_is_PML(ispec)) then
@@ -1171,7 +1158,7 @@
     enddo
   endif
 !!!----------------------------------------------------------------------------
-!!! with PML_parameter_adjustment
+!!! with PML_PARAMETER_ADJUSTMENT
 !!!----------------------------------------------------------------------------
 
  end subroutine define_PML_coefficients
