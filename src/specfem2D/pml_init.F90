@@ -491,11 +491,13 @@
 
 ! The simple code implemented for PML_parameter_adjustment only works fine for one source.
 ! If the sources are distributed widely when NSOURCES > 1, then it is hard to optimize the PML and thus we turn it off
-  if (NSOURCES == 1) then
-    PML_parameter_adjustment = .true.
-  else
-    PML_parameter_adjustment = .false.
-  endif
+! if (NSOURCES == 1) then
+!   PML_parameter_adjustment = .true.
+! else
+!   PML_parameter_adjustment = .false.
+! endif
+!! DK DK that option is dangerous, turning it off for now (following tests made by Alexis Bottero)
+  PML_parameter_adjustment = .false.
 
 ! compute the maximum dominant frequency of all sources
   f0_max = maxval(f0_source(:))
