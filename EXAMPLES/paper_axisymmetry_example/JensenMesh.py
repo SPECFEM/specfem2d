@@ -15,7 +15,7 @@
 #### |<------>--->                                                   | M | |
 #### |   l1    l2                                                    | L | |
 #### |_______________________________________________________________|   | v
-#### |_____________________________C_P_M_L_______________________________| 
+#### |_____________________________C_P_M_L_______________________________|
 ####  <------------------------------------------------------------->
 ####                                   lx
 ####
@@ -23,7 +23,7 @@
 ####   _make sure the script tab (python command line) is open in Trelis/Cubit :
 ####      Trelis 15.0: Tools -> Options -> Layout --> Show Script Tab
 ####      Cubit 15.1: Tools -> Options -> Layout --> Cubit Layout --> Show Script Tab
-#### 
+####
 ####   _copy paste one line of this script after another in this script tab and
 ####    observe what happens.
 ####
@@ -126,7 +126,7 @@ cubit.cmd('color body 2 orange')
 # volumes, creating non-manifold geometry. Both imprinting and merging are necessary to make adjacent
 # volumes have identical meshes at their intersection.
 
-cubit.cmd('merge vol all') 
+cubit.cmd('merge vol all')
 cubit.cmd('imprint vol all')
 
 ### Meshing the surfaces :
@@ -162,7 +162,7 @@ cubit.cmd('create element extrude edge in face all in block 100 2 with x_coord >
 cubit.cmd('block 102 (face all except face in block 1 2 100 101)')
 # xz pmls :
 cubit.cmd('set duplicate block elements on')
-cubit.cmd('block 103 face in block 102 with z_coord < '+str(-lz)) 
+cubit.cmd('block 103 face in block 102 with z_coord < '+str(-lz))
 
 ### Create geometry from free mesh (necessary to merge) :
 cubit.cmd('create mesh geometry Face in block 100 feature_angle 135.0 keep')
@@ -212,15 +212,15 @@ cubit.cmd('delete face all except face in block all') # This is necessary to rem
 cubit.cmd('compress')
 
 ### Creating absorbing surfaces block (after the merging!)
-cubit.cmd('block 3 edge in curve 15 18 19') 
+cubit.cmd('block 3 edge in curve 15 18 19')
 cubit.cmd('block 3 name "abs_right"')
 cubit.cmd('block 3 element type BAR2')
-cubit.cmd('block 4 edge in curve 12 17') 
+cubit.cmd('block 4 edge in curve 12 17')
 cubit.cmd('block 4 name "abs_bottom"')
 cubit.cmd('block 4 element type BAR2')
 
 ### Creating topo surface block (after the merging!)
-cubit.cmd('block 5 edge in curve 6 14') 
+cubit.cmd('block 5 edge in curve 6 14')
 cubit.cmd('block 5 name "topo"')
 cubit.cmd('block 5 element type BAR2')
 

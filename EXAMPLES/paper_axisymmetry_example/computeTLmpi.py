@@ -24,7 +24,7 @@ import mpi4py.MPI as MPI # MPI
 
 def distributeN(rank,P,N):
     """
-    Distribute N consecutive things (rows of a matrix , blocks of a 1D array) 
+    Distribute N consecutive things (rows of a matrix , blocks of a 1D array)
     as evenly as possible over a given communicator.
     Uneven workload (differs by 1 at most) is on the initial ranks.
 
@@ -61,7 +61,7 @@ def distributeN(rank,P,N):
             if rank >= remainder:
                 rstart += remainder
                 rend   += remainder
-            else: 
+            else:
                 rstart += rank
                 rend   += rank + 1
     return rstart,rend

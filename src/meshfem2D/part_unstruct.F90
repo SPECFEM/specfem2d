@@ -49,7 +49,7 @@
 
   ! local parameters
   integer  :: i, j, k, l, m, num_edges
-  logical  ::  is_neighbour
+  logical  ::  is_neighbor
   integer  :: num_node, n
   integer  :: elem_base, elem_target
   integer  :: connectivity
@@ -71,7 +71,7 @@
     nnodes_elmnts(elmnts_l(i)) = nnodes_elmnts(elmnts_l(i)) + 1
   enddo
 
-  ! checking which elements are neighbours ('ncommonnodes' criteria)
+  ! checking which elements are neighbors ('ncommonnodes' criteria)
   do j = 0, nnodes-1
     do k = 0, nnodes_elmnts(j)-1
       do l = k+1, nnodes_elmnts(j)-1
@@ -92,29 +92,29 @@
         ! according to ncommonnodes criteria
         if (connectivity >= ncommonnodes) then
 
-          is_neighbour = .false.
+          is_neighbor = .false.
 
           do m = 0, xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED))
-            if (.not. is_neighbour) then
+            if (.not. is_neighbor) then
               if (adjncy(nodes_elmnts(k+j*MAX_NSIZE_SHARED)*MAX_NEIGHBORS+m) == nodes_elmnts(l+j*MAX_NSIZE_SHARED)) then
-                is_neighbour = .true.
+                is_neighbor = .true.
               endif
             endif
           enddo
-          if (.not. is_neighbour) then
+          if (.not. is_neighbor) then
             adjncy(nodes_elmnts(k+j*MAX_NSIZE_SHARED)*MAX_NEIGHBORS &
                    + xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED))) = nodes_elmnts(l+j*MAX_NSIZE_SHARED)
 
             xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED)) = xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED)) + 1
             if (xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED)) > MAX_NEIGHBORS) &
-              stop 'ERROR : too much neighbours per element, modify the mesh.'
+              stop 'ERROR : too much neighbors per element, modify the mesh.'
 
             adjncy(nodes_elmnts(l+j*MAX_NSIZE_SHARED)*MAX_NEIGHBORS &
                    + xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED))) = nodes_elmnts(k+j*MAX_NSIZE_SHARED)
 
             xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED)) = xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED)) + 1
             if (xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED)) > MAX_NEIGHBORS) &
-              stop 'ERROR : too much neighbours per element, modify the mesh.'
+              stop 'ERROR : too much neighbors per element, modify the mesh.'
 
           endif
         endif

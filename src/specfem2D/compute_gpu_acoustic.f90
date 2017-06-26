@@ -34,7 +34,7 @@
   subroutine compute_forces_viscoacoustic_GPU()
 
   use specfem_par, only: NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
-    my_neighbours,ninterface_acoustic,inum_interfaces_acoustic, &
+    my_neighbors,ninterface_acoustic,inum_interfaces_acoustic, &
     nelem_acoustic_surface,num_fluid_solid_edges, &
     STACEY_ABSORBING_CONDITIONS,any_elastic,any_poroelastic,SIMULATION_TYPE
 
@@ -101,7 +101,7 @@
                           buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
                           ninterface,max_nibool_interfaces_ext_mesh, &
                           nibool_interfaces_ext_mesh, &
-                          my_neighbours, &
+                          my_neighbors, &
                           request_send_recv_scalar_gpu,ninterface_acoustic,inum_interfaces_acoustic)
 
         ! adjoint simulations
@@ -114,7 +114,7 @@
                             b_buffer_send_scalar_gpu,b_buffer_recv_scalar_gpu, &
                             ninterface,max_nibool_interfaces_ext_mesh, &
                             nibool_interfaces_ext_mesh, &
-                            my_neighbours, &
+                            my_neighbors, &
                             b_request_send_recv_scalar_gpu,ninterface_acoustic,inum_interfaces_acoustic)
         endif
 

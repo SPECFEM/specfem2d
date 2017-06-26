@@ -41,7 +41,7 @@
 ! Determines the points that are on the interfaces with other partitions, to help
 ! build the communication buffers, and determines which elements are considered 'inner'
 ! (no points in common with other partitions) and 'outer' (at least one point in common
-! with neighbouring partitions).
+! with neighboring partitions).
 ! We have both acoustic and (poro)elastic buffers, for coupling between acoustic and (poro)elastic elements
 ! led us to have two sets of communications.
 !-----------------------------------------------
@@ -52,7 +52,7 @@
   use specfem_par, only: ibool, knods, ngnod, nglob, &
     ispec_is_elastic, ispec_is_poroelastic, ispec_is_acoustic, ispec_is_gravitoacoustic
 
-  use specfem_par, only: ninterface, my_nelmnts_neighbours, my_interfaces, &
+  use specfem_par, only: ninterface, my_nelmnts_neighbors, my_interfaces, &
     nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh_init
 
   use specfem_par, only: NPROC, &
@@ -114,7 +114,7 @@
     mask_ibool_elastic(:) = .false.
     mask_ibool_poroelastic(:) = .false.
 
-    do ispec_interface = 1, my_nelmnts_neighbours(iinterface)
+    do ispec_interface = 1, my_nelmnts_neighbors(iinterface)
       ! element id
       ispec = my_interfaces(1,ispec_interface,iinterface)
 

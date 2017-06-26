@@ -17,7 +17,7 @@ This is the velocity profile set:
                |          -
                |            \
      Depth (m) v
-     
+
 How to use external velocity model in specfem (03/20/2017) :
 
 To set an arbitrary velocity model you have to use the option TOMOGRAPHY_FILE that I have implemented and that you have to set like that in the Par_file when you define the velocity model:
@@ -95,7 +95,7 @@ vmin = 1500    # m.s-1
 
 # Regular sampling (the characteristic of GLL points found in between these points will be interpolated)
 nx = 20  # Number of sampling points in x direction
-nz = 200 # Number of sampling points in z direction 
+nz = 200 # Number of sampling points in z direction
 
 DENSITY = 1000  # Density of water in kg.m-3. We suppose it homogeneous
 ZMIN    = -1500 # Depth of minimum velocity in meters
@@ -106,7 +106,7 @@ vs  = np.zeros(nz) # In that case a fluid will be described : vs = 0 m/s everywh
 rho = np.zeros(nz) + DENSITY # Homogeneous density
 vp  = np.zeros(nz) # We will fill that array. !!WARNING!! if you want 2D variations you have to replace that by a 2D array.
 
-# Fill vp array : !!WARNING!! if you want 2D variations you have to add a loop over x. vp[ix,iz] = ... 
+# Fill vp array : !!WARNING!! if you want 2D variations you have to add a loop over x. vp[ix,iz] = ...
 for i,zi in enumerate(z):
     if zi > ZMIN:
         vp[i]=d1*(zi-ZMIN)+vmin

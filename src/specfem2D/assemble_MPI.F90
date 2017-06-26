@@ -52,7 +52,7 @@
 
   use constants, only: CUSTOM_REAL,NDIM
 
-  use specfem_par, only: NPROC,ninterface,my_neighbours
+  use specfem_par, only: NPROC,ninterface,my_neighbors
 
   ! acoustic/elastic/poroelastic interfaces
   use specfem_par, only: max_ibool_interfaces_size_ac,max_ibool_interfaces_size_el,max_ibool_interfaces_size_po, &
@@ -130,11 +130,11 @@
                       + 2*nibool_interfaces_poroelastic(iinterface)
 
       ! non-blocking send
-      call isend_cr(buffer_send_faces_scalar(1,iinterface), nbuffer_points, my_neighbours(iinterface),11, &
+      call isend_cr(buffer_send_faces_scalar(1,iinterface), nbuffer_points, my_neighbors(iinterface),11, &
                     msg_send_requests(iinterface))
 
       ! starts a blocking receive
-      call irecv_cr(buffer_recv_faces_scalar(1,iinterface),nbuffer_points,my_neighbours(iinterface),11, &
+      call irecv_cr(buffer_recv_faces_scalar(1,iinterface),nbuffer_points,my_neighbors(iinterface),11, &
                     msg_recv_requests(iinterface))
 
     enddo
@@ -198,14 +198,14 @@
 ! communication, but the merging of the outer and inner elements rendered
 ! overlap no longer possible, while persistent communications were removed
 ! because trace tool MPITrace does not yet instrument those.
-! Particular care should be taken concerning possible optimisations of the
+! Particular care should be taken concerning possible optimizations of the
 ! communication scheme.
 !-----------------------------------------------
   subroutine assemble_MPI_scalar_ac_blocking(array_val1)
 
   use constants, only: CUSTOM_REAL
 
-  use specfem_par, only: NPROC,nglob,my_neighbours
+  use specfem_par, only: NPROC,nglob,my_neighbors
 
   ! acoustic MPI interfaces
   use specfem_par, only: ninterface_acoustic,inum_interfaces_acoustic, &
@@ -252,14 +252,14 @@
       ! non-blocking send
       call isend_cr( buffer_send_faces_vector_ac(1,iinterface), &
                      nibool_interfaces_acoustic(num_interface), &
-                     my_neighbours(num_interface), &
+                     my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_acoustic(iinterface) )
 
       ! starts a non-blocking receive
       call irecv_cr( buffer_recv_faces_vector_ac(1,iinterface), &
                      nibool_interfaces_acoustic(num_interface), &
-                     my_neighbours(num_interface), &
+                     my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_acoustic(ninterface_acoustic+iinterface) )
     enddo
@@ -305,7 +305,7 @@
 
   use constants, only: CUSTOM_REAL
 
-  use specfem_par, only: NPROC,nglob,my_neighbours
+  use specfem_par, only: NPROC,nglob,my_neighbors
 
   ! acoustic MPI interfaces
   use specfem_par, only: ninterface_acoustic,inum_interfaces_acoustic, &
@@ -352,13 +352,13 @@
 
       call isend_cr( buffer_send_faces_vector_ac(1,iinterface), &
                      nibool_interfaces_acoustic(num_interface), &
-                     my_neighbours(num_interface), &
+                     my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_acoustic(iinterface) )
 
       call irecv_cr( buffer_recv_faces_vector_ac(1,iinterface), &
                      nibool_interfaces_acoustic(num_interface), &
-                     my_neighbours(num_interface), &
+                     my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_acoustic(ninterface_acoustic+iinterface) )
     enddo
@@ -443,7 +443,7 @@
 ! communication, but the merging of the outer and inner elements rendered
 ! overlap no longer possible, while persistent communications were removed
 ! because trace tool MPITrace does not yet instrument those.
-! Particular care should be taken concerning possible optimisations of the
+! Particular care should be taken concerning possible optimizations of the
 ! communication scheme.
 !-----------------------------------------------
 ! note: although it uses asynchronuous isend/irecv, the routine is waiting to have all buffers transfered.
@@ -462,7 +462,7 @@
     request_send_recv_elastic, &
     buffer_send_faces_vector_el, &
     buffer_recv_faces_vector_el, &
-    my_neighbours
+    my_neighbors
 
   implicit none
 
@@ -495,10 +495,10 @@
       num_interface = inum_interfaces_elastic(iinterface)
 
       call isend_cr(buffer_send_faces_vector_el(1,iinterface),NDIM * nibool_interfaces_elastic(num_interface), &
-                      my_neighbours(num_interface),12,request_send_recv_elastic(iinterface))
+                      my_neighbors(num_interface),12,request_send_recv_elastic(iinterface))
 
       call irecv_cr(buffer_recv_faces_vector_el(1,iinterface),NDIM * nibool_interfaces_elastic(num_interface), &
-                    my_neighbours(num_interface), 12, request_send_recv_elastic(ninterface_elastic+iinterface))
+                    my_neighbors(num_interface), 12, request_send_recv_elastic(ninterface_elastic+iinterface))
 
     enddo
 
@@ -545,7 +545,7 @@
     request_send_recv_elastic, &
     buffer_send_faces_vector_el, &
     buffer_recv_faces_vector_el, &
-    my_neighbours
+    my_neighbors
 
   implicit none
 
@@ -578,13 +578,13 @@
 
       call isend_cr( buffer_send_faces_vector_el(1,iinterface), &
                      NDIM * nibool_interfaces_elastic(num_interface), &
-                     my_neighbours(num_interface), &
+                     my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_elastic(iinterface) )
 
       call irecv_cr( buffer_recv_faces_vector_el(1,iinterface), &
                      NDIM * nibool_interfaces_elastic(num_interface), &
-                     my_neighbours(num_interface), &
+                     my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_elastic(ninterface_elastic+iinterface) )
     enddo
@@ -668,7 +668,7 @@
 ! communication, but the merging of the outer and inner elements rendered
 ! overlap no longer possible, while persistent communications were removed
 ! because trace tool MPITrace does not yet instrument those.
-! Particular care should be taken concerning possible optimisations of the
+! Particular care should be taken concerning possible optimizations of the
 ! communication scheme.
 !-----------------------------------------------
   subroutine assemble_MPI_vector_po_blocking(array_val3,array_val4)
@@ -684,7 +684,7 @@
     request_send_recv_poro, &
     buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
     buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
-    my_neighbours
+    my_neighbors
 
   implicit none
 
@@ -722,16 +722,16 @@
       num_interface = inum_interfaces_poroelastic(iinterface)
 
       call isend_cr(buffer_send_faces_vector_pos(1,iinterface),NDIM*nibool_interfaces_poroelastic(num_interface), &
-                    my_neighbours(num_interface),12,request_send_recv_poro(iinterface))
+                    my_neighbors(num_interface),12,request_send_recv_poro(iinterface))
 
       call irecv_cr(buffer_recv_faces_vector_pos(1,iinterface),NDIM*nibool_interfaces_poroelastic(num_interface), &
-                       my_neighbours(num_interface),12,request_send_recv_poro(ninterface_poroelastic+iinterface))
+                       my_neighbors(num_interface),12,request_send_recv_poro(ninterface_poroelastic+iinterface))
 
       call isend_cr(buffer_send_faces_vector_pow(1,iinterface),NDIM*nibool_interfaces_poroelastic(num_interface), &
-                    my_neighbours(num_interface),12,request_send_recv_poro(ninterface_poroelastic*2+iinterface))
+                    my_neighbors(num_interface),12,request_send_recv_poro(ninterface_poroelastic*2+iinterface))
 
       call irecv_cr(buffer_recv_faces_vector_pow(1,iinterface),NDIM*nibool_interfaces_poroelastic(num_interface), &
-                       my_neighbours(num_interface),12,request_send_recv_poro(ninterface_poroelastic*3+iinterface))
+                       my_neighbors(num_interface),12,request_send_recv_poro(ninterface_poroelastic*3+iinterface))
 
     enddo
 
@@ -784,7 +784,7 @@
     request_send_recv_poro, &
     buffer_send_faces_vector_pos,buffer_send_faces_vector_pow, &
     buffer_recv_faces_vector_pos,buffer_recv_faces_vector_pow, &
-    my_neighbours
+    my_neighbors
 
   implicit none
 
@@ -824,27 +824,27 @@
       ! solid
       call isend_cr( buffer_send_faces_vector_pos(1,iinterface), &
                      NDIM * nibool_interfaces_poroelastic(num_interface), &
-                     my_neighbours(num_interface), &
+                     my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_poro(iinterface) )
 
       call irecv_cr( buffer_recv_faces_vector_pos(1,iinterface), &
                      NDIM * nibool_interfaces_poroelastic(num_interface), &
-                     my_neighbours(num_interface), &
+                     my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_poro(ninterface_poroelastic+iinterface) )
 
       ! fluid
       call isend_cr( buffer_send_faces_vector_pow(1,iinterface), &
                      NDIM * nibool_interfaces_poroelastic(num_interface), &
-                     my_neighbours(num_interface), &
+                     my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_poro(ninterface_poroelastic*2+iinterface) )
 
 
       call irecv_cr( buffer_recv_faces_vector_pow(1,iinterface), &
                      NDIM * nibool_interfaces_poroelastic(num_interface), &
-                     my_neighbours(num_interface), &
+                     my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_poro(ninterface_poroelastic*3+iinterface) )
 
@@ -931,7 +931,7 @@
                                            buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
                                            num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
                                            nibool_interfaces_ext_mesh, &
-                                           my_neighbours_ext_mesh, &
+                                           my_neighbors_ext_mesh, &
                                            request_send_recv_gpu,ninterface_acoustic,inum_interfaces_acoustic)
 
 ! non-blocking MPI send
@@ -949,7 +949,7 @@
   real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: &
        buffer_send_scalar_gpu,buffer_recv_scalar_gpu
 
-  integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh,my_neighbours_ext_mesh
+  integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh,my_neighbors_ext_mesh
   integer, dimension(2*num_interfaces_ext_mesh) :: request_send_recv_gpu
 integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acoustic
   ! local parameters
@@ -970,14 +970,14 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
       call isend_cr(buffer_send_scalar_gpu(1,num_interface), &
                     nibool_interfaces_ext_mesh(num_interface), &
-                    my_neighbours_ext_mesh(num_interface), &
+                    my_neighbors_ext_mesh(num_interface), &
                     itag, &
                     request_send_recv_gpu(num_interface) )
 
       ! receive request
       call irecv_cr(buffer_recv_scalar_gpu(1,num_interface), &
                     nibool_interfaces_ext_mesh(num_interface), &
-                    my_neighbours_ext_mesh(num_interface), &
+                    my_neighbors_ext_mesh(num_interface), &
                     itag, &
                     request_send_recv_gpu(num_interface+num_interfaces_ext_mesh) )
     enddo
@@ -1028,7 +1028,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
       call wait_req(request_send_recv_gpu(num_interface + num_interfaces_ext_mesh))
     enddo
 
-    ! adding contributions of neighbours
+    ! adding contributions of neighbors
     call transfer_asmbl_pot_to_device(Mesh_pointer,buffer_recv_scalar_gpu,FORWARD_OR_ADJOINT)
 
     ! wait for communications completion (send)
@@ -1052,7 +1052,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
                                           buffer_send_vector_gpu,buffer_recv_vector_gpu, &
                                           num_interfaces_ext_mesh,max_nibool_interfaces_ext_mesh, &
                                           nibool_interfaces_ext_mesh, &
-                                          my_neighbours_ext_mesh, &
+                                          my_neighbors_ext_mesh, &
                                           request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic)
 
 ! sends data
@@ -1069,7 +1069,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
   real(kind=CUSTOM_REAL), dimension(NDIM,max_nibool_interfaces_ext_mesh,num_interfaces_ext_mesh) :: &
        buffer_send_vector_gpu,buffer_recv_vector_gpu
 
-  integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh,my_neighbours_ext_mesh
+  integer, dimension(num_interfaces_ext_mesh) :: nibool_interfaces_ext_mesh,my_neighbors_ext_mesh
   integer, dimension(2*num_interfaces_ext_mesh) :: request_send_recv_vector_gpu
   integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_elastic
   ! local parameters
@@ -1087,13 +1087,13 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
 
       call isend_cr(buffer_send_vector_gpu(1,1,num_interface), &
                      NDIM*nibool_interfaces_ext_mesh(num_interface), &
-                     my_neighbours_ext_mesh(num_interface), &
+                     my_neighbors_ext_mesh(num_interface), &
                      itag, &
                      request_send_recv_vector_gpu(num_interface) )
 
       call irecv_cr(buffer_recv_vector_gpu(1,1,num_interface), &
                      NDIM*nibool_interfaces_ext_mesh(num_interface), &
-                     my_neighbours_ext_mesh(num_interface), &
+                     my_neighbors_ext_mesh(num_interface), &
                      itag, &
                      request_send_recv_vector_gpu(num_interface + num_interfaces_ext_mesh ) )
     enddo
@@ -1150,7 +1150,7 @@ integer, dimension(num_interfaces_ext_mesh), intent(in)  :: inum_interfaces_acou
       call wait_req(request_send_recv_vector_gpu(num_interface + num_interfaces_ext_mesh))
     enddo
 
-    ! adding contributions of neighbours
+    ! adding contributions of neighbors
     call transfer_asmbl_accel_to_device(Mesh_pointer, &
                                         buffer_recv_vector_gpu, &
                                         max_nibool_interfaces_ext_mesh, &

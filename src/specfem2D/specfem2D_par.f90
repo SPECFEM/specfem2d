@@ -638,8 +638,8 @@ module specfem_par
   ! MPI interfaces
   integer :: ninterface
   integer :: max_interface_size
-  integer, dimension(:), allocatable  :: my_neighbours
-  integer, dimension(:), allocatable  :: my_nelmnts_neighbours
+  integer, dimension(:), allocatable  :: my_neighbors
+  integer, dimension(:), allocatable  :: my_nelmnts_neighbors
   integer, dimension(:,:,:), allocatable  :: my_interfaces
 
   integer, dimension(:), allocatable :: nibool_interfaces_ext_mesh

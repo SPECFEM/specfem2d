@@ -38,7 +38,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NDIM
 
   use specfem_par, only: myrank,NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
-    my_neighbours,ninterface_elastic,inum_interfaces_elastic,ibool_interfaces_ext_mesh, &
+    my_neighbors,ninterface_elastic,inum_interfaces_elastic,ibool_interfaces_ext_mesh, &
     num_fluid_solid_edges,nspec_bottom,nspec_left,nspec_right,nspec_top, &
     STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS,any_poroelastic,any_acoustic,SIMULATION_TYPE
 
@@ -86,7 +86,7 @@
                     buffer_send_vector_gpu,buffer_recv_vector_gpu, &
                     ninterface,max_nibool_interfaces_ext_mesh, &
                     nibool_interfaces_ext_mesh, &
-                    my_neighbours, &
+                    my_neighbors, &
                     request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic)
 
         ! transfers MPI buffers onto GPU
@@ -142,7 +142,7 @@
                         b_buffer_send_vector_gpu,b_buffer_recv_vector_gpu, &
                         ninterface,max_nibool_interfaces_ext_mesh, &
                         nibool_interfaces_ext_mesh, &
-                        my_neighbours, &
+                        my_neighbors, &
                         b_request_send_recv_vector_gpu,ninterface_elastic,inum_interfaces_elastic)
         endif !adjoint
 

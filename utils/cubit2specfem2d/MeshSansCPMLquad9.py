@@ -6,14 +6,14 @@ import cubit
 # Author: Ting Yu, CNRS and EDF, France, December 2015
 
 # From Ting Yu: type d'elements : QUAD9 pour les elements surface et BAR3 pour les bords (bottom, right, top, left)
-#  (si j'ai bien compris ton dernier mail, on a besoin seulement les deux bouts du edge pour 
-#  les conditions aux limites des bords (absorbants, libres). Je suis d'accord, mais pour que tous les elements 
+#  (si j'ai bien compris ton dernier mail, on a besoin seulement les deux bouts du edge pour
+#  les conditions aux limites des bords (absorbants, libres). Je suis d'accord, mais pour que tous les elements
 #  de surface dans le maillage ont 9 noeuds, je prefere changer le type des bords a BAR3, qui donne la
 #  simplification de modifier le script.)
 
-lx=0.08  
-lz=0.13  
-rayon=0.006 
+lx=0.08
+lz=0.13
+rayon=0.006
 
 elementSize = 0.001  # matrice
 elementSize2 = 0.001  # cercle

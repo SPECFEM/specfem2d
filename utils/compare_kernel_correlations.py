@@ -53,8 +53,8 @@ def plot_correlations(syn_file,ref_file):
         # specfem file: proc******_rhop_alpha_beta_kernel.dat
         fname = os.path.basename(syn_file)
         names = str.split(fname,"_")
-        
-        # trace 
+
+        # trace
         kernel = names[i]
 
         # numpy: reads in file data
@@ -126,7 +126,7 @@ def plot_correlations(syn_file,ref_file):
     else:
         print("              no poor correlations found")
     print ""
-    
+
     print("L2-error    : values 0.0 perfect, > %.2f poor match" % TOL_ERR)
     if err_max > TOL_ERR:
         print("              poor matching seismograms found")

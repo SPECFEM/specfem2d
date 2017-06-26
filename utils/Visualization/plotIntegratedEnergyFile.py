@@ -62,13 +62,13 @@ class ParFile:
                         self.dt = float(self.dt)
                     else:
                         raise ValueError('Incorrect value of DT read')
-                        
+
 def find_index(x,z,xil,zil):
     """Return the indices of the closest point in 2D array"""
     idxX=np.searchsorted(xil,x)
     idxZ=np.searchsorted(zil,z)
     return idxX,idxZ
-                        
+
 def interpolateValue(array,xil,zil,x,z):
     """Return the value of the 2D field described by array,xil and zil at (x,z)"""
     idxX,idxZ = find_index(x,z,xil,zil)
@@ -443,7 +443,7 @@ if args.profiles:
 
     if not args.noplot and nxProfiles > 1:
         plt.figure(3)
-  
+
     xVector=np.arange(xmax/(nxProfiles + 1),xmax,xmax/(nxProfiles + 1))
     colors = [cmap2(i) for i in np.linspace(0, 1, len(xVector))]
     z0=zminProfiles
@@ -466,7 +466,7 @@ if args.profiles:
         xLine, zLine = np.linspace(idxX0,idxX1, num), np.linspace(idxZ0, idxZ1, num)
         #print("xx:",xmin,"xil:",xil,"zil:",zil)
         zi = intEnergyi[zLine.astype(np.int),xLine.astype(np.int)] # If you have got an error here try to choose a lower z1 or a bigger z0! 2
-        
+
 
         # Extract the values along the line, using cubic interpolation
         if type(intEnergyi) == np.ndarray:
@@ -523,7 +523,7 @@ if args.saveOneProfile:
     x1profile = float(args.saveOneProfile[1])
     z0profile = float(args.saveOneProfile[2])
     z1profile = float(args.saveOneProfile[3])
-    
+
     x0,z0 = x0profile,z0profile
     x1,z1 = x1profile,z1profile
     if z0 == z1:

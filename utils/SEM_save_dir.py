@@ -52,7 +52,7 @@ def SemSave(rep):
             shutil.copyfile(op.join(SEM,'DATA',fic),op.join(nvdir,fic))
     else:
         print 'Unable to save, directory /'+rep+' already exists. Change name !'
-        
+
 def GetValuePar(VAR,lignes):
     """ Return the values of a parameter present in the lines of a file"""
     for ligne in lignes:
@@ -62,6 +62,6 @@ def GetValuePar(VAR,lignes):
                 val=lsplit[2]
                 break
     return val
-    
+
 if __name__=='__main__':
     SemSave(sys.argv[1])

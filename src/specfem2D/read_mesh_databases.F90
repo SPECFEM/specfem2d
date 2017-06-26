@@ -628,8 +628,8 @@
 
   ! allocates arrays for mpi/partition interfaces
   if (ninterface > 0) then
-    allocate(my_neighbours(ninterface))
-    allocate(my_nelmnts_neighbours(ninterface))
+    allocate(my_neighbors(ninterface))
+    allocate(my_nelmnts_neighbors(ninterface))
     allocate(my_interfaces(4,max_interface_size,ninterface))
 
     allocate(ibool_interfaces_acoustic(NGLLX*max_interface_size,ninterface))
@@ -646,8 +646,8 @@
     allocate(inum_interfaces_elastic(ninterface))
     allocate(inum_interfaces_poroelastic(ninterface))
   else
-    allocate(my_neighbours(1))
-    allocate(my_nelmnts_neighbours(1))
+    allocate(my_neighbors(1))
+    allocate(my_nelmnts_neighbors(1))
     allocate(my_interfaces(1,1,1))
 
     allocate(ibool_interfaces_acoustic(1,1))
@@ -666,8 +666,8 @@
   endif
 
   ! initializes
-  my_neighbours(:) = -1
-  my_nelmnts_neighbours(:) = 0
+  my_neighbors(:) = -1
+  my_nelmnts_neighbors(:) = 0
   my_interfaces(:,:,:) = -1
 
   ! note: for serial simulations, ninterface will be zero.
@@ -679,10 +679,10 @@
     ! where
     !     process_interface_id = rank of (neighbor) process to share MPI interface with
     !     number_of_elements_on_interface = number of interface elements
-    read(IIN) my_neighbours(num_interface), my_nelmnts_neighbours(num_interface)
+    read(IIN) my_neighbors(num_interface), my_nelmnts_neighbors(num_interface)
 
     ! loops over interface elements
-    do ie = 1, my_nelmnts_neighbours(num_interface)
+    do ie = 1, my_nelmnts_neighbors(num_interface)
       ! format: #(1)spectral_element_id  #(2)interface_type  #(3)node_id1  #(4)node_id2
       !
       ! interface types:

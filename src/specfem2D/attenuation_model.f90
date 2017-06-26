@@ -304,7 +304,7 @@
 
 ! Suivant les compilateurs et les options de compilation utilisees,
 ! il peut y avoir des differences au 4eme chiffre significatif. C'est sans consequences sur la precision du calcul :
-! l'erreur est de 0.015 % avec optimisation non lineaire, a comparer a 1.47 % avec Emmerich and Korn (1987).
+! l'erreur est de 0.015 % avec optimization non lineaire, a comparer a 1.47 % avec Emmerich and Korn (1987).
 ! Si je relance le calcul en initialisant avec le resultat precedent, ce chiffre varie a nouveau tres legerement.
 
 !-------------------------------------------------------------------------
@@ -354,7 +354,7 @@
 
 ! From Emilie Blanc, April 2014:
 
-! le programme SolvOpt d'optimisation non-lineaire
+! le programme SolvOpt d'optimization non-lineaire
 ! avec contrainte. Ce programme prend quatre fonctions en entree :
 
 ! - fun() est la fonction a minimiser
@@ -370,7 +370,7 @@
 
 ! J'ai utilise ce code pour la poroelasticite haute-frequence, et aussi en
 ! viscoelasticite fractionnaire (modele d'Andrade, avec Bruno Lombard et
-! Cedric Bellis). Nous pouvons interagir sur l'algorithme d'optimisation
+! Cedric Bellis). Nous pouvons interagir sur l'algorithme d'optimization
 ! pour votre modele visco, et etudier l'effet des coefficients ainsi obtenus.
 
 !---------------------------------------------------
@@ -380,7 +380,7 @@
 ! Les entrees du programme principal sont le nombre de variables
 ! diffusives, le facteur de qualite voulu Qref et la frequence centrale f0.
 
-! Cependant, pour l'optimisation non-lineaire, j'ai mis theta_max=100*f0
+! Cependant, pour l'optimization non-lineaire, j'ai mis theta_max=100*f0
 ! et non pas theta_max=2*pi*100*f0. En effet, dans le programme, on
 ! travaille sur les frequences, et non pas sur les frequences angulaires.
 ! Cela dit, dans les deux cas j'obtiens les memes coefficients...
@@ -745,7 +745,7 @@
 
   end subroutine classical_linear_least_squares
 
-! Calcul des coefficients par optimisation non-lineaire avec contraintes
+! Calcul des coefficients par optimization non-lineaire avec contraintes
 
   subroutine solvopt(n,x,f,fun,flg,grad,options,flfc,func,flgc,gradc,Qref,Kopt,theta_min,theta_max,f_min,f_max)
 !-----------------------------------------------------------------------------

@@ -36,13 +36,13 @@ from cubit2specfem2d import mtools,block_tools,mesh_tools,mesh
 
 # All the distances are given in meters. See the header for a draft of the model
 #f0 = 250e3
-#fmax = f0 * 2.5 # maximal frequency used in specfem to calculte the resolution (true for a Ricker source) fmax = f0*2,5 
-#lambda_min = 1036/fmax # smaller wavelength due to the small value of shear wave speed in epoxy ... thus normally the model is enough sampled 
+#fmax = f0 * 2.5 # maximal frequency used in specfem to calculte the resolution (true for a Ricker source) fmax = f0*2,5
+#lambda_min = 1036/fmax # smaller wavelength due to the small value of shear wave speed in epoxy ... thus normally the model is enough sampled
 e#lementSize = lambda_min # Average spectral elements size
 elementSize = 1.326e-3
 lx = 370.0e-3 		# TODO For the moment, I use the same dimension as the transmision through the homogeneous plate
-lzUp = 3.0e-3 		# the value lx is used in runSpecFem.py, more precisely in the script CreateReceivers to generate a receiver line over the whole domain 
-lzGlue = 0.25e-3 	# it will be a good thing to give these geometric parameters as argument into the make_mesh.sh script !!!! 
+lzUp = 3.0e-3 		# the value lx is used in runSpecFem.py, more precisely in the script CreateReceivers to generate a receiver line over the whole domain
+lzGlue = 0.25e-3 	# it will be a good thing to give these geometric parameters as argument into the make_mesh.sh script !!!!
 lzDown = 3.0e-3
 lwUp  =  110.0e-3   # same dimension as the transmision through the homogeneous plate
 lwDown = 280.0e-3   # same dimension as the transmision through the homogeneous plate
@@ -262,19 +262,19 @@ cubit.cmd('block 1005 attribute count 1')
 cubit.cmd('block 1005 attribute index 1 4')
 cubit.cmd('block 1005 element type QUAD4')
 
-cubit.cmd('block 10 edge in curve 45 34 19 21 23 32 49') 
+cubit.cmd('block 10 edge in curve 45 34 19 21 23 32 49')
 cubit.cmd('block 10 name "abs_right"')
 cubit.cmd('block 10 element type BAR2')
 
-cubit.cmd('block 11 edge in curve 52 44 50') 
+cubit.cmd('block 11 edge in curve 52 44 50')
 cubit.cmd('block 11 name "abs_bottom"')
 cubit.cmd('block 11 element type BAR2')
 
-cubit.cmd('block 12 edge in curve 47 38 26 28 30 36 51') 
+cubit.cmd('block 12 edge in curve 47 38 26 28 30 36 51')
 cubit.cmd('block 12 name "abs_left"')
 cubit.cmd('block 12 element type BAR2')
 
-cubit.cmd('block 13 edge in curve 48 41 46') 
+cubit.cmd('block 13 edge in curve 48 41 46')
 cubit.cmd('block 13 name "abs_top"')
 cubit.cmd('block 13 element type BAR2')
 

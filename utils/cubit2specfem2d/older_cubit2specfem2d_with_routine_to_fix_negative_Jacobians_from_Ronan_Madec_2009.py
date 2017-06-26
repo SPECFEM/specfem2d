@@ -12,7 +12,7 @@ from scipy import *
 
 
 def readAbaqus(file):
-    if  os.path.exists(file) : 
+    if  os.path.exists(file) :
         infile=open(file,'r')
 	lines=infile.readlines()
 	line=lines[0].split(',')
@@ -43,7 +43,7 @@ def readAbaqus(file):
 		i+=1
                 if i!=len(lines):
                     line=lines[i].split(',')
-            
+
 	infile.close()
 	return [coords,elem]
 
@@ -206,7 +206,7 @@ def writeAbsorbing(coords,elem,abs,outfile):
     file.close()
     return
 
-#check if jacobian of elements are 
+#check if jacobian of elements are
 def check_jacobian(coords,elem):
     jacobian=[]
     positif=0
@@ -228,7 +228,7 @@ def check_jacobian(coords,elem):
                 zxi += dershape[0]*z
                 xgamma += dershape[1]*x
                 zgamma += dershape[1]*z
-                
+
             if xxi*zgamma - xgamma*zxi == 0:
                 print 'error jacobian null on element :', i, 'point :', k
                 sys.exit(-1)
@@ -251,7 +251,7 @@ def check_jacobian(coords,elem):
             negatif+=1
         else:
             print 'pb with jacobian in elem :', i
-        
+
     print 'on the mesh, there is '+str(positif)+' positive jacobian elements (unchanged)'
     print '                  and '+str(negatif)+' negative jacobian elements (re-ordered)'
 
@@ -262,7 +262,7 @@ def der_shape_function(xi,gamma,inode):
     sp=xi+1.
     tm=gamma-1.
     tp=gamma+1.
-    
+
     if inode==0:
         dershape=[.25*tm,.25*sm]
     elif inode==1:
@@ -275,7 +275,7 @@ def der_shape_function(xi,gamma,inode):
         print 'unknown inode for shape function (0,1,2 or 3):', inode
     return dershape
 
-#check if jacobian of elements are 
+#check if jacobian of elements are
 def find_first(coords,elem):
     ifirst=[]
     imin=-1
@@ -303,7 +303,7 @@ def find_first(coords,elem):
 
 if len(sys.argv)<2:
     print 'usage: python Cubit2Specfem2D.py input_file'
-    print '    to change absorbing conditions and precise label of the fluid' 
+    print '    to change absorbing conditions and precise label of the fluid'
     print '    you have to change vector abs and vector label explicitely given'
     print '    in the script (search "Parameters" in script to find it)'
     print ''
@@ -342,7 +342,7 @@ absorbing_surface_meshfem2D_file=name_root_file+'_absorbing_surface_file'
 #    coords=[...,[i,[x(i),y(i),z(i)]],...]
 #    elem=[...,[i,label,[node(1)+1,node(2)+1,node(3)+1,node(4)+1]],...]
 
-#jacobian : 
+#jacobian :
 #       if it is 1, the element nodes will be written in the same order as Cubit
 #       if it is -1, the element nodes will be written in the oposite order as Cubit
 jacobian_direction=check_jacobian(coords,elem)
@@ -350,16 +350,16 @@ jacobian_direction=check_jacobian(coords,elem)
 #Find good first element (sum of coordinates the smallest)
 ifirst=find_first(coords,elem)
 
-print 'creating mesh file...' 
+print 'creating mesh file...'
 writeMesh(elem,jacobian_direction,mesh_meshfem2D_file,ifirst)
 
-print 'creating nodes file...' 
+print 'creating nodes file...'
 writeNodes(coords,col,nodes_meshfem2D_file)
 
-print 'creating materials file...' 
+print 'creating materials file...'
 writeMaterials(elem,materials_meshfem2D_file)
 
-print 'creating free surface file... (can be long)' 
+print 'creating free surface file... (can be long)'
 writeFree(coords,elem,abs,free_surface_meshfem2D_file)
 
 print 'creating absorbing condition file... (can be long)'

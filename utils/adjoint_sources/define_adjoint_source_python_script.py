@@ -6,34 +6,34 @@ import scipy.interpolate as interp
 import scipy.integrate as integr
 import scipy.signal as sgnl
 import matplotlib.pyplot as plt
-import ownModules.proc.filter as filt 
+import ownModules.proc.filter as filt
 
 def calAdjCCTTFromTrace(nt,dt,tStartIn,tEndIn,dataIn, synthIn):
-    """ calculate the cross correlation traveltime adjoint sources for one seismogram 
+    """ calculate the cross correlation traveltime adjoint sources for one seismogram
     IN:
-        nt          : number of timesteps in each seismogram 
-        dt          : timestep of seismograms 
+        nt          : number of timesteps in each seismogram
+        dt          : timestep of seismograms
         tStartIn      : float starting time for trace
         tEndIn        : float end time for trace
     OUT:
         fBar        : array containing the adjoint seismogram for the trace
-        t           : ndarray containing the time steps 
+        t           : ndarray containing the time steps
     """
     isCalculateWeights = False
-    if isCalculateWeights: 
+    if isCalculateWeights:
         dSeism = np.zeros(nt)
         weight = 0
 
     # -- time vector
     t = np.ogrid[0:(nt-1)*dt:nt*1j]
-    # -- the norm 
+    # -- the norm
     norm = 0
-        
-    # -- numpy arrays initialisation 
-    velSynth = np.zeros(nt)  
-    accSynth = np.zeros(nt)  
-    timeWind = np.zeros(nt)  
-    fBar = np.zeros(nt)  
+
+    # -- numpy arrays initialisation
+    velSynth = np.zeros(nt)
+    accSynth = np.zeros(nt)
+    timeWind = np.zeros(nt)
+    fBar = np.zeros(nt)
 
     # -- calculate time time-window
     tStart = tStartIn
@@ -50,24 +50,24 @@ def calAdjCCTTFromTrace(nt,dt,tStartIn,tEndIn,dataIn, synthIn):
     synth = synthIn
     interpTrc = interp.InterpolatedUnivariateSpline(t,synth)
     velSynth = interpTrc(t,1)
-    accSynth = interpTrc(t,2) 
+    accSynth = interpTrc(t,2)
 
     integrArgument = timeWind*synth*accSynth
     # -- calculating the norm
     norm = integr.simps(integrArgument,dx=dt,axis=-1,even='last')
-    
+
     # -- divide every trace (row in matrices) by their norm (row in vector norm)
     fBar = timeWind*velSynth / norm
-    if  isCalculateWeights: 
+    if  isCalculateWeights:
         # -- read in the data seismograms
         data = dataIn
         # -- calculate the difference between data and synthetics (amplitude) per trace
-        dSeism = data - synth                     
+        dSeism = data - synth
         # -- calculate the weight per trace
         integrArgument = timeWind*velSynth*dSeism
         weight = integr.simps(integrArgument,dx=dt,axis=-1,even='last')
         print "weight", weight/norm
         # -- multiply weight with every adj trace
-        fBar = fBar*weight   
+        fBar = fBar*weight
         print weight
     return [fBar,t]

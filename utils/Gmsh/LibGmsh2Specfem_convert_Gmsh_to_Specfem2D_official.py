@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  Python code to link gmsh with specfem 
+#  Python code to link gmsh with specfem
 #  New version with identification of the zone
-#  and handling of PML 
+#  and handling of PML
 #
-#@author: Cristini Paul, 
+#@author: Cristini Paul,
 #  Laboratoire de Mecanique et d'Acoustique, CNRS, Marseille, France
 #
 # September 2012, 6rd
@@ -46,15 +46,15 @@ def OuvreGmsh(Dir,Nom,Bords):
     print '-'*60
     #
     # Open the file and get the lines
-    # 
+    #
     f = file(Dir+fic,'rU')
     lignes= f.readlines()
     f.close()
     # Looking for positions
     #
     for ii in range(len(lignes)):
-        if lignes[ii]=='$Nodes\n': PosNodes=ii 
-        if lignes[ii]=='$PhysicalNames\n': PosPhys=ii 
+        if lignes[ii]=='$Nodes\n': PosNodes=ii
+        if lignes[ii]=='$PhysicalNames\n': PosPhys=ii
         if lignes[ii]=='$Elements\n':
             PosElem=ii
             break
@@ -90,12 +90,12 @@ def OuvreGmsh(Dir,Nom,Bords):
     PhysCar=zeros((NbPhysNames,), dtype=dt)
     Med=zeros(NbPhysNames+1)   # Les milieux: domaines dont le nom commence par M
     #--------------------------------------------------------------------------
-    # Initialisation des zones (celles qui ne seront pas affectees auront 
+    # Initialisation des zones (celles qui ne seront pas affectees auront
     #  une valeur nulle)
     PML_right, PML_right_bottom, PML_right_top = 0, 0, 0
     PML_left, PML_left_bottom, PML_left_top = 0, 0, 0
     PML_top, PML_bottom = 0, 0
-    
+
     for Ip in range(NbPhysNames):
         Dim = int(string.split(lignes[PosPhys+2+Ip])[0])
         Zon = int(string.split(lignes[PosPhys+2+Ip])[1])
@@ -135,7 +135,7 @@ def OuvreGmsh(Dir,Nom,Bords):
     print '-'*60
     print 'Absorbing boundaries : ', Bord_abso
     print 'Free boundaries : ', Bord_free
-    print '-'*60    
+    print '-'*60
     print 'Right boundaries : ', Bord_right
     print 'Left boundaries : ', Bord_left
     print 'Top boundaries : ', Bord_top
@@ -160,7 +160,7 @@ def OuvreGmsh(Dir,Nom,Bords):
     # Elements
     DecElem=12+NbNodes
     NbElements=int(string.split(lignes[PosElem+1])[0])
-    print 'Number of elements: ', NbElements 
+    print 'Number of elements: ', NbElements
     #--------------------------------------------------------------------------
     #      Initialization
     #
@@ -188,7 +188,7 @@ def OuvreGmsh(Dir,Nom,Bords):
     N1DBordLeft, N1DBordRight, N1DBordTop, N1DBordBottom = 0, 0, 0, 0
     #--------------------------------------------------------------------------
     # Loop over all elements
-    # 
+    #
     for Ninc in range(NbElements):
         Pos     = PosElem+Ninc+2
         Ispec   = int(string.split(lignes[Pos])[0])
@@ -197,7 +197,7 @@ def OuvreGmsh(Dir,Nom,Bords):
         #
         if TypElem==LinElem: # Elements 1D (lines)
             Elements1D[N1D] = [int(val) for val in \
-                               (string.split(lignes[Pos])[5:])] 
+                               (string.split(lignes[Pos])[5:])]
             #  Bottom
             if ZonP==Bord_bottom:
                 Elements1DBordBottom[N1DBordBottom] = Elements1D[N1D]
@@ -215,7 +215,7 @@ def OuvreGmsh(Dir,Nom,Bords):
                 Elements1DBordRight[N1DBordRight] = Elements1D[N1D]
                 N1DBordRight+=1
             N1D+=1
-        
+
         #----------------------------------------------------------------------
 
 #
@@ -303,12 +303,12 @@ def OuvreGmsh(Dir,Nom,Bords):
     print '# Corners  '
     #--------------------------------------------------------------------------
     #  Detection of elements in contact with sides
-    
+
     for Ct2D in xrange(N2D):
         #
         jj=set(Elements[Ct2D,:])  # take the nodes of the element
         ct_corner = 0
-        
+
         # Bottom
         if not set.isdisjoint(jj, NodesBordBottom):
             rr = set.intersection(jj, NodesBordBottom)
@@ -323,14 +323,14 @@ def OuvreGmsh(Dir,Nom,Bords):
                     Elements2DBordFree[ctf,:] = elf
                     ctf+=1
                 ct_corner +=1
-            
+
         # Right
         if not set.isdisjoint(jj, NodesBordRight):
             rr = set.intersection(jj, NodesBordRight)
             lrr = len(rr)
             if lrr > 1:
                 ela = concatenate(([Ct2D+1], [lrr], list(rr), [2]))
-                elf = concatenate(([Ct2D+1], [lrr], list(rr)))        
+                elf = concatenate(([Ct2D+1], [lrr], list(rr)))
                 if Bords['Right']=='Abso':
                     Elements2DBordAbso[cta,:] = ela
                     cta+=1
@@ -338,7 +338,7 @@ def OuvreGmsh(Dir,Nom,Bords):
                     Elements2DBordFree[ctf,:] = elf
                     ctf+=1
                 ct_corner +=1
-            
+
         # Top
         if not set.isdisjoint(jj, NodesBordTop):
             rr = set.intersection(jj, NodesBordTop)
@@ -353,7 +353,7 @@ def OuvreGmsh(Dir,Nom,Bords):
                     Elements2DBordFree[ctf,:] = elf
                     ctf+=1
                 ct_corner +=1
-            
+
         # Left
         if not set.isdisjoint(jj, NodesBordLeft):
             rr = set.intersection(jj, NodesBordLeft)
@@ -368,14 +368,14 @@ def OuvreGmsh(Dir,Nom,Bords):
                     Elements2DBordFree[ctf,:] = elf
                     ctf+=1
                 ct_corner +=1
-            
+
         if ct_corner > 1: print 'Corner', ct_corner, Ct2D+1
-    
+
     #
     print '-'*60
     print 'Number of elements in contact with a free surface', ctf
     print 'Number of elements in contact with an absorbing surface', cta
-    print '#'*20+' END OF PROCESSING '+'#'*20    
+    print '#'*20+' END OF PROCESSING '+'#'*20
     # remove unnecessary zeros created at initialization
     #----------------------------------------------------------------------
     Elements2DBordAbso   = Elements2DBordAbso[:cta,:]

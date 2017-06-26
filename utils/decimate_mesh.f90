@@ -6,8 +6,8 @@ program subdivide_mesh
 
   ! Number of nodes per elements.
   integer, parameter  :: ESIZE = 4
-  ! Max number of neighbours per elements.
-  integer,parameter  :: max_neighbour=30
+  ! Max number of neighbors per elements.
+  integer,parameter  :: max_neighbor=30
   ! Max number of elements that can contain the same node.
   integer, parameter  :: nsize=20
 
@@ -35,7 +35,7 @@ program subdivide_mesh
   integer, dimension(:), allocatable  :: nodes_elmnts
 
 
-  integer  :: ispec, inode, ispec_neighbours, ispec_neighbours_new
+  integer  :: ispec, inode, ispec_neighbors, ispec_neighbors_new
   integer  :: num_nodes_new
   integer  :: i, j
   integer  :: ix, iz
@@ -118,7 +118,7 @@ program subdivide_mesh
   elmnts(:,:) = elmnts(:,:) - 1
 
   allocate(xadj(1:nspec+1))
-  allocate(adjncy(1:max_neighbour*nspec))
+  allocate(adjncy(1:max_neighbor*nspec))
   allocate(nnodes_elmnts(1:nnodes))
   allocate(nodes_elmnts(1:nsize*nnodes))
 
@@ -161,18 +161,18 @@ program subdivide_mesh
      temporary_nodes_lookup(:,:) = 0
 
 
-     do ispec_neighbours = xadj(ispec), xadj(ispec+1)-1
+     do ispec_neighbors = xadj(ispec), xadj(ispec+1)-1
 
-        if ( adjncy(ispec_neighbours) < ispec ) then
-           do ispec_neighbours_new = (adjncy(ispec_neighbours)-1)*NSUB*NSUB + 1, adjncy(ispec_neighbours)*NSUB*NSUB
+        if ( adjncy(ispec_neighbors) < ispec ) then
+           do ispec_neighbors_new = (adjncy(ispec_neighbors)-1)*NSUB*NSUB + 1, adjncy(ispec_neighbors)*NSUB*NSUB
 
               do ix = 1, NSUB+1
                  do iz = 1, NSUB+1
                     do inode = 1, 4
-                       if ( sqrt( (temporary_nodes(1,ix,iz)-nodes_coords_new(1,elmnts_new(inode,ispec_neighbours_new)))**2 + &
-                            (temporary_nodes(2,ix,iz)-nodes_coords_new(2,elmnts_new(inode,ispec_neighbours_new)))**2 ) &
+                       if ( sqrt( (temporary_nodes(1,ix,iz)-nodes_coords_new(1,elmnts_new(inode,ispec_neighbors_new)))**2 + &
+                            (temporary_nodes(2,ix,iz)-nodes_coords_new(2,elmnts_new(inode,ispec_neighbors_new)))**2 ) &
  < xtol ) then
-                          temporary_nodes_lookup(ix,iz) = elmnts_new(inode,ispec_neighbours_new)
+                          temporary_nodes_lookup(ix,iz) = elmnts_new(inode,ispec_neighbors_new)
 
 
                        endif
@@ -259,8 +259,8 @@ end program subdivide_mesh
 
     ! Number of nodes per elements.
     integer, parameter  :: ESIZE = 4
-    ! Max number of neighbours per elements.
-    integer,parameter  :: max_neighbour=30
+    ! Max number of neighbors per elements.
+    integer,parameter  :: max_neighbor=30
     ! Max number of elements that can contain the same node.
     integer, parameter  :: nsize=20
 
@@ -269,13 +269,13 @@ end program subdivide_mesh
     integer, intent(in)  :: nnodes
     integer, dimension(0:esize*nelmnts-1), intent(in)  :: elmnts
     integer, dimension(0:nelmnts)  :: xadj
-    integer, dimension(0:max_neighbour*nelmnts-1)  :: adjncy
+    integer, dimension(0:max_neighbor*nelmnts-1)  :: adjncy
     integer, dimension(0:nnodes-1)  :: nnodes_elmnts
     integer, dimension(0:nsize*nnodes-1)  :: nodes_elmnts
     integer, intent(in)  :: ncommonnodes
 
     integer  :: i, j, k, l, m, nb_edges
-    logical  ::  is_neighbour
+    logical  ::  is_neighbor
     integer  :: num_node, n
     integer  :: elem_base, elem_target
     integer  :: connectivity
@@ -283,7 +283,7 @@ end program subdivide_mesh
 
     !allocate(xadj(0:nelmnts))
     xadj(:) = 0
-    !allocate(adjncy(0:max_neighbour*nelmnts-1))
+    !allocate(adjncy(0:max_neighbor*nelmnts-1))
     adjncy(:) = 0
     !allocate(nnodes_elmnts(0:nnodes-1))
     nnodes_elmnts(:) = 0
@@ -302,7 +302,7 @@ end program subdivide_mesh
 
     print *, 'nnodes_elmnts'
 
-    ! checking which elements are neighbours ('ncommonnodes' criteria)
+    ! checking which elements are neighbors ('ncommonnodes' criteria)
     do j = 0, nnodes-1
        do k = 0, nnodes_elmnts(j)-1
           do l = k+1, nnodes_elmnts(j)-1
@@ -321,20 +321,20 @@ end program subdivide_mesh
 
              if ( connectivity >= ncommonnodes) then
 
-                is_neighbour = .false.
+                is_neighbor = .false.
 
                 do m = 0, xadj(nodes_elmnts(k+j*nsize))
-                   if (.not. is_neighbour ) then
-                      if ( adjncy(nodes_elmnts(k+j*nsize)*max_neighbour+m) == nodes_elmnts(l+j*nsize) ) then
-                         is_neighbour = .true.
+                   if (.not. is_neighbor ) then
+                      if ( adjncy(nodes_elmnts(k+j*nsize)*max_neighbor+m) == nodes_elmnts(l+j*nsize) ) then
+                         is_neighbor = .true.
 
                       endif
                    endif
                 enddo
-                if (.not. is_neighbour ) then
-                   adjncy(nodes_elmnts(k+j*nsize)*max_neighbour+xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
+                if (.not. is_neighbor ) then
+                   adjncy(nodes_elmnts(k+j*nsize)*max_neighbor+xadj(nodes_elmnts(k+j*nsize))) = nodes_elmnts(l+j*nsize)
                    xadj(nodes_elmnts(k+j*nsize)) = xadj(nodes_elmnts(k+j*nsize)) + 1
-                   adjncy(nodes_elmnts(l+j*nsize)*max_neighbour+xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
+                   adjncy(nodes_elmnts(l+j*nsize)*max_neighbor+xadj(nodes_elmnts(l+j*nsize))) = nodes_elmnts(k+j*nsize)
                    xadj(nodes_elmnts(l+j*nsize)) = xadj(nodes_elmnts(l+j*nsize)) + 1
                 endif
              endif
@@ -347,7 +347,7 @@ end program subdivide_mesh
        k = xadj(i)
        xadj(i) = nb_edges
        do j = 0, k-1
-          adjncy(nb_edges) = adjncy(i*max_neighbour+j)
+          adjncy(nb_edges) = adjncy(i*max_neighbor+j)
           nb_edges = nb_edges + 1
        enddo
     enddo

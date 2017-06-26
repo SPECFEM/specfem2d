@@ -10,7 +10,7 @@ import numpy as np
 import pylab as pl
 
 
-zc = 30.   # position of 
+zc = 30.   # position of
 Cdeb = 1490.  # minimum sound speed
 Cinc = 40.
 cc = 5.
