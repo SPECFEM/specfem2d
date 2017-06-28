@@ -56,8 +56,8 @@
   ! RK
   double precision, dimension(4) :: c_RK
 
-  character(len=27) :: error_msg1 = 'Error opening file source: '
-  character(len=177) :: error_msg
+  character(len=150) :: error_msg1 = 'Error opening the file that contains the external source: '
+  character(len=250) :: error_msg
   logical :: trick_ok
 
   ! external functions
@@ -337,9 +337,11 @@
             ! opens external file to read in source time function
             if (it == 1) then
               coeff = factor(i_source)
-              error_msg = error_msg1//trim(name_of_source_file(i_source))
-              open(unit=num_file,file=trim(name_of_source_file(i_source)),iostat=ier)
-              if (ier /= 0 ) call exit_MPI(myrank,error_msg)
+              open(unit=num_file,file=trim(name_of_source_file(i_source)),status='old',action='read',iostat=ier)
+              if (ier /= 0) then
+                error_msg = trim(error_msg1)//trim(name_of_source_file(i_source))
+                call exit_MPI(myrank,error_msg)
+              endif
             endif
 
             ! format: #time #stf-value
