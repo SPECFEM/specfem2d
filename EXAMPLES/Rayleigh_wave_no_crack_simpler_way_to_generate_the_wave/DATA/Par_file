@@ -5,7 +5,7 @@
 #-----------------------------------------------------------------------------
 
 # title of job
-title                           = Test of SPECFEM2D with curved interfaces
+title                           = Tilted Lamb's Problem - Source at the free surface
 
 # forward or adjoint simulation
 # 1 = forward, 2 = adjoint, 3 = both simultaneously
@@ -25,9 +25,9 @@ ngnod                           = 9
 
 # time step parameters
 # total number of time steps
-NSTEP                           = 1600
+NSTEP                           = 2000
 # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
-DT                              = 1.1d-3
+DT                              = 0.85d-3
 
 # time stepping
 # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
@@ -138,28 +138,19 @@ SU_FORMAT                       = .false.        # output single precision binar
 use_existing_STATIONS           = .false.
 
 # number of receiver sets (i.e. number of receiver lines to create below)
-nreceiversets                   = 2
+nreceiversets                   = 1
 
 # orientation
-anglerec                        = 0.d0           # angle to rotate components at receivers
+anglerec                        = 10.d0          # angle to rotate components at receivers
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
 # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
 nrec                            = 11             # number of receivers
-xdeb                            = 300.           # first receiver x in meters
-zdeb                            = 2200.          # first receiver z in meters
-xfin                            = 3700.          # last receiver x in meters (ignored if only one receiver)
+xdeb                            = 600.           # first receiver x in meters
+zdeb                            = 1700.          # first receiver z in meters
+xfin                            = 3400.          # last receiver x in meters (ignored if only one receiver)
 zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
 record_at_surface_same_vertical = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
-
-# second receiver set
-nrec                            = 11             # number of receivers
-xdeb                            = 2500.          # first receiver x in meters
-zdeb                            = 2500.          # first receiver z in meters
-xfin                            = 2500.          # last receiver x in meters (ignored if only one receiver)
-zfin                            = 0.             # last receiver z in meters (ignored if only one receiver)
-record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
-
 
 #-----------------------------------------------------------------------------
 #
@@ -201,7 +192,7 @@ PERIODIC_HORIZ_DIST             = 4000.d0
 # velocity and density models
 #
 #-----------------------------------------------------------------------------
-nbmodels                        = 4
+nbmodels                        = 1
 # available material types (see user manual for more information)
 #   acoustic:    model_number 1 rho Vp 0  0 0 QKappa 9999 0 0 0 0 0 0 (for QKappa use 9999 to ignore it)
 #   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0 (for QKappa and Qmu use 9999 to ignore them)
@@ -215,10 +206,7 @@ nbmodels                        = 4
 #   anisotropic in AXISYM: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 c22 0 0
 #   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
 #   tomo:        model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
-1 1 2700.d0 3000.d0 1732.051d0 0 0 9999 9999 0 0 0 0 0 0
-2 1 2500.d0 2700.d0 0 0 0 9999 9999 0 0 0 0 0 0
-3 1 2200.d0 2500.d0 1443.375d0 0 0 9999 9999 0 0 0 0 0 0
-4 1 2200.d0 2200.d0 1343.375d0 0 0 9999 9999 0 0 0 0 0 0
+1 1 2200.d0 3200.d0 1847.5d0 0 0 9999 9999 0 0 0 0 0 0
 
 # external tomography file
 TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
@@ -252,12 +240,12 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 #-----------------------------------------------------------------------------
 
 # file containing interfaces for internal mesh
-interfacesfile                  = ../EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/DATA/interfaces_simple_topo_curved.dat
+interfacesfile                  = topolambtilted.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
 xmin                            = 0.d0           # abscissa of left side of the model
 xmax                            = 4000.d0        # abscissa of right side of the model
-nx                              = 80             # number of elements along X
+nx                              = 100            # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
 absorbbottom                    = .true.
@@ -266,12 +254,9 @@ absorbtop                       = .false.
 absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
-nbregions                       = 4              # then set below the different regions and model number for each region
+nbregions                       = 1              # then set below the different regions and model number for each region
 # format of each line: nxmin nxmax nzmin nzmax material_number
-1 80  1 20 1
-1 80 21 40 2
-1 80 41 60 3
-60 70 21 40 4
+1 100  1 60 1
 
 #-----------------------------------------------------------------------------
 #

@@ -1,0 +1,3 @@
+
+This example uses a point force normal to the free surface in order to generate the Rayleigh wave, while the other example (EXAMPLES/Rayleigh_wave_no_crack) uses an analytical solution from Paco Sanchez-Sesma implemented as initial field in the frequency domain (see subroutine src/specfem2D/paco_beyond_critical.f90). The way implemented in this example here is simpler.
+
