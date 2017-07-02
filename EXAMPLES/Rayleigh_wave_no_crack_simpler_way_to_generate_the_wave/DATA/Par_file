@@ -21,7 +21,7 @@ NPROC                           = 1              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 # number of control nodes per element (4 or 9)
-ngnod                           = 9
+ngnod                           = 4
 
 # time step parameters
 # total number of time steps
