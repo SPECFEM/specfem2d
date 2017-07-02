@@ -64,7 +64,8 @@
   subroutine read_mesh_nodes_coords_from_interfaces()
 
   use constants, only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK,MAX_STRING_LEN,mygroup,IN_DATA_FILES, &
-                       ADD_RANDOM_PERTURBATION_TO_THE_MESH,RANDOM_AMPLITUDE_ALONG_X,RANDOM_AMPLITUDE_ALONG_Z
+                       ADD_RANDOM_PERTURBATION_TO_THE_MESH,RANDOM_AMPLITUDE_ALONG_X,RANDOM_AMPLITUDE_ALONG_Z, &
+                       ADD_PERTURBATION_AROUND_SOURCE_ONLY,RADIUS_TO_USE_AROUND_THE_SOURCE
 
   use part_unstruct_par, only: nodes_coords,max_npoints_interface,number_of_interfaces, &
     npoints_interface_top,xinterface_top,zinterface_top,coefs_interface_top, &
@@ -86,7 +87,7 @@
 
   ! to compute the coordinate transformation
   integer :: ioffset
-  double precision :: gamma,absx,a00,a01,bot0,top0,random_value
+  double precision :: gamma,absx,a00,a01,bot0,top0,random_value,radius_squared
   double precision :: tang1,tangN
 
   integer :: i_source
@@ -226,6 +227,13 @@
               if (ilayer == 1 .and. iz <= NELEM_PML_THICKNESS) need_to_add_the_perturbation = .false.
               if (ix <= NELEM_PML_THICKNESS) need_to_add_the_perturbation = .false.
               if (ix > nx - (NELEM_PML_THICKNESS+1)) need_to_add_the_perturbation = .false.
+            endif
+
+            ! apply the perturbation in a disk around the source only
+            ! for simplicity here we assume that there is a single source
+            if (ADD_PERTURBATION_AROUND_SOURCE_ONLY) then
+              radius_squared = (grid_point_x(ix,iz + ioffset) - xs(1))**2 + (grid_point_z(ix,iz + ioffset) - zs(1))**2
+              if (radius_squared > RADIUS_TO_USE_AROUND_THE_SOURCE**2) need_to_add_the_perturbation = .false.
             endif
 
             if (need_to_add_the_perturbation) then

@@ -225,6 +225,11 @@
   double precision, parameter :: RANDOM_AMPLITUDE_ALONG_X = 14.d0
   double precision, parameter :: RANDOM_AMPLITUDE_ALONG_Z = 12.d0
 
+! apply the perturbation in a disk around the source only
+  logical, parameter :: ADD_PERTURBATION_AROUND_SOURCE_ONLY = .false.
+! radius of the disk to use in that case (in meters)
+  double precision, parameter :: RADIUS_TO_USE_AROUND_THE_SOURCE = 300.d0
+
 !!-----------------------------------------------------------
 !!
 !! small crack
