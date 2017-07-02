@@ -63,7 +63,8 @@
 
   subroutine read_mesh_nodes_coords_from_interfaces()
 
-  use constants, only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK,MAX_STRING_LEN,mygroup,IN_DATA_FILES
+  use constants, only: IMAIN,IIN_INTERFACES,DONT_IGNORE_JUNK,MAX_STRING_LEN,mygroup,IN_DATA_FILES, &
+                       ADD_RANDOM_PERTURBATION_TO_THE_MESH,RANDOM_AMPLITUDE_ALONG_X,RANDOM_AMPLITUDE_ALONG_Z
 
   use part_unstruct_par, only: nodes_coords,max_npoints_interface,number_of_interfaces, &
     npoints_interface_top,xinterface_top,zinterface_top,coefs_interface_top, &
@@ -71,7 +72,8 @@
 
   use source_file_par, only: source_surf,xs,zs
 
-  use shared_parameters, only: ngnod,interfacesfile,NSOURCES,xmin_param,xmax_param,NUMBER_OF_SIMULTANEOUS_RUNS
+  use shared_parameters, only: ngnod,interfacesfile,NSOURCES,xmin_param,xmax_param,NUMBER_OF_SIMULTANEOUS_RUNS, &
+                                     PML_BOUNDARY_CONDITIONS,NELEM_PML_THICKNESS
 
   implicit none
 
@@ -84,12 +86,14 @@
 
   ! to compute the coordinate transformation
   integer :: ioffset
-  double precision :: gamma,absx,a00,a01,bot0,top0
+  double precision :: gamma,absx,a00,a01,bot0,top0,random_value
   double precision :: tang1,tangN
 
   integer :: i_source
   integer :: ix,iz
   integer :: i,j
+
+  logical :: need_to_add_the_perturbation
 
   ! external functions
   integer, external :: num_4, num_9
@@ -207,6 +211,31 @@
           ! coordinates of the grid points
           grid_point_x(ix,iz + ioffset) = absx
           grid_point_z(ix,iz + ioffset) = a00*bot0 + a01*top0
+
+          ! add a random perturbation of the mesh if needed
+          if (ADD_RANDOM_PERTURBATION_TO_THE_MESH) then
+
+            need_to_add_the_perturbation = .true.
+
+            ! do not make any modification on the outer edges of the mesh (fictitious outer edges, and free surface)
+            if ((ilayer == 1 .and. iz == 0) .or. (ilayer == number_of_layers .and. iz == nz_layer(ilayer)) &
+                           .or. ix == 0 .or. ix == nx) need_to_add_the_perturbation = .false.
+
+            ! do not make any modification inside the PML layers
+            if (PML_BOUNDARY_CONDITIONS) then
+              if (ilayer == 1 .and. iz <= NELEM_PML_THICKNESS) need_to_add_the_perturbation = .false.
+              if (ix <= NELEM_PML_THICKNESS) need_to_add_the_perturbation = .false.
+              if (ix > nx - (NELEM_PML_THICKNESS+1)) need_to_add_the_perturbation = .false.
+            endif
+
+            if (need_to_add_the_perturbation) then
+              call random_number(random_value)
+              grid_point_x(ix,iz + ioffset) = grid_point_x(ix,iz + ioffset) + RANDOM_AMPLITUDE_ALONG_X * (random_value - 0.5d0)
+              call random_number(random_value)
+              grid_point_z(ix,iz + ioffset) = grid_point_z(ix,iz + ioffset) + RANDOM_AMPLITUDE_ALONG_Z * (random_value - 0.5d0)
+            endif
+
+          endif
 
        enddo
 
