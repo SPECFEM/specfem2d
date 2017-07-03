@@ -221,9 +221,9 @@
 ! add a random perturbation to the mesh
   logical, parameter :: ADD_RANDOM_PERTURBATION_TO_THE_MESH = .false.
 
-! absolute maximum size of the perturbation of the mesh around a given mesh points (in meters)
-  double precision, parameter :: RANDOM_AMPLITUDE_ALONG_X = 14.d0
-  double precision, parameter :: RANDOM_AMPLITUDE_ALONG_Z = 12.d0
+! maximum absolute value of the size of the perturbation (i.e. mesh point displacement) around a given mesh point (in meters)
+  double precision, parameter :: RANDOM_AMPLITUDE_ALONG_X = 7.d0
+  double precision, parameter :: RANDOM_AMPLITUDE_ALONG_Z = 6.d0
 
 ! apply the perturbation in a disk around the source only
   logical, parameter :: ADD_PERTURBATION_AROUND_SOURCE_ONLY = .false.

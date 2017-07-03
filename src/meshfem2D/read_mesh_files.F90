@@ -213,7 +213,7 @@
           grid_point_x(ix,iz + ioffset) = absx
           grid_point_z(ix,iz + ioffset) = a00*bot0 + a01*top0
 
-          ! add a random perturbation of the mesh if needed
+          ! add a random perturbation to the mesh if needed
           if (ADD_RANDOM_PERTURBATION_TO_THE_MESH) then
 
             need_to_add_the_perturbation = .true.
@@ -224,9 +224,10 @@
 
             ! do not make any modification inside the PML layers
             if (PML_BOUNDARY_CONDITIONS) then
+              ! this works only if the whole bottom PML is comprised inside the bottom layer
               if (ilayer == 1 .and. iz <= NELEM_PML_THICKNESS) need_to_add_the_perturbation = .false.
               if (ix <= NELEM_PML_THICKNESS) need_to_add_the_perturbation = .false.
-              if (ix > nx - (NELEM_PML_THICKNESS+1)) need_to_add_the_perturbation = .false.
+              if (ix > nx - NELEM_PML_THICKNESS - 1) need_to_add_the_perturbation = .false.
             endif
 
             ! apply the perturbation in a disk around the source only
@@ -237,10 +238,14 @@
             endif
 
             if (need_to_add_the_perturbation) then
+              ! get a random number between 0. and 1.
               call random_number(random_value)
-              grid_point_x(ix,iz + ioffset) = grid_point_x(ix,iz + ioffset) + RANDOM_AMPLITUDE_ALONG_X * (random_value - 0.5d0)
+              ! map this random number to between -1. and +1., so that the point can be moved to the left or to the right
+              grid_point_x(ix,iz + ioffset) = grid_point_x(ix,iz + ioffset) + &
+                                                  RANDOM_AMPLITUDE_ALONG_X * 2.d0 * (random_value - 0.5d0)
               call random_number(random_value)
-              grid_point_z(ix,iz + ioffset) = grid_point_z(ix,iz + ioffset) + RANDOM_AMPLITUDE_ALONG_Z * (random_value - 0.5d0)
+              grid_point_z(ix,iz + ioffset) = grid_point_z(ix,iz + ioffset) + &
+                                                  RANDOM_AMPLITUDE_ALONG_Z * 2.d0 * (random_value - 0.5d0)
             endif
 
           endif
