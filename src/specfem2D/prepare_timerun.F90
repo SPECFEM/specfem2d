@@ -363,6 +363,9 @@
   integer :: d1_coorg_send_ps_vector_field, d2_coorg_send_ps_vector_field, &
              d1_coorg_recv_ps_vector_field, d2_coorg_recv_ps_vector_field
 
+  ! wavefield dump
+  integer :: d1_dump_send, d2_dump_send, d1_dump_recv, d2_dump_recv 
+  
   ! checks if anything to do
   if (.not. (output_color_image .or. output_postscript_snapshot .or. output_wavefield_dumps)) return
 
@@ -625,11 +628,31 @@
     ! to dump the wave field
     this_is_the_first_time_we_dump = .true.
 
-  else if (output_wavefield_dumps) then
-     this_is_the_first_time_we_dump = .true.
-
   endif ! postscript
 
+  if (output_wavefield_dumps) then
+    ! allocate arrays for wavefield dump
+    d1_dump_recv = 2
+    d1_dump_send = 2
+    
+    d2_dump_send = nspec*NGLLX*NGLLZ
+
+#ifdef USE_MPI
+    call mpi_allreduce(d2_dump_send,d2_dump_recv,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+#endif
+
+    allocate(dump_send(d1_dump_send, d2_dump_send))
+    allocate(dump_recv(d1_dump_recv, d2_dump_recv))
+    
+    allocate(dump_duplicate_send(d2_dump_send))
+    allocate(dump_duplicate_recv(d2_dump_recv))
+    
+    allocate(dump_recv_counts(0:NPROC-1))
+    
+    this_is_the_first_time_we_dump = .true.
+
+  endif ! wavefield dump
+  
   end subroutine prepare_timerun_image_coloring
 
 !
