@@ -879,11 +879,15 @@ module specfem_par_movie
   double precision, dimension(:,:), allocatable  :: coorg_recv_ps_vector_field
 
   !---------------------------------------------------------------------
-  ! for wavefield damp
+  ! for wavefield dump
   !---------------------------------------------------------------------
   logical :: this_is_the_first_time_we_dump
   logical, dimension(:), allocatable  :: mask_ibool
-
+  logical, dimension(:), allocatable  :: mask_duplicate ! mask array for identifying duplicates between partitions
+  integer, dimension(:), allocatable :: dump_recv_counts 
+  double precision, dimension(:,:), allocatable :: dump_recv, dump_send, dump_write, dump_gather
+  logical, dimension(:), allocatable :: dump_duplicate_send, dump_duplicate_recv, dump_duplicate_gather
+  
 end module specfem_par_movie
 
 
