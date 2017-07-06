@@ -67,6 +67,7 @@
   integer :: gcounter           ! index counter for variable send/receive counts
   integer :: ii,jj,kk              ! Loop counters
 
+  integer :: dummy
 
 #ifndef USE_MPI
 ! To avoid warnings by the compiler about unused variables in case of a serial code.
@@ -84,6 +85,9 @@
   
   allocate(mask_duplicate(1))
   deallocate(mask_duplicate)
+  dummy = NPROC
+#else
+  dummy = 0
 #endif
 
 
@@ -132,7 +136,8 @@
         enddo
       enddo
     enddo
-
+    
+#ifdef USE_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
         ! Master collects.
@@ -183,11 +188,17 @@
       endif ! if (myrank == 0)
 
     else
-      ! Serial, only single processor.
+      ! In this case, all data is located in dump_recv (as myrank = 0) as run in single process.
       ! Rather ineffecient to copy data into another variable just to write, but helas.
-      dump_write = dump_recv
-      
+      ! As dump_write gets allocated in mask_write_matrix, which is not called in this case, the array must be allocated here.
+      allocate(dump_write(2, size(dump_recv,2)))
+      dump_write = dump_recv(:,1:icounter)
     endif ! if (NPROC > 1)
+#else
+    ! Array must be allocated first time we dump.
+    allocate(dump_write(2, icounter))
+    dump_write = dump_recv(:,1:icounter)
+#endif
 
     this_is_the_first_time_we_dump = .false.
 
@@ -249,6 +260,7 @@
     enddo ! do jj
   enddo ! do ispec
 
+#ifdef USE_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
       ! Master collects
@@ -272,9 +284,13 @@
            MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
     endif ! if (myrank == 0)
   else
-    dump_write = dump_recv
+    dump_write = dump_recv(:,1:icounter)
   endif ! if (NPROC > 1)
-
+#else
+  ! Array dump_write has already been allocated first time we dump.
+  dump_write = dump_recv(:,1:icounter)
+#endif
+  
   ! Proc 0 handles file write.
   if (myrank == 0) then
     call write_file_dump()

@@ -639,11 +639,13 @@
 
 #ifdef USE_MPI
     call mpi_allreduce(d2_dump_send,d2_dump_recv,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
+#else
+    d2_dump_recv = d2_dump_send
 #endif
 
     allocate(dump_send(d1_dump_send, d2_dump_send))
     allocate(dump_recv(d1_dump_recv, d2_dump_recv))
-    
+
     allocate(dump_duplicate_send(d2_dump_send))
     allocate(dump_duplicate_recv(d2_dump_recv))
     
