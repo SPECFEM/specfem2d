@@ -246,7 +246,7 @@ end module enforce_par
   real(kind=CUSTOM_REAL) :: factor,x,z,facx,facz,tval,tval_old
   real(kind=CUSTOM_REAL) :: omegaj
   real(kind=CUSTOM_REAL) :: time_dependence_x,time_dependence_x_old,time_dependence_z,time_dependence_z_old
-  complex :: sum_ux,sum_uz
+  complex(CUSTOM_REAL) :: sum_ux,sum_uz
 
   ! Choose the mode to generate
   logical :: antisym = .false.
@@ -380,10 +380,10 @@ end module enforce_par
     real(kind=CUSTOM_REAL), intent(in) :: z      ! coord z forced 
 
     ! Output variables
-    complex, intent(out) :: sum_ux,sum_uz
+    complex(kind=CUSTOM_REAL), intent(out) :: sum_ux,sum_uz
 
     ! local variables 
-    complex :: ux=(0.0,0.0),uz=(0.0,0.0)
+    complex(kind=CUSTOM_REAL) :: ux=(0.0,0.0),uz=(0.0,0.0)
 
     real(kind=CUSTOM_REAL) ::  fc!,fdmin,fdmax,stepfd
     real(kind=CUSTOM_REAL) ::  freq,omegaj!,fmax,fmin
@@ -440,8 +440,8 @@ end module enforce_par
 !
 
  function cosh(x)
-    use constants, only: TWO
-    complex :: cosh,x
+    use constants, only: TWO,CUSTOM_REAL
+    complex(kind=CUSTOM_REAL) :: cosh,x
     cosh = (exp(x)+exp(-x))/TWO
   end function cosh
 
@@ -450,8 +450,8 @@ end module enforce_par
 !
   
   function sinh(x)
-    use constants, only: TWO
-    complex :: sinh,x
+    use constants, only: TWO,CUSTOM_REAL
+    complex(kind=CUSTOM_REAL) :: sinh,x
     sinh = (exp(x)-exp(-x))/TWO
   end function sinh
 
@@ -472,14 +472,14 @@ end module enforce_par
     logical, intent(in) :: antisym
     
     ! Outputs
-    complex, intent(out) :: ux,uz
+    complex(kind=CUSTOM_REAL), intent(out) :: ux,uz
     
     ! Local variables      
-    complex :: s,s2,q,q2,k,k2,sqrkp,sqrks,C1,C2
-    complex :: jj = (0.0,1.0)
+    complex(kind=CUSTOM_REAL) :: s,s2,q,q2,k,k2,sqrkp,sqrks,C1,C2
+    complex(kind=CUSTOM_REAL) :: jj = (0.0,1.0)
 
     ! Functions
-    complex, external :: cosh,sinh
+    complex(kind=CUSTOM_REAL), external :: cosh,sinh
        
     k2 = (omegaj/cphase)**2
     sqrkp=(omegaj/cp)**2 
