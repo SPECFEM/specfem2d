@@ -61,18 +61,18 @@ module enforce_par
   function count_lines(filename) result(nlines)
     implicit none
     character(len=*)    :: filename
-    integer             :: nlines 
+    integer             :: nlines
     integer             :: io
 
     open(10,file=filename, iostat=io, status='old')
-    if (io/=0) stop 'Cannot open file! '
+    if (io /= 0) stop 'Cannot open file! '
 
     nlines = 0
     do
       read(10,*,iostat=io)
-      if (io/=0) exit
+      if (io /= 0) exit
       nlines = nlines + 1
-    end do
+    enddo
     close(10)
   end function count_lines
 
@@ -179,7 +179,7 @@ end module enforce_par
           if (iglob_is_forced(iglob)) then
             if (ispec_is_acoustic(ispec)) then
                acoustic_iglob_is_forced = .true.
-            elseif (ispec_is_elastic(ispec)) then
+            else if (ispec_is_elastic(ispec)) then
                elastic_iglob_is_forced = .true.
             else
               stop "Problem forced! Element is not acoustic and not elastic... this is not possible so far"
@@ -250,7 +250,7 @@ end module enforce_par
 
   ! Choose the mode to generate
   logical :: antisym = .false.
-  ! String that must be equal to 0,1, and so on 
+  ! String that must be equal to 0,1, and so on
   character (len=1) :: order='0'
   ! Number of cycle of the burst
   integer :: Nc = 10
@@ -289,14 +289,14 @@ end module enforce_par
     time_dependence_x_old = 0.0d0
     time_dependence_z_old = 0.0d0
   endif
-  
+
   fdin = f0 * d
   ! Read file and calculate weighted sum.
   if (.not. hasReadFile) then
     call readCphaseAndFdInFile(antisym,order,fdin)
     hasReadFile = .true.
   endif
-  
+
   !print *,fdVec(indexFdIn),cphaseVec(indexFdIn)
   call weighted_sum_Lamb_disp(sum_ux,sum_uz,z,f0,d,cp,cs,antisym,Nc,Nweight)
 
@@ -365,8 +365,8 @@ end module enforce_par
 
    implicit none
 
-    ! imput variables 
-    real(kind=CUSTOM_REAL), intent(in) :: f0    ! frequency ! (fd=500,f=125KHz) 
+    ! imput variables
+    real(kind=CUSTOM_REAL), intent(in) :: f0    ! frequency ! (fd=500,f=125KHz)
     real(kind=CUSTOM_REAL), intent(in) :: d     ! half width of the plate
     real(kind=CUSTOM_REAL), intent(in) ::  cp   ! Compressional waves velocity
     real(kind=CUSTOM_REAL), intent(in) ::  cs   ! Shear waves velocity
@@ -376,29 +376,29 @@ end module enforce_par
     ! choose the mode to generate
     ! real(kind=CUSTOM_REAL) , intent(in):: fdin ! KHz.mm
     logical , intent(in):: antisym
-    integer , intent(in) :: Nc                   !number of cycle of the burst 
-    real(kind=CUSTOM_REAL), intent(in) :: z      ! coord z forced 
+    integer , intent(in) :: Nc                   !number of cycle of the burst
+    real(kind=CUSTOM_REAL), intent(in) :: z      ! coord z forced
 
     ! Output variables
     complex(kind=CUSTOM_REAL), intent(out) :: sum_ux,sum_uz
 
-    ! local variables 
+    ! local variables
     complex(kind=CUSTOM_REAL) :: ux=(0.0,0.0),uz=(0.0,0.0)
 
     real(kind=CUSTOM_REAL) ::  fc!,fdmin,fdmax,stepfd
     real(kind=CUSTOM_REAL) ::  freq,omegaj!,fmax,fmin
     real(kind=CUSTOM_REAL) ::  cphase
-    !real(kind=CUSTOM_REAL) ::  BW ! frequency band width   
+    !real(kind=CUSTOM_REAL) ::  BW ! frequency band width
     real(kind=CUSTOM_REAL) ::  Weigth_Burst,sum_Weight ! frequency weight
     integer :: iweight ! iterator over weigths
- 
-    omegaj=TWO*PI*f0
-     
-    !DSP = weight = 0 at fmin and fmax 
-    ! this frequency range corresponds to the principal lobe of the DSP 
 
-    fc = fdVec(indexFdIn)/d   
-!    BW=2.0d0*fc/Nc  
+    omegaj=TWO*PI*f0
+
+    !DSP = weight = 0 at fmin and fmax
+    ! this frequency range corresponds to the principal lobe of the DSP
+
+    fc = fdVec(indexFdIn)/d
+!    BW=2.0d0*fc/Nc
 !    fmin=fc-BW; fmax=fc+BW
 !    fdmin=fmin*d; fdmax=fmax*d
 !    stepfd=(fdmax-fdmin)/(Nweight-1)
@@ -411,24 +411,24 @@ end module enforce_par
         !fdin=fdmin+(iweight-1)*stepfd
         !freq=fdin/d
         cphase = cphaseVec(iweight)
-        freq=fdVec(iweight)/d 
+        freq=fdVec(iweight)/d
         omegaj=TWO*PI*freq
         call Calculate_Weigth_Burst(Weigth_Burst,fc,freq,Nc)
-        call calculateUxUz(ux,uz,z,cp,cs,d,omegaj,cphase,antisym)        
+        call calculateUxUz(ux,uz,z,cp,cs,d,omegaj,cphase,antisym)
         sum_ux=sum_ux+Weigth_Burst*ux
-        sum_uz=sum_uz+Weigth_Burst*uz      
+        sum_uz=sum_uz+Weigth_Burst*uz
         sum_Weight=sum_Weight+Weigth_Burst
-        
-!        print *,''
-!        print *,'***************************************************' 
-!        print *, 'verif dans la boucle '  
-!        print *, 'cphase = ',cphase,'m/s @fd = ',fdout          
-!        print *, 'sum_ux =' ,  sum_ux , 'ux =' , ux    
-!        print *, 'sum_uz =' ,  sum_uz , 'uz =' , uz 
+
+!        print *
+!        print *,'***************************************************'
+!        print *, 'verif dans la boucle '
+!        print *, 'cphase = ',cphase,'m/s @fd = ',fdout
+!        print *, 'sum_ux =' ,  sum_ux , 'ux =' , ux
+!        print *, 'sum_uz =' ,  sum_uz , 'uz =' , uz
 !        print *, 'Weight_Burst = ', Weigth_Burst ,'sum_Weight =', sum_Weight
 !        print *,'***************************************************'
-!        print *,''
-    enddo 
+!        print *
+    enddo
     sum_ux=sum_ux/sum_Weight; ! division by the sum of weights
     sum_uz=sum_uz/sum_Weight; ! of course ! it is a weighted Sum !
     !! but in fact, it does no matter because it must be OK up to a constant
@@ -448,7 +448,7 @@ end module enforce_par
 !
 ! ----------------------------------------------------------------------------------------
 !
-  
+
   function sinh(x)
     use constants, only: TWO,CUSTOM_REAL
     complex(kind=CUSTOM_REAL) :: sinh,x
@@ -462,55 +462,55 @@ end module enforce_par
   subroutine calculateUxUz(ux,uz,zi,cp,cs,d,omegaj,cphase,antisym)
     ! ----------------------------------------------------------------------------------------
     ! See eq.Viktorov page 70 ! todo to check page number
-    ! ----------------------------------------------------------------------------------------      
+    ! ----------------------------------------------------------------------------------------
     use constants, only: CUSTOM_REAL,TWO,PI
     implicit none
 
-    ! Inputs      
+    ! Inputs
     real(kind=CUSTOM_REAL), intent(in) :: zi,cp,cs,d,omegaj
     real(kind=CUSTOM_REAL), intent(in) :: cphase
     logical, intent(in) :: antisym
-    
+
     ! Outputs
     complex(kind=CUSTOM_REAL), intent(out) :: ux,uz
-    
-    ! Local variables      
+
+    ! Local variables
     complex(kind=CUSTOM_REAL) :: s,s2,q,q2,k,k2,sqrkp,sqrks,C1,C2
     complex(kind=CUSTOM_REAL) :: jj = (0.0,1.0)
 
-    ! Functions
+    ! functions
     complex(kind=CUSTOM_REAL), external :: cosh,sinh
-       
+
     k2 = (omegaj/cphase)**2
-    sqrkp=(omegaj/cp)**2 
-    sqrks=(omegaj/cs)**2 
+    sqrkp=(omegaj/cp)**2
+    sqrks=(omegaj/cs)**2
     q2 = k2 - sqrkp
     s2 = k2 - sqrks
     q = sqrt(q2)
     s = sqrt(s2)
     k = sqrt(k2)
     C1=TWO*q*s/(k2+s2)
-    C2=TWO*k2/(k2+s2) 
-     
+    C2=TWO*k2/(k2+s2)
+
     if (.not. antisym) then ! symmetric modes
         ux = jj * k * (cosh(q*zi)/sinh(q*d) - C1*cosh(s*zi)/sinh(s*d))
         uz = -q * (sinh(q*zi)/sinh(q*d) - C2*sinh(s*zi)/sinh(s*d))
     else                    ! antisymmetric modes
         ux = jj * k * (sinh(q*zi)/cosh(q*d) - C1*sinh(s*zi)/cosh(s*d))
         uz = -q * (cosh(q*zi)/cosh(q*d) - C2*cosh(s*zi)/cosh(s*d))
-    endif     
-      
-!    print *,''
+    endif
+
+!    print *
 !     print *,'***************************************************'
 !~     print *, 'dans la fonction calculate ux uz'
-!~     print *, 'fd= ' , omegaj/TWO/PI*d 
- !   print *,'cphase = ',cphase,'m/s @fd = ',omegaj/TWO/PI*d   
-!~     print *, 'C1= ', C1, 'C2= ', C2      
+!~     print *, 'fd= ' , omegaj/TWO/PI*d
+ !   print *,'cphase = ',cphase,'m/s @fd = ',omegaj/TWO/PI*d
+!~     print *, 'C1= ', C1, 'C2= ', C2
 !~     print *,  'q=', q ,'s= ',s,'k= ',k
-!     print *, 'ux =' ,  ux , 'uz =' , uz 
+!     print *, 'ux =' ,  ux , 'uz =' , uz
 !    print *,'***************************************************'
-!~     print *,''
-    
+!~     print *
+
   end subroutine calculateUxUz
 
 !
@@ -518,10 +518,10 @@ end module enforce_par
 !
 
   subroutine readCphaseAndFdInFile(antisym,order,fdin)
-  
+
     use constants, only: CUSTOM_REAL
     use enforce_par, only: fdVec,cphaseVec,indexFdIn,number_of_lines_in_file
-    
+
     implicit none
     ! Inputs
     character(len=1) :: order
@@ -536,27 +536,27 @@ end module enforce_par
     character(len=1024) :: directory
     character(len=1024) :: file2read
     logical :: hasBeenFound = .false.
-       
+
     directory= '/home1/bottero/specfem2d/EXAMPLES/delamination/DispersionCurves/' ! WARNING DO NOT FORGET THE / AT THE END
     ! choose the file to read
     if (.not. antisym) then
     mode='S'
     else
     mode='A'
-    endif 
-    file2read = trim(directory) // trim(mode) // trim(order) // '.csv' ! file to read  
-        
+    endif
+    file2read = trim(directory) // trim(mode) // trim(order) // '.csv' ! file to read
+
     open(unit=7,file=file2read,action='read',status='old')
 
-    do while(error==0)    ! determine the number of line in the file 
-    read(7,*,iostat=error) 
+    do while(error == 0)    ! determine the number of line in the file
+    read(7,*,iostat=error)
     number_of_lines_in_file=number_of_lines_in_file+1
-    end do 
-    rewind 7 ! to restart at the begining of the file 
-    
+    enddo
+    rewind 7 ! to restart at the begining of the file
+
     allocate(fdVec(number_of_lines_in_file))
     allocate(cphaseVec(number_of_lines_in_file))
-    
+
     do i = 1, number_of_lines_in_file    !read the content of the file
       read(7,*) fdVec(i), cphaseVec(i)
       if ((fdVec(i) >= fdin) .and. (.not. hasBeenFound)) then
@@ -565,35 +565,35 @@ end module enforce_par
       endif
     enddo
 
-!!    fdMin_of_file=zfd(1); 
+!!    fdMin_of_file=zfd(1);
 !!    fdMax_of_file=zfd(number_of_lines_in_file)
 !!    stepfd_of_file=(fdMax_of_file-fdMin_of_file)/(number_of_lines_in_file-1)
 !!    nfdout1=floor((fdin-fdMin_of_file)/stepfd_of_file)+1
 !!    nfdout2=ceiling ((fdin-fdMin_of_file)/stepfd_of_file)+1
     !nfdout1=floor(fdin/fdMin_of_file)
     !nfdout1=ceiling(fdin/fdMin_of_file)
-    
-    
-!    if (fdin-fdMin_of_file < 0) then 
+
+
+!    if (fdin-fdMin_of_file < 0) then
 !    call exit_MPI(myrank,'fdin>fdMin_of_file, change fdin product or increase Nc!')
-!    endif 
+!    endif
 
 !!    fdtemp1=zfd(nfdout1)
 !!    fdtemp2=zfd(nfdout2)
-    
+
     !sometime if we use only nfdout1 we do not have the closet product
-    !the test below is to fix that pb 
-!!    if (abs(fdtemp1-fdin).LT.abs(fdtemp2-fdin)) then
-!!    fdout=zfd(nfdout1) 
+    !the test below is to fix that pb
+!!    if (abs(fdtemp1-fdin) < abs(fdtemp2-fdin)) then
+!!    fdout=zfd(nfdout1)
 !!    cphase=zcphase(nfdout1)
 !!    else
 !!    fdout=zfd(nfdout2)
 !!    cphase=zcphase(nfdout2)
-!!    endif   
+!!    endif
 
 
-!    print *,''
-!    print *,'**************************************************'   
+!    print *
+!    print *,'**************************************************'
 !    print *,'subroutine readCphaseAndFdInFile '
 !    print *,'file2read = ', file2read
 !    print *,'number_of_lines_in_file = ', number_of_lines_in_file
@@ -601,8 +601,8 @@ end module enforce_par
 !    print *, 'stepfd_of_file, nfdout, nfdout2=' ,stepfd_of_file, nfdout1, nfdout2
 !    print *,'stepfd =',stepfd_of_file, ' fdin = ', fdin, ' fdout =', fdout
 !    print *,'cphase = ',cphase,'m/s @fd = ',fdout
-!    print *,'**************************************************'  
-    
+!    print *,'**************************************************'
+
     close(7)
 !    deallocate(zfd)
 !    deallocate(zcphase)
@@ -621,50 +621,50 @@ subroutine Calculate_Weigth_Burst(Weigth_Burst,f0,freq,Nc)
 ! @ freq=f0 +/-f0/Nc the limit of the normalized DSP=0.5
 ! ----------------------------------------------------------------------
     !use specfem_par, only: myrank
-                        
+
     use constants, only: CUSTOM_REAL,PI,TWO
     implicit none
     ! Inputs
     real(kind=CUSTOM_REAL), intent(in) :: freq,f0
     integer,intent(in) :: Nc
     ! Outputs
-    real(kind=CUSTOM_REAL),intent(out) :: Weigth_Burst    
-    
+    real(kind=CUSTOM_REAL),intent(out) :: Weigth_Burst
+
     !   Local variables
     real(kind=CUSTOM_REAL), parameter :: SMALLVAL=1e-1
     real(kind=CUSTOM_REAL) :: cste,den,M,f04,f,fbw1,fbw2
     ! SMALLVAL not TINYVAL because it does not work if val in too tiny !
-    
-    
-    fbw1=f0-f0/Nc 
-    fbw2=f0+f0/Nc 
-    
+
+
+    fbw1=f0-f0/Nc
+    fbw2=f0+f0/Nc
+
     f=freq-f0
-    if (abs(f)<SMALLVAL) then
+    if (abs(f) < SMALLVAL) then
     Weigth_Burst=1
-    elseif (abs(freq-fbw1)<SMALLVAL .or. abs(freq-fbw2)<SMALLVAL ) then
+    else if (abs(freq-fbw1) < SMALLVAL .or. abs(freq-fbw2) < SMALLVAL ) then
     Weigth_Burst=0.5
-    else    
+    else
     M=sqrt(Nc**2/f0**2)    !max @ f0
     cste=sqrt(TWO)/TWO/PI/M
     den=(Nc**2*f**2-f0**2)**2*f**2
     f04=f0**4
     Weigth_Burst=cste*sqrt(-1.0*f04*(cos(2*Nc*PI*f/f0)-1)/den)
     endif
-     
-!~     print *,''
-!~     print *,'***************************************************'     
-!~     print *, 'Verif Calculate Weigth ' 
+
+!~     print *
+!~     print *,'***************************************************'
+!~     print *, 'Verif Calculate Weigth '
 !~     print *, 'fd =' , freq*d,'freq= ', freq, 'freq - f0 = ', f
 !~     print *, 'f0 = ',f0,'Nc= ',Nc, 'Nweight= ', Nweight
 !~     print *, 'cos(2*Nc*PI*f/f0)= ', cos(2*Nc*PI*f/f0)
 !~     print *, 'M= ', M,'cste= ',cste,'den= ', den
-!~     print *, 'Weight_Burst =====' , Weigth_Burst!~ 
-!~     print *,'***************************************************'  
-!~     print *,'' 
+!~     print *, 'Weight_Burst =====' , Weigth_Burst!~
+!~     print *,'***************************************************'
+!~     print *
 !~     print *, freq,Weigth_Burst ! write Weigth_Burst to plot and check
-        
- 
+
+
 end subroutine Calculate_Weigth_Burst
 
 !
@@ -836,7 +836,7 @@ end subroutine Calculate_Weigth_Burst
 !    A = (realMode(idx + 1) - realMode(idx))/(zmode(idx+1) - zmode(idx))
 !    B = (zmode(idx+1)*realMode(idx) - zmode(idx)*realMode(idx+1)) / (zmode(idx+1) - zmode(idx))
 !    modeAmplitude(iglob) = A*z+B
-!    !print *,""
+!    !print *
 !    !print *,"nLines:",nLines,"zmode:",zmode,"z:",dble(z)
 !    !print *,idx,zmode(idx),zmode(idx+1)," so modeReal between ",realMode(idx)," and ",realMode(idx + 1)
 !    !print *,"mode at",z,"m :",modeAmplitude(iglob)
@@ -933,7 +933,7 @@ end subroutine Calculate_Weigth_Burst
     A = (realMode(idx + 1) - realMode(idx))/(zmode(idx+1) - zmode(idx))
     B = (zmode(idx+1)*realMode(idx) - zmode(idx)*realMode(idx+1)) / (zmode(idx+1) - zmode(idx))
     modeAmplitude(iglob) = A*z+B
-    !print *,""
+    !print *
     !print *,"nLines:",nLines,"zmode:",zmode,"z:",dble(z)
     !print *,idx,zmode(idx),zmode(idx+1)," so modeReal between ",realMode(idx)," and ",realMode(idx + 1)
     !print *,"mode at",z,"m :",modeAmplitude(iglob)
