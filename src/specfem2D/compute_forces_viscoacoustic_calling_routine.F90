@@ -39,7 +39,7 @@
   implicit none
 
   ! local parameters
-  integer :: i
+  integer :: i,iglob
   ! non-blocking MPI
   ! iphase: iphase = 1 is for computing outer elements (on MPI interface),
   !         iphase = 2 is for computing inner elements
@@ -158,7 +158,15 @@
 
   ! multiply by the inverse of the mass matrix
   !! DK DK this should be vectorized
-  potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
+  if (USE_ENFORCE_FIELDS) then
+    do iglob = 1,nglob_acoustic
+      if (.not. iglob_is_forced(iglob)) then
+        potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) * rmass_inverse_acoustic(iglob)
+      endif
+    enddo
+  else
+    potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
+  endif
 
   ! update velocity
   select case (time_stepping_scheme)

@@ -45,7 +45,7 @@
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
                          rmemory_fsb_displ_elastic,timeval,deltat, &
                          rmemory_fsb_displ_elastic_LDDRK,i_stage,time_stepping_scheme, &
-                         nglob_acoustic,nglob_elastic
+                         nglob_acoustic,nglob_elastic,iglob_is_forced
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML,nspec_PML,spec_to_PML,region_CPML, &
@@ -239,7 +239,9 @@
       displ_n = displ_x*nx + displ_z*nz
 !! DK DK QUENTIN visco begin ici comme tu disais il faudrait coupler la composante tangentielle
 !! DK DK QUENTIN en plus de la composante normale je suppose
-      potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+      if (.not. iglob_is_forced(iglob)) then
+        potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+      endif
 !! DK DK QUENTIN visco end
 
     enddo
