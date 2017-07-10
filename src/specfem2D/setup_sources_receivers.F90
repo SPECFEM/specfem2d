@@ -602,17 +602,11 @@
 #ifdef USE_MPI
         else if (myrank == 0) then
           call recv_singlei(source_courbe_eros(i_source), MPI_ANY_SOURCE, 42)
-          !call MPI_recv(source_courbe_eros(i_source),1,MPI_INTEGER, &
-          !              MPI_ANY_SOURCE,42,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
           call recv_singledp(anglesource_recv, MPI_ANY_SOURCE, 43)
-          !call MPI_recv(anglesource_recv,1,MPI_DOUBLE_PRECISION, &
-          !              MPI_ANY_SOURCE,43,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
 
         else if (myrank == islice_selected_source(i_source)) then
           call send_singlei(n1_tangential_detection_curve, 0, 42)
           call send_singledp(anglesource(i_source), 0, 43)
-          !call MPI_send(n1_tangential_detection_curve,1,MPI_INTEGER,0,42,my_local_mpi_comm_world,ier) ! TODO remove
-          !call MPI_send(anglesource(i_source),1,MPI_DOUBLE_PRECISION,0,43,my_local_mpi_comm_world,ier) ! TODO remove
 #endif
         endif
 
@@ -687,13 +681,6 @@
           call recv_singlei(n1_tangential_detection_curve, islice_selected_rec(irec), irec)
           call recv_singledp(x_final_receiver_dummy, islice_selected_rec(irec), irec)
           call recv_singledp(z_final_receiver_dummy, islice_selected_rec(irec), irec)
-          !call MPI_RECV(n1_tangential_detection_curve,1,MPI_INTEGER, &
-          !   islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
-          !call MPI_RECV(x_final_receiver_dummy,1,MPI_DOUBLE_PRECISION, &
-          !   islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
-          !call MPI_RECV(z_final_receiver_dummy,1,MPI_DOUBLE_PRECISION, &
-          !   islice_selected_rec(irec),irec,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier) ! TODO remove
-
 #endif
         endif
 
@@ -704,9 +691,6 @@
           call send_singlei(rec_tangential_detection_curve(irecloc), 0, irec)
           call send_singledp(x_final_receiver(irec), 0, irec)
           call send_singledp(z_final_receiver(irec), 0, irec)
-          !call MPI_SEND(rec_tangential_detection_curve(irecloc),1,MPI_INTEGER,0,irec,my_local_mpi_comm_world,ier) ! TODO remove
-          !call MPI_SEND(x_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,my_local_mpi_comm_world,ier) ! TODO remove
-          !call MPI_SEND(z_final_receiver(irec),1,MPI_DOUBLE_PRECISION,0,irec,my_local_mpi_comm_world,ier) ! TODO remove
         endif
 #endif
 
