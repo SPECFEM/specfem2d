@@ -884,10 +884,10 @@ module specfem_par_movie
   logical :: this_is_the_first_time_we_dump
   logical, dimension(:), allocatable  :: mask_ibool
   logical, dimension(:), allocatable  :: mask_duplicate ! mask array for identifying duplicates between partitions
-  integer, dimension(:), allocatable :: dump_recv_counts 
+  integer, dimension(:), allocatable :: dump_recv_counts
   double precision, dimension(:,:), allocatable :: dump_recv, dump_send, dump_write, dump_gather
   logical, dimension(:), allocatable :: dump_duplicate_send, dump_duplicate_recv, dump_duplicate_gather
-  
+
 end module specfem_par_movie
 
 

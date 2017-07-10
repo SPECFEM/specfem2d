@@ -15,7 +15,7 @@
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
-! the Free Software Foundation; either version 2 of the License, or
+! the Free Software Foundation; either version 3 of the License, or
 ! (at your option) any later version.
 !
 ! This program is distributed in the hope that it will be useful,
@@ -54,7 +54,7 @@
                                mask_duplicate, dump_duplicate_send, dump_duplicate_recv, dump_duplicate_gather
 
   use specfem_par, only: ninterface, ibool_interfaces_ext_mesh
-  
+
   implicit none
 
   !local variables
@@ -71,18 +71,18 @@
 
 #ifndef USE_MPI
 ! To avoid warnings by the compiler about unused variables in case of a serial code.
-  
+
   iproc = 0
   dump_recv_counts = 0
   gcounter = 0
   ier = 0
-  
+
   allocate(dump_gather(1,1))
   deallocate(dump_gather)
 
   allocate(dump_duplicate_gather(1))
   deallocate(dump_duplicate_gather)
-  
+
   allocate(mask_duplicate(1))
   deallocate(mask_duplicate)
   dummy = NPROC
@@ -91,7 +91,7 @@
 #endif
 
 
-  
+
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Dumping the wave field to a file for time step ',it
@@ -115,7 +115,7 @@
           if (.not. mask_ibool(iglob)) then
             icounter = icounter + 1
             mask_ibool(iglob) = .true.
-            
+
             ! Storing directly in recv buffer for proc 0
             if (myrank == 0) then
               dump_recv(1,icounter) = coord(1,iglob)
@@ -136,7 +136,7 @@
         enddo
       enddo
     enddo
-    
+
 #ifdef USE_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
@@ -151,7 +151,7 @@
         dump_gather = 0.0
         allocate(dump_duplicate_gather(sum(dump_recv_counts)))
         dump_duplicate_gather = .false.
-        
+
         ! Start gathering with proc 0 data
         dump_gather(:,1:dump_recv_counts(0)) = dump_recv(:,1:dump_recv_counts(0))
         dump_duplicate_gather(1:dump_recv_counts(0)) = dump_duplicate_recv(1:dump_recv_counts(0))
@@ -165,7 +165,7 @@
 
           call MPI_RECV (dump_duplicate_recv(1), dump_recv_counts(iproc), &
                MPI_LOGICAL, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
-          
+
           dump_duplicate_gather(gcounter+1:gcounter+dump_recv_counts(iproc)) = dump_duplicate_recv(1:dump_recv_counts(iproc))
           ! Update index
           gcounter = gcounter + dump_recv_counts(iproc)
@@ -175,7 +175,7 @@
 
         ! As array mask_duplicate is now filled, this array is no longer needed.
         deallocate(dump_duplicate_gather)
-        
+
         call mask_write_matrix()
 
       else
@@ -206,7 +206,7 @@
     if (myrank == 0) then
       call write_file_grid()
     endif
-    
+
   endif ! if (this_is_the_first_time_we_dump)
 
   ! Prepare the requested data for dump.
@@ -290,28 +290,28 @@
   ! Array dump_write has already been allocated first time we dump.
   dump_write = dump_recv(:,1:icounter)
 #endif
-  
+
   ! Proc 0 handles file write.
   if (myrank == 0) then
     call write_file_dump()
   endif
-      
-  
+
+
   if (myrank == 0) then
     write(IMAIN,*) 'Wave field dumped'
     call flush_IMAIN()
   endif
 
   call synchronize_all()
-  
+
   return
 
   contains
-  ! 
+  !
   ! ------------------------------------------------------------
-  ! 
+  !
   subroutine write_file_grid()
-  
+
   integer :: ii
 
   ! Open file handle
@@ -341,11 +341,11 @@
 
   return
   end subroutine write_file_grid
-  ! 
+  !
   ! ------------------------------------------------------------
-  ! 
+  !
   subroutine write_file_dump()
-  
+
   integer :: ii
 
   ! Open file handle
@@ -403,19 +403,19 @@
 
   return
   end subroutine write_file_dump
-  ! 
+  !
   ! ------------------------------------------------------------
-  ! 
+  !
   subroutine mask_duplicates()
-    ! 
-    
+    !
+
   implicit none
 
   integer :: ii,jj
   integer :: nduplicate
   integer, dimension(:), allocatable :: duplicate_index, duplicate_index_pack
   logical, dimension(:), allocatable :: duplicate_index_mask
-  
+
   ! This variable is only generated once
   allocate(mask_duplicate(size(dump_gather,2)))
 
@@ -423,7 +423,7 @@
   mask_duplicate(:) = .true.
 
   ! Nothing to do then
-  if (count(dump_duplicate_gather)==0) return
+  if (count(dump_duplicate_gather) == 0) return
 
   ! Counter for duplicate removal cycles.
   ii = 0
@@ -436,8 +436,8 @@
     ! Might be inefficient to reform the entire index array every time, but avoids storage.
     duplicate_index = pack([(jj, jj=1, size(dump_gather, 2))], dump_duplicate_gather)
     ! Search for duplicates of first entry still marked as duplicates.
-    duplicate_index_mask = dump_gather(1,duplicate_index(1))==dump_gather(1,duplicate_index) .and. &
-                           dump_gather(2,duplicate_index(1))==dump_gather(2,duplicate_index)
+    duplicate_index_mask = dump_gather(1,duplicate_index(1)) == dump_gather(1,duplicate_index) .and. &
+                           dump_gather(2,duplicate_index(1)) == dump_gather(2,duplicate_index)
     nduplicate = count(duplicate_index_mask)
     ! The reduced (masked) duplicate indices (i.e. excluding the first duplicate that is being searched for)
     allocate(duplicate_index_pack(nduplicate))
@@ -459,9 +459,9 @@
 
   return
   end subroutine mask_duplicates
-  ! 
+  !
   ! ------------------------------------------------------------
-  ! 
+  !
   subroutine mask_write_matrix()
   ! Masks the gathered data to exclude duplicates and packs to the reduced size write arrays.
   implicit none
@@ -473,7 +473,7 @@
   dump_write = 0.0
   dump_write(1,:) = pack(dump_gather(1,:), mask_duplicate)
   dump_write(2,:) = pack(dump_gather(2,:), mask_duplicate)
-  
+
   return
   end subroutine mask_write_matrix
 end subroutine write_wavefield_dumps
