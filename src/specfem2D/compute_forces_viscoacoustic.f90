@@ -254,7 +254,7 @@
           do i_sls = 1,N_SLS
             tempx3(i,j) = tempx3(i,j) + e1(i,j,ispec,i_sls)
           enddo
-          tempx3(i,j) = jacobian(i,j,ispec)  * tempx3(i,j)
+!!!!!! DK DK   test here       tempx3(i,j) = jacobian(i,j,ispec)  * tempx3(i,j)
         enddo
       enddo
 
@@ -339,7 +339,8 @@
         do i = 1,NGLLX
           ! sums contributions from each element to the global values
           iglob = ibool(i,j,ispec)
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + wzgll(j) * wxgll(i) * tempx3(i,j)
+!! DK DK   test here       potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + wzgll(j) * wxgll(i) * tempx3(i,j)
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + tempx3(i,j)
         enddo
       enddo
     endif

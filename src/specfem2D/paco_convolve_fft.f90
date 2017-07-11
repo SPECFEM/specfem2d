@@ -62,10 +62,10 @@
   AN = N
 
 !
-! label=1, champ U en entree, convolution par un ricker pour U
-! label=2, champ U en entree, convolution par la derivee de ricker pour V
-! label=3, champ U en entree, convolution par la derivee seconde de ricker pour A
-! label=4, champ T en entree, convolution par un ricker
+! label=1, displacement field U as input, convolution by a Ricker for displacement U
+! label=2, displacement field U as input, convolution by the first derivative of a Ricker for velocity V
+! label=3, displacement field U as input, convolution by the second derivative of a Ricker for acceleration A
+! label=4, displacement field T as input, convolution by a Ricker
 !
 ! flag = 0 on a besoin de U, V et A (pas T)
 ! flag /= 0 on a besoin de T et V (pas U ni A)
