@@ -47,7 +47,7 @@
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj,ATTENUATION_VISCOACOUSTIC, &
-       nspec_ATT, N_SLS
+                         nspec_ATT, N_SLS, iglob_is_forced
 
   ! overlapping communication
   use specfem_par, only: nspec_inner_acoustic,nspec_outer_acoustic,phase_ispec_inner_acoustic
@@ -254,7 +254,7 @@
           do i_sls = 1,N_SLS
             tempx3(i,j) = tempx3(i,j) + e1(i,j,ispec,i_sls)
           enddo
-!!!!!! DK DK   test here       tempx3(i,j) = jacobian(i,j,ispec)  * tempx3(i,j)
+          tempx3(i,j) = jacobian(i,j,ispec)  * tempx3(i,j)
         enddo
       enddo
 
@@ -272,22 +272,46 @@
       if (is_on_the_axis(ispec)) then
         do j = 1,NGLLZ
           do i = 1,NGLLX
-            ! assembles the contributions
-            temp1l = 0._CUSTOM_REAL
-            temp2l = 0._CUSTOM_REAL
-            do k = 1,NGLLX
-              temp1l = temp1l + tempx1(k,j) * hprimeBarwglj_xx(k,i)
-              temp2l = temp2l + tempx2(i,k) * hprimewgll_zz(k,j)
-            enddo
-            ! sums contributions from each element to the global values
             iglob = ibool(i,j,ispec)
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                                - (wzgll(j) * temp1l + wxglj(i) * temp2l)
+            if (.not. iglob_is_forced(iglob)) then
+              ! assembles the contributions
+              temp1l = 0._CUSTOM_REAL
+              temp2l = 0._CUSTOM_REAL
+              do k = 1,NGLLX
+                temp1l = temp1l + tempx1(k,j) * hprimeBarwglj_xx(k,i)
+                temp2l = temp2l + tempx2(i,k) * hprimewgll_zz(k,j)
+              enddo
+              ! sums contributions from each element to the global values
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
+                                                  - (wzgll(j) * temp1l + wxglj(i) * temp2l)
+            endif
           enddo
         enddo
       else
         do j = 1,NGLLZ
           do i = 1,NGLLX
+            iglob = ibool(i,j,ispec)
+            if (.not. iglob_is_forced(iglob)) then
+              ! assembles the contributions
+              temp1l = 0._CUSTOM_REAL
+              temp2l = 0._CUSTOM_REAL
+              do k = 1,NGLLX
+                temp1l = temp1l + tempx1(k,j) * hprimewgll_xx(k,i)
+                temp2l = temp2l + tempx2(i,k) * hprimewgll_zz(k,j)
+              enddo
+              ! sums contributions from each element to the global values
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
+                                                  - (wzgll(j) * temp1l + wxgll(i) * temp2l)
+            endif
+          enddo
+        enddo
+      endif
+    else
+      ! default case
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
+          if (.not. iglob_is_forced(iglob)) then
             ! assembles the contributions
             temp1l = 0._CUSTOM_REAL
             temp2l = 0._CUSTOM_REAL
@@ -296,27 +320,9 @@
               temp2l = temp2l + tempx2(i,k) * hprimewgll_zz(k,j)
             enddo
             ! sums contributions from each element to the global values
-            iglob = ibool(i,j,ispec)
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
                                                 - (wzgll(j) * temp1l + wxgll(i) * temp2l)
-          enddo
-        enddo
-      endif
-    else
-      ! default case
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          ! assembles the contributions
-          temp1l = 0._CUSTOM_REAL
-          temp2l = 0._CUSTOM_REAL
-          do k = 1,NGLLX
-            temp1l = temp1l + tempx1(k,j) * hprimewgll_xx(k,i)
-            temp2l = temp2l + tempx2(i,k) * hprimewgll_zz(k,j)
-          enddo
-          ! sums contributions from each element to the global values
-          iglob = ibool(i,j,ispec)
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                              - (wzgll(j) * temp1l + wxgll(i) * temp2l)
+          endif
         enddo
       enddo
     endif
@@ -327,7 +333,9 @@
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_dot_acoustic_PML(i,j)
+            if (.not. iglob_is_forced(iglob)) then
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_dot_acoustic_PML(i,j)
+            endif
           enddo
         enddo
       endif
@@ -339,8 +347,9 @@
         do i = 1,NGLLX
           ! sums contributions from each element to the global values
           iglob = ibool(i,j,ispec)
-!! DK DK   test here       potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + wzgll(j) * wxgll(i) * tempx3(i,j)
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + tempx3(i,j)
+          if (.not. iglob_is_forced(iglob)) then
+            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + wzgll(j) * wxgll(i) * tempx3(i,j)
+          endif
         enddo
       enddo
     endif

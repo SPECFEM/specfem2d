@@ -383,7 +383,13 @@
 
   ! iglob_is_forced array is used when USE_ENFORCE_FIELDS is .true. (it says if a GLL point is forced or not)
   allocate(iglob_is_forced(nglob))
+  allocate(acoustic_iglob_is_forced(nglob))
+  allocate(elastic_iglob_is_forced(nglob))
+  allocate(modeAmplitude(nglob_acoustic))
   iglob_is_forced(:) = .false.
+  acoustic_iglob_is_forced(:) = .false.
+  elastic_iglob_is_forced(:) = .false.
+  modeAmplitude(:) = 0.0d0
 
   ! synchronizes all processes
   call synchronize_all()

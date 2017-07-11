@@ -184,7 +184,9 @@ module specfem_par
   integer, dimension(:), allocatable :: ib_left_acforcing,ib_right_acforcing,ib_bottom_acforcing,ib_top_acforcing
 
   ! Variables for forcing
-  logical, dimension(:), allocatable :: iglob_is_forced
+  logical, dimension(:), allocatable :: iglob_is_forced,acoustic_iglob_is_forced,elastic_iglob_is_forced
+  integer :: nLines ! Number of lines in input file
+  double precision, dimension(:), allocatable  :: zmode,realMode,imagMode,modeAmplitude
 
   ! for plane wave incidence
   double precision :: anglesource_refl, c_inc, c_refl

@@ -409,6 +409,10 @@
                                                   PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
 
   use specfem_par, only: nglob_acoustic,CUSTOM_REAL
+#ifndef FORCE_VECTORIZATION
+  use constants, only: USE_ENFORCE_FIELDS
+  use specfem_par, only: iglob_is_forced,acoustic_iglob_is_forced,it
+#endif
 
   implicit none
 
@@ -420,9 +424,7 @@
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_acoustic_old
 
   ! local parameters
-#ifdef FORCE_VECTORIZATION
-  integer :: i
-#endif
+  integer :: iglob
 
   ! PML simulations
   if (PML_BOUNDARY_CONDITIONS) then
@@ -430,8 +432,8 @@
     ! note: todo - for elastic, there is an additional factor 1/TWO to the default deltasquareover2 for the acceleration term
     !       find explanations where?
 #ifdef FORCE_VECTORIZATION
-    do i = 1,nglob_acoustic
-      potential_acoustic_old(i) = potential_acoustic(i) + deltatsquareover2 * potential_dot_dot_acoustic(i)
+    do iglob = 1,nglob_acoustic
+      potential_acoustic_old(iglob) = potential_acoustic(iglob) + deltatsquareover2 * potential_dot_dot_acoustic(iglob)
     enddo
 #else
     potential_acoustic_old(:) = potential_acoustic(:) + deltatsquareover2 * potential_dot_dot_acoustic(:)
@@ -439,19 +441,35 @@
 
   endif ! PML_BOUNDARY_CONDITIONS
 
-
 #ifdef FORCE_VECTORIZATION
-  do i = 1,nglob_acoustic
-    potential_acoustic(i) = potential_acoustic(i) + deltat * potential_dot_acoustic(i) &
-                                                  + deltatsquareover2 * potential_dot_dot_acoustic(i)
-    potential_dot_acoustic(i) = potential_dot_acoustic(i) + deltatover2 * potential_dot_dot_acoustic(i)
-    potential_dot_dot_acoustic(i) = 0._CUSTOM_REAL
+  do iglob = 1,nglob_acoustic
+    potential_acoustic(iglob) = potential_acoustic(iglob) + deltat * potential_dot_acoustic(iglob) &
+                                                  + deltatsquareover2 * potential_dot_dot_acoustic(iglob)
+    potential_dot_acoustic(iglob) = potential_dot_acoustic(iglob) + deltatover2 * potential_dot_dot_acoustic(iglob)
+    potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
   enddo
 #else
-  potential_acoustic(:) = potential_acoustic(:) + deltat * potential_dot_acoustic &
-                                                + deltatsquareover2 * potential_dot_dot_acoustic(:)
-  potential_dot_acoustic(:) = potential_dot_acoustic(:) + deltatover2 * potential_dot_dot_acoustic(:)
-  potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+  ! non-vectorized updates
+  if (USE_ENFORCE_FIELDS) then
+    do iglob = 1,nglob_acoustic
+      if (iglob_is_forced(iglob)) then
+        if (acoustic_iglob_is_forced(iglob)) call enforce_fields_acoustic(iglob,it)
+      else
+        ! big loop over all the global points (not elements) in the mesh to update
+        ! the potential_acoustic and potential_dot_acoustic vectors and clear the potential_dot_dot_acoustic vector
+        potential_acoustic(iglob) = potential_acoustic(iglob) + deltat * potential_dot_acoustic(iglob) &
+                                                      + deltatsquareover2 * potential_dot_dot_acoustic(iglob)
+        potential_dot_acoustic(iglob) = potential_dot_acoustic(iglob) + deltatover2 * potential_dot_dot_acoustic(iglob)
+        potential_dot_dot_acoustic(iglob) = 0._CUSTOM_REAL
+      endif
+    enddo
+  else
+    potential_acoustic(:) = potential_acoustic(:) + deltat * potential_dot_acoustic &
+                                                  + deltatsquareover2 * potential_dot_dot_acoustic(:)
+    potential_dot_acoustic(:) = potential_dot_acoustic(:) + deltatover2 * potential_dot_dot_acoustic(:)
+    potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+  endif
+
 #endif
 
   end subroutine update_displacement_newmark_acoustic
@@ -471,7 +489,7 @@
 
 #ifndef FORCE_VECTORIZATION
   use constants, only: USE_ENFORCE_FIELDS
-  use specfem_par, only: iglob_is_forced,it
+  use specfem_par, only: iglob_is_forced,elastic_iglob_is_forced,it
 #endif
 
   implicit none
@@ -518,7 +536,7 @@
   if (USE_ENFORCE_FIELDS) then
     do iglob = 1,nglob_elastic
       if (iglob_is_forced(iglob)) then
-        call enforce_fields(iglob,it)
+        if (elastic_iglob_is_forced(iglob)) call enforce_fields(iglob,it) ! TODO TODO TODO
       else
         ! big loop over all the global points (not elements) in the mesh to update
         ! the displacement and velocity vectors and clear the acceleration vector
@@ -717,7 +735,7 @@
   if (USE_ENFORCE_FIELDS) then
     do iglob = 1,nglob_elastic
       ! big loop over all the global points (not elements) in the mesh to update velocity vector (corrector).
-      if (.not. iglob_is_forced(iglob)) then
+      if (.not. elastic_iglob_is_forced(iglob)) then
         veloc_elastic(:,iglob) = veloc_elastic(:,iglob) + deltatover2 * accel_elastic(:,iglob)
       endif
     enddo
@@ -748,7 +766,7 @@
   if (USE_ENFORCE_FIELDS) then
     do iglob = 1,nglob_elastic
       ! big loop over all the global points (not elements) in the mesh to update velocity vector (corrector).
-      if (.not. iglob_is_forced(iglob)) then
+      if (.not. elastic_iglob_is_forced(iglob)) then
         b_veloc_elastic(:,iglob) = b_veloc_elastic(:,iglob) + b_deltatover2 * b_accel_elastic(:,iglob)
       endif
     enddo
@@ -771,12 +789,25 @@
 
 ! updates velocity potential (corrector)
 
+  use constants, only: USE_ENFORCE_FIELDS
   use specfem_par
 
   implicit none
 
+  ! local parameters
+  integer :: iglob
+
   !! DK DK this should be vectorized
-  potential_dot_acoustic(:) = potential_dot_acoustic(:) + deltatover2 * potential_dot_dot_acoustic(:)
+  if (USE_ENFORCE_FIELDS) then
+    do iglob = 1,nglob_acoustic
+      ! big loop over all the global points (not elements) in the acoustic mesh to update velocity vector (corrector).
+      if (.not. acoustic_iglob_is_forced(iglob)) then
+        potential_dot_acoustic(iglob) = potential_dot_acoustic(iglob) + deltatover2 * potential_dot_dot_acoustic(iglob)
+      endif
+    enddo
+  else
+    potential_dot_acoustic(:) = potential_dot_acoustic(:) + deltatover2 * potential_dot_dot_acoustic(:)
+  endif
 
   ! update the potential field (use a new array here) for coupling terms
   if (SIMULATION_TYPE == 3) then
@@ -793,10 +824,26 @@
 
 ! updates velocity potential (corrector)
 
+  use constants, only: USE_ENFORCE_FIELDS
   use specfem_par
 
+  implicit none
+
+  ! local parameters
+  integer :: iglob
+
   !! DK DK this should be vectorized
-  b_potential_dot_acoustic(:) = b_potential_dot_acoustic(:) + b_deltatover2 * b_potential_dot_dot_acoustic(:)
+  if (USE_ENFORCE_FIELDS) then
+    do iglob = 1,nglob_acoustic
+      ! big loop over all the global points (not elements) in the acoustic mesh to update velocity vector (corrector).
+      if (.not. acoustic_iglob_is_forced(iglob)) then
+        b_potential_dot_acoustic(iglob) = b_potential_dot_acoustic(iglob) + b_deltatover2 * b_potential_dot_dot_acoustic(iglob)
+      endif
+    enddo
+  else
+    !! DK DK this should be vectorized
+    b_potential_dot_acoustic(:) = b_potential_dot_acoustic(:) + b_deltatover2 * b_potential_dot_dot_acoustic(:)
+  endif
 
   end subroutine update_veloc_acoustic_Newmark_backward
 
@@ -830,6 +877,8 @@
 ! updates velocity (corrector)
 
   use specfem_par
+
+  implicit none
 
   ! solid
   b_velocs_poroelastic(:,:) = b_velocs_poroelastic(:,:) + b_deltatover2 * b_accels_poroelastic(:,:)
