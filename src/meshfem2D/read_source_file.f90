@@ -37,7 +37,7 @@
 
   use constants, only: IMAIN,IGNORE_JUNK,NLINES_PER_SOURCE,TINYVAL,PI,mygroup,IN_DATA_FILES
   use source_file_par
-  use shared_parameters, only: DT,NUMBER_OF_SIMULTANEOUS_RUNS
+  use shared_parameters, only: DT
 
   implicit none
 
