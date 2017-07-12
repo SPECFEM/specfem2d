@@ -36,6 +36,7 @@
   ! reads in source file DATA/SOURCE
 
   use constants, only: IMAIN,IGNORE_JUNK,NLINES_PER_SOURCE,TINYVAL,PI,mygroup,IN_DATA_FILES
+  use part_unstruct_par, only: myrank
   use source_file_par
   use shared_parameters, only: DT,NUMBER_OF_SIMULTANEOUS_RUNS
 
@@ -82,7 +83,8 @@
 
   source_filename = trim(IN_DATA_FILES)//'SOURCE'
 
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+  ! mygroup has been initialized with negative value. It is positive just in the case NUMBER_OF_SIMULTANEOUS_RUNS > 1
+  if (mygroup >= 0) then
     write(path_to_add,"('run',i4.4,'/')") mygroup + 1
     source_filename = path_to_add(1:len_trim(path_to_add))//source_filename(1:len_trim(source_filename))
   endif
