@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Dimitri Komatitsch, CNRS, Marseille, France, 2017
+
 # use "montage" from ImageMagick
 
 # use A4 landscape, which is -page 842x595
