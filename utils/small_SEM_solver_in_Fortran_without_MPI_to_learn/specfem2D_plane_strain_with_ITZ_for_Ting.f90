@@ -128,11 +128,9 @@
   double precision, dimension(NDIM,NGLOB) :: coord
 
 !! DK DK added this for example of contour integral for Ting
-  logical, dimension(NSPEC) :: is_on_left_edge_of_integral_contour
-  logical, dimension(NSPEC) :: is_on_right_edge_of_integral_contour
-  logical, dimension(NSPEC) :: is_on_bottom_edge_of_integral_contour
-  logical, dimension(NSPEC) :: is_on_top_edge_of_integral_contour
-  real(kind=CUSTOM_REAL) :: nx,nz,xxi,zxi,xgamma,zgamma,weight,jacobian1D
+  logical, dimension(NSPEC) :: is_on_Gamma_plus
+  logical, dimension(NSPEC) :: is_on_Gamma_minus
+  real(kind=CUSTOM_REAL) :: nx,nz,xxi,zxi,weight,jacobian1D
   real(kind=CUSTOM_REAL) :: my_function_to_integrate,test_integral_x,test_integral_z,exact
 
   double precision :: x_source,z_source
@@ -206,10 +204,8 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !! DK DK added this for example of contour integral for Ting
-  is_on_left_edge_of_integral_contour(:) = .false.
-  is_on_right_edge_of_integral_contour(:) = .false.
-  is_on_bottom_edge_of_integral_contour(:) = .false.
-  is_on_top_edge_of_integral_contour(:) = .false.
+  is_on_Gamma_plus(:) = .false.
+  is_on_Gamma_minus(:) = .false.
 
 !!!! create the first half of the mesh (the bottom part)
 
@@ -249,17 +245,8 @@
       knods(3,ispec) = num(i+1,j+1,nelem_x)
       knods(4,ispec) = num(i,j+1,nelem_x)
 
-!! DK DK added this for example of contour integral for Ting
-!! DK DK create a rectangle around the source, which will be the contour
-      if (i == EXTERNAL_SIZE_X .and. (j >= EXTERNAL_SIZE_Z .and. j <= nelem_z/2-1 - EXTERNAL_SIZE_Z)) &
-                                                           is_on_left_edge_of_integral_contour(ispec) = .true.
-      if (i == nelem_x-1 - EXTERNAL_SIZE_X .and. (j >= EXTERNAL_SIZE_Z .and. j <= nelem_z/2-1 - EXTERNAL_SIZE_Z)) &
-                                                           is_on_right_edge_of_integral_contour(ispec) = .true.
-
-      if (j == EXTERNAL_SIZE_Z .and. (i >= EXTERNAL_SIZE_X .and. i <= nelem_x-1 - EXTERNAL_SIZE_X)) &
-                                                           is_on_bottom_edge_of_integral_contour(ispec) = .true.
-      if (j == nelem_z/2-1 - EXTERNAL_SIZE_Z .and. (i >= EXTERNAL_SIZE_X .and. i <= nelem_x-1 - EXTERNAL_SIZE_X)) &
-                                                           is_on_top_edge_of_integral_contour(ispec) = .true.
+!! DK DK create a flag for all the elements that are in contact with the Gamma_minus contour
+      if (j == nelem_z/2-1) is_on_Gamma_minus(ispec) = .true.
 
     enddo
   enddo
@@ -301,6 +288,10 @@
       knods(2,ispec) = num(i+1,j,nelem_x) + value_to_add_to_knods
       knods(3,ispec) = num(i+1,j+1,nelem_x) + value_to_add_to_knods
       knods(4,ispec) = num(i,j+1,nelem_x) + value_to_add_to_knods
+
+!! DK DK create a flag for all the elements that are in contact with the Gamma_plus contour
+      if (j == 0) is_on_Gamma_plus(ispec) = .true.
+
     enddo
   enddo
 
@@ -376,73 +367,19 @@
   print *
 
 !
-!---- compute a test 1D integral along the contour to create an example for Ting
+!---- compute a test 1D integral along Gamma_minus to create an example for Ting
 !
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-!! DK DK added this for example of contour integral for Ting
+!! DK DK added this for example of Gamma_minus integral for Ting
 
   test_integral_x = 0.
   test_integral_z = 0.
 
   do ispec = 1,nspec
 
-  if (is_on_left_edge_of_integral_contour(ispec)) then
-    i = 1
-    do j = 1,NGLLZ
-        xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-        zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xgamma**2 + zgamma**2)
-        nx = - zgamma / jacobian1D
-        nz = + xgamma / jacobian1D
-        weight = jacobian1D * wzgll(j)
-
-        x = coord(1,ibool(i,j,ispec))
-        z = coord(2,ibool(i,j,ispec))
-        my_function_to_integrate = 12.*z
-        test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
-        test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
-    enddo
-  endif
-
-  if (is_on_right_edge_of_integral_contour(ispec)) then
-    i = NGLLX
-    do j = 1,NGLLZ
-        xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-        zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xgamma**2 + zgamma**2)
-        nx = + zgamma / jacobian1D
-        nz = - xgamma / jacobian1D
-        weight = jacobian1D * wzgll(j)
-
-        x = coord(1,ibool(i,j,ispec))
-        z = coord(2,ibool(i,j,ispec))
-        my_function_to_integrate = 27.*z
-        test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
-        test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
-    enddo
-  endif
-
-  if (is_on_bottom_edge_of_integral_contour(ispec)) then
-    j = 1
-    do i = 1,NGLLX
-        xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-        zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-        jacobian1D = sqrt(xxi**2 + zxi**2)
-        nx = + zxi / jacobian1D
-        nz = - xxi / jacobian1D
-        weight = jacobian1D * wxgll(i)
-
-        x = coord(1,ibool(i,j,ispec))
-        z = coord(2,ibool(i,j,ispec))
-        my_function_to_integrate = 12.*x
-        test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
-        test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
-    enddo
-  endif
-
-  if (is_on_top_edge_of_integral_contour(ispec)) then
+  if (is_on_Gamma_minus(ispec)) then
+! Gamma_minus is composed of the top edges (j == NGLLZ) of the spectral elements in contact with the mesh interface of height h
+! (represented in yellow in the PostScript visualization files produced by the code)
     j = NGLLZ
     do i = 1,NGLLX
         xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
@@ -450,11 +387,14 @@
         jacobian1D = sqrt(xxi**2 + zxi**2)
         nx = - zxi / jacobian1D
         nz = + xxi / jacobian1D
+!! BEWARE here: the normal is (0, +1), not (0, -1), because we are at the top of a spectral element
+!! Ting, you may need to invert the sign of the normal here, depending if you want it to go down or up along Gamma_minus
         weight = jacobian1D * wxgll(i)
 
         x = coord(1,ibool(i,j,ispec))
         z = coord(2,ibool(i,j,ispec))
-        my_function_to_integrate = 27.*x
+        !!!!!!!!!!!! print *,'z (should be 1500) = ',z
+        my_function_to_integrate = x
         test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
         test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
     enddo
@@ -463,9 +403,58 @@
   enddo
 
   print *
-  exact = (27-12)*(1200**2 - 300**2)/2
+! this one is exactly zero because the interface is horizontal and thus the normal vector (nx, nz) is always (0, 1)
+  exact = 0.d0
   print *,'Value of test_integral_x  numerical = ',test_integral_x,'  exact = ',exact,'  difference = ',test_integral_x - exact
-  exact = (27-12)*(3700**2 - 300**2)/2
+! the sign is positive here because the normal is (0, +1), not (0, -1), because we are at the top of a spectral element
+  exact = (xmax**2 - xmin**2)/2
+  print *,'Value of test_integral_z  numerical = ',test_integral_z,'  exact = ',exact,'  difference = ',test_integral_z - exact
+  print *
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!
+!---- compute a test 1D integral along Gamma_plus to create an example for Ting
+!
+
+!! DK DK added this for example of Gamma_plus integral for Ting
+
+  test_integral_x = 0.
+  test_integral_z = 0.
+
+  do ispec = 1,nspec
+
+  if (is_on_Gamma_plus(ispec)) then
+! Gamma_plus is composed of the bottom edges (j == 1) of the spectral elements in contact with the mesh interface of height h
+! (represented in green in the PostScript visualization files produced by the code)
+    j = 1
+    do i = 1,NGLLX
+        xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+        zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+        jacobian1D = sqrt(xxi**2 + zxi**2)
+        nx = + zxi / jacobian1D
+        nz = - xxi / jacobian1D
+!! BEWARE here: the normal is (0, -1), not (0, +1), because we are at the bottom of a spectral element
+!! Ting, you may need to invert the sign of the normal here, depending if you want it to go up or down along Gamma_plus
+        weight = jacobian1D * wxgll(i)
+
+        x = coord(1,ibool(i,j,ispec))
+        z = coord(2,ibool(i,j,ispec))
+        !!!!!!!!!!!! print *,'z (should be ',1500 + h,') = ',z
+        my_function_to_integrate = x
+        test_integral_x = test_integral_x + weight*nx*my_function_to_integrate
+        test_integral_z = test_integral_z + weight*nz*my_function_to_integrate
+    enddo
+  endif
+
+  enddo
+
+  print *
+! this one is exactly zero because the interface is horizontal and thus the normal vector (nx, nz) is always (0, -1)
+  exact = 0.d0
+  print *,'Value of test_integral_x  numerical = ',test_integral_x,'  exact = ',exact,'  difference = ',test_integral_x - exact
+! the sign is negative here because the normal is (0, -1), not (0, +1), because we are at the bottom of a spectral element
+  exact = - (xmax**2 - xmin**2)/2
   print *,'Value of test_integral_z  numerical = ',test_integral_z,'  exact = ',exact,'  difference = ',test_integral_z - exact
   print *
 
@@ -528,7 +517,8 @@
   write(*,*)
 
 ! draw the displacement vector field in a PostScript file
-      call plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,x_receiver,z_receiver,it,deltat,NGLLX,NGLLZ,NDIM)
+      call plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,x_receiver,z_receiver,it,deltat,NGLLX,NGLLZ,NDIM, &
+                          is_on_Gamma_minus,is_on_Gamma_plus)
 
     endif
 
