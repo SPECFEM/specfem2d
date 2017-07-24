@@ -194,6 +194,10 @@
   ! the common nodes forming the edge are computed here
   if (coupled_acoustic_poro) then
 
+    ! checks
+    if (ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_PORO_FLUID_PART) &
+      stop 'Attenuation not supported for mixed acoustic/poroelastic simulations'
+
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)
@@ -336,6 +340,7 @@
     ! checks
     if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_PORO_FLUID_PART) &
       stop 'Attenuation not supported for mixed elastic/poroelastic simulations'
+
     if (time_stepping_scheme == 2 .or. time_stepping_scheme == 3) &
       stop 'RK and LDDRK time scheme not supported for mixed elastic/poroelastic simulations'
 
