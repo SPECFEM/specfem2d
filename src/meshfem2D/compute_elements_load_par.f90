@@ -29,8 +29,8 @@ module compute_elements_load_par
 
   use part_unstruct_par, only: myrank,nelmnts,nb_edges,abs_surface,nelemabs,glob2loc_elmnts,abs_surface_merge,nelemabs_merge, &
                                nxread,nzread
-  use shared_parameters, only: ATTENUATION_VISCOELASTIC,NELEM_PML_THICKNESS,PML_BOUNDARY_CONDITIONS,read_external_mesh, &
-                               num_material,phi_read,QKappa,Qmu,absorbbottom,absorbtop,absorbleft,absorbright
+  use shared_parameters, only: ATTENUATION_VISCOELASTIC,ATTENUATION_VISCOACOUSTIC,NELEM_PML_THICKNESS,PML_BOUNDARY_CONDITIONS, &
+                               read_external_mesh,num_material,phi_read,QKappa,Qmu,absorbbottom,absorbtop,absorbleft,absorbright
   use constants, only: IMAIN,TINYVAL
 
   integer, dimension(:), allocatable  :: elmnts_load
@@ -40,11 +40,14 @@ module compute_elements_load_par
 
   !! acoustic-elastic-poroelastic as well as CPML load balancing:
   !! we define here the relative cost of all types of spectral elements used in the code.
-  integer, parameter :: ELASTIC_LOAD = 113
   integer, parameter :: ACOUSTIC_LOAD = 46
+  integer, parameter :: ELASTIC_LOAD = 113
+  integer, parameter :: VISCOACOUSTIC_LOAD = 99999 !! not implemented yet, but should be implemented for sure
   integer, parameter :: VISCOELASTIC_LOAD = 280
-  integer, parameter :: ELASTIC_LOAD_PML = 1049
+
   integer, parameter :: ACOUSTIC_LOAD_PML = 790
+  integer, parameter :: ELASTIC_LOAD_PML = 1049
+  integer, parameter :: VISCOACOUSTIC_LOAD_PML = 99999 !! not implemented yet, but should be implemented for sure
   integer, parameter :: VISCOELASTIC_LOAD_PML = 1306
 
 contains
@@ -166,6 +169,7 @@ contains
         is_acoustic(ispec) = .false.
         is_elastic(ispec) = .false.
       endif
+
       if (ATTENUATION_VISCOELASTIC) then
         if (((abs(Qkappa(num_material(ispec+1)) - 9999.0d0)) > TINYVAL) .or. &
             ((abs(Qmu(num_material(ispec+1)) - 9999.0d0)) > TINYVAL)) then
@@ -174,6 +178,11 @@ contains
           is_acoustic(ispec) = .false.
         endif
       endif
+
+      if (ATTENUATION_VISCOACOUSTIC) then
+        print *,'warning: there should be some code for ATTENUATION_VISCOACOUSTIC in subroutine determine_elements_type!'
+      endif
+
     enddo
 
   end subroutine determine_elements_type
