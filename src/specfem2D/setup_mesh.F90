@@ -725,7 +725,7 @@
 !    call exit_MPI(myrank,'Cannot put absorbing boundaries if anisotropic materials along edges')
 
   if (ATTENUATION_VISCOELASTIC .and. all_anisotropic) then
-    call exit_MPI(myrank,'Cannot turn attenuation on in anisotropic materials')
+    call exit_MPI(myrank,'Cannot turn attenuation on in anisotropic materials for now (not implemented yet, but could be done)')
   endif
 
   ! synchronizes all processes

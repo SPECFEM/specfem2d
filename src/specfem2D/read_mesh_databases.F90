@@ -214,7 +214,7 @@
     write(IMAIN,700) seismotype,anglerec
     write(IMAIN,750) initialfield, &
                  add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left, &
-                 ATTENUATION_VISCOELASTIC,output_grid_ASCII,OUTPUT_ENERGY
+                 ATTENUATION_VISCOELASTIC,ATTENUATION_VISCOACOUSTIC,output_grid_ASCII,OUTPUT_ENERGY
     write(IMAIN,800) imagetype_postscript,cutsnaps,subsamp_postscript
 
     ! time step
@@ -250,7 +250,8 @@
   'Add Bielak conditions .(add_Bielak_conditions_right) = ',l6/5x, &
   'Add Bielak conditions . .(add_Bielak_conditions_top) = ',l6/5x, &
   'Add Bielak conditions. .(add_Bielak_conditions_left) = ',l6/5x, &
-  'Attenuation on/off . . . .(ATTENUATION_VISCOELASTIC) = ',l6/5x, &
+  'Attenuation in solid . . .(ATTENUATION_VISCOELASTIC) = ',l6/5x, &
+  'Attenuation in fluid . . (ATTENUATION_VISCOACOUSTIC) = ',l6/5x, &
   'Save grid in ASCII file or not . (output_grid_ASCII) = ',l6/5x, &
   'Save a file with total energy or not.(OUTPUT_ENERGY) = ',l6)
 

@@ -153,7 +153,7 @@
   use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES
 
   use specfem_par, only: myrank,iteration_on_subset,NSUBSET_ITERATIONS, &
-    any_acoustic,any_elastic,ATTENUATION_VISCOELASTIC, &
+    any_acoustic,any_elastic,ATTENUATION_VISCOACOUSTIC,ATTENUATION_VISCOELASTIC, &
     b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
     b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_e1,b_e11,b_e13
 
@@ -179,6 +179,10 @@
     read(IIN_UNDO_ATT) b_potential_dot_dot_acoustic
     read(IIN_UNDO_ATT) b_potential_dot_acoustic
     read(IIN_UNDO_ATT) b_potential_acoustic
+
+    if (ATTENUATION_VISCOACOUSTIC) then
+      read(IIN_UNDO_ATT) b_e1
+    endif
   endif
 
   if (any_elastic) then
