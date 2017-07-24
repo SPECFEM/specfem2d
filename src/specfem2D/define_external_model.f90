@@ -32,7 +32,7 @@
 !========================================================================
 
   subroutine define_external_model_dummy(coord,material_element,ibool, &
-                                         rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+                                         rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
                                          c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
@@ -60,7 +60,6 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: QKappa_attenuation,Qmu_attenuation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: gravity,Nsq
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: c11,c15,c13,c33,c35,c55,c12,c23,c25
 
   ! local parameters
@@ -76,11 +75,6 @@
     write(IMAIN,*) '  external model: ','dummy example'
     call flush_IMAIN()
   endif
-
-! remove gravity
-! leave these arrays here even if you do not assign them to use them because they need to be cleared
-  gravity(:,:,:) = 0.d0
-  Nsq(:,:,:) = 0.d0
 
   ! default no attenuation
   QKappa_attenuation(:,:,:) = 9999.d0
@@ -153,7 +147,7 @@
 !
 !========================================================================
   subroutine define_external_model(coord,material_element,ibool, &
-                                   rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+                                   rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
                                    c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
@@ -200,7 +194,6 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: QKappa_attenuation,Qmu_attenuation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: gravity,Nsq
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: c11,c15,c13,c33,c35,c55,c12,c23,c25
 
   ! local parameters
@@ -229,11 +222,6 @@
     write(IMAIN,*) '  external model: ','ak135-f'
     call flush_IMAIN()
   endif
-
-  ! remove gravity
-  ! leave these arrays here even if you do not assign them to use them because they need to be cleared
-  gravity(:,:,:) = 0.d0
-  Nsq(:,:,:)     = 0.d0
 
   ! default no attenuation
   QKappa_attenuation(:,:,:) = 9999.d0
@@ -1153,138 +1141,4 @@
   vs(:,:,:) = vs(:,:,:)*1000.0d0
 
   end subroutine define_external_model
-
-
-!========================================================================
-! another example below, to read data from a 1D atmosphere model
-! including gravity
-!========================================================================
-
-  subroutine define_external_model_atmos_tabular_gravitoacoustic(coord,material_element,ibool, &
-                                                                 rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
-                                                                 c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
-
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
-
-  use specfem_par, only: myrank
-
-  implicit none
-
-!--------------------------------------------------------------------------------------------------
-!
-!          Model is either test one or being based on the Nrl_MSISE2000 atmosphere model
-!          ----------------------------------------------------------
-
-! 1D model:
-!
-! The 1D model will be used to create a tabular model of atmosphere
-
-!--------------------------------------------------------------------------------------------------
-
-  integer, intent(in) :: nspec,nglob
-
-  double precision, dimension(NDIM,nglob), intent(in) :: coord
-
-  integer, dimension(nspec), intent(in) :: material_element
-
-  integer, dimension(NGLLX,NGLLZ,nspec), intent(in) :: ibool
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
-                                              c11,c15,c13,c33,c35,c55,c12,c23,c25
-
-! number of layers in the model
-  integer, parameter :: NR_LAYER = 251
-
-  double precision, dimension(NR_LAYER) :: z_atmos
-  double precision, dimension(NR_LAYER) :: density_atmos
-  double precision, dimension(NR_LAYER) :: vp_atmos
-  double precision, dimension(NR_LAYER) :: gravity_atmos
-  double precision, dimension(NR_LAYER) :: Nsq_atmos
-
-! region flag to assign the Atmosphere model
-  integer, parameter :: IREGION_AIR = 1
-
-  integer :: i,j,ispec,iglob,ii
-
-  double precision :: x,z,frac,tmp2
-
-  ! user output
-  if (myrank == 0) then
-    write(IMAIN,*) '  external model: ','atmos_tabular_gravitoacoustic'
-    call flush_IMAIN()
-  endif
-
-  ! default no attenuation
-  Qmu_attenuation(:,:,:) = 9999.d0
-  Qkappa_attenuation(:,:,:) = 9999.d0
-
-  ! default no anisotropy
-  c11(:,:,:) = 0.d0
-  c13(:,:,:) = 0.d0
-  c15(:,:,:) = 0.d0
-  c33(:,:,:) = 0.d0
-  c35(:,:,:) = 0.d0
-  c55(:,:,:) = 0.d0
-  c12(:,:,:) = 0.d0
-  c23(:,:,:) = 0.d0
-  c25(:,:,:) = 0.d0
-
-  ! read all the values in the 1D model once and for all
-  open(10,file='EXAMPLES/gravitoacoustic_forcing_bottom/1D_isothermal_atmosphere_model_N2const.txt', &
-  form='formatted')
-
-  do i = 1,NR_LAYER
-    read(10,*) z_atmos(i),density_atmos(i),vp_atmos(i),gravity_atmos(i),Nsq_atmos(i),tmp2
-    !  write(*,'(6e16.7)') z_atmos(i),density_atmos(i),vp_atmos(i),gravity_atmos(i),tmp1,tmp2
-  enddo
-
-  close(10)
-
-! loop on all the elements of the mesh, and inside each element loop on all the GLL points
-  do ispec = 1,nspec
-
-    if (material_element(ispec) /= IREGION_AIR ) stop 'error: Wrong flag number in external model'
-
-    do j = 1,NGLLZ
-      do i = 1,NGLLX
-
-        iglob = ibool(i,j,ispec)
-
-        x = coord(1,iglob)
-        z = coord(2,iglob)
-
-        ii = 1
-        do while(z >= z_atmos(ii) .and. ii /= NR_LAYER)
-          ii = ii + 1
-        enddo
-
-        if (ii == 1) then
-          rho(i,j,ispec) = density_atmos(1)
-          vp(i,j,ispec) = vp_atmos(1)
-          gravity(i,j,ispec) = gravity_atmos(1)
-          vs(i,j,ispec) = 0.d0
-        else
-          ! interpolate from radius_ak135(ii-1) to r using the values at ii-1 and ii
-          frac = (z-z_atmos(ii-1))/(z_atmos(ii)-z_atmos(ii-1))
-
-          rho(i,j,ispec) = exp(log(density_atmos(ii-1)) + frac * (log(density_atmos(ii))-log(density_atmos(ii-1))))
-          vp(i,j,ispec) = vp_atmos(ii-1) + frac * (vp_atmos(ii)-vp_atmos(ii-1))
-          gravity(i,j,ispec) = gravity_atmos(ii-1) + frac * (gravity_atmos(ii)-gravity_atmos(ii-1))
-          Nsq(i,j,ispec) = Nsq_atmos(ii-1) + frac * (Nsq_atmos(ii)-Nsq_atmos(ii-1))
-          if (Nsq(i,j,ispec) <= 0.0) then
-            write(*,*) 'STOP Negative Nsquare !!! :', &
-            i,j,coord(1,iglob),coord(2,iglob),Nsq(i,j,ispec),gravity(i,j,ispec),vp(i,j,ispec)
-            stop
-          endif
-          vs(i,j,ispec) = 0.d0
-        endif
-
-      enddo
-    enddo
-  enddo
-
-  ! remove gravity for acoustic-only simulations
-  gravity(:,:,:) = 0.d0
-
-  end subroutine define_external_model_atmos_tabular_gravitoacoustic
 

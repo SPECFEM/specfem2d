@@ -42,8 +42,6 @@
   use specfem_par, only: myrank,nspec,it,NPROC, &
                         assign_external_model,ibool,kmato,density,rhoext,P_SV, &
                         potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
-                        potential_gravito,potential_dot_gravito,potential_dot_dot_gravito, &
-                        potential_gravitoacoustic,potential_dot_gravitoacoustic,potential_dot_dot_gravitoacoustic, &
                         displ_elastic,veloc_elastic,accel_elastic, &
                         displs_poroelastic,velocs_poroelastic,accels_poroelastic
 
@@ -73,25 +71,21 @@
 
   if (imagetype_JPEG >= 1 .and. imagetype_JPEG <= 3) then
     if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of the displacement vector...'
-    call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                                     potential_gravito,displ_elastic,displs_poroelastic)
+    call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic)
 
   else if (imagetype_JPEG >= 4 .and. imagetype_JPEG <= 6) then
     if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of the velocity vector...'
-    call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                                     potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+    call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic)
 
   else if (imagetype_JPEG >= 7 .and. imagetype_JPEG <= 9) then
     if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of the acceleration vector...'
-    call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                                     potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
+    call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic)
 
   else if (imagetype_JPEG >= 11 .and. imagetype_JPEG <= 13) then
     ! allocation for normalized representation in JPEG image
     ! for an atmosphere model
     if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of normalized displacement vector...'
-    call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                                     potential_gravito,displ_elastic,displs_poroelastic)
+    call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic)
 
     do ispec = 1,nspec
       do j = 1,NGLLZ
@@ -111,8 +105,7 @@
   else if (imagetype_JPEG >= 14 .and. imagetype_JPEG <= 16) then
     ! allocation for normalized representation in JPEG image
     ! for an atmosphere model
-    call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                                     potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+    call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic)
 
     do ispec = 1,nspec
       do j = 1,NGLLZ

@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine define_external_model_from_marmousi(coord,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation,gravity,Nsq, &
+  subroutine define_external_model_from_marmousi(coord,ibool,rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
                                                  c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
 
 ! reads in external model using a marmousi format which defines a compaction gradient
@@ -51,7 +51,6 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rho,vp,vs
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: QKappa_attenuation,Qmu_attenuation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: gravity,Nsq
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: c11,c15,c13,c33,c35,c55,c12,c23,c25
 
   ! local parameters
@@ -67,11 +66,6 @@
     write(IMAIN,*) '  marmousi model: ','using compaction gradient'
     call flush_IMAIN()
   endif
-
-! remove gravity
-! leave these arrays here even if you do not assign them to use them because they need to be cleared
-  gravity(:,:,:) = 0.d0
-  Nsq(:,:,:) = 0.d0
 
   ! default no attenuation
   QKappa_attenuation(:,:,:) = 9999.d0

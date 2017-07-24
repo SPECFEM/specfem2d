@@ -35,8 +35,8 @@
 
   use constants, only: TINYVAL
 
-  use specfem_par, only: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
-    ispec_is_anisotropic,ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic,ispec_is_gravitoacoustic, &
+  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic, &
+    ispec_is_anisotropic,ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic, &
     nspec,porosity,anisotropy,kmato
 
   implicit none
@@ -46,12 +46,10 @@
 
   ! initializes
   any_acoustic = .false.
-  any_gravitoacoustic = .false.
   any_elastic = .false.
   any_poroelastic = .false.
 
   ispec_is_acoustic(:) = .false.
-  ispec_is_gravitoacoustic(:) = .false.
   ispec_is_anisotropic(:) = .false.
   ispec_is_elastic(:) = .false.
   ispec_is_poroelastic(:) = .false.
@@ -62,7 +60,6 @@
     ! checks domain properties
     if (nint(porosity(kmato(ispec))) == 1) then
       ! assume acoustic domain
-      ! if gravitoacoustic -> set by read_external_model
       ispec_is_acoustic(ispec) = .true.
       any_acoustic = .true.
 
@@ -98,12 +95,12 @@
 
   use constants, only: TINYVAL,NGLLX,NGLLZ,CUSTOM_REAL
 
-  use specfem_par, only: any_acoustic,any_gravitoacoustic,any_elastic,any_poroelastic, &
-    ispec_is_anisotropic,ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic,ispec_is_gravitoacoustic, &
+  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic, &
+    ispec_is_anisotropic,ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic, &
     nspec,myrank,P_SV,MODEL
 
   ! external model parameters
-  use specfem_par, only: vsext,gravityext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
+  use specfem_par, only: vsext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext
 
   implicit none
 
@@ -114,12 +111,10 @@
   ! re-assigns flags
   ! initializes
   any_acoustic = .false.
-  any_gravitoacoustic = .false.
   any_elastic = .false.
   any_poroelastic = .false.
 
   ispec_is_acoustic(:) = .false.
-  ispec_is_gravitoacoustic(:) = .false.
   ispec_is_anisotropic(:) = .false.
   ispec_is_elastic(:) = .false.
   ispec_is_poroelastic(:) = .false.
@@ -130,9 +125,6 @@
 
     do j = 1,NGLLZ
       do i = 1,NGLLX
-        ! checks velocities inside element
-        !print *,"vsext(i,j,ispec)",vsext(i,j,ispec)
-        !print *,"gravityext(i,j,ispec)",gravityext(i,j,ispec)
         if (P_SV .and. (.not. (i == 1 .and. j == 1)) .and. &
           ((vsext(i,j,ispec) >= TINYVAL .and. previous_vsext < TINYVAL) .or. &
            (vsext(i,j,ispec) < TINYVAL .and. previous_vsext >= TINYVAL)))  &
@@ -155,9 +147,7 @@
             ispec_is_anisotropic(ispec) = .true.
             ispec_is_elastic(ispec) = .true.
             ispec_is_acoustic(ispec) = .false.
-          else if ((vsext(i,j,ispec) < TINYVAL) .and. (gravityext(i,j,ispec) >= TINYVAL)) then
-            ! gravito-acoustic
-            ispec_is_gravitoacoustic(ispec) = .true.
+          else if (vsext(i,j,ispec) < TINYVAL) then
             ispec_is_acoustic(ispec) = .false.
           endif
 
@@ -194,7 +184,6 @@
   if (ANY(ispec_is_acoustic(:)) .neqv. any_acoustic) stop 'Error any_acoustic invalid'
   if (ANY(ispec_is_elastic(:)) .neqv. any_elastic) stop 'Error any_elastic invalid'
   if (ANY(ispec_is_poroelastic(:)) .neqv. any_poroelastic) stop 'Error any_poroelastic invalid'
-  if (ANY(ispec_is_gravitoacoustic(:)) .neqv. any_gravitoacoustic) stop 'Error any_gravitoacoustic invalid'
 
   ! safety checks
   if (.not. P_SV .and. .not. any_elastic) then
@@ -216,27 +205,22 @@
   do ispec = 1,nspec
     ! checks if at least one domain is set
     if ((.not. ispec_is_acoustic(ispec)) .and. (.not. ispec_is_elastic(ispec)) &
-        .and. (.not. ispec_is_poroelastic(ispec)) .and. (.not. ispec_is_gravitoacoustic(ispec))) then
+        .and. (.not. ispec_is_poroelastic(ispec))) then
       print *,'Error material domain not assigned to element:',ispec
       print *,'acoustic       : ',ispec_is_acoustic(ispec)
       print *,'elastic        : ',ispec_is_elastic(ispec)
       print *,'poroelastic    : ',ispec_is_poroelastic(ispec)
-      print *,'gravitoacoustic: ',ispec_is_gravitoacoustic(ispec)
       stop 'Error material domain index element'
     endif
 
     ! checks if domain is unique
     if ((ispec_is_acoustic(ispec) .and. ispec_is_elastic(ispec)) .or. &
         (ispec_is_acoustic(ispec) .and. ispec_is_poroelastic(ispec)) .or. &
-        (ispec_is_acoustic(ispec) .and. ispec_is_gravitoacoustic(ispec)) .or. &
-        (ispec_is_elastic(ispec) .and. ispec_is_poroelastic(ispec)) .or. &
-        (ispec_is_elastic(ispec) .and. ispec_is_gravitoacoustic(ispec)) .or. &
-        (ispec_is_poroelastic(ispec) .and. ispec_is_gravitoacoustic(ispec))) then
+        (ispec_is_elastic(ispec) .and. ispec_is_poroelastic(ispec))) then
       print *,'Error material domain assigned twice to element:',ispec
       print *,'acoustic       : ',ispec_is_acoustic(ispec)
       print *,'elastic        : ',ispec_is_elastic(ispec)
       print *,'poroelastic    : ',ispec_is_poroelastic(ispec)
-      print *,'gravitoacoustic: ',ispec_is_gravitoacoustic(ispec)
       stop 'Error material domain index element'
     endif
   enddo
@@ -271,9 +255,5 @@
   nspec_poroelastic = count(ispec_is_poroelastic(:))
   if (nspec_poroelastic > 0 ) any_poroelastic = .true.
 
-  ! gravito-acoustic
-  ! number of elastic elements in this partition
-  nspec_gravitoacoustic = count(ispec_is_gravitoacoustic(:))
-  if (nspec_gravitoacoustic > 0 ) any_gravitoacoustic = .true.
-
   end subroutine get_simulation_domain_counts
+

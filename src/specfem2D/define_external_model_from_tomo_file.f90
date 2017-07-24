@@ -306,7 +306,7 @@ end module interpolation
   use specfem_par, only: tomo_material,coord,nspec,ibool,kmato,rhoext,vpext,vsext, &
                        QKappa_attenuation,Qmu_attenuation,anisotropy, &
                        QKappa_attenuationext,Qmu_attenuationext,poroelastcoef,density, &
-                       c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext,gravityext,Nsqext
+                       c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext
 
   use specfem_par, only: myrank,TOMOGRAPHY_FILE
 
@@ -330,11 +330,6 @@ end module interpolation
 
   ! Read external tomo file TOMOGRAPHY_FILE
   call read_tomo_file()
-
-  ! remove gravity
-  ! leave these arrays here even if you do not assign them to use them because they need to be cleared
-  gravityext(:,:,:) = 0.d0
-  Nsqext(:,:,:) = 0.d0
 
   ! default no attenuation
   QKappa_attenuationext(:,:,:) = 9999.d0

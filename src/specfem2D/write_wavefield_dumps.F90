@@ -41,8 +41,7 @@
 
   use specfem_par, only: myrank,nglob,nspec, &
                          ibool,coord,P_SV,it,SIMULATION_TYPE, &
-                         potential_acoustic,potential_gravitoacoustic, &
-                         potential_gravito,displ_elastic,displs_poroelastic, &
+                         potential_acoustic,displ_elastic,displs_poroelastic, &
                          potential_dot_acoustic,veloc_elastic,velocs_poroelastic, &
                          potential_dot_dot_acoustic,accel_elastic,accels_poroelastic, &
                          NPROC
@@ -212,18 +211,15 @@
   ! Prepare the requested data for dump.
   if (imagetype_wavefield_dumps == 1) then
     if (myrank == 0) write(IMAIN,*) 'Dumping the displacement vector...'
-      call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                                       potential_gravito,displ_elastic,displs_poroelastic)
+      call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic)
 
   else if (imagetype_wavefield_dumps == 2) then
     if (myrank == 0) write(IMAIN,*) 'Dumping the velocity vector...'
-    call compute_vector_whole_medium(potential_dot_acoustic,potential_gravitoacoustic, &
-                                     potential_gravito,veloc_elastic,velocs_poroelastic)
+    call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic)
 
   else if (imagetype_wavefield_dumps == 3) then
     if (myrank == 0) write(IMAIN,*) 'Dumping the acceleration vector...'
-    call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_gravitoacoustic, &
-                                     potential_gravito,accel_elastic,accels_poroelastic)
+    call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic)
 
   else if (imagetype_wavefield_dumps == 4 .and. P_SV) then
     if (myrank == 0) write(IMAIN,*) 'Dumping the pressure field...'

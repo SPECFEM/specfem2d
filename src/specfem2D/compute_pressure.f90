@@ -74,9 +74,9 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,TWO
 
   use specfem_par, only: N_SLS,ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
-    ispec_is_gravitoacoustic,ispec_is_anisotropic,kmato,poroelastcoef,assign_external_model,vpext,vsext,rhoext, &
-    ATTENUATION_VISCOELASTIC,AXISYM,is_on_the_axis,displ_elastic,displs_poroelastic,displw_poroelastic, &
-    potential_dot_dot_acoustic,potential_acoustic,potential_dot_dot_gravitoacoustic,potential_gravitoacoustic, &
+    ispec_is_anisotropic,kmato,poroelastcoef,assign_external_model,vpext,vsext,rhoext, &
+    ATTENUATION_VISCOACOUSTIC,ATTENUATION_VISCOELASTIC,AXISYM,is_on_the_axis,displ_elastic,displs_poroelastic,displw_poroelastic, &
+    potential_dot_dot_acoustic,potential_acoustic, &
     anisotropy,c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext,c55ext, &
     hprimebar_xx,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,jacobian,ibool,coord,e1,e11,USE_TRICK_FOR_BETTER_PRESSURE
 
@@ -557,36 +557,14 @@
       enddo
     endif
 
-  else if (ispec_is_gravitoacoustic(ispec)) then
-    ! gravito-acoustic element
-
-    if (USE_TRICK_FOR_BETTER_PRESSURE) then
-      ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
-      ! use the second derivative of the source for the source time function instead of the source itself,
-      ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
-      ! this is mathematically equivalent, but numerically significantly more accurate because in the explicit
-      ! Newmark time scheme acceleration is accurate at zeroth order while displacement is accurate at second order,
-      ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
-      ! is accurate at second order and thus contains significantly less numerical noise.
-      ! compute pressure on the fluid/porous medium edge
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          iglob = ibool(i,j,ispec)
-          ! store pressure
-          pressure_element(i,j) = - potential_gravitoacoustic(iglob)
-        enddo
-      enddo
-    else
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          iglob = ibool(i,j,ispec)
-          ! store pressure
-          pressure_element(i,j) = - potential_dot_dot_gravitoacoustic(iglob)
-        enddo
-      enddo
+    if (ATTENUATION_VISCOACOUSTIC) then
+      stop 'DK DK error: ATTENUATION_VISCOACOUSTIC not implemented yet in compute_pressure.f90'
+      if (USE_TRICK_FOR_BETTER_PRESSURE) then
+        stop 'DK DK error: ATTENUATION_VISCOACOUSTIC with USE_TRICK_FOR_BETTER_PRESSURE not implemented yet'
+      endif
     endif
 
-  endif ! end of test if acoustic or elastic or gravito element
+  endif ! end of test if acoustic or elastic element
 
   end subroutine compute_pressure_one_element
 

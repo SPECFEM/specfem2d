@@ -69,19 +69,6 @@
   ! infrasounds / seismic
   tho = 30.0
 
-! gravity wave test function
-!  tho = 600.0
-!  xo = 500000.0
-!  lambdo = 20000.0
-
-! gravity wave test function
-!  tho = 600.0
-!  xo = 3000.0
-!  lambdo = 120.0
-
-! gravity wave /tsunami
-!  tho = 600.0 ! *20
-!  c = 200.0 ! /20
   A = 1
   x = coord(1,iglob)
   z = coord(2,iglob)
@@ -109,18 +96,6 @@
         displ_x =  0._CUSTOM_REAL
         displ_z = 0._CUSTOM_REAL
       endif
-      ! gravity wave test function
-      !  displ_x = 0 !* Apo
-      !  displ_z = A * ( exp(-(alpha*(x-(xo-lambdo/2))/lambdo)**2) - &
-      !                  exp(-(alpha*(x-(xo+lambdo/2))/lambdo)**2) ) * &
-      !            (exp(-(alpha*(deltat*it+1000-t0)/tho)**2) &
-      !            - exp(-(alpha*(deltat*it-1300-t0)/tho)**2)) !* Apo
-
-      ! gravity wave /tsunami
-      !  displ_x = 0 !* Apo
-      !  displ_z = A * (exp(-(alpha*(deltat*it-1000-t0)/tho)**2) &
-      !            - exp(-(alpha*(deltat*it-1600-t0)/tho)**2)) !* Apo
-    !endif
   endif
 
   !! Second test function : moving forcing

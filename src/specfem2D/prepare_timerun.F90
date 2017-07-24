@@ -1429,9 +1429,8 @@
           if (READ_VELOCITIES_AT_f0) then
 
             ! safety check
-            if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec) .or. ispec_is_gravitoacoustic(ispec)) &
-              stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, &
-                    &non poroelastic, non gravitoacoustic materials for now'
+            if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec)) &
+              stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic materials for now'
 
             if (ispec_is_acoustic(ispec)) then
               do n = 1,100

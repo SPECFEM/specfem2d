@@ -50,7 +50,7 @@
   use constants, only: NGLLX,NGLLZ
 
   use specfem_par, only: ibool, knods, ngnod, nglob, &
-    ispec_is_elastic, ispec_is_poroelastic, ispec_is_acoustic, ispec_is_gravitoacoustic
+    ispec_is_elastic, ispec_is_poroelastic, ispec_is_acoustic
 
   use specfem_par, only: ninterface, my_nelmnts_neighbors, my_interfaces, &
     nibool_interfaces_ext_mesh, ibool_interfaces_ext_mesh_init
@@ -178,10 +178,6 @@
               nglob_interface_acoustic = nglob_interface_acoustic + 1
               ibool_interfaces_acoustic(nglob_interface_acoustic,iinterface) = iglob
             endif
-
-          else if (ispec_is_gravitoacoustic(iglob)) then
-            ! gravitoacoustic element
-            stop 'Preparing assembly points with MPI not implemented yet for gravitoacoustic domains'
 
           else
             stop 'Invalid element type found in prepare_assemble_MPI() routine'

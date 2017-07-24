@@ -49,8 +49,8 @@
         if (ier /= 0) stop 'Error writing data file to disk'
 
   write(2040) nglob,ELASTIC_SIMULATION,POROELASTIC_SIMULATION, &
-              ACOUSTIC_SIMULATION,GRAVITOACOUSTIC_SIMULATION,coupled_acoustic_elastic, &
-              any_acoustic,any_elastic,any_poroelastic,any_gravitoacoustic
+              ACOUSTIC_SIMULATION,coupled_acoustic_elastic, &
+              any_acoustic,any_elastic,any_poroelastic
 
   write(2040) coord,jacobian,xix,xiz,gammax,gammaz, &
               this_ibool_is_a_periodic_edge,ibool,ispec_is_inner
@@ -128,11 +128,11 @@
       if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_data.bin')
 
   read(2040) nglob,ELASTIC_SIMULATION,POROELASTIC_SIMULATION, &
-             ACOUSTIC_SIMULATION,GRAVITOACOUSTIC_SIMULATION,coupled_acoustic_elastic, &
-             any_acoustic,any_elastic,any_poroelastic,any_gravitoacoustic
+             ACOUSTIC_SIMULATION,coupled_acoustic_elastic, &
+             any_acoustic,any_elastic,any_poroelastic
 
-  if (any_poroelastic .or. any_gravitoacoustic) &
-      call exit_MPI(myrank,'currently cannot have database mode if gravitoacoustic/poroelastic simulation')
+  if (any_poroelastic) &
+      call exit_MPI(myrank,'currently cannot have database mode if poroelastic simulation')
   if (PML_BOUNDARY_CONDITIONS) &
       call exit_MPI(myrank,'currently cannot have database mode with PML')
   if (AXISYM) &

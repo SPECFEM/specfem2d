@@ -159,16 +159,6 @@ subroutine iterate_time()
         endif
       endif
 
-      ! gravitoacoustic domains
-      if (GRAVITOACOUSTIC_SIMULATION) then
-        if (.not. GPU_MODE) then
-          call compute_forces_gravitoacoustic_main()
-        else
-          ! on GPU
-          if (any_gravitoacoustic) call exit_MPI(myrank,'gravitoacoustic not implemented in GPU MODE yet')
-        endif
-      endif
-
       ! elastic domains
       if (ELASTIC_SIMULATION) then
         if (.not. GPU_MODE) then

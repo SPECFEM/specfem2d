@@ -81,8 +81,6 @@ specfem2D_OBJECTS = \
 	$O/compute_attenuation_viscoacoustic.spec.o \
 	$O/compute_forces_viscoacoustic_backward.spec.o \
 	$O/compute_forces_viscoacoustic_calling_routine.spec.o \
-	$O/compute_forces_gravitoacoustic.spec.o \
-	$O/compute_forces_gravitoacoustic_calling_routine.spec.o \
 	$O/compute_forces_poroelastic_calling_routine.spec.o \
 	$O/compute_forces_poro_fluid.spec.o \
 	$O/compute_forces_poro_solid.spec.o \

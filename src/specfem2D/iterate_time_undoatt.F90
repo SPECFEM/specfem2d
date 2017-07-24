@@ -103,7 +103,6 @@
   ! safety checks
   if (GPU_MODE ) call exit_MPI(myrank,'for undo_attenuation, GPU_MODE is not supported')
   if (time_stepping_scheme /= 1 ) call exit_MPI(myrank,'for undo_attenuation, only Newmark scheme has implemented ')
-  if (any_gravitoacoustic ) call exit_MPI(myrank,'undo_attenuation has not implemented for gravitoacoustic yet')
   if (any_poroelastic ) call exit_MPI(myrank,'undo_attenuation has not implemented for poroelastic simulation yet')
   if (NOISE_TOMOGRAPHY /= 0 ) call exit_MPI(myrank,'for undo_attenuation, NOISE_TOMOGRAPHY is not supported')
   if (AXISYM ) call exit_MPI(myrank,'Just axisymmetric FORWARD simulations are possible so far')

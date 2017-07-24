@@ -565,7 +565,7 @@
   ! because in that case MODEL = "default" but nspec_ext = nspec
   if (tomo_material > 0) MODEL = 'tomo'
 
-  ! allocates material arrays for gravity Nsq c11 c13 c15 c33 c35 c55 c12 c23 c25 c22
+  ! allocates material arrays for c11 c13 c15 c33 c35 c55 c12 c23 c25 c22
   if (assign_external_model .and. ( trim(MODEL) == 'external' .or. &
                                     trim(MODEL) == 'tomo' .or. trim(MODEL) == 'binary_voigt' ) ) then
     nspec_ext = nspec
@@ -574,9 +574,7 @@
     nspec_ext = 1
   endif
 
-  allocate(gravityext(NGLLX,NGLLZ,nspec_ext), &
-           Nsqext(NGLLX,NGLLZ,nspec_ext), &
-           c11ext(NGLLX,NGLLZ,nspec_ext), &
+  allocate(c11ext(NGLLX,NGLLZ,nspec_ext), &
            c13ext(NGLLX,NGLLZ,nspec_ext), &
            c15ext(NGLLX,NGLLZ,nspec_ext), &
            c33ext(NGLLX,NGLLZ,nspec_ext), &
@@ -586,7 +584,7 @@
            c23ext(NGLLX,NGLLZ,nspec_ext), &
            c25ext(NGLLX,NGLLZ,nspec_ext), &
            c22ext(NGLLX,NGLLZ,nspec_ext),stat=ier)
-  if (ier /= 0) stop 'Error allocating external model arrays for gravity Nsq anisotropy'
+  if (ier /= 0) stop 'Error allocating external model arrays for anisotropy'
 
   ! reads in external models
   if (assign_external_model) then
@@ -627,21 +625,14 @@
     if (ispec_is_acoustic(ispec) .and. ispec_is_poroelastic(ispec)) &
       stop 'Error invalid domain element found! element is acoustic and poroelastic, please check...'
 
-    if (ispec_is_acoustic(ispec) .and. ispec_is_gravitoacoustic(ispec)) &
-      stop 'Error invalid domain element found! element is acoustic and gravitoacoustic, please check...'
-
     if (ispec_is_elastic(ispec) .and. ispec_is_poroelastic(ispec)) &
       stop 'Error invalid domain element found! element is elastic and poroelastic, please check...'
-
-    if (ispec_is_elastic(ispec) .and. ispec_is_gravitoacoustic(ispec)) &
-      stop 'Error invalid domain element found! element is elastic and gravitoacoustic, please check...'
 
     ! un-assigned element
     if ((.not. ispec_is_acoustic(ispec)) .and. &
         (.not. ispec_is_elastic(ispec)) .and. &
-        (.not. ispec_is_poroelastic(ispec)) .and. &
-        (.not. ispec_is_gravitoacoustic(ispec))) &
-      stop 'Error invalid domain element found! element has no domain (acoustic, elastic, poroelastic or gravitoacoustic), &
+        (.not. ispec_is_poroelastic(ispec))) &
+      stop 'Error invalid domain element found! element has no domain (acoustic, elastic, or poroelastic), &
             & please check...'
   enddo
 
@@ -666,7 +657,7 @@
   implicit none
 
   ! local parameters
-  integer :: nspec_acoustic_all,nspec_elastic_all,nspec_poroelastic_all,nspec_gravitoacoustic_all
+  integer :: nspec_acoustic_all,nspec_elastic_all,nspec_poroelastic_all
   integer :: nspec_total,nspec_in_domains
 
   ! re-counts domain elements
@@ -676,7 +667,6 @@
   call sum_all_i(nspec_acoustic,nspec_acoustic_all)
   call sum_all_i(nspec_elastic,nspec_elastic_all)
   call sum_all_i(nspec_poroelastic,nspec_poroelastic_all)
-  call sum_all_i(nspec_gravitoacoustic,nspec_gravitoacoustic_all)
 
   ! user output
   if (myrank == 0) then
@@ -684,10 +674,9 @@
     write(IMAIN,*) '  total number of acoustic elements        = ',nspec_acoustic_all
     write(IMAIN,*) '  total number of elastic elements         = ',nspec_elastic_all
     write(IMAIN,*) '  total number of poroelastic elements     = ',nspec_poroelastic_all
-    write(IMAIN,*) '  total number of gravitoacoustic elements = ',nspec_gravitoacoustic_all
   endif
 
-  nspec_in_domains = nspec_acoustic_all + nspec_elastic_all + nspec_poroelastic_all + nspec_gravitoacoustic_all
+  nspec_in_domains = nspec_acoustic_all + nspec_elastic_all + nspec_poroelastic_all
 
   ! checks with total
   call sum_all_i(nspec,nspec_total)
@@ -707,10 +696,9 @@
   call any_all_l(any_elastic, ELASTIC_SIMULATION)
   call any_all_l(any_acoustic, ACOUSTIC_SIMULATION)
   call any_all_l(any_poroelastic, POROELASTIC_SIMULATION)
-  call any_all_l(any_gravitoacoustic, GRAVITOACOUSTIC_SIMULATION)
 
   ! check for solid attenuation
-  if (.not. ELASTIC_SIMULATION .and. .not. ACOUSTIC_SIMULATION .and. .not. GRAVITOACOUSTIC_SIMULATION) then
+  if (.not. ELASTIC_SIMULATION .and. .not. ACOUSTIC_SIMULATION) then
     if (ATTENUATION_VISCOELASTIC) call exit_MPI(myrank,'currently cannot have attenuation if poroelastic simulation only')
   endif
 

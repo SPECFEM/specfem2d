@@ -40,14 +40,12 @@
     CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: myrank,any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
+  use specfem_par, only: myrank,any_elastic,any_acoustic,any_poroelastic, &
     rmass_inverse_elastic, &
     rmass_inverse_acoustic, &
-    rmass_inverse_gravitoacoustic, &
-    rmass_inverse_gravito, &
     rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic, &
     nspec,ibool,kmato,wxgll,wzgll,jacobian, &
-    ispec_is_elastic,ispec_is_acoustic,ispec_is_gravitoacoustic,ispec_is_poroelastic, &
+    ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
     assign_external_model, &
     density,poroelastcoef,porosity,tortuosity, &
     vpext,rhoext,vsext, &
@@ -99,15 +97,10 @@
     rmass_inverse_acoustic(:) = 0._CUSTOM_REAL
   endif
 
-  if (any_gravitoacoustic) then
-    rmass_inverse_gravitoacoustic(:) = 0._CUSTOM_REAL
-    rmass_inverse_gravito(:) = 0._CUSTOM_REAL
-  endif
-
   ! common factor
   deltatover2 = real(0.5d0*deltat,kind=CUSTOM_REAL)
 
-  ! computes mass matrix for each element (poroelastic/elastic/gravitoacoustic/acoustic)
+  ! computes mass matrix for each element (poroelastic/elastic/acoustic)
   do ispec = 1,nspec
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -292,20 +285,6 @@
             endif
             rmass_inverse_elastic(2,iglob) = rmass_inverse_elastic(1,iglob)
           endif
-
-        else if (ispec_is_gravitoacoustic(ispec)) then
-          ! for gravitoacoustic medium
-
-          !!! PML NOT WORKING YET !!!
-          this_element_has_PML = .false.
-          if (PML_BOUNDARY_CONDITIONS) then
-            if (ispec_is_PML(ispec)) stop 'PML not implemented yet for gravitoacoustic case'
-          endif
-
-          rmass_inverse_gravitoacoustic(iglob) = rmass_inverse_gravitoacoustic(iglob) &
-                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / (kappal/rhol)
-          rmass_inverse_gravito(iglob) = rmass_inverse_gravito(iglob) &
-                  + wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
 
         else if (ispec_is_acoustic(ispec)) then
           ! for acoustic medium
@@ -819,11 +798,9 @@
 
 ! inverts the global mass matrix
 
-  use specfem_par, only: myrank,any_elastic,any_acoustic,any_gravitoacoustic,any_poroelastic, &
+  use specfem_par, only: myrank,any_elastic,any_acoustic,any_poroelastic, &
                                 rmass_inverse_elastic, &
                                 rmass_inverse_acoustic, &
-                                rmass_inverse_gravitoacoustic, &
-                                rmass_inverse_gravito, &
                                 rmass_s_inverse_poroelastic, &
                                 rmass_w_inverse_poroelastic
   implicit none
@@ -849,11 +826,6 @@
     where(rmass_inverse_acoustic <= 0._CUSTOM_REAL) rmass_inverse_acoustic = 1._CUSTOM_REAL
   endif
 
-  if (any_gravitoacoustic) then
-    where(rmass_inverse_gravitoacoustic <= 0._CUSTOM_REAL) rmass_inverse_gravitoacoustic = 1._CUSTOM_REAL
-    where(rmass_inverse_gravito <= 0._CUSTOM_REAL) rmass_inverse_gravito = 1._CUSTOM_REAL
-  endif
-
 ! compute the inverse of the mass matrix
   if (any_elastic) then
     rmass_inverse_elastic(:,:) = 1._CUSTOM_REAL / rmass_inverse_elastic(:,:)
@@ -866,11 +838,6 @@
 
   if (any_acoustic) then
     rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
-  endif
-
-  if (any_gravitoacoustic) then
-    rmass_inverse_gravitoacoustic(:) = 1._CUSTOM_REAL / rmass_inverse_gravitoacoustic(:)
-    rmass_inverse_gravito(:) = 1._CUSTOM_REAL / rmass_inverse_gravito(:)
   endif
 
   end subroutine invert_mass_matrix

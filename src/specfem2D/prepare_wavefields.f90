@@ -354,33 +354,6 @@
     allocate(rhorho_ac_Hessian_final1(NGLLX,NGLLZ,nspec_acoustic_b))
   endif
 
-  !
-  ! gravito-acoustic domains
-  !
-  if (GRAVITOACOUSTIC_SIMULATION) then
-    if (myrank == 0) then
-      write(IMAIN,*) '  arrays for elastic domains'
-      call flush_IMAIN()
-    endif
-  endif
-
-  ! potential, its first and second derivative, and inverse of the mass matrix for gravitoacoustic elements
-  if (any_gravitoacoustic) then
-    nglob_gravitoacoustic = nglob
-  else
-    ! allocate unused arrays with fictitious size
-    nglob_gravitoacoustic = 1
-  endif
-
-  allocate(potential_gravitoacoustic(nglob_gravitoacoustic))
-  allocate(potential_dot_gravitoacoustic(nglob_gravitoacoustic))
-  allocate(potential_dot_dot_gravitoacoustic(nglob_gravitoacoustic))
-  allocate(rmass_inverse_gravitoacoustic(nglob_gravitoacoustic))
-  allocate(potential_gravito(nglob_gravitoacoustic))
-  allocate(potential_dot_gravito(nglob_gravitoacoustic))
-  allocate(potential_dot_dot_gravito(nglob_gravitoacoustic))
-  allocate(rmass_inverse_gravito(nglob_gravitoacoustic))
-
   ! iglob_is_forced array is used when USE_ENFORCE_FIELDS is .true. (it says if a GLL point is forced or not)
   allocate(iglob_is_forced(nglob))
   allocate(acoustic_iglob_is_forced(nglob))
@@ -477,13 +450,6 @@
     potential_dot_dot_acoustic_rk(:,:) = 0._CUSTOM_REAL
     potential_dot_acoustic_rk(:,:) = 0._CUSTOM_REAL
   endif
-
-  potential_gravitoacoustic(:) = 0._CUSTOM_REAL
-  potential_dot_gravitoacoustic(:) = 0._CUSTOM_REAL
-  potential_dot_dot_gravitoacoustic(:) = 0._CUSTOM_REAL
-  potential_gravito(:) = 0._CUSTOM_REAL
-  potential_dot_gravito(:) = 0._CUSTOM_REAL
-  potential_dot_dot_gravito(:) = 0._CUSTOM_REAL
 
   ! user output
   if (myrank == 0) then

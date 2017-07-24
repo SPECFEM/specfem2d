@@ -72,10 +72,6 @@
 
           ispec = ispec_selected_rec_loc(irecloc)
 
-          !debug
-          !print *,'ispec',ispec,ispec_is_acoustic(ispec),ispec_is_elastic(ispec), &
-          !                ispec_is_gravitoacoustic(ispec),ispec_is_poroelastic(ispec)
-
           ! initializes local element arrays
           vector_field_element(:,:,:) = 0._CUSTOM_REAL
           pressure_element(:,:) = 0._CUSTOM_REAL
@@ -85,28 +81,20 @@
           select case (seismotype)
           case (1)
             ! displacement
-            call compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
-                                            potential_gravito,displ_elastic,displs_poroelastic, &
-                                            ispec,vector_field_element)
+            call compute_vector_one_element(potential_acoustic,displ_elastic,displs_poroelastic,ispec,vector_field_element)
           case (2)
             ! velocity
-            call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                                            potential_dot_gravito,veloc_elastic,velocs_poroelastic, &
-                                            ispec,vector_field_element)
+            call compute_vector_one_element(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
           case (3)
             ! acceleration
-            call compute_vector_one_element(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                                            potential_dot_dot_gravito,accel_elastic,accels_poroelastic, &
-                                            ispec,vector_field_element)
+            call compute_vector_one_element(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,ispec,vector_field_element)
           case (4)
             ! pressure
             call compute_pressure_one_element(ispec,pressure_element)
 
           case (5)
             ! displacement
-            call compute_vector_one_element(potential_acoustic,potential_gravitoacoustic, &
-                                            potential_gravito,displ_elastic,displs_poroelastic, &
-                                            ispec,vector_field_element)
+            call compute_vector_one_element(potential_acoustic,displ_elastic,displs_poroelastic,ispec,vector_field_element)
             ! curl of displacement
             call compute_curl_one_element(ispec,curl_element)
 
@@ -118,13 +106,6 @@
                 do i = 1,NGLLX
                   iglob = ibool(i,j,ispec)
                   pressure_element(i,j) = potential_acoustic(iglob)
-                enddo
-              enddo
-            else if (ispec_is_gravitoacoustic(ispec)) then
-              do j = 1,NGLLZ
-                do i = 1,NGLLX
-                  iglob = ibool(i,j,ispec)
-                  pressure_element(i,j) = potential_gravitoacoustic(iglob)
                 enddo
               enddo
             endif

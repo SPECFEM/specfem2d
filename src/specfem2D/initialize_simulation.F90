@@ -142,13 +142,11 @@
   ! domain flags
   allocate(ispec_is_elastic(nspec), &
            ispec_is_acoustic(nspec), &
-           ispec_is_gravitoacoustic(nspec), &
            ispec_is_poroelastic(nspec),stat=ier)
   if (ier /= 0) stop 'Error allocating domain flag arrays'
 
   ispec_is_elastic(:) = .false.
   ispec_is_acoustic(:) = .false.
-  ispec_is_gravitoacoustic(:) = .false.
   ispec_is_poroelastic(:) = .false.
 
   ! element property flags

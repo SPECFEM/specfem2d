@@ -36,12 +36,9 @@
   use constants, only: IMAIN
 
   use specfem_par, only: myrank,P_SV,it, &
-                         potential_acoustic,potential_gravitoacoustic, &
-                         potential_gravito,displ_elastic,displs_poroelastic, &
-                         potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                         potential_dot_gravito,veloc_elastic,velocs_poroelastic, &
-                         potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                         potential_dot_dot_gravito,accel_elastic,accels_poroelastic
+                         potential_acoustic,displ_elastic,displs_poroelastic, &
+                         potential_dot_acoustic,veloc_elastic,velocs_poroelastic, &
+                         potential_dot_dot_acoustic,accel_elastic,accels_poroelastic
 
   use specfem_par_movie, only: imagetype_postscript
 
@@ -60,18 +57,15 @@
     case (1)
       ! displacement
       if (myrank == 0) write(IMAIN,*) 'drawing displacement vector as small arrows...'
-      call compute_vector_whole_medium(potential_acoustic,potential_gravitoacoustic, &
-                                       potential_gravito,displ_elastic,displs_poroelastic)
+      call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic)
     case (2)
       ! velocity
       if (myrank == 0) write(IMAIN,*) 'drawing velocity vector as small arrows...'
-      call compute_vector_whole_medium(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                                       potential_dot_gravito,veloc_elastic,velocs_poroelastic)
+      call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic)
     case (3)
       ! acceleration
       if (myrank == 0) write(IMAIN,*) 'drawing acceleration vector as small arrows...'
-      call compute_vector_whole_medium(potential_dot_dot_acoustic,potential_dot_dot_gravitoacoustic, &
-                                       potential_dot_dot_gravito,accel_elastic,accels_poroelastic)
+      call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic)
     case default
       call exit_MPI(myrank,'wrong type for PostScript snapshots')
     end select

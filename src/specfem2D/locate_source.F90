@@ -42,10 +42,10 @@
                            xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source,is_force_source)
 
   use constants, only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,USE_BEST_LOCATION_FOR_SOURCE,SOURCE_IS_MOVING, &
-    IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC,IDOMAIN_GRAVITOACOUSTIC
+    IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC
 
   use specfem_par, only: AXISYM,is_on_the_axis,xiglj, &
-    ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic,ispec_is_gravitoacoustic
+    ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic
 
 #ifdef USE_MPI
   use mpi
@@ -170,8 +170,6 @@
             idomain = IDOMAIN_ELASTIC
           else if (ispec_is_poroelastic(ispec)) then
             idomain = IDOMAIN_POROELASTIC
-          else if (ispec_is_gravitoacoustic(ispec)) then
-            idomain = IDOMAIN_GRAVITOACOUSTIC
           else
             stop 'Invalid element type in locating source found!'
           endif
@@ -311,8 +309,6 @@
         write(IMAIN,*) ' in elastic domain'
       else if (idomain == IDOMAIN_POROELASTIC) then
         write(IMAIN,*) ' in poroelastic domain'
-      else if (idomain == IDOMAIN_GRAVITOACOUSTIC) then
-        write(IMAIN,*) ' in gravitoacoustic domain'
       else
         write(IMAIN,*) ' in unknown domain'
       endif

@@ -55,7 +55,7 @@ module specfem_par
   ! poroelastic and elastic coefficients
   double precision, dimension(:,:,:), allocatable :: poroelastcoef
   logical, dimension(:), allocatable :: already_shifted_velocity
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: vpext,vsext,rhoext,gravityext,Nsqext
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: vpext,vsext,rhoext
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
 
   ! anisotropy parameters
@@ -332,13 +332,7 @@ module specfem_par
 
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: potential_acoustic_adj_coupling
 
-  ! for gravitoacoustic medium
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    potential_dot_dot_gravitoacoustic,potential_dot_gravitoacoustic,potential_gravitoacoustic
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    potential_dot_dot_gravito,potential_dot_gravito,potential_gravito
-
-  ! for acoustic and gravitoacoustic detection
+  ! for acoustic detection
   integer :: nglob_acoustic
 
   ! number of purely acoustic elements in this slice
@@ -358,26 +352,8 @@ module specfem_par
   integer :: num_phase_ispec_acoustic
   integer, dimension(:,:), allocatable :: phase_ispec_inner_acoustic
 
-  !---------------------------------------------------------------------
-  ! for gravito-acoustic simulations
-  !---------------------------------------------------------------------
-  integer :: nglob_gravitoacoustic
-
-  ! number of purely gravitoacoustic elements in this slice
-  integer :: nspec_gravitoacoustic
-
-  ! local flag to determine if any gravitoacoustic elements in this slice
-  logical :: any_gravitoacoustic
-
-  ! global flag for gravitoacoustic simulations
-  logical :: GRAVITOACOUSTIC_SIMULATION
-
-  logical, dimension(:), allocatable :: ispec_is_gravitoacoustic
-
   ! inverse mass matrices
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_acoustic
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_gravitoacoustic
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: rmass_inverse_gravito
 
   ! the variable for PML
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic
@@ -475,11 +451,11 @@ module specfem_par
   integer, dimension(:,:), allocatable :: phase_ispec_inner_elastic
 
   !---------------------------------------------------------------------
-  !for by poroelastic simulation
+  ! for poroelastic simulation
   !---------------------------------------------------------------------
   integer :: nglob_poroelastic
 
-  ! number of purely gravitoacoustic elements in this slice
+  ! number of purely poroelastic elements in this slice
   integer :: nspec_poroelastic
   integer :: nspec_poroelastic_b
 
@@ -618,9 +594,6 @@ module specfem_par
 
   integer :: nspec_left,nspec_right,nspec_bottom,nspec_top
   integer, dimension(:), allocatable :: ib_left,ib_right,ib_bottom,ib_top
-
-  ! debugging gravitoacoustic
-  integer :: iglobzero
 
   ! current time step
   integer :: it

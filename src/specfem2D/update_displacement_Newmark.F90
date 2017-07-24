@@ -359,12 +359,11 @@
 
   subroutine update_displacement_newmark_acoustic(deltat,deltatover2,deltatsquareover2, &
                                                   potential_dot_dot_acoustic,potential_dot_acoustic, &
-                                                  potential_acoustic, &
-                                                  PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
+                                                  potential_acoustic,PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
 
-  use specfem_par, only: nglob_acoustic,CUSTOM_REAL
   use constants, only: USE_ENFORCE_FIELDS
-  use specfem_par, only: iglob_is_forced,acoustic_iglob_is_forced,it
+
+  use specfem_par, only: nglob_acoustic,CUSTOM_REAL,ATTENUATION_VISCOACOUSTIC,iglob_is_forced,acoustic_iglob_is_forced,it
 
   implicit none
 
@@ -379,10 +378,10 @@
   integer :: iglob
 
   ! PML simulations
-  if (PML_BOUNDARY_CONDITIONS) then
+  if (PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOACOUSTIC) then
 
-    ! note: todo - for elastic, there is an additional factor 1/TWO to the default deltasquareover2 for the acceleration term
-    !       find explanations where?
+    ! note: TODO - for elastic, there is an additional factor 1/TWO to the default deltasquareover2 for the acceleration term
+    !       find explanations where? Zhinan Xie probably wrote that and should thus know the answer
     potential_acoustic_old(:) = potential_acoustic(:) + deltatsquareover2 * potential_dot_dot_acoustic(:)
 
   endif ! PML_BOUNDARY_CONDITIONS
@@ -418,12 +417,9 @@
                                                  displ_elastic,displ_elastic_old, &
                                                  PML_BOUNDARY_CONDITIONS)
 
-  use constants, only: CUSTOM_REAL,NDIM,TWO
+  use constants, only: CUSTOM_REAL,NDIM,TWO,USE_ENFORCE_FIELDS
 
-  use specfem_par, only: nglob_elastic,ATTENUATION_VISCOELASTIC
-
-  use constants, only: USE_ENFORCE_FIELDS
-  use specfem_par, only: iglob_is_forced,elastic_iglob_is_forced,it
+  use specfem_par, only: nglob_elastic,ATTENUATION_VISCOELASTIC,iglob_is_forced,elastic_iglob_is_forced,it
 
   implicit none
 
@@ -439,8 +435,8 @@
   ! attenuation/PML simulations
   if (PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOELASTIC) then
 
-    ! note: todo - there is an additional factor 1/TWO to the default deltasquareover2 for the acceleration term
-    !       find explanations where?
+    ! note: TODO - there is an additional factor 1/TWO to the default deltasquareover2 for the acceleration term
+    !       find explanations where? Zhinan Xie probably wrote that and should thus know the answer
     displ_elastic_old(:,:) = displ_elastic(:,:) + deltatsquareover2/TWO * accel_elastic(:,:)
 
   endif ! PML

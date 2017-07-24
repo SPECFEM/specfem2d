@@ -74,8 +74,7 @@
     ibool,hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz,jacobian,wxgll,wzgll, &
     displ_elastic,veloc_elastic, &
     displs_poroelastic,displw_poroelastic,velocs_poroelastic,velocw_poroelastic, &
-    potential_dot_acoustic,potential_dot_gravitoacoustic,potential_dot_gravito, &
-    vsext,vpext,rhoext,poroelastcoef,density,kmato,assign_external_model, &
+    potential_dot_acoustic,vsext,vpext,rhoext,poroelastcoef,density,kmato,assign_external_model, &
     ispec_is_poroelastic,ispec_is_elastic,P_SV
 
   implicit none
@@ -318,8 +317,7 @@
       call compute_pressure_one_element(ispec,pressure_element)
 
       ! compute velocity vector field in this element
-      call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                                      potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
+      call compute_vector_one_element(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
 
       ! get velocity and density in current spectral element
       if (.not. assign_external_model) then
@@ -371,7 +369,7 @@
                         ispec_is_poroelastic,integrated_kinetic_energy_field,max_kinetic_energy_field, &
                         integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
                         potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
-                        total_effective_duration_field,potential_dot_gravitoacoustic,potential_dot_gravito,velocs_poroelastic, &
+                        total_effective_duration_field,velocs_poroelastic, &
                         poroelastcoef,vsext,vpext,rhoext,density,kmato,assign_external_model,jacobian,displ_elastic, &
                         hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz
 
@@ -526,8 +524,7 @@
     else
 
       ! compute velocity vector field in this element
-      call compute_vector_one_element(potential_dot_acoustic,potential_dot_gravitoacoustic, &
-                                      potential_dot_gravito,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
+      call compute_vector_one_element(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
 
       ! compute pressure in this element
       call compute_pressure_one_element(ispec,pressure_element)
