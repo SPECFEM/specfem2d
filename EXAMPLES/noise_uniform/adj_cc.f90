@@ -56,7 +56,7 @@ program adj_cc
   !W_TUKEY is a number between 0 and 1, 0 being pure boxcar and 1 being pure cosine
 
   ! Get file info
-  call getarg(1,file_in)
+  call get_command_argument(1,file_in)
   call getlen(file_in,nt)
   call getinc(file_in,nt,dt)
   nthalf = (nt+1)/2

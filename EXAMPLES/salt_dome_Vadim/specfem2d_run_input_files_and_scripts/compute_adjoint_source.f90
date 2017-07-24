@@ -10,7 +10,7 @@
     double precision, dimension(:), allocatable :: time, pressure_synth, pressure_data, adjoint_source
 
     do i = 1, 3
-       call getarg(i, arg(i))
+       call get_command_argument(i, arg(i))
        write (*,*) arg(i)
     enddo
     dir_data=arg(1)
