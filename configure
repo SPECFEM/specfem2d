@@ -695,8 +695,6 @@ COND_CUDA_FALSE
 COND_CUDA_TRUE
 COND_MPI_FALSE
 COND_MPI_TRUE
-COND_VECTORIZATION_FALSE
-COND_VECTORIZATION_TRUE
 COND_DEBUG_FALSE
 COND_DEBUG_TRUE
 CUSTOM_MPI_TYPE
@@ -752,7 +750,6 @@ ac_user_opts='
 enable_option_checking
 enable_double_precision
 enable_debug
-enable_vectorization
 with_mpi
 with_cuda
 with_scotch_dir
@@ -1406,8 +1403,6 @@ Optional Features:
   --enable-double-precision
                           solver in double precision [default=no]
   --enable-debug          build with debugging options enabled [default=no]
-  --enable-vectorization  build FORCE_VECTORIZATION enabled version
-                          [default=auto]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -2586,36 +2581,6 @@ fi
 
 export COND_DEBUG_FALSE
 export COND_DEBUG_TRUE
-
-###
-### FORCE_VECTORIZATION
-###
-
-# Check whether --enable-vectorization was given.
-if test "${enable_vectorization+set}" = set; then :
-  enableval=$enable_vectorization; want_vec="$enableval"
-else
-  want_vec=no
-fi
-
-if test x"$want_vec" == xauto; then
-    if test x"$want_debug" != xno; then
-        want_vec=no
-    else
-        want_vec=yes
-    fi
-else
-    if test x"$want_vec" != xno && test x"$want_debug" != xno; then
-        as_fn_error $? "--enable-debug and --enable-vectorization cannot be specified simultaneously." "$LINENO" 5
-    fi
-fi
- if test x"$want_vec" != xno; then
-  COND_VECTORIZATION_TRUE=
-  COND_VECTORIZATION_FALSE='#'
-else
-  COND_VECTORIZATION_TRUE='#'
-  COND_VECTORIZATION_FALSE=
-fi
 
 
 ###
@@ -7503,22 +7468,6 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 fi
 
-###
-### FORCE_VECTORIZATION
-###
-
-if test x"$want_vec" != xno; then :
-
-  $as_echo "## ------------------- ##
-## FORCE VECTORIZATION ##
-## ------------------- ##"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: FORCE_VECTORIZATION is enabled" >&5
-$as_echo "$as_me: FORCE_VECTORIZATION is enabled" >&6;}
-
-  FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}FORCE_VECTORIZATION"
-  CPPFLAGS="${CPPFLAGS} -DFORCE_VECTORIZATION"
-
-fi
 
 ############################################################
 
@@ -7655,10 +7604,6 @@ LTLIBOBJS=$ac_ltlibobjs
 
 if test -z "${COND_DEBUG_TRUE}" && test -z "${COND_DEBUG_FALSE}"; then
   as_fn_error $? "conditional \"COND_DEBUG\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${COND_VECTORIZATION_TRUE}" && test -z "${COND_VECTORIZATION_FALSE}"; then
-  as_fn_error $? "conditional \"COND_VECTORIZATION\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_MPI_TRUE}" && test -z "${COND_MPI_FALSE}"; then

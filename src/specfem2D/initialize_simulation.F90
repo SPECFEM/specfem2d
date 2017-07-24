@@ -299,21 +299,8 @@
     stop 'Please set P_SV flag to .true. for simulations with attenuation and anisotropy'
   endif
 
-  ! enforcing wavefield at global degrees-of-freedom
-#ifdef FORCE_VECTORIZATION
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) '    using array vectorization: FORCE_VECTORIZATION'
-    write(IMAIN,*)
-  endif
-  ! safety stop
-  if (USE_ENFORCE_FIELDS) &
-    stop 'USE_ENFORCE_FIELDS is not supported yet when using FORCE_VECTORIZATION'
-#endif
-
   if (USE_ENFORCE_FIELDS .and. SIMULATION_TYPE /= 1) &
     stop 'USE_ENFORCE_FIELDS is not supported yet for adjoint/kernel simulations'
-
 
   ! synchronizes processes
   call synchronize_all()
