@@ -353,7 +353,7 @@
     if (ispec_is_elastic(ispec)) then
       ! add source array
       if (P_SV) then
-        ! P-SH waves
+        ! P-SV waves
         do j = 1,NGLLZ
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
