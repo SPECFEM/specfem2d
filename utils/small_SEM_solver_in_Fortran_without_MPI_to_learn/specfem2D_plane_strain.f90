@@ -115,8 +115,9 @@
 ! time step
   integer it
 
-! arrays with mesh parameters per slice
+! arrays with mesh topology
   integer, dimension(NGLLX,NGLLZ,NSPEC) :: ibool
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC) :: xix,xiz,gammax,gammaz,jacobian
 
 ! arrays with the mesh in double precision
@@ -150,6 +151,7 @@
 
 ! total number of geometrical points that describe the geometry
   integer, parameter :: npgeo = (nelem_x+1)*(nelem_z+1)
+
 ! numbering of the four corners of each mesh element
   integer, dimension(ngnod,NSPEC) :: knods
 
@@ -161,6 +163,18 @@
 
 ! function that numbers the mesh points with a unique number
   integer, external :: num
+
+! total number of sources and of receivers
+  integer, parameter :: NSOURCES = 1,nrec = 1
+
+! to create JPEG color snapshots of the results (optional)
+  integer  :: NX_IMAGE_color,NZ_IMAGE_color,isnapshot_number = 0
+  double precision  :: xmin_color_image,xmax_color_image,zmin_color_image,zmax_color_image
+  integer, dimension(:,:), allocatable :: iglob_image_color
+  double precision, dimension(:,:), allocatable :: image_color_data
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: vector_field_display
+  integer, dimension(NSOURCES) :: ix_image_color_source,iy_image_color_source
+  integer, dimension(nrec) :: ix_image_color_receiver,iy_image_color_receiver
 
 ! timer to count elapsed time
   character(len=8) datein
@@ -290,6 +304,18 @@
   print *,'z_receiver = ',z_receiver
   print *
 
+! to prepare for the creation of color JPEG snapshots of the results (optional)
+  call prepare_color_image_init(NDIM,NGLOB,NGLLX,coord,npgeo,NX_IMAGE_color,NZ_IMAGE_color, &
+                          xmin_color_image,xmax_color_image,zmin_color_image,zmax_color_image)
+
+  allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color))
+  allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color))
+
+  call prepare_color_image_pixels(ngnod,npgeo,nspec,NDIM,NGLOB,NGLLX,NGLLZ,NX_IMAGE_color,NZ_IMAGE_color,NSOURCES,nrec, &
+        xmin_color_image,xmax_color_image,zmin_color_image,zmax_color_image,x_source,z_source,x_receiver,z_receiver, &
+        coord,coorg,knods,ibool,iglob_image_color,ix_image_color_source,iy_image_color_source, &
+        ix_image_color_receiver,iy_image_color_receiver)
+
 ! clear initial vectors before starting the time loop
   displ(:,:) = 0. !!!!!!!!!! VERYSMALLVAL
   veloc(:,:) = 0.
@@ -335,6 +361,14 @@
   time_end = 86400.d0*time_values(3) + 3600.d0*time_values(5) + &
              60.d0*time_values(6) + time_values(7) + time_values(8) / 1000.d0
 
+! draw the displacement vector field in a PostScript file (optional)
+      call plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,x_receiver,z_receiver,it,deltat,NGLLX,NGLLZ,NDIM)
+
+! draw a color JPEG snapshot of the results (optional)
+      call write_color_image_snaphot(it,NX_IMAGE_color,NZ_IMAGE_color,NDIM,NGLOB,displ,veloc,accel, &
+                  vector_field_display,image_color_data,iglob_image_color,ix_image_color_source,iy_image_color_source, &
+                  ix_image_color_receiver,iy_image_color_receiver,isnapshot_number,NSOURCES,nrec,cp)
+
 ! elapsed time since beginning of the simulation
   tCPU = time_end - time_start
   int_tCPU = int(tCPU)
@@ -345,9 +379,6 @@
   write(*,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
   write(*,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
   write(*,*)
-
-! draw the displacement vector field in a PostScript file
-      call plot_post(displ,coord,ibool,NGLOB,NSPEC,x_source,z_source,x_receiver,z_receiver,it,deltat,NGLLX,NGLLZ,NDIM)
 
     endif
 
