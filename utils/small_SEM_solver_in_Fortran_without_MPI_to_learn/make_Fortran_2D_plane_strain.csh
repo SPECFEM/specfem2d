@@ -23,10 +23,10 @@ cd ..
 gcc -c -O3 -o write_jpeg_image.o write_jpeg_image.c
 
 # with full optimization on
-#gfortran -O3 -std=f2003 -fimplicit-none -frange-check -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -ffpe-trap=invalid,zero,overflow -Wunused -Werror -o xspecfem2D specfem2D_plane_strain.f90 plot_post.f90 createnum_slow.f90 define_derivation_matrices.f90 recompute_jacobian.f90 define_shape_functions.f90 gll_library.f90 lagrange_poly.f90 create_color_image.f90 write_color_image_snaphot.f90 prepare_color_image.f90 is_in_convex_quadrilateral.f90 write_jpeg_image.o libjpeg/*.o
+gfortran -O3 -std=f2003 -fimplicit-none -frange-check -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -ffpe-trap=invalid,zero,overflow -Wunused -Werror -o xspecfem2D specfem2D_plane_strain.f90 plot_post.f90 createnum_slow.f90 define_derivation_matrices.f90 recompute_jacobian.f90 define_shape_functions.f90 gll_library.f90 lagrange_poly.f90 create_color_image.f90 write_color_image_snaphot.f90 prepare_color_image.f90 is_in_convex_quadrilateral.f90 write_jpeg_image.o libjpeg/*.o
 
 # with full debugging turned on
-gfortran -std=f2003 -fimplicit-none -frange-check -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -ffpe-trap=invalid,zero,overflow -Wunused -Werror -g -O0 -ggdb -fbacktrace -fbounds-check -o xspecfem2D specfem2D_plane_strain.f90 plot_post.f90 createnum_slow.f90 define_derivation_matrices.f90 recompute_jacobian.f90 define_shape_functions.f90 gll_library.f90 lagrange_poly.f90 create_color_image.f90 write_color_image_snaphot.f90 prepare_color_image.f90 is_in_convex_quadrilateral.f90 write_jpeg_image.o libjpeg/*.o
+#gfortran -std=f2003 -fimplicit-none -frange-check -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -ffpe-trap=invalid,zero,overflow -Wunused -Werror -g -O0 -ggdb -fbacktrace -fbounds-check -o xspecfem2D specfem2D_plane_strain.f90 plot_post.f90 createnum_slow.f90 define_derivation_matrices.f90 recompute_jacobian.f90 define_shape_functions.f90 gll_library.f90 lagrange_poly.f90 create_color_image.f90 write_color_image_snaphot.f90 prepare_color_image.f90 is_in_convex_quadrilateral.f90 write_jpeg_image.o libjpeg/*.o
 
 rm -f *.o libjpeg/*.o *__genmod.*
 
