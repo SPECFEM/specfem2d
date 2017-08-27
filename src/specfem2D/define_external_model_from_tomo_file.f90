@@ -192,15 +192,19 @@ module interpolation
     if (x <= minx .and. y <= miny) then ! case 1
       !print *,"case1"
       interpolate = f(1,1)
+
     else if (x > maxx .and. y >= maxy) then ! case 2
       !print *,"case2"
       interpolate = f(x_len,y_len)
+
     else if (x <= minx .and. y >= maxy) then ! case 3
       !print *,"case3"
       interpolate = f(1,y_len)
+
     else if (x >= maxx .and. y <= miny) then ! case 4
       !print *,"case4"
       interpolate = f(x_len,1)
+
     else if (x >= minx .and. x <= maxx .and. y <= miny) then ! case 5
       !print *,"case5"
       y1 = y_array(1)
@@ -217,6 +221,7 @@ module interpolation
       endif
       denom = (x2 - x1)*(y2 - y1)
       interpolate = (f(i,j)*(x2-x)*(y2-y1) + f(i+1,j)*(x-x1)*(y2-y1))/denom
+
     else if (x >= minx .and. x <= maxx .and. y >= maxy) then ! case 6
       !print *,"case6"
       y1 = y_array(y_len-1)
@@ -233,6 +238,7 @@ module interpolation
       endif
       denom = (x2 - x1)*(y2 - y1)
       interpolate = (f(i,j+1)*(x2-x)*(y2-y1) + f(i+1, j+1)*(x-x1)*(y2-y1))/denom
+
     else if (x <= minx .and. y >= miny .and. y <= maxy) then ! case 7
       !print *,"case7"
       x1 = x_array(1)
@@ -249,6 +255,7 @@ module interpolation
       endif
       denom = (x2 - x1)*(y2 - y1)
       interpolate = (f(i,j)*(x2-x1)*(y2-y) + f(i,j+1)*(x2-x1)*(y-y1))/denom
+
     else if (x >= maxx .and. y >= miny .and. y <= maxy) then ! case 8
       !print *,"case8"
       x1 = x_array(x_len-1)
@@ -264,7 +271,8 @@ module interpolation
         y2 = y_array(j)
       endif
       denom = (x2 - x1)*(y2 - y1)
-      interpolate = (f(i+1,j)*(x-x1)*(y2-y) + f(i+1, j+1)*(x-x1)*(y-y1))/denom
+      interpolate = (f(i+1,j)*(x2-x1)*(y2-y) + f(i+1,j+1)*(x2-x1)*(y-y1))/denom
+
     else ! case 9 ! The point is exactly on the area defined
       !print *,"case9"
       i = searchInf(x_len, x_array, x) ! Test also if the array is increasing
