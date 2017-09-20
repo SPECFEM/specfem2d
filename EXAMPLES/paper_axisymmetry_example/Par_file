@@ -72,14 +72,16 @@ SAVE_MODEL                      = default
 # attenuation parameters
 ATTENUATION_VISCOELASTIC        = .true.         # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_VISCOACOUSTIC       = .false.        # turn attenuation (viscoacousticity) on or off for non-poroelastic fluid parts of the model
-ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
-Q0                              = 1              # quality factor for viscous attenuation
-freq0                           = 10             # frequency for viscous attenuation
 
 # for viscoelastic attenuation
 N_SLS                           = 5              # number of standard linear solids for attenuation (3 is usually the minimum)
 f0_attenuation                  = 5              # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
 READ_VELOCITIES_AT_f0           = .true.         # shift velocities to account for physical dispersion (see user manual for more information)
+
+# for poroelastic attenuation
+ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
+Q0_poroelastic                  = 1              # quality factor for viscous attenuation (ignore it if you are not using a poroelastic material)
+freq0_poroelastic               = 10             # frequency for viscous attenuation (ignore it if you are not using a poroelastic material)
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use the flag below. It performs undoing of attenuation in an exact way for sensitivity kernel calculations

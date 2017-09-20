@@ -38,7 +38,7 @@
   subroutine get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare, &
                                         H_biot,C_biot,M_biot,mu_fr,phi, &
                                         tort,rho_s,rho_f,eta_f,perm_xx, &
-                                        fi,f0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+                                        fi,f0,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
   use constants, only: PI
 
@@ -50,7 +50,7 @@
   double precision,intent(in) :: eta_f,rho_f,rho_s,perm_xx
   double precision,intent(in) :: mu_fr,phi,tort
 
-  double precision,intent(in) :: fi,f0,Q0
+  double precision,intent(in) :: fi,f0,Q0_poroelastic
   double precision,intent(out) :: w_c
 
   logical,intent(in) :: ATTENUATION_PORO_FLUID_PART
@@ -75,8 +75,8 @@
 
   alpha = 10.d0**dlog10(wi)
 
-  taue = (sqrt(Q0*Q0+1) + 1)/(w0il*Q0)
-  taus = (sqrt(Q0*Q0+1) - 1)/(w0il*Q0)
+  taue = (sqrt(Q0_poroelastic*Q0_poroelastic+1) + 1)/(w0il*Q0_poroelastic)
+  taus = (sqrt(Q0_poroelastic*Q0_poroelastic+1) - 1)/(w0il*Q0_poroelastic)
 
   if (ATTENUATION_PORO_FLUID_PART) then
     ! high frequency, with memory variables

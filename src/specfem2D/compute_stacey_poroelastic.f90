@@ -57,7 +57,7 @@
                          b_absorb_poro_w_left,b_absorb_poro_w_right, &
                          b_absorb_poro_w_bottom,b_absorb_poro_w_top, &
                          ib_left,ib_right,ib_bottom,ib_top, &
-                         freq0,Q0
+                         freq0_poroelastic,Q0_poroelastic
 
   implicit none
 
@@ -99,7 +99,7 @@
       permlxx = permeability(1,kmato(ispec))
 
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                                      tort,rho_s,rho_f,eta_f,permlxx,f0,freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+                   tort,rho_s,rho_f,eta_f,permlxx,f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIl = sqrt(cpIsquare)
       cpIIl = sqrt(cpIIsquare)
@@ -469,7 +469,7 @@
                          b_absorb_poro_s_left,b_absorb_poro_s_right, &
                          b_absorb_poro_s_bottom,b_absorb_poro_s_top, &
                          ib_left,ib_right,ib_bottom,ib_top, &
-                         freq0,Q0
+                         freq0_poroelastic,Q0_poroelastic
 
   implicit none
 
@@ -511,7 +511,7 @@
       permlxx = permeability(1,kmato(ispec))
 
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                                      tort,rho_s,rho_f,eta_f,permlxx,f0,freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+                    tort,rho_s,rho_f,eta_f,permlxx,f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIl = sqrt(cpIsquare)
       cpIIl = sqrt(cpIIsquare)

@@ -117,12 +117,12 @@
 
     call bcast_all_singlel(ATTENUATION_VISCOELASTIC)
     call bcast_all_singlel(ATTENUATION_VISCOACOUSTIC)
-    call bcast_all_singlel(ATTENUATION_PORO_FLUID_PART)
-    call bcast_all_singledp(Q0)
-    call bcast_all_singledp(freq0)
     call bcast_all_singlei(N_SLS)
     call bcast_all_singledp(f0_attenuation)
     call bcast_all_singlel(READ_VELOCITIES_AT_f0)
+    call bcast_all_singlel(ATTENUATION_PORO_FLUID_PART)
+    call bcast_all_singledp(Q0_poroelastic)
+    call bcast_all_singledp(freq0_poroelastic)
 
     call bcast_all_singlel(UNDO_ATTENUATION)
     call bcast_all_singlei(NT_DUMP_ATTENUATION)
@@ -345,16 +345,6 @@
   call read_value_logical_p(ATTENUATION_VISCOACOUSTIC, 'solver.ATTENUATION_VISCOACOUSTIC')
   if (err_occurred() /= 0) stop 'error reading parameter ATTENUATION_VISCOACOUSTIC in Par_file'
 
-  ! read viscous attenuation parameters (poroelastic media)
-  call read_value_logical_p(ATTENUATION_PORO_FLUID_PART, 'solver.ATTENUATION_PORO_FLUID_PART')
-  if (err_occurred() /= 0) stop 'error reading parameter ATTENUATION_PORO_FLUID_PART in Par_file'
-
-  call read_value_double_precision_p(Q0, 'solver.Q0')
-  if (err_occurred() /= 0) stop 'error reading parameter Q0 in Par_file'
-
-  call read_value_double_precision_p(freq0, 'solver.freq0')
-  if (err_occurred() /= 0) stop 'error reading parameter freq0 in Par_file'
-
   ! read constants for attenuation
   call read_value_integer_p(N_SLS, 'solver.N_SLS')
   if (err_occurred() /= 0) stop 'error reading parameter N_SLS in Par_file'
@@ -364,6 +354,16 @@
 
   call read_value_logical_p(READ_VELOCITIES_AT_f0, 'solver.READ_VELOCITIES_AT_f0')
   if (err_occurred() /= 0) stop 'error reading parameter READ_VELOCITIES_AT_f0 in Par_file'
+
+  ! read viscous attenuation parameters (poroelastic media)
+  call read_value_logical_p(ATTENUATION_PORO_FLUID_PART, 'solver.ATTENUATION_PORO_FLUID_PART')
+  if (err_occurred() /= 0) stop 'error reading parameter ATTENUATION_PORO_FLUID_PART in Par_file'
+
+  call read_value_double_precision_p(Q0_poroelastic, 'solver.Q0_poroelastic')
+  if (err_occurred() /= 0) stop 'error reading parameter Q0_poroelastic in Par_file'
+
+  call read_value_double_precision_p(freq0_poroelastic, 'solver.freq0_poroelastic')
+  if (err_occurred() /= 0) stop 'error reading parameter freq0_poroelastic in Par_file'
 
   call read_value_logical_p(UNDO_ATTENUATION, 'solver.UNDO_ATTENUATION')
   if (err_occurred() /= 0) stop 'error reading parameter UNDO_ATTENUATION in Par_file'

@@ -140,7 +140,7 @@ module shared_input_parameters
   logical :: ATTENUATION_VISCOELASTIC
   logical :: ATTENUATION_PORO_FLUID_PART
   logical :: ATTENUATION_VISCOACOUSTIC
-  double precision :: Q0,freq0
+  double precision :: Q0_poroelastic,freq0_poroelastic
 
   integer :: N_SLS
   double precision :: f0_attenuation

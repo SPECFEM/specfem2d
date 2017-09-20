@@ -222,8 +222,8 @@
   ! 'DRAW_SOURCES_AND_RECEIVERS'
   write(IOUT) DRAW_SOURCES_AND_RECEIVERS
 
-  ! 'Q0 freq0'
-  write(IOUT) Q0,freq0
+  ! 'Q0_poroelastic freq0_poroelastic'
+  write(IOUT) Q0_poroelastic,freq0_poroelastic
 
   ! 'Axisymmetric (2.5D, .true.) or Cartesian planar (2D; .false.) simulation'
   write(IOUT) AXISYM

@@ -175,7 +175,7 @@
 
       ! computes velocities
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+             tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIloc = sqrt(cpIsquare)
       cpIIloc = sqrt(cpIIsquare)
@@ -591,7 +591,7 @@
 
         ! computes velocities
         call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-               tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+               tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
         cpIloc = sqrt(cpIsquare)
         cpIIloc = sqrt(cpIIsquare)
@@ -1180,7 +1180,7 @@
 
       ! computes velocities
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-           tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+           tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIloc = sqrt(cpIsquare)
     else
@@ -1522,7 +1522,7 @@
 
       ! computes velocities
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                                      tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+               tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIloc = sqrt(cpIsquare)
       csloc = sqrt(cssquare)
@@ -1913,7 +1913,7 @@
 
           ! computes velocities
           call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                                          tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+                   tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
           cpIloc = sqrt(cpIsquare)
         else

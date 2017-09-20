@@ -1516,12 +1516,12 @@
       rz_viscous_force_RK(:,:,:,:) = 0.d0
     endif
 
-    ! Precompute Runge Kutta coefficients if viscous attenuation
+    ! precompute Runge Kutta coefficients if viscous attenuation
     ! viscous attenuation is implemented following the memory variable formulation of
     ! J. M. Carcione Wave fields in real media: wave propagation in anisotropic,
     ! anelastic and porous media, Elsevier, p. 304-305, 2007
-    theta_e = (sqrt(Q0**2+1.d0) +1.d0)/(2.d0*pi*freq0*Q0)
-    theta_s = (sqrt(Q0**2+1.d0) -1.d0)/(2.d0*pi*freq0*Q0)
+    theta_e = (sqrt(Q0_poroelastic**2+1.d0) +1.d0)/(2.d0*pi*freq0_poroelastic*Q0_poroelastic)
+    theta_s = (sqrt(Q0_poroelastic**2+1.d0) -1.d0)/(2.d0*pi*freq0_poroelastic*Q0_poroelastic)
 
     thetainv = - 1.d0 / theta_s
     alphaval = 1.d0 + deltat*thetainv + deltat**2*thetainv**2 / 2.d0 &

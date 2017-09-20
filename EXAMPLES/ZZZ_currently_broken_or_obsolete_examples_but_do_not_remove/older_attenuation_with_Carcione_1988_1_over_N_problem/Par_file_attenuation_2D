@@ -30,9 +30,12 @@ assign_external_model           = .false.        # define external earth model o
 READ_EXTERNAL_SEP_FILE          = .false.        # Read external model from DATA/model_velocity.dat_input, or use routine
 ATTENUATION_VISCOELASTIC        = .true.         # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_VISCOACOUSTIC       = .false.        # turn attenuation (viscoacousticity) on or off for non-poroelastic fluid parts of the model
+
+# for poroelastic attenuation
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model
-Q0                              =  1             # quality factor for viscous attenuation
-freq0                           =  10            # frequency for viscous attenuation
+Q0_poroelastic                  = 1              # quality factor for viscous attenuation (ignore it if you are not using a poroelastic material)
+freq0_poroelastic               = 10             # frequency for viscous attenuation (ignore it if you are not using a poroelastic material)
+
 p_sv                            = .true.         # set the type of calculation (P-SV or SH/membrane waves)
 
 # time step parameters

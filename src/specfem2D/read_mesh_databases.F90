@@ -142,7 +142,7 @@
 
   read(IIN) DRAW_SOURCES_AND_RECEIVERS
 
-  read(IIN) Q0,freq0
+  read(IIN) Q0_poroelastic,freq0_poroelastic
 
   read(IIN) AXISYM
 

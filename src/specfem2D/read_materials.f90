@@ -39,7 +39,7 @@
 
   use specfem_par, only: AXISYM,density,porosity,tortuosity,anisotropy,permeability,poroelastcoef, &
                           numat,myrank,QKappa_attenuation,Qmu_attenuation, &
-                          freq0,Q0,ATTENUATION_PORO_FLUID_PART,assign_external_model,tomo_material,myrank
+                          freq0_poroelastic,Q0_poroelastic,ATTENUATION_PORO_FLUID_PART,assign_external_model,tomo_material,myrank
 
   implicit none
 
@@ -207,7 +207,7 @@
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare, &
                                       H_biot,C_biot,M_biot,mu_fr,phi, &
                                       tortuosity_mat,density_mat(1),density_mat(2),eta_f, &
-                                      val4,f0,freq0,Q0,w_c,ATTENUATION_PORO_FLUID_PART)
+                                      val4,f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       porosity(n) = val2
       tortuosity(n) = val3
