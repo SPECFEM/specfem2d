@@ -120,7 +120,7 @@
       young = 9.d0*kappa*mu/(3.d0*kappa + mu)
 
       ! Poisson's ratio
-      poisson = HALF * (3.d0*kappa-two_mu)/(3.d0*kappa+mu)
+      poisson = 0.5d0*(cp*cp-2.d0*cs*cs) / (cp*cp-cs*cs)
 
       ! Poisson's ratio must be between -1 and +1/2
       if (poisson < -1.d0 .or. poisson > 0.5d0) call exit_MPI(myrank,'Poisson''s ratio out of range')
