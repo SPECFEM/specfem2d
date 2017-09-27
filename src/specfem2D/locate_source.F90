@@ -123,8 +123,9 @@
 
   ! determines search range
   if (is_force_source) then
-    !  if (USE_BEST_LOCATION_FOR_SOURCE) then
-    if (.false.) then
+    if (USE_BEST_LOCATION_FOR_SOURCE) then
+!! DK DK please do *NOT* change that to "if (.false.) then" otherwise sources can be poorly located;
+!! DK DK somebody had changed it and it took us a while to find the bug
       ! only search best element with inner points (exact location will be interpolated afterwards)
       imin = 2
       imax = NGLLX - 1
