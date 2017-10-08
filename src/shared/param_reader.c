@@ -11,7 +11,7 @@
  ! (c) Princeton University and CNRS / University of Marseille, April 2014
  !
  ! This software is a computer program whose purpose is to solve
- ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
+ ! the viscoelastic anisotropic or poroelastic wave equation
  ! using a spectral-element method (SEM).
  !
  ! This program is free software; you can redistribute it and/or modify
@@ -35,11 +35,9 @@
 
 /*
 
- by Dennis McRitchie (Princeton University, USA)
- and others
+ by Dennis McRitchie (Princeton University, USA) and others
 
- January 7, 2010 - par_file parsing for SPECFEM3D_GLOBE
- ??? - Modifications (by others) to work with SPECFEM2D
+ January 7, 2010 - par_file parsing
  June 1, 2011 - Updated to support multi-word values; also a few bug fixes.
  ..
  You'll notice that the heart of the parser is a complex regular
@@ -53,8 +51,7 @@
  any problems on that account. There are no wrapper functions used: just
  the C routine called directly from a Fortran routine. Also, regarding
  the use of C, I assumed this would not be a problem since there are
- already six C files that make up part of the build (though they all are
- related to the pyre-framework).
+ already a few C files that make up part of the build.
  ..
 */
 
@@ -110,7 +107,7 @@ FC_FUNC_(param_open,PARAM_OPEN)(char * filename, int * length, int * ierr)
     fncopy[blank - fncopy] = '\0';
   }
   if ((fid = fopen(fncopy, "r")) == NULL) {
-   // AB AB purposely suppressed this for NUMBER_OF_SIMULTANEOUS_RUNS     printf("Can't open '%s'\n", fncopy);
+    // DK DK purposely suppressed this for NUMBER_OF_SIMULTANEOUS_RUNS     printf("Can't open '%s'\n", fncopy);
     *ierr = 1;
     return;
   }
@@ -145,6 +142,7 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
   if (blank != NULL) {
     namecopy[blank - namecopy] = '\0';
   }
+
   // Then get rid of any dot-terminated prefix.
   namecopy2 = strchr(namecopy, '.');
   if (namecopy2 != NULL) {
@@ -152,6 +150,7 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
   } else {
     namecopy2 = namecopy;
   }
+
   /* Regular expression for parsing lines from param file.
    ** Good luck reading this regular expression.  Basically, the lines of
    ** the parameter file should be of the form 'parameter = value',
@@ -200,7 +199,6 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
     // printf("Line read = %s\n", line);
     // If we have a match, extract the keyword from the line.
     keyword = strndup(line+parameter[1].rm_so, parameter[1].rm_eo-parameter[1].rm_so);
-    //printf("keyword: %s\n", keyword);
 
     // If the keyword is not the one we're looking for, check the next line.
     if (strcmp(keyword, namecopy2) != 0) {
@@ -211,7 +209,6 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
     regfree(&compiled_pattern);
     // If it matches, extract the value from the line.
     value = strndup(line+parameter[2].rm_so, parameter[2].rm_eo-parameter[2].rm_so);
-    //printf("value: %s\n", value);
 
     // Clear out the return string with blanks, copy the value into it, and return.
     memset(string_read, ' ', *string_read_len);
@@ -220,15 +217,13 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
     if (value_len > (size_t)*string_read_len)
       value_len = *string_read_len;
     strncpy(string_read, value, value_len);
-    // printf("'%s'='%s'\n", namecopy2, value);
 
     free(value);
     free(namecopy);
     *ierr = 0;
     return;
   }
-  // If no keyword matches, print out error and die.
-  printf("No match in parameter file for keyword '%s'\n", namecopy);
+  // If no keyword matches, set the error flag
   free(namecopy);
   regfree(&compiled_pattern);
   *ierr = 1;

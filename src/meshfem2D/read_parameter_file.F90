@@ -269,8 +269,9 @@
 
   ! local parameters
   integer :: i,irange
+  logical :: some_parameters_missing_from_Par_file
 
-  integer,external :: err_occurred
+  integer, external :: err_occurred
 
   !--------------------------------------------------------------------
   !
@@ -278,59 +279,125 @@
   !
   !--------------------------------------------------------------------
 
+  some_parameters_missing_from_Par_file = .false.
+
   ! read file names and path for output
-  call read_value_string_p(title, 'solver.title')
-  if (err_occurred() /= 0) stop 'error reading parameter title in Par_file'
+  call read_value_string_p(title, 'title')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'title                           = Title of my simulation'
+    write(*,*)
+  endif
 
   ! read type of simulation
-  call read_value_integer_p(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
-  if (err_occurred() /= 0) stop 'error reading parameter SIMULATION_TYPE in Par_file'
+  call read_value_integer_p(SIMULATION_TYPE, 'SIMULATION_TYPE')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'SIMULATION_TYPE                 = 1'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(NOISE_TOMOGRAPHY, 'solver.NOISE_TOMOGRAPHY')
-  if (err_occurred() /= 0) stop 'error reading parameter NOISE_TOMOGRAPHY in Par_file'
+  call read_value_integer_p(NOISE_TOMOGRAPHY, 'NOISE_TOMOGRAPHY')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NOISE_TOMOGRAPHY                = 0'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(SAVE_FORWARD, 'solver.SAVE_FORWARD')
-  if (err_occurred() /= 0) stop 'error reading parameter SAVE_FORWARD in Par_file'
+  call read_value_logical_p(SAVE_FORWARD, 'SAVE_FORWARD')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'SAVE_FORWARD                    = .false.'
+    write(*,*)
+  endif
 
   ! read info about partitioning
-  call read_value_integer_p(NPROC, 'solver.NPROC')
-  if (err_occurred() /= 0) stop 'error reading parameter NPROC in Par_file'
+  call read_value_integer_p(NPROC, 'NPROC')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NPROC                           = 1'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(partitioning_method, 'mesher.partitioning_method')
-  if (err_occurred() /= 0) stop 'error reading parameter partitioning_method in Par_file'
+  call read_value_integer_p(partitioning_method, 'partitioning_method')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'partitioning_method             = 3'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(ngnod, 'mesher.ngnod')
-  if (err_occurred() /= 0) stop 'error reading parameter ngnod in Par_file'
+  call read_value_integer_p(ngnod, 'ngnod')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'ngnod                           = 9'
+    write(*,*)
+  endif
 
   ! read time step parameters
-  call read_value_integer_p(NSTEP, 'solver.NSTEP')
-  if (err_occurred() /= 0) stop 'error reading parameter NSTEP in Par_file'
+  call read_value_integer_p(NSTEP, 'NSTEP')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NSTEP                           = 3000'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(DT, 'solver.DT')
-  if (err_occurred() /= 0) stop 'error reading parameter DT in Par_file'
+  call read_value_double_precision_p(DT, 'DT')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'DT                              = 1.0e-3'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(time_stepping_scheme, 'solver.time_stepping_scheme')
-  if (err_occurred() /= 0) stop 'error reading parameter time_stepping_scheme in Par_file'
+  call read_value_integer_p(time_stepping_scheme, 'time_stepping_scheme')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'time_stepping_scheme            = 1'
+    write(*,*)
+  endif
 
   ! axisymmetric (2.5D) or Cartesian planar (2D) simulation
-  call read_value_logical_p(AXISYM, 'solver.AXISYM')
-  if (err_occurred() /= 0) stop 'error reading parameter AXISYM in Par_file'
+  call read_value_logical_p(AXISYM, 'AXISYM')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'AXISYM                          = .false.'
+    write(*,*)
+  endif
 
   ! determine if body or surface (membrane) waves calculation
-  call read_value_logical_p(P_SV, 'solver.P_SV')
-  if (err_occurred() /= 0) stop 'error reading parameter P_SV in Par_file'
+  call read_value_logical_p(P_SV, 'P_SV')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'P_SV                            = .true.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(GPU_MODE, 'solver.GPU_MODE')
-  if (err_occurred() /= 0) stop 'error reading parameter GPU_MODE in Par_file'
+  call read_value_logical_p(GPU_MODE, 'GPU_MODE')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'GPU_MODE                        = .false.'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(setup_with_binary_database, 'solver.setup_with_binary_database')
-  if (err_occurred() /= 0) stop 'error reading parameter setup_with_binary_database in Par_file'
+  call read_value_integer_p(setup_with_binary_database, 'setup_with_binary_database')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'setup_with_binary_database      = 0'
+    write(*,*)
+  endif
 
-  call read_value_string_p(MODEL, 'mesher.MODEL')
-  if (err_occurred() /= 0) stop 'error reading parameter MODEL in Par_file'
+  call read_value_string_p(MODEL, 'MODEL')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'MODEL                           = default'
+    write(*,*)
+  endif
 
-  call read_value_string_p(SAVE_MODEL, 'mesher.SAVE_MODEL')
-  if (err_occurred() /= 0) stop 'error reading parameter SAVE_MODEL in Par_file'
+  call read_value_string_p(SAVE_MODEL, 'SAVE_MODEL')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'SAVE_MODEL                      = default'
+    write(*,*)
+  endif
 
   !--------------------------------------------------------------------
   !
@@ -338,38 +405,78 @@
   !
   !--------------------------------------------------------------------
 
-  call read_value_logical_p(ATTENUATION_VISCOELASTIC, 'solver.ATTENUATION_VISCOELASTIC')
-  if (err_occurred() /= 0) stop 'error reading parameter ATTENUATION_VISCOELASTIC in Par_file'
+  call read_value_logical_p(ATTENUATION_VISCOELASTIC, 'ATTENUATION_VISCOELASTIC')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'ATTENUATION_VISCOELASTIC        = .false.'
+    write(*,*)
+  endif
 
   ! read viscous attenuation parameters (acoustic media)
-  call read_value_logical_p(ATTENUATION_VISCOACOUSTIC, 'solver.ATTENUATION_VISCOACOUSTIC')
-  if (err_occurred() /= 0) stop 'error reading parameter ATTENUATION_VISCOACOUSTIC in Par_file'
+  call read_value_logical_p(ATTENUATION_VISCOACOUSTIC, 'ATTENUATION_VISCOACOUSTIC')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'ATTENUATION_VISCOACOUSTIC       = .false.'
+    write(*,*)
+  endif
 
   ! read constants for attenuation
-  call read_value_integer_p(N_SLS, 'solver.N_SLS')
-  if (err_occurred() /= 0) stop 'error reading parameter N_SLS in Par_file'
+  call read_value_integer_p(N_SLS, 'N_SLS')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'N_SLS                           = 3'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(f0_attenuation, 'solver.f0_attenuation')
-  if (err_occurred() /= 0) stop 'error reading parameter f0_attenuation in Par_file'
+  call read_value_double_precision_p(f0_attenuation, 'f0_attenuation')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'f0_attenuation                  = 5.196'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(READ_VELOCITIES_AT_f0, 'solver.READ_VELOCITIES_AT_f0')
-  if (err_occurred() /= 0) stop 'error reading parameter READ_VELOCITIES_AT_f0 in Par_file'
+  call read_value_logical_p(READ_VELOCITIES_AT_f0, 'READ_VELOCITIES_AT_f0')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'READ_VELOCITIES_AT_f0           = .false.'
+    write(*,*)
+  endif
 
   ! read viscous attenuation parameters (poroelastic media)
-  call read_value_logical_p(ATTENUATION_PORO_FLUID_PART, 'solver.ATTENUATION_PORO_FLUID_PART')
-  if (err_occurred() /= 0) stop 'error reading parameter ATTENUATION_PORO_FLUID_PART in Par_file'
+  call read_value_logical_p(ATTENUATION_PORO_FLUID_PART, 'ATTENUATION_PORO_FLUID_PART')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'ATTENUATION_PORO_FLUID_PART     = .false.'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(Q0_poroelastic, 'solver.Q0_poroelastic')
-  if (err_occurred() /= 0) stop 'error reading parameter Q0_poroelastic in Par_file'
+  call read_value_double_precision_p(Q0_poroelastic, 'Q0_poroelastic')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'Q0_poroelastic                  = 1'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(freq0_poroelastic, 'solver.freq0_poroelastic')
-  if (err_occurred() /= 0) stop 'error reading parameter freq0_poroelastic in Par_file'
+  call read_value_double_precision_p(freq0_poroelastic, 'freq0_poroelastic')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'freq0_poroelastic               = 10'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(UNDO_ATTENUATION, 'solver.UNDO_ATTENUATION')
-  if (err_occurred() /= 0) stop 'error reading parameter UNDO_ATTENUATION in Par_file'
+  call read_value_logical_p(UNDO_ATTENUATION, 'UNDO_ATTENUATION')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'UNDO_ATTENUATION                = .false.'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(NT_DUMP_ATTENUATION, 'solver.NT_DUMP_ATTENUATION')
-  if (err_occurred() /= 0) stop 'error reading parameter NT_DUMP_ATTENUATION in Par_file'
+  call read_value_integer_p(NT_DUMP_ATTENUATION, 'NT_DUMP_ATTENUATION')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NT_DUMP_ATTENUATION             = 500'
+    write(*,*)
+  endif
 
   !--------------------------------------------------------------------
   !
@@ -378,31 +485,62 @@
   !--------------------------------------------------------------------
 
   ! read source infos
-  call read_value_integer_p(NSOURCES, 'solver.NSOURCES')
-  if (err_occurred() /= 0) stop 'error reading parameter NSOURCES in Par_file'
+  call read_value_integer_p(NSOURCES, 'NSOURCES')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NSOURCES                        = 1'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(force_normal_to_surface, 'solver.force_normal_to_surface')
-  if (err_occurred() /= 0) stop 'error reading parameter force_normal_to_surface in Par_file'
+  call read_value_logical_p(force_normal_to_surface, 'force_normal_to_surface')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'force_normal_to_surface         = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(initialfield, 'solver.initialfield')
-  if (err_occurred() /= 0) stop 'error reading parameter initialfield in Par_file'
+  call read_value_logical_p(initialfield, 'initialfield')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'initialfield                    = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(add_Bielak_conditions_bottom, 'solver.add_Bielak_conditions_bottom')
-  if (err_occurred() /= 0) stop 'error reading parameter add_Bielak_conditions_bottom in Par_file'
+  call read_value_logical_p(add_Bielak_conditions_bottom, 'add_Bielak_conditions_bottom')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'add_Bielak_conditions_bottom    = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(add_Bielak_conditions_right, 'solver.add_Bielak_conditions_right')
-  if (err_occurred() /= 0) stop 'error reading parameter add_Bielak_conditions_right in Par_file'
+  call read_value_logical_p(add_Bielak_conditions_right, 'add_Bielak_conditions_right')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'add_Bielak_conditions_right     = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(add_Bielak_conditions_top, 'solver.add_Bielak_conditions_top')
-  if (err_occurred() /= 0) stop 'error reading parameter add_Bielak_conditions_top in Par_file'
+  call read_value_logical_p(add_Bielak_conditions_top, 'add_Bielak_conditions_top')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'add_Bielak_conditions_top       = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(add_Bielak_conditions_left, 'solver.add_Bielak_conditions_left')
-  if (err_occurred() /= 0) stop 'error reading parameter add_Bielak_conditions_left in Par_file'
+  call read_value_logical_p(add_Bielak_conditions_left, 'add_Bielak_conditions_left')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'add_Bielak_conditions_left      = .false.'
+    write(*,*)
+  endif
 
   ! read acoustic forcing flag
-  call read_value_logical_p(ACOUSTIC_FORCING, 'solver.ACOUSTIC_FORCING')
-  if (err_occurred() /= 0) stop 'error reading parameter ACOUSTIC_FORCING in Par_file'
-
+  call read_value_logical_p(ACOUSTIC_FORCING, 'ACOUSTIC_FORCING')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'ACOUSTIC_FORCING                = .false.'
+    write(*,*)
+  endif
 
   !--------------------------------------------------------------------
   !
@@ -411,44 +549,89 @@
   !--------------------------------------------------------------------
 
   ! read receiver line parameters
-  call read_value_integer_p(seismotype, 'solver.seismotype')
-  if (err_occurred() /= 0) stop 'error reading parameter seismotype in Par_file'
+  call read_value_integer_p(seismotype, 'seismotype')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'seismotype                      = 1'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(subsamp_seismos, 'solver.subsamp_seismos')
-  if (err_occurred() /= 0) stop 'error reading parameter subsamp_seismos in Par_file'
+  call read_value_integer_p(subsamp_seismos, 'subsamp_seismos')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'subsamp_seismos                 = 1'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(USE_TRICK_FOR_BETTER_PRESSURE, 'solver.USE_TRICK_FOR_BETTER_PRESSURE')
-  if (err_occurred() /= 0) stop 'error reading parameter USE_TRICK_FOR_BETTER_PRESSURE in Par_file'
+  call read_value_logical_p(USE_TRICK_FOR_BETTER_PRESSURE, 'USE_TRICK_FOR_BETTER_PRESSURE')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'USE_TRICK_FOR_BETTER_PRESSURE   = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(COMPUTE_INTEGRATED_ENERGY_FIELD, 'solver.COMPUTE_INTEGRATED_ENERGY_FIELD')
-  if (err_occurred() /= 0) stop 'error reading parameter COMPUTE_INTEGRATED_ENERGY_FIELD in Par_file'
+  call read_value_double_precision_p(USER_T0, 'USER_T0')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'USER_T0                         = 0.0d0'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(USER_T0, 'solver.USER_T0')
-  if (err_occurred() /= 0) stop 'error reading parameter USER_T0 in Par_file'
+  call read_value_logical_p(save_ASCII_seismograms, 'save_ASCII_seismograms')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'save_ASCII_seismograms          = .true.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(save_ASCII_seismograms, 'solver.save_ASCII_seismograms')
-  if (err_occurred() /= 0) stop 'error reading parameter save_ASCII_seismograms in Par_file'
+  call read_value_logical_p(save_binary_seismograms_single, 'save_binary_seismograms_single')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'save_binary_seismograms_single  = .true.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(save_binary_seismograms_single, 'solver.save_binary_seismograms_single')
-  if (err_occurred() /= 0) stop 'error reading parameter save_binary_seismograms_single in Par_file'
+  call read_value_logical_p(save_binary_seismograms_double, 'save_binary_seismograms_double')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'save_binary_seismograms_double  = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(save_binary_seismograms_double, 'solver.save_binary_seismograms_double')
-  if (err_occurred() /= 0) stop 'error reading parameter save_binary_seismograms_double in Par_file'
+  call read_value_logical_p(SU_FORMAT, 'SU_FORMAT')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'SU_FORMAT                       = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(SU_FORMAT, 'solver.SU_FORMAT')
-  if (err_occurred() /= 0) stop 'error reading parameter SU_FORMAT in Par_file'
+  call read_value_logical_p(use_existing_STATIONS, 'use_existing_STATIONS')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'use_existing_STATIONS           = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(use_existing_STATIONS, 'solver.use_existing_STATIONS')
-  if (err_occurred() /= 0) stop 'error reading parameter use_existing_STATIONS in Par_file'
+  call read_value_integer_p(nreceiversets, 'nreceiversets')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'nreceiversets                   = 1'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(nreceiversets, 'solver.nreceiversets')
-  if (err_occurred() /= 0) stop 'error reading parameter nreceiversets in Par_file'
+  call read_value_double_precision_p(anglerec, 'anglerec')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'anglerec                        = 0.d0'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(anglerec, 'solver.anglerec')
-  if (err_occurred() /= 0) stop 'error reading parameter anglerec in Par_file'
-
-  call read_value_logical_p(rec_normal_to_surface, 'solver.rec_normal_to_surface')
-  if (err_occurred() /= 0) stop 'error reading parameter rec_normal_to_surface in Par_file'
+  call read_value_logical_p(rec_normal_to_surface, 'rec_normal_to_surface')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'rec_normal_to_surface           = .false.'
+    write(*,*)
+  endif
 
   ! receiver sets will be read in later...
 
@@ -458,8 +641,12 @@
   !
   !--------------------------------------------------------------------
 
-  call read_value_logical_p(save_ASCII_kernels, 'solver.save_ASCII_kernels')
-  if (err_occurred() /= 0) stop 'error reading parameter save_ASCII_kernels in Par_file'
+  call read_value_logical_p(save_ASCII_kernels, 'save_ASCII_kernels')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'save_ASCII_kernels              = .true.'
+    write(*,*)
+  endif
 
   !--------------------------------------------------------------------
   !
@@ -467,30 +654,62 @@
   !
   !--------------------------------------------------------------------
 
-  call read_value_logical_p(PML_BOUNDARY_CONDITIONS, 'solver.PML_BOUNDARY_CONDITIONS')
-  if (err_occurred() /= 0) stop 'error reading parameter PML_BOUNDARY_CONDITIONS in Par_file'
+  call read_value_logical_p(PML_BOUNDARY_CONDITIONS, 'PML_BOUNDARY_CONDITIONS')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'PML_BOUNDARY_CONDITIONS         = .true.'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(NELEM_PML_THICKNESS, 'solver.NELEM_PML_THICKNESS')
-  if (err_occurred() /= 0) stop 'error reading parameter NELEM_PML_THICKNESS in Par_file'
+  call read_value_integer_p(NELEM_PML_THICKNESS, 'NELEM_PML_THICKNESS')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NELEM_PML_THICKNESS             = 3'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(ROTATE_PML_ACTIVATE, 'solver.ROTATE_PML_ACTIVATE')
-  if (err_occurred() /= 0) stop 'error reading parameter ROTATE_PML_ACTIVATE in Par_file'
+  call read_value_logical_p(ROTATE_PML_ACTIVATE, 'ROTATE_PML_ACTIVATE')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'ROTATE_PML_ACTIVATE             = .false.'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(ROTATE_PML_ANGLE, 'solver.ROTATE_PML_ANGLE')
-  if (err_occurred() /= 0) stop 'error reading parameter ROTATE_PML_ANGLE in Par_file'
+  call read_value_double_precision_p(ROTATE_PML_ANGLE, 'ROTATE_PML_ANGLE')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'ROTATE_PML_ANGLE                = 30.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(PML_PARAMETER_ADJUSTMENT, 'solver.PML_PARAMETER_ADJUSTMENT')
-  if (err_occurred() /= 0) stop 'error reading parameter PML_PARAMETER_ADJUSTMENT in Par_file'
+  call read_value_logical_p(PML_PARAMETER_ADJUSTMENT, 'PML_PARAMETER_ADJUSTMENT')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'PML_PARAMETER_ADJUSTMENT        = .false.'
+    write(*,*)
+  endif
 
   ! boolean defining whether to use any absorbing boundaries
-  call read_value_logical_p(STACEY_ABSORBING_CONDITIONS, 'solver.STACEY_ABSORBING_CONDITIONS')
-  if (err_occurred() /= 0) stop 'error reading parameter STACEY_ABSORBING_CONDITIONS in Par_file'
+  call read_value_logical_p(STACEY_ABSORBING_CONDITIONS, 'STACEY_ABSORBING_CONDITIONS')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'STACEY_ABSORBING_CONDITIONS     = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(ADD_PERIODIC_CONDITIONS, 'solver.ADD_PERIODIC_CONDITIONS')
-  if (err_occurred() /= 0) stop 'error reading parameter ADD_PERIODIC_CONDITIONS in Par_file'
+  call read_value_logical_p(ADD_PERIODIC_CONDITIONS, 'ADD_PERIODIC_CONDITIONS')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'ADD_PERIODIC_CONDITIONS         = .false.'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(PERIODIC_HORIZ_DIST, 'solver.PERIODIC_HORIZ_DIST')
-  if (err_occurred() /= 0) stop 'error reading parameter PERIODIC_HORIZ_DIST in Par_file'
+  call read_value_double_precision_p(PERIODIC_HORIZ_DIST, 'PERIODIC_HORIZ_DIST')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'PERIODIC_HORIZ_DIST             = 4000.'
+    write(*,*)
+  endif
 
   !--------------------------------------------------------------------
   !
@@ -499,17 +718,29 @@
   !--------------------------------------------------------------------
 
   ! read the different material materials (i.e. the number of models)
-  call read_value_integer_p(nbmodels, 'mesher.nbmodels')
-  if (err_occurred() /= 0) stop 'error reading parameter nbmodels in Par_file'
+  call read_value_integer_p(nbmodels, 'nbmodels')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'nbmodels                        = 1'
+    write(*,*)
+  endif
 
   ! material definitions will be read later on...
 
-  call read_value_string_p(TOMOGRAPHY_FILE, 'solver.TOMOGRAPHY_FILE')
-  if (err_occurred() /= 0) stop 'error reading parameter TOMOGRAPHY_FILE in Par_file'
+  call read_value_string_p(TOMOGRAPHY_FILE, 'TOMOGRAPHY_FILE')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz'
+    write(*,*)
+  endif
 
   ! boolean defining whether internal or external mesh
-  call read_value_logical_p(read_external_mesh, 'mesher.read_external_mesh')
-  if (err_occurred() /= 0) stop 'error reading parameter read_external_mesh in Par_file'
+  call read_value_logical_p(read_external_mesh, 'read_external_mesh')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'read_external_mesh              = .false.'
+    write(*,*)
+  endif
 
   !--------------------------------------------------------------------
   !
@@ -523,32 +754,68 @@
   if (read_external_mesh) then
 
     ! read info about external mesh
-    call read_value_string_p(mesh_file, 'mesher.mesh_file')
-    if (err_occurred() /= 0) stop 'error reading parameter mesh_file in Par_file'
+    call read_value_string_p(mesh_file, 'mesh_file')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'mesh_file                       = ./DATA/mesh_file'
+      write(*,*)
+    endif
 
-    call read_value_string_p(nodes_coords_file, 'mesher.nodes_coords_file')
-    if (err_occurred() /= 0) stop 'error reading parameter nodes_coords_file in Par_file'
+    call read_value_string_p(nodes_coords_file, 'nodes_coords_file')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'nodes_coords_file               = ./DATA/nodes_coords_file'
+      write(*,*)
+    endif
 
-    call read_value_string_p(materials_file, 'mesher.materials_file')
-    if (err_occurred() /= 0) stop 'error reading parameter materials_file in Par_file'
+    call read_value_string_p(materials_file, 'materials_file')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'materials_file                  = ./DATA/materials_file'
+      write(*,*)
+    endif
 
-    call read_value_string_p(free_surface_file, 'mesher.free_surface_file')
-    if (err_occurred() /= 0) stop 'error reading parameter free_surface_file in Par_file'
+    call read_value_string_p(free_surface_file, 'free_surface_file')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'free_surface_file               = ./DATA/free_surface_file'
+      write(*,*)
+    endif
 
-    call read_value_string_p(axial_elements_file, 'mesher.axial_elements_file')
-    if (err_occurred() /= 0) stop 'error reading parameter axial_elements_file in Par_file'
+    call read_value_string_p(axial_elements_file, 'axial_elements_file')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'axial_elements_file             = ./DATA/axial_elements_file'
+      write(*,*)
+    endif
 
-    call read_value_string_p(absorbing_surface_file, 'mesher.absorbing_surface_file')
-    if (err_occurred() /= 0) stop 'error reading parameter absorbing_surface_file in Par_file'
+    call read_value_string_p(absorbing_surface_file, 'absorbing_surface_file')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'absorbing_surface_file          = ./DATA/absorbing_surface_file'
+      write(*,*)
+    endif
 
-    call read_value_string_p(acoustic_forcing_surface_file, 'mesher.acoustic_forcing_surface_file')
-    if (err_occurred() /= 0) stop 'error reading parameter acoustic_forcing_surface_file in Par_file'
+    call read_value_string_p(acoustic_forcing_surface_file, 'acoustic_forcing_surface_file')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'acoustic_forcing_surface_file   = ./DATA/MSH/Surf_acforcing_Bottom_enforcing_mesh'
+      write(*,*)
+    endif
 
-    call read_value_string_p(absorbing_cpml_file, 'mesher.absorbing_cpml_file')
-    if (err_occurred() /= 0) stop 'error reading parameter absorbing_cpml_file in Par_file'
+    call read_value_string_p(absorbing_cpml_file, 'absorbing_cpml_file')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'absorbing_cpml_file             = ./DATA/absorbing_cpml_file'
+      write(*,*)
+    endif
 
-    call read_value_string_p(tangential_detection_curve_file, 'mesher.tangential_detection_curve_file')
-    if (err_occurred() /= 0) stop 'error reading parameter tangential_detection_curve_file in Par_file'
+    call read_value_string_p(tangential_detection_curve_file, 'tangential_detection_curve_file')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'tangential_detection_curve_file = ./DATA/courbe_eros_nodes'
+      write(*,*)
+    endif
 
   else
 
@@ -556,35 +823,71 @@
     ! internal mesh parameters
 
     ! interfaces file
-    call read_value_string_p(interfacesfile, 'mesher.interfacesfile')
-    if (err_occurred() /= 0) stop 'error reading parameter interfacesfile in Par_file'
+    call read_value_string_p(interfacesfile, 'interfacesfile')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'interfacesfile                  = DATA/interfaces_simple_topo_curved.dat'
+      write(*,*)
+    endif
 
     ! read grid parameters
-    call read_value_double_precision_p(xmin_param, 'mesher.xmin')
-    if (err_occurred() /= 0) stop 'error reading parameter xmin_param in Par_file'
+    call read_value_double_precision_p(xmin_param, 'xmin')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'xmin                            = 0.d0'
+      write(*,*)
+    endif
 
-    call read_value_double_precision_p(xmax_param, 'mesher.xmax')
-    if (err_occurred() /= 0) stop 'error reading parameter xmax_param in Par_file'
+    call read_value_double_precision_p(xmax_param, 'xmax')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'xmax                            = 4000.d0'
+      write(*,*)
+    endif
 
-    call read_value_integer_p(nx_param, 'mesher.nx')
-    if (err_occurred() /= 0) stop 'error reading parameter nx in Par_file'
+    call read_value_integer_p(nx_param, 'nx')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'nx                              = 80'
+      write(*,*)
+    endif
 
     ! read absorbing boundary parameters
-    call read_value_logical_p(absorbbottom, 'solver.absorbbottom')
-    if (err_occurred() /= 0) stop 'error reading parameter absorbbottom in Par_file'
+    call read_value_logical_p(absorbbottom, 'absorbbottom')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'absorbbottom                    = .true.'
+      write(*,*)
+    endif
 
-    call read_value_logical_p(absorbright, 'solver.absorbright')
-    if (err_occurred() /= 0) stop 'error reading parameter absorbright in Par_file'
+    call read_value_logical_p(absorbright, 'absorbright')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'absorbright                     = .true.'
+      write(*,*)
+    endif
 
-    call read_value_logical_p(absorbtop, 'solver.absorbtop')
-    if (err_occurred() /= 0) stop 'error reading parameter absorbtop in Par_file'
+    call read_value_logical_p(absorbtop, 'absorbtop')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'absorbtop                       = .false.'
+      write(*,*)
+    endif
 
-    call read_value_logical_p(absorbleft, 'solver.absorbleft')
-    if (err_occurred() /= 0) stop 'error reading parameter absorbleft in Par_file'
+    call read_value_logical_p(absorbleft, 'absorbleft')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'absorbleft                      = .true.'
+      write(*,*)
+    endif
 
-    call read_value_integer_p(nbregions, 'mesher.nbregions')
-    if (err_occurred() /= 0) stop 'error reading parameter nbregions in Par_file'
-    ! note: if internal mesh, then region tables will be read in by read_regions (from meshfem2D)
+    call read_value_integer_p(nbregions, 'nbregions')
+    if (err_occurred() /= 0) then
+      some_parameters_missing_from_Par_file = .true.
+      write(*,'(a)') 'nbregions                       = 1'
+      write(*,*)
+    endif
+! note: if internal mesh, then region tables will be read in by read_regions (from meshfem2D)
   endif
 
 
@@ -595,20 +898,47 @@
   !--------------------------------------------------------------------
 
   ! read display parameters
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_INFO, 'solver.NSTEP_BETWEEN_OUTPUT_INFO')
-  if (err_occurred() /= 0) stop 'error reading parameter NSTEP_BETWEEN_OUTPUT_INFO in Par_file'
+  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_INFO, 'NSTEP_BETWEEN_OUTPUT_INFO')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NSTEP_BETWEEN_OUTPUT_INFO       = 100'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(output_grid_Gnuplot, 'solver.output_grid_Gnuplot')
-  if (err_occurred() /= 0) stop 'error reading parameter output_grid_Gnuplot in Par_file'
+  call read_value_logical_p(output_grid_Gnuplot, 'output_grid_Gnuplot')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'output_grid_Gnuplot             = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(output_grid_ASCII, 'solver.output_grid_ASCII')
-  if (err_occurred() /= 0) stop 'error reading parameter output_grid_ASCII in Par_file'
+  call read_value_logical_p(output_grid_ASCII, 'output_grid_ASCII')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'output_grid_ASCII               = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(OUTPUT_ENERGY, 'solver.OUTPUT_ENERGY')
-  if (err_occurred() /= 0) stop 'error reading parameter OUTPUT_ENERGY in Par_file'
+  call read_value_logical_p(OUTPUT_ENERGY, 'OUTPUT_ENERGY')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'OUTPUT_ENERGY                   = .false.'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_ENERGY, 'solver.NTSTEP_BETWEEN_OUTPUT_ENERGY')
-  if (err_occurred() /= 0) stop 'error reading parameter NTSTEP_BETWEEN_OUTPUT_ENERGY in Par_file'
+  call read_value_integer_p(NTSTEP_BETWEEN_OUTPUT_ENERGY, 'NTSTEP_BETWEEN_OUTPUT_ENERGY')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NTSTEP_BETWEEN_OUTPUT_ENERGY    = 10'
+    write(*,*)
+  endif
+
+  call read_value_logical_p(COMPUTE_INTEGRATED_ENERGY_FIELD, 'COMPUTE_INTEGRATED_ENERGY_FIELD')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'COMPUTE_INTEGRATED_ENERGY_FIELD = .false.'
+    write(*,*)
+  endif
 
   !--------------------------------------------------------------------
   !
@@ -616,86 +946,200 @@
   !
   !--------------------------------------------------------------------
 
-  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_IMAGES, 'solver.NSTEP_BETWEEN_OUTPUT_IMAGES')
-  if (err_occurred() /= 0) stop 'error reading parameter NSTEP_BETWEEN_OUTPUT_IMAGES in Par_file'
+  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_IMAGES, 'NSTEP_BETWEEN_OUTPUT_IMAGES')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NSTEP_BETWEEN_OUTPUT_IMAGES     = 100'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(cutsnaps, 'solver.cutsnaps')
-  if (err_occurred() /= 0) stop 'error reading parameter cutsnaps in Par_file'
+  call read_value_double_precision_p(cutsnaps, 'cutsnaps')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'cutsnaps                        = 1.'
+    write(*,*)
+  endif
 
   ! jpeg images
-  call read_value_logical_p(output_color_image, 'solver.output_color_image')
-  if (err_occurred() /= 0) stop 'error reading parameter output_color_image in Par_file'
+  call read_value_logical_p(output_color_image, 'output_color_image')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'output_color_image              = .true.'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(imagetype_JPEG, 'solver.imagetype_JPEG')
-  if (err_occurred() /= 0) stop 'error reading parameter imagetype_JPEG in Par_file'
+  call read_value_integer_p(imagetype_JPEG, 'imagetype_JPEG')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'imagetype_JPEG                  = 2'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(factor_subsample_image, 'solver.factor_subsample_image')
-  if (err_occurred() /= 0) stop 'error reading parameter factor_subsample_image in Par_file'
+  call read_value_double_precision_p(factor_subsample_image, 'factor_subsample_image')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'factor_subsample_image          = 1.0d0'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(USE_CONSTANT_MAX_AMPLITUDE, 'solver.USE_CONSTANT_MAX_AMPLITUDE')
-  if (err_occurred() /= 0) stop 'error reading parameter USE_CONSTANT_MAX_AMPLITUDE in Par_file'
+  call read_value_logical_p(USE_CONSTANT_MAX_AMPLITUDE, 'USE_CONSTANT_MAX_AMPLITUDE')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'USE_CONSTANT_MAX_AMPLITUDE      = .false.'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(CONSTANT_MAX_AMPLITUDE_TO_USE, 'solver.CONSTANT_MAX_AMPLITUDE_TO_USE')
-  if (err_occurred() /= 0) stop 'error reading parameter CONSTANT_MAX_AMPLITUDE_TO_USE in Par_file'
+  call read_value_double_precision_p(CONSTANT_MAX_AMPLITUDE_TO_USE, 'CONSTANT_MAX_AMPLITUDE_TO_USE')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'CONSTANT_MAX_AMPLITUDE_TO_USE   = 1.17d4'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(POWER_DISPLAY_COLOR, 'solver.POWER_DISPLAY_COLOR')
-  if (err_occurred() /= 0) stop 'error reading parameter POWER_DISPLAY_COLOR in Par_file'
+  call read_value_double_precision_p(POWER_DISPLAY_COLOR, 'POWER_DISPLAY_COLOR')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'POWER_DISPLAY_COLOR             = 0.30d0'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(DRAW_SOURCES_AND_RECEIVERS, 'solver.DRAW_SOURCES_AND_RECEIVERS')
-  if (err_occurred() /= 0) stop 'error reading parameter DRAW_SOURCES_AND_RECEIVERS in Par_file'
+  call read_value_logical_p(DRAW_SOURCES_AND_RECEIVERS, 'DRAW_SOURCES_AND_RECEIVERS')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'DRAW_SOURCES_AND_RECEIVERS      = .true.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(DRAW_WATER_IN_BLUE, 'solver.DRAW_WATER_IN_BLUE')
-  if (err_occurred() /= 0) stop 'error reading parameter DRAW_WATER_IN_BLUE in Par_file'
+  call read_value_logical_p(DRAW_WATER_IN_BLUE, 'DRAW_WATER_IN_BLUE')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'DRAW_WATER_IN_BLUE              = .true.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(USE_SNAPSHOT_NUMBER_IN_FILENAME, 'solver.USE_SNAPSHOT_NUMBER_IN_FILENAME')
-  if (err_occurred() /= 0) stop 'error reading parameter USE_SNAPSHOT_NUMBER_IN_FILENAME in Par_file'
+  call read_value_logical_p(USE_SNAPSHOT_NUMBER_IN_FILENAME, 'USE_SNAPSHOT_NUMBER_IN_FILENAME')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.'
+    write(*,*)
+  endif
 
   ! postscript files
-  call read_value_logical_p(output_postscript_snapshot, 'solver.output_postscript_snapshot')
-  if (err_occurred() /= 0) stop 'error reading parameter output_postscript_snapshot in Par_file'
+  call read_value_logical_p(output_postscript_snapshot, 'output_postscript_snapshot')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'output_postscript_snapshot      = .false.'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(imagetype_postscript, 'solver.imagetype_postscript')
-  if (err_occurred() /= 0) stop 'error reading parameter imagetype_postscript in Par_file'
+  call read_value_integer_p(imagetype_postscript, 'imagetype_postscript')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'imagetype_postscript            = 1'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(meshvect, 'solver.meshvect')
-  if (err_occurred() /= 0) stop 'error reading parameter meshvect in Par_file'
+  call read_value_logical_p(meshvect, 'meshvect')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'meshvect                        = .true.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(modelvect, 'solver.modelvect')
-  if (err_occurred() /= 0) stop 'error reading parameter modelvect in Par_file'
+  call read_value_logical_p(modelvect, 'modelvect')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'modelvect                       = .false.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(boundvect, 'solver.boundvect')
-  if (err_occurred() /= 0) stop 'error reading parameter boundvect in Par_file'
+  call read_value_logical_p(boundvect, 'boundvect')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'boundvect                       = .true.'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(interpol, 'solver.interpol')
-  if (err_occurred() /= 0) stop 'error reading parameter interpol in Par_file'
+  call read_value_logical_p(interpol, 'interpol')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'interpol                        = .true.'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(pointsdisp, 'solver.pointsdisp')
-  if (err_occurred() /= 0) stop 'error reading parameter pointsdisp in Par_file'
+  call read_value_integer_p(pointsdisp, 'pointsdisp')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'pointsdisp                      = 6'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(subsamp_postscript, 'solver.subsamp_postscript')
-  if (err_occurred() /= 0) stop 'error reading parameter subsamp_postscript in Par_file'
+  call read_value_integer_p(subsamp_postscript, 'subsamp_postscript')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'subsamp_postscript              = 1'
+    write(*,*)
+  endif
 
-  call read_value_double_precision_p(sizemax_arrows, 'solver.sizemax_arrows')
-  if (err_occurred() /= 0) stop 'error reading parameter sizemax_arrows in Par_file'
+  call read_value_double_precision_p(sizemax_arrows, 'sizemax_arrows')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'sizemax_arrows                  = 1.d0'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(US_LETTER, 'solver.US_LETTER')
-  if (err_occurred() /= 0) stop 'error reading parameter US_LETTER in Par_file'
+  call read_value_logical_p(US_LETTER, 'US_LETTER')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'US_LETTER                       = .false.'
+    write(*,*)
+  endif
 
   ! wavefield dumps
-  call read_value_logical_p(output_wavefield_dumps, 'solver.output_wavefield_dumps')
-  if (err_occurred() /= 0) stop 'error reading parameter output_wavefield_dumps in Par_file'
+  call read_value_logical_p(output_wavefield_dumps, 'output_wavefield_dumps')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'output_wavefield_dumps          = .false.'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(imagetype_wavefield_dumps, 'solver.imagetype_wavefield_dumps')
-  if (err_occurred() /= 0) stop 'error reading parameter imagetype_wavefield_dumps in Par_file'
+  call read_value_integer_p(imagetype_wavefield_dumps, 'imagetype_wavefield_dumps')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'imagetype_wavefield_dumps       = 1'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(use_binary_for_wavefield_dumps, 'solver.use_binary_for_wavefield_dumps')
-  if (err_occurred() /= 0) stop 'error reading parameter use_binary_for_wavefield_dumps in Par_file'
+  call read_value_logical_p(use_binary_for_wavefield_dumps, 'use_binary_for_wavefield_dumps')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'use_binary_for_wavefield_dumps  = .false.'
+    write(*,*)
+  endif
 
-  call read_value_integer_p(NUMBER_OF_SIMULTANEOUS_RUNS, 'mesher.NUMBER_OF_SIMULTANEOUS_RUNS')
-  if (err_occurred() /= 0) stop 'error reading parameter NUMBER_OF_SIMULTANEOUS_RUNS in Par_file'
+  call read_value_integer_p(NUMBER_OF_SIMULTANEOUS_RUNS, 'NUMBER_OF_SIMULTANEOUS_RUNS')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NUMBER_OF_SIMULTANEOUS_RUNS     = 1'
+    write(*,*)
+  endif
 
-  call read_value_logical_p(BROADCAST_SAME_MESH_AND_MODEL, 'solver.BROADCAST_SAME_MESH_AND_MODEL')
-  if (err_occurred() /= 0) stop 'error reading parameter BROADCAST_SAME_MESH_AND_MODEL in Par_file'
+  call read_value_logical_p(BROADCAST_SAME_MESH_AND_MODEL, 'BROADCAST_SAME_MESH_AND_MODEL')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'BROADCAST_SAME_MESH_AND_MODEL   = .true.'
+    write(*,*)
+  endif
+
+  if (some_parameters_missing_from_Par_file) then
+    write(*,*)
+    write(*,*) 'All the above parameters are missing from your Par_file.'
+    write(*,*) 'Please cut and paste them somewhere in your Par_file (any place is fine), change their values if needed'
+    write(*,*) '(the above values are just default values), and restart your run.'
+    write(*,*)
+    stop 'Error: some parameters are missing in your Par_file, it is incomplete or in an older format, &
+       &see at the end of the standard output file of the run for detailed and easy instructions about how to fix that'
+  endif
 
   !--------------------------------------------------------------------
 
@@ -851,7 +1295,7 @@
   write(IMAIN,*)
 
   ! re-reads rec_normal_to_surface parameter to reposition read header for following next-line reads
-  call read_value_logical_p(reread_rec_normal_to_surface, 'solver.rec_normal_to_surface')
+  call read_value_logical_p(reread_rec_normal_to_surface, 'rec_normal_to_surface')
   if (err_occurred() /= 0) stop 'error reading parameter rec_normal_to_surface in Par_file'
 
   ! checks
@@ -910,22 +1354,22 @@
   else
     ! loop on all the receiver lines
     do ireceiverlines = 1,nreceiversets
-      call read_value_integer_next_p(nrec_line(ireceiverlines),'solver.nrec')
+      call read_value_integer_next_p(nrec_line(ireceiverlines),'nrec')
       if (err_occurred() /= 0) stop 'error reading parameter nrec in Par_file'
 
-      call read_value_double_prec_next_p(xdeb(ireceiverlines),'solver.xdeb')
+      call read_value_double_prec_next_p(xdeb(ireceiverlines),'xdeb')
       if (err_occurred() /= 0) stop 'error reading parameter xdeb in Par_file'
 
-      call read_value_double_prec_next_p(zdeb(ireceiverlines),'solver.zdeb')
+      call read_value_double_prec_next_p(zdeb(ireceiverlines),'zdeb')
       if (err_occurred() /= 0) stop 'error reading parameter zdeb in Par_file'
 
-      call read_value_double_prec_next_p(xfin(ireceiverlines),'solver.xfin')
+      call read_value_double_prec_next_p(xfin(ireceiverlines),'xfin')
       if (err_occurred() /= 0) stop 'error reading parameter xfin in Par_file'
 
-      call read_value_double_prec_next_p(zfin(ireceiverlines),'solver.zfin')
+      call read_value_double_prec_next_p(zfin(ireceiverlines),'zfin')
       if (err_occurred() /= 0) stop 'error reading parameter zfin in Par_file'
 
-      call read_value_logical_next_p(record_at_surface_same_vertical(ireceiverlines),'solver.record_at_surface_same_vertical')
+      call read_value_logical_next_p(record_at_surface_same_vertical(ireceiverlines),'record_at_surface_same_vertical')
       if (err_occurred() /= 0) stop 'error reading parameter record_at_surface_same_vertical in Par_file'
 
       if (read_external_mesh .and. record_at_surface_same_vertical(ireceiverlines)) then
