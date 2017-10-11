@@ -48,11 +48,11 @@
   double precision  :: xmin_color_image_loc, xmax_color_image_loc, &
                        zmin_color_image_loc,zmax_color_image_loc
 
-  ! horizontal size of the image
+  ! horizontal min and max coordinates of the image
   xmin_color_image_loc = minval(coord(1,:))
   xmax_color_image_loc = maxval(coord(1,:))
 
-  ! vertical size of the image, slightly increase it to go beyond maximum topography
+  ! vertical min and max coordinates of the image, slightly increase it to go beyond maximum topography
   zmin_color_image_loc = minval(coord(2,:))
   zmax_color_image_loc = maxval(coord(2,:))
 
