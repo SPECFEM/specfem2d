@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Dimitri Komatitsch, CNRS, Marseille, France, 2017
+# Dimitri Komatitsch, CNRS, France, 2017
 
 # use "montage" from ImageMagick
 
