@@ -361,9 +361,9 @@
                                                   potential_dot_dot_acoustic,potential_dot_acoustic, &
                                                   potential_acoustic,PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
 
-  use constants, only: USE_ENFORCE_FIELDS
+  use constants, only: TWO,USE_ENFORCE_FIELDS
 
-  use specfem_par, only: nglob_acoustic,CUSTOM_REAL,TWO,ATTENUATION_VISCOACOUSTIC,iglob_is_forced,acoustic_iglob_is_forced,it
+  use specfem_par, only: nglob_acoustic,CUSTOM_REAL,ATTENUATION_VISCOACOUSTIC,iglob_is_forced,acoustic_iglob_is_forced,it
 
   implicit none
 
