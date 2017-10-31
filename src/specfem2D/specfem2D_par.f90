@@ -300,7 +300,7 @@ module specfem_par
   ! current time
   double precision :: timeval
 
-  ! UNDO_ATTENUATION
+  ! UNDO_ATTENUATION_AND_OR_PML
   integer :: NSUBSET_ITERATIONS
   integer :: iteration_on_subset,it_of_this_subset
   integer :: it_subset_end

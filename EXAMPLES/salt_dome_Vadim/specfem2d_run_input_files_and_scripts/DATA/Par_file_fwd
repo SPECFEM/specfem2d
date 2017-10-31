@@ -87,7 +87,7 @@ freq0_poroelastic               = 10             # frequency for viscous attenua
 # use the flag below. It performs undoing of attenuation in an exact way for sensitivity kernel calculations
 # but requires disk space for temporary storage, and uses a significant amount of memory used as buffers for temporary storage.
 # When that option is on the second parameter indicates how often the code dumps restart files to disk (if in doubt, use something between 100 and 1000).
-UNDO_ATTENUATION                = .true.
+UNDO_ATTENUATION_AND_OR_PML     = .true.
 NT_DUMP_ATTENUATION             = 1
 
 

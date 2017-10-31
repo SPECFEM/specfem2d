@@ -285,9 +285,9 @@
     stop 'Anisotropy & Viscous damping are not presently implemented for adjoint calculations'
   endif
 
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. ATTENUATION_PORO_FLUID_PART .and. (.not. UNDO_ATTENUATION)) then
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. ATTENUATION_PORO_FLUID_PART .and. (.not. UNDO_ATTENUATION_AND_OR_PML)) then
     print *, '*************** Error ***************'
-    stop 'attenuation is only implemented for adjoint calculations with UNDO_ATTENUATION'
+    stop 'attenuation is only implemented for adjoint calculations with UNDO_ATTENUATION_AND_OR_PML'
   endif
 
   if ((.not. P_SV) .and. ATTENUATION_VISCOELASTIC) then
@@ -333,7 +333,7 @@
     stop 'GPU mode can only be used if NGLLX == NGLLZ == 5'
   if (CUSTOM_REAL /= 4 ) &
     stop 'GPU mode runs only with CUSTOM_REAL == 4'
-  if (UNDO_ATTENUATION) &
+  if (UNDO_ATTENUATION_AND_OR_PML) &
     stop 'for undo_attenuation, GPU_MODE is not supported yet'
   if (PML_BOUNDARY_CONDITIONS) &
     stop 'for PML boundaries, GPU_MODE is not supported yet'

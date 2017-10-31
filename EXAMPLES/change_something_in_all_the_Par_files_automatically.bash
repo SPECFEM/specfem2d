@@ -8,6 +8,8 @@
 # However this will *not* make the change in ../DATA/Par_file, which you will need to do separately.
 #
 
-find . -type f -iname "Par_file*" -exec sed -i 's/ATTENUATION_FLUID               =/ATTENUATION_VISCOACOUSTIC       =/g' {} \;
-find . -type f -iname "Par_file*" -exec sed -i 's/ATTENUATION_FLUID/ATTENUATION_VISCOACOUSTIC/g' {} \;
+#  [ ]*  below is very useful, it matches any number of white spaces, thus makes the search insensitive to where the = sign is located in the initial line
+
+find . -type f -iname "Par_file*" -exec sed -i 's/UNDO_ATTENUATION[ ]*=/UNDO_ATTENUATION_AND_OR_PML     =/g' {} \;
+#find . -type f -iname "Par_file*" -exec sed -i 's/ATTENUATION_FLUID/ATTENUATION_VISCOACOUSTIC/g' {} \;
 

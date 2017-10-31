@@ -162,7 +162,7 @@
 
   !  define coefficients of the Newmark time scheme for the backward wavefield
   if (SIMULATION_TYPE == 3) then
-    if (UNDO_ATTENUATION) then
+    if (UNDO_ATTENUATION_AND_OR_PML) then
       ! moves forward
       b_deltat = deltat
       b_deltatover2 = deltatover2

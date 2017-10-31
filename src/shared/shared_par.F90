@@ -147,7 +147,7 @@ module shared_input_parameters
   logical :: READ_VELOCITIES_AT_f0
 
   ! undo attenuation
-  logical :: UNDO_ATTENUATION
+  logical :: UNDO_ATTENUATION_AND_OR_PML
   ! variables used for iteration
   integer :: NT_DUMP_ATTENUATION
 

@@ -56,7 +56,7 @@ subroutine read_model_nspec()
 
   ! reads lines until nspec
   read(IIN) dummy  ! simulation_title
-  read(IIN) idummy,idummy,ldummy,ldummy  ! SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION
+  read(IIN) idummy,idummy,ldummy,ldummy  ! SIMULATION_TYPE, NOISE_TOMOGRAPHY, SAVE_FORWARD, UNDO_ATTENUATION_AND_OR_PML
   read(IIN) nspec
 
   close(IIN)

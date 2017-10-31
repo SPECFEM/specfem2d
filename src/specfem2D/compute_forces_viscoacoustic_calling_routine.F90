@@ -212,7 +212,7 @@
   if (.not. any_acoustic) return
 
   ! timing
-  if (UNDO_ATTENUATION) then
+  if (UNDO_ATTENUATION_AND_OR_PML) then
     ! time increment
     ! example: NSTEP = 800, NT_DUMP_ATTENUATION = 500 -> 1. subset: it_temp = (2-1)*500 + 1 = 501,502,..,800
     !                                                 -> 2. subset: it_temp = (2-2)*500 + 1 = 1,2,..,500
@@ -238,7 +238,7 @@
   do iphase = 1,2
 
     ! main solver for the acoustic elements
-    if (UNDO_ATTENUATION) then
+    if (UNDO_ATTENUATION_AND_OR_PML) then
       call compute_forces_viscoacoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
                                    .false.,b_potential_acoustic_old,iphase,e1)
     else
@@ -259,7 +259,7 @@
     if (iphase == 1) then
       ! Stacey boundary conditions
       if (STACEY_ABSORBING_CONDITIONS) then
-        if (UNDO_ATTENUATION) then
+        if (UNDO_ATTENUATION_AND_OR_PML) then
           call compute_stacey_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic)
         else
           call compute_stacey_acoustic_backward(b_potential_dot_dot_acoustic)

@@ -346,7 +346,7 @@
 
   program specfem2D
 
-  use specfem_par, only: UNDO_ATTENUATION
+  use specfem_par, only: UNDO_ATTENUATION_AND_OR_PML
 
   implicit none
 
@@ -375,7 +375,7 @@
   call prepare_timerun()
 
   ! steps through time iterations
-  if (UNDO_ATTENUATION) then
+  if (UNDO_ATTENUATION_AND_OR_PML) then
     call iterate_time_undoatt()
   else
     call iterate_time()

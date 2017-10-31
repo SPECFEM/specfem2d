@@ -65,7 +65,7 @@
   integer :: year,mon,day,hr,minutes,timestamp
 
   ! checks if anything to do
-  if (.not. UNDO_ATTENUATION) return
+  if (.not. UNDO_ATTENUATION_AND_OR_PML) return
 
   ! user output
   if (myrank == 0) write(IMAIN,400)

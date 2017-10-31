@@ -80,7 +80,7 @@
   read(IIN) simulation_title
 
   !---- read parameters from input file
-  read(IIN) NOISE_TOMOGRAPHY, UNDO_ATTENUATION
+  read(IIN) NOISE_TOMOGRAPHY, UNDO_ATTENUATION_AND_OR_PML
 
   read(IIN) nspec
 

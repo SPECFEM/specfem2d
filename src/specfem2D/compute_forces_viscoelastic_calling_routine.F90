@@ -225,7 +225,7 @@
   if (.not. any_elastic) return
 
   ! timing
-  if (UNDO_ATTENUATION) then
+  if (UNDO_ATTENUATION_AND_OR_PML) then
     ! time increment
     ! example: NSTEP = 800, NT_DUMP_ATTENUATION = 500 -> 1. subset: it_temp = (2-1)*500 + 1 = 501,502,..,800
     !                                                 -> 2. subset: it_temp = (2-2)*500 + 1 = 1,2,..,500
@@ -247,7 +247,7 @@
     call rebuild_value_on_PML_interface_viscoelastic(it_temp)
   endif
 
-  if (UNDO_ATTENUATION) then
+  if (UNDO_ATTENUATION_AND_OR_PML) then
     ! viscous attenuation for elastic media
     if (ATTENUATION_VISCOELASTIC) call compute_attenuation_viscoelastic(b_displ_elastic,b_displ_elastic_old, &
                                                                               ispec_is_elastic,.false.,b_e1,b_e11,b_e13)
@@ -256,7 +256,7 @@
   ! distinguishes two runs: for elements on MPI interfaces (outer), and elements within the partitions (inner)
   do iphase = 1,2
 
-    if (UNDO_ATTENUATION) then
+    if (UNDO_ATTENUATION_AND_OR_PML) then
       call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
                                        .false.,b_e1,b_e11,b_e13,iphase)
     else
@@ -276,7 +276,7 @@
     if (iphase == 1) then
       ! Stacey boundary conditions
       if (STACEY_ABSORBING_CONDITIONS) then
-        if (UNDO_ATTENUATION) then
+        if (UNDO_ATTENUATION_AND_OR_PML) then
           call compute_stacey_elastic(b_accel_elastic,b_veloc_elastic)
         else
           call compute_stacey_elastic_backward(b_accel_elastic)

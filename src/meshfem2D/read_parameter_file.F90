@@ -124,7 +124,7 @@
     call bcast_all_singledp(Q0_poroelastic)
     call bcast_all_singledp(freq0_poroelastic)
 
-    call bcast_all_singlel(UNDO_ATTENUATION)
+    call bcast_all_singlel(UNDO_ATTENUATION_AND_OR_PML)
     call bcast_all_singlei(NT_DUMP_ATTENUATION)
 
     call bcast_all_singlei(NSOURCES)
@@ -464,10 +464,10 @@
     write(*,*)
   endif
 
-  call read_value_logical_p(UNDO_ATTENUATION, 'UNDO_ATTENUATION')
+  call read_value_logical_p(UNDO_ATTENUATION_AND_OR_PML, 'UNDO_ATTENUATION_AND_OR_PML')
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'UNDO_ATTENUATION                = .false.'
+    write(*,'(a)') 'UNDO_ATTENUATION_AND_OR_PML     = .false.'
     write(*,*)
   endif
 
