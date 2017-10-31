@@ -557,11 +557,9 @@
       enddo
     endif
 
-    if (ATTENUATION_VISCOACOUSTIC) then
-      stop 'DK DK error: ATTENUATION_VISCOACOUSTIC not implemented yet in compute_pressure.f90'
-      if (USE_TRICK_FOR_BETTER_PRESSURE) then
+    if (ATTENUATION_VISCOACOUSTIC .and. USE_TRICK_FOR_BETTER_PRESSURE) then
+        ! maybe works fine already, but not checked yet
         stop 'DK DK error: ATTENUATION_VISCOACOUSTIC with USE_TRICK_FOR_BETTER_PRESSURE not implemented yet'
-      endif
     endif
 
   endif ! end of test if acoustic or elastic element
