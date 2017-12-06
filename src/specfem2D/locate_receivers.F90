@@ -76,11 +76,17 @@
 ! use dynamic allocation
   double precision :: distmin_squared
   double precision, dimension(:), allocatable :: final_distance
+  double precision :: final_distance_this_element
 
 ! receiver information
   integer  :: nrecloc
   integer, dimension(nrec) :: ispec_selected_rec, recloc
   double precision, dimension(nrec) :: xi_receiver,gamma_receiver
+
+!! DK DK dec 2017: also loop on all the elements in contact with the initial guess element to improve accuracy of estimate
+  logical, dimension(nglob) :: flag_topological
+  integer :: number_of_mesh_elements_for_the_initial_guess
+  integer, dimension(:), allocatable :: array_of_all_elements_of_ispec_selected_rec
 
 ! station information for writing the seismograms
   character(len=MAX_LENGTH_STATION_NAME), dimension(nrec) :: station_name
@@ -124,7 +130,7 @@
   allocate(final_distance(nrec))
 
 ! loop on all the stations
-  do irec= 1,nrec
+  do irec = 1,nrec
 
     ! set distance to huge initial value
     distmin_squared = HUGEVAL
@@ -163,13 +169,77 @@
     ! end of loop on all the spectral elements
     enddo
 
+!! DK DK dec 2017: also loop on all the elements in contact with the initial guess element to improve accuracy of estimate
+  flag_topological(:) = .false.
+
+! mark the four corners of the initial guess element
+  flag_topological(ibool(1,1,ispec_selected_rec(irec))) = .true.
+  flag_topological(ibool(NGLLX,1,ispec_selected_rec(irec))) = .true.
+  flag_topological(ibool(NGLLX,NGLLZ,ispec_selected_rec(irec))) = .true.
+  flag_topological(ibool(1,NGLLZ,ispec_selected_rec(irec))) = .true.
+
+! loop on all the elements to count how many are shared with the initial guess
+  number_of_mesh_elements_for_the_initial_guess = 1
+  do ispec = 1,nspec
+    if (ispec == ispec_selected_rec(irec)) cycle
+    ! loop on the four corners only, no need to loop on the rest since we just want to detect adjacency
+    do j = 1,NGLLZ,NGLLZ-1
+      do i = 1,NGLLX,NGLLX-1
+        if (flag_topological(ibool(i,j,ispec))) then
+          ! this element is in contact with the initial guess
+          number_of_mesh_elements_for_the_initial_guess = number_of_mesh_elements_for_the_initial_guess + 1
+          ! let us not count it more than once, it may have a full edge in contact with it and would then be counted twice
+          goto 700
+        endif
+      enddo
+    enddo
+    700 continue
+  enddo
+
+! now that we know the number of elements, we can allocate the list of elements and create it
+  allocate(array_of_all_elements_of_ispec_selected_rec(number_of_mesh_elements_for_the_initial_guess))
+
+! first store the initial guess itself
+  number_of_mesh_elements_for_the_initial_guess = 1
+  array_of_all_elements_of_ispec_selected_rec(number_of_mesh_elements_for_the_initial_guess) = ispec_selected_rec(irec)
+
+! then store all the others
+  do ispec = 1,nspec
+    if (ispec == ispec_selected_rec(irec)) cycle
+    ! loop on the four corners only, no need to loop on the rest since we just want to detect adjacency
+    do j = 1,NGLLZ,NGLLZ-1
+      do i = 1,NGLLX,NGLLX-1
+        if (flag_topological(ibool(i,j,ispec))) then
+          ! this element is in contact with the initial guess
+          number_of_mesh_elements_for_the_initial_guess = number_of_mesh_elements_for_the_initial_guess + 1
+          array_of_all_elements_of_ispec_selected_rec(number_of_mesh_elements_for_the_initial_guess) = ispec
+          ! let us not count it more than once, it may have a full edge in contact with it and would then be counted twice
+          goto 800
+        endif
+      enddo
+    enddo
+    800 continue
+  enddo
+
+!! DK DK dec 2017
+  final_distance(irec) = 1.d30
+
+  do i = 1,number_of_mesh_elements_for_the_initial_guess
+
+!! DK DK dec 2017 set initial guess in the middle of the element, since we computed the true one only for the true initial guess
+!! DK DK dec 2017 the nonlinear process below will converge anyway
+    ix_initial_guess = NGLLX / 2
+    iz_initial_guess = NGLLZ / 2
+
+    ispec = array_of_all_elements_of_ispec_selected_rec(i)
+
     ! ****************************************
     ! find the best (xi,gamma) for each receiver
     ! ****************************************
-    ! use initial guess in xi and gamma
 
+    ! use initial guess in xi and gamma
     if (AXISYM) then
-      if (is_on_the_axis(ispec_selected_rec(irec))) then
+      if (is_on_the_axis(ispec)) then
         xi = xiglj(ix_initial_guess)
       else
         xi = xigll(ix_initial_guess)
@@ -183,8 +253,7 @@
     do iter_loop = 1,NUM_ITER
       ! compute coordinates of the new point and derivatives dxi/dx, dxi/dz
       call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                  coorg,knods,ispec_selected_rec(irec),ngnod,nspec,npgeo, &
-                  .true.)
+                  coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
 
       ! compute distance to target location
       dx = - (x - st_xval(irec))
@@ -213,20 +282,34 @@
 
     ! compute final coordinates of point found
     call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                coorg,knods,ispec_selected_rec(irec),ngnod,nspec,npgeo, &
-                .true.)
+                coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
+
+! compute final distance between asked and found
+    final_distance_this_element = sqrt((st_xval(irec)-x)**2 + (st_zval(irec)-z)**2)
+
+! if we have found an element that gives a shorter distance
+  if (final_distance_this_element < final_distance(irec)) then
+!   store element number found
+    ispec_selected_rec(irec) = ispec
 
     ! store xi,gamma of point found
     xi_receiver(irec) = xi
     gamma_receiver(irec) = gamma
 
-    ! compute final distance between asked and found
-    final_distance(irec) = sqrt((st_xval(irec)-x)**2 + (st_zval(irec)-z)**2)
-
     x_final_receiver(irec) = x
     z_final_receiver(irec) = z
 
+!   store final distance between asked and found
+    final_distance(irec) = final_distance_this_element
+  endif
+
+!! DK DK dec 2017
   enddo
+
+!! DK DK dec 2017: also loop on all the elements in contact with the initial guess element to improve accuracy of estimate
+    deallocate(array_of_all_elements_of_ispec_selected_rec)
+
+  enddo ! of loop on all the receivers
 
   ! close receiver file
   close(1)
