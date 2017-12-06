@@ -316,7 +316,7 @@ module shared_input_parameters
   logical :: USE_CONSTANT_MAX_AMPLITUDE
   ! constant maximum amplitude to use for all color images if the USE_CONSTANT_MAX_AMPLITUDE option is true
   double precision :: CONSTANT_MAX_AMPLITUDE_TO_USE
-  ! non linear display to enhance small amplitudes in color images
+  ! nonlinear display to enhance small amplitudes in color images
   double precision :: POWER_DISPLAY_COLOR
   logical :: DRAW_SOURCES_AND_RECEIVERS
   ! display acoustic layers as constant blue, because they likely correspond to water in the case of ocean acoustics

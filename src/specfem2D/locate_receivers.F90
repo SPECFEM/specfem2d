@@ -143,7 +143,7 @@
     ! compute distance between source and receiver
     distance_receiver(irec) = sqrt((st_zval(irec)-z_source)**2 + (st_xval(irec)-x_source)**2)
 
-    do ispec= 1,nspec
+    do ispec = 1,nspec
 
       ! loop only on points inside the element
       ! exclude edges to ensure this point is not shared with other elements
@@ -153,10 +153,21 @@
           iglob = ibool(i,j,ispec)
 
           !  we compare squared distances instead of distances themselves to significantly speed up calculations
-          dist_squared = (st_xval(irec)-dble(coord(1,iglob)))**2 + (st_zval(irec)-dble(coord(2,iglob)))**2
+          dist_squared = (st_xval(irec)-coord(1,iglob))**2 + (st_zval(irec)-coord(2,iglob))**2
 
           ! keep this point if it is closer to the receiver
           if (dist_squared < distmin_squared) then
+
+            ! this statement is useless, it is there because of a bug in some releases of the Intel ifort compiler
+            ! in which at optimization level -O3 the "if" statement above undergoes heavy optimization and
+            ! something goes wrong in the compiler, resulting in a comparison in the "if" statement that can
+            ! be performed wrong; adding this dummy call in the "if" means that the compiler cannot optimize
+            ! as aggressively, and the compiler bug is not triggered;
+            ! thus, please do *NOT* remove this statement (it took us a while to discover this nasty compiler problem).
+            ! GNU gfortran and all other compilers we have tested are fine and do not have any problem even if this
+            ! statement is removed. Some releases of Intel ifort are also OK.
+            call flush_IMAIN()
+
             distmin_squared = dist_squared
             ispec_selected_rec(irec) = ispec
             ix_initial_guess = i
@@ -222,14 +233,16 @@
   enddo
 
 !! DK DK dec 2017
-  final_distance(irec) = 1.d30
+  final_distance(irec) = HUGEVAL
 
   do i = 1,number_of_mesh_elements_for_the_initial_guess
 
 !! DK DK dec 2017 set initial guess in the middle of the element, since we computed the true one only for the true initial guess
 !! DK DK dec 2017 the nonlinear process below will converge anyway
-    ix_initial_guess = NGLLX / 2
-    iz_initial_guess = NGLLZ / 2
+    if (i > 1) then
+      ix_initial_guess = NGLLX / 2
+      iz_initial_guess = NGLLZ / 2
+    endif
 
     ispec = array_of_all_elements_of_ispec_selected_rec(i)
 
@@ -249,8 +262,9 @@
     endif
     gamma = zigll(iz_initial_guess)
 
-    ! iterate to solve the non linear system
+    ! iterate to solve the nonlinear system
     do iter_loop = 1,NUM_ITER
+
       ! compute coordinates of the new point and derivatives dxi/dx, dxi/dz
       call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
                   coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
@@ -277,7 +291,7 @@
       if (gamma > 1.01d0) gamma = 1.01d0
       if (gamma < -1.01d0) gamma = -1.01d0
 
-    ! end of non linear iterations
+    ! end of nonlinear iterations
     enddo
 
     ! compute final coordinates of point found
@@ -363,13 +377,13 @@
 
       write(IMAIN,*) '            original x: ',sngl(st_xval(irec))
       write(IMAIN,*) '            original z: ',sngl(st_zval(irec))
-      write(IMAIN,*) '  distance from source: ',sngl(distance_receiver(irec))
-      write(IMAIN,*) 'closest estimate found: ',sngl(gather_final_distance(irec,islice_selected_rec(irec)+1)), &
+      write(IMAIN,*) 'Closest estimate found: ',sngl(gather_final_distance(irec,islice_selected_rec(irec)+1)), &
                     ' m away'
       write(IMAIN,*) ' in element ',gather_ispec_selected_rec(irec,islice_selected_rec(irec)+1)
       write(IMAIN,*) ' in rank ', islice_selected_rec(irec)
       write(IMAIN,*) ' at xi,gamma coordinates = ',gather_xi_receiver(irec,islice_selected_rec(irec)+1), &
                                   gather_gamma_receiver(irec,islice_selected_rec(irec)+1)
+      write(IMAIN,*) 'Distance from source: ',sngl(distance_receiver(irec)),' m'
       write(IMAIN,*)
     enddo
 

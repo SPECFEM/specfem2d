@@ -304,7 +304,7 @@
 
 ! Suivant les compilateurs et les options de compilation utilisees,
 ! il peut y avoir des differences au 4eme chiffre significatif. C'est sans consequences sur la precision du calcul :
-! l'erreur est de 0.015 % avec optimization non lineaire, a comparer a 1.47 % avec Emmerich and Korn (1987).
+! l'erreur est de 0.015 % avec optimization non-lineaire, a comparer a 1.47 % avec Emmerich and Korn (1987).
 ! Si je relance le calcul en initialisant avec le resultat precedent, ce chiffre varie a nouveau tres legerement.
 
 !-------------------------------------------------------------------------

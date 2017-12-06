@@ -234,14 +234,16 @@
   enddo
 
 !! DK DK dec 2017
-  final_distance = 1.d30
+  final_distance = HUGEVAL
 
   do i = 1,number_of_mesh_elements_for_the_initial_guess
 
 !! DK DK dec 2017 set initial guess in the middle of the element, since we computed the true one only for the true initial guess
 !! DK DK dec 2017 the nonlinear process below will converge anyway
-    ix_initial_guess = NGLLX / 2
-    iz_initial_guess = NGLLZ / 2
+    if (i > 1) then
+      ix_initial_guess = NGLLX / 2
+      iz_initial_guess = NGLLZ / 2
+    endif
 
     ispec = array_of_all_elements_of_ispec_selected_source(i)
 
@@ -261,7 +263,7 @@
   endif
   gamma = zigll(iz_initial_guess)
 
-! iterate to solve the non linear system
+! iterate to solve the nonlinear system
   if (USE_BEST_LOCATION_FOR_SOURCE) then
     number_of_iterations = NUM_ITER
   else
@@ -296,7 +298,7 @@
     if (gamma > 1.01d0) gamma = 1.01d0
     if (gamma < -1.01d0) gamma = -1.01d0
 
-! end of non linear iterations
+! end of nonlinear iterations
   enddo
 
 ! compute final coordinates of point found
