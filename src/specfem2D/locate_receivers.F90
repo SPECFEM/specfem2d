@@ -141,8 +141,8 @@
 
       ! loop only on points inside the element
       ! exclude edges to ensure this point is not shared with other elements
-      do j = 2,NGLLZ-1
-        do i = 2,NGLLX-1
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
 
           iglob = ibool(i,j,ispec)
 
@@ -203,10 +203,10 @@
       ! we can go slightly outside the [1,1] segment since with finite elements
       ! the polynomial solution is defined everywhere
       ! this can be useful for convergence of itertive scheme with distorted elements
-      if (xi > 1.10d0) xi = 1.10d0
-      if (xi < -1.10d0) xi = -1.10d0
-      if (gamma > 1.10d0) gamma = 1.10d0
-      if (gamma < -1.10d0) gamma = -1.10d0
+      if (xi > 1.01d0) xi = 1.01d0
+      if (xi < -1.01d0) xi = -1.01d0
+      if (gamma > 1.01d0) gamma = 1.01d0
+      if (gamma < -1.01d0) gamma = -1.01d0
 
     ! end of non linear iterations
     enddo

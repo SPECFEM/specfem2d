@@ -74,6 +74,11 @@
   ! source information
   integer,intent(out) :: ispec_selected_source,islice_selected_source,iglob_source
 
+!! DK DK dec 2017: also loop on all the elements in contact with the initial guess element to improve accuracy of estimate
+  logical, dimension(nglob) :: flag_topological
+  integer :: number_of_mesh_elements_for_the_initial_guess
+  integer, dimension(:), allocatable :: array_of_all_elements_of_ispec_selected_source
+
   integer,intent(in)  :: NPROC, myrank
   double precision,intent(out) :: xi_source,gamma_source
 
@@ -87,7 +92,7 @@
   double precision :: xi,gamma,dx,dz,dxi,dgamma
   double precision :: x,z,xix,xiz,gammax,gammaz,jacobian
   double precision :: distmin_squared,dist_glob_squared
-  double precision :: final_distance
+  double precision :: final_distance,final_distance_this_element
 
   integer :: is_proc_source
   integer, dimension(1:NPROC)  :: allgather_is_proc_source
@@ -121,30 +126,11 @@
   ! set distance to huge initial value
   distmin_squared = HUGEVAL
 
-  ! determines search range
-  if (is_force_source) then
-    if (USE_BEST_LOCATION_FOR_SOURCE) then
-!! DK DK please do *NOT* change that to "if (.false.) then" otherwise sources can be poorly located;
-!! DK DK somebody had changed it and it took us a while to find the bug
-      ! only search best element with inner points (exact location will be interpolated afterwards)
-      imin = 2
-      imax = NGLLX - 1
-      jmin = 2
-      jmax = NGLLZ - 1
-    else
-      ! search best GLL location
-      imin = 1
-      imax = NGLLX
-      jmin = 1
-      jmax = NGLLZ
-    endif
-  else
-    ! moment-tensor
-    imin = 2
-    imax = NGLLX - 1
-    jmin = 2
-    jmax = NGLLZ - 1
-  endif
+  ! search range
+  imin = 1
+  imax = NGLLX
+  jmin = 1
+  jmax = NGLLZ
 
   ! loops over all elements
   do ispec = 1,nspec
@@ -195,13 +181,77 @@
   ! selects slice which holds source
   call bcast_all_singlei(islice_selected_source)
 
+!! DK DK dec 2017: also loop on all the elements in contact with the initial guess element to improve accuracy of estimate
+  flag_topological(:) = .false.
+
+! mark the four corners of the initial guess element
+  flag_topological(ibool(1,1,ispec_selected_source)) = .true.
+  flag_topological(ibool(NGLLX,1,ispec_selected_source)) = .true.
+  flag_topological(ibool(NGLLX,NGLLZ,ispec_selected_source)) = .true.
+  flag_topological(ibool(1,NGLLZ,ispec_selected_source)) = .true.
+
+! loop on all the elements to count how many are shared with the initial guess
+  number_of_mesh_elements_for_the_initial_guess = 1
+  do ispec = 1,nspec
+    if (ispec == ispec_selected_source) cycle
+    ! loop on the four corners only, no need to loop on the rest since we just want to detect adjacency
+    do j = 1,NGLLZ,NGLLZ-1
+      do i = 1,NGLLX,NGLLX-1
+        if (flag_topological(ibool(i,j,ispec))) then
+          ! this element is in contact with the initial guess
+          number_of_mesh_elements_for_the_initial_guess = number_of_mesh_elements_for_the_initial_guess + 1
+          ! let us not count it more than once, it may have a full edge in contact with it and would then be counted twice
+          goto 700
+        endif
+      enddo
+    enddo
+    700 continue
+  enddo
+
+! now that we know the number of elements, we can allocate the list of elements and create it
+  allocate(array_of_all_elements_of_ispec_selected_source(number_of_mesh_elements_for_the_initial_guess))
+
+! first store the initial guess itself
+  number_of_mesh_elements_for_the_initial_guess = 1
+  array_of_all_elements_of_ispec_selected_source(number_of_mesh_elements_for_the_initial_guess) = ispec_selected_source
+
+! then store all the others
+  do ispec = 1,nspec
+    if (ispec == ispec_selected_source) cycle
+    ! loop on the four corners only, no need to loop on the rest since we just want to detect adjacency
+    do j = 1,NGLLZ,NGLLZ-1
+      do i = 1,NGLLX,NGLLX-1
+        if (flag_topological(ibool(i,j,ispec))) then
+          ! this element is in contact with the initial guess
+          number_of_mesh_elements_for_the_initial_guess = number_of_mesh_elements_for_the_initial_guess + 1
+          array_of_all_elements_of_ispec_selected_source(number_of_mesh_elements_for_the_initial_guess) = ispec
+          ! let us not count it more than once, it may have a full edge in contact with it and would then be counted twice
+          goto 800
+        endif
+      enddo
+    enddo
+    800 continue
+  enddo
+
+!! DK DK dec 2017
+  final_distance = 1.d30
+
+  do i = 1,number_of_mesh_elements_for_the_initial_guess
+
+!! DK DK dec 2017 set initial guess in the middle of the element, since we computed the true one only for the true initial guess
+!! DK DK dec 2017 the nonlinear process below will converge anyway
+    ix_initial_guess = NGLLX / 2
+    iz_initial_guess = NGLLZ / 2
+
+    ispec = array_of_all_elements_of_ispec_selected_source(i)
+
 ! ****************************************
 ! find the best (xi,gamma) for each source
 ! ****************************************
 
 ! use initial guess in xi and gamma
   if (AXISYM) then
-    if (is_on_the_axis(ispec_selected_source)) then
+    if (is_on_the_axis(ispec)) then
       xi = xiglj(ix_initial_guess)
     else
       xi = xigll(ix_initial_guess)
@@ -222,8 +272,7 @@
 
     ! recompute jacobian for the new point
     call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                  coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
-                  .true.)
+                  coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
 
     ! compute distance to target location
     dx = - (x - x_source)
@@ -242,31 +291,36 @@
     ! we can go slightly outside the [1,1] segment since with finite elements
     ! the polynomial solution is defined everywhere
     ! this can be useful for convergence of itertive scheme with distorted elements
-    if (is_force_source) then
-      if (xi > 1.010d0) xi = 1.010d0
-      if (xi < -1.010d0) xi = -1.010d0
-      if (gamma > 1.010d0) gamma = 1.010d0
-      if (gamma < -1.010d0) gamma = -1.010d0
-    else
-      if (xi > 1.10d0) xi = 1.10d0
-      if (xi < -1.10d0) xi = -1.10d0
-      if (gamma > 1.10d0) gamma = 1.10d0
-      if (gamma < -1.10d0) gamma = -1.10d0
-    endif
+    if (xi > 1.01d0) xi = 1.01d0
+    if (xi < -1.01d0) xi = -1.01d0
+    if (gamma > 1.01d0) gamma = 1.01d0
+    if (gamma < -1.01d0) gamma = -1.01d0
+
 ! end of non linear iterations
   enddo
 
 ! compute final coordinates of point found
   call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                          coorg,knods,ispec_selected_source,ngnod,nspec,npgeo, &
-                          .true.)
-
-! store xi,gamma of point found
-  xi_source = xi
-  gamma_source = gamma
+                          coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
 
 ! compute final distance between asked and found
-  final_distance = sqrt((x_source-x)**2 + (z_source-z)**2)
+  final_distance_this_element = sqrt((x_source-x)**2 + (z_source-z)**2)
+
+! if we have found an element that gives a shorter distance
+  if (final_distance_this_element < final_distance) then
+!   store element number found
+    ispec_selected_source = ispec
+
+!   store xi,gamma of point found
+    xi_source = xi
+    gamma_source = gamma
+
+!   store final distance between asked and found
+    final_distance = final_distance_this_element
+  endif
+
+!! DK DK dec 2017
+  enddo
 
 #ifdef USE_MPI
   ! for MPI version, gather information from all the nodes
@@ -329,6 +383,9 @@
     ! check position
     if (final_distance == HUGEVAL) call exit_MPI(myrank,'Error locating source')
   endif
+
+!! DK DK dec 2017: also loop on all the elements in contact with the initial guess element to improve accuracy of estimate
+  deallocate(array_of_all_elements_of_ispec_selected_source)
 
   end subroutine locate_source
 
