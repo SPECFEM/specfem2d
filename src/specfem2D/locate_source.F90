@@ -357,7 +357,7 @@
       endif
       write(IMAIN,*) '            original x: ',sngl(x_source)
       write(IMAIN,*) '            original z: ',sngl(z_source)
-      write(IMAIN,*) 'closest estimate found: ',sngl(final_distance),' m away'
+      write(IMAIN,*) 'Closest estimate found: ',sngl(final_distance),' m away'
       write(IMAIN,*) ' in rank ',islice_selected_source
       write(IMAIN,*) ' in element ',ispec_selected_source
       if (idomain == IDOMAIN_ACOUSTIC) then
