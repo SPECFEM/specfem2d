@@ -439,21 +439,21 @@ end module enforce_par
 ! ----------------------------------------------------------------------------------------
 !
 
- function cosh(x)
+ function cosh_cmplx(x)
     use constants, only: TWO,CUSTOM_REAL
-    complex(kind=CUSTOM_REAL) :: cosh,x
-    cosh = (exp(x)+exp(-x))/TWO
-  end function cosh
+    complex(kind=CUSTOM_REAL) :: cosh_cmplx,x
+    cosh_cmplx = (exp(x)+exp(-x))/TWO
+  end function cosh_cmplx
 
 !
 ! ----------------------------------------------------------------------------------------
 !
 
-  function sinh(x)
+  function sinh_cmplx(x)
     use constants, only: TWO,CUSTOM_REAL
-    complex(kind=CUSTOM_REAL) :: sinh,x
-    sinh = (exp(x)-exp(-x))/TWO
-  end function sinh
+    complex(kind=CUSTOM_REAL) :: sinh_cmplx,x
+    sinh_cmplx = (exp(x)-exp(-x))/TWO
+  end function sinh_cmplx
 
 !
 ! ----------------------------------------------------------------------------------------
@@ -478,8 +478,9 @@ end module enforce_par
     complex(kind=CUSTOM_REAL) :: s,s2,q,q2,k,k2,sqrkp,sqrks,C1,C2
     complex(kind=CUSTOM_REAL) :: jj = (0.0,1.0)
 
+    ! note: since cosh and sinh are intrinsic functions, the complex functions defined in this file are renamed to **_cmplx
     ! functions
-    complex(kind=CUSTOM_REAL), external :: cosh,sinh
+    complex(kind=CUSTOM_REAL), external :: cosh_cmplx,sinh_cmplx
 
     k2 = (omegaj/cphase)**2
     sqrkp=(omegaj/cp)**2
@@ -493,11 +494,11 @@ end module enforce_par
     C2=TWO*k2/(k2+s2)
 
     if (.not. antisym) then ! symmetric modes
-        ux = jj * k * (cosh(q*zi)/sinh(q*d) - C1*cosh(s*zi)/sinh(s*d))
-        uz = -q * (sinh(q*zi)/sinh(q*d) - C2*sinh(s*zi)/sinh(s*d))
+        ux = jj * k * (cosh_cmplx(q*zi)/sinh_cmplx(q*d) - C1*cosh_cmplx(s*zi)/sinh_cmplx(s*d))
+        uz = -q * (sinh_cmplx(q*zi)/sinh_cmplx(q*d) - C2*sinh_cmplx(s*zi)/sinh_cmplx(s*d))
     else                    ! antisymmetric modes
-        ux = jj * k * (sinh(q*zi)/cosh(q*d) - C1*sinh(s*zi)/cosh(s*d))
-        uz = -q * (cosh(q*zi)/cosh(q*d) - C2*cosh(s*zi)/cosh(s*d))
+        ux = jj * k * (sinh_cmplx(q*zi)/cosh_cmplx(q*d) - C1*sinh_cmplx(s*zi)/cosh_cmplx(s*d))
+        uz = -q * (cosh_cmplx(q*zi)/cosh_cmplx(q*d) - C2*cosh_cmplx(s*zi)/cosh_cmplx(s*d))
     endif
 
 !    print *
