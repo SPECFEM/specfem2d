@@ -61,6 +61,9 @@
   ! for Bielak
   use specfem_par, only: x_source,z_source,f0_source,coord
 
+! daniel debug
+!  use specfem_par, only: displ_elastic
+
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(inout) :: accel_elastic
@@ -78,6 +81,10 @@
   ! for analytical initial plane wave for Bielak's conditions
   double precision :: veloc_horiz,veloc_vert,dxUx,dzUx,dxUz,dzUz,traction_x_t0,traction_z_t0
   integer :: count_left,count_right,count_bottom
+
+!daniel debug
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ) :: dux_dxl,dux_dzl,duz_dxl,duz_dzl
+!  real(kind=CUSTOM_REAL) :: unit_x,unit_z,norm
 
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
@@ -111,6 +118,13 @@
     endif
 
     csl = sqrt(mul_unrelaxed_elastic/rhol)
+
+!daniel debug
+! gradient
+    if (.false.) then
+      call compute_gradient_field_element(ispec,veloc_elastic,dux_dxl,dux_dzl,duz_dxl,duz_dzl)
+    endif
+
 
     !--- left absorbing boundary
     if (codeabs(IEDGE4,ispecabs)) then
@@ -234,6 +248,26 @@
           ! SH case
           vy = veloc_elastic(1,iglob)
           ty = rho_vs*vy
+
+!daniel debug
+!          if (.true.) then
+!            ! unit vector in gradient direction of first component wavefield
+!            norm = sqrt( dux_dxl(i,j)**2 + dux_dzl(i,j)**2)
+!            if (norm > 0._CUSTOM_REAL) then
+!              unit_x = dux_dxl(i,j) / norm
+!              unit_z = dux_dzl(i,j) / norm
+!            else
+!              unit_x = 0._CUSTOM_REAL
+!              unit_z = 0._CUSTOM_REAL
+!            endif
+!!            vy = abs(nx * unit_x + nz * unit_z) * veloc_elastic(1,iglob)
+!!            ty = rho_vs * vy
+!
+!            vy = nx * dux_dxl(i,j) + nz * dux_dzl(i,j)*nz    ! d/dn s  derivative along normal n
+!            ty = rho_vs * vy
+!            !print*,'left',nx,nz,unit_x,unit_z,(nx * unit_x + nz * unit_z),veloc_elastic(1,iglob),coord(1,iglob),coord(2,iglob)
+!          endif
+
         endif
 
         weight = jacobian1D * wzgll(j)
@@ -319,6 +353,23 @@
           ! SH case
           vy = veloc_elastic(1,iglob)
           ty = rho_vs*vy
+
+!daniel debug
+!          if (.true.) then
+!            ! unit vector in gradient direction of first component wavefield
+!            norm = sqrt( dux_dxl(i,j)**2 + dux_dzl(i,j)**2)
+!            if (norm > 0._CUSTOM_REAL) then
+!              unit_x = dux_dxl(i,j) / norm
+!              unit_z = dux_dzl(i,j) / norm
+!            else
+!              unit_x = 0._CUSTOM_REAL
+!              unit_z = 0._CUSTOM_REAL
+!            endif
+!            vy = abs(nx * unit_x + nz * unit_z) * veloc_elastic(1,iglob)
+!            ty = rho_vs * vy
+!            !print*,'right',nx,nz,unit_x,unit_z,(nx * unit_x + nz * unit_z),veloc_elastic(1,iglob),coord(1,iglob),coord(2,iglob)
+!          endif
+
         endif
 
         weight = jacobian1D * wzgll(j)
@@ -403,6 +454,22 @@
           ! SH case
           vy = veloc_elastic(1,iglob)
           ty = rho_vs*vy
+
+!daniel debug
+!          if (.true.) then
+!            ! unit vector in gradient direction of first component wavefield
+!            norm = sqrt( dux_dxl(i,j)**2 + dux_dzl(i,j)**2)
+!            if (norm > 0._CUSTOM_REAL) then
+!              unit_x = dux_dxl(i,j) / norm
+!              unit_z = dux_dzl(i,j) / norm
+!            else
+!              unit_x = 0._CUSTOM_REAL
+!              unit_z = 0._CUSTOM_REAL
+!            endif
+!            vy = abs(nx * unit_x + nz * unit_z) * veloc_elastic(1,iglob)
+!            ty = rho_vs * vy
+!          endif
+
         endif
 
 ! exclude corners to make sure there is no contradiction on the normal
@@ -490,6 +557,22 @@
           ! SH case
           vy = veloc_elastic(1,iglob)
           ty = rho_vs*vy
+
+!daniel debug
+!          if (.true.) then
+!            ! unit vector in gradient direction of first component wavefield
+!            norm = sqrt( dux_dxl(i,j)**2 + dux_dzl(i,j)**2)
+!            if (norm > 0._CUSTOM_REAL) then
+!              unit_x = dux_dxl(i,j) / norm
+!              unit_z = dux_dzl(i,j) / norm
+!            else
+!              unit_x = 0._CUSTOM_REAL
+!              unit_z = 0._CUSTOM_REAL
+!            endif
+!            vy = abs(nx * unit_x + nz * unit_z) * veloc_elastic(1,iglob)
+!            ty = rho_vs * vy
+!          endif
+
         endif
 
 ! exclude corners to make sure there is no contradiction on the normal
@@ -636,4 +719,95 @@
   enddo
 
   end subroutine compute_stacey_elastic_backward
+
+!
+!------------------------------------------------------------------------------------------
+!
+
+! daniel debug
+  subroutine compute_gradient_field_element(ispec,field,dux_dxl,dux_dzl,duz_dxl,duz_dzl)
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+
+  use specfem_par, only: nglob,ibool,xix,xiz,gammax,gammaz
+  use specfem_par, only: hprime_xx,hprime_zz
+  use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx,NGLJ
+
+  implicit none
+
+  integer,intent(in) :: ispec
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: field
+
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ),intent(out) :: dux_dxl,dux_dzl,duz_dxl,duz_dzl
+
+  ! local parameters
+  integer :: i,j,k,iglob
+  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
+  real(kind=CUSTOM_REAL) :: dux_dxi,duz_dxi,dux_dgamma,duz_dgamma
+
+
+  do j = 1,NGLLZ
+    do i = 1,NGLLX
+      ! derivative along x and along z
+      dux_dxi = 0._CUSTOM_REAL
+      duz_dxi = 0._CUSTOM_REAL
+
+      dux_dgamma = 0._CUSTOM_REAL
+      duz_dgamma = 0._CUSTOM_REAL
+
+      ! first double loop over GLL points to compute and store gradients
+      ! we can merge the two loops because NGLLX == NGLLZ
+      if (AXISYM) then
+        if (is_on_the_axis(ispec)) then
+          do k = 1,NGLJ
+            ! derivative along x
+            iglob = ibool(k,j,ispec)
+            dux_dxi = dux_dxi + field(1,iglob)*hprimeBar_xx(i,k)
+            duz_dxi = duz_dxi + field(2,iglob)*hprimeBar_xx(i,k)
+            ! derivative along z
+            iglob = ibool(i,k,ispec)
+            dux_dgamma = dux_dgamma + field(1,iglob)*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + field(2,iglob)*hprime_zz(j,k)
+          enddo
+        else
+          do k = 1,NGLJ
+            ! derivative along x
+            iglob = ibool(k,j,ispec)
+            dux_dxi = dux_dxi + field(1,iglob)*hprime_xx(i,k)
+            duz_dxi = duz_dxi + field(2,iglob)*hprime_xx(i,k)
+            ! derivative along z
+            iglob = ibool(i,k,ispec)
+            dux_dgamma = dux_dgamma + field(1,iglob)*hprime_zz(j,k)
+            duz_dgamma = duz_dgamma + field(2,iglob)*hprime_zz(j,k)
+          enddo
+        endif
+      else
+        do k = 1,NGLLX
+          ! derivative along x
+          iglob = ibool(k,j,ispec)
+          dux_dxi = dux_dxi + field(1,iglob)*hprime_xx(i,k)
+          duz_dxi = duz_dxi + field(2,iglob)*hprime_xx(i,k)
+          ! derivative along z
+          iglob = ibool(i,k,ispec)
+          dux_dgamma = dux_dgamma + field(1,iglob)*hprime_zz(j,k)
+          duz_dgamma = duz_dgamma + field(2,iglob)*hprime_zz(j,k)
+        enddo
+      endif
+
+      xixl = xix(i,j,ispec)
+      xizl = xiz(i,j,ispec)
+      gammaxl = gammax(i,j,ispec)
+      gammazl = gammaz(i,j,ispec)
+
+      ! derivatives in x and z directions
+      dux_dxl(i,j) = dux_dxi*xixl + dux_dgamma*gammaxl
+      dux_dzl(i,j) = dux_dxi*xizl + dux_dgamma*gammazl
+
+      duz_dxl(i,j) = duz_dxi*xixl + duz_dgamma*gammaxl
+      duz_dzl(i,j) = duz_dxi*xizl + duz_dgamma*gammazl
+
+    enddo
+  enddo
+
+  end subroutine compute_gradient_field_element
 
