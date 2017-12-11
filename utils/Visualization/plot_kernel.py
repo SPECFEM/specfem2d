@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os.path
 import sys
 import numpy as np
 
@@ -28,11 +29,12 @@ def grid(x, y, z, resX=100, resY=100):
     X, Y = np.meshgrid(xi, yi)
     return X, Y, Z
 
-def plot_kernels(filename):
+def plot_kernels(filename,show=False):
     """
     plots ASCII kernel file
     """
     print "plotting kernel file: ",filename
+    print ""
 
     data = np.loadtxt(filename)
 
@@ -54,19 +56,44 @@ def plot_kernels(filename):
     x = data[:,0]
     y = data[:,1]
 
-    print "x-range min/max = %f / %f" % (x.min(), x.max())
-    print "y-range min/max = %f / %f" % (y.min(), y.max())
+    print "dimensions:"
+    print "  x-range min/max = %f / %f" % (x.min(), x.max())
+    print "  y-range min/max = %f / %f" % (y.min(), y.max())
+    print ""
 
     z1 = data[:,2] # e.g. rho
     z2 = data[:,3] # e.g. alpha
     z3 = data[:,4] # e.g. beta
 
-    print "data 1: min/max = %e / %e" % (z1.min(),z1.max())
-    print "data 2: min/max = %e / %e" % (z2.min(),z2.max())
-    print "data 3: min/max = %e / %e" % (z3.min(),z3.max())
+    # names like
+    #   rhop_alpha_beta_kernel.dat
+    # or
+    #   proc000000_rhop_alpha_beta_kernel.dat
+    name = os.path.basename(file)
+
+    name_kernels = str.split(name,"_")
+    if len(name_kernels) == 4:
+        kernel1 = 'K_' + name_kernels[0] # rhop
+        kernel2 = 'K_' + name_kernels[1] # alpha
+        kernel3 = 'K_' + name_kernels[2] # beta
+    elif len(name_kernels) == 5:
+        kernel1 = 'K_' + name_kernels[1]
+        kernel2 = 'K_' + name_kernels[2]
+        kernel3 = 'K_' + name_kernels[3]
+    else:
+        kernel1 = 'K_1'
+        kernel2 = 'K_2'
+        kernel3 = 'K_3'
+
+    print "statistics:"
+    print "  %12s : min/max = %e / %e" % (kernel1,z1.min(),z1.max())
+    print "  %12s : min/max = %e / %e" % (kernel2,z2.min(),z2.max())
+    print "  %12s : min/max = %e / %e" % (kernel3,z3.min(),z3.max())
+    print ""
 
     total_max = abs(np.concatenate((z1,z2,z3))).max()
-    print "data max = ",total_max
+    print "  data max = ",total_max
+    print ""
 
     total_max = 1.e-8
 
@@ -78,16 +105,19 @@ def plot_kernels(filename):
         if i == 1:
             X, Y, Z = grid(x,y,z1)
             ax.set_title("Kernels")
-            ax.set_ylabel('K_rho')
+            ax.set_ylabel(kernel1)
         elif i == 2:
             X, Y, Z = grid(x,y,z2)
-            ax.set_ylabel('K_alpha')
+            ax.set_ylabel(kernel2)
         elif i == 3:
             X, Y, Z = grid(x,y,z3)
-            ax.set_ylabel('K_beta')
+            ax.set_ylabel(kernel3)
+
+        #colormap = 'jet'
+        colormap = 'RdBu'
 
         im = ax.imshow(Z,vmax=total_max, vmin=-total_max,
-                       extent=[x.min(), x.max(), y.min(), y.max()],cmap='jet') # cmap='RdBu'
+                       extent=[x.min(), x.max(), y.min(), y.max()],cmap=colormap)
 
     # moves plots together
     fig.subplots_adjust(hspace=0)
@@ -97,12 +127,24 @@ def plot_kernels(filename):
     fig.colorbar(im, ax=axes.ravel().tolist())
     #fig.colorbar(im, ax=axes.ravel().tolist(),orientation='horizontal')
 
-    # show the images
-    plt.show()
+    # show the figure
+    if show:
+        plt.show()
+
+    # saves kernel figure as file
+    dir = os.path.dirname(file)
+    name_without_ending = str.split(name,".")[0]
+    outfile = dir + "/" + name_without_ending + ".png"
+    fig.savefig(outfile, format="png")
+
+    print "*****"
+    print "plotted file: ",outfile
+    print "*****"
+    print ""
 
 
 def usage():
-    print "usage: ./plot_kernel.py file"
+    print "usage: ./plot_kernel.py file [1 == show figure / 0 == just plot file]"
     print "   where"
     print "       file - ASCII kernel file, e.g. OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat"
 
@@ -114,5 +156,13 @@ if __name__ == '__main__':
     else:
         file = sys.argv[1]
 
-    plot_kernels(file)
+    if len(sys.argv) > 2:
+        show_plot = sys.argv[2]
+    else:
+        show_plot = 0
+
+    if show_plot == '1':
+        plot_kernels(file,show=True)
+    else:
+        plot_kernels(file)
 
