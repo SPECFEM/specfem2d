@@ -319,7 +319,7 @@ program adj_seismogram
       seism(:,3) = 0.d0
     endif
 
-    ! start/end index 
+    ! start/end index
     ! (note early start times have negative t0. it needs to be added to find correct index)
     istart = floor((tstart(irec) - t0)/deltat) + 1
     iend = ceiling((tend(irec) - t0)/deltat) + 1

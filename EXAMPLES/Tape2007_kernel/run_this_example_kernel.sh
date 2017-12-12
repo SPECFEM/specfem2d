@@ -81,7 +81,7 @@ cp -rp OUTPUT_FILES OUTPUT_FILES.for
 
 ##
 ## 2. kernel simulation
-## 
+##
 echo
 echo "running kernel simulation"
 echo

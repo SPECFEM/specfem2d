@@ -265,7 +265,7 @@
 !
 !            vy = nx * dux_dxl(i,j) + nz * dux_dzl(i,j)*nz    ! d/dn s  derivative along normal n
 !            ty = rho_vs * vy
-!            !print*,'left',nx,nz,unit_x,unit_z,(nx * unit_x + nz * unit_z),veloc_elastic(1,iglob),coord(1,iglob),coord(2,iglob)
+!            !print *,'left',nx,nz,unit_x,unit_z,(nx * unit_x + nz * unit_z),veloc_elastic(1,iglob),coord(1,iglob),coord(2,iglob)
 !          endif
 
         endif
@@ -367,7 +367,7 @@
 !            endif
 !            vy = abs(nx * unit_x + nz * unit_z) * veloc_elastic(1,iglob)
 !            ty = rho_vs * vy
-!            !print*,'right',nx,nz,unit_x,unit_z,(nx * unit_x + nz * unit_z),veloc_elastic(1,iglob),coord(1,iglob),coord(2,iglob)
+!            !print *,'right',nx,nz,unit_x,unit_z,(nx * unit_x + nz * unit_z),veloc_elastic(1,iglob),coord(1,iglob),coord(2,iglob)
 !          endif
 
         endif
