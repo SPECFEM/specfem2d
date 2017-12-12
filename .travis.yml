@@ -100,7 +100,7 @@ before_install:
     # and if we have to actually perform code testing or not :(
     #
     # to skip testing: the commit message must contain [ci skip]
-
+    #
     # this fails...
     #git rev-list --oneline $TRAVIS_COMMIT_RANGE
     ## fixes triple-dot to double-dot range (see: https://github.com/travis-ci/travis-ci/issues/4596)
@@ -171,8 +171,9 @@ install:
     # for distribution precise
     #sudo apt-get install -qq python-numpy #python-scipy
     # trusty:
-    pip install --upgrade pip setuptools wheel
-    pip install --only-binary=numpy numpy
+    # (Sep2017 update: adding flag --user : see https://github.com/travis-ci/travis-ci/issues/8382)
+    pip install --user --upgrade pip setuptools wheel
+    pip install --user --only-binary=numpy numpy
     # version info
     python --version
 
