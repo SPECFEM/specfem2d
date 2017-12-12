@@ -623,6 +623,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+GIT_VERSION_DEPS
 CUDA_LIBS
 CUDA_LDFLAGS
 CUDA_CPPFLAGS
@@ -674,6 +675,7 @@ CPPFLAGS
 CFLAGS
 CC
 FCLIBS
+srcdir
 FCENV
 OBJEXT
 EXEEXT
@@ -683,6 +685,8 @@ FCFLAGS
 FC
 COND_CUDA_PLUS_FALSE
 COND_CUDA_PLUS_TRUE
+COND_CUDA9_FALSE
+COND_CUDA9_TRUE
 COND_CUDA8_FALSE
 COND_CUDA8_TRUE
 COND_CUDA7_FALSE
@@ -2430,6 +2434,140 @@ ac_config_headers="$ac_config_headers setup/config.h"
 
 
 
+# -*- Autoconf -*-
+
+## --------------------------------------------------------- ##
+## Autoconf macros for functions missing in older versions.  ##
+## --------------------------------------------------------- ##
+
+# Missing in autoconf < 2.60
+
+
+
+#
+# The following two macros are from autoconf 2.68 (which is still new).
+#
+
+# AC_FC_PP_SRCEXT(EXT, [ACTION-IF-SUCCESS], [ACTION-IF-FAILURE])
+# --------------------------------------------------------------
+# Like AC_FC_SRCEXT, set the source-code extension used in Fortran (FC) tests
+# to EXT (which defaults to f).  Also, look for any necessary additional
+# FCFLAGS needed to allow this extension for preprocessed Fortran, and store
+# them in the output variable FCFLAGS_<EXT> (e.g. FCFLAGS_f90 for EXT=f90).
+# If successful, call ACTION-IF-SUCCESS.  If unable to compile preprocessed
+# source code with EXT, call ACTION-IF-FAILURE, which defaults to failing with
+# an error message.
+#
+# Some compilers allow preprocessing with either a Fortran preprocessor or
+# with the C preprocessor (cpp).  Prefer the Fortran preprocessor, to deal
+# correctly with continuation lines, `//' (not a comment), and preserve white
+# space (for fixed form).
+#
+# (The flags for the current source-code extension, if any, are stored in
+# $ac_fcflags_srcext and used automatically in subsequent autoconf tests.)
+#
+# For ordinary extensions like f90, etcetera, the modified FCFLAGS
+# are needed for IBM's xlf*.  Also, for Intel's ifort compiler, the
+# $FCFLAGS_<EXT> variable *must* go immediately before the source file on the
+# command line, unlike other $FCFLAGS.  Ugh.
+#
+# Known extensions that enable preprocessing by default, and flags to force it:
+# GNU: .F .F90 .F95 .F03 .F08, -cpp for most others,
+#      -x f77-cpp-input for .f77 .F77; -x f95-cpp-input for gfortran < 4.4
+# SGI: .F .F90, -ftpp or -cpp for .f .f90, -E write preproc to stdout
+#      -macro_expand enable macro expansion everywhere (with -ftpp)
+#      -P preproc only, save in .i, no #line's
+# SUN: .F .F95, -fpp for others; -xpp={fpp,cpp} for preprocessor selection
+#      -F preprocess only (save in lowercase extension)
+# IBM: .F .F77 .F90 .F95 .F03, -qsuffix=cpp=EXT for extension .EXT to invoke cpp
+#      -WF,-qnofpp -WF,-qfpp=comment:linecont:nocomment:nolinecont
+#      -WF,-qlanglvl=classic or not -qnoescape (trigraph problems)
+#      -d no #line in output, -qnoobject for preprocessing only (output in .f)
+#      -q{no,}ppsuborigarg substitute original macro args before expansion
+# HP:  .F, +cpp={yes|no|default} use cpp, -cpp, +cpp_keep save in .i/.i90
+# PGI: -Mpreprocess
+# Absoft: .F .FOR .F90 .F95, -cpp for others
+# Cray: .F .F90 .FTN, -e Z for others; -F enable macro expansion everywhere
+# Intel: .F .F90, -fpp for others, but except for .f and .f90, -Tf may also be
+#        needed right before the source file name
+# PathScale: .F .F90 .F95, -ftpp or -cpp for .f .f90 .f95
+#         -macro_expand for expansion everywhere, -P for no #line in output
+# Lahey: .F .FOR .F90 .F95, -Cpp
+# NAGWare: .F .F90 .F95, .ff .ff90 .ff95 (new), -fpp for others
+# Compaq/Tru64: .F .F90, -cpp, -P keep .i file, -P keep .i file
+# f2c: .F, -cpp
+# g95: .F .FOR .F90 .F95 .F03, -cpp -no-cpp, -E for stdout
+
+
+# AC_FC_PP_DEFINE([ACTION-IF-SUCCESS], [ACTION-IF-FAILURE = FAILURE])
+# -------------------------------------------------------------------
+# Find a flag to specify defines for preprocessed Fortran.  Not all
+# Fortran compilers use -D.  Substitute FC_DEFINE with the result and
+# call ACTION-IF-SUCCESS (defaults to nothing) if successful, and
+# ACTION-IF-FAILURE (defaults to failing with an error message) if not.
+#
+# Known flags:
+# IBM: -WF,-D
+# Lahey/Fujitsu: -Wp,-D     older versions???
+# f2c: -D or -Wc,-D
+# others: -D
+
+
+
+#
+# The following three macros are from autoconf 2.69 (which is quite new).
+#
+
+# AC_FC_MODULE_EXTENSION
+# ----------------------
+# Find the Fortran 90 module file extension.  The module extension is stored
+# in the variable FC_MODEXT and empty if it cannot be determined.  The result
+# or "unknown" is cached in the cache variable ac_cv_fc_module_ext.
+
+
+
+# AC_FC_MODULE_FLAG([ACTION-IF-SUCCESS], [ACTION-IF-FAILURE = FAILURE])
+# ---------------------------------------------------------------------
+# Find a flag to include Fortran 90 modules from another directory.
+# If successful, run ACTION-IF-SUCCESS (defaults to nothing), otherwise
+# run ACTION-IF-FAILURE (defaults to failing with an error message).
+# The module flag is cached in the ac_cv_fc_module_flag variable.
+# It may contain significant trailing whitespace.
+#
+# Known flags:
+# gfortran: -Idir, -I dir (-M dir, -Mdir (deprecated), -Jdir for writing)
+# g95: -I dir (-fmod=dir for writing)
+# SUN: -Mdir, -M dir (-moddir=dir for writing;
+#                     -Idir for includes is also searched)
+# HP: -Idir, -I dir (+moddir=dir for writing)
+# IBM: -Idir (-qmoddir=dir for writing)
+# Intel: -Idir -I dir (-mod dir for writing)
+# Absoft: -pdir
+# Lahey: -mod dir
+# Cray: -module dir, -p dir (-J dir for writing)
+#       -e m is needed to enable writing .mod files at all
+# Compaq: -Idir
+# NAGWare: -I dir
+# PathScale: -I dir  (but -module dir is looked at first)
+# Portland: -module dir (first -module also names dir for writing)
+# Fujitsu: -Am -Idir (-Mdir for writing is searched first, then '.', then -I)
+#                    (-Am indicates how module information is saved)
+
+
+
+# AC_FC_MODULE_OUTPUT_FLAG([ACTION-IF-SUCCESS], [ACTION-IF-FAILURE = FAILURE])
+# ----------------------------------------------------------------------------
+# Find a flag to write Fortran 90 module information to another directory.
+# If successful, run ACTION-IF-SUCCESS (defaults to nothing), otherwise
+# run ACTION-IF-FAILURE (defaults to failing with an error message).
+# The module flag is cached in the ac_cv_fc_module_output_flag variable.
+# It may contain significant trailing whitespace.
+#
+# For known flags, see the documentation of AC_FC_MODULE_FLAG above.
+
+
+
+
 
 ############################################################
 
@@ -2550,7 +2688,7 @@ else
   want_double_precision=no
 fi
 
-if test "$want_double_precision" = no; then
+if test x"$want_double_precision" = xno; then
     CUSTOM_REAL=SIZE_REAL
     CUSTOM_MPI_TYPE=MPI_REAL
 else
@@ -2581,7 +2719,6 @@ fi
 
 export COND_DEBUG_FALSE
 export COND_DEBUG_TRUE
-
 
 ###
 ### MPI
@@ -2616,7 +2753,7 @@ else
   want_cuda=no
 fi
 
- if test "$want_cuda" != no; then
+ if test x"$want_cuda" != xno; then
   COND_CUDA_TRUE=
   COND_CUDA_FALSE='#'
 else
@@ -2624,7 +2761,7 @@ else
   COND_CUDA_FALSE=
 fi
 
- if test "$want_cuda" = cuda5; then
+ if test x"$want_cuda" = xcuda5; then
   COND_CUDA5_TRUE=
   COND_CUDA5_FALSE='#'
 else
@@ -2632,7 +2769,7 @@ else
   COND_CUDA5_FALSE=
 fi
 
- if test "$want_cuda" = cuda6; then
+ if test x"$want_cuda" = xcuda6; then
   COND_CUDA6_TRUE=
   COND_CUDA6_FALSE='#'
 else
@@ -2640,7 +2777,7 @@ else
   COND_CUDA6_FALSE=
 fi
 
- if test "$want_cuda" = cuda7; then
+ if test x"$want_cuda" = xcuda7; then
   COND_CUDA7_TRUE=
   COND_CUDA7_FALSE='#'
 else
@@ -2648,7 +2785,7 @@ else
   COND_CUDA7_FALSE=
 fi
 
- if test "$want_cuda" = cuda8; then
+ if test x"$want_cuda" = xcuda8; then
   COND_CUDA8_TRUE=
   COND_CUDA8_FALSE='#'
 else
@@ -2656,8 +2793,21 @@ else
   COND_CUDA8_FALSE=
 fi
 
-# cuda linking for cuda 5x and 6x and 7x and 8x
- if test "$want_cuda" = cuda5 -o "$want_cuda" = cuda6 -o "$want_cuda" = cuda7 -o "$want_cuda" = cuda8; then
+ if test x"$want_cuda" = xcuda9; then
+  COND_CUDA9_TRUE=
+  COND_CUDA9_FALSE='#'
+else
+  COND_CUDA9_TRUE='#'
+  COND_CUDA9_FALSE=
+fi
+
+# cuda linking for cuda 5x and 6x and 7x and 8x and ..
+ if test "$want_cuda" = cuda5 \
+     -o "$want_cuda" = cuda6 \
+     -o "$want_cuda" = cuda7 \
+     -o "$want_cuda" = cuda8 \
+     -o "$want_cuda" = cuda9 \
+; then
   COND_CUDA_PLUS_TRUE=
   COND_CUDA_PLUS_FALSE='#'
 else
@@ -3129,6 +3279,7 @@ export FC
 export MPIFC
 F77="$FC"
 FFLAGS="$FCFLAGS"
+
 
 
 
@@ -7147,6 +7298,7 @@ if test "$want_mpi" = yes; then :
     $as_echo "## --- ##
 ## MPI ##
 ## --- ##"
+    # checks MPI include directory
 
 
   ac_ext=cpp
@@ -7468,7 +7620,6 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 fi
 
-
 ############################################################
 
 $as_echo "## ----------------------------------- ##
@@ -7479,10 +7630,29 @@ $as_echo "## ----------------------------------- ##
 ac_config_files="$ac_config_files Makefile setup/constants.h setup/constants_tomography.h setup/precision.h setup/config.fh"
 
 
+if test -d $srcdir/.git; then :
+
+    GIT_VERSION_DEPS="$srcdir/.git/logs/HEAD"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: building from git repository" >&5
+$as_echo "$as_me: building from git repository" >&6;}
+
+
+else
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: not a git repository" >&5
+$as_echo "$as_me: not a git repository" >&6;}
+    ac_config_files="$ac_config_files setup/version.fh"
+
+
+fi
+
 if test "$USE_BUNDLED_SCOTCH" = 1; then
   ac_config_files="$ac_config_files ${SCOTCH_DIR}/src/Makefile.inc"
 
 fi
+
+ac_config_files="$ac_config_files DATA/Par_file:DATA/Par_file DATA/SOURCE:DATA/SOURCE"
+
 
 ac_config_commands="$ac_config_commands bin"
 
@@ -7628,6 +7798,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CUDA8_TRUE}" && test -z "${COND_CUDA8_FALSE}"; then
   as_fn_error $? "conditional \"COND_CUDA8\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_CUDA9_TRUE}" && test -z "${COND_CUDA9_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CUDA9\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CUDA_PLUS_TRUE}" && test -z "${COND_CUDA_PLUS_FALSE}"; then
@@ -8234,7 +8408,10 @@ do
     "setup/constants_tomography.h") CONFIG_FILES="$CONFIG_FILES setup/constants_tomography.h" ;;
     "setup/precision.h") CONFIG_FILES="$CONFIG_FILES setup/precision.h" ;;
     "setup/config.fh") CONFIG_FILES="$CONFIG_FILES setup/config.fh" ;;
+    "setup/version.fh") CONFIG_FILES="$CONFIG_FILES setup/version.fh" ;;
     "${SCOTCH_DIR}/src/Makefile.inc") CONFIG_FILES="$CONFIG_FILES ${SCOTCH_DIR}/src/Makefile.inc" ;;
+    "DATA/Par_file") CONFIG_FILES="$CONFIG_FILES DATA/Par_file:DATA/Par_file" ;;
+    "DATA/SOURCE") CONFIG_FILES="$CONFIG_FILES DATA/SOURCE:DATA/SOURCE" ;;
     "bin") CONFIG_COMMANDS="$CONFIG_COMMANDS bin" ;;
     "obj") CONFIG_COMMANDS="$CONFIG_COMMANDS obj" ;;
     "DATA") CONFIG_COMMANDS="$CONFIG_COMMANDS DATA" ;;
