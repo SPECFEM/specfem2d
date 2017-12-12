@@ -83,8 +83,8 @@ ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on o
 Q0_poroelastic                  = 1              # quality factor for viscous attenuation (ignore it if you are not using a poroelastic material)
 freq0_poroelastic               = 10             # frequency for viscous attenuation (ignore it if you are not using a poroelastic material)
 
-# to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
-# use the flag below. It performs undoing of attenuation in an exact way for sensitivity kernel calculations
+# to undo attenuation and/or PMLs for sensitivity kernel calculations or forward runs with SAVE_FORWARD
+# use the flag below. It performs undoing of attenuation and/or of PMLs in an exact way for sensitivity kernel calculations
 # but requires disk space for temporary storage, and uses a significant amount of memory used as buffers for temporary storage.
 # When that option is on the second parameter indicates how often the code dumps restart files to disk (if in doubt, use something between 100 and 1000).
 UNDO_ATTENUATION_AND_OR_PML     = .true.
