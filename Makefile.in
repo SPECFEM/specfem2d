@@ -58,7 +58,6 @@ CPPFLAGS = @CPPFLAGS@ $(COND_MPI_CPPFLAGS)
 # all linker flags
 MPILIBS += @LDFLAGS@ @LIBS@
 
-
 #######################################
 ####
 #### MPI
@@ -123,8 +122,8 @@ SCOTCH_FLAGS = @FC_DEFINE@USE_SCOTCH $(SCOTCH_INC)
 @COND_CUDA8_TRUE@CUDA8 = yes
 @COND_CUDA8_FALSE@CUDA8 = no
 
-@COND_CUDA8_TRUE@CUDA9 = yes
-@COND_CUDA8_FALSE@CUDA9 = no
+@COND_CUDA9_TRUE@CUDA9 = yes
+@COND_CUDA9_FALSE@CUDA9 = no
 
 # CUDA compilation with linking
 @COND_CUDA_PLUS_TRUE@CUDA_PLUS = yes
@@ -140,8 +139,9 @@ CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@ -lstdc++
 @COND_CUDA_TRUE@NVCC = nvcc
 @COND_CUDA_FALSE@NVCC = @CC@
 
-# GPU architecture
-
+##
+## GPU architecture
+##
 # CUDA architecture / code version
 # Fermi: -gencode=arch=compute_10,code=sm_10 not supported
 # Tesla (default): -gencode=arch=compute_20,code=sm_20
@@ -161,7 +161,7 @@ GENCODE_70 = -gencode=arch=compute_70,code=\"sm_70,compute_70\"
 
 # cuda preprocessor flag
 # CUDA version 9.0
-@COND_CUDA_TRUE@@COND_CUDA8_TRUE@GENCODE = $(GENCODE_70) $(FC_DEFINE)GPU_DEVICE_Volta
+@COND_CUDA_TRUE@@COND_CUDA9_TRUE@GENCODE = $(GENCODE_70) $(FC_DEFINE)GPU_DEVICE_Volta
 # CUDA version 8.0
 @COND_CUDA_TRUE@@COND_CUDA8_TRUE@GENCODE = $(GENCODE_60) $(FC_DEFINE)GPU_DEVICE_Pascal
 # CUDA version 7.x
