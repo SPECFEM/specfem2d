@@ -1524,7 +1524,8 @@ end module my_mpi_communicator
   endif
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. IMAIN == ISTANDARD_OUTPUT) &
-    stop 'must not have IMAIN == ISTANDARD_OUTPUT when NUMBER_OF_SIMULTANEOUS_RUNS > 1 otherwise output to screen is mingled'
+    stop 'must not have IMAIN == ISTANDARD_OUTPUT when NUMBER_OF_SIMULTANEOUS_RUNS > 1 otherwise output to screen is mingled. &
+                 & Change this in specfem/setup/constant.h.in and recompile.'
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS == 1) then
 
