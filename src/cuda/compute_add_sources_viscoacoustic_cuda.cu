@@ -118,7 +118,7 @@ void FC_FUNC_(compute_add_sources_ac_cuda,
                                                                               mp->d_kappastore,
                                                                               it,mp->nsources_local);
 
-  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),mp->myrank);
+  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),37);
 
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

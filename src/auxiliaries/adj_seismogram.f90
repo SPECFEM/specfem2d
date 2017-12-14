@@ -71,11 +71,17 @@ program adj_seismogram
   double precision,dimension(nrec) :: tstart(nrec),tend(nrec)
   character(len=150), dimension(nrec) :: station_name
 
-  ! tolerance
-  double precision, parameter :: EPS = 1.d-40
-
   ! input
   character(len=256) :: arg
+
+  ! tolerance
+  double precision, parameter :: EPS = 1.d-40
+  double precision, parameter :: SMALLVAL = 1.d-9
+  double precision, parameter :: PI = 3.141592653589793d0
+
+  ! window taper: 1 == Welch / 2 == cosine
+  integer,parameter :: window_taper_type = 1
+
 
 !--------------------------------------------------------------------------------
 ! USER PARAMETERS
@@ -245,7 +251,7 @@ program adj_seismogram
           ! checks start time
           if (itime == 1) then
             time0 = time
-            if (abs(t0 - time0) > 1.e-5) then
+            if (abs(t0 - time0) > SMALLVAL) then
               print *,'Error: start time',time0,' in file ',trim(filename),' does not match t0 = ',t0
               stop 40
             endif
@@ -253,7 +259,7 @@ program adj_seismogram
 
           ! checks time step size
           if (itime == NSTEP) then
-            if (abs( (time - time0)/dble(NSTEP-1) - deltat) > 1.e-5) then
+            if (abs( (time - time0)/dble(NSTEP-1) - deltat) > SMALLVAL) then
               print *,'Error: time step size ',(time-time0)/dble(NSTEP-1),' in file ',trim(filename), &
                       ' does not match deltat = ',deltat
               stop 50
@@ -314,6 +320,7 @@ program adj_seismogram
     endif
 
     ! start/end index
+    ! (note early start times have negative t0. it needs to be added to find correct index)
     istart = floor((tstart(irec) - t0)/deltat) + 1
     iend = ceiling((tend(irec) - t0)/deltat) + 1
 
@@ -355,20 +362,31 @@ program adj_seismogram
         stop 60
       endif
 
+      ! time window
       time_window(:) = 0.d0
-      seism_win(:) = seism(:,icomp)
-      seism_veloc(:) = 0.d0
-      seism_accel(:) = 0.d0
-
-      do itime = istart,iend
-        ! cosine window
-        !time_window(itime) = 1.d0 - cos(pi*(itime-1)/NSTEP+1)**10
-
+      select case (window_taper_type)
+      case (1)
         ! Welch window
-        time_window(itime) = 1.d0 - (2* (dble(itime) - istart)/(iend-istart) -1.d0)**2
-      enddo
+        do itime = istart,iend
+          time_window(itime) = 1.d0 - (2* (dble(itime) - istart)/(iend-istart) -1.d0)**2
+        enddo
+
+      case (2)
+        ! cosine window
+        do itime = istart,iend
+          time_window(itime) = 1.d0 - cos(PI*(itime-1)/NSTEP+1)**10
+        enddo
+
+      case default
+        print *,'Invalid window taper type ',window_taper_type
+        print *,'Please choose 1 == Welch or 2 == cosine and re-compile before running'
+        stop 60
+      end select
+
+      seism_win(:) = seism(:,icomp)
 
       ! first time derivative (by finite-differences)
+      seism_veloc(:) = 0.d0
       do itime = 2,NSTEP-1
          seism_veloc(itime) = (seism_win(itime+1) - seism_win(itime-1))/(2*deltat)
       enddo
@@ -376,6 +394,7 @@ program adj_seismogram
       seism_veloc(NSTEP) = (seism_win(NSTEP) - seism_win(NSTEP-1))/deltat
 
       ! second time derivative
+      seism_accel(:) = 0.d0
       do itime = 2,NSTEP-1
          seism_accel(itime) = (seism_veloc(itime+1) - seism_veloc(itime-1))/(2*deltat)
       enddo
@@ -398,13 +417,15 @@ program adj_seismogram
       endif
       print *
 
-      do itime = 1,NSTEP
-         if (icomp == adj_comp) then
-            write(11,*) (itime-1)*deltat - t0, ft_bar(itime)
-         else
-            write(11,*) (itime-1)*deltat - t0, 0.d0
-         endif
-      enddo
+      if (icomp == adj_comp) then
+        do itime = 1,NSTEP
+          write(11,*) (itime-1)*deltat + t0, ft_bar(itime)
+        enddo
+      else
+        do itime = 1,NSTEP
+          write(11,*) (itime-1)*deltat + t0, 0.d0
+        enddo
+      endif
       close(11)
 
     enddo

@@ -371,21 +371,30 @@
 
 ! test face 2 (top)
       if (x(i3) < limit .and. x(i4) < limit) then
-        if (already_found_a_face) stop 'error: element with two faces on the same PML edge found!'
+        if (already_found_a_face) then
+          print *,'problem detected in the mesh near coordinates x,z = ',x(i3),z(i3)
+          stop 'error: element with two faces on the same PML edge found!'
+        endif
         count_faces_found = count_faces_found + 1
         already_found_a_face = .true.
       endif
 
 ! test face 3 (left)
       if (x(i1) < limit .and. x(i4) < limit) then
-        if (already_found_a_face) stop 'error: element with two faces on the same PML edge found!'
+        if (already_found_a_face) then
+          print *,'problem detected in the mesh near coordinates x,z = ',x(i1),z(i1)
+          stop 'error: element with two faces on the same PML edge found!'
+        endif
         count_faces_found = count_faces_found + 1
         already_found_a_face = .true.
       endif
 
 ! test face 4 (right)
       if (x(i2) < limit .and. x(i3) < limit) then
-        if (already_found_a_face) stop 'error: element with two faces on the same PML edge found!'
+        if (already_found_a_face) then
+          print *,'problem detected in the mesh near coordinates x,z = ',x(i2),z(i2)
+          stop 'error: element with two faces on the same PML edge found!'
+        endif
         count_faces_found = count_faces_found + 1
         already_found_a_face = .true.
       endif
@@ -420,21 +429,30 @@
 
 ! test face 2 (top)
       if (x(i3) > limit .and. x(i4) > limit) then
-        if (already_found_a_face) stop 'error: element with two faces on the same PML edge found!'
+        if (already_found_a_face) then
+          print *,'problem detected in the mesh near coordinates x,z = ',x(i3),z(i3)
+          stop 'error: element with two faces on the same PML edge found!'
+        endif
         count_faces_found = count_faces_found + 1
         already_found_a_face = .true.
       endif
 
 ! test face 3 (left)
       if (x(i1) > limit .and. x(i4) > limit) then
-        if (already_found_a_face) stop 'error: element with two faces on the same PML edge found!'
+        if (already_found_a_face) then
+          print *,'problem detected in the mesh near coordinates x,z = ',x(i1),z(i1)
+          stop 'error: element with two faces on the same PML edge found!'
+        endif
         count_faces_found = count_faces_found + 1
         already_found_a_face = .true.
       endif
 
 ! test face 4 (right)
       if (x(i2) > limit .and. x(i3) > limit) then
-        if (already_found_a_face) stop 'error: element with two faces on the same PML edge found!'
+        if (already_found_a_face) then
+          print *,'problem detected in the mesh near coordinates x,z = ',x(i2),z(i2)
+          stop 'error: element with two faces on the same PML edge found!'
+        endif
         count_faces_found = count_faces_found + 1
         already_found_a_face = .true.
       endif
@@ -469,21 +487,30 @@
 
 ! test face 2 (top)
       if (z(i3) < limit .and. z(i4) < limit) then
-        if (already_found_a_face) stop 'error: element with two faces on the same PML edge found!'
+        if (already_found_a_face) then
+          print *,'problem detected in the mesh near coordinates x,z = ',x(i3),z(i3)
+          stop 'error: element with two faces on the same PML edge found!'
+        endif
         count_faces_found = count_faces_found + 1
         already_found_a_face = .true.
       endif
 
 ! test face 3 (left)
       if (z(i1) < limit .and. z(i4) < limit) then
-        if (already_found_a_face) stop 'error: element with two faces on the same PML edge found!'
+        if (already_found_a_face) then
+          print *,'problem detected in the mesh near coordinates x,z = ',x(i1),z(i1)
+          stop 'error: element with two faces on the same PML edge found!'
+        endif
         count_faces_found = count_faces_found + 1
         already_found_a_face = .true.
       endif
 
 ! test face 4 (right)
       if (z(i2) < limit .and. z(i3) < limit) then
-        if (already_found_a_face) stop 'error: element with two faces on the same PML edge found!'
+        if (already_found_a_face) then
+          print *,'problem detected in the mesh near coordinates x,z = ',x(i2),z(i2)
+          stop 'error: element with two faces on the same PML edge found!'
+        endif
         count_faces_found = count_faces_found + 1
         already_found_a_face = .true.
       endif
@@ -518,21 +545,30 @@
 
 ! test face 2 (top)
       if (z(i3) > limit .and. z(i4) > limit) then
-        if (already_found_a_face) stop 'error: element with two faces on the same PML edge found!'
+        if (already_found_a_face) then
+          print *,'problem detected in the mesh near coordinates x,z = ',x(i3),z(i3)
+          stop 'error: element with two faces on the same PML edge found!'
+        endif
         count_faces_found = count_faces_found + 1
         already_found_a_face = .true.
       endif
 
 ! test face 3 (left)
       if (z(i1) > limit .and. z(i4) > limit) then
-        if (already_found_a_face) stop 'error: element with two faces on the same PML edge found!'
+        if (already_found_a_face) then
+          print *,'problem detected in the mesh near coordinates x,z = ',x(i1),z(i1)
+          stop 'error: element with two faces on the same PML edge found!'
+        endif
         count_faces_found = count_faces_found + 1
         already_found_a_face = .true.
       endif
 
 ! test face 4 (right)
       if (z(i2) > limit .and. z(i3) > limit) then
-        if (already_found_a_face) stop 'error: element with two faces on the same PML edge found!'
+        if (already_found_a_face) then
+          print *,'problem detected in the mesh near coordinates x,z = ',x(i2),z(i2)
+          stop 'error: element with two faces on the same PML edge found!'
+        endif
         count_faces_found = count_faces_found + 1
         already_found_a_face = .true.
       endif

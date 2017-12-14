@@ -181,12 +181,14 @@
 // leads up to ~1% performance increase
 //#define MANUALLY_UNROLLED_LOOPS
 
-// compiler specifications
+// CUDA compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
+//
+// Kepler architecture
+#ifdef GPU_DEVICE_K20
 // (depending on GPU type, register spilling might slow down the performance)
-// (uncomment if desired)
+// (uncomment if not desired)
 #define USE_LAUNCH_BOUNDS
-
 // elastic kernel
 // note: main kernel is Kernel_2_***_impl() which is limited by shared memory usage to 8 active blocks
 //       while register usage might use up to 9 blocks
@@ -201,7 +203,6 @@
 //       registers per thread    = 59
 //       registers per block     = 8192                total = 65536 -> limits active blocks to 8
 #define LAUNCH_MIN_BLOCKS 10
-
 // acoustic kernel
 // performance statistics: kernel Kernel_2_acoustic_impl():
 //       shared memory per block = 2200    for Kepler: -> limits active blocks to 16 (maximum possible)
@@ -210,6 +211,20 @@
 // note: for K20x, using a minimum of 16 blocks leads to register spilling.
 //       this slows down the kernel by ~ 4%
 #define LAUNCH_MIN_BLOCKS_ACOUSTIC 16
+#endif
+//
+// Pascal architecture
+#ifdef GPU_DEVICE_Pascal
+// Pascal P100: Pascal: total of 65536 register size
+//              careful, as using launch bounds to increase the number of blocks might lead to register spilling.
+#undef USE_LAUNCH_BOUNDS
+#define LAUNCH_MIN_BLOCKS 10
+#define LAUNCH_MIN_BLOCKS_ACOUSTIC 16
+#endif
+
+#ifdef USE_LAUNCH_BOUNDS
+#pragma message ("\nCompiling with: USE_LAUNCH_BOUNDS enabled\n")
+#endif
 
 /* ----------------------------------------------------------------------------------------------- */
 

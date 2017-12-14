@@ -39,18 +39,30 @@ program adj_seismogram
 
   implicit none
 
+!--------------------------------------------------------------------------------
+! USER PARAMETERS
+!--------------------------------------------------------------------------------
+! please check these parameters with your setting in Par_file
+
   integer, parameter :: NSTEP = 3000
   integer, parameter :: nrec = 1
+
   double precision, parameter :: t0 = 48.0   ! labeled as 'time delay'
   double precision, parameter :: deltat = 0.06
+
+!--------------------------------------------------------------------------------
+
   double precision, parameter :: EPS = 1.d-40
 
   integer :: itime,icomp,istart,iend,nlen,irec,NDIM,NDIMr,adj_comp
+
   double precision :: time,tstart(nrec),tend(nrec)
   character(len=150), dimension(nrec) :: station_name
+
   double precision, dimension(NSTEP) :: time_window
   double precision :: seism(NSTEP,3),Nnorm,seism_win(NSTEP)
   double precision :: seism_veloc(NSTEP),seism_accel(NSTEP),ft_bar(NSTEP)
+
   character(len=3) :: compr(2),comp(3)
   character(len=150) :: filename
   integer :: ier
@@ -61,8 +73,10 @@ program adj_seismogram
   ! number of components
   !NDIMr=2  ! P-SV
   NDIMr=1  ! SH (membrane)
+
   !compr = (/"BXX","BXZ"/)    ! P-SV
   compr = (/"BXY","tmp"/)  ! SH (membrane)
+
   ! list of stations
   station_name(1) = 'S0001'
 
@@ -73,7 +87,25 @@ program adj_seismogram
   ! chose the component for the adjoint source (adj_comp = 1:X, 2:Y, 3:Z)
   adj_comp = 2
 
-  do irec =1,nrec
+  ! user output
+  print *,'adjoint source - seismogram:'
+  print *
+  print *,'parameters:'
+  print *,'  NSTEP  = ',NSTEP
+  print *,'  deltat = ',deltat
+  print *,'  nrec   = ',nrec
+  print *,'  t0     = ',t0
+  print *
+  print *,'setup:'
+  print *,'  seismogram components   = ',NDIMr
+  print *,'  seismogram labels       = ',compr(1),' / ',compr(2)
+  print *,'  station name            = ',trim(station_name(1))
+  print *
+  print *,'  time window start/end                           = ',tstart(1),tend(1)
+  print *,'  adjoint source trace component (1 == X/2 == Y/3 == Z) = ',adj_comp
+  print *
+
+  do irec = 1,nrec
 
      do icomp = 1, NDIMr
 
@@ -98,11 +130,11 @@ program adj_seismogram
 
      close(10)
 
-
      istart = max(floor(tstart(irec)/deltat),1)
      iend = min(floor(tend(irec)/deltat),NSTEP)
      print *,'istart =',istart, 'iend =', iend
      print *,'tstart =',istart*deltat, 'tend =', iend*deltat
+
      if (istart >= iend) stop 'check istart,iend'
      nlen = iend - istart +1
 
@@ -119,17 +151,22 @@ program adj_seismogram
         seism_veloc(:) = 0.d0
         seism_accel(:) = 0.d0
 
-        do itime =istart,iend
-           !time_window(itime) = 1.d0 - cos(pi*(itime-1)/NSTEP+1)**10   ! cosine window
-           time_window(itime) = 1.d0 - (2* (dble(itime) - istart)/(iend-istart) -1.d0)**2  ! Welch window
+        do itime = istart,iend
+          ! cosine window
+          !time_window(itime) = 1.d0 - cos(pi*(itime-1)/NSTEP+1)**10
+
+          ! Welch window
+          time_window(itime) = 1.d0 - (2* (dble(itime) - istart)/(iend-istart) -1.d0)**2
         enddo
 
+        ! first time derivative (by finite-differences)
         do itime = 2,NSTEP-1
            seism_veloc(itime) = (seism_win(itime+1) - seism_win(itime-1))/(2*deltat)
         enddo
         seism_veloc(1) = (seism_win(2) - seism_win(1))/deltat
         seism_veloc(NSTEP) = (seism_win(NSTEP) - seism_win(NSTEP-1))/deltat
 
+        ! second time derivative
         do itime = 2,NSTEP-1
            seism_accel(itime) = (seism_veloc(itime+1) - seism_veloc(itime-1))/(2*deltat)
         enddo
@@ -138,13 +175,15 @@ program adj_seismogram
 
         ! cross-correlation traveltime adjoint source
         Nnorm = deltat * sum(time_window(:) * seism_win(:) * seism_accel(:))
+
         !Nnorm = deltat * sum(time_window(:) * seism_veloc(:) * seism_veloc(:))
+
         if (abs(Nnorm) > EPS) then
            !ft_bar(:) = -seism_veloc(:) * time_window(:) / Nnorm
            ft_bar(:) = seism_veloc(:) * time_window(:) / Nnorm
            print *,'Norm =', Nnorm
         else
-           print *, 'norm < EPS for file '
+           print *,'Norm < EPS for file, zeroeing out trace'
            print *,'Norm =', Nnorm
            ft_bar(:) = 0.d0
         endif
@@ -162,7 +201,7 @@ program adj_seismogram
 
   enddo
   print *,'*************************'
-  print *,'The input files (AA.S****.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in SEM'
+  print *,'The input files (AA.S****.BXX/BXY/BXZ.adj) needed to run the adjoint simulation are in folder SEM/'
   print *,'*************************'
 
 end program adj_seismogram
