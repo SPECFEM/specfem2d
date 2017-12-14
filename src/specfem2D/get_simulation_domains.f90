@@ -148,7 +148,7 @@
             ispec_is_elastic(ispec) = .true.
             ispec_is_acoustic(ispec) = .false.
           else if (vsext(i,j,ispec) < TINYVAL) then
-            ispec_is_acoustic(ispec) = .false.
+            ispec_is_acoustic(ispec) = .true.
           endif
 
         endif
