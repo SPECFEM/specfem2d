@@ -130,6 +130,8 @@
 
   read(IIN) ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART,ATTENUATION_VISCOACOUSTIC
 
+  read(IIN) USE_SOLVOPT
+
   read(IIN) save_ASCII_seismograms
 
   read(IIN) save_binary_seismograms_single,save_binary_seismograms_double

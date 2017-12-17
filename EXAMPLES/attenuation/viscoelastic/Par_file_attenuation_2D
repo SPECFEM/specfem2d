@@ -77,6 +77,7 @@ ATTENUATION_VISCOACOUSTIC       = .false.        # turn attenuation (viscoacoust
 N_SLS                           = 2              # number of standard linear solids for attenuation (3 is usually the minimum)
 f0_attenuation                  = 5.196          # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
 READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
+USE_SOLVOPT                     = .false.        # use more precise but much more expensive way of determining the Q factor relaxation times, as in http://komatitsch.free.fr/preprints/GJI_Lombard_2016.pdf
 
 # for poroelastic attenuation
 ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on or off for the fluid part of poroelastic parts of the model

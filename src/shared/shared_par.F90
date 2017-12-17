@@ -145,6 +145,7 @@ module shared_input_parameters
   integer :: N_SLS
   double precision :: f0_attenuation
   logical :: READ_VELOCITIES_AT_f0
+  logical :: USE_SOLVOPT
 
   ! undo attenuation
   logical :: UNDO_ATTENUATION_AND_OR_PML

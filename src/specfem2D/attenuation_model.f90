@@ -2198,7 +2198,7 @@
 
   subroutine nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
 
-  use constants, only: USE_SOLVOPT
+  use shared_input_parameters, only: USE_SOLVOPT
 
   implicit none
 

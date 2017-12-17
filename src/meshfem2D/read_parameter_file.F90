@@ -120,6 +120,7 @@
     call bcast_all_singlei(N_SLS)
     call bcast_all_singledp(f0_attenuation)
     call bcast_all_singlel(READ_VELOCITIES_AT_f0)
+    call bcast_all_singlel(USE_SOLVOPT)
     call bcast_all_singlel(ATTENUATION_PORO_FLUID_PART)
     call bcast_all_singledp(Q0_poroelastic)
     call bcast_all_singledp(freq0_poroelastic)
@@ -439,6 +440,13 @@
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'READ_VELOCITIES_AT_f0           = .false.'
+    write(*,*)
+  endif
+
+  call read_value_logical_p(USE_SOLVOPT, 'USE_SOLVOPT')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'USE_SOLVOPT                     = .false.'
     write(*,*)
   endif
 

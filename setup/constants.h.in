@@ -89,15 +89,6 @@
 
 !!-----------------------------------------------------------
 !!
-!! for attenuation
-!!
-!!-----------------------------------------------------------
-
-! use SolvOpt nonlinear optimization with constraints or less accurate classical linear least squares
-  logical, parameter :: USE_SOLVOPT = .false.
-
-!!-----------------------------------------------------------
-!!
 !! poroelasticity
 !!
 !!-----------------------------------------------------------
