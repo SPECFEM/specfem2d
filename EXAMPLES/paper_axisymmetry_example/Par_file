@@ -73,7 +73,7 @@ SAVE_MODEL                      = default
 ATTENUATION_VISCOELASTIC        = .true.         # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_VISCOACOUSTIC       = .false.        # turn attenuation (viscoacousticity) on or off for non-poroelastic fluid parts of the model
 
-# for viscoelastic attenuation
+# for viscoelastic or viscoacoustic attenuation
 N_SLS                           = 5              # number of standard linear solids for attenuation (3 is usually the minimum)
 f0_attenuation                  = 5              # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
 READ_VELOCITIES_AT_f0           = .true.         # shift velocities to account for physical dispersion (see user manual for more information)
