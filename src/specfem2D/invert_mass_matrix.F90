@@ -54,7 +54,8 @@
     ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
     nelemabs,vsext,xix,xiz,gammaz,gammax, &
     AXISYM,is_on_the_axis,coord,wxglj,xiglj, &
-    time_stepping_scheme,P_SV,STACEY_ABSORBING_CONDITIONS
+    time_stepping_scheme,P_SV,STACEY_ABSORBING_CONDITIONS, &
+    ATTENUATION_VISCOACOUSTIC,Mu_nu1
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML,region_CPML,spec_to_PML, &
@@ -72,7 +73,7 @@
                             weight,xxi,zxi,xgamma,zgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: deltatover2
 
-  double precision :: rhol,mul,kappal,mu_relaxed,lambda_relaxed
+  double precision :: rhol,mul,kappal_relaxed,kappal_unrelaxed,mu_relaxed,lambda_relaxed
   double precision :: rho_s,rho_f,rho_bar,phi,tort
 
   integer :: ispec_PML
@@ -111,9 +112,9 @@
           rhol = rhoext(i,j,ispec)
           mul = rhol * vsext(i,j,ispec)
           if (AXISYM) then ! CHECK kappa mm
-            kappal = rhol * vpext(i,j,ispec)**2 - TWO_THIRDS * mul ! CHECK Kappa
+            kappal_relaxed = rhol * vpext(i,j,ispec)**2 - TWO_THIRDS * mul ! CHECK Kappa
           else
-            kappal = rhol * vpext(i,j,ispec)**2 - mul ! CHECK Kappa
+            kappal_relaxed = rhol * vpext(i,j,ispec)**2 - mul ! CHECK Kappa
           endif
         else
           rhol = density(1,kmato(ispec))
@@ -121,9 +122,9 @@
           mu_relaxed = poroelastcoef(2,1,kmato(ispec))
 
           if (AXISYM) then ! CHECK kappa
-            kappal = lambda_relaxed + TWO_THIRDS * mu_relaxed
+            kappal_relaxed = lambda_relaxed + TWO_THIRDS * mu_relaxed
           else
-            kappal = lambda_relaxed + mu_relaxed
+            kappal_relaxed = lambda_relaxed + mu_relaxed
           endif
 
         endif
@@ -299,24 +300,24 @@
               if (region_CPML(ispec) == CPML_X_ONLY) then
                 if (AXISYM) then   !! ABAB: This PML cannot be on the axis: it is a right PML
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                       + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) &
+                       + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal_relaxed*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) &
                        + d_x_store(i,j,ispec_PML) * deltatover2)
                 else ! not axisym
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                       + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) &
+                       + wxgll(i)*wzgll(j)/ kappal_relaxed*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) &
                        + d_x_store(i,j,ispec_PML) * deltatover2)
                 endif
 
               else if (region_CPML(ispec) == CPML_XZ) then
                 if (AXISYM) then   !! ABAB: This corner cannot be on the axis
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                       + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) &
+                       + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal_relaxed*jacobian(i,j,ispec) &
                        *  (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML) &
                        + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML) &
                         + d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltatover2)
                 else ! not axisym
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                       + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML) &
+               + wxgll(i)*wzgll(j)/ kappal_relaxed*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML) &
                        + (d_x_store(i,j,ispec_PML)*k_z_store(i,j,ispec_PML) &
                           + d_z_store(i,j,ispec_PML)*k_x_store(i,j,ispec_PML)) * deltatover2)
                 endif
@@ -327,21 +328,21 @@
                     if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                       xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
                       rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                         + xxi*wxglj(i)*wzgll(j)/kappal*jacobian(i,j,ispec) &
+                         + xxi*wxglj(i)*wzgll(j)/kappal_relaxed*jacobian(i,j,ispec) &
                          * (K_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML)* deltatover2)
                     else
                       rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                         + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)/kappal*jacobian(i,j,ispec) &
+                         + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)/kappal_relaxed*jacobian(i,j,ispec) &
                          * (K_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML)* deltatover2)
                     endif
                   else ! not on the axis
                     rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                         + coord(1,iglob)*wxgll(i)*wzgll(j)/kappal*jacobian(i,j,ispec) &
+                         + coord(1,iglob)*wxgll(i)*wzgll(j)/kappal_relaxed*jacobian(i,j,ispec) &
                          * (K_z_store(i,j,ispec_PML) + d_z_store(i,j,ispec_PML)* deltatover2)
                   endif
                 else ! not axisym
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                       + wxgll(i)*wzgll(j)/kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML) &
+                       + wxgll(i)*wzgll(j)/kappal_relaxed*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML) &
                        + d_z_store(i,j,ispec_PML)* deltatover2)
                 endif
               endif
@@ -351,21 +352,21 @@
 
                 if (AXISYM) then   !! ABAB: This PML cannot be on the axis: it is a right PML
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                       + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
+                       + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal_relaxed*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
                 else ! not axisym
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                       + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
+                       + wxgll(i)*wzgll(j)/ kappal_relaxed*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML))
                 endif
 
               else if (region_CPML(ispec) == CPML_XZ) then
 
                 if (AXISYM) then   !! ABAB: This corner cannot be on the axis
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                       + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) &
+                       + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal_relaxed*jacobian(i,j,ispec) &
                        * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
                 else ! not axisym
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                       + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
+             + wxgll(i)*wzgll(j)/ kappal_relaxed*jacobian(i,j,ispec) * (K_x_store(i,j,ispec_PML) * K_z_store(i,j,ispec_PML))
                 endif
 
               else if (region_CPML(ispec) == CPML_Z_ONLY) then
@@ -374,44 +375,54 @@
                     if (is_on_the_axis(ispec) .and. i == 1) then ! First GLJ point
                       xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
                       rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                            + xxi*wxglj(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
+                            + xxi*wxglj(i)*wzgll(j)/ kappal_relaxed*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
                     else
                       rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                           + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)/kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
+             + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)/kappal_relaxed*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
                     endif
                   else ! not on the axis
                     rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                           + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
+                           + coord(1,iglob)*wxgll(i)*wzgll(j)/ kappal_relaxed*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
                   endif
                 else ! not axisym
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                       + wxgll(i)*wzgll(j)/ kappal*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
+                       + wxgll(i)*wzgll(j)/ kappal_relaxed*jacobian(i,j,ispec) * (K_z_store(i,j,ispec_PML))
 
                 endif
               endif
             endif
           else
+
             ! acoustic no PML
+            ! add relaxation contribution to mass matrix when viscoacousticity is on,
+            ! i.e. use the unrelaxed modulus instead of the relaxed modulus.
+            ! We do not use it in the above cases with PML because so far the code only has
+            ! PMLs with no viscoelasticity and no viscoacousticity
+            if (ATTENUATION_VISCOACOUSTIC) then
+              kappal_unrelaxed = kappal_relaxed * Mu_nu1(i,j,ispec)
+            else
+              kappal_unrelaxed = kappal_relaxed
+            endif
             if (AXISYM) then
               if (is_on_the_axis(ispec)) then
                 if (is_on_the_axis(ispec) .and. i == 1) then
                   ! First GLJ point
                   xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                      + xxi*wxglj(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
+                      + xxi*wxglj(i)*wzgll(j)*jacobian(i,j,ispec) / kappal_unrelaxed
                 else
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                      + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
+                      + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)*jacobian(i,j,ispec) / kappal_unrelaxed
                 endif
               else
                 ! not on the axis
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                    + coord(1,iglob)*wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
+                    + coord(1,iglob)*wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal_unrelaxed
               endif
             else
               ! not axisym
               rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal
+                   + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal_unrelaxed
             endif
 
           endif
@@ -450,11 +461,11 @@
           rhol  = density(1,kmato(ispec))
 
           if (AXISYM) then ! CHECK kappa
-            kappal  = lambdal_unrelaxed_elastic + TWO_THIRDS*mul_unrelaxed_elastic
-            cpl = sqrt((kappal + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
+            kappal_relaxed  = lambdal_unrelaxed_elastic + TWO_THIRDS*mul_unrelaxed_elastic
+            cpl = sqrt((kappal_relaxed + FOUR_THIRDS * mul_unrelaxed_elastic)/rhol)
           else
-            kappal  = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
-            cpl = sqrt((kappal + mul_unrelaxed_elastic)/rhol)
+            kappal_relaxed  = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
+            cpl = sqrt((kappal_relaxed + mul_unrelaxed_elastic)/rhol)
           endif
 
           csl = sqrt(mul_unrelaxed_elastic/rhol)
@@ -680,13 +691,13 @@
           mu_relaxed = poroelastcoef(2,1,kmato(ispec))
 
           if (AXISYM) then ! CHECK kappa
-            kappal  = lambda_relaxed + TWO_THIRDS*mu_relaxed
+            kappal_relaxed  = lambda_relaxed + TWO_THIRDS*mu_relaxed
           else
-            kappal  = lambda_relaxed + mu_relaxed
+            kappal_relaxed  = lambda_relaxed + mu_relaxed
           endif
 
           rhol = density(1,kmato(ispec))
-          cpl = sqrt(kappal/rhol)
+          cpl = sqrt(kappal_relaxed/rhol)
 
           !--- left absorbing boundary
           if (codeabs(IEDGE4,ispecabs)) then

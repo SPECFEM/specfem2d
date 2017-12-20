@@ -61,6 +61,13 @@
 
   if (setup_with_binary_database /= 2 ) then
 
+    ! attenuation
+    !! DK DK moved preparation of attenuation to before preparation of mass matrix
+    !! DK DK because now that we have support for viscoacoustic fluids, we need to use
+    !! DK DK the unrelaxed Kappa modulus in the fluid mass matrix when ATTENUATION_VISCOACOUSTIC is on
+    !! DK DK and thus we need to prepare attenuation before preparing the mass matrix
+    call prepare_timerun_attenuation()
+
     ! prepares mass matrices
     call prepare_timerun_mass_matrix()
 
@@ -81,9 +88,6 @@
 
     ! prepares noise simulations
     if (NOISE_TOMOGRAPHY /= 0) call prepare_timerun_noise()
-
-    ! attenuation
-    call prepare_timerun_attenuation()
 
     if (setup_with_binary_database == 1 ) call save_binary_database()
 
