@@ -39,21 +39,23 @@
   ! Anisotropic-medium PML for vector FETD with modified basis functions,
   ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
 
-  use constants, only: CUSTOM_REAL
-
   implicit none
 
-  double precision :: bb,coef0,coef1,coef2
+  double precision :: bb,coef0,coef1,coef2,temp,one_minus_temp,one_over_bb
   double precision :: deltat
 
-  coef0 = exp(- bb * deltat)
+  temp = exp(- 0.5d0 * bb * deltat)
 
-  if (abs(bb) > 1e-5_CUSTOM_REAL) then
-    coef1 = (1.0_CUSTOM_REAL - exp(-bb * deltat * 0.5_CUSTOM_REAL)) / bb
-    coef2 = (1.0_CUSTOM_REAL - exp(-bb * deltat * 0.5_CUSTOM_REAL)) * exp(-bb * deltat * 0.5_CUSTOM_REAL) / bb
+  coef0 = temp*temp
+
+  if (abs(bb) > 1d-5) then
+    one_minus_temp = 1.d0 - temp
+    one_over_bb = 1.d0 / bb
+    coef1 = one_minus_temp * one_over_bb
+    coef2 = one_minus_temp * temp * one_over_bb
   else
-    coef1 = deltat * 0.5_CUSTOM_REAL
-    coef2 = deltat * 0.5_CUSTOM_REAL
+    coef1 = 0.5d0 * deltat
+    coef2 = coef1
   endif
 
   end subroutine compute_coef_convolution

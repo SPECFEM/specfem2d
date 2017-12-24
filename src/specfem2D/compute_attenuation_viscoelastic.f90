@@ -128,14 +128,18 @@
   real(kind=CUSTOM_REAL) :: phinu1,phinu2,theta_n_u,theta_nsub1_u
   double precision :: tauinvnu1,tauinvnu2
   double precision :: coef0,coef1,coef2
+  double precision :: temp,one_minus_temp,one_over_bb
 
   ! temporary RK4 variable
   real(kind=CUSTOM_REAL) :: weight_rk
 
+  if (.not. CONVOLUTION_MEMORY_VARIABLES) &
+    stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
+
   do j = 1,NGLLZ
     do i = 1,NGLLX
 
-      ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
+      ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity at that GLL point
       if (inv_tau_sigma_nu1(i,j,ispec,1) < 0.) cycle
 
       theta_n_u = dux_dxl_n(i,j,ispec) + duz_dzl_n(i,j,ispec)
@@ -162,14 +166,24 @@
 ! For cases in which a value of tau_sigma is small, then its inverse is large,
 ! which may result in a in stiff ordinary differential equation to solve;
 ! in such a case, resorting to the convolution formulation is better.
-          if (CONVOLUTION_MEMORY_VARIABLES) then
-            call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
-
+!         if (CONVOLUTION_MEMORY_VARIABLES) then
+!! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
+            temp = exp(- 0.5d0 * tauinvnu1 * deltat)
+            coef0 = temp*temp
+            one_minus_temp = 1.d0 - temp
+            one_over_bb = 1.d0 / tauinvnu1
+            coef1 = one_minus_temp * one_over_bb
+            coef2 = one_minus_temp * temp * one_over_bb
             e1(i,j,ispec,i_sls) = coef0 * e1(i,j,ispec,i_sls) + &
                                   phinu1 * (coef1 * theta_n_u + coef2 * theta_nsub1_u)
 
-            call compute_coef_convolution(tauinvnu2,deltat,coef0,coef1,coef2)
-
+!! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu2,deltat,coef0,coef1,coef2)
+            temp = exp(- 0.5d0 * tauinvnu2 * deltat)
+            coef0 = temp*temp
+            one_minus_temp = 1.d0 - temp
+            one_over_bb = 1.d0 / tauinvnu2
+            coef1 = one_minus_temp * one_over_bb
+            coef2 = one_minus_temp * temp * one_over_bb
             e11(i,j,ispec,i_sls) = coef0 * e11(i,j,ispec,i_sls) + &
                                    phinu2 * (coef1 * (dux_dxl_n(i,j,ispec)-theta_n_u/TWO) + &
                                              coef2 * (dux_dxl_nsub1(i,j,ispec)-theta_nsub1_u/TWO))
@@ -177,17 +191,17 @@
             e13(i,j,ispec,i_sls) = coef0 * e13(i,j,ispec,i_sls) + &
                                    phinu2 * (coef1 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) + &
                                              coef2 * (dux_dzl_nsub1(i,j,ispec) + duz_dxl_nsub1(i,j,ispec)))
-          else
-            stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
-            e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + deltat * &
-                 (- e1(i,j,ispec,i_sls)*tauinvnu1 + phinu1 * theta_n_u)
-
-            e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls) + deltat * &
-                 (- e11(i,j,ispec,i_sls)*tauinvnu2 + phinu2 * (dux_dxl_n(i,j,ispec)-theta_n_u/TWO))
-
-            e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls) + deltat * &
-               (- e13(i,j,ispec,i_sls)*tauinvnu2 + phinu2 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)))
-          endif
+!         else
+!           stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
+!           e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + deltat * &
+!                (- e1(i,j,ispec,i_sls)*tauinvnu1 + phinu1 * theta_n_u)
+!
+!           e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls) + deltat * &
+!                (- e11(i,j,ispec,i_sls)*tauinvnu2 + phinu2 * (dux_dxl_n(i,j,ispec)-theta_n_u/TWO))
+!
+!           e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls) + deltat * &
+!              (- e13(i,j,ispec,i_sls)*tauinvnu2 + phinu2 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)))
+!         endif
 
         case (2)
           ! LDDRK

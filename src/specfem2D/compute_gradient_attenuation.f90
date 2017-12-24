@@ -180,6 +180,8 @@
   gradient_temp(1,:) = potential_acoustic(:)
   gradient_temp(2,:) = potential_acoustic(:)
 
+! compute the source term for the e1 memory variable, which is div(grad(Chi)/rho) i.e. div(u).
+! Thus, in a first step, compute grad(Chi) / rho, and in a second step, compute div() of that.
   do i_step = 1,2
 
 ! loop over spectral elements
