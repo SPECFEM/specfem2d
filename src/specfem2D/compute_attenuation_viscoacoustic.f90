@@ -62,14 +62,13 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS),intent(inout) :: e1
 
-  ! local parameters
+  ! local variables
   integer :: ispec
+  integer :: i,j,i_sls
+
   ! nsub1 denotes discrete time step n-1
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_n,dux_dzl_n,duz_dxl_n,duz_dzl_n
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_nsub1,dux_dzl_nsub1,duz_dxl_nsub1,duz_dzl_nsub1
-
-  ! local parameters
-  integer :: i,j,i_sls
 
   ! for attenuation
   real(kind=CUSTOM_REAL) :: phinu1,theta_n_u,theta_nsub1_u

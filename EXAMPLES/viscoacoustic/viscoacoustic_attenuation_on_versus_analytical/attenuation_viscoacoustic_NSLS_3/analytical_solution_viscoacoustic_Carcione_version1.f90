@@ -378,8 +378,8 @@
   IW1 = N+N+1
   IW2 = IW1+N+N
   CALL CFFTB1 (N,C,WSAVE,WSAVE(IW1),WSAVE(IW2))
-  return
   END
+
   subroutine CFFTB1 (N,C,CH,WA,IFAC)
   DIMENSION       CH(1)      ,C(1)       ,WA(1)      ,IFAC(1)
   NF = IFAC(2)
@@ -439,8 +439,8 @@
   DO 117 I=1,N2
    C(I) = CH(I)
   117 continue
-  return
   END
+
   subroutine PASSB (NAC,IDO,IP,L1,IDL1,CC,C1,C2,CH,CH2,WA)
   DIMENSION       CH(IDO,L1,IP)          ,CC(IDO,IP,L1), &
                   C1(IDO,L1,IP)          ,WA(1)      ,C2(IDL1,IP), &
@@ -450,7 +450,7 @@
   IPP2 = IP+2
   IPPH = (IP+1)/2
   IDP = IP*IDO
-!
+
   if (IDO < L1) goto 106
   DO 103 J=2,IPPH
    JC = IPP2-J
@@ -555,8 +555,8 @@
   128       continue
   129    continue
   130 continue
-  return
   END
+
   subroutine PASSB2 (IDO,L1,CC,CH,WA1)
   DIMENSION       CC(IDO,2,L1)           ,CH(IDO,L1,2), &
                   WA1(1)
@@ -578,8 +578,8 @@
       CH(I-1,K,2) = WA1(I-1)*TR2-WA1(I)*TI2
   103    continue
   104 continue
-  return
   END
+
   subroutine PASSB3 (IDO,L1,CC,CH,WA1,WA2)
   DIMENSION       CC(IDO,3,L1)           ,CH(IDO,L1,3), &
                   WA1(1)     ,WA2(1)
@@ -620,8 +620,8 @@
       CH(I-1,K,3) = WA2(I-1)*DR3-WA2(I)*DI3
   103    continue
   104 continue
-  return
   END
+
   subroutine PASSB4 (IDO,L1,CC,CH,WA1,WA2,WA3)
   DIMENSION       CC(IDO,4,L1)           ,CH(IDO,L1,4), &
                   WA1(1)     ,WA2(1)     ,WA3(1)
@@ -671,8 +671,8 @@
       CH(I,K,4) = WA3(I-1)*CI4+WA3(I)*CR4
   103    continue
   104 continue
-  return
   END
+
   subroutine PASSB5 (IDO,L1,CC,CH,WA1,WA2,WA3,WA4)
   DIMENSION       CC(IDO,5,L1)           ,CH(IDO,L1,5), &
                   WA1(1)     ,WA2(1)     ,WA3(1)     ,WA4(1)
@@ -746,10 +746,7 @@
       CH(I,K,5) = WA4(I-1)*DI5+WA4(I)*DR5
   103    continue
   104 continue
-  return
   END
-
-
 
   subroutine CFFTI (N,WSAVE)
   DIMENSION       WSAVE(1)
@@ -757,8 +754,8 @@
   IW1 = N+N+1
   IW2 = IW1+N+N
   CALL CFFTI1 (N,WSAVE(IW1),WSAVE(IW2))
-  return
   END
+
   subroutine CFFTI1 (N,WA,IFAC)
   DIMENSION       WA(1)      ,IFAC(1)    ,NTRYH(4)
   DATA NTRYH(1),NTRYH(2),NTRYH(3),NTRYH(4)/3,4,2,5/
@@ -817,12 +814,7 @@
   109    continue
    L1 = L2
   110 continue
-  return
   END
-
-
-
-
 
   subroutine CFFTF (N,C,WSAVE)
   DIMENSION       C(1)       ,WSAVE(1)
@@ -830,8 +822,8 @@
   IW1 = N+N+1
   IW2 = IW1+N+N
   CALL CFFTF1 (N,C,WSAVE,WSAVE(IW1),WSAVE(IW2))
-  return
   END
+
   subroutine CFFTF1 (N,C,CH,WA,IFAC)
   DIMENSION       CH(1)      ,C(1)       ,WA(1)      ,IFAC(1)
   NF = IFAC(2)
@@ -891,8 +883,8 @@
   DO 117 I=1,N2
    C(I) = CH(I)
   117 continue
-  return
   END
+
   subroutine PASSF (NAC,IDO,IP,L1,IDL1,CC,C1,C2,CH,CH2,WA)
   DIMENSION       CH(IDO,L1,IP)          ,CC(IDO,IP,L1), &
                   C1(IDO,L1,IP)          ,WA(1)      ,C2(IDL1,IP), &
@@ -902,7 +894,7 @@
   IPP2 = IP+2
   IPPH = (IP+1)/2
   IDP = IP*IDO
-!
+
   if (IDO < L1) goto 106
   DO 103 J=2,IPPH
    JC = IPP2-J
@@ -1007,8 +999,8 @@
   128       continue
   129    continue
   130 continue
-  return
   END
+
   subroutine PASSF2 (IDO,L1,CC,CH,WA1)
   DIMENSION       CC(IDO,2,L1)           ,CH(IDO,L1,2), &
                   WA1(1)
@@ -1030,8 +1022,8 @@
       CH(I-1,K,2) = WA1(I-1)*TR2+WA1(I)*TI2
   103    continue
   104 continue
-  return
   END
+
   subroutine PASSF3 (IDO,L1,CC,CH,WA1,WA2)
   DIMENSION       CC(IDO,3,L1)           ,CH(IDO,L1,3), &
                   WA1(1)     ,WA2(1)
@@ -1072,8 +1064,8 @@
       CH(I-1,K,3) = WA2(I-1)*DR3+WA2(I)*DI3
   103    continue
   104 continue
-  return
   END
+
   subroutine PASSF4 (IDO,L1,CC,CH,WA1,WA2,WA3)
   DIMENSION       CC(IDO,4,L1)           ,CH(IDO,L1,4), &
                   WA1(1)     ,WA2(1)     ,WA3(1)
@@ -1123,8 +1115,8 @@
       CH(I,K,4) = WA3(I-1)*CI4-WA3(I)*CR4
   103    continue
   104 continue
-  return
   END
+
   subroutine PASSF5 (IDO,L1,CC,CH,WA1,WA2,WA3,WA4)
   DIMENSION       CC(IDO,5,L1)           ,CH(IDO,L1,5), &
                   WA1(1)     ,WA2(1)     ,WA3(1)     ,WA4(1)
@@ -1198,12 +1190,9 @@
       CH(I,K,5) = WA4(I-1)*DI5-WA4(I)*DR5
   103    continue
   104 continue
-  return
   END
 
-! !!!!!!!! DK DK NAG routines included below
-
-! DK DK march99 : routines recuperees sur le Cray (simple precision)
+! DK DK march99 : routines sur le Cray (simple precision)
 
   subroutine ABZP01
 !     MARK 11.5(F77) RELEASE. NAG COPYRIGHT 1986.

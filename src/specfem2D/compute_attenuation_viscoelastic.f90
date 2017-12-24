@@ -38,34 +38,51 @@
 
   ! updates memory variable in viscoelastic simulation
 
-  ! compute forces for the elastic elements
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: nglob,nspec,nspec_ATT,ATTENUATION_VISCOELASTIC,N_SLS, &
-                         ibool,xix,xiz,gammax,gammaz,hprime_xx,hprime_zz
-
-  ! PML arrays
-  use specfem_par, only: ispec_is_PML
+                         ibool,xix,xiz,gammax,gammaz,hprime_xx,hprime_zz,ispec_is_PML, &
+                         inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,time_stepping_scheme,i_stage,deltat, &
+                         e1_LDDRK,e11_LDDRK,e13_LDDRK,e1_initial_rk,e11_initial_rk,e13_initial_rk, &
+                         e1_force_RK,e11_force_RK,e13_force_RK
 
   implicit none
 
+! update the memory variables using a convolution or using a differential equation
+! (tests made by Ting Yu and also by Zhinan Xie, CNRS Marseille, France, show that it is better to leave it to .true.)
+  logical, parameter :: CONVOLUTION_MEMORY_VARIABLES = .true.
+
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: displ_elastic,displ_elastic_old
 
-  logical,dimension(nspec),intent(in) :: ispec_is_elastic
+  logical, dimension(nspec), intent(in) :: ispec_is_elastic
 
   ! CPML coefficients and memory variables
-  logical,intent(in) :: PML_BOUNDARY_CONDITIONS
+  logical, intent(in) :: PML_BOUNDARY_CONDITIONS
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS),intent(inout) :: e1,e11,e13
 
-  ! local parameters
+  ! local variables
   integer :: ispec
+  integer :: i,j,i_sls
+
   ! nsub1 denotes discrete time step n-1
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_n,dux_dzl_n,duz_dxl_n,duz_dzl_n
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_nsub1,dux_dzl_nsub1,duz_dxl_nsub1,duz_dzl_nsub1
 
+  ! for attenuation
+  real(kind=CUSTOM_REAL) :: phinu1,phinu2,theta_n_u,theta_nsub1_u
+  double precision :: tauinvnu1,tauinvnu2
+  double precision :: coef0,coef1,coef2
+  double precision :: temp,one_minus_temp,one_over_bb
+
+  ! temporary RK4 variable
+  real(kind=CUSTOM_REAL) :: weight_rk
+
   ! checks if anything to do
   if (.not. ATTENUATION_VISCOELASTIC) return
+
+  if (.not. CONVOLUTION_MEMORY_VARIABLES) &
+    stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
 
   ! compute Grad(displ_elastic) at time step n for attenuation
   call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
@@ -81,60 +98,6 @@
     if (.not. ispec_is_elastic(ispec)) cycle
 
     if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. ispec_is_PML(ispec)))) then
-      call compute_attenuation_viscoelastic_update(ispec,e1,e11,e13, &
-                                                   dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-                                                   dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1)
-    endif
-  enddo
-
-  end subroutine compute_attenuation_viscoelastic
-
-!
-!-------------------------------------------------------------------------------------
-!
-
-  subroutine compute_attenuation_viscoelastic_update(ispec,e1,e11,e13, &
-                                                     dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n, &
-                                                     dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1)
-
-  use constants, only: NGLLX,NGLLZ,CUSTOM_REAL,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
-
-  use specfem_par, only: nspec,nspec_ATT,N_SLS, &
-                         inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2, &
-                         time_stepping_scheme,i_stage,deltat
-
-  ! LDDRK & RK
-  use specfem_par, only: e1_LDDRK,e11_LDDRK,e13_LDDRK, &
-                         e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK
-
-  implicit none
-
-! update the memory variables using a convolution or using a differential equation
-! (tests made by Ting Yu and also by Zhinan Xie, CNRS Marseille, France, show that it is better to leave it to .true.)
-  logical, parameter :: CONVOLUTION_MEMORY_VARIABLES = .true.
-
-  integer,intent(in) :: ispec
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS),intent(inout) :: e1,e11,e13
-
-  ! gradient of displacements (nsub1 denotes discrete time step n-1)
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec),intent(in) :: dux_dxl_n,duz_dzl_n,duz_dxl_n,dux_dzl_n
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec),intent(in) :: dux_dxl_nsub1,duz_dzl_nsub1,duz_dxl_nsub1,dux_dzl_nsub1
-
-  ! local parameters
-  integer :: i,j
-  integer :: i_sls
-
-  ! for attenuation
-  real(kind=CUSTOM_REAL) :: phinu1,phinu2,theta_n_u,theta_nsub1_u
-  double precision :: tauinvnu1,tauinvnu2
-  double precision :: coef0,coef1,coef2
-  double precision :: temp,one_minus_temp,one_over_bb
-
-  ! temporary RK4 variable
-  real(kind=CUSTOM_REAL) :: weight_rk
-
-  if (.not. CONVOLUTION_MEMORY_VARIABLES) &
-    stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
 
   do j = 1,NGLLZ
     do i = 1,NGLLX
@@ -278,4 +241,8 @@
     enddo
   enddo
 
-  end subroutine compute_attenuation_viscoelastic_update
+    endif
+  enddo
+
+  end subroutine compute_attenuation_viscoelastic
+
