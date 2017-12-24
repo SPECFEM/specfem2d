@@ -33,7 +33,7 @@
 
   subroutine compute_coef_convolution(bb,deltat,coef0,coef1,coef2)
 
-  ! compute coefficient used in second order convolution scheme, from
+  ! compute coefficient used in second-order convolution scheme, from
   ! second-order accurate convolution term calculation from equation (21) of
   ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
   ! Anisotropic-medium PML for vector FETD with modified basis functions,
@@ -41,7 +41,7 @@
 
   implicit none
 
-  double precision :: bb,coef0,coef1,coef2,temp,one_minus_temp,one_over_bb
+  double precision :: bb,coef0,coef1,coef2,temp
   double precision :: deltat
 
   temp = exp(- 0.5d0 * bb * deltat)
@@ -49,10 +49,8 @@
   coef0 = temp*temp
 
   if (abs(bb) > 1d-5) then
-    one_minus_temp = 1.d0 - temp
-    one_over_bb = 1.d0 / bb
-    coef1 = one_minus_temp * one_over_bb
-    coef2 = one_minus_temp * temp * one_over_bb
+    coef1 = (1.d0 - temp) / bb
+    coef2 = coef1 * temp
   else
     coef1 = 0.5d0 * deltat
     coef2 = coef1

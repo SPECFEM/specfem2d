@@ -72,9 +72,7 @@
 
   ! for attenuation
   real(kind=CUSTOM_REAL) :: phinu1,theta_n_u,theta_nsub1_u
-  double precision :: tauinvnu1
-  double precision :: coef0,coef1,coef2
-  double precision :: temp,one_minus_temp,one_over_bb
+  double precision :: tauinvnu1,coef1,temp
 
   ! temporary RK4 variable
   real(kind=CUSTOM_REAL) :: weight_rk
@@ -132,12 +130,8 @@
 !         if (CONVOLUTION_MEMORY_VARIABLES) then
 !! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
             temp = exp(- 0.5d0 * tauinvnu1 * deltat)
-            coef0 = temp*temp
-            one_minus_temp = 1.d0 - temp
-            one_over_bb = 1.d0 / tauinvnu1
-            coef1 = one_minus_temp * one_over_bb
-            coef2 = one_minus_temp * temp * one_over_bb
-            e1(i,j,ispec,i_sls) = coef0 * e1(i,j,ispec,i_sls) + phinu1 * (coef1 * theta_n_u + coef2 * theta_nsub1_u)
+            coef1 = (1.d0 - temp) / tauinvnu1
+            e1(i,j,ispec,i_sls) = temp*temp * e1(i,j,ispec,i_sls) + phinu1 * coef1 * (theta_n_u + temp * theta_nsub1_u)
 !         else
 !           stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
 !           e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + deltat * (- e1(i,j,ispec,i_sls)*tauinvnu1 + phinu1 * theta_n_u)
