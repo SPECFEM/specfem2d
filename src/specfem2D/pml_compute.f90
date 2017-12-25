@@ -64,7 +64,7 @@
                                       CPML_region_local,index_ik,A_0,A_1,A_2,singularity_type_2,bb_1,bb_2, &
                                       coef0_1,coef1_1,coef2_1,coef0_2,coef1_2,coef2_2)
 
-  use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
+  use constants, only: CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
 
   implicit none
 
@@ -100,7 +100,7 @@
     bar_A_0 = kappa_x / kappa_z
     A_0 = bar_A_0
 
-    if (abs(alpha_x-beta_z) >= 1.e-5_CUSTOM_REAL) then
+    if (abs(alpha_x-beta_z) >= 1.d-5) then
       !----------------A1,2-------------------------
       bar_A_1 = - bar_A_0 * (alpha_x - alpha_z) * (alpha_x - beta_x) / (alpha_x-beta_z)
       bar_A_2 = - bar_A_0 * (beta_z - alpha_z) * (beta_z - beta_x) / (beta_z-alpha_x)
@@ -110,11 +110,11 @@
 
       singularity_type_2 = 0 ! 0 means no singularity, 1 means first order singularity
 
-    else if (abs(alpha_x-beta_z) < 1.e-5_CUSTOM_REAL) then
+    else if (abs(alpha_x-beta_z) < 1.d-5) then
       !----------------A1,2,3-------------------------
       alpha_0 = max(alpha_x,beta_z)
 
-      bar_A_1 = bar_A_0 * (-2._CUSTOM_REAL * alpha_0 + (alpha_z + beta_x))
+      bar_A_1 = bar_A_0 * (-2.d0 * alpha_0 + (alpha_z + beta_x))
       bar_A_2 = bar_A_0 * (alpha_0 - alpha_z) * (alpha_0-beta_x)
 
       A_1 = bar_A_1 + timeval * bar_A_2
@@ -132,7 +132,7 @@
     A_0 = bar_A_0
   !----------------A1,2,3-------------------------
     bar_A_1 = - bar_A_0 * (alpha_x - beta_x)
-    bar_A_2 = 0._CUSTOM_REAL
+    bar_A_2 = 0.d0
 
     A_1 = bar_A_1
     A_2 = bar_A_2
@@ -141,11 +141,11 @@
 
   else if (CPML_region_local == CPML_Z_ONLY_TEMP) then
   !----------------A0-------------------------
-    bar_A_0 = 1._CUSTOM_REAL / kappa_z
+    bar_A_0 = 1.d0 / kappa_z
     A_0 = bar_A_0
 
     !----------------A1,2,3-------------------------
-    bar_A_1 = 0._CUSTOM_REAL
+    bar_A_1 = 0.d0
     bar_A_2 = - bar_A_0 * (beta_z - alpha_z)
 
     A_1 = bar_A_1
@@ -168,7 +168,7 @@
                                      CPML_region_local,A_0,A_1,A_2,A_3,A_4,singularity_type, &
                                      bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
-  use constants, only: CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
+  use constants, only: CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
 
   implicit none
 
@@ -201,7 +201,7 @@
     beta_xyz_1 = beta_x + beta_z
     beta_xyz_2 = beta_x * beta_z
 
-    if (abs( alpha_x - alpha_z ) >= 1.e-5_CUSTOM_REAL) then
+    if (abs( alpha_x - alpha_z ) >= 1.d-5) then
       bar_A_3 = bar_A_0 * alpha_x**2 * (beta_x - alpha_x) * (beta_z - alpha_x) / (alpha_z - alpha_x)
       bar_A_4 = bar_A_0 * alpha_z**2 * (beta_x - alpha_z) * (beta_z - alpha_z) / (alpha_x - alpha_z)
 
@@ -209,10 +209,10 @@
       A_4 = bar_A_4
 
       singularity_type = 0
-    else if (abs( alpha_x - alpha_z ) < 1.e-5_CUSTOM_REAL) then
+    else if (abs( alpha_x - alpha_z ) < 1.d-5) then
       alpha_0 = alpha_x
-      bar_A_3 = bar_A_0 * (- 4._CUSTOM_REAL * alpha_0**3  &
-                           + 3._CUSTOM_REAL * alpha_0**2 * beta_xyz_1 - 2._CUSTOM_REAL * alpha_0 * beta_xyz_2)
+      bar_A_3 = bar_A_0 * (- 4.d0 * alpha_0**3  &
+                           + 3.d0 * alpha_0**2 * beta_xyz_1 - 2.d0 * alpha_0 * beta_xyz_2)
       bar_A_4 = bar_A_0 * alpha_0**2 * (beta_x - alpha_0) * (beta_z - alpha_0)
 
       A_3 = bar_A_3 + timeval * bar_A_4
@@ -230,7 +230,7 @@
     A_2 = bar_A_2
 
     bar_A_3 = bar_A_0 * alpha_x**2 * (beta_x - alpha_x)
-    bar_A_4 = 0._CUSTOM_REAL
+    bar_A_4 = 0.d0
 
     A_3 = bar_A_3
     A_4 = bar_A_4
@@ -245,7 +245,7 @@
     A_1 = bar_A_1
     A_2 = bar_A_2
 
-    bar_A_3 = 0._CUSTOM_REAL
+    bar_A_3 = 0.d0
     bar_A_4 = bar_A_0 * alpha_z**2 * (beta_z - alpha_z)
 
     A_3 = bar_A_3
@@ -356,8 +356,8 @@
       if (ispec_is_elastic(ispec) .and. ispec_is_PML(ispec)) then
         do j = 1, NGLLZ
           do i = 1, NGLLX
-            b_veloc_elastic(:,ibool(i,j,ispec)) = 0.0_CUSTOM_REAL
-            b_displ_elastic(:,ibool(i,j,ispec)) = 0.0_CUSTOM_REAL
+            b_veloc_elastic(:,ibool(i,j,ispec)) = 0._CUSTOM_REAL
+            b_displ_elastic(:,ibool(i,j,ispec)) = 0._CUSTOM_REAL
           enddo
         enddo
       endif
@@ -379,8 +379,6 @@
 !========================================================================
 
   subroutine rebuild_value_on_PML_interface_viscoelastic_accel(it)
-
-  use constants, only: NGLLX,NGLLZ,CUSTOM_REAL
 
   use specfem_par, only: any_elastic,nglob_interface,point_interface, &
                          b_accel_elastic
