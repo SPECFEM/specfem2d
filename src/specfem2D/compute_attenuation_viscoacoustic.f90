@@ -112,7 +112,7 @@
         phinu1    = phi_nu1(i,j,ispec,i_sls)
         tauinvnu1 = inv_tau_sigma_nu1(i,j,ispec,i_sls)
 
-        ! update e1 in convolution formation with modified recursive convolution scheme on basis of
+        ! update e1 in convolution formulation with modified recursive convolution scheme on basis of
         ! second-order accurate convolution term calculation from equation (21) of
         ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
         ! Anisotropic-medium PML for vector FETD with modified basis functions,
