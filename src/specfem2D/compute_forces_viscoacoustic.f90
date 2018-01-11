@@ -343,15 +343,40 @@
 
 !! DK DK QUENTIN visco begin
     if (ATTENUATION_VISCOACOUSTIC) then
-      do j = 1,NGLLZ
-        do i = 1,NGLLX
-          ! sums contributions from each element to the global values
-          iglob = ibool(i,j,ispec)
-          if (.not. iglob_is_forced(iglob)) then
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + wzgll(j) * wxgll(i) * tempx3(i,j)
-          endif
+      if (AXISYM) then
+        ! axisymmetric case
+        if (is_on_the_axis(ispec)) then
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              ! sums contributions from each element to the global values
+              iglob = ibool(i,j,ispec)
+              if (.not. iglob_is_forced(iglob)) then
+                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + wzgll(j) * wxglj(i) * tempx3(i,j)
+              endif
+            enddo
+          enddo
+        else
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              ! sums contributions from each element to the global values
+              iglob = ibool(i,j,ispec)
+              if (.not. iglob_is_forced(iglob)) then
+                potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + wzgll(j) * wxgll(i) * tempx3(i,j)
+              endif
+            enddo
+          enddo
+        endif
+      else
+        do j = 1,NGLLZ
+          do i = 1,NGLLX
+            ! sums contributions from each element to the global values
+            iglob = ibool(i,j,ispec)
+            if (.not. iglob_is_forced(iglob)) then
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + wzgll(j) * wxgll(i) * tempx3(i,j)
+            endif
+          enddo
         enddo
-      enddo
+      endif
     endif
 !! DK DK QUENTIN visco end
 
