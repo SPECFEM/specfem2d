@@ -1359,13 +1359,15 @@
   ! initialize to dummy values
   ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
   inv_tau_sigma_nu1(:,:,:,:) = -1._CUSTOM_REAL
-  phi_nu1(:,:,:,:) = -1._CUSTOM_REAL
-
   inv_tau_sigma_nu2(:,:,:,:) = -1._CUSTOM_REAL
-  phi_nu2(:,:,:,:) = -1._CUSTOM_REAL
 
-  Mu_nu1(:,:,:) = -1._CUSTOM_REAL
-  Mu_nu2(:,:,:) = -1._CUSTOM_REAL
+  phi_nu1(:,:,:,:) = 0._CUSTOM_REAL
+  phi_nu2(:,:,:,:) = 0._CUSTOM_REAL
+
+  ! do not change this, in the case of a viscoacoustic medium the mass matrix is multiplied by this,
+  ! and thus the factor needs to be equal to +1 when QKappa = 9999 i.e. when viscoacousticity is turned off in parts of the medium
+  Mu_nu1(:,:,:) = +1._CUSTOM_REAL
+  Mu_nu2(:,:,:) = +1._CUSTOM_REAL
 
   ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
   if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
