@@ -161,6 +161,7 @@ specfem2D_OBJECTS = \
 	$O/update_displacement_RK.spec.o \
 	$O/compute_kernels.spec.o \
 	$O/write_jpeg_image.cc.o \
+	$O/attenuation_compute_param.cc.o \
 	$O/write_movie_output.spec.o \
 	$O/write_output_SU.spec.o \
 	$O/write_seismograms.spec.o \

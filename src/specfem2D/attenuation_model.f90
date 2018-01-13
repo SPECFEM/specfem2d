@@ -38,6 +38,7 @@
 ! define the attenuation constants
 
   use constants, only: CUSTOM_REAL,ONE
+  use shared_input_parameters, only: USE_SOLVOPT
 
   implicit none
 
@@ -63,15 +64,30 @@
 ! nu2 is the shear mode (Qmu)
 ! array index (1) is the first standard linear solid, (2) is the second etc.
 
-! use a wide bandwidth (always OK when using three or more Standard Linear Solids, can be a bit inaccurate if using only two)
-  f_min_attenuation = f0_attenuation / 10.d0
-  f_max_attenuation = f0_attenuation * 10.d0
+  if (USE_SOLVOPT) then
 
-  call compute_attenuation_coeffs(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
-                                        tau_epsilon_nu1_d,tau_sigma_nu1)
+  ! use a wide bandwidth (always OK when using three or more Standard Linear Solids, can be a bit inaccurate if using only two)
+    f_min_attenuation = f0_attenuation / 10.d0
+    f_max_attenuation = f0_attenuation * 10.d0
 
-  call compute_attenuation_coeffs(N_SLS,QMu_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
-                                        tau_epsilon_nu2_d,tau_sigma_nu2)
+    call compute_attenuation_coeffs(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+                                          tau_epsilon_nu1_d,tau_sigma_nu1)
+
+    call compute_attenuation_coeffs(N_SLS,QMu_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+                                          tau_epsilon_nu2_d,tau_sigma_nu2)
+
+  else
+
+  ! f_min and f_max are computed as : f_max/f_min=12 and (log(f_min)+log(f_max))/2 = log(f0)
+    f_min_attenuation = exp(log(f0_attenuation)-log(12.d0)/2.d0)
+    f_max_attenuation = 12.d0 * f_min_attenuation
+
+  ! call of C function that computes attenuation parameters (function in file "attenuation_compute_param.c";
+  ! a main can be found in UTILS/attenuation directory).
+    call attenuation_compute_param(N_SLS,QKappa_att,QMu_att,f_min_attenuation,f_max_attenuation, &
+                                   tau_sigma_nu1,tau_sigma_nu2,tau_epsilon_nu1_d,tau_epsilon_nu2_d)
+
+  endif
 
 ! print *
 ! print *,'N_SLS, QKappa_att, QMu_att = ',N_SLS, QKappa_att, QMu_att
@@ -2198,7 +2214,7 @@
 
   subroutine nonlinear_optimization(N,Qref,f0,point,poids,f_min,f_max)
 
-  use shared_input_parameters, only: USE_SOLVOPT
+!!!!!!!  use shared_input_parameters, only: USE_SOLVOPT
 
   implicit none
 
@@ -2224,7 +2240,9 @@
 
   ! this is used as a first guess
   call classical_linear_least_squares(Qref,poids,point,N,f_min,f_max)
-  if (.not. USE_SOLVOPT) return
+
+!!!!!!! DK DK we now call the old C routine again when USE_SOLVOPT is false, for compatibility with older benchmarks
+!!!!!!!  if (.not. USE_SOLVOPT) return
 
   ! what follows is the nonlinear optimization part
 
