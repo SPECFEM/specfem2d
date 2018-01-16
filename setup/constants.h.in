@@ -100,6 +100,17 @@
 
 !!-----------------------------------------------------------
 !!
+!! attenuation
+!!
+!!-----------------------------------------------------------
+
+! can call the old C routine to compute the Zener Standard Linear Solids (SLSs) attenuation relaxation times instead of
+! the initial (least squares) step of the SolvOpt() routine when USE_SOLVOPT is false, for compatibility with older benchmarks
+  logical, parameter :: USE_OLD_C_ATTENUATION_ROUTINE_INSTEAD = .false.
+
+
+!!-----------------------------------------------------------
+!!
 !! noise simulations
 !!
 !!-----------------------------------------------------------
