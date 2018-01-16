@@ -77,7 +77,7 @@
     ! finish and transfer the boundary terms to the device asynchronously
     if (NPROC > 1) then
       if (iphase == 2) then
-        !daniel: todo - this avoids calling the fortran vector send from CUDA routine
+        !daniel: todo - this avoids calling the Fortran vector send from CUDA routine
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_gpu)
 

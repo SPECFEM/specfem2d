@@ -80,7 +80,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-! The following utility function was modified from http://fortranwiki.org/fortran/show/strtok
+! The following utility function was modified from http://Fortranwiki.org/Fortran/show/strtok
 !
   subroutine strtok (source_string, delimiter, token)
 
