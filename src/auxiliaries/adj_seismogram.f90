@@ -40,7 +40,7 @@ program adj_seismogram
 ! within a given time window
 !
 ! compilation:
-!    rm -r -f xadj_seismogram ; gfortran adj_seismogram.f90 -o xadj_seismogram
+!    rm -r -f xadj_seismogram ; gFortran adj_seismogram.f90 -o xadj_seismogram
 !
 ! usage example:
 !    ./xadj_seismogram 27.0 32.  AA.S0001  1
