@@ -105,6 +105,7 @@ module specfem_par
 
   double precision, dimension(:,:,:), allocatable :: &
     K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+  double precision :: min_distance_between_CPML_parameter
 
   ! Stacey BC
   logical, dimension(:,:), allocatable  :: codeabs

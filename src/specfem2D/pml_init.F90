@@ -416,15 +416,15 @@
 
  subroutine define_PML_coefficients()
 
-  use constants, only: PI,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
+  use constants, only: PI,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ,HUGEVAL
 
   use specfem_par, only: f0_source,ispec_is_elastic,ispec_is_acoustic, &
                          NSOURCES,ispec_selected_source, &
                          nspec,kmato,density,poroelastcoef,ibool,coord,islice_selected_source,myrank
-
-  ! PML arrays
-  use specfem_par, only: ispec_is_PML,spec_to_PML,region_CPML, &
-                K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,PML_PARAMETER_ADJUSTMENT
+! PML arrays and variables
+  use specfem_par, only: ispec_is_PML,spec_to_PML,region_CPML,PML_PARAMETER_ADJUSTMENT, &
+                         K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
+                         min_distance_between_CPML_parameter
 
   implicit none
 
@@ -456,7 +456,7 @@
 ! material properties of the elastic medium
   integer i,j,ispec,iglob,ispec_PML,i_source
   double precision :: lambdalplus2mul_relaxed,rhol
-  double precision :: d_x, d_z, K_x, K_z, alpha_x, alpha_z
+  double precision :: d_x, d_z, K_x, K_z, alpha_x, alpha_z, beta_x, beta_z
 ! define an alias for y and z variable names (which are the same)
   double precision :: d0_z_bottom_acoustic, d0_x_right_acoustic, d0_z_top_acoustic, d0_x_left_acoustic
   double precision :: d0_z_bottom_elastic, d0_x_right_elastic, d0_z_top_elastic, d0_x_left_elastic
@@ -485,6 +485,14 @@
                       thickness_PML_x_min_left_glob,thickness_PML_x_max_left_glob
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision :: vpmax_glob_acoustic, vpmax_glob_elastic
+
+! for CPML parameter separation
+  integer :: iglob1, iglob2
+  double precision :: x1, x2, z1, z2, dist
+  double precision :: distance_min, distance_min_glob
+  double precision :: CPML_thickness_x_max, CPML_thickness_x_max_glob
+  double precision :: CPML_thickness_z_max, CPML_thickness_z_max_glob
+  double precision :: const_for_separation_two
 
 ! compute the maximum dominant frequency of all sources
   f0_max = maxval(f0_source(:))
@@ -1159,6 +1167,130 @@
   endif
 !!!----------------------------------------------------------------------------
 !!! with PML_PARAMETER_ADJUSTMENT
+!!!----------------------------------------------------------------------------
+
+!!!----------------------------------------------------------------------------
+!!! for robust CPML parameter separation
+!!!----------------------------------------------------------------------------
+  distance_min = dble(HUGEVAL)
+  do ispec = 1,nspec
+    ispec_PML = spec_to_PML(ispec)
+    if (ispec_is_PML(ispec)) then
+      ! loops over all GLL points
+      ! (combines directions to speed up calculations)
+      do j=1,NGLLZ-1
+        do i=1,NGLLX-1
+          ! reference point
+          iglob1 = ibool(i,j,ispec)
+          x1 = coord(1,iglob1)
+          z1 = coord(2,iglob1)
+
+          ! along X
+          iglob2 = ibool(i+1,j,ispec)
+          x2 = coord(1,iglob2)
+          z2 = coord(2,iglob2)
+          dist = (x1 - x2)*(x1 - x2) + (z1 - z2)*(z1 - z2)
+
+          if (dist < distance_min) distance_min = dist
+
+          ! along Z
+          iglob2 = ibool(i,j+1,ispec)
+          x2 = coord(1,iglob2)
+          z2 = coord(2,iglob2)
+
+          dist = (x1 - x2)*(x1 - x2) + (z1 - z2)*(z1 - z2)
+
+          if (dist < distance_min) distance_min = dist
+
+        enddo
+      enddo
+    endif
+  enddo
+  
+  distance_min = dsqrt(distance_min)
+  call min_all_all_dp(distance_min,distance_min_glob)
+  if (myrank == 0) then
+    if (distance_min_glob <= 0.d0) call exit_mpi(myrank,"error: GLL points minimum distance")
+  endif
+  distance_min = distance_min_glob
+  
+  CPML_thickness_z_max = max(thickness_PML_z_bottom,thickness_PML_z_top)
+  call max_all_all_dp(CPML_thickness_z_max,CPML_thickness_z_max_glob)
+  CPML_thickness_x_max = max(thickness_PML_x_left,thickness_PML_x_right)
+  call max_all_all_dp(CPML_thickness_x_max,CPML_thickness_x_max_glob)
+  if (myrank == 0) then
+    if (CPML_thickness_x_max_glob <= 0.d0 .or. CPML_thickness_z_max_glob  <= 0.d0) &
+      call exit_mpi(myrank,"error: PML thickness set is wrong")
+  endif
+  CPML_thickness_x_max = CPML_thickness_x_max_glob
+  CPML_thickness_z_max = CPML_thickness_z_max_glob
+
+  min_distance_between_CPML_parameter = ALPHA_MAX_PML / 8.d0 * &
+                                        distance_min / max(CPML_thickness_x_max,CPML_thickness_z_max)
+  const_for_separation_two = min_distance_between_CPML_parameter * 2.d0
+
+  do ispec = 1,nspec
+    ispec_PML = spec_to_PML(ispec)
+    if (ispec_is_PML(ispec)) then
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          if (region_CPML(ispec) == CPML_XZ) then
+
+            K_x = K_x_store(i,j,ispec_PML)
+            d_x = d_x_store(i,j,ispec_PML)
+            alpha_x = alpha_x_store(i,j,ispec_PML)
+
+            K_z = K_z_store(i,j,ispec_PML)
+            d_z = d_z_store(i,j,ispec_PML)
+            alpha_z = alpha_z_store(i,j,ispec_PML)
+
+            if (abs(alpha_x - alpha_z) < min_distance_between_CPML_parameter) then
+              if (alpha_x > alpha_z) then
+                alpha_x = alpha_z + const_for_separation_two
+              else
+                alpha_z = alpha_x + const_for_separation_two
+              endif
+            endif
+
+            if (abs(alpha_x - alpha_z) < min_distance_between_CPML_parameter) then
+              stop 'error in separation of alpha_x, alpha_z'
+            endif
+
+            beta_x = alpha_x + d_x / K_x
+     
+            if (abs(beta_x- alpha_z) < min_distance_between_CPML_parameter) then
+              beta_x = alpha_z + const_for_separation_two
+            endif
+
+            beta_z = alpha_z + d_z / K_z
+    
+            if (abs(beta_z - alpha_x) < min_distance_between_CPML_parameter) then
+              beta_z = alpha_x + const_for_separation_two
+            endif
+    
+            if (abs(beta_x - alpha_z) < min_distance_between_CPML_parameter) then
+              stop 'there is an error in the separation of beta_x,alpha_z '
+            endif
+
+            if (abs(beta_z - alpha_x) < min_distance_between_CPML_parameter) then
+              stop 'there is an error in the separation of beta_z,alpha_x '
+            endif
+
+            d_x = (beta_x - alpha_x) * K_x
+            d_z = (beta_z - alpha_z) * K_z
+
+            d_x_store(i,j,ispec_PML) = d_x
+            alpha_x_store(i,j,ispec_PML) = alpha_x
+            d_z_store(i,j,ispec_PML) = d_z
+            alpha_z_store(i,j,ispec_PML) = alpha_z
+      
+          endif
+        enddo
+      enddo
+    endif
+  enddo
+!!!----------------------------------------------------------------------------
+!!! for robust CPML parameter separation
 !!!----------------------------------------------------------------------------
 
  end subroutine define_PML_coefficients
