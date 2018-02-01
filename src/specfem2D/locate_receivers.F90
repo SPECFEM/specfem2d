@@ -164,7 +164,7 @@
             ! be performed wrong; adding this dummy call in the "if" means that the compiler cannot optimize
             ! as aggressively, and the compiler bug is not triggered;
             ! thus, please do *NOT* remove this statement (it took us a while to discover this nasty compiler problem).
-            ! GNU gFortran and all other compilers we have tested are fine and do not have any problem even if this
+            ! GNU gfortran and all other compilers we have tested are fine and do not have any problem even if this
             ! statement is removed. Some releases of Intel ifort are also OK.
             call flush_IMAIN()
 

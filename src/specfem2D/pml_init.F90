@@ -423,7 +423,7 @@
                          nspec,kmato,density,poroelastcoef,ibool,coord,islice_selected_source,myrank
 ! PML arrays and variables
   use specfem_par, only: ispec_is_PML,spec_to_PML,region_CPML,PML_PARAMETER_ADJUSTMENT, &
-                         K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store,&
+                         K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
                          min_distance_between_CPML_parameter
 
   implicit none
@@ -1206,20 +1206,20 @@
       enddo
     endif
   enddo
-  
+
   distance_min = dsqrt(distance_min)
   call min_all_all_dp(distance_min,distance_min_glob)
   if (myrank == 0) then
     if (distance_min_glob <= 0.d0) call exit_mpi(myrank,"error: GLL points minimum distance")
   endif
   distance_min = distance_min_glob
-  
+
   CPML_thickness_z_max = max(thickness_PML_z_bottom,thickness_PML_z_top)
   call max_all_all_dp(CPML_thickness_z_max,CPML_thickness_z_max_glob)
   CPML_thickness_x_max = max(thickness_PML_x_left,thickness_PML_x_right)
   call max_all_all_dp(CPML_thickness_x_max,CPML_thickness_x_max_glob)
   if (myrank == 0) then
-    if (CPML_thickness_x_max_glob <= 0.d0 .or. CPML_thickness_z_max_glob  <= 0.d0) &
+    if (CPML_thickness_x_max_glob <= 0.d0 .or. CPML_thickness_z_max_glob <= 0.d0) &
       call exit_mpi(myrank,"error: PML thickness set is wrong")
   endif
   CPML_thickness_x_max = CPML_thickness_x_max_glob
@@ -1257,17 +1257,17 @@
             endif
 
             beta_x = alpha_x + d_x / K_x
-     
+
             if (abs(beta_x- alpha_z) < min_distance_between_CPML_parameter) then
               beta_x = alpha_z + const_for_separation_two
             endif
 
             beta_z = alpha_z + d_z / K_z
-    
+
             if (abs(beta_z - alpha_x) < min_distance_between_CPML_parameter) then
               beta_z = alpha_x + const_for_separation_two
             endif
-    
+
             if (abs(beta_x - alpha_z) < min_distance_between_CPML_parameter) then
               stop 'there is an error in the separation of beta_x,alpha_z '
             endif
@@ -1283,7 +1283,7 @@
             alpha_x_store(i,j,ispec_PML) = alpha_x
             d_z_store(i,j,ispec_PML) = d_z
             alpha_z_store(i,j,ispec_PML) = alpha_z
-      
+
           endif
         enddo
       enddo

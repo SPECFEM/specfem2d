@@ -35,7 +35,7 @@ program adj_seismogram
 
   ! This program cuts a certain portion of the seismograms and convert it
   ! into the adjoint source for generating banana-dougnut kernels
-  !    rm -rf xadj_seismogram ; gFortran adj_seismogram.f90 -o xadj_seismogram
+  !    rm -rf xadj_seismogram ; gfortran adj_seismogram.f90 -o xadj_seismogram
 
   implicit none
 
