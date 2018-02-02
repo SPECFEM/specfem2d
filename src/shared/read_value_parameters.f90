@@ -467,7 +467,7 @@ subroutine open_parameter_file_from_master_only()
 
   implicit none
 
-  ! to use c routines
+  ! to use C routines
   call param_close()
 
   end subroutine close_parameter_file
@@ -484,4 +484,23 @@ subroutine open_parameter_file_from_master_only()
   err_occurred = ierr
 
   end function err_occurred
+
+!--------------------
+!--------------------
+!--------------------
+
+  subroutine dummy_routine()
+
+! dummy routine that does nothing, it is there just to fix an Intel ifort compiler bug
+! with some releases of that compiler, in file src/specfem2D/locate_receivers.F90
+
+  implicit none
+
+  integer :: i,j,k
+
+  i = 12
+  j = 14
+  k = i + j
+
+  end subroutine dummy_routine
 
