@@ -1,0 +1,38 @@
+#
+# number of interfaces
+#
+ 3
+#
+# for each interface below, we give the number of points and then x,z for each point
+#
+#
+# interface number 1 (bottom of the mesh)
+#
+ 2
+  -300 -5300
+ 10300 -5300
+#
+# interface number 2 (ocean bottom)
+#
+ 2
+  -300 -2000
+ 10300 -2000
+#
+# interface number 3 (topography, top of the mesh)
+#
+ 2
+  -300 0.0
+ 10300 0.0
+#
+# for each layer, we give the number of spectral elements in the vertical direction
+#
+#
+# layer number 1 (bottom layer)
+#
+## DK DK the original 2000 Geophysics paper used nz = 90 but NGLLZ = 6
+## DK DK here I rescale it to nz = 108 and NGLLZ = 5 because nowadays we almost always use NGLLZ = 5  # 54 75
+33
+#
+# layer number 2 (top layer)  # 54 75
+#
+20

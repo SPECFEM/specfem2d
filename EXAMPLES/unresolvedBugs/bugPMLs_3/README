@@ -1,0 +1,15 @@
+This is a simple bug to correct I guess.
+With this setting (which is correct) we obtain:
+error: PML thickness set is wrong
+
+If we remove the PMLs everything works well. It works if we set :
+absorbbottom                    = .true.
+absorbright                     = .true.
+absorbtop                       = .false.
+absorbleft                      = .false.
+
+instead of:
+absorbbottom                    = .false.
+absorbright                     = .true.
+absorbtop                       = .false.
+absorbleft                      = .false.
