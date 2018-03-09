@@ -251,7 +251,7 @@ parser.add_argument('--fontsize',  type=float, default=16.0,
 parser.add_argument('--xlabel',  type=str, default="",
     help='set xlabel on plots: ex \"r\'time ($s$)\'\"')
 parser.add_argument('--ylabel',  type=str, default="",
-    help='set ylabel on plots: ex \"r\'time ($s$)\'\"')   
+    help='set ylabel on plots: ex \"r\'time ($s$)\'\"')
 parser.add_argument('-g','--grid', action='store_true',
     help='show a grid on the plot')
 parser.add_argument('files', nargs='+', type=argparse.FileType('r'),
@@ -279,17 +279,17 @@ args = parser.parse_args()
 plot_legend = False
 default_legend = False
 legend_loc = 0
-#‘best’ 	0
-#‘upper right’ 	1
-#‘upper left’ 	2
-#‘lower left’ 	3
-#‘lower right’ 	4
-#‘right’ 	5
-#‘center left’ 	6
-#‘center right’ 	7
-#‘lower center’ 	8
-#‘upper center’ 	9
-#‘center’ 	10
+#'best' 	0
+#'upper right' 	1
+#'upper left' 	2
+#'lower left' 	3
+#'lower right' 	4
+#'right' 	5
+#'center left' 	6
+#'center right' 	7
+#'lower center' 	8
+#'upper center' 	9
+#'center' 	10
 user_labels = []
 default_colors = True
 user_colors = []
@@ -417,7 +417,7 @@ for idx,seismo in enumerate(args.files):      # Loop on the files given
         plt.rc('font', **font)
         plt.xlabel(args.xlabel,fontsize=args.fontsize+2)
         plt.ylabel(args.ylabel,fontsize=args.fontsize+2)
-        
+
     elif plot_specgram:
         # Pxx is the segments x freqs array of instantaneous power, freqs is
         # the frequency vector, bins are the centers of the time bins in which
