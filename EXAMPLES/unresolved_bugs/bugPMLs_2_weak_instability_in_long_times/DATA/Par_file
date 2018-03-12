@@ -283,10 +283,10 @@ output_grid_ASCII               = .false.        # dump the grid in an ASCII tex
 
 # to plot total energy curves, for instance to monitor how CPML absorbing layers behave;
 # should be turned OFF in most cases because a bit expensive
-OUTPUT_ENERGY                   = .false.
+OUTPUT_ENERGY                   = .true.
 
 # every how many time steps we compute energy (which is a bit expensive to compute)
-NTSTEP_BETWEEN_OUTPUT_ENERGY    = 10
+NTSTEP_BETWEEN_OUTPUT_ENERGY    = 50
 
 # Compute the field int_0^t v^2 dt for a set of GLL points and write it to file. Use
 # the script utils/visualisation/plotIntegratedEnergyFile.py to watch. It is refreshed at the same time than the seismograms
@@ -300,7 +300,7 @@ COMPUTE_INTEGRATED_ENERGY_FIELD = .false.
 
 # every how many time steps we draw JPEG or PostScript pictures of the simulation
 # and/or we dump results of the simulation as ASCII or binary files (costly, do not use a very small value)
-NSTEP_BETWEEN_OUTPUT_IMAGES     = 500
+NSTEP_BETWEEN_OUTPUT_IMAGES     = 1000
 
 # minimum amplitude kept in % for the JPEG and PostScript snapshots; amplitudes below that are muted
 cutsnaps                        = 1.
