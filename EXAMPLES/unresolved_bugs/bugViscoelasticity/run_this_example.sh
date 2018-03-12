@@ -1,12 +1,9 @@
 #!/bin/bash
 #
-# script runs mesher and solver (in serial)
-# using this example setup
+# script runs mesher and solver
 #
 
-SEMBIN=../../../../specfem2d
-#SEMBIN=~/specfem2d_19_12_2017
-#SEMBIN=~/specfem2d_28_01_2017
+SEMBIN=../../..
 
 echo "running example: `date`"
 currentdir=`pwd`

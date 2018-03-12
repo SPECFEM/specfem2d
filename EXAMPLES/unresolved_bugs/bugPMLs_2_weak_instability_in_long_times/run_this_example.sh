@@ -4,9 +4,7 @@
 # using this example setup
 #
 
-SEMBIN=../../../../specfem2d
-#SEMBIN=~/specfem2d_19_12_2017
-#SEMBIN=~/specfem2d_28_01_2017
+SEMBIN=../../..
 
 echo "running example: `date`"
 currentdir=`pwd`

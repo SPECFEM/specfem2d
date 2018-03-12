@@ -462,10 +462,10 @@
   double precision :: d0_z_bottom_elastic, d0_x_right_elastic, d0_z_top_elastic, d0_x_left_elastic
   double precision :: abscissa_in_PML, abscissa_normalized
 
-  double precision :: thickness_PML_z_min_bottom,thickness_PML_z_max_bottom, &
-                      thickness_PML_x_min_right,thickness_PML_x_max_right, &
-                      thickness_PML_z_min_top,thickness_PML_z_max_top, &
-                      thickness_PML_x_min_left,thickness_PML_x_max_left, &
+  double precision :: PML_z_min_bottom,PML_z_max_bottom, &
+                      PML_x_min_right,PML_x_max_right, &
+                      PML_z_min_top,PML_z_max_top, &
+                      PML_x_min_left,PML_x_max_left, &
                       thickness_PML_z_bottom,thickness_PML_x_right, &
                       thickness_PML_z_top,thickness_PML_x_left
 
@@ -479,10 +479,10 @@
 
 ! for MPI and partitioning
   double precision :: f0_max_glob
-  double precision :: thickness_PML_z_min_bottom_glob,thickness_PML_z_max_bottom_glob, &
-                      thickness_PML_x_min_right_glob,thickness_PML_x_max_right_glob, &
-                      thickness_PML_z_min_top_glob,thickness_PML_z_max_top_glob, &
-                      thickness_PML_x_min_left_glob,thickness_PML_x_max_left_glob
+  double precision :: PML_z_min_bottom_glob,PML_z_max_bottom_glob, &
+                      PML_x_min_right_glob,PML_x_max_right_glob, &
+                      PML_z_min_top_glob,PML_z_max_top_glob, &
+                      PML_x_min_left_glob,PML_x_max_left_glob
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision :: vpmax_glob_acoustic, vpmax_glob_elastic
 
@@ -533,17 +533,17 @@
   zorigin = zmin + (zmax - zmin)/2.d0
 
 ! determinate the thickness of PML on each side on which PML are activated
-  thickness_PML_z_min_bottom=1.d30
-  thickness_PML_z_max_bottom=-1.d30
+  PML_z_min_bottom=1.d30
+  PML_z_max_bottom=-1.d30
 
-  thickness_PML_x_min_right=1.d30
-  thickness_PML_x_max_right=-1.d30
+  PML_x_min_right=1.d30
+  PML_x_max_right=-1.d30
 
-  thickness_PML_z_min_top=1.d30
-  thickness_PML_z_max_top=-1.d30
+  PML_z_min_top=1.d30
+  PML_z_max_top=-1.d30
 
-  thickness_PML_x_min_left=1.d30
-  thickness_PML_x_max_left=-1.d30
+  PML_x_min_left=1.d30
+  PML_x_max_left=-1.d30
 
   do ispec= 1,nspec
      if (ispec_is_PML(ispec)) then
@@ -551,29 +551,29 @@
 !!!bottom_case
          if (coord(2,ibool(i,j,ispec)) < zorigin) then
            if (region_CPML(ispec) == CPML_Z_ONLY .or. region_CPML(ispec) == CPML_XZ) then
-             thickness_PML_z_max_bottom=max(coord(2,ibool(i,j,ispec)),thickness_PML_z_max_bottom)
-             thickness_PML_z_min_bottom=min(coord(2,ibool(i,j,ispec)),thickness_PML_z_min_bottom)
+             PML_z_max_bottom=max(coord(2,ibool(i,j,ispec)),PML_z_max_bottom)
+             PML_z_min_bottom=min(coord(2,ibool(i,j,ispec)),PML_z_min_bottom)
            endif
          endif
 !!!right case
          if (coord(1,ibool(i,j,ispec)) > xorigin) then
            if (region_CPML(ispec) == CPML_X_ONLY .or. region_CPML(ispec) == CPML_XZ) then
-             thickness_PML_x_max_right=max(coord(1,ibool(i,j,ispec)),thickness_PML_x_max_right)
-             thickness_PML_x_min_right=min(coord(1,ibool(i,j,ispec)),thickness_PML_x_min_right)
+             PML_x_max_right=max(coord(1,ibool(i,j,ispec)),PML_x_max_right)
+             PML_x_min_right=min(coord(1,ibool(i,j,ispec)),PML_x_min_right)
            endif
          endif
 !!!top case
          if (coord(2,ibool(i,j,ispec)) > zorigin) then
            if (region_CPML(ispec) == CPML_Z_ONLY .or. region_CPML(ispec) == CPML_XZ) then
-             thickness_PML_z_max_top=max(coord(2,ibool(i,j,ispec)),thickness_PML_z_max_top)
-             thickness_PML_z_min_top=min(coord(2,ibool(i,j,ispec)),thickness_PML_z_min_top)
+             PML_z_max_top=max(coord(2,ibool(i,j,ispec)),PML_z_max_top)
+             PML_z_min_top=min(coord(2,ibool(i,j,ispec)),PML_z_min_top)
            endif
          endif
 !!!left case
          if (coord(1,ibool(i,j,ispec)) < xorigin) then
            if (region_CPML(ispec) == CPML_X_ONLY .or. region_CPML(ispec) == CPML_XZ) then
-             thickness_PML_x_max_left=max(coord(1,ibool(i,j,ispec)),thickness_PML_x_max_left)
-             thickness_PML_x_min_left=min(coord(1,ibool(i,j,ispec)),thickness_PML_x_min_left)
+             PML_x_max_left=max(coord(1,ibool(i,j,ispec)),PML_x_max_left)
+             PML_x_min_left=min(coord(1,ibool(i,j,ispec)),PML_x_min_left)
            endif
          endif
        enddo; enddo
@@ -581,34 +581,39 @@
   enddo
 
 !!!bottom_case
-  call max_all_all_dp(thickness_PML_z_max_bottom, thickness_PML_z_max_bottom_glob)
-  call min_all_all_dp(thickness_PML_z_min_bottom, thickness_PML_z_min_bottom_glob)
-  thickness_PML_z_max_bottom=thickness_PML_z_max_bottom_glob
-  thickness_PML_z_min_bottom=thickness_PML_z_min_bottom_glob
+  call max_all_all_dp(PML_z_max_bottom, PML_z_max_bottom_glob)
+  call min_all_all_dp(PML_z_min_bottom, PML_z_min_bottom_glob)
+  PML_z_max_bottom=PML_z_max_bottom_glob
+  PML_z_min_bottom=PML_z_min_bottom_glob
 
 !!!right_case
-  call max_all_all_dp(thickness_PML_x_max_right, thickness_PML_x_max_right_glob)
-  call min_all_all_dp(thickness_PML_x_min_right, thickness_PML_x_min_right_glob)
-  thickness_PML_x_max_right=thickness_PML_x_max_right_glob
-  thickness_PML_x_min_right=thickness_PML_x_min_right_glob
+  call max_all_all_dp(PML_x_max_right, PML_x_max_right_glob)
+  call min_all_all_dp(PML_x_min_right, PML_x_min_right_glob)
+  PML_x_max_right=PML_x_max_right_glob
+  PML_x_min_right=PML_x_min_right_glob
 
 !!!top_case
-  call max_all_all_dp(thickness_PML_z_max_top, thickness_PML_z_max_top_glob)
-  call min_all_all_dp(thickness_PML_z_min_top, thickness_PML_z_min_top_glob)
-  thickness_PML_z_max_top=thickness_PML_z_max_top_glob
-  thickness_PML_z_min_top=thickness_PML_z_min_top_glob
+  call max_all_all_dp(PML_z_max_top, PML_z_max_top_glob)
+  call min_all_all_dp(PML_z_min_top, PML_z_min_top_glob)
+  PML_z_max_top=PML_z_max_top_glob
+  PML_z_min_top=PML_z_min_top_glob
 
 !!!left_case
-  call max_all_all_dp(thickness_PML_x_max_left, thickness_PML_x_max_left_glob)
-  call min_all_all_dp(thickness_PML_x_min_left, thickness_PML_x_min_left_glob)
-  thickness_PML_x_max_left=thickness_PML_x_max_left_glob
-  thickness_PML_x_min_left=thickness_PML_x_min_left_glob
+  call max_all_all_dp(PML_x_max_left, PML_x_max_left_glob)
+  call min_all_all_dp(PML_x_min_left, PML_x_min_left_glob)
+  PML_x_max_left=PML_x_max_left_glob
+  PML_x_min_left=PML_x_min_left_glob
 
+  thickness_PML_x_left = PML_x_max_left - PML_x_min_left
+  thickness_PML_x_right = PML_x_max_right - PML_x_min_right
+  thickness_PML_z_bottom = PML_z_max_bottom - PML_z_min_bottom
+  thickness_PML_z_top = PML_z_max_top - PML_z_min_top
 
-  thickness_PML_x_left= thickness_PML_x_max_left - thickness_PML_x_min_left
-  thickness_PML_x_right= thickness_PML_x_max_right - thickness_PML_x_min_right
-  thickness_PML_z_bottom= thickness_PML_z_max_bottom - thickness_PML_z_min_bottom
-  thickness_PML_z_top= thickness_PML_z_max_top - thickness_PML_z_min_top
+!! DK DK March 2018: added this to detect if some PML edges are not set, to avoid triggering a stop statement below otherwise
+  if (abs(thickness_PML_x_left) > 1.d30) thickness_PML_x_left = 0.d0
+  if (abs(thickness_PML_x_right) > 1.d30) thickness_PML_x_right = 0.d0
+  if (abs(thickness_PML_z_bottom) > 1.d30) thickness_PML_z_bottom = 0.d0
+  if (abs(thickness_PML_z_top) > 1.d30) thickness_PML_z_top = 0.d0
 
 ! origin of the PML layer (position of right edge minus thickness, in meters)
   xoriginleft = thickness_PML_x_left+xmin
@@ -672,15 +677,37 @@
   vpmax_acoustic = vpmax_glob_acoustic
   vpmax_elastic = vpmax_glob_elastic
 
-  d0_x_left_acoustic = - (NPOWER + 1) * vpmax_acoustic * log(Rcoef) / (2.d0 * thickness_PML_x_left)
-  d0_x_right_acoustic = - (NPOWER + 1) * vpmax_acoustic * log(Rcoef) / (2.d0 * thickness_PML_x_right)
-  d0_z_bottom_acoustic = - (NPOWER + 1) * vpmax_acoustic * log(Rcoef) / (2.d0 * thickness_PML_z_bottom)
-  d0_z_top_acoustic = - (NPOWER + 1) * vpmax_acoustic * log(Rcoef) / (2.d0 * thickness_PML_z_top)
+  if (thickness_PML_x_left > 0.d0) then
+    d0_x_left_acoustic = - (NPOWER + 1) * vpmax_acoustic * log(Rcoef) / (2.d0 * thickness_PML_x_left)
+    d0_x_left_elastic = - (NPOWER + 1) * vpmax_elastic * log(Rcoef) / (2.d0 * thickness_PML_x_left)
+  else
+    d0_x_left_acoustic = 0.d0
+    d0_x_left_elastic = 0.d0
+  endif
 
-  d0_x_left_elastic = - (NPOWER + 1) * vpmax_elastic * log(Rcoef) / (2.d0 * thickness_PML_x_left)
-  d0_x_right_elastic = - (NPOWER + 1) * vpmax_elastic * log(Rcoef) / (2.d0 * thickness_PML_x_right)
-  d0_z_bottom_elastic = - (NPOWER + 1) * vpmax_elastic * log(Rcoef) / (2.d0 * thickness_PML_z_bottom)
-  d0_z_top_elastic = - (NPOWER + 1) * vpmax_elastic * log(Rcoef) / (2.d0 * thickness_PML_z_top)
+  if (thickness_PML_x_right > 0.d0) then
+    d0_x_right_acoustic = - (NPOWER + 1) * vpmax_acoustic * log(Rcoef) / (2.d0 * thickness_PML_x_right)
+    d0_x_right_elastic = - (NPOWER + 1) * vpmax_elastic * log(Rcoef) / (2.d0 * thickness_PML_x_right)
+  else
+    d0_x_right_acoustic = 0.d0
+    d0_x_right_elastic = 0.d0
+  endif
+
+  if (thickness_PML_z_bottom > 0.d0) then
+    d0_z_bottom_acoustic = - (NPOWER + 1) * vpmax_acoustic * log(Rcoef) / (2.d0 * thickness_PML_z_bottom)
+    d0_z_bottom_elastic = - (NPOWER + 1) * vpmax_elastic * log(Rcoef) / (2.d0 * thickness_PML_z_bottom)
+  else
+    d0_z_bottom_acoustic = 0.d0
+    d0_z_bottom_elastic = 0.d0
+  endif
+
+  if (thickness_PML_z_top > 0.d0) then
+    d0_z_top_acoustic = - (NPOWER + 1) * vpmax_acoustic * log(Rcoef) / (2.d0 * thickness_PML_z_top)
+    d0_z_top_elastic = - (NPOWER + 1) * vpmax_elastic * log(Rcoef) / (2.d0 * thickness_PML_z_top)
+  else
+    d0_z_top_acoustic = 0.d0
+    d0_z_top_elastic = 0.d0
+  endif
 
   d_x_store = 0.d0
   d_z_store = 0.d0
@@ -1219,7 +1246,7 @@
   CPML_thickness_x_max = max(thickness_PML_x_left,thickness_PML_x_right)
   call max_all_all_dp(CPML_thickness_x_max,CPML_thickness_x_max_glob)
   if (myrank == 0) then
-    if (CPML_thickness_x_max_glob <= 0.d0 .or. CPML_thickness_z_max_glob <= 0.d0) &
+    if (CPML_thickness_x_max_glob < 0.d0 .or. CPML_thickness_z_max_glob < 0.d0) &
       call exit_mpi(myrank,"error: PML thickness set is wrong")
   endif
   CPML_thickness_x_max = CPML_thickness_x_max_glob
