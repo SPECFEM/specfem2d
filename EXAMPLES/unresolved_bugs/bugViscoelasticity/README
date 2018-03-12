@@ -1,7 +1,0 @@
-This bug occurs in simulations with many time steps and viscoelastic media (without PMLs).
-It seems to happen quicker if the model includes fluid-solid coupling.
-The code slowly explodes at some spots in the viscoelastic part. It exists since at least 01/28/2017.
-_The mesh has no influence (we use the internal mesher)
-_SOLVOPT neither
-_NSLS neither
-_Read_velocity_at_f0 neither
