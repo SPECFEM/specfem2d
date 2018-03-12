@@ -75,7 +75,7 @@
     displ_elastic,veloc_elastic, &
     displs_poroelastic,displw_poroelastic,velocs_poroelastic,velocw_poroelastic, &
     potential_dot_acoustic,vsext,vpext,rhoext,poroelastcoef,density,kmato,assign_external_model, &
-    ispec_is_poroelastic,ispec_is_elastic,P_SV
+    ispec_is_poroelastic,ispec_is_elastic,P_SV,ispec_is_PML
 
   implicit none
 
@@ -101,8 +101,17 @@
   ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: pressure_element
 
+!! DK DK March 2018: restored this initialization that someone had removed for some reason, thus making the calculation wrong
+!! DK DK March 2018: please do *NOT* remove it
+  kinetic_energy = 0._CUSTOM_REAL
+  potential_energy = 0._CUSTOM_REAL
+
   ! loop over spectral elements
-  do ispec = 1,nspec ! TODO uncomment
+  do ispec = 1,nspec
+
+!! DK DK March 2018: only compute energy in the main domain, not in the PMLs, in which it is not physical
+    if (ispec_is_PML(ispec)) cycle
+
     !---
     !--- elastic spectral element
     !---
