@@ -18,7 +18,10 @@
 !! DK DK as reference instead of the relaxed ones) because it is not useful any more,
 !! DK DK this modification was not consistent with the calculations of the tau values
 !! DK DK made by Carcione et al. 1988 and by Carcione 1993.
-  logical, parameter :: FIX_ATTENUATION_CAUSALITY = .false.
+!! Comment from Quentin Brissaud, March 2018:
+!! This flag will tell the code that the input velocities are the relaxed one (omega -> zero frequency)
+!! instead of the unrelaxed ones (by default omega -> + infinity)
+  logical, parameter :: FIX_ATTENUATION_CAUSALITY = .true.
 
   integer, parameter :: iratio = 32
 
@@ -66,7 +69,8 @@
 
 ! this value comes from page 397 of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
 ! Geophysical Journal, vol. 93, p. 393-407 (1988)
-  double precision, parameter :: M_relaxed = 8.d9
+  double precision, parameter :: vp = 2000.d0
+  double precision, parameter :: M_relaxed = rho*vp**2
 
   integer :: ifreq,ifreq2,i_mech,iposition
   double precision :: deltafreq,freq,omega,omega0,deltat,time,sum_of_coefficients
@@ -94,34 +98,10 @@
 
 ! ********** end of variable declarations ************
 
-! IMPORTANT: for this analytical code the weights to use must be defined with
-!   tau_epsilon(i) = tau_sigma(i) * (1.d0 + weight(i))
-! instead of
-!   tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * weight(i))
-! in file src/specfem2D/attenuation_model.f90
-! because the analytical formulas of Carcione et al. 1998 do not include the 1/N factor
-
-! relaxation times from Table 1 of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
-! Geophysical Journal, vol. 93, p. 393-407 (1988)
-! tau_epsilon_nu1(1) = 0.3196389
-! tau_epsilon_nu1(2) = 0.0850242
-! tau_epsilon_nu1(3) = 0.0226019
-! tau_epsilon_nu1(4) = 0.0060121
-! tau_epsilon_nu1(5) = 0.0016009
-
-! tau_sigma_nu1(1)   = 0.3169863
-! tau_sigma_nu1(2)   = 0.0842641
-! tau_sigma_nu1(3)   = 0.0224143
-! tau_sigma_nu1(4)   = 0.0059584
-! tau_sigma_nu1(5)   = 0.0015823
-
-  tau_epsilon_nu1(1) =  2.777320375916291d-002
-  tau_epsilon_nu1(2) =  3.187084050385516d-003
-  tau_epsilon_nu1(3) =  3.683612420748419d-004
-
-  tau_sigma_nu1(1)   =   2.730926321834314d-002
-  tau_sigma_nu1(2)   =   3.145516983560762d-003
-  tau_sigma_nu1(3)   =   3.620115821834951d-004
+!! DK DK Quentin Brissaud in March 2018 added the 1/L factor here (it is missing in Carcione's older papers)
+!! DK DK the weights below include this factor.
+  tau_epsilon_nu1 =    (/3.3490038309560245E-002,   3.3205062588009785E-003,   3.3551297958320871E-004/)
+  tau_sigma_nu1   =    (/3.1830988618379068E-002,   3.1830988618379067E-003,   3.1830988618379065E-004/)
 
 ! position of the receiver
   do iposition = 1,3
@@ -195,7 +175,8 @@
   do i_mech = 1,L_mech
     sum_to_compute = sum_to_compute + dcmplx(1.d0,omega*tau_epsilon_nu1(i_mech)) / dcmplx(1.d0,omega*tau_sigma_nu1(i_mech))
   enddo
-  MC = M_relaxed * (1.d0 - L_mech + sum_to_compute)
+!! DK DK Quentin Brissaud in March 2018 added the 1/L factor here (it is missing in Carcione's older papers)
+  MC = M_relaxed * (1.d0 + (1./L_mech)*(-L_mech + sum_to_compute))
 
 ! use more standard infinite frequency (unrelaxed) reference,
 ! in which waves slow down when attenuation is turned on,
@@ -206,7 +187,8 @@
     do i_mech = 1,L_mech
       sum_of_coefficients = sum_of_coefficients + tau_epsilon_nu1(i_mech) / tau_sigma_nu1(i_mech)
     enddo
-    MC = MC / (1.d0 - L_mech + sum_of_coefficients)
+!! DK DK Quentin Brissaud in March 2018 added the 1/L factor here (it is missing in Carcione's older papers)
+    MC = MC / (1.d0 + (1./L_mech)*(-L_mech + sum_of_coefficients))
   endif
 
 ! equation (18) of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,

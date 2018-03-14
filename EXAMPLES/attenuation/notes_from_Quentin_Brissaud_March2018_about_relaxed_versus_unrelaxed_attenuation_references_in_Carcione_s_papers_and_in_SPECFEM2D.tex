@@ -1,0 +1,111 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+
+\title{Notes on compatibility between Carcione's analytical viscoelastic solution and SPECFEM2D}
+\author{Quentin Brissaud and Dimitri Komatitsch}
+\date{March 2018}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% A4 paper
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{a4wide}
+\textwidth 17cm
+\textheight 24.9cm
+\oddsidemargin -4.5mm
+\evensidemargin -4.5mm
+\topmargin -14mm
+
+\usepackage{gji_extra}
+
+% figures
+\usepackage[dvipdf]{epsfig}
+\usepackage{graphicx}
+
+% colors to show the corrections
+\usepackage[dvipsnames,usenames]{color}
+
+\newcommand{\red}[1]{\textbf{\textcolor{Red}{#1}}}
+\newcommand{\blue}[1]{\textbf{\textcolor{Blue}{#1}}}
+\newcommand{\cyan}[1]{\textbf{\textcolor{Cyan}{#1}}}
+\newcommand{\green}[1]{\textbf{\textcolor{Green}{#1}}}
+\newcommand{\magenta}[1]{\textbf{\textcolor{Magenta}{#1}}}
+\newcommand{\orange}[1]{\textbf{\textcolor{Orange}{#1}}}
+
+% \newcommand{\red}[1]{#1}
+% \newcommand{\blue}[1]{#1}
+% \newcommand{\cyan}[1]{#1}
+
+% comments between authors
+\newcommand{\toall}[1]{\textbf{\red{@@@ To all: #1 @@@}}}
+
+\newcommand{\rmd}{\, \mathrm{d}}
+
+% biblio GJI
+\bibliographystyle{gji}
+\renewcommand{\cite}[1]{\citet{#1}}
+
+\begin{document}
+
+\Large
+
+\maketitle
+
+The use of terms as unrelaxed or relaxed moduli can be confusing, especially for the construction of quasi-analytical solutions. Carcione used, in his famous paper \cite{CaKoKo88b}, the following formulation for the unrelaxed moduli, in eq. (38) where we added the $(1/L)$ factor that was missing
+\begin{equation}
+M_{u_\nu} = M_\nu\left(1-\frac{1}{L}\sum_{l=1,L}(1-\frac{\tau^\nu_{\epsilon,l}}{\tau^\nu_{\sigma,l}})\right),
+\end{equation}
+where $L$ is the number of Zener solids, $M_\nu$ the relaxed modulus, $M_{u_\nu}$ the relaxed modulus and $(\tau^\nu_{\epsilon,l},\tau^\nu_{\sigma,l})_{l=1,L}$ the strain relaxation times for $\nu = 1$ and shear relaxation times for $\nu = 2$. These unrelaxed moduli appear in the stress-strain relationship as
+\begin{equation}
+\sigma_{ij} = \frac{1}{n}\delta_{ij}(M_{u_1}+\Phi^c_1*)\epsilon_{kk}+(M_{u_2}+\Phi^c_2*)\epsilon^d_{ij},
+\end{equation}
+where $n$ is the spatial dimension, $\Phi^c_\nu$ the response function, $\delta_{ij}$ the dirac distribution and $\epsilon_{ij} = \partial_i\epsilon_j + \partial_j\epsilon_i$. Then if you want to build Carcione's analytical solution you will need to compute the relaxed moduli $M_\nu$ that read, from eq. (A.27a)-(A.27b)
+\begin{equation}
+\begin{array}{rcl}
+M_1 &=& \rho(nv_p^2-2(n-1)v_s^2),\\
+M_2 &=& 2\rho vs^2,
+\end{array}
+\end{equation}
+where $v_p, v_s$ are the relaxed P and S wave velocities. \\
+
+But in SPECFEM2D, by default, the velocities in the "Par$\_$file" represent the unrelaxed velocities for $f\rightarrow+\infty$. Then, in order to compute the right $M_\nu$ for Carcione's analytical solution, you should use
+\begin{equation}
+\begin{array}{rcl}
+M_1 &=& \frac{\rho(nv_{u,p}^2-2(n-1)v_{u,s}^2)}{\left(1-\frac{1}{L}\sum_{l=1,L}(1-\frac{\tau^l_{\epsilon,1}}{\tau^l_{\sigma,1}})\right)},\\
+M_2 &=& \frac{2\rho v_{u,s}^2}{\left(1-\frac{1}{L}\sum_{l=1,L}(1-\frac{\tau^l_{\epsilon,2}}{\tau^l_{\sigma,2}})\right)},
+\end{array}
+\label{unrelaxed_infty}
+\end{equation}
+where $v_{u,p}, v_{u,s}$ are the unrelaxed velocities, for $f\rightarrow+\infty$, that you used in the Par$\_$file. Note that the option "READ$\_$VELOCITIES$\_$AT$\_$f0 = .true." will change SPECFEM2D behavior by using wave velocities in the Par$\_$file as unrelaxed velocities for $f = f_0$ instead of unrelaxed ones for $f\rightarrow +\infty$, where $f_0$ is the chosen peak attenuation frequency that matches the option f0$\_$attenuation in the Par$\_$file. In that case, the relationship becomes,
+\begin{equation}
+\begin{array}{rcl}
+M_1 &=& \frac{\rho(nv_{u,p}^2-2(n-1)v_{u,s}^2)}{(1 - \frac{1}{L}\sum_{l=1,L}\frac{1-\frac{\tau^l_{\epsilon,1}}{\tau^l_{\sigma,1}}}{1+\frac{1}{(\omega_0\tau^l_{\sigma,1})^2}})},\\
+M_2 &=& \frac{2\rho v_{u,s}^2}{(1 - \frac{1}{L}\sum_{l=1,L}\frac{1-\frac{\tau^l_{\epsilon,2}}{\tau^l_{\sigma,2}}}{1+\frac{1}{(\omega_0\tau^l_{\sigma,2})^2}})},
+\end{array}
+\end{equation}
+
+Then, one notices that for very high frequency attenuation peaks ($\omega_0 \rightarrow +\infty$) you recover the relationship \eqref{unrelaxed_infty}. And for low frequency attenuation peaks $\omega_0$ one obtains, as $\omega_0 \rightarrow 0$
+\begin{equation}
+\begin{array}{rcl}
+M_1 &\rightarrow& \rho(nv_{u,p}^2-2(n-1)v_{u,s}^2),\\
+M_2 &\rightarrow& 2\rho v_{u,s}^2.
+\end{array}
+\end{equation}
+
+\textbf{Note that in the current SPECFEM2D code, with its setup it is not possible to give the reference velocities in the Par\_file at a frequency that would be zero
+(i.e. give the relaxed values), for the following technical reason, that would be easy to fix if needed:
+lorsqu'on ne souhaite pas definir les vitesses a $f$ infini (c'est-a-dire lorsque READ\_VELOCITIES\_AT\_F0 = .true.), on utilise f0\_attenuation (venant du Par\_file)
+pour recalculer la vitesse de reference. Mais on ne peut jamais mettre ce f0\_attenuation egal a 0 car on utilise aussi ce meme f0\_attenuation pour
+definir le centre logarithmique de la bande de frequence dans laquelle on va approximer l'attenuation par N\_SLS solides de Zener.
+Donc, on ne peut pas a l'heure actuelle, avec SPECFEM (mais ce serait tres simple a changer), donner les vitesses dans le Par\_file pour une frequence $f$ = 0.
+Pour changer cela il faudrait renommer le flag de READ\_VELOCITIES\_AT\_F0 en\\
+READ\_VELOCITIES\_AT\_A\_GIVEN\_F et ajouter un nouveau parametre qui serait ce F auquel on lit les vitesses,
+et qui pourrait alors etre different de f0 (et qui donc pourrait valoir zero si necessaire).
+Facile a faire si le besoin apparait un jour.}
+
+%%%%
+%%%%  Bibliography
+%%%%
+\bibliography{Biblio1}
+
+\end{document}

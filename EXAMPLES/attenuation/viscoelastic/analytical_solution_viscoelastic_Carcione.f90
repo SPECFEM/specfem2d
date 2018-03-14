@@ -15,6 +15,11 @@
 !! DK DK made by Carcione et al. 1988 and by Carcione 1993.
   logical, parameter :: FIX_ATTENUATION_CAUSALITY = .false.
 
+!! DK DK March 2018: the missing 1/L factor in older Carcione papers has been added to this code by Quentin Brissaud
+!! DK DK for the viscoacoustic code in directory EXAMPLES/attenuation/viscoacoustic,
+!! DK DK it would be very easy to copy the changes from there to this viscoelastic version;
+!! DK DK but then all the values of the tau_epsilon in the code below would need to change.
+
 ! compute the elastic solution instead of the viscoelastic one
   logical, parameter :: COMPUTE_ELASTIC_CASE_INSTEAD = .false.
 
@@ -69,6 +74,12 @@
 !   tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * weight(i))
 ! in file src/specfem2D/attenuation_model.f90
 ! because the analytical formulas of Carcione et al. 1998 do not include the 1/N factor
+!
+!! DK DK March 2018: this missing 1/L factor has been added to this code by Quentin Brissaud
+!! DK DK for the viscoacoustic code in directory EXAMPLES/attenuation/viscoacoustic,
+!! DK DK it would be very easy to copy the changes from there to this viscoelastic version;
+!! DK DK but then all the values of the tau_epsilon below would need to change, and the above
+!! DK DK comment that starts with "VERY IMPORTANT" would need to be removed.
 
 ! this below is from Carcione et al. 1988 GJI vol 95 p 604 Table 1
 ! parameter(tau_epsilon_nu1_mech1 = 0.0325305d0)
