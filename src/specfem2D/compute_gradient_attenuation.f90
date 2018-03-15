@@ -143,7 +143,7 @@
   subroutine compute_gradient_attenuation_fluid(potential_acoustic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
          xix,xiz,gammax,gammaz,ibool,ispec_is_acoustic,hprime_xx,hprime_zz,nspec,nglob)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,NDIM
 
   use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx,rhoext,density,assign_external_model,kmato
 
@@ -167,9 +167,9 @@
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
 
 ! local variables
-  integer :: i,j,k,ispec,i_step
+  integer :: i,j,k,ispec
 
-  real(kind=CUSTOM_REAL), dimension(2,nglob) :: gradient_temp
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,nspec) :: displ
 
 ! spatial derivatives
   real(kind=CUSTOM_REAL) :: dux_dxi,dux_dgamma,duz_dxi,duz_dgamma
@@ -177,14 +177,9 @@
 ! jacobian
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,rhol
 
-  gradient_temp(1,:) = potential_acoustic(:)
-  gradient_temp(2,:) = potential_acoustic(:)
-
-! compute the source term for the e1 memory variable, which is div(grad(Chi)/rho) i.e. div(u).
-! Thus, in a first step, compute grad(Chi) / rho, and in a second step, compute div() of that.
-  do i_step = 1,2
-
-! loop over spectral elements
+! loop over spectral elements to compute the displacement vector
+! (which is discontinuous between elements here because it is the gradient of the potential,
+!  and gradients are discontinuous between elements in the spectral-element method)
   do ispec = 1,nspec
 
 !---
@@ -209,25 +204,25 @@
           if (AXISYM) then
             if (is_on_the_axis(ispec)) then
               do k = 1,NGLJ
-                dux_dxi = dux_dxi + gradient_temp(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
-                duz_dxi = duz_dxi + gradient_temp(2,ibool(k,j,ispec))*hprimeBar_xx(i,k)
-                dux_dgamma = dux_dgamma + gradient_temp(1,ibool(i,k,ispec))*hprime_zz(j,k)
-                duz_dgamma = duz_dgamma + gradient_temp(2,ibool(i,k,ispec))*hprime_zz(j,k)
+                dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                duz_dxi = duz_dxi + potential_acoustic(ibool(k,j,ispec))*hprimeBar_xx(i,k)
+                dux_dgamma = dux_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+                duz_dgamma = duz_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
               enddo
             else
               do k = 1,NGLJ
-                dux_dxi = dux_dxi + gradient_temp(1,ibool(k,j,ispec))*hprime_xx(i,k)
-                duz_dxi = duz_dxi + gradient_temp(2,ibool(k,j,ispec))*hprime_xx(i,k)
-                dux_dgamma = dux_dgamma + gradient_temp(1,ibool(i,k,ispec))*hprime_zz(j,k)
-                duz_dgamma = duz_dgamma + gradient_temp(2,ibool(i,k,ispec))*hprime_zz(j,k)
+                dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+                duz_dxi = duz_dxi + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+                dux_dgamma = dux_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+                duz_dgamma = duz_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
               enddo
             endif
           else
             do k = 1,NGLLX
-              dux_dxi = dux_dxi + gradient_temp(1,ibool(k,j,ispec))*hprime_xx(i,k)
-              duz_dxi = duz_dxi + gradient_temp(2,ibool(k,j,ispec))*hprime_xx(i,k)
-              dux_dgamma = dux_dgamma + gradient_temp(1,ibool(i,k,ispec))*hprime_zz(j,k)
-              duz_dgamma = duz_dgamma + gradient_temp(2,ibool(i,k,ispec))*hprime_zz(j,k)
+              dux_dxi = dux_dxi + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+              duz_dxi = duz_dxi + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
+              dux_dgamma = dux_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
+              duz_dgamma = duz_dgamma + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
             enddo
           endif
 
@@ -236,19 +231,15 @@
           gammaxl = gammax(i,j,ispec)
           gammazl = gammaz(i,j,ispec)
 
-! derivatives of displacement
+! derivatives of the potential
           dux_dxl(i,j,ispec) = dux_dxi*xixl + dux_dgamma*gammaxl
-          dux_dzl(i,j,ispec) = 0._CUSTOM_REAL
-
-          duz_dxl(i,j,ispec) = 0._CUSTOM_REAL
           duz_dzl(i,j,ispec) = duz_dxi*xizl + duz_dgamma*gammazl
 
-          if (i_step == 1) then
-            rhol = density(1,kmato(ispec))
-            if (assign_external_model) rhol = rhoext(i,j,ispec)
-            dux_dxl(i,j,ispec) = dux_dxl(i,j,ispec) / rhol
-            duz_dzl(i,j,ispec) = duz_dzl(i,j,ispec) / rhol
-          endif
+          rhol = density(1,kmato(ispec))
+          if (assign_external_model) rhol = rhoext(i,j,ispec)
+! discontinuous displacement vector
+          displ(1,i,j,ispec) = dux_dxl(i,j,ispec) / rhol
+          displ(2,i,j,ispec) = duz_dzl(i,j,ispec) / rhol
 
         enddo
       enddo
@@ -257,28 +248,67 @@
 
   enddo
 
-  if (i_step == 1) then
 
-    ! loop over spectral elements
+! loop over spectral elements to compute the terms that appear in the divergence of displacement
   do ispec = 1,nspec
 
 !---
 !--- acoustic spectral element
 !---
     if (ispec_is_acoustic(ispec)) then
+
+! double loop over GLL points to compute and store gradients
       do j = 1,NGLLZ
         do i = 1,NGLLX
-          gradient_temp(1,ibool(i,j,ispec)) = dux_dxl(i,j,ispec)
-          gradient_temp(2,ibool(i,j,ispec)) = duz_dzl(i,j,ispec)
+
+! derivative along x and along z
+          dux_dxi = ZERO
+          duz_dxi = ZERO
+
+          dux_dgamma = ZERO
+          duz_dgamma = ZERO
+
+          if (AXISYM) then
+            if (is_on_the_axis(ispec)) then
+              do k = 1,NGLJ
+                dux_dxi = dux_dxi + displ(1,k,j,ispec)*hprimeBar_xx(i,k)
+                duz_dxi = duz_dxi + displ(2,k,j,ispec)*hprimeBar_xx(i,k)
+                dux_dgamma = dux_dgamma + displ(1,i,k,ispec)*hprime_zz(j,k)
+                duz_dgamma = duz_dgamma + displ(2,i,k,ispec)*hprime_zz(j,k)
+              enddo
+            else
+              do k = 1,NGLJ
+                dux_dxi = dux_dxi + displ(1,k,j,ispec)*hprime_xx(i,k)
+                duz_dxi = duz_dxi + displ(2,k,j,ispec)*hprime_xx(i,k)
+                dux_dgamma = dux_dgamma + displ(1,i,k,ispec)*hprime_zz(j,k)
+                duz_dgamma = duz_dgamma + displ(2,i,k,ispec)*hprime_zz(j,k)
+              enddo
+            endif
+          else
+            do k = 1,NGLLX
+              dux_dxi = dux_dxi + displ(1,k,j,ispec)*hprime_xx(i,k)
+              duz_dxi = duz_dxi + displ(2,k,j,ispec)*hprime_xx(i,k)
+              dux_dgamma = dux_dgamma + displ(1,i,k,ispec)*hprime_zz(j,k)
+              duz_dgamma = duz_dgamma + displ(2,i,k,ispec)*hprime_zz(j,k)
+            enddo
+          endif
+
+          xixl = xix(i,j,ispec)
+          xizl = xiz(i,j,ispec)
+          gammaxl = gammax(i,j,ispec)
+          gammazl = gammaz(i,j,ispec)
+
+! compute only the two derivatives of displacement that are needed to compute the divergence
+          dux_dxl(i,j,ispec) = dux_dxi*xixl + dux_dgamma*gammaxl
+          dux_dzl(i,j,ispec) = 0._CUSTOM_REAL
+          duz_dxl(i,j,ispec) = 0._CUSTOM_REAL
+          duz_dzl(i,j,ispec) = duz_dxi*xizl + duz_dgamma*gammazl
+
         enddo
       enddo
+
     endif
 
   enddo
 
-  endif
-
-  enddo
-
   end subroutine compute_gradient_attenuation_fluid
-
