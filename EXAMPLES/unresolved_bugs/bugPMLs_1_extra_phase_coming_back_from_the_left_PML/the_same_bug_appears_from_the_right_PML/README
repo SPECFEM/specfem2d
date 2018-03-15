@@ -1,0 +1,10 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This example shows a problem with PMLs.
+Run:
+
+./run_this_example.sh
+
+And look at the images... You will get it.
