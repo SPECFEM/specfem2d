@@ -1344,7 +1344,7 @@
            phi_nu1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
            phi_nu2(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
            Mu_nu1(NGLLX,NGLLZ,nspec_ATT), &
-           Mu_nu2(NGLLX,NGLLZ,nspec_ATT),&
+           Mu_nu2(NGLLX,NGLLZ,nspec_ATT), &
            tau_epsilon_nu1(NGLLX,NGLLZ,nspec_ATT,N_SLS),&  !ZN needed for further optimization with nspec_ATT replaced with nspec_PML
            tau_epsilon_nu2(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
   if (ier /= 0) stop 'Error allocating attenuation arrays'
@@ -1498,7 +1498,7 @@
       enddo
     enddo
 
-    if(PML_BOUNDARY_CONDITIONS) then
+    if (PML_BOUNDARY_CONDITIONS) then
       call prepare_timerun_attenuation_with_PML()
     endif
 
@@ -1671,17 +1671,17 @@
           K_z = K_z_store(i,j,ispec_PML)
           d_z = d_z_store(i,j,ispec_PML)
           alpha_z = alpha_z_store(i,j,ispec_PML)
-            
+
           if (ATTENUATION_VISCOELASTIC) then
             if (region_CPML(ispec) == CPML_XZ) then
-              if (ispec_is_elastic(ispec)) then 
+              if (ispec_is_elastic(ispec)) then
                 do i_sls = 1,N_SLS
                   tauinvnu(i_sls) = inv_tau_sigma_nu1(i,j,ispec,i_sls)
                   tauinvnu(i_sls+N_SLS) = inv_tau_sigma_nu2(i,j,ispec,i_sls)
                 enddo
 
                 call tauinvnu_arange_from_lt_to_gt(2*N_SLS,tauinvnu)
-                
+
                 do i_sls = 1,2*N_SLS
                   if (abs(alpha_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
                     alpha_x = tauinvnu(i_sls) + const_for_separation_two
@@ -1693,7 +1693,7 @@
                 do i_sls = 1,2*N_SLS
                   tauinvplusone(i_sls) = tauinvnu(i_sls)
                 enddo
-                tauinvplusone(2*N_SLS + 1) = alpha_x 
+                tauinvplusone(2*N_SLS + 1) = alpha_x
 
                 call tauinvnu_arange_from_lt_to_gt(2 * N_SLS + 1,tauinvplusone)
 
@@ -1720,7 +1720,7 @@
                 do i_sls = 1,2*N_SLS
                   tauinvplusone(i_sls) = tauinvnu(i_sls)
                 enddo
-                tauinvplusone(2*N_SLS + 1) = alpha_z 
+                tauinvplusone(2*N_SLS + 1) = alpha_z
 
                 call tauinvnu_arange_from_lt_to_gt(2 * N_SLS + 1,tauinvplusone)
                 beta_x = alpha_x + d_x / K_x
@@ -1731,7 +1731,7 @@
                   if (abs(beta_x - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
                     stop 'error in separation of beta_x, alpha_z,tauinvnu'
                   endif
-                enddo 
+                enddo
 
                 d_x = (beta_x - alpha_x) * K_x
                 d_z = (beta_z - alpha_z) * K_z
@@ -1740,7 +1740,7 @@
                 alpha_x_store(i,j,ispec_PML) = alpha_x
                 d_z_store(i,j,ispec_PML) = d_z
                 alpha_z_store(i,j,ispec_PML) = alpha_z
-                            
+
               endif
             endif
 
@@ -1761,14 +1761,14 @@
                 if (abs(beta_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
                   stop 'error in separation of beta_x, tauinvnu'
                 endif
-              enddo  
+              enddo
 
               d_x = (beta_x - alpha_x) * K_x
               d_x_store(i,j,ispec_PML) = d_x
-              alpha_x_store(i,j,ispec_PML) = alpha_x        
-           
+              alpha_x_store(i,j,ispec_PML) = alpha_x
+
             endif
-            
+
             if (region_CPML(ispec) == CPML_Z_ONLY) then
               do i_sls = 1,2*N_SLS
                 if (abs(alpha_z - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
@@ -1786,19 +1786,19 @@
                 if (abs(beta_z - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
                   stop 'error in separation of beta_z, tauinvnu'
                 endif
-              enddo  
- 
+              enddo
+
               d_z = (beta_z - alpha_z) * K_z
               d_z_store(i,j,ispec_PML) = d_z
-              alpha_z_store(i,j,ispec_PML) = alpha_z   
-                   
+              alpha_z_store(i,j,ispec_PML) = alpha_z
+
             endif
           endif
         enddo
       enddo
     endif
   enddo
-   
+
   end subroutine prepare_timerun_attenuation_with_PML
 !
 !-------------------------------------------------------------------------------------
@@ -1812,10 +1812,10 @@
   !local parameters
   integer :: i,j
   double precision :: temp
- 
+
   do i= 1,siz
     do j= i+1,siz
-      if (tauinvnu(i) .gt. tauinvnu(j)) then
+      if (tauinvnu(i) > tauinvnu(j)) then
         temp = tauinvnu(i)
         tauinvnu(i) = tauinvnu(j)
         tauinvnu(j) =  temp

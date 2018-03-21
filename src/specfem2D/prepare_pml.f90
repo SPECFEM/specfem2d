@@ -328,21 +328,21 @@
       allocate(rmemory_duz_dz_LDDRK(1,1,1,1))
     endif
 
-    ! addtional variables needed for CPML in viscoelastic simulation 
+    ! addtional variables needed for CPML in viscoelastic simulation
     if (ATTENUATION_VISCOELASTIC) then
       if (PML_BOUNDARY_CONDITIONS) then
         if (nspec_PML > 0) then
-          allocate(kaPML_rmemory_dux_dxl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)  
+          allocate(kaPML_rmemory_dux_dxl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array kaPML_rmemory_dux_dxl'
-          allocate(kaPML_rmemory_duz_dzl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)  
-          if (ier /= 0) stop 'error: not enough memory to allocate array kaPML_rmemory_duz_dzl' 
-          allocate(muPML_rmemory_dux_dxl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)  
+          allocate(kaPML_rmemory_duz_dzl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)
+          if (ier /= 0) stop 'error: not enough memory to allocate array kaPML_rmemory_duz_dzl'
+          allocate(muPML_rmemory_dux_dxl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array muPML_rmemory_dux_dxl'
-          allocate(muPML_rmemory_duz_dzl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)  
+          allocate(muPML_rmemory_duz_dzl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array mu_rmemory_duz_dzl'
-          allocate(muPML_rmemory_dux_dzl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)  
+          allocate(muPML_rmemory_dux_dzl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array muPML_rmemory_dux_dzl'
-          allocate(muPML_rmemory_duz_dxl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)  
+          allocate(muPML_rmemory_duz_dxl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)
           if (ier /= 0) stop 'error: not enough memory to allocate array muPML_rmemory_duz_dxl'
           kaPML_rmemory_dux_dxl(:,:,:,:) = 0_CUSTOM_REAL
           kaPML_rmemory_duz_dzl(:,:,:,:) = 0_CUSTOM_REAL
@@ -356,11 +356,11 @@
           allocate(muPML_rmemory_dux_dxl(1,1,1,1),stat=ier)
           allocate(muPML_rmemory_duz_dzl(1,1,1,1),stat=ier)
           allocate(muPML_rmemory_dux_dzl(1,1,1,1),stat=ier)
-          allocate(muPML_rmemory_duz_dxl(1,1,1,1),stat=ier)        
+          allocate(muPML_rmemory_duz_dxl(1,1,1,1),stat=ier)
         endif
       endif
     endif
-    !addtional variables needed for CPML in viscoelastic simulation 
+    !addtional variables needed for CPML in viscoelastic simulation
 
     if (any_acoustic .and. nspec_PML > 0) then
       allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)

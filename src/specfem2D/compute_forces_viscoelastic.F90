@@ -42,7 +42,7 @@
                          ATTENUATION_VISCOELASTIC,nspec_ATT,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
-                         jacobian,vpext,vsext,rhoext,&
+                         jacobian,vpext,vsext,rhoext, &
                          QKappa_attenuation,Qmu_attenuation,QKappa_attenuationext,Qmu_attenuationext, &
                          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext, &
                          ispec_is_anisotropic,anisotropy, &
@@ -115,9 +115,9 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: PML_dux_dxl_old,PML_dux_dzl_old,PML_duz_dxl_old,PML_duz_dzl_old
 
   !additional variables for CPML implementation in viscoelastic simulation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: kappa_dux_dxl,kappa_duz_dzl,mu_dux_dxl,mu_duz_dzl,&
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: kappa_dux_dxl,kappa_duz_dzl,mu_dux_dxl,mu_duz_dzl, &
                                                     mu_dux_dzl,mu_duz_dxl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: kappa_pml_dux_dxl,kappa_pml_duz_dzl,&
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: kappa_pml_dux_dxl,kappa_pml_duz_dzl, &
                                                     mu_pml_dux_dxl,mu_pml_duz_dzl,mu_pml_dux_dzl,mu_pml_duz_dxl
   double precision :: qkappal,qmul
 
@@ -229,19 +229,19 @@
         if (ATTENUATION_VISCOELASTIC) then
           if (qkappal < 9998.999d0 .and. qmul < 9998.999d0) then
 
-            call pml_compute_memory_variables_viscoelastic(ispec,nglob,displ_elastic_old,dux_dxl,dux_dzl,duz_dxl,duz_dzl,&
-                                                           kappa_pml_dux_dxl,kappa_pml_duz_dzl,&
-                                                           mu_pml_dux_dxl,mu_pml_duz_dzl,mu_pml_dux_dzl,&
-                                                           mu_pml_duz_dxl,kappa_dux_dxl,kappa_duz_dzl,mu_dux_dxl,&
-                                                           mu_duz_dzl,mu_dux_dzl,mu_duz_dxl) 
+            call pml_compute_memory_variables_viscoelastic(ispec,nglob,displ_elastic_old,dux_dxl,dux_dzl,duz_dxl,duz_dzl, &
+                                                           kappa_pml_dux_dxl,kappa_pml_duz_dzl, &
+                                                           mu_pml_dux_dxl,mu_pml_duz_dzl,mu_pml_dux_dzl, &
+                                                           mu_pml_duz_dxl,kappa_dux_dxl,kappa_duz_dzl,mu_dux_dxl, &
+                                                           mu_duz_dzl,mu_dux_dzl,mu_duz_dxl)
           else
-            call pml_compute_memory_variables_elastic(ispec,nglob,displ_elastic_old,dux_dxl,dux_dzl,duz_dxl,duz_dzl,&
+            call pml_compute_memory_variables_elastic(ispec,nglob,displ_elastic_old,dux_dxl,dux_dzl,duz_dxl,duz_dzl, &
                                                      dux_dxl_prime,dux_dzl_prime,duz_dxl_prime,duz_dzl_prime, &
                                                      PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl, &
                                                      PML_dux_dxl_old,PML_dux_dzl_old,PML_duz_dxl_old,PML_duz_dzl_old)
           endif
         else
-          call pml_compute_memory_variables_elastic(ispec,nglob,displ_elastic_old,dux_dxl,dux_dzl,duz_dxl,duz_dzl,&
+          call pml_compute_memory_variables_elastic(ispec,nglob,displ_elastic_old,dux_dxl,dux_dzl,duz_dxl,duz_dzl, &
                                                    dux_dxl_prime,dux_dzl_prime,duz_dxl_prime,duz_dzl_prime, &
                                                    PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl, &
                                                    PML_dux_dxl_old,PML_dux_dzl_old,PML_duz_dxl_old,PML_duz_dzl_old)

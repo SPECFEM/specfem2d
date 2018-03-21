@@ -544,11 +544,11 @@
 !-------------------------------------------------------------------------------------
 !
 
-  subroutine pml_compute_memory_variables_viscoelastic(ispec,nglob,displ_elastic_old, & 
+  subroutine pml_compute_memory_variables_viscoelastic(ispec,nglob,displ_elastic_old, &
                                                        dux_dxl,dux_dzl,duz_dxl,duz_dzl, &
-                                                       kappa_pml_dux_dxl,kappa_pml_duz_dzl,&
-                                                       mu_pml_dux_dxl,mu_pml_duz_dzl,mu_pml_dux_dzl,&
-                                                       mu_pml_duz_dxl,kappa_dux_dxl,kappa_duz_dzl,mu_dux_dxl,&
+                                                       kappa_pml_dux_dxl,kappa_pml_duz_dzl, &
+                                                       mu_pml_dux_dxl,mu_pml_duz_dzl,mu_pml_dux_dzl, &
+                                                       mu_pml_duz_dxl,kappa_dux_dxl,kappa_duz_dzl,mu_dux_dxl, &
                                                        mu_duz_dzl,mu_dux_dzl,mu_duz_dxl)
 
   use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY
@@ -557,12 +557,12 @@
                          ibool,xix,xiz,gammax,gammaz,hprime_xx,hprime_zz
 
   use specfem_par, only: rmemory_dux_dx,rmemory_dux_dz,rmemory_duz_dx,rmemory_duz_dz, &
-                         kaPML_rmemory_dux_dxl,kaPML_rmemory_duz_dzl,muPML_rmemory_dux_dxl,&
-                         muPML_rmemory_duz_dzl,muPML_rmemory_duz_dxl,muPML_rmemory_dux_dzl,&
-                         nspec_PML,ispec_is_PML             
+                         kaPML_rmemory_dux_dxl,kaPML_rmemory_duz_dzl,muPML_rmemory_dux_dxl, &
+                         muPML_rmemory_duz_dzl,muPML_rmemory_duz_dxl,muPML_rmemory_dux_dzl, &
+                         nspec_PML,ispec_is_PML
 
-  use specfem_par, only: tau_epsilon_nu1,tau_epsilon_nu2,Mu_nu1,Mu_nu2,&
-                         N_SLS,inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,spec_to_PML,&
+  use specfem_par, only: tau_epsilon_nu1,tau_epsilon_nu2,Mu_nu1,Mu_nu2, &
+                         N_SLS,inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,spec_to_PML, &
                          region_CPML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
 
   implicit none
@@ -573,7 +573,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: displ_elastic_old
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(inout) :: dux_dxl,dux_dzl,duz_dxl,duz_dzl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: kappa_pml_dux_dxl,kappa_pml_duz_dzl,mu_pml_dux_dxl,&
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: kappa_pml_dux_dxl,kappa_pml_duz_dzl,mu_pml_dux_dxl, &
                                                                 mu_pml_duz_dzl,mu_pml_dux_dzl,mu_pml_duz_dxl
 
   ! local parameters
@@ -588,17 +588,17 @@
   integer :: CPML_region_local
   double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z
   double precision :: tauinv_kappa,tauinv_mu,tao_epsilon_kappa,tao_epsilon_mu,Mu_kappa,Mu_mu
-  double precision :: A_01,A_2_ka,A_3_ka,A_ik_ka,A_2_mu,A_3_mu,A_ik_mu,&
-                      A_10,A_4_ka,A_5_ka,A_ki_ka,A_4_mu,A_5_mu,A_ki_mu,&
+  double precision :: A_01,A_2_ka,A_3_ka,A_ik_ka,A_2_mu,A_3_mu,A_ik_mu, &
+                      A_10,A_4_ka,A_5_ka,A_ki_ka,A_4_mu,A_5_mu,A_ki_mu, &
                       A_2_ka_sum,A_2_mu_sum,A_3_ka_sum,A_3_mu_sum,A_4_ka_sum,A_4_mu_sum,A_5_ka_sum,A_5_mu_sum
-  double precision :: coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2,&
-                      coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2,&
+  double precision :: coef0_zx_1,coef1_zx_1,coef2_zx_1,coef0_zx_2,coef1_zx_2,coef2_zx_2, &
+                      coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2, &
                       coef0_l_ka,coef1_l_ka,coef2_l_ka,coef0_l_mu,coef1_l_mu,coef2_l_mu
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: kappa_dux_dxl,kappa_duz_dzl,mu_dux_dxl,mu_duz_dzl,&
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: kappa_dux_dxl,kappa_duz_dzl,mu_dux_dxl,mu_duz_dzl, &
                                                                 mu_dux_dzl,mu_duz_dxl
-  real(kind=CUSTOM_REAL) :: sum_kappa_dux_dx,sum_kappa_duz_dz,sum_mu_dux_dx,sum_mu_duz_dz,&
-                            sum_mu_dux_dz,sum_mu_duz_dx, kappa_sum_dux_dxl,kappa_sum_duz_dzl,&
+  real(kind=CUSTOM_REAL) :: sum_kappa_dux_dx,sum_kappa_duz_dz,sum_mu_dux_dx,sum_mu_duz_dz, &
+                            sum_mu_dux_dz,sum_mu_duz_dx, kappa_sum_dux_dxl,kappa_sum_duz_dzl, &
                             mu_sum_dux_dxl,mu_sum_duz_dzl,mu_sum_dux_dzl,mu_sum_duz_dxl
 
 
@@ -673,7 +673,7 @@
       A_5_mu_sum = 0._CUSTOM_REAL
 
       if (inv_tau_sigma_nu1(i,j,ispec,1) < 0.) cycle
-       
+
       sum_kappa_dux_dx = 0._CUSTOM_REAL
       sum_kappa_duz_dz = 0._CUSTOM_REAL
       sum_mu_dux_dx = 0._CUSTOM_REAL
@@ -687,16 +687,16 @@
       call compute_coef_convolution(beta_x,deltat,coef0_zx_2,coef1_zx_2,coef2_zx_2)
       call compute_coef_convolution(alpha_x,deltat,coef0_xz_1,coef1_xz_1,coef2_xz_1)
       call compute_coef_convolution(beta_z,deltat,coef0_xz_2,coef1_xz_2,coef2_xz_2)
-    
+
 
       select case (time_stepping_scheme)
       case (1)
         ! Newmark
         rmemory_dux_dx(i,j,ispec_PML,1) = coef0_zx_1 * rmemory_dux_dx(i,j,ispec_PML,1) + &
-                                          coef1_zx_1 * PML_dux_dxl(i,j) + coef2_zx_1 * PML_dux_dxl_old(i,j)  !alpha_z convolve dux_dx 
- 
+                                          coef1_zx_1 * PML_dux_dxl(i,j) + coef2_zx_1 * PML_dux_dxl_old(i,j)  !alpha_z convolve dux_dx
+
         rmemory_duz_dx(i,j,ispec_PML,1) = coef0_zx_1 * rmemory_duz_dx(i,j,ispec_PML,1) + &
-                                          coef1_zx_1 * PML_duz_dxl(i,j) + coef2_zx_1 * PML_duz_dxl_old(i,j)  !alpha_z convolve duz_dx   
+                                          coef1_zx_1 * PML_duz_dxl(i,j) + coef2_zx_1 * PML_duz_dxl_old(i,j)  !alpha_z convolve duz_dx
 
         rmemory_dux_dx(i,j,ispec_PML,2) = coef0_zx_2 * rmemory_dux_dx(i,j,ispec_PML,2) + &
                                           coef1_zx_2 * PML_dux_dxl(i,j) + coef2_zx_2 * PML_dux_dxl_old(i,j)  !beta_x convolve dux_dx
@@ -704,7 +704,7 @@
         rmemory_duz_dx(i,j,ispec_PML,2) = coef0_zx_2 * rmemory_duz_dx(i,j,ispec_PML,2) + &
                                           coef1_zx_2 * PML_duz_dxl(i,j) + coef2_zx_2 * PML_duz_dxl_old(i,j)  !beta_x convolve duz_dx
 
-        rmemory_dux_dz(i,j,ispec_PML,1) = coef0_xz_1 * rmemory_dux_dz(i,j,ispec_PML,1) + & 
+        rmemory_dux_dz(i,j,ispec_PML,1) = coef0_xz_1 * rmemory_dux_dz(i,j,ispec_PML,1) + &
                                           coef1_xz_1 * PML_dux_dzl(i,j) + coef2_xz_1 * PML_dux_dzl_old(i,j)  !alpha_x convolve dux_dz
 
         rmemory_duz_dz(i,j,ispec_PML,1) = coef0_xz_1 * rmemory_duz_dz(i,j,ispec_PML,1) + &
@@ -720,32 +720,32 @@
         stop 'Time stepping scheme not implemented yet for viscoelastic PML memory variable update'
       case default
         stop 'Time stepping scheme not implemented yet for viscoelastic PML memory variable update'
-      end select  
+      end select
 
       do i_sls = 1,N_SLS
         tauinv_kappa = inv_tau_sigma_nu1(i,j,ispec,i_sls)
         tauinv_mu = inv_tau_sigma_nu2(i,j,ispec,i_sls)
         tao_epsilon_kappa = tau_epsilon_nu1(i,j,ispec,i_sls)
         tao_epsilon_mu = tau_epsilon_nu2(i,j,ispec,i_sls)
-        Mu_kappa = Mu_nu1(i,j,ispec) * dble(N_SLS) 
+        Mu_kappa = Mu_nu1(i,j,ispec) * dble(N_SLS)
         Mu_mu = Mu_nu2(i,j,ispec) * dble(N_SLS)
 
         A_kappa = phi_nu1(i,j,ispec,i_sls)
         A_mu = phi_nu2(i,j,ispec,i_sls)
-        
+
         ! gets viscelastic PML coefficients
-        call lik_parameter_computation_viscoelastic(deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, & 
-                                              CPML_region_local,31,A_01,A_2_ka,A_3_ka,A_ki_ka,tauinv_kappa,&
+        call lik_parameter_computation_viscoelastic(deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
+                                              CPML_region_local,31,A_01,A_2_ka,A_3_ka,A_ki_ka,tauinv_kappa, &
                                               tao_epsilon_kappa)
         call lik_parameter_computation_viscoelastic(deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
-                                              CPML_region_local,31,A_01,A_2_mu,A_3_mu,A_ki_mu,tauinv_mu,&
+                                              CPML_region_local,31,A_01,A_2_mu,A_3_mu,A_ki_mu,tauinv_mu, &
                                               tao_epsilon_mu)
 
         call lik_parameter_computation_viscoelastic(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
-                                              CPML_region_local,13,A_10,A_4_ka,A_5_ka,A_ik_ka,tauinv_kappa,&
+                                              CPML_region_local,13,A_10,A_4_ka,A_5_ka,A_ik_ka,tauinv_kappa, &
                                               tao_epsilon_kappa)
         call lik_parameter_computation_viscoelastic(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
-                                              CPML_region_local,13,A_10,A_4_mu,A_5_mu,A_ik_mu,tauinv_mu,&
+                                              CPML_region_local,13,A_10,A_4_mu,A_5_mu,A_ik_mu,tauinv_mu, &
                                               tao_epsilon_mu)
 
         call compute_coef_convolution(tauinv_kappa,deltat,coef0_l_ka,coef1_l_ka,coef2_l_ka)
@@ -755,22 +755,22 @@
         case (1)
         ! Newmark
           kaPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) = coef0_l_ka * kaPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) + & !inv_tau_sigma_nu1 convolve dux_dx
-                                                       coef1_l_ka * PML_dux_dxl(i,j) + coef2_l_ka * PML_dux_dxl_old(i,j)  
+                                                       coef1_l_ka * PML_dux_dxl(i,j) + coef2_l_ka * PML_dux_dxl_old(i,j)
 
           kaPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) = coef0_l_ka * kaPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) + & !inv_tau_sigma_nu1 convolve duz_dz
-                                                       coef1_l_ka * PML_duz_dzl(i,j) + coef2_l_ka * PML_duz_dzl_old(i,j)  
+                                                       coef1_l_ka * PML_duz_dzl(i,j) + coef2_l_ka * PML_duz_dzl_old(i,j)
 
           muPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) + & !inv_tau_sigma_nu2 convolve dux_dx
-                                                       coef1_l_mu * PML_dux_dxl(i,j) + coef2_l_mu * PML_dux_dxl_old(i,j)   
-  
+                                                       coef1_l_mu * PML_dux_dxl(i,j) + coef2_l_mu * PML_dux_dxl_old(i,j)
+
           muPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) + & !inv_tau_sigma_nu2 convolve duz_dz
-                                                       coef1_l_mu * PML_duz_dzl(i,j) + coef2_l_mu * PML_duz_dzl_old(i,j)  
-  
+                                                       coef1_l_mu * PML_duz_dzl(i,j) + coef2_l_mu * PML_duz_dzl_old(i,j)
+
           muPML_rmemory_dux_dzl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_dux_dzl(i,j,ispec_PML,i_sls) + & !inv_tau_sigma_nu2 convolve dux_dz
-                                                       coef1_l_mu * PML_dux_dzl(i,j) + coef2_l_mu * PML_dux_dzl_old(i,j) 
-    
+                                                       coef1_l_mu * PML_dux_dzl(i,j) + coef2_l_mu * PML_dux_dzl_old(i,j)
+
           muPML_rmemory_duz_dxl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_duz_dxl(i,j,ispec_PML,i_sls) + & !inv_tau_sigma_nu2 convolve duz_dx
-                                                       coef1_l_mu * PML_duz_dxl(i,j) + coef2_l_mu * PML_duz_dxl_old(i,j)     
+                                                       coef1_l_mu * PML_duz_dxl(i,j) + coef2_l_mu * PML_duz_dxl_old(i,j)
           A_2_ka_sum = A_2_ka_sum + A_2_ka
           A_2_mu_sum = A_2_mu_sum + A_2_mu
           A_3_ka_sum = A_3_ka_sum + A_3_ka
@@ -779,18 +779,18 @@
           A_4_mu_sum = A_4_mu_sum + A_4_mu
           A_5_ka_sum = A_5_ka_sum + A_5_ka
           A_5_mu_sum = A_5_mu_sum + A_5_mu
-        
+
           kappa_sum_dux_dxl = kappa_sum_dux_dxl + A_ki_ka * kaPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) / Mu_kappa
           kappa_sum_duz_dzl = kappa_sum_duz_dzl + A_ik_ka * kaPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) / Mu_kappa
-        
+
           mu_sum_dux_dxl = mu_sum_dux_dxl + A_ki_mu * muPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) / Mu_mu
           mu_sum_duz_dzl = mu_sum_duz_dzl + A_ik_mu * muPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) / Mu_mu
           mu_sum_dux_dzl = mu_sum_dux_dzl + A_ik_mu * muPML_rmemory_dux_dzl(i,j,ispec_PML,i_sls) / Mu_mu
-          mu_sum_duz_dxl = mu_sum_duz_dxl + A_ki_mu * muPML_rmemory_duz_dxl(i,j,ispec_PML,i_sls) / Mu_mu  
+          mu_sum_duz_dxl = mu_sum_duz_dxl + A_ki_mu * muPML_rmemory_duz_dxl(i,j,ispec_PML,i_sls) / Mu_mu
 
           sum_kappa_dux_dx = sum_kappa_dux_dx + A_kappa * kaPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls)
           sum_kappa_duz_dz = sum_kappa_duz_dz + A_kappa * kaPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls)
-      
+
           sum_mu_dux_dx = sum_mu_dux_dx + A_mu * muPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls)
           sum_mu_duz_dz = sum_mu_duz_dz + A_mu * muPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls)
           sum_mu_dux_dz = sum_mu_dux_dz + A_mu * muPML_rmemory_dux_dzl(i,j,ispec_PML,i_sls)
@@ -809,7 +809,7 @@
       kappa_pml_duz_dzl(i,j) = A_10 * PML_duz_dzl(i,j) + kappa_sum_duz_dzl + &
                                A_4_ka_sum * rmemory_duz_dz(i,j,ispec_PML,1) / Mu_kappa + &
                                A_5_ka_sum * rmemory_duz_dz(i,j,ispec_PML,2) / Mu_kappa
-        
+
       mu_pml_dux_dxl(i,j) = A_01 * PML_dux_dxl(i,j) + mu_sum_dux_dxl + &
                             A_2_mu_sum * rmemory_dux_dx(i,j,ispec_PML,1) / Mu_mu + &
                             A_3_mu_sum * rmemory_dux_dx(i,j,ispec_PML,2) / Mu_mu
@@ -821,15 +821,15 @@
                             A_5_mu_sum * rmemory_dux_dz(i,j,ispec_PML,2) / Mu_mu
       mu_pml_duz_dxl(i,j) = A_01 * PML_duz_dxl(i,j) + mu_sum_duz_dxl + &
                             A_2_mu_sum * rmemory_duz_dx(i,j,ispec_PML,1) / Mu_mu + &
-                            A_3_mu_sum * rmemory_duz_dx(i,j,ispec_PML,2) / Mu_mu   
+                            A_3_mu_sum * rmemory_duz_dx(i,j,ispec_PML,2) / Mu_mu
 
       kappa_dux_dxl(i,j) = PML_dux_dxl(i,j) + sum_kappa_dux_dx
       kappa_duz_dzl(i,j) = PML_duz_dzl(i,j) + sum_kappa_duz_dz
-        
+
       mu_dux_dxl(i,j) = PML_dux_dxl(i,j) + sum_mu_dux_dx
       mu_duz_dzl(i,j) = PML_duz_dzl(i,j) + sum_mu_duz_dz
       mu_dux_dzl(i,j) = PML_dux_dzl(i,j) + sum_mu_dux_dz
-      mu_duz_dxl(i,j) = PML_duz_dxl(i,j) + sum_mu_duz_dx 
+      mu_duz_dxl(i,j) = PML_duz_dxl(i,j) + sum_mu_duz_dx
     enddo
   enddo
   end subroutine pml_compute_memory_variables_viscoelastic

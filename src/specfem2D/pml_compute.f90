@@ -65,7 +65,7 @@
                                        coef0_1,coef1_1,coef2_1,coef0_2,coef1_2,coef2_2)
 
   use constants, only: CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ,CUSTOM_REAL
- 
+
   implicit none
 
   double precision, intent(in) :: deltat
@@ -94,20 +94,20 @@
   endif
 
   if (CPML_region_local == CPML_XZ_TEMP) then
-    
-    bar_A_0 = kappa_x / kappa_z                                            
-    A_0 = bar_A_0                                                            
+
+    bar_A_0 = kappa_x / kappa_z
+    A_0 = bar_A_0
     gamma_x = (alpha_x * beta_z + alpha_x**2 + 2._CUSTOM_REAL * beta_x * alpha_z - &
-               2._CUSTOM_REAL * alpha_x * (beta_x + alpha_z)) / (beta_z - alpha_x)       
+               2._CUSTOM_REAL * alpha_x * (beta_x + alpha_z)) / (beta_z - alpha_x)
     gamma_z = (alpha_x * beta_z + beta_z**2 + 2._CUSTOM_REAL * beta_x * alpha_z - &
-               2._CUSTOM_REAL * beta_z * (beta_x + alpha_z)) / (alpha_x - beta_z)       
+               2._CUSTOM_REAL * beta_z * (beta_x + alpha_z)) / (alpha_x - beta_z)
 
     !----------------A1,2-------------------------
-    bar_A_1 = bar_A_0 / 2._CUSTOM_REAL * (gamma_x - alpha_x)                         
-    bar_A_2 = bar_A_0 / 2._CUSTOM_REAL * (gamma_z - beta_z)                           
+    bar_A_1 = bar_A_0 / 2._CUSTOM_REAL * (gamma_x - alpha_x)
+    bar_A_2 = bar_A_0 / 2._CUSTOM_REAL * (gamma_z - beta_z)
 
-    A_1 = bar_A_1                                                          
-    A_2 = bar_A_2 
+    A_1 = bar_A_1
+    A_2 = bar_A_2
   else if (CPML_region_local == CPML_X_ONLY_TEMP) then
   !----------------A0-------------------------
     bar_A_0 = kappa_x
@@ -141,7 +141,7 @@
 
 !========================================================================
   subroutine lik_parameter_computation_viscoelastic(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
-                                                    CPML_region_local,index_ik,A_0,A_1,A_2,A_zener,&
+                                                    CPML_region_local,index_ik,A_0,A_1,A_2,A_zener, &
                                                     inv_tau_temp,tau_epsilon_temp)
 
   use constants, only: NDIM,CUSTOM_REAL,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
@@ -154,14 +154,14 @@
   double precision, intent(in) :: tau_epsilon_temp,inv_tau_temp
 
   double precision, intent(out) :: A_0,A_1,A_2,A_zener
- 
+
   ! local variables
   integer :: i,CPML_X_ONLY_TEMP,CPML_Z_ONLY_TEMP,CPML_XZ_TEMP,N_PMLSF
-  double precision :: bar_A_0,bar_A_1,bar_A_2  
+  double precision :: bar_A_0,bar_A_1,bar_A_2
   double precision, dimension(NDIM) :: beta_xz,alpha_xz,gamma_xz,eta_xz
   double precision :: gamma_only,alpha_only,beta_only,eta_only
 
-  
+
   if (index_ik == 13) then
     CPML_X_ONLY_TEMP = CPML_X_ONLY
     CPML_Z_ONLY_TEMP = CPML_Z_ONLY
@@ -189,8 +189,8 @@
       gamma_xz(i) = (beta_xz(i) * (inv_tau_temp - alpha_xz(i) * tau_epsilon_temp * inv_tau_temp) + &
                      alpha_xz(i) * alpha_xz(i) * (tau_epsilon_temp * inv_tau_temp - 1._CUSTOM_REAL)) / &
                     (inv_tau_temp - alpha_xz(i))
-      eta_xz(i) = inv_tau_temp * (beta_xz(i) - alpha_xz(i)) / (inv_tau_temp - alpha_xz(i)) 
-    end do
+      eta_xz(i) = inv_tau_temp * (beta_xz(i) - alpha_xz(i)) / (inv_tau_temp - alpha_xz(i))
+    enddo
 
     bar_A_1 = bar_A_0 / 2._CUSTOM_REAL * (gamma_xz(1) - alpha_xz(1))
     bar_A_2 = bar_A_0 / 2._CUSTOM_REAL * (gamma_xz(2) - alpha_xz(2))
@@ -205,40 +205,40 @@
   else if (CPML_region_local == CPML_X_ONLY_TEMP) then
     bar_A_0 = kappa_x
     alpha_only = alpha_x
-    beta_only = beta_x    
+    beta_only = beta_x
 
     gamma_only = (beta_only * (inv_tau_temp - alpha_only * tau_epsilon_temp * inv_tau_temp) + &
                   alpha_only * alpha_only * (tau_epsilon_temp * inv_tau_temp - 1._CUSTOM_REAL)) / &
                  (inv_tau_temp - alpha_only)
-    eta_only = inv_tau_temp * (beta_only - alpha_only) / (inv_tau_temp - alpha_only) 
+    eta_only = inv_tau_temp * (beta_only - alpha_only) / (inv_tau_temp - alpha_only)
 
-    bar_A_1 = bar_A_0 * (gamma_only -alpha_only) 
+    bar_A_1 = bar_A_0 * (gamma_only -alpha_only)
     bar_A_2 = 0._CUSTOM_REAL
 
-    A_0 = bar_A_0 
-    A_1 = bar_A_1 
+    A_0 = bar_A_0
+    A_1 = bar_A_1
     A_2 = bar_A_2
-    
+
     A_zener = bar_A_0 * (tau_epsilon_temp * inv_tau_temp - 1._CUSTOM_REAL) * &
               (eta_only - inv_tau_temp)
   else if (CPML_region_local == CPML_Z_ONLY_TEMP) then
 
     bar_A_0 = 1._CUSTOM_REAL / kappa_z
     alpha_only = beta_z
-    beta_only = alpha_z    
+    beta_only = alpha_z
 
     gamma_only = (beta_only * (inv_tau_temp - alpha_only * tau_epsilon_temp * inv_tau_temp) + &
                   alpha_only * alpha_only * (tau_epsilon_temp * inv_tau_temp - 1._CUSTOM_REAL)) &
                   / (inv_tau_temp - alpha_only)
-    eta_only = inv_tau_temp * (beta_only - alpha_only) / (inv_tau_temp - alpha_only) 
+    eta_only = inv_tau_temp * (beta_only - alpha_only) / (inv_tau_temp - alpha_only)
 
 
-    bar_A_1 = 0._CUSTOM_REAL 
+    bar_A_1 = 0._CUSTOM_REAL
     bar_A_2 = bar_A_0* (gamma_only - alpha_only)
 
-    A_0 = bar_A_0  
-    A_1 = bar_A_1 
-    A_2 = bar_A_2    
+    A_0 = bar_A_0
+    A_1 = bar_A_1
+    A_2 = bar_A_2
     A_zener = bar_A_0 * (tau_epsilon_temp * inv_tau_temp - 1._CUSTOM_REAL) * &
               (eta_only - inv_tau_temp)
   endif
@@ -274,14 +274,14 @@
     gamma_z = (alpha_x * alpha_z + alpha_z**2 + 2._CUSTOM_REAL * beta_x * beta_z - &
               2._CUSTOM_REAL * alpha_z * (beta_x + beta_z)) / (alpha_x - alpha_z)
     bar_A_1 = bar_A_0 /2._CUSTOM_REAL * (gamma_x - alpha_x + gamma_z - alpha_z)
-    bar_A_2 = bar_A_0 /2._CUSTOM_REAL * (alpha_x**2 - gamma_x * alpha_x + & 
+    bar_A_2 = bar_A_0 /2._CUSTOM_REAL * (alpha_x**2 - gamma_x * alpha_x + &
               alpha_z**2 - gamma_z * alpha_z)
 
     A_0 = bar_A_0
     A_1 = bar_A_1
     A_2 = bar_A_2
 
-    bar_A_3 = bar_A_0 /2._CUSTOM_REAL * alpha_x**2 * (gamma_x - alpha_x) 
+    bar_A_3 = bar_A_0 /2._CUSTOM_REAL * alpha_x**2 * (gamma_x - alpha_x)
     bar_A_4 = bar_A_0 /2._CUSTOM_REAL * alpha_z**2 * (gamma_z - alpha_z)
 
     A_3 = bar_A_3
@@ -645,15 +645,15 @@
   integer :: i
   double precision, dimension(N_PMLSF) ::gamma_de
 
-  if (N_PMLSF .lt. 0) then
+  if (N_PMLSF < 0) then
     write(*,*)'the number of PML Stretching function should be greater than 0'
     stop
   endif
-  
+
 
   if (N_PMLSF == 1) then
     ! there is nothing to do in this case
-  elseif (N_PMLSF == 2) then
+  else if (N_PMLSF == 2) then
     gamma_de(1) = (alpha(1) * alpha(2) + alpha(1)**2 + 2._CUSTOM_REAL * beta(1) * beta(2) - &
                   2._CUSTOM_REAL * alpha(1) * (beta(1) + beta(2))) / (alpha(2) - alpha(1))
     gamma_de(2) = (alpha(1) * alpha(2) + alpha(2)**2 + 2._CUSTOM_REAL * beta(1) * beta(2) - &
@@ -662,7 +662,7 @@
 
   do i = 1,N_PMLSF
     beta(i) = gamma_de(i)
-  end do
-   
+  enddo
+
  end subroutine decompose_rational_fraction_PML
  !=================================================

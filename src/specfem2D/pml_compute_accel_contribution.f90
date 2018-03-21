@@ -203,7 +203,7 @@
 ! for elastic elements
 
   use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,NGLJ,TWO_THIRDS, &
-                       CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK                       
+                       CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: time_stepping_scheme,i_stage,deltat, &
                          assign_external_model,rhoext,density,kmato, &

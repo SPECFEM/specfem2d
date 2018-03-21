@@ -435,8 +435,8 @@ module specfem_par
 
   ! additional variables needed for CPML in viscoelastic simulation
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tau_epsilon_nu1,tau_epsilon_nu2
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: kaPML_rmemory_dux_dxl,kaPML_rmemory_duz_dzl,&
-                                                             muPML_rmemory_dux_dxl,muPML_rmemory_duz_dzl,&
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: kaPML_rmemory_dux_dxl,kaPML_rmemory_duz_dzl, &
+                                                             muPML_rmemory_dux_dxl,muPML_rmemory_duz_dzl, &
                                                              muPML_rmemory_dux_dzl,muPML_rmemory_duz_dxl
 
   !for backward simulation in adjoint inversion
