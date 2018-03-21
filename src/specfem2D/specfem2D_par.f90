@@ -423,7 +423,7 @@ module specfem_par
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
 
-  ! the variable for PML
+  ! the variable for CPML in elastic simulation
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
                           rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
@@ -432,6 +432,12 @@ module specfem_par
                           rmemory_dux_dx_LDDRK,rmemory_duz_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dz_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic_LDDRK
+
+  ! additional variables needed for CPML in viscoelastic simulation
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tau_epsilon_nu1,tau_epsilon_nu2
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: kaPML_rmemory_dux_dxl,kaPML_rmemory_duz_dzl,&
+                                                             muPML_rmemory_dux_dxl,muPML_rmemory_duz_dzl,&
+                                                             muPML_rmemory_dux_dzl,muPML_rmemory_duz_dxl
 
   !for backward simulation in adjoint inversion
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &

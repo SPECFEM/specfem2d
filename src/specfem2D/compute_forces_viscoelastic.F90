@@ -42,7 +42,8 @@
                          ATTENUATION_VISCOELASTIC,nspec_ATT,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
-                         jacobian,vpext,vsext,rhoext, &
+                         jacobian,vpext,vsext,rhoext,&
+                         QKappa_attenuation,Qmu_attenuation,QKappa_attenuationext,Qmu_attenuationext, &
                          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext, &
                          ispec_is_anisotropic,anisotropy, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -113,6 +114,13 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: PML_dux_dxl_old,PML_dux_dzl_old,PML_duz_dxl_old,PML_duz_dzl_old
 
+  !additional variables for CPML implementation in viscoelastic simulation
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: kappa_dux_dxl,kappa_duz_dzl,mu_dux_dxl,mu_duz_dzl,&
+                                                    mu_dux_dzl,mu_duz_dxl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: kappa_pml_dux_dxl,kappa_pml_duz_dzl,&
+                                                    mu_pml_dux_dxl,mu_pml_duz_dzl,mu_pml_dux_dzl,mu_pml_duz_dxl
+  double precision :: qkappal,qmul
+
   integer :: num_elements,ispec_p
 
   ! this to avoid a warning at execution time about an undefined variable being used
@@ -141,6 +149,16 @@
 
     ! only for elastic spectral elements
     if (.not. ispec_is_elastic(ispec)) cycle
+
+    if (ATTENUATION_VISCOELASTIC) then
+      if (.not. assign_external_model) then
+        qkappal = QKappa_attenuation(kmato(ispec))
+        qmul = Qmu_attenuation(kmato(ispec))
+      else
+        qkappal = maxval(QKappa_attenuationext(:,:,ispec))
+        qmul =  maxval(Qmu_attenuationext(:,:,ispec))
+      endif
+    endif
 
     ! gets local displacement for element
     do j = 1,NGLLZ
@@ -206,12 +224,29 @@
       endif
     endif
 
-    if (PML_BOUNDARY_CONDITIONS) then
-      call pml_compute_memory_variables_elastic(ispec,nglob,displ_elastic_old, &
-                                                dux_dxl,dux_dzl,duz_dxl,duz_dzl, &
-                                                dux_dxl_prime,dux_dzl_prime,duz_dxl_prime,duz_dzl_prime, &
-                                                PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl, &
-                                                PML_dux_dxl_old,PML_dux_dzl_old,PML_duz_dxl_old,PML_duz_dzl_old)
+    if (PML_BOUNDARY_CONDITIONS) then !viscoelastic PML
+      if (ispec_is_PML(ispec)) then
+        if (ATTENUATION_VISCOELASTIC) then
+          if (qkappal < 9998.999d0 .and. qmul < 9998.999d0) then
+
+            call pml_compute_memory_variables_viscoelastic(ispec,nglob,displ_elastic_old,dux_dxl,dux_dzl,duz_dxl,duz_dzl,&
+                                                           kappa_pml_dux_dxl,kappa_pml_duz_dzl,&
+                                                           mu_pml_dux_dxl,mu_pml_duz_dzl,mu_pml_dux_dzl,&
+                                                           mu_pml_duz_dxl,kappa_dux_dxl,kappa_duz_dzl,mu_dux_dxl,&
+                                                           mu_duz_dzl,mu_dux_dzl,mu_duz_dxl) 
+          else
+            call pml_compute_memory_variables_elastic(ispec,nglob,displ_elastic_old,dux_dxl,dux_dzl,duz_dxl,duz_dzl,&
+                                                     dux_dxl_prime,dux_dzl_prime,duz_dxl_prime,duz_dzl_prime, &
+                                                     PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl, &
+                                                     PML_dux_dxl_old,PML_dux_dzl_old,PML_duz_dxl_old,PML_duz_dzl_old)
+          endif
+        else
+          call pml_compute_memory_variables_elastic(ispec,nglob,displ_elastic_old,dux_dxl,dux_dzl,duz_dxl,duz_dzl,&
+                                                   dux_dxl_prime,dux_dzl_prime,duz_dxl_prime,duz_dzl_prime, &
+                                                   PML_dux_dxl,PML_dux_dzl,PML_duz_dxl,PML_duz_dzl, &
+                                                   PML_dux_dxl_old,PML_dux_dzl_old,PML_duz_dxl_old,PML_duz_dzl_old)
+        endif
+      endif
     endif
 
     ! AXISYM case overwrite duz_dxl and duz_dxl_prime
@@ -356,14 +391,23 @@
 
           if (PML_BOUNDARY_CONDITIONS) then
             if (ispec_is_PML(ispec)) then
-! PML currently has no support for viscoelasticity, use the elastic formula instead
-              sigma_xx = lambdaplus2mu_unrelaxed_elastic * dux_dxl(i,j) + lambdal_unrelaxed_elastic * PML_duz_dzl(i,j)
-              sigma_zz = lambdaplus2mu_unrelaxed_elastic * duz_dzl(i,j) + lambdal_unrelaxed_elastic * PML_dux_dxl(i,j)
-              sigma_zx = mul_unrelaxed_elastic * (PML_duz_dxl(i,j) + dux_dzl(i,j))
-              sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j) + duz_dxl(i,j))
+               if (qkappal < 9998.999d0 .and. qmul < 9998.999d0) then
+                 sigma_xx = (lambdalplusmul_unrelaxed_elastic * kappa_pml_dux_dxl(i,j) + mul_unrelaxed_elastic * &
+                            mu_pml_dux_dxl(i,j)) + (lambdalplusmul_unrelaxed_elastic * kappa_duz_dzl(i,j) - &
+                            mul_unrelaxed_elastic * mu_duz_dzl(i,j))
+                 sigma_xz = (mul_unrelaxed_elastic * mu_pml_duz_dxl(i,j) + mul_unrelaxed_elastic * mu_dux_dzl(i,j))
+                 sigma_zx = (mul_unrelaxed_elastic * mu_duz_dxl(i,j) + mul_unrelaxed_elastic * mu_pml_dux_dzl(i,j))
+                 sigma_zz = (lambdalplusmul_unrelaxed_elastic * kappa_dux_dxl(i,j) - mul_unrelaxed_elastic * &
+                            mu_dux_dxl(i,j))+ (lambdalplusmul_unrelaxed_elastic * kappa_pml_duz_dzl(i,j) + &
+                            mul_unrelaxed_elastic * mu_pml_duz_dzl(i,j))
+               else
+                 sigma_xx = lambdaplus2mu_unrelaxed_elastic * dux_dxl(i,j) + lambdal_unrelaxed_elastic * PML_duz_dzl(i,j)
+                 sigma_zz = lambdaplus2mu_unrelaxed_elastic * duz_dzl(i,j) + lambdal_unrelaxed_elastic * PML_dux_dxl(i,j)
+                 sigma_zx = mul_unrelaxed_elastic * (PML_duz_dxl(i,j) + dux_dzl(i,j))
+                 sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j) + duz_dxl(i,j))
+               endif
             endif
           endif
-
         else
           ! no attenuation
 
