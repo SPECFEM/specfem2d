@@ -81,7 +81,7 @@
     write(12,pos=ioffset) header1,header2,header3,header4
   endif
   ioffset = 4*((irec-1)*(NSTEP/subsamp_seismos + 60) + 60 + seismo_offset) + 1
-  write(12,pos=ioffset) single_precision_seismo  
+  write(12,pos=ioffset) single_precision_seismo
 
 
   if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
@@ -94,7 +94,7 @@
     endif
     ioffset = 4*((irec-1)*(NSTEP/subsamp_seismos + 60) + 60 + seismo_offset) + 1
     write(14,pos=ioffset) single_precision_seismo
-    
+
   endif
 
   end subroutine write_output_SU
