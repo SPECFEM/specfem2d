@@ -270,9 +270,6 @@
   if (seismotype < 1 .or. seismotype > 6) &
     stop 'seismotype should be 1(=displ), 2(=veloc), 3(=accel), 4(=pressure), 5(=curl of displ) or 6(=the fluid potential)'
 
-  if (SU_FORMAT .and. .not. save_binary_seismograms_single) &
-     stop 'SU_FORMAT seismograms are single precision and thus require save_binary_seismograms_single set to .true.'
-
   if (SAVE_FORWARD .and. (seismotype /= 1 .and. seismotype /= 6)) then
     ! user warning
     if (myrank == 0) then
