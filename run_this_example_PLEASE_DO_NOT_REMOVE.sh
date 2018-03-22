@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# script runs mesher and solver (in serial)
+# this script runs the mesher and the solver (in serial or in parallel, as needed)
 # using this example setup
 #
 
