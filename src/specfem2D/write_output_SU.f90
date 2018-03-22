@@ -34,7 +34,7 @@
   subroutine write_output_SU(x_source,z_source,irec,buffer_binary,number_of_components)
 
   use specfem_par, only: NSTEP,nrec,deltat,seismotype,st_xval, &
-                         P_SV,st_zval,subsamp_seismos
+                         P_SV,st_zval,subsamp_seismos,NSTEP_BETWEEN_OUTPUT_SEISMOS
 
   implicit none
 
@@ -51,6 +51,12 @@
   real(kind=4), dimension(30) :: header4
   integer(kind=2) :: header2(2),header3(2)
   real(kind=4), dimension(NSTEP/subsamp_seismos) :: single_precision_seismo
+
+  if (NSTEP_BETWEEN_OUTPUT_SEISMOS /= NSTEP) then
+    print *,'option NSTEP_BETWEEN_OUTPUT_SEISMOS not supported yet for write_output_SU()'
+    print *,'please set NSTEP_BETWEEN_OUTPUT_SEISMOS to the same value as NSTEP in your Par_file and start the run again'
+    stop 'error: NSTEP_BETWEEN_OUTPUT_SEISMOS /= NSTEP in write_output_SU()'
+  endif
 
   if (deltat*1.0d6 > 2**15) then
     deltat_int2 = 0

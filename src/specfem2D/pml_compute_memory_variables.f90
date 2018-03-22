@@ -692,29 +692,37 @@
       select case (time_stepping_scheme)
       case (1)
         ! Newmark
+! alpha_z convolve dux_dx
         rmemory_dux_dx(i,j,ispec_PML,1) = coef0_zx_1 * rmemory_dux_dx(i,j,ispec_PML,1) + &
-                                          coef1_zx_1 * PML_dux_dxl(i,j) + coef2_zx_1 * PML_dux_dxl_old(i,j)  !alpha_z convolve dux_dx
+                                          coef1_zx_1 * PML_dux_dxl(i,j) + coef2_zx_1 * PML_dux_dxl_old(i,j)
 
+! alpha_z convolve duz_dx
         rmemory_duz_dx(i,j,ispec_PML,1) = coef0_zx_1 * rmemory_duz_dx(i,j,ispec_PML,1) + &
-                                          coef1_zx_1 * PML_duz_dxl(i,j) + coef2_zx_1 * PML_duz_dxl_old(i,j)  !alpha_z convolve duz_dx
+                                          coef1_zx_1 * PML_duz_dxl(i,j) + coef2_zx_1 * PML_duz_dxl_old(i,j)
 
+! beta_x convolve dux_dx
         rmemory_dux_dx(i,j,ispec_PML,2) = coef0_zx_2 * rmemory_dux_dx(i,j,ispec_PML,2) + &
-                                          coef1_zx_2 * PML_dux_dxl(i,j) + coef2_zx_2 * PML_dux_dxl_old(i,j)  !beta_x convolve dux_dx
+                                          coef1_zx_2 * PML_dux_dxl(i,j) + coef2_zx_2 * PML_dux_dxl_old(i,j)
 
+! beta_x convolve duz_dx
         rmemory_duz_dx(i,j,ispec_PML,2) = coef0_zx_2 * rmemory_duz_dx(i,j,ispec_PML,2) + &
-                                          coef1_zx_2 * PML_duz_dxl(i,j) + coef2_zx_2 * PML_duz_dxl_old(i,j)  !beta_x convolve duz_dx
+                                          coef1_zx_2 * PML_duz_dxl(i,j) + coef2_zx_2 * PML_duz_dxl_old(i,j)
 
+! alpha_x convolve dux_dz
         rmemory_dux_dz(i,j,ispec_PML,1) = coef0_xz_1 * rmemory_dux_dz(i,j,ispec_PML,1) + &
-                                          coef1_xz_1 * PML_dux_dzl(i,j) + coef2_xz_1 * PML_dux_dzl_old(i,j)  !alpha_x convolve dux_dz
+                                          coef1_xz_1 * PML_dux_dzl(i,j) + coef2_xz_1 * PML_dux_dzl_old(i,j)
 
+! alpha_x convolve duz_dz
         rmemory_duz_dz(i,j,ispec_PML,1) = coef0_xz_1 * rmemory_duz_dz(i,j,ispec_PML,1) + &
-                                          coef1_xz_1 * PML_duz_dzl(i,j) + coef2_xz_1 * PML_duz_dzl_old(i,j)  !alpha_x convolve duz_dz
+                                          coef1_xz_1 * PML_duz_dzl(i,j) + coef2_xz_1 * PML_duz_dzl_old(i,j)
 
+! beta_z convolve dux_dz
         rmemory_dux_dz(i,j,ispec_PML,2) = coef0_xz_2 * rmemory_dux_dz(i,j,ispec_PML,2) + &
-                                          coef1_xz_2 * PML_dux_dzl(i,j) + coef2_xz_2 * PML_dux_dzl_old(i,j)  !beta_z convolve dux_dz
+                                          coef1_xz_2 * PML_dux_dzl(i,j) + coef2_xz_2 * PML_dux_dzl_old(i,j)
 
+! beta_z convolve duz_dz
         rmemory_duz_dz(i,j,ispec_PML,2) = coef0_xz_2 * rmemory_duz_dz(i,j,ispec_PML,2) + &
-                                          coef1_xz_2 * PML_duz_dzl(i,j) + coef2_xz_2 * PML_duz_dzl_old(i,j)  !beta_z convolve duz_dz
+                                          coef1_xz_2 * PML_duz_dzl(i,j) + coef2_xz_2 * PML_duz_dzl_old(i,j)
       case (2)
       ! LDDRK
         stop 'Time stepping scheme not implemented yet for viscoelastic PML memory variable update'
@@ -734,17 +742,17 @@
         A_mu = phi_nu2(i,j,ispec,i_sls)
 
         ! gets viscelastic PML coefficients
-        call lik_parameter_computation_viscoelastic(deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
+        call lik_parameter_computation_viscoelastic(kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
                                               CPML_region_local,31,A_01,A_2_ka,A_3_ka,A_ki_ka,tauinv_kappa, &
                                               tao_epsilon_kappa)
-        call lik_parameter_computation_viscoelastic(deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
+        call lik_parameter_computation_viscoelastic(kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
                                               CPML_region_local,31,A_01,A_2_mu,A_3_mu,A_ki_mu,tauinv_mu, &
                                               tao_epsilon_mu)
 
-        call lik_parameter_computation_viscoelastic(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+        call lik_parameter_computation_viscoelastic(kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                               CPML_region_local,13,A_10,A_4_ka,A_5_ka,A_ik_ka,tauinv_kappa, &
                                               tao_epsilon_kappa)
-        call lik_parameter_computation_viscoelastic(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+        call lik_parameter_computation_viscoelastic(kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                               CPML_region_local,13,A_10,A_4_mu,A_5_mu,A_ik_mu,tauinv_mu, &
                                               tao_epsilon_mu)
 
@@ -752,24 +760,32 @@
         call compute_coef_convolution(tauinv_mu,deltat,coef0_l_mu,coef1_l_mu,coef2_l_mu)
 
         select case (time_stepping_scheme)
+
         case (1)
         ! Newmark
-          kaPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) = coef0_l_ka * kaPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) + & !inv_tau_sigma_nu1 convolve dux_dx
+
+! inv_tau_sigma_nu1 convolve dux_dx
+          kaPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) = coef0_l_ka * kaPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) + &
                                                        coef1_l_ka * PML_dux_dxl(i,j) + coef2_l_ka * PML_dux_dxl_old(i,j)
 
-          kaPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) = coef0_l_ka * kaPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) + & !inv_tau_sigma_nu1 convolve duz_dz
+! inv_tau_sigma_nu1 convolve duz_dz
+          kaPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) = coef0_l_ka * kaPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) + &
                                                        coef1_l_ka * PML_duz_dzl(i,j) + coef2_l_ka * PML_duz_dzl_old(i,j)
 
-          muPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) + & !inv_tau_sigma_nu2 convolve dux_dx
+! inv_tau_sigma_nu2 convolve dux_dx
+          muPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_dux_dxl(i,j,ispec_PML,i_sls) + &
                                                        coef1_l_mu * PML_dux_dxl(i,j) + coef2_l_mu * PML_dux_dxl_old(i,j)
 
-          muPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) + & !inv_tau_sigma_nu2 convolve duz_dz
+! inv_tau_sigma_nu2 convolve duz_dz
+          muPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls) + &
                                                        coef1_l_mu * PML_duz_dzl(i,j) + coef2_l_mu * PML_duz_dzl_old(i,j)
 
-          muPML_rmemory_dux_dzl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_dux_dzl(i,j,ispec_PML,i_sls) + & !inv_tau_sigma_nu2 convolve dux_dz
+! inv_tau_sigma_nu2 convolve dux_dz
+          muPML_rmemory_dux_dzl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_dux_dzl(i,j,ispec_PML,i_sls) + &
                                                        coef1_l_mu * PML_dux_dzl(i,j) + coef2_l_mu * PML_dux_dzl_old(i,j)
 
-          muPML_rmemory_duz_dxl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_duz_dxl(i,j,ispec_PML,i_sls) + & !inv_tau_sigma_nu2 convolve duz_dx
+! inv_tau_sigma_nu2 convolve duz_dx
+          muPML_rmemory_duz_dxl(i,j,ispec_PML,i_sls) = coef0_l_mu * muPML_rmemory_duz_dxl(i,j,ispec_PML,i_sls) + &
                                                        coef1_l_mu * PML_duz_dxl(i,j) + coef2_l_mu * PML_duz_dxl_old(i,j)
           A_2_ka_sum = A_2_ka_sum + A_2_ka
           A_2_mu_sum = A_2_mu_sum + A_2_mu
@@ -830,6 +846,9 @@
       mu_duz_dzl(i,j) = PML_duz_dzl(i,j) + sum_mu_duz_dz
       mu_dux_dzl(i,j) = PML_dux_dzl(i,j) + sum_mu_dux_dz
       mu_duz_dxl(i,j) = PML_duz_dxl(i,j) + sum_mu_duz_dx
+
     enddo
   enddo
+
   end subroutine pml_compute_memory_variables_viscoelastic
+

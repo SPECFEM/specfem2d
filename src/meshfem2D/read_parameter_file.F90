@@ -140,6 +140,7 @@
     call bcast_all_singlei(seismotype)
     call bcast_all_singlei(subsamp_seismos)
     call bcast_all_singlel(USE_TRICK_FOR_BETTER_PRESSURE)
+    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_SEISMOS)
     call bcast_all_singlel(COMPUTE_INTEGRATED_ENERGY_FIELD)
     call bcast_all_singledp(USER_T0)
     call bcast_all_singlel(save_ASCII_seismograms)
@@ -575,6 +576,13 @@
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'USE_TRICK_FOR_BETTER_PRESSURE   = .false.'
+    write(*,*)
+  endif
+
+  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_SEISMOS, 'NSTEP_BETWEEN_OUTPUT_SEISMOS')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NSTEP_BETWEEN_OUTPUT_SEISMOS    = 1000'
     write(*,*)
   endif
 

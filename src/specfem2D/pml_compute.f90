@@ -140,7 +140,8 @@
  end subroutine lik_parameter_computation
 
 !========================================================================
-  subroutine lik_parameter_computation_viscoelastic(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+
+  subroutine lik_parameter_computation_viscoelastic(kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
                                                     CPML_region_local,index_ik,A_0,A_1,A_2,A_zener, &
                                                     inv_tau_temp,tau_epsilon_temp)
 
@@ -148,7 +149,6 @@
 
   implicit none
 
-  double precision, intent(in) :: deltat
   double precision, intent(in) :: kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z
   integer, intent(in) :: CPML_region_local,index_ik
   double precision, intent(in) :: tau_epsilon_temp,inv_tau_temp

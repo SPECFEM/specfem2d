@@ -180,6 +180,8 @@ module shared_input_parameters
   ! for better accuracy of pressure output (uses 2nd time-derivatives of the initial source time function)
   logical :: USE_TRICK_FOR_BETTER_PRESSURE
 
+  integer :: NSTEP_BETWEEN_OUTPUT_SEISMOS
+
   ! Integrated energy field output
   logical :: COMPUTE_INTEGRATED_ENERGY_FIELD
 

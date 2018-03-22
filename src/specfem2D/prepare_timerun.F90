@@ -186,9 +186,9 @@
 
   ! seismograms
   ! allocate seismogram arrays
-  allocate(sisux(NSTEP/subsamp_seismos,nrecloc), &
-           sisuz(NSTEP/subsamp_seismos,nrecloc), &
-           siscurl(NSTEP/subsamp_seismos,nrecloc),stat=ier)
+  allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
+           sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
+           siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),stat=ier)
   if (ier /= 0) stop 'Error allocating seismogram arrays'
 
   sisux(:,:) = ZERO ! double precision zero
@@ -1345,7 +1345,8 @@
            phi_nu2(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
            Mu_nu1(NGLLX,NGLLZ,nspec_ATT), &
            Mu_nu2(NGLLX,NGLLZ,nspec_ATT), &
-           tau_epsilon_nu1(NGLLX,NGLLZ,nspec_ATT,N_SLS),&  !ZN needed for further optimization with nspec_ATT replaced with nspec_PML
+! ZX ZX needed for further optimization with nspec_ATT replaced with nspec_PML
+           tau_epsilon_nu1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
            tau_epsilon_nu2(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
   if (ier /= 0) stop 'Error allocating attenuation arrays'
 
