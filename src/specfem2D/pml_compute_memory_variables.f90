@@ -563,7 +563,8 @@
 
   use specfem_par, only: tau_epsilon_nu1,tau_epsilon_nu2,Mu_nu1,Mu_nu2, &
                          N_SLS,inv_tau_sigma_nu1,inv_tau_sigma_nu2,phi_nu1,phi_nu2,spec_to_PML, &
-                         region_CPML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store
+                         region_CPML,K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
+                         AXISYM,is_on_the_axis,hprimeBar_xx
 
   implicit none
 
@@ -607,8 +608,50 @@
   ! checks if anything to do in this slice
   if (nspec_PML == 0) return
   if (.not. ispec_is_PML(ispec)) return
+
+  ! compute the spatial derivatives
+
+  ! AXISYM case
+  if (AXISYM .and. is_on_the_axis(ispec)) then
+
   do j = 1,NGLLZ
     do i = 1,NGLLX
+
+      ! stores initial derivatives
+      PML_dux_dxl(i,j) = dux_dxl(i,j)
+      PML_dux_dzl(i,j) = dux_dzl(i,j)
+      PML_duz_dzl(i,j) = duz_dzl(i,j)
+      PML_duz_dxl(i,j) = duz_dxl(i,j)
+
+      dux_dxi_old = 0._CUSTOM_REAL
+      duz_dxi_old = 0._CUSTOM_REAL
+      dux_dgamma_old = 0._CUSTOM_REAL
+      duz_dgamma_old = 0._CUSTOM_REAL
+      do k = 1,NGLLX
+        dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+        duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+        dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
+        duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
+      enddo
+
+      ! derivatives of displacement
+      xixl = xix(i,j,ispec)
+      xizl = xiz(i,j,ispec)
+      gammaxl = gammax(i,j,ispec)
+      gammazl = gammaz(i,j,ispec)
+
+      PML_dux_dxl_old(i,j) = dux_dxi_old*xixl + dux_dgamma_old*gammaxl ! this is dux_dxl_old
+      PML_dux_dzl_old(i,j) = dux_dxi_old*xizl + dux_dgamma_old*gammazl ! this is dux_dzl_old
+      PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl ! this is duz_dxl_old
+      PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl ! this is duz_dzl_old
+    enddo
+  enddo
+
+  else ! non AXISYM case
+
+  do j = 1,NGLLZ
+    do i = 1,NGLLX
+
       ! stores initial derivatives
       PML_dux_dxl(i,j) = dux_dxl(i,j)
       PML_dux_dzl(i,j) = dux_dzl(i,j)
@@ -625,18 +668,21 @@
         dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
         duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
       enddo
+
       ! derivatives of displacement
       xixl = xix(i,j,ispec)
       xizl = xiz(i,j,ispec)
       gammaxl = gammax(i,j,ispec)
       gammazl = gammaz(i,j,ispec)
 
-      PML_dux_dxl_old(i,j) = dux_dxi_old*xixl + dux_dgamma_old*gammaxl !dux_dxl_old
-      PML_dux_dzl_old(i,j) = dux_dxi_old*xizl + dux_dgamma_old*gammazl !dux_dzl_old
-      PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl !duz_dxl_old
-      PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl !duz_dzl_old
+      PML_dux_dxl_old(i,j) = dux_dxi_old*xixl + dux_dgamma_old*gammaxl ! this is dux_dxl_old
+      PML_dux_dzl_old(i,j) = dux_dxi_old*xizl + dux_dgamma_old*gammazl ! this is dux_dzl_old
+      PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl ! this is duz_dxl_old
+      PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl ! this is duz_dzl_old
     enddo
   enddo
+
+  endif ! end of test on AXISYM
 
   ! local PML element
   ispec_PML = spec_to_PML(ispec)
@@ -725,9 +771,11 @@
                                           coef1_xz_2 * PML_duz_dzl(i,j) + coef2_xz_2 * PML_duz_dzl_old(i,j)
       case (2)
       ! LDDRK
-        stop 'Time stepping scheme not implemented yet for viscoelastic PML memory variable update'
+        stop 'Time stepping scheme LDDRK not implemented yet for viscoelastic PML memory variable update'
+
       case default
-        stop 'Time stepping scheme not implemented yet for viscoelastic PML memory variable update'
+        stop 'Unknown time scheme for viscoelastic PML memory variable update'
+
       end select
 
       do i_sls = 1,N_SLS
@@ -811,12 +859,16 @@
           sum_mu_duz_dz = sum_mu_duz_dz + A_mu * muPML_rmemory_duz_dzl(i,j,ispec_PML,i_sls)
           sum_mu_dux_dz = sum_mu_dux_dz + A_mu * muPML_rmemory_dux_dzl(i,j,ispec_PML,i_sls)
           sum_mu_duz_dx = sum_mu_duz_dx + A_mu * muPML_rmemory_duz_dxl(i,j,ispec_PML,i_sls)
+
         case (2)
         ! LDDRK
-          stop 'Time stepping scheme not implemented yet for viscoelastic PML memory variable update'
+          stop 'Time stepping scheme LDDRK not implemented yet for viscoelastic PML memory variable update'
+
         case default
-          stop 'Time stepping scheme not implemented yet for viscoelastic PML memory variable update'
+          stop 'Unknown time scheme for viscoelastic PML memory variable update'
+
         end select
+
       enddo
 
       kappa_pml_dux_dxl(i,j) = A_01 * PML_dux_dxl(i,j) + kappa_sum_dux_dxl + &
