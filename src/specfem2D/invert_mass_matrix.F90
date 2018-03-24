@@ -42,8 +42,8 @@
 
   use specfem_par, only: myrank,any_elastic,any_acoustic,any_poroelastic, &
     rmass_inverse_elastic, &
-    rmass_inverse_acoustic, &
-    rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic, &
+    rmass_inverse_acoustic,rmass_inverse_e1,ATTENUATION_VISCOACOUSTIC,phi_nu1,N_SLS, &
+    time_stepping_scheme,rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic, &
     nspec,ibool,kmato,wxgll,wzgll,jacobian, &
     ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
     assign_external_model, &
@@ -70,13 +70,15 @@
   real(kind=CUSTOM_REAL) :: cpl,csl
   real(kind=CUSTOM_REAL) :: nx,nz,vx,vy,vz,vn,rho_vp,rho_vs,tx,ty,tz, &
                             weight,xxi,zxi,xgamma,zgamma,jacobian1D
-  real(kind=CUSTOM_REAL) :: deltatover2
+  real(kind=CUSTOM_REAL) :: deltatover2,phinu1
 
   double precision :: rhol,mul,kappal_relaxed,mu_relaxed,lambda_relaxed
   double precision :: rho_s,rho_f,rho_bar,phi,tort
 
   integer :: ispec_PML
   logical :: this_element_has_PML
+
+  integer :: i_sls
 
   if (myrank == 0) then
     write(IMAIN,*) "  initializing mass matrices"
@@ -95,6 +97,7 @@
 
   if (any_acoustic) then
     rmass_inverse_acoustic(:) = 0._CUSTOM_REAL
+    if (ATTENUATION_VISCOACOUSTIC) rmass_inverse_e1(:,:) = 0._CUSTOM_REAL
   endif
 
   ! common factor
@@ -400,19 +403,63 @@
                   xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
                       + xxi*wxglj(i)*wzgll(j)*jacobian(i,j,ispec) / kappal_relaxed
+
+                  if (ATTENUATION_VISCOACOUSTIC) then
+                    ! loop over relaxation mechanisms
+                    do i_sls = 1,N_SLS
+                      phinu1 = 1.
+                      if (time_stepping_scheme > 1) phinu1 = phi_nu1(i,j,ispec,i_sls)
+                      rmass_inverse_e1(iglob,i_sls) = rmass_inverse_e1(iglob,i_sls) &
+                         + xxi*wxglj(i)*wzgll(j)*jacobian(i,j,ispec) / phinu1
+                    enddo
+                  endif
+
                 else
                   rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
                       + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)*jacobian(i,j,ispec) / kappal_relaxed
+
+                  if (ATTENUATION_VISCOACOUSTIC) then
+                    ! loop over relaxation mechanisms
+                    do i_sls = 1,N_SLS
+                      phinu1 = 1.
+                      if (time_stepping_scheme > 1) phinu1 = phi_nu1(i,j,ispec,i_sls)
+                      rmass_inverse_e1(iglob,i_sls) = rmass_inverse_e1(iglob,i_sls) &
+                         + coord(1,iglob)/(xiglj(i)+ONE)*wxglj(i)*wzgll(j)*jacobian(i,j,ispec) / phinu1
+                    enddo
+                  endif
+
                 endif
               else
                 ! not on the axis
                 rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
                     + coord(1,iglob)*wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal_relaxed
+
+                if (ATTENUATION_VISCOACOUSTIC) then
+                  ! loop over relaxation mechanisms
+                  do i_sls = 1,N_SLS
+                    phinu1 = 1.
+                    if (time_stepping_scheme > 1) phinu1 = phi_nu1(i,j,ispec,i_sls)
+                    rmass_inverse_e1(iglob,i_sls) = rmass_inverse_e1(iglob,i_sls) &
+                       + coord(1,iglob)*wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / phinu1
+                  enddo
+                endif
+
               endif
             else
               ! not axisym
               rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
                    + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / kappal_relaxed
+
+              if (ATTENUATION_VISCOACOUSTIC) then
+                ! loop over relaxation mechanisms
+                do i_sls = 1,N_SLS
+                  phinu1 = 1.
+                  if (time_stepping_scheme > 1) phinu1 = phi_nu1(i,j,ispec,i_sls)
+                  rmass_inverse_e1(iglob,i_sls) = rmass_inverse_e1(iglob,i_sls) &
+                       + wxgll(i)*wzgll(j)*jacobian(i,j,ispec) / phinu1
+                enddo
+              endif
+
             endif
 
           endif
@@ -802,6 +849,7 @@
   use specfem_par, only: myrank,any_elastic,any_acoustic,any_poroelastic, &
                                 rmass_inverse_elastic, &
                                 rmass_inverse_acoustic, &
+                                rmass_inverse_e1,ATTENUATION_VISCOACOUSTIC, &
                                 rmass_s_inverse_poroelastic, &
                                 rmass_w_inverse_poroelastic
   implicit none
@@ -825,6 +873,7 @@
 
   if (any_acoustic) then
     where(rmass_inverse_acoustic <= 0._CUSTOM_REAL) rmass_inverse_acoustic = 1._CUSTOM_REAL
+    if (ATTENUATION_VISCOACOUSTIC) where(abs(rmass_inverse_e1) <= 0._CUSTOM_REAL) rmass_inverse_e1 = 1._CUSTOM_REAL
   endif
 
 ! compute the inverse of the mass matrix
@@ -839,6 +888,7 @@
 
   if (any_acoustic) then
     rmass_inverse_acoustic(:) = 1._CUSTOM_REAL / rmass_inverse_acoustic(:)
+    if (ATTENUATION_VISCOACOUSTIC) rmass_inverse_e1(:,:) = 1._CUSTOM_REAL / rmass_inverse_e1(:,:)
   endif
 
   end subroutine invert_mass_matrix

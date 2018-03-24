@@ -63,6 +63,7 @@
   if (any_acoustic) then
     write(2040) rmass_inverse_acoustic,num_phase_ispec_acoustic
     write(2040) phase_ispec_inner_acoustic,nspec_inner_acoustic,nspec_outer_acoustic,ispec_is_acoustic
+    if (ATTENUATION_VISCOACOUSTIC) write(2040) rmass_inverse_e1
   endif
 
   if (any_elastic) then
@@ -156,8 +157,7 @@
 
   implicit none
 
-  integer :: ier
-
+  integer :: ier,n_sls_loc
 
   ! reads setup data from a binary file
   allocate(ispec_is_inner(nspec))
@@ -216,11 +216,13 @@
 
     ! allocations
     if (ACOUSTIC_SIMULATION) then
+      n_sls_loc = 0
+      if (ATTENUATION_VISCOACOUSTIC) n_sls_loc = N_SLS
       allocate(request_send_recv_acoustic(ninterface_acoustic*2),stat=ier)
       if (ier /= 0) stop 'error in allocation of array request_send_recv_acoustic'
-      allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic),stat=ier)
+      allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac*(n_sls_loc+1),ninterface_acoustic),stat=ier)
       if (ier /= 0) stop 'error in allocation of array buffer_send_faces_vector_ac'
-      allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic),stat=ier)
+      allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac*(n_sls_loc+1),ninterface_acoustic),stat=ier)
       if (ier /= 0) stop 'error in allocation of array buffer_recv_faces_vector_ac'
     endif
 

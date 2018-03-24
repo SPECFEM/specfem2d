@@ -32,7 +32,7 @@
 !========================================================================
 
   subroutine compute_forces_viscoacoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                                     PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1)
+                                     PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1_acous,dot_e1)
 
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
@@ -47,7 +47,7 @@
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj,ATTENUATION_VISCOACOUSTIC, &
-                         nspec_ATT, N_SLS, iglob_is_forced
+                         N_SLS, iglob_is_forced,time_stepping_scheme,phi_nu1,inv_tau_sigma_nu1,nglob_acoustic
 
   ! overlapping communication
   use specfem_par, only: nspec_inner_acoustic,nspec_outer_acoustic,phase_ispec_inner_acoustic
@@ -59,6 +59,9 @@
 
   real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: potential_dot_dot_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_dot_acoustic,potential_acoustic
+
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic,N_SLS),intent(inout) :: dot_e1
+  real(kind=CUSTOM_REAL), dimension(nglob_acoustic,N_SLS),intent(in) :: e1_acous
 
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
   real(kind=CUSTOM_REAL), dimension(nglob) :: potential_acoustic_old
@@ -74,10 +77,12 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_elem
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: tempx1,tempx2,tempx3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,N_SLS) :: tempx3_e1
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
 
   ! Jacobian matrix and determinant
   real(kind=CUSTOM_REAL), dimension(6,NGLLX,NGLLZ) :: deriv
+  real(kind=CUSTOM_REAL), dimension(2,NGLLX,NGLLZ,N_SLS) :: deriv_e1
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
   real(kind=CUSTOM_REAL) :: rhol,fac
@@ -85,8 +90,6 @@
 
   ! local PML parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_dot_dot_acoustic_PML
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS) :: e1
 
   integer :: num_elements,ispec_p
 
@@ -126,6 +129,12 @@
           rhol = rhoext(i,j,ispec)
         endif
         deriv(6,i,j) = jacobian(i,j,ispec) / rhol
+
+        if (ATTENUATION_VISCOACOUSTIC .and. time_stepping_scheme > 1) then
+                deriv_e1(1,i,j,:) = phi_nu1(i,j,ispec,:)
+                deriv_e1(2,i,j,:) = inv_tau_sigma_nu1(i,j,ispec,:)
+        endif
+
       enddo
     enddo
 
@@ -247,13 +256,16 @@
       ! Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
       ! Geophysical Journal, vol. 93, p. 393-407 (1988)
 
-      tempx3 = 0._CUSTOM_REAL
+      tempx3    = 0._CUSTOM_REAL
+      tempx3_e1 = 0._CUSTOM_REAL
       do j = 1,NGLLZ
         do i = 1,NGLLX
+          iglob = ibool(i,j,ispec)
           ! loop on all the standard linear solids
           do i_sls = 1,N_SLS
-            tempx3(i,j) = tempx3(i,j) + e1(i,j,ispec,i_sls)
+            tempx3(i,j) = tempx3(i,j) + e1_acous(iglob,i_sls)
           enddo
+          if (time_stepping_scheme > 1) tempx3_e1(i,j,:) = deriv(5,i,j)*(deriv_e1(2,i,j,:)/deriv_e1(1,i,j,:))*e1_acous(iglob,:)
           tempx3(i,j) = jacobian(i,j,ispec)  * tempx3(i,j)
         enddo
       enddo
@@ -284,6 +296,8 @@
               ! sums contributions from each element to the global values
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
                                                   - (wzgll(j) * temp1l + wxglj(i) * temp2l)
+              if (ATTENUATION_VISCOACOUSTIC .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) &
+                                                      - (wzgll(j) * temp1l + wxglj(i) * temp2l)
             endif
           enddo
         enddo
@@ -302,6 +316,8 @@
               ! sums contributions from each element to the global values
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
                                                   - (wzgll(j) * temp1l + wxgll(i) * temp2l)
+              if (ATTENUATION_VISCOACOUSTIC .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) &
+                                                      - (wzgll(j) * temp1l + wxgll(i) * temp2l)
             endif
           enddo
         enddo
@@ -322,6 +338,8 @@
             ! sums contributions from each element to the global values
             potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
                                                 - (wzgll(j) * temp1l + wxgll(i) * temp2l)
+            if (ATTENUATION_VISCOACOUSTIC .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) &
+                                                      - (wzgll(j) * temp1l + wxgll(i) * temp2l)
           endif
         enddo
       enddo
@@ -352,6 +370,8 @@
               iglob = ibool(i,j,ispec)
               if (.not. iglob_is_forced(iglob)) then
                 potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + wzgll(j) * wxglj(i) * tempx3(i,j)
+                ! loop over all relaxation mechanisms
+                if (time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) - wzgll(j) * wxglj(i) * tempx3_e1(i,j,:)
               endif
             enddo
           enddo
@@ -362,6 +382,8 @@
               iglob = ibool(i,j,ispec)
               if (.not. iglob_is_forced(iglob)) then
                 potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + wzgll(j) * wxgll(i) * tempx3(i,j)
+                ! loop over all relaxation mechanisms
+                if (time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) - wzgll(j) * wxgll(i) * tempx3_e1(i,j,:)
               endif
             enddo
           enddo
@@ -373,6 +395,8 @@
             iglob = ibool(i,j,ispec)
             if (.not. iglob_is_forced(iglob)) then
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + wzgll(j) * wxgll(i) * tempx3(i,j)
+              ! loop over all relaxation mechanisms
+              if (time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) - wzgll(j) * wxgll(i) * tempx3_e1(i,j,:)
             endif
           enddo
         enddo

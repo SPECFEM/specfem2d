@@ -203,6 +203,16 @@
 
   integer :: irecloc,ier,ioffset
 
+  logical :: file_unit_12_has_been_opened,file_unit_13_has_been_opened,file_unit_14_has_been_opened
+  logical :: file_unit_15_has_been_opened,file_unit_16_has_been_opened,file_unit_17_has_been_opened
+
+  file_unit_12_has_been_opened = .false.
+  file_unit_13_has_been_opened = .false.
+  file_unit_14_has_been_opened = .false.
+  file_unit_15_has_been_opened = .false.
+  file_unit_16_has_been_opened = .false.
+  file_unit_17_has_been_opened = .false.
+
 ! write seismograms
 
   ! save displacement, velocity, acceleration or pressure
@@ -258,20 +268,26 @@
     if (save_binary_seismograms_single .or. SU_FORMAT) then
       if (seismotype == 4 .or. seismotype == 6) then
         open(unit=12,file=trim(OUTPUT_FILES)//'Up_file_single'//suffix,status=sismo_statut,access='stream')
+        file_unit_12_has_been_opened = .true.
       else if (.not. P_SV) then
         open(unit=12,file=trim(OUTPUT_FILES)//'Uy_file_single'//suffix,status=sismo_statut,access='stream')
+        file_unit_12_has_been_opened = .true.
       else
         open(unit=12,file=trim(OUTPUT_FILES)//'Ux_file_single'//suffix,status=sismo_statut,access='stream')
+        file_unit_12_has_been_opened = .true.
       endif
     endif
 
     if (save_binary_seismograms_double) then
       if (seismotype == 4 .or. seismotype == 6) then
         open(unit=13,file=trim(OUTPUT_FILES)//'Up_file_double'//suffix,status=sismo_statut,access='stream')
+        file_unit_13_has_been_opened = .true.
       else if (.not. P_SV) then
         open(unit=13,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status=sismo_statut,access='stream')
+        file_unit_13_has_been_opened = .true.
       else
         open(unit=13,file=trim(OUTPUT_FILES)//'Ux_file_double'//suffix,status=sismo_statut,access='stream')
+        file_unit_13_has_been_opened = .true.
       endif
     endif
 
@@ -279,16 +295,20 @@
     if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
       if (save_binary_seismograms_single .or. SU_FORMAT) &
         open(unit=14,file=trim(OUTPUT_FILES)//'Uz_file_single'//suffix,status=sismo_statut,access='stream')
+        file_unit_14_has_been_opened = .true.
       if (save_binary_seismograms_double) &
         open(unit=15,file=trim(OUTPUT_FILES)//'Uz_file_double'//suffix,status=sismo_statut,access='stream')
+        file_unit_15_has_been_opened = .true.
     endif
 
     ! curl output
     if (seismotype == 5) then
       if (save_binary_seismograms_single .or. SU_FORMAT) &
         open(unit=16,file=trim(OUTPUT_FILES)//'Uc_file_single'//suffix,status=sismo_statut,access='stream')
+        file_unit_16_has_been_opened = .true.
       if (save_binary_seismograms_double) &
         open(unit=17,file=trim(OUTPUT_FILES)//'Uc_file_double'//suffix,status=sismo_statut,access='stream')
+        file_unit_17_has_been_opened = .true.
     endif
   endif ! save_binary_seismograms
 
@@ -457,21 +477,17 @@
 
   enddo
 
-  ! closes files
-  if (save_binary_seismograms_single .or. SU_FORMAT) close(12)
-  if (save_binary_seismograms_double) close(13)
-  if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
-    if (save_binary_seismograms_single .or. SU_FORMAT) close(14)
-    if (save_binary_seismograms_double) close(15)
-  endif
-  if (seismotype == 5) then
-    if (save_binary_seismograms_single .or. SU_FORMAT) close(16)
-    if (save_binary_seismograms_double) close(17)
-  endif
+  ! close files
+  if (file_unit_12_has_been_opened) close(12)
+  if (file_unit_13_has_been_opened) close(13)
+  if (file_unit_14_has_been_opened) close(14)
+  if (file_unit_15_has_been_opened) close(15)
+  if (file_unit_16_has_been_opened) close(16)
+  if (file_unit_17_has_been_opened) close(17)
 
   ! frees temporary buffer
-  deallocate(buffer_binary)
-  deallocate(single_precision_seismo)
+  if (allocated(buffer_binary)) deallocate(buffer_binary)
+  if (allocated(single_precision_seismo)) deallocate(single_precision_seismo)
 
   end subroutine write_seismograms_to_file
 

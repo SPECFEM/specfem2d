@@ -59,7 +59,7 @@
   ! PML preparation
   call prepare_PML()
 
-  if (setup_with_binary_database /= 2 ) then
+  if (setup_with_binary_database /= 2) then
 
     ! attenuation
     !! DK DK moved preparation of attenuation to before preparation of mass matrix
@@ -216,6 +216,9 @@
 
   implicit none
 
+  ! local variable
+  integer :: n_sls_loc
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
@@ -227,8 +230,11 @@
   call invert_mass_matrix_init()
 
 #ifdef USE_MPI
+  n_sls_loc = 0
+  if (ATTENUATION_VISCOACOUSTIC) n_sls_loc = N_SLS
   ! assembling the mass matrix of shared nodes on MPI partition interfaces
   call assemble_MPI_scalar(rmass_inverse_acoustic,nglob_acoustic, &
+                           rmass_inverse_e1,n_sls_loc, &
                            rmass_inverse_elastic,nglob_elastic, &
                            rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic,nglob_poroelastic)
 #endif
@@ -1292,23 +1298,59 @@
   allocate(e1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
            e11(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
            e13(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
+
+  if (ATTENUATION_VISCOACOUSTIC) then
+        allocate(e1_acous(nglob_acoustic,N_SLS), &
+                dot_e1(nglob_acoustic,N_SLS),stat=ier)
+  else
+        allocate(e1_acous(1,N_SLS), &
+                dot_e1(1,N_SLS),stat=ier)
+  endif
+
+  if (time_stepping_scheme == 1 .and. ATTENUATION_VISCOACOUSTIC) then
+        allocate(dot_e1_old(nglob_acoustic,N_SLS), &
+        A_newmark_e1(nglob_acoustic,N_SLS), &
+        B_newmark_e1(nglob_acoustic,N_SLS),stat=ier)
+  else
+        allocate(dot_e1_old(1,N_SLS), &
+        A_newmark_e1(1,N_SLS), &
+        B_newmark_e1(1,N_SLS),stat=ier)
+  endif
+
   if (ier /= 0) stop 'Error allocating attenuation arrays'
   e1(:,:,:,:) = 0._CUSTOM_REAL
   e11(:,:,:,:) = 0._CUSTOM_REAL
   e13(:,:,:,:) = 0._CUSTOM_REAL
 
+  e1_acous(:,:) = 0._CUSTOM_REAL
+
+  dot_e1_old = 0._CUSTOM_REAL
+  dot_e1     = 0._CUSTOM_REAL
+  A_newmark_e1 = 0._CUSTOM_REAL
+  B_newmark_e1 = 0._CUSTOM_REAL
+
   if (time_stepping_scheme == 2) then
     allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
     allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
     allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
+
+    if (ATTENUATION_VISCOACOUSTIC) then
+        allocate(e1_LDDRK_acous(nglob,N_SLS))
+    else
+        allocate(e1_LDDRK_acous(1,1))
+    endif
   else
     allocate(e1_LDDRK(1,1,1,1))
     allocate(e11_LDDRK(1,1,1,1))
     allocate(e13_LDDRK(1,1,1,1))
+
+    allocate(e1_LDDRK_acous(1,1))
   endif
   e1_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
   e11_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
   e13_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
+
+  e1_LDDRK_acous(:,:) = 0._CUSTOM_REAL
 
   if (time_stepping_scheme == 3) then
     allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS))
@@ -1317,6 +1359,14 @@
     allocate(e1_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
     allocate(e11_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
     allocate(e13_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
+
+    if (ATTENUATION_VISCOACOUSTIC) then
+            allocate(e1_initial_rk_acous(nglob,N_SLS))
+            allocate(e1_force_rk_acous(nglob,N_SLS,stage_time_scheme))
+    else
+            allocate(e1_initial_rk_acous(1,1))
+            allocate(e1_force_rk_acous(1,1,1))
+    endif
   else
     allocate(e1_initial_rk(1,1,1,1))
     allocate(e11_initial_rk(1,1,1,1))
@@ -1324,6 +1374,9 @@
     allocate(e1_force_rk(1,1,1,1,1))
     allocate(e11_force_rk(1,1,1,1,1))
     allocate(e13_force_rk(1,1,1,1,1))
+
+    allocate(e1_initial_rk_acous(1,1))
+    allocate(e1_force_rk_acous(1,1,1))
   endif
   e1_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
   e11_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
@@ -1331,6 +1384,9 @@
   e1_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
   e11_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
   e13_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
+
+  e1_initial_rk_acous(:,:) = 0._CUSTOM_REAL
+  e1_force_rk_acous(:,:,:) = 0._CUSTOM_REAL
 
   ! attenuation arrays
   if (.not. assign_external_model) then

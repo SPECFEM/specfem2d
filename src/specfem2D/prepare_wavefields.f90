@@ -308,9 +308,9 @@
   if (SIMULATION_TYPE == 3) then
     allocate(potential_acoustic_adj_coupling(nglob_acoustic))
   endif
+
   allocate(potential_dot_acoustic(nglob_acoustic))
   allocate(potential_dot_dot_acoustic(nglob_acoustic))
-  allocate(rmass_inverse_acoustic(nglob_acoustic))
   if (time_stepping_scheme == 2) then
     allocate(potential_acoustic_LDDRK(nglob_acoustic))
     allocate(potential_dot_acoustic_LDDRK(nglob_acoustic))
@@ -323,6 +323,10 @@
     allocate(potential_dot_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
     allocate(potential_dot_acoustic_rk(nglob_acoustic,stage_time_scheme))
   endif
+
+  allocate(rmass_inverse_acoustic(nglob_acoustic))
+!! DK DK March 2018: this was missing in Quentin Brissaud's new variational formulation for viscoacoustic media; I added it
+  allocate(rmass_inverse_e1(nglob_acoustic,N_SLS))
 
   if (SIMULATION_TYPE == 3 .and. any_acoustic) then
     nglob_acoustic_b = nglob

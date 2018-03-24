@@ -45,6 +45,7 @@
 ! Assembling the mass matrix.
 !-----------------------------------------------
   subroutine assemble_MPI_scalar(array_val1,npoin_val1, &
+                                 array_e1,n_sls_loc, &
                                  array_val2,npoin_val2, &
                                  array_val3,array_val4,npoin_val3)
 
@@ -52,7 +53,7 @@
 
   use constants, only: CUSTOM_REAL,NDIM
 
-  use specfem_par, only: NPROC,ninterface,my_neighbors
+  use specfem_par, only: NPROC,ninterface,my_neighbors,N_SLS,ATTENUATION_VISCOACOUSTIC
 
   ! acoustic/elastic/poroelastic interfaces
   use specfem_par, only: max_ibool_interfaces_size_ac,max_ibool_interfaces_size_el,max_ibool_interfaces_size_po, &
@@ -63,13 +64,20 @@
 
   include "precision.h"
 
-  ! array to assemble
+  ! arrays to assemble
+
   ! acoustic
   integer :: npoin_val1
   real(kind=CUSTOM_REAL), dimension(npoin_val1), intent(inout) :: array_val1
+
+  ! viscoacoustic
+  real(kind=CUSTOM_REAL), dimension(npoin_val1,N_SLS), intent(inout) :: array_e1
+  integer :: i_sls,n_sls_loc
+
   ! elastic
   integer :: npoin_val2
   real(kind=CUSTOM_REAL), dimension(NDIM,npoin_val2), intent(inout) :: array_val2
+
   ! poroelastic
   integer :: npoin_val3
   real(kind=CUSTOM_REAL), dimension(npoin_val3), intent(inout) :: array_val3,array_val4
@@ -81,9 +89,10 @@
   ! there are now two different mass matrices for the elastic case
   ! in order to handle the C deltat / 2 contribution of the Stacey conditions to the mass matrix
   real(kind=CUSTOM_REAL), dimension(max_ibool_interfaces_size_ac + &
-                              NDIM * max_ibool_interfaces_size_el + &
-                              2 * max_ibool_interfaces_size_po, ninterface)  :: buffer_send_faces_scalar, &
-                                                                                   buffer_recv_faces_scalar
+    NDIM * max_ibool_interfaces_size_el + &
+    2 * max_ibool_interfaces_size_po + &
+    n_sls_loc*max_ibool_interfaces_size_ac, ninterface)  :: buffer_send_faces_scalar, buffer_recv_faces_scalar
+
   integer, dimension(ninterface)  :: msg_send_requests,msg_recv_requests
 
   ! assemble only if more than one partition
@@ -128,6 +137,24 @@
       nbuffer_points = nibool_interfaces_acoustic(iinterface) &
                       + NDIM*nibool_interfaces_elastic(iinterface) &
                       + 2*nibool_interfaces_poroelastic(iinterface)
+
+      if (ATTENUATION_VISCOACOUSTIC) then
+        ! viscoacoustic
+
+        ! loop over relaxation mechanisms
+        do i_sls = 1,N_SLS
+
+          do i = 1, nibool_interfaces_acoustic(iinterface)
+            ipoin = ipoin + 1
+            iglob = ibool_interfaces_acoustic(i,iinterface)
+            buffer_send_faces_scalar(ipoin,iinterface) = array_e1(iglob,i_sls)
+          enddo
+
+          ! update total number of points in buffer
+          nbuffer_points = nbuffer_points + nibool_interfaces_acoustic(iinterface)
+
+        enddo
+      endif
 
       ! non-blocking send
       call isend_cr(buffer_send_faces_scalar(1,iinterface), nbuffer_points, my_neighbors(iinterface),11, &
@@ -174,6 +201,17 @@
         iglob = ibool_interfaces_poroelastic(i,iinterface)
         array_val4(iglob) = array_val4(iglob) + buffer_recv_faces_scalar(ipoin,iinterface)
       enddo
+
+      if (ATTENUATION_VISCOACOUSTIC) then
+        ! loop over relaxation mechanisms
+        do i_sls = 1,N_SLS
+          do i = 1, nibool_interfaces_acoustic(iinterface)
+            ipoin = ipoin + 1
+            iglob = ibool_interfaces_acoustic(i,iinterface)
+            array_e1(iglob,i_sls) = array_e1(iglob,i_sls) + buffer_recv_faces_scalar(ipoin,iinterface)
+          enddo
+        enddo
+      endif
 
     enddo
 
@@ -326,6 +364,7 @@
     ! initializes buffers
     buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
     buffer_recv_faces_vector_ac(:,:) = 0._CUSTOM_REAL
+
     request_send_recv_acoustic(:) = 0
 
     ! loops over acoustic interfaces only
@@ -337,7 +376,6 @@
       ! loops over all interface points
       do ipoin = 1, nibool_interfaces_acoustic(num_interface)
         iglob = ibool_interfaces_acoustic(ipoin,num_interface)
-
         ! copies array values to buffer
         buffer_send_faces_vector_ac(ipoin,iinterface) = array_val1(iglob)
       enddo
@@ -361,6 +399,7 @@
                      my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_acoustic(ninterface_acoustic+iinterface) )
+
     enddo
 
   endif
@@ -423,7 +462,157 @@
 
   end subroutine assemble_MPI_scalar_ac_w
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
+  subroutine assemble_MPI_scalar_ac_s_e1(array_val1,array_val1_e1,n_sls_local)
+
+! sends MPI buffers (asynchronously) - non-blocking routine
+
+  use constants, only: CUSTOM_REAL
+
+  use specfem_par, only: NPROC,nglob,my_neighbors
+
+  ! acoustic MPI interfaces
+  use specfem_par, only: ninterface_acoustic,inum_interfaces_acoustic, &
+    ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+    request_send_recv_acoustic,buffer_send_faces_vector_ac,buffer_recv_faces_vector_ac, &
+    N_SLS,ATTENUATION_VISCOACOUSTIC
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
+  real(kind=CUSTOM_REAL), dimension(nglob,N_SLS), intent(inout) :: array_val1_e1
+
+  integer :: n_sls_local
+
+  ! local parameters
+  integer  :: ipoin, num_interface,iinterface, iglob, i
+  integer, parameter :: itag = 12
+
+  ! assemble only if more than one partition
+  if (NPROC > 1) then
+
+    ! initializes buffers
+    buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
+    buffer_recv_faces_vector_ac(:,:) = 0._CUSTOM_REAL
+
+    request_send_recv_acoustic(:) = 0
+
+    ! loops over acoustic interfaces only
+    do iinterface = 1, ninterface_acoustic
+
+      ! gets interface index in the range of all interfaces [1,ninterface]
+      num_interface = inum_interfaces_acoustic(iinterface)
+
+      ipoin = 0
+      ! loops over all interface points
+      do i = 1, nibool_interfaces_acoustic(num_interface)
+        iglob = ibool_interfaces_acoustic(i,num_interface)
+
+        ipoin = ipoin + 1
+        ! copies array values to buffer
+        buffer_send_faces_vector_ac(ipoin,iinterface) = array_val1(iglob)
+        if (ATTENUATION_VISCOACOUSTIC .and. n_sls_local > 0) then
+        buffer_send_faces_vector_ac(ipoin+1:ipoin+N_SLS,iinterface) = array_val1_e1(iglob,:)
+        ipoin = ipoin + N_SLS
+        endif
+      enddo
+
+    enddo
+
+    ! send/request messages
+    do iinterface = 1, ninterface_acoustic
+
+      ! gets global interface index
+      num_interface = inum_interfaces_acoustic(iinterface)
+
+      call isend_cr( buffer_send_faces_vector_ac(1,iinterface), &
+                     nibool_interfaces_acoustic(num_interface)*(n_sls_local+1), &
+                     my_neighbors(num_interface), &
+                     itag, &
+                     request_send_recv_acoustic(iinterface) )
+
+      call irecv_cr( buffer_recv_faces_vector_ac(1,iinterface), &
+                     nibool_interfaces_acoustic(num_interface)*(n_sls_local+1), &
+                     my_neighbors(num_interface), &
+                     itag, &
+                     request_send_recv_acoustic(ninterface_acoustic+iinterface) )
+
+    enddo
+
+  endif
+
+  end subroutine assemble_MPI_scalar_ac_s_e1
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine assemble_MPI_scalar_ac_w_e1(array_val1,array_val1_e1,n_sls_local)
+
+! waits for data and assembles
+
+  use constants, only: CUSTOM_REAL
+
+  use specfem_par, only: NPROC,nglob
+
+  ! acoustic MPI interfaces
+  use specfem_par, only: ninterface_acoustic,inum_interfaces_acoustic, &
+    ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
+    request_send_recv_acoustic,buffer_recv_faces_vector_ac, &
+    N_SLS,ATTENUATION_VISCOACOUSTIC
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
+  real(kind=CUSTOM_REAL), dimension(nglob,N_SLS), intent(inout) :: array_val1_e1
+
+  integer :: n_sls_local
+
+  ! local parameters
+  integer  :: ipoin, num_interface,iinterface, iglob, i
+
+  ! assemble only if more than one partition
+  if (NPROC > 1) then
+
+    ! waits for communication complection (all receive has finished)
+    do iinterface = 1, ninterface_acoustic
+      call wait_req(request_send_recv_acoustic(ninterface_acoustic+iinterface))
+    enddo
+
+    ! assembles the array values
+    do iinterface = 1, ninterface_acoustic
+
+      ! gets global interface index
+      num_interface = inum_interfaces_acoustic(iinterface)
+
+      ipoin = 0
+      ! loops over all interface points
+      do i = 1, nibool_interfaces_acoustic(num_interface)
+        ipoin = ipoin + 1
+        iglob = ibool_interfaces_acoustic(i,num_interface)
+        ! adds buffer contribution
+        array_val1(iglob) = array_val1(iglob) + buffer_recv_faces_vector_ac(ipoin,iinterface)
+
+        if (ATTENUATION_VISCOACOUSTIC .and. n_sls_local > 0) then
+        array_val1_e1(iglob,:) = array_val1_e1(iglob,:) &
+                + buffer_recv_faces_vector_ac(ipoin+1:ipoin+N_SLS,iinterface)
+        ipoin = ipoin + N_SLS
+        endif
+      enddo
+
+    enddo
+
+    ! waits for communication completion (all send has finished, we can clear the buffer...)
+    do iinterface = 1, ninterface_acoustic
+      call wait_req(request_send_recv_acoustic(iinterface))
+    enddo
+
+  endif
+
+  end subroutine assemble_MPI_scalar_ac_w_e1
 
 !-------------------------------------------------------------------------------------------------
 !

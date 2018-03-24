@@ -42,7 +42,7 @@
   implicit none
 
   ! local parameters
-  integer :: i,iinterface,imax_all,ier
+  integer :: i,iinterface,imax_all,ier,n_sls_loc
 
   ! user output
   if (myrank == 0) then
@@ -94,11 +94,13 @@
     max_ibool_interfaces_size_po = NDIM*maxval(nibool_interfaces_poroelastic(:))
 
     if (ACOUSTIC_SIMULATION) then
+      n_sls_loc = 0
+      if (ATTENUATION_VISCOACOUSTIC) n_sls_loc = N_SLS
       allocate(request_send_recv_acoustic(ninterface_acoustic*2),stat=ier)
       if (ier /= 0) stop 'error in allocation of array request_send_recv_acoustic'
-      allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic),stat=ier)
+      allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac*(n_sls_loc+1),ninterface_acoustic),stat=ier)
       if (ier /= 0) stop 'error in allocation of array buffer_send_faces_vector_ac'
-      allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic),stat=ier)
+      allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac*(n_sls_loc+1),ninterface_acoustic),stat=ier)
       if (ier /= 0) stop 'error in allocation of array buffer_recv_faces_vector_ac'
     endif
 

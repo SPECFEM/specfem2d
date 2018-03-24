@@ -33,7 +33,7 @@
 
 ! for acoustic solver
 
-  subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
+  subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic,dot_e1)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
     CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE,ALPHA_LDDRK,BETA_LDDRK
@@ -45,7 +45,8 @@
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
                          rmemory_fsb_displ_elastic,deltat, &
                          rmemory_fsb_displ_elastic_LDDRK,i_stage,time_stepping_scheme, &
-                         nglob_acoustic,nglob_elastic,iglob_is_forced
+                         nglob_acoustic,nglob_elastic,iglob_is_forced, &
+                         ATTENUATION_VISCOACOUSTIC,N_SLS
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML,nspec_PML,spec_to_PML,region_CPML, &
@@ -55,6 +56,8 @@
 
   real(kind=CUSTOM_REAL),dimension(NDIM,nglob_elastic) :: displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_dot_dot_acoustic
+
+  real(kind=CUSTOM_REAL),dimension(nglob_acoustic,N_SLS) :: dot_e1
 
   !local variable
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
@@ -242,6 +245,7 @@
 !! DK DK QUENTIN en plus de la composante normale je suppose
       if (.not. iglob_is_forced(iglob)) then
         potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+        if (ATTENUATION_VISCOACOUSTIC) dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
       endif
 !! DK DK QUENTIN visco end
 

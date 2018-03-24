@@ -381,8 +381,9 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential_dot_dot
 
   !---------------------------------------------------------------------
-  !for by elastic simulation
+  ! for elastic simulation
   !---------------------------------------------------------------------
+
   ! number of node associated with elastic medium
   integer :: nglob_elastic
 
@@ -420,6 +421,14 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_LDDRK,e11_LDDRK,e13_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_force_rk,e11_force_rk,e13_force_rk
+
+  ! inverse mass matrix for viscoacoustic simulations
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: rmass_inverse_e1
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_acous
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_LDDRK_acous
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_acous_temp, dot_e1, dot_e1_old, A_newmark_e1, B_newmark_e1
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_initial_rk_acous
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: e1_force_rk_acous
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
 
