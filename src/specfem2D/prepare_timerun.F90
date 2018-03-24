@@ -217,7 +217,9 @@
   implicit none
 
   ! local variable
+#ifdef USE_MPI
   integer :: n_sls_loc
+#endif
 
   ! user output
   if (myrank == 0) then
