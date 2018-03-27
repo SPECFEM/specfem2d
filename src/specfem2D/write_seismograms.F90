@@ -321,13 +321,13 @@
         irecloc = irecloc + 1
 
         ! fills buffer
-        buffer_binary(:,irec,1) = sisux(:,irecloc)
+        buffer_binary(:,irec,1) = sisux(1:seismo_current,irecloc)
         if (number_of_components == 2) then
-          buffer_binary(:,irec,2) = sisuz(:,irecloc)
+          buffer_binary(:,irec,2) = sisuz(1:seismo_current,irecloc)
         else if (number_of_components == 3) then
           ! adds curl trace
-          buffer_binary(:,irec,2) = sisuz(:,irecloc)
-          buffer_binary(:,irec,3) = siscurl(:,irecloc)
+          buffer_binary(:,irec,2) = sisuz(1:seismo_current,irecloc)
+          buffer_binary(:,irec,3) = siscurl(1:seismo_current,irecloc)
         endif
 
 #ifdef USE_MPI
