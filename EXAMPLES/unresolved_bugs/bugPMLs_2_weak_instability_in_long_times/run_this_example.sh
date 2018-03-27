@@ -46,7 +46,7 @@ else
   echo
   echo "running mesher on $NPROC processors..."
   echo
-  /home/bottero/bin/mpirun -np $NPROC ./xmeshfem2D
+  mpirun -np $NPROC ./xmeshfem2D
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -63,7 +63,7 @@ else
   echo
   echo "running solver on $NPROC processors..."
   echo
-  /home/bottero/bin/mpirun -np $NPROC ./xspecfem2D
+  mpirun -np $NPROC ./xspecfem2D
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
