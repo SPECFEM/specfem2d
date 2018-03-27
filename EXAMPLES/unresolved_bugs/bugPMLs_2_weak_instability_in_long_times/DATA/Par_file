@@ -253,7 +253,7 @@ nx                              = 100             # number of elesments along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
 absorbbottom                    = .true.
-absorbright                     = .true.
+absorbright                     = .false.
 absorbtop                       = .false.
 absorbleft                      = .false.
 

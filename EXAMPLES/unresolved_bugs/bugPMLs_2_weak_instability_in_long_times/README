@@ -1,8 +1,6 @@
 This bug occurs in simulations with many time steps and viscoelastic media with PMLs. Even if the PMLs are not in contact with
 the viscoelastic part!!
 
-Clue (??) : run_this_example_otherBug.sh -> the explosion is immediate when replacing the elastic cushion by a fluid!
-
 Appart from the explosion in the PMLs one can see:
 _An important amount of energy reflected at the PMLs at the beginning of the run
 _The spots already discussed in bugPMLs_1
