@@ -1557,9 +1557,7 @@
       enddo
     enddo
 
-    if (PML_BOUNDARY_CONDITIONS) then
-      call prepare_timerun_attenuation_with_PML()
-    endif
+    if (PML_BOUNDARY_CONDITIONS) call prepare_timerun_attenuation_with_PML()
 
   endif ! of if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC)
 
