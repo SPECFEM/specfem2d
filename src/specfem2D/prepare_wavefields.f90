@@ -311,6 +311,7 @@
 
   allocate(potential_dot_acoustic(nglob_acoustic))
   allocate(potential_dot_dot_acoustic(nglob_acoustic))
+
   if (time_stepping_scheme == 2) then
     allocate(potential_acoustic_LDDRK(nglob_acoustic))
     allocate(potential_dot_acoustic_LDDRK(nglob_acoustic))
@@ -326,7 +327,17 @@
 
   allocate(rmass_inverse_acoustic(nglob_acoustic))
 !! DK DK March 2018: this was missing in Quentin Brissaud's new variational formulation for viscoacoustic media; I added it
-  allocate(rmass_inverse_e1(nglob_acoustic,N_SLS))
+  if (ATTENUATION_VISCOACOUSTIC) then
+    allocate(rmass_inverse_e1(nglob_acoustic,N_SLS))
+  else
+    allocate(rmass_inverse_e1(1,1))
+  endif
+
+  if (ATTENUATION_VISCOACOUSTIC .and. time_stepping_scheme == 2) then
+    allocate(e1_acous_temp(nglob_acoustic,N_SLS))
+  else
+    allocate(e1_acous_temp(1,1))
+  endif
 
   if (SIMULATION_TYPE == 3 .and. any_acoustic) then
     nglob_acoustic_b = nglob

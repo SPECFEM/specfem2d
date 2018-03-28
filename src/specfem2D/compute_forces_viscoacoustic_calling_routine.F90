@@ -291,6 +291,9 @@
 
     ! main solver for the acoustic elements
     if (UNDO_ATTENUATION_AND_OR_PML) then
+!! DK DK March 2018: following Quentin Brissaud's new variational implementation of viscoacousticity,
+!! DK DK March 2018: I am not sure if the last argument, dot_e1, that I added here is right, or if
+!! DK DK March 2018: a backward one should be created (b_dot_e1); far more likely it should be a b_dot_e1 to create (not done yet)
       call compute_forces_viscoacoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
                                    .false.,b_potential_acoustic_old,iphase,e1_acous,dot_e1)
     else
@@ -313,8 +316,8 @@
       if (STACEY_ABSORBING_CONDITIONS) then
         if (UNDO_ATTENUATION_AND_OR_PML) then
 !! DK DK March 2018: following Quentin Brissaud's new variational implementation of viscoacousticity,
-!! DK DK March 2018: I am not sure if the second argument, dot_e1, that I added here is right, or if
-!! DK DK March 2018: a backward one should be created (b_dot_e1); more likely it should be b_dot_e1
+!! DK DK March 2018: I am not sure if the last argument, dot_e1, that I added here is right, or if
+!! DK DK March 2018: a backward one should be created (b_dot_e1); far more likely it should be b_dot_e1 to create (not done yet)
           call compute_stacey_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,dot_e1)
         else
           call compute_stacey_acoustic_backward(b_potential_dot_dot_acoustic)
@@ -324,8 +327,8 @@
       ! add acoustic forcing at a rigid boundary
       if (ACOUSTIC_FORCING) then
 !! DK DK March 2018: following Quentin Brissaud's new variational implementation of viscoacousticity,
-!! DK DK March 2018: I am not sure if the second argument, dot_e1, that I added here is right, or if
-!! DK DK March 2018: a backward one should be created (b_dot_e1); more likely it should be b_dot_e1
+!! DK DK March 2018: I am not sure if the last argument, dot_e1, that I added here is right, or if
+!! DK DK March 2018: a backward one should be created (b_dot_e1); far more likely it should be b_dot_e1 to create (not done yet)
         call add_acoustic_forcing_at_rigid_boundary(b_potential_dot_dot_acoustic,dot_e1)
       endif
 
