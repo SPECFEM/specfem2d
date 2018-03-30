@@ -47,7 +47,7 @@
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj,ATTENUATION_VISCOACOUSTIC, &
-                         N_SLS, iglob_is_forced,time_stepping_scheme,phi_nu1,inv_tau_sigma_nu1,nglob_acoustic
+                         N_SLS, iglob_is_forced,time_stepping_scheme,phi_nu1,inv_tau_sigma_nu1,nglob_att
 
   ! overlapping communication
   use specfem_par, only: nspec_inner_acoustic,nspec_outer_acoustic,phase_ispec_inner_acoustic
@@ -60,8 +60,8 @@
   real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: potential_dot_dot_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_dot_acoustic,potential_acoustic
 
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic,N_SLS),intent(inout) :: dot_e1
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic,N_SLS),intent(in) :: e1_acous
+  real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS),intent(inout) :: dot_e1
+  real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS),intent(in) :: e1_acous
 
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
   real(kind=CUSTOM_REAL), dimension(nglob) :: potential_acoustic_old

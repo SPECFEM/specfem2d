@@ -478,12 +478,12 @@
   use specfem_par, only: ninterface_acoustic,inum_interfaces_acoustic, &
     ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
     request_send_recv_acoustic,buffer_send_faces_vector_ac,buffer_recv_faces_vector_ac, &
-    N_SLS,ATTENUATION_VISCOACOUSTIC
+    N_SLS,ATTENUATION_VISCOACOUSTIC,nglob_att
 
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
-  real(kind=CUSTOM_REAL), dimension(nglob,N_SLS), intent(inout) :: array_val1_e1
+  real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS), intent(inout) :: array_val1_e1
 
   integer :: n_sls_local
 
@@ -493,6 +493,9 @@
 
   ! assemble only if more than one partition
   if (NPROC > 1) then
+
+    ! n_sls_local = 0 corresponds to a Newmark scheme, or to no viscoacousticity
+    if (n_sls_local > 0 .and. .not. ATTENUATION_VISCOACOUSTIC) n_sls_local = 0
 
     ! initializes buffers
     buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
@@ -562,12 +565,12 @@
   use specfem_par, only: ninterface_acoustic,inum_interfaces_acoustic, &
     ibool_interfaces_acoustic, nibool_interfaces_acoustic, &
     request_send_recv_acoustic,buffer_recv_faces_vector_ac, &
-    N_SLS,ATTENUATION_VISCOACOUSTIC
+    N_SLS,ATTENUATION_VISCOACOUSTIC,nglob_att
 
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
-  real(kind=CUSTOM_REAL), dimension(nglob,N_SLS), intent(inout) :: array_val1_e1
+  real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS), intent(inout) :: array_val1_e1
 
   integer :: n_sls_local
 
@@ -576,6 +579,9 @@
 
   ! assemble only if more than one partition
   if (NPROC > 1) then
+
+    ! n_sls_local = 0 corresponds to a Newmark scheme, or to no viscoacousticity
+    if (n_sls_local > 0 .and. .not. ATTENUATION_VISCOACOUSTIC) n_sls_local = 0
 
     ! waits for communication complection (all receive has finished)
     do iinterface = 1, ninterface_acoustic

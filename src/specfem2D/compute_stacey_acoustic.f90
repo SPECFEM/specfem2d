@@ -51,14 +51,14 @@
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top, &
                          STACEY_ABSORBING_CONDITIONS, &
-                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_acoustic
+                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att
 
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: potential_dot_dot_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_dot_acoustic
 
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic,N_SLS),intent(inout) :: dot_e1
+  real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS),intent(inout) :: dot_e1
 
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob

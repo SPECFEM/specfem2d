@@ -46,7 +46,7 @@
                          rmemory_fsb_displ_elastic,deltat, &
                          rmemory_fsb_displ_elastic_LDDRK,i_stage,time_stepping_scheme, &
                          nglob_acoustic,nglob_elastic,iglob_is_forced, &
-                         ATTENUATION_VISCOACOUSTIC,N_SLS
+                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML,nspec_PML,spec_to_PML,region_CPML, &
@@ -57,7 +57,7 @@
   real(kind=CUSTOM_REAL),dimension(NDIM,nglob_elastic) :: displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_dot_dot_acoustic
 
-  real(kind=CUSTOM_REAL),dimension(nglob_acoustic,N_SLS) :: dot_e1
+  real(kind=CUSTOM_REAL),dimension(nglob_att,N_SLS) :: dot_e1
 
   !local variable
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1

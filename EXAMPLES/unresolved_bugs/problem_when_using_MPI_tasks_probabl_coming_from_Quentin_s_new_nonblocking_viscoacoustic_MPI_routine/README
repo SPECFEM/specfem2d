@@ -1,2 +1,0 @@
-This bug occurs in parallel fluid simulations. The run works well in serial but explodes when using 2 tasks.
-

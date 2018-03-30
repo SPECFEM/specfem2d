@@ -1296,27 +1296,33 @@
     nspec_ATT = 1
   endif
 
+  if (ATTENUATION_VISCOACOUSTIC) then
+        nglob_att = nglob_acoustic
+  else
+        nglob_att = 1
+  endif
+
   ! allocate memory variables for attenuation
   allocate(e1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
            e11(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
            e13(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
 
   if (ATTENUATION_VISCOACOUSTIC) then
-        allocate(e1_acous(nglob_acoustic,N_SLS), &
-                dot_e1(nglob_acoustic,N_SLS),stat=ier)
+        allocate(e1_acous(nglob_att,N_SLS), &
+                 dot_e1(nglob_att,N_SLS),stat=ier)
   else
         allocate(e1_acous(1,N_SLS), &
-                dot_e1(1,N_SLS),stat=ier)
+                 dot_e1(1,N_SLS),stat=ier)
   endif
 
   if (time_stepping_scheme == 1 .and. ATTENUATION_VISCOACOUSTIC) then
-        allocate(dot_e1_old(nglob_acoustic,N_SLS), &
-        A_newmark_e1(nglob_acoustic,N_SLS), &
-        B_newmark_e1(nglob_acoustic,N_SLS),stat=ier)
+        allocate(dot_e1_old(nglob_att,N_SLS), &
+                 A_newmark_e1(nglob_att,N_SLS), &
+                 B_newmark_e1(nglob_att,N_SLS),stat=ier)
   else
         allocate(dot_e1_old(1,N_SLS), &
-        A_newmark_e1(1,N_SLS), &
-        B_newmark_e1(1,N_SLS),stat=ier)
+                 A_newmark_e1(1,N_SLS), &
+                 B_newmark_e1(1,N_SLS),stat=ier)
   endif
 
   if (ier /= 0) stop 'Error allocating attenuation arrays'
@@ -1337,7 +1343,7 @@
     allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
 
     if (ATTENUATION_VISCOACOUSTIC) then
-        allocate(e1_LDDRK_acous(nglob,N_SLS))
+        allocate(e1_LDDRK_acous(nglob_att,N_SLS))
     else
         allocate(e1_LDDRK_acous(1,1))
     endif
@@ -1363,8 +1369,8 @@
     allocate(e13_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
 
     if (ATTENUATION_VISCOACOUSTIC) then
-            allocate(e1_initial_rk_acous(nglob,N_SLS))
-            allocate(e1_force_rk_acous(nglob,N_SLS,stage_time_scheme))
+            allocate(e1_initial_rk_acous(nglob_att,N_SLS))
+            allocate(e1_force_rk_acous(nglob_att,N_SLS,stage_time_scheme))
     else
             allocate(e1_initial_rk_acous(1,1))
             allocate(e1_force_rk_acous(1,1,1))

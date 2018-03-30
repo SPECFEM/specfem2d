@@ -37,7 +37,7 @@
 
   use specfem_par, only: nglob_acoustic,nelem_acforcing,codeacforcing,numacforcing,ispec_is_acoustic, &
                          ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll, &
-                         ATTENUATION_VISCOACOUSTIC,N_SLS
+                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
@@ -45,7 +45,7 @@
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
-  real(kind=CUSTOM_REAL), dimension(nglob_acoustic,N_SLS) :: dot_e1
+  real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS) :: dot_e1
 
   !local variables
   integer :: inum,ispec,i,j,iglob

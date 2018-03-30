@@ -44,11 +44,11 @@
                          displs_poroelastic,displw_poroelastic, &
                          accels_poroelastic_adj_coupling,accelw_poroelastic_adj_coupling, &
                          potential_dot_dot_acoustic,SIMULATION_TYPE, &
-                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_acoustic
+                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att
 
   implicit none
 
-  real(kind=CUSTOM_REAL),dimension(nglob_acoustic,N_SLS) :: dot_e1
+  real(kind=CUSTOM_REAL),dimension(nglob_att,N_SLS) :: dot_e1
 
   ! local variables
   integer :: inum,ispec_acoustic,iedge_acoustic,ispec_poroelastic,iedge_poroelastic, &

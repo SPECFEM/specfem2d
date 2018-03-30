@@ -50,7 +50,7 @@
                          nspec_inner_acoustic, nspec_outer_acoustic, &
                          kmato, phase_ispec_inner_acoustic,jacobian,rhoext,density, &
                          is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,hprimewgll_zz,hprimewgll_xx, &
-                         wxgll,wzgll,wxglj,xiglj,coord,iglob_is_forced
+                         wxgll,wzgll,wxglj,xiglj,coord,iglob_is_forced,nglob_att
 
   implicit none
 
@@ -71,7 +71,7 @@
   integer :: ispec
   integer :: i,j
 
-  real(kind=CUSTOM_REAL), dimension(nglob,N_SLS) :: dot_e1
+  real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS) :: dot_e1
 
   integer :: k,iglob
 

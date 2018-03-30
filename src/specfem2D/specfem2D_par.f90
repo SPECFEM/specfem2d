@@ -72,7 +72,7 @@ module specfem_par
   double precision, dimension(:), allocatable  :: QKappa_attenuation
   double precision, dimension(:), allocatable  :: Qmu_attenuation
 
-  integer :: nspec_ATT
+  integer :: nspec_ATT,nglob_att
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   real(kind=CUSTOM_REAL), dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
 
