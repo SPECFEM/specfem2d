@@ -602,7 +602,6 @@
                             sum_mu_dux_dz,sum_mu_duz_dx, kappa_sum_dux_dxl,kappa_sum_duz_dzl, &
                             mu_sum_dux_dxl,mu_sum_duz_dzl,mu_sum_dux_dzl,mu_sum_duz_dxl
 
-
   double precision :: A_kappa,A_mu
 
   ! checks if anything to do in this slice

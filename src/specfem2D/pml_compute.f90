@@ -203,6 +203,7 @@
               ((eta_xz(1) + eta_xz(2)) / 2._CUSTOM_REAL  - inv_tau_temp)
 
   else if (CPML_region_local == CPML_X_ONLY_TEMP) then
+
     bar_A_0 = kappa_x
     alpha_only = alpha_x
     beta_only = beta_x
@@ -219,8 +220,8 @@
     A_1 = bar_A_1
     A_2 = bar_A_2
 
-    A_zener = bar_A_0 * (tau_epsilon_temp * inv_tau_temp - 1._CUSTOM_REAL) * &
-              (eta_only - inv_tau_temp)
+    A_zener = bar_A_0 * (tau_epsilon_temp * inv_tau_temp - 1._CUSTOM_REAL) * (eta_only - inv_tau_temp)
+
   else if (CPML_region_local == CPML_Z_ONLY_TEMP) then
 
     bar_A_0 = 1._CUSTOM_REAL / kappa_z
@@ -239,8 +240,12 @@
     A_0 = bar_A_0
     A_1 = bar_A_1
     A_2 = bar_A_2
-    A_zener = bar_A_0 * (tau_epsilon_temp * inv_tau_temp - 1._CUSTOM_REAL) * &
-              (eta_only - inv_tau_temp)
+    A_zener = bar_A_0 * (tau_epsilon_temp * inv_tau_temp - 1._CUSTOM_REAL) * (eta_only - inv_tau_temp)
+
+  else
+
+    stop 'error: CPML_region_local is undefined in lik_parameter_computation_viscoelastic()'
+
   endif
 
   end subroutine lik_parameter_computation_viscoelastic
