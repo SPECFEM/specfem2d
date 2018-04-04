@@ -86,23 +86,30 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
+
 #ifdef USE_MPI
     write(IMAIN,*) '**********************************************'
     write(IMAIN,*) '**** Specfem 2-D Solver - MPI version     ****'
     write(IMAIN,*) '**********************************************'
-    write(IMAIN,*)
-    write(IMAIN,*) 'There are ',NPROC,' MPI processes'
-    write(IMAIN,*) 'Processes are numbered from 0 to ',NPROC-1
-    write(IMAIN,*)
-    write(IMAIN,*) 'There is a total of ',NPROC,' slices'
 #else
     write(IMAIN,*) '**********************************************'
     write(IMAIN,*) '**** Specfem 2-D Solver - serial version  ****'
     write(IMAIN,*) '**********************************************'
 #endif
+
+    write(IMAIN,*)
     write(IMAIN,*) 'Running Git version of the code corresponding to ', git_commit_version
     write(IMAIN,*) 'dating ', git_date_version
     write(IMAIN,*)
+
+#ifdef USE_MPI
+    write(IMAIN,*) 'There are ',NPROC,' MPI processes'
+    write(IMAIN,*) 'Processes are numbered from 0 to ',NPROC-1
+    write(IMAIN,*)
+    write(IMAIN,*) 'There is a total of ',NPROC,' slices'
+    write(IMAIN,*)
+#endif
+
     write(IMAIN,*)
     write(IMAIN,*) 'NDIM = ',NDIM
     write(IMAIN,*)
