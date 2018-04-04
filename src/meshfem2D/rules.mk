@@ -143,6 +143,10 @@ $O/scotch_partitioning.mesh.o: $(SCOTCH_INCDIR)/scotchf.h
 endif
 
 
+# Version file
+$O/meshfem2D.mesh.o: ${SETUP}/version.fh
+
+
 ####
 #### rule to build each .o file below
 ####

@@ -348,6 +348,8 @@ endif
 
 $O/specfem2D.spec.o: $O/specfem2D_par.spec_module.o
 
+# Version file
+$O/initialize_simulation.spec.o: ${SETUP}/version.fh
 
 ##
 ## object files

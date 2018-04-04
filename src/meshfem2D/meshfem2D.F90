@@ -354,6 +354,8 @@
 
   implicit none
 
+  include 'version.fh'
+
   integer :: nspec_cpml
   integer :: i,j,i_source,ier,num_elmnt
 
@@ -383,6 +385,9 @@
     write(IMAIN,*) '*** Specfem 2-D Mesher - serial version    ***'
     write(IMAIN,*) '**********************************************'
 #endif
+    write(IMAIN,*)
+    write(IMAIN,*) 'Running Git version of the code corresponding to ', git_commit_version
+    write(IMAIN,*) 'dating ', git_date_version
     write(IMAIN,*)
     call flush_IMAIN()
   endif

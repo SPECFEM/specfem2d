@@ -43,6 +43,8 @@
 
   implicit none
 
+  include 'version.fh'
+
   ! local parameters
   integer :: ier
 
@@ -98,6 +100,9 @@
     write(IMAIN,*) '**** Specfem 2-D Solver - serial version  ****'
     write(IMAIN,*) '**********************************************'
 #endif
+    write(IMAIN,*) 'Running Git version of the code corresponding to ', git_commit_version
+    write(IMAIN,*) 'dating ', git_date_version
+    write(IMAIN,*)
     write(IMAIN,*)
     write(IMAIN,*) 'NDIM = ',NDIM
     write(IMAIN,*)
