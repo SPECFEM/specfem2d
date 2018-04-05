@@ -485,17 +485,21 @@
   real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
   real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS), intent(inout) :: array_val1_e1
 
-  integer :: n_sls_local
+  integer :: n_sls_local,n_sls_local_copy
 
   ! local parameters
   integer  :: ipoin, num_interface,iinterface, iglob, i
   integer, parameter :: itag = 12
 
+  ! this is to avoid setting N_SLS to zero in the rest of the code
+  ! when it is necessary to set it to zero temporarily here only
+  n_sls_local_copy = n_sls_local
+
   ! assemble only if more than one partition
   if (NPROC > 1) then
 
     ! n_sls_local = 0 corresponds to a Newmark scheme, or to no viscoacousticity
-    if (n_sls_local > 0 .and. .not. ATTENUATION_VISCOACOUSTIC) n_sls_local = 0
+    if (n_sls_local_copy > 0 .and. .not. ATTENUATION_VISCOACOUSTIC) n_sls_local_copy = 0
 
     ! initializes buffers
     buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
@@ -517,7 +521,7 @@
         ipoin = ipoin + 1
         ! copies array values to buffer
         buffer_send_faces_vector_ac(ipoin,iinterface) = array_val1(iglob)
-        if (ATTENUATION_VISCOACOUSTIC .and. n_sls_local > 0) then
+        if (ATTENUATION_VISCOACOUSTIC .and. n_sls_local_copy > 0) then
         buffer_send_faces_vector_ac(ipoin+1:ipoin+N_SLS,iinterface) = array_val1_e1(iglob,:)
         ipoin = ipoin + N_SLS
         endif
@@ -532,13 +536,13 @@
       num_interface = inum_interfaces_acoustic(iinterface)
 
       call isend_cr( buffer_send_faces_vector_ac(1,iinterface), &
-                     nibool_interfaces_acoustic(num_interface)*(n_sls_local+1), &
+                     nibool_interfaces_acoustic(num_interface)*(n_sls_local_copy+1), &
                      my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_acoustic(iinterface) )
 
       call irecv_cr( buffer_recv_faces_vector_ac(1,iinterface), &
-                     nibool_interfaces_acoustic(num_interface)*(n_sls_local+1), &
+                     nibool_interfaces_acoustic(num_interface)*(n_sls_local_copy+1), &
                      my_neighbors(num_interface), &
                      itag, &
                      request_send_recv_acoustic(ninterface_acoustic+iinterface) )
@@ -572,16 +576,20 @@
   real(kind=CUSTOM_REAL), dimension(nglob), intent(inout) :: array_val1
   real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS), intent(inout) :: array_val1_e1
 
-  integer :: n_sls_local
+  integer :: n_sls_local,n_sls_local_copy
 
   ! local parameters
   integer  :: ipoin, num_interface,iinterface, iglob, i
+
+  ! this is to avoid setting N_SLS to zero in the rest of the code
+  ! when it is necessary to set it to zero temporarily here only
+  n_sls_local_copy = n_sls_local
 
   ! assemble only if more than one partition
   if (NPROC > 1) then
 
     ! n_sls_local = 0 corresponds to a Newmark scheme, or to no viscoacousticity
-    if (n_sls_local > 0 .and. .not. ATTENUATION_VISCOACOUSTIC) n_sls_local = 0
+    if (n_sls_local_copy > 0 .and. .not. ATTENUATION_VISCOACOUSTIC) n_sls_local_copy = 0
 
     ! waits for communication complection (all receive has finished)
     do iinterface = 1, ninterface_acoustic
@@ -602,7 +610,7 @@
         ! adds buffer contribution
         array_val1(iglob) = array_val1(iglob) + buffer_recv_faces_vector_ac(ipoin,iinterface)
 
-        if (ATTENUATION_VISCOACOUSTIC .and. n_sls_local > 0) then
+        if (ATTENUATION_VISCOACOUSTIC .and. n_sls_local_copy > 0) then
         array_val1_e1(iglob,:) = array_val1_e1(iglob,:) &
                 + buffer_recv_faces_vector_ac(ipoin+1:ipoin+N_SLS,iinterface)
         ipoin = ipoin + N_SLS
