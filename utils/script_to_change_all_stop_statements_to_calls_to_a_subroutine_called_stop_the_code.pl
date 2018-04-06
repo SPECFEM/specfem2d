@@ -74,7 +74,7 @@ use File::Basename;
 # suppress trailing white spaces, just in case we have added any in the above processing
           $line =~ s/\s*$//;
 
-        } 
+        }
       }
 
       print FILEF90 "$line\n";
