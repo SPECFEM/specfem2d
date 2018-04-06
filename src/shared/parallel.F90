@@ -95,15 +95,15 @@ end module my_mpi_communicator
 
   ! parallel version
   call MPI_INIT(ier)
-  if (ier /= 0 ) stop 'Error initializing MPI'
+  if (ier /= 0 ) call stop_the_code('Error initializing MPI')
 
   ! checks if getting size works
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
-  if (ier /= 0 ) stop 'Error getting MPI size'
+  if (ier /= 0 ) call stop_the_code('Error getting MPI size')
   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read before calling world_split()
   ! thus read the parameter file
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
-  if (ier /= 0 ) stop 'Error getting MPI rank'
+  if (ier /= 0 ) call stop_the_code('Error getting MPI rank')
   if (myrank == 0) then
     call open_parameter_file_from_master_only()
     ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read
@@ -158,7 +158,7 @@ end module my_mpi_communicator
 
   ! stop all the MPI processes, and exit
   call MPI_FINALIZE(ier)
-  if (ier /= 0) stop 'Error finalizing MPI'
+  if (ier /= 0) call stop_the_code('Error finalizing MPI')
 #endif
 
   end subroutine finalize_mpi
@@ -216,7 +216,7 @@ end module my_mpi_communicator
   call MPI_ABORT(MPI_COMM_WORLD,30,ier)
 #endif
 
-  stop 'Error, program ended in exit_MPI'
+  call stop_the_code('Error, program ended in exit_MPI')
 
   end subroutine abort_mpi
 
@@ -239,7 +239,7 @@ end module my_mpi_communicator
   integer :: ier
 
   call MPI_BARRIER(my_local_mpi_comm_world,ier)
-  if (ier /= 0 ) stop 'Error synchronize MPI processes'
+  if (ier /= 0 ) call stop_the_code('Error synchronize MPI processes')
 #endif
 
   end subroutine synchronize_all
@@ -1001,7 +1001,7 @@ end module my_mpi_communicator
 
   call MPI_ISEND(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag,my_local_mpi_comm_world,req,ier)
 #else
-  stop 'isend_cr not implemented for serial code'
+  call stop_the_code('isend_cr not implemented for serial code')
   ! to avoid compiler warning
   dummy = sendbuf(1)
   dummy = dest
@@ -1045,7 +1045,7 @@ end module my_mpi_communicator
 
   call MPI_IRECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag,my_local_mpi_comm_world,req,ier)
 #else
-  stop 'irecv_cr not implemented for serial code'
+  call stop_the_code('irecv_cr not implemented for serial code')
   ! to avoid compiler warning
   dummy = recvbuf(1)
   dummy = dest
@@ -1403,7 +1403,7 @@ end module my_mpi_communicator
   integer :: ier
 
   call MPI_COMM_SIZE(my_local_mpi_comm_world,sizeval,ier)
-  if (ier /= 0 ) stop 'Error getting MPI world size'
+  if (ier /= 0 ) call stop_the_code('Error getting MPI world size')
 #else
   ! single process
   sizeval = 1
@@ -1432,7 +1432,7 @@ end module my_mpi_communicator
   integer :: ier
 
   call MPI_COMM_RANK(my_local_mpi_comm_world,rank,ier)
-  if (ier /= 0 ) stop 'Error getting MPI rank'
+  if (ier /= 0 ) call stop_the_code('Error getting MPI rank')
 #else
   ! always returns master rank zero
   rank = 0
@@ -1460,7 +1460,7 @@ end module my_mpi_communicator
   integer :: ier
 
   call MPI_COMM_DUP(my_local_mpi_comm_world,comm,ier)
-  if (ier /= 0) stop 'error duplicating my_local_mpi_comm_world communicator'
+  if (ier /= 0) call stop_the_code('error duplicating my_local_mpi_comm_world communicator')
 #else
   comm = comm
 #endif
@@ -1512,7 +1512,7 @@ end module my_mpi_communicator
 
   character(len=MAX_STRING_LEN) :: path_to_add
 
-  if (NUMBER_OF_SIMULTANEOUS_RUNS <= 0) stop 'NUMBER_OF_SIMULTANEOUS_RUNS <= 0 makes no sense'
+  if (NUMBER_OF_SIMULTANEOUS_RUNS <= 0) call stop_the_code('NUMBER_OF_SIMULTANEOUS_RUNS <= 0 makes no sense')
 
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeval,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
@@ -1520,12 +1520,14 @@ end module my_mpi_communicator
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mod(sizeval,NUMBER_OF_SIMULTANEOUS_RUNS) /= 0) then
     if (myrank == 0) print *,'Error: the number of MPI processes ',sizeval, &
                             ' is not a multiple of NUMBER_OF_SIMULTANEOUS_RUNS = ',NUMBER_OF_SIMULTANEOUS_RUNS
-    stop 'the number of MPI processes is not a multiple of NUMBER_OF_SIMULTANEOUS_RUNS. Make sure you call meshfem2D with mpirun.'
+    call stop_the_code( &
+'the number of MPI processes is not a multiple of NUMBER_OF_SIMULTANEOUS_RUNS. Make sure you call meshfem2D with mpirun.')
   endif
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. IMAIN == ISTANDARD_OUTPUT) &
-    stop 'must not have IMAIN == ISTANDARD_OUTPUT when NUMBER_OF_SIMULTANEOUS_RUNS > 1 otherwise output to screen is mingled. &
-                 & Change this in specfem/setup/constant.h.in and recompile.'
+    call stop_the_code( &
+'must not have IMAIN == ISTANDARD_OUTPUT when NUMBER_OF_SIMULTANEOUS_RUNS > 1 otherwise output to screen is mingled. &
+                 & Change this in specfem/setup/constant.h.in and recompile.')
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS == 1) then
 
@@ -1544,11 +1546,11 @@ end module my_mpi_communicator
 !   create the different groups of processes, one for each independent run
     mygroup = myrank / NPROC
     key = myrank
-    if (mygroup < 0 .or. mygroup > NUMBER_OF_SIMULTANEOUS_RUNS-1) stop 'invalid value of mygroup'
+    if (mygroup < 0 .or. mygroup > NUMBER_OF_SIMULTANEOUS_RUNS-1) call stop_the_code('invalid value of mygroup')
 
 !   build the sub-communicators
     call MPI_COMM_SPLIT(MPI_COMM_WORLD, mygroup, key, my_local_mpi_comm_world, ier)
-    if (ier /= 0) stop 'error while trying to create the sub-communicators'
+    if (ier /= 0) call stop_the_code('error while trying to create the sub-communicators')
 
 !   add the right directory for that run
 !   (group numbers start at zero, but directory names start at run0001, thus we add one)
@@ -1563,11 +1565,11 @@ end module my_mpi_communicator
 !     to broadcast the model, split along similar ranks per run instead
       my_group_for_bcast = mod(myrank,NPROC)
       key = myrank
-      if (my_group_for_bcast < 0 .or. my_group_for_bcast > NPROC-1) stop 'invalid value of my_group_for_bcast'
+      if (my_group_for_bcast < 0 .or. my_group_for_bcast > NPROC-1) call stop_the_code('invalid value of my_group_for_bcast')
 
 !     build the sub-communicators
       call MPI_COMM_SPLIT(MPI_COMM_WORLD, my_group_for_bcast, key, my_local_mpi_comm_for_bcast, ier)
-      if (ier /= 0) stop 'error while trying to create the sub-communicators'
+      if (ier /= 0) call stop_the_code('error while trying to create the sub-communicators')
 
 !     see if that process will need to read the mesh and model database and then broadcast it to others
       call MPI_COMM_RANK(my_local_mpi_comm_for_bcast,my_local_rank_for_bcast,ier)

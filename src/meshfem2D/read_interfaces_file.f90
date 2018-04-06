@@ -75,14 +75,14 @@
 
   ! read number of interfaces
   call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,number_of_interfaces)
-  if (number_of_interfaces < 2) stop 'not enough interfaces (minimum is 2)'
+  if (number_of_interfaces < 2) call stop_the_code('not enough interfaces (minimum is 2)')
 
   ! loop on all the interfaces
   do interface_current = 1,number_of_interfaces
 
     call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,npoints_interface_bottom)
 
-    if (npoints_interface_bottom < 2) stop 'not enough interface points (minimum is 2)'
+    if (npoints_interface_bottom < 2) call stop_the_code('not enough interface points (minimum is 2)')
 
     max_npoints_interface = max(npoints_interface_bottom,max_npoints_interface)
 
@@ -96,7 +96,7 @@
       call read_two_interface_points(IIN_INTERFACES,DONT_IGNORE_JUNK,xinterface_dummy,zinterface_dummy)
 
       if (ipoint_current > 1 .and. xinterface_dummy <= xinterface_dummy_previous) &
-        stop 'interface points must be sorted in increasing X'
+        call stop_the_code('interface points must be sorted in increasing X')
 
       xinterface_dummy_previous = xinterface_dummy
     enddo
@@ -106,7 +106,7 @@
   number_of_layers = number_of_interfaces - 1
 
   allocate(nz_layer(number_of_layers),stat=ier)
-  if (ier /= 0) stop 'Error allocating array nz_layer'
+  if (ier /= 0) call stop_the_code('Error allocating array nz_layer')
 
   ! user output
   write(IMAIN,*)
@@ -119,7 +119,7 @@
     ! read number of spectral elements in vertical direction in this layer
     call read_value_integer(IIN_INTERFACES,DONT_IGNORE_JUNK,nz_layer(ilayer))
 
-    if (nz_layer(ilayer) < 1) stop 'not enough spectral elements along Z in layer (minimum is 1)'
+    if (nz_layer(ilayer) < 1) call stop_the_code('not enough spectral elements along Z in layer (minimum is 1)')
 
     ! user output
     write(IMAIN,*) 'There are ',nz_layer(ilayer),' spectral elements along Z in layer ',ilayer

@@ -383,7 +383,8 @@
           ! implement anisotropy in 2D
           sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
-          if (c12 < 1.e-7 .or. c23 < 1.e-7) stop 'cannot compute pressure for an anisotropic material if c12 or c23 are zero'
+          if (c12 < 1.e-7 .or. c23 < 1.e-7) call stop_the_code( &
+'cannot compute pressure for an anisotropic material if c12 or c23 are zero')
           sigma_yy = c12*dux_dxl + c23*duz_dzl + c25*(duz_dxl + dux_dzl)
           sigma_zz = c13*dux_dxl + c33*duz_dzl + c35*(duz_dxl + dux_dzl)
 
@@ -486,7 +487,7 @@
           sigma_xx = (lambdal_unrelaxed_elastic + 2.0 * mul_unrelaxed_elastic)*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
 !         sigma_yy = ...  ! it is not zero because of the plane strain formulation, thus it should be computed here
-          stop 'pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here'
+          call stop_the_code('pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here')
           sigma_zz = (lambdal_unrelaxed_elastic + 2.0 * mul_unrelaxed_elastic)*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
 
           ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
@@ -503,7 +504,7 @@
                     + TWO * mul_unrelaxed_elastic * e11_sum
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
 !         sigma_yy = ...  ! it is not zero because of the plane strain formulation, thus it should be computed here
-          stop 'pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here'
+          call stop_the_code('pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here')
           sigma_zz = sigma_zz + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
                     - TWO * mul_unrelaxed_elastic * e11_sum
 
@@ -513,7 +514,7 @@
           sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
 !         sigma_yy = ...  ! it is not zero because of the plane strain formulation, thus it should be computed here
-          stop 'pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here'
+          call stop_the_code('pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here')
           sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
 !         sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)

@@ -71,11 +71,11 @@
   allocate(displ_elastic(NDIM,nglob_elastic), &
            veloc_elastic(NDIM,nglob_elastic), &
            accel_elastic(NDIM,nglob_elastic),stat=ier)
-  if (ier /= 0) stop 'Error allocating elastic wavefield arrays'
+  if (ier /= 0) call stop_the_code('Error allocating elastic wavefield arrays')
 
   ! PML
   allocate(displ_elastic_old(NDIM,nglob_elastic),stat=ier)
-  if (ier /= 0) stop 'Error allocating old elastic wavefield arrays'
+  if (ier /= 0) call stop_the_code('Error allocating old elastic wavefield arrays')
 
   if (SIMULATION_TYPE == 3) then
     if (coupled_acoustic_elastic) then
@@ -84,13 +84,13 @@
   endif
 
   allocate(rmass_inverse_elastic(NDIM,nglob_elastic),stat=ier)
-  if (ier /= 0) stop 'Error allocating elastic mass matrix array'
+  if (ier /= 0) call stop_the_code('Error allocating elastic mass matrix array')
 
   if (time_stepping_scheme == 2) then
     allocate(displ_elastic_LDDRK(NDIM,nglob_elastic), &
              veloc_elastic_LDDRK(NDIM,nglob_elastic), &
              veloc_elastic_LDDRK_temp(NDIM,nglob_elastic),stat=ier)
-    if (ier /= 0) stop 'Error allocating elastic LDDRK wavefield arrays'
+    if (ier /= 0) call stop_the_code('Error allocating elastic LDDRK wavefield arrays')
   endif
 
   if (time_stepping_scheme == 3) then
@@ -98,7 +98,7 @@
              veloc_elastic_rk(NDIM,nglob_elastic,stage_time_scheme), &
              veloc_elastic_initial_rk(NDIM,nglob_elastic), &
              displ_elastic_initial_rk(NDIM,nglob_elastic),stat=ier)
-    if (ier /= 0) stop 'Error allocating elastic RK wavefield arrays'
+    if (ier /= 0) call stop_the_code('Error allocating elastic RK wavefield arrays')
   endif
 
   ! extra array if adjoint and kernels calculation
@@ -114,7 +114,7 @@
   allocate(b_displ_elastic(NDIM,nglob_elastic_b), &
            b_veloc_elastic(NDIM,nglob_elastic_b), &
            b_accel_elastic(NDIM,nglob_elastic_b),stat=ier)
-  if (ier /= 0) stop 'Error allocating elastic backward wavefield arrays'
+  if (ier /= 0) call stop_the_code('Error allocating elastic backward wavefield arrays')
 
   allocate(b_displ_elastic_old(NDIM,nglob_elastic_b))
 
@@ -258,31 +258,31 @@
 
   if (COMPUTE_INTEGRATED_ENERGY_FIELD) then
     allocate(total_integrated_energy_field(nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating total_integrated_energy_field array'
+    if (ier /= 0) call stop_the_code('Error allocating total_integrated_energy_field array')
     total_integrated_energy_field(:) = 0._CUSTOM_REAL
     allocate(max_total_energy_field(nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating max_total_energy_field array'
+    if (ier /= 0) call stop_the_code('Error allocating max_total_energy_field array')
     max_total_energy_field(:) = 0._CUSTOM_REAL
     allocate(total_effective_duration_field(nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating total_effective_duration_field array'
+    if (ier /= 0) call stop_the_code('Error allocating total_effective_duration_field array')
     total_effective_duration_field(:) = 0._CUSTOM_REAL
     allocate(integrated_kinetic_energy_field(nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating integrated_kinetic_energy_field array'
+    if (ier /= 0) call stop_the_code('Error allocating integrated_kinetic_energy_field array')
     integrated_kinetic_energy_field(:) = 0._CUSTOM_REAL
     allocate(max_kinetic_energy_field(nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating max_kinetic_energy_field array'
+    if (ier /= 0) call stop_the_code('Error allocating max_kinetic_energy_field array')
     max_kinetic_energy_field(:) = 0._CUSTOM_REAL
     allocate(integrated_potential_energy_field(nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating integrated_potential_energy_field array'
+    if (ier /= 0) call stop_the_code('Error allocating integrated_potential_energy_field array')
     integrated_potential_energy_field(:) = 0._CUSTOM_REAL
     allocate(max_potential_energy_field(nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating max_potential_energy_field array'
+    if (ier /= 0) call stop_the_code('Error allocating max_potential_energy_field array')
     max_potential_energy_field(:) = 0._CUSTOM_REAL
     allocate(kinetic_effective_duration_field(nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating kinetic_effective_duration_field array'
+    if (ier /= 0) call stop_the_code('Error allocating kinetic_effective_duration_field array')
     kinetic_effective_duration_field(:) = 0._CUSTOM_REAL
     allocate(potential_effective_duration_field(nspec),stat=ier)
-    if (ier /= 0) stop 'Error allocating potential_effective_duration_field array'
+    if (ier /= 0) call stop_the_code('Error allocating potential_effective_duration_field array')
     potential_effective_duration_field(:) = 0._CUSTOM_REAL
   endif
   !

@@ -610,9 +610,9 @@
             if (abs(coord(1,ibool(i,j,ispec))) > TINYVAL) then
               if (i == 1) then
                 write(*,*) "Element number:",ispec
-                stop "Error: an axial element is rotated. The code should have been stopped before. Check that your &
+                call stop_the_code("Error: an axial element is rotated. The code should have been stopped before. Check that your &
                  &coordinates are greater than TINYVAL. Maybe you should also have a look to &
-                 &doc/problematic_case_that_we_exclude_for_axisymmetric.pdf"
+                 &doc/problematic_case_that_we_exclude_for_axisymmetric.pdf")
               endif
               tempx3(i,j) = tempx3(i,j) + wxglj(i) * jacobianl &
                             * sigma_thetatheta(i,j)/(xiglj(i)+ONE) ! this goes to accel_x

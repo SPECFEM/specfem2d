@@ -747,7 +747,7 @@
 
       if (total_percent < 99.9d0 .or. total_percent > 100.1d0) then
         write(IMAIN,*) 'total percentage = ',total_percent,' %'
-        stop 'total percentage should be 100%'
+        call stop_the_code('total percentage should be 100%')
       else
         write(IMAIN,*)
         write(IMAIN,*) 'total percentage = ',total_percent,' %'
@@ -814,7 +814,7 @@
   integer :: NGLLX_MAX_STABILITY
   double precision :: percent_GLL(NGLLX_MAX_STABILITY)
 
-  if (NGLLX_MAX_STABILITY /= 15 ) stop 'check NGLLX_MAX_STABILITY is equal to 15 in check_grid.f90'
+  if (NGLLX_MAX_STABILITY /= 15 ) call stop_the_code('check NGLLX_MAX_STABILITY is equal to 15 in check_grid.f90')
 
 ! define percentage of smallest distance between GLL points for NGLLX points
 ! percentages were computed by calling the GLL points routine for each degree
@@ -839,7 +839,7 @@
   percent_GLL(:) = percent_GLL(:) / 100.d0
 
   if (NGLLX > NGLLX_MAX_STABILITY) then
-    stop 'cannot estimate the stability condition for degree NGLLX > NGLLX_MAX_STABILITY'
+    call stop_the_code('cannot estimate the stability condition for degree NGLLX > NGLLX_MAX_STABILITY')
   endif
 
   end subroutine check_grid_setup_GLLper
@@ -922,7 +922,7 @@
   else if (DISPLAY_SUBSET_OPTION == 4) then
     UPPER_LIMIT_DISPLAY = NSPEC_DISPLAY_SUBSET
   else
-    stop 'incorrect value of DISPLAY_SUBSET_OPTION'
+    call stop_the_code('incorrect value of DISPLAY_SUBSET_OPTION')
   endif
 
   ! checks limit

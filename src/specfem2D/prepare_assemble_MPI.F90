@@ -180,7 +180,7 @@
             endif
 
           else
-            stop 'Invalid element type found in prepare_assemble_MPI() routine'
+            call stop_the_code('Invalid element type found in prepare_assemble_MPI() routine')
           endif
 
         enddo
@@ -336,7 +336,7 @@
 
   else
 
-    stop 'ERROR get_edge unknown type'
+    call stop_the_code('ERROR get_edge unknown type')
 
   endif
 

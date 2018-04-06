@@ -193,7 +193,7 @@
         nz = + xgamma / jacobian1D
         if (AXISYM) then
           if (is_on_the_axis(ispec_acoustic)) then
-            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+            call stop_the_code('error: rotated element detected on the symmetry axis, this should not happen')
           else
             weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
           endif
@@ -210,7 +210,7 @@
         nz = - xgamma / jacobian1D
         if (AXISYM) then
           if (is_on_the_axis(ispec_acoustic)) then
-            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+            call stop_the_code('error: rotated element detected on the symmetry axis, this should not happen')
           else
             weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
           endif
@@ -333,7 +333,7 @@
         nz = + xgamma / jacobian1D
         if (AXISYM) then
           if (is_on_the_axis(ispec_acoustic)) then
-            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+            call stop_the_code('error: rotated element detected on the symmetry axis, this should not happen')
           else
             weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
           endif
@@ -348,7 +348,7 @@
         nz = - xgamma / jacobian1D
         if (AXISYM) then
           if (is_on_the_axis(ispec_acoustic)) then
-            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+            call stop_the_code('error: rotated element detected on the symmetry axis, this should not happen')
           else
             weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
           endif

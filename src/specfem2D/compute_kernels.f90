@@ -427,7 +427,7 @@
   integer :: material
 
   ! safety check
-  if (GPU_MODE) stop 'Error poroelastic kernels not implemented on GPUs yet'
+  if (GPU_MODE) call stop_the_code('Error poroelastic kernels not implemented on GPUs yet')
 
   ! kernel contributions on global nodes
   do iglob = 1,nglob

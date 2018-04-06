@@ -132,7 +132,7 @@ program smooth_sem
   if (command_argument_count() /= NARGS) then
     if (myrank == 0) then
         print *, 'USAGE:  mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR GPU_MODE'
-      stop ' Please check command line arguments'
+      call stop_the_code(' Please check command line arguments')
     endif
   endif
 
@@ -167,8 +167,8 @@ program smooth_sem
   sigma_h2_inv = ( 1.0 / (2.0 * (sigma_h ** 2)) ) ! factor two for Gaussian distribution with standard variance sigma
   sigma_v2_inv = ( 1.0 / (2.0 * (sigma_v ** 2)) )
 
-  if ((1.0 / sigma_h2_inv) < 1.e-18) stop 'Error sigma_h2 zero, must non-zero'
-  if ((1.0 / sigma_v2_inv) < 1.e-18) stop 'Error sigma_v2 zero, must non-zero'
+  if ((1.0 / sigma_h2_inv) < 1.e-18) call stop_the_code('Error sigma_h2 zero, must non-zero')
+  if ((1.0 / sigma_v2_inv) < 1.e-18) call stop_the_code('Error sigma_v2 zero, must non-zero')
 
   ! adds margin to search radius
   element_size = max(sigma_h,sigma_v) * 0.5
@@ -199,7 +199,7 @@ program smooth_sem
   open(IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0) then
       print *,'Error: could not open database file: ',trim(prname)
-      stop 'Error opening _NSPEC_IBOOL file'
+      call stop_the_code('Error opening _NSPEC_IBOOL file')
   endif
   read(IIN) nspec_me
   allocate(ibool_me(NGLLX,NGLLZ,nspec_me))
@@ -213,7 +213,7 @@ program smooth_sem
     open(unit=IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error: could not open database file: ',trim(prname)
-      stop 'Error reading neighbors external mesh file'
+      call stop_the_code('Error reading neighbors external mesh file')
     endif
     ! global point arrays
     read(IIN) xstore_me
@@ -224,7 +224,7 @@ program smooth_sem
     open(unit=IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error: could not open database file: ',trim(prname)
-      stop 'Error reading neighbors external mesh file'
+      call stop_the_code('Error reading neighbors external mesh file')
     endif
     ! global point arrays
     read(IIN) zstore_me
@@ -247,7 +247,7 @@ program smooth_sem
 ! loops over slices
 ! each process reads all the other slices and Gaussian filters the values
   allocate(tk(nglob_me,nker), bk(nglob_me),stat=ier)
-  if (ier /= 0) stop 'Error allocating array tk and bk'
+  if (ier /= 0) call stop_the_code('Error allocating array tk and bk')
 
   tk = 0.0_CUSTOM_REAL
   bk = 0.0_CUSTOM_REAL
@@ -256,19 +256,19 @@ program smooth_sem
     ! slice database file
     write(prname,'(a,i6.6,a)') trim(input_dir)//'/proc',iproc,'_NSPEC_ibool.bin'
     open(IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) stop 'Error opening ibool file'
+    if (ier /= 0) call stop_the_code('Error opening ibool file')
     read(IIN) nspec_other
     close(IIN)
     allocate(xstore_other(NGLLX,NGLLZ,NSPEC_other),zstore_other(NGLLX,NGLLZ,NSPEC_other), &
              jacobian(NGLLX,NGLLZ,NSPEC_other),stat=ier)
-    if (ier /= 0) stop 'Error allocating array xstore_other etc.'
+    if (ier /= 0) call stop_the_code('Error allocating array xstore_other etc.')
 
      write(prname, '(a,i6.6,a)') trim(input_dir)//'/proc',iproc,'_x.bin'
     ! gets the coordinate x of the points located in the other slice
     open(unit=IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error: could not open database file: ',trim(prname)
-      stop 'Error reading x coordinate'
+      call stop_the_code('Error reading x coordinate')
     endif
     ! global point arrays
     read(IIN) xstore_other
@@ -279,7 +279,7 @@ program smooth_sem
     open(unit=IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error: could not open database file: ',trim(prname)
-      stop 'Error reading z coordinate'
+      call stop_the_code('Error reading z coordinate')
     endif
     ! global point arrays
     read(IIN) zstore_other
@@ -290,14 +290,14 @@ program smooth_sem
     open(unit=IIN,file=trim(prname),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error: could not open database file: ',trim(prname)
-      stop 'Error reading jacobian'
+      call stop_the_code('Error reading jacobian')
     endif
     ! global point arrays
     read(IIN) jacobian
     close(IIN)
 
     allocate(dat(NGLLX,NGLLZ,NSPEC_other),dat_store(NGLLX,NGLLZ,NSPEC_other,nker),stat=ier)
-    if (ier /= 0) stop 'Error allocating dat array'
+    if (ier /= 0) call stop_the_code('Error allocating dat array')
 
     do iker= 1, nker
       ! data file
@@ -306,7 +306,7 @@ program smooth_sem
       open(unit = IIN,file = trim(prname),status='old',action='read',form ='unformatted',iostat=ier)
       if (ier /= 0) then
         print *,'Error opening data file: ',trim(prname)
-        stop 'Error opening data file'
+        call stop_the_code('Error opening data file')
       endif
       read(IIN) dat
       close(IIN)
@@ -385,7 +385,7 @@ program smooth_sem
   if (myrank == 0) print *, 'Scaling values: min/max = ',minval(bk),maxval(bk)
 
   allocate(dat_smooth(NGLLX,NGLLZ,NSPEC_me,nker),stat=ier)
-  if (ier /= 0) stop 'Error allocating array dat_smooth'
+  if (ier /= 0) call stop_the_code('Error allocating array dat_smooth')
 
   dat_smooth(:,:,:,:) = 0.0_CUSTOM_REAL
 
@@ -416,7 +416,7 @@ program smooth_sem
     write(ks_file,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank,'_'//trim(kernel_names(iker))//'_smooth.bin'
 
     open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',iostat=ier)
-    if (ier /= 0) stop 'Error opening smoothed kernel file'
+    if (ier /= 0) call stop_the_code('Error opening smoothed kernel file')
     write(IOUT) dat_smooth(:,:,:,iker)
     close(IOUT)
     if (myrank == 0) print *,'written: ',trim(ks_file)

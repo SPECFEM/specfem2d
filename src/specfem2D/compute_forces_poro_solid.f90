@@ -111,7 +111,7 @@
 
     ! safety check
     if (SIMULATION_TYPE == 3) &
-      stop 'ATTENUATION_VISCOELASTIC not fully implemented yet for poroelastic kernel simulations'
+      call stop_the_code('ATTENUATION_VISCOELASTIC not fully implemented yet for poroelastic kernel simulations')
 
 ! compute Grad(displs_poroelastic) at time step n for attenuation
     call compute_gradient_attenuation(displs_poroelastic,dux_dxl_n,duz_dxl_n, &

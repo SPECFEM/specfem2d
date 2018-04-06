@@ -81,7 +81,7 @@
 
       ! poroelastic coupling
       if (any_poroelastic) then
-            stop 'poroelastic not implemented yet in GPU mode'
+            call stop_the_code('poroelastic not implemented yet in GPU mode')
       endif
 
       ! sources

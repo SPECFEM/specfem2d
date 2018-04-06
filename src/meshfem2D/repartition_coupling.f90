@@ -91,7 +91,7 @@
   write(IMAIN,*) 'nedges_coupled (acoustic/elastic)     = ', nedges_coupled
 
   allocate(edges_coupled(2,nedges_coupled),stat=ier)
-  if (ier /= 0) stop 'Error allocating array edges_coupled'
+  if (ier /= 0) call stop_the_code('Error allocating array edges_coupled')
   edges_coupled(:,:) = 0
 
   ! repartitions elements
@@ -166,7 +166,7 @@
   write(IMAIN,*) 'nedges_coupled (acoustic/poroelastic) = ', nedges_acporo_coupled
 
   allocate(edges_acporo_coupled(2,nedges_acporo_coupled),stat=ier)
-  if (ier /= 0) stop 'Error allocating array edges_acporo_coupled'
+  if (ier /= 0) call stop_the_code('Error allocating array edges_acporo_coupled')
   edges_acporo_coupled(:,:) = 0
 
   ! repartitions elements
@@ -240,7 +240,7 @@
   write(IMAIN,*) 'nedges_coupled (poroelastic/elastic)  = ', nedges_elporo_coupled
 
   allocate(edges_elporo_coupled(2,nedges_elporo_coupled),stat=ier)
-  if (ier /= 0) stop 'Error allocating array edges_elporo_coupled'
+  if (ier /= 0) call stop_the_code('Error allocating array edges_elporo_coupled')
   edges_elporo_coupled(:,:) = 0
 
   ! repartitions elements
@@ -299,7 +299,7 @@
       enddo
     endif
   enddo
-  if (iedge /= nedges_coupled) stop 'Error in setting domain edges, number of edges invalid'
+  if (iedge /= nedges_coupled) call stop_the_code('Error in setting domain edges, number of edges invalid')
 
   ! only in case we have different partitions
   if (nproc > 1) then
@@ -333,7 +333,7 @@
       write(IMAIN,*) '  repartitioning edges left = ',i
       if (i /= 0) then
         write(IMAIN,*) 'Error: repartitioning edges has still edges left = ',i
-        stop 'Error: repartitioning coupled elements needs more iterations'
+        call stop_the_code('Error: repartitioning coupled elements needs more iterations')
       else
         ! for user output
         i = nedges_coupled * nproc
@@ -402,7 +402,7 @@
   is_periodic(:) = .false.
 
 ! loop on all the elements
-  do el = 0, nelmnts-2 ! we stop one element before the end in order for the second loop to be OK in all cases
+  do el = 0, nelmnts-2 ! we call stop_the_code(one element before the end in order for the second loop to be OK in all cases)
     do el2 = el+1, nelmnts-1
       if (is_periodic(el2)) cycle
       ! it is sufficient to loop on the four corners to determine if this element has at least one periodic point
@@ -443,7 +443,8 @@
       exit
     endif
   enddo
-  if (ifirst_partition_found < 0) stop 'error: no periodic element found, even though ADD_PERIODIC_CONDITIONS is set'
+  if (ifirst_partition_found < 0) call stop_the_code( &
+'error: no periodic element found, even though ADD_PERIODIC_CONDITIONS is set')
 
   ! loop on all the elements to move all periodic elements to the first partition found
   do el = 0, nelmnts-1
@@ -501,9 +502,9 @@
   call flush_IMAIN()
 
   if (count(is_crack_element) == 0) &
-    stop 'Error: no crack element found, even though ADD_A_SMALL_CRACK_IN_THE_MEDIUM is set'
+    call stop_the_code('Error: no crack element found, even though ADD_A_SMALL_CRACK_IN_THE_MEDIUM is set')
   if (ipartition_crack > nproc) &
-    stop 'Error: invalid partition number for crack elements'
+    call stop_the_code('Error: invalid partition number for crack elements')
 
   ! we will put all crack elements into the same partition
   do el = 0, nelmnts-1

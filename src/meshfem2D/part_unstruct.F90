@@ -107,14 +107,14 @@
 
             xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED)) = xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED)) + 1
             if (xadj(nodes_elmnts(k+j*MAX_NSIZE_SHARED)) > MAX_NEIGHBORS) &
-              stop 'ERROR : too much neighbors per element, modify the mesh.'
+              call stop_the_code('ERROR : too much neighbors per element, modify the mesh.')
 
             adjncy(nodes_elmnts(l+j*MAX_NSIZE_SHARED)*MAX_NEIGHBORS &
                    + xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED))) = nodes_elmnts(k+j*MAX_NSIZE_SHARED)
 
             xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED)) = xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED)) + 1
             if (xadj(nodes_elmnts(l+j*MAX_NSIZE_SHARED)) > MAX_NEIGHBORS) &
-              stop 'ERROR : too much neighbors per element, modify the mesh.'
+              call stop_the_code('ERROR : too much neighbors per element, modify the mesh.')
 
           endif
         endif
@@ -394,7 +394,7 @@
                 tab_interfaces(tab_size_interfaces(num_interface)*5+num_edge*5+2) = ncommon_nodes
               else
                 print *,'Error while building interfaces! invalid number of common nodes ', ncommon_nodes
-                stop 'Error building interfaces'
+                call stop_the_code('Error building interfaces')
               endif
               num_edge = num_edge + 1
             endif
@@ -601,7 +601,7 @@
                                            local_nodes(1), local_nodes(2)
               else
                 print *,"Error: write_interfaces_database", tab_interfaces(k*5+2)
-                stop 'Invalid interface found'
+                call stop_the_code('Invalid interface found')
               endif
             endif
           enddo

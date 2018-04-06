@@ -55,10 +55,11 @@
   endif
 
   ! safety checks
-  if (any_elastic .and. (.not. P_SV)) stop 'Invalid GPU simulation, SH waves not implemented yet. Please use P_SV instead.'
-  if (PML_BOUNDARY_CONDITIONS ) stop 'PML not implemented on GPU mode. Please use Stacey instead.'
-  if (AXISYM) stop 'Axisym not implemented on GPU yet.'
-  if (NGLLX /= NGLLZ) stop 'GPU simulations require NGLLX == NGLLZ'
+  if (any_elastic .and. (.not. P_SV)) call stop_the_code( &
+'Invalid GPU simulation, SH waves not implemented yet. Please use P_SV instead.')
+  if (PML_BOUNDARY_CONDITIONS ) call stop_the_code('PML not implemented on GPU mode. Please use Stacey instead.')
+  if (AXISYM) call stop_the_code('Axisym not implemented on GPU yet.')
+  if (NGLLX /= NGLLZ) call stop_the_code('GPU simulations require NGLLX == NGLLZ')
 
   ! initializes arrays
   call init_host_to_dev_variable()
@@ -66,7 +67,7 @@
   ! check number of purely elastic elements
   if (nspec_elastic /= nspec - nspec_acoustic) then
     print *,'GPU simulation only supported for acoustic and/or elastic domain simulations'
-    stop 'Error GPU simulation'
+    call stop_the_code('Error GPU simulation')
   endif
 
 !!!!!!!!!!! Parametres fournis
@@ -172,7 +173,7 @@
     if (SIMULATION_TYPE == 3) then
       ! safety check
       if (APPROXIMATE_HESS_KL) then
-        stop 'Sorry, approximate acoustic Hessian kernels not yet fully implemented for GPU simulations!'
+        call stop_the_code('Sorry, approximate acoustic Hessian kernels not yet fully implemented for GPU simulations!')
       endif
       call prepare_fields_acoustic_adj_dev(Mesh_pointer,APPROXIMATE_HESS_KL)
     endif
@@ -218,7 +219,7 @@
     if (SIMULATION_TYPE == 3) then
       ! safety check
       if (APPROXIMATE_HESS_KL) then
-        stop 'Sorry, approximate elastic Hessian kernels not yet fully implemented for GPU simulations!'
+        call stop_the_code('Sorry, approximate elastic Hessian kernels not yet fully implemented for GPU simulations!')
       endif
       call prepare_fields_elastic_adj_dev(Mesh_pointer,NDIM*NGLOB_AB,APPROXIMATE_HESS_KL)
     endif
@@ -229,7 +230,7 @@
 
   ! prepares fields on GPU for poroelastic simulations
   if (any_poroelastic) then
-    stop 'todo poroelastic simulations on GPU'
+    call stop_the_code('todo poroelastic simulations on GPU')
   endif
 
   ! prepares needed receiver array for adjoint runs
@@ -383,7 +384,7 @@
            abs_boundary_jacobian1Dw(NGLLX,nelemabs), &
            abs_boundary_normal(NDIM,NGLLX,nelemabs), &
            cote_abs(nelemabs),stat=ier)
-  if (ier /= 0 ) stop 'error allocating array abs_boundary_ispec etc.'
+  if (ier /= 0 ) call stop_the_code('error allocating array abs_boundary_ispec etc.')
 
   if (STACEY_ABSORBING_CONDITIONS) then
 
@@ -500,7 +501,7 @@
   j = 0
   do i = 1, NSOURCES
     if (myrank == islice_selected_source(i)) then
-      if (j > nsources_local) stop 'Error with the number of local sources'
+      if (j > nsources_local) call stop_the_code('Error with the number of local sources')
       j = j + 1
       source_time_function_loc(j,:) = source_time_function(i,:,1)
       ispec_selected_source_loc(j)  = ispec_selected_source(i)

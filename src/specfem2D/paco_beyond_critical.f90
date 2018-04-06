@@ -133,7 +133,7 @@
     print *, 'Error: Initial plane wave setting has invalid time step size deltat = ',deltat
     print *, 'You must take a deltat that is a power of two (power can be negative)'
     print *, 'For example, you can take ', DT
-    stop 'Error in paco_beyond_critical routine cannot go further, restart with new deltat'
+    call stop_the_code('Error in paco_beyond_critical routine cannot go further, restart with new deltat')
   endif
 
   DT = deltat/2.d0
@@ -157,7 +157,7 @@
     write(IMAIN,*) 'dt (here we need deltat/2)                   = ', DT
   endif
 
-  if (mod(N,2) /= 0) stop 'N must be a multiple of 2'
+  if (mod(N,2) /= 0) call stop_the_code('N must be a multiple of 2')
 
   NFREC = N/2
   NFREC1 = NFREC + 1
@@ -221,7 +221,7 @@
       local_pt = bot_bound
       NSTEP_local = NSTEP
     case default
-      stop 'Invalid flag'
+      call stop_the_code('Invalid flag')
     end select
 
     ! to distinguish all model case and boundary case
@@ -406,7 +406,7 @@
         t0z_bot(indice,:) = temp_field(:)
 
       case default
-        stop 'Invalid flag'
+        call stop_the_code('Invalid flag')
       end select
     enddo
 

@@ -231,7 +231,7 @@
     ! find pixel position of the sources with orange crosses
     allocate(ix_image_color_source(NSOURCES), &
              iy_image_color_source(NSOURCES),stat=ier)
-    if (ier /= 0) stop 'Error allocating image source arrays'
+    if (ier /= 0) call stop_the_code('Error allocating image source arrays')
 
     do i = 1,NSOURCES
       ix_image_color_source(i) = int((x_source(i) - xmin_color_image) / size_pixel_horizontal) + 1
@@ -248,7 +248,7 @@
     ! find pixel position of the receivers with green squares
     allocate(ix_image_color_receiver(nrec), &
              iy_image_color_receiver(nrec),stat=ier)
-    if (ier /= 0) stop 'Error allocating image receiver arrays'
+    if (ier /= 0) call stop_the_code('Error allocating image receiver arrays')
 
     do i = 1,nrec
       ix_image_color_receiver(i) = int((st_xval(i) - xmin_color_image) / size_pixel_horizontal) + 1

@@ -80,7 +80,7 @@
   write(IMAIN,*)
 
   open(unit=IOUT,file=trim(stations_filename),status='unknown',iostat=ios)
-  if (ios /= 0 ) stop 'error saving STATIONS file'
+  if (ios /= 0 ) call stop_the_code('error saving STATIONS file')
 
   irec_global_number = 0
 

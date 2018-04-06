@@ -82,7 +82,7 @@
     case (3)
       FUN = de2ric(j,tp,ts,dt)
     case default
-      stop 'Invalid label in paco_convolve_fft'
+      call stop_the_code('Invalid label in paco_convolve_fft')
     end select
 
     CR(j) = CMPLX(FUN,0.0d0)

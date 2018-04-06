@@ -90,7 +90,7 @@
     CPML_Z_ONLY_TEMP = CPML_X_ONLY
     CPML_XZ_TEMP = CPML_XZ
   else
-    stop 'In lik_parameter_computation index_ik must be equal to 13 or 31'
+    call stop_the_code('In lik_parameter_computation index_ik must be equal to 13 or 31')
   endif
 
   if (CPML_region_local == CPML_XZ_TEMP) then
@@ -171,7 +171,7 @@
     CPML_Z_ONLY_TEMP = CPML_X_ONLY
     CPML_XZ_TEMP = CPML_XZ
   else
-    stop 'In lik_parameter_computation index_ik must be equal to 13 or 31'
+    call stop_the_code('In lik_parameter_computation index_ik must be equal to 13 or 31')
   endif
 
   if (CPML_region_local == CPML_XZ_TEMP) then
@@ -244,7 +244,7 @@
 
   else
 
-    stop 'error: CPML_region_local is undefined in lik_parameter_computation_viscoelastic()'
+    call stop_the_code('error: CPML_region_local is undefined in lik_parameter_computation_viscoelastic()')
 
   endif
 
@@ -652,7 +652,7 @@
 
   if (N_PMLSF < 0) then
     write(*,*)'the number of PML Stretching function should be greater than 0'
-    stop
+    call stop_the_code('error: stopping the code')
   endif
 
 

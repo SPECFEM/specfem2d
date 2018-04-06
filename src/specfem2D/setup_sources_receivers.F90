@@ -253,7 +253,7 @@
            islice_selected_rec(nrec), &
            x_final_receiver(nrec), &
            z_final_receiver(nrec),stat=ier)
-  if (ier /= 0) stop 'Error allocating receiver arrays'
+  if (ier /= 0) call stop_the_code('Error allocating receiver arrays')
 
   ! locate receivers in the mesh
   call locate_receivers(ibool,coord,nspec,nglob,xigll,zigll, &
@@ -311,7 +311,7 @@
   irec_local = 0
   do irec = 1, nrec
     if (myrank == islice_selected_rec(irec)) then
-      if (irec_local > nrecloc) stop 'Error with the number of local sources'
+      if (irec_local > nrecloc) call stop_the_code('Error with the number of local sources')
       irec_local = irec_local + 1
       ispec_selected_rec_loc(irec_local)  = ispec_selected_rec(irec)
     endif
@@ -455,7 +455,7 @@
         endif
       enddo
       ! checks
-      if (irec_local /= nadj_rec_local) stop 'Error invalid number of local adjoint sources found'
+      if (irec_local /= nadj_rec_local) call stop_the_code('Error invalid number of local adjoint sources found')
     else
       ! user output
       if (myrank == 0) then
@@ -514,11 +514,11 @@
            cosrot_irec(nrecloc), &
            sinrot_irec(nrecloc), &
            rec_tangential_detection_curve(nrecloc),stat=ier)
-  if (ier /= 0) stop 'Error allocating tangential arrays'
+  if (ier /= 0) call stop_the_code('Error allocating tangential arrays')
 
   ! checks angle
   if (rec_normal_to_surface .and. abs(anglerec) > 1.d-6) &
-    stop 'anglerec should be zero when receivers are normal to the topography'
+    call stop_the_code('anglerec should be zero when receivers are normal to the topography')
 
   ! convert receiver angle to radians
   anglerec = anglerec * pi / 180.d0
@@ -743,7 +743,7 @@
   ! allocates Lagrange interpolators for sources
   allocate(hxis_store(NSOURCES,NGLLX), &
            hgammas_store(NSOURCES,NGLLZ),stat=ier)
-  if (ier /= 0) stop 'Error allocating source h**_store arrays'
+  if (ier /= 0) call stop_the_code('Error allocating source h**_store arrays')
 
   ! initializes
   hxis_store(:,:) = ZERO
@@ -864,7 +864,7 @@
   ! allocate Lagrange interpolants for receivers
   allocate(xir_store_loc(nrecloc,NGLLX), &
            gammar_store_loc(nrecloc,NGLLZ),stat=ier)
-  if (ier /= 0) stop 'Error allocating local receiver h**_store arrays'
+  if (ier /= 0) call stop_the_code('Error allocating local receiver h**_store arrays')
 
   ! define and store Lagrange interpolants at all the receivers
   irec_local = 0

@@ -72,11 +72,11 @@ contains
     ! Allocations WARNING indices start at zero!
     allocate(elmnts_load(0:nelmnts-1), &
              adjwgt(0:nb_edges-1),stat=ier)
-    if (ier /= 0) stop 'Error allocating arrays for weights'
+    if (ier /= 0) call stop_the_code('Error allocating arrays for weights')
     allocate(is_acoustic(0:nelmnts-1), &
              is_elastic(0:nelmnts-1), &
              is_viscoelastic(0:nelmnts-1),stat=ier)
-    if (ier /= 0) stop 'Error allocating arrays for is_acoustic, is_elastic and is_viscoelastic'
+    if (ier /= 0) call stop_the_code('Error allocating arrays for is_acoustic, is_elastic and is_viscoelastic')
 
     ! Initialize counters and arrays
     nelem_elastic = 0

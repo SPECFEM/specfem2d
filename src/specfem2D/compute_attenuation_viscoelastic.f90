@@ -81,7 +81,7 @@
   if (.not. ATTENUATION_VISCOELASTIC) return
 
   if (.not. CONVOLUTION_MEMORY_VARIABLES) &
-    stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
+    call stop_the_code('CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now')
 
   ! compute Grad(displ_elastic) at time step n for attenuation
   call compute_gradient_attenuation(displ_elastic,dux_dxl_n,duz_dxl_n, &
@@ -223,7 +223,7 @@
           endif
 
         case default
-          stop 'Time stepping scheme not implemented yet in viscoelastic attenuation update'
+          call stop_the_code('Time stepping scheme not implemented yet in viscoelastic attenuation update')
         end select
 
       enddo ! i_sls

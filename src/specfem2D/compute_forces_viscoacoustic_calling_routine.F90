@@ -232,7 +232,7 @@
     ! RK scheme
     call update_veloc_acoustic_RK()
   case default
-    stop 'Invalid time stepping scheme for compute forces routine!'
+    call stop_the_code('Invalid time stepping scheme for compute forces routine!')
   end select
 
   ! free surface for an acoustic medium
@@ -382,7 +382,7 @@
     ! Newmark
     call update_veloc_acoustic_Newmark_backward()
   case default
-    stop 'Sorry, time stepping scheme not implemented yet for backward computations'
+    call stop_the_code('Sorry, time stepping scheme not implemented yet for backward computations')
   end select
 
   ! free surface for an acoustic medium

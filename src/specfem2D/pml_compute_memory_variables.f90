@@ -143,7 +143,7 @@
     ! LDDRK
     time_n = (it-1) * deltat + C_LDDRK(i_stage) * deltat
   case default
-    stop 'Sorry, time stepping scheme not implemented yet in PML memory variable updates'
+    call stop_the_code('Sorry, time stepping scheme not implemented yet in PML memory variable updates')
   end select
 
   ! local PML element
@@ -212,7 +212,7 @@
         rmemory_acoustic_dux_dz(i,j,ispec_PML,2) = rmemory_acoustic_dux_dz(i,j,ispec_PML,2) + &
                BETA_LDDRK(i_stage) * rmemory_acoustic_dux_dz_LDDRK(i,j,ispec_PML,2)
       case default
-        stop 'Time stepping scheme not implemented yet for PML memory variables'
+        call stop_the_code('Time stepping scheme not implemented yet for PML memory variables')
       end select
 
       dux_dxl(i,j) = A5 * PML_dux_dxl(i,j) + A6 * rmemory_acoustic_dux_dx(i,j,ispec_PML,1) + &
@@ -360,7 +360,7 @@
     ! LDDRK
     time_n = (it-1) * deltat + C_LDDRK(i_stage) * deltat
   case default
-    stop 'Sorry, time stepping scheme not implemented yet in PML memory variable updates'
+    call stop_the_code('Sorry, time stepping scheme not implemented yet in PML memory variable updates')
   end select
 
   ! local PML element
@@ -490,7 +490,7 @@
                                           BETA_LDDRK(i_stage) * rmemory_duz_dz_LDDRK(i,j,ispec_PML,2)
 
       case default
-        stop 'Time stepping scheme not implemented yet for elastic PML memory variable update'
+        call stop_the_code('Time stepping scheme not implemented yet for elastic PML memory variable update')
       end select
 
       if (ROTATE_PML_ACTIVATE) then
@@ -770,10 +770,10 @@
                                           coef1_xz_2 * PML_duz_dzl(i,j) + coef2_xz_2 * PML_duz_dzl_old(i,j)
       case (2)
       ! LDDRK
-        stop 'Time stepping scheme LDDRK not implemented yet for viscoelastic PML memory variable update'
+        call stop_the_code('Time stepping scheme LDDRK not implemented yet for viscoelastic PML memory variable update')
 
       case default
-        stop 'Unknown time scheme for viscoelastic PML memory variable update'
+        call stop_the_code('Unknown time scheme for viscoelastic PML memory variable update')
 
       end select
 
@@ -861,10 +861,10 @@
 
         case (2)
         ! LDDRK
-          stop 'Time stepping scheme LDDRK not implemented yet for viscoelastic PML memory variable update'
+          call stop_the_code('Time stepping scheme LDDRK not implemented yet for viscoelastic PML memory variable update')
 
         case default
-          stop 'Unknown time scheme for viscoelastic PML memory variable update'
+          call stop_the_code('Unknown time scheme for viscoelastic PML memory variable update')
 
         end select
 

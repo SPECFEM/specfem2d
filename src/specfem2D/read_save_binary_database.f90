@@ -46,7 +46,7 @@
   ! saves data in a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_data.bin'
         open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing data file to disk'
+        if (ier /= 0) call stop_the_code('Error writing data file to disk')
 
   write(2040) nglob,ELASTIC_SIMULATION,POROELASTIC_SIMULATION, &
               ACOUSTIC_SIMULATION,coupled_acoustic_elastic, &
@@ -88,7 +88,7 @@
   ! saves all data regarding sources in a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_sources_info.bin'
       open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing sources info file to disk'
+      if (ier /= 0) call stop_the_code('Error writing sources info file to disk')
 
   write(2040) source_time_function,nsources_local,sourcearrays,islice_selected_source,ispec_selected_source
 
@@ -97,7 +97,7 @@
   ! saves all data regarding receivers in a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_receivers_info.bin'
       open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing receivers info data file to disk'
+      if (ier /= 0) call stop_the_code('Error writing receivers info data file to disk')
 
   write(2040) nrecloc,nrec
   write(2040) recloc,ispec_selected_rec_loc,cosrot_irec,sinrot_irec,xir_store_loc,gammar_store_loc,st_xval,st_zval, &
@@ -175,28 +175,28 @@
     read(2040) rmass_inverse_acoustic,num_phase_ispec_acoustic
 
     allocate( phase_ispec_inner_acoustic(num_phase_ispec_acoustic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating array phase_ispec_inner_acoustic'
+    if (ier /= 0 ) call stop_the_code('Error allocating array phase_ispec_inner_acoustic')
 
     read(2040) phase_ispec_inner_acoustic,nspec_inner_acoustic,nspec_outer_acoustic,ispec_is_acoustic
   else
     ! allocates dummy array
     num_phase_ispec_acoustic = 0
     allocate( phase_ispec_inner_acoustic(num_phase_ispec_acoustic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating dummy array phase_ispec_inner_acoustic'
+    if (ier /= 0 ) call stop_the_code('Error allocating dummy array phase_ispec_inner_acoustic')
   endif
 
   if (any_elastic) then
     read(2040) rmass_inverse_elastic,num_phase_ispec_elastic
 
     allocate( phase_ispec_inner_elastic(num_phase_ispec_elastic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating array phase_ispec_inner_elastic'
+    if (ier /= 0 ) call stop_the_code('Error allocating array phase_ispec_inner_elastic')
 
     read(2040) phase_ispec_inner_elastic,nspec_inner_elastic,nspec_outer_elastic,ispec_is_elastic
   else
     ! allocates dummy array
     num_phase_ispec_elastic = 0
     allocate( phase_ispec_inner_elastic(num_phase_ispec_elastic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating dummy array phase_ispec_inner_elastic'
+    if (ier /= 0 ) call stop_the_code('Error allocating dummy array phase_ispec_inner_elastic')
   endif
 
   if (coupled_acoustic_elastic) then
@@ -219,20 +219,20 @@
       n_sls_loc = 0
       if (ATTENUATION_VISCOACOUSTIC) n_sls_loc = N_SLS
       allocate(request_send_recv_acoustic(ninterface_acoustic*2),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array request_send_recv_acoustic'
+      if (ier /= 0) call stop_the_code('error in allocation of array request_send_recv_acoustic')
       allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac*(n_sls_loc+1),ninterface_acoustic),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array buffer_send_faces_vector_ac'
+      if (ier /= 0) call stop_the_code('error in allocation of array buffer_send_faces_vector_ac')
       allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac*(n_sls_loc+1),ninterface_acoustic),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array buffer_recv_faces_vector_ac'
+      if (ier /= 0) call stop_the_code('error in allocation of array buffer_recv_faces_vector_ac')
     endif
 
     if (ELASTIC_SIMULATION) then
       allocate(request_send_recv_elastic(ninterface_elastic*2),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array request_send_recv_elastic'
+      if (ier /= 0) call stop_the_code('error in allocation of array request_send_recv_elastic')
       allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array buffer_send_faces_vector_el'
+      if (ier /= 0) call stop_the_code('error in allocation of array buffer_send_faces_vector_el')
       allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array buffer_recv_faces_vector_el'
+      if (ier /= 0) call stop_the_code('error in allocation of array buffer_recv_faces_vector_el')
     endif
 
   endif
@@ -263,7 +263,7 @@
   ! reads all data regarding sources from a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_sources_info.bin'
       open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error reading sources info from disk'
+      if (ier /= 0) call stop_the_code('Error reading sources info from disk')
 
 
   if (initialfield) then
@@ -275,7 +275,7 @@
 
   allocate(hxis_store(NSOURCES,NGLLX), &
            hgammas_store(NSOURCES,NGLLZ),stat=ier)
-  if (ier /= 0) stop 'Error allocating source h**_store arrays'
+  if (ier /= 0) call stop_the_code('Error allocating source h**_store arrays')
 
   read(2040) source_time_function,nsources_local,sourcearrays,islice_selected_source,ispec_selected_source
 
@@ -284,7 +284,7 @@
   ! reads all data from receivers a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_receivers_info.bin'
       open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='old',action='read',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error reading receivers info from disk'
+      if (ier /= 0) call stop_the_code('Error reading receivers info from disk')
 
   read(2040) nrecloc,nrec
 
@@ -302,13 +302,13 @@
   ! allocate Lagrange interpolators for receivers
   allocate(xir_store_loc(nrecloc,NGLLX), &
            gammar_store_loc(nrecloc,NGLLZ),stat=ier)
-  if (ier /= 0) stop 'Error allocating local receiver h**_store arrays'
+  if (ier /= 0) call stop_the_code('Error allocating local receiver h**_store arrays')
 
   allocate(anglerec_irec(nrecloc), &
            cosrot_irec(nrecloc), &
            sinrot_irec(nrecloc), &
            rec_tangential_detection_curve(nrecloc),stat=ier)
-  if (ier /= 0) stop 'Error allocating tangential arrays'
+  if (ier /= 0) call stop_the_code('Error allocating tangential arrays')
 
   read(2040) recloc,ispec_selected_rec_loc,cosrot_irec,sinrot_irec,xir_store_loc,gammar_store_loc,st_xval,st_zval, &
              station_name,network_name,islice_selected_rec

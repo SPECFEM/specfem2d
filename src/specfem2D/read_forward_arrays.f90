@@ -136,7 +136,7 @@
 
     ! safety check
     if (GPU_MODE) then
-      stop 'GPU_MODE error: sorry, reading lastframe from poroelastic simulation not implemented yet'
+      call stop_the_code('GPU_MODE error: sorry, reading lastframe from poroelastic simulation not implemented yet')
     endif
   endif
 

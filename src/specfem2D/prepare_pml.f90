@@ -43,7 +43,8 @@
   character(len=MAX_STRING_LEN) :: outputname
 
   ! safety check
-  if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) stop 'Error : PML not implemented on GPU mode. Please use Stacey instead'
+  if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) call stop_the_code( &
+'Error : PML not implemented on GPU mode. Please use Stacey instead')
 
   ! PML absorbing conditions
   ! sets global flag for all slices
@@ -59,15 +60,15 @@
 
     ! allocates PML arrays
     allocate(spec_to_PML(nspec),stat=ier)
-    if (ier /= 0) stop 'error: not enough memory to allocate array spec_to_PML'
+    if (ier /= 0) call stop_the_code('error: not enough memory to allocate array spec_to_PML')
 
     allocate(which_PML_elem(4,nspec),stat=ier)
-    if (ier /= 0) stop 'error: not enough memory to allocate array which_PML_elem'
+    if (ier /= 0) call stop_the_code('error: not enough memory to allocate array which_PML_elem')
     which_PML_elem(:,:) = .false.
 
     if (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) then
       allocate(PML_interior_interface(4,nspec),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array PML_interior_interface'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array PML_interior_interface')
       PML_interior_interface = .false.
     else
       allocate(PML_interior_interface(4,1))
@@ -86,25 +87,25 @@
 
       if (nglob_interface > 0) then
         allocate(point_interface(nglob_interface),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array point_interface'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array point_interface')
       endif
 
       if (any_elastic .and. nglob_interface > 0) then
         allocate(pml_interface_history_displ(NDIM,nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_displ'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array pml_interface_history_displ')
         allocate(pml_interface_history_veloc(NDIM,nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_veloc'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array pml_interface_history_veloc')
         allocate(pml_interface_history_accel(NDIM,nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_accel'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array pml_interface_history_accel')
       endif
 
       if (any_acoustic .and. nglob_interface > 0) then
         allocate(pml_interface_history_potential(nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array pml_interface_history_potential')
         allocate(pml_interface_history_potential_dot(nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array pml_interface_history_potential_dot')
         allocate(pml_interface_history_potential_dot_dot(nglob_interface,NSTEP),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array pml_interface_history_potential_dot_dot'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array pml_interface_history_potential_dot_dot')
       endif
 
       if (nglob_interface > 0) then
@@ -163,17 +164,17 @@
 
     if (nspec_PML > 0) then
       allocate(K_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array K_x_store')
       allocate(K_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array K_z_store')
       allocate(d_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array d_x_store')
       allocate(d_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array d_z_store')
       allocate(alpha_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array alpha_x_store')
       allocate(alpha_z_store(NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array alpha_z_store')
       K_x_store(:,:,:) = ZERO
       K_z_store(:,:,:) = ZERO
       d_x_store(:,:,:) = ZERO
@@ -183,17 +184,17 @@
       call define_PML_coefficients()
     else
       allocate(K_x_store(NGLLX,NGLLZ,1),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array K_x_store'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array K_x_store')
       allocate(K_z_store(NGLLX,NGLLZ,1),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array K_z_store'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array K_z_store')
       allocate(d_x_store(NGLLX,NGLLZ,1),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array d_x_store'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array d_x_store')
       allocate(d_z_store(NGLLX,NGLLZ,1),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array d_z_store'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array d_z_store')
       allocate(alpha_x_store(NGLLX,NGLLZ,1),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array alpha_x_store'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array alpha_x_store')
       allocate(alpha_z_store(NGLLX,NGLLZ,1),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array alpha_z_store'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array alpha_z_store')
       K_x_store(:,:,:) = ZERO
       K_z_store(:,:,:) = ZERO
       d_x_store(:,:,:) = ZERO
@@ -205,58 +206,58 @@
     ! elastic PML memory variables
     if (any_elastic .and. nspec_PML > 0) then
       allocate(rmemory_displ_elastic(2,NDIM,NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_displ_elastic')
       allocate(rmemory_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_dux_dx')
       allocate(rmemory_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_dux_dz')
       allocate(rmemory_duz_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_duz_dx')
       allocate(rmemory_duz_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_duz_dz')
       if (any_acoustic .and. num_fluid_solid_edges > 0) then
         allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_fsb_displ_elastic')
         allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic')
       endif
 
       if (ROTATE_PML_ACTIVATE) then
         allocate(rmemory_dux_dx_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_dux_dx_prime')
         allocate(rmemory_dux_dz_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_dux_dz_prime')
         allocate(rmemory_duz_dx_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_duz_dx_prime')
         allocate(rmemory_duz_dz_prime(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_duz_dz_prime')
       else
         allocate(rmemory_dux_dx_prime(1,1,1,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx_prime'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_dux_dx_prime')
         allocate(rmemory_dux_dz_prime(1,1,1,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz_prime'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_dux_dz_prime')
         allocate(rmemory_duz_dx_prime(1,1,1,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx_prime'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_duz_dx_prime')
         allocate(rmemory_duz_dz_prime(1,1,1,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz_prime'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_duz_dz_prime')
       endif
 
       if (time_stepping_scheme == 2) then
         allocate(rmemory_displ_elastic_LDDRK(2,NDIM,NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_displ_elastic'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_displ_elastic')
         allocate(rmemory_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dx'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_dux_dx')
         allocate(rmemory_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_dux_dz'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_dux_dz')
         allocate(rmemory_duz_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dx'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_duz_dx')
         allocate(rmemory_duz_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_duz_dz'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_duz_dz')
         if (any_acoustic .and. num_fluid_solid_edges > 0) then
           allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
+          if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_fsb_displ_elastic')
           allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,num_fluid_solid_edges),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
+          if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic')
         endif
       else
         allocate(rmemory_displ_elastic_LDDRK(1,1,1,1,1),stat=ier)
@@ -266,9 +267,9 @@
         allocate(rmemory_duz_dz_LDDRK(1,1,1,2),stat=ier)
         if (any_acoustic .and. num_fluid_solid_edges > 0) then
           allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,1),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_fsb_displ_elastic'
+          if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_fsb_displ_elastic')
           allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic'
+          if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_sfb_potential_ddot_acoustic')
         endif
       endif
 
@@ -333,17 +334,17 @@
       if (PML_BOUNDARY_CONDITIONS) then
         if (nspec_PML > 0) then
           allocate(kaPML_rmemory_dux_dxl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array kaPML_rmemory_dux_dxl'
+          if (ier /= 0) call stop_the_code('error: not enough memory to allocate array kaPML_rmemory_dux_dxl')
           allocate(kaPML_rmemory_duz_dzl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array kaPML_rmemory_duz_dzl'
+          if (ier /= 0) call stop_the_code('error: not enough memory to allocate array kaPML_rmemory_duz_dzl')
           allocate(muPML_rmemory_dux_dxl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array muPML_rmemory_dux_dxl'
+          if (ier /= 0) call stop_the_code('error: not enough memory to allocate array muPML_rmemory_dux_dxl')
           allocate(muPML_rmemory_duz_dzl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array mu_rmemory_duz_dzl'
+          if (ier /= 0) call stop_the_code('error: not enough memory to allocate array mu_rmemory_duz_dzl')
           allocate(muPML_rmemory_dux_dzl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array muPML_rmemory_dux_dzl'
+          if (ier /= 0) call stop_the_code('error: not enough memory to allocate array muPML_rmemory_dux_dzl')
           allocate(muPML_rmemory_duz_dxl(NGLLX,NGLLZ,nspec_PML,N_SLS),stat=ier)
-          if (ier /= 0) stop 'error: not enough memory to allocate array muPML_rmemory_duz_dxl'
+          if (ier /= 0) call stop_the_code('error: not enough memory to allocate array muPML_rmemory_duz_dxl')
           kaPML_rmemory_dux_dxl(:,:,:,:) = 0_CUSTOM_REAL
           kaPML_rmemory_duz_dzl(:,:,:,:) = 0_CUSTOM_REAL
           muPML_rmemory_dux_dxl(:,:,:,:) = 0_CUSTOM_REAL
@@ -364,11 +365,11 @@
 
     if (any_acoustic .and. nspec_PML > 0) then
       allocate(rmemory_potential_acoustic(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_potential_acoustic')
       allocate(rmemory_acoustic_dux_dx(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_acoustic_dux_dx')
       allocate(rmemory_acoustic_dux_dz(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-      if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
+      if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_acoustic_dux_dz')
 
       rmemory_potential_acoustic = 0._CUSTOM_REAL
       rmemory_acoustic_dux_dx = 0._CUSTOM_REAL
@@ -376,11 +377,11 @@
 
       if (time_stepping_scheme == 2) then
         allocate(rmemory_potential_acoustic_LDDRK(2,NGLLX,NGLLZ,nspec_PML),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_potential_acoustic'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_potential_acoustic')
         allocate(rmemory_acoustic_dux_dx_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dx'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_acoustic_dux_dx')
         allocate(rmemory_acoustic_dux_dz_LDDRK(NGLLX,NGLLZ,nspec_PML,2),stat=ier)
-        if (ier /= 0) stop 'error: not enough memory to allocate array rmemory_acoustic_dux_dz'
+        if (ier /= 0) call stop_the_code('error: not enough memory to allocate array rmemory_acoustic_dux_dz')
       else
         allocate(rmemory_potential_acoustic_LDDRK(1,1,1,1),stat=ier)
         allocate(rmemory_acoustic_dux_dx_LDDRK(1,1,1,1),stat=ier)

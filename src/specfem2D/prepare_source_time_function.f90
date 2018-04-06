@@ -91,7 +91,7 @@
   ! Newmark: time_stepping_scheme == 1
   ! LDDRK  : time_stepping_scheme == 2
   ! RK     : time_stepping_scheme == 3
-  if (time_stepping_scheme < 1 .or. time_stepping_scheme > 3) stop 'Error invalid time stepping scheme for STF'
+  if (time_stepping_scheme < 1 .or. time_stepping_scheme > 3) call stop_the_code('Error invalid time stepping scheme for STF')
 
   ! RK time scheme constants
   if (time_stepping_scheme == 3) then
@@ -109,7 +109,7 @@
     endif
     ! opens source time file for output
     open(unit=55,file=trim(OUTPUT_FILES)//'plot_source_time_function.txt',status='unknown',iostat=ier)
-    if (ier /= 0) stop 'Error opening source time function text-file'
+    if (ier /= 0) call stop_the_code('Error opening source time function text-file')
   endif
 
   ! loop on all the sources

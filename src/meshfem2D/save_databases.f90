@@ -50,7 +50,7 @@
     ! opens Database file
     write(prname, "(a,i5.5,a)") './'//trim(OUTPUT_FILES)//'Database',iproc,'.bin'
     open(unit=IOUT,file=trim(prname),status='unknown',action='write',form='unformatted',iostat=ier)
-    if (ier /= 0 ) stop 'Error saving databases; check that directory OUTPUT_FILES exists'
+    if (ier /= 0 ) call stop_the_code('Error saving databases; check that directory OUTPUT_FILES exists')
 
     ! saves header infos and simulation setup
     call save_databases_init()
@@ -498,7 +498,7 @@
       !write(IOUT) i,icodemat(i),rho_s_read(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
     else
       ! case should not occur
-      stop 'Unknown material code'
+      call stop_the_code('Unknown material code')
     endif
 
     ! check format with file src/specfem2D/read_materials.f90

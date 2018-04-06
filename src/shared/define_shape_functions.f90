@@ -149,16 +149,16 @@
        dershape2D(2,9) = -ONE * t2 * (ONE - ss)
 
   else
-     stop 'Error: wrong number of control nodes'
+     call stop_the_code('Error: wrong number of control nodes')
   endif
 
 !--- check the shape functions and their derivatives
   ! sum of shape functions should be one
-  if (abs(sum(shape2D)-ONE) > TINYVAL) stop 'Error shape functions'
+  if (abs(sum(shape2D)-ONE) > TINYVAL) call stop_the_code('Error shape functions')
 
   ! sum of derivatives of shape functions should be zero
-  if (abs(sum(dershape2D(1,:))) > TINYVAL) stop 'Error deriv xi shape functions'
-  if (abs(sum(dershape2D(2,:))) > TINYVAL) stop 'Error deriv gamma shape functions'
+  if (abs(sum(dershape2D(1,:))) > TINYVAL) call stop_the_code('Error deriv xi shape functions')
+  if (abs(sum(dershape2D(2,:))) > TINYVAL) call stop_the_code('Error deriv gamma shape functions')
 
   end subroutine define_shape_functions
 

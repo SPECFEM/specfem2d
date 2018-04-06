@@ -162,9 +162,9 @@
 
   ! allocate temporary arrays
   allocate(integer_mask_ibool(nglob),stat=ier)
-  if (ier /= 0 ) stop 'error allocating integer_mask_ibool'
+  if (ier /= 0 ) call stop_the_code('error allocating integer_mask_ibool')
   allocate(copy_ibool_ori(NGLLX,NGLLZ,nspec),stat=ier)
-  if (ier /= 0 ) stop 'error allocating copy_ibool_ori'
+  if (ier /= 0 ) call stop_the_code('error allocating copy_ibool_ori')
 
   ! reduce cache misses by sorting the global numbering in the order in which it is accessed in the time loop.
   ! this speeds up the calculations significantly on modern processors
@@ -198,7 +198,7 @@
 
   ! allocate other global arrays
   allocate(coord(NDIM,nglob),stat=ier)
-  if (ier /= 0) stop 'Error allocating coord array'
+  if (ier /= 0) call stop_the_code('Error allocating coord array')
 
   ! sets the coordinates of the points of the global grid
   found_a_negative_jacobian = .false.
@@ -318,11 +318,11 @@
   ! checks that no source is located outside the mesh
   if (myrank == 0) then
     do i = 1,NSOURCES
-      if (x_source(i) < xmin) stop 'error: at least one source has x < xmin of the mesh'
-      if (x_source(i) > xmax) stop 'error: at least one source has x > xmax of the mesh'
+      if (x_source(i) < xmin) call stop_the_code('error: at least one source has x < xmin of the mesh')
+      if (x_source(i) > xmax) call stop_the_code('error: at least one source has x > xmax of the mesh')
 
-      if (z_source(i) < zmin) stop 'error: at least one source has z < zmin of the mesh'
-      if (z_source(i) > zmax) stop 'error: at least one source has z > zmax of the mesh'
+      if (z_source(i) < zmin) call stop_the_code('error: at least one source has z < zmin of the mesh')
+      if (z_source(i) > zmax) call stop_the_code('error: at least one source has z > zmax of the mesh')
     enddo
   endif
 
@@ -367,7 +367,7 @@
 
 ! allocate an array to make sure that an acoustic free surface is not enforced on periodic edges
   allocate(this_ibool_is_a_periodic_edge(NGLOB),stat=ier)
-  if (ier /= 0) stop 'Error allocating periodic edge array'
+  if (ier /= 0) call stop_the_code('Error allocating periodic edge array')
 
   this_ibool_is_a_periodic_edge(:) = .false.
 
@@ -378,7 +378,8 @@
       write(IMAIN,*)
       write(IMAIN,*) 'implementing periodic boundary conditions'
       write(IMAIN,*) 'in the horizontal direction with a periodicity distance of ',PERIODIC_HORIZ_DIST,' m'
-      if (PERIODIC_HORIZ_DIST <= 0.d0) stop 'PERIODIC_HORIZ_DIST should be greater than zero when using ADD_PERIODIC_CONDITIONS'
+      if (PERIODIC_HORIZ_DIST <= 0.d0) call stop_the_code( &
+'PERIODIC_HORIZ_DIST should be greater than zero when using ADD_PERIODIC_CONDITIONS')
       write(IMAIN,*)
       write(IMAIN,*) '*****************************************************************'
       write(IMAIN,*) '*****************************************************************'
@@ -558,7 +559,7 @@
            rhoext(NGLLX,NGLLZ,nspec_ext), &
            QKappa_attenuationext(NGLLX,NGLLZ,nspec_ext), &
            Qmu_attenuationext(NGLLX,NGLLZ,nspec_ext),stat=ier)
-  if (ier /= 0) stop 'Error allocating external model arrays for vp vs rho attenuation'
+  if (ier /= 0) call stop_the_code('Error allocating external model arrays for vp vs rho attenuation')
 
   ! The following line is important. For external model defined from tomography file ; material line in Par_file like that:
   ! model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
@@ -584,7 +585,7 @@
            c23ext(NGLLX,NGLLZ,nspec_ext), &
            c25ext(NGLLX,NGLLZ,nspec_ext), &
            c22ext(NGLLX,NGLLZ,nspec_ext),stat=ier)
-  if (ier /= 0) stop 'Error allocating external model arrays for anisotropy'
+  if (ier /= 0) call stop_the_code('Error allocating external model arrays for anisotropy')
 
   ! reads in external models
   if (assign_external_model) then
@@ -620,20 +621,20 @@
   do ispec = 1,nspec
     ! exclusive domain flags
     if (ispec_is_acoustic(ispec) .and. ispec_is_elastic(ispec)) &
-      stop 'Error invalid domain element found! element is acoustic and elastic, please check...'
+      call stop_the_code('Error invalid domain element found! element is acoustic and elastic, please check...')
 
     if (ispec_is_acoustic(ispec) .and. ispec_is_poroelastic(ispec)) &
-      stop 'Error invalid domain element found! element is acoustic and poroelastic, please check...'
+      call stop_the_code('Error invalid domain element found! element is acoustic and poroelastic, please check...')
 
     if (ispec_is_elastic(ispec) .and. ispec_is_poroelastic(ispec)) &
-      stop 'Error invalid domain element found! element is elastic and poroelastic, please check...'
+      call stop_the_code('Error invalid domain element found! element is elastic and poroelastic, please check...')
 
     ! un-assigned element
     if ((.not. ispec_is_acoustic(ispec)) .and. &
         (.not. ispec_is_elastic(ispec)) .and. &
         (.not. ispec_is_poroelastic(ispec))) &
-      stop 'Error invalid domain element found! element has no domain (acoustic, elastic, or poroelastic), &
-            & please check...'
+      call stop_the_code('Error invalid domain element found! element has no domain (acoustic, elastic, or poroelastic), &
+            & please check...')
   enddo
 
   ! synchronizes all processes
@@ -705,7 +706,7 @@
   ! safety check
   if (POROELASTIC_SIMULATION) then
     if (ATTENUATION_PORO_FLUID_PART .and. time_stepping_scheme /= 1) &
-      stop 'RK and LDDRK time scheme not supported for poroelastic simulations with attenuation'
+      call stop_the_code('RK and LDDRK time scheme not supported for poroelastic simulations with attenuation')
   endif
 
 ! absorbing boundaries work, but not perfect for anisotropic

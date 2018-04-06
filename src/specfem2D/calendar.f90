@@ -499,7 +499,7 @@
    write(*,*)'For calndr(), you specified ioptn = ', ioptn
    write(*,*) 'Allowable values are 1 to 5 for the Gregorian calendar'
    write(*,*) 'and -1 to -5 for the Julian calendar.'
-   stop
+   call stop_the_code('error: stopping the code')
   endif
 !
 ! Options 1-3 have "iyear" as an input value.
@@ -510,7 +510,7 @@
       jyear = iyear
    else if (iyear == 0) then
       write(*,*) 'For calndr(), you specified the nonexistent year 0'
-      stop
+      call stop_the_code('error: stopping the code')
    else
       jyear = iyear + 1
    endif

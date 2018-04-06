@@ -65,7 +65,7 @@
 #endif
   if (ier /= 0) then
     print *,'Error opening file: ',trim(filename)
-    stop 'Error read external mesh file'
+    call stop_the_code('Error read external mesh file')
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -92,7 +92,7 @@
                   elmnts(i*ngnod+4), elmnts(i*ngnod+5), elmnts(i*ngnod+6), elmnts(i*ngnod+7), elmnts(i*ngnod+8)
 #endif
     else
-      stop 'error, ngnod should be either 4 or 9 for external meshes'
+      call stop_the_code('error, ngnod should be either 4 or 9 for external meshes')
     endif
   enddo
 
@@ -135,7 +135,7 @@
 
   ! assigns materials to mesh elements
   allocate(num_material(nelmnts),stat=ier)
-  if (ier /= 0) stop 'Error allocating num_material array'
+  if (ier /= 0) call stop_the_code('Error allocating num_material array')
   num_material(:) = 0
 
   ! file input
@@ -146,7 +146,7 @@
 #endif
   if (ier /= 0) then
     print *,'Error opening file: ',trim(filename)
-    stop 'Error read external mat file'
+    call stop_the_code('Error read external mat file')
   endif
 
   do i = 1, nelmnts
@@ -159,7 +159,7 @@
   close(992)
 
   ! quick check
-  if (any(num_material(:) == 0)) stop 'Error reading material array, some elements have zero material index'
+  if (any(num_material(:) == 0)) call stop_the_code('Error reading material array, some elements have zero material index')
 
   end subroutine read_external_materials_file
 
@@ -192,7 +192,7 @@
 #endif
   if (ier /= 0) then
     print *,'Error opening file: ',trim(filename)
-    stop 'Error read external absorbing_cpml_file'
+    call stop_the_code('Error read external absorbing_cpml_file')
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -208,7 +208,7 @@
      read(992,*) ispec, pml_flag
 #endif
      if (pml_flag /= CPML_X_ONLY .and. pml_flag /= CPML_Z_ONLY .and. pml_flag /= CPML_XZ) &
-       stop 'error: incorrect CPML element flag found, should be CPML_X_ONLY or CPML_Z_ONLY or CPML_XZ only'
+       call stop_the_code('error: incorrect CPML element flag found, should be CPML_X_ONLY or CPML_Z_ONLY or CPML_XZ only')
 
      region_pml_external_mesh(ispec) = pml_flag
      is_pml(ispec-1) = .true.
@@ -244,7 +244,7 @@
 #endif
   if (ier /= 0) then
     print *,'Error opening file: ',trim(filename)
-    stop 'Error read external nodes coords file'
+    call stop_the_code('Error read external nodes coords file')
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -307,7 +307,7 @@
 #endif
   if (ier /= 0) then
     print *,'Error opening file: ',trim(filename)
-    stop 'Error read acoustic surface file'
+    call stop_the_code('Error read acoustic surface file')
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -341,7 +341,7 @@
   enddo
 
   allocate(acoustic_surface(4,nelem_acoustic_surface),stat=ier)
-  if (ier /= 0) stop 'Error allocating acoustic_surface array'
+  if (ier /= 0) call stop_the_code('Error allocating acoustic_surface array')
 
   nelem_acoustic_surface = 0
   do i = 1, nelmnts_surface
@@ -384,7 +384,7 @@
 #endif
   if (ier /= 0) then
     print *,'Error opening file: ',trim(filename)
-    stop 'Error read absorbing surface file'
+    call stop_the_code('Error read absorbing surface file')
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -412,11 +412,11 @@
       print *,'If you use 9-node elements, list only the first and last points of the edge and not the intermediate point'
       print *,'located around the middle of the edge; the right 9-node curvature will be restored automatically by the code.'
 
-      stop 'only two nodes per element should be listed for absorbing edges'
+      call stop_the_code('only two nodes per element should be listed for absorbing edges')
     endif
 
     if (abs_surface(5,i) < 1 .or. abs_surface(5,i) > 4) then
-      stop 'absorbing element type must be between 1 (IBOTTOM) and 4 (ILEFT)'
+      call stop_the_code('absorbing element type must be between 1 (IBOTTOM) and 4 (ILEFT)')
     endif
 
   enddo
@@ -460,7 +460,7 @@
 #endif
   if (ier /= 0) then
     print *,'Error opening file: ',trim(filename)
-    stop 'Error read acoustic forcing surface file'
+    call stop_the_code('Error read acoustic forcing surface file')
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -490,11 +490,11 @@
       print *,'If you use 9-node elements, list only the first and last points of the edge and not the intermediate point'
       print *,'located around the middle of the edge; the right 9-node curvature will be restored automatically by the code.'
 
-      stop 'only two nodes per element should be listed for absorbing edges'
+      call stop_the_code('only two nodes per element should be listed for absorbing edges')
     endif
 
     if (acforcing_surface(5,i) < 1 .or. acforcing_surface(5,i) > 4) then
-      stop 'absorbing element type must be between 1 (IBOTTOM) and 4 (ILEFT)'
+      call stop_the_code('absorbing element type must be between 1 (IBOTTOM) and 4 (ILEFT)')
     endif
 
   enddo
@@ -538,7 +538,7 @@
 #endif
   if (ier /= 0) then
     print *,'Error opening file: ',trim(axial_elements_file)
-    stop 'Error read axial elements file'
+    call stop_the_code('Error read axial elements file')
   endif
 
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -551,12 +551,12 @@
   write(IMAIN,*) "Number of elements on the axis: ", nelem_on_the_axis
 
   allocate(ispec_of_axial_elements(nelem_on_the_axis),stat=ier)
-  if (ier /= 0) stop 'Error allocating array ispec_of_axial_elements'
+  if (ier /= 0) call stop_the_code('Error allocating array ispec_of_axial_elements')
 
   ! needed for rotation
   allocate(inode1_axial_elements(nelem_on_the_axis), &
            inode2_axial_elements(nelem_on_the_axis),stat=ier)
-  if (ier /= 0) stop 'Error allocating array inode**_axial_elements'
+  if (ier /= 0) call stop_the_code('Error allocating array inode**_axial_elements')
 
   do i = 1, nelem_on_the_axis ! Dump is always 2 (old convention from absorbing surfaces)
 #ifdef USE_BINARY_FOR_EXTERNAL_MESH_DATABASE
@@ -575,7 +575,7 @@
   do i = 1,nelem_on_the_axis
     do j = i+1,nelem_on_the_axis
       if (ispec_of_axial_elements(i) == ispec_of_axial_elements(j)) then
-        stop 'At least one element appears twice in the axial element file'
+        call stop_the_code('At least one element appears twice in the axial element file')
       endif
     enddo
   enddo
@@ -612,13 +612,13 @@
   open(unit=IIN,file=trim(tangential_detection_curve_file),status='old',action='read',iostat=ier)
   if (ier /= 0) then
     print *,'Error opening file: ',trim(tangential_detection_curve_file)
-    stop 'Error read tangential curve file'
+    call stop_the_code('Error read tangential curve file')
   endif
 
   read(IIN,*) nnodes_tangential_curve
 
   allocate(nodes_tangential_curve(2,nnodes_tangential_curve),stat=ier)
-  if (ier /= 0) stop 'Error allocating tangential array'
+  if (ier /= 0) call stop_the_code('Error allocating tangential array')
 
   do i = 1, nnodes_tangential_curve
     read(IIN,*) nodes_tangential_curve(1,i), nodes_tangential_curve(2,i)

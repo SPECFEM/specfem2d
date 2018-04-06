@@ -369,7 +369,7 @@
     open(unit=IMAIN,file=trim(OUTPUT_FILES)//'output_meshfem2D.txt',status='unknown',iostat=ier)
     if (ier /= 0) then
       print *,'Error could not open output file :',trim(OUTPUT_FILES)//'output_meshfem2D.txt'
-      stop 'Error opening output file'
+      call stop_the_code('Error opening output file')
     endif
   endif
 
@@ -405,7 +405,7 @@
     write(IMAIN,*)
 
     ! reads in parameters in DATA/Par_file
-    call read_parameter_file(myrank,1,.false.)
+    call read_parameter_file(1,.false.)
 
     ! reads in additional files for mesh elements
     if (read_external_mesh) then
@@ -423,7 +423,7 @@
     else
       ! internal meshing
       allocate(elmnts(0:ngnod*nelmnts-1),stat=ier)
-      if (ier /= 0) stop 'Error allocating array elmnts'
+      if (ier /= 0) call stop_the_code('Error allocating array elmnts')
 
       ! stores mesh point indices in array 'elmnts'
       if (ngnod == 4) then
@@ -454,7 +454,7 @@
            enddo
         enddo
       else
-        stop 'ngnod must be either 4 or 9'
+        call stop_the_code('ngnod must be either 4 or 9')
       endif
 
       ! user output
@@ -465,11 +465,11 @@
 
     ! PML mesh elements
     allocate(region_pml_external_mesh(nelmnts),stat=ier)
-    if (ier /= 0) stop 'Error allocating array region_pml_external_mesh'
+    if (ier /= 0) call stop_the_code('Error allocating array region_pml_external_mesh')
     region_pml_external_mesh(:) = 0
 
     allocate(is_pml(0:nelmnts-1),stat=ier)
-    if (ier /= 0) stop 'Error allocating array is_pml'
+    if (ier /= 0) call stop_the_code('Error allocating array is_pml')
     is_pml(:) = .false.
 
     if (read_external_mesh) then
@@ -545,9 +545,9 @@
         ! internal meshing
         ! if the mesh has been made by the internal mesher
         if (xmin_param * xmax_param < 0) &
-          stop 'in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis'
+          call stop_the_code('in axisymmetric mode xmin and xmax must have the same sign, they cannot cross the symmetry axis')
         if (xmin_param < 0) &
-          stop 'in axisymmetric mode, case of symmetry axis on the right edge instead of left not supported yet'
+          call stop_the_code('in axisymmetric mode, case of symmetry axis on the right edge instead of left not supported yet')
 
         ! count the number of axial elements
         nelem_on_the_axis = 0
@@ -556,12 +556,12 @@
         if (abs(xmin_param) < TINYVAL) then
 
           ! if the surface is absorbing, it cannot be axial at the same time
-          if (absorbleft) stop 'in axisymmetric mode, the left edge cannot be both axial and absorbing'
+          if (absorbleft) call stop_the_code('in axisymmetric mode, the left edge cannot be both axial and absorbing')
 
           !all the elements on the left edge are axial because that edge is vertical and located in x = 0
           nelem_on_the_axis = nzread
           allocate(ispec_of_axial_elements(nelem_on_the_axis),stat=ier)
-          if (ier /= 0) stop 'Error allocating array ispec_of_axial_elements'
+          if (ier /= 0) call stop_the_code('Error allocating array ispec_of_axial_elements')
 
           i = 1
           do j = 1,nzread
@@ -571,7 +571,7 @@
         else
           ! no elements on the symmetry axis
           allocate(ispec_of_axial_elements(nelem_on_the_axis),stat=ier)
-          if (ier /= 0) stop 'Error allocating array ispec_of_axial_elements'
+          if (ier /= 0) call stop_the_code('Error allocating array ispec_of_axial_elements')
         endif
 
       endif ! of if (read_external_mesh) then
@@ -584,7 +584,7 @@
       ! dummy allocation
       nelem_on_the_axis = 0
       allocate(ispec_of_axial_elements(nelem_on_the_axis),stat=ier)
-      if (ier /= 0) stop 'Error allocating array ispec_of_axial_elements'
+      if (ier /= 0) call stop_the_code('Error allocating array ispec_of_axial_elements')
     endif
 
     ! compute min and max of X and Z in the grid
@@ -626,7 +626,7 @@
 !! DK DK for now we cannot use both record_at_surface_same_vertical and read_external_mesh
 !! DK DK because we need to know splines to define the shape of the surface of the model
       if (any(record_at_surface_same_vertical) .and. read_external_mesh) &
-        stop 'for now we cannot use both record_at_surface_same_vertical and read_external_mesh'
+        call stop_the_code('for now we cannot use both record_at_surface_same_vertical and read_external_mesh')
 
 !! DK DK if we read an external mesh, the splines are not defined for the shape of the surface and of the interfaces
 !! DK DK therefore let us allocate dummy arrays just to be able to call the "save_stations_file" subroutine

@@ -50,14 +50,14 @@
 
   call open_parameter_file()
   call read_value_string_p(dummy, 'solver.title')
-  if (err_occurred() /= 0) stop 'error reading parameter title in Par_file'
+  if (err_occurred() /= 0) call stop_the_code('error reading parameter title in Par_file')
   ! read type of simulation
   call read_value_integer_p(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
-  if (err_occurred() /= 0) stop 'error reading parameter SIMULATION_TYPE in Par_file'
+  if (err_occurred() /= 0) call stop_the_code('error reading parameter SIMULATION_TYPE in Par_file')
   call read_value_integer_p(int_dummy, 'solver.NOISE_TOMOGRAPHY')
-  if (err_occurred() /= 0) stop 'error reading parameter NOISE_TOMOGRAPHY in Par_file'
+  if (err_occurred() /= 0) call stop_the_code('error reading parameter NOISE_TOMOGRAPHY in Par_file')
   call read_value_logical_p(SAVE_FORWARD, 'solver.SAVE_FORWARD')
-  if (err_occurred() /= 0) stop 'error reading parameter SAVE_FORWARD in Par_file'
+  if (err_occurred() /= 0) call stop_the_code('error reading parameter SAVE_FORWARD in Par_file')
   call close_parameter_file()
 
   ! starts reading in parameters from input Database file
@@ -363,7 +363,7 @@
   ! safety check
   ! note: in principle, the number of sources could be zero for noise simulations.
   !       however, we want to make sure to have one defined at least, even if not really needed.
-  if (NSOURCES < 1) stop 'Need at least one source for running a simulation, please check...'
+  if (NSOURCES < 1) call stop_the_code('Need at least one source for running a simulation, please check...')
 
   ! allocates source information arrays
   allocate(source_type(NSOURCES), &
@@ -382,14 +382,14 @@
            source_courbe_eros(NSOURCES), &
            islice_selected_source(NSOURCES), &
            sourcearrays(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
-  if (ier /= 0) stop 'Error allocating source arrays'
+  if (ier /= 0) call stop_the_code('Error allocating source arrays')
 
   ! source locations
   allocate(x_source(NSOURCES), &
            z_source(NSOURCES), &
            xi_source(NSOURCES), &
            gamma_source(NSOURCES),stat=ier)
-  if (ier /= 0) stop 'Error allocating source arrays'
+  if (ier /= 0) call stop_the_code('Error allocating source arrays')
 
   ! initializes
   source_type(:) = 0
@@ -448,11 +448,11 @@
   integer :: nspec_all,nelem_acforcing_all,nelem_acoustic_surface_all
 
   ! safety check
-  if (NDIM /= 2) stop 'Invalid NDIM value to read coordinates, please check...'
+  if (NDIM /= 2) call stop_the_code('Invalid NDIM value to read coordinates, please check...')
 
   ! allocates nodal coordinates
   allocate(coorg(NDIM,npgeo),stat=ier)
-  if (ier /= 0) stop 'Error allocating coorg array'
+  if (ier /= 0) call stop_the_code('Error allocating coorg array')
 
   ! initializes
   coorg(:,:) = 0.d0
@@ -509,14 +509,14 @@
   allocate(porosity(numat), &
            tortuosity(numat), &
            permeability(3,numat),stat=ier)
-  if (ier /= 0) stop 'Error allocating porosity,.. arrays'
+  if (ier /= 0) call stop_the_code('Error allocating porosity,.. arrays')
 
   allocate(poroelastcoef(4,3,numat),stat=ier)
-  if (ier /= 0) stop 'Error allocating poroelastcoef arrays'
+  if (ier /= 0) call stop_the_code('Error allocating poroelastcoef arrays')
 
   allocate(QKappa_attenuation(numat), &
            Qmu_attenuation(numat),stat=ier)
-  if (ier /= 0) stop 'Error allocating attenuation arrays'
+  if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
 
 
   ! output formats
@@ -552,7 +552,7 @@
   read(IIN) N_SLS, f0_attenuation, READ_VELOCITIES_AT_f0
 
   ! checks number of standard linear solids
-  if (N_SLS < 1) stop 'must have N_SLS >= 1 even if attenuation if off because it is used to assign some arrays'
+  if (N_SLS < 1) call stop_the_code('must have N_SLS >= 1 even if attenuation if off because it is used to assign some arrays')
 
   end subroutine read_mesh_databases_attenuation
 
@@ -580,7 +580,7 @@
 
   ! add support for using PML in MPI mode with external mesh
   allocate(region_CPML(nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating region_CPML array'
+  if (ier /= 0) call stop_the_code('Error allocating region_CPML array')
 
   ! initializes
   kmato(:) = 0
@@ -589,7 +589,7 @@
 
   ! temporary read array
   allocate(knods_read(ngnod),stat=ier)
-  if (ier /= 0) stop 'Error allocating temporary knods array'
+  if (ier /= 0) call stop_the_code('Error allocating temporary knods array')
 
   ! reads spectral macrobloc data
 
@@ -747,14 +747,14 @@
   ! allocate arrays for absorbing boundary conditions
   allocate(numabs(nelemabs), &
            codeabs(4,nelemabs),stat=ier)
-  if (ier /= 0) stop 'Error allocating absorbing arrays'
+  if (ier /= 0) call stop_the_code('Error allocating absorbing arrays')
 
   !---codeabs_corner(1,nelemabs) denotes whether element is on bottom-left corner of absorbing boundary or not
   !---codeabs_corner(2,nelemabs) denotes whether element is on bottom-right corner of absorbing boundary or not
   !---codeabs_corner(3,nelemabs) denotes whether element is on top-left corner of absorbing boundary or not
   !---codeabs_corner(4,nelemabs) denotes whether element is on top-right corner of absorbing boundary or not
   allocate(codeabs_corner(4,nelemabs),stat=ier)
-  if (ier /= 0) stop 'Error allocating absorbing codeabs_corner array'
+  if (ier /= 0) call stop_the_code('Error allocating absorbing codeabs_corner array')
 
   allocate(typeabs(nelemabs))
 
@@ -787,7 +787,7 @@
            ib_right(nelemabs), &
            ib_bottom(nelemabs), &
            ib_top(nelemabs),stat=ier)
-  if (ier /= 0) stop 'Error allocating absorbing boundary arrays'
+  if (ier /= 0) call stop_the_code('Error allocating absorbing boundary arrays')
 
   ! initializes
   codeabs(:,:) = .false.
@@ -860,7 +860,7 @@
       ! (since elements with two absorbing edges MUST be cited twice, each time with a different "typeabs()" code
       if (count(codeabs(:,inum) .eqv. .true.) /= 1) then
         print *,'Error for absorbing element inum = ',inum
-        stop 'must have one and only one absorbing edge per absorbing line cited'
+        call stop_the_code('must have one and only one absorbing edge per absorbing line cited')
       endif
 
     enddo
@@ -934,7 +934,7 @@
         ib_left(inum) =  nspec_left
 
       else
-        stop 'incorrect absorbing boundary element type read'
+        call stop_the_code('incorrect absorbing boundary element type read')
       endif
     enddo
 
@@ -1088,7 +1088,7 @@
   allocate(numacforcing(nelem_acforcing), &
            codeacforcing(4,nelem_acforcing), &
            typeacforcing(nelem_acforcing),stat=ier)
-  if (ier /= 0) stop 'Error allocating acoustic forcing arrays'
+  if (ier /= 0) call stop_the_code('Error allocating acoustic forcing arrays')
 
   allocate(ibegin_edge1_acforcing(nelem_acforcing))
   allocate(iend_edge1_acforcing(nelem_acforcing))
@@ -1104,7 +1104,7 @@
            ib_right_acforcing(nelem_acforcing), &
            ib_bottom_acforcing(nelem_acforcing), &
            ib_top_acforcing(nelem_acforcing),stat=ier)
-  if (ier /= 0) stop 'Error allocating acoustic forcing boundary arrays'
+  if (ier /= 0) call stop_the_code('Error allocating acoustic forcing boundary arrays')
 
   ! initializes
   codeacforcing(:,:) = .false.
@@ -1162,7 +1162,7 @@
       ! (since elements with two absorbing edges MUST be cited twice, each time with a different "typeacforcing()" code
       if (count(codeacforcing(:,inum) .eqv. .true.) /= 1) then
         print *,'Error for absorbing element inum = ',inum
-        stop 'must have one and only one absorbing edge per absorbing line cited'
+        call stop_the_code('must have one and only one absorbing edge per absorbing line cited')
       endif
 
     enddo
@@ -1186,7 +1186,7 @@
         ib_left_acforcing(inum) =  nspec_left_acforcing
 
       else
-        stop 'incorrect absorbing boundary element type read'
+        call stop_the_code('incorrect absorbing boundary element type read')
       endif
     enddo
 
@@ -1242,7 +1242,7 @@
 
   allocate(acoustic_edges(4,nelem_acoustic_surface), &
            acoustic_surface(5,nelem_acoustic_surface),stat=ier)
-  if (ier /= 0) stop 'Error allocating acoustic free surface arrays'
+  if (ier /= 0) call stop_the_code('Error allocating acoustic free surface arrays')
 
   ! initializes
   acoustic_edges(:,:) = 0
@@ -1320,7 +1320,7 @@
            fluid_solid_acoustic_iedge(num_fluid_solid_edges), &
            fluid_solid_elastic_ispec(num_fluid_solid_edges), &
            fluid_solid_elastic_iedge(num_fluid_solid_edges),stat=ier)
-  if (ier /= 0) stop 'Error allocating fluid-solid arrays'
+  if (ier /= 0) call stop_the_code('Error allocating fluid-solid arrays')
 
   ! sets flags for poroelastic-acoustic coupled domains
   if (num_fluid_poro_edges > 0) then
@@ -1424,7 +1424,7 @@
 
   allocate(nodes_tangential_curve(2,nnodes_tangential_curve), &
            dist_tangential_detection_curve(nnodes_tangential_curve),stat=ier)
-  if (ier /= 0) stop 'Error allocating tangential arrays'
+  if (ier /= 0) call stop_the_code('Error allocating tangential arrays')
 
   ! initializes
   nodes_tangential_curve(:,:) = 0.d0
@@ -1470,7 +1470,7 @@
 
   ! axial flags
   allocate(is_on_the_axis(nspec),stat=ier)
-  if (ier /= 0) stop 'Error: not enough memory to allocate array is_on_the_axis'
+  if (ier /= 0) call stop_the_code('Error: not enough memory to allocate array is_on_the_axis')
 
   is_on_the_axis(:) = .false.
 
@@ -1491,7 +1491,7 @@
       read(IIN) ispec
 
       ! quick check
-      if (ispec < 1 .or. ispec > nspec) stop 'Invalid ispec value, out of range in reading axial elements'
+      if (ispec < 1 .or. ispec > nspec) call stop_the_code('Invalid ispec value, out of range in reading axial elements')
 
       ! stores element list
       ispec_of_axial_elements(i) = ispec

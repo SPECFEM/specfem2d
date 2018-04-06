@@ -54,7 +54,7 @@
   if (ier /= 0 ) then
     print *,'Error opening gnuplot file for writing: ',trim(OUTPUT_FILES)//'gridfile.gnu'
     print *,'Please make sure directory ',trim(OUTPUT_FILES),' exists...'
-    stop 'Error saving gnuplot file'
+    call stop_the_code('Error saving gnuplot file')
   endif
 
   ! draw horizontal lines of the grid
@@ -95,7 +95,7 @@
 
   ! create a Gnuplot script to display the grid
   open(unit=20,file=trim(OUTPUT_FILES)//'plot_gridfile.gnu',status='unknown',iostat=ier)
-  if (ier /= 0 ) stop 'Error saving plotgnu file'
+  if (ier /= 0 ) call stop_the_code('Error saving plotgnu file')
 
   write(20,*) '#set term wxt'
   write(20,*) 'set term postscript landscape monochrome solid "Helvetica" 22'

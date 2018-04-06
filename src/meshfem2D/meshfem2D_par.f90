@@ -77,11 +77,10 @@
 ! corresponding graphs.
 
   use shared_parameters, only: nelmnts,nxread,nzread,max_npoints_interface,number_of_interfaces, &
-    nz_layer,number_of_layers,nx,nz
+    nz_layer,number_of_layers,nx,nz,myrank
 
   implicit none
 
-  integer :: myrank
   integer, dimension(:), allocatable  :: elmnts
   integer, dimension(:), allocatable  :: elmnts_bis
   integer, dimension(:), allocatable  :: glob2loc_elmnts

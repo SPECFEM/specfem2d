@@ -137,7 +137,7 @@
           !!! PML NOT WORKING YET !!!
           this_element_has_PML = .false.
           if (PML_BOUNDARY_CONDITIONS) then
-            if (ispec_is_PML(ispec)) stop 'PML not implemented yet for poroelastic case'
+            if (ispec_is_PML(ispec)) call stop_the_code('PML not implemented yet for poroelastic case')
           endif
 
           rho_s = density(1,kmato(ispec))
@@ -464,7 +464,7 @@
 
           endif
         else
-          stop 'Invalid element type found in routine invert_mass_matrix_init()'
+          call stop_the_code('Invalid element type found in routine invert_mass_matrix_init()')
         endif
       enddo
     enddo

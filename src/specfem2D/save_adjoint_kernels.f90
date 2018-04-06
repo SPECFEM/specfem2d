@@ -167,8 +167,8 @@
   if (any_poroelastic) then
     ! poro-elastic domains
     ! checks
-    if (GPU_MODE) stop 'poroelastic kernel output not implemented on GPUs yet'
-    if (.not. SAVE_ASCII_KERNELS) stop 'poroelastic simulations must use SAVE_ASCII_KERNELS'
+    if (GPU_MODE) call stop_the_code('poroelastic kernel output not implemented on GPUs yet')
+    if (.not. SAVE_ASCII_KERNELS) call stop_the_code('poroelastic simulations must use SAVE_ASCII_KERNELS')
     ! ascii format
     do ispec = 1, nspec
       do j = 1, NGLLZ

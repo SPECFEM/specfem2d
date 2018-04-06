@@ -83,7 +83,7 @@
         invpermlxz = -permlxz/detk
         invpermlzz = permlxx/detk
       else
-        stop 'Permeability matrix is not invertible'
+        call stop_the_code('Permeability matrix is not invertible')
       endif
 
       if (ATTENUATION_PORO_FLUID_PART) then

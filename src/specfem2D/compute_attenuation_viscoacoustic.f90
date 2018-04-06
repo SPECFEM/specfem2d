@@ -496,7 +496,7 @@
           endif
 
         case default
-          stop 'Time stepping scheme not implemented yet in viscoacoustic attenuation update'
+          call stop_the_code('Time stepping scheme not implemented yet in viscoacoustic attenuation update')
 
   end select
 
@@ -555,7 +555,7 @@
   if (.not. ATTENUATION_VISCOACOUSTIC) return
 
   if (.not. CONVOLUTION_MEMORY_VARIABLES) &
-    stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
+    call stop_the_code('CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now')
 
   ! compute gradient at time step n for attenuation
   call compute_gradient_attenuation_fluid(potential_acoustic,dux_dxl_n,duz_dxl_n, &
@@ -640,7 +640,7 @@
           endif
 
         case default
-          stop 'Time stepping scheme not implemented yet in viscoacoustic attenuation update'
+          call stop_the_code('Time stepping scheme not implemented yet in viscoacoustic attenuation update')
         end select
 
       enddo ! i_sls

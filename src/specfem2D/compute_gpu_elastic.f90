@@ -115,7 +115,7 @@
       ! poroelastic coupling
       ! poroelastic coupling
       if (any_poroelastic) then
-        stop 'Error GPU simulation: poroelastic coupling not implemented yet'
+        call stop_the_code('Error GPU simulation: poroelastic coupling not implemented yet')
       endif
 
       ! adds source term (single-force/moment-tensor solution)

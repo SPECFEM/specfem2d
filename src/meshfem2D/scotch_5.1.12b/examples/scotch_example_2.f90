@@ -55,13 +55,13 @@ PROGRAM Scotch_test
     call ScotchFstratInit ( Scotchstrat(1), ierr )
     if (ierr /= 0) then
       write(6,*) 'Scotch error : cannot initialize graph'
-      STOP
+      call stop_the_code('error: stopping the code')
     endif
 
     call ScotchFgraphInit ( Scotchgraph(1), ierr )
     if (ierr /= 0) then
       write(6,*) 'Scotch error : cannot initialize strat'
-      STOP
+      call stop_the_code('error: stopping the code')
     endif
 
     open(10,iostat=ierr,file="bump.grf")
@@ -74,7 +74,7 @@ PROGRAM Scotch_test
     call ScotchFgraphLoad ( Scotchgraph(1), file_u, base, flag, ierr )
     if (ierr /= 0) then
       write(6,*) 'Scotch error : cannot load graph'
-      STOP
+      call stop_the_code('error: stopping the code')
     endif
 
     close(10)
@@ -96,7 +96,7 @@ PROGRAM Scotch_test
     call ScotchFgraphCheck ( Scotchgraph(1), ierr )
     if (ierr /= 0) then
       write(6,*) 'ERROR Scotch : Invalid check'
-      STOP
+      call stop_the_code('error: stopping the code')
     endif
 
     open (10,iostat=ierr,file="test.grf")
@@ -107,7 +107,7 @@ PROGRAM Scotch_test
     call ScotchFgraphSave ( Scotchgraph(1), file_u, ierr )
     if (ierr /= 0) then
       write(6,*) 'ERROR Scotch : Invalid save '
-      STOP
+      call stop_the_code('error: stopping the code')
     endif
 
     close(10)
@@ -118,7 +118,7 @@ PROGRAM Scotch_test
     if (ierr /= 0) then
       write(6,*) 'ERROR Scotch : Cannot initialize partitioning&
         &strategy'
-      STOP
+      call stop_the_code('error: stopping the code')
     endif
 
     allocate(part(1:vertnbr + 1))
@@ -127,7 +127,7 @@ PROGRAM Scotch_test
       part(1), ierr )
     if (ierr /= 0) then
       write(6,*) 'ERROR Scotch : Cannot partition graph'
-      STOP
+      call stop_the_code('error: stopping the code')
     endif
 
     do i=1,vertnbr + 1

@@ -100,7 +100,8 @@
       QKappa = val5
       Qmu = val6
       if (QKappa <= 0.0000001 .or. Qmu <= 0.0000001) &
-        stop 'negative or null values of Q attenuation factor not allowed; set them equal to 9999 to indicate no attenuation'
+        call stop_the_code( &
+'negative or null values of Q attenuation factor not allowed; set them equal to 9999 to indicate no attenuation')
 
       ! Lame parameters
       lambdaplus2mu = density_mat(1)*cp*cp
@@ -223,7 +224,7 @@
       poisson_s = HALF * (3.d0*kappa_s- 2.d0*mu_s)/(3.d0*kappa_s+mu_s)
 
       ! Poisson's ratio must be between -1 and +1/2
-      if (poisson_s < -1.d0 .or. poisson_s > 0.5d0) stop 'Poisson''s ratio for the solid phase out of range'
+      if (poisson_s < -1.d0 .or. poisson_s > 0.5d0) call stop_the_code('Poisson''s ratio for the solid phase out of range')
 
     else if (indic <= 0) then
       assign_external_model = .true.

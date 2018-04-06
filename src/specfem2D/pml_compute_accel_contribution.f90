@@ -97,7 +97,7 @@
     ! LDDRK
     time_n = (it-1) * deltat + C_LDDRK(i_stage) * deltat
   case default
-    stop 'Sorry, time stepping scheme for PML accel contribution not implemented yet'
+    call stop_the_code('Sorry, time stepping scheme for PML accel contribution not implemented yet')
   end select
 
   ! local PML element
@@ -308,7 +308,7 @@
         rmemory_displ_elastic(2,2,i,j,ispec_PML) = rmemory_displ_elastic(2,2,i,j,ispec_PML) + &
               BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML)
       case default
-        stop 'Time stepping scheme not implemented yet for PML accel contribution'
+        call stop_the_code('Time stepping scheme not implemented yet for PML accel contribution')
       end select
 
       if (assign_external_model) then

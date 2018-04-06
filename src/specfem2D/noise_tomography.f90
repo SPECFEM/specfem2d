@@ -174,7 +174,7 @@
     write(*,*) 'Error opening NOISE_TOMOGRAPHY/irec_master_noise file'
     write(*,*) 'Please make sure all noise setup files exist in NOISE_TOMOGRAPHY/ directory...'
     print *
-    stop 'Error opening NOISE_TOMOGRAPHY/irec_master_noise file'
+    call stop_the_code('Error opening NOISE_TOMOGRAPHY/irec_master_noise file')
   endif
 
   read(500,*) irec_master
@@ -294,7 +294,7 @@
       write(IMAIN,*) '  reading noise source from file ','NOISE_TOMOGRAPHY/S_squared'
     endif
     open(unit=500,file='NOISE_TOMOGRAPHY/S_squared',status='old',iostat=ier)
-    if (ier /= 0) stop 'Error opening file NOISE_TOMOGRAPHY/S_squared'
+    if (ier /= 0) call stop_the_code('Error opening file NOISE_TOMOGRAPHY/S_squared')
     do it = 1,NSTEP
       read(500,*) time_function_noise(it)
     enddo
@@ -355,7 +355,7 @@
 
   ! saves source time function
   open(500,file=trim(OUTPUT_FILES)//'plot_source_time_function_noise.txt',status='unknown',iostat=ier)
-  if (ier /= 0) stop 'Error opening noise source time function text-file'
+  if (ier /= 0) call stop_the_code('Error opening noise source time function text-file')
   do it = 1,NSTEP
     t = it*deltat
     write(500,*) (t-t0),time_function_noise(it)
@@ -540,7 +540,7 @@
 
   ! safety check
   if (nglob /= nglob_elastic) &
-    stop 'Noise simulation requires elastic simulation'
+    call stop_the_code('Noise simulation requires elastic simulation')
 
   if (NOISE_TOMOGRAPHY == 1) then
     ! stores forward generating wavefield

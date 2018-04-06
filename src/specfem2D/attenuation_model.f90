@@ -57,7 +57,7 @@
   double precision :: f_min_attenuation, f_max_attenuation
 
   ! safety check
-  if (N_SLS < 1) stop 'Invalid N_SLS value, must be at least 1'
+  if (N_SLS < 1) call stop_the_code('Invalid N_SLS value, must be at least 1')
 
 ! attenuation constants for standard linear solids
 ! nu1 is the dilatation/incompressibility mode (QKappa)
@@ -101,7 +101,7 @@
 
   if (any(tau_sigma_nu1 < 0.d0) .or. any(tau_sigma_nu2 < 0.d0) .or. &
       any(tau_epsilon_nu1_d < 0.d0) .or. any(tau_epsilon_nu2_d < 0.d0)) &
-       stop 'error: negative relaxation time found for a viscoelastic material'
+       call stop_the_code('error: negative relaxation time found for a viscoelastic material')
 
 ! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
 ! and thus this does not apply; it only applies to the right formula with 1/N included
@@ -160,7 +160,7 @@
   Mu_nu2_sent = real(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS),kind=CUSTOM_REAL)
 
   if (Mu_nu1_sent < 1. .or. Mu_nu2_sent < 1.) &
-    stop 'error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one'
+    call stop_the_code('error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one')
 
   end subroutine attenuation_model
 
@@ -901,7 +901,7 @@
       if (n < 2) then
           print *, 'SolvOpt error:'
           print *, 'Improper space dimension.'
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
         options(9)=-one
         goto 999
       endif
@@ -911,85 +911,85 @@
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (g(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (g0(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (g1(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (gt(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (gc(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (z(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (x1(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (xopt(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (xrec(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (grec(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (xx(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (deltax(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (idx(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
 
 ! store flags:
@@ -1286,7 +1286,7 @@
         if (kj > 2*kd) then
           kd=kd+1
           warnno=1
-          endwarn='Premature stop is possible. Try to re-run the routine from the obtained point.'
+          endwarn='Premature stopping is possible. Try to re-run the routine from the obtained point.'
           do i = 1,n
             if (dabs(x(i)-xx(i)) < epsnorm*dabs(x(i))) then
              if (dispwarn) then
@@ -1940,7 +1940,7 @@
                 print *,'The function is flat in certain directions.'
              endif
              warnno=1
-             endwarn='Premature stop is possible. Try to re-run the routine from the obtained point.'
+             endwarn='Premature stopping is possible. Try to re-run the routine from the obtained point.'
              do i = 1,n
                x1(i)=x(i)
              enddo

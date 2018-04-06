@@ -60,7 +60,7 @@
 
     ! check for edge effects
     if (seismo_current < 1 .or. seismo_current > NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos) &
-      stop 'Error: seismo_current out of bounds in recording of seismograms'
+      call stop_the_code('Error: seismo_current out of bounds in recording of seismograms')
 
     ! updates local receiver records
     if (nrecloc > 0) then
@@ -111,7 +111,7 @@
             endif
 
           case default
-            stop 'Invalid seismotype for writing seismograms'
+            call stop_the_code('Invalid seismotype for writing seismograms')
           end select
 
           ! perform the general interpolation using Lagrange polynomials
@@ -242,7 +242,7 @@
 
   allocate(buffer_binary(seismo_current,nrec,number_of_components),stat=ier)
   allocate(single_precision_seismo(seismo_current),stat=ier)
-  if (ier /= 0) stop 'Error allocating array buffer_binary'
+  if (ier /= 0) call stop_the_code('Error allocating array buffer_binary')
   buffer_binary(:,:,:) = 0.d0
 
   ! see if we need to save any seismogram in binary format

@@ -65,14 +65,14 @@
   call world_rank(myrank)
 
   ! check process setup
-  if (NPROC < 1) stop 'should have NPROC >= 1'
+  if (NPROC < 1) call stop_the_code('should have NPROC >= 1')
 
   ! checks rank to make sure that myrank is zero for serial version
 #ifdef USE_MPI
-    if (myrank >= NPROC) stop 'Error: invalid MPI rank'
+    if (myrank >= NPROC) call stop_the_code('Error: invalid MPI rank')
 #else
     ! serial version: checks rank is initialized
-    if (myrank /= 0) stop 'Error: process should have myrank zero for serial version'
+    if (myrank /= 0) call stop_the_code('Error: process should have myrank zero for serial version')
 #endif
 
   ! determine if we write to file instead of standard output
@@ -141,7 +141,7 @@
   ! allocates mesh
   ! local to global indexing
   allocate(ibool(NGLLX,NGLLZ,nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating ibool array'
+  if (ier /= 0) call stop_the_code('Error allocating ibool array')
 
   ! mesh arrays
   allocate(xix(NGLLX,NGLLZ,nspec), &
@@ -149,13 +149,13 @@
            gammax(NGLLX,NGLLZ,nspec), &
            gammaz(NGLLX,NGLLZ,nspec), &
            jacobian(NGLLX,NGLLZ,nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating mesh arrays for databases'
+  if (ier /= 0) call stop_the_code('Error allocating mesh arrays for databases')
 
   ! domain flags
   allocate(ispec_is_elastic(nspec), &
            ispec_is_acoustic(nspec), &
            ispec_is_poroelastic(nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating domain flag arrays'
+  if (ier /= 0) call stop_the_code('Error allocating domain flag arrays')
 
   ispec_is_elastic(:) = .false.
   ispec_is_acoustic(:) = .false.
@@ -164,7 +164,7 @@
   ! element property flags
   allocate(ispec_is_anisotropic(nspec), &
            ispec_is_PML(nspec), stat=ier)
-  if (ier /= 0) stop 'Error allocating element property flag arrays'
+  if (ier /= 0) call stop_the_code('Error allocating element property flag arrays')
 
   ispec_is_anisotropic(:) = .false.
   ispec_is_PML(:) = .false.
@@ -220,7 +220,7 @@
       write(IMAIN,*) 'Invalid number of NSTEP_BETWEEN_OUTPUT_SEISMOS = ',NSTEP_BETWEEN_OUTPUT_SEISMOS
       write(IMAIN,*) 'Must be a multiple of subsamp_seismos = ',subsamp_seismos
     endif
-    stop 'Error: NSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of subsamp_seismos'
+    call stop_the_code('Error: NSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of subsamp_seismos')
   endif
 
   end subroutine initialize_simulation
@@ -242,7 +242,7 @@
   call synchronize_all()
 
   ! number of processes
-  if (nproc_read_from_database < 1) stop 'should have nproc_read_from_database >= 1'
+  if (nproc_read_from_database < 1) call stop_the_code('should have nproc_read_from_database >= 1')
 
   ! check that the code is running with the requested nb of processes
   if (NPROC /= nproc_read_from_database) then
@@ -263,24 +263,25 @@
 
   ! time scheme
   if (SIMULATION_TYPE == 3 .and. (time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
-    stop 'RK and LDDRK time scheme not supported for adjoint inversion'
+    call stop_the_code('RK and LDDRK time scheme not supported for adjoint inversion')
 
   ! standard RK scheme
   if (time_stepping_scheme == 3) then
     if (NPROC > 1) &
-      stop 'MPI support for standard Runge-Kutta scheme is not implemented yet'
+      call stop_the_code('MPI support for standard Runge-Kutta scheme is not implemented yet')
 
     if (PML_BOUNDARY_CONDITIONS) &
-      stop 'PML boundary conditions not implemented with standard Runge Kutta scheme yet'
+      call stop_the_code('PML boundary conditions not implemented with standard Runge Kutta scheme yet')
   endif
 
   ! Bielak parameter setup
   if (add_Bielak_conditions .and. .not. initialfield) &
-    stop 'need to have an initial field to add Bielak plane wave conditions'
+    call stop_the_code('need to have an initial field to add Bielak plane wave conditions')
 
   ! seismogram output
   if (seismotype < 1 .or. seismotype > 6) &
-    stop 'seismotype should be 1(=displ), 2(=veloc), 3(=accel), 4(=pressure), 5(=curl of displ) or 6(=the fluid potential)'
+    call stop_the_code( &
+'seismotype should be 1(=displ), 2(=veloc), 3(=accel), 4(=pressure), 5(=curl of displ) or 6(=the fluid potential)')
 
   if (SAVE_FORWARD .and. (seismotype /= 1 .and. seismotype /= 6)) then
     ! user warning
@@ -298,28 +299,28 @@
   endif
 
   ! image type
-  if (imagetype_postscript < 1 .or. imagetype_postscript > 4) stop 'Wrong type for PostScript snapshots'
+  if (imagetype_postscript < 1 .or. imagetype_postscript > 4) call stop_the_code('Wrong type for PostScript snapshots')
 
   ! checks attenuation setting
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (ATTENUATION_PORO_FLUID_PART)) then
     print *, '*************** Error ***************'
-    stop 'Anisotropy & Viscous damping are not presently implemented for adjoint calculations'
+    call stop_the_code('Anisotropy & Viscous damping are not presently implemented for adjoint calculations')
   endif
 
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. ATTENUATION_PORO_FLUID_PART .and. (.not. UNDO_ATTENUATION_AND_OR_PML)) then
     print *, '*************** Error ***************'
-    stop 'attenuation is only implemented for adjoint calculations with UNDO_ATTENUATION_AND_OR_PML'
+    call stop_the_code('attenuation is only implemented for adjoint calculations with UNDO_ATTENUATION_AND_OR_PML')
   endif
 
   if ((.not. P_SV) .and. ATTENUATION_VISCOELASTIC) then
     print *, '*************** WARNING ***************'
     print *, 'Attenuation and anisotropy are not implemented for surface (membrane) waves calculation'
     print *, '*************** WARNING ***************'
-    stop 'Please set P_SV flag to .true. for simulations with attenuation and anisotropy'
+    call stop_the_code('Please set P_SV flag to .true. for simulations with attenuation and anisotropy')
   endif
 
   if (USE_ENFORCE_FIELDS .and. SIMULATION_TYPE /= 1) &
-    stop 'USE_ENFORCE_FIELDS is not supported yet for adjoint/kernel simulations'
+    call stop_the_code('USE_ENFORCE_FIELDS is not supported yet for adjoint/kernel simulations')
 
   ! synchronizes processes
   call synchronize_all()
@@ -351,13 +352,13 @@
 
   ! check for GPU runs
   if (NGLLX /= 5 .or. NGLLZ /= 5 ) &
-    stop 'GPU mode can only be used if NGLLX == NGLLZ == 5'
+    call stop_the_code('GPU mode can only be used if NGLLX == NGLLZ == 5')
   if (CUSTOM_REAL /= 4 ) &
-    stop 'GPU mode runs only with CUSTOM_REAL == 4'
+    call stop_the_code('GPU mode runs only with CUSTOM_REAL == 4')
   if (UNDO_ATTENUATION_AND_OR_PML) &
-    stop 'for undo_attenuation, GPU_MODE is not supported yet'
+    call stop_the_code('for undo_attenuation, GPU_MODE is not supported yet')
   if (PML_BOUNDARY_CONDITIONS) &
-    stop 'for PML boundaries, GPU_MODE is not supported yet'
+    call stop_the_code('for PML boundaries, GPU_MODE is not supported yet')
 
   ! initializes GPU and outputs info to files for all processes
   call initialize_cuda_device(myrank,ncuda_devices)

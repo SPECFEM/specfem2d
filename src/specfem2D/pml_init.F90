@@ -511,14 +511,14 @@
   damping_modified_factor_elastic = 1.0d0
 
 ! check that NPOWER is okay
-  if (NPOWER < 1) stop 'NPOWER must be greater than 1'
+  if (NPOWER < 1) call stop_the_code('NPOWER must be greater than 1')
 
 ! get minimum and maximum values of mesh coordinates
   xmin = minval(coord(1,:))
   zmin = minval(coord(2,:))
   xmax = maxval(coord(1,:))
   zmax = maxval(coord(2,:))
-  if (zmax - zmin < 0.0 .or. xmax - xmin < 0.0) stop 'there are errors in the mesh'
+  if (zmax - zmin < 0.0 .or. xmax - xmin < 0.0) call stop_the_code('there are errors in the mesh')
 
   call min_all_all_dp(xmin, xmin_glob)
   call min_all_all_dp(zmin, zmin_glob)
@@ -638,7 +638,7 @@
         rhol = density(1,kmato(ispec))
         vpmax_elastic=max(vpmax_elastic,sqrt(lambdalplus2mul_relaxed/rhol))
       else
-        stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+        call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
       endif
     endif
   enddo
@@ -746,7 +746,7 @@
                 else if (ispec_is_elastic(ispec)) then
                   d_z = d0_z_bottom_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                 else
-                  stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                  call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                 endif
                 K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                 alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -772,7 +772,7 @@
                 else if (ispec_is_elastic(ispec)) then
                   d_z = d0_z_top_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                 else
-                  stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                  call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                 endif
                 K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                 alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -799,7 +799,7 @@
                 else if (ispec_is_elastic(ispec)) then
                   d_x = d0_x_right_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                 else
-                  stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                  call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                 endif
                 K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                 alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -825,7 +825,7 @@
                 else if (ispec_is_elastic(ispec)) then
                   d_x = d0_x_left_elastic / damping_modified_factor_elastic * abscissa_normalized**NPOWER
                 else
-                  stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                  call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                 endif
                 K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                 alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
@@ -898,7 +898,7 @@
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
                   else
-                    stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                   endif
                 else if (rough_estimate_incident_angle > 1.0d0 .and. &
                        rough_estimate_incident_angle <= 6.0d0) then
@@ -917,7 +917,7 @@
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
                   else
-                    stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                   endif
 
                 else if (rough_estimate_incident_angle > 6.0d0) then
@@ -936,7 +936,7 @@
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
                   else
-                    stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                   endif
 
                 endif
@@ -975,7 +975,7 @@
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
                   else
-                    stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                   endif
                 else if (rough_estimate_incident_angle > 1.0d0 .and. &
                        rough_estimate_incident_angle <= 6.0d0) then
@@ -994,7 +994,7 @@
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
                   else
-                    stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                   endif
 
                 else if (rough_estimate_incident_angle > 6.0d0) then
@@ -1013,7 +1013,7 @@
                     K_z = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_z = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
                   else
-                    stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                   endif
                 endif
               else
@@ -1052,7 +1052,7 @@
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
                   else
-                    stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                   endif
                 else if (rough_estimate_incident_angle > 1.0d0 .and. &
                        rough_estimate_incident_angle <= 6.0d0) then
@@ -1071,7 +1071,7 @@
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
                   else
-                    stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                   endif
 
                 else if (rough_estimate_incident_angle > 6.0d0) then
@@ -1090,7 +1090,7 @@
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
                   else
-                    stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                   endif
                 endif
 
@@ -1129,7 +1129,7 @@
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
                   else
-                    stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                   endif
                 else if (rough_estimate_incident_angle > 1.0d0 .and. &
                        rough_estimate_incident_angle <= 6.0d0) then
@@ -1148,7 +1148,7 @@
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
                   else
-                    stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                   endif
 
                 else if (rough_estimate_incident_angle > 6.0d0) then
@@ -1167,7 +1167,7 @@
                     K_x = K_MIN_PML + (K_MAX_PML - 1.0d0) * abscissa_normalized**NPOWER
                     alpha_x = ALPHA_MAX_PML * (1.0d0 - abscissa_normalized)
                   else
-                    stop 'PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation'
+                    call stop_the_code('PML only implemented for purely elastic or purely acoustic or acoustic/elastic simulation')
                   endif
                 endif
 
@@ -1280,7 +1280,7 @@
             endif
 
             if (abs(alpha_x - alpha_z) < min_distance_between_CPML_parameter) then
-              stop 'error in separation of alpha_x, alpha_z'
+              call stop_the_code('error in separation of alpha_x, alpha_z')
             endif
 
             beta_x = alpha_x + d_x / K_x
@@ -1296,11 +1296,11 @@
             endif
 
             if (abs(beta_x - alpha_z) < min_distance_between_CPML_parameter) then
-              stop 'there is an error in the separation of beta_x,alpha_z '
+              call stop_the_code('there is an error in the separation of beta_x,alpha_z ')
             endif
 
             if (abs(beta_z - alpha_x) < min_distance_between_CPML_parameter) then
-              stop 'there is an error in the separation of beta_z,alpha_x '
+              call stop_the_code('there is an error in the separation of beta_z,alpha_x ')
             endif
 
             d_x = (beta_x - alpha_x) * K_x

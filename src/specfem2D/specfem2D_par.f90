@@ -620,9 +620,6 @@ module specfem_par
   ! spectral elements
   integer :: nspec
 
-  ! for MPI and partitioning
-  integer :: myrank
-
   ! parameter read from parameter file
   integer :: nproc_read_from_database
 

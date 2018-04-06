@@ -155,7 +155,7 @@
       close(172)
 
     else
-      stop 'Save Model not implemented for external and tomo'
+      call stop_the_code('Save Model not implemented for external and tomo')
     endif !Type of model
   endif !save model
 

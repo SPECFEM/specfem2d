@@ -53,7 +53,7 @@
 
   ! shape arrays
   allocate(shape2D(ngnod,NGLLX,NGLLZ),dershape2D(NDIM,ngnod,NGLLX,NGLLZ),stat=ier)
-  if (ier /= 0) stop 'Error allocating shape arrays'
+  if (ier /= 0) call stop_the_code('Error allocating shape arrays')
 
   do j = 1,NGLLZ
     do i = 1,NGLLX
@@ -71,7 +71,7 @@
            hgammas(NGLLZ), &
            hpgammar(NGLLZ), &
            hpgammas(NGLLZ),stat=ier)
-  if (ier /= 0) stop 'error allocating arrays for interpolators'
+  if (ier /= 0) call stop_the_code('error allocating arrays for interpolators')
 
   end subroutine setup_GLL_points
 

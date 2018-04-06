@@ -78,7 +78,7 @@
         invpermlxz = -permlxz/detk
         invpermlzz = permlxx/detk
       else
-        stop 'Permeability matrix is not invertible'
+        call stop_the_code('Permeability matrix is not invertible')
       endif
 
       ! relaxed viscous coef
@@ -167,7 +167,7 @@
             endif
 
           case default
-            stop 'Time stepping scheme not implemented yet for poro_fluid attenuation'
+            call stop_the_code('Time stepping scheme not implemented yet for poro_fluid attenuation')
           end select
         enddo
       enddo

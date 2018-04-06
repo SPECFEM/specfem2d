@@ -484,7 +484,7 @@
 
   ! safety check
   !PML did not implemented for poroelastic simulation
-  if (PML_BOUNDARY_CONDITIONS) stop 'Updating displacement for PML on poroelastic domain not implemented yet'
+  if (PML_BOUNDARY_CONDITIONS) call stop_the_code('Updating displacement for PML on poroelastic domain not implemented yet')
 
   ! for the solid
   displs_poroelastic(:,:) = displs_poroelastic(:,:) + deltat*velocs_poroelastic(:,:) &

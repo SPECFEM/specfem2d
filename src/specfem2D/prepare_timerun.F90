@@ -189,7 +189,7 @@
   allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
            sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
            siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),stat=ier)
-  if (ier /= 0) stop 'Error allocating seismogram arrays'
+  if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
 
   sisux(:,:) = ZERO ! double precision zero
   sisuz(:,:) = ZERO
@@ -278,7 +278,7 @@
   ! arrays for display images
   allocate(shape2D_display(ngnod,pointsdisp,pointsdisp), &
            dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp),stat=ier)
-  if (ier /= 0) stop 'Error allocating shape arrays for display'
+  if (ier /= 0) call stop_the_code('Error allocating shape arrays for display')
 
   ! computes shape functions and their derivatives for regular interpolated display grid
   do j = 1,pointsdisp
@@ -401,15 +401,15 @@
 
     ! allocate an array for image data
     allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
-    if (ier /= 0) stop 'error in an allocate statement 1'
+    if (ier /= 0) call stop_the_code('error in an allocate statement 1')
     allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
-    if (ier /= 0) stop 'error in an allocate statement 2'
+    if (ier /= 0) call stop_the_code('error in an allocate statement 2')
 
     ! allocate an array for the grid point that corresponds to a given image data point
     allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
-    if (ier /= 0) stop 'error in an allocate statement 3'
+    if (ier /= 0) call stop_the_code('error in an allocate statement 3')
     allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
-    if (ier /= 0) stop 'error in an allocate statement 4'
+    if (ier /= 0) call stop_the_code('error in an allocate statement 4')
 
     !remember which image are going to produce
     if (USE_SNAPSHOT_NUMBER_IN_FILENAME) then
@@ -436,7 +436,7 @@
     ! checks
     if (ipixel /= nb_pixel_loc) then
       print *,'Error: pixel count ',ipixel,nb_pixel_loc
-      stop 'Error invalid pixel count for color image'
+      call stop_the_code('Error invalid pixel count for color image')
     endif
     ! filling array iglob_image_color, containing info on which process owns which pixels.
     iproc = 0
@@ -635,7 +635,7 @@
 
     allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
     allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field),stat=ier)
-    if (ier /= 0) stop 'Error allocating postscript arrays'
+    if (ier /= 0) call stop_the_code('Error allocating postscript arrays')
 
     ! to dump the wave field
     this_is_the_first_time_we_dump = .true.
@@ -732,7 +732,7 @@
       if (any_poroelastic) then
         allocate(b_viscodampx(NGLLX,NGLLZ,nspec), &
                  b_viscodampz(NGLLX,NGLLZ,nspec),stat=ier)
-        if (ier /= 0) stop 'Error allocating b_viscodamp arrays'
+        if (ier /= 0) call stop_the_code('Error allocating b_viscodamp arrays')
         b_viscodampx(:,:,:) = 0._CUSTOM_REAL
         b_viscodampz(:,:,:) = 0._CUSTOM_REAL
 
@@ -809,83 +809,83 @@
       if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_cijkl_kernel.dat'
         open(unit = 97, file=trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
       else
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
         open(unit = 97, file = trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
         open(unit = 98, file = trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
       endif
     else
       ! binary format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kernel.bin'
       open(unit = 204, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
       if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
          write(outputname,'(a,i6.6,a)')'proc',myrank,'_c11_kernel.bin'
          open(unit = 205,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) stop 'Error writing kernel file to disk'
+         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c13_kernel.bin'
          open(unit = 206,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) stop 'Error writing kernel file to disk'
+         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c15_kernel.bin'
          open(unit = 207,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) stop 'Error writing kernel file to disk'
+         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c33_kernel.bin'
          open(unit = 208,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) stop 'Error writing kernel file to disk'
+         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c35_kernel.bin'
          open(unit = 209,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) stop 'Error writing kernel file to disk'
+         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c55_kernel.bin'
          open(unit = 210,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) stop 'Error writing kernel file to disk'
+         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
       else
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_kernel.bin'
         open(unit = 205, file =trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_kernel.bin'
         open(unit = 206, file =trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_kernel.bin'
         open(unit = 207, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_alpha_kernel.bin'
         open(unit = 208, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_beta_kernel.bin'
         open(unit = 209, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
         open(unit = 210,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
         open(unit = 211,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         if (APPROXIMATE_HESS_KL) then
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian1_kernel.bin'
           open(unit =214,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-          if (ier /= 0) stop 'Error writing kernel file to disk'
+          if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian2_kernel.bin'
           open(unit=215,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-          if (ier /= 0) stop 'Error writing kernel file to disk'
+          if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
         endif
       endif
 
@@ -910,38 +910,38 @@
   ! poro-elastic domains
   if (any_poroelastic) then
 
-    if (.not. save_ASCII_kernels) stop 'poroelastic simulations must use save_ASCII_kernels'
+    if (.not. save_ASCII_kernels) call stop_the_code('poroelastic simulations must use save_ASCII_kernels')
 
     ! Primary kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_B_C_kernel.dat'
     open(unit = 144, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_M_rho_rhof_kernel.dat'
     open(unit = 155, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_m_eta_kernel.dat'
     open(unit = 16, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     ! Wavespeed kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_cpI_cpII_cs_kernel.dat'
     open(unit = 20, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhobb_rhofbb_ratio_kernel.dat'
     open(unit = 21, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_phib_eta_kernel.dat'
     open(unit = 22, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     ! Density normalized kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mub_Bb_Cb_kernel.dat'
     open(unit = 17, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Mb_rhob_rhofb_kernel.dat'
     open(unit = 18, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mb_etab_kernel.dat'
     open(unit = 19, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
     rhot_kl(:,:,:) = 0._CUSTOM_REAL
     rhof_kl(:,:,:) = 0._CUSTOM_REAL
@@ -973,38 +973,38 @@
       ! ascii format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.dat'
       open(unit = 95, file = trim(OUTPUT_FILES)//outputname,status ='unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_c_kernel.dat'
       open(unit = 96, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
     else
       ! binary format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_acoustic_kernel.bin'
       open(unit = 200, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_acoustic_kernel.bin'
       open(unit = 201, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_acoustic_kernel.bin'
       open(unit = 202, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c_acoustic_kernel.bin'
       open(unit = 203, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
       if (APPROXIMATE_HESS_KL) then
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian1_acoustic_kernel.bin'
         open(unit=212,file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian2_acoustic_kernel.bin'
         open(unit=213,file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
       endif
     endif
 
@@ -1054,9 +1054,9 @@
 
   ! safety checks
   if (.not. any_elastic) &
-    stop 'Sorry, initial field (plane wave source) only implemented for elastic simulations so far...'
+    call stop_the_code('Sorry, initial field (plane wave source) only implemented for elastic simulations so far...')
   if (any_acoustic .or. any_poroelastic) &
-    stop 'Initial field currently implemented for purely elastic simulation only'
+    call stop_the_code('Initial field currently implemented for purely elastic simulation only')
 
   ! Calculation of the initial field for a plane wave
   if (any_elastic) then
@@ -1162,7 +1162,7 @@
            source_array_noise(NDIM,NGLLX,NGLLZ,NSTEP), &
            mask_noise(nglob), &
            surface_movie_y_or_z_noise(nglob),stat=ier)
-  if (ier /= 0) stop 'Error allocating noise arrays'
+  if (ier /= 0) call stop_the_code('Error allocating noise arrays')
 
   ! initializes
   source_array_noise(:,:,:,:) = 0._CUSTOM_REAL
@@ -1325,7 +1325,7 @@
                  B_newmark_e1(1,N_SLS),stat=ier)
   endif
 
-  if (ier /= 0) stop 'Error allocating attenuation arrays'
+  if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
   e1(:,:,:,:) = 0._CUSTOM_REAL
   e11(:,:,:,:) = 0._CUSTOM_REAL
   e13(:,:,:,:) = 0._CUSTOM_REAL
@@ -1399,7 +1399,7 @@
   ! attenuation arrays
   if (.not. assign_external_model) then
     allocate(already_shifted_velocity(numat),stat=ier)
-    if (ier /= 0) stop 'Error allocating attenuation Qkappa,Qmu,.. arrays'
+    if (ier /= 0) call stop_the_code('Error allocating attenuation Qkappa,Qmu,.. arrays')
     already_shifted_velocity(:) = .false.
   endif
 
@@ -1412,7 +1412,7 @@
 ! ZX ZX needed for further optimization with nspec_ATT replaced with nspec_PML
            tau_epsilon_nu1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
            tau_epsilon_nu2(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
-  if (ier /= 0) stop 'Error allocating attenuation arrays'
+  if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
 
   ! temporary arrays for function argument
   allocate(tau_epsilon_nu1_sent(N_SLS), &
@@ -1421,7 +1421,7 @@
            inv_tau_sigma_nu2_sent(N_SLS), &
            phi_nu1_sent(N_SLS), &
            phi_nu2_sent(N_SLS),stat=ier)
-  if (ier /= 0) stop 'Error allocating attenuation coefficient arrays'
+  if (ier /= 0) call stop_the_code('Error allocating attenuation coefficient arrays')
 
   ! initialize to dummy values
   ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
@@ -1508,7 +1508,7 @@
 
             ! safety check
             if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec)) &
-              stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic materials for now'
+              call stop_the_code('READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic materials for now')
 
             if (ispec_is_acoustic(ispec)) then
               do n = 1,100
@@ -1650,7 +1650,7 @@
            rhostore(NGLLX,NGLLZ,nspec), &
            rho_vp(NGLLX,NGLLZ,nspec), &
            rho_vs(NGLLX,NGLLZ,nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating material arrays'
+  if (ier /= 0) call stop_the_code('Error allocating material arrays')
 
   do ispec = 1,nspec
     do j = 1,NGLLZ
@@ -1750,7 +1750,7 @@
                     alpha_x = tauinvnu(i_sls) + const_for_separation_two
                   endif
                   if (abs(alpha_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                    stop 'error in separation of alpha_x, tauinvnu'
+                    call stop_the_code('error in separation of alpha_x, tauinvnu')
                   endif
                 enddo
                 do i_sls = 1,2*N_SLS
@@ -1765,7 +1765,7 @@
                     alpha_z = tauinvplusone(i_sls) + const_for_separation_two
                   endif
                   if (abs(alpha_z - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
-                    stop 'error in separation of alpha_z, alpha_x,tauinvnu'
+                    call stop_the_code('error in separation of alpha_z, alpha_x,tauinvnu')
                   endif
                 enddo
 
@@ -1776,7 +1776,7 @@
                     beta_z = tauinvplusone(i_sls) + const_for_separation_two
                   endif
                   if (abs(beta_z - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
-                    stop 'error in separation of beta_z, alpha_x,tauinvnu'
+                    call stop_the_code('error in separation of beta_z, alpha_x,tauinvnu')
                   endif
                 enddo
 
@@ -1792,7 +1792,7 @@
                     beta_x = tauinvplusone(i_sls) + const_for_separation_two
                   endif
                   if (abs(beta_x - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
-                    stop 'error in separation of beta_x, alpha_z,tauinvnu'
+                    call stop_the_code('error in separation of beta_x, alpha_z,tauinvnu')
                   endif
                 enddo
 
@@ -1813,7 +1813,7 @@
                   alpha_x = tauinvnu(i_sls) + const_for_separation_two
                 endif
                 if (abs(alpha_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                  stop 'error in separation of alpha_x, tauinvnu'
+                  call stop_the_code('error in separation of alpha_x, tauinvnu')
                 endif
               enddo
               beta_x = alpha_x + d_x / K_x
@@ -1822,7 +1822,7 @@
                   beta_x = tauinvnu(i_sls) + const_for_separation_two
                 endif
                 if (abs(beta_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                  stop 'error in separation of beta_x, tauinvnu'
+                  call stop_the_code('error in separation of beta_x, tauinvnu')
                 endif
               enddo
 
@@ -1838,7 +1838,7 @@
                   alpha_z = tauinvnu(i_sls) + const_for_separation_two
                 endif
                 if (abs(alpha_z - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                  stop 'error in separation of alpha_z, tauinvnu'
+                  call stop_the_code('error in separation of alpha_z, tauinvnu')
                 endif
               enddo
               beta_z = alpha_z + d_z / K_z
@@ -1847,7 +1847,7 @@
                   beta_z = tauinvnu(i_sls) + const_for_separation_two
                 endif
                 if (abs(beta_z - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
-                  stop 'error in separation of beta_z, tauinvnu'
+                  call stop_the_code('error in separation of beta_z, tauinvnu')
                 endif
               enddo
 

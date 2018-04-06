@@ -78,7 +78,7 @@
   call scotchfstratinit (SCOTCHSTRAT(1), ier)
    if (ier /= 0) then
      print *, 'ERROR : MAIN : Cannot initialize strategy'
-     stop 'Error scotch init'
+     call stop_the_code('Error scotch init')
   endif
 
   ! resets SCOTCH random number generator to produce deterministic partitions
@@ -88,7 +88,7 @@
   call scotchfgraphinit (SCOTCHGRAPH (1), ier)
   if (ier /= 0) then
      print *, 'ERROR : MAIN : Cannot initialize graph'
-     stop 'Error scotch graph'
+     call stop_the_code('Error scotch graph')
   endif
 
   ! fills graph structure : see user manual (scotch_user5.1.pdf, page 72/73)
@@ -104,38 +104,38 @@
                           adjncy_g(0), adjwgt (0), ier)
   if (ier /= 0) then
      print *, 'ERROR : MAIN : Cannot build graph'
-     stop 'Error scotch graphbuild'
+     call stop_the_code('Error scotch graphbuild')
   endif
 
   call scotchfgraphcheck (SCOTCHGRAPH (1), ier)
   if (ier /= 0) then
      print *, 'ERROR : MAIN : Invalid check'
-     stop 'Error scotch graphcheck'
+     call stop_the_code('Error scotch graphcheck')
   endif
 
   call scotchfgraphpart (SCOTCHGRAPH (1), nparts, SCOTCHSTRAT(1), part(0), ier)
   if (ier /= 0) then
      print *, 'ERROR : MAIN : Cannot part graph'
-     stop 'Error scotch graphpart'
+     call stop_the_code('Error scotch graphpart')
   endif
 
   call SCOTCHFGRAPHEXIT (SCOTCHGRAPH (1), ier)
   if (ier /= 0) then
      print *, 'ERROR : MAIN : Cannot destroy graph'
-     stop 'Error scotch graphexit'
+     call stop_the_code('Error scotch graphexit')
   endif
 
   call scotchfstratexit (SCOTCHSTRAT(1), ier)
   if (ier /= 0) then
      print *, 'ERROR : MAIN : Cannot destroy strat'
-     stop 'Error scotch exit'
+     call stop_the_code('Error scotch exit')
   endif
 
 #else
   ! safety stop
   print *, 'This version of SPECFEM was not compiled with support of SCOTCH.'
   print *, 'Please recompile with -DUSE_SCOTCH in order to enable use of SCOTCH.'
-  stop 'Error SCOTCH partitioning not compiled'
+  call stop_the_code('Error SCOTCH partitioning not compiled')
 #endif
 
   end subroutine scotch_partitioning

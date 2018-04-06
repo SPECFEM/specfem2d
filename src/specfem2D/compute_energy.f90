@@ -43,7 +43,7 @@
   real(kind=CUSTOM_REAL) :: kinetic_energy_total,potential_energy_total
 
   ! safety check
-  if (GPU_MODE) stop 'Error computing energy for output is not implemented on GPUs yet'
+  if (GPU_MODE) call stop_the_code('Error computing energy for output is not implemented on GPUs yet')
 
   ! computes energy
   call compute_energy()
@@ -525,7 +525,8 @@
     !---
     else if (ispec_is_poroelastic(ispec)) then
        ! safety check
-       stop 'COMPUTE_INTEGRATED_ENERGY_FIELD is not available for poroelastic media yet (but it would be very easy to implement)'
+       call stop_the_code( &
+'COMPUTE_INTEGRATED_ENERGY_FIELD is not available for poroelastic media yet (but it would be very easy to implement)')
 
     !---
     !--- acoustic spectral element

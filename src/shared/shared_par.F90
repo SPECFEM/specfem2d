@@ -365,9 +365,8 @@ module shared_parameters
 
   implicit none
 
-! note: we use this module definition only to be able to allocate
-!          arrays for receiverlines and materials in this subroutine rather than in the main
-!          routine in meshfem2D.F90
+  ! for MPI and partitioning
+  integer :: myrank
 
   ! for Bielak condition
   logical :: add_Bielak_conditions

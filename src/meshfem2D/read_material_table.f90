@@ -58,13 +58,13 @@
 
   ! re-read number of models to reposition read-header
   call read_value_integer_p(reread_nbmodels, 'mesher.nbmodels')
-  if (err_occurred() /= 0) stop 'error reading parameter nbmodels in Par_file'
+  if (err_occurred() /= 0) call stop_the_code('error reading parameter nbmodels in Par_file')
 
   ! check
-  if (reread_nbmodels /= nbmodels) stop 'Invalid reread value of nbmodels in reading material table'
+  if (reread_nbmodels /= nbmodels) call stop_the_code('Invalid reread value of nbmodels in reading material table')
 
   ! safety check
-  if (nbmodels <= 0) stop 'Non-positive number of materials not allowed!'
+  if (nbmodels <= 0) call stop_the_code('Non-positive number of materials not allowed!')
 
   ! allocates material tables
   allocate(icodemat(nbmodels))
@@ -145,7 +145,7 @@
                                     val8read,val9read,val10read,val11read,val12read)
 
     ! checks material id
-    if (i < 1 .or. i > nbmodels) stop 'Wrong material number!'
+    if (i < 1 .or. i > nbmodels) call stop_the_code('Wrong material number!')
     icodemat(i) = icodematread
 
     ! sets material properties
@@ -161,10 +161,10 @@
       ! for Cs we use a less restrictive test because acoustic media have Cs exactly equal to zero
       if (rho_s_read(i) <= 0.00000001d0 .or. cp(i) <= 0.00000001d0 .or. cs(i) < 0.d0) then
         write(*,*) 'rho,cp,cs=',rho_s_read(i),cp(i),cs(i)
-        stop 'negative value of velocity or density'
+        call stop_the_code('negative value of velocity or density')
       endif
       if (QKappa(i) <= 0.00000001d0 .or. Qmu(i) <= 0.00000001d0) then
-        stop 'non-positive value of QKappa or Qmu'
+        call stop_the_code('non-positive value of QKappa or Qmu')
       endif
 
       aniso3(i) = val3read
@@ -206,20 +206,21 @@
       Qmu(i) = val12read
 
       if (rho_s_read(i) <= 0.d0 .or. rho_f_read(i) <= 0.d0) &
-        stop 'non-positive value of density'
+        call stop_the_code('non-positive value of density')
       if (phi_read(i) <= 0.d0 .or. tortuosity_read(i) <= 0.d0) &
-        stop 'non-positive value of porosity or tortuosity'
+        call stop_the_code('non-positive value of porosity or tortuosity')
       if (kappa_s_read(i) <= 0.d0 .or. kappa_f_read(i) <= 0.d0 .or. kappa_fr_read(i) <= 0.d0 .or. mu_fr_read(i) <= 0.d0) &
-        stop 'non-positive value of modulus'
+        call stop_the_code('non-positive value of modulus')
       if (Qmu(i) <= 0.00000001d0) &
-        stop 'non-positive value of Qmu'
+        call stop_the_code('non-positive value of Qmu')
 
     else if (icodemat(i) <= 0) then
       ! tomographic material
       number_of_materials_defined_by_tomo_file = number_of_materials_defined_by_tomo_file + 1
 
       if (number_of_materials_defined_by_tomo_file > 1) &
-        stop 'Just one material can be defined by a tomo file for now (we would need to write a nummaterial_velocity_file)'
+        call stop_the_code( &
+'Just one material can be defined by a tomo file for now (we would need to write a nummaterial_velocity_file)')
 
       ! Assign dummy values for now (they will be read by the solver). Vs must be == 0 for acoustic media anyway
       rho_s_read(i) = -1.0d0
@@ -237,7 +238,7 @@
 
     else
       ! default
-      stop 'Unknown material code'
+      call stop_the_code('Unknown material code')
 
     endif
 
@@ -283,7 +284,7 @@
      else if (icodemat(i) <= 0) then
         write(IMAIN,*) 'Material #',i,' will be read in an external tomography file (TOMOGRAPHY_FILE in Par_file)'
      else
-        stop 'Unknown material code'
+        call stop_the_code('Unknown material code')
      endif
      write(IMAIN,*) '--------'
      call flush_IMAIN()

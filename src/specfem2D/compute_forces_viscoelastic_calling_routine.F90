@@ -353,7 +353,7 @@
     ! Newmark
     call update_veloc_elastic_Newmark_backward()
   case default
-    stop 'Time stepping scheme not implemented yet in viscoelastic backward routine'
+    call stop_the_code('Time stepping scheme not implemented yet in viscoelastic backward routine')
   end select
 
   end subroutine compute_forces_viscoelastic_main_backward

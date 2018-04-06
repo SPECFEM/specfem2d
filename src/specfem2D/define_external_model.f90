@@ -125,7 +125,7 @@
         else
           ! this case should not occur
           write(IMAIN,*) 'Error: invalid flag number in external model is equal to ',material_element(ispec)
-          stop 'wrong flag number in external model; exiting...'
+          call stop_the_code('wrong flag number in external model; exiting...')
         endif
 
         !! ABAB Do not forget these 3 lines otherwise PML may not work !! TODO check that
@@ -1077,7 +1077,7 @@
   if (material_element(ispec) /= IREGION_MANTLE_CRUST_ABOVE_d670 .and. &
      material_element(ispec) /= IREGION_MANTLE_BELOW_d670 .and. &
      material_element(ispec) /= IREGION_OUTER_CORE .and. &
-     material_element(ispec) /= IREGION_INNER_CORE) stop 'wrong flag number in external model'
+     material_element(ispec) /= IREGION_INNER_CORE) call stop_the_code('wrong flag number in external model')
 
     do j = 1,NGLLZ
       do i = 1,NGLLX

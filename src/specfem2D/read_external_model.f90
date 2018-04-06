@@ -66,7 +66,7 @@
     if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_model_velocity.dat_input'
 
     open(unit=IIN,file=inputname,status='old',action='read',iostat=ier)
-    if (ier /= 0) stop 'Error opening DATA/proc*****_model_velocity.dat_input file.'
+    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_model_velocity.dat_input file.')
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -75,7 +75,7 @@
           do while (read_next_line)
             ! format: #unused #unused #unused #rho #vp #vs
             read(IIN,'(a256)',iostat=ier) line
-            if (ier /= 0) stop 'Error reading file model_velocity.dat_input'
+            if (ier /= 0) call stop_the_code('Error reading file model_velocity.dat_input')
 
             ! left adjust
             line = adjustl(line)
@@ -111,7 +111,7 @@
     if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_rho_vp_vs.dat'
 
     open(unit=IIN,file=inputname,status='old',action='read',iostat=ier)
-    if (ier /= 0) stop 'Error opening DATA/proc*****_rho_vp_vs.dat file.'
+    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_rho_vp_vs.dat file.')
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -134,7 +134,7 @@
     if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_rho.bin, .._vp.bin, .._vs.bin'
 
     open(unit = IIN, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) stop 'Error opening DATA/proc*****_rho.bin file.'
+    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_rho.bin file.')
 
     read(IIN) rhoext
     close(IIN)
@@ -142,14 +142,14 @@
 
     write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_vp.bin'
     open(unit = IIN, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) stop 'Error opening DATA/proc*****_vp.bin file.'
+    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_vp.bin file.')
 
     read(IIN) vpext
     close(IIN)
 
     write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_vs.bin'
     open(unit = IIN, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) stop 'Error opening DATA/proc*****_vs.bin file.'
+    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_vs.bin file.')
 
     read(IIN) vsext
     close(IIN)
@@ -164,7 +164,7 @@
     if (myrank == 0) write(IMAIN,*) '  reading external files: ','DATA/proc*****_rho.bin, .._c11.bin, .._c55.bin'
 
     open(unit = IIN, file = inputname,status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) stop 'Error opening DATA/proc*****_rho.bin file.'
+    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_rho.bin file.')
 
     read(IIN) rhoext
     close(IIN)
@@ -172,7 +172,7 @@
 
     write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c11.bin'
     open(unit = IIN, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-    if (ier /= 0) stop 'Error opening DATA/proc*****_c11.bin file.'
+    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_c11.bin file.')
 
     read(IIN) c11ext
     close(IIN)
@@ -180,7 +180,7 @@
 
     write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c13.bin'
     open(unit = IIN, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-    if (ier /= 0) stop 'Error opening DATA/proc*****_c13.bin file.'
+    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_c13.bin file.')
 
     read(IIN) c13ext
     close(IIN)
@@ -188,7 +188,7 @@
 
     write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c15.bin'
     open(unit = IIN, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-    if (ier /= 0) stop 'Error opening DATA/proc*****_c15.bin file.'
+    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_c15.bin file.')
 
     read(IIN) c15ext
     close(IIN)
@@ -196,7 +196,7 @@
 
     write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c33.bin'
     open(unit = IIN, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-    if (ier /= 0) stop 'Error opening DATA/proc*****_c33.bin file.'
+    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_c33.bin file.')
 
     read(IIN) c33ext
     close(IIN)
@@ -204,7 +204,7 @@
 
     write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c35.bin'
     open(unit = IIN, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-    if (ier /= 0) stop 'Error opening DATA/proc*****_c35.bin file.'
+    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_c35.bin file.')
 
     read(IIN) c35ext
     close(IIN)
@@ -212,7 +212,7 @@
 
     write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_c55.bin'
     open(unit = IIN, file = inputname,status='old',action='read',form='unformatted', iostat=ier)
-    if (ier /= 0) stop 'Error opening DATA/proc*****_c55.bin file.'
+    if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_c55.bin file.')
 
     read(IIN) c55ext
     close(IIN)
@@ -260,7 +260,7 @@
   case default
     print *,"Error: unrecognized model = ",trim(MODEL)
     print *,"Invalid MODEL chosen, please check your Par_file settings..."
-    stop 'Invalid MODEL parameter'
+    call stop_the_code('Invalid MODEL parameter')
 
   end select
 
@@ -282,18 +282,18 @@
           if ((c11ext(i,j,ispec) > TINYVAL .or. c13ext(i,j,ispec) > TINYVAL .or. c15ext(i,j,ispec) > TINYVAL .or. &
                c33ext(i,j,ispec) > TINYVAL .or. c35ext(i,j,ispec) > TINYVAL .or. c55ext(i,j,ispec) > TINYVAL) &
               .and. .not. ispec_is_anisotropic(ispec)) &
-            stop 'Error: non anisotropic material in DATA/Par_file or &
-                 &external mesh redefined as anisotropic in define_external_model()'
+            call stop_the_code('Error: non anisotropic material in DATA/Par_file or &
+                 &external mesh redefined as anisotropic in define_external_model()')
 
           ! acoustic element
           if (vsext(i,j,ispec) < TINYVAL .and. (ispec_is_elastic(ispec) .or. ispec_is_anisotropic(ispec))) &
-            stop 'Error: non acoustic material in DATA/Par_file or &
-                 &external mesh redefined as acoustic in define_external_model()'
+            call stop_the_code('Error: non acoustic material in DATA/Par_file or &
+                 &external mesh redefined as acoustic in define_external_model()')
 
           ! elastic element
           if (vsext(i,j,ispec) > TINYVAL .and. .not. ispec_is_elastic(ispec)) &
-            stop 'Error: acoustic material in DATA/Par_file or &
-                 &external mesh redefined as non acoustic in define_external_model()'
+            call stop_the_code('Error: acoustic material in DATA/Par_file or &
+                 &external mesh redefined as non acoustic in define_external_model()')
         enddo
       enddo
     enddo

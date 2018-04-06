@@ -152,7 +152,7 @@
       allocate(b_e1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
                b_e11(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
                b_e13(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
-      if (ier /= 0) stop 'Error allocating attenuation arrays'
+      if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
       b_e1(:,:,:,:) = 0._CUSTOM_REAL
       b_e11(:,:,:,:) = 0._CUSTOM_REAL
       b_e13(:,:,:,:) = 0._CUSTOM_REAL
@@ -326,7 +326,7 @@
         endif
 
         ! safety stop
-        if (NOISE_TOMOGRAPHY == 3) stop 'Undo_attenuation for noise kernels not implemented yet'
+        if (NOISE_TOMOGRAPHY == 3) call stop_the_code('Undo_attenuation for noise kernels not implemented yet')
 
         it = it + 1
 

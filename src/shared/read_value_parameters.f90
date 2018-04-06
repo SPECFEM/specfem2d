@@ -137,7 +137,7 @@
   do
     ! daniel: actually MAX_STRING_LEN set to 512...
     read(unit=iin,fmt="(a256)",iostat=ios) string_read
-    if (ios /= 0) stop 'error while reading input file'
+    if (ios /= 0) call stop_the_code('error while reading input file')
 
 ! suppress leading white spaces, if any
     string_read = adjustl(string_read)
@@ -160,7 +160,8 @@
 ! suppress leading junk (up to the first equal sign, included) if needed
   if (ignore_junk) then
     index_equal_sign = index(string_read,'=')
-    if (index_equal_sign <= 1 .or. index_equal_sign == len_trim(string_read)) stop 'incorrect syntax detected in DATA/Par_file'
+    if (index_equal_sign <= 1 .or. index_equal_sign == len_trim(string_read)) call stop_the_code( &
+'incorrect syntax detected in DATA/Par_file')
     string_read = string_read(index_equal_sign + 1:len_trim(string_read))
   endif
 
@@ -340,14 +341,14 @@
   common /param_err_common/ ierr
 
   call param_read_nextline(string_read, len(string_read), ierr)
-  if (ierr /= 0) stop 'error reading material parameter'
+  if (ierr /= 0) call stop_the_code('error reading material parameter')
 
   !print *,trim(string_read)
 
   read(string_read,*,iostat=ierr) i,icodematread,val0read,val1read,val2read,val3read,val4read,val5read, &
                       val6read,val7read,val8read,val9read,val10read,val11read,val12read
 
-  if (ierr /= 0) stop 'error reading material parameters line'
+  if (ierr /= 0) call stop_the_code('error reading material parameters line')
 
   end subroutine read_material_parameters_p
 
@@ -366,13 +367,13 @@
   common /param_err_common/ ierr
 
   call param_read_nextline(string_read, len(string_read), ierr)
-  if (ierr /= 0) stop 'error reading region coordinates'
+  if (ierr /= 0) call stop_the_code('error reading region coordinates')
 
   !print *,string_read
 
   read(string_read,*,iostat=ierr) value_to_read_1,value_to_read_2,value_to_read_3,value_to_read_4,value_to_read_5
 
-  if (ierr /= 0) stop 'error reading region coordinates line'
+  if (ierr /= 0) call stop_the_code('error reading region coordinates line')
 
   end subroutine read_region_coordinates_p
 
@@ -420,7 +421,7 @@ subroutine open_parameter_file_from_master_only()
     if (ier /= 0) then
       print *
       print *,'opening file failed, please check your file path and run-directory.'
-      stop 'error opening Par_file'
+      call stop_the_code('error opening Par_file')
     endif
   endif
 
@@ -456,7 +457,7 @@ subroutine open_parameter_file_from_master_only()
   if (ierr /= 0) then
     print *
     print *,'opening file failed, please check your file path and run-directory.'
-    stop 'error opening Par_file'
+    call stop_the_code('error opening Par_file')
   endif
 
   end subroutine open_parameter_file

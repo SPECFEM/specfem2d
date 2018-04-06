@@ -145,7 +145,7 @@
 ! close OpenDX file
     close(11)
 
-    stop 'negative 2D Jacobian, element saved in DX_first_element_with_negative_jacobian.dx'
+    call stop_the_code('negative 2D Jacobian, element saved in DX_first_element_with_negative_jacobian.dx')
   endif
 
 ! invert the relation
