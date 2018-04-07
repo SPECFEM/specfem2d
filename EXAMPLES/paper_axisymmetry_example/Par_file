@@ -183,7 +183,12 @@ PML_BOUNDARY_CONDITIONS         = .true.
 NELEM_PML_THICKNESS             = 9
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
-# set to .false. unless you know what you are doing; this implements automatic adjustment of the PML parameters for elongated models.
+# change the four parameters below only if you know what you are doing; they change the damping profiles inside the PMLs
+K_MIN_PML                       = 1.0d0 # from Gedney page 8.11
+K_MAX_PML                       = 1.0d0
+damping_change_factor_acoustic  = 0.5d0
+damping_change_factor_elastic   = 1.0d0
+# set the parameter below to .false. unless you know what you are doing; this implements automatic adjustment of the PML parameters for elongated models.
 # The goal is to improve the absorbing efficiency of PML for waves with large incidence angles, but this can lead to artefacts.
 # In particular, this option is efficient only when the number of sources NSOURCES is equal to one.
 PML_PARAMETER_ADJUSTMENT        = .false.

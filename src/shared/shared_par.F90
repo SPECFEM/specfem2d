@@ -228,6 +228,10 @@ module shared_input_parameters
   integer :: NELEM_PML_THICKNESS
   logical :: ROTATE_PML_ACTIVATE
   double precision :: ROTATE_PML_ANGLE
+  double precision :: K_MIN_PML
+  double precision :: K_MAX_PML
+  double precision :: damping_change_factor_acoustic
+  double precision :: damping_change_factor_elastic
   logical :: PML_PARAMETER_ADJUSTMENT
 
   ! Stacey

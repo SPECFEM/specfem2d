@@ -100,6 +100,14 @@
 
   read(IIN) ROTATE_PML_ANGLE
 
+  read(IIN) K_MIN_PML
+
+  read(IIN) K_MAX_PML
+
+  read(IIN) damping_change_factor_acoustic
+
+  read(IIN) damping_change_factor_elastic
+
   read(IIN) PML_PARAMETER_ADJUSTMENT
 
   read(IIN) read_external_mesh

@@ -158,6 +158,10 @@
     call bcast_all_singlei(NELEM_PML_THICKNESS)
     call bcast_all_singlel(ROTATE_PML_ACTIVATE)
     call bcast_all_singledp(ROTATE_PML_ANGLE)
+    call bcast_all_singledp(K_MIN_PML)
+    call bcast_all_singledp(K_MAX_PML)
+    call bcast_all_singledp(damping_change_factor_acoustic)
+    call bcast_all_singledp(damping_change_factor_elastic)
     call bcast_all_singlel(PML_PARAMETER_ADJUSTMENT)
 
     call bcast_all_singlel(STACEY_ABSORBING_CONDITIONS)
@@ -695,6 +699,34 @@
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'ROTATE_PML_ANGLE                = 30.'
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(K_MIN_PML, 'K_MIN_PML')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'K_MIN_PML                       = 1.d0'
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(K_MAX_PML, 'K_MAX_PML')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'K_MAX_PML                       = 1.d0'
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(damping_change_factor_acoustic, 'damping_change_factor_acoustic')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'damping_change_factor_acoustic  = 0.5d0'
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(damping_change_factor_elastic, 'damping_change_factor_elastic')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'damping_change_factor_elastic   = 1.d0'
     write(*,*)
   endif
 

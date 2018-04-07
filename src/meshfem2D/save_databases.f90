@@ -159,6 +159,18 @@
   ! 'ROTATE_PML_ANGLE'
   write(IOUT) ROTATE_PML_ANGLE
 
+  ! 'K_MIN_PML'
+  write(IOUT) K_MIN_PML
+
+  ! 'K_MAX_PML'
+  write(IOUT) K_MAX_PML
+
+  ! 'damping_change_factor_acoustic'
+  write(IOUT) damping_change_factor_acoustic
+
+  ! 'damping_change_factor_elastic'
+  write(IOUT) damping_change_factor_elastic
+
   ! 'PML_PARAMETER_ADJUSTMENT'
   write(IOUT) PML_PARAMETER_ADJUSTMENT
 
