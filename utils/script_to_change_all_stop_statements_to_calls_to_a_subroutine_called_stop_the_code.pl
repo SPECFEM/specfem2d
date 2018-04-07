@@ -4,8 +4,6 @@
 # read and clean all Fortran files in the current directory and subdirectories
 #
 
-use File::Basename;
-
 ## DK DK April 2018: convert all "stop" statements in the code to calls to a subroutine called "stop_the_code", which itself calls exit_MPI()
 ## DK DK April 2018: this avoids wasting CPU hours on clusters when a thread exits with a stop statement, which may not kill the whole run properly, and the run may keep hanging.
 
@@ -33,8 +31,6 @@ use File::Basename;
             open(FILE_INPUT,"<_____temp08_____");
             open(FILEF90,">$f90name");
 
-            $basename_obtained = basename($f90name,@suffixlist);
-
 # open the input f90 file
       while($line = <FILE_INPUT>) {
 
@@ -57,18 +53,18 @@ use File::Basename;
         if (index($line, " stop ") != -1) {
 
 # get the first part of the line, before the "stop" statement
-        $first_part_of_word = substr($line, 0, index($line, ' stop '));
+        $first_part_of_line = substr($line, 0, index($line, ' stop '));
 
 # get the last part of the line, after the "stop" statement
 # the + 6 corresponds to the length of " stop " with two spaces
-        $last_part_of_word = substr($line, index($line, ' stop ') + 6, length($line));
+        $last_part_of_line = substr($line, index($line, ' stop ') + 6, length($line));
 
-        $line = $first_part_of_word . " call stop_the_code(" . $last_part_of_word . ")";
+        $line = $first_part_of_line . " call stop_the_code(" . $last_part_of_line . ")";
 
 # if the new line created is longer than the standard
         if (length($line) >= 132) {
           # split the line using a & line continuation symbol
-            $line = $first_part_of_word . " call stop_the_code( &\n" . $last_part_of_word . ")";
+            $line = $first_part_of_line . " call stop_the_code( &\n" . $last_part_of_line . ")";
           }
 
 # suppress trailing white spaces, just in case we have added any in the above processing
