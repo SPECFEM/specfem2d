@@ -179,24 +179,24 @@ else: # If the reference amplitude is not given: calculate one from source.txt
     if DEBUG_PLOT:
         plt.figure()
         plt.hold(True)
-        plt.plot(t_source,aS,'+-b',label='Source brute')
+        plt.plot(t_source,aS,'+-b',label='Raw source signal')
     aS=savitzky_golay(aS, 51, 3) # Filtering of this signal: totally useless, I don't know why I keep it
     if DEBUG_PLOT:
-        plt.plot(t_source,aS,'+-r',label='Source filtree')
+        plt.plot(t_source,aS,'+-r',label='Filtered source')
     assert abs((t_source[1]-t_source[0])/par_file.dt-1) < 0.01 # Check that t_source[1]-t_source[0] ~ par_file.dt
     assert len(t_source) == par_file.nt # Check that len(t_source) ~ par_file.nt
     ############### Down sample the signal ###############
     t_source=t_source[::NdownSampled]
     aS=aS[::NdownSampled]
     if DEBUG_PLOT:
-        plt.plot(t_source,aS,'+-g',label='Source filtree downsamplee')
+        plt.plot(t_source,aS,'+-g',label='Filtered downsampled source')
     ########### Zero pad up to next power of 2 ###########
     t_source,aS=zeroPad(t_source,aS,N2-Ndown) # Zero-pad the source
     if DEBUG_PLOT:
-        plt.plot(t_source,aS,'+-k',label='Source filtree downsamplee zeropadee')
+        plt.plot(t_source,aS,'+-k',label='Filtered downsampled zeropadded source')
         plt.legend()
     ############# Compute amplitude spectrum #############
-    Sf = abs(rfft(aS,N2)/Ndown)#**2
+    Sf = abs(rfft(aS,N2)/Ndown)**2
     freq_source = rfftfreq(N2,d=par_file.dt*NdownSampled)
     if DEBUG_PLOT:
         plt.figure()
@@ -236,11 +236,11 @@ for path_to_seismo in sorted(glob.glob(Dir+'AA.S*')): # All seismograms
     #print("Ndown: ",Ndown)
     #print("N2: ",N2)
     if DEBUG_PLOT:
-        plt.plot(t_seismo,pres_seismo,'+-r',label='Seismo downsample')
+        plt.plot(t_seismo,pres_seismo,'+-r',label='Downsampled seismo')
     ########### Zero pad up to next power of 2 ###########
     t_seismo,pres_seismo=zeroPad(t_seismo,pres_seismo,N2-Ndown)
     if DEBUG_PLOT:
-        plt.plot(t_seismo,pres_seismo,'+-g',label='Seismo downsample zeropadde')
+        plt.plot(t_seismo,pres_seismo,'+-g',label='Downsample zeropaded seismo')
     # (The number of points is the same than for the source)
     ############# Compute amplitude spectrum #############
     s_seismo = abs(rfft(pres_seismo,N2)/Ndown)**2
