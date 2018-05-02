@@ -96,7 +96,6 @@
        vpregion = cp(imaterial_number)
        vsregion = cs(imaterial_number)
 
-       poisson_ratio = 0.5d0*(vpregion*vpregion-2.d0*vsregion*vsregion) / (vpregion*vpregion-vsregion*vsregion)
 
        write(IMAIN,*) 'Material # ',imaterial_number,' isotropic'
        if (vsregion < TINYVAL) then
@@ -107,6 +106,8 @@
        write(IMAIN,*) 'vp     = ',sngl(vpregion)
        write(IMAIN,*) 'vs     = ',sngl(vsregion)
        write(IMAIN,*) 'rho    = ',sngl(rho_s_read(imaterial_number))
+       if (vpregion == vsregion) stop 'Materials cannot have Vs = Vp, there is an error in your input file'
+       poisson_ratio = 0.5d0*(vpregion*vpregion - 2.d0*vsregion*vsregion) / (vpregion*vpregion - vsregion*vsregion)
        write(IMAIN,*) 'Poisson''s ratio = ',sngl(poisson_ratio)
        write(IMAIN,*) 'QKappa = ',sngl(QKappa(imaterial_number))
        write(IMAIN,*) 'Qmu    = ',sngl(Qmu(imaterial_number))
