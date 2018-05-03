@@ -13,7 +13,7 @@
 !! DK DK as reference instead of the relaxed ones) because it is not useful any more,
 !! DK DK this modification was not consistent with the calculations of the tau values
 !! DK DK made by Carcione et al. 1988 and by Carcione 1993.
-  logical, parameter :: FIX_ATTENUATION_CAUSALITY = .false.
+  logical, parameter :: FIX_ATTENUATION_CAUSALITY = .true.
 
 !! DK DK March 2018: the missing 1/L factor in older Carcione papers has been added to this code by Quentin Brissaud
 !! DK DK for the viscoacoustic code in directory EXAMPLES/attenuation/viscoacoustic,
@@ -38,7 +38,7 @@
   double precision, parameter :: pi = 3.141592653589793d0
 
 ! for the solution in time domain
-  integer it
+  integer it,i
   real wsave(4*nt+15)
   complex c(nt)
 
@@ -61,7 +61,7 @@
 ! parameter(eta = 0.5d0)
 
 ! number of Zener standard linear solids in parallel
-  integer, parameter :: Lnu = 2
+  integer, parameter :: Lnu = 3
 
 ! attenuation constants from Carcione et al. 1988 GJI vol 95 p 604
 ! two mechanisms for the moment
@@ -82,35 +82,20 @@
 !! DK DK comment that starts with "VERY IMPORTANT" would need to be removed.
 
 ! this below is from Carcione et al. 1988 GJI vol 95 p 604 Table 1
-! parameter(tau_epsilon_nu1_mech1 = 0.0325305d0)
-! parameter(tau_epsilon_nu1_mech2 = 0.0032530d0)
-! parameter(tau_sigma_nu1_mech1   = 0.0311465d0)
-! parameter(tau_sigma_nu1_mech2   = 0.0031146d0)
 
-! parameter(tau_epsilon_nu2_mech1 = 0.0332577d0)
-! parameter(tau_epsilon_nu2_mech2 = 0.0033257d0)
-! parameter(tau_sigma_nu2_mech1   = 0.0304655d0)
-! parameter(tau_sigma_nu2_mech2   = 0.0030465d0)
+ double precision, dimension(Lnu) :: tau_sigma_nu1,tau_sigma_nu2,tau_epsilon_nu1,tau_epsilon_nu2 
 
-  parameter(tau_epsilon_nu1_mech1 = 4.262332253966861E-002)
-  parameter(tau_epsilon_nu1_mech2 = 1.851561240017022E-003)
-  parameter(tau_sigma_nu1_mech1   = 3.876976972195918E-002)
-  parameter(tau_sigma_nu1_mech2   = 1.669539210862250E-003)
 
-  parameter(tau_epsilon_nu2_mech1 = 4.260395276908462E-002)
-  parameter(tau_epsilon_nu2_mech2 = 1.856317437490798E-003)
-  parameter(tau_sigma_nu2_mech1   = 3.833318400245433E-002)
-  parameter(tau_sigma_nu2_mech2   = 1.652248125544272E-003)
 
 ! these values come from Carcione et al. 1988 GJI vol 95 p 604 Table 1
 
-! unrelaxed (f = +infinity) values, i.e. slower Vp and Vs velocities
-  double precision, parameter :: M1_unrelaxed = 20.d9
-  double precision, parameter :: M2_unrelaxed = 16.d9
+! relaxed (f = 0) values, i.e. slower Vp and Vs velocities
+  double precision, parameter :: M1_relaxed = 20.d9
+  double precision, parameter :: M2_relaxed = 16.d9
 
-! relaxed (f = 0) values, i.e. faster Vp and Vs velocities
-  double precision, parameter :: M1_relaxed = 23744567022.0200d0
-  double precision, parameter :: M2_relaxed = 19758665085.1840d0
+! unrelaxed (f = +infinity) values, i.e. faster Vp and Vs velocities
+  double precision, parameter :: M1_unrelaxed = 23744567022.0200d0
+  double precision, parameter :: M2_unrelaxed = 19758665085.1840d0
 
   integer :: ifreq,ifreq2
   double precision :: deltafreq,freq,omega,omega0,deltat,time
@@ -133,9 +118,50 @@
   double complex, external :: u1,u2
 
 ! modules elastiques
-  double complex :: M1C, M2C, E, V1, V2
+  double complex :: M1C, M2C, E, V1, V2, temp
 
   logical :: correction_f0
+
+! tau_epsilon_nu1 =   (/0.177259205471548, 3.483430821907837E-002,  1.023777179343313E-002,  3.065184026755895E-003,  7.546081574469268E-004/)
+! tau_sigma_nu1 =   (/0.133678306720354, 2.912520509228697E-002,  8.582372991186043E-003,  2.533530108490411E-003,  5.405262690749288E-004/)
+! tau_epsilon_nu2 = (/0.181568808463103, 3.543268400057541E-002, 1.041723672643150E-002,  3.126350722909452E-003,  7.815693120771861E-004/)
+! tau_sigma_nu2 =   (/0.133088444661193, 2.902924633533533E-002, 8.553444926037403E-003,  2.525318822368128E-003,  5.380663879915198E-004/)
+
+!Solvopt constants
+! tau_epsilon_nu1 = (/  0.491485643053316,       4.752325211015568E-002,&
+!  0.113662957866006,       2.143035220849165E-002,  9.636747358146760E-003,&
+!  4.251506754403021E-003,  6.015570297497529E-004,  1.792126004974076E-003/)
+! tau_sigma_nu1 = (/  0.330523905567723,     3.951158043373009E-002,&
+!  9.245154986790269E-002,  1.777385022701770E-002,  7.932229025448868E-003,&
+!  3.459512416196204E-003,  3.708514135470344E-004,  1.408766568792614E-003/)
+! tau_epsilon_nu2 = (/  0.297330386561410,       2.578936992787368E-002,&
+!  6.580400115094642E-002,  1.092691699338443E-002,  4.679270012208235E-003,&
+!  1.954857421717561E-003,  8.684162536313360E-004,  6.064004286929209E-004/)
+! tau_sigma_nu2 = (/  0.191931406380048,       2.065791236249650E-002,&
+!  5.162807732988284E-002,  8.744755181340443E-003,  3.712876062278938E-003,&
+!  1.515902479565495E-003,  8.201119874500258E-004,  3.605581227326970E-004/)
+
+!classical least square constants
+! tau_epsilon_nu1 = (/  0.148204866199756,       3.470583874503157E-002,&
+!  3.228274280900643E-002,  1.410465263892126E-002,  6.440126574634497E-003,&
+!  5.027032340404072E-003,  1.012465101809438E-003,  1.649875655241010E-003/)
+! tau_sigma_nu1 = (/  8.841941282883074E-002,  4.579660964308235E-002,&
+!  2.372023730649557E-002,  1.228583733319689E-002,  6.363417714226235E-003,&
+!  3.295916221662683E-003,  1.707111528437532E-003,  8.841941282883074E-004/)
+! tau_epsilon_nu2 = (/  0.154923452006017,       3.371655382763321E-002,&
+!  3.314739636489375E-002,  1.444500853362984E-002,  6.391556144317905E-003,&
+!  5.287732578501829E-003,  9.025621559687974E-004,  1.760555142287116E-003/)
+! tau_sigma_nu2 = (/  8.841941282883074E-002,  4.579660964308235E-002,&
+!  2.372023730649557E-002,  1.228583733319689E-002,  6.363417714226235E-003,&
+!  3.295916221662683E-003,  1.707111528437532E-003,  8.841941282883074E-004/)
+
+!classical least square
+ tau_epsilon_nu1 =  (/ 0.109527114743452     ,  1.070028707488438E-002,  1.132519034287800E-003/)
+ tau_sigma_nu1 = (/  8.841941282883074E-002 , 8.841941282883075E-003,  8.841941282883074E-004/)
+ tau_epsilon_nu2 = (/  0.112028084581976    ,   1.093882462934487E-002,  1.167173427475064E-003/)
+ tau_sigma_nu2 = (/  8.841941282883074E-002,  8.841941282883075E-003,  8.841941282883074E-004/)
+
+
 
 ! ********** end of variable declarations ************
 
@@ -202,27 +228,36 @@
 ! or use far less standard zero frequency (relaxed) reference,
 ! in which waves speed up when attenuation is turned on
   if (FIX_ATTENUATION_CAUSALITY) then
-    M1C = M1_unrelaxed /(1.d0 - Lnu + tau_epsilon_nu1_mech1/tau_sigma_nu1_mech1 + &
-      tau_epsilon_nu1_mech2/tau_sigma_nu1_mech2) &
-        * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu1_mech1) &
-                    / dcmplx(1.d0,omega*tau_sigma_nu1_mech1) &
-              + dcmplx(1.d0,omega*tau_epsilon_nu1_mech2) &
-                    / dcmplx(1.d0,omega*tau_sigma_nu1_mech2) )
-    M2C = M2_unrelaxed /(1.d0 - Lnu+tau_epsilon_nu2_mech1/tau_sigma_nu2_mech1 + &
-      tau_epsilon_nu2_mech2/tau_sigma_nu2_mech2) &
-        * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu2_mech1) &
-                    / dcmplx(1.d0,omega*tau_sigma_nu2_mech1) &
-              + dcmplx(1.d0,omega*tau_epsilon_nu2_mech2) &
-                    / dcmplx(1.d0,omega*tau_sigma_nu2_mech2) )
+
+    temp = dcmplx(0.d0,0.d0)
+    do i=1,Lnu
+      temp = temp + dcmplx(1.d0,omega*tau_epsilon_nu1(i)) / dcmplx(1.d0,omega*tau_sigma_nu1(i))
+    enddo
+
+    M1C = (M1_unrelaxed /(sum(tau_epsilon_nu1(:)/tau_sigma_nu1(:)))) * temp 
+
+    temp = dcmplx(0.d0,0.d0)
+    do i=1,Lnu
+      temp = temp + dcmplx(1.d0,omega*tau_epsilon_nu2(i)) / dcmplx(1.d0,omega*tau_sigma_nu2(i))
+    enddo
+
+    M2C = (M2_unrelaxed /(sum(tau_epsilon_nu2(:)/tau_sigma_nu2(:)))) * temp 
   else
-    M1C = M1_unrelaxed * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu1_mech1) &
-                    / dcmplx(1.d0,omega*tau_sigma_nu1_mech1) &
-              + dcmplx(1.d0,omega*tau_epsilon_nu1_mech2) &
-                    / dcmplx(1.d0,omega*tau_sigma_nu1_mech2) )
-    M2C = M2_unrelaxed * (1.d0 - Lnu + dcmplx(1.d0,omega*tau_epsilon_nu2_mech1) &
-                    / dcmplx(1.d0,omega*tau_sigma_nu2_mech1) &
-              + dcmplx(1.d0,omega*tau_epsilon_nu2_mech2) &
-                    / dcmplx(1.d0,omega*tau_sigma_nu2_mech2) )
+
+    temp = dcmplx(0.d0,0.d0)
+    do i=1,Lnu
+      temp = temp + dcmplx(1.d0,omega*tau_epsilon_nu1(i)) / dcmplx(1.d0,omega*tau_sigma_nu1(i))
+    enddo
+
+    M1C = M1_relaxed * ((temp)/Lnu) 
+
+    temp = dcmplx(0.d0,0.d0)
+    do i=1,Lnu
+      temp = temp + dcmplx(1.d0,omega*tau_epsilon_nu2(i)) / dcmplx(1.d0,omega*tau_sigma_nu2(i))
+    enddo
+
+    M2C = M2_relaxed * ((temp)/Lnu) 
+
   endif
 
   if (COMPUTE_ELASTIC_CASE_INSTEAD) then
