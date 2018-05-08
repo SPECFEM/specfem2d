@@ -1,13 +1,15 @@
 
   program convert_rho_Vp_Vs_to_M1_M2
 
+!! DK DK, June 2017
+
   implicit none
 
-! relaxed (f = 0) values
+! unrelaxed (f = +infinity) values
 ! double precision, parameter :: Vp = 3297.849d0
 ! double precision, parameter :: Vs = 2222.536d0
 
-! unrelaxed (f = +infinity) values
+! relaxed (f = 0) values
   double precision, parameter :: Vp = 3000.d0
   double precision, parameter :: Vs = 2000.d0
 
