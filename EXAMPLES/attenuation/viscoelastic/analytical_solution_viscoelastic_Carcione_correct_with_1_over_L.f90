@@ -1,7 +1,9 @@
 
   program analytical_solution
 
-! this program implements the analytical solution for a viscoelastic medium from Carcione et al.
+! this program implements the analytical solution for a 2D plane-strain viscoelastic medium
+! from Appendix B of Carcione et al., Wave propagation simulation in a linear viscoelastic medium, GJI, vol. 95, p. 597-611 (1988)
+! (note that that Appendix contains two typos, fixed in this code)
 
   implicit none
 
@@ -61,8 +63,7 @@
 ! number of Zener standard linear solids in parallel
   integer, parameter :: Lnu = 3
 
-! attenuation constants from Carcione et al. 1988 GJI vol 95 p 604
-! two mechanisms for the moment
+! attenuation relaxation times
   double precision tau_epsilon_nu1_mech1, tau_sigma_nu1_mech1, tau_epsilon_nu2_mech1, tau_sigma_nu2_mech1, &
     tau_epsilon_nu1_mech2, tau_sigma_nu1_mech2, tau_epsilon_nu2_mech2, tau_sigma_nu2_mech2
 
@@ -70,8 +71,6 @@
 !! DK DK for the viscoacoustic code in directory EXAMPLES/attenuation/viscoacoustic,
 !! DK DK it would be very easy to copy the changes from there to this viscoelastic version;
 !! DK DK but then all the values of the tau_epsilon below would need to change.
-
-! this below is from Carcione et al. 1988 GJI vol 95 p 604 Table 1
 
  double precision, dimension(Lnu) :: tau_sigma_nu1,tau_sigma_nu2,tau_epsilon_nu1,tau_epsilon_nu2
 
@@ -268,7 +267,13 @@
 ! enddo
 ! close(11)
 
-! Calculation of the time domain solution using Netlib
+! ***************************************************************************
+! Calculation of the time domain solution (using routine "cfftb" from Netlib)
+! ***************************************************************************
+
+! **********
+! Compute Ux
+! **********
 
 ! initialize FFT arrays
   call cffti(nt,wsave)
@@ -278,7 +283,7 @@
       c(it) = cmplx(0.,0.)
   enddo
 
-! enter the Fourier values for Ux
+! use the Fourier values for Ux
   c(1) = cmplx(phi1(0))
   do ifreq=1,nfreq-2
       c(ifreq+1) = cmplx(phi1(ifreq))
@@ -307,12 +312,16 @@
   enddo
   close(11)
 
+! **********
+! Compute Uz
+! **********
+
 ! clear array of Fourier coefficients
   do it=1,nt
       c(it) = cmplx(0.,0.)
   enddo
 
-! enter the Fourier values for Uz
+! use the Fourier values for Uz
   c(1) = cmplx(phi2(0))
   do ifreq=1,nfreq-2
       c(ifreq+1) = cmplx(phi2(ifreq))

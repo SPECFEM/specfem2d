@@ -1,26 +1,26 @@
 
   program analytical_solution
 
-! this program implements the analytical solution for a viscoelastic medium
-! from Carcione et al.
+! this program implements the analytical solution for a 2D plane-strain viscoelastic medium
+! from Appendix B of Carcione et al., Wave propagation simulation in a linear viscoelastic medium, GJI, vol. 95, p. 597-611 (1988)
+! (note that that Appendix contains two typos, fixed in this code)
 
   implicit none
 
 !! DK DK Dimitri Komatitsch, CNRS Marseille, France, April 2017: added the elastic reference calculation.
 
 !! DK DK Dimitri Komatitsch, CNRS Marseille, France, October 2015:
-!! DK DK by default I turned off the fix for attenuation causality (using the unrelaxed velocities
-!! DK DK as reference instead of the relaxed ones) because it is not useful any more,
-!! DK DK this modification was not consistent with the calculations of the tau values
-!! DK DK made by Carcione et al. 1988 and by Carcione 1993.
+!! DK DK to fix the attenuation causality issue in the original papers by Carcione et al. 1988 and by Carcione 1993.
   logical, parameter :: FIX_ATTENUATION_CAUSALITY = .true.
 
-!! DK DK March 2018: the missing 1/L factor in older Carcione papers has been added to this code by Quentin Brissaud
+!! DK DK May 2018: the missing 1/L factor in older Carcione papers
+!! DK DK May 2018: has been added to this code by Quentin Brissaud and by Etienne Bachmann
 !! DK DK for the viscoacoustic code in directory EXAMPLES/attenuation/viscoacoustic,
 !! DK DK it would be very easy to copy the changes from there to this viscoelastic version;
 !! DK DK but then all the values of the tau_epsilon in the code below would need to change.
 
-! compute the elastic solution instead of the viscoelastic one
+! compute the elastic solution instead of the viscoelastic one,
+! i.e. turn off viscoelasticity and compute the elastic Green function instead
   logical, parameter :: COMPUTE_ELASTIC_CASE_INSTEAD = .false.
 
   integer, parameter :: iratio = 32
@@ -63,8 +63,7 @@
 ! number of Zener standard linear solids in parallel
   integer, parameter :: Lnu = 5
 
-! attenuation constants from Carcione et al. 1988 GJI vol 95 p 604
-! two mechanisms for the moment
+! attenuation relaxation times
   double precision tau_epsilon_nu1_mech1, tau_sigma_nu1_mech1, tau_epsilon_nu2_mech1, tau_sigma_nu2_mech1, &
     tau_epsilon_nu1_mech2, tau_sigma_nu1_mech2, tau_epsilon_nu2_mech2, tau_sigma_nu2_mech2
 
@@ -74,7 +73,7 @@
 !   tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * weight(i))
 ! in file src/specfem2D/attenuation_model.f90
 ! because the analytical formulas of Carcione et al. 1998 do not include the 1/N factor
-!
+
 !! DK DK March 2018: this missing 1/L factor has been added to this code by Quentin Brissaud
 !! DK DK for the viscoacoustic code in directory EXAMPLES/attenuation/viscoacoustic,
 !! DK DK it would be very easy to copy the changes from there to this viscoelastic version;
@@ -104,13 +103,9 @@
 
  double precision, dimension(Lnu) :: tau_sigma_nu1,tau_sigma_nu2,tau_epsilon_nu1,tau_epsilon_nu2
 
-
-
 ! these values come from Carcione et al. 1988 GJI vol 95 p 604 Table 1
 
-
-!! EB EB May 2018 switched the comments word in capital letters in the two comments
-!below
+!! Etienne Bachmann, May 2018: switched the comments word in capital letters in the two comments below
 ! unrelaxed (f = +infinity) values, i.e. FASTER Vp and Vs velocities
   double precision, parameter :: M1_relaxed = 20.d9
   double precision, parameter :: M2_relaxed = 16.d9
@@ -143,6 +138,9 @@
   double complex :: M1C, M2C, E, V1, V2, temp
 
   logical :: correction_f0
+
+! ********** end of variable declarations ************
+
 ! solvopt
 ! tau_sigma_nu1   =    (/0.133678306720354, 2.912520509228697E-002,8.582372991186043E-003,  2.533530108490411E-003,  5.405262690749288E-004/)
 ! tau_epsilon_nu1 =    (/0.142394486470593, 3.026702571764525E-002,8.913452751635461E-003,  2.639860892143508E-003,  5.833426467493284E-004/)
@@ -192,8 +190,6 @@
 !  tau_epsilon_nu1 =    (/4.262332253966861E-002, 1.851561240017022E-003/)
 !  tau_sigma_nu2   =    (/3.833318400245433E-002, 1.652248125544272E-003/)
 !  tau_epsilon_nu2 =    (/4.260395276908462E-002, 1.856317437490798E-003/)
-
-! ********** end of variable declarations ************
 
 ! position of the receiver
   x1 = +500.
@@ -302,11 +298,11 @@
   V1 = cdsqrt(E / rho)  !! DK DK this is Vp
 !! DK DK print the velocity if we want to display the curve of how velocity varies with frequency
 !! DK DK for instance to compute the unrelaxed velocity in the Zener model
-!print *,freq,dsqrt(real(V1)**2 + imag(V1)**2)
+! print *,freq,dsqrt(real(V1)**2 + imag(V1)**2)
   V2 = cdsqrt(M2C / (2.d0 * rho))  !! DK DK this is Vs
 !! DK DK print the velocity if we want to display the curve of how velocity varies with frequency
 !! DK DK for instance to compute the unrelaxed velocity in the Zener model
-!print *,freq,dsqrt(real(V2)**2 + imag(V2)**2)
+! print *,freq,dsqrt(real(V2)**2 + imag(V2)**2)
 
 ! calcul de la solution analytique en frequence
   phi1(ifreq) = u1(omega,V1,V2,x1,x2,rho) * fomega(ifreq)
@@ -348,7 +344,13 @@
 ! enddo
 ! close(11)
 
-! Calculation of the time domain solution using Netlib
+! ***************************************************************************
+! Calculation of the time domain solution (using routine "cfftb" from Netlib)
+! ***************************************************************************
+
+! **********
+! Compute Ux
+! **********
 
 ! initialize FFT arrays
   call cffti(nt,wsave)
@@ -358,7 +360,7 @@
       c(it) = cmplx(0.,0.)
   enddo
 
-! enter the Fourier values for Ux
+! use the Fourier values for Ux
   c(1) = cmplx(phi1(0))
   do ifreq=1,nfreq-2
       c(ifreq+1) = cmplx(phi1(ifreq))
@@ -387,12 +389,16 @@
   enddo
   close(11)
 
+! **********
+! Compute Uz
+! **********
+
 ! clear array of Fourier coefficients
   do it=1,nt
       c(it) = cmplx(0.,0.)
   enddo
 
-! enter the Fourier values for Uz
+! use the Fourier values for Uz
   c(1) = cmplx(phi2(0))
   do ifreq=1,nfreq-2
       c(ifreq+1) = cmplx(phi2(ifreq))
