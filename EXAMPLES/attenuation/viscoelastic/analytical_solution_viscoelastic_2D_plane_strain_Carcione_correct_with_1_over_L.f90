@@ -1,25 +1,21 @@
 
   program analytical_solution
 
-! this program implements the analytical solution for a 2D plane-strain viscoelastic medium
+! This program implements the analytical solution for the displacement vector in a 2D plane-strain viscoelastic medium
 ! with a vertical force source located in (0,0),
 ! from Appendix B of Carcione et al., Wave propagation simulation in a linear viscoelastic medium, GJI, vol. 95, p. 597-611 (1988)
-! (note that that Appendix contains two typos, fixed in this code).
+! (note that that Appendix contains two typos, fixed in this code; I added two comments below to mention them).
 ! The amplitude of the force is called F and is defined below.
 
   implicit none
-
-!! DK DK Dimitri Komatitsch, CNRS Marseille, France, April 2017: added the elastic reference calculation.
-
-!! DK DK Dimitri Komatitsch, CNRS Marseille, France, October 2015:
-!! DK DK to fix the attenuation causality issue in the original papers by Carcione et al. 1988 and by Carcione 1993.
-  logical, parameter :: FIX_ATTENUATION_CAUSALITY = .true.
 
 !! DK DK May 2018: the missing 1/L factor in older Carcione papers
 !! DK DK May 2018: has been added to this code by Quentin Brissaud and by Etienne Bachmann
 !! DK DK for the viscoacoustic code in directory EXAMPLES/attenuation/viscoacoustic,
 !! DK DK it would be very easy to copy the changes from there to this viscoelastic version;
 !! DK DK but then all the values of the tau_epsilon in the code below would need to change.
+
+!! DK DK Dimitri Komatitsch, CNRS Marseille, France, April 2017: added the elastic reference calculation.
 
 ! compute the elastic solution instead of the viscoelastic one,
 ! i.e. turn off viscoelasticity and compute the elastic Green function instead
@@ -35,7 +31,7 @@
 !! DK DK for instance to compute the unrelaxed velocity in the Zener model
 ! double precision, parameter :: freqmax = 20000.d0
 
-  double precision, parameter :: freqseuil = 0.05d0
+  double precision, parameter :: freqseuil = 0.0005d0
 
   double precision, parameter :: pi = 3.141592653589793d0
 
@@ -80,10 +76,6 @@
  double precision, dimension(Lnu) :: tau_sigma_nu1,tau_sigma_nu2,tau_epsilon_nu1,tau_epsilon_nu2
 
 ! these values come from Carcione et al. 1988 GJI vol 95 p 604 Table 1
-
-! relaxed (f = 0) values, i.e. slower Vp and Vs velocities
-  double precision, parameter :: M1_relaxed = 20.d9
-  double precision, parameter :: M2_relaxed = 16.d9
 
 ! unrelaxed (f = +infinity) values, i.e. faster Vp and Vs velocities
   double precision, parameter :: M1_unrelaxed = 23744567022.0200d0
@@ -143,14 +135,14 @@
       freq = deltafreq * dble(ifreq)
       omega = 2.d0 * pi * freq
       omega0 = 2.d0 * pi * f0
-! typo in equation (B10) of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
-! Geophysical Journal, vol. 93, p. 393-407 (1988), the exponential is of -i omega t0,
+! typo in equation (B7) of Carcione et al., Wave propagation simulation in a linear viscoelastic medium,
+! Geophysical Journal, vol. 95, p. 597-611 (1988), the exponential should be of -i omega t0,
 ! fixed here by adding the minus sign
       comparg = dcmplx(0.d0,-omega*t0)
 
 ! definir le spectre du Ricker de Carcione avec cos()
-! equation (B10) of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
-! Geophysical Journal, vol. 93, p. 393-407 (1988)
+! equation (B7) of Carcione et al., Wave propagation simulation in a linear viscoelastic medium,
+! Geophysical Journal, vol. 95, p. 597-611 (1988)
 !     fomega(ifreq) = pi * dsqrt(pi/eta) * (1.d0/omega0) * cdexp(comparg) * ( dexp(- (pi*pi/eta) * (epsil/2 - omega/omega0)**2) &
 !         + dexp(- (pi*pi/eta) * (epsil/2 + omega/omega0)**2) )
 
@@ -181,46 +173,28 @@
 ! critere ad-hoc pour eviter singularite en zero
   if (freq < freqseuil) omega = 2.d0 * pi * freqseuil
 
-! use more standard infinite frequency (unrelaxed) reference,
-! in which waves slow down when attenuation is turned on,
-! or use far less standard zero frequency (relaxed) reference,
-! in which waves speed up when attenuation is turned on
-  if (FIX_ATTENUATION_CAUSALITY) then
+! use standard infinite frequency (unrelaxed) reference,
+! in which waves slow down when attenuation is turned on.
+  temp = dcmplx(0.d0,0.d0)
+  do i=1,Lnu
+    temp = temp + dcmplx(1.d0,omega*tau_epsilon_nu1(i)) / dcmplx(1.d0,omega*tau_sigma_nu1(i))
+  enddo
 
-    temp = dcmplx(0.d0,0.d0)
-    do i=1,Lnu
-      temp = temp + dcmplx(1.d0,omega*tau_epsilon_nu1(i)) / dcmplx(1.d0,omega*tau_sigma_nu1(i))
-    enddo
+  M1C = (M1_unrelaxed /(sum(tau_epsilon_nu1(:)/tau_sigma_nu1(:)))) * temp
 
-    M1C = (M1_unrelaxed /(sum(tau_epsilon_nu1(:)/tau_sigma_nu1(:)))) * temp
+  temp = dcmplx(0.d0,0.d0)
+  do i=1,Lnu
+    temp = temp + dcmplx(1.d0,omega*tau_epsilon_nu2(i)) / dcmplx(1.d0,omega*tau_sigma_nu2(i))
+  enddo
 
-    temp = dcmplx(0.d0,0.d0)
-    do i=1,Lnu
-      temp = temp + dcmplx(1.d0,omega*tau_epsilon_nu2(i)) / dcmplx(1.d0,omega*tau_sigma_nu2(i))
-    enddo
-
-    M2C = (M2_unrelaxed /(sum(tau_epsilon_nu2(:)/tau_sigma_nu2(:)))) * temp
-  else
-
-    temp = dcmplx(0.d0,0.d0)
-    do i=1,Lnu
-      temp = temp + dcmplx(1.d0,omega*tau_epsilon_nu1(i)) / dcmplx(1.d0,omega*tau_sigma_nu1(i))
-    enddo
-
-    M1C = M1_relaxed * ((temp)/Lnu)
-
-    temp = dcmplx(0.d0,0.d0)
-    do i=1,Lnu
-      temp = temp + dcmplx(1.d0,omega*tau_epsilon_nu2(i)) / dcmplx(1.d0,omega*tau_sigma_nu2(i))
-    enddo
-
-    M2C = M2_relaxed * ((temp)/Lnu)
-
-  endif
+  M2C = (M2_unrelaxed /(sum(tau_epsilon_nu2(:)/tau_sigma_nu2(:)))) * temp
 
   if (COMPUTE_ELASTIC_CASE_INSTEAD) then
-    M1C = M1_relaxed
-    M2C = M2_relaxed
+! from Etienne Bachmann, May 2018: pour calculer la solution sans attenuation, il faut donner le Mu_unrelaxed et pas le Mu_relaxed.
+! En effet, pour comparer avec SPECFEM, il faut simplement partir de la bonne reference.
+! SPECFEM est defini en unrelaxed et les constantes unrelaxed dans Carcione matchent parfaitement les Vp et Vs definis dans SPECFEM.
+    M1C = M1_unrelaxed
+    M2C = M2_unrelaxed
   endif
 
   E = (M1C + M2C) / 2
@@ -423,7 +397,8 @@
   double precision pi
   parameter (pi = 3.141592653589793d0)
 
-! bug Carcione fixed: omega/(r*v) -> omega*r/v
+! typo in equations (B4a) and (B4b) of Carcione et al., Wave propagation simulation in a linear viscoelastic medium,
+! Geophysical Journal, vol. 95, p. 597-611 (1988), fixed here: omega/(r*v) -> omega*r/v
 
   G1 = (hankel0(omega*r/v1)/(v1**2) + hankel1(omega*r/v2)/(omega*r*v2) - hankel1(omega*r/v1)/(omega*r*v1)) * dcmplx(0.d0,-pi/2.d0)
 
@@ -444,7 +419,8 @@
   double precision pi
   parameter (pi = 3.141592653589793d0)
 
-! bug Carcione fixed: omega/(r*v) -> omega*r/v
+! typo in equations (B4a) and (B4b) of Carcione et al., Wave propagation simulation in a linear viscoelastic medium,
+! Geophysical Journal, vol. 95, p. 597-611 (1988), fixed here: omega/(r*v) -> omega*r/v
 
   G2 = (hankel0(omega*r/v2)/(v2**2) - hankel1(omega*r/v2)/(omega*r*v2) + hankel1(omega*r/v1)/(omega*r*v1)) * dcmplx(0.d0,+pi/2.d0)
 

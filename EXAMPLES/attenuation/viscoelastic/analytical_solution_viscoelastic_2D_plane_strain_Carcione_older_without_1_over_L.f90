@@ -1,15 +1,13 @@
 
   program analytical_solution
 
-! this program implements the analytical solution for a 2D plane-strain viscoelastic medium
+! This program implements the analytical solution for the displacement vector in a 2D plane-strain viscoelastic medium
 ! with a vertical force source located in (0,0),
 ! from Appendix B of Carcione et al., Wave propagation simulation in a linear viscoelastic medium, GJI, vol. 95, p. 597-611 (1988)
-! (note that that Appendix contains two typos, fixed in this code).
+! (note that that Appendix contains two typos, fixed in this code; I added two comments below to mention them).
 ! The amplitude of the force is called F and is defined below.
 
   implicit none
-
-!! DK DK Dimitri Komatitsch, CNRS Marseille, France, April 2017: added the elastic reference calculation.
 
 !! DK DK Dimitri Komatitsch, CNRS Marseille, France, October 2015:
 !! DK DK to fix the attenuation causality issue in the original papers by Carcione et al. 1988 and by Carcione 1993.
@@ -20,6 +18,8 @@
 !! DK DK for the viscoacoustic code in directory EXAMPLES/attenuation/viscoacoustic,
 !! DK DK it would be very easy to copy the changes from there to this viscoelastic version;
 !! DK DK but then all the values of the tau_epsilon in the code below would need to change.
+
+!! DK DK Dimitri Komatitsch, CNRS Marseille, France, April 2017: added the elastic reference calculation.
 
 ! compute the elastic solution instead of the viscoelastic one,
 ! i.e. turn off viscoelasticity and compute the elastic Green function instead
@@ -35,7 +35,7 @@
 !! DK DK for instance to compute the unrelaxed velocity in the Zener model
 ! double precision, parameter :: freqmax = 20000.d0
 
-  double precision, parameter :: freqseuil = 0.05d0
+  double precision, parameter :: freqseuil = 0.0005d0
 
   double precision, parameter :: pi = 3.141592653589793d0
 
@@ -146,13 +146,13 @@
 
 ! ********** end of variable declarations ************
 
-! solvopt
+! SolvOpt
 ! tau_sigma_nu1   =    (/0.133678306720354, 2.912520509228697E-002,8.582372991186043E-003,  2.533530108490411E-003,  5.405262690749288E-004/)
 ! tau_epsilon_nu1 =    (/0.142394486470593, 3.026702571764525E-002,8.913452751635461E-003,  2.639860892143508E-003,  5.833426467493284E-004/)
 ! tau_sigma_nu2   =    (/0.133088444661193, 2.902924633533533E-002,8.553444926037403E-003,  2.525318822368128E-003,  5.380663879915198E-004/)
 ! tau_epsilon_nu2 =    (/0.142784517421575, 3.030993386838335E-002,  8.926203286116222E-003,  2.645525202476393E-003,  5.867669728086531E-004/)
 
-!no solvopt
+! no SolvOpt
   tau_epsilon_nu1 =  (/9.453149896375479E-002,  2.845313504122305E-002,  9.295789994524371E-003,  2.842079165848256E-003,  9.580154822122504E-004/)
   tau_sigma_nu1 =   (/8.841941282883074E-002,  2.796067339138169E-002,  8.841941282883075E-003,  2.796067339138169E-003,  8.841941282883074E-004/)
   tau_epsilon_nu2 =   (/9.524427184695315E-002,  2.851689905973108E-002,  9.354508395285212E-003,  2.847608446822655E-003,  9.684291558725508E-004/)
@@ -217,14 +217,14 @@
       freq = deltafreq * dble(ifreq)
       omega = 2.d0 * pi * freq
       omega0 = 2.d0 * pi * f0
-! typo in equation (B10) of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
-! Geophysical Journal, vol. 93, p. 393-407 (1988), the exponential is of -i omega t0,
+! typo in equation (B7) of Carcione et al., Wave propagation simulation in a linear viscoelastic medium,
+! Geophysical Journal, vol. 95, p. 597-611 (1988), the exponential should be of -i omega t0,
 ! fixed here by adding the minus sign
       comparg = dcmplx(0.d0,-omega*t0)
 
 ! definir le spectre du Ricker de Carcione avec cos()
-! equation (B10) of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
-! Geophysical Journal, vol. 93, p. 393-407 (1988)
+! equation (B7) of Carcione et al., Wave propagation simulation in a linear viscoelastic medium,
+! Geophysical Journal, vol. 95, p. 597-611 (1988)
 !     fomega(ifreq) = pi * dsqrt(pi/eta) * (1.d0/omega0) * cdexp(comparg) * ( dexp(- (pi*pi/eta) * (epsil/2 - omega/omega0)**2) &
 !         + dexp(- (pi*pi/eta) * (epsil/2 + omega/omega0)**2) )
 
@@ -296,8 +296,11 @@
   endif
 
   if (COMPUTE_ELASTIC_CASE_INSTEAD) then
-    M1C = M1_relaxed
-    M2C = M2_relaxed
+! from Etienne Bachmann, May 2018: pour calculer la solution sans attenuation, il faut donner le Mu_unrelaxed et pas le Mu_relaxed.
+! En effet, pour comparer avec SPECFEM, il faut simplement partir de la bonne reference.
+! SPECFEM est defini en unrelaxed et les constantes unrelaxed dans Carcione matchent parfaitement les Vp et Vs definis dans SPECFEM.
+    M1C = M1_unrelaxed
+    M2C = M2_unrelaxed
   endif
 
   E = (M1C + M2C) / 2
@@ -500,7 +503,8 @@
   double precision pi
   parameter (pi = 3.141592653589793d0)
 
-! bug Carcione fixed: omega/(r*v) -> omega*r/v
+! typo in equations (B4a) and (B4b) of Carcione et al., Wave propagation simulation in a linear viscoelastic medium,
+! Geophysical Journal, vol. 95, p. 597-611 (1988), fixed here: omega/(r*v) -> omega*r/v
 
   G1 = (hankel0(omega*r/v1)/(v1**2) + hankel1(omega*r/v2)/(omega*r*v2) - hankel1(omega*r/v1)/(omega*r*v1)) * dcmplx(0.d0,-pi/2.d0)
 
@@ -521,7 +525,8 @@
   double precision pi
   parameter (pi = 3.141592653589793d0)
 
-! bug Carcione fixed: omega/(r*v) -> omega*r/v
+! typo in equations (B4a) and (B4b) of Carcione et al., Wave propagation simulation in a linear viscoelastic medium,
+! Geophysical Journal, vol. 95, p. 597-611 (1988), fixed here: omega/(r*v) -> omega*r/v
 
   G2 = (hankel0(omega*r/v2)/(v2**2) - hankel1(omega*r/v2)/(omega*r*v2) + hankel1(omega*r/v1)/(omega*r*v1)) * dcmplx(0.d0,+pi/2.d0)
 
