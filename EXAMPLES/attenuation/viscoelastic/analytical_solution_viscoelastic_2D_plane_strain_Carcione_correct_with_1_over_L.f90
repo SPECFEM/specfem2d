@@ -97,7 +97,7 @@
 ! spectral amplitude
   double precision ampli(0:nfreq)
 
-! analytical solution for both components
+! analytical solution for the two components
   double complex phi1(-nfreq:nfreq)
   double complex phi2(-nfreq:nfreq)
 
@@ -290,8 +290,8 @@
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
         time = dble(it)*deltat - t0
 ! the seismograms are very long due to the very large number of FFT points used,
-! thus keeping the useful part of the signal only (the first two seconds of the seismogram)
-        if (time <= 2.d0) write(11,*) sngl(time),real(c(it)),imag(c(it))
+! thus keeping the useful part of the signal only (the first six seconds of the seismogram)
+        if (time <= 6.d0) write(11,*) sngl(time),real(c(it))
   enddo
   close(11)
 
@@ -324,8 +324,8 @@
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
         time = dble(it)*deltat - t0
 ! the seismograms are very long due to the very large number of FFT points used,
-! thus keeping the useful part of the signal only (the first two seconds of the seismogram)
-        if (time <= 2.d0) write(11,*) sngl(time),real(c(it)),imag(c(it))
+! thus keeping the useful part of the signal only (the first six seconds of the seismogram)
+        if (time <= 6.d0) write(11,*) sngl(time),real(c(it))
   enddo
   close(11)
 
