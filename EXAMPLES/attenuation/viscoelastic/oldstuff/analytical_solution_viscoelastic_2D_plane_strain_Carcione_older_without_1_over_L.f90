@@ -44,9 +44,18 @@
   real wsave(4*nt+15)
   complex c(nt)
 
-! properties of the medium
-  double precision rho
-  parameter(rho = 2000.d0)
+! density of the medium
+  double precision, parameter :: rho = 2000.d0
+
+! unrelaxed (f = +infinity) values
+! these values for the unrelaxed state are computed from the relaxed state values (Vp = 3000, Vs = 2000, rho = 2000)
+! given in Carcione et al. 1988 GJI vol 95 p 604 Table 1
+  double precision, parameter :: Vp = 3297.849d0
+  double precision, parameter :: Vs = 2222.536d0
+
+! unrelaxed (f = +infinity) values, i.e. using the fastest Vp and Vs velocities
+  double precision, parameter :: M2_unrelaxed = Vs**2 * 2.d0 * rho
+  double precision, parameter :: M1_unrelaxed = 2.d0 * Vp**2 * rho - M2_unrelaxed
 
 ! amplitude of the force source
   double precision, parameter :: F = 1.d10
@@ -107,17 +116,6 @@
 !  parameter(tau_sigma_nu2_mech2   = 1.652248125544272E-003)
 
  double precision, dimension(Lnu) :: tau_sigma_nu1,tau_sigma_nu2,tau_epsilon_nu1,tau_epsilon_nu2
-
-! these values come from Carcione et al. 1988 GJI vol 95 p 604 Table 1
-
-!! Etienne Bachmann, May 2018: switched the comments word in capital letters in the two comments below
-! unrelaxed (f = +infinity) values, i.e. FASTER Vp and Vs velocities
-  double precision, parameter :: M1_relaxed = 20.d9
-  double precision, parameter :: M2_relaxed = 16.d9
-
-! relaxed (f = 0) values, i.e. SLOWER Vp and Vs velocities
-  double precision, parameter :: M1_unrelaxed = 23744567022.0200d0
-  double precision, parameter :: M2_unrelaxed = 19758665085.1840d0
 
   integer :: ifreq,ifreq2
   double precision :: deltafreq,freq,omega,omega0,deltat,time

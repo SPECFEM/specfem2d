@@ -6,12 +6,12 @@
   implicit none
 
 ! unrelaxed (f = +infinity) values
-! double precision, parameter :: Vp = 3297.849d0
-! double precision, parameter :: Vs = 2222.536d0
+  double precision, parameter :: Vp = 3297.849d0
+  double precision, parameter :: Vs = 2222.536d0
 
 ! relaxed (f = 0) values
-  double precision, parameter :: Vp = 3000.d0
-  double precision, parameter :: Vs = 2000.d0
+! double precision, parameter :: Vp = 3000.d0
+! double precision, parameter :: Vs = 2000.d0
 
   double precision, parameter :: rho = 2000.d0
 
