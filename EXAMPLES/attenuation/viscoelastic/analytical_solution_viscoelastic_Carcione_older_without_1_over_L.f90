@@ -2,8 +2,10 @@
   program analytical_solution
 
 ! this program implements the analytical solution for a 2D plane-strain viscoelastic medium
+! with a vertical force source located in (0,0),
 ! from Appendix B of Carcione et al., Wave propagation simulation in a linear viscoelastic medium, GJI, vol. 95, p. 597-611 (1988)
-! (note that that Appendix contains two typos, fixed in this code)
+! (note that that Appendix contains two typos, fixed in this code).
+! The amplitude of the force is called F and is defined below.
 
   implicit none
 
@@ -45,6 +47,9 @@
 ! properties of the medium
   double precision rho
   parameter(rho = 2000.d0)
+
+! amplitude of the force source
+  double precision, parameter :: F = 1.d10
 
 ! definition position recepteur Carcione
   double precision x1,x2
@@ -199,7 +204,8 @@
 ! (should be set to true, otherwise the singularity will create numerical problems)
   correction_f0 = .true.
 
-  print *,'Receiver located in x1,x2:',x1,x2
+  print *,'Force source located at the origin (0,0)'
+  print *,'Receiver located in (x,z) = ',x1,x2
 
   print *,'Apply correction of the Hankel function in f = 0 (true or false):',correction_f0
 
@@ -305,8 +311,8 @@
 ! print *,freq,dsqrt(real(V2)**2 + imag(V2)**2)
 
 ! calcul de la solution analytique en frequence
-  phi1(ifreq) = u1(omega,V1,V2,x1,x2,rho) * fomega(ifreq)
-  phi2(ifreq) = u2(omega,V1,V2,x1,x2,rho) * fomega(ifreq)
+  phi1(ifreq) = u1(omega,V1,V2,x1,x2,rho,F) * fomega(ifreq)
+  phi2(ifreq) = u2(omega,V1,V2,x1,x2,rho,F) * fomega(ifreq)
 
 ! a nouveau critere ad-hoc pour eviter singularite en zero
   if (freq < freqseuil) then
@@ -427,7 +433,7 @@
 
 ! -----------
 
-  double complex function u1(omega,v1,v2,x1,x2,rho)
+  double complex function u1(omega,v1,v2,x1,x2,rho,F)
 
   implicit none
 
@@ -440,9 +446,8 @@
   double precision pi
   parameter (pi = 3.141592653589793d0)
 
-! amplitude de la force
+! amplitude of the force
   double precision F
-  parameter(F = 1.d10)
 
   double precision x1,x2,r,rho
 
@@ -455,7 +460,7 @@
 
 ! -----------
 
-  double complex function u2(omega,v1,v2,x1,x2,rho)
+  double complex function u2(omega,v1,v2,x1,x2,rho,F)
 
   implicit none
 
@@ -468,9 +473,8 @@
   double precision pi
   parameter (pi = 3.141592653589793d0)
 
-! amplitude de la force
+! amplitude of the force
   double precision F
-  parameter(F = 1.d10)
 
   double precision x1,x2,r,rho
 
