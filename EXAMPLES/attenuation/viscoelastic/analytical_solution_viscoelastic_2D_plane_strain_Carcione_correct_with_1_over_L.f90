@@ -21,6 +21,10 @@
 ! i.e. turn off viscoelasticity and compute the elastic Green function instead
   logical, parameter :: COMPUTE_ELASTIC_CASE_INSTEAD = .false.
 
+! to see how small the contribution of the near-field term is,
+! here the user can ask not to include it, to then compare with the full result obtained with this flag set to false
+  logical, parameter :: DO_NOT_COMPUTE_THE_NEAR_FIELD = .false.
+
   integer, parameter :: iratio = 32
 
   integer, parameter :: nfreq = 524288
@@ -31,7 +35,7 @@
 !! DK DK for instance to compute the unrelaxed velocity in the Zener model
 ! double precision, parameter :: freqmax = 20000.d0
 
-  double precision, parameter :: freqseuil = 0.0005d0
+  double precision, parameter :: freqseuil = 0.00005d0
 
   double precision, parameter :: pi = 3.141592653589793d0
 
@@ -54,7 +58,7 @@
   double precision, parameter :: M1_unrelaxed = 2.d0 * Vp**2 * rho - M2_unrelaxed
 
 ! amplitude of the force source
-  double precision, parameter :: F = 1.d10
+  double precision, parameter :: F = 1.d0
 
 ! definition position recepteur Carcione
   double precision x1,x2
@@ -107,8 +111,6 @@
 ! modules elastiques
   double complex :: M1C, M2C, E, V1, V2, temp
 
-  logical :: correction_f0
-
 ! ********** end of variable declarations ************
 
 ! classical least-squares constants
@@ -121,14 +123,20 @@
   x1 = +500.
   x2 = +500.
 
-! fix the problem of the Hankel transform singularity at zero frequency or not
-! (should be set to true, otherwise the singularity will create numerical problems)
-  correction_f0 = .true.
-
   print *,'Force source located at the origin (0,0)'
   print *,'Receiver located in (x,z) = ',x1,x2
 
-  print *,'Apply correction of the Hankel function in f = 0 (true or false):',correction_f0
+  if (COMPUTE_ELASTIC_CASE_INSTEAD) then
+    print *,'BEWARE: computing the elastic reference solution (i.e., without attenuation) instead of the viscoelastic solution'
+  else
+    print *,'Computing the viscoelastic solution'
+  endif
+
+  if (DO_NOT_COMPUTE_THE_NEAR_FIELD) then
+    print *,'BEWARE: computing the far-field solution only, rather than the full Green function'
+  else
+    print *,'Computing the full solution, including the near-field term of the Green function'
+  endif
 
 ! step in frequency
   deltafreq = freqmax / dble(nfreq)
@@ -159,10 +167,10 @@
   enddo
 
 ! sauvegarde du spectre d'amplitude de la source en Hz au format Gnuplot
-  open(unit=10,file='spectrum.gnu',status='unknown')
+  open(unit=10,file='spectrum_of_the_source_used.gnu',status='unknown')
   do ifreq = 0,nfreq
-      freq = deltafreq * dble(ifreq)
-      write(10,*) sngl(freq),sngl(ampli(ifreq))
+    freq = deltafreq * dble(ifreq)
+    write(10,*) sngl(freq),sngl(ampli(ifreq))
   enddo
   close(10)
 
@@ -211,30 +219,10 @@
 ! print *,freq,dsqrt(real(V2)**2 + imag(V2)**2)
 
 ! calcul de la solution analytique en frequence
-  phi1(ifreq) = u1(omega,V1,V2,x1,x2,rho,F) * fomega(ifreq)
-  phi2(ifreq) = u2(omega,V1,V2,x1,x2,rho,F) * fomega(ifreq)
-
-! a nouveau critere ad-hoc pour eviter singularite en zero
-  if (freq < freqseuil) then
-      phi1(ifreq) = dcmplx(0.d0,0.d0)
-      phi2(ifreq) = dcmplx(0.d0,0.d0)
-  endif
+  phi1(ifreq) = u1(omega,V1,V2,x1,x2,rho,F,DO_NOT_COMPUTE_THE_NEAR_FIELD) * fomega(ifreq)
+  phi2(ifreq) = u2(omega,V1,V2,x1,x2,rho,F,DO_NOT_COMPUTE_THE_NEAR_FIELD) * fomega(ifreq)
 
   enddo
-
-! pour eviter singularite en zero, prendre premiere valeur non nulle
-  if (correction_f0) then
-  do ifreq=0,nfreq
-      if (cdabs(phi1(ifreq)) > 0.d0) goto 180
-      do ifreq2=ifreq,nfreq
-        if (cdabs(phi1(ifreq2)) > 0.d0) goto 181
-      enddo
- 181 continue
-      phi1(ifreq) = phi1(ifreq2)
-      phi2(ifreq) = phi2(ifreq2)
-  enddo
- 180 continue
-  endif
 
 ! take the conjugate value for negative frequencies
   do ifreq=-nfreq,-1
@@ -282,9 +270,17 @@
 ! save time result inverse FFT for Ux
 
   if (COMPUTE_ELASTIC_CASE_INSTEAD) then
-    open(unit=11,file='Ux_time_analytical_solution_elastic.dat',status='unknown')
+    if (DO_NOT_COMPUTE_THE_NEAR_FIELD) then
+      open(unit=11,file='Ux_time_analytical_solution_elastic_without_near_field.dat',status='unknown')
+    else
+      open(unit=11,file='Ux_time_analytical_solution_elastic.dat',status='unknown')
+    endif
   else
-    open(unit=11,file='Ux_time_analytical_solution_viscoelastic.dat',status='unknown')
+    if (DO_NOT_COMPUTE_THE_NEAR_FIELD) then
+      open(unit=11,file='Ux_time_analytical_solution_viscoelastic_without_near_field.dat',status='unknown')
+    else
+      open(unit=11,file='Ux_time_analytical_solution_viscoelastic.dat',status='unknown')
+    endif
   endif
   do it=1,nt
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
@@ -316,9 +312,17 @@
 
 ! save time result inverse FFT for Uz
   if (COMPUTE_ELASTIC_CASE_INSTEAD) then
-    open(unit=11,file='Uz_time_analytical_solution_elastic.dat',status='unknown')
+    if (DO_NOT_COMPUTE_THE_NEAR_FIELD) then
+      open(unit=11,file='Uz_time_analytical_solution_elastic_without_near_field.dat',status='unknown')
+    else
+      open(unit=11,file='Uz_time_analytical_solution_elastic.dat',status='unknown')
+    endif
   else
-    open(unit=11,file='Uz_time_analytical_solution_viscoelastic.dat',status='unknown')
+    if (DO_NOT_COMPUTE_THE_NEAR_FIELD) then
+      open(unit=11,file='Uz_time_analytical_solution_viscoelastic_without_near_field.dat',status='unknown')
+    else
+      open(unit=11,file='Uz_time_analytical_solution_viscoelastic.dat',status='unknown')
+    endif
   endif
   do it=1,nt
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
@@ -333,18 +337,19 @@
 
 ! -----------
 
-  double complex function u1(omega,v1,v2,x1,x2,rho,F)
+  double complex function u1(omega,v1,v2,x1,x2,rho,F,DO_NOT_COMPUTE_THE_NEAR_FIELD)
 
   implicit none
 
   double precision omega
   double complex v1,v2
 
+  logical :: DO_NOT_COMPUTE_THE_NEAR_FIELD
+
   double complex G1,G2
   external G1,G2
 
-  double precision pi
-  parameter (pi = 3.141592653589793d0)
+  double precision, parameter :: pi = 3.141592653589793d0
 
 ! amplitude of the force
   double precision F
@@ -354,24 +359,26 @@
 ! source-receiver distance
   r = dsqrt(x1**2 + x2**2)
 
-  u1 = F * x1 * x2 * (G1(r,omega,v1,v2) + G2(r,omega,v1,v2)) / (2.d0 * pi * rho * r**2 )
+  u1 = F * x1 * x2 * (G1(r,omega,v1,v2,DO_NOT_COMPUTE_THE_NEAR_FIELD) + &
+                      G2(r,omega,v1,v2,DO_NOT_COMPUTE_THE_NEAR_FIELD)) / (2.d0 * pi * rho * r**2)
 
   end
 
 ! -----------
 
-  double complex function u2(omega,v1,v2,x1,x2,rho,F)
+  double complex function u2(omega,v1,v2,x1,x2,rho,F,DO_NOT_COMPUTE_THE_NEAR_FIELD)
 
   implicit none
 
   double precision omega
   double complex v1,v2
 
+  logical :: DO_NOT_COMPUTE_THE_NEAR_FIELD
+
   double complex G1,G2
   external G1,G2
 
-  double precision pi
-  parameter (pi = 3.141592653589793d0)
+  double precision, parameter :: pi = 3.141592653589793d0
 
 ! amplitude of the force
   double precision F
@@ -381,51 +388,62 @@
 ! source-receiver distance
   r = dsqrt(x1**2 + x2**2)
 
-  u2 = F * (x2*x2*G1(r,omega,v1,v2) - x1*x1*G2(r,omega,v1,v2)) / (2.d0 * pi * rho * r**2)
+  u2 = F * (x2*x2*G1(r,omega,v1,v2,DO_NOT_COMPUTE_THE_NEAR_FIELD) - &
+            x1*x1*G2(r,omega,v1,v2,DO_NOT_COMPUTE_THE_NEAR_FIELD)) / (2.d0 * pi * rho * r**2)
 
   end
 
 ! -----------
 
-  double complex function G1(r,omega,v1,v2)
+  double complex function G1(r,omega,v1,v2,DO_NOT_COMPUTE_THE_NEAR_FIELD)
 
   implicit none
 
   double precision r,omega
   double complex v1,v2
 
+  logical :: DO_NOT_COMPUTE_THE_NEAR_FIELD
+
   double complex hankel0,hankel1
   external hankel0,hankel1
 
-  double precision pi
-  parameter (pi = 3.141592653589793d0)
+  double precision, parameter :: pi = 3.141592653589793d0
 
 ! typo in equations (B4a) and (B4b) of Carcione et al., Wave propagation simulation in a linear viscoelastic medium,
 ! Geophysical Journal, vol. 95, p. 597-611 (1988), fixed here: omega/(r*v) -> omega*r/v
 
-  G1 = (hankel0(omega*r/v1)/(v1**2) + hankel1(omega*r/v2)/(omega*r*v2) - hankel1(omega*r/v1)/(omega*r*v1)) * dcmplx(0.d0,-pi/2.d0)
+  if (DO_NOT_COMPUTE_THE_NEAR_FIELD) then
+   G1 = (hankel0(omega*r/v1)/(v1**2)) * dcmplx(0.d0,-pi/2.d0)
+  else
+   G1 = (hankel0(omega*r/v1)/(v1**2) + hankel1(omega*r/v2)/(omega*r*v2) - hankel1(omega*r/v1)/(omega*r*v1)) * dcmplx(0.d0,-pi/2.d0)
+  endif
 
   end
 
 ! -----------
 
-  double complex function G2(r,omega,v1,v2)
+  double complex function G2(r,omega,v1,v2,DO_NOT_COMPUTE_THE_NEAR_FIELD)
 
   implicit none
 
   double precision r,omega
   double complex v1,v2
 
+  logical :: DO_NOT_COMPUTE_THE_NEAR_FIELD
+
   double complex hankel0,hankel1
   external hankel0,hankel1
 
-  double precision pi
-  parameter (pi = 3.141592653589793d0)
+  double precision, parameter :: pi = 3.141592653589793d0
 
 ! typo in equations (B4a) and (B4b) of Carcione et al., Wave propagation simulation in a linear viscoelastic medium,
 ! Geophysical Journal, vol. 95, p. 597-611 (1988), fixed here: omega/(r*v) -> omega*r/v
 
-  G2 = (hankel0(omega*r/v2)/(v2**2) - hankel1(omega*r/v2)/(omega*r*v2) + hankel1(omega*r/v1)/(omega*r*v1)) * dcmplx(0.d0,+pi/2.d0)
+  if (DO_NOT_COMPUTE_THE_NEAR_FIELD) then
+   G2 = (hankel0(omega*r/v2)/(v2**2)) * dcmplx(0.d0,+pi/2.d0)
+  else
+   G2 = (hankel0(omega*r/v2)/(v2**2) - hankel1(omega*r/v2)/(omega*r*v2) + hankel1(omega*r/v1)/(omega*r*v1)) * dcmplx(0.d0,+pi/2.d0)
+  endif
 
   end
 
