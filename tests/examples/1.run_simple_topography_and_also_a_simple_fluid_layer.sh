@@ -12,8 +12,8 @@ EXAMPLES="../../EXAMPLES/"
 # bash function for checking seismogram output with reference solutions
 my_test(){
   echo "testing seismograms:";
-  ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/;
-  ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}';
+  ../../utils/compare_seismogram_correlations.py REF_SEIS/ OUTPUT_FILES/ ;
+  ../../utils/compare_seismogram_correlations.py REF_SEIS/ OUTPUT_FILES/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}';
 }
 
 testdir=`pwd`
@@ -44,7 +44,14 @@ cp -rp $EXAMPLES/$NAME/DATA .
 cp -p $EXAMPLES/$NAME/run_this_example.sh .
 ln -s $EXAMPLES/$NAME/REF_SEIS
 
-sed -i "s:^NPROC .*:NPROC    = 4:" DATA/Par_file
+# parallel setup
+# reduces file i/o (takes too long for travis to run the example otherwise)
+sed -i "s:^NPROC .*:NPROC      = 2:" DATA/Par_file
+sed -i "s:^NSTEP .*:NSTEP      = 500:" DATA/Par_file
+sed -i "s:^NSTEP_BETWEEN_OUTPUT_INFO .*:NSTEP_BETWEEN_OUTPUT_INFO      = 200:" DATA/Par_file
+sed -i "s:^NSTEP_BETWEEN_OUTPUT_IMAGES .*:NSTEP_BETWEEN_OUTPUT_IMAGES      = 1000:" DATA/Par_file
+sed -i "s:^output_color_image .*:output_color_image      = .false.:" DATA/Par_file
+sed -i "s:^output_postscript_snapshot .*:output_postscript_snapshot      = .false.:" DATA/Par_file
 
 # checks exit code
 if [[ $? -ne 0 ]]; then
