@@ -33,7 +33,7 @@
 !! DK DK for instance to compute the unrelaxed velocity in the Zener model
 ! double precision, parameter :: freqmax = 20000.d0
 
-  double precision, parameter :: freqseuil = 0.05d0
+  double precision, parameter :: freqseuil = 0.00005d0
 
   double precision, parameter :: pi = 3.141592653589793d0
 
@@ -94,8 +94,6 @@
 ! modules elastiques
   double complex :: MC, V1
 
-  logical :: correction_f0
-
 ! ********** end of variable declarations ************
 
 !! DK DK Quentin Brissaud in March 2018 added the 1/L factor here (it is missing in Carcione's older papers)
@@ -115,13 +113,14 @@
     endif
     x2 = 0.
 
-! fix the problem of the Hankel transform singularity at zero frequency or not
-! (should be set to true, otherwise the singularity will create numerical problems)
-  correction_f0 = .true.
+  print *,'Force source located at the origin (0,0,0)'
+  print *,'Receiver located in (x,z) = ',x1,x2
 
-  print *,'Receiver located in x1,x2:',x1,x2
-
-  print *,'Apply correction of the Hankel function in f = 0 (true or false):',correction_f0
+  if (TURN_ATTENUATION_OFF) then
+    print *,'BEWARE: computing the acoustic reference solution (i.e., without attenuation) instead of the viscoacoustic solution'
+  else
+    print *,'Computing the viscoacoustic solution'
+  endif
 
 ! step in frequency
   deltafreq = freqmax / dble(nfreq)
@@ -152,7 +151,7 @@
   enddo
 
 ! sauvegarde du spectre d'amplitude de la source en Hz au format Gnuplot
-  open(unit=10,file='spectrum.gnu',status='unknown')
+  open(unit=10,file='spectrum_of_the_source_used.gnu',status='unknown')
   do ifreq = 0,nfreq
       freq = deltafreq * dble(ifreq)
       write(10,*) sngl(freq),sngl(ampli(ifreq))
@@ -201,25 +200,7 @@
 ! calcul de la solution analytique en frequence
   phi1(ifreq) = u1(omega,V1,x1,x2) * fomega(ifreq)
 
-! a nouveau critere ad-hoc pour eviter singularite en zero
-  if (freq < freqseuil) then
-      phi1(ifreq) = dcmplx(0.d0,0.d0)
-  endif
-
   enddo
-
-! pour eviter singularite en zero, prendre premiere valeur non nulle
-  if (correction_f0) then
-  do ifreq=0,nfreq
-      if (cdabs(phi1(ifreq)) > 0.d0) goto 180
-      do ifreq2=ifreq,nfreq
-        if (cdabs(phi1(ifreq2)) > 0.d0) goto 181
-      enddo
- 181 continue
-      phi1(ifreq) = phi1(ifreq2)
-  enddo
- 180 continue
-  endif
 
 ! take the conjugate value for negative frequencies
   do ifreq=-nfreq,-1
@@ -260,11 +241,23 @@
 ! save time result inverse FFT for pressure
 
     if (iposition == 1) then
-      open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_200.dat',status='unknown')
+      if (TURN_ATTENUATION_OFF) then
+        open(unit=11,file='pressure_time_analytical_solution_acoustic_200.dat',status='unknown')
+      else
+        open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_200.dat',status='unknown')
+      endif
     else if (iposition == 2) then
-      open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_500.dat',status='unknown')
+      if (TURN_ATTENUATION_OFF) then
+        open(unit=11,file='pressure_time_analytical_solution_acoustic_500.dat',status='unknown')
+      else
+        open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_500.dat',status='unknown')
+      endif
     else
-      open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_800.dat',status='unknown')
+      if (TURN_ATTENUATION_OFF) then
+        open(unit=11,file='pressure_time_analytical_solution_acoustic_800.dat',status='unknown')
+      else
+        open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_800.dat',status='unknown')
+      endif
     endif
 
   do it=1,nt
@@ -272,8 +265,8 @@
         ! time = dble(it-1)*deltat
         time = dble(it-1)*deltat - t0
 ! the seismograms are very long due to the very large number of FFT points used,
-! thus keeping the useful part of the signal only (the first two seconds of the seismogram)
-        if (time <= 0.9d0) write(11,*) sngl(time),real(c(it)),imag(c(it))
+! thus keeping the useful part of the signal only (the first six seconds of the seismogram)
+        if (time <= 6.d0) write(11,*) sngl(time),real(c(it)),imag(c(it))
   enddo
   close(11)
 
