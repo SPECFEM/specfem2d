@@ -42,9 +42,12 @@
   real wsave(4*nt+15)
   complex c(nt)
 
-! properties of the medium
-  double precision rho
-  parameter(rho = 2000.d0)
+!! DK DK for my slow inverse Discrete Fourier Transform using a double loop
+  complex :: input(nt), i_imaginary_constant
+  integer :: j,m
+
+! density of the medium
+  double precision, parameter :: rho = 2000.d0
 
 ! definition position recepteur Carcione
   double precision x1,x2
@@ -64,6 +67,12 @@
 ! integer, parameter :: L_mech = 5
   integer, parameter :: L_mech = 3
 
+! DK DK I implemented a very simple and slow inverse Discrete Fourier Transform
+! DK DK at some point, for verification, using a double loop. I keep it just in case.
+! DK DK For large number of points it is extremely slow because of the double loop.
+! DK DK Thus there is no reason to turn this flag on.
+  logical, parameter :: USE_SLOW_FOURIER_TRANSFORM = .false.
+
 ! attenuation constants from Carcione 1988 GJI vol 95 p 604
   double precision, dimension(L_mech) :: tau_epsilon_nu1, tau_sigma_nu1
 
@@ -72,8 +81,8 @@
   double precision, parameter :: vp = 2000.d0
   double precision, parameter :: M_relaxed = rho*vp**2
 
-  integer :: ifreq,ifreq2,i_mech,iposition
-  double precision :: deltafreq,freq,omega,omega0,deltat,time,sum_of_coefficients
+  integer :: ifreq,i_mech,iposition
+  double precision :: deltafreq,freq,omega,omega0,deltat,time,a,sum_of_coefficients
   double complex :: comparg,sum_to_compute
 
 ! Fourier transform of the Ricker wavelet source
@@ -85,7 +94,7 @@
 ! spectral amplitude
   double precision ampli(0:nfreq)
 
-! analytical solution for both components
+! analytical solution for the single scalar component (pressure)
   double complex phi1(-nfreq:nfreq)
 
 ! external functions
@@ -113,7 +122,7 @@
     endif
     x2 = 0.
 
-  print *,'Force source located at the origin (0,0,0)'
+  print *,'Force source located at the origin (0,0)'
   print *,'Receiver located in (x,z) = ',x1,x2
 
   if (TURN_ATTENUATION_OFF) then
@@ -125,11 +134,17 @@
 ! step in frequency
   deltafreq = freqmax / dble(nfreq)
 
+! define parameters for the Ricker source
+  omega0 = 2.d0 * pi * f0
+  a = pi**2 * f0**2
+
+  deltat = 1.d0 / (freqmax*dble(iratio))
+
 ! define the spectrum of the source
   do ifreq=0,nfreq
       freq = deltafreq * dble(ifreq)
       omega = 2.d0 * pi * freq
-      omega0 = 2.d0 * pi * f0
+
 ! typo in equation (B10) of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
 ! Geophysical Journal, vol. 93, p. 393-407 (1988), the exponential is of -i omega t0,
 ! fixed here by adding the minus sign
@@ -141,8 +156,8 @@
 !     fomega(ifreq) = pi * dsqrt(pi/eta) * (1.d0/omega0) * cdexp(comparg) * ( dexp(- (pi*pi/eta) * (epsil/2 - omega/omega0)**2) &
 !         + dexp(- (pi*pi/eta) * (epsil/2 + omega/omega0)**2) )
 
-! definir le spectre d'un Ricker classique
-      fomega(ifreq) = - omega**2 * 2.d0 * (dsqrt(pi)/omega0) * cdexp(comparg) * dexp(- (omega/omega0)**2)
+! definir le spectre d'un Ricker classique (centre en t0)
+      fomega(ifreq) = dsqrt(pi) * cdexp(comparg) * omega**2 * dexp(-omega**2/(4.d0*a)) / (2.d0 * dsqrt(a**3))
 
       ra(ifreq) = dreal(fomega(ifreq))
       rb(ifreq) = dimag(fomega(ifreq))
@@ -153,8 +168,8 @@
 ! sauvegarde du spectre d'amplitude de la source en Hz au format Gnuplot
   open(unit=10,file='spectrum_of_the_source_used.gnu',status='unknown')
   do ifreq = 0,nfreq
-      freq = deltafreq * dble(ifreq)
-      write(10,*) sngl(freq),sngl(ampli(ifreq))
+    freq = deltafreq * dble(ifreq)
+    write(10,*) sngl(freq),sngl(ampli(ifreq))
   enddo
   close(10)
 
@@ -215,28 +230,57 @@
 ! enddo
 ! close(11)
 
-! Calculation of the time domain solution using Netlib
+! ***************************************************************************
+! Calculation of the time domain solution (using routine "cfftb" from Netlib)
+! ***************************************************************************
+
+! ****************
+! Compute pressure
+! ****************
 
 ! initialize FFT arrays
   call cffti(nt,wsave)
 
 ! clear array of Fourier coefficients
-  do it=1,nt
-      c(it) = cmplx(0.,0.)
+  do it = 1,nt
+    c(it) = cmplx(0.,0.)
   enddo
 
-! enter the Fourier values for Ux
+! use the Fourier values for pressure
   c(1) = cmplx(phi1(0))
   do ifreq=1,nfreq-2
       c(ifreq+1) = cmplx(phi1(ifreq))
       c(nt+1-ifreq) = conjg(cmplx(phi1(ifreq)))
   enddo
 
-! perform the inverse FFT for Ux
-  call cfftb(nt,c,wsave)
+! perform the inverse FFT for pressure
+  if (.not. USE_SLOW_FOURIER_TRANSFORM) then
+    call cfftb(nt,c,wsave)
+  else
+! DK DK I implemented a very simple and slow inverse Discrete Fourier Transform here
+! DK DK at some point, for verification, using a double loop. I keep it just in case.
+! DK DK For large number of points it is extremely slow because of the double loop.
+    input(:) = c(:)
+!   imaginary constant "i"
+    i_imaginary_constant = (0.,1.)
+    do it = 1,nt
+      if (mod(it,1000) == 0) print *,'FFT inverse it = ',it,' out of ',nt
+      j = it
+      c(j) = cmplx(0.,0.)
+      do m = 1,nt
+        c(j) = c(j) + input(m) * exp(2.d0 * PI * i_imaginary_constant * dble((m-1) * (j-1)) / nt)
+      enddo
+    enddo
+  endif
+
+! in the inverse Discrete Fourier transform one needs to divide by N, the number of samples (number of time steps here)
+  c(:) = c(:) / nt
 
 ! value of a time step
   deltat = 1.d0 / (freqmax*dble(iratio))
+
+! to get the amplitude right, we need to divide by the time step
+  c(:) = c(:) / deltat
 
 ! save time result inverse FFT for pressure
 
@@ -262,11 +306,10 @@
 
   do it=1,nt
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
-        ! time = dble(it-1)*deltat
         time = dble(it-1)*deltat - t0
 ! the seismograms are very long due to the very large number of FFT points used,
 ! thus keeping the useful part of the signal only (the first six seconds of the seismogram)
-        if (time <= 6.d0) write(11,*) sngl(time),real(c(it)),imag(c(it))
+        if (time >= 0.d0 .and. time <= 6.d0) write(11,*) sngl(time),real(c(it))
   enddo
   close(11)
 

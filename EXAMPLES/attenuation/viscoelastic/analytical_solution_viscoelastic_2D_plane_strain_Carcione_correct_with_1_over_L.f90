@@ -43,6 +43,10 @@
   real wsave(4*nt+15)
   complex c(nt)
 
+!! DK DK for my slow inverse Discrete Fourier Transform using a double loop
+  complex :: input(nt), i_imaginary_constant
+  integer :: j,m
+
 ! density of the medium
   double precision, parameter :: rho = 2000.d0
 
@@ -76,9 +80,11 @@
 ! number of Zener standard linear solids in parallel
   integer, parameter :: Lnu = 3
 
-! attenuation relaxation times
-  double precision tau_epsilon_nu1_mech1, tau_sigma_nu1_mech1, tau_epsilon_nu2_mech1, tau_sigma_nu2_mech1, &
-    tau_epsilon_nu1_mech2, tau_sigma_nu1_mech2, tau_epsilon_nu2_mech2, tau_sigma_nu2_mech2
+! DK DK I implemented a very simple and slow inverse Discrete Fourier Transform
+! DK DK at some point, for verification, using a double loop. I keep it just in case.
+! DK DK For large number of points it is extremely slow because of the double loop.
+! DK DK Thus there is no reason to turn this flag on.
+  logical, parameter :: USE_SLOW_FOURIER_TRANSFORM = .false.
 
 !! DK DK March 2018: this missing 1/L factor has been added to this code by Quentin Brissaud
 !! DK DK for the viscoacoustic code in directory EXAMPLES/attenuation/viscoacoustic,
@@ -87,8 +93,8 @@
 
  double precision, dimension(Lnu) :: tau_sigma_nu1,tau_sigma_nu2,tau_epsilon_nu1,tau_epsilon_nu2
 
-  integer :: ifreq,ifreq2
-  double precision :: deltafreq,freq,omega,omega0,deltat,time
+  integer :: ifreq
+  double precision :: deltafreq,freq,omega,omega0,deltat,time,a
   double complex :: comparg
 
 ! Fourier transform of the Ricker wavelet source
@@ -113,10 +119,10 @@
 ! ********** end of variable declarations ************
 
 ! classical least-squares constants
- tau_epsilon_nu1 =  (/ 0.109527114743452     ,  1.070028707488438E-002,  1.132519034287800E-003/)
- tau_sigma_nu1 = (/  8.841941282883074E-002 , 8.841941282883075E-003,  8.841941282883074E-004/)
- tau_epsilon_nu2 = (/  0.112028084581976    ,   1.093882462934487E-002,  1.167173427475064E-003/)
- tau_sigma_nu2 = (/  8.841941282883074E-002,  8.841941282883075E-003,  8.841941282883074E-004/)
+  tau_epsilon_nu1 =  (/ 0.109527114743452     ,  1.070028707488438E-002,  1.132519034287800E-003/)
+  tau_sigma_nu1 = (/  8.841941282883074E-002 , 8.841941282883075E-003,  8.841941282883074E-004/)
+  tau_epsilon_nu2 = (/  0.112028084581976    ,   1.093882462934487E-002,  1.167173427475064E-003/)
+  tau_sigma_nu2 = (/  8.841941282883074E-002,  8.841941282883075E-003,  8.841941282883074E-004/)
 
 ! position of the receiver
   x1 = +500.
@@ -140,11 +146,17 @@
 ! step in frequency
   deltafreq = freqmax / dble(nfreq)
 
+! define parameters for the Ricker source
+  omega0 = 2.d0 * pi * f0
+  a = pi**2 * f0**2
+
+  deltat = 1.d0 / (freqmax*dble(iratio))
+
 ! define the spectrum of the source
   do ifreq=0,nfreq
       freq = deltafreq * dble(ifreq)
       omega = 2.d0 * pi * freq
-      omega0 = 2.d0 * pi * f0
+
 ! typo in equation (B7) of Carcione et al., Wave propagation simulation in a linear viscoelastic medium,
 ! Geophysical Journal, vol. 95, p. 597-611 (1988), the exponential should be of -i omega t0,
 ! fixed here by adding the minus sign
@@ -156,8 +168,8 @@
 !     fomega(ifreq) = pi * dsqrt(pi/eta) * (1.d0/omega0) * cdexp(comparg) * ( dexp(- (pi*pi/eta) * (epsil/2 - omega/omega0)**2) &
 !         + dexp(- (pi*pi/eta) * (epsil/2 + omega/omega0)**2) )
 
-! definir le spectre d'un Ricker classique
-      fomega(ifreq) = - omega**2 * 2.d0 * (dsqrt(pi)/omega0) * cdexp(comparg) * dexp(- (omega/omega0)**2)
+! definir le spectre d'un Ricker classique (centre en t0)
+      fomega(ifreq) = dsqrt(pi) * cdexp(comparg) * omega**2 * dexp(-omega**2/(4.d0*a)) / (2.d0 * dsqrt(a**3))
 
       ra(ifreq) = dreal(fomega(ifreq))
       rb(ifreq) = dimag(fomega(ifreq))
@@ -249,8 +261,8 @@
   call cffti(nt,wsave)
 
 ! clear array of Fourier coefficients
-  do it=1,nt
-      c(it) = cmplx(0.,0.)
+  do it = 1,nt
+    c(it) = cmplx(0.,0.)
   enddo
 
 ! use the Fourier values for Ux
@@ -261,10 +273,33 @@
   enddo
 
 ! perform the inverse FFT for Ux
-  call cfftb(nt,c,wsave)
+  if (.not. USE_SLOW_FOURIER_TRANSFORM) then
+    call cfftb(nt,c,wsave)
+  else
+! DK DK I implemented a very simple and slow inverse Discrete Fourier Transform here
+! DK DK at some point, for verification, using a double loop. I keep it just in case.
+! DK DK For large number of points it is extremely slow because of the double loop.
+    input(:) = c(:)
+!   imaginary constant "i"
+    i_imaginary_constant = (0.,1.)
+    do it = 1,nt
+      if (mod(it,1000) == 0) print *,'FFT inverse it = ',it,' out of ',nt
+      j = it
+      c(j) = cmplx(0.,0.)
+      do m = 1,nt
+        c(j) = c(j) + input(m) * exp(2.d0 * PI * i_imaginary_constant * dble((m-1) * (j-1)) / nt)
+      enddo
+    enddo
+  endif
+
+! in the inverse Discrete Fourier transform one needs to divide by N, the number of samples (number of time steps here)
+  c(:) = c(:) / nt
 
 ! value of a time step
   deltat = 1.d0 / (freqmax*dble(iratio))
+
+! to get the amplitude right, we need to divide by the time step
+  c(:) = c(:) / deltat
 
 ! save time result inverse FFT for Ux
 
@@ -283,10 +318,10 @@
   endif
   do it=1,nt
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
-        time = dble(it)*deltat - t0
+        time = dble(it-1)*deltat - t0
 ! the seismograms are very long due to the very large number of FFT points used,
 ! thus keeping the useful part of the signal only (the first six seconds of the seismogram)
-        if (time <= 6.d0) write(11,*) sngl(time),real(c(it))
+        if (time >= 0.d0 .and. time <= 6.d0) write(11,*) sngl(time),real(c(it))
   enddo
   close(11)
 
@@ -295,8 +330,8 @@
 ! **********
 
 ! clear array of Fourier coefficients
-  do it=1,nt
-      c(it) = cmplx(0.,0.)
+  do it = 1,nt
+    c(it) = cmplx(0.,0.)
   enddo
 
 ! use the Fourier values for Uz
@@ -306,8 +341,34 @@
       c(nt+1-ifreq) = conjg(cmplx(phi2(ifreq)))
   enddo
 
-! perform the inverse FFT for Uz
-  call cfftb(nt,c,wsave)
+! perform the inverse FFT for Ux
+  if (.not. USE_SLOW_FOURIER_TRANSFORM) then
+    call cfftb(nt,c,wsave)
+  else
+! DK DK I implemented a very simple and slow inverse Discrete Fourier Transform here
+! DK DK at some point, for verification, using a double loop. I keep it just in case.
+! DK DK For large number of points it is extremely slow because of the double loop.
+    input(:) = c(:)
+!   imaginary constant "i"
+    i_imaginary_constant = (0.,1.)
+    do it = 1,nt
+      if (mod(it,1000) == 0) print *,'FFT inverse it = ',it,' out of ',nt
+      j = it
+      c(j) = cmplx(0.,0.)
+      do m = 1,nt
+        c(j) = c(j) + input(m) * exp(2.d0 * PI * i_imaginary_constant * dble((m-1) * (j-1)) / nt)
+      enddo
+    enddo
+  endif
+
+! in the inverse Discrete Fourier transform one needs to divide by N, the number of samples (number of time steps here)
+  c(:) = c(:) / nt
+
+! value of a time step
+  deltat = 1.d0 / (freqmax*dble(iratio))
+
+! to get the amplitude right, we need to divide by the time step
+  c(:) = c(:) / deltat
 
 ! save time result inverse FFT for Uz
   if (TURN_ATTENUATION_OFF) then
@@ -325,10 +386,10 @@
   endif
   do it=1,nt
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
-        time = dble(it)*deltat - t0
+        time = dble(it-1)*deltat - t0
 ! the seismograms are very long due to the very large number of FFT points used,
 ! thus keeping the useful part of the signal only (the first six seconds of the seismogram)
-        if (time <= 6.d0) write(11,*) sngl(time),real(c(it))
+        if (time >= 0.d0 .and. time <= 6.d0) write(11,*) sngl(time),real(c(it))
   enddo
   close(11)
 
