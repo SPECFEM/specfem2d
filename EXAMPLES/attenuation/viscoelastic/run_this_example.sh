@@ -7,10 +7,6 @@
 echo "running example: `date`"
 currentdir=`pwd`
 
-echo
-echo "(will take a few minutes)"
-echo
-
 # sets up directory structure in current example directoy
 echo
 echo "   setting up example..."

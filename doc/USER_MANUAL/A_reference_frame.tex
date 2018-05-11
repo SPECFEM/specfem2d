@@ -1,0 +1,42 @@
+\chapter{Reference Frame Convention}\label{cha:Coordinates}
+
+The code uses the following convention for the Cartesian reference frame:
+\begin{itemize}
+\item the $x$ axis points right (i.e., East)
+\item the $z$ axis points up (i.e., North).
+\end{itemize}
+
+\subsection*{Seismogram outputs}
+
+The seismogram output directions are given in Cartesian $x$/$z$
+directions. They can be rotated (from the direction of positive $z$, i.e. from the North) if needed using a flag defined in the \texttt{Par\_file}.
+
+For the labeling of the seismogram channels, see Appendix~\ref{cha:channel-codes}.
+Additionally, we add labels to the synthetics using the following
+convention: For a receiver station located in an
+\begin{description}
+\item [{elastic domain:}] ~
+\begin{itemize}
+\item \texttt{semd} for the displacement vector
+\item \texttt{semv} for the velocity vector
+\item \texttt{sema} for the acceleration vector
+\end{itemize}
+\item [{acoustic domain:}] ~\\
+ (please note that receiver stations in acoustic domains must be buried.
+This is due to the free surface condition which enforces a zero pressure
+at the surface.)
+\begin{itemize}
+\item \texttt{semd} for the displacement vector
+\item \texttt{semv} for the velocity vector
+\item \texttt{sema} for pressure which will be stored in the vertical component
+\texttt{Z}. Note that pressure in the acoustic media is isotropic
+and thus the pressure record would be the same in the other two component
+directions. We therefore use the other two seismogram components to
+store the acoustic potential in component \texttt{X} (or \texttt{N})
+and the first time derivative of the acoustic potential in component
+\texttt{Y} (or \texttt{E}).
+\end{itemize}
+\end{description}
+The seismograms are by default written out in ASCII-format to the
+\texttt{OUTPUT\_FILES/} subdirectory by each parallel process.
+
