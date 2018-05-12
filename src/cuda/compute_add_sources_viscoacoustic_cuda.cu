@@ -71,7 +71,7 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
 
         stf = source_time_function[INDEX2(nsources_local,isource,it)]/kappal;
         atomicAdd(&potential_dot_dot_acoustic[iglob],
-                  -sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 0,i,j)]*stf);
+                  sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 0,i,j)]*stf);
 
 
 
