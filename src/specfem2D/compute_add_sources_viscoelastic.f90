@@ -73,10 +73,8 @@
           do j = 1,NGLLZ
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
-                                       sourcearrays(i_source,1,i,j) * stf_used
-              accel_elastic(2,iglob) = accel_elastic(2,iglob) + &
-                                       sourcearrays(i_source,2,i,j) * stf_used
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(i_source,1,i,j) * stf_used
+              accel_elastic(2,iglob) = accel_elastic(2,iglob) + sourcearrays(i_source,2,i,j) * stf_used
             enddo
           enddo
         else
@@ -85,14 +83,7 @@
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
 
-              accel_elastic(1,iglob) = accel_elastic(1,iglob) + &
-                                       sourcearrays(i_source,1,i,j) * stf_used
-
-              ! daniel debug source contribution
-              !if (iglob == 37905) &
-              !write(1234,*) it, dble(sourcearrays(i_source,1,i,j) * source_time_function(i_source,it,i_stage)), &
-              !              accel_elastic(1,iglob),source_time_function(i_source,it,i_stage),sourcearrays(i_source,1,i,j)
-
+              accel_elastic(1,iglob) = accel_elastic(1,iglob) + sourcearrays(i_source,1,i,j) * stf_used
 
             enddo
           enddo
