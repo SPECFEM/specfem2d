@@ -405,7 +405,7 @@
 
   ! attenuation setting
   ! 'attenuation'
-  write(IOUT) N_SLS, f0_attenuation, READ_VELOCITIES_AT_f0
+  write(IOUT) N_SLS, ATTENUATION_f0_REFERENCE, READ_VELOCITIES_AT_f0
 
   end subroutine save_databases_attenuation
 

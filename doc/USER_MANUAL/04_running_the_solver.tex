@@ -76,7 +76,7 @@ is accurate at second order and thus contains significantly less numerical noise
 
 \item[READ\_VELOCITIES\_AT\_f0]
 
- shift (i.e. change) velocities read from the input file to take average physical dispersion into account, i.e. if needed change the reference frequency at which these velocities are defined internally in the code: by default, the velocity values that are read at the end of this Par\_file of the code are supposed to be the unrelaxed values, i.e. the velocities at infinite frequency. We may want to change this and impose that the values read are those for a given frequency (here f0\_attenuation). (when we do this, velocities will then slightly decrease and waves will thus slightly slow down)
+ shift (i.e. change) velocities read from the input file to take average physical dispersion into account, i.e. if needed change the reference frequency at which these velocities are defined internally in the code: by default, the velocity values that are read at the end of this Par\_file of the code are supposed to be the unrelaxed values, i.e. the velocities at infinite frequency. If you set this flage to .true., the values read are then those for a given frequency called ATTENUATION\_f0\_REFERENCE.
 
 
 \item[nbmodels]  With \texttt{MODEL = default} chosen, a variety of simple velocity and density models can be defined using the \texttt{nbmodels} device.

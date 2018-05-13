@@ -118,7 +118,7 @@
     call bcast_all_singlel(ATTENUATION_VISCOELASTIC)
     call bcast_all_singlel(ATTENUATION_VISCOACOUSTIC)
     call bcast_all_singlei(N_SLS)
-    call bcast_all_singledp(f0_attenuation)
+    call bcast_all_singledp(ATTENUATION_f0_REFERENCE)
     call bcast_all_singlel(READ_VELOCITIES_AT_f0)
     call bcast_all_singlel(USE_SOLVOPT)
     call bcast_all_singlel(ATTENUATION_PORO_FLUID_PART)
@@ -279,6 +279,9 @@
 
   integer, external :: err_occurred
 
+!! DK DK to detect discontinued parameters
+  double precision :: f0_attenuation
+
   !--------------------------------------------------------------------
   !
   ! simulation input paramters
@@ -434,11 +437,22 @@
     write(*,*)
   endif
 
-  call read_value_double_precision_p(f0_attenuation, 'f0_attenuation')
+  call read_value_double_precision_p(ATTENUATION_f0_REFERENCE, 'ATTENUATION_f0_REFERENCE')
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'f0_attenuation                  = 5.196'
+    write(*,'(a)') 'ATTENUATION_f0_REFERENCE        = 5.196'
     write(*,*)
+  endif
+
+!! DK DK discontinued parameter
+  call read_value_double_precision_p(f0_attenuation, 'f0_attenuation')
+! if this parameter exists in the Par_file
+  if (err_occurred() == 0) then
+    write(*,'(a)') 'Parameter f0_attenuation in the Par_file is now called ATTENUATION_f0_REFERENCE'
+    write(*,'(a)') 'in order to use the same name as in the 3D code (SPECFEM3D).'
+    write(*,'(a)') 'Please rename it in your Par_file and start the code again.'
+    write(*,*)
+    call stop_the_code('Error: parameter f0_attenuation should be renamed in your Par_file')
   endif
 
   call read_value_logical_p(READ_VELOCITIES_AT_f0, 'READ_VELOCITIES_AT_f0')
