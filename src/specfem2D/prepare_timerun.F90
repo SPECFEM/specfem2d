@@ -1439,9 +1439,9 @@
   Mu_nu1(:,:,:) = +1._CUSTOM_REAL
   Mu_nu2(:,:,:) = +1._CUSTOM_REAL
 
-  ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
+  ! if source is not a Dirac or Heavyside then ATTENUATION_f0_REFERENCE is f0 of the first source
   if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
-    f0_attenuation = f0_source(1)
+    ATTENUATION_f0_REFERENCE = f0_source(1)
   endif
 
   ! setup attenuation
@@ -1452,7 +1452,7 @@
       write(IMAIN,*) 'Preparing attenuation in viscoelastic or viscoacoustic parts of the model:'
       write(IMAIN,*) '  using external model for Qkappa and Qmu: ',assign_external_model
       write(IMAIN,*) '  reading velocity at f0                 : ',READ_VELOCITIES_AT_f0
-      write(IMAIN,*) '  using f0 attenuation = ',f0_attenuation,'Hz'
+      write(IMAIN,*) '  using an attenuation reference frequency of ',ATTENUATION_f0_REFERENCE,'Hz'
       call flush_IMAIN()
     endif
 
@@ -1469,7 +1469,7 @@
         if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
 
         ! determines attenuation factors
-        call attenuation_model(qkappal,qmul,f0_attenuation,N_SLS, &
+        call attenuation_model(qkappal,qmul,ATTENUATION_f0_REFERENCE,N_SLS, &
                                tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
                                tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
       endif
@@ -1486,7 +1486,7 @@
             if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
 
             ! determines attenuation factors
-            call attenuation_model(qkappal,qmul,f0_attenuation,N_SLS, &
+            call attenuation_model(qkappal,qmul,ATTENUATION_f0_REFERENCE,N_SLS, &
                                    tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
                                    tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
           endif
@@ -1525,7 +1525,7 @@
 
               ! shifts vp and vs (according to f0 and attenuation band)
               call shift_velocities_from_f0(vp,vs,rhol, &
-                                    f0_attenuation,N_SLS, &
+                                    ATTENUATION_f0_REFERENCE,N_SLS, &
                                     tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
 
               ! stores shifted values
@@ -1544,7 +1544,7 @@
 
                 ! shifts vp and vs
                 call shift_velocities_from_f0(vp,vs,rhol, &
-                                      f0_attenuation,N_SLS, &
+                                      ATTENUATION_f0_REFERENCE,N_SLS, &
                                       tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
 
                 ! stores shifted mu,lambda

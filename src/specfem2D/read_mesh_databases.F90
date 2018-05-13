@@ -552,12 +552,12 @@
 
   use constants, only: IIN,NGLLX,NGLLZ
 
-  use specfem_par, only: N_SLS,f0_attenuation,READ_VELOCITIES_AT_f0
+  use specfem_par, only: N_SLS,ATTENUATION_f0_REFERENCE,READ_VELOCITIES_AT_f0
 
   implicit none
 
   ! attenuation parameters
-  read(IIN) N_SLS, f0_attenuation, READ_VELOCITIES_AT_f0
+  read(IIN) N_SLS, ATTENUATION_f0_REFERENCE, READ_VELOCITIES_AT_f0
 
   ! checks number of standard linear solids
   if (N_SLS < 1) call stop_the_code('must have N_SLS >= 1 even if attenuation if off because it is used to assign some arrays')

@@ -143,7 +143,7 @@ module shared_input_parameters
   double precision :: Q0_poroelastic,freq0_poroelastic
 
   integer :: N_SLS
-  double precision :: f0_attenuation
+  double precision :: ATTENUATION_f0_REFERENCE
   logical :: READ_VELOCITIES_AT_f0
   logical :: USE_SOLVOPT
 
