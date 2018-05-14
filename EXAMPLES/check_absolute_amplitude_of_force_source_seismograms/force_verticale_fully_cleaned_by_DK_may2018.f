@@ -37,13 +37,13 @@ C The FORTRAN source code              from record 0038 to 1471
 
 C EXACT 2D RESPONSE FOR VACUUM/ELASTIC INTERFACE, DIRECTIONAL SOURCE
 C  TMIN         TMAX         NTSTP
-C  0.000D0      0.800D0       400
+C  0.000D0      0.800D0      400
 C  DELAY        FP           ZS
-C  0.050D0       25.00D0   300.00D0
+C  0.050D0      25.00D0      300.00D0
 C  XREC         ZREC         DXR          DZR         NREC
-C  100.0D0     375.00D0      50.0D0       0.0D0         1
+C  100.0D0      375.00D0     50.0D0       0.0D0         1
 C  CP           CS           RHO
-C  3000.0D0     1000.0D0     2.0D0
+C  3000.0D0     1000.0D0     2000.0D0
 C  ITRACE(1)    ITRACE(2)    ITRACE(3)    ITRACE(4)
 C  1            1            1            1
 C  ITRACE(5)    ITRACE(6)    ITRACE(7)    ITRACE(8)
