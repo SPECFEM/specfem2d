@@ -43,7 +43,7 @@ C  0.050D0      25.00D0      300.00D0
 C  XREC         ZREC         DXR          DZR         NREC
 C  100.0D0      375.00D0     50.0D0       0.0D0         1
 C  CP           CS           RHO
-C  3000.0D0     1000.0D0     2000.0D0
+C  3000.0D0     2000.0D0     2000.0D0
 C  ITRACE(1)    ITRACE(2)    ITRACE(3)    ITRACE(4)
 C  1            1            1            1
 C  ITRACE(5)    ITRACE(6)    ITRACE(7)    ITRACE(8)
@@ -842,6 +842,7 @@ c *** fin modif D.K.
 
       double precision P,P1,GP,GS,DFDP,FAP
       double precision CP2I,CS2I,X,Z1,Z2,FEPS,CPF,TWO,TEMP
+      integer i
       COMMON /PARAM/ CP2I,CS2I
       DATA TWO,FEPS /2.00D+00,1.00D-13/
       I    = 0
@@ -880,10 +881,10 @@ c *** fin modif D.K.
 
       implicit double precision (a-h,o-z)
 
-      double precision T,DELAY,TAU,ZERO,HALF,TEMP,FP,a
+      double precision T,DELAY,TAU,ZERO,FP,a
       INTEGER DISPV
       COMMON /SOURCE/ DELAY,FP,DISPV
-      DATA ZERO,HALF /0.00D+00,0.50D+00/
+      DATA ZERO /0.00D+00/
 
       double precision PI
       parameter     (PI = 3.141592653589793d0)
@@ -1072,8 +1073,10 @@ c -------------------------------------------
       double complex P,P1,GP,GS,DPDT,FAP
       double precision CP2I,CS2I,TAU,X,Z1,Z2,FEPS,PI,ZERO,ONE,EPS
       double precision FAPR,FAPI,PR,PPS
+      integer i
       COMMON /PARAM/ CP2I,CS2I
       DATA ZERO,ONE,FEPS,EPS /0.00D+00,1.0D+00,1.0D-12,1.0D-6/
+
       I=0
       PR   = TAU*X/(X*X+(Z1+Z2)**2)
       PI   = -(Z1+Z2)*DSQRT(PR*PR-PPS*PPS)/X
@@ -1156,6 +1159,7 @@ c        IF(I.GT.500) GOTO 9999
 
       implicit double precision (a-h,o-z)
 
+      integer NP
       double precision Z,P(NP),Z2,ONE,TWO,FOUR
       DATA ONE,TWO,FOUR /1.00D+00,2.00D+00,4.00D+00/
       Z2   = Z*Z
@@ -1233,7 +1237,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,X,Z,C2I,R2,TIME,SOUR,DELAY,TARRIV,Y
+      double precision TAU,X,Z,C2I,R2,TIME,SOUR,DELAY,TARRIV,Y,FP
       double precision TWO,ONE,CH
       EXTERNAL SOUR
       COMMON /SOURCE/ DELAY,FP,DISPV
@@ -1250,7 +1254,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,X,Z,C2I,R2,TIME,SOUR,DELAY,TARRIV,Y
+      double precision TAU,X,Z,C2I,R2,TIME,SOUR,DELAY,TARRIV,Y,FP
       double precision SH,CH
       COMMON /SOURCE/ DELAY,FP,DISPV
       COMMON /NAG1/   X,Z,C2I,R2,TIME,TARRIV
@@ -1270,7 +1274,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,X,Z,C2I,R2,TIME,SOUR,DELAY,TARRIV,Y
+      double precision TAU,X,Z,C2I,R2,TIME,SOUR,DELAY,TARRIV,Y,FP
       double precision TWO,ONE,CH
       EXTERNAL SOUR
       COMMON /SOURCE/ DELAY,FP,DISPV
@@ -1287,7 +1291,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,X,Z,C2I,R2,TIME,SOUR,DELAY,TARRIV,Y
+      double precision TAU,X,Z,C2I,R2,TIME,SOUR,DELAY,TARRIV,Y,FP
       double precision SH,CH
       COMMON /SOURCE/ DELAY,FP,DISPV
       COMMON /NAG1/   X,Z,C2I,R2,TIME,TARRIV
@@ -1307,7 +1311,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y
+      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y,FP
       double precision X,Z,R2,C2I,CH,SH,TEMP
       double complex PP,P,GAMP,CI
       EXTERNAL SOUR,PP
@@ -1329,7 +1333,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y
+      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y,FP
       double precision X,Z,R2,C2I,CH,SH,TEMP
       double complex PP,P,GAMP,CI
       EXTERNAL SOUR,PP
@@ -1354,7 +1358,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY
+      double precision TAU,TIME,SOUR,DELAY,FP
       double precision CP2I,CS2I,X,ZR,ZS,PPS,PSP
       double precision TARRIV,Z,C2I,R2
       double complex P,DPDT,PTAU,PS,PC,GAMS
@@ -1374,7 +1378,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY
+      double precision TAU,TIME,SOUR,DELAY,FP
       double precision CP2I,CS2I,X,ZR,ZS,PPS,PSP
       double precision TARRIV,Z,C2I,R2
       double complex P,DPDT,PTAU,PS,PC,GAMS
@@ -1397,7 +1401,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY,CP2I,CS2I,X
+      double precision TAU,TIME,SOUR,DELAY,CP2I,CS2I,X,FP
       double precision TARRIV,Z,C2I,R2,Y,CH,SH,TEMP
       double complex P,PS0,GAMS,GAMP,CI
       EXTERNAL PS0,SOUR
@@ -1421,7 +1425,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY,CP2I,CS2I,X
+      double precision TAU,TIME,SOUR,DELAY,CP2I,CS2I,X,FP
       double precision TARRIV,Z,C2I,R2,Y,CH,SH,TEMP
       double complex P,PS0,GAMS,GAMP,CI
       EXTERNAL PS0,SOUR
@@ -1448,7 +1452,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y
+      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y,FP
       double precision X,Z,R2,C2I,CH,SH,TEMP
       double complex SS,P,GAMS,CI
       EXTERNAL SOUR,SS
@@ -1470,7 +1474,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y
+      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y,FP
       double precision X,Z,R2,C2I,CH,SH,TEMP
       double complex SS,P,GAMS,CI
       EXTERNAL SOUR,SS
@@ -1495,7 +1499,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY
+      double precision TAU,TIME,SOUR,DELAY,FP
       double precision CP2I,CS2I,X,ZR,ZS,PPS,PSP
       double precision TARRIV,Z,C2I,R2
       double complex P,DPDT,PTAU,SP,PC,GAMP
@@ -1515,7 +1519,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY
+      double precision TAU,TIME,SOUR,DELAY,FP
       double precision CP2I,CS2I,X,ZR,ZS,PPS,PSP
       double precision TARRIV,Z,C2I,R2
       double complex P,DPDT,PTAU,SP,PC,GAMP
@@ -1538,7 +1542,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY,CP2I,CS2I,X
+      double precision TAU,TIME,SOUR,DELAY,CP2I,CS2I,X,FP
       double precision TARRIV,Z,C2I,R2,Y,CH,SH,TEMP
       double complex P,SP0,GAMP,GAMS,CI
       EXTERNAL SP0,SOUR
@@ -1562,7 +1566,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY,CP2I,CS2I,X
+      double precision TAU,TIME,SOUR,DELAY,CP2I,CS2I,X,FP
       double precision TARRIV,Z,C2I,R2,Y,CH,SH,TEMP
       double complex P,SP0,GAMP,GAMS,CI
       EXTERNAL SP0,SOUR
@@ -1589,7 +1593,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y
+      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y,FP
       double precision X,Z,R2,C2I,CH,SH,TEMP,P,GAMS
       double complex SSH
       COMMON /SOURCE/ DELAY,FP,DISPV
@@ -1610,7 +1614,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y
+      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y,FP
       double precision X,Z,R2,C2I,CH,SH,TEMP,P,GAMS
       double complex SSH
       COMMON /SOURCE/ DELAY,FP,DISPV
@@ -1634,7 +1638,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y
+      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y,FP
       double precision X,Z,R2,C2I,CH,SH,TEMP,P,GAMS,GAMP,CP2I,CS2I
       double complex SPH
       COMMON /SOURCE/ DELAY,FP,DISPV
@@ -1657,7 +1661,7 @@ C***********************************************************************
       implicit double precision (a-h,o-z)
 
       INTEGER DISPV
-      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y
+      double precision TAU,TIME,SOUR,DELAY,TARRIV,Y,FP
       double precision X,Z,R2,C2I,CH,SH,TEMP,P,GAMS,GAMP,CP2I,CS2I
       double complex SPH
       COMMON /SOURCE/ DELAY,FP,DISPV
