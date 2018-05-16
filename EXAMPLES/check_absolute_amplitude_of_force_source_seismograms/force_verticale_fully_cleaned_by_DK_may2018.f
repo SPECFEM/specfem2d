@@ -119,7 +119,7 @@ c               per@hallf.kth.se
 *  SOURCE TYPE:         VERTICAL SINGLE FORCE (DIRECTIONAL POINT SOURCE)
 *                       _
 *                       F(X,Z,T)=(FX,FZ), FX=0, FZ=S(T)D(X)D(Z-ZS) ,
-*                       WHERE D IS DIRACH'S DELTA FUNCTION.
+*                       WHERE D IS DIRAC'S DELTA FUNCTION.
 *  SOURCE POSITION:     FIXED AT (0,ZS) WITH ZS>0.
 *  SOURCE TIME HISTORY: IS IDENTICAL ZERO FOR TIME<0 OR TIME>2*DELAY.
 *                       IS NON-ZERO ONLY IN THE INTERVAL 0<TIME<2*DELAY.
@@ -127,14 +127,14 @@ c               per@hallf.kth.se
 *                       THE CONVOLUTION INTEGRALS ARE 2*DELAY.
 *                       IN THIS CODE THE SOURCE TIME HISTORY S(T) IS
 *                       DEFINED FOR 0<T<2*DELAY AS:
-*                          S(T) EQUALS THE 1'ST DERIVATIVE OF A GAUSSIAN
+*                          S(T) EQUALS THE 2'ND DERIVATIVE OF A GAUSSIAN
 *                          HAVING CENTER AT T=DELAY, PEAK FREQUENCY FP
 *                          AND AMPLITUDE 1.
 *                       double precision FUNCTION SOUR(T) RETURNS THE VALUES:
 *                          0      IF T<0 OR T>2*DELAY,
 *                          S(T)   IF 0<T<2*DELAY AND DISPV=0,
 *                          S'(T)  IF 0<T<2*DELAY AND DISPV=1.
-*  GREEN'S FUNCTION:    DEFINED AS THE RESPONSE TO A DIRACH'S DELTA
+*  GREEN'S FUNCTION:    DEFINED AS THE RESPONSE TO A DIRAC'S DELTA
 *                       FUNCTION, I.E. WHEN S(T)=0 FOR ALL T, EXCEPT FOR
 *                       S(T=0+)=INFINITY. THE RESPONSE TO AN ARBITRARY
 *                       SOURCE TIME HISTORY S(T) IS THEN THE CONVOLUTION
@@ -343,25 +343,25 @@ c *** fin ajout D.K.
 
 *************** CHECK INPUT PARAMETERS
       IF(ZS.GT.ZERO) GOTO 22
-        WRITE(9,*) 'ZS MUST BE POSITIVE.'
+        WRITE(*,*) 'ZS MUST BE POSITIVE.'
         STOP
    22 IF(ZREC.GE.ZERO) GOTO 33
-        WRITE(9,*) 'ZREC MUST NOT BE NEGATIVE.'
+        WRITE(*,*) 'ZREC MUST NOT BE NEGATIVE.'
         STOP
    33 IF((NTSTP.GT.0).AND.(NTSTP.LE.NN)) GOTO 44
-        WRITE(9,*) 'NTSTP MUST BE POSITIVE AND LESS THAN',NN+1
+        WRITE(*,*) 'NTSTP MUST BE POSITIVE AND LESS THAN',NN+1
         STOP
    44 IF(TMIN.LT.TMAX) GOTO 55
-        WRITE(9,*) 'TMIN MUST BE LESS THAN TMAX.'
+        WRITE(*,*) 'TMIN MUST BE LESS THAN TMAX.'
         STOP
    55 IF((CS.GT.ZERO).AND.(CP.GT.ZERO)) GOTO 66
-        WRITE(9,*) 'VELOCITIES MUST BE POSITIVE.'
+        WRITE(*,*) 'VELOCITIES MUST BE POSITIVE.'
         STOP
    66 IF(DSQRT(TWO)*CS.LE.CP) GOTO 77
-        WRITE(9,*) 'CP MUST BE GREATER THAN SQRT(2)*CS.'
+        WRITE(*,*) 'CP MUST BE GREATER THAN SQRT(2)*CS.'
         STOP
    77 IF(RHO.GT.ZERO) GOTO 88
-        WRITE(9,*) 'DENSITY MUST BE POSITIVE.'
+        WRITE(*,*) 'DENSITY MUST BE POSITIVE.'
         STOP
    88 CONTINUE
 *************** SET PARAMETERS
@@ -399,50 +399,48 @@ c sauvegarde de la source au format Gnuplot (temps en secondes)
 c ***** fin ajout D.K.
 
 ***************  WRITE RUN INF.ON UNIT 9
-      WRITE(9,'(A19,F11.3,A6)')' DT               =',DT*MSEC,' MSEC '
-      WRITE(9,'(A19,F11.3,A6)')' P VELOCITY       =',CP   ,' M/SEC'
-      WRITE(9,'(A19,F11.3,A6)')' S VELOCITY       =',CS   ,' M/SEC'
-      WRITE(9,'(A19,F11.3,A8)')' DENSITY          =',RHO  ,' KG/M**3'
-      WRITE(9,'(A19         )')' RAYLEIGH WAVE:    '
-      WRITE(9,'(A19,F11.3,A6)')'   VELOCITY       =',CR   ,' M/SEC'
-      WRITE(9,'(A19,F11.3,A6)')'   DISTANCE (P)   =',RAYDP,' M    '
-      WRITE(9,'(A19,F11.3,A6)')'   DISTANCE (S)   =',RAYDS,' M    '
-      WRITE(9,'(A19         )')' HEAD WAVE (S-S):  '
-      WRITE(9,'(A19,F11.3,A6)')'   DISTANCE (ZREC)=',HEADD,' M    '
-      WRITE(9,'(A19,F11.3,A5)')' SOURCE DEPTH     =',ZS   ,' M   '
-      WRITE(9,'(A19,F11.3,A5)')' SOURCE PEEK FREQ.=',FP   ,' HZ  '
-      WRITE(9,'(A19,F11.3,A5)')' SOURCE DELAY     =',DELAY*1.D3,' MSEC'
+      WRITE(*,'(A19,F11.3,A6)')' DT               =',DT*MSEC,' MSEC '
+      WRITE(*,'(A19,F11.3,A6)')' P VELOCITY       =',CP   ,' M/SEC'
+      WRITE(*,'(A19,F11.3,A6)')' S VELOCITY       =',CS   ,' M/SEC'
+      WRITE(*,'(A19,F11.3,A8)')' DENSITY          =',RHO  ,' KG/M**3'
+      WRITE(*,'(A19         )')' RAYLEIGH WAVE:    '
+      WRITE(*,'(A19,F11.3,A6)')'   VELOCITY       =',CR   ,' M/SEC'
+      WRITE(*,'(A19,F11.3,A6)')'   DISTANCE (P)   =',RAYDP,' M    '
+      WRITE(*,'(A19,F11.3,A6)')'   DISTANCE (S)   =',RAYDS,' M    '
+      WRITE(*,'(A19         )')' HEAD WAVE (S-S):  '
+      WRITE(*,'(A19,F11.3,A6)')'   DISTANCE (ZREC)=',HEADD,' M    '
+      WRITE(*,'(A19,F11.3,A5)')' SOURCE DEPTH     =',ZS   ,' M   '
+      WRITE(*,'(A19,F11.3,A5)')' SOURCE PEEK FREQ.=',FP   ,' HZ  '
+      WRITE(*,'(A19,F11.3,A5)')' SOURCE DELAY     =',DELAY*1.D3,' MSEC'
       DO 1 I=1,2
-      IF(OUTPUT(I).EQ.'TAB'.AND.DISPV.EQ.0) WRITE(9,*)
+      IF(OUTPUT(I).EQ.'TAB'.AND.DISPV.EQ.0) WRITE(*,*)
      & 'TIME , U AND W ON UNIT 8'
-      IF(OUTPUT(I).EQ.'TAB'.AND.DISPV.EQ.1) WRITE(9,*)
+      IF(OUTPUT(I).EQ.'TAB'.AND.DISPV.EQ.1) WRITE(*,*)
      & 'TIME , DU/DT AND DW/DT ON UNIT 8'
-      IF(OUTPUT(I).EQ.'CON'.AND.DISPV.EQ.0) WRITE(9,*)
+      IF(OUTPUT(I).EQ.'CON'.AND.DISPV.EQ.0) WRITE(*,*)
      & 'U ON UNIT 10 AND W ON UNIT 11'
-      IF(OUTPUT(I).EQ.'CON'.AND.DISPV.EQ.1) WRITE(9,*)
+      IF(OUTPUT(I).EQ.'CON'.AND.DISPV.EQ.1) WRITE(*,*)
      & 'DU/DT ON UNIT 10 AND DW/DT ON UNIT 11'
   1   CONTINUE
-      WRITE(9,'(A1 )')' '
-      WRITE(9,'(A64)')
+      WRITE(*,'(A1 )')' '
+      WRITE(*,'(A64)')
      &' **************** TRAVEL TIME SCHEME (IN MSEC) *****************'
-      WRITE(9,'(A1 )')' '
-      WRITE(9,'(A20)')
+      WRITE(*,'(A1 )')' '
+      WRITE(*,'(A20)')
      &'  NO      XR      ZR'
-      WRITE(9,'(A66)')
+      WRITE(*,'(A66)')
      &'     DIR-P   DIR-S      PP      PS      SS'
      &//'      SP    RAYL    HEAD'
 *
 ***************  START RECEIVER LOOP
 *
       DO 1000 IR = 0,NREC-1
-       WRITE(6,*)'START RECEIVER LOOP NO.',IR+1
+       WRITE(*,*)'START RECEIVER LOOP NO.',IR+1
        XR = XREC+IR*DXR
        ZR = ZREC+IR*DZR
        IF(ZR.LT.ZERO) THEN
-         WRITE(6,*) 'RECEIVER DEPTH MUST NOT BE NEGATIVE.'
-         WRITE(6,*) 'ZR < 0 FOR RECEIVER NO:',IR
-         WRITE(9,*) 'RECEIVER DEPTH MUST NOT BE NEGATIVE.'
-         WRITE(9,*) 'ZR < 0 FOR RECEIVER NO:',IR
+         WRITE(*,*) 'RECEIVER DEPTH MUST NOT BE NEGATIVE.'
+         WRITE(*,*) 'ZR < 0 FOR RECEIVER NO:',IR
          STOP
        ELSE
        ENDIF
@@ -487,9 +485,9 @@ c ***** fin ajout D.K.
          TSP = TS
        ENDIF
 *
-       WRITE(9,'(I4,2(F8.2))')
+       WRITE(*,'(I4,2(F8.2))')
      &  IR+1,XR,ZR
-       WRITE(9,'(2X,8(F8.2))')
+       WRITE(*,'(2X,8(F8.2))')
      &  TP*MSEC,TS*MSEC,TPP*MSEC,TPS*MSEC,TSS*MSEC,
      &  TSP*MSEC,TRR*MSEC,THS*MSEC
 *
@@ -504,7 +502,7 @@ c ***** fin ajout D.K.
  10   CONTINUE
 *
       IF(ITRACE(1).EQ.0) GOTO 299
-      WRITE(6,*)'  START TRACE 1'
+      WRITE(*,*)'  START TRACE 1'
       OUTP = .TRUE.
 *****************************************************************
 *        DIRECT P-WAVE  (TP)                           TRACE 1
@@ -535,7 +533,7 @@ c ***** fin ajout D.K.
 *
  299  CONTINUE
       IF(ITRACE(2).EQ.0) GOTO 399
-      WRITE(6,*)'  START TRACE 2'
+      WRITE(*,*)'  START TRACE 2'
       OUTP = .TRUE.
 *****************************************************************
 *        DIRECT S-WAVE  (TS)                           TRACE 2
@@ -566,7 +564,7 @@ c ***** fin ajout D.K.
 *
  399  CONTINUE
       IF(ITRACE(3).EQ.0) GOTO 499
-      WRITE(6,*)'  START TRACE 3'
+      WRITE(*,*)'  START TRACE 3'
       OUTP = .TRUE.
 *****************************************************************
 *        PP REFLECTED WAVE  (TPP)                     TRACE 3
@@ -595,7 +593,7 @@ c ***** fin ajout D.K.
 *
  499  CONTINUE
       IF(ITRACE(4).EQ.0) GOTO 599
-      WRITE(6,*)'  START TRACE 4'
+      WRITE(*,*)'  START TRACE 4'
       OUTP = .TRUE.
 *****************************************************************
 *        PS REFLECTED WAVE   (TPS)                    TRACE 4
@@ -642,7 +640,7 @@ c ***** fin ajout D.K.
 *
  599  CONTINUE
       IF(ITRACE(5).EQ.0) GOTO 699
-      WRITE(6,*)'  START TRACE 5'
+      WRITE(*,*)'  START TRACE 5'
       OUTP = .TRUE.
 *****************************************************************
 *        SS REFLECTED WAVE  (TSS) BODY WAVE PART      TRACE 5
@@ -671,7 +669,7 @@ c ***** fin ajout D.K.
 *
  699  CONTINUE
       IF(ITRACE(6).EQ.0) GOTO 799
-      WRITE(6,*)'  START TRACE 6'
+      WRITE(*,*)'  START TRACE 6'
       OUTP = .TRUE.
 *****************************************************************
 *        SP REFLECTED WAVE   (TSP)                    TRACE 6
@@ -718,7 +716,7 @@ c ***** fin ajout D.K.
 *
  799  CONTINUE
       IF(ITRACE(7).EQ.0) GOTO 899
-      WRITE(6,*)'  START TRACE 7'
+      WRITE(*,*)'  START TRACE 7'
       OUTP = .TRUE.
 *****************************************************************
 *        SS REFLECTED WAVE   (THS) HEAD WAVE PART     TRACE 7
@@ -748,7 +746,7 @@ c ***** fin ajout D.K.
 *
  899  CONTINUE
       IF(ITRACE(8).EQ.0) GOTO 999
-      WRITE(6,*)'  START TRACE 8'
+      WRITE(*,*)'  START TRACE 8'
       OUTP = .TRUE.
 *****************************************************************
 *        SP REFLECTED WAVE   (THS) HEAD WAVE PART     TRACE 8
@@ -866,11 +864,11 @@ c *** fin modif D.K.
      &       .OR.DABS(FAP).GT.FEPS ) GOTO 10
       FINDP = P
       RETURN
- 9999 WRITE(9,*) '*************** ERROR IN FINDP ******************'
-      WRITE(9,*) 'I:                ',I
-      WRITE(9,*) 'P(I), P(I)-P(I-1):',P,DABS(P-P1)
-      WRITE(9,*) 'FUNCTION VALUE:   ',FAP
-      WRITE(9,*) 'FUNCTION DERIV:   ',DFDP
+ 9999 WRITE(*,*) '*************** ERROR IN FINDP ******************'
+      WRITE(*,*) 'I:                ',I
+      WRITE(*,*) 'P(I), P(I)-P(I-1):',P,DABS(P-P1)
+      WRITE(*,*) 'FUNCTION VALUE:   ',FAP
+      WRITE(*,*) 'FUNCTION DERIV:   ',DFDP
       STOP
       END
 *
@@ -1122,13 +1120,13 @@ c        IF(I.GT.500) GOTO 9999
       GS   = CDSQRT(CS2I-P1*P1)
       DPDT = GP*GS/(X*GP*GS-P*(Z1*GP+Z2*GS))
       RETURN
- 9999 WRITE(9,*) '************** ERROR IN PTAU *****************'
-      WRITE(9,*) 'TAU,I=            ',TAU,I
-      WRITE(9,*) 'P(I)-P(I-1):      ',DREAL(P-P1),DIMAG(P-P1)
-      WRITE(9,*) 'P(I)+P(I-1):      ',DREAL(P+P1),DIMAG(P+P1)
-      WRITE(9,*) 'FUNCTION VALUE:   ',FAPR,FAPI
-      WRITE(9,*) 'FUNCTION DERIV:   ',ONE/( X-P*(Z1/GS+Z2/GP) )
-      WRITE(9,*) 'P(I)              ',P
+ 9999 WRITE(*,*) '************** ERROR IN PTAU *****************'
+      WRITE(*,*) 'TAU,I=            ',TAU,I
+      WRITE(*,*) 'P(I)-P(I-1):      ',DREAL(P-P1),DIMAG(P-P1)
+      WRITE(*,*) 'P(I)+P(I-1):      ',DREAL(P+P1),DIMAG(P+P1)
+      WRITE(*,*) 'FUNCTION VALUE:   ',FAPR,FAPI
+      WRITE(*,*) 'FUNCTION DERIV:   ',ONE/( X-P*(Z1/GS+Z2/GP) )
+      WRITE(*,*) 'P(I)              ',P
       STOP
       END
 *
@@ -2836,8 +2834,7 @@ C     IBM-specific call to get trace-back
 C
 C     CALL ERRTRA
 C     .. WRITE STATEMENTS REPLACING TRACEBACK (IF AND BERG, OCT. 1991)
-      WRITE(9,'(A)') 'STOP DUE TO ERROR IN NAG-ROUTINE'
-      WRITE(6,'(A)') 'STOP DUE TO ERROR IN NAG-ROUTINE'
+      WRITE(*,'(A)') 'STOP DUE TO ERROR IN NAG-ROUTINE'
       STOP
       END
 *AG05CAF
