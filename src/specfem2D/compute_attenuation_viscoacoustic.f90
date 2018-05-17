@@ -516,7 +516,7 @@
   ! compute forces for the elastic elements
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: nglob,nspec,PML_BOUNDARY_CONDITIONS,N_SLS, &
+  use specfem_par, only: PML_BOUNDARY_CONDITIONS,N_SLS, &
                          ispec_is_PML, &
                          phi_nu1, inv_tau_sigma_nu1,time_stepping_scheme,i_stage, it, deltat, &
                          e1_acous, e1_LDDRK_acous, e1_initial_rk_acous, e1_force_RK_acous, &
