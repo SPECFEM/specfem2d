@@ -51,7 +51,7 @@
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top, &
                          STACEY_ABSORBING_CONDITIONS, &
-                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att,dot_e1
+                         ATTENUATION_VISCOACOUSTIC,dot_e1
 
   implicit none
 
