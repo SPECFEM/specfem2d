@@ -426,9 +426,10 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: rmass_inverse_e1
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_acous
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_LDDRK_acous
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_acous_temp, dot_e1, dot_e1_old, A_newmark_e1, B_newmark_e1
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_acous_temp, dot_e1, dot_e1_old,A_newmark_e1, B_newmark_e1
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: A_newmark_e1_sf, B_newmark_e1_sf,e1_acous_sf
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_initial_rk_acous
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: e1_force_rk_acous
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: e1_force_rk_acous,sum_forces_old
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
 

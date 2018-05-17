@@ -385,7 +385,7 @@
 
   ! -----------------------------------------------------------------------------------------------------------------------
 
-  subroutine update_memory_var_acous(dot_e1)
+  subroutine update_memory_var_acous_weak_form(dot_e1)
 
   ! compute forces for the elastic elements
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK,ZERO
@@ -504,99 +504,79 @@
 
   dot_e1(:,:) = ZERO
 
-  end subroutine update_memory_var_acous
+  end subroutine update_memory_var_acous_weak_form
 
   ! -----------------------------------------------------------------------------------------------------------------------
 
-  subroutine compute_attenuation_acoustic(potential_acoustic,potential_acoustic_old,ispec_is_acoustic, &
-                                              PML_BOUNDARY_CONDITIONS,e1_acous)
+  subroutine get_attenuation_forces_strong_form(sum_forces,sum_forces_old,forces_attenuation,i,j,ispec,iglob)
 
   ! updates memory variable in viscoacoustic simulation
+  ! and get the attenuation contribution
 
   ! compute forces for the elastic elements
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: nglob,nspec,ATTENUATION_VISCOACOUSTIC,N_SLS, &
-                         ibool,xix,xiz,gammax,gammaz,hprime_xx,hprime_zz,ispec_is_PML, &
-                         phi_nu1, inv_tau_sigma_nu1,time_stepping_scheme,i_stage,deltat, &
-                         e1_LDDRK_acous, e1_initial_rk_acous, e1_force_RK_acous, ibool
+  use specfem_par, only: nglob,nspec,PML_BOUNDARY_CONDITIONS,N_SLS, &
+                         ispec_is_PML, &
+                         phi_nu1, inv_tau_sigma_nu1,time_stepping_scheme,i_stage, it, deltat, &
+                         e1_acous, e1_LDDRK_acous, e1_initial_rk_acous, e1_force_RK_acous, &
+                         e1_acous_sf, A_newmark_e1_sf, B_newmark_e1_sf
 
   implicit none
 
-! update the memory variables using a convolution or using a differential equation
-! (tests made by Ting Yu and also by Zhinan Xie, CNRS Marseille, France, show that it is better to leave it to .true.)
-  logical, parameter :: CONVOLUTION_MEMORY_VARIABLES = .true.
 
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_acoustic,potential_acoustic_old
-
-  logical,dimension(nspec),intent(in) :: ispec_is_acoustic
-
-  ! CPML coefficients and memory variables
-  logical,intent(in) :: PML_BOUNDARY_CONDITIONS
-
-  real(kind=CUSTOM_REAL), dimension(nglob,N_SLS),intent(inout) :: e1_acous
+  real(kind=CUSTOM_REAL), intent(in)    :: sum_forces
+  real(kind=CUSTOM_REAL), intent(inout) :: sum_forces_old
+  real(kind=CUSTOM_REAL), intent(out)   :: forces_attenuation
+  integer :: i,j,ispec,iglob
 
   ! local variables
-  integer :: ispec
-  integer :: i,j,i_sls,iglob
-
-  ! nsub1 denotes discrete time step n-1
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_n,dux_dzl_n,duz_dxl_n,duz_dzl_n
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec) :: dux_dxl_nsub1,dux_dzl_nsub1,duz_dxl_nsub1,duz_dzl_nsub1
+  
+! update the memory variables using a convolution or using a differential equation
+! (tests made by Ting Yu and also by Zhinan Xie, CNRS Marseille, France, show
+! that it is better to leave it to .true.)
+  logical, parameter :: CONVOLUTION_MEMORY_VARIABLES = .true.
 
   ! for attenuation
-  real(kind=CUSTOM_REAL) :: phinu1,theta_n_u,theta_nsub1_u
-  double precision :: tauinvnu1,coef1,temp
+  real(kind=CUSTOM_REAL), dimension(N_SLS) :: phinu1,a_newmark
+  double precision, dimension(N_SLS) :: tauinvnu1,coef1,temp
 
   ! temporary RK4 variable
   real(kind=CUSTOM_REAL) :: weight_rk
 
-  ! checks if anything to do
-  if (.not. ATTENUATION_VISCOACOUSTIC) return
-
   if (.not. CONVOLUTION_MEMORY_VARIABLES) &
     call stop_the_code('CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now')
 
-  ! compute gradient at time step n for attenuation
-  call compute_gradient_attenuation_fluid(potential_acoustic,dux_dxl_n,duz_dxl_n, &
-        dux_dzl_n,duz_dzl_n,xix,xiz,gammax,gammaz,ibool,ispec_is_acoustic,hprime_xx,hprime_zz,nspec,nglob)
+  forces_attenuation = 0._CUSTOM_REAL
 
-  ! compute gradient at time step n-1 for attenuation
-  call compute_gradient_attenuation_fluid(potential_acoustic_old,dux_dxl_nsub1,duz_dxl_nsub1, &
-        dux_dzl_nsub1,duz_dzl_nsub1,xix,xiz,gammax,gammaz,ibool,ispec_is_acoustic,hprime_xx,hprime_zz,nspec,nglob)
+  if ( PML_BOUNDARY_CONDITIONS .and. ispec_is_PML(ispec)) return
 
-  ! loop over spectral elements
-  do ispec = 1,nspec
+  ! convention to indicate that Q = 9999 i.e. that there is no viscoacousticity at that GLL point
+  if (inv_tau_sigma_nu1(i,j,ispec,1) < 0.) return
 
-    if (.not. ispec_is_acoustic(ispec)) cycle
+  if (time_stepping_scheme==1 .and. it==1) then
+    phinu1(:)    = phi_nu1(i,j,ispec,:)
+    tauinvnu1(:) = inv_tau_sigma_nu1(i,j,ispec,:)
+    temp(:)      = exp(- 0.5d0 * tauinvnu1(:) * deltat)
+    coef1(:)     = (1.d0 - temp(:)) / tauinvnu1(:)
+    A_newmark_e1_sf(:,i,j,ispec) = temp(:)
+    B_newmark_e1_sf(:,i,j,ispec) = phinu1(:) * coef1(:)
+  endif
 
-    if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS .and. (.not. ispec_is_PML(ispec)))) then
+  if (time_stepping_scheme /= 1) then
+    phinu1(:)    = phi_nu1(i,j,ispec,:)
+    tauinvnu1(:) = inv_tau_sigma_nu1(i,j,ispec,:)
+  endif
 
-  do j = 1,NGLLZ
-    do i = 1,NGLLX
+  ! update e1 in convolution formulation with modified recursive convolution scheme on basis of
+  ! second-order accurate convolution term calculation from equation (21) of
+  ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
+  ! Anisotropic-medium PML for vector FETD with modified basis functions,
+  ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
+  select case (time_stepping_scheme)
 
-      ! convention to indicate that Q = 9999 i.e. that there is no viscoacousticity at that GLL point
-      if (inv_tau_sigma_nu1(i,j,ispec,1) < 0.) cycle
-
-      iglob = ibool(i,j,ispec)
-
-      theta_n_u     = (dux_dxl_n(i,j,ispec) + duz_dzl_n(i,j,ispec))
-      theta_nsub1_u = (dux_dxl_nsub1(i,j,ispec) + duz_dzl_nsub1(i,j,ispec))
-
-      ! loop on all the standard linear solids
-      do i_sls = 1,N_SLS
-        phinu1    = phi_nu1(i,j,ispec,i_sls)
-        tauinvnu1 = inv_tau_sigma_nu1(i,j,ispec,i_sls)
-
-        ! update e1 in convolution formulation with modified recursive convolution scheme on basis of
-        ! second-order accurate convolution term calculation from equation (21) of
-        ! Shumin Wang, Robert Lee, and Fernando L. Teixeira,
-        ! Anisotropic-medium PML for vector FETD with modified basis functions,
-        ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
-        select case (time_stepping_scheme)
-
-        case (1)
-          ! Newmark
+  case (1)
+  ! Newmark
 
 ! update the memory variables using a convolution or using a differential equation
 ! From Zhinan Xie and Dimitri Komatitsch:
@@ -604,52 +584,48 @@
 ! which may result in a in stiff ordinary differential equation to solve;
 ! in such a case, resorting to the convolution formulation is better.
 !         if (CONVOLUTION_MEMORY_VARIABLES) then
-!! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
-            temp = exp(- 0.5d0 * tauinvnu1 * deltat)
-            coef1 = (1.d0 - temp) / tauinvnu1
-            e1_acous(iglob,i_sls) = temp*temp * e1_acous(iglob,i_sls) + phinu1 * coef1 * (theta_n_u + temp * theta_nsub1_u)
+    a_newmark = A_newmark_e1_sf(:,i,j,ispec)
+    e1_acous_sf(:,i,j,ispec) = a_newmark * a_newmark * e1_acous_sf(:,i,j,ispec) + &
+                               B_newmark_e1_sf(:,i,j,ispec) * (sum_forces + a_newmark * sum_forces_old)
+    forces_attenuation = sum(e1_acous_sf(:,i,j,ispec))
+    sum_forces_old = sum_forces
 !         else
 !           stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
 !           e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + deltat * (- e1(i,j,ispec,i_sls)*tauinvnu1 + phinu1 * theta_n_u)
 !         endif
 
-        case (2)
-          ! LDDRK
-          ! update e1, e11, e13 in ADE formation with fourth-order LDDRK scheme
-          e1_LDDRK_acous(iglob,i_sls) = ALPHA_LDDRK(i_stage) * e1_LDDRK_acous(iglob,i_sls) + &
-                                      deltat * (theta_n_u * phinu1 - e1_acous(iglob,i_sls) * tauinvnu1)
-          e1_acous(iglob,i_sls) = e1_acous(iglob,i_sls) + BETA_LDDRK(i_stage) * e1_LDDRK_acous(iglob,i_sls)
+  case (2)
+    ! LDDRK
+    ! update e1, e11, e13 in ADE formation with fourth-order LDDRK scheme
+    e1_LDDRK_acous(iglob,:) = ALPHA_LDDRK(i_stage) * e1_LDDRK_acous(iglob,:) + &
+                                  deltat * (sum_forces * phinu1 - e1_acous(iglob,:) * tauinvnu1)
+    e1_acous(iglob,:) = e1_acous(iglob,:) + BETA_LDDRK(i_stage) * e1_LDDRK_acous(iglob,:)
 
-        case (3)
-          ! Runge-Kutta
-          ! update e1, e11, e13 in ADE formation with classical fourth-order Runge-Kutta scheme
-          e1_force_RK_acous(iglob,i_sls,i_stage) = deltat * (theta_n_u * phinu1 - e1_acous(iglob,i_sls) * tauinvnu1)
+    forces_attenuation = sum(e1_acous(iglob,:))
 
-          if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
-            if (i_stage == 1) weight_rk = 0.5_CUSTOM_REAL
-            if (i_stage == 2) weight_rk = 0.5_CUSTOM_REAL
-            if (i_stage == 3) weight_rk = 1._CUSTOM_REAL
+  case (3)
+    ! Runge-Kutta
+    ! update e1, e11, e13 in ADE formation with classical fourth-order Runge-Kutta scheme
+    e1_force_RK_acous(iglob,:,i_stage) = deltat * (sum_forces * phinu1 - e1_acous(iglob,:) * tauinvnu1)
 
-            if (i_stage == 1) e1_initial_rk_acous(iglob,i_sls) = e1_acous(iglob,i_sls)
-            e1_acous(iglob,i_sls) = e1_initial_rk_acous(iglob,i_sls) &
-                + weight_rk * e1_force_RK_acous(iglob,i_sls,i_stage)
-          else if (i_stage == 4) then
-            e1_acous(iglob,i_sls) = e1_initial_rk_acous(iglob,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
-                                  (e1_force_RK_acous(iglob,i_sls,1) + 2._CUSTOM_REAL * e1_force_RK_acous(iglob,i_sls,2) + &
-                                   2._CUSTOM_REAL * e1_force_RK_acous(iglob,i_sls,3) + e1_force_RK_acous(iglob,i_sls,4))
-          endif
+    if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
+      if (i_stage == 1) weight_rk = 0.5_CUSTOM_REAL
+      if (i_stage == 2) weight_rk = 0.5_CUSTOM_REAL
+      if (i_stage == 3) weight_rk = 1._CUSTOM_REAL
 
-        case default
-          call stop_the_code('Time stepping scheme not implemented yet in viscoacoustic attenuation update')
-        end select
-
-      enddo ! i_sls
-
-    enddo
-  enddo
-
+      if (i_stage == 1) e1_initial_rk_acous(iglob,:) = e1_acous(iglob,:)
+      e1_acous(iglob,:) = e1_initial_rk_acous(iglob,:) &
+                              + weight_rk * e1_force_RK_acous(iglob,:,i_stage)
+    else if (i_stage == 4) then
+      e1_acous(iglob,:) = e1_initial_rk_acous(iglob,:) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+                             (e1_force_RK_acous(iglob,:,1) + 2._CUSTOM_REAL * e1_force_RK_acous(iglob,:,2) + &
+                              2._CUSTOM_REAL * e1_force_RK_acous(iglob,:,3) + e1_force_RK_acous(iglob,:,4))
     endif
-  enddo
 
-  end subroutine compute_attenuation_acoustic
+    forces_attenuation = sum(e1_acous(iglob,:))
 
+  case default
+    call stop_the_code('Time stepping scheme not implemented yet in viscoacoustic attenuation update')
+  end select
+
+  end subroutine get_attenuation_forces_strong_form

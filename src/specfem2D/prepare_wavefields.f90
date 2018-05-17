@@ -333,12 +333,6 @@
     allocate(rmass_inverse_e1(1,1))
   endif
 
-  if (ATTENUATION_VISCOACOUSTIC .and. time_stepping_scheme == 2) then
-    allocate(e1_acous_temp(nglob_acoustic,N_SLS))
-  else
-    allocate(e1_acous_temp(1,1))
-  endif
-
   if (SIMULATION_TYPE == 3 .and. any_acoustic) then
     nglob_acoustic_b = nglob
     nspec_acoustic_b = nspec

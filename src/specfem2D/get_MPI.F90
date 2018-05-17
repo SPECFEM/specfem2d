@@ -35,7 +35,7 @@
 
 ! sets up MPI arrays
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,USE_A_STRONG_FORMULATION_FOR_E1
   use shared_parameters, only: NPROC
   use specfem_par
 
@@ -95,7 +95,7 @@
 
     if (ACOUSTIC_SIMULATION) then
       n_sls_loc = 0
-      if (ATTENUATION_VISCOACOUSTIC) n_sls_loc = N_SLS
+      if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) n_sls_loc = N_SLS
       allocate(request_send_recv_acoustic(ninterface_acoustic*2),stat=ier)
       if (ier /= 0) call stop_the_code('error in allocation of array request_send_recv_acoustic')
       allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac*(n_sls_loc+1),ninterface_acoustic),stat=ier)

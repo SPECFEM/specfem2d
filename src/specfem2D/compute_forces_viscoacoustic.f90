@@ -32,13 +32,13 @@
 !========================================================================
 
   subroutine compute_forces_viscoacoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                                     PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1_acous,dot_e1)
+                                     PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase)
 
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP, &
     ZERO,ONE,TWO,TWO_THIRDS, &
-    ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
+    ALPHA_LDDRK,BETA_LDDRK,C_LDDRK,USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par, only: nglob, &
                          assign_external_model,ibool,kmato,ispec_is_acoustic, &
@@ -47,7 +47,7 @@
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj,ATTENUATION_VISCOACOUSTIC, &
-                         N_SLS, iglob_is_forced,time_stepping_scheme,phi_nu1,inv_tau_sigma_nu1,nglob_att
+                         N_SLS, iglob_is_forced,time_stepping_scheme,phi_nu1,inv_tau_sigma_nu1,nglob_att,sum_forces_old,e1_acous,dot_e1
 
   ! overlapping communication
   use specfem_par, only: nspec_inner_acoustic,nspec_outer_acoustic,phase_ispec_inner_acoustic
@@ -59,9 +59,6 @@
 
   real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: potential_dot_dot_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_dot_acoustic,potential_acoustic
-
-  real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS),intent(inout) :: dot_e1
-  real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS),intent(in) :: e1_acous
 
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
   real(kind=CUSTOM_REAL), dimension(nglob) :: potential_acoustic_old
@@ -86,7 +83,7 @@
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
   real(kind=CUSTOM_REAL) :: rhol,fac
-  real(kind=CUSTOM_REAL) :: temp1l,temp2l
+  real(kind=CUSTOM_REAL) :: temp1l,temp2l,sum_forces,forces_attenuation
 
   ! local PML parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: potential_dot_dot_acoustic_PML
@@ -130,7 +127,7 @@
         endif
         deriv(6,i,j) = jacobian(i,j,ispec) / rhol
 
-        if (ATTENUATION_VISCOACOUSTIC .and. time_stepping_scheme > 1) then
+        if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. time_stepping_scheme > 1) then
                 deriv_e1(1,i,j,:) = phi_nu1(i,j,ispec,:)
                 deriv_e1(2,i,j,:) = inv_tau_sigma_nu1(i,j,ispec,:)
         endif
@@ -251,7 +248,7 @@
     endif
 
 !! DK DK QUENTIN visco begin
-    if (ATTENUATION_VISCOACOUSTIC) then
+    if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1)) then
       ! attenuation is implemented following the memory variable formulation of
       ! Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
       ! Geophysical Journal, vol. 93, p. 393-407 (1988)
@@ -296,7 +293,8 @@
               ! sums contributions from each element to the global values
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
                                                   - (wzgll(j) * temp1l + wxglj(i) * temp2l)
-              if (ATTENUATION_VISCOACOUSTIC .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) &
+              if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) &
+                   .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) &
                                                       - (wzgll(j) * temp1l + wxglj(i) * temp2l)
             endif
           enddo
@@ -316,7 +314,8 @@
               ! sums contributions from each element to the global values
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
                                                   - (wzgll(j) * temp1l + wxgll(i) * temp2l)
-              if (ATTENUATION_VISCOACOUSTIC .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) &
+              if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) &
+                  .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) &
                                                       - (wzgll(j) * temp1l + wxgll(i) * temp2l)
             endif
           enddo
@@ -336,10 +335,14 @@
               temp2l = temp2l + tempx2(i,k) * hprimewgll_zz(k,j)
             enddo
             ! sums contributions from each element to the global values
-            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) &
-                                                - (wzgll(j) * temp1l + wxgll(i) * temp2l)
-            if (ATTENUATION_VISCOACOUSTIC .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) &
-                                                      - (wzgll(j) * temp1l + wxgll(i) * temp2l)
+            sum_forces = wzgll(j) * temp1l + wxgll(i) * temp2l
+            potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - sum_forces
+            if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) &
+                .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) - sum_forces
+            if (ATTENUATION_VISCOACOUSTIC .and. USE_A_STRONG_FORMULATION_FOR_E1) then
+              call get_attenuation_forces_strong_form(sum_forces,sum_forces_old(i,j,ispec),forces_attenuation,i,j,ispec,iglob)
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - forces_attenuation
+            endif
           endif
         enddo
       enddo
@@ -360,7 +363,7 @@
     endif
 
 !! DK DK QUENTIN visco begin
-    if (ATTENUATION_VISCOACOUSTIC) then
+    if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1)) then
       if (AXISYM) then
         ! axisymmetric case
         if (is_on_the_axis(ispec)) then

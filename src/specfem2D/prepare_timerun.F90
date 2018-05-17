@@ -1273,7 +1273,7 @@
   use mpi
 #endif
 
-  use constants, only: IMAIN,TWO,PI,FOUR_THIRDS,TWO_THIRDS
+  use constants, only: IMAIN,TWO,PI,FOUR_THIRDS,TWO_THIRDS,USE_A_STRONG_FORMULATION_FOR_E1
   use specfem_par
 
   implicit none
@@ -1296,10 +1296,11 @@
     nspec_ATT = 1
   endif
 
+  ! attenuation
   if (ATTENUATION_VISCOACOUSTIC) then
-        nglob_att = nglob_acoustic
+    nglob_ATT = nglob
   else
-        nglob_att = 1
+    nglob_ATT = 1
   endif
 
   ! allocate memory variables for attenuation
@@ -1307,22 +1308,57 @@
            e11(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
            e13(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
 
-  if (ATTENUATION_VISCOACOUSTIC) then
-        allocate(e1_acous(nglob_att,N_SLS), &
-                 dot_e1(nglob_att,N_SLS),stat=ier)
-  else
-        allocate(e1_acous(1,N_SLS), &
-                 dot_e1(1,N_SLS),stat=ier)
-  endif
+  if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) then
 
-  if (time_stepping_scheme == 1 .and. ATTENUATION_VISCOACOUSTIC) then
-        allocate(dot_e1_old(nglob_att,N_SLS), &
-                 A_newmark_e1(nglob_att,N_SLS), &
-                 B_newmark_e1(nglob_att,N_SLS),stat=ier)
-  else
-        allocate(dot_e1_old(1,N_SLS), &
-                 A_newmark_e1(1,N_SLS), &
-                 B_newmark_e1(1,N_SLS),stat=ier)
+    allocate(e1_acous(nglob_acoustic,N_SLS), &
+             dot_e1(nglob_acoustic,N_SLS), &
+             e1_acous_sf(1,1,1,1), &
+             sum_forces_old(1,1,1), &
+             A_newmark_e1_sf(1,1,1,1), &
+             B_newmark_e1_sf(1,1,1,1), &
+             stat=ier)
+
+    if (time_stepping_scheme == 1) then
+      allocate(dot_e1_old(nglob_acoustic,N_SLS), &
+               A_newmark_e1(nglob_acoustic,N_SLS), &
+               B_newmark_e1(nglob_acoustic,N_SLS),stat=ier)
+    else
+      allocate(dot_e1_old(1,N_SLS), &
+               A_newmark_e1(1,N_SLS), &
+               B_newmark_e1(1,N_SLS),stat=ier)
+    endif
+
+    if (time_stepping_scheme == 2) then
+      allocate(e1_acous_temp(nglob_acoustic,N_SLS),stat=ier)
+    else
+      allocate(e1_acous_temp(1,N_SLS),stat=ier)
+    endif
+
+  else if (ATTENUATION_VISCOACOUSTIC .and. USE_A_STRONG_FORMULATION_FOR_E1) then
+
+    allocate(e1_acous(1,N_SLS), &
+             e1_acous_temp(1,N_SLS), &
+             dot_e1(1,N_SLS), &
+             dot_e1_old(1,N_SLS), &
+             A_newmark_e1(1,N_SLS), &
+             B_newmark_e1(1,N_SLS),stat=ier) 
+    allocate(sum_forces_old(NGLLX,NGLLZ,nspec), &
+             e1_acous_sf(N_SLS,NGLLX,NGLLZ,nspec), &
+             A_newmark_e1_sf(N_SLS,NGLLX,NGLLZ,nspec), &
+             B_newmark_e1_sf(N_SLS,NGLLX,NGLLZ,nspec),stat=ier)
+
+  else ! no ATTENUATION_VISCOACOUSTIC
+
+    allocate(e1_acous(1,N_SLS), &
+             e1_acous_temp(1,N_SLS), &
+             dot_e1(1,N_SLS), &
+             dot_e1_old(1,N_SLS), &
+             A_newmark_e1(1,N_SLS), &
+             B_newmark_e1(1,N_SLS), &
+             sum_forces_old(1,1,1), & 
+             e1_acous_sf(1,1,1,1), &
+             A_newmark_e1_sf(1,1,1,1), &
+             B_newmark_e1_sf(1,1,1,1),stat=ier)
   endif
 
   if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
@@ -1331,16 +1367,24 @@
   e13(:,:,:,:) = 0._CUSTOM_REAL
 
   e1_acous(:,:) = 0._CUSTOM_REAL
+  e1_acous_sf(:,:,:,:) = 0._CUSTOM_REAL
 
   dot_e1_old = 0._CUSTOM_REAL
   dot_e1     = 0._CUSTOM_REAL
   A_newmark_e1 = 0._CUSTOM_REAL
   B_newmark_e1 = 0._CUSTOM_REAL
+  sum_forces_old = 0._CUSTOM_REAL
 
   if (time_stepping_scheme == 2) then
-    allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
-    allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
-    allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
+    if (ATTENUATION_VISCOELASTIC) then
+      allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
+      allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
+      allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
+    else
+      allocate(e1_LDDRK(1,1,1,1))
+      allocate(e11_LDDRK(1,1,1,1))
+      allocate(e13_LDDRK(1,1,1,1))
+    endif
 
     if (ATTENUATION_VISCOACOUSTIC) then
         allocate(e1_LDDRK_acous(nglob_att,N_SLS))

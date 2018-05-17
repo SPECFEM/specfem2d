@@ -31,12 +31,12 @@
 !
 !========================================================================
 
-  subroutine compute_stacey_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic,dot_e1)
+  subroutine compute_stacey_acoustic(potential_dot_dot_acoustic,potential_dot_acoustic)
 
 ! absorbing boundaries
 ! for Stacey paraxial absorbing conditions (more precisely: Sommerfeld in the case of a fluid) we implement them here
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4,USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par, only: AXISYM,nglob,nelemabs,it,any_acoustic, &
                          assign_external_model,ibool,kmato,numabs,ispec_is_acoustic, &
@@ -51,14 +51,12 @@
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top, &
                          STACEY_ABSORBING_CONDITIONS, &
-                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att
+                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att,dot_e1
 
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob),intent(inout) :: potential_dot_dot_acoustic
   real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_dot_acoustic
-
-  real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS),intent(inout) :: dot_e1
 
   ! local parameters
   integer :: ispecabs,ispec,i,j,iglob
@@ -110,7 +108,8 @@
 
           ! adds absorbing boundary contribution
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
-          if (ATTENUATION_VISCOACOUSTIC) dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+          if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
+                   dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/cpl/rhol
 
           if (SAVE_FORWARD) then
             ! saves contribution
@@ -138,7 +137,8 @@
 
           ! adds absorbing boundary contribution
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
-          if (ATTENUATION_VISCOACOUSTIC) dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+          if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
+                 dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/cpl/rhol
 
           if (SAVE_FORWARD) then
             ! saves contribution
@@ -169,7 +169,8 @@
 
           ! adds absorbing boundary contribution
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
-          if (ATTENUATION_VISCOACOUSTIC) dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+          if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
+             dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/cpl/rhol
 
           if (SAVE_FORWARD) then
             ! saves contribution
@@ -200,7 +201,8 @@
 
           ! adds absorbing boundary contribution
           potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
-          if (ATTENUATION_VISCOACOUSTIC) dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+          if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
+               dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/cpl/rhol
 
           if (SAVE_FORWARD) then
             ! saves contribution

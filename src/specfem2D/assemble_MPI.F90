@@ -51,7 +51,7 @@
 
   use mpi
 
-  use constants, only: CUSTOM_REAL,NDIM
+  use constants, only: CUSTOM_REAL,NDIM,USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par, only: NPROC,ninterface,my_neighbors,N_SLS,ATTENUATION_VISCOACOUSTIC
 
@@ -138,7 +138,7 @@
                       + NDIM*nibool_interfaces_elastic(iinterface) &
                       + 2*nibool_interfaces_poroelastic(iinterface)
 
-      if (ATTENUATION_VISCOACOUSTIC) then
+      if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1)) then
         ! viscoacoustic
 
         ! loop over relaxation mechanisms
@@ -202,7 +202,7 @@
         array_val4(iglob) = array_val4(iglob) + buffer_recv_faces_scalar(ipoin,iinterface)
       enddo
 
-      if (ATTENUATION_VISCOACOUSTIC) then
+      if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1)) then
         ! loop over relaxation mechanisms
         do i_sls = 1,N_SLS
           do i = 1, nibool_interfaces_acoustic(iinterface)
@@ -470,7 +470,7 @@
 
 ! sends MPI buffers (asynchronously) - non-blocking routine
 
-  use constants, only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL,USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par, only: NPROC,nglob,my_neighbors
 
@@ -499,7 +499,9 @@
   if (NPROC > 1) then
 
     ! n_sls_local = 0 corresponds to a Newmark scheme, or to no viscoacousticity
-    if (n_sls_local_copy > 0 .and. .not. ATTENUATION_VISCOACOUSTIC) n_sls_local_copy = 0
+    if (n_sls_local_copy > 0 .and. (.not. ATTENUATION_VISCOACOUSTIC .or. &
+       (ATTENUATION_VISCOACOUSTIC .and. ( USE_A_STRONG_FORMULATION_FOR_E1)))) n_sls_local_copy = 0
+
 
     ! initializes buffers
     buffer_send_faces_vector_ac(:,:) = 0._CUSTOM_REAL
@@ -521,7 +523,7 @@
         ipoin = ipoin + 1
         ! copies array values to buffer
         buffer_send_faces_vector_ac(ipoin,iinterface) = array_val1(iglob)
-        if (ATTENUATION_VISCOACOUSTIC .and. n_sls_local_copy > 0) then
+        if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. n_sls_local_copy > 0) then
         buffer_send_faces_vector_ac(ipoin+1:ipoin+N_SLS,iinterface) = array_val1_e1(iglob,:)
         ipoin = ipoin + N_SLS
         endif
@@ -561,7 +563,7 @@
 
 ! waits for data and assembles
 
-  use constants, only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL,USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par, only: NPROC,nglob
 
@@ -589,7 +591,8 @@
   if (NPROC > 1) then
 
     ! n_sls_local = 0 corresponds to a Newmark scheme, or to no viscoacousticity
-    if (n_sls_local_copy > 0 .and. .not. ATTENUATION_VISCOACOUSTIC) n_sls_local_copy = 0
+    if (n_sls_local_copy > 0 .and. ((.not. ATTENUATION_VISCOACOUSTIC) .or. &
+       (ATTENUATION_VISCOACOUSTIC .and. ( USE_A_STRONG_FORMULATION_FOR_E1)))) n_sls_local_copy = 0
 
     ! waits for communication complection (all receive has finished)
     do iinterface = 1, ninterface_acoustic
@@ -610,7 +613,7 @@
         ! adds buffer contribution
         array_val1(iglob) = array_val1(iglob) + buffer_recv_faces_vector_ac(ipoin,iinterface)
 
-        if (ATTENUATION_VISCOACOUSTIC .and. n_sls_local_copy > 0) then
+        if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. n_sls_local_copy > 0) then
         array_val1_e1(iglob,:) = array_val1_e1(iglob,:) &
                 + buffer_recv_faces_vector_ac(ipoin+1:ipoin+N_SLS,iinterface)
         ipoin = ipoin + N_SLS

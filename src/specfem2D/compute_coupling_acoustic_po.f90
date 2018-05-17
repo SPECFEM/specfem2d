@@ -35,7 +35,8 @@
 
  subroutine compute_coupling_acoustic_po(dot_e1)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE, &
+                       USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par, only: num_fluid_poro_edges,ibool,wxgll,wzgll,xix,xiz, &
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
@@ -134,7 +135,7 @@
       displ_n = (displ_x + displw_x)*nx + (displ_z + displw_z)*nz
       potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
 
-      if (ATTENUATION_VISCOACOUSTIC) dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
+      if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
 
     enddo
   enddo

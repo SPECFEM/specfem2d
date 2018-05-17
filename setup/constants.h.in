@@ -108,6 +108,8 @@
 ! the initial (least squares) step of the SolvOpt() routine when USE_SOLVOPT is false, for compatibility with older benchmarks
   logical, parameter :: USE_OLD_C_ATTENUATION_ROUTINE_INSTEAD = .false.
 
+! for viscoacousticity
+  logical, parameter :: USE_A_STRONG_FORMULATION_FOR_E1 = .false.
 
 !!-----------------------------------------------------------
 !!

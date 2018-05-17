@@ -361,7 +361,7 @@
                                                   potential_dot_dot_acoustic,potential_dot_acoustic, &
                                                   potential_acoustic,PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
 
-  use constants, only: TWO,USE_ENFORCE_FIELDS
+  use constants, only: TWO,USE_ENFORCE_FIELDS,USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par, only: nglob_acoustic,CUSTOM_REAL,ATTENUATION_VISCOACOUSTIC,iglob_is_forced,acoustic_iglob_is_forced,it
 
@@ -378,7 +378,7 @@
   integer :: iglob
 
   ! PML simulations
-  if (PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOACOUSTIC) then
+  if (PML_BOUNDARY_CONDITIONS .or. (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1)) then
     ! note: TODO - for elastic, there is an additional factor 1/TWO to the default deltasquareover2 for the acceleration term
     !       find explanations where? Zhinan Xie probably wrote that and should thus know the answer
     !! DK DK oct 2017: thus adding a factor of TWO here as well
