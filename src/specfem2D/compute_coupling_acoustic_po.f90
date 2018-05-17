@@ -135,7 +135,8 @@
       displ_n = (displ_x + displw_x)*nx + (displ_z + displw_z)*nz
       potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
 
-      if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
+      if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
+          dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
 
     enddo
   enddo
