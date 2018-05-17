@@ -1341,7 +1341,7 @@
              dot_e1(1,N_SLS), &
              dot_e1_old(1,N_SLS), &
              A_newmark_e1(1,N_SLS), &
-             B_newmark_e1(1,N_SLS),stat=ier) 
+             B_newmark_e1(1,N_SLS),stat=ier)
     allocate(sum_forces_old(NGLLX,NGLLZ,nspec), &
              e1_acous_sf(N_SLS,NGLLX,NGLLZ,nspec), &
              A_newmark_e1_sf(N_SLS,NGLLX,NGLLZ,nspec), &
@@ -1355,7 +1355,7 @@
              dot_e1_old(1,N_SLS), &
              A_newmark_e1(1,N_SLS), &
              B_newmark_e1(1,N_SLS), &
-             sum_forces_old(1,1,1), & 
+             sum_forces_old(1,1,1), &
              e1_acous_sf(1,1,1,1), &
              A_newmark_e1_sf(1,1,1,1), &
              B_newmark_e1_sf(1,1,1,1),stat=ier)

@@ -33,7 +33,7 @@
 
   subroutine compute_forces_viscoacoustic_main()
 
-  use constants, only: SOURCE_IS_MOVING,USE_ENFORCE_FIELDS,ALPHA_LDDRK,BETA_LDDRK,ZERO,USE_A_STRONG_FORMULATION_FOR_E1 
+  use constants, only: SOURCE_IS_MOVING,USE_ENFORCE_FIELDS,ALPHA_LDDRK,BETA_LDDRK,ZERO,USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par
 

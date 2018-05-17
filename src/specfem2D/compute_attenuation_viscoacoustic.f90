@@ -531,7 +531,7 @@
   integer :: i,j,ispec,iglob
 
   ! local variables
-  
+
 ! update the memory variables using a convolution or using a differential equation
 ! (tests made by Ting Yu and also by Zhinan Xie, CNRS Marseille, France, show
 ! that it is better to leave it to .true.)
@@ -554,7 +554,7 @@
   ! convention to indicate that Q = 9999 i.e. that there is no viscoacousticity at that GLL point
   if (inv_tau_sigma_nu1(i,j,ispec,1) < 0.) return
 
-  if (time_stepping_scheme==1 .and. it==1) then
+  if (time_stepping_scheme == 1 .and. it == 1) then
     phinu1(:)    = phi_nu1(i,j,ispec,:)
     tauinvnu1(:) = inv_tau_sigma_nu1(i,j,ispec,:)
     temp(:)      = exp(- 0.5d0 * tauinvnu1(:) * deltat)
