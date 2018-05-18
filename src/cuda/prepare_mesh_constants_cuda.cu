@@ -164,7 +164,6 @@ void FC_FUNC_(prepare_constants_device,
                                         int* nrec_local,
                                         realw * h_cosrot,realw * h_sinrot,
                                         int* SIMULATION_TYPE,
-                                        int* USE_MESH_COLORING_GPU_f,
                                         int* nspec_acoustic,int* nspec_elastic,
                                         int* h_myrank,
                                         int* SAVE_FORWARD,
@@ -351,16 +350,6 @@ void FC_FUNC_(prepare_constants_device,
     copy_todevice_int((void**)&mp->d_ispec_selected_rec_loc,h_ispec_selected_rec_loc,mp->nrec_local);
   }
 
-  // mesh coloring
-#ifdef USE_MESH_COLORING_GPU
-  mp->use_mesh_coloring_gpu = 1;
-  if (! *USE_MESH_COLORING_GPU_f ) exit_on_error("error with USE_MESH_COLORING_GPU constant; please re-compile\n");
-#else
-  // note: this here passes the coloring as an option to the kernel routines
-  //          the performance seems to be the same if one uses the pre-processing directives above or not
-  mp->use_mesh_coloring_gpu = *USE_MESH_COLORING_GPU_f;
-#endif
-
   // number of elements per domain
   mp->nspec_acoustic = *nspec_acoustic;
   mp->nspec_elastic  = *nspec_elastic;
@@ -395,10 +384,7 @@ void FC_FUNC_(prepare_fields_acoustic_device,
                                               int* coupling_ac_el_ijk,
                                               realw* coupling_ac_el_normal,
                                               realw* coupling_ac_el_jacobian2Dw,
-                                              int * h_ninterface_acoustic,int * h_inum_interfaces_acoustic,
-                                              int* num_colors_outer_acoustic,
-                                              int* num_colors_inner_acoustic,
-                                              int* num_elem_colors_acoustic) {
+                                              int * h_ninterface_acoustic,int * h_inum_interfaces_acoustic) {
 
   TRACE("prepare_fields_acoustic_device");
 
@@ -488,13 +474,6 @@ void FC_FUNC_(prepare_fields_acoustic_device,
                         2*NGLLX*(*num_coupling_ac_el_faces));
     copy_todevice_realw((void**)&mp->d_coupling_ac_el_jacobian2Dw,coupling_ac_el_jacobian2Dw,
                         NGLLX*(*num_coupling_ac_el_faces));
-  }
-
-  // mesh coloring
-  if (mp->use_mesh_coloring_gpu) {
-    mp->num_colors_outer_acoustic = *num_colors_outer_acoustic;
-    mp->num_colors_inner_acoustic = *num_colors_inner_acoustic;
-    mp->h_num_elem_colors_acoustic = (int*) num_elem_colors_acoustic;
   }
 
   mp->ninterface_acoustic = *h_ninterface_acoustic;
@@ -594,9 +573,6 @@ void FC_FUNC_(prepare_fields_elastic_device,
                                              int* h_nspec_right,
                                              int* h_nspec_top,
                                              int* h_nspec_bottom,
-                                             int* num_colors_outer_elastic,
-                                             int* num_colors_inner_elastic,
-                                             int* num_elem_colors_elastic,
                                              int* ANISOTROPY,
                                              realw *c11store,realw *c12store,realw *c13store,
                                              realw *c15store,
@@ -633,15 +609,9 @@ void FC_FUNC_(prepare_fields_elastic_device,
       const textureReference* d_displ_tex_ref_ptr;
       print_CUDA_error_if_any(cudaGetTextureReference(&d_displ_tex_ref_ptr, "d_displ_tex"), 4004);
       print_CUDA_error_if_any(cudaBindTexture(0, d_displ_tex_ref_ptr, mp->d_displ, &channelDesc, sizeof(realw)*size), 4005);
-      if (mp->use_mesh_coloring_gpu) {
-        const textureReference* d_accel_tex_ref_ptr;
-        print_CUDA_error_if_any(cudaGetTextureReference(&d_accel_tex_ref_ptr, "d_accel_tex"), 4006);
-        print_CUDA_error_if_any(cudaBindTexture(0, d_accel_tex_ref_ptr, mp->d_accel, &channelDesc, sizeof(realw)*size), 4007);
-      }
     #else
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
       print_CUDA_error_if_any(cudaBindTexture(0, &d_displ_tex, mp->d_displ, &channelDesc, sizeof(realw)*size), 4008);
-      if (mp->use_mesh_coloring_gpu ) print_CUDA_error_if_any(cudaBindTexture(0, &d_accel_tex, mp->d_accel, &channelDesc, sizeof(realw)*size), 4009);
     #endif
   }
   #endif
@@ -778,13 +748,6 @@ void FC_FUNC_(prepare_fields_elastic_device,
                                          mp->NSPEC_AB, cudaMemcpyHostToDevice),4800);
   }
 
-  // mesh coloring
-  if (mp->use_mesh_coloring_gpu) {
-    mp->num_colors_outer_elastic = *num_colors_outer_elastic;
-    mp->num_colors_inner_elastic = *num_colors_inner_elastic;
-    mp->h_num_elem_colors_elastic = (int*) num_elem_colors_elastic;
-  }
-
   mp->ninterface_elastic = *h_ninterface_elastic;
   copy_todevice_int((void**)&mp->d_inum_interfaces_elastic,h_inum_interfaces_elastic,mp->num_interfaces_ext_mesh);
 
@@ -839,15 +802,9 @@ void FC_FUNC_(prepare_fields_elastic_adj_dev,
       const textureReference* d_b_displ_tex_ref_ptr;
       print_CUDA_error_if_any(cudaGetTextureReference(&d_b_displ_tex_ref_ptr, "d_b_displ_tex"), 5204);
       print_CUDA_error_if_any(cudaBindTexture(0, d_b_displ_tex_ref_ptr, mp->d_b_displ, &channelDesc, sizeof(realw)*size), 5205);
-      if (mp->use_mesh_coloring_gpu) {
-        const textureReference* d_b_accel_tex_ref_ptr;
-        print_CUDA_error_if_any(cudaGetTextureReference(&d_b_accel_tex_ref_ptr, "d_b_accel_tex"), 5206);
-        print_CUDA_error_if_any(cudaBindTexture(0, d_b_accel_tex_ref_ptr, mp->d_b_accel, &channelDesc, sizeof(realw)*size), 5207);
-      }
     #else
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
       print_CUDA_error_if_any(cudaBindTexture(0, &d_b_displ_tex, mp->d_b_displ, &channelDesc, sizeof(realw)*size), 5208);
-      if (mp->use_mesh_coloring_gpu ) print_CUDA_error_if_any(cudaBindTexture(0, &d_b_accel_tex, mp->d_b_accel, &channelDesc, sizeof(realw)*size), 5209);
     #endif
   }
   #endif

@@ -72,10 +72,6 @@ extern realw_texture d_wxgll_xx_tex;
 
 // note on performance optimizations:
 //
-//   instead of providing spezialized kernel routines (without mesh coloring, without gravity, etc.),
-//   we only provide one "general" kernel to handle all cases. this reduces code redundancy and improves code readability.
-//   as tradeoff, we take a little performance hit of around ~ 3%
-//
 //   performance tests done:
 //   - registers: we were trying to reduce the number of registers, as this is the main limiter for the
 //                occupancy of the kernel. however, there is only little difference in register pressure for one "general" kernel
@@ -122,8 +118,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
                        realw_const_p d_hprime_xx,
                        realw_const_p d_hprimewgll_xx,
                        realw_const_p d_wxgll,
-                       const realw* d_rhostore,
-                       const int use_mesh_coloring_gpu){
+                       const realw* d_rhostore){
 
   // block-id == number of local element id in phase_ispec array
   int bx = blockIdx.y*gridDim.x+blockIdx.x;
@@ -165,7 +160,6 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 //                                           counts accesses to global memory, but no shared memory or register loads/stores
 //                                           float has 4 bytes
 
-// counts: for simulations without gravity, without mesh_coloring
 //         counts floating-point operations (FLOP) per thread
 //         counts global memory accesses in bytes (BYTES) per block
 // 2 FLOP
@@ -353,8 +347,6 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
 #endif
 
   // if the grid can handle the number of blocks, we let it be 1D
-  // grid_2_x = nb_elem_color;
-  // nb_elem_color is just how many blocks we are computing now
   int blocksize = NGLL2;
 
   int num_blocks_x, num_blocks_y, nb_field;
@@ -390,8 +382,7 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                     mp->d_hprime_xx,
                                                                     mp->d_hprimewgll_xx,
                                                                     mp->d_wxgll,
-                                                                    d_rhostore,
-                                                                    mp->use_mesh_coloring_gpu);
+                                                                    d_rhostore);
 
 
   // Cuda timing
@@ -400,17 +391,7 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
     stop_timing_cuda(&start,&stop,"Kernel_2_acoustic_impl",&time);
     // time in seconds
     time = time / 1000.;
-
-      if (! mp->use_mesh_coloring_gpu) {
-        // see with: nvprof --metrics flops_sp ./xspecfem3D
-        //           -> using 322631424 FLOPS (Single) floating-point operations for 20736 elements
-        //              = 15559 FLOPS per block
-        flops = 15559 * nb_blocks_to_compute;
-      }else{
-        // coloring
-        flops = 15559 * nb_blocks_to_compute;
-      }
-
+    flops = 15559 * nb_blocks_to_compute;
     printf("  performance: %f GFlop/s\n", flops/time * 1.e-9);
   }
 

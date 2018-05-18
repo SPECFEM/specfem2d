@@ -225,21 +225,19 @@ subroutine iterate_time()
 
   call cpu_time(finish_time_of_time_loop)
 
-  if (TIME_THE_COST_TO_COMPUTE_WEIGHTS_FOR_THE_DOMAIN_DECOMPOSER) then
-    if (myrank == 0) then
-      duration_of_time_loop_in_seconds = finish_time_of_time_loop - start_time_of_time_loop
-      write(IMAIN,*)
-      write(IMAIN,*) 'Total duration of the time loop in seconds = ',duration_of_time_loop_in_seconds,' s'
-      write(IMAIN,*) 'Total number of time steps = ',NSTEP
-      write(IMAIN,*) 'Average duration of a time step of the time loop = ',duration_of_time_loop_in_seconds / real(NSTEP),' s'
-      write(IMAIN,*) 'Total number of spectral elements in the mesh = ',NSPEC
-      write(IMAIN,*) '    of which ',NSPEC - count(ispec_is_PML),' are regular elements'
-      write(IMAIN,*) '    and ',count(ispec_is_PML),' are PML elements.'
-      write(IMAIN,*) 'Average duration of the calculation per spectral element = ', &
-                           duration_of_time_loop_in_seconds / real(NSTEP * NSPEC),' s'
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
+  if (myrank == 0) then
+    duration_of_time_loop_in_seconds = finish_time_of_time_loop - start_time_of_time_loop
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total duration of the time loop in seconds = ',duration_of_time_loop_in_seconds,' s'
+    write(IMAIN,*) 'Total number of time steps = ',NSTEP
+    write(IMAIN,*) 'Average duration of a time step of the time loop = ',duration_of_time_loop_in_seconds / real(NSTEP),' s'
+    write(IMAIN,*) 'Total number of spectral elements in the mesh = ',NSPEC
+    write(IMAIN,*) '    of which ',NSPEC - count(ispec_is_PML),' are regular elements'
+    write(IMAIN,*) '    and ',count(ispec_is_PML),' are PML elements.'
+    write(IMAIN,*) 'Average duration of the calculation per spectral element = ', &
+                         duration_of_time_loop_in_seconds / real(NSTEP * NSPEC),' s'
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
 ! *********************************************************

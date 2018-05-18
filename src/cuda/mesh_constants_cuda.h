@@ -137,12 +137,6 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// (optional) pre-processing directive used in kernels: if defined check that it is also set in setup/constants.h:
-// leads up to ~ 5% performance increase
-//#define USE_MESH_COLORING_GPU
-
-/* ----------------------------------------------------------------------------------------------- */
-
 // macros for version output
 #define VALUE_TO_STRING(x) #x
 #define VALUE(x) VALUE_TO_STRING(x)
@@ -328,7 +322,6 @@ typedef struct mesh_ {
   // constants
   int simulation_type;
   int save_forward;
-  int use_mesh_coloring_gpu;
   int absorbing_conditions;
 
   // ------------------------------------------------------------------ //
@@ -419,10 +412,6 @@ typedef struct mesh_ {
   int ninterface_elastic;
   int * d_inum_interfaces_elastic;
 
-  // mesh coloring
-  int* h_num_elem_colors_elastic;
-  int num_colors_outer_elastic,num_colors_inner_elastic;
-
   realw* d_rmassx;
   realw* d_rmassz;
 
@@ -506,10 +495,6 @@ typedef struct mesh_ {
   int num_phase_ispec_acoustic;
   int ninterface_acoustic;
   int * d_inum_interfaces_acoustic;
-
-  // mesh coloring
-  int* h_num_elem_colors_acoustic;
-  int num_colors_outer_acoustic,num_colors_inner_acoustic;
 
   realw* d_rhostore;
   realw* d_kappastore;
