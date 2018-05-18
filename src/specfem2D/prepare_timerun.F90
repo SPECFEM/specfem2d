@@ -1288,7 +1288,7 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: tau_epsilon_nu1_sent,tau_epsilon_nu2_sent
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent, &
                                                        phi_nu1_sent,phi_nu2_sent
-  real(kind=CUSTOM_REAL), dimension(N_SLS) ::  phinu1,tauinvnu1,temp,coef1    
+  real(kind=CUSTOM_REAL), dimension(N_SLS) ::  phinu1,tauinvnu1,temp,coef1
 
   ! attenuation
   if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC) then

@@ -537,7 +537,7 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                           d_rhostore,
                                                                           mp->d_e1_acous,
                                                                           mp->d_A_newmark,
-                                                                          mp->d_B_newmark, 
+                                                                          mp->d_B_newmark,
                                                                           mp->d_sum_forces_old);
   }
 
