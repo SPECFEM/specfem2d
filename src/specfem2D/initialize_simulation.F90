@@ -98,8 +98,8 @@
 #endif
 
     write(IMAIN,*)
-    write(IMAIN,*) 'Running Git version of the code corresponding to ', git_commit_version
-    write(IMAIN,*) 'dating ', git_date_version
+   ! write(IMAIN,*) 'Running Git version of the code corresponding to ', git_commit_version
+   ! write(IMAIN,*) 'dating ', git_date_version
     write(IMAIN,*)
 
 #ifdef USE_MPI

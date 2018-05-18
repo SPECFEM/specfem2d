@@ -114,13 +114,8 @@
 // Gauss-Lobatto-Legendre
 #define NGLLX 5
 #define NGLL2 25
-#define NGLL3 125 // no padding: requires same size as in fortran for NGLLX * NGLLY * NGLLZ
 
-// padding: 128 == 2**7 might improve on older graphics cards w/ coalescent memory accesses:
-#define NGLL3_PADDED 128
 #define NGLL2_PADDED 32
-// no padding: 125 == 5*5*5 to avoid allocation of extra memory
-//#define NGLL3_PADDED 125
 
 // number of standard linear solids
 #define N_SLS 3
@@ -476,7 +471,6 @@ typedef struct mesh_ {
   realw* d_b_dsxz;
   realw* d_b_dszz;
 
-
   // JC JC here we will need to add GPU support for the new C-PML routines
 
   // ------------------------------------------------------------------ //
@@ -499,6 +493,12 @@ typedef struct mesh_ {
   realw* d_rhostore;
   realw* d_kappastore;
   realw* d_rmass_acoustic;
+
+  // attenuation
+  realw* d_e1_acous;
+  realw* d_A_newmark;
+  realw* d_B_newmark;
+  realw* d_sum_forces_old;
 
   // mpi buffer
   realw* d_send_potential_dot_dot_buffer;

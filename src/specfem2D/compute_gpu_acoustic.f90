@@ -36,7 +36,7 @@
   use specfem_par, only: NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbors,ninterface_acoustic,inum_interfaces_acoustic, &
     nelem_acoustic_surface,num_fluid_solid_edges, &
-    STACEY_ABSORBING_CONDITIONS,any_elastic,any_poroelastic,SIMULATION_TYPE
+    STACEY_ABSORBING_CONDITIONS,any_elastic,any_poroelastic,SIMULATION_TYPE, ATTENUATION_VISCOACOUSTIC
 
   use specfem_par, only: nspec_outer_acoustic, nspec_inner_acoustic
 
@@ -61,7 +61,7 @@
     ! acoustic pressure term
     ! includes code for SIMULATION_TYPE==3
     call compute_forces_acoustic_cuda(Mesh_pointer, iphase, &
-                                      nspec_outer_acoustic, nspec_inner_acoustic)
+                                      nspec_outer_acoustic, nspec_inner_acoustic,ATTENUATION_VISCOACOUSTIC)
 
     ! computes additional contributions
     if (iphase == 1) then

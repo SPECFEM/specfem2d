@@ -518,7 +518,7 @@
 
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,N_SLS, &
                          ispec_is_PML, &
-                         phi_nu1, inv_tau_sigma_nu1,time_stepping_scheme,i_stage, it, deltat, &
+                         phi_nu1, inv_tau_sigma_nu1,time_stepping_scheme,i_stage,deltat, &
                          e1_acous, e1_LDDRK_acous, e1_initial_rk_acous, e1_force_RK_acous, &
                          e1_acous_sf, A_newmark_e1_sf, B_newmark_e1_sf
 
@@ -539,7 +539,7 @@
 
   ! for attenuation
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: phinu1,a_newmark
-  double precision, dimension(N_SLS) :: tauinvnu1,coef1,temp
+  double precision, dimension(N_SLS) :: tauinvnu1
 
   ! temporary RK4 variable
   real(kind=CUSTOM_REAL) :: weight_rk
@@ -553,15 +553,6 @@
 
   ! convention to indicate that Q = 9999 i.e. that there is no viscoacousticity at that GLL point
   if (inv_tau_sigma_nu1(i,j,ispec,1) < 0.) return
-
-  if (time_stepping_scheme == 1 .and. it == 1) then
-    phinu1(:)    = phi_nu1(i,j,ispec,:)
-    tauinvnu1(:) = inv_tau_sigma_nu1(i,j,ispec,:)
-    temp(:)      = exp(- 0.5d0 * tauinvnu1(:) * deltat)
-    coef1(:)     = (1.d0 - temp(:)) / tauinvnu1(:)
-    A_newmark_e1_sf(:,i,j,ispec) = temp(:)
-    B_newmark_e1_sf(:,i,j,ispec) = phinu1(:) * coef1(:)
-  endif
 
   if (time_stepping_scheme /= 1) then
     phinu1(:)    = phi_nu1(i,j,ispec,:)

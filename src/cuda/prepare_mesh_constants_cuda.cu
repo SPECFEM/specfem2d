@@ -384,7 +384,8 @@ void FC_FUNC_(prepare_fields_acoustic_device,
                                               int* coupling_ac_el_ijk,
                                               realw* coupling_ac_el_normal,
                                               realw* coupling_ac_el_jacobian2Dw,
-                                              int * h_ninterface_acoustic,int * h_inum_interfaces_acoustic) {
+                                              int * h_ninterface_acoustic,int * h_inum_interfaces_acoustic,int* ATTENUATION_VISCOACOUSTIC, 
+                                              realw* h_A_newmark,realw* h_B_newmark) {
 
   TRACE("prepare_fields_acoustic_device");
 
@@ -478,6 +479,15 @@ void FC_FUNC_(prepare_fields_acoustic_device,
 
   mp->ninterface_acoustic = *h_ninterface_acoustic;
   copy_todevice_int((void**)&mp->d_inum_interfaces_acoustic,h_inum_interfaces_acoustic,mp->num_interfaces_ext_mesh);
+
+  if (*ATTENUATION_VISCOACOUSTIC) {
+    copy_todevice_realw((void**)&mp->d_A_newmark,h_A_newmark,NGLL2*mp->NSPEC_AB*N_SLS);
+    copy_todevice_realw((void**)&mp->d_B_newmark,h_B_newmark,NGLL2*mp->NSPEC_AB*N_SLS);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_e1_acous,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),2202);
+    print_CUDA_error_if_any(cudaMemset(mp->d_e1_acous,0,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),2203);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_sum_forces_old,mp->NSPEC_AB*sizeof(realw)*NGLL2),2204);
+    print_CUDA_error_if_any(cudaMemset(mp->d_sum_forces_old,0,mp->NSPEC_AB*sizeof(realw)*NGLL2),2205);
+  }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("prepare_fields_acoustic_device");
@@ -900,7 +910,8 @@ void FC_FUNC_(prepare_cleanup_device,
                                       int* ELASTIC_SIMULATION,
                                       int* ABSORBING_CONDITIONS,
                                       int* ANISOTROPY,
-                                      int* APPROXIMATE_HESS_KL) {
+                                      int* APPROXIMATE_HESS_KL,
+                                      int* ATTENUATION_VISCOACOUSTIC) {
 
 
 TRACE("prepare_cleanup_device");
@@ -991,8 +1002,15 @@ TRACE("prepare_cleanup_device");
         cudaFree(mp->d_b_absorb_potential_left);
         cudaFree(mp->d_b_absorb_potential_right);
         cudaFree(mp->d_b_absorb_potential_top);
-      }
+       }
     }
+    if (*ATTENUATION_VISCOACOUSTIC){
+      cudaFree(mp->d_e1_acous);
+      cudaFree(mp->d_A_newmark);
+      cudaFree(mp->d_B_newmark);
+      cudaFree(mp->d_sum_forces_old);
+    }
+
   } // ACOUSTIC_SIMULATION
 
   // ELASTIC arrays

@@ -396,7 +396,7 @@ void FC_FUNC_(transfer_kernels_hess_el_tohost,
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
 
-  print_CUDA_error_if_any(cudaMemcpy(h_hess_kl,mp->d_hess_el_kl,NGLL3*(*NSPEC_AB)*sizeof(realw),
+  print_CUDA_error_if_any(cudaMemcpy(h_hess_kl,mp->d_hess_el_kl,NGLL2*(*NSPEC_AB)*sizeof(realw),
                                      cudaMemcpyDeviceToHost),70201);
 }
 
@@ -411,7 +411,7 @@ void FC_FUNC_(transfer_kernels_hess_ac_tohost,
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
 
-  print_CUDA_error_if_any(cudaMemcpy(h_hess_ac_kl,mp->d_hess_ac_kl,NGLL3*(*NSPEC_AB)*sizeof(realw),
+  print_CUDA_error_if_any(cudaMemcpy(h_hess_ac_kl,mp->d_hess_ac_kl,NGLL2*(*NSPEC_AB)*sizeof(realw),
                                      cudaMemcpyDeviceToHost),70202);
 }
 

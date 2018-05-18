@@ -1288,6 +1288,7 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: tau_epsilon_nu1_sent,tau_epsilon_nu2_sent
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent, &
                                                        phi_nu1_sent,phi_nu2_sent
+  real(kind=CUSTOM_REAL), dimension(N_SLS) ::  phinu1,tauinvnu1,temp,coef1    
 
   ! attenuation
   if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC) then
@@ -1546,6 +1547,15 @@
 
           Mu_nu1(i,j,ispec) = Mu_nu1_sent
           Mu_nu2(i,j,ispec) = Mu_nu2_sent
+
+          if (ATTENUATION_VISCOACOUSTIC .and. USE_A_STRONG_FORMULATION_FOR_E1 .and. time_stepping_scheme == 1 ) then
+            phinu1(:)    = phi_nu1(i,j,ispec,:)
+            tauinvnu1(:) = inv_tau_sigma_nu1(i,j,ispec,:)
+            temp(:)      = exp(- 0.5d0 * tauinvnu1(:) * deltat)
+            coef1(:)     = (1.d0 - temp(:)) / tauinvnu1(:)
+            A_newmark_e1_sf(:,i,j,ispec) = temp(:)
+            B_newmark_e1_sf(:,i,j,ispec) = phinu1(:) * coef1(:)
+          endif
 
           ! shifts velocities
           if (READ_VELOCITIES_AT_f0) then

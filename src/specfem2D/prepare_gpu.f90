@@ -33,7 +33,7 @@
 
   subroutine prepare_GPU()
 
-  use constants, only: IMAIN,USE_MESH_COLORING_GPU,APPROXIMATE_HESS_KL
+  use constants, only: IMAIN,APPROXIMATE_HESS_KL,USE_A_STRONG_FORMULATION_FOR_E1
   use specfem_par
   use specfem_par_gpu
 
@@ -60,6 +60,9 @@
   if (PML_BOUNDARY_CONDITIONS ) call stop_the_code('PML not implemented on GPU mode. Please use Stacey instead.')
   if (AXISYM) call stop_the_code('Axisym not implemented on GPU yet.')
   if (NGLLX /= NGLLZ) call stop_the_code('GPU simulations require NGLLX == NGLLZ')
+  if ( (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. ATTENUATION_VISCOACOUSTIC) call stop_the_code( &
+    'GPU simulations require USE_A_STRONG_FORMULATION_FOR_E1 set to true')
+
 
   ! initializes arrays
   call init_host_to_dev_variable()
@@ -126,7 +129,6 @@
                                 nrecloc, &
                                 cosrot_irecf,sinrot_irecf, &
                                 SIMULATION_TYPE, &
-                                USE_MESH_COLORING_GPU, &
                                 nspec_acoustic,nspec_elastic, &
                                 myrank,SAVE_FORWARD, &
                                 xir_store_loc, &
@@ -150,9 +152,6 @@
 ! coupling_ac_el_ij                      : coordonnees locales des points GLL sur la frontiere elastique/acoustique
 ! coupling_ac_el_normal(i,j,ispec)       : i eme coordonne de la normale au point GLL j de l'element frontiere ispec
 ! coupling_ac_el_jacobian1Dw(i,ispec)    : jacobienne ponderee du i eme point GLL de l'element frontiere ispec
-! num_colors_outer_acoustic              : a initialiser plus tard quand USE_COLOR_MESH sera implemente
-! num_colors_inner_acoustic              : a initialiser plus tard quand USE_COLOR_MESH sera implemente
-! num_elem_colors_acoustic               : a initialiser plus tard quand USE_COLOR_MESH sera implemente
 
 
   ! prepares fields on GPU for acoustic simulations
@@ -166,9 +165,8 @@
                                         any_elastic, num_fluid_solid_edges, &
                                         coupling_ac_el_ispec,coupling_ac_el_ij, &
                                         coupling_ac_el_normal,coupling_ac_el_jacobian1Dw, &
-                                        ninterface_acoustic,inum_interfaces_acoustic, &
-                                        num_colors_outer_acoustic,num_colors_inner_acoustic, &
-                                        num_elem_colors_acoustic)
+                                        ninterface_acoustic,inum_interfaces_acoustic,ATTENUATION_VISCOACOUSTIC, &
+                                        A_newmark_e1_sf,B_newmark_e1_sf)
 
     if (SIMULATION_TYPE == 3) then
       ! safety check
@@ -186,9 +184,6 @@
 ! num_phase_ispec_elastic        : max entre nb d'element spectraux elastiques interieur et exterieur
 ! phase_ispec_inner_elastic(i,j) : i eme element spectral elastique interieur si j=2 exterieur si j=1
 ! elastic(i)                     : vrai si l'element spectral i est elastique
-! num_colors_outer_elastic       : a initialiser plus tard quand USE_COLOR_MESH sera implemente
-! num_colors_inner_elastic       : a initialiser plus tard quand USE_COLOR_MESH sera implemente
-! num_elem_colors_elastic        : a initialiser plus tard quand USE_COLOR_MESH sera implemente
 
   ! prepares fields on GPU for elastic simulations
   !?!? JC JC here we will need to add GPU support for the new C-PML routines
@@ -207,8 +202,6 @@
                                        nspec_right, &
                                        nspec_top, &
                                        nspec_bottom, &
-                                       num_colors_outer_elastic,num_colors_inner_elastic, &
-                                       num_elem_colors_elastic, &
                                        ANY_ANISOTROPY, &
                                        c11store,c12store,c13store, &
                                        c15store,c23store, &
@@ -633,21 +626,9 @@
     enddo
   enddo
 
-  ! coloring (dummy)
-  num_colors_outer_acoustic = 0
-  num_colors_inner_acoustic = 0
-  allocate(num_elem_colors_acoustic(1))
-  num_elem_colors_acoustic(1) = 0
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!! Initialisation parametres pour simulation elastique
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-  ! coloring (dummy)
-  num_colors_outer_elastic = 0
-  num_colors_inner_elastic = 0
-  allocate(num_elem_colors_elastic(1))
-  num_elem_colors_elastic(1) = 0
 
   ! anisotropy
   ANY_ANISOTROPY = .false.

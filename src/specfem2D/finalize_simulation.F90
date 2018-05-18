@@ -176,7 +176,8 @@
     call prepare_cleanup_device(Mesh_pointer,any_acoustic,any_elastic, &
                                 STACEY_ABSORBING_CONDITIONS, &
                                 ANISOTROPY, &
-                                APPROXIMATE_HESS_KL)
+                                APPROXIMATE_HESS_KL, &
+                                ATTENUATION_VISCOACOUSTIC)
   endif
 
   if (output_wavefield_dumps) deallocate(mask_ibool)

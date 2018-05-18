@@ -765,13 +765,6 @@ module specfem_par_gpu
 
   integer, dimension(:), allocatable :: cote_abs
 
-  ! coloring
-  integer :: num_colors_outer_acoustic,num_colors_inner_acoustic
-  integer, dimension(:), allocatable :: num_elem_colors_acoustic
-
-  integer :: num_colors_outer_elastic,num_colors_inner_elastic
-  integer, dimension(:), allocatable :: num_elem_colors_elastic
-
   ! sources
   integer :: nsources_local
   integer, dimension(:), allocatable :: ispec_selected_source_loc

@@ -42,6 +42,9 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
+
+//  !!!!!!!!!!  BEWARE this kernel needs to be adapted, it only reflect the 3D case for now
+
 __global__ void compute_kernels_ani_cudakernel(int* ispec_is_elastic,
                                            int* d_ibool,
                                            realw* accel,
@@ -59,8 +62,8 @@ __global__ void compute_kernels_ani_cudakernel(int* ispec_is_elastic,
 
   int ispec = blockIdx.x + blockIdx.y*gridDim.x;
   int ijk = threadIdx.x;
-  int ijk_ispec = ijk + NGLL3*ispec;
-  int ijk21_ispec = ijk + 21*NGLL3*ispec;
+  int ijk_ispec = ijk + NGLL2*ispec;
+  int ijk21_ispec = ijk + 9*NGLL2*ispec;
 
   realw prod[21];
   realw eps[6];
@@ -75,7 +78,7 @@ __global__ void compute_kernels_ani_cudakernel(int* ispec_is_elastic,
 
     // elastic elements only
     if (ispec_is_elastic[ispec]) {
-      int iglob = d_ibool[ijk + NGLL3_PADDED*ispec] - 1;
+      int iglob = d_ibool[ijk + NGLL2_PADDED*ispec] - 1;
 
       // anisotropic kernels:
       // density kernel
