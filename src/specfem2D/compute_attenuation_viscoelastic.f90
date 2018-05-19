@@ -33,8 +33,8 @@
 
 ! for viscoelastic solver
 
-  subroutine compute_attenuation_viscoelastic(e1,e11,e13,dux_dxl,dux_dzl,duz_dxl,duz_dzl,dux_dxl_old,duz_dzl_old,&
-                                              dux_dzl_plus_duz_dxl_old,PML_BOUNDARY_CONDITIONS,i,j,ispec,&
+  subroutine compute_attenuation_viscoelastic(e1,e11,e13,dux_dxl,dux_dzl,duz_dxl,duz_dzl,dux_dxl_old,duz_dzl_old, &
+                                              dux_dzl_plus_duz_dxl_old,PML_BOUNDARY_CONDITIONS,i,j,ispec, &
                                               e1_sum,e11_sum,e13_sum)
 
   ! updates memory variable in viscoelastic simulation

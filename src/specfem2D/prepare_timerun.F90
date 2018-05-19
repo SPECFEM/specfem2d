@@ -1578,7 +1578,7 @@
             temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
             coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
             A_newmark_nu2(:,i,j,ispec) = temp(:)
-            B_newmark_nu2(:,i,j,ispec) = phinu(:) * coef(:)          
+            B_newmark_nu2(:,i,j,ispec) = phinu(:) * coef(:)
           endif
 
           ! shifts velocities
