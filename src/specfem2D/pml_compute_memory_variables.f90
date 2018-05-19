@@ -573,7 +573,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: displ_elastic_old
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(inout) :: dux_dxl,dux_dzl,duz_dxl,duz_dzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(in) :: dux_dxl,dux_dzl,duz_dxl,duz_dzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: kappa_pml_dux_dxl,kappa_pml_duz_dzl,mu_pml_dux_dxl, &
                                                                 mu_pml_duz_dzl,mu_pml_dux_dzl,mu_pml_duz_dxl
 

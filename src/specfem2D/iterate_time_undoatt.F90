@@ -151,11 +151,17 @@
 
       allocate(b_e1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
                b_e11(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-               b_e13(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
+               b_e13(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+               b_dux_dxl_old(NGLLX,NGLLZ,nspec_ATT), &
+               b_duz_dzl_old(NGLLX,NGLLZ,nspec_ATT), &
+               b_dux_dzl_plus_duz_dxl_old(NGLLX,NGLLZ,nspec_ATT),stat=ier)
       if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
       b_e1(:,:,:,:) = 0._CUSTOM_REAL
       b_e11(:,:,:,:) = 0._CUSTOM_REAL
       b_e13(:,:,:,:) = 0._CUSTOM_REAL
+      b_dux_dxl_old(:,:,:) = 0._CUSTOM_REAL
+      b_duz_dzl_old(:,:,:) = 0._CUSTOM_REAL
+      b_dux_dzl_plus_duz_dxl_old(:,:,:) = 0._CUSTOM_REAL
     endif
   endif
 
@@ -398,7 +404,7 @@
     endif
     if (any_elastic) then
       deallocate(b_displ_elastic_buffer,b_accel_elastic_buffer)
-      deallocate(b_e1,b_e11,b_e13)
+      deallocate(b_e1,b_e11,b_e13,b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old)
     endif
   endif
 

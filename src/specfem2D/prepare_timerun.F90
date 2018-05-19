@@ -1288,7 +1288,7 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: tau_epsilon_nu1_sent,tau_epsilon_nu2_sent
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent, &
                                                        phi_nu1_sent,phi_nu2_sent
-  real(kind=CUSTOM_REAL), dimension(N_SLS) ::  phinu1,tauinvnu1,temp,coef1
+  real(kind=CUSTOM_REAL), dimension(N_SLS) ::  phinu,tauinvnu,temp,coef
 
   ! attenuation
   if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC) then
@@ -1297,17 +1297,24 @@
     nspec_ATT = 1
   endif
 
+  ! allocate memory variables for attenuation
+  allocate(e1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+           e11(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+           e13(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+           dux_dxl_old(NGLLX,NGLLZ,nspec_ATT), &
+           duz_dzl_old(NGLLX,NGLLZ,nspec_ATT), &
+           dux_dzl_plus_duz_dxl_old(NGLLX,NGLLZ,nspec_ATT), &
+           A_newmark_nu1(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
+           B_newmark_nu1(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
+           A_newmark_nu2(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
+           B_newmark_nu2(N_SLS,NGLLX,NGLLZ,nspec_ATT), stat=ier)
+
   ! attenuation
   if (ATTENUATION_VISCOACOUSTIC) then
     nglob_ATT = nglob
   else
     nglob_ATT = 1
   endif
-
-  ! allocate memory variables for attenuation
-  allocate(e1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           e11(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           e13(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
 
   if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) then
 
@@ -1366,14 +1373,15 @@
   e1(:,:,:,:) = 0._CUSTOM_REAL
   e11(:,:,:,:) = 0._CUSTOM_REAL
   e13(:,:,:,:) = 0._CUSTOM_REAL
+  dux_dxl_old(:,:,:) = 0._CUSTOM_REAL
+  duz_dzl_old(:,:,:) = 0._CUSTOM_REAL
+  dux_dzl_plus_duz_dxl_old(:,:,:) = 0._CUSTOM_REAL
 
   e1_acous(:,:) = 0._CUSTOM_REAL
   e1_acous_sf(:,:,:,:) = 0._CUSTOM_REAL
 
   dot_e1_old = 0._CUSTOM_REAL
   dot_e1     = 0._CUSTOM_REAL
-  A_newmark_e1 = 0._CUSTOM_REAL
-  B_newmark_e1 = 0._CUSTOM_REAL
   sum_forces_old = 0._CUSTOM_REAL
 
   if (time_stepping_scheme == 2) then
@@ -1549,12 +1557,28 @@
           Mu_nu2(i,j,ispec) = Mu_nu2_sent
 
           if (ATTENUATION_VISCOACOUSTIC .and. USE_A_STRONG_FORMULATION_FOR_E1 .and. time_stepping_scheme == 1 ) then
-            phinu1(:)    = phi_nu1(i,j,ispec,:)
-            tauinvnu1(:) = inv_tau_sigma_nu1(i,j,ispec,:)
-            temp(:)      = exp(- 0.5d0 * tauinvnu1(:) * deltat)
-            coef1(:)     = (1.d0 - temp(:)) / tauinvnu1(:)
+            phinu(:)    = phi_nu1(i,j,ispec,:)
+            tauinvnu(:) = inv_tau_sigma_nu1(i,j,ispec,:)
+            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
+            coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
             A_newmark_e1_sf(:,i,j,ispec) = temp(:)
-            B_newmark_e1_sf(:,i,j,ispec) = phinu1(:) * coef1(:)
+            B_newmark_e1_sf(:,i,j,ispec) = phinu(:) * coef(:)
+          endif
+
+          if (ATTENUATION_VISCOELASTIC .and. time_stepping_scheme == 1 ) then
+            phinu(:)    = phi_nu1(i,j,ispec,:)
+            tauinvnu(:) = inv_tau_sigma_nu1(i,j,ispec,:)
+            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
+            coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
+            A_newmark_nu1(:,i,j,ispec) = temp(:)
+            B_newmark_nu1(:,i,j,ispec) = phinu(:) * coef(:)
+
+            phinu(:)    = phi_nu2(i,j,ispec,:)
+            tauinvnu(:) = inv_tau_sigma_nu2(i,j,ispec,:)
+            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
+            coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
+            A_newmark_nu2(:,i,j,ispec) = temp(:)
+            B_newmark_nu2(:,i,j,ispec) = phinu(:) * coef(:)          
           endif
 
           ! shifts velocities

@@ -421,6 +421,10 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_LDDRK,e11_LDDRK,e13_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_force_rk,e11_force_rk,e13_force_rk
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: A_newmark_nu1,B_newmark_nu1,A_newmark_nu2,B_newmark_nu2
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old
+
 
   ! inverse mass matrix for viscoacoustic simulations
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: rmass_inverse_e1
