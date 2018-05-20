@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine create_color_image()
+  subroutine create_color_image(i_field)
 
 ! display a given field as a red and blue color JPEG image
 
@@ -46,9 +46,11 @@
     USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
     DRAW_SOURCES_AND_RECEIVERS, &
     ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver, &
-    USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE
+    USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE,SIMULATION_TYPE
 
   implicit none
+
+  integer :: i_field
 
   ! local parameters
   integer :: i
@@ -84,9 +86,21 @@
 ! slightly change the beginning of the file name depending if we use the time step of the image number, to avoid confusion
   if (USE_SNAPSHOT_NUMBER_IN_FILENAME) then
     isnapshot_number = isnapshot_number + 1
-    write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'img',isnapshot_number,'.jpg'
+    if (i_field == 1 .and. SIMULATION_TYPE==1) then
+      write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'forward_img',isnapshot_number,'.jpg'
+    else if (i_field == 1 .and. SIMULATION_TYPE==3) then
+      write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'adjoint_img',isnapshot_number,'.jpg'
+    else
+      write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'b_forward_img',isnapshot_number,'.jpg'
+    endif
   else
-    write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'image',it,'.jpg'
+    if (i_field == 1 .and. SIMULATION_TYPE==1) then
+      write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'forward_image',it,'.jpg'
+    else if (i_field == 1 .and. SIMULATION_TYPE==3) then
+      write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'adjoint_image',it,'.jpg'
+    else
+      write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'b_forward_image',it,'.jpg'
+    endif
   endif
 
 ! compute maximum amplitude

@@ -31,14 +31,19 @@
 !
 !========================================================================
 
-  subroutine compute_pressure_whole_medium()
+  subroutine compute_pressure_whole_medium(i_field)
 
 ! compute pressure in acoustic elements and in elastic elements
 
-  use specfem_par, only: CUSTOM_REAL,NGLLX,NGLLZ,nspec,ibool
+  use specfem_par, only: CUSTOM_REAL,NGLLX,NGLLZ,nspec,ibool,displ_elastic,displs_poroelastic,displw_poroelastic,&
+                         potential_dot_dot_acoustic,potential_acoustic,b_displ_elastic,b_displs_poroelastic,&
+                         b_displw_poroelastic,b_potential_dot_dot_acoustic,b_potential_acoustic
   use specfem_par_movie, only: vector_field_display
 
   implicit none
+
+  ! forwrad or adjoint wavefield)
+  integer :: i_field
 
   ! local parameters
   integer :: i,j,ispec,iglob
@@ -49,8 +54,13 @@
   do ispec = 1,nspec
 
     ! compute pressure in this element
-    call compute_pressure_one_element(ispec,pressure_element)
-
+    if (i_field==1) then
+      call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic,&
+                                        potential_dot_dot_acoustic,potential_acoustic)
+    else
+      call compute_pressure_one_element(ispec,pressure_element,b_displ_elastic,b_displs_poroelastic,b_displw_poroelastic,&
+                                        b_potential_dot_dot_acoustic,b_potential_acoustic)
+    endif
     ! use vector_field_display as temporary storage, store pressure in its second component
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -67,16 +77,16 @@
 !=====================================================================
 !
 
-  subroutine compute_pressure_one_element(ispec,pressure_element)
+  subroutine compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic,&
+                                          potential_dot_dot_acoustic,potential_acoustic)
 
 ! compute pressure in acoustic elements and in elastic elements
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,TWO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,TWO,NDIM
 
-  use specfem_par, only: N_SLS,ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
+  use specfem_par, only: N_SLS,nglob,ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
     ispec_is_anisotropic,kmato,poroelastcoef,assign_external_model,vpext,vsext,rhoext, &
-    ATTENUATION_VISCOELASTIC,AXISYM,is_on_the_axis,displ_elastic,displs_poroelastic,displw_poroelastic, &
-    potential_dot_dot_acoustic,potential_acoustic, &
+    ATTENUATION_VISCOELASTIC,AXISYM,is_on_the_axis, &
     anisotropy,c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext,c55ext, &
     hprimebar_xx,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,jacobian,ibool,coord,e1,e11,USE_TRICK_FOR_BETTER_PRESSURE
 
@@ -85,6 +95,8 @@
   integer,intent(in) :: ispec
   ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: pressure_element
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_dot_dot_acoustic,potential_acoustic 
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: displ_elastic,displs_poroelastic,displw_poroelastic
 
   ! local variables
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum

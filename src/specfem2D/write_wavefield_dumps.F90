@@ -223,7 +223,7 @@
 
   else if (imagetype_wavefield_dumps == 4 .and. P_SV) then
     if (myrank == 0) write(IMAIN,*) 'Dumping the pressure field...'
-    call compute_pressure_whole_medium()
+    call compute_pressure_whole_medium(1)
 
   else if (imagetype_wavefield_dumps == 4 .and. .not. P_SV) then
     call exit_MPI(myrank,'cannot dump the pressure field for SH (membrane) waves')
