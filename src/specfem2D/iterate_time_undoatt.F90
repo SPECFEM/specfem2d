@@ -48,7 +48,7 @@
 #endif
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_potential_acoustic_buffer,b_potential_dot_dot_acoustic_buffer
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_potential_acoustic_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_elastic_buffer,b_accel_elastic_buffer
   double precision :: sizeval
 
@@ -121,7 +121,7 @@
       write(IMAIN,*) '  wavefield snapshots at every NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION
       if (any_acoustic) then
         ! buffer(nglob,NT_DUMP_ATTENUATION) in MB
-        sizeval = 2 * dble(nglob) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+        sizeval = dble(nglob) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
         write(IMAIN,*) '  size of acoustic wavefield buffer per slice      = ', sngl(sizeval),'MB'
       endif
       if (any_elastic) then
@@ -140,8 +140,6 @@
     if (any_acoustic) then
       allocate(b_potential_acoustic_buffer(nglob,NT_DUMP_ATTENUATION),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_potential_acoustic')
-      allocate(b_potential_dot_dot_acoustic_buffer(nglob,NT_DUMP_ATTENUATION),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_potential_dot_dot_acoustic')
     endif
 
     if (any_elastic) then
@@ -298,10 +296,8 @@
         enddo
 
         ! stores wavefield in buffers
-        if (any_acoustic) then
-          b_potential_acoustic_buffer(:,it_of_this_subset) = b_potential_acoustic(:)
-          b_potential_dot_dot_acoustic_buffer(:,it_of_this_subset) = b_potential_dot_dot_acoustic(:)
-        endif
+        if (any_acoustic) b_potential_acoustic_buffer(:,it_of_this_subset) = b_potential_acoustic(:)
+
 
         if (any_elastic) then
           b_displ_elastic_buffer(:,:,it_of_this_subset) = b_displ_elastic(:,:)
@@ -320,10 +316,7 @@
       do it_of_this_subset = 1, it_subset_end
         ! reads backward/reconstructed wavefield from buffers
         ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
-        if (any_acoustic) then
-            b_potential_acoustic(:) = b_potential_acoustic_buffer(:,it_subset_end-it_of_this_subset+1)
-            b_potential_dot_dot_acoustic(:) = b_potential_dot_dot_acoustic_buffer(:,it_subset_end-it_of_this_subset+1)
-        endif
+        if (any_acoustic) b_potential_acoustic(:) = b_potential_acoustic_buffer(:,it_subset_end-it_of_this_subset+1)
 
         ! copy the reconstructed wavefield for kernel integration
         if (any_elastic) then
@@ -420,7 +413,7 @@
   ! frees undo_attenuation buffers
   if (SIMULATION_TYPE == 3) then
     if (any_acoustic) then
-      deallocate(b_potential_acoustic_buffer,b_potential_dot_dot_acoustic_buffer)
+      deallocate(b_potential_acoustic_buffer)
     endif
     if (any_elastic) then
       deallocate(b_displ_elastic_buffer)

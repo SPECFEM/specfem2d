@@ -83,7 +83,7 @@
                          density,poroelastcoef,kmato,assign_external_model,rhoext,vsext,vpext, &
                          deltat,P_SV,displ_elastic, &
                          mu_k,kappa_k,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
-                         GPU_MODE
+                         GPU_MODE,it,NSTEP
 
   use specfem_par_gpu, only: Mesh_pointer,deltatf
 
@@ -199,53 +199,23 @@
     call compute_kernels_elastic_cuda(Mesh_pointer,deltatf)
   endif
 
-  do ispec = 1, nspec
+ do ispec = 1, nspec
     if (ispec_is_elastic(ispec)) then
       ! isotropic kernels
       do j = 1, NGLLZ
         do i = 1, NGLLX
           iglob = ibool(i,j,ispec)
-          if (.not. assign_external_model) then
-            rhol = density(1,kmato(ispec))
-            mul = poroelastcoef(2,1,kmato(ispec))
-            !if (AXISYM) then ! ABAB !! Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
-              kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
-            !else
-            !  kappal = poroelastcoef(3,1,kmato(ispec)) - mul
-            !endif
-          else
-            rhol = rhoext(i,j,ispec)
-            mul = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
-            !if (AXISYM) then ! ABAB !! Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
-              kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - FOUR_THIRDS * mul
-            !else
-            !  kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - mul
-            !endif
-          endif
-
+          
           ! for parameterization (rho,mu,kappa): "primary" kernels
           ! density kernel
-          rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rhol  * rho_k(iglob) * deltat
+          rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rho_k(iglob) 
           ! shear modulus kernel
-          mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) - TWO * mul * mu_k(iglob) * deltat
+          mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) -  mu_k(iglob) 
           ! bulk modulus kernel
-          kappa_kl(i,j,ispec) = kappa_kl(i,j,ispec) - kappal * kappa_k(iglob) * deltat
+          kappa_kl(i,j,ispec) = kappa_kl(i,j,ispec) -  kappa_k(iglob) 
 
-          ! for parameterization (rho,beta,alpha):
-          ! rho prime kernel
-          rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + kappa_kl(i,j,ispec) + mu_kl(i,j,ispec)
-          ! Vs kernel
-          ! ABAB !! Warning !! This is possibly false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
-          beta_kl(i,j,ispec) = TWO * (mu_kl(i,j,ispec) - FOUR_THIRDS * mul/kappal * kappa_kl(i,j,ispec))
-          ! Vp kernel
-          ! ABAB !! Warning !! This is possibly false for plane strain (look for: bulk modulus plane strain) Check Kappa
-          alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + FOUR_THIRDS * mul/kappal) * kappa_kl(i,j,ispec)
-          ! for bulk velocity c parameterization (rho,bulk_c,beta):
-          bulk_c_kl(i,j,ispec) =  TWO * kappa_kl(i,j,ispec)
-          bulk_beta_kl(i,j,ispec) =  TWO * mu_kl(i,j,ispec)
         enddo
       enddo
-
       ! Voigt kernels, e.g., see Sieminski, 2007a,b
       if (ispec_is_anisotropic(ispec)) then
         do j = 1, NGLLZ
@@ -265,8 +235,65 @@
         enddo
       endif
 
-    endif ! elastic
+
+    endif
   enddo
+
+  ! only at the last time step we multiply by delta and parameter value, it is not necessary to do it at each iteration
+  if (it==NSTEP) then
+
+    do ispec = 1, nspec
+      if (ispec_is_elastic(ispec)) then
+        ! isotropic kernels
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            if (.not. assign_external_model) then
+              rhol = density(1,kmato(ispec))
+              mul = poroelastcoef(2,1,kmato(ispec))
+              !if (AXISYM) then ! ABAB !! 
+              !Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
+                kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
+              !else
+              !  kappal = poroelastcoef(3,1,kmato(ispec)) - mul
+              !endif
+            else
+              rhol = rhoext(i,j,ispec)
+              mul = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
+              !if (AXISYM) then ! ABAB !!
+              ! Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
+                kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - FOUR_THIRDS * mul
+              !else
+              !  kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - mul
+              !endif
+            endif
+
+            ! for parameterization (rho,mu,kappa): "primary" kernels
+            ! density kernel
+            rho_kl(i,j,ispec) = rhol * deltat * rho_kl(i,j,ispec)
+            ! shear modulus kernel
+            mu_kl(i,j,ispec) =  TWO * mul * deltat * mu_kl(i,j,ispec)
+            ! bulk modulus kernel
+            kappa_kl(i,j,ispec) = kappal * deltat * kappa_kl(i,j,ispec)
+
+            ! for parameterization (rho,beta,alpha):
+            ! rho prime kernel
+            rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + kappa_kl(i,j,ispec) + mu_kl(i,j,ispec)
+            ! Vs kernel
+            ! ABAB !! Warning !! This is possibly false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
+            beta_kl(i,j,ispec) = TWO * (mu_kl(i,j,ispec) - FOUR_THIRDS * mul/kappal * kappa_kl(i,j,ispec))
+            ! Vp kernel
+            ! ABAB !! Warning !! This is possibly false for plane strain (look for: bulk modulus plane strain) Check Kappa
+            alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + FOUR_THIRDS * mul/kappal) * kappa_kl(i,j,ispec)
+            ! for bulk velocity c parameterization (rho,bulk_c,beta):
+            bulk_c_kl(i,j,ispec) =  TWO * kappa_kl(i,j,ispec)
+            bulk_beta_kl(i,j,ispec) =  TWO * mu_kl(i,j,ispec)
+          enddo
+        enddo
+
+      endif ! elastic
+    enddo !nspec loop
+
+  endif ! it==NSTEP
 
   end subroutine compute_kernels_el
 
@@ -284,7 +311,7 @@
   use specfem_par, only: nspec,ispec_is_acoustic,ibool,kappal_ac_global,rhol_ac_global, &
                          poroelastcoef,density,kmato,assign_external_model,rhoext,vpext,deltat, &
                          hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
-                         potential_acoustic,b_potential_acoustic,b_potential_dot_dot_acoustic, &
+                         potential_acoustic,b_potential_acoustic,potential_dot_dot_acoustic, &
                          accel_ac,b_accel_ac,b_displ_ac, &
                          rho_ac_kl,kappa_ac_kl,rhop_ac_kl,alpha_ac_kl,GPU_MODE
 
@@ -294,7 +321,7 @@
 
   !local variables
   integer :: i,j,k,ispec,iglob
-  real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,b_tempx1l,b_tempx2l,bb_tempx1l,bb_tempx2l
+  real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,b_tempx1l,b_tempx2l
   double precision :: xixl,xizl,gammaxl,gammazl
 
   if (.not. GPU_MODE) then
@@ -318,19 +345,17 @@
             tempx2l = ZERO
             b_tempx1l = ZERO
             b_tempx2l = ZERO
-            bb_tempx1l = ZERO
-            bb_tempx2l = ZERO
+          !  bb_tempx1l = ZERO
+          !  bb_tempx2l = ZERO
             do k = 1,NGLLX
               ! derivative along x
               !tempx1l = tempx1l + potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
               tempx1l = tempx1l + potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k) !!! YANGL
               b_tempx1l = b_tempx1l + b_potential_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
-              bb_tempx1l = bb_tempx1l + b_potential_dot_dot_acoustic(ibool(k,j,ispec))*hprime_xx(i,k)
               ! derivative along z
               !tempx2l = tempx2l + potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
               tempx2l = tempx2l + potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k) !!! YANGL
               b_tempx2l = b_tempx2l + b_potential_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
-              bb_tempx2l = bb_tempx2l + b_potential_dot_dot_acoustic(ibool(i,k,ispec))*hprime_zz(j,k)
             enddo
 
             xixl = xix(i,j,ispec)
@@ -343,8 +368,6 @@
             accel_ac(2,iglob) = (tempx1l*xizl + tempx2l*gammazl) / rhol_ac_global(iglob)
             b_displ_ac(1,iglob) = (b_tempx1l*xixl + b_tempx2l*gammaxl) / rhol_ac_global(iglob)
             b_displ_ac(2,iglob) = (b_tempx1l*xizl + b_tempx2l*gammazl) / rhol_ac_global(iglob)
-            b_accel_ac(1,iglob) = (bb_tempx1l*xixl + bb_tempx2l*gammaxl) / rhol_ac_global(iglob)
-            b_accel_ac(2,iglob) = (bb_tempx1l*xizl + bb_tempx2l*gammazl) / rhol_ac_global(iglob)
           enddo !i = 1, NGLLX
         enddo !j = 1, NGLLZ
       endif
@@ -365,10 +388,11 @@
             !!!      * deltat
             !!!! new expression (from PDE-constrained optimization, coupling terms changed as well)
             rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + rhol_ac_global(iglob) * &
-                                   dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
+                                   dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat  
+                                   !warning : the variable is named accel_ac but it is displ_ac that is computed
             kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) + kappal_ac_global(iglob) * &
-                                     potential_acoustic(iglob)/kappal_ac_global(iglob) * &
-                                     b_potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * deltat
+                                     potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
+                                     b_potential_acoustic(iglob)/kappal_ac_global(iglob) * deltat
             ! YANGL
             rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)
             alpha_ac_kl(i,j,ispec) = TWO *  kappa_ac_kl(i,j,ispec)
