@@ -312,7 +312,7 @@
                          poroelastcoef,density,kmato,assign_external_model,rhoext,vpext,deltat, &
                          hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
                          potential_acoustic,b_potential_acoustic,potential_dot_dot_acoustic, &
-                         accel_ac,b_accel_ac,b_displ_ac, &
+                         accel_ac,b_displ_ac, &
                          rho_ac_kl,kappa_ac_kl,rhop_ac_kl,alpha_ac_kl,GPU_MODE
 
   use specfem_par_gpu, only: Mesh_pointer,deltatf
