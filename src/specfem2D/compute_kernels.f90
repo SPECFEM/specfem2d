@@ -205,14 +205,14 @@
       do j = 1, NGLLZ
         do i = 1, NGLLX
           iglob = ibool(i,j,ispec)
-          
+
           ! for parameterization (rho,mu,kappa): "primary" kernels
           ! density kernel
-          rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rho_k(iglob) 
+          rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rho_k(iglob)
           ! shear modulus kernel
-          mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) -  mu_k(iglob) 
+          mu_kl(i,j,ispec) =  mu_kl(i,j,ispec) -  mu_k(iglob)
           ! bulk modulus kernel
-          kappa_kl(i,j,ispec) = kappa_kl(i,j,ispec) -  kappa_k(iglob) 
+          kappa_kl(i,j,ispec) = kappa_kl(i,j,ispec) -  kappa_k(iglob)
 
         enddo
       enddo
@@ -240,7 +240,7 @@
   enddo
 
   ! only at the last time step we multiply by delta and parameter value, it is not necessary to do it at each iteration
-  if (it==NSTEP) then
+  if (it == NSTEP) then
 
     do ispec = 1, nspec
       if (ispec_is_elastic(ispec)) then
@@ -250,7 +250,7 @@
             if (.not. assign_external_model) then
               rhol = density(1,kmato(ispec))
               mul = poroelastcoef(2,1,kmato(ispec))
-              !if (AXISYM) then ! ABAB !! 
+              !if (AXISYM) then ! ABAB !!
               !Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
                 kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
               !else
@@ -293,7 +293,7 @@
       endif ! elastic
     enddo !nspec loop
 
-  endif ! it==NSTEP
+  endif ! it == NSTEP
 
   end subroutine compute_kernels_el
 
@@ -388,7 +388,7 @@
             !!!      * deltat
             !!!! new expression (from PDE-constrained optimization, coupling terms changed as well)
             rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + rhol_ac_global(iglob) * &
-                                   dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat  
+                                   dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
                                    !warning : the variable is named accel_ac but it is displ_ac that is computed
             kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) + kappal_ac_global(iglob) * &
                                      potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
