@@ -1298,9 +1298,9 @@
   endif
 
   ! allocate memory variables for attenuation
-  allocate(e1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           e11(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           e13(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+  allocate(e1(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
+           e11(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
+           e13(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
            dux_dxl_old(NGLLX,NGLLZ,nspec_ATT), &
            duz_dzl_old(NGLLX,NGLLZ,nspec_ATT), &
            dux_dzl_plus_duz_dxl_old(NGLLX,NGLLZ,nspec_ATT), &

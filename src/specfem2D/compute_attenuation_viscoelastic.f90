@@ -55,7 +55,7 @@
   integer, intent(in) :: i,j,ispec
   ! CPML coefficients and memory variables
   logical, intent(in) :: PML_BOUNDARY_CONDITIONS
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS),intent(inout) :: e1,e11,e13
+  real(kind=CUSTOM_REAL),dimension(N_SLS,NGLLX,NGLLZ,nspec_ATT),intent(inout) :: e1,e11,e13
 
   ! local variables
   integer :: i_sls
@@ -114,16 +114,16 @@
 !         if (CONVOLUTION_MEMORY_VARIABLES) then
 !! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
         a_newmark = A_newmark_nu1(i_sls,i,j,ispec)
-        e1(i,j,ispec,i_sls) = a_newmark * a_newmark * e1(i,j,ispec,i_sls) + &
+        e1(i_sls,i,j,ispec) = a_newmark * a_newmark * e1(i_sls,i,j,ispec) + &
                               B_newmark_nu1(i_sls,i,j,ispec) * (theta_n_u + a_newmark * theta_nsub1_u)
 
 !! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu2,deltat,coef0,coef1,coef2)
         a_newmark = A_newmark_nu2(i_sls,i,j,ispec)
-        e11(i,j,ispec,i_sls) = a_newmark * a_newmark * e11(i,j,ispec,i_sls) + &
+        e11(i_sls,i,j,ispec) = a_newmark * a_newmark * e11(i_sls,i,j,ispec) + &
                                B_newmark_nu2(i_sls,i,j,ispec) * (dux_dxl-theta_n_u/TWO + &
                                a_newmark * (dux_dxl_old(i,j,ispec)-theta_nsub1_u/TWO))
 
-        e13(i,j,ispec,i_sls) = a_newmark * a_newmark * e13(i,j,ispec,i_sls) + &
+        e13(i_sls,i,j,ispec) = a_newmark * a_newmark * e13(i_sls,i,j,ispec) + &
                                B_newmark_nu2(i_sls,i,j,ispec) * (dux_dzl + duz_dxl + &
                                a_newmark * (dux_dzl_plus_duz_dxl_old(i,j,ispec)))
 
@@ -143,18 +143,18 @@
       ! LDDRK
       ! update e1, e11, e13 in ADE formation with fourth-order LDDRK scheme
       e1_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls) + &
-                                  deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
-      e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + BETA_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
+                                  deltat * (theta_n_u * phinu1 - e1(i_sls,i,j,ispec) * tauinvnu1)
+      e1(i_sls,i,j,ispec) = e1(i_sls,i,j,ispec) + BETA_LDDRK(i_stage) * e1_LDDRK(i,j,ispec,i_sls)
 
       e11_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) + &
                                    deltat * ((dux_dxl-theta_n_u/TWO) * phinu2) - &
-                                   deltat * (e11(i,j,ispec,i_sls) * tauinvnu2)
-      e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)+BETA_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
+                                   deltat * (e11(i_sls,i,j,ispec) * tauinvnu2)
+      e11(i_sls,i,j,ispec) = e11(i_sls,i,j,ispec)+BETA_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
 
       e13_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls) + &
                                    deltat * ((dux_dzl + duz_dxl)*phinu2) - &
-                                   deltat * (e13(i,j,ispec,i_sls) * tauinvnu2)
-      e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+BETA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
+                                   deltat * (e13(i_sls,i,j,ispec) * tauinvnu2)
+      e13(i_sls,i,j,ispec) = e13(i_sls,i,j,ispec)+BETA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
 
     case (3)
       ! Runge-Kutta
@@ -165,41 +165,41 @@
         if (i_stage == 1) weight_rk = 0.5_CUSTOM_REAL
         if (i_stage == 2) weight_rk = 0.5_CUSTOM_REAL
         if (i_stage == 3) weight_rk = 1._CUSTOM_REAL
-        if (i_stage == 1) e1_initial_rk(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls)
-        e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
+        if (i_stage == 1) e1_initial_rk(i,j,ispec,i_sls) = e1(i_sls,i,j,ispec)
+        e1(i_sls,i,j,ispec) = e1_initial_rk(i,j,ispec,i_sls) + weight_rk * e1_force_RK(i,j,ispec,i_sls,i_stage)
       else if (i_stage == 4) then
-        e1(i,j,ispec,i_sls) = e1_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+        e1(i_sls,i,j,ispec) = e1_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                               (e1_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,2) + &
                                2._CUSTOM_REAL * e1_force_RK(i,j,ispec,i_sls,3) + e1_force_RK(i,j,ispec,i_sls,4))
       endif
 
       e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dxl-theta_n_u/TWO) * phinu2 - &
-                                                         e11(i,j,ispec,i_sls) * tauinvnu2)
+                                                         e11(i_sls,i,j,ispec) * tauinvnu2)
 
       if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
         if (i_stage == 1) weight_rk = 0.5_CUSTOM_REAL
         if (i_stage == 2) weight_rk = 0.5_CUSTOM_REAL
         if (i_stage == 3) weight_rk = 1._CUSTOM_REAL
 
-        if (i_stage == 1) e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
-        e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
+        if (i_stage == 1) e11_initial_rk(i,j,ispec,i_sls) = e11(i_sls,i,j,ispec)
+        e11(i_sls,i,j,ispec) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
       else if (i_stage == 4) then
-        e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+        e11(i_sls,i,j,ispec) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                (e11_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,2) + &
                                 2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
       endif
 
       e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dzl + duz_dxl)*phinu2 - &
-                                                         e13(i,j,ispec,i_sls) * tauinvnu2)
+                                                         e13(i_sls,i,j,ispec) * tauinvnu2)
       if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
         if (i_stage == 1) weight_rk = 0.5_CUSTOM_REAL
         if (i_stage == 2) weight_rk = 0.5_CUSTOM_REAL
         if (i_stage == 3) weight_rk = 1._CUSTOM_REAL
 
-        if (i_stage == 1) e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
-        e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
+        if (i_stage == 1) e13_initial_rk(i,j,ispec,i_sls) = e13(i_sls,i,j,ispec)
+        e13(i_sls,i,j,ispec) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
       else if (i_stage == 4) then
-        e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+        e13(i_sls,i,j,ispec) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                (e13_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,2) + &
                                 2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
       endif
@@ -210,9 +210,9 @@
 
   enddo ! i_sls
 
-  e1_sum = sum(e1(i,j,ispec,:))
-  e11_sum = sum(e11(i,j,ispec,:))
-  e13_sum = sum(e13(i,j,ispec,:))
+  e1_sum = sum(e1(:,i,j,ispec))
+  e11_sum = sum(e11(:,i,j,ispec))
+  e13_sum = sum(e13(:,i,j,ispec))
 
   if (time_stepping_scheme == 1) then
         !Update of grad(Displ)

@@ -37,7 +37,7 @@
   use mpi
 #endif
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN, APPROXIMATE_HESS_KL
   use specfem_par
   use specfem_par_noise, only: NOISE_TOMOGRAPHY
 
@@ -52,7 +52,6 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_elastic_buffer,b_accel_elastic_buffer
   double precision :: sizeval
 
-  integer :: i,j
   integer :: it_temp,seismo_current_temp
   integer :: ier
   integer, parameter :: it_begin = 1
@@ -63,6 +62,7 @@
   character(len=5) :: zone
   integer, dimension(8) :: time_values
   integer :: year,mon,day,hr,minutes,timestamp
+  real :: start_time_of_time_loop,finish_time_of_time_loop,duration_of_time_loop_in_seconds
 
   ! checks if anything to do
   if (.not. UNDO_ATTENUATION_AND_OR_PML) return
@@ -126,7 +126,8 @@
       endif
       if (any_elastic) then
         ! buffer(3,nglob,NT_DUMP_ATTENUATION) in MB
-        sizeval = 2 * dble(NDIM) * dble(nglob) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+        sizeval = dble(NDIM) * dble(nglob) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+        if (APPROXIMATE_HESS_KL) sizeval = 2 * sizeval
         write(IMAIN,*) '  size of elastic wavefield buffer per slice       = ', sngl(sizeval),'MB'
       endif
       write(IMAIN,*)
@@ -146,12 +147,12 @@
     if (any_elastic) then
       allocate(b_displ_elastic_buffer(NDIM,nglob,NT_DUMP_ATTENUATION),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_elastic')
-      allocate(b_accel_elastic_buffer(NDIM,nglob,NT_DUMP_ATTENUATION),stat=ier)
+      if (APPROXIMATE_HESS_KL) allocate(b_accel_elastic_buffer(NDIM,nglob,NT_DUMP_ATTENUATION),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_accel_elastic')
 
-      allocate(b_e1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-               b_e11(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-               b_e13(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
+      allocate(b_e1(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
+               b_e11(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
+               b_e13(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
                b_dux_dxl_old(NGLLX,NGLLZ,nspec_ATT), &
                b_duz_dzl_old(NGLLX,NGLLZ,nspec_ATT), &
                b_dux_dzl_plus_duz_dxl_old(NGLLX,NGLLZ,nspec_ATT),stat=ier)
@@ -187,6 +188,8 @@
 
   ! initializes time increments
   it = 0
+
+  call cpu_time(start_time_of_time_loop)
 
   ! loops over time subsets
   do iteration_on_subset = 1, NSUBSET_ITERATIONS
@@ -302,7 +305,9 @@
 
         if (any_elastic) then
           b_displ_elastic_buffer(:,:,it_of_this_subset) = b_displ_elastic(:,:)
-          b_accel_elastic_buffer(:,:,it_of_this_subset) = b_accel_elastic(:,:)
+          if (APPROXIMATE_HESS_KL) then
+            b_accel_elastic_buffer(:,:,it_of_this_subset) = b_accel_elastic(:,:)
+          endif
         endif
 
       enddo ! subset loop
@@ -316,19 +321,16 @@
         ! reads backward/reconstructed wavefield from buffers
         ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
         if (any_acoustic) then
-          do j = 1,NGLOB
-            b_potential_acoustic(j) = b_potential_acoustic_buffer(j,it_subset_end-it_of_this_subset+1)
-            b_potential_dot_dot_acoustic(j) = b_potential_dot_dot_acoustic_buffer(j,it_subset_end-it_of_this_subset+1)
-          enddo
+            b_potential_acoustic(:) = b_potential_acoustic_buffer(:,it_subset_end-it_of_this_subset+1)
+            b_potential_dot_dot_acoustic(:) = b_potential_dot_dot_acoustic_buffer(:,it_subset_end-it_of_this_subset+1)
         endif
 
+        ! copy the reconstructed wavefield for kernel integration
         if (any_elastic) then
-          do i = 1,NDIM
-            do j = 1,NGLOB
-              b_displ_elastic(i,j) = b_displ_elastic_buffer(i,j,it_subset_end-it_of_this_subset+1)
-              b_accel_elastic(i,j) = b_accel_elastic_buffer(i,j,it_subset_end-it_of_this_subset+1)
-            enddo
-          enddo
+           b_displ_elastic(:,:) = b_displ_elastic_buffer(:,:,it_subset_end-it_of_this_subset+1)
+          if (APPROXIMATE_HESS_KL) then
+             b_accel_elastic(:,:) = b_accel_elastic_buffer(:,:,it_subset_end-it_of_this_subset+1)
+          endif
         endif
 
         ! safety stop
@@ -380,7 +382,7 @@
         if (OUTPUT_ENERGY .and. mod(it,NTSTEP_BETWEEN_OUTPUT_ENERGY) == 0) call compute_and_output_energy()
 
         ! loop on all the receivers to compute and store the seismograms
-        call write_seismograms()
+        !call write_seismograms()
 
         ! kernels calculation
         call compute_kernels()
@@ -397,13 +399,32 @@
   !---- end of time iteration loop
   !
 
+  call cpu_time(finish_time_of_time_loop)
+  if (myrank == 0) then
+    duration_of_time_loop_in_seconds = finish_time_of_time_loop - start_time_of_time_loop
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total duration of the time loop in seconds = ',duration_of_time_loop_in_seconds,' s'
+    write(IMAIN,*) 'Total number of time steps = ',NSTEP
+    write(IMAIN,*) 'Average duration of a time step of the time loop = ',duration_of_time_loop_in_seconds / real(NSTEP),' s'
+    write(IMAIN,*) 'Total number of spectral elements in the mesh = ',NSPEC
+    write(IMAIN,*) '    of which ',NSPEC - count(ispec_is_PML),' are regular elements'
+    write(IMAIN,*) '    and ',count(ispec_is_PML),' are PML elements.'
+    write(IMAIN,*) 'Average duration of the calculation per spectral element = ', &
+                         duration_of_time_loop_in_seconds / real(NSTEP * NSPEC),' s'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+
+
   ! frees undo_attenuation buffers
   if (SIMULATION_TYPE == 3) then
     if (any_acoustic) then
       deallocate(b_potential_acoustic_buffer,b_potential_dot_dot_acoustic_buffer)
     endif
     if (any_elastic) then
-      deallocate(b_displ_elastic_buffer,b_accel_elastic_buffer)
+      deallocate(b_displ_elastic_buffer)
+      if (APPROXIMATE_HESS_KL) deallocate(b_accel_elastic_buffer)
       deallocate(b_e1,b_e11,b_e13,b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old)
     endif
   endif
