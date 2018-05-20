@@ -965,7 +965,7 @@ Kernel_2_att_iso_impl(const int nb_blocks_to_compute,
   duxdxl_old = dux_dxl_old[offset_align];
   duzdzl_old = duz_dzl_old[offset_align];
   duxdxl_plus_duzdzl_old = duxdxl_old + duzdzl_old;
-  duxdzl_plus_duzdxl_old = dux_dzl_plus_duz_dxl_old[offset_align]; 
+  duxdzl_plus_duzdxl_old = dux_dzl_plus_duz_dxl_old[offset_align];
 
   e1_sum = 0.f;
   e11_sum = 0.f;
