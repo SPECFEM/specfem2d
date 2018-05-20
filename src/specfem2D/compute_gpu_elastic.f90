@@ -40,7 +40,7 @@
   use specfem_par, only: myrank,NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbors,ninterface_elastic,inum_interfaces_elastic,ibool_interfaces_ext_mesh, &
     num_fluid_solid_edges,nspec_bottom,nspec_left,nspec_right,nspec_top, &
-    STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS,any_poroelastic,any_acoustic,SIMULATION_TYPE
+    STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS,any_poroelastic,any_acoustic,SIMULATION_TYPE,ATTENUATION_VISCOELASTIC
 
   use specfem_par, only: nspec_outer_elastic,nspec_inner_elastic
 
@@ -70,7 +70,7 @@
     call compute_forces_viscoelastic_cuda(Mesh_pointer, iphase, deltatf, &
                                           nspec_outer_elastic, &
                                           nspec_inner_elastic, &
-                                          ANY_ANISOTROPY)
+                                          ANY_ANISOTROPY,ATTENUATION_VISCOELASTIC)
 
 
     ! while inner elements compute "Kernel_2", we wait for MPI to

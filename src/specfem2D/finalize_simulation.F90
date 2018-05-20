@@ -177,7 +177,8 @@
                                 STACEY_ABSORBING_CONDITIONS, &
                                 ANISOTROPY, &
                                 APPROXIMATE_HESS_KL, &
-                                ATTENUATION_VISCOACOUSTIC)
+                                ATTENUATION_VISCOACOUSTIC, &
+                                ATTENUATION_VISCOELASTIC)
   endif
 
   if (output_wavefield_dumps) deallocate(mask_ibool)

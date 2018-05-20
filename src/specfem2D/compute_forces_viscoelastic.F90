@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,dux_dxl_old,duz_dzl_old, &
+  subroutine compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,dux_dxl_old,duz_dzl_old,&
                                          dux_dzl_plus_duz_dxl_old,PML_BOUNDARY_CONDITIONS,e1,e11,e13,iphase)
 
   ! compute forces for the elastic elements
@@ -358,11 +358,11 @@
 ! in a linear viscoelastic medium, Geophysical Journal International,
 ! vol. 95, p. 597-611 (1988) for two memory-variable mechanisms (page 604).
         if (ATTENUATION_VISCOELASTIC) then
-          ! This routine updates the memory variables and with the current grad(displ)
+          ! This routine updates the memory variables and with the current grad(displ) 
           ! and gets the attenuation contribution (in e*_sum variables)
-          call compute_attenuation_viscoelastic(e1,e11,e13,dux_dxl(i,j),dux_dzl(i,j),duz_dxl(i,j),duz_dzl(i,j), &
-                                                dux_dxl_old,duz_dzl_old, &
-                                                dux_dzl_plus_duz_dxl_old,PML_BOUNDARY_CONDITIONS,i,j,ispec, &
+          call compute_attenuation_viscoelastic(e1,e11,e13,dux_dxl(i,j),dux_dzl(i,j),duz_dxl(i,j),duz_dzl(i,j),&
+                                                dux_dxl_old,duz_dzl_old,&
+                                                dux_dzl_plus_duz_dxl_old,PML_BOUNDARY_CONDITIONS,i,j,ispec,&
                                                 e1_sum,e11_sum,e13_sum)
 
 ! use the right formula with 1/N included
@@ -430,7 +430,7 @@
                 sigma_xz = mul_unrelaxed_elastic * (PML_dux_dzl(i,j) + duz_dxl(i,j))
               endif
             endif
-
+ 
           endif ! ATTENUATION
         endif ! PML_BOUNDARY_CONDITION
 

@@ -62,8 +62,10 @@
   if (NGLLX /= NGLLZ) call stop_the_code('GPU simulations require NGLLX == NGLLZ')
   if ( (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. ATTENUATION_VISCOACOUSTIC) call stop_the_code( &
     'GPU simulations require USE_A_STRONG_FORMULATION_FOR_E1 set to true')
-
-
+  if ( (ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. SIMULATION_TYPE==3) call stop_the_code( &
+    'GPU mode do not support yet adjoint simulations with attenuation')
+  if ( (ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. any_elastic .and. any_acoustic) call stop_the_code( &
+    'GPU mode do not support yet coupled fluid-solid simulations with attenuation')
   ! initializes arrays
   call init_host_to_dev_variable()
 
@@ -206,7 +208,8 @@
                                        c11store,c12store,c13store, &
                                        c15store,c23store, &
                                        c25store,c33store,c35store,c55store, &
-                                       ninterface_elastic,inum_interfaces_elastic)
+                                       ninterface_elastic,inum_interfaces_elastic,ATTENUATION_VISCOELASTIC, &
+                                       A_newmark_nu2,B_newmark_nu2,A_newmark_nu1,B_newmark_nu1)
 
 
     if (SIMULATION_TYPE == 3) then

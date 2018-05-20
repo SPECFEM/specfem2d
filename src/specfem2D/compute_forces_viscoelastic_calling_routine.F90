@@ -59,7 +59,7 @@
 
     ! main solver for the elastic elements
     ! visco-elastic term
-    call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,dux_dxl_old,duz_dzl_old, &
+    call compute_forces_viscoelastic(accel_elastic,veloc_elastic,displ_elastic,displ_elastic_old,dux_dxl_old,duz_dzl_old,&
                                      dux_dzl_plus_duz_dxl_old,PML_BOUNDARY_CONDITIONS,e1,e11,e13,iphase)
 
     ! computes additional contributions to acceleration field
@@ -247,8 +247,8 @@
   do iphase = 1,2
 
     if (UNDO_ATTENUATION_AND_OR_PML) then
-      call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                       b_dux_dxl_old,b_duz_dzl_old, &
+      call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old,&
+                                       b_dux_dxl_old,b_duz_dzl_old,&
                                        b_dux_dzl_plus_duz_dxl_old,.false.,b_e1,b_e11,b_e13,iphase)
     else
       ! todo: maybe should be b_e1,b_e11,.. here, please check...

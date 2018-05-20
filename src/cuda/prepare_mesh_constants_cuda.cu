@@ -481,8 +481,8 @@ void FC_FUNC_(prepare_fields_acoustic_device,
   copy_todevice_int((void**)&mp->d_inum_interfaces_acoustic,h_inum_interfaces_acoustic,mp->num_interfaces_ext_mesh);
 
   if (*ATTENUATION_VISCOACOUSTIC) {
-    copy_todevice_realw((void**)&mp->d_A_newmark,h_A_newmark,NGLL2*mp->NSPEC_AB*N_SLS);
-    copy_todevice_realw((void**)&mp->d_B_newmark,h_B_newmark,NGLL2*mp->NSPEC_AB*N_SLS);
+    copy_todevice_realw((void**)&mp->d_A_newmark_acous,h_A_newmark,NGLL2*mp->NSPEC_AB*N_SLS);
+    copy_todevice_realw((void**)&mp->d_B_newmark_acous,h_B_newmark,NGLL2*mp->NSPEC_AB*N_SLS);
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_e1_acous,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),2202);
     print_CUDA_error_if_any(cudaMemset(mp->d_e1_acous,0,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),2203);
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_sum_forces_old,mp->NSPEC_AB*sizeof(realw)*NGLL2),2204);
@@ -589,7 +589,8 @@ void FC_FUNC_(prepare_fields_elastic_device,
                                              realw *c23store,
                                              realw *c25store,realw *c33store,
                                              realw *c35store,
-                                             realw *c55store,int* h_ninterface_elastic,int * h_inum_interfaces_elastic) {
+                                             realw *c55store,int* h_ninterface_elastic,int * h_inum_interfaces_elastic,int* ATTENUATION_VISCOELASTIC,
+                                             realw* h_A_newmark_mu,realw* h_B_newmark_mu,realw* h_A_newmark_kappa,realw* h_B_newmark_kappa) {
 
 
 
@@ -761,6 +762,28 @@ void FC_FUNC_(prepare_fields_elastic_device,
   mp->ninterface_elastic = *h_ninterface_elastic;
   copy_todevice_int((void**)&mp->d_inum_interfaces_elastic,h_inum_interfaces_elastic,mp->num_interfaces_ext_mesh);
 
+
+  if (*ATTENUATION_VISCOELASTIC) {
+    copy_todevice_realw((void**)&mp->d_A_newmark_mu,h_A_newmark_mu,NGLL2*mp->NSPEC_AB*N_SLS);
+    copy_todevice_realw((void**)&mp->d_B_newmark_mu,h_B_newmark_mu,NGLL2*mp->NSPEC_AB*N_SLS);
+    copy_todevice_realw((void**)&mp->d_A_newmark_kappa,h_A_newmark_kappa,NGLL2*mp->NSPEC_AB*N_SLS);
+    copy_todevice_realw((void**)&mp->d_B_newmark_kappa,h_B_newmark_kappa,NGLL2*mp->NSPEC_AB*N_SLS);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_e1,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),4801);
+    print_CUDA_error_if_any(cudaMemset(mp->d_e1,0,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),4802);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_e11,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),4803);
+    print_CUDA_error_if_any(cudaMemset(mp->d_e11,0,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),4804);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_e13,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),4805);
+    print_CUDA_error_if_any(cudaMemset(mp->d_e13,0,mp->NSPEC_AB*sizeof(realw)*NGLL2*N_SLS),4806);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_dux_dxl_old,mp->NSPEC_AB*sizeof(realw)*NGLL2),4807);
+    print_CUDA_error_if_any(cudaMemset(mp->d_dux_dxl_old,0,mp->NSPEC_AB*sizeof(realw)*NGLL2),4808);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_duz_dzl_old,mp->NSPEC_AB*sizeof(realw)*NGLL2),4809);
+    print_CUDA_error_if_any(cudaMemset(mp->d_duz_dzl_old,0,mp->NSPEC_AB*sizeof(realw)*NGLL2),4810);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_dux_dzl_plus_duz_dxl_old,mp->NSPEC_AB*sizeof(realw)*NGLL2),4811);
+    print_CUDA_error_if_any(cudaMemset(mp->d_dux_dzl_plus_duz_dxl_old,0,mp->NSPEC_AB*sizeof(realw)*NGLL2),4812);
+  }
+
+
+
   // JC JC here we will need to add GPU support for the new C-PML routines
 
   // debug
@@ -911,7 +934,8 @@ void FC_FUNC_(prepare_cleanup_device,
                                       int* ABSORBING_CONDITIONS,
                                       int* ANISOTROPY,
                                       int* APPROXIMATE_HESS_KL,
-                                      int* ATTENUATION_VISCOACOUSTIC) {
+                                      int* ATTENUATION_VISCOACOUSTIC,
+                                      int* ATTENUATION_VISCOELASTIC) {
 
 
 TRACE("prepare_cleanup_device");
@@ -1006,8 +1030,8 @@ TRACE("prepare_cleanup_device");
     }
     if (*ATTENUATION_VISCOACOUSTIC){
       cudaFree(mp->d_e1_acous);
-      cudaFree(mp->d_A_newmark);
-      cudaFree(mp->d_B_newmark);
+      cudaFree(mp->d_A_newmark_acous);
+      cudaFree(mp->d_B_newmark_acous);
       cudaFree(mp->d_sum_forces_old);
     }
 
@@ -1073,6 +1097,22 @@ TRACE("prepare_cleanup_device");
       cudaFree(mp->d_c35store);
       cudaFree(mp->d_c55store);
     }
+
+  if (*ATTENUATION_VISCOELASTIC) {
+    cudaFree(mp->d_A_newmark_mu);
+    cudaFree(mp->d_B_newmark_mu);
+    cudaFree(mp->d_A_newmark_kappa);
+    cudaFree(mp->d_B_newmark_kappa);
+    cudaFree(mp->d_e1);
+    cudaFree(mp->d_e11);
+    cudaFree(mp->d_e13);
+    cudaFree(mp->d_dux_dxl_old);
+    cudaFree(mp->d_duz_dzl_old);
+    cudaFree(mp->d_dux_dzl_plus_duz_dxl_old);
+  }
+
+
+
   } // ELASTIC_SIMULATION
 
   // purely adjoint & kernel array

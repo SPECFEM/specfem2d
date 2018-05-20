@@ -410,6 +410,18 @@ typedef struct mesh_ {
   realw* d_rmassx;
   realw* d_rmassz;
 
+  //attenuation
+  realw* d_e1;
+  realw* d_e11;
+  realw* d_e13;
+  realw* d_A_newmark_mu;
+  realw* d_B_newmark_mu;
+  realw* d_A_newmark_kappa;
+  realw* d_B_newmark_kappa;
+  realw* d_dux_dxl_old;
+  realw* d_duz_dzl_old;
+  realw* d_dux_dzl_plus_duz_dxl_old;
+
   // mpi buffer
   realw* d_send_accel_buffer;
   realw* d_b_send_accel_buffer;
@@ -496,8 +508,8 @@ typedef struct mesh_ {
 
   // attenuation
   realw* d_e1_acous;
-  realw* d_A_newmark;
-  realw* d_B_newmark;
+  realw* d_A_newmark_acous;
+  realw* d_B_newmark_acous;
   realw* d_sum_forces_old;
 
   // mpi buffer
