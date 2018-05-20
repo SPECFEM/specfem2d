@@ -90,7 +90,7 @@
             call compute_vector_one_element(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic,ispec,vector_field_element)
           case (4)
             ! pressure
-            call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic,&
+            call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic, &
                                               potential_dot_dot_acoustic,potential_acoustic)
 
           case (5)

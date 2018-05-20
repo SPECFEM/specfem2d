@@ -323,7 +323,7 @@
       ! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
 
       ! compute pressure in this element
-      call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic,&
+      call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic, &
                                         potential_dot_dot_acoustic,potential_acoustic)
 
       ! compute velocity vector field in this element
@@ -382,7 +382,7 @@
                         total_effective_duration_field,velocs_poroelastic, &
                         poroelastcoef,vsext,vpext,rhoext,density,kmato,assign_external_model,jacobian,displ_elastic, &
                         hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz, &
-                        displs_poroelastic,displw_poroelastic,&
+                        displs_poroelastic,displw_poroelastic, &
                         potential_dot_dot_acoustic,potential_acoustic
 
   implicit none
@@ -540,7 +540,7 @@
       call compute_vector_one_element(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
 
       ! compute pressure in this element
-      call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic,&
+      call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic, &
                                         potential_dot_dot_acoustic,potential_acoustic)
 
       !--- if external medium, get density of current grid point

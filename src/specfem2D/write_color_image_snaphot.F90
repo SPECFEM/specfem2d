@@ -66,7 +66,7 @@
   integer :: i,j,k,ispec,iglob,iproc,i_field,n_fields
   double precision :: rhol
 
-  if (SIMULATION_TYPE==1) then
+  if (SIMULATION_TYPE == 1) then
     n_fields = 1
   else
     n_fields = 2
@@ -82,8 +82,8 @@
   endif
 
   if (imagetype_JPEG >= 1 .and. imagetype_JPEG <= 3) then
-    if (i_field==1) then
-      if (myrank == 0 .and. SIMULATION_TYPE==1 ) then
+    if (i_field == 1) then
+      if (myrank == 0 .and. SIMULATION_TYPE == 1 ) then
         write(IMAIN,*) 'drawing scalar image of the forward wavefield displacement...'
       else if (myrank == 0) then
         write(IMAIN,*) 'drawing scalar image of the adjoint wavefield displacement...'
@@ -96,8 +96,8 @@
 
   else if (imagetype_JPEG >= 4 .and. imagetype_JPEG <= 6) then
 
-    if (i_field==1) then
-      if (myrank == 0 .and. SIMULATION_TYPE==1 ) then
+    if (i_field == 1) then
+      if (myrank == 0 .and. SIMULATION_TYPE == 1 ) then
         write(IMAIN,*) 'drawing scalar image of the forward wavefield velocity...'
       else if (myrank == 0) then
         write(IMAIN,*) 'drawing scalar image of the adjoint wavefield velocity...'
@@ -110,8 +110,8 @@
 
   else if (imagetype_JPEG >= 7 .and. imagetype_JPEG <= 9) then
 
-    if (i_field==1) then
-      if (myrank == 0 .and. SIMULATION_TYPE==1 ) then
+    if (i_field == 1) then
+      if (myrank == 0 .and. SIMULATION_TYPE == 1 ) then
         write(IMAIN,*) 'drawing scalar image of the forward wavefield acceleration...'
       else if (myrank == 0) then
         write(IMAIN,*) 'drawing scalar image of the adjoint wavefield acceleration...'
@@ -165,13 +165,13 @@
 
   else if (imagetype_JPEG == 10 .and. P_SV) then
 
-    if (i_field==1) then
-      if (myrank == 0 .and. SIMULATION_TYPE==1 ) then
+    if (i_field == 1) then
+      if (myrank == 0 .and. SIMULATION_TYPE == 1 ) then
         write(IMAIN,*) 'drawing scalar image of the forward wavefield pressure...'
-      else 
+      else
         if (myrank == 0) write(IMAIN,*) 'drawing scalar image of the adjoint wavefield pressure...'
       endif
-    else 
+    else
       if (myrank == 0) write(IMAIN,*) 'drawing scalar image of the reconstructed forward wavefield pressure...'
     endif
     call compute_pressure_whole_medium(i_field)

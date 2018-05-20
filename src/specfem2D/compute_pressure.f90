@@ -35,8 +35,8 @@
 
 ! compute pressure in acoustic elements and in elastic elements
 
-  use specfem_par, only: CUSTOM_REAL,NGLLX,NGLLZ,nspec,ibool,displ_elastic,displs_poroelastic,displw_poroelastic,&
-                         potential_dot_dot_acoustic,potential_acoustic,b_displ_elastic,b_displs_poroelastic,&
+  use specfem_par, only: CUSTOM_REAL,NGLLX,NGLLZ,nspec,ibool,displ_elastic,displs_poroelastic,displw_poroelastic, &
+                         potential_dot_dot_acoustic,potential_acoustic,b_displ_elastic,b_displs_poroelastic, &
                          b_displw_poroelastic,b_potential_dot_dot_acoustic,b_potential_acoustic
   use specfem_par_movie, only: vector_field_display
 
@@ -54,11 +54,11 @@
   do ispec = 1,nspec
 
     ! compute pressure in this element
-    if (i_field==1) then
-      call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic,&
+    if (i_field == 1) then
+      call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic, &
                                         potential_dot_dot_acoustic,potential_acoustic)
     else
-      call compute_pressure_one_element(ispec,pressure_element,b_displ_elastic,b_displs_poroelastic,b_displw_poroelastic,&
+      call compute_pressure_one_element(ispec,pressure_element,b_displ_elastic,b_displs_poroelastic,b_displw_poroelastic, &
                                         b_potential_dot_dot_acoustic,b_potential_acoustic)
     endif
     ! use vector_field_display as temporary storage, store pressure in its second component
@@ -77,7 +77,7 @@
 !=====================================================================
 !
 
-  subroutine compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic,&
+  subroutine compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic, &
                                           potential_dot_dot_acoustic,potential_acoustic)
 
 ! compute pressure in acoustic elements and in elastic elements
@@ -95,7 +95,7 @@
   integer,intent(in) :: ispec
   ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: pressure_element
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_dot_dot_acoustic,potential_acoustic 
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_dot_dot_acoustic,potential_acoustic
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: displ_elastic,displs_poroelastic,displw_poroelastic
 
   ! local variables

@@ -86,17 +86,17 @@
 ! slightly change the beginning of the file name depending if we use the time step of the image number, to avoid confusion
   if (USE_SNAPSHOT_NUMBER_IN_FILENAME) then
     isnapshot_number = isnapshot_number + 1
-    if (i_field == 1 .and. SIMULATION_TYPE==1) then
+    if (i_field == 1 .and. SIMULATION_TYPE == 1) then
       write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'forward_img',isnapshot_number,'.jpg'
-    else if (i_field == 1 .and. SIMULATION_TYPE==3) then
+    else if (i_field == 1 .and. SIMULATION_TYPE == 3) then
       write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'adjoint_img',isnapshot_number,'.jpg'
     else
       write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'b_forward_img',isnapshot_number,'.jpg'
     endif
   else
-    if (i_field == 1 .and. SIMULATION_TYPE==1) then
+    if (i_field == 1 .and. SIMULATION_TYPE == 1) then
       write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'forward_image',it,'.jpg'
-    else if (i_field == 1 .and. SIMULATION_TYPE==3) then
+    else if (i_field == 1 .and. SIMULATION_TYPE == 3) then
       write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'adjoint_image',it,'.jpg'
     else
       write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'b_forward_image',it,'.jpg'
