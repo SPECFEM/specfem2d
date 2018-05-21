@@ -129,14 +129,14 @@
 
 !         else
 !           stop 'CONVOLUTION_MEMORY_VARIABLES == .false. is not accurate enough and has been discontinued for now'
-!           e1(i,j,ispec,i_sls) = e1(i,j,ispec,i_sls) + deltat * &
-!                (- e1(i,j,ispec,i_sls)*tauinvnu1 + phinu1 * theta_n_u)
+!           e1(i_sls,i,j,ispec) = e1(i_sls,i,j,ispec) + deltat * &
+!                (- e1(i_sls,i,j,ispec)*tauinvnu1 + phinu1 * theta_n_u)
 !
-!           e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls) + deltat * &
-!                (- e11(i,j,ispec,i_sls)*tauinvnu2 + phinu2 * (dux_dxl_n(i,j,ispec)-theta_n_u/TWO))
+!           e11(i_sls,i,j,ispec) = e11(i_sls,i,j,ispec) + deltat * &
+!                (- e11(i_sls,i,j,ispec)*tauinvnu2 + phinu2 * (dux_dxl_n(i,j,ispec)-theta_n_u/TWO))
 !
-!           e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls) + deltat * &
-!              (- e13(i,j,ispec,i_sls)*tauinvnu2 + phinu2 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)))
+!           e13(i_sls,i,j,ispec) = e13(i_sls,i,j,ispec) + deltat * &
+!              (- e13(i_sls,i,j,ispec)*tauinvnu2 + phinu2 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)))
 !         endif
 
     case (2)
@@ -159,7 +159,7 @@
     case (3)
       ! Runge-Kutta
       ! update e1, e11, e13 in ADE formation with classical fourth-order Runge-Kutta scheme
-      e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n_u * phinu1 - e1(i,j,ispec,i_sls) * tauinvnu1)
+      e1_force_RK(i,j,ispec,i_sls,i_stage) = deltat * (theta_n_u * phinu1 - e1(i_sls,i,j,ispec) * tauinvnu1)
 
       if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
         if (i_stage == 1) weight_rk = 0.5_CUSTOM_REAL
