@@ -152,11 +152,11 @@
                  coef2 = deltat / 2._CUSTOM_REAL
               endif
 
-              e11(i,j,ispec,i_sls) = coef0 * e11(i,j,ispec,i_sls) + &
+              e11(i_sls,i,j,ispec) = coef0 * e11(i_sls,i,j,ispec) + &
                                      phinu2 * (coef1 * (dux_dxl_n(i,j,ispec)-theta_n_u/TWO) + &
                                                coef2 * (dux_dxl_nsub1(i,j,ispec)-theta_nsub1_u/TWO))
 
-              e13(i,j,ispec,i_sls) = coef0 * e13(i,j,ispec,i_sls) + &
+              e13(i_sls,i,j,ispec) = coef0 * e13(i_sls,i,j,ispec) + &
                                      phinu2 * (coef1 * (dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec)) + &
                                                coef2 * (dux_dzl_nsub1(i,j,ispec) + duz_dxl_nsub1(i,j,ispec)))
 
@@ -166,43 +166,43 @@
               ! LDDRK
               e11_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e11_LDDRK(i,j,ispec,i_sls) + &
                                            deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2) - &
-                                           deltat * (e11(i,j,ispec,i_sls) * tauinvnu2)
-              e11(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)+BETA_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
+                                           deltat * (e11(i_sls,i,j,ispec) * tauinvnu2)
+              e11(i_sls,i,j,ispec) = e11(i_sls,i,j,ispec)+BETA_LDDRK(i_stage)*e11_LDDRK(i,j,ispec,i_sls)
 
               e13_LDDRK(i,j,ispec,i_sls) = ALPHA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls) + &
                                            deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2) - &
-                                           deltat * (e13(i,j,ispec,i_sls) * tauinvnu2)
-              e13(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)+BETA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
+                                           deltat * (e13(i_sls,i,j,ispec) * tauinvnu2)
+              e13(i_sls,i,j,ispec) = e13(i_sls,i,j,ispec)+BETA_LDDRK(i_stage) * e13_LDDRK(i,j,ispec,i_sls)
 
             ! update e1, e11, e13 in ADE formation with classical Runge-Kutta scheme
             ! evolution e1 ! no need since we are just considering shear attenuation
             else if (time_stepping_scheme == 3) then
               ! RK
               e11_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dxl_n(i,j,ispec)-theta_n_u/TWO) * phinu2 - &
-                                                                 e11(i,j,ispec,i_sls) * tauinvnu2)
+                                                                 e11(i_sls,i,j,ispec) * tauinvnu2)
               if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
                 if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
                 if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
                 if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
 
-                if (i_stage == 1) e11_initial_rk(i,j,ispec,i_sls) = e11(i,j,ispec,i_sls)
-                e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
+                if (i_stage == 1) e11_initial_rk(i,j,ispec,i_sls) = e11(i_sls,i,j,ispec)
+                e11(i_sls,i,j,ispec) = e11_initial_rk(i,j,ispec,i_sls) + weight_rk * e11_force_RK(i,j,ispec,i_sls,i_stage)
               else if (i_stage == 4) then
-                e11(i,j,ispec,i_sls) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+                e11(i_sls,i,j,ispec) = e11_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                        (e11_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,2) + &
                                         2._CUSTOM_REAL * e11_force_RK(i,j,ispec,i_sls,3) + e11_force_RK(i,j,ispec,i_sls,4))
               endif
 
               e13_force_RK(i,j,ispec,i_sls,i_stage) = deltat * ((dux_dzl_n(i,j,ispec) + duz_dxl_n(i,j,ispec))*phinu2 - &
-                                                                 e13(i,j,ispec,i_sls) * tauinvnu2)
+                                                                 e13(i_sls,i,j,ispec) * tauinvnu2)
               if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
                 if (i_stage == 1)weight_rk = 0.5_CUSTOM_REAL
                 if (i_stage == 2)weight_rk = 0.5_CUSTOM_REAL
                 if (i_stage == 3)weight_rk = 1._CUSTOM_REAL
-                if (i_stage == 1) e13_initial_rk(i,j,ispec,i_sls) = e13(i,j,ispec,i_sls)
-                e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
+                if (i_stage == 1) e13_initial_rk(i,j,ispec,i_sls) = e13(i_sls,i,j,ispec)
+                e13(i_sls,i,j,ispec) = e13_initial_rk(i,j,ispec,i_sls) + weight_rk * e13_force_RK(i,j,ispec,i_sls,i_stage)
               else if (i_stage == 4) then
-                e13(i,j,ispec,i_sls) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
+                e13(i_sls,i,j,ispec) = e13_initial_rk(i,j,ispec,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
                                        (e13_force_RK(i,j,ispec,i_sls,1) + 2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,2) + &
                                         2._CUSTOM_REAL * e13_force_RK(i,j,ispec,i_sls,3) + e13_force_RK(i,j,ispec,i_sls,4))
               endif
@@ -336,8 +336,8 @@
           e13_sum = 0._CUSTOM_REAL
 
           do i_sls = 1,N_SLS
-            e11_sum = e11_sum + e11(i,j,ispec,i_sls)
-            e13_sum = e13_sum + e13(i,j,ispec,i_sls)
+            e11_sum = e11_sum + e11(i_sls,i,j,ispec)
+            e13_sum = e13_sum + e13(i_sls,i,j,ispec)
           enddo
 
           ! mu_G is the relaxed modulus. Note that it is defined as the
