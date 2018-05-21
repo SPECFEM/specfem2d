@@ -300,8 +300,8 @@
           e11_sum = 0._CUSTOM_REAL
 
           do i_sls = 1,N_SLS
-            e1_sum = e1_sum + e1(i,j,ispec,i_sls)
-            e11_sum = e11_sum + e11(i,j,ispec,i_sls)
+            e1_sum = e1_sum + e1(i_sls,i,j,ispec)
+            e11_sum = e11_sum + e11(i_sls,i,j,ispec)
           enddo
 
           sigma_xx = sigma_xx + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
@@ -508,8 +508,8 @@
           e11_sum = 0._CUSTOM_REAL
 
           do i_sls = 1,N_SLS
-            e1_sum = e1_sum + e1(i,j,ispec,i_sls)
-            e11_sum = e11_sum + e11(i,j,ispec,i_sls)
+            e1_sum = e1_sum + e1(i_sls,i,j,ispec)
+            e11_sum = e11_sum + e11(i_sls,i,j,ispec)
           enddo
 
           sigma_xx = sigma_xx + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
