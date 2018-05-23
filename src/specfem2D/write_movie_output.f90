@@ -76,11 +76,11 @@
     ! Fields transfer for imaging
     ! acoustic domains
     if (any_acoustic) then
-      if ( .not. plot_b_wavefield_only) &
+      if (.not. plot_b_wavefield_only) &
         call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic,potential_dot_acoustic, &
                                             potential_dot_dot_acoustic,Mesh_pointer)
       if ((SIMULATION_TYPE == 3 .and. (.not. UNDO_ATTENUATION_AND_OR_PML)) .or. plot_b_wavefield_only ) &
-          call transfer_b_fields_ac_from_device(NGLOB_AB,b_potential_acoustic,b_potential_dot_acoustic,&
+          call transfer_b_fields_ac_from_device(NGLOB_AB,b_potential_acoustic,b_potential_dot_acoustic, &
                                                 b_potential_dot_dot_acoustic,Mesh_pointer)
     endif
     ! elastic domains

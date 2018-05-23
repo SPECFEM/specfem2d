@@ -56,16 +56,16 @@
   logical :: compute_wavefield_2
 
   ! determines which wavefields to compute
-  if ((.not. UNDO_ATTENUATION_AND_OR_PML) .and. SIMULATION_TYPE==1) then
+  if ((.not. UNDO_ATTENUATION_AND_OR_PML) .and. SIMULATION_TYPE == 1) then
     compute_wavefield_1 = .true.
     compute_wavefield_2 = .false.
-  else if ((.not. UNDO_ATTENUATION_AND_OR_PML) .and. SIMULATION_TYPE==3) then
+  else if ((.not. UNDO_ATTENUATION_AND_OR_PML) .and. SIMULATION_TYPE == 3) then
     compute_wavefield_1 = .true.
     compute_wavefield_2 = .true.
   else if (UNDO_ATTENUATION_AND_OR_PML .and. compute_b_wavefield_arg) then
     compute_wavefield_1 = .false.
     compute_wavefield_2 = .true.
-  else 
+  else
     compute_wavefield_1 = .true.
     compute_wavefield_2 = .false.
   endif
@@ -111,7 +111,7 @@
 
     ! assemble all the contributions between slices using MPI
     if (ninterface_acoustic > 0) then
-      
+
       if (iphase == 1) then
         if (compute_wavefield_1) then
           ! sends potential_dot_dot_acoustic values to corresponding MPI interface neighbors (non-blocking)

@@ -155,7 +155,7 @@
   use specfem_par, only: myrank,iteration_on_subset,NSUBSET_ITERATIONS, &
     any_acoustic,any_elastic,ATTENUATION_VISCOACOUSTIC,ATTENUATION_VISCOELASTIC, &
     b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
-    b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_e1,b_e11,b_e13,&
+    b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_e1,b_e11,b_e13, &
     b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old,b_e1_acous_sf,b_sum_forces_old, &
     GPU_MODE,nspec_ATT_ac,nglob
 

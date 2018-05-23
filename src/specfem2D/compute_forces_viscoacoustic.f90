@@ -344,7 +344,7 @@
             if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) &
                 .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) - sum_forces
             if (ATTENUATION_VISCOACOUSTIC .and. USE_A_STRONG_FORMULATION_FOR_E1) then
-              call get_attenuation_forces_strong_form(sum_forces,sum_forces_old(i,j,ispec),&
+              call get_attenuation_forces_strong_form(sum_forces,sum_forces_old(i,j,ispec), &
                                                       forces_attenuation,i,j,ispec,iglob,e1_acous_sf)
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - forces_attenuation
             endif

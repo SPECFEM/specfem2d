@@ -101,29 +101,29 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
 
   // adjoint simulations
   if (compute_wavefield2) {
-    // we distinguish between undo_attenuation or classical, because undo recomputes it meanwhile classical just reads it 
+    // we distinguish between undo_attenuation or classical, because undo recomputes it meanwhile classical just reads it
     if (UNDO_ATTENUATION_AND_OR_PML){
       vel = b_potential_dot_acoustic[iglob] / rhol;
       atomicAdd(&b_potential_dot_dot_acoustic[iglob],-vel*jacobianw/cpl);
     }else{
-      if (cote_abs[iface] == 1)     {num_local = ib_bottom[iface] - 1; 
+      if (cote_abs[iface] == 1)     {num_local = ib_bottom[iface] - 1;
                                      atomicAdd(&b_potential_dot_dot_acoustic[iglob],
                                                -b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)]);}
-      else if (cote_abs[iface] == 2){num_local = ib_right[iface] - 1; 
+      else if (cote_abs[iface] == 2){num_local = ib_right[iface] - 1;
                                      atomicAdd(&b_potential_dot_dot_acoustic[iglob],
                                                -b_absorb_potential_right[INDEX2(NGLLX,igll,num_local)]);}
-      else if (cote_abs[iface] == 3){num_local = ib_top[iface] - 1; 
+      else if (cote_abs[iface] == 3){num_local = ib_top[iface] - 1;
                                      atomicAdd(&b_potential_dot_dot_acoustic[iglob],
                                                -b_absorb_potential_top[INDEX2(NGLLX,igll,num_local)]);}
-      else if (cote_abs[iface] == 4){num_local = ib_left[iface] - 1; 
+      else if (cote_abs[iface] == 4){num_local = ib_left[iface] - 1;
                                      atomicAdd(&b_potential_dot_dot_acoustic[iglob],
                                                -b_absorb_potential_left[INDEX2(NGLLX,igll,num_local)]);}
     }
     if (write_abs) {
       // saves boundary values
-      if (cote_abs[iface] == 1)      { num_local = ib_bottom[iface] - 1; 
+      if (cote_abs[iface] == 1)      { num_local = ib_bottom[iface] - 1;
                                        b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
-      else if (cote_abs[iface] == 2) { num_local = ib_right[iface] - 1; 
+      else if (cote_abs[iface] == 2) { num_local = ib_right[iface] - 1;
                                        b_absorb_potential_right[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}
       else if (cote_abs[iface] == 3) { num_local = ib_top[iface] - 1;
                                        b_absorb_potential_top[INDEX2(NGLLX,igll,num_local)] = vel*jacobianw/cpl;}

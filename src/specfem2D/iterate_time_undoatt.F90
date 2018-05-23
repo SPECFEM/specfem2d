@@ -109,7 +109,7 @@
   if (NOISE_TOMOGRAPHY /= 0) call exit_MPI(myrank,'for undo_attenuation, NOISE_TOMOGRAPHY is not supported')
   if (AXISYM) call exit_MPI(myrank,'Just axisymmetric FORWARD simulations are possible so far')
   if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
-    call exit_MPI(myrank,'for undo_attenuation with viscoacousticity, & 
+    call exit_MPI(myrank,'for undo_attenuation with viscoacousticity, &
                  & USE_A_STRONG_FORMULATION_FOR_E1 has to be set to true (in setup/constants.h)')
 
   ! number of time subsets for time loop
@@ -353,7 +353,7 @@
         ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
         if (any_acoustic) then
           if (GPU_MODE) then
-            call transfer_b_potential_ac_to_device(nglob,&
+            call transfer_b_potential_ac_to_device(nglob, &
                                       b_potential_acoustic_buffer(:,it_subset_end-it_of_this_subset+1),Mesh_pointer)
           else
             b_potential_acoustic(:) = b_potential_acoustic_buffer(:,it_subset_end-it_of_this_subset+1)
@@ -386,8 +386,8 @@
         do i_stage = 1, stage_time_scheme
           ! adjoint
           ! update_displacement_newmark
-          if (GPU_MODE) then 
-            if (any_acoustic) call update_displacement_newmark_GPU_acoustic(compute_b_wavefield) 
+          if (GPU_MODE) then
+            if (any_acoustic) call update_displacement_newmark_GPU_acoustic(compute_b_wavefield)
           else
             call update_displ_acoustic_forward()
           endif
