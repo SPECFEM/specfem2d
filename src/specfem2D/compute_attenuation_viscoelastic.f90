@@ -41,7 +41,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: nspec_ATT,ATTENUATION_VISCOELASTIC,N_SLS, &
+  use specfem_par, only: nspec_ATT_el,ATTENUATION_VISCOELASTIC,N_SLS, &
                          ispec_is_PML, &
                          inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2,time_stepping_scheme,i_stage,deltat, &
                          e1_LDDRK,e11_LDDRK,e13_LDDRK,e1_initial_rk,e11_initial_rk,e13_initial_rk, &
@@ -50,12 +50,12 @@
   implicit none
 
   real(kind=CUSTOM_REAL),intent(in) :: dux_dxl,dux_dzl,duz_dxl,duz_dzl
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ,nspec_ATT),intent(inout) :: dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ,nspec_ATT_el),intent(inout) :: dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old
   real(kind=CUSTOM_REAL),intent(out) :: e1_sum,e11_sum,e13_sum
   integer, intent(in) :: i,j,ispec
   ! CPML coefficients and memory variables
   logical, intent(in) :: PML_BOUNDARY_CONDITIONS
-  real(kind=CUSTOM_REAL),dimension(N_SLS,NGLLX,NGLLZ,nspec_ATT),intent(inout) :: e1,e11,e13
+  real(kind=CUSTOM_REAL),dimension(N_SLS,NGLLX,NGLLZ,nspec_ATT_el),intent(inout) :: e1,e11,e13
 
   ! local variables
   integer :: i_sls

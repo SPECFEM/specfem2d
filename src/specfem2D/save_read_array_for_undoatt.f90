@@ -33,13 +33,16 @@
 
   subroutine save_forward_arrays_undoatt()
 
-  use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES
+  use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,NGLLX,NGLLZ
 
   use specfem_par, only: myrank,iteration_on_subset, &
     any_acoustic,any_elastic,ATTENUATION_VISCOACOUSTIC,ATTENUATION_VISCOELASTIC, &
     potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
-    e1,e11,e13
+    e1,e11,e13,dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old, &
+    e1_acous_sf,sum_forces_old,GPU_MODE,nspec_ATT_ac,nglob
+
+  use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
 
@@ -59,12 +62,18 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for writing')
 
   if (any_acoustic) then
+    if (GPU_MODE) call transfer_fields_ac_from_device(nglob,potential_acoustic,potential_dot_acoustic, &
+                                                      potential_dot_dot_acoustic,Mesh_pointer)
     write(IOUT_UNDO_ATT) potential_dot_dot_acoustic
     write(IOUT_UNDO_ATT) potential_dot_acoustic
     write(IOUT_UNDO_ATT) potential_acoustic
 
     if (ATTENUATION_VISCOACOUSTIC) then
-      write(IOUT_UNDO_ATT) e1
+      if (GPU_MODE) call transfer_viscoacoustic_var_from_device(NGLLX*NGLLZ*nspec_ATT_ac, &
+                                                                e1_acous_sf,sum_forces_old,Mesh_pointer)
+      write(IOUT_UNDO_ATT) e1_acous_sf
+      write(IOUT_UNDO_ATT) sum_forces_old
+
     endif
 
   endif
@@ -78,6 +87,9 @@
       write(IOUT_UNDO_ATT) e1
       write(IOUT_UNDO_ATT) e11
       write(IOUT_UNDO_ATT) e13
+      write(IOUT_UNDO_ATT) dux_dxl_old
+      write(IOUT_UNDO_ATT) duz_dzl_old
+      write(IOUT_UNDO_ATT) dux_dzl_plus_duz_dxl_old
     endif
   endif
 

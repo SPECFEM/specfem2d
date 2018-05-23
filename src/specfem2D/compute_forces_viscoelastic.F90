@@ -39,7 +39,7 @@
     ONE,TWO,PI,TINYVAL,FOUR_THIRDS,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: nglob,assign_external_model,P_SV, &
-                         ATTENUATION_VISCOELASTIC,nspec_ATT,N_SLS, &
+                         ATTENUATION_VISCOELASTIC,nspec_ATT_el,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
                          jacobian,vpext,vsext,rhoext, &
@@ -64,8 +64,8 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(inout) :: accel_elastic
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: displ_elastic_old
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT),intent(inout) :: dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT,N_SLS),intent(inout) :: e1,e11,e13
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT_el),intent(inout) :: dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec_ATT_el,N_SLS),intent(inout) :: e1,e11,e13
 
   ! CPML coefficients and memory variables
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS

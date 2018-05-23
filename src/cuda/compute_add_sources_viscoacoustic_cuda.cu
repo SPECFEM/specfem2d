@@ -205,11 +205,8 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
       int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
 
       realw  kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
-
       realw  xir = xir_store[INDEX2(nadj_rec_local,irec_local,i)];
-
       realw  gammar = gammar_store[INDEX2(nadj_rec_local,irec_local,j)];
-
       realw  source_adj = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,0)];
 
 

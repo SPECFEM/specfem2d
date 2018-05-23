@@ -500,7 +500,7 @@ void FC_FUNC_(prepare_fields_acoustic_device,
 extern "C"
 void FC_FUNC_(prepare_fields_acoustic_adj_dev,
               PREPARE_FIELDS_ACOUSTIC_ADJ_DEV)(long* Mesh_pointer,
-                                              int* APPROXIMATE_HESS_KL) {
+                                               int* APPROXIMATE_HESS_KL,int* ATTENUATION_VISCOACOUSTIC) {
 
   TRACE("prepare_fields_acoustic_adj_dev");
 
@@ -552,6 +552,11 @@ void FC_FUNC_(prepare_fields_acoustic_adj_dev,
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_hess_ac_kl),size*sizeof(realw)),3030);
     // initializes with zeros
     print_CUDA_error_if_any(cudaMemset(mp->d_hess_ac_kl,0,size*sizeof(realw)),3031);
+  }
+
+  if (*ATTENUATION_VISCOACOUSTIC) {
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_sum_forces_old),size*sizeof(realw)),3040);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_e1_acous),size*N_SLS*sizeof(realw)),3041);
   }
 
   // mpi buffer
@@ -1018,6 +1023,10 @@ TRACE("prepare_cleanup_device");
       cudaFree(mp->d_kappa_ac_kl);
       if (*APPROXIMATE_HESS_KL) cudaFree(mp->d_hess_ac_kl);
       if (mp->size_mpi_buffer_potential > 0 ) cudaFree(mp->d_b_send_potential_dot_dot_buffer);
+      if (*ATTENUATION_VISCOACOUSTIC) {
+        cudaFree(mp->d_b_sum_forces_old);
+        cudaFree(mp->d_b_e1_acous);
+      }
     }
 
     if (*ABSORBING_CONDITIONS && mp->d_num_abs_boundary_faces > 0){

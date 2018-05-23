@@ -331,6 +331,42 @@ void FC_FUNC_(transfer_b_fields_ac_from_device,
 /* ----------------------------------------------------------------------------------------------- */
 
 extern "C"
+void FC_FUNC_(transfer_b_potential_ac_from_device,
+              TRANSFER_B_POTENTIAL_AC_FROM_DEVICE)(int* size,
+                                                realw* b_potential_acoustic,
+                                                long* Mesh_pointer) {
+  TRACE("transfer_b_potential_ac_from_device");
+
+  //get mesh pointer out of fortran integer container
+  Mesh* mp = (Mesh*)(*Mesh_pointer);
+  print_CUDA_error_if_any(cudaMemcpy(b_potential_acoustic,mp->d_b_potential_acoustic,
+                                     sizeof(realw)*(*size),cudaMemcpyDeviceToHost),53132);
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_cuda_error("after transfer_b_potential_ac_from_device");
+#endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(transfer_b_potential_ac_to_device,
+              TRANSFER_B_POTENTIAL_AC_TO_DEVICE)(int* size,
+                                                 realw* b_potential_acoustic,
+                                                 long* Mesh_pointer) {
+  TRACE("transfer_b_potential_ac_to_device");
+
+  //get mesh pointer out of fortran integer container
+  Mesh* mp = (Mesh*)(*Mesh_pointer);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_potential_acoustic,b_potential_acoustic,
+                                     sizeof(realw)*(*size),cudaMemcpyHostToDevice),53133);
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_cuda_error("after transfer_b_potential_ac_to_device");
+#endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
 void FC_FUNC_(transfer_dot_dot_from_device,
               TRNASFER_DOT_DOT_FROM_DEVICE)(int* size, realw* potential_dot_dot_acoustic,long* Mesh_pointer) {
 
@@ -414,6 +450,45 @@ void FC_FUNC_(transfer_kernels_hess_ac_tohost,
   print_CUDA_error_if_any(cudaMemcpy(h_hess_ac_kl,mp->d_hess_ac_kl,NGLL2*(*NSPEC_AB)*sizeof(realw),
                                      cudaMemcpyDeviceToHost),70202);
 }
+
+//For UNDO_ATTENUATION
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(transfer_viscoacoustic_b_var_to_device,
+              TRANSFER_VISCOACOUSTIC_b_VAR_TO_DEVICE)(int* size,
+                                                      realw* b_e1_acous_sf,
+                                                      realw* b_sum_forces_old,
+                                                      long* Mesh_pointer) {
+
+  TRACE("transfer_viscoacoustic_var_to_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_sum_forces_old,b_sum_forces_old,sizeof(realw)*(*size),cudaMemcpyHostToDevice),70203);
+  print_CUDA_error_if_any(cudaMemcpy(mp->d_b_e1_acous,b_e1_acous_sf,sizeof(realw)*(*size)*N_SLS,cudaMemcpyHostToDevice),70204);
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(transfer_viscoacoustic_var_from_device,
+              TRANSFER_VISCOACOUSTIC_VAR_FROM_DEVICE)(int* size,
+                                                      realw* e1_acous_sf,
+                                                      realw* sum_forces_old,
+                                                      long* Mesh_pointer ) {
+
+  TRACE("transfer_viscoacoustic_var_from_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaMemcpy(sum_forces_old,mp->d_sum_forces_old,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),70205);
+  print_CUDA_error_if_any(cudaMemcpy(e1_acous_sf,mp->d_e1_acous,sizeof(realw)*(*size)*N_SLS,cudaMemcpyDeviceToHost),70206);
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+
 
 // unused...
 

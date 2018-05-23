@@ -246,23 +246,9 @@
   ! distinguishes two runs: for elements on MPI interfaces (outer), and elements within the partitions (inner)
   do iphase = 1,2
 
-    if (UNDO_ATTENUATION_AND_OR_PML) then
-      call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                       b_dux_dxl_old,b_duz_dzl_old, &
-                                       b_dux_dzl_plus_duz_dxl_old,.false.,b_e1,b_e11,b_e13,iphase)
-    else
-      ! todo: maybe should be b_e1,b_e11,.. here, please check...
-      !! EB EB May 2018 : this is false anyway and should be removed
-      call compute_forces_viscoelastic_backward(b_accel_elastic,b_displ_elastic,b_displ_elastic_old, &
-                                                e1,e11,e13,iphase)
-    endif
-
-!   ! viscous attenuation for elastic media
-!   if (ATTENUATION_VISCOELASTIC) call compute_attenuation_viscoelastic(b_displ_elastic,b_displ_elastic_old, &
-!                                                                  ispec_is_elastic,PML_BOUNDARY_CONDITIONS,b_e1,b_e11,b_e13)
-!
-!    call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
-!                                     PML_BOUNDARY_CONDITIONS,b_e1,b_e11,b_e13)
+    call compute_forces_viscoelastic(b_accel_elastic,b_veloc_elastic,b_displ_elastic,b_displ_elastic_old, &
+                                     b_dux_dxl_old,b_duz_dzl_old, &
+                                     b_dux_dzl_plus_duz_dxl_old,.false.,b_e1,b_e11,b_e13,iphase)
 
     ! computes additional contributions
     if (iphase == 1) then

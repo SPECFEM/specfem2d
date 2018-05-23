@@ -155,7 +155,7 @@ subroutine iterate_time()
           if (SIMULATION_TYPE == 3) call compute_forces_viscoacoustic_main_backward()
         else
           ! on GPU
-          if (any_acoustic) call compute_forces_viscoacoustic_GPU()
+          if (any_acoustic) call compute_forces_viscoacoustic_GPU(.false.)
         endif
       endif
 
@@ -219,7 +219,7 @@ subroutine iterate_time()
     endif
 
     ! display results at given time steps
-    call write_movie_output()
+    call write_movie_output(.true.)
 
   enddo ! end of the main time loop
 
@@ -306,7 +306,6 @@ subroutine it_transfer_from_GPU()
     ! acoustic domains
     if (any_acoustic) then
       call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
-
       rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
       alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
     endif

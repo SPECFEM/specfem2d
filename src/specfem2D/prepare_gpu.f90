@@ -62,8 +62,8 @@
   if (NGLLX /= NGLLZ) call stop_the_code('GPU simulations require NGLLX == NGLLZ')
   if ( (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. ATTENUATION_VISCOACOUSTIC) call stop_the_code( &
     'GPU simulations require USE_A_STRONG_FORMULATION_FOR_E1 set to true')
-  if ( (ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. SIMULATION_TYPE == 3) call stop_the_code( &
-    'GPU mode do not support yet adjoint simulations with attenuation')
+  if ( ATTENUATION_VISCOELASTIC  .and. SIMULATION_TYPE == 3) call stop_the_code( &
+    'GPU mode do not support yet adjoint simulations with attenuation viscoelastic')
   if ( (ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. any_elastic .and. any_acoustic) call stop_the_code( &
     'GPU mode do not support yet coupled fluid-solid simulations with attenuation')
   ! initializes arrays
@@ -175,7 +175,7 @@
       if (APPROXIMATE_HESS_KL) then
         call stop_the_code('Sorry, approximate acoustic Hessian kernels not yet fully implemented for GPU simulations!')
       endif
-      call prepare_fields_acoustic_adj_dev(Mesh_pointer,APPROXIMATE_HESS_KL)
+      call prepare_fields_acoustic_adj_dev(Mesh_pointer,APPROXIMATE_HESS_KL,ATTENUATION_VISCOACOUSTIC)
     endif
   endif
 

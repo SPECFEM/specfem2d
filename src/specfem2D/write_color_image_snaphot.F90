@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine write_color_image_snaphot()
+  subroutine write_color_image_snaphot(plot_b_wavefield_only)
 
 #ifdef USE_MPI
   use mpi
@@ -46,7 +46,8 @@
                         displs_poroelastic,velocs_poroelastic,accels_poroelastic, &
                         b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
                         b_displ_elastic,b_veloc_elastic,b_accel_elastic, &
-                        b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,SIMULATION_TYPE
+                        b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,SIMULATION_TYPE, &
+                        UNDO_ATTENUATION_AND_OR_PML
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
@@ -62,11 +63,14 @@
 
   implicit none
 
+  !parameter useful for UNDO_ATTENUATION
+  logical :: plot_b_wavefield_only
+
   !local variables
   integer :: i,j,k,ispec,iglob,iproc,i_field,n_fields
   double precision :: rhol
 
-  if (SIMULATION_TYPE == 1) then
+  if (SIMULATION_TYPE == 1 .or. UNDO_ATTENUATION_AND_OR_PML) then
     n_fields = 1
   else
     n_fields = 2
@@ -82,7 +86,7 @@
   endif
 
   if (imagetype_JPEG >= 1 .and. imagetype_JPEG <= 3) then
-    if (i_field == 1) then
+    if (i_field == 1 .and. .not. plot_b_wavefield_only) then
       if (myrank == 0 .and. SIMULATION_TYPE == 1 ) then
         write(IMAIN,*) 'drawing scalar image of the forward wavefield displacement...'
       else if (myrank == 0) then
@@ -96,7 +100,7 @@
 
   else if (imagetype_JPEG >= 4 .and. imagetype_JPEG <= 6) then
 
-    if (i_field == 1) then
+    if (i_field == 1 .and. .not. plot_b_wavefield_only) then
       if (myrank == 0 .and. SIMULATION_TYPE == 1 ) then
         write(IMAIN,*) 'drawing scalar image of the forward wavefield velocity...'
       else if (myrank == 0) then
@@ -110,7 +114,7 @@
 
   else if (imagetype_JPEG >= 7 .and. imagetype_JPEG <= 9) then
 
-    if (i_field == 1) then
+    if (i_field == 1 .and. .not. plot_b_wavefield_only) then
       if (myrank == 0 .and. SIMULATION_TYPE == 1 ) then
         write(IMAIN,*) 'drawing scalar image of the forward wavefield acceleration...'
       else if (myrank == 0) then
@@ -165,16 +169,17 @@
 
   else if (imagetype_JPEG == 10 .and. P_SV) then
 
-    if (i_field == 1) then
+    if (i_field == 1 .and. .not. plot_b_wavefield_only) then
       if (myrank == 0 .and. SIMULATION_TYPE == 1 ) then
         write(IMAIN,*) 'drawing scalar image of the forward wavefield pressure...'
       else
         if (myrank == 0) write(IMAIN,*) 'drawing scalar image of the adjoint wavefield pressure...'
       endif
+    call compute_pressure_whole_medium(1)
     else
       if (myrank == 0) write(IMAIN,*) 'drawing scalar image of the reconstructed forward wavefield pressure...'
+      call compute_pressure_whole_medium(2)
     endif
-    call compute_pressure_whole_medium(i_field)
 
   else if (imagetype_JPEG == 10 .and. .not. P_SV) then
     call exit_MPI(myrank,'cannot draw pressure field for SH (membrane) waves')
@@ -321,7 +326,7 @@
 
   ! creates image
   if (myrank == 0) then
-    call create_color_image(i_field)
+    call create_color_image(i_field,plot_b_wavefield_only)
 
     ! user output
     write(IMAIN,*) 'Color image created'

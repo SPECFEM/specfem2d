@@ -104,7 +104,7 @@
 
     ! main solver for the acoustic elements
     call compute_forces_viscoacoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                                 PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase)
+                                 PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1_acous_sf,sum_forces_old)
 
     ! PML boundary conditions enforces zero potentials on boundary
     if (PML_BOUNDARY_CONDITIONS) then
@@ -285,15 +285,8 @@
   do iphase = 1,2
 
     ! main solver for the acoustic elements
-    if (UNDO_ATTENUATION_AND_OR_PML) then
-!! DK DK March 2018: following Quentin Brissaud's new variational implementation of viscoacousticity,
-!! DK DK March 2018: I am not sure if the last argument, dot_e1, that I added here is right, or if
-!! DK DK March 2018: a backward one should be created (b_dot_e1); far more likely it should be a b_dot_e1 to create (not done yet)
-      call compute_forces_viscoacoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
-                                   .false.,b_potential_acoustic_old,iphase)
-    else
-      call compute_forces_viscoacoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic,iphase)
-    endif
+    call compute_forces_viscoacoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
+                                     .false.,b_potential_acoustic_old,iphase,b_e1_acous_sf,b_sum_forces_old)
 
     ! PML boundary conditions
     if (PML_BOUNDARY_CONDITIONS) then

@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine write_movie_output()
+  subroutine write_movie_output(get_b_wavefield)
 
 ! outputs snapshots for movies
 
@@ -39,9 +39,10 @@
 
   use specfem_par, only: myrank,it,NSTEP,nspec,nglob,ibool, &
     potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
+    b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
     b_displ_elastic,rho_k,rho_kl, &
-    any_acoustic,any_elastic,GPU_MODE,P_SV
+    any_acoustic,any_elastic,GPU_MODE,P_SV,UNDO_ATTENUATION_AND_OR_PML,SIMULATION_TYPE
 
   use specfem_par_gpu, only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
 
@@ -53,21 +54,34 @@
 
   implicit none
 
+  ! parameter useful for UNDO_ATTENUATION mode
+  logical :: get_b_wavefield
+
   ! local parameters
   integer :: ier
-  logical :: ex, is_opened
+  logical :: ex, is_opened,plot_b_wavefield_only
   character(len=MAX_STRING_LEN) :: noise_output_file
 
   ! checks if anything to do
   if (.not. (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP)) return
 
+  if (UNDO_ATTENUATION_AND_OR_PML .and. get_b_wavefield) then
+    plot_b_wavefield_only = .true.
+  else
+    plot_b_wavefield_only = .false.
+  endif
+
   ! transfers arrays from GPU to CPU
   if (GPU_MODE) then
     ! Fields transfer for imaging
     ! acoustic domains
-    if (any_acoustic ) then
-      call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic,potential_dot_acoustic, &
-                                          potential_dot_dot_acoustic,Mesh_pointer)
+    if (any_acoustic) then
+      if ( .not. plot_b_wavefield_only) &
+        call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic,potential_dot_acoustic, &
+                                            potential_dot_dot_acoustic,Mesh_pointer)
+      if ((SIMULATION_TYPE == 3 .and. (.not. UNDO_ATTENUATION_AND_OR_PML)) .or. plot_b_wavefield_only ) &
+          call transfer_b_fields_ac_from_device(NGLOB_AB,b_potential_acoustic,b_potential_dot_acoustic,&
+                                                b_potential_dot_dot_acoustic,Mesh_pointer)
     endif
     ! elastic domains
     if (any_elastic) then
@@ -135,7 +149,7 @@
 
   ! display color image
   if (output_color_image) then
-    call write_color_image_snaphot()
+    call write_color_image_snaphot(plot_b_wavefield_only)
   endif
 
   ! dump the full (local) wavefield to a file

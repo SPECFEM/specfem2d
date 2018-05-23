@@ -476,7 +476,10 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                        int* d_ibool,
                        realw* d_xix,realw* d_xiz,
                        realw* d_gammax,realw* d_gammaz,
-                       realw* d_rhostore,int ATTENUATION_VISCOACOUSTIC){
+                       realw* d_rhostore,
+                       int ATTENUATION_VISCOACOUSTIC,
+                       int compute_wavefield_1,
+                       int compute_wavefield_2) {
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("before acoustic kernel Kernel 2");
@@ -497,49 +500,102 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
     start_timing_cuda(&start,&stop);
   }
 
-  if (mp->simulation_type==3){
+  if (compute_wavefield_1 && compute_wavefield_2){
     nb_field=2;
-  }
-  else{
+  }else{
     nb_field=1;
   }
-
   if ( ! ATTENUATION_VISCOACOUSTIC){
-
-    // forward wavefields -> FORWARD_OR_ADJOINT == 1
-    Kernel_2_acoustic_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                     d_ibool,
-                                                                     mp->d_phase_ispec_inner_acoustic,
-                                                                     mp->num_phase_ispec_acoustic,
-                                                                     d_iphase,
-                                                                     mp->d_potential_acoustic, mp->d_potential_dot_dot_acoustic,
-                                                                     mp->d_b_potential_acoustic,mp->d_b_potential_dot_dot_acoustic,
-                                                                     nb_field,
-                                                                     d_xix, d_xiz,
-                                                                     d_gammax, d_gammaz,
-                                                                     mp->d_hprime_xx,
-                                                                     mp->d_hprimewgll_xx,
-                                                                     mp->d_wxgll,
-                                                                     d_rhostore);
-  }else{
-
-    Kernel_2_viscoacoustic_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                          d_ibool,
-                                                                          mp->d_phase_ispec_inner_acoustic,
-                                                                          mp->num_phase_ispec_acoustic,
-                                                                          d_iphase,
-                                                                          mp->d_potential_acoustic, mp->d_potential_dot_dot_acoustic,
-                                                                          d_xix, d_xiz,
-                                                                          d_gammax, d_gammaz,
-                                                                          mp->d_hprime_xx,
-                                                                          mp->d_hprimewgll_xx,
-                                                                          mp->d_wxgll,
-                                                                          d_rhostore,
-                                                                          mp->d_e1_acous,
-                                                                          mp->d_A_newmark_acous,
-                                                                          mp->d_B_newmark_acous,
-                                                                          mp->d_sum_forces_old);
-  }
+    if (nb_field==2){
+      // forward wavefields -> FORWARD_OR_ADJOINT == 1
+      Kernel_2_acoustic_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                       d_ibool,
+                                                                       mp->d_phase_ispec_inner_acoustic,
+                                                                       mp->num_phase_ispec_acoustic,
+                                                                       d_iphase,
+                                                                       mp->d_potential_acoustic, mp->d_potential_dot_dot_acoustic,
+                                                                       mp->d_b_potential_acoustic,mp->d_b_potential_dot_dot_acoustic,
+                                                                       nb_field,
+                                                                       d_xix, d_xiz,
+                                                                       d_gammax, d_gammaz,
+                                                                       mp->d_hprime_xx,
+                                                                       mp->d_hprimewgll_xx,
+                                                                       mp->d_wxgll,
+                                                                       d_rhostore);
+    }else{ // nb_field==1
+      if (compute_wavefield_1){
+        // forward wavefields -> FORWARD_OR_ADJOINT == 1
+        Kernel_2_acoustic_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                         d_ibool,
+                                                                         mp->d_phase_ispec_inner_acoustic,
+                                                                         mp->num_phase_ispec_acoustic,
+                                                                         d_iphase,
+                                                                         mp->d_potential_acoustic, mp->d_potential_dot_dot_acoustic,
+                                                                         mp->d_b_potential_acoustic,mp->d_b_potential_dot_dot_acoustic,
+                                                                         nb_field,
+                                                                         d_xix, d_xiz,
+                                                                         d_gammax, d_gammaz,
+                                                                         mp->d_hprime_xx,
+                                                                         mp->d_hprimewgll_xx,
+                                                                         mp->d_wxgll,
+                                                                         d_rhostore);
+      }else{
+        // this run only happens with UNDO_ATTENUATION_AND_OR_PML on
+        // adjoint wavefields -> FORWARD_OR_ADJOINT == 3
+        Kernel_2_acoustic_impl<3><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                         d_ibool,
+                                                                         mp->d_phase_ispec_inner_acoustic,
+                                                                         mp->num_phase_ispec_acoustic,
+                                                                         d_iphase,
+                                                                         mp->d_b_potential_acoustic, mp->d_b_potential_dot_dot_acoustic,
+                                                                         mp->d_b_potential_acoustic,mp->d_b_potential_dot_dot_acoustic,
+                                                                         nb_field,
+                                                                         d_xix, d_xiz,
+                                                                         d_gammax, d_gammaz,
+                                                                         mp->d_hprime_xx,
+                                                                         mp->d_hprimewgll_xx,
+                                                                         mp->d_wxgll,
+                                                                         d_rhostore);
+      } //compute_wavefield_1
+    } //nb_field
+  }else{ // ATTENUATION_VISCOACOUSTIC== .true. below
+    if (compute_wavefield_1) {
+      Kernel_2_viscoacoustic_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                            d_ibool,
+                                                                            mp->d_phase_ispec_inner_acoustic,
+                                                                            mp->num_phase_ispec_acoustic,
+                                                                            d_iphase,
+                                                                            mp->d_potential_acoustic, mp->d_potential_dot_dot_acoustic,
+                                                                            d_xix, d_xiz,
+                                                                            d_gammax, d_gammaz,
+                                                                            mp->d_hprime_xx,
+                                                                            mp->d_hprimewgll_xx,
+                                                                            mp->d_wxgll,
+                                                                            d_rhostore,
+                                                                            mp->d_e1_acous,
+                                                                            mp->d_A_newmark_acous,
+                                                                            mp->d_B_newmark_acous,
+                                                                            mp->d_sum_forces_old);
+    }
+    if (compute_wavefield_2) {
+      Kernel_2_viscoacoustic_impl<3><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                            d_ibool,
+                                                                            mp->d_phase_ispec_inner_acoustic,
+                                                                            mp->num_phase_ispec_acoustic,
+                                                                            d_iphase,
+                                                                            mp->d_b_potential_acoustic, mp->d_b_potential_dot_dot_acoustic,
+                                                                            d_xix, d_xiz,
+                                                                            d_gammax, d_gammaz,
+                                                                            mp->d_hprime_xx,
+                                                                            mp->d_hprimewgll_xx,
+                                                                            mp->d_wxgll,
+                                                                            d_rhostore,
+                                                                            mp->d_b_e1_acous,
+                                                                            mp->d_A_newmark_acous,
+                                                                            mp->d_B_newmark_acous,
+                                                                            mp->d_b_sum_forces_old);
+    }
+  } // ATTENUATION_VISCOACOUSTIC
 
 
 
@@ -570,7 +626,9 @@ void FC_FUNC_(compute_forces_acoustic_cuda,
                                             int* iphase,
                                             int* nspec_outer_acoustic,
                                             int* nspec_inner_acoustic,
-                                            int* ATTENUATION_VISCOACOUSTIC) {
+                                            int* ATTENUATION_VISCOACOUSTIC,
+                                            int* compute_wavefield_1,
+                                            int* compute_wavefield_2) {
   TRACE("compute_forces_acoustic_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
@@ -580,7 +638,6 @@ void FC_FUNC_(compute_forces_acoustic_cuda,
     num_elements = *nspec_outer_acoustic;
   else
     num_elements = *nspec_inner_acoustic;
-
   if (num_elements == 0) return;
 
   // no mesh coloring: uses atomic updates
@@ -589,7 +646,9 @@ void FC_FUNC_(compute_forces_acoustic_cuda,
                     mp->d_xix,mp->d_xiz,
                     mp->d_gammax,mp->d_gammaz,
                     mp->d_rhostore,
-                    *ATTENUATION_VISCOACOUSTIC);
+                    *ATTENUATION_VISCOACOUSTIC,
+                    *compute_wavefield_1,
+                    *compute_wavefield_2);
 }
 
 
@@ -629,9 +688,9 @@ __global__ void enforce_free_surface_cuda_kernel(realw_p potential_acoustic,
       int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)] - 1;
 
       // sets potentials to zero at free surface
-      potential_acoustic[iglob] = 0;
-      potential_dot_acoustic[iglob] = 0;
-      potential_dot_dot_acoustic[iglob] = 0;
+      potential_acoustic[iglob] = 0.f;
+      potential_dot_acoustic[iglob] = 0.f;
+      potential_dot_dot_acoustic[iglob] = 0.f;
     }
   }
 }
@@ -641,7 +700,7 @@ __global__ void enforce_free_surface_cuda_kernel(realw_p potential_acoustic,
 
 extern "C"
 void FC_FUNC_(acoustic_enforce_free_surf_cuda,
-              ACOUSTIC_ENFORCE_FREE_SURF_CUDA)(long* Mesh_pointer) {
+              ACOUSTIC_ENFORCE_FREE_SURF_CUDA)(long* Mesh_pointer,int* compute_wavefield_1,int* compute_wavefield_2) {
 
   TRACE("acoustic_enforce_free_surf_cuda");
 
@@ -661,6 +720,7 @@ void FC_FUNC_(acoustic_enforce_free_surf_cuda,
 
 
   // sets potentials to zero at free surface
+  if (*compute_wavefield_1) {
   enforce_free_surface_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_acoustic,
                                                                           mp->d_potential_dot_acoustic,
                                                                           mp->d_potential_dot_dot_acoustic,
@@ -669,9 +729,9 @@ void FC_FUNC_(acoustic_enforce_free_surf_cuda,
                                                                           mp->d_free_surface_ijk,
                                                                           mp->d_ibool,
                                                                           mp->d_ispec_is_acoustic);
-
+  }
   // for backward/reconstructed potentials
-  if (mp->simulation_type == 3) {
+  if (*compute_wavefield_2) {
     enforce_free_surface_cuda_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_acoustic,
                                                                             mp->d_b_potential_dot_acoustic,
                                                                             mp->d_b_potential_dot_dot_acoustic,

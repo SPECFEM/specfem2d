@@ -1291,41 +1291,42 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS) ::  phinu,tauinvnu,temp,coef
 
   ! attenuation
-  if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC) then
-    nspec_ATT = nspec
+  if (ATTENUATION_VISCOELASTIC) then
+    nspec_ATT_el = nspec
   else
-    nspec_ATT = 1
+    nspec_ATT_el = 1
   endif
 
   ! allocate memory variables for attenuation
-  allocate(e1(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
-           e11(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
-           e13(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
-           dux_dxl_old(NGLLX,NGLLZ,nspec_ATT), &
-           duz_dzl_old(NGLLX,NGLLZ,nspec_ATT), &
-           dux_dzl_plus_duz_dxl_old(NGLLX,NGLLZ,nspec_ATT), &
-           A_newmark_nu1(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
-           B_newmark_nu1(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
-           A_newmark_nu2(N_SLS,NGLLX,NGLLZ,nspec_ATT), &
-           B_newmark_nu2(N_SLS,NGLLX,NGLLZ,nspec_ATT), stat=ier)
+  allocate(e1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+           e11(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+           e13(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+           dux_dxl_old(NGLLX,NGLLZ,nspec_ATT_el), &
+           duz_dzl_old(NGLLX,NGLLZ,nspec_ATT_el), &
+           dux_dzl_plus_duz_dxl_old(NGLLX,NGLLZ,nspec_ATT_el), &
+           A_newmark_nu1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+           B_newmark_nu1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+           A_newmark_nu2(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+           B_newmark_nu2(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), stat=ier)
 
   ! attenuation
   if (ATTENUATION_VISCOACOUSTIC) then
     nglob_ATT = nglob
+    nspec_ATT_ac = nspec
   else
     nglob_ATT = 1
+    nspec_ATT_ac = 1
   endif
+
+  allocate(e1_acous_sf(N_SLS,NGLLX,NGLLZ,nspec_ATT_ac), &
+           sum_forces_old(NGLLX,NGLLZ,nspec_ATT_ac), stat=ier)
 
   if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) then
 
     allocate(e1_acous(nglob_acoustic,N_SLS), &
              dot_e1(nglob_acoustic,N_SLS), &
-             e1_acous_sf(1,1,1,1), &
-             sum_forces_old(1,1,1), &
              A_newmark_e1_sf(1,1,1,1), &
-             B_newmark_e1_sf(1,1,1,1), &
-             stat=ier)
-
+             B_newmark_e1_sf(1,1,1,1),stat=ier)
     if (time_stepping_scheme == 1) then
       allocate(dot_e1_old(nglob_acoustic,N_SLS), &
                A_newmark_e1(nglob_acoustic,N_SLS), &
@@ -1350,9 +1351,7 @@
              dot_e1_old(1,N_SLS), &
              A_newmark_e1(1,N_SLS), &
              B_newmark_e1(1,N_SLS),stat=ier)
-    allocate(sum_forces_old(NGLLX,NGLLZ,nspec), &
-             e1_acous_sf(N_SLS,NGLLX,NGLLZ,nspec), &
-             A_newmark_e1_sf(N_SLS,NGLLX,NGLLZ,nspec), &
+    allocate(A_newmark_e1_sf(N_SLS,NGLLX,NGLLZ,nspec), &
              B_newmark_e1_sf(N_SLS,NGLLX,NGLLZ,nspec),stat=ier)
 
   else ! no ATTENUATION_VISCOACOUSTIC
@@ -1363,8 +1362,6 @@
              dot_e1_old(1,N_SLS), &
              A_newmark_e1(1,N_SLS), &
              B_newmark_e1(1,N_SLS), &
-             sum_forces_old(1,1,1), &
-             e1_acous_sf(1,1,1,1), &
              A_newmark_e1_sf(1,1,1,1), &
              B_newmark_e1_sf(1,1,1,1),stat=ier)
   endif
@@ -1386,9 +1383,9 @@
 
   if (time_stepping_scheme == 2) then
     if (ATTENUATION_VISCOELASTIC) then
-      allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
-      allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
-      allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
+      allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
+      allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
+      allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
     else
       allocate(e1_LDDRK(1,1,1,1))
       allocate(e11_LDDRK(1,1,1,1))
@@ -1414,12 +1411,12 @@
   e1_LDDRK_acous(:,:) = 0._CUSTOM_REAL
 
   if (time_stepping_scheme == 3) then
-    allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS))
-    allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS))
-    allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS))
-    allocate(e1_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
-    allocate(e11_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
-    allocate(e13_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
+    allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
+    allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
+    allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
+    allocate(e1_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
+    allocate(e11_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
+    allocate(e13_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
 
     if (ATTENUATION_VISCOACOUSTIC) then
             allocate(e1_initial_rk_acous(nglob_att,N_SLS))
@@ -1456,15 +1453,15 @@
     already_shifted_velocity(:) = .false.
   endif
 
-  allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           phi_nu1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           phi_nu2(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           Mu_nu1(NGLLX,NGLLZ,nspec_ATT), &
-           Mu_nu2(NGLLX,NGLLZ,nspec_ATT), &
-! ZX ZX needed for further optimization with nspec_ATT replaced with nspec_PML
-           tau_epsilon_nu1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           tau_epsilon_nu2(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
+  allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
+           inv_tau_sigma_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
+           phi_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
+           phi_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
+           Mu_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac)), &
+           Mu_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac)), &
+! ZX ZX needed for further optimization with nspec_ATT_el replaced with nspec_PML
+           tau_epsilon_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
+           tau_epsilon_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
 
   ! temporary arrays for function argument

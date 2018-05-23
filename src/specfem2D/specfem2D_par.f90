@@ -72,7 +72,7 @@ module specfem_par
   double precision, dimension(:), allocatable  :: QKappa_attenuation
   double precision, dimension(:), allocatable  :: Qmu_attenuation
 
-  integer :: nspec_ATT,nglob_att
+  integer :: nspec_ATT_el,nspec_ATT_ac,nglob_att
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   real(kind=CUSTOM_REAL), dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
 
@@ -431,9 +431,9 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_acous
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_LDDRK_acous
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_acous_temp, dot_e1, dot_e1_old,A_newmark_e1, B_newmark_e1
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: A_newmark_e1_sf, B_newmark_e1_sf,e1_acous_sf
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: A_newmark_e1_sf, B_newmark_e1_sf,e1_acous_sf,b_e1_acous_sf
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_initial_rk_acous
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: e1_force_rk_acous,sum_forces_old
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: e1_force_rk_acous,sum_forces_old,b_sum_forces_old
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
 

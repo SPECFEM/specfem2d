@@ -150,12 +150,16 @@
 
 ! reads in saved wavefields
 
-  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES
+  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,NGLLX,NGLLZ
 
   use specfem_par, only: myrank,iteration_on_subset,NSUBSET_ITERATIONS, &
     any_acoustic,any_elastic,ATTENUATION_VISCOACOUSTIC,ATTENUATION_VISCOELASTIC, &
     b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
-    b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_e1,b_e11,b_e13
+    b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_e1,b_e11,b_e13,&
+    b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old,b_e1_acous_sf,b_sum_forces_old, &
+    GPU_MODE,nspec_ATT_ac,nglob
+
+  use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
 
@@ -179,9 +183,13 @@
     read(IIN_UNDO_ATT) b_potential_dot_dot_acoustic
     read(IIN_UNDO_ATT) b_potential_dot_acoustic
     read(IIN_UNDO_ATT) b_potential_acoustic
-
+    if (GPU_MODE) call transfer_b_fields_ac_to_device(nglob,b_potential_acoustic,b_potential_dot_acoustic, &
+                                                        b_potential_dot_dot_acoustic,Mesh_pointer)
     if (ATTENUATION_VISCOACOUSTIC) then
-      read(IIN_UNDO_ATT) b_e1
+      read(IIN_UNDO_ATT) b_e1_acous_sf
+      read(IIN_UNDO_ATT) b_sum_forces_old
+      if (GPU_MODE) call transfer_viscoacoustic_b_var_to_device(NGLLX*NGLLZ*nspec_ATT_ac,b_e1_acous_sf, &
+                                                                b_sum_forces_old,Mesh_pointer)
     endif
   endif
 
@@ -194,6 +202,9 @@
       read(IIN_UNDO_ATT) b_e1
       read(IIN_UNDO_ATT) b_e11
       read(IIN_UNDO_ATT) b_e13
+      read(IIN_UNDO_ATT) b_dux_dxl_old
+      read(IIN_UNDO_ATT) b_duz_dzl_old
+      read(IIN_UNDO_ATT) b_dux_dzl_plus_duz_dxl_old
     endif
   endif
 

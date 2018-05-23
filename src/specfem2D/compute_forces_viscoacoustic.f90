@@ -32,7 +32,7 @@
 !========================================================================
 
   subroutine compute_forces_viscoacoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                                     PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase)
+                                          PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1_acous_sf,sum_forces_old)
 
 ! compute forces in the acoustic elements in forward simulation and in adjoint simulation in adjoint inversion
 
@@ -40,7 +40,7 @@
     ZERO,ONE,TWO,TWO_THIRDS, &
     ALPHA_LDDRK,BETA_LDDRK,C_LDDRK,USE_A_STRONG_FORMULATION_FOR_E1
 
-  use specfem_par, only: nglob, &
+  use specfem_par, only: nglob,nspec_ATT_ac, &
                          assign_external_model,ibool,kmato,ispec_is_acoustic, &
                          density,rhoext, &
                          xix,xiz,gammax,gammaz,jacobian, &
@@ -48,7 +48,7 @@
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,coord,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj,ATTENUATION_VISCOACOUSTIC, &
                          N_SLS, iglob_is_forced,time_stepping_scheme,phi_nu1,inv_tau_sigma_nu1, &
-                         sum_forces_old,e1_acous,dot_e1
+                         e1_acous,dot_e1
 
   ! overlapping communication
   use specfem_par, only: nspec_inner_acoustic,nspec_outer_acoustic,phase_ispec_inner_acoustic
@@ -63,6 +63,9 @@
 
   logical,intent(in) :: PML_BOUNDARY_CONDITIONS
   real(kind=CUSTOM_REAL), dimension(nglob) :: potential_acoustic_old
+
+  real(kind=CUSTOM_REAL),dimension(N_SLS,NGLLX,NGLLZ,nspec_ATT_ac) :: e1_acous_sf
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ,nspec_ATT_ac) :: sum_forces_old
 
   integer,intent(in) :: iphase
 
@@ -341,7 +344,8 @@
             if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) &
                 .and. time_stepping_scheme > 1) dot_e1(iglob,:) = dot_e1(iglob,:) - sum_forces
             if (ATTENUATION_VISCOACOUSTIC .and. USE_A_STRONG_FORMULATION_FOR_E1) then
-              call get_attenuation_forces_strong_form(sum_forces,sum_forces_old(i,j,ispec),forces_attenuation,i,j,ispec,iglob)
+              call get_attenuation_forces_strong_form(sum_forces,sum_forces_old(i,j,ispec),&
+                                                      forces_attenuation,i,j,ispec,iglob,e1_acous_sf)
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - forces_attenuation
             endif
           endif

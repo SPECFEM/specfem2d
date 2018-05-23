@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine create_color_image(i_field)
+  subroutine create_color_image(i_field,plot_b_wavefield_only)
 
 ! display a given field as a red and blue color JPEG image
 
@@ -51,6 +51,7 @@
   implicit none
 
   integer :: i_field
+  logical :: plot_b_wavefield_only
 
   ! local parameters
   integer :: i
@@ -88,7 +89,7 @@
     isnapshot_number = isnapshot_number + 1
     if (i_field == 1 .and. SIMULATION_TYPE == 1) then
       write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'forward_img',isnapshot_number,'.jpg'
-    else if (i_field == 1 .and. SIMULATION_TYPE == 3) then
+    else if (i_field == 1 .and. SIMULATION_TYPE == 3 .and. .not. plot_b_wavefield_only) then
       write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'adjoint_img',isnapshot_number,'.jpg'
     else
       write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'b_forward_img',isnapshot_number,'.jpg'
@@ -96,7 +97,7 @@
   else
     if (i_field == 1 .and. SIMULATION_TYPE == 1) then
       write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'forward_image',it,'.jpg'
-    else if (i_field == 1 .and. SIMULATION_TYPE == 3) then
+    else if (i_field == 1 .and. SIMULATION_TYPE == 3 .and. .not. plot_b_wavefield_only) then
       write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'adjoint_image',it,'.jpg'
     else
       write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'b_forward_image',it,'.jpg'

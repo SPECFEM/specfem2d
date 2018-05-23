@@ -144,7 +144,7 @@
   else
     ! on GPU
     ! handles both forward and backward
-    call update_displacement_newmark_GPU_acoustic()
+    call update_displacement_newmark_GPU_acoustic(.true.)
   endif
 
   end subroutine update_displ_acoustic_forward
@@ -504,43 +504,16 @@
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_newmark_GPU()
+  subroutine update_displacement_newmark_GPU_acoustic(compute_b_wavefield)
 
-  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic,myrank
-
-  implicit none
-
-  ! update displacement using finite-difference time scheme (Newmark)
-
-  if (any_acoustic) then
-    ! wavefields on GPU
-    call update_displacement_newmark_GPU_acoustic()
-  endif
-
-  if (any_elastic) then
-    ! wavefields on GPU
-    call update_displacement_newmark_GPU_elastic()
-  endif
-
-  if (any_poroelastic) then
-    ! safety stop
-    call exit_MPI(myrank,'poroelastic time marching scheme on GPU not implemented yet...')
-  endif
-
-  end subroutine update_displacement_newmark_GPU
-
-!
-!------------------------------------------------------------------------------------------------
-!
-
-  subroutine update_displacement_newmark_GPU_acoustic()
-
-  use specfem_par, only: SIMULATION_TYPE,PML_BOUNDARY_CONDITIONS,myrank
+  use specfem_par, only: SIMULATION_TYPE,PML_BOUNDARY_CONDITIONS,myrank,UNDO_ATTENUATION_AND_OR_PML
 
   use specfem_par_gpu, only: Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f, &
     b_deltatsquareover2f
 
   implicit none
+
+  logical :: compute_b_wavefield
 
   ! update displacement using finite-difference time scheme (Newmark)
 
@@ -553,8 +526,8 @@
   endif
 
   ! updates acoustic potentials
-  call update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f, &
-                                   b_deltatf,b_deltatsquareover2f,b_deltatover2f)
+  call update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f,b_deltatf, &
+                                   b_deltatsquareover2f,b_deltatover2f,compute_b_wavefield,UNDO_ATTENUATION_AND_OR_PML)
 
   end subroutine update_displacement_newmark_GPU_acoustic
 

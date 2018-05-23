@@ -507,10 +507,12 @@ typedef struct mesh_ {
   realw* d_rmass_acoustic;
 
   // attenuation
-  realw* d_e1_acous;
   realw* d_A_newmark_acous;
   realw* d_B_newmark_acous;
+  realw* d_e1_acous;
   realw* d_sum_forces_old;
+  realw* d_b_e1_acous;
+  realw* d_b_sum_forces_old;
 
   // mpi buffer
   realw* d_send_potential_dot_dot_buffer;

@@ -508,7 +508,7 @@
 
   ! -----------------------------------------------------------------------------------------------------------------------
 
-  subroutine get_attenuation_forces_strong_form(sum_forces,sum_forces_old,forces_attenuation,i,j,ispec,iglob)
+  subroutine get_attenuation_forces_strong_form(sum_forces,sum_forces_old,forces_attenuation,i,j,ispec,iglob,e1_acous_sf)
 
   ! updates memory variable in viscoacoustic simulation
   ! and get the attenuation contribution
@@ -516,11 +516,11 @@
   ! compute forces for the elastic elements
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: PML_BOUNDARY_CONDITIONS,N_SLS, &
+  use specfem_par, only: PML_BOUNDARY_CONDITIONS,N_SLS,nspec_ATT_ac, &
                          ispec_is_PML, &
                          phi_nu1, inv_tau_sigma_nu1,time_stepping_scheme,i_stage,deltat, &
                          e1_acous, e1_LDDRK_acous, e1_initial_rk_acous, e1_force_RK_acous, &
-                         e1_acous_sf, A_newmark_e1_sf, B_newmark_e1_sf
+                         A_newmark_e1_sf, B_newmark_e1_sf
 
   implicit none
 
@@ -528,6 +528,7 @@
   real(kind=CUSTOM_REAL), intent(in)    :: sum_forces
   real(kind=CUSTOM_REAL), intent(inout) :: sum_forces_old
   real(kind=CUSTOM_REAL), intent(out)   :: forces_attenuation
+  real(kind=CUSTOM_REAL), dimension(N_SLS,NGLLX,NGLLZ,nspec_ATT_ac), intent(inout):: e1_acous_sf
   integer :: i,j,ispec,iglob
 
   ! local variables

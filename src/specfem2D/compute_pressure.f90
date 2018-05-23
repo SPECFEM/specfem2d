@@ -569,7 +569,6 @@
         enddo
       enddo
     endif
-
   endif ! end of test if acoustic or elastic element
 
   end subroutine compute_pressure_one_element

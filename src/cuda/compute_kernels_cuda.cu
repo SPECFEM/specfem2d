@@ -309,7 +309,6 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
                                                 realw* d_gammax,realw* d_gammaz,
                                                 realw* potential_dot_dot_acoustic,
                                                 realw* b_potential_acoustic,
-                                                realw* b_potential_dot_dot_acoustic,
                                                 realw* rho_ac_kl,
                                                 realw* kappa_ac_kl,
                                                 int NSPEC_AB,
@@ -368,7 +367,6 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
     // density kernel
     rho_ac_kl[ij_ispec] -=  rhol * (accel_elm[0]*b_displ_elm[0] +
                                              accel_elm[1]*b_displ_elm[1] ) * deltat;
-
     // bulk modulus kernel
     kappal = kappastore[ij_ispec];
     kappa_ac_kl[ij_ispec] -= potential_dot_dot_acoustic[iglob] * b_potential_acoustic[iglob] * deltat / kappal ;
@@ -403,7 +401,6 @@ TRACE("compute_kernels_acoustic_cuda");
                                                     mp->d_gammax,mp->d_gammaz,
                                                     mp->d_potential_dot_dot_acoustic,
                                                     mp->d_b_potential_acoustic,
-                                                    mp->d_b_potential_dot_dot_acoustic,
                                                     mp->d_rho_ac_kl,
                                                     mp->d_kappa_ac_kl,
                                                     mp->NSPEC_AB,

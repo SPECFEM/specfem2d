@@ -405,6 +405,12 @@ void FC_FUNC_(transfer_b_fields_to_device,
 void FC_FUNC_(transfer_b_fields_from_device,
               TRANSFER_B_FIELDS_FROM_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,long* Mesh_pointer) {}
 
+void FC_FUNC_(transfer_b_potential_ac_from_device,
+              TRANSFER_B_POTENTIAL_AC_FROM_DEVICE)(int* size,realw* b_potential_acoustic,long* Mesh_pointer) {}
+
+void FC_FUNC_(transfer_b_potential_ac_to_device,
+              TRANSFER_B_POTENTIAL_AC_TO_DEVICE)(int* size,realw* b_potential_acoustic,long* Mesh_pointer) {}
+
 void FC_FUNC_(transfer_accel_to_device,
               TRNASFER_ACCEL_TO_DEVICE)(int* size, realw* accel,long* Mesh_pointer) {}
 
@@ -469,6 +475,14 @@ void FC_FUNC_(transfer_kernels_hess_el_tohost,
 
 void FC_FUNC_(transfer_kernels_hess_ac_tohost,
               TRANSFER_KERNELS_HESS_AC_TOHOST)(long* Mesh_pointer,realw* h_hess_ac_kl,int* NSPEC_AB) {}
+
+
+void FC_FUNC_(transfer_viscoacoustic_var_from_device,
+              TRANSFER_VISCOACOUSTIC_VAR_FROM_DEVICE)(int* size,realw* e1_acous_sf,realw* sum_forces_old,long* Mesh_pointer ) {}
+
+void FC_FUNC_(transfer_viscoacoustic_b_var_to_device,
+              TRANSFER_VISCOACOUSTIC_b_VAR_TO_DEVICE)(int* size,realw* b_e1_acous_sf,realw* b_sum_forces_old,long* Mesh_pointer) {}
+
 
 void FC_FUNC_(transfer_compute_kernel_answers_from_device,
               TRANSFER_COMPUTE_KERNEL_ANSWERS_FROM_DEVICE)(long* Mesh_pointer,
