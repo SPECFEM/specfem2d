@@ -2,9 +2,9 @@
 README
 ----------------------------------------------------------------------
 
-This example runs a 2D P-SV plane strain benchmark for a vertical force source of maximum amplitude 1 Newton with a Ricker source time function in a homogeneous elastic medium,
-and compares the displacement seismograms at a receiver to the analytical solution (computed using three different analytical codes, thus the Gnuplot
-display script will display four curves). This benchmark allows us to check that the absolute amplitude of the seismograms is right.
+This example runs a 2D plane strain benchmark for a pressure source of maximum amplitude 1 Pascal with a Ricker source time function in a homogeneous acoustic medium,
+and compares the pressure seismograms at a receiver to the analytical solution (computed using two different analytical codes, thus the Gnuplot
+display script will display three curves). This benchmark allows us to check that the absolute amplitude of the seismograms is right.
 
 
 TO RUN:
@@ -17,9 +17,9 @@ TO RUN:
 2. compile:
    make all
 
-3. cd EXAMPLES/check_absolute_amplitude_of_force_source_seismograms_elastic
+3. cd EXAMPLES/check_absolute_amplitude_of_pressure_source_seismograms_acoustic
 
-4. execute script to run mesher and solver for the P-SV case:
+4. execute script to run mesher and solver for the PSV case:
    ./run_this_example.sh
 
 5. check out the output files in the local directory OUTPUT_FILES; in particular, you can type "gnuplot plot_compare_to_analytical_solution.gnu" to compare the seismograms computed to the quasi-analytical solution of the problem.
