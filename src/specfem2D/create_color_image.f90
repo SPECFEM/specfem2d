@@ -37,7 +37,7 @@
 
 ! to display the snapshots : display image*.jpg
 
-  use constants, only: TINYVAL,HUGEVAL,STABILITY_THRESHOLD,OUTPUT_FILES,IMAIN
+  use constants, only: TINYVAL,VERYTINYVAL,HUGEVAL,STABILITY_THRESHOLD,OUTPUT_FILES,IMAIN
 
   use specfem_par, only: myrank,it,NSOURCES,P_SV,nrec
 
@@ -191,10 +191,10 @@
 
 ! define normalized image data in [-1:1] and convert to nearest integer
 ! keeping in mind that data values can be negative
-        if (amplitude_max >= TINYVAL) then
+        if (amplitude_max >= VERYTINYVAL) then
           normalized_value = image_color_data(ix,iy) / amplitude_max
         else
-          normalized_value = image_color_data(ix,iy) / TINYVAL
+          normalized_value = image_color_data(ix,iy) / VERYTINYVAL
         endif
         ! check value (isNaN)
         if (normalized_value /= normalized_value) then
