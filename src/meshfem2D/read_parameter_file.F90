@@ -153,6 +153,7 @@
     call bcast_all_singlel(rec_normal_to_surface)
 
     call bcast_all_singlel(save_ASCII_kernels)
+    call bcast_all_singlei(NSTEP_BETWEEN_COMPUTE_KERNELS)
 
     call bcast_all_singlel(PML_BOUNDARY_CONDITIONS)
     call bcast_all_singlei(NELEM_PML_THICKNESS)
@@ -681,6 +682,14 @@
     write(*,'(a)') 'save_ASCII_kernels              = .true.'
     write(*,*)
   endif
+
+  call read_value_integer_p(NSTEP_BETWEEN_COMPUTE_KERNELS, 'NSTEP_BETWEEN_COMPUTE_KERNELS')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NSTEP_BETWEEN_COMPUTE_KERNELS             = 1'
+    write(*,*)
+  endif
+
 
   !--------------------------------------------------------------------
   !

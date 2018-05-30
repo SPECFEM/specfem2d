@@ -214,7 +214,7 @@ subroutine iterate_time()
     call write_seismograms()
 
     ! kernels calculation
-    if (SIMULATION_TYPE == 3) then
+    if (SIMULATION_TYPE == 3 .and. (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS)==0 .or. it==NSTEP)) then
       call compute_kernels()
     endif
 

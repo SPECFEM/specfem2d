@@ -216,6 +216,7 @@ module shared_input_parameters
   ! kernel output in case of adjoint simulation
   logical :: save_ASCII_kernels
 
+  integer :: NSTEP_BETWEEN_COMPUTE_KERNELS
 
   !#-----------------------------------------------------------------------------
   !#

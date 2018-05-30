@@ -177,6 +177,8 @@ record_at_surface_same_vertical = .false.        # receivers inside the medium o
 
 # save sensitivity kernels in ASCII format (much bigger files, but compatible with current GMT scripts) or in binary format
 save_ASCII_kernels              = .true.
+# since the accuracy of kernel integration may not need to respect the CFL, this option permits to save computing time, and memory with UNDO_ATTENUATION_AND_OR_PML mode
+NSTEP_BETWEEN_COMPUTE_KERNELS   = 1
 
 
 #-----------------------------------------------------------------------------
@@ -249,6 +251,7 @@ materials_file                  = dummy                     # file containing th
 free_surface_file               = dummy                     # file containing the free surface
 axial_elements_file             = dummy                     # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = dummy                     # file containing the absorbing surface
+CPML_element_file               = Elements_CPML_list  # file containing the CPML element numbers
 acoustic_forcing_surface_file   = dummy                     # file containing the acoustic forcing surface
 absorbing_cpml_file             = dummy          # file containing the CPML element numbers
 tangential_detection_curve_file = dummy                     # file containing the curve delimiting the velocity model

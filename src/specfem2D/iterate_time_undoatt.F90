@@ -52,7 +52,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_elastic_buffer,b_accel_elastic_buffer
   double precision :: sizeval
 
-  integer :: it_temp,it_temp2,seismo_current_temp
+  integer :: it_temp,iframe_kernel,nframes_kernel,size_buffer
   integer :: ier
   integer, parameter :: it_begin = 1
 
@@ -111,9 +111,18 @@
   if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
     call exit_MPI(myrank,'for undo_attenuation with viscoacousticity, &
                  & USE_A_STRONG_FORMULATION_FOR_E1 has to be set to true (in setup/constants.h)')
+  if (NOISE_TOMOGRAPHY == 3) call stop_the_code('Undo_attenuation for noise kernels not implemented yet')
+
 
   ! number of time subsets for time loop
   NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
+
+  ! get the maximum number of frames to save
+  if (NSTEP_BETWEEN_COMPUTE_KERNELS==1) then
+    size_buffer = NT_DUMP_ATTENUATION
+  else
+    size_buffer = NT_DUMP_ATTENUATION / NSTEP_BETWEEN_COMPUTE_KERNELS + 2 
+  endif 
 
   ! checks
   if (NSUBSET_ITERATIONS <= 0) call exit_MPI(myrank,'Error invalid number of time subsets for undoing attenuation')
@@ -126,12 +135,12 @@
       write(IMAIN,*) '  wavefield snapshots at every NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION
       if (any_acoustic) then
         ! buffer(nglob,NT_DUMP_ATTENUATION) in MB
-        sizeval = dble(nglob) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+        sizeval = dble(nglob) * dble(size_buffer) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
         write(IMAIN,*) '  size of acoustic wavefield buffer per slice      = ', sngl(sizeval),'MB'
       endif
       if (any_elastic) then
         ! buffer(3,nglob,NT_DUMP_ATTENUATION) in MB
-        sizeval = dble(NDIM) * dble(nglob) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+        sizeval = dble(NDIM) * dble(nglob) * dble(size_buffer) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
         if (APPROXIMATE_HESS_KL) sizeval = 2 * sizeval
         write(IMAIN,*) '  size of elastic wavefield buffer per slice       = ', sngl(sizeval),'MB'
       endif
@@ -143,16 +152,16 @@
   ! allocates buffers
   if (SIMULATION_TYPE == 3) then
     if (any_acoustic) then
-      allocate(b_potential_acoustic_buffer(nglob,NT_DUMP_ATTENUATION),stat=ier)
+      allocate(b_potential_acoustic_buffer(nglob,size_buffer),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_potential_acoustic')
       allocate(b_e1_acous_sf(N_SLS,NGLLX,NGLLZ,nspec_ATT_ac),b_sum_forces_old(NGLLX,NGLLZ,nspec_ATT_ac),stat=ier)
       if (ier /= 0) call stop_the_code('Error allocating acoustic attenuation arrays')
     endif
 
     if (any_elastic) then
-      allocate(b_displ_elastic_buffer(NDIM,nglob,NT_DUMP_ATTENUATION),stat=ier)
+      allocate(b_displ_elastic_buffer(NDIM,nglob,size_buffer),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_elastic')
-      if (APPROXIMATE_HESS_KL) allocate(b_accel_elastic_buffer(NDIM,nglob,NT_DUMP_ATTENUATION),stat=ier)
+      if (APPROXIMATE_HESS_KL) allocate(b_accel_elastic_buffer(NDIM,nglob,size_buffer),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_accel_elastic')
 
       allocate(b_e1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
@@ -269,11 +278,9 @@
 
     case (3)
       ! kernel simulations
-
-      ! intermediate storage of it and seismo_current positions
+      ! intermediate storage of it position
       it_temp = it
-      seismo_current_temp = seismo_current
-
+      it = NT_DUMP_ATTENUATION * (NSUBSET_ITERATIONS - iteration_on_subset )
       ! increment end of this subset
       if (iteration_on_subset == 1) then
         ! loops over remaining steps in last forward subset
@@ -290,6 +297,8 @@
       !
       ! note: we step forward in time here, starting from last snapshot.
       !       the newly computed, reconstructed forward wavefields (b_displ_..) get stored in buffers.
+
+      iframe_kernel = 0
 
       ! subset loop
       do it_of_this_subset = 1, it_subset_end
@@ -321,57 +330,62 @@
         enddo
 
         ! stores wavefield in buffers
-        if (any_acoustic) then
-          if (GPU_MODE) then
-            call transfer_b_potential_ac_from_device(nglob,b_potential_acoustic_buffer(:,it_of_this_subset),Mesh_pointer)
-          else
-            b_potential_acoustic_buffer(:,it_of_this_subset) = b_potential_acoustic(:)
-          endif
-        endif
+        if (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS)==0 .or. it==1) then
+          
+          iframe_kernel = iframe_kernel + 1 
 
-        if (any_elastic) then
-          b_displ_elastic_buffer(:,:,it_of_this_subset) = b_displ_elastic(:,:)
-          if (APPROXIMATE_HESS_KL) b_accel_elastic_buffer(:,:,it_of_this_subset) = b_accel_elastic(:,:)
+          if (any_acoustic) then
+            if (GPU_MODE) then
+              call transfer_b_potential_ac_from_device(nglob,b_potential_acoustic_buffer(:,iframe_kernel),Mesh_pointer)
+            else
+              b_potential_acoustic_buffer(:,iframe_kernel) = b_potential_acoustic(:)
+            endif
+          endif
+
+          if (any_elastic) then
+            b_displ_elastic_buffer(:,:,iframe_kernel) = b_displ_elastic(:,:)
+            if (APPROXIMATE_HESS_KL) b_accel_elastic_buffer(:,:,iframe_kernel) = b_accel_elastic(:,:)
+          endif
+
         endif
 
         ! display results at given time steps
-        ! We change temporarily it to get image timing consistency
-        it_temp2 = it
-        it = NT_DUMP_ATTENUATION * (NSUBSET_ITERATIONS - iteration_on_subset ) + it_of_this_subset
         call write_movie_output(compute_b_wavefield)
-        it = it_temp2
 
       enddo ! subset loop
 
-      ! resets current it and seismo_current positions
+      ! resets current it position
       it = it_temp
-      seismo_current = seismo_current_temp
-
+      nframes_kernel = iframe_kernel
+      iframe_kernel = 0
       ! adjoint wavefield simulation
       do it_of_this_subset = 1, it_subset_end
-        ! reads backward/reconstructed wavefield from buffers
-        ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
-        if (any_acoustic) then
-          if (GPU_MODE) then
-            call transfer_b_potential_ac_to_device(nglob, &
-                                      b_potential_acoustic_buffer(:,it_subset_end-it_of_this_subset+1),Mesh_pointer)
-          else
-            b_potential_acoustic(:) = b_potential_acoustic_buffer(:,it_subset_end-it_of_this_subset+1)
-          endif
-        endif
-
-        ! copy the reconstructed wavefield for kernel integration
-        if (any_elastic) then
-           b_displ_elastic(:,:) = b_displ_elastic_buffer(:,:,it_subset_end-it_of_this_subset+1)
-          if (APPROXIMATE_HESS_KL) then
-             b_accel_elastic(:,:) = b_accel_elastic_buffer(:,:,it_subset_end-it_of_this_subset+1)
-          endif
-        endif
-
-        ! safety stop
-        if (NOISE_TOMOGRAPHY == 3) call stop_the_code('Undo_attenuation for noise kernels not implemented yet')
 
         it = it + 1
+        if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it==NSTEP) then
+
+          iframe_kernel = iframe_kernel + 1 
+
+          ! reads backward/reconstructed wavefield from buffers
+          ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
+          if (any_acoustic) then
+            if (GPU_MODE) then
+              call transfer_b_potential_ac_to_device(nglob, &
+                                        b_potential_acoustic_buffer(:,nframes_kernel-iframe_kernel+1),Mesh_pointer)
+            else
+              b_potential_acoustic(:) = b_potential_acoustic_buffer(:,nframes_kernel-iframe_kernel+1)
+            endif
+          endif
+
+          ! copy the reconstructed wavefield for kernel integration
+          if (any_elastic) then
+             b_displ_elastic(:,:) = b_displ_elastic_buffer(:,:,nframes_kernel-iframe_kernel+1)
+            if (APPROXIMATE_HESS_KL) then
+               b_accel_elastic(:,:) = b_accel_elastic_buffer(:,:,nframes_kernel-iframe_kernel+1)
+            endif
+          endif
+
+        endif ! mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0
 
         ! compute current time
         timeval = (it-1) * deltat
@@ -433,7 +447,7 @@
         !call write_seismograms()
 
         ! kernels calculation
-        call compute_kernels()
+        if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it==NSTEP) call compute_kernels()
 
         ! display results at given time steps
         call write_movie_output(compute_b_wavefield)

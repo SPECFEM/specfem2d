@@ -83,7 +83,7 @@
                          density,poroelastcoef,kmato,assign_external_model,rhoext,vsext,vpext, &
                          deltat,P_SV,displ_elastic, &
                          mu_k,kappa_k,ibool,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
-                         GPU_MODE,it,NSTEP
+                         GPU_MODE,it,NSTEP,NSTEP_BETWEEN_COMPUTE_KERNELS
 
   use specfem_par_gpu, only: Mesh_pointer,deltatf
 
@@ -221,13 +221,13 @@
         do j = 1, NGLLZ
           do i = 1, NGLLX
             iglob = ibool(i,j,ispec)
-            rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rho_k(iglob) * deltat
-            c11_kl(i,j,ispec) = c11_kl(i,j,ispec) - c11_k(iglob) * deltat
-            c13_kl(i,j,ispec) = c13_kl(i,j,ispec) - c13_k(iglob) * deltat
-            c15_kl(i,j,ispec) = c15_kl(i,j,ispec) - c15_k(iglob) * deltat
-            c33_kl(i,j,ispec) = c33_kl(i,j,ispec) - c33_k(iglob) * deltat
-            c35_kl(i,j,ispec) = c35_kl(i,j,ispec) - c35_k(iglob) * deltat
-            c55_kl(i,j,ispec) = c55_kl(i,j,ispec) - c55_k(iglob) * deltat
+            rho_kl(i,j,ispec) = rho_kl(i,j,ispec) - rho_k(iglob) * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+            c11_kl(i,j,ispec) = c11_kl(i,j,ispec) - c11_k(iglob) * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+            c13_kl(i,j,ispec) = c13_kl(i,j,ispec) - c13_k(iglob) * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+            c15_kl(i,j,ispec) = c15_kl(i,j,ispec) - c15_k(iglob) * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+            c33_kl(i,j,ispec) = c33_kl(i,j,ispec) - c33_k(iglob) * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+            c35_kl(i,j,ispec) = c35_kl(i,j,ispec) - c35_k(iglob) * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
+            c55_kl(i,j,ispec) = c55_kl(i,j,ispec) - c55_k(iglob) * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS)
             rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + c11_kl(i,j,ispec) + &
                                  c13_kl(i,j,ispec) + c15_kl(i,j,ispec) + c33_kl(i,j,ispec) + &
                                  c35_kl(i,j,ispec) + c55_kl(i,j,ispec)
@@ -269,11 +269,11 @@
 
             ! for parameterization (rho,mu,kappa): "primary" kernels
             ! density kernel
-            rho_kl(i,j,ispec) = rhol * deltat * rho_kl(i,j,ispec)
+            rho_kl(i,j,ispec) = rhol * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_kl(i,j,ispec)
             ! shear modulus kernel
-            mu_kl(i,j,ispec) =  TWO * mul * deltat * mu_kl(i,j,ispec)
+            mu_kl(i,j,ispec) =  TWO * mul * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * mu_kl(i,j,ispec)
             ! bulk modulus kernel
-            kappa_kl(i,j,ispec) = kappal * deltat * kappa_kl(i,j,ispec)
+            kappa_kl(i,j,ispec) = kappal * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * kappa_kl(i,j,ispec)
 
             ! for parameterization (rho,beta,alpha):
             ! rho prime kernel
@@ -312,7 +312,7 @@
                          poroelastcoef,density,kmato,assign_external_model,rhoext,vpext,deltat, &
                          hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
                          potential_acoustic,b_potential_acoustic,potential_dot_dot_acoustic, &
-                         accel_ac,b_displ_ac, &
+                         accel_ac,b_displ_ac,NSTEP_BETWEEN_COMPUTE_KERNELS, &
                          rho_ac_kl,kappa_ac_kl,rhop_ac_kl,alpha_ac_kl,GPU_MODE
 
   use specfem_par_gpu, only: Mesh_pointer,deltatf
@@ -388,11 +388,13 @@
             !!!      * deltat
             !!!! new expression (from PDE-constrained optimization, coupling terms changed as well)
             rho_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + rhol_ac_global(iglob) * &
-                                   dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * deltat
+                                   dot_product(accel_ac(:,iglob),b_displ_ac(:,iglob)) * &
+                                   (deltat*NSTEP_BETWEEN_COMPUTE_KERNELS)
                                    !warning : the variable is named accel_ac but it is displ_ac that is computed
             kappa_ac_kl(i,j,ispec) = kappa_ac_kl(i,j,ispec) + kappal_ac_global(iglob) * &
                                      potential_dot_dot_acoustic(iglob)/kappal_ac_global(iglob) * &
-                                     b_potential_acoustic(iglob)/kappal_ac_global(iglob) * deltat
+                                     b_potential_acoustic(iglob)/kappal_ac_global(iglob) * &
+                                     (deltat*NSTEP_BETWEEN_COMPUTE_KERNELS)
             ! YANGL
             rhop_ac_kl(i,j,ispec) = rho_ac_kl(i,j,ispec) + kappa_ac_kl(i,j,ispec)
             alpha_ac_kl(i,j,ispec) = TWO *  kappa_ac_kl(i,j,ispec)
@@ -428,7 +430,7 @@
                          rhot_kl,rhof_kl,sm_kl,eta_kl,B_kl,C_kl,M_kl,M_k, &
                          mufr_kl,mufr_k,rhob_kl,rhofb_kl, &
                          mufrb_kl,phi_kl,rhobb_kl,rhofbb_kl,phib_kl,cpI_kl,cpII_kl,cs_kl,ratio_kl, &
-                         GPU_MODE
+                         GPU_MODE,NSTEP_BETWEEN_COMPUTE_KERNELS
   implicit none
 
   !local variables
@@ -509,12 +511,12 @@
         do i = 1, NGLLX
           iglob = ibool(i,j,ispec)
 
-          rhot_kl(i,j,ispec) = rhot_kl(i,j,ispec) - deltat * rho_bar * rhot_k(iglob)
-          rhof_kl(i,j,ispec) = rhof_kl(i,j,ispec) - deltat * rho_f * rhof_k(iglob)
-          sm_kl(i,j,ispec) = sm_kl(i,j,ispec) - deltat * rho_f*tort/phi * sm_k(iglob)
+          rhot_kl(i,j,ispec) = rhot_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_bar * rhot_k(iglob)
+          rhof_kl(i,j,ispec) = rhof_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_f * rhof_k(iglob)
+          sm_kl(i,j,ispec) = sm_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_f*tort/phi * sm_k(iglob)
 
           !at the moment works with constant permeability
-          eta_kl(i,j,ispec) = eta_kl(i,j,ispec) - deltat * eta_f/perm_xx * eta_k(iglob)
+          eta_kl(i,j,ispec) = eta_kl(i,j,ispec) - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * eta_f/perm_xx * eta_k(iglob)
 
           ! for B_k & mufr_k
           dsxx = epsilondev_s(1,i,j,ispec) ! dux_dxl
@@ -567,11 +569,11 @@
           !                (dwx_dxl + dwz_dzl) *  (b_dux_dxl + b_duz_dzl)) * C_biot
           !M_k(iglob) = (dwx_dxl + dwz_dzl) *  (b_dwx_dxl + b_dwz_dzl) * M_biot
 
-          B_kl(i,j,ispec) = B_kl(i,j,ispec) - deltat * B_k(iglob)
-          C_kl(i,j,ispec) = C_kl(i,j,ispec) - deltat * C_k(iglob)
-          M_kl(i,j,ispec) = M_kl(i,j,ispec) - deltat * M_k(iglob)
+          B_kl(i,j,ispec) = B_kl(i,j,ispec) - (deltat*NSTEP_BETWEEN_COMPUTE_KERNELS) * B_k(iglob)
+          C_kl(i,j,ispec) = C_kl(i,j,ispec) - (deltat*NSTEP_BETWEEN_COMPUTE_KERNELS) * C_k(iglob)
+          M_kl(i,j,ispec) = M_kl(i,j,ispec) - (deltat*NSTEP_BETWEEN_COMPUTE_KERNELS) * M_k(iglob)
 
-          mufr_kl(i,j,ispec) = mufr_kl(i,j,ispec) - TWO * deltat * mufr_k(iglob)
+          mufr_kl(i,j,ispec) = mufr_kl(i,j,ispec) - TWO * (deltat*NSTEP_BETWEEN_COMPUTE_KERNELS) * mufr_k(iglob)
 
           ! density kernels
           rholb = rho_bar - phi*rho_f/tort
@@ -706,7 +708,7 @@
                          accel_elastic,b_accel_elastic,accel_ac,b_accel_ac, &
                          rhorho_el_Hessian_final1,rhorho_el_Hessian_final2, &
                          rhorho_ac_Hessian_final1,rhorho_ac_Hessian_final2, &
-                         deltat,GPU_MODE
+                         deltat,GPU_MODE,NSTEP_BETWEEN_COMPUTE_KERNELS
 
   use specfem_par_gpu, only: Mesh_pointer
 
@@ -735,8 +737,10 @@
           do j = 1, NGLLZ
             do i = 1, NGLLX
               iglob = ibool(i,j,ispec)
-              rhorho_el_Hessian_final1(i,j,ispec) = rhorho_el_Hessian_final1(i,j,ispec) + rhorho_el_Hessian_temp1(iglob) * deltat
-              rhorho_el_Hessian_final2(i,j,ispec) = rhorho_el_Hessian_final2(i,j,ispec) + rhorho_el_Hessian_temp2(iglob) * deltat
+              rhorho_el_Hessian_final1(i,j,ispec) = rhorho_el_Hessian_final1(i,j,ispec) + &
+                                                    rhorho_el_Hessian_temp1(iglob) * (deltat*NSTEP_BETWEEN_COMPUTE_KERNELS)
+              rhorho_el_Hessian_final2(i,j,ispec) = rhorho_el_Hessian_final2(i,j,ispec) + &
+                                                    rhorho_el_Hessian_temp2(iglob) * (deltat*NSTEP_BETWEEN_COMPUTE_KERNELS)
             enddo
           enddo
         endif
@@ -752,9 +756,11 @@
             do i = 1, NGLLX
               iglob = ibool(i,j,ispec)
               rhorho_ac_Hessian_final1(i,j,ispec) = rhorho_ac_Hessian_final1(i,j,ispec) + &
-                                                    dot_product(accel_ac(:,iglob),accel_ac(:,iglob)) * deltat
+                                                    dot_product(accel_ac(:,iglob),accel_ac(:,iglob)) * &
+                                                    (deltat* NSTEP_BETWEEN_COMPUTE_KERNELS)
               rhorho_ac_Hessian_final2(i,j,ispec) = rhorho_ac_Hessian_final2(i,j,ispec) + &
-                                                    dot_product(accel_ac(:,iglob),b_accel_ac(:,iglob)) * deltat
+                                                    dot_product(accel_ac(:,iglob),b_accel_ac(:,iglob)) * &
+                                                    (deltat* NSTEP_BETWEEN_COMPUTE_KERNELS)
             enddo
           enddo
         endif

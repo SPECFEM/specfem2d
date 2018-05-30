@@ -888,6 +888,41 @@ def ProcessParfile_pressure_trick(fic):
     #
     print 'xxxxx------> '+fic+' processed to '+release_number
     return
+
+#------------------------------------------------------------------------------
+def ProcessParfile_NSTEP_BETWEEN_COMPUTE_KERNELS(fic):
+    # define the release number
+    release_number='nstep_between_compute_kernels'
+    # Open the file and get all lines from Par_file
+    ligs= LoadLig(fic)
+
+    # Test if already processed
+    for lig in ligs:
+        if lig.startswith('NSTEP_BETWEEN_COMPUTE_KERNELS '):
+            print '----> '+fic+' already processed to '+release_number
+            return
+    #
+    a1='# since the accuracy of kernel integration may not need to respect the CFL,' + \
+       ' this option permits to save computing time, and memory with UNDO_ATTENUATION_AND_OR_PML mode\n' + \
+       'NSTEP_BETWEEN_COMPUTE_KERNELS   = 1\n'
+    #--------------------------------------------------------------------------
+    # Add new parameters
+    #
+    for ilg, lig in enumerate(ligs):
+        if lig.startswith('save_ASCII_kernels'):
+            ligs.insert(ilg+1,a1)
+            break
+    #
+    move(fic,fic+'.before_update_to_'+release_number)
+    #
+    fm = open(fic,'w')
+    fm.writelines(ligs)
+    fm.close()
+    #
+    print 'xxxxx------> '+fic+' processed to '+release_number
+    return
+
+
 #------------------------------------------------------------------------------
 def ProcessParfile_tomography_file(fic):
     # define the release number
@@ -959,6 +994,7 @@ if __name__=='__main__':
                     ProcessParfile_external_model(fic)
                     ProcessParfile_pressure_trick(fic)
                     ProcessParfile_tomography_file(fic)
+                    ProcessParfile_NSTEP_BETWEEN_COMPUTE_KERNELS(fic)
                     print '~'*80
     #
     print 'Number of Par_file analysed : ', Ct_Par_file

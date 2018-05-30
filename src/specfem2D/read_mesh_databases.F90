@@ -152,6 +152,8 @@
 
   read(IIN) save_ASCII_kernels
 
+  read(IIN) NSTEP_BETWEEN_COMPUTE_KERNELS
+
   read(IIN) DRAW_SOURCES_AND_RECEIVERS
 
   read(IIN) Q0_poroelastic,freq0_poroelastic
