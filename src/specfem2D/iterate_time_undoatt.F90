@@ -118,11 +118,11 @@
   NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
 
   ! get the maximum number of frames to save
-  if (NSTEP_BETWEEN_COMPUTE_KERNELS==1) then
+  if (NSTEP_BETWEEN_COMPUTE_KERNELS == 1) then
     size_buffer = NT_DUMP_ATTENUATION
   else
-    size_buffer = NT_DUMP_ATTENUATION / NSTEP_BETWEEN_COMPUTE_KERNELS + 2 
-  endif 
+    size_buffer = NT_DUMP_ATTENUATION / NSTEP_BETWEEN_COMPUTE_KERNELS + 2
+  endif
 
   ! checks
   if (NSUBSET_ITERATIONS <= 0) call exit_MPI(myrank,'Error invalid number of time subsets for undoing attenuation')
@@ -330,9 +330,9 @@
         enddo
 
         ! stores wavefield in buffers
-        if (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS)==0 .or. it==1) then
-          
-          iframe_kernel = iframe_kernel + 1 
+        if (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == 1) then
+
+          iframe_kernel = iframe_kernel + 1
 
           if (any_acoustic) then
             if (GPU_MODE) then
@@ -362,9 +362,9 @@
       do it_of_this_subset = 1, it_subset_end
 
         it = it + 1
-        if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it==NSTEP) then
+        if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == NSTEP) then
 
-          iframe_kernel = iframe_kernel + 1 
+          iframe_kernel = iframe_kernel + 1
 
           ! reads backward/reconstructed wavefield from buffers
           ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
@@ -447,7 +447,7 @@
         !call write_seismograms()
 
         ! kernels calculation
-        if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it==NSTEP) call compute_kernels()
+        if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == NSTEP) call compute_kernels()
 
         ! display results at given time steps
         call write_movie_output(compute_b_wavefield)
