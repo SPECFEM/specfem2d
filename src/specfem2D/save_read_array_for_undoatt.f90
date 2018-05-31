@@ -105,8 +105,10 @@
 
   use specfem_par, only: myrank,it,NSTEP,NSTEP_BETWEEN_COMPUTE_KERNELS, &
     any_acoustic,any_elastic,potential_acoustic, &
-    displ_elastic,accel_elastic,nglob,no_backward_nframes, &!GPU_MODE
-    no_backward_acoustic_buffer,no_backward_displ_buffer,no_backward_accel_buffer,no_backward_iframe
+    displ_elastic,accel_elastic, &!GPU_MODE
+    no_backward_acoustic_buffer, &
+    ! no_backward_displ_buffer,no_backward_accel_buffer
+     no_backward_iframe
 
 !  use specfem_par_gpu, only: Mesh_pointer
 
