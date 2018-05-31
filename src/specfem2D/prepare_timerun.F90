@@ -1982,7 +1982,7 @@
 
   !safety checks
   if (time_stepping_scheme /= 1) call exit_MPI(myrank,'for NO_BACKWARD_RECONSTRUCTION, only Newmark scheme has implemented ')
-  if (UNDO_ATTENUATION_AND_OR_PML) call exit_MPI(myrank,&
+  if (UNDO_ATTENUATION_AND_OR_PML) call exit_MPI(myrank, &
                                       'NO_BACKWARD_RECONSTRUCTION is not compatible with UNDO_ATTENUATION_AND_OR_PML')
 
   ! gets the number of frames to store/read in the NO BACKWARD RECONSTRUCTION
@@ -1995,7 +1995,7 @@
   ! user output
   if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
     if (myrank == 0) then
-      write(IMAIN,*) ''
+      write(IMAIN,*)
       write(IMAIN,*) 'Preparing NO_BACKWARD_RECONSTRUCTION :'
       write(IMAIN,*) '  number of frames to save :',no_backward_nframes
       if (any_acoustic) then

@@ -134,7 +134,7 @@
   if (NSTEP_BETWEEN_COMPUTE_KERNELS == 1 .or. it /= NSTEP) then
     if (any_acoustic) then
       no_backward_iframe = no_backward_iframe + 1
-      !if (GPU_MODE) call transfer_fields_ac_from_device(nglob,potential_acoustic,potential_dot_acoustic,&
+      !if (GPU_MODE) call transfer_fields_ac_from_device(nglob,potential_acoustic,potential_dot_acoustic, &
        !                                                 potential_dot_dot_acoustic,Mesh_pointer)
       no_backward_acoustic_buffer(:,2) = potential_acoustic
       write(IOUT_UNDO_ATT,asynchronous='yes') no_backward_acoustic_buffer(:,2)

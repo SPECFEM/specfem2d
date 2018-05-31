@@ -188,7 +188,7 @@ subroutine iterate_time()
       call read_forward_arrays()
     ! writes in frame for further adjoint/kernels calculation
     else if (NO_BACKWARD_RECONSTRUCTION .and. SAVE_FORWARD .and. (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 &
-             .or. it == 1 .or. it == NSTEP)) then 
+             .or. it == 1 .or. it == NSTEP)) then
       call save_forward_arrays_no_backward()
     ! reads in frame for further adjoint/kernels calculation
     else if (NO_BACKWARD_RECONSTRUCTION .and. SIMULATION_TYPE == 3 .and. &
@@ -257,7 +257,7 @@ subroutine iterate_time()
   call convtime(timestamp,year,mon,day,hr,minutes)
   if (myrank == 0) then
    write(IMAIN,*)
-   write(IMAIN,*) 'Total duration of the timeloop in seconds, measured using ' 
+   write(IMAIN,*) 'Total duration of the timeloop in seconds, measured using '
    write(IMAIN,*)  'date and time of the system : ',sngl(timestamp*60.d0 + time_values(7) + &
                    time_values(8)/1000.d0 - timestamp_seconds_start),' s'
   endif

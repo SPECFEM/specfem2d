@@ -221,8 +221,8 @@
   use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES
 
   use specfem_par, only: myrank,it, &
-    any_acoustic,any_elastic,&
-    b_potential_acoustic,&
+    any_acoustic,any_elastic, &
+    b_potential_acoustic, &
     b_displ_elastic,b_accel_elastic, &
     nglob,no_backward_acoustic_buffer,no_backward_iframe,no_backward_nframes
 
@@ -245,11 +245,11 @@
     b_potential_acoustic(:) = no_backward_acoustic_buffer(:,1)
   endif
 
-  if (no_backward_iframe < no_backward_nframes ) then  
+  if (no_backward_iframe < no_backward_nframes ) then
     if (any_acoustic) then
       no_backward_iframe = no_backward_iframe + 1
 
-      ! the +2 and +5 are due to the way fortran is writing binary arrays, adding an extra octet before and after the array
+      ! the +2 and +5 are due to the way Fortran is writing binary arrays, adding an extra octet before and after the array
       if (no_backward_iframe == no_backward_nframes) then
         offset = 5
       else
