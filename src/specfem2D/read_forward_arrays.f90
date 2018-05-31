@@ -220,7 +220,7 @@
 
   use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES
 
-  use specfem_par, only: myrank,it,NSTEP, &
+  use specfem_par, only: myrank,it, &
     any_acoustic,any_elastic,&
     b_potential_acoustic,&
     b_displ_elastic,b_accel_elastic, &
