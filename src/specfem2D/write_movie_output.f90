@@ -42,7 +42,7 @@
     b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
     b_displ_elastic,rho_k,rho_kl, &
-    any_acoustic,any_elastic,GPU_MODE,P_SV,UNDO_ATTENUATION_AND_OR_PML,SIMULATION_TYPE
+    any_acoustic,any_elastic,GPU_MODE,P_SV,UNDO_ATTENUATION_AND_OR_PML,SIMULATION_TYPE,NO_BACKWARD_RECONSTRUCTION
 
   use specfem_par_gpu, only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
 
@@ -65,7 +65,7 @@
   ! checks if anything to do
   if (.not. (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP)) return
 
-  if (UNDO_ATTENUATION_AND_OR_PML .and. get_b_wavefield) then
+  if (UNDO_ATTENUATION_AND_OR_PML .and. get_b_wavefield .and. .not. NO_BACKWARD_RECONSTRUCTION) then
     plot_b_wavefield_only = .true.
   else
     plot_b_wavefield_only = .false.

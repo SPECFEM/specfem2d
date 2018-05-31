@@ -90,6 +90,8 @@ freq0_poroelastic               = 10             # frequency for viscous attenua
 # When that option is on the second parameter indicates how often the code dumps restart files to disk (if in doubt, use something between 100 and 1000).
 UNDO_ATTENUATION_AND_OR_PML     = .true.
 NT_DUMP_ATTENUATION             = 50
+# Instead of reconstructing the forward wavefield, this option reads it from the disk using asynchronous I/O. Outperforms conventional mode using a value of NSTEP_BETWEEN_COMPUTE_KERNELS high enough.
+NO_BACKWARD_RECONSTRUCTION      = .false.
 
 
 #-----------------------------------------------------------------------------

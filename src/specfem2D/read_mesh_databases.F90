@@ -154,6 +154,8 @@
 
   read(IIN) NSTEP_BETWEEN_COMPUTE_KERNELS
 
+  read(IIN) NO_BACKWARD_RECONSTRUCTION
+
   read(IIN) DRAW_SOURCES_AND_RECEIVERS
 
   read(IIN) Q0_poroelastic,freq0_poroelastic

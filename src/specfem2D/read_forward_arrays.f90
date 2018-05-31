@@ -212,4 +212,62 @@
 
   end subroutine read_forward_arrays_undoatt
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_forward_arrays_no_backward()
+
+  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES
+
+  use specfem_par, only: myrank,it,NSTEP, &
+    any_acoustic,any_elastic,&
+    b_potential_acoustic,&
+    b_displ_elastic,b_accel_elastic, &
+    nglob,no_backward_acoustic_buffer,no_backward_iframe,no_backward_nframes
+
+!  use specfem_par_gpu, only: Mesh_pointer
+
+  implicit none
+
+  ! local parameters
+  integer :: ier,offset
+  character(len=MAX_STRING_LEN) :: outputname
+  if (it == 1) then
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_No_backward_reconstruction_database.bin'
+    ! opens corresponding file for reading
+    open(unit=IIN_UNDO_ATT,asynchronous='yes',file=trim(OUTPUT_FILES)//outputname, &
+       status='old',action='read',form='unformatted',access='stream',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_No_backward_reconstruction_database.bin for reading')
+    no_backward_iframe = 0
+  else
+    wait(IIN_UNDO_ATT)
+    b_potential_acoustic(:) = no_backward_acoustic_buffer(:,1)
+  endif
+
+  if (no_backward_iframe < no_backward_nframes ) then  
+    if (any_acoustic) then
+      no_backward_iframe = no_backward_iframe + 1
+
+      ! the +2 and +5 are due to the way fortran is writing binary arrays, adding an extra octet before and after the array
+      if (no_backward_iframe == no_backward_nframes) then
+        offset = 5
+      else
+        offset = 4*(nglob+2)*(no_backward_nframes - no_backward_iframe) + 5
+      endif
+
+      read(IIN_UNDO_ATT,asynchronous='yes',pos=offset) no_backward_acoustic_buffer(:,1)
+!    if (GPU_MODE) call transfer_b_fields_ac_to_device(nglob,b_potential_acoustic,b_potential_dot_acoustic,
+!&                                                        b_potential_dot_dot_acoustic,Mesh_pointer)
+    endif
+    if (any_elastic) then
+      read(IIN_UNDO_ATT) b_accel_elastic
+      read(IIN_UNDO_ATT) b_displ_elastic
+    endif
+
+  endif
+
+  if (no_backward_iframe == no_backward_nframes) close(IIN_UNDO_ATT)
+
+  end subroutine read_forward_arrays_no_backward
 

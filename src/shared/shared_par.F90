@@ -218,6 +218,8 @@ module shared_input_parameters
 
   integer :: NSTEP_BETWEEN_COMPUTE_KERNELS
 
+  logical :: NO_BACKWARD_RECONSTRUCTION
+
   !#-----------------------------------------------------------------------------
   !#
   !# boundary conditions

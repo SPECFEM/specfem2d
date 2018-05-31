@@ -380,6 +380,9 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential_dot
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential_dot_dot
 
+  ! buffer for I/O
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: no_backward_acoustic_buffer
+
   !---------------------------------------------------------------------
   ! for elastic simulation
   !---------------------------------------------------------------------
@@ -470,6 +473,10 @@ module specfem_par
   integer :: nspec_inner_elastic,nspec_outer_elastic
   integer :: num_phase_ispec_elastic
   integer, dimension(:,:), allocatable :: phase_ispec_inner_elastic
+
+  ! buffer for I/O
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: no_backward_displ_buffer,no_backward_accel_buffer
+  integer :: no_backward_nframes,no_backward_iframe
 
   !---------------------------------------------------------------------
   ! for poroelastic simulation

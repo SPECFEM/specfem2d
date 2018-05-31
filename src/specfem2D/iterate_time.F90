@@ -86,10 +86,6 @@ subroutine iterate_time()
   ! convert to seconds instead of minutes, to be more precise for 2D runs, which can be fast
   timestamp_seconds_start = timestamp*60.d0 + time_values(7) + time_values(8)/1000.d0
 
-! *********************************************************
-! ************* MAIN LOOP OVER THE TIME STEPS *************
-! *********************************************************
-
   ! synchronize all processes to make sure everybody is ready to start time loop
   call synchronize_all()
 
@@ -131,6 +127,10 @@ subroutine iterate_time()
 
   call cpu_time(start_time_of_time_loop)
 
+! *********************************************************
+! ************* MAIN LOOP OVER THE TIME STEPS *************
+! *********************************************************
+
   do it = 1,NSTEP
     ! compute current time
     timeval = (it-1) * deltat
@@ -146,13 +146,13 @@ subroutine iterate_time()
       ! forward wavefield (acoustic/elastic/poroelastic)
       call update_displ_Newmark()
       ! reconstructed/backward wavefields
-      if (SIMULATION_TYPE == 3) call update_displ_Newmark_backward()
+      if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call update_displ_Newmark_backward()
 
       ! acoustic domains
       if (ACOUSTIC_SIMULATION) then
         if (.not. GPU_MODE) then
           call compute_forces_viscoacoustic_main()
-          if (SIMULATION_TYPE == 3) call compute_forces_viscoacoustic_main_backward()
+          if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call compute_forces_viscoacoustic_main_backward()
         else
           ! on GPU
           if (any_acoustic) call compute_forces_viscoacoustic_GPU(.false.)
@@ -163,7 +163,7 @@ subroutine iterate_time()
       if (ELASTIC_SIMULATION) then
         if (.not. GPU_MODE) then
           call compute_forces_viscoelastic_main()
-          if (SIMULATION_TYPE == 3) call compute_forces_viscoelastic_main_backward()
+          if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call compute_forces_viscoelastic_main_backward()
         else
           ! on GPU
           if (any_elastic) call compute_forces_viscoelastic_GPU()
@@ -184,8 +184,16 @@ subroutine iterate_time()
     enddo ! stage_time_scheme (LDDRK or RK)
 
     ! reads in lastframe for adjoint/kernels calculation
-    if (SIMULATION_TYPE == 3 .and. it == 1) then
+    if (SIMULATION_TYPE == 3 .and. it == 1 .and. .not. NO_BACKWARD_RECONSTRUCTION) then
       call read_forward_arrays()
+    ! writes in frame for further adjoint/kernels calculation
+    else if (NO_BACKWARD_RECONSTRUCTION .and. SAVE_FORWARD .and. (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 &
+             .or. it == 1 .or. it == NSTEP)) then 
+      call save_forward_arrays_no_backward()
+    ! reads in frame for further adjoint/kernels calculation
+    else if (NO_BACKWARD_RECONSTRUCTION .and. SIMULATION_TYPE == 3 .and. &
+          (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == 1 .or. it == NSTEP)) then
+      call read_forward_arrays_no_backward()
     endif
 
     ! noise simulations
@@ -238,6 +246,20 @@ subroutine iterate_time()
                          duration_of_time_loop_in_seconds / real(NSTEP * NSPEC),' s'
     write(IMAIN,*)
     call flush_IMAIN()
+  endif
+
+  call date_and_time(datein,timein,zone,time_values)
+  year = time_values(1)
+  mon = time_values(2)
+  day = time_values(3)
+  hr = time_values(5)
+  minutes = time_values(6)
+  call convtime(timestamp,year,mon,day,hr,minutes)
+  if (myrank == 0) then
+   write(IMAIN,*)
+   write(IMAIN,*) 'Total duration of the timeloop in seconds, measured using ' 
+   write(IMAIN,*)  'date and time of the system : ',sngl(timestamp*60.d0 + time_values(7) + &
+                   time_values(8)/1000.d0 - timestamp_seconds_start),' s'
   endif
 
 ! *********************************************************

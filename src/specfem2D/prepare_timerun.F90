@@ -103,6 +103,9 @@
   ! jpeg images
   call prepare_timerun_image_coloring()
 
+  ! init specific to NO_BACKWARD_RECONSTRUCTION option
+  call prepare_timerun_no_backward_reconstruction()
+
   ! prepares GPU arrays
   if (GPU_MODE) call prepare_GPU()
 
@@ -1965,6 +1968,66 @@
 !
 !-------------------------------------------------------------------------------------
 !
+  subroutine prepare_timerun_no_backward_reconstruction()
 
+  use constants
+  use specfem_par
+  implicit none
 
+  integer :: ier
+  double precision :: sizeval
 
+  !checks if anything to do
+  if (.not. NO_BACKWARD_RECONSTRUCTION) return
+
+  !safety checks
+  if (time_stepping_scheme /= 1) call exit_MPI(myrank,'for NO_BACKWARD_RECONSTRUCTION, only Newmark scheme has implemented ')
+  if (UNDO_ATTENUATION_AND_OR_PML) call exit_MPI(myrank,&
+                                      'NO_BACKWARD_RECONSTRUCTION is not compatible with UNDO_ATTENUATION_AND_OR_PML')
+
+  ! gets the number of frames to store/read in the NO BACKWARD RECONSTRUCTION
+  ! database
+  no_backward_nframes = 0
+  do while (no_backward_nframes * NSTEP_BETWEEN_COMPUTE_KERNELS < NSTEP )
+    no_backward_nframes = no_backward_nframes + 1
+  enddo
+
+  ! user output
+  if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
+    if (myrank == 0) then
+      write(IMAIN,*) ''
+      write(IMAIN,*) 'Preparing NO_BACKWARD_RECONSTRUCTION :'
+      write(IMAIN,*) '  number of frames to save :',no_backward_nframes
+      if (any_acoustic) then
+        sizeval = dble(nglob) * dble(no_backward_nframes) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+        write(IMAIN,*) '  size of No_backward_reconstruction file per slice = ', sngl(sizeval),'MB'
+      endif
+      if (any_elastic) then
+        sizeval = dble(NDIM) * dble(nglob) * dble(no_backward_nframes) * &
+                  dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+        if (APPROXIMATE_HESS_KL) sizeval = 2 * sizeval
+        write(IMAIN,*) '  size of No_backward_reconstruction file per slice= ', sngl(sizeval),'MB'
+      endif
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif ! myrank
+  endif ! SAVE_FORWARD .or. SIMULATION_TYPE == 3
+
+  ! deallocates arrays that won't be used with this mode
+  if (SIMULATION_TYPE == 3) then
+    if (any_acoustic) deallocate(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,stat=ier)
+    if (any_elastic) deallocate(b_veloc_elastic,b_accel_elastic,stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'error deallocating b_accel_elastic etc')
+  endif
+
+  ! allocates buffers for I/O
+  if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
+    if (any_acoustic) allocate(no_backward_acoustic_buffer(nglob,2),stat=ier)
+    if (any_elastic) then
+      allocate(no_backward_displ_buffer(NDIM,nglob,2),stat=ier)
+      if (APPROXIMATE_HESS_KL) allocate(no_backward_accel_buffer(NDIM,nglob,2),stat=ier)
+    endif
+    if (ier /= 0 ) call exit_MPI(myrank,'error allocating no_backward_***_buffer')
+  endif
+
+  end subroutine prepare_timerun_no_backward_reconstruction

@@ -154,16 +154,8 @@
 
     call bcast_all_singlel(save_ASCII_kernels)
     call bcast_all_singlei(NSTEP_BETWEEN_COMPUTE_KERNELS)
+    call bcast_all_singlel(NO_BACKWARD_RECONSTRUCTION)
 
-    call bcast_all_singlel(PML_BOUNDARY_CONDITIONS)
-    call bcast_all_singlei(NELEM_PML_THICKNESS)
-    call bcast_all_singlel(ROTATE_PML_ACTIVATE)
-    call bcast_all_singledp(ROTATE_PML_ANGLE)
-    call bcast_all_singledp(K_MIN_PML)
-    call bcast_all_singledp(K_MAX_PML)
-    call bcast_all_singledp(damping_change_factor_acoustic)
-    call bcast_all_singledp(damping_change_factor_elastic)
-    call bcast_all_singlel(PML_PARAMETER_ADJUSTMENT)
 
     call bcast_all_singlel(STACEY_ABSORBING_CONDITIONS)
     call bcast_all_singlel(ADD_PERIODIC_CONDITIONS)
@@ -672,7 +664,7 @@
 
   !--------------------------------------------------------------------
   !
-  ! adjoint kernel outputs
+  ! adjoint kernel 
   !
   !--------------------------------------------------------------------
 
@@ -687,6 +679,13 @@
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'NSTEP_BETWEEN_COMPUTE_KERNELS             = 1'
+    write(*,*)
+  endif
+
+  call read_value_logical_p(NO_BACKWARD_RECONSTRUCTION,'NO_BACKWARD_RECONSTRUCTION')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NO_BACKWARD_RECONSTRUCTIO           = .false.'
     write(*,*)
   endif
 

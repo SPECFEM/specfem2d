@@ -97,3 +97,56 @@
 
   end subroutine save_forward_arrays_undoatt
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  subroutine save_forward_arrays_no_backward()
+
+  use constants, only: IOUT_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,APPROXIMATE_HESS_KL
+
+  use specfem_par, only: myrank,it,NSTEP,NSTEP_BETWEEN_COMPUTE_KERNELS, &
+    any_acoustic,any_elastic,potential_acoustic, &
+    displ_elastic,accel_elastic,nglob,no_backward_nframes, &!GPU_MODE
+    no_backward_acoustic_buffer,no_backward_displ_buffer,no_backward_accel_buffer,no_backward_iframe
+
+!  use specfem_par_gpu, only: Mesh_pointer
+
+  implicit none
+
+  ! local parameters
+  integer :: ier
+  character(len=MAX_STRING_LEN) :: outputname
+
+
+  ! opens file to save at the first use of the routine
+  if (it == 1) then
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_No_backward_reconstruction_database.bin'
+    open(unit=IOUT_UNDO_ATT,file=trim(OUTPUT_FILES)//outputname, &
+         status='unknown',asynchronous='yes',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_No_backward_reconstruction_database.bin for writing')
+    no_backward_iframe = 0
+  ! waits for previous asynchronous I/O
+  else
+    wait(IOUT_UNDO_ATT)
+  endif
+
+  if (NSTEP_BETWEEN_COMPUTE_KERNELS == 1 .or. it /= NSTEP) then
+    if (any_acoustic) then
+      no_backward_iframe = no_backward_iframe + 1
+      !if (GPU_MODE) call transfer_fields_ac_from_device(nglob,potential_acoustic,potential_dot_acoustic,&
+       !                                                 potential_dot_dot_acoustic,Mesh_pointer)
+      no_backward_acoustic_buffer(:,2) = potential_acoustic
+      write(IOUT_UNDO_ATT,asynchronous='yes') no_backward_acoustic_buffer(:,2)
+    endif
+
+    if (any_elastic) then
+      write(IOUT_UNDO_ATT) accel_elastic
+      write(IOUT_UNDO_ATT) displ_elastic
+    endif
+  endif
+
+  ! this operation will automatically synchronize the remaining I/O to do
+  if (it == NSTEP) then
+   close(IOUT_UNDO_ATT)
+  endif
+  end subroutine save_forward_arrays_no_backward
+
