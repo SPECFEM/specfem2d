@@ -107,7 +107,7 @@
     any_acoustic,any_elastic,potential_acoustic, &
     displ_elastic,accel_elastic, &!GPU_MODE
     no_backward_acoustic_buffer, &
-    ! no_backward_displ_buffer,no_backward_accel_buffer
+     no_backward_displ_buffer,no_backward_accel_buffer, &
      no_backward_iframe
 
 !  use specfem_par_gpu, only: Mesh_pointer
@@ -132,6 +132,7 @@
   endif
 
   if (NSTEP_BETWEEN_COMPUTE_KERNELS == 1 .or. it /= NSTEP) then
+
     if (any_acoustic) then
       no_backward_iframe = no_backward_iframe + 1
       !if (GPU_MODE) call transfer_fields_ac_from_device(nglob,potential_acoustic,potential_dot_acoustic, &
@@ -141,14 +142,18 @@
     endif
 
     if (any_elastic) then
-      write(IOUT_UNDO_ATT) accel_elastic
-      write(IOUT_UNDO_ATT) displ_elastic
+      no_backward_displ_buffer(:,:,2) = displ_elastic(:,:)
+      write(IOUT_UNDO_ATT,asynchronous='yes') no_backward_displ_buffer(:,:,2)
+      if (APPROXIMATE_HESS_KL) then
+        no_backward_accel_buffer(:,:,2) = accel_elastic(:,:)
+        write(IOUT_UNDO_ATT,asynchronous='yes') no_backward_accel_buffer(:,:,2)
+      endif
     endif
+
   endif
 
   ! this operation will automatically synchronize the remaining I/O to do
-  if (it == NSTEP) then
-   close(IOUT_UNDO_ATT)
-  endif
+  if (it == NSTEP) close(IOUT_UNDO_ATT)
+
   end subroutine save_forward_arrays_no_backward
 

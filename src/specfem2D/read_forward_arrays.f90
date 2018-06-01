@@ -218,13 +218,12 @@
 
   subroutine read_forward_arrays_no_backward()
 
-  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES
+  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,APPROXIMATE_HESS_KL,NDIM
 
-  use specfem_par, only: myrank,it, &
-    any_acoustic,any_elastic, &
-    b_potential_acoustic, &
-    b_displ_elastic,b_accel_elastic, &
-    nglob,no_backward_acoustic_buffer,no_backward_iframe,no_backward_nframes
+  use specfem_par, only: myrank,it,any_acoustic,any_elastic, &
+    b_potential_acoustic,b_displ_elastic,b_accel_elastic, &
+    nglob,no_backward_acoustic_buffer,no_backward_displ_buffer,no_backward_accel_buffer,&
+    no_backward_iframe,no_backward_nframes
 
 !  use specfem_par_gpu, only: Mesh_pointer
 
@@ -233,6 +232,7 @@
   ! local parameters
   integer :: ier,offset
   character(len=MAX_STRING_LEN) :: outputname
+
   if (it == 1) then
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_No_backward_reconstruction_database.bin'
     ! opens corresponding file for reading
@@ -242,12 +242,18 @@
     no_backward_iframe = 0
   else
     wait(IIN_UNDO_ATT)
-    b_potential_acoustic(:) = no_backward_acoustic_buffer(:,1)
+    if (any_acoustic) b_potential_acoustic(:) = no_backward_acoustic_buffer(:,1)
+    if (any_elastic) then
+      b_displ_elastic(:,:) = no_backward_displ_buffer(:,:,1)
+      if (APPROXIMATE_HESS_KL) b_accel_elastic(:,:) = no_backward_accel_buffer(:,:,1)
+    endif
   endif
 
   if (no_backward_iframe < no_backward_nframes ) then
+
+    no_backward_iframe = no_backward_iframe + 1
+
     if (any_acoustic) then
-      no_backward_iframe = no_backward_iframe + 1
 
       ! the +2 and +5 are due to the way Fortran is writing binary arrays, adding an extra octet before and after the array
       if (no_backward_iframe == no_backward_nframes) then
@@ -260,9 +266,22 @@
 !    if (GPU_MODE) call transfer_b_fields_ac_to_device(nglob,b_potential_acoustic,b_potential_dot_acoustic,
 !&                                                        b_potential_dot_dot_acoustic,Mesh_pointer)
     endif
+
     if (any_elastic) then
-      read(IIN_UNDO_ATT) b_accel_elastic
-      read(IIN_UNDO_ATT) b_displ_elastic
+
+      ! the +2, +4 and +5 are due to the way Fortran is writing binary arrays, adding an extra octet before and after an array
+      if (no_backward_iframe == no_backward_nframes) then
+        offset = 5
+      else
+        if (APPROXIMATE_HESS_KL) then
+          offset = 4*2*(NDIM*nglob+2)*(no_backward_nframes - no_backward_iframe) + 5
+        else
+          offset = 4*(NDIM*nglob+2)*(no_backward_nframes - no_backward_iframe) + 5
+        endif
+      endif
+
+      read(IIN_UNDO_ATT,asynchronous='yes',pos=offset) no_backward_displ_buffer(:,:,1)
+      if (APPROXIMATE_HESS_KL) read(IIN_UNDO_ATT,asynchronous='yes',pos=offset+8+4*nglob) no_backward_accel_buffer(:,:,1)
     endif
 
   endif
