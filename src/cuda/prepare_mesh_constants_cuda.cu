@@ -491,7 +491,7 @@ void FC_FUNC_(prepare_fields_acoustic_device,
   if (*NO_BACKWARD_RECONSTRUCTION){
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_potential_acoustic_buffer),mp->NGLOB_AB*sizeof(realw)),2206);
     cudaStreamCreateWithFlags(&mp->copy_stream_no_backward,cudaStreamNonBlocking);
-    cudaHostRegister(h_no_backward_acoustic_buffer,3*mp->NGLOB_AB*sizeof(realw),0); 
+    cudaHostRegister(h_no_backward_acoustic_buffer,3*mp->NGLOB_AB*sizeof(realw),0);
     cudaEventCreate(&mp->transfer_is_complete1);
     cudaEventCreate(&mp->transfer_is_complete2);
   }

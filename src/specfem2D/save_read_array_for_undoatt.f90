@@ -112,8 +112,8 @@
 
   implicit none
 
-  ! EB EB June 2018 : in this routine, in order to overlap both GPU ==> RAM and RAM ==> disk transfers, we transfer
-  ! a wavefield in two iterations. 
+  ! EB EB June 2018 : in this routine, in order to overlap both GPU = => RAM and RAM = => disk transfers, we transfer
+  ! a wavefield in two iterations.
   ! At the first iteration, we transfer the wavefield from the GPU to the disk.
   ! At the second iteration, we write this wavefield on the disk from the RAM.
   ! In the text above, an iteration means NSTEP_BETWEEN_COMPUTE_KERNELS iterations of the timeloop.
@@ -147,7 +147,7 @@
   buffer_num_GPU_transfer = mod(no_backward_iframe+2,3)
   buffer_num_async_IO = mod(no_backward_iframe,3)
 
-  ! for the two first times, we only launch GPU ==> RAM transfers 
+  ! for the two first times, we only launch GPU = => RAM transfers
   if (no_backward_iframe < 3) then
 
     if (GPU_MODE) then

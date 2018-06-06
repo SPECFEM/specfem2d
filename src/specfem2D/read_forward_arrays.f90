@@ -234,8 +234,8 @@
   integer(KIND=8) :: offset
   character(len=MAX_STRING_LEN) :: outputname
 
-  ! EB EB June 2018 : in this routine, in order to overlap both disk ==> RAM and RAM ==> GPU transfers, we initiate the
-  ! transfer of a wavefield two iterations before this wavefield is actually needed by the kernel computation. 
+  ! EB EB June 2018 : in this routine, in order to overlap both disk = => RAM and RAM = => GPU transfers, we initiate the
+  ! transfer of a wavefield two iterations before this wavefield is actually needed by the kernel computation.
   ! Two iterations before, the wavefield is read from the disk.
   ! One iteration before, this wavefield is transfered from the RAM to the GPU.
   ! In the text above, an iteration means NSTEP_BETWEEN_COMPUTE_KERNELS iterations of the timeloop.
@@ -270,7 +270,7 @@
         ! launches the transfer of the next wavefield
         call transfer_async_pot_ac_to_device(no_backward_acoustic_buffer(nglob*buffer_num_GPU_transfer+1),Mesh_pointer)
       else
-        ! we get the wavefield from the previous iteration, because this RAM ==>
+        ! we get the wavefield from the previous iteration, because this RAM = =>
         ! RAM copy is blocking
         b_potential_acoustic(:) = no_backward_acoustic_buffer(nglob*mod(no_backward_iframe,3)+1: &
                                                                 nglob*(mod(no_backward_iframe,3)+1))

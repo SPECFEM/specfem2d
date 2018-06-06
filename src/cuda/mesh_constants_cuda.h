@@ -493,7 +493,7 @@ typedef struct mesh_ {
   // buffer for NO_BACKWARD_RECONSTRUCTION
   realw* d_potential_acoustic_buffer;
 
-  cudaEvent_t transfer_is_complete1; 
+  cudaEvent_t transfer_is_complete1;
   cudaEvent_t transfer_is_complete2;
 
   // acoustic domain parameters

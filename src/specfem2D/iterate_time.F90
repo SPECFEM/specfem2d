@@ -329,10 +329,10 @@ subroutine it_transfer_from_GPU()
       kappa_ac_kl(:,:,:) = kappa_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
       rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
       alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
-      print*,''
-      print*,'Maximum value of rho prime kernel : ',maxval(rhop_ac_kl)
-      print*,'Maximum value of alpha kernel : ',maxval(alpha_ac_kl)
-      print*,''
+      print *
+      print *,'Maximum value of rho prime kernel : ',maxval(rhop_ac_kl)
+      print *,'Maximum value of alpha kernel : ',maxval(alpha_ac_kl)
+      print *
     endif
 
     ! elastic domains
@@ -567,12 +567,12 @@ subroutine manage_no_backward_reconstruction_io()
 
     if (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == NSTEP ) then
 
-      call save_forward_arrays_no_backward() 
+      call save_forward_arrays_no_backward()
 
     endif
 
   endif ! SAVE_FORWARD
-  
+
   if (SIMULATION_TYPE == 3) then
 
     if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == 1 .or. it == NSTEP) then

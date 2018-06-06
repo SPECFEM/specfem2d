@@ -159,7 +159,7 @@
     endif !Type of model
   endif !save model
 
-  ! For this mode, the forward model has been saved differently 
+  ! For this mode, the forward model has been saved differently
   if ((.not. NO_BACKWARD_RECONSTRUCTION) ) then
 
     ! stores absorbing boundary contributions into files
@@ -376,7 +376,7 @@
     endif
 
   endif ! if trim(SAVE_MODEL) /= '.false.' .and. (.not.
-        ! UNDO_ATTENUATION_AND_OR_PML)  .and. (.not. NO_BACKWARD_RECONSTRUCTION)
+        ! UNDO_ATTENUATION_AND_OR_PML) .and. (.not. NO_BACKWARD_RECONSTRUCTION)
 
   ! frees memory
   if (GPU_MODE) then
