@@ -240,7 +240,7 @@
   enddo
 
   ! only at the last time step we multiply by delta and parameter value, it is not necessary to do it at each iteration
-  if (it == NSTEP) then
+  if (NSTEP - it == mod(NSTEP,NSTEP_BETWEEN_COMPUTE_KERNELS)) then
 
     do ispec = 1, nspec
       if (ispec_is_elastic(ispec)) then

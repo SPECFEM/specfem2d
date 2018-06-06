@@ -347,7 +347,9 @@ void FC_FUNC_(prepare_fields_acoustic_device,
 
 void FC_FUNC_(prepare_fields_acoustic_adj_dev,
               PREPARE_FIELDS_ACOUSTIC_ADJ_DEV)(long* Mesh_pointer,
-                                              int* APPROXIMATE_HESS_KL) {}
+                                               int* APPROXIMATE_HESS_KL,
+                                               int* ATTENUATION_VISCOACOUSTIC,
+                                               int* NO_BACKWARD_RECONSTRUCTION) {}
 
 void FC_FUNC_(prepare_fields_elastic_device,
               PREPARE_FIELDS_ELASTIC_DEVICE)(long* Mesh_pointer,
@@ -483,6 +485,12 @@ void FC_FUNC_(transfer_viscoacoustic_var_from_device,
 void FC_FUNC_(transfer_viscoacoustic_b_var_to_device,
               TRANSFER_VISCOACOUSTIC_b_VAR_TO_DEVICE)(int* size,realw* b_e1_acous_sf,realw* b_sum_forces_old,long* Mesh_pointer) {}
 
+void FC_FUNC_(transfer_async_pot_ac_from_device,
+              TRANSFER_ASYNC_POT_AC_FROM_DEVICE)(realw* buffer,long* Mesh_pointer) {}
+
+void FC_FUNC_(transfer_async_pot_ac_to_device,
+              TRANSFER_ASYNC_POT_AC_TO_DEVICE)(realw* pot_buffer,
+                                               long* Mesh_pointer) {}
 
 void FC_FUNC_(transfer_compute_kernel_answers_from_device,
               TRANSFER_COMPUTE_KERNEL_ANSWERS_FROM_DEVICE)(long* Mesh_pointer,

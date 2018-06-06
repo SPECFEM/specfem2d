@@ -81,7 +81,7 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
   i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
   j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
   //check if the point must be computed
-  if (i==5 || j==5) return;
+  if (i==NGLLX-1 || j==NGLLX-1) return;
 
   iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
 

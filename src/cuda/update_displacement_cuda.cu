@@ -230,6 +230,9 @@ void FC_FUNC_(update_displacement_ac_cuda,
   realw deltatsqover2 = *deltatsqover2_F;
   realw deltatover2 = *deltatover2_F;
 
+  //cudaEventRecord(mp->end_of_iteration,mp->compute_stream);
+  //cudaEventSynchronize(mp->end_of_iteration);
+
   // Cuda timing
   cudaEvent_t start,stop;
   if (CUDA_TIMING_UPDATE) {
@@ -505,16 +508,16 @@ void FC_FUNC_(kernel_3_acoustic_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  kernel_3_acoustic_cuda_device<<< grid, threads>>>(mp->d_potential_dot_dot_acoustic,
-                                                    mp->d_b_potential_dot_dot_acoustic,
-                                                    mp->d_potential_dot_acoustic,
-                                                    mp->d_b_potential_dot_acoustic,
-                                                    size,
-                                                    *compute_wavefield_1,
-                                                    *compute_wavefield_2,
-                                                    *deltatover2,
-                                                    *b_deltatover2,
-                                                    mp->d_rmass_acoustic);
+  kernel_3_acoustic_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
+                                                                         mp->d_b_potential_dot_dot_acoustic,
+                                                                         mp->d_potential_dot_acoustic,
+                                                                         mp->d_b_potential_dot_acoustic,
+                                                                         size,
+                                                                         *compute_wavefield_1,
+                                                                         *compute_wavefield_2,
+                                                                         *deltatover2,
+                                                                         *b_deltatover2,
+                                                                          mp->d_rmass_acoustic);
 
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

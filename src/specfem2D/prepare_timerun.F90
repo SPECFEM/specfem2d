@@ -1977,9 +1977,13 @@
   integer :: ier
   double precision :: sizeval
 
-  !checks if anything to do
-  if (.not. NO_BACKWARD_RECONSTRUCTION) return
+  no_backward_iframe = 0
 
+  !checks if anything to do
+  if (.not. NO_BACKWARD_RECONSTRUCTION) then
+    allocate(no_backward_acoustic_buffer(1),no_backward_displ_buffer(1,1),no_backward_accel_buffer(1,1))
+    return
+  endif
   !safety checks
   if (time_stepping_scheme /= 1) call exit_MPI(myrank,'for NO_BACKWARD_RECONSTRUCTION, only Newmark scheme has implemented ')
   if (UNDO_ATTENUATION_AND_OR_PML) call exit_MPI(myrank, &
@@ -1988,9 +1992,10 @@
   ! gets the number of frames to store/read in the NO BACKWARD RECONSTRUCTION
   ! database
   no_backward_nframes = 0
-  do while (no_backward_nframes * NSTEP_BETWEEN_COMPUTE_KERNELS < NSTEP )
+  do while (no_backward_nframes * NSTEP_BETWEEN_COMPUTE_KERNELS <= NSTEP )
     no_backward_nframes = no_backward_nframes + 1
   enddo
+  no_backward_nframes = no_backward_nframes -1 
 
   ! user output
   if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
@@ -2022,10 +2027,20 @@
 
   ! allocates buffers for I/O
   if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
-    if (any_acoustic) allocate(no_backward_acoustic_buffer(nglob,2),stat=ier)
+    if (any_acoustic) then
+      allocate(no_backward_acoustic_buffer(3*nglob),stat=ier)
+    else
+      allocate(no_backward_acoustic_buffer(1),stat=ier)
+    endif
     if (any_elastic) then
-      allocate(no_backward_displ_buffer(NDIM,nglob,2),stat=ier)
-      if (APPROXIMATE_HESS_KL) allocate(no_backward_accel_buffer(NDIM,nglob,2),stat=ier)
+      allocate(no_backward_displ_buffer(NDIM,nglob),stat=ier)
+      if (APPROXIMATE_HESS_KL) then 
+        allocate(no_backward_accel_buffer(NDIM,nglob),stat=ier)
+      else
+        allocate(no_backward_accel_buffer(1,1),stat=ier)
+      endif
+    else
+      allocate(no_backward_displ_buffer(1,1),no_backward_accel_buffer(1,1),stat=ier)   
     endif
     if (ier /= 0 ) call exit_MPI(myrank,'error allocating no_backward_***_buffer')
   endif

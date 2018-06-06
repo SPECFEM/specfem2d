@@ -64,6 +64,8 @@
 
   ! checks if anything to do
   if (.not. (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP)) return
+  if ( (.not. output_postscript_snapshot) .and. (.not. NOISE_MOVIE_OUTPUT) .and. (.not. output_color_image) &
+       .and. (.not. output_wavefield_dumps) ) return
 
   if (UNDO_ATTENUATION_AND_OR_PML .and. get_b_wavefield .and. .not. NO_BACKWARD_RECONSTRUCTION) then
     plot_b_wavefield_only = .true.
@@ -79,7 +81,8 @@
       if (.not. plot_b_wavefield_only) &
         call transfer_fields_ac_from_device(NGLOB_AB,potential_acoustic,potential_dot_acoustic, &
                                             potential_dot_dot_acoustic,Mesh_pointer)
-      if ((SIMULATION_TYPE == 3 .and. (.not. UNDO_ATTENUATION_AND_OR_PML)) .or. plot_b_wavefield_only ) &
+      if ((SIMULATION_TYPE == 3 .and. (.not. NO_BACKWARD_RECONSTRUCTION) .and. &
+          (.not. UNDO_ATTENUATION_AND_OR_PML)) .or. plot_b_wavefield_only ) &
           call transfer_b_fields_ac_from_device(NGLOB_AB,b_potential_acoustic,b_potential_dot_acoustic, &
                                                 b_potential_dot_dot_acoustic,Mesh_pointer)
     endif

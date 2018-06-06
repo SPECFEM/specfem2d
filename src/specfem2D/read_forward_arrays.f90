@@ -223,15 +223,24 @@
   use specfem_par, only: myrank,it,any_acoustic,any_elastic, &
     b_potential_acoustic,b_displ_elastic,b_accel_elastic, &
     nglob,no_backward_acoustic_buffer,no_backward_displ_buffer,no_backward_accel_buffer, &
-    no_backward_iframe,no_backward_nframes
+    no_backward_iframe,no_backward_Nframes,GPU_MODE,NSTEP
 
-!  use specfem_par_gpu, only: Mesh_pointer
+  use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
 
   ! local parameters
-  integer :: ier,offset
+  integer :: ier,buffer_num_async_IO,buffer_num_GPU_transfer
+  integer(KIND=8) :: offset
   character(len=MAX_STRING_LEN) :: outputname
+
+  ! EB EB June 2018 : in this routine, in order to overlap both disk ==> RAM and RAM ==> GPU transfers, we initiate the
+  ! transfer of a wavefield two iterations before this wavefield is actually needed by the kernel computation. 
+  ! Two iterations before, the wavefield is read from the disk.
+  ! One iteration before, this wavefield is transfered from the RAM to the GPU.
+  ! In the text above, an iteration means NSTEP_BETWEEN_COMPUTE_KERNELS iterations of the timeloop.
+
+  no_backward_iframe = no_backward_iframe + 1
 
   if (it == 1) then
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_No_backward_reconstruction_database.bin'
@@ -239,54 +248,53 @@
     open(unit=IIN_UNDO_ATT,asynchronous='yes',file=trim(OUTPUT_FILES)//outputname, &
        status='old',action='read',form='unformatted',access='stream',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_No_backward_reconstruction_database.bin for reading')
-    no_backward_iframe = 0
   else
     wait(IIN_UNDO_ATT)
-    if (any_acoustic) b_potential_acoustic(:) = no_backward_acoustic_buffer(:,1)
-    if (any_elastic) then
-      b_displ_elastic(:,:) = no_backward_displ_buffer(:,:,1)
-      if (APPROXIMATE_HESS_KL) b_accel_elastic(:,:) = no_backward_accel_buffer(:,:,1)
-    endif
   endif
 
-  if (no_backward_iframe < no_backward_nframes ) then
+  buffer_num_async_IO = mod(no_backward_iframe+2,3)
+  buffer_num_GPU_transfer = mod(no_backward_iframe+1,3)
 
-    no_backward_iframe = no_backward_iframe + 1
+  if (any_acoustic) then
 
-    if (any_acoustic) then
+    ! offset is computed in two times to avoid integer overflow
+    offset = 4*nglob
+    offset = offset*(no_backward_Nframes - no_backward_iframe ) + 1
+    if (no_backward_iframe <= no_backward_Nframes) &
+      read(IIN_UNDO_ATT,asynchronous='yes',pos=offset) &
+           no_backward_acoustic_buffer(nglob*buffer_num_async_IO+1:nglob*(buffer_num_async_IO+1))
 
-      ! the +2 and +5 are due to the way Fortran is writing binary arrays, adding an extra octet before and after the array
-      if (no_backward_iframe == no_backward_nframes) then
-        offset = 5
+    if (no_backward_iframe /= 1) then
+      if (GPU_MODE) then
+        ! this function ensures the previous async transfer is finished, and
+        ! launches the transfer of the next wavefield
+        call transfer_async_pot_ac_to_device(no_backward_acoustic_buffer(nglob*buffer_num_GPU_transfer+1),Mesh_pointer)
       else
-        offset = 4*(nglob+2)*(no_backward_nframes - no_backward_iframe) + 5
+        ! we get the wavefield from the previous iteration, because this RAM ==>
+        ! RAM copy is blocking
+        b_potential_acoustic(:) = no_backward_acoustic_buffer(nglob*mod(no_backward_iframe,3)+1: &
+                                                                nglob*(mod(no_backward_iframe,3)+1))
       endif
-
-      read(IIN_UNDO_ATT,asynchronous='yes',pos=offset) no_backward_acoustic_buffer(:,1)
-!    if (GPU_MODE) call transfer_b_fields_ac_to_device(nglob,b_potential_acoustic,b_potential_dot_acoustic,
-!&                                                        b_potential_dot_dot_acoustic,Mesh_pointer)
     endif
+
+    endif ! any_acoustic
 
     if (any_elastic) then
 
-      ! the +2, +4 and +5 are due to the way Fortran is writing binary arrays, adding an extra octet before and after an array
-      if (no_backward_iframe == no_backward_nframes) then
-        offset = 5
+      b_displ_elastic(:,:) = no_backward_displ_buffer(:,:)
+      if (APPROXIMATE_HESS_KL) b_accel_elastic(:,:) = no_backward_accel_buffer(:,:)
+
+      if (APPROXIMATE_HESS_KL) then
+        offset = 4*2*(NDIM*nglob)*(no_backward_Nframes - no_backward_iframe) + 1
       else
-        if (APPROXIMATE_HESS_KL) then
-          offset = 4*2*(NDIM*nglob+2)*(no_backward_nframes - no_backward_iframe) + 5
-        else
-          offset = 4*(NDIM*nglob+2)*(no_backward_nframes - no_backward_iframe) + 5
-        endif
+        offset = 4*(NDIM*nglob)*(no_backward_Nframes - no_backward_iframe) + 1
       endif
 
-      read(IIN_UNDO_ATT,asynchronous='yes',pos=offset) no_backward_displ_buffer(:,:,1)
-      if (APPROXIMATE_HESS_KL) read(IIN_UNDO_ATT,asynchronous='yes',pos=offset+8+4*nglob) no_backward_accel_buffer(:,:,1)
+      read(IIN_UNDO_ATT,asynchronous='yes',pos=offset) no_backward_displ_buffer(:,:)
+      if (APPROXIMATE_HESS_KL) read(IIN_UNDO_ATT,asynchronous='yes',pos=offset+8+4*nglob) no_backward_accel_buffer(:,:)
     endif
 
-  endif
-
-  if (no_backward_iframe == no_backward_nframes) close(IIN_UNDO_ATT)
+  if (it == NSTEP) close(IIN_UNDO_ATT)
 
   end subroutine read_forward_arrays_no_backward
 

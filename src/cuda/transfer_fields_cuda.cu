@@ -286,6 +286,8 @@ void FC_FUNC_(transfer_fields_ac_from_device,
   //get mesh pointer out of fortran integer container
   Mesh* mp = (Mesh*)(*Mesh_pointer);
 
+  //print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),52110);
+
   print_CUDA_error_if_any(cudaMemcpy(potential_acoustic,mp->d_potential_acoustic,
                                      sizeof(realw)*(*size),cudaMemcpyDeviceToHost),52111);
   print_CUDA_error_if_any(cudaMemcpy(potential_dot_acoustic,mp->d_potential_dot_acoustic,
@@ -476,7 +478,7 @@ void FC_FUNC_(transfer_viscoacoustic_var_from_device,
               TRANSFER_VISCOACOUSTIC_VAR_FROM_DEVICE)(int* size,
                                                       realw* e1_acous_sf,
                                                       realw* sum_forces_old,
-                                                      long* Mesh_pointer ) {
+                                                      long* Mesh_pointer) {
 
   TRACE("transfer_viscoacoustic_var_from_device");
 
@@ -484,6 +486,59 @@ void FC_FUNC_(transfer_viscoacoustic_var_from_device,
 
   print_CUDA_error_if_any(cudaMemcpy(sum_forces_old,mp->d_sum_forces_old,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),70205);
   print_CUDA_error_if_any(cudaMemcpy(e1_acous_sf,mp->d_e1_acous,sizeof(realw)*(*size)*N_SLS,cudaMemcpyDeviceToHost),70206);
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(transfer_async_pot_ac_from_device,
+              TRANSFER_ASYNC_POT_AC_FROM_DEVICE)(realw* pot_buffer,long* Mesh_pointer) {
+
+  TRACE("transfer_async_pot_ac_from_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
+
+  // waits for previous transfer to finish
+  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),70207);
+//  print_CUDA_error_if_any(cudaStreamSynchronize(mp->copy_stream_no_backward),70207);
+
+  cudaStreamWaitEvent(mp->compute_stream,mp->transfer_is_complete1,0);
+  // adds the copy of d_potential_acoustic to the compute_stream stream to make sure it will be not overwritten by this same stream in further operations
+  print_CUDA_error_if_any(cudaMemcpyAsync(mp->d_potential_acoustic_buffer,mp->d_potential_acoustic,sizeof(realw)*mp->NGLOB_AB,cudaMemcpyDeviceToDevice,mp->compute_stream),70208);
+  // We create an event to know when the GPU buffer is ready for the transfer GPU ==> CPU
+  cudaEventRecord(mp->transfer_is_complete2,mp->compute_stream);
+  cudaStreamWaitEvent(mp->copy_stream_no_backward,mp->transfer_is_complete2,0);
+
+  print_CUDA_error_if_any(cudaMemcpyAsync(pot_buffer,mp->d_potential_acoustic_buffer,sizeof(realw)*mp->NGLOB_AB,cudaMemcpyDeviceToHost,mp->copy_stream_no_backward),70209);
+
+  cudaEventRecord(mp->transfer_is_complete1,mp->copy_stream_no_backward);
+//  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),70207);
+//  print_CUDA_error_if_any(cudaStreamSynchronize(mp->copy_stream_no_backward),70207);
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(transfer_async_pot_ac_to_device,
+              TRANSFER_ASYNC_POT_AC_TO_DEVICE)(realw* pot_buffer,
+                                               long* Mesh_pointer) {
+  TRACE("transfer_async_pot_ac_to_device");
+  Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
+
+  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),70207);
+//  print_CUDA_error_if_any(cudaStreamSynchronize(mp->copy_stream_no_backward),70207);
+
+  cudaStreamWaitEvent(mp->compute_stream,mp->transfer_is_complete1,0);
+
+  print_CUDA_error_if_any(cudaMemcpyAsync(mp->d_b_potential_acoustic,mp->d_potential_acoustic_buffer,sizeof(realw)*mp->NGLOB_AB,cudaMemcpyDeviceToDevice,mp->compute_stream),70211);
+
+  cudaEventRecord(mp->transfer_is_complete2,mp->compute_stream);
+  cudaStreamWaitEvent(mp->copy_stream_no_backward,mp->transfer_is_complete2,0);
+  print_CUDA_error_if_any(cudaMemcpyAsync(mp->d_potential_acoustic_buffer,pot_buffer,sizeof(realw)*mp->NGLOB_AB,cudaMemcpyHostToDevice,mp->copy_stream_no_backward),70212);
+//  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),70207);
+//  print_CUDA_error_if_any(cudaStreamSynchronize(mp->copy_stream_no_backward),70207);
+
+  cudaEventRecord(mp->transfer_is_complete1,mp->copy_stream_no_backward);
 }
 
 /* ----------------------------------------------------------------------------------------------- */

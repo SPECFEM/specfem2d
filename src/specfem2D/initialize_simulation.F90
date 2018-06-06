@@ -309,9 +309,10 @@
 
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. &
       (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC) &
-      .and. (.not. UNDO_ATTENUATION_AND_OR_PML)) then
+      .and. (.not. UNDO_ATTENUATION_AND_OR_PML .and. .not. NO_BACKWARD_RECONSTRUCTION )) then
     print *, '*************** Error ***************'
-    call stop_the_code('attenuation is only implemented for adjoint calculations with UNDO_ATTENUATION_AND_OR_PML')
+    call stop_the_code(&
+    'attenuation is only implemented for adjoint calculations with UNDO_ATTENUATION_AND_OR_PML or NO_BACKWARD_RECONSTRUCTION')
   endif
 
   if ((.not. P_SV) .and. ATTENUATION_VISCOELASTIC) then

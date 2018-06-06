@@ -36,9 +36,9 @@
   use specfem_par, only: NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbors,ninterface_acoustic,inum_interfaces_acoustic, &
     nelem_acoustic_surface,num_fluid_solid_edges,UNDO_ATTENUATION_AND_OR_PML, &
-    STACEY_ABSORBING_CONDITIONS,any_elastic,any_poroelastic,SIMULATION_TYPE, ATTENUATION_VISCOACOUSTIC
+    STACEY_ABSORBING_CONDITIONS,any_elastic,any_poroelastic,SIMULATION_TYPE,ATTENUATION_VISCOACOUSTIC
 
-  use specfem_par, only: nspec_outer_acoustic, nspec_inner_acoustic
+  use specfem_par, only: nspec_outer_acoustic, nspec_inner_acoustic,NO_BACKWARD_RECONSTRUCTION
 
   use specfem_par_gpu, only: Mesh_pointer,deltatover2f,b_deltatover2f, &
     buffer_send_scalar_gpu,buffer_recv_scalar_gpu, &
@@ -56,7 +56,7 @@
   logical :: compute_wavefield_2
 
   ! determines which wavefields to compute
-  if ((.not. UNDO_ATTENUATION_AND_OR_PML) .and. SIMULATION_TYPE == 1) then
+  if ((.not. UNDO_ATTENUATION_AND_OR_PML) .and. (SIMULATION_TYPE == 1 .or. NO_BACKWARD_RECONSTRUCTION) ) then
     compute_wavefield_1 = .true.
     compute_wavefield_2 = .false.
   else if ((.not. UNDO_ATTENUATION_AND_OR_PML) .and. SIMULATION_TYPE == 3) then
@@ -77,7 +77,6 @@
 
   ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
   do iphase = 1,2
-
     ! acoustic pressure term
     ! includes code for SIMULATION_TYPE==3
     call compute_forces_acoustic_cuda(Mesh_pointer, iphase, &
@@ -107,6 +106,7 @@
 
       ! sources
       call compute_add_sources_acoustic_GPU(iphase,compute_wavefield_1,compute_wavefield_2)
+
     endif
 
     ! assemble all the contributions between slices using MPI
@@ -191,7 +191,7 @@
 
   use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom, b_absorb_acoustic_top,it,NSTEP,SIMULATION_TYPE,SAVE_FORWARD, &
-                         nelemabs,UNDO_ATTENUATION_AND_OR_PML
+                         nelemabs,UNDO_ATTENUATION_AND_OR_PML,NO_BACKWARD_RECONSTRUCTION
 
   use specfem_par_gpu, only: Mesh_pointer
 
@@ -210,7 +210,7 @@
   ! checks if anything to do
   if (nelemabs == 0) return
 
-  if (SIMULATION_TYPE == 3 .and. (.not. UNDO_ATTENUATION_AND_OR_PML) ) then
+  if (SIMULATION_TYPE == 3 .and. (.not. UNDO_ATTENUATION_AND_OR_PML .and. .not. NO_BACKWARD_RECONSTRUCTION) ) then
     ! gets absorbing contributions buffers
     b_absorb_potential_left_slice(:,:) = b_absorb_acoustic_left(:,:,NSTEP-it+1)
     b_absorb_potential_right_slice(:,:) = b_absorb_acoustic_right(:,:,NSTEP-it+1)
@@ -224,7 +224,8 @@
                                     compute_wavefield_1,compute_wavefield_2,UNDO_ATTENUATION_AND_OR_PML)
 
   ! adjoint simulations: stores absorbed wavefield part
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (.not. UNDO_ATTENUATION_AND_OR_PML)) then
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (.not. UNDO_ATTENUATION_AND_OR_PML .and. &
+      .not. NO_BACKWARD_RECONSTRUCTION)) then
     ! writes out absorbing boundary value only when second phase is running
     b_absorb_acoustic_bottom(:,:,it) = b_absorb_potential_bottom_slice(:,:)
     b_absorb_acoustic_right(:,:,it) = b_absorb_potential_right_slice(:,:)

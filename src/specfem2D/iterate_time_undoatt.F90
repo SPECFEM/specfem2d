@@ -121,7 +121,7 @@
   if (NSTEP_BETWEEN_COMPUTE_KERNELS == 1) then
     size_buffer = NT_DUMP_ATTENUATION
   else
-    size_buffer = NT_DUMP_ATTENUATION / NSTEP_BETWEEN_COMPUTE_KERNELS + 2
+    size_buffer = NT_DUMP_ATTENUATION / NSTEP_BETWEEN_COMPUTE_KERNELS + 1
   endif
 
   ! checks
@@ -280,7 +280,7 @@
       ! kernel simulations
       ! intermediate storage of it position
       it_temp = it
-      it = NT_DUMP_ATTENUATION * (NSUBSET_ITERATIONS - iteration_on_subset )
+      it = NT_DUMP_ATTENUATION * (NSUBSET_ITERATIONS - iteration_on_subset)
       ! increment end of this subset
       if (iteration_on_subset == 1) then
         ! loops over remaining steps in last forward subset
@@ -330,7 +330,7 @@
         enddo
 
         ! stores wavefield in buffers
-        if (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == 1) then
+        if (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
 
           iframe_kernel = iframe_kernel + 1
 
@@ -362,7 +362,7 @@
       do it_of_this_subset = 1, it_subset_end
 
         it = it + 1
-        if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == NSTEP) then
+        if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
 
           iframe_kernel = iframe_kernel + 1
 
@@ -447,7 +447,7 @@
         !call write_seismograms()
 
         ! kernels calculation
-        if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == NSTEP) call compute_kernels()
+        if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0) call compute_kernels()
 
         ! display results at given time steps
         call write_movie_output(compute_b_wavefield)

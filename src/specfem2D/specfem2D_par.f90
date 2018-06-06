@@ -41,11 +41,9 @@ module specfem_par
   use shared_parameters
 
   implicit none
-
   !=====================================================================
   ! input for simulation (its beginning)
   !=====================================================================
-
   !---------------------------------------------------------------------
   ! for material information
   !---------------------------------------------------------------------
@@ -381,7 +379,7 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential_dot_dot
 
   ! buffer for I/O
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: no_backward_acoustic_buffer
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: no_backward_acoustic_buffer
 
   !---------------------------------------------------------------------
   ! for elastic simulation
@@ -475,7 +473,7 @@ module specfem_par
   integer, dimension(:,:), allocatable :: phase_ispec_inner_elastic
 
   ! buffer for I/O
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: no_backward_displ_buffer,no_backward_accel_buffer
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: no_backward_displ_buffer,no_backward_accel_buffer
   integer :: no_backward_nframes,no_backward_iframe
 
   !---------------------------------------------------------------------

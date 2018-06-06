@@ -186,14 +186,10 @@ subroutine iterate_time()
     ! reads in lastframe for adjoint/kernels calculation
     if (SIMULATION_TYPE == 3 .and. it == 1 .and. .not. NO_BACKWARD_RECONSTRUCTION) then
       call read_forward_arrays()
-    ! writes in frame for further adjoint/kernels calculation
-    else if (NO_BACKWARD_RECONSTRUCTION .and. SAVE_FORWARD .and. (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 &
-             .or. it == 1 .or. it == NSTEP)) then
-      call save_forward_arrays_no_backward()
-    ! reads in frame for further adjoint/kernels calculation
-    else if (NO_BACKWARD_RECONSTRUCTION .and. SIMULATION_TYPE == 3 .and. &
-          (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == 1 .or. it == NSTEP)) then
-      call read_forward_arrays_no_backward()
+    endif
+
+    if (NO_BACKWARD_RECONSTRUCTION .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) ) then
+      call manage_no_backward_reconstruction_io()
     endif
 
     ! noise simulations
@@ -222,7 +218,7 @@ subroutine iterate_time()
     call write_seismograms()
 
     ! kernels calculation
-    if (SIMULATION_TYPE == 3 .and. (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == NSTEP)) then
+    if (SIMULATION_TYPE == 3 .and. mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
       call compute_kernels()
     endif
 
@@ -255,6 +251,7 @@ subroutine iterate_time()
   hr = time_values(5)
   minutes = time_values(6)
   call convtime(timestamp,year,mon,day,hr,minutes)
+
   if (myrank == 0) then
    write(IMAIN,*)
    write(IMAIN,*) 'Total duration of the timeloop in seconds, measured using '
@@ -290,7 +287,7 @@ subroutine it_transfer_from_GPU()
   implicit none
 
   ! local parameters
-  integer :: i,j,ispec,iglob
+  integer :: i,j,ispec
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal
 
   ! Fields transfer for imaging
@@ -328,8 +325,14 @@ subroutine it_transfer_from_GPU()
     ! acoustic domains
     if (any_acoustic) then
       call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
+      rho_ac_kl(:,:,:) = rho_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
+      kappa_ac_kl(:,:,:) = kappa_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
       rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
       alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
+      print*,''
+      print*,'Maximum value of rho prime kernel : ',maxval(rhop_ac_kl)
+      print*,'Maximum value of alpha kernel : ',maxval(alpha_ac_kl)
+      print*,''
     endif
 
     ! elastic domains
@@ -341,7 +344,6 @@ subroutine it_transfer_from_GPU()
         if (ispec_is_elastic(ispec)) then
           do j = 1, NGLLZ
             do i = 1, NGLLX
-              iglob = ibool(i,j,ispec)
               if (.not. assign_external_model) then
                 mul = poroelastcoef(2,1,kmato(ispec))
                 kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
@@ -546,3 +548,47 @@ subroutine it_compute_integrated_energy_field_and_output()
 
 end subroutine it_compute_integrated_energy_field_and_output
 
+subroutine manage_no_backward_reconstruction_io()
+
+  use constants
+  use specfem_par
+  use specfem_par_gpu
+
+  implicit none
+
+  ! EB EB June 2018 : this routine is saving/reading the frames of the forward
+  ! wavefield that are necessary to compute the sensitivity kernels
+
+  ! safety check
+  if (.not. NO_BACKWARD_RECONSTRUCTION) return
+
+  ! writes in frame for further adjoint/kernels calculation
+  if (SAVE_FORWARD) then
+
+    if (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == NSTEP ) then
+
+      call save_forward_arrays_no_backward() 
+
+    endif
+
+  endif ! SAVE_FORWARD
+  
+  if (SIMULATION_TYPE == 3) then
+
+    if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == 1 .or. it == NSTEP) then
+
+      call read_forward_arrays_no_backward()
+
+      ! For the first iteration we need to add a transfer, to initiate the
+      ! transfer on the GPU
+      if (no_backward_iframe == 1) call read_forward_arrays_no_backward()
+
+      ! If the wavefield is requested at it=1, then we enforce another transfer
+      if (no_backward_iframe == 2 .and. NSTEP_BETWEEN_COMPUTE_KERNELS == 1) &
+                                   call read_forward_arrays_no_backward()
+
+    endif
+
+  endif ! SIMULATION == 3
+
+end subroutine  manage_no_backward_reconstruction_io

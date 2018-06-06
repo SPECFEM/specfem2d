@@ -127,6 +127,8 @@
 
   implicit none
 
+  logical :: compute_b_wavefield
+
   ! checks if anything to do in this slice
   if (.not. any_acoustic) return
 
@@ -142,9 +144,15 @@
     endif
 
   else
+    ! for the UNDO_ATTENUATION_AND_OR_PML case, this routine is not used
+    if (NO_BACKWARD_RECONSTRUCTION) then
+      compute_b_wavefield = .false.
+    else
+      compute_b_wavefield = .true.
+    endif
     ! on GPU
     ! handles both forward and backward
-    call update_displacement_newmark_GPU_acoustic(.true.)
+    call update_displacement_newmark_GPU_acoustic(compute_b_wavefield)
   endif
 
   end subroutine update_displ_acoustic_forward

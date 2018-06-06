@@ -145,7 +145,7 @@
 // Texture memory usage:
 // requires CUDA version >= 4.0, see check below
 // Use textures for d_displ and d_accel -- 10% performance boost
-#define USE_TEXTURES_FIELDS
+//#define USE_TEXTURES_FIELDS
 
 // Using texture memory for the hprime-style constants is slower on
 // Fermi generation hardware, but *may* be faster on Kepler
@@ -165,10 +165,6 @@
 #ifdef USE_TEXTURES_CONSTANTS
 #pragma message ("Compiling with: USE_TEXTURES_CONSTANTS enabled\n")
 #endif
-
-// (optional) unrolling loops
-// leads up to ~1% performance increase
-//#define MANUALLY_UNROLLED_LOOPS
 
 // CUDA compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
@@ -364,6 +360,8 @@ typedef struct mesh_ {
   // overlapped memcpy streams
   cudaStream_t compute_stream;
   cudaStream_t copy_stream;
+  // stream to copy wavefield over several iterations
+  cudaStream_t copy_stream_no_backward;
   //cudaStream_t b_copy_stream;
 
   // sources
@@ -492,6 +490,11 @@ typedef struct mesh_ {
   realw* d_potential_acoustic; realw* d_potential_dot_acoustic; realw* d_potential_dot_dot_acoustic;
   // backward/reconstructed wavefield
   realw* d_b_potential_acoustic; realw* d_b_potential_dot_acoustic; realw* d_b_potential_dot_dot_acoustic;
+  // buffer for NO_BACKWARD_RECONSTRUCTION
+  realw* d_potential_acoustic_buffer;
+
+  cudaEvent_t transfer_is_complete1; 
+  cudaEvent_t transfer_is_complete2;
 
   // acoustic domain parameters
   int nspec_acoustic;

@@ -47,7 +47,7 @@
                         b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
                         b_displ_elastic,b_veloc_elastic,b_accel_elastic, &
                         b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,SIMULATION_TYPE, &
-                        UNDO_ATTENUATION_AND_OR_PML
+                        UNDO_ATTENUATION_AND_OR_PML,NO_BACKWARD_RECONSTRUCTION
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
@@ -70,7 +70,7 @@
   integer :: i,j,k,ispec,iglob,iproc,i_field,n_fields
   double precision :: rhol
 
-  if (SIMULATION_TYPE == 1 .or. UNDO_ATTENUATION_AND_OR_PML) then
+  if (SIMULATION_TYPE == 1 .or. UNDO_ATTENUATION_AND_OR_PML .or. NO_BACKWARD_RECONSTRUCTION) then
     n_fields = 1
   else
     n_fields = 2

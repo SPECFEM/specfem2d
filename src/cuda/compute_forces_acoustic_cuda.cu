@@ -252,17 +252,19 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 //
 // + 2 * 1 float * 25 threads = 200 BYTE
 
-  // synchronize all the threads (one thread for each of the NGLL grid points of the
-  // current spectral element) because we need the whole element to be ready in order
-  // to be able to compute the matrix products along cut planes of the 3D element below
-  __syncthreads();
-
   for (int k=0 ; k < nb_field ; k++) {
+
+    // synchronize all the threads (one thread for each of the NGLL grid points of the
+    // current spectral element) because we need the whole element to be ready in order
+    // to be able to compute the matrix products along cut planes of the 3D element below
+    __syncthreads();
+
     // computes first matrix product
     temp1l = 0.f;
     temp3l = 0.f;
 
     for (int l=0;l<NGLLX;l++) {
+
       //assumes that hprime_xx = hprime_yy = hprime_zz
       // 1. cut-plane along xi-direction
       temp1l += s_dummy_loc[NGLL2*k+J*NGLLX+l] * sh_hprime_xx[l*NGLLX+I];
@@ -316,7 +318,6 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
     } else {
       atomicAdd(&d_b_potential_dot_dot_acoustic[iglob],sum_terms);
     }
-
 // counts:
 // + 1 FLOP
 //
@@ -539,7 +540,8 @@ void Kernel_2_acoustic(int nb_blocks_to_compute, Mesh* mp, int d_iphase,
                                                                          mp->d_hprimewgll_xx,
                                                                          mp->d_wxgll,
                                                                          d_rhostore);
-      }else{
+      }
+      if (compute_wavefield_2){
         // this run only happens with UNDO_ATTENUATION_AND_OR_PML on
         // adjoint wavefields -> FORWARD_OR_ADJOINT == 3
         Kernel_2_acoustic_impl<3><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,

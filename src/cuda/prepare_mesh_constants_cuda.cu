@@ -176,9 +176,8 @@ void FC_FUNC_(prepare_constants_device,
   if (mp == NULL) exit_on_error("error allocating mesh pointer");
   *Mesh_pointer = (long)mp;
 
-  // checks if NGLLX == 5
   if (*h_NGLLX != NGLLX) {
-    exit_on_error("NGLLX must be 5 for CUDA devices");
+    exit_on_error("NGLLX defined in constants.h must match the NGLLX defined in src/cuda/mesh_constants_cuda.h");
   }
 
   // sets processes mpi rank
@@ -293,7 +292,7 @@ void FC_FUNC_(prepare_constants_device,
   cudaStreamCreate(&mp->compute_stream);
   // copy stream (needed to transfer mpi buffers)
   if (mp->num_interfaces_ext_mesh * mp->max_nibool_interfaces_ext_mesh > 0) {
-    cudaStreamCreate(&mp->copy_stream);
+  cudaStreamCreate(&mp->copy_stream);
   }
 
   // inner elements
@@ -385,7 +384,7 @@ void FC_FUNC_(prepare_fields_acoustic_device,
                                               realw* coupling_ac_el_normal,
                                               realw* coupling_ac_el_jacobian2Dw,
                                               int * h_ninterface_acoustic,int * h_inum_interfaces_acoustic,int* ATTENUATION_VISCOACOUSTIC,
-                                              realw* h_A_newmark,realw* h_B_newmark) {
+                                              realw* h_A_newmark,realw* h_B_newmark,int* NO_BACKWARD_RECONSTRUCTION,realw* h_no_backward_acoustic_buffer) {
 
   TRACE("prepare_fields_acoustic_device");
 
@@ -397,9 +396,9 @@ void FC_FUNC_(prepare_fields_acoustic_device,
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_potential_dot_acoustic),sizeof(realw)*size),2002);
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_potential_dot_dot_acoustic),sizeof(realw)*size),2003);
   // initializes values to zero
-  //print_CUDA_error_if_any(cudaMemset(mp->d_potential_acoustic,0,sizeof(realw)*size),2007);
-  //print_CUDA_error_if_any(cudaMemset(mp->d_potential_dot_acoustic,0,sizeof(realw)*size),2007);
-  //print_CUDA_error_if_any(cudaMemset(mp->d_potential_dot_dot_acoustic,0,sizeof(realw)*size),2007);
+  print_CUDA_error_if_any(cudaMemset(mp->d_potential_acoustic,0,sizeof(realw)*size),2007);
+  print_CUDA_error_if_any(cudaMemset(mp->d_potential_dot_acoustic,0,sizeof(realw)*size),2007);
+  print_CUDA_error_if_any(cudaMemset(mp->d_potential_dot_dot_acoustic,0,sizeof(realw)*size),2007);
 
   #ifdef USE_TEXTURES_FIELDS
   {
@@ -489,6 +488,15 @@ void FC_FUNC_(prepare_fields_acoustic_device,
     print_CUDA_error_if_any(cudaMemset(mp->d_sum_forces_old,0,mp->NSPEC_AB*sizeof(realw)*NGLL2),2205);
   }
 
+  if (*NO_BACKWARD_RECONSTRUCTION){
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_potential_acoustic_buffer),mp->NGLOB_AB*sizeof(realw)),2206);
+    cudaStreamCreateWithFlags(&mp->copy_stream_no_backward,cudaStreamNonBlocking);
+    cudaHostRegister(h_no_backward_acoustic_buffer,3*mp->NGLOB_AB*sizeof(realw),0); 
+    cudaEventCreate(&mp->transfer_is_complete1);
+    cudaEventCreate(&mp->transfer_is_complete2);
+  }
+
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("prepare_fields_acoustic_device");
 #endif
@@ -500,7 +508,9 @@ void FC_FUNC_(prepare_fields_acoustic_device,
 extern "C"
 void FC_FUNC_(prepare_fields_acoustic_adj_dev,
               PREPARE_FIELDS_ACOUSTIC_ADJ_DEV)(long* Mesh_pointer,
-                                               int* APPROXIMATE_HESS_KL,int* ATTENUATION_VISCOACOUSTIC) {
+                                               int* APPROXIMATE_HESS_KL,
+                                               int* ATTENUATION_VISCOACOUSTIC,
+                                               int* NO_BACKWARD_RECONSTRUCTION) {
 
   TRACE("prepare_fields_acoustic_adj_dev");
 
@@ -510,57 +520,61 @@ void FC_FUNC_(prepare_fields_acoustic_adj_dev,
   if (mp->simulation_type != 3 ) return;
 
   // allocates backward/reconstructed arrays on device (GPU)
-  int size = mp->NGLOB_AB;
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_potential_acoustic),sizeof(realw)*size),3014);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_potential_dot_acoustic),sizeof(realw)*size),3015);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_potential_dot_dot_acoustic),sizeof(realw)*size),3016);
+  int size = mp->NGLOB_AB * sizeof(realw);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_potential_acoustic),size),3014);
+  if (! *NO_BACKWARD_RECONSTRUCTION){
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_potential_dot_acoustic),size),3015);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_potential_dot_dot_acoustic),size),3016);
+  }
   // initializes values to zero
-  print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_acoustic,0,sizeof(realw)*size),3007);
-  print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_dot_acoustic,0,sizeof(realw)*size),3007);
-  print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_dot_dot_acoustic,0,sizeof(realw)*size),3007);
-
+  //print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_acoustic,0,size),3007);
+  //print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_dot_acoustic,0,size),3007);
+  //print_CUDA_error_if_any(cudaMemset(mp->d_b_potential_dot_dot_acoustic,0,size),3007);
 
   #ifdef USE_TEXTURES_FIELDS
   {
     #ifdef USE_OLDER_CUDA4_GPU
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
       const textureReference* d_b_potential_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_potential_tex_ref_ptr, "d_b_potential_tex"), 3001);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_b_potential_tex_ref_ptr, mp->d_b_potential_acoustic, &channelDesc, sizeof(realw)*size), 3001);
 
-      const textureReference* d_b_potential_dot_dot_tex_ref_ptr;
-      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_potential_dot_dot_tex_ref_ptr, "d_b_potential_dot_dot_tex"),3003);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_b_potential_dot_dot_tex_ref_ptr, mp->d_b_potential_dot_dot_acoustic, &channelDesc, sizeof(realw)*size), 3003);
+      print_CUDA_error_if_any(cudaGetTextureReference(&d_b_potential_tex_ref_ptr, "d_b_potential_tex"), 3001);
+      print_CUDA_error_if_any(cudaBindTexture(0, d_b_potential_tex_ref_ptr, mp->d_b_potential_acoustic, &channelDesc, size), 3001);
+
+      if (! *NO_BACKWARD_RECONSTRUCTION){
+        const textureReference* d_b_potential_dot_dot_tex_ref_ptr;
+        print_CUDA_error_if_any(cudaGetTextureReference(&d_b_potential_dot_dot_tex_ref_ptr, "d_b_potential_dot_dot_tex"),3003);
+        print_CUDA_error_if_any(cudaBindTexture(0, d_b_potential_dot_dot_tex_ref_ptr, mp->d_b_potential_dot_dot_acoustic, &channelDesc, size), 3003);
+      }
     #else
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<float>();
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_b_potential_tex, mp->d_b_potential_acoustic, &channelDesc, sizeof(realw)*size), 3001);
-      print_CUDA_error_if_any(cudaBindTexture(0, &d_b_potential_dot_dot_tex, mp->d_b_potential_dot_dot_acoustic, &channelDesc, sizeof(realw)*size), 3003);
+      print_CUDA_error_if_any(cudaBindTexture(0, &d_b_potential_tex, mp->d_b_potential_acoustic, &channelDesc, size), 3001);
+      if (! *NO_BACKWARD_RECONSTRUCTION) print_CUDA_error_if_any(cudaBindTexture(0, &d_b_potential_dot_dot_tex, mp->d_b_potential_dot_dot_acoustic, &channelDesc, size), 3003);
     #endif
   }
   #endif
 
   // allocates kernels
-  size = NGLL2*mp->NSPEC_AB;
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_rho_ac_kl),size*sizeof(realw)),3017);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_kappa_ac_kl),size*sizeof(realw)),3018);
+  size = NGLL2 * mp->NSPEC_AB * sizeof(realw);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_rho_ac_kl),size),3017);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_kappa_ac_kl),size),3018);
   // initializes kernel values to zero
-  print_CUDA_error_if_any(cudaMemset(mp->d_rho_ac_kl,0,size*sizeof(realw)),3019);
-  print_CUDA_error_if_any(cudaMemset(mp->d_kappa_ac_kl,0,size*sizeof(realw)),3020);
+  print_CUDA_error_if_any(cudaMemset(mp->d_rho_ac_kl,0,size),3019);
+  print_CUDA_error_if_any(cudaMemset(mp->d_kappa_ac_kl,0,size),3020);
 
   // preconditioner
   if (*APPROXIMATE_HESS_KL) {
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_hess_ac_kl),size*sizeof(realw)),3030);
+    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_hess_ac_kl),size),3030);
     // initializes with zeros
-    print_CUDA_error_if_any(cudaMemset(mp->d_hess_ac_kl,0,size*sizeof(realw)),3031);
+    print_CUDA_error_if_any(cudaMemset(mp->d_hess_ac_kl,0,size),3031);
   }
 
-  if (*ATTENUATION_VISCOACOUSTIC) {
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_sum_forces_old),size*sizeof(realw)),3040);
-  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_e1_acous),size*N_SLS*sizeof(realw)),3041);
+  if (*ATTENUATION_VISCOACOUSTIC && (! *NO_BACKWARD_RECONSTRUCTION) ) {
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_sum_forces_old),size),3040);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_e1_acous),size*N_SLS),3041);
   }
 
   // mpi buffer
-  if (mp->size_mpi_buffer_potential > 0) {
+  if (mp->size_mpi_buffer_potential > 0 && (! *NO_BACKWARD_RECONSTRUCTION)) {
     print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_send_potential_dot_dot_buffer),mp->size_mpi_buffer_potential*sizeof(realw)),3014);
   }
 
@@ -806,8 +820,8 @@ void FC_FUNC_(prepare_fields_elastic_device,
 extern "C"
 void FC_FUNC_(prepare_fields_elastic_adj_dev,
               PREPARE_FIELDS_ELASTIC_ADJ_DEV)(long* Mesh_pointer,
-                                             int* size_f,
-                                             int* APPROXIMATE_HESS_KL){
+                                              int* size_f,
+                                              int* APPROXIMATE_HESS_KL){
 
   TRACE("prepare_fields_elastic_adj_dev");
 
@@ -940,7 +954,9 @@ void FC_FUNC_(prepare_cleanup_device,
                                       int* ANISOTROPY,
                                       int* APPROXIMATE_HESS_KL,
                                       int* ATTENUATION_VISCOACOUSTIC,
-                                      int* ATTENUATION_VISCOELASTIC) {
+                                      int* ATTENUATION_VISCOELASTIC,
+                                      int* NO_BACKWARD_RECONSTRUCTION,
+                                      realw * h_no_backward_acoustic_buffer) {
 
 
 TRACE("prepare_cleanup_device");
@@ -1015,15 +1031,24 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_ispec_is_acoustic);
     cudaFree(mp->d_inum_interfaces_acoustic);
 
+    if (*NO_BACKWARD_RECONSTRUCTION){
+      cudaFree(mp->d_potential_acoustic_buffer);
+      cudaHostUnregister(h_no_backward_acoustic_buffer);
+      cudaEventDestroy(mp->transfer_is_complete1);
+      cudaEventDestroy(mp->transfer_is_complete2);
+
+    }
     if (mp->simulation_type == 3) {
       cudaFree(mp->d_b_potential_acoustic);
-      cudaFree(mp->d_b_potential_dot_acoustic);
-      cudaFree(mp->d_b_potential_dot_dot_acoustic);
+      if (! *NO_BACKWARD_RECONSTRUCTION){
+        cudaFree(mp->d_b_potential_dot_acoustic);
+        cudaFree(mp->d_b_potential_dot_dot_acoustic);
+      }
       cudaFree(mp->d_rho_ac_kl);
       cudaFree(mp->d_kappa_ac_kl);
       if (*APPROXIMATE_HESS_KL) cudaFree(mp->d_hess_ac_kl);
-      if (mp->size_mpi_buffer_potential > 0 ) cudaFree(mp->d_b_send_potential_dot_dot_buffer);
-      if (*ATTENUATION_VISCOACOUSTIC) {
+      if (mp->size_mpi_buffer_potential > 0 && ! *NO_BACKWARD_RECONSTRUCTION) cudaFree(mp->d_b_send_potential_dot_dot_buffer);
+      if (*ATTENUATION_VISCOACOUSTIC && ! *NO_BACKWARD_RECONSTRUCTION) {
         cudaFree(mp->d_b_sum_forces_old);
         cudaFree(mp->d_b_e1_acous);
       }

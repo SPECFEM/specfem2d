@@ -168,14 +168,15 @@
                                         coupling_ac_el_ispec,coupling_ac_el_ij, &
                                         coupling_ac_el_normal,coupling_ac_el_jacobian1Dw, &
                                         ninterface_acoustic,inum_interfaces_acoustic,ATTENUATION_VISCOACOUSTIC, &
-                                        A_newmark_e1_sf,B_newmark_e1_sf)
+                                        A_newmark_e1_sf,B_newmark_e1_sf,NO_BACKWARD_RECONSTRUCTION,no_backward_acoustic_buffer)
 
     if (SIMULATION_TYPE == 3) then
       ! safety check
       if (APPROXIMATE_HESS_KL) then
         call stop_the_code('Sorry, approximate acoustic Hessian kernels not yet fully implemented for GPU simulations!')
       endif
-      call prepare_fields_acoustic_adj_dev(Mesh_pointer,APPROXIMATE_HESS_KL,ATTENUATION_VISCOACOUSTIC)
+      call prepare_fields_acoustic_adj_dev(Mesh_pointer,APPROXIMATE_HESS_KL, &
+                                           ATTENUATION_VISCOACOUSTIC,NO_BACKWARD_RECONSTRUCTION)
     endif
   endif
 
@@ -241,9 +242,7 @@
     call transfer_fields_ac_to_device(NGLOB_AB,potential_acoustic, &
                                       potential_dot_acoustic,potential_dot_dot_acoustic,Mesh_pointer)
 
-
-
-    if (SIMULATION_TYPE == 3) &
+    if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) &
       call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
                                           b_potential_dot_acoustic,b_potential_dot_dot_acoustic,Mesh_pointer)
   endif
@@ -544,7 +543,7 @@
 
   do i_spec_free = 1, nelem_acoustic_surface
     if (acoustic_surface(2,i_spec_free) == acoustic_surface(3,i_spec_free)) then
-      do j =1,5
+      do j =1,NGLLX
         free_surface_ij(1,j,i_spec_free) = acoustic_surface(2,i_spec_free)
       enddo
     else
@@ -556,7 +555,7 @@
     endif
 
     if (acoustic_surface(4,i_spec_free) == acoustic_surface(5,i_spec_free)) then
-      do j =1,5
+      do j =1,NGLLX
         free_surface_ij(2,j,i_spec_free) = acoustic_surface(4,i_spec_free)
       enddo
     else

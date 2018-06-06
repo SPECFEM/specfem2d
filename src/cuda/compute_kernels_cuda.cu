@@ -46,19 +46,19 @@
 //  !!!!!!!!!!  BEWARE this kernel needs to be adapted, it only reflect the 3D case for now
 
 __global__ void compute_kernels_ani_cudakernel(int* ispec_is_elastic,
-                                           int* d_ibool,
-                                           realw* accel,
-                                           realw* b_displ,
-                                           realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,
-                                           realw* epsilondev_xz,realw* epsilondev_yz,
-                                           realw* b_epsilondev_xx,realw* b_epsilondev_yy,realw* b_epsilondev_xy,
-                                           realw* b_epsilondev_xz,realw* b_epsilondev_yz,
-                                           realw* rho_kl,
-                                           realw deltat,
-                                           realw* cijkl_kl,
-                                           realw* epsilon_trace_over_3,
-                                           realw* b_epsilon_trace_over_3,
-                                           int NSPEC_AB) {
+                                               int* d_ibool,
+                                               realw* accel,
+                                               realw* b_displ,
+                                               realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,
+                                               realw* epsilondev_xz,realw* epsilondev_yz,
+                                               realw* b_epsilondev_xx,realw* b_epsilondev_yy,realw* b_epsilondev_xy,
+                                               realw* b_epsilondev_xz,realw* b_epsilondev_yz,
+                                               realw* rho_kl,
+                                               realw deltat,
+                                               realw* cijkl_kl,
+                                               realw* epsilon_trace_over_3,
+                                               realw* b_epsilon_trace_over_3,
+                                               int NSPEC_AB) {
 
   int ispec = blockIdx.x + blockIdx.y*gridDim.x;
   int ijk = threadIdx.x;
@@ -218,19 +218,19 @@ void FC_FUNC_(compute_kernels_elastic_cuda,
   dim3 threads(blocksize,1,1);
 
 
-    compute_kernels_cudakernel<<<grid,threads>>>(mp->d_ispec_is_elastic,mp->d_ibool,
-                                                 mp->d_accel, mp->d_b_displ,
-                                                 mp->d_rho_kl,
-                                                 mp->d_mu_kl,
-                                                 mp->d_kappa_kl,
-                                                 mp->NSPEC_AB,
-                                                 mp->d_dsxx,
-                                                 mp->d_dsxz,
-                                                 mp->d_dszz,
-                                                 mp->d_b_dsxx,
-                                                 mp->d_b_dsxz,
-                                                 mp->d_b_dszz,
-                                                 *deltat);
+    compute_kernels_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ispec_is_elastic,mp->d_ibool,
+                                                                      mp->d_accel, mp->d_b_displ,
+                                                                      mp->d_rho_kl,
+                                                                      mp->d_mu_kl,
+                                                                      mp->d_kappa_kl,
+                                                                      mp->NSPEC_AB,
+                                                                      mp->d_dsxx,
+                                                                      mp->d_dsxz,
+                                                                      mp->d_dszz,
+                                                                      mp->d_b_dsxx,
+                                                                      mp->d_b_dsxz,
+                                                                      mp->d_b_dszz,
+                                                                      *deltat);
 
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -365,11 +365,12 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
                             rhol);
 
     // density kernel
-    rho_ac_kl[ij_ispec] -=  rhol * (accel_elm[0]*b_displ_elm[0] +
+    rho_ac_kl[ij_ispec] +=  rhol * (accel_elm[0]*b_displ_elm[0] +
                                              accel_elm[1]*b_displ_elm[1] ) * deltat;
     // bulk modulus kernel
     kappal = kappastore[ij_ispec];
-    kappa_ac_kl[ij_ispec] -= potential_dot_dot_acoustic[iglob] * b_potential_acoustic[iglob] * deltat / kappal ;
+    kappa_ac_kl[ij_ispec] += potential_dot_dot_acoustic[iglob] * b_potential_acoustic[iglob] * deltat / kappal ;
+
   } // active
 }
 
@@ -392,19 +393,20 @@ TRACE("compute_kernels_acoustic_cuda");
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  compute_kernels_acoustic_kernel<<<grid,threads>>>(mp->d_ispec_is_acoustic,
-                                                    mp->d_ibool,
-                                                    mp->d_rhostore,
-                                                    mp->d_kappastore,
-                                                    mp->d_hprime_xx,
-                                                    mp->d_xix,mp->d_xiz,
-                                                    mp->d_gammax,mp->d_gammaz,
-                                                    mp->d_potential_dot_dot_acoustic,
-                                                    mp->d_b_potential_acoustic,
-                                                    mp->d_rho_ac_kl,
-                                                    mp->d_kappa_ac_kl,
-                                                    mp->NSPEC_AB,
-                                                    *deltat);
+
+  compute_kernels_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ispec_is_acoustic,
+                                                                         mp->d_ibool,
+                                                                         mp->d_rhostore,
+                                                                         mp->d_kappastore,
+                                                                         mp->d_hprime_xx,
+                                                                         mp->d_xix,mp->d_xiz,
+                                                                         mp->d_gammax,mp->d_gammaz,
+                                                                         mp->d_potential_dot_dot_acoustic,
+                                                                         mp->d_b_potential_acoustic,
+                                                                         mp->d_rho_ac_kl,
+                                                                         mp->d_kappa_ac_kl,
+                                                                         mp->NSPEC_AB,
+                                                                         *deltat);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("compute_kernels_acoustic_kernel");
@@ -532,25 +534,25 @@ void FC_FUNC_(compute_kernels_hess_cuda,
   dim3 threads(blocksize,1,1);
 
   if (*ELASTIC_SIMULATION) {
-    compute_kernels_hess_el_cudakernel<<<grid,threads>>>(mp->d_ispec_is_elastic,
-                                                         mp->d_ibool,
-                                                         mp->d_accel,
-                                                         mp->d_b_accel,
-                                                         mp->d_hess_el_kl,
-                                                         mp->NSPEC_AB);
+    compute_kernels_hess_el_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ispec_is_elastic,
+                                                                              mp->d_ibool,
+                                                                              mp->d_accel,
+                                                                              mp->d_b_accel,
+                                                                              mp->d_hess_el_kl,
+                                                                              mp->NSPEC_AB);
   }
 
   if (*ACOUSTIC_SIMULATION) {
-    compute_kernels_hess_ac_cudakernel<<<grid,threads>>>(mp->d_ispec_is_acoustic,
-                                                         mp->d_ibool,
-                                                         mp->d_potential_dot_dot_acoustic,
-                                                         mp->d_b_potential_dot_dot_acoustic,
-                                                         mp->d_rhostore,
-                                                         mp->d_hprime_xx,
-                                                         mp->d_xix,mp->d_xiz,
-                                                         mp->d_gammax,mp->d_gammaz,
-                                                         mp->d_hess_ac_kl,
-                                                         mp->NSPEC_AB);
+    compute_kernels_hess_ac_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ispec_is_acoustic,
+                                                                              mp->d_ibool,
+                                                                              mp->d_potential_dot_dot_acoustic,
+                                                                              mp->d_b_potential_dot_dot_acoustic,
+                                                                              mp->d_rhostore,
+                                                                              mp->d_hprime_xx,
+                                                                              mp->d_xix,mp->d_xiz,
+                                                                              mp->d_gammax,mp->d_gammaz,
+                                                                              mp->d_hess_ac_kl,
+                                                                              mp->NSPEC_AB);
   }
 
 
