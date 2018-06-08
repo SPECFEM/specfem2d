@@ -1994,7 +1994,7 @@
   do while (no_backward_nframes * NSTEP_BETWEEN_COMPUTE_KERNELS <= NSTEP )
     no_backward_nframes = no_backward_nframes + 1
   enddo
-  no_backward_nframes = no_backward_nframes -1 
+  no_backward_nframes = no_backward_nframes -1
 
   ! user output
   if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
@@ -2033,13 +2033,13 @@
     endif
     if (any_elastic) then
       allocate(no_backward_displ_buffer(NDIM,nglob),stat=ier)
-      if (APPROXIMATE_HESS_KL) then 
+      if (APPROXIMATE_HESS_KL) then
         allocate(no_backward_accel_buffer(NDIM,nglob),stat=ier)
       else
         allocate(no_backward_accel_buffer(1,1),stat=ier)
       endif
     else
-      allocate(no_backward_displ_buffer(1,1),no_backward_accel_buffer(1,1),stat=ier)   
+      allocate(no_backward_displ_buffer(1,1),no_backward_accel_buffer(1,1),stat=ier)
     endif
     if (ier /= 0 ) call exit_MPI(myrank,'error allocating no_backward_***_buffer')
   endif

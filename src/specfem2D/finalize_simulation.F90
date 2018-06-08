@@ -66,7 +66,7 @@
     if (ATTENUATION_VISCOACOUSTIC) allocate(Qkappa_save(NGLLX,NGLLZ,nspec))
     if (ATTENUATION_VISCOELASTIC) then
      allocate(Qkappa_save(NGLLX,NGLLZ,nspec),Qmu_save(NGLLX,NGLLZ,nspec),stat=ier)
-     if (ATTENUATION_VISCOACOUSTIC) call exit_MPI(myrank,&
+     if (ATTENUATION_VISCOACOUSTIC) call exit_MPI(myrank, &
                     'Not possible yet to save model with both acoustic and elastic attenuation')
     endif
     if (ier /= 0) call exit_MPI(myrank, 'error allocating save model arrays')
@@ -89,7 +89,7 @@
           iglob = ibool(i,j,ispec)
           x_save(i,j,ispec) = coord(1,iglob)
           z_save(i,j,ispec) = coord(2,iglob)
-          if (ATTENUATION_VISCOACOUSTIC) Qkappa_save(i,j,ispec) = QKappa_attenuation(kmato(ispec)) 
+          if (ATTENUATION_VISCOACOUSTIC) Qkappa_save(i,j,ispec) = QKappa_attenuation(kmato(ispec))
           if (ATTENUATION_VISCOELASTIC) then
             Qkappa_save(i,j,ispec) = QKappa_attenuation(kmato(ispec))
             Qmu_save(i,j,ispec) = Qmu_attenuation(kmato(ispec))
@@ -192,7 +192,7 @@
     endif !Type of model
   endif !save model
 
-  ! For this mode, the forward model has been saved differently 
+  ! For this mode, the forward model has been saved differently
   if ((.not. NO_BACKWARD_RECONSTRUCTION) ) then
 
     ! stores absorbing boundary contributions into files
@@ -409,7 +409,7 @@
     endif
 
   endif ! if trim(SAVE_MODEL) /= '.false.' .and. (.not.
-        ! UNDO_ATTENUATION_AND_OR_PML)  .and. (.not. NO_BACKWARD_RECONSTRUCTION)
+        ! UNDO_ATTENUATION_AND_OR_PML) .and. (.not. NO_BACKWARD_RECONSTRUCTION)
 
   ! frees memory
   if (GPU_MODE) then
