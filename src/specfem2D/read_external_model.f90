@@ -43,7 +43,8 @@
 
   ! external model parameters
   use specfem_par, only: rhoext,vpext,vsext, &
-    QKappa_attenuationext,Qmu_attenuationext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext
+    QKappa_attenuationext,Qmu_attenuationext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
+    ATTENUATION_VISCOELASTIC,ATTENUATION_VISCOACOUSTIC
 
   implicit none
 
@@ -154,9 +155,36 @@
     read(IIN) vsext
     close(IIN)
 
-    ! default no attenuation
-    QKappa_attenuationext(:,:,:) = 9999.d0
-    Qmu_attenuationext(:,:,:) = 9999.d0
+    if (ATTENUATION_VISCOACOUSTIC) then
+      write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_Qkappa.bin'
+      open(unit = IIN, file = inputname, status='old',action='read',form='unformatted',iostat=ier)
+      if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_Qkappa.bin file.')
+
+      read(IIN) QKappa_attenuationext
+      close(IIN)
+      Qmu_attenuationext(:,:,:) = 9999.d0
+    ! for the moment we don't do external model with both viscoacoustics and
+    ! viscoelastics
+    else if (ATTENUATION_VISCOELASTIC) then
+      write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_Qkappa.bin'
+      open(unit = IIN, file = inputname,status='old',action='read',form='unformatted',iostat=ier)
+      if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_Qkappa.bin file.')
+
+      read(IIN) QKappa_attenuationext
+      close(IIN)
+
+      write(inputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_Qmu.bin'
+      open(unit = IIN, file = inputname,status='old',action='read',form='unformatted',iostat=ier)
+      if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_Qmu.bin file.')
+
+      read(IIN) Qmu_attenuationext
+      close(IIN)
+
+    else
+      ! default no attenuation
+      QKappa_attenuationext(:,:,:) = 9999.d0
+      Qmu_attenuationext(:,:,:) = 9999.d0
+    endif
 
   case ('binary_voigt')
     ! Voigt model
