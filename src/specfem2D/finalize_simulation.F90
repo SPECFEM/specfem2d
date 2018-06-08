@@ -45,7 +45,7 @@
 
   integer :: i,ispec,j,iglob
   integer :: ier
-  real(kind=4),dimension(:,:,:),allocatable :: rho_save, vp_save, vs_save, kappa_save, x_save, z_save
+  real(kind=4),dimension(:,:,:),allocatable :: rho_save, vp_save, vs_save, kappa_save, x_save, z_save, Qkappa_save,Qmu_save
   double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
   character(len=MAX_STRING_LEN) :: inputname,outputname,outputname2
 
@@ -63,6 +63,13 @@
     allocate(kappa_save(NGLLX,NGLLZ,nspec))
     allocate(x_save(NGLLX,NGLLZ,nspec))
     allocate(z_save(NGLLX,NGLLZ,nspec))
+    if (ATTENUATION_VISCOACOUSTIC) allocate(Qkappa_save(NGLLX,NGLLZ,nspec))
+    if (ATTENUATION_VISCOELASTIC) then
+     allocate(Qkappa_save(NGLLX,NGLLZ,nspec),Qmu_save(NGLLX,NGLLZ,nspec),stat=ier)
+     if (ATTENUATION_VISCOACOUSTIC) call exit_MPI(myrank,&
+                    'Not possible yet to save model with both acoustic and elastic attenuation')
+    endif
+    if (ier /= 0) call exit_MPI(myrank, 'error allocating save model arrays')
     do ispec= 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -82,6 +89,11 @@
           iglob = ibool(i,j,ispec)
           x_save(i,j,ispec) = coord(1,iglob)
           z_save(i,j,ispec) = coord(2,iglob)
+          if (ATTENUATION_VISCOACOUSTIC) Qkappa_save(i,j,ispec) = QKappa_attenuation(kmato(ispec)) 
+          if (ATTENUATION_VISCOELASTIC) then
+            Qkappa_save(i,j,ispec) = QKappa_attenuation(kmato(ispec))
+            Qmu_save(i,j,ispec) = Qmu_attenuation(kmato(ispec))
+          endif
         enddo
       enddo
     enddo
@@ -113,7 +125,6 @@
       do ispec = 1,nspec
         do j = 1,NGLLZ
           do i = 1,NGLLX
-            iglob = ibool(i,j,ispec)
             write(1001,'(5e15.5e4)') x_save(i,j,ispec),z_save(i,j,ispec),rho_save(i,j,ispec),vp_save(i,j,ispec),vs_save(i,j,ispec)
           enddo
         enddo
@@ -154,12 +165,34 @@
       write(172) jacobian
       close(172)
 
+      if (ATTENUATION_VISCOACOUSTIC) then
+        write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_Qkappa.bin'
+        open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_Qkappa.bin')
+        write(172) Qkappa_save
+        close(172)
+      endif
+
+      if (ATTENUATION_VISCOELASTIC) then
+        write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_Qkappa.bin'
+        open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_Qkappa.bin')
+        write(172) Qkappa_save
+        close(172)
+
+        write(outputname,'(a,i6.6,a)')trim(IN_DATA_FILES)//'proc',myrank,'_Qmu.bin'
+        open(unit=172,file=outputname,status='unknown',form='unformatted',iostat=ier)
+        if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_Qmu.bin')
+        write(172) Qmu_save
+        close(172)
+      endif
+
     else
       call stop_the_code('Save Model not implemented for external and tomo')
     endif !Type of model
   endif !save model
 
-  ! For this mode, the forward model has been saved differently
+  ! For this mode, the forward model has been saved differently 
   if ((.not. NO_BACKWARD_RECONSTRUCTION) ) then
 
     ! stores absorbing boundary contributions into files
@@ -376,7 +409,7 @@
     endif
 
   endif ! if trim(SAVE_MODEL) /= '.false.' .and. (.not.
-        ! UNDO_ATTENUATION_AND_OR_PML) .and. (.not. NO_BACKWARD_RECONSTRUCTION)
+        ! UNDO_ATTENUATION_AND_OR_PML)  .and. (.not. NO_BACKWARD_RECONSTRUCTION)
 
   ! frees memory
   if (GPU_MODE) then

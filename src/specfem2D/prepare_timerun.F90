@@ -1510,14 +1510,12 @@
     endif
 
     ! define the attenuation quality factors.
-!! DK DK if needed in the future, here the quality factor could be different for each point
     do ispec = 1,nspec
 
       ! get values for internal meshes
       if (.not. assign_external_model) then
         qkappal = QKappa_attenuation(kmato(ispec))
         qmul = Qmu_attenuation(kmato(ispec))
-
         ! if no attenuation in that elastic element
         if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
 
@@ -1532,6 +1530,7 @@
 
           ! get values for external meshes
           if (assign_external_model) then
+
             qkappal = QKappa_attenuationext(i,j,ispec)
             qmul = Qmu_attenuationext(i,j,ispec)
 
@@ -1995,7 +1994,7 @@
   do while (no_backward_nframes * NSTEP_BETWEEN_COMPUTE_KERNELS <= NSTEP )
     no_backward_nframes = no_backward_nframes + 1
   enddo
-  no_backward_nframes = no_backward_nframes -1
+  no_backward_nframes = no_backward_nframes -1 
 
   ! user output
   if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
@@ -2034,13 +2033,13 @@
     endif
     if (any_elastic) then
       allocate(no_backward_displ_buffer(NDIM,nglob),stat=ier)
-      if (APPROXIMATE_HESS_KL) then
+      if (APPROXIMATE_HESS_KL) then 
         allocate(no_backward_accel_buffer(NDIM,nglob),stat=ier)
       else
         allocate(no_backward_accel_buffer(1,1),stat=ier)
       endif
     else
-      allocate(no_backward_displ_buffer(1,1),no_backward_accel_buffer(1,1),stat=ier)
+      allocate(no_backward_displ_buffer(1,1),no_backward_accel_buffer(1,1),stat=ier)   
     endif
     if (ier /= 0 ) call exit_MPI(myrank,'error allocating no_backward_***_buffer')
   endif
