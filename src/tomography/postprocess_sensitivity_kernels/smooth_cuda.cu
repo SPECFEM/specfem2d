@@ -73,11 +73,12 @@ __global__ void process_smooth(realw_const_p xstore_me,realw_const_p zstore_me,r
   sh_wgll_sq[igll]=wgll_sq[igll];
   __syncthreads();
 
-  dat=0;
-  normalisation_slice=0;
+  dat=0.f;
+  normalisation_slice=0.f;
   //We test 32 spectral elements at a time
   for (int i=0;i<n_loop;i++)
-  {
+  { 
+     __syncthreads();
     if (NGLL2*i + threadIdx.x < nspec_other){
       x_other = xstore_other[i*NGLL2*NGLL2 + threadIdx.x*NGLL2 ];
       z_other = zstore_other[i*NGLL2*NGLL2 + threadIdx.x*NGLL2 ];
