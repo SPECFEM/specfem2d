@@ -396,7 +396,7 @@
           sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
           if (c12 < 1.e-7 .or. c23 < 1.e-7) call stop_the_code( &
-'cannot compute pressure for an anisotropic material if c12 or c23 are zero')
+              'cannot compute pressure for an anisotropic material if c12 or c23 are zero')
           sigma_yy = c12*dux_dxl + c23*duz_dzl + c25*(duz_dxl + dux_dzl)
           sigma_zz = c13*dux_dxl + c33*duz_dzl + c35*(duz_dxl + dux_dzl)
 
@@ -526,6 +526,9 @@
           sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
 !         sigma_yy = ...  ! it is not zero because of the plane strain formulation, thus it should be computed here
+!! DK DK we temporarily set it to zero here to avoid a warning by certain compilers about an unassigned variable
+!! DK DK when computing pressure a few lines below; this should be removed and replaced with a true calculation
+          sigma_yy = 0.d0
           call stop_the_code('pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here')
           sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
