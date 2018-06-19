@@ -127,8 +127,10 @@
   ! checks if anything to do
   if (.not. SOURCE_IS_MOVING) return
 
-  xminSource = -5000.0d0 !m
-  vSource = 2150.0d0 !1425.0d0 !1250.0 !m/s
+  !xminSource = -5000.0d0 !m
+  !vSource = 2150.0d0 !1425.0d0 !1250.0 !m/s
+  xminSource = -60.0d0 !m
+  vSource = 60.0d0 !m/s
 
   if (time_stepping_scheme == 1) then
     ! Newmark
@@ -168,95 +170,98 @@
       endif
 
       ispec = ispec_selected_source(i_source)
+      ! source element is elastic
+      if (ispec_is_elastic(ispec)) then
 
-      ! Lagrange interpolators
-      if (AXISYM) then
-        if (is_on_the_axis(ispec)) then
-          call lagrange_any(xi_source(i_source),NGLJ,xiglj,hxis,hpxis)
-          !do j = 1,NGLJ ! ABAB same result with that loop, this is good
-          !  hxis(j) = hglj(j-1,xi_source(i_source),xiglj,NGLJ)
-          !enddo
+        ! Lagrange interpolators
+        if (AXISYM) then
+          if (is_on_the_axis(ispec)) then
+            call lagrange_any(xi_source(i_source),NGLJ,xiglj,hxis,hpxis)
+            !do j = 1,NGLJ ! ABAB same result with that loop, this is good
+            !  hxis(j) = hglj(j-1,xi_source(i_source),xiglj,NGLJ)
+            !enddo
+          else
+            call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
+          endif
         else
           call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
         endif
-      else
-        call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
-      endif
-      call lagrange_any(gamma_source(i_source),NGLLZ,zigll,hgammas,hpgammas)
+        call lagrange_any(gamma_source(i_source),NGLLZ,zigll,hgammas,hpgammas)
 
-      if (mod(it,10) == 0) then
-          !  write(IMAIN,*) "myrank:",myrank
-          ! user output
-          if (myrank == islice_selected_source(i_source)) then
-            iglob = ibool(2,2,ispec_selected_source(i_source))
-            !write(IMAIN,*) 'xcoord: ',coord(1,iglob)
-            write(IMAIN,*) 'it??: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob
-            !'source carried by proc',myrank,"  source x:",x_source(i_source)," ispec:",ispec_selected_source(i_source)
+        if (mod(it,10000) == 0) then
+            !  write(IMAIN,*) "myrank:",myrank
+            ! user output
+            if (myrank == islice_selected_source(i_source)) then
+              iglob = ibool(2,2,ispec_selected_source(i_source))
+              !write(IMAIN,*) 'xcoord: ',coord(1,iglob)
+              write(IMAIN,*) 'Problem... it??: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob
+              !'source carried by proc',myrank,"  source x:",x_source(i_source)," ispec:",ispec_selected_source(i_source)
 
-            !call flush_IMAIN()
-          endif
-
-      endif
-
-      ! stores Lagrangians for source
-      hxis_store(i_source,:) = hxis(:)
-      hgammas_store(i_source,:) = hgammas(:)
-
-      sourcearray(:,:,:) = 0._CUSTOM_REAL
-
-      ! computes source arrays
-      select case (source_type(i_source))
-      case (1)
-        ! collocated force source
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-
-            ! source element is acoustic
-            if (ispec_is_acoustic(ispec)) then
-              sourcearray(:,i,j) = real(hlagrange,kind=CUSTOM_REAL)
+              !call flush_IMAIN()
             endif
 
-            ! source element is elastic
-            if (ispec_is_elastic(ispec)) then
-              if (P_SV) then
-                ! P_SV case
-                sourcearray(1,i,j) = real(- sin(anglesource(i_source)) * hlagrange,kind=CUSTOM_REAL)
-                sourcearray(2,i,j) = real(cos(anglesource(i_source)) * hlagrange,kind=CUSTOM_REAL)
-              else
-                ! SH case (membrane)
+        endif
+
+        ! stores Lagrangians for source
+        hxis_store(i_source,:) = hxis(:)
+        hgammas_store(i_source,:) = hgammas(:)
+
+        sourcearray(:,:,:) = 0._CUSTOM_REAL
+
+        ! computes source arrays
+        select case (source_type(i_source))
+        case (1)
+          ! collocated force source
+          do j = 1,NGLLZ
+            do i = 1,NGLLX
+              hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+
+              ! source element is acoustic
+              if (ispec_is_acoustic(ispec)) then
                 sourcearray(:,i,j) = real(hlagrange,kind=CUSTOM_REAL)
               endif
-            endif
 
-            ! source element is poroelastic
-            if (ispec_is_poroelastic(ispec)) then
-              sourcearray(1,i,j) = real(- sin(anglesource(i_source)) * hlagrange,kind=CUSTOM_REAL)
-              sourcearray(2,i,j) = real(cos(anglesource(i_source)) * hlagrange,kind=CUSTOM_REAL)
-            endif
+              ! source element is elastic
+              if (ispec_is_elastic(ispec)) then
+                if (P_SV) then
+                  ! P_SV case
+                  sourcearray(1,i,j) = real(- sin(anglesource(i_source)) * hlagrange,kind=CUSTOM_REAL)
+                  sourcearray(2,i,j) = real(cos(anglesource(i_source)) * hlagrange,kind=CUSTOM_REAL)
+                else
+                  ! SH case (membrane)
+                  sourcearray(:,i,j) = real(hlagrange,kind=CUSTOM_REAL)
+                endif
+              endif
 
+              ! source element is poroelastic
+              if (ispec_is_poroelastic(ispec)) then
+                sourcearray(1,i,j) = real(- sin(anglesource(i_source)) * hlagrange,kind=CUSTOM_REAL)
+                sourcearray(2,i,j) = real(cos(anglesource(i_source)) * hlagrange,kind=CUSTOM_REAL)
+              endif
+
+            enddo
           enddo
-        enddo
 
-      case (2)
-        ! moment-tensor source
-        call compute_arrays_source(ispec,xi_source(i_source),gamma_source(i_source),sourcearray, &
-                                   Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
-        ! checks source
-        if (ispec_is_acoustic(ispec)) then
-          call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
-        endif
+        case (2)
+          ! moment-tensor source
+          call compute_arrays_source(ispec,xi_source(i_source),gamma_source(i_source),sourcearray, &
+                                     Mxx(i_source),Mzz(i_source),Mxz(i_source),xix,xiz,gammax,gammaz,xigll,zigll,nspec)
+          ! checks source
+          if (ispec_is_acoustic(ispec)) then
+            call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
+          endif
 
-        ! checks wave type
-        if (ispec_is_elastic(ispec)) then
-          if (.not. P_SV ) call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
-        endif
+          ! checks wave type
+          if (ispec_is_elastic(ispec)) then
+            if (.not. P_SV ) call exit_MPI(myrank,'cannot have moment tensor source in SH (membrane) waves calculation')
+          endif
 
-      end select
+        end select
 
-      ! stores sourcearray for all sources
-      sourcearrays(i_source,:,:,:) = sourcearray(:,:,:)
+        ! stores sourcearray for all sources
+        sourcearrays(i_source,:,:,:) = sourcearray(:,:,:)
 
+      endif
     endif
   enddo
 

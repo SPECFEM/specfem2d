@@ -444,7 +444,7 @@
             stf_used = source_time_function(i_source,it,i_stage)
 
             ! note: earliest start time of the simulation is: (it-1)*deltat - t0 - tshift_src(i_source)
-            write(55,*) timeval-t0,' ',stf_used
+            if (myrank == islice_selected_source(1)) write(55,*) timeval-t0,' ',stf_used
 
           endif
         endif
@@ -453,7 +453,9 @@
   enddo
 
   ! closes STF file
-  if (myrank == islice_selected_source(1)) close(55)
+  if (myrank == islice_selected_source(i_source)) close(55)
+
+  !print *,"myrank:",myrank,"Ok"
 
   ! synchronizes all processes
   call synchronize_all()

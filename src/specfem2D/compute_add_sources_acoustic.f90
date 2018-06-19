@@ -126,8 +126,11 @@
   ! checks if anything to do
   if (.not. SOURCE_IS_MOVING) return
 
-  xminSource = -15000.0d0 !m
-  vSource = 1250.0d0 !1425.0d0 !1250.0 !m/s
+  !xminSource = -1000.0d0 !m
+  !vSource = 1250.0d0 !m/s
+
+  xminSource = -60.0d0 !m
+  vSource = 60.0d0 !m/s
 
   if (time_stepping_scheme == 1) then
     ! Newmark
