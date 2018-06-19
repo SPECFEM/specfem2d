@@ -89,7 +89,7 @@
         vcurl = vcurl + dcurld*hlagrange
 
       case default
-        stop 'Invalid seismotype for writing seismograms'
+        call stop_the_code('Invalid seismotype for writing seismograms')
       end select
     enddo
   enddo

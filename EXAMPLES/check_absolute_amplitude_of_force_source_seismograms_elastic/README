@@ -1,0 +1,31 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This example runs a 2D P-SV plane strain benchmark for a vertical force source of maximum amplitude 1 Newton with a Ricker source time function in a homogeneous elastic medium,
+and compares the displacement seismograms at a receiver to the analytical solution (computed using three different analytical codes, thus the Gnuplot
+display script will display four curves). This benchmark allows us to check that the absolute amplitude of the seismograms is right.
+
+
+TO RUN:
+
+0. Read the user manual in SPECFEM2D/doc/manual_SPECFEM2D.pdf
+
+1. in the SPECFEM2D root directory, configure, e.g.,
+   ./configure FC=gfortran
+
+2. compile:
+   make all
+
+3. cd EXAMPLES/check_absolute_amplitude_of_force_source_seismograms_elastic
+
+4. execute script to run mesher and solver for the P-SV case:
+   ./run_this_example.sh
+
+5. check out the output files in the local directory OUTPUT_FILES; in particular, you can type "gnuplot plot_compare_to_analytical_solution.gnu" to compare the seismograms computed to the quasi-analytical solution of the problem.
+
+Note that because our example has no absorbing conditions on the edges of the grid, there are extra (spurious) waves after the main P and S waves, reflected off the edges of the grid, which are not present in the quasi-analytical solution and which you can safely ignore.
+
+Beware that the reference solution is not exact, only quasi-exact (i.e., the formulation uses an approximation, and some integrals are computed numerically) therefore some tiny discrepancies can be noticed.
+
+----------------------------------------------------------------------

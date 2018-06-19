@@ -64,7 +64,7 @@
            Mxz(NSOURCES), &
            Mzz(NSOURCES), &
            factor(NSOURCES),stat=ier)
-  if (ier /= 0) stop 'Error allocating source arrays'
+  if (ier /= 0) call stop_the_code('Error allocating source arrays')
 
   ! initializes
   xs(:) = 0.d0
@@ -90,7 +90,7 @@
 
   ! counts lines
   open(unit=IIN_SOURCE,file=trim(source_filename),status='old',action='read',iostat=ier)
-  if (ier /= 0) stop 'Error opening source file, please make sure file exists...'
+  if (ier /= 0) call stop_the_code('Error opening source file, please make sure file exists...')
 
   ! counts number of lines
   icounter = 0
@@ -113,22 +113,23 @@
 
   ! checks counter
   if (mod(icounter,NLINES_PER_SOURCE) /= 0) &
-    stop 'total number of non blank and non comment lines in SOURCE file should be a multiple of NLINES_PER_SOURCE'
+    call stop_the_code('total number of non blank and non comment lines in SOURCE file should be a multiple of NLINES_PER_SOURCE')
 
   ! total number of sources
   num_sources = icounter / NLINES_PER_SOURCE
 
   ! checks number of sources
-  if (num_sources < 1) stop 'need at least one source in SOURCE file'
+  if (num_sources < 1) call stop_the_code('need at least one source in SOURCE file')
   if (num_sources /= NSOURCES) then
        print *,'Error invalid num_sources :',num_sources
        print *,'NSOURCES :',NSOURCES
-       stop 'Error: Total number of sources in DATA/SOURCE is different from that declared in the Par_file, please check...'
+       call stop_the_code( &
+'Error: Total number of sources in DATA/SOURCE is different from that declared in the Par_file, please check...')
   endif
 
   ! reads in source parameters
   open(unit=IIN_SOURCE,file=trim(source_filename),status='old',action='read',iostat=ier)
-  if (ier /= 0) stop 'Error opening source file, please make sure file exists...'
+  if (ier /= 0) call stop_the_code('Error opening source file, please make sure file exists...')
 
   ! reads in all source informations
   do  i_source= 1,NSOURCES
@@ -219,7 +220,7 @@
       write(IMAIN,*) '  Angle of the incident wave (deg) = ',anglesource(i_source)
     case default
       ! not supported yet
-      stop 'Error invalid source type! must be 1, 2, 3, 4 or 5, exiting...'
+      call stop_the_code('Error invalid source type! must be 1, 2, 3, 4 or 5, exiting...')
     end select
     write(IMAIN,*)
 
@@ -261,7 +262,7 @@
       write(IMAIN,*) '  Ormsby source time function:'
       write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
     case default
-      stop 'Error invalid source time function type! must be between 1 and 9, exiting...'
+      call stop_the_code('Error invalid source time function type! must be between 1 and 9, exiting...')
     end select
     write(IMAIN,*)
 

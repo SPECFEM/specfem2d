@@ -31,12 +31,13 @@
 !
 !=====================================================================
 
-  subroutine add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
+  subroutine add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic,dot_e1)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob_acoustic,nelem_acforcing,codeacforcing,numacforcing,ispec_is_acoustic, &
-                         ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll
+                         ibool,xix,xiz,jacobian,gammax,gammaz,wxgll,wzgll, &
+                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
@@ -44,6 +45,7 @@
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic) :: potential_dot_dot_acoustic
+  real(kind=CUSTOM_REAL), dimension(nglob_att,N_SLS) :: dot_e1
 
   !local variables
   integer :: inum,ispec,i,j,iglob
@@ -83,6 +85,7 @@
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
         potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+        if (ATTENUATION_VISCOACOUSTIC) dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
       enddo
     endif  !  end of left acoustic forcing boundary
 
@@ -113,6 +116,7 @@
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
         potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+        if (ATTENUATION_VISCOACOUSTIC) dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
 
       enddo
     endif  !  end of right acoustic forcing boundary
@@ -144,6 +148,7 @@
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
         potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+        if (ATTENUATION_VISCOACOUSTIC) dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
       enddo
     endif  !  end of bottom acoustic forcing boundary
 
@@ -174,6 +179,7 @@
         ! compute dot product
         displ_n = displ_x*nx + displ_z*nz
         potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+        if (ATTENUATION_VISCOACOUSTIC) dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
       enddo
     endif  !  end of top acoustic forcing boundary
   enddo

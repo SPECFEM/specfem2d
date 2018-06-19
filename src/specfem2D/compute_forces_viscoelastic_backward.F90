@@ -560,9 +560,9 @@
 
               if (abs(coord(1,ibool(i,j,ispec))) > TINYVAL) then ! Not first GLJ point
                 if (i == 1) then
-                  stop "error: an axial element is rotated. The code should have been stopped before. Check that your &
-                   &coordinates are greater than TINYVAL. Maybe you should also have a look to &
-                   &doc/problematic_case_that_we_exclude_for_axisymmetric.pdf"
+                  call stop_the_code("error: an axial element is rotated. The code should have been stopped before. &
+                   &Check that your coordinates are greater than TINYVAL. Maybe you should also have a look to &
+                   &doc/problematic_case_that_we_exclude_for_axisymmetric.pdf")
                 endif
                 tempx3(i,j) = tempx3(i,j) + wzgll(j)*wxglj(i)*jacobian(i,j,ispec) &
                               * sigma_thetatheta(i,j)/(xiglj(i)+ONE) ! this goes to accel_x

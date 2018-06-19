@@ -74,7 +74,7 @@
     write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_NSPEC_ibool.bin'
 
     open(888,file=trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if (ier /= 0) stop 'Error opening smoothed kernel file'
+    if (ier /= 0) call stop_the_code('Error opening smoothed kernel file')
     write(888) nspec
     write(888) ibool
     close(888)

@@ -143,7 +143,7 @@ module shared_input_parameters
   double precision :: Q0_poroelastic,freq0_poroelastic
 
   integer :: N_SLS
-  double precision :: f0_attenuation
+  double precision :: ATTENUATION_f0_REFERENCE
   logical :: READ_VELOCITIES_AT_f0
   logical :: USE_SOLVOPT
 
@@ -180,6 +180,8 @@ module shared_input_parameters
   ! for better accuracy of pressure output (uses 2nd time-derivatives of the initial source time function)
   logical :: USE_TRICK_FOR_BETTER_PRESSURE
 
+  integer :: NSTEP_BETWEEN_OUTPUT_SEISMOS
+
   ! Integrated energy field output
   logical :: COMPUTE_INTEGRATED_ENERGY_FIELD
 
@@ -214,6 +216,9 @@ module shared_input_parameters
   ! kernel output in case of adjoint simulation
   logical :: save_ASCII_kernels
 
+  integer :: NSTEP_BETWEEN_COMPUTE_KERNELS
+
+  logical :: NO_BACKWARD_RECONSTRUCTION
 
   !#-----------------------------------------------------------------------------
   !#
@@ -226,6 +231,10 @@ module shared_input_parameters
   integer :: NELEM_PML_THICKNESS
   logical :: ROTATE_PML_ACTIVATE
   double precision :: ROTATE_PML_ANGLE
+  double precision :: K_MIN_PML
+  double precision :: K_MAX_PML
+  double precision :: damping_change_factor_acoustic
+  double precision :: damping_change_factor_elastic
   logical :: PML_PARAMETER_ADJUSTMENT
 
   ! Stacey
@@ -363,9 +372,8 @@ module shared_parameters
 
   implicit none
 
-! note: we use this module definition only to be able to allocate
-!          arrays for receiverlines and materials in this subroutine rather than in the main
-!          routine in meshfem2D.F90
+  ! for MPI and partitioning
+  integer :: myrank
 
   ! for Bielak condition
   logical :: add_Bielak_conditions

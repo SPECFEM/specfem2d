@@ -35,14 +35,14 @@
 
 ! sets up MPI arrays
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,USE_A_STRONG_FORMULATION_FOR_E1
   use shared_parameters, only: NPROC
   use specfem_par
 
   implicit none
 
   ! local parameters
-  integer :: i,iinterface,imax_all,ier
+  integer :: i,iinterface,imax_all,ier,n_sls_loc
 
   ! user output
   if (myrank == 0) then
@@ -94,39 +94,41 @@
     max_ibool_interfaces_size_po = NDIM*maxval(nibool_interfaces_poroelastic(:))
 
     if (ACOUSTIC_SIMULATION) then
+      n_sls_loc = 0
+      if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) n_sls_loc = N_SLS
       allocate(request_send_recv_acoustic(ninterface_acoustic*2),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array request_send_recv_acoustic'
-      allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array buffer_send_faces_vector_ac'
-      allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac,ninterface_acoustic),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array buffer_recv_faces_vector_ac'
+      if (ier /= 0) call stop_the_code('error in allocation of array request_send_recv_acoustic')
+      allocate(buffer_send_faces_vector_ac(max_ibool_interfaces_size_ac*(n_sls_loc+1),ninterface_acoustic),stat=ier)
+      if (ier /= 0) call stop_the_code('error in allocation of array buffer_send_faces_vector_ac')
+      allocate(buffer_recv_faces_vector_ac(max_ibool_interfaces_size_ac*(n_sls_loc+1),ninterface_acoustic),stat=ier)
+      if (ier /= 0) call stop_the_code('error in allocation of array buffer_recv_faces_vector_ac')
     endif
 
     if (ELASTIC_SIMULATION) then
       allocate(request_send_recv_elastic(ninterface_elastic*2),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array request_send_recv_elastic'
+      if (ier /= 0) call stop_the_code('error in allocation of array request_send_recv_elastic')
       allocate(buffer_send_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array buffer_send_faces_vector_el'
+      if (ier /= 0) call stop_the_code('error in allocation of array buffer_send_faces_vector_el')
       allocate(buffer_recv_faces_vector_el(max_ibool_interfaces_size_el,ninterface_elastic),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array buffer_recv_faces_vector_el'
+      if (ier /= 0) call stop_the_code('error in allocation of array buffer_recv_faces_vector_el')
     endif
 
     if (POROELASTIC_SIMULATION) then
       allocate(request_send_recv_poro(ninterface_poroelastic*4),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array request_send_recv_poro'
+      if (ier /= 0) call stop_the_code('error in allocation of array request_send_recv_poro')
       allocate(buffer_send_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array buffer_send_faces_vector_pos'
+      if (ier /= 0) call stop_the_code('error in allocation of array buffer_send_faces_vector_pos')
       allocate(buffer_recv_faces_vector_pos(max_ibool_interfaces_size_po,ninterface_poroelastic),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array buffer_recv_faces_vector_pos'
+      if (ier /= 0) call stop_the_code('error in allocation of array buffer_recv_faces_vector_pos')
       allocate(buffer_send_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array buffer_send_faces_vector_pow'
+      if (ier /= 0) call stop_the_code('error in allocation of array buffer_send_faces_vector_pow')
       allocate(buffer_recv_faces_vector_pow(max_ibool_interfaces_size_po,ninterface_poroelastic),stat=ier)
-      if (ier /= 0) stop 'error in allocation of array buffer_recv_faces_vector_pow'
+      if (ier /= 0) call stop_the_code('error in allocation of array buffer_recv_faces_vector_pow')
     endif
 
   else
     ! safety check
-    if (myrank /= 0) stop 'Invalid myrank for serial simulation'
+    if (myrank /= 0) call stop_the_code('Invalid myrank for serial simulation')
 
     ! user output
     write(IMAIN,*) '  This is a single process simulation, no need for MPI communication'
@@ -138,7 +140,7 @@
   if (ninterface > 0) then
 
     allocate(ibool_interfaces_ext_mesh(max_nibool_interfaces_ext_mesh,ninterface),stat=ier)
-    if (ier /= 0) stop 'error in allocation of array ibool_interfaces_ext_mesh'
+    if (ier /= 0) call stop_the_code('error in allocation of array ibool_interfaces_ext_mesh')
     ibool_interfaces_ext_mesh(:,:) = 0
 
     do iinterface = 1,ninterface
@@ -406,7 +408,7 @@
 
     ! checks
     if (num_points1 /= num_points2) then
-      stop 'Error acoustic MPI interfaces has invalid assembly'
+      call stop_the_code('Error acoustic MPI interfaces has invalid assembly')
     else
       if (myrank == 0) then
         write(IMAIN,*) '  interfaces okay'
@@ -606,10 +608,10 @@
 
     ! stores indices of inner and outer elements
     num_phase_ispec_elastic = max(nspec_inner_elastic,nspec_outer_elastic)
-    if (num_phase_ispec_elastic < 0 ) stop 'Error elastic simulation: num_phase_ispec_elastic is < zero'
+    if (num_phase_ispec_elastic < 0 ) call stop_the_code('Error elastic simulation: num_phase_ispec_elastic is < zero')
 
     allocate( phase_ispec_inner_elastic(num_phase_ispec_elastic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating array phase_ispec_inner_elastic'
+    if (ier /= 0 ) call stop_the_code('Error allocating array phase_ispec_inner_elastic')
     phase_ispec_inner_elastic(:,:) = 0
 
     ispec_inner = 0
@@ -629,7 +631,7 @@
     ! allocates dummy array
     num_phase_ispec_elastic = 0
     allocate( phase_ispec_inner_elastic(num_phase_ispec_elastic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating dummy array phase_ispec_inner_elastic'
+    if (ier /= 0 ) call stop_the_code('Error allocating dummy array phase_ispec_inner_elastic')
     phase_ispec_inner_elastic(:,:) = 0
   endif
 
@@ -639,7 +641,7 @@
     call sum_all_i(nspec_inner_elastic,ispec_inner)
     if (myrank == 0) then
       ! check
-      if (ispec_inner + ispec_outer == 0) stop 'Invalid total number of inner/outer elements for elastic simulation'
+      if (ispec_inner + ispec_outer == 0) call stop_the_code('Invalid total number of inner/outer elements for elastic simulation')
       ! ratio inner/outer
       percentage_edge = 100.0 * ispec_inner/real(ispec_inner + ispec_outer)
       ! output
@@ -672,10 +674,10 @@
 
     ! stores indices of inner and outer elements for faster(?) computation
     num_phase_ispec_acoustic = max(nspec_inner_acoustic,nspec_outer_acoustic)
-    if (num_phase_ispec_acoustic < 0 ) stop 'Error acoustic simulation: num_phase_ispec_acoustic is < zero'
+    if (num_phase_ispec_acoustic < 0 ) call stop_the_code('Error acoustic simulation: num_phase_ispec_acoustic is < zero')
 
     allocate( phase_ispec_inner_acoustic(num_phase_ispec_acoustic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating array phase_ispec_inner_acoustic'
+    if (ier /= 0 ) call stop_the_code('Error allocating array phase_ispec_inner_acoustic')
     phase_ispec_inner_acoustic(:,:) = 0
 
     ispec_inner = 0
@@ -695,7 +697,7 @@
     ! allocates dummy array
     num_phase_ispec_acoustic = 0
     allocate( phase_ispec_inner_acoustic(num_phase_ispec_acoustic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating dummy array phase_ispec_inner_acoustic'
+    if (ier /= 0 ) call stop_the_code('Error allocating dummy array phase_ispec_inner_acoustic')
     phase_ispec_inner_acoustic(:,:) = 0
   endif
 
@@ -706,7 +708,8 @@
     call sum_all_i(nspec_inner_acoustic,ispec_inner)
     if (myrank == 0) then
       ! check
-      if (ispec_inner + ispec_outer == 0) stop 'Invalid total number of inner/outer elements for acoustic simulation'
+      if (ispec_inner + ispec_outer == 0) call stop_the_code( &
+'Invalid total number of inner/outer elements for acoustic simulation')
       ! ratio inner/outer
       percentage_edge = 100.0 * ispec_inner/real(ispec_inner + ispec_outer)
       ! output
@@ -738,10 +741,10 @@
 
     ! stores indices of inner and outer elements
     num_phase_ispec_poroelastic = max(nspec_inner_poroelastic,nspec_outer_poroelastic)
-    if (num_phase_ispec_poroelastic < 0 ) stop 'Error poroelastic simulation: num_phase_ispec_poroelastic is < zero'
+    if (num_phase_ispec_poroelastic < 0 ) call stop_the_code('Error poroelastic simulation: num_phase_ispec_poroelastic is < zero')
 
     allocate( phase_ispec_inner_poroelastic(num_phase_ispec_poroelastic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating array phase_ispec_inner_poroelastic'
+    if (ier /= 0 ) call stop_the_code('Error allocating array phase_ispec_inner_poroelastic')
     phase_ispec_inner_poroelastic(:,:) = 0
 
     ispec_inner = 0
@@ -761,7 +764,7 @@
     ! allocates dummy array
     num_phase_ispec_poroelastic = 0
     allocate( phase_ispec_inner_poroelastic(num_phase_ispec_poroelastic,2),stat=ier)
-    if (ier /= 0 ) stop 'Error allocating dummy array phase_ispec_inner_poroelastic'
+    if (ier /= 0 ) call stop_the_code('Error allocating dummy array phase_ispec_inner_poroelastic')
     phase_ispec_inner_poroelastic(:,:) = 0
   endif
 
@@ -771,7 +774,8 @@
     call sum_all_i(nspec_inner_poroelastic,ispec_inner)
     if (myrank == 0) then
       ! check
-      if (ispec_inner + ispec_outer == 0) stop 'Invalid total number of inner/outer elements for poroelastic simulation'
+      if (ispec_inner + ispec_outer == 0) call stop_the_code( &
+'Invalid total number of inner/outer elements for poroelastic simulation')
       ! ratio inner/outer
       percentage_edge = 100.0 * ispec_inner/real(ispec_inner + ispec_outer)
       ! output

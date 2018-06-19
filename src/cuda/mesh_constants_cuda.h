@@ -114,13 +114,8 @@
 // Gauss-Lobatto-Legendre
 #define NGLLX 5
 #define NGLL2 25
-#define NGLL3 125 // no padding: requires same size as in fortran for NGLLX * NGLLY * NGLLZ
 
-// padding: 128 == 2**7 might improve on older graphics cards w/ coalescent memory accesses:
-#define NGLL3_PADDED 128
 #define NGLL2_PADDED 32
-// no padding: 125 == 5*5*5 to avoid allocation of extra memory
-//#define NGLL3_PADDED 125
 
 // number of standard linear solids
 #define N_SLS 3
@@ -137,12 +132,6 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// (optional) pre-processing directive used in kernels: if defined check that it is also set in setup/constants.h:
-// leads up to ~ 5% performance increase
-//#define USE_MESH_COLORING_GPU
-
-/* ----------------------------------------------------------------------------------------------- */
-
 // macros for version output
 #define VALUE_TO_STRING(x) #x
 #define VALUE(x) VALUE_TO_STRING(x)
@@ -156,7 +145,7 @@
 // Texture memory usage:
 // requires CUDA version >= 4.0, see check below
 // Use textures for d_displ and d_accel -- 10% performance boost
-#define USE_TEXTURES_FIELDS
+//#define USE_TEXTURES_FIELDS
 
 // Using texture memory for the hprime-style constants is slower on
 // Fermi generation hardware, but *may* be faster on Kepler
@@ -176,10 +165,6 @@
 #ifdef USE_TEXTURES_CONSTANTS
 #pragma message ("Compiling with: USE_TEXTURES_CONSTANTS enabled\n")
 #endif
-
-// (optional) unrolling loops
-// leads up to ~1% performance increase
-//#define MANUALLY_UNROLLED_LOOPS
 
 // CUDA compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
@@ -328,7 +313,6 @@ typedef struct mesh_ {
   // constants
   int simulation_type;
   int save_forward;
-  int use_mesh_coloring_gpu;
   int absorbing_conditions;
 
   // ------------------------------------------------------------------ //
@@ -376,6 +360,8 @@ typedef struct mesh_ {
   // overlapped memcpy streams
   cudaStream_t compute_stream;
   cudaStream_t copy_stream;
+  // stream to copy wavefield over several iterations
+  cudaStream_t copy_stream_no_backward;
   //cudaStream_t b_copy_stream;
 
   // sources
@@ -419,12 +405,20 @@ typedef struct mesh_ {
   int ninterface_elastic;
   int * d_inum_interfaces_elastic;
 
-  // mesh coloring
-  int* h_num_elem_colors_elastic;
-  int num_colors_outer_elastic,num_colors_inner_elastic;
-
   realw* d_rmassx;
   realw* d_rmassz;
+
+  //attenuation
+  realw* d_e1;
+  realw* d_e11;
+  realw* d_e13;
+  realw* d_A_newmark_mu;
+  realw* d_B_newmark_mu;
+  realw* d_A_newmark_kappa;
+  realw* d_B_newmark_kappa;
+  realw* d_dux_dxl_old;
+  realw* d_duz_dzl_old;
+  realw* d_dux_dzl_plus_duz_dxl_old;
 
   // mpi buffer
   realw* d_send_accel_buffer;
@@ -487,7 +481,6 @@ typedef struct mesh_ {
   realw* d_b_dsxz;
   realw* d_b_dszz;
 
-
   // JC JC here we will need to add GPU support for the new C-PML routines
 
   // ------------------------------------------------------------------ //
@@ -497,6 +490,11 @@ typedef struct mesh_ {
   realw* d_potential_acoustic; realw* d_potential_dot_acoustic; realw* d_potential_dot_dot_acoustic;
   // backward/reconstructed wavefield
   realw* d_b_potential_acoustic; realw* d_b_potential_dot_acoustic; realw* d_b_potential_dot_dot_acoustic;
+  // buffer for NO_BACKWARD_RECONSTRUCTION
+  realw* d_potential_acoustic_buffer;
+
+  cudaEvent_t transfer_is_complete1;
+  cudaEvent_t transfer_is_complete2;
 
   // acoustic domain parameters
   int nspec_acoustic;
@@ -507,13 +505,17 @@ typedef struct mesh_ {
   int ninterface_acoustic;
   int * d_inum_interfaces_acoustic;
 
-  // mesh coloring
-  int* h_num_elem_colors_acoustic;
-  int num_colors_outer_acoustic,num_colors_inner_acoustic;
-
   realw* d_rhostore;
   realw* d_kappastore;
   realw* d_rmass_acoustic;
+
+  // attenuation
+  realw* d_A_newmark_acous;
+  realw* d_B_newmark_acous;
+  realw* d_e1_acous;
+  realw* d_sum_forces_old;
+  realw* d_b_e1_acous;
+  realw* d_b_sum_forces_old;
 
   // mpi buffer
   realw* d_send_potential_dot_dot_buffer;

@@ -64,7 +64,7 @@
   integer :: edgecut
 
 !! DK DK support for METIS now removed, we use SCOTCH instead
-  stop 'support for the METIS graph partitioner has been discontinued, please use SCOTCH (option 3) instead'
+  call stop_the_code('support for the METIS graph partitioner has been discontinued, please use SCOTCH (option 3) instead')
 
   ! initializes
   remove_min_to_start_at_zero = 0
@@ -81,7 +81,7 @@
   ! safety stop
   write(IMAIN,*) 'This version of SPECFEM was not compiled with support of METIS.'
   write(IMAIN,*) 'Please recompile with -DUSE_METIS in order to enable use of METIS.'
-  stop 'Metis partitioning not compiled'
+  call stop_the_code('Metis partitioning not compiled')
 #endif
 
  end subroutine metis_partitioning

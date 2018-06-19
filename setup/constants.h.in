@@ -108,6 +108,8 @@
 ! the initial (least squares) step of the SolvOpt() routine when USE_SOLVOPT is false, for compatibility with older benchmarks
   logical, parameter :: USE_OLD_C_ATTENUATION_ROUTINE_INSTEAD = .false.
 
+! for viscoacousticity
+  logical, parameter :: USE_A_STRONG_FORMULATION_FOR_E1 = .false.
 
 !!-----------------------------------------------------------
 !!
@@ -320,7 +322,7 @@
   double precision, parameter :: ONE_OVER_24 = 1.d0 / 24.d0
 
 ! very large and very small values
-  double precision, parameter :: HUGEVAL = 1.d+30,TINYVAL = 1.d-9
+  double precision, parameter :: HUGEVAL = 1.d+30,TINYVAL = 1.d-9,VERYTINYVAL = 1.d-23
 
 ! do not use tags for MPI messages, use dummy tag instead
   integer, parameter :: itag = 0

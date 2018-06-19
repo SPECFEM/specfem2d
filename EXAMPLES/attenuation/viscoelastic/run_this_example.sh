@@ -7,10 +7,6 @@
 echo "running example: `date`"
 currentdir=`pwd`
 
-echo
-echo "(will take a few minutes)"
-echo
-
 # sets up directory structure in current example directoy
 echo
 echo "   setting up example..."
@@ -21,9 +17,16 @@ mkdir -p DATA
 
 # sets up local DATA/ directory
 cd DATA/
-cp ../Par_file_attenuation_2D Par_file
+
+# use this to test a source that is located at a corner point shared between four spectral elements
+cp ../Par_file_attenuation_2D_source_in_point_shared_by_four_elements Par_file
+cp ../SOURCE_attenuation_2D_source_in_point_shared_by_four_elements SOURCE
+
+# or use this to test a source that is located inside a given element, which does NOT coincide with a GLL point
+# cp ../Par_file_attenuation_2D_source_in_point_inside_an_element Par_file
+# cp ../SOURCE_attenuation_2D_source_in_point_inside_an_element SOURCE
+
 cp ../interfaces_attenuation_analytic.dat .
-cp ../SOURCE_attenuation_2D SOURCE
 cd ../
 
 # cleans output files

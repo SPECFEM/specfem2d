@@ -31,14 +31,19 @@
 !
 !========================================================================
 
-  subroutine compute_pressure_whole_medium()
+  subroutine compute_pressure_whole_medium(i_field)
 
 ! compute pressure in acoustic elements and in elastic elements
 
-  use specfem_par, only: CUSTOM_REAL,NGLLX,NGLLZ,nspec,ibool
+  use specfem_par, only: CUSTOM_REAL,NGLLX,NGLLZ,nspec,ibool,displ_elastic,displs_poroelastic,displw_poroelastic, &
+                         potential_dot_dot_acoustic,potential_acoustic,b_displ_elastic,b_displs_poroelastic, &
+                         b_displw_poroelastic,b_potential_dot_dot_acoustic,b_potential_acoustic
   use specfem_par_movie, only: vector_field_display
 
   implicit none
+
+  ! forwrad or adjoint wavefield)
+  integer :: i_field
 
   ! local parameters
   integer :: i,j,ispec,iglob
@@ -49,8 +54,13 @@
   do ispec = 1,nspec
 
     ! compute pressure in this element
-    call compute_pressure_one_element(ispec,pressure_element)
-
+    if (i_field == 1) then
+      call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic, &
+                                        potential_dot_dot_acoustic,potential_acoustic)
+    else
+      call compute_pressure_one_element(ispec,pressure_element,b_displ_elastic,b_displs_poroelastic,b_displw_poroelastic, &
+                                        b_potential_dot_dot_acoustic,b_potential_acoustic)
+    endif
     ! use vector_field_display as temporary storage, store pressure in its second component
     do j = 1,NGLLZ
       do i = 1,NGLLX
@@ -67,16 +77,16 @@
 !=====================================================================
 !
 
-  subroutine compute_pressure_one_element(ispec,pressure_element)
+  subroutine compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic, &
+                                          potential_dot_dot_acoustic,potential_acoustic)
 
 ! compute pressure in acoustic elements and in elastic elements
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,TWO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,TWO,NDIM
 
-  use specfem_par, only: N_SLS,ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
+  use specfem_par, only: N_SLS,nglob,ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
     ispec_is_anisotropic,kmato,poroelastcoef,assign_external_model,vpext,vsext,rhoext, &
-    ATTENUATION_VISCOELASTIC,AXISYM,is_on_the_axis,displ_elastic,displs_poroelastic,displw_poroelastic, &
-    potential_dot_dot_acoustic,potential_acoustic, &
+    ATTENUATION_VISCOELASTIC,AXISYM,is_on_the_axis, &
     anisotropy,c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext,c55ext, &
     hprimebar_xx,hprime_xx,hprime_zz,xix,xiz,gammax,gammaz,jacobian,ibool,coord,e1,e11,USE_TRICK_FOR_BETTER_PRESSURE
 
@@ -85,6 +95,8 @@
   integer,intent(in) :: ispec
   ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ),intent(out) :: pressure_element
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: potential_dot_dot_acoustic,potential_acoustic
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: displ_elastic,displs_poroelastic,displw_poroelastic
 
   ! local variables
   real(kind=CUSTOM_REAL) :: e1_sum,e11_sum
@@ -288,8 +300,8 @@
           e11_sum = 0._CUSTOM_REAL
 
           do i_sls = 1,N_SLS
-            e1_sum = e1_sum + e1(i,j,ispec,i_sls)
-            e11_sum = e11_sum + e11(i,j,ispec,i_sls)
+            e1_sum = e1_sum + e1(i_sls,i,j,ispec)
+            e11_sum = e11_sum + e11(i_sls,i,j,ispec)
           enddo
 
           sigma_xx = sigma_xx + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
@@ -383,7 +395,8 @@
           ! implement anisotropy in 2D
           sigma_xx = c11*dux_dxl + c13*duz_dzl + c15*(duz_dxl + dux_dzl)
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
-          if (c12 < 1.e-7 .or. c23 < 1.e-7) stop 'cannot compute pressure for an anisotropic material if c12 or c23 are zero'
+          if (c12 < 1.e-7 .or. c23 < 1.e-7) call stop_the_code( &
+              'cannot compute pressure for an anisotropic material if c12 or c23 are zero')
           sigma_yy = c12*dux_dxl + c23*duz_dzl + c25*(duz_dxl + dux_dzl)
           sigma_zz = c13*dux_dxl + c33*duz_dzl + c35*(duz_dxl + dux_dzl)
 
@@ -486,7 +499,7 @@
           sigma_xx = (lambdal_unrelaxed_elastic + 2.0 * mul_unrelaxed_elastic)*dux_dxl + lambdal_unrelaxed_elastic*duz_dzl
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
 !         sigma_yy = ...  ! it is not zero because of the plane strain formulation, thus it should be computed here
-          stop 'pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here'
+          call stop_the_code('pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here')
           sigma_zz = (lambdal_unrelaxed_elastic + 2.0 * mul_unrelaxed_elastic)*duz_dzl + lambdal_unrelaxed_elastic*dux_dxl
 
           ! add the memory variables using the relaxed parameters (Carcione 2007 page 125)
@@ -495,15 +508,15 @@
           e11_sum = 0._CUSTOM_REAL
 
           do i_sls = 1,N_SLS
-            e1_sum = e1_sum + e1(i,j,ispec,i_sls)
-            e11_sum = e11_sum + e11(i,j,ispec,i_sls)
+            e1_sum = e1_sum + e1(i_sls,i,j,ispec)
+            e11_sum = e11_sum + e11(i_sls,i,j,ispec)
           enddo
 
           sigma_xx = sigma_xx + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
                     + TWO * mul_unrelaxed_elastic * e11_sum
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
 !         sigma_yy = ...  ! it is not zero because of the plane strain formulation, thus it should be computed here
-          stop 'pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here'
+          call stop_the_code('pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here')
           sigma_zz = sigma_zz + (lambdal_unrelaxed_elastic + mul_unrelaxed_elastic) * e1_sum &
                     - TWO * mul_unrelaxed_elastic * e11_sum
 
@@ -513,7 +526,10 @@
           sigma_xx = lambdalplus2mul_G*dux_dxl + lambdal_G*duz_dzl + C_biot*(dwx_dxl + dwz_dzl)
           ! sigma_yy is not equal to zero in a 2D medium because of the plane strain formulation
 !         sigma_yy = ...  ! it is not zero because of the plane strain formulation, thus it should be computed here
-          stop 'pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here'
+!! DK DK we temporarily set it to zero here to avoid a warning by certain compilers about an unassigned variable
+!! DK DK when computing pressure a few lines below; this should be removed and replaced with a true calculation
+          sigma_yy = 0.d0
+          call stop_the_code('pressure calculation not implemented for poroelastic media yet, you should compute sigma_yy here')
           sigma_zz = lambdalplus2mul_G*duz_dzl + lambdal_G*dux_dxl + C_biot*(dwx_dxl + dwz_dzl)
 
 !         sigmap = C_biot*(dux_dxl + duz_dzl) + M_biot*(dwx_dxl + dwz_dzl)
@@ -556,7 +572,6 @@
         enddo
       enddo
     endif
-
   endif ! end of test if acoustic or elastic element
 
   end subroutine compute_pressure_one_element

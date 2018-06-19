@@ -33,19 +33,20 @@
 
 ! for acoustic solver
 
-  subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
+  subroutine compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic,dot_e1)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
-    CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE,ALPHA_LDDRK,BETA_LDDRK
+    CPML_X_ONLY,CPML_Z_ONLY,IRIGHT,ILEFT,IBOTTOM,ITOP,ONE,ALPHA_LDDRK,BETA_LDDRK,USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par, only: num_fluid_solid_edges,ibool,wxgll,wzgll,xix,xiz, &
                          gammax,gammaz,jacobian,ivalue,jvalue,ivalue_inverse,jvalue_inverse, &
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge, &
                          fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
-                         rmemory_fsb_displ_elastic,timeval,deltat, &
+                         rmemory_fsb_displ_elastic,deltat, &
                          rmemory_fsb_displ_elastic_LDDRK,i_stage,time_stepping_scheme, &
-                         nglob_acoustic,nglob_elastic,iglob_is_forced
+                         nglob_acoustic,nglob_elastic,iglob_is_forced, &
+                         ATTENUATION_VISCOACOUSTIC,N_SLS,nglob_att
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML,nspec_PML,spec_to_PML,region_CPML, &
@@ -56,13 +57,15 @@
   real(kind=CUSTOM_REAL),dimension(NDIM,nglob_elastic) :: displ_elastic,displ_elastic_old
   real(kind=CUSTOM_REAL),dimension(nglob_acoustic) :: potential_dot_dot_acoustic
 
+  real(kind=CUSTOM_REAL),dimension(nglob_att,N_SLS) :: dot_e1
+
   !local variable
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
   integer :: inum,ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,i,j,iglob
   real(kind=CUSTOM_REAL) :: displ_x,displ_z,displ_n, &
                             xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
   ! PML
-  integer :: ispec_PML,CPML_region_local,singularity_type_xz
+  integer :: ispec_PML,CPML_region_local
   double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &
                       A8,A9,A10,bb_xz_1,bb_xz_2,coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2
 
@@ -104,16 +107,17 @@
           beta_z = alpha_z + d_z / kappa_z
 
           if (CPML_region_local == CPML_X_ONLY) then
-            call lik_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
-                                           CPML_region_local,13,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2, &
+            !ZN needed to be change in case of viscoelastic medium
+            call lik_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+                                           CPML_region_local,13,A8,A9,A10,bb_xz_1,bb_xz_2, &
                                            coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
           else if (CPML_region_local == CPML_Z_ONLY) then
-            call lik_parameter_computation(timeval,deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
-                                           CPML_region_local,31,A8,A9,A10,singularity_type_xz,bb_xz_1,bb_xz_2, &
+            call lik_parameter_computation(deltat,kappa_z,beta_z,alpha_z,kappa_x,beta_x,alpha_x, &
+                                           CPML_region_local,31,A8,A9,A10,bb_xz_1,bb_xz_2, &
                                            coef0_xz_1,coef1_xz_1,coef2_xz_1,coef0_xz_2,coef1_xz_2,coef2_xz_2)
 
           else
-            stop 'PML do not support a fluid-solid boundary in corner PML region'
+            call stop_the_code('PML do not support a fluid-solid boundary in corner PML region')
           endif
 
           if (time_stepping_scheme == 1) then
@@ -208,7 +212,7 @@
         nz = + xgamma / jacobian1D
         if (AXISYM) then
           if (is_on_the_axis(ispec_acoustic)) then
-            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+            call stop_the_code('error: rotated element detected on the symmetry axis, this should not happen')
           else
             weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
           endif
@@ -225,7 +229,7 @@
         nz = - xgamma / jacobian1D
         if (AXISYM) then
           if (is_on_the_axis(ispec_acoustic)) then
-            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+            call stop_the_code('error: rotated element detected on the symmetry axis, this should not happen')
           else
             weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
           endif
@@ -241,6 +245,8 @@
 !! DK DK QUENTIN en plus de la composante normale je suppose
       if (.not. iglob_is_forced(iglob)) then
         potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + weight*displ_n
+        if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1 ) &
+          dot_e1(iglob,:) = dot_e1(iglob,:) + weight*displ_n
       endif
 !! DK DK QUENTIN visco end
 
@@ -356,7 +362,7 @@
         nz = + xgamma / jacobian1D
         if (AXISYM) then
           if (is_on_the_axis(ispec_acoustic)) then
-            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+            call stop_the_code('error: rotated element detected on the symmetry axis, this should not happen')
           else
             weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
           endif
@@ -371,7 +377,7 @@
         nz = - xgamma / jacobian1D
         if (AXISYM) then
           if (is_on_the_axis(ispec_acoustic)) then
-            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+            call stop_the_code('error: rotated element detected on the symmetry axis, this should not happen')
           else
             weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
           endif

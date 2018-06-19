@@ -91,7 +91,7 @@
   ! Newmark: time_stepping_scheme == 1
   ! LDDRK  : time_stepping_scheme == 2
   ! RK     : time_stepping_scheme == 3
-  if (time_stepping_scheme < 1 .or. time_stepping_scheme > 3) stop 'Error invalid time stepping scheme for STF'
+  if (time_stepping_scheme < 1 .or. time_stepping_scheme > 3) call stop_the_code('Error invalid time stepping scheme for STF')
 
   ! RK time scheme constants
   if (time_stepping_scheme == 3) then
@@ -109,7 +109,7 @@
     endif
     ! opens source time file for output
     open(unit=55,file=trim(OUTPUT_FILES)//'plot_source_time_function.txt',status='unknown',iostat=ier)
-    if (ier /= 0) stop 'Error opening source time function text-file'
+    if (ier /= 0) call stop_the_code('Error opening source time function text-file')
   endif
 
   ! loop on all the sources
@@ -444,7 +444,7 @@
             stf_used = source_time_function(i_source,it,i_stage)
 
             ! note: earliest start time of the simulation is: (it-1)*deltat - t0 - tshift_src(i_source)
-            write(55,*) timeval-t0,' ',stf_used
+            if (myrank == islice_selected_source(1)) write(55,*) timeval-t0,' ',stf_used
 
           endif
         endif
@@ -453,7 +453,9 @@
   enddo
 
   ! closes STF file
-  if (myrank == islice_selected_source(1)) close(55)
+  if (myrank == islice_selected_source(i_source)) close(55)
+
+  !print *,"myrank:",myrank,"Ok"
 
   ! synchronizes all processes
   call synchronize_all()

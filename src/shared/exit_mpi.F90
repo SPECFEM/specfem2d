@@ -31,9 +31,10 @@
 !
 !========================================================================
 
-!-----------------------------------------------
-! subroutine to stop the code whether sequential or parallel.
-!-----------------------------------------------
+!------------------------------------------------------------
+! subroutine to stop the code, whether sequential or parallel
+!------------------------------------------------------------
+
   subroutine exit_MPI(myrank,error_msg)
 
 #ifdef USE_MPI
@@ -68,6 +69,22 @@
   call abort_mpi()
 
   end subroutine exit_MPI
+
+!-------------------------------------------------------------------------------------------------
+
+! alias for exit_MPI, useful to convert stop statements to this automatically in the code cleaning script ran by Buildbot
+
+  subroutine stop_the_code(error_msg)
+
+  use shared_parameters, only: myrank
+
+  implicit none
+
+  character(len=*) :: error_msg
+
+  call exit_MPI(myrank,error_msg)
+
+  end subroutine stop_the_code
 
 !-------------------------------------------------------------------------------------------------
 !

@@ -59,16 +59,16 @@
 
   ! assigns materials to mesh elements
   allocate(num_material(nelmnts),stat=ier)
-  if (ier /= 0) stop 'Error allocating num_material array'
+  if (ier /= 0) call stop_the_code('Error allocating num_material array')
   num_material(:) = 0
 
   ! this call positions again the read header to the line with nbregions. we can then call next line to get the table
   call read_value_integer_p(reread_nbregions, 'mesher.nbregions')
-  if (err_occurred() /= 0) stop 'Error reading parameter nbregions in Par_file'
+  if (err_occurred() /= 0) call stop_the_code('Error reading parameter nbregions in Par_file')
 
   ! checks
-  if (reread_nbregions /= nbregions) stop 'Error re-reading parameter nbregions in Par_file'
-  if (nbmodels < 1) stop 'Invalid number of model definitions'
+  if (reread_nbregions /= nbregions) call stop_the_code('Error re-reading parameter nbregions in Par_file')
+  if (nbmodels < 1) call stop_the_code('Invalid number of model definitions')
 
   ! read the material numbers for each region
   do iregion = 1,nbregions
@@ -78,11 +78,11 @@
     call read_region_coordinates_p(ix_start,ix_end,iz_start,iz_end,imaterial_number)
 
     ! check
-    if (imaterial_number < 1) stop 'Negative material number not allowed!'
-    if (ix_start < 1) stop 'Left coordinate of region negative!'
-    if (ix_end > nxread) stop 'Right coordinate of region too high!'
-    if (iz_start < 1) stop 'Bottom coordinate of region negative!'
-    if (iz_end > nzread) stop 'Top coordinate of region too high!'
+    if (imaterial_number < 1) call stop_the_code('Negative material number not allowed!')
+    if (ix_start < 1) call stop_the_code('Left coordinate of region negative!')
+    if (ix_end > nxread) call stop_the_code('Right coordinate of region too high!')
+    if (iz_start < 1) call stop_the_code('Bottom coordinate of region negative!')
+    if (iz_end > nzread) call stop_the_code('Top coordinate of region too high!')
 
     if (iregion == 1) write(IMAIN,*) '------'
     write(IMAIN,*) 'Region ',iregion
@@ -96,7 +96,6 @@
        vpregion = cp(imaterial_number)
        vsregion = cs(imaterial_number)
 
-       poisson_ratio = 0.5d0*(vpregion*vpregion-2.d0*vsregion*vsregion) / (vpregion*vpregion-vsregion*vsregion)
 
        write(IMAIN,*) 'Material # ',imaterial_number,' isotropic'
        if (vsregion < TINYVAL) then
@@ -107,11 +106,13 @@
        write(IMAIN,*) 'vp     = ',sngl(vpregion)
        write(IMAIN,*) 'vs     = ',sngl(vsregion)
        write(IMAIN,*) 'rho    = ',sngl(rho_s_read(imaterial_number))
+       if (vpregion == vsregion) stop 'Materials cannot have Vs = Vp, there is an error in your input file'
+       poisson_ratio = 0.5d0*(vpregion*vpregion - 2.d0*vsregion*vsregion) / (vpregion*vpregion - vsregion*vsregion)
        write(IMAIN,*) 'Poisson''s ratio = ',sngl(poisson_ratio)
        write(IMAIN,*) 'QKappa = ',sngl(QKappa(imaterial_number))
        write(IMAIN,*) 'Qmu    = ',sngl(Qmu(imaterial_number))
 
-       if (poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) stop 'incorrect value of Poisson''s ratio'
+       if (poisson_ratio <= -1.00001d0 .or. poisson_ratio >= 0.50001d0) call stop_the_code('incorrect value of Poisson''s ratio')
 
     else if (icodemat(imaterial_number) == POROELASTIC_MATERIAL) then
 
@@ -168,6 +169,6 @@
 
   enddo
 
-  if (minval(num_material) <= 0) stop 'Velocity model not entirely set...'
+  if (minval(num_material) <= 0) call stop_the_code('Velocity model not entirely set...')
 
   end subroutine read_regions

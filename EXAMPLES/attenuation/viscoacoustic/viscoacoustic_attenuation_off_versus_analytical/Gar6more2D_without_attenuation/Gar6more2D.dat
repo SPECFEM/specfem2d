@@ -1,11 +1,11 @@
 100. Height of the source
-50. Central frequency of the source 
+50. Dominant frequency of the source 
 1. Amplitude of the source
 0.02400000  Delay of the source
 100. Height of the line of receivers
 800.  Abscissa of the first receiver
 800.  Abscissa of the second receiver
-1 Numbers of receivers
+1 Number of receivers
 0. Start time
 1 Stop time
 1e-4 Time step

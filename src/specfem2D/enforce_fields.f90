@@ -65,7 +65,7 @@ module enforce_par
     integer             :: io
 
     open(10,file=filename, iostat=io, status='old')
-    if (io /= 0) stop 'Cannot open file! '
+    if (io /= 0) call stop_the_code('Cannot open file! ')
 
     nlines = 0
     do
@@ -182,7 +182,7 @@ end module enforce_par
             else if (ispec_is_elastic(ispec)) then
                elastic_iglob_is_forced = .true.
             else
-              stop "Problem forced! Element is not acoustic and not elastic... this is not possible so far"
+              call stop_the_code("Problem forced! Element is not acoustic and not elastic... this is not possible so far")
             endif
           endif
         enddo

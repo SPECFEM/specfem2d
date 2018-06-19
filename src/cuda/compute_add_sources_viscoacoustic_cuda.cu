@@ -71,7 +71,7 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
 
         stf = source_time_function[INDEX2(nsources_local,isource,it)]/kappal;
         atomicAdd(&potential_dot_dot_acoustic[iglob],
-                  -sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 0,i,j)]*stf);
+                  +sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 0,i,j)]*stf);
 
 
 
@@ -104,7 +104,7 @@ void FC_FUNC_(compute_add_sources_ac_cuda,
   get_blocks_xy(mp->nsources_local,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y);
-  dim3 threads(5,5,1);
+  dim3 threads(NGLLX,NGLLX,1);
 
   int it = *itf - 1;
 
@@ -118,7 +118,7 @@ void FC_FUNC_(compute_add_sources_ac_cuda,
                                                                               mp->d_kappastore,
                                                                               it,mp->nsources_local);
 
-  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),37);
+  // print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),37);
 
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -149,7 +149,7 @@ void FC_FUNC_(compute_add_sources_ac_s3_cuda,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nsources_local,&num_blocks_x,&num_blocks_y);
   dim3 grid(num_blocks_x,num_blocks_y);
-  dim3 threads(5,5,1);
+  dim3 threads(NGLLX,NGLLX,1);
 
   int it = *itf - 1;
 
@@ -164,7 +164,7 @@ void FC_FUNC_(compute_add_sources_ac_s3_cuda,
                                                                               it,mp->nsources_local);
 
 
-      print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),38);
+    //  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),38);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("compute_add_sources_ac_s3_cuda");
@@ -205,11 +205,8 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
       int iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
 
       realw  kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
-
       realw  xir = xir_store[INDEX2(nadj_rec_local,irec_local,i)];
-
       realw  gammar = gammar_store[INDEX2(nadj_rec_local,irec_local,j)];
-
       realw  source_adj = source_adjointe[INDEX3(nadj_rec_local,NSTEP,irec_local,it,0)];
 
 
@@ -254,7 +251,7 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
   get_blocks_xy(mp->nadj_rec_local,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y,1);
-  dim3 threads(5,5,1);
+  dim3 threads(NGLLX,NGLLX,1);
 
   int it_index = (*it) - 1;
 
@@ -271,6 +268,7 @@ void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
                                                                                 mp->d_kappastore,
                                                                                 *NSTEP);
 
+//  print_CUDA_error_if_any(cudaStreamSynchronize(mp->compute_stream),38);
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("add_sources_acoustic_SIM_TYPE_2_OR_3_kernel");
 #endif

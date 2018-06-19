@@ -122,7 +122,7 @@
     ! Runge-Kutta
     call update_veloc_poroelastic_RK()
   case default
-    stop 'Time stepping scheme not implemented yet for poroelastic case'
+    call stop_the_code('Time stepping scheme not implemented yet for poroelastic case')
   end select
 
   ! imposes continuity for stabilization
@@ -158,7 +158,8 @@
   if (.not. any_poroelastic) return
 
   ! implement viscous attenuation for poroelastic media
-  if (ATTENUATION_PORO_FLUID_PART) stop 'ATTENUATION_PORO_FLUID_PART not implemented yet for backward/kernel simulations'
+  if (ATTENUATION_PORO_FLUID_PART) call stop_the_code( &
+'ATTENUATION_PORO_FLUID_PART not implemented yet for backward/kernel simulations')
 
   ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
   do iphase = 1,2
@@ -223,12 +224,12 @@
     call update_veloc_poroelastic_Newmark_backward()
   case (2)
     ! LDDRK
-    if (SIMULATION_TYPE == 3) stop 'LDDRK scheme for poroelastic kernel simulation not implemented yet'
+    if (SIMULATION_TYPE == 3) call stop_the_code('LDDRK scheme for poroelastic kernel simulation not implemented yet')
   case (3)
     ! Runge-Kutta
-    if (SIMULATION_TYPE == 3) stop 'RK scheme for poroelastic kernel simulation not implemented yet'
+    if (SIMULATION_TYPE == 3) call stop_the_code('RK scheme for poroelastic kernel simulation not implemented yet')
   case default
-    stop 'Time stepping scheme not implemented yet for poroelastic case'
+    call stop_the_code('Time stepping scheme not implemented yet for poroelastic case')
   end select
 
   ! imposes continuity for stabilization

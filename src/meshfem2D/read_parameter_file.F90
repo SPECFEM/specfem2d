@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine read_parameter_file(myrank,imesher,BROADCAST_AFTER_READ)
+  subroutine read_parameter_file(imesher,BROADCAST_AFTER_READ)
 
 ! reads in DATA/Par_file
 
@@ -40,7 +40,7 @@
 
   implicit none
 
-  integer, intent(in) :: myrank,imesher
+  integer, intent(in) :: imesher
   logical, intent(in) :: BROADCAST_AFTER_READ
 
   ! initializes
@@ -118,7 +118,7 @@
     call bcast_all_singlel(ATTENUATION_VISCOELASTIC)
     call bcast_all_singlel(ATTENUATION_VISCOACOUSTIC)
     call bcast_all_singlei(N_SLS)
-    call bcast_all_singledp(f0_attenuation)
+    call bcast_all_singledp(ATTENUATION_f0_REFERENCE)
     call bcast_all_singlel(READ_VELOCITIES_AT_f0)
     call bcast_all_singlel(USE_SOLVOPT)
     call bcast_all_singlel(ATTENUATION_PORO_FLUID_PART)
@@ -140,6 +140,7 @@
     call bcast_all_singlei(seismotype)
     call bcast_all_singlei(subsamp_seismos)
     call bcast_all_singlel(USE_TRICK_FOR_BETTER_PRESSURE)
+    call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_SEISMOS)
     call bcast_all_singlel(COMPUTE_INTEGRATED_ENERGY_FIELD)
     call bcast_all_singledp(USER_T0)
     call bcast_all_singlel(save_ASCII_seismograms)
@@ -152,12 +153,9 @@
     call bcast_all_singlel(rec_normal_to_surface)
 
     call bcast_all_singlel(save_ASCII_kernels)
+    call bcast_all_singlei(NSTEP_BETWEEN_COMPUTE_KERNELS)
+    call bcast_all_singlel(NO_BACKWARD_RECONSTRUCTION)
 
-    call bcast_all_singlel(PML_BOUNDARY_CONDITIONS)
-    call bcast_all_singlei(NELEM_PML_THICKNESS)
-    call bcast_all_singlel(ROTATE_PML_ACTIVATE)
-    call bcast_all_singledp(ROTATE_PML_ANGLE)
-    call bcast_all_singlel(PML_PARAMETER_ADJUSTMENT)
 
     call bcast_all_singlel(STACEY_ABSORBING_CONDITIONS)
     call bcast_all_singlel(ADD_PERIODIC_CONDITIONS)
@@ -273,6 +271,9 @@
   logical :: some_parameters_missing_from_Par_file
 
   integer, external :: err_occurred
+
+!! DK DK to detect discontinued parameters
+  double precision :: f0_attenuation
 
   !--------------------------------------------------------------------
   !
@@ -429,11 +430,22 @@
     write(*,*)
   endif
 
-  call read_value_double_precision_p(f0_attenuation, 'f0_attenuation')
+  call read_value_double_precision_p(ATTENUATION_f0_REFERENCE, 'ATTENUATION_f0_REFERENCE')
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'f0_attenuation                  = 5.196'
+    write(*,'(a)') 'ATTENUATION_f0_REFERENCE        = 5.196'
     write(*,*)
+  endif
+
+!! DK DK discontinued parameter
+  call read_value_double_precision_p(f0_attenuation, 'f0_attenuation')
+! if this parameter exists in the Par_file
+  if (err_occurred() == 0) then
+    write(*,'(a)') 'Parameter f0_attenuation in the Par_file is now called ATTENUATION_f0_REFERENCE'
+    write(*,'(a)') 'in order to use the same name as in the 3D code (SPECFEM3D).'
+    write(*,'(a)') 'Please rename it in your Par_file and start the code again.'
+    write(*,*)
+    call stop_the_code('Error: parameter f0_attenuation should be renamed in your Par_file')
   endif
 
   call read_value_logical_p(READ_VELOCITIES_AT_f0, 'READ_VELOCITIES_AT_f0')
@@ -578,6 +590,13 @@
     write(*,*)
   endif
 
+  call read_value_integer_p(NSTEP_BETWEEN_OUTPUT_SEISMOS, 'NSTEP_BETWEEN_OUTPUT_SEISMOS')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NSTEP_BETWEEN_OUTPUT_SEISMOS    = 1000'
+    write(*,*)
+  endif
+
   call read_value_double_precision_p(USER_T0, 'USER_T0')
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
@@ -645,7 +664,7 @@
 
   !--------------------------------------------------------------------
   !
-  ! adjoint kernel outputs
+  ! adjoint kernel
   !
   !--------------------------------------------------------------------
 
@@ -655,6 +674,21 @@
     write(*,'(a)') 'save_ASCII_kernels              = .true.'
     write(*,*)
   endif
+
+  call read_value_integer_p(NSTEP_BETWEEN_COMPUTE_KERNELS, 'NSTEP_BETWEEN_COMPUTE_KERNELS')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NSTEP_BETWEEN_COMPUTE_KERNELS             = 1'
+    write(*,*)
+  endif
+
+  call read_value_logical_p(NO_BACKWARD_RECONSTRUCTION,'NO_BACKWARD_RECONSTRUCTION')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'NO_BACKWARD_RECONSTRUCTIO           = .false.'
+    write(*,*)
+  endif
+
 
   !--------------------------------------------------------------------
   !
@@ -687,6 +721,34 @@
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'ROTATE_PML_ANGLE                = 30.'
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(K_MIN_PML, 'K_MIN_PML')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'K_MIN_PML                       = 1.d0'
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(K_MAX_PML, 'K_MAX_PML')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'K_MAX_PML                       = 1.d0'
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(damping_change_factor_acoustic, 'damping_change_factor_acoustic')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'damping_change_factor_acoustic  = 0.5d0'
+    write(*,*)
+  endif
+
+  call read_value_double_precision_p(damping_change_factor_elastic, 'damping_change_factor_elastic')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'damping_change_factor_elastic   = 1.d0'
     write(*,*)
   endif
 
@@ -1145,8 +1207,8 @@
     write(*,*) 'Please cut and paste them somewhere in your Par_file (any place is fine), change their values if needed'
     write(*,*) '(the above values are just default values), and restart your run.'
     write(*,*)
-    stop 'Error: some parameters are missing in your Par_file, it is incomplete or in an older format, &
-       &see at the end of the standard output file of the run for detailed and easy instructions about how to fix that'
+    call stop_the_code('Error: some parameters are missing in your Par_file, it is incomplete or in an older format, &
+       &see at the end of the standard output file of the run for detailed and easy instructions about how to fix that')
   endif
 
   !--------------------------------------------------------------------
@@ -1188,14 +1250,14 @@
   ! checks partitioning
   if (NPROC <= 0) then
      print *, 'Error: Number of processes (NPROC) must be greater than or equal to one.'
-     stop 'Error invalid NPROC value'
+     call stop_the_code('Error invalid NPROC value')
   endif
 
 #ifndef USE_MPI
   if (NPROC > 1) then
      print *, 'Error: Number of processes (NPROC) must be equal to one when not using MPI.'
      print *, 'Please recompile with -DUSE_MPI in order to enable use of MPI.'
-     stop 'Error invalid NPROC value'
+     call stop_the_code('Error invalid NPROC value')
   endif
 #endif
 
@@ -1203,48 +1265,49 @@
      print *, 'Error: Invalid partitioning method number.'
      print *, 'Partitioning method ',partitioning_method,' was requested, but is not available.'
      print *, 'Support for the METIS graph partitioner has been discontinued, please use SCOTCH (option 3) instead.'
-     stop 'Error invalid partitioning method'
+     call stop_the_code('Error invalid partitioning method')
   endif
 
   ! simulation parameters
   if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /= 3) &
-    stop 'SIMULATION_TYPE can only be set to 1 or 3 in the Par_file; exiting'
+    call stop_the_code('SIMULATION_TYPE can only be set to 1 or 3 in the Par_file; exiting')
 
   if (NOISE_TOMOGRAPHY < 0 .or. NOISE_TOMOGRAPHY > 3) &
-    stop 'NOISE_TOMOGRAPHY can only be set to 0, 1, 2 or 3 in the Par_file; exiting'
+    call stop_the_code('NOISE_TOMOGRAPHY can only be set to 0, 1, 2 or 3 in the Par_file; exiting')
 
-  if (N_SLS < 2) stop 'must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays'
+  if (N_SLS < 2) call stop_the_code('must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays')
 
-  if (ngnod /= 4 .and. ngnod /= 9) stop 'ngnod should be either 4 or 9!'
+  if (ngnod /= 4 .and. ngnod /= 9) call stop_the_code('ngnod should be either 4 or 9!')
 
   if (seismotype < 1 .or. seismotype > 6) &
-    stop 'seismotype should be 1(=displ), 2(=veloc), 3(=accel), 4(=pressure), 5(=curl of displ) or 6(=the fluid potential)'
+    call stop_the_code( &
+'seismotype should be 1(=displ), 2(=veloc), 3(=accel), 4(=pressure), 5(=curl of displ) or 6(=the fluid potential)')
 
   if (USE_TRICK_FOR_BETTER_PRESSURE .and. seismotype /= 4) &
-    stop 'USE_TRICK_FOR_BETTER_PRESSURE : seismograms must record pressure'
+    call stop_the_code('USE_TRICK_FOR_BETTER_PRESSURE : seismograms must record pressure')
 
-  if (subsamp_seismos < 1) stop 'Error: subsamp_seismos must be >= 1'
+  if (subsamp_seismos < 1) call stop_the_code('Error: subsamp_seismos must be >= 1')
 
   if (output_color_image .and. USE_CONSTANT_MAX_AMPLITUDE .and. CONSTANT_MAX_AMPLITUDE_TO_USE < 0.d0) &
-    stop 'CONSTANT_MAX_AMPLITUDE_TO_USE must be strictly positive'
+    call stop_the_code('CONSTANT_MAX_AMPLITUDE_TO_USE must be strictly positive')
 
   if (force_normal_to_surface .or. rec_normal_to_surface) then
     if (.not. read_external_mesh) &
-      stop 'Error read_external_mesh must be set to .true. for force_normal_to_surface or rec_normal_to_surface &
-            &to use external tangential_detection_curve_file'
+      call stop_the_code('Error read_external_mesh must be set to .true. for force_normal_to_surface or rec_normal_to_surface &
+            &to use external tangential_detection_curve_file')
     if (NUMBER_OF_SIMULTANEOUS_RUNS > 1) &
-      stop 'NUMBER_OF_SIMULTANEOUS_RUNS not compatible with force_normal_to_surface or rec_normal_to_surface for now &
-            & (look for FN2SNSR in the source code)'
+      call stop_the_code('NUMBER_OF_SIMULTANEOUS_RUNS not compatible with force_normal_to_surface or rec_normal_to_surface &
+            &for now (look for FN2SNSR in the source code)')
   endif
 
-  if (DT == 0.d0) stop 'DT must be non-zero value'
+  if (DT == 0.d0) call stop_the_code('DT must be non-zero value')
 
   ! reads in material definitions
-  if (nbmodels <= 0) stop 'Non-positive number of materials not allowed!'
+  if (nbmodels <= 0) call stop_the_code('Non-positive number of materials not allowed!')
 
   ! CPML and Stacey are mutually exclusive
   if (STACEY_ABSORBING_CONDITIONS .and. PML_BOUNDARY_CONDITIONS) &
-    stop 'STACEY_ABSORBING_CONDITIONS and PML_BOUNDARY_CONDITIONS are mutually exclusive but are both set to .true.'
+    call stop_the_code('STACEY_ABSORBING_CONDITIONS and PML_BOUNDARY_CONDITIONS are mutually exclusive but are both set to .true.')
 
   ! checks model
   select case (trim(MODEL))
@@ -1252,7 +1315,7 @@
     continue ! do nothing
   case default
     print *,'Error: unknown model choosen ',trim(MODEL)
-    stop 'Error bad model value for parameter MODEL'
+    call stop_the_code('Error bad model value for parameter MODEL')
   end select
 
   ! checks model
@@ -1261,20 +1324,20 @@
     continue ! do nothing
   case default
     print *,'Error: unknown save_model choosen ',trim(SAVE_MODEL)
-    stop 'Error bad value for parameter SAVE_MODEL'
+    call stop_the_code('Error bad value for parameter SAVE_MODEL')
   end select
 
   ! check regions
   if (read_external_mesh .eqv. .false.) then
-    if (nbregions <= 0) stop 'Negative number of regions not allowed for internal meshing!'
+    if (nbregions <= 0) call stop_the_code('Negative number of regions not allowed for internal meshing!')
   endif
 
-  if (NUMBER_OF_SIMULTANEOUS_RUNS <= 0) stop 'NUMBER_OF_SIMULTANEOUS_RUNS <= 0 makes no sense'
+  if (NUMBER_OF_SIMULTANEOUS_RUNS <= 0) call stop_the_code('NUMBER_OF_SIMULTANEOUS_RUNS <= 0 makes no sense')
 
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. NPROC == 1) stop 'Serial runs require NUMBER_OF_SIMULTANEOUS_RUNS == 1'
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. NPROC == 1) call stop_the_code('Serial runs require NUMBER_OF_SIMULTANEOUS_RUNS == 1')
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. trim(SAVE_MODEL) /= 'default' .and. trim(SAVE_MODEL) /= '.false.') &
-    stop 'NUMBER_OF_SIMULTANEOUS_RUNS not compatible yet with SAVE_MODEL. Look for SMNSR in the source code'
+    call stop_the_code('NUMBER_OF_SIMULTANEOUS_RUNS not compatible yet with SAVE_MODEL. Look for SMNSR in the source code')
 
   end subroutine check_parameters
 
@@ -1304,13 +1367,14 @@
 
   ! re-reads rec_normal_to_surface parameter to reposition read header for following next-line reads
   call read_value_logical_p(reread_rec_normal_to_surface, 'rec_normal_to_surface')
-  if (err_occurred() /= 0) stop 'error reading parameter rec_normal_to_surface in Par_file'
+  if (err_occurred() /= 0) call stop_the_code('error reading parameter rec_normal_to_surface in Par_file')
 
   ! checks
-  if (reread_rec_normal_to_surface .neqv. rec_normal_to_surface) stop 'Invalid re-reading of rec_normal_to_surface parameter'
+  if (reread_rec_normal_to_surface .neqv. rec_normal_to_surface) call stop_the_code( &
+'Invalid re-reading of rec_normal_to_surface parameter')
 
   ! only valid if at least 1 receiver line is specified
-  if (nreceiversets < 1) stop 'number of receiver sets must be greater than 1'
+  if (nreceiversets < 1) call stop_the_code('number of receiver sets must be greater than 1')
 
   ! allocate receiver line arrays
   allocate(nrec_line(nreceiversets))
@@ -1319,7 +1383,7 @@
   allocate(xfin(nreceiversets))
   allocate(zfin(nreceiversets))
   allocate(record_at_surface_same_vertical(nreceiversets),stat=ier)
-  if (ier /= 0 ) stop 'Error allocating receiver lines'
+  if (ier /= 0 ) call stop_the_code('Error allocating receiver lines')
 
   nrec_line(:) = 0
   xdeb(:) = 0.d0
@@ -1346,7 +1410,7 @@
       print *, 'Error could not open existing STATIONS file:'
       print *, trim(stations_filename)
       print *, 'Please check if file exists.'
-      stop 'Error opening STATIONS file'
+      call stop_the_code('Error opening STATIONS file')
     endif
     nrec = 0
     do while(ier == 0)
@@ -1363,25 +1427,25 @@
     ! loop on all the receiver lines
     do ireceiverlines = 1,nreceiversets
       call read_value_integer_next_p(nrec_line(ireceiverlines),'nrec')
-      if (err_occurred() /= 0) stop 'error reading parameter nrec in Par_file'
+      if (err_occurred() /= 0) call stop_the_code('error reading parameter nrec in Par_file')
 
       call read_value_double_prec_next_p(xdeb(ireceiverlines),'xdeb')
-      if (err_occurred() /= 0) stop 'error reading parameter xdeb in Par_file'
+      if (err_occurred() /= 0) call stop_the_code('error reading parameter xdeb in Par_file')
 
       call read_value_double_prec_next_p(zdeb(ireceiverlines),'zdeb')
-      if (err_occurred() /= 0) stop 'error reading parameter zdeb in Par_file'
+      if (err_occurred() /= 0) call stop_the_code('error reading parameter zdeb in Par_file')
 
       call read_value_double_prec_next_p(xfin(ireceiverlines),'xfin')
-      if (err_occurred() /= 0) stop 'error reading parameter xfin in Par_file'
+      if (err_occurred() /= 0) call stop_the_code('error reading parameter xfin in Par_file')
 
       call read_value_double_prec_next_p(zfin(ireceiverlines),'zfin')
-      if (err_occurred() /= 0) stop 'error reading parameter zfin in Par_file'
+      if (err_occurred() /= 0) call stop_the_code('error reading parameter zfin in Par_file')
 
       call read_value_logical_next_p(record_at_surface_same_vertical(ireceiverlines),'record_at_surface_same_vertical')
-      if (err_occurred() /= 0) stop 'error reading parameter record_at_surface_same_vertical in Par_file'
+      if (err_occurred() /= 0) call stop_the_code('error reading parameter record_at_surface_same_vertical in Par_file')
 
       if (read_external_mesh .and. record_at_surface_same_vertical(ireceiverlines)) then
-        stop 'Cannot use record_at_surface_same_vertical with external meshes!'
+        call stop_the_code('Cannot use record_at_surface_same_vertical with external meshes!')
       endif
     enddo
   endif
@@ -1406,7 +1470,7 @@
 
   ! boundary conditions
   if (add_Bielak_conditions .and. .not. STACEY_ABSORBING_CONDITIONS) &
-    stop 'need STACEY_ABSORBING_CONDITIONS set to .true. in order to use add_Bielak_conditions'
+    call stop_the_code('need STACEY_ABSORBING_CONDITIONS set to .true. in order to use add_Bielak_conditions')
 
   ! solve the conflict in value of PML_BOUNDARY_CONDITIONS and STACEY_ABSORBING_CONDITIONS
   if (PML_BOUNDARY_CONDITIONS) any_abs = .true.

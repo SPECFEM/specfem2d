@@ -18,7 +18,10 @@
 !! DK DK as reference instead of the relaxed ones) because it is not useful any more,
 !! DK DK this modification was not consistent with the calculations of the tau values
 !! DK DK made by Carcione et al. 1988 and by Carcione 1993.
-  logical, parameter :: FIX_ATTENUATION_CAUSALITY = .false.
+!! Comment from Quentin Brissaud, March 2018:
+!! This flag will tell the code that the input velocities are the relaxed one (omega -> zero frequency)
+!! instead of the unrelaxed ones (by default omega -> + infinity)
+  logical, parameter :: FIX_ATTENUATION_CAUSALITY = .true.
 
   integer, parameter :: iratio = 32
 
@@ -30,7 +33,7 @@
 !! DK DK for instance to compute the unrelaxed velocity in the Zener model
 ! double precision, parameter :: freqmax = 20000.d0
 
-  double precision, parameter :: freqseuil = 0.05d0
+  double precision, parameter :: freqseuil = 0.00005d0
 
   double precision, parameter :: pi = 3.141592653589793d0
 
@@ -39,9 +42,12 @@
   real wsave(4*nt+15)
   complex c(nt)
 
-! properties of the medium
-  double precision rho
-  parameter(rho = 2000.d0)
+!! DK DK for my slow inverse Discrete Fourier Transform using a double loop
+  complex :: input(nt), i_imaginary_constant
+  integer :: j,m
+
+! density of the medium
+  double precision, parameter :: rho = 2000.d0
 
 ! definition position recepteur Carcione
   double precision x1,x2
@@ -61,15 +67,22 @@
 ! integer, parameter :: L_mech = 5
   integer, parameter :: L_mech = 3
 
+! DK DK I implemented a very simple and slow inverse Discrete Fourier Transform
+! DK DK at some point, for verification, using a double loop. I keep it just in case.
+! DK DK For large number of points it is extremely slow because of the double loop.
+! DK DK Thus there is no reason to turn this flag on.
+  logical, parameter :: USE_SLOW_FOURIER_TRANSFORM = .false.
+
 ! attenuation constants from Carcione 1988 GJI vol 95 p 604
   double precision, dimension(L_mech) :: tau_epsilon_nu1, tau_sigma_nu1
 
 ! this value comes from page 397 of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
 ! Geophysical Journal, vol. 93, p. 393-407 (1988)
-  double precision, parameter :: M_relaxed = 8.d9
+  double precision, parameter :: vp = 2000.d0
+  double precision, parameter :: M_relaxed = rho*vp**2
 
-  integer :: ifreq,ifreq2,i_mech,iposition
-  double precision :: deltafreq,freq,omega,omega0,deltat,time,sum_of_coefficients
+  integer :: ifreq,i_mech,iposition
+  double precision :: deltafreq,freq,omega,omega0,deltat,time,a,sum_of_coefficients
   double complex :: comparg,sum_to_compute
 
 ! Fourier transform of the Ricker wavelet source
@@ -81,7 +94,7 @@
 ! spectral amplitude
   double precision ampli(0:nfreq)
 
-! analytical solution for both components
+! analytical solution for the single scalar component (pressure)
   double complex phi1(-nfreq:nfreq)
 
 ! external functions
@@ -90,38 +103,12 @@
 ! modules elastiques
   double complex :: MC, V1
 
-  logical :: correction_f0
-
 ! ********** end of variable declarations ************
 
-! IMPORTANT: for this analytical code the weights to use must be defined with
-!   tau_epsilon(i) = tau_sigma(i) * (1.d0 + weight(i))
-! instead of
-!   tau_epsilon(i) = tau_sigma(i) * (1.d0 + N * weight(i))
-! in file src/specfem2D/attenuation_model.f90
-! because the analytical formulas of Carcione et al. 1998 do not include the 1/N factor
-
-! relaxation times from Table 1 of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
-! Geophysical Journal, vol. 93, p. 393-407 (1988)
-! tau_epsilon_nu1(1) = 0.3196389
-! tau_epsilon_nu1(2) = 0.0850242
-! tau_epsilon_nu1(3) = 0.0226019
-! tau_epsilon_nu1(4) = 0.0060121
-! tau_epsilon_nu1(5) = 0.0016009
-
-! tau_sigma_nu1(1)   = 0.3169863
-! tau_sigma_nu1(2)   = 0.0842641
-! tau_sigma_nu1(3)   = 0.0224143
-! tau_sigma_nu1(4)   = 0.0059584
-! tau_sigma_nu1(5)   = 0.0015823
-
-  tau_epsilon_nu1(1) =  2.777320375916291d-002
-  tau_epsilon_nu1(2) =  3.187084050385516d-003
-  tau_epsilon_nu1(3) =  3.683612420748419d-004
-
-  tau_sigma_nu1(1)   =   2.730926321834314d-002
-  tau_sigma_nu1(2)   =   3.145516983560762d-003
-  tau_sigma_nu1(3)   =   3.620115821834951d-004
+!! DK DK Quentin Brissaud in March 2018 added the 1/L factor here (it is missing in Carcione's older papers)
+!! DK DK the weights below include this factor.
+  tau_epsilon_nu1 =    (/3.3490038309560245E-002,   3.3205062588009785E-003,   3.3551297958320871E-004/)
+  tau_sigma_nu1   =    (/3.1830988618379068E-002,   3.1830988618379067E-003,   3.1830988618379065E-004/)
 
 ! position of the receiver
   do iposition = 1,3
@@ -135,22 +122,29 @@
     endif
     x2 = 0.
 
-! fix the problem of the Hankel transform singularity at zero frequency or not
-! (should be set to true, otherwise the singularity will create numerical problems)
-  correction_f0 = .true.
+  print *,'Force source located at the origin (0,0)'
+  print *,'Receiver located in (x,z) = ',x1,x2
 
-  print *,'Receiver located in x1,x2:',x1,x2
-
-  print *,'Apply correction of the Hankel function in f = 0 (true or false):',correction_f0
+  if (TURN_ATTENUATION_OFF) then
+    print *,'BEWARE: computing the acoustic reference solution (i.e., without attenuation) instead of the viscoacoustic solution'
+  else
+    print *,'Computing the viscoacoustic solution'
+  endif
 
 ! step in frequency
   deltafreq = freqmax / dble(nfreq)
+
+! define parameters for the Ricker source
+  omega0 = 2.d0 * pi * f0
+  a = pi**2 * f0**2
+
+  deltat = 1.d0 / (freqmax*dble(iratio))
 
 ! define the spectrum of the source
   do ifreq=0,nfreq
       freq = deltafreq * dble(ifreq)
       omega = 2.d0 * pi * freq
-      omega0 = 2.d0 * pi * f0
+
 ! typo in equation (B10) of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
 ! Geophysical Journal, vol. 93, p. 393-407 (1988), the exponential is of -i omega t0,
 ! fixed here by adding the minus sign
@@ -162,8 +156,8 @@
 !     fomega(ifreq) = pi * dsqrt(pi/eta) * (1.d0/omega0) * cdexp(comparg) * ( dexp(- (pi*pi/eta) * (epsil/2 - omega/omega0)**2) &
 !         + dexp(- (pi*pi/eta) * (epsil/2 + omega/omega0)**2) )
 
-! definir le spectre d'un Ricker classique
-      fomega(ifreq) = - omega**2 * 2.d0 * (dsqrt(pi)/omega0) * cdexp(comparg) * dexp(- (omega/omega0)**2)
+! definir le spectre d'un Ricker classique (centre en t0)
+      fomega(ifreq) = dsqrt(pi) * cdexp(comparg) * omega**2 * dexp(-omega**2/(4.d0*a)) / (2.d0 * dsqrt(a**3))
 
       ra(ifreq) = dreal(fomega(ifreq))
       rb(ifreq) = dimag(fomega(ifreq))
@@ -172,10 +166,10 @@
   enddo
 
 ! sauvegarde du spectre d'amplitude de la source en Hz au format Gnuplot
-  open(unit=10,file='spectrum.gnu',status='unknown')
+  open(unit=10,file='spectrum_of_the_source_used.gnu',status='unknown')
   do ifreq = 0,nfreq
-      freq = deltafreq * dble(ifreq)
-      write(10,*) sngl(freq),sngl(ampli(ifreq))
+    freq = deltafreq * dble(ifreq)
+    write(10,*) sngl(freq),sngl(ampli(ifreq))
   enddo
   close(10)
 
@@ -195,7 +189,8 @@
   do i_mech = 1,L_mech
     sum_to_compute = sum_to_compute + dcmplx(1.d0,omega*tau_epsilon_nu1(i_mech)) / dcmplx(1.d0,omega*tau_sigma_nu1(i_mech))
   enddo
-  MC = M_relaxed * (1.d0 - L_mech + sum_to_compute)
+!! DK DK Quentin Brissaud in March 2018 added the 1/L factor here (it is missing in Carcione's older papers)
+  MC = M_relaxed * (1.d0 + (1./L_mech)*(-L_mech + sum_to_compute))
 
 ! use more standard infinite frequency (unrelaxed) reference,
 ! in which waves slow down when attenuation is turned on,
@@ -206,7 +201,8 @@
     do i_mech = 1,L_mech
       sum_of_coefficients = sum_of_coefficients + tau_epsilon_nu1(i_mech) / tau_sigma_nu1(i_mech)
     enddo
-    MC = MC / (1.d0 - L_mech + sum_of_coefficients)
+!! DK DK Quentin Brissaud in March 2018 added the 1/L factor here (it is missing in Carcione's older papers)
+    MC = MC / (1.d0 + (1./L_mech)*(-L_mech + sum_of_coefficients))
   endif
 
 ! equation (18) of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
@@ -219,25 +215,7 @@
 ! calcul de la solution analytique en frequence
   phi1(ifreq) = u1(omega,V1,x1,x2) * fomega(ifreq)
 
-! a nouveau critere ad-hoc pour eviter singularite en zero
-  if (freq < freqseuil) then
-      phi1(ifreq) = dcmplx(0.d0,0.d0)
-  endif
-
   enddo
-
-! pour eviter singularite en zero, prendre premiere valeur non nulle
-  if (correction_f0) then
-  do ifreq=0,nfreq
-      if (cdabs(phi1(ifreq)) > 0.d0) goto 180
-      do ifreq2=ifreq,nfreq
-        if (cdabs(phi1(ifreq2)) > 0.d0) goto 181
-      enddo
- 181 continue
-      phi1(ifreq) = phi1(ifreq2)
-  enddo
- 180 continue
-  endif
 
 ! take the conjugate value for negative frequencies
   do ifreq=-nfreq,-1
@@ -252,46 +230,86 @@
 ! enddo
 ! close(11)
 
-! Calculation of the time domain solution using Netlib
+! ***************************************************************************
+! Calculation of the time domain solution (using routine "cfftb" from Netlib)
+! ***************************************************************************
+
+! ****************
+! Compute pressure
+! ****************
 
 ! initialize FFT arrays
   call cffti(nt,wsave)
 
 ! clear array of Fourier coefficients
-  do it=1,nt
-      c(it) = cmplx(0.,0.)
+  do it = 1,nt
+    c(it) = cmplx(0.,0.)
   enddo
 
-! enter the Fourier values for Ux
+! use the Fourier values for pressure
   c(1) = cmplx(phi1(0))
   do ifreq=1,nfreq-2
       c(ifreq+1) = cmplx(phi1(ifreq))
       c(nt+1-ifreq) = conjg(cmplx(phi1(ifreq)))
   enddo
 
-! perform the inverse FFT for Ux
-  call cfftb(nt,c,wsave)
+! perform the inverse FFT for pressure
+  if (.not. USE_SLOW_FOURIER_TRANSFORM) then
+    call cfftb(nt,c,wsave)
+  else
+! DK DK I implemented a very simple and slow inverse Discrete Fourier Transform here
+! DK DK at some point, for verification, using a double loop. I keep it just in case.
+! DK DK For large number of points it is extremely slow because of the double loop.
+    input(:) = c(:)
+!   imaginary constant "i"
+    i_imaginary_constant = (0.,1.)
+    do it = 1,nt
+      if (mod(it,1000) == 0) print *,'FFT inverse it = ',it,' out of ',nt
+      j = it
+      c(j) = cmplx(0.,0.)
+      do m = 1,nt
+        c(j) = c(j) + input(m) * exp(2.d0 * PI * i_imaginary_constant * dble((m-1) * (j-1)) / nt)
+      enddo
+    enddo
+  endif
+
+! in the inverse Discrete Fourier transform one needs to divide by N, the number of samples (number of time steps here)
+  c(:) = c(:) / nt
 
 ! value of a time step
   deltat = 1.d0 / (freqmax*dble(iratio))
 
+! to get the amplitude right, we need to divide by the time step
+  c(:) = c(:) / deltat
+
 ! save time result inverse FFT for pressure
 
     if (iposition == 1) then
-      open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_200.dat',status='unknown')
+      if (TURN_ATTENUATION_OFF) then
+        open(unit=11,file='pressure_time_analytical_solution_acoustic_200.dat',status='unknown')
+      else
+        open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_200.dat',status='unknown')
+      endif
     else if (iposition == 2) then
-      open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_500.dat',status='unknown')
+      if (TURN_ATTENUATION_OFF) then
+        open(unit=11,file='pressure_time_analytical_solution_acoustic_500.dat',status='unknown')
+      else
+        open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_500.dat',status='unknown')
+      endif
     else
-      open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_800.dat',status='unknown')
+      if (TURN_ATTENUATION_OFF) then
+        open(unit=11,file='pressure_time_analytical_solution_acoustic_800.dat',status='unknown')
+      else
+        open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_800.dat',status='unknown')
+      endif
     endif
 
   do it=1,nt
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
-        ! time = dble(it-1)*deltat
         time = dble(it-1)*deltat - t0
 ! the seismograms are very long due to the very large number of FFT points used,
-! thus keeping the useful part of the signal only (the first two seconds of the seismogram)
-        if (time <= 0.9d0) write(11,*) sngl(time),real(c(it)),imag(c(it))
+! thus keeping the useful part of the signal only (the first six seconds of the seismogram)
+        if (time >= 0.d0 .and. time <= 6.d0) write(11,*) sngl(time),real(c(it))
   enddo
   close(11)
 

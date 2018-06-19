@@ -52,14 +52,14 @@
 
   ! allocates and initializes partitioning of elements
   allocate(part(0:nelmnts-1),stat=ier)
-  if (ier /= 0) stop 'Error allocating partition array'
+  if (ier /= 0) call stop_the_code('Error allocating partition array')
   part(:) = -1
 
   ! connectivity
   if (NPROC > 1) then
     allocate(xadj_g(0:nelmnts), &
              adjncy_g(0:MAX_NEIGHBORS*nelmnts-1),stat=ier)
-    if (ier /= 0) stop 'Error allocating connectivity arrays'
+    if (ier /= 0) call stop_the_code('Error allocating connectivity arrays')
     xadj_g(:) = 0
     adjncy_g(:) = -1
   endif
@@ -70,7 +70,7 @@
   ! because the adjacency of the mesh elements can be entirely determined from the knowledge of the four corners only
   if (ngnod == 9) then
     allocate(elmnts_bis(0:NCORNERS*nelmnts-1),stat=ier)
-    if (ier /= 0) stop 'Error allocating elmnts_bis array'
+    if (ier /= 0) call stop_the_code('Error allocating elmnts_bis array')
 
     do i = 0, nelmnts-1
       elmnts_bis(i*NCORNERS:i*NCORNERS+NCORNERS-1) = elmnts(i*ngnod:i*ngnod+NCORNERS-1)
@@ -129,7 +129,7 @@
       call scotch_partitioning()
 
     case default
-      stop 'Error invalid partitioning method value! must be 1, 2 or 3, please check your Par_file...'
+      call stop_the_code('Error invalid partitioning method value! must be 1, 2 or 3, please check your Par_file...')
     end select
 
   endif
@@ -168,7 +168,7 @@
   if (ADD_A_SMALL_CRACK_IN_THE_MEDIUM .and. NPROC > 1) then
     ! safety check
     if (ngnod /= 4) then
-      stop 'must currently have ngnod == 4 when adding a crack manually'
+      call stop_the_code('must currently have ngnod == 4 when adding a crack manually')
     else
       call manual_crack_repartitioning(num_material,NPROC)
     endif

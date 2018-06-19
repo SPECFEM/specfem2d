@@ -207,7 +207,9 @@ void FC_FUNC_(update_displacement_ac_cuda,
                                            realw* deltatover2_F,
                                            realw* b_deltat_F,
                                            realw* b_deltatsqover2_F,
-                                           realw* b_deltatover2_F) {
+                                           realw* b_deltatover2_F,
+                                           int* compute_b_wavefield,
+                                           int* UNDO_ATTENUATION_AND_OR_PML) {
   TRACE("\tupdate_displacement_ac_cuda");
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get Mesh from fortran integer wrapper
 
@@ -228,23 +230,25 @@ void FC_FUNC_(update_displacement_ac_cuda,
   realw deltatsqover2 = *deltatsqover2_F;
   realw deltatover2 = *deltatover2_F;
 
+  //cudaEventRecord(mp->end_of_iteration,mp->compute_stream);
+  //cudaEventSynchronize(mp->end_of_iteration);
+
   // Cuda timing
   cudaEvent_t start,stop;
   if (CUDA_TIMING_UPDATE) {
     start_timing_cuda(&start,&stop);
   }
-
+  if(!(*UNDO_ATTENUATION_AND_OR_PML && *compute_b_wavefield)) {
   UpdatePotential_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_acoustic,
-                                                                 mp->d_potential_dot_acoustic,
-                                                                 mp->d_potential_dot_dot_acoustic,
-                                                                 size,deltat,deltatsqover2,deltatover2);
-
+                                                                mp->d_potential_dot_acoustic,
+                                                                mp->d_potential_dot_dot_acoustic,
+                                                                size,deltat,deltatsqover2,deltatover2);
+  }
   // backward/reconstructed wavefields
-  if (mp->simulation_type == 3) {
+  if (mp->simulation_type == 3 && *compute_b_wavefield) {
     realw b_deltat = *b_deltat_F;
     realw b_deltatsqover2 = *b_deltatsqover2_F;
     realw b_deltatover2 = *b_deltatover2_F;
-
     UpdatePotential_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_acoustic,
                                                                   mp->d_b_potential_dot_acoustic,
                                                                   mp->d_b_potential_dot_dot_acoustic,
@@ -446,32 +450,37 @@ __global__ void kernel_3_acoustic_cuda_device(realw* potential_dot_dot_acoustic,
                                                 realw* potential_dot_acoustic,
                                                 realw* b_potential_dot_acoustic,
                                                 int size,
-                                                int simulation_type,
+                                                int compute_wavefield_1,
+                                                int compute_wavefield_2,
                                                 realw deltatover2,
                                                 realw b_deltatover2,
                                                 realw* rmass_acoustic) {
 
   int id = threadIdx.x + blockIdx.x*blockDim.x + blockIdx.y*gridDim.x*blockDim.x;
-
+  realw p_dot_dot;
   // because of block and grid sizing problems, there is a small
   // amount of buffer at the end of the calculation
   if (id < size) {
     // multiplies pressure with the inverse of the mass matrix
     realw rmass = rmass_acoustic[id];
-    realw p_dot_dot = potential_dot_dot_acoustic[id]*rmass;
-    potential_dot_dot_acoustic[id] = p_dot_dot;
-    // corrector:
-    // updates the chi_dot term which requires chi_dot_dot(t+delta)
-    potential_dot_acoustic[id] += deltatover2*p_dot_dot;
 
-    if (simulation_type==3){
+    if (compute_wavefield_1){
+      p_dot_dot = potential_dot_dot_acoustic[id]*rmass;
+      potential_dot_dot_acoustic[id] = p_dot_dot;
+      // corrector:
+      // updates the chi_dot term which requires chi_dot_dot(t+delta)
+      potential_dot_acoustic[id] += deltatover2*p_dot_dot;
+    }
+
+    if (compute_wavefield_2){
       p_dot_dot = b_potential_dot_dot_acoustic[id]*rmass;
       b_potential_dot_dot_acoustic[id] = p_dot_dot;
       // corrector:
       // updates the chi_dot term which requires chi_dot_dot(t+delta)
-      b_potential_dot_acoustic[id] += b_deltatover2*p_dot_dot;}
+      b_potential_dot_acoustic[id] += b_deltatover2*p_dot_dot;
+    }
 
-  }
+  } // id<size
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -480,7 +489,9 @@ extern "C"
 void FC_FUNC_(kernel_3_acoustic_cuda,
               KERNEL_3_ACOUSTIC_CUDA)(long* Mesh_pointer,
                                       realw* deltatover2,
-                                      realw* b_deltatover2) {
+                                      realw* b_deltatover2,
+                                      int* compute_wavefield_1,
+                                      int* compute_wavefield_2) {
 
   TRACE("\tkernel_3_acoustic_cuda");
 
@@ -497,15 +508,16 @@ void FC_FUNC_(kernel_3_acoustic_cuda,
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-  kernel_3_acoustic_cuda_device<<< grid, threads>>>(mp->d_potential_dot_dot_acoustic,
-                                                    mp->d_b_potential_dot_dot_acoustic,
-                                                    mp->d_potential_dot_acoustic,
-                                                    mp->d_b_potential_dot_acoustic,
-                                                    size,
-                                                    mp->simulation_type,
-                                                    *deltatover2,
-                                                    *b_deltatover2,
-                                                    mp->d_rmass_acoustic);
+  kernel_3_acoustic_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
+                                                                         mp->d_b_potential_dot_dot_acoustic,
+                                                                         mp->d_potential_dot_acoustic,
+                                                                         mp->d_b_potential_dot_acoustic,
+                                                                         size,
+                                                                         *compute_wavefield_1,
+                                                                         *compute_wavefield_2,
+                                                                         *deltatover2,
+                                                                         *b_deltatover2,
+                                                                          mp->d_rmass_acoustic);
 
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

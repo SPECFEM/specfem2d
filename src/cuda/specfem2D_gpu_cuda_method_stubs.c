@@ -324,7 +324,6 @@ void FC_FUNC_(prepare_constants_device,
                                         int* nrec_local,
                                         realw * h_cosrot,realw * h_sinrot,
                                         int* SIMULATION_TYPE,
-                                        int* USE_MESH_COLORING_GPU_f,
                                         int* nspec_acoustic,int* nspec_elastic,
                                         int* h_myrank,
                                         int* SAVE_FORWARD,
@@ -344,14 +343,13 @@ void FC_FUNC_(prepare_fields_acoustic_device,
                                               int* coupling_ac_el_ijk,
                                               realw* coupling_ac_el_normal,
                                               realw* coupling_ac_el_jacobian2Dw,
-                                              int * h_ninterface_acoustic,int * h_inum_interfaces_acoustic,
-                                              int* num_colors_outer_acoustic,
-                                              int* num_colors_inner_acoustic,
-                                              int* num_elem_colors_acoustic) {}
+                                              int * h_ninterface_acoustic,int * h_inum_interfaces_acoustic) {}
 
 void FC_FUNC_(prepare_fields_acoustic_adj_dev,
               PREPARE_FIELDS_ACOUSTIC_ADJ_DEV)(long* Mesh_pointer,
-                                              int* APPROXIMATE_HESS_KL) {}
+                                               int* APPROXIMATE_HESS_KL,
+                                               int* ATTENUATION_VISCOACOUSTIC,
+                                               int* NO_BACKWARD_RECONSTRUCTION) {}
 
 void FC_FUNC_(prepare_fields_elastic_device,
               PREPARE_FIELDS_ELASTIC_DEVICE)(long* Mesh_pointer,
@@ -364,9 +362,6 @@ void FC_FUNC_(prepare_fields_elastic_device,
                                              int* h_nspec_right,
                                              int* h_nspec_top,
                                              int* h_nspec_bottom,
-                                             int* num_colors_outer_elastic,
-                                             int* num_colors_inner_elastic,
-                                             int* num_elem_colors_elastic,
                                              int* ANISOTROPY,
                                              realw *c11store,realw *c12store,realw *c13store,
                                              realw *c15store,
@@ -411,6 +406,12 @@ void FC_FUNC_(transfer_b_fields_to_device,
 
 void FC_FUNC_(transfer_b_fields_from_device,
               TRANSFER_B_FIELDS_FROM_DEVICE)(int* size, realw* b_displ, realw* b_veloc, realw* b_accel,long* Mesh_pointer) {}
+
+void FC_FUNC_(transfer_b_potential_ac_from_device,
+              TRANSFER_B_POTENTIAL_AC_FROM_DEVICE)(int* size,realw* b_potential_acoustic,long* Mesh_pointer) {}
+
+void FC_FUNC_(transfer_b_potential_ac_to_device,
+              TRANSFER_B_POTENTIAL_AC_TO_DEVICE)(int* size,realw* b_potential_acoustic,long* Mesh_pointer) {}
 
 void FC_FUNC_(transfer_accel_to_device,
               TRNASFER_ACCEL_TO_DEVICE)(int* size, realw* accel,long* Mesh_pointer) {}
@@ -476,6 +477,20 @@ void FC_FUNC_(transfer_kernels_hess_el_tohost,
 
 void FC_FUNC_(transfer_kernels_hess_ac_tohost,
               TRANSFER_KERNELS_HESS_AC_TOHOST)(long* Mesh_pointer,realw* h_hess_ac_kl,int* NSPEC_AB) {}
+
+
+void FC_FUNC_(transfer_viscoacoustic_var_from_device,
+              TRANSFER_VISCOACOUSTIC_VAR_FROM_DEVICE)(int* size,realw* e1_acous_sf,realw* sum_forces_old,long* Mesh_pointer ) {}
+
+void FC_FUNC_(transfer_viscoacoustic_b_var_to_device,
+              TRANSFER_VISCOACOUSTIC_b_VAR_TO_DEVICE)(int* size,realw* b_e1_acous_sf,realw* b_sum_forces_old,long* Mesh_pointer) {}
+
+void FC_FUNC_(transfer_async_pot_ac_from_device,
+              TRANSFER_ASYNC_POT_AC_FROM_DEVICE)(realw* buffer,long* Mesh_pointer) {}
+
+void FC_FUNC_(transfer_async_pot_ac_to_device,
+              TRANSFER_ASYNC_POT_AC_TO_DEVICE)(realw* pot_buffer,
+                                               long* Mesh_pointer) {}
 
 void FC_FUNC_(transfer_compute_kernel_answers_from_device,
               TRANSFER_COMPUTE_KERNEL_ANSWERS_FROM_DEVICE)(long* Mesh_pointer,

@@ -33,7 +33,7 @@
 
   subroutine prepare_GPU()
 
-  use constants, only: IMAIN,USE_MESH_COLORING_GPU,APPROXIMATE_HESS_KL
+  use constants, only: IMAIN,APPROXIMATE_HESS_KL,USE_A_STRONG_FORMULATION_FOR_E1
   use specfem_par
   use specfem_par_gpu
 
@@ -55,18 +55,24 @@
   endif
 
   ! safety checks
-  if (any_elastic .and. (.not. P_SV)) stop 'Invalid GPU simulation, SH waves not implemented yet. Please use P_SV instead.'
-  if (PML_BOUNDARY_CONDITIONS ) stop 'PML not implemented on GPU mode. Please use Stacey instead.'
-  if (AXISYM) stop 'Axisym not implemented on GPU yet.'
-  if (NGLLX /= NGLLZ) stop 'GPU simulations require NGLLX == NGLLZ'
-
+  if (any_elastic .and. (.not. P_SV)) call stop_the_code( &
+'Invalid GPU simulation, SH waves not implemented yet. Please use P_SV instead.')
+  if (PML_BOUNDARY_CONDITIONS ) call stop_the_code('PML not implemented on GPU mode. Please use Stacey instead.')
+  if (AXISYM) call stop_the_code('Axisym not implemented on GPU yet.')
+  if (NGLLX /= NGLLZ) call stop_the_code('GPU simulations require NGLLX == NGLLZ')
+  if ( (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. ATTENUATION_VISCOACOUSTIC) call stop_the_code( &
+    'GPU simulations require USE_A_STRONG_FORMULATION_FOR_E1 set to true')
+  if ( ATTENUATION_VISCOELASTIC .and. SIMULATION_TYPE == 3) call stop_the_code( &
+    'GPU mode do not support yet adjoint simulations with attenuation viscoelastic')
+  if ( (ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. any_elastic .and. any_acoustic) call stop_the_code( &
+    'GPU mode do not support yet coupled fluid-solid simulations with attenuation')
   ! initializes arrays
   call init_host_to_dev_variable()
 
   ! check number of purely elastic elements
   if (nspec_elastic /= nspec - nspec_acoustic) then
     print *,'GPU simulation only supported for acoustic and/or elastic domain simulations'
-    stop 'Error GPU simulation'
+    call stop_the_code('Error GPU simulation')
   endif
 
 !!!!!!!!!!! Parametres fournis
@@ -125,7 +131,6 @@
                                 nrecloc, &
                                 cosrot_irecf,sinrot_irecf, &
                                 SIMULATION_TYPE, &
-                                USE_MESH_COLORING_GPU, &
                                 nspec_acoustic,nspec_elastic, &
                                 myrank,SAVE_FORWARD, &
                                 xir_store_loc, &
@@ -149,9 +154,6 @@
 ! coupling_ac_el_ij                      : coordonnees locales des points GLL sur la frontiere elastique/acoustique
 ! coupling_ac_el_normal(i,j,ispec)       : i eme coordonne de la normale au point GLL j de l'element frontiere ispec
 ! coupling_ac_el_jacobian1Dw(i,ispec)    : jacobienne ponderee du i eme point GLL de l'element frontiere ispec
-! num_colors_outer_acoustic              : a initialiser plus tard quand USE_COLOR_MESH sera implemente
-! num_colors_inner_acoustic              : a initialiser plus tard quand USE_COLOR_MESH sera implemente
-! num_elem_colors_acoustic               : a initialiser plus tard quand USE_COLOR_MESH sera implemente
 
 
   ! prepares fields on GPU for acoustic simulations
@@ -165,16 +167,16 @@
                                         any_elastic, num_fluid_solid_edges, &
                                         coupling_ac_el_ispec,coupling_ac_el_ij, &
                                         coupling_ac_el_normal,coupling_ac_el_jacobian1Dw, &
-                                        ninterface_acoustic,inum_interfaces_acoustic, &
-                                        num_colors_outer_acoustic,num_colors_inner_acoustic, &
-                                        num_elem_colors_acoustic)
+                                        ninterface_acoustic,inum_interfaces_acoustic,ATTENUATION_VISCOACOUSTIC, &
+                                        A_newmark_e1_sf,B_newmark_e1_sf,NO_BACKWARD_RECONSTRUCTION,no_backward_acoustic_buffer)
 
     if (SIMULATION_TYPE == 3) then
       ! safety check
       if (APPROXIMATE_HESS_KL) then
-        stop 'Sorry, approximate acoustic Hessian kernels not yet fully implemented for GPU simulations!'
+        call stop_the_code('Sorry, approximate acoustic Hessian kernels not yet fully implemented for GPU simulations!')
       endif
-      call prepare_fields_acoustic_adj_dev(Mesh_pointer,APPROXIMATE_HESS_KL)
+      call prepare_fields_acoustic_adj_dev(Mesh_pointer,APPROXIMATE_HESS_KL, &
+                                           ATTENUATION_VISCOACOUSTIC,NO_BACKWARD_RECONSTRUCTION)
     endif
   endif
 
@@ -185,9 +187,6 @@
 ! num_phase_ispec_elastic        : max entre nb d'element spectraux elastiques interieur et exterieur
 ! phase_ispec_inner_elastic(i,j) : i eme element spectral elastique interieur si j=2 exterieur si j=1
 ! elastic(i)                     : vrai si l'element spectral i est elastique
-! num_colors_outer_elastic       : a initialiser plus tard quand USE_COLOR_MESH sera implemente
-! num_colors_inner_elastic       : a initialiser plus tard quand USE_COLOR_MESH sera implemente
-! num_elem_colors_elastic        : a initialiser plus tard quand USE_COLOR_MESH sera implemente
 
   ! prepares fields on GPU for elastic simulations
   !?!? JC JC here we will need to add GPU support for the new C-PML routines
@@ -206,19 +205,18 @@
                                        nspec_right, &
                                        nspec_top, &
                                        nspec_bottom, &
-                                       num_colors_outer_elastic,num_colors_inner_elastic, &
-                                       num_elem_colors_elastic, &
                                        ANY_ANISOTROPY, &
                                        c11store,c12store,c13store, &
                                        c15store,c23store, &
                                        c25store,c33store,c35store,c55store, &
-                                       ninterface_elastic,inum_interfaces_elastic)
+                                       ninterface_elastic,inum_interfaces_elastic,ATTENUATION_VISCOELASTIC, &
+                                       A_newmark_nu2,B_newmark_nu2,A_newmark_nu1,B_newmark_nu1)
 
 
     if (SIMULATION_TYPE == 3) then
       ! safety check
       if (APPROXIMATE_HESS_KL) then
-        stop 'Sorry, approximate elastic Hessian kernels not yet fully implemented for GPU simulations!'
+        call stop_the_code('Sorry, approximate elastic Hessian kernels not yet fully implemented for GPU simulations!')
       endif
       call prepare_fields_elastic_adj_dev(Mesh_pointer,NDIM*NGLOB_AB,APPROXIMATE_HESS_KL)
     endif
@@ -229,7 +227,7 @@
 
   ! prepares fields on GPU for poroelastic simulations
   if (any_poroelastic) then
-    stop 'todo poroelastic simulations on GPU'
+    call stop_the_code('todo poroelastic simulations on GPU')
   endif
 
   ! prepares needed receiver array for adjoint runs
@@ -244,9 +242,7 @@
     call transfer_fields_ac_to_device(NGLOB_AB,potential_acoustic, &
                                       potential_dot_acoustic,potential_dot_dot_acoustic,Mesh_pointer)
 
-
-
-    if (SIMULATION_TYPE == 3) &
+    if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) &
       call transfer_b_fields_ac_to_device(NGLOB_AB,b_potential_acoustic, &
                                           b_potential_dot_acoustic,b_potential_dot_dot_acoustic,Mesh_pointer)
   endif
@@ -383,7 +379,7 @@
            abs_boundary_jacobian1Dw(NGLLX,nelemabs), &
            abs_boundary_normal(NDIM,NGLLX,nelemabs), &
            cote_abs(nelemabs),stat=ier)
-  if (ier /= 0 ) stop 'error allocating array abs_boundary_ispec etc.'
+  if (ier /= 0 ) call stop_the_code('error allocating array abs_boundary_ispec etc.')
 
   if (STACEY_ABSORBING_CONDITIONS) then
 
@@ -500,7 +496,7 @@
   j = 0
   do i = 1, NSOURCES
     if (myrank == islice_selected_source(i)) then
-      if (j > nsources_local) stop 'Error with the number of local sources'
+      if (j > nsources_local) call stop_the_code('Error with the number of local sources')
       j = j + 1
       source_time_function_loc(j,:) = source_time_function(i,:,1)
       ispec_selected_source_loc(j)  = ispec_selected_source(i)
@@ -547,7 +543,7 @@
 
   do i_spec_free = 1, nelem_acoustic_surface
     if (acoustic_surface(2,i_spec_free) == acoustic_surface(3,i_spec_free)) then
-      do j =1,5
+      do j =1,NGLLX
         free_surface_ij(1,j,i_spec_free) = acoustic_surface(2,i_spec_free)
       enddo
     else
@@ -559,7 +555,7 @@
     endif
 
     if (acoustic_surface(4,i_spec_free) == acoustic_surface(5,i_spec_free)) then
-      do j =1,5
+      do j =1,NGLLX
         free_surface_ij(2,j,i_spec_free) = acoustic_surface(4,i_spec_free)
       enddo
     else
@@ -632,21 +628,9 @@
     enddo
   enddo
 
-  ! coloring (dummy)
-  num_colors_outer_acoustic = 0
-  num_colors_inner_acoustic = 0
-  allocate(num_elem_colors_acoustic(1))
-  num_elem_colors_acoustic(1) = 0
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!! Initialisation parametres pour simulation elastique
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-  ! coloring (dummy)
-  num_colors_outer_elastic = 0
-  num_colors_inner_elastic = 0
-  allocate(num_elem_colors_elastic(1))
-  num_elem_colors_elastic(1) = 0
 
   ! anisotropy
   ANY_ANISOTROPY = .false.

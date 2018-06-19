@@ -50,7 +50,7 @@
     ! opens Database file
     write(prname, "(a,i5.5,a)") './'//trim(OUTPUT_FILES)//'Database',iproc,'.bin'
     open(unit=IOUT,file=trim(prname),status='unknown',action='write',form='unformatted',iostat=ier)
-    if (ier /= 0 ) stop 'Error saving databases; check that directory OUTPUT_FILES exists'
+    if (ier /= 0 ) call stop_the_code('Error saving databases; check that directory OUTPUT_FILES exists')
 
     ! saves header infos and simulation setup
     call save_databases_init()
@@ -144,6 +144,9 @@
   ! 'NSTEP_BETWEEN_OUTPUT_INFO'
   write(IOUT) NSTEP_BETWEEN_OUTPUT_INFO
 
+  ! 'NSTEP_BETWEEN_OUTPUT_SEISMOS'
+  write(IOUT) NSTEP_BETWEEN_OUTPUT_SEISMOS
+
   ! 'NSTEP_BETWEEN_OUTPUT_IMAGES'
   write(IOUT) NSTEP_BETWEEN_OUTPUT_IMAGES
 
@@ -155,6 +158,18 @@
 
   ! 'ROTATE_PML_ANGLE'
   write(IOUT) ROTATE_PML_ANGLE
+
+  ! 'K_MIN_PML'
+  write(IOUT) K_MIN_PML
+
+  ! 'K_MAX_PML'
+  write(IOUT) K_MAX_PML
+
+  ! 'damping_change_factor_acoustic'
+  write(IOUT) damping_change_factor_acoustic
+
+  ! 'damping_change_factor_elastic'
+  write(IOUT) damping_change_factor_elastic
 
   ! 'PML_PARAMETER_ADJUSTMENT'
   write(IOUT) PML_PARAMETER_ADJUSTMENT
@@ -221,6 +236,12 @@
 
   ! 'save_ASCII_kernels'
   write(IOUT) save_ASCII_kernels
+
+  ! 'NSTEP_BETWEEN_COMPUTE_KERNELS'
+  write(IOUT) NSTEP_BETWEEN_COMPUTE_KERNELS
+
+  ! 'NO_BACKWARD_RECONSTRUCTION'
+  write(IOUT) NO_BACKWARD_RECONSTRUCTION
 
   ! 'DRAW_SOURCES_AND_RECEIVERS'
   write(IOUT) DRAW_SOURCES_AND_RECEIVERS
@@ -390,7 +411,7 @@
 
   ! attenuation setting
   ! 'attenuation'
-  write(IOUT) N_SLS, f0_attenuation, READ_VELOCITIES_AT_f0
+  write(IOUT) N_SLS, ATTENUATION_f0_REFERENCE, READ_VELOCITIES_AT_f0
 
   end subroutine save_databases_attenuation
 
@@ -495,7 +516,7 @@
       !write(IOUT) i,icodemat(i),rho_s_read(i),cp(i),cs(i),0,0,QKappa(i),Qmu(i),0,0,0,0,0,0
     else
       ! case should not occur
-      stop 'Unknown material code'
+      call stop_the_code('Unknown material code')
     endif
 
     ! check format with file src/specfem2D/read_materials.f90

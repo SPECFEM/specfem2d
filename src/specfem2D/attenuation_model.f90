@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine attenuation_model(QKappa_att,QMu_att,f0_attenuation,N_SLS, &
+  subroutine attenuation_model(QKappa_att,QMu_att,ATTENUATION_f0_REFERENCE,N_SLS, &
                                tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
                                tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
 
@@ -43,7 +43,7 @@
   implicit none
 
   double precision,intent(in) :: QKappa_att,QMu_att
-  double precision,intent(in) :: f0_attenuation
+  double precision,intent(in) :: ATTENUATION_f0_REFERENCE
 
   integer,intent(in) :: N_SLS
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(out) :: inv_tau_sigma_nu1_sent,phi_nu1_sent
@@ -57,7 +57,7 @@
   double precision :: f_min_attenuation, f_max_attenuation
 
   ! safety check
-  if (N_SLS < 1) stop 'Invalid N_SLS value, must be at least 1'
+  if (N_SLS < 1) call stop_the_code('Invalid N_SLS value, must be at least 1')
 
 ! attenuation constants for standard linear solids
 ! nu1 is the dilatation/incompressibility mode (QKappa)
@@ -68,7 +68,7 @@
   if (USE_OLD_C_ATTENUATION_ROUTINE_INSTEAD .and. .not. USE_SOLVOPT) then
 
   ! f_min and f_max are computed as : f_max/f_min=12 and (log(f_min)+log(f_max))/2 = log(f0)
-    f_min_attenuation = exp(log(f0_attenuation)-log(12.d0)/2.d0)
+    f_min_attenuation = exp(log(ATTENUATION_f0_REFERENCE)-log(12.d0)/2.d0)
     f_max_attenuation = 12.d0 * f_min_attenuation
 
   ! call of C function that computes attenuation parameters (function in file "attenuation_compute_param.c";
@@ -79,20 +79,21 @@
   else
 
   ! use a wide bandwidth (always OK when using three or more Standard Linear Solids, can be a bit inaccurate if using only two)
-    f_min_attenuation = f0_attenuation / 10.d0
-    f_max_attenuation = f0_attenuation * 10.d0
+    f_min_attenuation = ATTENUATION_f0_REFERENCE / 10.d0
+    f_max_attenuation = ATTENUATION_f0_REFERENCE * 10.d0
 
-    call compute_attenuation_coeffs(N_SLS,QKappa_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+    call compute_attenuation_coeffs(N_SLS,QKappa_att,ATTENUATION_f0_REFERENCE,f_min_attenuation,f_max_attenuation, &
                                           tau_epsilon_nu1_d,tau_sigma_nu1)
 
-    call compute_attenuation_coeffs(N_SLS,QMu_att,f0_attenuation,f_min_attenuation,f_max_attenuation, &
+    call compute_attenuation_coeffs(N_SLS,QMu_att,ATTENUATION_f0_REFERENCE,f_min_attenuation,f_max_attenuation, &
                                           tau_epsilon_nu2_d,tau_sigma_nu2)
 
   endif
 
 ! print *
 ! print *,'N_SLS, QKappa_att, QMu_att = ',N_SLS, QKappa_att, QMu_att
-! print *,'f0_attenuation,f_min_attenuation,f_max_attenuation = ',f0_attenuation,f_min_attenuation,f_max_attenuation
+! print *,'ATTENUATION_f0_REFERENCE,f_min_attenuation,f_max_attenuation = ',ATTENUATION_f0_REFERENCE, &
+!                              f_min_attenuation,f_max_attenuation
 ! print *,'tau_epsilon_nu1 = ',tau_epsilon_nu1_d
 ! print *,'tau_sigma_nu1 = ',tau_sigma_nu1
 ! print *,'tau_epsilon_nu2 = ',tau_epsilon_nu2_d
@@ -101,7 +102,7 @@
 
   if (any(tau_sigma_nu1 < 0.d0) .or. any(tau_sigma_nu2 < 0.d0) .or. &
       any(tau_epsilon_nu1_d < 0.d0) .or. any(tau_epsilon_nu2_d < 0.d0)) &
-       stop 'error: negative relaxation time found for a viscoelastic material'
+       call stop_the_code('error: negative relaxation time found for a viscoelastic material')
 
 ! in the old formulation of Carcione 1993, which is based on Liu et al. 1976, the 1/N factor is missing
 ! and thus this does not apply; it only applies to the right formula with 1/N included
@@ -160,7 +161,7 @@
   Mu_nu2_sent = real(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS),kind=CUSTOM_REAL)
 
   if (Mu_nu1_sent < 1. .or. Mu_nu2_sent < 1.) &
-    stop 'error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one'
+    call stop_the_code('error in Zener viscoelasticity: must have Mu_nu1 and Mu_nu2 both greater than one')
 
   end subroutine attenuation_model
 
@@ -169,7 +170,7 @@
 !
 
   subroutine shift_velocities_from_f0(vp,vs,rho, &
-                                      f0_attenuation,N_SLS, &
+                                      ATTENUATION_f0_REFERENCE,N_SLS, &
                                       tau_epsilon_nu1,tau_epsilon_nu2,inv_tau_sigma_nu1,inv_tau_sigma_nu2)
 
 ! From Emmanuel Chaljub, ISTerre, OSU Grenoble, France:
@@ -179,13 +180,13 @@
 
 !  by default, the velocity values that are read in the Par_file of the code are supposed to be the unrelaxed values,
 !  i.e. the velocities at infinite frequency.
-!  We may want to change this and impose that the values read are those for a given frequency (here f0_attenuation).
+!  We may want to change this and impose that the values read are those for a given frequency (here ATTENUATION_f0_REFERENCE).
 !
-!  The unrelaxed values are then defined from the reference values read at frequency f0_attenuation as follows:
+!  The unrelaxed values are then defined from the reference values read at frequency ATTENUATION_f0_REFERENCE as follows:
 !
 !     mu_unrelaxed = mu (w_ref) * [ ( 1 + (1/N) Sum_k ak ) / (1 + (1/N) Sum_k ak/(1+1/(w_ref*tau_sigma_k)**2) ) ]
 !
-!     where w_ref = 2*PI*f0_attenuation
+!     where w_ref = 2*PI*ATTENUATION_f0_REFERENCE
 !           tau_k = tau_epsilon_k is the strain relaxation time of the k-th SLS mechanism
 !              ak = tau_k/tau_sigma_k - 1
 !     The ak are the solutions of the linear system:
@@ -222,7 +223,7 @@
   double precision, intent(inout) :: vp,vs
 
   double precision, intent(in) :: rho
-  double precision, intent(in) :: f0_attenuation
+  double precision, intent(in) :: ATTENUATION_f0_REFERENCE
 
   integer,intent(in) :: N_SLS
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: tau_epsilon_nu1,tau_epsilon_nu2
@@ -252,12 +253,12 @@
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)/tau_sigma_nu2(i_sls) - ONE
      xtmp_ak_nu2 = tau_epsilon_nu2(i_sls)*inv_tau_sigma_nu2(i_sls) - ONE
      xtmp1_nu2 = xtmp1_nu2 + xtmp_ak_nu2/N_SLS
-     xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * f0_attenuation / inv_tau_sigma_nu2(i_sls))**2)/N_SLS
+     xtmp2_nu2 = xtmp2_nu2 + xtmp_ak_nu2/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu2(i_sls))**2)/N_SLS
 
 !! DK DK changed this to the pre-computed inverse     xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)/tau_sigma_nu1(i_sls) - ONE
      xtmp_ak_nu1 = tau_epsilon_nu1(i_sls)*inv_tau_sigma_nu1(i_sls) - ONE
      xtmp1_nu1 = xtmp1_nu1 + xtmp_ak_nu1/N_SLS
-     xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * f0_attenuation / inv_tau_sigma_nu1(i_sls))**2)/N_SLS
+     xtmp2_nu1 = xtmp2_nu1 + xtmp_ak_nu1/(ONE + ONE/(TWO * PI * ATTENUATION_f0_REFERENCE / inv_tau_sigma_nu1(i_sls))**2)/N_SLS
   enddo
 
   factor_mu = xtmp1_nu2/xtmp2_nu2
@@ -901,7 +902,7 @@
       if (n < 2) then
           print *, 'SolvOpt error:'
           print *, 'Improper space dimension.'
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
         options(9)=-one
         goto 999
       endif
@@ -911,85 +912,85 @@
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (g(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (g0(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (g1(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (gt(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (gc(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (z(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (x1(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (xopt(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (xrec(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (grec(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (xx(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (deltax(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
       allocate (idx(n),stat=allocerr)
       if (allocerr /= 0) then
          options(9)=-one
          print *,allocerrstr,allocerr
-         stop 'error in allocate statement in SolvOpt'
+         call stop_the_code('error in allocate statement in SolvOpt')
       endif
 
 ! store flags:
@@ -1286,7 +1287,7 @@
         if (kj > 2*kd) then
           kd=kd+1
           warnno=1
-          endwarn='Premature stop is possible. Try to re-run the routine from the obtained point.'
+          endwarn='Premature stopping is possible. Try to re-run the routine from the obtained point.'
           do i = 1,n
             if (dabs(x(i)-xx(i)) < epsnorm*dabs(x(i))) then
              if (dispwarn) then
@@ -1940,7 +1941,7 @@
                 print *,'The function is flat in certain directions.'
              endif
              warnno=1
-             endwarn='Premature stop is possible. Try to re-run the routine from the obtained point.'
+             endwarn='Premature stopping is possible. Try to re-run the routine from the obtained point.'
              do i = 1,n
                x1(i)=x(i)
              enddo

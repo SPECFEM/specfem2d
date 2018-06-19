@@ -158,7 +158,7 @@
           else if (ispec_is_poroelastic(ispec)) then
             idomain = IDOMAIN_POROELASTIC
           else
-            stop 'Invalid element type in locating source found!'
+            call stop_the_code('Invalid element type in locating source found!')
           endif
         endif
       enddo

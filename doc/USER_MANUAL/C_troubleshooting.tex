@@ -1,0 +1,54 @@
+%------------------------------------------------------------------------------------------------%
+
+\chapter{Troubleshooting}\label{cha:Troubleshooting}
+
+%------------------------------------------------------------------------------------------------%
+
+
+\section*{FAQ}
+
+\subsection*{Regarding the structure of some of the database files}
+
+\paragraph{Question:} Can anyone tell me what the columns of the SPECFEM2D boundary
+condition files in \texttt{SPECFEM2D/DATA/}~\\
+\texttt{Mesh\_canyon} are?
+%
+\begin{verbatim}
+    SPECFEM2D/DATA/Mesh_canyon/canyon_absorbing_surface_file
+    SPECFEM2D/DATA/Mesh_canyon/canyon_free_surface_file
+\end{verbatim}
+
+\paragraph{Answer:} \texttt{canyon\_absorbing\_surface\_file} refers to parameters related to the
+absorbing conditions:
+The first number (180) is the number of absorbing elements (nelemabs in the
+code).
+Then the columns are:
+\begin{enumerate}[wide=1em, label=column \arabic*:]
+\item the element number
+\item the number of nodes of this element that form the absorbing surface
+\item the first node
+\item the second node
+\end{enumerate}
+
+\texttt{canyon\_free\_surface\_file} refers to the elements of the free surface
+(relevant for enforcing free surface condition for acoustic media):
+The first number (160) is the number of  elements of the free surface.
+Then the columns are (similar to the absorbing case):
+\begin{enumerate}[wide=1em, label=column \arabic*:]
+\item the element number
+\item the number of nodes of this element that form the absorbing surface
+\item the first node
+\item the second node
+\end{enumerate}
+
+Concerning the free surface description file, nodes/edges pertaining to
+elastic elements are discarded when the file is read (if for whatever
+reason it was simpler to include all the nodes/edges on one side of a
+studied area and that there are among them some elements that are
+elastic elements, only the nodes/edges of acoustic elements are kept).
+
+These files are opened and read in \texttt{meshfem2D.F90} using subroutines
+\texttt{read\_abs\_surface()} and \texttt{read\_}~\\
+\texttt{acoustic\_surface()}, which are in \texttt{part\_unstruct.F90}
+
+

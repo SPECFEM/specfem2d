@@ -79,14 +79,12 @@ specfem2D_OBJECTS = \
 	$O/compute_energy.spec.o \
 	$O/compute_forces_viscoacoustic.spec.o \
 	$O/compute_attenuation_viscoacoustic.spec.o \
-	$O/compute_forces_viscoacoustic_backward.spec.o \
 	$O/compute_forces_viscoacoustic_calling_routine.spec.o \
 	$O/compute_forces_poroelastic_calling_routine.spec.o \
 	$O/compute_forces_poro_fluid.spec.o \
 	$O/compute_forces_poro_solid.spec.o \
 	$O/compute_forces_poro_viscous_damping.spec.o \
 	$O/compute_forces_viscoelastic.spec.o \
-	$O/compute_forces_viscoelastic_backward.spec.o \
 	$O/compute_forces_viscoelastic_calling_routine.spec.o \
 	$O/compute_gpu_acoustic.spec.o \
 	$O/compute_gpu_elastic.spec.o \
@@ -348,6 +346,8 @@ endif
 
 $O/specfem2D.spec.o: $O/specfem2D_par.spec_module.o
 
+# Version file
+$O/initialize_simulation.spec.o: ${SETUP}/version.fh
 
 ##
 ## object files

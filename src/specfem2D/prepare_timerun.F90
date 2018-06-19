@@ -59,7 +59,7 @@
   ! PML preparation
   call prepare_PML()
 
-  if (setup_with_binary_database /= 2 ) then
+  if (setup_with_binary_database /= 2) then
 
     ! attenuation
     !! DK DK moved preparation of attenuation to before preparation of mass matrix
@@ -102,6 +102,9 @@
 
   ! jpeg images
   call prepare_timerun_image_coloring()
+
+  ! init specific to NO_BACKWARD_RECONSTRUCTION option
+  call prepare_timerun_no_backward_reconstruction()
 
   ! prepares GPU arrays
   if (GPU_MODE) call prepare_GPU()
@@ -186,10 +189,10 @@
 
   ! seismograms
   ! allocate seismogram arrays
-  allocate(sisux(NSTEP/subsamp_seismos,nrecloc), &
-           sisuz(NSTEP/subsamp_seismos,nrecloc), &
-           siscurl(NSTEP/subsamp_seismos,nrecloc),stat=ier)
-  if (ier /= 0) stop 'Error allocating seismogram arrays'
+  allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
+           sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
+           siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
 
   sisux(:,:) = ZERO ! double precision zero
   sisuz(:,:) = ZERO
@@ -216,6 +219,11 @@
 
   implicit none
 
+  ! local variable
+#ifdef USE_MPI
+  integer :: n_sls_loc
+#endif
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
@@ -227,8 +235,11 @@
   call invert_mass_matrix_init()
 
 #ifdef USE_MPI
+  n_sls_loc = 0
+  if (ATTENUATION_VISCOACOUSTIC) n_sls_loc = N_SLS
   ! assembling the mass matrix of shared nodes on MPI partition interfaces
   call assemble_MPI_scalar(rmass_inverse_acoustic,nglob_acoustic, &
+                           rmass_inverse_e1,n_sls_loc, &
                            rmass_inverse_elastic,nglob_elastic, &
                            rmass_s_inverse_poroelastic,rmass_w_inverse_poroelastic,nglob_poroelastic)
 #endif
@@ -270,7 +281,7 @@
   ! arrays for display images
   allocate(shape2D_display(ngnod,pointsdisp,pointsdisp), &
            dershape2D_display(NDIM,ngnod,pointsdisp,pointsdisp),stat=ier)
-  if (ier /= 0) stop 'Error allocating shape arrays for display'
+  if (ier /= 0) call stop_the_code('Error allocating shape arrays for display')
 
   ! computes shape functions and their derivatives for regular interpolated display grid
   do j = 1,pointsdisp
@@ -393,15 +404,15 @@
 
     ! allocate an array for image data
     allocate(image_color_data(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
-    if (ier /= 0) stop 'error in an allocate statement 1'
+    if (ier /= 0) call stop_the_code('error in an allocate statement 1')
     allocate(image_color_vp_display(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
-    if (ier /= 0) stop 'error in an allocate statement 2'
+    if (ier /= 0) call stop_the_code('error in an allocate statement 2')
 
     ! allocate an array for the grid point that corresponds to a given image data point
     allocate(iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
-    if (ier /= 0) stop 'error in an allocate statement 3'
+    if (ier /= 0) call stop_the_code('error in an allocate statement 3')
     allocate(copy_iglob_image_color(NX_IMAGE_color,NZ_IMAGE_color),stat=ier)
-    if (ier /= 0) stop 'error in an allocate statement 4'
+    if (ier /= 0) call stop_the_code('error in an allocate statement 4')
 
     !remember which image are going to produce
     if (USE_SNAPSHOT_NUMBER_IN_FILENAME) then
@@ -428,7 +439,7 @@
     ! checks
     if (ipixel /= nb_pixel_loc) then
       print *,'Error: pixel count ',ipixel,nb_pixel_loc
-      stop 'Error invalid pixel count for color image'
+      call stop_the_code('Error invalid pixel count for color image')
     endif
     ! filling array iglob_image_color, containing info on which process owns which pixels.
     iproc = 0
@@ -627,7 +638,7 @@
 
     allocate(coorg_send_ps_vector_field(d1_coorg_send_ps_vector_field,d2_coorg_send_ps_vector_field))
     allocate(coorg_recv_ps_vector_field(d1_coorg_recv_ps_vector_field,d2_coorg_recv_ps_vector_field),stat=ier)
-    if (ier /= 0) stop 'Error allocating postscript arrays'
+    if (ier /= 0) call stop_the_code('Error allocating postscript arrays')
 
     ! to dump the wave field
     this_is_the_first_time_we_dump = .true.
@@ -724,7 +735,7 @@
       if (any_poroelastic) then
         allocate(b_viscodampx(NGLLX,NGLLZ,nspec), &
                  b_viscodampz(NGLLX,NGLLZ,nspec),stat=ier)
-        if (ier /= 0) stop 'Error allocating b_viscodamp arrays'
+        if (ier /= 0) call stop_the_code('Error allocating b_viscodamp arrays')
         b_viscodampx(:,:,:) = 0._CUSTOM_REAL
         b_viscodampz(:,:,:) = 0._CUSTOM_REAL
 
@@ -801,83 +812,83 @@
       if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_cijkl_kernel.dat'
         open(unit = 97, file=trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
       else
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_mu_kernel.dat'
         open(unit = 97, file = trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_alpha_beta_kernel.dat'
         open(unit = 98, file = trim(OUTPUT_FILES)//outputname,status='unknown',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
       endif
     else
       ! binary format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kernel.bin'
       open(unit = 204, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
       if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
          write(outputname,'(a,i6.6,a)')'proc',myrank,'_c11_kernel.bin'
          open(unit = 205,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) stop 'Error writing kernel file to disk'
+         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c13_kernel.bin'
          open(unit = 206,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) stop 'Error writing kernel file to disk'
+         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c15_kernel.bin'
          open(unit = 207,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) stop 'Error writing kernel file to disk'
+         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c33_kernel.bin'
          open(unit = 208,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) stop 'Error writing kernel file to disk'
+         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c35_kernel.bin'
          open(unit = 209,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) stop 'Error writing kernel file to disk'
+         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
          write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c55_kernel.bin'
          open(unit = 210,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-         if (ier /= 0) stop 'Error writing kernel file to disk'
+         if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
       else
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_kernel.bin'
         open(unit = 205, file =trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_kernel.bin'
         open(unit = 206, file =trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_kernel.bin'
         open(unit = 207, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_alpha_kernel.bin'
         open(unit = 208, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_beta_kernel.bin'
         open(unit = 209, file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_c_kernel.bin'
         open(unit = 210,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_bulk_beta_kernel.bin'
         open(unit = 211,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         if (APPROXIMATE_HESS_KL) then
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian1_kernel.bin'
           open(unit =214,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-          if (ier /= 0) stop 'Error writing kernel file to disk'
+          if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
           write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian2_kernel.bin'
           open(unit=215,file=trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-          if (ier /= 0) stop 'Error writing kernel file to disk'
+          if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
         endif
       endif
 
@@ -902,38 +913,38 @@
   ! poro-elastic domains
   if (any_poroelastic) then
 
-    if (.not. save_ASCII_kernels) stop 'poroelastic simulations must use save_ASCII_kernels'
+    if (.not. save_ASCII_kernels) call stop_the_code('poroelastic simulations must use save_ASCII_kernels')
 
     ! Primary kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mu_B_C_kernel.dat'
     open(unit = 144, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_M_rho_rhof_kernel.dat'
     open(unit = 155, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_m_eta_kernel.dat'
     open(unit = 16, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     ! Wavespeed kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_cpI_cpII_cs_kernel.dat'
     open(unit = 20, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhobb_rhofbb_ratio_kernel.dat'
     open(unit = 21, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_phib_eta_kernel.dat'
     open(unit = 22, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     ! Density normalized kernels
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mub_Bb_Cb_kernel.dat'
     open(unit = 17, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Mb_rhob_rhofb_kernel.dat'
     open(unit = 18, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_mb_etab_kernel.dat'
     open(unit = 19, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-    if (ier /= 0) stop 'Error writing kernel file to disk'
+    if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
     rhot_kl(:,:,:) = 0._CUSTOM_REAL
     rhof_kl(:,:,:) = 0._CUSTOM_REAL
@@ -965,38 +976,38 @@
       ! ascii format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_kappa_kernel.dat'
       open(unit = 95, file = trim(OUTPUT_FILES)//outputname,status ='unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_c_kernel.dat'
       open(unit = 96, file = trim(OUTPUT_FILES)//outputname,status = 'unknown',iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
     else
       ! binary format
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rho_acoustic_kernel.bin'
       open(unit = 200, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_kappa_acoustic_kernel.bin'
       open(unit = 201, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_rhop_acoustic_kernel.bin'
       open(unit = 202, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_c_acoustic_kernel.bin'
       open(unit = 203, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
-      if (ier /= 0) stop 'Error writing kernel file to disk'
+      if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
       if (APPROXIMATE_HESS_KL) then
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian1_acoustic_kernel.bin'
         open(unit=212,file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
 
         write(outputname,'(a,i6.6,a)') 'proc',myrank,'_Hessian2_acoustic_kernel.bin'
         open(unit=213,file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
-        if (ier /= 0) stop 'Error writing kernel file to disk'
+        if (ier /= 0) call stop_the_code('Error writing kernel file to disk')
       endif
     endif
 
@@ -1046,9 +1057,9 @@
 
   ! safety checks
   if (.not. any_elastic) &
-    stop 'Sorry, initial field (plane wave source) only implemented for elastic simulations so far...'
+    call stop_the_code('Sorry, initial field (plane wave source) only implemented for elastic simulations so far...')
   if (any_acoustic .or. any_poroelastic) &
-    stop 'Initial field currently implemented for purely elastic simulation only'
+    call stop_the_code('Initial field currently implemented for purely elastic simulation only')
 
   ! Calculation of the initial field for a plane wave
   if (any_elastic) then
@@ -1154,7 +1165,7 @@
            source_array_noise(NDIM,NGLLX,NGLLZ,NSTEP), &
            mask_noise(nglob), &
            surface_movie_y_or_z_noise(nglob),stat=ier)
-  if (ier /= 0) stop 'Error allocating noise arrays'
+  if (ier /= 0) call stop_the_code('Error allocating noise arrays')
 
   ! initializes
   source_array_noise(:,:,:,:) = 0._CUSTOM_REAL
@@ -1265,7 +1276,7 @@
   use mpi
 #endif
 
-  use constants, only: IMAIN,TWO,PI,FOUR_THIRDS,TWO_THIRDS
+  use constants, only: IMAIN,TWO,PI,FOUR_THIRDS,TWO_THIRDS,USE_A_STRONG_FORMULATION_FOR_E1
   use specfem_par
 
   implicit none
@@ -1280,43 +1291,143 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: tau_epsilon_nu1_sent,tau_epsilon_nu2_sent
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent, &
                                                        phi_nu1_sent,phi_nu2_sent
+  real(kind=CUSTOM_REAL), dimension(N_SLS) ::  phinu,tauinvnu,temp,coef
 
   ! attenuation
-  if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC) then
-    nspec_ATT = nspec
+  if (ATTENUATION_VISCOELASTIC) then
+    nspec_ATT_el = nspec
   else
-    nspec_ATT = 1
+    nspec_ATT_el = 1
   endif
 
   ! allocate memory variables for attenuation
-  allocate(e1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           e11(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           e13(NGLLX,NGLLZ,nspec_ATT,N_SLS),stat=ier)
-  if (ier /= 0) stop 'Error allocating attenuation arrays'
+  allocate(e1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+           e11(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+           e13(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+           dux_dxl_old(NGLLX,NGLLZ,nspec_ATT_el), &
+           duz_dzl_old(NGLLX,NGLLZ,nspec_ATT_el), &
+           dux_dzl_plus_duz_dxl_old(NGLLX,NGLLZ,nspec_ATT_el), &
+           A_newmark_nu1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+           B_newmark_nu1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+           A_newmark_nu2(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+           B_newmark_nu2(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), stat=ier)
+
+  ! attenuation
+  if (ATTENUATION_VISCOACOUSTIC) then
+    nglob_ATT = nglob
+    nspec_ATT_ac = nspec
+  else
+    nglob_ATT = 1
+    nspec_ATT_ac = 1
+  endif
+
+  allocate(e1_acous_sf(N_SLS,NGLLX,NGLLZ,nspec_ATT_ac), &
+           sum_forces_old(NGLLX,NGLLZ,nspec_ATT_ac), stat=ier)
+
+  if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) then
+
+    allocate(e1_acous(nglob_acoustic,N_SLS), &
+             dot_e1(nglob_acoustic,N_SLS), &
+             A_newmark_e1_sf(1,1,1,1), &
+             B_newmark_e1_sf(1,1,1,1),stat=ier)
+    if (time_stepping_scheme == 1) then
+      allocate(dot_e1_old(nglob_acoustic,N_SLS), &
+               A_newmark_e1(nglob_acoustic,N_SLS), &
+               B_newmark_e1(nglob_acoustic,N_SLS),stat=ier)
+    else
+      allocate(dot_e1_old(1,N_SLS), &
+               A_newmark_e1(1,N_SLS), &
+               B_newmark_e1(1,N_SLS),stat=ier)
+    endif
+
+    if (time_stepping_scheme == 2) then
+      allocate(e1_acous_temp(nglob_acoustic,N_SLS),stat=ier)
+    else
+      allocate(e1_acous_temp(1,N_SLS),stat=ier)
+    endif
+
+  else if (ATTENUATION_VISCOACOUSTIC .and. USE_A_STRONG_FORMULATION_FOR_E1) then
+
+    allocate(e1_acous(1,N_SLS), &
+             e1_acous_temp(1,N_SLS), &
+             dot_e1(1,N_SLS), &
+             dot_e1_old(1,N_SLS), &
+             A_newmark_e1(1,N_SLS), &
+             B_newmark_e1(1,N_SLS),stat=ier)
+    allocate(A_newmark_e1_sf(N_SLS,NGLLX,NGLLZ,nspec), &
+             B_newmark_e1_sf(N_SLS,NGLLX,NGLLZ,nspec),stat=ier)
+
+  else ! no ATTENUATION_VISCOACOUSTIC
+
+    allocate(e1_acous(1,N_SLS), &
+             e1_acous_temp(1,N_SLS), &
+             dot_e1(1,N_SLS), &
+             dot_e1_old(1,N_SLS), &
+             A_newmark_e1(1,N_SLS), &
+             B_newmark_e1(1,N_SLS), &
+             A_newmark_e1_sf(1,1,1,1), &
+             B_newmark_e1_sf(1,1,1,1),stat=ier)
+  endif
+
+  if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
   e1(:,:,:,:) = 0._CUSTOM_REAL
   e11(:,:,:,:) = 0._CUSTOM_REAL
   e13(:,:,:,:) = 0._CUSTOM_REAL
+  dux_dxl_old(:,:,:) = 0._CUSTOM_REAL
+  duz_dzl_old(:,:,:) = 0._CUSTOM_REAL
+  dux_dzl_plus_duz_dxl_old(:,:,:) = 0._CUSTOM_REAL
+
+  e1_acous(:,:) = 0._CUSTOM_REAL
+  e1_acous_sf(:,:,:,:) = 0._CUSTOM_REAL
+
+  dot_e1_old = 0._CUSTOM_REAL
+  dot_e1     = 0._CUSTOM_REAL
+  sum_forces_old = 0._CUSTOM_REAL
 
   if (time_stepping_scheme == 2) then
-    allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
-    allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
-    allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_ATT,N_SLS))
+    if (ATTENUATION_VISCOELASTIC) then
+      allocate(e1_LDDRK(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
+      allocate(e11_LDDRK(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
+      allocate(e13_LDDRK(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
+    else
+      allocate(e1_LDDRK(1,1,1,1))
+      allocate(e11_LDDRK(1,1,1,1))
+      allocate(e13_LDDRK(1,1,1,1))
+    endif
+
+    if (ATTENUATION_VISCOACOUSTIC) then
+        allocate(e1_LDDRK_acous(nglob_att,N_SLS))
+    else
+        allocate(e1_LDDRK_acous(1,1))
+    endif
   else
     allocate(e1_LDDRK(1,1,1,1))
     allocate(e11_LDDRK(1,1,1,1))
     allocate(e13_LDDRK(1,1,1,1))
+
+    allocate(e1_LDDRK_acous(1,1))
   endif
   e1_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
   e11_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
   e13_LDDRK(:,:,:,:) = 0._CUSTOM_REAL
 
+  e1_LDDRK_acous(:,:) = 0._CUSTOM_REAL
+
   if (time_stepping_scheme == 3) then
-    allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS))
-    allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS))
-    allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS))
-    allocate(e1_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
-    allocate(e11_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
-    allocate(e13_force_rk(NGLLX,NGLLZ,nspec_ATT,N_SLS,stage_time_scheme))
+    allocate(e1_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
+    allocate(e11_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
+    allocate(e13_initial_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS))
+    allocate(e1_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
+    allocate(e11_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
+    allocate(e13_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
+
+    if (ATTENUATION_VISCOACOUSTIC) then
+            allocate(e1_initial_rk_acous(nglob_att,N_SLS))
+            allocate(e1_force_rk_acous(nglob_att,N_SLS,stage_time_scheme))
+    else
+            allocate(e1_initial_rk_acous(1,1))
+            allocate(e1_force_rk_acous(1,1,1))
+    endif
   else
     allocate(e1_initial_rk(1,1,1,1))
     allocate(e11_initial_rk(1,1,1,1))
@@ -1324,6 +1435,9 @@
     allocate(e1_force_rk(1,1,1,1,1))
     allocate(e11_force_rk(1,1,1,1,1))
     allocate(e13_force_rk(1,1,1,1,1))
+
+    allocate(e1_initial_rk_acous(1,1))
+    allocate(e1_force_rk_acous(1,1,1))
   endif
   e1_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
   e11_initial_rk(:,:,:,:) = 0._CUSTOM_REAL
@@ -1332,20 +1446,26 @@
   e11_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
   e13_force_rk(:,:,:,:,:) = 0._CUSTOM_REAL
 
+  e1_initial_rk_acous(:,:) = 0._CUSTOM_REAL
+  e1_force_rk_acous(:,:,:) = 0._CUSTOM_REAL
+
   ! attenuation arrays
   if (.not. assign_external_model) then
     allocate(already_shifted_velocity(numat),stat=ier)
-    if (ier /= 0) stop 'Error allocating attenuation Qkappa,Qmu,.. arrays'
+    if (ier /= 0) call stop_the_code('Error allocating attenuation Qkappa,Qmu,.. arrays')
     already_shifted_velocity(:) = .false.
   endif
 
-  allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           inv_tau_sigma_nu2(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           phi_nu1(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           phi_nu2(NGLLX,NGLLZ,nspec_ATT,N_SLS), &
-           Mu_nu1(NGLLX,NGLLZ,nspec_ATT), &
-           Mu_nu2(NGLLX,NGLLZ,nspec_ATT),stat=ier)
-  if (ier /= 0) stop 'Error allocating attenuation arrays'
+  allocate(inv_tau_sigma_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
+           inv_tau_sigma_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
+           phi_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
+           phi_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
+           Mu_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac)), &
+           Mu_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac)), &
+! ZX ZX needed for further optimization with nspec_ATT_el replaced with nspec_PML
+           tau_epsilon_nu1(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS), &
+           tau_epsilon_nu2(NGLLX,NGLLZ,max(nspec_ATT_el,nspec_ATT_ac),N_SLS),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
 
   ! temporary arrays for function argument
   allocate(tau_epsilon_nu1_sent(N_SLS), &
@@ -1354,12 +1474,15 @@
            inv_tau_sigma_nu2_sent(N_SLS), &
            phi_nu1_sent(N_SLS), &
            phi_nu2_sent(N_SLS),stat=ier)
-  if (ier /= 0) stop 'Error allocating attenuation coefficient arrays'
+  if (ier /= 0) call stop_the_code('Error allocating attenuation coefficient arrays')
 
   ! initialize to dummy values
   ! convention to indicate that Q = 9999 in that element i.e. that there is no viscoelasticity in that element
   inv_tau_sigma_nu1(:,:,:,:) = -1._CUSTOM_REAL
   inv_tau_sigma_nu2(:,:,:,:) = -1._CUSTOM_REAL
+
+  tau_epsilon_nu1(:,:,:,:) = -1._CUSTOM_REAL
+  tau_epsilon_nu2(:,:,:,:) = -1._CUSTOM_REAL
 
   phi_nu1(:,:,:,:) = 0._CUSTOM_REAL
   phi_nu2(:,:,:,:) = 0._CUSTOM_REAL
@@ -1369,9 +1492,9 @@
   Mu_nu1(:,:,:) = +1._CUSTOM_REAL
   Mu_nu2(:,:,:) = +1._CUSTOM_REAL
 
-  ! if source is not a Dirac or Heavyside then f0_attenuation is f0 of the first source
+  ! if source is not a Dirac or Heavyside then ATTENUATION_f0_REFERENCE is f0 of the first source
   if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
-    f0_attenuation = f0_source(1)
+    ATTENUATION_f0_REFERENCE = f0_source(1)
   endif
 
   ! setup attenuation
@@ -1382,24 +1505,22 @@
       write(IMAIN,*) 'Preparing attenuation in viscoelastic or viscoacoustic parts of the model:'
       write(IMAIN,*) '  using external model for Qkappa and Qmu: ',assign_external_model
       write(IMAIN,*) '  reading velocity at f0                 : ',READ_VELOCITIES_AT_f0
-      write(IMAIN,*) '  using f0 attenuation = ',f0_attenuation,'Hz'
+      write(IMAIN,*) '  using an attenuation reference frequency of ',ATTENUATION_f0_REFERENCE,'Hz'
       call flush_IMAIN()
     endif
 
     ! define the attenuation quality factors.
-!! DK DK if needed in the future, here the quality factor could be different for each point
     do ispec = 1,nspec
 
       ! get values for internal meshes
       if (.not. assign_external_model) then
         qkappal = QKappa_attenuation(kmato(ispec))
         qmul = Qmu_attenuation(kmato(ispec))
-
         ! if no attenuation in that elastic element
         if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
 
         ! determines attenuation factors
-        call attenuation_model(qkappal,qmul,f0_attenuation,N_SLS, &
+        call attenuation_model(qkappal,qmul,ATTENUATION_f0_REFERENCE,N_SLS, &
                                tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
                                tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
       endif
@@ -1409,6 +1530,7 @@
 
           ! get values for external meshes
           if (assign_external_model) then
+
             qkappal = QKappa_attenuationext(i,j,ispec)
             qmul = Qmu_attenuationext(i,j,ispec)
 
@@ -1416,27 +1538,54 @@
             if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
 
             ! determines attenuation factors
-            call attenuation_model(qkappal,qmul,f0_attenuation,N_SLS, &
+            call attenuation_model(qkappal,qmul,ATTENUATION_f0_REFERENCE,N_SLS, &
                                    tau_epsilon_nu1_sent,inv_tau_sigma_nu1_sent,phi_nu1_sent,Mu_nu1_sent, &
                                    tau_epsilon_nu2_sent,inv_tau_sigma_nu2_sent,phi_nu2_sent,Mu_nu2_sent)
           endif
 
           ! stores attenuation values
           inv_tau_sigma_nu1(i,j,ispec,:) = inv_tau_sigma_nu1_sent(:)
+          tau_epsilon_nu1(i,j,ispec,:) = tau_epsilon_nu1_sent(:)
           phi_nu1(i,j,ispec,:) = phi_nu1_sent(:)
 
           inv_tau_sigma_nu2(i,j,ispec,:) = inv_tau_sigma_nu2_sent(:)
+          tau_epsilon_nu2(i,j,ispec,:) = tau_epsilon_nu2_sent(:)
           phi_nu2(i,j,ispec,:) = phi_nu2_sent(:)
 
           Mu_nu1(i,j,ispec) = Mu_nu1_sent
           Mu_nu2(i,j,ispec) = Mu_nu2_sent
+
+          if (ATTENUATION_VISCOACOUSTIC .and. USE_A_STRONG_FORMULATION_FOR_E1 .and. time_stepping_scheme == 1 ) then
+            phinu(:)    = phi_nu1(i,j,ispec,:)
+            tauinvnu(:) = inv_tau_sigma_nu1(i,j,ispec,:)
+            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
+            coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
+            A_newmark_e1_sf(:,i,j,ispec) = temp(:)
+            B_newmark_e1_sf(:,i,j,ispec) = phinu(:) * coef(:)
+          endif
+
+          if (ATTENUATION_VISCOELASTIC .and. time_stepping_scheme == 1 ) then
+            phinu(:)    = phi_nu1(i,j,ispec,:)
+            tauinvnu(:) = inv_tau_sigma_nu1(i,j,ispec,:)
+            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
+            coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
+            A_newmark_nu1(:,i,j,ispec) = temp(:)
+            B_newmark_nu1(:,i,j,ispec) = phinu(:) * coef(:)
+
+            phinu(:)    = phi_nu2(i,j,ispec,:)
+            tauinvnu(:) = inv_tau_sigma_nu2(i,j,ispec,:)
+            temp(:)      = exp(- 0.5d0 * tauinvnu(:) * deltat)
+            coef(:)     = (1.d0 - temp(:)) / tauinvnu(:)
+            A_newmark_nu2(:,i,j,ispec) = temp(:)
+            B_newmark_nu2(:,i,j,ispec) = phinu(:) * coef(:)
+          endif
 
           ! shifts velocities
           if (READ_VELOCITIES_AT_f0) then
 
             ! safety check
             if (ispec_is_anisotropic(ispec) .or. ispec_is_poroelastic(ispec)) &
-              stop 'READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic materials for now'
+              call stop_the_code('READ_VELOCITIES_AT_f0 only implemented for non anisotropic, non poroelastic materials for now')
 
             if (ispec_is_acoustic(ispec)) then
               do n = 1,100
@@ -1453,7 +1602,7 @@
 
               ! shifts vp and vs (according to f0 and attenuation band)
               call shift_velocities_from_f0(vp,vs,rhol, &
-                                    f0_attenuation,N_SLS, &
+                                    ATTENUATION_f0_REFERENCE,N_SLS, &
                                     tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
 
               ! stores shifted values
@@ -1472,7 +1621,7 @@
 
                 ! shifts vp and vs
                 call shift_velocities_from_f0(vp,vs,rhol, &
-                                      f0_attenuation,N_SLS, &
+                                      ATTENUATION_f0_REFERENCE,N_SLS, &
                                       tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
 
                 ! stores shifted mu,lambda
@@ -1490,6 +1639,9 @@
         enddo
       enddo
     enddo
+
+    if (PML_BOUNDARY_CONDITIONS) call prepare_timerun_attenuation_with_PML()
+
   endif ! of if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC)
 
   ! allocate memory variables for viscous attenuation (poroelastic media)
@@ -1575,7 +1727,7 @@
            rhostore(NGLLX,NGLLZ,nspec), &
            rho_vp(NGLLX,NGLLZ,nspec), &
            rho_vs(NGLLX,NGLLZ,nspec),stat=ier)
-  if (ier /= 0) stop 'Error allocating material arrays'
+  if (ier /= 0) call stop_the_code('Error allocating material arrays')
 
   do ispec = 1,nspec
     do j = 1,NGLLZ
@@ -1621,3 +1773,275 @@
   enddo
 
   end subroutine prepare_material_arrays
+
+!
+!-------------------------------------------------------------------------------------
+!
+  subroutine prepare_timerun_attenuation_with_PML()
+
+  use constants
+  use specfem_par
+
+  double precision, dimension(2*N_SLS) :: tauinvnu
+  double precision, dimension(2*N_SLS + 1) :: tauinvplusone
+  double precision :: qkappal,qmul
+  double precision :: d_x, d_z, K_x, K_z, alpha_x, alpha_z, beta_x, beta_z
+  double precision :: const_for_separation_two
+
+  integer :: i,j,ispec,i_sls,ispec_PML
+
+  const_for_separation_two = min_distance_between_CPML_parameter * 2.d0
+  do ispec = 1,nspec
+    ispec_PML = spec_to_PML(ispec)
+    if (ispec_is_PML(ispec)) then
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          if (.not. assign_external_model) then
+            qkappal = QKappa_attenuation(kmato(ispec))
+            qmul = Qmu_attenuation(kmato(ispec))
+          else
+            qkappal = QKappa_attenuationext(i,j,ispec)
+            qmul = Qmu_attenuationext(i,j,ispec)
+          endif
+          if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
+          K_x = K_x_store(i,j,ispec_PML)
+          d_x = d_x_store(i,j,ispec_PML)
+          alpha_x = alpha_x_store(i,j,ispec_PML)
+
+          K_z = K_z_store(i,j,ispec_PML)
+          d_z = d_z_store(i,j,ispec_PML)
+          alpha_z = alpha_z_store(i,j,ispec_PML)
+
+          if (ATTENUATION_VISCOELASTIC) then
+            if (region_CPML(ispec) == CPML_XZ) then
+              if (ispec_is_elastic(ispec)) then
+                do i_sls = 1,N_SLS
+                  tauinvnu(i_sls) = inv_tau_sigma_nu1(i,j,ispec,i_sls)
+                  tauinvnu(i_sls+N_SLS) = inv_tau_sigma_nu2(i,j,ispec,i_sls)
+                enddo
+
+                call tauinvnu_arange_from_lt_to_gt(2*N_SLS,tauinvnu)
+
+                do i_sls = 1,2*N_SLS
+                  if (abs(alpha_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
+                    alpha_x = tauinvnu(i_sls) + const_for_separation_two
+                  endif
+                  if (abs(alpha_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
+                    call stop_the_code('error in separation of alpha_x, tauinvnu')
+                  endif
+                enddo
+                do i_sls = 1,2*N_SLS
+                  tauinvplusone(i_sls) = tauinvnu(i_sls)
+                enddo
+                tauinvplusone(2*N_SLS + 1) = alpha_x
+
+                call tauinvnu_arange_from_lt_to_gt(2 * N_SLS + 1,tauinvplusone)
+
+                do i_sls = 1,2*N_SLS + 1
+                  if (abs(alpha_z - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
+                    alpha_z = tauinvplusone(i_sls) + const_for_separation_two
+                  endif
+                  if (abs(alpha_z - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
+                    call stop_the_code('error in separation of alpha_z, alpha_x,tauinvnu')
+                  endif
+                enddo
+
+                beta_z = alpha_z + d_z / K_z
+
+                do i_sls = 1,2*N_SLS + 1
+                  if (abs(beta_z - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
+                    beta_z = tauinvplusone(i_sls) + const_for_separation_two
+                  endif
+                  if (abs(beta_z - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
+                    call stop_the_code('error in separation of beta_z, alpha_x,tauinvnu')
+                  endif
+                enddo
+
+                do i_sls = 1,2*N_SLS
+                  tauinvplusone(i_sls) = tauinvnu(i_sls)
+                enddo
+                tauinvplusone(2*N_SLS + 1) = alpha_z
+
+                call tauinvnu_arange_from_lt_to_gt(2 * N_SLS + 1,tauinvplusone)
+                beta_x = alpha_x + d_x / K_x
+                do i_sls = 1,2*N_SLS + 1
+                  if (abs(beta_x - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
+                    beta_x = tauinvplusone(i_sls) + const_for_separation_two
+                  endif
+                  if (abs(beta_x - tauinvplusone(i_sls)) < min_distance_between_CPML_parameter) then
+                    call stop_the_code('error in separation of beta_x, alpha_z,tauinvnu')
+                  endif
+                enddo
+
+                d_x = (beta_x - alpha_x) * K_x
+                d_z = (beta_z - alpha_z) * K_z
+
+                d_x_store(i,j,ispec_PML) = d_x
+                alpha_x_store(i,j,ispec_PML) = alpha_x
+                d_z_store(i,j,ispec_PML) = d_z
+                alpha_z_store(i,j,ispec_PML) = alpha_z
+
+              endif
+            endif
+
+            if (region_CPML(ispec) == CPML_X_ONLY) then
+              do i_sls = 1,2*N_SLS
+                if (abs(alpha_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
+                  alpha_x = tauinvnu(i_sls) + const_for_separation_two
+                endif
+                if (abs(alpha_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
+                  call stop_the_code('error in separation of alpha_x, tauinvnu')
+                endif
+              enddo
+              beta_x = alpha_x + d_x / K_x
+              do i_sls = 1,2*N_SLS
+                if (abs(beta_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
+                  beta_x = tauinvnu(i_sls) + const_for_separation_two
+                endif
+                if (abs(beta_x - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
+                  call stop_the_code('error in separation of beta_x, tauinvnu')
+                endif
+              enddo
+
+              d_x = (beta_x - alpha_x) * K_x
+              d_x_store(i,j,ispec_PML) = d_x
+              alpha_x_store(i,j,ispec_PML) = alpha_x
+
+            endif
+
+            if (region_CPML(ispec) == CPML_Z_ONLY) then
+              do i_sls = 1,2*N_SLS
+                if (abs(alpha_z - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
+                  alpha_z = tauinvnu(i_sls) + const_for_separation_two
+                endif
+                if (abs(alpha_z - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
+                  call stop_the_code('error in separation of alpha_z, tauinvnu')
+                endif
+              enddo
+              beta_z = alpha_z + d_z / K_z
+              do i_sls = 1,2*N_SLS
+                if (abs(beta_z - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
+                  beta_z = tauinvnu(i_sls) + const_for_separation_two
+                endif
+                if (abs(beta_z - tauinvnu(i_sls)) < min_distance_between_CPML_parameter) then
+                  call stop_the_code('error in separation of beta_z, tauinvnu')
+                endif
+              enddo
+
+              d_z = (beta_z - alpha_z) * K_z
+              d_z_store(i,j,ispec_PML) = d_z
+              alpha_z_store(i,j,ispec_PML) = alpha_z
+
+            endif
+          endif
+        enddo
+      enddo
+    endif
+  enddo
+
+  end subroutine prepare_timerun_attenuation_with_PML
+!
+!-------------------------------------------------------------------------------------
+!
+  subroutine tauinvnu_arange_from_lt_to_gt(siz,tauinvnu)
+
+  implicit none
+  integer, intent(in) :: siz
+  double precision, dimension(siz), intent(inout) :: tauinvnu
+
+  !local parameters
+  integer :: i,j
+  double precision :: temp
+
+  do i= 1,siz
+    do j= i+1,siz
+      if (tauinvnu(i) > tauinvnu(j)) then
+        temp = tauinvnu(i)
+        tauinvnu(i) = tauinvnu(j)
+        tauinvnu(j) =  temp
+      endif
+    enddo
+  enddo
+
+  end subroutine tauinvnu_arange_from_lt_to_gt
+!
+!-------------------------------------------------------------------------------------
+!
+  subroutine prepare_timerun_no_backward_reconstruction()
+
+  use constants
+  use specfem_par
+  implicit none
+
+  integer :: ier
+  double precision :: sizeval
+
+  no_backward_iframe = 0
+
+  !checks if anything to do
+  if (.not. NO_BACKWARD_RECONSTRUCTION) then
+    allocate(no_backward_acoustic_buffer(1),no_backward_displ_buffer(1,1),no_backward_accel_buffer(1,1))
+    return
+  endif
+  !safety checks
+  if (time_stepping_scheme /= 1) call exit_MPI(myrank,'for NO_BACKWARD_RECONSTRUCTION, only Newmark scheme has implemented ')
+  if (UNDO_ATTENUATION_AND_OR_PML) call exit_MPI(myrank, &
+                                      'NO_BACKWARD_RECONSTRUCTION is not compatible with UNDO_ATTENUATION_AND_OR_PML')
+
+  ! gets the number of frames to store/read in the NO BACKWARD RECONSTRUCTION
+  ! database
+  no_backward_nframes = 0
+  do while (no_backward_nframes * NSTEP_BETWEEN_COMPUTE_KERNELS <= NSTEP )
+    no_backward_nframes = no_backward_nframes + 1
+  enddo
+  no_backward_nframes = no_backward_nframes -1
+
+  ! user output
+  if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) 'Preparing NO_BACKWARD_RECONSTRUCTION :'
+      write(IMAIN,*) '  number of frames to save :',no_backward_nframes
+      if (any_acoustic) then
+        sizeval = dble(nglob) * dble(no_backward_nframes) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+        write(IMAIN,*) '  size of No_backward_reconstruction file per slice = ', sngl(sizeval),'MB'
+      endif
+      if (any_elastic) then
+        sizeval = dble(NDIM) * dble(nglob) * dble(no_backward_nframes) * &
+                  dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+        if (APPROXIMATE_HESS_KL) sizeval = 2 * sizeval
+        write(IMAIN,*) '  size of No_backward_reconstruction file per slice= ', sngl(sizeval),'MB'
+      endif
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif ! myrank
+  endif ! SAVE_FORWARD .or. SIMULATION_TYPE == 3
+
+  ! deallocates arrays that won't be used with this mode
+  if (SIMULATION_TYPE == 3) then
+    if (any_acoustic) deallocate(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,stat=ier)
+    if (any_elastic) deallocate(b_veloc_elastic,b_accel_elastic,stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'error deallocating b_accel_elastic etc')
+  endif
+
+  ! allocates buffers for I/O
+  if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
+    if (any_acoustic) then
+      allocate(no_backward_acoustic_buffer(3*nglob),stat=ier)
+    else
+      allocate(no_backward_acoustic_buffer(1),stat=ier)
+    endif
+    if (any_elastic) then
+      allocate(no_backward_displ_buffer(NDIM,nglob),stat=ier)
+      if (APPROXIMATE_HESS_KL) then
+        allocate(no_backward_accel_buffer(NDIM,nglob),stat=ier)
+      else
+        allocate(no_backward_accel_buffer(1,1),stat=ier)
+      endif
+    else
+      allocate(no_backward_displ_buffer(1,1),no_backward_accel_buffer(1,1),stat=ier)
+    endif
+    if (ier /= 0 ) call exit_MPI(myrank,'error allocating no_backward_***_buffer')
+  endif
+
+  end subroutine prepare_timerun_no_backward_reconstruction

@@ -84,7 +84,7 @@ program sum_kernels_ascii
   if (command_argument_count() /= NARGS) then
     print *, 'USAGE: bin/xsum_kernels_ascii INPUT_FILE OUTPUT_DIR'
     print *
-    stop 'Please check command line arguments'
+    call stop_the_code('Please check command line arguments')
   endif
 
   ! parse command line arguments
@@ -100,13 +100,13 @@ program sum_kernels_ascii
   open(unit = IIN, file = trim(input_file), status = 'old',iostat = ier)
   if (ier /= 0) then
      print *,'Error opening ',trim(input_file)
-     stop 'Please check command line argument: INPUT_FILE'
+     call stop_the_code('Please check command line argument: INPUT_FILE')
   endif
   do while (1 == 1)
      read(IIN,'(a)',iostat=ier) line
      if (ier /= 0) exit
      npath = npath+1
-     if (npath > MAX_KERNEL_PATHS) stop 'Error number of paths exceeds MAX_KERNEL_PATHS'
+     if (npath > MAX_KERNEL_PATHS) call stop_the_code('Error number of paths exceeds MAX_KERNEL_PATHS')
      kernel_paths(npath) = line
   enddo
   close(IIN)

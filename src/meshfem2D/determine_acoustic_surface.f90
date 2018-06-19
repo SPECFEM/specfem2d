@@ -91,7 +91,7 @@
 
   ! allocates surface elements
   allocate(acoustic_surface(4,nelem_acoustic_surface),stat=ier)
-  if (ier /= 0) stop 'Error allocating acoustic_surface array'
+  if (ier /= 0) call stop_the_code('Error allocating acoustic_surface array')
 
   nelem_acoustic_surface = 0
 

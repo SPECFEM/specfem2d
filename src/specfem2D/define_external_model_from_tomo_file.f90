@@ -107,11 +107,11 @@ module interpolation
     endif
 
     if (length <= 0) then
-      stop "Incorrect length in searchInf"
+      call stop_the_code("Incorrect length in searchInf")
     else if (length == 1) then
       searchInf = array(1)
     else
-      if (array(1) > array(2)) stop "searchInf needs an increasing array"
+      if (array(1) > array(2)) call stop_the_code("searchInf needs an increasing array")
       if (value < array(1)) then
         searchInf = 1
         return
@@ -555,7 +555,7 @@ end module interpolation
      print *, 'Error: ',trim(TOMOGRAPHY_FILE),' has invalid number of records'
      print *, '     number of grid points specified (= NX*NZ):',nrecord
      print *, '     number of file lines for grid points        :',irecord
-     stop 'Error in tomography data file for the grid points definition'
+     call stop_the_code('Error in tomography data file for the grid points definition')
   endif
 
   if (myrank == 0) then
@@ -587,7 +587,7 @@ end module interpolation
 
   do
      read(unit=unit_in,fmt="(a)",iostat=ier) string_read
-     if (ier /= 0) stop 'error while reading tomography file'
+     if (ier /= 0) call stop_the_code('error while reading tomography file')
 
      ! suppress leading white spaces, if any
      string_read = adjustl(string_read)

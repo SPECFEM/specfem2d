@@ -75,7 +75,7 @@ ATTENUATION_VISCOACOUSTIC       = .true.         # turn attenuation (viscoacoust
 
 # for viscoelastic attenuation
 N_SLS                           = 3              # number of standard linear solids for attenuation (3 is usually the minimum)
-f0_attenuation                  = 5.196          # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
+ATTENUATION_f0_REFERENCE        = 5.196          # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
 READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
 USE_SOLVOPT                     = .false.        # use more precise but much more expensive way of determining the Q factor relaxation times, as in http://komatitsch.free.fr/preprints/GJI_Lombard_2016.pdf
 
@@ -90,6 +90,8 @@ freq0_poroelastic               = 10             # frequency for viscous attenua
 # When that option is on the second parameter indicates how often the code dumps restart files to disk (if in doubt, use something between 100 and 1000).
 UNDO_ATTENUATION_AND_OR_PML     = .false.
 NT_DUMP_ATTENUATION             = 500
+# Instead of reconstructing the forward wavefield, this option reads it from the disk using asynchronous I/O. Outperforms conventional mode using a value of NSTEP_BETWEEN_COMPUTE_KERNELS high enough.
+NO_BACKWARD_RECONSTRUCTION      = .false.
 
 
 #-----------------------------------------------------------------------------
@@ -128,6 +130,11 @@ subsamp_seismos                 = 1
 # so far, this option can only be used if all the receivers are in acoustic elements
 USE_TRICK_FOR_BETTER_PRESSURE   = .true.
 
+# every how many time steps we save the seismograms
+# (costly, do not use a very small value; if you use a very large value that is larger than the total number
+#  of time steps of the run, the seismograms will automatically be saved once at the end of the run anyway)
+NSTEP_BETWEEN_OUTPUT_SEISMOS    = 1000
+
 # use this t0 as earliest starting time rather than the automatically calculated one
 USER_T0                         = 0.0d0
 
@@ -164,6 +171,8 @@ record_at_surface_same_vertical = .false.        # receivers inside the medium o
 
 # save sensitivity kernels in ASCII format (much bigger files, but compatible with current GMT scripts) or in binary format
 save_ASCII_kernels              = .true.
+# since the accuracy of kernel integration may not need to respect the CFL, this option permits to save computing time, and memory with UNDO_ATTENUATION_AND_OR_PML mode
+NSTEP_BETWEEN_COMPUTE_KERNELS   = 1
 
 
 #-----------------------------------------------------------------------------
@@ -178,7 +187,12 @@ PML_BOUNDARY_CONDITIONS         = .false.
 NELEM_PML_THICKNESS             = 3
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
-# set to .false. unless you know what you are doing; this implements automatic adjustment of the PML parameters for elongated models.
+# change the four parameters below only if you know what you are doing; they change the damping profiles inside the PMLs
+K_MIN_PML                       = 1.0d0 # from Gedney page 8.11
+K_MAX_PML                       = 1.0d0
+damping_change_factor_acoustic  = 0.5d0
+damping_change_factor_elastic   = 1.0d0
+# set the parameter below to .false. unless you know what you are doing; this implements automatic adjustment of the PML parameters for elongated models.
 # The goal is to improve the absorbing efficiency of PML for waves with large incidence angles, but this can lead to artefacts.
 # In particular, this option is efficient only when the number of sources NSOURCES is equal to one.
 PML_PARAMETER_ADJUSTMENT        = .false.
@@ -234,6 +248,7 @@ materials_file                  = ./DATA/materials_file     # file containing th
 free_surface_file               = ./DATA/free_surface_file  # file containing the free surface
 axial_elements_file             = ./DATA/axial_elements_file   # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = ./DATA/absorbing_surface_file   # file containing the absorbing surface
+CPML_element_file               = Elements_CPML_list  # file containing the CPML element numbers
 acoustic_forcing_surface_file   = ./DATA/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
 absorbing_cpml_file             = ./DATA/absorbing_cpml_file   # file containing the CPML element numbers
 tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing the curve delimiting the velocity model

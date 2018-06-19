@@ -324,7 +324,6 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
 //  ANISOTROPY                = .false.
 //  COMPUTE_AND_STORE_STRAIN  = .true. or .false. (true for kernel simulations)
 //  gravity                   = .false.
-//  use_mesh_coloring_gpu     = .false.
 //  COMPUTE_AND_STORE_STRAIN  = .false.
 
   // block-id == number of local element id in phase_ispec array
@@ -615,7 +614,6 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
                         const int* d_ibool,
                         const int* d_phase_ispec_inner_elastic,const int num_phase_ispec_elastic,
                         const int d_iphase,
-                        const int use_mesh_coloring_gpu,
                         realw_const_p d_displ,
                         realw_p d_accel,
                         realw* d_xix,realw* d_xiz,
@@ -692,17 +690,8 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
 
   // spectral-element id
   // iphase-1 and working_element-1 for Fortran->C array conventions
-#ifdef USE_MESH_COLORING_GPU
-  working_element = bx;
-#else
-  //mesh coloring
-  if (use_mesh_coloring_gpu) {
-    working_element = bx;
-  }else{
-    // iphase-1 and working_element-1 for Fortran->C array conventions
-    working_element = d_phase_ispec_inner_elastic[bx + num_phase_ispec_elastic*(d_iphase-1)] - 1;
-  }
-#endif
+  working_element = d_phase_ispec_inner_elastic[bx + num_phase_ispec_elastic*(d_iphase-1)] - 1;
+
   // local padded index
   offset = working_element*NGLL2_PADDED + tx;
 
@@ -812,49 +801,259 @@ Kernel_2_noatt_ani_impl(int nb_blocks_to_compute,
 
   // assembles acceleration array
   if (threadIdx.x < NGLL2) {
-
-#ifdef USE_MESH_COLORING_GPU
-    // no atomic operation needed, colors don't share global points between elements
-
-#ifdef USE_TEXTURES_FIELDS
-    d_accel[iglob*2]     = texfetch_accel<FORWARD_OR_ADJOINT>(iglob*2) + sum_terms1;
-    d_accel[iglob*2 + 1] = texfetch_accel<FORWARD_OR_ADJOINT>(iglob*2 + 1) + sum_terms3;
-#else
-    d_accel[iglob*2]     += sum_terms1;
-    d_accel[iglob*2 + 1] += sum_terms3;
-#endif // USE_TEXTURES_FIELDS
-
-#else // MESH_COLORING
-
-    //mesh coloring
-    if (use_mesh_coloring_gpu) {
-
-      // no atomic operation needed, colors don't share global points between elements
-#ifdef USE_TEXTURES_FIELDS
-      d_accel[iglob*2]     = texfetch_accel<FORWARD_OR_ADJOINT>(iglob*2) + sum_terms1;
-      d_accel[iglob*2 + 1] = texfetch_accel<FORWARD_OR_ADJOINT>(iglob*2 + 1) + sum_terms3;
-#else
-      d_accel[iglob*2]     += sum_terms1;
-      d_accel[iglob*2 + 1] += sum_terms3;
-#endif // USE_TEXTURES_FIELDS
-
-    }else {
-      atomicAdd(&d_accel[iglob*2], sum_terms1);
-      atomicAdd(&d_accel[iglob*2+1], sum_terms3);
-    } // if (use_mesh_coloring_gpu)
-
-#endif // MESH_COLORING
-
+    atomicAdd(&d_accel[iglob*2], sum_terms1);
+    atomicAdd(&d_accel[iglob*2+1], sum_terms3);
   } // threadIdx.x
 
 } // kernel_2_noatt_ani_impl()
+
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// KERNEL 2
+//
+// for viscoelastic domains
+
+/* ----------------------------------------------------------------------------------------------- */
+
+template<int FORWARD_OR_ADJOINT> __global__ void
+#ifdef USE_LAUNCH_BOUNDS
+// adds compiler specification
+__launch_bounds__(NGLL2_PADDED,LAUNCH_MIN_BLOCKS)
+#endif
+// main kernel
+Kernel_2_att_iso_impl(const int nb_blocks_to_compute,
+                      const int* d_ibool,
+                      const int* d_phase_ispec_inner_elastic,const int num_phase_ispec_elastic,
+                      const int d_iphase,
+                      realw_const_p d_displ,
+                      realw_p d_accel,
+                      realw* d_xix,realw* d_xiz,
+                      realw* d_gammax,realw* d_gammaz,
+                      realw_const_p d_hprime_xx,
+                      realw_const_p d_hprimewgll_xx,
+                      realw_const_p wxgll,
+                      realw* d_kappav,
+                      realw* d_muv,
+                      int simulation_type,
+                      realw* dsxx,realw* dsxz,realw* dszz,
+                      realw_const_p A_newmark_mu,realw_const_p B_newmark_mu,
+                      realw_const_p A_newmark_kappa,realw_const_p B_newmark_kappa,
+                      realw_p e1,realw_p e11,realw_p e13,
+                      realw_p dux_dxl_old,realw_p duz_dzl_old,realw_p dux_dzl_plus_duz_dxl_old){
+
+// elastic compute kernel without attenuation for isotropic elements
+//
+// holds for:
+//  ATTENUATION               = .true.
+//  ANISOTROPY                = .false.
+//  COMPUTE_AND_STORE_STRAIN  = .true. or .false. (true for kernel simulations)
+//  gravity                   = .false.
+//  COMPUTE_AND_STORE_STRAIN  = .false.
+
+  // block-id == number of local element id in phase_ispec array
+  int bx = blockIdx.y*gridDim.x+blockIdx.x;
+  int tx = threadIdx.x;
+
+  int iglob,offset,offset_align,i_sls;
+  int working_element;
+
+  realw tempx1l,tempx3l,tempz1l,tempz3l;
+  realw xixl,xizl,gammaxl,gammazl,jacobianl;
+  realw duxdxl,duxdzl,duzdxl,duzdzl;
+  realw duzdxl_plus_duxdzl,duxdxl_plus_duzdzl;
+  realw duxdxl_old,duzdzl_old,duxdzl_plus_duzdxl_old,duxdxl_plus_duzdzl_old;
+
+  realw lambdal,mul,lambdalplus2mul,kappal;
+  realw sigma_xx,sigma_zz,sigma_xz;
+  realw sum_terms1,sum_terms3;
+  realw e1_load[N_SLS],e11_load[N_SLS],e13_load[N_SLS];
+  realw e1_sum,e11_sum,e13_sum,a_newmark,b_newmark;
+
+  // shared memory
+  __shared__ realw sh_tempx[NGLL2];
+  __shared__ realw sh_tempz[NGLL2];
+  __shared__ realw sh_hprime_xx[NGLL2];
+  __shared__ realw sh_hprimewgll_xx[NGLL2];
+  __shared__ realw sh_wxgll[NGLLX];
+
+  // checks if anything to do
+  if (bx >= nb_blocks_to_compute ) return;
+
+
+  // limits thread ids to range [0,25-1]
+  if (tx >= NGLL2 ) tx = tx - NGLL2 ;
+
+  // loads hprime's into shared memory
+  if (threadIdx.x < NGLL2) {
+    // copy hprime from global memory to shared memory
+    load_shared_memory_hprime(&tx,d_hprime_xx,sh_hprime_xx);
+
+    // copy hprimewgll from global memory to shared memory
+    load_shared_memory_hprimewgll(&tx,d_hprimewgll_xx,sh_hprimewgll_xx);
+  }
+  else if (threadIdx.x < NGLL2 + NGLLX ) load_shared_memory_wxgll(&tx,wxgll,sh_wxgll);
+
+  // spectral-element id
+  // iphase-1 and working_element-1 for Fortran->C array conventions
+  working_element = d_phase_ispec_inner_elastic[bx + num_phase_ispec_elastic*(d_iphase-1)] - 1;
+
+  // local padded index
+  offset = working_element*NGLL2_PADDED + tx;
+  offset_align = working_element*NGLL2 + tx;
+
+  // global index
+  iglob = d_ibool[offset] - 1 ;
+
+  // copy from global memory to shared memory
+  // each thread writes one of the NGLL^2 = 25 data points
+  if (threadIdx.x < NGLL2) {
+    // copy displacement from global memory to shared memory
+    load_shared_memory_displ<FORWARD_OR_ADJOINT>(&tx,&iglob,d_displ,sh_tempx,sh_tempz);
+  }
+
+  kappal = d_kappav[offset];
+  mul = d_muv[offset];
+
+  for (i_sls=0;i_sls<N_SLS;i_sls++){
+    e1_load[i_sls] = e1[N_SLS*offset_align+i_sls];
+    e11_load[i_sls] = e11[N_SLS*offset_align+i_sls];
+    e13_load[i_sls] = e13[N_SLS*offset_align+i_sls];
+  }
+
+  xixl = get_global_cr( &d_xix[offset] ); // first array with texture load
+  xizl = get_global_cr( &d_xiz[offset] ); // first array with texture load
+  gammaxl = d_gammax[offset];
+  gammazl = d_gammaz[offset];
+
+  jacobianl = 1.f / (xixl*gammazl-gammaxl*xizl);
+
+  // local index
+  int J = (tx/NGLLX);
+  int I = (tx-J*NGLLX);
+
+  __syncthreads();
+
+ // computes first matrix products
+  // 1. cut-plane
+  sum_hprime_xi(I,J,&tempx1l,&tempz1l,sh_tempx,sh_tempz,sh_hprime_xx);
+  // 3. cut-plane
+  sum_hprime_gamma(I,J,&tempx3l,&tempz3l,sh_tempx,sh_tempz,sh_hprime_xx);
+
+  // compute derivatives of ux, uy and uz with respect to x, y and z
+  duxdxl = xixl*tempx1l + gammaxl*tempx3l;
+  duxdzl = xizl*tempx1l + gammazl*tempx3l;
+
+  duzdxl = xixl*tempz1l + gammaxl*tempz3l;
+  duzdzl = xizl*tempz1l + gammazl*tempz3l;
+
+  // precompute some sums to save CPU time
+  duzdxl_plus_duxdzl = duzdxl + duxdzl;
+
+  // new
+  lambdal = kappal - mul;
+  lambdalplus2mul = kappal + mul;
+
+  // compute the three components of the stress tensor sigma
+  sigma_xx = lambdalplus2mul*duxdxl + lambdal*duzdzl;
+  sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl;
+  sigma_xz = mul*duzdxl_plus_duxdzl;
+
+  //get the contribution of attenuation and update the memory variables
+  duxdxl_plus_duzdzl = duxdxl + duzdzl;
+  duxdxl_old = dux_dxl_old[offset_align];
+  duzdzl_old = duz_dzl_old[offset_align];
+  duxdxl_plus_duzdzl_old = duxdxl_old + duzdzl_old;
+  duxdzl_plus_duzdxl_old = dux_dzl_plus_duz_dxl_old[offset_align];
+
+  e1_sum = 0.f;
+  e11_sum = 0.f;
+  e13_sum = 0.f;
+
+  for (i_sls=0;i_sls<N_SLS;i_sls++){
+    a_newmark = A_newmark_kappa[N_SLS * offset_align + i_sls];
+    b_newmark = B_newmark_kappa[N_SLS * offset_align + i_sls];
+
+    e1_load[i_sls] = a_newmark * a_newmark * e1_load[i_sls] + b_newmark * (duxdxl_plus_duzdzl + a_newmark * (duxdxl_plus_duzdzl_old));
+    e1_sum += e1_load[i_sls];
+    e1[N_SLS*offset_align+i_sls] = e1_load[i_sls];
+
+    a_newmark = A_newmark_mu[N_SLS * offset_align + i_sls];
+    b_newmark = B_newmark_mu[N_SLS * offset_align + i_sls];
+
+    e11_load[i_sls] = a_newmark * a_newmark * e11_load[i_sls] + b_newmark * (duxdxl - 0.5f*duxdxl_plus_duzdzl + a_newmark * (duxdxl_old-0.5f*duxdxl_plus_duzdzl_old));
+    e11_sum += e11_load[i_sls];
+    e11[N_SLS*offset_align+i_sls] = e11_load[i_sls];
+
+    e13_load[i_sls] = a_newmark * a_newmark * e13_load[i_sls] + b_newmark * (duzdxl_plus_duxdzl + a_newmark * duxdzl_plus_duzdxl_old);
+    e13_sum += e13_load[i_sls];
+    e13[N_SLS*offset_align+i_sls] = e13_load[i_sls];
+  }
+
+  // add the contribution of the attenuation
+  sigma_xx += (lambdalplus2mul-mul) * e1_sum + 2.0f * mul * e11_sum;
+  sigma_xz += mul * e13_sum;
+  sigma_zz += (lambdalplus2mul-mul) * e1_sum - 2.0f * mul * e11_sum;
+
+  // saves the grad(displ) to use at the next iteration
+  dux_dxl_old[offset_align] = duxdxl;
+  duz_dzl_old[offset_align] = duzdzl;
+  dux_dzl_plus_duz_dxl_old[offset_align] = duzdxl_plus_duxdzl;
+
+  // form dot product with test vector, non-symmetric form
+  // 1. cut-plane xi
+  __syncthreads();
+  if (threadIdx.x < NGLL2) {
+    sh_tempx[tx] = sh_wxgll[J] *jacobianl * (sigma_xx*xixl + sigma_xz*xizl); // sh_tempx1
+    sh_tempz[tx] = sh_wxgll[J] *jacobianl * (sigma_xz*xixl + sigma_zz*xizl); // sh_tempz1
+  }
+  __syncthreads();
+
+  // 1. cut-plane xi
+  sum_hprimewgll_xi(I,J,&tempx1l,&tempz1l,sh_tempx,sh_tempz,sh_hprimewgll_xx);
+  __syncthreads();
+
+  if (threadIdx.x < NGLL2) {
+    sh_tempx[tx] = sh_wxgll[I] * jacobianl * (sigma_xx*gammaxl +  sigma_xz*gammazl); // sh_tempx3
+    sh_tempz[tx] = sh_wxgll[I] * jacobianl * (sigma_xz*gammaxl +  sigma_zz*gammazl); // sh_tempz3
+  }
+  __syncthreads();
+
+  // 3. cut-plane gamma
+  sum_hprimewgll_gamma(I,J,&tempx3l,&tempz3l,sh_tempx,sh_tempz,sh_hprimewgll_xx);
+  __syncthreads();
+
+  sum_terms1= -tempx1l - tempx3l;
+  sum_terms3= -tempz1l - tempz3l;
+
+  // assembles acceleration array
+  if (threadIdx.x < NGLL2) {
+    atomicAdd(&d_accel[iglob*2], sum_terms1);
+    atomicAdd(&d_accel[iglob*2+1], sum_terms3);
+  }
+
+// Servira pour calcul futur des noyaux
+  if (simulation_type == 3){
+    dsxx[iglob] = duxdxl;
+    dszz[iglob] = duzdzl;
+    dsxz[iglob] = duzdxl_plus_duxdzl;
+  }
+
+} // kernel_2_att_iso_impl()
+
+/* ----------------------------------------------------------------------------------------------- */
+
+
+
+
 
 
 /* ----------------------------------------------------------------------------------------------- */
 
 
 void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
-              int ANISOTROPY,
+              int ANISOTROPY,int ATTENUATION_VISCOELASTIC,
               int* d_ibool,
               realw* d_xix,realw* d_xiz,
               realw* d_gammax,realw* d_gammaz,
@@ -871,8 +1070,6 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
 #endif
 
   // if the grid can handle the number of blocks, we let it be 1D
-  // grid_2_x = nb_elem_color;
-  // nb_elem_color is just how many blocks we are computing now
 
   int blocksize = NGLL2_PADDED;
 
@@ -896,7 +1093,6 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
                                                                       d_ibool,
                                                                       mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
                                                                       d_iphase,
-                                                                      mp->use_mesh_coloring_gpu,
                                                                       mp->d_displ,
                                                                       mp->d_accel,
                                                                       d_xix, d_xiz,
@@ -922,7 +1118,6 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
                                                                       d_ibool,
                                                                       mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
                                                                       d_iphase,
-                                                                      mp->use_mesh_coloring_gpu,
                                                                       mp->d_b_displ,
                                                                       mp->d_b_accel,
                                                                       d_xix, d_xiz,
@@ -942,6 +1137,36 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
                                                                       d_c55store);
     }
   }else{
+    if (ATTENUATION_VISCOELASTIC){
+      Kernel_2_att_iso_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                                      d_ibool,
+                                                                      mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
+                                                                      d_iphase,
+                                                                      mp->d_displ,
+                                                                      mp->d_accel,
+                                                                      d_xix, d_xiz,
+                                                                      d_gammax, d_gammaz,
+                                                                      mp->d_hprime_xx,
+                                                                      mp->d_hprimewgll_xx,
+                                                                      mp->d_wxgll,
+                                                                      d_kappav,
+                                                                      d_muv,
+                                                                      mp->simulation_type,
+                                                                      mp->d_dsxx,
+                                                                      mp->d_dsxz,
+                                                                      mp->d_dszz,
+                                                                      mp->d_A_newmark_mu,
+                                                                      mp->d_B_newmark_mu,
+                                                                      mp->d_A_newmark_kappa,
+                                                                      mp->d_B_newmark_kappa,
+                                                                      mp->d_e1,
+                                                                      mp->d_e11,
+                                                                      mp->d_e13,
+                                                                      mp->d_dux_dxl_old,
+                                                                      mp->d_duz_dzl_old,
+                                                                      mp->d_dux_dzl_plus_duz_dxl_old);
+    }
+    else{
     // without storing strains
     // forward wavefields -> FORWARD_OR_ADJOINT == 1
     Kernel_2_noatt_iso_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
@@ -962,7 +1187,7 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
                                                                       mp->d_dsxz,
                                                                       mp->d_dszz);
 
-
+    }
     // backward/reconstructed wavefield
     if (mp->simulation_type == 3) {
       // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
@@ -1018,7 +1243,8 @@ void FC_FUNC_(compute_forces_viscoelastic_cuda,
                                                 realw* deltat,
                                                 int* nspec_outer_elastic,
                                                 int* nspec_inner_elastic,
-                                                int* ANISOTROPY) {
+                                                int* ANISOTROPY,
+                                                int* ATTENUATION_VISCOELASTIC) {
 
   TRACE("compute_forces_viscoelastic_cuda");
   // EPIK_TRACER("compute_forces_viscoelastic_cuda");
@@ -1037,76 +1263,14 @@ void FC_FUNC_(compute_forces_viscoelastic_cuda,
   // checks if anything to do
   if (num_elements == 0) return;
 
-  // mesh coloring
-  if (mp->use_mesh_coloring_gpu) {
-    // note: array offsets require sorted arrays, such that e.g. ibool starts with elastic elements
-    //         and followed by acoustic ones.
-    //         elastic elements also start with outer than inner element ordering
-    int nb_colors,nb_blocks_to_compute;
-    int istart;
-    int offset,offset_nonpadded;
-
-    // sets up color loop
-    if (*iphase == 1) {
-      // outer elements
-      nb_colors = mp->num_colors_outer_elastic;
-      istart = 0;
-
-      // array offsets
-      offset = 0;
-      offset_nonpadded = 0;
-    }else{
-      // inner elements (start after outer elements)
-      nb_colors = mp->num_colors_outer_elastic + mp->num_colors_inner_elastic;
-      istart = mp->num_colors_outer_elastic;
-
-      // array offsets
-      offset = (*nspec_outer_elastic) * NGLL2_PADDED;
-      offset_nonpadded = (*nspec_outer_elastic) * NGLL2;
-    }
-
-    // loops over colors
-    for(int icolor = istart; icolor < nb_colors; icolor++){
-
-      nb_blocks_to_compute = mp->h_num_elem_colors_elastic[icolor];
-
-      // checks
-      //if (nb_blocks_to_compute <= 0) {
-      //  printf("error number of elastic color blocks: %d -- color = %d \n",nb_blocks_to_compute,icolor);
-      //  exit(EXIT_FAILURE);
-      //}
-
-      Kernel_2(nb_blocks_to_compute,mp,*iphase,*deltat,*ANISOTROPY,
-               mp->d_ibool + offset,
-               mp->d_xix + offset,mp->d_xiz + offset,
-               mp->d_gammax + offset,mp->d_gammaz + offset,
-               mp->d_kappav + offset,
-               mp->d_muv + offset,
-               mp->d_c11store + offset,mp->d_c12store + offset,mp->d_c13store + offset,
-               mp->d_c15store + offset,mp->d_c23store + offset,mp->d_c25store + offset,
-               mp->d_c33store + offset,mp->d_c35store + offset,mp->d_c55store + offset);
-
-      // for padded and aligned arrays
-      offset += nb_blocks_to_compute * NGLL2_PADDED;
-      // for no-aligned arrays
-      offset_nonpadded += nb_blocks_to_compute * NGLL2;
-
-
-      //note: we use the same stream, so kernels are executed one after the other
-      //      thus, there should be no need to synchronize in case we run on only 1 process to avoid race-conditions
-
-    }
-
-  }else{
-    // no mesh coloring: uses atomic updates
-    Kernel_2(num_elements,mp,*iphase,*deltat,*ANISOTROPY,
-             mp->d_ibool,
-             mp->d_xix,mp->d_xiz,
-             mp->d_gammax,mp->d_gammaz,
-             mp->d_kappav,
-             mp->d_muv,
-             mp->d_c11store,mp->d_c12store,mp->d_c13store,
-             mp->d_c15store,mp->d_c23store,mp->d_c25store,
-             mp->d_c33store,mp->d_c35store,mp->d_c55store);
-  }
+  // no mesh coloring: uses atomic updates
+  Kernel_2(num_elements,mp,*iphase,*deltat,*ANISOTROPY,*ATTENUATION_VISCOELASTIC,
+           mp->d_ibool,
+           mp->d_xix,mp->d_xiz,
+           mp->d_gammax,mp->d_gammaz,
+           mp->d_kappav,
+           mp->d_muv,
+           mp->d_c11store,mp->d_c12store,mp->d_c13store,
+           mp->d_c15store,mp->d_c23store,mp->d_c25store,
+           mp->d_c33store,mp->d_c35store,mp->d_c55store);
 }

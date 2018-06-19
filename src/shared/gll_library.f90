@@ -237,7 +237,7 @@
     enddo
 
     ! checks bounds
-    if (np-j+1 < 1 .or. np-j+1 > np) stop 'error np-j+1-index in jacg'
+    if (np-j+1 < 1 .or. np-j+1 > np) call stop_the_code('error np-j+1-index in jacg')
 
     xjac(np-j+1) = x
     xlast        = x
@@ -263,7 +263,7 @@
     enddo
 
     ! checks bounds
-    if (jmin < 1 .or. jmin > np) stop 'error j-index in jacg'
+    if (jmin < 1 .or. jmin > np) call stop_the_code('error j-index in jacg')
 
     if (jmin /= i) then
       swap = xjac(i)
@@ -490,9 +490,9 @@
   p    = zero
   pdm1 = zero
 
-  if (np <= 0) stop 'minimum number of Gauss points is 1'
+  if (np <= 0) call stop_the_code('minimum number of Gauss points is 1')
 
-  if ((alpha <= -one) .or. (beta <= -one)) stop 'alpha and beta must be greater than -1'
+  if ((alpha <= -one) .or. (beta <= -one)) call stop_the_code('alpha and beta must be greater than -1')
 
   if (np == 1) then
     z(1) = (beta-alpha)/(apb+two)
@@ -560,12 +560,12 @@
   nm1 = n-1
   pd  = zero
 
-  if (np <= 1) stop 'minimum number of Gauss-Lobatto points is 2'
+  if (np <= 1) call stop_the_code('minimum number of Gauss-Lobatto points is 2')
 
 ! with spectral elements, use at least 3 points
-  if (np <= 2) stop 'minimum number of Gauss-Lobatto points for the SEM is 3'
+  if (np <= 2) call stop_the_code('minimum number of Gauss-Lobatto points for the SEM is 3')
 
-  if ((alpha <= -one) .or. (beta <= -one)) stop 'alpha and beta must be greater than -1'
+  if ((alpha <= -one) .or. (beta <= -one)) call stop_the_code('alpha and beta must be greater than -1')
 
   if (nm1 > 0) then
     alpg  = alpha+one

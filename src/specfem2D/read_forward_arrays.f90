@@ -136,7 +136,7 @@
 
     ! safety check
     if (GPU_MODE) then
-      stop 'GPU_MODE error: sorry, reading lastframe from poroelastic simulation not implemented yet'
+      call stop_the_code('GPU_MODE error: sorry, reading lastframe from poroelastic simulation not implemented yet')
     endif
   endif
 
@@ -150,12 +150,16 @@
 
 ! reads in saved wavefields
 
-  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES
+  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,NGLLX,NGLLZ
 
   use specfem_par, only: myrank,iteration_on_subset,NSUBSET_ITERATIONS, &
     any_acoustic,any_elastic,ATTENUATION_VISCOACOUSTIC,ATTENUATION_VISCOELASTIC, &
     b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
-    b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_e1,b_e11,b_e13
+    b_displ_elastic,b_veloc_elastic,b_accel_elastic,b_e1,b_e11,b_e13, &
+    b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old,b_e1_acous_sf,b_sum_forces_old, &
+    GPU_MODE,nspec_ATT_ac,nglob
+
+  use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
 
@@ -179,9 +183,13 @@
     read(IIN_UNDO_ATT) b_potential_dot_dot_acoustic
     read(IIN_UNDO_ATT) b_potential_dot_acoustic
     read(IIN_UNDO_ATT) b_potential_acoustic
-
+    if (GPU_MODE) call transfer_b_fields_ac_to_device(nglob,b_potential_acoustic,b_potential_dot_acoustic, &
+                                                        b_potential_dot_dot_acoustic,Mesh_pointer)
     if (ATTENUATION_VISCOACOUSTIC) then
-      read(IIN_UNDO_ATT) b_e1
+      read(IIN_UNDO_ATT) b_e1_acous_sf
+      read(IIN_UNDO_ATT) b_sum_forces_old
+      if (GPU_MODE) call transfer_viscoacoustic_b_var_to_device(NGLLX*NGLLZ*nspec_ATT_ac,b_e1_acous_sf, &
+                                                                b_sum_forces_old,Mesh_pointer)
     endif
   endif
 
@@ -194,6 +202,9 @@
       read(IIN_UNDO_ATT) b_e1
       read(IIN_UNDO_ATT) b_e11
       read(IIN_UNDO_ATT) b_e13
+      read(IIN_UNDO_ATT) b_dux_dxl_old
+      read(IIN_UNDO_ATT) b_duz_dzl_old
+      read(IIN_UNDO_ATT) b_dux_dzl_plus_duz_dxl_old
     endif
   endif
 
@@ -201,4 +212,89 @@
 
   end subroutine read_forward_arrays_undoatt
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_forward_arrays_no_backward()
+
+  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,APPROXIMATE_HESS_KL,NDIM
+
+  use specfem_par, only: myrank,it,any_acoustic,any_elastic, &
+    b_potential_acoustic,b_displ_elastic,b_accel_elastic, &
+    nglob,no_backward_acoustic_buffer,no_backward_displ_buffer,no_backward_accel_buffer, &
+    no_backward_iframe,no_backward_Nframes,GPU_MODE,NSTEP
+
+  use specfem_par_gpu, only: Mesh_pointer
+
+  implicit none
+
+  ! local parameters
+  integer :: ier,buffer_num_async_IO,buffer_num_GPU_transfer
+  integer(KIND=8) :: offset
+  character(len=MAX_STRING_LEN) :: outputname
+
+  ! EB EB June 2018 : in this routine, in order to overlap both disk = => RAM and RAM = => GPU transfers, we initiate the
+  ! transfer of a wavefield two iterations before this wavefield is actually needed by the kernel computation.
+  ! Two iterations before, the wavefield is read from the disk.
+  ! One iteration before, this wavefield is transfered from the RAM to the GPU.
+  ! In the text above, an iteration means NSTEP_BETWEEN_COMPUTE_KERNELS iterations of the timeloop.
+
+  no_backward_iframe = no_backward_iframe + 1
+
+  if (it == 1) then
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_No_backward_reconstruction_database.bin'
+    ! opens corresponding file for reading
+    open(unit=IIN_UNDO_ATT,asynchronous='yes',file=trim(OUTPUT_FILES)//outputname, &
+       status='old',action='read',form='unformatted',access='stream',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_No_backward_reconstruction_database.bin for reading')
+  else
+    wait(IIN_UNDO_ATT)
+  endif
+
+  buffer_num_async_IO = mod(no_backward_iframe+2,3)
+  buffer_num_GPU_transfer = mod(no_backward_iframe+1,3)
+
+  if (any_acoustic) then
+
+    ! offset is computed in two times to avoid integer overflow
+    offset = 4*nglob
+    offset = offset*(no_backward_Nframes - no_backward_iframe ) + 1
+    if (no_backward_iframe <= no_backward_Nframes) &
+      read(IIN_UNDO_ATT,asynchronous='yes',pos=offset) &
+           no_backward_acoustic_buffer(nglob*buffer_num_async_IO+1:nglob*(buffer_num_async_IO+1))
+
+    if (no_backward_iframe /= 1) then
+      if (GPU_MODE) then
+        ! this function ensures the previous async transfer is finished, and
+        ! launches the transfer of the next wavefield
+        call transfer_async_pot_ac_to_device(no_backward_acoustic_buffer(nglob*buffer_num_GPU_transfer+1),Mesh_pointer)
+      else
+        ! we get the wavefield from the previous iteration, because this RAM = =>
+        ! RAM copy is blocking
+        b_potential_acoustic(:) = no_backward_acoustic_buffer(nglob*mod(no_backward_iframe,3)+1: &
+                                                                nglob*(mod(no_backward_iframe,3)+1))
+      endif
+    endif
+
+    endif ! any_acoustic
+
+    if (any_elastic) then
+
+      b_displ_elastic(:,:) = no_backward_displ_buffer(:,:)
+      if (APPROXIMATE_HESS_KL) b_accel_elastic(:,:) = no_backward_accel_buffer(:,:)
+
+      if (APPROXIMATE_HESS_KL) then
+        offset = 4*2*(NDIM*nglob)*(no_backward_Nframes - no_backward_iframe) + 1
+      else
+        offset = 4*(NDIM*nglob)*(no_backward_Nframes - no_backward_iframe) + 1
+      endif
+
+      read(IIN_UNDO_ATT,asynchronous='yes',pos=offset) no_backward_displ_buffer(:,:)
+      if (APPROXIMATE_HESS_KL) read(IIN_UNDO_ATT,asynchronous='yes',pos=offset+8+4*nglob) no_backward_accel_buffer(:,:)
+    endif
+
+  if (it == NSTEP) close(IIN_UNDO_ATT)
+
+  end subroutine read_forward_arrays_no_backward
 

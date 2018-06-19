@@ -43,7 +43,7 @@
   real(kind=CUSTOM_REAL) :: kinetic_energy_total,potential_energy_total
 
   ! safety check
-  if (GPU_MODE) stop 'Error computing energy for output is not implemented on GPUs yet'
+  if (GPU_MODE) call stop_the_code('Error computing energy for output is not implemented on GPUs yet')
 
   ! computes energy
   call compute_energy()
@@ -70,13 +70,13 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM,ZERO,TWO
 
+
   use specfem_par, only: AXISYM,is_on_the_axis,myrank,nspec,kinetic_energy,potential_energy, &
     ibool,hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz,jacobian,wxgll,wzgll, &
     displ_elastic,veloc_elastic, &
-    displs_poroelastic,displw_poroelastic,velocs_poroelastic,velocw_poroelastic, &
-    potential_dot_acoustic,vsext,vpext,rhoext,poroelastcoef,density,kmato,assign_external_model, &
-    ispec_is_poroelastic,ispec_is_elastic,P_SV
-
+    displs_poroelastic,displw_poroelastic,velocs_poroelastic,velocw_poroelastic,potential_acoustic, &
+    potential_dot_acoustic,potential_dot_dot_acoustic,vsext,vpext,rhoext,poroelastcoef,density,kmato,assign_external_model, &
+    ispec_is_poroelastic,ispec_is_elastic,P_SV,ispec_is_PML
   implicit none
 
 ! local variables
@@ -101,8 +101,17 @@
   ! pressure in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: pressure_element
 
+!! DK DK March 2018: restored this initialization that someone had removed for some reason, thus making the calculation wrong
+!! DK DK March 2018: please do *NOT* remove it
+  kinetic_energy = 0._CUSTOM_REAL
+  potential_energy = 0._CUSTOM_REAL
+
   ! loop over spectral elements
-  do ispec = 1,nspec ! TODO uncomment
+  do ispec = 1,nspec
+
+!! DK DK March 2018: only compute energy in the main domain, not in the PMLs, in which it is not physical
+    if (ispec_is_PML(ispec)) cycle
+
     !---
     !--- elastic spectral element
     !---
@@ -314,7 +323,8 @@
       ! and pressure is: p = - Chi_dot_dot  (Chi_dot_dot being the time second derivative of Chi).
 
       ! compute pressure in this element
-      call compute_pressure_one_element(ispec,pressure_element)
+      call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic, &
+                                        potential_dot_dot_acoustic,potential_acoustic)
 
       ! compute velocity vector field in this element
       call compute_vector_one_element(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
@@ -371,7 +381,9 @@
                         potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
                         total_effective_duration_field,velocs_poroelastic, &
                         poroelastcoef,vsext,vpext,rhoext,density,kmato,assign_external_model,jacobian,displ_elastic, &
-                        hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz
+                        hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz, &
+                        displs_poroelastic,displw_poroelastic, &
+                        potential_dot_dot_acoustic,potential_acoustic
 
   implicit none
 
@@ -516,7 +528,8 @@
     !---
     else if (ispec_is_poroelastic(ispec)) then
        ! safety check
-       stop 'COMPUTE_INTEGRATED_ENERGY_FIELD is not available for poroelastic media yet (but it would be very easy to implement)'
+       call stop_the_code( &
+'COMPUTE_INTEGRATED_ENERGY_FIELD is not available for poroelastic media yet (but it would be very easy to implement)')
 
     !---
     !--- acoustic spectral element
@@ -527,7 +540,8 @@
       call compute_vector_one_element(potential_dot_acoustic,veloc_elastic,velocs_poroelastic,ispec,vector_field_element)
 
       ! compute pressure in this element
-      call compute_pressure_one_element(ispec,pressure_element)
+      call compute_pressure_one_element(ispec,pressure_element,displ_elastic,displs_poroelastic,displw_poroelastic, &
+                                        potential_dot_dot_acoustic,potential_acoustic)
 
       !--- if external medium, get density of current grid point
       if (assign_external_model) then

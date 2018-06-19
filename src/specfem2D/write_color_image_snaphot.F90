@@ -31,7 +31,7 @@
 !
 !========================================================================
 
-  subroutine write_color_image_snaphot()
+  subroutine write_color_image_snaphot(plot_b_wavefield_only)
 
 #ifdef USE_MPI
   use mpi
@@ -43,7 +43,11 @@
                         assign_external_model,ibool,kmato,density,rhoext,P_SV, &
                         potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
                         displ_elastic,veloc_elastic,accel_elastic, &
-                        displs_poroelastic,velocs_poroelastic,accels_poroelastic
+                        displs_poroelastic,velocs_poroelastic,accels_poroelastic, &
+                        b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
+                        b_displ_elastic,b_veloc_elastic,b_accel_elastic, &
+                        b_displs_poroelastic,b_velocs_poroelastic,b_accels_poroelastic,SIMULATION_TYPE, &
+                        UNDO_ATTENUATION_AND_OR_PML,NO_BACKWARD_RECONSTRUCTION
 
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
@@ -59,9 +63,21 @@
 
   implicit none
 
+  !parameter useful for UNDO_ATTENUATION
+  logical :: plot_b_wavefield_only
+
   !local variables
-  integer :: i,j,k,ispec,iglob,iproc
+  integer :: i,j,k,ispec,iglob,iproc,i_field,n_fields
   double precision :: rhol
+
+  if (SIMULATION_TYPE == 1 .or. UNDO_ATTENUATION_AND_OR_PML .or. NO_BACKWARD_RECONSTRUCTION) then
+    n_fields = 1
+  else
+    n_fields = 2
+  endif
+
+  !loop over each wavefield
+  do i_field = 1, n_fields
 
   if (myrank == 0) then
     write(IMAIN,*)
@@ -70,16 +86,45 @@
   endif
 
   if (imagetype_JPEG >= 1 .and. imagetype_JPEG <= 3) then
-    if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of the displacement vector...'
-    call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic)
+    if (i_field == 1 .and. .not. plot_b_wavefield_only) then
+      if (myrank == 0 .and. SIMULATION_TYPE == 1 ) then
+        write(IMAIN,*) 'drawing scalar image of the forward wavefield displacement...'
+      else if (myrank == 0) then
+        write(IMAIN,*) 'drawing scalar image of the adjoint wavefield displacement...'
+      endif
+      call compute_vector_whole_medium(potential_acoustic,displ_elastic,displs_poroelastic)
+    else
+       if (myrank == 0) write(IMAIN,*) 'drawing scalar image of the reconstructed forward wavefield displacement...'
+      call compute_vector_whole_medium(b_potential_acoustic,b_displ_elastic,b_displs_poroelastic)
+    endif
 
   else if (imagetype_JPEG >= 4 .and. imagetype_JPEG <= 6) then
-    if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of the velocity vector...'
-    call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic)
+
+    if (i_field == 1 .and. .not. plot_b_wavefield_only) then
+      if (myrank == 0 .and. SIMULATION_TYPE == 1 ) then
+        write(IMAIN,*) 'drawing scalar image of the forward wavefield velocity...'
+      else if (myrank == 0) then
+        write(IMAIN,*) 'drawing scalar image of the adjoint wavefield velocity...'
+      endif
+      call compute_vector_whole_medium(potential_dot_acoustic,veloc_elastic,velocs_poroelastic)
+    else
+       if (myrank == 0) write(IMAIN,*) 'drawing scalar image of the reconstructed forward wavefield velocity...'
+      call compute_vector_whole_medium(b_potential_dot_acoustic,b_veloc_elastic,b_velocs_poroelastic)
+    endif
 
   else if (imagetype_JPEG >= 7 .and. imagetype_JPEG <= 9) then
-    if (myrank == 0) write(IMAIN,*) 'drawing scalar image of part of the acceleration vector...'
-    call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic)
+
+    if (i_field == 1 .and. .not. plot_b_wavefield_only) then
+      if (myrank == 0 .and. SIMULATION_TYPE == 1 ) then
+        write(IMAIN,*) 'drawing scalar image of the forward wavefield acceleration...'
+      else if (myrank == 0) then
+        write(IMAIN,*) 'drawing scalar image of the adjoint wavefield acceleration...'
+      endif
+      call compute_vector_whole_medium(potential_dot_dot_acoustic,accel_elastic,accels_poroelastic)
+    else
+       if (myrank == 0) write(IMAIN,*) 'drawing scalar image of the reconstructed forward wavefield acceleration...'
+      call compute_vector_whole_medium(b_potential_dot_dot_acoustic,b_accel_elastic,b_accels_poroelastic)
+    endif
 
   else if (imagetype_JPEG >= 11 .and. imagetype_JPEG <= 13) then
     ! allocation for normalized representation in JPEG image
@@ -123,8 +168,18 @@
     enddo
 
   else if (imagetype_JPEG == 10 .and. P_SV) then
-    if (myrank == 0) write(IMAIN,*) 'drawing image of pressure field...'
-    call compute_pressure_whole_medium()
+
+    if (i_field == 1 .and. .not. plot_b_wavefield_only) then
+      if (myrank == 0 .and. SIMULATION_TYPE == 1 ) then
+        write(IMAIN,*) 'drawing scalar image of the forward wavefield pressure...'
+      else
+        if (myrank == 0) write(IMAIN,*) 'drawing scalar image of the adjoint wavefield pressure...'
+      endif
+    call compute_pressure_whole_medium(1)
+    else
+      if (myrank == 0) write(IMAIN,*) 'drawing scalar image of the reconstructed forward wavefield pressure...'
+      call compute_pressure_whole_medium(2)
+    endif
 
   else if (imagetype_JPEG == 10 .and. .not. P_SV) then
     call exit_MPI(myrank,'cannot draw pressure field for SH (membrane) waves')
@@ -271,13 +326,15 @@
 
   ! creates image
   if (myrank == 0) then
-    call create_color_image()
+    call create_color_image(i_field,plot_b_wavefield_only)
 
     ! user output
     write(IMAIN,*) 'Color image created'
     call flush_IMAIN()
   endif
   call synchronize_all()
+
+enddo !loop over wavefields (forward and adjoint if necessary)
 
   end subroutine write_color_image_snaphot
 

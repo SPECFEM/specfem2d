@@ -41,11 +41,9 @@ module specfem_par
   use shared_parameters
 
   implicit none
-
   !=====================================================================
   ! input for simulation (its beginning)
   !=====================================================================
-
   !---------------------------------------------------------------------
   ! for material information
   !---------------------------------------------------------------------
@@ -72,7 +70,7 @@ module specfem_par
   double precision, dimension(:), allocatable  :: QKappa_attenuation
   double precision, dimension(:), allocatable  :: Qmu_attenuation
 
-  integer :: nspec_ATT
+  integer :: nspec_ATT_el,nspec_ATT_ac,nglob_att
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   real(kind=CUSTOM_REAL), dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
 
@@ -380,9 +378,13 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential_dot
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: pml_interface_history_potential_dot_dot
 
+  ! buffer for I/O
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: no_backward_acoustic_buffer
+
   !---------------------------------------------------------------------
-  !for by elastic simulation
+  ! for elastic simulation
   !---------------------------------------------------------------------
+
   ! number of node associated with elastic medium
   integer :: nglob_elastic
 
@@ -420,10 +422,23 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_LDDRK,e11_LDDRK,e13_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: e1_initial_rk,e11_initial_rk,e13_initial_rk
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: e1_force_rk,e11_force_rk,e13_force_rk
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: A_newmark_nu1,B_newmark_nu1,A_newmark_nu2,B_newmark_nu2
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old
+
+
+  ! inverse mass matrix for viscoacoustic simulations
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: rmass_inverse_e1
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_acous
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_LDDRK_acous
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_acous_temp, dot_e1, dot_e1_old,A_newmark_e1, B_newmark_e1
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: A_newmark_e1_sf, B_newmark_e1_sf,e1_acous_sf,b_e1_acous_sf
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: e1_initial_rk_acous
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: e1_force_rk_acous,sum_forces_old,b_sum_forces_old
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: accel_elastic_adj_coupling
 
-  ! the variable for PML
+  ! the variable for CPML in elastic simulation
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
                           rmemory_dux_dx,rmemory_duz_dx,rmemory_dux_dz,rmemory_duz_dz
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
@@ -432,6 +447,12 @@ module specfem_par
                           rmemory_dux_dx_LDDRK,rmemory_duz_dx_LDDRK,rmemory_dux_dz_LDDRK,rmemory_duz_dz_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: rmemory_displ_elastic_LDDRK
+
+  ! additional variables needed for CPML in viscoelastic simulation
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tau_epsilon_nu1,tau_epsilon_nu2
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: kaPML_rmemory_dux_dxl,kaPML_rmemory_duz_dzl, &
+                                                             muPML_rmemory_dux_dxl,muPML_rmemory_duz_dzl, &
+                                                             muPML_rmemory_dux_dzl,muPML_rmemory_duz_dxl
 
   !for backward simulation in adjoint inversion
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
@@ -450,6 +471,10 @@ module specfem_par
   integer :: nspec_inner_elastic,nspec_outer_elastic
   integer :: num_phase_ispec_elastic
   integer, dimension(:,:), allocatable :: phase_ispec_inner_elastic
+
+  ! buffer for I/O
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: no_backward_displ_buffer,no_backward_accel_buffer
+  integer :: no_backward_nframes,no_backward_iframe
 
   !---------------------------------------------------------------------
   ! for poroelastic simulation
@@ -605,9 +630,6 @@ module specfem_par
   ! spectral elements
   integer :: nspec
 
-  ! for MPI and partitioning
-  integer :: myrank
-
   ! parameter read from parameter file
   integer :: nproc_read_from_database
 
@@ -751,13 +773,6 @@ module specfem_par_gpu
   integer :: num_free_surface_faces
 
   integer, dimension(:), allocatable :: cote_abs
-
-  ! coloring
-  integer :: num_colors_outer_acoustic,num_colors_inner_acoustic
-  integer, dimension(:), allocatable :: num_elem_colors_acoustic
-
-  integer :: num_colors_outer_elastic,num_colors_inner_elastic
-  integer, dimension(:), allocatable :: num_elem_colors_elastic
 
   ! sources
   integer :: nsources_local

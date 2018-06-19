@@ -76,7 +76,7 @@ is accurate at second order and thus contains significantly less numerical noise
 
 \item[READ\_VELOCITIES\_AT\_f0]
 
- shift (i.e. change) velocities read from the input file to take average physical dispersion into account, i.e. if needed change the reference frequency at which these velocities are defined internally in the code: by default, the velocity values that are read at the end of this Par\_file of the code are supposed to be the unrelaxed values, i.e. the velocities at infinite frequency. We may want to change this and impose that the values read are those for a given frequency (here f0\_attenuation). (when we do this, velocities will then slightly decrease and waves will thus slightly slow down)
+ shift (i.e. change) velocities read from the input file to take average physical dispersion into account, i.e. if needed change the reference frequency at which these velocities are defined internally in the code: by default, the velocity values that are read at the end of this Par\_file of the code are supposed to be the unrelaxed values, i.e. the velocities at infinite frequency. If you set this flage to .true., the values read are then those for a given frequency called ATTENUATION\_f0\_REFERENCE.
 
 
 \item[nbmodels]  With \texttt{MODEL = default} chosen, a variety of simple velocity and density models can be defined using the \texttt{nbmodels} device.
@@ -145,8 +145,21 @@ For a plane wave including converted and reflected waves at the free surface, P 
 for a plane wave without converted nor reflected waves at the free surface, i.e. the incident wave only, P wave = 4, S wave = 5.
 (incident plane waves are turned on by parameter \texttt{initialfield} in \texttt{DATA/Par\_file}).
 
-\item[time\_function\_type] Choose a source-time function: set this value to \texttt{1} to use a Ricker,
-\texttt{2} the first derivative, \texttt{3} a Gaussian, \texttt{4} a Dirac or \texttt{5} a Heaviside source-time function.
+\item[time\_function\_type] Choose a source-time function: set this value to \texttt{1} to use a Ricker, i.e. the second derivative of a Gaussian,
+\texttt{2} to use the first derivative of a Gaussian, \texttt{3} to use a Gaussian, \texttt{4} to use a Dirac or \texttt{5} to use a Heaviside source-time function.
+Note that we use the standard definition of a Ricker, for a dominant frequency $f_0$:
+$\mathrm{Ricker}(t) = (1 - 2 a t^2) e^{-a t^2}$, with $a = \pi^2 f_0^2$,
+whose Fourier transform is thus:
+$\frac{1}{2} \frac{\sqrt{\pi}\omega^2}{a^{3/2}}e^{-\frac{\omega^2}{4 a}}$
+This gives the wavelet of Figure~\ref{fig:RickerWavelet}.
+%%
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=3in]{figures/Ricker_wavelet.png}
+\caption{We use the standard definition of a Ricker (i.e., second derivative of a Gaussian). Image taken from \url{http://subsurfwiki.org}.}
+\label{fig:RickerWavelet}
+\end{figure}
+%%
 
 \item[f0] Set this to the dominant frequency of the source.
 For point-source simulations using a Heaviside source-time function (\texttt{time\_function\_type = 5}),

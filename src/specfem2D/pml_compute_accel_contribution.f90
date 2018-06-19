@@ -75,7 +75,6 @@
   ! PML
   integer :: ispec_PML
   integer :: CPML_region_local
-  integer :: singularity_type
   double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z
   double precision :: time_n,time_nsub1
   double precision :: A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
@@ -98,7 +97,7 @@
     ! LDDRK
     time_n = (it-1) * deltat + C_LDDRK(i_stage) * deltat
   case default
-    stop 'Sorry, time stepping scheme for PML accel contribution not implemented yet'
+    call stop_the_code('Sorry, time stepping scheme for PML accel contribution not implemented yet')
   end select
 
   ! local PML element
@@ -121,8 +120,8 @@
       beta_z = alpha_z + d_z / kappa_z
 
       ! the subroutine of l_parameter_computation is located at the end of compute_forces_viscoelastic.F90
-      call l_parameter_computation(time_n,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
-                                   CPML_region_local,A0,A1,A2,A3,A4,singularity_type, &
+      call l_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+                                   CPML_region_local,A0,A1,A2,A3,A4, &
                                    bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
       iglob = ibool(i,j,ispec)
@@ -133,13 +132,8 @@
         rmemory_potential_acoustic(1,i,j,ispec_PML) = coef0_1 * rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                coef1_1 * potential_acoustic(iglob) + coef2_1 * potential_acoustic_old(iglob)
 
-        if (singularity_type == 0) then
-          rmemory_potential_acoustic(2,i,j,ispec_PML) = coef0_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + &
-                 coef1_2 * potential_acoustic(iglob) + coef2_2 * potential_acoustic_old(iglob)
-        else
-          rmemory_potential_acoustic(2,i,j,ispec_PML) = coef0_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + &
-                 coef1_2 * time_n * potential_acoustic(iglob) + coef2_2 * time_nsub1 * potential_acoustic_old(iglob)
-        endif
+        rmemory_potential_acoustic(2,i,j,ispec_PML) = coef0_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + &
+               coef1_2 * potential_acoustic(iglob) + coef2_2 * potential_acoustic_old(iglob)
 
       case (2)
         ! LDDRK
@@ -149,19 +143,11 @@
         rmemory_potential_acoustic(1,i,j,ispec_PML) = rmemory_potential_acoustic(1,i,j,ispec_PML) + &
                  BETA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(1,i,j,ispec_PML)
 
-        if (singularity_type == 0) then
-          rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) = &
-                 ALPHA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) + &
-                 deltat * (-bb_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + potential_acoustic(iglob))
-          rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
-                 BETA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML)
-        else
-          rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) = &
-                 ALPHA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) + &
-                 deltat * (-bb_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + potential_acoustic(iglob) * time_n)
-          rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
-                 BETA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML)
-        endif
+        rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) = &
+               ALPHA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML) + &
+               deltat * (-bb_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + potential_acoustic(iglob))
+        rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
+               BETA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML)
       end select
 
       ! material properties
@@ -212,19 +198,18 @@
 
 
   subroutine pml_compute_accel_contribution_elastic(ispec,nglob, &
-                                                     dummy_loc,displ_elastic_old,veloc_elastic, &
-                                                     accel_elastic_PML,r_xiplus1)
+                                                    dummy_loc,displ_elastic_old,veloc_elastic, &
+                                                    accel_elastic_PML,r_xiplus1)
 ! for elastic elements
 
-  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK, &
-    NGLJ,TWO_THIRDS
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,NGLJ,TWO_THIRDS, &
+                       CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
-  use specfem_par, only: time_stepping_scheme,i_stage,it,deltat, &
+  use specfem_par, only: time_stepping_scheme,i_stage,deltat, &
                          assign_external_model,rhoext,density,kmato, &
-                         ibool,jacobian, &
-                         wxgll,wzgll, &
-                         rmemory_displ_elastic,rmemory_displ_elastic_LDDRK, &
-                         AXISYM,is_on_the_axis,coord,wxglj
+                         ibool,jacobian,wxgll,wzgll, &
+                         AXISYM,is_on_the_axis,coord,wxglj, &
+                         rmemory_displ_elastic,rmemory_displ_elastic_LDDRK
 
   ! PML arrays
   use specfem_par, only: nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
@@ -245,11 +230,8 @@
   integer :: i,j,iglob
 
   ! PML
-  integer :: ispec_PML
-  integer :: CPML_region_local
-  integer :: singularity_type
+  integer :: ispec_PML,CPML_region_local
   double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z
-  double precision :: time_n,time_nsub1
   double precision :: A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
 
   ! material properties of the acoustic medium
@@ -258,19 +240,6 @@
   ! checks if anything to do in this slice
   if (nspec_PML == 0) return
   if (.not. ispec_is_PML(ispec)) return
-
-  ! timing
-  select case (time_stepping_scheme)
-  case (1)
-    ! Newmark
-    time_n = (it-1) * deltat
-    time_nsub1 = (it-2) * deltat
-  case (2)
-    ! LDDRK
-    time_n = (it-1) * deltat + C_LDDRK(i_stage) * deltat
-  case default
-    stop 'Sorry, time stepping scheme for PML accel contribution not implemented yet'
-  end select
 
   ! initializes
   accel_elastic_PML(:,:,:) = 0._CUSTOM_REAL
@@ -296,8 +265,8 @@
       beta_x = alpha_x + d_x / kappa_x
       beta_z = alpha_z + d_z / kappa_z
 
-      call l_parameter_computation(time_n,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
-                                   CPML_region_local,A0,A1,A2,A3,A4,singularity_type, &
+      call l_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+                                   CPML_region_local,A0,A1,A2,A3,A4, &
                                    bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
       select case (time_stepping_scheme)
@@ -308,19 +277,10 @@
         rmemory_displ_elastic(1,2,i,j,ispec_PML) = coef0_1 * rmemory_displ_elastic(1,2,i,j,ispec_PML) + &
                                                    coef1_1 * dummy_loc(2,i,j) + coef2_1 * displ_elastic_old(2,iglob)
 
-        if (singularity_type == 0) then
-          rmemory_displ_elastic(2,1,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
-                                                     coef1_2 * dummy_loc(1,i,j) + coef2_2 * displ_elastic_old(1,iglob)
-          rmemory_displ_elastic(2,2,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,2,i,j,ispec_PML) + &
-                                                     coef1_2 * dummy_loc(2,i,j) + coef2_2 * displ_elastic_old(2,iglob)
-        else
-          rmemory_displ_elastic(2,1,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
-                                                     coef1_2 * time_n * dummy_loc(1,i,j) + &
-                                                     coef2_2 * time_nsub1 * displ_elastic_old(1,iglob)
-          rmemory_displ_elastic(2,2,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,2,i,j,ispec_PML) + &
-                                                     coef1_2 * time_n * dummy_loc(2,i,j) + &
-                                                     coef2_2 * time_nsub1 * displ_elastic_old(2,iglob)
-        endif
+        rmemory_displ_elastic(2,1,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
+                                                   coef1_2 * dummy_loc(1,i,j) + coef2_2 * displ_elastic_old(1,iglob)
+        rmemory_displ_elastic(2,2,i,j,ispec_PML) = coef0_2 * rmemory_displ_elastic(2,2,i,j,ispec_PML) + &
+                                                   coef1_2 * dummy_loc(2,i,j) + coef2_2 * displ_elastic_old(2,iglob)
 
       case (2)
         ! LDDRK
@@ -336,34 +296,19 @@
         rmemory_displ_elastic(1,2,i,j,ispec_PML) = rmemory_displ_elastic(1,2,i,j,ispec_PML) + &
               BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(1,2,i,j,ispec_PML)
 
-        if (singularity_type == 0) then
-          rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) = &
-                ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) + &
-                deltat * (-bb_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + dummy_loc(1,i,j))
-          rmemory_displ_elastic(2,1,i,j,ispec_PML) = rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
-                BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML)
+        rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) = &
+              ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) + &
+              deltat * (-bb_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + dummy_loc(1,i,j))
+        rmemory_displ_elastic(2,1,i,j,ispec_PML) = rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
+              BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML)
 
-          rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML) = &
-                ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML) + &
-                deltat * (-bb_2 * rmemory_displ_elastic(2,2,i,j,ispec_PML) + dummy_loc(2,i,j))
-          rmemory_displ_elastic(2,2,i,j,ispec_PML) = rmemory_displ_elastic(2,2,i,j,ispec_PML) + &
-                BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML)
-        else
-          rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) = &
-                ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML) + &
-                deltat * (-bb_2 * rmemory_displ_elastic(2,1,i,j,ispec_PML) + dummy_loc(1,i,j) * time_n)
-          rmemory_displ_elastic(2,1,i,j,ispec_PML) = rmemory_displ_elastic(2,1,i,j,ispec_PML) + &
-                BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,1,i,j,ispec_PML)
-
-          rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML) = &
-                ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML) + &
-                deltat * (-bb_2 * rmemory_displ_elastic(2,2,i,j,ispec_PML) + dummy_loc(2,i,j) * time_n)
-          rmemory_displ_elastic(2,2,i,j,ispec_PML) = rmemory_displ_elastic(2,2,i,j,ispec_PML) + &
-                BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML)
-        endif
-
+        rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML) = &
+              ALPHA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML) + &
+              deltat * (-bb_2 * rmemory_displ_elastic(2,2,i,j,ispec_PML) + dummy_loc(2,i,j))
+        rmemory_displ_elastic(2,2,i,j,ispec_PML) = rmemory_displ_elastic(2,2,i,j,ispec_PML) + &
+              BETA_LDDRK(i_stage) * rmemory_displ_elastic_LDDRK(2,2,i,j,ispec_PML)
       case default
-        stop 'Time stepping scheme not implemented yet for PML accel contribution'
+        call stop_the_code('Time stepping scheme not implemented yet for PML accel contribution')
       end select
 
       if (assign_external_model) then

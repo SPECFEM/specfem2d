@@ -45,7 +45,7 @@
                          fluid_solid_acoustic_iedge,fluid_solid_elastic_ispec,fluid_solid_elastic_iedge, &
                          potential_acoustic_adj_coupling, &
                          AXISYM,coord,is_on_the_axis,xiglj,wxglj, &
-                         rmemory_sfb_potential_ddot_acoustic,timeval,deltat, &
+                         rmemory_sfb_potential_ddot_acoustic,deltat, &
                          rmemory_sfb_potential_ddot_acoustic_LDDRK,i_stage,time_stepping_scheme
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,nspec_PML,ispec_is_PML,spec_to_PML,region_CPML, &
@@ -55,7 +55,7 @@
 
   !local variable
   integer :: inum,ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic,ipoin1D,i,j,iglob,ii2,jj2, &
-             ispec_PML,CPML_region_local,singularity_type
+             ispec_PML,CPML_region_local
   real(kind=CUSTOM_REAL) :: pressure,xxi,zxi,xgamma,zgamma,jacobian1D,nx,nz,weight
   real(kind=CUSTOM_REAL), dimension(NGLJ,NGLLZ) :: r_xiplus1
   double precision :: kappa_x,kappa_z,d_x,d_z,alpha_x,alpha_z,beta_x,beta_z, &
@@ -105,8 +105,8 @@
           beta_x = alpha_x + d_x / kappa_x
           beta_z = alpha_z + d_z / kappa_z
 
-          call l_parameter_computation(timeval,deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
-                                       CPML_region_local,A0,A1,A2,A3,A4,singularity_type, &
+          call l_parameter_computation(deltat,kappa_x,beta_x,alpha_x,kappa_z,beta_z,alpha_z, &
+                                       CPML_region_local,A0,A1,A2,A3,A4, &
                                        bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
           if (time_stepping_scheme == 1) then
@@ -193,7 +193,7 @@
         nz = + xgamma / jacobian1D
         if (AXISYM) then
           if (is_on_the_axis(ispec_acoustic)) then
-            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+            call stop_the_code('error: rotated element detected on the symmetry axis, this should not happen')
           else
             weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
           endif
@@ -210,7 +210,7 @@
         nz = - xgamma / jacobian1D
         if (AXISYM) then
           if (is_on_the_axis(ispec_acoustic)) then
-            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+            call stop_the_code('error: rotated element detected on the symmetry axis, this should not happen')
           else
             weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
           endif
@@ -333,7 +333,7 @@
         nz = + xgamma / jacobian1D
         if (AXISYM) then
           if (is_on_the_axis(ispec_acoustic)) then
-            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+            call stop_the_code('error: rotated element detected on the symmetry axis, this should not happen')
           else
             weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
           endif
@@ -348,7 +348,7 @@
         nz = - xgamma / jacobian1D
         if (AXISYM) then
           if (is_on_the_axis(ispec_acoustic)) then
-            stop 'error: rotated element detected on the symmetry axis, this should not happen'
+            call stop_the_code('error: rotated element detected on the symmetry axis, this should not happen')
           else
             weight = jacobian1D * wzgll(j) * coord(1,ibool(i,j,ispec_acoustic))
           endif

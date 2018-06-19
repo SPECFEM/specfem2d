@@ -89,13 +89,13 @@ program sum_kernels
   open(unit = IIN, file = trim(KERNEL_FILE_LIST), status = 'old',iostat = ier)
   if (ier /= 0) then
      print *,'Error opening ',trim(KERNEL_FILE_LIST),myrank
-     stop 1
+     call stop_the_code("error 1")
   endif
   do while (1 == 1)
      read(IIN,'(a)',iostat=ier) sline
      if (ier /= 0) exit
      nker = nker+1
-     if (nker > MAX_KERNEL_PATHS) stop 'Error number of kernels exceeds MAX_KERNEL_PATHS'
+     if (nker > MAX_KERNEL_PATHS) call stop_the_code('Error number of kernels exceeds MAX_KERNEL_PATHS')
      kernel_list(nker) = sline
   enddo
   close(IIN)
@@ -115,7 +115,7 @@ program sum_kernels
       print *
     endif
     call synchronize_all()
-    stop 'Error total number of slices'
+    call stop_the_code('Error total number of slices')
   endif
   call synchronize_all()
 
@@ -212,7 +212,7 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
   ! initializes arrays
   allocate(kernel(NGLLX,NGLLZ,NSPEC), &
            total_kernel(NGLLX,NGLLZ,NSPEC),stat=ier)
-  if (ier /= 0) stop 'Error allocating kernel arrays'
+  if (ier /= 0) call stop_the_code('Error allocating kernel arrays')
 
   if (USE_SOURCE_MASK) then
     allocate(mask_source(NGLLX,NGLLZ,NSPEC))
@@ -236,7 +236,7 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
     open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0) then
       write(*,*) '  kernel not found: ',trim(k_file)
-      stop 'Error kernel file not found'
+      call stop_the_code('Error kernel file not found')
     endif
     read(IIN) kernel
     close(IIN)
@@ -257,7 +257,7 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
       open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
       if (ier /= 0) then
         write(*,*) '  file not found: ',trim(k_file)
-        stop 'Error source mask file not found'
+        call stop_the_code('Error source mask file not found')
       endif
       read(IIN) mask_source
       close(IIN)
@@ -279,7 +279,7 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
   if (ier /= 0) then
     write(*,*) 'Error kernel not written: ',trim(k_file)
     write(*,*) 'Please check if directory OUTPUT_SUM/ exists...'
-    stop 'Error kernel write'
+    call stop_the_code('Error kernel write')
   endif
   write(IOUT) total_kernel
   close(IOUT)

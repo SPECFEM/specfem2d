@@ -127,6 +127,8 @@
 
   implicit none
 
+  logical :: compute_b_wavefield
+
   ! checks if anything to do in this slice
   if (.not. any_acoustic) return
 
@@ -142,9 +144,15 @@
     endif
 
   else
+    ! for the UNDO_ATTENUATION_AND_OR_PML case, this routine is not used
+    if (NO_BACKWARD_RECONSTRUCTION) then
+      compute_b_wavefield = .false.
+    else
+      compute_b_wavefield = .true.
+    endif
     ! on GPU
     ! handles both forward and backward
-    call update_displacement_newmark_GPU_acoustic()
+    call update_displacement_newmark_GPU_acoustic(compute_b_wavefield)
   endif
 
   end subroutine update_displ_acoustic_forward
@@ -361,7 +369,7 @@
                                                   potential_dot_dot_acoustic,potential_dot_acoustic, &
                                                   potential_acoustic,PML_BOUNDARY_CONDITIONS,potential_acoustic_old)
 
-  use constants, only: TWO,USE_ENFORCE_FIELDS
+  use constants, only: TWO,USE_ENFORCE_FIELDS,USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par, only: nglob_acoustic,CUSTOM_REAL,ATTENUATION_VISCOACOUSTIC,iglob_is_forced,acoustic_iglob_is_forced,it
 
@@ -378,7 +386,7 @@
   integer :: iglob
 
   ! PML simulations
-  if (PML_BOUNDARY_CONDITIONS .or. ATTENUATION_VISCOACOUSTIC) then
+  if (PML_BOUNDARY_CONDITIONS .or. (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1)) then
     ! note: TODO - for elastic, there is an additional factor 1/TWO to the default deltasquareover2 for the acceleration term
     !       find explanations where? Zhinan Xie probably wrote that and should thus know the answer
     !! DK DK oct 2017: thus adding a factor of TWO here as well
@@ -484,7 +492,7 @@
 
   ! safety check
   !PML did not implemented for poroelastic simulation
-  if (PML_BOUNDARY_CONDITIONS) stop 'Updating displacement for PML on poroelastic domain not implemented yet'
+  if (PML_BOUNDARY_CONDITIONS) call stop_the_code('Updating displacement for PML on poroelastic domain not implemented yet')
 
   ! for the solid
   displs_poroelastic(:,:) = displs_poroelastic(:,:) + deltat*velocs_poroelastic(:,:) &
@@ -504,43 +512,16 @@
 !------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_newmark_GPU()
+  subroutine update_displacement_newmark_GPU_acoustic(compute_b_wavefield)
 
-  use specfem_par, only: any_acoustic,any_elastic,any_poroelastic,myrank
-
-  implicit none
-
-  ! update displacement using finite-difference time scheme (Newmark)
-
-  if (any_acoustic) then
-    ! wavefields on GPU
-    call update_displacement_newmark_GPU_acoustic()
-  endif
-
-  if (any_elastic) then
-    ! wavefields on GPU
-    call update_displacement_newmark_GPU_elastic()
-  endif
-
-  if (any_poroelastic) then
-    ! safety stop
-    call exit_MPI(myrank,'poroelastic time marching scheme on GPU not implemented yet...')
-  endif
-
-  end subroutine update_displacement_newmark_GPU
-
-!
-!------------------------------------------------------------------------------------------------
-!
-
-  subroutine update_displacement_newmark_GPU_acoustic()
-
-  use specfem_par, only: SIMULATION_TYPE,PML_BOUNDARY_CONDITIONS,myrank
+  use specfem_par, only: SIMULATION_TYPE,PML_BOUNDARY_CONDITIONS,myrank,UNDO_ATTENUATION_AND_OR_PML
 
   use specfem_par_gpu, only: Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f, &
     b_deltatsquareover2f
 
   implicit none
+
+  logical :: compute_b_wavefield
 
   ! update displacement using finite-difference time scheme (Newmark)
 
@@ -553,8 +534,8 @@
   endif
 
   ! updates acoustic potentials
-  call update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f, &
-                                   b_deltatf,b_deltatsquareover2f,b_deltatover2f)
+  call update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f,b_deltatf, &
+                                   b_deltatsquareover2f,b_deltatover2f,compute_b_wavefield,UNDO_ATTENUATION_AND_OR_PML)
 
   end subroutine update_displacement_newmark_GPU_acoustic
 

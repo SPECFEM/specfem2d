@@ -35,6 +35,8 @@ module tomography_par
 
   use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLZ,IIN,IOUT,FOUR_THIRDS,GAUSSALPHA,GAUSSBETA
 
+  use shared_parameters, only: myrank
+
   implicit none
 
   ! tomography parameter settings
@@ -51,7 +53,7 @@ module tomography_par
   real(kind=CUSTOM_REAL) :: step_fac,step_length
 
   ! MPI process
-  integer :: myrank,sizeprocs
+  integer :: sizeprocs
 
 end module tomography_par
 

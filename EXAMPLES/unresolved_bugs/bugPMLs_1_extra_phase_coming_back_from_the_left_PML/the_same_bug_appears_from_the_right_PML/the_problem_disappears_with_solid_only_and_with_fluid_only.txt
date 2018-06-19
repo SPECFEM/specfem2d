@@ -1,0 +1,5 @@
+
+the problem disappears when using pure fluid, or pure solid (i.e. a fluid, or a solid, for the whole medium)
+
+thus the problem comes from fluid-solid matching in the PML (probably exactly at its entrance)
+

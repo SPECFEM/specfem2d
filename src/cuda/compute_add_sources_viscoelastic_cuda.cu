@@ -106,7 +106,7 @@ void FC_FUNC_(compute_add_sources_el_cuda,
   get_blocks_xy(mp->nsources_local,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y);
-  dim3 threads(5,5,1);
+  dim3 threads(NGLLX,NGLLX,1);
 
   compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel,mp->d_ibool,
                                                                     mp->d_sourcearrays,
@@ -146,7 +146,7 @@ void FC_FUNC_(compute_add_sources_el_s3_cuda,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nsources_local,&num_blocks_x,&num_blocks_y);
   dim3 grid(num_blocks_x,num_blocks_y);
-  dim3 threads(5,5,1);
+  dim3 threads(NGLLX,NGLLX,1);
   int it = *itf -1;
 
   compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel,mp->d_ibool,
@@ -233,7 +233,7 @@ void FC_FUNC_(add_sources_el_sim_type_2_or_3,
   get_blocks_xy(mp->nadj_rec_local,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y,1);
-  dim3 threads(5,5,1);
+  dim3 threads(NGLLX,NGLLX,1);
 
   int it_index = (*it) - 1;
 

@@ -33,13 +33,14 @@
 
   subroutine compute_forces_viscoacoustic_main()
 
-  use constants, only: SOURCE_IS_MOVING,USE_ENFORCE_FIELDS,ALPHA_LDDRK,BETA_LDDRK
+  use constants, only: SOURCE_IS_MOVING,USE_ENFORCE_FIELDS,ALPHA_LDDRK,BETA_LDDRK,ZERO,USE_A_STRONG_FORMULATION_FOR_E1
+
   use specfem_par
 
   implicit none
 
   ! local parameters
-  integer :: i,iglob
+  integer :: i,iglob,i_sls
   ! non-blocking MPI
   ! iphase: iphase = 1 is for computing outer elements (on MPI interface),
   !         iphase = 2 is for computing inner elements
@@ -53,16 +54,57 @@
 
 !! DK DK QUENTIN visco begin
   ! viscoacoustic attenuation for fluid media
-  if (ATTENUATION_VISCOACOUSTIC) call compute_attenuation_acoustic(potential_acoustic,potential_acoustic_old, &
-                                                                  ispec_is_acoustic,PML_BOUNDARY_CONDITIONS,e1)
-!! DK DK QUENTIN visco end
+  if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) ) then
 
-  ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
-  do iphase = 1,2
+    ! If Newmark scheme we compute the memory variables with a Delta_t offset from the displacement
+    if (time_stepping_scheme == 1) then
+
+      do iphase = 1,2
+
+        call compute_attenuation_acoustic_integration(potential_acoustic,ispec_is_acoustic,PML_BOUNDARY_CONDITIONS,iphase,dot_e1)
+
+#ifdef USE_MPI
+        ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
+        if (NPROC > 1 .and. ninterface_acoustic > 0) then
+        ! loop over relaxation mechanisms
+        do i_sls = 1,N_SLS
+          if (iphase == 1) then
+            call assemble_MPI_scalar_ac_s_e1(dot_e1(:,i_sls),dot_e1,0)
+          else
+            call assemble_MPI_scalar_ac_w_e1(dot_e1(:,i_sls),dot_e1,0)
+          endif
+        enddo
+        endif
+#endif
+
+      enddo
+
+      ! multiply by the inverse of the mass matrix
+      !! DK DK this should be vectorized
+      if (USE_ENFORCE_FIELDS) then
+        do iglob = 1,nglob_acoustic
+          if (.not. iglob_is_forced(iglob)) then
+            do i_sls = 1,N_SLS
+              dot_e1(iglob,i_sls) = dot_e1(iglob,i_sls) * rmass_inverse_e1(iglob,i_sls)
+            enddo
+          endif
+        enddo
+      else
+        dot_e1(:,:) = rmass_inverse_e1(:,:)*dot_e1(:,:)
+      endif
+
+    endif ! of if test on time_stepping_scheme == 1
+
+    call update_memory_var_acous_weak_form(dot_e1)
+
+  endif
+
+    ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
+    do iphase = 1,2
 
     ! main solver for the acoustic elements
     call compute_forces_viscoacoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                                 PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1)
+                                 PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1_acous_sf,sum_forces_old)
 
     ! PML boundary conditions enforces zero potentials on boundary
     if (PML_BOUNDARY_CONDITIONS) then
@@ -79,7 +121,7 @@
 
       ! add acoustic forcing at a rigid boundary
       if (ACOUSTIC_FORCING .and. (.not. USE_ENFORCE_FIELDS)) then
-        call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic)
+        call add_acoustic_forcing_at_rigid_boundary(potential_dot_dot_acoustic,dot_e1)
       endif
 
       ! applies to coupling in case of MPI partitioning:
@@ -90,7 +132,7 @@
       ! add coupling with the elastic side
       if (coupled_acoustic_elastic) then
         if (SIMULATION_TYPE == 1) then
-          call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic)
+          call compute_coupling_acoustic_el(displ_elastic,displ_elastic_old,potential_dot_dot_acoustic,dot_e1)
         endif
 
         ! coupling for adjoint wavefields
@@ -99,13 +141,13 @@
           !       adjoint definition: \partial_t^2 \bfs^\dagger = - \frac{1}{\rho} \bfnabla \phi^\dagger
           !
           ! coupling with adjoint wavefields
-          call compute_coupling_acoustic_el(accel_elastic_adj_coupling,displ_elastic_old,potential_dot_dot_acoustic)
+          call compute_coupling_acoustic_el(accel_elastic_adj_coupling,displ_elastic_old,potential_dot_dot_acoustic,dot_e1)
         endif
       endif
 
       ! add coupling with the poroelastic side
       if (coupled_acoustic_poro) then
-        call compute_coupling_acoustic_po()
+        call compute_coupling_acoustic_po(dot_e1)
       endif
 
       ! add force source
@@ -127,11 +169,10 @@
     ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
     if (NPROC > 1 .and. ninterface_acoustic > 0) then
       if (iphase == 1) then
-        call assemble_MPI_scalar_ac_s(potential_dot_dot_acoustic)
+        call assemble_MPI_scalar_ac_s_e1(potential_dot_dot_acoustic,dot_e1,N_SLS)
       else
-        call assemble_MPI_scalar_ac_w(potential_dot_dot_acoustic)
+        call assemble_MPI_scalar_ac_w_e1(potential_dot_dot_acoustic,dot_e1,N_SLS)
       endif
-
       if (time_stepping_scheme == 2) then
         ! LDDRK
         if (i_stage == 1 .and. it == 1 .and. iphase == 2 .and. (.not. initialfield)) then
@@ -162,11 +203,17 @@
     do iglob = 1,nglob_acoustic
       if (.not. iglob_is_forced(iglob)) then
         potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) * rmass_inverse_acoustic(iglob)
+        if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. time_stepping_scheme > 1) &
+                dot_e1(iglob,:) = dot_e1(iglob,:) * rmass_inverse_e1(iglob,:)
       endif
     enddo
   else
     potential_dot_dot_acoustic(:) = potential_dot_dot_acoustic(:) * rmass_inverse_acoustic(:)
+    if (ATTENUATION_VISCOACOUSTIC .and. (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. time_stepping_scheme > 1) &
+        dot_e1(:,:) = rmass_inverse_e1(:,:)*dot_e1(:,:)
   endif
+
+!! DK DK QUENTIN visco end
 
   ! update velocity
   select case (time_stepping_scheme)
@@ -180,7 +227,7 @@
     ! RK scheme
     call update_veloc_acoustic_RK()
   case default
-    stop 'Invalid time stepping scheme for compute forces routine!'
+    call stop_the_code('Invalid time stepping scheme for compute forces routine!')
   end select
 
   ! free surface for an acoustic medium
@@ -238,12 +285,8 @@
   do iphase = 1,2
 
     ! main solver for the acoustic elements
-    if (UNDO_ATTENUATION_AND_OR_PML) then
-      call compute_forces_viscoacoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
-                                   .false.,b_potential_acoustic_old,iphase,e1)
-    else
-      call compute_forces_viscoacoustic_backward(b_potential_dot_dot_acoustic,b_potential_acoustic,iphase)
-    endif
+    call compute_forces_viscoacoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic, &
+                                     .false.,b_potential_acoustic_old,iphase,b_e1_acous_sf,b_sum_forces_old)
 
     ! PML boundary conditions
     if (PML_BOUNDARY_CONDITIONS) then
@@ -260,6 +303,9 @@
       ! Stacey boundary conditions
       if (STACEY_ABSORBING_CONDITIONS) then
         if (UNDO_ATTENUATION_AND_OR_PML) then
+!! DK DK March 2018: following Quentin Brissaud's new variational implementation of viscoacousticity,
+!! DK DK March 2018: I am not sure if the last argument, dot_e1, that I added here is right, or if
+!! DK DK March 2018: a backward one should be created (b_dot_e1); far more likely it should be b_dot_e1 to create (not done yet)
           call compute_stacey_acoustic(b_potential_dot_dot_acoustic,b_potential_dot_acoustic)
         else
           call compute_stacey_acoustic_backward(b_potential_dot_dot_acoustic)
@@ -268,7 +314,10 @@
 
       ! add acoustic forcing at a rigid boundary
       if (ACOUSTIC_FORCING) then
-        call add_acoustic_forcing_at_rigid_boundary(b_potential_dot_dot_acoustic)
+!! DK DK March 2018: following Quentin Brissaud's new variational implementation of viscoacousticity,
+!! DK DK March 2018: I am not sure if the last argument, dot_e1, that I added here is right, or if
+!! DK DK March 2018: a backward one should be created (b_dot_e1); far more likely it should be b_dot_e1 to create (not done yet)
+        call add_acoustic_forcing_at_rigid_boundary(b_potential_dot_dot_acoustic,dot_e1)
       endif
 
       ! add coupling with the elastic side
@@ -321,7 +370,7 @@
     ! Newmark
     call update_veloc_acoustic_Newmark_backward()
   case default
-    stop 'Sorry, time stepping scheme not implemented yet for backward computations'
+    call stop_the_code('Sorry, time stepping scheme not implemented yet for backward computations')
   end select
 
   ! free surface for an acoustic medium

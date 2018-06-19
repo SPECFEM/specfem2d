@@ -181,24 +181,24 @@
   integer :: ispec
 
   ! checks simulation domain flags
-  if (ANY(ispec_is_acoustic(:)) .neqv. any_acoustic) stop 'Error any_acoustic invalid'
-  if (ANY(ispec_is_elastic(:)) .neqv. any_elastic) stop 'Error any_elastic invalid'
-  if (ANY(ispec_is_poroelastic(:)) .neqv. any_poroelastic) stop 'Error any_poroelastic invalid'
+  if (ANY(ispec_is_acoustic(:)) .neqv. any_acoustic) call stop_the_code('Error any_acoustic invalid')
+  if (ANY(ispec_is_elastic(:)) .neqv. any_elastic) call stop_the_code('Error any_elastic invalid')
+  if (ANY(ispec_is_poroelastic(:)) .neqv. any_poroelastic) call stop_the_code('Error any_poroelastic invalid')
 
   ! safety checks
   if (.not. P_SV .and. .not. any_elastic) then
     print *, '*************** WARNING ***************'
     print *, 'Surface (membrane) waves calculation needs an elastic medium'
     print *, '*************** WARNING ***************'
-    stop 'Please set P_SV flag to .true. for acoustic simulations'
+    call stop_the_code('Please set P_SV flag to .true. for acoustic simulations')
   endif
 
   if (PML_BOUNDARY_CONDITIONS .and. any_poroelastic) then
-    stop 'PML boundary conditions not implemented for poroelastic simulations yet'
+    call stop_the_code('PML boundary conditions not implemented for poroelastic simulations yet')
   endif
 
   if (PML_BOUNDARY_CONDITIONS .and. any_elastic .and. (.not. P_SV)) then
-    stop 'PML boundary conditions not implemented for SH simulations yet'
+    call stop_the_code('PML boundary conditions not implemented for SH simulations yet')
   endif
 
   ! checks material domains
@@ -210,7 +210,7 @@
       print *,'acoustic       : ',ispec_is_acoustic(ispec)
       print *,'elastic        : ',ispec_is_elastic(ispec)
       print *,'poroelastic    : ',ispec_is_poroelastic(ispec)
-      stop 'Error material domain index element'
+      call stop_the_code('Error material domain index element')
     endif
 
     ! checks if domain is unique
@@ -221,7 +221,7 @@
       print *,'acoustic       : ',ispec_is_acoustic(ispec)
       print *,'elastic        : ',ispec_is_elastic(ispec)
       print *,'poroelastic    : ',ispec_is_poroelastic(ispec)
-      stop 'Error material domain index element'
+      call stop_the_code('Error material domain index element')
     endif
   enddo
 

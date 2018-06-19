@@ -86,7 +86,7 @@
       ibool(8,ispec) = elmnts((ispec-1)*ngnod+7)
       ibool(9,ispec) = elmnts((ispec-1)*ngnod+8)
     else
-      stop 'error, ngnod should be either 4 or 9 for external meshes'
+      call stop_the_code('error, ngnod should be either 4 or 9 for external meshes')
     endif
   enddo
 
@@ -104,7 +104,7 @@
       index_edge=2
       ibool(:,:) = ibool_rotated(:,:)
     else
-      stop 'j should be >= 1 and <= 4'
+      call stop_the_code('j should be >= 1 and <= 4')
     endif
 
     if (index_edge == 1) then
@@ -152,7 +152,7 @@
       index_rotation8 = 4
       ! index_rotation9 does not need to exist because the center rotates on itself
     else
-      stop 'The edge on which abs_nodes is located should be defined'
+      call stop_the_code('The edge on which abs_nodes is located should be defined')
     endif
 
     do i = 1,nelemabs
@@ -167,7 +167,7 @@
           endif
         enddo
 
-        if (.not. found_this_point) stop 'point not found'
+        if (.not. found_this_point) call stop_the_code('point not found')
 
         found_this_point = .false.
         do inode = 1,4
@@ -177,7 +177,7 @@
             exit
           endif
         enddo
-        if (.not. found_this_point) stop 'point not found'
+        if (.not. found_this_point) call stop_the_code('point not found')
 
         ! swap points if needed for clarity, to avoid testing both cases each time below
         if (i1 > i2) then
@@ -233,7 +233,7 @@
             ! 9th point is at the element center and thus never changes when we rotate an element
           endif
         else
-          stop 'problem in an element'
+          call stop_the_code('problem in an element')
         endif
       endif
     enddo
@@ -257,7 +257,7 @@
       elmnts((ispec-1)*ngnod+7) = ibool_rotated(8,ispec)
       elmnts((ispec-1)*ngnod+8) = ibool_rotated(9,ispec)
     else
-      stop 'error, ngnod should be either 4 or 9 for external meshes'
+      call stop_the_code('error, ngnod should be either 4 or 9 for external meshes')
     endif
   enddo
 
@@ -346,7 +346,7 @@
       ibool(8,ispec) = elmnts((ispec-1)*ngnod+7)
       ibool(9,ispec) = elmnts((ispec-1)*ngnod+8)
     else
-      stop 'rotate_mesh_for_axisym: error, ngnod should be either 4 or 9 for external meshes'
+      call stop_the_code('rotate_mesh_for_axisym: error, ngnod should be either 4 or 9 for external meshes')
     endif
   enddo
 
@@ -364,7 +364,7 @@
         exit
       endif
     enddo
-    if (.not. found_this_point) stop 'rotate_mesh_for_axisym: point not found 1'
+    if (.not. found_this_point) call stop_the_code('rotate_mesh_for_axisym: point not found 1')
     found_this_point = .false.
     do inode = 1,4 ! loop on the corners of axial element ispec_of_axial_elements(i) to see if we find inode2_axial_elements(i)
       if (ibool(inode,ispec) == inode2_axial_elements(i)) then
@@ -373,7 +373,7 @@
         exit
       endif
     enddo
-    if (.not. found_this_point) stop 'rotate_mesh_for_axisym: point not found 2'
+    if (.not. found_this_point) call stop_the_code('rotate_mesh_for_axisym: point not found 2')
     if (i1 > i2) then
       ! swap points if needed for clarity, to avoid testing both cases each time below
       ! Otherwise we would have done : if ((i1 == 1 .and. i2 == 4) .or. (i1 == 4 .and. i2 == 1)) then
@@ -438,7 +438,7 @@
         ! 9th point is at the element center and thus never changes when we rotate an element
       endif
     else
-      stop 'rotate_mesh_for_axisym: problem in an element'
+      call stop_the_code('rotate_mesh_for_axisym: problem in an element')
     endif
   enddo
 
@@ -460,7 +460,7 @@
       elmnts((ispec-1)*ngnod+7) = ibool_rotated(8,ispec)
       elmnts((ispec-1)*ngnod+8) = ibool_rotated(9,ispec)
     else
-      stop 'rotate_mesh_for_axisym: error, ngnod should be either 4 or 9 for external meshes'
+      call stop_the_code('rotate_mesh_for_axisym: error, ngnod should be either 4 or 9 for external meshes')
     endif
   enddo
 
@@ -550,7 +550,7 @@
       ibool(8,ispec) = elmnts((ispec-1)*ngnod+7)
       ibool(9,ispec) = elmnts((ispec-1)*ngnod+8)
     else
-      stop 'error, ngnod should be either 4 or 9 for external meshes'
+      call stop_the_code('error, ngnod should be either 4 or 9 for external meshes')
     endif
   enddo
 
@@ -568,7 +568,7 @@
       index_edge=2
       ibool(:,:) = ibool_rotated(:,:)
     else
-      stop 'j should be >= 1 and <= 4'
+      call stop_the_code('j should be >= 1 and <= 4')
     endif
 
     if (index_edge == 1) then
@@ -616,7 +616,7 @@
       index_rotation8 = 4
       ! index_rotation9 does not need to exist because the center rotates on itself
     else
-      stop 'The edge on which abs_nodes is located should be defined'
+      call stop_the_code('The edge on which abs_nodes is located should be defined')
     endif
 
     do i = 1,nelemacforcing
@@ -631,7 +631,7 @@
           endif
         enddo
 
-        if (.not. found_this_point) stop 'point not found'
+        if (.not. found_this_point) call stop_the_code('point not found')
 
         found_this_point = .false.
         do inode = 1,4
@@ -641,7 +641,7 @@
             exit
           endif
         enddo
-        if (.not. found_this_point) stop 'point not found'
+        if (.not. found_this_point) call stop_the_code('point not found')
 
         ! swap points if needed for clarity, to avoid testing both cases each time below
         if (i1 > i2) then
@@ -697,7 +697,7 @@
             ! 9th point is at the element center and thus never changes when we rotate an element
           endif
         else
-          stop 'problem in an element'
+          call stop_the_code('problem in an element')
         endif
       endif
     enddo
@@ -721,7 +721,7 @@
       elmnts((ispec-1)*ngnod+7) = ibool_rotated(8,ispec)
       elmnts((ispec-1)*ngnod+8) = ibool_rotated(9,ispec)
     else
-      stop 'error, ngnod should be either 4 or 9 for external meshes'
+      call stop_the_code('error, ngnod should be either 4 or 9 for external meshes')
     endif
   enddo
 

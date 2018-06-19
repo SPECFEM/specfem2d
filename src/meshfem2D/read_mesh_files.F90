@@ -51,7 +51,7 @@
       call read_external_tangential_curve_file()
     else
       ! safety stop
-      stop 'Error read_external_mesh must be set to .true. to use external tangential_dectection_curve_file'
+      call stop_the_code('Error read_external_mesh must be set to .true. to use external tangential_dectection_curve_file')
     endif
   endif
 
@@ -288,7 +288,7 @@
       enddo
     enddo
   else
-    stop 'ngnod should be either 4 or 9'
+    call stop_the_code('ngnod should be either 4 or 9')
   endif
 
   end subroutine read_mesh_nodes_coords_from_interfaces

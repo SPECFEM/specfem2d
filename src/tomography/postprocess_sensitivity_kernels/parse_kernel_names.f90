@@ -69,7 +69,7 @@
     if (len_trim(kernel_names(iker)) == 0) then
       print *,'Error encountered kernel name with zero length: kernel name number ',iker,' out of ',nker,' is empty'
       print *,'Please check your kernel_names argument...'
-      stop 'Error kernel name with zero length'
+      call stop_the_code('Error kernel name with zero length')
     endif
   enddo
 

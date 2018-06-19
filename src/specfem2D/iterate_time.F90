@@ -86,10 +86,6 @@ subroutine iterate_time()
   ! convert to seconds instead of minutes, to be more precise for 2D runs, which can be fast
   timestamp_seconds_start = timestamp*60.d0 + time_values(7) + time_values(8)/1000.d0
 
-! *********************************************************
-! ************* MAIN LOOP OVER THE TIME STEPS *************
-! *********************************************************
-
   ! synchronize all processes to make sure everybody is ready to start time loop
   call synchronize_all()
 
@@ -131,6 +127,10 @@ subroutine iterate_time()
 
   call cpu_time(start_time_of_time_loop)
 
+! *********************************************************
+! ************* MAIN LOOP OVER THE TIME STEPS *************
+! *********************************************************
+
   do it = 1,NSTEP
     ! compute current time
     timeval = (it-1) * deltat
@@ -146,16 +146,16 @@ subroutine iterate_time()
       ! forward wavefield (acoustic/elastic/poroelastic)
       call update_displ_Newmark()
       ! reconstructed/backward wavefields
-      if (SIMULATION_TYPE == 3) call update_displ_Newmark_backward()
+      if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call update_displ_Newmark_backward()
 
       ! acoustic domains
       if (ACOUSTIC_SIMULATION) then
         if (.not. GPU_MODE) then
           call compute_forces_viscoacoustic_main()
-          if (SIMULATION_TYPE == 3) call compute_forces_viscoacoustic_main_backward()
+          if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call compute_forces_viscoacoustic_main_backward()
         else
           ! on GPU
-          if (any_acoustic) call compute_forces_viscoacoustic_GPU()
+          if (any_acoustic) call compute_forces_viscoacoustic_GPU(.false.)
         endif
       endif
 
@@ -163,7 +163,7 @@ subroutine iterate_time()
       if (ELASTIC_SIMULATION) then
         if (.not. GPU_MODE) then
           call compute_forces_viscoelastic_main()
-          if (SIMULATION_TYPE == 3) call compute_forces_viscoelastic_main_backward()
+          if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call compute_forces_viscoelastic_main_backward()
         else
           ! on GPU
           if (any_elastic) call compute_forces_viscoelastic_GPU()
@@ -184,8 +184,12 @@ subroutine iterate_time()
     enddo ! stage_time_scheme (LDDRK or RK)
 
     ! reads in lastframe for adjoint/kernels calculation
-    if (SIMULATION_TYPE == 3 .and. it == 1) then
+    if (SIMULATION_TYPE == 3 .and. it == 1 .and. .not. NO_BACKWARD_RECONSTRUCTION) then
       call read_forward_arrays()
+    endif
+
+    if (NO_BACKWARD_RECONSTRUCTION .and. (SAVE_FORWARD .or. SIMULATION_TYPE == 3) ) then
+      call manage_no_backward_reconstruction_io()
     endif
 
     ! noise simulations
@@ -214,32 +218,45 @@ subroutine iterate_time()
     call write_seismograms()
 
     ! kernels calculation
-    if (SIMULATION_TYPE == 3) then
+    if (SIMULATION_TYPE == 3 .and. mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0) then
       call compute_kernels()
     endif
 
     ! display results at given time steps
-    call write_movie_output()
+    call write_movie_output(.true.)
 
   enddo ! end of the main time loop
 
   call cpu_time(finish_time_of_time_loop)
 
-  if (TIME_THE_COST_TO_COMPUTE_WEIGHTS_FOR_THE_DOMAIN_DECOMPOSER) then
-    if (myrank == 0) then
-      duration_of_time_loop_in_seconds = finish_time_of_time_loop - start_time_of_time_loop
-      write(IMAIN,*)
-      write(IMAIN,*) 'Total duration of the time loop in seconds = ',duration_of_time_loop_in_seconds,' s'
-      write(IMAIN,*) 'Total number of time steps = ',NSTEP
-      write(IMAIN,*) 'Average duration of a time step of the time loop = ',duration_of_time_loop_in_seconds / real(NSTEP),' s'
-      write(IMAIN,*) 'Total number of spectral elements in the mesh = ',NSPEC
-      write(IMAIN,*) '    of which ',NSPEC - count(ispec_is_PML),' are regular elements'
-      write(IMAIN,*) '    and ',count(ispec_is_PML),' are PML elements.'
-      write(IMAIN,*) 'Average duration of the calculation per spectral element = ', &
-                           duration_of_time_loop_in_seconds / real(NSTEP * NSPEC),' s'
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
+  if (myrank == 0) then
+    duration_of_time_loop_in_seconds = finish_time_of_time_loop - start_time_of_time_loop
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total duration of the time loop in seconds = ',duration_of_time_loop_in_seconds,' s'
+    write(IMAIN,*) 'Total number of time steps = ',NSTEP
+    write(IMAIN,*) 'Average duration of a time step of the time loop = ',duration_of_time_loop_in_seconds / real(NSTEP),' s'
+    write(IMAIN,*) 'Total number of spectral elements in the mesh = ',NSPEC
+    write(IMAIN,*) '    of which ',NSPEC - count(ispec_is_PML),' are regular elements'
+    write(IMAIN,*) '    and ',count(ispec_is_PML),' are PML elements.'
+    write(IMAIN,*) 'Average duration of the calculation per spectral element = ', &
+                         duration_of_time_loop_in_seconds / real(NSTEP * NSPEC),' s'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  call date_and_time(datein,timein,zone,time_values)
+  year = time_values(1)
+  mon = time_values(2)
+  day = time_values(3)
+  hr = time_values(5)
+  minutes = time_values(6)
+  call convtime(timestamp,year,mon,day,hr,minutes)
+
+  if (myrank == 0) then
+   write(IMAIN,*)
+   write(IMAIN,*) 'Total duration of the timeloop in seconds, measured using '
+   write(IMAIN,*)  'date and time of the system : ',sngl(timestamp*60.d0 + time_values(7) + &
+                   time_values(8)/1000.d0 - timestamp_seconds_start),' s'
   endif
 
 ! *********************************************************
@@ -270,7 +287,7 @@ subroutine it_transfer_from_GPU()
   implicit none
 
   ! local parameters
-  integer :: i,j,ispec,iglob
+  integer :: i,j,ispec
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal
 
   ! Fields transfer for imaging
@@ -308,9 +325,14 @@ subroutine it_transfer_from_GPU()
     ! acoustic domains
     if (any_acoustic) then
       call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
-
+      rho_ac_kl(:,:,:) = rho_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
+      kappa_ac_kl(:,:,:) = kappa_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
       rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
       alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
+      print *
+      print *,'Maximum value of rho prime kernel : ',maxval(rhop_ac_kl)
+      print *,'Maximum value of alpha kernel : ',maxval(alpha_ac_kl)
+      print *
     endif
 
     ! elastic domains
@@ -322,7 +344,6 @@ subroutine it_transfer_from_GPU()
         if (ispec_is_elastic(ispec)) then
           do j = 1, NGLLZ
             do i = 1, NGLLX
-              iglob = ibool(i,j,ispec)
               if (.not. assign_external_model) then
                 mul = poroelastcoef(2,1,kmato(ispec))
                 kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
@@ -358,7 +379,7 @@ subroutine it_compute_integrated_energy_field_and_output()
   use specfem_par, only: myrank,it,coord,nspec,ibool,integrated_kinetic_energy_field,max_kinetic_energy_field, &
                          integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
                          potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
-                         total_effective_duration_field,NSTEP
+                         total_effective_duration_field,NSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP
 
   implicit none
 
@@ -398,7 +419,7 @@ subroutine it_compute_integrated_energy_field_and_output()
     !call synchronize_all() ! Wait for first proc to create directories
   endif
 
-  if (it == NSTEP) then
+  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
     ! write integrated kinetic energy field in external file
     write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'energyFields/kinetic/integrated_kinetic_energy_field',myrank
     open(unit=IIN,file=trim(filename),status='unknown',action='write')
@@ -504,7 +525,7 @@ subroutine it_compute_integrated_energy_field_and_output()
   !  write(filename,"(a,i5.5)") trim(OUTPUT_FILES)//'velocities',myrank
   !  open(unit=IIN,file=trim(filename),status='unknown',action='write')
   !
-  !  if (it == NSTEP) then
+  !  if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
   !    ! loop over spectral elements
   !    do ispec = 1,nspec
   !      if (ispec_is_acoustic(ispec)) then
@@ -527,3 +548,47 @@ subroutine it_compute_integrated_energy_field_and_output()
 
 end subroutine it_compute_integrated_energy_field_and_output
 
+subroutine manage_no_backward_reconstruction_io()
+
+  use constants
+  use specfem_par
+  use specfem_par_gpu
+
+  implicit none
+
+  ! EB EB June 2018 : this routine is saving/reading the frames of the forward
+  ! wavefield that are necessary to compute the sensitivity kernels
+
+  ! safety check
+  if (.not. NO_BACKWARD_RECONSTRUCTION) return
+
+  ! writes in frame for further adjoint/kernels calculation
+  if (SAVE_FORWARD) then
+
+    if (mod(NSTEP-it+1,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == NSTEP ) then
+
+      call save_forward_arrays_no_backward()
+
+    endif
+
+  endif ! SAVE_FORWARD
+
+  if (SIMULATION_TYPE == 3) then
+
+    if (mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0 .or. it == 1 .or. it == NSTEP) then
+
+      call read_forward_arrays_no_backward()
+
+      ! For the first iteration we need to add a transfer, to initiate the
+      ! transfer on the GPU
+      if (no_backward_iframe == 1) call read_forward_arrays_no_backward()
+
+      ! If the wavefield is requested at it=1, then we enforce another transfer
+      if (no_backward_iframe == 2 .and. NSTEP_BETWEEN_COMPUTE_KERNELS == 1) &
+                                   call read_forward_arrays_no_backward()
+
+    endif
+
+  endif ! SIMULATION == 3
+
+end subroutine  manage_no_backward_reconstruction_io

@@ -42,7 +42,7 @@
   integer,intent(in) :: NUM_COLORS
   double precision, dimension(NUM_COLORS),intent(out) :: red,green,blue
 
-  if (NUM_COLORS /= 236 ) stop 'check NUM_COLORS, must be equal to 236 in set_color_palette.f90'
+  if (NUM_COLORS /= 236 ) call stop_the_code('check NUM_COLORS, must be equal to 236 in set_color_palette.f90')
 
 ! red
   red(1) = 1.00000000000000

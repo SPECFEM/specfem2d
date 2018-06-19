@@ -19,8 +19,12 @@ step() {
 }
 
 try() {
+  # starts timer
+  timer_start
   # runs command
   "$@"
+  # stops timer
+  timer_stop
   # Check if command failed and update $STEP_OK if so.
   local EXIT_CODE=$?
   if [[ $EXIT_CODE -ne 0 ]]; then
@@ -36,12 +40,45 @@ next() {
   return $STEP_OK
 }
 
+timer_start(){
+  t_start=`date +'%s'`
+  trap '[ -n "$(jobs -pr)" ] && kill $(jobs -pr)' INT QUIT TERM EXIT
+  # progress bar
+  while true; do
+    echo -n "."
+    sleep 30.0
+  done &
+  timer_PID=$!
+}
+
+timer_stop(){
+  # saves previous return code
+  local exit_code=$?
+  # stop background process
+  kill $timer_PID
+  # get time difference (in s)
+  local t_end=`date +'%s'`
+  local diff=$(($t_end - $t_start))
+  # output nice time format info
+  local lapsed_time=$(convertsecs $diff)
+  echo -n " ($lapsed_time) "
+  # return with previous exit code
+  return $exit_code
+}
+
+convertsecs() {
+  h=$(($1/3600))
+  m=$((($1/60)%60))
+  s=$(($1%60))
+  printf "%02dh %02dm %02ds\n" $h $m $s
+}
+
 #############################################################
 
 # checks if argument given
 if [ "$testdir" == "" ]; then echo "usage: ./run_tests.sh testdir[e.g.=compilations]"; exit 1; fi
 
-# changes to subdirectory tests/ if called in root directory SPECFEM3D/
+# changes to subdirectory tests/ if called in root directory SPECFEM2D/
 dir=`pwd`
 currentdir=`basename $dir`
 if [ "$currentdir" == "SPECFEM2D" ]; then

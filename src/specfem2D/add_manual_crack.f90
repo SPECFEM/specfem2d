@@ -61,9 +61,9 @@
 
   ! safety checks
   if (ngnod /= 4) &
-    stop 'must currently have ngnod == 4 when adding a crack manually'
+    call stop_the_code('must currently have ngnod == 4 when adding a crack manually')
   if (FAST_NUMBERING) &
-    stop 'must not have FAST_NUMBERING when adding a crack manually'
+    call stop_the_code('must not have FAST_NUMBERING when adding a crack manually')
 
 !! DK DK material number 2 indicates the spectral elements that form the left vertical side of the crack, and
 !! DK DK material number 3 the right side
@@ -79,13 +79,13 @@
     print *, 'rank ',myrank,' has npoints to add right = ',npoints_to_add_right
     print *, 'Number of points must be the same!'
     if (NPROC > 1) print *,'Please try with serial simulation.'
-    stop 'Invalid left and right number of points to add for manual crack'
+    call stop_the_code('Invalid left and right number of points to add for manual crack')
   endif
   npoints_to_add = npoints_to_add_left
 
   ! checks if this slice contains the crack, then we must have the right number of points
   if (npoints_to_add > 0 .and. npoints_to_add /= NB_POINTS_TO_ADD_TO_NPGEO) &
-      stop 'must have number of points to add == NB_POINTS_TO_ADD_TO_NPGEO when adding a crack manually'
+      call stop_the_code('must have number of points to add == NB_POINTS_TO_ADD_TO_NPGEO when adding a crack manually')
 
   ! slice has no elements along the crack, nothing to do
   if (npoints_to_add == 0) return
@@ -98,7 +98,7 @@
 
   ! temporary coordinate array, will replace original coorg array
   allocate(tmp_coorg(NDIM,npgeo_ori),stat=ier)
-  if (ier /= 0) stop 'Error allocating tmp_coorg array'
+  if (ier /= 0) call stop_the_code('Error allocating tmp_coorg array')
 
   ! initializes
   tmp_coorg(:,:) = coorg(:,:)
@@ -108,7 +108,7 @@
 
   ! re-sizes coorg
   allocate(coorg(NDIM,npgeo),stat=ier)
-  if (ier /= 0) stop 'Error allocating new coorg array'
+  if (ier /= 0) call stop_the_code('Error allocating new coorg array')
   coorg(:,:) = 0.d0
 
   ! copy over from temporary array
@@ -205,7 +205,7 @@
     print *,'Error invalid number of points added for manual crack:'
     print *,'current_last_point = ',current_last_point
     print *,'npgeo_new = ',npgeo
-    stop 'did not find the right total number of points, should have current_last_point == npgeo_new'
+    call stop_the_code('did not find the right total number of points, should have current_last_point == npgeo_new')
   endif
 
   end subroutine add_manual_crack

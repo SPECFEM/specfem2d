@@ -31,13 +31,13 @@
 !
 !========================================================================
 
-  subroutine create_color_image()
+  subroutine create_color_image(i_field,plot_b_wavefield_only)
 
 ! display a given field as a red and blue color JPEG image
 
 ! to display the snapshots : display image*.jpg
 
-  use constants, only: TINYVAL,HUGEVAL,STABILITY_THRESHOLD,OUTPUT_FILES,IMAIN
+  use constants, only: TINYVAL,VERYTINYVAL,HUGEVAL,STABILITY_THRESHOLD,OUTPUT_FILES,IMAIN
 
   use specfem_par, only: myrank,it,NSOURCES,P_SV,nrec
 
@@ -46,9 +46,12 @@
     USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
     DRAW_SOURCES_AND_RECEIVERS, &
     ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver, &
-    USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE
+    USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE,SIMULATION_TYPE
 
   implicit none
+
+  integer :: i_field
+  logical :: plot_b_wavefield_only
 
   ! local parameters
   integer :: i
@@ -84,9 +87,21 @@
 ! slightly change the beginning of the file name depending if we use the time step of the image number, to avoid confusion
   if (USE_SNAPSHOT_NUMBER_IN_FILENAME) then
     isnapshot_number = isnapshot_number + 1
-    write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'img',isnapshot_number,'.jpg'
+    if (i_field == 1 .and. SIMULATION_TYPE == 1) then
+      write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'forward_img',isnapshot_number,'.jpg'
+    else if (i_field == 1 .and. SIMULATION_TYPE == 3 .and. .not. plot_b_wavefield_only) then
+      write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'adjoint_img',isnapshot_number,'.jpg'
+    else
+      write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'b_forward_img',isnapshot_number,'.jpg'
+    endif
   else
-    write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'image',it,'.jpg'
+    if (i_field == 1 .and. SIMULATION_TYPE == 1) then
+      write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'forward_image',it,'.jpg'
+    else if (i_field == 1 .and. SIMULATION_TYPE == 3 .and. .not. plot_b_wavefield_only) then
+      write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'adjoint_image',it,'.jpg'
+    else
+      write(filename,"(a,i7.7,a)") trim(OUTPUT_FILES)//'b_forward_image',it,'.jpg'
+    endif
   endif
 
 ! compute maximum amplitude
@@ -176,10 +191,10 @@
 
 ! define normalized image data in [-1:1] and convert to nearest integer
 ! keeping in mind that data values can be negative
-        if (amplitude_max >= TINYVAL) then
+        if (amplitude_max >= VERYTINYVAL) then
           normalized_value = image_color_data(ix,iy) / amplitude_max
         else
-          normalized_value = image_color_data(ix,iy) / TINYVAL
+          normalized_value = image_color_data(ix,iy) / VERYTINYVAL
         endif
         ! check value (isNaN)
         if (normalized_value /= normalized_value) then

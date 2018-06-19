@@ -281,7 +281,7 @@
   else if (i == degpoly .and. j == degpoly) then ! Case 10
     poly_deriv_GLJ = (dble(degpoly)*(dble(degpoly)+2.d0)-1.d0)/4.d0
   else
-    stop 'Problem in poly_deriv_GLJ: in a perfect world this would NEVER appear'
+    call stop_the_code('Problem in poly_deriv_GLJ: in a perfect world this would NEVER appear')
   endif
 
   end function poly_deriv_GLJ
