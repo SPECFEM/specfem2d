@@ -453,7 +453,7 @@
   enddo
 
   ! closes STF file
-  if (myrank == islice_selected_source(i_source)) close(55)
+  if (myrank == islice_selected_source(1)) close(55)
 
   !print *,"myrank:",myrank,"Ok"
 
