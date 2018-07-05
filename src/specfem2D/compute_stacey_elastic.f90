@@ -643,7 +643,7 @@
 
 ! daniel debug
 ! this routine is in principle unused
-  subroutine compute_gradient_field_element(ispec,field,dux_dxl,dux_dzl,duz_dxl,duz_dzl)
+  subroutine UNUSED_compute_gradient_field_element(ispec,field,dux_dxl,dux_dzl,duz_dxl,duz_dzl)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
@@ -727,5 +727,5 @@
     enddo
   enddo
 
-  end subroutine compute_gradient_field_element
+  end subroutine UNUSED_compute_gradient_field_element
 

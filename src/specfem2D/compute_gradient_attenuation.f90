@@ -140,7 +140,9 @@
 
   ! -------------------------------------------------------
 
-  subroutine compute_gradient_attenuation_fluid(potential_acoustic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
+!! DK DK Jul 2018: this routine is unused
+
+  subroutine UNUSED_compute_gradient_attenuation_fluid(potential_acoustic,dux_dxl,duz_dxl,dux_dzl,duz_dzl, &
          xix,xiz,gammax,gammaz,ibool,ispec_is_acoustic,hprime_xx,hprime_zz,nspec,nglob)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,ZERO,NDIM
@@ -311,4 +313,4 @@
 
   enddo
 
-  end subroutine compute_gradient_attenuation_fluid
+  end subroutine UNUSED_compute_gradient_attenuation_fluid
