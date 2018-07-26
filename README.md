@@ -19,13 +19,13 @@ available in the
 - HTML manual (latest version): [specfem2d.readthedocs.io](http://specfem2d.readthedocs.io/)
 
 For a quick test, run the default example with these commands:
-
-  ./configure FC=gfortran
-  make all
-  ./bin/xmeshfem2D
-  ./bin/xspecfem2D
-
-and check the output files in ./OUTPUT_FILES/
+```
+./configure FC=gfortran
+make all
+./bin/xmeshfem2D
+./bin/xspecfem2D
+```
+and check the output files in `./OUTPUT_FILES/`
 
 
 ## Development
@@ -50,4 +50,3 @@ To contribute, please follow the guidelines in the SPECFEM3D github wiki:
 ## Computational Infrastructure for Geodynamics (CIG)
 
 Seismology software repository: [SPECFEM2D](https://geodynamics.org/cig/software/specfem2d/)
-
