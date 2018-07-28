@@ -35,6 +35,31 @@
 !---- subroutine to compute poroelastic velocities cpI, cpII, & cs as a function of the dominant frequency
 !----
 
+!
+! This routine calculates the poroelastic wave speeds, cpI, cpII and cs.
+!
+! We have two frequencies:
+!
+! - fi is the dominant frequency of the source time function
+!
+! - f0 is a frequency used when we consider the frequency dependence of the viscous term.
+!   Namely without viscous attenuation b = eta_f k^-1
+!   While when we do introduce attenuation mechanism using memory variable b=b(t) and the expression
+!   is that of our paper equation (161) - Zener model. It is the same model used for viscoelasticity in the code.
+!
+!   Again, fi is set by the source time function.
+!   f0 is set in the Par_file as freq0_poroelastic, as well as Q0_poroelastic, to define the strain and stress relaxation times.
+!
+!   If you are running simulations without the fluid viscous dissipation,
+!   then in Par_file you have the flag ATTENUATION_PORO_FLUID_PART     = .false.
+!   and fi and Q0 are obsolete, and b=eta_f k^-1 simply.
+!
+!   If the flag is set to true, then you have to provide the quality factor and frequency range you want to work with.
+!
+!   One can refer to Section 8.3 of Morency, C. and Tromp, J., Spectral-element simulations of wave propagation
+!   in poroelastic media, Geophys. J. Int., vol. 175, p. 301-345 (2008).
+!
+
   subroutine get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare, &
                                         H_biot,C_biot,M_biot,mu_fr,phi, &
                                         tort,rho_s,rho_f,eta_f,perm_xx, &
