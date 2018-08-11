@@ -3,7 +3,9 @@ source_surf                     = .false.         # source inside the medium or 
 xs                              = 1003.           # source location x in meters
 zs                              = 1003.           # source location z in meters
 source_type                     = 1               # elastic force or acoustic pressure = 1 or moment tensor = 2
-time_function_type              = 1               # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4, Heaviside = 5
+## DK DK here, to get pressure for a Ricker in the seismograms, we need to select a Gaussian for the potential Chi
+## DK DK used as a source, rather than a Ricker, because pressure = - Chi_dot_dot
+time_function_type              = 3               # Ricker = 1, first derivative = 2, Gaussian = 3, Dirac = 4, Heaviside = 5
 # time function_type == 8 source read from file, if time function_type == 9 : burst
 # If time_function_type == 8, enter below the custom source file to read (two columns file with time and amplitude) :
 # (For the moment dt must be equal to the dt of the simulation. File name can't exceed 150 characters)
