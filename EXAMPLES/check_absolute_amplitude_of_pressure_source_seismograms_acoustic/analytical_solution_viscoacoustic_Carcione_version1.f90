@@ -1,6 +1,10 @@
 
   program analytical_solution
 
+!! DK DK to compare to our finite-difference codes from SEISMIC_CPML or SOUNDVIEW,
+!! DK DK we divide the source by 4 * PI * cp^2 to get the right amplitude (our convention being to use a source of amplitude 1,
+!! DK DK while the convention used by Carcione in his 1988 paper is to use a source of amplitude 4 * PI * cp^2
+
 ! this program implements the analytical solution for a viscoacoustic medium
 ! from Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
 ! Geophysical Journal, vol. 93, p. 393-407 (1988)
@@ -23,12 +27,12 @@
 !! instead of the unrelaxed ones (by default omega -> + infinity)
   logical, parameter :: FIX_ATTENUATION_CAUSALITY = .true.
 
-  integer, parameter :: iratio = 32
+  integer, parameter :: iratio = 64
 
   integer, parameter :: nfreq = 524288
   integer, parameter :: nt = iratio * nfreq
 
-  double precision, parameter :: freqmax = 225.d0
+  double precision, parameter :: freqmax = 1000.d0 ! 225.d0
 !! DK DK to print the velocity if we want to display the curve of how velocity varies with frequency
 !! DK DK for instance to compute the unrelaxed velocity in the Zener model
 ! double precision, parameter :: freqmax = 20000.d0
@@ -76,13 +80,12 @@
 ! attenuation constants from Carcione 1988 GJI vol 95 p 604
   double precision, dimension(L_mech) :: tau_epsilon_nu1, tau_sigma_nu1
 
-! unrelaxed (f = +infinity) values
-! this value for the unrelaxed state is computed from the relaxed state value (Vp = 3000)
-! given in Carcione et al. 1988 GJI vol 95 p 604 Table 1
-  double precision, parameter :: Vp = 3297.849d0
+! this value comes from page 397 of Carcione et al., Wave propagation simulation in a linear viscoacoustic medium,
+! Geophysical Journal, vol. 93, p. 393-407 (1988)
+  double precision, parameter :: vp = 3297.849d0
   double precision, parameter :: M_relaxed = rho*vp**2
 
-  integer :: ifreq,i_mech
+  integer :: ifreq,i_mech,iposition
   double precision :: deltafreq,freq,omega,omega0,deltat,time,a,sum_of_coefficients
   double complex :: comparg,sum_to_compute
 
@@ -106,20 +109,30 @@
 
 ! ********** end of variable declarations ************
 
-!! DK DK Quentin Brissaud in March 2018 added the 1/L factor here (it is missing in Carcione's older papers)
-!! DK DK the weights below include this factor.
-  tau_epsilon_nu1 =    (/3.3490038309560245E-002,   3.3205062588009785E-003,   3.3551297958320871E-004/)
-  tau_sigma_nu1   =    (/3.1830988618379068E-002,   3.1830988618379067E-003,   3.1830988618379065E-004/)
+!! DK DK July 2018: values computed to fit Q = 65 for the example I designed for the "SOUNDVIEW" finite-difference code
+  tau_epsilon_nu1 = (/   2.408158185805540d-002, 4.699608990946073d-003, 9.567997872679109d-004/)
+  tau_sigma_nu1 = (/ 2.256014638685252d-002, 4.508471279793884d-003, 8.937876403997143d-004/)
 
 ! position of the receiver
-  x1 = +500.
-  x2 = +500.
+  do iposition = 1,3
+
+    if (iposition == 1) then
+      x1 = +200.
+      x2 = +200.
+    else if (iposition == 2) then
+      x1 = +500.
+      x2 = +500.
+    else
+      x1 = +800.
+      x2 = +800.
+    endif
+
 ! x1 = +1.
 ! x2 = +1.
-! x1 = +.1
-! x2 = +.1
+! x1 = +0.1
+! x2 = +0.1
 
-  print *,'Force source located at the origin (0,0)'
+  print *,'Pressure source located at the origin (0,0)'
   print *,'Receiver located in (x,z) = ',x1,x2
 
   if (TURN_ATTENUATION_OFF) then
@@ -136,6 +149,7 @@
   a = pi**2 * f0**2
 
   deltat = 1.d0 / (freqmax*dble(iratio))
+  print *,'deltat = ',deltat
 
 ! define the spectrum of the source
   do ifreq=0,nfreq
@@ -155,6 +169,11 @@
 
 ! definir le spectre d'un Ricker classique (centre en t0)
       fomega(ifreq) = dsqrt(pi) * cdexp(comparg) * omega**2 * dexp(-omega**2/(4.d0*a)) / (2.d0 * dsqrt(a**3))
+
+!! DK DK to compare to our finite-difference codes from SEISMIC_CPML or SOUNDVIEW,
+!! DK DK we divide the source by 4 * PI * cp^2 to get the right amplitude (our convention being to use a source of amplitude 1,
+!! DK DK while the convention used by Carcione in his 1988 paper is to use a source of amplitude 4 * PI * cp^2
+      fomega(ifreq) = fomega(ifreq) / (4.d0 * PI * vp**2)
 
       ra(ifreq) = dreal(fomega(ifreq))
       rb(ifreq) = dimag(fomega(ifreq))
@@ -280,24 +299,40 @@
   c(:) = c(:) / deltat
 
 ! save time result inverse FFT for pressure
-  if (TURN_ATTENUATION_OFF) then
-    open(unit=11,file='pressure_time_analytical_solution_acoustic.dat',status='unknown')
-  else
-    open(unit=11,file='pressure_time_analytical_solution_viscoacoustic.dat',status='unknown')
-  endif
+
+    if (iposition == 1) then
+      if (TURN_ATTENUATION_OFF) then
+        open(unit=11,file='pressure_time_analytical_solution_acoustic_200.dat',status='unknown')
+      else
+        open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_200.dat',status='unknown')
+      endif
+    else if (iposition == 2) then
+      if (TURN_ATTENUATION_OFF) then
+        open(unit=11,file='pressure_time_analytical_solution_acoustic_500.dat',status='unknown')
+      else
+        open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_500.dat',status='unknown')
+      endif
+    else
+      if (TURN_ATTENUATION_OFF) then
+        open(unit=11,file='pressure_time_analytical_solution_acoustic_800.dat',status='unknown')
+      else
+        open(unit=11,file='pressure_time_analytical_solution_viscoacoustic_800.dat',status='unknown')
+      endif
+    endif
 
   do it=1,nt
 ! DK DK Dec 2011: subtract t0 to be consistent with the SPECFEM2D code
         time = dble(it-1)*deltat - t0
 ! the seismograms are very long due to the very large number of FFT points used,
 ! thus keeping the useful part of the signal only (the first six seconds of the seismogram)
-!!!!!!!!!        if (time >= 0.d0 .and. time <= 6.d0) write(11,*) sngl(time),real(c(it))
-        if (time <= 6.d0) write(11,*) sngl(time),real(c(it))
+        if (time >= 0.d0 .and. time <= 6.d0) write(11,*) sngl(time),real(c(it))
   enddo
   close(11)
 
     print *,'Maximum positive amplitude of the time-domain solution = ',maxval(real(c(:)))
     print *
+
+  enddo ! of loop on the three positions of the receiver
 
   end
 

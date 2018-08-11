@@ -84,6 +84,11 @@
     Green(it) = F * G1(r,time,Vp)
   enddo
 
+!! DK DK to compare to our finite-difference codes from SEISMIC_CPML or SOUNDVIEW,
+!! DK DK we divide the source by 4 * PI * cp^2 to get the right amplitude (our convention being to use a source of amplitude 1,
+!! DK DK while the convention used by Carcione in his 1988 paper is to use a source of amplitude 4 * PI * cp^2
+  Green(:) = Green(:) / (4.d0 * PI * Vp**2)
+
 ! to avoid writing a huge file, since we purposely used a huge number of time steps, write only every 100 time steps
   do it = 1,nt,100
 
@@ -106,8 +111,8 @@
 
     enddo
 
-!!!!!!!!!!!!    if (time >= 0.d0) write(11,*) sngl(time),sngl(convolution_value)
-    write(11,*) sngl(time),sngl(convolution_value)
+    if (time >= 0.d0) write(11,*) sngl(time),sngl(convolution_value)
+!   write(11,*) sngl(time),sngl(convolution_value)
 
   enddo
 
