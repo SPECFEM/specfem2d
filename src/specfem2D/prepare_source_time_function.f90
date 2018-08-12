@@ -8,7 +8,6 @@
 !                       and Princeton University, USA
 !                 (there are currently many more authors!)
 !                           (c) October 2017
-!               Pieyre Le Loher, pieyre DOT le-loher aT inria.fr
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
@@ -38,7 +37,7 @@
 
   use constants, only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE,SOURCE_IS_MOVING,C_LDDRK,OUTPUT_FILES
 
-  use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
+  use specfem_par, only: NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0_source,tshift_src,factor, &
                          t0,deltat, &
                          time_stepping_scheme,stage_time_scheme,islice_selected_source, &
@@ -61,10 +60,10 @@
   logical :: trick_ok
 
   ! external functions
-  double precision, external :: comp_source_time_function_heavi
-  double precision, external :: comp_source_time_function_gaussB,comp_source_time_function_dgaussB, &
-    comp_source_time_function_d2gaussB,comp_source_time_function_d3gaussB,marmousi_ormsby_wavelet,cos_taper
-  double precision, external :: comp_source_time_function_rickr,comp_source_time_function_d2rck
+  double precision, external :: comp_source_time_function_heaviside_hdur
+  double precision, external :: comp_source_time_function_Gaussian,comp_source_time_function_dGaussian, &
+    comp_source_time_function_d2Gaussian,comp_source_time_function_d3Gaussian,marmousi_ormsby_wavelet,cos_taper
+  double precision, external :: comp_source_time_function_Ricker,comp_source_time_function_d2Ricker
 
   ! user output
   if (myrank == 0) then
@@ -115,9 +114,6 @@
   ! loop on all the sources
   do i_source = 1,NSOURCES
 
-    if (AXISYM) then
-      factor(i_source) = - factor(i_source)
-    endif
     ! The following lines could be needed to set absolute amplitudes.
     ! In this case variables vpext,rhoext,density,poroelastcoef,assign_external_model,ispec_selected_source,kmato
     ! and double precision :: rho, cp logical :: already_done = .false. need to be introduced
@@ -190,12 +186,12 @@
               ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! Second derivative of Ricker source time function :
-              source_time_function(i_source,it,i_stage) =  factor(i_source) * &
-                       comp_source_time_function_d2rck(t_used,f0_source(i_source))
+              source_time_function(i_source,it,i_stage) =  - factor(i_source) * &
+                       comp_source_time_function_d2Ricker(t_used,f0_source(i_source))
             else
               ! Ricker (second derivative of a Gaussian) source time function
-              source_time_function(i_source,it,i_stage) = factor(i_source) * &
-                      comp_source_time_function_rickr(t_used,f0_source(i_source))
+              source_time_function(i_source,it,i_stage) = - factor(i_source) * &
+                      comp_source_time_function_Ricker(t_used,f0_source(i_source))
             endif
 
           case (2)
@@ -210,12 +206,12 @@
               ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! Third derivative of Gaussian source time function :
-              source_time_function(i_source,it,i_stage) = factor(i_source) * &
-                        comp_source_time_function_d3gaussB(t_used,f0_source(i_source))
+              source_time_function(i_source,it,i_stage) = - factor(i_source) * &
+                        comp_source_time_function_d3Gaussian(t_used,f0_source(i_source))
             else
               ! First derivative of a Gaussian source time function
-              source_time_function(i_source,it,i_stage) = factor(i_source) * &
-                        comp_source_time_function_dgaussB(t_used,f0_source(i_source))
+              source_time_function(i_source,it,i_stage) = - factor(i_source) * &
+                        comp_source_time_function_dGaussian(t_used,f0_source(i_source))
             endif
 
           case (3,4)
@@ -230,12 +226,12 @@
               ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! Second derivative of Gaussian :
-              source_time_function(i_source,it,i_stage) = factor(i_source) * &
-                         comp_source_time_function_d2gaussB(t_used,f0_source(i_source))
+              source_time_function(i_source,it,i_stage) = - factor(i_source) * &
+                         comp_source_time_function_d2Gaussian(t_used,f0_source(i_source))
             else
               ! Gaussian or Dirac (we use a very thin Gaussian instead) source time function
-              source_time_function(i_source,it,i_stage) = factor(i_source) * &
-                          comp_source_time_function_gaussB(t_used,f0_source(i_source))
+              source_time_function(i_source,it,i_stage) = - factor(i_source) * &
+                          comp_source_time_function_Gaussian(t_used,f0_source(i_source))
             endif
 
           case (5)
@@ -247,7 +243,8 @@
             hdur_gauss = hdur_gauss / SOURCE_DECAY_MIMIC_TRIANGLE
 
             ! quasi-Heaviside
-            source_time_function(i_source,it,i_stage) = factor(i_source) * comp_source_time_function_heavi(t_used,hdur_gauss)
+            source_time_function(i_source,it,i_stage) = - factor(i_source) * &
+                                    comp_source_time_function_heaviside_hdur(t_used,hdur_gauss)
 
           case (6)
             ! ocean acoustics type I

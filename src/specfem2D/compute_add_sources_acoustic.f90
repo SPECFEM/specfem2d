@@ -63,16 +63,14 @@
         stf_used = source_time_function(i_source,it,i_stage)
 
         ! collocated force
-        ! beware, for an acoustic medium, the source is: pressure divided by Kappa of the fluid
-        ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
-        ! to add a minus to the source here, added to Chi_dot_dot, to get plus the source in pressure
+        ! beware, for an acoustic medium, the source is pressure divided by Kappa of the fluid
         if (source_type(i_source) == 1) then
           ! forward wavefield
           do j = 1,NGLLZ
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
 
-              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
                                   real(sourcearrays(i_source,1,i,j) * stf_used / kappastore(i,j,ispec),kind=CUSTOM_REAL)
             enddo
           enddo
@@ -102,10 +100,11 @@
                          NSOURCES,source_type,source_time_function, &
                          islice_selected_source,ispec_selected_source, &
                          hxis_store,hgammas_store,ibool,kappastore,myrank,deltat,t0,tshift_src, &
-                         coord,nspec,nglob,xigll,zigll,z_source,NPROC,xi_source,& !These 3 lines are for moving src
+! These three lines are for a moving acoustic source
+                         coord,nspec,nglob,xigll,zigll,z_source,NPROC,xi_source, &
                          gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source, &
                          time_stepping_scheme, &
-                         hxis,hpxis,hgammas,hpgammas !,AXISYM,xiglj,is_on_the_axis
+                         hxis,hpxis,hgammas,hpgammas
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_dot_dot_acoustic
@@ -119,11 +118,8 @@
   ! checks if anything to do
   if (.not. SOURCE_IS_MOVING) return
 
-  !xminSource = -1000.0d0 !m
-  !vSource = 1250.0d0 !m/s
-
-  xminSource = -60.0d0 !m
-  vSource = 60.0d0 !m/s
+  xminSource = -60.0d0 ! m
+  vSource = 60.0d0 ! m/s
 
   if (time_stepping_scheme == 1) then
     ! Newmark
@@ -165,19 +161,6 @@
       hxis_store(i_source,:) = hxis(:)
       hgammas_store(i_source,:) = hgammas(:)
 
-!      if (mod(it,10) == 0) then
-!          !  write(IMAIN,*) "myrank:",myrank
-!          ! user output
-!          if (myrank == islice_selected_source(i_source)) then
-!            iglob = ibool(2,2,ispec_selected_source(i_source))
-!            !write(IMAIN,*) 'xcoord: ',coord(1,iglob)
-!            write(IMAIN,*) 'it?: ',it,'xcoord: ',coord(1,iglob)," iglob",iglob
-!            !'source carried by proc',myrank,"  source x:",x_source(i_source)," ispec:",ispec_selected_source(i_source)
-
-!            !call flush_IMAIN()
-!          endif
-
-!      endif
     endif
   enddo
 
@@ -201,14 +184,9 @@
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
 
-              !if (mod(it,10) == 0 .and. i == 2 .and. j == 2) write(IMAIN,*) 'it',it,'source carried by proc',myrank, &
-              !"iglob",iglob !"  source x:",x_source(i_source)," xcoord:", coord(1,iglob)," ispec:",ispec_selected_source(i_source)
               hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
 
-              !ZN becareful the following line is new added, thus when do comparison
-              !ZN of the new code with the old code, you will have big difference if you
-              !ZN do not tune the source
-              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
+              potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
                       real(source_time_function(i_source,it,i_stage)*hlagrange / kappastore(i,j,ispec),kind=CUSTOM_REAL)
             enddo
           enddo
@@ -255,10 +233,11 @@
         do i = 1,NGLLX
           iglob = ibool(i,j,ispec)
 
-          !ZN becareful the following line is new added, thus when do comparison
-          !ZN of the new code with the old code, you will have big difference if you
-          !ZN do not tune the source
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
+          !ZN Zinan Xie, Year 2012:
+          !ZN be careful, the following line is newly added, thus when doing a comparison
+          !ZN of the new code with the old code, you will have a big difference if you
+          !ZN do not adjust the amplitude of the adjoint source
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
                                               real(xir_store_loc(irec_local,i)*gammar_store_loc(irec_local,j)* &
                                               source_adjoint(irec_local,it_tmp,1),kind=CUSTOM_REAL) &
                                               / kappastore(i,j,ispec)
