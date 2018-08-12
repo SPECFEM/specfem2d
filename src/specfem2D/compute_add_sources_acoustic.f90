@@ -63,22 +63,15 @@
         stf_used = source_time_function(i_source,it,i_stage)
 
         ! collocated force
-        ! beware, for acoustic medium, source is: pressure divided by Kappa of the fluid
+        ! beware, for an acoustic medium, the source is: pressure divided by Kappa of the fluid
         ! the sign is negative because pressure p = - Chi_dot_dot therefore we need
-        ! to add minus the source to Chi_dot_dot to get plus the source in pressure
+        ! to add a minus to the source here, added to Chi_dot_dot, to get plus the source in pressure
         if (source_type(i_source) == 1) then
           ! forward wavefield
           do j = 1,NGLLZ
             do i = 1,NGLLX
               iglob = ibool(i,j,ispec)
 
-              ! old way: source without factor 1/kappa
-              !potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
-              !                                    sourcearrays(i_source,1,i,j) * stf_used
-
-              !ZN becareful the following line is new added, thus when do comparison
-              !ZN of the new code with the old code, you will have big difference if you
-              !ZN do not tune the source
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - &
                                   real(sourcearrays(i_source,1,i,j) * stf_used / kappastore(i,j,ispec),kind=CUSTOM_REAL)
             enddo

@@ -47,7 +47,7 @@
   implicit none
 
   ! local parameters
-  double precision :: stf_used, timeval, aval, DecT, Tc, omegat, omega_coa,time,coeff, t_used, Nc
+  double precision :: stf_used, timeval, DecT, Tc, omegat, omega_coa,time,coeff, t_used, Nc
   double precision :: hdur,hdur_gauss
 
   integer :: it,i_source,ier,num_file
@@ -180,7 +180,7 @@
           ! determines source_time_function value for different source types
           select case (time_function_type(i_source))
           case (1)
-            ! Ricker type: second derivative
+            ! Ricker: second derivative of a Gaussian
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
               ! use the second derivative of the source for the source time function instead of the source itself,
@@ -190,19 +190,16 @@
               ! thus in fluid elements potential_dot_dot_acoustic() is accurate at zeroth order while potential_acoustic()
               ! is accurate at second order and thus contains significantly less numerical noise.
               ! Second derivative of Ricker source time function :
-              source_time_function(i_source,it,i_stage) =  - factor(i_source) * &
+              source_time_function(i_source,it,i_stage) =  factor(i_source) * &
                        comp_source_time_function_d2rck(t_used,f0_source(i_source))
             else
               ! Ricker (second derivative of a Gaussian) source time function
-              source_time_function(i_source,it,i_stage) = - factor(i_source) * &
+              source_time_function(i_source,it,i_stage) = factor(i_source) * &
                       comp_source_time_function_rickr(t_used,f0_source(i_source))
             endif
 
           case (2)
-            ! Ricker type: first derivative
-
-            ! for the source time function
-            aval = PI*PI*f0_source(i_source)*f0_source(i_source)
+            ! first derivative of a Gaussian
 
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
@@ -223,9 +220,6 @@
 
           case (3,4)
             ! Gaussian/Dirac type
-
-            ! for the source time function
-            aval = PI*PI*f0_source(i_source)*f0_source(i_source)
 
             if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
@@ -266,7 +260,7 @@
               omegat =  omega_coa * ( timeval - DecT )
               source_time_function(i_source,it,i_stage) = factor(i_source) * HALF * &
                     sin( omegat ) * ( ONE - cos( QUARTER * omegat ) )
-              !source_time_function(i_source,it,i_stage) = - factor(i_source) * HALF / omega_coa / omega_coa * &
+              !source_time_function(i_source,it,i_stage) = factor(i_source) * HALF / omega_coa / omega_coa * &
               !      ( sin(omegat) - 8.d0 / 9.d0 * sin(3.d0/ 4.d0 * omegat) - 8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) )
             else
               source_time_function(i_source,it,i_stage) = ZERO
@@ -311,7 +305,7 @@
                         8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) - 1.d0 / 15.d0 * omegat )
               else if (timeval > DecT) then
                 source_time_function(i_source,it,i_stage) = &
-                - factor(i_source) * HALF / omega_coa / 15.d0 * (4.d0 / f0_source(i_source))
+                       - factor(i_source) * HALF / omega_coa / 15.d0 * (4.d0 / f0_source(i_source))
               else
                 source_time_function(i_source,it,i_stage) = ZERO
               endif
@@ -326,7 +320,7 @@
 !                        8.d0 / 25.d0 * sin(5.d0 / 4.d0 * omegat) - 1.d0 / 15.d0 * omegat )
 !              else if (timeval > DecT) then
 !                source_time_function(i_source,it,i_stage) = &
-!                - factor(i_source) * HALF / omega_coa / 15.d0 * (4.d0 / f0_source(i_source))
+!                       - factor(i_source) * HALF / omega_coa / 15.d0 * (4.d0 / f0_source(i_source))
 !              else
 !                source_time_function(i_source,it,i_stage) = ZERO
 !              endif
