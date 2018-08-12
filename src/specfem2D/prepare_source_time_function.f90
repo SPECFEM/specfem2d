@@ -8,7 +8,6 @@
 !                       and Princeton University, USA
 !                 (there are currently many more authors!)
 !                           (c) October 2017
-!               Pieyre Le Loher, pieyre DOT le-loher aT inria.fr
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
@@ -38,7 +37,7 @@
 
   use constants, only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE,SOURCE_IS_MOVING,C_LDDRK,OUTPUT_FILES
 
-  use specfem_par, only: AXISYM,NSTEP,NSOURCES,source_time_function, &
+  use specfem_par, only: NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0_source,tshift_src,factor, &
                          t0,deltat, &
                          time_stepping_scheme,stage_time_scheme,islice_selected_source, &
@@ -114,10 +113,6 @@
 
   ! loop on all the sources
   do i_source = 1,NSOURCES
-
-!!! DK DK     if (AXISYM) then
-!!! DK DK       factor(i_source) = - factor(i_source)
-!!! DK DK     endif
 
     ! The following lines could be needed to set absolute amplitudes.
     ! In this case variables vpext,rhoext,density,poroelastcoef,assign_external_model,ispec_selected_source,kmato

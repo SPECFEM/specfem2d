@@ -8,7 +8,6 @@
 !                       and Princeton University, USA
 !                 (there are currently many more authors!)
 !                           (c) October 2017
-!               Pieyre Le Loher, pieyre DOT le-loher aT inria.fr
 !
 ! This software is a computer program whose purpose is to solve
 ! the two-dimensional viscoelastic anisotropic or poroelastic wave equation
