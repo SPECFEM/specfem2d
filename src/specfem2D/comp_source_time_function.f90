@@ -38,9 +38,8 @@
 
   end function comp_source_time_function_heavi
 
-
 !
-!-------------------------------------------------------------------------------------------------
+!------------------------------------------------------------
 !
 
   double precision function comp_source_time_function_gauss(t,hdur)
@@ -50,27 +49,16 @@
   implicit none
 
   double precision, intent(in) :: t,hdur
-  double precision :: hdur_decay,a
-
-  ! note: hdur given is hdur_Gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
-  !           and SOURCE_DECAY_MIMIC_TRIANGLE ~ 1.68
-  hdur_decay = hdur
-
-  ! this here uses a stronger Gaussian decay rate (empirical value) to avoid non-zero onset times;
-  ! however, it should mimik a triangle source time function...
-  !hdur_decay = hdur  / SOURCE_DECAY_STRONG
-
-  ! note: a nonzero time to start the simulation with would lead to more high-frequency noise
-  !          due to the (spatial) discretization of the point source on the mesh
+  double precision :: a
 
   ! Gaussian wavelet
-  a = 1.d0 / (hdur_decay**2)
-  comp_source_time_function_gauss = exp(-a * t**2) / (sqrt(PI)*hdur_decay)
+  a = 1.d0 / (hdur**2)
+  comp_source_time_function_gauss = exp(-a * t**2) / (sqrt(PI)*hdur)
 
   end function comp_source_time_function_gauss
 
 !
-!-------------------------------------------------------------------------------------------------
+!------------------------------------------------------------
 !
 
   double precision function comp_source_time_function_dgau(t,hdur)
@@ -80,27 +68,16 @@
   implicit none
 
   double precision, intent(in) :: t,hdur
-  double precision :: hdur_decay,a
-
-  ! note: hdur given is hdur_Gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
-  !           and SOURCE_DECAY_MIMIC_TRIANGLE ~ 1.68
-  hdur_decay = hdur
-
-  ! this here uses a stronger Gaussian decay rate (empirical value) to avoid non-zero onset times;
-  ! however, it should mimik a triangle source time function...
-  !hdur_decay = hdur  / SOURCE_DECAY_STRONG
-
-  ! note: a nonzero time to start the simulation with would lead to more high-frequency noise
-  !          due to the (spatial) discretization of the point source on the mesh
+  double precision :: a
 
   ! first derivative of a Gaussian wavelet
-  a = 1.d0 / (hdur_decay**2)
-  comp_source_time_function_dgau = - 2.d0 * a * t * exp(-a * t**2) / (sqrt(PI)*hdur_decay)
+  a = 1.d0 / (hdur**2)
+  comp_source_time_function_dgau = - 2.d0 * a * t * exp(-a * t**2) / (sqrt(PI)*hdur)
 
   end function comp_source_time_function_dgau
 
 !
-!-------------------------------------------------------------------------------------------------
+!------------------------------------------------------------
 !
 
   double precision function comp_source_time_function_d2gau(t,hdur)
@@ -110,28 +87,16 @@
   implicit none
 
   double precision, intent(in) :: t,hdur
-  double precision :: hdur_decay,a
-
-  ! note: hdur given is hdur_Gaussian = hdur/SOURCE_DECAY_MIMIC_TRIANGLE
-  !           and SOURCE_DECAY_MIMIC_TRIANGLE ~ 1.68
-  hdur_decay = hdur
-
-  ! this here uses a stronger Gaussian decay rate (empirical value) to avoid non-zero onset times;
-  ! however, it should mimik a triangle source time function...
-  !hdur_decay = hdur  / SOURCE_DECAY_STRONG
-
-  ! note: a nonzero time to start the simulation with would lead to more high-frequency noise
-  !          due to the (spatial) discretization of the point source on the mesh
+  double precision :: a
 
   ! second derivative of a Gaussian wavelet
-  a = 1.d0 / (hdur_decay**2)
-  comp_source_time_function_d2gau = 2.d0 * a * (-1.d0 + 2.d0 * a * t**2) * exp(-a * t**2) / (sqrt(PI)*hdur_decay)
+  a = 1.d0 / (hdur**2)
+  comp_source_time_function_d2gau = 2.d0 * a * (-1.d0 + 2.d0 * a * t**2) * exp(-a * t**2) / (sqrt(PI)*hdur)
 
   end function comp_source_time_function_d2gau
 
-
 !
-!-------------------------------------------------------------------------------------------------
+!------------------------------------------------------------
 !
 
   double precision function comp_source_time_function_gaussB(t,f0)
@@ -152,7 +117,7 @@
   end function comp_source_time_function_gaussB
 
 !
-!-------------------------------------------------------------------------------------------------
+!------------------------------------------------------------
 !
 
   double precision function comp_source_time_function_dgaussB(t,f0)
@@ -173,7 +138,7 @@
   end function comp_source_time_function_dgaussB
 
 !
-!-------------------------------------------------------------------------------------------------
+!------------------------------------------------------------
 !
 
   double precision function comp_source_time_function_d2gaussB(t,f0)
@@ -193,9 +158,8 @@
 
   end function comp_source_time_function_d2gaussB
 
-
 !
-!-------------------------------------------------------------------------------------------------
+!------------------------------------------------------------
 !
 
   double precision function comp_source_time_function_d3gaussB(t,f0)
@@ -215,10 +179,8 @@
 
   end function comp_source_time_function_d3gaussB
 
-
-
 !
-!-------------------------------------------------------------------------------------------------
+!------------------------------------------------------------
 !
 
   double precision function comp_source_time_function_rickr(t,f0)
@@ -238,15 +200,14 @@
   a = PI**2 * f0**2
   comp_source_time_function_rickr = (1.d0 - 2.d0 * a * t*t) * exp( -a * t*t )
 
-  !!! another source time function they have called 'ricker' in some old papers,
-  !!! e.g., 'Finite-Frequency Kernels Based on Adjoint Methods' by Liu & Tromp, BSSA (2006)
-  !!! in order to benchmark those simulations, the following formula is needed.
+  !! another source time function that is improperly called 'Ricker' in some old papers,
+  !! e.g., 'Finite-Frequency Kernels Based on Adjoint Methods' by Liu & Tromp, BSSA (2006), is:
   ! comp_source_time_function_rickr = -2.d0*PI*PI*f0*f0*f0*t * exp(-PI*PI*f0*f0*t*t)
 
   end function comp_source_time_function_rickr
 
 !
-!-------------------------------------------------------------------------------------------------
+!------------------------------------------------------------
 !
 
   double precision function comp_source_time_function_drck(t,f0)
@@ -267,7 +228,7 @@
   end function comp_source_time_function_drck
 
 !
-!-------------------------------------------------------------------------------------------------
+!------------------------------------------------------------
 !
 
   double precision function comp_source_time_function_d2rck(t,f0)
@@ -287,7 +248,9 @@
 
   end function comp_source_time_function_d2rck
 
-!-------------------------------------------------------------------------------------------------
+!
+!------------------------------------------------------------
+!
 
   double precision function sinc(a)
 
@@ -297,8 +260,6 @@
 
   double precision, intent(in) :: a
 
-  ! sinc function defined here
-
   if (abs(a) < 1.0d-10) then
     sinc = 1.0d0
   else
@@ -307,7 +268,9 @@
 
   end function sinc
 
-!-------------------------------------------------------------------------------------------------
+!
+!------------------------------------------------------------
+!
 
   double precision function cos_taper(a,hdur)
 
@@ -318,8 +281,6 @@
   double precision, intent(in) :: a,hdur
 
   double precision :: b
-
-  ! cos_taper function defined here
 
   b = abs(a)
   cos_taper = 0.0
@@ -332,7 +293,9 @@
 
   end function cos_taper
 
-!-----------------------------------------------------------------------------------------------------
+!
+!------------------------------------------------------------
+!
 
   double precision function marmousi_ormsby_wavelet(a)
 
@@ -349,10 +312,10 @@
   ! 5-10-60-80 Hz Ormsby Wavelet for Marmousi2 Model (Gray S. Martin, 2006)
   ! Please find the Ormsby Wavelet here http://subsurfwiki.org/wiki/Ormsby_filter
 
-  f1 = 5.0d0;  ! low-cut frequency
-  f2 = 10.0d0; ! low-pass frequency
-  f3 = 60.0d0; ! high-pass frequency
-  f4 = 80.0d0; ! high-cut frequency
+  f1 = 5.0d0  ! low-cut frequency
+  f2 = 10.0d0 ! low-pass frequency
+  f3 = 60.0d0 ! high-pass frequency
+  f4 = 80.0d0 ! high-cut frequency
 
   b = sinc( f1 * a )
   tmp = PI * f1
@@ -381,7 +344,4 @@
   marmousi_ormsby_wavelet = c
 
   end function marmousi_ormsby_wavelet
-
-!-------------------------------------------------------------------------------------------------
-
 
