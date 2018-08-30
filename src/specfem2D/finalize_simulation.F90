@@ -56,20 +56,38 @@
 
   ! saves model files
   if (trim(SAVE_MODEL) /= 'default' .and. trim(SAVE_MODEL) /= '.false.') then
+
     ! allocates temporary arrays for file storage
-    allocate(rho_save(NGLLX,NGLLZ,nspec))
-    allocate(vp_save(NGLLX,NGLLZ,nspec))
-    allocate(vs_save(NGLLX,NGLLZ,nspec))
-    allocate(kappa_save(NGLLX,NGLLZ,nspec))
-    allocate(x_save(NGLLX,NGLLZ,nspec))
-    allocate(z_save(NGLLX,NGLLZ,nspec))
-    if (ATTENUATION_VISCOACOUSTIC) allocate(Qkappa_save(NGLLX,NGLLZ,nspec))
-    if (ATTENUATION_VISCOELASTIC) then
-     allocate(Qkappa_save(NGLLX,NGLLZ,nspec),Qmu_save(NGLLX,NGLLZ,nspec),stat=ier)
-     if (ATTENUATION_VISCOACOUSTIC) call exit_MPI(myrank, &
-                    'Not possible yet to save model with both acoustic and elastic attenuation')
+    allocate(rho_save(NGLLX,NGLLZ,nspec),stat=ier)
+    if (ier /= 0) call exit_MPI(myrank, 'error allocating save model arrays 01')
+
+    allocate(vp_save(NGLLX,NGLLZ,nspec),stat=ier)
+    if (ier /= 0) call exit_MPI(myrank, 'error allocating save model arrays 02')
+
+    allocate(vs_save(NGLLX,NGLLZ,nspec),stat=ier)
+    if (ier /= 0) call exit_MPI(myrank, 'error allocating save model arrays 03')
+
+    allocate(kappa_save(NGLLX,NGLLZ,nspec),stat=ier)
+    if (ier /= 0) call exit_MPI(myrank, 'error allocating save model arrays 04')
+
+    allocate(x_save(NGLLX,NGLLZ,nspec),stat=ier)
+    if (ier /= 0) call exit_MPI(myrank, 'error allocating save model arrays 05')
+
+    allocate(z_save(NGLLX,NGLLZ,nspec),stat=ier)
+    if (ier /= 0) call exit_MPI(myrank, 'error allocating save model arrays 06')
+
+    if (ATTENUATION_VISCOACOUSTIC) then
+      allocate(Qkappa_save(NGLLX,NGLLZ,nspec),stat=ier)
+      if (ier /= 0) call exit_MPI(myrank, 'error allocating save model arrays 07')
     endif
-    if (ier /= 0) call exit_MPI(myrank, 'error allocating save model arrays')
+
+    if (ATTENUATION_VISCOELASTIC) then
+      if (ATTENUATION_VISCOACOUSTIC) call exit_MPI(myrank, &
+                    'Not possible yet to save model with both acoustic and elastic attenuation')
+      allocate(Qkappa_save(NGLLX,NGLLZ,nspec),Qmu_save(NGLLX,NGLLZ,nspec),stat=ier)
+      if (ier /= 0) call exit_MPI(myrank, 'error allocating save model arrays 08')
+    endif
+
     do ispec= 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
