@@ -75,6 +75,10 @@
 void
 FC_FUNC_(force_ftz,FORCE_FTZ)()
 {
+
+// DK DK Aug 2018: not needed anymore these days, and we had numerous portability issues with this routine, thus turning it off
+#undef FORCE_FTZ
+
 #ifdef __GNUC__
 #ifdef FORCE_FTZ
   unsigned int x;
