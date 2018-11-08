@@ -212,7 +212,7 @@
 ! select fast (Paul Fischer) or slow (topology only) global numbering algorithm
   logical, parameter :: FAST_NUMBERING = .true.
 
-! mesh tolerance for fast global numbering
+! relative mesh tolerance for fast global numbering
   double precision, parameter :: SMALLVALTOL = 1.d-10
 
 !!-----------------------------------------------------------
