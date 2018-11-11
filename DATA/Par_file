@@ -284,10 +284,11 @@ absorbtop                       = .false.
 absorbleft                      = .true.
 
 # define the different regions of the model in the (nx,nz) spectral-element mesh
-nbregions                       = 4              # then set below the different regions and model number for each region
+nbregions                       = 5              # then set below the different regions and model number for each region
 # format of each line: nxmin nxmax nzmin nzmax material_number
 1 80  1 20 1
-1 80 21 40 2
+1 59 21 40 2
+71 80 21 40 2
 1 80 41 60 3
 60 70 21 40 4
 
