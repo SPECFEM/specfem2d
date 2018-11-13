@@ -241,7 +241,6 @@ materials_file                  = dummy                     # file containing th
 free_surface_file               = dummy                     # file containing the free surface
 axial_elements_file             = dummy                     # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = dummy                     # file containing the absorbing surface
-CPML_element_file               = Elements_CPML_list  # file containing the CPML element numbers
 acoustic_forcing_surface_file   = dummy                     # file containing the acoustic forcing surface
 absorbing_cpml_file             = dummy          # file containing the CPML element numbers
 tangential_detection_curve_file = dummy                     # file containing the curve delimiting the velocity model
