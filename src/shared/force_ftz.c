@@ -75,7 +75,7 @@
 void
 FC_FUNC_(force_ftz,FORCE_FTZ)()
 {
- 
+
 // DK DK Nov 2018: uncomment this if you have any problem compiling this file
 //#undef FORCE_FTZ
 
