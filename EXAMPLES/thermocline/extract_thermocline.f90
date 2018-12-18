@@ -2,7 +2,7 @@
 ! extract thermocline from PNM image
 
 ! use "convert -compress none" to convert to ASCII PNM image
-! and then "tr '\040' '\012' < thermocline.pnm > thermocline2.pnm" to suppress white spaces
+! and then "tr '\040' '\012'<thermocline.pnm > thermocline2.pnm" to suppress white spaces
 
   program extract_thermocline
 

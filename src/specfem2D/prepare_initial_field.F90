@@ -348,7 +348,7 @@
   ! user output
   if (myrank == 0) then
     if (source_type(1) /= 3 ) &
-      write(IMAIN,*) 'You are beyond the critical angle ( > ',asin(c_inc/c_refl)*180d0/pi,')'
+      write(IMAIN,*) 'You are beyond the critical angle (>',asin(c_inc/c_refl)*180d0/pi,')'
 
     write(IMAIN,*)  '*************'
     write(IMAIN,*)  'We have to compute the initial field in the frequency domain'
