@@ -539,7 +539,7 @@ end module enforce_par
     real(kind=CUSTOM_REAL), intent(in) :: fdin
 
     ! Local variables
-    integer :: i,error,nfdout1,nfdout2
+    integer :: i,error !,nfdout1,nfdout2
     !real(kind=CUSTOM_REAL) :: fdMin_of_file,fdMax_of_file,stepfd_of_file
     !real(kind=CUSTOM_REAL) ::  fdtemp1,fdtemp2
     character(len=1) :: mode

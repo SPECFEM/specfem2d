@@ -55,9 +55,9 @@
   integer, parameter :: IIN  = 40, IOUT = 41
 
 ! uncomment this to write to standard output (i.e. to the screen)
-!  integer, parameter :: IMAIN = ISTANDARD_OUTPUT
+  integer, parameter :: IMAIN = ISTANDARD_OUTPUT
 ! uncomment this to write messages to a text file
-  integer, parameter :: IMAIN = 42
+!  integer, parameter :: IMAIN = 42
 
   integer, parameter :: IOUT_UNDO_ATT = 45
   integer, parameter :: IIN_UNDO_ATT = IOUT_UNDO_ATT
