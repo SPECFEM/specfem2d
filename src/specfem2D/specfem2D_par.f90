@@ -688,10 +688,12 @@ module specfem_par
   !---------------------------------------------------------------------
   ! for seismograms
   !---------------------------------------------------------------------
-  integer :: seismo_offset, seismo_current
+  integer, dimension(:), allocatable :: seismotypeVec
+  integer, dimension(:), allocatable :: seismo_current, seismo_offset
+  integer :: seismotype_adj
 
   ! for seismograms
-  double precision, dimension(:,:), allocatable :: sisux,sisuz,siscurl
+  double precision, dimension(:,:,:), allocatable :: sisux,sisuz,siscurl
 
 end module specfem_par
 

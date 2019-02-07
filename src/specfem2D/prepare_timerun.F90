@@ -188,15 +188,17 @@
   endif
 
   ! seismograms
+  allocate(seismo_current(NSIGTYPE),seismo_offset(NSIGTYPE))
+
   ! allocate seismogram arrays
-  allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
-           sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc), &
-           siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc),stat=ier)
+  allocate(sisux(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc,NSIGTYPE), &
+           sisuz(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc,NSIGTYPE), &
+           siscurl(NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos,nrecloc,NSIGTYPE),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating seismogram arrays')
 
-  sisux(:,:) = ZERO ! double precision zero
-  sisuz(:,:) = ZERO
-  siscurl(:,:) = ZERO
+  sisux(:,:,:) = ZERO ! double precision zero
+  sisuz(:,:,:) = ZERO
+  siscurl(:,:,:) = ZERO
 
   ! synchronizes all processes
   call synchronize_all()

@@ -31,15 +31,15 @@
 !
 !========================================================================
 
-  subroutine write_output_SU(x_source,z_source,irec,buffer_binary,number_of_components,seismo_offset,seismo_current)
+  subroutine write_output_SU(x_source,z_source,irec,buffer_binary,number_of_components,seismo_offset,seismo_current,seismotype_l)
 
-  use specfem_par, only: NSTEP,nrec,deltat,seismotype,st_xval, &
+  use specfem_par, only: NSTEP,nrec,deltat,st_xval, &
                          P_SV,st_zval,subsamp_seismos
 
   implicit none
 
   double precision,intent(in) :: x_source,z_source
-  integer,intent(in) :: irec,number_of_components,seismo_offset,seismo_current
+  integer,intent(in) :: irec,number_of_components,seismo_offset,seismo_current,seismotype_l
 
   ! to write seismograms in single precision SEP and double precision binary
   double precision, dimension(seismo_current,nrec,number_of_components),intent(in) :: buffer_binary
@@ -84,7 +84,7 @@
   write(12,pos=ioffset) single_precision_seismo
 
 
-  if (seismotype /= 4 .and. seismotype /= 6 .and. P_SV) then
+  if (seismotype_l /= 4 .and. seismotype_l /= 6 .and. P_SV) then
     do isample = 1,seismo_current
       single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,2))
     enddo

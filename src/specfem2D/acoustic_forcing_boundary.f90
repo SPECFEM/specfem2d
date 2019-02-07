@@ -58,8 +58,9 @@
   double precision :: t,t_used,signal_x1,signal_x2,fracx,fract
   double precision :: x,z
 
-  double precision :: f0 = 6000.0
+  double precision :: f0
 
+  f0 = 6000.0
   forcing_type = 1
 
   ! length of a PML element along x-axis at the edge which will be forced

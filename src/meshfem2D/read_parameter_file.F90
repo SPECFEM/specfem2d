@@ -137,7 +137,7 @@
     call bcast_all_singlel(add_Bielak_conditions_left)
     call bcast_all_singlel(ACOUSTIC_FORCING)
 
-    call bcast_all_singlei(seismotype)
+    call bcast_all_string(seismotype)
     call bcast_all_singlei(subsamp_seismos)
     call bcast_all_singlel(USE_TRICK_FOR_BETTER_PRESSURE)
     call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_SEISMOS)
@@ -569,10 +569,10 @@
   !--------------------------------------------------------------------
 
   ! read receiver line parameters
-  call read_value_integer_p(seismotype, 'seismotype')
+  call read_value_string_p(seismotype, 'seismotype')
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
-    write(*,'(a)') 'seismotype                      = 1'
+    write(*,'(a)') 'seismotype                     = 1'
     write(*,*)
   endif
 
@@ -1278,13 +1278,6 @@
   if (N_SLS < 2) call stop_the_code('must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays')
 
   if (ngnod /= 4 .and. ngnod /= 9) call stop_the_code('ngnod should be either 4 or 9!')
-
-  if (seismotype < 1 .or. seismotype > 6) &
-    call stop_the_code( &
-'seismotype should be 1(=displ), 2(=veloc), 3(=accel), 4(=pressure), 5(=curl of displ) or 6(=the fluid potential)')
-
-  if (USE_TRICK_FOR_BETTER_PRESSURE .and. seismotype /= 4) &
-    call stop_the_code('USE_TRICK_FOR_BETTER_PRESSURE : seismograms must record pressure')
 
   if (subsamp_seismos < 1) call stop_the_code('Error: subsamp_seismos must be >= 1')
 

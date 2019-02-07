@@ -123,7 +123,7 @@
         PML_dux_dxl_old(i,j) = dux_dxi * xixl + dux_dgamma * gammaxl
         PML_dux_dzl_old(i,j) = dux_dxi * xizl + dux_dgamma * gammazl
 
-!        if (AXISYM) then ! TODO LDDRK
+!        if (AXISYM) then
 !          if (is_on_the_axis(ispec) .and. i == 1) then
 !            ! dchi/dr=rho * u_r=0 on the axis
 !            PML_dux_dxl_old(i,j) = 0._CUSTOM_REAL
@@ -293,7 +293,7 @@
       PML_duz_dzl(i,j) = duz_dzl(i,j)
       PML_duz_dxl(i,j) = duz_dxl(i,j)
 
-      if (AXISYM) then ! TODO LDDRK
+      if (AXISYM) then
         if (is_on_the_axis(ispec) .and. i == 1) then
           ! d_uz/dr=0 on the axis
           PML_duz_dxl(i,j) = 0._CUSTOM_REAL
@@ -338,7 +338,7 @@
       PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl !duz_dxl_old
       PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl !duz_dzl_old
 
-      if (AXISYM) then ! TODO LDDRK
+      if (AXISYM) then
         if (is_on_the_axis(ispec) .and. i == 1) then
           ! d_uz/dr=0 on the axis
           PML_duz_dxl_old(i,j) = 0._CUSTOM_REAL
@@ -516,7 +516,7 @@
     enddo
   enddo
 
-  ! AXISYM enforces zero derivatives on axis ! TODO LDDRK
+  ! AXISYM enforces zero derivatives on axis
   if (AXISYM) then
     if (is_on_the_axis(ispec)) then
       ! d_uz/dr=0 on the axis

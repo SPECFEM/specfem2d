@@ -237,6 +237,8 @@
 
   implicit none
 
+  integer :: i_sig
+
   ! synchronizes processes
   call synchronize_all()
 
@@ -278,16 +280,21 @@
     call stop_the_code('need to have an initial field to add Bielak plane wave conditions')
 
   ! seismogram output
-  if (seismotype < 1 .or. seismotype > 6) &
-    call stop_the_code( &
-'seismotype should be 1(=displ), 2(=veloc), 3(=accel), 4(=pressure), 5(=curl of displ) or 6(=the fluid potential)')
+  do i_sig = 1,NSIGTYPE
+    if (seismotypeVec(i_sig) < 1 .or. seismotypeVec(i_sig) > 6) & ! TODO
+      call stop_the_code( &
+      'seismotype should be 1(=displ), 2(=veloc), 3(=accel), 4(=pressure), 5(=curl of displ) or 6(=the fluid potential)')
+  enddo
 
-  if (SAVE_FORWARD .and. (seismotype /= 1 .and. seismotype /= 6)) then
+  if (SAVE_FORWARD .and. (NSIGTYPE > 1)) &
+    call stop_the_code('Only one one signal type (seismotype) can be computed when using SAVE_FORWARD')
+
+  if (SAVE_FORWARD .and. seismotypeVec(1) /= 1 .and. seismotypeVec(1) /= 6) then
     ! user warning
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '***** WARNING *****'
-      write(IMAIN,*) 'SAVE_FORWARD simulation: uses seismotype = ',seismotype
+      write(IMAIN,*) 'SAVE_FORWARD simulation: uses seismotype = ',seismotypeVec(1)
       write(IMAIN,*) '  Note that seismograms usually must be in displacement/potential for (poro)elastic/acoustic domains'
       write(IMAIN,*) '  and seismotype should be 1 (elastic/poroelastic adjoint source) or 6 (acoustic adjoint source)'
       write(IMAIN,*) '*******************'

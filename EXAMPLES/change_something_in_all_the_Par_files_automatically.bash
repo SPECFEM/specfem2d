@@ -10,6 +10,6 @@
 
 #  [ ]*  below is very useful, it matches any number of white spaces, thus makes the search insensitive to where the = sign is located in the initial line
 
-find . -type f -iname "Par_file*" -exec sed -i 's/f0_attenuation[ ]*=/ATTENUATION_f0_REFERENCE        =/g' {} \;
+find . -type f -iname "Par_file*" -exec sed -i 's/Several values can be chosen! Record 1        [ ]*=/Several values can be chosen, separated by ","! Record 1=/g' {} \;
 #find . -type f -iname "Par_file*" -exec sed -i 's/ATTENUATION_FLUID/ATTENUATION_VISCOACOUSTIC/g' {} \;
 

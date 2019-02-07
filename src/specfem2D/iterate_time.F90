@@ -97,8 +97,8 @@ subroutine iterate_time()
   endif
 
   ! initialize variables for writing seismograms
-  seismo_offset = 0
-  seismo_current = 0
+  seismo_offset(:) = 0
+  seismo_current(:) = 0
 
   if (TIME_THE_COST_TO_COMPUTE_WEIGHTS_FOR_THE_DOMAIN_DECOMPOSER) then
     if (NPROC /= 1) call exit_MPI(myrank,'timing for element weights should be done in serial mode')

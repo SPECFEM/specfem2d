@@ -305,6 +305,12 @@
   ! checks if acoustic receiver is exactly on the free surface because pressure is zero there
   call setup_receivers_check_acoustic()
 
+  if (USE_TRICK_FOR_BETTER_PRESSURE .and. (NSIGTYPE /= 1)) then
+    call stop_the_code('USE_TRICK_FOR_BETTER_PRESSURE : only pressure can be recorded')
+    if (seismotypeVec(1) /= 4) &
+      call stop_the_code('USE_TRICK_FOR_BETTER_PRESSURE : seismograms must record pressure')
+  endif
+
   ! create a local array for receivers
   allocate(ispec_selected_rec_loc(nrecloc))
   irec_local = 0
@@ -330,7 +336,7 @@
   use constants, only: NGLLX,NGLLZ,IMAIN
 
   use specfem_par, only: myrank,ispec_selected_rec,nrecloc,recloc, &
-                         xi_receiver,gamma_receiver,seismotype, &
+                         xi_receiver,gamma_receiver,seismotypeVec,NSIGTYPE, &
                          nelem_acoustic_surface,acoustic_surface,ispec_is_acoustic
   implicit none
 
@@ -366,9 +372,17 @@
         (izmin == NGLLZ .and. izmax == NGLLZ .and. ixmin == NGLLX .and. ixmax == NGLLX .and. &
         gamma_receiver(irec) > 0.99d0 .and. xi_receiver(irec) > 0.99d0)) then
           ! checks
-          if (seismotype == 4) then
-            call exit_MPI(myrank,'an acoustic pressure receiver cannot be located exactly '// &
-                            'on the free surface because pressure is zero there')
+          if (any(seismotypeVec == 4)) then
+            if (NSIGTYPE == 1) then
+              call exit_MPI(myrank,'an acoustic pressure receiver cannot be located exactly '// &
+                                   'on the free surface because pressure is zero there')
+            else
+              write(IMAIN,*) '**********************************************************************'
+              write(IMAIN,*) '*** Warning: the acoustic receivers located on the free surface    ***'
+              write(IMAIN,*) '*** Warning: will record 0 !!                                      ***'
+              write(IMAIN,*) '**********************************************************************'
+              write(IMAIN,*)
+            endif
           else
             write(IMAIN,*) '**********************************************************************'
             write(IMAIN,*) '*** Warning: acoustic receiver located exactly on the free surface ***'
@@ -395,13 +409,13 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,MAX_STRING_LEN,IMAIN
 
   use specfem_par, only: nadj_rec_local,nrec,nrecloc,NSTEP,NPROC,SIMULATION_TYPE,SU_FORMAT, &
-                        myrank,islice_selected_rec,seismotype, &
+                        myrank,islice_selected_rec,seismotypeVec,NSIGTYPE, &
                         network_name,station_name,source_adjoint
 
   implicit none
 
   ! local parameters
-  integer :: irec,irec_local
+  integer :: irec,irec_local, seismotype_adj
   character(len=MAX_STRING_LEN) :: adj_source_file
 
   ! number of adjoint receivers in this slice
@@ -421,6 +435,9 @@
     endif
 
     allocate(source_adjoint(nrecloc,NSTEP,2))
+
+    if (NSIGTYPE > 1) call exit_MPI(myrank,'only one signal can be computed if running an adjoint simulation (e.g. seismotype = 1)')
+    seismotype_adj = seismotypeVec(1)
 
     ! counts number of adjoint sources in this slice
     do irec = 1,nrec
@@ -463,7 +480,7 @@
       endif
 
       ! (SU_FORMAT)
-      call read_adj_source_SU(seismotype)
+      call read_adj_source_SU(seismotype_adj)
     endif
 
     ! user output
