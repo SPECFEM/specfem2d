@@ -15,7 +15,7 @@
   double precision,parameter :: TIME_WINDOW_END = 1.274
 
   ! default
-  filename = 'OUTPUT_FILES/AA.S0001.PRE.semp'
+  filename = 'OUTPUT_FILES/AA.S0001.POT.semx'
   filename_adj = 'SEM/AA.S0001.POT.adj'
 
   ! user output

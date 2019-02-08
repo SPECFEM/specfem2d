@@ -45,12 +45,16 @@ echo
 echo "  running mesher..."
 echo
 ./xmeshfem2D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # runs simulation
 echo
 echo "  running solver..."
 echo
 ./xspecfem2D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # stores output
 cp -f DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES
