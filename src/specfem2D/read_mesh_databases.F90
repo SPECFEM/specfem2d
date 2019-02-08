@@ -1568,16 +1568,23 @@
     end do
 
     ! Convert to integer list :
-    do while (index(stringCopy, ',') > 0)
-      stringCopy1 = stringCopy(:index(stringCopy, ',')-1)
-      read(stringCopy1, '(i3)') integs
+    if (index(stringCopy, ',') < 0) then
+      stop "This should never ever happen... this is an interesting bug really, memory broken somewhere?"
+    else if (index(stringCopy, ',') == 0) Then
+      read(stringCopy, '(i3)') integs
       call AddToList(seismotypeVec, integs)
-      stringCopy = stringCopy(index(stringCopy, ',')+1:)
-      if (index(stringCopy, ',') < 1) then
-        read(stringCopy, '(i3)') integs
+    else
+      do while (index(stringCopy, ',') > 0)
+        stringCopy1 = stringCopy(:index(stringCopy, ',')-1)
+        read(stringCopy1, '(i3)') integs
         call AddToList(seismotypeVec, integs)
-      endif
-    enddo
+        stringCopy = stringCopy(index(stringCopy, ',')+1:)
+        if (index(stringCopy, ',') < 1) then
+          read(stringCopy, '(i3)') integs
+          call AddToList(seismotypeVec, integs)
+        endif
+      enddo
+    endif
 
     if (any(seismotypeVec == 0)) call stop_the_code("Seismotype line in Par_file contain a 0 or is malformed")
 
