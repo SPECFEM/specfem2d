@@ -17,7 +17,7 @@ NOISE_TOMOGRAPHY                = 0
 SAVE_FORWARD                    = .false.
 
 # parameters concerning partitioning
-NPROC                           = 4              # number of processes
+NPROC                           = 1              # number of processes
 partitioning_method             = 3              # SCOTCH = 3, ascending order (very bad idea) = 1
 
 # number of control nodes per element (4 or 9)
@@ -150,7 +150,7 @@ SU_FORMAT                       = .false.        # output single precision binar
 use_existing_STATIONS           = .false.
 
 # number of receiver sets (i.e. number of receiver lines to create below)
-nreceiversets                   = 1
+nreceiversets                   = 2
 
 # orientation
 anglerec                        = 0.d0           # angle to rotate components at receivers
@@ -163,6 +163,14 @@ zdeb                            = 2200.          # first receiver z in meters
 xfin                            = 3700.          # last receiver x in meters (ignored if only one receiver)
 zfin                            = 2200.          # last receiver z in meters (ignored if only one receiver)
 record_at_surface_same_vertical = .true.         # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
+
+# first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
+nrec                            = 11             # number of receivers
+xdeb                            = 2500.          # first receiver x in meters
+zdeb                            = 2500.          # first receiver z in meters
+xfin                            = 2500.          # last receiver x in meters (ignored if only one receiver)
+zfin                            = 0.             # last receiver z in meters (ignored if only one receiver)
+record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface (z values are ignored if this is set to true, they are replaced with the topography height)
 
 
 #-----------------------------------------------------------------------------
@@ -245,12 +253,12 @@ read_external_mesh              = .false.
 
 # data concerning mesh, when generated using third-party app (more info in README)
 # (see also absorbing_conditions above)
-mesh_file                       = ./DATA/Mesh_canyon/canyon_mesh_file   # file containing the mesh
-nodes_coords_file               = ./DATA/Mesh_canyon/canyon_nodes_coords_file   # file containing the nodes coordinates
-materials_file                  = ./DATA/Mesh_canyon/canyon_materials_file   # file containing the material number for each element
-free_surface_file               = ./DATA/Mesh_canyon/canyon_free_surface_file   # file containing the free surface
+mesh_file                       = ./DATA/mesh_file          # file containing the mesh
+nodes_coords_file               = ./DATA/nodes_coords_file  # file containing the nodes coordinates
+materials_file                  = ./DATA/materials_file     # file containing the material number for each element
+free_surface_file               = ./DATA/free_surface_file  # file containing the free surface
 axial_elements_file             = ./DATA/axial_elements_file   # file containing the axial elements if AXISYM is true
-absorbing_surface_file          = ./DATA/Mesh_canyon/canyon_absorbing_surface_file   # file containing the absorbing surface
+absorbing_surface_file          = ./DATA/absorbing_surface_file   # file containing the absorbing surface
 acoustic_forcing_surface_file   = ./DATA/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
 absorbing_cpml_file             = ./DATA/absorbing_cpml_file   # file containing the CPML element numbers
 tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing the curve delimiting the velocity model
@@ -332,7 +340,7 @@ DRAW_WATER_IN_BLUE              = .true.         # display acoustic layers as co
 USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step (for instance to create movies in an easier way later)
 
 #### for PostScript snapshots ####
-output_postscript_snapshot      = .false.        # output Postscript snapshot of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
+output_postscript_snapshot      = .true.         # output Postscript snapshot of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
 imagetype_postscript            = 1              # display 1=displ vector 2=veloc vector 3=accel vector; small arrows are displayed for the vectors
 meshvect                        = .true.         # display mesh on PostScript plots or not
 modelvect                       = .false.        # display velocity model on PostScript plots or not
