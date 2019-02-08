@@ -25,9 +25,9 @@ ngnod                           = 4
 
 # time step parameters
 # total number of time steps
-NSTEP                           = 15000 #6000000
+NSTEP                           = 15000
 # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
-DT                              = 0.875d-3 #6.2d-3
+DT                              = 0.875d-3
 
 # time stepping
 # 1 = Newmark (2nd order), 2 = LDDRK4-6 (4th-order 6-stage low storage Runge-Kutta), 3 = classical RK4 4th-order 4-stage Runge-Kutta
@@ -73,10 +73,10 @@ SAVE_MODEL                      = default
 ATTENUATION_VISCOELASTIC        = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_VISCOACOUSTIC       = .false.        # turn attenuation (viscoacousticity) on or off for non-poroelastic fluid parts of the model
 
-# for viscoelastic attenuation
+# for viscoelastic or viscoacoustic attenuation
 N_SLS                           = 3              # number of standard linear solids for attenuation (3 is usually the minimum)
-ATTENUATION_f0_REFERENCE        = 5.196152422706633 # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
-READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
+ATTENUATION_f0_REFERENCE        = 5.196152422706633 # in case of attenuation, reference frequency in Hz at which the velocity values in the velocity model are given (unused otherwise); relevant only if source is a Dirac or a Heaviside, otherwise it is automatically set to f0 the dominant frequency of the source in the DATA/SOURCE file
+READ_VELOCITIES_AT_f0           = .false.        # read seismic velocities at ATTENUATION_f0_REFERENCE instead of at infinite frequency (see user manual for more information)
 USE_SOLVOPT                     = .false.        # use more precise but much more expensive way of determining the Q factor relaxation times, as in http://komatitsch.free.fr/preprints/GJI_Lombard_2016.pdf
 
 # for poroelastic attenuation
@@ -90,9 +90,10 @@ freq0_poroelastic               = 10             # frequency for viscous attenua
 # When that option is on the second parameter indicates how often the code dumps restart files to disk (if in doubt, use something between 100 and 1000).
 UNDO_ATTENUATION_AND_OR_PML     = .false.
 NT_DUMP_ATTENUATION             = 500
-# Instead of reconstructing the forward wavefield, this option reads it from the disk using asynchronous I/O. Outperforms conventional mode using a value of NSTEP_BETWEEN_COMPUTE_KERNELS high enough.
-NO_BACKWARD_RECONSTRUCTION      = .false.
 
+# Instead of reconstructing the forward wavefield, this option reads it from the disk using asynchronous I/O.
+# Outperforms conventional mode using a value of NSTEP_BETWEEN_COMPUTE_KERNELS high enough.
+NO_BACKWARD_RECONSTRUCTION      = .false.
 
 #-----------------------------------------------------------------------------
 #
@@ -117,12 +118,13 @@ ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoust
 
 #-----------------------------------------------------------------------------
 #
-# Receivers
+# receivers
 #
 #-----------------------------------------------------------------------------
 
 # receiver set parameters for recording stations (i.e. recording points)
-seismotype                      = 1              #  Several values can be chosen, separated by ","! Record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+# seismotype : record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+seismotype                      = 1              # several values can be chosen. For example : 1,2,4
 
 # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
 subsamp_seismos                 = 1
@@ -155,12 +157,13 @@ anglerec                        = 0.d0           # angle to rotate components at
 rec_normal_to_surface           = .false.        # base anglerec normal to surface (external mesh and curve file needed)
 
 # first receiver set (repeat these 6 lines and adjust nreceiversets accordingly)
-nrec                            = 1            # number of receivers
+nrec                            = 1              # number of receivers
 xdeb                            = 3000.d0        # first receiver x in meters
-zdeb                            = -1500.0d0   # first receiver z in meters
-xfin                            = 3000 #24000.d0        # last receiver x in meters (ignored if only one receiver)
-zfin                            = -1500.0d0   # last receiver z in meters (ignored if only one receiver)
+zdeb                            = -1500.0d0      # first receiver z in meters
+xfin                            = 3000           #24000.d0        # last receiver x in meters (ignored if only one receiver)
+zfin                            = -1500.0d0      # last receiver z in meters (ignored if only one receiver)
 record_at_surface_same_vertical = .false.        # receivers inside the medium or at the surface
+
 
 #-----------------------------------------------------------------------------
 #
@@ -170,9 +173,9 @@ record_at_surface_same_vertical = .false.        # receivers inside the medium o
 
 # save sensitivity kernels in ASCII format (much bigger files, but compatible with current GMT scripts) or in binary format
 save_ASCII_kernels              = .true.
+
 # since the accuracy of kernel integration may not need to respect the CFL, this option permits to save computing time, and memory with UNDO_ATTENUATION_AND_OR_PML mode
 NSTEP_BETWEEN_COMPUTE_KERNELS   = 1
-
 
 #-----------------------------------------------------------------------------
 #
@@ -187,7 +190,7 @@ NELEM_PML_THICKNESS             = 3
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
 # change the four parameters below only if you know what you are doing; they change the damping profiles inside the PMLs
-K_MIN_PML                       = 1.0d0 # from Gedney page 8.11
+K_MIN_PML                       = 1.0d0          # from Gedney page 8.11
 K_MAX_PML                       = 1.0d0
 damping_change_factor_acoustic  = 0.5d0
 damping_change_factor_elastic   = 1.0d0
@@ -255,7 +258,7 @@ free_surface_file               = ./DATA/Mesh_canyon/canyon_free_surface_file   
 axial_elements_file             = ./DATA/axial_elements_file   # file containing the axial elements if AXISYM is true
 absorbing_surface_file          = ./DATA/Mesh_canyon/canyon_absorbing_surface_file   # file containing the absorbing surface
 acoustic_forcing_surface_file   = ./DATA/MSH/Surf_acforcing_Bottom_enforcing_mesh   # file containing the acoustic forcing surface
-absorbing_cpml_file             = ./DATA/absorbing_cpml_file # file containing the CPML element numbers
+absorbing_cpml_file             = ./DATA/absorbing_cpml_file   # file containing the CPML element numbers
 tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing the curve delimiting the velocity model
 
 #-----------------------------------------------------------------------------
@@ -268,9 +271,9 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 interfacesfile                  = ../interfaces_fluid_flat.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
-xmin                            = -300.d0  # abscissa of left side of the model
-xmax                            = 10300    # abscissa of right side of the model
-nx                              = 106      # number of elements along X
+xmin                            = -300.d0        # abscissa of left side of the model
+xmax                            = 10300          # abscissa of right side of the model
+nx                              = 106            # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
 absorbbottom                    = .true.

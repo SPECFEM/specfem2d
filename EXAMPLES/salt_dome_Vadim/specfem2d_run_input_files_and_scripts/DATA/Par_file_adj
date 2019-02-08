@@ -75,8 +75,8 @@ ATTENUATION_VISCOACOUSTIC       = .false.        # turn attenuation (viscoacoust
 
 # for viscoelastic or viscoacoustic attenuation
 N_SLS                           = 3              # number of standard linear solids for attenuation (3 is usually the minimum)
-ATTENUATION_f0_REFERENCE        = 5.196152422706633 # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
-READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
+ATTENUATION_f0_REFERENCE        = 5.196152422706633 # in case of attenuation, reference frequency in Hz at which the velocity values in the velocity model are given (unused otherwise); relevant only if source is a Dirac or a Heaviside, otherwise it is automatically set to f0 the dominant frequency of the source in the DATA/SOURCE file
+READ_VELOCITIES_AT_f0           = .false.        # read seismic velocities at ATTENUATION_f0_REFERENCE instead of at infinite frequency (see user manual for more information)
 USE_SOLVOPT                     = .false.        # use more precise but much more expensive way of determining the Q factor relaxation times, as in http://komatitsch.free.fr/preprints/GJI_Lombard_2016.pdf
 
 # for poroelastic attenuation
@@ -90,9 +90,10 @@ freq0_poroelastic               = 10             # frequency for viscous attenua
 # When that option is on the second parameter indicates how often the code dumps restart files to disk (if in doubt, use something between 100 and 1000).
 UNDO_ATTENUATION_AND_OR_PML     = .true.
 NT_DUMP_ATTENUATION             = 1
-# Instead of reconstructing the forward wavefield, this option reads it from the disk using asynchronous I/O. Outperforms conventional mode using a value of NSTEP_BETWEEN_COMPUTE_KERNELS high enough.
-NO_BACKWARD_RECONSTRUCTION      = .false.
 
+# Instead of reconstructing the forward wavefield, this option reads it from the disk using asynchronous I/O.
+# Outperforms conventional mode using a value of NSTEP_BETWEEN_COMPUTE_KERNELS high enough.
+NO_BACKWARD_RECONSTRUCTION      = .false.
 
 #-----------------------------------------------------------------------------
 #
@@ -122,7 +123,8 @@ ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoust
 #-----------------------------------------------------------------------------
 
 # receiver set parameters for recording stations (i.e. recording points)
-seismotype                      = 6              #  Several values can be chosen, separated by ","! Record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+# seismotype : record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+seismotype                      = 6              # several values can be chosen. For example : 1,2,4
 
 # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
 subsamp_seismos                 = 1
@@ -171,9 +173,9 @@ record_at_surface_same_vertical = .false.        # receivers inside the medium o
 
 # save sensitivity kernels in ASCII format (much bigger files, but compatible with current GMT scripts) or in binary format
 save_ASCII_kernels              = .false.
+
 # since the accuracy of kernel integration may not need to respect the CFL, this option permits to save computing time, and memory with UNDO_ATTENUATION_AND_OR_PML mode
 NSTEP_BETWEEN_COMPUTE_KERNELS   = 1
-
 
 #-----------------------------------------------------------------------------
 #
@@ -188,7 +190,7 @@ NELEM_PML_THICKNESS             = 3
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
 # change the four parameters below only if you know what you are doing; they change the damping profiles inside the PMLs
-K_MIN_PML                       = 1.0d0 # from Gedney page 8.11
+K_MIN_PML                       = 1.0d0          # from Gedney page 8.11
 K_MAX_PML                       = 1.0d0
 damping_change_factor_acoustic  = 0.5d0
 damping_change_factor_elastic   = 1.0d0

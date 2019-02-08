@@ -124,7 +124,7 @@ ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoust
 
 # receiver set parameters for recording stations (i.e. recording points)
 # seismotype : record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
-seismotype                      = 1     # several values can be chosen. For example : 1,2,4
+seismotype                      = 1              # several values can be chosen. For example : 1,2,4
 
 # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
 subsamp_seismos                 = 1
@@ -198,7 +198,7 @@ NELEM_PML_THICKNESS             = 3
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
 # change the four parameters below only if you know what you are doing; they change the damping profiles inside the PMLs
-K_MIN_PML                       = 1.0d0 # from Gedney page 8.11
+K_MIN_PML                       = 1.0d0          # from Gedney page 8.11
 K_MAX_PML                       = 1.0d0
 damping_change_factor_acoustic  = 0.5d0
 damping_change_factor_elastic   = 1.0d0

@@ -25,7 +25,7 @@ ngnod                           = 4
 
 # time step parameters
 # total number of time steps
-NSTEP                           = 4100 # 5000
+NSTEP                           = 4100
 # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
 DT                              = 1.3d-4
 
@@ -73,10 +73,10 @@ SAVE_MODEL                      = default
 ATTENUATION_VISCOELASTIC        = .false.        # turn attenuation (viscoelasticity) on or off for non-poroelastic solid parts of the model
 ATTENUATION_VISCOACOUSTIC       = .false.        # turn attenuation (viscoacousticity) on or off for non-poroelastic fluid parts of the model
 
-# for viscoelastic attenuation
+# for viscoelastic or viscoacoustic attenuation
 N_SLS                           = 3              # number of standard linear solids for attenuation (3 is usually the minimum)
-ATTENUATION_f0_REFERENCE        = 5.196          # (Hz) relevant only if source is a Dirac or a Heaviside, otherwise it is f0 the dominant frequency of the source in the DATA/SOURCE file
-READ_VELOCITIES_AT_f0           = .false.        # shift velocities to account for physical dispersion (see user manual for more information)
+ATTENUATION_f0_REFERENCE        = 5.196          # in case of attenuation, reference frequency in Hz at which the velocity values in the velocity model are given (unused otherwise); relevant only if source is a Dirac or a Heaviside, otherwise it is automatically set to f0 the dominant frequency of the source in the DATA/SOURCE file
+READ_VELOCITIES_AT_f0           = .false.        # read seismic velocities at ATTENUATION_f0_REFERENCE instead of at infinite frequency (see user manual for more information)
 USE_SOLVOPT                     = .false.        # use more precise but much more expensive way of determining the Q factor relaxation times, as in http://komatitsch.free.fr/preprints/GJI_Lombard_2016.pdf
 
 # for poroelastic attenuation
@@ -84,15 +84,16 @@ ATTENUATION_PORO_FLUID_PART     = .false.        # turn viscous attenuation on o
 Q0_poroelastic                  = 1              # quality factor for viscous attenuation (ignore it if you are not using a poroelastic material)
 freq0_poroelastic               = 10             # frequency for viscous attenuation (ignore it if you are not using a poroelastic material)
 
-# to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
-# use the flag below. It performs undoing of attenuation in an exact way for sensitivity kernel calculations
+# to undo attenuation and/or PMLs for sensitivity kernel calculations or forward runs with SAVE_FORWARD
+# use the flag below. It performs undoing of attenuation and/or of PMLs in an exact way for sensitivity kernel calculations
 # but requires disk space for temporary storage, and uses a significant amount of memory used as buffers for temporary storage.
 # When that option is on the second parameter indicates how often the code dumps restart files to disk (if in doubt, use something between 100 and 1000).
 UNDO_ATTENUATION_AND_OR_PML     = .false.
 NT_DUMP_ATTENUATION             = 500
-# Instead of reconstructing the forward wavefield, this option reads it from the disk using asynchronous I/O. Outperforms conventional mode using a value of NSTEP_BETWEEN_COMPUTE_KERNELS high enough.
-NO_BACKWARD_RECONSTRUCTION      = .false.
 
+# Instead of reconstructing the forward wavefield, this option reads it from the disk using asynchronous I/O.
+# Outperforms conventional mode using a value of NSTEP_BETWEEN_COMPUTE_KERNELS high enough.
+NO_BACKWARD_RECONSTRUCTION      = .false.
 
 #-----------------------------------------------------------------------------
 #
@@ -122,7 +123,8 @@ ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoust
 #-----------------------------------------------------------------------------
 
 # receiver set parameters for recording stations (i.e. recording points)
-seismotype                      = 4              #  Several values can be chosen, separated by ","! Record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+# seismotype : record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+seismotype                      = 4              # several values can be chosen. For example : 1,2,4
 
 # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
 subsamp_seismos                 = 1
@@ -171,9 +173,9 @@ record_at_surface_same_vertical = .false.        # receivers inside the medium o
 
 # save sensitivity kernels in ASCII format (much bigger files, but compatible with current GMT scripts) or in binary format
 save_ASCII_kernels              = .true.
+
 # since the accuracy of kernel integration may not need to respect the CFL, this option permits to save computing time, and memory with UNDO_ATTENUATION_AND_OR_PML mode
 NSTEP_BETWEEN_COMPUTE_KERNELS   = 1
-
 
 #-----------------------------------------------------------------------------
 #
@@ -188,7 +190,7 @@ NELEM_PML_THICKNESS             = 3
 ROTATE_PML_ACTIVATE             = .false.
 ROTATE_PML_ANGLE                = 30.
 # change the four parameters below only if you know what you are doing; they change the damping profiles inside the PMLs
-K_MIN_PML                       = 1.0d0 # from Gedney page 8.11
+K_MIN_PML                       = 1.0d0          # from Gedney page 8.11
 K_MAX_PML                       = 1.0d0
 damping_change_factor_acoustic  = 0.5d0
 damping_change_factor_elastic   = 1.0d0
@@ -225,7 +227,6 @@ nbmodels                        = 1
 #   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
 #   tomo:        model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
 1 1 2000.d0 2000.d0 0 0 0 100 9999 0 0 0 0 0 0
-#1 1 2000.d0 2095.486000d0 0 0 0 100 9999 0 0 0 0 0 0
 
 # external tomography file
 TOMOGRAPHY_FILE                 = ./DATA/tomo_file.xyz
@@ -262,9 +263,9 @@ tangential_detection_curve_file = ./DATA/courbe_eros_nodes  # file containing th
 interfacesfile                  = interfaces_simple_flat_viscoacoustic.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
-xmin                            = -1500.d0           # abscissa of left side of the model
+xmin                            = -1500.d0       # abscissa of left side of the model
 xmax                            = 1500.d0        # abscissa of right side of the model
-nx                              = 250             # number of elements along X
+nx                              = 250            # number of elements along X
 
 # absorbing boundary parameters (see absorbing_conditions above)
 absorbbottom                    = .true.
@@ -326,7 +327,7 @@ DRAW_WATER_IN_BLUE              = .true.         # display acoustic layers as co
 USE_SNAPSHOT_NUMBER_IN_FILENAME = .false.        # use snapshot number in the file name of JPEG color snapshots instead of the time step (for instance to create movies in an easier way later)
 
 #### for PostScript snapshots ####
-output_postscript_snapshot      = .false.         # output Postscript snapshot of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
+output_postscript_snapshot      = .false.        # output Postscript snapshot of the results every NSTEP_BETWEEN_OUTPUT_IMAGES time steps or not
 imagetype_postscript            = 1              # display 1=displ vector 2=veloc vector 3=accel vector; small arrows are displayed for the vectors
 meshvect                        = .true.         # display mesh on PostScript plots or not
 modelvect                       = .false.        # display velocity model on PostScript plots or not
