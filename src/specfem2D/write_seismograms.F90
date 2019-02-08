@@ -237,7 +237,7 @@
   else if (seismotype_l == 4) then
     component = 'p'
   else if (seismotype_l == 6) then
-    component = 'pot'
+    component = 'x'
   else if (seismotype_l == 5) then
     component = 'c'
   else
