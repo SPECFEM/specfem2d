@@ -1539,9 +1539,9 @@
   implicit none
 
     integer :: i
-    character(len=512) :: stringCopy, stringCopy1, stringCopy2
+    character(len=512) :: stringCopy, stringCopy1
     character(len=52), parameter :: charVec = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ&
-                                     abcdefghijklmnopqrstuvwxyz'
+                                     &abcdefghijklmnopqrstuvwxyz'
     integer :: actual
     integer :: stringLen, integs
     integer :: res(512)
@@ -1609,7 +1609,6 @@
     character(len=*),intent(inout) :: string
     character(len=512) :: stringCopy1, stringCopy2
     character,intent(in) :: char
-    integer :: i
 
     if (char .eq. ' ') then
       stop 'This function can not be used to strip spaces, use StripSpaces instead'
