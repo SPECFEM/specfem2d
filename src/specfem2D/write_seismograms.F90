@@ -211,7 +211,7 @@
   double precision :: time_t
   real, dimension(:), allocatable :: single_precision_seismo
 
-  integer :: irecloc,ier,unitBase
+  integer :: irecloc,ier
 
   integer (kind=RegInt_K) :: ioffset
 
