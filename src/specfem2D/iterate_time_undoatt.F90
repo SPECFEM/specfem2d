@@ -154,25 +154,13 @@
     if (any_acoustic) then
       allocate(b_potential_acoustic_buffer(nglob,size_buffer),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_potential_acoustic')
-      allocate(b_e1_acous_sf(N_SLS,NGLLX,NGLLZ,nspec_ATT_ac),b_sum_forces_old(NGLLX,NGLLZ,nspec_ATT_ac),stat=ier)
-      if (ier /= 0) call stop_the_code('Error allocating acoustic attenuation arrays')
     endif
-
     if (any_elastic) then
       allocate(b_displ_elastic_buffer(NDIM,nglob,size_buffer),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_elastic')
       if (APPROXIMATE_HESS_KL) allocate(b_accel_elastic_buffer(NDIM,nglob,size_buffer),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'error allocating b_accel_elastic')
-
-      allocate(b_e1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
-               b_e11(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
-               b_e13(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
-               b_dux_dxl_old(NGLLX,NGLLZ,nspec_ATT_el), &
-               b_duz_dzl_old(NGLLX,NGLLZ,nspec_ATT_el), &
-               b_dux_dzl_plus_duz_dxl_old(NGLLX,NGLLZ,nspec_ATT_el),stat=ier)
-      if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
     endif
-
   endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -485,12 +473,10 @@
   if (SIMULATION_TYPE == 3) then
     if (any_acoustic) then
       deallocate(b_potential_acoustic_buffer)
-      deallocate(b_e1_acous_sf,b_sum_forces_old)
     endif
     if (any_elastic) then
       deallocate(b_displ_elastic_buffer)
       if (APPROXIMATE_HESS_KL) deallocate(b_accel_elastic_buffer)
-      deallocate(b_e1,b_e11,b_e13,b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old)
     endif
   endif
 

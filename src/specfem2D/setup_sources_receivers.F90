@@ -415,7 +415,7 @@
   implicit none
 
   ! local parameters
-  integer :: irec,irec_local, seismotype_adj
+  integer :: irec,irec_local, seismotype_adj,ier
   character(len=MAX_STRING_LEN) :: adj_source_file
 
   ! number of adjoint receivers in this slice
@@ -434,10 +434,19 @@
       call flush_IMAIN()
     endif
 
-    allocate(source_adjoint(nrecloc,NSTEP,2))
+    allocate(source_adjoint(nrecloc,NSTEP,2),stat=ier)
+    if (ier /= 0) stop 'Error allocating array source_adjoint'
+    source_adjoint(:,:,:) = 0._CUSTOM_REAL
 
     if (NSIGTYPE > 1) call exit_MPI(myrank,'only one signal can be computed if running an adjoint simulation (e.g. seismotype = 1)')
+
     seismotype_adj = seismotypeVec(1)
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  adjoint source type:', seismotype_adj
+      call flush_IMAIN()
+    endif
 
     ! counts number of adjoint sources in this slice
     do irec = 1,nrec
@@ -467,7 +476,7 @@
         if (myrank == islice_selected_rec(irec)) then
           irec_local = irec_local + 1
           adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
-          call read_adj_source(irec_local,adj_source_file)
+          call read_adj_source(irec_local,seismotype_adj,adj_source_file)
         endif
       enddo
       ! checks
@@ -486,6 +495,7 @@
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) '  number of adjoint sources = ',nrec
+      write(IMAIN,*) '  adjoint sources min/max   = ',minval(source_adjoint(:,:,:)),maxval(source_adjoint(:,:,:))
       call flush_IMAIN()
     endif
   endif ! SIMULATION_TYPE == 3

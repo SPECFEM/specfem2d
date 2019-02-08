@@ -124,18 +124,18 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine read_adj_source(irec_local,adj_source_file)
+  subroutine read_adj_source(irec_local,seismotype_adj,adj_source_file)
 
 ! reads in adjoint source file
 
   use constants, only: IIN,MAX_STRING_LEN,CUSTOM_REAL,NDIM
 
-  use specfem_par, only: myrank,NSTEP,P_SV,seismotype_adj,source_adjoint
+  use specfem_par, only: myrank,NSTEP,P_SV,source_adjoint
 
   implicit none
 
   integer,intent(in) :: irec_local
-
+  integer,intent(in) :: seismotype_adj
   character(len=MAX_STRING_LEN),intent(in) :: adj_source_file
 
   ! local parameters
@@ -153,7 +153,8 @@
   !       when copying the temporary array into the actual storage array adj_sourcearray
   adj_src_s(:,:) = 0.d0
 
-  if (seismotype_adj == 1 .or. seismotype_adj == 2 .or. seismotype_adj == 3) then
+  select case(seismotype_adj)
+  case (1,2,3)
     ! displacement/velocity/acceleration
     comp = (/"BXX","BXY","BXZ"/)
 
@@ -183,7 +184,7 @@
       close(IIN)
     enddo
 
-  else if (seismotype_adj == 4) then
+  case (4)
     ! pressure
     ! reads in ascii adjoint source files **.PRE.adj
     filename = 'SEM/'//trim(adj_source_file) // '.PRE.adj'
@@ -196,7 +197,7 @@
     enddo
     close(IIN)
 
-  else if (seismotype_adj == 6) then
+  case (6)
     ! potential
     ! reads in ascii adjoint source files **.POT.adj
     filename = 'SEM/'//trim(adj_source_file) // '.POT.adj'
@@ -209,7 +210,12 @@
     enddo
     close(IIN)
 
-  endif
+  case default
+    ! unknown, not implement yet
+    print *,'Error: unknown adjoint source type ',seismotype_adj
+    call exit_MPI(myrank,'Invalid adjoint source type')
+
+  end select
 
   if (P_SV) then
     ! P_SV-case

@@ -38,6 +38,7 @@
 #endif
   use constants, only: TWO,FOUR_THIRDS,TWO_THIRDS,APPROXIMATE_HESS_KL,IMAIN,IOUT_ENERGY,ISTANDARD_OUTPUT,IN_DATA_FILES,OUTPUT_FILES
   use specfem_par
+  use specfem_par_noise
   use specfem_par_gpu
   use specfem_par_movie, only: simulation_title,output_wavefield_dumps,mask_ibool
 
@@ -469,6 +470,42 @@
     deallocate(v0z_bot)
     deallocate(t0x_bot)
     deallocate(t0z_bot)
+  endif
+
+  ! frees arrays (not complete, but at least a few...)
+  deallocate(seismo_current)
+  deallocate(sisux,sisuz,siscurl)
+  ! wavefields
+  deallocate(displ_elastic,veloc_elastic,accel_elastic)
+  deallocate(displ_elastic_old)
+  deallocate(rmass_inverse_elastic)
+  deallocate(b_displ_elastic,b_veloc_elastic,b_accel_elastic)
+  deallocate(b_displ_elastic_old)
+  deallocate(potential_acoustic,potential_acoustic_old)
+  deallocate(potential_dot_acoustic,potential_dot_dot_acoustic)
+  deallocate(rmass_inverse_acoustic)
+  deallocate(b_potential_acoustic,b_potential_acoustic_old)
+  deallocate(b_potential_dot_acoustic,b_potential_dot_dot_acoustic)
+  deallocate(b_displ_ac,b_accel_ac,accel_ac)
+  ! noise
+  if (allocated(time_function_noise)) deallocate(time_function_noise)
+  if (allocated(source_array_noise)) deallocate(source_array_noise)
+  if (allocated(mask_noise)) deallocate(mask_noise)
+  if (allocated(surface_movie_y_or_z_noise)) deallocate(surface_movie_y_or_z_noise)
+  ! material
+  deallocate(kappastore,mustore,rhostore,rho_vp,rho_vs)
+  ! attenuation
+  deallocate(e1,e11,e13)
+  deallocate(dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old)
+  deallocate(A_newmark_nu1,B_newmark_nu1,A_newmark_nu2,B_newmark_nu2)
+  deallocate(e1_acous_sf,sum_forces_old)
+  if (SIMULATION_TYPE == 3) then
+    if (any_acoustic) then
+      deallocate(b_e1_acous_sf,b_sum_forces_old)
+    endif
+    if (any_elastic) then
+      deallocate(b_e1,b_e11,b_e13,b_dux_dxl_old,b_duz_dzl_old,b_dux_dzl_plus_duz_dxl_old)
+    endif
   endif
 
   ! close energy file

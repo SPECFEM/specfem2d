@@ -1370,8 +1370,8 @@
              A_newmark_e1_sf(1,1,1,1), &
              B_newmark_e1_sf(1,1,1,1),stat=ier)
   endif
-
   if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
+
   e1(:,:,:,:) = 0._CUSTOM_REAL
   e11(:,:,:,:) = 0._CUSTOM_REAL
   e13(:,:,:,:) = 0._CUSTOM_REAL
@@ -1385,6 +1385,31 @@
   dot_e1_old = 0._CUSTOM_REAL
   dot_e1     = 0._CUSTOM_REAL
   sum_forces_old = 0._CUSTOM_REAL
+
+  if (SIMULATION_TYPE == 3) then
+    if (any_acoustic) then
+      allocate(b_e1_acous_sf(N_SLS,NGLLX,NGLLZ,nspec_ATT_ac), &
+               b_sum_forces_old(NGLLX,NGLLZ,nspec_ATT_ac),stat=ier)
+      if (ier /= 0) call stop_the_code('Error allocating acoustic attenuation arrays')
+      b_e1_acous_sf(:,:,:,:) = 0._CUSTOM_REAL
+      b_sum_forces_old(:,:,:) = 0._CUSTOM_REAL
+    endif
+    if (any_elastic) then
+      allocate(b_e1(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+               b_e11(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+               b_e13(N_SLS,NGLLX,NGLLZ,nspec_ATT_el), &
+               b_dux_dxl_old(NGLLX,NGLLZ,nspec_ATT_el), &
+               b_duz_dzl_old(NGLLX,NGLLZ,nspec_ATT_el), &
+               b_dux_dzl_plus_duz_dxl_old(NGLLX,NGLLZ,nspec_ATT_el),stat=ier)
+      if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
+      b_e1(:,:,:,:) = 0._CUSTOM_REAL
+      b_e11(:,:,:,:) = 0._CUSTOM_REAL
+      b_e13(:,:,:,:) = 0._CUSTOM_REAL
+      b_dux_dxl_old(:,:,:) = 0._CUSTOM_REAL
+      b_duz_dzl_old(:,:,:) = 0._CUSTOM_REAL
+      b_dux_dzl_plus_duz_dxl_old(:,:,:) = 0._CUSTOM_REAL
+    endif
+  endif
 
   if (time_stepping_scheme == 2) then
     if (ATTENUATION_VISCOELASTIC) then

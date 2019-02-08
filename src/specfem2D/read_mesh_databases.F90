@@ -1565,12 +1565,12 @@
     do while (actual < stringLen)
       call StripChar(stringCopy, charVec(actual:actual))
       actual = actual + 1
-    end do
+    enddo
 
     ! Convert to integer list :
     if (index(stringCopy, ',') < 0) then
       stop "This should never ever happen... this is an interesting bug really, memory broken somewhere?"
-    else if (index(stringCopy, ',') == 0) Then
+    else if (index(stringCopy, ',') == 0) then
       read(stringCopy, '(i3)') integs
       call AddToList(seismotypeVec, integs)
     else
@@ -1598,7 +1598,7 @@
         ! No match found so add it to the output
         NSIGTYPE = NSIGTYPE + 1
         res(NSIGTYPE) = seismotypeVec(i)
-    end do
+    enddo
 
     seismotypeVec = res(1:NSIGTYPE)
 
@@ -1617,7 +1617,7 @@
     character(len=512) :: stringCopy1, stringCopy2
     character,intent(in) :: char
 
-    if (char .eq. ' ') then
+    if (char == ' ') then
       stop 'This function can not be used to strip spaces, use StripSpaces instead'
     endif
 
@@ -1657,7 +1657,7 @@
           if (actual < last) &
               actual = last
       endif
-  end do
+  enddo
 
   end subroutine StripSpaces
 
@@ -1677,12 +1677,12 @@
   integer, dimension(:), allocatable :: clist
 
 
-  if(allocated(list)) then
+  if (allocated(list)) then
       isize = size(list)
       allocate(clist(isize+1))
       do i=1,isize
       clist(i) = list(i)
-      end do
+      enddo
       clist(isize+1) = element
 
       deallocate(list)
@@ -1691,7 +1691,7 @@
   else
       allocate(list(1))
       list(1) = element
-  end if
+  endif
 
 end subroutine AddToList
 
