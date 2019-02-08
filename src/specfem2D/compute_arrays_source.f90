@@ -130,7 +130,7 @@
 
   use constants, only: IIN,MAX_STRING_LEN,CUSTOM_REAL,NDIM
 
-  use specfem_par, only: myrank,NSTEP,P_SV,seismotype,source_adjoint
+  use specfem_par, only: myrank,NSTEP,P_SV,seismotype_adj,source_adjoint
 
   implicit none
 
@@ -153,7 +153,7 @@
   !       when copying the temporary array into the actual storage array adj_sourcearray
   adj_src_s(:,:) = 0.d0
 
-  if (seismotype == 1 .or. seismotype == 2 .or. seismotype == 3) then
+  if (seismotype_adj == 1 .or. seismotype_adj == 2 .or. seismotype_adj == 3) then
     ! displacement/velocity/acceleration
     comp = (/"BXX","BXY","BXZ"/)
 
@@ -183,7 +183,7 @@
       close(IIN)
     enddo
 
-  else if (seismotype == 4) then
+  else if (seismotype_adj == 4) then
     ! pressure
     ! reads in ascii adjoint source files **.PRE.adj
     filename = 'SEM/'//trim(adj_source_file) // '.PRE.adj'
@@ -196,7 +196,7 @@
     enddo
     close(IIN)
 
-  else if (seismotype == 6) then
+  else if (seismotype_adj == 6) then
     ! potential
     ! reads in ascii adjoint source files **.POT.adj
     filename = 'SEM/'//trim(adj_source_file) // '.POT.adj'
@@ -226,7 +226,7 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine read_adj_source_SU(seismotype)
+  subroutine read_adj_source_SU(seismotype_adj)
 
 ! reads in all adjoint sources in SU-file format
 
@@ -237,7 +237,7 @@
 
   implicit none
 
-  integer,intent(in) :: seismotype
+  integer,intent(in) :: seismotype_adj
 
   ! local parameters
   integer :: irec, irec_local, ier
@@ -250,7 +250,7 @@
   real(kind=4),dimension(:,:),allocatable :: adj_src_s
 
   ! opens adjoint source files in SU format
-  if (seismotype == 4 .or. seismotype == 6) then
+  if (seismotype_adj == 4 .or. seismotype_adj == 6) then
     ! pressure/potential type
     write(filename, "('./SEM/Up_file_single.su.adj')")
     open(111,file=trim(filename),access='direct',recl=240+4*NSTEP,iostat = ier)
@@ -287,7 +287,7 @@
 
       adj_src_s(:,:) = 0.0
 
-      if (seismotype == 4 .or. seismotype == 6) then
+      if (seismotype_adj == 4 .or. seismotype_adj == 6) then
         ! pressure/potential
         ! single component
         read(111,rec=irec,iostat=ier) r4head, adj_src_s(:,1)
@@ -323,7 +323,7 @@
   enddo ! irec
 
   ! closes files
-  if (seismotype == 4) then
+  if (seismotype_adj == 4) then
     close(111)
   else
     if (P_SV) then

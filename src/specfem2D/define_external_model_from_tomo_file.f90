@@ -98,7 +98,9 @@ module interpolation
     double precision, intent(in) :: value
     double precision, intent(in), optional :: delta
     double precision :: d
-    integer :: index_closest = 1
+    integer :: index_closest
+
+    index_closest = 1
 
     if (present(delta)) then
       d = delta

@@ -205,6 +205,9 @@
   ! 'BROADCAST_SAME_MESH_AND_MODEL'
   read(IIN) BROADCAST_SAME_MESH_AND_MODEL
 
+  ! At that point seismotype is a string (e.g 2,3,6). The following routine convert it to an integer array: seismotypeVec
+  call processSeismotypeLine()
+
   !-------- finish reading init section
   ! sets time step for time scheme
   deltat = DT
@@ -239,7 +242,6 @@
     call flush_IMAIN()
   endif
 
-
   ! -------------- formatting
   ! output formats
 200 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
@@ -256,7 +258,7 @@
   ' == 1     number the mesh                      ')
 
 700 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
-  'Seismograms recording type . . . . . . .(seismotype) = ',i6/5x, &
+  'Seismograms recording type . . . . . . .(seismotype) = ',a/5x, &
   'Angle for first line of receivers. . . . .(anglerec) = ',f6.2)
 
 750 format(//1x,'C o n t r o l',/1x,13('='),//5x, &
@@ -1523,4 +1525,174 @@
   endif
 
   end subroutine read_mesh_databases_axial_elements
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine processSeismotypeLine()
+
+ ! This subroutine convert the string "seismotype" (e.g 2,3,6) to an integer array: "seismotypeVec"
+
+  use specfem_par, only: NSIGTYPE,seismotype,seismotypeVec
+
+  implicit none
+
+    integer :: i
+    character(len=512) :: stringCopy, stringCopy1
+    character(len=52), parameter :: charVec = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ&
+                                     &abcdefghijklmnopqrstuvwxyz'
+    integer :: actual
+    integer :: stringLen, integs
+    integer :: res(512)
+
+    interface
+       subroutine AddToList(list, element)
+         integer, dimension(:), allocatable, intent(inout) :: list
+         integer, intent(in) :: element
+       end subroutine AddToList
+    end interface
+
+    actual = 1
+    NSIGTYPE = 0
+    stringLen = len(charVec)
+    stringCopy = trim(seismotype)
+
+    ! Strip spaces :
+    call StripSpaces(stringCopy)
+
+    ! Strip chars :
+    do while (actual < stringLen)
+      call StripChar(stringCopy, charVec(actual:actual))
+      actual = actual + 1
+    end do
+
+    ! Convert to integer list :
+    if (index(stringCopy, ',') < 0) then
+      stop "This should never ever happen... this is an interesting bug really, memory broken somewhere?"
+    else if (index(stringCopy, ',') == 0) Then
+      read(stringCopy, '(i3)') integs
+      call AddToList(seismotypeVec, integs)
+    else
+      do while (index(stringCopy, ',') > 0)
+        stringCopy1 = stringCopy(:index(stringCopy, ',')-1)
+        read(stringCopy1, '(i3)') integs
+        call AddToList(seismotypeVec, integs)
+        stringCopy = stringCopy(index(stringCopy, ',')+1:)
+        if (index(stringCopy, ',') < 1) then
+          read(stringCopy, '(i3)') integs
+          call AddToList(seismotypeVec, integs)
+        endif
+      enddo
+    endif
+
+    if (any(seismotypeVec == 0)) call stop_the_code("Seismotype line in Par_file contain a 0 or is malformed")
+
+    ! Delete duplicates
+    NSIGTYPE = 1
+    res(:) = 0
+    res(1) = seismotypeVec(1)
+    do i = 2, size(seismotypeVec)
+        ! if the number already exist in res check next
+        if (any( res == seismotypeVec(i) )) cycle
+        ! No match found so add it to the output
+        NSIGTYPE = NSIGTYPE + 1
+        res(NSIGTYPE) = seismotypeVec(i)
+    end do
+
+    seismotypeVec = res(1:NSIGTYPE)
+
+  end subroutine processSeismotypeLine
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine StripChar(string,char)
+    ! Remove all character "char" from string. Warning: "char" can't be " " !!!
+
+    implicit none
+
+    character(len=*),intent(inout) :: string
+    character(len=512) :: stringCopy1, stringCopy2
+    character,intent(in) :: char
+
+    if (char .eq. ' ') then
+      stop 'This function can not be used to strip spaces, use StripSpaces instead'
+    endif
+
+    do while (index(string,char,back=.true.) > 0)
+      stringCopy1 = string(:index(string,char,back=.true.)-1)
+      stringCopy2 = string(index(string,char,back=.true.)+1:)
+      string = trim(stringCopy1)//trim(stringCopy2)
+    enddo
+
+  end subroutine StripChar
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine StripSpaces(string)
+
+  ! Remove all spaces from string
+
+  implicit none
+
+  character(len=*) :: string
+  integer :: stringLen
+  integer :: last, actual
+
+  stringLen = len (string)
+  last = 1
+  actual = 1
+
+  do while (actual < stringLen)
+      if (string(last:last) == ' ') then
+          actual = actual + 1
+          string(last:last) = string(actual:actual)
+          string(actual:actual) = ' '
+      else
+          last = last + 1
+          if (actual < last) &
+              actual = last
+      endif
+  end do
+
+  end subroutine StripSpaces
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine AddToList(list, element)
+
+  ! Add an element to an integer list dynamically
+
+  implicit none
+
+  integer :: i, isize
+  integer, intent(in) :: element
+  integer, dimension(:), allocatable, intent(inout) :: list
+  integer, dimension(:), allocatable :: clist
+
+
+  if(allocated(list)) then
+      isize = size(list)
+      allocate(clist(isize+1))
+      do i=1,isize
+      clist(i) = list(i)
+      end do
+      clist(isize+1) = element
+
+      deallocate(list)
+      call move_alloc(clist, list)
+
+  else
+      allocate(list(1))
+      list(1) = element
+  end if
+
+end subroutine AddToList
+
 

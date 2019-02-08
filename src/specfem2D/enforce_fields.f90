@@ -235,13 +235,8 @@ end module enforce_par
   integer, intent(in) :: iglob,it
 
   ! Local variables
-  real(kind=CUSTOM_REAL) :: f0 = 0.125d6 ! frequency ! (fd=200,f=50KHz) (fd=500,f=125KHz) (fd=800,f=200KHz)
-  real(kind=CUSTOM_REAL) :: d = 4.0d-3 ! half width of the plate
-  real(kind=CUSTOM_REAL) :: cp = 5960.0d0 ! Compressional waves velocity
-  real(kind=CUSTOM_REAL) :: cs = 3260.d0 ! Shear waves velocity
-  real(kind=CUSTOM_REAL) :: fdin ! = f0 * d
-
-  integer :: Nweight = 11 ! Number of point on which we perform the weighted sum. Must be odd
+  real(kind=CUSTOM_REAL) :: f0,d,cp,cs,fdin ! = f0 * d
+  integer :: Nweight ! Number of point on which we perform the weighted sum. Must be odd
   real(kind=CUSTOM_REAL), dimension(2) :: accelOld,velocOld
   real(kind=CUSTOM_REAL) :: factor,x,z,facx,facz,tval,tval_old
   real(kind=CUSTOM_REAL) :: omegaj
@@ -249,11 +244,20 @@ end module enforce_par
   complex(CUSTOM_REAL) :: sum_ux,sum_uz
 
   ! Choose the mode to generate
-  logical :: antisym = .false.
+  logical :: antisym
   ! String that must be equal to 0,1, and so on
-  character (len=1) :: order='0'
+  character (len=1) :: order
   ! Number of cycle of the burst
-  integer :: Nc = 10
+  integer :: Nc
+
+  f0 = 0.125d6 ! frequency ! (fd=200,f=50KHz) (fd=500,f=125KHz) (fd=800,f=200KHz)
+  d = 4.0d-3 ! half width of the plate
+  cp = 5960.0d0 ! Compressional waves velocity
+  cs = 3260.d0 ! Shear waves velocity
+  Nweight = 11 ! Number of point on which we perform the weighted sum. Must be odd
+  antisym = .false. ! Choose the mode to generate
+  order='0'
+  Nc = 10 ! Number of cycle of the burst
 
   factor = 1.0d0
   omegaj = TWO*PI*f0
@@ -383,7 +387,7 @@ end module enforce_par
     complex(kind=CUSTOM_REAL), intent(out) :: sum_ux,sum_uz
 
     ! local variables
-    complex(kind=CUSTOM_REAL) :: ux=(0.0,0.0),uz=(0.0,0.0)
+    complex(kind=CUSTOM_REAL) :: ux,uz
 
     real(kind=CUSTOM_REAL) ::  fc!,fdmin,fdmax,stepfd
     real(kind=CUSTOM_REAL) ::  freq,omegaj!,fmax,fmin
@@ -391,6 +395,9 @@ end module enforce_par
     !real(kind=CUSTOM_REAL) ::  BW ! frequency band width
     real(kind=CUSTOM_REAL) ::  Weigth_Burst,sum_Weight ! frequency weight
     integer :: iweight ! iterator over weigths
+
+    ux=(0.0,0.0)
+    uz=(0.0,0.0)
 
     omegaj=TWO*PI*f0
 
@@ -476,11 +483,13 @@ end module enforce_par
 
     ! Local variables
     complex(kind=CUSTOM_REAL) :: s,s2,q,q2,k,k2,sqrkp,sqrks,C1,C2
-    complex(kind=CUSTOM_REAL) :: jj = (0.0,1.0)
+    complex(kind=CUSTOM_REAL) :: jj
 
     ! note: since cosh and sinh are intrinsic functions, the complex functions defined in this file are renamed to **_cmplx
     ! functions
     complex(kind=CUSTOM_REAL), external :: cosh_cmplx,sinh_cmplx
+
+    jj = (0.0,1.0)
 
     k2 = (omegaj/cphase)**2
     sqrkp=(omegaj/cp)**2
@@ -530,15 +539,18 @@ end module enforce_par
     real(kind=CUSTOM_REAL), intent(in) :: fdin
 
     ! Local variables
-    integer :: i,error=0!,nfdout1,nfdout2
+    integer :: i,error !,nfdout1,nfdout2
     !real(kind=CUSTOM_REAL) :: fdMin_of_file,fdMax_of_file,stepfd_of_file
     !real(kind=CUSTOM_REAL) ::  fdtemp1,fdtemp2
     character(len=1) :: mode
     character(len=1024) :: directory
     character(len=1024) :: file2read
-    logical :: hasBeenFound = .false.
+    logical :: hasBeenFound
 
+    error = 0
+    hasBeenFound = .false.
     directory= '/home1/bottero/specfem2d/EXAMPLES/delamination/DispersionCurves/' ! WARNING DO NOT FORGET THE / AT THE END
+
     ! choose the file to read
     if (.not. antisym) then
     mode='S'
@@ -632,10 +644,9 @@ subroutine Calculate_Weigth_Burst(Weigth_Burst,f0,freq,Nc)
     real(kind=CUSTOM_REAL),intent(out) :: Weigth_Burst
 
     !   Local variables
-    real(kind=CUSTOM_REAL), parameter :: SMALLVAL=1e-1
+    real(kind=CUSTOM_REAL), parameter :: SMALLVAL = 1e-1
     real(kind=CUSTOM_REAL) :: cste,den,M,f04,f,fbw1,fbw2
     ! SMALLVAL not TINYVAL because it does not work if val in too tiny !
-
 
     fbw1=f0-f0/Nc
     fbw2=f0+f0/Nc
@@ -888,11 +899,13 @@ end subroutine Calculate_Weigth_Burst
   integer :: i,ier,idx
   real(kind=CUSTOM_REAL) :: potential_dot_dot_acoustic_old,potential_dot_acoustic_old
   real(kind=CUSTOM_REAL) :: factor,x,z,A,B,tval,tval_old
-  real(kind=CUSTOM_REAL) :: f0 = 2.0d0
+  real(kind=CUSTOM_REAL) :: f0
   real(kind=CUSTOM_REAL) :: omegaj
   real(kind=CUSTOM_REAL) :: time_dependence,time_dependence_old
-  integer :: Nc = 10
+  integer :: Nc
 
+  f0 = 2.0d0
+  Nc = 10
   factor = 1.0d0
   omegaj = TWO*PI*f0
 

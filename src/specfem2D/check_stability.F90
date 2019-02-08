@@ -74,115 +74,112 @@
   integer, external :: idaywk
 
   ! checks if anything to do
-  if (GPU_MODE) then
-    ! todo: wavefields are on GPU and not transferred onto CPU yet for the following norm checks
-    return
-  endif
-
-  ! user output
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) '******************************************************************'
-    if (timeval >= 1.d-3 .and. timeval < 1000.d0) then
-      write(IMAIN,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,timeval,NSTEP
-    else
-      write(IMAIN,"('Time step number ',i7,'   t = ',1pe13.6,' s out of ',i7)") it,timeval,NSTEP
-    endif
-    write(IMAIN,*) '******************************************************************'
-    write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it-1)/dble(NSTEP-1)),'% of the total'
-  endif
+  if (.not. GPU_MODE) then ! todo: wavefields are on GPU and not transferred onto CPU yet for the following norm checks
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*)
+        write(IMAIN,*) '******************************************************************'
+        if (timeval >= 1.d-3 .and. timeval < 1000.d0) then
+          write(IMAIN,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,timeval,NSTEP
+        else
+          write(IMAIN,"('Time step number ',i7,'   t = ',1pe13.6,' s out of ',i7)") it,timeval,NSTEP
+        endif
+        write(IMAIN,*) '******************************************************************'
+        write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it-1)/dble(NSTEP-1)),'% of the total'
+      endif
 
 
-  ! elastic wavefield
-  if (ELASTIC_SIMULATION) then
-    if (any_elastic) then
-      displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
-    else
-      displnorm_all = 0._CUSTOM_REAL
-    endif
+      ! elastic wavefield
+      if (ELASTIC_SIMULATION) then
+        if (any_elastic) then
+          displnorm_all = maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
+        else
+          displnorm_all = 0._CUSTOM_REAL
+        endif
 
-    if (NOISE_TOMOGRAPHY /= 0) then
-      if (myrank == 0) write(*,*) 'Noise simulation ', NOISE_TOMOGRAPHY, ' of 3'
-    endif
+        if (NOISE_TOMOGRAPHY /= 0) then
+          if (myrank == 0) write(*,*) 'Noise simulation ', NOISE_TOMOGRAPHY, ' of 3'
+        endif
 
-    ! master collects norm from all processes
-    call max_all_cr(displnorm_all, displnorm_all_glob)
-    if (myrank == 0) &
-      write(IMAIN,*) 'Max norm of vector field in solid (elastic) = ', displnorm_all_glob
+        ! master collects norm from all processes
+        call max_all_cr(displnorm_all, displnorm_all_glob)
+        if (myrank == 0) &
+          write(IMAIN,*) 'Max norm of vector field in solid (elastic) = ', displnorm_all_glob
 
-    ! check stability of the code in solid, exit if unstable
-    ! negative values can occur with some compilers when the unstable value is greater
-    ! than the greatest possible floating-point number of the machine
-    ! (is-not-a-number check is more robust when done on actual array values rather than return values from sqrt and amxval)
-    if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
-! this trick checks for NaN (Not a Number), which is not even equal to itself
-        displ_elastic(1,1) /= displ_elastic(1,1)) &
-      call exit_MPI(myrank,'code became unstable and blew up in solid (elastic)')
-  endif
+        ! check stability of the code in solid, exit if unstable
+        ! negative values can occur with some compilers when the unstable value is greater
+        ! than the greatest possible floating-point number of the machine
+        ! (is-not-a-number check is more robust when done on actual array values rather than return values from sqrt and amxval)
+        if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
+    ! this trick checks for NaN (Not a Number), which is not even equal to itself
+            displ_elastic(1,1) /= displ_elastic(1,1)) &
+          call exit_MPI(myrank,'code became unstable and blew up in solid (elastic)')
+      endif
 
-  ! poroelastic wavefield
-  if (POROELASTIC_SIMULATION) then
-    if (any_poroelastic) then
-      displnorm_all = maxval(sqrt(displs_poroelastic(1,:)**2 + displs_poroelastic(2,:)**2))
-    else
-      displnorm_all = 0._CUSTOM_REAL
-    endif
+      ! poroelastic wavefield
+      if (POROELASTIC_SIMULATION) then
+        if (any_poroelastic) then
+          displnorm_all = maxval(sqrt(displs_poroelastic(1,:)**2 + displs_poroelastic(2,:)**2))
+        else
+          displnorm_all = 0._CUSTOM_REAL
+        endif
 
-    ! master collects norm from all processes
-    call max_all_cr(displnorm_all, displnorm_all_glob)
-    if (myrank == 0) &
-      write(IMAIN,*) 'Max norm of vector field in solid (poroelastic) = ',displnorm_all_glob
+        ! master collects norm from all processes
+        call max_all_cr(displnorm_all, displnorm_all_glob)
+        if (myrank == 0) &
+          write(IMAIN,*) 'Max norm of vector field in solid (poroelastic) = ',displnorm_all_glob
 
-    ! check stability of the code in solid, exit if unstable
-    ! negative values can occur with some compilers when the unstable value is greater
-    ! than the greatest possible floating-point number of the machine
-    if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
-! this trick checks for NaN (Not a Number), which is not even equal to itself
-        displs_poroelastic(1,1) /= displs_poroelastic(1,1)) &
-      call exit_MPI(myrank,'code became unstable and blew up in solid (poroelastic)')
+        ! check stability of the code in solid, exit if unstable
+        ! negative values can occur with some compilers when the unstable value is greater
+        ! than the greatest possible floating-point number of the machine
+        if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
+    ! this trick checks for NaN (Not a Number), which is not even equal to itself
+            displs_poroelastic(1,1) /= displs_poroelastic(1,1)) &
+          call exit_MPI(myrank,'code became unstable and blew up in solid (poroelastic)')
 
-    if (any_poroelastic) then
-      displnorm_all = maxval(sqrt(displw_poroelastic(1,:)**2 + displw_poroelastic(2,:)**2))
-    else
-      displnorm_all = 0._CUSTOM_REAL
-    endif
+        if (any_poroelastic) then
+          displnorm_all = maxval(sqrt(displw_poroelastic(1,:)**2 + displw_poroelastic(2,:)**2))
+        else
+          displnorm_all = 0._CUSTOM_REAL
+        endif
 
-    ! master collects norm from all processes
-    call max_all_cr(displnorm_all, displnorm_all_glob)
-    if (myrank == 0) &
-      write(IMAIN,*) 'Max norm of vector field in fluid (poroelastic) = ',displnorm_all_glob
+        ! master collects norm from all processes
+        call max_all_cr(displnorm_all, displnorm_all_glob)
+        if (myrank == 0) &
+          write(IMAIN,*) 'Max norm of vector field in fluid (poroelastic) = ',displnorm_all_glob
 
-    ! check stability of the code in solid, exit if unstable
-    ! negative values can occur with some compilers when the unstable value is greater
-    ! than the greatest possible floating-point number of the machine
-    if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
-! this trick checks for NaN (Not a Number), which is not even equal to itself
-        displw_poroelastic(1,1) /= displw_poroelastic(1,1)) &
-      call exit_MPI(myrank,'code became unstable and blew up in fluid (poroelastic)')
-  endif
+        ! check stability of the code in solid, exit if unstable
+        ! negative values can occur with some compilers when the unstable value is greater
+        ! than the greatest possible floating-point number of the machine
+        if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
+    ! this trick checks for NaN (Not a Number), which is not even equal to itself
+            displw_poroelastic(1,1) /= displw_poroelastic(1,1)) &
+          call exit_MPI(myrank,'code became unstable and blew up in fluid (poroelastic)')
+      endif
 
 
-  ! acoustic wavefield
-  if (ACOUSTIC_SIMULATION) then
-    if (any_acoustic) then
-      displnorm_all = maxval(abs(potential_acoustic(:)))
-    else
-      displnorm_all = 0._CUSTOM_REAL
-    endif
+      ! acoustic wavefield
+      if (ACOUSTIC_SIMULATION) then
+        if (any_acoustic) then
+          displnorm_all = maxval(abs(potential_acoustic(:)))
+        else
+          displnorm_all = 0._CUSTOM_REAL
+        endif
 
-    ! master collects norm from all processes
-    call max_all_cr(displnorm_all, displnorm_all_glob)
-    if (myrank == 0) &
-      write(IMAIN,*) 'Max absolute value of scalar field in fluid (acoustic) = ',displnorm_all_glob
+        ! master collects norm from all processes
+        call max_all_cr(displnorm_all, displnorm_all_glob)
+        if (myrank == 0) &
+          write(IMAIN,*) 'Max absolute value of scalar field in fluid (acoustic) = ',displnorm_all_glob
 
-    ! check stability of the code in fluid, exit if unstable
-    ! negative values can occur with some compilers when the unstable value is greater
-    ! than the greatest possible floating-point number of the machine
-    if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
-! this trick checks for NaN (Not a Number), which is not even equal to itself
-        potential_acoustic(1) /= potential_acoustic(1)) &
-      call exit_MPI(myrank,'code became unstable and blew up in fluid (acoustic)')
-  endif
+        ! check stability of the code in fluid, exit if unstable
+        ! negative values can occur with some compilers when the unstable value is greater
+        ! than the greatest possible floating-point number of the machine
+        if (displnorm_all > STABILITY_THRESHOLD .or. displnorm_all < 0._CUSTOM_REAL .or. &
+    ! this trick checks for NaN (Not a Number), which is not even equal to itself
+            potential_acoustic(1) /= potential_acoustic(1)) &
+          call exit_MPI(myrank,'code became unstable and blew up in fluid (acoustic)')
+      endif
+  endif ! if not GPU_MODE
 
   ! count elapsed wall-clock time
   call date_and_time(datein,timein,zone,time_values)

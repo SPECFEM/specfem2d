@@ -59,7 +59,7 @@ module shared_input_parameters
 
 ! holds input parameters given in DATA/Par_file
 
-  use constants, only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN, RegInt_K
 
   implicit none
 
@@ -103,7 +103,7 @@ module shared_input_parameters
   integer :: ngnod
 
   ! number of time steps
-  integer :: NSTEP
+  integer (kind=RegInt_K) :: NSTEP
 
   ! time step size
   double precision :: DT
@@ -173,7 +173,9 @@ module shared_input_parameters
   !# receivers
   !#
   !#-----------------------------------------------------------------------------
-  integer :: seismotype
+  integer :: NSIGTYPE
+  character(len=MAX_STRING_LEN) :: seismotype
+
   ! subsampling
   integer :: subsamp_seismos
 

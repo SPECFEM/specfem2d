@@ -122,7 +122,7 @@ ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoust
 #-----------------------------------------------------------------------------
 
 # receiver set parameters for recording stations (i.e. recording points)
-seismotype                      = 2              # record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
+seismotype                      = 2              #  Several values can be chosen, separated by ","! Record 1=displ 2=veloc 3=accel 4=pressure 5=curl of displ 6=the fluid potential
 
 # subsampling of the seismograms to create smaller files (but less accurately sampled in time)
 subsamp_seismos                 = 1

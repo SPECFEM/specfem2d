@@ -268,7 +268,7 @@
             DecT = t0 + tshift_src(i_source)
             Tc = 4.d0 / f0_source(i_source) + DecT
             omega_coa = TWO*PI*f0_source(i_source)
-            if (USE_TRICK_FOR_BETTER_PRESSURE) then !TODO
+            if (USE_TRICK_FOR_BETTER_PRESSURE) then
               ! use a trick to increase accuracy of pressure seismograms in fluid (acoustic) elements:
               ! use the second derivative of the source for the source time function instead of the source itself,
               ! and then record -potential_acoustic() as pressure seismograms instead of -potential_dot_dot_acoustic();
