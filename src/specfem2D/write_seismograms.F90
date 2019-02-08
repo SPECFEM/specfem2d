@@ -53,9 +53,6 @@
   ! curl in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: curl_element
 
-  seismotypeVec(1) = 2
-  seismotypeVec(2) = 4
-
   ! checks subsampling recurrence
   if (mod(it-1,subsamp_seismos) == 0) then
 
