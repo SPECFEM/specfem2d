@@ -24,7 +24,7 @@
 
 ! Kind of some integers (such as NSTEP). Beware, if you change this the compiler may raise an issue, many lines would have to
 ! be updated to do this properly
-  integer, parameter :: RegInt_K = selected_int_kind (4)
+  integer, parameter :: RegInt_K = selected_int_kind(8)
 
 !----------- parameters that can be changed by the user -----------
 
