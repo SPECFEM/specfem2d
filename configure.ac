@@ -240,7 +240,7 @@ else
   # uses bundled scotch: current version pointed to by symbolic link scotch/
   USE_BUNDLED_SCOTCH=1
 
-  SCOTCH_DIR="$srcdir/src/meshfem2D/scotch"
+  SCOTCH_DIR="$srcdir/external_libs/scotch"
   SCOTCH_LIBDIR="${SCOTCH_DIR}/lib"
   SCOTCH_INCLUDEDIR="${SCOTCH_DIR}/include"
  else
@@ -283,17 +283,17 @@ AC_ARG_VAR(LOCAL_PATH_IS_ALSO_GLOBAL, [files on a local path on each node are al
 AS_IF([test x"$MPIFC" = x],[
     MPIFC=mpif90
 ])
+
 AS_IF([test x"$MPICC" = x],[
     MPICC=mpicc
 ])
+
 AS_IF([test x"$LOCAL_PATH_IS_ALSO_GLOBAL" = x],[
     LOCAL_PATH_IS_ALSO_GLOBAL=true
 ])
 
 # Checks for typedefs, structures, and compiler characteristics.
-
 # check fortran modules flag
-
 AS_BOX([module extensions])
 
 AC_FC_MODULE_EXTENSION
@@ -329,6 +329,23 @@ AS_IF([test x"$want_cuda" != xno], [
     CIT_CUDA_CONFIG
 ])
 
+##
+## Git version info
+##
+AS_BOX([git version info])
+CIG_PKG_GIT(SPECFEM2D)
+AC_DEFINE_UNQUOTED([SPECFEM2D_VERSION], ["$PACKAGE_VERSION"], [Define SPECFEM2D version])
+#AC_DEFINE_UNQUOTED([SPECFEM2D_DOI], ["10.5281/zenodo.xxxxx"], [Define SPECFEM2D doi])
+AS_IF([test -d $srcdir/.git], [
+    GIT_VERSION_DEPS="$srcdir/.git/logs/HEAD"
+    AC_MSG_NOTICE([building from git repository])
+    AC_SUBST(GIT_VERSION_DEPS)
+], [
+    dnl Only substitute if not in a git repository.
+    AC_MSG_NOTICE([not a git repository])
+    AC_CONFIG_FILES([setup/version.fh])
+])
+
 ############################################################
 
 AS_BOX([setting up default simulation setup])
@@ -342,16 +359,7 @@ AC_CONFIG_FILES([
   setup/config.fh
 ])
 
-AS_IF([test -d $srcdir/.git], [
-    GIT_VERSION_DEPS="$srcdir/.git/logs/HEAD"
-    AC_MSG_NOTICE([building from git repository])
-    AC_SUBST(GIT_VERSION_DEPS)
-], [
-    dnl Only substitute if not in a git repository.
-    AC_MSG_NOTICE([not a git repository])
-    AC_CONFIG_FILES([setup/version.fh])
-])
-
+# Scotch makefile
 if test "$USE_BUNDLED_SCOTCH" = 1; then
   AC_CONFIG_FILES([
 	  ${SCOTCH_DIR}/src/Makefile.inc

@@ -36,8 +36,8 @@ S := ${S_TOP}/src/specfem2D
 $(specfem2D_OBJECTS): S := ${S_TOP}/src/specfem2D
 
 # libjpeg file directory
-LIBJPEG = ${S_TOP}/src/specfem2D/libjpeg
-$(JPEGLIB_OBJECTS): S := ${S_TOP}/src/specfem2D/libjpeg
+S_LIBJPEG = ${S_TOP}/external_libs/libjpeg
+$(JPEGLIB_OBJECTS): S := ${S_TOP}/external_libs/libjpeg
 
 
 ####
@@ -367,7 +367,7 @@ $O/%.spec.o: $S/%.F90 ${SETUP}/constants.h $O/specfem2D_par.spec_module.o
 	${F90} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.cc.o: $S/%.c ${SETUP}/config.h
-	${CC} ${CFLAGS} -c -o $@ $<
+	${CC} ${CFLAGS} -I${S_LIBJPEG} -c -o $@ $<
 
 ###
 ### CUDA 5 only
@@ -381,5 +381,5 @@ $(cuda_specfem2D_DEVICE_OBJ): $(cuda_OBJECTS)
 ## JPEG library files
 ##
 
-$O/%.cc_jpeg.o: $S/libjpeg/%.c
-	${CC} -c $(CFLAGS) -I${LIBJPEG} -o $@ $<
+$O/%.cc_jpeg.o: $(S_LIBJPEG)/%.c
+	${CC} -c $(CFLAGS) -I${S_LIBJPEG} -o $@ $<

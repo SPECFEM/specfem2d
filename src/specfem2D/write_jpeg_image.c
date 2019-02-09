@@ -35,7 +35,7 @@
 
 #include "config.h"
 #include <stdio.h>
-#include "libjpeg/jpeglib.h"
+#include "jpeglib.h"
 #include <stdlib.h>
 #include <ctype.h>
 
