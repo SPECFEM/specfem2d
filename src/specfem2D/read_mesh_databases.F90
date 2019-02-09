@@ -229,7 +229,7 @@
     ! outputs parameters read
     write(IMAIN,200) npgeo,NDIM
     write(IMAIN,600) NSTEP_BETWEEN_OUTPUT_INFO,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
-    write(IMAIN,700) seismotype,anglerec
+    write(IMAIN,700) trim(seismotype),anglerec
     write(IMAIN,750) initialfield, &
                  add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left, &
                  ATTENUATION_VISCOELASTIC,ATTENUATION_VISCOACOUSTIC,output_grid_ASCII,OUTPUT_ENERGY
