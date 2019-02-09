@@ -39,9 +39,12 @@ rm -rf OUTPUT_FILES/*
 cd $currentdir
 
 # links executables
+mkdir -p bin
+cd bin/
 rm -f xmeshfem2D xspecfem2D
 ln -s ../../../bin/xmeshfem2D
 ln -s ../../../bin/xspecfem2D
+cd ../
 
 # stores setup
 cp DATA/Par_file OUTPUT_FILES/
@@ -51,13 +54,13 @@ cp DATA/SOURCE OUTPUT_FILES/
 echo
 echo "  running mesher..."
 echo
-./xmeshfem2D
+./bin/xmeshfem2D
 
 # runs simulation
 echo
 echo "  running solver..."
 echo
-./xspecfem2D
+./bin/xspecfem2D
 
 # stores output
 cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES

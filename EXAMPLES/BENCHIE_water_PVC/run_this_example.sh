@@ -20,7 +20,6 @@ rm -rf OUTPUT_FILES/*
 cd $currentdir
 
 # links executables
-# links executables
 mkdir -p bin
 cd bin/
 rm -f xmeshfem2D xspecfem2D
