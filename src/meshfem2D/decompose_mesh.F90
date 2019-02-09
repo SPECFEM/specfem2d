@@ -175,7 +175,7 @@
   endif
 
   ! local number of each element for each partition
-  call Construct_glob2loc_elmnts(NPROC)
+  call construct_glob2loc_elmnts(NPROC)
 
   if (ngnod == 9) then
     if (allocated(nnodes_elmnts) ) deallocate(nnodes_elmnts)

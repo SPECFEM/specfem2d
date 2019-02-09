@@ -150,11 +150,13 @@
   implicit none
   integer, intent(in)  :: nparts
 
-  integer  :: num_glob, num_part
+  integer :: num_glob, num_part
   integer, dimension(0:nparts-1)  :: num_loc
+  integer :: ier
 
-
-  allocate(glob2loc_elmnts(0:nelmnts-1))
+  allocate(glob2loc_elmnts(0:nelmnts-1),stat=ier)
+  if (ier /= 0) stop 'Error allocating array glob2loc_elmnts'
+  glob2loc_elmnts(:) = -1
 
   ! initializes number of local elements per partition
   do num_part = 0, nparts-1
