@@ -40,9 +40,12 @@ cd ../
 cd $currentdir
 
 # links executables
+mkdir -p bin
+cd bin/
 rm -f xmeshfem2D xspecfem2D
-ln -s ../../bin/xmeshfem2D
-ln -s ../../bin/xspecfem2D
+ln -s ../../../bin/xmeshfem2D
+ln -s ../../../bin/xspecfem2D
+cd ../
 
 # stores setup
 cp DATA/Par_file OUTPUT_FILES/
@@ -61,7 +64,7 @@ fi
 echo
 echo "running mesher..."
 echo
-./xmeshfem2D
+./bin/xmeshfem2D
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
@@ -70,7 +73,7 @@ if [[ $? -ne 0 ]]; then exit 1; fi
 echo
 echo "running solver..."
 echo
-./xspecfem2D
+./bin/xspecfem2D
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 

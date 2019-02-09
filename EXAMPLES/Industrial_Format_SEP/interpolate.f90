@@ -223,12 +223,12 @@
 
   ! runs mesher
   print *,'call xmeshfem2d'
-  call system('./xmeshfem2D > OUTPUT_FILES/output_mesher.step_1.txt')
+  call system('./bin/xmeshfem2D > OUTPUT_FILES/output_mesher.step_1.txt')
 
   ! runs first forward simulation to generate new specfem files
   print *,'call xspecfem2d'
   write(num,'(i2.2)') nproc
-  call system('mpirun -np ' //num//' ./xspecfem2D > OUTPUT_FILES/output_solver.step_1.txt')
+  call system('mpirun -np ' //num//' ./bin/xspecfem2D > OUTPUT_FILES/output_solver.step_1.txt')
 
   print *
   print *, '************ Setting up new simulation ************ '
@@ -243,7 +243,7 @@
 
   ! runs mesher
   print *,'call xmeshfem2d'
-  call system('./xmeshfem2D')
+  call system('./bin/xmeshfem2D')
 
   ! scaling model values
   if (SCALE_FROM_VP) then
@@ -282,7 +282,7 @@
 
   ! runs forward simulation
   print *,'call xspecfem2d'
-  call system('mpirun -np ' //num//' ./xspecfem2D ')
+  call system('mpirun -np ' //num//' ./bin/xspecfem2D ')
 
   end program main_interpolate
 

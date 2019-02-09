@@ -63,9 +63,12 @@ rm -rf OUTPUT_FILES/*
 cd $currentdir
 
 # links executables
+mkdir -p bin
+cd bin/
 rm -f xmeshfem2D xspecfem2D
-ln -s ../../bin/xmeshfem2D
-ln -s ../../bin/xspecfem2D
+ln -s ../../../bin/xmeshfem2D
+ln -s ../../../bin/xspecfem2D
+cd ../
 
 ##
 ## simulation 1
@@ -87,13 +90,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running mesher..."
   echo
-  ./xmeshfem2D
+  ./bin/xmeshfem2D
 else
   # This is a MPI simulation
   echo
   echo "running mesher on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./xmeshfem2D
+  mpirun -np $NPROC ./bin/xmeshfem2D
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -104,13 +107,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running solver..."
   echo
-  ./xspecfem2D
+  ./bin/xspecfem2D
 else
   # This is a MPI simulation
   echo
   echo "running solver on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./xspecfem2D
+  mpirun -np $NPROC ./bin/xspecfem2D
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -146,13 +149,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running mesher..."
   echo
-  ./xmeshfem2D
+  ./bin/xmeshfem2D
 else
   # This is a MPI simulation
   echo
   echo "running mesher on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./xmeshfem2D
+  mpirun -np $NPROC ./bin/xmeshfem2D
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -163,13 +166,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running solver..."
   echo
-  ./xspecfem2D
+  ./bin/xspecfem2D
 else
   # This is a MPI simulation
   echo
   echo "running solver on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./xspecfem2D
+  mpirun -np $NPROC ./bin/xspecfem2D
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -226,10 +229,10 @@ sed -i'.bak' 's/use_custom_window = .[a-z]*./use_custom_window = .false./' $ADJC
 sed -i'.bak' 's/time_reverse = .[a-z]*./time_reverse = .false./' $ADJCC
 
 
-$FC $ADJCC -o adj_run
+$FC $ADJCC -o xadj_run
 cp OUTPUT_FILES/$TRACE SEM/
 
-./adj_run SEM/$TRACE
+./xadj_run SEM/$TRACE
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
@@ -259,13 +262,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running mesher..."
   echo
-  ./xmeshfem2D
+  ./bin/xmeshfem2D
 else
   # This is a MPI simulation
   echo
   echo "running mesher on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./xmeshfem2D
+  mpirun -np $NPROC ./bin/xmeshfem2D
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -276,13 +279,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running solver..."
   echo
-  ./xspecfem2D
+  ./bin/xspecfem2D
 else
   # This is a MPI simulation
   echo
   echo "running solver on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./xspecfem2D
+  mpirun -np $NPROC ./bin/xspecfem2D
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi

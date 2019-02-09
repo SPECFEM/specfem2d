@@ -53,6 +53,11 @@ sed -i "s:^NSTEP_BETWEEN_OUTPUT_IMAGES .*:NSTEP_BETWEEN_OUTPUT_IMAGES      = 100
 sed -i "s:^output_color_image .*:output_color_image      = .false.:" DATA/Par_file
 sed -i "s:^output_postscript_snapshot .*:output_postscript_snapshot      = .false.:" DATA/Par_file
 
+# avoid linking to binaries in ../../../bin, instead use the compiled ones in ./bin
+sed -i "s:^rm -f xmeshfem2D xspecfem2D:#rm -f xmeshfem2D xspecfem2D:" run_this_example.sh
+sed -i "s:^ln -s ../../../bin/xmeshfem2D:#ln -s ../../../bin/xmeshfem2D:g" run_this_example.sh
+sed -i "s:^ln -s ../../../bin/xspecfem2D:#ln -s ../../../bin/xspecfem2D:g" run_this_example.sh
+
 # checks exit code
 if [[ $? -ne 0 ]]; then
   echo >> $testdir/results.log

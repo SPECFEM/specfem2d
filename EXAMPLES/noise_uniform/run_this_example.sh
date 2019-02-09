@@ -37,9 +37,12 @@ echo $master_id > NOISE_TOMOGRAPHY/irec_master_noise
 rm -rf OUTPUT_FILES/*
 
 # links executables
+mkdir -p bin
+cd bin/
 rm -f xmeshfem2D xspecfem2D
-ln -s ../../bin/xmeshfem2D
-ln -s ../../bin/xspecfem2D
+ln -s ../../../bin/xmeshfem2D
+ln -s ../../../bin/xspecfem2D
+cd ../
 
 # stores setup
 cp DATA/Par_file OUTPUT_FILES/
@@ -54,13 +57,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running mesher..."
   echo
-  ./xmeshfem2D
+  ./bin/xmeshfem2D
 else
   # This is a MPI simulation
   echo
   echo "running mesher on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./xmeshfem2D
+  mpirun -np $NPROC ./bin/xmeshfem2D
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -71,13 +74,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running solver..."
   echo
-  ./xspecfem2D
+  ./bin/xspecfem2D
 else
   # This is a MPI simulation
   echo
   echo "running solver on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./xspecfem2D
+  mpirun -np $NPROC ./bin/xspecfem2D
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
