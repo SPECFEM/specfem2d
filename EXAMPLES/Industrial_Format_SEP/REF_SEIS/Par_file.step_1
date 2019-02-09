@@ -25,7 +25,7 @@ ngnod                           = 4
 
 # time step parameters
 # total number of time steps
-NSTEP                           = 5
+NSTEP                            = 5
 # duration of a time step (see section "How to choose the time step" of the manual for how to do this)
 DT                              = 5d-4
 
@@ -56,11 +56,11 @@ setup_with_binary_database      = 0
 #   external      - define model using define_external_model subroutine
 #   gll           - read GLL model from binary database file
 #   legacy        - read model from model_velocity.dat_input
-MODEL                           = default
+MODEL                            = default
 
 # Output the model with the requested type, does not save if turn to default or .false.
 # (available output formats: ascii,binary,gll,legacy)
-SAVE_MODEL                      = legacy
+SAVE_MODEL                  = legacy
 
 
 #-----------------------------------------------------------------------------
@@ -262,9 +262,9 @@ tangential_detection_curve_file = ./mesh/courbe_eros_nodes  # file containing th
 interfacesfile                  = interface_industry.dat
 
 # geometry of the model (origin lower-left corner = 0,0) and mesh description
-xmin                            = 0.00000000     # abscissa of left side of the model
-xmax                            = 51520.0000     # abscissa of right side of the model
-nx                              = 644            # number of elements along X
+xmin                            =   0.00000000
+xmax                            =   51520.0000
+nx                              =         644
 
 # absorbing boundary parameters (see absorbing_conditions above)
 absorbbottom                    = .true.
@@ -275,6 +275,8 @@ absorbleft                      = .true.
 # define the different regions of the model in the (nx,nz) spectral-element mesh
 nbregions                       = 1              # then set below the different regions and model number for each region
 1         644 1         149 1
+# format of each line: nxmin nxmax nzmin nzmax material_number
+1 20  1 20 1
 
 #-----------------------------------------------------------------------------
 #
@@ -388,4 +390,3 @@ NUMBER_OF_SIMULTANEOUS_RUNS     = 1
 # directories) in each of the run0001, run0002,... directories, it is sufficient to have one in run0001
 # and the code will broadcast it to the others)
 BROADCAST_SAME_MESH_AND_MODEL   = .true.
-
