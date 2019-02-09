@@ -21,6 +21,9 @@ case "$TESTDIR" in
 10) dir=EXAMPLES/Rayleigh_wave_no_crack/ ;;
 11) dir=EXAMPLES/Rayleigh_wave_with_crack/ ;;
 12) dir=EXAMPLES/Tape2007/ ;;
+13) dir=EXAMPLES/check_absolute_amplitude_of_pressure_source_seismograms_acoustic/ ;;
+14) dir=EXAMPLES/check_absolute_amplitude_of_force_source_seismograms_elastic/ ;;
+15) dir=EXAMPLES/check_absolute_amplitude_of_force_source_seismograms_viscoelastic/ ;;
 *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
 esac
 
@@ -44,8 +47,13 @@ my_test(){
   ln -s $WORKDIR/utils/compare_seismogram_correlations.py
   ./compare_seismogram_correlations.py REF_SEIS/ OUTPUT_FILES/
   if [[ $? -ne 0 ]]; then exit 1; fi
+  # correlations
   ./compare_seismogram_correlations.py REF_SEIS/ OUTPUT_FILES/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
   if [[ $? -ne 0 ]]; then exit 1; fi
+  # L2 errors
+  ./compare_seismogram_correlations.py REF_SEIS/ OUTPUT_FILES/ | grep min/max | cut -d \| -f 4 | awk '{print "L2 error:",$1; if ($1 > 0.01 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
+  if [[ $? -ne 0 ]]; then exit 1; fi
+  # cleanup
   rm -rf OUTPUT_FILES/
 }
 

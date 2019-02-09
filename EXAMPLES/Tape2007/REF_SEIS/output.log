@@ -1,4 +1,4 @@
-running example: Sun May 21 15:32:23 AST 2017
+running example: Sat Feb  9 22:30:03 AST 2019
 
 (will take about 1 minute)
 
@@ -12,6 +12,9 @@ running mesher...
  **********************************************
  *** Specfem 2-D Mesher - MPI version       ***
  **********************************************
+
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
 
  Reading the parameter file...
 
@@ -109,10 +112,14 @@ running solver...
  **** Specfem 2-D Solver - MPI version     ****
  **********************************************
 
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
  There are            1  MPI processes
  Processes are numbered from 0 to            0
 
  There is a total of            1  slices
+
 
  NDIM =            2
 
@@ -132,7 +139,7 @@ running solver...
  Tape-Liu-Tromp (GJI 2007)
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 21 - 05 - 2017                                 T i m e  : 15:32:23
+ D a t e : 09 - 02 - 2019                                 T i m e  : 22:30:04
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
@@ -159,7 +166,7 @@ running solver...
  C o n t r o l
  =============
 
-     Seismograms recording type . . . . . . .(seismotype) =      1
+     Seismograms recording type . . . . . . .(seismotype) = 1
      Angle for first line of receivers. . . . .(anglerec) =   0.00
 
 
@@ -171,7 +178,8 @@ running solver...
      Add Bielak conditions .(add_Bielak_conditions_right) =      F
      Add Bielak conditions . .(add_Bielak_conditions_top) =      F
      Add Bielak conditions. .(add_Bielak_conditions_left) =      F
-     Attenuation on/off . . . .(ATTENUATION_VISCOELASTIC) =      F
+     Attenuation in solid . . .(ATTENUATION_VISCOELASTIC) =      F
+     Attenuation in fluid . . (ATTENUATION_VISCOACOUSTIC) =      F
      Save grid in ASCII file or not . (output_grid_ASCII) =      F
      Save a file with total energy or not.(OUTPUT_ENERGY) =      F
 
@@ -240,7 +248,7 @@ running solver...
      P-wave velocity. . . . . . . . . . . (cp) = 5.80000000E+03
      S-wave velocity. . . . . . . . . . . (cs) = 3.50000000E+03
      Mass density. . . . . . . . . . (density) = 2.60000000E+03
-     Poisson's ratio. . . . . . . . .(poisson) = 2.59552473E-01
+     Poisson's ratio. . . . . . . . .(poisson) = 2.13651239E-01
      First Lame parameter Lambda. . . (lambda) = 2.37640000E+10
      Second Lame parameter Mu. . . . . . .(mu) = 3.18500000E+10
      Bulk modulus Kappa . . . . . . . .(kappa) = 5.56140000E+10
@@ -283,7 +291,6 @@ running solver...
    total number of acoustic elements        =            0
    total number of elastic elements         =         1600
    total number of poroelastic elements     =            0
-   total number of gravitoacoustic elements =            0
 
  Setting up MPI communication arrays
 
@@ -318,7 +325,7 @@ running solver...
  Force source:
              original x:    192015.266    
              original z:    248162.109    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in rank            0
   in element          816
   in elastic domain
@@ -343,1321 +350,1321 @@ running solver...
  Station #            1     AA      S000000                         
              original x:    243610.000    
              original z:    278904.000    
-   distance from source:    60058.9727    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          941
   in rank            0
   at xi,gamma coordinates =  -0.39833333333334092      -0.51600000000000745     
+ Distance from source:    60058.9727      m
 
 
  Station #            2     AA      S000001                         
              original x:    338981.000    
              original z:    177849.000    
-   distance from source:    162919.797    
- closest estimate found:    5.82076609E-11  m away
+ Closest estimate found:    5.82076609E-11  m away
   in element          589
   in rank            0
   at xi,gamma coordinates =  -0.50316666666667409       0.64149999999999752     
+ Distance from source:    162919.797      m
 
 
  Station #            3     AA      S000002                         
              original x:    164438.000    
              original z:    294733.000    
-   distance from source:    54123.5039    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          974
   in rank            0
   at xi,gamma coordinates =   0.40633333333333566       0.12216666666666658     
+ Distance from source:    54123.5039      m
 
 
  Station #            4     AA      S000003                         
              original x:    92225.0000    
              original z:    368887.000    
-   distance from source:    156628.844    
- closest estimate found:    5.82076609E-11  m away
+ Closest estimate found:    5.82076609E-11  m away
   in element         1208
   in rank            0
   at xi,gamma coordinates =   0.37083333333333340       0.48116666666666397     
+ Distance from source:    156628.844      m
 
 
  Station #            5     AA      S000004                         
              original x:    290702.000    
              original z:    246865.000    
-   distance from source:    98695.2578    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          825
   in rank            0
   at xi,gamma coordinates =  -0.54966666666666475       0.14416666666666630     
+ Distance from source:    98695.2578      m
 
 
  Station #            6     AA      S000005                         
              original x:    285186.000    
              original z:    209065.000    
-   distance from source:    101041.422    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          704
   in rank            0
   at xi,gamma coordinates =   0.53099999999999736      -0.15583333333333343     
+ Distance from source:    101041.422      m
 
 
  Station #            7     AA      S000006                         
              original x:    426783.000    
              original z:    180623.000    
-   distance from source:    244289.625    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          636
   in rank            0
-  at xi,gamma coordinates =   0.13049999999999984      -0.89616666666666922     
+  at xi,gamma coordinates =   0.13050000000000000      -0.89616666666666378     
+ Distance from source:    244289.625      m
 
 
  Station #            8     AA      S000007                         
              original x:    259207.000    
              original z:    170701.000    
-   distance from source:    102542.438    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          582
   in rank            0
   at xi,gamma coordinates =   0.20116666666666208      -0.54983333333333595     
+ Distance from source:    102542.438      m
 
 
  Station #            9     AA      S000008                         
              original x:    375965.000    
              original z:    218298.000    
-   distance from source:    186358.172    
- closest estimate found:    6.50781443E-11  m away
+ Closest estimate found:    6.50781443E-11  m away
   in element          752
   in rank            0
   at xi,gamma coordinates =  -0.33916666666665507      -0.61699999999999777     
+ Distance from source:    186358.172      m
 
 
  Station #           10     AA      S000009                         
              original x:    222832.000    
              original z:    244253.000    
-   distance from source:    31063.6758    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          819
   in rank            0
   at xi,gamma coordinates =   0.13866666666666666      -0.29116666666667146     
+ Distance from source:    31063.6758      m
 
 
  Station #           11     AA      S000010                         
              original x:    339809.000    
              original z:    225653.000    
-   distance from source:    149497.984    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          749
   in rank            0
   at xi,gamma coordinates =  -0.36516666666667408       0.60883333333333112     
+ Distance from source:    149497.984      m
 
 
  Station #           12     AA      S000011                         
              original x:    337727.000    
              original z:    136797.000    
-   distance from source:    183396.016    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          469
   in rank            0
   at xi,gamma coordinates =  -0.71216666666666439      -0.20049999999999998     
+ Distance from source:    183396.016      m
 
 
  Station #           13     AA      S000012                         
              original x:    192629.000    
              original z:    196902.000    
-   distance from source:    51263.7852    
- closest estimate found:    6.50781443E-11  m away
+ Closest estimate found:    6.50781443E-11  m away
   in element          657
   in rank            0
-  at xi,gamma coordinates =  -0.89516666666666922      -0.18300000000000000     
+  at xi,gamma coordinates =  -0.89516666666666955      -0.18300000000000261     
+ Distance from source:    51263.7852      m
 
 
  Station #           14     AA      S000013                         
              original x:    449701.000    
              original z:    109662.000    
-   distance from source:    292547.812    
- closest estimate found:    1.45519152E-11  m away
+ Closest estimate found:    1.45519152E-11  m away
   in element          398
   in rank            0
   at xi,gamma coordinates =   -4.9833333333333278E-002 -0.72299999999999764     
+ Distance from source:    292547.812      m
 
 
  Station #           15     AA      S000014                         
              original x:    139236.000    
              original z:    294549.000    
-   distance from source:    70266.6016    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          972
   in rank            0
   at xi,gamma coordinates =   0.20599999999999999        9.1499999999999998E-002
+ Distance from source:    70266.6016      m
 
 
  Station #           16     AA      S000015                         
              original x:    265293.000    
              original z:    149966.000    
-   distance from source:    122523.883    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          503
   in rank            0
   at xi,gamma coordinates =  -0.78449999999999775       -5.6666666666666662E-003
+ Distance from source:    122523.883      m
 
 
  Station #           17     AA      S000016                         
              original x:    250336.000    
              original z:    386935.000    
-   distance from source:    150529.812    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1301
   in rank            0
   at xi,gamma coordinates =   0.72266666666666912      -0.51083333333333114     
+ Distance from source:    150529.812      m
 
 
  Station #           18     AA      S000017                         
              original x:    189048.000    
              original z:    255222.000    
-   distance from source:    7658.11572    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          856
   in rank            0
   at xi,gamma coordinates =   0.50800000000000245      -0.46299999999999764     
+ Distance from source:    7658.11572      m
 
 
  Station #           19     AA      S000018                         
              original x:    220630.000    
              original z:    217855.000    
-   distance from source:    41681.2148    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          739
   in rank            0
   at xi,gamma coordinates =  -0.22833333333333306      -0.69083333333333585     
+ Distance from source:    41681.2148      m
 
 
  Station #           20     AA      S000019                         
              original x:    151933.000    
              original z:    152362.000    
-   distance from source:    103847.242    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          493
   in rank            0
   at xi,gamma coordinates =   0.32216666666666666       0.39366666666666916     
+ Distance from source:    103847.242      m
 
 
  Station #           21     AA      S000020                         
              original x:    229406.000    
              original z:    419290.000    
-   distance from source:    175165.125    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1380
   in rank            0
-  at xi,gamma coordinates =  -0.76566666666666960       0.88166666666666438     
+  at xi,gamma coordinates =  -0.76566666666666927       0.88166666666665705     
+ Distance from source:    175165.125      m
 
 
  Station #           22     AA      S000021                         
              original x:    254186.000    
              original z:    228114.000    
-   distance from source:    65323.2461    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          782
   in rank            0
   at xi,gamma coordinates =  -0.63566666666666438      -0.98099999999999377     
+ Distance from source:    65323.2461      m
 
 
  Station #           23     AA      S000022                         
              original x:    179515.000    
              original z:    233454.000    
-   distance from source:    19302.4668    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          775
   in rank            0
-  at xi,gamma coordinates =   0.91916666666666913       -9.1000000000000053E-002
+  at xi,gamma coordinates =   0.91916666666666669       -9.0999999999999998E-002
+ Distance from source:    19302.4668      m
 
 
  Station #           24     AA      S000023                         
              original x:    377080.000    
              original z:    180008.000    
-   distance from source:    197215.453    
- closest estimate found:    6.50781443E-11  m away
-  in element          632
+ Closest estimate found:    0.00000000      m away
+  in element          592
   in rank            0
-  at xi,gamma coordinates =  -0.15333333333334284      -0.99866666666666914     
+  at xi,gamma coordinates =  -0.15333333333332361        1.0013333333333334     
+ Distance from source:    197215.453      m
 
 
  Station #           25     AA      S000024                         
              original x:    431825.000    
              original z:    289657.000    
-   distance from source:    243373.234    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    8.23180621E-11  m away
   in element          996
   in rank            0
-  at xi,gamma coordinates =   0.97083333333333055      -0.72383333333334066     
+  at xi,gamma coordinates =   0.97083333333333333      -0.72383333333332145     
+ Distance from source:    243373.234      m
 
 
  Station #           26     AA      S000025                         
              original x:    160598.000    
              original z:    246691.000    
-   distance from source:    31451.6934    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          814
   in rank            0
   at xi,gamma coordinates =  -0.23366666666666666       0.11516666666666667     
+ Distance from source:    31451.6934      m
 
 
  Station #           27     AA      S000026                         
              original x:    322430.000    
              original z:    210763.000    
-   distance from source:    135671.281    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          707
   in rank            0
   at xi,gamma coordinates =   0.73833333333334039       0.12716666666666673     
+ Distance from source:    135671.281      m
 
 
  Station #           28     AA      S000027                         
              original x:    282595.000    
              original z:    178974.000    
-   distance from source:    113981.062    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          584
   in rank            0
-  at xi,gamma coordinates =    9.9166666666666903E-002  0.82900000000000251     
+  at xi,gamma coordinates =    9.9166666666666667E-002  0.82899999999999996     
+ Distance from source:    113981.062      m
 
 
  Station #           29     AA      S000028                         
              original x:    149222.000    
              original z:    230510.000    
-   distance from source:    46291.0469    
- closest estimate found:    6.50781443E-11  m away
+ Closest estimate found:    6.50781443E-11  m away
   in element          773
   in rank            0
   at xi,gamma coordinates =  -0.12966666666666668      -0.58166666666665956     
+ Distance from source:    46291.0469      m
 
 
  Station #           30     AA      S000029                         
              original x:    182032.000    
              original z:    201489.000    
-   distance from source:    47728.8672    
- closest estimate found:    2.91038305E-11  m away
+ Closest estimate found:    2.91038305E-11  m away
   in element          656
   in rank            0
   at xi,gamma coordinates =  -0.66133333333333577       0.58150000000000235     
+ Distance from source:    47728.8672      m
 
 
  Station #           31     AA      S000030                         
              original x:    317679.000    
              original z:    169800.000    
-   distance from source:    148094.547    
- closest estimate found:    5.82076609E-11  m away
+ Closest estimate found:    5.82076609E-11  m away
   in element          587
   in rank            0
   at xi,gamma coordinates =   -5.3499999999990201E-002 -0.70000000000000262     
+ Distance from source:    148094.547      m
 
 
  Station #           32     AA      S000031                         
              original x:    288848.000    
              original z:    106760.000    
-   distance from source:    171380.094    
- closest estimate found:    5.99990821E-11  m away
+ Closest estimate found:    5.99990821E-11  m away
   in element          345
   in rank            0
-  at xi,gamma coordinates =  -0.85866666666666480       0.79333333333333333     
+  at xi,gamma coordinates =  -0.85866666666666769       0.79333333333333311     
+ Distance from source:    171380.094      m
 
 
  Station #           33     AA      S000032                         
              original x:    428832.000    
              original z:    86398.0000    
-   distance from source:    286792.250    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          316
   in rank            0
   at xi,gamma coordinates =   0.47200000000000741      -0.60033333333333350     
+ Distance from source:    286792.250      m
 
 
  Station #           34     AA      S000033                         
              original x:    365052.000    
              original z:    344844.000    
-   distance from source:    198214.781    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1151
   in rank            0
   at xi,gamma coordinates =  -0.15800000000000075       0.47399999999999765     
+ Distance from source:    198214.781      m
 
 
  Station #           35     AA      S000034                         
              original x:    367735.000    
              original z:    69480.0000    
-   distance from source:    250608.703    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          231
   in rank            0
   at xi,gamma coordinates =   0.28916666666666802       0.58000000000000007     
+ Distance from source:    250608.703      m
 
 
  Station #           36     AA      S000035                         
              original x:    192867.000    
              original z:    316137.000    
-   distance from source:    67980.2266    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1057
   in rank            0
-  at xi,gamma coordinates =  -0.85550000000000259      -0.31049999999999922     
+  at xi,gamma coordinates =  -0.85549999999999793      -0.31049999999999855     
+ Distance from source:    67980.2266      m
 
 
  Station #           37     AA      S000036                         
              original x:    297833.000    
              original z:    94819.0000    
-   distance from source:    186310.234    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          305
   in rank            0
   at xi,gamma coordinates =   0.63883333333333103       0.80316666666666670     
+ Distance from source:    186310.234      m
 
 
  Station #           38     AA      S000037                         
              original x:    393240.000    
              original z:    120467.000    
-   distance from source:    238322.125    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          433
   in rank            0
-  at xi,gamma coordinates =   0.53999999999999737      -0.92216666666666691     
+  at xi,gamma coordinates =   0.54000000000000092      -0.92216666666666680     
+ Distance from source:    238322.125      m
 
 
  Station #           39     AA      S000038                         
              original x:    163524.000    
              original z:    186666.000    
-   distance from source:    67775.5391    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          614
   in rank            0
   at xi,gamma coordinates =   0.25400000000000000       0.11100000000000000     
+ Distance from source:    67775.5391      m
 
 
  Station #           40     AA      S000039                         
              original x:    262074.000    
              original z:    123976.000    
-   distance from source:    142584.766    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          422
   in rank            0
   at xi,gamma coordinates =   0.67900000000000227      -0.33733333333333099     
+ Distance from source:    142584.766      m
 
 
  Station #           41     AA      S000040                         
              original x:    301067.000    
              original z:    362149.000    
-   distance from source:    157750.719    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1226
   in rank            0
   at xi,gamma coordinates =  -0.82216666666666460      -0.64183333333334069     
+ Distance from source:    157750.719      m
 
 
  Station #           42     AA      S000041                         
              original x:    344239.000    
              original z:    309947.000    
-   distance from source:    164284.625    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1029
   in rank            0
   at xi,gamma coordinates =   0.37316666666666426       0.65783333333333094     
+ Distance from source:    164284.625      m
 
 
  Station #           43     AA      S000042                         
              original x:    158089.000    
              original z:    238173.000    
-   distance from source:    35366.2852    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          774
   in rank            0
   at xi,gamma coordinates =  -0.65183333333333593       0.69549999999999768     
+ Distance from source:    35366.2852      m
 
 
  Station #           44     AA      S000043                         
              original x:    454433.000    
              original z:    236786.000    
-   distance from source:    262664.188    
- closest estimate found:    1.30156289E-10  m away
+ Closest estimate found:    1.30156289E-10  m away
   in element          798
   in rank            0
   at xi,gamma coordinates =   0.73883333333332113       0.46433333333333088     
+ Distance from source:    262664.188      m
 
 
  Station #           45     AA      S000044                         
              original x:    150010.000    
              original z:    403168.000    
-   distance from source:    160596.609    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1333
   in rank            0
   at xi,gamma coordinates =    1.6666666666666666E-003  0.19466666666666665     
+ Distance from source:    160596.609      m
 
 
  Station #           46     AA      S000045                         
              original x:    321134.000    
              original z:    116509.000    
-   distance from source:    184402.250    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          387
   in rank            0
   at xi,gamma coordinates =   0.52233333333333110       0.41816666666666663     
+ Distance from source:    184402.250      m
 
 
  Station #           47     AA      S000046                         
              original x:    210587.000    
              original z:    437904.000    
-   distance from source:    190648.609    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1458
   in rank            0
   at xi,gamma coordinates =    9.7833333333328470E-002  -1.6000000000000000E-002
+ Distance from source:    190648.609      m
 
 
  Station #           48     AA      S000047                         
              original x:    319015.000    
              original z:    258451.000    
-   distance from source:    127415.828    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          867
   in rank            0
   at xi,gamma coordinates =   0.16916666666666666        7.5166666666666659E-002
+ Distance from source:    127415.828      m
 
 
  Station #           49     AA      S000048                         
              original x:    160319.000    
              original z:    204041.000    
-   distance from source:    54326.1055    
- closest estimate found:    0.00000000      m away
-  in element          694
+ Closest estimate found:    0.00000000      m away
+  in element          654
   in rank            0
-  at xi,gamma coordinates =  -0.28016666666666645      -0.99316666666666931     
+  at xi,gamma coordinates =  -0.28016666666666667        1.0068333333333332     
+ Distance from source:    54326.1055      m
 
 
  Station #           50     AA      S000049                         
              original x:    156167.000    
              original z:    218668.000    
-   distance from source:    46421.9883    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          734
   in rank            0
   at xi,gamma coordinates =  -0.97216666666666884      -0.55533333333333612     
+ Distance from source:    46421.9883      m
 
 
  Station #           51     AA      S000050                         
              original x:    448984.000    
              original z:    344612.000    
-   distance from source:    274473.156    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1158
   in rank            0
   at xi,gamma coordinates =  -0.16933333333333334       0.43533333333333096     
+ Distance from source:    274473.156      m
 
 
  Station #           52     AA      S000051                         
              original x:    160949.000    
              original z:    328443.000    
-   distance from source:    86082.1406    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1094
   in rank            0
   at xi,gamma coordinates =  -0.17516666666666666      -0.25950000000000001     
+ Distance from source:    86082.1406      m
 
 
  Station #           53     AA      S000052                         
              original x:    146500.000    
              original z:    252632.000    
-   distance from source:    45734.2305    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          853
   in rank            0
   at xi,gamma coordinates =  -0.58333333333333615      -0.89466666666666494     
+ Distance from source:    45734.2305      m
 
 
  Station #           54     AA      S000053                         
              original x:    177286.000    
              original z:    215635.000    
-   distance from source:    35706.6406    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    4.11590310E-11  m away
   in element          695
   in rank            0
-  at xi,gamma coordinates =   0.54766666666666952       0.93916666666667425     
+  at xi,gamma coordinates =   0.54766666666666919       0.93916666666666659     
+ Distance from source:    35706.6406      m
 
 
  Station #           55     AA      S000054                         
              original x:    92861.0000    
              original z:    231703.000    
-   distance from source:    100511.055    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          768
   in rank            0
   at xi,gamma coordinates =   0.47683333333333333      -0.38283333333333575     
+ Distance from source:    100511.055      m
 
 
  Station #           56     AA      S000055                         
              original x:    112559.000    
              original z:    308918.000    
-   distance from source:    100022.883    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1010
   in rank            0
   at xi,gamma coordinates =  -0.24016666666666667       0.48633333333333095     
+ Distance from source:    100022.883      m
 
 
  Station #           57     AA      S000056                         
              original x:    207794.000    
              original z:    286380.000    
-   distance from source:    41347.0117    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          938
   in rank            0
   at xi,gamma coordinates =  -0.36766666666666925       0.72999999999999765     
+ Distance from source:    41347.0117      m
 
 
  Station #           58     AA      S000057                         
              original x:    196021.000    
              original z:    183198.000    
-   distance from source:    65087.4922    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          617
   in rank            0
   at xi,gamma coordinates =  -0.32983333333333553      -0.46700000000000308     
+ Distance from source:    65087.4922      m
 
 
  Station #           59     AA      S000058                         
              original x:    219865.000    
              original z:    321610.000    
-   distance from source:    78550.6172    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1059
   in rank            0
   at xi,gamma coordinates =  -0.35583333333333172       0.60166666666666435     
+ Distance from source:    78550.6172      m
 
 
  Station #           60     AA      S000059                         
              original x:    221559.000    
              original z:    382052.000    
-   distance from source:    137110.672    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1259
   in rank            0
   at xi,gamma coordinates =   -7.3499999999999815E-002  0.67533333333334067     
+ Distance from source:    137110.672      m
 
 
  Station #           61     AA      S000060                         
              original x:    174672.000    
              original z:    205219.000    
-   distance from source:    46313.0625    
- closest estimate found:    2.91038305E-11  m away
+ Closest estimate found:    2.91038305E-11  m away
   in element          695
   in rank            0
   at xi,gamma coordinates =   0.11200000000000015      -0.79683333333333595     
+ Distance from source:    46313.0625      m
 
 
  Station #           62     AA      S000061                         
              original x:    249683.000    
              original z:    258377.000    
-   distance from source:    58565.4414    
- closest estimate found:    4.11590310E-11  m away
+ Closest estimate found:    4.11590310E-11  m away
   in element          861
   in rank            0
   at xi,gamma coordinates =   0.61383333333333101        6.2833333333338223E-002
+ Distance from source:    58565.4414      m
 
 
  Station #           63     AA      S000062                         
              original x:    371759.000    
              original z:    243309.000    
-   distance from source:    179809.234    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          831
   in rank            0
-  at xi,gamma coordinates =   0.95983333333333976      -0.44849999999999784     
+  at xi,gamma coordinates =   0.95983333333333343      -0.44849999999999768     
+ Distance from source:    179809.234      m
 
 
  Station #           64     AA      S000063                         
              original x:    341826.000    
              original z:    197824.000    
-   distance from source:    158041.703    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          669
   in rank            0
   at xi,gamma coordinates =   -2.8999999999999998E-002  -2.9333333333333333E-002
+ Distance from source:    158041.703      m
 
 
  Station #           65     AA      S000064                         
              original x:    231531.000    
              original z:    218432.000    
-   distance from source:    49450.7070    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          740
   in rank            0
   at xi,gamma coordinates =  -0.41149999999999753      -0.59466666666666934     
+ Distance from source:    49450.7070      m
 
 
  Station #           66     AA      S000065                         
              original x:    108072.000    
              original z:    250556.000    
-   distance from source:    83977.3984    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          810
   in rank            0
-  at xi,gamma coordinates =  -0.98800000000000021       0.75933333333333564     
+  at xi,gamma coordinates =  -0.98800000000000254       0.75933333333332731     
+ Distance from source:    83977.3984      m
 
 
  Station #           67     AA      S000066                         
              original x:    87229.0000    
              original z:    309979.000    
-   distance from source:    121661.375    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1008
   in rank            0
   at xi,gamma coordinates =  -0.46183333333333348       0.66316666666666424     
+ Distance from source:    121661.375      m
 
 
  Station #           68     AA      S000067                         
              original x:    239388.000    
              original z:    446109.000    
-   distance from source:    203536.594    
- closest estimate found:    1.19998164E-10  m away
+ Closest estimate found:    0.00000000      m away
   in element         1500
   in rank            0
-  at xi,gamma coordinates =   0.89800000000000280      -0.64849999999998809     
+  at xi,gamma coordinates =   0.89799999999999991      -0.64850000000000740     
+ Distance from source:    203536.594      m
 
 
  Station #           69     AA      S000068                         
              original x:    26257.0000    
              original z:    319913.000    
-   distance from source:    180621.141    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1043
   in rank            0
   at xi,gamma coordinates =  -0.62383333333333402       0.31883333333332281     
+ Distance from source:    180621.141      m
 
 
  Station #           70     AA      S000069                         
              original x:    286391.000    
              original z:    196492.000    
-   distance from source:    107594.508    
- closest estimate found:    6.50781443E-11  m away
+ Closest estimate found:    6.50781443E-11  m away
   in element          664
   in rank            0
   at xi,gamma coordinates =   0.73183333333333045      -0.25133333333333319     
+ Distance from source:    107594.508      m
 
 
  Station #           71     AA      S000070                         
              original x:    414695.000    
              original z:    383333.000    
-   distance from source:    260494.594    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1275
   in rank            0
-  at xi,gamma coordinates =   0.11583333333333387       0.88883333333333103     
+  at xi,gamma coordinates =   0.11583333333333333       0.88883333333333336     
+ Distance from source:    260494.594      m
 
 
  Station #           72     AA      S000071                         
              original x:    185978.000    
              original z:    243077.000    
-   distance from source:    7893.47656    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          816
   in rank            0
   at xi,gamma coordinates =   -3.6666666666666623E-003 -0.48716666666666442     
+ Distance from source:    7893.47656      m
 
 
  Station #           73     AA      S000072                         
              original x:    323871.000    
              original z:    304389.000    
-   distance from source:    143343.625    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    5.82076609E-11  m away
   in element         1027
   in rank            0
-  at xi,gamma coordinates =   0.97850000000000781      -0.26850000000000018     
+  at xi,gamma coordinates =   0.97850000000000004      -0.26849999999999030     
+ Distance from source:    143343.625      m
 
 
  Station #           74     AA      S000073                         
              original x:    381179.000    
              original z:    169060.000    
-   distance from source:    205036.734    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          592
   in rank            0
   at xi,gamma coordinates =   0.52983333333333082      -0.82333333333333092     
+ Distance from source:    205036.734      m
 
 
  Station #           75     AA      S000074                         
              original x:    198042.000    
              original z:    212110.000    
-   distance from source:    36552.3750    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          697
   in rank            0
   at xi,gamma coordinates =    7.0000000000048504E-003  0.35166666666666913     
+ Distance from source:    36552.3750      m
 
 
  Station #           76     AA      S000075                         
              original x:    289997.000    
              original z:    63439.0000    
-   distance from source:    209100.562    
- closest estimate found:    7.27595761E-12  m away
+ Closest estimate found:    7.27595761E-12  m away
   in element          225
   in rank            0
   at xi,gamma coordinates =  -0.66716666666666491      -0.42683333333333351     
+ Distance from source:    209100.562      m
 
 
  Station #           77     AA      S000076                         
              original x:    125365.000    
              original z:    287266.000    
-   distance from source:    77274.6562    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    1.45519152E-11  m away
   in element          931
   in rank            0
-  at xi,gamma coordinates =  -0.10583333333333333       0.87766666666666426     
+  at xi,gamma coordinates =  -0.10583333333333333       0.87766666666666671     
+ Distance from source:    77274.6562      m
 
 
  Station #           78     AA      S000077                         
              original x:    175473.000    
              original z:    234853.000    
-   distance from source:    21231.5586    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          775
   in rank            0
   at xi,gamma coordinates =   0.24550000000000000       0.14216666666666666     
+ Distance from source:    21231.5586      m
 
 
  Station #           79     AA      S000078                         
              original x:    138086.000    
              original z:    267923.000    
-   distance from source:    57435.6953    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          892
   in rank            0
   at xi,gamma coordinates =    1.4333333333333335E-002 -0.34616666666666440     
+ Distance from source:    57435.6953      m
 
 
  Station #           80     AA      S000079                         
              original x:    150659.000    
              original z:    214574.000    
-   distance from source:    53277.5938    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          693
   in rank            0
   at xi,gamma coordinates =   0.10983333333333332       0.76233333333333098     
+ Distance from source:    53277.5938      m
 
 
  Station #           81     AA      S000080                         
              original x:    224593.000    
              original z:    231346.000    
-   distance from source:    36661.8320    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          779
   in rank            0
   at xi,gamma coordinates =   0.43216666666666953      -0.44233333333333097     
+ Distance from source:    36661.8320      m
 
 
  Station #           82     AA      S000081                         
              original x:    264467.000    
              original z:    202453.000    
-   distance from source:    85665.4922    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          663
   in rank            0
-  at xi,gamma coordinates =  -0.92216666666666403       0.74216666666666908     
+  at xi,gamma coordinates =  -0.92216666666667724       0.74216666666666409     
+ Distance from source:    85665.4922      m
 
 
  Station #           83     AA      S000082                         
              original x:    328589.000    
              original z:    198417.000    
-   distance from source:    145351.156    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          668
   in rank            0
   at xi,gamma coordinates =  -0.23516666666666666        6.9499999999999992E-002
+ Distance from source:    145351.156      m
 
 
  Station #           84     AA      S000083                         
              original x:    296176.000    
              original z:    146122.000    
-   distance from source:    145813.719    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          505
   in rank            0
   at xi,gamma coordinates =   0.36266666666667435      -0.64633333333333109     
+ Distance from source:    145813.719      m
 
 
  Station #           85     AA      S000084                         
              original x:    227053.000    
              original z:    195250.000    
-   distance from source:    63461.2773    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    2.91038305E-11  m away
   in element          659
   in rank            0
-  at xi,gamma coordinates =   0.84216666666666407      -0.45833333333333603     
+  at xi,gamma coordinates =   0.84216666666666684      -0.45833333333333592     
+ Distance from source:    63461.2773      m
 
 
  Station #           86     AA      S000085                         
              original x:    147291.000    
              original z:    250036.000    
-   distance from source:    44763.5078    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          813
   in rank            0
   at xi,gamma coordinates =  -0.45149999999999768       0.67266666666666908     
+ Distance from source:    44763.5078      m
 
 
  Station #           87     AA      S000086                         
              original x:    193036.000    
              original z:    229821.000    
-   distance from source:    18369.4902    
- closest estimate found:    5.82076609E-11  m away
+ Closest estimate found:    5.82076609E-11  m away
   in element          777
   in rank            0
   at xi,gamma coordinates =  -0.82733333333333614      -0.69650000000000756     
+ Distance from source:    18369.4902      m
 
 
  Station #           88     AA      S000087                         
              original x:    153377.000    
              original z:    190226.000    
-   distance from source:    69638.4141    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          613
   in rank            0
   at xi,gamma coordinates =   0.56283333333333574       0.70433333333333581     
+ Distance from source:    69638.4141      m
 
 
  Station #           89     AA      S000088                         
              original x:    283703.000    
              original z:    314835.000    
-   distance from source:    113366.281    
- closest estimate found:    5.82076609E-11  m away
+ Closest estimate found:    5.82076609E-11  m away
   in element         1064
   in rank            0
   at xi,gamma coordinates =   0.28383333333333371      -0.52750000000000741     
+ Distance from source:    113366.281      m
 
 
  Station #           90     AA      S000089                         
              original x:    253221.000    
              original z:    214867.000    
-   distance from source:    69675.7188    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          702
   in rank            0
   at xi,gamma coordinates =  -0.79649999999999765       0.81116666666666914     
+ Distance from source:    69675.7188      m
 
 
  Station #           91     AA      S000090                         
              original x:    183656.000    
              original z:    223928.000    
-   distance from source:    25635.3164    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          736
   in rank            0
   at xi,gamma coordinates =  -0.39066666666666516       0.32133333333333253     
+ Distance from source:    25635.3164      m
 
 
  Station #           92     AA      S000091                         
              original x:    248795.000    
              original z:    217122.000    
-   distance from source:    64710.3242    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          741
   in rank            0
   at xi,gamma coordinates =   0.46583333333333582      -0.81300000000000727     
+ Distance from source:    64710.3242      m
 
 
  Station #           93     AA      S000092                         
              original x:    377857.000    
              original z:    138424.000    
-   distance from source:    215823.078    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          472
   in rank            0
   at xi,gamma coordinates =   -2.3833333333333331E-002   7.0666666666666669E-002
+ Distance from source:    215823.078      m
 
 
  Station #           94     AA      S000093                         
              original x:    33968.0000    
              original z:    269999.000    
-   distance from source:    159548.703    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          883
   in rank            0
   at xi,gamma coordinates =   0.66133333333333333       -1.6666666666666655E-004
+ Distance from source:    159548.703      m
 
 
  Station #           95     AA      S000094                         
              original x:    94810.0000    
              original z:    162026.000    
-   distance from source:    129878.000    
- closest estimate found:    3.25390721E-11  m away
+ Closest estimate found:    3.25390721E-11  m away
   in element          528
   in rank            0
   at xi,gamma coordinates =   0.80166666666666919        4.3333333333381843E-003
+ Distance from source:    129878.000      m
 
 
  Station #           96     AA      S000095                         
              original x:    261786.000    
              original z:    243572.000    
-   distance from source:    69921.5547    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          822
   in rank            0
   at xi,gamma coordinates =   0.63099999999999745      -0.40466666666666939     
+ Distance from source:    69921.5547      m
 
 
  Station #           97     AA      S000096                         
              original x:    138872.000    
              original z:    105748.000    
-   distance from source:    152006.531    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          332
   in rank            0
   at xi,gamma coordinates =   0.14533333333333334       0.62466666666666670     
+ Distance from source:    152006.531      m
 
 
  Station #           98     AA      S000097                         
              original x:    40042.0000    
              original z:    220400.000    
-   distance from source:    154488.219    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          724
   in rank            0
   at xi,gamma coordinates =  -0.32633333333333331      -0.26666666666666666     
+ Distance from source:    154488.219      m
 
 
  Station #           99     AA      S000098                         
              original x:    221974.000    
              original z:    168372.000    
-   distance from source:    85229.0312    
- closest estimate found:    2.91038305E-11  m away
+ Closest estimate found:    2.91038305E-11  m away
   in element          579
   in rank            0
-  at xi,gamma coordinates =   -4.3333333333333279E-003 -0.93800000000000261     
+  at xi,gamma coordinates =   -4.3333333333318153E-003 -0.93799999999999351     
+ Distance from source:    85229.0312      m
 
 
  Station #          100     AA      S000099                         
              original x:    270506.000    
              original z:    82977.0000    
-   distance from source:    182884.984    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          263
   in rank            0
-  at xi,gamma coordinates =    8.4333333333333121E-002  0.82950000000000002     
+  at xi,gamma coordinates =    8.4333333333333330E-002  0.82950000000000002     
+ Distance from source:    182884.984      m
 
 
  Station #          101     AA      S000100                         
              original x:    288864.000    
              original z:    77605.0000    
-   distance from source:    196136.188    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    5.82076609E-11  m away
   in element          265
   in rank            0
-  at xi,gamma coordinates =  -0.85599999999999754       -6.5833333333333285E-002
+  at xi,gamma coordinates =  -0.85599999999999887       -6.5833333333333854E-002
+ Distance from source:    196136.188      m
 
 
  Station #          102     AA      S000101                         
              original x:    87077.0000    
              original z:    268293.000    
-   distance from source:    106851.734    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          888
   in rank            0
   at xi,gamma coordinates =  -0.48716666666666680      -0.28449999999999931     
+ Distance from source:    106851.734      m
 
 
  Station #          103     AA      S000102                         
              original x:    348857.000    
              original z:    428662.000    
-   distance from source:    239122.438    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    5.82076609E-11  m away
   in element         1430
   in rank            0
-  at xi,gamma coordinates =  -0.85716666666667407       0.44366666666666432     
+  at xi,gamma coordinates =  -0.85716666666667485       0.44366666666665944     
+ Distance from source:    239122.438      m
 
 
  Station #          104     AA      S000103                         
              original x:    257887.000    
              original z:    427502.000    
-   distance from source:    191054.656    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1422
   in rank            0
   at xi,gamma coordinates =   -1.8833333333333334E-002  0.25033333333333335     
+ Distance from source:    191054.656      m
 
 
  Station #          105     AA      S000104                         
              original x:    148985.000    
              original z:    220331.000    
-   distance from source:    51246.2188    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          733
   in rank            0
   at xi,gamma coordinates =  -0.16916666666666666      -0.27816666666666667     
+ Distance from source:    51246.2188      m
 
 
  Station #          106     AA      S000105                         
              original x:    48274.0000    
              original z:    137247.000    
-   distance from source:    181559.125    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          445
   in rank            0
-  at xi,gamma coordinates =  -0.95433333333333348      -0.12550000000000000     
+  at xi,gamma coordinates =  -0.95433333333333381      -0.12550000000000261     
+ Distance from source:    181559.125      m
 
 
  Station #          107     AA      S000106                         
              original x:    131519.000    
              original z:    225576.000    
-   distance from source:    64575.0039    
- closest estimate found:    2.91038305E-11  m away
+ Closest estimate found:    2.91038305E-11  m away
   in element          731
   in rank            0
-  at xi,gamma coordinates =   0.91983333333333339       0.59599999999999764     
+  at xi,gamma coordinates =   0.91983333333333328       0.59599999999999764     
+ Distance from source:    64575.0039      m
 
 
  Station #          108     AA      S000107                         
              original x:    120476.000    
              original z:    456113.000    
-   distance from source:    219912.344    
- closest estimate found:    5.82076609E-11  m away
+ Closest estimate found:    5.82076609E-11  m away
   in element         1531
   in rank            0
   at xi,gamma coordinates =  -0.92066666666666441      -0.98116666666665631     
+ Distance from source:    219912.344      m
 
 
  Station #          109     AA      S000108                         
              original x:    210418.000    
              original z:    199044.000    
-   distance from source:    52452.3516    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          658
   in rank            0
   at xi,gamma coordinates =    6.9666666666666668E-002  0.17399999999999999     
+ Distance from source:    52452.3516      m
 
 
  Station #          110     AA      S000109                         
              original x:    412465.000    
              original z:    127444.000    
-   distance from source:    251338.312    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          435
   in rank            0
   at xi,gamma coordinates =  -0.25583333333333330       0.24066666666666667     
+ Distance from source:    251338.312      m
 
 
  Station #          111     AA      S000110                         
              original x:    82161.0000    
              original z:    253507.000    
-   distance from source:    109984.219    
- closest estimate found:    5.82076609E-11  m away
+ Closest estimate found:    5.82076609E-11  m away
   in element          847
   in rank            0
   at xi,gamma coordinates =   0.69350000000000001      -0.74883333333333102     
+ Distance from source:    109984.219      m
 
 
  Station #          112     AA      S000111                         
              original x:    212133.000    
              original z:    180791.000    
-   distance from source:    70310.6641    
- closest estimate found:    2.91038305E-11  m away
+ Closest estimate found:    8.23180621E-11  m away
   in element          618
   in rank            0
-  at xi,gamma coordinates =   0.35550000000000292      -0.86816666666666942     
+  at xi,gamma coordinates =   0.35549999999999610      -0.86816666666667353     
+ Distance from source:    70310.6641      m
 
 
  Station #          113     AA      S000112                         
              original x:    172427.000    
              original z:    195175.000    
-   distance from source:    56491.8945    
- closest estimate found:    4.11590310E-11  m away
+ Closest estimate found:    4.11590310E-11  m away
   in element          655
   in rank            0
   at xi,gamma coordinates =  -0.26216666666666222      -0.47083333333333105     
+ Distance from source:    56491.8945      m
 
 
  Station #          114     AA      S000113                         
              original x:    274390.000    
              original z:    229592.000    
-   distance from source:    84441.9609    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          783
   in rank            0
   at xi,gamma coordinates =   0.73166666666666413      -0.73466666666667402     
+ Distance from source:    84441.9609      m
 
 
  Station #          115     AA      S000114                         
              original x:    395983.000    
              original z:    100994.000    
-   distance from source:    251517.969    
- closest estimate found:    0.00000000      m away
-  in element          353
+ Closest estimate found:    0.00000000      m away
+  in element          354
   in rank            0
-  at xi,gamma coordinates =   0.99716666666666409      -0.16766666666666669     
+  at xi,gamma coordinates =   -1.0028333333333228      -0.16766666666666433     
+ Distance from source:    251517.969      m
 
 
  Station #          116     AA      S000115                         
              original x:    221097.000    
              original z:    260343.000    
-   distance from source:    31529.6855    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          859
   in rank            0
   at xi,gamma coordinates =  -0.15049999999999963       0.39049999999999763     
+ Distance from source:    31529.6855      m
 
 
  Station #          117     AA      S000116                         
              original x:    154214.000    
              original z:    361893.000    
-   distance from source:    119848.453    
- closest estimate found:    2.91038305E-11  m away
+ Closest estimate found:    2.91038305E-11  m away
   in element         1213
   in rank            0
   at xi,gamma coordinates =   0.70233333333333592      -0.68449999999999789     
+ Distance from source:    119848.453      m
 
 
  Station #          118     AA      S000117                         
              original x:    63057.0000    
              original z:    347522.000    
-   distance from source:    162796.266    
- closest estimate found:    7.27595761E-12  m away
+ Closest estimate found:    0.00000000      m away
   in element         1126
   in rank            0
-  at xi,gamma coordinates =  -0.49050000000000016       0.92033333333333101     
+  at xi,gamma coordinates =  -0.49050000000000016       0.92033333333333345     
+ Distance from source:    162796.266      m
 
 
  Station #          119     AA      S000118                         
              original x:    360964.000    
              original z:    177613.000    
-   distance from source:    183087.000    
- closest estimate found:    5.82076609E-11  m away
+ Closest estimate found:    0.00000000      m away
   in element          591
   in rank            0
-  at xi,gamma coordinates =  -0.83933333333334181       0.60216666666666407     
+  at xi,gamma coordinates =  -0.83933333333334059       0.60216666666666219     
+ Distance from source:    183087.000      m
 
 
  Station #          120     AA      S000119                         
              original x:    115650.000    
              original z:    236583.000    
-   distance from source:    77238.1406    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          770
   in rank            0
   at xi,gamma coordinates =   0.27499999999999997       0.43049999999999761     
+ Distance from source:    77238.1406      m
 
 
  Station #          121     AA      S000120                         
              original x:    381097.000    
              original z:    377524.000    
-   distance from source:    229099.109    
- closest estimate found:    5.82076609E-11  m away
+ Closest estimate found:    5.82076609E-11  m away
   in element         1272
   in rank            0
   at xi,gamma coordinates =   0.51616666666666411       -7.9333333333333436E-002
+ Distance from source:    229099.109      m
 
 
  Station #          122     AA      S000121                         
              original x:    164690.000    
              original z:    220654.000    
-   distance from source:    38773.2695    
- closest estimate found:    4.11590310E-11  m away
+ Closest estimate found:    4.11590310E-11  m away
   in element          734
   in rank            0
   at xi,gamma coordinates =   0.44833333333333603      -0.22433333333333319     
+ Distance from source:    38773.2695      m
 
 
  Station #          123     AA      S000122                         
              original x:    180768.000    
              original z:    271967.000    
-   distance from source:    26328.1953    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          896
   in rank            0
-  at xi,gamma coordinates =  -0.87200000000000233       0.32783333333333176     
+  at xi,gamma coordinates =  -0.87199999999999978       0.32783333333332343     
+ Distance from source:    26328.1953      m
 
 
  Station #          124     AA      S000123                         
              original x:    95119.0000    
              original z:    423927.000    
-   distance from source:    200704.219    
- closest estimate found:    5.99990821E-11  m away
+ Closest estimate found:    5.99990821E-11  m away
   in element         1408
   in rank            0
-  at xi,gamma coordinates =   0.85316666666666685      -0.34550000000000702     
+  at xi,gamma coordinates =   0.85316666666666907      -0.34550000000000741     
+ Distance from source:    200704.219      m
 
 
  Station #          125     AA      S000124                         
              original x:    253155.000    
              original z:    279988.000    
-   distance from source:    68927.1641    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          942
   in rank            0
   at xi,gamma coordinates =  -0.80750000000000277      -0.33533333333334076     
+ Distance from source:    68927.1641      m
 
 
  Station #          126     AA      S000125                         
              original x:    180081.000    
              original z:    388769.000    
-   distance from source:    141112.453    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1296
   in rank            0
-  at xi,gamma coordinates =  -0.98649999999999727      -0.20516666666666569     
+  at xi,gamma coordinates =  -0.98649999999999838      -0.20516666666666650     
+ Distance from source:    141112.453      m
 
 
  Station #          127     AA      S000126                         
              original x:    98581.0000    
              original z:    337251.000    
-   distance from source:    129099.938    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element         1129
   in rank            0
   at xi,gamma coordinates =  -0.56983333333333364      -0.79150000000000742     
+ Distance from source:    129099.938      m
 
 
  Station #          128     AA      S000127                         
              original x:    402208.000    
              original z:    80909.0000    
-   distance from source:    268616.062    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          274
   in rank            0
   at xi,gamma coordinates =    3.4666666666666665E-002  0.48483333333333334     
+ Distance from source:    268616.062      m
 
 
  Station #          129     AA      S000128                         
              original x:    74671.0000    
              original z:    276764.000    
-   distance from source:    120779.742    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          927
   in rank            0
   at xi,gamma coordinates =  -0.55483333333333107      -0.87266666666666437     
+ Distance from source:    120779.742      m
 
 
  Station #          130     AA      S000129                         
              original x:    195613.000    
              original z:    219240.000    
-   distance from source:    29145.0195    
- closest estimate found:    6.50781443E-11  m away
+ Closest estimate found:    6.50781443E-11  m away
   in element          737
   in rank            0
   at xi,gamma coordinates =  -0.39783333333333565      -0.46000000000000796     
+ Distance from source:    29145.0195      m
 
 
  Station #          131     AA      S000130                         
              original x:    131351.000    
              original z:    238047.000    
-   distance from source:    61501.7812    
- closest estimate found:    0.00000000      m away
+ Closest estimate found:    0.00000000      m away
   in element          771
   in rank            0
   at xi,gamma coordinates =   0.89183333333333337       0.67450000000000243     
+ Distance from source:    61501.7812      m
 
 
  Station #          132     AA      S000131                         
              original x:    167457.000    
              original z:    212801.000    
-   distance from source:    43052.4883    
- closest estimate found:    2.91038305E-11  m away
+ Closest estimate found:    4.11590310E-11  m away
   in element          694
   in rank            0
-  at xi,gamma coordinates =   0.90950000000000231       0.46683333333333565     
+  at xi,gamma coordinates =   0.90950000000000009       0.46683333333333094     
+ Distance from source:    43052.4883      m
 
 
  end of receiver detection
@@ -1784,24 +1791,24 @@ Time step number       5   t =    0.2400 s out of    4800
  ******************************************************************
  We have done    8.33506957E-02 % of the total
  Max norm of vector field in solid (elastic) =    0.00000000    
- Elapsed time in seconds =    7.9998970031738281E-003
+ Elapsed time in seconds =    6.9999694824218750E-003
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    1.5999794006347657E-003
+ Mean elapsed time per time step in seconds =    1.3999938964843750E-003
  Time steps remaining =         4795
- Estimated remaining time in seconds =    7.6719012260437012     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
- Estimated total run time in seconds =    7.6799011230468750     
- Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
- The run will finish approximately on: Sun May 21, 2017 15:33
+ Estimated remaining time in seconds =    6.7129707336425781     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
+ Estimated total run time in seconds =    6.7199707031250000     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 06 s
+ The run will finish approximately on: Sat Feb 09, 2019 22:30
 
 
  Creating color image of size          166  x          174  for time step            5
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
  Color image maximum amplitude =    0.0000000000000000     
  Color image created
 
  Creating color image of size          166  x          174  for time step          200
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
  Color image maximum amplitude =    0.0000000000000000     
  Color image created
 
@@ -1809,307 +1816,319 @@ Time step number       5   t =    0.2400 s out of    4800
 Time step number     400   t =   23.9400 s out of    4800
  ******************************************************************
  We have done    8.31423187     % of the total
- Max norm of vector field in solid (elastic) =    2.26061249E-19
- Elapsed time in seconds =   0.67699980735778809     
+ Max norm of vector field in solid (elastic) =    1.62307208E-18
+ Elapsed time in seconds =   0.65600013732910156     
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    1.6924995183944702E-003
+ Mean elapsed time per time step in seconds =    1.6400003433227539E-003
  Time steps remaining =         4400
- Estimated remaining time in seconds =    7.4469978809356689     
+ Estimated remaining time in seconds =    7.2160015106201172     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 07 s
- Estimated total run time in seconds =    8.1239976882934570     
- Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
- The run will finish approximately on: Sun May 21, 2017 15:33
+ Estimated total run time in seconds =    7.8720016479492188     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
+ The run will finish approximately on: Sat Feb 09, 2019 22:30
 
 
  Creating color image of size          166  x          174  for time step          400
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    2.7652671142102443E-019
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.9854034557431461E-018
  Color image created
 
  Creating color image of size          166  x          174  for time step          600
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    3.3098517633334268E-006
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.3764039724483155E-005
  Color image created
 
  ******************************************************************
 Time step number     800   t =   47.9400 s out of    4800
  ******************************************************************
  We have done    16.6493015     % of the total
- Max norm of vector field in solid (elastic) =    2.37326585E-02
- Elapsed time in seconds =    1.3579998016357422     
+ Max norm of vector field in solid (elastic) =   0.170395508    
+ Elapsed time in seconds =    1.3050000667572021     
  Elapsed time in hh:mm:ss =      0 h 00 m 01 s
- Mean elapsed time per time step in seconds =    1.6974997520446777E-003
+ Mean elapsed time per time step in seconds =    1.6312500834465026E-003
  Time steps remaining =         4000
- Estimated remaining time in seconds =    6.7899990081787109     
+ Estimated remaining time in seconds =    6.5250003337860107     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
- Estimated total run time in seconds =    8.1479988098144531     
- Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
- The run will finish approximately on: Sun May 21, 2017 15:33
+ Estimated total run time in seconds =    7.8300004005432129     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 07 s
+ The run will finish approximately on: Sat Feb 09, 2019 22:30
 
 
  Creating color image of size          166  x          174  for time step          800
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    2.2999925538897514E-002
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =   0.16513463854789734     
  Color image created
 
  Creating color image of size          166  x          174  for time step         1000
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    7.8812651336193085E-003
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    5.6585803627967834E-002
  Color image created
 
  ******************************************************************
 Time step number    1200   t =   71.9400 s out of    4800
  ******************************************************************
  We have done    24.9843712     % of the total
- Max norm of vector field in solid (elastic) =    5.94999921E-03
- Elapsed time in seconds =    2.0409998893737793     
+ Max norm of vector field in solid (elastic) =    4.27197330E-02
+ Elapsed time in seconds =    2.2380001544952393     
  Elapsed time in hh:mm:ss =      0 h 00 m 02 s
- Mean elapsed time per time step in seconds =    1.7008332411448160E-003
+ Mean elapsed time per time step in seconds =    1.8650001287460326E-003
  Time steps remaining =         3600
- Estimated remaining time in seconds =    6.1229996681213379     
+ Estimated remaining time in seconds =    6.7140004634857178     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 06 s
- Estimated total run time in seconds =    8.1639995574951172     
+ Estimated total run time in seconds =    8.9520006179809570     
  Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
- The run will finish approximately on: Sun May 21, 2017 15:33
+ The run will finish approximately on: Sat Feb 09, 2019 22:30
 
 
  Creating color image of size          166  x          174  for time step         1200
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    5.9774215333163738E-003
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    4.2916622012853622E-002
  Color image created
 
  Creating color image of size          166  x          174  for time step         1400
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    5.2947252988815308E-003
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    3.8015000522136688E-002
  Color image created
 
  ******************************************************************
 Time step number    1600   t =   95.9400 s out of    4800
  ******************************************************************
  We have done    33.3194427     % of the total
- Max norm of vector field in solid (elastic) =    4.83663380E-03
- Elapsed time in seconds =    2.7209999561309814     
+ Max norm of vector field in solid (elastic) =    3.47259976E-02
+ Elapsed time in seconds =    2.9349999427795410     
  Elapsed time in hh:mm:ss =      0 h 00 m 02 s
- Mean elapsed time per time step in seconds =    1.7006249725818633E-003
+ Mean elapsed time per time step in seconds =    1.8343749642372132E-003
  Time steps remaining =         3200
- Estimated remaining time in seconds =    5.4419999122619629     
+ Estimated remaining time in seconds =    5.8699998855590820     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
- Estimated total run time in seconds =    8.1629998683929443     
+ Estimated total run time in seconds =    8.8049998283386230     
  Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
- The run will finish approximately on: Sun May 21, 2017 15:33
+ The run will finish approximately on: Sat Feb 09, 2019 22:30
 
 
  Creating color image of size          166  x          174  for time step         1600
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    4.7949398867785931E-003
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    3.4426644444465637E-002
  Color image created
 
  Creating color image of size          166  x          174  for time step         1800
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    4.7284741885960102E-003
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    3.3949442207813263E-002
  Color image created
 
  ******************************************************************
 Time step number    2000   t =  119.9400 s out of    4800
  ******************************************************************
  We have done    41.6545105     % of the total
- Max norm of vector field in solid (elastic) =    4.14047670E-03
- Elapsed time in seconds =    3.4189999103546143     
+ Max norm of vector field in solid (elastic) =    2.97277421E-02
+ Elapsed time in seconds =    3.5920000076293945     
  Elapsed time in hh:mm:ss =      0 h 00 m 03 s
- Mean elapsed time per time step in seconds =    1.7094999551773072E-003
+ Mean elapsed time per time step in seconds =    1.7960000038146973E-003
  Time steps remaining =         2800
- Estimated remaining time in seconds =    4.7865998744964600     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    8.2055997848510742     
+ Estimated remaining time in seconds =    5.0288000106811523     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
+ Estimated total run time in seconds =    8.6208000183105469     
  Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
- The run will finish approximately on: Sun May 21, 2017 15:33
+ The run will finish approximately on: Sat Feb 09, 2019 22:30
 
 
  Creating color image of size          166  x          174  for time step         2000
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    4.1660158894956112E-003
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.9911106452345848E-002
  Color image created
 
  Creating color image of size          166  x          174  for time step         2200
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    3.2854271121323109E-003
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.3588679730892181E-002
  Color image created
 
  ******************************************************************
 Time step number    2400   t =  143.9400 s out of    4800
  ******************************************************************
  We have done    49.9895821     % of the total
- Max norm of vector field in solid (elastic) =    3.30675161E-03
- Elapsed time in seconds =    4.1189999580383301     
- Elapsed time in hh:mm:ss =      0 h 00 m 04 s
- Mean elapsed time per time step in seconds =    1.7162499825159709E-003
+ Max norm of vector field in solid (elastic) =    2.37417687E-02
+ Elapsed time in seconds =    5.0150001049041748     
+ Elapsed time in hh:mm:ss =      0 h 00 m 05 s
+ Mean elapsed time per time step in seconds =    2.0895833770434064E-003
  Time steps remaining =         2400
- Estimated remaining time in seconds =    4.1189999580383301     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    8.2379999160766602     
- Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
- The run will finish approximately on: Sun May 21, 2017 15:33
+ Estimated remaining time in seconds =    5.0150001049041757     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 05 s
+ Estimated total run time in seconds =    10.030000209808350     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 10 s
+ The run will finish approximately on: Sat Feb 09, 2019 22:30
 
 
  Creating color image of size          166  x          174  for time step         2400
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    3.3165481872856617E-003
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.3812111467123032E-002
  Color image created
 
  Creating color image of size          166  x          174  for time step         2600
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.8507911590859294E-003
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.3288289308547974E-002
  Color image created
 
  ******************************************************************
 Time step number    2800   t =  167.9400 s out of    4800
  ******************************************************************
  We have done    58.3246498     % of the total
- Max norm of vector field in solid (elastic) =    4.75161709E-04
- Elapsed time in seconds =    4.7979998588562012     
- Elapsed time in hh:mm:ss =      0 h 00 m 04 s
- Mean elapsed time per time step in seconds =    1.7135713781629290E-003
+ Max norm of vector field in solid (elastic) =    3.41155939E-03
+ Elapsed time in seconds =    5.7209999561309814     
+ Elapsed time in hh:mm:ss =      0 h 00 m 05 s
+ Mean elapsed time per time step in seconds =    2.0432142700467790E-003
  Time steps remaining =         2000
- Estimated remaining time in seconds =    3.4271427563258579     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
- Estimated total run time in seconds =    8.2251426151820581     
- Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
- The run will finish approximately on: Sun May 21, 2017 15:33
+ Estimated remaining time in seconds =    4.0864285400935580     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
+ Estimated total run time in seconds =    9.8074284962245386     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
+ The run will finish approximately on: Sat Feb 09, 2019 22:30
 
 
  Creating color image of size          166  x          174  for time step         2800
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    4.7600260586477816E-004
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    3.4175971522927284E-003
  Color image created
 
  Creating color image of size          166  x          174  for time step         3000
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    3.8679363206028938E-004
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.7770958840847015E-003
  Color image created
 
  ******************************************************************
 Time step number    3200   t =  191.9400 s out of    4800
  ******************************************************************
  We have done    66.6597214     % of the total
- Max norm of vector field in solid (elastic) =    2.56875763E-04
- Elapsed time in seconds =    5.4809999465942383     
- Elapsed time in hh:mm:ss =      0 h 00 m 05 s
- Mean elapsed time per time step in seconds =    1.7128124833106994E-003
+ Max norm of vector field in solid (elastic) =    1.84431870E-03
+ Elapsed time in seconds =    6.8140001296997070     
+ Elapsed time in hh:mm:ss =      0 h 00 m 06 s
+ Mean elapsed time per time step in seconds =    2.1293750405311585E-003
  Time steps remaining =         1600
- Estimated remaining time in seconds =    2.7404999732971191     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    8.2214999198913574     
- Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
- The run will finish approximately on: Sun May 21, 2017 15:33
+ Estimated remaining time in seconds =    3.4070000648498535     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 03 s
+ Estimated total run time in seconds =    10.221000194549561     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 10 s
+ The run will finish approximately on: Sat Feb 09, 2019 22:30
 
 
  Creating color image of size          166  x          174  for time step         3200
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    2.5827903300523758E-004
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.8543918849900365E-003
  Color image created
 
  Creating color image of size          166  x          174  for time step         3400
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    2.9108172748237848E-004
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    2.0899053197354078E-003
  Color image created
 
  ******************************************************************
 Time step number    3600   t =  215.9400 s out of    4800
  ******************************************************************
  We have done    74.9947891     % of the total
- Max norm of vector field in solid (elastic) =    2.35252941E-04
- Elapsed time in seconds =    6.1589999198913574     
- Elapsed time in hh:mm:ss =      0 h 00 m 06 s
- Mean elapsed time per time step in seconds =    1.7108333110809326E-003
+ Max norm of vector field in solid (elastic) =    1.68906385E-03
+ Elapsed time in seconds =    7.5469999313354492     
+ Elapsed time in hh:mm:ss =      0 h 00 m 07 s
+ Mean elapsed time per time step in seconds =    2.0963888698154027E-003
  Time steps remaining =         1200
- Estimated remaining time in seconds =    2.0529999732971191     
+ Estimated remaining time in seconds =    2.5156666437784834     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 02 s
- Estimated total run time in seconds =    8.2119998931884766     
- Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
- The run will finish approximately on: Sun May 21, 2017 15:33
+ Estimated total run time in seconds =    10.062666575113933     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 10 s
+ The run will finish approximately on: Sat Feb 09, 2019 22:30
 
 
  Creating color image of size          166  x          174  for time step         3600
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    2.3583939764648676E-004
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.6932741273194551E-003
  Color image created
 
  Creating color image of size          166  x          174  for time step         3800
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.9857798179145902E-004
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.4257476432248950E-003
  Color image created
 
  ******************************************************************
 Time step number    4000   t =  239.9400 s out of    4800
  ******************************************************************
  We have done    83.3298569     % of the total
- Max norm of vector field in solid (elastic) =    2.22294504E-04
- Elapsed time in seconds =    6.8429999351501465     
- Elapsed time in hh:mm:ss =      0 h 00 m 06 s
- Mean elapsed time per time step in seconds =    1.7107499837875366E-003
+ Max norm of vector field in solid (elastic) =    1.59602962E-03
+ Elapsed time in seconds =    8.2780001163482666     
+ Elapsed time in hh:mm:ss =      0 h 00 m 08 s
+ Mean elapsed time per time step in seconds =    2.0695000290870667E-003
  Time steps remaining =          800
- Estimated remaining time in seconds =    1.3685999870300292     
+ Estimated remaining time in seconds =    1.6556000232696533     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 01 s
- Estimated total run time in seconds =    8.2115999221801754     
- Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
- The run will finish approximately on: Sun May 21, 2017 15:33
+ Estimated total run time in seconds =    9.9336001396179192     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 09 s
+ The run will finish approximately on: Sat Feb 09, 2019 22:30
 
 
  Creating color image of size          166  x          174  for time step         4000
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    2.2475002333521843E-004
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.6136587364599109E-003
  Color image created
 
  Creating color image of size          166  x          174  for time step         4200
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.9915733719244599E-004
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.4299073955044150E-003
  Color image created
 
  ******************************************************************
 Time step number    4400   t =  263.9400 s out of    4800
  ******************************************************************
  We have done    91.6649323     % of the total
- Max norm of vector field in solid (elastic) =    1.34171045E-04
- Elapsed time in seconds =    7.5259997844696045     
- Elapsed time in hh:mm:ss =      0 h 00 m 07 s
- Mean elapsed time per time step in seconds =    1.7104544964703647E-003
+ Max norm of vector field in solid (elastic) =    9.63325088E-04
+ Elapsed time in seconds =    10.327000141143799     
+ Elapsed time in hh:mm:ss =      0 h 00 m 10 s
+ Mean elapsed time per time step in seconds =    2.3470454866235907E-003
  Time steps remaining =          400
- Estimated remaining time in seconds =   0.68418179858814587     
+ Estimated remaining time in seconds =   0.93881819464943628     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    8.2101815830577500     
- Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
- The run will finish approximately on: Sun May 21, 2017 15:33
+ Estimated total run time in seconds =    11.265818335793234     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
+ The run will finish approximately on: Sat Feb 09, 2019 22:30
 
 
  Creating color image of size          166  x          174  for time step         4400
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.3356262934394181E-004
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    9.5895217964425683E-004
  Color image created
 
  Creating color image of size          166  x          174  for time step         4600
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.1210348020540550E-004
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    8.0487696686759591E-004
  Color image created
 
  ******************************************************************
 Time step number    4800   t =  287.9400 s out of    4800
  ******************************************************************
  We have done    100.000000     % of the total
- Max norm of vector field in solid (elastic) =    1.01839374E-04
- Elapsed time in seconds =    8.2149999141693115     
- Elapsed time in hh:mm:ss =      0 h 00 m 08 s
- Mean elapsed time per time step in seconds =    1.7114583154519399E-003
+ Max norm of vector field in solid (elastic) =    7.31190084E-04
+ Elapsed time in seconds =    11.029000043869019     
+ Elapsed time in hh:mm:ss =      0 h 00 m 11 s
+ Mean elapsed time per time step in seconds =    2.2977083424727124E-003
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    8.2149999141693115     
- Estimated total run time in hh:mm:ss =      0 h 00 m 08 s
+ Estimated total run time in seconds =    11.029000043869019     
+ Estimated total run time in hh:mm:ss =      0 h 00 m 11 s
 
 
  Creating color image of size          166  x          174  for time step         4800
- drawing scalar image of part of the displacement vector...
- Color image maximum amplitude =    1.0184169514104724E-004
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    7.3120661545544863E-004
  Color image created
+
+ Total duration of the time loop in seconds =    9.86343384      s
+ Total number of time steps =         4800
+ Average duration of a time step of the time loop =    2.05488200E-03  s
+ Total number of spectral elements in the mesh =         1600
+     of which         1600  are regular elements
+     and            0  are PML elements.
+ Average duration of the calculation per spectral element =    1.28430133E-06  s
+
+
+ Total duration of the timeloop in seconds, measured using 
+ date and time of the system :    11.7770004      s
 
 
  -------------------------------------------------------------------------------
@@ -2120,11 +2139,11 @@ Time step number    4800   t =  287.9400 s out of    4800
  Tape-Liu-Tromp (GJI 2007)
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 21 - 05 - 2017                                 T i m e  : 15:32:33
+ D a t e : 09 - 02 - 2019                                 T i m e  : 22:30:16
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 see results in directory: OUTPUT_FILES/
 
 done
-Sun May 21 15:32:33 AST 2017
+Sat Feb  9 22:30:16 AST 2019
