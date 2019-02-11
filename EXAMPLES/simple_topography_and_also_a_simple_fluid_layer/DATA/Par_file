@@ -301,8 +301,8 @@ nbregions                       = 4              # then set below the different 
 NSTEP_BETWEEN_OUTPUT_INFO       = 100
 
 # meshing output
-output_grid_Gnuplot             = .false.        # generate a GNUPLOT file containing the grid, and a script to plot it
-output_grid_ASCII               = .false.        # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
+output_grid_Gnuplot             = .true.         # generate a GNUPLOT file containing the grid, and a script to plot it
+output_grid_ASCII               = .true.         # dump the grid in an ASCII text file consisting of a set of X,Y,Z points or not
 
 # to plot total energy curves, for instance to monitor how CPML absorbing layers behave;
 # should be turned OFF in most cases because a bit expensive

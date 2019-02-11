@@ -125,11 +125,11 @@ echo -en 'travis_fold:end:build\\r'
 # test examples
 ###########################################################
 # testing internal mesher example (short & quick for all configuration)
-echo 'Tests...' && echo -en 'travis_fold:start:tests\\r'
 # runs test
 echo "test directory: $dir"
 echo
 cd $dir
+echo 'Tests...' && echo -en 'travis_fold:start:tests\\r'
 if [ "$TESTID" == "2" ]; then
   # runs default tests
   make tests
@@ -167,8 +167,6 @@ else
   fi
   cd $WORKDIR
 fi
-
-
 echo -en 'travis_fold:end:tests\\r'
 
 
@@ -177,7 +175,7 @@ echo -en 'travis_fold:end:tests\\r'
 #
 # note: log becomes too long, trying to fold each test output
 # first coverage tester (without mpi)
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.additional\\r'
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.noise\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
   ##
   ## testing noise example
@@ -187,7 +185,11 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
   ./run_this_example.sh
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.noise\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.tape\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
   ##
   ## testing Tape2007 example
   ##
@@ -197,10 +199,10 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
-echo -en 'travis_fold:end:coverage.additional\\r'
+echo -en 'travis_fold:end:coverage.tape\\r'
 
 # second coverage tester (with mpi)
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.additional2\\r'
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.semi_infinite\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing example with pml (longer testing only together with mpi and code coverage)
@@ -211,7 +213,11 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ./run_this_example.sh
   my_test
   cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.semi_infinite\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.gmsh\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing external mesher example with mpi and stacey
   ##
@@ -223,7 +229,11 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   if [[ $? -ne 0 ]]; then exit 1; fi
   my_test
   cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.gmsh\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.tromp\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing kernel example
   ##
@@ -233,7 +243,11 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   # no kernel value testing: only execution failure
   #my_test_kernel
   cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.tromp\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.poroelastic_acoustic\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing poroelastic example
   ##
@@ -242,7 +256,11 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ./run_this_example.sh
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.poroelastic_acoustic\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.axisym\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing axisymmetric example
   ##
@@ -252,7 +270,11 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ./run_this_example.sh
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.axisym\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.simple_topo\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing PML & MPI example
   ##
@@ -261,7 +283,11 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ./run_this_example.sh
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.simple_topo\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.industrial\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing MPI, SEP example
   ##
@@ -270,7 +296,11 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ./run_this_example.sh
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.industrial\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.rayleigh\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing plane wave example
   ##
@@ -283,7 +313,11 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ./run_this_example.sh
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.rayleigh\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.fluid_solid\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing fluid solid w/ external mesh
   ##
@@ -293,7 +327,7 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
-echo -en 'travis_fold:end:coverage.additional2\\r'
+echo -en 'travis_fold:end:coverage.fluid_solid\\r'
 
 
 # done

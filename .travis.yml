@@ -115,6 +115,9 @@ before_install:
   # recommended for MPI projects to unset CC: see https://docs.travis-ci.com/user/languages/c
   #- test -n $CC && unset CC
 
+  # in case travis fails randomly due to missing key
+  - sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 6B05F25D762E3157
+
   # updates repository
   - sudo apt-get update
 

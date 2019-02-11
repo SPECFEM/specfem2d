@@ -285,10 +285,10 @@ output_grid_ASCII               = .false.        # dump the grid in an ASCII tex
 
 # to plot total energy curves, for instance to monitor how CPML absorbing layers behave;
 # should be turned OFF in most cases because a bit expensive
-OUTPUT_ENERGY                   = .false.
+OUTPUT_ENERGY                   = .true.
 
 # every how many time steps we compute energy (which is a bit expensive to compute)
-NTSTEP_BETWEEN_OUTPUT_ENERGY    = 10
+NTSTEP_BETWEEN_OUTPUT_ENERGY    = 50
 
 # Compute the field int_0^t v^2 dt for a set of GLL points and write it to file. Use
 # the script utils/visualisation/plotIntegratedEnergyFile.py to watch. It is refreshed at the same time than the seismograms
