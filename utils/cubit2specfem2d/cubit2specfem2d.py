@@ -253,6 +253,7 @@ class mesh_tools(block_tools):
         print 'Minimum frequency resolved => edge:'+str(self.dr[0][0])+' frequency: '+str(self.dr[0][1])
         return self.ddt[0],self.dr[0]
 
+
 class mesh(object,mesh_tools):
     """ A class to store the mesh """
     def __init__(self):
@@ -738,5 +739,20 @@ class mesh(object,mesh_tools):
         cubit.cmd('set info on') # Turn on return messages from Cubit commands
         cubit.cmd('set echo on') # Turn on echo of Cubit commands
 
-profile = mesh() # Store the mesh from Cubit
-profile.write() # Write it into files (in specfem2d format). profile.write(/path/to/directory)
+def export2SPECFEM2D(path_exporting_mesh_SPECFEM2D='.'):
+    # reads in mesh from cubit
+    profile = mesh()
+    # writes out
+    profile.write(path=path_exporting_mesh_SPECFEM2D)
+    print "END SPECFEM2D exporting process......"
+
+# gets executed when run as script within cubit
+export2SPECFEM2D()
+
+
+
+
+
+
+
+
