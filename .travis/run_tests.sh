@@ -24,6 +24,8 @@ case "$TESTDIR" in
 13) dir=EXAMPLES/check_absolute_amplitude_of_pressure_source_seismograms_acoustic/ ;;
 14) dir=EXAMPLES/check_absolute_amplitude_of_force_source_seismograms_elastic/ ;;
 15) dir=EXAMPLES/check_absolute_amplitude_of_force_source_seismograms_viscoelastic/ ;;
+16) dir=EXAMPLES/fluid_solid/fluid_solid_external_mesh/ ;;
+17) dir=EXAMPLES/poroelastic_semi_infinite_homogeneous/ ;;
 *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
 esac
 
@@ -144,6 +146,9 @@ else
     sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
     sed -i "s:^NSTEP .*:NSTEP    = 3000:" DATA/Par_file
   fi
+  if [ "$TESTDIR" == "17" ]; then
+    sed -i "s:^NSTEP .*:NSTEP    = 2000:" DATA/Par_file
+  fi
 
   # coverage run
   if [ "$TESTCOV" == "1" ]; then
@@ -171,7 +176,31 @@ echo -en 'travis_fold:end:tests\\r'
 # additional runs for coverage
 #
 # note: log becomes too long, trying to fold each test output
+# first coverage tester (without mpi)
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.additional\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "0" ]; then
+  ##
+  ## testing noise example
+  ##
+  cd EXAMPLES/noise_uniform/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file_noise_1
+  ./run_this_example.sh
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+
+  ##
+  ## testing Tape2007 example
+  ##
+  cd EXAMPLES/Tape2007/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.additional\\r'
+
+# second coverage tester (with mpi)
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.additional2\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing example with pml (longer testing only together with mpi and code coverage)
@@ -210,15 +239,6 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   cd EXAMPLES/poroelastic_acoustic/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
-  ./run_this_example.sh
-  # only for coverage, comparison would fail: my_test
-  cd $WORKDIR
-
-  ##
-  ## testing noise example
-  ##
-  cd EXAMPLES/noise_uniform/
-  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file_noise_1
   ./run_this_example.sh
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
@@ -265,15 +285,15 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd $WORKDIR
 
   ##
-  ## testing Tape2007 example
+  ## testing fluid solid w/ external mesh
   ##
-  cd EXAMPLES/Tape2007/
+  cd EXAMPLES/fluid_solid/fluid_solid_external_mesh/
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
-echo -en 'travis_fold:end:coverage.additional\\r'
+echo -en 'travis_fold:end:coverage.additional2\\r'
 
 
 # done

@@ -1,4 +1,4 @@
-running example: Sun Jun 19 00:35:26 AST 2016
+running example: Mon Feb 11 04:03:49 AST 2019
 
 setting up example...
 
@@ -10,42 +10,54 @@ running mesher on 4 processors...
  *** Specfem 2-D Mesher - MPI version       ***
  **********************************************
 
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
  Reading the parameter file...
 
  Title of the simulation: poroelastic semi-infinite homogeneous
 
 
+ Receiver lines:
+   Nb of line sets =            1
 
- Nb of solid, fluid or porous materials =            1
+ Materials:
+   Nb of solid, fluid or porous materials =            1
 
+ --------
  Material #           1  isotropic
- rho_s, kappa_s=    2650.0000000000000        12200000000.000000     
- rho_f, kappa_f, eta_f=    880.00000000000000        1985000000.0000000        0.0000000000000000     
- phi, tortuosity, permxx, permxz, permzz=   0.10000000000000001        2.0000000000000000        1.0000000000000001E-009   0.0000000000000000        1.0000000000000001E-009
- kappa_fr, mu_fr, Qmu=    9600000000.0000000        5100000000.0000000        9999999999.0000000     
+ rho_s, kappa_s         =    2650.0000000000000        12200000000.000000     
+ rho_f, kappa_f, eta_f  =    880.00000000000000        1985000000.0000000        0.0000000000000000     
+ phi, tortuosity        =   0.10000000000000001        2.0000000000000000     
+ permxx, permxz, permzz =    1.0000000000000001E-009   0.0000000000000000        1.0000000000000001E-009
+ kappa_fr, mu_fr, Qmu   =    9600000000.0000000        5100000000.0000000        9999999999.0000000     
  Material is porous
+ --------
 
+ Mesh from internal meshing:
 
- mesh from internal meshing
-
-
- Reading interface data from file DATA/./interfaces.dat to count the spectral elements
+ Reading interface data from file: ./DATA/./interfaces.dat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
  Reading            2  points for interface            1
  Reading            2  points for interface            2
+
  Total number of layers in z direction =            1
  There are          200  spectral elements along Z in layer            1
 
+ Total number of spectral elements along X =          200
  Total number of spectral elements along Z =          200
 
+ Regions:
+   Nb of regions in the mesh =            1
 
- Nb of regions in the mesh =            1
-
+ ------
  Region            1
  IX from            1  to          200
  IZ from            1  to          200
  Material #            1  isotropic
  Material is poroelastic
-  -----
+ ------
+ Total number of spectral elements         =        40000
+
 
  Parameter file successfully read 
 
@@ -56,7 +68,7 @@ running mesher on 4 processors...
  Source           1
    Position xs, zs =    500.00000000000000        300.00000000000000     
 
-   Source type (1=force, 2=moment tensor):            2
+   Source type (1=force, 2=moment tensor, 3=Rayleigh wave, 4=plane incident P, 5=plane incident S):            2
    Moment tensor source:
    Mxx of the source =    1.0000000000000000     
    Mzz of the source =    1.0000000000000000     
@@ -66,10 +78,23 @@ running mesher on 4 processors...
    Gaussian:
    Frequency, delay =    30.000000000000000        0.0000000000000000     
 
- Reading interface data from file DATA/./interfaces.dat
+ Reading interface data from file: ./DATA/./interfaces.dat
 
- Min and max value of X in the grid =    0.0000000000000000        1000.0000000000000     
- Min and max value of Z in the grid =    0.0000000000000000        1000.0000000000000     
+ Mesh dimensions: 
+   Min and max value of X in the grid =    0.0000000000000000        1000.0000000000000     
+   Min and max value of Z in the grid =    0.0000000000000000        1000.0000000000000     
+
+
+ ************ Computing elements load ************
+ Number of elastic elements :           0
+ Number of acoustic elements :           0
+ Number of viscoelastic elements :           0
+ Number of viscoacoustic elements :           0
+ Number of elastic PML elements :           0
+ Number of acoustic PML elements :           0
+ Number of viscoelastic PML elements :           0
+ Number of viscoacoustic PML elements :           0
+ *************************************************
 
 
  Partitioning method: SCOTCH
@@ -78,15 +103,15 @@ running mesher on 4 processors...
  nedges_coupled (acoustic/poroelastic) =            0
  nedges_coupled (poroelastic/elastic)  =            0
 
- slice            0  has number of spectral elements =        9974
- slice            1  has number of spectral elements =        9975
- slice            2  has number of spectral elements =       10025
- slice            3  has number of spectral elements =       10026
+ slice            0  has number of spectral elements =        9875
+ slice            1  has number of spectral elements =       10125
+ slice            2  has number of spectral elements =       10000
+ slice            3  has number of spectral elements =       10000
 
  Position (x,z) of the source =    500.00000000000000        300.00000000000000     
 
 
- writing the DATA/STATIONS file
+ writing the ./DATA/STATIONS file
 
 
  There are            1  receivers
@@ -105,10 +130,14 @@ running solver on 4 processors...
  **** Specfem 2-D Solver - MPI version     ****
  **********************************************
 
+ Running Git version of the code corresponding to undefined in the case of old tar ball builds
+ dating undefined in the case of old tar ball builds
+
  There are            4  MPI processes
  Processes are numbered from 0 to            3
 
  There is a total of            4  slices
+
 
  NDIM =            2
 
@@ -125,10 +154,10 @@ running solver on 4 processors...
  Program SPECFEM2D: 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- poroelastic semi-infinite homogeneous             
+ poroelastic semi-infinite homogeneous
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 19 - 06 - 2016                                 T i m e  : 00:35:27
+ D a t e : 11 - 02 - 2019                                 T i m e  : 04:03:50
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
@@ -136,7 +165,7 @@ running solver on 4 processors...
  C o n t r o l
  =============
 
-     Number of spectral element control nodes. . .(npgeo) =   40311
+     Number of spectral element control nodes. . .(npgeo) =   39921
      Number of space dimensions. . . . . . . . . . (NDIM) =       2
 
 
@@ -145,17 +174,17 @@ running solver on 4 processors...
 
      Display frequency . . . .(NSTEP_BETWEEN_OUTPUT_INFO) =    200
      Color display . . . . . . . . . . . . . . . (colors) =      1
-             ==  0     black and white display              
-             ==  1     color display                        
+      == 0     black and white display              
+      == 1     color display                        
      Numbered mesh . . . . . . . . . . . . . . .(numbers) =      0
-             ==  0     do not number the mesh               
-             ==  1     number the mesh                      
+      == 0     do not number the mesh               
+      == 1     number the mesh                      
 
 
  C o n t r o l
  =============
 
-     Seismograms recording type . . . . . . .(seismotype) =      2
+     Seismograms recording type . . . . . . .(seismotype) = 2
      Angle for first line of receivers. . . . .(anglerec) =   0.00
 
 
@@ -167,9 +196,10 @@ running solver on 4 processors...
      Add Bielak conditions .(add_Bielak_conditions_right) =      F
      Add Bielak conditions . .(add_Bielak_conditions_top) =      F
      Add Bielak conditions. .(add_Bielak_conditions_left) =      F
-     Attenuation on/off .(ATTENUATION_VISCOELASTIC_SOLID) =      F
+     Attenuation in solid . . .(ATTENUATION_VISCOELASTIC) =      F
+     Attenuation in fluid . . (ATTENUATION_VISCOACOUSTIC) =      F
      Save grid in ASCII file or not . (output_grid_ASCII) =      F
-     Save a file with total energy or not.(output_energy) =      F
+     Save a file with total energy or not.(OUTPUT_ENERGY) =      F
 
 
  C o n t r o l
@@ -200,9 +230,9 @@ running solver on 4 processors...
      Onset time. . . . . . =   -4.0000000000000001E-002
      Fundamental period. . =    3.3333333333333333E-002
      Fundamental frequency =    30.000000000000000     
-     --> onset time ok
+     The onset time is ok
 
-     --> Spectral Elements <--
+     -- Spectral Elements --
 
 
      Number of spectral elements . . . . . . . . .  (nspec) =  40000
@@ -280,37 +310,66 @@ running solver on 4 processors...
    nspec_top    =            0
 
 
+ Setting up mesh
 
  Generating global mesh numbering (fast version)...
 
+ Mesh numbering:
+   Total number of elements:        40000
 
- Total number of elements:        40000
- decomposed as follows:
-
- Total number of elastic/visco/poro elements:        40000
- Total number of acoustic elements:            0
+   Total number of acoustic elements           =            0
+   Total number of elastic/visco/poro elements =        40000
 
  Approximate total number of grid points in the mesh
- (with a few duplicates coming from MPI buffers):       643344
+ (with a few duplicates coming from MPI buffers):       643284
 
  Approximate number of acoustic degrees of freedom in the mesh:            0
- Approximate number of elastic degrees of freedom in the mesh:      1286688
+ Approximate number of elastic degrees of freedom in the mesh:      1286568
    (there are 2 degrees of freedom per point for elastic elements)
 
  Approximate total number of degrees of freedom in the mesh
- (sum of the two values above):      1286688
+ (sum of the two values above):      1286568
 
   (for simplicity viscoelastic or poroelastic elements, if any,
    are counted as elastic in the above three estimates;
    in reality they have more degrees of freedom)
 
+ Mesh dimensions:
+   Xmin,Xmax of the whole mesh =    0.0000000000000000        1000.0000000000001     
+   Zmin,Zmax of the whole mesh =    0.0000000000000000        1000.0000000000001     
 
- Xmin,Xmax of the whole mesh =    0.0000000000000000        1000.0000000000001     
- Zmin,Zmax of the whole mesh =    0.0000000000000000        1000.0000000000001     
+ Domains:
+   total number of acoustic elements        =            0
+   total number of elastic elements         =            0
+   total number of poroelastic elements     =        40000
 
+ Setting up MPI communication arrays
 
- basic mesh setup is successful
+   maximum number of MPI interfaces (for a single slice) =            3
 
+   total MPI interface points:         3370
+
+   master process:
+   number of MPI interfaces in acoustic domain    =            0
+   number of MPI interfaces in elastic domain     =            0
+   number of MPI interfaces in poroelastic domain =            2
+
+   number of outer elements  =          209
+   number of inner elements  =         9666
+
+   percentage of outer elements    2.11645508     %
+   percentage of inner elements    97.8835449     %
+
+   number of global nodes in outer elements  =         4185
+   number of global nodes in inner elements  =       155489
+
+   determining communication phases:
+   poroelastic domains:
+   total number of outer/inner elements =          836       39164
+   total percentage of outer elements    2.08999634     %
+   total percentage of inner elements    97.9100037     %
+
+ All mesh setup done successfully
 
  sources:
 
@@ -322,10 +381,11 @@ running solver on 4 processors...
  Moment-tensor source:
              original x:    500.000000    
              original z:    300.000000    
- closest estimate found:    8.03887325E-14  m away
-  in rank            1
-  in element         6628
-  at xi,gamma coordinates =    1.0000000000000706       -1.0000000000000144     
+ Closest estimate found:    0.00000000      m away
+  in rank            2
+  in element         6000
+  in poroelastic domain
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
 
 
  end of moment-tensor source detection
@@ -340,17 +400,17 @@ running solver on 4 processors...
   locating receivers
  ********************
 
- reading receiver information from the DATA/STATIONS file
+ reading receiver information from the ./DATA/STATIONS file
 
 
  Station #            1     AA      S0001                           
              original x:    600.000000    
              original z:    400.000000    
-   distance from source:    141.421356    
- closest estimate found:    0.00000000      m away
-  in element         7352
-  at process            0
-  at xi,gamma coordinates =    1.0000000000000338       0.99999999999999545     
+ Closest estimate found:    0.00000000      m away
+  in element         7920
+  in rank            3
+  at xi,gamma coordinates =    1.0000000000000000        1.0000000000000000     
+ Distance from source:    141.421356      m
 
 
  end of receiver detection
@@ -365,12 +425,9 @@ running solver on 4 processors...
 
  Preparing mass matrices
    initializing mass matrices
-
-   total MPI interface points:         3490
-        acoustic interface points:            0
-        assembly acoustic MPI interface points:           0
-
    inverting mass matrices
+
+ Preparing image coloring
 
  Checking mesh and stability
 
@@ -404,16 +461,18 @@ running solver on 4 processors...
 
  ----
  Number of points per wavelength:
+ ----
+   Source            1
    maximum dominant source frequency =    75.000000000000000      Hz
- 
-   Nb pts / lambdaPI_fmax min =    28.149650752965741     
-   Nb pts / lambdaPI_fmax max =    28.149650752965741     
- 
-   Nb pts / lambdaPII_fmax min =    10.250209657816525     
-   Nb pts / lambdaPII_fmax max =    10.250209657816525     
- 
-   Nb pts / lambdaS_fmax min =    15.456104815475619     
-   Nb pts / lambdaS_fmax max =    15.456104815475619     
+
+   Nb pts / lambdaPI_fmax min =    28.1496506    
+   Nb pts / lambdaPI_fmax max =    28.1496506    
+
+   Nb pts / lambdaPII_fmax min =    10.2502098    
+   Nb pts / lambdaPII_fmax max =    10.2502098    
+
+   Nb pts / lambdaS_fmax min =    15.4561052    
+   Nb pts / lambdaS_fmax max =    15.4561052    
 
  -----------------------------------------
 
@@ -454,6 +513,10 @@ running solver on 4 processors...
  total number of elements in fluid and solid regions =        40000
 
 
+ Preparing source time function
+
+ Preparing material arrays
+
  Preparing image coloring
    allocating color image arrays
    locating all the pixels of color images
@@ -461,13 +524,8 @@ running solver on 4 processors...
    done locating all the pixels of color images
    coloring image background based on vp
 
- Preparing source time function
-   saving the source time function in a text file...
-
- Preparing attenuation
- 
  done, preparation successful
- 
+
 
  =========================================
  =  T i m e  e v o l u t i o n  l o o p  =
@@ -477,298 +535,284 @@ running solver on 4 processors...
  Starting time iteration loop ...
 
 
- Creating color image of size         1610  x         1690  for time step            1
- drawing scalar image of part of the displacement vector...
- Color image created
-
  ******************************************************************
 Time step number       5   t =  4.000000E-04 s out of    2500
  ******************************************************************
  We have done   0.160064027     % of the total
- Max norm of vector field in solid (poroelastic) =    1.0400140126876067E-006
- Max norm of vector field in fluid (poroelastic) =    1.9083331892488786E-007
- Elapsed time in seconds =   0.30699992179870605     
+ Max norm of vector field in solid (poroelastic) =    5.85419213E-11
+ Max norm of vector field in fluid (poroelastic) =    1.07419212E-11
+ Elapsed time in seconds =   0.15700006484985352     
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =    6.1399984359741214E-002
+ Mean elapsed time per time step in seconds =    3.1400012969970706E-002
  Time steps remaining =         2495
- Estimated remaining time in seconds =    153.19296097755432     
- Estimated remaining time in hh:mm:ss =      0 h 02 m 33 s
- Estimated total run time in seconds =    153.49996089935303     
- Estimated total run time in hh:mm:ss =      0 h 02 m 33 s
- The run will finish approximately on: Sun Jun 19, 2016 00:38
+ Estimated remaining time in seconds =    78.343032360076904     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 18 s
+ Estimated total run time in seconds =    78.500032424926758     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 18 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:05
 
+
+ Creating color image of size         1610  x         1690  for time step            5
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    4.2341050804362013E-011
+ Color image created
 
  ******************************************************************
 Time step number     200   t =    0.0199 s out of    2500
  ******************************************************************
  We have done    7.96318531     % of the total
- Max norm of vector field in solid (poroelastic) =    1.6495069488883018E-002
- Max norm of vector field in fluid (poroelastic) =    2.4604557082056999E-002
- Elapsed time in seconds =    9.1619999408721924     
- Elapsed time in hh:mm:ss =      0 h 00 m 09 s
- Mean elapsed time per time step in seconds =    4.5809999704360962E-002
+ Max norm of vector field in solid (poroelastic) =    9.28500185E-07
+ Max norm of vector field in fluid (poroelastic) =    1.38497921E-06
+ Elapsed time in seconds =    7.8510000705718994     
+ Elapsed time in hh:mm:ss =      0 h 00 m 07 s
+ Mean elapsed time per time step in seconds =    3.9255000352859497E-002
  Time steps remaining =         2300
- Estimated remaining time in seconds =    105.36299932003021     
- Estimated remaining time in hh:mm:ss =      0 h 01 m 45 s
- Estimated total run time in seconds =    114.52499926090240     
- Estimated total run time in hh:mm:ss =      0 h 01 m 54 s
- The run will finish approximately on: Sun Jun 19, 2016 00:37
+ Estimated remaining time in seconds =    90.286500811576843     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 30 s
+ Estimated total run time in seconds =    98.137500882148743     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 38 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:05
 
-
- Creating color image of size         1610  x         1690  for time step          200
- drawing scalar image of part of the displacement vector...
- Color image created
 
  ******************************************************************
 Time step number     400   t =    0.0399 s out of    2500
  ******************************************************************
  We have done    15.9663868     % of the total
- Max norm of vector field in solid (poroelastic) =   0.61641401052474976     
- Max norm of vector field in fluid (poroelastic) =   0.97427338361740112     
- Elapsed time in seconds =    17.983000040054321     
- Elapsed time in hh:mm:ss =      0 h 00 m 17 s
- Mean elapsed time per time step in seconds =    4.4957500100135800E-002
+ Max norm of vector field in solid (poroelastic) =    3.46976594E-05
+ Max norm of vector field in fluid (poroelastic) =    5.48414246E-05
+ Elapsed time in seconds =    15.770999908447266     
+ Elapsed time in hh:mm:ss =      0 h 00 m 15 s
+ Mean elapsed time per time step in seconds =    3.9427499771118167E-002
  Time steps remaining =         2100
- Estimated remaining time in seconds =    94.410750210285187     
- Estimated remaining time in hh:mm:ss =      0 h 01 m 34 s
- Estimated total run time in seconds =    112.39375025033951     
- Estimated total run time in hh:mm:ss =      0 h 01 m 52 s
- The run will finish approximately on: Sun Jun 19, 2016 00:37
+ Estimated remaining time in seconds =    82.797749519348145     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 22 s
+ Estimated total run time in seconds =    98.568749427795410     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 38 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:05
 
 
- Creating color image of size         1610  x         1690  for time step          400
- drawing scalar image of part of the displacement vector...
+ Creating color image of size         1610  x         1690  for time step          500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    1.0285589269187767E-005
  Color image created
 
  ******************************************************************
 Time step number     600   t =    0.0599 s out of    2500
  ******************************************************************
  We have done    23.9695873     % of the total
- Max norm of vector field in solid (poroelastic) =    1.9017131999135017E-002
- Max norm of vector field in fluid (poroelastic) =   0.13792583346366882     
- Elapsed time in seconds =    26.828999996185303     
- Elapsed time in hh:mm:ss =      0 h 00 m 26 s
- Mean elapsed time per time step in seconds =    4.4714999993642174E-002
+ Max norm of vector field in solid (poroelastic) =    1.07047686E-06
+ Max norm of vector field in fluid (poroelastic) =    7.76378602E-06
+ Elapsed time in seconds =    24.243999958038330     
+ Elapsed time in hh:mm:ss =      0 h 00 m 24 s
+ Mean elapsed time per time step in seconds =    4.0406666596730548E-002
  Time steps remaining =         1900
- Estimated remaining time in seconds =    84.958499987920135     
- Estimated remaining time in hh:mm:ss =      0 h 01 m 24 s
- Estimated total run time in seconds =    111.78749998410544     
- Estimated total run time in hh:mm:ss =      0 h 01 m 51 s
- The run will finish approximately on: Sun Jun 19, 2016 00:37
+ Estimated remaining time in seconds =    76.772666533788041     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 16 s
+ Estimated total run time in seconds =    101.01666649182637     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 41 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:06
 
-
- Creating color image of size         1610  x         1690  for time step          600
- drawing scalar image of part of the displacement vector...
- Color image created
 
  ******************************************************************
 Time step number     800   t =    0.0799 s out of    2500
  ******************************************************************
  We have done    31.9727898     % of the total
- Max norm of vector field in solid (poroelastic) =    1.9448722014203668E-003
- Max norm of vector field in fluid (poroelastic) =   0.12963218986988068     
- Elapsed time in seconds =    36.128000020980835     
- Elapsed time in hh:mm:ss =      0 h 00 m 36 s
- Mean elapsed time per time step in seconds =    4.5160000026226041E-002
+ Max norm of vector field in solid (poroelastic) =    1.09476062E-07
+ Max norm of vector field in fluid (poroelastic) =    7.29693193E-06
+ Elapsed time in seconds =    32.394999980926514     
+ Elapsed time in hh:mm:ss =      0 h 00 m 32 s
+ Mean elapsed time per time step in seconds =    4.0493749976158143E-002
  Time steps remaining =         1700
- Estimated remaining time in seconds =    76.772000044584274     
- Estimated remaining time in hh:mm:ss =      0 h 01 m 16 s
- Estimated total run time in seconds =    112.90000006556511     
- Estimated total run time in hh:mm:ss =      0 h 01 m 52 s
- The run will finish approximately on: Sun Jun 19, 2016 00:37
+ Estimated remaining time in seconds =    68.839374959468842     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 08 s
+ Estimated total run time in seconds =    101.23437494039536     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 41 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:06
 
-
- Creating color image of size         1610  x         1690  for time step          800
- drawing scalar image of part of the displacement vector...
- Color image created
 
  ******************************************************************
 Time step number    1000   t =    0.0999 s out of    2500
  ******************************************************************
  We have done    39.9759903     % of the total
- Max norm of vector field in solid (poroelastic) =    1.5736868372187018E-003
- Max norm of vector field in fluid (poroelastic) =   0.12134203314781189     
- Elapsed time in seconds =    45.650000095367432     
- Elapsed time in hh:mm:ss =      0 h 00 m 45 s
- Mean elapsed time per time step in seconds =    4.5650000095367432E-002
+ Max norm of vector field in solid (poroelastic) =    8.85822047E-08
+ Max norm of vector field in fluid (poroelastic) =    6.83028838E-06
+ Elapsed time in seconds =    41.872999906539917     
+ Elapsed time in hh:mm:ss =      0 h 00 m 41 s
+ Mean elapsed time per time step in seconds =    4.1872999906539914E-002
  Time steps remaining =         1500
- Estimated remaining time in seconds =    68.475000143051147     
- Estimated remaining time in hh:mm:ss =      0 h 01 m 08 s
- Estimated total run time in seconds =    114.12500023841858     
- Estimated total run time in hh:mm:ss =      0 h 01 m 54 s
- The run will finish approximately on: Sun Jun 19, 2016 00:37
+ Estimated remaining time in seconds =    62.809499859809868     
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 02 s
+ Estimated total run time in seconds =    104.68249976634979     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 44 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:06
 
 
  Creating color image of size         1610  x         1690  for time step         1000
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    8.8504513939824392E-008
  Color image created
 
  ******************************************************************
 Time step number    1200   t =    0.1199 s out of    2500
  ******************************************************************
  We have done    47.9791908     % of the total
- Max norm of vector field in solid (poroelastic) =    1.3573796022683382E-003
- Max norm of vector field in fluid (poroelastic) =   0.11261473596096039     
- Elapsed time in seconds =    55.415999889373779     
- Elapsed time in hh:mm:ss =      0 h 00 m 55 s
- Mean elapsed time per time step in seconds =    4.6179999907811485E-002
+ Max norm of vector field in solid (poroelastic) =    7.63714780E-08
+ Max norm of vector field in fluid (poroelastic) =    6.33902891E-06
+ Elapsed time in seconds =    51.056999921798706     
+ Elapsed time in hh:mm:ss =      0 h 00 m 51 s
+ Mean elapsed time per time step in seconds =    4.2547499934832256E-002
  Time steps remaining =         1300
- Estimated remaining time in seconds =    60.033999880154930     
- Estimated remaining time in hh:mm:ss =      0 h 01 m 00 s
- Estimated total run time in seconds =    115.44999976952872     
- Estimated total run time in hh:mm:ss =      0 h 01 m 55 s
- The run will finish approximately on: Sun Jun 19, 2016 00:37
+ Estimated remaining time in seconds =    55.311749915281929     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 55 s
+ Estimated total run time in seconds =    106.36874983708063     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 46 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:06
 
-
- Creating color image of size         1610  x         1690  for time step         1200
- drawing scalar image of part of the displacement vector...
- Color image created
 
  ******************************************************************
 Time step number    1400   t =    0.1399 s out of    2500
  ******************************************************************
  We have done    55.9823914     % of the total
- Max norm of vector field in solid (poroelastic) =    1.2120493920519948E-003
- Max norm of vector field in fluid (poroelastic) =   0.10443703085184097     
- Elapsed time in seconds =    65.117000102996826     
- Elapsed time in hh:mm:ss =      0 h 01 m 05 s
- Mean elapsed time per time step in seconds =    4.6512142930712021E-002
+ Max norm of vector field in solid (poroelastic) =    6.81297649E-08
+ Max norm of vector field in fluid (poroelastic) =    5.87871182E-06
+ Elapsed time in seconds =    60.174000024795532     
+ Elapsed time in hh:mm:ss =      0 h 01 m 00 s
+ Mean elapsed time per time step in seconds =    4.2981428589139663E-002
  Time steps remaining =         1100
- Estimated remaining time in seconds =    51.163357223783223     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 51 s
- Estimated total run time in seconds =    116.28035732678005     
- Estimated total run time in hh:mm:ss =      0 h 01 m 56 s
- The run will finish approximately on: Sun Jun 19, 2016 00:37
+ Estimated remaining time in seconds =    47.279571448053630     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 47 s
+ Estimated total run time in seconds =    107.45357147284916     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 47 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:06
 
 
- Creating color image of size         1610  x         1690  for time step         1400
- drawing scalar image of part of the displacement vector...
+ Creating color image of size         1610  x         1690  for time step         1500
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    6.5240001845268125E-008
  Color image created
 
  ******************************************************************
 Time step number    1600   t =    0.1599 s out of    2500
  ******************************************************************
  We have done    63.9855957     % of the total
- Max norm of vector field in solid (poroelastic) =    1.1066258884966373E-003
- Max norm of vector field in fluid (poroelastic) =    9.8106905817985535E-002
- Elapsed time in seconds =    74.958999872207642     
- Elapsed time in hh:mm:ss =      0 h 01 m 14 s
- Mean elapsed time per time step in seconds =    4.6849374920129777E-002
+ Max norm of vector field in solid (poroelastic) =    6.22907095E-08
+ Max norm of vector field in fluid (poroelastic) =    5.52239135E-06
+ Elapsed time in seconds =    69.046999931335449     
+ Elapsed time in hh:mm:ss =      0 h 01 m 09 s
+ Mean elapsed time per time step in seconds =    4.3154374957084657E-002
  Time steps remaining =          900
- Estimated remaining time in seconds =    42.164437428116798     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 42 s
- Estimated total run time in seconds =    117.12343730032444     
- Estimated total run time in hh:mm:ss =      0 h 01 m 57 s
- The run will finish approximately on: Sun Jun 19, 2016 00:37
+ Estimated remaining time in seconds =    38.838937461376190     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 38 s
+ Estimated total run time in seconds =    107.88593739271164     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 47 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:06
 
-
- Creating color image of size         1610  x         1690  for time step         1600
- drawing scalar image of part of the displacement vector...
- Color image created
 
  ******************************************************************
 Time step number    1800   t =    0.1799 s out of    2500
  ******************************************************************
  We have done    71.9887924     % of the total
- Max norm of vector field in solid (poroelastic) =    1.0211705230176449E-003
- Max norm of vector field in fluid (poroelastic) =    9.2252209782600403E-002
- Elapsed time in seconds =    84.710999965667725     
- Elapsed time in hh:mm:ss =      0 h 01 m 24 s
- Mean elapsed time per time step in seconds =    4.7061666647593182E-002
+ Max norm of vector field in solid (poroelastic) =    5.74069858E-08
+ Max norm of vector field in fluid (poroelastic) =    5.19283776E-06
+ Elapsed time in seconds =    77.977999925613403     
+ Elapsed time in hh:mm:ss =      0 h 01 m 17 s
+ Mean elapsed time per time step in seconds =    4.3321111069785222E-002
  Time steps remaining =          700
- Estimated remaining time in seconds =    32.943166653315231     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 32 s
- Estimated total run time in seconds =    117.65416661898296     
- Estimated total run time in hh:mm:ss =      0 h 01 m 57 s
- The run will finish approximately on: Sun Jun 19, 2016 00:37
+ Estimated remaining time in seconds =    30.324777748849655     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 30 s
+ Estimated total run time in seconds =    108.30277767446306     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 48 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:06
 
-
- Creating color image of size         1610  x         1690  for time step         1800
- drawing scalar image of part of the displacement vector...
- Color image created
 
  ******************************************************************
 Time step number    2000   t =    0.1999 s out of    2500
  ******************************************************************
  We have done    79.9919968     % of the total
- Max norm of vector field in solid (poroelastic) =    9.5428904751315713E-004
- Max norm of vector field in fluid (poroelastic) =    8.7558500468730927E-002
- Elapsed time in seconds =    94.427000045776367     
- Elapsed time in hh:mm:ss =      0 h 01 m 34 s
- Mean elapsed time per time step in seconds =    4.7213500022888183E-002
+ Max norm of vector field in solid (poroelastic) =    5.36406937E-08
+ Max norm of vector field in fluid (poroelastic) =    4.92862682E-06
+ Elapsed time in seconds =    86.677000045776367     
+ Elapsed time in hh:mm:ss =      0 h 01 m 26 s
+ Mean elapsed time per time step in seconds =    4.3338500022888186E-002
  Time steps remaining =          500
- Estimated remaining time in seconds =    23.606750011444092     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 23 s
- Estimated total run time in seconds =    118.03375005722046     
- Estimated total run time in hh:mm:ss =      0 h 01 m 58 s
- The run will finish approximately on: Sun Jun 19, 2016 00:37
+ Estimated remaining time in seconds =    21.669250011444092     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 21 s
+ Estimated total run time in seconds =    108.34625005722046     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 48 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:06
 
 
  Creating color image of size         1610  x         1690  for time step         2000
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    5.3621349138666119E-008
  Color image created
 
  ******************************************************************
 Time step number    2200   t =    0.2199 s out of    2500
  ******************************************************************
  We have done    87.9952011     % of the total
- Max norm of vector field in solid (poroelastic) =    8.9904351625591516E-004
- Max norm of vector field in fluid (poroelastic) =    8.3500266075134277E-002
- Elapsed time in seconds =    104.00200009346008     
- Elapsed time in hh:mm:ss =      0 h 01 m 44 s
- Mean elapsed time per time step in seconds =    4.7273636406118216E-002
+ Max norm of vector field in solid (poroelastic) =    5.05932718E-08
+ Max norm of vector field in fluid (poroelastic) =    4.70017949E-06
+ Elapsed time in seconds =    96.130000114440918     
+ Elapsed time in hh:mm:ss =      0 h 01 m 36 s
+ Mean elapsed time per time step in seconds =    4.3695454597473142E-002
  Time steps remaining =          300
- Estimated remaining time in seconds =    14.182090921835465     
- Estimated remaining time in hh:mm:ss =      0 h 00 m 14 s
- Estimated total run time in seconds =    118.18409101529555     
- Estimated total run time in hh:mm:ss =      0 h 01 m 58 s
- The run will finish approximately on: Sun Jun 19, 2016 00:37
+ Estimated remaining time in seconds =    13.108636379241943     
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 13 s
+ Estimated total run time in seconds =    109.23863649368286     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 49 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:06
 
-
- Creating color image of size         1610  x         1690  for time step         2200
- drawing scalar image of part of the displacement vector...
- Color image created
 
  ******************************************************************
 Time step number    2400   t =    0.2399 s out of    2500
  ******************************************************************
  We have done    95.9983978     % of the total
- Max norm of vector field in solid (poroelastic) =    8.5311202565208077E-004
- Max norm of vector field in fluid (poroelastic) =    7.9890541732311249E-002
- Elapsed time in seconds =    113.82899999618530     
- Elapsed time in hh:mm:ss =      0 h 01 m 53 s
- Mean elapsed time per time step in seconds =    4.7428749998410541E-002
+ Max norm of vector field in solid (poroelastic) =    4.79772204E-08
+ Max norm of vector field in fluid (poroelastic) =    4.49699110E-06
+ Elapsed time in seconds =    105.21300005912781     
+ Elapsed time in hh:mm:ss =      0 h 01 m 45 s
+ Mean elapsed time per time step in seconds =    4.3838750024636587E-002
  Time steps remaining =          100
- Estimated remaining time in seconds =    4.7428749998410540     
+ Estimated remaining time in seconds =    4.3838750024636584     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    118.57187499602635     
- Estimated total run time in hh:mm:ss =      0 h 01 m 58 s
- The run will finish approximately on: Sun Jun 19, 2016 00:37
+ Estimated total run time in seconds =    109.59687506159146     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 49 s
+ The run will finish approximately on: Mon Feb 11, 2019 04:06
 
-
- Creating color image of size         1610  x         1690  for time step         2400
- drawing scalar image of part of the displacement vector...
- Color image created
 
  ******************************************************************
 Time step number    2500   t =    0.2499 s out of    2500
  ******************************************************************
  We have done    100.000000     % of the total
- Max norm of vector field in solid (poroelastic) =    8.3164492389187217E-004
- Max norm of vector field in fluid (poroelastic) =    7.8263275325298309E-002
- Elapsed time in seconds =    118.73600006103516     
- Elapsed time in hh:mm:ss =      0 h 01 m 58 s
- Mean elapsed time per time step in seconds =    4.7494400024414060E-002
+ Max norm of vector field in solid (poroelastic) =    4.67469015E-08
+ Max norm of vector field in fluid (poroelastic) =    4.40540589E-06
+ Elapsed time in seconds =    109.84599995613098     
+ Elapsed time in hh:mm:ss =      0 h 01 m 49 s
+ Mean elapsed time per time step in seconds =    4.3938399982452393E-002
  Time steps remaining =            0
  Estimated remaining time in seconds =    0.0000000000000000     
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    118.73600006103516     
- Estimated total run time in hh:mm:ss =      0 h 01 m 58 s
+ Estimated total run time in seconds =    109.84599995613098     
+ Estimated total run time in hh:mm:ss =      0 h 01 m 49 s
 
 
  Creating color image of size         1610  x         1690  for time step         2500
- drawing scalar image of part of the displacement vector...
+ drawing scalar image of the forward wavefield displacement...
+ Color image maximum amplitude =    4.6726920999162758E-008
  Color image created
+
+ Total duration of the time loop in seconds =    109.531227      s
+ Total number of time steps =         2500
+ Average duration of a time step of the time loop =    4.38124910E-02  s
+ Total number of spectral elements in the mesh =         9875
+     of which         9875  are regular elements
+     and            0  are PML elements.
+ Average duration of the calculation per spectral element =    4.43670797E-06  s
+
+
+ Total duration of the timeloop in seconds, measured using 
+ date and time of the system :    110.039001      s
 
 
  -------------------------------------------------------------------------------
@@ -776,14 +820,14 @@ Time step number    2500   t =    0.2499 s out of    2500
  Program SPECFEM2D: 
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- poroelastic semi-infinite homogeneous             
+ poroelastic semi-infinite homogeneous
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
- D a t e : 19 - 06 - 2016                                 T i m e  : 00:37:26
+ D a t e : 11 - 02 - 2019                                 T i m e  : 04:05:40
  -------------------------------------------------------------------------------
  -------------------------------------------------------------------------------
 
 see results in directory: OUTPUT_FILES/
 
 done
-Sun Jun 19 00:37:26 AST 2016
+Mon Feb 11 04:05:40 AST 2019

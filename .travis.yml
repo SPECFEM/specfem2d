@@ -28,6 +28,9 @@ env:
     #   CUDA_VERSION - specifies CUDA toolkit version
 
     # code coverage: vectorization & mpi, using code coverage flags
+    - TESTID=0 TESTDIR=1 TESTCOV=1 TESTFLAGS="--without-mpi" CUDA=false
+
+    # code coverage: vectorization & mpi, using code coverage flags
     - TESTID=1 TESTDIR=1 TESTCOV=1 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
 
     # default test with make tests
@@ -89,6 +92,12 @@ env:
 
     # check amplitudes viscoelastic
     - TESTID=21 TESTDIR=15 TESTCOV=0 TESTFLAGS="--without-mpi" CUDA=false
+
+    # fluid solid
+    - TESTID=22 TESTDIR=16 TESTCOV=0 TESTFLAGS="--with-mpi" CUDA=false
+
+    # poroelastic
+    - TESTID=23 TESTDIR=17 TESTCOV=0 TESTFLAGS="--with-mpi" CUDA=false
 
 
 before_install:
