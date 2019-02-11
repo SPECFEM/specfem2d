@@ -40,6 +40,7 @@
 #
 
 PATH_TO_CUBIT=/opt/Trelis-15.0/bin/trelis # TODO update that line: path to cubit executable
+
 while true; do
     read -p "Have you read all the comments in files make_mesh.sh and JensenMesh.py before running that script? [y|n] " yn
     case $yn in
@@ -48,10 +49,15 @@ while true; do
         * ) echo "Please answer yes (Y or y) or no (N or n)";;
     esac
 done
-rm -rf MESH
-mkdir MESH
+
+mkdir -p MESH
+rm -rf MESH/*
+
 echo "Making mesh ..."
+
 $PATH_TO_CUBIT -nographics -batch ./JensenMesh.py # >> /dev/null 2>&1
+
 echo "Done! Mesh files has been written in directory MESH"
+
 rm -rf history* free_surface_file materials_file mesh_file nodes_coords_file elements_cpml_list absorbing_surface_file
 

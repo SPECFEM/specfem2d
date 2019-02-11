@@ -19,13 +19,6 @@ echo
 mkdir -p OUTPUT_FILES
 mkdir -p DATA
 
-# sets up local DATA/ directory
-cd DATA/
-cp ../Par_file_elastic_2D Par_file
-cp ../interfaces_test.dat .
-cp ../SOURCE_elastic_2D SOURCE
-cd ../
-
 # cleans output files
 rm -rf OUTPUT_FILES/*
 
@@ -48,12 +41,16 @@ echo
 echo "  running mesher..."
 echo
 ./bin/xmeshfem2D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # runs simulation
 echo
 echo "  running solver..."
 echo
 ./bin/xspecfem2D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # stores output
 cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES

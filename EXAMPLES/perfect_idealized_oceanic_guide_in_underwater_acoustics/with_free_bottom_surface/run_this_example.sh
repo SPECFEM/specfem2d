@@ -13,17 +13,16 @@ echo "setting up example..."
 echo
 
 mkdir -p OUTPUT_FILES
-mkdir -p DATA
-
-# Sets up local DATA/ directory
-cd DATA/
-cp ../Par_file Par_file
-cp ../interfaces.dat interfaces.dat
-cp ../SOURCE SOURCE
-cd ../
-
 # Clean output files
 rm -rf OUTPUT_FILES/*
+
+# links executables
+mkdir -p bin
+cd bin/
+rm -f xmeshfem2D xspecfem2D
+ln -s ../../../../bin/xmeshfem2D
+ln -s ../../../../bin/xspecfem2D
+cd ../
 
 # Store setup
 cp DATA/Par_file OUTPUT_FILES/
@@ -38,13 +37,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running mesher..."
   echo
-  xmeshfem2D > OUTPUT_FILES/output_mesher.txt
+  ./bin/xmeshfem2D > OUTPUT_FILES/output_mesher.txt
 else
   # This is a MPI simulation
   echo
   echo "running mesher on $NPROC processors..."
   echo
-  mpirun -np $NPROC xmeshfem2D > OUTPUT_FILES/output_mesher.txt
+  mpirun -np $NPROC ./bin/xmeshfem2D > OUTPUT_FILES/output_mesher.txt
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -55,13 +54,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running solver..."
   echo
-  xspecfem2D > OUTPUT_FILES/output_solver.txt
+  ./bin/xspecfem2D > OUTPUT_FILES/output_solver.txt
 else
   # This is a MPI simulation
   echo
   echo "running solver on $NPROC processors..."
   echo
-  mpirun -np $NPROC xspecfem2D > OUTPUT_FILES/output_solver.txt
+  mpirun -np $NPROC ./bin/xspecfem2D > OUTPUT_FILES/output_solver.txt
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi

@@ -19,13 +19,6 @@ echo
 mkdir -p OUTPUT_FILES
 mkdir -p DATA
 
-# sets up local DATA/ directory
-cd DATA/
-rm -f Par_file SOURCE
-ln -s ../Par_file Par_file
-ln -s ../SOURCE SOURCE
-cd ../
-
 # cleans output files
 rm -rf OUTPUT_FILES/*
 
@@ -51,6 +44,8 @@ echo
 echo "  running mesher..."
 echo
 ./bin/xmeshfem2D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 if [ "$NPROC" -eq 1 ]; then # This is a serial simulation
   echo
@@ -63,6 +58,8 @@ else # This is a MPI simulation
   echo
   mpirun -np $NPROC ./bin/xspecfem2D
 fi
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # stores output
 cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES

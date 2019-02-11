@@ -19,12 +19,6 @@ echo
 mkdir -p OUTPUT_FILES
 mkdir -p DATA
 
-# sets up local DATA/ directory
-cd DATA/
-ln -s ../Par_file_fluid_solid Par_file
-ln -s ../SOURCE_fluid_solid SOURCE
-cd ../
-
 # cleans output files
 rm -rf OUTPUT_FILES/*
 
@@ -34,8 +28,8 @@ cd $currentdir
 mkdir -p bin
 cd bin/
 rm -f xmeshfem2D xspecfem2D
-ln -s ../../../bin/xmeshfem2D
-ln -s ../../../bin/xspecfem2D
+ln -s ../../../../bin/xmeshfem2D
+ln -s ../../../../bin/xspecfem2D
 cd ../
 
 # stores setup
@@ -47,12 +41,16 @@ echo
 echo "  running mesher..."
 echo
 ./bin/xmeshfem2D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # runs simulation
 echo
 echo "  running solver..."
 echo
 ./bin/xspecfem2D
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 # stores output
 cp DATA/*SOURCE* DATA/*STATIONS* OUTPUT_FILES

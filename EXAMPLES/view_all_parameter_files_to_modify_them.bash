@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# I get the list of files using " ls */Par_fi* */*/Par_fi* */*/*/Par_fi* */*/*/*/Par_fi* */*/*/*/*/Par_fi* | /bin/grep -v "~" | tr '\n' ' ' "
+# I get the list of files using
+# > ls */Par_fi* */*/Par_fi* */*/*/Par_fi* */*/*/*/Par_fi* */*/*/*/*/Par_fi* | grep -v "~" | tr '\n' ' '
 # and I add ../DATA/Par_file manually
 
 #

@@ -13,7 +13,6 @@ echo "setting up example..."
 echo
 
 mkdir -p OUTPUT_FILES
-
 # cleans output files
 rm -rf OUTPUT_FILES/*
 
@@ -23,9 +22,10 @@ cd $currentdir
 mkdir -p bin
 cd bin/
 rm -f xmeshfem2D xspecfem2D
-ln -s ../../../bin/xmeshfem2D
-ln -s ../../../bin/xspecfem2D
+ln -s ../../../../bin/xmeshfem2D
+ln -s ../../../../bin/xspecfem2D
 cd ../
+
 
 # stores setup
 cp DATA/Par_file OUTPUT_FILES/

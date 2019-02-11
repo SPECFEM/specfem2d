@@ -1,0 +1,16 @@
+----------------------------------------------
+README
+----------------------------------------------
+
+This simulation uses only an acoustic simulation, turning attenuation off.
+
+The source here uses an amplification factor of 4* PI * vp**2 = 4 * PI * (2000)**2 = 50264000.0
+This is due to a factor difference between the source definitions in Carcione.
+
+The convention used by Carcione in his 1988 paper is to use a source of amplitude 4 * PI * cp^2, 
+while in SPECFEM it is to have amplitude 1.
+
+Note: The reference code provided in no_attenuation_analytical/ folder is not correcting for this.
+      While the code provided in check_absolute_amplitude_of_pressure_source_seismograms_acoustic/analytical_solution_viscoacoustic_Carcione_version1.f90
+      is dividing the source by 4 * PI * cp^2 to get the right amplitude directly.
+
