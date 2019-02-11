@@ -36,18 +36,18 @@ module compute_elements_load_par
   integer, dimension(:), allocatable  :: elmnts_load
   integer, dimension(:), allocatable  :: adjwgt
 
-  logical, dimension(:), allocatable :: is_elastic,is_acoustic,is_viscoelastic,is_pml
+  logical, dimension(:), allocatable :: is_elastic,is_acoustic,is_viscoelastic,is_viscoacoustic,is_pml
 
   !! acoustic-elastic-poroelastic as well as CPML load balancing:
   !! we define here the relative cost of all types of spectral elements used in the code.
   integer, parameter :: ACOUSTIC_LOAD = 46
   integer, parameter :: ELASTIC_LOAD = 113
-  integer, parameter :: VISCOACOUSTIC_LOAD = 99999 !! not implemented yet, but should be implemented for sure
+  integer, parameter :: VISCOACOUSTIC_LOAD = 123
   integer, parameter :: VISCOELASTIC_LOAD = 280
 
   integer, parameter :: ACOUSTIC_LOAD_PML = 790
   integer, parameter :: ELASTIC_LOAD_PML = 1049
-  integer, parameter :: VISCOACOUSTIC_LOAD_PML = 99999 !! not implemented yet, but should be implemented for sure
+  integer, parameter :: VISCOACOUSTIC_LOAD_PML = 573 !! estimated based on elastic factor, better check one day...
   integer, parameter :: VISCOELASTIC_LOAD_PML = 1306
 
 contains
@@ -67,13 +67,17 @@ contains
     implicit none
 
     ! local parameters
-    integer :: ier,ispec,nelem_elastic,nelem_acoustic,nelem_viscoelastic,nelem_elastic_pml,nelem_acoustic_pml,nelem_viscoelastic_pml
+    integer :: ier,ispec
+    integer :: nelem_acoustic,nelem_viscoacoustic,nelem_acoustic_pml,nelem_viscoacoustic_pml
+    integer :: nelem_elastic,nelem_viscoelastic,nelem_elastic_pml,nelem_viscoelastic_pml
 
     ! Allocations WARNING indices start at zero!
     allocate(elmnts_load(0:nelmnts-1), &
              adjwgt(0:nb_edges-1),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating arrays for weights')
+
     allocate(is_acoustic(0:nelmnts-1), &
+             is_viscoacoustic(0:nelmnts-1), &
              is_elastic(0:nelmnts-1), &
              is_viscoelastic(0:nelmnts-1),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating arrays for is_acoustic, is_elastic and is_viscoelastic')
@@ -85,9 +89,12 @@ contains
     nelem_elastic_pml = 0
     nelem_acoustic_pml = 0
     nelem_viscoelastic_pml = 0
+
     elmnts_load(:) = ELASTIC_LOAD
     adjwgt(:) = ELASTIC_LOAD
+
     is_acoustic(:) = .false.
+    is_viscoacoustic(:) = .false.
     is_elastic(:) = .false.
     is_viscoelastic(:) = .false.
 
@@ -127,6 +134,14 @@ contains
           elmnts_load(ispec) = ACOUSTIC_LOAD
           nelem_acoustic = nelem_acoustic + 1
         endif
+      else if (is_viscoacoustic(ispec)) then
+        if (is_pml(ispec)) then
+          elmnts_load(ispec) = VISCOACOUSTIC_LOAD_PML
+          nelem_viscoacoustic_pml = nelem_viscoacoustic_pml + 1
+        else
+          elmnts_load(ispec) = VISCOACOUSTIC_LOAD
+          nelem_viscoacoustic = nelem_viscoacoustic + 1
+        endif
       endif
     enddo
 
@@ -137,9 +152,11 @@ contains
       write(IMAIN,*) 'Number of elastic elements :',nelem_elastic
       write(IMAIN,*) 'Number of acoustic elements :',nelem_acoustic
       write(IMAIN,*) 'Number of viscoelastic elements :',nelem_viscoelastic
+      write(IMAIN,*) 'Number of viscoacoustic elements :',nelem_viscoacoustic
       write(IMAIN,*) 'Number of elastic PML elements :',nelem_elastic_pml
       write(IMAIN,*) 'Number of acoustic PML elements :',nelem_acoustic_pml
       write(IMAIN,*) 'Number of viscoelastic PML elements :',nelem_viscoelastic_pml
+      write(IMAIN,*) 'Number of viscoacoustic PML elements :',nelem_viscoacoustic_pml
       write(IMAIN,*) '*************************************************'
       write(IMAIN,*)
       call flush_IMAIN()
@@ -159,6 +176,7 @@ contains
     integer :: ispec
 
     do ispec = 0,nelmnts-1
+      ! acoustic/elastic/poroelastic...
       if (phi_read(num_material(ispec+1)) < TINYVAL) then
         is_acoustic(ispec) = .false.
         is_elastic(ispec) = .true.
@@ -170,17 +188,27 @@ contains
         is_elastic(ispec) = .false.
       endif
 
+      ! visco-elastic
       if (ATTENUATION_VISCOELASTIC) then
-        if (((abs(Qkappa(num_material(ispec+1)) - 9999.0d0)) > TINYVAL) .or. &
-            ((abs(Qmu(num_material(ispec+1)) - 9999.0d0)) > TINYVAL)) then
-          is_viscoelastic(ispec) = .true.
-          is_elastic(ispec) = .false.
-          is_acoustic(ispec) = .false.
+        if (is_elastic(ispec)) then
+          if (((abs(Qkappa(num_material(ispec+1)) - 9999.0d0)) > TINYVAL) .or. &
+              ((abs(Qmu(num_material(ispec+1)) - 9999.0d0)) > TINYVAL)) then
+            is_viscoelastic(ispec) = .true.
+            is_elastic(ispec) = .false.
+            is_acoustic(ispec) = .false.
+          endif
         endif
       endif
 
+      ! visco-acoustic
       if (ATTENUATION_VISCOACOUSTIC) then
-        print *,'warning: there should be some code for ATTENUATION_VISCOACOUSTIC in subroutine determine_elements_type!'
+        if (is_acoustic(ispec)) then
+          if (((abs(Qkappa(num_material(ispec+1)) - 9999.0d0)) > TINYVAL)) then
+            is_viscoacoustic(ispec) = .true.
+            is_elastic(ispec) = .false.
+            is_acoustic(ispec) = .false.
+          endif
+        endif
       endif
 
     enddo
