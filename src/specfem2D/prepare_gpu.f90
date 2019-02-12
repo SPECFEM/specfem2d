@@ -134,8 +134,8 @@
                                 nspec_acoustic,nspec_elastic, &
                                 myrank,SAVE_FORWARD, &
                                 xir_store_loc, &
-                                gammar_store_loc)
-
+                                gammar_store_loc, &
+                                NSIGTYPE, seismotypeVec)
 
 !!! Parametres fournis
 

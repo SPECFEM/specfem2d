@@ -88,7 +88,6 @@ __device__ realw d_hprimewgll_xx[NGLL2];
 
 __device__ realw d_wxgll[NGLLX];
 
-
 void setConst_wxgll(realw* array,Mesh* mp)
 {
   cudaError_t err = cudaMemcpyToSymbol(d_wxgll, array, NGLLX*sizeof(realw));
@@ -169,7 +168,6 @@ void setConst_hprimewgll_xx(realw* array,Mesh* mp)
     exit(1);
   }
 }
-
 
 /*
 // only needed if NGLLX != NGLLY != NGLLZ
