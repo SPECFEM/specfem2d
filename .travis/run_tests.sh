@@ -146,6 +146,9 @@ else
     sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
     sed -i "s:^NSTEP .*:NSTEP    = 3000:" DATA/Par_file
   fi
+  if [ "$TESTDIR" == "16" ]; then
+    sed -i "s:^NPROC .*:NPROC    = 2:" DATA/Par_file
+  fi
   if [ "$TESTDIR" == "17" ]; then
     sed -i "s:^NSTEP .*:NSTEP    = 2000:" DATA/Par_file
   fi
