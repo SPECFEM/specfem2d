@@ -167,7 +167,8 @@ void FC_FUNC_(prepare_constants_device,
                                         int* nspec_acoustic,int* nspec_elastic,
                                         int* h_myrank,
                                         int* SAVE_FORWARD,
-                                        realw* h_xir_store, realw* h_gammar_store) {
+                                        realw* h_xir_store, realw* h_gammar_store,
+                                        int* h_NSIGTYPE, int* h_seismotypeVec) {
 
   TRACE("prepare_constants_device");
 
@@ -330,13 +331,82 @@ void FC_FUNC_(prepare_constants_device,
   }
 
   // receiver stations
+
+  // Alexis Bottero (AB AB) defined all these arrays in order to be able to write several signal types with one simulation
+  // I know it is ugly but it works and I did not have any other idea... sorry about that
+  // I defined arrays for seismotype = 5-10 for the future
+
+  mp->h_NSIGTYPE = *h_NSIGTYPE;
+  copy_todevice_int((void**)&mp->d_seismotypeVec,h_seismotypeVec,mp->h_NSIGTYPE);
+  mp->h_seismotypeVec = h_seismotypeVec;
+  mp->seismotype1wanted = 0;
+  mp->seismotype2wanted = 0;
+  mp->seismotype3wanted = 0;
+  mp->seismotype4wanted = 0;
+  mp->seismotype5wanted = 0;
+  mp->seismotype6wanted = 0;
+  mp->seismotype7wanted = 0;
+  mp->seismotype8wanted = 0;
+  mp->seismotype9wanted = 0;
+  mp->seismotype10wanted = 0;
+  for(int ii = 0; ii < mp->h_NSIGTYPE; ii++) {
+      if (mp->h_seismotypeVec[ii] == 1) mp->seismotype1wanted = 1;
+      if (mp->h_seismotypeVec[ii] == 2) mp->seismotype2wanted = 1;
+      if (mp->h_seismotypeVec[ii] == 3) mp->seismotype3wanted = 1;
+      if (mp->h_seismotypeVec[ii] == 4) mp->seismotype4wanted = 1;
+      if (mp->h_seismotypeVec[ii] == 5) mp->seismotype5wanted = 1;
+      if (mp->h_seismotypeVec[ii] == 6) mp->seismotype6wanted = 1;
+      if (mp->h_seismotypeVec[ii] == 7) mp->seismotype7wanted = 1;
+      if (mp->h_seismotypeVec[ii] == 8) mp->seismotype8wanted = 1;
+      if (mp->h_seismotypeVec[ii] == 9) mp->seismotype9wanted = 1;
+      if (mp->h_seismotypeVec[ii] == 10) mp->seismotype10wanted = 1;
+  }
+
   mp->nrec_local = *nrec_local; // number of receiver located in this partition
   // note that: size of size(ispec_selected_rec_loc) = nrec_local
   if (mp->nrec_local > 0) {
-    print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms,2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),1303);
-    // pinned memory
-    print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms),2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),8004);
-    // host memory
+    if (mp->seismotype1wanted) {
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms1,2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),1303);
+      // pinned memory
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms1),2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),8004);
+      // host memory
+    }
+    if (mp->seismotype2wanted) {
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms2,2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),1303);
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms2),2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),8004);
+    }
+    if (mp->seismotype3wanted) {
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms3,2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),1303);
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms3),2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),8004);
+    }
+    if (mp->seismotype4wanted) {
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms4,2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),1303);
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms4),2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),8004);
+    }
+    if (mp->seismotype5wanted) {
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms5,2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),1303);
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms5),2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),8004);
+    }
+    if (mp->seismotype6wanted) {
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms6,2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),1303);
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms6),2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),8004);
+    }
+    if (mp->seismotype7wanted) {
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms7,2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),1303);
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms7),2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),8004);
+    }
+    if (mp->seismotype8wanted) {
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms8,2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),1303);
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms8),2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),8004);
+    }
+    if (mp->seismotype9wanted) {
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms9,2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),1303);
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms9),2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),8004);
+    }
+    if (mp->seismotype10wanted) {
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_seismograms10,2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),1303);
+      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_seismograms10),2*(*NSTEP)*sizeof(realw)*(mp->nrec_local)*2),8004);
+    }
     //mp->h_seismograms = (float*)malloc((mp->nrec_local)*2*sizeof(float));
     //if (mp->h_seismograms == NULL) exit_on_error("h_seismograms not allocated \n");
 
@@ -1008,14 +1078,56 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_ispec_selected_source);
   }
 
+  // Alexis Bottero (AB AB) defined all these arrays in order to be able to write several signal types with one simulation
+  // I know it is ugly but it works and I did not have any other idea... sorry about that
+  // I defined arrays for seismotype = 5-10 for the future
+
   // receivers
   if (mp->nrec_local > 0) {
-    cudaFree(mp->d_seismograms);
+    if (mp->seismotype1wanted) {
+      cudaFree(mp->d_seismograms1);
+      cudaFreeHost(mp->h_seismograms1);
+    }
+    if (mp->seismotype2wanted) {
+      cudaFree(mp->d_seismograms2);
+      cudaFreeHost(mp->h_seismograms2);
+    }
+    if (mp->seismotype3wanted) {
+      cudaFree(mp->d_seismograms3);
+      cudaFreeHost(mp->h_seismograms3);
+    }
+    if (mp->seismotype4wanted) {
+      cudaFree(mp->d_seismograms4);
+      cudaFreeHost(mp->h_seismograms4);
+    }
+    if (mp->seismotype5wanted) {
+      cudaFree(mp->d_seismograms5);
+      cudaFreeHost(mp->h_seismograms5);
+    }
+    if (mp->seismotype6wanted) {
+      cudaFree(mp->d_seismograms6);
+      cudaFreeHost(mp->h_seismograms6);
+    }
+    if (mp->seismotype7wanted) {
+      cudaFree(mp->d_seismograms7);
+      cudaFreeHost(mp->h_seismograms7);
+    }
+    if (mp->seismotype8wanted) {
+      cudaFree(mp->d_seismograms8);
+      cudaFreeHost(mp->h_seismograms8);
+    }
+    if (mp->seismotype9wanted) {
+      cudaFree(mp->d_seismograms9);
+      cudaFreeHost(mp->h_seismograms9);
+    }
+    if (mp->seismotype10wanted) {
+      cudaFree(mp->d_seismograms10);
+      cudaFreeHost(mp->h_seismograms10);
+    }
     cudaFree(mp->d_cosrot),cudaFree(mp->d_sinrot);
     cudaFree(mp->d_gammar_store_loc);
     cudaFree(mp->d_xir_store_loc);
     cudaFree(mp->d_ispec_selected_rec_loc);
-    cudaFreeHost(mp->h_seismograms);
   }
 
   // ACOUSTIC arrays

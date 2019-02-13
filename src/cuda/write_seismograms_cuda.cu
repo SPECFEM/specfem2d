@@ -203,143 +203,166 @@ void FC_FUNC_(compute_seismograms_cuda,
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
   int i,j;
 
+  synchronize_cuda();
+
   //checks if anything to do
-  if (mp->nrec_local == 0) return;
+  if (mp->nrec_local != 0) {
 
-  int num_blocks_x, num_blocks_y;
-  get_blocks_xy(mp->nrec_local,&num_blocks_x,&num_blocks_y);
+    int num_blocks_x, num_blocks_y;
+    get_blocks_xy(mp->nrec_local,&num_blocks_x,&num_blocks_y);
 
-  dim3 grid(num_blocks_x,num_blocks_y);
-  dim3 threads(NGLL2_PADDED,1,1);
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(NGLL2_PADDED,1,1);
 
-  int seismotype = *seismotypef;
-  int seismo_current = *seismo_currentf - 1 ;
-  int NSTEP = *NSTEPf;
+    int seismotype = *seismotypef;
+    int seismo_current = *seismo_currentf - 1 ;
+    int NSTEP = *NSTEPf;
 
-  // warnings
-  if (seismo_current == 0){
-    switch (seismotype){
-    case 1 :
-      //Deplacement
-      // warnings
-      if (! *ELASTIC_SIMULATION)
-        printf("\nWarning: Wrong type of seismogram for a pure fluid simulation, use pressure in seismotype\n");
-      if (*ELASTIC_SIMULATION && *ACOUSTIC_SIMULATION)
-        printf("\nWarning: Coupled elastic/fluid simulation has only valid displacement seismograms in elastic domain for GPU simulation\n\n");
-      break;
-    case 2 :
-      //Vitesse
-      if (! *ELASTIC_SIMULATION)
-        printf("\nWarning: Wrong type of seismogram for a pure fluid simulation, use pressure in seismotype\n");
-      if (*ELASTIC_SIMULATION && *ACOUSTIC_SIMULATION)
-        printf("\nWarning: Coupled elastic/fluid simulation has only valid velocity seismograms in elastic domain for GPU simulation\n\n");
-      break;
-    case 3 :
-      //Acceleration
-      if (! *ELASTIC_SIMULATION)
-        printf("\nWarning: Wrong type of seismogram for a pure fluid simulation, use pressure in seismotype\n");
-      if (*ELASTIC_SIMULATION && *ACOUSTIC_SIMULATION)
-        printf("\nWarning: Coupled elastic/fluid simulation has only valid acceleration seismograms in elastic domain for GPU simulation\n\n");
-      break;
-    case 4 :
-      //Pression
-      if (! *ACOUSTIC_SIMULATION)
-        printf("\nWarning: Wrong type of seismogram for a pure elastic simulation, use displ veloc or accel in seismotype\n");
-      if (*ELASTIC_SIMULATION && *ACOUSTIC_SIMULATION)
-        printf("\nWarning: Coupled elastic/fluid simulation has only valid pressure seismograms in fluid domain for GPU simulation\n\n");
-      break;
+    // warnings
+    if (seismo_current == 0){
+      switch (seismotype){
+      case 1 :
+        //Deplacement
+        // warnings
+        if (! *ELASTIC_SIMULATION)
+          printf("\nWarning: Wrong type of seismogram for a pure fluid simulation, use pressure in seismotype\n");
+        if (*ELASTIC_SIMULATION && *ACOUSTIC_SIMULATION)
+          printf("\nWarning: Coupled elastic/fluid simulation has only valid displacement seismograms in elastic domain for GPU simulation\n\n");
+        break;
+      case 2 :
+        //Vitesse
+        if (! *ELASTIC_SIMULATION)
+          printf("\nWarning: Wrong type of seismogram for a pure fluid simulation, use pressure in seismotype\n");
+        if (*ELASTIC_SIMULATION && *ACOUSTIC_SIMULATION)
+          printf("\nWarning: Coupled elastic/fluid simulation has only valid velocity seismograms in elastic domain for GPU simulation\n\n");
+        break;
+      case 3 :
+        //Acceleration
+        if (! *ELASTIC_SIMULATION)
+          printf("\nWarning: Wrong type of seismogram for a pure fluid simulation, use pressure in seismotype\n");
+        if (*ELASTIC_SIMULATION && *ACOUSTIC_SIMULATION)
+          printf("\nWarning: Coupled elastic/fluid simulation has only valid acceleration seismograms in elastic domain for GPU simulation\n\n");
+        break;
+      case 4 :
+        //Pression
+        if (! *ACOUSTIC_SIMULATION)
+          printf("\nWarning: Wrong type of seismogram for a pure elastic simulation, use displ veloc or accel in seismotype\n");
+        if (*ELASTIC_SIMULATION && *ACOUSTIC_SIMULATION)
+          printf("\nWarning: Coupled elastic/fluid simulation has only valid pressure seismograms in fluid domain for GPU simulation\n\n");
+        break;
+      }
     }
-  }
 
-  // todo: for coupled simulations, one should check in which domain the receiver lies to output displacement
-  //       similar to what routine compute_vector_one_element(..) is doing
+    synchronize_cuda();
+    // todo: for coupled simulations, one should check in which domain the receiver lies to output displacement
+    //       similar to what routine compute_vector_one_element(..) is doing
 
-  // computes current seismograms value
-  switch (seismotype){
-    case 1 :
-      //Deplacement
-      compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
-                                                                               mp->d_displ,
-                                                                               mp->d_ibool,
-                                                                               mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                               mp->d_seismograms,
-                                                                               mp->d_cosrot,
-                                                                               mp->d_sinrot,
-                                                                               mp->d_ispec_selected_rec_loc,
-                                                                               seismo_current,
-                                                                               NSTEP);
-
-      break;
-
-    case 2 :
-      //Vitesse
-      compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
-                                                                               mp->d_veloc,
-                                                                               mp->d_ibool,
-                                                                               mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                               mp->d_seismograms,
-                                                                               mp->d_cosrot,
-                                                                               mp->d_sinrot,
-                                                                               mp->d_ispec_selected_rec_loc,
-                                                                               seismo_current,
-                                                                               NSTEP);
-
-      break;
-
-    case 3 :
-      //Acceleration
-      compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
-                                                                               mp->d_accel,
-                                                                               mp->d_ibool,
-                                                                               mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                               mp->d_seismograms,
-                                                                               mp->d_cosrot,
-                                                                               mp->d_sinrot,
-                                                                               mp->d_ispec_selected_rec_loc,
-                                                                               seismo_current,
-                                                                               NSTEP);
-
-      break;
-
-    case 4 :
-      //Pression
-      if (*USE_TRICK_FOR_BETTER_PRESSURE){
-        compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
-                                                                                  mp->d_potential_acoustic,
-                                                                                  mp->d_ibool,
-                                                                                  mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                                  mp->d_seismograms,
-                                                                                  mp->d_ispec_selected_rec_loc,
-                                                                                  seismo_current,
-                                                                                  NSTEP);
-
-      }else{
-        compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
-                                                                                  mp->d_potential_dot_dot_acoustic,
-                                                                                  mp->d_ibool,
-                                                                                  mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                                  mp->d_seismograms,
-                                                                                  mp->d_ispec_selected_rec_loc,
-                                                                                  seismo_current,
-                                                                                  NSTEP);
-
-      }
-      break;
-  }
-
-  if (seismo_current == NSTEP - 1 ){
+    // computes current seismograms value
     int size = mp->nrec_local*NSTEP;
-    // (cudaMemcpy implicitly synchronizes all other cuda operations)
-    print_CUDA_error_if_any(cudaMemcpy(mp->h_seismograms,mp->d_seismograms,sizeof(realw)* 2 * size,cudaMemcpyDeviceToHost),72001);
+    switch (seismotype){
+      case 1 :
+        //Deplacement
+        compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
+                                                                                 mp->d_displ,
+                                                                                 mp->d_ibool,
+                                                                                 mp->d_xir_store_loc, mp->d_gammar_store_loc,
+                                                                                 mp->d_seismograms1,
+                                                                                 mp->d_cosrot,
+                                                                                 mp->d_sinrot,
+                                                                                 mp->d_ispec_selected_rec_loc,
+                                                                                 seismo_current,
+                                                                                 NSTEP);
+        if (seismo_current == NSTEP - 1 ){
+          print_CUDA_error_if_any(cudaMemcpy(mp->h_seismograms1,mp->d_seismograms1,sizeof(realw)* 2 * size,cudaMemcpyDeviceToHost),72001);
+          for (i=0;i < mp->nrec_local;i++)
+            for (j=0;j<NSTEP;j++)
+            {   sisux[j + NSTEP * i ] = (double)*(mp->h_seismograms1 + j + NSTEP * i);
+                sisuz[j + NSTEP * i ] = (double)*(mp->h_seismograms1 + j + NSTEP * i + size);
+            }
+        }
 
-    for (i=0;i < mp->nrec_local;i++)
-      for (j=0;j<NSTEP;j++)
-     {    sisux[j + NSTEP * i ] = (double)*(mp->h_seismograms + j + NSTEP * i);
-          sisuz[j + NSTEP * i ] = (double)*(mp->h_seismograms + j + NSTEP * i + size);
-      }
-      //debug
-      //printf("seismo %d - nrec_local %d sis %f %f\n",seismo_current,i,sisux[seismo_current + nstep_over_subsamp * i ],mp->h_seismograms[i]);
-  }
+        break;
+
+      case 2 :
+        //Vitesse
+        compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
+                                                                                 mp->d_veloc,
+                                                                                 mp->d_ibool,
+                                                                                 mp->d_xir_store_loc, mp->d_gammar_store_loc,
+                                                                                 mp->d_seismograms2,
+                                                                                 mp->d_cosrot,
+                                                                                 mp->d_sinrot,
+                                                                                 mp->d_ispec_selected_rec_loc,
+                                                                                 seismo_current,
+                                                                                 NSTEP);
+        if (seismo_current == NSTEP - 1 ){
+          print_CUDA_error_if_any(cudaMemcpy(mp->h_seismograms2,mp->d_seismograms2,sizeof(realw)* 2 * size,cudaMemcpyDeviceToHost),72001);
+          for (i=0;i < mp->nrec_local;i++)
+            for (j=0;j<NSTEP;j++)
+            {   sisux[j + NSTEP * i ] = (double)*(mp->h_seismograms2 + j + NSTEP * i);
+                sisuz[j + NSTEP * i ] = (double)*(mp->h_seismograms2 + j + NSTEP * i + size);
+            }
+        }
+
+        break;
+
+      case 3 :
+        //Acceleration
+        compute_elastic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
+                                                                                 mp->d_accel,
+                                                                                 mp->d_ibool,
+                                                                                 mp->d_xir_store_loc, mp->d_gammar_store_loc,
+                                                                                 mp->d_seismograms3,
+                                                                                 mp->d_cosrot,
+                                                                                 mp->d_sinrot,
+                                                                                 mp->d_ispec_selected_rec_loc,
+                                                                                 seismo_current,
+                                                                                 NSTEP);
+        if (seismo_current == NSTEP - 1 ){
+          print_CUDA_error_if_any(cudaMemcpy(mp->h_seismograms3,mp->d_seismograms3,sizeof(realw)* 2 * size,cudaMemcpyDeviceToHost),72001);
+          for (i=0;i < mp->nrec_local;i++)
+            for (j=0;j<NSTEP;j++)
+            {   sisux[j + NSTEP * i ] = (double)*(mp->h_seismograms3 + j + NSTEP * i);
+                sisuz[j + NSTEP * i ] = (double)*(mp->h_seismograms3 + j + NSTEP * i + size);
+            }
+        }
+
+        break;
+
+      case 4 :
+        //Pression
+        if (*USE_TRICK_FOR_BETTER_PRESSURE){
+          compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
+                                                                                    mp->d_potential_acoustic,
+                                                                                    mp->d_ibool,
+                                                                                    mp->d_xir_store_loc, mp->d_gammar_store_loc,
+                                                                                    mp->d_seismograms4,
+                                                                                    mp->d_ispec_selected_rec_loc,
+                                                                                    seismo_current,
+                                                                                    NSTEP);
+
+        }else{
+          compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
+                                                                                    mp->d_potential_dot_dot_acoustic,
+                                                                                    mp->d_ibool,
+                                                                                    mp->d_xir_store_loc, mp->d_gammar_store_loc,
+                                                                                    mp->d_seismograms4,
+                                                                                    mp->d_ispec_selected_rec_loc,
+                                                                                    seismo_current,
+                                                                                    NSTEP);
+
+        }
+        if (seismo_current == NSTEP - 1 ){
+          print_CUDA_error_if_any(cudaMemcpy(mp->h_seismograms4,mp->d_seismograms4,sizeof(realw)* 2 * size,cudaMemcpyDeviceToHost),72001);
+          for (i=0;i < mp->nrec_local;i++)
+            for (j=0;j<NSTEP;j++)
+            {   sisux[j + NSTEP * i ] = (double)*(mp->h_seismograms4 + j + NSTEP * i);
+                sisuz[j + NSTEP * i ] = (double)*(mp->h_seismograms4 + j + NSTEP * i + size);
+            }
+        }
+        break;
+    }
+}
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("after compute_seismograms_cuda");

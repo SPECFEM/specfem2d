@@ -327,7 +327,8 @@ void FC_FUNC_(prepare_constants_device,
                                         int* nspec_acoustic,int* nspec_elastic,
                                         int* h_myrank,
                                         int* SAVE_FORWARD,
-                                        realw* h_xir_store, realw* h_gammar_store) {}
+                                        realw* h_xir_store, realw* h_gammar_store,
+                                        int* h_NSIGTYPE, int* h_seismotypeVec) {}
 
 void FC_FUNC_(prepare_fields_acoustic_device,
               PREPARE_FIELDS_ACOUSTIC_DEVICE)(long* Mesh_pointer,
