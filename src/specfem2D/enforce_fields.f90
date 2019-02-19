@@ -219,7 +219,7 @@ end module enforce_par
 ! ----------------------------------------------------------------------------------------
 !
 
-  subroutine enforce_fields(iglob,it)
+  subroutine enforce_fields_Lamb(iglob,it)
 ! ----------------------------------------------------------------------------------------
 ! This subroutine impose the fields at given GLL points and at a given time steps
 ! ----------------------------------------------------------------------------------------
@@ -356,7 +356,7 @@ end module enforce_par
 !    accel_elastic(:,iglob) = 0.0d0
 !  endif
 
-  end subroutine enforce_fields
+  end subroutine enforce_fields_Lamb
 
 !
 ! ----------------------------------------------------------------------------------------
@@ -512,7 +512,7 @@ end module enforce_par
 
 !    print *
 !     print *,'***************************************************'
-!~     print *, 'dans la fonction calculate ux uz'
+!~     print *, 'In function calculate ux uz'
 !~     print *, 'fd= ' , omegaj/TWO/PI*d
  !   print *,'cphase = ',cphase,'m/s @fd = ',omegaj/TWO/PI*d
 !~     print *, 'C1= ', C1, 'C2= ', C2
@@ -683,61 +683,63 @@ end subroutine Calculate_Weigth_Burst
 ! ----------------------------------------------------------------------------------------
 !
 
-! subroutine enforce_fields(iglob,it)
-!! ----------------------------------------------------------------------------------------
-!! This subroutine impose the fields at a given GLL point and at a given time step
-!! ----------------------------------------------------------------------------------------
+ subroutine enforce_fields(iglob,it)
+! ----------------------------------------------------------------------------------------
+! This subroutine impose the fields at a given GLL point and at a given time step
+! ----------------------------------------------------------------------------------------
 
-!  use specfem_par, only: coord,forced,displ_elastic,veloc_elastic,accel_elastic,deltat,deltatover2, &
-!                         deltatsquareover2
-!  use enforce_par
-!  use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI
+  use specfem_par, only: coord,displ_elastic,veloc_elastic,accel_elastic,deltat,deltatover2, &
+                         deltatsquareover2
+  use enforce_par
+  use constants, only: CUSTOM_REAL,TWO,PI
 
-!  implicit none
-!
-!  ! Inputs
-!  integer, intent(in) :: iglob,it
+  implicit none
 
-!  ! Local variables
+  ! Inputs
+  integer, intent(in) :: iglob,it
 
-!  ! Local variables
-!  real(kind=CUSTOM_REAL), dimension(2) :: accelOld,velocOld
-!  real(kind=CUSTOM_REAL) :: factor,x,z
-!  real(kind=CUSTOM_REAL) :: f0 = 0.5d6
+  ! Local variables
 
-!  x = coord(1,iglob)
-!  z = coord(2,iglob)
-!
-!  factor = 1.0d0 ! * (z - 2.0d0)**2
-!
-!  !if (abs(z + 1.5d-3) < 1.5d-3) then
-!    if (it == 1) then ! We initialize the variables
-!      displ_elastic(1,iglob) = factor*(-1.0d0)
-!      displ_elastic(2,iglob) = factor*0.0d0
-!      veloc_elastic(1,iglob) = factor*0.0d0
-!      veloc_elastic(2,iglob) = factor*0.0d0
-!      accel_elastic(1,iglob) = factor*(TWO*PI*f0)**2
-!      accel_elastic(2,iglob) = factor*0.0d0
-!    else ! We set what we want
-!      accel_elastic(1,iglob) = factor*(TWO*PI*f0)**2*cos(TWO*PI*f0*(it-1)*deltat)
-!      accelOld(1) = factor*(TWO*PI*f0)**2*cos(TWO*PI*f0*(it-2)*deltat)
-!      accel_elastic(2,iglob) = 0.0d0
-!      accelOld(2) = 0.0d0
-!      ! Do not change anything below: we compute numerically the velocity and displacement
-!      velocOld(1) = veloc_elastic(1,iglob)
-!      veloc_elastic(1,iglob) = veloc_elastic(1,iglob) + deltatover2*(accelOld(1) + accel_elastic(1,iglob))
-!      displ_elastic(1,iglob) = displ_elastic(1,iglob) + deltat*velocOld(1) + deltatsquareover2*accelOld(1)
-!      velocOld(2) = veloc_elastic(2,iglob)
-!      veloc_elastic(2,iglob) = veloc_elastic(2,iglob) + deltatover2*(accelOld(2) + accel_elastic(2,iglob))
-!      displ_elastic(2,iglob) = displ_elastic(2,iglob) + deltat*velocOld(2) + deltatsquareover2*accelOld(2)
-!    endif
-!  !else
-!  !  displ_elastic(:,iglob) = 0.0d0
-!  !  veloc_elastic(:,iglob) = 0.0d0
-!  !  accel_elastic(:,iglob) = 0.0d0
-!  !endif
+  ! Local variables
+  real(kind=CUSTOM_REAL), dimension(2) :: accelOld,velocOld
+  real(kind=CUSTOM_REAL) :: factor,x,z
+  real(kind=CUSTOM_REAL) :: f0
 
-! end subroutine enforce_fields
+  x = coord(1,iglob)
+  z = coord(2,iglob)
+
+  f0 = 1.5d6
+  factor = 1.0d0 ! * (z - 2.0d0)**2
+
+  !if (abs(z + 1.5d-3) < 1.5d-3) then
+  !if (abs(x) < 0.01) then
+    if (it == 1) then ! We initialize the variables
+      displ_elastic(2,iglob) = factor*0.0d0
+      displ_elastic(1,iglob) = factor*0.0d0
+      veloc_elastic(2,iglob) = factor*0.0d0
+      veloc_elastic(1,iglob) = factor*0.0d0
+      accel_elastic(2,iglob) = factor*0.0d0
+      accel_elastic(1,iglob) = factor*0.0d0
+    else ! We set what we want
+      accel_elastic(2,iglob) = factor*(TWO*PI*f0)**2*sin(TWO*PI*f0*(it-1)*deltat)
+      accelOld(2) = factor*(TWO*PI*f0)**2*sin(TWO*PI*f0*(it-2)*deltat)
+      accel_elastic(1,iglob) = 0.0d0
+      accelOld(1) = 0.0d0
+      ! Do not change anything below: we compute numerically the velocity and displacement
+      velocOld(1) = veloc_elastic(1,iglob)
+      veloc_elastic(1,iglob) = veloc_elastic(1,iglob) + deltatover2*(accelOld(1) + accel_elastic(1,iglob))
+      displ_elastic(1,iglob) = displ_elastic(1,iglob) + deltat*velocOld(1) + deltatsquareover2*accelOld(1)
+      velocOld(2) = veloc_elastic(2,iglob)
+      veloc_elastic(2,iglob) = veloc_elastic(2,iglob) + deltatover2*(accelOld(2) + accel_elastic(2,iglob))
+      displ_elastic(2,iglob) = displ_elastic(2,iglob) + deltat*velocOld(2) + deltatsquareover2*accelOld(2)
+    endif
+  !else
+  !  displ_elastic(:,iglob) = 0.0d0
+  !  veloc_elastic(:,iglob) = 0.0d0
+  !  accel_elastic(:,iglob) = 0.0d0
+  !endif
+
+ end subroutine enforce_fields
 
 ! subroutine enforce_fields_acoustic(iglob,it)
 !! ----------------------------------------------------------------------------------------
