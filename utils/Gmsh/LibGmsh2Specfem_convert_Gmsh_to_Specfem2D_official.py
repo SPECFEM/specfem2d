@@ -53,11 +53,18 @@ def OuvreGmsh(Dir,Nom,Bords):
     # Looking for positions
     #
     for ii in range(len(lignes)):
+        if lignes[ii]=='$MeshFormat\n': PosFormat=ii
         if lignes[ii]=='$Nodes\n': PosNodes=ii
         if lignes[ii]=='$PhysicalNames\n': PosPhys=ii
         if lignes[ii]=='$Elements\n':
             PosElem=ii
             break
+    # Mesh Format should be 2.2
+    Format=string.split(lignes[PosFormat+1])[0]
+    print 'MeshFormat   : ',Format
+    if Format != "2.2":
+        print '*** Error: MeshFormat should be 2.2, please consider storing your mesh with added option: -format msh22 ..'
+        sys.exit(1)
     # Elements type 4 nodes or 9 nodes
     TypElem1D = int(string.split(lignes[PosElem+2])[1])
     if TypElem1D==1:
@@ -68,6 +75,8 @@ def OuvreGmsh(Dir,Nom,Bords):
         len1D, len2D = 3, 9
     else:
         print 'The number of nodes of elemnts is not 4 nor 9'
+    print 'Elements type: ',TypElem1D
+    print '-'*60
     #-------------------------------------------------------------------------
     # Conditions on sides of the domain
     # Possible choices: Abso, Free
