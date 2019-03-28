@@ -38,6 +38,7 @@
   use specfem_par, only: CUSTOM_REAL,NGLLX,NGLLZ,nspec,ibool,displ_elastic,displs_poroelastic,displw_poroelastic, &
                          potential_dot_dot_acoustic,potential_acoustic,b_displ_elastic,b_displs_poroelastic, &
                          b_displw_poroelastic,b_potential_dot_dot_acoustic,b_potential_acoustic
+
   use specfem_par_movie, only: vector_field_display
 
   implicit none

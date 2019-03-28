@@ -64,9 +64,11 @@
 
   ! checks if anything to do
   if (.not. (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP)) return
+
   if ( (.not. output_postscript_snapshot) .and. (.not. NOISE_MOVIE_OUTPUT) .and. (.not. output_color_image) &
        .and. (.not. output_wavefield_dumps) ) return
 
+  ! checks plotting of backward wavefield
   if (UNDO_ATTENUATION_AND_OR_PML .and. get_b_wavefield .and. .not. NO_BACKWARD_RECONSTRUCTION) then
     plot_b_wavefield_only = .true.
   else
@@ -156,12 +158,9 @@
   endif
 
   ! dump the full (local) wavefield to a file
-  ! note: in the case of MPI, in the future it would be more convenient to output a single file
-  !       rather than one for each myrank
   if (output_wavefield_dumps) then
     call write_wavefield_dumps()
   endif
 
   end subroutine write_movie_output
-
 

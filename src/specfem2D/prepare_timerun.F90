@@ -660,13 +660,15 @@
     d2_dump_recv = d2_dump_send
 #endif
 
+    ! allocates temporary arrays for wavefield outputs
     allocate(dump_send(d1_dump_send, d2_dump_send))
     allocate(dump_recv(d1_dump_recv, d2_dump_recv))
 
     allocate(dump_duplicate_send(d2_dump_send))
     allocate(dump_duplicate_recv(d2_dump_recv))
 
-    allocate(dump_recv_counts(0:NPROC-1))
+    allocate(dump_recv_counts(0:NPROC-1),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating wavefield_dumps arrays')
 
     this_is_the_first_time_we_dump = .true.
 
