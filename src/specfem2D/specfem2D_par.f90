@@ -100,7 +100,7 @@ module specfem_par
   double precision :: ALPHA_MAX_PML
   real(kind=CUSTOM_REAL) :: d0_max
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_normalized, abs_normalized2
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_normalized
 
   logical, dimension(:,:), allocatable :: which_PML_elem
   logical, dimension(:), allocatable  :: mask_ibool_PML
