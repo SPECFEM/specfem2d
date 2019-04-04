@@ -343,7 +343,7 @@ Kernel_2_acoustic_impl(const int nb_blocks_to_compute,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// KERNEL 2 - acoustic compute forces kernel with PML 
+// KERNEL 2 - acoustic compute forces kernel with PML
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -421,7 +421,7 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
   // checks if anything to do
   if (bx >= nb_blocks_to_compute ) return;
 
-  ispec = d_phase_ispec_inner_acoustic[bx + num_phase_ispec_acoustic*(d_iphase-1)]-1; 
+  ispec = d_phase_ispec_inner_acoustic[bx + num_phase_ispec_acoustic*(d_iphase-1)]-1;
   ispec_pml = spec_to_PML[ispec];
 
   //checks if element is inside the PML
@@ -493,7 +493,7 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
 
   if (ispec_pml - 1 < NSPEC_PML_X + NSPEC_PML_Z){
     abs_norm = abs_normalized[(ispec_pml-1)*NGLL2 + tx ];
-    alpha1 = ALPHA_MAX_PML * ( 1.f - abs_norm ) ; 
+    alpha1 = ALPHA_MAX_PML * ( 1.f - abs_norm ) ;
     beta1 =  alpha1 + 2.f * d0  * abs_norm * abs_norm;}
   else{
     alpha1 = alphaz_store[(ispec_pml-1-(NSPEC_PML_X + NSPEC_PML_Z))*NGLL2 + tx ];
@@ -503,7 +503,7 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
   }
   coef1 = __expf(-0.5f * deltat * alpha1);
   coef2 = __expf(-0.5f * deltat * beta1);
-  // Update memory variables of derivatives 
+  // Update memory variables of derivatives
   r1 = rmemory_acoustic_dux_dx[(ispec_pml-1)*NGLL2 + tx ];
   r2 = rmemory_acoustic_dux_dz[(ispec_pml-1)*NGLL2 + tx ];
   if (ispec_pml - 1 < NSPEC_PML_X){
@@ -551,7 +551,7 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
       r4 += ( 1.f - coef4 ) / alphax * dpotentialdzl + coef4 * ( 1.f - coef4 ) / alphax * PML_dpotentialdzl_old[(ispec_pml-1)*NGLL2 + tx];
     }else{
       r4 += 0.5f * deltat * dpotentialdzl + 0.5f * deltat * PML_dpotentialdzl_old[(ispec_pml-1)*NGLL2 + tx];
-    } 
+    }
     rmemory_acoustic_dux_dx2[(ispec_pml-1- NSPEC_PML_X - NSPEC_PML_Z)*NGLL2 + tx ] = r3;
     rmemory_acoustic_dux_dz2[(ispec_pml-1- NSPEC_PML_X - NSPEC_PML_Z)*NGLL2 + tx ] = r4;
 
@@ -565,7 +565,7 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
     r5 += 0.5f * deltat *  s_dummy_loc[tx] + 0.5f * deltat * dpotential_old[(ispec_pml-1)*NGLL2 + tx];
   }
   rmemory_pot_acoustic[(ispec_pml-1)*NGLL2 + tx ] = r5 ;
-  if (ispec_pml - 1 >= NSPEC_PML_X + NSPEC_PML_Z){ 
+  if (ispec_pml - 1 >= NSPEC_PML_X + NSPEC_PML_Z){
     r6 = coef4 * coef4 * rmemory_pot_acoustic2[(ispec_pml-1- NSPEC_PML_X - NSPEC_PML_Z)*NGLL2 + tx ];
     if (abs(alphax) > 0.00001){
       r6 += ( 1.f - coef4 ) / alphax *  s_dummy_loc[tx] + coef4 * ( 1.f - coef4 ) / alphax * dpotential_old[(ispec_pml-1)*NGLL2 + tx];
@@ -595,7 +595,7 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
   if (ispec_pml - 1 < NSPEC_PML_X){
     dpotentialdxl += (alpha1-beta1) * r1;
     dpotentialdzl -= (alpha1-beta1) * r2;}
-  else if (ispec_pml - 1 < NSPEC_PML_X + NSPEC_PML_Z){ 
+  else if (ispec_pml - 1 < NSPEC_PML_X + NSPEC_PML_Z){
     dpotentialdxl -= (alpha1-beta1) * r1;
     dpotentialdzl += (alpha1-beta1) * r2;}
   else{
@@ -604,7 +604,7 @@ Kernel_2_acoustic_PML_impl(const int nb_blocks_to_compute,
     dpotentialdzl += 0.5f * ((alphax * beta1 + alphax*alphax + 2.f * betax * alpha1 - 2.f * alphax * ( betax + alpha1)) / (beta1 - alphax) - alphax ) * r4;
     dpotentialdzl += 0.5f * ((alphax * beta1 + beta1*beta1 + 2.f * betax * alpha1 - 2.f * beta1 * ( betax + alpha1)) / (alphax - beta1) - beta1 ) * r2;
   }
-      
+
   __syncthreads();
 
   // form the dot product with the test vector

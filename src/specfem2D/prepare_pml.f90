@@ -79,7 +79,7 @@
 
     call pml_init()
 
-    if ((.not. NO_BACKWARD_RECONSTRUCTION) .and. & 
+    if ((.not. NO_BACKWARD_RECONSTRUCTION) .and. &
         ((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)) then
 
       if (nglob_interface > 0) then

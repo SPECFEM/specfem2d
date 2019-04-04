@@ -66,10 +66,10 @@
   if ( (ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. any_elastic .and. any_acoustic) call stop_the_code( &
     'GPU mode do not support yet coupled fluid-solid simulations with attenuation')
   if (PML_BOUNDARY_CONDITIONS .and. any_elastic) call stop_the_code( &
-                   'PML on GPU do not support elastic case yet') 
+                   'PML on GPU do not support elastic case yet')
   if (PML_BOUNDARY_CONDITIONS .and. ATTENUATION_VISCOACOUSTIC) call stop_the_code( &
-                   'PML on GPU do not support viscoacoustic case yet') 
-  if (PML_BOUNDARY_CONDITIONS .and. SIMULATION_TYPE==3 .and. (.not. NO_BACKWARD_RECONSTRUCTION) ) call stop_the_code( &
+                   'PML on GPU do not support viscoacoustic case yet')
+  if (PML_BOUNDARY_CONDITIONS .and. SIMULATION_TYPE == 3 .and. (.not. NO_BACKWARD_RECONSTRUCTION) ) call stop_the_code( &
                    'PML on GPU in adjoint mode only work using NO_BACKWARD_RECONSTRUCTION flag')
 
   ! initializes arrays
@@ -252,7 +252,7 @@
                                ib_left, &
                                ib_right, &
                                ib_top)
- 
+
 
   ! prepares fields on GPU for poroelastic simulations
   if (any_poroelastic) then
@@ -362,7 +362,7 @@
   real(kind=CUSTOM_REAL) :: zxi,xgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: xxi,zgamma
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_normalized_temp
-  
+
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! Initialisation variables pour routine prepare_constants_device
@@ -513,19 +513,19 @@
     ! spec_to_PML_GPU(ispec) \in [NSPEC_PML_X + 1, NSPEC_PML_X + NSPEC_PML_Z] indicates the element is in the region CPML_Z_ONLY
     ! spec_to_PML_GPU(ispec) >  NSPEC_PML_X + NSPEC_PML_Z indicates the element is in the region CPML_XZ
     ! Finally, spec_to_PML_GPU(ispec) = ispec_pml, where ispec_pml the local
-    ! number of the element in the PML 
+    ! number of the element in the PML
     allocate(spec_to_PML_GPU(nspec))
-    spec_to_PML_GPU(:) = 0  
+    spec_to_PML_GPU(:) = 0
     nspec_PML_X = 0
     do ispec= 1,nspec
       if (region_CPML(ispec) == CPML_X_ONLY ) then
         nspec_PML_X = nspec_PML_X+1
         spec_to_PML_GPU(ispec) = nspec_PML_X
       endif
-    enddo 
+    enddo
     nspec_PML_Z = 0
     do ispec= 1,nspec
-      if (region_CPML(ispec)  == CPML_Z_ONLY ) then
+      if (region_CPML(ispec) == CPML_Z_ONLY ) then
         nspec_PML_Z = nspec_PML_Z+1
         spec_to_PML_GPU(ispec) = nspec_PML_X + nspec_PML_Z
       endif
@@ -552,13 +552,13 @@
     enddo
     deallocate(abs_normalized_temp)
 
-    allocate(alphax_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ),alphaz_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ),&
+    allocate(alphax_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ),alphaz_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ), &
              betax_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ),betaz_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ))
     do ispec= 1,nspec
-      if (region_CPML(ispec)  == CPML_XZ) then
+      if (region_CPML(ispec) == CPML_XZ) then
         do j=1,NGLLZ
           do i = 1,NGLLX
-            alphax_store_GPU(i,j,spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)) = sngl(alpha_x_store(i,j,spec_to_PML(ispec))) 
+            alphax_store_GPU(i,j,spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)) = sngl(alpha_x_store(i,j,spec_to_PML(ispec)))
             alphaz_store_GPU(i,j,spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)) = sngl(alpha_z_store(i,j,spec_to_PML(ispec)))
             betax_store_GPU(i,j,spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)) = sngl(alpha_x_store(i,j,spec_to_PML(ispec)) + &
               d_x_store(i,j,spec_to_PML(ispec)))
@@ -570,7 +570,7 @@
     enddo
   else
     allocate(spec_to_PML_GPU(1))
-    allocate(alphax_store_GPU(1,1,1),alphaz_store_GPU(1,1,1),&
+    allocate(alphax_store_GPU(1,1,1),alphaz_store_GPU(1,1,1), &
              betax_store_GPU(1,1,1),betaz_store_GPU(1,1,1))
   endif ! PML_BOUNDARY_CONDITIONS
 
