@@ -42,10 +42,6 @@
   integer :: i,ier
   character(len=MAX_STRING_LEN) :: outputname
 
-  ! safety check
-  if (GPU_MODE .and. PML_BOUNDARY_CONDITIONS ) call stop_the_code( &
-'Error : PML not implemented on GPU mode. Please use Stacey instead')
-
   ! PML absorbing conditions
   ! sets global flag for all slices
   call any_all_l(anyabs, anyabs_glob)
@@ -83,7 +79,8 @@
 
     call pml_init()
 
-    if ((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS) then
+    if ((.not. NO_BACKWARD_RECONSTRUCTION) .and. & 
+        ((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)) then
 
       if (nglob_interface > 0) then
         allocate(point_interface(nglob_interface),stat=ier)
@@ -133,7 +130,7 @@
       allocate(pml_interface_history_potential_dot_dot(1,1))
     endif
 
-    if (SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS) then
+    if ((.not. NO_BACKWARD_RECONSTRUCTION) .and. SIMULATION_TYPE == 3 .and. PML_BOUNDARY_CONDITIONS) then
 
       if (any_elastic .and. nglob_interface > 0) then
         do it = 1,NSTEP

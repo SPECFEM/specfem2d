@@ -313,7 +313,8 @@ typedef struct mesh_ {
   // constants
   int simulation_type;
   int save_forward;
-  int absorbing_conditions;
+  int stacey_absorbing_conditions;
+  int pml;
 
   // ------------------------------------------------------------------ //
   // GLL points & weights
@@ -486,6 +487,29 @@ typedef struct mesh_ {
 
   realw* d_rho_vp;
   realw* d_rho_vs;
+
+  // used for PML
+  int nspec_pml;
+  int nspec_pml_x;
+  int nspec_pml_z;
+  int* spec_to_pml;
+  realw* PML_dpotentialdxl_old;
+  realw* PML_dpotentialdzl_old;
+  realw* dpotential_old;
+  realw* abscissa_norm;
+  realw ALPHA_MAX_PML;
+  realw d0_max;
+  realw* rmemory_acoustic_dux_dx;
+  realw* rmemory_acoustic_dux_dz;
+  realw* rmemory_acoustic_dux_dx2;
+  realw* rmemory_acoustic_dux_dz2;
+  realw* rmemory_pot_acoustic;
+  realw* rmemory_pot_acoustic2;
+  realw deltat;
+  realw* alphax_store;
+  realw* alphaz_store;
+  realw* betax_store;
+  realw* betaz_store;
 
   // surface elements (to save for noise tomography and acoustic simulations)
   int* d_free_surface_ispec;

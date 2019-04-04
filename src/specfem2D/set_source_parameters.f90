@@ -91,6 +91,8 @@
     if (time_function_type(i_source) == 5 .or. time_function_type(i_source) == 11) then
       ! Heaviside or Ormsby
       t0_source(i_source) = 2.0d0 * hdur + tshift_src(i_source)
+    else if (time_function_type(i_source) == 10) then
+      t0_source(i_source) = 0.0
     else
       t0_source(i_source) = 1.20d0 * hdur + tshift_src(i_source)
     endif
@@ -199,7 +201,7 @@
         endif
 
         ! checks source onset time
-        if (t0+tshift_src(i_source) < 1.d0/f0_source(i_source)) then
+        if (t0+tshift_src(i_source) < 1.d0/f0_source(i_source) .and. time_function_type(i_source) /= 10) then
           call exit_MPI(myrank,'Onset time too small')
         else
           if (myrank == 0) then

@@ -141,20 +141,8 @@ void FC_FUNC_(prepare_constants_device,
                                         int* h_nibool_interfaces_ext_mesh, int* h_ibool_interfaces_ext_mesh,
                                         realw* h_hprime_xx, realw* h_hprimewgll_xx,
                                         realw* h_wxgll,
-                                        int* ABSORBING_CONDITIONS,
-                                        int* h_nspec_bottom,
-                                        int* h_nspec_left,
-                                        int* h_nspec_right,
-                                        int* h_nspec_top,
-                                        int* h_abs_boundary_ispec, int* h_abs_boundary_ij,
-                                        realw* h_abs_boundary_normal,
-                                        realw* h_abs_boundary_jacobian1Dw,
-                                        int* h_num_abs_boundary_faces,
-                                        int* h_cote_abs,
-                                        int* h_ib_bottom,
-                                        int* h_ib_left,
-                                        int* h_ib_right,
-                                        int* h_ib_top,
+                                        int* STACEY_BOUNDARY_CONDITIONS,
+                                        int* PML_BOUNDARY_CONDITIONS,
                                         int* h_ispec_is_inner,
                                         int* nsources_local_f,
                                         realw* h_sourcearrays, realw * h_source_time_function,
@@ -190,7 +178,8 @@ void FC_FUNC_(prepare_constants_device,
 
   // constants
   mp->simulation_type = *SIMULATION_TYPE;
-  mp->absorbing_conditions = *ABSORBING_CONDITIONS;
+  mp->stacey_absorbing_conditions = *STACEY_BOUNDARY_CONDITIONS;
+  mp->pml = *PML_BOUNDARY_CONDITIONS;
   mp->save_forward = *SAVE_FORWARD;
 
   // sets constant arrays
@@ -298,28 +287,6 @@ void FC_FUNC_(prepare_constants_device,
 
   // inner elements
   copy_todevice_int((void**)&mp->d_ispec_is_inner,h_ispec_is_inner,mp->NSPEC_AB);
-
-  // absorbing boundaries
-  mp->d_num_abs_boundary_faces = *h_num_abs_boundary_faces;
-  if (mp->absorbing_conditions && mp->d_num_abs_boundary_faces > 0) {
-    copy_todevice_int((void**)&mp->d_abs_boundary_ispec,h_abs_boundary_ispec,mp->d_num_abs_boundary_faces);
-    copy_todevice_int((void**)&mp->d_abs_boundary_ijk,h_abs_boundary_ij,
-                      2*NGLLX*(mp->d_num_abs_boundary_faces));
-    copy_todevice_realw((void**)&mp->d_abs_boundary_normal,h_abs_boundary_normal,
-                        NDIM*NGLLX*(mp->d_num_abs_boundary_faces));
-    copy_todevice_realw((void**)&mp->d_abs_boundary_jacobian2Dw,h_abs_boundary_jacobian1Dw,
-                        NGLLX*(mp->d_num_abs_boundary_faces));
-    copy_todevice_int((void**)&mp->d_cote_abs,h_cote_abs,(mp->d_num_abs_boundary_faces));
-    copy_todevice_int((void**)&mp->d_ib_left,h_ib_left,(mp->d_num_abs_boundary_faces));
-    copy_todevice_int((void**)&mp->d_ib_right,h_ib_right,(mp->d_num_abs_boundary_faces));
-    copy_todevice_int((void**)&mp->d_ib_top,h_ib_top,(mp->d_num_abs_boundary_faces));
-    copy_todevice_int((void**)&mp->d_ib_bottom,h_ib_bottom,(mp->d_num_abs_boundary_faces));
-
-    mp->d_nspec_bottom = *h_nspec_bottom;
-    mp->d_nspec_left = *h_nspec_left;
-    mp->d_nspec_right = *h_nspec_right;
-    mp->d_nspec_top = *h_nspec_top;
-  }
 
   // sources
   mp->nsources_local = *nsources_local_f;
@@ -524,8 +491,8 @@ void FC_FUNC_(prepare_fields_acoustic_device,
     copy_todevice_int((void**)&mp->d_free_surface_ijk,free_surface_ijk,2*NGLLX*mp->num_free_surface_faces);
   }
 
-  // absorbing boundaries
-  if (mp->absorbing_conditions && mp->d_num_abs_boundary_faces > 0) {
+  // Stacey absorbing boundaries
+  if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0) {
     // absorb_field array used for file i/o
     if (mp->simulation_type == 3 || ( mp->simulation_type == 1 && mp->save_forward )){
       print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_left,mp->d_nspec_left*sizeof(realw)*NGLLX),2201);
@@ -766,8 +733,8 @@ void FC_FUNC_(prepare_fields_elastic_device,
   // debug
   //synchronize_mpi();
 
-  // absorbing conditions
-  if (mp->absorbing_conditions && mp->d_num_abs_boundary_faces > 0){
+  // Stacey absorbing conditions
+  if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0){
 
     // debug
     //printf("prepare_fields_elastic_device: rank %d - absorbing boundary setup\n",mp->myrank);
@@ -778,7 +745,7 @@ void FC_FUNC_(prepare_fields_elastic_device,
     copy_todevice_realw((void**)&mp->d_rho_vs,rho_vs,NGLL2*mp->NSPEC_AB);
 
     // absorb_field array used for file i/o
-    if (mp->absorbing_conditions && mp->d_num_abs_boundary_faces > 0) {
+    if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0) {
       // absorb_field array used for file i/o
       if (mp->simulation_type == 3 || ( mp->simulation_type == 1 && mp->save_forward )){
         mp->d_nspec_left = *h_nspec_left;
@@ -870,10 +837,6 @@ void FC_FUNC_(prepare_fields_elastic_device,
     print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_dux_dzl_plus_duz_dxl_old,mp->NSPEC_AB*sizeof(realw)*NGLL2),4811);
     print_CUDA_error_if_any(cudaMemset(mp->d_dux_dzl_plus_duz_dxl_old,0,mp->NSPEC_AB*sizeof(realw)*NGLL2),4812);
   }
-
-
-
-  // JC JC here we will need to add GPU support for the new C-PML routines
 
   // debug
   //printf("prepare_fields_elastic_device: rank %d - done\n",mp->myrank);
@@ -1007,6 +970,126 @@ void FC_FUNC_(prepare_sim2_or_3_const_device,
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// PML boundary conditions
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(prepare_pml_device,
+              PREPARE_PML_DEVICE)(long* Mesh_pointer,
+                                  int* NSPEC_PML,
+                                  int* NSPEC_PML_X,
+                                  int* NSPEC_PML_Z,
+                                  int* NSPEC_PML_XZ,
+                                  int* h_spec_to_pml,
+                                  realw* h_abs_normalized,
+                                  realw* ALPHA_MAX_PML,
+                                  realw* d0_max,
+                                  realw* deltat,
+                                  realw* h_alphax_store,
+                                  realw* h_alphaz_store,
+                                  realw* h_betax_store,
+                                  realw* h_betaz_store){
+
+  TRACE("prepare_PML_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer);
+
+  if (mp->pml){
+    mp->deltat = *deltat;
+    mp->nspec_pml    = *NSPEC_PML;
+    mp->nspec_pml_x  = *NSPEC_PML_X;
+    mp->nspec_pml_z  = *NSPEC_PML_Z;
+    mp->ALPHA_MAX_PML = *ALPHA_MAX_PML;
+    mp->d0_max = *d0_max;
+    copy_todevice_int((void**)&mp->spec_to_pml,h_spec_to_pml,mp->NSPEC_AB);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->PML_dpotentialdxl_old,NGLL2*mp->nspec_pml*sizeof(realw)),1301);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->PML_dpotentialdzl_old,NGLL2*mp->nspec_pml*sizeof(realw)),1302);
+    print_CUDA_error_if_any(cudaMemset(mp->PML_dpotentialdxl_old,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
+    print_CUDA_error_if_any(cudaMemset(mp->PML_dpotentialdzl_old,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->dpotential_old,NGLL2*mp->nspec_pml*sizeof(realw)),1303);
+    print_CUDA_error_if_any(cudaMemset(mp->dpotential_old,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
+    copy_todevice_realw((void**)&mp->abscissa_norm,h_abs_normalized,NGLL2*mp->nspec_pml);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->rmemory_acoustic_dux_dx,NGLL2*mp->nspec_pml*sizeof(realw)),1290);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->rmemory_acoustic_dux_dz,NGLL2*mp->nspec_pml*sizeof(realw)),1291);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->rmemory_acoustic_dux_dx2,NGLL2*(*NSPEC_PML_XZ)*sizeof(realw)),1292);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->rmemory_acoustic_dux_dz2,NGLL2*(*NSPEC_PML_XZ)*sizeof(realw)),1292);
+    print_CUDA_error_if_any(cudaMemset(mp->rmemory_acoustic_dux_dx,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
+    print_CUDA_error_if_any(cudaMemset(mp->rmemory_acoustic_dux_dz,0,sizeof(realw)*NGLL2*mp->nspec_pml),2007);
+    print_CUDA_error_if_any(cudaMemset(mp->rmemory_acoustic_dux_dx2,0,sizeof(realw)*NGLL2*(*NSPEC_PML_XZ)),2007);
+    print_CUDA_error_if_any(cudaMemset(mp->rmemory_acoustic_dux_dz2,0,sizeof(realw)*NGLL2*(*NSPEC_PML_XZ)),2007);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->rmemory_pot_acoustic,NGLL2*mp->nspec_pml*sizeof(realw)),1293);
+    print_CUDA_error_if_any(cudaMalloc((void**)&mp->rmemory_pot_acoustic2,NGLL2*(*NSPEC_PML_XZ)*sizeof(realw)),1294);
+    print_CUDA_error_if_any(cudaMemset(mp->rmemory_pot_acoustic,0,sizeof(realw)*NGLL2*(mp->nspec_pml)),2007);
+    print_CUDA_error_if_any(cudaMemset(mp->rmemory_pot_acoustic2,0,sizeof(realw)*NGLL2*(*NSPEC_PML_XZ)),2007);
+    copy_todevice_realw((void**)&mp->alphax_store,h_alphax_store,NGLL2*(*NSPEC_PML_XZ));
+    copy_todevice_realw((void**)&mp->alphaz_store,h_alphaz_store,NGLL2*(*NSPEC_PML_XZ));
+    copy_todevice_realw((void**)&mp->betax_store,h_betax_store,NGLL2*(*NSPEC_PML_XZ));
+    copy_todevice_realw((void**)&mp->betaz_store,h_betaz_store,NGLL2*(*NSPEC_PML_XZ));
+  }
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_cuda_error("prepare_PML_device");
+#endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// Stacey boundary conditions
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(prepare_stacey_device,
+              PREPARE_STACEY_DEVICE)(long* Mesh_pointer,
+                                     int* h_nspec_bottom,
+                                     int* h_nspec_left,
+                                     int* h_nspec_right,
+                                     int* h_nspec_top,
+                                     int* h_abs_boundary_ispec, int* h_abs_boundary_ij,
+                                     realw* h_abs_boundary_normal,
+                                     realw* h_abs_boundary_jacobian1Dw,
+                                     int* h_num_abs_boundary_faces,
+                                     int* h_cote_abs,
+                                     int* h_ib_bottom,
+                                     int* h_ib_left,
+                                     int* h_ib_right,
+                                     int* h_ib_top){
+
+  TRACE("prepare_Stacey_device");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer);
+
+  // Stacey absorbing boundaries
+  mp->d_num_abs_boundary_faces = *h_num_abs_boundary_faces;
+  if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0) {
+    copy_todevice_int((void**)&mp->d_abs_boundary_ispec,h_abs_boundary_ispec,mp->d_num_abs_boundary_faces);
+    copy_todevice_int((void**)&mp->d_abs_boundary_ijk,h_abs_boundary_ij,
+                      2*NGLLX*(mp->d_num_abs_boundary_faces));
+    copy_todevice_realw((void**)&mp->d_abs_boundary_normal,h_abs_boundary_normal,
+                        NDIM*NGLLX*(mp->d_num_abs_boundary_faces));
+    copy_todevice_realw((void**)&mp->d_abs_boundary_jacobian2Dw,h_abs_boundary_jacobian1Dw,
+                        NGLLX*(mp->d_num_abs_boundary_faces));
+    copy_todevice_int((void**)&mp->d_cote_abs,h_cote_abs,(mp->d_num_abs_boundary_faces));
+    copy_todevice_int((void**)&mp->d_ib_left,h_ib_left,(mp->d_num_abs_boundary_faces));
+    copy_todevice_int((void**)&mp->d_ib_right,h_ib_right,(mp->d_num_abs_boundary_faces));
+    copy_todevice_int((void**)&mp->d_ib_top,h_ib_top,(mp->d_num_abs_boundary_faces));
+    copy_todevice_int((void**)&mp->d_ib_bottom,h_ib_bottom,(mp->d_num_abs_boundary_faces));
+
+    mp->d_nspec_bottom = *h_nspec_bottom;
+    mp->d_nspec_left = *h_nspec_left;
+    mp->d_nspec_right = *h_nspec_right;
+    mp->d_nspec_top = *h_nspec_top;
+  }
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_cuda_error("prepare_Stacey_device");
+#endif
+}
+
+
 
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1020,7 +1103,6 @@ void FC_FUNC_(prepare_cleanup_device,
               PREPARE_CLEANUP_DEVICE)(long* Mesh_pointer,
                                       int* ACOUSTIC_SIMULATION,
                                       int* ELASTIC_SIMULATION,
-                                      int* ABSORBING_CONDITIONS,
                                       int* ANISOTROPY,
                                       int* APPROXIMATE_HESS_KL,
                                       int* ATTENUATION_VISCOACOUSTIC,
@@ -1048,8 +1130,8 @@ TRACE("prepare_cleanup_device");
   cudaFree(mp->d_muv);
   cudaFree(mp->d_kappav);
 
-  // absorbing boundaries
-  if (*ABSORBING_CONDITIONS && mp->d_num_abs_boundary_faces > 0) {
+  // Stacey absorbing boundaries
+  if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0) {
     cudaFree(mp->d_abs_boundary_ispec);
     cudaFree(mp->d_abs_boundary_ijk);
     cudaFree(mp->d_abs_boundary_normal);
@@ -1130,6 +1212,25 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_ispec_selected_rec_loc);
   }
 
+  // PML
+  if (mp->pml){
+    cudaFree(mp->spec_to_pml);
+    cudaFree(mp->PML_dpotentialdxl_old);
+    cudaFree(mp->PML_dpotentialdzl_old);
+    cudaFree(mp->dpotential_old);
+    cudaFree(mp->abscissa_norm);
+    cudaFree(mp->rmemory_acoustic_dux_dx);
+    cudaFree(mp->rmemory_acoustic_dux_dz);
+    cudaFree(mp->rmemory_acoustic_dux_dx2);
+    cudaFree(mp->rmemory_acoustic_dux_dz2);
+    cudaFree(mp->rmemory_pot_acoustic);
+    cudaFree(mp->rmemory_pot_acoustic2);
+    cudaFree(mp->alphax_store);
+    cudaFree(mp->alphaz_store);
+    cudaFree(mp->betax_store);
+    cudaFree(mp->betaz_store);
+  }
+
   // ACOUSTIC arrays
   if (*ACOUSTIC_SIMULATION) {
     cudaFree(mp->d_potential_acoustic);
@@ -1166,7 +1267,7 @@ TRACE("prepare_cleanup_device");
       }
     }
 
-    if (*ABSORBING_CONDITIONS && mp->d_num_abs_boundary_faces > 0){
+    if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0){
       if (mp->simulation_type == 3 || ( mp->simulation_type == 1 && mp->save_forward )){
         cudaFree(mp->d_b_absorb_potential_bottom);
         cudaFree(mp->d_b_absorb_potential_left);
@@ -1207,7 +1308,7 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_ispec_is_elastic);
     cudaFree(mp->d_inum_interfaces_elastic);
 
-    if (*ABSORBING_CONDITIONS && mp->d_num_abs_boundary_faces > 0){
+    if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0){
       cudaFree(mp->d_rho_vp);
       cudaFree(mp->d_rho_vs);
       cudaFree(mp->d_b_absorb_elastic_bottom);

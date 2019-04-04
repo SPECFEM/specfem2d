@@ -57,7 +57,6 @@
   ! safety checks
   if (any_elastic .and. (.not. P_SV)) call stop_the_code( &
 'Invalid GPU simulation, SH waves not implemented yet. Please use P_SV instead.')
-  if (PML_BOUNDARY_CONDITIONS ) call stop_the_code('PML not implemented on GPU mode. Please use Stacey instead.')
   if (AXISYM) call stop_the_code('Axisym not implemented on GPU yet.')
   if (NGLLX /= NGLLZ) call stop_the_code('GPU simulations require NGLLX == NGLLZ')
   if ( (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. ATTENUATION_VISCOACOUSTIC) call stop_the_code( &
@@ -66,6 +65,13 @@
     'GPU mode do not support yet adjoint simulations with attenuation viscoelastic')
   if ( (ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. any_elastic .and. any_acoustic) call stop_the_code( &
     'GPU mode do not support yet coupled fluid-solid simulations with attenuation')
+  if (PML_BOUNDARY_CONDITIONS .and. any_elastic) call stop_the_code( &
+                   'PML on GPU do not support elastic case yet') 
+  if (PML_BOUNDARY_CONDITIONS .and. ATTENUATION_VISCOACOUSTIC) call stop_the_code( &
+                   'PML on GPU do not support viscoacoustic case yet') 
+  if (PML_BOUNDARY_CONDITIONS .and. SIMULATION_TYPE==3 .and. (.not. NO_BACKWARD_RECONSTRUCTION) ) call stop_the_code( &
+                   'PML on GPU in adjoint mode only work using NO_BACKWARD_RECONSTRUCTION flag')
+
   ! initializes arrays
   call init_host_to_dev_variable()
 
@@ -82,13 +88,6 @@
 ! max_nibool_interfaces_ext_mesh         : nombre maximum de points GLL contenus sur une interface
 ! nibool_interfaces_ext_mesh(i)          : nombre de points GLL contenus sur l'interface i
 ! ibool_interfaces_ext_mesh(iGGL,i)      : numero global iglob du ieme point GLL (iGLL) de l'interface i
-! numabs                                 : tableau des elements spectraux situes en zone absorbante
-! abs_boundary_ij(i,j,ispecabs)          : coordonnee locale i de j eme point GLL de l'element absorbant ispecabs
-! abs_boundary_normal(i,j,ispecabs)      : i eme coordonnee du vecteur normal du j eme point GLL de l'element absorbant ispecabs
-! abs_boundary_jacobian1Dw(i,ispecabs)   : i eme jacobienne ponderee de l'element absorbant jspecabs
-! nelemabs                               : nombre d'elements absorbant
-! cote_abs(ispecabs)                     : numero du cote (1=b, 2=r, 3=t, 4=l ) auquel appartient l'element absorbant ispecabs
-! ib_left                                : correspondance entre le numero d'element absorbant global et son numero sur le cote
 ! ispec_is_inner                         : booleen vrai si l'element est a l'interieur d'une partition
 ! sourcearray_loc(i_src,dim,i,j)         : tableau de ponderation de l'intensite de la source pour chaque point GLL (i,j)
 !                                          de l'element spectral qui contient la source locale i_src
@@ -110,19 +109,7 @@
                                 hprime_xx,hprimewgll_xx, &
                                 wxgll, &
                                 STACEY_ABSORBING_CONDITIONS, &
-                                nspec_bottom, &
-                                nspec_left, &
-                                nspec_right, &
-                                nspec_top, &
-                                numabs, abs_boundary_ij, &
-                                abs_boundary_normal, &
-                                abs_boundary_jacobian1Dw, &
-                                nelemabs, &
-                                cote_abs, &
-                                ib_bottom, &
-                                ib_left, &
-                                ib_right, &
-                                ib_top, &
+                                PML_BOUNDARY_CONDITIONS, &
                                 ispec_is_inner, &
                                 nsources_local, &
                                 sourcearray_loc,source_time_function_loc, &
@@ -189,7 +176,6 @@
 ! elastic(i)                     : vrai si l'element spectral i est elastique
 
   ! prepares fields on GPU for elastic simulations
-  !?!? JC JC here we will need to add GPU support for the new C-PML routines
   if (any_elastic) then
     ! temporary mass matrices
     allocate(rmassx(nglob_elastic),rmassz(nglob_elastic))
@@ -224,6 +210,49 @@
     ! frees memory
     deallocate(rmassx,rmassz)
   endif
+
+  if (PML_BOUNDARY_CONDITIONS) &
+    call prepare_PML_device(Mesh_pointer, &
+                            nspec_PML, &
+                            NSPEC_PML_X, &
+                            NSPEC_PML_Z, &
+                            NSPEC_PML_XZ, &
+                            spec_to_PML_GPU, &
+                            abs_normalized, &
+                            sngl(ALPHA_MAX_PML), &
+                            d0_max, &
+                            sngl(deltat), &
+                            alphax_store_GPU, &
+                            alphaz_store_GPU, &
+                            betax_store_GPU, &
+                            betaz_store_GPU)
+
+! numabs                                 : tableau des elements spectraux situes en zone absorbante
+! abs_boundary_ij(i,j,ispecabs)          : coordonnee locale i de j eme point GLL de l'element absorbant ispecabs
+! abs_boundary_normal(i,j,ispecabs)      : i eme coordonnee du vecteur normal du j eme point GLL de l'element absorbant ispecabs
+! abs_boundary_jacobian1Dw(i,ispecabs)   : i eme jacobienne ponderee de l'element absorbant jspecabs
+! nelemabs                               : nombre d'elements absorbant
+! cote_abs(ispecabs)                     : numero du cote (1=b, 2=r, 3=t, 4=l )
+! auquel appartient l'element absorbant ispecabs
+! ib_left                                : correspondance entre le numero
+! d'element absorbant global et son numero sur le cote
+
+  if (STACEY_ABSORBING_CONDITIONS) &
+    call prepare_Stacey_device(Mesh_pointer, &
+                               nspec_bottom, &
+                               nspec_left, &
+                               nspec_right, &
+                               nspec_top, &
+                               numabs, abs_boundary_ij, &
+                               abs_boundary_normal, &
+                               abs_boundary_jacobian1Dw, &
+                               nelemabs, &
+                               cote_abs, &
+                               ib_bottom, &
+                               ib_left, &
+                               ib_right, &
+                               ib_top)
+ 
 
   ! prepares fields on GPU for poroelastic simulations
   if (any_poroelastic) then
@@ -322,7 +351,7 @@
 
 ! helper routine for array initialization and time run setup
 
-  use constants, only: IMAIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IBOTTOM,IRIGHT,ITOP,ILEFT
+  use constants, only: IMAIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4,IBOTTOM,IRIGHT,ITOP,ILEFT,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
 
   implicit none
 
@@ -332,6 +361,8 @@
   integer :: ier,inum
   real(kind=CUSTOM_REAL) :: zxi,xgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: xxi,zgamma
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_normalized_temp
+  
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! Initialisation variables pour routine prepare_constants_device
@@ -474,6 +505,74 @@
       endif
     enddo
   endif ! STACEY_ABSORBING_CONDITIONS
+
+  if (PML_BOUNDARY_CONDITIONS) then
+    ! EB EB : We create spec_to_PML_GPU such that :
+    ! spec_to_PML_GPU(ispec) = 0 indicates the element is not in the PML
+    ! spec_to_PML_GPU(ispec) \in [1, NSPEC_PML_X] indicates the element is not in the region CPML_X_ONLY
+    ! spec_to_PML_GPU(ispec) \in [NSPEC_PML_X + 1, NSPEC_PML_X + NSPEC_PML_Z] indicates the element is in the region CPML_Z_ONLY
+    ! spec_to_PML_GPU(ispec) >  NSPEC_PML_X + NSPEC_PML_Z indicates the element is in the region CPML_XZ
+    ! Finally, spec_to_PML_GPU(ispec) = ispec_pml, where ispec_pml the local
+    ! number of the element in the PML 
+    allocate(spec_to_PML_GPU(nspec))
+    spec_to_PML_GPU(:) = 0  
+    nspec_PML_X = 0
+    do ispec= 1,nspec
+      if (region_CPML(ispec) == CPML_X_ONLY ) then
+        nspec_PML_X = nspec_PML_X+1
+        spec_to_PML_GPU(ispec) = nspec_PML_X
+      endif
+    enddo 
+    nspec_PML_Z = 0
+    do ispec= 1,nspec
+      if (region_CPML(ispec)  == CPML_Z_ONLY ) then
+        nspec_PML_Z = nspec_PML_Z+1
+        spec_to_PML_GPU(ispec) = nspec_PML_X + nspec_PML_Z
+      endif
+    enddo
+    nspec_PML_XZ = 0
+    do ispec= 1,nspec
+      if (region_CPML(ispec) == CPML_XZ ) then
+        nspec_PML_XZ = nspec_PML_XZ+1
+        spec_to_PML_GPU(ispec) = nspec_PML_X + nspec_PML_Z + nspec_PML_XZ
+      endif
+    enddo
+    ! Safety check
+    if (nspec_PML_X + nspec_PML_Z + nspec_PML_XZ /= nspec_PML) call stop_the_code(&
+                       'Error with the number of PML elements in GPU mode')
+
+    ! EB EB : We reorganize the arrays abs_normalized and abs_normalized2 that
+    ! don't have the correct dimension and new local element numbering
+    allocate(abs_normalized_temp(NGLLX,NGLLZ,NSPEC))
+    abs_normalized_temp = abs_normalized
+    deallocate(abs_normalized)
+    allocate(abs_normalized(NGLLX,NGLLZ,NSPEC_PML))
+    do ispec= 1,nspec
+     if (spec_to_PML_GPU(ispec) > 0) abs_normalized(:,:,spec_to_PML_GPU(ispec)) = abs_normalized_temp(:,:,ispec)
+    enddo
+    deallocate(abs_normalized_temp)
+
+    allocate(alphax_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ),alphaz_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ),&
+             betax_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ),betaz_store_GPU(NGLLX,NGLLZ,NSPEC_PML_XZ))
+    do ispec= 1,nspec
+      if (region_CPML(ispec)  == CPML_XZ) then
+        do j=1,NGLLZ
+          do i = 1,NGLLX
+            alphax_store_GPU(i,j,spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)) = sngl(alpha_x_store(i,j,spec_to_PML(ispec))) 
+            alphaz_store_GPU(i,j,spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)) = sngl(alpha_z_store(i,j,spec_to_PML(ispec)))
+            betax_store_GPU(i,j,spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)) = sngl(alpha_x_store(i,j,spec_to_PML(ispec)) + &
+              d_x_store(i,j,spec_to_PML(ispec)))
+            betaz_store_GPU(i,j,spec_to_PML_GPU(ispec)-(nspec_PML_X + nspec_PML_Z)) = sngl(alpha_z_store(i,j,spec_to_PML(ispec)) + &
+              d_z_store(i,j,spec_to_PML(ispec)))
+           enddo
+         enddo
+      endif
+    enddo
+  else
+    allocate(spec_to_PML_GPU(1))
+    allocate(alphax_store_GPU(1,1,1),alphaz_store_GPU(1,1,1),&
+             betax_store_GPU(1,1,1),betaz_store_GPU(1,1,1))
+  endif ! PML_BOUNDARY_CONDITIONS
 
   ! sources
   ! counts sources in this process slice

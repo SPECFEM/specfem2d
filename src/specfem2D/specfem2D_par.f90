@@ -93,10 +93,14 @@ module specfem_par
 
   ! PML
   logical, dimension(:), allocatable :: ispec_is_PML
-  integer :: nspec_PML
+  integer :: nspec_PML,nspec_PML_X,nspec_PML_Z,nspec_PML_XZ
 
   integer, dimension(:), allocatable :: region_CPML
-  integer, dimension(:), allocatable :: spec_to_PML
+  integer, dimension(:), allocatable :: spec_to_PML,spec_to_PML_GPU
+  double precision :: ALPHA_MAX_PML
+  real(kind=CUSTOM_REAL) :: d0_max
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_normalized, abs_normalized2
 
   logical, dimension(:,:), allocatable :: which_PML_elem
   logical, dimension(:), allocatable  :: mask_ibool_PML
@@ -358,6 +362,8 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
                           rmemory_acoustic_dux_dx,rmemory_acoustic_dux_dz
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
+                          alphax_store_GPU,alphaz_store_GPU,betax_store_GPU,betaz_store_GPU
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rmemory_potential_acoustic_LDDRK
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &

@@ -444,7 +444,6 @@
 
     ! frees memory on GPU
     call prepare_cleanup_device(Mesh_pointer,any_acoustic,any_elastic, &
-                                STACEY_ABSORBING_CONDITIONS, &
                                 ANISOTROPY, &
                                 APPROXIMATE_HESS_KL, &
                                 ATTENUATION_VISCOACOUSTIC, &
@@ -471,7 +470,6 @@
     deallocate(t0x_bot)
     deallocate(t0z_bot)
   endif
-
   ! frees arrays (not complete, but at least a few...)
   deallocate(seismo_current)
   deallocate(sisux,sisuz,siscurl)
@@ -485,7 +483,9 @@
   deallocate(potential_dot_acoustic,potential_dot_dot_acoustic)
   deallocate(rmass_inverse_acoustic)
   deallocate(b_potential_acoustic,b_potential_acoustic_old)
-  deallocate(b_potential_dot_acoustic,b_potential_dot_dot_acoustic)
+  if (.not. NO_BACKWARD_RECONSTRUCTION) then
+    deallocate(b_potential_dot_acoustic,b_potential_dot_dot_acoustic)
+  endif
   deallocate(b_displ_ac,b_accel_ac,accel_ac)
   ! noise
   if (allocated(time_function_noise)) deallocate(time_function_noise)

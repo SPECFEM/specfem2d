@@ -364,8 +364,6 @@
     call stop_the_code('GPU mode can only be used if NGLLX == NGLLZ ')
   if (CUSTOM_REAL /= 4 ) &
     call stop_the_code('GPU mode runs only with CUSTOM_REAL == 4')
-  if (PML_BOUNDARY_CONDITIONS) &
-    call stop_the_code('for PML boundaries, GPU_MODE is not supported yet')
 
   ! initializes GPU and outputs info to files for all processes
   call initialize_cuda_device(myrank,ncuda_devices)

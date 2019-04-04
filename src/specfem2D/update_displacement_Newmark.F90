@@ -514,7 +514,7 @@
 
   subroutine update_displacement_newmark_GPU_acoustic(compute_b_wavefield)
 
-  use specfem_par, only: SIMULATION_TYPE,PML_BOUNDARY_CONDITIONS,myrank,UNDO_ATTENUATION_AND_OR_PML
+  use specfem_par, only: UNDO_ATTENUATION_AND_OR_PML
 
   use specfem_par_gpu, only: Mesh_pointer,deltatf,deltatover2f,deltatsquareover2f,b_deltatf,b_deltatover2f, &
     b_deltatsquareover2f
@@ -524,14 +524,6 @@
   logical :: compute_b_wavefield
 
   ! update displacement using finite-difference time scheme (Newmark)
-
-  ! wavefields on GPU
-  ! check
-  if (SIMULATION_TYPE == 3) then
-    if (PML_BOUNDARY_CONDITIONS) then
-      call exit_MPI(myrank,'acoustic time marching scheme with PML_CONDITIONS on GPU not implemented yet...')
-    endif
-  endif
 
   ! updates acoustic potentials
   call update_displacement_ac_cuda(Mesh_pointer,deltatf,deltatsquareover2f,deltatover2f,b_deltatf, &
