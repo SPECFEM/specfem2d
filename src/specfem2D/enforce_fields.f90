@@ -178,9 +178,9 @@ end module enforce_par
           iglob = ibool(i,j,ispec)
           if (iglob_is_forced(iglob)) then
             if (ispec_is_acoustic(ispec)) then
-               acoustic_iglob_is_forced = .true.
+               acoustic_iglob_is_forced(iglob) = .true.
             else if (ispec_is_elastic(ispec)) then
-               elastic_iglob_is_forced = .true.
+               elastic_iglob_is_forced(iglob) = .true.
             else
               call stop_the_code("Problem forced! Element is not acoustic and not elastic... this is not possible so far")
             endif
@@ -1000,5 +1000,3 @@ end subroutine Calculate_Weigth_Burst
   !endif
 
   end subroutine enforce_fields_acoustic
-
-
