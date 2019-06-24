@@ -244,6 +244,36 @@
     kappa  = lambda + mu
   endif
 
+!daniel todo: check if we need first to shift moduli from reference frequency to center frequency,
+!             and then compute the unrelaxed moduli from the center (since tau values are computed around the center freq)
+!
+!
+! from 3D version: (see get_attenuation_model.f90 line 611)
+!  !--- compute central angular frequency of source (non dimensionalized)
+!  w_c_source = TWO_PI * f_c_source
+!
+!  !--- quantity by which to scale mu_0 to get mu
+!  ! this formula can be found for instance in
+!  ! Liu, H. P., Anderson, D. L. and Kanamori, H., Velocity dispersion due to
+!  ! anelasticity: implications for seismology and mantle composition,
+!  ! Geophys. J. R. Astron. Soc., vol. 47, pp. 41-58 (1976)
+!  ! and in Aki, K. and Richards, P. G., Quantitative seismology, theory and methods,
+!  ! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170
+!  factor_scale_mu0 = ONE + TWO * log(f_c_source / ATTENUATION_f0_REFERENCE ) / (PI * Q_val)
+!  ..
+!  !--- total factor by which to scale mu0 to get mu_unrelaxed
+!  scale_factor = factor_scale_mu * factor_scale_mu0
+!  ..
+!
+! note: f_c_source corresponds to the center of the logarithmic frequency band of the simulation.
+!       ATTENUATION_f0_REFERENCE is the reference frequency of the given velocities.
+!
+! here below, the code computes the unrelaxed moduli directly based on (kappa,mu) given at the reference frequency ATTENUATION_f0_REFERENCE,
+! using the tau relaxation times computed for the frequency band of the simulation.
+!
+! thus, this omits the shift to the center frequency first.
+! this is probably still fine in case the reference and center freq's are close to each other.
+
   xtmp1_nu1 = ONE
   xtmp2_nu1 = ONE
   xtmp1_nu2 = ONE

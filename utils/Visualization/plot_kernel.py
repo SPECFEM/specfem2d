@@ -1,5 +1,19 @@
 #!/usr/bin/env python
-
+# SPECFEM2D
+#
+# script plots kernels and saves image as PNG-file
+#
+# usage:
+#   ./plot_kernel.py file [1 == show figure / 0 == just plot file]
+#
+# for example:
+#   ./plot_kernel.py OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat 1
+#
+#
+# requirements:
+#   - numpy
+#   - matplotlib
+#
 import os.path
 import sys
 import numpy as np
