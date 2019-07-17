@@ -38,7 +38,7 @@
 ! These subroutines are for the most part not used in the sequential version.
 
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
 ! only supported with parallel version...
 
 !-----------------------------------------------
@@ -48,8 +48,6 @@
                                  array_e1,n_sls_loc, &
                                  array_val2,npoin_val2, &
                                  array_val3,array_val4,npoin_val3)
-
-  use mpi
 
   use constants, only: CUSTOM_REAL,NDIM,USE_A_STRONG_FORMULATION_FOR_E1
 
@@ -61,8 +59,6 @@
     nibool_interfaces_acoustic,nibool_interfaces_elastic,nibool_interfaces_poroelastic
 
   implicit none
-
-  include "precision.h"
 
   ! arrays to assemble
 
@@ -638,7 +634,7 @@
 !-------------------------------------------------------------------------------------------------
 
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
 ! only supported with parallel version...
 
 !-----------------------------------------------
@@ -657,8 +653,6 @@
 
   subroutine assemble_MPI_vector_el_blocking(array_val)
 
-  use mpi
-
   use constants, only: CUSTOM_REAL,NDIM
 
   use specfem_par, only: NPROC, &
@@ -671,8 +665,6 @@
     my_neighbors
 
   implicit none
-
-  include "precision.h"
 
   ! array to assemble
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob), intent(inout) :: array_val
@@ -863,7 +855,7 @@
 !
 !-------------------------------------------------------------------------------------------------
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
 ! only supported with parallel version...
 
 !-----------------------------------------------
@@ -879,8 +871,6 @@
 !-----------------------------------------------
   subroutine assemble_MPI_vector_po_blocking(array_val3,array_val4)
 
-  use mpi
-
   use constants, only: CUSTOM_REAL,NDIM
 
   use specfem_par, only: NPROC, &
@@ -893,8 +883,6 @@
     my_neighbors
 
   implicit none
-
-  include "precision.h"
 
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob), intent(inout) :: array_val3,array_val4
 

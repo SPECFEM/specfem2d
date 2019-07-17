@@ -32,7 +32,7 @@
 !========================================================================
 
 ! note: the filename ending is .F90 to have pre-compilation with pragmas
-!            (like #ifndef USE_MPI) working properly
+!            (like #ifndef WITH_MPI) working properly
 
   subroutine read_interfaces_file()
 

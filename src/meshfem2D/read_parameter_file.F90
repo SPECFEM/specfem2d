@@ -1253,10 +1253,10 @@
      call stop_the_code('Error invalid NPROC value')
   endif
 
-#ifndef USE_MPI
+#ifndef WITH_MPI
   if (NPROC > 1) then
      print *, 'Error: Number of processes (NPROC) must be equal to one when not using MPI.'
-     print *, 'Please recompile with -DUSE_MPI in order to enable use of MPI.'
+     print *, 'Please recompile with -DWITH_MPI in order to enable use of MPI.'
      call stop_the_code('Error invalid NPROC value')
   endif
 #endif

@@ -37,10 +37,6 @@
 ! PostScript display routine
 !
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN,NGLLX,NGLLZ,ARROW_ANGLE,ARROW_RATIO,CENTIM, &
     DISPLAY_PML_IN_DIFFERENT_COLOR,ICOLOR_FOR_PML_DISPLAY, &
     IEDGE1,IEDGE2,IEDGE3,IEDGE4, &
@@ -134,7 +130,7 @@
   double precision :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
   double precision :: dispmax_glob
 
-#ifndef USE_MPI
+#ifndef WITH_MPI
 ! this to avoid warnings by the compiler about unused variables in the case
 ! of a serial code, therefore use them once and do nothing: just set them to zero
   nspec_recv = 0
@@ -523,7 +519,7 @@
       enddo
     enddo
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
         ! master collects
@@ -851,7 +847,7 @@
 
   enddo ! ispec
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
       ! master collects
@@ -1060,7 +1056,7 @@
       enddo
     endif ! anyabs
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
         ! master collects
@@ -1148,7 +1144,7 @@
     enddo
   endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
       ! master collects
@@ -1246,7 +1242,7 @@
 
     enddo
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
         ! master collects
@@ -1347,7 +1343,7 @@
 
     enddo
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
         ! master collects
@@ -1449,7 +1445,7 @@
 
     enddo
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
         ! master collects
@@ -1532,7 +1528,7 @@
     do ispec = 1,nspec
 
 ! interpolation on a uniform grid
-#ifdef USE_MPI
+#ifdef WITH_MPI
       if (myrank == 0 .and. mod(ispec,1000) == 0) &
         write(IMAIN,*) '  Interpolation uniform grid element ',ispec,' on processor core 0'
 #else
@@ -1650,7 +1646,7 @@
 
     enddo ! ispec
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (myrank == 0) then
       ! master collects
       do iproc = 1, NPROC-1
@@ -1782,7 +1778,7 @@
 
     enddo
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (myrank == 0) then
       ! master collects
       do iproc = 1, NPROC-1

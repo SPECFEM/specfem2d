@@ -187,7 +187,7 @@ specfem2D_SHARED_OBJECTS = \
 	$O/force_ftz.cc.o \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \
-	$O/parallel.shared.o \
+	$O/parallel.sharedmpi.o \
 	$O/read_parameter_file.mesh.o \
 	$O/read_value_parameters.shared.o \
 	$O/read_material_table.mesh.o \
@@ -358,13 +358,13 @@ $O/initialize_simulation.spec.o: ${SETUP}/version.fh
 ####
 
 $O/%.spec_module.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.spec.o: $S/%.f90 ${SETUP}/constants.h $O/specfem2D_par.spec_module.o
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.spec.o: $S/%.F90 ${SETUP}/constants.h $O/specfem2D_par.spec_module.o
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.cc.o: $S/%.c ${SETUP}/config.h
 	${CC} ${CFLAGS} -I${S_LIBJPEG} -c -o $@ $<

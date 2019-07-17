@@ -32,7 +32,7 @@
 !========================================================================
 
 ! note: the filename ending is .F90 to have pre-compilation with pragmas
-!            (like #ifndef USE_MPI) working properly
+!            (like #ifndef WITH_MPI) working properly
 
 module constants
 
@@ -422,6 +422,9 @@ module shared_parameters
   ! vertical layers
   integer :: number_of_layers
   integer, dimension(:), allocatable :: nz_layer
+
+  ! seismogram output
+  logical, parameter :: WRITE_SEISMOGRAMS_BY_MASTER = .true.
 
 end module shared_parameters
 

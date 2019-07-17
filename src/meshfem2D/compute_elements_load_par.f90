@@ -33,6 +33,7 @@ module compute_elements_load_par
                                read_external_mesh,num_material,phi_read,QKappa,Qmu,absorbbottom,absorbtop,absorbleft,absorbright
   use constants, only: IMAIN,TINYVAL
 
+  implicit none
   integer, dimension(:), allocatable  :: elmnts_load
   integer, dimension(:), allocatable  :: adjwgt
 

@@ -497,10 +497,6 @@
 
 ! create statistics about mesh sampling (number of points per wavelength)
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO,OUTPUT_FILES
   use specfem_par
   use specfem_par_movie
@@ -685,11 +681,7 @@
 
     enddo
 
-#ifdef USE_MPI
     call sum_all_1Darray_i(classes_wavelength, classes_wavelength_all, NCLASSES)
-#else
-    classes_wavelength_all(:) = classes_wavelength(:)
-#endif
 
     ! gets total for all slices
     call sum_all_i(nspec,nspec_all)
@@ -851,10 +843,6 @@
 
   subroutine check_grid_create_postscript(courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaSmin,lambdaSmax)
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN,TINYVAL,HUGEVAL,DISPLAY_SUBSET_OPTION,NSPEC_DISPLAY_SUBSET, &
     RPERCENTX,RPERCENTZ,ORIG_X,ORIG_Z,CENTIM,THRESHOLD_POSTSCRIPT,OUTPUT_FILES
   use specfem_par
@@ -895,7 +883,7 @@
   double precision :: x1,z1,x2,z2,ratio_page,xmin,zmin
 
   double precision  :: xmin_glob, xmax_glob, zmin_glob, zmax_glob
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer  :: icol
 #endif
 
@@ -1244,7 +1232,7 @@
 
   enddo ! end of loop on all the spectral elements
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (myrank == 0) then
 
     do iproc = 1, NPROC-1
@@ -1647,7 +1635,7 @@
 
   enddo ! end of loop on all the spectral elements
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (myrank == 0) then
     do iproc = 1, NPROC-1
       call recv_singlei(nspec_recv,iproc,42)
@@ -1945,7 +1933,7 @@
 
   enddo ! end of loop on all the spectral elements
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (myrank == 0) then
     do iproc = 1, NPROC-1
       call recv_singlei(nspec_recv, iproc, 42)
@@ -2196,7 +2184,7 @@
 
   enddo ! end of loop on all the spectral elements
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (myrank == 0) then
     do iproc = 1, NPROC-1
       ! use a different color for each material set

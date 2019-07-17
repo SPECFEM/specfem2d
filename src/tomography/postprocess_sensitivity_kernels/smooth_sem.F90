@@ -62,19 +62,9 @@
 
 program smooth_sem
 
-
-
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use postprocess_par
 
   implicit none
-
-#ifdef USE_MPI
-  include "precision.h"
-#endif
 
   integer, parameter :: NARGS = 6
 
@@ -118,7 +108,10 @@ program smooth_sem
   real(kind=CUSTOM_REAL) :: dist_h,dist_v
   real(kind=CUSTOM_REAL) :: element_size
   real(kind=CUSTOM_REAL), PARAMETER :: PI = 3.1415927
-  real t1,t2
+
+  ! timing
+  double precision, external :: wtime
+  real :: t1,t2
 
   ! MPI initialization
   call init_mpi()
@@ -126,7 +119,7 @@ program smooth_sem
   call world_rank(myrank)
 
   if (myrank == 0) print *,"Running XSMOOTH_SEM on",NPROC,"processors"
-  call cpu_time(t1)
+  t1 = wtime()
 
   ! parse command line arguments
   if (command_argument_count() /= NARGS) then
@@ -428,29 +421,20 @@ program smooth_sem
   ! synchronizes all processes
   call synchronize_all()
 
-#ifdef USE_MPI
   if (NPROC > 1) then
-
     ! the maximum value for the smoothed kernel
     norm(:) = max_old(:)
-
-
-    call MPI_REDUCE(norm,max_old,nker,CUSTOM_MPI_TYPE,MPI_MAX,0,MPI_COMM_WORLD,ier)
+    call max_all_1Darray_cr(norm, max_old, nker)
 
     norm(:) = max_new(:)
+    call max_all_1Darray_cr(norm, max_new, nker)
 
-    call MPI_REDUCE(norm,max_new,nker,CUSTOM_MPI_TYPE,MPI_MAX,0,MPI_COMM_WORLD,ier)
     norm(:) = min_old(:)
-
-
-    call MPI_REDUCE(norm,min_old,nker,CUSTOM_MPI_TYPE,MPI_MIN,0,MPI_COMM_WORLD,ier)
+    call min_all_1Darray_cr(norm, min_old, nker)
 
     norm(:) = min_new(:)
-
-    call MPI_REDUCE(norm,min_new,nker,CUSTOM_MPI_TYPE,MPI_MIN,0,MPI_COMM_WORLD,ier)
-
+    call min_all_1Darray_cr(norm, min_new, nker)
   endif
-#endif
 
   do iker= 1, nker
     if (myrank == 0) then
@@ -461,7 +445,7 @@ program smooth_sem
     endif
   enddo
 
-  call cpu_time(t2)
+  t2 = wtime()
 
   if (GPU_Mode) then
     print *,'Computation time with GPU:',t2-t1

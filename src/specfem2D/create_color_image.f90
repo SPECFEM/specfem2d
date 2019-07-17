@@ -128,8 +128,8 @@
 
   vpmin = HUGEVAL
   vpmax = TINYVAL
-  do iy= 1,NZ_IMAGE_color
-    do ix= 1,NX_IMAGE_color
+  do iy = 1,NZ_IMAGE_color
+    do ix = 1,NX_IMAGE_color
 ! negative values in image_color_vp_display are a flag indicating a water layer to color in light blue later
       if (iglob_image_color(ix,iy) > -1 .and. image_color_vp_display(ix,iy) >= 0) then
         vpmin = min(vpmin,image_color_vp_display(ix,iy))
@@ -139,8 +139,8 @@
   enddo
 
 ! in the image format, the image starts in the upper-left corner
-  do iy=NZ_IMAGE_color,1,-1
-    do ix= 1,NX_IMAGE_color
+  do iy = NZ_IMAGE_color,1,-1
+    do ix = 1,NX_IMAGE_color
 
 ! check if pixel is defined or not (can be above topography for instance)
       if (iglob_image_color(ix,iy) == -1) then
@@ -242,8 +242,10 @@
     do i = 1,NSOURCES
 
 ! avoid edge effects for source or receiver symbols that can be partly outside of the image
-      do iy = max(iy_image_color_source(i) - half_width_cross,1), min(iy_image_color_source(i) + half_width_cross,NZ_IMAGE_color)
-        do ix = max(ix_image_color_source(i) - thickness_cross,1), min(ix_image_color_source(i) + thickness_cross,NX_IMAGE_color)
+      do iy = max(iy_image_color_source(i) - half_width_cross,1), &
+              min(iy_image_color_source(i) + half_width_cross,NZ_IMAGE_color)
+        do ix = max(ix_image_color_source(i) - thickness_cross,1), &
+                min(ix_image_color_source(i) + thickness_cross,NX_IMAGE_color)
 ! use orange color
           R = 255
           G = 157
@@ -256,8 +258,10 @@
       enddo
 
 ! avoid edge effects for source or receiver symbols that can be partly outside of the image
-      do iy = max(iy_image_color_source(i) - thickness_cross,1), min(iy_image_color_source(i) + thickness_cross,NZ_IMAGE_color)
-        do ix = max(ix_image_color_source(i) - half_width_cross,1), min(ix_image_color_source(i) + half_width_cross,NX_IMAGE_color)
+      do iy = max(iy_image_color_source(i) - thickness_cross,1), &
+              min(iy_image_color_source(i) + thickness_cross,NZ_IMAGE_color)
+        do ix = max(ix_image_color_source(i) - half_width_cross,1), &
+                min(ix_image_color_source(i) + half_width_cross,NX_IMAGE_color)
 ! use orange color
           R = 255
           G = 157
@@ -275,9 +279,9 @@
     do i = 1,nrec
 ! avoid edge effects for source or receiver symbols that can be partly outside of the image
       do iy = max(iy_image_color_receiver(i) - half_size_square,1), &
-                                          min(iy_image_color_receiver(i) + half_size_square,NZ_IMAGE_color)
+              min(iy_image_color_receiver(i) + half_size_square,NZ_IMAGE_color)
         do ix = max(ix_image_color_receiver(i) - half_size_square,1), &
-                                          min(ix_image_color_receiver(i) + half_size_square,NX_IMAGE_color)
+                min(ix_image_color_receiver(i) + half_size_square,NX_IMAGE_color)
 ! use dark green color
           R = 30
           G = 180

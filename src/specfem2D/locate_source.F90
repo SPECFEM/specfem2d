@@ -47,10 +47,6 @@
   use specfem_par, only: AXISYM,is_on_the_axis,xiglj, &
     ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   implicit none
 
   integer,intent(in) :: nspec,nglob
@@ -324,7 +320,7 @@
 !! DK DK dec 2017
   enddo
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   ! for MPI version, gather information from all the nodes
   if (islice_selected_source /= 0) then
     ! source is in another slice than the master process

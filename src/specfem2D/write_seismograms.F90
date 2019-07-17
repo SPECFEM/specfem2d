@@ -35,7 +35,7 @@
 
   subroutine write_seismograms()
 
-  use constants, only: ZERO
+  use constants, only: ZERO,IMAIN
   use specfem_par
   use specfem_par_gpu, only: Mesh_pointer
 
@@ -52,6 +52,10 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: pressure_element
   ! curl in an element
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ) :: curl_element
+
+  ! timing
+  double precision, external :: wtime
+  double precision :: write_time_begin,write_time
 
   ! checks subsampling recurrence
   if (mod(it-1,subsamp_seismos) == 0) then
@@ -158,10 +162,14 @@
         endif ! GPU_MODE
       endif ! nrecloc
     enddo  ! loop on signal types (seismotype)
+
   endif  ! subsamp_seismos
 
   ! save temporary or final seismograms
   if (mod(it,NSTEP_BETWEEN_OUTPUT_SEISMOS) == 0 .or. it == NSTEP) then
+    ! timing
+    write_time_begin = wtime()
+
     do i_sig = 1,NSIGTYPE ! Loop on signal types
       seismotype_l = seismotypeVec(i_sig)
       call write_seismograms_to_file(sisux(:,:,i_sig),sisuz(:,:,i_sig),siscurl(:,:,i_sig),seismotype_l,seismo_current(i_sig), &
@@ -170,6 +178,23 @@
         seismo_offset(i_sig) = seismo_offset(i_sig) + seismo_current(i_sig)
         seismo_current(i_sig) = 0
     enddo ! loop on signal types (seismotype)
+
+    ! user output
+    if (myrank == 0) then
+      ! timing
+      write_time = wtime() - write_time_begin
+      ! output
+      write(IMAIN,*)
+      write(IMAIN,*) 'Total number of time steps written: ', it-it_begin+1
+      if (WRITE_SEISMOGRAMS_BY_MASTER) then
+        write(IMAIN,*) 'Writing the seismograms by master proc alone took ',sngl(write_time),' seconds'
+      else
+        write(IMAIN,*) 'Writing the seismograms in parallel took ',sngl(write_time),' seconds'
+      endif
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
   endif
 
   end subroutine write_seismograms
@@ -178,16 +203,13 @@
 
   subroutine write_seismograms_to_file(sisux_l,sisuz_l,siscurl_l,seismotype_l,seismo_current_l,seismo_offset_l)
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: NDIM,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME,OUTPUT_FILES, RegInt_K
 
   use specfem_par, only: station_name,network_name,NSTEP,islice_selected_rec,nrec,myrank,deltat,t0, &
                          NSTEP_BETWEEN_OUTPUT_SEISMOS,subsamp_seismos,nrecloc, &
                          P_SV,SU_FORMAT,save_ASCII_seismograms, &
-                         save_binary_seismograms_single,save_binary_seismograms_double,x_source,z_source
+                         save_binary_seismograms_single,save_binary_seismograms_double,x_source,z_source, &
+                         WRITE_SEISMOGRAMS_BY_MASTER
 
   implicit none
 
@@ -221,6 +243,10 @@
   file_unit_15_has_been_opened = .false.
   file_unit_16_has_been_opened = .false.
   file_unit_17_has_been_opened = .false.
+
+  ! safety stop
+  if (.not. WRITE_SEISMOGRAMS_BY_MASTER) &
+    stop 'Error writing seismograms in parallel not supported yet!'
 
 ! write seismograms
 
@@ -341,27 +367,53 @@
           buffer_binary(:,irec,3) = siscurl_l(1:seismo_current_l,irecloc)
         endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
       else
-        ! collects seismogram components on master
-        call recv_dp(buffer_binary(1,irec,1), seismo_current_l, islice_selected_rec(irec), irec)
+        ! gets from other processes
+        if (WRITE_SEISMOGRAMS_BY_MASTER) then
+          ! collects seismogram components on master
+          call recv_dp(buffer_binary(1,irec,1), seismo_current_l, islice_selected_rec(irec), irec)
 
-        if (number_of_components == 2) then
-          call recv_dp(buffer_binary(1,irec,2), seismo_current_l, islice_selected_rec(irec), irec)
+          if (number_of_components == 2) then
+            call recv_dp(buffer_binary(1,irec,2), seismo_current_l, islice_selected_rec(irec), irec)
+          endif
+
+          if (number_of_components == 3) then
+            call recv_dp(buffer_binary(1,irec,2), seismo_current_l, islice_selected_rec(irec), irec)
+            call recv_dp(buffer_binary(1,irec,3), seismo_current_l, islice_selected_rec(irec), irec)
+          endif
         endif
 
-        if (number_of_components == 3) then
-          call recv_dp(buffer_binary(1,irec,2), seismo_current_l, islice_selected_rec(irec), irec)
-          call recv_dp(buffer_binary(1,irec,3), seismo_current_l, islice_selected_rec(irec), irec)
-        endif
 #endif
+      endif ! islice_selected_rec
+
+#ifdef WITH_MPI
+    else
+      ! slave processes (myrank > 0)
+      if (WRITE_SEISMOGRAMS_BY_MASTER) then
+        ! sends seismogram values to master
+        if (myrank == islice_selected_rec(irec)) then
+          irecloc = irecloc + 1
+          call send_dp(sisux_l(1,irecloc), seismo_current_l, 0, irec)
+
+          if (number_of_components >= 2) then
+            call send_dp(sisuz_l(1,irecloc), seismo_current_l, 0, irec)
+          endif
+
+          if (number_of_components == 3) then
+            call send_dp(siscurl_l(1,irecloc), seismo_current_l, 0, irec)
+          endif
+        endif
       endif
+#endif
+
     endif ! myrank == 0
   enddo
 
-  irecloc = 0
-  do irec = 1,nrec
-    if (myrank == 0) then
+  ! outputs to file
+  if (myrank == 0) then
+    irecloc = 0
+    do irec = 1,nrec
 
       if (.not. SU_FORMAT) then
 
@@ -466,29 +518,8 @@
         call write_output_SU(x_source(1),z_source(1),irec,buffer_binary,number_of_components, &
                              seismo_offset_l,seismo_current_l,seismotype_l)
       endif
-
-#ifdef USE_MPI
-    else
-      ! slave processes (myrank > 0)
-      ! sends seismogram values to master
-      if (myrank == islice_selected_rec(irec)) then
-        irecloc = irecloc + 1
-        call send_dp(sisux_l(1,irecloc), seismo_current_l, 0, irec)
-
-        if (number_of_components >= 2) then
-          call send_dp(sisuz_l(1,irecloc), seismo_current_l, 0, irec)
-        endif
-
-        if (number_of_components == 3) then
-          call send_dp(siscurl_l(1,irecloc), seismo_current_l, 0, irec)
-        endif
-
-      endif
-#endif
-
-    endif ! myrank
-
-  enddo
+    enddo
+  endif ! myrank
 
   ! close files
   if (file_unit_12_has_been_opened) close(12)

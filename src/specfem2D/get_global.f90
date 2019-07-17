@@ -70,6 +70,7 @@
     enddo
   enddo
 
+  ! file output for ibool
   if (trim(SAVE_MODEL) == 'binary') then
     write(outputname,'(a,i6.6,a)') trim(IN_DATA_FILES)//'proc',myrank,'_NSPEC_ibool.bin'
 

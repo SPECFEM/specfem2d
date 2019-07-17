@@ -35,10 +35,6 @@
 
 ! dumps the full wavefield (collected for all MPI ranks) to a single file
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN,SIZE_REAL,NGLLX,NGLLZ,OUTPUT_FILES
 
   use specfem_par, only: myrank,nglob,nspec, &
@@ -73,7 +69,7 @@
 
   integer :: dummy
 
-#ifndef USE_MPI
+#ifndef WITH_MPI
 ! To avoid warnings by the compiler about unused variables in case of a serial code.
 
   ! only needed for NPROC > 1 cases
@@ -144,14 +140,14 @@
       enddo
     enddo
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (NPROC > 1) then
       if (myrank == 0) then
         ! Master collects.
         ! Collect first receive counts to allocate gather array.
         dump_recv_counts(0) = icounter
         do iproc = 1, NPROC-1
-          call MPI_RECV (dump_recv_counts(iproc), 1, MPI_INTEGER, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_singlei(dump_recv_counts(iproc), iproc, 43 )
         enddo
 
         ! As this is first time, dump_gather is not yet allocated.
@@ -169,13 +165,11 @@
 
         ! Collect from other process.
         do iproc = 1, NPROC-1
-          call MPI_RECV (dump_recv(1,1), 2*dump_recv_counts(iproc), &
-                         MPI_DOUBLE_PRECISION, iproc, 44, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_dp(dump_recv(1,1),2*dump_recv_counts(iproc), iproc, 44 )
 
           dump_gather(:,gcounter+1:gcounter+dump_recv_counts(iproc)) = dump_recv(:,1:dump_recv_counts(iproc))
 
-          call MPI_RECV (dump_duplicate_recv(1), dump_recv_counts(iproc), &
-                         MPI_LOGICAL, iproc, 45, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+          call recv_l(dump_duplicate_recv(1),dump_recv_counts(iproc), iproc, 45 )
 
           dump_duplicate_gather(gcounter+1:gcounter+dump_recv_counts(iproc)) = dump_duplicate_recv(1:dump_recv_counts(iproc))
           ! Update index
@@ -191,12 +185,9 @@
 
       else
         ! sends to master
-        call MPI_SEND (icounter, 1, MPI_INTEGER, 0, 43, MPI_COMM_WORLD, ier)
-        call MPI_SEND (dump_send(1,1), 2*icounter, &
-                       MPI_DOUBLE_PRECISION, 0, 44, MPI_COMM_WORLD, ier)
-        call MPI_SEND (dump_duplicate_send(1), icounter, &
-                       MPI_LOGICAL, 0, 45, MPI_COMM_WORLD, ier)
-
+        call send_singlei(icounter, 0, 43 )
+        call send_dp(dump_send(1,1), 2*icounter, 0, 44)
+        call send_l(dump_duplicate_send(1), icounter, 0, 45)
       endif ! if (myrank == 0)
 
     else
@@ -270,7 +261,7 @@
     enddo ! do jj
   enddo ! do ispec
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
       ! Master collects
@@ -279,8 +270,7 @@
       gcounter = dump_recv_counts(0)
       ! The receiver counts dump_recv_counts has already been found and stored and these does not change from first to subsequent dumps.
       do iproc = 1, NPROC-1
-        call MPI_RECV (dump_recv(1,1), 2*dump_recv_counts(iproc), &
-                       MPI_DOUBLE_PRECISION, iproc, 43, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ier)
+        call recv_dp(dump_recv(1,1),2*dump_recv_counts(iproc), iproc, 43)
         dump_gather(:,gcounter+1:gcounter+dump_recv_counts(iproc)) = dump_recv(:,1:dump_recv_counts(iproc))
         gcounter = gcounter + dump_recv_counts(iproc)
       enddo
@@ -290,8 +280,7 @@
 
     else
       ! Send collected vector field to master
-      call MPI_SEND (dump_send(1,1), 2*icounter, &
-                     MPI_DOUBLE_PRECISION, 0, 43, MPI_COMM_WORLD, ier)
+      call send_dp(dump_send(1,1), 2*icounter, 0, 43)
     endif ! if (myrank == 0)
   else
     dump_write(:,:) = dump_recv(:,1:icounter)

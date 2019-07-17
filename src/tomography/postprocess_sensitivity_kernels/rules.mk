@@ -93,7 +93,7 @@ xcombine_sem_SHARED_OBJECTS = \
 	$O/specfem2D_par.spec_module.o \
 	$O/shared_par.shared_module.o \
 	$O/exit_mpi.shared.o \
-	$O/parallel.shared.o \
+	$O/parallel.sharedmpi.o \
 	$O/read_parameter_file.mesh.o \
 	$O/read_value_parameters.shared.o \
 	$O/read_material_table.mesh.o \
@@ -126,7 +126,7 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/exit_mpi.shared.o \
 	$O/gll_library.shared.o \
-	$O/parallel.shared.o \
+	$O/parallel.sharedmpi.o \
 	$O/read_parameter_file.mesh.o \
 	$O/read_value_parameters.shared.o \
 	$O/read_material_table.mesh.o \

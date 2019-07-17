@@ -33,9 +33,6 @@
 
   subroutine initialize_simulation()
 
-#ifdef USE_MPI
-  use mpi
-#endif
   use constants, only: IMAIN,ISTANDARD_OUTPUT,SIZE_REAL,NSTAGE,OUTPUT_FILES
   use specfem_par
   use specfem_par_movie, only: cutsnaps
@@ -67,7 +64,7 @@
   if (NPROC < 1) call stop_the_code('should have NPROC >= 1')
 
   ! checks rank to make sure that myrank is zero for serial version
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (myrank >= NPROC) call stop_the_code('Error: invalid MPI rank')
 #else
     ! serial version: checks rank is initialized
@@ -86,7 +83,7 @@
   if (myrank == 0) then
     write(IMAIN,*)
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     write(IMAIN,*) '**********************************************'
     write(IMAIN,*) '**** Specfem 2-D Solver - MPI version     ****'
     write(IMAIN,*) '**********************************************'
@@ -101,7 +98,7 @@
     write(IMAIN,*) 'dating ', git_date_version
     write(IMAIN,*)
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     write(IMAIN,*) 'There are ',NPROC,' MPI processes'
     write(IMAIN,*) 'Processes are numbered from 0 to ',NPROC-1
     write(IMAIN,*)
@@ -372,13 +369,8 @@
   call synchronize_all()
 
   ! collects min/max of local devices found for statistics
-#ifdef USE_MPI
   call min_all_i(ncuda_devices,ncuda_devices_min)
   call max_all_i(ncuda_devices,ncuda_devices_max)
-#else
-  ncuda_devices_min = ncuda_devices
-  ncuda_devices_max = ncuda_devices
-#endif
 
   if (myrank == 0) then
     write(IMAIN,*) "GPU number of devices per node: min =",ncuda_devices_min

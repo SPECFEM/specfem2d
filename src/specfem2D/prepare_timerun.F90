@@ -218,17 +218,13 @@
 
   subroutine prepare_timerun_mass_matrix()
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN
   use specfem_par
 
   implicit none
 
   ! local variable
-#ifdef USE_MPI
+#ifdef WITH_MPI
   integer :: n_sls_loc
 #endif
 
@@ -242,7 +238,7 @@
   ! builds the global mass matrix
   call invert_mass_matrix_init()
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   n_sls_loc = 0
   if (ATTENUATION_VISCOACOUSTIC) n_sls_loc = N_SLS
   ! assembling the mass matrix of shared nodes on MPI partition interfaces
@@ -349,12 +345,8 @@
 
   subroutine prepare_timerun_image_coloring()
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN
-#ifdef USE_MPI
+#ifdef WITH_MPI
   use constants, only: DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT
 #endif
   use specfem_par
@@ -452,7 +444,7 @@
     ! filling array iglob_image_color, containing info on which process owns which pixels.
     iproc = 0
     k = 0
-#ifdef USE_MPI
+#ifdef WITH_MPI
     allocate(nb_pixel_per_proc(0:NPROC-1))
     nb_pixel_per_proc(:) = 0
     call gather_all_singlei(nb_pixel_loc,nb_pixel_per_proc,NPROC)
@@ -515,7 +507,7 @@
     endif
 
     ! allocate arrays for postscript output
-#ifdef USE_MPI
+#ifdef WITH_MPI
     if (modelvect) then
       d1_coorg_recv_ps_velocity_model = 2
       call max_all_all_i(nspec,d2_coorg_recv_ps_velocity_model)
@@ -659,12 +651,7 @@
     d1_dump_send = 2
 
     d2_dump_send = nspec*NGLLX*NGLLZ
-
-#ifdef USE_MPI
-    call mpi_allreduce(d2_dump_send,d2_dump_recv,1,MPI_INTEGER,MPI_MAX,MPI_COMM_WORLD,ier)
-#else
-    d2_dump_recv = d2_dump_send
-#endif
+    call max_all_all_i(d2_dump_send,d2_dump_recv)
 
     ! allocates temporary arrays for wavefield outputs
     allocate(dump_send(d1_dump_send, d2_dump_send))
@@ -790,10 +777,6 @@
 
   subroutine prepare_timerun_kernels()
 
-
-#ifdef USE_MPI
-  use mpi
-#endif
 
   use constants, only: IMAIN,APPROXIMATE_HESS_KL,OUTPUT_FILES
   use specfem_par
@@ -1146,10 +1129,6 @@
 
 ! for noise simulations
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,NOISE_MOVIE_OUTPUT,TWO_THIRDS,OUTPUT_FILES
 
   use specfem_par, only: myrank,AXISYM,NSTEP,nglob,nspec,ibool,coord, &
@@ -1281,10 +1260,6 @@
 !
 
   subroutine prepare_timerun_attenuation()
-
-#ifdef USE_MPI
-  use mpi
-#endif
 
   use constants, only: IMAIN,TWO,PI,FOUR_THIRDS,TWO_THIRDS,USE_A_STRONG_FORMULATION_FOR_E1
   use specfem_par
@@ -1733,10 +1708,6 @@
 !
 
   subroutine prepare_material_arrays()
-
-#ifdef USE_MPI
-  use mpi
-#endif
 
   use constants, only: IMAIN,FOUR_THIRDS,TWO_THIRDS
   use specfem_par

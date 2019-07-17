@@ -33,10 +33,6 @@
 
   subroutine write_color_image_snaphot(plot_b_wavefield_only)
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN,NGLLX,NGLLZ,REMOVE_PMLS_FROM_JPEG_IMAGES
 
   use specfem_par, only: myrank,nspec,it,NPROC, &
@@ -57,7 +53,7 @@
     NX_IMAGE_color,NZ_IMAGE_color, &
     num_pixel_loc
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   use specfem_par_movie, only: data_pixel_recv,data_pixel_send,nb_pixel_per_proc,num_pixel_recv
 #endif
 
@@ -252,7 +248,7 @@
   enddo
 
   ! assembling array image_color_data on process zero for color output
-#ifdef USE_MPI
+#ifdef WITH_MPI
   if (NPROC > 1) then
     if (myrank == 0) then
       do iproc = 1, NPROC-1

@@ -35,10 +35,6 @@
 
 ! checks simulation stability and outputs timerun infos
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN,STABILITY_THRESHOLD,CUSTOM_REAL
 
   use specfem_par, only: myrank,timeval,it,NSTEP,GPU_MODE, &

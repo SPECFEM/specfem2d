@@ -39,7 +39,7 @@ module parameter_file
   !          routine in meshfem2D.F90
 
   ! note 2: the filename ending is .F90 to have pre-compilation with pragmas
-  !            (like #ifndef USE_MPI) working properly
+  !            (like #ifndef WITH_MPI) working properly
 
   implicit none
   character(len=100) :: interfacesfile,title
@@ -556,10 +556,10 @@ contains
      stop
   endif
 
-#ifndef USE_MPI
+#ifndef WITH_MPI
   if ( nproc > 1 ) then
      print *, 'Number of processes (nproc) must be equal to one when not using MPI.'
-     print *, 'Please recompile with -DUSE_MPI in order to enable use of MPI.'
+     print *, 'Please recompile with -DWITH_MPI in order to enable use of MPI.'
      stop
   endif
 #endif

@@ -33,19 +33,11 @@
 
   subroutine iterate_time_undoatt()
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN, APPROXIMATE_HESS_KL,USE_A_STRONG_FORMULATION_FOR_E1
   use specfem_par
   use specfem_par_noise, only: NOISE_TOMOGRAPHY
   use specfem_par_gpu, only: Mesh_pointer
   implicit none
-
-#ifdef USE_MPI
-  include "precision.h"
-#endif
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_potential_acoustic_buffer
@@ -54,7 +46,6 @@
 
   integer :: it_temp,iframe_kernel,nframes_kernel,size_buffer
   integer :: ier
-  integer, parameter :: it_begin = 1
 
   ! time
   character(len=8) :: datein
@@ -62,7 +53,10 @@
   character(len=5) :: zone
   integer, dimension(8) :: time_values
   integer :: year,mon,day,hr,minutes,timestamp
-  real :: start_time_of_time_loop,finish_time_of_time_loop,duration_of_time_loop_in_seconds
+
+  ! timing
+  double precision, external :: wtime
+  real :: start_time_of_time_loop,duration_of_time_loop_in_seconds
   logical :: compute_b_wavefield
 
   ! checks if anything to do
@@ -175,8 +169,12 @@
     call flush_IMAIN()
   endif
 
+  ! time loop increments begin/end
+  it_begin = 1
+  it_end = NSTEP
+
   ! initialize variables for writing seismograms
-  seismo_offset = it_begin-1
+  seismo_offset = it_begin - 1
   seismo_current = 0
 
   ! *********************************************************
@@ -184,9 +182,10 @@
   ! *********************************************************
 
   ! initializes time increments
-  it = 0
+  it = it_begin - 1
 
-  call cpu_time(start_time_of_time_loop)
+  ! timing
+  start_time_of_time_loop = wtime()
 
   ! loops over time subsets
   do iteration_on_subset = 1, NSUBSET_ITERATIONS
@@ -449,9 +448,9 @@
   !---- end of time iteration loop
   !
 
-  call cpu_time(finish_time_of_time_loop)
   if (myrank == 0) then
-    duration_of_time_loop_in_seconds = finish_time_of_time_loop - start_time_of_time_loop
+    duration_of_time_loop_in_seconds = wtime() - start_time_of_time_loop
+
     write(IMAIN,*)
     write(IMAIN,*) 'Total duration of the time loop in seconds = ',duration_of_time_loop_in_seconds,' s'
     write(IMAIN,*) 'Total number of time steps = ',NSTEP

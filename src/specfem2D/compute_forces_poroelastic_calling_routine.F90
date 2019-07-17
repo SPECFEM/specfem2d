@@ -89,7 +89,7 @@
       endif
     endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     ! assembling accels_proelastic & accelw_poroelastic for poroelastic elements
     if (NPROC > 1 .and. ninterface_poroelastic > 0) then
       if (iphase == 1) then
@@ -196,7 +196,7 @@
       endif
     endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     ! assembling accels_proelastic & accelw_poroelastic for poroelastic elements
     if (NPROC > 1 .and. ninterface_poroelastic > 0) then
       if (iphase == 1) then

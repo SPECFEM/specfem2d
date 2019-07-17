@@ -49,7 +49,7 @@ shared_OBJECTS = \
 	$O/force_ftz.cc.o \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \
-	$O/parallel.shared.o \
+	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
 	$O/read_value_parameters.shared.o \
 	$O/set_color_palette.shared.o \
@@ -60,7 +60,7 @@ shared_MODULES = \
 	$(FC_MODDIR)/constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_parameters.$(FC_MODEXT) \
-	$(FC_MODDIR)/my_mpi_communicator.$(FC_MODEXT) \
+	$(FC_MODDIR)/my_mpi.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 
@@ -82,10 +82,16 @@ $O/%.shared_module.o: $S/%.F90 ${SETUP}/constants.h
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.shared.o: $S/%.f90 $O/shared_par.shared_module.o
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.shared.o: $S/%.F90 $O/shared_par.shared_module.o
-	${F90} ${FCFLAGS_f90} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.sharedmpi.o: $S/%.f90 $O/shared_par.shared_module.o
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.sharedmpi.o: $S/%.F90 $O/shared_par.shared_module.o
+	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 
 ##

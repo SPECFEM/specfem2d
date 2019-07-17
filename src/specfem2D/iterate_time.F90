@@ -33,10 +33,6 @@
 
 subroutine iterate_time()
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IMAIN,NOISE_SAVE_EVERYWHERE
   use specfem_par
   use specfem_par_gpu
@@ -58,7 +54,9 @@ subroutine iterate_time()
   integer, dimension(8) :: time_values
   integer :: year,mon,day,hr,minutes,timestamp
 
-  real :: start_time_of_time_loop,finish_time_of_time_loop,duration_of_time_loop_in_seconds
+  ! timing
+  double precision,external :: wtime
+  real :: start_time_of_time_loop,duration_of_time_loop_in_seconds
 
   if (myrank == 0) write(IMAIN,400) ! Write = T i m e  e v o l u t i o n  l o o p =
 !
@@ -96,6 +94,10 @@ subroutine iterate_time()
     call flush_IMAIN()
   endif
 
+  ! time loop increments begin/end
+  it_begin = 1
+  it_end = NSTEP
+
   ! initialize variables for writing seismograms
   seismo_offset(:) = 0
   seismo_current(:) = 0
@@ -125,13 +127,14 @@ subroutine iterate_time()
        call exit_MPI(myrank,'timing for element weights should be done with COMPUTE_INTEGRATED_ENERGY_FIELD turned off')
   endif
 
-  call cpu_time(start_time_of_time_loop)
+  ! timing
+  start_time_of_time_loop = wtime()
 
 ! *********************************************************
 ! ************* MAIN LOOP OVER THE TIME STEPS *************
 ! *********************************************************
 
-  do it = 1,NSTEP
+  do it = it_begin,it_end
     ! compute current time
     timeval = (it-1) * deltat
 
@@ -227,10 +230,8 @@ subroutine iterate_time()
 
   enddo ! end of the main time loop
 
-  call cpu_time(finish_time_of_time_loop)
-
   if (myrank == 0) then
-    duration_of_time_loop_in_seconds = finish_time_of_time_loop - start_time_of_time_loop
+    duration_of_time_loop_in_seconds = wtime() - start_time_of_time_loop
     write(IMAIN,*)
     write(IMAIN,*) 'Total duration of the time loop in seconds = ',duration_of_time_loop_in_seconds,' s'
     write(IMAIN,*) 'Total number of time steps = ',NSTEP

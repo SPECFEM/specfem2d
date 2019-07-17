@@ -82,7 +82,7 @@ meshfem2D_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/read_value_parameters.shared.o \
 	$O/exit_mpi.shared.o \
-	$O/parallel.shared.o \
+	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 
@@ -152,10 +152,10 @@ $O/meshfem2D.mesh.o: ${SETUP}/version.fh
 ####
 
 $O/%.mesh_module.o: $S/%.f90 ${SETUP}/constants.h $O/shared_par.shared_module.o
-	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90_MESH} -c -o $@ $<
 
 $O/%.mesh.o: $S/%.f90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o
-	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90_MESH} -c -o $@ $<
 
 $O/%.mesh.o: $S/%.F90 ${SETUP}/constants.h $O/meshfem2D_par.mesh_module.o
-	${F90} ${FCFLAGS_f90_MESH} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90_MESH} -c -o $@ $<

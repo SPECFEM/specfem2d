@@ -69,7 +69,7 @@
   subroutine setup_sources()
 
   use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,IIN, &
-#ifndef USE_MPI
+#ifndef WITH_MPI
      OUTPUT_FILES, &
 #endif
      MAX_STRING_LEN
@@ -162,7 +162,7 @@
 !! DK DK this below not supported in the case of MPI yet, we should do a MPI_GATHER() of the values
 !! DK DK and use "if (myrank == islice_selected_rec(irec)) then" to display the right sources
 !! DK DK and receivers carried by each mesh slice, and not fictitious values coming from other slices
-#ifndef USE_MPI
+#ifndef WITH_MPI
   if (myrank == 0) then
      ! write actual source locations to file
      ! note that these may differ from input values, especially if source_surf = .true. in SOURCE
@@ -186,7 +186,7 @@
 
   subroutine setup_receivers()
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
   use constants, only: IMAIN,IIN,mygroup,IN_DATA_FILES
 #else
   use constants, only: IMAIN,IIN,mygroup,IN_DATA_FILES,OUTPUT_FILES,IOUT
@@ -266,7 +266,7 @@
 !! DK DK this below not supported in the case of MPI yet, we should do a MPI_GATHER() of the values
 !! DK DK and use "if (myrank == islice_selected_rec(irec)) then" to display the right sources
 !! DK DK and receivers carried by each mesh slice, and not fictitious values coming from other slices
-#ifndef USE_MPI
+#ifndef WITH_MPI
   if (myrank == 0) then
      ! write out actual station locations (compare with STATIONS from meshfem2D)
      ! NOTE: this will be written out even if use_existing_STATIONS = .true.
@@ -513,10 +513,6 @@
 
 ! tangential computation
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: PI,HUGEVAL,OUTPUT_FILES
   use specfem_par
 
@@ -625,10 +621,10 @@
         if (myrank == 0 .and. myrank == islice_selected_source(i_source)) then
           source_courbe_eros(i_source) = n1_tangential_detection_curve
           anglesource_recv = anglesource(i_source)
-#ifdef USE_MPI
+#ifdef WITH_MPI
         else if (myrank == 0) then
-          call recv_singlei(source_courbe_eros(i_source), MPI_ANY_SOURCE, 42)
-          call recv_singledp(anglesource_recv, MPI_ANY_SOURCE, 43)
+          call recv_any_singlei(source_courbe_eros(i_source), 42)
+          call recv_any_singledp(anglesource_recv, 43)
 
         else if (myrank == islice_selected_source(i_source)) then
           call send_singlei(n1_tangential_detection_curve, 0, 42)
@@ -636,7 +632,7 @@
 #endif
         endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
         call bcast_all_singledp(anglesource_recv)
         anglesource(i_source) = anglesource_recv
 #endif
@@ -702,7 +698,7 @@
           n1_tangential_detection_curve = rec_tangential_detection_curve(irecloc)
           x_final_receiver_dummy = x_final_receiver(irec)
           z_final_receiver_dummy = z_final_receiver(irec)
-#ifdef USE_MPI
+#ifdef WITH_MPI
         else
           call recv_singlei(n1_tangential_detection_curve, islice_selected_rec(irec), irec)
           call recv_singledp(x_final_receiver_dummy, islice_selected_rec(irec), irec)
@@ -710,7 +706,7 @@
 #endif
         endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
       else
         if (myrank == islice_selected_rec(irec)) then
           irecloc = irecloc + 1

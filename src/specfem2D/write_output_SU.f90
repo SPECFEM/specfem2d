@@ -52,56 +52,68 @@
   integer(kind=2) :: header2(2),header3(2)
   real(kind=4), dimension(seismo_current) :: single_precision_seismo
 
-
+  ! time step (in microseconds)
   if (deltat*1.0d6 > 2**15) then
     deltat_int2 = 0
   else
     deltat_int2 = NINT(deltat*1.0d6, kind=2) ! deltat (unit: 10^{-6} second)
   endif
 
+  ! header
   header1(:) = 0
   header2(:) = 0
   header3(:) = 0
   header4(:) = 0
+
   ! write SU headers (refer to Seismic Unix for details)
-  header1(1) =  irec                          ! receiver ID
-  header1(10)=NINT(st_xval(irec)-x_source)  ! offset
-  header1(19)=NINT(x_source)                ! source location xs
-  header1(20)=NINT(z_source)                ! source location zs
-  header1(21)=NINT(st_xval(irec))           ! receiver location xr
-  header1(22)=NINT(st_zval(irec))           ! receiver location zr
-  if (nrec > 1) header4(18)=SNGL(st_xval(2)-st_xval(1)) ! receiver interval
-  header2(1)=0  ! dummy
+  header1(1)  =  irec                          ! receiver ID
+  header1(10) = NINT(st_xval(irec)-x_source)  ! offset
+  header1(19) = NINT(x_source)                ! source location xs
+  header1(20) = NINT(z_source)                ! source location zs
+  header1(21) = NINT(st_xval(irec))           ! receiver location xr
+  header1(22) = NINT(st_zval(irec))           ! receiver location zr
+
+  if (nrec > 1) header4(18) = SNGL(st_xval(2)-st_xval(1)) ! receiver interval
+
+  header2(1) = 0  ! dummy
   if (NSTEP/subsamp_seismos < 32768) then
-    header2(2)=int(NSTEP/subsamp_seismos, kind=2)
+    header2(2) = int(NSTEP/subsamp_seismos, kind=2)
   else
     print *,"!!! BEWARE !!! Two many samples for SU format ! The .su file created won't be usable"
     header2(2)=-9999
   endif
-  header3(1)=deltat_int2
-  header3(2)=0  ! dummy
+  header3(1) = deltat_int2
+  header3(2) = 0  ! dummy
 
+  ! first component trace
+  ! samples trace
   do isample = 1,seismo_current
     single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,1))
   enddo
+
+  ! output
   if (seismo_offset == 0) then
-    ioffset = 4*((irec-1)*(NSTEP/subsamp_seismos + 60)) + 1
+    ioffset = 4 * ((irec-1) * (NSTEP/subsamp_seismos + 60)) + 1
     write(12,pos=ioffset) header1,header2,header3,header4
   endif
-  ioffset = 4*((irec-1)*(NSTEP/subsamp_seismos + 60) + 60 + seismo_offset) + 1
+  ioffset = 4 * ((irec-1) * (NSTEP/subsamp_seismos + 60) + 60 + seismo_offset) + 1
   write(12,pos=ioffset) single_precision_seismo
 
+  ! second component trace (not for pressure or membranes)
   if (seismotype_l /= 4 .and. seismotype_l /= 6 .and. P_SV) then
+    ! samples trace
     do isample = 1,seismo_current
       single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,2))
     enddo
+
+    ! output
     if (seismo_offset == 0) then
-      ioffset = 4*((irec-1)*(NSTEP/subsamp_seismos + 60)) + 1
+      ioffset = 4 * ((irec-1) * (NSTEP/subsamp_seismos + 60)) + 1
       write(14,pos=ioffset) header1,header2,header3,header4
     endif
-    ioffset = 4*((irec-1)*(NSTEP/subsamp_seismos + 60) + 60 + seismo_offset) + 1
-    write(14,pos=ioffset) single_precision_seismo
 
+    ioffset = 4 * ((irec-1)*(NSTEP/subsamp_seismos + 60) + 60 + seismo_offset) + 1
+    write(14,pos=ioffset) single_precision_seismo
   endif
 
   end subroutine write_output_SU

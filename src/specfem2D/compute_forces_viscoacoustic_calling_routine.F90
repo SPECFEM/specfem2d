@@ -63,7 +63,7 @@
 
         call compute_attenuation_acoustic_integration(potential_acoustic,ispec_is_acoustic,PML_BOUNDARY_CONDITIONS,iphase,dot_e1)
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
         ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
         if (NPROC > 1 .and. ninterface_acoustic > 0) then
         ! loop over relaxation mechanisms
@@ -165,7 +165,7 @@
       endif
     endif ! iphase == 1
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
     if (NPROC > 1 .and. ninterface_acoustic > 0) then
       if (iphase == 1) then
@@ -343,7 +343,7 @@
 
     endif ! iphase == 1
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
     if (NPROC > 1 .and. ninterface_acoustic > 0) then
       if (iphase == 1) then

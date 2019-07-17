@@ -122,7 +122,7 @@
       call enforce_zero_radial_displacements_on_the_axis()
     endif
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     ! LDDRK
     ! daniel: when is this needed? veloc_elastic at it == 1 and i_stage == 1 is zero for non-initialfield simulations.
     !         todo - please check...
@@ -304,7 +304,7 @@
 
     endif ! iphase
 
-#ifdef USE_MPI
+#ifdef WITH_MPI
     ! assembling accel_elastic for elastic elements
     if (NPROC > 1 .and. ninterface_elastic > 0) then
       if (iphase == 1) then

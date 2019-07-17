@@ -376,7 +376,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
-#ifdef USE_MPI
+#ifdef WITH_MPI
     write(IMAIN,*) '**********************************************'
     write(IMAIN,*) '*** Specfem 2-D Mesher - MPI version       ***'
     write(IMAIN,*) '**********************************************'

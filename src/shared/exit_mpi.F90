@@ -37,9 +37,6 @@
 
   subroutine exit_MPI(myrank,error_msg)
 
-#ifdef USE_MPI
-  use mpi
-#endif
   use constants, only: MAX_STRING_LEN,IMAIN,ISTANDARD_OUTPUT,OUTPUT_FILES
 
   implicit none

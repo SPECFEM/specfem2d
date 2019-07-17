@@ -127,7 +127,7 @@
     write(IMAIN,*) '  Total number of acoustic elements           = ',nspec_acoustic_total
     write(IMAIN,*) '  Total number of elastic/visco/poro elements = ',nspec_total - nspec_acoustic_total
     write(IMAIN,*)
-#ifdef USE_MPI
+#ifdef WITH_MPI
     write(IMAIN,*) 'Approximate total number of grid points in the mesh'
     write(IMAIN,*) '(with a few duplicates coming from MPI buffers): ',nglob_total
 #else
@@ -279,10 +279,6 @@
 !
 
   subroutine setup_mesh_properties()
-
-#ifdef USE_MPI
-  use mpi
-#endif
 
   use constants, only: IMAIN,OUTPUT_FILES
   use specfem_par

@@ -291,10 +291,6 @@
 
   subroutine read_mesh_databases()
 
-#ifdef USE_MPI
-  use mpi
-#endif
-
   use constants, only: IIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM
   use specfem_par
 
@@ -724,10 +720,6 @@
   subroutine read_mesh_databases_absorbing()
 
 ! reads in absorbing edges
-
-#ifdef USE_MPI
-  use mpi
-#endif
 
   use constants, only: IMAIN,IIN,IEDGE1,IEDGE2,IEDGE3,IEDGE4
   use specfem_par
@@ -1466,10 +1458,6 @@
   subroutine read_mesh_databases_axial_elements()
 
 ! reads axial elements data
-
-#ifdef USE_MPI
-  use mpi
-#endif
 
   use constants, only: IIN,IMAIN
 
