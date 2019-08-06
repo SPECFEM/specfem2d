@@ -200,6 +200,12 @@
   sisuz(:,:,:) = ZERO
   siscurl(:,:,:) = ZERO
 
+  ! Check SU_FORMAT
+  if (SU_FORMAT .and. (NSTEP/subsamp_seismos > 32768)) then
+    print *
+    print *,"!!! BEWARE !!! Two many samples for SU format ! The .su file created won't be usable"
+  endif
+
   ! synchronizes all processes
   call synchronize_all()
 
