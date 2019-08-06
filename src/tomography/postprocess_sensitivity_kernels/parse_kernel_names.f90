@@ -140,7 +140,7 @@
     endif
   enddo
 
-  if (ibegin > isource_len) then
+  if (ibegin >= isource_len) then
     token = char(0)
     return
   endif
@@ -149,7 +149,7 @@
   ifinish = ibegin
 
   do while (.true.)
-    if ((ifinish <= isource_len) .and. (index(delimiter,saved_string(ifinish:ifinish)) == 0)) then
+    if ((ifinish < isource_len) .and. (index(delimiter,saved_string(ifinish:ifinish)) == 0)) then
       ! delimiter is not encountered yet, increases finish index
       ifinish = ifinish + 1
     else
