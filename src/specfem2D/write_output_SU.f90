@@ -60,6 +60,8 @@
   endif
 
   header1(:) = 0
+  header2(:) = 0
+  header3(:) = 0
   header4(:) = 0
   ! write SU headers (refer to Seismic Unix for details)
   header1(1) =  irec                          ! receiver ID
@@ -70,9 +72,15 @@
   header1(22)=NINT(st_zval(irec))           ! receiver location zr
   if (nrec > 1) header4(18)=SNGL(st_xval(2)-st_xval(1)) ! receiver interval
   header2(1)=0  ! dummy
-  header2(2)=int(NSTEP/subsamp_seismos, kind=2)
+  if (NSTEP/subsamp_seismos < 32768) then
+    header2(2)=int(NSTEP/subsamp_seismos, kind=2)
+  else
+    print *,"!!! BEWARE !!! Two many samples for SU format ! The .su file created won't be usable"
+    header2(2)=-9999
+  endif
   header3(1)=deltat_int2
   header3(2)=0  ! dummy
+
   do isample = 1,seismo_current
     single_precision_seismo(isample) = sngl(buffer_binary(isample,irec,1))
   enddo
@@ -82,7 +90,6 @@
   endif
   ioffset = 4*((irec-1)*(NSTEP/subsamp_seismos + 60) + 60 + seismo_offset) + 1
   write(12,pos=ioffset) single_precision_seismo
-
 
   if (seismotype_l /= 4 .and. seismotype_l /= 6 .and. P_SV) then
     do isample = 1,seismo_current
