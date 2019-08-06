@@ -103,7 +103,13 @@
             vp_save(i,j,ispec) = sqrt((kappa_save(i,j,ispec) + mul_unrelaxed_elastic)/density(1,kmato(ispec)))
           endif
 
-          vs_save(i,j,ispec) = sqrt(mul_unrelaxed_elastic/density(1,kmato(ispec)))
+          vs_save(i,j,ispec) = sqrt(mul_unrelaxed_elastic/rho_save(i,j,ispec))
+
+          if (assign_external_model) then
+            vp_save(i,j,ispec) = vpext(i,j,ispec)
+            vs_save(i,j,ispec) = vsext(i,j,ispec)
+            rho_save(i,j,ispec) = rhoext(i,j,ispec)
+          endif
 
           iglob = ibool(i,j,ispec)
           x_save(i,j,ispec) = coord(1,iglob)
