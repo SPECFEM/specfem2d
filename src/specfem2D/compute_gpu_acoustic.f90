@@ -169,6 +169,20 @@
 
   enddo !iphase
 
+  ! TODO PML saves interface values, record the field at each time step on the PML edges and write it to file.
+  ! This would have to be done here (in GPU mode) also if one wants to do adjoint simulations
+  ! without using NO_BACKWARD_RECONSTRUCTION
+  !if (PML_BOUNDARY_CONDITIONS) then
+  !  if (nglob_interface > 0) then
+  !    if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
+  !      do i = 1, nglob_interface
+  !        write(72) potential_dot_dot_acoustic(point_interface(i)), potential_dot_acoustic(point_interface(i)), &
+  !                  potential_acoustic(point_interface(i))
+  !      enddo
+  !    endif
+  !  endif
+  !endif
+
   ! divides pressure with mass matrix
   ! corrector:
   ! updates the chi_dot term which requires chi_dot_dot(t+delta)
