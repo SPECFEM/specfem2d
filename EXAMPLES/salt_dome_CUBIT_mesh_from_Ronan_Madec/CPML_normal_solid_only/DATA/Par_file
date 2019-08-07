@@ -218,7 +218,7 @@ nbmodels                        = 7
 #   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
 #   anistoropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
 #   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
-#   tomo:        model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
+#   tomo:        model_number -1 0 9999 9999 A 0 0 9999 9999 0 0 0 0 0
 1 1 2000.d0 4000.d0 2300.d0 0 0 9999 9999 0 0 0 0 0 0
 2 1 1800.d0 3000.d0 1500.d0 0 0 9999 9999 0 0 0 0 0 0
 3 1 2000.d0 3500.d0 2000.d0 0 0 9999 9999 0 0 0 0 0 0

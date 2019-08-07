@@ -224,7 +224,7 @@ nbmodels                        = 4
 #   anisotropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
 #   anisotropic in AXISYM: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 c22 0 0
 #   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
-#   tomo:        model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
+#   tomo:        model_number -1 0 9999 9999 A 0 0 9999 9999 0 0 0 0 0
 #   marmousi:    model_number 1 rho Vp Vs k 0 QKappa Qmu 0 0 0 0 0 0 (similar to elastic, except that the fourth parameter k accounts for the VELOCITY GRADIENT in Marmousi2)
 1 1 2700.d0 3000.d0 1732.051d0 0.2 0 9999 9999 0 0 0 0 0 0
 2 1 2500.d0 2700.d0 1600.0     0.2 0 9999 9999 0 0 0 0 0 0

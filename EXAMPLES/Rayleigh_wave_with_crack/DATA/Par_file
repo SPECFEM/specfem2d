@@ -218,7 +218,7 @@ nbmodels                        = 3
 #   elastic:     model_number 1 rho Vp Vs 0 0 QKappa Qmu 0 0 0 0 0 0
 #   anistoropic: model_number 2 rho c11 c13 c15 c33 c35 c55 c12 c23 c25 0 0 0
 #   poroelastic: model_number 3 rhos rhof phi c kxx kxz kzz Ks Kf Kfr etaf mufr Qmu
-#   tomo:        model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
+#   tomo:        model_number -1 0 9999 9999 A 0 0 9999 9999 0 0 0 0 0
 1 1 1.d0 2.d0 1.d0 0 0 9999.d0 9999.d0 0 0 0 0 0 0
 ## DK DK create three identical media (thus it is still a homogeneous medium)
 ## DK DK just to have a way of detecting the crack in the mesh and to indicate with colors where the crack is located in the PostScript displays
