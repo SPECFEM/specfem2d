@@ -229,7 +229,7 @@
     ! Filter adjoint signals :
     call exit_MPI(myrank, 'This part has to be tested. Make sure the following filtering is ' // &
                           'going well in single and double precicison. This is just a 5 min check, ' // &
-                          'then you can remove this stop') 
+                          'then you can remove this stop')
     if (P_SV) then
       call bwfilt(adj_src_s(:,1), temp, DT, NSTEP, irek, norder, f1, f2)
       adj_src_s(:,1) = temp
@@ -410,7 +410,7 @@
 
     ! norder: order of butterworth filter
     ! norder=0: only filtering, no determination of coefficients
-    ! norder<0: no starplots of transfer function and impulse response
+    ! norder < 0: no starplots of transfer function and impulse response
 
     ! f1: low cutoff frequency (Hz)
     ! f1=0: low pass filter
@@ -430,11 +430,11 @@
 
      iunit = 3
 
-     if(norder/=0) then
+     if (norder /= 0) then
         npoles=iabs(norder)
         !determination of filter coefficients
         call bpcoeff(f1,f2,npoles, dt, a,b1, b2)
-        if(norder>=0) then
+        if (norder >= 0) then
            !plot of transfer function and impuulse response
            lx = 100
            !filtering
@@ -442,7 +442,7 @@
      endif
 
 
-     if(n/=0) then
+     if (n /= 0) then
         call rekurs(x,y,n,a,b1,b2,npoles,irek)
      endif
      return
@@ -457,7 +457,7 @@
     ! a, b1, b2 are the filtercoefficients previously determined in bwcoef
     ! npoles is the number of poles
     ! iflag=0: forward filtering only
-    ! iflag/=0: forward and backward filtering
+    ! iflag /= 0: forward and backward filtering
 
     use constants, only: CUSTOM_REAL
 
@@ -492,7 +492,7 @@
        y(n) = z(npoles)
     enddo
 
-    if(iflag==0) then
+    if (iflag == 0) then
        return
     endif
 
@@ -537,7 +537,7 @@
     double precision :: f1,f2,dt,d2,w0,w1,w2,ssum, sprod,fact1,fact2,fact3
     integer :: i,npol2,n,npoles
 
-    if(npoles>10) then
+    if (npoles > 10) then
        stop ' npoles greater than 10: STOP '
     endif
 
