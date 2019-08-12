@@ -300,7 +300,7 @@
   logical,intent(in) :: compute_wavefield_1,compute_wavefield_2
 
   !local variables
-  integer :: i_source,i,j,k,iglob,ispec
+  integer :: i_source,i,j,k,ispec
   double precision :: hlagrange
   double precision :: xminSource,vSource,time_val,t_used
   ! single source array
