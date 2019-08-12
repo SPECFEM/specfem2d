@@ -330,6 +330,23 @@ void FC_FUNC_(prepare_constants_device,
                                         realw* h_xir_store, realw* h_gammar_store,
                                         int* h_NSIGTYPE, int* h_seismotypeVec) {}
 
+void FC_FUNC_(recompute_source_position_cuda,
+              RECOMPUTE_SOURCE_POSITION_CUDA)(long* Mesh_pointer,
+                                        int* h_NGLLX, int* NSPEC_AB, int* NGLOB_AB,
+                                        realw* h_xix, realw* h_xiz,
+                                        realw* h_gammax, realw* h_gammaz,
+                                        realw* h_kappav, realw* h_muv,
+                                        int* h_ibool,
+                                        realw* h_hprime_xx, realw* h_hprimewgll_xx,
+                                        realw* h_wxgll,
+                                        int* h_ispec_is_inner,
+                                        int* nsources_local_f,
+                                        realw* h_sourcearrays, realw * h_source_time_function,
+                                        int* h_ispec_selected_source,
+                                        realw * h_cosrot,realw * h_sinrot,
+                                        int* SIMULATION_TYPE,
+                                        int* h_myrank) {}
+
 void FC_FUNC_(prepare_fields_acoustic_device,
               PREPARE_FIELDS_ACOUSTIC_DEVICE)(long* Mesh_pointer,
                                               realw* rmass_acoustic, realw* rhostore, realw* kappastore,

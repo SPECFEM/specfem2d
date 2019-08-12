@@ -1372,3 +1372,34 @@ TRACE("prepare_cleanup_device");
   // mesh pointer - not needed anymore
   free(mp);
 }
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// For moving sources
+// This function may be put elsewhere
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(recompute_source_position_cuda,
+              RECOMPUTE_SOURCE_POSITION_CUDA)(long* Mesh_pointer,
+                                        int* nsources_local_f,
+                                        realw* h_sourcearrays,
+                                        int* h_ispec_selected_source) {
+
+  TRACE("recompute_source_position_cuda");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
+
+  // sources
+  mp->nsources_local = *nsources_local_f;
+  if (mp->nsources_local > 0){
+    copy_todevice_realw((void**)&mp->d_sourcearrays,h_sourcearrays,mp->nsources_local*NDIM*NGLL2);
+    copy_todevice_int((void**)&mp->d_ispec_selected_source,h_ispec_selected_source,mp->nsources_local);
+  }
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_cuda_error("recompute_source_position_cuda");
+#endif
+}
