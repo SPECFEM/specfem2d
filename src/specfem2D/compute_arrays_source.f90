@@ -227,8 +227,9 @@
     f2 = maxval(f0_source) * 5.0
     norder = 4
     ! Filter adjoint signals :
-    call exit_MPI("This part has to be tested. Make sure the following filtering is going well in single and double precicison. &
-                  &This is just a 5 min check, then you can remove this stop.")
+    call exit_MPI(myrank, 'This part has to be tested. Make sure the following filtering is ' // &
+                          'going well in single and double precicison. This is just a 5 min check, ' // &
+                          'then you can remove this stop') 
     if (P_SV) then
       call bwfilt(adj_src_s(:,1), temp, DT, NSTEP, irek, norder, f1, f2)
       adj_src_s(:,1) = temp
