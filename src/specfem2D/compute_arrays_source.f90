@@ -272,7 +272,7 @@
   integer :: irec, irec_local, ier
   integer :: irek, norder
   double precision :: f1, f2
-  real(kind=4), dimension(NSTEP) :: temp
+  real(kind=CUSTOM_REAL), dimension(NSTEP) :: temp
   character(len=MAX_STRING_LEN) :: filename
 
   ! SU
@@ -349,13 +349,13 @@
         norder = 4
         ! Filter adjoint signals :
         if (P_SV) then
-          call bwfilt(adj_src_s(:,1), temp, DT, NSTEP, irek, norder, f1, f2)
-          adj_src_s(:,1) = temp(:)
-          call bwfilt(adj_src_s(:,2), temp, DT, NSTEP, irek, norder, f1, f2)
-          adj_src_s(:,2) = temp(:)
+          call bwfilt(real(adj_src_s(:,1),kind=CUSTOM_REAL), temp, DT, NSTEP, irek, norder, f1, f2)
+          adj_src_s(:,1) = real(temp(:),kind=4)
+          call bwfilt(real(adj_src_s(:,2),kind=CUSTOM_REAL), temp, DT, NSTEP, irek, norder, f1, f2)
+          adj_src_s(:,2) = real(temp(:),kind=4)
         else ! SH-case
-          call bwfilt(adj_src_s(:,1), temp, DT, NSTEP, irek, norder, f1, f2)
-          adj_src_s(:,1) = temp(:)
+          call bwfilt(real(adj_src_s(:,1),kind=CUSTOM_REAL), temp, DT, NSTEP, irek, norder, f1, f2)
+          adj_src_s(:,1) = real(temp(:),kind=4)
         endif
       endif
 
