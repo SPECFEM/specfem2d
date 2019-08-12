@@ -221,6 +221,7 @@
   end select
 
   if (SOURCE_IS_MOVING) then
+    ! In this case high frequency noise is produced. We have to filter it out before sending it at the receivers
     irek = 1
     f1 = 0.0d0 ! High pass filter. minval(f0_source) / 10.0
     f2 = maxval(f0_source) * 5.0
@@ -341,6 +342,7 @@
       endif
 
       if (SOURCE_IS_MOVING) then
+        ! In this case high frequency noise is produced. We have to filter it out before sending it at the receivers
         irek = 1
         f1 = 0.d0
         f2 = maxval(f0_source) * 5.0
