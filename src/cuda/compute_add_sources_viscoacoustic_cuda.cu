@@ -70,11 +70,8 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
         kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
 
         stf = source_time_function[INDEX2(nsources_local,isource,it)]/kappal;
-         atomicAdd(&potential_dot_dot_acoustic[iglob],
-                  -sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 0,i,j)]*stf);
-        // Alexis Bottero replaced the + by - for consistency with CPU version behaviour
-        //atomicAdd(&potential_dot_dot_acoustic[iglob],
-        //          +sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 0,i,j)]*stf);
+        atomicAdd(&potential_dot_dot_acoustic[iglob],
+                  +sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 0,i,j)]*stf);
 
 
 
@@ -221,6 +218,7 @@ __global__ void add_sources_ac_SIM_TYPE_2_OR_3_kernel(realw* potential_dot_dot_a
 
 
       realw stf = source_adj * gammar * xir / kappal ;
+
       atomicAdd(&potential_dot_dot_acoustic[iglob],-stf);
       // Alexis Bottero added a - sign for consistency with CPU version
       //atomicAdd(&potential_dot_dot_acoustic[iglob],stf);
