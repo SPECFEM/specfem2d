@@ -142,7 +142,7 @@
   integer :: icomp, itime
   integer :: ier, irek, norder
   double precision :: junk
-  real(kind=CUSTOM_REAL) :: f1, f2
+  double precision :: f1, f2
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: temp
   real(kind=CUSTOM_REAL), dimension(NSTEP,3) :: adj_src_s
 
@@ -230,12 +230,12 @@
     call exit_MPI("This part has to be tested. Make sure the following filtering is going well in single and double precicison. &
                   &This is just a 5 min check, then you can remove this stop.")
     if (P_SV) then
-      call bwfilt(adj_src_s(:,1), temp, real(DT, kind=4), NSTEP, irek, norder, f1, f2)
+      call bwfilt(adj_src_s(:,1), temp, DT, NSTEP, irek, norder, f1, f2)
       adj_src_s(:,1) = temp
-      call bwfilt(adj_src_s(:,3), temp, real(DT, kind=4), NSTEP, irek, norder, f1, f2)
+      call bwfilt(adj_src_s(:,3), temp, DT, NSTEP, irek, norder, f1, f2)
       adj_src_s(:,3) = temp
     else ! SH-case
-      call bwfilt(adj_src_s(:,2), temp, real(DT, kind=4), NSTEP, irek, norder, f1, f2)
+      call bwfilt(adj_src_s(:,2), temp, DT, NSTEP, irek, norder, f1, f2)
       adj_src_s(:,2) = temp
     endif
   endif
@@ -271,7 +271,7 @@
   ! local parameters
   integer :: irec, irec_local, ier
   integer :: irek, norder
-  real(kind=4) :: f1, f2
+  double precision :: f1, f2
   real(kind=4), dimension(NSTEP) :: temp
   character(len=MAX_STRING_LEN) :: filename
 
@@ -349,12 +349,12 @@
         norder = 4
         ! Filter adjoint signals :
         if (P_SV) then
-          call bwfilt(adj_src_s(:,1), temp, real(DT, kind=4), NSTEP, irek, norder, f1, f2)
+          call bwfilt(adj_src_s(:,1), temp, DT, NSTEP, irek, norder, f1, f2)
           adj_src_s(:,1) = temp(:)
-          call bwfilt(adj_src_s(:,2), temp, real(DT, kind=4), NSTEP, irek, norder, f1, f2)
+          call bwfilt(adj_src_s(:,2), temp, DT, NSTEP, irek, norder, f1, f2)
           adj_src_s(:,2) = temp(:)
         else ! SH-case
-          call bwfilt(adj_src_s(:,1), temp, real(DT, kind=4), NSTEP, irek, norder, f1, f2)
+          call bwfilt(adj_src_s(:,1), temp, DT, NSTEP, irek, norder, f1, f2)
           adj_src_s(:,1) = temp(:)
         endif
       endif
@@ -423,7 +423,7 @@
 
     real(kind=CUSTOM_REAL), dimension(1)::x,y
     real(kind=CUSTOM_REAL), dimension (10) ::  a, b1, b2
-    real(kind=CUSTOM_REAL) :: dt,f1,f2
+    double precision :: dt,f1,f2
     integer :: iunit, npoles,norder,irek,n,lx
     !real(kind(0d0)) :: x(n),y(n)
 
@@ -533,7 +533,7 @@
     real(kind=CUSTOM_REAL),dimension(10) :: a,b1,b2
     complex(kind=CUSTOM_REAL) :: s(20), t1,t2,p
     real(kind=CUSTOM_REAL), parameter :: pi = 3.141592653589793d0
-    real(kind=CUSTOM_REAL) :: f1,f2,dt,d2,w0,w1,w2,ssum, sprod,fact1,fact2,fact3
+    double precision :: f1,f2,dt,d2,w0,w1,w2,ssum, sprod,fact1,fact2,fact3
     integer :: i,npol2,n,npoles
 
     if(npoles>10) then
