@@ -140,7 +140,7 @@
 
   ! local parameters
   integer :: icomp, itime
-  integer :: ier, irek, norder, isource
+  integer :: ier, irek, norder
   double precision :: junk
   real(kind=CUSTOM_REAL) :: f1, f2
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: temp
@@ -228,7 +228,7 @@
     norder = 4
     ! Filter adjoint signals :
     call exit_MPI("This part has to be tested. Make sure the following filtering is going well in single and double precicison. &
-                  This is just a 5 min check, then you can remove this stop.")
+                  &This is just a 5 min check, then you can remove this stop.")
     if (P_SV) then
       call bwfilt(adj_src_s(:,1), temp, real(DT, kind=4), NSTEP, irek, norder, f1, f2)
       adj_src_s(:,1) = temp
