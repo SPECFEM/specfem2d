@@ -298,8 +298,8 @@
 
         gamma = zigll(j)
 
-        call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
-                        jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo,NDIM)
+        call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl, &
+                                coorg,knods,ispec,ngnod,nspec,npgeo,NDIM)
         if (jacobianl <= 0.d0) stop 'error: negative Jacobian found'
 
         coord(1,ibool(i,j,ispec)) = x

@@ -216,9 +216,9 @@
         endif
         gamma = zigll(j)
 
-        call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
-                                jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
-                                .false.)
+        call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl, &
+                                                   coorg,knods,ispec,ngnod,nspec,npgeo, &
+                                                   .false.)
 
         if (jacobianl <= ZERO) found_a_negative_jacobian = .true.
 
@@ -261,9 +261,9 @@
           endif
           gamma = zigll(j)
 
-          call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl, &
-                                  jacobianl,coorg,knods,ispec,ngnod,nspec,npgeo, &
-                                  .true.)
+          call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl, &
+                                                     coorg,knods,ispec,ngnod,nspec,npgeo, &
+                                                     .true.)
         enddo
       enddo
     enddo

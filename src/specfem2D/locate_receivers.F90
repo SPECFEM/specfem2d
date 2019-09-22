@@ -266,8 +266,8 @@
     do iter_loop = 1,NUM_ITER
 
       ! compute coordinates of the new point and derivatives dxi/dx, dxi/dz
-      call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                  coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
+      call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
+                                                 coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
 
       ! compute distance to target location
       dx = - (x - st_xval(irec))
@@ -295,8 +295,8 @@
     enddo
 
     ! compute final coordinates of point found
-    call recompute_jacobian(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
-                coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
+    call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
+                                               coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
 
 ! compute final distance between asked and found
     final_distance_this_element = sqrt((st_xval(irec)-x)**2 + (st_zval(irec)-z)**2)

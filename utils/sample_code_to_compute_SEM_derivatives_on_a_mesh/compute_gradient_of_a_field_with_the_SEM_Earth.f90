@@ -268,7 +268,7 @@
 
           ! compute the Jacobian matrix and the physical coordinates of this mesh point
           call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl, &
-                    coord_of_anchor_points,ispec,nspec)
+                                  coord_of_anchor_points,ispec,nspec)
 
           coord(1,ibool(i,j,ispec)) = x
           coord(2,ibool(i,j,ispec)) = z
@@ -403,7 +403,7 @@
 
 ! recompute jacobian for the new point
     call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl, &
-                    coord_of_anchor_points,ispec_selected_receiver,nspec)
+                            coord_of_anchor_points,ispec_selected_receiver,nspec)
 
 ! compute distance to target location
     dx = - (x - x_receiver)
@@ -432,7 +432,7 @@
 
 ! compute final coordinates of point found
     call recompute_jacobian(xi,gamma,x,z,xixl,xizl,gammaxl,gammazl,jacobianl, &
-                    coord_of_anchor_points,ispec_selected_receiver,nspec)
+                            coord_of_anchor_points,ispec_selected_receiver,nspec)
 
 ! store xi,gamma of point found
   xi_receiver = xi
