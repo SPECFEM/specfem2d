@@ -772,6 +772,8 @@ module specfem_par_gpu
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_boundary_normal
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian1Dw
   integer, dimension(:,:,:), allocatable :: abs_boundary_ij
+  integer, dimension(:), allocatable :: abs_boundary_ispec
+  integer :: num_abs_boundary_faces
 
   ! free surface
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: free_surface_normal

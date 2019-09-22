@@ -243,10 +243,10 @@
                                nspec_left, &
                                nspec_right, &
                                nspec_top, &
-                               numabs, abs_boundary_ij, &
+                               abs_boundary_ispec, abs_boundary_ij, &
                                abs_boundary_normal, &
                                abs_boundary_jacobian1Dw, &
-                               nelemabs, &
+                               num_abs_boundary_faces, &
                                cote_abs, &
                                ib_bottom, &
                                ib_left, &
@@ -406,13 +406,19 @@
     nelemabs = 0
   endif
 
-  allocate(abs_boundary_ij(2,NGLLX,nelemabs), &
-           abs_boundary_jacobian1Dw(NGLLX,nelemabs), &
-           abs_boundary_normal(NDIM,NGLLX,nelemabs), &
-           cote_abs(nelemabs),stat=ier)
+  ! number of stacey boundary element faces
+  num_abs_boundary_faces = nelemabs
+
+  allocate(abs_boundary_ij(2,NGLLX,num_abs_boundary_faces), &
+           abs_boundary_jacobian1Dw(NGLLX,num_abs_boundary_faces), &
+           abs_boundary_normal(NDIM,NGLLX,num_abs_boundary_faces), &
+           abs_boundary_ispec(num_abs_boundary_faces), &
+           cote_abs(num_abs_boundary_faces),stat=ier)
   if (ier /= 0 ) call stop_the_code('error allocating array abs_boundary_ispec etc.')
 
   if (STACEY_ABSORBING_CONDITIONS) then
+
+    abs_boundary_ispec(:) = numabs(:)
 
     do ispecabs = 1,nelemabs
       ispec = numabs(ispecabs)
