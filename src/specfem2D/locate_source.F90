@@ -237,8 +237,8 @@
 !! DK DK dec 2017 set initial guess in the middle of the element, since we computed the true one only for the true initial guess
 !! DK DK dec 2017 the nonlinear process below will converge anyway
     if (i > 1) then
-      ix_initial_guess = NGLLX / 2
-      iz_initial_guess = NGLLZ / 2
+      ix_initial_guess = int(NGLLX / 2.0)
+      iz_initial_guess = int(NGLLZ / 2.0)
     endif
 
     ispec = array_of_all_elements_of_ispec_selected_source(i)

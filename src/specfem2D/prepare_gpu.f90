@@ -55,22 +55,24 @@
   endif
 
   ! safety checks
-  if (any_elastic .and. (.not. P_SV)) call stop_the_code( &
-'Invalid GPU simulation, SH waves not implemented yet. Please use P_SV instead.')
-  if (AXISYM) call stop_the_code('Axisym not implemented on GPU yet.')
-  if (NGLLX /= NGLLZ) call stop_the_code('GPU simulations require NGLLX == NGLLZ')
-  if ( (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. ATTENUATION_VISCOACOUSTIC) call stop_the_code( &
-    'GPU simulations require USE_A_STRONG_FORMULATION_FOR_E1 set to true')
-  if ( ATTENUATION_VISCOELASTIC .and. SIMULATION_TYPE == 3) call stop_the_code( &
-    'GPU mode do not support yet adjoint simulations with attenuation viscoelastic')
-  if ( (ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. any_elastic .and. any_acoustic) call stop_the_code( &
-    'GPU mode do not support yet coupled fluid-solid simulations with attenuation')
-  if (PML_BOUNDARY_CONDITIONS .and. any_elastic) call stop_the_code( &
-                   'PML on GPU do not support elastic case yet')
-  if (PML_BOUNDARY_CONDITIONS .and. ATTENUATION_VISCOACOUSTIC) call stop_the_code( &
-                   'PML on GPU do not support viscoacoustic case yet')
-  if (PML_BOUNDARY_CONDITIONS .and. SIMULATION_TYPE == 3 .and. (.not. NO_BACKWARD_RECONSTRUCTION) ) call stop_the_code( &
-                   'PML on GPU in adjoint mode only work using NO_BACKWARD_RECONSTRUCTION flag')
+  if (any_elastic .and. (.not. P_SV)) &
+    call stop_the_code('Invalid GPU simulation, SH waves not implemented yet. Please use P_SV instead.')
+  if (AXISYM) &
+    call stop_the_code('Axisym not implemented on GPU yet.')
+  if (NGLLX /= NGLLZ) &
+    call stop_the_code('GPU simulations require NGLLX == NGLLZ')
+  if ( (.not. USE_A_STRONG_FORMULATION_FOR_E1) .and. ATTENUATION_VISCOACOUSTIC) &
+    call stop_the_code('GPU simulations require USE_A_STRONG_FORMULATION_FOR_E1 set to true')
+  if ( ATTENUATION_VISCOELASTIC .and. SIMULATION_TYPE == 3) &
+    call stop_the_code('GPU mode do not support yet adjoint simulations with attenuation viscoelastic')
+  if ( (ATTENUATION_VISCOACOUSTIC .or. ATTENUATION_VISCOELASTIC) .and. any_elastic .and. any_acoustic) &
+    call stop_the_code('GPU mode do not support yet coupled fluid-solid simulations with attenuation')
+  if (PML_BOUNDARY_CONDITIONS .and. any_elastic) &
+    call stop_the_code('PML on GPU do not support elastic case yet')
+  if (PML_BOUNDARY_CONDITIONS .and. ATTENUATION_VISCOACOUSTIC) &
+    call stop_the_code('PML on GPU do not support viscoacoustic case yet')
+  if (PML_BOUNDARY_CONDITIONS .and. SIMULATION_TYPE == 3 .and. (.not. NO_BACKWARD_RECONSTRUCTION) ) &
+    call stop_the_code('PML on GPU in adjoint mode only work using NO_BACKWARD_RECONSTRUCTION flag')
 
   ! initializes arrays
   call init_host_to_dev_variable()
@@ -414,7 +416,8 @@
            abs_boundary_normal(NDIM,NGLLX,num_abs_boundary_faces), &
            abs_boundary_ispec(num_abs_boundary_faces), &
            cote_abs(num_abs_boundary_faces),stat=ier)
-  if (ier /= 0 ) call stop_the_code('error allocating array abs_boundary_ispec etc.')
+
+  if (ier /= 0) stop 'error allocating array abs_boundary_ispec etc.'
 
   if (STACEY_ABSORBING_CONDITIONS) then
 
@@ -544,8 +547,8 @@
       endif
     enddo
     ! Safety check
-    if (nspec_PML_X + nspec_PML_Z + nspec_PML_XZ /= nspec_PML) call stop_the_code(&
-                       'Error with the number of PML elements in GPU mode')
+    if (nspec_PML_X + nspec_PML_Z + nspec_PML_XZ /= nspec_PML) &
+      stop 'Error with the number of PML elements in GPU mode'
 
     ! EB EB : We reorganize the arrays abs_normalized and abs_normalized2 that
     ! don't have the correct dimension and new local element numbering
@@ -601,7 +604,7 @@
   j = 0
   do i = 1, NSOURCES
     if (myrank == islice_selected_source(i)) then
-      if (j > nsources_local) call stop_the_code('Error with the number of local sources')
+      if (j > nsources_local) stop 'Error with the number of local sources'
       j = j + 1
       source_time_function_loc(j,:) = source_time_function(i,:,1)
       ispec_selected_source_loc(j)  = ispec_selected_source(i)

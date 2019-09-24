@@ -321,11 +321,11 @@
       wavefield_file = 'OUTPUT_FILES/wavefield_grid_for_dumps.bin'
       open(unit=27,file=wavefield_file,form='unformatted',access='direct',status='replace', &
            action='write',recl=2*SIZE_REAL,iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield_grid_for_dumps,bin')
+      if (ier /= 0) stop 'Error opening file wavefield_grid_for_dumps,bin'
     else
       wavefield_file = 'OUTPUT_FILES/wavefield_grid_for_dumps.txt'
       open(unit=27,file=wavefield_file,status='replace',action='write',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield_grid_for_dumps.txt')
+      if (ier /= 0) stop 'Error opening file wavefield_grid_for_dumps.txt'
     endif
 
     ! Write file content
@@ -361,11 +361,11 @@
       write(wavefield_file,"(a,i7.7,'_',i2.2,a)") trim(OUTPUT_FILES)//'wavefield',it,SIMULATION_TYPE,'.bin'
       open(unit=27,file=wavefield_file,form='unformatted',access='direct',status='replace', &
            action='write',recl=nb_of_values_to_save*SIZE_REAL,iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield**.bin')
+      if (ier /= 0) stop 'Error opening file wavefield**.bin'
     else
       write(wavefield_file,"(a,i7.7,'_',i2.2,a)") trim(OUTPUT_FILES)//'wavefield',it,SIMULATION_TYPE,'.txt'
       open(unit=27,file=wavefield_file,status='replace',action='write',iostat=ier)
-      if (ier /= 0) call exit_MPI(myrank,'Error opening file wavefield**.txt')
+      if (ier /= 0) stop 'Error opening file wavefield**.txt'
     endif
 
     ! Write file content
@@ -408,6 +408,8 @@
     !
     ! ------------------------------------------------------------
     !
+#ifdef WITH_MPI
+    ! only MPI-version needed
 
     subroutine mask_duplicates()
 
@@ -463,10 +465,13 @@
     enddo
 
     end subroutine mask_duplicates
-
+#endif
     !
     ! ------------------------------------------------------------
     !
+
+#ifdef WITH_MPI
+    ! only MPI-version needed
 
     subroutine mask_write_matrix()
 
@@ -483,6 +488,7 @@
     dump_write(2,:) = pack(dump_gather(2,:), mask_duplicate)
 
     end subroutine mask_write_matrix
+#endif
 
   end subroutine write_wavefield_dumps
 

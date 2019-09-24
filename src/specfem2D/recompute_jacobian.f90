@@ -158,5 +158,5 @@
   xiz = - xgamma / jacobian
   gammaz = xxi / jacobian
 
-  end subroutine recompute_jacobian
+  end subroutine recompute_jacobian_with_negative_stop
 

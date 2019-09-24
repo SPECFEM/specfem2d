@@ -63,7 +63,13 @@
 ! close output file
   if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
+  ! stop all the MPI processes, and exit
   if (error_msg /= 'Error, program ended in exit_MPI') call abort_mpi()
+
+  ! otherwise: there is no standard behaviour to exit with an error code in Fortran,
+  ! however most compilers do recognize this as an error code stop statement;
+  ! to check stop code in terminal: > echo $?
+  stop 30
 
   end subroutine exit_MPI
 

@@ -214,8 +214,9 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
     memset(string_read, ' ', *string_read_len);
 
     value_len = strlen(value);
-    if (value_len > (size_t)*string_read_len)
-      value_len = *string_read_len;
+    // makes sure there is a character left for NUL termination
+    if (value_len > (size_t)*string_read_len - 1) value_len = *string_read_len - 1;
+
     strncpy(string_read, value, value_len);
 
     free(value);
@@ -327,8 +328,9 @@ FC_FUNC_(param_read_nextparam,PARAM_READ_NEXTPARAM)(char * string_read, int * st
     memset(string_read, ' ', *string_read_len);
 
     value_len = strlen(value);
-    if (value_len > (size_t)*string_read_len)
-      value_len = *string_read_len;
+    // makes sure there is a character left for NUL termination
+    if (value_len > (size_t)*string_read_len - 1) value_len = *string_read_len - 1;
+
     strncpy(string_read, value, value_len);
     // printf("'%s'='%s'\n", namecopy2, value);
 
@@ -396,8 +398,9 @@ FC_FUNC_(param_read_nextline,PARAM_READ_NEXTLINE)(char * string_read, int * stri
 
 
     value_len = strlen(line);
-    if (value_len > (size_t)*string_read_len)
-      value_len = *string_read_len;
+    // makes sure there is a character left for NUL termination
+    if (value_len > (size_t)*string_read_len - 1) value_len = *string_read_len - 1;
+
     strncpy(string_read, line, value_len);
 
     *ierr = 0;

@@ -212,7 +212,7 @@ end module my_mpi
   call MPI_ABORT(MPI_COMM_WORLD,30,ier)
 #endif
 
-  call stop_the_code('Error, program ended in exit_MPI')
+  stop 'Error, program ended in exit_MPI'
 
   end subroutine abort_mpi
 
