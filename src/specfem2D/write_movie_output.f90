@@ -41,7 +41,8 @@
     potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
     b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
-    b_displ_elastic,rho_k,rho_kl, &
+    b_displ_elastic,b_veloc_elastic,b_accel_elastic, &
+    rho_k,rho_kl, &
     any_acoustic,any_elastic,GPU_MODE,P_SV,UNDO_ATTENUATION_AND_OR_PML,SIMULATION_TYPE,NO_BACKWARD_RECONSTRUCTION
 
   use specfem_par_gpu, only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
@@ -104,6 +105,24 @@
         displ_elastic(1,:) = tmp_displ_2D(1,:)
         veloc_elastic(1,:) = tmp_veloc_2D(1,:)
         accel_elastic(1,:) = tmp_accel_2D(1,:)
+      endif
+      ! backward/reconstructed wavefield
+      if (SIMULATION_TYPE == 3) then
+        call transfer_b_fields_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
+        if (P_SV) then
+          ! P-SV waves
+          b_displ_elastic(1,:) = tmp_displ_2D(1,:)
+          b_displ_elastic(2,:) = tmp_displ_2D(2,:)
+          b_veloc_elastic(1,:) = tmp_veloc_2D(1,:)
+          b_veloc_elastic(2,:) = tmp_veloc_2D(2,:)
+          b_accel_elastic(1,:) = tmp_accel_2D(1,:)
+          b_accel_elastic(2,:) = tmp_accel_2D(2,:)
+        else
+          ! SH waves
+          b_displ_elastic(1,:) = tmp_displ_2D(1,:)
+          b_veloc_elastic(1,:) = tmp_veloc_2D(1,:)
+          b_accel_elastic(1,:) = tmp_accel_2D(1,:)
+        endif
       endif
     endif
   endif
