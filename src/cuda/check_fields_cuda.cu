@@ -491,20 +491,18 @@ void FC_FUNC_(get_norm_acoustic_from_device,
   //double start_time = get_time();
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
-  realw max = 0.0;
-  realw max2 = 0.0;
-  realw max3 = 0.0;
-  realw *d_max;
-  realw *d_max2;
-  realw *d_max3;
+  realw max1 = 0.0;
+  //realw max2 = 0.0;
+  //realw max3 = 0.0;
+  realw *d_max1;
+  //realw *d_max2;
+  //realw *d_max3;
 
   //initializes
   *norm = 0.0f;
 
-
   // way 2 b: timing Elapsed time: 1.236916e-03
   // launch simple reduction kernel
-  realw* h_max,* h_max2,* h_max3;
   int blocksize = BLOCKSIZE_TRANSFER;
 
   int size = mp->NGLOB_AB;
@@ -519,32 +517,29 @@ void FC_FUNC_(get_norm_acoustic_from_device,
   //printf("num_blocks_x %i \n",num_blocks_x);
 
   // on host (allocates & initializes to zero)
-  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
- h_max2 = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
- h_max3 = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  realw* h_max1 = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  //realw* h_max2 = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  //realw* h_max3 = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
 
   // allocates memory on device
-  print_CUDA_error_if_any(cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw)),78001);
+  print_CUDA_error_if_any(cudaMalloc((void**)&d_max1,num_blocks_x*num_blocks_y*sizeof(realw)),78001);
   // initializes values to zero
-  print_CUDA_error_if_any(cudaMemset(d_max,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
+  print_CUDA_error_if_any(cudaMemset(d_max1,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
 
-  print_CUDA_error_if_any(cudaMalloc((void**)&d_max2,num_blocks_x*num_blocks_y*sizeof(realw)),78001);
-  // initializes values to zero
-  print_CUDA_error_if_any(cudaMemset(d_max2,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
+  //print_CUDA_error_if_any(cudaMalloc((void**)&d_max2,num_blocks_x*num_blocks_y*sizeof(realw)),78001);
+  //print_CUDA_error_if_any(cudaMemset(d_max2,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
 
-  print_CUDA_error_if_any(cudaMalloc((void**)&d_max3,num_blocks_x*num_blocks_y*sizeof(realw)),78001);
-  // initializes values to zero
-  print_CUDA_error_if_any(cudaMemset(d_max3,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
-
+  //print_CUDA_error_if_any(cudaMalloc((void**)&d_max3,num_blocks_x*num_blocks_y*sizeof(realw)),78001);
+  //print_CUDA_error_if_any(cudaMemset(d_max3,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
 
   if (*sim_type == 1) {
-    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,size,d_max);
-    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_acoustic,size,d_max2);
-    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_acoustic,size,d_max3);
+    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_acoustic,size,d_max1);
+    //get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_acoustic,size,d_max2);
+    //get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,size,d_max3);
   }else if (*sim_type == 3) {
-   get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_dot_acoustic,size,d_max);
-    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_acoustic,size,d_max2);
-    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_acoustic,size,d_max3);
+    get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_acoustic,size,d_max1);
+    //get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_acoustic,size,d_max2);
+    //get_maximum_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_potential_dot_dot_acoustic,size,d_ma3);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -557,46 +552,45 @@ void FC_FUNC_(get_norm_acoustic_from_device,
   // (cudaMemcpy implicitly synchronizes all other cuda operations)
   cudaStreamSynchronize(mp->compute_stream);
 
-  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
+  print_CUDA_error_if_any(cudaMemcpy(h_max1,d_max1,num_blocks_x*num_blocks_y*sizeof(realw),
                                      cudaMemcpyDeviceToHost),222);
 
-  print_CUDA_error_if_any(cudaMemcpy(h_max2,d_max2,num_blocks_x*num_blocks_y*sizeof(realw),
-                                     cudaMemcpyDeviceToHost),222);
+  //print_CUDA_error_if_any(cudaMemcpy(h_max2,d_max2,num_blocks_x*num_blocks_y*sizeof(realw),
+  //                                   cudaMemcpyDeviceToHost),222);
 
-  print_CUDA_error_if_any(cudaMemcpy(h_max3,d_max3,num_blocks_x*num_blocks_y*sizeof(realw),
-                                     cudaMemcpyDeviceToHost),222);
+  //print_CUDA_error_if_any(cudaMemcpy(h_max3,d_max3,num_blocks_x*num_blocks_y*sizeof(realw),
+  //                                   cudaMemcpyDeviceToHost),222);
 
   // determines max for all blocks
-  max = h_max[0];
+  max1 = h_max1[0];
   for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
-    if (max < h_max[i]) max = h_max[i];
+    if (max1 < h_max1[i]) max1 = h_max1[i];
   }
-
+  /*
   max2 = h_max2[0];
   for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if (max2 < h_max2[i]) max2 = h_max2[i];
   }
-
+  */
+  /*
   max3 = h_max3[0];
   for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if (max3 < h_max3[i]) max3 = h_max3[i];
   }
-
-  cudaFree(d_max);
-  free(h_max);
-  cudaFree(d_max2);
-  free(h_max2);
-  cudaFree(d_max3);
-  free(h_max3);
-
-
-
-
+  */
+  cudaFree(d_max1);
+  free(h_max1);
+  //cudaFree(d_max2);
+  //free(h_max2);
+  //cudaFree(d_max3);
+  //free(h_max3);
 
   // return result
-  norm[0] = max;
-  norm[1] = max2;
-  norm[2] = max3;
+  //norm[0] = max1;
+  //norm[1] = max2;
+  //norm[2] = max3;
+  // only potential_acoustic for now:
+  *norm = max1;
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
@@ -654,21 +648,17 @@ void FC_FUNC_(get_norm_elastic_from_device,
   TRACE("\tget_norm_elastic_from_device");
   //double start_time = get_time();
 
-
-
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
-  realw max, max2,max3,res,res2,res3;
-  realw *d_max;
-  realw *d_max2;
-  realw *d_max3;
+  realw max1; //,max2,max3;
+  realw res1; //,res2,res3;
+  realw *d_max1;
+  //realw *d_max2;
+  //realw *d_max3;
 
   //initializes
   *norm = 0.0f;
 
   // launch simple reduction kernel
-  realw * h_max;
-  realw * h_max2;
-  realw * h_max3;
   int blocksize = BLOCKSIZE_TRANSFER;
 
   int size = mp->NGLOB_AB;
@@ -681,34 +671,29 @@ void FC_FUNC_(get_norm_elastic_from_device,
   dim3 threads(blocksize,1,1);
 
   // on host (allocates & initializes to zero)
-  h_max = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
-  h_max2 = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
-  h_max3 = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  realw* h_max1 = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  //realw* h_max2 = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
+  //realw* h_max3 = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));
 
   // allocates memory on device
-  print_CUDA_error_if_any(cudaMalloc((void**)&d_max,num_blocks_x*num_blocks_y*sizeof(realw)),77001);
-  print_CUDA_error_if_any(cudaMemset(d_max,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
+  // and initializes values to zero
+  print_CUDA_error_if_any(cudaMalloc((void**)&d_max1,num_blocks_x*num_blocks_y*sizeof(realw)),77001);
+  print_CUDA_error_if_any(cudaMemset(d_max1,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
 
-  print_CUDA_error_if_any(cudaMalloc((void**)&d_max2,num_blocks_x*num_blocks_y*sizeof(realw)),77001);
-  print_CUDA_error_if_any(cudaMemset(d_max2,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
+  //print_CUDA_error_if_any(cudaMalloc((void**)&d_max2,num_blocks_x*num_blocks_y*sizeof(realw)),77001);
+  //print_CUDA_error_if_any(cudaMemset(d_max2,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
 
-  print_CUDA_error_if_any(cudaMalloc((void**)&d_max3,num_blocks_x*num_blocks_y*sizeof(realw)),77001);
-  print_CUDA_error_if_any(cudaMemset(d_max3,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
-
-  // initializes values to zero
-
-
-
-
+  //print_CUDA_error_if_any(cudaMalloc((void**)&d_max3,num_blocks_x*num_blocks_y*sizeof(realw)),77001);
+  //print_CUDA_error_if_any(cudaMemset(d_max3,0,num_blocks_x*num_blocks_y*sizeof(realw)),77002);
 
   if (*type == 1) {
-    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ,size,d_max);
-    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_veloc,size,d_max2);
-    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel,size,d_max3);
+    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ,size,d_max1);
+    //get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_veloc,size,d_max2);
+    //get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel,size,d_max3);
   }else if (*type == 3) {
-    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ,size,d_max);
-get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc,size,d_max2);
-get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel,size,d_max3);
+    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ,size,d_max1);
+    //get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc,size,d_max2);
+    //get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel,size,d_max3);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -724,50 +709,50 @@ get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel,s
   cudaStreamSynchronize(mp->compute_stream);
 
   // copies reduction array back to CPU
-  print_CUDA_error_if_any(cudaMemcpy(h_max,d_max,num_blocks_x*num_blocks_y*sizeof(realw),
+  print_CUDA_error_if_any(cudaMemcpy(h_max1,d_max1,num_blocks_x*num_blocks_y*sizeof(realw),
                                      cudaMemcpyDeviceToHost),222);
-  print_CUDA_error_if_any(cudaMemcpy(h_max2,d_max2,num_blocks_x*num_blocks_y*sizeof(realw),
-                                     cudaMemcpyDeviceToHost),222);
-  print_CUDA_error_if_any(cudaMemcpy(h_max3,d_max3,num_blocks_x*num_blocks_y*sizeof(realw),
-                                     cudaMemcpyDeviceToHost),222);
+  //print_CUDA_error_if_any(cudaMemcpy(h_max2,d_max2,num_blocks_x*num_blocks_y*sizeof(realw),
+  //                                   cudaMemcpyDeviceToHost),222);
+  //print_CUDA_error_if_any(cudaMemcpy(h_max3,d_max3,num_blocks_x*num_blocks_y*sizeof(realw),
+  //                                   cudaMemcpyDeviceToHost),222);
 
   // determines max for all blocks
-  max = h_max[0];
+  max1 = h_max1[0];
   for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
-    if (max < h_max[i]) max = h_max[i];
+    if (max1 < h_max1[i]) max1 = h_max1[i];
   }
+  /*
   max2 = h_max2[0];
   for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if (max2 < h_max2[i]) max2 = h_max2[i];
   }
-
+  */
+  /*
   max3 = h_max3[0];
   for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
     if (max3 < h_max3[i]) max3 = h_max3[i];
   }
-
-
-  res = sqrt(max);
- res2 = sqrt(max2);
- res3 = sqrt(max3);
-printf("iteration %d  Valeur max de displ : %.12f  processus %d \n",*it,res,mp->myrank);
-printf("iteration %d  Valeur max de veloc : %.12f  processus %d \n",*it,res2,mp->myrank);
-printf("iteration %d  Valeur max de accel : %.12f  processus %d \n",*it,res3,mp->myrank);
+  */
+  res1 = sqrt(max1);
+  //res2 = sqrt(max2);
+  //res3 = sqrt(max3);
+  // debug
+  //printf("iteration %d  Valeur max de displ : %.12f  processus %d \n",*it,res1,mp->myrank);
+  //printf("iteration %d  Valeur max de veloc : %.12f  processus %d \n",*it,res2,mp->myrank);
+  //printf("iteration %d  Valeur max de accel : %.12f  processus %d \n",*it,res3,mp->myrank);
 
   // return result
-  *norm = res;
+  *norm = res1;
 
   // debug
-  //printf("rank % d - type: %d norm: %f \n",mp->myrank,*type,res);
+  //printf("rank % d - type: %d norm: %e \n",mp->myrank,*type,*norm);
 
-  cudaFree(d_max);
-  free(h_max);
-  cudaFree(d_max2);
-  free(h_max2);
-  cudaFree(d_max3);
-  free(h_max3);
-
-
+  cudaFree(d_max1);
+  free(h_max1);
+  //cudaFree(d_max2);
+  //free(h_max2);
+  //cudaFree(d_max3);
+  //free(h_max3);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time();
