@@ -146,19 +146,17 @@
 
         else
           ! on GPU
-          if (SIMULATION_TYPE == 1) then
-            ! Simulating seismograms
-            if (USE_TRICK_FOR_BETTER_PRESSURE) then
-              call compute_seismograms_cuda(Mesh_pointer,seismotype_l,sisux(:,:,i_sig),sisuz(:,:,i_sig),seismo_current(i_sig), &
-                                                         NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
-                                                         ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,1)
-            else
-              call compute_seismograms_cuda(Mesh_pointer,seismotype_l,sisux(:,:,i_sig),sisuz(:,:,i_sig),seismo_current(i_sig), &
-                                                         NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
-                                                         ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,0)
-            endif
-            ! note: curl not implemented yet
+          ! Simulating seismograms
+          if (USE_TRICK_FOR_BETTER_PRESSURE) then
+            call compute_seismograms_cuda(Mesh_pointer,seismotype_l,sisux(:,:,i_sig),sisuz(:,:,i_sig),seismo_current(i_sig), &
+                                                       NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
+                                                       ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,1)
+          else
+            call compute_seismograms_cuda(Mesh_pointer,seismotype_l,sisux(:,:,i_sig),sisuz(:,:,i_sig),seismo_current(i_sig), &
+                                                       NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
+                                                       ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,0)
           endif
+          ! note: curl not implemented yet
         endif ! GPU_MODE
       endif ! nrecloc
     enddo  ! loop on signal types (seismotype)
