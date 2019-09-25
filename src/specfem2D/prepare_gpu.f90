@@ -186,18 +186,14 @@
 
     call prepare_fields_elastic_device(Mesh_pointer, &
                                        rmassx,rmassz, &
-                                       rho_vp,rho_vs, &
                                        num_phase_ispec_elastic,phase_ispec_inner_elastic, &
                                        ispec_is_elastic, &
-                                       nspec_left, &
-                                       nspec_right, &
-                                       nspec_top, &
-                                       nspec_bottom, &
                                        ANY_ANISOTROPY, &
                                        c11store,c12store,c13store, &
                                        c15store,c23store, &
                                        c25store,c33store,c35store,c55store, &
-                                       ninterface_elastic,inum_interfaces_elastic,ATTENUATION_VISCOELASTIC, &
+                                       ninterface_elastic,inum_interfaces_elastic, &
+                                       ATTENUATION_VISCOELASTIC, &
                                        A_newmark_nu2,B_newmark_nu2,A_newmark_nu1,B_newmark_nu1)
 
 
@@ -213,7 +209,7 @@
     deallocate(rmassx,rmassz)
   endif
 
-  if (PML_BOUNDARY_CONDITIONS) &
+  if (PML_BOUNDARY_CONDITIONS) then
     call prepare_PML_device(Mesh_pointer, &
                             nspec_PML, &
                             NSPEC_PML_X, &
@@ -228,6 +224,7 @@
                             alphaz_store_GPU, &
                             betax_store_GPU, &
                             betaz_store_GPU)
+  endif
 
 ! numabs                                 : tableau des elements spectraux situes en zone absorbante
 ! abs_boundary_ij(i,j,ispecabs)          : coordonnee locale i de j eme point GLL de l'element absorbant ispecabs
@@ -239,8 +236,10 @@
 ! ib_left                                : correspondance entre le numero
 ! d'element absorbant global et son numero sur le cote
 
-  if (STACEY_ABSORBING_CONDITIONS) &
+  if (STACEY_ABSORBING_CONDITIONS) then
     call prepare_Stacey_device(Mesh_pointer, &
+                               any_acoustic,any_elastic, &
+                               rho_vp,rho_vs, &
                                nspec_bottom, &
                                nspec_left, &
                                nspec_right, &
@@ -254,7 +253,7 @@
                                ib_left, &
                                ib_right, &
                                ib_top)
-
+  endif
 
   ! prepares fields on GPU for poroelastic simulations
   if (any_poroelastic) then

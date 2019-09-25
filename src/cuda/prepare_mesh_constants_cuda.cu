@@ -165,10 +165,6 @@ void FC_FUNC_(prepare_constants_device,
   if (mp == NULL) exit_on_error("error allocating mesh pointer");
   *Mesh_pointer = (long)mp;
 
-  if (*h_NGLLX != NGLLX) {
-    exit_on_error("NGLLX defined in constants.h must match the NGLLX defined in src/cuda/mesh_constants_cuda.h");
-  }
-
   // sets processes mpi rank
   mp->myrank = *h_myrank;
 
@@ -181,6 +177,14 @@ void FC_FUNC_(prepare_constants_device,
   mp->stacey_absorbing_conditions = *STACEY_BOUNDARY_CONDITIONS;
   mp->pml = *PML_BOUNDARY_CONDITIONS;
   mp->save_forward = *SAVE_FORWARD;
+
+  // safety check
+  if (*h_NGLLX != NGLLX) {
+    exit_on_error("make sure that the NGLL constants are equal in the two files:\n" \
+                  "  setup/constants.h and src/cuda/mesh_constants_cuda.h\n" \
+                  "and then please re-compile; also make sure that the value of NGLL3_PADDED " \
+                  "is consistent with the value of NGLL\n");
+  }
 
   // sets constant arrays
   setConst_hprime_xx(h_hprime_xx,mp);
@@ -279,10 +283,11 @@ void FC_FUNC_(prepare_constants_device,
   mp->size_mpi_buffer_potential = 0;
 
   // streams
+  // setup two streams, one for compute and one for host<->device memory copies
   cudaStreamCreate(&mp->compute_stream);
   // copy stream (needed to transfer mpi buffers)
   if (mp->num_interfaces_ext_mesh * mp->max_nibool_interfaces_ext_mesh > 0) {
-  cudaStreamCreate(&mp->copy_stream);
+    cudaStreamCreate(&mp->copy_stream);
   }
 
   // inner elements
@@ -290,7 +295,6 @@ void FC_FUNC_(prepare_constants_device,
 
   // sources
   mp->nsources_local = *nsources_local_f;
-
   if (mp->nsources_local > 0){
     copy_todevice_realw((void**)&mp->d_source_time_function,h_source_time_function,(*NSTEP)*(mp->nsources_local));
     copy_todevice_realw((void**)&mp->d_sourcearrays,h_sourcearrays,mp->nsources_local*NDIM*NGLL2);
@@ -298,13 +302,13 @@ void FC_FUNC_(prepare_constants_device,
   }
 
   // receiver stations
-
+  //
   // Alexis Bottero (AB AB) defined all these arrays in order to be able to write several signal types with one simulation
   // I know it is ugly but it works and I did not have any other idea... sorry about that
   // I defined arrays for seismotype = 5-10 for the future
-
   mp->h_NSIGTYPE = *h_NSIGTYPE;
   copy_todevice_int((void**)&mp->d_seismotypeVec,h_seismotypeVec,mp->h_NSIGTYPE);
+
   mp->h_seismotypeVec = h_seismotypeVec;
   mp->seismotype1wanted = 0;
   mp->seismotype2wanted = 0;
@@ -317,16 +321,16 @@ void FC_FUNC_(prepare_constants_device,
   mp->seismotype9wanted = 0;
   mp->seismotype10wanted = 0;
   for(int ii = 0; ii < mp->h_NSIGTYPE; ii++) {
-      if (mp->h_seismotypeVec[ii] == 1) mp->seismotype1wanted = 1;
-      if (mp->h_seismotypeVec[ii] == 2) mp->seismotype2wanted = 1;
-      if (mp->h_seismotypeVec[ii] == 3) mp->seismotype3wanted = 1;
-      if (mp->h_seismotypeVec[ii] == 4) mp->seismotype4wanted = 1;
-      if (mp->h_seismotypeVec[ii] == 5) mp->seismotype5wanted = 1;
-      if (mp->h_seismotypeVec[ii] == 6) mp->seismotype6wanted = 1;
-      if (mp->h_seismotypeVec[ii] == 7) mp->seismotype7wanted = 1;
-      if (mp->h_seismotypeVec[ii] == 8) mp->seismotype8wanted = 1;
-      if (mp->h_seismotypeVec[ii] == 9) mp->seismotype9wanted = 1;
-      if (mp->h_seismotypeVec[ii] == 10) mp->seismotype10wanted = 1;
+    if (mp->h_seismotypeVec[ii] == 1) mp->seismotype1wanted = 1;
+    if (mp->h_seismotypeVec[ii] == 2) mp->seismotype2wanted = 1;
+    if (mp->h_seismotypeVec[ii] == 3) mp->seismotype3wanted = 1;
+    if (mp->h_seismotypeVec[ii] == 4) mp->seismotype4wanted = 1;
+    if (mp->h_seismotypeVec[ii] == 5) mp->seismotype5wanted = 1;
+    if (mp->h_seismotypeVec[ii] == 6) mp->seismotype6wanted = 1;
+    if (mp->h_seismotypeVec[ii] == 7) mp->seismotype7wanted = 1;
+    if (mp->h_seismotypeVec[ii] == 8) mp->seismotype8wanted = 1;
+    if (mp->h_seismotypeVec[ii] == 9) mp->seismotype9wanted = 1;
+    if (mp->h_seismotypeVec[ii] == 10) mp->seismotype10wanted = 1;
   }
 
   mp->nrec_local = *nrec_local; // number of receiver located in this partition
@@ -420,8 +424,10 @@ void FC_FUNC_(prepare_fields_acoustic_device,
                                               int* coupling_ac_el_ijk,
                                               realw* coupling_ac_el_normal,
                                               realw* coupling_ac_el_jacobian2Dw,
-                                              int * h_ninterface_acoustic,int * h_inum_interfaces_acoustic,int* ATTENUATION_VISCOACOUSTIC,
-                                              realw* h_A_newmark,realw* h_B_newmark,int* NO_BACKWARD_RECONSTRUCTION,realw* h_no_backward_acoustic_buffer) {
+                                              int * h_ninterface_acoustic,int * h_inum_interfaces_acoustic,
+                                              int* ATTENUATION_VISCOACOUSTIC,
+                                              realw* h_A_newmark,realw* h_B_newmark,
+                                              int* NO_BACKWARD_RECONSTRUCTION,realw* h_no_backward_acoustic_buffer) {
 
   TRACE("prepare_fields_acoustic_device");
 
@@ -491,18 +497,6 @@ void FC_FUNC_(prepare_fields_acoustic_device,
     copy_todevice_int((void**)&mp->d_free_surface_ijk,free_surface_ijk,2*NGLLX*mp->num_free_surface_faces);
   }
 
-  // Stacey absorbing boundaries
-  if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0) {
-    // absorb_field array used for file i/o
-    if (mp->simulation_type == 3 || ( mp->simulation_type == 1 && mp->save_forward )){
-      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_left,mp->d_nspec_left*sizeof(realw)*NGLLX),2201);
-      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_right,mp->d_nspec_right*sizeof(realw)*NGLLX),2201);
-      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_top,mp->d_nspec_top*sizeof(realw)*NGLLX),2201);
-      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_bottom,mp->d_nspec_bottom*sizeof(realw)*NGLLX),2201);
-
-    }
-  }
-
   // coupling with elastic parts
   if (*ELASTIC_SIMULATION && *num_coupling_ac_el_faces > 0) {
     copy_todevice_int((void**)&mp->d_coupling_ac_el_ispec,coupling_ac_el_ispec,(*num_coupling_ac_el_faces));
@@ -516,6 +510,7 @@ void FC_FUNC_(prepare_fields_acoustic_device,
   mp->ninterface_acoustic = *h_ninterface_acoustic;
   copy_todevice_int((void**)&mp->d_inum_interfaces_acoustic,h_inum_interfaces_acoustic,mp->num_interfaces_ext_mesh);
 
+  // attenuation
   if (*ATTENUATION_VISCOACOUSTIC) {
     copy_todevice_realw((void**)&mp->d_A_newmark_acous,h_A_newmark,NGLL2*mp->NSPEC_AB*N_SLS);
     copy_todevice_realw((void**)&mp->d_B_newmark_acous,h_B_newmark,NGLL2*mp->NSPEC_AB*N_SLS);
@@ -631,24 +626,20 @@ extern "C"
 void FC_FUNC_(prepare_fields_elastic_device,
               PREPARE_FIELDS_ELASTIC_DEVICE)(long* Mesh_pointer,
                                              realw* rmassx, realw* rmassz,
-                                             realw* rho_vp, realw* rho_vs,
                                              int* num_phase_ispec_elastic,
                                              int* phase_ispec_inner_elastic,
                                              int* ispec_is_elastic,
-                                             int* h_nspec_left,
-                                             int* h_nspec_right,
-                                             int* h_nspec_top,
-                                             int* h_nspec_bottom,
                                              int* ANISOTROPY,
                                              realw *c11store,realw *c12store,realw *c13store,
                                              realw *c15store,
                                              realw *c23store,
                                              realw *c25store,realw *c33store,
                                              realw *c35store,
-                                             realw *c55store,int* h_ninterface_elastic,int * h_inum_interfaces_elastic,int* ATTENUATION_VISCOELASTIC,
-                                             realw* h_A_newmark_mu,realw* h_B_newmark_mu,realw* h_A_newmark_kappa,realw* h_B_newmark_kappa) {
-
-
+                                             realw *c55store,
+                                             int* h_ninterface_elastic,int * h_inum_interfaces_elastic,
+                                             int* ATTENUATION_VISCOELASTIC,
+                                             realw* h_A_newmark_mu,realw* h_B_newmark_mu,
+                                             realw* h_A_newmark_kappa,realw* h_B_newmark_kappa) {
 
   TRACE("prepare_fields_elastic_device");
 
@@ -733,39 +724,6 @@ void FC_FUNC_(prepare_fields_elastic_device,
   // debug
   //synchronize_mpi();
 
-  // Stacey absorbing conditions
-  if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0){
-
-    // debug
-    //printf("prepare_fields_elastic_device: rank %d - absorbing boundary setup\n",mp->myrank);
-
-    // non-padded arrays
-    // rho_vp, rho_vs non-padded; they are needed for stacey boundary condition
-    copy_todevice_realw((void**)&mp->d_rho_vp,rho_vp,NGLL2*mp->NSPEC_AB);
-    copy_todevice_realw((void**)&mp->d_rho_vs,rho_vs,NGLL2*mp->NSPEC_AB);
-
-    // absorb_field array used for file i/o
-    if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0) {
-      // absorb_field array used for file i/o
-      if (mp->simulation_type == 3 || ( mp->simulation_type == 1 && mp->save_forward )){
-        mp->d_nspec_left = *h_nspec_left;
-        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_left,2*mp->d_nspec_left*sizeof(realw)*NGLLX),2201);
-
-        mp->d_nspec_right = *h_nspec_right;
-        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_right,2*mp->d_nspec_right*sizeof(realw)*NGLLX),2201);
-
-        mp->d_nspec_top = *h_nspec_top;
-        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_top,2*mp->d_nspec_top*sizeof(realw)*NGLLX),2201);
-
-        mp->d_nspec_bottom = *h_nspec_bottom;
-        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_bottom,2*mp->d_nspec_bottom*sizeof(realw)*NGLLX),2201);
-      }
-    }
-  }
-
-  // debug
-  //synchronize_mpi();
-
   // anisotropy
   if (*ANISOTROPY) {
     // debug
@@ -818,7 +776,7 @@ void FC_FUNC_(prepare_fields_elastic_device,
   mp->ninterface_elastic = *h_ninterface_elastic;
   copy_todevice_int((void**)&mp->d_inum_interfaces_elastic,h_inum_interfaces_elastic,mp->num_interfaces_ext_mesh);
 
-
+  // attenuation
   if (*ATTENUATION_VISCOELASTIC) {
     copy_todevice_realw((void**)&mp->d_A_newmark_mu,h_A_newmark_mu,NGLL2*mp->NSPEC_AB*N_SLS);
     copy_todevice_realw((void**)&mp->d_B_newmark_mu,h_B_newmark_mu,NGLL2*mp->NSPEC_AB*N_SLS);
@@ -903,22 +861,23 @@ void FC_FUNC_(prepare_fields_elastic_adj_dev,
   size = NGLL2 * mp->NSPEC_AB; // note: non-aligned; if align, check memcpy below and indexing
   // density kernel
   print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_rho_kl),size*sizeof(realw)),5211);
+  // isotropic kernels
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_mu_kl),size*sizeof(realw)),5213);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_kappa_kl),size*sizeof(realw)),5214);
+
   // initializes kernel values to zero
   print_CUDA_error_if_any(cudaMemset(mp->d_rho_kl,0,size*sizeof(realw)),5212);
+  print_CUDA_error_if_any(cudaMemset(mp->d_mu_kl,0,size*sizeof(realw)),5216);
+  print_CUDA_error_if_any(cudaMemset(mp->d_kappa_kl,0,size*sizeof(realw)),5217);
 
-
-    // isotropic kernels
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_mu_kl),size*sizeof(realw)),5213);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_kappa_kl),size*sizeof(realw)),5214);
-    print_CUDA_error_if_any(cudaMemset(mp->d_mu_kl,0,size*sizeof(realw)),5216);
-    print_CUDA_error_if_any(cudaMemset(mp->d_kappa_kl,0,size*sizeof(realw)),5217);
-
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_dsxx),size*sizeof(realw)),5218);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_dsxz),size*sizeof(realw)),5219);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_dszz),size*sizeof(realw)),5220);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_dsxx),size*sizeof(realw)),5221);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_dsxz),size*sizeof(realw)),5222);
-    print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_dszz),size*sizeof(realw)),5223);
+  // helper arrays size [NGLOB]
+  size = mp->NGLOB_AB;
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_dsxx),size*sizeof(realw)),5218);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_dsxz),size*sizeof(realw)),5219);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_dszz),size*sizeof(realw)),5220);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_dsxx),size*sizeof(realw)),5221);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_dsxz),size*sizeof(realw)),5222);
+  print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_dszz),size*sizeof(realw)),5223);
 
   // approximate hessian kernel
   if (*APPROXIMATE_HESS_KL) {
@@ -1044,6 +1003,9 @@ void FC_FUNC_(prepare_pml_device,
 extern "C"
 void FC_FUNC_(prepare_stacey_device,
               PREPARE_STACEY_DEVICE)(long* Mesh_pointer,
+                                     int* ACOUSTIC_SIMULATION,
+                                     int* ELASTIC_SIMULATION,
+                                     realw* rho_vp, realw* rho_vs,
                                      int* h_nspec_bottom,
                                      int* h_nspec_left,
                                      int* h_nspec_right,
@@ -1062,9 +1024,24 @@ void FC_FUNC_(prepare_stacey_device,
 
   Mesh* mp = (Mesh*)(*Mesh_pointer);
 
+  // checks consistency
+  if (! mp->stacey_absorbing_conditions)
+    exit_on_error("Stacey absorbing condition flag inconsistent with prepare_stacey_device() call");
+
   // Stacey absorbing boundaries
   mp->d_num_abs_boundary_faces = *h_num_abs_boundary_faces;
+
+  // Stacey absorbing conditions
   if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0) {
+    mp->d_nspec_left = *h_nspec_left;
+    mp->d_nspec_right = *h_nspec_right;
+    mp->d_nspec_top = *h_nspec_top;
+    mp->d_nspec_bottom = *h_nspec_bottom;
+
+    // debug
+    //printf("debug: stacey prepare faces %d %d\n",mp->stacey_absorbing_conditions,mp->d_num_abs_boundary_faces);
+    //printf("debug: stacey prepare %d %d %d %d\n",mp->d_nspec_left,mp->d_nspec_right,mp->d_nspec_top,mp->d_nspec_bottom);
+
     copy_todevice_int((void**)&mp->d_abs_boundary_ispec,h_abs_boundary_ispec,mp->d_num_abs_boundary_faces);
     copy_todevice_int((void**)&mp->d_abs_boundary_ijk,h_abs_boundary_ij,
                       2*NGLLX*(mp->d_num_abs_boundary_faces));
@@ -1072,16 +1049,42 @@ void FC_FUNC_(prepare_stacey_device,
                         NDIM*NGLLX*(mp->d_num_abs_boundary_faces));
     copy_todevice_realw((void**)&mp->d_abs_boundary_jacobian2Dw,h_abs_boundary_jacobian1Dw,
                         NGLLX*(mp->d_num_abs_boundary_faces));
+
     copy_todevice_int((void**)&mp->d_cote_abs,h_cote_abs,(mp->d_num_abs_boundary_faces));
     copy_todevice_int((void**)&mp->d_ib_left,h_ib_left,(mp->d_num_abs_boundary_faces));
     copy_todevice_int((void**)&mp->d_ib_right,h_ib_right,(mp->d_num_abs_boundary_faces));
     copy_todevice_int((void**)&mp->d_ib_top,h_ib_top,(mp->d_num_abs_boundary_faces));
     copy_todevice_int((void**)&mp->d_ib_bottom,h_ib_bottom,(mp->d_num_abs_boundary_faces));
 
-    mp->d_nspec_bottom = *h_nspec_bottom;
-    mp->d_nspec_left = *h_nspec_left;
-    mp->d_nspec_right = *h_nspec_right;
-    mp->d_nspec_top = *h_nspec_top;
+    // elastic domains
+    if (*ELASTIC_SIMULATION){
+      // debug
+      //printf("prepare_fields_elastic_device: rank %d - absorbing boundary setup\n",mp->myrank);
+
+      // non-padded arrays
+      // rho_vp, rho_vs non-padded; they are needed for stacey boundary condition
+      copy_todevice_realw((void**)&mp->d_rho_vp,rho_vp,NGLL2*mp->NSPEC_AB);
+      copy_todevice_realw((void**)&mp->d_rho_vs,rho_vs,NGLL2*mp->NSPEC_AB);
+
+      // absorb_field array used for file i/o
+      if (mp->simulation_type == 3 || ( mp->simulation_type == 1 && mp->save_forward )){
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_left,2*mp->d_nspec_left*sizeof(realw)*NGLLX),2201);
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_right,2*mp->d_nspec_right*sizeof(realw)*NGLLX),2202);
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_top,2*mp->d_nspec_top*sizeof(realw)*NGLLX),2203);
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_elastic_bottom,2*mp->d_nspec_bottom*sizeof(realw)*NGLLX),2204);
+      }
+    } // ELASTIC_SIMULATION
+
+    // acoustic domains
+    if (*ACOUSTIC_SIMULATION){
+      // absorb_field array used for file i/o
+      if (mp->simulation_type == 3 || ( mp->simulation_type == 1 && mp->save_forward )){
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_left,mp->d_nspec_left*sizeof(realw)*NGLLX),2211);
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_right,mp->d_nspec_right*sizeof(realw)*NGLLX),2212);
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_top,mp->d_nspec_top*sizeof(realw)*NGLLX),2213);
+        print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_b_absorb_potential_bottom,mp->d_nspec_bottom*sizeof(realw)*NGLLX),2214);
+      }
+    } // ACOUSTIC_SIMULATION
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -1273,7 +1276,7 @@ TRACE("prepare_cleanup_device");
         cudaFree(mp->d_b_absorb_potential_left);
         cudaFree(mp->d_b_absorb_potential_right);
         cudaFree(mp->d_b_absorb_potential_top);
-       }
+      }
     }
     if (*ATTENUATION_VISCOACOUSTIC){
       cudaFree(mp->d_e1_acous);
@@ -1311,10 +1314,12 @@ TRACE("prepare_cleanup_device");
     if (mp->stacey_absorbing_conditions && mp->d_num_abs_boundary_faces > 0){
       cudaFree(mp->d_rho_vp);
       cudaFree(mp->d_rho_vs);
-      cudaFree(mp->d_b_absorb_elastic_bottom);
-      cudaFree(mp->d_b_absorb_elastic_left);
-      cudaFree(mp->d_b_absorb_elastic_right);
-      cudaFree(mp->d_b_absorb_elastic_top);
+      if (mp->simulation_type == 3 || ( mp->simulation_type == 1 && mp->save_forward )){
+        cudaFree(mp->d_b_absorb_elastic_bottom);
+        cudaFree(mp->d_b_absorb_elastic_left);
+        cudaFree(mp->d_b_absorb_elastic_right);
+        cudaFree(mp->d_b_absorb_elastic_top);
+      }
     }
 
     if (mp->simulation_type == 3) {

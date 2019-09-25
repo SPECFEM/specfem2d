@@ -84,13 +84,9 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
 
       i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
       j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
-      //check if the point must be computed
-      if (i==NGLLX || j==NGLLX) return;
-
       iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
 
       // gets associated velocity
-
       vx = veloc[iglob*2];
       vz = veloc[iglob*2+1];
 
@@ -114,18 +110,23 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
 
       if (SAVE_FORWARD && SIMULATION_TYPE == 1) {
 
-      if (cote_abs[iface] == 1) {num_local = ib_bottom[iface]-1;
-                                b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
-                                b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;}
-      else if (cote_abs[iface] == 2)   {num_local = ib_right[iface]-1;
-                                 b_absorb_elastic_right[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
-                                b_absorb_elastic_right[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;}
-      else if (cote_abs[iface] == 3)  {num_local = ib_top[iface]-1;
-                                 b_absorb_elastic_top[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
-                                b_absorb_elastic_top[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;}
-      else if (cote_abs[iface] == 4){num_local = ib_left[iface]-1;
-                                b_absorb_elastic_left[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
-                                b_absorb_elastic_left[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;}
+        if (cote_abs[iface] == 1) {
+          num_local = ib_bottom[iface]-1;
+          b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
+          b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
+        }else if (cote_abs[iface] == 2) {
+          num_local = ib_right[iface]-1;
+          b_absorb_elastic_right[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
+          b_absorb_elastic_right[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
+        }else if (cote_abs[iface] == 3) {
+          num_local = ib_top[iface]-1;
+          b_absorb_elastic_top[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
+          b_absorb_elastic_top[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
+        }else if (cote_abs[iface] == 4) {
+          num_local = ib_left[iface]-1;
+          b_absorb_elastic_left[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
+          b_absorb_elastic_left[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
+        }
 
       } // SIMULATION_TYPE
     }
@@ -199,11 +200,11 @@ __global__ void compute_stacey_elastic_sim3_kernel(int* abs_boundary_ispec,
 extern "C"
 void FC_FUNC_(compute_stacey_viscoelastic_cuda,
               COMPUTE_STACEY_VISCOELASTIC_CUDA)(long* Mesh_pointer,
-                                           int* iphasef,
-                                           realw* h_b_absorb_elastic_left,
-                                           realw* h_b_absorb_elastic_right,
-                                           realw* h_b_absorb_elastic_top,
-                                           realw* h_b_absorb_elastic_bottom) {
+                                                int* iphasef,
+                                                realw* h_b_absorb_elastic_left,
+                                                realw* h_b_absorb_elastic_right,
+                                                realw* h_b_absorb_elastic_top,
+                                                realw* h_b_absorb_elastic_bottom) {
 
   TRACE("compute_stacey_viscoelastic_cuda");
 
@@ -294,13 +295,13 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
 
     // writing is done in fortran routine
     print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_elastic_left,mp->d_b_absorb_elastic_left,
-                                       2*mp->d_nspec_left*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7701);
+                                       2*mp->d_nspec_left*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7801);
     print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_elastic_right,mp->d_b_absorb_elastic_right,
-                                       2*mp->d_nspec_right*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7702);
+                                       2*mp->d_nspec_right*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7802);
     print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_elastic_top,mp->d_b_absorb_elastic_top,
-                                       2*mp->d_nspec_top*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7703);
+                                       2*mp->d_nspec_top*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7803);
     print_CUDA_error_if_any(cudaMemcpy(h_b_absorb_elastic_bottom,mp->d_b_absorb_elastic_bottom,
-                                       2*mp->d_nspec_bottom*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7704);
+                                       2*mp->d_nspec_bottom*sizeof(realw)*NGLLX,cudaMemcpyDeviceToHost),7804);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
