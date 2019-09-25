@@ -161,30 +161,31 @@
 
   if (USE_OPENDX) then
 
-  if (iformat == 1) then
+    if (iformat == 1) then
 
-! read range of skewness used for elements
-  print *
-  print *,'enter minimum skewness for OpenDX (between 0. and 0.99):'
-  read(5,*) skewness_AVS_DX_min
-  if (skewness_AVS_DX_min < 0.d0) skewness_AVS_DX_min = 0.d0
-  if (skewness_AVS_DX_min > 0.99999d0) skewness_AVS_DX_min = 0.99999d0
+      ! read range of skewness used for elements
+      print *
+      print *,'enter minimum skewness for OpenDX (between 0. and 0.99):'
+      read(5,*) skewness_AVS_DX_min
+      if (skewness_AVS_DX_min < 0.d0) skewness_AVS_DX_min = 0.d0
+      if (skewness_AVS_DX_min > 0.99999d0) skewness_AVS_DX_min = 0.99999d0
 
-!!!!!!!!  print *,'enter maximum skewness for OpenDX (between 0. and 1.):'
-!!!!!!!!!!!!!  read(5,*) skewness_AVS_DX_max
-  skewness_AVS_DX_max = 0.99999d0 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if (skewness_AVS_DX_max < 0.d0) skewness_AVS_DX_max = 0.d0
-  if (skewness_AVS_DX_max > 0.99999d0) skewness_AVS_DX_max = 0.99999d0
+      !!!!!!!!  print *,'enter maximum skewness for OpenDX (between 0. and 1.):'
+      !!!!!!!!!!!!!  read(5,*) skewness_AVS_DX_max
+      skewness_AVS_DX_max = 0.99999d0 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      if (skewness_AVS_DX_max < 0.d0) skewness_AVS_DX_max = 0.d0
+      if (skewness_AVS_DX_max > 0.99999d0) skewness_AVS_DX_max = 0.99999d0
 
-  if (skewness_AVS_DX_min > skewness_AVS_DX_max) stop 'incorrect skewness range'
+      if (skewness_AVS_DX_min > skewness_AVS_DX_max) stop 'incorrect skewness range'
 
-  else
-    print *,'enter the element number to output in OpenDX format between 1 and ',NSPEC
-    read(5,*) ispec_to_output
-    if (ispec_to_output < 1 .or. ispec_to_output > NSPEC) stop 'incorrect element number to output'
+    else
+      print *,'enter the element number to output in OpenDX format between 1 and ',NSPEC
+      read(5,*) ispec_to_output
+      if (ispec_to_output < 1 .or. ispec_to_output > NSPEC) stop 'incorrect element number to output'
+    endif
+
   endif
-
-  endif
+  print *,''
 
 ! read the points
   print *,'NPOIN = ',NPOIN
@@ -202,57 +203,71 @@
   enddo
   close(11)
 
+  print *,''
   print *,'done reading the external files'
-  print *
+  print *,''
 
 ! ************* compute min and max of skewness and ratios ******************
 
   print *,'start checking if any element with a negative Jacobian is found'
 
-  do i = 1,NSPEC
+  do ispec = 1,NSPEC
 
-! compute jacobian matrix
-  xxi = ZERO
-  zxi = ZERO
-  xgamma = ZERO
-  zgamma = ZERO
+    ! compute jacobian matrix
+    xxi = ZERO
+    zxi = ZERO
+    xgamma = ZERO
+    zgamma = ZERO
 
-  do ia = 1,ngnod
-    xelm = x(ibool(ia,i))
-    zelm = y(ibool(ia,i))
+    do ia = 1,ngnod
+      xelm = x(ibool(ia,ispec))
+      zelm = y(ibool(ia,ispec))
 
-! create the 2D shape functions
-    if (ia == 1) then
-      xi    = -1.d0
-      gamma = -1.d0
-    else if (ia == 2) then
-      xi    = +1.d0
-      gamma = -1.d0
-    else if (ia == 3) then
-      xi    = +1.d0
-      gamma = +1.d0
-    else if (ia == 4) then
-      xi    = -1.d0
-      gamma = +1.d0
-    else
-      stop 'ia must be between 1 and NGNOD = 4'
+      ! create the 2D shape functions
+      if (ia == 1) then
+        xi    = -1.d0
+        gamma = -1.d0
+      else if (ia == 2) then
+        xi    = +1.d0
+        gamma = -1.d0
+      else if (ia == 3) then
+        xi    = +1.d0
+        gamma = +1.d0
+      else if (ia == 4) then
+        xi    = -1.d0
+        gamma = +1.d0
+      else
+        stop 'ia must be between 1 and NGNOD = 4'
+      endif
+
+      call define_shape_functions(shape2D,dershape2D,xi,gamma,ngnod)
+
+      xxi = xxi + dershape2D(1,ia)*xelm
+      zxi = zxi + dershape2D(1,ia)*zelm
+      xgamma = xgamma + dershape2D(2,ia)*xelm
+      zgamma = zgamma + dershape2D(2,ia)*zelm
+    enddo
+
+    jacobian = xxi*zgamma - xgamma*zxi
+
+    ! the Jacobian is negative, this means that there is an error in the mesh
+    if (jacobian <= ZERO) then
+      print *,'element ',ispec,' has a negative Jacobian'
+      do ia = 1,ngnod
+        print *,x(ibool(ia,ispec)),y(ibool(ia,ispec))
+      enddo
+      print *,'Jacobian = ',jacobian
+
+      call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
+                  equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
+      print *,'quality data element ',ispec
+      print *,'  dist min/max          = ',distmin,distmax
+      print *,'  equiangle_skewness    = ',equiangle_skewness
+      print *,'  edge_aspect_ratio     = ',edge_aspect_ratio
+      print *,'  diagonal_aspect_ratio = ',diagonal_aspect_ratio
+      print *,''
+      stop 'negative Jacobian found'
     endif
-
-    call define_shape_functions(shape2D,dershape2D,xi,gamma,ngnod)
-
-    xxi = xxi + dershape2D(1,ia)*xelm
-    zxi = zxi + dershape2D(1,ia)*zelm
-    xgamma = xgamma + dershape2D(2,ia)*xelm
-    zgamma = zgamma + dershape2D(2,ia)*zelm
-  enddo
-
-  jacobian = xxi*zgamma - xgamma*zxi
-
-! the Jacobian is negative, this means that there is an error in the mesh
-  if (jacobian <= ZERO) then
-    print *,'element ',i,' has a negative Jacobian'
-    stop 'negative Jacobian found'
-  endif
 
   enddo
 
@@ -282,14 +297,14 @@
 
     if (mod(ispec,100000) == 0) print *,'processed ',ispec,' elements out of ',NSPEC
 
-      call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
+    call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
-! store element number in which the edge of minimum or maximum length is located
+    ! store element number in which the edge of minimum or maximum length is located
     if (distmin < distance_min) ispec_min_edge_length = ispec
     if (distmax > distance_max) ispec_max_edge_length = ispec
 
-! compute minimum and maximum of quality numbers
+    ! compute minimum and maximum of quality numbers
     equiangle_skewness_min = min(equiangle_skewness_min,equiangle_skewness)
     edge_aspect_ratio_min = min(edge_aspect_ratio_min,edge_aspect_ratio)
     diagonal_aspect_ratio_min = min(diagonal_aspect_ratio_min,diagonal_aspect_ratio)
@@ -344,7 +359,7 @@
 ! loop on all the elements
   do ispec = 1,NSPEC
 
-      call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
+    call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
 ! store skewness in histogram
@@ -359,13 +374,14 @@
   print *
   print *,'histogram of skewness (0. good - 1. bad):'
   print *
+
   total_percent = 0.
   open(unit=14,file='OUTPUT_FILES/mesh_quality_histogram.txt',status='unknown')
   do iclass = 0,NCLASSES-1
     current_percent = 100.*dble(classes_skewness(iclass))/dble(NSPEC)
     total_percent = total_percent + current_percent
     print *,real(iclass/dble(NCLASSES)),' - ',real((iclass+1)/dble(NCLASSES)),classes_skewness(iclass),' ', &
-       sngl(current_percent),' %'
+            sngl(current_percent),' %'
     write(14,*) 0.5*(real(iclass/dble(NCLASSES)) + real((iclass+1)/dble(NCLASSES))),' ',sngl(current_percent)
   enddo
   close(14)
@@ -429,17 +445,17 @@
 
   do ispec = 1,NSPEC
 
-      call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
+    call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
-! check if element belongs to requested skewness range
+    ! check if element belongs to requested skewness range
     if (equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max) &
         ntotspecAVS_DX = ntotspecAVS_DX + 1
 
   enddo
 
   else
-! outputing a single element
+    ! outputing a single element
     ntotspecAVS_DX = 1
   endif
 
@@ -471,35 +487,35 @@
 
   do ispec = ispec_begin,ispec_end
 
-      call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
+    call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
-! check if element needs to be output
+    ! check if element needs to be output
     if (iformat == 2 .or. (iformat == 1 .and. &
-       equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max)) then
-! create point for first corner of the element
-       if (.not. mask_ibool(ibool(1,ispec))) then
-         mask_ibool(ibool(1,ispec)) = .true.
-         NPOIN_unique_needed = NPOIN_unique_needed + 1
-       endif
+      equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max)) then
+      ! create point for first corner of the element
+      if (.not. mask_ibool(ibool(1,ispec))) then
+        mask_ibool(ibool(1,ispec)) = .true.
+        NPOIN_unique_needed = NPOIN_unique_needed + 1
+      endif
 
-! create point for second corner of the element
-       if (.not. mask_ibool(ibool(2,ispec))) then
-         mask_ibool(ibool(2,ispec)) = .true.
-         NPOIN_unique_needed = NPOIN_unique_needed + 1
-       endif
+      ! create point for second corner of the element
+      if (.not. mask_ibool(ibool(2,ispec))) then
+        mask_ibool(ibool(2,ispec)) = .true.
+        NPOIN_unique_needed = NPOIN_unique_needed + 1
+      endif
 
-! create point for third corner of the element
-       if (.not. mask_ibool(ibool(3,ispec))) then
-         mask_ibool(ibool(3,ispec)) = .true.
-         NPOIN_unique_needed = NPOIN_unique_needed + 1
-       endif
+      ! create point for third corner of the element
+      if (.not. mask_ibool(ibool(3,ispec))) then
+        mask_ibool(ibool(3,ispec)) = .true.
+        NPOIN_unique_needed = NPOIN_unique_needed + 1
+      endif
 
-! create point for fourth corner of the element
-       if (.not. mask_ibool(ibool(4,ispec))) then
-         mask_ibool(ibool(4,ispec)) = .true.
-         NPOIN_unique_needed = NPOIN_unique_needed + 1
-       endif
+      ! create point for fourth corner of the element
+      if (.not. mask_ibool(ibool(4,ispec))) then
+        mask_ibool(ibool(4,ispec)) = .true.
+        NPOIN_unique_needed = NPOIN_unique_needed + 1
+      endif
 
     endif
 
@@ -528,43 +544,43 @@
 
   do ispec = ispec_begin,ispec_end
 
-      call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
+    call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
-! check if element needs to be output
+    ! check if element needs to be output
     if (iformat == 2 .or. (iformat == 1 .and. &
        equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max)) then
-! create point for first corner of the element
-       if (.not. mask_ibool(ibool(1,ispec))) then
-         mask_ibool(ibool(1,ispec)) = .true.
-         ibool_reduced(ibool(1,ispec)) = NPOIN_unique_needed
-         write(11,*) sngl(x(ibool(1,ispec))),sngl(y(ibool(1,ispec))),sngl(z(ibool(1,ispec)))
-         NPOIN_unique_needed = NPOIN_unique_needed + 1
-       endif
+      ! create point for first corner of the element
+      if (.not. mask_ibool(ibool(1,ispec))) then
+        mask_ibool(ibool(1,ispec)) = .true.
+        ibool_reduced(ibool(1,ispec)) = NPOIN_unique_needed
+        write(11,*) sngl(x(ibool(1,ispec))),sngl(y(ibool(1,ispec))),sngl(z(ibool(1,ispec)))
+        NPOIN_unique_needed = NPOIN_unique_needed + 1
+      endif
 
-! create point for second corner of the element
-       if (.not. mask_ibool(ibool(2,ispec))) then
-         mask_ibool(ibool(2,ispec)) = .true.
-         ibool_reduced(ibool(2,ispec)) = NPOIN_unique_needed
-         write(11,*) sngl(x(ibool(2,ispec))),sngl(y(ibool(2,ispec))),sngl(z(ibool(2,ispec)))
-         NPOIN_unique_needed = NPOIN_unique_needed + 1
-       endif
+      ! create point for second corner of the element
+      if (.not. mask_ibool(ibool(2,ispec))) then
+        mask_ibool(ibool(2,ispec)) = .true.
+        ibool_reduced(ibool(2,ispec)) = NPOIN_unique_needed
+        write(11,*) sngl(x(ibool(2,ispec))),sngl(y(ibool(2,ispec))),sngl(z(ibool(2,ispec)))
+        NPOIN_unique_needed = NPOIN_unique_needed + 1
+      endif
 
-! create point for third corner of the element
-       if (.not. mask_ibool(ibool(3,ispec))) then
-         mask_ibool(ibool(3,ispec)) = .true.
-         ibool_reduced(ibool(3,ispec)) = NPOIN_unique_needed
-         write(11,*) sngl(x(ibool(3,ispec))),sngl(y(ibool(3,ispec))),sngl(z(ibool(3,ispec)))
-         NPOIN_unique_needed = NPOIN_unique_needed + 1
-       endif
+      ! create point for third corner of the element
+      if (.not. mask_ibool(ibool(3,ispec))) then
+        mask_ibool(ibool(3,ispec)) = .true.
+        ibool_reduced(ibool(3,ispec)) = NPOIN_unique_needed
+        write(11,*) sngl(x(ibool(3,ispec))),sngl(y(ibool(3,ispec))),sngl(z(ibool(3,ispec)))
+        NPOIN_unique_needed = NPOIN_unique_needed + 1
+      endif
 
-! create point for fourth corner of the element
-       if (.not. mask_ibool(ibool(4,ispec))) then
-         mask_ibool(ibool(4,ispec)) = .true.
-         ibool_reduced(ibool(4,ispec)) = NPOIN_unique_needed
-         write(11,*) sngl(x(ibool(4,ispec))),sngl(y(ibool(4,ispec))),sngl(z(ibool(4,ispec)))
-         NPOIN_unique_needed = NPOIN_unique_needed + 1
-       endif
+      ! create point for fourth corner of the element
+      if (.not. mask_ibool(ibool(4,ispec))) then
+        mask_ibool(ibool(4,ispec)) = .true.
+        ibool_reduced(ibool(4,ispec)) = NPOIN_unique_needed
+        write(11,*) sngl(x(ibool(4,ispec))),sngl(y(ibool(4,ispec))),sngl(z(ibool(4,ispec)))
+        NPOIN_unique_needed = NPOIN_unique_needed + 1
+      endif
 
     endif
 
@@ -587,10 +603,10 @@
 
   do ispec = ispec_begin,ispec_end
 
-      call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
+    call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
-! check if element needs to be output
+    ! check if element needs to be output
     if (iformat == 2 .or. (iformat == 1 .and. &
        equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max)) then
 ! point order in OpenDX in 2D is 1,4,2,3 *not* 1,2,3,4 as in AVS
@@ -614,10 +630,10 @@
 ! loop on all the elements
   do ispec = ispec_begin,ispec_end
 
-      call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
+    call create_mesh_quality_data_2D(x,y,z,ibool,ispec,NSPEC,NPOIN,NGNOD, &
                equiangle_skewness,edge_aspect_ratio,diagonal_aspect_ratio,distmin,distmax)
 
-! check if element needs to be output
+    ! check if element needs to be output
     if (iformat == 2 .or. (iformat == 1 .and. &
        equiangle_skewness >= skewness_AVS_DX_min .and. equiangle_skewness <= skewness_AVS_DX_max)) &
     write(11,*) sngl(equiangle_skewness)
@@ -691,11 +707,11 @@
 
 ! compute equiangle skewness (as defined in Fluent/Gambit manual)
 ! and compute edge aspect ratio using the corners of the element
-     distmin = + HUGEVAL
-     distmax = - HUGEVAL
-     equiangle_skewness = - HUGEVAL
+  distmin = + HUGEVAL
+  distmax = - HUGEVAL
+  equiangle_skewness = - HUGEVAL
 
-     do icorner = 1,4
+  do icorner = 1,4
 
 ! first vector of angle
        vectorA_x = xelm(faces_topo(icorner)) - xelm(faces_topo(icorner+1))
@@ -723,7 +739,7 @@
        distmin = min(distmin,dist)
        distmax = max(distmax,dist)
 
-     enddo
+  enddo
 
 ! compute edge aspect ratio
    edge_aspect_ratio = distmax / distmin
