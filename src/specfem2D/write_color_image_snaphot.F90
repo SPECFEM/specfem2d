@@ -333,7 +333,7 @@
 
   ! output
   if (myrank == 0) then
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 

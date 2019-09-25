@@ -630,7 +630,7 @@ module specfem_par
   ! current time step
   integer :: it
   integer :: it_begin,it_end
-  
+
   ! global points
   integer :: nglob,npgeo
 
