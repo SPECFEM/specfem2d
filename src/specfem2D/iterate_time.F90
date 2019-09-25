@@ -287,10 +287,6 @@ subroutine it_transfer_from_GPU()
 
   implicit none
 
-  ! local parameters
-  integer :: i,j,ispec
-  real(kind=CUSTOM_REAL) :: rhol,mul,kappal
-
   ! Fields transfer for imaging
   ! acoustic domains
   if (any_acoustic ) then
@@ -326,10 +322,14 @@ subroutine it_transfer_from_GPU()
     ! acoustic domains
     if (any_acoustic) then
       call transfer_kernels_ac_to_host(Mesh_pointer,rho_ac_kl,kappa_ac_kl,NSPEC_AB)
+
+      ! note: acoustic kernels in CPU-version add (delta * NSTEP_BETWEEN_COMPUTE_KERNELS) factors at each computation.
+      !       for the GPU-kernels, the NSTEP_** is still missing... adding it here
       rho_ac_kl(:,:,:) = rho_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
       kappa_ac_kl(:,:,:) = kappa_ac_kl(:,:,:) * NSTEP_BETWEEN_COMPUTE_KERNELS
       rhop_ac_kl(:,:,:) = rho_ac_kl(:,:,:) + kappa_ac_kl(:,:,:)
       alpha_ac_kl(:,:,:) = TWO *  kappa_ac_kl(:,:,:)
+
       print *
       print *,'Maximum value of rho prime kernel : ',maxval(rhop_ac_kl)
       print *,'Maximum value of alpha kernel : ',maxval(alpha_ac_kl)
@@ -338,31 +338,11 @@ subroutine it_transfer_from_GPU()
 
     ! elastic domains
     if (any_elastic) then
+      ! note: kernel values in the elastic case will be multiplied with material properties
+      !       in save_adjoint_kernels.f90
       call transfer_kernels_el_to_host(Mesh_pointer,rho_kl,mu_kl,kappa_kl,NSPEC_AB)
-
-      ! Multiply each kernel point with the local coefficient
-      do ispec = 1, nspec
-        if (ispec_is_elastic(ispec)) then
-          do j = 1, NGLLZ
-            do i = 1, NGLLX
-              if (.not. assign_external_model) then
-                mul = poroelastcoef(2,1,kmato(ispec))
-                kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
-                rhol = density(1,kmato(ispec))
-              else
-                rhol = rhoext(i,j,ispec)
-                mul = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
-                kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - FOUR_THIRDS * mul
-              endif
-
-              rho_kl(i,j,ispec) = - rhol * rho_kl(i,j,ispec)
-              mu_kl(i,j,ispec) =  - TWO * mul * mu_kl(i,j,ispec)
-              kappa_kl(i,j,ispec) = - kappal * kappa_kl(i,j,ispec)
-            enddo
-          enddo
-        endif
-      enddo
     endif
+
   endif
 
 end subroutine it_transfer_from_GPU
@@ -582,11 +562,12 @@ subroutine manage_no_backward_reconstruction_io()
 
       ! For the first iteration we need to add a transfer, to initiate the
       ! transfer on the GPU
-      if (no_backward_iframe == 1) call read_forward_arrays_no_backward()
+      if (no_backward_iframe == 1) &
+        call read_forward_arrays_no_backward()
 
       ! If the wavefield is requested at it=1, then we enforce another transfer
       if (no_backward_iframe == 2 .and. NSTEP_BETWEEN_COMPUTE_KERNELS == 1) &
-                                   call read_forward_arrays_no_backward()
+        call read_forward_arrays_no_backward()
 
     endif
 

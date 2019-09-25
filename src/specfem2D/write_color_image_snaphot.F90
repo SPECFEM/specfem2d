@@ -76,7 +76,6 @@
   do i_field = 1, n_fields
 
   if (myrank == 0) then
-    write(IMAIN,*)
     write(IMAIN,*) 'Creating color image of size ',NX_IMAGE_color,' x ',NZ_IMAGE_color,' for time step ',it
     call flush_IMAIN()
   endif
@@ -330,7 +329,13 @@
   endif
   call synchronize_all()
 
-enddo !loop over wavefields (forward and adjoint if necessary)
+  enddo !loop over wavefields (forward and adjoint if necessary)
+
+  ! output
+  if (myrank == 0) then
+    write(IMAIN,*) ''
+    call flush_IMAIN()
+  endif
 
   end subroutine write_color_image_snaphot
 

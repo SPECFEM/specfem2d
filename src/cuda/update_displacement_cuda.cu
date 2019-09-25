@@ -238,12 +238,14 @@ void FC_FUNC_(update_displacement_ac_cuda,
   if (CUDA_TIMING_UPDATE) {
     start_timing_cuda(&start,&stop);
   }
-  if(!(*UNDO_ATTENUATION_AND_OR_PML && *compute_b_wavefield)) {
-  UpdatePotential_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_acoustic,
-                                                                mp->d_potential_dot_acoustic,
-                                                                mp->d_potential_dot_dot_acoustic,
-                                                                size,deltat,deltatsqover2,deltatover2);
+
+  if (!(*UNDO_ATTENUATION_AND_OR_PML && *compute_b_wavefield)) {
+    UpdatePotential_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_acoustic,
+                                                                  mp->d_potential_dot_acoustic,
+                                                                  mp->d_potential_dot_dot_acoustic,
+                                                                  size,deltat,deltatsqover2,deltatover2);
   }
+
   // backward/reconstructed wavefields
   if (mp->simulation_type == 3 && *compute_b_wavefield) {
     realw b_deltat = *b_deltat_F;
@@ -302,7 +304,6 @@ __global__ void kernel_3_cuda_device(realw* veloc,
 
     veloc[2*id] = veloc[2*id] + deltatover2*accel[2*id];
     veloc[2*id+1] = veloc[2*id+1] + deltatover2*accel[2*id+1];
-
   }
 
 // -----------------
@@ -346,7 +347,6 @@ __global__ void kernel_3_veloc_cuda_device(realw* veloc,
   if (id < size) {
     veloc[2*id] = veloc[2*id] + deltatover2*accel[2*id];
     veloc[2*id+1] = veloc[2*id+1] + deltatover2*accel[2*id+1];
-
   }
 }
 
@@ -375,18 +375,19 @@ void FC_FUNC_(kernel_3_a_cuda,
 
   realw deltatover2 = *deltatover2_F;
 
-   // updates both, accel and veloc
-   kernel_3_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_veloc,
-                                                                 mp->d_accel,
-                                                                 size, deltatover2,
-                                                                 mp->d_rmassx,mp->d_rmassz);
-   if (mp->simulation_type == 3) {
-     realw b_deltatover2 = *b_deltatover2_F;
-     kernel_3_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_b_veloc,
-                                                                   mp->d_b_accel,
-                                                                   size, b_deltatover2,
-                                                                   mp->d_rmassx,mp->d_rmassz);
-   }
+  // updates both, accel and veloc
+  kernel_3_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_veloc,
+                                                                mp->d_accel,
+                                                                size, deltatover2,
+                                                                mp->d_rmassx,mp->d_rmassz);
+  // kernel for backward fields
+  if (mp->simulation_type == 3) {
+    realw b_deltatover2 = *b_deltatover2_F;
+    kernel_3_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_b_veloc,
+                                                                  mp->d_b_accel,
+                                                                  size, b_deltatover2,
+                                                                  mp->d_rmassx,mp->d_rmassz);
+  }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //printf("checking updatedispl_kernel launch...with %dx%d blocks\n",num_blocks_x,num_blocks_y);
@@ -417,11 +418,12 @@ void FC_FUNC_(kernel_3_b_cuda,
   dim3 threads(blocksize,1,1);
 
   realw deltatover2 = *deltatover2_F;
+
   // updates only veloc at this point
   kernel_3_veloc_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_veloc,
                                                                       mp->d_accel,
                                                                       size,deltatover2);
-
+  // kernel for backward fields
   if (mp->simulation_type == 3) {
     realw b_deltatover2 = *b_deltatover2_F;
     kernel_3_veloc_cuda_device<<< grid, threads,0,mp->compute_stream>>>(mp->d_b_veloc,

@@ -44,7 +44,7 @@
 
 
 //  !!!!!!!!!!  BEWARE this kernel needs to be adapted, it only reflect the 3D case for now
-
+/*
 __global__ void compute_kernels_ani_cudakernel(int* ispec_is_elastic,
                                                int* d_ibool,
                                                realw* accel,
@@ -147,6 +147,7 @@ __global__ void compute_kernels_ani_cudakernel(int* ispec_is_elastic,
     }
   }
 }
+*/
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -163,13 +164,10 @@ __global__ void compute_kernels_cudakernel(int* ispec_is_elastic,
                                            realw* dszz,
                                            realw* b_dsxx,
                                            realw* b_dsxz,
-                                           realw* b_dszz,
-                                           realw deltat) {
+                                           realw* b_dszz) {
 
   int ispec = blockIdx.x + blockIdx.y*gridDim.x;
   int ij = threadIdx.x;
-  int ij_ispec = ij + NGLL2*ispec;
-
 
   // handles case when there is 1 extra block (due to rectangular grid)
   if (ispec < NSPEC_AB) {
@@ -177,23 +175,20 @@ __global__ void compute_kernels_cudakernel(int* ispec_is_elastic,
     // elastic elements only
     if (ispec_is_elastic[ispec]) {
       int iglob = d_ibool[ij + NGLL2_PADDED*ispec] - 1 ;
+      int ij_ispec = ij + NGLL2*ispec;
 
       // isotropic kernels:
       // density kernel
-      rho_kl[ij_ispec] +=  (accel[2*iglob]*b_displ[2*iglob]+
-                                     accel[2*iglob+1]*b_displ[2*iglob+1]);
+      rho_kl[ij_ispec] += (accel[2*iglob]*b_displ[2*iglob] + accel[2*iglob+1]*b_displ[2*iglob+1]);
 
-
-      realw prod = (dsxx[iglob] + dszz[iglob]) *  (b_dsxx[iglob] + b_dszz[iglob]);
+      realw prod = (dsxx[iglob] + dszz[iglob]) * (b_dsxx[iglob] + b_dszz[iglob]);
 
       // shear modulus kernel
-      mu_kl[ij_ispec] += (dsxx[iglob] * b_dsxx[iglob] + dszz[iglob] * b_dszz[iglob] +
-                           0.5* dsxz[iglob] * b_dsxz[iglob] -
-                           prod/3) * deltat;
+      mu_kl[ij_ispec] += dsxx[iglob] * b_dsxx[iglob] + dszz[iglob] * b_dszz[iglob] +
+                           2.0f * dsxz[iglob] * b_dsxz[iglob] - prod/3.0f;
 
       // bulk modulus kernel
-      kappa_kl[ij_ispec] += prod * deltat;
-
+      kappa_kl[ij_ispec] += prod;
     }
   }
 }
@@ -210,28 +205,24 @@ void FC_FUNC_(compute_kernels_elastic_cuda,
 
   int blocksize = NGLL2; // NGLLX*NGLLZ
 
-
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->NSPEC_AB,&num_blocks_x,&num_blocks_y);
 
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
 
-
-    compute_kernels_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ispec_is_elastic,mp->d_ibool,
-                                                                      mp->d_accel, mp->d_b_displ,
-                                                                      mp->d_rho_kl,
-                                                                      mp->d_mu_kl,
-                                                                      mp->d_kappa_kl,
-                                                                      mp->NSPEC_AB,
-                                                                      mp->d_dsxx,
-                                                                      mp->d_dsxz,
-                                                                      mp->d_dszz,
-                                                                      mp->d_b_dsxx,
-                                                                      mp->d_b_dsxz,
-                                                                      mp->d_b_dszz,
-                                                                      *deltat);
-
+  compute_kernels_cudakernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ispec_is_elastic,mp->d_ibool,
+                                                                    mp->d_accel, mp->d_b_displ,
+                                                                    mp->d_rho_kl,
+                                                                    mp->d_mu_kl,
+                                                                    mp->d_kappa_kl,
+                                                                    mp->NSPEC_AB,
+                                                                    mp->d_dsxx,
+                                                                    mp->d_dsxz,
+                                                                    mp->d_dszz,
+                                                                    mp->d_b_dsxx,
+                                                                    mp->d_b_dsxz,
+                                                                    mp->d_b_dszz);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("compute_kernels_elastic_cuda");
@@ -365,8 +356,8 @@ __global__ void compute_kernels_acoustic_kernel(int* ispec_is_acoustic,
                             rhol);
 
     // density kernel
-    rho_ac_kl[ij_ispec] +=  rhol * (accel_elm[0]*b_displ_elm[0] +
-                                             accel_elm[1]*b_displ_elm[1] ) * deltat;
+    rho_ac_kl[ij_ispec] +=  rhol * (accel_elm[0]*b_displ_elm[0] + accel_elm[1]*b_displ_elm[1] ) * deltat;
+
     // bulk modulus kernel
     kappal = kappastore[ij_ispec];
     kappa_ac_kl[ij_ispec] += potential_dot_dot_acoustic[iglob] * b_potential_acoustic[iglob] * deltat / kappal ;
@@ -392,7 +383,6 @@ TRACE("compute_kernels_acoustic_cuda");
 
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
-
 
   compute_kernels_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_ispec_is_acoustic,
                                                                          mp->d_ibool,
@@ -437,8 +427,7 @@ __global__ void compute_kernels_hess_el_cudakernel(int* ispec_is_elastic,
       int iglob = d_ibool[ij + NGLL2_PADDED*ispec] - 1;
 
       // approximate hessian
-      hess_kl[ij + NGLL2*ispec] +=  (accel[2*iglob]*b_accel[2*iglob]+
-                                              accel[2*iglob+1]*b_accel[2*iglob+1]);
+      hess_kl[ij + NGLL2*ispec] +=  (accel[2*iglob]*b_accel[2*iglob] + accel[2*iglob+1]*b_accel[2*iglob+1]);
     }
   }
 }
@@ -508,8 +497,7 @@ __global__ void compute_kernels_hess_ac_cudakernel(int* ispec_is_acoustic,
                             d_xix,d_xiz,d_gammax,d_gammaz,
                             rhol);
     // approximates hessian
-    hess_kl[ij + NGLL2*ispec] +=  (accel_elm[0]*b_accel_elm[0] +
-                                            accel_elm[1]*b_accel_elm[1]);
+    hess_kl[ij + NGLL2*ispec] +=  (accel_elm[0]*b_accel_elm[0] + accel_elm[1]*b_accel_elm[1]);
 
   } // active
 }

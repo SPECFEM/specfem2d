@@ -556,9 +556,11 @@ Kernel_2_noatt_iso_impl(const int nb_blocks_to_compute,
 
 // Servira pour calcul futur des noyaux
   if (simulation_type == 3){
-    dsxx[iglob] = duxdxl;
-    dszz[iglob] = duzdzl;
-    dsxz[iglob] = duzdxl_plus_duxdzl;
+    if (threadIdx.x < NGLL2) {
+      dsxx[iglob] = duxdxl;
+      dszz[iglob] = duzdzl;
+      dsxz[iglob] = 0.5f * duzdxl_plus_duxdzl;
+    }
   }
 
 // counts:
@@ -1035,9 +1037,11 @@ Kernel_2_att_iso_impl(const int nb_blocks_to_compute,
 
 // Servira pour calcul futur des noyaux
   if (simulation_type == 3){
-    dsxx[iglob] = duxdxl;
-    dszz[iglob] = duzdzl;
-    dsxz[iglob] = duzdxl_plus_duxdzl;
+    if (threadIdx.x < NGLL2) {
+      dsxx[iglob] = duxdxl;
+      dszz[iglob] = duzdzl;
+      dsxz[iglob] = 0.5f * duzdxl_plus_duxdzl;
+    }
   }
 
 } // kernel_2_att_iso_impl()
@@ -1089,6 +1093,7 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
   if (ANISOTROPY) {
     // full anisotropy
     // forward wavefields -> FORWARD_OR_ADJOINT == 1
+    TRACE("\tKernel_2_noatt_ani_impl 1");
     Kernel_2_noatt_ani_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                       d_ibool,
                                                                       mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
@@ -1114,6 +1119,7 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
     // backward/reconstructed wavefield
     if (mp->simulation_type == 3) {
       // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
+      TRACE("\tKernel_2_noatt_ani_impl 3");
       Kernel_2_noatt_ani_impl<3><<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                       d_ibool,
                                                                       mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
@@ -1137,7 +1143,9 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
                                                                       d_c55store);
     }
   }else{
+    // isotropic
     if (ATTENUATION_VISCOELASTIC){
+      TRACE("\tKernel_2_att_iso_impl 1");
       Kernel_2_att_iso_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                       d_ibool,
                                                                       mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
@@ -1165,11 +1173,11 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
                                                                       mp->d_dux_dxl_old,
                                                                       mp->d_duz_dzl_old,
                                                                       mp->d_dux_dzl_plus_duz_dxl_old);
-    }
-    else{
-    // without storing strains
-    // forward wavefields -> FORWARD_OR_ADJOINT == 1
-    Kernel_2_noatt_iso_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+    } else {
+      // without storing strains
+      // forward wavefields -> FORWARD_OR_ADJOINT == 1
+      TRACE("\tKernel_2_noatt_iso_impl 1");
+      Kernel_2_noatt_iso_impl<1><<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                       d_ibool,
                                                                       mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,
                                                                       d_iphase,
@@ -1191,6 +1199,7 @@ void Kernel_2(int nb_blocks_to_compute,Mesh* mp,int d_iphase,realw d_deltat,
     // backward/reconstructed wavefield
     if (mp->simulation_type == 3) {
       // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
+      TRACE("\tKernel_2_noatt_iso_impl 3");
       Kernel_2_noatt_iso_impl<3><<< grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                          d_ibool,
                                                                          mp->d_phase_ispec_inner_elastic,mp->num_phase_ispec_elastic,

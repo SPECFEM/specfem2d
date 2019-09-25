@@ -973,7 +973,10 @@ void FC_FUNC_(compute_forces_acoustic_cuda,
     num_elements = *nspec_outer_acoustic;
   else
     num_elements = *nspec_inner_acoustic;
+
+  // checks if anything to do
   if (num_elements == 0) return;
+
   // no mesh coloring: uses atomic updates
   Kernel_2_acoustic(num_elements, mp, *iphase,
                     mp->d_ibool,

@@ -204,12 +204,13 @@ void FC_FUNC_(transfer_kernels_el_to_host,
 
   print_CUDA_error_if_any(cudaMemcpy(h_rho_kl,mp->d_rho_kl,*NSPEC_AB*NGLL2*sizeof(realw),
                                      cudaMemcpyDeviceToHost),40101);
-
-    print_CUDA_error_if_any(cudaMemcpy(h_mu_kl,mp->d_mu_kl,*NSPEC_AB*NGLL2*sizeof(realw),
-                                       cudaMemcpyDeviceToHost),40102);
-    print_CUDA_error_if_any(cudaMemcpy(h_kappa_kl,mp->d_kappa_kl,*NSPEC_AB*NGLL2*sizeof(realw),
-                                       cudaMemcpyDeviceToHost),40103);
-
+  print_CUDA_error_if_any(cudaMemcpy(h_mu_kl,mp->d_mu_kl,*NSPEC_AB*NGLL2*sizeof(realw),
+                                     cudaMemcpyDeviceToHost),40102);
+  print_CUDA_error_if_any(cudaMemcpy(h_kappa_kl,mp->d_kappa_kl,*NSPEC_AB*NGLL2*sizeof(realw),
+                                     cudaMemcpyDeviceToHost),40103);
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+ exit_on_cuda_error("after transfer_kernels_el_to_host");
+#endif
 }
 
 

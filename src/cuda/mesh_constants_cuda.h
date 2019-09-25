@@ -132,16 +132,6 @@
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// macros for version output
-#define VALUE_TO_STRING(x) #x
-#define VALUE(x) VALUE_TO_STRING(x)
-#define VAR_NAME_VALUE(var) #var " = "  VALUE(var)
-
-#pragma message ("Compiling with: " VAR_NAME_VALUE(CUDA_VERSION) "\n")
-#if defined(__CUDA_ARCH__)
-#pragma message ("Compiling with: " VAR_NAME_VALUE(__CUDA_ARCH__) "\n")
-#endif
-
 // Texture memory usage:
 // requires CUDA version >= 4.0, see check below
 // Use textures for d_displ and d_accel -- 10% performance boost

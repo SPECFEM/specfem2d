@@ -35,7 +35,7 @@
 
 ! saves adjoint sensitivity kernels to file
 
-  use constants, only: NGLLX,NGLLZ,IMAIN,APPROXIMATE_HESS_KL
+  use constants, only: NGLLX,NGLLZ,IMAIN,CUSTOM_REAL,FOUR_THIRDS,TWO,APPROXIMATE_HESS_KL
 
   use specfem_par, only: myrank, nspec, ibool, coord, save_ASCII_kernels, &
                          any_acoustic, any_elastic, any_poroelastic, &
@@ -46,14 +46,20 @@
                          rhorho_el_Hessian_final1, rhorho_el_Hessian_final2, &
                          rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
                          C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, mufrb_kl, &
-                         rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, GPU_MODE
+                         rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, &
+                         GPU_MODE, &
+                         density,poroelastcoef,kmato,assign_external_model,rhoext,vsext,vpext, &
+                         ispec_is_elastic, &
+                         deltat,NSTEP_BETWEEN_COMPUTE_KERNELS
 
   use specfem_par, only: ispec_is_anisotropic, c11_kl, c13_kl, c15_kl, c33_kl, c35_kl, c55_kl
 
   implicit none
 
+  ! local parameters
   integer :: i, j, ispec, iglob
   double precision :: xx, zz
+  real(kind=CUSTOM_REAL) :: rhol,mul,kappal
 
   ! user output
   if (myrank == 0) then
@@ -63,6 +69,86 @@
     call flush_IMAIN()
   endif
 
+  ! elastic kernels
+  ! only at the last time step we multiply by delta and parameter value, it is not necessary to do it at each iteration
+  ! note: acoustic kernels add these at each iteration step already
+  if (any_elastic) then
+    do ispec = 1, nspec
+      if (ispec_is_elastic(ispec)) then
+        ! isotropic kernels
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            if (.not. assign_external_model) then
+              rhol = density(1,kmato(ispec))
+              mul = poroelastcoef(2,1,kmato(ispec))
+              !if (AXISYM) then ! ABAB !!
+              !Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
+                kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
+              !else
+              !  kappal = poroelastcoef(3,1,kmato(ispec)) - mul
+              !endif
+            else
+              rhol = rhoext(i,j,ispec)
+              mul = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
+              !if (AXISYM) then ! ABAB !!
+              ! Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
+                kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - FOUR_THIRDS * mul
+              !else
+              !  kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - mul
+              !endif
+            endif
+
+            ! for parameterization (rho,mu,kappa): "primary" kernels
+            ! density kernel
+            rho_kl(i,j,ispec) =  - rhol * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * rho_kl(i,j,ispec)
+            ! shear modulus kernel
+            mu_kl(i,j,ispec) =  - TWO * mul * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * mu_kl(i,j,ispec)
+            ! bulk modulus kernel
+            kappa_kl(i,j,ispec) = - kappal * (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * kappa_kl(i,j,ispec)
+
+            ! derived from "primary" kernels above...
+            !
+            ! for parameterization (rho,beta,alpha):
+            ! rho prime kernel
+            rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + kappa_kl(i,j,ispec) + mu_kl(i,j,ispec)
+            ! Vs kernel
+            ! ABAB !! Warning !! This is possibly false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
+            beta_kl(i,j,ispec) = TWO * (mu_kl(i,j,ispec) - FOUR_THIRDS * mul/kappal * kappa_kl(i,j,ispec))
+            ! Vp kernel
+            ! ABAB !! Warning !! This is possibly false for plane strain (look for: bulk modulus plane strain) Check Kappa
+            alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + FOUR_THIRDS * mul/kappal) * kappa_kl(i,j,ispec)
+            ! for bulk velocity c parameterization (rho,bulk_c,beta):
+            bulk_c_kl(i,j,ispec) =  TWO * kappa_kl(i,j,ispec)
+            bulk_beta_kl(i,j,ispec) =  TWO * mu_kl(i,j,ispec)
+          enddo
+        enddo
+
+        ! Voigt kernels, e.g., see Sieminski, 2007a,b
+        if (ispec_is_anisotropic(ispec)) then
+          do j = 1, NGLLZ
+            do i = 1, NGLLX
+              iglob = ibool(i,j,ispec)
+              ! "primary" kernels
+              c11_kl(i,j,ispec) = - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * c11_kl(i,j,ispec)
+              c13_kl(i,j,ispec) = - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * c13_kl(i,j,ispec)
+              c15_kl(i,j,ispec) = - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * c15_kl(i,j,ispec)
+              c33_kl(i,j,ispec) = - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * c33_kl(i,j,ispec)
+              c35_kl(i,j,ispec) = - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * c35_kl(i,j,ispec)
+              c55_kl(i,j,ispec) = - (deltat * NSTEP_BETWEEN_COMPUTE_KERNELS) * c55_kl(i,j,ispec)
+              ! rho prime kernel
+              rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + c11_kl(i,j,ispec) + &
+                                   c13_kl(i,j,ispec) + c15_kl(i,j,ispec) + c33_kl(i,j,ispec) + &
+                                   c35_kl(i,j,ispec) + c55_kl(i,j,ispec)
+            enddo
+          enddo
+        endif
+
+      endif ! elastic element
+    enddo !nspec loop
+  endif ! any_elastic
+
+  ! file output
+  ! saves acoustic kernels
   if (any_acoustic) then
     ! acoustic domain
     if (save_ASCII_kernels) then
@@ -100,6 +186,7 @@
     endif
   endif
 
+  ! saves elastic kernels
   if (any_elastic) then
     ! elastic domains
     if (save_ASCII_kernels) then
@@ -110,7 +197,8 @@
             iglob = ibool(i,j,ispec)
             xx = coord(1,iglob)
             zz = coord(2,iglob)
-            if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then
+            ! isotropic or anisotropic kernel values
+            if ((count(ispec_is_anisotropic(:)) >= 1) .eqv. .true.) then
               ! anisotropic
               write(97,'(9e15.5e4)') xx, zz, rho_kl(i,j,ispec), c11_kl(i,j,ispec), &
                                      c13_kl(i,j,ispec), c15_kl(i,j,ispec), c33_kl(i,j,ispec), c35_kl(i,j,ispec), &
@@ -130,7 +218,8 @@
     else
       ! binary format
       write(204) rho_kl
-      if (count(ispec_is_anisotropic(:) .eqv. .true.) >= 1) then ! anisotropic
+      if ((count(ispec_is_anisotropic(:)) >= 1) .eqv. .true.) then
+        ! anisotropic
         write(205) c11_kl
         write(206) c13_kl
         write(207) c15_kl
@@ -138,6 +227,7 @@
         write(209) c35_kl
         write(210) c55_kl
       else
+        ! isotropic
         write(205) kappa_kl
         write(206) mu_kl
         write(207) rhop_kl
@@ -164,6 +254,7 @@
     endif
   endif
 
+  ! saves poroelastic kernels
   if (any_poroelastic) then
     ! poro-elastic domains
     ! checks
