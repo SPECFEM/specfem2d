@@ -48,10 +48,11 @@
     assign_external_model, &
     density,poroelastcoef,porosity,tortuosity, &
     vpext,rhoext,vsext, &
-    numabs,deltat,codeabs,codeabs_corner, &
+    num_abs_boundary_faces,abs_boundary_ispec,deltat, &
+    codeabs,codeabs_corner, &
     ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
     ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
-    nelemabs,vsext,xix,xiz,gammaz,gammax, &
+    xix,xiz,gammaz,gammax, &
     AXISYM,is_on_the_axis,coord,wxglj,xiglj, &
     time_stepping_scheme,P_SV,STACEY_ABSORBING_CONDITIONS
 
@@ -484,9 +485,9 @@
     ! elastic medium
     if (any_elastic) then
 
-      do ispecabs = 1,nelemabs
+      do ispecabs = 1,num_abs_boundary_faces
 
-        ispec = numabs(ispecabs)
+        ispec = abs_boundary_ispec(ispecabs)
 
         if (ispec_is_elastic(ispec)) then
 
@@ -715,9 +716,9 @@
     ! acoustic elements
     if (any_acoustic) then
 
-      do ispecabs = 1,nelemabs
+      do ispecabs = 1,num_abs_boundary_faces
 
-        ispec = numabs(ispecabs)
+        ispec = abs_boundary_ispec(ispecabs)
 
         ! Sommerfeld condition if acoustic
         if (ispec_is_acoustic(ispec)) then

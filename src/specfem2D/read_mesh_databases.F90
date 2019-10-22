@@ -730,8 +730,15 @@
   integer :: inum,inum_duplicate,numabsread,typeabsread
   logical :: codeabsread(4)
 
-  integer :: nelemabs_tot,nspec_left_tot,nspec_right_tot,nspec_bottom_tot,nspec_top_tot
+  integer :: num_abs_boundary_faces_tot,nspec_left_tot,nspec_right_tot,nspec_bottom_tot,nspec_top_tot
   integer :: ier
+  integer, dimension(:), allocatable :: numabs
+
+  ! saftey check
+  if (nelemabs < 0) then
+    if (myrank == 0) write(IMAIN,*) '  Warning: read in negative nelemabs ',nelemabs,'...resetting to zero!'
+    nelemabs = 0
+  endif
 
   ! determines flag for absorbing boundaries
   if (nelemabs <= 0) then
@@ -742,6 +749,9 @@
     anyabs = .true.
   endif
 
+  ! number of boundary element faces (uses same name as in 3D versions; in 2D, the boundary would be edges)
+  num_abs_boundary_faces = nelemabs
+
   ! sets Stacey flag
   if (anyabs .and. (.not. PML_BOUNDARY_CONDITIONS)) then
     STACEY_ABSORBING_CONDITIONS = .true.
@@ -749,49 +759,53 @@
     STACEY_ABSORBING_CONDITIONS = .false.
   endif
 
-  ! allocate arrays for absorbing boundary conditions
-  allocate(numabs(nelemabs), &
-           codeabs(4,nelemabs),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating absorbing arrays')
+  ! temporary array
+  allocate(numabs(num_abs_boundary_faces),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating temporary absorbing array')
+  numabs(:) = 0
 
-  !---codeabs_corner(1,nelemabs) denotes whether element is on bottom-left corner of absorbing boundary or not
-  !---codeabs_corner(2,nelemabs) denotes whether element is on bottom-right corner of absorbing boundary or not
-  !---codeabs_corner(3,nelemabs) denotes whether element is on top-left corner of absorbing boundary or not
-  !---codeabs_corner(4,nelemabs) denotes whether element is on top-right corner of absorbing boundary or not
-  allocate(codeabs_corner(4,nelemabs),stat=ier)
+  ! allocate arrays for absorbing boundary conditions
+  allocate(codeabs(4,num_abs_boundary_faces),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating absorbing array')
+
+  !---codeabs_corner(1,num_abs_boundary_faces) denotes whether element is on bottom-left corner of absorbing boundary or not
+  !---codeabs_corner(2,num_abs_boundary_faces) denotes whether element is on bottom-right corner of absorbing boundary or not
+  !---codeabs_corner(3,num_abs_boundary_faces) denotes whether element is on top-left corner of absorbing boundary or not
+  !---codeabs_corner(4,num_abs_boundary_faces) denotes whether element is on top-right corner of absorbing boundary or not
+  allocate(codeabs_corner(4,num_abs_boundary_faces),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating absorbing codeabs_corner array')
 
-  allocate(typeabs(nelemabs))
+  allocate(typeabs(num_abs_boundary_faces))
 
-  allocate(ibegin_edge1(nelemabs))
-  allocate(iend_edge1(nelemabs))
+  allocate(ibegin_edge1(num_abs_boundary_faces))
+  allocate(iend_edge1(num_abs_boundary_faces))
 
-  allocate(ibegin_edge2(nelemabs))
-  allocate(iend_edge2(nelemabs))
+  allocate(ibegin_edge2(num_abs_boundary_faces))
+  allocate(iend_edge2(num_abs_boundary_faces))
 
-  allocate(ibegin_edge3(nelemabs))
-  allocate(iend_edge3(nelemabs))
+  allocate(ibegin_edge3(num_abs_boundary_faces))
+  allocate(iend_edge3(num_abs_boundary_faces))
 
-  allocate(ibegin_edge4(nelemabs))
-  allocate(iend_edge4(nelemabs))
+  allocate(ibegin_edge4(num_abs_boundary_faces))
+  allocate(iend_edge4(num_abs_boundary_faces))
 
   ! poroelastic
-  allocate(ibegin_edge1_poro(nelemabs))
-  allocate(iend_edge1_poro(nelemabs))
+  allocate(ibegin_edge1_poro(num_abs_boundary_faces))
+  allocate(iend_edge1_poro(num_abs_boundary_faces))
 
-  allocate(ibegin_edge2_poro(nelemabs))
-  allocate(iend_edge2_poro(nelemabs))
+  allocate(ibegin_edge2_poro(num_abs_boundary_faces))
+  allocate(iend_edge2_poro(num_abs_boundary_faces))
 
-  allocate(ibegin_edge3_poro(nelemabs))
-  allocate(iend_edge3_poro(nelemabs))
+  allocate(ibegin_edge3_poro(num_abs_boundary_faces))
+  allocate(iend_edge3_poro(num_abs_boundary_faces))
 
-  allocate(ibegin_edge4_poro(nelemabs))
-  allocate(iend_edge4_poro(nelemabs))
+  allocate(ibegin_edge4_poro(num_abs_boundary_faces))
+  allocate(iend_edge4_poro(num_abs_boundary_faces))
 
-  allocate(ib_left(nelemabs), &
-           ib_right(nelemabs), &
-           ib_bottom(nelemabs), &
-           ib_top(nelemabs),stat=ier)
+  allocate(ib_left(num_abs_boundary_faces), &
+           ib_right(num_abs_boundary_faces), &
+           ib_bottom(num_abs_boundary_faces), &
+           ib_top(num_abs_boundary_faces),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating absorbing boundary arrays')
 
   ! initializes
@@ -838,7 +852,7 @@
   if (anyabs) then
 
     ! reads absorbing boundaries
-    do inum = 1,nelemabs
+    do inum = 1,num_abs_boundary_faces
 
       ! beware here and below that external meshes (for instance coming from CUBIT or Gmsh)
       ! may have rotated elements and thus edge 1 may not correspond to the bottom,
@@ -871,10 +885,10 @@
     enddo
 
     ! detection of the corner element
-    do inum = 1,nelemabs
+    do inum = 1,num_abs_boundary_faces
       if (codeabs(IEDGE1,inum)) then
         ! bottom
-        do inum_duplicate = 1,nelemabs
+        do inum_duplicate = 1,num_abs_boundary_faces
           if (inum == inum_duplicate) then
             ! left for blank, since no operation is needed.
             continue
@@ -895,7 +909,7 @@
 
       if (codeabs(IEDGE3,inum)) then
         ! top
-        do inum_duplicate = 1,nelemabs
+        do inum_duplicate = 1,num_abs_boundary_faces
           if (inum == inum_duplicate) then
             ! left for blank, since no operation is needed.
             continue
@@ -917,7 +931,7 @@
 
     ! detection of the corner element
     ! boundary element numbering
-    do inum = 1,nelemabs
+    do inum = 1,num_abs_boundary_faces
       if (codeabs(IEDGE1,inum)) then
         ! bottom
         nspec_bottom = nspec_bottom + 1
@@ -945,15 +959,23 @@
 
   else
     ! if this MPI slice has no absorbing element at all
-    nelemabs = 0
+    num_abs_boundary_faces = 0
     nspec_left = 0
     nspec_right = 0
     nspec_bottom = 0
     nspec_top = 0
   endif
 
+  ! sets up arrays for boundary routines
+  allocate(abs_boundary_ispec(num_abs_boundary_faces),stat=ier)
+  if (ier /= 0) stop 'error allocating array abs_boundary_ispec etc.'
+  abs_boundary_ispec(:) = numabs(:)
+
+  ! free memory
+  deallocate(numabs)
+
   ! collects total values
-  call sum_all_i(nelemabs, nelemabs_tot)
+  call sum_all_i(num_abs_boundary_faces, num_abs_boundary_faces_tot)
   call sum_all_i(nspec_left, nspec_left_tot)
   call sum_all_i(nspec_right, nspec_right_tot)
   call sum_all_i(nspec_bottom, nspec_bottom_tot)
@@ -971,7 +993,7 @@
       ! for Stacey
       if (STACEY_ABSORBING_CONDITIONS) then
         write(IMAIN,*)
-        write(IMAIN,*) 'Number of absorbing elements: ',nelemabs_tot
+        write(IMAIN,*) 'Number of absorbing elements: ',num_abs_boundary_faces_tot
         write(IMAIN,*) '  nspec_left   = ',nspec_left_tot
         write(IMAIN,*) '  nspec_right  = ',nspec_right_tot
         write(IMAIN,*) '  nspec_bottom = ',nspec_bottom_tot

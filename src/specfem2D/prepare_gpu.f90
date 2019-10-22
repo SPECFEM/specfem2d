@@ -226,11 +226,11 @@
                             betaz_store_GPU)
   endif
 
-! numabs                                 : tableau des elements spectraux situes en zone absorbante
+! abs_boundary_ispec                     : tableau des elements spectraux situes en zone absorbante
 ! abs_boundary_ij(i,j,ispecabs)          : coordonnee locale i de j eme point GLL de l'element absorbant ispecabs
 ! abs_boundary_normal(i,j,ispecabs)      : i eme coordonnee du vecteur normal du j eme point GLL de l'element absorbant ispecabs
 ! abs_boundary_jacobian1Dw(i,ispecabs)   : i eme jacobienne ponderee de l'element absorbant jspecabs
-! nelemabs                               : nombre d'elements absorbant
+! num_abs_boundary_faces                 : nombre d'elements absorbant
 ! cote_abs(ispecabs)                     : numero du cote (1=b, 2=r, 3=t, 4=l )
 ! auquel appartient l'element absorbant ispecabs
 ! ib_left                                : correspondance entre le numero
@@ -357,9 +357,9 @@
   implicit none
 
   ! local parameters
-  integer :: i_spec_free, ipoint1D, i, j, k, ispec, ispecabs, i_source
+  integer :: i_spec_free, ipoint1D, i, j, k, ispec, i_source
   integer :: ispec_acoustic,ispec_elastic,iedge_acoustic,iedge_elastic
-  integer :: ier,inum
+  integer :: inum
   real(kind=CUSTOM_REAL) :: zxi,xgamma,jacobian1D
   real(kind=CUSTOM_REAL) :: xxi,zgamma
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_normalized_temp
@@ -400,119 +400,6 @@
     ! gets ispec indices for acoustic elements at free surface
     free_ac_ispec(:) = acoustic_surface(1,:)
   endif
-
-  ! checks
-  if (nelemabs < 0) then
-    if (myrank == 0) write(IMAIN,*) '  Warning: reading in negative nelemabs ',nelemabs,'...resetting to zero!'
-    nelemabs = 0
-  endif
-
-  ! number of stacey boundary element faces
-  num_abs_boundary_faces = nelemabs
-
-  allocate(abs_boundary_ij(2,NGLLX,num_abs_boundary_faces), &
-           abs_boundary_jacobian1Dw(NGLLX,num_abs_boundary_faces), &
-           abs_boundary_normal(NDIM,NGLLX,num_abs_boundary_faces), &
-           abs_boundary_ispec(num_abs_boundary_faces), &
-           cote_abs(num_abs_boundary_faces),stat=ier)
-
-  if (ier /= 0) stop 'error allocating array abs_boundary_ispec etc.'
-
-  if (STACEY_ABSORBING_CONDITIONS) then
-
-    abs_boundary_ispec(:) = numabs(:)
-
-    do ispecabs = 1,nelemabs
-      ispec = numabs(ispecabs)
-
-      !--- left absorbing boundary
-      if (codeabs(IEDGE4,ispecabs)) then
-        i = 1
-        do j = 1,NGLLZ
-          abs_boundary_ij(1,j,ispecabs) = i
-          abs_boundary_ij(2,j,ispecabs) = j
-
-          xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-          zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-          jacobian1D = sqrt(xgamma**2 + zgamma**2)
-
-          abs_boundary_normal(1,j,ispecabs) = - zgamma / jacobian1D
-          abs_boundary_normal(2,j,ispecabs) = + xgamma / jacobian1D
-
-          abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
-
-          cote_abs(ispecabs) = 4
-        enddo
-        if (ibegin_edge4(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = 6
-        if (iend_edge4(ispecabs) == 4) abs_boundary_ij(2,5,ispecabs) = 6
-
-      !--- right absorbing boundary
-      else if (codeabs(IEDGE2,ispecabs)) then
-        i = NGLLX
-        do j = 1,NGLLZ
-          abs_boundary_ij(1,j,ispecabs) = i
-          abs_boundary_ij(2,j,ispecabs) = j
-
-          xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
-          zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
-          jacobian1D = sqrt(xgamma**2 + zgamma**2)
-
-          abs_boundary_normal(1,j,ispecabs) = + zgamma / jacobian1D
-          abs_boundary_normal(2,j,ispecabs) = - xgamma / jacobian1D
-
-          abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
-
-          cote_abs(ispecabs) = 2
-        enddo
-        if (ibegin_edge2(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = 6
-        if (iend_edge2(ispecabs) == 4) abs_boundary_ij(2,5,ispecabs) = 6
-
-      !--- bottom absorbing boundary
-      else if (codeabs(IEDGE1,ispecabs)) then
-        j = 1
-        do i = 1,NGLLX
-          abs_boundary_ij(1,i,ispecabs) = i
-          abs_boundary_ij(2,i,ispecabs) = j
-
-          xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-          zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-          jacobian1D = sqrt(xxi**2 + zxi**2)
-
-          abs_boundary_normal(1,i,ispecabs) = + zxi / jacobian1D
-          abs_boundary_normal(2,i,ispecabs) = - xxi / jacobian1D
-
-          abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
-
-          cote_abs(ispecabs) = 1
-
-        enddo
-        if (ibegin_edge1(ispecabs) == 2 .or. codeabs_corner(1,ispecabs)) abs_boundary_ij(1,1,ispecabs) = 6
-        if (iend_edge1(ispecabs) == 4 .or. codeabs_corner(2,ispecabs)) abs_boundary_ij(1,5,ispecabs) = 6
-
-      !--- top absorbing boundary
-      else if (codeabs(IEDGE3,ispecabs)) then
-        j = NGLLZ
-        do i = 1,NGLLX
-          abs_boundary_ij(1,i,ispecabs) = i
-          abs_boundary_ij(2,i,ispecabs) = j
-
-          xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
-          zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
-          jacobian1D = sqrt(xxi**2 + zxi**2)
-
-          abs_boundary_normal(1,i,ispecabs) = - zxi / jacobian1D
-          abs_boundary_normal(2,i,ispecabs) = + xxi / jacobian1D
-
-          abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
-
-          cote_abs(ispecabs) = 3
-        enddo
-        if (ibegin_edge3(ispecabs) == 2 .or. codeabs_corner(3,ispecabs)) abs_boundary_ij(1,1,ispecabs) = 6
-        if (iend_edge3(ispecabs) == 4 .or. codeabs_corner(4,ispecabs)) abs_boundary_ij(1,5,ispecabs) = 6
-
-      endif
-    enddo
-  endif ! STACEY_ABSORBING_CONDITIONS
 
   if (PML_BOUNDARY_CONDITIONS) then
     ! EB EB : We create spec_to_PML_GPU such that :

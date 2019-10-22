@@ -187,7 +187,7 @@
 
   use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_elastic_left,b_absorb_elastic_right, &
                           b_absorb_elastic_bottom, b_absorb_elastic_top,SIMULATION_TYPE,SAVE_FORWARD,NSTEP,it, &
-                          nelemabs
+                          num_abs_boundary_faces
 
   use specfem_par_gpu, only: Mesh_pointer
 
@@ -202,7 +202,7 @@
   real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,nspec_top) :: b_absorb_elastic_top_slice
 
   ! checks if anything to do
-  if (nelemabs == 0) return
+  if (num_abs_boundary_faces == 0) return
 
   if (SIMULATION_TYPE == 3) then
     ! gets absorbing contribution buffers

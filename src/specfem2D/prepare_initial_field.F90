@@ -335,8 +335,8 @@
 
   use constants, only: IMAIN,IEDGE1,IEDGE2,IEDGE4,NGLLX,NGLLZ,PI
 
-  use specfem_par, only: myrank,nelemabs,left_bound,right_bound,bot_bound, &
-                                    numabs,codeabs,ibool, &
+  use specfem_par, only: myrank,num_abs_boundary_faces,left_bound,right_bound,bot_bound, &
+                                    abs_boundary_ispec,codeabs,ibool, &
                                     source_type,c_inc,c_refl, &
                                     count_bottom,count_left,count_right
 
@@ -361,8 +361,8 @@
   count_bottom = 0
   count_left = 0
   count_right = 0
-  do ispecabs = 1,nelemabs
-    ispec = numabs(ispecabs)
+  do ispecabs = 1,num_abs_boundary_faces
+    ispec = abs_boundary_ispec(ispecabs)
     ! left boundary
     if (codeabs(IEDGE4,ispecabs)) then
        i = 1

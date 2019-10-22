@@ -115,6 +115,14 @@ module specfem_par
   ! for detection of corner element on absorbing boundary
   logical, dimension(:,:), allocatable  :: codeabs_corner
 
+  ! absorbing boundary
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_boundary_normal
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian1Dw
+  integer, dimension(:,:,:), allocatable :: abs_boundary_ij
+  integer, dimension(:), allocatable :: abs_boundary_ispec
+  integer, dimension(:), allocatable :: cote_abs
+  integer :: num_abs_boundary_faces
+
   ! horizontal periodicity distance for periodic conditions
   logical, dimension(:), allocatable :: this_ibool_is_a_periodic_edge
 
@@ -258,8 +266,8 @@ module specfem_par
   integer, dimension(:,:), allocatable  :: knods
   integer, dimension(:), allocatable :: kmato
 
-  integer, dimension(:), allocatable :: numabs, &
-     ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3,ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
+  integer, dimension(:), allocatable :: ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
+                                        ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2
 
   ! Lagrange interpolators at receivers
   double precision, dimension(:), allocatable :: hxir,hgammar,hpxir,hpgammar
@@ -768,21 +776,12 @@ module specfem_par_gpu
 
   logical :: ANY_ANISOTROPY
 
-  ! absorbing boundary
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_boundary_normal
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian1Dw
-  integer, dimension(:,:,:), allocatable :: abs_boundary_ij
-  integer, dimension(:), allocatable :: abs_boundary_ispec
-  integer :: num_abs_boundary_faces
-
   ! free surface
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: free_surface_normal
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: free_surface_jacobian2Dw
   integer, dimension(:,:,:), allocatable :: free_surface_ij
   integer, dimension(:), allocatable :: free_ac_ispec
   integer :: num_free_surface_faces
-
-  integer, dimension(:), allocatable :: cote_abs
 
   ! sources
   integer :: nsources_local

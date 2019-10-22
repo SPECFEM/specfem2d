@@ -39,6 +39,7 @@
   implicit none
 
   ! local parameters
+  integer :: nspec_PML_tot
   integer :: i,ier
   character(len=MAX_STRING_LEN) :: outputname
 
@@ -51,6 +52,8 @@
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'Preparing PML'
+      write(IMAIN,*) '  rotate PML activated   :',ROTATE_PML_ACTIVATE
+      write(IMAIN,*) '  backward reconstruction:',NO_BACKWARD_RECONSTRUCTION
       call flush_IMAIN()
     endif
 
@@ -77,8 +80,18 @@
       allocate(mask_ibool_pml(1))
     endif
 
+    ! reads in PML
     call pml_init()
 
+    ! outputs total
+    call sum_all_i(nspec_PML,nspec_PML_tot)
+    if (myrank == 0) then
+      write(IMAIN,*) "  total number of PML spectral elements: ", nspec_PML_tot
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
+
+    ! allocates arrays
     if ((.not. NO_BACKWARD_RECONSTRUCTION) .and. &
         ((SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) .and. PML_BOUNDARY_CONDITIONS)) then
 
@@ -157,7 +170,8 @@
 
     deallocate(which_PML_elem)
 
-    if (nspec_PML == 0) nspec_PML=1 ! DK DK added this
+    !daniel debug: let nspec_PML be zero in case the partition has no pml boundary
+    !if (nspec_PML == 0) nspec_PML=1 ! DK DK added this
 
     if (nspec_PML > 0) then
       allocate(K_x_store(NGLLX,NGLLZ,nspec_PML),stat=ier)

@@ -211,7 +211,7 @@
 
   use specfem_par, only: nspec_bottom,nspec_left,nspec_top,nspec_right,b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom, b_absorb_acoustic_top,it,NSTEP,SIMULATION_TYPE,SAVE_FORWARD, &
-                         nelemabs,UNDO_ATTENUATION_AND_OR_PML,NO_BACKWARD_RECONSTRUCTION
+                         num_abs_boundary_faces,UNDO_ATTENUATION_AND_OR_PML,NO_BACKWARD_RECONSTRUCTION
 
   use specfem_par_gpu, only: Mesh_pointer
 
@@ -228,7 +228,7 @@
   real(kind=CUSTOM_REAL),dimension(NGLLX,nspec_top) :: b_absorb_potential_top_slice
 
   ! checks if anything to do
-  if (nelemabs == 0) return
+  if (num_abs_boundary_faces == 0) return
 
   if (SIMULATION_TYPE == 3 .and. (.not. UNDO_ATTENUATION_AND_OR_PML .and. .not. NO_BACKWARD_RECONSTRUCTION) ) then
     ! gets absorbing contributions buffers

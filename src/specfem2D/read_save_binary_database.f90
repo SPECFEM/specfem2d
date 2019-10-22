@@ -42,7 +42,6 @@
   integer ier
   character(len=MAX_STRING_LEN) :: outputname
 
-
   ! saves data in a binary file
   write(outputname,'(a,i6.6,a)') 'proc',myrank,'_data.bin'
         open(unit = 2040, file = trim(OUTPUT_FILES)//outputname,status='unknown',action='write',form='unformatted', iostat=ier)
@@ -55,9 +54,10 @@
   write(2040) coord,jacobian,xix,xiz,gammax,gammaz, &
               this_ibool_is_a_periodic_edge,ibool,ispec_is_inner
 
+  write (2040) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw
+
   if (GPU_MODE) then
-    write (2040) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw, &
-                 free_ac_ispec,cote_abs,free_surface_ij,ANY_ANISOTROPY
+    write (2040) free_ac_ispec,cote_abs,free_surface_ij,ANY_ANISOTROPY
   endif
 
   if (any_acoustic) then
@@ -166,9 +166,10 @@
   read(2040) coord,jacobian,xix,xiz,gammax,gammaz, &
              this_ibool_is_a_periodic_edge,ibool,ispec_is_inner
 
+  read (2040) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw
+
   if (GPU_MODE) then
-    read (2040) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw, &
-                free_ac_ispec,cote_abs,free_surface_ij,ANY_ANISOTROPY
+    read (2040) free_ac_ispec,cote_abs,free_surface_ij,ANY_ANISOTROPY
   endif
 
   if (any_acoustic) then

@@ -47,7 +47,7 @@
                          c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext, &
                          ispec_is_anisotropic,anisotropy, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
-                         it,coord,iglob_is_forced
+                         coord,iglob_is_forced
 
   ! overlapping communication
   use specfem_par, only: nspec_inner_elastic,nspec_outer_elastic,phase_ispec_inner_elastic
@@ -396,7 +396,8 @@
             if (ispec_is_PML(ispec) .and. nspec_PML > 0) then
               if (ROTATE_PML_ACTIVATE) then
                 theta = - ROTATE_PML_ANGLE/180._CUSTOM_REAL*PI
-                if (it == 1) write(*,*) theta,ROTATE_PML_ACTIVATE,cos(theta),sin(theta)
+                !debug
+                !if (it == 1) write(*,*) 'debug: rotate PML',theta,ROTATE_PML_ACTIVATE,cos(theta),sin(theta)
                 ct = cos(theta)
                 st = sin(theta)
                 sigma_xx_prime = lambdaplus2mu_unrelaxed_elastic * (ct**2*dux_dxl(i,j) + ct*st*duz_dxl(i,j) + &

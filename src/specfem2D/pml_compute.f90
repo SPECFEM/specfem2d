@@ -486,7 +486,8 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML,nglob_acoustic,ispec_is_acoustic
+  use specfem_par, only: ibool,num_abs_boundary_faces,codeabs,anyabs, &
+    abs_boundary_ispec,ispec_is_PML,nglob_acoustic,ispec_is_acoustic
 
   implicit none
 
@@ -500,8 +501,8 @@
   if (.not. anyabs) return
 
   ! set Dirichelet boundary condition on outer boundary of CFS-PML
-  do ispecabs = 1,nelemabs
-    ispec = numabs(ispecabs)
+  do ispecabs = 1,num_abs_boundary_faces
+    ispec = abs_boundary_ispec(ispecabs)
     if (.not. ispec_is_acoustic(ispec)) cycle
 
     if (ispec_is_PML(ispec)) then
@@ -560,7 +561,8 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: nglob_elastic,ibool,nelemabs,codeabs,anyabs,numabs,ispec_is_PML,nspec_PML,ispec_is_elastic
+  use specfem_par, only: nglob_elastic,ibool,num_abs_boundary_faces,codeabs,anyabs, &
+    abs_boundary_ispec,ispec_is_PML,nspec_PML,ispec_is_elastic
 
   implicit none
 
@@ -576,8 +578,8 @@
   !set Dirichlet boundary condition on outer boundary of PML
 
   ! we have to put Dirichlet on the boundary of the PML
-  do ispecabs = 1,nelemabs
-    ispec = numabs(ispecabs)
+  do ispecabs = 1,num_abs_boundary_faces
+    ispec = abs_boundary_ispec(ispecabs)
     if (.not. ispec_is_elastic(ispec)) cycle
 
     if (ispec_is_PML(ispec)) then

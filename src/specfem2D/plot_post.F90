@@ -47,9 +47,10 @@
   use specfem_par, only: coord,vpext,x_source,z_source,st_xval,st_zval,it,deltat,coorg,density, &
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
                          poroelastcoef,knods,kmato,ibool, &
-                         numabs,codeabs,typeabs,anyabs,nelem_acoustic_surface, acoustic_edges, &
+                         num_abs_boundary_faces,abs_boundary_ispec,codeabs,typeabs,anyabs, &
+                         nelem_acoustic_surface, acoustic_edges, &
                          nglob,nrec,NSOURCES, &
-                         assign_external_model,nelemabs,pointsdisp, &
+                         assign_external_model,pointsdisp, &
                          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                          any_acoustic,any_poroelastic, &
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
@@ -991,8 +992,8 @@
     buffer_offset = 0
 
     if (anyabs) then
-      do inum = 1,nelemabs
-        ispec = numabs(inum)
+      do inum = 1,num_abs_boundary_faces
+        ispec = abs_boundary_ispec(inum)
 
         do iedge = 1,4
 

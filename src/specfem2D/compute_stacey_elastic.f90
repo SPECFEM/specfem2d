@@ -40,8 +40,9 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM, &
     ZERO,ONE,TWO,TWO_THIRDS,FOUR_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: AXISYM,nglob,nelemabs,it,any_elastic, &
-                         assign_external_model,ibool,kmato,numabs,ispec_is_elastic, &
+  use specfem_par, only: AXISYM,nglob,num_abs_boundary_faces,it,any_elastic, &
+                         assign_external_model,ibool,kmato, &
+                         abs_boundary_ispec,ispec_is_elastic, &
                          codeabs,codeabs_corner,density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                          vpext,vsext,rhoext,wxgll,wzgll,P_SV, &
                          SIMULATION_TYPE,SAVE_FORWARD, &
@@ -87,9 +88,10 @@
   count_left = 1
   count_right = 1
   count_bottom = 1
-  do ispecabs = 1,nelemabs
 
-    ispec = numabs(ispecabs)
+  do ispecabs = 1,num_abs_boundary_faces
+
+    ispec = abs_boundary_ispec(ispecabs)
 
     ! only for elastic elements, skip others
     if (.not. ispec_is_elastic(ispec) ) cycle
@@ -542,7 +544,8 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
   use specfem_par, only: nglob,any_elastic,ibool,ispec_is_elastic, &
-                         NSTEP,it,nelemabs,numabs,codeabs, &
+                         NSTEP,it,num_abs_boundary_faces, &
+                         abs_boundary_ispec,codeabs, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top, &
                          ib_left,ib_right,ib_bottom,ib_top, &
@@ -563,9 +566,9 @@
   it_tmp = NSTEP - it + 1
 
   ! Clayton-Engquist condition if elastic
-  do ispecabs = 1,nelemabs
+  do ispecabs = 1,num_abs_boundary_faces
 
-    ispec = numabs(ispecabs)
+    ispec = abs_boundary_ispec(ispecabs)
     if (.not. ispec_is_elastic(ispec) ) cycle
 
     !--- left absorbing boundary
@@ -640,92 +643,92 @@
 !
 !------------------------------------------------------------------------------------------
 !
-
-! daniel debug
-! this routine is in principle unused
-  subroutine UNUSED_compute_gradient_field_element(ispec,field,dux_dxl,dux_dzl,duz_dxl,duz_dzl)
-
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
-
-  use specfem_par, only: nglob,ibool,xix,xiz,gammax,gammaz
-  use specfem_par, only: hprime_xx,hprime_zz
-  use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx,NGLJ
-
-  implicit none
-
-  integer,intent(in) :: ispec
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: field
-
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ),intent(out) :: dux_dxl,dux_dzl,duz_dxl,duz_dzl
-
-  ! local parameters
-  integer :: i,j,k,iglob
-  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
-  real(kind=CUSTOM_REAL) :: dux_dxi,duz_dxi,dux_dgamma,duz_dgamma
-
-
-  do j = 1,NGLLZ
-    do i = 1,NGLLX
-      ! derivative along x and along z
-      dux_dxi = 0._CUSTOM_REAL
-      duz_dxi = 0._CUSTOM_REAL
-
-      dux_dgamma = 0._CUSTOM_REAL
-      duz_dgamma = 0._CUSTOM_REAL
-
-      ! first double loop over GLL points to compute and store gradients
-      ! we can merge the two loops because NGLLX == NGLLZ
-      if (AXISYM) then
-        if (is_on_the_axis(ispec)) then
-          do k = 1,NGLJ
-            ! derivative along x
-            iglob = ibool(k,j,ispec)
-            dux_dxi = dux_dxi + field(1,iglob)*hprimeBar_xx(i,k)
-            duz_dxi = duz_dxi + field(2,iglob)*hprimeBar_xx(i,k)
-            ! derivative along z
-            iglob = ibool(i,k,ispec)
-            dux_dgamma = dux_dgamma + field(1,iglob)*hprime_zz(j,k)
-            duz_dgamma = duz_dgamma + field(2,iglob)*hprime_zz(j,k)
-          enddo
-        else
-          do k = 1,NGLJ
-            ! derivative along x
-            iglob = ibool(k,j,ispec)
-            dux_dxi = dux_dxi + field(1,iglob)*hprime_xx(i,k)
-            duz_dxi = duz_dxi + field(2,iglob)*hprime_xx(i,k)
-            ! derivative along z
-            iglob = ibool(i,k,ispec)
-            dux_dgamma = dux_dgamma + field(1,iglob)*hprime_zz(j,k)
-            duz_dgamma = duz_dgamma + field(2,iglob)*hprime_zz(j,k)
-          enddo
-        endif
-      else
-        do k = 1,NGLLX
-          ! derivative along x
-          iglob = ibool(k,j,ispec)
-          dux_dxi = dux_dxi + field(1,iglob)*hprime_xx(i,k)
-          duz_dxi = duz_dxi + field(2,iglob)*hprime_xx(i,k)
-          ! derivative along z
-          iglob = ibool(i,k,ispec)
-          dux_dgamma = dux_dgamma + field(1,iglob)*hprime_zz(j,k)
-          duz_dgamma = duz_dgamma + field(2,iglob)*hprime_zz(j,k)
-        enddo
-      endif
-
-      xixl = xix(i,j,ispec)
-      xizl = xiz(i,j,ispec)
-      gammaxl = gammax(i,j,ispec)
-      gammazl = gammaz(i,j,ispec)
-
-      ! derivatives in x and z directions
-      dux_dxl(i,j) = dux_dxi*xixl + dux_dgamma*gammaxl
-      dux_dzl(i,j) = dux_dxi*xizl + dux_dgamma*gammazl
-
-      duz_dxl(i,j) = duz_dxi*xixl + duz_dgamma*gammaxl
-      duz_dzl(i,j) = duz_dxi*xizl + duz_dgamma*gammazl
-
-    enddo
-  enddo
-
-  end subroutine UNUSED_compute_gradient_field_element
+!
+! this routine is in principle unused... left here for reference
+!
+!  subroutine UNUSED_compute_gradient_field_element(ispec,field,dux_dxl,dux_dzl,duz_dxl,duz_dzl)
+!
+!  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+!
+!  use specfem_par, only: nglob,ibool,xix,xiz,gammax,gammaz
+!  use specfem_par, only: hprime_xx,hprime_zz
+!  use specfem_par, only: AXISYM,is_on_the_axis,hprimeBar_xx,NGLJ
+!
+!  implicit none
+!
+!  integer,intent(in) :: ispec
+!  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: field
+!
+!  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ),intent(out) :: dux_dxl,dux_dzl,duz_dxl,duz_dzl
+!
+!  ! local parameters
+!  integer :: i,j,k,iglob
+!  real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl
+!  real(kind=CUSTOM_REAL) :: dux_dxi,duz_dxi,dux_dgamma,duz_dgamma
+!
+!
+!  do j = 1,NGLLZ
+!    do i = 1,NGLLX
+!      ! derivative along x and along z
+!      dux_dxi = 0._CUSTOM_REAL
+!      duz_dxi = 0._CUSTOM_REAL
+!
+!      dux_dgamma = 0._CUSTOM_REAL
+!      duz_dgamma = 0._CUSTOM_REAL
+!
+!      ! first double loop over GLL points to compute and store gradients
+!      ! we can merge the two loops because NGLLX == NGLLZ
+!      if (AXISYM) then
+!        if (is_on_the_axis(ispec)) then
+!          do k = 1,NGLJ
+!            ! derivative along x
+!            iglob = ibool(k,j,ispec)
+!            dux_dxi = dux_dxi + field(1,iglob)*hprimeBar_xx(i,k)
+!            duz_dxi = duz_dxi + field(2,iglob)*hprimeBar_xx(i,k)
+!            ! derivative along z
+!            iglob = ibool(i,k,ispec)
+!            dux_dgamma = dux_dgamma + field(1,iglob)*hprime_zz(j,k)
+!            duz_dgamma = duz_dgamma + field(2,iglob)*hprime_zz(j,k)
+!          enddo
+!        else
+!          do k = 1,NGLJ
+!            ! derivative along x
+!            iglob = ibool(k,j,ispec)
+!            dux_dxi = dux_dxi + field(1,iglob)*hprime_xx(i,k)
+!            duz_dxi = duz_dxi + field(2,iglob)*hprime_xx(i,k)
+!            ! derivative along z
+!            iglob = ibool(i,k,ispec)
+!            dux_dgamma = dux_dgamma + field(1,iglob)*hprime_zz(j,k)
+!            duz_dgamma = duz_dgamma + field(2,iglob)*hprime_zz(j,k)
+!          enddo
+!        endif
+!      else
+!        do k = 1,NGLLX
+!          ! derivative along x
+!          iglob = ibool(k,j,ispec)
+!          dux_dxi = dux_dxi + field(1,iglob)*hprime_xx(i,k)
+!          duz_dxi = duz_dxi + field(2,iglob)*hprime_xx(i,k)
+!          ! derivative along z
+!          iglob = ibool(i,k,ispec)
+!          dux_dgamma = dux_dgamma + field(1,iglob)*hprime_zz(j,k)
+!          duz_dgamma = duz_dgamma + field(2,iglob)*hprime_zz(j,k)
+!        enddo
+!      endif
+!
+!      xixl = xix(i,j,ispec)
+!      xizl = xiz(i,j,ispec)
+!      gammaxl = gammax(i,j,ispec)
+!      gammazl = gammaz(i,j,ispec)
+!
+!      ! derivatives in x and z directions
+!      dux_dxl(i,j) = dux_dxi*xixl + dux_dgamma*gammaxl
+!      dux_dzl(i,j) = dux_dxi*xizl + dux_dgamma*gammazl
+!
+!      duz_dxl(i,j) = duz_dxi*xixl + duz_dgamma*gammaxl
+!      duz_dzl(i,j) = duz_dxi*xizl + duz_dgamma*gammazl
+!
+!    enddo
+!  enddo
+!
+!  end subroutine UNUSED_compute_gradient_field_element
 

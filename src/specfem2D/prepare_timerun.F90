@@ -40,7 +40,7 @@
 
   implicit none
 
-  if (setup_with_binary_database == 2 ) then
+  if (setup_with_binary_database == 2) then
    call setup_mesh_external_models()
    call read_sources_receivers()
    if (SIMULATION_TYPE == 3) call setup_adjoint_sources()
@@ -58,6 +58,9 @@
 
   ! PML preparation
   call prepare_PML()
+
+  ! Stacey preparation
+  call prepare_timerun_Stacey()
 
   if (setup_with_binary_database /= 2) then
 
@@ -148,7 +151,6 @@
 
   end subroutine prepare_timerun
 
-
 !
 !-------------------------------------------------------------------------------------
 !
@@ -210,7 +212,6 @@
   call synchronize_all()
 
   end subroutine prepare_timerun_constants
-
 
 !
 !-------------------------------------------------------------------------------------
@@ -337,7 +338,6 @@
   call synchronize_all()
 
   end subroutine prepare_timerun_postscripts
-
 
 !
 !-------------------------------------------------------------------------------------
@@ -561,7 +561,7 @@
     call max_all_all_i(d1_color_send_ps_element_mesh,d1_color_recv_ps_element_mesh)
 
     d1_coorg_send_ps_abs=5
-    d2_coorg_send_ps_abs=4*nelemabs
+    d2_coorg_send_ps_abs=4*num_abs_boundary_faces
     call max_all_all_i(d1_coorg_send_ps_abs,d1_coorg_recv_ps_abs)
     call max_all_all_i(d2_coorg_send_ps_abs,d2_coorg_recv_ps_abs)
 
@@ -769,7 +769,6 @@
   call synchronize_all()
 
   end subroutine prepare_timerun_adjoint
-
 
 !
 !-------------------------------------------------------------------------------------
@@ -1064,9 +1063,9 @@
     if (over_critical_angle) then
 
       ! allocates boundaries
-      allocate(left_bound(nelemabs*NGLLX))
-      allocate(right_bound(nelemabs*NGLLX))
-      allocate(bot_bound(nelemabs*NGLLZ))
+      allocate(left_bound(num_abs_boundary_faces*NGLLX))
+      allocate(right_bound(num_abs_boundary_faces*NGLLX))
+      allocate(bot_bound(num_abs_boundary_faces*NGLLZ))
 
       ! sets up boundary points
       call prepare_initial_field_paco()
@@ -1119,7 +1118,6 @@
   endif
 
   end subroutine prepare_timerun_initialfield
-
 
 !
 !-------------------------------------------------------------------------------------
@@ -1253,7 +1251,6 @@
   call synchronize_all()
 
   end subroutine prepare_timerun_noise
-
 
 !
 !-------------------------------------------------------------------------------------
@@ -1783,6 +1780,7 @@
 !
 !-------------------------------------------------------------------------------------
 !
+
   subroutine prepare_timerun_attenuation_with_PML()
 
   use constants
@@ -1946,9 +1944,11 @@
   enddo
 
   end subroutine prepare_timerun_attenuation_with_PML
+
 !
 !-------------------------------------------------------------------------------------
 !
+
   subroutine tauinvnu_arange_from_lt_to_gt(siz,tauinvnu)
 
   implicit none
@@ -1970,9 +1970,11 @@
   enddo
 
   end subroutine tauinvnu_arange_from_lt_to_gt
+
 !
 !-------------------------------------------------------------------------------------
 !
+
   subroutine prepare_timerun_no_backward_reconstruction()
 
   use constants
@@ -2051,3 +2053,130 @@
   endif
 
   end subroutine prepare_timerun_no_backward_reconstruction
+
+!
+!-------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_Stacey()
+
+  use constants, only: IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use specfem_par
+
+  implicit none
+
+  integer :: i,j,ispec,ispecabs,ier
+  real(kind=CUSTOM_REAL) :: xxi,zxi,xgamma,zgamma,jacobian1D
+
+  ! sets up arrays for stacey boundary routines
+  if (STACEY_ABSORBING_CONDITIONS) then
+    ! stacey boundaries
+    allocate(abs_boundary_ij(2,NGLLX,num_abs_boundary_faces), &
+             abs_boundary_jacobian1Dw(NGLLX,num_abs_boundary_faces), &
+             abs_boundary_normal(NDIM,NGLLX,num_abs_boundary_faces),stat=ier)
+    if (ier /= 0) stop 'error allocating array abs_boundary_ij etc.'
+
+    ! needed for gpu boundary array storage
+    allocate(cote_abs(num_abs_boundary_faces),stat=ier)
+    if (ier /= 0) stop 'error allocating array cote_abs etc.'
+
+    do ispecabs = 1,num_abs_boundary_faces
+      ispec = abs_boundary_ispec(ispecabs)
+
+      !--- left absorbing boundary
+      if (codeabs(IEDGE4,ispecabs)) then
+        i = 1
+        do j = 1,NGLLZ
+          abs_boundary_ij(1,j,ispecabs) = i
+          abs_boundary_ij(2,j,ispecabs) = j
+
+          xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+          zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+          jacobian1D = sqrt(xgamma**2 + zgamma**2)
+
+          abs_boundary_normal(1,j,ispecabs) = - zgamma / jacobian1D
+          abs_boundary_normal(2,j,ispecabs) = + xgamma / jacobian1D
+
+          abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
+
+          cote_abs(ispecabs) = 4
+        enddo
+        if (ibegin_edge4(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
+        if (iend_edge4(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
+
+      !--- right absorbing boundary
+      else if (codeabs(IEDGE2,ispecabs)) then
+        i = NGLLX
+        do j = 1,NGLLZ
+          abs_boundary_ij(1,j,ispecabs) = i
+          abs_boundary_ij(2,j,ispecabs) = j
+
+          xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
+          zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
+          jacobian1D = sqrt(xgamma**2 + zgamma**2)
+
+          abs_boundary_normal(1,j,ispecabs) = + zgamma / jacobian1D
+          abs_boundary_normal(2,j,ispecabs) = - xgamma / jacobian1D
+
+          abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
+
+          cote_abs(ispecabs) = 2
+        enddo
+        if (ibegin_edge2(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
+        if (iend_edge2(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
+
+      !--- bottom absorbing boundary
+      else if (codeabs(IEDGE1,ispecabs)) then
+        j = 1
+        do i = 1,NGLLX
+          abs_boundary_ij(1,i,ispecabs) = i
+          abs_boundary_ij(2,i,ispecabs) = j
+
+          xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+          zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+          jacobian1D = sqrt(xxi**2 + zxi**2)
+
+          abs_boundary_normal(1,i,ispecabs) = + zxi / jacobian1D
+          abs_boundary_normal(2,i,ispecabs) = - xxi / jacobian1D
+
+          abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
+
+          cote_abs(ispecabs) = 1
+
+        enddo
+        if (ibegin_edge1(ispecabs) == 2 .or. codeabs_corner(1,ispecabs)) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+        if (iend_edge1(ispecabs) == NGLLX-1 .or. codeabs_corner(2,ispecabs)) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+
+      !--- top absorbing boundary
+      else if (codeabs(IEDGE3,ispecabs)) then
+        j = NGLLZ
+        do i = 1,NGLLX
+          abs_boundary_ij(1,i,ispecabs) = i
+          abs_boundary_ij(2,i,ispecabs) = j
+
+          xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
+          zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
+          jacobian1D = sqrt(xxi**2 + zxi**2)
+
+          abs_boundary_normal(1,i,ispecabs) = - zxi / jacobian1D
+          abs_boundary_normal(2,i,ispecabs) = + xxi / jacobian1D
+
+          abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
+
+          cote_abs(ispecabs) = 3
+        enddo
+        if (ibegin_edge3(ispecabs) == 2 .or. codeabs_corner(3,ispecabs)) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
+        if (iend_edge3(ispecabs) == NGLLX-1 .or. codeabs_corner(4,ispecabs)) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
+
+      endif
+    enddo
+  else
+    ! dummy allocation
+    allocate(abs_boundary_ij(1,1,1), &
+             abs_boundary_jacobian1Dw(1,1), &
+             abs_boundary_normal(1,1,1), &
+             cote_abs(1),stat=ier)
+    if (ier /= 0) stop 'error allocating dummy array abs_boundary_ij etc.'
+  endif ! STACEY_ABSORBING_CONDITIONS
+
+  end subroutine prepare_timerun_Stacey

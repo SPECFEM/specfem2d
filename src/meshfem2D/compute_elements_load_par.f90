@@ -87,6 +87,7 @@ contains
     nelem_elastic = 0
     nelem_acoustic = 0
     nelem_viscoelastic = 0
+    nelem_viscoacoustic = 0
     nelem_elastic_pml = 0
     nelem_acoustic_pml = 0
     nelem_viscoelastic_pml = 0

@@ -52,8 +52,8 @@
 
   use constants, only: IMAIN,NGLLX,NGLLZ,IRIGHT,ILEFT,IBOTTOM,ITOP,CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
 
-  use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool, &
-    anyabs,nelemabs,codeabs,numabs, &
+  use specfem_par, only: SIMULATION_TYPE,SAVE_FORWARD,nspec,nglob,ibool, &
+    anyabs,num_abs_boundary_faces,codeabs,abs_boundary_ispec, &
     nglob_interface,read_external_mesh
 
   ! PML arrays
@@ -64,7 +64,7 @@
 
   ! local parameters
   integer, dimension(nglob) ::   icorner_iglob
-  integer :: nspec_PML_tot,ibound,ispecabs,ncorner,i_coef,i,j,k,ispec,iglob
+  integer :: ibound,ispecabs,ncorner,i_coef,i,j,k,ispec,iglob
 
   nspec_PML = 0
 
@@ -78,8 +78,8 @@
 
       if (anyabs) then
         ! mark any elements on the boundary as PML and list their corners
-        do ispecabs = 1,nelemabs
-          ispec = numabs(ispecabs)
+        do ispecabs = 1,num_abs_boundary_faces
+          ispec = abs_boundary_ispec(ispecabs)
           !array to know which PML it is
           which_PML_elem(ibound,ispec)=codeabs(ibound,ispecabs)
           if (codeabs(ibound,ispecabs)) then ! we are on the good absorbing boundary
@@ -274,14 +274,6 @@
       enddo
     endif
 
-  endif
-
-  ! outputs total
-  call sum_all_i(nspec_PML,nspec_PML_tot)
-  if (myrank == 0) then
-    write(IMAIN,*) "Total number of PML spectral elements: ", nspec_PML_tot
-    write(IMAIN,*)
-    call flush_IMAIN()
   endif
 
   end subroutine pml_init

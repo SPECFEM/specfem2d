@@ -38,8 +38,9 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,TWO_THIRDS,IEDGE1,IEDGE2,IEDGE3,IEDGE4,USE_A_STRONG_FORMULATION_FOR_E1
 
-  use specfem_par, only: AXISYM,nglob,nelemabs,it,any_acoustic, &
-                         assign_external_model,ibool,kmato,numabs,ispec_is_acoustic, &
+  use specfem_par, only: AXISYM,nglob,num_abs_boundary_faces,it,any_acoustic, &
+                         assign_external_model,ibool,kmato, &
+                         abs_boundary_ispec,ispec_is_acoustic, &
                          codeabs,codeabs_corner, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
                          vpext,rhoext, &
@@ -69,8 +70,8 @@
   if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. any_acoustic) return
 
-  do ispecabs = 1,nelemabs
-    ispec = numabs(ispecabs)
+  do ispecabs = 1,num_abs_boundary_faces
+    ispec = abs_boundary_ispec(ispecabs)
 
     ! Sommerfeld condition if acoustic
     if (ispec_is_acoustic(ispec)) then
@@ -227,8 +228,8 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,ONE,TWO,IEDGE1,IEDGE2,IEDGE3,IEDGE4
 
-  use specfem_par, only: nglob,nelemabs,it,NSTEP,any_acoustic, &
-                         ibool,numabs,ispec_is_acoustic, &
+  use specfem_par, only: nglob,num_abs_boundary_faces,it,NSTEP,any_acoustic, &
+                         ibool,abs_boundary_ispec,ispec_is_acoustic, &
                          codeabs,codeabs_corner, &
                          ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                          ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
@@ -253,8 +254,8 @@
   ! time increment step
   it_tmp = NSTEP - it + 1
 
-  do ispecabs = 1,nelemabs
-    ispec = numabs(ispecabs)
+  do ispecabs = 1,num_abs_boundary_faces
+    ispec = abs_boundary_ispec(ispecabs)
 
     ! Sommerfeld condition if acoustic
     if (ispec_is_acoustic(ispec)) then

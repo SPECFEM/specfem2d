@@ -42,7 +42,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
   use specfem_par, only: it,STACEY_ABSORBING_CONDITIONS, &
-                         anyabs,nelemabs,numabs, &
+                         anyabs,num_abs_boundary_faces,abs_boundary_ispec, &
                          ATTENUATION_PORO_FLUID_PART, &
                          ibool,kmato,ispec_is_poroelastic, &
                          codeabs,codeabs_corner, &
@@ -84,9 +84,9 @@
   if (.not. anyabs) return
 
   ! absorbing boundaries
-  do ispecabs= 1,nelemabs
+  do ispecabs= 1,num_abs_boundary_faces
 
-    ispec = numabs(ispecabs)
+    ispec = abs_boundary_ispec(ispecabs)
 
     if (ispec_is_poroelastic(ispec)) then
 
@@ -324,7 +324,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
   use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
-                         anyabs,nelemabs,numabs, &
+                         anyabs,num_abs_boundary_faces,abs_boundary_ispec, &
                          ibool,ispec_is_poroelastic, &
                          codeabs,codeabs_corner, &
                          b_accelw_poroelastic, &
@@ -347,9 +347,9 @@
   if (SIMULATION_TYPE /= 3) return
 
   ! absorbing boundaries
-  do ispecabs= 1,nelemabs
+  do ispecabs= 1,num_abs_boundary_faces
 
-    ispec = numabs(ispecabs)
+    ispec = abs_boundary_ispec(ispecabs)
 
     if (ispec_is_poroelastic(ispec)) then
 
@@ -454,7 +454,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
   use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
-                         anyabs,nelemabs,numabs, &
+                         anyabs,num_abs_boundary_faces,abs_boundary_ispec, &
                          ATTENUATION_PORO_FLUID_PART, &
                          ibool,kmato,ispec_is_poroelastic, &
                          codeabs,codeabs_corner, &
@@ -496,9 +496,9 @@
   if (.not. anyabs) return
 
   ! absorbing boundaries
-  do ispecabs = 1,nelemabs
+  do ispecabs = 1,num_abs_boundary_faces
 
-    ispec = numabs(ispecabs)
+    ispec = abs_boundary_ispec(ispecabs)
 
     if (ispec_is_poroelastic(ispec)) then
 
@@ -761,7 +761,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
   use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
-                         anyabs,nelemabs,numabs, &
+                         anyabs,num_abs_boundary_faces,abs_boundary_ispec, &
                          ibool,ispec_is_poroelastic, &
                          codeabs,codeabs_corner, &
                          b_accels_poroelastic, &
@@ -784,9 +784,9 @@
   if (SIMULATION_TYPE /= 3) return
 
   ! absorbing boundaries
-  do ispecabs = 1,nelemabs
+  do ispecabs = 1,num_abs_boundary_faces
 
-    ispec = numabs(ispecabs)
+    ispec = abs_boundary_ispec(ispecabs)
 
     if (ispec_is_poroelastic(ispec)) then
 
