@@ -53,13 +53,14 @@
   if (any_acoustic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_acoustic',myrank,'.bin'
     open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_acoustic**.bin')
-
-    read(55) b_potential_acoustic
-    read(55) b_potential_dot_acoustic
-    read(55) b_potential_dot_dot_acoustic
-
-    close(55)
+    if (ier /= 0) then
+      call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_acoustic**.bin')
+    else
+      read(55) b_potential_acoustic
+      read(55) b_potential_dot_acoustic
+      read(55) b_potential_dot_dot_acoustic
+      close(55)
+    endif
 
     if (GPU_MODE) then
       ! transfers fields onto GPU
@@ -77,12 +78,14 @@
   if (any_elastic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_elastic',myrank,'.bin'
     open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_elastic**.bin')
-
-    read(55) b_displ_elastic
-    read(55) b_veloc_elastic
-    read(55) b_accel_elastic
-    close(55)
+    if (ier /= 0) then
+      call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_elastic**.bin')
+    else
+      read(55) b_displ_elastic
+      read(55) b_veloc_elastic
+      read(55) b_accel_elastic
+      close(55)
+    endif
 
     !SH (membrane) waves
     if (.not. P_SV) then
@@ -118,21 +121,25 @@
   if (any_poroelastic) then
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_s',myrank,'.bin'
     open(unit=55,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_poroelastic_s**.bin')
-
-    read(55) b_displs_poroelastic
-    read(55) b_velocs_poroelastic
-    read(55) b_accels_poroelastic
-    close(55)
+    if (ier /= 0) then
+      call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_poroelastic_s**.bin')
+    else
+      read(55) b_displs_poroelastic
+      read(55) b_velocs_poroelastic
+      read(55) b_accels_poroelastic
+      close(55)
+    endif
 
     write(outputname,'(a,i6.6,a)') 'lastframe_poroelastic_w',myrank,'.bin'
     open(unit=56,file=trim(OUTPUT_FILES)//trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_poroelastic_w**.bin')
-
-    read(56) b_displw_poroelastic
-    read(56) b_velocw_poroelastic
-    read(56) b_accelw_poroelastic
-    close(56)
+    if (ier /= 0) then
+      call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'lastframe_poroelastic_w**.bin')
+    else
+      read(56) b_displw_poroelastic
+      read(56) b_velocw_poroelastic
+      read(56) b_accelw_poroelastic
+      close(56)
+    endif
 
     ! safety check
     if (GPU_MODE) then
