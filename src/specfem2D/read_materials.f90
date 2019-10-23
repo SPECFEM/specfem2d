@@ -37,8 +37,8 @@
 
   use constants, only: IIN,IMAIN,ZERO,FOUR_THIRDS,TWO_THIRDS,HALF,TINYVAL
 
-  use specfem_par, only: AXISYM,density,porosity,tortuosity,anisotropy,permeability,poroelastcoef, &
-                          numat,myrank,QKappa_attenuation,Qmu_attenuation, &
+  use specfem_par, only: AXISYM,density,porosity,tortuosity,anisotropycoef,permeability,poroelastcoef, &
+                          numat,myrank,QKappa_attenuationcoef,Qmu_attenuationcoef, &
                           freq0_poroelastic,Q0_poroelastic,ATTENUATION_PORO_FLUID_PART,assign_external_model,tomo_material,myrank
 
   implicit none
@@ -66,12 +66,13 @@
   density(:,:) = ZERO
   porosity(:) = ZERO
   tortuosity(:) = ZERO
-  anisotropy(:,:) = ZERO
   permeability(:,:) = ZERO
-  poroelastcoef(:,:,:) = ZERO
 
-  QKappa_attenuation(:) = 9999.
-  Qmu_attenuation(:) = 9999.
+  poroelastcoef(:,:,:) = ZERO
+  anisotropycoef(:,:) = ZERO
+
+  QKappa_attenuationcoef(:) = 9999.
+  Qmu_attenuationcoef(:) = 9999.
 
   ! Index of the material that will be defined by an external tomo file if needed (TOMOGRAPHY_FILE)
   tomo_material = 0
@@ -245,8 +246,8 @@
       poroelastcoef(2,1,n) = mu
       poroelastcoef(3,1,n) = lambdaplus2mu
       poroelastcoef(4,1,n) = compaction_grad
-      QKappa_attenuation(n) = QKappa
-      Qmu_attenuation(n) = Qmu
+      QKappa_attenuationcoef(n) = QKappa
+      Qmu_attenuationcoef(n) = Qmu
       if (mu > TINYVAL) then
         porosity(n) = 0.d0
       else
@@ -260,16 +261,16 @@
       poroelastcoef(2,1,n) = mu
       poroelastcoef(3,1,n) = lambdaplus2mu
       poroelastcoef(4,1,n) = ZERO
-      anisotropy(1,n) = c11
-      anisotropy(2,n) = c13
-      anisotropy(3,n) = c15
-      anisotropy(4,n) = c33
-      anisotropy(5,n) = c35
-      anisotropy(6,n) = c55
-      anisotropy(7,n) = c12
-      anisotropy(8,n) = c23
-      anisotropy(9,n) = c25
-      anisotropy(10,n) = c22 ! This value is used for AXISYM only
+      anisotropycoef(1,n) = c11
+      anisotropycoef(2,n) = c13
+      anisotropycoef(3,n) = c15
+      anisotropycoef(4,n) = c33
+      anisotropycoef(5,n) = c35
+      anisotropycoef(6,n) = c55
+      anisotropycoef(7,n) = c12
+      anisotropycoef(8,n) = c23
+      anisotropycoef(9,n) = c25
+      anisotropycoef(10,n) = c22 ! This value is used for AXISYM only
       porosity(n) = 0.d0
 
     else if (indic == 3) then
@@ -297,8 +298,8 @@
       poroelastcoef(2,1,n) = mu
       poroelastcoef(3,1,n) = -1.0d0
       poroelastcoef(4,1,n) = ZERO
-      QKappa_attenuation(n) = 9999.
-      Qmu_attenuation(n) = 9999.
+      QKappa_attenuationcoef(n) = 9999.
+      Qmu_attenuationcoef(n) = 9999.
       if (mu > TINYVAL) then
         porosity(n) = 0.d0
       else

@@ -42,7 +42,7 @@
   use specfem_par, only: nglob, &
                          assign_external_model,ibool,kmato,ispec_is_acoustic, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-                         vpext,rhoext, &
+                         kappastore,rhostore, &
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          AXISYM,coord, is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,xiglj,wxglj
@@ -70,7 +70,7 @@
   real(kind=CUSTOM_REAL) :: xixl,xizl,gammaxl,gammazl,jacobianl
 
   ! material properties of the acoustic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,rhol
+  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,rhol
 
   integer :: num_elements,ispec_p
 
@@ -130,7 +130,7 @@
 
         ! if external density model
         if (assign_external_model) then
-          rhol = rhoext(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
         endif
 
         if (AXISYM) then
@@ -163,11 +163,10 @@
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec)
         if (assign_external_model) then
-          rhol = rhoext(i,j,ispec)
-          cpl = vpext(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
           !assuming that in fluid(acoustic) part input cpl is defined by sqrt(kappal/rhol), &
           !which is not the same as in cpl input in elastic part
-          kappal = rhol * cpl * cpl ! CHECK kappa
+          kappal = kappastore(i,j,ispec)
         else
           lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
           mul_relaxed = poroelastcoef(2,1,kmato(ispec))

@@ -185,7 +185,7 @@
     endif
 
   endif
-  print *,''
+  print *
 
 ! read the points
   print *,'NPOIN = ',NPOIN
@@ -203,9 +203,9 @@
   enddo
   close(11)
 
-  print *,''
+  print *
   print *,'done reading the external files'
-  print *,''
+  print *
 
 ! ************* compute min and max of skewness and ratios ******************
 
@@ -265,7 +265,7 @@
       print *,'  equiangle_skewness    = ',equiangle_skewness
       print *,'  edge_aspect_ratio     = ',edge_aspect_ratio
       print *,'  diagonal_aspect_ratio = ',diagonal_aspect_ratio
-      print *,''
+      print *
       stop 'negative Jacobian found'
     endif
 

@@ -33,11 +33,11 @@
 
   subroutine define_external_model_dummy(coord,material_element,ibool, &
                                          rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
-                                         c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+                                         c11,c12,c13,c15,c23,c25,c33,c35,c55)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
 
-  use specfem_par, only: poroelastcoef,density,kmato,myrank
+  use specfem_par, only: poroelastcoef,density,kmato,myrank,nspec,nglob
 
   implicit none
 
@@ -49,8 +49,6 @@
 
 ! users can modify this routine to assign any different external model (rho, vp, vs)
 ! based on the x and y coordinates of that grid point and the material number of the region it belongs to
-
-  integer, intent(in) :: nspec,nglob
 
   double precision, dimension(NDIM,nglob), intent(in) :: coord
 
@@ -148,11 +146,11 @@
 !========================================================================
   subroutine define_external_model(coord,material_element,ibool, &
                                    rho,vp,vs,QKappa_attenuation,Qmu_attenuation, &
-                                   c11,c13,c15,c33,c35,c55,c12,c23,c25,nspec,nglob)
+                                   c11,c12,c13,c15,c23,c25,c33,c35,c55)
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,IMAIN
 
-  use specfem_par, only: myrank
+  use specfem_par, only: myrank,nspec,nglob
 
   implicit none
 
@@ -183,8 +181,6 @@
 !! DK DK values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
 
 !--------------------------------------------------------------------------------------------------
-
-  integer, intent(in) :: nspec,nglob
 
   double precision, dimension(NDIM,nglob), intent(in) :: coord
 

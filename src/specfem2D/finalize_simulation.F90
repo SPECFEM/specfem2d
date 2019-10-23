@@ -33,7 +33,9 @@
 
   subroutine finalize_simulation()
 
-  use constants, only: TWO,FOUR_THIRDS,TWO_THIRDS,APPROXIMATE_HESS_KL,IMAIN,IOUT_ENERGY,ISTANDARD_OUTPUT,IN_DATA_FILES,OUTPUT_FILES
+  use constants, only: TWO,FOUR_THIRDS,TWO_THIRDS, &
+    APPROXIMATE_HESS_KL,IMAIN,IOUT_ENERGY,ISTANDARD_OUTPUT,IN_DATA_FILES,OUTPUT_FILES
+
   use specfem_par
   use specfem_par_noise
   use specfem_par_gpu
@@ -44,7 +46,7 @@
   integer :: i,ispec,j,iglob
   integer :: ier
   real(kind=4),dimension(:,:,:),allocatable :: rho_save, vp_save, vs_save, kappa_save, x_save, z_save, Qkappa_save,Qmu_save
-  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic
+  double precision :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic,rhol
   character(len=MAX_STRING_LEN) :: inputname,outputname,outputname2
 
   ! writes out kernel files
@@ -109,9 +111,10 @@
           vs_save(i,j,ispec) = sqrt(mul_unrelaxed_elastic/rho_save(i,j,ispec))
 
           if (assign_external_model) then
-            vp_save(i,j,ispec) = vpext(i,j,ispec)
-            vs_save(i,j,ispec) = vsext(i,j,ispec)
-            rho_save(i,j,ispec) = rhoext(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
+            vp_save(i,j,ispec) = rho_vpstore(i,j,ispec)/rhol
+            vs_save(i,j,ispec) = rho_vsstore(i,j,ispec)/rhol
+            rho_save(i,j,ispec) = rhol
           endif
 
           iglob = ibool(i,j,ispec)
@@ -119,11 +122,11 @@
           z_save(i,j,ispec) = coord(2,iglob)
           ! attenuation arrays
           if (ATTENUATION_VISCOACOUSTIC) then
-            Qkappa_save(i,j,ispec) = QKappa_attenuation(kmato(ispec))
+            Qkappa_save(i,j,ispec) = QKappa_attenuationcoef(kmato(ispec))
           endif
           if (ATTENUATION_VISCOELASTIC) then
-            Qkappa_save(i,j,ispec) = QKappa_attenuation(kmato(ispec))
-            Qmu_save(i,j,ispec) = Qmu_attenuation(kmato(ispec))
+            Qkappa_save(i,j,ispec) = QKappa_attenuationcoef(kmato(ispec))
+            Qmu_save(i,j,ispec) = Qmu_attenuationcoef(kmato(ispec))
           endif
         enddo
       enddo
@@ -142,7 +145,7 @@
           do i = 1,NGLLX
             iglob = ibool(i,j,ispec)
             write(1001,'(I10,5e15.5e4)') iglob, x_save(i,j,ispec),z_save(i,j,ispec),rho_save(i,j,ispec), &
-                                     vp_save(i,j,ispec),vs_save(i,j,ispec)
+                                         vp_save(i,j,ispec),vs_save(i,j,ispec)
           enddo
         enddo
       enddo
@@ -156,7 +159,8 @@
       do ispec = 1,nspec
         do j = 1,NGLLZ
           do i = 1,NGLLX
-            write(1001,'(5e15.5e4)') x_save(i,j,ispec),z_save(i,j,ispec),rho_save(i,j,ispec),vp_save(i,j,ispec),vs_save(i,j,ispec)
+            write(1001,'(5e15.5e4)') x_save(i,j,ispec),z_save(i,j,ispec),rho_save(i,j,ispec), &
+                                     vp_save(i,j,ispec),vs_save(i,j,ispec)
           enddo
         enddo
       enddo
@@ -466,8 +470,8 @@
     deallocate(buffer_recv_vector_gpu,b_buffer_recv_vector_gpu)
 
     ! frees memory on GPU
-    call prepare_cleanup_device(Mesh_pointer,any_acoustic,any_elastic, &
-                                ANISOTROPY, &
+    call prepare_cleanup_device(Mesh_pointer, &
+                                any_acoustic,any_elastic,any_anisotropy, &
                                 APPROXIMATE_HESS_KL, &
                                 ATTENUATION_VISCOACOUSTIC, &
                                 ATTENUATION_VISCOELASTIC, &
@@ -493,9 +497,11 @@
     deallocate(t0x_bot)
     deallocate(t0z_bot)
   endif
+
   ! frees arrays (not complete, but at least a few...)
   deallocate(seismo_current)
   deallocate(sisux,sisuz,siscurl)
+
   ! wavefields
   deallocate(displ_elastic,veloc_elastic,accel_elastic)
   deallocate(displ_elastic_old)
@@ -510,13 +516,16 @@
     deallocate(b_potential_dot_acoustic,b_potential_dot_dot_acoustic)
   endif
   deallocate(b_displ_ac,b_accel_ac,accel_ac)
+
   ! noise
   if (allocated(time_function_noise)) deallocate(time_function_noise)
   if (allocated(source_array_noise)) deallocate(source_array_noise)
   if (allocated(mask_noise)) deallocate(mask_noise)
   if (allocated(surface_movie_y_or_z_noise)) deallocate(surface_movie_y_or_z_noise)
+
   ! material
-  deallocate(kappastore,mustore,rhostore,rho_vp,rho_vs)
+  deallocate(kappastore,mustore,rhostore,rho_vpstore,rho_vsstore)
+
   ! attenuation
   deallocate(e1,e11,e13)
   deallocate(dux_dxl_old,duz_dzl_old,dux_dzl_plus_duz_dxl_old)

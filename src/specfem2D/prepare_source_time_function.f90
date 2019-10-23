@@ -67,7 +67,6 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*)
     write(IMAIN,*) 'Preparing source time function'
     call flush_IMAIN()
   endif
@@ -104,6 +103,7 @@
   if (myrank == islice_selected_source(1)) then
     if (myrank == 0) then
       write(IMAIN,*) '  saving the source time function in a text file...'
+      write(IMAIN,*)
       call flush_IMAIN()
     endif
     ! opens source time file for output
@@ -115,13 +115,13 @@
   do i_source = 1,NSOURCES
 
     ! The following lines could be needed to set absolute amplitudes.
-    ! In this case variables vpext,rhoext,density,poroelastcoef,assign_external_model,ispec_selected_source,kmato
+    ! In this case variables rho_vpstore,density,poroelastcoef,assign_external_model,ispec_selected_source,kmato
     ! and double precision :: rho, cp logical :: already_done = .false. need to be introduced
     !    if (myrank == islice_selected_source(i_source)) then
     !      if (AXISYM) then
     !        if (.not. already_done) then
     !          if (  assign_external_model ) then
-    !            cp = vpext(0,0,ispec_selected_source(i_source))
+    !            cp = rho_vpstore(0,0,ispec_selected_source(i_source))/rhostore(0,0,ispec_selected_source(i_source))
     !            TODO (above): We must interpolate to find the exact cp value at source location
     !          else
     !            rho = density(1,kmato(ispec_selected_source(i_source)))

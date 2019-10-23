@@ -42,7 +42,7 @@
 
   use specfem_par, only: nglob,nspec_ATT_ac, &
                          assign_external_model,ibool,kmato,ispec_is_acoustic, &
-                         density,rhoext, &
+                         density,rhostore, &
                          xix,xiz,gammax,gammaz,jacobian, &
                          hprime_xx,hprimewgll_xx, &
                          hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -127,7 +127,7 @@
         deriv(5,i,j) = jacobian(i,j,ispec)
         ! if external density model
         if (assign_external_model) then
-          rhol = rhoext(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
         endif
         deriv(6,i,j) = jacobian(i,j,ispec) / rhol
 

@@ -44,13 +44,14 @@
     ORIG_X,ORIG_Z,PI,RPERCENTX,RPERCENTZ,STABILITY_THRESHOLD, &
     DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT,OUTPUT_FILES
 
-  use specfem_par, only: coord,vpext,x_source,z_source,st_xval,st_zval,it,deltat,coorg,density, &
+  use specfem_par, only: coord,x_source,z_source,st_xval,st_zval,it,deltat,coorg,density, &
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
                          poroelastcoef,knods,kmato,ibool, &
                          num_abs_boundary_faces,abs_boundary_ispec,codeabs,typeabs,anyabs, &
                          nelem_acoustic_surface, acoustic_edges, &
                          nglob,nrec,NSOURCES, &
-                         assign_external_model,pointsdisp, &
+                         assign_external_model,rhostore,rho_vpstore, &
+                         pointsdisp, &
                          nspec,ngnod,coupled_acoustic_elastic,coupled_acoustic_poro,coupled_elastic_poro, &
                          any_acoustic,any_poroelastic, &
                          fluid_solid_acoustic_ispec,fluid_solid_acoustic_iedge,num_fluid_solid_edges, &
@@ -406,7 +407,7 @@
 
             if (assign_external_model) then
 
-              x1 = (vpext(i,j,ispec)-vpImin) / (vpImax-vpImin)
+              x1 = (rho_vpstore(i,j,ispec)/rhostore(i,j,ispec) - vpImin) / (vpImax-vpImin)
 
             else
 

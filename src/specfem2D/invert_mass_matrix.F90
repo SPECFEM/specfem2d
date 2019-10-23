@@ -47,7 +47,7 @@
     ispec_is_elastic,ispec_is_acoustic,ispec_is_poroelastic, &
     assign_external_model, &
     density,poroelastcoef,porosity,tortuosity, &
-    vpext,rhoext,vsext, &
+    rhostore,rho_vpstore,rho_vsstore,mustore,kappastore, &
     num_abs_boundary_faces,abs_boundary_ispec,deltat, &
     codeabs,codeabs_corner, &
     ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
@@ -111,13 +111,9 @@
 
         ! if external density model (elastic or acoustic)
         if (assign_external_model) then
-          rhol = rhoext(i,j,ispec)
-          mul = rhol * vsext(i,j,ispec)
-          if (AXISYM) then ! CHECK kappa mm
-            kappal_relaxed = rhol * vpext(i,j,ispec)**2 - TWO_THIRDS * mul ! CHECK Kappa
-          else
-            kappal_relaxed = rhol * vpext(i,j,ispec)**2 - mul ! CHECK Kappa
-          endif
+          rhol = rhostore(i,j,ispec)
+          mul = mustore(i,j,ispec)
+          kappal_relaxed = kappastore(i,j,ispec)
         else
           rhol = density(1,kmato(ispec))
           lambda_relaxed = poroelastcoef(1,1,kmato(ispec))
@@ -515,13 +511,12 @@
 
               ! external velocity model
               if (assign_external_model) then
-                cpl = vpext(i,j,ispec)
-                csl = vsext(i,j,ispec)
-                rhol = rhoext(i,j,ispec)
+                rho_vp = rho_vpstore(i,j,ispec)
+                rho_vs = rho_vsstore(i,j,ispec)
+              else
+                rho_vp = rhol*cpl
+                rho_vs = rhol*csl
               endif
-
-              rho_vp = rhol*cpl
-              rho_vs = rhol*csl
 
               xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
               zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
@@ -566,13 +561,12 @@
 
               ! external velocity model
               if (assign_external_model) then
-                cpl = vpext(i,j,ispec)
-                csl = vsext(i,j,ispec)
-                rhol = rhoext(i,j,ispec)
+                rho_vp = rho_vpstore(i,j,ispec)
+                rho_vs = rho_vsstore(i,j,ispec)
+              else
+                rho_vp = rhol*cpl
+                rho_vs = rhol*csl
               endif
-
-              rho_vp = rhol*cpl
-              rho_vs = rhol*csl
 
               xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
               zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
@@ -618,13 +612,12 @@
 
               ! external velocity model
               if (assign_external_model) then
-                cpl = vpext(i,j,ispec)
-                csl = vsext(i,j,ispec)
-                rhol = rhoext(i,j,ispec)
+                rho_vp = rho_vpstore(i,j,ispec)
+                rho_vs = rho_vsstore(i,j,ispec)
+              else
+                rho_vp = rhol*cpl
+                rho_vs = rhol*csl
               endif
-
-              rho_vp = rhol*cpl
-              rho_vs = rhol*csl
 
               xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
               zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -670,13 +663,12 @@
 
               ! external velocity model
               if (assign_external_model) then
-                cpl = vpext(i,j,ispec)
-                csl = vsext(i,j,ispec)
-                rhol = rhoext(i,j,ispec)
+                rho_vp = rho_vpstore(i,j,ispec)
+                rho_vs = rho_vsstore(i,j,ispec)
+              else
+                rho_vp = rhol*cpl
+                rho_vs = rhol*csl
               endif
-
-              rho_vp = rhol*cpl
-              rho_vs = rhol*csl
 
               xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
               zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -745,16 +737,18 @@
               iglob = ibool(i,j,ispec)
               ! external velocity model
               if (assign_external_model) then
-                cpl = vpext(i,j,ispec)
-                rhol = rhoext(i,j,ispec)
+                rho_vp = rho_vpstore(i,j,ispec)
+              else
+                rho_vp = rhol*cpl
               endif
+
               xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
               zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
               jacobian1D = sqrt(xgamma**2 + zgamma**2)
               weight = jacobian1D * wzgll(j)
 
               rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                    + deltatover2*weight/cpl/rhol
+                    + deltatover2*weight/rho_vp
             enddo
           endif  !  end of left absorbing boundary
 
@@ -767,8 +761,9 @@
               iglob = ibool(i,j,ispec)
               ! external velocity model
               if (assign_external_model) then
-                cpl = vpext(i,j,ispec)
-                rhol = rhoext(i,j,ispec)
+                rho_vp = rho_vpstore(i,j,ispec)
+              else
+                rho_vp = rhol*cpl
               endif
               xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
               zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
@@ -776,7 +771,7 @@
               weight = jacobian1D * wzgll(j)
 
               rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                    + deltatover2*weight/cpl/rhol
+                    + deltatover2*weight/rho_vp
             enddo
           endif  !  end of right absorbing boundary
 
@@ -792,8 +787,9 @@
               iglob = ibool(i,j,ispec)
               ! external velocity model
               if (assign_external_model) then
-                cpl = vpext(i,j,ispec)
-                rhol = rhoext(i,j,ispec)
+                rho_vp = rho_vpstore(i,j,ispec)
+              else
+                rho_vp = rhol*cpl
               endif
               xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
               zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -801,7 +797,7 @@
               weight = jacobian1D * wxgll(i)
 
               rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                   + deltatover2*weight/cpl/rhol
+                   + deltatover2*weight/rho_vp
             enddo
           endif  !  end of bottom absorbing boundary
 
@@ -817,8 +813,9 @@
               iglob = ibool(i,j,ispec)
               ! external velocity model
               if (assign_external_model) then
-                cpl = vpext(i,j,ispec)
-                rhol = rhoext(i,j,ispec)
+                rho_vp = rho_vpstore(i,j,ispec)
+              else
+                rho_vp = rhol*cpl
               endif
               xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
               zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -826,7 +823,7 @@
               weight = jacobian1D * wxgll(i)
 
               rmass_inverse_acoustic(iglob) = rmass_inverse_acoustic(iglob) &
-                   + deltatover2*weight/cpl/rhol
+                   + deltatover2*weight/rho_vp
             enddo
           endif  !  end of top absorbing boundary
         endif ! ispec_is_acoustic
@@ -857,6 +854,7 @@
 
   if (myrank == 0) then
     write(IMAIN,*) "  inverting mass matrices"
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 

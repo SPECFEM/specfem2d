@@ -1275,11 +1275,14 @@
   if (NOISE_TOMOGRAPHY < 0 .or. NOISE_TOMOGRAPHY > 3) &
     call stop_the_code('NOISE_TOMOGRAPHY can only be set to 0, 1, 2 or 3 in the Par_file; exiting')
 
-  if (N_SLS < 2) call stop_the_code('must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays')
+  if (N_SLS < 2) &
+    call stop_the_code('must have N_SLS >= 2 even if attenuation if off because it is used to assign some arrays')
 
-  if (ngnod /= 4 .and. ngnod /= 9) call stop_the_code('ngnod should be either 4 or 9!')
+  if (ngnod /= 4 .and. ngnod /= 9) &
+    call stop_the_code('ngnod should be either 4 or 9!')
 
-  if (subsamp_seismos < 1) call stop_the_code('Error: subsamp_seismos must be >= 1')
+  if (subsamp_seismos < 1) &
+    call stop_the_code('Error: subsamp_seismos must be >= 1')
 
   if (output_color_image .and. USE_CONSTANT_MAX_AMPLITUDE .and. CONSTANT_MAX_AMPLITUDE_TO_USE < 0.d0) &
     call stop_the_code('CONSTANT_MAX_AMPLITUDE_TO_USE must be strictly positive')
@@ -1296,7 +1299,8 @@
   if (DT == 0.d0) call stop_the_code('DT must be non-zero value')
 
   ! reads in material definitions
-  if (nbmodels <= 0) call stop_the_code('Non-positive number of materials not allowed!')
+  if (nbmodels <= 0) &
+    call stop_the_code('Non-positive number of materials not allowed!')
 
   ! CPML and Stacey are mutually exclusive
   if (STACEY_ABSORBING_CONDITIONS .and. PML_BOUNDARY_CONDITIONS) &
@@ -1325,12 +1329,17 @@
     if (nbregions <= 0) call stop_the_code('Negative number of regions not allowed for internal meshing!')
   endif
 
-  if (NUMBER_OF_SIMULTANEOUS_RUNS <= 0) call stop_the_code('NUMBER_OF_SIMULTANEOUS_RUNS <= 0 makes no sense')
+  if (NUMBER_OF_SIMULTANEOUS_RUNS <= 0) &
+    call stop_the_code('NUMBER_OF_SIMULTANEOUS_RUNS <= 0 makes no sense')
 
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. NPROC == 1) call stop_the_code('Serial runs require NUMBER_OF_SIMULTANEOUS_RUNS == 1')
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. NPROC == 1) &
+    call stop_the_code('Serial runs require NUMBER_OF_SIMULTANEOUS_RUNS == 1')
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. trim(SAVE_MODEL) /= 'default' .and. trim(SAVE_MODEL) /= '.false.') &
     call stop_the_code('NUMBER_OF_SIMULTANEOUS_RUNS not compatible yet with SAVE_MODEL. Look for SMNSR in the source code')
+
+  if (setup_with_binary_database /= 0 .and. setup_with_binary_database /= 1 .and. setup_with_binary_database /= 2) &
+    call stop_the_code('setup_with_binary_database parameter should be either 0, 1 or 2')
 
   end subroutine check_parameters
 

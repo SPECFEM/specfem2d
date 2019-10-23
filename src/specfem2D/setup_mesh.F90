@@ -40,6 +40,7 @@
 
   implicit none
 
+  ! checks if anything to do
   if (setup_with_binary_database == 2) return
 
   ! user output
@@ -534,28 +535,19 @@
 
 ! external models
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,FOUR_THIRDS,TWO_THIRDS
   use specfem_par
 
   implicit none
 
   ! local parameters
   integer :: nspec_ext,ier
+  integer :: i,j,ispec
+  ! temporary arrays for reading
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhoext,vsext,vpext
 
-  ! allocates material arrays for vp vs rho QKappa Qmu
-  if (assign_external_model) then
-    nspec_ext = nspec
-  else
-    ! dummy allocations
-    nspec_ext = 1
-  endif
-
-  allocate(vpext(NGLLX,NGLLZ,nspec_ext), &
-           vsext(NGLLX,NGLLZ,nspec_ext), &
-           rhoext(NGLLX,NGLLZ,nspec_ext), &
-           QKappa_attenuationext(NGLLX,NGLLZ,nspec_ext), &
-           Qmu_attenuationext(NGLLX,NGLLZ,nspec_ext),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating external model arrays for vp vs rho attenuation')
+  ! for shifting of velocities if needed in the case of viscoelasticity
+  double precision :: vp,vs,rhol,mul,lambdal,kappal,qmul,qkappal
 
   ! The following line is important. For external model defined from tomography file ; material line in Par_file like that:
   ! model_number -1 0 0 A 0 0 0 0 0 0 0 0 0 0
@@ -563,33 +555,219 @@
   if (tomo_material > 0) MODEL = 'tomo'
 
   ! allocates material arrays for c11 c13 c15 c33 c35 c55 c12 c23 c25 c22
-  if (assign_external_model .and. ( trim(MODEL) == 'external' .or. &
-                                    trim(MODEL) == 'tomo' .or. trim(MODEL) == 'binary_voigt' ) ) then
+  if (trim(MODEL) == 'external' .or. trim(MODEL) == 'tomo' .or. trim(MODEL) == 'binary_voigt' ) then
     nspec_ext = nspec
   else
     ! dummy allocations
     nspec_ext = 1
   endif
 
-  allocate(c11ext(NGLLX,NGLLZ,nspec_ext), &
-           c13ext(NGLLX,NGLLZ,nspec_ext), &
-           c15ext(NGLLX,NGLLZ,nspec_ext), &
-           c33ext(NGLLX,NGLLZ,nspec_ext), &
-           c35ext(NGLLX,NGLLZ,nspec_ext), &
-           c55ext(NGLLX,NGLLZ,nspec_ext), &
-           c12ext(NGLLX,NGLLZ,nspec_ext), &
-           c23ext(NGLLX,NGLLZ,nspec_ext), &
-           c25ext(NGLLX,NGLLZ,nspec_ext), &
-           c22ext(NGLLX,NGLLZ,nspec_ext),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating external model arrays for anisotropy')
-
-  ! reads in external models
+  ! allocates material arrays for vp vs rho QKappa Qmu
   if (assign_external_model) then
+    allocate(vpext(NGLLX,NGLLZ,nspec), &
+             vsext(NGLLX,NGLLZ,nspec), &
+             rhoext(NGLLX,NGLLZ,nspec), &
+             QKappa_attenuationext(NGLLX,NGLLZ,nspec), &
+             Qmu_attenuationext(NGLLX,NGLLZ,nspec),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating external model arrays for vp vs rho attenuation')
+
+    ! allocates material arrays for c11 c13 c15 c33 c35 c55 c12 c23 c25 c22
+    allocate(c11ext(NGLLX,NGLLZ,nspec_ext), &
+             c13ext(NGLLX,NGLLZ,nspec_ext), &
+             c15ext(NGLLX,NGLLZ,nspec_ext), &
+             c33ext(NGLLX,NGLLZ,nspec_ext), &
+             c35ext(NGLLX,NGLLZ,nspec_ext), &
+             c55ext(NGLLX,NGLLZ,nspec_ext), &
+             c12ext(NGLLX,NGLLZ,nspec_ext), &
+             c23ext(NGLLX,NGLLZ,nspec_ext), &
+             c25ext(NGLLX,NGLLZ,nspec_ext), &
+             c22ext(NGLLX,NGLLZ,nspec_ext),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating external model arrays for anisotropy')
+
+    ! reads in external models
     if (myrank == 0) then
       write(IMAIN,*) 'Assigning an external velocity and density model'
       call flush_IMAIN()
     endif
-    call read_external_model()
+
+    call read_external_model(rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext, &
+                             nspec_ext,c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext,c33ext,c35ext,c55ext)
+
+  else
+    ! dummy
+    allocate(vpext(1,1,1), &
+             vsext(1,1,1), &
+             rhoext(1,1,1), &
+             QKappa_attenuationext(1,1,1), &
+             Qmu_attenuationext(1,1,1),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating external model arrays for vp vs rho attenuation')
+    allocate(c11ext(1,1,1), &
+             c13ext(1,1,1), &
+             c15ext(1,1,1), &
+             c33ext(1,1,1), &
+             c35ext(1,1,1), &
+             c55ext(1,1,1), &
+             c12ext(1,1,1), &
+             c23ext(1,1,1), &
+             c25ext(1,1,1), &
+             c22ext(1,1,1),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating external model arrays for anisotropy')
+  endif
+
+  ! allocates material arrays
+  allocate(kappastore(NGLLX,NGLLZ,nspec), &
+           mustore(NGLLX,NGLLZ,nspec), &
+           rhostore(NGLLX,NGLLZ,nspec), &
+           qkappa_attenuation_store(NGLLX,NGLLZ,nspec), &
+           qmu_attenuation_store(NGLLX,NGLLZ,nspec), &
+           rho_vpstore(NGLLX,NGLLZ,nspec), &
+           rho_vsstore(NGLLX,NGLLZ,nspec),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating material arrays')
+
+  ! sets new material properties
+  ! note: velocities might have been shifted by attenuation
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'setup material arrays'
+    call flush_IMAIN()
+  endif
+
+  do ispec = 1,nspec
+    do j = 1,NGLLZ
+      do i = 1,NGLLX
+        if (assign_external_model) then
+          ! external model
+          rhol = rhoext(i,j,ispec)
+          vp = vpext(i,j,ispec)
+          vs = vsext(i,j,ispec)
+          ! determins mu and kappa
+          mul = rhol * vs * vs
+          if (AXISYM) then ! CHECK kappa
+            kappal = rhol * vp * vp - FOUR_THIRDS * mul
+          else
+            kappal = rhol * vp * vp - mul
+          endif
+          ! to compare:
+          !lambdal = rhol * vp*vp - TWO * mul
+          !if (AXISYM) then ! CHECK kappa
+          !  kappal = lambdal + TWO_THIRDS * mul
+          !  vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
+          !else
+          !  kappal = lambdal + mul
+          !  vp = sqrt((kappal + mul)/rhol)
+          !endif
+          !
+          ! and/or:
+          !if (AXISYM) then
+          !  lambdal = kappal - TWO_THIRDS * mul
+          !else
+          !  lambdal = kappal - mul
+          !endif
+          !attenuation
+          qmul = Qmu_attenuationext(i,j,ispec)
+          qkappal = QKappa_attenuationext(i,j,ispec)
+        else
+          ! internal mesh
+          rhol = density(1,kmato(ispec))
+          lambdal = poroelastcoef(1,1,kmato(ispec))
+          mul = poroelastcoef(2,1,kmato(ispec))
+          if (AXISYM) then ! CHECK kappa
+            kappal = lambdal + TWO_THIRDS * mul
+            vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
+          else
+            kappal = lambdal + mul
+            vp = sqrt((kappal + mul)/rhol)
+          endif
+          ! attenuation
+          qmul = Qmu_attenuationcoef(kmato(ispec))
+          qkappal = Qkappa_attenuationcoef(kmato(ispec))
+        endif
+
+        ! stores moduli
+        rhostore(i,j,ispec) = rhol
+        mustore(i,j,ispec) = mul
+        kappastore(i,j,ispec) = kappal
+
+        qmu_attenuation_store(i,j,ispec) = qmul
+        qkappa_attenuation_store(i,j,ispec) = qkappal
+
+        ! stores density times vp and vs
+        vs = sqrt(mul/rhol)
+
+        rho_vpstore(i,j,ispec) = rhol * vp
+        rho_vsstore(i,j,ispec) = rhol * vs
+      enddo
+    enddo
+  enddo
+
+  ! free memory
+  deallocate(rhoext,vpext,vsext)
+
+  ! anisotropy
+  if (any_anisotropy .or. nspec_ext == nspec) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  setting up anisotropic arrays'
+      call flush_IMAIN()
+    endif
+
+    allocate(c11store(NGLLX,NGLLZ,NSPEC), &
+             c12store(NGLLX,NGLLZ,NSPEC), &
+             c13store(NGLLX,NGLLZ,NSPEC), &
+             c15store(NGLLX,NGLLZ,NSPEC), &
+             c22store(NGLLX,NGLLZ,NSPEC), &
+             c23store(NGLLX,NGLLZ,NSPEC), &
+             c25store(NGLLX,NGLLZ,NSPEC), &
+             c33store(NGLLX,NGLLZ,NSPEC), &
+             c35store(NGLLX,NGLLZ,NSPEC), &
+             c55store(NGLLX,NGLLZ,NSPEC),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating aniso material arrays')
+    c11store(:,:,:) = 0.0_CUSTOM_REAL
+    c12store(:,:,:) = 0.0_CUSTOM_REAL
+    c13store(:,:,:) = 0.0_CUSTOM_REAL
+    c15store(:,:,:) = 0.0_CUSTOM_REAL
+    c22store(:,:,:) = 0.0_CUSTOM_REAL
+    c23store(:,:,:) = 0.0_CUSTOM_REAL
+    c25store(:,:,:) = 0.0_CUSTOM_REAL
+    c33store(:,:,:) = 0.0_CUSTOM_REAL
+    c35store(:,:,:) = 0.0_CUSTOM_REAL
+    c55store(:,:,:) = 0.0_CUSTOM_REAL
+
+    do ispec = 1,nspec
+      do j = 1,NGLLZ
+        do i = 1,NGLLX
+          if (assign_external_model) then
+            c11store(i,j,ispec) = c11ext(i,j,ispec)
+            c12store(i,j,ispec) = c12ext(i,j,ispec)
+            c13store(i,j,ispec) = c13ext(i,j,ispec)
+            c15store(i,j,ispec) = c15ext(i,j,ispec)
+            c22store(i,j,ispec) = c22ext(i,j,ispec) ! for AXISYM
+            c23store(i,j,ispec) = c23ext(i,j,ispec)
+            c25store(i,j,ispec) = c25ext(i,j,ispec)
+            c33store(i,j,ispec) = c33ext(i,j,ispec)
+            c35store(i,j,ispec) = c35ext(i,j,ispec)
+            c55store(i,j,ispec) = c55ext(i,j,ispec)
+          else
+            c11store(i,j,ispec) = sngl(anisotropycoef(1,kmato(ispec)))
+            c13store(i,j,ispec) = sngl(anisotropycoef(2,kmato(ispec)))
+            c15store(i,j,ispec) = sngl(anisotropycoef(3,kmato(ispec)))
+            c33store(i,j,ispec) = sngl(anisotropycoef(4,kmato(ispec)))
+            c35store(i,j,ispec) = sngl(anisotropycoef(5,kmato(ispec)))
+            c55store(i,j,ispec) = sngl(anisotropycoef(6,kmato(ispec)))
+            c12store(i,j,ispec) = sngl(anisotropycoef(7,kmato(ispec)))
+            c23store(i,j,ispec) = sngl(anisotropycoef(8,kmato(ispec)))
+            c25store(i,j,ispec) = sngl(anisotropycoef(9,kmato(ispec)))
+            c22store(i,j,ispec) = sngl(anisotropycoef(10,kmato(ispec))) ! for AXISYM
+          endif
+        enddo
+      enddo
+    enddo
+  else
+    ! dummy allocations
+    allocate(c11store(1,1,1),c12store(1,1,1),c13store(1,1,1),c15store(1,1,1), &
+             c22store(1,1,1),c23store(1,1,1),c25store(1,1,1), &
+             c33store(1,1,1),c35store(1,1,1),c55store(1,1,1),stat=ier)
+    if (ier /= 0) call stop_the_code('Error allocating dummy aniso material arrays')
   endif
 
   ! synchronizes all processes

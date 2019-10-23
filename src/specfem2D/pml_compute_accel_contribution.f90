@@ -49,7 +49,7 @@
     NGLJ,TWO_THIRDS
 
   use specfem_par, only: time_stepping_scheme,i_stage,it,deltat, &
-                         assign_external_model,rhoext,vpext,density,poroelastcoef,kmato, &
+                         assign_external_model,rhostore,kappastore,density,poroelastcoef,kmato, &
                          ibool,jacobian, &
                          wxgll,wzgll, &
                          rmemory_potential_acoustic,rmemory_potential_acoustic_LDDRK, &
@@ -80,7 +80,7 @@
   double precision :: A0,A1,A2,A3,A4,bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2
 
   ! material properties of the acoustic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,rhol
+  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,rhol
   real(kind=CUSTOM_REAL) :: fac
 
   ! checks if anything to do in this slice
@@ -152,11 +152,10 @@
 
       ! material properties
       if (assign_external_model) then
-        rhol = rhoext(i,j,ispec)
-        cpl = vpext(i,j,ispec)
+        rhol = rhostore(i,j,ispec)
         !assuming that in fluid(acoustic) part input cpl is defined by sqrt(kappal/rhol), &
         !which is not the same as in cpl input in elastic part
-        kappal = rhol * cpl * cpl ! CHECK Kappa : it is ok here because we are in acoustic elements
+        kappal = kappastore(i,j,ispec)
       else
         rhol = density(1,kmato(ispec))
         lambdal_relaxed = poroelastcoef(1,1,kmato(ispec))
@@ -206,7 +205,7 @@
                        CPML_X_ONLY,CPML_Z_ONLY,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
 
   use specfem_par, only: time_stepping_scheme,i_stage,deltat, &
-                         assign_external_model,rhoext,density,kmato, &
+                         assign_external_model,rhostore,density,kmato, &
                          ibool,jacobian,wxgll,wzgll, &
                          AXISYM,is_on_the_axis,coord,wxglj, &
                          rmemory_displ_elastic,rmemory_displ_elastic_LDDRK
@@ -312,7 +311,7 @@
       end select
 
       if (assign_external_model) then
-        rhol = rhoext(i,j,ispec)
+        rhol = rhostore(i,j,ispec)
       else
         rhol = density(1,kmato(ispec))
       endif

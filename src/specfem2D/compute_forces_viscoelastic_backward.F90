@@ -42,8 +42,9 @@
                          ATTENUATION_VISCOELASTIC,nspec_ATT,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
-                         jacobian,vpext,vsext,rhoext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
-                         ispec_is_anisotropic,anisotropy, &
+                         jacobian,rho_vpstore,mustore,rhostore, &
+                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
+                         ispec_is_anisotropic,anisotropycoef, &
                          e1_LDDRK,e11_LDDRK,e13_LDDRK, &
                          e1_initial_rk,e11_initial_rk,e13_initial_rk,e1_force_RK, e11_force_RK, e13_force_RK, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
@@ -99,7 +100,7 @@
 
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
-    lambdalplusmul_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,cpl,csl,rhol
+    lambdalplusmul_unrelaxed_elastic,lambdaplus2mu_unrelaxed_elastic,cpl,rhol
 
   ! for attenuation
   real(kind=CUSTOM_REAL) :: phinu1,phinu2,theta_n_u,theta_nsub1_u
@@ -291,10 +292,9 @@
         do i = 1,NGLLX
           !--- if external medium, get elastic parameters of current grid point
           if (assign_external_model) then
-            cpl = vpext(i,j,ispec)
-            csl = vsext(i,j,ispec)
-            rhol = rhoext(i,j,ispec)
-            mul_unrelaxed_elastic = rhol*csl*csl
+            mul_unrelaxed_elastic = mustore(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec)/rhol
             lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
             lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
             lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
@@ -526,15 +526,15 @@
               c23 = c23ext(i,j,ispec)
               c25 = c25ext(i,j,ispec)
             else
-              c11 = anisotropy(1,kmato(ispec))
-              c13 = anisotropy(2,kmato(ispec))
-              c15 = anisotropy(3,kmato(ispec))
-              c33 = anisotropy(4,kmato(ispec))
-              c35 = anisotropy(5,kmato(ispec))
-              c55 = anisotropy(6,kmato(ispec))
-              c12 = anisotropy(7,kmato(ispec))
-              c23 = anisotropy(8,kmato(ispec))
-              c25 = anisotropy(9,kmato(ispec))
+              c11 = anisotropycoef(1,kmato(ispec))
+              c13 = anisotropycoef(2,kmato(ispec))
+              c15 = anisotropycoef(3,kmato(ispec))
+              c33 = anisotropycoef(4,kmato(ispec))
+              c35 = anisotropycoef(5,kmato(ispec))
+              c55 = anisotropycoef(6,kmato(ispec))
+              c12 = anisotropycoef(7,kmato(ispec))
+              c23 = anisotropycoef(8,kmato(ispec))
+              c25 = anisotropycoef(9,kmato(ispec))
             endif
 
             ! implement anisotropy in 2D

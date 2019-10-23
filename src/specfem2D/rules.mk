@@ -133,6 +133,7 @@ specfem2D_OBJECTS = \
 	$O/pml_compute_memory_variables.spec.o \
 	$O/prepare_absorb.spec.o \
 	$O/prepare_assemble_MPI.spec.o \
+	$O/prepare_attenuation.spec.o \
 	$O/prepare_color_image.spec.o \
 	$O/prepare_gpu.spec.o \
 	$O/prepare_initial_field.spec.o \

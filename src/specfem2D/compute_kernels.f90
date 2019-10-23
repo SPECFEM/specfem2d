@@ -250,7 +250,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,ZERO,HALF,TWO
 
   use specfem_par, only: nspec,ispec_is_acoustic,ibool,kappal_ac_global,rhol_ac_global, &
-                         poroelastcoef,density,kmato,assign_external_model,rhoext,vpext,deltat, &
+                         poroelastcoef,density,kmato,assign_external_model,rhostore,kappastore,deltat, &
                          hprime_xx,hprime_zz,xix,xiz,gammax,gammaz, &
                          potential_acoustic,b_potential_acoustic,potential_dot_dot_acoustic, &
                          accel_ac,b_displ_ac,NSTEP_BETWEEN_COMPUTE_KERNELS, &
@@ -272,12 +272,14 @@
         do j = 1, NGLLZ
           do i = 1, NGLLX
             iglob = ibool(i,j,ispec)
-            if (.not. assign_external_model) then
+            if (assign_external_model) then
+              kappal_ac_global(iglob) = kappastore(i,j,ispec)
+              rhol_ac_global(iglob)   = rhostore(i,j,ispec)
+            else
+              ! daniel todo: please check... kappa here might be used different,
+              !              poroelastcoef(3,..) is usually defined as lambda + 2 mu
               kappal_ac_global(iglob) = poroelastcoef(3,1,kmato(ispec))
               rhol_ac_global(iglob) = density(1,kmato(ispec))
-            else
-              kappal_ac_global(iglob) = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec)
-              rhol_ac_global(iglob)   = rhoext(i,j,ispec)
             endif
 
             ! calcul the displacement by computing the gradient of potential / rho

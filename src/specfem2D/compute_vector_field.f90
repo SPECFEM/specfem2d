@@ -80,7 +80,7 @@
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
 
   use specfem_par, only: nglob_acoustic,nglob_elastic,nglob_poroelastic, &
-    assign_external_model,density,kmato,rhoext, &
+    assign_external_model,density,kmato,rhostore, &
     hprimeBar_xx,hprime_xx,hprime_zz, &
     xix,xiz,gammax,gammaz,ibool, &
     ispec_is_elastic,ispec_is_poroelastic,ispec_is_acoustic, &
@@ -187,7 +187,7 @@
         gammaxl = gammax(i,j,ispec)
         gammazl = gammaz(i,j,ispec)
 
-        if (assign_external_model) rhol = rhoext(i,j,ispec)
+        if (assign_external_model) rhol = rhostore(i,j,ispec)
 
         ! derivatives of potential
         vector_field_element(1,i,j) = real((tempx1l*xixl + tempx2l*gammaxl) / rhol,kind=CUSTOM_REAL) ! u_x = 1/rho dChi/dx

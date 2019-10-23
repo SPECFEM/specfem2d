@@ -43,7 +43,7 @@
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge, &
                          kmato,poroelastcoef, &
-                         assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropy, &
+                         assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropycoef, &
                          displ_elastic,b_displ_elastic,displs_poroelastic,displw_poroelastic, &
                          b_displs_poroelastic,b_displw_poroelastic, &
                          accel_elastic,b_accel_elastic
@@ -275,15 +275,15 @@
           c23 = c23ext(ii2,jj2,ispec_elastic)
           c25 = c25ext(ii2,jj2,ispec_elastic)
         else
-          c11 = anisotropy(1,kmato(ispec_elastic))
-          c13 = anisotropy(2,kmato(ispec_elastic))
-          c15 = anisotropy(3,kmato(ispec_elastic))
-          c33 = anisotropy(4,kmato(ispec_elastic))
-          c35 = anisotropy(5,kmato(ispec_elastic))
-          c55 = anisotropy(6,kmato(ispec_elastic))
-          c12 = anisotropy(7,kmato(ispec_elastic))
-          c23 = anisotropy(8,kmato(ispec_elastic))
-          c25 = anisotropy(9,kmato(ispec_elastic))
+          c11 = anisotropycoef(1,kmato(ispec_elastic))
+          c13 = anisotropycoef(2,kmato(ispec_elastic))
+          c15 = anisotropycoef(3,kmato(ispec_elastic))
+          c33 = anisotropycoef(4,kmato(ispec_elastic))
+          c35 = anisotropycoef(5,kmato(ispec_elastic))
+          c55 = anisotropycoef(6,kmato(ispec_elastic))
+          c12 = anisotropycoef(7,kmato(ispec_elastic))
+          c23 = anisotropycoef(8,kmato(ispec_elastic))
+          c25 = anisotropycoef(9,kmato(ispec_elastic))
         endif
 
         sigma_xx = sigma_xx + c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl
@@ -366,7 +366,7 @@
                          solid_poro_elastic_ispec,solid_poro_elastic_iedge, &
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge, &
                          kmato,poroelastcoef, &
-                         assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropy, &
+                         assign_external_model,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,anisotropycoef, &
                          displ_elastic,b_displ_elastic,displs_poroelastic,displw_poroelastic, &
                          b_displs_poroelastic,b_displw_poroelastic, &
                          accel_elastic,b_accel_elastic
@@ -585,15 +585,15 @@
           c23 = c23ext(ii2,jj2,ispec_elastic)
           c25 = c25ext(ii2,jj2,ispec_elastic)
         else
-          c11 = anisotropy(1,kmato(ispec_elastic))
-          c13 = anisotropy(2,kmato(ispec_elastic))
-          c15 = anisotropy(3,kmato(ispec_elastic))
-          c33 = anisotropy(4,kmato(ispec_elastic))
-          c35 = anisotropy(5,kmato(ispec_elastic))
-          c55 = anisotropy(6,kmato(ispec_elastic))
-          c12 = anisotropy(7,kmato(ispec_elastic))
-          c23 = anisotropy(8,kmato(ispec_elastic))
-          c25 = anisotropy(9,kmato(ispec_elastic))
+          c11 = anisotropycoef(1,kmato(ispec_elastic))
+          c13 = anisotropycoef(2,kmato(ispec_elastic))
+          c15 = anisotropycoef(3,kmato(ispec_elastic))
+          c33 = anisotropycoef(4,kmato(ispec_elastic))
+          c35 = anisotropycoef(5,kmato(ispec_elastic))
+          c55 = anisotropycoef(6,kmato(ispec_elastic))
+          c12 = anisotropycoef(7,kmato(ispec_elastic))
+          c23 = anisotropycoef(8,kmato(ispec_elastic))
+          c25 = anisotropycoef(9,kmato(ispec_elastic))
         endif
 
         sigma_xx = sigma_xx + c11*dux_dxl + c15*(duz_dxl + dux_dzl) + c13*duz_dzl

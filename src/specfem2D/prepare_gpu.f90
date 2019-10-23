@@ -188,7 +188,7 @@
                                        rmassx,rmassz, &
                                        num_phase_ispec_elastic,phase_ispec_inner_elastic, &
                                        ispec_is_elastic, &
-                                       ANY_ANISOTROPY, &
+                                       any_anisotropy, &
                                        c11store,c12store,c13store, &
                                        c15store,c23store, &
                                        c25store,c33store,c35store,c55store, &
@@ -239,7 +239,7 @@
   if (STACEY_ABSORBING_CONDITIONS) then
     call prepare_Stacey_device(Mesh_pointer, &
                                any_acoustic,any_elastic, &
-                               rho_vp,rho_vs, &
+                               rho_vpstore,rho_vsstore, &
                                nspec_bottom, &
                                nspec_left, &
                                nspec_right, &
@@ -620,76 +620,6 @@
       endif
     enddo
   enddo
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!! Initialisation parametres pour simulation elastique
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-  ! anisotropy
-  ANY_ANISOTROPY = .false.
-  do ispec = 1, nspec
-    if (ispec_is_anisotropic(ispec) ) ANY_ANISOTROPY = .true.
-  enddo
-
-  if (ANY_ANISOTROPY) then
-    ! user output
-    if (myrank == 0) write(IMAIN,*) '  setting up anisotropic arrays'
-
-    allocate(c11store(NGLLX,NGLLZ,NSPEC))
-    allocate(c13store(NGLLX,NGLLZ,NSPEC))
-    allocate(c15store(NGLLX,NGLLZ,NSPEC))
-    allocate(c33store(NGLLX,NGLLZ,NSPEC))
-    allocate(c35store(NGLLX,NGLLZ,NSPEC))
-    allocate(c55store(NGLLX,NGLLZ,NSPEC))
-    allocate(c12store(NGLLX,NGLLZ,NSPEC))
-    allocate(c23store(NGLLX,NGLLZ,NSPEC))
-    allocate(c25store(NGLLX,NGLLZ,NSPEC))
-
-    if (assign_external_model) then
-      do ispec = 1,nspec
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            c11store(i,j,ispec) = c11ext(i,j,ispec)
-            c13store(i,j,ispec) = c13ext(i,j,ispec)
-            c15store(i,j,ispec) = c15ext(i,j,ispec)
-            c33store(i,j,ispec) = c33ext(i,j,ispec)
-            c35store(i,j,ispec) = c35ext(i,j,ispec)
-            c55store(i,j,ispec) = c55ext(i,j,ispec)
-            c12store(i,j,ispec) = c12ext(i,j,ispec)
-            c23store(i,j,ispec) = c23ext(i,j,ispec)
-            c25store(i,j,ispec) = c25ext(i,j,ispec)
-          enddo
-       enddo
-      enddo
-    else
-      do ispec = 1,nspec
-        do j = 1,NGLLZ
-          do i = 1,NGLLX
-            c11store(i,j,ispec) = sngl(anisotropy(1,kmato(ispec)))
-            c13store(i,j,ispec) = sngl(anisotropy(2,kmato(ispec)))
-            c15store(i,j,ispec) = sngl(anisotropy(3,kmato(ispec)))
-            c33store(i,j,ispec) = sngl(anisotropy(4,kmato(ispec)))
-            c35store(i,j,ispec) = sngl(anisotropy(5,kmato(ispec)))
-            c55store(i,j,ispec) = sngl(anisotropy(6,kmato(ispec)))
-            c12store(i,j,ispec) = sngl(anisotropy(7,kmato(ispec)))
-            c23store(i,j,ispec) = sngl(anisotropy(8,kmato(ispec)))
-            c25store(i,j,ispec) = sngl(anisotropy(9,kmato(ispec)))
-          enddo
-        enddo
-      enddo
-    endif
-  else
-    ! dummy allocations
-    allocate(c11store(1,1,1))
-    allocate(c13store(1,1,1))
-    allocate(c15store(1,1,1))
-    allocate(c33store(1,1,1))
-    allocate(c35store(1,1,1))
-    allocate(c55store(1,1,1))
-    allocate(c12store(1,1,1))
-    allocate(c23store(1,1,1))
-    allocate(c25store(1,1,1))
-  endif
 
   ! user output
   if (myrank == 0) then

@@ -37,6 +37,7 @@
 
   implicit none
 
+  ! checks if anything to do
   if (setup_with_binary_database == 2) return
 
   ! locates sources and determines simulation start time t0

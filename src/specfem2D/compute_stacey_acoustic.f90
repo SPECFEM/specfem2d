@@ -43,7 +43,7 @@
                          abs_boundary_ispec,ispec_is_acoustic, &
                          codeabs,codeabs_corner, &
                          density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-                         vpext,rhoext, &
+                         rho_vpstore, &
                          wxgll,wzgll, &
                          ibegin_edge1,iend_edge1,ibegin_edge3,iend_edge3, &
                          ibegin_edge4,iend_edge4,ibegin_edge2,iend_edge2, &
@@ -64,7 +64,7 @@
   integer :: ibegin,iend,jbegin,jend
   real(kind=CUSTOM_REAL) :: weight,xxi,zxi,xgamma,zgamma,jacobian1D
   ! material properties of the acoustic medium
-  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,rhol
+  real(kind=CUSTOM_REAL) :: mul_relaxed,lambdal_relaxed,kappal,cpl,rhol,rho_vp
 
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
@@ -87,7 +87,6 @@
       endif
 
       rhol = density(1,kmato(ispec))
-
       cpl = sqrt(kappal/rhol)
 
       !--- left absorbing boundary
@@ -99,8 +98,9 @@
           iglob = ibool(i,j,ispec)
           ! external velocity model
           if (assign_external_model) then
-            cpl = vpext(i,j,ispec)
-            rhol = rhoext(i,j,ispec)
+            rho_vp = rho_vpstore(i,j,ispec)
+          else
+            rho_vp = rhol*cpl
           endif
           xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
           zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
@@ -108,13 +108,13 @@
           weight = jacobian1D * wzgll(j)
 
           ! adds absorbing boundary contribution
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/rho_vp
           if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
-                   dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+                   dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/rho_vp
 
           if (SAVE_FORWARD) then
             ! saves contribution
-            b_absorb_acoustic_left(j,ib_left(ispecabs),it) = potential_dot_acoustic(iglob) * weight/cpl/rhol
+            b_absorb_acoustic_left(j,ib_left(ispecabs),it) = potential_dot_acoustic(iglob) * weight/rho_vp
           endif
         enddo
       endif  !  end of left absorbing boundary
@@ -128,8 +128,9 @@
           iglob = ibool(i,j,ispec)
           ! external velocity model
           if (assign_external_model) then
-            cpl = vpext(i,j,ispec)
-            rhol = rhoext(i,j,ispec)
+            rho_vp = rho_vpstore(i,j,ispec)
+          else
+            rho_vp = rhol*cpl
           endif
           xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
           zgamma = + xix(i,j,ispec) * jacobian(i,j,ispec)
@@ -137,13 +138,13 @@
           weight = jacobian1D * wzgll(j)
 
           ! adds absorbing boundary contribution
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/rho_vp
           if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
-                 dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+                 dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/rho_vp
 
           if (SAVE_FORWARD) then
             ! saves contribution
-            b_absorb_acoustic_right(j,ib_right(ispecabs),it) = potential_dot_acoustic(iglob) * weight/cpl/rhol
+            b_absorb_acoustic_right(j,ib_right(ispecabs),it) = potential_dot_acoustic(iglob) * weight/rho_vp
           endif
         enddo
       endif  !  end of right absorbing boundary
@@ -160,8 +161,9 @@
           iglob = ibool(i,j,ispec)
           ! external velocity model
           if (assign_external_model) then
-            cpl = vpext(i,j,ispec)
-            rhol = rhoext(i,j,ispec)
+            rho_vp = rho_vpstore(i,j,ispec)
+          else
+            rho_vp = rhol*cpl
           endif
           xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
           zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -169,13 +171,13 @@
           weight = jacobian1D * wxgll(i)
 
           ! adds absorbing boundary contribution
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/rho_vp
           if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
-             dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+             dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/rho_vp
 
           if (SAVE_FORWARD) then
             ! saves contribution
-            b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),it) = potential_dot_acoustic(iglob) * weight/cpl/rhol
+            b_absorb_acoustic_bottom(i,ib_bottom(ispecabs),it) = potential_dot_acoustic(iglob) * weight/rho_vp
           endif
         enddo
       endif  !  end of bottom absorbing boundary
@@ -192,8 +194,9 @@
           iglob = ibool(i,j,ispec)
           ! external velocity model
           if (assign_external_model) then
-            cpl = vpext(i,j,ispec)
-            rhol = rhoext(i,j,ispec)
+            rho_vp = rho_vpstore(i,j,ispec)
+          else
+            rho_vp = rhol*cpl
           endif
           xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
           zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -201,13 +204,13 @@
           weight = jacobian1D * wxgll(i)
 
           ! adds absorbing boundary contribution
-          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+          potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) - potential_dot_acoustic(iglob) * weight/rho_vp
           if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
-               dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/cpl/rhol
+               dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/rho_vp
 
           if (SAVE_FORWARD) then
             ! saves contribution
-            b_absorb_acoustic_top(i,ib_top(ispecabs),it) = potential_dot_acoustic(iglob) * weight/cpl/rhol
+            b_absorb_acoustic_top(i,ib_top(ispecabs),it) = potential_dot_acoustic(iglob) * weight/rho_vp
           endif
         enddo
       endif  !  end of top absorbing boundary

@@ -35,7 +35,8 @@
 
 ! saves adjoint sensitivity kernels to file
 
-  use constants, only: NGLLX,NGLLZ,IMAIN,CUSTOM_REAL,FOUR_THIRDS,TWO,APPROXIMATE_HESS_KL
+  use constants, only: NGLLX,NGLLZ,IMAIN,CUSTOM_REAL,FOUR_THIRDS,TWO_THIRDS,TWO, &
+    APPROXIMATE_HESS_KL
 
   use specfem_par, only: myrank, nspec, ibool, coord, save_ASCII_kernels, &
                          any_acoustic, any_elastic, any_poroelastic, &
@@ -47,8 +48,9 @@
                          rhot_kl, rhof_kl, sm_kl, eta_kl, mufr_kl, B_kl, &
                          C_kl, M_kl, rhob_kl, rhofb_kl, phi_kl, mufrb_kl, &
                          rhobb_kl, rhofbb_kl, phib_kl, cpI_kl, cpII_kl, cs_kl, ratio_kl, &
-                         GPU_MODE, &
-                         density,poroelastcoef,kmato,assign_external_model,rhoext,vsext,vpext, &
+                         GPU_MODE,AXISYM, &
+                         density,poroelastcoef,kmato,assign_external_model, &
+                         rhostore,mustore,kappastore, &
                          ispec_is_elastic, &
                          deltat,NSTEP_BETWEEN_COMPUTE_KERNELS
 
@@ -59,7 +61,7 @@
   ! local parameters
   integer :: i, j, ispec, iglob
   double precision :: xx, zz
-  real(kind=CUSTOM_REAL) :: rhol,mul,kappal
+  real(kind=CUSTOM_REAL) :: rhol,mul,kappal,lambdal
 
   ! user output
   if (myrank == 0) then
@@ -78,24 +80,33 @@
         ! isotropic kernels
         do j = 1, NGLLZ
           do i = 1, NGLLX
-            if (.not. assign_external_model) then
-              rhol = density(1,kmato(ispec))
-              mul = poroelastcoef(2,1,kmato(ispec))
-              !if (AXISYM) then ! ABAB !!
-              !Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
-                kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
-              !else
-              !  kappal = poroelastcoef(3,1,kmato(ispec)) - mul
-              !endif
+            ! gets elastic moduli
+            !
+            ! daniel todo - please check:
+            ! note: in case of attenuation, mu/kappa store and poroelastcoef parameters have been scaled
+            !       to unrelaxed moduli in routine prepare_attenuation()
+            !
+            !       this should probably be corrected to have again the moduli at the (initial) reference frequency
+            !       for calculating the kernel values below...
+            if (assign_external_model) then
+              rhol = rhostore(i,j,ispec)
+              mul = mustore(i,j,ispec)
+              kappal = kappastore(i,j,ispec)
             else
-              rhol = rhoext(i,j,ispec)
-              mul = rhoext(i,j,ispec)*vsext(i,j,ispec)*vsext(i,j,ispec)
-              !if (AXISYM) then ! ABAB !!
-              ! Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
-                kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - FOUR_THIRDS * mul
-              !else
-              !  kappal = rhoext(i,j,ispec)*vpext(i,j,ispec)*vpext(i,j,ispec) - mul
-              !endif
+              rhol = density(1,kmato(ispec))
+              lambdal = poroelastcoef(1,1,kmato(ispec))
+              mul = poroelastcoef(2,1,kmato(ispec))
+              !!if (AXISYM) then ! ABAB !!
+              !!Warning !! This is false for plane strain (look for: bulk modulus plane strain) CHECK Kappa
+              !  kappal = poroelastcoef(3,1,kmato(ispec)) - FOUR_THIRDS * mul
+              !!else
+              !!  kappal = poroelastcoef(3,1,kmato(ispec)) - mul
+              !!endif
+              if (AXISYM) then ! CHECK kappa
+                kappal = lambdal + TWO_THIRDS * mul
+              else
+                kappal = lambdal + mul
+              endif
             endif
 
             ! for parameterization (rho,mu,kappa): "primary" kernels
@@ -108,6 +119,18 @@
 
             ! derived from "primary" kernels above...
             !
+
+            ! daniel todo - please check:
+            ! note: the definition of vp depends on the modulus definition of kappa (case AXISYM).
+            !       this in turn can change the kernels formula...
+            !
+            !if (AXISYM) then ! CHECK kappa
+            !  vp = sqrt((kappal + FOUR_THIRDS * mul)/rhol)
+            !else
+            !  vp = sqrt((kappal + mul)/rhol)
+            !endif
+            !vs = sqrt(mul/rhol)
+
             ! for parameterization (rho,beta,alpha):
             ! rho prime kernel
             rhop_kl(i,j,ispec) = rho_kl(i,j,ispec) + kappa_kl(i,j,ispec) + mu_kl(i,j,ispec)
@@ -117,6 +140,7 @@
             ! Vp kernel
             ! ABAB !! Warning !! This is possibly false for plane strain (look for: bulk modulus plane strain) Check Kappa
             alpha_kl(i,j,ispec) = TWO * (1._CUSTOM_REAL + FOUR_THIRDS * mul/kappal) * kappa_kl(i,j,ispec)
+
             ! for bulk velocity c parameterization (rho,bulk_c,beta):
             bulk_c_kl(i,j,ispec) =  TWO * kappa_kl(i,j,ispec)
             bulk_beta_kl(i,j,ispec) =  TWO * mu_kl(i,j,ispec)

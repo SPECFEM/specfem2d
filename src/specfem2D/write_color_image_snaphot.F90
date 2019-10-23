@@ -36,7 +36,7 @@
   use constants, only: IMAIN,NGLLX,NGLLZ,REMOVE_PMLS_FROM_JPEG_IMAGES
 
   use specfem_par, only: myrank,nspec,it,NPROC, &
-                        assign_external_model,ibool,kmato,density,rhoext,P_SV, &
+                        assign_external_model,ibool,kmato,density,rhostore,P_SV, &
                         potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
                         displ_elastic,veloc_elastic,accel_elastic, &
                         displs_poroelastic,velocs_poroelastic,accels_poroelastic, &
@@ -131,7 +131,7 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           if (assign_external_model) then
-            rhol = rhoext(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
           else
             rhol = density(1,kmato(ispec))
           endif
@@ -151,7 +151,7 @@
       do j = 1,NGLLZ
         do i = 1,NGLLX
           if (assign_external_model) then
-            rhol = rhoext(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
           else
             rhol = density(1,kmato(ispec))
           endif

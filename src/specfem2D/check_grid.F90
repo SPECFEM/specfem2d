@@ -206,9 +206,10 @@
       do i = 1,NGLLX
         !--- if heterogeneous formulation with external velocity model
         if (assign_external_model) then
-          cpIloc = vpext(i,j,ispec)
-          csloc = vsext(i,j,ispec)
-          denst = rhoext(i,j,ispec)
+          mu = mustore(i,j,ispec)
+          denst = rhostore(i,j,ispec)
+          cpIloc = rho_vpstore(i,j,ispec)/denst
+          csloc = sqrt(mu/denst)
         endif
 
         !--- compute min and max of velocity and density models
@@ -611,8 +612,10 @@
 
           !--- if heterogeneous formulation with external velocity model
           if (assign_external_model) then
-            cpIloc = vpext(i,j,ispec)
-            csloc = vsext(i,j,ispec)
+            mu = mustore(i,j,ispec)
+            denst = rhostore(i,j,ispec)
+            cpIloc = rho_vpstore(i,j,ispec)/denst
+            csloc = sqrt(mu/denst)
           endif
 
           vpImin_local = min(vpImin_local,cpIloc)
@@ -1187,8 +1190,8 @@
 
         !--- if heterogeneous formulation with external velocity model
         if (assign_external_model) then
-          cpIloc = vpext(i,j,ispec)
-          denst = rhoext(i,j,ispec)
+          denst = rhostore(i,j,ispec)
+          cpIloc = rho_vpstore(i,j,ispec)/denst
         endif
 
         vpImax_local = max(vpImax_local,cpIloc)
@@ -1532,9 +1535,10 @@
       do i = 1,NGLLX
 !--- if heterogeneous formulation with external velocity model
         if (assign_external_model) then
-          cpIloc = vpext(i,j,ispec)
-          csloc = vsext(i,j,ispec)
-          denst = rhoext(i,j,ispec)
+          mu = mustore(i,j,ispec)
+          denst = rhostore(i,j,ispec)
+          cpIloc = rho_vpstore(i,j,ispec)/denst
+          csloc = sqrt(mu/denst)
         endif
 
         vpImax_local = max(vpImax_local,cpIloc)
@@ -1886,7 +1890,7 @@
     if ((vpImax-vpImin)/vpImin > 0.02d0) then
       if (assign_external_model) then
         ! use lower-left corner
-        x1 = (vpext(1,1,ispec)-vpImin) / (vpImax-vpImin)
+        x1 = (rho_vpstore(1,1,ispec)/rhostore(1,1,ispec) - vpImin) / (vpImax-vpImin)
       else
         if (ispec_is_poroelastic(ispec)) then
           ! gets poroelastic material

@@ -1350,20 +1350,18 @@ TRACE("prepare_cleanup_device");
       cudaFree(mp->d_c55store);
     }
 
-  if (*ATTENUATION_VISCOELASTIC) {
-    cudaFree(mp->d_A_newmark_mu);
-    cudaFree(mp->d_B_newmark_mu);
-    cudaFree(mp->d_A_newmark_kappa);
-    cudaFree(mp->d_B_newmark_kappa);
-    cudaFree(mp->d_e1);
-    cudaFree(mp->d_e11);
-    cudaFree(mp->d_e13);
-    cudaFree(mp->d_dux_dxl_old);
-    cudaFree(mp->d_duz_dzl_old);
-    cudaFree(mp->d_dux_dzl_plus_duz_dxl_old);
-  }
-
-
+    if (*ATTENUATION_VISCOELASTIC) {
+      cudaFree(mp->d_A_newmark_mu);
+      cudaFree(mp->d_B_newmark_mu);
+      cudaFree(mp->d_A_newmark_kappa);
+      cudaFree(mp->d_B_newmark_kappa);
+      cudaFree(mp->d_e1);
+      cudaFree(mp->d_e11);
+      cudaFree(mp->d_e13);
+      cudaFree(mp->d_dux_dxl_old);
+      cudaFree(mp->d_duz_dzl_old);
+      cudaFree(mp->d_dux_dzl_plus_duz_dxl_old);
+    }
 
   } // ELASTIC_SIMULATION
 

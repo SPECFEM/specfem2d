@@ -42,10 +42,10 @@
                          ATTENUATION_VISCOELASTIC,nspec_ATT_el,N_SLS, &
                          ibool,kmato,ispec_is_elastic, &
                          poroelastcoef,xix,xiz,gammax,gammaz, &
-                         jacobian,vpext,vsext,rhoext, &
-                         QKappa_attenuation,Qmu_attenuation,QKappa_attenuationext,Qmu_attenuationext, &
-                         c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext, &
-                         ispec_is_anisotropic,anisotropy, &
+                         jacobian,rho_vpstore,mustore,rhostore, &
+                         QKappa_attenuationcoef,Qmu_attenuationcoef,QKappa_attenuationext,Qmu_attenuationext, &
+                         c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext,c33ext,c35ext,c55ext, &
+                         ispec_is_anisotropic,anisotropycoef, &
                          hprime_xx,hprimewgll_xx,hprime_zz,hprimewgll_zz,wxgll,wzgll, &
                          coord,iglob_is_forced
 
@@ -104,7 +104,7 @@
 
   ! material properties of the elastic medium
   real(kind=CUSTOM_REAL) :: mul_unrelaxed_elastic,lambdal_unrelaxed_elastic, &
-    lambdaplus2mu_unrelaxed_elastic,cpl,csl,rhol,lambdalplusmul_unrelaxed_elastic
+    lambdaplus2mu_unrelaxed_elastic,cpl,rhol,lambdalplusmul_unrelaxed_elastic
 
   ! for anisotropy
   double precision ::  c11,c15,c13,c33,c35,c55,c12,c23,c25,c22
@@ -152,8 +152,8 @@
 
     if (ATTENUATION_VISCOELASTIC) then
       if (.not. assign_external_model) then
-        qkappal = QKappa_attenuation(kmato(ispec))
-        qmul = Qmu_attenuation(kmato(ispec))
+        qkappal = QKappa_attenuationcoef(kmato(ispec))
+        qmul = Qmu_attenuationcoef(kmato(ispec))
       else
         qkappal = maxval(QKappa_attenuationext(:,:,ispec))
         qmul =  maxval(Qmu_attenuationext(:,:,ispec))
@@ -273,11 +273,10 @@
       do i = 1,NGLLX
         !--- if external medium, get elastic parameters of current grid point
         if (assign_external_model) then
-          cpl = vpext(i,j,ispec)
-          csl = vsext(i,j,ispec)
-          rhol = rhoext(i,j,ispec)
+          mul_unrelaxed_elastic = mustore(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
+          cpl = rho_vpstore(i,j,ispec)/rhol
 
-          mul_unrelaxed_elastic = rhol*csl*csl
           lambdal_unrelaxed_elastic = rhol*cpl*cpl - 2._CUSTOM_REAL * mul_unrelaxed_elastic
           lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + 2._CUSTOM_REAL * mul_unrelaxed_elastic
           lambdalplusmul_unrelaxed_elastic = lambdal_unrelaxed_elastic + mul_unrelaxed_elastic
@@ -451,17 +450,17 @@
               c22 = c22ext(i,j,ispec) ! This variable is used for axisym simulations only
             endif
           else
-            c11 = anisotropy(1,kmato(ispec))
-            c13 = anisotropy(2,kmato(ispec))
-            c15 = anisotropy(3,kmato(ispec))
-            c33 = anisotropy(4,kmato(ispec))
-            c35 = anisotropy(5,kmato(ispec))
-            c55 = anisotropy(6,kmato(ispec))
-            c12 = anisotropy(7,kmato(ispec))
-            c23 = anisotropy(8,kmato(ispec))
-            c25 = anisotropy(9,kmato(ispec))
+            c11 = anisotropycoef(1,kmato(ispec))
+            c13 = anisotropycoef(2,kmato(ispec))
+            c15 = anisotropycoef(3,kmato(ispec))
+            c33 = anisotropycoef(4,kmato(ispec))
+            c35 = anisotropycoef(5,kmato(ispec))
+            c55 = anisotropycoef(6,kmato(ispec))
+            c12 = anisotropycoef(7,kmato(ispec))
+            c23 = anisotropycoef(8,kmato(ispec))
+            c25 = anisotropycoef(9,kmato(ispec))
             if (AXISYM) then
-              c22 = anisotropy(10,kmato(ispec)) ! This variable is used for axisym simulations only
+              c22 = anisotropycoef(10,kmato(ispec)) ! This variable is used for axisym simulations only
             endif
           endif
 

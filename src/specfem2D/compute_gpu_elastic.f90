@@ -42,9 +42,10 @@
     num_fluid_solid_edges,nspec_bottom,nspec_left,nspec_right,nspec_top, &
     STACEY_ABSORBING_CONDITIONS,PML_BOUNDARY_CONDITIONS,any_poroelastic,any_acoustic,SIMULATION_TYPE,ATTENUATION_VISCOELASTIC
 
-  use specfem_par, only: nspec_outer_elastic,nspec_inner_elastic
+  use specfem_par, only: nspec_outer_elastic,nspec_inner_elastic,any_anisotropy
 
-  use specfem_par_gpu, only: Mesh_pointer,ANY_ANISOTROPY,deltatf,deltatover2f,b_deltatover2f, &
+  use specfem_par_gpu, only: Mesh_pointer, &
+    deltatf,deltatover2f,b_deltatover2f, &
     buffer_send_vector_gpu,buffer_recv_vector_gpu, &
     b_buffer_send_vector_gpu,b_buffer_recv_vector_gpu, &
     request_send_recv_vector_gpu,b_request_send_recv_vector_gpu
@@ -70,7 +71,7 @@
     call compute_forces_viscoelastic_cuda(Mesh_pointer, iphase, deltatf, &
                                           nspec_outer_elastic, &
                                           nspec_inner_elastic, &
-                                          ANY_ANISOTROPY,ATTENUATION_VISCOELASTIC)
+                                          any_anisotropy,ATTENUATION_VISCOELASTIC)
 
 
     ! while inner elements compute "Kernel_2", we wait for MPI to

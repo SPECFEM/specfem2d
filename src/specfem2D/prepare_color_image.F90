@@ -288,7 +288,7 @@
   use constants, only: NGLLX,NGLLZ,HALF,TWO,IMAIN
 
   use specfem_par, only: nglob,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
-    density,poroelastcoef,NPROC,myrank,assign_external_model,vpext
+    density,poroelastcoef,NPROC,myrank,assign_external_model,rho_vpstore,rhostore
 
   use specfem_par_movie, only: image_color_vp_display,iglob_image_color, &
     NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc,num_pixel_loc,DRAW_WATER_IN_BLUE
@@ -357,7 +357,7 @@
         do i = 1,NGLLX
           !--- if external medium, get elastic parameters of current grid point
           if (assign_external_model) then
-            vp_display(ibool(i,j,ispec)) = vpext(i,j,ispec)
+            vp_display(ibool(i,j,ispec)) = rho_vpstore(i,j,ispec)/rhostore(i,j,ispec)
           else
             vp_display(ibool(i,j,ispec)) = sqrt((lambdal_relaxed + 2.d0*mul_relaxed) / rhol)
           endif
@@ -377,7 +377,7 @@
 
           !--- if external medium, get elastic parameters of current grid point
           if (assign_external_model) then
-            vp_of_the_model = vpext(i,j,ispec)
+            vp_of_the_model = rho_vpstore(i,j,ispec)/rhostore(i,j,ispec)
           else
             vp_of_the_model = sqrt((lambdal_relaxed + 2.d0*mul_relaxed) / rhol)
           endif

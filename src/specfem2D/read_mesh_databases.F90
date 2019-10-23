@@ -511,9 +511,9 @@
   allocate(kmato(nspec))
   allocate(knods(ngnod,nspec))
 
-  ! material
+  ! default material
   allocate(density(2,numat))
-  allocate(anisotropy(10,numat)) ! don't forget c22 value (it is used for AXISYM simulations only)
+  allocate(anisotropycoef(10,numat)) ! don't forget c22 value (it is used for AXISYM simulations only)
 
   allocate(porosity(numat), &
            tortuosity(numat), &
@@ -523,8 +523,8 @@
   allocate(poroelastcoef(4,3,numat),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating poroelastcoef arrays')
 
-  allocate(QKappa_attenuation(numat), &
-           Qmu_attenuation(numat),stat=ier)
+  allocate(QKappa_attenuationcoef(numat), &
+           Qmu_attenuationcoef(numat),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating attenuation arrays')
 
 

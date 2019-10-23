@@ -31,21 +31,27 @@
 !
 !========================================================================
 
-  subroutine read_external_model()
+  subroutine read_external_model(rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext, &
+                                 nspec_ext,c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext,c33ext,c35ext,c55ext)
 
 ! reads in external model files
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TINYVAL,IMAIN,IN_DATA_FILES,IIN,MAX_STRING_LEN
 
-  use specfem_par, only: nspec,nglob,ibool,ispec_is_elastic,ispec_is_anisotropic, &
+  use specfem_par, only: nspec,ibool,ispec_is_elastic,ispec_is_anisotropic, &
     coord,kmato,MODEL,myrank,setup_with_binary_database
 
   ! external model parameters
-  use specfem_par, only: rhoext,vpext,vsext, &
-    QKappa_attenuationext,Qmu_attenuationext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext, &
+  use specfem_par, only: &
     ATTENUATION_VISCOELASTIC,ATTENUATION_VISCOACOUSTIC
 
   implicit none
+
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ,nspec) :: rhoext,vpext,vsext,QKappa_attenuationext,Qmu_attenuationext
+
+  integer :: nspec_ext
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLZ,nspec_ext) :: c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext, &
+                                                             c33ext,c35ext,c55ext
 
   ! Local variables
   integer :: i,j,ispec,itmp
@@ -67,6 +73,7 @@
 
     open(unit=IIN,file=inputname,status='old',action='read',iostat=ier)
     if (ier /= 0) call stop_the_code('Error opening DATA/proc*****_model_velocity.dat_input file.')
+
     do ispec = 1,nspec
       do j = 1,NGLLZ
         do i = 1,NGLLX
@@ -93,6 +100,7 @@
 
           ! reads in values
           read(line,*) itmp,tmp1,tmp2,rho_val,vp_val,vs_val
+
           rhoext(i,j,ispec) = rho_val
           vpext(i,j,ispec) = vp_val
           vsext(i,j,ispec) = vs_val
@@ -117,6 +125,7 @@
         do i = 1,NGLLX
           ! format: #unused #unused #rho #vp #vs
           read(IIN,*) tmp1,tmp2,rho_val,vp_val,vs_val
+
           rhoext(i,j,ispec) = rho_val
           vpext(i,j,ispec) = vp_val
           vsext(i,j,ispec) = vs_val
@@ -273,16 +282,18 @@
     ! generic model defined in external files
     call define_external_model(coord,kmato,ibool,rhoext,vpext,vsext, &
                                QKappa_attenuationext,Qmu_attenuationext, &
-                               c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
+                               c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext,c55ext)
   case ('marmousi')
     ! marmousi type model
     call define_external_model_from_marmousi(coord,ibool,rhoext,vpext,vsext, &
                                              QKappa_attenuationext,Qmu_attenuationext, &
-                                             c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,nspec,nglob)
+                                             c11ext,c12ext,c13ext,c15ext,c23ext,c25ext,c33ext,c35ext,c55ext)
 
   case ('tomo')
     ! tomographic file
-    call define_external_model_from_tomo_file()
+    call define_external_model_from_tomo_file(rhoext,vpext,vsext, &
+                                              QKappa_attenuationext,Qmu_attenuationext, &
+                                              c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext,c33ext,c35ext,c55ext)
 
   case default
     print *,"Error: unrecognized model = ",trim(MODEL)
@@ -328,7 +339,7 @@
 
   ! resets domain flags
   if (setup_with_binary_database /= 2) then
-    call get_simulation_domains_from_external_models()
+    call get_simulation_domains_from_external_models(vsext,nspec_ext,c11ext,c13ext,c15ext,c33ext,c35ext,c55ext)
   endif
 
   ! user output

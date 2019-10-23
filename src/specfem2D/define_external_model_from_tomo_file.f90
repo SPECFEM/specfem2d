@@ -307,28 +307,34 @@ end module interpolation
 ! ----------------------------------------------------------------------------------------
 !
 
-  subroutine define_external_model_from_tomo_file()
+  subroutine define_external_model_from_tomo_file(rhoext,vpext,vsext, &
+                                                  QKappa_attenuationext,Qmu_attenuationext, &
+                                                  c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext,c33ext,c35ext,c55ext)
 
 ! ----------------------------------------------------------------------------------------
 ! Read a tomo file and loop over all GLL points to set the values of vp,vs and rho
 ! ----------------------------------------------------------------------------------------
 
-  use specfem_par, only: tomo_material,coord,nspec,ibool,kmato,rhoext,vpext,vsext, &
-                       QKappa_attenuation,Qmu_attenuation,anisotropy, &
-                       QKappa_attenuationext,Qmu_attenuationext,poroelastcoef,density, &
-                       c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext
+  use specfem_par, only: tomo_material,coord,nspec,ibool,kmato, &
+                         QKappa_attenuationcoef,Qmu_attenuationcoef,anisotropycoef, &
+                         poroelastcoef,density
 
   use specfem_par, only: myrank,TOMOGRAPHY_FILE
 
   use model_tomography_par
   use interpolation
 
-  use constants, only: NGLLX,NGLLZ,TINYVAL,IMAIN
+  use constants, only: NGLLX,NGLLZ,TINYVAL,IMAIN,CUSTOM_REAL
 
   implicit none
 
-  ! local parameters
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: rhoext,vpext,vsext
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: QKappa_attenuationext,Qmu_attenuationext
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext, &
+                                                                       c33ext,c35ext,c55ext
 
+
+  ! local parameters
   integer :: i,j,ispec,iglob
   double precision :: xmesh,zmesh
 
@@ -355,7 +361,7 @@ end module interpolation
   c12ext(:,:,:) = 0.d0
   c23ext(:,:,:) = 0.d0
   c25ext(:,:,:) = 0.d0
-  c22ext(:,:,:) = 0.d0
+  c22ext(:,:,:) = 0.d0 ! for AXISYM only
 
   ! loop on all the elements of the mesh, and inside each element loop on all the GLL points
   do ispec = 1,nspec
@@ -378,39 +384,39 @@ end module interpolation
           poroelastcoef(2,1,kmato(ispec)) =  rhoext(i,j,ispec) * vsext(i,j,ispec) * vsext(i,j,ispec)
 
           !! ABAB : I do the same with anisotropy and attenuation even if I don't use them (for the future) :
-          anisotropy(1,kmato(ispec)) = c11ext(i,j,ispec)
-          anisotropy(2,kmato(ispec)) = c13ext(i,j,ispec)
-          anisotropy(3,kmato(ispec)) = c15ext(i,j,ispec)
-          anisotropy(4,kmato(ispec)) = c33ext(i,j,ispec)
-          anisotropy(5,kmato(ispec)) = c35ext(i,j,ispec)
-          anisotropy(6,kmato(ispec)) = c55ext(i,j,ispec)
-          anisotropy(7,kmato(ispec)) = c12ext(i,j,ispec)
-          anisotropy(8,kmato(ispec)) = c23ext(i,j,ispec)
-          anisotropy(9,kmato(ispec)) = c25ext(i,j,ispec)
-          anisotropy(10,kmato(ispec)) = c22ext(i,j,ispec)
+          anisotropycoef(1,kmato(ispec)) = c11ext(i,j,ispec)
+          anisotropycoef(2,kmato(ispec)) = c13ext(i,j,ispec)
+          anisotropycoef(3,kmato(ispec)) = c15ext(i,j,ispec)
+          anisotropycoef(4,kmato(ispec)) = c33ext(i,j,ispec)
+          anisotropycoef(5,kmato(ispec)) = c35ext(i,j,ispec)
+          anisotropycoef(6,kmato(ispec)) = c55ext(i,j,ispec)
+          anisotropycoef(7,kmato(ispec)) = c12ext(i,j,ispec)
+          anisotropycoef(8,kmato(ispec)) = c23ext(i,j,ispec)
+          anisotropycoef(9,kmato(ispec)) = c25ext(i,j,ispec)
+          anisotropycoef(10,kmato(ispec)) = c22ext(i,j,ispec) ! for AXISYM
 
-          QKappa_attenuation(kmato(ispec)) = QKappa_attenuationext(i,j,ispec)
-          Qmu_attenuation(kmato(ispec)) = Qmu_attenuationext(i,j,ispec)
+          QKappa_attenuationcoef(kmato(ispec)) = QKappa_attenuationext(i,j,ispec)
+          Qmu_attenuationcoef(kmato(ispec)) = Qmu_attenuationext(i,j,ispec)
         else
           ! Internal model
-           rhoext(i,j,ispec) = density(1,kmato(ispec))
-           vpext(i,j,ispec) = sqrt(poroelastcoef(3,1,kmato(ispec))/rhoext(i,j,ispec))
-           vsext(i,j,ispec) = sqrt(poroelastcoef(2,1,kmato(ispec))/rhoext(i,j,ispec))
+          rhoext(i,j,ispec) = density(1,kmato(ispec))
+          vpext(i,j,ispec) = sqrt(poroelastcoef(3,1,kmato(ispec))/rhoext(i,j,ispec))
+          vsext(i,j,ispec) = sqrt(poroelastcoef(2,1,kmato(ispec))/rhoext(i,j,ispec))
 
-           QKappa_attenuationext(i,j,ispec) = QKappa_attenuation(kmato(ispec))
-           Qmu_attenuationext(i,j,ispec) = Qmu_attenuation(kmato(ispec))
+          QKappa_attenuationext(i,j,ispec) = QKappa_attenuationcoef(kmato(ispec))
+          Qmu_attenuationext(i,j,ispec) = Qmu_attenuationcoef(kmato(ispec))
 
-           c11ext(i,j,ispec) = anisotropy(1,kmato(ispec))
-           c13ext(i,j,ispec) = anisotropy(2,kmato(ispec))
-           c15ext(i,j,ispec) = anisotropy(3,kmato(ispec))
-           c33ext(i,j,ispec) = anisotropy(4,kmato(ispec))
-           c35ext(i,j,ispec) = anisotropy(5,kmato(ispec))
-           c55ext(i,j,ispec) = anisotropy(6,kmato(ispec))
-           c12ext(i,j,ispec) = anisotropy(7,kmato(ispec))
-           c23ext(i,j,ispec) = anisotropy(8,kmato(ispec))
-           c25ext(i,j,ispec) = anisotropy(9,kmato(ispec))
-           c22ext(i,j,ispec) = anisotropy(10,kmato(ispec))
-         endif
+          c11ext(i,j,ispec) = anisotropycoef(1,kmato(ispec))
+          c13ext(i,j,ispec) = anisotropycoef(2,kmato(ispec))
+          c15ext(i,j,ispec) = anisotropycoef(3,kmato(ispec))
+          c33ext(i,j,ispec) = anisotropycoef(4,kmato(ispec))
+          c35ext(i,j,ispec) = anisotropycoef(5,kmato(ispec))
+          c55ext(i,j,ispec) = anisotropycoef(6,kmato(ispec))
+          c12ext(i,j,ispec) = anisotropycoef(7,kmato(ispec))
+          c23ext(i,j,ispec) = anisotropycoef(8,kmato(ispec))
+          c25ext(i,j,ispec) = anisotropycoef(9,kmato(ispec))
+          c22ext(i,j,ispec) = anisotropycoef(10,kmato(ispec)) ! for AXISYM
+        endif
       enddo
     enddo
   enddo

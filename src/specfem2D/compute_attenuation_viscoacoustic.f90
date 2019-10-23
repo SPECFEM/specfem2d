@@ -48,7 +48,7 @@
                          ibool,xix,xiz,gammax,gammaz,hprime_xx,hprime_zz,ispec_is_PML, &
                          NGLJ, assign_external_model,AXISYM, &
                          nspec_inner_acoustic, nspec_outer_acoustic, &
-                         kmato, phase_ispec_inner_acoustic,jacobian,rhoext,density, &
+                         kmato, phase_ispec_inner_acoustic,jacobian,rhostore,density, &
                          is_on_the_axis,hprimeBar_xx,hprimeBarwglj_xx,hprimewgll_zz,hprimewgll_xx, &
                          wxgll,wzgll,wxglj,xiglj,coord,iglob_is_forced,nglob_att
 
@@ -138,7 +138,7 @@
 
         ! if external density model
         if (assign_external_model) then
-          rhol = rhoext(i,j,ispec)
+          rhol = rhostore(i,j,ispec)
         endif
         deriv(6,i,j) = jacobian(i,j,ispec) / rhol
 

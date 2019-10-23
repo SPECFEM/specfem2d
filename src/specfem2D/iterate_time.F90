@@ -518,7 +518,7 @@ subroutine it_compute_integrated_energy_field_and_output()
   !
   !        !--- if external medium, get density of current grid point
   !        if (assign_external_model) then
-  !          cpl = vpext(2,2,ispec)
+  !          cpl = rho_vpstore(2,2,ispec)/rhostore(2,2,ispec)
   !        endif
   !        iglob = ibool(2,2,ispec)
   !        write(IIN,*) real(coord(2,iglob),4),cpl

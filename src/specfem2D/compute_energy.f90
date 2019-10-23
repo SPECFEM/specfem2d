@@ -75,13 +75,15 @@
     ibool,hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz,jacobian,wxgll,wzgll, &
     displ_elastic,veloc_elastic, &
     displs_poroelastic,displw_poroelastic,velocs_poroelastic,velocw_poroelastic,potential_acoustic, &
-    potential_dot_acoustic,potential_dot_dot_acoustic,vsext,vpext,rhoext,poroelastcoef,density,kmato,assign_external_model, &
+    potential_dot_acoustic,potential_dot_dot_acoustic,mustore,rho_vpstore,rhostore, &
+    poroelastcoef,density,kmato,assign_external_model, &
     ispec_is_poroelastic,ispec_is_elastic,P_SV,ispec_is_PML
+
   implicit none
 
 ! local variables
   integer :: i,j,k,ispec
-  real(kind=CUSTOM_REAL) :: cpl,csl,kappal
+  real(kind=CUSTOM_REAL) :: cpl,kappal
   real(kind=CUSTOM_REAL) :: mu_G,lambdal_G,lambdalplus2mul_G
 
   ! Jacobian matrix and determinant
@@ -135,10 +137,9 @@
 
           !--- if external medium, get elastic parameters of current grid point
           if (assign_external_model) then
-            cpl = vpext(i,j,ispec)
-            csl = vsext(i,j,ispec)
-            rhol = rhoext(i,j,ispec)
-            mul_unrelaxed_elastic = rhol*csl*csl
+            mul_unrelaxed_elastic = mustore(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec)/rhol
             lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
             lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
           endif
@@ -343,8 +344,8 @@
 
           !--- if external medium, get density of current grid point
           if (assign_external_model) then
-            cpl = vpext(i,j,ispec)
-            rhol = rhoext(i,j,ispec)
+            rhol = rhostore(i,j,ispec)
+            cpl = rho_vpstore(i,j,ispec)/rhol
           endif
 
           jacobianl = jacobian(i,j,ispec)
@@ -380,7 +381,8 @@
                         integrated_potential_energy_field,max_potential_energy_field,kinetic_effective_duration_field, &
                         potential_effective_duration_field,total_integrated_energy_field,max_total_energy_field, &
                         total_effective_duration_field,velocs_poroelastic, &
-                        poroelastcoef,vsext,vpext,rhoext,density,kmato,assign_external_model,jacobian,displ_elastic, &
+                        poroelastcoef,mustore,rho_vpstore,rhostore, &
+                        density,kmato,assign_external_model,jacobian,displ_elastic, &
                         hprime_xx,hprime_zz,hprimeBar_xx,xix,xiz,gammax,gammaz, &
                         displs_poroelastic,displw_poroelastic, &
                         potential_dot_dot_acoustic,potential_acoustic
@@ -389,7 +391,7 @@
 
   ! local variables
   integer :: ispec,i,j,k
-  real(kind=CUSTOM_REAL) :: cpl,csl
+  real(kind=CUSTOM_REAL) :: cpl
 
   ! Jacobian matrix and determinant
   double precision :: xixl,xizl,gammaxl,gammazl,jacobianl
@@ -424,10 +426,9 @@
 
       !--- if external medium, get elastic parameters of current grid point
       if (assign_external_model) then
-        cpl = vpext(i,j,ispec)
-        csl = vsext(i,j,ispec)
-        rhol = rhoext(i,j,ispec)
-        mul_unrelaxed_elastic = rhol*csl*csl
+        mul_unrelaxed_elastic = mustore(i,j,ispec)
+        rhol = rhostore(i,j,ispec)
+        cpl = rho_vpstore(i,j,ispec)/rhol
         lambdal_unrelaxed_elastic = rhol*cpl*cpl - TWO*mul_unrelaxed_elastic
         lambdaplus2mu_unrelaxed_elastic = lambdal_unrelaxed_elastic + TWO*mul_unrelaxed_elastic
       endif
@@ -545,8 +546,8 @@
 
       !--- if external medium, get density of current grid point
       if (assign_external_model) then
-        rhol = rhoext(i,j,ispec)
-        cpl = vpext(i,j,ispec)
+        rhol = rhostore(i,j,ispec)
+        cpl = rho_vpstore(i,j,ispec)/rhol
       else
         lambdal_unrelaxed_elastic = poroelastcoef(1,1,kmato(ispec))
         rhol  = density(1,kmato(ispec))

@@ -170,7 +170,7 @@
 
     deallocate(which_PML_elem)
 
-    !daniel debug: let nspec_PML be zero in case the partition has no pml boundary
+    !daniel debug: let nspec_PML be zero in case the partition has no PML boundary
     !if (nspec_PML == 0) nspec_PML=1 ! DK DK added this
 
     if (nspec_PML > 0) then

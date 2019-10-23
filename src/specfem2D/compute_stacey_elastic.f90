@@ -44,7 +44,7 @@
                          assign_external_model,ibool,kmato, &
                          abs_boundary_ispec,ispec_is_elastic, &
                          codeabs,codeabs_corner,density,poroelastcoef,xix,xiz,gammax,gammaz,jacobian, &
-                         vpext,vsext,rhoext,wxgll,wzgll,P_SV, &
+                         rho_vpstore,rho_vsstore,wxgll,wzgll,P_SV, &
                          SIMULATION_TYPE,SAVE_FORWARD, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top, &
@@ -147,13 +147,12 @@
 
         ! external velocity model
         if (assign_external_model) then
-          cpl = vpext(i,j,ispec)
-          csl = vsext(i,j,ispec)
-          rhol = rhoext(i,j,ispec)
+          rho_vp = rho_vpstore(i,j,ispec)
+          rho_vs = rho_vsstore(i,j,ispec)
+        else
+          rho_vp = rhol*cpl
+          rho_vs = rhol*csl
         endif
-
-        rho_vp = rhol*cpl
-        rho_vs = rhol*csl
 
         ! normal pointing left
         xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
@@ -295,13 +294,12 @@
 
         ! external velocity model
         if (assign_external_model) then
-          cpl = vpext(i,j,ispec)
-          csl = vsext(i,j,ispec)
-          rhol = rhoext(i,j,ispec)
+          rho_vp = rho_vpstore(i,j,ispec)
+          rho_vs = rho_vsstore(i,j,ispec)
+        else
+          rho_vp = rhol*cpl
+          rho_vs = rhol*csl
         endif
-
-        rho_vp = rhol*cpl
-        rho_vs = rhol*csl
 
         ! normal pointing right
         xgamma = - xiz(i,j,ispec) * jacobian(i,j,ispec)
@@ -380,13 +378,12 @@
 
         ! external velocity model
         if (assign_external_model) then
-          cpl = vpext(i,j,ispec)
-          csl = vsext(i,j,ispec)
-          rhol = rhoext(i,j,ispec)
+          rho_vp = rho_vpstore(i,j,ispec)
+          rho_vs = rho_vsstore(i,j,ispec)
+        else
+          rho_vp = rhol*cpl
+          rho_vs = rhol*csl
         endif
-
-        rho_vp = rhol*cpl
-        rho_vs = rhol*csl
 
         xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
         zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)
@@ -467,13 +464,12 @@
 
         ! external velocity model
         if (assign_external_model) then
-          cpl = vpext(i,j,ispec)
-          csl = vsext(i,j,ispec)
-          rhol = rhoext(i,j,ispec)
+          rho_vp = rho_vpstore(i,j,ispec)
+          rho_vs = rho_vsstore(i,j,ispec)
+        else
+          rho_vp = rhol*cpl
+          rho_vs = rhol*csl
         endif
-
-        rho_vp = rhol*cpl
-        rho_vs = rhol*csl
 
         xxi = + gammaz(i,j,ispec) * jacobian(i,j,ispec)
         zxi = - gammax(i,j,ispec) * jacobian(i,j,ispec)

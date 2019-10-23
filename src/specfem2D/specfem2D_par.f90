@@ -44,47 +44,56 @@ module specfem_par
   !=====================================================================
   ! input for simulation (its beginning)
   !=====================================================================
+
   !---------------------------------------------------------------------
   ! for material information
   !---------------------------------------------------------------------
   integer :: numat
-  logical :: assign_external_model
 
+  ! default model
   ! poroelastic and elastic coefficients
   double precision, dimension(:,:,:), allocatable :: poroelastcoef
-  logical, dimension(:), allocatable :: already_shifted_velocity
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: vpext,vsext,rhoext
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
-
-  ! anisotropy parameters
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: c11ext,c13ext,c15ext,c33ext,c35ext,c55ext,c12ext,c23ext,c25ext,c22ext
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: c11_k, c13_k, c15_k,c33_k, c35_k, c55_k
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: c11_kl, c13_kl, c15_kl,c33_kl, c35_kl, c55_kl
-
-  logical :: all_anisotropic
-  logical, dimension(:), allocatable :: ispec_is_anisotropic
-
-  double precision, dimension(:,:), allocatable :: anisotropy
-
+  ! aniso material properties
+  double precision, dimension(:,:), allocatable :: anisotropycoef
   ! for attenuation
-  double precision, dimension(:), allocatable  :: QKappa_attenuation
-  double precision, dimension(:), allocatable  :: Qmu_attenuation
+  double precision, dimension(:), allocatable  :: QKappa_attenuationcoef
+  double precision, dimension(:), allocatable  :: Qmu_attenuationcoef
+
+  ! external models
+  logical :: assign_external_model
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: QKappa_attenuationext,Qmu_attenuationext
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext, &
+                                                           c33ext,c35ext,c55ext
 
   integer :: nspec_ATT_el,nspec_ATT_ac,nglob_att
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: inv_tau_sigma_nu1,phi_nu1,inv_tau_sigma_nu2,phi_nu2
   real(kind=CUSTOM_REAL), dimension(:,:,:) , allocatable :: Mu_nu1,Mu_nu2
 
-  ! material
+  ! material store arrays
+  !
+  ! daniel todo: unify material properties
+  ! note: we will be unifying the default & external model arrays **coef and **ext to have a single **store repository
+  !       of model material properties (similar to 3D versions).
+  !
+  !       material properties in a spectral-element method are stored on a local level in general.
+  !       thus, the default model coefficients **ceof will be mapped to these local ones **store. this will increase the
+  !       memory burden of the code, which is hopefully still fine for 2D setups.
+  !       for external models, they are already defined at local **ext arrays which will then only be copied.
+  !       to avoid duplication and free memory, the **ext arrays will only be needed for reading in models.
+  !       once material properties are read in, they will be stored for the solver in the **store arrays
+  !       and all **ext arrays freed afterwards.
+  !
   ! density
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhostore
   ! isotropic moduli
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: kappastore,mustore
   ! anisotropic
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
-    c11store,c12store,c13store,c15store,c23store,c25store,c33store,c35store,c55store
-
-  ! for absorbing boundaries
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_vp,rho_vs
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: c11store,c12store,c13store,c15store,c22store,c23store,c25store, &
+                                                           c33store,c35store,c55store
+  ! useful additional rho*vp and rho*vs arrays for getting vp,vs and absorbing boundary terms
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_vpstore,rho_vsstore
+  ! attenuation
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: qkappa_attenuation_store,qmu_attenuation_store
 
   !---------------------------------------------------------------------
   ! for boundary condition (physical BC or artificial BC)
@@ -414,6 +423,12 @@ module specfem_par
 
   logical, dimension(:), allocatable :: ispec_is_elastic
 
+  logical :: any_anisotropy
+  integer :: nspec_aniso
+
+  logical :: all_anisotropic
+  logical, dimension(:), allocatable :: ispec_is_anisotropic
+
   ! inverse mass matrices
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: rmass_inverse_elastic
 
@@ -589,6 +604,10 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mu_k, kappa_k,rho_k
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rhop_kl, beta_kl, alpha_kl
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: bulk_c_kl, bulk_beta_kl
+
+  ! aniso kernels
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: c11_k, c13_k, c15_k,c33_k, c35_k, c55_k
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: c11_kl, c13_kl, c15_kl,c33_kl, c35_kl, c55_kl
 
   ! acoustic domain kernels
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: rho_ac_kl, kappa_ac_kl
@@ -773,8 +792,6 @@ module specfem_par_gpu
 
   ! mesh dimension
   integer :: NGLOB_AB, NSPEC_AB
-
-  logical :: ANY_ANISOTROPY
 
   ! free surface
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: free_surface_normal
