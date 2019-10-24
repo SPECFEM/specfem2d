@@ -148,13 +148,13 @@
           ! on GPU
           ! Simulating seismograms
           if (USE_TRICK_FOR_BETTER_PRESSURE) then
-            call compute_seismograms_cuda(Mesh_pointer,seismotype_l,sisux(:,:,i_sig),sisuz(:,:,i_sig),seismo_current(i_sig), &
+            call compute_seismograms_cuda(Mesh_pointer,i_sig,sisux(:,:,i_sig),sisuz(:,:,i_sig),seismo_current(i_sig), &
                                                        NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
-                                                       ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,1)
+                                                       ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,1,it,NSTEP)
           else
-            call compute_seismograms_cuda(Mesh_pointer,seismotype_l,sisux(:,:,i_sig),sisuz(:,:,i_sig),seismo_current(i_sig), &
+            call compute_seismograms_cuda(Mesh_pointer,i_sig,sisux(:,:,i_sig),sisuz(:,:,i_sig),seismo_current(i_sig), &
                                                        NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos, &
-                                                       ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,0)
+                                                       ELASTIC_SIMULATION,ACOUSTIC_SIMULATION,0,it,NSTEP)
           endif
           ! note: curl not implemented yet
         endif ! GPU_MODE
@@ -170,11 +170,13 @@
 
     do i_sig = 1,NSIGTYPE ! Loop on signal types
       seismotype_l = seismotypeVec(i_sig)
+
       call write_seismograms_to_file(sisux(:,:,i_sig),sisuz(:,:,i_sig),siscurl(:,:,i_sig),seismotype_l,seismo_current(i_sig), &
                                      seismo_offset(i_sig))
+
       ! updates current seismogram offsets
-        seismo_offset(i_sig) = seismo_offset(i_sig) + seismo_current(i_sig)
-        seismo_current(i_sig) = 0
+      seismo_offset(i_sig) = seismo_offset(i_sig) + seismo_current(i_sig)
+      seismo_current(i_sig) = 0
     enddo ! loop on signal types (seismotype)
 
     ! user output
@@ -192,7 +194,6 @@
       write(IMAIN,*)
       call flush_IMAIN()
     endif
-
   endif
 
   end subroutine write_seismograms

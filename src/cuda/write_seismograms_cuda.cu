@@ -189,20 +189,22 @@ __global__ void compute_acoustic_seismogram_kernel(int nrec_local,
 extern "C"
 void FC_FUNC_(compute_seismograms_cuda,
               COMPUTE_SEISMOGRAMS_CUDA)(long* Mesh_pointer_f,
-                                        int* seismotypef,
+                                        int* i_sigf,
                                         double* sisux, double* sisuz,
                                         int* seismo_currentf,
-                                        int* NSTEPf,
+                                        int* NSTEP_seismof,
                                         int* ELASTIC_SIMULATION,
                                         int* ACOUSTIC_SIMULATION,
-                                        int* USE_TRICK_FOR_BETTER_PRESSURE) {
+                                        int* USE_TRICK_FOR_BETTER_PRESSURE,
+                                        int* it,
+                                        int* it_end) {
 
 // compute_seismograms
   TRACE("compute_seismograms_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from fortran integer wrapper
-  int i,j;
 
+  // synchronizes to wait for cuda computations to be completed before copying wavefield values
   synchronize_cuda();
 
   //checks if anything to do
@@ -214,9 +216,11 @@ void FC_FUNC_(compute_seismograms_cuda,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(NGLL2_PADDED,1,1);
 
-    int seismotype = *seismotypef;
+    int i_sig = *i_sigf - 1;
     int seismo_current = *seismo_currentf - 1 ;
-    int NSTEP = *NSTEPf;
+    int NSTEP_seismo = *NSTEP_seismof;
+
+    int seismotype = mp->h_seismotypeVec[i_sig];
 
     // warnings
     if (seismo_current == 0){
@@ -253,12 +257,14 @@ void FC_FUNC_(compute_seismograms_cuda,
       }
     }
 
-    synchronize_cuda();
+    // setup for copy
+    realw* h_seismo = mp->h_seismograms[i_sig];
+    realw* d_seismo = mp->d_seismograms[i_sig];
+
     // todo: for coupled simulations, one should check in which domain the receiver lies to output displacement
     //       similar to what routine compute_vector_one_element(..) is doing
 
     // computes current seismograms value
-    int size = mp->nrec_local*NSTEP;
     switch (seismotype){
       case 1 :
         //Deplacement
@@ -266,21 +272,12 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                  mp->d_displ,
                                                                                  mp->d_ibool,
                                                                                  mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                                 mp->d_seismograms1,
+                                                                                 d_seismo,
                                                                                  mp->d_cosrot,
                                                                                  mp->d_sinrot,
                                                                                  mp->d_ispec_selected_rec_loc,
                                                                                  seismo_current,
-                                                                                 NSTEP);
-        if (seismo_current == NSTEP - 1 ){
-          print_CUDA_error_if_any(cudaMemcpy(mp->h_seismograms1,mp->d_seismograms1,sizeof(realw)* 2 * size,cudaMemcpyDeviceToHost),72001);
-          for (i=0;i < mp->nrec_local;i++)
-            for (j=0;j<NSTEP;j++)
-            {   sisux[j + NSTEP * i ] = (double)*(mp->h_seismograms1 + j + NSTEP * i);
-                sisuz[j + NSTEP * i ] = (double)*(mp->h_seismograms1 + j + NSTEP * i + size);
-            }
-        }
-
+                                                                                 NSTEP_seismo);
         break;
 
       case 2 :
@@ -289,21 +286,12 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                  mp->d_veloc,
                                                                                  mp->d_ibool,
                                                                                  mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                                 mp->d_seismograms2,
+                                                                                 d_seismo,
                                                                                  mp->d_cosrot,
                                                                                  mp->d_sinrot,
                                                                                  mp->d_ispec_selected_rec_loc,
                                                                                  seismo_current,
-                                                                                 NSTEP);
-        if (seismo_current == NSTEP - 1 ){
-          print_CUDA_error_if_any(cudaMemcpy(mp->h_seismograms2,mp->d_seismograms2,sizeof(realw)* 2 * size,cudaMemcpyDeviceToHost),72001);
-          for (i=0;i < mp->nrec_local;i++)
-            for (j=0;j<NSTEP;j++)
-            {   sisux[j + NSTEP * i ] = (double)*(mp->h_seismograms2 + j + NSTEP * i);
-                sisuz[j + NSTEP * i ] = (double)*(mp->h_seismograms2 + j + NSTEP * i + size);
-            }
-        }
-
+                                                                                 NSTEP_seismo);
         break;
 
       case 3 :
@@ -312,21 +300,12 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                  mp->d_accel,
                                                                                  mp->d_ibool,
                                                                                  mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                                 mp->d_seismograms3,
+                                                                                 d_seismo,
                                                                                  mp->d_cosrot,
                                                                                  mp->d_sinrot,
                                                                                  mp->d_ispec_selected_rec_loc,
                                                                                  seismo_current,
-                                                                                 NSTEP);
-        if (seismo_current == NSTEP - 1 ){
-          print_CUDA_error_if_any(cudaMemcpy(mp->h_seismograms3,mp->d_seismograms3,sizeof(realw)* 2 * size,cudaMemcpyDeviceToHost),72001);
-          for (i=0;i < mp->nrec_local;i++)
-            for (j=0;j<NSTEP;j++)
-            {   sisux[j + NSTEP * i ] = (double)*(mp->h_seismograms3 + j + NSTEP * i);
-                sisuz[j + NSTEP * i ] = (double)*(mp->h_seismograms3 + j + NSTEP * i + size);
-            }
-        }
-
+                                                                                 NSTEP_seismo);
         break;
 
       case 4 :
@@ -336,33 +315,43 @@ void FC_FUNC_(compute_seismograms_cuda,
                                                                                     mp->d_potential_acoustic,
                                                                                     mp->d_ibool,
                                                                                     mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                                    mp->d_seismograms4,
+                                                                                    d_seismo,
                                                                                     mp->d_ispec_selected_rec_loc,
                                                                                     seismo_current,
-                                                                                    NSTEP);
+                                                                                    NSTEP_seismo);
 
         }else{
           compute_acoustic_seismogram_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->nrec_local,
                                                                                     mp->d_potential_dot_dot_acoustic,
                                                                                     mp->d_ibool,
                                                                                     mp->d_xir_store_loc, mp->d_gammar_store_loc,
-                                                                                    mp->d_seismograms4,
+                                                                                    d_seismo,
                                                                                     mp->d_ispec_selected_rec_loc,
                                                                                     seismo_current,
-                                                                                    NSTEP);
+                                                                                    NSTEP_seismo);
 
         }
-        if (seismo_current == NSTEP - 1 ){
-          print_CUDA_error_if_any(cudaMemcpy(mp->h_seismograms4,mp->d_seismograms4,sizeof(realw)* 2 * size,cudaMemcpyDeviceToHost),72001);
-          for (i=0;i < mp->nrec_local;i++)
-            for (j=0;j<NSTEP;j++)
-            {   sisux[j + NSTEP * i ] = (double)*(mp->h_seismograms4 + j + NSTEP * i);
-                sisuz[j + NSTEP * i ] = (double)*(mp->h_seismograms4 + j + NSTEP * i + size);
-            }
-        }
         break;
+    }//switch
+
+    // copies array to CPU host
+    if (seismo_current == NSTEP_seismo - 1 || *it == *it_end){
+      // seismogram buffers are 1D and components appended; size for one single component record
+      int size = mp->nrec_local * NSTEP_seismo;
+
+      // copies from GPU to CPU (note: could use async mem copy in future...)
+      print_CUDA_error_if_any(cudaMemcpy(h_seismo, d_seismo, sizeof(realw) * 2 * size, cudaMemcpyDeviceToHost),72001);
+
+      // copies values into host array
+      for (int irec=0; irec < mp->nrec_local; irec++){
+        for (int j=0; j < NSTEP_seismo; j++){
+          sisux[j + NSTEP_seismo * irec] = (double) h_seismo[j + NSTEP_seismo * irec];
+          sisuz[j + NSTEP_seismo * irec] = (double) h_seismo[j + NSTEP_seismo * irec + size];
+        }
+      }
     }
-}
+
+  } // nrec_local
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("after compute_seismograms_cuda");

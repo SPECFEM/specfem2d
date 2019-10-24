@@ -124,7 +124,8 @@
                                 myrank,SAVE_FORWARD, &
                                 xir_store_loc, &
                                 gammar_store_loc, &
-                                NSIGTYPE, seismotypeVec)
+                                NSIGTYPE, seismotypeVec, &
+                                NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos)
 
 !!! Parametres fournis
 

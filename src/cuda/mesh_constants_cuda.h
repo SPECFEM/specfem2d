@@ -149,12 +149,6 @@
 #undef USE_TEXTURES_CONSTANTS
 #endif
 
-#ifdef USE_TEXTURES_FIELDS
-#pragma message ("Compiling with: USE_TEXTURES_FIELDS enabled\n")
-#endif
-#ifdef USE_TEXTURES_CONSTANTS
-#pragma message ("Compiling with: USE_TEXTURES_CONSTANTS enabled\n")
-#endif
 
 // CUDA compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
@@ -197,9 +191,6 @@
 #define LAUNCH_MIN_BLOCKS_ACOUSTIC 16
 #endif
 
-#ifdef USE_LAUNCH_BOUNDS
-#pragma message ("\nCompiling with: USE_LAUNCH_BOUNDS enabled\n")
-#endif
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -364,45 +355,18 @@ typedef struct mesh_ {
   // receivers
   int nrec_local;
   int* d_ispec_selected_rec_loc;
+
   // Alexis Bottero (AB AB) defined all these array in order to be able to write several signal types with one simulation
-  // I know it is ugly but it works and I did not have any other idea... sorry about that
-  // I defined arrays for seismotype = 7,8,9 and 10 for the future
-  realw* h_seismograms1;
-  realw* d_seismograms1;
-  realw* h_seismograms2;
-  realw* d_seismograms2;
-  realw* h_seismograms3;
-  realw* d_seismograms3;
-  realw* h_seismograms4;
-  realw* d_seismograms4;
-  realw* h_seismograms5;
-  realw* d_seismograms5;
-  realw* h_seismograms6;
-  realw* d_seismograms6;
-  realw* h_seismograms7;
-  realw* d_seismograms7;
-  realw* h_seismograms8;
-  realw* d_seismograms8;
-  realw* h_seismograms9;
-  realw* d_seismograms9;
-  realw* h_seismograms10;
-  realw* d_seismograms10;
+  // pointer look-up tables
+  realw** h_seismograms;
+  realw** d_seismograms;
+
   realw* d_cosrot;
   realw* d_sinrot;
-  int d_NSIGTYPE;
+
   int h_NSIGTYPE;
-  int seismotype1wanted;
-  int seismotype2wanted;
-  int seismotype3wanted;
-  int seismotype4wanted;
-  int seismotype5wanted;
-  int seismotype6wanted;
-  int seismotype7wanted;
-  int seismotype8wanted;
-  int seismotype9wanted;
-  int seismotype10wanted;
-  int* d_seismotypeVec;
   int* h_seismotypeVec;
+
   // adjoint receivers/sources
   int nadj_rec_local;
   realw* d_adj_sourcearrays;
