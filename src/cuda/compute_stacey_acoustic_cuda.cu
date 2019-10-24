@@ -80,6 +80,11 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
 
   i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
   j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
+
+  //daniel todo: check if we can simplify.
+  //       in fortran routine, we set i == NGLLX+1 or j == NGLLX+1
+  //       to indicate points which duplicate contributions and can be left out
+  //
   //check if the point must be computed
   if (i==NGLLX || j==NGLLX) return;
 
@@ -89,6 +94,7 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
   rhol = rhostore[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)];
   kappal = kappastore[INDEX3(NGLLX,NGLLX,i,j,ispec)];
   cpl = sqrt( kappal / rhol );
+
   // gets associated, weighted jacobian
   jacobianw = abs_boundary_jacobian1Dw[INDEX2(NGLLX,igll,iface)];
 
@@ -106,18 +112,18 @@ __global__ void compute_stacey_acoustic_kernel(realw* potential_dot_acoustic,
       vel = b_potential_dot_acoustic[iglob] / rhol;
       atomicAdd(&b_potential_dot_dot_acoustic[iglob],-vel*jacobianw/cpl);
     }else{
-      if (cote_abs[iface] == 1)     {num_local = ib_bottom[iface] - 1;
-                                     atomicAdd(&b_potential_dot_dot_acoustic[iglob],
-                                               -b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)]);}
-      else if (cote_abs[iface] == 2){num_local = ib_right[iface] - 1;
-                                     atomicAdd(&b_potential_dot_dot_acoustic[iglob],
-                                               -b_absorb_potential_right[INDEX2(NGLLX,igll,num_local)]);}
-      else if (cote_abs[iface] == 3){num_local = ib_top[iface] - 1;
-                                     atomicAdd(&b_potential_dot_dot_acoustic[iglob],
-                                               -b_absorb_potential_top[INDEX2(NGLLX,igll,num_local)]);}
-      else if (cote_abs[iface] == 4){num_local = ib_left[iface] - 1;
-                                     atomicAdd(&b_potential_dot_dot_acoustic[iglob],
-                                               -b_absorb_potential_left[INDEX2(NGLLX,igll,num_local)]);}
+      if (cote_abs[iface] == 1)     { num_local = ib_bottom[iface] - 1;
+                                      atomicAdd(&b_potential_dot_dot_acoustic[iglob],
+                                                -b_absorb_potential_bottom[INDEX2(NGLLX,igll,num_local)]);}
+      else if (cote_abs[iface] == 2){ num_local = ib_right[iface] - 1;
+                                      atomicAdd(&b_potential_dot_dot_acoustic[iglob],
+                                                -b_absorb_potential_right[INDEX2(NGLLX,igll,num_local)]);}
+      else if (cote_abs[iface] == 3){ num_local = ib_top[iface] - 1;
+                                      atomicAdd(&b_potential_dot_dot_acoustic[iglob],
+                                                -b_absorb_potential_top[INDEX2(NGLLX,igll,num_local)]);}
+      else if (cote_abs[iface] == 4){ num_local = ib_left[iface] - 1;
+                                      atomicAdd(&b_potential_dot_dot_acoustic[iglob],
+                                                -b_absorb_potential_left[INDEX2(NGLLX,igll,num_local)]);}
     }
     if (write_abs) {
       // saves boundary values

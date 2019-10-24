@@ -84,6 +84,14 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
 
       i = abs_boundary_ij[INDEX3(NDIM,NGLLX,0,igll,iface)]-1;
       j = abs_boundary_ij[INDEX3(NDIM,NGLLX,1,igll,iface)]-1;
+
+      //daniel todo: check if we can simplify.
+      //       in fortran routine, we set i == NGLLX+1 or j == NGLLX+1
+      //       to indicate points which duplicate contributions and can be left out
+      //
+      //check if the point must be computed
+      if (i==NGLLX || j==NGLLX) return;
+
       iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
 
       // gets associated velocity
