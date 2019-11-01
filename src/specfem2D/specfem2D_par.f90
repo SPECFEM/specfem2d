@@ -806,6 +806,14 @@ module specfem_par_gpu
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray_loc
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable ::  source_time_function_loc
 
+  ! moving sources
+  integer :: max_nsources_local_moving
+  integer, dimension(:), allocatable :: nsources_local_moving
+  integer, dimension(:,:), allocatable :: ispec_selected_source_moving
+  integer, dimension(:,:), allocatable :: ispec_selected_source_loc_moving
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: sourcearrays_moving
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sourcearray_loc_moving
+
   ! coupling
   integer, dimension(:), allocatable :: coupling_ac_el_ispec
   integer, dimension(:,:,:), allocatable :: coupling_ac_el_ij
