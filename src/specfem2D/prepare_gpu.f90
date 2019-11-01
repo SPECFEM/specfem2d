@@ -646,7 +646,7 @@
 
   subroutine init_moving_source()
 
-  ! Compute the sourcearrays for all timesteps and send them to device 
+  ! Compute the sourcearrays for all timesteps and send them to device
 
   use constants, only: NGLLX,NGLLZ,TINYVAL
 
@@ -685,7 +685,7 @@
     if (myrank == 0) then
       write(IMAIN,*) '    Generating moving source databases ...'
       write(IMAIN,*) '      (if this step takes a long time in your case you may want to turn writeMovingDatabases to .true. .'
-      write(IMAIN,*) '      In this case go to init_moving_source. Read the comments also)'
+      write(IMAIN,*) '      In this case goto init_moving_source. Read the comments also)'
       call flush_IMAIN()
     endif
     do it_l = 1, NSTEP  ! Loop over the time steps to precompute all source positions
@@ -795,7 +795,7 @@
       enddo
     enddo
 
-    if (writeMovingDatabases) then  ! Write this to file 
+    if (writeMovingDatabases) then  ! Write this to file
       ! user output
       if (myrank == 0) then
         write(IMAIN,*) '  Moving source databases will be written in',trim(pathToMovingDatabase)//trim(outputname),' ...'
