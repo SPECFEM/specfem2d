@@ -108,7 +108,9 @@
 
       ! sources
       if (SOURCE_IS_MOVING) then
-        call compute_add_sources_acoustic_GPU_moving_source(iphase,compute_wavefield_1,compute_wavefield_2)
+        call compute_add_sources_acoustic_GPU_moving_source(iphase, compute_wavefield_1, compute_wavefield_2)
+        ! Old version. Using this version you can comment call init_moving_source() in prepare_gpu.f90
+        !call compute_add_sources_acoustic_GPU_moving_source_old(iphase, compute_wavefield_1, compute_wavefield_2)
       else
         call compute_add_sources_acoustic_GPU(iphase,compute_wavefield_1,compute_wavefield_2)
       endif
@@ -286,7 +288,7 @@
 !---------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_add_sources_acoustic_GPU_moving_source(iphase,compute_wavefield_1,compute_wavefield_2)
+  subroutine compute_add_sources_acoustic_GPU_moving_source_old(iphase,compute_wavefield_1,compute_wavefield_2)
 
   use constants, only: NGLLX,NGLLZ,TINYVAL
 
@@ -308,8 +310,8 @@
 
   ! forward simulations
   if (SIMULATION_TYPE == 1) then
-    xminSource = 50000.0d0 ! m
-    vSource = 1300.0d0 ! m/s
+    xminSource = -200.0d0 ! m
+    vSource = 200.0d0 ! m/s
 
     if (time_stepping_scheme == 1) then
       ! Newmark
@@ -380,6 +382,7 @@
     enddo
     deallocate(ispec_selected_source_loc)
     allocate(ispec_selected_source_loc(nsources_local))
+    ispec_selected_source_loc(:) = 0
     j = 0
     do i = 1, NSOURCES
       if (myrank == islice_selected_source(i)) then
@@ -394,6 +397,8 @@
     else
       allocate(sourcearray_loc(1,1,1,1))
     endif
+
+    sourcearray_loc(:,:,:,:) = 0._CUSTOM_REAL
     k = 0
     do i_source = 1,NSOURCES
       if (myrank == islice_selected_source(i_source)) then
@@ -407,7 +412,7 @@
     call recompute_source_position_cuda(Mesh_pointer, nsources_local, sourcearray_loc, &
                                     ispec_selected_source_loc)
 
-    call compute_add_sources_ac_cuda(Mesh_pointer,iphase,it)
+    call compute_add_sources_ac_cuda(Mesh_pointer, iphase, it)
   endif
   ! adjoint simulations
   if (SIMULATION_TYPE == 3 .and. nadj_rec_local > 0 .and. compute_wavefield_1) &
@@ -416,4 +421,37 @@
   ! adjoint simulations
   if (compute_wavefield_2) call compute_add_sources_ac_s3_cuda(Mesh_pointer, iphase, NSTEP -it + 1)
 
+  end subroutine compute_add_sources_acoustic_GPU_moving_source_old
+
+
+!
+!---------------------------------------------------------------------------------------------
+!
+
+
+  subroutine compute_add_sources_acoustic_GPU_moving_source(iphase,compute_wavefield_1,compute_wavefield_2)
+
+  use constants, only: NGLLX,NGLLZ,TINYVAL
+
+  use specfem_par
+  use specfem_par_gpu
+
+  implicit none
+
+  ! communication overlap
+  integer,intent(in) :: iphase
+  logical,intent(in) :: compute_wavefield_1,compute_wavefield_2
+
+  ! forward simulations
+  if (SIMULATION_TYPE == 1) then
+    call compute_add_moving_sources_ac_cuda(Mesh_pointer, iphase, nsources_local_moving(it), it, NSTEP)
+  endif
+  ! adjoint simulations
+  if (SIMULATION_TYPE == 3 .and. nadj_rec_local > 0 .and. compute_wavefield_1) &
+    call add_sources_ac_sim_2_or_3_cuda(Mesh_pointer,iphase, NSTEP -it + 1, nadj_rec_local, NSTEP)
+
+  ! adjoint simulations
+  if (compute_wavefield_2) call compute_add_sources_ac_s3_cuda(Mesh_pointer, iphase, NSTEP -it + 1)
+
   end subroutine compute_add_sources_acoustic_GPU_moving_source
+

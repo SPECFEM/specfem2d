@@ -212,7 +212,6 @@
 #define INDEX5(xsize,ysize,zsize,isize,x,y,z,i,j) x + xsize*(y + ysize*(z + zsize*(i + isize*(j))))
 #define INDEX6(xsize,ysize,zsize,isize,jsize,x,y,z,i,j,k) x + xsize*(y + ysize*(z + zsize*(i + isize*(j + jsize*k))))
 
-
 #define INDEX3_PADDED(xsize,ysize,x,y,i) x + (y)*xsize + (i)*NGLL2_PADDED
 #define INDEX4_PADDED(xsize,ysize,zsize,x,y,z,i) x + xsize*(y + ysize*z) + (i)*NGLL3_PADDED
 
@@ -296,6 +295,7 @@ typedef struct mesh_ {
   int save_forward;
   int stacey_absorbing_conditions;
   int pml;
+  int source_is_moving;
 
   // ------------------------------------------------------------------ //
   // GLL points & weights
@@ -348,9 +348,13 @@ typedef struct mesh_ {
 
   // sources
   int nsources_local;
-  realw* d_sourcearrays;
-  int* d_ispec_selected_source;
+  realw* d_sourcearrays;         // Will have shape nsources_local*NDIM*NGLL2
+  int* d_ispec_selected_source;  // Will have shape nsources_local
   realw* d_source_time_function;
+  int* d_nsources_local_moving;  // Will have shape NSTEP
+  int d_max_nsources_local_moving;  // = max(d_nsources_local_moving)
+  realw* d_sourcearrays_moving;  // Will have shape d_max_nsources_local_moving*NDIM*NGLL2*NSTEP
+  int* d_ispec_selected_source_moving;  // Will have shape d_max_nsources_local_moving*NSTEP
 
   // receivers
   int nrec_local;

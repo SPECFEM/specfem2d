@@ -102,7 +102,7 @@ void copy_todevice_int(void** d_array_addr_ptr,int* h_array,int size){
 
 /* ----------------------------------------------------------------------------------------------- */
 
-// copies integer array from CPU host to GPU device
+// copies float array from CPU host to GPU device
 void copy_todevice_realw(void** d_array_addr_ptr,realw* h_array,int size){
   TRACE("  copy_todevice_realw");
 
@@ -1123,6 +1123,13 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_ispec_selected_source);
   }
 
+  if (mp->source_is_moving) {
+    cudaFree(mp->d_nsources_local_moving);
+    cudaFree(mp->d_sourcearrays_moving);
+    cudaFree(mp->d_ispec_selected_source_moving);
+    //cudaFree(mp->d_source_time_function_moving);
+  }
+
   // receivers
   if (mp->nrec_local > 0) {
     // clear pointer look-up table
@@ -1304,7 +1311,45 @@ TRACE("prepare_cleanup_device");
 /* ----------------------------------------------------------------------------------------------- */
 
 // For moving sources
-// This function may be put elsewhere
+
+/* ----------------------------------------------------------------------------------------------- */
+
+
+extern "C"
+void FC_FUNC_(prepare_moving_source_cuda,
+              PREPARE_MOVING_SOURCE_CUDA)(long* Mesh_pointer,
+                                        int* h_nsources_local_f_moving,
+                                        int* h_max_nsources_local_f_moving,
+                                        realw* h_sourcearrays_moving,
+                                        int* h_ispec_selected_source_moving,
+                                        int* NSTEP) {
+
+  TRACE("prepare_moving_source_cuda");
+
+  int NSTEP_int = (*NSTEP);
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer); // get mesh pointer out of fortran integer container
+  // sources
+  mp->d_max_nsources_local_moving = *h_max_nsources_local_f_moving;
+  if (mp->d_max_nsources_local_moving > 0){
+    copy_todevice_realw((void**)&mp->d_sourcearrays_moving,h_sourcearrays_moving,mp->d_max_nsources_local_moving*NDIM*NGLL2*NSTEP_int);
+    copy_todevice_int((void**)&mp->d_ispec_selected_source_moving,h_ispec_selected_source_moving,mp->d_max_nsources_local_moving*NSTEP_int);
+    copy_todevice_int((void**)&mp->d_nsources_local_moving,h_nsources_local_f_moving,NSTEP_int);
+  }
+
+  // Beware, we can't print the values mp->d_nsources_local_moving[it] because they are on the device
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_cuda_error("prepare_moving_source_cuda");
+#endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// Old function for moving sources
+// Let it here please it may be useful
+// It is used when compute_add_sources_acoustic_GPU_moving_source_old is used
+// instead of compute_add_sources_acoustic_GPU_moving_source in compute_gpu_acoustic.f90
+// Read the comments there
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -1317,7 +1362,7 @@ void FC_FUNC_(recompute_source_position_cuda,
 
   TRACE("recompute_source_position_cuda");
 
-  Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
+  Mesh* mp = (Mesh*)(*Mesh_pointer); // get mesh pointer out of fortran integer container
 
   // sources
   mp->nsources_local = *nsources_local_f;
@@ -1330,3 +1375,4 @@ void FC_FUNC_(recompute_source_position_cuda,
   exit_on_cuda_error("recompute_source_position_cuda");
 #endif
 }
+

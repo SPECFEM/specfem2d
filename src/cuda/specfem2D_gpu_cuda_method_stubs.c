@@ -153,6 +153,11 @@ void FC_FUNC_(compute_add_sources_ac_cuda,
                                            int* iphasef,
                                            int * itf) {}
 
+void FC_FUNC_(compute_add_moving_sources_ac_cuda,
+              COMPUTE_ADD_MOVING_SOURCES_AC_CUDA)(long* Mesh_pointer,
+                                                  int* iphasef,
+                                                  int * itf) {}
+
 void FC_FUNC_(compute_add_sources_ac_s3_cuda,
               COMPUTE_ADD_SOURCES_AC_s3_CUDA)(long* Mesh_pointer,
                                               int* iphasef,
@@ -432,6 +437,13 @@ void FC_FUNC_(recompute_source_position_cuda,
                                         realw* h_sourcearrays,
                                         int* h_ispec_selected_source) {}
 
+void FC_FUNC_(prepare_moving_source_cuda,
+              PREPARE_MOVING_SOURCE_CUDA)(long* Mesh_pointer,
+                                        int* h_nsources_local_f_moving,
+                                        int* h_max_nsources_local_f_moving,
+                                        realw* h_sourcearrays_moving,
+                                        int* h_ispec_selected_source_moving,
+                                        int* NSTEP) {}
 
 //
 // src/cuda/transfer_fields_cuda.cu

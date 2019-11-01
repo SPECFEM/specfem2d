@@ -50,7 +50,7 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
                                                     int* ispec_selected_source,
                                                     int* ispec_is_acoustic,
                                                     realw* kappastore,
-                                                    int it,int nsources_local) {
+                                                    int it, int nsources_local) {
   int i = threadIdx.x;
   int j = threadIdx.y;
 
@@ -72,8 +72,49 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
         stf = source_time_function[INDEX2(nsources_local,isource,it)]/kappal;
         atomicAdd(&potential_dot_dot_acoustic[iglob],
                   +sourcearrays[INDEX4(nsources_local,NDIM,NGLLX,isource, 0,i,j)]*stf);
+    }
+  }
+}
 
 
+/* ----------------------------------------------------------------------------------------------- */
+
+__global__ void compute_add_moving_sources_acoustic_kernel(realw* potential_dot_dot_acoustic,
+                                                    int* d_ibool,
+                                                    realw* sourcearrays_moving,
+                                                    realw* source_time_function,
+                                                    int myrank,
+                                                    int* ispec_selected_source_moving,
+                                                    int* ispec_is_acoustic,
+                                                    realw* kappastore,
+                                                    int it, int nsources_local,
+                                                    int max_nsources_local, int NSTEP) {
+
+  // Same but for moving sources
+
+  int i = threadIdx.x;
+  int j = threadIdx.y;
+
+  int isource = blockIdx.x + gridDim.x*blockIdx.y;
+
+  int ispec, iglob;
+  realw stf, kappal;
+
+
+  if (isource < nsources_local) {
+
+      ispec = ispec_selected_source_moving[INDEX2(nsources_local, isource, it)] - 1;
+
+      if (ispec_is_acoustic[ispec]) {
+
+        iglob = d_ibool[INDEX3_PADDED(NGLLX, NGLLX, i, j, ispec)] - 1;
+
+        kappal = kappastore[INDEX3(NGLLX, NGLLX, i, j, ispec)];
+
+        stf = source_time_function[INDEX2(nsources_local, isource, it)]/kappal;
+
+        atomicAdd(&potential_dot_dot_acoustic[iglob],
+                  +sourcearrays_moving[INDEX5(max_nsources_local, NDIM, NGLLX, NGLLX, isource, 0, i, j, it)]*stf);
 
     }
   }
@@ -97,7 +138,7 @@ void FC_FUNC_(compute_add_sources_ac_cuda,
 
   int iphase = *iphasef;
 
-  // only add this contributions for first pass
+  // only adds this contribution for first pass
   if (iphase != 1) return;
 
   int num_blocks_x, num_blocks_y;
@@ -133,6 +174,8 @@ void FC_FUNC_(compute_add_sources_ac_s3_cuda,
               COMPUTE_ADD_SOURCES_AC_s3_CUDA)(long* Mesh_pointer,
                                               int* iphasef,
                                               int* itf) {
+  // Same function than previous one but applying to mp->d_b_potential_dot_dot_acoustic instead
+  // of mp->d_potential_dot_dot_acoustic
 
   TRACE("compute_add_sources_ac_s3_cuda");
 
@@ -148,6 +191,7 @@ void FC_FUNC_(compute_add_sources_ac_s3_cuda,
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nsources_local,&num_blocks_x,&num_blocks_y);
+
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(NGLLX,NGLLX,1);
 
@@ -169,6 +213,55 @@ void FC_FUNC_(compute_add_sources_ac_s3_cuda,
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("compute_add_sources_ac_s3_cuda");
 #endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern "C"
+void FC_FUNC_(compute_add_moving_sources_ac_cuda,
+              COMPUTE_ADD_MOVING_SOURCES_AC_CUDA)(long* Mesh_pointer,
+                                                  int* iphasef,
+                                                  int* nsources_local_moving,
+                                                  int* itf,
+                                                  int* NSTEP) {
+
+  // Same function but for moving sources
+
+  TRACE("compute_add_moving_sources_ac_cuda");
+
+  Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
+
+  int it = *itf - 1;
+  // check if anything to do
+  //if (mp->d_nsources_local_moving[it] == 0) return;
+  if (*nsources_local_moving == 0) return;
+
+  int iphase = *iphasef;
+  // only adds this contribution for first passcompute_add_moving_sources_ac_cuda
+  if (iphase != 1) return;
+  int num_blocks_x, num_blocks_y;
+  //get_blocks_xy(mp->d_nsources_local_moving[it],&num_blocks_x,&num_blocks_y);
+  get_blocks_xy(*nsources_local_moving,&num_blocks_x,&num_blocks_y);
+
+  dim3 grid(num_blocks_x,num_blocks_y);
+  dim3 threads(NGLLX,NGLLX,1);
+
+  compute_add_moving_sources_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
+                                                                                    mp->d_ibool,
+                                                                                    mp->d_sourcearrays_moving,
+                                                                                    mp->d_source_time_function,
+                                                                                    mp->myrank,
+                                                                                    mp->d_ispec_selected_source_moving,
+                                                                                    mp->d_ispec_is_acoustic,
+                                                                                    mp->d_kappastore,
+                                                                                    //it, mp->d_nsources_local_moving[it],
+                                                                                    it, *nsources_local_moving,
+                                                                                    mp->d_max_nsources_local_moving, *NSTEP);
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_cuda_error("compute_add_moving_sources_ac_cuda");
+#endif
+
 }
 
 

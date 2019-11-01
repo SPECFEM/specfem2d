@@ -357,9 +357,10 @@
 
 ! reads source parameters
 
-  use constants, only: IIN
+  use constants, only: IIN, SOURCE_IS_MOVING
   use specfem_par
   use specfem_par_movie
+  use specfem_par_gpu, only: nsources_local_moving, ispec_selected_source_moving, sourcearrays_moving
 
   implicit none
 
@@ -392,6 +393,19 @@
            islice_selected_source(NSOURCES), &
            sourcearrays(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating source arrays')
+
+  if (SOURCE_IS_MOVING .and. GPU_MODE) then
+    ! allocates source information arrays
+    allocate(nsources_local_moving(NSTEP), &
+             ispec_selected_source_moving(NSOURCES,NSTEP), &
+             sourcearrays_moving(NSOURCES,NDIM,NGLLX,NGLLZ,NSTEP),stat=ier)
+  else
+    ! allocates source information arrays
+    allocate(nsources_local_moving(1), &
+             ispec_selected_source_moving(1,1), &
+             sourcearrays_moving(1,1,1,1,1), stat=ier)
+  endif
+  if (ier /= 0) call stop_the_code('Error allocating source arrays 2')
 
   ! source locations
   allocate(x_source(NSOURCES), &

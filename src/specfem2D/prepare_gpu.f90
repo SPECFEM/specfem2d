@@ -33,7 +33,7 @@
 
   subroutine prepare_GPU()
 
-  use constants, only: IMAIN,APPROXIMATE_HESS_KL,USE_A_STRONG_FORMULATION_FOR_E1
+  use constants, only: IMAIN,APPROXIMATE_HESS_KL,USE_A_STRONG_FORMULATION_FOR_E1,SOURCE_IS_MOVING
   use specfem_par
   use specfem_par_gpu
 
@@ -321,6 +321,18 @@
   allocate(buffer_recv_vector_gpu(2,max_nibool_interfaces_ext_mesh,ninterface))
   allocate(b_buffer_recv_vector_gpu(2,max_nibool_interfaces_ext_mesh,ninterface))
 
+  if (SOURCE_IS_MOVING .and. SIMULATION_TYPE == 1) then
+    if (myrank == 0) then
+      write(IMAIN,*)
+      write(IMAIN,*) "  Initializing variables for moving sources ..."
+      call flush_IMAIN()
+    endif
+    call init_moving_source()
+    if (myrank == 0) then
+      write(IMAIN,*) "  Done"
+      call flush_IMAIN()
+    endif
+  endif
   ! synchronizes processes
   call synchronize_all()
 
@@ -329,6 +341,8 @@
 
   ! outputs usage for main process
   if (myrank == 0) then
+    write(IMAIN,*) "Initialization done successfully"
+    write(IMAIN,*)
     call get_free_device_memory(free_mb,used_mb,total_mb)
 
     write(IMAIN,*)
@@ -488,6 +502,7 @@
 
   allocate(source_time_function_loc(nsources_local,NSTEP))
   allocate(ispec_selected_source_loc(nsources_local))
+
   j = 0
   do i = 1, NSOURCES
     if (myrank == islice_selected_source(i)) then
@@ -624,11 +639,212 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  initialization done successfully'
+    write(IMAIN,*) '  init_host_to_dev_variable done successfully'
     call flush_IMAIN()
   endif
 
   end subroutine init_host_to_dev_variable
+
+!----------------------------------------------------------------------
+
+  subroutine init_moving_source()
+
+  ! Compute the sourcearrays for all timesteps and send them to device 
+
+  use constants, only: NGLLX,NGLLZ,TINYVAL
+
+  use specfem_par
+  use specfem_par_gpu
+
+  implicit none
+
+  ! Local variables
+  logical :: writeMovingDatabases, file_exists
+  character(len=MAX_STRING_LEN) :: pathToMovingDatabase, outputname
+  integer :: i_source,i,j,k,ispec,it_l,i_stage_loc,ier
+  double precision :: hlagrange
+  double precision :: xminSource,vSource,time_val,t_used
+  ! Single source array
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray_temp
+
+  allocate(ispec_selected_source_loc_moving(1,1))
+  allocate(sourcearray_loc_moving(1,1,1,1,1))
+  nsources_local_moving(:) = 0
+  sourcearrays_moving(:,:,:,:,:) = 0
+  file_exists = .false.
+
+  writeMovingDatabases = .true. ! TODO Turn on this if the generation of moving source databases takes a long time
+  ! Then you can do it in two steps, first you run the code and it write the databases to file. Then you rerun the code
+  ! and it will read the databases from there directly saving a lot of time.
+
+  if (writeMovingDatabases) then
+    ! saves data in a binary file
+    write(outputname,'(a,i6.6,a)') 'proc',myrank,'_data.bin'
+    pathToMovingDatabase = '/path/to/wherever/directory/you/want/'  ! Must end with '/'
+    inquire(file = trim(pathToMovingDatabase)//outputname, exist=file_exists)
+  endif
+
+  if ((.not. file_exists) .or. (.not. writeMovingDatabases)) then  ! Generate the moving source databases (can be expensive)
+    if (myrank == 0) then
+      write(IMAIN,*) '    Generating moving source databases ...'
+      write(IMAIN,*) '      (if this step takes a long time in your case you may want to turn writeMovingDatabases to .true. .'
+      write(IMAIN,*) '      In this case go to init_moving_source. Read the comments also)'
+      call flush_IMAIN()
+    endif
+    do it_l = 1, NSTEP  ! Loop over the time steps to precompute all source positions
+      do i_stage_loc = 1, stage_time_scheme  ! For now stage_time_scheme = 1 only because only Newmark time scheme are supported
+
+        xminSource = -200.0d0 ! m
+        vSource = 200.0d0 ! m/s
+
+        if (time_stepping_scheme == 1) then  ! Only Newmark time scheme is supported
+          ! Newmark
+          time_val = (it_l-1)*deltat
+        else
+          call exit_MPI(myrank,'Not implemented! (546999)')
+        endif
+        ! moves and re-locates sources along x-axis
+        do i_source = 1,NSOURCES
+          if (abs(source_time_function(i_source,it_l,i_stage_loc)) > TINYVAL) then
+            t_used = (time_val-t0-tshift_src(i_source))
+
+            x_source(i_source) = xminSource + vSource*t_used !time_val?
+
+            ! collocated force source (most expensive step)
+            call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
+                               x_source(i_source),z_source(i_source), &
+                               ispec_selected_source_moving(i_source, it_l),islice_selected_source(i_source), &
+                               NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+                               iglob_source(i_source),.true.)
+
+            call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
+            call lagrange_any(gamma_source(i_source),NGLLZ,zigll,hgammas,hpgammas)
+
+            ! stores Lagrangians for source
+            hxis_store(i_source,:) = hxis(:)
+            hgammas_store(i_source,:) = hgammas(:)
+
+            sourcearray_temp(:,:,:) = 0._CUSTOM_REAL
+
+            ! element containing source
+            ispec = ispec_selected_source_moving(i_source, it_l)
+            if (myrank == islice_selected_source(i_source)) then
+              ! computes source arrays
+              if (source_type(i_source) == 1) then
+                ! collocated force source
+                do j = 1,NGLLZ
+                  do i = 1,NGLLX
+                    hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+                    ! source element is acoustic
+                    if (ispec_is_acoustic(ispec)) then
+                      sourcearray_temp(:,i,j) = hlagrange
+                    else
+                      call exit_MPI(myrank,'Moving source not in acoustic element (GPU)')
+                    endif
+                  enddo
+                enddo
+              else
+                call exit_MPI(myrank,'Moving source with source_type != 1 (GPU)')
+              endif
+
+              ! stores sourcearray for all sources
+              sourcearrays_moving(i_source,:,:,:,it_l) = sourcearray_temp(:,:,:)
+
+            endif
+          endif
+        enddo
+
+        ! counts sources in this process slice for this time step
+        nsources_local = 0
+        do i = 1, NSOURCES
+          if (myrank == islice_selected_source(i)) then
+            nsources_local = nsources_local + 1
+          endif
+        enddo
+        nsources_local_moving(it_l) = nsources_local
+      enddo  ! stage_time_scheme
+    enddo  ! NSTEP
+
+    deallocate(ispec_selected_source_loc_moving)
+    max_nsources_local_moving = maxval(nsources_local_moving)
+    allocate(ispec_selected_source_loc_moving(max_nsources_local_moving, NSTEP))
+    ispec_selected_source_loc_moving(:,:) = 0
+
+    do it_l = 1, NSTEP
+      j = 0
+      do i = 1, NSOURCES
+        if (myrank == islice_selected_source(i)) then
+          if (j > nsources_local_moving(it_l)) call stop_the_code('Error with the number of local sources')
+          j = j + 1
+          ispec_selected_source_loc_moving(j, it_l)  = ispec_selected_source_moving(i, it_l)
+        endif
+      enddo
+    enddo
+
+    deallocate(sourcearray_loc_moving)
+    if (max_nsources_local_moving > 0) then
+      allocate(sourcearray_loc_moving(max_nsources_local_moving,NDIM,NGLLX,NGLLX,NSTEP))
+    else
+      allocate(sourcearray_loc_moving(1,1,1,1,1))
+    endif
+    do it_l = 1, NSTEP
+      k = 0
+      do i_source = 1,NSOURCES
+        if (myrank == islice_selected_source(i_source)) then
+          ! source belongs to this process
+          k = k + 1
+          sourcearray_loc_moving(k,:,:,:,it_l) = sourcearrays_moving(i_source,:,:,:,it_l)
+        endif
+      enddo
+    enddo
+
+    if (writeMovingDatabases) then  ! Write this to file 
+      ! user output
+      if (myrank == 0) then
+        write(IMAIN,*) '  Moving source databases will be written in',trim(pathToMovingDatabase)//trim(outputname),' ...'
+        call flush_IMAIN()
+      endif
+      open(unit = 1698, file = trim(pathToMovingDatabase)//outputname,status='unknown',action='write',form='unformatted',iostat=ier)
+      if (ier /= 0) call stop_the_code('  Error writing moving source data file to disk !')
+      write(1698) max_nsources_local_moving
+      write(1698) NSTEP
+      write(1698) nsources_local_moving
+      write(1698) sourcearray_loc_moving
+      write(1698) ispec_selected_source_loc_moving
+      ! user output
+      close(1698)
+      write(IMAIN,*) '  Moving source databases have been written in ', trim(pathToMovingDatabase)//trim(outputname)
+      call synchronize_all()
+      if (myrank == 0) then
+        write(IMAIN,*) '  Just rerun the code now, they will be read there'
+        call flush_IMAIN()
+      endif
+      call exit_MPI('  Terminating ...')
+    endif
+  else  ! Read the file
+    ! Read setup data from a binary file
+    write(IMAIN,*) '  Reading moving source databases from file: ', trim(pathToMovingDatabase)//trim(outputname)
+    open(unit = 1698,file = trim(pathToMovingDatabase)//outputname,status='old',form='unformatted',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening model file proc**_data.bin')
+
+    read(1698) max_nsources_local_moving
+    read(1698) NSTEP
+    read(1698) nsources_local_moving
+    deallocate(ispec_selected_source_loc_moving)
+    deallocate(sourcearray_loc_moving)
+    allocate(ispec_selected_source_loc_moving(max_nsources_local_moving, NSTEP))
+    allocate(sourcearray_loc_moving(max_nsources_local_moving,NDIM,NGLLX,NGLLX,NSTEP))
+
+    read(1698) sourcearray_loc_moving
+    read(1698) ispec_selected_source_loc_moving
+    close(1698)
+  endif
+
+  ! Send variables to device:
+  call prepare_moving_source_cuda(Mesh_pointer, nsources_local_moving, max_nsources_local_moving, &
+                                  sourcearray_loc_moving, ispec_selected_source_loc_moving, NSTEP)
+
+  end subroutine init_moving_source
 
 !----------------------------------------------------------------------
 
