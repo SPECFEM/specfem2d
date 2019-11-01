@@ -819,7 +819,7 @@
         write(IMAIN,*) '  Just rerun the code now, they will be read there'
         call flush_IMAIN()
       endif
-      call exit_MPI('  Terminating ...')
+      call exit_MPI(myrank, '  Terminating ...')
     endif
   else  ! Read the file
     ! Read setup data from a binary file
