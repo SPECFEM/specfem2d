@@ -1373,8 +1373,8 @@
     if (ier /= 0) stop 'error allocating array abs_boundary_ij etc.'
 
     ! needed for gpu boundary array storage
-    allocate(cote_abs(num_abs_boundary_faces),stat=ier)
-    if (ier /= 0) stop 'error allocating array cote_abs etc.'
+    allocate(edge_abs(num_abs_boundary_faces),stat=ier)
+    if (ier /= 0) stop 'error allocating array edge_abs etc.'
 
     do ispecabs = 1,num_abs_boundary_faces
       ispec = abs_boundary_ispec(ispecabs)
@@ -1395,7 +1395,7 @@
 
           abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
 
-          cote_abs(ispecabs) = 4
+          edge_abs(ispecabs) = 4
         enddo
         if (ibegin_edge4(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
         if (iend_edge4(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
@@ -1416,7 +1416,7 @@
 
           abs_boundary_jacobian1Dw(j,ispecabs) = jacobian1D * wzgll(j)
 
-          cote_abs(ispecabs) = 2
+          edge_abs(ispecabs) = 2
         enddo
         if (ibegin_edge2(ispecabs) == 2) abs_boundary_ij(2,1,ispecabs) = NGLLZ+1
         if (iend_edge2(ispecabs) == NGLLZ-1) abs_boundary_ij(2,NGLLZ,ispecabs) = NGLLZ+1
@@ -1437,7 +1437,7 @@
 
           abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
 
-          cote_abs(ispecabs) = 1
+          edge_abs(ispecabs) = 1
 
         enddo
         if (ibegin_edge1(ispecabs) == 2 .or. codeabs_corner(1,ispecabs)) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
@@ -1459,7 +1459,7 @@
 
           abs_boundary_jacobian1Dw(i,ispecabs) = jacobian1D * wxgll(i)
 
-          cote_abs(ispecabs) = 3
+          edge_abs(ispecabs) = 3
         enddo
         if (ibegin_edge3(ispecabs) == 2 .or. codeabs_corner(3,ispecabs)) abs_boundary_ij(1,1,ispecabs) = NGLLX+1
         if (iend_edge3(ispecabs) == NGLLX-1 .or. codeabs_corner(4,ispecabs)) abs_boundary_ij(1,NGLLX,ispecabs) = NGLLX+1
@@ -1471,7 +1471,7 @@
     allocate(abs_boundary_ij(1,1,1), &
              abs_boundary_jacobian1Dw(1,1), &
              abs_boundary_normal(1,1,1), &
-             cote_abs(1),stat=ier)
+             edge_abs(1),stat=ier)
     if (ier /= 0) stop 'error allocating dummy array abs_boundary_ij etc.'
   endif ! STACEY_ABSORBING_CONDITIONS
 

@@ -974,7 +974,7 @@ void FC_FUNC_(prepare_stacey_device,
                                      realw* h_abs_boundary_normal,
                                      realw* h_abs_boundary_jacobian1Dw,
                                      int* h_num_abs_boundary_faces,
-                                     int* h_cote_abs,
+                                     int* h_edge_abs,
                                      int* h_ib_bottom,
                                      int* h_ib_left,
                                      int* h_ib_right,
@@ -1010,7 +1010,7 @@ void FC_FUNC_(prepare_stacey_device,
     copy_todevice_realw((void**)&mp->d_abs_boundary_jacobian2Dw,h_abs_boundary_jacobian1Dw,
                         NGLLX*(mp->d_num_abs_boundary_faces));
 
-    copy_todevice_int((void**)&mp->d_cote_abs,h_cote_abs,(mp->d_num_abs_boundary_faces));
+    copy_todevice_int((void**)&mp->d_edge_abs,h_edge_abs,(mp->d_num_abs_boundary_faces));
     copy_todevice_int((void**)&mp->d_ib_left,h_ib_left,(mp->d_num_abs_boundary_faces));
     copy_todevice_int((void**)&mp->d_ib_right,h_ib_right,(mp->d_num_abs_boundary_faces));
     copy_todevice_int((void**)&mp->d_ib_top,h_ib_top,(mp->d_num_abs_boundary_faces));
@@ -1099,7 +1099,7 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_abs_boundary_ijk);
     cudaFree(mp->d_abs_boundary_normal);
     cudaFree(mp->d_abs_boundary_jacobian2Dw);
-    cudaFree(mp->d_cote_abs);
+    cudaFree(mp->d_edge_abs);
     cudaFree(mp->d_ib_left);
     cudaFree(mp->d_ib_right);
     cudaFree(mp->d_ib_top);

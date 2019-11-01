@@ -425,7 +425,7 @@ typedef struct mesh_ {
   int* d_abs_boundary_ijk;
   realw* d_abs_boundary_normal;
   realw* d_abs_boundary_jacobian2Dw;
-  int* d_cote_abs;
+  int* d_edge_abs;
   int* d_ib_left;
   int* d_ib_right;
   int* d_ib_top;

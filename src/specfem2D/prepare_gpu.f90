@@ -83,20 +83,20 @@
     call stop_the_code('Error GPU simulation')
   endif
 
-!!!!!!!!!!! Parametres fournis
+  ! Input parameters :
 
-! ibool(i,j,ispec)                       : convertisseur numero du point GLL local (i,j) de l'element ispec => global (iglob)
-! ninterface                             : nombre d'interfaces de la partition locale avec les autres partitions
-! max_nibool_interfaces_ext_mesh         : nombre maximum de points GLL contenus sur une interface
-! nibool_interfaces_ext_mesh(i)          : nombre de points GLL contenus sur l'interface i
-! ibool_interfaces_ext_mesh(iGGL,i)      : numero global iglob du ieme point GLL (iGLL) de l'interface i
-! ispec_is_inner                         : booleen vrai si l'element est a l'interieur d'une partition
-! sourcearray_loc(i_src,dim,i,j)         : tableau de ponderation de l'intensite de la source pour chaque point GLL (i,j)
-!                                          de l'element spectral qui contient la source locale i_src
-! ispec_selected_source(i)               : numero d'element spectral contenant la source locale i
-! ispec_selected_rec_loc(i)              : numero d'element spectral du receveur local i
-! nrecloc                                : nombre de receveurs locaux
-! nspec_acoustic                         : nombre local d'elements spectraux acoustiques
+  ! ibool(i,j,ispec)                     : array that converts the index of GLL point (i,j) in elmt ispec from local to global (iglob)
+  ! ninterface                           : Number of interfaces that the local partition share with other partitions
+  ! max_nibool_interfaces_ext_mesh       : Maximum number of GLL points at an interface
+  ! nibool_interfaces_ext_mesh(i)        : Number of GLL points in interface i
+  ! ibool_interfaces_ext_mesh(iGGL,i)    : Global index iglob of the ith GLL point (iGLL) of interface i
+  ! ispec_is_inner                       : Boolean array. True if the input element is into a partition
+  ! sourcearray_loc(i_src,dim,i,j)       : Array of weights containing source intensity at each GLL point (i,j) of the spectral
+  !                                        element containing the local source i_src
+  ! ispec_selected_source(i)             : Index of the spectral element containing local source i
+  ! ispec_selected_rec_loc(i)            : Index of the spectral element containing local receiver i
+  ! nrecloc                              : Number of local receivers
+  ! nspec_acoustic                       : Number of local acoustic spectral elements
 
   ! prepares general fields on GPU
   !! JC JC here we will need to add GPU support for the C-PML routines
@@ -127,24 +127,23 @@
                                 NSIGTYPE, seismotypeVec, &
                                 NSTEP_BETWEEN_OUTPUT_SEISMOS/subsamp_seismos)
 
-!!! Parametres fournis
+  ! Input parameters :
 
-! rmass_inverse_acoustic                 : matrice acoustique inversee de taille nglob
-!                                          (nglob_acoustic = nglob s'il existe des elements acoustiques)
-! num_phase_ispec_acoustic               : max entre nb d'element spectraux acoustiques interieur et exterieur
-! phase_ispec_inner_acoustic(i,j)        : i eme element spectral acoustique interieur si j=2 exterieur si j=1
-! acoustic(i)                            : vrai si l'element spectral i est acoustique
-! nelem_acoustic_surface                 : nombre d'elements spectraux situes sur une surface libre acoustique
-! free_ac_ispec                          : numero d'element spectral du i eme element acoustique sur surface libre
-! free_surface_ij(i,j,ispec)             : i eme coordonnee du j eme point GLL de l'element spectral libre ispec
-! b_reclen_potential                     : place en octet prise par b_nelem_acoustic_surface * GLLX
-! any_elastic                            : vrai s'il existe des elements elastiques
-! num_fluid_solid_edges                  : nombre d'elements spectraux sur une frontiere elastique/acoustique
-! coupling_ac_el_ispec                   : tableau des elements spectraux frontiere ACOUSTIQUE
-! coupling_ac_el_ij                      : coordonnees locales des points GLL sur la frontiere elastique/acoustique
-! coupling_ac_el_normal(i,j,ispec)       : i eme coordonne de la normale au point GLL j de l'element frontiere ispec
-! coupling_ac_el_jacobian1Dw(i,ispec)    : jacobienne ponderee du i eme point GLL de l'element frontiere ispec
-
+  ! rmass_inverse_acoustic                 : Inverse of the acoustic mass matrix (size nglob)
+  !                                          (nglob_acoustic = nglob if it exists acoustic elements)
+  ! num_phase_ispec_acoustic               : Max between the number of inner acoustic spectral elements and outer
+  ! phase_ispec_inner_acoustic(i,j)        : ith acoustic spectral element. Inner if j=2 outer if j=1
+  ! acoustic(i)                            : True if spectral element i is acoustic
+  ! nelem_acoustic_surface                 : Number of spectral elements on an acoustic free surface
+  ! free_ac_ispec                          : Index of ith acoustic spectral element on free surfaces
+  ! free_surface_ij(i,j,ispec)             : ith coordinate of jth GLL point of the spectral element ispec located on a free surface
+  ! b_reclen_potential                     : Size in bytes taken by b_nelem_acoustic_surface * GLLX
+  ! any_elastic                            : True if it exists elastic elements in the mesh
+  ! num_fluid_solid_edges                  : Number of spectral elements on the elasto-acoustic border
+  ! coupling_ac_el_ispec                   : Array containing spectral element indices on the elasto-acoustic border
+  ! coupling_ac_el_ij                      : Local coordinates of GLL points on the elasto-acoustic border
+  ! coupling_ac_el_normal(i,j,ispec)       : ith coordinate of normal vector at GLL point j in border element ispec
+  ! coupling_ac_el_jacobian1Dw(i,ispec)    : Weighted jacobian matrix at ith GLL point in border element ispec
 
   ! prepares fields on GPU for acoustic simulations
   if (any_acoustic) then
@@ -170,13 +169,13 @@
     endif
   endif
 
-!!! Parametres fournis
+  ! Input parameters :
 
-! rmass_inverse_elastic          : matrice elastique inversee de taille nglob_acoustic
-!                                 (nglob_acoustic = nglob s'il existe des elements acoustiques)
-! num_phase_ispec_elastic        : max entre nb d'element spectraux elastiques interieur et exterieur
-! phase_ispec_inner_elastic(i,j) : i eme element spectral elastique interieur si j=2 exterieur si j=1
-! elastic(i)                     : vrai si l'element spectral i est elastique
+  ! rmass_inverse_elastic          : Inverse elastic mass matrix (size nglob_acoustic)
+  !                                  (nglob_acoustic = nglob if there are acoustic elements)
+  ! num_phase_ispec_elastic        : Max between the number of inner elastic spectral elements and outer
+  ! phase_ispec_inner_elastic(i,j) : ith elastic spectral element. Inner if j=2 outer if j=1
+  ! elastic(i)                     : True if spectral element i is elastic
 
   ! prepares fields on GPU for elastic simulations
   if (any_elastic) then
@@ -227,15 +226,13 @@
                             betaz_store_GPU)
   endif
 
-! abs_boundary_ispec                     : tableau des elements spectraux situes en zone absorbante
-! abs_boundary_ij(i,j,ispecabs)          : coordonnee locale i de j eme point GLL de l'element absorbant ispecabs
-! abs_boundary_normal(i,j,ispecabs)      : i eme coordonnee du vecteur normal du j eme point GLL de l'element absorbant ispecabs
-! abs_boundary_jacobian1Dw(i,ispecabs)   : i eme jacobienne ponderee de l'element absorbant jspecabs
-! num_abs_boundary_faces                 : nombre d'elements absorbant
-! cote_abs(ispecabs)                     : numero du cote (1=b, 2=r, 3=t, 4=l )
-! auquel appartient l'element absorbant ispecabs
-! ib_left                                : correspondance entre le numero
-! d'element absorbant global et son numero sur le cote
+! abs_boundary_ispec                     : Array containing spectral element indices in absorbing areas
+! abs_boundary_ij(i,j,ispecabs)          : ith local coordinate of jth GLL point of the absorbing element ispecabs
+! abs_boundary_normal(i,j,ispecabs)      : ith coordinate of normal vector at GLL point j in absorbing element ispecabs
+! abs_boundary_jacobian1Dw(i,ispecabs)   : Weighted jacobian matrix at ith GLL point in absorbing element jspecabs
+! num_abs_boundary_faces                 : Number of absorbing elements
+! edge_abs(ispecabs)                     : Index of edge (1=bottom, 2=right, 3=top, 4=left) corresponding to absorbing elmt ispecabs
+! ib_left                                : Correpondance between the global absorbing element index and its index on the edge
 
   if (STACEY_ABSORBING_CONDITIONS) then
     call prepare_Stacey_device(Mesh_pointer, &
@@ -249,7 +246,7 @@
                                abs_boundary_normal, &
                                abs_boundary_jacobian1Dw, &
                                num_abs_boundary_faces, &
-                               cote_abs, &
+                               edge_abs, &
                                ib_bottom, &
                                ib_left, &
                                ib_right, &
@@ -381,7 +378,7 @@
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! Initialisation variables pour routine prepare_constants_device
+!! Initialize variables for subroutine prepare_constants_device
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ! user output

@@ -129,7 +129,7 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian1Dw
   integer, dimension(:,:,:), allocatable :: abs_boundary_ij
   integer, dimension(:), allocatable :: abs_boundary_ispec
-  integer, dimension(:), allocatable :: cote_abs
+  integer, dimension(:), allocatable :: edge_abs
   integer :: num_abs_boundary_faces
 
   ! horizontal periodicity distance for periodic conditions

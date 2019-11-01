@@ -59,7 +59,7 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
                                               int* ib_right,
                                               int* ib_top,
                                               int* ib_bottom,
-                                              int* cote_abs) {
+                                              int* edge_abs) {
 
   int igll = threadIdx.x; // tx
   int iface = blockIdx.x + gridDim.x*blockIdx.y; // bx
@@ -118,19 +118,19 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
 
       if (SAVE_FORWARD && SIMULATION_TYPE == 1) {
 
-        if (cote_abs[iface] == 1) {
+        if (edge_abs[iface] == 1) {
           num_local = ib_bottom[iface]-1;
           b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
           b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
-        }else if (cote_abs[iface] == 2) {
+        }else if (edge_abs[iface] == 2) {
           num_local = ib_right[iface]-1;
           b_absorb_elastic_right[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
           b_absorb_elastic_right[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
-        }else if (cote_abs[iface] == 3) {
+        }else if (edge_abs[iface] == 3) {
           num_local = ib_top[iface]-1;
           b_absorb_elastic_top[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
           b_absorb_elastic_top[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
-        }else if (cote_abs[iface] == 4) {
+        }else if (edge_abs[iface] == 4) {
           num_local = ib_left[iface]-1;
           b_absorb_elastic_left[INDEX3(NDIM,NGLLX,0,igll,num_local)] = tx*jacobianw;
           b_absorb_elastic_left[INDEX3(NDIM,NGLLX,1,igll,num_local)] = tz*jacobianw;
@@ -158,7 +158,7 @@ __global__ void compute_stacey_elastic_sim3_kernel(int* abs_boundary_ispec,
                                                    int* ib_right,
                                                    int* ib_top,
                                                    int* ib_bottom,
-                                                   int* d_cote_abs) {
+                                                   int* d_edge_abs) {
 
   int igll = threadIdx.x; // tx
   int iface = blockIdx.x + gridDim.x*blockIdx.y; // bx
@@ -177,22 +177,22 @@ __global__ void compute_stacey_elastic_sim3_kernel(int* abs_boundary_ispec,
 
       iglob = d_ibool[INDEX3_PADDED(NGLLX,NGLLX,i,j,ispec)]-1;
 
-      if (d_cote_abs[iface] == 1){
+      if (d_edge_abs[iface] == 1){
         num_local= ib_bottom[iface]-1;
         atomicAdd(&b_accel[iglob*2 ], -b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,0,igll,num_local)]);
         atomicAdd(&b_accel[iglob*2+1 ], -b_absorb_elastic_bottom[INDEX3(NDIM,NGLLX,1,igll,num_local)]);
 
-      } else if (d_cote_abs[iface] == 2){
+      } else if (d_edge_abs[iface] == 2){
         num_local= ib_right[iface]-1;
         atomicAdd(&b_accel[iglob*2 ], -b_absorb_elastic_right[INDEX3(NDIM,NGLLX,0,igll,num_local)]);
         atomicAdd(&b_accel[iglob*2+1 ], -b_absorb_elastic_right[INDEX3(NDIM,NGLLX,1,igll,num_local)]);
 
-      } else if (d_cote_abs[iface] == 3){
+      } else if (d_edge_abs[iface] == 3){
         num_local= ib_top[iface]-1;
         atomicAdd(&b_accel[iglob*2 ], -b_absorb_elastic_top[INDEX3(NDIM,NGLLX,0,igll,num_local)]);
         atomicAdd(&b_accel[iglob*2+1 ], -b_absorb_elastic_top[INDEX3(NDIM,NGLLX,1,igll,num_local)]);
 
-      } else if (d_cote_abs[iface] == 4){
+      } else if (d_edge_abs[iface] == 4){
         num_local= ib_left[iface]-1;
         atomicAdd(&b_accel[iglob*2 ], -b_absorb_elastic_left[INDEX3(NDIM,NGLLX,0,igll,num_local)]);
         atomicAdd(&b_accel[iglob*2+1 ], -b_absorb_elastic_left[INDEX3(NDIM,NGLLX,1,igll,num_local)]);
@@ -271,7 +271,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
                                                                         mp->d_ib_right,
                                                                         mp->d_ib_top,
                                                                         mp->d_ib_bottom,
-                                                                        mp->d_cote_abs);
+                                                                        mp->d_edge_abs);
 
   // adjoint simulations
   if (mp->simulation_type == 3) {
@@ -289,7 +289,7 @@ void FC_FUNC_(compute_stacey_viscoelastic_cuda,
                                                                               mp->d_ib_right,
                                                                               mp->d_ib_top,
                                                                               mp->d_ib_bottom,
-                                                                              mp->d_cote_abs);
+                                                                              mp->d_edge_abs);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

@@ -57,7 +57,7 @@
   write (2040) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw
 
   if (GPU_MODE) then
-    write (2040) free_ac_ispec,cote_abs,free_surface_ij,any_anisotropy
+    write (2040) free_ac_ispec,edge_abs,free_surface_ij,any_anisotropy
   endif
 
   if (any_acoustic) then
@@ -169,7 +169,7 @@
   read (2040) abs_boundary_ij,abs_boundary_normal,abs_boundary_jacobian1Dw
 
   if (GPU_MODE) then
-    read (2040) free_ac_ispec,cote_abs,free_surface_ij,any_anisotropy
+    read (2040) free_ac_ispec,edge_abs,free_surface_ij,any_anisotropy
   endif
 
   if (any_acoustic) then
