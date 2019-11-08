@@ -35,7 +35,7 @@
 
 ! reads in DATA/Par_file
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,myrank
   use shared_parameters
 
   implicit none
@@ -48,44 +48,70 @@
 
   ! only master process reads in Par_file
   if (myrank == 0) then
+
+    ! user output
+    write(IMAIN,*) 'Reading the parameter file...'
+    write(IMAIN,*)
+    call flush_IMAIN()
+
     ! opens file Par_file
     call open_parameter_file()
 
     ! reads only parameters (without receiver-line section, material tables or region definitions)
     call read_parameter_file_only()
 
+    ! user output
+    write(IMAIN,*) 'Title of the simulation: ',trim(title)
+    write(IMAIN,*)
+    if (AXISYM) write(IMAIN,*) 'Axisymmetric simulation'
+    write(IMAIN,*)
+    call flush_IMAIN()
+
     ! reads receiver lines
+    if (imesher == 1) then
+      ! user output
+      write(IMAIN,*) 'Receiver lines:'
+      write(IMAIN,*) '  Nb of line sets = ',nreceiversets
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
     call read_parameter_file_receiversets()
 
-    ! reads material definitions
-    call read_material_table()
+    ! only mesher needs to reads this
+    if (imesher == 1) then
+      ! reads material definitions
+      call read_material_table()
 
-    ! mesher reads in internal region table for setting up mesh elements
-    if (imesher == 1 .and. (.not. read_external_mesh) ) then
-      ! internal meshing
-      ! user output
-      write(IMAIN,*)
-      write(IMAIN,*) 'Mesh from internal meshing:'
-      ! reads interface definitions from interface file (we need to have nxread & nzread value for checking regions)
-      call read_interfaces_file()
+      ! mesher reads in internal region table for setting up mesh elements
+      if (.not. read_external_mesh) then
+        ! internal meshing
+        ! user output
+        write(IMAIN,*)
+        write(IMAIN,*) 'Mesh from internal meshing:'
+        write(IMAIN,*)
+        call flush_IMAIN()
 
-      ! internal meshing
-      nx = nxread
-      nz = nzread
+        ! reads interface definitions from interface file (we need to have nxread & nzread value for checking regions)
+        call read_interfaces_file()
 
-      ! setup mesh array
-      ! multiply by 2 if elements have 9 nodes
-      if (ngnod == 9) then
-        nx = nx * 2
-        nz = nz * 2
-        nz_layer(:) = nz_layer(:) * 2
+        ! internal meshing
+        nx_elem_internal = nxread
+        nz_elem_internal = nzread
+
+        ! setup mesh array
+        ! multiply by 2 if elements have 9 nodes
+        if (ngnod == 9) then
+          nx_elem_internal = nx_elem_internal * 2
+          nz_elem_internal = nz_elem_internal * 2
+          nz_layer(:) = nz_layer(:) * 2
+        endif
+
+        ! total number of elements
+        nelmnts = nxread * nzread
+
+        ! reads material regions defined in Par_file
+        call read_regions()
       endif
-
-      ! total number of elements
-      nelmnts = nxread * nzread
-
-      ! reads material regions defined in Par_file
-      call read_regions()
     endif
 
     ! closes file Par_file
@@ -95,6 +121,8 @@
   ! master process broadcasts to all
   ! note: this is only needed at the moment for the solver to setup a simulation run
   if (BROADCAST_AFTER_READ) then
+
+    ! simulation input parameters
     call bcast_all_singlei(SIMULATION_TYPE)
     call bcast_all_singlei(NOISE_TOMOGRAPHY)
     call bcast_all_singlel(SAVE_FORWARD)
@@ -115,12 +143,14 @@
     call bcast_all_string(MODEL)
     call bcast_all_string(SAVE_MODEL)
 
+    ! attenuation
     call bcast_all_singlel(ATTENUATION_VISCOELASTIC)
     call bcast_all_singlel(ATTENUATION_VISCOACOUSTIC)
     call bcast_all_singlei(N_SLS)
     call bcast_all_singledp(ATTENUATION_f0_REFERENCE)
     call bcast_all_singlel(READ_VELOCITIES_AT_f0)
     call bcast_all_singlel(USE_SOLVOPT)
+
     call bcast_all_singlel(ATTENUATION_PORO_FLUID_PART)
     call bcast_all_singledp(Q0_poroelastic)
     call bcast_all_singledp(freq0_poroelastic)
@@ -128,6 +158,7 @@
     call bcast_all_singlel(UNDO_ATTENUATION_AND_OR_PML)
     call bcast_all_singlei(NT_DUMP_ATTENUATION)
 
+    ! sources
     call bcast_all_singlei(NSOURCES)
     call bcast_all_singlel(force_normal_to_surface)
     call bcast_all_singlel(initialfield)
@@ -137,11 +168,11 @@
     call bcast_all_singlel(add_Bielak_conditions_left)
     call bcast_all_singlel(ACOUSTIC_FORCING)
 
+    ! receivers
     call bcast_all_string(seismotype)
     call bcast_all_singlei(subsamp_seismos)
     call bcast_all_singlel(USE_TRICK_FOR_BETTER_PRESSURE)
     call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_SEISMOS)
-    call bcast_all_singlel(COMPUTE_INTEGRATED_ENERGY_FIELD)
     call bcast_all_singledp(USER_T0)
     call bcast_all_singlel(save_ASCII_seismograms)
     call bcast_all_singlel(save_binary_seismograms_single)
@@ -152,32 +183,64 @@
     call bcast_all_singledp(anglerec)
     call bcast_all_singlel(rec_normal_to_surface)
 
+    ! adjoint kernel
     call bcast_all_singlel(save_ASCII_kernels)
     call bcast_all_singlei(NSTEP_BETWEEN_COMPUTE_KERNELS)
     call bcast_all_singlel(NO_BACKWARD_RECONSTRUCTION)
 
+    ! boundary conditions
+    call bcast_all_singlel(PML_BOUNDARY_CONDITIONS)
+    call bcast_all_singlei(NELEM_PML_THICKNESS)
+    call bcast_all_singlel(ROTATE_PML_ACTIVATE)
+    call bcast_all_singledp(ROTATE_PML_ANGLE)
+
+    call bcast_all_singledp(K_MIN_PML)
+    call bcast_all_singledp(K_MAX_PML)
+    call bcast_all_singledp(damping_change_factor_acoustic)
+    call bcast_all_singledp(damping_change_factor_elastic)
+    call bcast_all_singlel(PML_PARAMETER_ADJUSTMENT)
 
     call bcast_all_singlel(STACEY_ABSORBING_CONDITIONS)
     call bcast_all_singlel(ADD_PERIODIC_CONDITIONS)
     call bcast_all_singledp(PERIODIC_HORIZ_DIST)
 
+    ! velocity and density models
     call bcast_all_singlei(nbmodels)
     call bcast_all_string(TOMOGRAPHY_FILE)
     call bcast_all_singlel(read_external_mesh)
 
-    if (.not. read_external_mesh) then
+    if (read_external_mesh) then
+      call bcast_all_string(mesh_file)
+      call bcast_all_string(nodes_coords_file)
+      call bcast_all_string(materials_file)
+      call bcast_all_string(free_surface_file)
+      call bcast_all_string(axial_elements_file)
+      call bcast_all_string(absorbing_surface_file)
+      call bcast_all_string(acoustic_forcing_surface_file)
+      call bcast_all_string(absorbing_cpml_file)
+      call bcast_all_string(tangential_detection_curve_file)
+    else
+      call bcast_all_string(interfacesfile)
+      call bcast_all_singledp(xmin_param)
+      call bcast_all_singledp(xmax_param)
+      call bcast_all_singlei(nx_param)
+
       call bcast_all_singlel(absorbbottom)
       call bcast_all_singlel(absorbright)
       call bcast_all_singlel(absorbtop)
       call bcast_all_singlel(absorbleft)
+      call bcast_all_singlei(nbregions)
     endif
 
+    ! display parameters
     call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_INFO)
     call bcast_all_singlel(output_grid_Gnuplot)
     call bcast_all_singlel(output_grid_ASCII)
     call bcast_all_singlel(OUTPUT_ENERGY)
     call bcast_all_singlei(NTSTEP_BETWEEN_OUTPUT_ENERGY)
+    call bcast_all_singlel(COMPUTE_INTEGRATED_ENERGY_FIELD)
 
+    ! movies/images/snapshots
     call bcast_all_singlei(NSTEP_BETWEEN_OUTPUT_IMAGES)
     call bcast_all_singledp(cutsnaps)
 
@@ -212,6 +275,13 @@
 
   ! derive additional settings/flags based on input parameters
   call read_parameter_file_derive_flags()
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Parameter file successfully read '
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   end subroutine read_parameter_file
 
@@ -277,7 +347,7 @@
 
   !--------------------------------------------------------------------
   !
-  ! simulation input paramters
+  ! simulation input parameters
   !
   !--------------------------------------------------------------------
 
@@ -1213,12 +1283,6 @@
 
   !--------------------------------------------------------------------
 
-  ! user output
-  write(IMAIN,*) 'Title of the simulation: ',trim(title)
-  write(IMAIN,*)
-  if (AXISYM) write(IMAIN,*) 'Axisymmetric simulation'
-  write(IMAIN,*)
-
   ! converts all string characters to lowercase
   irange = iachar('a') - iachar('A')
   do i = 1,len_trim(MODEL)
@@ -1362,21 +1426,17 @@
 
   integer,external :: err_occurred
 
-  ! user output
-  write(IMAIN,*) 'Receiver lines:'
-  write(IMAIN,*) '  Nb of line sets = ',nreceiversets
-  write(IMAIN,*)
-
   ! re-reads rec_normal_to_surface parameter to reposition read header for following next-line reads
   call read_value_logical_p(reread_rec_normal_to_surface, 'rec_normal_to_surface')
   if (err_occurred() /= 0) call stop_the_code('error reading parameter rec_normal_to_surface in Par_file')
 
   ! checks
-  if (reread_rec_normal_to_surface .neqv. rec_normal_to_surface) call stop_the_code( &
-'Invalid re-reading of rec_normal_to_surface parameter')
+  if (reread_rec_normal_to_surface .neqv. rec_normal_to_surface) &
+    call stop_the_code('Invalid re-reading of rec_normal_to_surface parameter')
 
   ! only valid if at least 1 receiver line is specified
-  if (nreceiversets < 1) call stop_the_code('number of receiver sets must be greater than 1')
+  if (nreceiversets < 1) &
+    call stop_the_code('number of receiver sets must be greater than 1')
 
   ! allocate receiver line arrays
   allocate(nrec_line(nreceiversets))
@@ -1396,24 +1456,28 @@
 
   ! reads in receiver sets
   if (use_existing_STATIONS) then
-    write(IMAIN,*) '  using existing STATIONS file '
-
     ! checks if STATIONS file exisits
-    stations_filename = trim(IN_DATA_FILES)//'STATIONS'
+    stations_filename = trim(IN_DATA_FILES)//'STATIONS'      ! by default: DATA/STATIONS
 
+    ! adds specific run folder to path
+    ! for example: run0001/DATA/STATIONS
     if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
       write(path_to_add,"('run',i4.4,'/')") mygroup + 1
       stations_filename = path_to_add(1:len_trim(path_to_add))//stations_filename(1:len_trim(stations_filename))
     endif
 
+    ! user output
+    write(IMAIN,*) '  using existing STATIONS file: ',trim(stations_filename)
+    call flush_IMAIN()
+
     ! counts entries
     open(unit=IIN,file=trim(stations_filename),status='old',action='read',iostat=ier)
     if (ier /= 0 ) then
-      print *, 'Error could not open existing STATIONS file:'
-      print *, trim(stations_filename)
+      print *, 'Error could not open existing STATIONS file:',trim(stations_filename)
       print *, 'Please check if file exists.'
       call stop_the_code('Error opening STATIONS file')
     endif
+
     nrec = 0
     do while(ier == 0)
       read(IIN,"(a)",iostat=ier) dummystring
@@ -1495,3 +1559,106 @@
   endif
 
   end subroutine read_parameter_file_derive_flags
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine open_parameter_file_from_master_only()
+
+  use constants, only: MAX_STRING_LEN,IN_DATA_FILES
+
+  implicit none
+
+  character(len=MAX_STRING_LEN) :: filename_main,filename_run0001
+  logical :: exists_main_Par_file,exists_run0001_Par_file
+  integer :: ier
+
+  filename_main = IN_DATA_FILES(1:len_trim(IN_DATA_FILES))//'Par_file'
+
+! also see if we are running several independent runs in parallel
+! to do so, add the right directory for that run for the master process only here
+  filename_run0001 = 'run0001/'//filename_main(1:len_trim(filename_main))
+  call param_open(filename_main, len(filename_main), ier)
+  if (ier == 0) then
+    exists_main_Par_file = .true.
+    call close_parameter_file()
+  else
+    exists_main_Par_file    = .false.
+  endif
+  call param_open(filename_run0001, len(filename_run0001), ier)
+  if (ier == 0) then
+    exists_run0001_Par_file = .true.
+    call close_parameter_file()
+  else
+    exists_run0001_Par_file = .false.
+  endif
+
+  !if (exists_main_Par_file .and. exists_run0001_Par_file) then ! TODO why is it like that in the 3D version??
+  !  print *
+  !  print *,'cannot have both DATA/Par_file and run0001/DATA/Par_file present, please remove one of them'
+  !  stop 'error: two different copies of the Par_file'
+  !endif
+
+  call param_open(filename_main, len(filename_main), ier)
+  if (ier /= 0) then
+    call param_open(filename_run0001, len(filename_run0001), ier)
+    if (ier /= 0) then
+      print *
+      print *,'opening file failed, please check your file path and run-directory.'
+      call stop_the_code('error opening Par_file')
+    endif
+  endif
+
+  end subroutine open_parameter_file_from_master_only
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine open_parameter_file()
+
+  use constants, only: MAX_STRING_LEN,mygroup,IN_DATA_FILES
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
+
+  implicit none
+
+  integer ierr
+  common /param_err_common/ ierr
+  character(len=MAX_STRING_LEN) filename,path_to_add
+
+  ! Par_file filename with path
+  filename = trim(IN_DATA_FILES)//'Par_file'  ! by default: DATA/Par_file
+
+  ! see if we are running several independent runs in parallel
+  ! if so, add the right directory for that run
+  ! (group numbers start at zero, but directory names start at run0001, thus we add one)
+  !
+  ! a negative value for "mygroup" is a convention that indicates that groups (i.e. sub-communicators, one per run) are off
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    filename = path_to_add(1:len_trim(path_to_add))//filename(1:len_trim(filename))
+  endif
+
+  ! to use c routines for reading/parsing file content
+  call param_open(filename, len_trim(filename), ierr)
+  if (ierr /= 0) then
+    print *
+    print *,'opening file failed, please check your file path and run-directory.'
+    call stop_the_code('error opening Par_file')
+  endif
+
+  end subroutine open_parameter_file
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine close_parameter_file()
+
+  implicit none
+
+  ! to use C routines
+  call param_close()
+
+  end subroutine close_parameter_file

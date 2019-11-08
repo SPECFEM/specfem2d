@@ -27,11 +27,14 @@
 
 module compute_elements_load_par
 
-  use part_unstruct_par, only: myrank,nelmnts,nb_edges,abs_surface,nelemabs,glob2loc_elmnts,abs_surface_merge,nelemabs_merge, &
+
+  use part_unstruct_par, only: nelmnts,nb_edges,abs_surface,nelemabs,glob2loc_elmnts,abs_surface_merge,nelemabs_merge, &
                                nxread,nzread
+
   use shared_parameters, only: ATTENUATION_VISCOELASTIC,ATTENUATION_VISCOACOUSTIC,NELEM_PML_THICKNESS,PML_BOUNDARY_CONDITIONS, &
                                read_external_mesh,num_material,phi_read,QKappa,Qmu,absorbbottom,absorbtop,absorbleft,absorbright
-  use constants, only: IMAIN,TINYVAL
+
+  use constants, only: IMAIN,TINYVAL,myrank
 
   implicit none
   integer, dimension(:), allocatable  :: elmnts_load

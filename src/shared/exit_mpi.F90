@@ -41,13 +41,13 @@
 
   implicit none
 
+  integer,intent(in) :: myrank
+  character(len=*),intent(in) :: error_msg
+
+  ! local parameters
+  character(len=MAX_STRING_LEN) :: outputname
   ! identifier for error message file
   integer, parameter :: IERROR = 30
-
-  integer :: myrank
-  character(len=*) :: error_msg
-
-  character(len=MAX_STRING_LEN) :: outputname
 
   ! write error message to screen
   write(*,*) error_msg(1:len(error_msg))
@@ -79,7 +79,7 @@
 
   subroutine stop_the_code(error_msg)
 
-  use shared_parameters, only: myrank
+  use constants, only: myrank
 
   implicit none
 

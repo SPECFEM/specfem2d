@@ -33,9 +33,11 @@
 
   subroutine read_mesh_for_init()
 
-  use constants, only: IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT,OUTPUT_FILES
+  use constants, only: &
+    IMAIN,IIN,DISPLAY_COLORS,DISPLAY_ELEMENT_NUMBERS_POSTSCRIPT,OUTPUT_FILES, &
+    ADD_RANDOM_PERTURBATION_TO_THE_MESH,ADD_PERTURBATION_AROUND_SOURCE_ONLY
+
   use specfem_par
-  use specfem_par_noise, only: NOISE_TOMOGRAPHY
   use specfem_par_movie
 
   implicit none
@@ -45,18 +47,30 @@
   integer :: ier,int_dummy
   character(len=MAX_STRING_LEN) :: prname, dummy
 
+  logical :: do_rerun_mesher
+  integer :: local_i
+  integer (kind=RegInt_K) :: local_ireg
+  double precision :: local_dble
+  logical :: local_l,local_l1,local_l2,local_l3
+  character(len=MAX_STRING_LEN) :: local_str
+
   ! starts reading SIMULATION_TYPE and SAVE_FORWARD from Par_file
 
   call open_parameter_file()
+
   call read_value_string_p(dummy, 'solver.title')
   if (err_occurred() /= 0) call stop_the_code('error reading parameter title in Par_file')
+
   ! read type of simulation
   call read_value_integer_p(SIMULATION_TYPE, 'solver.SIMULATION_TYPE')
   if (err_occurred() /= 0) call stop_the_code('error reading parameter SIMULATION_TYPE in Par_file')
+
   call read_value_integer_p(int_dummy, 'solver.NOISE_TOMOGRAPHY')
   if (err_occurred() /= 0) call stop_the_code('error reading parameter NOISE_TOMOGRAPHY in Par_file')
+
   call read_value_logical_p(SAVE_FORWARD, 'solver.SAVE_FORWARD')
   if (err_occurred() /= 0) call stop_the_code('error reading parameter SAVE_FORWARD in Par_file')
+
   call close_parameter_file()
 
   ! starts reading in parameters from input Database file
@@ -73,137 +87,232 @@
     call exit_MPI(myrank,'Error opening file '//trim(OUTPUT_FILES)//'Database***.bin')
   endif
 
+! note: we now read in the parameter file also in the initialization of the solver.
+!       the idea is to separate solver and mesher further and
+!       to be able to run only the solver if Par_file parameters were changed which don't affect the meshing stage.
+!       this should include parameters like simulation_type, sources, receivers, image outputs etc. and would be more
+!       similar of how to run simulations in the 3D version.
+!
+!       however, at the moment most of the Par_file changes are setup in the mesher and require re-running the mesher.
+!
+!       we will use local_** variables just to read in the settings stored in the database and then compare with
+!       the ones from the Par_file to decide if we need to re-run the mesher.
+  do_rerun_mesher = .false.
+
+  simulation_title = trim(title) ! from parameter file
+
   !-------- starts reading init section
 
   !---  read job title and skip remaining titles of the input file
-  read(IIN) simulation_title
+  read(IIN) local_str ! simulation_title
+  !print *,'debug: simulation_title',myrank,'***',local_str,'***'
 
   !---- read parameters from input file
-  read(IIN) NOISE_TOMOGRAPHY, UNDO_ATTENUATION_AND_OR_PML
+  read(IIN) local_i, local_l ! NOISE_TOMOGRAPHY, UNDO_ATTENUATION_AND_OR_PML
+  !print *,'debug: NOISE_TOMOGRAPHY,UNDO_ATTENUATION_AND_OR_PML ',myrank,local_i,local_l
 
   read(IIN) nspec
+  !print *,'debug: nspec ',myrank,nspec
 
   read(IIN) npgeo,nproc_read_from_database
+  !print *,'debug: npgeo,nproc_read_from_database ',myrank,npgeo,nproc_read_from_database
 
-  read(IIN) output_grid_Gnuplot,interpol
+  read(IIN) local_l1, local_l2 ! output_grid_Gnuplot,interpol
+  !print *,'debug: output_grid_Gnuplot,interpol',myrank,local_l1,local_l2
 
-  read(IIN) NSTEP_BETWEEN_OUTPUT_INFO
+  read(IIN) local_i ! NSTEP_BETWEEN_OUTPUT_INFO
+  !print *,'debug: NSTEP_BETWEEN_OUTPUT_INFO ',myrank,local_i
 
-  read(IIN) NSTEP_BETWEEN_OUTPUT_SEISMOS
+  read(IIN) local_i ! NSTEP_BETWEEN_OUTPUT_SEISMOS
+  !print *,'debug: NSTEP_BETWEEN_OUTPUT_SEISMOS ',myrank,local_i
 
-  read(IIN) NSTEP_BETWEEN_OUTPUT_IMAGES
+  read(IIN) local_i ! NSTEP_BETWEEN_OUTPUT_IMAGES
+  !print *,'debug: NSTEP_BETWEEN_OUTPUT_IMAGES ',myrank,local_i
 
-  read(IIN) PML_BOUNDARY_CONDITIONS
+  read(IIN) local_l ! PML_BOUNDARY_CONDITIONS
+  !print *,'debug: PML_BOUNDARY_CONDITIONS ',myrank,local_l
 
-  read(IIN) ROTATE_PML_ACTIVATE
+  if (local_l .neqv. PML_BOUNDARY_CONDITIONS) then
+    print *,'Warning: rank ',myrank,' read mesh: PML_BOUNDARY_CONDITIONS setting changed'
+    do_rerun_mesher = .true.
+  endif
 
-  read(IIN) ROTATE_PML_ANGLE
+  read(IIN) local_l ! ROTATE_PML_ACTIVATE
 
-  read(IIN) K_MIN_PML
+  read(IIN) local_dble ! ROTATE_PML_ANGLE
 
-  read(IIN) K_MAX_PML
+  read(IIN) local_dble ! K_MIN_PML
 
-  read(IIN) damping_change_factor_acoustic
+  read(IIN) local_dble ! K_MAX_PML
 
-  read(IIN) damping_change_factor_elastic
+  read(IIN) local_dble ! damping_change_factor_acoustic
 
-  read(IIN) PML_PARAMETER_ADJUSTMENT
+  read(IIN) local_dble ! damping_change_factor_elastic
 
-  read(IIN) read_external_mesh
+  read(IIN) local_l ! PML_PARAMETER_ADJUSTMENT
 
-  read(IIN) NELEM_PML_THICKNESS
+  read(IIN) local_l ! read_external_mesh
+  if (local_l .neqv. read_external_mesh)  then
+     print *,'Warning: rank ',myrank,' read mesh: read_external_mesh setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
+  read(IIN) local_i ! NELEM_PML_THICKNESS
+  if (local_i /= NELEM_PML_THICKNESS)  then
+     print *,'Warning: rank ',myrank,' read mesh: NELEM_PML_THICKNESS setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) output_postscript_snapshot,output_color_image
+  read(IIN) local_i, local_i, local_i ! subsamp_seismos,imagetype_JPEG,imagetype_wavefield_dumps
 
-  read(IIN) meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows
+  read(IIN) local_l, local_l ! output_postscript_snapshot,output_color_image
 
-  read(IIN) anglerec
+  ! meshvect,modelvect,boundvect,cutsnaps,subsamp_postscript,sizemax_arrows
+  read(IIN) local_l, local_l, local_l, local_dble, local_i, local_dble
 
-  read(IIN) initialfield
+  read(IIN) local_dble ! anglerec
 
-  read(IIN) add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left
+  read(IIN) local_l ! initialfield
+  if (local_l .neqv. initialfield)  then
+     print *,'Warning: rank ',myrank,' read mesh: initialfield setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) seismotype,imagetype_postscript
+  ! add_Bielak_conditions_bottom,add_Bielak_conditions_right,add_Bielak_conditions_top,add_Bielak_conditions_left
+  read(IIN) local_l,local_l,local_l,local_l
 
-  read(IIN) MODEL
+  read(IIN) local_str,local_i ! seismotype,imagetype_postscript
 
-  read(IIN) SAVE_MODEL
+  read(IIN) local_str ! MODEL
+  if (trim(local_str) /= trim(MODEL))  then
+     print *,'Warning: rank ',myrank,' read mesh: MODEL setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) TOMOGRAPHY_FILE
+  read(IIN) local_str ! SAVE_MODEL
 
-  read(IIN) output_grid_ASCII,OUTPUT_ENERGY,NTSTEP_BETWEEN_OUTPUT_ENERGY,output_wavefield_dumps
+  read(IIN) local_str ! TOMOGRAPHY_FILE
+  if (trim(local_str) /= trim(TOMOGRAPHY_FILE))  then
+     print *,'Warning: rank ',myrank,' read mesh: TOMOGRAPHY_FILE setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) use_binary_for_wavefield_dumps
+  ! output_grid_ASCII,OUTPUT_ENERGY,NTSTEP_BETWEEN_OUTPUT_ENERGY,output_wavefield_dumps
+  read(IIN) local_l, local_l, local_i, local_l
 
-  read(IIN) ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART,ATTENUATION_VISCOACOUSTIC
+  read(IIN) local_l ! use_binary_for_wavefield_dumps
 
-  read(IIN) USE_SOLVOPT
+  read(IIN) local_l1, local_l2, local_l3 ! ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART,ATTENUATION_VISCOACOUSTIC
+  if (local_l1 .neqv. ATTENUATION_VISCOELASTIC)  then
+     print *,'Warning: rank ',myrank,' read mesh: ATTENUATION_VISCOELASTIC setting changed'
+     do_rerun_mesher = .true.
+   endif       ! elements load changes in meshing
+  if (local_l2 .neqv. ATTENUATION_PORO_FLUID_PART)  then
+     print *,'Warning: rank ',myrank,' read mesh: ATTENUATION_PORO_FLUID_PART setting changed'
+     do_rerun_mesher = .true.
+   endif
+  if (local_l3 .neqv. ATTENUATION_VISCOACOUSTIC)  then
+     print *,'Warning: rank ',myrank,' read mesh: ATTENUATION_VISCOACOUSTIC setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) save_ASCII_seismograms
+  read(IIN) local_l ! USE_SOLVOPT
 
-  read(IIN) save_binary_seismograms_single,save_binary_seismograms_double
+  read(IIN) local_l ! save_ASCII_seismograms
 
-  read(IIN) USE_TRICK_FOR_BETTER_PRESSURE
+  read(IIN) local_l, local_l ! save_binary_seismograms_single,save_binary_seismograms_double
 
-  read(IIN) COMPUTE_INTEGRATED_ENERGY_FIELD
+  read(IIN) local_l ! USE_TRICK_FOR_BETTER_PRESSURE
 
-  read(IIN) save_ASCII_kernels
+  read(IIN) local_l ! COMPUTE_INTEGRATED_ENERGY_FIELD
 
-  read(IIN) NSTEP_BETWEEN_COMPUTE_KERNELS
+  read(IIN) local_l ! save_ASCII_kernels
 
-  read(IIN) NO_BACKWARD_RECONSTRUCTION
+  read(IIN) local_i ! NSTEP_BETWEEN_COMPUTE_KERNELS
 
-  read(IIN) DRAW_SOURCES_AND_RECEIVERS
+  read(IIN) local_l ! NO_BACKWARD_RECONSTRUCTION
 
-  read(IIN) Q0_poroelastic,freq0_poroelastic
+  read(IIN) local_l ! DRAW_SOURCES_AND_RECEIVERS
 
-  read(IIN) AXISYM
+  read(IIN) local_dble,local_dble ! Q0_poroelastic,freq0_poroelastic
 
-  read(IIN) P_SV
+  read(IIN) local_l ! AXISYM
+  if (local_l .neqv. AXISYM)  then
+     print *,'Warning: rank ',myrank,' read mesh: AXISYM setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) factor_subsample_image
+  read(IIN) local_l ! P_SV
 
-  read(IIN) USE_CONSTANT_MAX_AMPLITUDE
+  read(IIN) local_dble ! factor_subsample_image
 
-  read(IIN) CONSTANT_MAX_AMPLITUDE_TO_USE
+  read(IIN) local_l ! USE_CONSTANT_MAX_AMPLITUDE
 
-  read(IIN) USE_SNAPSHOT_NUMBER_IN_FILENAME
+  read(IIN) local_dble ! CONSTANT_MAX_AMPLITUDE_TO_USE
 
-  read(IIN) DRAW_WATER_IN_BLUE
+  read(IIN) local_l ! USE_SNAPSHOT_NUMBER_IN_FILENAME
 
-  read(IIN) US_LETTER
+  read(IIN) local_l ! DRAW_WATER_IN_BLUE
 
-  read(IIN) POWER_DISPLAY_COLOR
+  read(IIN) local_l ! US_LETTER
 
-  read(IIN) SU_FORMAT
+  read(IIN) local_dble ! POWER_DISPLAY_COLOR
 
-  read(IIN) USER_T0
+  read(IIN) local_l ! SU_FORMAT
 
-  read(IIN) time_stepping_scheme
+  read(IIN) local_dble ! USER_T0
 
-  read(IIN) ADD_PERIODIC_CONDITIONS
+  read(IIN) local_i ! time_stepping_scheme
 
-  read(IIN) PERIODIC_HORIZ_DIST
+  read(IIN) local_l ! ADD_PERIODIC_CONDITIONS
+  if (local_l .neqv. ADD_PERIODIC_CONDITIONS)  then
+     print *,'Warning: rank ',myrank,' read mesh: ADD_PERIODIC_CONDITIONS setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) GPU_MODE
+  read(IIN) local_dble ! PERIODIC_HORIZ_DIST
+  if (local_dble /= PERIODIC_HORIZ_DIST)  then
+     print *,'Warning: rank ',myrank,' read mesh: PERIODIC_HORIZ_DIST setting changed'
+     do_rerun_mesher = .true.
+   endif
 
-  read(IIN) setup_with_binary_database
+  read(IIN) local_l ! GPU_MODE
+
+  read(IIN) local_i ! setup_with_binary_database
 
   !---- read time step
-  read(IIN) NSTEP,DT
+  read(IIN) local_ireg,local_dble ! NSTEP,DT
 
-  read(IIN) NT_DUMP_ATTENUATION
+  read(IIN) local_i ! NT_DUMP_ATTENUATION
 
   ! read the ACOUSTIC_FORCING flag
-  read(IIN) ACOUSTIC_FORCING
+  read(IIN) local_l ! ACOUSTIC_FORCING
+  if (local_l .neqv. ACOUSTIC_FORCING)  then
+     print *,'Warning: rank ',myrank,' read mesh: ACOUSTIC_FORCING setting changed'
+     do_rerun_mesher = .true.
+   endif
 
   ! 'NUMBER_OF_SIMULTANEOUS_RUNS'
-  read(IIN) NUMBER_OF_SIMULTANEOUS_RUNS
+  read(IIN) local_i ! NUMBER_OF_SIMULTANEOUS_RUNS
 
   ! 'BROADCAST_SAME_MESH_AND_MODEL'
-  read(IIN) BROADCAST_SAME_MESH_AND_MODEL
+  read(IIN) local_l ! BROADCAST_SAME_MESH_AND_MODEL
+
+  read(IIN) local_l1,local_l2 ! ADD_RANDOM_PERTURBATION_TO_THE_MESH,ADD_PERTURBATION_AROUND_SOURCE_ONLY
+  if ((local_l1 .neqv. ADD_RANDOM_PERTURBATION_TO_THE_MESH) &
+      .or. (local_l2 .neqv. ADD_PERTURBATION_AROUND_SOURCE_ONLY))  then
+    print *,'Warning: rank ',myrank,' read mesh: ADD_RANDOM_PERTURBATION or ADD_PERTURBATION_AROUND_SOURCE setting changed'
+    do_rerun_mesher = .true.
+  endif
+
+  ! check if setup needs re-running mesher
+  if (do_rerun_mesher) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Setup in Par_file changed and requires re-running the mesher...exiting'
+    write(IMAIN,*)
+    call stop_the_code('Please re-run mesher')
+  endif
+  call synchronize_all()
 
   ! At that point seismotype is a string (e.g 2,3,6). The following routine convert it to an integer array: seismotypeVec
   call processSeismotypeLine()
@@ -224,6 +333,7 @@
       write(IMAIN,*) '-----------------------------------------------------'
       write(IMAIN,*) '--- A x i s y m m e t r i c   S i m u l a t i o n ---'
       write(IMAIN,*) '-----------------------------------------------------'
+      call flush_IMAIN()
     endif
 
     ! outputs parameters read
@@ -300,11 +410,6 @@
   ! note: we opened the database file in read_mesh_for_init() and will continue reading from its current position
   !       thus, the ordering here must be consistent with the order in save_databases.f90
 
-  ! reads in source infos
-  call read_mesh_databases_sources()
-
-  ! sets source parameters
-  call set_source_parameters()
 
   ! reads the spectral macrobloc nodal coordinates
   ! and basic properties of the spectral elements
@@ -349,107 +454,6 @@
 
   end subroutine read_mesh_databases
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine read_mesh_databases_sources()
-
-! reads source parameters
-
-  use constants, only: IIN, SOURCE_IS_MOVING
-  use specfem_par
-  use specfem_par_movie
-  use specfem_par_gpu, only: nsources_local_moving, ispec_selected_source_moving, sourcearrays_moving
-
-  implicit none
-
-  ! local parameters
-  integer :: i_source,ier
-
-  !----  read source information
-  read(IIN) NSOURCES
-
-  ! safety check
-  ! note: in principle, the number of sources could be zero for noise simulations.
-  !       however, we want to make sure to have one defined at least, even if not really needed.
-  if (NSOURCES < 1) call stop_the_code('Need at least one source for running a simulation, please check...')
-
-  ! allocates source information arrays
-  allocate(source_type(NSOURCES), &
-           time_function_type(NSOURCES), &
-           name_of_source_file(NSOURCES), &
-           burst_band_width(NSOURCES), &
-           Mxx(NSOURCES), &
-           Mxz(NSOURCES), &
-           Mzz(NSOURCES), &
-           f0_source(NSOURCES), &
-           tshift_src(NSOURCES), &
-           factor(NSOURCES), &
-           anglesource(NSOURCES), &
-           ispec_selected_source(NSOURCES), &
-           iglob_source(NSOURCES), &
-           source_courbe_eros(NSOURCES), &
-           islice_selected_source(NSOURCES), &
-           sourcearrays(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating source arrays')
-
-  if (SOURCE_IS_MOVING .and. GPU_MODE) then
-    ! allocates source information arrays
-    allocate(nsources_local_moving(NSTEP), &
-             ispec_selected_source_moving(NSOURCES,NSTEP), &
-             sourcearrays_moving(NSOURCES,NDIM,NGLLX,NGLLZ,NSTEP),stat=ier)
-  else
-    ! allocates source information arrays
-    allocate(nsources_local_moving(1), &
-             ispec_selected_source_moving(1,1), &
-             sourcearrays_moving(1,1,1,1,1), stat=ier)
-  endif
-  if (ier /= 0) call stop_the_code('Error allocating source arrays 2')
-
-  ! source locations
-  allocate(x_source(NSOURCES), &
-           z_source(NSOURCES), &
-           xi_source(NSOURCES), &
-           gamma_source(NSOURCES),stat=ier)
-  if (ier /= 0) call stop_the_code('Error allocating source arrays')
-
-  ! initializes
-  source_type(:) = 0
-  time_function_type(:) = 0
-
-  f0_source(:) = 0.d0
-  tshift_src(:) = 0.d0
-  factor(:) = 0.d0
-  anglesource(:) = 0.d0
-
-  Mxx(:) = 0.d0
-  Mzz(:) = 0.d0
-  Mxz(:) = 0.d0
-
-  x_source(:) = 0.d0
-  z_source(:) = 0.d0
-
-  islice_selected_source(:) = 0
-  ispec_selected_source(:) = 0
-  iglob_source(:) = 0
-
-  sourcearrays(:,:,:,:) = 0._CUSTOM_REAL
-
-  ! reads in source info from Database file (check with routine save_databases_sources())
-  do i_source = 1,NSOURCES
-    read(IIN) source_type(i_source),time_function_type(i_source)
-    read(IIN) name_of_source_file(i_source)
-    read(IIN) burst_band_width(i_source)
-    read(IIN) x_source(i_source),z_source(i_source)
-    read(IIN) f0_source(i_source),tshift_src(i_source)
-    read(IIN) factor(i_source),anglesource(i_source)
-    read(IIN) Mxx(i_source),Mzz(i_source),Mxz(i_source)
-  enddo
-
-  !if (AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify
-
-  end subroutine read_mesh_databases_sources
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -789,7 +793,7 @@
   allocate(codeabs_corner(4,num_abs_boundary_faces),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating absorbing codeabs_corner array')
 
-  allocate(typeabs(num_abs_boundary_faces))
+  allocate(abs_boundary_type(num_abs_boundary_faces))
 
   allocate(ibegin_edge1(num_abs_boundary_faces))
   allocate(iend_edge1(num_abs_boundary_faces))
@@ -825,7 +829,7 @@
   ! initializes
   codeabs(:,:) = .false.
   codeabs_corner(:,:) = .false.
-  typeabs(:) = 0
+  abs_boundary_type(:) = 0
 
   ibegin_edge1(:) = 0
   iend_edge1(:) = 0
@@ -882,15 +886,15 @@
 
       numabs(inum) = numabsread
 
-      codeabs(IEDGE1,inum) = codeabsread(1)
-      codeabs(IEDGE2,inum) = codeabsread(2)
-      codeabs(IEDGE3,inum) = codeabsread(3)
-      codeabs(IEDGE4,inum) = codeabsread(4)
+      codeabs(IEDGE1,inum) = codeabsread(1) ! bottom
+      codeabs(IEDGE2,inum) = codeabsread(2) ! right
+      codeabs(IEDGE3,inum) = codeabsread(3) ! top
+      codeabs(IEDGE4,inum) = codeabsread(4) ! left
 
-      typeabs(inum) = typeabsread
+      abs_boundary_type(inum) = typeabsread ! type == IBOTTOM / IRIGHT / ITOP / ILEFT
 
       ! check that a single edge is defined for each element cited
-      ! (since elements with two absorbing edges MUST be cited twice, each time with a different "typeabs()" code
+      ! (since elements with two absorbing edges MUST be cited twice, each time with a different "type" code
       if (count(codeabs(:,inum) .eqv. .true.) /= 1) then
         print *,'Error for absorbing element inum = ',inum
         call stop_the_code('must have one and only one absorbing edge per absorbing line cited')
@@ -1446,13 +1450,14 @@
   use constants, only: IIN
 
   use specfem_par, only: nnodes_tangential_curve,nodes_tangential_curve, &
-                          force_normal_to_surface,rec_normal_to_surface, &
-                          any_tangential_curve,dist_tangential_detection_curve
+                          force_normal_to_surface,rec_normal_to_surface
+
 
   implicit none
 
   ! local parameters
   integer :: i,ier
+  logical  :: any_tangential_curve
 
   ! sets tangential flag
   if (nnodes_tangential_curve > 0) then
@@ -1463,8 +1468,7 @@
     nnodes_tangential_curve = 1
   endif
 
-  allocate(nodes_tangential_curve(2,nnodes_tangential_curve), &
-           dist_tangential_detection_curve(nnodes_tangential_curve),stat=ier)
+  allocate(nodes_tangential_curve(2,nnodes_tangential_curve),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating tangential arrays')
 
   ! initializes
@@ -1483,7 +1487,7 @@
   endif
 
   ! resets nnode_tangential_curve
-  if (any_tangential_curve .eqv. .false. ) nnodes_tangential_curve = 0
+  if (any_tangential_curve .eqv. .false.) nnodes_tangential_curve = 0
 
   end subroutine read_mesh_databases_tangential
 

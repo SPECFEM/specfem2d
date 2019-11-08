@@ -84,7 +84,7 @@
   if (.not. anyabs) return
 
   ! absorbing boundaries
-  do ispecabs= 1,num_abs_boundary_faces
+  do ispecabs = 1,num_abs_boundary_faces
 
     ispec = abs_boundary_ispec(ispecabs)
 
@@ -99,7 +99,8 @@
       permlxx = permeability(1,kmato(ispec))
 
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                   tort,rho_s,rho_f,eta_f,permlxx,f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                      tort,rho_s,rho_f,eta_f,permlxx, &
+                                      f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIl = sqrt(cpIsquare)
       cpIIl = sqrt(cpIIsquare)
@@ -511,7 +512,8 @@
       permlxx = permeability(1,kmato(ispec))
 
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                    tort,rho_s,rho_f,eta_f,permlxx,f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                      tort,rho_s,rho_f,eta_f,permlxx, &
+                                      f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIl = sqrt(cpIsquare)
       cpIIl = sqrt(cpIIsquare)

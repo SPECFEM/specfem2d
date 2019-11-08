@@ -307,8 +307,7 @@
 
   allocate(anglerec_irec(nrecloc), &
            cosrot_irec(nrecloc), &
-           sinrot_irec(nrecloc), &
-           rec_tangential_detection_curve(nrecloc),stat=ier)
+           sinrot_irec(nrecloc),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating tangential arrays')
 
   read(2040) recloc,ispec_selected_rec_loc,cosrot_irec,sinrot_irec,xir_store_loc,gammar_store_loc,st_xval,st_zval, &

@@ -51,7 +51,7 @@
   double precision :: young,poisson,cp,cs,mu,two_mu,lambda,QKappa,Qmu
   double precision :: lambdaplus2mu_s,lambdaplus2mu_fr,kappa_s,kappa_f,kappa_fr
   double precision :: young_s,poisson_s,density_mat(2),phi,tortuosity_mat
-  double precision :: cpIsquare,cpIIsquare,cssquare,mu_s,mu_fr,eta_f,lambda_s,lambda_fr
+  double precision :: cpIsquare,cpIIsquare,cssquare,mu_s,mu_fr,eta_f,lambda_s,lambda_fr,perm_xx
   double precision :: c11,c13,c15,c33,c35,c55,c12,c23,c25,c22
   double precision :: val0,val1,val2,val3,val4,val5,val6,val7,val8,val9,val10,val11,val12
 
@@ -177,15 +177,23 @@
       density_mat(1) = val0
       density_mat(2) = val1
 
+      ! porosity (phi)
       phi = val2
+
+      ! tortuosity (kappa)
       tortuosity_mat = val3
+
+      ! permeability
+      perm_xx = val4
 
       ! Solid properties
       kappa_s = val7
       mu_s = val11
+
       ! Fluid properties
       kappa_f = val8
       eta_f = val10
+
       ! Frame properties
       kappa_fr = val9
       mu_fr = val11
@@ -206,17 +214,21 @@
       ! Biot coefficients for the input phi
       call get_poroelastic_Biot_coeff(phi,kappa_s,kappa_f,kappa_fr,mu_fr,D_biot,H_biot,C_biot,M_biot)
 
+      ! gets cpI,cpII and cs
+      ! note: velocities become frequency dependent due to viscous resistance in fluid phase
+      !       to avoid dependency of a source frequency, we assume here that the source frequency
+      !       and viscous attenuation frequency
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare, &
                                       H_biot,C_biot,M_biot,mu_fr,phi, &
-                                      tortuosity_mat,density_mat(1),density_mat(2),eta_f, &
-                                      val4,f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                      tortuosity_mat,density_mat(1),density_mat(2),eta_f,perm_xx, &
+                                      f0,freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
-      porosity(n) = val2
-      tortuosity(n) = val3
+      porosity(n) = val2  ! phi
+      tortuosity(n) = val3 ! tort
 
-      permeability(1,n) = val4
-      permeability(2,n) = val5
-      permeability(3,n) = val6
+      permeability(1,n) = val4 ! perm_xx
+      permeability(2,n) = val5 ! perm_xz
+      permeability(3,n) = val6 ! perm_zz
 
       ! Young modulus for the solid phase
       young_s = 9.d0*kappa_s*mu_s/(3.d0*kappa_s + mu_s)

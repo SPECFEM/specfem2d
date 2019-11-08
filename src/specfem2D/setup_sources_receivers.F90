@@ -69,7 +69,7 @@
 
   subroutine setup_sources()
 
-  use constants, only: NGLLX,NGLLZ,NDIM,IMAIN,IIN, &
+  use constants, only: myrank,NGLLX,NGLLZ,NDIM,IMAIN,IIN,CUSTOM_REAL, &
 #ifndef WITH_MPI
      OUTPUT_FILES, &
 #endif
@@ -79,15 +79,19 @@
                          coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface, &
                          ispec_is_elastic,ispec_is_poroelastic, &
                          x_source,z_source,ispec_selected_source, &
-                         islice_selected_source, &
+                         xi_source,gamma_source,sourcearrays, &
+                         islice_selected_source,iglob_source, &
                          xigll,zigll,npgeo, &
-                         NPROC,myrank,xi_source,gamma_source,coorg,knods,ngnod, &
-                         iglob_source
+                         NPROC,coorg,knods,ngnod
   implicit none
 
   ! Local variables
   integer :: ispec_acoustic_surface
   integer :: ixmin, ixmax, izmin, izmax,i_source,ispec
+  ! dimensions
+  double precision :: xmin,xmax,zmin,zmax
+  double precision :: xmin_local,xmax_local,zmin_local,zmax_local
+  integer :: i,ier
 
   ! user output
   if (myrank == 0) then
@@ -95,6 +99,63 @@
     write(IMAIN,*) 'sources:'
     call flush_IMAIN()
   endif
+
+  ! safety check
+  ! note: in principle, the number of sources could be zero for noise simulations.
+  !       however, we want to make sure to have one defined at least, even if not really needed.
+  if (NSOURCES < 1) call stop_the_code('Need at least one source for running a simulation, please check...')
+
+  ! sets source parameters
+  call set_source_parameters()
+
+  ! checks that no source target is outside the mesh
+  ! determines mesh dimensions
+  xmin_local = minval(coord(1,:))
+  xmax_local = maxval(coord(1,:))
+  zmin_local = minval(coord(2,:))
+  zmax_local = maxval(coord(2,:))
+
+  ! collect min/max
+  call min_all_all_dp(xmin_local, xmin)
+  call max_all_all_dp(xmax_local, xmax)
+  call min_all_all_dp(zmin_local, zmin)
+  call max_all_all_dp(zmax_local, zmax)
+
+  ! checks
+  if (myrank == 0) then
+    ! print position of the source
+    do i = 1,NSOURCES
+      write(IMAIN,*)
+      write(IMAIN,*) 'Position (x,z) of the source = ',x_source(i),z_source(i)
+      write(IMAIN,*)
+      call flush_IMAIN()
+      ! checks
+      if (x_source(i) < xmin) call stop_the_code('error: at least one source has x < xmin of the mesh')
+      if (x_source(i) > xmax) call stop_the_code('error: at least one source has x > xmax of the mesh')
+
+      if (z_source(i) < zmin) call stop_the_code('error: at least one source has z < zmin of the mesh')
+      if (z_source(i) > zmax) call stop_the_code('error: at least one source has z > zmax of the mesh')
+    enddo
+  endif
+
+  ! source elements
+  allocate(ispec_selected_source(NSOURCES), &
+           iglob_source(NSOURCES), &
+           islice_selected_source(NSOURCES), &
+           sourcearrays(NSOURCES,NDIM,NGLLX,NGLLZ),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating ispec source arrays')
+
+  ! source locations
+  allocate(xi_source(NSOURCES), &
+           gamma_source(NSOURCES),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating source arrays')
+
+  ! initializes
+  islice_selected_source(:) = 0
+  ispec_selected_source(:) = 0
+  iglob_source(:) = 0
+
+  sourcearrays(:,:,:,:) = 0._CUSTOM_REAL
 
   ! locates sources
   do i_source = 1,NSOURCES
@@ -180,6 +241,43 @@
   call synchronize_all()
 
   end subroutine setup_sources
+
+!
+!----------------------------------------------------------------------------
+!
+
+!  subroutine setup_sources_read_file()
+
+! reads source parameters
+
+!  use constants, only: IIN
+!  use specfem_par
+!  use specfem_par_movie
+
+!  implicit none
+
+  ! local parameters
+!  integer :: i_source,ier
+
+  !----  read source information
+!  read(IIN) NSOURCES
+
+
+  ! reads in source info from Database file (check with routine save_databases_sources())
+!  do i_source = 1,NSOURCES
+!    read(IIN) source_type(i_source),time_function_type(i_source)
+!    read(IIN) name_of_source_file(i_source)
+!    read(IIN) burst_band_width(i_source)
+!    read(IIN) x_source(i_source),z_source(i_source)
+!    read(IIN) f0_source(i_source),tshift_src(i_source)
+!    read(IIN) factor(i_source),anglesource(i_source)
+!    read(IIN) Mxx(i_source),Mzz(i_source),Mxz(i_source)
+!  enddo
+
+  !if (AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify
+
+!  end subroutine setup_sources_read_file
+
 
 !
 !----------------------------------------------------------------------------
@@ -514,7 +612,7 @@
 
 ! tangential computation
 
-  use constants, only: PI,HUGEVAL,OUTPUT_FILES
+  use constants, only: PI,HUGEVAL,OUTPUT_FILES,IMAIN
   use specfem_par
 
   implicit none
@@ -524,6 +622,15 @@
   integer :: ier,nrec_alloc
   integer :: irecloc
   double precision :: x_final_receiver_dummy, z_final_receiver_dummy
+
+  integer  :: n1_tangential_detection_curve
+  integer, dimension(4) :: n_tangential_detection_curve
+  integer, dimension(:), allocatable  :: rec_tangential_detection_curve
+
+  double precision :: distmin, dist_current, anglesource_recv
+  double precision, dimension(:), allocatable :: dist_tangential_detection_curve
+
+  integer, dimension(:), allocatable :: source_courbe_eros
 
   ! receiver arrays
   if (nrecloc > 0) then
@@ -539,6 +646,12 @@
            rec_tangential_detection_curve(nrecloc),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating tangential arrays')
 
+  allocate(dist_tangential_detection_curve(nnodes_tangential_curve),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating tangential arrays')
+
+  allocate(source_courbe_eros(NSOURCES),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating source_courbe_eros array')
+
   ! checks angle
   if (rec_normal_to_surface .and. abs(anglerec) > 1.d-6) &
     call stop_the_code('anglerec should be zero when receivers are normal to the topography')
@@ -553,6 +666,12 @@
   ! tangential computation
   ! for receivers
   if (rec_normal_to_surface) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  computing tangential to surface for receivers'
+      call flush_IMAIN()
+    endif
+
     irecloc = 0
     do irec = 1, nrec
       if (myrank == islice_selected_rec(irec)) then
@@ -581,7 +700,6 @@
                                    nodes_tangential_curve(2,n_tangential_detection_curve(3)), &
                                    nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
       endif
-
     enddo
     cosrot_irec(:) = cos(anglerec_irec(:))
     sinrot_irec(:) = sin(anglerec_irec(:))
@@ -589,6 +707,12 @@
 
   ! for the source
   if (force_normal_to_surface) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  computing tangential to surface for sources'
+      call flush_IMAIN()
+    endif
+
     do i_source = 1,NSOURCES
       if (myrank == islice_selected_source(i_source)) then
         distmin = HUGEVAL
@@ -619,34 +743,42 @@
                                     nodes_tangential_curve(2,n_tangential_detection_curve(4)) )
 
         source_courbe_eros(i_source) = n1_tangential_detection_curve
-        if (myrank == 0 .and. myrank == islice_selected_source(i_source)) then
-          source_courbe_eros(i_source) = n1_tangential_detection_curve
-          anglesource_recv = anglesource(i_source)
-#ifdef WITH_MPI
-        else if (myrank == 0) then
-          call recv_any_singlei(source_courbe_eros(i_source), 42)
-          call recv_any_singledp(anglesource_recv, 43)
-
-        else if (myrank == islice_selected_source(i_source)) then
-          call send_singlei(n1_tangential_detection_curve, 0, 42)
-          call send_singledp(anglesource(i_source), 0, 43)
-#endif
-        endif
-
-#ifdef WITH_MPI
-        call bcast_all_singledp(anglesource_recv)
-        anglesource(i_source) = anglesource_recv
-#endif
-
-
       endif
+
+      ! collect results
+      if (myrank == 0 .and. myrank == islice_selected_source(i_source)) then
+        source_courbe_eros(i_source) = n1_tangential_detection_curve
+        anglesource_recv = anglesource(i_source)
+#ifdef WITH_MPI
+      else if (myrank == 0) then
+        call recv_any_singlei(source_courbe_eros(i_source), 42)
+        call recv_any_singledp(anglesource_recv, 43)
+
+      else if (myrank == islice_selected_source(i_source)) then
+        call send_singlei(n1_tangential_detection_curve, 0, 42)
+        call send_singledp(anglesource(i_source), 0, 43)
+#endif
+      endif
+
+#ifdef WITH_MPI
+      call bcast_all_singledp(anglesource_recv)
+      anglesource(i_source) = anglesource_recv
+#endif
+
     enddo ! do i_source= 1,NSOURCES
   endif !  if (force_normal_to_surface)
 
 ! CHRIS --- how to deal with multiple source. Use first source now. ---
 ! compute distance from source to receivers following the curve
   if (force_normal_to_surface .and. rec_normal_to_surface) then
-    dist_tangential_detection_curve(source_courbe_eros(1)) = 0
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  finding closest distance of tangentials for forces and receivers'
+      call flush_IMAIN()
+    endif
+
+    dist_tangential_detection_curve(source_courbe_eros(1)) = 0.d0
+
     do i = source_courbe_eros(1)+1, nnodes_tangential_curve
       dist_tangential_detection_curve(i) = dist_tangential_detection_curve(i-1) + &
           sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i-1))**2 + &
@@ -660,6 +792,7 @@
           sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i-1))**2 + &
           (nodes_tangential_curve(2,i)-nodes_tangential_curve(2,i-1))**2)
     enddo
+
     do i = source_courbe_eros(1)-1, 1, -1
       dist_current = dist_tangential_detection_curve(i+1) + &
           sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i+1))**2 + &
@@ -671,9 +804,11 @@
     dist_current = dist_tangential_detection_curve(1) + &
        sqrt((nodes_tangential_curve(1,1)-nodes_tangential_curve(1,nnodes_tangential_curve))**2 + &
        (nodes_tangential_curve(2,1)-nodes_tangential_curve(2,nnodes_tangential_curve))**2)
+
     if (dist_current < dist_tangential_detection_curve(nnodes_tangential_curve)) then
       dist_tangential_detection_curve(nnodes_tangential_curve) = dist_current
     endif
+
     do i = nnodes_tangential_curve-1, source_courbe_eros(1)+1, -1
       dist_current = dist_tangential_detection_curve(i+1) + &
           sqrt((nodes_tangential_curve(1,i)-nodes_tangential_curve(1,i+1))**2 + &
@@ -683,11 +818,10 @@
       endif
     enddo
 
-   ! Don't remove that comment: FN2SNSR. The following lines would have to be modified for compatibility with
-   ! NUMBER_OF_SIMULTANEOUS_RUNS
+    ! Don't remove that comment: FN2SNSR. The following lines would have to be modified for compatibility with
+    ! NUMBER_OF_SIMULTANEOUS_RUNS
     if (myrank == 0) then
-      open(unit=11,file=trim(OUTPUT_FILES)//'dist_rec_tangential_detection_curve', &
-            form='formatted', status='unknown')
+      open(unit=11,file=trim(OUTPUT_FILES)//'dist_rec_tangential_detection_curve',form='formatted', status='unknown')
     endif
 
     irecloc = 0
@@ -720,18 +854,22 @@
       endif
       if (myrank == 0) then
         write(11,*) dist_tangential_detection_curve(n1_tangential_detection_curve)
-        write(12,*) x_final_receiver_dummy
-        write(13,*) z_final_receiver_dummy
+        !write(12,*) x_final_receiver_dummy
+        !write(13,*) z_final_receiver_dummy
       endif
     enddo
 
     if (myrank == 0) then
       close(11)
-      close(12)
-      close(13)
+      !close(12)
+      !close(13)
     endif
 
   endif ! force_normal_to_surface
+
+  deallocate(rec_tangential_detection_curve)
+  deallocate(dist_tangential_detection_curve)
+  deallocate(source_courbe_eros)
 
   ! synchronizes all processes
   call synchronize_all()

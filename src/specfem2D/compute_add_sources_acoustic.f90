@@ -35,11 +35,11 @@
 
   subroutine compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,myrank
 
   use specfem_par, only: ispec_is_acoustic,nglob_acoustic, &
                          NSOURCES,source_type,source_time_function,sourcearrays, &
-                         islice_selected_source,ispec_selected_source,ibool,kappastore,myrank
+                         islice_selected_source,ispec_selected_source,ibool,kappastore
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_dot_dot_acoustic

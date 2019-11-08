@@ -35,11 +35,14 @@
 
 ! reads in material definitions in DATA/Par_file and outputs to num_material
 
-  use constants, only: IMAIN,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,TINYVAL
+  use constants, only: IMAIN,ANISOTROPIC_MATERIAL,POROELASTIC_MATERIAL,TINYVAL,myrank
 
-  use shared_parameters, only: nbregions,nbmodels,num_material,icodemat,cp,cs, &
-                      rho_s_read,QKappa,Qmu,aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
-                      nelmnts,nxread,nzread
+  use shared_parameters, only: nbregions,nbmodels,num_material,icodemat, &
+    cp,cs, &
+    rho_s_read,QKappa,Qmu, &
+    aniso3,aniso4,aniso5,aniso6,aniso7,aniso8,aniso9,aniso10,aniso11, &
+    nelmnts,nxread,nzread
+
   implicit none
 
   ! local parameters
@@ -51,6 +54,10 @@
   integer :: id_already_set
 
   integer,external :: err_occurred
+
+  ! safety check
+  ! only master process is supposed to read in file parameters
+  if (myrank /= 0) call stop_the_code('Only master process should read regions, exiting...')
 
   ! user output
   write(IMAIN,*) 'Regions:'
@@ -168,6 +175,8 @@
     call flush_IMAIN()
 
   enddo
+  write(IMAIN,*)
+  call flush_IMAIN()
 
   if (minval(num_material) <= 0) call stop_the_code('Velocity model not entirely set...')
 

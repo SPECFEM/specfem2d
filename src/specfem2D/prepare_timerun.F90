@@ -36,7 +36,6 @@
   use constants, only: USE_ENFORCE_FIELDS,IOUT_ENERGY,IMAIN,OUTPUT_FILES
   use specfem_par
   use specfem_par_movie
-  use specfem_par_noise, only: NOISE_TOMOGRAPHY
 
   implicit none
 
@@ -1140,7 +1139,9 @@
 
   use specfem_par, only: myrank,AXISYM,NSTEP,nglob,nspec,ibool,coord, &
                          rhostore,rho_vpstore,rho_vsstore, &
-                         density,poroelastcoef,kmato,assign_external_model
+                         density,poroelastcoef,kmato,assign_external_model, &
+                         NOISE_TOMOGRAPHY
+
   use specfem_par_noise
 
   implicit none

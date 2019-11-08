@@ -37,9 +37,11 @@
 
   use specfem_par, only: coord,npgeo,myrank
 
+  use shared_parameters, only: factor_subsample_image
+
   use specfem_par_movie, only: NX_IMAGE_color,NZ_IMAGE_color, &
                           xmin_color_image,xmax_color_image, &
-                          zmin_color_image,zmax_color_image,factor_subsample_image
+                          zmin_color_image,zmax_color_image
   implicit none
 
   ! local parameters
@@ -132,12 +134,12 @@
   use specfem_par, only: myrank,coord,coorg,nspec,knods,ibool, &
                           NSOURCES,nrec,x_source,z_source,st_xval,st_zval
 
+  use shared_parameters, only: DRAW_SOURCES_AND_RECEIVERS
 
   use specfem_par_movie, only: NX_IMAGE_color,NZ_IMAGE_color, &
                               xmin_color_image,xmax_color_image, &
                               zmin_color_image,zmax_color_image, &
                               nb_pixel_loc,iglob_image_color, &
-                              DRAW_SOURCES_AND_RECEIVERS, &
                               ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver
 
   implicit none
@@ -290,8 +292,10 @@
   use specfem_par, only: nglob,nspec,ispec_is_elastic,ispec_is_poroelastic,ibool,kmato, &
     density,poroelastcoef,NPROC,myrank,assign_external_model,rho_vpstore,rhostore
 
+  use shared_parameters, only: DRAW_WATER_IN_BLUE
+
   use specfem_par_movie, only: image_color_vp_display,iglob_image_color, &
-    NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc,num_pixel_loc,DRAW_WATER_IN_BLUE
+    NX_IMAGE_color,NZ_IMAGE_color,nb_pixel_loc,num_pixel_loc
 
   implicit none
 

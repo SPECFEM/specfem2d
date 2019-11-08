@@ -40,7 +40,7 @@
 
   implicit none
 
-  integer :: nreceiversets
+  integer,intent(in) :: nreceiversets
   integer, dimension(nreceiversets) :: nrec_line
   double precision, dimension(nreceiversets) :: xdeb,zdeb,xfin,zfin
   logical, dimension(nreceiversets) :: record_at_surface_same_vertical
@@ -78,6 +78,7 @@
   write(IMAIN,*)
   write(IMAIN,*) 'Target positions (x,z) of the ',nrec_total,' receivers'
   write(IMAIN,*)
+  call flush_IMAIN()
 
   open(unit=IOUT,file=trim(stations_filename),status='unknown',iostat=ios)
   if (ios /= 0 ) call stop_the_code('error saving STATIONS file')

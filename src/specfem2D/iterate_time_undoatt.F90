@@ -35,8 +35,8 @@
 
   use constants, only: IMAIN, APPROXIMATE_HESS_KL,USE_A_STRONG_FORMULATION_FOR_E1
   use specfem_par
-  use specfem_par_noise, only: NOISE_TOMOGRAPHY
   use specfem_par_gpu, only: Mesh_pointer
+
   implicit none
 
   ! local parameters

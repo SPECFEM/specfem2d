@@ -56,7 +56,7 @@
     call save_databases_init()
 
     ! sources setup
-    call save_databases_sources()
+    !call save_databases_sources()
 
     ! mesh node coordinates and mesh properties
     call save_databases_coorg_elem()
@@ -105,7 +105,7 @@
 
   subroutine save_databases_init()
 
-  use constants, only: IOUT
+  use constants, only: IOUT,ADD_RANDOM_PERTURBATION_TO_THE_MESH,ADD_PERTURBATION_AROUND_SOURCE_ONLY
   use shared_parameters
   use part_unstruct_par, only: iproc,nspec,npgeo,region_pml_external_mesh
 
@@ -312,36 +312,39 @@
   ! 'BROADCAST_SAME_MESH_AND_MODEL'
   write(IOUT) BROADCAST_SAME_MESH_AND_MODEL
 
+  ! 'ADD_RANDOM_PERTURBATION_TO_THE_MESH,ADD_PERTURBATION_AROUND_SOURCE_ONLY'
+  write(IOUT) ADD_RANDOM_PERTURBATION_TO_THE_MESH,ADD_PERTURBATION_AROUND_SOURCE_ONLY
+
   end subroutine save_databases_init
 
 !-------------------------------------------------------------------------------
 
-  subroutine save_databases_sources()
-
-  use constants, only: IOUT
-  use source_file_par
-  use shared_parameters
-
-  implicit none
-  ! local parameters
-  integer :: i_source
-
-  ! sources setup
-  ! 'NSOURCES'
-  write(IOUT) NSOURCES
-
-  do i_source = 1,NSOURCES
-    write(IOUT) source_type(i_source),time_function_type(i_source)
-    write(IOUT) name_of_source_file(i_source)
-    write(IOUT) burst_band_width(i_source)
-    write(IOUT) xs(i_source),zs(i_source)
-    write(IOUT) f0_source(i_source),tshift_src(i_source)
-    write(IOUT) factor(i_source),anglesource(i_source)
-    write(IOUT) Mxx(i_source),Mzz(i_source),Mxz(i_source)
-  enddo
-
-  end subroutine save_databases_sources
-
+!  subroutine save_databases_sources()
+!
+!  use constants, only: IOUT
+!  use source_file_par
+!  use shared_parameters
+!
+!  implicit none
+!  ! local parameters
+!  integer :: i_source
+!
+!  ! sources setup
+!  ! 'NSOURCES'
+!  write(IOUT) NSOURCES
+!
+!  do i_source = 1,NSOURCES
+!    write(IOUT) source_type(i_source),time_function_type(i_source)
+!    write(IOUT) name_of_source_file(i_source)
+!    write(IOUT) burst_band_width(i_source)
+!    write(IOUT) xs(i_source),zs(i_source)
+!    write(IOUT) f0_source(i_source),tshift_src(i_source)
+!    write(IOUT) factor(i_source),anglesource(i_source)
+!    write(IOUT) Mxx(i_source),Mzz(i_source),Mxz(i_source)
+!  enddo
+!
+!  end subroutine save_databases_sources
+!
 
 !-------------------------------------------------------------------------------
 

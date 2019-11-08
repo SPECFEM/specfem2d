@@ -148,6 +148,8 @@ specfem2D_OBJECTS = \
 	$O/read_save_binary_database.spec.o \
 	$O/recompute_jacobian.spec.o \
 	$O/save_adjoint_kernels.spec.o \
+	$O/save_forward_arrays.spec.o \
+	$O/save_model_files.spec.o \
 	$O/save_openDX_jacobian.spec.o \
 	$O/set_source_parameters.spec.o \
 	$O/setup_GLL_points.spec.o \
@@ -189,11 +191,12 @@ specfem2D_SHARED_OBJECTS = \
 	$O/gll_library.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/parallel.sharedmpi.o \
-	$O/read_parameter_file.mesh.o \
+	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/read_material_table.mesh.o \
-	$O/read_interfaces_file.mesh.o \
-	$O/read_regions.mesh.o \
+	$O/read_material_table.shared.o \
+	$O/read_interfaces_file.shared.o \
+	$O/read_regions.shared.o \
+	$O/read_source_file.shared.o \
 	$O/param_reader.cc.o \
 	$O/set_color_palette.shared.o \
 	$(EMPTY_MACRO)

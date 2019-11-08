@@ -72,14 +72,13 @@
 !   poroelasticity, anisotropy, Stacey absorbing boundaries, time stepping scheme /= 1, PML rotated, adjoint
 !   simulations, periodic conditions, noise tomographies
 
-  use constants, only: PI,TWO,TINYVAL
+  use constants, only: PI,TWO,TINYVAL,myrank
 
   use specfem_par, only: any_poroelastic, ROTATE_PML_ACTIVATE, &
                          STACEY_ABSORBING_CONDITIONS, SIMULATION_TYPE, SAVE_FORWARD, &
                          NSOURCES, source_type, ispec_selected_source, ADD_PERIODIC_CONDITIONS, &
-                         anglesource, is_on_the_axis, ispec_is_elastic, islice_selected_source,myrank
-
-  use specfem_par_noise, only: NOISE_TOMOGRAPHY
+                         anglesource, is_on_the_axis, ispec_is_elastic, islice_selected_source, &
+                         NOISE_TOMOGRAPHY
 
   implicit none
 

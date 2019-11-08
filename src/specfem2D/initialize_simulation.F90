@@ -35,7 +35,6 @@
 
   use constants, only: IMAIN,ISTANDARD_OUTPUT,SIZE_REAL,NSTAGE,OUTPUT_FILES
   use specfem_par
-  use specfem_par_movie, only: cutsnaps
 
   implicit none
 
@@ -43,6 +42,7 @@
 
   ! local parameters
   integer :: ier
+  logical :: BROADCAST_AFTER_READ
 
 !***********************************************************************
 !
@@ -121,8 +121,17 @@
     write(IMAIN,*)
     write(IMAIN,*) 'smallest and largest possible floating-point numbers are: ', &
                    tiny(1._CUSTOM_REAL),huge(1._CUSTOM_REAL)
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
+
+  ! read the parameter file
+  BROADCAST_AFTER_READ = .true.
+  call read_parameter_file(0,BROADCAST_AFTER_READ)
+
+  ! reads in source descriptions
+  ! note: we will need a source frequency for outputting poroelastic velocities when reading the mesh databases
+  call read_source_file(NSOURCES,BROADCAST_AFTER_READ)
 
   ! starts reading in Database file (header info, simulation flags, number of elements
   call read_mesh_for_init()

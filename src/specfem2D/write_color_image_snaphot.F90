@@ -48,8 +48,10 @@
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
 
+  use shared_parameters, only: imagetype_JPEG
+
   use specfem_par_movie, only: vector_field_display,image_color_data,iglob_image_color, &
-    imagetype_JPEG,nb_pixel_loc, &
+    nb_pixel_loc, &
     NX_IMAGE_color,NZ_IMAGE_color, &
     num_pixel_loc
 

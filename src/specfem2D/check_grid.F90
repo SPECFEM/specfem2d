@@ -35,7 +35,7 @@
 
 ! check the mesh, stability and number of points per wavelength
 
-  use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO
+  use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO,myrank
   use specfem_par
   use specfem_par_movie
 
@@ -175,7 +175,8 @@
 
       ! computes velocities
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-             tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                      tort,rho_s,rho_f,eta_f,perm_xx, &
+                                      f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIloc = sqrt(cpIsquare)
       cpIIloc = sqrt(cpIIsquare)
@@ -498,7 +499,7 @@
 
 ! create statistics about mesh sampling (number of points per wavelength)
 
-  use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO,OUTPUT_FILES
+  use constants, only: IMAIN,HUGEVAL,TINYVAL,ZERO,OUTPUT_FILES,myrank
   use specfem_par
   use specfem_par_movie
 
@@ -588,7 +589,8 @@
 
         ! computes velocities
         call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-               tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                        tort,rho_s,rho_f,eta_f,perm_xx, &
+                                        f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
         cpIloc = sqrt(cpIsquare)
         cpIIloc = sqrt(cpIIsquare)
@@ -847,7 +849,7 @@
   subroutine check_grid_create_postscript(courant_stability_number_max,lambdaPImin,lambdaPImax,lambdaSmin,lambdaSmax)
 
   use constants, only: IMAIN,TINYVAL,HUGEVAL,DISPLAY_SUBSET_OPTION,NSPEC_DISPLAY_SUBSET, &
-    RPERCENTX,RPERCENTZ,ORIG_X,ORIG_Z,CENTIM,THRESHOLD_POSTSCRIPT,OUTPUT_FILES
+    RPERCENTX,RPERCENTZ,ORIG_X,ORIG_Z,CENTIM,THRESHOLD_POSTSCRIPT,OUTPUT_FILES,myrank
   use specfem_par
   use specfem_par_movie
 
@@ -1171,7 +1173,8 @@
 
       ! computes velocities
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-           tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                      tort,rho_s,rho_f,eta_f,perm_xx, &
+                                      f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIloc = sqrt(cpIsquare)
     else
@@ -1513,7 +1516,8 @@
 
       ! computes velocities
       call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-               tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                      tort,rho_s,rho_f,eta_f,perm_xx, &
+                                      f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
       cpIloc = sqrt(cpIsquare)
       csloc = sqrt(cssquare)
@@ -1905,7 +1909,8 @@
 
           ! computes velocities
           call get_poroelastic_velocities(cpIsquare,cpIIsquare,cssquare,H_biot,C_biot,M_biot,mu_fr,phi, &
-                   tort,rho_s,rho_f,eta_f,perm_xx,f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
+                                          tort,rho_s,rho_f,eta_f,perm_xx, &
+                                          f0_source(1),freq0_poroelastic,Q0_poroelastic,w_c,ATTENUATION_PORO_FLUID_PART)
 
           cpIloc = sqrt(cpIsquare)
         else

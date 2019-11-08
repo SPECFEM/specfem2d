@@ -50,6 +50,12 @@
 
   ! note: see also routine in read_source_file.f90 which reads in source parameters
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  setting source parameters...'
+    call flush_IMAIN()
+  endif
+
   ! checks the input
   do i_source = 1,NSOURCES
 
@@ -63,7 +69,7 @@
       endif
     endif
 
-    ! checks source type
+    ! user output for source type
     if (.not. initialfield) then
       if (source_type(i_source) == 1) then
         ! force

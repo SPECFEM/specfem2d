@@ -35,17 +35,17 @@
 
 ! checks simulation stability and outputs timerun infos
 
-  use constants, only: IMAIN,STABILITY_THRESHOLD,CUSTOM_REAL
+  use constants, only: IMAIN,STABILITY_THRESHOLD,CUSTOM_REAL,myrank
 
-  use specfem_par, only: myrank,timeval,it,NSTEP,GPU_MODE, &
+  use specfem_par, only: timeval,it,NSTEP,GPU_MODE, &
                          SIMULATION_TYPE, &
                          ELASTIC_SIMULATION,any_elastic,displ_elastic,b_displ_elastic, &
                          POROELASTIC_SIMULATION,any_poroelastic, &
                          displs_poroelastic,displw_poroelastic, &
                          ACOUSTIC_SIMULATION,any_acoustic,potential_acoustic, &
-                         timestamp_seconds_start
+                         timestamp_seconds_start, &
+                         NOISE_TOMOGRAPHY
 
-  use specfem_par_noise, only: NOISE_TOMOGRAPHY
   use specfem_par_gpu, only: Mesh_pointer
 
   implicit none

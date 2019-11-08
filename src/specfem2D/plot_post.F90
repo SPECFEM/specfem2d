@@ -47,7 +47,7 @@
   use specfem_par, only: coord,x_source,z_source,st_xval,st_zval,it,deltat,coorg,density, &
                          AXISYM,is_on_the_axis,flagrange_GLJ, &
                          poroelastcoef,knods,kmato,ibool, &
-                         num_abs_boundary_faces,abs_boundary_ispec,codeabs,typeabs,anyabs, &
+                         num_abs_boundary_faces,abs_boundary_ispec,codeabs,abs_boundary_type,anyabs, &
                          nelem_acoustic_surface, acoustic_edges, &
                          nglob,nrec,NSOURCES, &
                          assign_external_model,rhostore,rho_vpstore, &
@@ -59,14 +59,18 @@
                          solid_poro_poroelastic_ispec,solid_poro_poroelastic_iedge,num_solid_poro_edges, &
                          ispec_is_poroelastic,myrank,NPROC
 
+  use shared_parameters, only: subsamp_postscript,imagetype_postscript,interpol, &
+    meshvect,modelvect, &
+    cutsnaps,sizemax_arrows, &
+    boundvect,plot_lowerleft_corner_only, &
+    US_LETTER
+
   ! PML arrays
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,ispec_is_PML
 
   ! movie images
   use specfem_par_movie, only: vector_field_display,simulation_title, &
     xinterp,zinterp,Uxinterp,Uzinterp,flagrange,shape2D_display, &
-    subsamp_postscript,imagetype_postscript,interpol,meshvect,modelvect, &
-    cutsnaps,sizemax_arrows,boundvect,plot_lowerleft_corner_only, &
     vpImin,vpImax, &
     coorg_send_ps_velocity_model,RGB_send_ps_velocity_model, &
     coorg_recv_ps_velocity_model,RGB_recv_ps_velocity_model, &
@@ -74,7 +78,7 @@
     coorg_recv_ps_element_mesh,color_recv_ps_element_mesh, &
     coorg_send_ps_abs,coorg_recv_ps_abs, &
     coorg_send_ps_free_surface,coorg_recv_ps_free_surface, &
-    coorg_send_ps_vector_field,coorg_recv_ps_vector_field,US_LETTER
+    coorg_send_ps_vector_field,coorg_recv_ps_vector_field
 
   implicit none
 
@@ -1031,13 +1035,13 @@
 
             if (myrank == 0) then
             ! draw the Stacey absorbing boundary line segment in different colors depending on its type
-              if (typeabs(inum) == IBOTTOM) then
+              if (abs_boundary_type(inum) == IBOTTOM) then
                 write(24,*) '0 1 0 RG'  ! green
-              else if (typeabs(inum) == IRIGHT) then
+              else if (abs_boundary_type(inum) == IRIGHT) then
                 write(24,*) '0 0 1 RG'  ! blue
-              else if (typeabs(inum) == ITOP) then
+              else if (abs_boundary_type(inum) == ITOP) then
                 write(24,*) '1 0.7529 0.7960 RG' ! pink
-              else if (typeabs(inum) == ILEFT) then
+              else if (abs_boundary_type(inum) == ILEFT) then
                 write(24,*) '1 0.6470 0 RG' ! orange
               else
                 call exit_MPI(myrank,'Wrong absorbing boundary code')
@@ -1049,7 +1053,7 @@
               coorg_send_ps_abs(2,buffer_offset) = z1
               coorg_send_ps_abs(3,buffer_offset) = x2
               coorg_send_ps_abs(4,buffer_offset) = z2
-              coorg_send_ps_abs(5,buffer_offset) = typeabs(inum)
+              coorg_send_ps_abs(5,buffer_offset) = abs_boundary_type(inum)
             endif
 
           endif ! of if (codeabs(iedge,inum))

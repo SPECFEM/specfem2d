@@ -94,11 +94,11 @@ xcombine_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/exit_mpi.shared.o \
 	$O/parallel.sharedmpi.o \
-	$O/read_parameter_file.mesh.o \
+	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/read_material_table.mesh.o \
-	$O/read_interfaces_file.mesh.o \
-	$O/read_regions.mesh.o \
+	$O/read_material_table.shared.o \
+	$O/read_interfaces_file.shared.o \
+	$O/read_regions.shared.o \
 	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 
@@ -127,11 +127,11 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/exit_mpi.shared.o \
 	$O/gll_library.shared.o \
 	$O/parallel.sharedmpi.o \
-	$O/read_parameter_file.mesh.o \
+	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/read_material_table.mesh.o \
-	$O/read_interfaces_file.mesh.o \
-	$O/read_regions.mesh.o \
+	$O/read_material_table.shared.o \
+	$O/read_interfaces_file.shared.o \
+	$O/read_regions.shared.o \
 	$O/param_reader.cc.o \
 	$(EMPTY_MACRO)
 

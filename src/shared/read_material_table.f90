@@ -55,7 +55,6 @@
 
   integer,external :: err_occurred
 
-
   ! re-read number of models to reposition read-header
   call read_value_integer_p(reread_nbmodels, 'mesher.nbmodels')
   if (err_occurred() /= 0) call stop_the_code('error reading parameter nbmodels in Par_file')
@@ -248,46 +247,46 @@
   write(IMAIN,*) 'Materials:'
   write(IMAIN,*) '  Nb of solid, fluid or porous materials = ',nbmodels
   write(IMAIN,*)
-
   do i = 1,nbmodels
-     if (i == 1) write(IMAIN,*) '--------'
-     if (icodemat(i) == ISOTROPIC_MATERIAL) then
-        write(IMAIN,*) 'Material #',i,' isotropic'
-        write(IMAIN,*) 'rho,cp,cs   = ',rho_s_read(i),cp(i),cs(i)
-        write(IMAIN,*) 'Qkappa, Qmu = ',QKappa(i),Qmu(i)
-        if (cs(i) < TINYVAL) then
-           write(IMAIN,*) 'Material is fluid'
-        else
-           write(IMAIN,*) 'Material is solid'
-        endif
-     else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
-        write(IMAIN,*) 'Material #',i,' anisotropic'
-        write(IMAIN,*) 'rho,cp,cs    = ',rho_s_read(i),cp(i),cs(i)
-        if (AXISYM) then
-          write(IMAIN,*) 'c11,c13,c15,c33,c35,c55,c12,c23,c25,c22 = ', &
-                          aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
-                          aniso9(i),aniso10(i),aniso11(i),aniso12(i)
-        else
-          write(IMAIN,*) 'c11,c13,c15,c33,c35,c55,c12,c23,c25 = ', &
-                          aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
-                          aniso9(i),aniso10(i),aniso11(i)
-          write(IMAIN,*) 'QKappa,Qmu = ',QKappa(i),Qmu(i)
-        endif
-     else if (icodemat(i) == POROELASTIC_MATERIAL) then
-        write(IMAIN,*) 'Material #',i,' isotropic'
-        write(IMAIN,*) 'rho_s, kappa_s         = ',rho_s_read(i),kappa_s_read(i)
-        write(IMAIN,*) 'rho_f, kappa_f, eta_f  = ',rho_f_read(i),kappa_f_read(i),eta_f_read(i)
-        write(IMAIN,*) 'phi, tortuosity        = ',phi_read(i),tortuosity_read(i)
-        write(IMAIN,*) 'permxx, permxz, permzz = ',permxx_read(i),permxz_read(i),permzz_read(i)
-        write(IMAIN,*) 'kappa_fr, mu_fr, Qmu   = ',kappa_fr_read(i),mu_fr_read(i),Qmu(i)
-        write(IMAIN,*) 'Material is porous'
-     else if (icodemat(i) <= 0) then
-        write(IMAIN,*) 'Material #',i,' will be read in an external tomography file (TOMOGRAPHY_FILE in Par_file)'
-     else
-        call stop_the_code('Unknown material code')
-     endif
-     write(IMAIN,*) '--------'
-     call flush_IMAIN()
+    if (i == 1) write(IMAIN,*) '--------'
+    if (icodemat(i) == ISOTROPIC_MATERIAL) then
+      write(IMAIN,*) 'Material #',i,' isotropic'
+      write(IMAIN,*) 'rho,cp,cs   = ',rho_s_read(i),cp(i),cs(i)
+      write(IMAIN,*) 'Qkappa, Qmu = ',QKappa(i),Qmu(i)
+      if (cs(i) < TINYVAL) then
+         write(IMAIN,*) 'Material is fluid'
+      else
+         write(IMAIN,*) 'Material is solid'
+      endif
+    else if (icodemat(i) == ANISOTROPIC_MATERIAL) then
+      write(IMAIN,*) 'Material #',i,' anisotropic'
+      write(IMAIN,*) 'rho,cp,cs    = ',rho_s_read(i),cp(i),cs(i)
+      if (AXISYM) then
+        write(IMAIN,*) 'c11,c13,c15,c33,c35,c55,c12,c23,c25,c22 = ', &
+                        aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
+                        aniso9(i),aniso10(i),aniso11(i),aniso12(i)
+      else
+        write(IMAIN,*) 'c11,c13,c15,c33,c35,c55,c12,c23,c25 = ', &
+                        aniso3(i),aniso4(i),aniso5(i),aniso6(i),aniso7(i),aniso8(i), &
+                        aniso9(i),aniso10(i),aniso11(i)
+        write(IMAIN,*) 'QKappa,Qmu = ',QKappa(i),Qmu(i)
+      endif
+    else if (icodemat(i) == POROELASTIC_MATERIAL) then
+      write(IMAIN,*) 'Material #',i,' isotropic'
+      write(IMAIN,*) 'rho_s, kappa_s         = ',rho_s_read(i),kappa_s_read(i)
+      write(IMAIN,*) 'rho_f, kappa_f, eta_f  = ',rho_f_read(i),kappa_f_read(i),eta_f_read(i)
+      write(IMAIN,*) 'phi, tortuosity        = ',phi_read(i),tortuosity_read(i)
+      write(IMAIN,*) 'permxx, permxz, permzz = ',permxx_read(i),permxz_read(i),permzz_read(i)
+      write(IMAIN,*) 'kappa_fr, mu_fr, Qmu   = ',kappa_fr_read(i),mu_fr_read(i),Qmu(i)
+      write(IMAIN,*) 'Material is porous'
+    else if (icodemat(i) <= 0) then
+      write(IMAIN,*) 'Material #',i,' will be read in an external tomography file (TOMOGRAPHY_FILE in Par_file)'
+    else
+      call stop_the_code('Unknown material code')
+    endif
+    write(IMAIN,*) '--------'
   enddo
+  write(IMAIN,*)
+  call flush_IMAIN()
 
   end subroutine read_material_table

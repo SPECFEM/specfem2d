@@ -152,7 +152,7 @@
 
   use constants, only: IMAIN,PI,noise_source_time_function_type,NOISE_MOVIE_OUTPUT,NOISE_SAVE_EVERYWHERE
 
-  use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD, &
+  use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,NOISE_TOMOGRAPHY, &
                          any_acoustic,any_poroelastic,P_SV, &
                          xi_receiver,gamma_receiver,ispec_selected_rec,nrec,station_name,network_name
 
@@ -450,7 +450,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,NOISE_SAVE_EVERYWHERE,OUTPUT_FILES
 
-  use specfem_par, only: P_SV,it,NSTEP,nspec,nglob,ibool,jacobian,wxgll,wzgll,myrank
+  use specfem_par, only: P_SV,it,NSTEP,nspec,nglob,ibool,jacobian,wxgll,wzgll,myrank,NOISE_TOMOGRAPHY
 
   use specfem_par_noise
 
@@ -525,9 +525,7 @@
 
   use constants, only: CUSTOM_REAL,NDIM,IMAIN,OUTPUT_FILES
 
-  use specfem_par, only: myrank,it,NSTEP,nglob,P_SV,displ_elastic,nglob_elastic
-
-  use specfem_par_noise, only: NOISE_TOMOGRAPHY
+  use specfem_par, only: myrank,it,NSTEP,nglob,P_SV,displ_elastic,nglob_elastic,NOISE_TOMOGRAPHY
 
   implicit none
 
@@ -604,9 +602,7 @@
 
   use constants, only: CUSTOM_REAL,NDIM,OUTPUT_FILES
 
-  use specfem_par, only: myrank,it,NSTEP,nglob,b_displ_elastic
-
-  use specfem_par_noise, only: NOISE_TOMOGRAPHY
+  use specfem_par, only: myrank,it,NSTEP,nglob,b_displ_elastic,NOISE_TOMOGRAPHY
 
   implicit none
   ! local parameters

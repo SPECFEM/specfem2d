@@ -51,8 +51,14 @@ shared_OBJECTS = \
 	$O/lagrange_poly.shared.o \
 	$O/parallel.sharedmpi.o \
 	$O/param_reader.cc.o \
+	$O/read_interfaces_file.shared.o \
+	$O/read_material_table.shared.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_regions.shared.o \
+	$O/read_source_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$O/set_color_palette.shared.o \
+	$O/spline_routines.shared.o \
 	$(EMPTY_MACRO)
 
 
@@ -61,6 +67,7 @@ shared_MODULES = \
 	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/my_mpi.$(FC_MODEXT) \
+	$(FC_MODDIR)/source_file_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 

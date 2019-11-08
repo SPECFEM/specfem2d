@@ -32,31 +32,6 @@
 !========================================================================
 
 
-  module source_file_par
-
-  use constants, only: MAX_STRING_LEN
-
-  implicit none
-
-  ! source type parameters
-  integer, dimension(:),allocatable ::  source_type,time_function_type
-  ! location
-  double precision, dimension(:),allocatable :: xs,zs
-  ! moment tensor
-  double precision, dimension(:),allocatable :: Mxx,Mzz,Mxz
-  ! source parameters
-  double precision, dimension(:),allocatable :: f0_source,tshift_src,anglesource,factor,burst_band_width
-  ! flag for fixation to surface
-  logical, dimension(:),allocatable ::  source_surf
-  ! File name can't exceed MAX_STRING_LEN characters
-  character(len=MAX_STRING_LEN), dimension(:),allocatable :: name_of_source_file
-
-  end module source_file_par
-
-!
-!---------------------------------------------------------------------------------------
-!
-
   module decompose_par
 
   implicit none
@@ -77,7 +52,7 @@
 ! corresponding graphs.
 
   use shared_parameters, only: nelmnts,nxread,nzread,max_npoints_interface,number_of_interfaces, &
-    nz_layer,number_of_layers,nx,nz,myrank
+    nz_layer,number_of_layers,nx_elem_internal,nz_elem_internal
 
   implicit none
 

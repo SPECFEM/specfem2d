@@ -35,9 +35,9 @@
 
   subroutine compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NDIM,myrank
 
-  use specfem_par, only: myrank,P_SV,ispec_is_elastic,nglob_elastic, &
+  use specfem_par, only: P_SV,ispec_is_elastic,nglob_elastic, &
                          NSOURCES,source_time_function, &
                          islice_selected_source,ispec_selected_source,sourcearrays, &
                          ibool

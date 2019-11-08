@@ -35,10 +35,16 @@ module specfem_par
 
 ! main parameter module for specfem simulations
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME, &
-    NEDGES,NGLLX,NGLLZ,NGLJ,NDIM
+  use constants, only: &
+    CUSTOM_REAL,NGLLX,NGLLZ, &
+    MAX_STRING_LEN,MAX_LENGTH_NETWORK_NAME,MAX_LENGTH_STATION_NAME, &
+    NEDGES,NGLJ,NDIM, &
+    myrank
 
   use shared_parameters
+
+  use source_file_par, only: source_type,time_function_type,name_of_source_file,burst_band_width, &
+    x_source,z_source,Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource
 
   implicit none
   !=====================================================================
@@ -120,17 +126,18 @@ module specfem_par
 
   ! Stacey BC
   logical, dimension(:,:), allocatable  :: codeabs
-  integer, dimension(:), allocatable  :: typeabs
   ! for detection of corner element on absorbing boundary
   logical, dimension(:,:), allocatable  :: codeabs_corner
 
   ! absorbing boundary
+  integer :: num_abs_boundary_faces
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: abs_boundary_normal
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: abs_boundary_jacobian1Dw
   integer, dimension(:,:,:), allocatable :: abs_boundary_ij
   integer, dimension(:), allocatable :: abs_boundary_ispec
   integer, dimension(:), allocatable :: edge_abs
-  integer :: num_abs_boundary_faces
+  ! boundary type (bottom/right/top/left)
+  integer, dimension(:), allocatable  :: abs_boundary_type ! used for plotting postscript images
 
   ! horizontal periodicity distance for periodic conditions
   logical, dimension(:), allocatable :: this_ibool_is_a_periodic_edge
@@ -164,18 +171,8 @@ module specfem_par
   !---------------------------------------------------------------------
   ! for source-receiver information
   !---------------------------------------------------------------------
-  ! source description
-  integer, dimension(:), allocatable :: source_type,time_function_type
-  character(len=MAX_STRING_LEN), dimension(:), allocatable :: name_of_source_file
-  double precision, dimension(:), allocatable :: burst_band_width
-
   ! source locations
-  double precision, dimension(:), allocatable :: x_source,z_source
   double precision, dimension(:), allocatable :: xi_source,gamma_source
-
-  double precision, dimension(:), allocatable :: Mxx,Mzz,Mxz
-  double precision, dimension(:), allocatable :: f0_source,tshift_src,factor,anglesource
-
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sourcearrays
   double precision :: t0
 
@@ -239,17 +236,8 @@ module specfem_par
   double precision, dimension(:), allocatable :: cosrot_irec, sinrot_irec
   double precision, dimension(:), allocatable :: x_final_receiver, z_final_receiver
 
-  integer, dimension(:), allocatable :: source_courbe_eros
-
   integer  :: nnodes_tangential_curve
   double precision, dimension(:,:), allocatable  :: nodes_tangential_curve
-  logical  :: any_tangential_curve
-
-  integer  :: n1_tangential_detection_curve
-  integer, dimension(4)  :: n_tangential_detection_curve
-  integer, dimension(:), allocatable  :: rec_tangential_detection_curve
-  double precision :: distmin, dist_current, anglesource_recv
-  double precision, dimension(:), allocatable :: dist_tangential_detection_curve
 
   !---------------------------------------------------------------------
   ! for SEM discretization of the model
@@ -738,7 +726,7 @@ module specfem_par_noise
 
   use constants, only: CUSTOM_REAL
 
-  use shared_parameters
+!  use shared_parameters
 
   implicit none
 
@@ -776,7 +764,7 @@ module specfem_par_gpu
 
   use constants, only: CUSTOM_REAL
 
-  use shared_parameters
+!  use shared_parameters
 
   implicit none
 
@@ -843,9 +831,9 @@ module specfem_par_movie
 
 ! parameter module for noise simulations
 
-  use constants, only: CUSTOM_REAL,MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN
 
-  use shared_parameters
+!  use shared_parameters
 
   implicit none
 

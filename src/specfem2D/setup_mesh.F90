@@ -312,17 +312,6 @@
     write(IMAIN,*)
   endif
 
-  ! checks that no source is located outside the mesh
-  if (myrank == 0) then
-    do i = 1,NSOURCES
-      if (x_source(i) < xmin) call stop_the_code('error: at least one source has x < xmin of the mesh')
-      if (x_source(i) > xmax) call stop_the_code('error: at least one source has x > xmax of the mesh')
-
-      if (z_source(i) < zmin) call stop_the_code('error: at least one source has z < zmin of the mesh')
-      if (z_source(i) > zmax) call stop_the_code('error: at least one source has z > zmax of the mesh')
-    enddo
-  endif
-
   ! saves the grid of points in a file
   if (output_grid_ASCII .and. myrank == 0) then
      write(IMAIN,*)

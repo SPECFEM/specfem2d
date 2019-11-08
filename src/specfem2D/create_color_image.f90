@@ -39,14 +39,15 @@
 
   use constants, only: TINYVAL,VERYTINYVAL,HUGEVAL,STABILITY_THRESHOLD,OUTPUT_FILES,IMAIN
 
-  use specfem_par, only: myrank,it,NSOURCES,P_SV,nrec
+  use specfem_par, only: myrank,it,NSOURCES,P_SV,nrec,SIMULATION_TYPE
+
+  use shared_parameters, only: cutsnaps,USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
+    DRAW_SOURCES_AND_RECEIVERS, &
+    USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE
 
   use specfem_par_movie, only: image_color_data,iglob_image_color,NX_IMAGE_color,NZ_IMAGE_color, &
-    isnapshot_number,cutsnaps,image_color_vp_display, &
-    USE_SNAPSHOT_NUMBER_IN_FILENAME,POWER_DISPLAY_COLOR, &
-    DRAW_SOURCES_AND_RECEIVERS, &
-    ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver, &
-    USE_CONSTANT_MAX_AMPLITUDE,CONSTANT_MAX_AMPLITUDE_TO_USE,SIMULATION_TYPE
+    isnapshot_number,image_color_vp_display, &
+    ix_image_color_source,iy_image_color_source,ix_image_color_receiver,iy_image_color_receiver
 
   implicit none
 
@@ -155,19 +156,23 @@
 
 ! use P velocity model as background where amplitude is negligible
         if ((P_SV) .and. ((vpmax-vpmin)/max(vpmin, TINYVAL) > 0.02d0)) then
-          x1 = (image_color_vp_display(ix,iy)-vpmin)/(vpmax-vpmin)
+          if (abs(vpmax - vpmin) > TINYVAL) then
+            x1 = (image_color_vp_display(ix,iy)-vpmin)/(vpmax-vpmin)
+          else
+            x1 = 0.5d0
+          endif
         else
           x1 = 0.5d0
         endif
 
-! rescale to avoid very dark gray levels
+        ! rescale to avoid very dark gray levels
         x1 = x1*0.7 + 0.2
         if (x1 > 1.d0) x1=1.d0
 
-! invert scale: white = vpmin, dark gray = vpmax
+        ! invert scale: white = vpmin, dark gray = vpmax
         x1 = 1.d0 - x1
 
-! map to [0,255]
+        ! map to [0,255]
         x1 = x1 * 255.d0
 
         R = nint(x1)

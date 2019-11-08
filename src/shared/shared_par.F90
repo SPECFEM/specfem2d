@@ -38,6 +38,9 @@ module constants
 
   include "constants.h"
 
+  ! proc number for MPI process
+  integer :: myrank
+
   ! a negative initial value is a convention that indicates that groups (i.e. sub-communicators, one per run) are off by default
   integer :: mygroup = -1
 
@@ -374,9 +377,6 @@ module shared_parameters
 
   implicit none
 
-  ! for MPI and partitioning
-  integer :: myrank
-
   ! for Bielak condition
   logical :: add_Bielak_conditions
 
@@ -413,11 +413,13 @@ module shared_parameters
   integer :: nelmnts
 
   ! interface file data
-  integer :: nx,nz
+  integer :: nx_elem_internal,nz_elem_internal
   integer :: nxread,nzread
 
   ! from interfaces file
   integer :: max_npoints_interface,number_of_interfaces
+  integer, dimension(:), allocatable :: npoints_of_interfaces
+  double precision, dimension(:,:), allocatable :: xinterface_coords,zinterface_coords
 
   ! vertical layers
   integer :: number_of_layers
@@ -427,5 +429,40 @@ module shared_parameters
   logical, parameter :: WRITE_SEISMOGRAMS_BY_MASTER = .true.
 
 end module shared_parameters
+
+!
+!========================================================================
+!
+
+module source_file_par
+
+  use constants, only: MAX_STRING_LEN
+
+  implicit none
+
+  ! source type parameters
+  integer, dimension(:),allocatable ::  source_type,time_function_type
+
+  ! location
+  double precision, dimension(:),allocatable :: x_source,z_source
+
+  ! moment tensor
+  double precision, dimension(:),allocatable :: Mxx,Mzz,Mxz
+
+  ! force
+  double precision, dimension(:),allocatable :: anglesource
+  double precision, dimension(:),allocatable :: factor
+
+  ! source parameters
+  double precision, dimension(:),allocatable :: tshift_src
+  double precision, dimension(:),allocatable :: f0_source,burst_band_width
+
+  ! flag for fixation to surface (works only for internal meshes, not external ones)
+  logical, dimension(:),allocatable ::  source_surf
+
+  ! File name can't exceed MAX_STRING_LEN characters
+  character(len=MAX_STRING_LEN), dimension(:),allocatable :: name_of_source_file
+
+end module source_file_par
 
 

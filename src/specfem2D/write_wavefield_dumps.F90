@@ -44,9 +44,11 @@
                          potential_dot_dot_acoustic,accel_elastic,accels_poroelastic, &
                          NPROC
 
+  use shared_parameters, only: imagetype_wavefield_dumps,use_binary_for_wavefield_dumps
+
   use specfem_par_movie, only: this_is_the_first_time_we_dump, &
-                               mask_ibool,imagetype_wavefield_dumps, &
-                               use_binary_for_wavefield_dumps,vector_field_display, &
+                               mask_ibool, &
+                               vector_field_display, &
                                dump_recv_counts, dump_send, dump_recv, dump_write, &
                                dump_gather, mask_duplicate, &
                                dump_duplicate_send, dump_duplicate_recv

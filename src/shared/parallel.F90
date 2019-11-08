@@ -349,6 +349,35 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
+
+  subroutine bcast_all_l(buffer, countval)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: countval
+  logical, dimension(countval) :: buffer
+#ifndef WITH_MPI
+  logical :: dummy
+#endif
+
+#ifdef WITH_MPI
+  integer :: ier
+
+  call MPI_BCAST(buffer,countval,MPI_LOGICAL,0,my_local_mpi_comm_world,ier)
+#else
+  ! to avoid compiler warning
+  dummy = buffer(1)
+#endif
+
+  end subroutine bcast_all_l
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
   subroutine bcast_all_singlel(buffer)
 
   use my_mpi
@@ -376,6 +405,33 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine bcast_all_dp(buffer, countval)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: countval
+  double precision, dimension(countval) :: buffer
+#ifndef WITH_MPI
+  double precision :: dummy
+#endif
+
+#ifdef WITH_MPI
+  integer :: ier
+
+  call MPI_BCAST(buffer,countval,MPI_DOUBLE_PRECISION,0,my_local_mpi_comm_world,ier)
+#else
+  ! to avoid compiler warning
+  dummy = buffer(1)
+#endif
+
+  end subroutine bcast_all_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine bcast_all_singledp(buffer)
 
   use my_mpi
@@ -397,6 +453,34 @@ end module my_mpi
 #endif
 
   end subroutine bcast_all_singledp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_string_array(buffer, countval)
+
+  use my_mpi
+  use constants, only: MAX_STRING_LEN
+  
+  implicit none
+
+  integer :: countval
+  character(len=MAX_STRING_LEN), dimension(countval) :: buffer
+#ifndef WITH_MPI
+  character(len=MAX_STRING_LEN) :: dummy
+#endif
+
+#ifdef WITH_MPI
+  integer :: ier
+
+  call MPI_BCAST(buffer,countval*MAX_STRING_LEN,MPI_CHARACTER,0,my_local_mpi_comm_world,ier)
+#else
+  ! to avoid compiler warning
+  dummy = buffer(1)
+#endif
+
+  end subroutine bcast_all_string_array
 
 !
 !-------------------------------------------------------------------------------------------------

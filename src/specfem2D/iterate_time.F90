@@ -36,7 +36,6 @@ subroutine iterate_time()
   use constants, only: IMAIN,NOISE_SAVE_EVERYWHERE
   use specfem_par
   use specfem_par_gpu
-  use specfem_par_noise, only: NOISE_TOMOGRAPHY
 
   implicit none
 
