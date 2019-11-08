@@ -642,13 +642,26 @@
 
   end subroutine init_host_to_dev_variable
 
+  end subroutine prepare_GPU
+
+
+!
 !----------------------------------------------------------------------
+!
+
+! note: putting this subroutine as a contains-subroutine into prepare_GPU(),
+!       gnu compilers (>version 9) will complain about unused dummy arguments:
+!         Warning: Unused dummy argument '_formal_0' at (1) [-Wunused-dummy-argument]
+!       in every subroutine call which includes some arguments.
+!
+!       we thus move this routine out of prepare_GPU() and have it stand alone as subroutine.
+!       in this case, the gnu compilers will be happy again (until somebody fixes the gnu compilers...)
 
   subroutine init_moving_source()
 
   ! Compute the sourcearrays for all timesteps and send them to device
 
-  use constants, only: NGLLX,NGLLZ,TINYVAL
+  use constants, only: NGLLX,NGLLZ,TINYVAL,IMAIN
 
   use specfem_par
   use specfem_par_gpu
@@ -842,7 +855,3 @@
                                   sourcearray_loc_moving, ispec_selected_source_loc_moving, NSTEP)
 
   end subroutine init_moving_source
-
-!----------------------------------------------------------------------
-
-  end subroutine prepare_GPU
