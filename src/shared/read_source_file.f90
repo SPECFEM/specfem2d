@@ -147,7 +147,7 @@
     if (ier /= 0) call stop_the_code('Error opening source file, please make sure file exists...')
 
     ! reads in all source informations
-    do  i_source= 1,NSOURCES
+    do  i_source = 1,NSOURCES
 
       ! source set to surface
       call read_value_logical(IIN_SOURCE,IGNORE_JUNK,source_surf(i_source))
@@ -215,7 +215,6 @@
         ! force
         write(IMAIN,*) '  Force source:'
         write(IMAIN,*) '  Angle of the source (deg) = ',anglesource(i_source)
-        write(IMAIN,*) '  Multiplying factor  = ',factor(i_source)
       case (2)
         ! moment tensor
         write(IMAIN,*) '  Moment tensor source:'
@@ -279,6 +278,7 @@
       case default
         call stop_the_code('Error invalid source time function type! must be between 1 and 9, exiting...')
       end select
+      write(IMAIN,*) '  Multiplying factor  = ',factor(i_source)
       write(IMAIN,*)
 
     enddo ! do i_source= 1,NSOURCES

@@ -35,7 +35,7 @@
 
 ! generates the databases for the solver
 
-  use constants, only: IMAIN,IOUT,MAX_STRING_LEN,OUTPUT_FILES
+  use constants, only: IMAIN,IOUT,MAX_STRING_LEN,SAVE_MESHFILES_VTK_FORMAT,OUTPUT_FILES,myrank
   use part_unstruct_par, only: nspec,iproc
   use shared_parameters, only: NPROC
 
@@ -47,8 +47,16 @@
 
   do iproc = 0, NPROC-1
 
+    ! filename
+    write(prname, "(a,i5.5,a)") trim(OUTPUT_FILES)//'Database',iproc,'.bin'
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  database file: ',trim(prname)
+      call flush_IMAIN()
+    endif
+
     ! opens Database file
-    write(prname, "(a,i5.5,a)") './'//trim(OUTPUT_FILES)//'Database',iproc,'.bin'
     open(unit=IOUT,file=trim(prname),status='unknown',action='write',form='unformatted',iostat=ier)
     if (ier /= 0 ) call stop_the_code('Error saving databases; check that directory OUTPUT_FILES exists')
 
@@ -92,11 +100,16 @@
     close(IOUT)
 
     ! user output
-    if (iproc == 0) write(IMAIN,*)
-    write(IMAIN,*) 'slice ',iproc,' has number of spectral elements =',nspec
-    call flush_IMAIN()
+    if (myrank == 0) then
+      write(IMAIN,*) '  slice ',iproc,' has number of spectral elements =',nspec
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
 
   enddo
+
+  ! mesh file output for visualization
+  if (SAVE_MESHFILES_VTK_FORMAT) call save_databases_VTK_files()
 
   end subroutine save_databases
 
@@ -319,6 +332,8 @@
 
 !-------------------------------------------------------------------------------
 
+! original routine left here for reference...
+!
 !  subroutine save_databases_sources()
 !
 !  use constants, only: IOUT
@@ -682,5 +697,108 @@
 
   end subroutine save_databases_axial_elements
 
+!-------------------------------------------------------------------------------
 
+
+  subroutine save_databases_VTK_files()
+
+! saves mesh files as VTK file
+
+  use constants, only: MAX_STRING_LEN,SAVE_MESHFILES_VTK_FORMAT,OUTPUT_FILES,IMAIN,myrank
+  use part_unstruct_par,only: part,elmnts,nodes_coords,nelmnts,nnodes
+  use shared_parameters,only: ngnod,num_material,NPROC
+
+  implicit none
+
+  ! vtk output
+  integer :: ispec,i,j,inum,iproc,nspec
+  integer,dimension(:,:),allocatable :: tmp_elmnts
+  integer, dimension(:),allocatable :: tmp_elem_flag
+  double precision,dimension(:),allocatable :: xstore_dummy,zstore_dummy
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! checks if anything to do
+  if (.not. SAVE_MESHFILES_VTK_FORMAT) return
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  VTK mesh files:'
+    call flush_IMAIN()
+  endif
+
+  ! outputs material flag assignment on elements
+  allocate(tmp_elmnts(NGNOD,nelmnts))
+  allocate(tmp_elem_flag(nelmnts))
+  do ispec = 1, nelmnts
+    do j = 1, ngnod
+      tmp_elmnts(j,ispec) = elmnts((ispec-1)*ngnod+(j-1))+1
+    enddo
+    tmp_elem_flag(ispec) = num_material(ispec)
+  enddo
+
+  allocate(xstore_dummy(nnodes),zstore_dummy(nnodes))
+  xstore_dummy(:) = nodes_coords(1,:)
+  zstore_dummy(:) = nodes_coords(2,:)
+
+  ! materials
+  filename = trim(OUTPUT_FILES)//'/mesh_materials.vtk'
+  call write_VTK_data_ngnod_elem_i(nelmnts,nnodes,ngnod,xstore_dummy,zstore_dummy, &
+                                   tmp_elmnts,tmp_elem_flag,filename)
+  ! user output
+  if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename)
+
+  ! partitioning number
+  do ispec = 1, nelmnts
+    tmp_elem_flag(ispec) = part(ispec-1)
+  enddo
+  filename = trim(OUTPUT_FILES)//'/mesh_partition_number.vtk'
+  call write_VTK_data_ngnod_elem_i(nelmnts,nnodes,ngnod,xstore_dummy,zstore_dummy, &
+                                   tmp_elmnts,tmp_elem_flag,filename)
+  ! user output
+  if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename)
+
+  deallocate(tmp_elmnts,tmp_elem_flag)
+  deallocate(xstore_dummy,zstore_dummy)
+
+  ! debug
+  ! outputs single file per partition with partition number
+  if (.false.) then
+    ! stores only elements in this partition
+    do iproc = 0,NPROC-1
+
+      ! only counts number of elements for this given partition iproc
+      nspec = 0
+      do i = 0, nelmnts-1
+        if (part(i) == iproc) nspec = nspec + 1
+      enddo
+
+      allocate(tmp_elmnts(NGNOD,nspec))
+      tmp_elmnts(:,:) = 0
+      allocate(tmp_elem_flag(nspec))
+      tmp_elem_flag(:) = -1
+      inum = 0
+      do ispec = 1,nelmnts
+        if (part(ispec-1) == iproc) then
+          inum = inum + 1
+          do j = 1, ngnod
+            tmp_elmnts(j,inum) = elmnts((ispec-1)*ngnod+(j-1))+1
+          enddo
+          tmp_elem_flag(inum) = iproc
+        endif
+      enddo
+      if (inum /= nspec) then
+        print *,'Error: inum ',inum,'should be equal to nspec ',nspec
+        stop 'Error invalid inum for writing partition vtk file'
+      endif
+      ! saves as vtk file
+      write(filename,'(a,i6.6,a)') trim(OUTPUT_FILES)//'/proc',iproc,'_partition_number.vtk'
+      call write_VTK_data_ngnod_elem_i(nspec,nnodes,NGNOD,xstore_dummy,zstore_dummy, &
+                                       tmp_elmnts,tmp_elem_flag,filename)
+      if (myrank == 0) write(IMAIN,*) '  written file: ',trim(filename)
+      deallocate(tmp_elmnts,tmp_elem_flag)
+      deallocate(xstore_dummy,zstore_dummy)
+    enddo
+  endif
+
+  end subroutine save_databases_VTK_files
 

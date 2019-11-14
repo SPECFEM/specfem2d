@@ -59,6 +59,7 @@ shared_OBJECTS = \
 	$O/read_value_parameters.shared.o \
 	$O/set_color_palette.shared.o \
 	$O/spline_routines.shared.o \
+	$O/write_VTK_data.shared.o \
 	$(EMPTY_MACRO)
 
 

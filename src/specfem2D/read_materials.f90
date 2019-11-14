@@ -91,6 +91,7 @@
     !---- isotropic material, P and S velocities given, allows for declaration of elastic/acoustic material
     !---- elastic (cs /= 0) and acoustic (cs = 0)
     if (indic == 1) then
+      ! isotropic elastic/acoustic material
       density_mat(1) = val0
 
       ! P and S velocity
@@ -129,7 +130,7 @@
 
     !---- anisotropic material, c11, c13, c33 and c44 given in Pascal
     else if (indic == 2) then
-
+      ! anisotropic elastic material
       density_mat(1) = val0
 
       ! Anisotropy parameters
@@ -171,6 +172,7 @@
     !---- isotropic material, moduli are given, allows for declaration of poroelastic material
     !---- poroelastic (0 < phi < 1)
     else if (indic == 3) then
+      ! poroelastic material
       ! Qmu values
       Qmu = val12
 
@@ -240,6 +242,7 @@
       if (poisson_s < -1.d0 .or. poisson_s > 0.5d0) call stop_the_code('Poisson''s ratio for the solid phase out of range')
 
     else if (indic <= 0) then
+      ! external, tomo material (material properties will be assigned later)
       assign_external_model = .true.
       tomo_material = n
       mu = val2 ! for acoustic medium vs must be 0 anyway
@@ -253,6 +256,7 @@
     !----  set elastic coefficients and density
     !
     if (indic == 1) then
+      ! isotropic elastic/acoustic material
       density(1,n) = density_mat(1)
       poroelastcoef(1,1,n) = lambda
       poroelastcoef(2,1,n) = mu
@@ -267,6 +271,7 @@
       endif
 
     else if (indic == 2) then
+      ! anisotropic elastic material
       density(1,n) = density_mat(1)
       ! dummy poroelastcoef values, trick to avoid floating invalid
       poroelastcoef(1,1,n) = lambda
@@ -286,6 +291,7 @@
       porosity(n) = 0.d0
 
     else if (indic == 3) then
+      ! poroelastic material
       density(1,n) = density_mat(1)
       density(2,n) = density_mat(2)
       poroelastcoef(1,1,n) = lambda_s
@@ -304,6 +310,7 @@
       poroelastcoef(4,3,n) = ZERO
 
     else if (indic <= 0) then
+      ! external, tomo material
       ! assign dummy values for now (for acoustic medium vs must be 0 anyway), these values will be read in read_external_model
       density(1,n) = -1.0d0
       poroelastcoef(1,1,n) = -1.0d0

@@ -66,6 +66,9 @@
 ! output file for energy
   integer, parameter :: IOUT_ENERGY = 77
 
+! output file for visualizations
+  integer, parameter :: IOUT_VIS = 50, IOUT_VTK = 51
+
 !!-----------------------------------------------------------
 !!
 !! source/receiver setup
@@ -218,6 +221,9 @@
 
 ! relative mesh tolerance for fast global numbering
   double precision, parameter :: SMALLVALTOL = 1.d-10
+
+! outputs mesh files (partitioning) in VTK format
+  logical, parameter :: SAVE_MESHFILES_VTK_FORMAT = .true.
 
 !!-----------------------------------------------------------
 !!

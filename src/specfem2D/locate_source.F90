@@ -97,18 +97,14 @@
   ! user output
   if (myrank == 0) then
     if (is_force_source .and. (.not. SOURCE_IS_MOVING)) then ! TODO
-      write(IMAIN,*)
       write(IMAIN,*) '*******************************'
       write(IMAIN,*) ' locating force source'
       write(IMAIN,*) '*******************************'
-      write(IMAIN,*)
       call flush_IMAIN()
     else if (.not. SOURCE_IS_MOVING) then
-      write(IMAIN,*)
       write(IMAIN,*) '*******************************'
       write(IMAIN,*) ' locating moment-tensor source'
       write(IMAIN,*) '*******************************'
-      write(IMAIN,*)
       call flush_IMAIN()
     endif
   endif

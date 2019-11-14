@@ -57,6 +57,7 @@
 
   ! attenuation
   ! user output
+  call synchronize_all()
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Attenuation:'
@@ -294,6 +295,26 @@
   Mu_nu1(:,:,:) = +1._CUSTOM_REAL
   Mu_nu2(:,:,:) = +1._CUSTOM_REAL
 
+  ! physical dispersion: scales moduli from reference frequency to simulation (source) center frequency
+  !
+  ! if attenuation is on, shift the velocity model to right frequency;
+  ! rescale mu to average frequency for attenuation
+  !
+  ! the formulas to implement the scaling can be found for instance in
+  ! Liu, H. P., Anderson, D. L. and Kanamori, H., Velocity dispersion due to
+  ! anelasticity: implications for seismology and mantle composition,
+  ! Geophys. J. R. Astron. Soc., vol. 47, pp. 41-58 (1976)
+  !
+  ! and in Aki, K. and Richards, P. G., Quantitative seismology, theory and methods,
+  ! W. H. Freeman, (1980), second edition, sections 5.5 and 5.5.2, eq. (5.81) p. 170.
+  !
+  ! Beware that in the book of Aki and Richards eq. (5.81) is given for velocities
+  ! while we need an equation for "mu" and thus we have an additional factor of 2
+  ! in the scaling factor below and in equation (49) of Komatitsch and Tromp, Geophys. J. Int. (2002) 149, 390-412,
+  ! because "mu" is related to the square of velocity.
+  !
+  ! mu(omega_c) = mu(omega_0)[ 1 + 2/(pi Q_mu) ln(omega_c / omega_0) ]
+  !
   ! if source is not a Dirac or Heavyside then ATTENUATION_f0_REFERENCE is f0 of the first source
   if (.not. (time_function_type(1) == 4 .or. time_function_type(1) == 5)) then
     ATTENUATION_f0_REFERENCE = f0_source(1)
@@ -404,11 +425,12 @@
 
               ! shifts vp and vs (according to f0 and attenuation band)
               call shift_velocities_from_f0(vp,vs,rhol, &
-                                    ATTENUATION_f0_REFERENCE,N_SLS, &
-                                    tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
+                                            ATTENUATION_f0_REFERENCE,N_SLS, &
+                                            tau_epsilon_nu1_sent,tau_epsilon_nu2_sent, &
+                                            inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
 
               ! stores shifted values
-              ! determins mu and kappa
+              ! determines mu and kappa
               mul = rhol * vs * vs
               if (AXISYM) then ! CHECK kappa
                 kappal = rhol * vp * vp - FOUR_THIRDS * mul
@@ -447,8 +469,9 @@
 
                 ! shifts vp and vs
                 call shift_velocities_from_f0(vp,vs,rhol, &
-                                      ATTENUATION_f0_REFERENCE,N_SLS, &
-                                      tau_epsilon_nu1_sent,tau_epsilon_nu2_sent,inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
+                                              ATTENUATION_f0_REFERENCE,N_SLS, &
+                                              tau_epsilon_nu1_sent,tau_epsilon_nu2_sent, &
+                                              inv_tau_sigma_nu1_sent,inv_tau_sigma_nu2_sent)
 
                 ! stores shifted mu,lambda
                 mul = rhol * vs*vs
@@ -483,6 +506,7 @@
       enddo
     enddo
 
+    ! for PMLs
     if (PML_BOUNDARY_CONDITIONS) call prepare_attenuation_with_PML()
 
   endif ! of if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_VISCOACOUSTIC)
@@ -547,9 +571,23 @@
 
   subroutine prepare_attenuation_with_PML()
 
-  use constants
-  use specfem_par
+  use constants, only: NGLLX,NGLLZ,IMAIN,myrank, &
+    CPML_X_ONLY,CPML_XZ,CPML_Z_ONLY
 
+  use specfem_par,only: N_SLS,assign_external_model,ATTENUATION_VISCOELASTIC, &
+    ispec_is_elastic,nspec,kmato, &
+    QKappa_attenuationcoef,QKappa_attenuationext, &
+    Qmu_attenuationcoef,Qmu_attenuationext, &
+    inv_tau_sigma_nu1,inv_tau_sigma_nu2
+
+  ! PML
+  use specfem_par,only: spec_to_PML,ispec_is_PML,region_CPML,min_distance_between_CPML_parameter, &
+    K_x_store,d_x_store,alpha_x_store,K_z_store,d_z_store,alpha_z_store
+
+
+  implicit none
+
+  ! local parameters
   double precision, dimension(2*N_SLS) :: tauinvnu
   double precision, dimension(2*N_SLS + 1) :: tauinvplusone
   double precision :: qkappal,qmul
@@ -566,11 +604,15 @@
   endif
 
   const_for_separation_two = min_distance_between_CPML_parameter * 2.d0
+
   do ispec = 1,nspec
+
     ispec_PML = spec_to_PML(ispec)
+
     if (ispec_is_PML(ispec)) then
       do j = 1,NGLLZ
         do i = 1,NGLLX
+          ! kappa & mu
           if (.not. assign_external_model) then
             qkappal = QKappa_attenuationcoef(kmato(ispec))
             qmul = Qmu_attenuationcoef(kmato(ispec))
@@ -578,7 +620,9 @@
             qkappal = QKappa_attenuationext(i,j,ispec)
             qmul = Qmu_attenuationext(i,j,ispec)
           endif
+          ! checks if anything to do; values of Q == 9999. mean no attenuation
           if (qkappal > 9998.999d0 .and. qmul > 9998.999d0) cycle
+
           K_x = K_x_store(i,j,ispec_PML)
           d_x = d_x_store(i,j,ispec_PML)
           alpha_x = alpha_x_store(i,j,ispec_PML)
@@ -587,6 +631,7 @@
           d_z = d_z_store(i,j,ispec_PML)
           alpha_z = alpha_z_store(i,j,ispec_PML)
 
+          ! visco-elastic
           if (ATTENUATION_VISCOELASTIC) then
             if (region_CPML(ispec) == CPML_XZ) then
               if (ispec_is_elastic(ispec)) then
@@ -655,7 +700,6 @@
                 alpha_x_store(i,j,ispec_PML) = alpha_x
                 d_z_store(i,j,ispec_PML) = d_z
                 alpha_z_store(i,j,ispec_PML) = alpha_z
-
               endif
             endif
 
@@ -677,11 +721,9 @@
                   call stop_the_code('error in separation of beta_x, tauinvnu')
                 endif
               enddo
-
               d_x = (beta_x - alpha_x) * K_x
               d_x_store(i,j,ispec_PML) = d_x
               alpha_x_store(i,j,ispec_PML) = alpha_x
-
             endif
 
             if (region_CPML(ispec) == CPML_Z_ONLY) then
@@ -702,17 +744,27 @@
                   call stop_the_code('error in separation of beta_z, tauinvnu')
                 endif
               enddo
-
               d_z = (beta_z - alpha_z) * K_z
               d_z_store(i,j,ispec_PML) = d_z
               alpha_z_store(i,j,ispec_PML) = alpha_z
-
             endif
-          endif
-        enddo
-      enddo
-    endif
-  enddo
+
+          endif ! ATTENUATION_VISCOELASTIC
+
+        enddo ! NGLLX
+      enddo ! NGLLZ
+
+    endif ! ispec_is_PML
+
+  enddo ! ispec
+
+  ! user output
+  call synchronize_all()
+  if (myrank == 0) then
+    write(IMAIN,*) '  done PML attenuation setup'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   contains
 
@@ -726,8 +778,8 @@
     integer :: i,j
     double precision :: temp
 
-    do i= 1,siz
-      do j= i+1,siz
+    do i = 1,siz
+      do j = i+1,siz
         if (tauinvnu(i) > tauinvnu(j)) then
           temp = tauinvnu(i)
           tauinvnu(i) = tauinvnu(j)

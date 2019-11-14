@@ -103,7 +103,6 @@
        vpregion = cp(imaterial_number)
        vsregion = cs(imaterial_number)
 
-
        write(IMAIN,*) 'Material # ',imaterial_number,' isotropic'
        if (vsregion < TINYVAL) then
           write(IMAIN,*) 'Material is fluid'
@@ -178,6 +177,6 @@
   write(IMAIN,*)
   call flush_IMAIN()
 
-  if (minval(num_material) <= 0) call stop_the_code('Velocity model not entirely set...')
+  if (minval(num_material(:)) <= 0) call stop_the_code('Velocity model not entirely set...')
 
   end subroutine read_regions

@@ -35,9 +35,12 @@
 
 ! reads in tangential detection
 
+  use constants, only: IMAIN,myrank
+
   use part_unstruct_par, only: nnodes_tangential_curve
 
-  use shared_parameters, only: force_normal_to_surface,rec_normal_to_surface,read_external_mesh
+  use shared_parameters, only: force_normal_to_surface,rec_normal_to_surface,read_external_mesh, &
+    tangential_detection_curve_file
 
   implicit none
 
@@ -45,10 +48,16 @@
   nnodes_tangential_curve = 0
 
   if (force_normal_to_surface .or. rec_normal_to_surface) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'Tangential curve:'
+      call flush_IMAIN()
+    endif
+
     ! reads in file
     if (read_external_mesh) then
       ! reads in specified external file
-      call read_external_tangential_curve_file()
+      call read_external_tangential_curve_file(tangential_detection_curve_file)
     else
       ! safety stop
       call stop_the_code('Error read_external_mesh must be set to .true. to use external tangential_dectection_curve_file')

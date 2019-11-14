@@ -83,6 +83,7 @@ meshfem2D_SHARED_OBJECTS = \
 	$O/read_source_file.shared.o \
 	$O/read_value_parameters.shared.o \
 	$O/spline_routines.shared.o \
+	$O/write_VTK_data.shared.o \
 	$(EMPTY_MACRO)
 
 # default mesher flags

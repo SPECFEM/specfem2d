@@ -174,49 +174,49 @@ contains
 !
 
   subroutine determine_elements_type()
-    ! Loop on the elements to determine which element is elastic, acoustic or viscoelastic
 
-    implicit none
+! Loop on the elements to determine which element is elastic, acoustic or viscoelastic
 
-    integer :: ispec
+  implicit none
 
-    do ispec = 0,nelmnts-1
-      ! acoustic/elastic/poroelastic...
-      if (phi_read(num_material(ispec+1)) < TINYVAL) then
-        is_acoustic(ispec) = .false.
-        is_elastic(ispec) = .true.
-      else if (phi_read(num_material(ispec+1)) >= 1.d0) then
-        is_acoustic(ispec) = .true.
-        is_elastic(ispec) = .false.
-      else
-        is_acoustic(ispec) = .false.
-        is_elastic(ispec) = .false.
-      endif
+  integer :: ispec
 
-      ! visco-elastic
-      if (ATTENUATION_VISCOELASTIC) then
-        if (is_elastic(ispec)) then
-          if (((abs(Qkappa(num_material(ispec+1)) - 9999.0d0)) > TINYVAL) .or. &
-              ((abs(Qmu(num_material(ispec+1)) - 9999.0d0)) > TINYVAL)) then
-            is_viscoelastic(ispec) = .true.
-            is_elastic(ispec) = .false.
-            is_acoustic(ispec) = .false.
-          endif
+  do ispec = 0,nelmnts-1
+    ! acoustic/elastic/poroelastic...
+    if (phi_read(num_material(ispec+1)) < TINYVAL) then
+      is_acoustic(ispec) = .false.
+      is_elastic(ispec) = .true.
+    else if (phi_read(num_material(ispec+1)) >= 1.d0) then
+      is_acoustic(ispec) = .true.
+      is_elastic(ispec) = .false.
+    else
+      is_acoustic(ispec) = .false.
+      is_elastic(ispec) = .false.
+    endif
+
+    ! visco-elastic
+    if (ATTENUATION_VISCOELASTIC) then
+      if (is_elastic(ispec)) then
+        if (((abs(Qkappa(num_material(ispec+1)) - 9999.0d0)) > TINYVAL) .or. &
+            ((abs(Qmu(num_material(ispec+1)) - 9999.0d0)) > TINYVAL)) then
+          is_viscoelastic(ispec) = .true.
+          is_elastic(ispec) = .false.
+          is_acoustic(ispec) = .false.
         endif
       endif
+    endif
 
-      ! visco-acoustic
-      if (ATTENUATION_VISCOACOUSTIC) then
-        if (is_acoustic(ispec)) then
-          if (((abs(Qkappa(num_material(ispec+1)) - 9999.0d0)) > TINYVAL)) then
-            is_viscoacoustic(ispec) = .true.
-            is_elastic(ispec) = .false.
-            is_acoustic(ispec) = .false.
-          endif
+    ! visco-acoustic
+    if (ATTENUATION_VISCOACOUSTIC) then
+      if (is_acoustic(ispec)) then
+        if (((abs(Qkappa(num_material(ispec+1)) - 9999.0d0)) > TINYVAL)) then
+          is_viscoacoustic(ispec) = .true.
+          is_elastic(ispec) = .false.
+          is_acoustic(ispec) = .false.
         endif
       endif
-
-    enddo
+    endif
+  enddo
 
   end subroutine determine_elements_type
 

@@ -525,10 +525,6 @@
   endif
 
   ! allocates mesh arrays
-  ! elements
-  allocate(kmato(nspec))
-  allocate(knods(ngnod,nspec))
-
   ! default material
   allocate(density(2,numat))
   allocate(anisotropycoef(10,numat)) ! don't forget c22 value (it is used for AXISYM simulations only)
@@ -591,15 +587,14 @@
 
 ! reads spectral macrobloc data
 
-  use constants, only: IIN
+  use constants, only: IIN,myrank
 
-  use specfem_par, only: nspec,ngnod,kmato,knods,region_CPML,f0_source
+  use specfem_par, only: nspec,ngnod,kmato,knods,region_CPML,f0_source,numat
 
   implicit none
 
   ! local parameters
-  integer :: n,k,ispec,kmato_read,pml_read
-  integer :: ier
+  integer :: n,k,ispec,kmato_read,pml_read,imat,ier
   integer, dimension(:), allocatable :: knods_read
 
   ! reads and sets the material properties
@@ -608,6 +603,11 @@
   ! add support for using PML in MPI mode with external mesh
   allocate(region_CPML(nspec),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating region_CPML array')
+
+  ! elements
+  allocate(kmato(nspec), &
+           knods(ngnod,nspec),stat=ier)
+  if (ier /= 0) call stop_the_code('Error allocating kmato,.. array')
 
   ! initializes
   kmato(:) = 0
@@ -632,6 +632,16 @@
 
     ! element control node indices
     knods(:,n)= knods_read(:)
+  enddo
+
+  ! checks material array
+  do ispec = 1,nspec
+    imat = kmato(ispec)
+    if (imat < 1 .or. imat > numat) then
+      print *,'Error: rank ',myrank,'found element ',ispec,' with invalid material id',imat
+      print *,'Please check your material definitions and element assignments'
+      call stop_the_code('Invalid material id found')
+    endif
   enddo
 
   ! frees temporary array

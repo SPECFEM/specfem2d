@@ -333,7 +333,6 @@ end module interpolation
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,nspec), intent(out) :: c11ext,c12ext,c13ext,c15ext,c22ext,c23ext,c25ext, &
                                                                        c33ext,c35ext,c55ext
 
-
   ! local parameters
   integer :: i,j,ispec,iglob
   double precision :: xmesh,zmesh

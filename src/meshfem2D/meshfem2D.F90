@@ -412,6 +412,7 @@
       ! user output
       write(IMAIN,*)
       write(IMAIN,*) 'Mesh from external meshing:'
+      call flush_IMAIN()
 
       ! reads in mesh
       call read_external_mesh_file(mesh_file, remove_min_to_start_at_zero, ngnod)
@@ -421,6 +422,11 @@
 
     else
       ! internal meshing
+      ! user output
+      write(IMAIN,*)
+      write(IMAIN,*) 'Mesh from internal meshing:'
+      call flush_IMAIN()
+
       allocate(elmnts(0:ngnod*nelmnts-1),stat=ier)
       if (ier /= 0) call stop_the_code('Error allocating array elmnts')
 
@@ -457,12 +463,16 @@
       endif
 
       ! user output
-      write(IMAIN,*) 'Total number of spectral elements         = ',nelmnts
+      write(IMAIN,*) '  Total number of spectral elements         = ',nelmnts
       write(IMAIN,*)
       call flush_IMAIN()
     endif
 
     ! PML mesh elements
+    ! user output
+    write(IMAIN,*) 'PML mesh elements:'
+    call flush_IMAIN()
+
     allocate(region_pml_external_mesh(nelmnts),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating array region_pml_external_mesh')
     region_pml_external_mesh(:) = 0
@@ -496,12 +506,20 @@
     call read_mesh_tangential_curve_file()
 
     ! reads in node coordinates
+    ! user output
+    write(IMAIN,*) 'Node coordinates:'
+    call flush_IMAIN()
+
     if (read_external_mesh) then
       call read_external_mesh_nodes_coords(nodes_coords_file)
     else
       ! reads interfaces and sets node coordinates
       call read_mesh_nodes_coords_from_interfaces()
     endif
+
+    ! user output
+    write(IMAIN,*) 'Mesh surfaces:'
+    call flush_IMAIN()
 
     if (read_external_mesh) then
       call read_external_acoustic_surface(free_surface_file, num_material, &
@@ -531,7 +549,12 @@
       call determine_abs_surface()
     endif
 
+    ! axi-symmetric mesh
     if (AXISYM) then
+      ! user output
+      write(IMAIN,*) 'Axisymmetric mesh:'
+      call flush_IMAIN()
+
       if (read_external_mesh) then
         ! external meshing
         call read_external_axial_elements_file(axial_elements_file,remove_min_to_start_at_zero)
@@ -599,23 +622,42 @@
       call save_gnuplot_file(ngnod,nx_elem_internal,nz_elem_internal,grid_point_x,grid_point_z)
 
     ! partitioning
+    ! user output
+    write(IMAIN,*) 'Mesh partitioning:'
+    call flush_IMAIN()
+
     call decompose_mesh()
 
     ! setting absorbing boundaries by elements instead of edges
     if (any_abs) then
+      ! user output
+      write(IMAIN,*) 'Absorbing boundaries:'
+      call flush_IMAIN()
+
       call merge_abs_boundaries(nbmodels, phi_read, num_material, ngnod)
     endif
 
     ! setting acoustic forcing boundaries by elements instead of edges
     if (ACOUSTIC_FORCING) then
+      ! user output
+      write(IMAIN,*) 'Acoustic forcing boundaries:'
+      call flush_IMAIN()
+
       call merge_acoustic_forcing_boundaries(ngnod)
     endif
 
     ! generate the databases for the solver
+    ! user output
+    write(IMAIN,*) 'Saving databases:'
+    call flush_IMAIN()
+
     call save_databases()
 
     !--- compute position of the receivers and write the STATIONS file
     if (.not. use_existing_STATIONS) then
+      ! user output
+      write(IMAIN,*) 'creating STATIONS file...'
+      call flush_IMAIN()
 
 !! DK DK for now we cannot use both record_at_surface_same_vertical and read_external_mesh
 !! DK DK because we need to know splines to define the shape of the surface of the model

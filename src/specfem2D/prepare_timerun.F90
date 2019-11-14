@@ -39,6 +39,15 @@
 
   implicit none
 
+  ! user output
+  call synchronize_all()
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) "preparing timerun..."
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   ! reads binary database for setup
   if (setup_with_binary_database == 2) then
     ! updates external model properties in case
@@ -214,8 +223,9 @@
 
   ! Check SU_FORMAT
   if (SU_FORMAT .and. (NSTEP/subsamp_seismos > 32768)) then
-    print *
+    print *,''
     print *,"!!! BEWARE !!! Two many samples for SU format ! The .su file created won't be usable"
+    print *,''
   endif
 
   ! synchronizes all processes
@@ -1475,5 +1485,8 @@
              edge_abs(1),stat=ier)
     if (ier /= 0) stop 'error allocating dummy array abs_boundary_ij etc.'
   endif ! STACEY_ABSORBING_CONDITIONS
+
+  ! done
+  call synchronize_all()
 
   end subroutine prepare_timerun_Stacey

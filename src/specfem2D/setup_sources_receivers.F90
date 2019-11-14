@@ -92,6 +92,7 @@
   double precision :: xmin,xmax,zmin,zmax
   double precision :: xmin_local,xmax_local,zmin_local,zmax_local
   integer :: i,ier
+  logical :: not_in_mesh_domain
 
   ! user output
   if (myrank == 0) then
@@ -123,18 +124,25 @@
 
   ! checks
   if (myrank == 0) then
-    ! print position of the source
+    ! checks position of the source
     do i = 1,NSOURCES
-      write(IMAIN,*)
-      write(IMAIN,*) 'Position (x,z) of the source = ',x_source(i),z_source(i)
-      write(IMAIN,*)
-      call flush_IMAIN()
-      ! checks
-      if (x_source(i) < xmin) call stop_the_code('error: at least one source has x < xmin of the mesh')
-      if (x_source(i) > xmax) call stop_the_code('error: at least one source has x > xmax of the mesh')
+      not_in_mesh_domain = .false.
+      if (x_source(i) < xmin) not_in_mesh_domain = .true.
+      if (x_source(i) > xmax) not_in_mesh_domain = .true.
+      if (z_source(i) < zmin) not_in_mesh_domain = .true.
+      if (z_source(i) > zmax) not_in_mesh_domain = .true.
 
-      if (z_source(i) < zmin) call stop_the_code('error: at least one source has z < zmin of the mesh')
-      if (z_source(i) > zmax) call stop_the_code('error: at least one source has z > zmax of the mesh')
+      ! user output
+      if (not_in_mesh_domain) then
+        write(IMAIN,*) 'Source ',i
+        write(IMAIN,*) '  Position (x,z) of the source = ',x_source(i),z_source(i)
+        write(IMAIN,*) 'Invalid position, mesh dimensions are: xmin/max = ',xmin,xmax,'zmin/zmax',zmin,zmax
+        write(IMAIN,*) 'Please fix source location, exiting...'
+        if (x_source(i) < xmin) call stop_the_code('Error: at least one source has x < xmin of the mesh')
+        if (x_source(i) > xmax) call stop_the_code('Error: at least one source has x > xmax of the mesh')
+        if (z_source(i) < zmin) call stop_the_code('Error: at least one source has z < zmin of the mesh')
+        if (z_source(i) > zmax) call stop_the_code('Error: at least one source has z > zmax of the mesh')
+      endif
     enddo
   endif
 
@@ -159,6 +167,11 @@
 
   ! locates sources
   do i_source = 1,NSOURCES
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'Source: ',i_source
+      call flush_IMAIN()
+    endif
 
     if (source_type(i_source) == 1) then
       ! collocated force source
@@ -246,24 +259,25 @@
 !----------------------------------------------------------------------------
 !
 
+!original routine, left here for reference...
+!
 !  subroutine setup_sources_read_file()
-
+!
 ! reads source parameters
-
+!
 !  use constants, only: IIN
 !  use specfem_par
 !  use specfem_par_movie
-
+!
 !  implicit none
-
-  ! local parameters
+!
+!  ! local parameters
 !  integer :: i_source,ier
-
-  !----  read source information
+!
+!  !----  read source information
 !  read(IIN) NSOURCES
-
-
-  ! reads in source info from Database file (check with routine save_databases_sources())
+!
+!  ! reads in source info from Database file (check with routine save_databases_sources())
 !  do i_source = 1,NSOURCES
 !    read(IIN) source_type(i_source),time_function_type(i_source)
 !    read(IIN) name_of_source_file(i_source)
@@ -273,9 +287,9 @@
 !    read(IIN) factor(i_source),anglesource(i_source)
 !    read(IIN) Mxx(i_source),Mzz(i_source),Mxz(i_source)
 !  enddo
-
-  !if (AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify
-
+!
+!  !if (AXISYM) factor = factor/(TWO*PI)   !!!!! axisym TODO verify
+!
 !  end subroutine setup_sources_read_file
 
 
