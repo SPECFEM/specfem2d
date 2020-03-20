@@ -150,7 +150,9 @@
 
 ! read noise parameters and check for consistency
 
-  use constants, only: IIN,IMAIN,PI,noise_source_time_function_type,NOISE_MOVIE_OUTPUT,NOISE_SAVE_EVERYWHERE
+  use constants, only: IIN,IMAIN,PI,NOISE_MOVIE_OUTPUT,NOISE_SAVE_EVERYWHERE
+
+  use shared_parameters, only: noise_source_time_function_type
 
   use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,NOISE_TOMOGRAPHY, &
                          any_acoustic,any_poroelastic,P_SV, &
@@ -264,7 +266,9 @@
 !
 ! ----------------------------------------------------------------------------------
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,IIN,IOUT,IMAIN,noise_source_time_function_type,OUTPUT_FILES
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,IIN,IOUT,IMAIN,OUTPUT_FILES
+
+  use shared_parameters, only: noise_source_time_function_type
 
   use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,deltat, &
                          xigll,zigll,myrank

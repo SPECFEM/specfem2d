@@ -705,8 +705,8 @@
 ! saves mesh files as VTK file
 
   use constants, only: MAX_STRING_LEN,SAVE_MESHFILES_VTK_FORMAT,OUTPUT_FILES,IMAIN,myrank
-  use part_unstruct_par,only: part,elmnts,nodes_coords,nelmnts,nnodes
-  use shared_parameters,only: ngnod,num_material,NPROC
+  use part_unstruct_par, only: part,elmnts,nodes_coords,nelmnts,nnodes
+  use shared_parameters, only: ngnod,num_material,NPROC
 
   implicit none
 

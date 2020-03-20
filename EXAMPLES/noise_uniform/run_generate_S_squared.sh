@@ -7,9 +7,14 @@ DT=`grep '^DT ' DATA/Par_file_noise_1 | grep -v -E '^[[:space:]]*#' | cut -d = -
 noise_nstep=$((2*NSTEP - 1))
 noise_model=NLNM
 
+# min/max period range
+Tmin=1.0
+Tmax=8.0
+
 echo "simulation setup:"
-echo "  NSTEP = $NSTEP"
-echo "  DT    = $DT"
+echo "  NSTEP        = $NSTEP"
+echo "  DT           = $DT"
+echo "  period range = $Tmin / $Tmax"
 echo
 echo "noise:"
 echo "  number of steps = $noise_nstep"
@@ -21,10 +26,10 @@ mkdir -p NOISE_TOMOGRAPHY/
 # generates S_squared file
 if [ 0 == 1 ]; then
   ## matlab
-  matlab -nosplash -nodisplay -r "NOISE_TOMOGRAPHY($noise_nstep,$DT,1.,15.,\'$noise_model\');exit"
+  matlab -nosplash -nodisplay -r "NOISE_TOMOGRAPHY($noise_nstep,$DT,$Tmin,$Tmax,\'$noise_model\');exit"
 else
   ## python & numpy
-  ./NOISE_TOMOGRAPHY.py $noise_nstep $DT 1.0 15.0 $noise_model
+  ./NOISE_TOMOGRAPHY.py $noise_nstep $DT $Tmin $Tmax $noise_model
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi

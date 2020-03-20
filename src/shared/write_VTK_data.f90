@@ -83,8 +83,8 @@
   endif
 
   ! debug
-  !print*,'debug:',itype,nglob,nspec,xstore_dummy(1),zstore_dummy(1)
-  !print*,'debug:',elmnts(:,1)  ! index values should start at 0
+  !print *,'debug:',itype,nglob,nspec,xstore_dummy(1),zstore_dummy(1)
+  !print *,'debug:',elmnts(:,1)  ! index values should start at 0
 
   ! write source and receiver VTK files for Paraview
   open(IOUT_VTK,file=trim(filename),status='unknown')

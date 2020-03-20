@@ -42,7 +42,7 @@
     nxread,nzread
 
   ! see comment below for uncommenting this feature
-  !use shared_parameters,only: NUMBER_OF_SIMULTANEOUS_RUNS
+  !use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
   !use constants, only: mygroup
   implicit none
 

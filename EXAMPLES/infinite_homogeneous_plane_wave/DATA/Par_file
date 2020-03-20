@@ -115,6 +115,11 @@ add_Bielak_conditions_left      = .true.
 # acoustic forcing
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
 
+# noise simulations - type of noise source time function:
+# 0=external (S_squared), 1=Ricker(second derivative), 2=Ricker(first derivative), 3=Gaussian, 4=Figure 2a of Tromp et al. 2010
+# (default value 4 is chosen to reproduce the time function from Fig 2a of "Tromp et al., 2010, Noise Cross-Correlation Sensitivity Kernels")
+noise_source_time_function_type = 4
+
 
 #-----------------------------------------------------------------------------
 #

@@ -223,7 +223,7 @@
     alpha_z_store(:,:,:) = ZERO
 
     ! defines coefficients in PML
-    ! (note this routine must be called by all mpi processes)
+    ! (note this routine must be called by all MPI processes)
     call define_PML_coefficients()
 
     ! elastic PML memory variables

@@ -167,6 +167,7 @@
     call bcast_all_singlel(add_Bielak_conditions_top)
     call bcast_all_singlel(add_Bielak_conditions_left)
     call bcast_all_singlel(ACOUSTIC_FORCING)
+    call bcast_all_singlei(noise_source_time_function_type)
 
     ! receivers
     call bcast_all_string(seismotype)
@@ -629,6 +630,13 @@
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'ACOUSTIC_FORCING                = .false.'
+    write(*,*)
+  endif
+
+  call read_value_integer_p(noise_source_time_function_type, 'noise_source_time_function_type')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'noise_source_time_function_type = 4'
     write(*,*)
   endif
 

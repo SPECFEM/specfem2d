@@ -223,9 +223,9 @@
 
   ! Check SU_FORMAT
   if (SU_FORMAT .and. (NSTEP/subsamp_seismos > 32768)) then
-    print *,''
+    print *
     print *,"!!! BEWARE !!! Two many samples for SU format ! The .su file created won't be usable"
-    print *,''
+    print *
   endif
 
   ! synchronizes all processes

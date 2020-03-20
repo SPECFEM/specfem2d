@@ -574,14 +574,14 @@
   use constants, only: NGLLX,NGLLZ,IMAIN,myrank, &
     CPML_X_ONLY,CPML_XZ,CPML_Z_ONLY
 
-  use specfem_par,only: N_SLS,assign_external_model,ATTENUATION_VISCOELASTIC, &
+  use specfem_par, only: N_SLS,assign_external_model,ATTENUATION_VISCOELASTIC, &
     ispec_is_elastic,nspec,kmato, &
     QKappa_attenuationcoef,QKappa_attenuationext, &
     Qmu_attenuationcoef,Qmu_attenuationext, &
     inv_tau_sigma_nu1,inv_tau_sigma_nu2
 
   ! PML
-  use specfem_par,only: spec_to_PML,ispec_is_PML,region_CPML,min_distance_between_CPML_parameter, &
+  use specfem_par, only: spec_to_PML,ispec_is_PML,region_CPML,min_distance_between_CPML_parameter, &
     K_x_store,d_x_store,alpha_x_store,K_z_store,d_z_store,alpha_z_store
 
 

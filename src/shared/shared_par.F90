@@ -171,6 +171,9 @@ module shared_input_parameters
   ! acoustic forcing of an acoustic medium at a rigid interface
   logical :: ACOUSTIC_FORCING
 
+  ! noise simulations - source time function type
+  integer :: noise_source_time_function_type
+
   !#-----------------------------------------------------------------------------
   !#
   !# receivers

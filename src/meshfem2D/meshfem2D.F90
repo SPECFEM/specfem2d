@@ -496,7 +496,7 @@
     write(IMAIN,*) 'Control elements have ',ngnod,' nodes'
     write(IMAIN,*)
     call flush_IMAIN()
-    
+
     ! reads in source descriptions
     ! daniel todo: for now needed for ADD_PERTURBATION_AROUND_SOURCE_ONLY and if source_surf(..) is set to .true.
     !              will try to avoid dependency on sources in mesher in future...

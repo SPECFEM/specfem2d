@@ -152,13 +152,13 @@
   read(IIN) local_l ! PML_PARAMETER_ADJUSTMENT
 
   read(IIN) local_l ! read_external_mesh
-  if (local_l .neqv. read_external_mesh)  then
+  if (local_l .neqv. read_external_mesh) then
      print *,'Warning: rank ',myrank,' read mesh: read_external_mesh setting changed'
      do_rerun_mesher = .true.
    endif
 
   read(IIN) local_i ! NELEM_PML_THICKNESS
-  if (local_i /= NELEM_PML_THICKNESS)  then
+  if (local_i /= NELEM_PML_THICKNESS) then
      print *,'Warning: rank ',myrank,' read mesh: NELEM_PML_THICKNESS setting changed'
      do_rerun_mesher = .true.
    endif
@@ -173,7 +173,7 @@
   read(IIN) local_dble ! anglerec
 
   read(IIN) local_l ! initialfield
-  if (local_l .neqv. initialfield)  then
+  if (local_l .neqv. initialfield) then
      print *,'Warning: rank ',myrank,' read mesh: initialfield setting changed'
      do_rerun_mesher = .true.
    endif
@@ -184,7 +184,7 @@
   read(IIN) local_str,local_i ! seismotype,imagetype_postscript
 
   read(IIN) local_str ! MODEL
-  if (trim(local_str) /= trim(MODEL))  then
+  if (trim(local_str) /= trim(MODEL)) then
      print *,'Warning: rank ',myrank,' read mesh: MODEL setting changed'
      do_rerun_mesher = .true.
    endif
@@ -192,7 +192,7 @@
   read(IIN) local_str ! SAVE_MODEL
 
   read(IIN) local_str ! TOMOGRAPHY_FILE
-  if (trim(local_str) /= trim(TOMOGRAPHY_FILE))  then
+  if (trim(local_str) /= trim(TOMOGRAPHY_FILE)) then
      print *,'Warning: rank ',myrank,' read mesh: TOMOGRAPHY_FILE setting changed'
      do_rerun_mesher = .true.
    endif
@@ -203,15 +203,15 @@
   read(IIN) local_l ! use_binary_for_wavefield_dumps
 
   read(IIN) local_l1, local_l2, local_l3 ! ATTENUATION_VISCOELASTIC,ATTENUATION_PORO_FLUID_PART,ATTENUATION_VISCOACOUSTIC
-  if (local_l1 .neqv. ATTENUATION_VISCOELASTIC)  then
+  if (local_l1 .neqv. ATTENUATION_VISCOELASTIC) then
      print *,'Warning: rank ',myrank,' read mesh: ATTENUATION_VISCOELASTIC setting changed'
      do_rerun_mesher = .true.
    endif       ! elements load changes in meshing
-  if (local_l2 .neqv. ATTENUATION_PORO_FLUID_PART)  then
+  if (local_l2 .neqv. ATTENUATION_PORO_FLUID_PART) then
      print *,'Warning: rank ',myrank,' read mesh: ATTENUATION_PORO_FLUID_PART setting changed'
      do_rerun_mesher = .true.
    endif
-  if (local_l3 .neqv. ATTENUATION_VISCOACOUSTIC)  then
+  if (local_l3 .neqv. ATTENUATION_VISCOACOUSTIC) then
      print *,'Warning: rank ',myrank,' read mesh: ATTENUATION_VISCOACOUSTIC setting changed'
      do_rerun_mesher = .true.
    endif
@@ -237,7 +237,7 @@
   read(IIN) local_dble,local_dble ! Q0_poroelastic,freq0_poroelastic
 
   read(IIN) local_l ! AXISYM
-  if (local_l .neqv. AXISYM)  then
+  if (local_l .neqv. AXISYM) then
      print *,'Warning: rank ',myrank,' read mesh: AXISYM setting changed'
      do_rerun_mesher = .true.
    endif
@@ -265,13 +265,13 @@
   read(IIN) local_i ! time_stepping_scheme
 
   read(IIN) local_l ! ADD_PERIODIC_CONDITIONS
-  if (local_l .neqv. ADD_PERIODIC_CONDITIONS)  then
+  if (local_l .neqv. ADD_PERIODIC_CONDITIONS) then
      print *,'Warning: rank ',myrank,' read mesh: ADD_PERIODIC_CONDITIONS setting changed'
      do_rerun_mesher = .true.
    endif
 
   read(IIN) local_dble ! PERIODIC_HORIZ_DIST
-  if (local_dble /= PERIODIC_HORIZ_DIST)  then
+  if (local_dble /= PERIODIC_HORIZ_DIST) then
      print *,'Warning: rank ',myrank,' read mesh: PERIODIC_HORIZ_DIST setting changed'
      do_rerun_mesher = .true.
    endif
@@ -287,7 +287,7 @@
 
   ! read the ACOUSTIC_FORCING flag
   read(IIN) local_l ! ACOUSTIC_FORCING
-  if (local_l .neqv. ACOUSTIC_FORCING)  then
+  if (local_l .neqv. ACOUSTIC_FORCING) then
      print *,'Warning: rank ',myrank,' read mesh: ACOUSTIC_FORCING setting changed'
      do_rerun_mesher = .true.
    endif
@@ -300,7 +300,7 @@
 
   read(IIN) local_l1,local_l2 ! ADD_RANDOM_PERTURBATION_TO_THE_MESH,ADD_PERTURBATION_AROUND_SOURCE_ONLY
   if ((local_l1 .neqv. ADD_RANDOM_PERTURBATION_TO_THE_MESH) &
-      .or. (local_l2 .neqv. ADD_PERTURBATION_AROUND_SOURCE_ONLY))  then
+      .or. (local_l2 .neqv. ADD_PERTURBATION_AROUND_SOURCE_ONLY)) then
     print *,'Warning: rank ',myrank,' read mesh: ADD_RANDOM_PERTURBATION or ADD_PERTURBATION_AROUND_SOURCE setting changed'
     do_rerun_mesher = .true.
   endif

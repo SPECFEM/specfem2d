@@ -462,7 +462,7 @@ end module my_mpi
 
   use my_mpi
   use constants, only: MAX_STRING_LEN
-  
+
   implicit none
 
   integer :: countval
