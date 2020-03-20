@@ -738,8 +738,7 @@ module specfem_par_noise
   ! for P_SV case, 0 for vertical along z-direction
   real(kind=CUSTOM_REAL) :: angle_noise
 
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: time_function_noise
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: source_array_noise
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_sourcearray
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: mask_noise
 
   ! The following array is used to hold snapshots of the generating
@@ -747,7 +746,7 @@ module specfem_par_noise
   ! noise simulation specified. In some cases, the entire generating wavefield
   ! or ensemble forward wavefield needs to be saved for all times steps. Since
   ! the disk space required to do this is usually quite large
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: surface_movie_y_or_z_noise
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: noise_surface_movie_y_or_z
 
   ! For writing noise wavefields
   integer :: noise_output_ncol

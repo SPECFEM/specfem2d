@@ -121,10 +121,9 @@
   deallocate(b_displ_ac,b_accel_ac,accel_ac)
 
   ! noise
-  if (allocated(time_function_noise)) deallocate(time_function_noise)
-  if (allocated(source_array_noise)) deallocate(source_array_noise)
+  if (allocated(noise_sourcearray)) deallocate(noise_sourcearray)
   if (allocated(mask_noise)) deallocate(mask_noise)
-  if (allocated(surface_movie_y_or_z_noise)) deallocate(surface_movie_y_or_z_noise)
+  if (allocated(noise_surface_movie_y_or_z)) deallocate(noise_surface_movie_y_or_z)
 
   ! material
   deallocate(kappastore,mustore,rhostore,rho_vpstore,rho_vsstore)

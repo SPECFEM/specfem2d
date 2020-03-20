@@ -35,25 +35,20 @@
 
 ! outputs snapshots for movies
 
-  use constants, only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,NOISE_MOVIE_OUTPUT,OUTPUT_FILES
+  use constants, only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,NOISE_MOVIE_OUTPUT
 
-  use specfem_par, only: myrank,it,NSTEP,nspec,nglob,ibool, &
+  use specfem_par, only: it,NSTEP, &
     potential_acoustic,potential_dot_acoustic,potential_dot_dot_acoustic, &
     b_potential_acoustic,b_potential_dot_acoustic,b_potential_dot_dot_acoustic, &
     displ_elastic,veloc_elastic,accel_elastic, &
     b_displ_elastic,b_veloc_elastic,b_accel_elastic, &
-    rho_k,rho_kl, &
     any_acoustic,any_elastic, &
-    GPU_MODE,P_SV,UNDO_ATTENUATION_AND_OR_PML,SIMULATION_TYPE,NO_BACKWARD_RECONSTRUCTION, &
-    NOISE_TOMOGRAPHY
+    GPU_MODE,P_SV,UNDO_ATTENUATION_AND_OR_PML,SIMULATION_TYPE,NO_BACKWARD_RECONSTRUCTION
 
   use shared_parameters, only: output_postscript_snapshot,output_color_image,output_wavefield_dumps, &
     NSTEP_BETWEEN_OUTPUT_IMAGES
 
   use specfem_par_gpu, only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
-
-  use specfem_par_noise, only: mask_noise, &
-    surface_movie_y_or_z_noise,noise_output_rhokl,noise_output_array,noise_output_ncol
 
   implicit none
 
@@ -61,9 +56,7 @@
   logical :: get_b_wavefield
 
   ! local parameters
-  integer :: ier
-  logical :: ex, is_opened,plot_b_wavefield_only
-  character(len=MAX_STRING_LEN) :: noise_output_file
+  logical :: plot_b_wavefield_only
 
   ! checks if anything to do
   if (.not. (mod(it,NSTEP_BETWEEN_OUTPUT_IMAGES) == 0 .or. it == 5 .or. it == NSTEP)) return
@@ -129,43 +122,9 @@
     endif
   endif
 
-  ! noise simulations
-  if (.not. GPU_MODE) then
-    if (NOISE_TOMOGRAPHY == 3 .and. NOISE_MOVIE_OUTPUT) then
-      ! load ensemble forward source
-      inquire(unit=501,exist=ex,opened=is_opened)
-      if (.not. is_opened) then
-        open(unit=501,file=trim(OUTPUT_FILES)//'noise_eta.bin',access='direct', &
-             recl=nglob*CUSTOM_REAL,action='read',iostat=ier)
-        if (ier /= 0) call exit_MPI(myrank,'Error opening noise eta file')
-      endif
-      ! for both P_SV/SH cases
-      read(unit=501,rec=it) surface_movie_y_or_z_noise ! either y (SH) or z (P_SV) component
-
-      ! load product of fwd, adj wavefields
-      call spec2glob(nspec,nglob,ibool,rho_kl,noise_output_rhokl)
-
-      ! prepares array
-      ! noise distribution
-      noise_output_array(1,:) = surface_movie_y_or_z_noise(:) * mask_noise(:)
-
-      ! P_SV/SH-case
-      noise_output_array(2,:) = b_displ_elastic(1,:)
-      noise_output_array(3,:) = accel_elastic(1,:)
-
-      ! rho kernel on global nodes
-      noise_output_array(4,:) = rho_k(:)
-
-      ! rho kernel on global nodes from local kernel (for comparison)
-      noise_output_array(5,:) = noise_output_rhokl(:)
-
-      ! writes out to text file
-      write(noise_output_file,"(a,i6.6,a)") trim(OUTPUT_FILES)//'noise_snapshot_all_',it,'.txt'
-      call snapshots_noise(noise_output_ncol,nglob,noise_output_file,noise_output_array)
-
-      ! re-initializes noise array
-      surface_movie_y_or_z_noise(:) = 0._CUSTOM_REAL
-    endif
+  ! noise movie
+  if (NOISE_MOVIE_OUTPUT) then
+    call noise_save_movie_output()
   endif
 
   ! output_postscript_snapshot

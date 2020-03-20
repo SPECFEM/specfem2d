@@ -194,19 +194,6 @@ subroutine iterate_time()
       call manage_no_backward_reconstruction_io()
     endif
 
-    ! noise simulations
-    select case (NOISE_TOMOGRAPHY)
-    case (1)
-      ! stores generating wavefield
-      call save_surface_movie_noise()
-    case (2)
-      ! stores complete wavefield for reconstruction
-      if (NOISE_SAVE_EVERYWHERE) call save_surface_movie_noise()
-    case (3)
-      ! reconstructs forward wavefield based on complete wavefield storage
-      if (NOISE_SAVE_EVERYWHERE) call read_wavefield_noise()
-    end select
-
     if (output_energy) then
       call compute_and_output_energy()
     endif
@@ -226,6 +213,23 @@ subroutine iterate_time()
 
     ! display results at given time steps
     call write_movie_output(.true.)
+
+    ! first step of noise tomography, i.e., save a surface movie at every time step
+    if (NOISE_TOMOGRAPHY == 1) then
+      call noise_save_surface_movie()
+    endif
+
+    ! noise simulations
+    if (NOISE_SAVE_EVERYWHERE) then
+      select case (NOISE_TOMOGRAPHY)
+      case (2)
+        ! stores complete wavefield for reconstruction
+        call noise_save_surface_movie()
+      case (3)
+        ! reconstructs forward wavefield based on complete wavefield storage
+        call noise_read_wavefield()
+      end select
+    endif
 
   enddo ! end of the main time loop
 

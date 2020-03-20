@@ -261,6 +261,11 @@
         ! display results at given time steps
         call write_movie_output(compute_b_wavefield)
 
+        ! first step of noise tomography, i.e., save a surface movie at every time step
+        if (NOISE_TOMOGRAPHY == 1) then
+          call noise_save_surface_movie()
+        endif
+
       enddo ! subset loop
 
     case (3)

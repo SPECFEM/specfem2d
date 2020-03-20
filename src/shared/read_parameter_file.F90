@@ -1296,6 +1296,12 @@
     endif
   enddo
 
+  ! noise simulations:
+  if (NOISE_TOMOGRAPHY /= 0) then
+    ! double the number of time steps, if running noise simulations (+/- branches)
+    NSTEP = 2 * NSTEP - 1
+  endif
+
   ! checks input parameters
   call check_parameters()
 

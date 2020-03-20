@@ -150,7 +150,7 @@
 
 ! read noise parameters and check for consistency
 
-  use constants, only: IMAIN,PI,noise_source_time_function_type,NOISE_MOVIE_OUTPUT,NOISE_SAVE_EVERYWHERE
+  use constants, only: IIN,IMAIN,PI,noise_source_time_function_type,NOISE_MOVIE_OUTPUT,NOISE_SAVE_EVERYWHERE
 
   use specfem_par, only: myrank,SIMULATION_TYPE,SAVE_FORWARD,NOISE_TOMOGRAPHY, &
                          any_acoustic,any_poroelastic,P_SV, &
@@ -167,7 +167,7 @@
   angle_noise = 0._CUSTOM_REAL
 
   !define master receiver
-  open(unit=500,file='NOISE_TOMOGRAPHY/irec_master_noise',status='old',action='read',iostat=ier)
+  open(unit=IIN,file='NOISE_TOMOGRAPHY/irec_master_noise',status='old',action='read',iostat=ier)
   if (ier /= 0) then
     ! we will be strict on input format
     print *
@@ -177,8 +177,8 @@
     call stop_the_code('Error opening NOISE_TOMOGRAPHY/irec_master_noise file')
   endif
 
-  read(500,*) irec_master
-  close(500)
+  read(IIN,*) irec_master
+  close(IIN)
 
   ! user output
   if (myrank == 0) then
@@ -264,7 +264,7 @@
 !
 ! ----------------------------------------------------------------------------------
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,IMAIN,noise_source_time_function_type,OUTPUT_FILES
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,IIN,IOUT,IMAIN,noise_source_time_function_type,OUTPUT_FILES
 
   use specfem_par, only: AXISYM,is_on_the_axis,xiglj,P_SV,NSTEP,deltat, &
                          xigll,zigll,myrank
@@ -274,18 +274,27 @@
   implicit none
 
   !local
-  integer :: it,i,j,ier
-  real(kind=CUSTOM_REAL) :: t
+  integer :: it,i,j,ier,nlines
+  real(kind=CUSTOM_REAL) :: t,t0,junk
   double precision, dimension(NGLLX) :: hxi, hpxi
   double precision, dimension(NGLLZ) :: hgamma, hpgamma
-  real(kind=CUSTOM_REAL) :: factor_noise, a_val, t0
+  real(kind=CUSTOM_REAL), dimension(NSTEP) :: noise_src
 
-  time_function_noise(:) = 0._CUSTOM_REAL
+  ! parameters for Gaussian/Ricker type source time functions
+  real(kind=CUSTOM_REAL),parameter :: a_val = 0.6_CUSTOM_REAL, factor_noise = 1.e3_CUSTOM_REAL
 
+  ! initializes
+  noise_src(:) = 0._CUSTOM_REAL
+
+  ! noise simulations use cross-correlation wavefields, with duration between [-T,T]
+  ! mid-time becomes zero time t0
   t0 = ((NSTEP-1)/2.0_CUSTOM_REAL) * deltat
 
-  a_val = 0.6_CUSTOM_REAL
-  factor_noise = 1.e3_CUSTOM_REAL
+  if (myrank == 0) then
+    write(IMAIN,*) '  noise source array:'
+    write(IMAIN,*) '  number of time steps = ',NSTEP
+    write(IMAIN,*) '  zero-time t0         = ',t0
+  endif
 
   if (noise_source_time_function_type == 0) then
     !read in time function from file S_squared
@@ -293,12 +302,60 @@
     if (myrank == 0) then
       write(IMAIN,*) '  reading noise source from file ','NOISE_TOMOGRAPHY/S_squared'
     endif
-    open(unit=500,file='NOISE_TOMOGRAPHY/S_squared',status='old',iostat=ier)
+    open(unit=IIN,file='NOISE_TOMOGRAPHY/S_squared',status='old',iostat=ier)
     if (ier /= 0) call stop_the_code('Error opening file NOISE_TOMOGRAPHY/S_squared')
-    do it = 1,NSTEP
-      read(500,*) time_function_noise(it)
+
+    ! counts line reads noise source S(t)
+    nlines = 0
+    do while(ier == 0)
+      read(IIN,*,iostat=ier) junk, junk
+      if (ier == 0)  nlines = nlines + 1
     enddo
-    close(500)
+    rewind(IIN)
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  number of lines      = ',nlines
+    endif
+
+    ! checks to be sure that file is matching simulation setup
+    if (nlines /= NSTEP) then
+      print *,'Error: invalid number of lines ',nlines,' in file NOISE_TOMOGRAPHY/S_squared'
+      print *,'       must match simulation steps NSTEP = ',NSTEP
+      print *,'Please check file S_squared and NSTEP in Par_file'
+      call exit_MPI(myrank,'Invalid number of lines in file S_squared')
+    endif
+
+    ! actual read in noise stf
+    do it = 1,NSTEP
+      ! format: #time #Source-time-function-value
+      read(IIN,*,iostat=ier) junk,noise_src(it)
+      if (ier /= 0) then
+        print *,'Error reading file S_squared'
+        stop 'Invalid S_squared file'
+      endif
+    enddo
+    close(IIN)
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  noise source S_squared: min/max = ',minval(noise_src(:)),'/',maxval(noise_src(:))
+    endif
+
+    ! normalizes
+    if (maxval(abs(noise_src)) > 1.e-30_CUSTOM_REAL) then
+      noise_src(:) = noise_src(:)/maxval(abs(noise_src))
+    else
+      print *,'Error: noise source S_squared is (almost) zero: absolute max = ',maxval(abs(noise_src))
+      print *,'Please check source file NOISE_TOMOGRAPHY/S_squared'
+      stop 'Error source S_squared zero'
+    endif
+
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) '  noise source S_squared normalized: min/max = ',minval(noise_src(:)),maxval(noise_src(:))
+      call flush_IMAIN()
+    endif
 
   else if (noise_source_time_function_type == 1) then
     !Ricker (second derivative of a Gaussian) time function
@@ -308,8 +365,7 @@
     endif
     do it = 1,NSTEP
       t = it*deltat
-      time_function_noise(it) = - factor_noise * 2.*a_val * (1. - 2.*a_val*(t-t0)**2.) * &
-                                 exp(-a_val*(t-t0)**2.)
+      noise_src(it) = - factor_noise * 2.0 * a_val * (1.0 - 2.0 * a_val * (t-t0)**2) * exp(-a_val * (t-t0)**2)
     enddo
 
   else if (noise_source_time_function_type == 2) then
@@ -319,10 +375,9 @@
       write(IMAIN,*) '  Ricker (first derivative) noise source'
     endif
     do it = 1,NSTEP
-      t = it*deltat
-      time_function_noise(it) = - factor_noise * (2.*a_val*(t-t0)) * exp(-a_val*(t-t0)**2.)
+      t = it * deltat
+      noise_src(it) = - factor_noise * (2.0 * a_val * (t-t0)) * exp(-a_val * (t-t0)**2)
     enddo
-
 
   else if (noise_source_time_function_type == 3) then
     !Gaussian time function
@@ -332,9 +387,8 @@
     endif
     do it = 1,NSTEP
       t = it*deltat
-      time_function_noise(it) = factor_noise * exp(-a_val*(t-t0)**2.)
+      noise_src(it) = factor_noise * exp(-a_val * (t-t0)**2)
     enddo
-
 
   else if (noise_source_time_function_type == 4) then
     !reproduce time function from Figure 2a of Tromp et al. 2010
@@ -344,27 +398,24 @@
     endif
     do it = 1,NSTEP
       t = it*deltat
-      time_function_noise(it) = factor_noise * &
-       4.*a_val**2. * (3. - 12.*a_val*(t-t0)**2. + 4.*a_val**2.*(t-t0)**4.) * &
-       exp(-a_val*(t-t0)**2.)
+      noise_src(it) = factor_noise * 4.0 * a_val**2 * (3.0 - 12.0 * a_val * (t-t0)**2 + 4.0 * a_val**2 * (t-t0)**4) * &
+                      exp(-a_val * (t-t0)**2)
     enddo
 
   else
-    call exit_MPI(myrank,'Bad noise_source_time_function_type in compute_source_array_noise.')
+    call exit_MPI(myrank,'Bad noise_source_time_function_type in compute_source_array_noise. Please check setting in constants.h')
   endif
 
   ! saves source time function
-  open(500,file=trim(OUTPUT_FILES)//'plot_source_time_function_noise.txt',status='unknown',iostat=ier)
+  open(IOUT,file=trim(OUTPUT_FILES)//'plot_source_time_function_noise.txt',status='unknown',iostat=ier)
   if (ier /= 0) call stop_the_code('Error opening noise source time function text-file')
   do it = 1,NSTEP
-    t = it*deltat
-    write(500,*) (t-t0),time_function_noise(it)
+    t = it * deltat
+    write(IOUT,*) (t-t0),noise_src(it)
   enddo
-  close(500)
+  close(IOUT)
 
-  !interpolate over GLL points
-  source_array_noise(:,:,:,:) = 0._CUSTOM_REAL
-
+  ! interpolates over GLL points
   if (AXISYM) then
     if (is_on_the_axis(ispec_noise)) then
       call lagrange_any(xi_noise,NGLJ,xiglj,hxi,hpxi)
@@ -378,13 +429,14 @@
   call lagrange_any(gamma_noise,NGLLZ,zigll,hgamma,hpgamma)
 
   ! master station for noise source: located in element ispec_noise
+  noise_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
   if (P_SV) then
     ! P-SV simulation
     do j = 1,NGLLZ
       do i = 1,NGLLX
         ! iglob = ibool(i,j,ispec_noise)
-        source_array_noise(1,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
-        source_array_noise(2,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
+        noise_sourcearray(1,i,j,:) = noise_src(:) * hxi(i) * hgamma(j)
+        noise_sourcearray(2,i,j,:) = noise_src(:) * hxi(i) * hgamma(j)
       enddo
     enddo
   else
@@ -392,7 +444,7 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         ! iglob = ibool(i,j,ispec_noise)
-        source_array_noise(1,i,j,:) = time_function_noise(:) * hxi(i) * hgamma(j)
+        noise_sourcearray(1,i,j,:) = noise_src(:) * hxi(i) * hgamma(j)
       enddo
     enddo
   endif
@@ -411,7 +463,7 @@
 
   use specfem_par, only: P_SV,it,ibool,accel_elastic
 
-  use specfem_par_noise, only: ispec_noise,angle_noise,source_array_noise
+  use specfem_par_noise, only: ispec_noise,angle_noise,noise_sourcearray
 
   implicit none
 
@@ -423,8 +475,8 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec_noise)
-        accel_elastic(1,iglob) = accel_elastic(1,iglob) + sin(angle_noise)*source_array_noise(1,i,j,it)
-        accel_elastic(2,iglob) = accel_elastic(2,iglob) - cos(angle_noise)*source_array_noise(2,i,j,it)
+        accel_elastic(1,iglob) = accel_elastic(1,iglob) + sin(angle_noise)*noise_sourcearray(1,i,j,it)
+        accel_elastic(2,iglob) = accel_elastic(2,iglob) - cos(angle_noise)*noise_sourcearray(2,i,j,it)
       enddo
     enddo
   else
@@ -432,12 +484,77 @@
     do j = 1,NGLLZ
       do i = 1,NGLLX
         iglob = ibool(i,j,ispec_noise)
-        accel_elastic(1,iglob) = accel_elastic(1,iglob) - source_array_noise(1,i,j,it)
+        accel_elastic(1,iglob) = accel_elastic(1,iglob) - noise_sourcearray(1,i,j,it)
       enddo
     enddo
   endif
 
   end subroutine add_point_source_noise
+
+!
+!========================================================================
+!
+
+  subroutine noise_save_movie_output()
+
+! noise simulations saves wavefield snapshots for movies, only in kernel simulation
+  use constants, only: CUSTOM_REAL,OUTPUT_FILES,MAX_STRING_LEN
+
+  use specfem_par, only: myrank,it,NOISE_TOMOGRAPHY,GPU_MODE, &
+    ibool,nglob,nspec, &
+    accel_elastic,b_displ_elastic, &
+    rho_k,rho_kl
+
+  use specfem_par_noise, only: mask_noise, &
+    noise_surface_movie_y_or_z,noise_output_rhokl,noise_output_array,noise_output_ncol, &
+    noise_output_rhokl
+
+  implicit none
+  ! local parameters
+  integer :: ier
+  logical :: ex,is_opened
+  character(len=MAX_STRING_LEN) :: noise_output_file
+
+  ! checks if anything to do
+  if (NOISE_TOMOGRAPHY /= 3) return
+
+  if (.not. GPU_MODE) then
+    ! load ensemble forward source
+    inquire(unit=501,exist=ex,opened=is_opened)
+    if (.not. is_opened) then
+      open(unit=501,file=trim(OUTPUT_FILES)//'noise_eta.bin',access='direct', &
+           recl=nglob*CUSTOM_REAL,action='read',iostat=ier)
+      if (ier /= 0) call exit_MPI(myrank,'Error opening noise eta file')
+    endif
+    ! for both P_SV/SH cases
+    read(unit=501,rec=it) noise_surface_movie_y_or_z ! either y (SH) or z (P_SV) component
+
+    ! load product of fwd, adj wavefields
+    call spec2glob(nspec,nglob,ibool,rho_kl,noise_output_rhokl)
+
+    ! prepares array
+    ! noise distribution
+    noise_output_array(1,:) = noise_surface_movie_y_or_z(:) * mask_noise(:)
+
+    ! P_SV/SH-case
+    noise_output_array(2,:) = b_displ_elastic(1,:)
+    noise_output_array(3,:) = accel_elastic(1,:)
+
+    ! rho kernel on global nodes
+    noise_output_array(4,:) = rho_k(:)
+
+    ! rho kernel on global nodes from local kernel (for comparison)
+    noise_output_array(5,:) = noise_output_rhokl(:)
+
+    ! writes out to text file
+    write(noise_output_file,"(a,i6.6,a)") trim(OUTPUT_FILES)//'noise_snapshot_all_',it,'.txt'
+    call snapshots_noise(noise_output_ncol,nglob,noise_output_file,noise_output_array)
+
+    ! re-initializes noise array
+    noise_surface_movie_y_or_z(:) = 0._CUSTOM_REAL
+  endif
+
+  end subroutine noise_save_movie_output
 
 !
 !========================================================================
@@ -478,12 +595,12 @@
   if (NOISE_TOMOGRAPHY == 2) then
     ! reads backward
     ! for both SH- or P-SV calculation (only vertical component as noise for now...)
-    read(unit=501,rec=NSTEP-it+1) surface_movie_y_or_z_noise
+    read(unit=501,rec=NSTEP-it+1) noise_surface_movie_y_or_z
   else if (NOISE_TOMOGRAPHY == 3) then
     ! for reconstructed/backward wavefield
     ! reads forward again
     ! for both SH- or P-SV calculation (only vertical component...)
-    read(unit=501,rec=it) surface_movie_y_or_z_noise
+    read(unit=501,rec=it) noise_surface_movie_y_or_z
   endif
 
   ! close file at simulation end
@@ -500,12 +617,12 @@
           !accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_x_noise(iglob) * &
           !                         mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
           ! only vertical for now...
-          accel_elastic(2,iglob) = accel_elastic(2,iglob) + surface_movie_y_or_z_noise(iglob) * &
+          accel_elastic(2,iglob) = accel_elastic(2,iglob) + noise_surface_movie_y_or_z(iglob) * &
                                    mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
 
         else
           ! SH (membrane) calculation
-          accel_elastic(1,iglob) = accel_elastic(1,iglob) + surface_movie_y_or_z_noise(iglob) * &
+          accel_elastic(1,iglob) = accel_elastic(1,iglob) + noise_surface_movie_y_or_z(iglob) * &
                                    mask_noise(iglob) * wxgll(i)*wzgll(j)*jacobian(i,j,ispec)
         endif
       enddo
@@ -518,14 +635,21 @@
 !========================================================================
 !
 
-  subroutine save_surface_movie_noise()
+  subroutine noise_save_surface_movie()
 
+! first step of noise tomography, i.e., save a surface movie at every time step
+!
+! step 1: calculate the "ensemble forward source", save surface movie (displacement) at every time steps, for step 2 & 3.
+!
 ! save a snapshot of the "generating wavefield" eta that will be used to drive
 ! the "ensemble forward wavefield"
 
   use constants, only: CUSTOM_REAL,NDIM,IMAIN,OUTPUT_FILES
 
-  use specfem_par, only: myrank,it,NSTEP,nglob,P_SV,displ_elastic,nglob_elastic,NOISE_TOMOGRAPHY
+  use specfem_par, only: myrank,it,NSTEP,nglob,P_SV,displ_elastic,nglob_elastic,NOISE_TOMOGRAPHY, &
+    any_elastic,GPU_MODE
+
+  use specfem_par_gpu, only: Mesh_pointer,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,NGLOB_AB
 
   implicit none
 
@@ -539,6 +663,16 @@
   ! safety check
   if (nglob /= nglob_elastic) &
     call stop_the_code('Noise simulation requires elastic simulation')
+
+  ! transfers arrays from GPU to CPU
+  if (GPU_MODE) then
+    ! elastic domains
+    if (any_elastic) then
+      call transfer_fields_el_from_device(NDIM*NGLOB_AB,tmp_displ_2D,tmp_veloc_2D,tmp_accel_2D,Mesh_pointer)
+      displ_elastic(1,:) = tmp_displ_2D(1,:)
+      displ_elastic(2,:) = tmp_displ_2D(2,:)
+    endif
+  endif
 
   if (NOISE_TOMOGRAPHY == 1) then
     ! stores forward generating wavefield
@@ -560,6 +694,7 @@
       ! SH-case
       wavefield(:) = displ_elastic(1,:)
     endif
+
     ! file output
     write(unit=501,rec=it) wavefield
 
@@ -590,13 +725,13 @@
 
   endif
 
-  end subroutine save_surface_movie_noise
+  end subroutine noise_save_surface_movie
 
 !
 !========================================================================
 !
 
-  subroutine read_wavefield_noise()
+  subroutine noise_read_wavefield()
 
 ! reads in backward wavefield
 
@@ -625,7 +760,7 @@
     close(503)
   endif
 
-  end subroutine read_wavefield_noise
+  end subroutine noise_read_wavefield
 
 !
 !========================================================================

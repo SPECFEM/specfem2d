@@ -1170,15 +1170,13 @@
   endif
 
   ! allocates arrays for noise tomography
-  allocate(time_function_noise(NSTEP), &
-           source_array_noise(NDIM,NGLLX,NGLLZ,NSTEP), &
+  allocate(noise_sourcearray(NDIM,NGLLX,NGLLZ,NSTEP), &
            mask_noise(nglob), &
-           surface_movie_y_or_z_noise(nglob),stat=ier)
+           noise_surface_movie_y_or_z(nglob),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating noise arrays')
-
-  ! initializes
-  source_array_noise(:,:,:,:) = 0._CUSTOM_REAL
-  surface_movie_y_or_z_noise(:) = 0._CUSTOM_REAL
+  noise_sourcearray(:,:,:,:) = 0._CUSTOM_REAL
+  mask_noise(:) = 0._CUSTOM_REAL
+  noise_surface_movie_y_or_z(:) = 0._CUSTOM_REAL
 
   ! user output
   if (myrank == 0) then
@@ -1190,71 +1188,72 @@
   call read_parameters_noise()
 
   if (NOISE_TOMOGRAPHY == 1) then
+    ! creates generating noise source
     call compute_source_array_noise()
 
     ! write out coordinates of mesh
     open(unit=504,file=trim(OUTPUT_FILES)//'mesh_spec',status='unknown',action='write')
-      do ispec = 1, nspec
-        do j = 1, NGLLZ
-          do i = 1, NGLLX
-            iglob = ibool(i,j,ispec)
-            write(504,'(1pe11.3,1pe11.3,2i3,i7)') coord(1,iglob), coord(2,iglob), i, j, ispec
-         enddo
-        enddo
+    do ispec = 1, nspec
+      do j = 1, NGLLZ
+        do i = 1, NGLLX
+          iglob = ibool(i,j,ispec)
+          write(504,'(1pe11.3,1pe11.3,2i3,i7)') coord(1,iglob), coord(2,iglob), i, j, ispec
+       enddo
       enddo
+    enddo
     close(504)
 
     open(unit=504,file=trim(OUTPUT_FILES)//'mesh_glob',status='unknown',action='write')
-      do iglob = 1, nglob
-        write(504,'(1pe11.3,1pe11.3,i7)') coord(1,iglob), coord(2,iglob), iglob
-      enddo
+    do iglob = 1, nglob
+      write(504,'(1pe11.3,1pe11.3,i7)') coord(1,iglob), coord(2,iglob), iglob
+    enddo
     close(504)
 
     ! write out spatial distribution of noise sources
     call create_mask_noise()
+
     open(unit=504,file=trim(OUTPUT_FILES)//'mask_noise',status='unknown',action='write')
-      do iglob = 1, nglob
-            write(504,'(1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), mask_noise(iglob)
-      enddo
+    do iglob = 1, nglob
+      write(504,'(1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), mask_noise(iglob)
+    enddo
     close(504)
 
     ! write out velocity model
     if (assign_external_model) then
       open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_vp_vs',status='unknown',action='write')
-        do ispec = 1, nspec
-          do j = 1, NGLLZ
-            do i = 1, NGLLX
-              iglob = ibool(i,j,ispec)
-              rhol = dble(rhostore(i,j,ispec))
-              vs = dble(rho_vsstore(i,j,ispec)/rhol)
-              vp = dble(rho_vpstore(i,j,ispec)/rhol)
+      do ispec = 1, nspec
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
+            rhol = dble(rhostore(i,j,ispec))
+            vs = dble(rho_vsstore(i,j,ispec)/rhol)
+            vp = dble(rho_vpstore(i,j,ispec)/rhol)
 
-              write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
-                coord(1,iglob), coord(2,iglob), rhol, vp, vs
-            enddo
+            write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') coord(1,iglob), coord(2,iglob), rhol, vp, vs
           enddo
         enddo
+      enddo
       close(504)
     else
       open(unit=504,file=trim(OUTPUT_FILES)//'model_rho_kappa_mu',status='unknown',action='write')
-        do ispec = 1, nspec
-          do j = 1, NGLLZ
-            do i = 1, NGLLX
-              iglob = ibool(i,j,ispec)
-              if (AXISYM) then ! CHECK kappa
-                write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
-                  coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
-                  poroelastcoef(1,1,kmato(ispec)) + TWO_THIRDS * poroelastcoef(2,1,kmato(ispec)), &
-                  poroelastcoef(2,1,kmato(ispec))
-              else
-                write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
-                  coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
-                  poroelastcoef(1,1,kmato(ispec)) + poroelastcoef(2,1,kmato(ispec)), &
-                  poroelastcoef(2,1,kmato(ispec))
-              endif
-            enddo
+      do ispec = 1, nspec
+        do j = 1, NGLLZ
+          do i = 1, NGLLX
+            iglob = ibool(i,j,ispec)
+            if (AXISYM) then ! CHECK kappa
+              write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
+                coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
+                poroelastcoef(1,1,kmato(ispec)) + TWO_THIRDS * poroelastcoef(2,1,kmato(ispec)), &
+                poroelastcoef(2,1,kmato(ispec))
+            else
+              write(504,'(1pe11.3,1pe11.3,1pe11.3,1pe11.3,1pe11.3)') &
+                coord(1,iglob), coord(2,iglob), density(1,kmato(ispec)), &
+                poroelastcoef(1,1,kmato(ispec)) + poroelastcoef(2,1,kmato(ispec)), &
+                poroelastcoef(2,1,kmato(ispec))
+            endif
           enddo
         enddo
+      enddo
       close(504)
     endif
 
@@ -1265,10 +1264,13 @@
     ! noise movie
     if (NOISE_MOVIE_OUTPUT) then
       call create_mask_noise()
+
       ! prepare array that will hold wavefield snapshots
       noise_output_ncol = 5
       allocate(noise_output_array(noise_output_ncol,nglob), &
                noise_output_rhokl(nglob))
+      noise_output_array(:,:) = 0._CUSTOM_REAL
+      noise_output_rhokl(:) = 0._CUSTOM_REAL
     endif
 
   endif
