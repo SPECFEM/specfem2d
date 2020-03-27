@@ -159,13 +159,17 @@ else
   fi
 
   # default
-  if [ "$TESTDIR" == "4" ]; then
+  if [ "$TESTDIR" == "4" ] || [ "$TESTID" == "24" ]; then
     # kernel script
     ./run_this_example_kernel.sh
-    my_test_kernel
+    # kernel comparison
+    if [ "$TESTDIR" == "4" ]; then
+      my_test_kernel
+    fi
   else
     # default script
     ./run_this_example.sh
+    # seismogram comparison
     my_test
   fi
   cd $WORKDIR
