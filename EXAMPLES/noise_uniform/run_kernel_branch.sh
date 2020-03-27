@@ -90,13 +90,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running mesher..."
   echo
-  ./bin/xmeshfem2D
+  ./bin/xmeshfem2D > OUTPUT_FILES/output_mesher.log
 else
   # This is a MPI simulation
   echo
   echo "running mesher on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./bin/xmeshfem2D
+  mpirun -np $NPROC ./bin/xmeshfem2D > OUTPUT_FILES/output_mesher.log
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -107,22 +107,23 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running solver..."
   echo
-  ./bin/xspecfem2D
+  ./bin/xspecfem2D > OUTPUT_FILES/output_solver.log
 else
   # This is a MPI simulation
   echo
   echo "running solver on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./bin/xspecfem2D
+  mpirun -np $NPROC ./bin/xspecfem2D > OUTPUT_FILES/output_solver.log
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
 # backup
 mkdir -p OUTPUT_ALL/step_1
-mv OUTPUT_FILES/image*       OUTPUT_ALL/step_1
+mv OUTPUT_FILES/*image*.jpg  OUTPUT_ALL/step_1
 mv OUTPUT_FILES/*.semd       OUTPUT_ALL/step_1
 mv OUTPUT_FILES/plot*        OUTPUT_ALL/step_1
+mv OUTPUT_FILES/output*.log  OUTPUT_ALL/step_1
 mv DATA/Par_file             OUTPUT_ALL/step_1
 
 mv OUTPUT_FILES/mask*        OUTPUT_ALL/
@@ -149,13 +150,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running mesher..."
   echo
-  ./bin/xmeshfem2D
+  ./bin/xmeshfem2D > OUTPUT_FILES/output_mesher.log
 else
   # This is a MPI simulation
   echo
   echo "running mesher on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./bin/xmeshfem2D
+  mpirun -np $NPROC ./bin/xmeshfem2D > OUTPUT_FILES/output_mesher.log
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -166,21 +167,23 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running solver..."
   echo
-  ./bin/xspecfem2D
+  ./bin/xspecfem2D > OUTPUT_FILES/output_solver.log
 else
   # This is a MPI simulation
   echo
   echo "running solver on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./bin/xspecfem2D
+  mpirun -np $NPROC ./bin/xspecfem2D > OUTPUT_FILES/output_solver.log
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
 # backup
 mkdir -p OUTPUT_ALL/step_2
-mv OUTPUT_FILES/image*       OUTPUT_ALL/step_2
+
+mv OUTPUT_FILES/*image*.jpg  OUTPUT_ALL/step_2
 cp OUTPUT_FILES/*.semd       OUTPUT_ALL/step_2
+mv OUTPUT_FILES/output*.log  OUTPUT_ALL/step_2
 mv DATA/Par_file             OUTPUT_ALL/step_2
 
 ##
@@ -215,21 +218,22 @@ done
 cd ../
 
 # compile and write master trace
-ADJCC='adj_cc.f90'
+ADJCC='adj_traveltime_filter.f90'
 if [ "$BRANCH" == "0" ]; then
   echo "negative branch"
-  sed -i'.bak' 's/use_positive_branch = .[a-z]*./use_positive_branch = .false./' $ADJCC
-  sed -i'.bak' 's/use_negative_branch = .[a-z]*./use_negative_branch = .true./' $ADJCC
+  sed -i'.bak' 's/branch_type = .*/branch_type = 0/' $ADJCC
 elif [ "$BRANCH" == "1" ]; then
   echo "positive branch"
-  sed -i'.bak' 's/use_positive_branch = .[a-z]*./use_positive_branch = .true./' $ADJCC
-  sed -i'.bak' 's/use_negative_branch = .[a-z]*./use_negative_branch = .false./' $ADJCC
+  sed -i'.bak' 's/branch_type = .*/branch_type = 1/' $ADJCC
 fi
-sed -i'.bak' 's/use_custom_window = .[a-z]*./use_custom_window = .false./' $ADJCC
+# no time reversal of signal
 sed -i'.bak' 's/time_reverse = .[a-z]*./time_reverse = .false./' $ADJCC
-
+echo ""
 
 $FC $ADJCC -o xadj_run
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
 cp OUTPUT_FILES/$TRACE SEM/
 
 ./xadj_run SEM/$TRACE
@@ -240,7 +244,7 @@ echo
 # note: using > rename .semd.adj .adj SEM/$TRACE.adj
 #       might fails on different OS due to different rename command-line versions
 cp -p -v SEM/$TRACE.adj SEM/$TRACE_ADJ
-
+echo
 
 ##
 ## simulation 3
@@ -262,13 +266,13 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running mesher..."
   echo
-  ./bin/xmeshfem2D
+  ./bin/xmeshfem2D > OUTPUT_FILES/output_mesher.log
 else
   # This is a MPI simulation
   echo
   echo "running mesher on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./bin/xmeshfem2D
+  mpirun -np $NPROC ./bin/xmeshfem2D > OUTPUT_FILES/output_mesher.log
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
@@ -279,21 +283,22 @@ if [ "$NPROC" -eq 1 ]; then
   echo
   echo "running solver..."
   echo
-  ./bin/xspecfem2D
+  ./bin/xspecfem2D > OUTPUT_FILES/output_solver.log
 else
   # This is a MPI simulation
   echo
   echo "running solver on $NPROC processors..."
   echo
-  mpirun -np $NPROC ./bin/xspecfem2D
+  mpirun -np $NPROC ./bin/xspecfem2D > OUTPUT_FILES/output_solver.log
 fi
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi
 
 # backup
 mkdir -p OUTPUT_ALL/step_3
-cp OUTPUT_FILES/image*       OUTPUT_ALL/step_3
+cp OUTPUT_FILES/*image*.jpg  OUTPUT_ALL/step_3
 cp OUTPUT_FILES/*.semd       OUTPUT_ALL/step_3
+cp OUTPUT_FILES/output*.log  OUTPUT_ALL/step_3
 cp SEM/*Y.adj                OUTPUT_ALL/step_3
 cp DATA/Par_file             OUTPUT_ALL/step_3
 # kernels

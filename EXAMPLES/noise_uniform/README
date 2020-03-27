@@ -1,0 +1,29 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This example runs a simple noise simulation (NOISE_TOMOGRAPHY = 1), using a noise source time function as in Tromp et al. (2010), Figure 2a.
+
+To run the example simulation, just execute script:
+./run_this_example.sh
+
+You can check out the output files in the local directory OUTPUT_FILES/ and compare them to the solutions provided in REF_SEIS/.
+
+----------------------------------------------------------------------
+
+Tip:
+
+* To modify the noise source time function: 
+
+1. generate a file using a Peterson noise model, stored in file NOISE_TOMOGRAPHY/S_squared:
+  ./run_generate_S_squared.sh
+
+2. set in Par_file:
+  ..
+  noise_source_time_function_type = 0
+  ..
+
+3. re-run the simulation
+
+----------------------------------------------------------------------
+
