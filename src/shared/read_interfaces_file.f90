@@ -172,6 +172,7 @@
 
   allocate(nz_layer(number_of_layers),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating array nz_layer')
+  nz_layer(:) = 0
 
   ! user output
   write(IMAIN,*)

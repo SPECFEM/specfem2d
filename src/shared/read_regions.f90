@@ -81,7 +81,7 @@
   do iregion = 1,nbregions
 
     ! reads in region range
-    ! format: #ix start #ix end #iz start #iz end
+    ! format: #ix_start #ix_end #iz_start #iz_end #imaterial_number
     call read_region_coordinates_p(ix_start,ix_end,iz_start,iz_end,imaterial_number)
 
     ! check

@@ -800,5 +800,12 @@
     enddo
   endif
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  done'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   end subroutine save_databases_VTK_files
 

@@ -506,7 +506,7 @@
   ! Write interfaces (element and common nodes) pertaining to iproc partition in the corresponding Database
   !--------------------------------------------------
   subroutine write_interfaces_database(IIN_database, nparts, iproc, &
-                        my_ninterface, my_interfaces, my_nb_interfaces, num_phase)
+                                       my_ninterface, my_interfaces, my_nb_interfaces, num_phase)
 
   use part_unstruct_par, only: ninterfaces,tab_size_interfaces,tab_interfaces, &
     glob2loc_elmnts,glob2loc_nodes_nparts,glob2loc_nodes_parts,glob2loc_nodes

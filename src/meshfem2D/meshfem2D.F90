@@ -429,6 +429,7 @@
 
       allocate(elmnts(0:ngnod*nelmnts-1),stat=ier)
       if (ier /= 0) call stop_the_code('Error allocating array elmnts')
+      elmnts(:) = 0
 
       ! stores mesh point indices in array 'elmnts'
       if (ngnod == 4) then
@@ -480,17 +481,26 @@
     allocate(is_pml(0:nelmnts-1),stat=ier)
     if (ier /= 0) call stop_the_code('Error allocating array is_pml')
     is_pml(:) = .false.
+    nspec_cpml = 0
 
-    if (read_external_mesh) then
-      if (PML_BOUNDARY_CONDITIONS) then
+    if (PML_BOUNDARY_CONDITIONS) then
+      if (read_external_mesh) then
         call read_external_pml_element(absorbing_cpml_file, region_pml_external_mesh, nspec_cpml)
       else
+        ! no need to read in pml values.
+        ! the internal mesher will assign PML elements in routine pml_init() in the solver.
         nspec_cpml = 0
+        write(IMAIN,*) '  using internal mesh, PML elements will be determined in solver run...'
+        write(IMAIN,*)
       endif
+    else
+      ! no PML condition
+      ! user output
+      write(IMAIN,*) '  Total number of PML elements = ',nspec_cpml
+      write(IMAIN,*)
     endif
 
     ! user output
-    write(IMAIN,*)
     write(IMAIN,*) 'The mesh contains ',nelmnts,' elements'
     write(IMAIN,*)
     write(IMAIN,*) 'Control elements have ',ngnod,' nodes'

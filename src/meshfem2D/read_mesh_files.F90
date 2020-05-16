@@ -62,6 +62,13 @@
       ! safety stop
       call stop_the_code('Error read_external_mesh must be set to .true. to use external tangential_dectection_curve_file')
     endif
+  else
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'Normals to surface not needed'
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
   endif
 
   end subroutine read_mesh_tangential_curve_file
@@ -118,6 +125,16 @@
   !       thus, a lot of arrays haven't been transfered to other processes after reading in the Par_file.
   !       this also applies to the interface arrays used here below
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'reading node coordinates from interfaces...'
+    if (ADD_RANDOM_PERTURBATION_TO_THE_MESH) &
+      write(IMAIN,*) ' using add random perturbation to the mesh node locations'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   ! safety checks
   if (myrank /= 0) &
     call stop_the_code('meshing using interfaces for internal models only supported on rank 0 process')
@@ -128,7 +145,6 @@
   ! allocate arrays for the grid
   allocate(grid_point_x(0:nx_elem_internal,0:nz_elem_internal))
   allocate(grid_point_z(0:nx_elem_internal,0:nz_elem_internal))
-
   grid_point_x(:,:) = 0.d0
   grid_point_z(:,:) = 0.d0
 

@@ -36,7 +36,7 @@
 
 ! determines absorbing boundary elements
 
-  use constants, only: IBOTTOM,IRIGHT,ITOP,ILEFT
+  use constants, only: IBOTTOM,IRIGHT,ITOP,ILEFT,IMAIN,myrank
 
   use part_unstruct_par, only: nelemabs,abs_surface,elmnts,nxread,nzread
 
@@ -48,6 +48,12 @@
   integer :: ix,iz
   integer :: inumelem
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  determining absorbing boundary surfaces...'
+    call flush_IMAIN()
+  endif
+
   !
   !--- definition of absorbing boundaries
   !
@@ -58,6 +64,7 @@
   if (absorbright) nelemabs = nelemabs + nzread
 
   allocate(abs_surface(5,nelemabs))
+  abs_surface(:,:) = 0
 
   ! generate the list of absorbing elements
   if (nelemabs > 0) then
@@ -103,6 +110,13 @@
           endif
        enddo
     enddo
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of elements with absorbing boundaries = ',nelemabs
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine determine_abs_surface

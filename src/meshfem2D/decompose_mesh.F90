@@ -106,6 +106,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  graph adjacency done'
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
