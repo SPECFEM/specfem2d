@@ -94,12 +94,15 @@ end module enforce_par
                          PML_BOUNDARY_CONDITIONS,ispec_is_PML,read_external_mesh,acoustic_iglob_is_forced, &
                          elastic_iglob_is_forced,ispec_is_acoustic,ispec_is_elastic
   use enforce_par
-  use constants, only: TINYVAL,IMAIN,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4
+  use constants, only: TINYVAL,IMAIN,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,USE_ENFORCE_FIELDS
 
   implicit none
 
   !local variables
   integer :: inum,ispec,i,j,iglob
+
+  ! safety check
+  if (.not. USE_ENFORCE_FIELDS) return
 
   if (read_external_mesh) then
 
@@ -227,7 +230,7 @@ end module enforce_par
   use specfem_par, only: coord,displ_elastic,veloc_elastic,accel_elastic,deltat,deltatover2, &
                          deltatsquareover2,myrank
   use enforce_par
-  use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI
+  use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI,USE_ENFORCE_FIELDS
 
   implicit none
 
@@ -249,6 +252,9 @@ end module enforce_par
   character (len=1) :: order
   ! Number of cycle of the burst
   integer :: Nc
+
+  ! safety check
+  if (.not. USE_ENFORCE_FIELDS) return
 
   f0 = 0.125d6 ! frequency ! (fd=200,f=50KHz) (fd=500,f=125KHz) (fd=800,f=200KHz)
   d = 4.0d-3 ! half width of the plate
@@ -691,7 +697,7 @@ end subroutine Calculate_Weigth_Burst
   use specfem_par, only: coord,displ_elastic,veloc_elastic,accel_elastic,deltat,deltatover2, &
                          deltatsquareover2
   use enforce_par
-  use constants, only: CUSTOM_REAL,TWO,PI
+  use constants, only: CUSTOM_REAL,TWO,PI,USE_ENFORCE_FIELDS
 
   implicit none
 
@@ -705,6 +711,9 @@ end subroutine Calculate_Weigth_Burst
   real(kind=CUSTOM_REAL) :: factor,x,z
   real(kind=CUSTOM_REAL) :: f0
 
+  ! safety check
+  if (.not. USE_ENFORCE_FIELDS) return
+
   x = coord(1,iglob)
   z = coord(2,iglob)
 
@@ -713,18 +722,21 @@ end subroutine Calculate_Weigth_Burst
 
   !if (abs(z + 1.5d-3) < 1.5d-3) then
   !if (abs(x) < 0.01) then
-    if (it == 1) then ! We initialize the variables
-      displ_elastic(2,iglob) = factor*0.0d0
-      displ_elastic(1,iglob) = factor*0.0d0
-      veloc_elastic(2,iglob) = factor*0.0d0
-      veloc_elastic(1,iglob) = factor*0.0d0
-      accel_elastic(2,iglob) = factor*0.0d0
-      accel_elastic(1,iglob) = factor*0.0d0
-    else ! We set what we want
+    if (it == 1) then
+      ! We initialize the variables
+      displ_elastic(2,iglob) = 0.0d0
+      displ_elastic(1,iglob) = 0.0d0
+      veloc_elastic(2,iglob) = 0.0d0
+      veloc_elastic(1,iglob) = 0.0d0
+      accel_elastic(2,iglob) = 0.0d0
+      accel_elastic(1,iglob) = 0.0d0
+    else
+      ! We set what we want
       accel_elastic(2,iglob) = factor*(TWO*PI*f0)**2*sin(TWO*PI*f0*(it-1)*deltat)
       accelOld(2) = factor*(TWO*PI*f0)**2*sin(TWO*PI*f0*(it-2)*deltat)
       accel_elastic(1,iglob) = 0.0d0
       accelOld(1) = 0.0d0
+
       ! Do not change anything below: we compute numerically the velocity and displacement
       velocOld(1) = veloc_elastic(1,iglob)
       veloc_elastic(1,iglob) = veloc_elastic(1,iglob) + deltatover2*(accelOld(1) + accel_elastic(1,iglob))
@@ -890,7 +902,7 @@ end subroutine Calculate_Weigth_Burst
                          deltatsquareover2,myrank,nLines,zmode,realMode,imagMode,modeAmplitude
   use enforce_par
   use interpolation
-  use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI
+  use constants, only: TINYVAL,CUSTOM_REAL,TWO,PI,USE_ENFORCE_FIELDS
 
   implicit none
 
@@ -905,6 +917,9 @@ end subroutine Calculate_Weigth_Burst
   real(kind=CUSTOM_REAL) :: omegaj
   real(kind=CUSTOM_REAL) :: time_dependence,time_dependence_old
   integer :: Nc
+
+  ! safety check
+  if (.not. USE_ENFORCE_FIELDS) return
 
   f0 = 2.0d0
   Nc = 10
@@ -979,13 +994,14 @@ end subroutine Calculate_Weigth_Burst
   !if (abs(z + 0.0d-3) < 1.0d-3) then
     if (it == 1) then
       ! We initialize the variables
-      potential_acoustic(iglob) = factor*0.0d0
-      potential_dot_acoustic(iglob) = factor*0.0d0
-      potential_dot_dot_acoustic(iglob) = factor*0.0d0
+      potential_acoustic(iglob) = 0.0d0
+      potential_dot_acoustic(iglob) = 0.0d0
+      potential_dot_dot_acoustic(iglob) = 0.0d0
     else
       ! We set what we want
       potential_dot_dot_acoustic(iglob) = factor*time_dependence
       potential_dot_dot_acoustic_old = factor*time_dependence_old
+
       ! Do not change anything below: we compute numerically the velocity and displacement
       potential_dot_acoustic_old = potential_dot_acoustic(iglob)
       potential_dot_acoustic(iglob) = potential_dot_acoustic(iglob) + deltatover2*(potential_dot_dot_acoustic_old + &
