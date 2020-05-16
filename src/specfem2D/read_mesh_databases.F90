@@ -315,7 +315,7 @@
   call synchronize_all()
 
   ! At that point seismotype is a string (e.g 2,3,6). The following routine convert it to an integer array: seismotypeVec
-  call processSeismotypeLine()
+  call process_seismotype_line()
 
   !-------- finish reading init section
   ! sets time step for time scheme
@@ -401,7 +401,7 @@
 
   subroutine read_mesh_databases()
 
-  use constants, only: IIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM
+  use constants, only: IIN,IMAIN,ADD_A_SMALL_CRACK_IN_THE_MEDIUM
   use specfem_par
 
   implicit none
@@ -410,6 +410,14 @@
   ! note: we opened the database file in read_mesh_for_init() and will continue reading from its current position
   !       thus, the ordering here must be consistent with the order in save_databases.f90
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'reading mesh databases...'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   ! reads the spectral macrobloc nodal coordinates
   ! and basic properties of the spectral elements
@@ -543,7 +551,7 @@
 
 
   ! output formats
-107 format(/5x,'-- Spectral Elements --',//)
+107 format(/1x,'-- Spectral Elements --',//)
 
 207 format(5x,'Number of spectral elements . . . . . . . . .  (nspec) =',i7,/5x, &
                'Number of control nodes per element . . . . . (ngnod) =',i7,/5x, &
@@ -762,10 +770,23 @@
   integer :: ier
   integer, dimension(:), allocatable :: numabs
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*)
+    write(IMAIN,*) 'reading absorbing boundary...'
+  endif
+
   ! saftey check
   if (nelemabs < 0) then
     if (myrank == 0) write(IMAIN,*) '  Warning: read in negative nelemabs ',nelemabs,'...resetting to zero!'
     nelemabs = 0
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  number of absorbing elements = ',nelemabs
+    call flush_IMAIN()
   endif
 
   ! determines flag for absorbing boundaries
@@ -785,6 +806,16 @@
     STACEY_ABSORBING_CONDITIONS = .true.
   else
     STACEY_ABSORBING_CONDITIONS = .false.
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) '  any absorbing boundary flag  = ',anyabs
+    write(IMAIN,*) '  PML boundary flag            = ',PML_BOUNDARY_CONDITIONS
+    write(IMAIN,*) '  Stacey boundary flag         = ',STACEY_ABSORBING_CONDITIONS
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! temporary array
@@ -997,7 +1028,11 @@
   ! sets up arrays for boundary routines
   allocate(abs_boundary_ispec(num_abs_boundary_faces),stat=ier)
   if (ier /= 0) stop 'error allocating array abs_boundary_ispec etc.'
-  abs_boundary_ispec(:) = numabs(:)
+  abs_boundary_ispec(:) = 0
+
+  if (num_abs_boundary_faces > 0) then
+    abs_boundary_ispec(:) = numabs(:)
+  endif
 
   ! free memory
   deallocate(numabs)
@@ -1010,9 +1045,9 @@
   call sum_all_i(nspec_top, nspec_top_tot)
 
   ! user output
-  if (myrank == 0) then
-    write(IMAIN,*)
-    if (PML_BOUNDARY_CONDITIONS .or. STACEY_ABSORBING_CONDITIONS) then
+  if (PML_BOUNDARY_CONDITIONS .or. STACEY_ABSORBING_CONDITIONS) then
+    if (myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) 'Absorbing boundaries:'
       if (PML_BOUNDARY_CONDITIONS) &
         write(IMAIN,*) '  using PML boundary conditions'
@@ -1028,8 +1063,8 @@
         write(IMAIN,*) '  nspec_top    = ',nspec_top_tot
         write(IMAIN,*)
       endif
+      call flush_IMAIN()
     endif
-    call flush_IMAIN()
   endif
 
   ! allocates arrays
@@ -1568,7 +1603,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine processSeismotypeLine()
+  subroutine process_seismotype_line()
 
  ! This subroutine convert the string "seismotype" (e.g 2,3,6) to an integer array: "seismotypeVec"
 
@@ -1640,7 +1675,7 @@
 
     seismotypeVec = res(1:NSIGTYPE)
 
-  end subroutine processSeismotypeLine
+  end subroutine process_seismotype_line
 
 !
 !-------------------------------------------------------------------------------------------------
