@@ -98,7 +98,7 @@
       zelm = coorg(2,nnum)
       print *,'node ', ia,' x,y = ',xelm,zelm
     enddo
-    stop 'error: negative 2D Jacobian found'
+    stop 'Error: negative 2D Jacobian found'
   endif
 
 ! invert the relation
