@@ -114,7 +114,7 @@ add_Bielak_conditions_left      = .false.
 
 # acoustic forcing
 ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoustic medium with a rigid interface
-
+noise_source_time_function_type = 4              # source time function type for noise simulation
 
 #-----------------------------------------------------------------------------
 #
