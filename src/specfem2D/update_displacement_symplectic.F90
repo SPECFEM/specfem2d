@@ -276,18 +276,18 @@
 !------------------------------------------------------------------------------------------------
 ! Omelyan,  I.M. Mryglod and R. Folk, 2002.
 ! Optimized Forest-Ruth- and Suzuki-like algorithms for integration of motion in many-body systems,
-! Computer Physics Communications 146, 188
+! Computer Physics communications 146, 188
 ! http://arxiv.org/abs/cond-mat/0110585
 !
 ! uses PEFRL scheme coefficients from Omelyan et al, 2002, eq. (20)
 ! together with algorithm in eq. (22) which update position r before velocity v:
 !   r1 = r(t) + v(t) xi h
-!   v1 = v(t) + 1/m f[r] (1 − 2 lambda) h/2
+!   v1 = v(t) + 1/m f[r] (1 - 2 lambda) h/2
 !
 !   r2 = r1 + v1 chi h
 !   v2 = v1 + 1/m f[r2] lambda h
 !
-!   r3 = r2 + v2 (1 − 2 (chi + xi)) h
+!   r3 = r2 + v2 (1 - 2 (chi + xi)) h
 !   v3 = v2 + 1/m f[r3] lambda h
 !
 !   r4 = r3 + v3 chi h
