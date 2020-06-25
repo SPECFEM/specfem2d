@@ -325,7 +325,7 @@
       call stop_the_code('NO_BACKWARD_RECONSTRUCTION is not supported yet for time scheme symplectic')
 
   case default
-    call stop_the_code('Invalid time scheme, please choose between 1==Newmark, 2==LDDRK, 3==RK4, 4==symplectic')
+    call stop_the_code('Invalid time scheme, please choose between 1 == Newmark, 2 == LDDRK, 3 == RK4, 4 == symplectic')
   end select
 
   ! Bielak parameter setup

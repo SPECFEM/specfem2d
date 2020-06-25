@@ -102,6 +102,9 @@ env:
     # example w/ noise kernel
     - TESTID=24 TESTDIR=6 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
 
+    # example w/ LDDRK
+    - TESTID=25 TESTDIR=18 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
+
 
 before_install:
   # informations on git

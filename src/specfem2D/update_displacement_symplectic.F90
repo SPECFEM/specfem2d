@@ -293,7 +293,7 @@
 !   r4 = r3 + v3 chi h
 !   v(t+h) = v3 + 1/m f[r4] (1 - 2 lambda) h/2
 !
-!   r(t+h) = r4 + v(t+h) xi h        <- final update
+!   r(t+h) = r4 + v(t+h) xi h <- final update
 
   subroutine update_displacement_symplectic_acoustic(deltat, &
                                                      potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic)

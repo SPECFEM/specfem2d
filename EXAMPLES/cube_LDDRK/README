@@ -1,0 +1,12 @@
+----------------------------------------------------------------------
+README
+----------------------------------------------------------------------
+
+This example uses a higher-order time scheme and initialfield setup.
+The initialfield will be a mode solution for the 2D plate.
+
+To run the simulation, type:
+> ./run_this_example.sh
+
+An analytical solution will be output for the (vertical) displacement as file **net**.**sta**.mode_solutionZ.dat to compare against.
+

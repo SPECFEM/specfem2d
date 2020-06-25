@@ -487,7 +487,7 @@
       if (read_external_mesh) then
         call read_external_pml_element(absorbing_cpml_file, region_pml_external_mesh, nspec_cpml)
       else
-        ! no need to read in pml values.
+        ! no need to read in PML values.
         ! the internal mesher will assign PML elements in routine pml_init() in the solver.
         nspec_cpml = 0
         write(IMAIN,*) '  using internal mesh, PML elements will be determined in solver run...'
