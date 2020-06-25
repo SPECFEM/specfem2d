@@ -345,8 +345,7 @@
   close(IIN)
 
   if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Total number of receivers = ',nrec
+    write(IMAIN,*) '  Total number of receivers = ',nrec
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -896,9 +895,9 @@
 
   subroutine setup_source_interpolation()
 
-  use constants, only: NDIM,NGLLX,NGLLZ,NGLJ,ZERO,CUSTOM_REAL
+  use constants, only: NDIM,NGLLX,NGLLZ,NGLJ,ZERO,CUSTOM_REAL,IMAIN
 
-  use specfem_par, only: myrank,nspec,NSOURCES,source_type,anglesource,P_SV, &
+  use specfem_par, only: myrank,nspec,NSOURCES,initialfield,source_type,anglesource,P_SV, &
     sourcearrays,Mxx,Mxz,Mzz, &
     ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic, &
     ispec_selected_source,islice_selected_source, &
@@ -925,6 +924,17 @@
   hgammas_store(:,:) = ZERO
 
   sourcearrays(:,:,:,:) = 0._CUSTOM_REAL
+
+  ! check if anything left to do
+  if (initialfield) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'using initialfield instead of source arrays'
+      call flush_IMAIN()
+    endif
+    ! all done
+    return
+  endif
 
   ! define and store Lagrange interpolators at all the sources
   do i_source = 1,NSOURCES

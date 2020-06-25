@@ -232,9 +232,12 @@
         ! plane S wave without converted/refracted phases
         write(IMAIN,*) '  Plane S-wave source without converted/refracted phases:'
         write(IMAIN,*) '  Angle of the incident wave (deg) = ',anglesource(i_source)
+      case (6)
+        ! initial mode displacement
+        write(IMAIN,*) '  Initial mode displacement for initialfield'
       case default
         ! not supported yet
-        call stop_the_code('Error invalid source type! must be 1, 2, 3, 4 or 5, exiting...')
+        call stop_the_code('Error invalid source type! exiting...')
       end select
       write(IMAIN,*)
 
