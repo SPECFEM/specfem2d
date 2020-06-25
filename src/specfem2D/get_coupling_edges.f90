@@ -341,8 +341,8 @@
     if (ATTENUATION_VISCOELASTIC .or. ATTENUATION_PORO_FLUID_PART) &
       call stop_the_code('Attenuation not supported for mixed elastic/poroelastic simulations')
 
-    if (time_stepping_scheme == 2 .or. time_stepping_scheme == 3) &
-      call stop_the_code('RK and LDDRK time scheme not supported for mixed elastic/poroelastic simulations')
+    if (time_stepping_scheme /= 1) &
+      call stop_the_code('Time scheme not supported for mixed elastic/poroelastic simulations')
 
     if (myrank == 0) then
       write(IMAIN,*)

@@ -400,21 +400,90 @@
 ! see: http://www.sciencedirect.com/science/article/pii/S0045793005000575?np=y
 
 ! maximum number of stages for optimized (for reduced storage) LDDRK4-6 Runge-Kutta time scheme
-  integer, parameter :: NSTAGE = 6
+  integer, parameter :: NSTAGE_LDDRK = 6
 
 ! coefficients from Table 1, Berland et al. (2006)
 ! (parameters used in LDDRK scheme, from equation (2) of Berland et al.)
-  real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: ALPHA_LDDRK = &
+  real(kind=CUSTOM_REAL), dimension(NSTAGE_LDDRK), parameter :: ALPHA_LDDRK = &
     (/0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, -1.634740794341_CUSTOM_REAL, &
       -0.744739003780_CUSTOM_REAL,-1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/)
 
-  real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: BETA_LDDRK = &
+  real(kind=CUSTOM_REAL), dimension(NSTAGE_LDDRK), parameter :: BETA_LDDRK = &
     (/0.032918605146_CUSTOM_REAL,0.823256998200_CUSTOM_REAL,0.381530948900_CUSTOM_REAL, &
       0.200092213184_CUSTOM_REAL,1.718581042715_CUSTOM_REAL,0.27_CUSTOM_REAL/)
 
-  real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: C_LDDRK = &
+  real(kind=CUSTOM_REAL), dimension(NSTAGE_LDDRK), parameter :: C_LDDRK = &
     (/0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,0.249351723343_CUSTOM_REAL, &
       0.466911705055_CUSTOM_REAL,0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/)
+
+!!-----------------------------------------------------------
+!!
+!! for RK4 - classical Runge-Kutta 4-th order scheme
+!!
+!!-----------------------------------------------------------
+
+! https://en.wikipedia.org/wiki/Runge–Kutta_methods
+! https://scicomp.stackexchange.com/questions/22025/runge-kutta-for-wave-equation
+!
+! first-order derivatives for runge-kutta:
+!  dU/dt = A U(t)
+! with
+!   U = [ veloc |    -> dU/dt =   [ d/dt veloc |    =  [ K(t,displ) + F(t) |  =  A U(t)
+!       | displ ]                 | d/dt displ ]       | veloc(t)          |
+!
+!   k1 = A U(tn)
+!   k2 = A { U(tn+dt/2) + 1/2 dt k1 }
+!   k3 = A { U(tn+dt/2) + 1/2 dt k2 }
+!   k4 = A { U(tn+dt) + dt k3 }
+!
+!  U(tn + dt) = 1/6 * dt * { k1 + 2 k2 + 2 k3 + k4 }
+
+  integer, parameter :: NSTAGE_RK4 = 4
+
+  real(kind=CUSTOM_REAL), dimension(NSTAGE_RK4), parameter :: ALPHA_RK4 = &
+    (/ 0.0_CUSTOM_REAL, 0.5_CUSTOM_REAL, 0.5_CUSTOM_REAL, 1.0_CUSTOM_REAL /)
+
+  real(kind=CUSTOM_REAL), dimension(NSTAGE_RK4), parameter :: BETA_RK4 = &
+    (/ 1.0_CUSTOM_REAL/6.0_CUSTOM_REAL, 1.0_CUSTOM_REAL/3.0_CUSTOM_REAL, &
+       1.0_CUSTOM_REAL/3.0_CUSTOM_REAL, 1.0_CUSTOM_REAL/6.0_CUSTOM_REAL /)
+
+  real(kind=CUSTOM_REAL), dimension(NSTAGE_RK4), parameter :: C_RK4 = &
+    (/ 0.0_CUSTOM_REAL, 0.5_CUSTOM_REAL, 0.5_CUSTOM_REAL, 1.0_CUSTOM_REAL /)
+
+!!-----------------------------------------------------------
+!!
+!! symplectic time scheme - Position-Extended Forest-Ruth-Like (PEFRL) scheme (4th order)
+!!
+!!-----------------------------------------------------------
+
+! see reference:
+! Omelyan,  I.M. Mryglod and R. Folk, 2002.
+! Optimized Forest-Ruth- and Suzuki-like algorithms for integration of motion in many-body systems,
+! Computer Physics Communications 146, 188
+! http://arxiv.org/abs/cond-mat/0110585
+
+  integer, parameter :: NSTAGE_SYMPLECTIC = 4
+
+  ! PEFRL scheme coefficients (see Omelyan et al, 2002, eq. (20))
+  double precision, parameter :: PEFRL_xi = 0.1786178958448091d0
+  double precision, parameter :: PEFRL_lambda = -0.2123418310626054d0
+  double precision, parameter :: PEFRL_chi = -0.06626458266981849d0
+
+  real(kind=CUSTOM_REAL), dimension(NSTAGE_SYMPLECTIC), parameter :: ALPHA_SYMPLECTIC = &
+    (/ PEFRL_xi, PEFRL_chi, 1.0_CUSTOM_REAL - 2.0_CUSTOM_REAL*(PEFRL_chi + PEFRL_xi), PEFRL_chi /)
+
+  real(kind=CUSTOM_REAL), dimension(NSTAGE_SYMPLECTIC), parameter :: BETA_SYMPLECTIC = &
+    (/ 0.5_CUSTOM_REAL - PEFRL_lambda, PEFRL_lambda, PEFRL_lambda, 0.5_CUSTOM_REAL - PEFRL_lambda /)
+
+  !! also mentioned:
+  !! velocity Forest-Ruth (VFR) scheme (4th order)
+  !! with theta = 1./(2 - 2**(1/3) ) ~ 1.3512071919596578
+  !double precision, parameter :: VFR_theta = 1.3512071919596578d0
+  !
+  !real(kind=CUSTOM_REAL), dimension(NSTAGE_SYMPLECTIC), parameter :: ALPHA_SYMPLECTIC = &
+  !  (/ 0.d0, VFR_theta, 1.0_CUSTOM_REAL - 2.0_CUSTOM_REAL*VFR_theta, VFR_theta /)
+  !real(kind=CUSTOM_REAL), dimension(NSTAGE_SYMPLECTIC), parameter :: BETA_SYMPLECTIC = &
+  !  (/ 0.5d0 * VFR_theta, 0.5d0 * (1.d0 - VFR_theta), 0.5d0 * (1.d0 - VFR_theta), 0.5d0 * VFR_theta /)
 
 !!-----------------------------------------------------------
 !!

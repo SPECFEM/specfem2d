@@ -160,6 +160,7 @@ specfem2D_OBJECTS = \
 	$O/update_displacement_LDDRK.spec.o \
 	$O/update_displacement_Newmark.spec.o \
 	$O/update_displacement_RK.spec.o \
+	$O/update_displacement_symplectic.spec.o \
 	$O/compute_kernels.spec.o \
 	$O/write_jpeg_image.cc.o \
 	$O/attenuation_compute_param.cc.o \

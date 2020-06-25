@@ -226,6 +226,9 @@
   case (3)
     ! RK scheme
     call update_veloc_acoustic_RK()
+  case (4)
+    ! symplectic PEFRL
+    call update_veloc_acoustic_symplectic()
   case default
     call stop_the_code('Invalid time stepping scheme for compute forces routine!')
   end select
@@ -369,6 +372,9 @@
   case (1)
     ! Newmark
     call update_veloc_acoustic_Newmark_backward()
+  case (4)
+    ! symplectic PEFRL
+    call update_veloc_acoustic_symplectic_backward()
   case default
     call stop_the_code('Sorry, time stepping scheme not implemented yet for backward computations')
   end select

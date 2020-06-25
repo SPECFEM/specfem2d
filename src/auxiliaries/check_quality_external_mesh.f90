@@ -88,13 +88,13 @@
 ! to check if any element with a negative Jacobian is found
 
 ! 2D shape functions and their derivatives at receiver
-  double precision shape2D(ngnod)
-  double precision dershape2D(NDIM,ngnod)
+  double precision :: shape2D(ngnod)
+  double precision :: dershape2D(NDIM,ngnod)
 
-  double precision xxi,zxi,xgamma,zgamma,xelm,zelm
-  double precision xi,gamma,jacobian
+  double precision :: xxi,zxi,xgamma,zgamma,xelm,zelm
+  double precision :: xi,gamma,jacobian
 
-  integer ia
+  integer :: ia
 
   if (NGNOD /= 4) stop 'NGNOD must be 4'
 

@@ -153,9 +153,9 @@
 
   ! use the right formula with 1/N included
   phi_nu1_sent(:) = real((1.d0 - tau_epsilon_nu1_d(:)/tau_sigma_nu1(:)) / tau_sigma_nu1(:) &
-                                                                           / sum(tau_epsilon_nu1_d/tau_sigma_nu1),kind=CUSTOM_REAL)
+                         / sum(tau_epsilon_nu1_d/tau_sigma_nu1),kind=CUSTOM_REAL)
   phi_nu2_sent(:) = real((1.d0 - tau_epsilon_nu2_d(:)/tau_sigma_nu2(:)) / tau_sigma_nu2(:) &
-                                                                           / sum(tau_epsilon_nu2_d/tau_sigma_nu2),kind=CUSTOM_REAL)
+                         / sum(tau_epsilon_nu2_d/tau_sigma_nu2),kind=CUSTOM_REAL)
 
   Mu_nu1_sent = real(sum(tau_epsilon_nu1_d/tau_sigma_nu1) / dble(N_SLS),kind=CUSTOM_REAL)
   Mu_nu2_sent = real(sum(tau_epsilon_nu2_d/tau_sigma_nu2) / dble(N_SLS),kind=CUSTOM_REAL)

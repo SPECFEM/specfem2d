@@ -306,7 +306,7 @@ module specfem_par
   double precision :: b_deltatover2,b_deltatsquareover2,b_deltat ! coefficients of the explicit Newmark time scheme
 
   ! current time
-  double precision :: timeval
+  double precision :: current_timeval
 
   ! UNDO_ATTENUATION_AND_OR_PML
   integer :: NSUBSET_ITERATIONS
@@ -345,7 +345,6 @@ module specfem_par
 
   ! number of purely acoustic elements in this slice
   integer :: nspec_acoustic
-  integer :: nspec_acoustic_b
 
   ! local flag to determine if any acoustic elements in this slice
   logical :: any_acoustic
@@ -401,7 +400,6 @@ module specfem_par
 
   ! number of purely elastic elements in this slice
   integer :: nspec_elastic
-  integer :: nspec_elastic_b
 
   ! local flag if any elastic element is in this slice
   logical :: any_elastic
@@ -500,7 +498,7 @@ module specfem_par
 
   ! number of purely poroelastic elements in this slice
   integer :: nspec_poroelastic
-  integer :: nspec_poroelastic_b
+  integer :: b_nspec_poroelastic
 
   ! local flag to determine if this slice has poroelastic elements
   logical :: any_poroelastic

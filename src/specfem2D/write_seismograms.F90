@@ -467,7 +467,7 @@
             do isample = 1,seismo_current_l
 
               ! forward time
-              time_t = dble(seismo_offset_l + isample - 1) * deltat*subsamp_seismos - t0
+              time_t = dble(seismo_offset_l + isample - 1) * deltat * subsamp_seismos - t0
 
               write(11,*) time_t,' ',buffer_binary(isample,irec,iorientation)
             enddo
@@ -480,7 +480,7 @@
         ! write binary seismogram
         if (save_binary_seismograms) then
 
-          ioffset = (irec-1)*NSTEP/subsamp_seismos+seismo_offset_l
+          ioffset = (irec-1) * NSTEP / subsamp_seismos + seismo_offset_l
 
           if (save_binary_seismograms_single) then
             do isample = 1, seismo_current_l

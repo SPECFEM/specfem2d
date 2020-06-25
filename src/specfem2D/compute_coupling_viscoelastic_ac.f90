@@ -109,19 +109,24 @@
                                        CPML_region_local,A0,A1,A2,A3,A4, &
                                        bb_1,coef0_1,coef1_1,coef2_1,bb_2,coef0_2,coef1_2,coef2_2)
 
-          if (time_stepping_scheme == 1) then
+          select case(time_stepping_scheme)
+          case (1)
             ! Newmark
             rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) = &
                         coef0_1 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + &
                         coef1_1 * potential_acoustic(iglob) + coef2_1 * potential_acoustic_old(iglob)
-          else if (time_stepping_scheme == 2) then
+
+          case (2)
             ! LDDRK
             rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) = &
                     ALPHA_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum) + &
                     deltat * (-bb_1 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + potential_acoustic(iglob))
             rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) = rmemory_sfb_potential_ddot_acoustic(1,i,j,inum) + &
                     BETA_LDDRK(i_stage) * rmemory_sfb_potential_ddot_acoustic_LDDRK(1,i,j,inum)
-          endif
+
+          case default
+            call stop_the_code('Error time scheme for PML not implement yet in compute_coupling_viscoelastic_ac()')
+          end select
 
           pressure = - (A0 * potential_dot_dot_acoustic(iglob) + A1 * potential_dot_acoustic(iglob) + &
                         A2 * potential_acoustic(iglob) + A3 * rmemory_sfb_potential_ddot_acoustic(1,i,j,inum))

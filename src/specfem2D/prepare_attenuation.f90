@@ -221,11 +221,11 @@
     allocate(e13_force_rk(NGLLX,NGLLZ,nspec_ATT_el,N_SLS,stage_time_scheme))
 
     if (ATTENUATION_VISCOACOUSTIC) then
-            allocate(e1_initial_rk_acous(nglob_att,N_SLS))
-            allocate(e1_force_rk_acous(nglob_att,N_SLS,stage_time_scheme))
+      allocate(e1_initial_rk_acous(nglob_att,N_SLS))
+      allocate(e1_force_rk_acous(nglob_att,N_SLS,stage_time_scheme))
     else
-            allocate(e1_initial_rk_acous(1,1))
-            allocate(e1_force_rk_acous(1,1,1))
+      allocate(e1_initial_rk_acous(1,1))
+      allocate(e1_force_rk_acous(1,1,1))
     endif
   else
     allocate(e1_initial_rk(1,1,1,1))

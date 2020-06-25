@@ -200,6 +200,7 @@
   ! allocate other global arrays
   allocate(coord(NDIM,nglob),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating coord array')
+  coord(:,:) = 0.d0
 
   ! sets the coordinates of the points of the global grid
   found_a_negative_jacobian = .false.

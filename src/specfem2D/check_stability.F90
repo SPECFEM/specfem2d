@@ -37,7 +37,7 @@
 
   use constants, only: IMAIN,STABILITY_THRESHOLD,CUSTOM_REAL,myrank
 
-  use specfem_par, only: timeval,it,NSTEP,GPU_MODE, &
+  use specfem_par, only: current_timeval,it,NSTEP,GPU_MODE, &
                          SIMULATION_TYPE, &
                          ELASTIC_SIMULATION,any_elastic,displ_elastic,b_displ_elastic, &
                          POROELASTIC_SIMULATION,any_poroelastic, &
@@ -77,10 +77,10 @@
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '******************************************************************'
-    if (timeval >= 1.d-3 .and. timeval < 1000.d0) then
-      write(IMAIN,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,timeval,NSTEP
+    if (current_timeval >= 1.d-3 .and. current_timeval < 1000.d0) then
+      write(IMAIN,"('Time step number ',i7,'   t = ',f9.4,' s out of ',i7)") it,current_timeval,NSTEP
     else
-      write(IMAIN,"('Time step number ',i7,'   t = ',1pe13.6,' s out of ',i7)") it,timeval,NSTEP
+      write(IMAIN,"('Time step number ',i7,'   t = ',1pe13.6,' s out of ',i7)") it,current_timeval,NSTEP
     endif
     write(IMAIN,*) '******************************************************************'
     write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it-1)/dble(NSTEP-1)),'% of the total'

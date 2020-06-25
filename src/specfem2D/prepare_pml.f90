@@ -470,14 +470,14 @@
   ! avoid a potential side effect owing to the "if" statements above: this array may be unallocated,
   ! if so we need to allocate a dummy version in order to be able to use that array as an argument
   ! in some subroutine calls below
-  if (.not. allocated(rmemory_fsb_displ_elastic)) allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,1))
-  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic)) allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
-  if (.not. allocated(rmemory_fsb_displ_elastic_LDDRK)) then
+  if (.not. allocated(rmemory_fsb_displ_elastic)) &
+    allocate(rmemory_fsb_displ_elastic(1,NDIM,NGLLX,NGLLZ,1))
+  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic)) &
+    allocate(rmemory_sfb_potential_ddot_acoustic(1,NGLLX,NGLLZ,1))
+  if (.not. allocated(rmemory_fsb_displ_elastic_LDDRK)) &
     allocate(rmemory_fsb_displ_elastic_LDDRK(1,NDIM,NGLLX,NGLLZ,1))
-  endif
-  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic_LDDRK)) then
+  if (.not. allocated(rmemory_sfb_potential_ddot_acoustic_LDDRK)) &
     allocate(rmemory_sfb_potential_ddot_acoustic_LDDRK(1,NGLLX,NGLLZ,1))
-  endif
 
   ! done
   call synchronize_all()

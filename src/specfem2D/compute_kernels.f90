@@ -644,7 +644,7 @@
 
   subroutine compute_kernels_Hessian()
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,APPROXIMATE_HESS_KL
 
   use specfem_par, only: nglob,nspec,ibool,ispec_is_acoustic,ispec_is_elastic, &
                          any_elastic,any_acoustic, &
@@ -661,6 +661,8 @@
   real(kind=CUSTOM_REAL), dimension(nglob) :: rhorho_el_Hessian_temp1, rhorho_el_Hessian_temp2
   integer :: i,j,ispec,iglob
 
+  ! checks if anything to do
+  if (.not. APPROXIMATE_HESS_KL) return
 
   if (.not. GPU_MODE) then
     ! elastic domains

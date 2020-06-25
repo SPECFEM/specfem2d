@@ -148,6 +148,9 @@
                deltat * (-bb_2 * rmemory_potential_acoustic(2,i,j,ispec_PML) + potential_acoustic(iglob))
         rmemory_potential_acoustic(2,i,j,ispec_PML) = rmemory_potential_acoustic(2,i,j,ispec_PML) + &
                BETA_LDDRK(i_stage) * rmemory_potential_acoustic_LDDRK(2,i,j,ispec_PML)
+
+      case default
+        call stop_the_code('PML for RK4 not implement yet in pml_compute_accel_contribution_acoustic()')
       end select
 
       ! material properties

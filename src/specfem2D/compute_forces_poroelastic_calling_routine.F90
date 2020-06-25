@@ -33,7 +33,7 @@
 
   subroutine compute_forces_poroelastic_main()
 
-  use constants, only: USE_PORO_VISCOUS_DAMPING,ALPHA_LDDRK,BETA_LDDRK
+  use constants, only: USE_PORO_VISCOUS_DAMPING
   use specfem_par
 
   implicit none
@@ -121,6 +121,9 @@
   case (3)
     ! Runge-Kutta
     call update_veloc_poroelastic_RK()
+  case (4)
+    ! symplectic PEFRL
+    call update_veloc_poroelastic_symplectic()
   case default
     call stop_the_code('Time stepping scheme not implemented yet for poroelastic case')
   end select
@@ -141,7 +144,7 @@
 
   subroutine compute_forces_poroelastic_main_backward()
 
-  use constants, only: USE_PORO_VISCOUS_DAMPING,ALPHA_LDDRK,BETA_LDDRK
+  use constants, only: USE_PORO_VISCOUS_DAMPING
   use specfem_par
 
   implicit none
@@ -228,6 +231,9 @@
   case (3)
     ! Runge-Kutta
     if (SIMULATION_TYPE == 3) call stop_the_code('RK scheme for poroelastic kernel simulation not implemented yet')
+  case (4)
+    ! symplectic PEFRL
+    call update_veloc_poroelastic_symplectic_backward()
   case default
     call stop_the_code('Time stepping scheme not implemented yet for poroelastic case')
   end select

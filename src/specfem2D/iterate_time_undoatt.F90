@@ -98,15 +98,13 @@
   ! safety checks
   if (GPU_MODE .and. ATTENUATION_VISCOELASTIC) call exit_MPI(myrank,'for undo_attenuation, &
                                               & GPU_MODE does not support ATTENUATION_VISCOELASTIC')
-  if (time_stepping_scheme /= 1) call exit_MPI(myrank,'for undo_attenuation, only Newmark scheme has implemented ')
-  if (any_poroelastic) call exit_MPI(myrank,'undo_attenuation has not implemented for poroelastic simulation yet')
+  if (any_poroelastic) call exit_MPI(myrank,'undo_attenuation is not implemented for poroelastic simulation yet')
   if (NOISE_TOMOGRAPHY /= 0) call exit_MPI(myrank,'for undo_attenuation, NOISE_TOMOGRAPHY is not supported')
   if (AXISYM) call exit_MPI(myrank,'Just axisymmetric FORWARD simulations are possible so far')
   if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
     call exit_MPI(myrank,'for undo_attenuation with viscoacousticity, &
                  & USE_A_STRONG_FORMULATION_FOR_E1 has to be set to true (in setup/constants.h)')
   if (NOISE_TOMOGRAPHY == 3) call stop_the_code('Undo_attenuation for noise kernels not implemented yet')
-
 
   ! number of time subsets for time loop
   NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
@@ -220,23 +218,66 @@
       ! subset loop
       ! We don't compute the forward reconstructed wavefield in the loop below
       compute_b_wavefield = .false.
+
       do it_of_this_subset = 1, it_subset_end
 
         it = it + 1
         ! compute current time
-        timeval = (it-1) * deltat
+        current_timeval = (it-1) * deltat
 
         ! display time step and max of norm of displacement
         if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) call check_stability()
 
         do i_stage = 1, stage_time_scheme ! is equal to 1 if Newmark because only one stage then
-          ! update_displacement_newmark
-          if (GPU_MODE) then
-            if (any_acoustic) call update_displacement_newmark_GPU_acoustic(compute_b_wavefield)
-          else
-            call update_displ_acoustic_forward()
-          endif
-          call update_displ_elastic_forward()
+
+          ! update displacement
+          select case(time_stepping_scheme)
+          case (1)
+            ! Newmark
+            if (any_acoustic) then
+              if (GPU_MODE) then
+                call update_displacement_newmark_GPU_acoustic(compute_b_wavefield)
+              else
+                call update_displ_acoustic_forward()
+              endif
+            endif
+            if (any_elastic) then
+              call update_displ_elastic_forward()
+            endif
+            if (any_poroelastic) then
+              call update_displ_poroelastic_forward()
+            endif
+
+          case (2,3)
+            ! LDDRK, RK4
+            if (any_acoustic) then
+              if (.not. GPU_MODE) potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+            endif
+            if (any_elastic) then
+              if (.not. GPU_MODE) accel_elastic(:,:) = 0._CUSTOM_REAL
+            endif
+            if (any_poroelastic) then
+              if (.not. GPU_MODE) then
+                accels_poroelastic(:,:) = 0._CUSTOM_REAL
+                accelw_poroelastic(:,:) = 0._CUSTOM_REAL
+              endif
+            endif
+
+          case (4)
+            ! symplectic PEFRL
+            if (any_acoustic) then
+              call update_displ_symplectic_acoustic_forward()
+            endif
+            if (any_elastic) then
+              call update_displ_symplectic_elastic_forward()
+            endif
+            if (any_poroelastic) then
+              call update_displ_symplectic_poroelastic_forward()
+            endif
+
+          case default
+            call stop_the_code('Error time scheme for update displacement not implemented yet in iterate_time_undoatt()')
+          end select
 
           ! acoustic domains
           if (any_acoustic) then
@@ -298,14 +339,49 @@
         it = it + 1
         ! We compute the forward reconstructed wavefield first
         compute_b_wavefield = .true.
+
         do i_stage = 1, stage_time_scheme
           ! backward_inner_loop
-          ! update_displacement_newmark
-          if (GPU_MODE) then
-            if (any_acoustic) call update_displacement_newmark_GPU_acoustic(compute_b_wavefield)
-          else
-            call update_displ_Newmark_backward()
-          endif
+          ! update displacement
+          select case(time_stepping_scheme)
+          case (1)
+            ! Newmark
+            if (GPU_MODE) then
+              if (any_acoustic) call update_displacement_newmark_GPU_acoustic(compute_b_wavefield)
+            else
+              call update_displ_Newmark_backward()
+            endif
+
+          case (2,3)
+            ! LDDRK, RK4
+            if (any_acoustic) then
+              if (.not. GPU_MODE) b_potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+            endif
+            if (any_elastic) then
+              if (.not. GPU_MODE) b_accel_elastic(:,:) = 0._CUSTOM_REAL
+            endif
+            if (any_poroelastic) then
+              if (.not. GPU_MODE) then
+                b_accels_poroelastic(:,:) = 0._CUSTOM_REAL
+                b_accelw_poroelastic(:,:) = 0._CUSTOM_REAL
+              endif
+            endif
+
+          case (4)
+            ! symplectic PEFRL
+            if (any_acoustic) then
+              call update_displ_symplectic_acoustic_backward()
+            endif
+            if (any_elastic) then
+              call update_displ_symplectic_elastic_backward()
+            endif
+            if (any_poroelastic) then
+              call update_displ_symplectic_poroelastic_backward()
+            endif
+
+          case default
+            call stop_the_code('Error time scheme for update displacement not implemented yet in iterate_time_undoatt()')
+          end select
 
           ! acoustic domains
           if (any_acoustic) then
@@ -380,7 +456,7 @@
         endif ! mod(it,NSTEP_BETWEEN_COMPUTE_KERNELS) == 0
 
         ! compute current time
-        timeval = (it-1) * deltat
+        current_timeval = (it-1) * deltat
 
         ! display time step and max of norm of displacement
         if ((.not. GPU_MODE) .and. mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
@@ -389,14 +465,56 @@
 
         ! we only compute the adjoint wavefield on the next loop
         compute_b_wavefield = .false.
+
         do i_stage = 1, stage_time_scheme
           ! adjoint
-          ! update_displacement_newmark
-          if (GPU_MODE) then
-            if (any_acoustic) call update_displacement_newmark_GPU_acoustic(compute_b_wavefield)
-          else
-            call update_displ_acoustic_forward()
-          endif
+          ! update displacement
+          select case(time_stepping_scheme)
+          case (1)
+            ! Newmark
+            if (any_acoustic) then
+              if (GPU_MODE) then
+                call update_displacement_newmark_GPU_acoustic(compute_b_wavefield)
+              else
+                call update_displ_acoustic_forward()
+              endif
+            endif
+            if (any_elastic) then
+              call update_displ_elastic_forward()
+            endif
+            if (any_poroelastic) then
+              call update_displ_poroelastic_forward()
+            endif
+          case (2,3)
+            ! LDDRK, RK4
+            if (any_acoustic) then
+              if (.not. GPU_MODE) potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+            endif
+            if (any_elastic) then
+              if (.not. GPU_MODE) accel_elastic(:,:) = 0._CUSTOM_REAL
+            endif
+            if (any_poroelastic) then
+              if (.not. GPU_MODE) then
+                accels_poroelastic(:,:) = 0._CUSTOM_REAL
+                accelw_poroelastic(:,:) = 0._CUSTOM_REAL
+              endif
+            endif
+
+          case (4)
+            ! symplectic PEFRL
+            if (any_acoustic) then
+              call update_displ_symplectic_acoustic_forward()
+            endif
+            if (any_elastic) then
+              call update_displ_symplectic_elastic_forward()
+            endif
+            if (any_poroelastic) then
+              call update_displ_symplectic_poroelastic_forward()
+            endif
+
+          case default
+            call stop_the_code('Error time scheme for update displacement not implemented yet in iterate_time_undoatt()')
+          end select
 
           if (any_acoustic) then
             !ZN here we remove the trick introduced by Luoyang to stabilized the adjoint simulation
@@ -404,8 +522,6 @@
             !ZN the final goal should remove the *adj_coupling
             potential_acoustic_adj_coupling(:) = potential_acoustic(:)
           endif
-
-          call update_displ_elastic_forward()
 
 !daniel TODO: not sure if the following below is correct or needs to switch orders
 !             usually one computes first the updated pressure and afterwards computes the elastic domain

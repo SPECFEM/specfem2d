@@ -33,7 +33,8 @@
 
   subroutine initialize_simulation()
 
-  use constants, only: IMAIN,ISTANDARD_OUTPUT,SIZE_REAL,NSTAGE,OUTPUT_FILES
+  use constants, only: IMAIN,ISTANDARD_OUTPUT,SIZE_REAL,OUTPUT_FILES, &
+    NSTAGE_LDDRK,NSTAGE_RK4,NSTAGE_SYMPLECTIC
   use specfem_par
 
   implicit none
@@ -147,6 +148,7 @@
   ! local to global indexing
   allocate(ibool(NGLLX,NGLLZ,nspec),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating ibool array')
+  ibool(:,:,:) = 0
 
   ! mesh arrays
   allocate(xix(NGLLX,NGLLZ,nspec), &
@@ -155,6 +157,11 @@
            gammaz(NGLLX,NGLLZ,nspec), &
            jacobian(NGLLX,NGLLZ,nspec),stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating mesh arrays for databases')
+  xix(:,:,:) = 0.0_CUSTOM_REAL
+  xiz(:,:,:) = 0.0_CUSTOM_REAL
+  gammax(:,:,:) = 0.0_CUSTOM_REAL
+  gammaz(:,:,:) = 0.0_CUSTOM_REAL
+  jacobian(:,:,:) = 0.0_CUSTOM_REAL
 
   ! domain flags
   allocate(ispec_is_elastic(nspec), &
@@ -181,16 +188,22 @@
 
   ! time scheme
   ! defines number of stages of chosen time stepping scheme
-  if (time_stepping_scheme == 1) then
+  select case (time_stepping_scheme)
+  case (1)
     ! Newmark
     stage_time_scheme = 1
-  else if (time_stepping_scheme == 2) then
+  case (2)
     ! LDDRK
-    stage_time_scheme = NSTAGE ! 6
-  else if (time_stepping_scheme == 3) then
+    stage_time_scheme = NSTAGE_LDDRK ! 6
+  case (3)
     ! Runge-Kutta
-    stage_time_scheme = 4
-  endif
+    stage_time_scheme = NSTAGE_RK4   ! 4
+  case (4)
+    ! symplectic PEFRL
+    stage_time_scheme = NSTAGE_SYMPLECTIC ! 4
+  case default
+    call stop_the_code('Error invalid time stepping scheme value')
+  end select
 
   ! converts percentage
   cutsnaps = cutsnaps / 100.d0
@@ -268,18 +281,52 @@
     call exit_MPI(myrank,'wrong number of MPI processes, must always have NPROC == nproc_read_from_database')
   endif
 
-  ! time scheme
-  if (SIMULATION_TYPE == 3 .and. (time_stepping_scheme == 2 .or. time_stepping_scheme == 3)) &
-    call stop_the_code('RK and LDDRK time scheme not supported for adjoint inversion')
+  ! time scheme (non-)feature checks
+  select case(time_stepping_scheme)
+  case (1)
+    ! full support
+    continue
 
-  ! standard RK scheme
-  if (time_stepping_scheme == 3) then
-    if (NPROC > 1) &
-      call stop_the_code('MPI support for standard Runge-Kutta scheme is not implemented yet')
+  case (2)
+    ! LDDRK
+    if (SIMULATION_TYPE == 3) &
+      call stop_the_code('Time scheme not supported for adjoint inversion')
+    if (USE_ENFORCE_FIELDS) &
+      call stop_the_code('USE_ENFORCE_FIELDS is not supported yet for time scheme LDDRK')
+    if (GPU_MODE) &
+      call stop_the_code('GPU_MODE is not supported yet for time scheme LDDRK')
+    if (NO_BACKWARD_RECONSTRUCTION) &
+      call stop_the_code('NO_BACKWARD_RECONSTRUCTION is not supported yet for time scheme LDDRK')
 
+  case (3)
+    ! RK4
     if (PML_BOUNDARY_CONDITIONS) &
-      call stop_the_code('PML boundary conditions not implemented with standard Runge Kutta scheme yet')
-  endif
+      call stop_the_code('PML boundary conditions not implemented with standard Runge-Kutta scheme yet')
+    if (SIMULATION_TYPE == 3) &
+      call stop_the_code('Time scheme not supported for adjoint inversion')
+    if (USE_ENFORCE_FIELDS) &
+      call stop_the_code('USE_ENFORCE_FIELDS is not supported yet for time scheme RK4')
+    if (GPU_MODE) &
+      call stop_the_code('GPU_MODE is not supported yet for time scheme RK4')
+    if (NO_BACKWARD_RECONSTRUCTION) &
+      call stop_the_code('NO_BACKWARD_RECONSTRUCTION is not supported yet for time scheme RK4')
+
+  case (4)
+    ! symplectic PEFRL
+    if (PML_BOUNDARY_CONDITIONS) &
+      call stop_the_code('PML boundary conditions not implemented with symplectic time scheme yet')
+    if (SIMULATION_TYPE == 3) &
+      call stop_the_code('Time scheme not supported for adjoint inversion')
+    if (USE_ENFORCE_FIELDS) &
+      call stop_the_code('USE_ENFORCE_FIELDS is not supported yet for time scheme symplectic')
+    if (GPU_MODE) &
+      call stop_the_code('GPU_MODE is not supported yet for time scheme symplectic')
+    if (NO_BACKWARD_RECONSTRUCTION) &
+      call stop_the_code('NO_BACKWARD_RECONSTRUCTION is not supported yet for time scheme symplectic')
+
+  case default
+    call stop_the_code('Invalid time scheme, please choose between 1==Newmark, 2==LDDRK, 3==RK4, 4==symplectic')
+  end select
 
   ! Bielak parameter setup
   if (add_Bielak_conditions .and. .not. initialfield) &

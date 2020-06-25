@@ -372,7 +372,9 @@
         ! only do this once on a global node
         mask_ibool(iglob) = .true.
 
-        if (time_stepping_scheme == 1) then
+        select case(time_stepping_scheme)
+        case (1)
+          ! Newmark
           veloc_elastic(1,iglob) = veloc_elastic(1,iglob) - deltatover2*accel_elastic(1,iglob)
           veloc_elastic(2,iglob) = veloc_elastic(2,iglob) - deltatover2*accel_elastic(2,iglob)
 
@@ -408,7 +410,10 @@
           accelw_poroelastic(2,iglob) = 0._CUSTOM_REAL
           velocw_poroelastic(1,iglob) = 0._CUSTOM_REAL
           velocw_poroelastic(2,iglob) = 0._CUSTOM_REAL
-        endif
+
+        case default
+          call stop_the_code('Error time scheme not implemented yet in coupling_poro_viscoelastic.f90')
+        end select
 
 !         if (time_stepping_scheme == 2) then
 !        recovering original velocities and accelerations on boundaries (elastic side)

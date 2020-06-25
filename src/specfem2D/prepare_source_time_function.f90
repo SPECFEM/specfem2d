@@ -35,7 +35,9 @@
 
   ! prepares source_time_function array
 
-  use constants, only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,SOURCE_DECAY_MIMIC_TRIANGLE,SOURCE_IS_MOVING,C_LDDRK,OUTPUT_FILES
+  use constants, only: IMAIN,ZERO,ONE,TWO,HALF,PI,QUARTER,OUTPUT_FILES, &
+                       SOURCE_DECAY_MIMIC_TRIANGLE,SOURCE_IS_MOVING, &
+                       C_LDDRK,C_RK4,ALPHA_SYMPLECTIC
 
   use specfem_par, only: NSTEP,NSOURCES,source_time_function, &
                          time_function_type,name_of_source_file,burst_band_width,f0_source,tshift_src,factor, &
@@ -52,9 +54,6 @@
   integer :: it,i_source,ier,num_file
   integer :: i_stage
 
-  ! RK
-  double precision, dimension(4) :: c_RK
-
   character(len=150) :: error_msg1 = 'Error opening the file that contains the external source: '
   character(len=250) :: error_msg
   logical :: trick_ok
@@ -67,7 +66,44 @@
 
   ! user output
   if (myrank == 0) then
+    write(IMAIN,*)
     write(IMAIN,*) 'Preparing source time function'
+    call flush_IMAIN()
+  endif
+
+  ! Newmark: time_stepping_scheme == 1
+  ! LDDRK  : time_stepping_scheme == 2
+  ! RK     : time_stepping_scheme == 3
+  ! PEFRL  : time_stepping_scheme == 4
+  ! user output
+  select case(time_stepping_scheme)
+  case (1)
+    ! Newmark
+    if (myrank == 0) write(IMAIN,*) '  time stepping scheme:   Newmark'
+  case (2)
+    ! LDDRK
+    if (myrank == 0) write(IMAIN,*) '  time stepping scheme:   LDDRK'
+  case (3)
+    ! RK4
+    if (myrank == 0) write(IMAIN,*) '  time stepping scheme:   RK4'
+  case (4)
+    ! symplectic PEFRL
+    if (myrank == 0) write(IMAIN,*) '  time stepping scheme:   symplectic PEFRL'
+  case default
+    call stop_the_code('Error invalid time stepping scheme for STF')
+  end select
+
+  if (myrank == 0) then
+    write(IMAIN,*) '  time stepping stages: ',stage_time_scheme
+    write(IMAIN,*) '  time step size      : ',sngl(deltat)
+    write(IMAIN,*)
+    write(IMAIN,*) '  number of time steps: ',NSTEP
+    if (initialfield) then
+      write(IMAIN,*) '  initital field      : ',initialfield
+    else
+      write(IMAIN,*) '  number of sources   : ',NSOURCES
+    endif
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
@@ -85,19 +121,6 @@
   ! initializes stf array
   source_time_function(:,:,:) = 0.d0
 
-  ! checks time scheme
-  ! Newmark: time_stepping_scheme == 1
-  ! LDDRK  : time_stepping_scheme == 2
-  ! RK     : time_stepping_scheme == 3
-  if (time_stepping_scheme < 1 .or. time_stepping_scheme > 3) call stop_the_code('Error invalid time stepping scheme for STF')
-
-  ! RK time scheme constants
-  if (time_stepping_scheme == 3) then
-    c_RK(1) = 0.0d0 * deltat
-    c_RK(2) = 0.5d0 * deltat
-    c_RK(3) = 0.5d0 * deltat
-    c_RK(4) = 1.0d0 * deltat
-  endif
 
   ! user output
   if (myrank == islice_selected_source(1)) then
@@ -160,10 +183,24 @@
           timeval = dble(it-1)*deltat
         case (2)
           ! LDDRK: Low-Dissipation and low-dispersion Runge-Kutta
-          timeval = dble(it-1)*deltat + dble(C_LDDRK(i_stage))*deltat
+          ! note: the LDDRK scheme updates displacement after the stiffness computations and
+          !       after adding boundary/coupling/source terms.
+          !       thus, at each time loop step it, displ(:) is still at (n) and not (n+1) like for the Newmark scheme.
+          !       we therefore at an additional -DT to have the corresponding timing for the source.
+          timeval = dble(it-1-1)*deltat + dble(C_LDDRK(i_stage))*deltat
         case (3)
           ! RK: Runge-Kutta
-          timeval = dble(it-1)*deltat + c_RK(i_stage)*deltat
+          ! note: similar like LDDRK above, displ(n+1) will be determined after stiffness/source/.. computations.
+          !       thus, adding an additional -DT to have the same timing in seismogram as Newmark
+          timeval = dble(it-1-1)*deltat + dble(C_RK4(i_stage))*deltat
+        case (4)
+          ! symplectic PEFRL
+          ! note: similar like LDDRK above, displ(n+1) will be determined after final stage of stiffness/source/.. computations.
+          !       thus, adding an additional -DT to have the same timing in seismogram as Newmark
+          !
+          !       for symplectic schemes, the current stage time step size is the sum of all previous and current coefficients
+          !          sum( ALPHA_SYMPLECTIC(1:i_stage) ) * deltat
+          timeval = dble(it-1-1)*deltat + dble(sum(ALPHA_SYMPLECTIC(1:i_stage))) * deltat
         case default
           call exit_MPI(myrank,'Error invalid time stepping scheme chosen, please check...')
         end select

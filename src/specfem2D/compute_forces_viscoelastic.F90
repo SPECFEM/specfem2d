@@ -36,7 +36,7 @@
 
   ! compute forces for the elastic elements
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,NDIM, &
-    ONE,TWO,PI,TINYVAL,FOUR_THIRDS,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
+    ONE,TWO,PI,TINYVAL,FOUR_THIRDS
 
   use specfem_par, only: nglob,assign_external_model,P_SV, &
                          ATTENUATION_VISCOELASTIC,nspec_ATT_el,N_SLS, &

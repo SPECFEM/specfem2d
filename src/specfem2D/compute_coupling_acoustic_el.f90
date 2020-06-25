@@ -120,14 +120,15 @@
             call stop_the_code('PML do not support a fluid-solid boundary in corner PML region')
           endif
 
-          if (time_stepping_scheme == 1) then
+          select case(time_stepping_scheme)
+          case (1)
             ! Newmark
             rmemory_fsb_displ_elastic(1,1,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,1,i,j,inum) + &
                    coef1_xz_1 * displ_elastic(1,iglob) + coef2_xz_1 * displ_elastic_old(1,iglob)
             rmemory_fsb_displ_elastic(1,2,i,j,inum) = coef0_xz_1 * rmemory_fsb_displ_elastic(1,2,i,j,inum) + &
                    coef1_xz_1 * displ_elastic(2,iglob) + coef2_xz_1 * displ_elastic_old(2,iglob)
 
-          else if (time_stepping_scheme == 2) then
+          case (2)
             ! LDDRK
             rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) = &
                    ALPHA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,1,i,j,inum) + &
@@ -140,7 +141,10 @@
                   deltat * ( - bb_xz_1 * rmemory_fsb_displ_elastic(1,2,i,j,inum) + displ_elastic(2,iglob) )
             rmemory_fsb_displ_elastic(1,2,i,j,inum) = rmemory_fsb_displ_elastic(1,2,i,j,inum) + &
                    BETA_LDDRK(i_stage) * rmemory_fsb_displ_elastic_LDDRK(1,2,i,j,inum)
-          endif
+
+          case default
+            call stop_the_code('PML for RK4 not implemented yet in compute_coupling_acoustic_el()')
+          end select
 
           displ_x = A8 * displ_elastic(1,iglob) + A9 * rmemory_fsb_displ_elastic(1,1,i,j,inum)
           displ_z = A8 * displ_elastic(2,iglob) + A9 * rmemory_fsb_displ_elastic(1,2,i,j,inum)

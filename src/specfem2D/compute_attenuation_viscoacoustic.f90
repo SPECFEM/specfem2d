@@ -388,7 +388,7 @@
   subroutine update_memory_var_acous_weak_form(dot_e1)
 
   ! compute forces for the elastic elements
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK,ZERO
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK,ZERO,ALPHA_RK4,BETA_RK4
 
   use specfem_par, only: N_SLS, &
                          time_stepping_scheme,i_stage,deltat, &
@@ -409,44 +409,34 @@
   ! loop over relaxation mechanisms
   do i_sls = 1,N_SLS
 
-  ! Time update
-  select case (time_stepping_scheme)
+    ! Time update
+    select case (time_stepping_scheme)
+    case (1)
+      ! Newmark
+      ! Set newmark coefficients
+      if (it == 1 .and. i_stage == 1) then
+        ! loop over spectral elements
+        do ispec = 1,nspec
+           if (.not. ispec_is_acoustic(ispec)) cycle
 
-        case (1)
+           if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS &
+                      .and. (.not. ispec_is_PML(ispec)))) then
+                do j = 1,NGLLZ
+                  do i = 1,NGLLX
+                  iglob = ibool(i,j,ispec)
 
-          ! Newmark
-          ! Set newmark coefficients
-          if (it == 1 .and. i_stage == 1) then
+                  phinu1    = phi_nu1(i,j,ispec,i_sls)
+                  tauinvnu1 = inv_tau_sigma_nu1(i,j,ispec,i_sls)
+                  temp      = exp(- 0.5d0 * tauinvnu1 * deltat)
+                  coef1     = (1.d0 - temp) / tauinvnu1
 
-          ! loop over spectral elements
-          do ispec = 1,nspec
-
-             if (.not. ispec_is_acoustic(ispec)) cycle
-
-             if ((.not. PML_BOUNDARY_CONDITIONS) .or. (PML_BOUNDARY_CONDITIONS &
-                        .and. (.not. ispec_is_PML(ispec)))) then
-
-                  do j = 1,NGLLZ
-                    do i = 1,NGLLX
-
-                    iglob = ibool(i,j,ispec)
-
-                    phinu1    = phi_nu1(i,j,ispec,i_sls)
-                    tauinvnu1 = inv_tau_sigma_nu1(i,j,ispec,i_sls)
-                    temp      = exp(- 0.5d0 * tauinvnu1 * deltat)
-                    coef1     = (1.d0 - temp) / tauinvnu1
-
-                    A_newmark_e1(iglob,i_sls) = temp
-                    B_newmark_e1(iglob,i_sls) = phinu1 * coef1
-
-                    enddo
+                  A_newmark_e1(iglob,i_sls) = temp
+                  B_newmark_e1(iglob,i_sls) = phinu1 * coef1
                   enddo
-
-             endif
-
-          enddo
-
-          endif
+                enddo
+           endif
+        enddo
+      endif
 
 ! update the memory variables using a convolution or using a differential equation
 ! From Zhinan Xie and Dimitri Komatitsch:
@@ -454,51 +444,51 @@
 ! which may result in a in stiff ordinary differential equation to solve;
 ! in such a case, resorting to the convolution formulation is better.
 !! DK DK inlined this for speed            call compute_coef_convolution(tauinvnu1,deltat,coef0,coef1,coef2)
-            !temp = exp(- 0.5d0 * tauinvnu1 * deltat)
-            !coef1 = (1.d0 - temp) / tauinvnu1
+      !temp = exp(- 0.5d0 * tauinvnu1 * deltat)
+      !coef1 = (1.d0 - temp) / tauinvnu1
 
-            e1_acous(:,i_sls) = (A_newmark_e1(:,i_sls)**2) * e1_acous(:,i_sls) &
-                + B_newmark_e1(:,i_sls) * (dot_e1(:,1) + A_newmark_e1(:,i_sls) * dot_e1_old(:,1))
+      e1_acous(:,i_sls) = (A_newmark_e1(:,i_sls)**2) * e1_acous(:,i_sls) &
+          + B_newmark_e1(:,i_sls) * (dot_e1(:,1) + A_newmark_e1(:,i_sls) * dot_e1_old(:,1))
 
-            dot_e1_old = dot_e1
+      dot_e1_old = dot_e1
 
-        case (2)
-          ! LDDRK
-          ! update e1, e11, e13 in ADE formation with fourth-order LDDRK scheme
-          e1_LDDRK_acous(:,i_sls) = ALPHA_LDDRK(i_stage) * e1_LDDRK_acous(:,i_sls) + deltat * dot_e1(:,i_sls)
+    case (2)
+      ! LDDRK
+      ! update e1, e11, e13 in ADE formation with fourth-order LDDRK scheme
+      e1_LDDRK_acous(:,i_sls) = ALPHA_LDDRK(i_stage) * e1_LDDRK_acous(:,i_sls) + deltat * dot_e1(:,i_sls)
 
-          if (i_stage == 1 .and. it == 1 .and. (.not. initialfield) .and. .false.) then
-            !! DK DK this should be vectorized
-            e1_acous_temp(:,i_sls) = e1_acous_temp(:,i_sls) + &
-                                     BETA_LDDRK(i_stage) * e1_LDDRK_acous(:,i_sls)
-            e1_acous(:,i_sls) = e1_acous_temp(:,i_sls)
-          else
-            e1_acous(:,i_sls) = e1_acous(:,i_sls) + BETA_LDDRK(i_stage) * e1_LDDRK_acous(:,i_sls)
-          endif
+      if (i_stage == 1 .and. it == 1 .and. (.not. initialfield) .and. .false.) then
+        !! DK DK this should be vectorized
+        e1_acous_temp(:,i_sls) = e1_acous_temp(:,i_sls) + &
+                                 BETA_LDDRK(i_stage) * e1_LDDRK_acous(:,i_sls)
+        e1_acous(:,i_sls) = e1_acous_temp(:,i_sls)
+      else
+        e1_acous(:,i_sls) = e1_acous(:,i_sls) + BETA_LDDRK(i_stage) * e1_LDDRK_acous(:,i_sls)
+      endif
 
-        case (3)
-          ! Runge-Kutta
-          ! update e1, e11, e13 in ADE formation with classical fourth-order Runge-Kutta scheme
-          e1_force_RK_acous(:,i_sls,i_stage) = deltat * dot_e1(:,i_sls)
+    case (3)
+      ! Runge-Kutta
+      ! initial field
+      if (i_stage == 1) e1_initial_rk_acous(:,i_sls) = e1_acous(:,i_sls)
 
-          if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
-            if (i_stage == 1) weight_rk = 0.5_CUSTOM_REAL
-            if (i_stage == 2) weight_rk = 0.5_CUSTOM_REAL
-            if (i_stage == 3) weight_rk = 1._CUSTOM_REAL
+      ! update e1, e11, e13 in ADE formation with classical fourth-order Runge-Kutta scheme
+      e1_force_RK_acous(:,i_sls,i_stage) = dot_e1(:,i_sls)
 
-            if (i_stage == 1) e1_initial_rk_acous(:,i_sls) = e1_acous(:,i_sls)
-            e1_acous(:,i_sls) = e1_initial_rk_acous(:,i_sls) &
-                + weight_rk * e1_force_RK_acous(:,i_sls,i_stage)
-          else if (i_stage == 4) then
-            e1_acous(:,i_sls) = e1_initial_rk_acous(:,i_sls) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
-                                  (e1_force_RK_acous(:,i_sls,1) + 2._CUSTOM_REAL * e1_force_RK_acous(:,i_sls,2) + &
-                                   2._CUSTOM_REAL * e1_force_RK_acous(:,i_sls,3) + e1_force_RK_acous(:,i_sls,4))
-          endif
+      if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
+        ! note: this prepare the fields for the next stage, i.e., used at istage+1
+        weight_rk = ALPHA_RK4(i_stage+1) * deltat
+        e1_acous(:,i_sls) = e1_initial_rk_acous(:,i_sls) + weight_rk * e1_force_RK_acous(:,i_sls,i_stage)
+      else if (i_stage == 4) then
+        ! final update
+        e1_acous(:,i_sls) = e1_initial_rk_acous(:,i_sls) + deltat * &
+                            ( BETA_RK4(1) * e1_force_RK_acous(:,i_sls,1) + BETA_RK4(2) * e1_force_RK_acous(:,i_sls,2) + &
+                              BETA_RK4(3) * e1_force_RK_acous(:,i_sls,3) + BETA_RK4(4) * e1_force_RK_acous(:,i_sls,4))
+      endif
 
-        case default
-          call stop_the_code('Time stepping scheme not implemented yet in viscoacoustic attenuation update')
+    case default
+      call stop_the_code('Time stepping scheme not implemented yet in viscoacoustic attenuation update')
 
-  end select
+    end select
 
   enddo ! end loop over all relaxation mechanisms
 
@@ -514,7 +504,7 @@
   ! and get the attenuation contribution
 
   ! compute forces for the elastic elements
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,TWO,ALPHA_LDDRK,BETA_LDDRK,C_LDDRK,ALPHA_RK4,BETA_RK4
 
   use specfem_par, only: PML_BOUNDARY_CONDITIONS,N_SLS,nspec_ATT_ac, &
                          ispec_is_PML, &
@@ -566,10 +556,8 @@
   ! Anisotropic-medium PML for vector FETD with modified basis functions,
   ! IEEE Transactions on Antennas and Propagation, vol. 54, no. 1, (2006)
   select case (time_stepping_scheme)
-
   case (1)
-  ! Newmark
-
+    ! Newmark
 ! update the memory variables using a convolution or using a differential equation
 ! From Zhinan Xie and Dimitri Komatitsch:
 ! For cases in which a value of tau_sigma is small, then its inverse is large,
@@ -597,21 +585,21 @@
 
   case (3)
     ! Runge-Kutta
+    ! initial field
+    if (i_stage == 1) e1_initial_rk_acous(iglob,:) = e1_acous(iglob,:)
+
     ! update e1, e11, e13 in ADE formation with classical fourth-order Runge-Kutta scheme
-    e1_force_RK_acous(iglob,:,i_stage) = deltat * (sum_forces * phinu1 - e1_acous(iglob,:) * tauinvnu1)
+    e1_force_RK_acous(iglob,:,i_stage) = sum_forces * phinu1 - e1_acous(iglob,:) * tauinvnu1
 
     if (i_stage == 1 .or. i_stage == 2 .or. i_stage == 3) then
-      if (i_stage == 1) weight_rk = 0.5_CUSTOM_REAL
-      if (i_stage == 2) weight_rk = 0.5_CUSTOM_REAL
-      if (i_stage == 3) weight_rk = 1._CUSTOM_REAL
-
-      if (i_stage == 1) e1_initial_rk_acous(iglob,:) = e1_acous(iglob,:)
-      e1_acous(iglob,:) = e1_initial_rk_acous(iglob,:) &
-                              + weight_rk * e1_force_RK_acous(iglob,:,i_stage)
+      ! note: this prepare the fields for the next stage, i.e., used at istage+1
+      weight_rk = ALPHA_RK4(i_stage+1) * deltat
+      e1_acous(iglob,:) = e1_initial_rk_acous(iglob,:) + weight_rk * e1_force_RK_acous(iglob,:,i_stage)
     else if (i_stage == 4) then
-      e1_acous(iglob,:) = e1_initial_rk_acous(iglob,:) + 1._CUSTOM_REAL / 6._CUSTOM_REAL * &
-                             (e1_force_RK_acous(iglob,:,1) + 2._CUSTOM_REAL * e1_force_RK_acous(iglob,:,2) + &
-                              2._CUSTOM_REAL * e1_force_RK_acous(iglob,:,3) + e1_force_RK_acous(iglob,:,4))
+      ! final update
+      e1_acous(iglob,:) = e1_initial_rk_acous(iglob,:) + deltat * &
+                             (BETA_RK4(1) * e1_force_RK_acous(iglob,:,1) + BETA_RK4(2) * e1_force_RK_acous(iglob,:,2) + &
+                              BETA_RK4(3) * e1_force_RK_acous(iglob,:,3) + BETA_RK4(4) * e1_force_RK_acous(iglob,:,4))
     endif
 
     forces_attenuation = sum(e1_acous(iglob,:))

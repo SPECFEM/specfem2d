@@ -53,8 +53,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  setting source parameters...'
-    write(IMAIN,*)
+    write(IMAIN,*) '  Total number of sources: ',NSOURCES
     call flush_IMAIN()
   endif
 
@@ -63,7 +62,9 @@
 
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*) '  Source: ',i_source
+      write(IMAIN,*)
+      write(IMAIN,*) '  setting parameters for source',i_source
+      write(IMAIN,*)
       call flush_IMAIN()
     endif
 
@@ -238,7 +239,7 @@
     endif
   else if (USER_T0 < 0.d0) then
     if (myrank == 0) then
-      write(IMAIN,*) 'error: USER_T0 is negative, must be set zero or positive!'
+      write(IMAIN,*) 'Error: USER_T0 is negative, must be set zero or positive!'
     endif
     call exit_MPI(myrank,'Error negative USER_T0 parameter in constants.h')
   endif

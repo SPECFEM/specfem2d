@@ -135,7 +135,7 @@ subroutine iterate_time()
 
   do it = it_begin,it_end
     ! compute current time
-    timeval = (it-1) * deltat
+    current_timeval = (it-1) * deltat
 
     ! display time step and max of norm of displacement
     if (mod(it,NSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == 5 .or. it == NSTEP) then
@@ -144,11 +144,50 @@ subroutine iterate_time()
 
     do i_stage = 1, stage_time_scheme
 
-      ! updates wavefields using Newmark time scheme
-      ! forward wavefield (acoustic/elastic/poroelastic)
-      call update_displ_Newmark()
-      ! reconstructed/backward wavefields
-      if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call update_displ_Newmark_backward()
+      ! updates wavefields
+      select case(time_stepping_scheme)
+      case (1)
+        ! Newmark time scheme
+        ! forward wavefield (acoustic/elastic/poroelastic)
+        call update_displ_Newmark()
+        ! reconstructed/backward wavefields
+        if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call update_displ_Newmark_backward()
+
+      case (2,3)
+        ! LDDRK, RK4
+        if (any_acoustic) then
+          if (.not. GPU_MODE) then
+            potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+            if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) b_potential_dot_dot_acoustic(:) = 0._CUSTOM_REAL
+          endif
+        endif
+        if (any_elastic) then
+          if (.not. GPU_MODE) then
+            accel_elastic(:,:) = 0._CUSTOM_REAL
+            if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) b_accel_elastic(:,:) = 0._CUSTOM_REAL
+          endif
+        endif
+        if (any_poroelastic) then
+          if (.not. GPU_MODE) then
+            accels_poroelastic(:,:) = 0._CUSTOM_REAL
+            accelw_poroelastic(:,:) = 0._CUSTOM_REAL
+            if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) then
+              b_accels_poroelastic(:,:) = 0._CUSTOM_REAL
+              b_accelw_poroelastic(:,:) = 0._CUSTOM_REAL
+            endif
+          endif
+        endif
+
+      case (4)
+        ! symplectic PEFRL
+        ! forward wavefield (acoustic/elastic/poroelastic)
+        call update_displ_symplectic()
+        ! reconstructed/backward wavefields
+        if (SIMULATION_TYPE == 3 .and. .not. NO_BACKWARD_RECONSTRUCTION) call update_displ_symplectic_backward()
+
+      case default
+        call stop_the_code('Error time scheme not implemente yet in iterate_time()')
+      end select
 
       ! acoustic domains
       if (ACOUSTIC_SIMULATION) then

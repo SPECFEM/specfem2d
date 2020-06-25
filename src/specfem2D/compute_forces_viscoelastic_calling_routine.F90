@@ -33,7 +33,7 @@
 
   subroutine compute_forces_viscoelastic_main()
 
-  use constants, only: SOURCE_IS_MOVING,USE_ENFORCE_FIELDS,ALPHA_LDDRK,BETA_LDDRK
+  use constants, only: SOURCE_IS_MOVING,USE_ENFORCE_FIELDS
   use specfem_par
   use specfem_par_noise
 
@@ -191,6 +191,11 @@
   case (3)
     ! RK
     call update_veloc_elastic_RK()
+  case (4)
+    ! symplectic PEFRL
+    call update_veloc_elastic_symplectic()
+  case default
+    call stop_the_code('Time scheme not implemented yet in compute_forces_viscoelastic_main()')
   end select
 
   end subroutine compute_forces_viscoelastic_main
@@ -330,6 +335,9 @@
   case (1)
     ! Newmark
     call update_veloc_elastic_Newmark_backward()
+  case (4)
+    ! symplectic PEFRL
+    call update_veloc_elastic_symplectic_backward()
   case default
     call stop_the_code('Time stepping scheme not implemented yet in viscoelastic backward routine')
   end select

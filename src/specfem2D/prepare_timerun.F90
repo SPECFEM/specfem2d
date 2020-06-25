@@ -1066,73 +1066,74 @@
   endif
 
   ! safety checks
-  if (.not. any_elastic) &
-    call stop_the_code('Sorry, initial field (plane wave source) only implemented for elastic simulations so far...')
-  if (any_acoustic .or. any_poroelastic) &
+  if (any_poroelastic) &
     call stop_the_code('Initial field currently implemented for purely elastic simulation only')
 
   ! Calculation of the initial field for a plane wave
-  if (any_elastic) then
+  ! calculates initial plane wave coefficients
+  call prepare_initial_field(cploc,csloc)
 
-    ! calculates initial plane wave coefficients
-    call prepare_initial_field(cploc,csloc)
+  ! special case for Rayleigh waves, SV waves above critical angle
+  if (over_critical_angle) then
 
-    ! special case for Rayleigh waves, SV waves above critical angle
-    if (over_critical_angle) then
+    ! allocates boundaries
+    allocate(left_bound(num_abs_boundary_faces*NGLLX))
+    allocate(right_bound(num_abs_boundary_faces*NGLLX))
+    allocate(bot_bound(num_abs_boundary_faces*NGLLZ))
 
-      ! allocates boundaries
-      allocate(left_bound(num_abs_boundary_faces*NGLLX))
-      allocate(right_bound(num_abs_boundary_faces*NGLLX))
-      allocate(bot_bound(num_abs_boundary_faces*NGLLZ))
+    ! sets up boundary points
+    call prepare_initial_field_paco()
 
-      ! sets up boundary points
-      call prepare_initial_field_paco()
+    allocate(v0x_left(count_left,NSTEP))
+    allocate(v0z_left(count_left,NSTEP))
+    allocate(t0x_left(count_left,NSTEP))
+    allocate(t0z_left(count_left,NSTEP))
 
-      allocate(v0x_left(count_left,NSTEP))
-      allocate(v0z_left(count_left,NSTEP))
-      allocate(t0x_left(count_left,NSTEP))
-      allocate(t0z_left(count_left,NSTEP))
+    allocate(v0x_right(count_right,NSTEP))
+    allocate(v0z_right(count_right,NSTEP))
+    allocate(t0x_right(count_right,NSTEP))
+    allocate(t0z_right(count_right,NSTEP))
 
-      allocate(v0x_right(count_right,NSTEP))
-      allocate(v0z_right(count_right,NSTEP))
-      allocate(t0x_right(count_right,NSTEP))
-      allocate(t0z_right(count_right,NSTEP))
+    allocate(v0x_bot(count_bottom,NSTEP))
+    allocate(v0z_bot(count_bottom,NSTEP))
+    allocate(t0x_bot(count_bottom,NSTEP))
+    allocate(t0z_bot(count_bottom,NSTEP))
 
-      allocate(v0x_bot(count_bottom,NSTEP))
-      allocate(v0z_bot(count_bottom,NSTEP))
-      allocate(t0x_bot(count_bottom,NSTEP))
-      allocate(t0z_bot(count_bottom,NSTEP))
+    ! call Paco's routine to compute in frequency and convert to time by Fourier transform
+    call paco_beyond_critical(anglesource(1),f0_source(1), &
+                              QKappa_attenuationcoef(1),source_type(1), &
+                              left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom), &
+                              count_left,count_right,count_bottom, &
+                              x_source(1),cploc,csloc)
 
-      ! call Paco's routine to compute in frequency and convert to time by Fourier transform
-      call paco_beyond_critical(anglesource(1),f0_source(1), &
-                                QKappa_attenuationcoef(1),source_type(1), &
-                                left_bound(1:count_left),right_bound(1:count_right),bot_bound(1:count_bottom), &
-                                count_left,count_right,count_bottom, &
-                                x_source(1),cploc,csloc)
+    ! frees memory
+    deallocate(left_bound)
+    deallocate(right_bound)
+    deallocate(bot_bound)
 
-      ! frees memory
-      deallocate(left_bound)
-      deallocate(right_bound)
-      deallocate(bot_bound)
-
-      ! user output
-      if (myrank == 0) then
-        write(IMAIN,*)
-        write(IMAIN,*)  '***********'
-        write(IMAIN,*)  'done calculating the initial wave field'
-        write(IMAIN,*)  '***********'
-        write(IMAIN,*)
-        call flush_IMAIN()
-      endif
-
-    endif ! beyond critical angle
-
+    ! user output
     if (myrank == 0) then
-      write(IMAIN,*) 'Max norm of initial elastic displacement = ', &
-                      maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
+      write(IMAIN,*)
+      write(IMAIN,*)  '***********'
+      write(IMAIN,*)  'done calculating the initial wave field'
+      write(IMAIN,*)  '***********'
+      write(IMAIN,*)
       call flush_IMAIN()
     endif
 
+  endif ! beyond critical angle
+
+  if (myrank == 0) then
+    if (any_elastic) then
+      write(IMAIN,*) 'Max norm of initial elastic displacement = ', &
+                      maxval(sqrt(displ_elastic(1,:)**2 + displ_elastic(2,:)**2))
+    endif
+    if (any_acoustic) then
+      write(IMAIN,*) 'Max norm of initial acoustic displacement = ', &
+                      maxval(potential_acoustic(:))
+    endif
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   end subroutine prepare_timerun_initialfield
@@ -1297,13 +1298,16 @@
 
   !checks if anything to do
   if (.not. NO_BACKWARD_RECONSTRUCTION) then
+    ! dummy
     allocate(no_backward_acoustic_buffer(1),no_backward_displ_buffer(1,1),no_backward_accel_buffer(1,1))
     return
   endif
+
   !safety checks
-  if (time_stepping_scheme /= 1) call exit_MPI(myrank,'for NO_BACKWARD_RECONSTRUCTION, only Newmark scheme has implemented ')
-  if (UNDO_ATTENUATION_AND_OR_PML) call exit_MPI(myrank, &
-                                      'NO_BACKWARD_RECONSTRUCTION is not compatible with UNDO_ATTENUATION_AND_OR_PML')
+  if (time_stepping_scheme /= 1) &
+    call exit_MPI(myrank,'for NO_BACKWARD_RECONSTRUCTION, only Newmark scheme has implemented ')
+  if (UNDO_ATTENUATION_AND_OR_PML) &
+    call exit_MPI(myrank,'NO_BACKWARD_RECONSTRUCTION is not compatible with UNDO_ATTENUATION_AND_OR_PML')
 
   ! gets the number of frames to store/read in the NO BACKWARD RECONSTRUCTION
   ! database
