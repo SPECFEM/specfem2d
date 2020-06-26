@@ -153,6 +153,11 @@ else
   if [ "$TESTDIR" == "17" ]; then
     sed -i "s:^NSTEP .*:NSTEP    = 2000:" DATA/Par_file
   fi
+  # elastic kernel example Tromp2005_kernel/ w/ NO_BACKWARD_RECONSTRUCTION
+  if [ "$TESTID" == "26" ]; then
+    sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
+    sed -i "s:^NSTEP_BETWEEN_COMPUTE_KERNELS .*:NSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
+  fi
 
   # coverage run
   if [ "$TESTCOV" == "1" ]; then
@@ -350,6 +355,21 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
 fi
 echo -en 'travis_fold:end:coverage.initial_mode_LDDRK\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.no_backward\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## elastic kernel example Tromp2005_kernel/ w/ NO_BACKWARD_RECONSTRUCTION
+  ##
+  cd EXAMPLES/Tromp2005_kernel/
+  sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
+  sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
+  sed -i "s:^NSTEP_BETWEEN_COMPUTE_KERNELS .*:NSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
+  ./run_this_example_kernel.sh
+  # no kernel value testing: only execution failure
+  #my_test_kernel
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.no_backward\\r'
 
 # done
 echo "done `pwd`"
