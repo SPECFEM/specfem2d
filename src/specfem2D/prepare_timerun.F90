@@ -709,7 +709,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     if (SAVE_FORWARD) then
       write(IMAIN,*) 'Preparing save forward simulation:'
     else
@@ -723,9 +723,9 @@
     !       a stepping of the size of a quarter of the minimum period resolved.
     !       this lower estimate can then be compared against the NSTEP_BETWEEN_COMPUTE_KERNELS setting.
     write(IMAIN,*) '  estimated steps between compute kernels (for a fair reconstruction): ',int(mesh_T_min / DT / 4.0)
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     write(IMAIN,*) '  number of steps between compute kernels: ',NSTEP_BETWEEN_COMPUTE_KERNELS
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
