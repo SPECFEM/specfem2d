@@ -26,7 +26,7 @@ case "$TESTDIR" in
 15) dir=EXAMPLES/check_absolute_amplitude_of_force_source_seismograms_viscoelastic/ ;;
 16) dir=EXAMPLES/fluid_solid/fluid_solid_external_mesh/ ;;
 17) dir=EXAMPLES/poroelastic_semi_infinite_homogeneous/ ;;
-18) dir=EXAMPLES/cube_LDDRK/ ;;
+18) dir=EXAMPLES/initial_mode_LDDRK/ ;;
 *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
 esac
 
@@ -337,18 +337,18 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
 fi
 echo -en 'travis_fold:end:coverage.fluid_solid\\r'
 
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.cube_LDDRK\\r'
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.initial_mode_LDDRK\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing fluid solid w/ external mesh
   ##
-  cd EXAMPLES/cube_LDDRK
+  cd EXAMPLES/initial_mode_LDDRK
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
-echo -en 'travis_fold:end:coverage.cube_LDDRK\\r'
+echo -en 'travis_fold:end:coverage.initial_mode_LDDRK\\r'
 
 
 # done
