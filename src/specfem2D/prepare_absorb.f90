@@ -40,7 +40,8 @@
   use specfem_par, only: myrank,any_elastic,SIMULATION_TYPE, &
                          nspec_left,nspec_right,nspec_bottom,nspec_top, &
                          b_absorb_elastic_left,b_absorb_elastic_right, &
-                         b_absorb_elastic_bottom,b_absorb_elastic_top
+                         b_absorb_elastic_bottom,b_absorb_elastic_top, &
+                         NO_BACKWARD_RECONSTRUCTION
 
   implicit none
   ! local parameters
@@ -52,6 +53,7 @@
 
   ! checks if anything to do
   if (SIMULATION_TYPE /= 3) return
+  if (NO_BACKWARD_RECONSTRUCTION) return
 
   !--- left absorbing boundary
   if (nspec_left > 0) then
@@ -107,7 +109,8 @@
                          b_absorb_poro_s_left,b_absorb_poro_w_left, &
                          b_absorb_poro_s_right,b_absorb_poro_w_right, &
                          b_absorb_poro_s_bottom,b_absorb_poro_w_bottom, &
-                         b_absorb_poro_s_top,b_absorb_poro_w_top
+                         b_absorb_poro_s_top,b_absorb_poro_w_top, &
+                         NO_BACKWARD_RECONSTRUCTION
 
   implicit none
   ! local parameters
@@ -119,6 +122,7 @@
 
   ! checks if anything to do
   if (SIMULATION_TYPE /= 3) return
+  if (NO_BACKWARD_RECONSTRUCTION) return
 
   !--- left absorbing boundary
   if (nspec_left > 0) then
@@ -192,7 +196,8 @@
   use specfem_par, only: myrank,any_acoustic,SIMULATION_TYPE, &
                          nspec_left,nspec_right,nspec_bottom,nspec_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
-                         b_absorb_acoustic_bottom,b_absorb_acoustic_top
+                         b_absorb_acoustic_bottom,b_absorb_acoustic_top, &
+                         NO_BACKWARD_RECONSTRUCTION
 
   implicit none
 
@@ -205,6 +210,7 @@
 
   ! checks if anything to do
   if (SIMULATION_TYPE /= 3) return
+  if (NO_BACKWARD_RECONSTRUCTION) return
 
   !--- left absorbing boundary
   if (nspec_left > 0) then

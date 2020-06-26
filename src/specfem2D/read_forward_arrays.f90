@@ -225,7 +225,7 @@
 
   subroutine read_forward_arrays_no_backward()
 
-  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,APPROXIMATE_HESS_KL,NDIM
+  use constants, only: IIN_UNDO_ATT,MAX_STRING_LEN,OUTPUT_FILES,APPROXIMATE_HESS_KL,NDIM,CUSTOM_REAL
 
   use specfem_par, only: myrank,it,any_acoustic,any_elastic, &
     b_potential_acoustic,b_displ_elastic,b_accel_elastic, &
@@ -253,7 +253,7 @@
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_No_backward_reconstruction_database.bin'
     ! opens corresponding file for reading
     open(unit=IIN_UNDO_ATT,asynchronous='yes',file=trim(OUTPUT_FILES)//outputname, &
-       status='old',action='read',form='unformatted',access='stream',iostat=ier)
+         status='old',action='read',form='unformatted',access='stream',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_No_backward_reconstruction_database.bin for reading')
   else
     wait(IIN_UNDO_ATT)
@@ -263,13 +263,19 @@
   buffer_num_GPU_transfer = mod(no_backward_iframe+1,3)
 
   if (any_acoustic) then
-
     ! offset is computed in two times to avoid integer overflow
-    offset = 4*nglob
-    offset = offset*(no_backward_Nframes - no_backward_iframe ) + 1
-    if (no_backward_iframe <= no_backward_Nframes) &
-      read(IIN_UNDO_ATT,asynchronous='yes',pos=offset) &
-           no_backward_acoustic_buffer(nglob*buffer_num_async_IO+1:nglob*(buffer_num_async_IO+1))
+    offset = CUSTOM_REAL * nglob
+    offset = offset * (no_backward_Nframes - no_backward_iframe) + 1
+
+    if (no_backward_iframe <= no_backward_Nframes) then
+      read(IIN_UNDO_ATT,asynchronous='yes',pos=offset,iostat=ier) &
+        no_backward_acoustic_buffer(nglob*buffer_num_async_IO+1:nglob*(buffer_num_async_IO+1))
+      if (ier /= 0) then
+        print *,'Error: reading no_backward_acoustic_buffer() at frame ',no_backward_iframe,'out of ',no_backward_Nframes,it
+        call flush_IMAIN()
+        call exit_MPI(myrank,'Error reading no_backward_acoustic_buffer')
+      endif
+    endif
 
     if (no_backward_iframe /= 1) then
       if (GPU_MODE) then
@@ -283,23 +289,35 @@
                                                                 nglob*(mod(no_backward_iframe,3)+1))
       endif
     endif
+  endif ! any_acoustic
 
-    endif ! any_acoustic
+  if (any_elastic) then
+    b_displ_elastic(:,:) = no_backward_displ_buffer(:,:)
+    if (APPROXIMATE_HESS_KL) b_accel_elastic(:,:) = no_backward_accel_buffer(:,:)
 
-    if (any_elastic) then
-
-      b_displ_elastic(:,:) = no_backward_displ_buffer(:,:)
-      if (APPROXIMATE_HESS_KL) b_accel_elastic(:,:) = no_backward_accel_buffer(:,:)
-
-      if (APPROXIMATE_HESS_KL) then
-        offset = 4*2*(NDIM*nglob)*(no_backward_Nframes - no_backward_iframe) + 1
-      else
-        offset = 4*(NDIM*nglob)*(no_backward_Nframes - no_backward_iframe) + 1
-      endif
-
-      read(IIN_UNDO_ATT,asynchronous='yes',pos=offset) no_backward_displ_buffer(:,:)
-      if (APPROXIMATE_HESS_KL) read(IIN_UNDO_ATT,asynchronous='yes',pos=offset+8+4*nglob) no_backward_accel_buffer(:,:)
+    if (APPROXIMATE_HESS_KL) then
+      offset = 2 * CUSTOM_REAL * (NDIM*nglob) * (no_backward_Nframes - no_backward_iframe) + 1
+    else
+      offset = CUSTOM_REAL * (NDIM*nglob) * (no_backward_Nframes - no_backward_iframe) + 1
     endif
+
+    if (no_backward_iframe <= no_backward_Nframes) then
+      read(IIN_UNDO_ATT,asynchronous='yes',pos=offset,iostat=ier) no_backward_displ_buffer(:,:)
+      if (ier /= 0) then
+        print *,'Error: reading no_backward_displ_buffer() at frame ',no_backward_iframe,'out of ',no_backward_Nframes,it
+        call flush_IMAIN()
+        call exit_MPI(myrank,'Error reading no_backward_displ_buffer')
+      endif
+      if (APPROXIMATE_HESS_KL) then
+        read(IIN_UNDO_ATT,asynchronous='yes',pos=offset+CUSTOM_REAL*(NDIM*nglob),iostat=ier) no_backward_accel_buffer(:,:)
+        if (ier /= 0) then
+          print *,'Error: reading no_backward_accel_buffer() at frame ',no_backward_iframe,'out of ',no_backward_Nframes,it
+          call flush_IMAIN()
+          call exit_MPI(myrank,'Error reading no_backward_accel_buffer')
+        endif
+      endif
+    endif
+  endif
 
   if (it == NSTEP) close(IIN_UNDO_ATT)
 

@@ -57,7 +57,8 @@
                          b_absorb_poro_w_left,b_absorb_poro_w_right, &
                          b_absorb_poro_w_bottom,b_absorb_poro_w_top, &
                          ib_left,ib_right,ib_bottom,ib_top, &
-                         freq0_poroelastic,Q0_poroelastic
+                         freq0_poroelastic,Q0_poroelastic, &
+                         NO_BACKWARD_RECONSTRUCTION
 
   implicit none
 
@@ -144,7 +145,7 @@
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - tx*weight
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
 
-            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
               b_absorb_poro_w_left(1,j,ib_left(ispecabs),it) = tx*weight
               b_absorb_poro_w_left(2,j,ib_left(ispecabs),it) = tz*weight
             endif
@@ -193,7 +194,7 @@
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - tx*weight
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
 
-            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
               b_absorb_poro_w_right(1,j,ib_right(ispecabs),it) = tx*weight
               b_absorb_poro_w_right(2,j,ib_right(ispecabs),it) = tz*weight
             endif
@@ -246,7 +247,7 @@
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - tx*weight
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
 
-            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
               b_absorb_poro_w_bottom(1,i,ib_bottom(ispecabs),it) = tx*weight
               b_absorb_poro_w_bottom(2,i,ib_bottom(ispecabs),it) = tz*weight
             endif
@@ -299,7 +300,7 @@
             accelw_poroelastic(1,iglob) = accelw_poroelastic(1,iglob) - tx*weight
             accelw_poroelastic(2,iglob) = accelw_poroelastic(2,iglob) - tz*weight
 
-            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+            if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
               b_absorb_poro_w_top(1,i,ib_top(ispecabs),it) = tx*weight
               b_absorb_poro_w_top(2,i,ib_top(ispecabs),it) = tz*weight
             endif
@@ -324,7 +325,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
-  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
+  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS,NO_BACKWARD_RECONSTRUCTION, &
                          anyabs,num_abs_boundary_faces,abs_boundary_ispec, &
                          ibool,ispec_is_poroelastic, &
                          codeabs,codeabs_corner, &
@@ -345,6 +346,8 @@
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. anyabs) return
+  if (NO_BACKWARD_RECONSTRUCTION) return
+
   if (SIMULATION_TYPE /= 3) return
 
   ! absorbing boundaries
@@ -762,7 +765,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,IEDGE1,IEDGE2,IEDGE3,IEDGE4,TWO,ZERO
 
-  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS, &
+  use specfem_par, only: it,NSTEP,STACEY_ABSORBING_CONDITIONS,NO_BACKWARD_RECONSTRUCTION, &
                          anyabs,num_abs_boundary_faces,abs_boundary_ispec, &
                          ibool,ispec_is_poroelastic, &
                          codeabs,codeabs_corner, &
@@ -783,6 +786,8 @@
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. anyabs) return
+  if (NO_BACKWARD_RECONSTRUCTION) return
+
   if (SIMULATION_TYPE /= 3) return
 
   ! absorbing boundaries

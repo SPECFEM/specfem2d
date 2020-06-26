@@ -49,7 +49,8 @@
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top, &
                          ib_left,ib_right,ib_bottom,ib_top, &
-                         STACEY_ABSORBING_CONDITIONS,deltat
+                         STACEY_ABSORBING_CONDITIONS,deltat, &
+                         NO_BACKWARD_RECONSTRUCTION
 
   ! initialfield
   use specfem_par, only: v0x_left,v0z_left,v0x_right,v0z_right,v0x_bot,v0z_bot, &
@@ -332,7 +333,7 @@
           accel_elastic(1,iglob) = accel_elastic(1,iglob) - ty*weight
         endif
 
-        if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
+        if (SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
           if (P_SV) then
             ! P-SV waves
             b_absorb_elastic_right(1,j,ib_right(ispecabs),it) = (tx - traction_x_t0)*weight
@@ -545,7 +546,7 @@
                          b_absorb_elastic_left,b_absorb_elastic_right, &
                          b_absorb_elastic_bottom,b_absorb_elastic_top, &
                          ib_left,ib_right,ib_bottom,ib_top, &
-                         STACEY_ABSORBING_CONDITIONS,P_SV
+                         STACEY_ABSORBING_CONDITIONS,P_SV,NO_BACKWARD_RECONSTRUCTION
 
   implicit none
 
@@ -557,6 +558,7 @@
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. any_elastic) return
+  if (NO_BACKWARD_RECONSTRUCTION) return
 
   ! time increment index
   it_tmp = NSTEP - it + 1

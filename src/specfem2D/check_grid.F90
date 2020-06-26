@@ -358,6 +358,9 @@
   pmax = pmax_glob
   dt_suggested = dt_suggested_glob
 
+  ! mesh resolved minimum period
+  mesh_T_min = pmax_glob
+
   ! sets if any slice has fluid histogram
   call any_all_l(any_fluid_histo,any_fluid_histo_glob)
 

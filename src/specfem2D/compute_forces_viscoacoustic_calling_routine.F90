@@ -66,14 +66,14 @@
 #ifdef WITH_MPI
         ! assembling potential_dot_dot or b_potential_dot_dot for acoustic elements
         if (NPROC > 1 .and. ninterface_acoustic > 0) then
-        ! loop over relaxation mechanisms
-        do i_sls = 1,N_SLS
-          if (iphase == 1) then
-            call assemble_MPI_scalar_ac_s_e1(dot_e1(:,i_sls),dot_e1,0)
-          else
-            call assemble_MPI_scalar_ac_w_e1(dot_e1(:,i_sls),dot_e1,0)
-          endif
-        enddo
+          ! loop over relaxation mechanisms
+          do i_sls = 1,N_SLS
+            if (iphase == 1) then
+              call assemble_MPI_scalar_ac_s_e1(dot_e1(:,i_sls),dot_e1,0)
+            else
+              call assemble_MPI_scalar_ac_w_e1(dot_e1(:,i_sls),dot_e1,0)
+            endif
+          enddo
         endif
 #endif
 
@@ -99,12 +99,12 @@
 
   endif
 
-    ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
-    do iphase = 1,2
+  ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
+  do iphase = 1,2
 
     ! main solver for the acoustic elements
     call compute_forces_viscoacoustic(potential_dot_dot_acoustic,potential_dot_acoustic,potential_acoustic, &
-                                 PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1_acous_sf,sum_forces_old)
+                                      PML_BOUNDARY_CONDITIONS,potential_acoustic_old,iphase,e1_acous_sf,sum_forces_old)
 
     ! PML boundary conditions enforces zero potentials on boundary
     if (PML_BOUNDARY_CONDITIONS) then
@@ -188,7 +188,7 @@
   ! PML saves interface values
   if (PML_BOUNDARY_CONDITIONS) then
     if (nglob_interface > 0) then
-      if (SAVE_FORWARD .and. SIMULATION_TYPE == 1) then
+      if (SAVE_FORWARD .and. SIMULATION_TYPE == 1 .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
         do i = 1, nglob_interface
           write(72) potential_dot_dot_acoustic(point_interface(i)), potential_dot_acoustic(point_interface(i)), &
                     potential_acoustic(point_interface(i))

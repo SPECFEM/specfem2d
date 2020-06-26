@@ -707,12 +707,32 @@
   ! checks if anything to do
   if (.not. (SAVE_FORWARD .or. SIMULATION_TYPE == 3)) return
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) ''
+    if (SAVE_FORWARD) then
+      write(IMAIN,*) 'Preparing save forward simulation:'
+    else
+      write(IMAIN,*) 'Preparing kernel simulation:'
+    endif
+    write(IMAIN,*) '  estimated minimum period resolved by mesh        : ',sngl(mesh_T_min)
+    write(IMAIN,*) '  estimated number of time steps for minimum period: ',int(mesh_T_min / DT)
+    ! note: to reconstruct kernels, the stepping to approximate kernel depends on both source and adjoint source frequency,
+    !       as well as the minimum period resolved by the mesh.
+    !       by comparison, we see that close-enough reconstructions (within ~90% accuracy) need about
+    !       a stepping of the size of a quarter of the minimum period resolved.
+    !       this lower estimate can then be compared against the NSTEP_BETWEEN_COMPUTE_KERNELS setting.
+    write(IMAIN,*) '  estimated steps between compute kernels (for a fair reconstruction): ',int(mesh_T_min / DT / 4.0)
+    write(IMAIN,*) ''
+    write(IMAIN,*) '  number of steps between compute kernels: ',NSTEP_BETWEEN_COMPUTE_KERNELS
+    write(IMAIN,*) ''
+    call flush_IMAIN()
+  endif
 
   ! prepares kernels
   if (SIMULATION_TYPE == 3) then
     ! user output
     if (myrank == 0) then
-      write(IMAIN,*)
       write(IMAIN,*) 'Preparing adjoint simulation'
       call flush_IMAIN()
     endif
@@ -1322,6 +1342,7 @@
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'Preparing NO_BACKWARD_RECONSTRUCTION :'
+      write(IMAIN,*) '  number of steps between compute kernels: ',NSTEP_BETWEEN_COMPUTE_KERNELS
       write(IMAIN,*) '  number of frames to save :',no_backward_nframes
       if (any_acoustic) then
         sizeval = dble(nglob) * dble(no_backward_nframes) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
@@ -1336,14 +1357,28 @@
       write(IMAIN,*)
       call flush_IMAIN()
     endif ! myrank
-  endif ! SAVE_FORWARD .or. SIMULATION_TYPE == 3
 
-  ! deallocates arrays that won't be used with this mode
-  if (SIMULATION_TYPE == 3) then
-    if (any_acoustic) deallocate(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,stat=ier)
-    if (any_elastic) deallocate(b_veloc_elastic,b_accel_elastic,stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'error deallocating b_accel_elastic etc')
-  endif
+    ! checks integer overflow
+    if (any_acoustic) then
+      !offset = CUSTOM_REAL * nglob * (no_backward_Nframes - no_backward_iframe) + 1
+      ! checks
+      if (dble(nglob) * dble(no_backward_Nframes - 1) > 2147483646.d0 / dble(CUSTOM_REAL) ) &
+        call exit_MPI(myrank,'Error no_backward buffer offset might exceed integer limit')
+    endif
+    if (any_elastic) then
+      if (APPROXIMATE_HESS_KL) then
+        !offset = 2 * CUSTOM_REAL * (NDIM*nglob) * (no_backward_Nframes - no_backward_iframe) + 1
+        ! checks
+        if (2.d0 * dble(NDIM) * dble(nglob) * dble(no_backward_Nframes - 1) > 2147483646.d0 / dble(CUSTOM_REAL) ) &
+          call exit_MPI(myrank,'Error no_backward buffer offset might exceed integer limit')
+      else
+        !offset = CUSTOM_REAL * (NDIM*nglob) * (no_backward_Nframes - no_backward_iframe) + 1
+        ! checks
+        if (dble(NDIM) * dble(nglob) * dble(no_backward_Nframes - 1) > 2147483646.d0 / dble(CUSTOM_REAL) ) &
+          call exit_MPI(myrank,'Error no_backward buffer offset might exceed integer limit')
+      endif
+    endif
+  endif ! SAVE_FORWARD .or. SIMULATION_TYPE == 3
 
   ! allocates buffers for I/O
   if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
@@ -1352,6 +1387,7 @@
     else
       allocate(no_backward_acoustic_buffer(1),stat=ier)
     endif
+
     if (any_elastic) then
       allocate(no_backward_displ_buffer(NDIM,nglob),stat=ier)
       if (APPROXIMATE_HESS_KL) then
