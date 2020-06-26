@@ -85,7 +85,8 @@
 
   ! Input parameters :
 
-  ! ibool(i,j,ispec)                     : array that converts the index of GLL point (i,j) in elmt ispec from local to global (iglob)
+  ! ibool(i,j,ispec)                     : array that converts the index of GLL point (i,j) in elmt ispec
+  !                                        from local to global (iglob)
   ! ninterface                           : Number of interfaces that the local partition share with other partitions
   ! max_nibool_interfaces_ext_mesh       : Maximum number of GLL points at an interface
   ! nibool_interfaces_ext_mesh(i)        : Number of GLL points in interface i
