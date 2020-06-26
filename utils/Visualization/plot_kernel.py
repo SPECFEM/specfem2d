@@ -14,6 +14,7 @@
 #   - numpy
 #   - matplotlib
 #
+from __future__ import print_function
 import os.path
 import sys
 import numpy as np
@@ -29,16 +30,16 @@ def grid(x, y, z, resX=100, resY=100):
     """
     Converts 3 column data to matplotlib grid
     """
-    from matplotlib.mlab import griddata
-    #from scipy.interpolate import griddata
+    #griddata deprecated since matplotlib 3.1: from matplotlib.mlab import griddata
+    from scipy.interpolate import griddata
 
     xi = np.linspace(min(x), max(x), resX)
     yi = np.linspace(min(y), max(y), resY)
 
     # mlab version
-    Z = griddata(x, y, z, xi, yi, interp='linear')
+    #Z = griddata(x, y, z, xi, yi, interp='linear')
     # scipy version
-    #Z = griddata((x, y), z, (xi[None,:], yi[:,None]), method='cubic')
+    Z = griddata((x, y), z, (xi[None,:], yi[:,None]), method='cubic')
 
     X, Y = np.meshgrid(xi, yi)
     return X, Y, Z
@@ -47,22 +48,22 @@ def plot_kernels(filename,show=False):
     """
     plots ASCII kernel file
     """
-    print "plotting kernel file: ",filename
-    print ""
+    print("plotting kernel file: ",filename)
+    print("")
 
     data = np.loadtxt(filename)
 
     # checks data
     if data.ndim != 2:
-        print "Error: wrong data dimension for kernel file",data.ndim
+        print("Error: wrong data dimension for kernel file",data.ndim)
         sys.tracebacklimit=0
         raise Exception("Invalid data dimension")
 
     # checks array
     if len(data[1,:]) != 5:
-        print "data shape  : ",data.shape
-        print "data lengths: ",len(data[:,1]),len(data[1,:])
-        print "Error: wrong data format for kernel file",data.shape
+        print("data shape  : ",data.shape)
+        print("data lengths: ",len(data[:,1]),len(data[1,:]))
+        print("Error: wrong data format for kernel file",data.shape)
         sys.tracebacklimit=0
         raise Exception("Invalid data format")
 
@@ -70,10 +71,10 @@ def plot_kernels(filename,show=False):
     x = data[:,0]
     y = data[:,1]
 
-    print "dimensions:"
-    print "  x-range min/max = %f / %f" % (x.min(), x.max())
-    print "  y-range min/max = %f / %f" % (y.min(), y.max())
-    print ""
+    print("dimensions:")
+    print("  x-range min/max = %f / %f" % (x.min(), x.max()))
+    print("  y-range min/max = %f / %f" % (y.min(), y.max()))
+    print("")
 
     z1 = data[:,2] # e.g. rho
     z2 = data[:,3] # e.g. alpha
@@ -99,15 +100,15 @@ def plot_kernels(filename,show=False):
         kernel2 = 'K_2'
         kernel3 = 'K_3'
 
-    print "statistics:"
-    print "  %12s : min/max = %e / %e" % (kernel1,z1.min(),z1.max())
-    print "  %12s : min/max = %e / %e" % (kernel2,z2.min(),z2.max())
-    print "  %12s : min/max = %e / %e" % (kernel3,z3.min(),z3.max())
-    print ""
+    print("statistics:")
+    print("  %12s : min/max = %e / %e" % (kernel1,z1.min(),z1.max()))
+    print("  %12s : min/max = %e / %e" % (kernel2,z2.min(),z2.max()))
+    print("  %12s : min/max = %e / %e" % (kernel3,z3.min(),z3.max()))
+    print("")
 
     total_max = abs(np.concatenate((z1,z2,z3))).max()
-    print "  data max = ",total_max
-    print ""
+    print("  data max = ",total_max)
+    print("")
 
     total_max = 1.e-8
 
@@ -151,16 +152,16 @@ def plot_kernels(filename,show=False):
     outfile = dir + "/" + name_without_ending + ".png"
     fig.savefig(outfile, format="png")
 
-    print "*****"
-    print "plotted file: ",outfile
-    print "*****"
-    print ""
+    print("*****")
+    print("plotted file: ",outfile)
+    print("*****")
+    print("")
 
 
 def usage():
-    print "usage: ./plot_kernel.py file [1 == show figure / 0 == just plot file]"
-    print "   where"
-    print "       file - ASCII kernel file, e.g. OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat"
+    print("usage: ./plot_kernel.py file [1 == show figure / 0 == just plot file]")
+    print("   where")
+    print("       file - ASCII kernel file, e.g. OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat")
 
 if __name__ == '__main__':
     # gets arguments

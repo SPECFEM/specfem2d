@@ -6,6 +6,7 @@
 #
 #  Python code to generate Seismic Unix files for Ux and Uz and plot them
 #
+from __future__ import print_function
 from os import *
 import os.path, string
 #
@@ -17,7 +18,7 @@ def createSU():
 	if path.exists(filename):
 		variables=['NSTEP','deltat','seismotype']
 	else:
-		print 'No Par_file found !'
+		print('No Par_file found !')
 		return
 
 
@@ -33,9 +34,9 @@ def createSU():
 			if lsplit[0]=='title':
 		   		title=' '.join(lsplit[2:])
 		   		break
-	print '#'*50
-	print '#  SU file creation for '+title
-	print  '#'*50
+	print('#'*50)
+	print('#  SU file creation for '+title)
+	print('#'*50)
 
 	#  Get the variables
 	for var in variables:
@@ -46,7 +47,7 @@ def createSU():
 					exec var+'='+string.replace(string.split(''.join(ligne))[2],'d','e')
 					break
 	#
-	print seismotype
+	print(seismotype)
 	chdir(SEM+'/OUTPUT_FILES')
 	labels='label1="Time" label2="Receivers"'
 
@@ -64,7 +65,7 @@ def createSU():
 	#
 	for i in range(len(ordres)):
 		system(ordres[i])
-		print system
+		print(system)
 
 if __name__=='__main__':
 	createSU()

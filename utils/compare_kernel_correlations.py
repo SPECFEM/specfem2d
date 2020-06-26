@@ -2,6 +2,7 @@
 #
 # plot the cross-correlation and L2-norm between reference and output seismograms
 #
+from __future__ import print_function
 import sys
 import glob
 import os
@@ -21,10 +22,10 @@ def plot_correlations(syn_file,ref_file):
 
     # makes sure files are both available
     if not os.path.isfile(ref_file):
-        print "  file " + ref_file + " not found"
+        print("  file " + ref_file + " not found")
         sys.exit(1)
     if not os.path.isfile(syn_file):
-        print "  file " + syn_file + " not found"
+        print("  file " + syn_file + " not found")
         sys.exit(1)
 
     corr_min = 1.0
@@ -34,13 +35,13 @@ def plot_correlations(syn_file,ref_file):
     # gets x-coordinates
     syn_x = np.loadtxt(syn_file)[:, 0]
     dx = syn_x[1] - syn_x[0]
-    print "  dx size = ",dx
-    print ""
+    print("  dx size = ",dx)
+    print("")
 
     # gets y-coordinates
     #syn_y = np.loadtxt(syn_file)[:, 1]
     #dy = syn_y[1] - syn_y[0]
-    #print "  dy size = ",dy
+    #print("  dy size = ",dy)
 
     # outputs table header
     print("|%-30s| %13s| %13s|" % ('kernel name', 'corr', 'err'))
@@ -125,21 +126,21 @@ def plot_correlations(syn_file,ref_file):
         print("              poor correlation seismograms found")
     else:
         print("              no poor correlations found")
-    print ""
+    print("")
 
     print("L2-error    : values 0.0 perfect, > %.2f poor match" % TOL_ERR)
     if err_max > TOL_ERR:
         print("              poor matching seismograms found")
     else:
         print("              no poor matches found")
-    print ""
+    print("")
 
 def usage():
-    print "usage: ./compare_kernel_correlations.py kernel-file1 kernel-file2"
-    print "  with"
-    print "     kernel-file1 - ASCII kernel file,"
-    print "                    OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat"
-    print "     kernel-file1 - ASCII kernel file for reference"
+    print("usage: ./compare_kernel_correlations.py kernel-file1 kernel-file2")
+    print("  with")
+    print("     kernel-file1 - ASCII kernel file,")
+    print("                    OUTPUT_FILES/proc000000_rhop_alpha_beta_kernel.dat")
+    print("     kernel-file1 - ASCII kernel file for reference")
 
 if __name__ == '__main__':
     # gets arguments

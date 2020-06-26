@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from pylab import *
 from os import *
 from sys import *
@@ -84,7 +85,7 @@ SEM_DIR='/home/cristini/SEM/SEM_2D_Dimitri'
 chdir(SEM_DIR+'/DATA')
 #
 FileMod='InterfaceCercleMod'+str(int(a))+'_'+str(n)+'.dat'
-print FileMod
+print(FileMod)
 #
 f = file(FileMod,'w')
 #
