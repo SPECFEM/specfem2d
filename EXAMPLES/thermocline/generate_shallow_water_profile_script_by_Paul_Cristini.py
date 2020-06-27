@@ -6,6 +6,7 @@ Created on Thu May 24 09:39:16 2012
 
 This script creates the sound profile displayed in figure_1_of_sound_profile_generated_by_the_Python_script_of_Paul.png
 """
+from __future__ import print_function
 import numpy as np
 import pylab as pl
 
@@ -25,7 +26,7 @@ vp = Cdeb + Cinc/2. * (1-np.tanh(zz)) + aa/ymax*y
 
 # save profile for future use
 y1, vp1, vp2 = y[:-1], vp[1:], vp[:-1]
-print np.shape(y1), np.shape(vp1), np.shape(vp2)
+print(np.shape(y1), np.shape(vp1), np.shape(vp2))
 np.savetxt('SW.out',np.transpose((y1,vp1,vp2)), fmt='%4.2f')
 
 pl.figure(figsize=(10,14))

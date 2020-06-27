@@ -268,7 +268,8 @@
 ! note: f_c_source corresponds to the center of the logarithmic frequency band of the simulation.
 !       ATTENUATION_f0_REFERENCE is the reference frequency of the given velocities.
 !
-! here below, the code computes the unrelaxed moduli directly based on (kappa,mu) given at the reference frequency ATTENUATION_f0_REFERENCE,
+! here below, the code computes the unrelaxed moduli directly based on (kappa,mu)
+! given at the reference frequency ATTENUATION_f0_REFERENCE,
 ! using the tau relaxation times computed for the frequency band of the simulation.
 !
 ! thus, this omits the shift to the center frequency first.

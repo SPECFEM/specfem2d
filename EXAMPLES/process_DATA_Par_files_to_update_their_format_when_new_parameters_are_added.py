@@ -10,6 +10,7 @@ This will process all Par_file starting from current directory
 
 @author: Cristini Paul, Laboratoire de Mecanique et d'Acoustique, CNRS, Marseille, France
 """
+from __future__ import print_function
 import os, string, sys
 from os import listdir, walk
 from string import capitalize
@@ -34,11 +35,11 @@ def OuvreParFile(fic):
         # Numerical variables
         VariableNum=['imagetype']
     else:
-        print 'No Par_file found !'
+        print('No Par_file found !')
         return
     #
     for var in VariableNum:
-        #print var
+        #print(var)
         for ligne in lignes:
             lsplit=string.split(ligne)
             if lsplit!= []:
@@ -67,7 +68,7 @@ def ProcessParfile_r19201(fic):
     # Test if already processed
     for lig in ligs:
         if 'ADD_PERIODIC_CONDITIONS' in lig:
-            print '----> '+fic+' already processed to r19201'
+            print('----> '+fic+' already processed to r19201')
             return
     # New additions to the Par_file
     a1='PERFORM_CUTHILL_MCKEE           = .false.        # perform ' + \
@@ -123,7 +124,7 @@ def ProcessParfile_r19201(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to r19201'
+    print('xxxxx------> '+fic+' processed to r19201')
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_r19340(fic):
@@ -132,7 +133,7 @@ def ProcessParfile_r19340(fic):
     # Test if already processed
     for lig in ligs:
         if 'nreceiversets' in lig:
-            print '----> '+fic+' already processed to r19340'
+            print('----> '+fic+' already processed to r19340')
             return
     #
     # Add new parameters
@@ -147,7 +148,7 @@ def ProcessParfile_r19340(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to r19340'
+    print('xxxxx------> '+fic+' processed to r19340')
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_r19346(fic):
@@ -156,7 +157,7 @@ def ProcessParfile_r19346(fic):
     # Test if already processed
     for lig in ligs:
         if 'ATTENUATION_PORO_FLUID_PART' in lig:
-            print '----> '+fic+' already processed to r19346'
+            print('----> '+fic+' already processed to r19346')
             return
     #--------------------------------------------------------------------------
     # Add new parameters
@@ -175,7 +176,7 @@ def ProcessParfile_r19346(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to r19346'
+    print('xxxxx------> '+fic+' processed to r19346')
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_r19521(fic):
@@ -184,7 +185,7 @@ def ProcessParfile_r19521(fic):
     # Test if already processed
     for lig in ligs:
         if 'time_stepping_scheme' in lig:
-            print '----> '+fic+' already processed to r19521'
+            print('----> '+fic+' already processed to r19521')
             return
     #
     a1='time_stepping_scheme            = 1   # 1 = Newmark (2nd order), \
@@ -204,7 +205,7 @@ def ProcessParfile_r19521(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to r19521'
+    print('xxxxx------> '+fic+' processed to r19521')
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_r19804(fic):
@@ -218,7 +219,7 @@ def ProcessParfile_r19804(fic):
     # Test if already processed
     for lig in ligs:
         if 'ADD_SPRING_TO_STACEY' in lig:
-            print '----> '+fic+' already processed to r19804'
+            print('----> '+fic+' already processed to r19804')
             return
     #
     a1='ADD_SPRING_TO_STACEY            = .true.\n'
@@ -236,7 +237,7 @@ def ProcessParfile_r19804(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to r19804'
+    print('xxxxx------> '+fic+' processed to r19804')
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_r20307(fic):
@@ -246,7 +247,7 @@ def ProcessParfile_r20307(fic):
     # Test if already processed
     for lig in ligs:
         if 'NSTEP_BETWEEN_OUTPUT_SEISMOS' in lig:
-            print '----> '+fic+' already processed to r20307'
+            print('----> '+fic+' already processed to r20307')
             return
 
     # Change the jpeg imagetype accordingly to the original values
@@ -382,7 +383,7 @@ def ProcessParfile_r20307(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to r20307'
+    print('xxxxx------> '+fic+' processed to r20307')
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_r20359(fic):
@@ -392,7 +393,7 @@ def ProcessParfile_r20359(fic):
     # Test if already processed
     for lig in ligs:
         if 'NELEM_PML_THICKNESS' in lig:
-            print '----> '+fic+' already processed to r20359'
+            print('----> '+fic+' already processed to r20359')
             return
     #
     a1='PML_BOUNDARY_CONDITIONS         = .true.\nNELEM_PML_THICKNESS  ' + \
@@ -412,7 +413,7 @@ def ProcessParfile_r20359(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to r20359'
+    print('xxxxx------> '+fic+' processed to r20359')
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_r20561(fic):
@@ -422,7 +423,7 @@ def ProcessParfile_r20561(fic):
     # Test if already processed
     for lig in ligs:
         if 'CPML_element_file' in lig:
-            print '----> '+fic+' already processed to r20561'
+            print('----> '+fic+' already processed to r20561')
             return
     #
     a1='CPML_element_file               = Elements_CPML_list  ' + \
@@ -441,7 +442,7 @@ def ProcessParfile_r20561(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to r20561'
+    print('xxxxx------> '+fic+' processed to r20561')
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_r20859(fic):
@@ -451,7 +452,7 @@ def ProcessParfile_r20859(fic):
     # Test if already processed
     for lig in ligs:
         if lig.endswith(' for how to do this)\n'):
-            print '----> '+fic+' already processed to r20859'
+            print('----> '+fic+' already processed to r20859')
             return
     #--------------------------------------------------------------------------
     # Add new parameters
@@ -468,7 +469,7 @@ def ProcessParfile_r20859(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to r20859'
+    print('xxxxx------> '+fic+' processed to r20859')
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_r21000(fic):
@@ -480,7 +481,7 @@ def ProcessParfile_r21000(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('ROTATE'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='ROTATE_PML_ACTIVATE             = .false.\nROTATE_PML_ANGLE     '+ \
@@ -498,7 +499,7 @@ def ProcessParfile_r21000(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_r21278(fic):
@@ -507,7 +508,7 @@ def ProcessParfile_r21278(fic):
     # Test if already processed
     for lig in ligs:
         if 'use_existing_STATIONS' in lig:
-            print '----> '+fic+' already processed to r21278'
+            print('----> '+fic+' already processed to r21278')
             return
     #--------------------------------------------------------------------------
     # Add new parameters
@@ -525,7 +526,7 @@ def ProcessParfile_r21278(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to r21278'
+    print('xxxxx------> '+fic+' processed to r21278')
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_r21820(fic):
@@ -537,7 +538,7 @@ def ProcessParfile_r21820(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('save_ASCII_kernels'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='save_ASCII_kernels              = .true.         # save sensitivity'+ \
@@ -556,7 +557,7 @@ def ProcessParfile_r21820(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_axisym(fic):
@@ -568,7 +569,7 @@ def ProcessParfile_axisym(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('AXISYM'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='\n# axisymmetric (2.5D) or Cartesian planar (2D) simulation\n'+ \
@@ -586,7 +587,7 @@ def ProcessParfile_axisym(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_axisym_file(fic):
@@ -598,7 +599,7 @@ def ProcessParfile_axisym_file(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('axial_elements_file'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='axial_elements_file             = Elements_Axial_list   '+ \
@@ -616,7 +617,7 @@ def ProcessParfile_axisym_file(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_force_acoustic(fic):
@@ -628,7 +629,7 @@ def ProcessParfile_force_acoustic(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('ACOUSTIC_FORCING'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='\n# acoustic forcing\n'+ \
@@ -650,7 +651,7 @@ def ProcessParfile_force_acoustic(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_correction_periodic(fic):
@@ -662,7 +663,7 @@ def ProcessParfile_correction_periodic(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('PERIODIC_HORIZ_DIST'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
 
     #--------------------------------------------------------------------------
@@ -679,7 +680,7 @@ def ProcessParfile_correction_periodic(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_max_amplitude(fic):
@@ -691,7 +692,7 @@ def ProcessParfile_max_amplitude(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('USE_CONSTANT_MAX_AMPLITUDE'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='USE_CONSTANT_MAX_AMPLITUDE      = .false.        # by default the'+\
@@ -714,7 +715,7 @@ def ProcessParfile_max_amplitude(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_read_velocities_at_f0(fic):
@@ -726,7 +727,7 @@ def ProcessParfile_read_velocities_at_f0(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('READ_VELOCITIES_AT_f0'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='# shift (i.e. change) velocities read from the input file to take '+\
@@ -752,7 +753,7 @@ def ProcessParfile_read_velocities_at_f0(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_gpu(fic):
@@ -764,7 +765,7 @@ def ProcessParfile_gpu(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('GPU'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='\n# set to true to use GPUs\nGPU_MODE                        = .false.\n'
@@ -781,7 +782,7 @@ def ProcessParfile_gpu(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_undo_attenuation(fic):
@@ -793,7 +794,7 @@ def ProcessParfile_undo_attenuation(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('UNDO_ATTENUATION'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='\n# to undo attenuation for sensitivity kernel calculations or '+\
@@ -818,7 +819,7 @@ def ProcessParfile_undo_attenuation(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_external_model(fic):
@@ -830,7 +831,7 @@ def ProcessParfile_external_model(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('MODEL'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='\n# available models\n#   default: define model using nbmodels '+\
@@ -854,7 +855,7 @@ def ProcessParfile_external_model(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 #------------------------------------------------------------------------------
 def ProcessParfile_pressure_trick(fic):
@@ -866,7 +867,7 @@ def ProcessParfile_pressure_trick(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('USE_TRICK_FOR_BETTER_PRESSURE'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='USE_TRICK_FOR_BETTER_PRESSURE   = .false.        # so far, '+\
@@ -886,7 +887,7 @@ def ProcessParfile_pressure_trick(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 
 #------------------------------------------------------------------------------
@@ -899,7 +900,7 @@ def ProcessParfile_NSTEP_BETWEEN_COMPUTE_KERNELS(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('NSTEP_BETWEEN_COMPUTE_KERNELS '):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='# since the accuracy of kernel integration may not need to respect the CFL,' + \
@@ -919,7 +920,7 @@ def ProcessParfile_NSTEP_BETWEEN_COMPUTE_KERNELS(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 
 #------------------------------------------------------------------------------
@@ -932,7 +933,7 @@ def ProcessParfile_NO_BACKWARD_RECONSTRUCTION(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('NO_BACKWARD_RECONSTRUCTION '):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='# Instead of reconstructing the forward wavefield, this option reads it from the disk using asynchronous I/O. ' + \
@@ -952,7 +953,7 @@ def ProcessParfile_NO_BACKWARD_RECONSTRUCTION(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 
 #------------------------------------------------------------------------------
@@ -965,7 +966,7 @@ def ProcessParfile_tomography_file(fic):
     # Test if already processed
     for lig in ligs:
         if lig.startswith('TOMOGRAPHY_FILE'):
-            print '----> '+fic+' already processed to '+release_number
+            print('----> '+fic+' already processed to '+release_number)
             return
     #
     a1='\n# external tomography file\nTOMOGRAPHY_FILE                 = '+\
@@ -984,7 +985,7 @@ def ProcessParfile_tomography_file(fic):
     fm.writelines(ligs)
     fm.close()
     #
-    print 'xxxxx------> '+fic+' processed to '+release_number
+    print('xxxxx------> '+fic+' processed to '+release_number)
     return
 #------------------------------------------------------------------------------
 if __name__=='__main__':
@@ -992,7 +993,7 @@ if __name__=='__main__':
     Fichiers=[]
     mylister('.')
     #
-    print '~'*80
+    print('~'*80)
     Ct_Par_file=0
     for fic in Fichiers:
         repert, ficname = os.path.split(fic)
@@ -1000,7 +1001,7 @@ if __name__=='__main__':
                 '.before_update_to_' in ficname):
             if ficname.startswith('Par_file'):
                 if not (ficname.endswith('~')):
-                    print 'Analysis of file : '+fic
+                    print('Analysis of file : '+fic)
                     Ct_Par_file+=1
                     Data = OuvreParFile(fic)
                     ProcessParfile_r19201(fic)
@@ -1028,8 +1029,8 @@ if __name__=='__main__':
                     ProcessParfile_tomography_file(fic)
                     ProcessParfile_NSTEP_BETWEEN_COMPUTE_KERNELS(fic)
                     ProcessParfile_NO_BACKWARD_RECONSTRUCTION(fic)
-                    print '~'*80
+                    print('~'*80)
     #
-    print 'Number of Par_file analysed : ', Ct_Par_file
-    print 'END OF Par_file PROCESSING'
+    print('Number of Par_file analysed : ', Ct_Par_file)
+    print('END OF Par_file PROCESSING')
 

@@ -102,6 +102,9 @@ module specfem_par
   ! attenuation
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: qkappa_attenuation_store,qmu_attenuation_store
 
+  ! resolution
+  double precision :: mesh_T_min
+
   !---------------------------------------------------------------------
   ! for boundary condition (physical BC or artificial BC)
   !---------------------------------------------------------------------

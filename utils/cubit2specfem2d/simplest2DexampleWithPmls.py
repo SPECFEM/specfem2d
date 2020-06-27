@@ -5,7 +5,7 @@
 #### Then just play cubit2specfem2d.py as a journal file and it will create
 #### specfem files
 ###########################################################################
-
+from __future__ import print_function
 # to run this script from command line, python must have its PATH environment set such that it
 # includes the path to CUBIT/Trelis (cubit.py).
 #
@@ -15,17 +15,17 @@ import sys
 try:
     import cubit
 except ImportError:
-    print "Error: Importing cubit as python module failed"
-    print "could not import cubit, please check your PYTHONPATH settings..."
-    print ""
-    print "current path: "
-    print sys.path
-    print ""
-    print "try to include path to directory which includes file cubit.py, e.g. /opt/Trelis-15.0/bin/"
-    print ""
+    print("Error: Importing cubit as python module failed")
+    print("could not import cubit, please check your PYTHONPATH settings...")
+    print("")
+    print("current path: ")
+    print(sys.path)
+    print("")
+    print("try to include path to directory which includes file cubit.py, e.g. /opt/Trelis-15.0/bin/")
+    print("")
     sys.exit("Import cubit failed")
 
-#print sys.path
+#print(sys.path)
 
 cubit.init([""])
 

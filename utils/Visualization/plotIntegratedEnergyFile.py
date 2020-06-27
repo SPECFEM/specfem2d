@@ -321,7 +321,15 @@ else:
     # Interpolate using delaunay triangularization:
     if args.verbose:
         print("Interpolation...")
-    intEnergyi = mlab.griddata(x,z,intEnergy,xi,zi,interp="linear")
+
+    #griddata deprecated since matplotlib 3.1: from matplotlib.mlab import griddata
+    from scipy.interpolate import griddata
+
+    # mlab version
+    #intEnergyi = mlab.griddata(x, z, intEnergy, xi, zi, interp='linear')
+    # scipy version
+    intEnergyi = griddata((x, z), intEnergy, (xi[None,:], zi[:,None]), method='cubic')
+
     if args.verbose:
         print("Done")
     if args.writeInterpolatedField:
@@ -344,7 +352,15 @@ if args.substract:
         # Interpolate using delaunay triangularization:
         if args.verbose:
             print("Interpolation of substracted file...")
-        intEnergyiSubstract = mlab.griddata(xSubstract,zSubstract,intEnergySubstract,xi,zi,interp="linear")
+
+        #griddata deprecated since matplotlib 3.1: from matplotlib.mlab import griddata
+        from scipy.interpolate import griddata
+
+        # mlab version
+        #intEnergyiSubstract = mlab.griddata(xSubstract,zSubstract,intEnergySubstract,xi,zi,interp="linear")
+        # scipy version
+        intEnergyiSubstract = griddata((xSubstract, zSubstract), intEnergySubstract, (xi[None,:], zi[:,None]), method='cubic')
+
         if args.verbose:
             print("Done")
         if args.writeInterpolatedField:

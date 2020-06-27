@@ -6,7 +6,7 @@
 #### Then you can run cubit2specfem2d.py
 #### Author alexis dot bottero at gmail dot com
 ###########################################################################
-
+from __future__ import print_function
 import cubit
 
 lx=50000 #5000

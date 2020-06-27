@@ -52,7 +52,7 @@
   endif
 
   ! absorbing boundaries
-  if (STACEY_ABSORBING_CONDITIONS) then
+  if (STACEY_ABSORBING_CONDITIONS .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
     ! user output
     if (myrank == 0) then
       write(IMAIN,*) 'Saving Stacey absorbing boundary contributions...'
@@ -199,7 +199,7 @@
   endif ! STACEY_ABSORBING_CONDITIONS
 
   ! PML
-  if (anyabs_glob .and. PML_BOUNDARY_CONDITIONS) then
+  if (anyabs_glob .and. PML_BOUNDARY_CONDITIONS .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
     if (any_elastic .and. nglob_interface > 0) close(71)
     if (any_acoustic .and. nglob_interface > 0) close(72)
   endif

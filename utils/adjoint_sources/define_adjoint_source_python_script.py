@@ -1,6 +1,6 @@
-
+#!/usr/bin/env python
 # by Philip Knaute, June 2012
-
+from __future__ import print_function
 import numpy as np
 import scipy.interpolate as interp
 import scipy.integrate as integr
@@ -43,7 +43,7 @@ def calAdjCCTTFromTrace(nt,dt,tStartIn,tEndIn,dataIn, synthIn):
     iEnd = int(np.ceil(tEnd/dt))
     # -- sample length of the window
     iWind = iEnd - iStart
-    #print iStart,iEnd,iWind
+    #print(iStart,iEnd,iWind)
     timeWind[iStart:iEnd]=sgnl.hann(iWind)
 
     # -- calculate the adjoint
@@ -66,8 +66,8 @@ def calAdjCCTTFromTrace(nt,dt,tStartIn,tEndIn,dataIn, synthIn):
         # -- calculate the weight per trace
         integrArgument = timeWind*velSynth*dSeism
         weight = integr.simps(integrArgument,dx=dt,axis=-1,even='last')
-        print "weight", weight/norm
+        print("weight", weight/norm)
         # -- multiply weight with every adj trace
         fBar = fBar*weight
-        print weight
+        print(weight)
     return [fBar,t]

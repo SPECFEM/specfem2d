@@ -571,6 +571,10 @@ subroutine it_compute_integrated_energy_field_and_output()
 
 end subroutine it_compute_integrated_energy_field_and_output
 
+!
+!----------------------------------------------------------------------------------------
+!
+
 subroutine manage_no_backward_reconstruction_io()
 
   use constants

@@ -26,7 +26,7 @@ case "$TESTDIR" in
 15) dir=EXAMPLES/check_absolute_amplitude_of_force_source_seismograms_viscoelastic/ ;;
 16) dir=EXAMPLES/fluid_solid/fluid_solid_external_mesh/ ;;
 17) dir=EXAMPLES/poroelastic_semi_infinite_homogeneous/ ;;
-18) dir=EXAMPLES/cube_LDDRK/ ;;
+18) dir=EXAMPLES/initial_mode_LDDRK/ ;;
 *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
 esac
 
@@ -152,6 +152,11 @@ else
   fi
   if [ "$TESTDIR" == "17" ]; then
     sed -i "s:^NSTEP .*:NSTEP    = 2000:" DATA/Par_file
+  fi
+  # elastic kernel example Tromp2005_kernel/ w/ NO_BACKWARD_RECONSTRUCTION
+  if [ "$TESTID" == "26" ]; then
+    sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
+    sed -i "s:^NSTEP_BETWEEN_COMPUTE_KERNELS .*:NSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
   fi
 
   # coverage run
@@ -337,19 +342,34 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
 fi
 echo -en 'travis_fold:end:coverage.fluid_solid\\r'
 
-echo 'Coverage...' && echo -en 'travis_fold:start:coverage.cube_LDDRK\\r'
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.initial_mode_LDDRK\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing fluid solid w/ external mesh
   ##
-  cd EXAMPLES/cube_LDDRK
+  cd EXAMPLES/initial_mode_LDDRK
   sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
   ./run_this_example.sh
   # only for coverage, comparison would fail: my_test
   cd $WORKDIR
 fi
-echo -en 'travis_fold:end:coverage.cube_LDDRK\\r'
+echo -en 'travis_fold:end:coverage.initial_mode_LDDRK\\r'
 
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.no_backward\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## elastic kernel example Tromp2005_kernel/ w/ NO_BACKWARD_RECONSTRUCTION
+  ##
+  cd EXAMPLES/Tromp2005_kernel/
+  sed -i "s:^NSTEP .*:NSTEP    = 500:" DATA/Par_file
+  sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
+  sed -i "s:^NSTEP_BETWEEN_COMPUTE_KERNELS .*:NSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
+  ./run_this_example_kernel.sh
+  # no kernel value testing: only execution failure
+  #my_test_kernel
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.no_backward\\r'
 
 # done
 echo "done `pwd`"

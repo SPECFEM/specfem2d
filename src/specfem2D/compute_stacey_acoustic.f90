@@ -52,7 +52,8 @@
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top, &
                          STACEY_ABSORBING_CONDITIONS, &
-                         ATTENUATION_VISCOACOUSTIC,dot_e1
+                         ATTENUATION_VISCOACOUSTIC,dot_e1, &
+                         NO_BACKWARD_RECONSTRUCTION
 
   implicit none
 
@@ -208,7 +209,7 @@
           if (ATTENUATION_VISCOACOUSTIC .and. .not. USE_A_STRONG_FORMULATION_FOR_E1) &
                dot_e1(iglob,:) = dot_e1(iglob,:) - potential_dot_acoustic(iglob) * weight/rho_vp
 
-          if (SAVE_FORWARD) then
+          if (SAVE_FORWARD .and. (.not. NO_BACKWARD_RECONSTRUCTION)) then
             ! saves contribution
             b_absorb_acoustic_top(i,ib_top(ispecabs),it) = potential_dot_acoustic(iglob) * weight/rho_vp
           endif
@@ -239,7 +240,7 @@
                          ib_left,ib_right,ib_bottom,ib_top, &
                          b_absorb_acoustic_left,b_absorb_acoustic_right, &
                          b_absorb_acoustic_bottom,b_absorb_acoustic_top, &
-                         STACEY_ABSORBING_CONDITIONS
+                         STACEY_ABSORBING_CONDITIONS,NO_BACKWARD_RECONSTRUCTION
 
   implicit none
 
@@ -253,6 +254,7 @@
   ! checks if anything to do
   if (.not. STACEY_ABSORBING_CONDITIONS) return
   if (.not. any_acoustic) return
+  if (NO_BACKWARD_RECONSTRUCTION) return
 
   ! time increment step
   it_tmp = NSTEP - it + 1

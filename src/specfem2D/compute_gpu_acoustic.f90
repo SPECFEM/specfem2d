@@ -231,8 +231,9 @@
 
   ! checks if anything to do
   if (num_abs_boundary_faces == 0) return
+  if (NO_BACKWARD_RECONSTRUCTION) return
 
-  if (SIMULATION_TYPE == 3 .and. (.not. UNDO_ATTENUATION_AND_OR_PML .and. .not. NO_BACKWARD_RECONSTRUCTION) ) then
+  if (SIMULATION_TYPE == 3 .and. (.not. UNDO_ATTENUATION_AND_OR_PML) ) then
     ! gets absorbing contributions buffers
     b_absorb_potential_left_slice(:,:) = b_absorb_acoustic_left(:,:,NSTEP-it+1)
     b_absorb_potential_right_slice(:,:) = b_absorb_acoustic_right(:,:,NSTEP-it+1)
@@ -246,8 +247,7 @@
                                     compute_wavefield_1,compute_wavefield_2,UNDO_ATTENUATION_AND_OR_PML)
 
   ! adjoint simulations: stores absorbed wavefield part
-  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (.not. UNDO_ATTENUATION_AND_OR_PML .and. &
-      .not. NO_BACKWARD_RECONSTRUCTION)) then
+  if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD .and. (.not. UNDO_ATTENUATION_AND_OR_PML)) then
     ! writes out absorbing boundary value only when second phase is running
     b_absorb_acoustic_bottom(:,:,it) = b_absorb_potential_bottom_slice(:,:)
     b_absorb_acoustic_right(:,:,it) = b_absorb_potential_right_slice(:,:)
