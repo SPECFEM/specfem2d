@@ -137,12 +137,12 @@ module moving_sources_par
       call exit_MPI(myrank,'setup_with_binary_database not available with moving sources yet')
     do i_source = 1,NSOURCES
       do it_l = 1,10
-        write(IMAIN,*) ''
+        write(IMAIN,*)
         write(IMAIN,*) 'Your are using moving source capabilities. Please cite:'
         write(IMAIN,*) 'Bottero (2018) Full-wave numerical simulation of T-waves and of moving acoustic sources'
         write(IMAIN,*) 'PhD thesis'
         write(IMAIN,*) 'https://tel.archives-ouvertes.fr/tel-01893011'
-        write(IMAIN,*) ''
+        write(IMAIN,*)
       enddo
       if ((abs(tshift_src(i_source)) > 0.0d0) .or. (abs(t0) > 0.0d0)) then
         write(IMAIN,*) ' !! BEWARE !! Parameters tshift and/or t0 are used with moving source !'
@@ -177,7 +177,7 @@ module moving_sources_par
       write(IMAIN,*) '    Generating moving source databases ...'
       if (.not. writeMovingDatabases) then
         write(IMAIN,*) '      (if this step takes too much time in your case you may want to turn writeMovingDatabases to .true.'
-        write(IMAIN,*) '      In the SOURCES file. In this case you may also want to go to subroutine init_moving_sources and'
+        write(IMAIN,*) '      In the SOURCES file. In this case you may also want to goto subroutine init_moving_sources and'
         write(IMAIN,*) '      read the comments)' ! There:
         ! Turn writeMovingDatabases .true. in the case of GPU computing if the generation of moving source databases takes
         ! a long time. Then the simulation is done in two steps: first you run the code and it writes the databases to file
@@ -197,8 +197,8 @@ module moving_sources_par
       ! call synchronize_all()
       ! if (myrank == 0) then
       ! call sleep(1)
-      !   print *,""
-      !   print *,""
+      !   print *
+      !   print *
       !   print *,myrank," Duration of this time step: ",stop_time - start_time, "seconds"
       ! endif
       ! call synchronize_all()
@@ -238,9 +238,9 @@ module moving_sources_par
             ! if (it_l > 51) then
             !   call synchronize_all()
             !   if (myrank == 0) then
-            !     print *,""
+            !     print *
             !     print *,"it:",it_l," xsrc :", xsrc
-            !     print *,""
+            !     print *
             !     print *,myrank," source_belonged_to_this_rank :", source_belonged_to_this_rank, "reset:", reset, &
             !             "ispec_source_first_guess:",ispec_source_first_guess
             !   endif
@@ -258,7 +258,7 @@ module moving_sources_par
             !   if (myrank == 3) then
             !     print *,myrank," source_belonged_to_this_rank :", source_belonged_to_this_rank, "reset:", reset, &
             !             "ispec_source_first_guess:",ispec_source_first_guess
-            !     print *,""
+            !     print *
             !   endif
             !   call synchronize_all()
             ! endif
@@ -268,7 +268,7 @@ module moving_sources_par
            !  if (it_l > 51) then
            !    call synchronize_all()
            !    if (myrank == 0) then
-           !      print *,""
+           !      print *
            !      print *,myrank," ispec_source_first_guess :", ispec_source_first_guess, "xmin:", &
            !              coord(1,ibool(1,1,ispec_source_first_guess)), &
            !              "xmax:", coord(1,ibool(NGLLX,1,ispec_source_first_guess))
@@ -290,7 +290,7 @@ module moving_sources_par
            !      print *,myrank," ispec_source_first_guess :", ispec_source_first_guess, "xmin:", &
            !              coord(1,ibool(1,1,ispec_source_first_guess)), &
            !              "xmax:", coord(1,ibool(NGLLX,1,ispec_source_first_guess))
-           !      print *,""
+           !      print *
            !    endif
            !    call synchronize_all()
            ! endif
@@ -346,7 +346,7 @@ module moving_sources_par
           !   call synchronize_all()
 
           !   if (myrank == 0) then
-          !     print *,""
+          !     print *
           !     print *,myrank,"NOW LOCATING THE SOURCE ? ",(source_belonged_to_this_rank .or. any_reset)
           !   endif
           !   call synchronize_all()
@@ -393,7 +393,7 @@ module moving_sources_par
             ! if (it_l > 51) then
             !   call synchronize_all()
             !   if (myrank == 0) then
-            !     print *,""
+            !     print *
             !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
             !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset
             !   endif
@@ -411,7 +411,7 @@ module moving_sources_par
             !   if (myrank == 3) then
             !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
             !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset
-            !     print *,""
+            !     print *
             !   endif
             !   call synchronize_all()
             ! endif
@@ -521,7 +521,7 @@ end subroutine init_moving_sources_GPU
   logical :: do_next_loops, return_array_of_adj_elem, point_in_first_guess_element, rst
 
   if (.not. SOURCE_IS_MOVING) then
-    call exit_MPI(myrank,'Subroutine locate_source_moving should be used when the source is moving')
+    call exit_MPI(myrank,'subroutine locate_source_moving should be used when the source is moving')
   endif
 
   if (present(reset)) then ! We define another variable to avoid repeating if (present) ...
@@ -799,13 +799,13 @@ end subroutine init_moving_sources_GPU
 
 #ifdef WITH_MPI
   ! for MPI version, gather information from all the nodes
-  ! mpi commands are necessary! The processes does not know the same part of the
+  ! MPI commands are necessary! The processes does not know the same part of the
   ! mesh. But we do it only when necessary to avoid exchanging too much in the
   ! case of moving sources
   if (rst .or. (ispec_guess == 0)) then
 
     ! global minimum distance computed over all processes
-    call min_all_all_dp(final_distance, dist_glob_squared) 
+    call min_all_all_dp(final_distance, dist_glob_squared)
 
     ! check if this process contains the source
     if (abs(sqrt(dist_glob_squared) - sqrt(final_distance)) < TINYVAL ) is_proc_source = 1
@@ -955,32 +955,32 @@ subroutine read_moving_databases(pathToMovingDatabase)
   if (NSTEP_read /= NSTEP) then
     write(str,*) 'Error: Database read does not match the Par_file (different NSTEP:', &
                  NSTEP,'instead of',NSTEP_read,')'
-    call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  -> Terminating' // NEW_LINE(''))
+    call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  - > Terminating' // NEW_LINE(''))
   endif
   if (abs(deltat_read - deltat) > TINYVAL) then
     write(str,*) 'Error: Database read does not match the Par_file (different deltat:', &
                   deltat,'instead of',deltat_read,')'
-    call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  -> Terminating' // NEW_LINE(''))
+    call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  - > Terminating' // NEW_LINE(''))
   endif
   if (nglob_read /= nglob) then
     write(str,*) 'Error: Database read does not match the current configuration', &
-                   '(different number of gll points:',nglob,'instead of',nglob_read,')'
-    call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  -> Terminating' // NEW_LINE(''))
+                   '(different number of GLL points:',nglob,'instead of',nglob_read,')'
+    call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  - > Terminating' // NEW_LINE(''))
   endif
   if (nglob_elastic_read /= nglob_elastic) then
     write(str,*) 'Error: Database read does not match the current configuration (different number of', &
                    'elastic elements',nglob_elastic,'instead of',nglob_elastic_read,')'
-    call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  -> Terminating' // NEW_LINE(''))
+    call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  - > Terminating' // NEW_LINE(''))
   endif
   if (nglob_acoustic_read /= nglob_acoustic) then
     write(str,*) 'Error: Database read does not match the current configuration (different number of', &
                    'acoustic elements',nglob_acoustic,'instead of',nglob_acoustic_read,')'
-    call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  -> Terminating' // NEW_LINE(''))
+    call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  - > Terminating' // NEW_LINE(''))
   endif
   if (NSOURCES_read /= NSOURCES) then
     write(str,*) 'Error: Database read does not match the SOURCES file (different number of sources:', &
                   NSOURCES,'instead of',NSOURCES_read,')'
-    call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  -> Terminating' // NEW_LINE(''))
+    call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  - > Terminating' // NEW_LINE(''))
   endif
   allocate(x_source_read(NSOURCES), z_source_read(NSOURCES), vx_source_read(NSOURCES), &
            vz_source_read(NSOURCES))
@@ -998,17 +998,17 @@ subroutine read_moving_databases(pathToMovingDatabase)
     if (abs(z_source_read(i_source) - z_source(i_source)) > TINYVAL) then
       write(str,*) 'Error: Database read does not match the current SOURCES file', &
                      '(different sources z coord:',z_source,'instead of',z_source_read,')'
-      call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  -> Terminating' // NEW_LINE(''))
+      call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  - > Terminating' // NEW_LINE(''))
     endif
     if (abs(vx_source_read(i_source) - vx_source(i_source)) > TINYVAL) then
       write(str,*) 'Error: Database read does not match the current SOURCES file', &
                      '(different sources x velocity:',vx_source,'instead of',vx_source_read,')'
-      call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  -> Terminating' // NEW_LINE(''))
+      call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  - > Terminating' // NEW_LINE(''))
     endif
     if (abs(vz_source_read(i_source) - vz_source(i_source)) > TINYVAL) then
       write(str,*) 'Error: Database read does not match the current SOURCES file', &
                      '(different sources z velocity:',vz_source,'instead of',vz_source_read,')'
-      call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  -> Terminating' // NEW_LINE(''))
+      call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  - > Terminating' // NEW_LINE(''))
     endif
   enddo
   deallocate(ispec_selected_source_moving)
@@ -1181,12 +1181,12 @@ function point_in_polygon ( n, x, y, x0, y0 )
   !----    Moshe Shimrat,
   !----    ACM Algorithm 112,
   !----    Position of Point Relative to Polygon,
-  !----    Communications of the ACM,
+  !----    communications of the ACM,
   !----    Volume 5, Number 8, page 434, August 1962.
   !----
   !----    Richard Hacker,
   !----    Certification of Algorithm 112,
-  !----    Communications of the ACM,
+  !----    communications of the ACM,
   !----    Volume 5, Number 12, page  606, December 1962.
   !----
   !----  Parameters:
@@ -1216,16 +1216,16 @@ function point_in_polygon ( n, x, y, x0, y0 )
       ip1 = mod ( i, n ) + 1
       !
       !   if ( ( y(ip1) < y0 .and. y0 <= y(i)   ) .or. &
-      !        ( y(i)   < y0 .and. y0 <= y(ip1) ) ) then
+      !        ( y(i) < y0 .and. y0 <= y(ip1) ) ) then
       !
       if ( y(ip1) < y0 .eqv. y0 <= y(i) ) then
         t = x0 - x(i) - ( y0 - y(i) ) * ( x(ip1) - x(i) ) / ( y(ip1) - y(i) )
         print *,"t:",t
         if ( t <= 0.0D+00 ) then
           b = .not. b
-        end if
-      end if
-    end do
+        endif
+      endif
+    enddo
 
     point_in_polygon = b
 
@@ -1266,45 +1266,45 @@ subroutine pnpoly(n, x, y, x0, y0, in_or_out)
     !----  Come from David H. Douglas, COLLECTED ALGORITHMS, Cambridge MA:
     !----  Harvard Laboratory for Computer Graphics, 1974
     !----
-  	!----        Purpose
-  	!----           to determine whether a point is inside a polygon
-  	!----
-  	!----        Usage
+    !----        Purpose
+    !----           to determine whether a point is inside a polygon
+    !----
+    !----        Usage
     !----           call pnpoly (x0, y0, x, y, n, inout )
-  	!----
-  	!----        Description of the parameters
-  	!----           x0      - x-coordinate of point in question.
+    !----
+    !----        Description of the parameters
+    !----           x0      - x-coordinate of point in question.
     !----           y0      - y-coordinate of point in question.
-  	!----           x       - n long vector containing x-coordinates of
+    !----           x       - n long vector containing x-coordinates of
     !----                     vertices of polygon.
-  	!----           y       - n long vector containing y-coordinates of
+    !----           y       - n long vector containing y-coordinates of
     !----                     vertices of polygon.
-  	!----           n       - number of vertices in the polygon.
-  	!----           in_or_out   - the signal returned:
-  	!----                     -1 if the point is outside of the polygon,
+    !----           n       - number of vertices in the polygon.
+    !----           in_or_out   - the signal returned:
+    !----                     -1 if the point is outside of the polygon,
     !----                      0 if the point is on an edge or at a vertex,
-  	!----                      1 if the point is inside of the polygon.
-  	!----
-  	!----        Remarks
+    !----                      1 if the point is inside of the polygon.
+    !----
+    !----        Remarks
     !----           the vertices may be listed in clockwise or anticlockwise
-  	!----           order.  for this subroutine a point is considered inside
-  	!----           the polygon if it is located in the enclosed area defined
+    !----           order.  for this subroutine a point is considered inside
+    !----           the polygon if it is located in the enclosed area defined
     !----           by the line forming the polygon.
-  	!----           the input polygon may be a compound polygon consisting
-  	!----           of several separate subpolygons. if so, the first vertex
+    !----           the input polygon may be a compound polygon consisting
+    !----           of several separate subpolygons. if so, the first vertex
     !----           of each subpolygon must be repeated, and when calculating
-  	!----           n, these first vertices must be counted twice.
-  	!----           inout is the only parameter whose value is changed.
+    !----           n, these first vertices must be counted twice.
+    !----           inout is the only parameter whose value is changed.
     !----           pnpoly can handle any number of vertices in the polygon.
-  	!----           written by randolph franklin, university of ottawa, 6/72.
-  	!----
-    !----        Subroutines and function subprograms required
-  	!----           none
-  	!----
+    !----           written by randolph franklin, university of ottawa, 6/72.
+    !----
+    !----        subroutines and function subprograms required
+    !----           none
+    !----
     !----        Method
-  	!----           a vertical semi-infinite line is drawn up from the point
-  	!----           in question. if it crosses the polygon an odd number of
-  	!----           times, the point is inside the polygon.
+    !----           a vertical semi-infinite line is drawn up from the point
+    !----           in question. if it crosses the polygon an odd number of
+    !----           times, the point is inside the polygon.
     !----
 
     implicit none
@@ -1326,7 +1326,7 @@ subroutine pnpoly(n, x, y, x0, y0, in_or_out)
        xi = x(i) - x0
        yi = y(i) - y0
        ! check whether the point in question is at this vertex.
-       if ( xi .eq. 0.0 .and. yi .eq. 0.0 ) then
+       if ( xi == 0.0 .and. yi == 0.0 ) then
           in_or_out = 0
           return
        endif
@@ -1335,29 +1335,29 @@ subroutine pnpoly(n, x, y, x0, y0, in_or_out)
        xj = x(j) - x0
        yj = y(j) - y0
        ! is this line of 0 length ?
-       if ( xi .eq. xj .and. yi .eq. yj ) goto 100
-       ix = xi .ge. 0.0
-       iy = yi .ge. 0.0
-       jx = xj .ge. 0.0
-       jy = yj .ge. 0.0
+       if ( xi == xj .and. yi == yj ) goto 100
+       ix = xi >= 0.0
+       iy = yi >= 0.0
+       jx = xj >= 0.0
+       jy = yj >= 0.0
        ! check whether (x0,y0) is on vertical side of polygon.
-       if ( xi .eq. 0.0 .and. xj.eq. 0.0 .and. eor_condition(iy,jy) ) then
+       if ( xi == 0.0 .and. xj == 0.0 .and. eor_condition(iy,jy) ) then
          in_or_out = 0
          return
        endif
        ! check whether (x0,y0) is on horizontal side of polygon.
-       if ( yi .eq. 0.0 .and. yj .eq. 0.0 .and. eor_condition(ix,jx) ) then
+       if ( yi == 0.0 .and. yj == 0.0 .and. eor_condition(ix,jx) ) then
          in_or_out = 0
          return
        endif
-     	 ! check whether both ends of this side are completely 1) to right
+       ! check whether both ends of this side are completely 1) to right
        ! of, 2) to left of, or 3) below (x0,y0).
-       if ( .not. ((iy .or. jy) .and. eor_condition(ix,jx)) ) goto 100
+       if (.not. ((iy .or. jy) .and. eor_condition(ix,jx)) ) goto 100
        ! does this side obviously cross line rising vertically from (x0,y0)
-       if ( .not. (iy .and. jy .and. eor_condition(ix,jx)) ) then
-         if ( (yi*xj-xi*yj)/(xj-xi) .lt. 0.0 ) then
+       if (.not. (iy .and. jy .and. eor_condition(ix,jx)) ) then
+         if ( (yi*xj-xi*yj)/(xj-xi) < 0.0 ) then
            goto 100
-         elseif ( (yi*xj-xi*yj)/(xj-xi) .eq. 0.0 ) then
+         else if ( (yi*xj-xi*yj)/(xj-xi) == 0.0 ) then
            in_or_out = 0
            return
          else

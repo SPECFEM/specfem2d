@@ -417,7 +417,7 @@
   endif
 
   if (nspec_PML == 0) &
-    PML_BOUNDARY_CONDITIONS = .False.
+    PML_BOUNDARY_CONDITIONS = .false.
 
   if (PML_BOUNDARY_CONDITIONS) then
     ! EB EB : We create spec_to_PML_GPU such that :
