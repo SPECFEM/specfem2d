@@ -1297,7 +1297,7 @@ subroutine pnpoly(n,x,y,x0,y0,in_or_out)
     logical :: ix , iy , jx , jy , eor
 
     ! Exclusive or statement function.
-    eor(ix,iy) = (ix .or. iy) .and. .not.(ix .and. iy)
+    eor(ix, iy) = (ix .or. iy) .and. (.not. (ix .and. iy))
 
     in_or_out = -1
 
