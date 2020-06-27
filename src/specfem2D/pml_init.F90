@@ -419,7 +419,7 @@
   use constants, only: PI,NGLLX,NGLLZ,HUGEVAL,IMAIN, &
     CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
 
-  use specfem_par, only: x_source, z_source, vx_source, vz_source, f0_source,ispec_is_elastic,ispec_is_acoustic, &
+  use specfem_par, only: vx_source, vz_source, f0_source,ispec_is_elastic,ispec_is_acoustic, &
                          NSOURCES,ispec_selected_source, &
                          nspec,kmato,density,poroelastcoef,ibool,coord,islice_selected_source,myrank, SOURCE_IS_MOVING
 ! PML arrays and variables
