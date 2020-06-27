@@ -78,11 +78,12 @@
   use specfem_par, only: NSOURCES,initialfield,source_type, &
                          coord,ibool,nglob,nspec,nelem_acoustic_surface,acoustic_surface, &
                          ispec_is_elastic,ispec_is_poroelastic, &
-                         x_source,z_source,ispec_selected_source, &
+                         x_source,z_source,vx_source,vz_source,ispec_selected_source, &
                          xi_source,gamma_source,sourcearrays, &
                          islice_selected_source,iglob_source, &
-                         xigll,zigll,npgeo, &
-                         NPROC,coorg,knods,ngnod
+                         xigll,zigll,npgeo, NPROC,coorg,knods,ngnod, &
+                         SOURCE_IS_MOVING,NSTEP,deltat,t0,tshift_src
+
   implicit none
 
   ! Local variables
@@ -91,6 +92,7 @@
   ! dimensions
   double precision :: xmin,xmax,zmin,zmax
   double precision :: xmin_local,xmax_local,zmin_local,zmax_local
+  double precision :: max_time,final_source_x,final_source_z
   integer :: i,ier
   logical :: not_in_mesh_domain
 
@@ -126,22 +128,45 @@
   if (myrank == 0) then
     ! checks position of the source
     do i = 1,NSOURCES
-      not_in_mesh_domain = .false.
-      if (x_source(i) < xmin) not_in_mesh_domain = .true.
-      if (x_source(i) > xmax) not_in_mesh_domain = .true.
-      if (z_source(i) < zmin) not_in_mesh_domain = .true.
-      if (z_source(i) > zmax) not_in_mesh_domain = .true.
+      if (.not. SOURCE_IS_MOVING) then
+        not_in_mesh_domain = .false.
+        if (x_source(i) < xmin) not_in_mesh_domain = .true.
+        if (x_source(i) > xmax) not_in_mesh_domain = .true.
+        if (z_source(i) < zmin) not_in_mesh_domain = .true.
+        if (z_source(i) > zmax) not_in_mesh_domain = .true.
 
-      ! user output
-      if (not_in_mesh_domain) then
-        write(IMAIN,*) 'Source ',i
-        write(IMAIN,*) '  Position (x,z) of the source = ',x_source(i),z_source(i)
-        write(IMAIN,*) 'Invalid position, mesh dimensions are: xmin/max = ',xmin,xmax,'zmin/zmax',zmin,zmax
-        write(IMAIN,*) 'Please fix source location, exiting...'
-        if (x_source(i) < xmin) call stop_the_code('Error: at least one source has x < xmin of the mesh')
-        if (x_source(i) > xmax) call stop_the_code('Error: at least one source has x > xmax of the mesh')
-        if (z_source(i) < zmin) call stop_the_code('Error: at least one source has z < zmin of the mesh')
-        if (z_source(i) > zmax) call stop_the_code('Error: at least one source has z > zmax of the mesh')
+        ! user output
+        if (not_in_mesh_domain) then
+          write(IMAIN,*) 'Source ',i
+          write(IMAIN,*) '  Position (x,z) of the source = ',x_source(i),z_source(i)
+          write(IMAIN,*) 'Invalid position, mesh dimensions are: xmin/max = ',xmin,xmax,'zmin/zmax',zmin,zmax
+          write(IMAIN,*) 'Please fix source location, exiting...'
+          if (x_source(i) < xmin) call stop_the_code('Error: at least one source has x < xmin of the mesh')
+          if (x_source(i) > xmax) call stop_the_code('Error: at least one source has x > xmax of the mesh')
+          if (z_source(i) < zmin) call stop_the_code('Error: at least one source has z < zmin of the mesh')
+          if (z_source(i) > zmax) call stop_the_code('Error: at least one source has z > zmax of the mesh')
+        endif
+      else  ! SOURCE_IS_MOVING
+        ! This is not perfect (it assumes the mesh is rectangular) but doing otherwise would be overkill
+        max_time = (NSTEP-1)*deltat - t0 - minval(tshift_src)
+        final_source_x = x_source(i) + vx_source(i)*max_time
+        final_source_z = z_source(i) + vz_source(i)*max_time
+        not_in_mesh_domain = .false.
+        if (final_source_x < xmin) not_in_mesh_domain = .true.
+        if (final_source_x > xmax) not_in_mesh_domain = .true.
+        if (final_source_z < zmin) not_in_mesh_domain = .true.
+        if (final_source_z > zmax) not_in_mesh_domain = .true.
+        ! user output
+        if (not_in_mesh_domain) then
+          write(IMAIN,*) 'Source ', i
+          write(IMAIN,*) '  Final position (x,z) of the source = ', final_source_x, final_source_z
+          write(IMAIN,*) 'Invalid position, mesh dimensions are: xmin/max = ', xmin, xmax, 'zmin/zmax', zmin, zmax
+          write(IMAIN,*) 'Please fix source location or source speed, exiting...'
+          if (final_source_x < xmin) call stop_the_code('Error: at least one source has final x < xmin of the mesh')
+          if (final_source_x > xmax) call stop_the_code('Error: at least one source has final x > xmax of the mesh')
+          if (final_source_z < zmin) call stop_the_code('Error: at least one source has final z < zmin of the mesh')
+          if (final_source_z > zmax) call stop_the_code('Error: at least one source has final z > zmax of the mesh')
+        endif
       endif
     enddo
   endif
@@ -345,7 +370,8 @@
   close(IIN)
 
   if (myrank == 0) then
-    write(IMAIN,*) '  Total number of receivers = ',nrec
+    write(IMAIN,*)
+    write(IMAIN,*) 'Total number of receivers = ',nrec
     write(IMAIN,*)
     call flush_IMAIN()
   endif

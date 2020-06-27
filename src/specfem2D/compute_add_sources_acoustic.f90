@@ -90,21 +90,24 @@
 !=====================================================================
 !
 
-  subroutine compute_add_sources_acoustic_moving_source(potential_dot_dot_acoustic,it,i_stage)
+  subroutine compute_add_sources_acoustic_moving_sources(potential_dot_dot_acoustic,it,i_stage)
 
 ! This subroutine is the same than the previous one but with a moving source
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLZ,NGLJ,TINYVAL,SOURCE_IS_MOVING,IMAIN
+  use constants, only: CUSTOM_REAL,NDIM,NGLLX,NGLLZ,NGLJ,TINYVAL,IMAIN
 
   use specfem_par, only: ispec_is_acoustic,nglob_acoustic, &
                          NSOURCES,source_type,source_time_function, &
                          islice_selected_source,ispec_selected_source, &
                          hxis_store,hgammas_store,ibool,kappastore,myrank,deltat,t0,tshift_src, &
-! These three lines are for a moving acoustic source
-                         coord,nspec,nglob,xigll,zigll,z_source,NPROC,xi_source, &
+                         coord,nspec,nglob,xigll,zigll,NPROC,xi_source, &
                          gamma_source,coorg,knods,ngnod,npgeo,iglob_source,x_source,z_source, &
-                         time_stepping_scheme, &
+                         vx_source,vz_source, time_stepping_scheme, &
+                         SOURCE_IS_MOVING, &
                          hxis,hpxis,hgammas,hpgammas
+
+  use moving_sources_par, only: locate_source_moving
+
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(nglob_acoustic),intent(inout) :: potential_dot_dot_acoustic
@@ -113,35 +116,62 @@
   !local variables
   integer :: i_source,i,j,iglob,ispec
   double precision :: hlagrange
-  double precision :: xminSource,vSource,timeval,t_used
+  double precision :: xsrc,zsrc,timeval,t_used
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
 
   ! checks if anything to do
   if (.not. SOURCE_IS_MOVING) return
-
-  xminSource = -60.0d0 ! m
-  vSource = 60.0d0 ! m/s
 
   if (time_stepping_scheme == 1) then
     ! Newmark
     timeval = (it-1)*deltat
   else
-    call exit_MPI(myrank,'Not implemented!')
+    call exit_MPI(myrank,'Only Newmark time scheme is implemented for moving sources (2)')
   endif
 
-  ! moves and re-locates sources along x-axis
+  if ((myrank == 0) .and. (it < 5)) then
+    do i_source = 1,NSOURCES
+      write(IMAIN,*) ''
+      write(IMAIN,*) 'Your are using moving source capabilities. Please cite:'
+      write(IMAIN,*) 'Bottero (2018) Full-wave numerical simulation of T-waves and of moving acoustic sources'
+      write(IMAIN,*) 'PhD thesis'
+      write(IMAIN,*) 'https://tel.archives-ouvertes.fr/tel-01893011'
+      write(IMAIN,*) ''
+      write(IMAIN,*) 'Note: subroutine compute_add_sources_acoustic_moving_sources can be greatly'
+      write(IMAIN,*) 'optimized. See what is done in init_moving_sources (in moving_sources_par.f90).'
+      write(IMAIN,*) 'This is easy to do and would probably greatly improve the computational time'
+      if ((abs(tshift_src(i_source)) > 0.0d0) .or. (abs(t0) > 0.0d0)) then
+        write(IMAIN,*) ''
+        write(IMAIN,*) ' !! BEWARE !! Parameters tshift and/or t0 are used with moving source !'
+        write(IMAIN,*) ' The time step for the moving source is: '
+        write(IMAIN,*) '    t_used = (it_l-1)*deltat-t0-tshift_src(i_source)'
+        write(IMAIN,*) ' And the source position is calculated like:'
+        write(IMAIN,*) '  xsrc = x_source + vx_source*t_used'
+      endif
+    enddo
+  endif
+
   do i_source = 1,NSOURCES
     if (abs(source_time_function(i_source,it,i_stage)) > TINYVAL) then
       t_used = (timeval-t0-tshift_src(i_source))
-
-      x_source(i_source) = xminSource + vSource*t_used !timeval?
+     ! moves and re-locates sources along x and z axis
+      xsrc = x_source(i_source) + vx_source(i_source)*t_used
+      zsrc = z_source(i_source) + vz_source(i_source)*t_used
 
       ! collocated force source
+      ! TODO: this would be more efficient compled with first guess as in init_moving_sources_GPU
+      !call locate_source_moving(xsrc,zsrc, &
+      !                   ispec_selected_source(i_source),islice_selected_source(i_source), &
+      !                   NPROC,myrank,xi_source(i_source),gamma_source(i_source),.true.)
       call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
-                         x_source(i_source),z_source(i_source), &
+                         xsrc,zsrc, &
                          ispec_selected_source(i_source),islice_selected_source(i_source), &
                          NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
                          iglob_source(i_source),.true.)
 
+      ! print *,ispec_selected_source(i_source) > nspec, "xmin:", &
+      !               coord(1,ibool(1,1,ispec_selected_source(i_source))), &
+      !               "xmax:", coord(1,ibool(NGLLX,1,ispec_selected_source(i_source)))
       ! define and store Lagrange interpolators (hxis,hpxis,hgammas,hpgammas) at all the sources
       !if (AXISYM) then
       !  if (is_on_the_axis(ispec_selected_source(i_source)) .and. myrank == islice_selected_source(i_source)) then
@@ -185,20 +215,22 @@
               iglob = ibool(i,j,ispec)
 
               hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+              sourcearray(1,i,j) = hlagrange
 
               potential_dot_dot_acoustic(iglob) = potential_dot_dot_acoustic(iglob) + &
-                      real(source_time_function(i_source,it,i_stage)*hlagrange / kappastore(i,j,ispec),kind=CUSTOM_REAL)
+                      real(source_time_function(i_source,it,i_stage)*sourcearray(1,i,j) / &
+                      kappastore(i,j,ispec),kind=CUSTOM_REAL)
             enddo
           enddo
           ! moment tensor
           else if (source_type(i_source) == 2) then
-            call exit_MPI(myrank,'cannot have moment tensor source in acoustic element')
+            call exit_MPI(myrank,'Cannot have moment tensor source in acoustic element')
         endif
       endif
     endif ! if this processor core carries the source and the source element is acoustic
   enddo ! do i_source= 1,NSOURCES
 
-  end subroutine compute_add_sources_acoustic_moving_source
+  end subroutine compute_add_sources_acoustic_moving_sources
 
 !
 !=====================================================================

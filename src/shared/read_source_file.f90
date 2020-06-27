@@ -74,12 +74,17 @@
            Mxx(NSOURCES), &
            Mxz(NSOURCES), &
            Mzz(NSOURCES), &
-           factor(NSOURCES),stat=ier)
+           factor(NSOURCES), &
+           vx_source(NSOURCES), &
+           vz_source(NSOURCES), stat=ier)
   if (ier /= 0) call stop_the_code('Error allocating source arrays')
 
   ! initializes
   x_source(:) = 0.d0
   z_source(:) = 0.d0
+
+  vx_source(:) = 0.d0
+  vz_source(:) = 0.d0
 
   source_type(:) = 0
   time_function_type(:) = 0
@@ -184,6 +189,19 @@
       ! amplification factor
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,factor(i_source))
 
+      ! x/z velocity (moving source)
+      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,vx_source(i_source))
+      call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,vz_source(i_source))
+
+      ! Read flag for writing moving source databases
+      call read_value_logical(IIN_SOURCE,IGNORE_JUNK,writeMovingDatabases)
+
+      ! Set flag SOURCE_IS_MOVING
+      if (any(abs(vx_source) > TINYVAL) .or. any(abs(vz_source) > TINYVAL)) then
+        SOURCE_IS_MOVING = .true.
+      else
+        SOURCE_IS_MOVING = .false.
+      endif
 
       ! Dirac/Heaviside
       ! if Dirac source time function, use a very thin Gaussian instead
@@ -194,7 +212,7 @@
 
       ! checks source frequency
       if (abs(f0_source(i_source)) < TINYVAL) then
-        call exit_MPI(0,'Error source frequency is zero')
+        call exit_MPI(0,'Error: source frequency is zero')
       endif
 
       ! convert angle from degrees to radians
@@ -204,7 +222,12 @@
       ! note: we will further process source info in solver,
       !         here we just read in the given specifics and show them
       write(IMAIN,*) 'Source', i_source
-      write(IMAIN,*) '  Position xs, zs = ',x_source(i_source),z_source(i_source)
+      if (SOURCE_IS_MOVING) then
+        write(IMAIN,*) '  Initial position xs, zs = ',x_source(i_source),z_source(i_source)
+        write(IMAIN,*) '  Velocities vx, vz = ',vx_source(i_source),vz_source(i_source)
+      else
+        write(IMAIN,*) '  Position xs, zs = ',x_source(i_source),z_source(i_source)
+      endif
       write(IMAIN,*)
 
       ! source type
@@ -237,7 +260,7 @@
         write(IMAIN,*) '  Initial mode displacement for initialfield'
       case default
         ! not supported yet
-        call stop_the_code('Error invalid source type! exiting...')
+        call stop_the_code('Error invalid source type! must be 1, 2, 3, 4, 5 or 6 exiting...')
       end select
       write(IMAIN,*)
 
@@ -273,7 +296,7 @@
         write(IMAIN,*) '  Burst wavelet:'
         write(IMAIN,*) '  Burst band width: ',burst_band_width(i_source)
       case (10)
-        write(IMAIN,*) '  Sinus source time function:'
+        write(IMAIN,*) '  Sinusoidal source time function:'
         write(IMAIN,*) '  Frequency, delay = ',f0_source(i_source),tshift_src(i_source)
       case (11)
         write(IMAIN,*) '  Ormsby source time function:'
@@ -304,10 +327,14 @@
     call bcast_all_dp(Mxz,NSOURCES)
     call bcast_all_dp(Mzz,NSOURCES)
     call bcast_all_dp(factor,NSOURCES)
+    call bcast_all_dp(vx_source,NSOURCES)
+    call bcast_all_dp(vz_source,NSOURCES)
 
     call bcast_all_l(source_surf,NSOURCES)
 
     call bcast_all_string_array(name_of_source_file,NSOURCES)
+    call bcast_all_singlel(writeMovingDatabases)
+    call bcast_all_singlel(SOURCE_IS_MOVING)
   endif
 
   ! user output

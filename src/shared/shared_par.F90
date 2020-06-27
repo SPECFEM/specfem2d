@@ -460,12 +460,19 @@ module source_file_par
   double precision, dimension(:),allocatable :: tshift_src
   double precision, dimension(:),allocatable :: f0_source,burst_band_width
 
+  ! horizontal and vertical velocities (for moving sources)
+  double precision, dimension(:),allocatable :: vx_source,vz_source
+
   ! flag for fixation to surface (works only for internal meshes, not external ones)
   logical, dimension(:),allocatable ::  source_surf
 
   ! File name can't exceed MAX_STRING_LEN characters
   character(len=MAX_STRING_LEN), dimension(:),allocatable :: name_of_source_file
 
+  ! Flag for writing moving source databases or not
+  logical :: writeMovingDatabases
+
+  ! Flag for moving sources
+  logical :: SOURCE_IS_MOVING
+
 end module source_file_par
-
-

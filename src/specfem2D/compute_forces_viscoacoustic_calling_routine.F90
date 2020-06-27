@@ -33,7 +33,7 @@
 
   subroutine compute_forces_viscoacoustic_main()
 
-  use constants, only: SOURCE_IS_MOVING,USE_ENFORCE_FIELDS,ALPHA_LDDRK,BETA_LDDRK,ZERO,USE_A_STRONG_FORMULATION_FOR_E1
+  use constants, only: USE_ENFORCE_FIELDS,ALPHA_LDDRK,BETA_LDDRK,ZERO,USE_A_STRONG_FORMULATION_FOR_E1
 
   use specfem_par
 
@@ -154,7 +154,7 @@
       if (.not. initialfield) then
         if (SIMULATION_TYPE == 1) then
           if (SOURCE_IS_MOVING) then
-            call compute_add_sources_acoustic_moving_source(potential_dot_dot_acoustic,it,i_stage)
+            call compute_add_sources_acoustic_moving_sources(potential_dot_dot_acoustic,it,i_stage)
           else
             call compute_add_sources_acoustic(potential_dot_dot_acoustic,it,i_stage)
           endif
@@ -383,6 +383,4 @@
   call enforce_acoustic_free_surface(b_potential_dot_dot_acoustic,b_potential_dot_acoustic,b_potential_acoustic)
 
   end subroutine compute_forces_viscoacoustic_main_backward
-
-
 

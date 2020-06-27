@@ -51,6 +51,7 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
                                                     int* ispec_is_acoustic,
                                                     realw* kappastore,
                                                     int it, int nsources_local) {
+
   int i = threadIdx.x;
   int j = threadIdx.y;
 
@@ -87,34 +88,27 @@ __global__ void compute_add_moving_sources_acoustic_kernel(realw* potential_dot_
                                                     int* ispec_selected_source_moving,
                                                     int* ispec_is_acoustic,
                                                     realw* kappastore,
-                                                    int it, int nsources_local,
-                                                    int max_nsources_local, int NSTEP) {
+                                                    int it, int* nsources_local,
+                                                    int nsources, int NSTEP) {
 
   // Same but for moving sources
-
-  int i = threadIdx.x;
-  int j = threadIdx.y;
+  int i = threadIdx.x;  // correspond to GLLx id (each thread has its own x and y id)
+  int j = threadIdx.y;  // correspond to GLLz id (each thread has its own x and y id)
 
   int isource = blockIdx.x + gridDim.x*blockIdx.y;
 
   int ispec, iglob;
   realw stf, kappal;
 
-
-  if (isource < nsources_local) {
-
-      ispec = ispec_selected_source_moving[INDEX2(nsources_local, isource, it)] - 1;
-
+  if (isource < nsources_local[it]) {
+      ispec = ispec_selected_source_moving[INDEX2(nsources, isource, it)] - 1;
       if (ispec_is_acoustic[ispec]) {
 
         iglob = d_ibool[INDEX3_PADDED(NGLLX, NGLLX, i, j, ispec)] - 1;
-
         kappal = kappastore[INDEX3(NGLLX, NGLLX, i, j, ispec)];
-
-        stf = source_time_function[INDEX2(nsources_local, isource, it)]/kappal;
-
+        stf = source_time_function[INDEX2(nsources, isource, it)]/kappal;
         atomicAdd(&potential_dot_dot_acoustic[iglob],
-                  +sourcearrays_moving[INDEX5(max_nsources_local, NDIM, NGLLX, NGLLX, isource, 0, i, j, it)]*stf);
+                  +sourcearrays_moving[INDEX5(nsources, NDIM, NGLLX, NGLLX, isource, 0, i, j, it)]*stf);
 
     }
   }
@@ -144,7 +138,9 @@ void FC_FUNC_(compute_add_sources_ac_cuda,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy(mp->nsources_local,&num_blocks_x,&num_blocks_y);
 
+  // One block per source
   dim3 grid(num_blocks_x,num_blocks_y);
+  // One thread per GLL
   dim3 threads(NGLLX,NGLLX,1);
 
   int it = *itf - 1;
@@ -223,40 +219,48 @@ void FC_FUNC_(compute_add_moving_sources_ac_cuda,
                                                   int* iphasef,
                                                   int* nsources_local_moving,
                                                   int* itf,
-                                                  int* NSTEP) {
+                                                  int* NSTEP,
+                                                  int* nsources) {
 
   // Same function but for moving sources
 
   TRACE("compute_add_moving_sources_ac_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
-
   int it = *itf - 1;
+
+  int nsources_local = *nsources_local_moving;
+  // Beware! nsources_local_moving is a pointer to an integer, not to the array
+  // of size NSTEP
+
   // check if anything to do
-  //if (mp->d_nsources_local_moving[it] == 0) return;
-  if (*nsources_local_moving == 0) return;
+  if (nsources_local == 0) return;
 
   int iphase = *iphasef;
-  // only adds this contribution for first passcompute_add_moving_sources_ac_cuda
+  // only adds this contribution for first pass
   if (iphase != 1) return;
-  int num_blocks_x, num_blocks_y;
-  //get_blocks_xy(mp->d_nsources_local_moving[it],&num_blocks_x,&num_blocks_y);
-  get_blocks_xy(*nsources_local_moving,&num_blocks_x,&num_blocks_y);
 
+  int num_blocks_x, num_blocks_y;
+
+  // Look up for the best way to distribute the sources in a grid (one block per source)
+  get_blocks_xy(nsources_local, &num_blocks_x, &num_blocks_y);
+   // create the grid (one block per source)
   dim3 grid(num_blocks_x,num_blocks_y);
+  // create the threads in the block (one thread per GLL), it has NGLLX,NGLLX,1 structure
   dim3 threads(NGLLX,NGLLX,1);
 
+  // cudaMemoryTest(3); // Useful to check memory
   compute_add_moving_sources_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_potential_dot_dot_acoustic,
                                                                                     mp->d_ibool,
                                                                                     mp->d_sourcearrays_moving,
-                                                                                    mp->d_source_time_function,
+                                                                                    mp->d_source_time_function_moving,
                                                                                     mp->myrank,
                                                                                     mp->d_ispec_selected_source_moving,
                                                                                     mp->d_ispec_is_acoustic,
                                                                                     mp->d_kappastore,
-                                                                                    //it, mp->d_nsources_local_moving[it],
-                                                                                    it, *nsources_local_moving,
-                                                                                    mp->d_max_nsources_local_moving, *NSTEP);
+                                                                                    it, mp->d_nsources_local_moving,
+                                                                                    *nsources, *NSTEP);
+  // cudaMemoryTest(334); // Useful to check memory
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_cuda_error("compute_add_moving_sources_ac_cuda");

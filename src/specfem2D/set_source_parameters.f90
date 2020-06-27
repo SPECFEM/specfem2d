@@ -39,7 +39,7 @@
 
   use specfem_par, only: myrank,NSOURCES,source_type,time_function_type, &
                          x_source,z_source,Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource, &
-                         t0,initialfield,USER_T0
+                         t0,initialfield,USER_T0,vx_source,vz_source,SOURCE_IS_MOVING
 
   implicit none
 
@@ -53,7 +53,8 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) '  Total number of sources: ',NSOURCES
+    write(IMAIN,*) '  Total number of sources: ', NSOURCES
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
@@ -63,7 +64,7 @@
     ! user output
     if (myrank == 0) then
       write(IMAIN,*)
-      write(IMAIN,*) '  setting parameters for source',i_source
+      write(IMAIN,*) '  Setting parameters for source',i_source
       write(IMAIN,*)
       call flush_IMAIN()
     endif
@@ -84,16 +85,27 @@
         ! force
         if (myrank == 0) then
           ! user output
-          write(IMAIN,212) x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
-                           factor(i_source),anglesource(i_source)
+          if (SOURCE_IS_MOVING) then
+            write(IMAIN,213) x_source(i_source),z_source(i_source),vx_source(i_source),vz_source(i_source), &
+                             f0_source(i_source), tshift_src(i_source), factor(i_source),anglesource(i_source)
+          else
+            write(IMAIN,212) x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
+                             factor(i_source),anglesource(i_source)
+          endif
           write(IMAIN,*)
         endif
       else if (source_type(i_source) == 2) then
         ! moment tensor
         if (myrank == 0) then
           ! user output
-          write(IMAIN,222) x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
-                           factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
+          if (SOURCE_IS_MOVING) then
+            write(IMAIN,223) x_source(i_source),z_source(i_source),vx_source(i_source),vz_source(i_source), &
+                             f0_source(i_source),tshift_src(i_source), factor(i_source),Mxx(i_source), &
+                             Mzz(i_source),Mxz(i_source)
+          else
+            write(IMAIN,222) x_source(i_source),z_source(i_source),f0_source(i_source),tshift_src(i_source), &
+                             factor(i_source),Mxx(i_source),Mzz(i_source),Mxz(i_source)
+          endif
           write(IMAIN,*)
         endif
       else
@@ -286,6 +298,16 @@
                   'Multiplying factor . . . . . . . . . . =',1pe20.10,/5x, &
                   'Angle from vertical direction (deg). . =',1pe20.10,/5x)
 
+213 format(5x,'Source Type. . . . . . . . . . . . . . = Collocated Force',/5x, &
+                  'Initial X-position (meters). . . . . . =',1pe20.10,/5x, &
+                  'Initial Y-position (meters). . . . . . =',1pe20.10,/5x, &
+                  'X-velocity (meters/second). . .  . . . =',1pe20.10,/5x, &
+                  'Z-velocity (meters/second). . .  . . . =',1pe20.10,/5x, &
+                  'Fundamental frequency (Hz) . . . . . . =',1pe20.10,/5x, &
+                  'Time delay (s) . . . . . . . . . . . . =',1pe20.10,/5x, &
+                  'Multiplying factor . . . . . . . . . . =',1pe20.10,/5x, &
+                  'Angle from vertical direction (deg). . =',1pe20.10,/5x)
+
 222 format(5x,'Source Type. . . . . . . . . . . . . . = Moment-tensor',/5x, &
                   'X-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
                   'Y-position (meters). . . . . . . . . . =',1pe20.10,/5x, &
@@ -295,5 +317,18 @@
                   'Mxx. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
                   'Mzz. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
                   'Mxz. . . . . . . . . . . . . . . . . . =',1pe20.10)
+
+223 format(5x,'Source Type. . . . . . . . . . . . . . = Moment-tensor',/5x, &
+                  'Initial X-position (meters). . . . . . =',1pe20.10,/5x, &
+                  'Initial Y-position (meters). . . . . . =',1pe20.10,/5x, &
+                  'X-velocity (meters/second). . .  . . . =',1pe20.10,/5x, &
+                  'Z-velocity (meters/second). . .  . . . =',1pe20.10,/5x, &
+                  'Fundamental frequency (Hz) . . . . . . =',1pe20.10,/5x, &
+                  'Time delay (s) . . . . . . . . . . . . =',1pe20.10,/5x, &
+                  'Multiplying factor . . . . . . . . . . =',1pe20.10,/5x, &
+                  'Mxx. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
+                  'Mzz. . . . . . . . . . . . . . . . . . =',1pe20.10,/5x, &
+                  'Mxz. . . . . . . . . . . . . . . . . . =',1pe20.10)
+
 
   end subroutine set_source_parameters

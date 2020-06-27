@@ -1517,6 +1517,30 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine gather_all_singledp(sendbuf, recvbuf, NPROC)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: NPROC
+  double precision  :: sendbuf
+  double precision, dimension(0:NPROC-1) :: recvbuf
+
+#ifdef WITH_MPI
+  ! local parameters
+  integer :: ier
+  call MPI_GATHER(sendbuf,1,MPI_DOUBLE_PRECISION,recvbuf,1,MPI_DOUBLE_PRECISION,0,my_local_mpi_comm_world,ier)
+#else
+  recvbuf(0) = sendbuf
+#endif
+
+end subroutine gather_all_singledp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine gather_all_all_singlei(sendbuf, recvbuf, NPROC)
 
   use my_mpi

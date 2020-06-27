@@ -33,7 +33,7 @@
 
   subroutine compute_forces_viscoelastic_main()
 
-  use constants, only: SOURCE_IS_MOVING,USE_ENFORCE_FIELDS
+  use constants, only: USE_ENFORCE_FIELDS
   use specfem_par
   use specfem_par_noise
 
@@ -93,7 +93,7 @@
           ! earthquake/force source
           if (SIMULATION_TYPE == 1) then
             if (SOURCE_IS_MOVING) then
-              call compute_add_sources_viscoelastic_moving_source(accel_elastic,it,i_stage)
+              call compute_add_sources_viscoelastic_moving_sources(accel_elastic,it,i_stage)
             else
               call compute_add_sources_viscoelastic(accel_elastic,it,i_stage)
             endif

@@ -44,7 +44,8 @@ module specfem_par
   use shared_parameters
 
   use source_file_par, only: source_type,time_function_type,name_of_source_file,burst_band_width, &
-    x_source,z_source,Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource
+    x_source,z_source,vx_source,vz_source,Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource, &
+    writeMovingDatabases, SOURCE_IS_MOVING
 
   implicit none
   !=====================================================================
@@ -791,14 +792,6 @@ module specfem_par_gpu
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sourcearray_loc
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable ::  source_time_function_loc
 
-  ! moving sources
-  integer :: max_nsources_local_moving
-  integer, dimension(:), allocatable :: nsources_local_moving
-  integer, dimension(:,:), allocatable :: ispec_selected_source_moving
-  integer, dimension(:,:), allocatable :: ispec_selected_source_loc_moving
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: sourcearrays_moving
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sourcearray_loc_moving
-
   ! coupling
   integer, dimension(:), allocatable :: coupling_ac_el_ispec
   integer, dimension(:,:,:), allocatable :: coupling_ac_el_ij
@@ -902,5 +895,4 @@ module specfem_par_movie
   logical, dimension(:), allocatable  :: mask_duplicate ! mask array for identifying duplicates between partitions
 
 end module specfem_par_movie
-
 

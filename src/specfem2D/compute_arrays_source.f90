@@ -128,9 +128,11 @@
 
 ! reads in adjoint source file
 
-  use constants, only: IIN, MAX_STRING_LEN, CUSTOM_REAL, NDIM, SOURCE_IS_MOVING
+  use constants, only: IIN, MAX_STRING_LEN, CUSTOM_REAL, NDIM
 
-  use specfem_par, only: myrank, NSTEP, DT, P_SV, source_adjoint, f0_source
+  use specfem_par, only: myrank, NSTEP, DT, P_SV, source_adjoint, &
+                         f0_source, vx_source, vz_source, SOURCE_IS_MOVING
+  use specfem_par_movie, only: vpImax
 
   implicit none
 
@@ -141,7 +143,7 @@
   ! local parameters
   integer :: icomp, itime
   integer :: ier, irek, norder
-  double precision :: junk
+  double precision :: junk, vx_source_max, vz_source_max, v_source_max
   double precision :: f1, f2
   real(kind=CUSTOM_REAL), dimension(NSTEP) :: temp
   real(kind=CUSTOM_REAL), dimension(NSTEP,3) :: adj_src_s
@@ -223,8 +225,18 @@
   if (SOURCE_IS_MOVING) then
     ! In this case high frequency noise is produced. We have to filter it out before sending it at the receivers
     irek = 1
-    f1 = 0.0d0 ! High pass filter. minval(f0_source) / 10.0
-    f2 = maxval(f0_source) * 5.0
+    f1 = 0.0d0 ! High pass filter.
+    f2 = maxval(f0_source) * 5.0 ! Cutoff frequency
+    ! Takes also Doppler shift into account:
+    vx_source_max = maxval(vx_source)
+    vz_source_max = maxval(vz_source)
+    v_source_max = max(vx_source_max, vz_source_max)
+    if ((vpImax > 0) .and. (vpImax < 15000.0)) then  ! Check that it has been calculated (value makes sense)
+      f2 = f2 / (1.0d0 - v_source_max/vpImax)
+    else
+      ! It should have been calculated in check_grid.F90
+      call exit_MPI(myrank, 'It looks like vpImax has not been calculated here yet...')
+    endif
     norder = 4
     ! Filter adjoint signals :
     call exit_MPI(myrank, 'This part has to be tested. Make sure the following filtering is ' // &
@@ -260,10 +272,11 @@
 
 ! reads in all adjoint sources in SU-file format
 
-  use constants, only: CUSTOM_REAL, MAX_STRING_LEN, NDIM, SOURCE_IS_MOVING
+  use constants, only: CUSTOM_REAL, MAX_STRING_LEN, NDIM
 
   use specfem_par, only: myrank, NSTEP, nrec, DT, f0_source, &
-                         islice_selected_rec, P_SV, source_adjoint
+                         islice_selected_rec, P_SV, source_adjoint, &
+                         SOURCE_IS_MOVING
 
   implicit none
 

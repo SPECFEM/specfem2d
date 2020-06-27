@@ -49,9 +49,12 @@ specfem2D_TARGETS = \
 	$E/xspecfem2D \
 	$(EMPTY_MACRO)
 
-
+# AB AB: Do not reorganize the following list !!
+# it looks like their order is important and this has nothing to do with alphabetical order...
+# (source files containing modules should be above source files using them)
 specfem2D_OBJECTS = \
 	$O/specfem2D_par.spec_module.o \
+	$O/moving_sources_par.spec.o \
 	$O/acoustic_forcing_boundary.spec.o \
 	$O/add_acoustic_forcing.spec.o \
 	$O/add_manual_crack.spec.o \
@@ -180,6 +183,7 @@ specfem2D_MODULES = \
 	$(FC_MODDIR)/specfem_par_gpu.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_movie.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_noise.$(FC_MODEXT) \
+	$(FC_MODDIR)/moving_sources_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/interpolation.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_tomography_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)

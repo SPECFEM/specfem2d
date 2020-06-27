@@ -16,3 +16,12 @@ Mxx                             = 1.              # Mxx component (for a moment 
 Mzz                             = 1.              # Mzz component (for a moment tensor source only)
 Mxz                             = 0.              # Mxz component (for a moment tensor source only)
 factor                          = 1.d9            # amplification factor
+
+# Moving source parameters
+vx                              = 0.0         # Horizontal source velocity (m/s)
+vz                              = 0.0         # Vertical source velocity (m/s)
+# Turn writeMovingDatabases .true. if the generation of moving source databases takes
+# a long time. Then the simulation is done in two steps: first you run the code and it writes the databases to file
+# (in DATA folder by default). Then you rerun the code and it will read the databases in there directly possibly
+# saving a lot of time. This is only useful for GPU version (for now)
+writeMovingDatabases = .false.

@@ -1127,7 +1127,7 @@ TRACE("prepare_cleanup_device");
     cudaFree(mp->d_nsources_local_moving);
     cudaFree(mp->d_sourcearrays_moving);
     cudaFree(mp->d_ispec_selected_source_moving);
-    //cudaFree(mp->d_source_time_function_moving);
+    cudaFree(mp->d_source_time_function_moving);
   }
 
   // receivers
@@ -1316,39 +1316,83 @@ TRACE("prepare_cleanup_device");
 
 
 extern "C"
-void FC_FUNC_(prepare_moving_source_cuda,
-              PREPARE_MOVING_SOURCE_CUDA)(long* Mesh_pointer,
+void FC_FUNC_(prepare_moving_sources_cuda,
+              PREPARE_MOVING_SOURCES_CUDA)(long* Mesh_pointer,
                                         int* h_nsources_local_f_moving,
-                                        int* h_max_nsources_local_f_moving,
+                                        int* NSOURCES,
                                         realw* h_sourcearrays_moving,
                                         int* h_ispec_selected_source_moving,
-                                        int* NSTEP) {
+                                        int* NSTEP,
+                                        realw* h_source_time_function_moving) {
 
-  TRACE("prepare_moving_source_cuda");
-
-  int NSTEP_int = (*NSTEP);
+  TRACE("prepare_moving_sources_cuda");
+  // Pointers received are int* (not int** or int*** etc which would allow
+  // using array[i][j] etc ) we use INDEX2, INDEX3 etc defined in mesh_constants_cuda
+  // to access to the elements. Do not forget printf("%f", float); to print a
+  // float !!
+  // Example of partial loop over 5 dimensional array size:(3,1,3,3,?) from real*
+  // for (int i = 0; i < 3; i++) {
+  //   for (int n = 0; n < 3; n++) {
+  //     printf("Example %d, 1, %d: ", i + 1, n + 1);
+  //     printf("%f\n", array[INDEX5(3,1,3,3, i, 0, n,0,0)]);
+  //   }
+  //   printf("\n");
+  // }
+  // Beware: h_sourcearrays_moving[INDEX5(1,2,5,5, 0, 1, 1,1,i)]
+  //
+  // Example of partial loop over 2d array from real*
+  // for (int i = 0; i < 3; i++) {
+  //   for (int n = 0; n < 3; n++) {
+  //     printf("%f\n", array[INDEX2(3, i, n)]);
+  //   }
+  //   printf("\n");
+  // }
+  //
+  // printf("nsources:\n");
+  // for (int i = 0; i < NSTEP_int; i++) {
+  //     printf("%d\n", h_nsources_local_f_moving[i]);
+  // }
+  int NSTEP_int = *NSTEP;
+  int nsources = *NSOURCES;
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); // get mesh pointer out of fortran integer container
-  // sources
-  mp->d_max_nsources_local_moving = *h_max_nsources_local_f_moving;
-  if (mp->d_max_nsources_local_moving > 0){
-    copy_todevice_realw((void**)&mp->d_sourcearrays_moving,h_sourcearrays_moving,mp->d_max_nsources_local_moving*NDIM*NGLL2*NSTEP_int);
-    copy_todevice_int((void**)&mp->d_ispec_selected_source_moving,h_ispec_selected_source_moving,mp->d_max_nsources_local_moving*NSTEP_int);
-    copy_todevice_int((void**)&mp->d_nsources_local_moving,h_nsources_local_f_moving,NSTEP_int);
-  }
+
+  // printf("This also works:\n");
+  // int* p1 = h_ispec_selected_source_moving;
+  // for (int i = 0; i < nsources*NSTEP_int; i++) {
+  //     printf("%d\n", *p1);
+  //     p1++;
+  // }
+  //
+  // printf("This as well:\n");
+  // int** p = &h_ispec_selected_source_moving;
+  // for (int i_source = 0; i_source < nsources; ++i_source) {
+  //     for (int it = 0; it < NSTEP_int; ++it) {
+  //         printf("%d %d %d \n",i_source,it,*(*(p + i_source) + it));
+  //     }
+  //     printf("");
+  // }
+
+  copy_todevice_realw((void**)&mp->d_sourcearrays_moving,h_sourcearrays_moving,nsources*NDIM*NGLL2*NSTEP_int);
+  copy_todevice_int((void**)&mp->d_ispec_selected_source_moving,h_ispec_selected_source_moving,nsources*NSTEP_int);
+  copy_todevice_int((void**)&mp->d_nsources_local_moving,h_nsources_local_f_moving,NSTEP_int);
+  // When the source is moving we don't know where it is going: all the slices
+  // need to know the source_time_function
+  // If the source is not moving only the slice containing the source knows the source_time_function
+  copy_todevice_realw((void**)&mp->d_source_time_function_moving,h_source_time_function_moving,NSTEP_int*nsources);
 
   // Beware, we can't print the values mp->d_nsources_local_moving[it] because they are on the device
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_cuda_error("prepare_moving_source_cuda");
+  exit_on_cuda_error("prepare_moving_sources_cuda");
 #endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
 
 // Old function for moving sources
-// Let it here please it may be useful
-// It is used when compute_add_sources_acoustic_GPU_moving_source_old is used
-// instead of compute_add_sources_acoustic_GPU_moving_source in compute_gpu_acoustic.f90
+// AB AB Let it here please it may be useful
+// It is used when compute_add_sources_acoustic_GPU_moving_sources_old is used
+// instead of compute_add_sources_acoustic_GPU_moving_sources in compute_gpu_acoustic.f90
 // Read the comments there
 
 /* ----------------------------------------------------------------------------------------------- */

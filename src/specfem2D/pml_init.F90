@@ -419,9 +419,9 @@
   use constants, only: PI,NGLLX,NGLLZ,HUGEVAL,IMAIN, &
     CPML_X_ONLY,CPML_Z_ONLY,CPML_XZ
 
-  use specfem_par, only: f0_source,ispec_is_elastic,ispec_is_acoustic, &
+  use specfem_par, only: x_source, z_source, vx_source, vz_source, f0_source,ispec_is_elastic,ispec_is_acoustic, &
                          NSOURCES,ispec_selected_source, &
-                         nspec,kmato,density,poroelastcoef,ibool,coord,islice_selected_source,myrank
+                         nspec,kmato,density,poroelastcoef,ibool,coord,islice_selected_source,myrank, SOURCE_IS_MOVING
 ! PML arrays and variables
   use specfem_par, only: ispec_is_PML,spec_to_PML,region_CPML,PML_PARAMETER_ADJUSTMENT, &
                          K_x_store,K_z_store,d_x_store,d_z_store,alpha_x_store,alpha_z_store, &
@@ -444,7 +444,7 @@
 !ZN  we did not prove and we can not ensure that such an adjustment is optimum, since we do the adjustment based on
 !ZN  our own experience in numerical simulation.
 
-  double precision :: f0_max
+  double precision :: f0_max, vx_source_max, vz_source_max, v_source_max
 
 ! PML fixed parameters to compute parameter in PML
   double precision, parameter :: NPOWER = 2.d0
@@ -467,7 +467,7 @@
                       thickness_PML_z_top,thickness_PML_x_left
 
   double precision :: xmin, xmax, zmin, zmax, xorigin, zorigin, xval, zval
-  double precision :: vpmax_acoustic, vpmax_elastic
+  double precision :: vpmax_acoustic, vpmax_elastic, vpmax
   double precision :: xoriginleft, xoriginright, zorigintop, zoriginbottom
 
   integer :: NSOURCES_glob
@@ -497,19 +497,6 @@
     call flush_IMAIN()
   endif
 
-  ! compute the maximum dominant frequency of all sources
-  f0_max = maxval(f0_source(:))
-  call max_all_all_dp(f0_max, f0_max_glob)
-
-  f0_max = f0_max_glob
-
-  ! finish the computation of the maximum dominant frequency of all sources
-
-  ! reflection coefficient (Inria report section 6.1) http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
-  ALPHA_MAX_PML = PI*f0_max ! from Festa and Vilotte
-  ! By experience, the d parameter defition according to Festa and Vilotte is small, thus we use damping_change_factor_acoustic
-  ! to increase the d parameter for PML implementation for acoustic simulation.
-
   ! check that NPOWER is okay
   if (NPOWER < 1) call stop_the_code('NPOWER must be greater than 1')
 
@@ -530,7 +517,6 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) "    maximum dominant frequency (sources): ",sngl(f0_max)
     write(IMAIN,*) "    using mesh dimension : xmin/xmax = ",sngl(xmin),"/",sngl(xmax)
     write(IMAIN,*) "                           zmin/zmax = ",sngl(zmin),"/",sngl(zmax)
     call flush_IMAIN()
@@ -692,6 +678,38 @@
   call max_all_all_dp(vpmax_elastic, vpmax_glob_elastic)
   vpmax_acoustic = vpmax_glob_acoustic
   vpmax_elastic = vpmax_glob_elastic
+
+  ! compute the maximum dominant frequency of all sources
+  f0_max = maxval(f0_source(:))
+
+  call max_all_all_dp(f0_max, f0_max_glob)
+
+  f0_max = f0_max_glob
+
+  if (SOURCE_IS_MOVING) then  ! Takes Doppler shift into account
+    vpmax = max(vpmax_acoustic, vpmax_elastic)
+    vx_source_max = maxval(vx_source(:))
+    vz_source_max = maxval(vz_source(:))
+    v_source_max = max(vx_source_max, vz_source_max)
+    f0_max = f0_max / (1.0d0 - v_source_max/vpmax)
+  endif
+
+  ! finish the computation of the maximum dominant frequency of all sources
+
+  ! reflection coefficient (Inria report section 6.1) http://hal.inria.fr/docs/00/07/32/19/PDF/RR-3471.pdf
+  ALPHA_MAX_PML = PI*f0_max ! from Festa and Vilotte
+  ! By experience, the d parameter defition according to Festa and Vilotte is small, thus we use damping_change_factor_acoustic
+  ! to increase the d parameter for PML implementation for acoustic simulation.
+
+  ! user output
+  if (myrank == 0) then
+    if (SOURCE_IS_MOVING) then
+      write(IMAIN,*) "    maximum dominant frequency (sources): ",sngl(f0_max)," (includes Doppler shift)"
+    else
+      write(IMAIN,*) "    maximum dominant frequency (sources): ",sngl(f0_max)
+    endif
+    call flush_IMAIN()
+  endif
 
   if (thickness_PML_x_left > 0.d0) then
     d0_x_left_acoustic = - (NPOWER + 1) * vpmax_acoustic * log(Rcoef) / (2.d0 * thickness_PML_x_left)

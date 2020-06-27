@@ -85,6 +85,21 @@ void pause_for_debugger(int pause) {
   }
 }
 
+/* ---------------------------------------------------------------------------------------- */
+
+void cudaMemoryTest(int posId)
+{
+    // call this function at different places to locate a bug
+    const unsigned int N = 1048576;
+    const unsigned int bytes = N * sizeof(int);
+    int *h_a = (int*)malloc(bytes);
+    int *d_a;
+    cudaSafeCall(cudaMalloc((int**)&d_a, bytes), posId);
+    memset(h_a, 0, bytes);
+    cudaSafeCall(cudaMemcpy(d_a, h_a, bytes, cudaMemcpyHostToDevice), posId);
+    cudaSafeCall(cudaMemcpy(h_a, d_a, bytes, cudaMemcpyDeviceToHost), posId);
+}
+
 /* ----------------------------------------------------------------------------------------------- */
 
 void exit_on_cuda_error(const char* kernel_name) {
@@ -513,8 +528,6 @@ void FC_FUNC_(get_norm_acoustic_from_device,
 
   dim3 grid(num_blocks_x,num_blocks_y);
   dim3 threads(blocksize,1,1);
-
-  //printf("num_blocks_x %i \n",num_blocks_x);
 
   // on host (allocates & initializes to zero)
   realw* h_max1 = (realw*) calloc(num_blocks_x*num_blocks_y,sizeof(realw));

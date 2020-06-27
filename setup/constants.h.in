@@ -269,26 +269,15 @@
 ! for CUDA mode
   logical, parameter :: USE_MESH_COLORING_GPU = .false.
 
-
-!!-----------------------------------------------------------
-!!
-!! moving source location
-!!
-!!-----------------------------------------------------------
-
-! For moving sources
-  logical, parameter :: SOURCE_IS_MOVING = .false.
-
 !!-----------------------------------------------------------
 !!
 !! enforces wavefield
 !!
 !!-----------------------------------------------------------
 
-! This option is used when we want to enforce fields
+! This option is used when we want to enforce fields values
+! somewhere
   logical, parameter :: USE_ENFORCE_FIELDS = .false.
-
-
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------

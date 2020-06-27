@@ -215,6 +215,22 @@
 #define INDEX3_PADDED(xsize,ysize,x,y,i) x + (y)*xsize + (i)*NGLL2_PADDED
 #define INDEX4_PADDED(xsize,ysize,zsize,x,y,z,i) x + xsize*(y + ysize*z) + (i)*NGLL3_PADDED
 
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// debugging
+
+#define cudaSafeCall(call, posId)  \
+        do {\
+            cudaError_t err = call;\
+            if (cudaSuccess != err) \
+            {\
+                printf("\nCUDA error : %s\n", cudaGetErrorString(err)); \
+                printf("Id : %d\n", posId); \
+                exit(EXIT_FAILURE);\
+            }\
+        } while(0)
+
 /* ----------------------------------------------------------------------------------------------- */
 
 // custom type declarations
@@ -264,6 +280,7 @@ double get_time();
 void get_free_memory(double* free_db, double* used_db, double* total_db);
 void print_CUDA_error_if_any(cudaError_t err, int num);
 void pause_for_debugger(int pause);
+void cudaMemoryTest(int posId);
 void exit_on_cuda_error(const char* kernel_name);
 void exit_on_error(const char* info);
 void synchronize_cuda();
@@ -351,10 +368,14 @@ typedef struct mesh_ {
   realw* d_sourcearrays;         // Will have shape nsources_local*NDIM*NGLL2
   int* d_ispec_selected_source;  // Will have shape nsources_local
   realw* d_source_time_function;
+  // When the source is moving we don't know where it is going: all the slices
+  // need to know the source_time_function
+  // If the source is not moving only the slice containing the source knows the source_time_function  
+  realw* d_source_time_function_moving;
   int* d_nsources_local_moving;  // Will have shape NSTEP
-  int d_max_nsources_local_moving;  // = max(d_nsources_local_moving)
-  realw* d_sourcearrays_moving;  // Will have shape d_max_nsources_local_moving*NDIM*NGLL2*NSTEP
-  int* d_ispec_selected_source_moving;  // Will have shape d_max_nsources_local_moving*NSTEP
+  int* nsources;                 // global number of sources
+  realw* d_sourcearrays_moving;  // Will have shape nsources*NDIM*NGLL2*NSTEP
+  int* d_ispec_selected_source_moving;  // Will have shape nsources*NSTEP
 
   // receivers
   int nrec_local;

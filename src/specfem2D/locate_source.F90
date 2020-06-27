@@ -41,11 +41,11 @@
                            NPROC,myrank, &
                            xi_source,gamma_source,coorg,knods,ngnod,npgeo,iglob_source,is_force_source)
 
-  use constants, only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,USE_BEST_LOCATION_FOR_SOURCE,SOURCE_IS_MOVING, &
+  use constants, only: NDIM,NGLLX,NGLLZ,IMAIN,HUGEVAL,TINYVAL,NUM_ITER,USE_BEST_LOCATION_FOR_SOURCE, &
     IDOMAIN_ACOUSTIC,IDOMAIN_ELASTIC,IDOMAIN_POROELASTIC
 
   use specfem_par, only: AXISYM,is_on_the_axis,xiglj, &
-    ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic
+    ispec_is_acoustic,ispec_is_elastic,ispec_is_poroelastic,SOURCE_IS_MOVING
 
   implicit none
 
@@ -157,22 +157,6 @@
     enddo
   enddo
 
-  ! global minimum distance computed over all processes
-  call min_all_all_dp(distmin_squared, dist_glob_squared)
-
-  ! check if this process contains the source
-  if (abs(sqrt(dist_glob_squared) - sqrt(distmin_squared)) < TINYVAL ) is_proc_source = 1
-
-  ! master collects info
-  call gather_all_singlei(is_proc_source,allgather_is_proc_source,NPROC)
-  if (myrank == 0) then
-    ! select slice with maximum rank which contains source
-    locate_is_proc_source = maxloc(allgather_is_proc_source) - 1
-    islice_selected_source = locate_is_proc_source(1)
-  endif
-  ! selects slice which holds source
-  call bcast_all_singlei(islice_selected_source)
-
 !! DK DK dec 2017: also loop on all the elements in contact with the initial guess element to improve accuracy of estimate
   flag_topological(:) = .false.
 
@@ -185,7 +169,7 @@
 ! loop on all the elements to count how many are shared with the initial guess
   number_of_mesh_elements_for_the_initial_guess = 1
   do ispec = 1,nspec
-    if (ispec == ispec_selected_source) cycle
+    if (ispec == ispec_selected_source) cycle  ! skip the initial guess element
     ! loop on the four corners only, no need to loop on the rest since we just want to detect adjacency
     do j = 1,NGLLZ,NGLLZ-1
       do i = 1,NGLLX,NGLLX-1
@@ -193,14 +177,14 @@
           ! this element is in contact with the initial guess
           number_of_mesh_elements_for_the_initial_guess = number_of_mesh_elements_for_the_initial_guess + 1
           ! let us not count it more than once, it may have a full edge in contact with it and would then be counted twice
-          goto 700
+          goto 700  ! Exit the loop over the four corners: we know this element is adjacent
         endif
       enddo
     enddo
     700 continue
   enddo
 
-! now that we know the number of elements, we can allocate the list of elements and create it
+! now that we know the number of adjacent elements, we can allocate the list of elements and create it
   allocate(array_of_all_elements_of_ispec_selected_source(number_of_mesh_elements_for_the_initial_guess))
 
 ! first store the initial guess itself
@@ -315,6 +299,22 @@
 
 !! DK DK dec 2017
   enddo
+
+  ! global minimum distance computed over all processes
+  call min_all_all_dp(final_distance, dist_glob_squared)
+
+  ! check if this process contains the source
+  if (abs(sqrt(dist_glob_squared) - sqrt(final_distance)) < TINYVAL ) is_proc_source = 1
+
+  ! master collects info
+  call gather_all_singlei(is_proc_source,allgather_is_proc_source,NPROC)
+  if (myrank == 0) then
+    ! select slice with maximum rank which contains source
+    locate_is_proc_source = maxloc(allgather_is_proc_source) - 1
+    islice_selected_source = locate_is_proc_source(1)
+  endif
+  ! selects slice which holds source
+  call bcast_all_singlei(islice_selected_source)
 
 #ifdef WITH_MPI
   ! for MPI version, gather information from all the nodes
