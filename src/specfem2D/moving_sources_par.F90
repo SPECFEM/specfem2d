@@ -100,14 +100,11 @@ module moving_sources_par
              reset, any_reset, src_in_first_guess_element, &
              src_in_adjacent_element, is_force_source
   character(len=MAX_STRING_LEN) :: pathToMovingDatabaseDir, outputname, pathToMovingDatabase
-  integer :: i_source, i, j, k, ispec, it_l, i_stage_loc, NSTEP_read, i_adjacent
+  integer :: i_source, it_l, i_stage_loc, i_adjacent
   integer, dimension(NSOURCES) :: ispec_first_guess_vec
-  integer :: ispec_source_first_guess, ispec_adjacent, nglob_read, nglob_elastic_read, &
-             nglob_acoustic_read, NSOURCES_read
-  double precision :: amp, deltat_read
+  integer :: ispec_source_first_guess, ispec_adjacent
+  double precision :: amp
   double precision :: xsrc, zsrc, time_val, t_used
-  double precision, dimension(:), allocatable :: x_source_read, z_source_read
-  double precision, dimension(:), allocatable :: vx_source_read, vz_source_read
   ! double precision :: start_time, stop_time  ! For debugging
 
   ! To store list of elements (of variable size):
@@ -540,6 +537,12 @@ end subroutine init_moving_sources_GPU
   ! initialize ispec for the loop
   ispec_test = -1
 
+  ! These have to be initialized otherwise the compiler can complain
+  ! In the case without MPI (inside preprocessor directive)
+  allgather_is_proc_source(:) = 0
+  dist_glob_squared = 0.0d0
+  locate_is_proc_source(:) = 0
+
   ! set distance to huge initial value
   distmin_squared = HUGEVAL
 
@@ -802,7 +805,7 @@ end subroutine init_moving_sources_GPU
   if (rst .or. (ispec_guess == 0)) then
 
     ! global minimum distance computed over all processes
-    call min_all_all_dp(final_distance, dist_glob_squared)
+    call min_all_all_dp(final_distance, dist_glob_squared) 
 
     ! check if this process contains the source
     if (abs(sqrt(dist_glob_squared) - sqrt(final_distance)) < TINYVAL ) is_proc_source = 1
@@ -1032,8 +1035,8 @@ subroutine setup_source_interpolation_moving(xi_source, gamma_source, sourcearra
 
   use constants, only: NDIM,NGLLX,NGLLZ,ZERO,CUSTOM_REAL
 
-  use specfem_par, only: myrank, source_type, NSOURCES, &
-    xigll, zigll, hxis_store, hgammas_store, hxis, hpxis, hgammas, hpgammas
+  use specfem_par, only: myrank, &
+    xigll, zigll, hxis, hpxis, hgammas, hpgammas
 
   implicit none
 
@@ -1044,7 +1047,7 @@ subroutine setup_source_interpolation_moving(xi_source, gamma_source, sourcearra
   integer, intent(in) :: ispec_source, this_source_type
 
   ! local parameters
-  integer :: i_source,ispec,i,j,ier
+  integer :: i,j
   double precision :: hlagrange
 
   ! (re)initializes (it has been done already in setup_sources_receivers.f90)
@@ -1233,7 +1236,28 @@ end function point_in_polygon
 !-----------------------------------------------------------------------------------------
 !
 
-subroutine pnpoly(n,x,y,x0,y0,in_or_out)
+function eor_condition (ix, iy)
+  !----
+  !---- Small logical function used in subroutine pnpoly
+  !----
+
+    implicit none
+
+    logical :: ix , iy
+    logical :: eor_condition
+
+    eor_condition = (ix .or. iy) .and. .not. (ix .and. iy)
+
+    return
+
+end function eor_condition
+
+
+!
+!-----------------------------------------------------------------------------------------
+!
+
+subroutine pnpoly(n, x, y, x0, y0, in_or_out)
     !----
     !----  Courtesy: Jay Sandhu
     !----               email: jsandhu@esri.com
@@ -1294,10 +1318,7 @@ subroutine pnpoly(n,x,y,x0,y0,in_or_out)
     ! Local variables
     integer :: i , j
     real (kind = 8) :: xi , yi , xj , yj
-    logical :: ix , iy , jx , jy , eor
-
-    ! Exclusive or statement function.
-    eor(ix, iy) = (ix .or. iy) .and. (.not. (ix .and. iy))
+    logical :: ix , iy , jx , jy
 
     in_or_out = -1
 
@@ -1314,26 +1335,26 @@ subroutine pnpoly(n,x,y,x0,y0,in_or_out)
        xj = x(j) - x0
        yj = y(j) - y0
        ! is this line of 0 length ?
-       if ( xi.eq.xj .and. yi.eq.yj ) goto 100
-       ix = xi.ge.0.0
-       iy = yi.ge.0.0
-       jx = xj.ge.0.0
-       jy = yj.ge.0.0
+       if ( xi .eq. xj .and. yi .eq. yj ) goto 100
+       ix = xi .ge. 0.0
+       iy = yi .ge. 0.0
+       jx = xj .ge. 0.0
+       jy = yj .ge. 0.0
        ! check whether (x0,y0) is on vertical side of polygon.
-       if ( xi .eq. 0.0 .and. xj.eq. 0.0 .and. eor(iy,jy) ) then
+       if ( xi .eq. 0.0 .and. xj.eq. 0.0 .and. eor_condition(iy,jy) ) then
          in_or_out = 0
          return
        endif
        ! check whether (x0,y0) is on horizontal side of polygon.
-       if ( yi .eq. 0.0 .and. yj.eq.0.0 .and. eor(ix,jx) ) then
+       if ( yi .eq. 0.0 .and. yj .eq. 0.0 .and. eor_condition(ix,jx) ) then
          in_or_out = 0
          return
-	     endif
+       endif
      	 ! check whether both ends of this side are completely 1) to right
        ! of, 2) to left of, or 3) below (x0,y0).
-       if ( .not.((iy .or. jy) .and. eor(ix,jx)) ) goto 100
+       if ( .not. ((iy .or. jy) .and. eor_condition(ix,jx)) ) goto 100
        ! does this side obviously cross line rising vertically from (x0,y0)
-       if ( .not.(iy .and. jy .and. eor(ix,jx)) ) then
+       if ( .not. (iy .and. jy .and. eor_condition(ix,jx)) ) then
          if ( (yi*xj-xi*yj)/(xj-xi) .lt. 0.0 ) then
            goto 100
          elseif ( (yi*xj-xi*yj)/(xj-xi) .eq. 0.0 ) then
