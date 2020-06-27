@@ -131,17 +131,17 @@
 
   if ((myrank == 0) .and. (it < 5)) then
     do i_source = 1,NSOURCES
-      write(IMAIN,*) ''
+      write(IMAIN,*)
       write(IMAIN,*) 'Your are using moving source capabilities. Please cite:'
       write(IMAIN,*) 'Bottero (2018) Full-wave numerical simulation of T-waves and of moving acoustic sources'
       write(IMAIN,*) 'PhD thesis'
       write(IMAIN,*) 'https://tel.archives-ouvertes.fr/tel-01893011'
-      write(IMAIN,*) ''
+      write(IMAIN,*)
       write(IMAIN,*) 'Note: subroutine compute_add_sources_acoustic_moving_sources can be greatly'
       write(IMAIN,*) 'optimized. See what is done in init_moving_sources (in moving_sources_par.f90).'
       write(IMAIN,*) 'This is easy to do and would probably greatly improve the computational time'
       if ((abs(tshift_src(i_source)) > 0.0d0) .or. (abs(t0) > 0.0d0)) then
-        write(IMAIN,*) ''
+        write(IMAIN,*)
         write(IMAIN,*) ' !! BEWARE !! Parameters tshift and/or t0 are used with moving source !'
         write(IMAIN,*) ' The time step for the moving source is: '
         write(IMAIN,*) '    t_used = (it_l-1)*deltat-t0-tshift_src(i_source)'

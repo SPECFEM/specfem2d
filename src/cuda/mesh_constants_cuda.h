@@ -370,7 +370,7 @@ typedef struct mesh_ {
   realw* d_source_time_function;
   // When the source is moving we don't know where it is going: all the slices
   // need to know the source_time_function
-  // If the source is not moving only the slice containing the source knows the source_time_function  
+  // If the source is not moving only the slice containing the source knows the source_time_function
   realw* d_source_time_function_moving;
   int* d_nsources_local_moving;  // Will have shape NSTEP
   int* nsources;                 // global number of sources
