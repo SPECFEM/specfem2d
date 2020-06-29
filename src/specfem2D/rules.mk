@@ -54,7 +54,6 @@ specfem2D_TARGETS = \
 # (source files containing modules should be above source files using them)
 specfem2D_OBJECTS = \
 	$O/specfem2D_par.spec_module.o \
-	$O/moving_sources_par.spec.o \
 	$O/acoustic_forcing_boundary.spec.o \
 	$O/add_acoustic_forcing.spec.o \
 	$O/add_manual_crack.spec.o \
@@ -124,6 +123,7 @@ specfem2D_OBJECTS = \
 	$O/iterate_time_undoatt.spec.o \
 	$O/locate_receivers.spec.o \
 	$O/locate_source.spec.o \
+	$O/moving_sources_par.spec.o \
 	$O/netlib_specfun_erf.spec.o \
 	$O/noise_tomography.spec.o \
 	$O/paco_beyond_critical.spec.o \
@@ -354,9 +354,13 @@ endif
 # the general dependency on the specfem module is handled by the rules below
 
 $O/specfem2D.spec.o: $O/specfem2D_par.spec_module.o
-
 # Version file
 $O/initialize_simulation.spec.o: ${SETUP}/version.fh
+
+$O/compute_add_sources_acoustic.spec.o: $O/moving_sources_par.spec.o
+$O/compute_add_sources_viscoelastic.spec.o: $O/moving_sources_par.spec.o
+$O/compute_gpu_acoustic.spec.o: $O/moving_sources_par.spec.o
+$O/prepare_gpu.spec.o: $O/moving_sources_par.spec.o
 
 ##
 ## object files
