@@ -108,6 +108,8 @@ env:
     # example w/ NO_BACKWARD_RECONSTRUCTION
     - TESTID=26 TESTDIR=4 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
 
+    # moving sources
+    - TESTID=27 TESTDIR=19 TESTCOV=0 TESTFLAGS="--enable-vectorization --with-mpi" CUDA=false
 
 before_install:
   # informations on git

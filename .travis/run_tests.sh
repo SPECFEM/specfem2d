@@ -27,6 +27,7 @@ case "$TESTDIR" in
 16) dir=EXAMPLES/fluid_solid/fluid_solid_external_mesh/ ;;
 17) dir=EXAMPLES/poroelastic_semi_infinite_homogeneous/ ;;
 18) dir=EXAMPLES/initial_mode_LDDRK/ ;;
+19) dir=EXAMPLES/moving_sources_acoustic/ ;;
 *) dir=EXAMPLES/simple_topography_and_also_a_simple_fluid_layer/ ;;
 esac
 
@@ -157,6 +158,10 @@ else
   if [ "$TESTID" == "26" ]; then
     sed -i "s:^NO_BACKWARD_RECONSTRUCTION .*:NO_BACKWARD_RECONSTRUCTION = .true.:" DATA/Par_file
     sed -i "s:^NSTEP_BETWEEN_COMPUTE_KERNELS .*:NSTEP_BETWEEN_COMPUTE_KERNELS = 12:" DATA/Par_file
+  fi
+  # moving sources
+  if [ "$TESTDIR" == "19" ]; then
+    sed -i "s:^NSTEP .*:NSTEP    = 3000:" DATA/Par_file
   fi
 
   # coverage run
@@ -370,6 +375,20 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.no_backward\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.moving_sources\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
+  ##
+  ## moving sources
+  ##
+  cd EXAMPLES/moving_sources_acoustic/
+  sed -i "s:^NSTEP .*:NSTEP    = 10:" DATA/Par_file
+  ./run_this_example.sh
+  # only for coverage, comparison would fail: my_test
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.moving_sources\\r'
+
 
 # done
 echo "done `pwd`"
