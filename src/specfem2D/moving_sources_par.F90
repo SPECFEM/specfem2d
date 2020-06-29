@@ -468,10 +468,10 @@ end subroutine init_moving_sources_GPU
 !
 
   subroutine locate_source_moving(x_source,z_source, &
-                           ispec_selected_source,islice_selected_source, &
-                           NPROC,myrank, xi_source,gamma_source, is_force_source, &
-                           source_belonged_to_this_rank, &
-                           ispec_first_guess, pt_first_guess, reset)
+                                  ispec_selected_source,islice_selected_source, &
+                                  NPROC,myrank, xi_source,gamma_source, is_force_source, &
+                                  source_belonged_to_this_rank, &
+                                  ispec_first_guess, pt_first_guess, reset)
 
    !----
    !---- subroutine locate_source_moving below finds the correct position of
@@ -519,7 +519,9 @@ end subroutine init_moving_sources_GPU
   double precision :: distmin_squared, dist_glob_squared
   double precision :: final_distance, final_distance_this_element
   logical :: do_next_loops, return_array_of_adj_elem, point_in_first_guess_element, rst
+  logical :: ldummy
 
+  ! check
   if (.not. SOURCE_IS_MOVING) then
     call exit_MPI(myrank,'subroutine locate_source_moving should be used when the source is moving')
   endif
@@ -536,6 +538,8 @@ end subroutine init_moving_sources_GPU
   ispec_guess = -1
   ! initialize ispec for the loop
   ispec_test = -1
+
+  ldummy = is_force_source ! unused yet, dummy to avoid compiler warning
 
   ! These have to be initialized otherwise the compiler can complain
   ! In the case without MPI (inside preprocessor directive)
