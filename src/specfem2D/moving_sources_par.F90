@@ -95,20 +95,30 @@ module moving_sources_par
   implicit none
 
   ! Local variables
-  logical :: file_exists, &
-             source_belonged_to_this_rank, &
-             reset, any_reset, src_in_first_guess_element, &
-             src_in_adjacent_element, is_force_source
-  character(len=MAX_STRING_LEN) :: pathToMovingDatabaseDir, outputname, pathToMovingDatabase
+  double precision :: xsrc, zsrc, time_val, t_used
   integer :: i_source, it_l, i_stage_loc, i_adjacent
   integer, dimension(NSOURCES) :: ispec_first_guess_vec
   integer :: ispec_source_first_guess, ispec_adjacent
-  double precision :: amp
-  double precision :: xsrc, zsrc, time_val, t_used
   ! double precision :: start_time, stop_time  ! For debugging
+
+  logical :: file_exists, is_force_source
+  logical :: src_in_first_guess_element, src_in_adjacent_element
+  logical, dimension(NSOURCES) :: source_belonged_to_this_rank_all
+  logical, dimension(NSOURCES) :: reset_source,any_reset_source
+
+  character(len=MAX_STRING_LEN) :: pathToMovingDatabaseDir, outputname, pathToMovingDatabase
 
   ! To store list of elements (of variable size):
   type(custom_array_pointer_type), dimension(NSOURCES) :: pt_first_guess
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'Moving sources on GPU:'
+    write(IMAIN,*) '  write moving database = ',writeMovingDatabases
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
 
   ! Allocations
   allocate(nsources_local_moving(NSTEP))
@@ -127,29 +137,36 @@ module moving_sources_par
   iglob_source(:) = 0
   ! Initialize all the flags
   file_exists = .false.
-  source_belonged_to_this_rank = .true.
-  reset = .false.
-  any_reset = .false.
+
+  source_belonged_to_this_rank_all(:) = .true.
+  reset_source(:) = .false.
+  any_reset_source(:) = .false.
+
+  ! checks
+  if (setup_with_binary_database /= 0 ) &
+    call exit_MPI(myrank,'setup_with_binary_database not available with moving sources yet')
 
   ! Warnings and checks
   if (myrank == 0) then
-    if (setup_with_binary_database /= 0 ) &
-      call exit_MPI(myrank,'setup_with_binary_database not available with moving sources yet')
+    ! citation
+    write(IMAIN,*)
+    write(IMAIN,*) '****************************************************************************************'
+    write(IMAIN,*) 'Your are using moving source capabilities. Please cite:'
+    write(IMAIN,*) 'Bottero (2018) Full-wave numerical simulation of T-waves and of moving acoustic sources'
+    write(IMAIN,*) 'PhD thesis'
+    write(IMAIN,*) 'https://tel.archives-ouvertes.fr/tel-01893011'
+    write(IMAIN,*) '****************************************************************************************'
+    write(IMAIN,*)
     do i_source = 1,NSOURCES
-      do it_l = 1,10
-        write(IMAIN,*)
-        write(IMAIN,*) 'Your are using moving source capabilities. Please cite:'
-        write(IMAIN,*) 'Bottero (2018) Full-wave numerical simulation of T-waves and of moving acoustic sources'
-        write(IMAIN,*) 'PhD thesis'
-        write(IMAIN,*) 'https://tel.archives-ouvertes.fr/tel-01893011'
-        write(IMAIN,*)
-      enddo
+      ! timing warning
       if ((abs(tshift_src(i_source)) > 0.0d0) .or. (abs(t0) > 0.0d0)) then
+        write(IMAIN,*) 'Source #',i_source
         write(IMAIN,*) ' !! BEWARE !! Parameters tshift and/or t0 are used with moving source !'
         write(IMAIN,*) ' The time step for the moving source is: '
         write(IMAIN,*) '    t_used = (it_l-1)*deltat-t0-tshift_src(i_source)'
         write(IMAIN,*) ' And the source position is calculated like:'
         write(IMAIN,*) '  xsrc = x_source + vx_source*t_used'
+        write(IMAIN,*)
       endif
     enddo
   endif
@@ -186,13 +203,17 @@ module moving_sources_par
       call flush_IMAIN()
     endif
 
-    do it_l = 1, NSTEP  ! Loop over the time steps to precompute all source positions
-      if (mod(it_l-1, int(NSTEP/50)) == 0) then
-        if (myrank == 0) &
+    ! Loop over the time steps to precompute all source positions
+    do it_l = 1, NSTEP
+      ! user output
+      if (myrank == 0) then
+        if (mod(it_l-1, int(NSTEP/50)) == 0) &
           write(IMAIN,*) "        Computing source(s) position(s) for timestep",it_l-1,"/",NSTEP,"..."
+          call flush_IMAIN()
       endif
 
       ! ! For debugging:
+      ! print *,"debug: init_moving_sources_GPU: source(s) position(s) for timestep",it_l," out of ",NSTEP
       ! call cpu_time(stop_time)
       ! call synchronize_all()
       ! if (myrank == 0) then
@@ -225,201 +246,230 @@ module moving_sources_par
           call exit_MPI(myrank,'Only Newmark time scheme is implemented for moving sources (1)')
         endif
 
+        ! checks if source needs to be re-located in all slices
         ! Loop on the sources
         do i_source = 1,NSOURCES
+          ! No need to do the following if amplitude is zero
+          if (abs(source_time_function(i_source,it_l,i_stage_loc)) <= TINYVAL) cycle
 
-          amp = abs(source_time_function(i_source,it_l,i_stage_loc))
-          if (amp > TINYVAL) then  ! No need to do the following if amplitude is zero
-            t_used = (time_val-t0-tshift_src(i_source))
-            ! Moves and re-locates the sources along x and z-axis
-            xsrc = x_source(i_source) + vx_source(i_source)*t_used
-            zsrc = z_source(i_source) + vz_source(i_source)*t_used
-
-            ! if (it_l > 51) then
-            !   call synchronize_all()
-            !   if (myrank == 0) then
-            !     print *
-            !     print *,"it:",it_l," xsrc :", xsrc
-            !     print *
-            !     print *,myrank," source_belonged_to_this_rank :", source_belonged_to_this_rank, "reset:", reset, &
-            !             "ispec_source_first_guess:",ispec_source_first_guess
-            !   endif
-            !   call synchronize_all()
-            !   if (myrank == 1) then
-            !     print *,myrank," source_belonged_to_this_rank :", source_belonged_to_this_rank, "reset:", reset, &
-            !             "ispec_source_first_guess:",ispec_source_first_guess
-            !   endif
-            !   call synchronize_all()
-            !   if (myrank == 2) then
-            !     print *,myrank," source_belonged_to_this_rank :", source_belonged_to_this_rank, "reset:", reset, &
-            !             "ispec_source_first_guess:",ispec_source_first_guess
-            !   endif
-            !   call synchronize_all()
-            !   if (myrank == 3) then
-            !     print *,myrank," source_belonged_to_this_rank :", source_belonged_to_this_rank, "reset:", reset, &
-            !             "ispec_source_first_guess:",ispec_source_first_guess
-            !     print *
-            !   endif
-            !   call synchronize_all()
-            ! endif
-
-            ispec_source_first_guess = ispec_first_guess_vec(i_source)
-
-           !  if (it_l > 51) then
-           !    call synchronize_all()
-           !    if (myrank == 0) then
-           !      print *
-           !      print *,myrank," ispec_source_first_guess :", ispec_source_first_guess, "xmin:", &
-           !              coord(1,ibool(1,1,ispec_source_first_guess)), &
-           !              "xmax:", coord(1,ibool(NGLLX,1,ispec_source_first_guess))
-           !    endif
-           !    call synchronize_all()
-           !    if (myrank == 1) then
-           !      print *,myrank," ispec_source_first_guess :", ispec_source_first_guess, "xmin:", &
-           !              coord(1,ibool(1,1,ispec_source_first_guess)), &
-           !              "xmax:", coord(1,ibool(NGLLX,1,ispec_source_first_guess))
-           !    endif
-           !    call synchronize_all()
-           !    if (myrank == 2) then
-           !      print *,myrank," ispec_source_first_guess :", ispec_source_first_guess, "xmin:", &
-           !              coord(1,ibool(1,1,ispec_source_first_guess)), &
-           !              "xmax:", coord(1,ibool(NGLLX,1,ispec_source_first_guess))
-           !    endif
-           !    call synchronize_all()
-           !    if (myrank == 3) then
-           !      print *,myrank," ispec_source_first_guess :", ispec_source_first_guess, "xmin:", &
-           !              coord(1,ibool(1,1,ispec_source_first_guess)), &
-           !              "xmax:", coord(1,ibool(NGLLX,1,ispec_source_first_guess))
-           !      print *
-           !    endif
-           !    call synchronize_all()
-           ! endif
-
-           if (ispec_source_first_guess /= 0) then
-             src_in_first_guess_element = in_element(xsrc, zsrc, ispec_source_first_guess)
-             if ((.not. src_in_first_guess_element) .and. source_belonged_to_this_rank) then
-               reset = .true.  ! All the procs have to recompute the source position
-               ! Added this also to check if the source is in adjacent elements
-               ! (in this case we do not need to reset either because these are scanned later)
-               if (pt_first_guess(i_source)%allocated) then
-                  do i_adjacent = 1,pt_first_guess(i_source)%size
-                     ispec_adjacent = pt_first_guess(i_source)%array(i_adjacent)
-                     src_in_adjacent_element = in_element(xsrc, zsrc, ispec_adjacent)
-                     if (src_in_adjacent_element) &
-                       reset = .false.
-                  enddo
-               else
-                 call stop_the_code('pt_first_guess should have been allocated if ispec_source_first_guess /= 0')
-               endif
-             else  ! The source is in first guess element, no need to scan the others
-               reset = .false.
-             endif
-           endif
-
-#ifdef WITH_MPI
-            call any_all_l(reset, any_reset)
-            call synchronize_all()
-#endif
+          ! updated source position
+          ! time
+          t_used = (time_val - t0 - tshift_src(i_source))
+          ! Moves and re-locates the sources along x and z-axis
+          xsrc = x_source(i_source) + vx_source(i_source) * t_used
+          zsrc = z_source(i_source) + vz_source(i_source) * t_used
 
           ! if (it_l > 51) then
           !   call synchronize_all()
           !   if (myrank == 0) then
-          !     print *,myrank,"reset :", reset," any_reset :", any_reset, &
-          !            " src_in_first_guess_element :", src_in_first_guess_element
-          !   endif
-          !   call synchronize_all()
-          !   if (myrank == 1) then
-          !     print *,myrank,"reset :", reset," any_reset :", any_reset, &
-          !            " src_in_first_guess_element :", src_in_first_guess_element
-          !   endif
-          !   call synchronize_all()
-          !   if (myrank == 2) then
-          !     print *,myrank,"reset :", reset," any_reset :", any_reset, &
-          !            " src_in_first_guess_element :", src_in_first_guess_element
-          !   endif
-          !   call synchronize_all()
-          !   if (myrank == 3) then
-          !     print *,myrank,"reset :", reset," any_reset :", any_reset, &
-          !            " src_in_first_guess_element :", src_in_first_guess_element
-          !     call sleep(1)
-          !   endif
-          !   call synchronize_all()
-
-          !   if (myrank == 0) then
           !     print *
-          !     print *,myrank,"NOW LOCATING THE SOURCE ? ",(source_belonged_to_this_rank .or. any_reset)
+          !     print *,"it:",it_l," xsrc :", xsrc
+          !     print *
+          !     print *,myrank," source_belonged_to_this_rank :", source_belonged_to_this_rank_all(i_source), &
+          !             "reset:", reset_source(i_source), &
+          !             "ispec_source_first_guess:",ispec_source_first_guess
           !   endif
           !   call synchronize_all()
           !   if (myrank == 1) then
-          !     print *,myrank,"NOW LOCATING THE SOURCE ? ",(source_belonged_to_this_rank .or. any_reset)
+          !     print *,myrank," source_belonged_to_this_rank :", source_belonged_to_this_rank_all(i_source), &
+          !             "reset:", reset_source(i_source), &
+          !             "ispec_source_first_guess:",ispec_source_first_guess
           !   endif
           !   call synchronize_all()
           !   if (myrank == 2) then
-          !     print *,myrank,"NOW LOCATING THE SOURCE ? ",(source_belonged_to_this_rank .or. any_reset)
+          !     print *,myrank," source_belonged_to_this_rank :", source_belonged_to_this_rank_all(i_source), &
+          !             "reset:", reset_source(i_source), &
+          !             "ispec_source_first_guess:",ispec_source_first_guess
           !   endif
           !   call synchronize_all()
           !   if (myrank == 3) then
-          !     print *,myrank,"NOW LOCATING THE SOURCE ? ",(source_belonged_to_this_rank .or. any_reset)
+          !     print *,myrank," source_belonged_to_this_rank :", source_belonged_to_this_rank_all(i_source), &
+          !             "reset:", reset_source(i_source), &
+          !             "ispec_source_first_guess:",ispec_source_first_guess
+          !     print *
           !   endif
           !   call synchronize_all()
           ! endif
 
-            ! This is done only by the slice carrying the source (without the expensive loops)
-            ! Except if a reset has been sent by any of the procs
-            if (source_belonged_to_this_rank .or. any_reset) then
-              ! locate force source (most expensive step)
-              call locate_source_moving(xsrc,zsrc, &
-                            ispec_selected_source_moving(i_source, it_l),islice_selected_source(i_source), &
-                            NPROC,myrank,xi_source(i_source),gamma_source(i_source),is_force_source, &
-                            source_belonged_to_this_rank=source_belonged_to_this_rank, &
-                            ispec_first_guess=ispec_source_first_guess, &
-                            pt_first_guess=pt_first_guess(i_source), &
-                            reset=any_reset)
+          ispec_source_first_guess = ispec_first_guess_vec(i_source)
 
-              ispec_first_guess_vec(i_source) = ispec_selected_source_moving(i_source, it_l)
+          !  if (it_l > 51) then
+          !    call synchronize_all()
+          !    if (myrank == 0) then
+          !      print *
+          !      print *,myrank," ispec_source_first_guess :", ispec_source_first_guess, "xmin:", &
+          !              coord(1,ibool(1,1,ispec_source_first_guess)), &
+          !              "xmax:", coord(1,ibool(NGLLX,1,ispec_source_first_guess))
+          !    endif
+          !    call synchronize_all()
+          !    if (myrank == 1) then
+          !      print *,myrank," ispec_source_first_guess :", ispec_source_first_guess, "xmin:", &
+          !              coord(1,ibool(1,1,ispec_source_first_guess)), &
+          !              "xmax:", coord(1,ibool(NGLLX,1,ispec_source_first_guess))
+          !    endif
+          !    call synchronize_all()
+          !    if (myrank == 2) then
+          !      print *,myrank," ispec_source_first_guess :", ispec_source_first_guess, "xmin:", &
+          !              coord(1,ibool(1,1,ispec_source_first_guess)), &
+          !              "xmax:", coord(1,ibool(NGLLX,1,ispec_source_first_guess))
+          !    endif
+          !    call synchronize_all()
+          !    if (myrank == 3) then
+          !      print *,myrank," ispec_source_first_guess :", ispec_source_first_guess, "xmin:", &
+          !              coord(1,ibool(1,1,ispec_source_first_guess)), &
+          !              "xmax:", coord(1,ibool(NGLLX,1,ispec_source_first_guess))
+          !      print *
+          !    endif
+          !    call synchronize_all()
+          ! endif
 
-              if (myrank == islice_selected_source(i_source)) then
-                ! Compute the sourcearray for this source and this time step
-                ! (for interpolation: the source does not fall exactly at a GLL point)
-                ! based on the source position in the reference element (xi_source, gamma_source)
-                ! do some checking also
-                call setup_source_interpolation_moving(xi_source(i_source), gamma_source(i_source), &
-                                                       sourcearrays_moving(i_source,:,:,:,it_l), &
-                                                       ispec_selected_source_moving(i_source, it_l), &
-                                                       source_type(i_source))
-              endif  ! myrank == islice_selected_source(i_source)
-            endif  ! source_belonged_to_this_rank .or. any_reset
-            !
-            ! if (it_l > 51) then
-            !   call synchronize_all()
-            !   if (myrank == 0) then
-            !     print *
-            !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
-            !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset
-            !   endif
-            !   call synchronize_all()
-            !   if (myrank == 1) then
-            !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
-            !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset
-            !   endif
-            !   call synchronize_all()
-            !   if (myrank == 2) then
-            !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
-            !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset
-            !   endif
-            !   call synchronize_all()
-            !   if (myrank == 3) then
-            !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
-            !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset
-            !     print *
-            !   endif
-            !   call synchronize_all()
-            ! endif
+          if (ispec_source_first_guess /= 0) then
+            src_in_first_guess_element = in_element(xsrc, zsrc, ispec_source_first_guess)
 
-          endif ! abs(source_time_function(i_source,it_l,i_stage_loc)) > TINYVAL
-        enddo  ! NSOURCES
-        ! synchronizes all processes
+            if ((.not. src_in_first_guess_element) .and. source_belonged_to_this_rank_all(i_source)) then
+              ! All the procs have to recompute the source position
+              reset_source(i_source) = .true.
+              ! Added this also to check if the source is in adjacent elements
+              ! (in this case we do not need to reset either because these are scanned later)
+              if (pt_first_guess(i_source)%allocated) then
+                do i_adjacent = 1,pt_first_guess(i_source)%size
+                  ispec_adjacent = pt_first_guess(i_source)%array(i_adjacent)
+                  src_in_adjacent_element = in_element(xsrc, zsrc, ispec_adjacent)
+                  if (src_in_adjacent_element) then
+                    reset_source(i_source) = .false.
+                    exit
+                  endif
+                enddo
+              else
+                call stop_the_code('pt_first_guess should have been allocated if ispec_source_first_guess /= 0')
+              endif
+            else
+              ! The source is in first guess element, no need to scan the others
+              reset_source(i_source) = .false.
+            endif
+          endif
+        enddo
+
+        ! synchronizes between slices
+        ! (moves synchronization out of do-loop above to avoid dead-locks)
+#ifdef WITH_MPI
+        do i_source = 1,NSOURCES
+          call any_all_l(reset_source(i_source), any_reset_source(i_source))
+        enddo
         call synchronize_all()
+#endif
+
+        do i_source = 1,NSOURCES
+          ! updated source position
+          ! time
+          t_used = (time_val - t0 - tshift_src(i_source))
+          ! Moves and re-locates the sources along x and z-axis
+          xsrc = x_source(i_source) + vx_source(i_source) * t_used
+          zsrc = z_source(i_source) + vz_source(i_source) * t_used
+          ispec_source_first_guess = ispec_first_guess_vec(i_source)
+
+          !debug
+          ! if (it_l > 51) then
+          !   call synchronize_all()
+          !   if (myrank == 0) then
+          !     print *,myrank,"reset :", reset_source(i_source)," any_reset :", any_reset_source(i_source), &
+          !            " src_in_first_guess_element :", src_in_first_guess_element
+          !   endif
+          !   call synchronize_all()
+          !   if (myrank == 1) then
+          !     print *,myrank,"reset :", reset_source(i_source)," any_reset :", any_reset_source(i_source), &
+          !            " src_in_first_guess_element :", src_in_first_guess_element
+          !   endif
+          !   call synchronize_all()
+          !   if (myrank == 2) then
+          !     print *,myrank,"reset :", reset_source(i_source)," any_reset :", any_reset_source(i_source), &
+          !            " src_in_first_guess_element :", src_in_first_guess_element
+          !   endif
+          !   call synchronize_all()
+          !   if (myrank == 3) then
+          !     print *,myrank,"reset :", reset_source(i_source)," any_reset :", any_reset_source(i_source), &
+          !            " src_in_first_guess_element :", src_in_first_guess_element
+          !     call sleep(1)
+          !   endif
+          !   call synchronize_all()
+          !
+          !   if (myrank == 0) then
+          !     print *
+          !     print *,myrank,"NOW LOCATING THE SOURCE ? ", &
+          !             (source_belonged_to_this_rank_all(i_source) .or. any_reset_source(i_source))
+          !   endif
+          !   call synchronize_all()
+          !   if (myrank == 1) then
+          !     print *,myrank,"NOW LOCATING THE SOURCE ? ", &
+          !             (source_belonged_to_this_rank_all(i_source) .or. any_reset_source(i_source))
+          !   endif
+          !   call synchronize_all()
+          !   if (myrank == 2) then
+          !     print *,myrank,"NOW LOCATING THE SOURCE ? ", &
+          !             (source_belonged_to_this_rank_all(i_source) .or. any_reset_source(i_source))
+          !   endif
+          !   call synchronize_all()
+          !   if (myrank == 3) then
+          !     print *,myrank,"NOW LOCATING THE SOURCE ? ", &
+          !             (source_belonged_to_this_rank_all(i_source) .or. any_reset_source(i_source))
+          !   endif
+          !   call synchronize_all()
+          ! endif
+
+          ! This is done only by the slice carrying the source (without the expensive loops)
+          ! Except if a reset has been sent by any of the procs
+          if (source_belonged_to_this_rank_all(i_source) .or. any_reset_source(i_source)) then
+            ! locate force source (most expensive step)
+            call locate_source_moving(xsrc,zsrc, &
+                                      ispec_selected_source_moving(i_source, it_l),islice_selected_source(i_source), &
+                                      NPROC,myrank,xi_source(i_source),gamma_source(i_source),is_force_source, &
+                                      source_belonged_to_this_rank=source_belonged_to_this_rank_all(i_source), &
+                                      ispec_first_guess=ispec_source_first_guess, &
+                                      pt_first_guess=pt_first_guess(i_source), &
+                                      reset=any_reset_source(i_source))
+
+            ispec_first_guess_vec(i_source) = ispec_selected_source_moving(i_source, it_l)
+
+            if (myrank == islice_selected_source(i_source)) then
+              ! Compute the sourcearray for this source and this time step
+              ! (for interpolation: the source does not fall exactly at a GLL point)
+              ! based on the source position in the reference element (xi_source, gamma_source)
+              ! do some checking also
+              call setup_source_interpolation_moving(xi_source(i_source), gamma_source(i_source), &
+                                                     sourcearrays_moving(i_source,:,:,:,it_l), &
+                                                     ispec_selected_source_moving(i_source, it_l), &
+                                                     source_type(i_source))
+            endif  ! myrank == islice_selected_source(i_source)
+          endif  ! source_belonged_to_this_rank .or. any_reset
+
+          !
+          ! if (it_l > 51) then
+          !   call synchronize_all()
+          !   if (myrank == 0) then
+          !     print *
+          !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
+          !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset_source(i_source)
+          !   endif
+          !   call synchronize_all()
+          !   if (myrank == 1) then
+          !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
+          !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset_source(i_source)
+          !   endif
+          !   call synchronize_all()
+          !   if (myrank == 2) then
+          !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
+          !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset_source(i_source)
+          !   endif
+          !   call synchronize_all()
+          !   if (myrank == 3) then
+          !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
+          !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset_source(i_source)
+          !     print *
+          !   endif
+          !   call synchronize_all()
+          ! endif
+
+        enddo  ! NSOURCES
       enddo ! stage_time_scheme
 
       ! counts sources in this process slice for this time step
@@ -433,10 +483,12 @@ module moving_sources_par
 
     enddo ! NSTEP
 
-    if (writeMovingDatabases) then  ! Write moving databases to a binary file
+    ! Write moving databases to a binary file
+    if (writeMovingDatabases) then
       call write_moving_databases(pathToMovingDatabase)
     endif
-  else  ! Read the binary file file_exists .and. writeMovingDatabases
+  else
+    ! Read the binary file file_exists .and. writeMovingDatabases
     call read_moving_databases(pathToMovingDatabase)
   endif
 
@@ -579,8 +631,10 @@ end subroutine init_moving_sources_GPU
     else
       call stop_the_code('Need pt_first_guess with ispec_first_guess (even if not allocated)')
     endif
+
     if (.not. present(source_belonged_to_this_rank)) &
       call stop_the_code('Need source_belonged_to_this_rank with ispec_first_guess')
+
     if (ispec_guess /= 0) then  ! If a first guess has been supplied
         ! Is the source in this first guess element ?
         point_in_first_guess_element = in_element(x_source, z_source, ispec_guess)
