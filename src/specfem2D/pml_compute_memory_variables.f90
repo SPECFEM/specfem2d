@@ -610,9 +610,6 @@
 
   ! compute the spatial derivatives
 
-  ! AXISYM case
-  if (AXISYM .and. is_on_the_axis(ispec)) then
-
   do j = 1,NGLLZ
     do i = 1,NGLLX
 
@@ -626,12 +623,6 @@
       duz_dxi_old = 0._CUSTOM_REAL
       dux_dgamma_old = 0._CUSTOM_REAL
       duz_dgamma_old = 0._CUSTOM_REAL
-      do k = 1,NGLLX
-        dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
-        duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprimeBar_xx(i,k)
-        dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
-        duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
-      enddo
 
       ! derivatives of displacement
       xixl = xix(i,j,ispec)
@@ -639,49 +630,49 @@
       gammaxl = gammax(i,j,ispec)
       gammazl = gammaz(i,j,ispec)
 
-      PML_dux_dxl_old(i,j) = dux_dxi_old*xixl + dux_dgamma_old*gammaxl ! this is dux_dxl_old
-      PML_dux_dzl_old(i,j) = dux_dxi_old*xizl + dux_dgamma_old*gammazl ! this is dux_dzl_old
-      PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl ! this is duz_dxl_old
-      PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl ! this is duz_dzl_old
+      ! AXISYM case
+      ! Beware: do not gather the two conditions because is_on_the_axis is not allocated if not AXISYM
+      ! (this may be worth it to avoid this kind of clutter, which is very frequent in the code)
+      if (AXISYM) then
+        if (is_on_the_axis(ispec)) then
+          do k = 1,NGLLX
+            dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+            duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprimeBar_xx(i,k)
+            dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
+          enddo
+          if (i /= 1) then
+            PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl ! this is duz_dxl_old
+            PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl ! this is duz_dzl_old
+          else
+            PML_duz_dxl_old(1,j) = 0._CUSTOM_REAL
+            PML_duz_dzl_old(i,j) = duz_dgamma_old*gammazl ! this is duz_dzl_old
+          endif
+
+        else  ! Not on the axis
+          do k = 1,NGLLX
+            dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprime_xx(i,k)
+            duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprime_xx(i,k)
+            dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
+            duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
+          enddo
+          PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl ! this is duz_dxl_old
+          PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl ! this is duz_dzl_old
+        endif  ! end of test is_on_the_axis
+      else ! Not AXISYM
+        do k = 1,NGLLX
+          dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprime_xx(i,k)
+          duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprime_xx(i,k)
+          dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
+          duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
+        enddo
+        PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl ! this is duz_dxl_old
+        PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl ! this is duz_dzl_old
+      endif ! end of test on AXISYM
+        PML_dux_dxl_old(i,j) = dux_dxi_old*xixl + dux_dgamma_old*gammaxl ! this is dux_dxl_old
+        PML_dux_dzl_old(i,j) = dux_dxi_old*xizl + dux_dgamma_old*gammazl ! this is dux_dzl_old
     enddo
   enddo
-
-  else ! non AXISYM case
-
-  do j = 1,NGLLZ
-    do i = 1,NGLLX
-
-      ! stores initial derivatives
-      PML_dux_dxl(i,j) = dux_dxl(i,j)
-      PML_dux_dzl(i,j) = dux_dzl(i,j)
-      PML_duz_dzl(i,j) = duz_dzl(i,j)
-      PML_duz_dxl(i,j) = duz_dxl(i,j)
-
-      dux_dxi_old = 0._CUSTOM_REAL
-      duz_dxi_old = 0._CUSTOM_REAL
-      dux_dgamma_old = 0._CUSTOM_REAL
-      duz_dgamma_old = 0._CUSTOM_REAL
-      do k = 1,NGLLX
-        dux_dxi_old = dux_dxi_old + displ_elastic_old(1,ibool(k,j,ispec))*hprime_xx(i,k)
-        duz_dxi_old = duz_dxi_old + displ_elastic_old(2,ibool(k,j,ispec))*hprime_xx(i,k)
-        dux_dgamma_old = dux_dgamma_old + displ_elastic_old(1,ibool(i,k,ispec))*hprime_zz(j,k)
-        duz_dgamma_old = duz_dgamma_old + displ_elastic_old(2,ibool(i,k,ispec))*hprime_zz(j,k)
-      enddo
-
-      ! derivatives of displacement
-      xixl = xix(i,j,ispec)
-      xizl = xiz(i,j,ispec)
-      gammaxl = gammax(i,j,ispec)
-      gammazl = gammaz(i,j,ispec)
-
-      PML_dux_dxl_old(i,j) = dux_dxi_old*xixl + dux_dgamma_old*gammaxl ! this is dux_dxl_old
-      PML_dux_dzl_old(i,j) = dux_dxi_old*xizl + dux_dgamma_old*gammazl ! this is dux_dzl_old
-      PML_duz_dxl_old(i,j) = duz_dxi_old*xixl + duz_dgamma_old*gammaxl ! this is duz_dxl_old
-      PML_duz_dzl_old(i,j) = duz_dxi_old*xizl + duz_dgamma_old*gammazl ! this is duz_dzl_old
-    enddo
-  enddo
-
-  endif ! end of test on AXISYM
 
   ! local PML element
   ispec_PML = spec_to_PML(ispec)
