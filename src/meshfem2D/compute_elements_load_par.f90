@@ -94,6 +94,7 @@ contains
     nelem_elastic_pml = 0
     nelem_acoustic_pml = 0
     nelem_viscoelastic_pml = 0
+    nelem_viscoacoustic_pml = 0
 
     elmnts_load(:) = ELASTIC_LOAD
     adjwgt(:) = ELASTIC_LOAD

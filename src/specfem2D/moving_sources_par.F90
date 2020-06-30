@@ -944,6 +944,9 @@ end subroutine init_moving_sources_GPU
     ! single MPI process
     islice_selected_source = 0
   endif
+#else
+  ! no MPI, single process
+  islice_selected_source = 0
 #endif
 
   ! user output
