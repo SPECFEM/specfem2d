@@ -118,9 +118,9 @@
     allocate(source_time_function(NSOURCES,NSTEP,stage_time_scheme),stat=ier)
     if (ier /= 0) call exit_MPI(myrank,'Error allocating array source_time_function')
   endif
+
   ! initializes stf array
   source_time_function(:,:,:) = 0.d0
-
 
   ! user output
   if (myrank == islice_selected_source(1)) then

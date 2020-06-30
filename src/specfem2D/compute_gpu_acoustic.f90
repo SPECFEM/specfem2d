@@ -36,8 +36,8 @@
   use specfem_par, only: NPROC,ninterface,max_nibool_interfaces_ext_mesh,nibool_interfaces_ext_mesh, &
     my_neighbors,ninterface_acoustic,inum_interfaces_acoustic, &
     nelem_acoustic_surface,num_fluid_solid_edges,UNDO_ATTENUATION_AND_OR_PML, &
-    STACEY_ABSORBING_CONDITIONS,any_elastic,any_poroelastic,SIMULATION_TYPE,ATTENUATION_VISCOACOUSTIC, &
-    SOURCE_IS_MOVING
+    STACEY_ABSORBING_CONDITIONS,any_elastic,any_poroelastic, &
+    SIMULATION_TYPE,ATTENUATION_VISCOACOUSTIC
 
   use specfem_par, only: nspec_outer_acoustic, nspec_inner_acoustic,NO_BACKWARD_RECONSTRUCTION
 
@@ -106,13 +106,7 @@
       endif
 
       ! sources
-      if (SOURCE_IS_MOVING) then
-        call compute_add_sources_acoustic_GPU_moving_sources(iphase, compute_wavefield_1, compute_wavefield_2)
-        ! Old version. Using this version you can comment call init_moving_sources() in prepare_gpu.f90
-        ! call compute_add_sources_acoustic_GPU_moving_sources_old(iphase, compute_wavefield_1, compute_wavefield_2)
-      else
-        call compute_add_sources_acoustic_GPU(iphase,compute_wavefield_1,compute_wavefield_2)
-      endif
+      call compute_add_sources_acoustic_GPU(iphase,compute_wavefield_1,compute_wavefield_2)
 
     endif
 
@@ -263,7 +257,11 @@
 
   subroutine compute_add_sources_acoustic_GPU(iphase,compute_wavefield_1,compute_wavefield_2)
 
-  use specfem_par, only: it,SIMULATION_TYPE,NSTEP, nadj_rec_local
+  use specfem_par, only: it,SIMULATION_TYPE,NSTEP,nadj_rec_local, &
+    SOURCE_IS_MOVING,NSOURCES
+
+  use moving_sources_par, only: nsources_local_moving
+
   use specfem_par_gpu, only: Mesh_pointer
 
   implicit none
@@ -273,7 +271,18 @@
   logical,intent(in) :: compute_wavefield_1,compute_wavefield_2
 
   ! forward simulations
-  if (SIMULATION_TYPE == 1) call compute_add_sources_ac_cuda(Mesh_pointer,iphase,it)
+  if (SIMULATION_TYPE == 1) then
+    if (SOURCE_IS_MOVING) then
+      ! sources move position
+      call compute_add_moving_sources_ac_cuda(Mesh_pointer, iphase, nsources_local_moving(it), it, NSTEP, NSOURCES)
+
+      ! Old version. Using this version you can comment call init_moving_sources() in prepare_gpu.f90
+      ! call compute_add_sources_acoustic_GPU_moving_sources_old(iphase, compute_wavefield_1, compute_wavefield_2)
+    else
+      ! sources stay at same location
+      call compute_add_sources_ac_cuda(Mesh_pointer,iphase,it)
+    endif
+  endif
 
   ! adjoint simulations
   if (SIMULATION_TYPE == 3 .and. nadj_rec_local > 0 .and. compute_wavefield_1) &
@@ -288,178 +297,148 @@
 !---------------------------------------------------------------------------------------------
 !
 
-
-  subroutine compute_add_sources_acoustic_GPU_moving_sources(iphase,compute_wavefield_1,compute_wavefield_2)
-
-  use constants, only: NGLLX,NGLLZ,TINYVAL
-
-  use specfem_par
-  use specfem_par_gpu
-  use moving_sources_par, only: nsources_local_moving
-
-  implicit none
-
-  ! communication overlap
-  integer,intent(in) :: iphase
-  logical,intent(in) :: compute_wavefield_1,compute_wavefield_2
-
-  ! forward simulations
-  if (SIMULATION_TYPE == 1) then
-    call compute_add_moving_sources_ac_cuda(Mesh_pointer, iphase, nsources_local_moving(it), it, NSTEP, &
-                                            NSOURCES)
-  endif
-  ! adjoint simulations
-  if (SIMULATION_TYPE == 3 .and. nadj_rec_local > 0 .and. compute_wavefield_1) &
-    call add_sources_ac_sim_2_or_3_cuda(Mesh_pointer,iphase, NSTEP -it + 1, nadj_rec_local, NSTEP)
-
-  ! adjoint simulations
-  if (compute_wavefield_2) call compute_add_sources_ac_s3_cuda(Mesh_pointer, iphase, NSTEP -it + 1)
-
-  end subroutine compute_add_sources_acoustic_GPU_moving_sources
-
-  !
-  !---------------------------------------------------------------------------------------------
-  !
-
-    subroutine compute_add_sources_acoustic_GPU_moving_sources_old(iphase,compute_wavefield_1,compute_wavefield_2)
-    ! This subroutine is useful to get an idea of how moving sources are handled
-    ! ... but it is very slow !! (a lot of communication with the GPU)
-    ! See new version in prepare_gpu.f90
-
-    use constants, only: NGLLX,NGLLZ,TINYVAL
-
-    use specfem_par
-    use specfem_par_gpu
-
-    implicit none
-
-    ! communication overlap
-    integer,intent(in) :: iphase
-    logical,intent(in) :: compute_wavefield_1,compute_wavefield_2
-
-    !local variables
-    integer :: i_source,i,j,k,ispec
-    double precision :: hlagrange
-    double precision :: xInitSource,zInitSource,xsrc,zsrc,vxSource,vzSource, &
-                        time_val,t_used
-    ! single source array
-    real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
-
-    ! forward simulations
-    if (SIMULATION_TYPE == 1) then
-      xInitSource = x_source(i_source) ! m
-      zInitSource = z_source(i_source) ! m
-      vxSource = vx_source(i_source) ! m/s
-      vzSource = vz_source(i_source) ! m/s
-
-      if (time_stepping_scheme == 1) then
-        ! Newmark
-        time_val = (it-1)*deltat
-      else
-        call exit_MPI(myrank,'Only Newmark time scheme is implemented for moving sources (0)')
-      endif
-
-      ! moves and re-locates sources along x-axis
-      do i_source = 1,NSOURCES
-        if (abs(source_time_function(i_source,it,i_stage)) > TINYVAL) then
-          t_used = (time_val-t0-tshift_src(i_source))
-
-          xsrc = xInitSource + vxSource*t_used
-          zsrc = zInitSource + vzSource*t_used
-
-          ! collocated force source
-          call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
-                             xsrc,zsrc, &
-                             ispec_selected_source(i_source),islice_selected_source(i_source), &
-                             NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
-                             iglob_source(i_source),.true.)
-
-          call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
-          call lagrange_any(gamma_source(i_source),NGLLZ,zigll,hgammas,hpgammas)
-
-          ! stores Lagrangians for source
-          hxis_store(i_source,:) = hxis(:)
-          hgammas_store(i_source,:) = hgammas(:)
-
-          sourcearray(:,:,:) = 0._CUSTOM_REAL
-
-          ! element containing source
-          ispec = ispec_selected_source(i_source)
-
-          if (myrank == islice_selected_source(i_source)) then
-
-            ! computes source arrays
-            if (source_type(i_source) == 1) then
-              ! collocated force source
-              do j = 1,NGLLZ
-                do i = 1,NGLLX
-                  hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
-                  ! source element is acoustic
-                  if (ispec_is_acoustic(ispec)) then
-                    ! sourcearray(1 and 2, i, j) are set to hlagrange:
-                    sourcearray(:,i,j) = hlagrange
-                  else
-                    call exit_MPI(myrank,'Moving source not in acoustic element (GPU, not implemented)')
-                  endif
-                enddo
-              enddo
-            else
-              call exit_MPI(myrank,'Moving source with source_type != 1 (GPU, not implemented)')
-            endif
-
-            ! stores sourcearray for all sources
-            sourcearrays(i_source,:,:,:) = sourcearray(:,:,:)
-
-          endif
-        endif
-      enddo
-
-      ! counts sources in this process slice
-      nsources_local = 0
-      do i = 1, NSOURCES
-        if (myrank == islice_selected_source(i)) then
-          nsources_local = nsources_local + 1
-        endif
-      enddo
-      deallocate(ispec_selected_source_loc)
-      allocate(ispec_selected_source_loc(nsources_local))
-      ispec_selected_source_loc(:) = 1
-      j = 0
-      do i = 1, NSOURCES
-        if (myrank == islice_selected_source(i)) then
-          if (j > nsources_local) call stop_the_code('Error with the number of local sources')
-          j = j + 1
-          ispec_selected_source_loc(j)  = ispec_selected_source(i)
-        endif
-      enddo
-      deallocate(sourcearray_loc)
-      if (nsources_local > 0) then
-        allocate(sourcearray_loc(nsources_local,NDIM,NGLLX,NGLLX))
-      else
-        allocate(sourcearray_loc(1,1,1,1))
-      endif
-
-      sourcearray_loc(:,:,:,:) = 0._CUSTOM_REAL
-      k = 0
-      do i_source = 1,NSOURCES
-        if (myrank == islice_selected_source(i_source)) then
-          ! source belongs to this process
-          k = k + 1
-          sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
-        endif
-      enddo
-
-      ! Send these values to device:
-      call recompute_source_position_cuda(Mesh_pointer, nsources_local, sourcearray_loc, &
-                                      ispec_selected_source_loc)
-
-      call compute_add_sources_ac_cuda(Mesh_pointer, iphase, it)
-    endif
-    ! adjoint simulations
-    if (SIMULATION_TYPE == 3 .and. nadj_rec_local > 0 .and. compute_wavefield_1) &
-      call add_sources_ac_sim_2_or_3_cuda(Mesh_pointer,iphase, NSTEP -it + 1, nadj_rec_local,NSTEP)
-
-    ! adjoint simulations
-    if (compute_wavefield_2) call compute_add_sources_ac_s3_cuda(Mesh_pointer, iphase, NSTEP -it + 1)
-
-    end subroutine compute_add_sources_acoustic_GPU_moving_sources_old
+!unused routine, left here for reference
+!
+!    subroutine compute_add_sources_acoustic_GPU_moving_sources_old(iphase,compute_wavefield_1,compute_wavefield_2)
+!    ! This subroutine is useful to get an idea of how moving sources are handled
+!    ! ... but it is very slow !! (a lot of communication with the GPU)
+!    ! See new version in prepare_gpu.f90
+!
+!    use constants, only: NGLLX,NGLLZ,TINYVAL
+!
+!    use specfem_par
+!    use specfem_par_gpu
+!
+!    implicit none
+!
+!    ! communication overlap
+!    integer,intent(in) :: iphase
+!    logical,intent(in) :: compute_wavefield_1,compute_wavefield_2
+!
+!    !local variables
+!    integer :: i_source,i,j,k,ispec
+!    double precision :: hlagrange
+!    double precision :: xInitSource,zInitSource,xsrc,zsrc,vxSource,vzSource, &
+!                        time_val,t_used
+!    ! single source array
+!    real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
+!
+!    ! forward simulations
+!    if (SIMULATION_TYPE == 1) then
+!      xInitSource = x_source(i_source) ! m
+!      zInitSource = z_source(i_source) ! m
+!      vxSource = vx_source(i_source) ! m/s
+!      vzSource = vz_source(i_source) ! m/s
+!
+!      if (time_stepping_scheme == 1) then
+!        ! Newmark
+!        time_val = (it-1)*deltat
+!      else
+!        call exit_MPI(myrank,'Only Newmark time scheme is implemented for moving sources (0)')
+!      endif
+!
+!      ! moves and re-locates sources along x-axis
+!      do i_source = 1,NSOURCES
+!        if (abs(source_time_function(i_source,it,i_stage)) > TINYVAL) then
+!          t_used = (time_val-t0-tshift_src(i_source))
+!
+!          xsrc = xInitSource + vxSource*t_used
+!          zsrc = zInitSource + vzSource*t_used
+!
+!          ! collocated force source
+!          call locate_source(ibool,coord,nspec,nglob,xigll,zigll, &
+!                             xsrc,zsrc, &
+!                             ispec_selected_source(i_source),islice_selected_source(i_source), &
+!                             NPROC,myrank,xi_source(i_source),gamma_source(i_source),coorg,knods,ngnod,npgeo, &
+!                             iglob_source(i_source),.true.)
+!
+!          call lagrange_any(xi_source(i_source),NGLLX,xigll,hxis,hpxis)
+!          call lagrange_any(gamma_source(i_source),NGLLZ,zigll,hgammas,hpgammas)
+!
+!          ! stores Lagrangians for source
+!          hxis_store(i_source,:) = hxis(:)
+!          hgammas_store(i_source,:) = hgammas(:)
+!
+!          sourcearray(:,:,:) = 0._CUSTOM_REAL
+!
+!          ! element containing source
+!          ispec = ispec_selected_source(i_source)
+!
+!          if (myrank == islice_selected_source(i_source)) then
+!
+!            ! computes source arrays
+!            if (source_type(i_source) == 1) then
+!              ! collocated force source
+!              do j = 1,NGLLZ
+!                do i = 1,NGLLX
+!                  hlagrange = hxis_store(i_source,i) * hgammas_store(i_source,j)
+!                  ! source element is acoustic
+!                  if (ispec_is_acoustic(ispec)) then
+!                    ! sourcearray(1 and 2, i, j) are set to hlagrange:
+!                    sourcearray(:,i,j) = hlagrange
+!                  else
+!                    call exit_MPI(myrank,'Moving source not in acoustic element (GPU, not implemented)')
+!                  endif
+!                enddo
+!              enddo
+!            else
+!              call exit_MPI(myrank,'Moving source with source_type != 1 (GPU, not implemented)')
+!            endif
+!
+!            ! stores sourcearray for all sources
+!            sourcearrays(i_source,:,:,:) = sourcearray(:,:,:)
+!
+!          endif
+!        endif
+!      enddo
+!
+!      ! counts sources in this process slice
+!      nsources_local = 0
+!      do i = 1, NSOURCES
+!        if (myrank == islice_selected_source(i)) then
+!          nsources_local = nsources_local + 1
+!        endif
+!      enddo
+!      deallocate(ispec_selected_source_loc)
+!      allocate(ispec_selected_source_loc(nsources_local))
+!      ispec_selected_source_loc(:) = 1
+!      j = 0
+!      do i = 1, NSOURCES
+!        if (myrank == islice_selected_source(i)) then
+!          if (j > nsources_local) call stop_the_code('Error with the number of local sources')
+!          j = j + 1
+!          ispec_selected_source_loc(j)  = ispec_selected_source(i)
+!        endif
+!      enddo
+!      deallocate(sourcearray_loc)
+!      if (nsources_local > 0) then
+!        allocate(sourcearray_loc(nsources_local,NDIM,NGLLX,NGLLX))
+!      else
+!        allocate(sourcearray_loc(1,1,1,1))
+!      endif
+!
+!      sourcearray_loc(:,:,:,:) = 0._CUSTOM_REAL
+!      k = 0
+!      do i_source = 1,NSOURCES
+!        if (myrank == islice_selected_source(i_source)) then
+!          ! source belongs to this process
+!          k = k + 1
+!          sourcearray_loc(k,:,:,:) = sourcearrays(i_source,:,:,:)
+!        endif
+!      enddo
+!
+!      ! Send these values to device:
+!      call recompute_source_position_cuda(Mesh_pointer, nsources_local, sourcearray_loc, &
+!                                      ispec_selected_source_loc)
+!
+!      call compute_add_sources_ac_cuda(Mesh_pointer, iphase, it)
+!    endif
+!    ! adjoint simulations
+!    if (SIMULATION_TYPE == 3 .and. nadj_rec_local > 0 .and. compute_wavefield_1) &
+!      call add_sources_ac_sim_2_or_3_cuda(Mesh_pointer,iphase, NSTEP -it + 1, nadj_rec_local,NSTEP)
+!
+!    ! adjoint simulations
+!    if (compute_wavefield_2) call compute_add_sources_ac_s3_cuda(Mesh_pointer, iphase, NSTEP -it + 1)
+!
+!    end subroutine compute_add_sources_acoustic_GPU_moving_sources_old
+!

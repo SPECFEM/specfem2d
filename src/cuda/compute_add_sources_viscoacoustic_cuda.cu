@@ -50,7 +50,8 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
                                                     int* ispec_selected_source,
                                                     int* ispec_is_acoustic,
                                                     realw* kappastore,
-                                                    int it, int nsources_local) {
+                                                    int it,
+                                                    int nsources_local) {
 
   int i = threadIdx.x;
   int j = threadIdx.y;
@@ -81,15 +82,17 @@ __global__ void compute_add_sources_acoustic_kernel(realw* potential_dot_dot_aco
 /* ----------------------------------------------------------------------------------------------- */
 
 __global__ void compute_add_moving_sources_acoustic_kernel(realw* potential_dot_dot_acoustic,
-                                                    int* d_ibool,
-                                                    realw* sourcearrays_moving,
-                                                    realw* source_time_function,
-                                                    int myrank,
-                                                    int* ispec_selected_source_moving,
-                                                    int* ispec_is_acoustic,
-                                                    realw* kappastore,
-                                                    int it, int* nsources_local,
-                                                    int nsources, int NSTEP) {
+                                                           int* d_ibool,
+                                                           realw* sourcearrays_moving,
+                                                           realw* source_time_function_moving,
+                                                           int myrank,
+                                                           int* ispec_selected_source_moving,
+                                                           int* ispec_is_acoustic,
+                                                           realw* kappastore,
+                                                           int it,
+                                                           int nsources_local,
+                                                           int nsources,
+                                                           int NSTEP) {
 
   // Same but for moving sources
   int i = threadIdx.x;  // correspond to GLLx id (each thread has its own x and y id)
@@ -100,16 +103,17 @@ __global__ void compute_add_moving_sources_acoustic_kernel(realw* potential_dot_
   int ispec, iglob;
   realw stf, kappal;
 
-  if (isource < nsources_local[it]) {
-      ispec = ispec_selected_source_moving[INDEX2(nsources, isource, it)] - 1;
-      if (ispec_is_acoustic[ispec]) {
+  if (isource < nsources_local) {
+    ispec = ispec_selected_source_moving[INDEX2(nsources, isource, it)] - 1;
+    if (ispec_is_acoustic[ispec]) {
+      iglob = d_ibool[INDEX3_PADDED(NGLLX, NGLLX, i, j, ispec)] - 1;
+      kappal = kappastore[INDEX3(NGLLX, NGLLX, i, j, ispec)];
+      stf = source_time_function_moving[INDEX2(nsources, isource, it)]/kappal;
 
-        iglob = d_ibool[INDEX3_PADDED(NGLLX, NGLLX, i, j, ispec)] - 1;
-        kappal = kappastore[INDEX3(NGLLX, NGLLX, i, j, ispec)];
-        stf = source_time_function[INDEX2(nsources, isource, it)]/kappal;
-        atomicAdd(&potential_dot_dot_acoustic[iglob],
-                  +sourcearrays_moving[INDEX5(nsources, NDIM, NGLLX, NGLLX, isource, 0, i, j, it)]*stf);
+      // local source contribution
+      realw accel = sourcearrays_moving[INDEX5(NDIM, NGLLX, NGLLX, nsources, 0, i, j, isource, it)] * stf;
 
+      atomicAdd(&potential_dot_dot_acoustic[iglob], accel);
     }
   }
 }
@@ -216,31 +220,38 @@ void FC_FUNC_(compute_add_sources_ac_s3_cuda,
 extern "C"
 void FC_FUNC_(compute_add_moving_sources_ac_cuda,
               COMPUTE_ADD_MOVING_SOURCES_AC_CUDA)(long* Mesh_pointer,
-                                                  int* iphasef,
+                                                  int* iphase_f,
                                                   int* nsources_local_moving,
-                                                  int* itf,
-                                                  int* NSTEP,
-                                                  int* nsources) {
+                                                  int* it_f,
+                                                  int* NSTEP_f,
+                                                  int* nsources_f) {
 
   // Same function but for moving sources
 
   TRACE("compute_add_moving_sources_ac_cuda");
 
   Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of fortran integer container
-  int it = *itf - 1;
 
   int nsources_local = *nsources_local_moving;
-  // Beware! nsources_local_moving is a pointer to an integer, not to the array
-  // of size NSTEP
+  // Beware! nsources_local_moving is a pointer to an integer, not to the array of size NSTEP
 
   // check if anything to do
   if (nsources_local == 0) return;
 
-  int iphase = *iphasef;
+  int nsources = *nsources_f;
+  int NSTEP = *NSTEP_f;
+
+  int it = *it_f - 1;
+  int iphase = *iphase_f;
+
   // only adds this contribution for first pass
   if (iphase != 1) return;
 
   int num_blocks_x, num_blocks_y;
+
+  // note: we will launch kernels only for local sources since sourcearrays_moving(..) and ispec_selected_souce_movie(..)
+  //       are sorted along local sources only.
+  //       this avoids the need to have an array like islice_selected_source(NSOURCES,NSTEP) on the GPU.
 
   // Look up for the best way to distribute the sources in a grid (one block per source)
   get_blocks_xy(nsources_local, &num_blocks_x, &num_blocks_y);
@@ -258,8 +269,10 @@ void FC_FUNC_(compute_add_moving_sources_ac_cuda,
                                                                                     mp->d_ispec_selected_source_moving,
                                                                                     mp->d_ispec_is_acoustic,
                                                                                     mp->d_kappastore,
-                                                                                    it, mp->d_nsources_local_moving,
-                                                                                    *nsources, *NSTEP);
+                                                                                    it,
+                                                                                    nsources_local,
+                                                                                    nsources,
+                                                                                    NSTEP);
   // cudaMemoryTest(334); // Useful to check memory
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

@@ -320,6 +320,7 @@
   allocate(buffer_recv_vector_gpu(2,max_nibool_interfaces_ext_mesh,ninterface))
   allocate(b_buffer_recv_vector_gpu(2,max_nibool_interfaces_ext_mesh,ninterface))
 
+  ! moving sources
   if (SOURCE_IS_MOVING .and. SIMULATION_TYPE == 1) then
     if (myrank == 0) then
       write(IMAIN,*)
@@ -332,6 +333,7 @@
       call flush_IMAIN()
     endif
   endif
+
   ! synchronizes processes
   call synchronize_all()
 

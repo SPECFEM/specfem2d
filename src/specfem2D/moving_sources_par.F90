@@ -57,7 +57,10 @@ module moving_sources_par
 
   integer, dimension(:), allocatable :: nsources_local_moving
   integer, dimension(:,:), allocatable :: ispec_selected_source_moving
+
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: sourcearrays_moving
+  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: source_time_function_moving
+
   integer, parameter :: IMOV = 1684  ! File unit for moving sources databases
 
   contains
@@ -96,10 +99,14 @@ module moving_sources_par
 
   ! Local variables
   double precision :: xsrc, zsrc, time_val, t_used
-  integer :: i_source, it_l, i_stage_loc, i_adjacent
+  integer :: i_source, it_l, i_stage_loc, i_adjacent, ier
+  integer :: ispec_source_first_guess,ispec_selected_source_local, ispec_adjacent
   integer, dimension(NSOURCES) :: ispec_first_guess_vec
-  integer :: ispec_source_first_guess, ispec_adjacent
-  ! double precision :: start_time, stop_time  ! For debugging
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ) :: sourcearray
+
+  ! For debugging
+  !double precision :: start_time, stop_time
+  !integer :: iproc
 
   logical :: file_exists, is_force_source
   logical :: src_in_first_guess_element, src_in_adjacent_element
@@ -121,17 +128,19 @@ module moving_sources_par
   endif
 
   ! Allocations
-  allocate(nsources_local_moving(NSTEP))
-  allocate(sourcearrays_moving(NSOURCES,NDIM,NGLLX,NGLLZ,NSTEP))
-  allocate(ispec_selected_source_moving(NSOURCES,NSTEP))
+  allocate(nsources_local_moving(NSTEP), &
+           sourcearrays_moving(NDIM,NGLLX,NGLLZ,NSOURCES,NSTEP), &
+           source_time_function_moving(NSOURCES,NSTEP), &
+           ispec_selected_source_moving(NSOURCES,NSTEP),stat=ier)
+  if (ier /= 0) stop 'Error allocating moving sources arrays'
 
   ! Initializations
   nsources_local_moving(:) = 0
-  sourcearrays_moving(:,:,:,:,:) = 0
-  ! We initialize ispec_selected_source_moving to 1 not 0:
-  ! there is no element 0 and this can cause bugs
-  ispec_selected_source_moving(:,:) = 1
+  sourcearrays_moving(:,:,:,:,:) = 0.0_CUSTOM_REAL
+  source_time_function_moving(:,:) = 0.0_CUSTOM_REAL
+  ispec_selected_source_moving(:,:) = 0  ! zero indicates not-a-valid ispec
   ispec_first_guess_vec(:) = 0
+
   ! initializes slice which hold source
   islice_selected_source(:) = -1
   iglob_source(:) = 0
@@ -237,9 +246,16 @@ module moving_sources_par
       ! call synchronize_all()
       ! call cpu_time(start_time)
 
+      ! note: the following routine and arrays assume there is only a single stage for the time scheme.
+      if (stage_time_scheme /= 1) stop 'Invalid number of stages of time scheme for moving sources'
+
+      ! counts sources in this process slice for this time step
+      nsources_local = 0
+
       do i_stage_loc = 1, stage_time_scheme  ! For now stage_time_scheme == 1 only because only Newmark time scheme are supported
 
-        if (time_stepping_scheme == 1) then  ! Only Newmark time scheme is supported
+        ! current time
+        if (time_stepping_scheme == 1) then
           ! Newmark
           time_val = (it_l-1)*deltat
         else
@@ -353,19 +369,22 @@ module moving_sources_par
         ! synchronizes between slices
         ! (moves synchronization out of do-loop above to avoid dead-locks)
 #ifdef WITH_MPI
-        do i_source = 1,NSOURCES
-          call any_all_l(reset_source(i_source), any_reset_source(i_source))
-        enddo
-        call synchronize_all()
+        if (NPROC > 1) then
+          do i_source = 1,NSOURCES
+            call any_all_l(reset_source(i_source), any_reset_source(i_source))
+          enddo
+          call synchronize_all()
+        endif
 #endif
 
+        ! determines best source positions
         do i_source = 1,NSOURCES
-          ! updated source position
           ! time
           t_used = (time_val - t0 - tshift_src(i_source))
           ! Moves and re-locates the sources along x and z-axis
           xsrc = x_source(i_source) + vx_source(i_source) * t_used
           zsrc = z_source(i_source) + vz_source(i_source) * t_used
+
           ispec_source_first_guess = ispec_first_guess_vec(i_source)
 
           !debug
@@ -419,16 +438,18 @@ module moving_sources_par
           ! This is done only by the slice carrying the source (without the expensive loops)
           ! Except if a reset has been sent by any of the procs
           if (source_belonged_to_this_rank_all(i_source) .or. any_reset_source(i_source)) then
+            ! initializes
+            ispec_selected_source_local = 1
             ! locate force source (most expensive step)
             call locate_source_moving(xsrc,zsrc, &
-                                      ispec_selected_source_moving(i_source, it_l),islice_selected_source(i_source), &
+                                      ispec_selected_source_local,islice_selected_source(i_source), &
                                       NPROC,myrank,xi_source(i_source),gamma_source(i_source),is_force_source, &
                                       source_belonged_to_this_rank=source_belonged_to_this_rank_all(i_source), &
                                       ispec_first_guess=ispec_source_first_guess, &
                                       pt_first_guess=pt_first_guess(i_source), &
                                       reset=any_reset_source(i_source))
 
-            ispec_first_guess_vec(i_source) = ispec_selected_source_moving(i_source, it_l)
+            ispec_first_guess_vec(i_source) = ispec_selected_source_local
 
             if (myrank == islice_selected_source(i_source)) then
               ! Compute the sourcearray for this source and this time step
@@ -436,49 +457,52 @@ module moving_sources_par
               ! based on the source position in the reference element (xi_source, gamma_source)
               ! do some checking also
               call setup_source_interpolation_moving(xi_source(i_source), gamma_source(i_source), &
-                                                     sourcearrays_moving(i_source,:,:,:,it_l), &
-                                                     ispec_selected_source_moving(i_source, it_l), &
+                                                     sourcearray, &
+                                                     ispec_selected_source_local, &
                                                      source_type(i_source))
+
+              ! counts sources in this process slice for this time step
+              ! (will be used to fill sourcearrays_moving for local sources only)
+              nsources_local = nsources_local + 1
+
+              ! stores best position (non-zero) element ispec
+              ispec_selected_source_moving(nsources_local, it_l) = ispec_selected_source_local
+              ! stores sourcearray
+              sourcearrays_moving(:,:,:,nsources_local,it_l) = sourcearray(:,:,:)
+              ! STF
+              source_time_function_moving(nsources_local,it_l) = source_time_function(i_source,it_l,i_stage_loc)
+
             endif  ! myrank == islice_selected_source(i_source)
           endif  ! source_belonged_to_this_rank .or. any_reset
 
+          ! note: sourcearrays_moving(:,:,:,isource_local,it_l) is only non-zero for process
+          !       which holds (best) source position for source i_source, sorted with local sources only.
+          !       nsources_local will indicate that the process has local sources at time it.
           !
-          ! if (it_l > 51) then
-          !   call synchronize_all()
-          !   if (myrank == 0) then
-          !     print *
-          !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
-          !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset_source(i_source)
-          !   endif
-          !   call synchronize_all()
-          !   if (myrank == 1) then
-          !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
-          !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset_source(i_source)
-          !   endif
-          !   call synchronize_all()
-          !   if (myrank == 2) then
-          !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
-          !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset_source(i_source)
-          !   endif
-          !   call synchronize_all()
-          !   if (myrank == 3) then
-          !     print *,myrank," ispec_selected_source_moving :", ispec_selected_source_moving(i_source, it_l), &
-          !             " islice_selected_source(i_source) :",islice_selected_source(i_source), "reset :", reset_source(i_source)
-          !     print *
-          !   endif
-          !   call synchronize_all()
-          ! endif
+          !       when adding source contributions on the GPU, we assume that the arrays
+          !       sourcearrays_moving(..) and ispec_selected_source_moving(..) are sorted with only local source entries.
+          !       this avoids the need of storing islice_selected_source(NSOURCES,NSTEP) for all sources and time steps.
+          !debug
+          !if (.false.) then
+          !  call synchronize_all()
+          !  do iproc = 0,NPROC-1
+          !    if (myrank == iproc .and. myrank == islice_selected_source(i_source)) then
+          !      print *,it_l,"rank",myrank,"source ",i_source,"source local",nsources_local, &
+          !              " ispec_selected_source_moving :", ispec_selected_source_moving(nsources_local, it_l), &
+          !              " islice_selected_source(i_source) :",islice_selected_source(i_source), &
+          !              "reset :", reset_source(i_source),"sourcearray",sourcearrays_moving(1,2,2,nsources_local,it_l)
+          !    endif
+          !  enddo
+          !  call synchronize_all()
+          !endif
 
         enddo  ! NSOURCES
       enddo ! stage_time_scheme
 
+      ! check
+      if (nsources_local > NSOURCES) stop 'Invalid nsources_local for moving sources'
+
       ! counts sources in this process slice for this time step
-      nsources_local = 0
-      do i_source = 1, NSOURCES
-        if (myrank == islice_selected_source(i_source)) then
-          nsources_local = nsources_local + 1
-        endif
-      enddo
       nsources_local_moving(it_l) = nsources_local
 
     enddo ! NSTEP
@@ -499,10 +523,10 @@ module moving_sources_par
 
   ! Send variables to device, once and for all:
   call prepare_moving_sources_cuda(Mesh_pointer, nsources_local_moving, NSOURCES, &
-                                  sourcearrays_moving, ispec_selected_source_moving, &
-                                  NSTEP, source_time_function)
+                                   sourcearrays_moving, ispec_selected_source_moving, &
+                                   NSTEP, source_time_function_moving)
 
-  ! Free useless memory
+  ! Free memory
   do i_source = 1,NSOURCES
     if (pt_first_guess(i_source)%allocated) then
       deallocate(pt_first_guess(i_source)%array)
@@ -512,6 +536,13 @@ module moving_sources_par
     endif
     pt_first_guess(i_source)%size = 0
   enddo
+
+  deallocate(ispec_selected_source_moving)
+  deallocate(sourcearrays_moving)
+  deallocate(source_time_function_moving)
+
+  ! synchronizes processes
+  call synchronize_all()
 
 end subroutine init_moving_sources_GPU
 
@@ -549,7 +580,7 @@ end subroutine init_moving_sources_GPU
   ! We use a custom pointer here because this can change size
   type(custom_array_pointer_type),intent(inout), optional :: pt_first_guess
   logical, intent(inout), optional :: source_belonged_to_this_rank
-  double precision, intent(out) :: xi_source, gamma_source
+  double precision, intent(inout) :: xi_source, gamma_source
 
   ! local variables
   !! DK DK dec 2017: also loop on all the elements in contact with the initial guess
@@ -578,6 +609,7 @@ end subroutine init_moving_sources_GPU
     call exit_MPI(myrank,'subroutine locate_source_moving should be used when the source is moving')
   endif
 
+  rst = .false.
   if (present(reset)) then ! We define another variable to avoid repeating if (present) ...
     rst = reset
   endif
@@ -636,14 +668,14 @@ end subroutine init_moving_sources_GPU
       call stop_the_code('Need source_belonged_to_this_rank with ispec_first_guess')
 
     if (ispec_guess /= 0) then  ! If a first guess has been supplied
-        ! Is the source in this first guess element ?
-        point_in_first_guess_element = in_element(x_source, z_source, ispec_guess)
-        if (point_in_first_guess_element) then ! If yes, no need to do the first loop
-          ispecmin = ispec_guess  ! The first loop will be a loop over one element
-          ispecmax = ispec_guess  ! The first loop will be a loop over one element
-        else ! If the source is not in the first guess element we have to perform the loops
-          do_next_loops = .true.
-        endif
+      ! Is the source in this first guess element ?
+      point_in_first_guess_element = in_element(x_source, z_source, ispec_guess)
+      if (point_in_first_guess_element) then ! If yes, no need to do the first loop
+        ispecmin = ispec_guess  ! The first loop will be a loop over one element
+        ispecmax = ispec_guess  ! The first loop will be a loop over one element
+      else ! If the source is not in the first guess element we have to perform the loops
+        do_next_loops = .true.
+      endif
     endif
   endif
 
@@ -839,8 +871,8 @@ end subroutine init_moving_sources_GPU
     call recompute_jacobian_with_negative_stop(xi,gamma,x,z,xix,xiz,gammax,gammaz,jacobian, &
                                                coorg,knods,ispec,ngnod,nspec,npgeo,.true.)
 
-    ! compute final distance between asked and found
-    final_distance_this_element = sqrt((x_source-x)**2 + (z_source-z)**2)
+    ! compute final distance between asked and found (using square value since taking the root is expensive)
+    final_distance_this_element = (x_source-x)**2 + (z_source-z)**2
 
     ! if we have found an element that gives a shorter distance
     if (final_distance_this_element < final_distance) then
@@ -857,51 +889,56 @@ end subroutine init_moving_sources_GPU
 
 #ifdef WITH_MPI
   ! for MPI version, gather information from all the nodes
-  ! MPI commands are necessary! The processes does not know the same part of the
-  ! mesh. But we do it only when necessary to avoid exchanging too much in the
-  ! case of moving sources
-  if (rst .or. (ispec_guess == 0)) then
+  if (NPROC > 1) then
+    ! MPI commands are necessary! The processes does not know the same part of the
+    ! mesh. But we do it only when necessary to avoid exchanging too much in the
+    ! case of moving sources
+    if (rst .or. (ispec_guess == 0)) then
 
-    ! global minimum distance computed over all processes
-    call min_all_all_dp(final_distance, dist_glob_squared)
+      ! global minimum distance computed over all processes
+      call min_all_all_dp(final_distance, dist_glob_squared)
 
-    ! check if this process contains the source
-    if (abs(sqrt(dist_glob_squared) - sqrt(final_distance)) < TINYVAL ) is_proc_source = 1
+      ! check if this process contains the source
+      if (abs(dist_glob_squared - final_distance) < TINYVAL ) is_proc_source = 1
 
-    if (present(source_belonged_to_this_rank)) then
-      if (is_proc_source == 1) then ! ADDED TODO
-        source_belonged_to_this_rank = .true.
-      else
-        source_belonged_to_this_rank = .false.
+      if (present(source_belonged_to_this_rank)) then
+        if (is_proc_source == 1) then ! ADDED TODO
+          source_belonged_to_this_rank = .true.
+        else
+          source_belonged_to_this_rank = .false.
+        endif
       endif
+
+      ! master collects info
+      call gather_all_singlei(is_proc_source,allgather_is_proc_source,NPROC)
+
+      if (myrank == 0) then
+        ! select slice with maximum rank which contains source
+        locate_is_proc_source = maxloc(allgather_is_proc_source) - 1
+        islice_selected_source = locate_is_proc_source(1)
+      endif
+
+      ! selects slice which holds source
+      call bcast_all_singlei(islice_selected_source)
+
+      ! if (islice_selected_source /= 0) then
+      !   ! source is in another slice than the master process
+      !   if (myrank == islice_selected_source) then
+      !     ! send information from process holding source
+      !     call send_singlei(ispec_selected_source,0,0)
+      !     call send_singledp(xi_source,0,2)
+      !     call send_singledp(gamma_source,0,3)
+      !   else if (myrank == 0) then
+      !     ! master collects
+      !     call recv_singlei(ispec_selected_source,islice_selected_source,0)
+      !     call recv_singledp(xi_source,islice_selected_source,2)
+      !     call recv_singledp(gamma_source,islice_selected_source,3)
+      !   endif
+      ! endif
     endif
-
-    ! master collects info
-    call gather_all_singlei(is_proc_source,allgather_is_proc_source,NPROC)
-
-    if (myrank == 0) then
-      ! select slice with maximum rank which contains source
-      locate_is_proc_source = maxloc(allgather_is_proc_source) - 1
-      islice_selected_source = locate_is_proc_source(1)
-    endif
-
-    ! selects slice which holds source
-    call bcast_all_singlei(islice_selected_source)
-
-    ! if (islice_selected_source /= 0) then
-    !   ! source is in another slice than the master process
-    !   if (myrank == islice_selected_source) then
-    !     ! send information from process holding source
-    !     call send_singlei(ispec_selected_source,0,0)
-    !     call send_singledp(xi_source,0,2)
-    !     call send_singledp(gamma_source,0,3)
-    !   else if (myrank == 0) then
-    !     ! master collects
-    !     call recv_singlei(ispec_selected_source,islice_selected_source,0)
-    !     call recv_singledp(xi_source,islice_selected_source,2)
-    !     call recv_singledp(gamma_source,islice_selected_source,3)
-    !   endif
-    ! endif
+  else
+    ! single mpi process
+    islice_selected_source = 0
   endif
 #endif
 
@@ -958,6 +995,7 @@ subroutine write_moving_databases(pathToMovingDatabase)
   write(IMOV) nsources_local_moving
   write(IMOV) sourcearrays_moving
   write(IMOV) ispec_selected_source_moving
+  write(IMOV) source_time_function_moving
 
   close(IMOV)
 
@@ -1069,12 +1107,21 @@ subroutine read_moving_databases(pathToMovingDatabase)
       call stop_the_code(NEW_LINE('') // trim(str) // NEW_LINE('') // '  - > Terminating' // NEW_LINE(''))
     endif
   enddo
+
+  ! re-allocates arrays
   deallocate(ispec_selected_source_moving)
   deallocate(sourcearrays_moving)
-  allocate(ispec_selected_source_moving(NSOURCES, NSTEP))
-  allocate(sourcearrays_moving(NSOURCES,NDIM,NGLLX,NGLLX,NSTEP))
+  deallocate(source_time_function_moving)
+
+  allocate(ispec_selected_source_moving(NSOURCES, NSTEP), &
+           source_time_function_moving(NSOURCES,NSTEP), &
+           sourcearrays_moving(NDIM,NGLLX,NGLLX,NSOURCES,NSTEP),stat=ier)
+  if (ier /= 0) stop 'Error allocating moving sources arrays'
+
+  ! reads in arrays from database
   read(IMOV) sourcearrays_moving
   read(IMOV) ispec_selected_source_moving
+  read(IMOV) source_time_function_moving
   close(IMOV)
 
 end subroutine read_moving_databases

@@ -372,9 +372,8 @@ typedef struct mesh_ {
   // need to know the source_time_function
   // If the source is not moving only the slice containing the source knows the source_time_function
   realw* d_source_time_function_moving;
-  int* d_nsources_local_moving;  // Will have shape NSTEP
   int* nsources;                 // global number of sources
-  realw* d_sourcearrays_moving;  // Will have shape nsources*NDIM*NGLL2*NSTEP
+  realw* d_sourcearrays_moving;  // Will have shape NDIM*NGLL2*nsource*NSTEP
   int* d_ispec_selected_source_moving;  // Will have shape nsources*NSTEP
 
   // receivers
