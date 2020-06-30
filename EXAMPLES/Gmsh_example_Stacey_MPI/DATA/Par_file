@@ -120,6 +120,13 @@ ACOUSTIC_FORCING                = .false.        # acoustic forcing of an acoust
 # (default value 4 is chosen to reproduce the time function from Fig 2a of "Tromp et al., 2010, Noise Cross-Correlation Sensitivity Kernels")
 noise_source_time_function_type = 4
 
+# moving sources
+# Set write_moving_sources_database to .true. if the generation of moving source databases takes
+# a long time. Then the simulation is done in two steps: first you run the code and it writes the databases to file
+# (in DATA folder by default). Then you rerun the code and it will read the databases in there directly possibly
+# saving a lot of time.
+# This is only useful for GPU version (for now)
+write_moving_sources_database   = .false.
 
 #-----------------------------------------------------------------------------
 #

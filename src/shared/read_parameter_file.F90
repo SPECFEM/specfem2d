@@ -168,6 +168,7 @@
     call bcast_all_singlel(add_Bielak_conditions_left)
     call bcast_all_singlel(ACOUSTIC_FORCING)
     call bcast_all_singlei(noise_source_time_function_type)
+    call bcast_all_singlel(write_moving_sources_database)
 
     ! receivers
     call bcast_all_string(seismotype)
@@ -637,6 +638,14 @@
   if (err_occurred() /= 0) then
     some_parameters_missing_from_Par_file = .true.
     write(*,'(a)') 'noise_source_time_function_type = 4'
+    write(*,*)
+  endif
+
+  ! moving sources
+  call read_value_logical_p(write_moving_sources_database, 'write_moving_sources_database')
+  if (err_occurred() /= 0) then
+    some_parameters_missing_from_Par_file = .true.
+    write(*,'(a)') 'write_moving_sources_database = .false.'
     write(*,*)
   endif
 

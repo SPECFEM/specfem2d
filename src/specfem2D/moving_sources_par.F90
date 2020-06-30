@@ -122,7 +122,7 @@ module moving_sources_par
   if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Moving sources on GPU:'
-    write(IMAIN,*) '  write moving database = ',writeMovingDatabases
+    write(IMAIN,*) '  write moving database = ',write_moving_sources_database
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -187,7 +187,7 @@ module moving_sources_par
   enddo
   is_force_source = .true.
 
-  if (writeMovingDatabases) then
+  if (write_moving_sources_database) then
     ! Saves data in a binary file
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_movingDatabase.bin'
     ! pathToMovingDatabaseDir = '/directory/you/want/'  !!! Must end with '/' !!!
@@ -198,16 +198,20 @@ module moving_sources_par
     pathToMovingDatabase = './this_file_does_not_exist_for_sure_and_this_should_never_happen_but_we_never_know'
   endif
 
-  if ((.not. file_exists) .or. (.not. writeMovingDatabases)) then  ! Generate the moving source databases (can be expensive)
+  ! Generate the moving source databases (can be expensive)
+  if ((.not. file_exists) .or. (.not. write_moving_sources_database)) then
     if (myrank == 0) then
       write(IMAIN,*) '    Generating moving source databases ...'
-      if (.not. writeMovingDatabases) then
-        write(IMAIN,*) '      (if this step takes too much time in your case you may want to turn writeMovingDatabases to .true.'
-        write(IMAIN,*) '      In the SOURCES file. In this case you may also want to goto subroutine init_moving_sources and'
-        write(IMAIN,*) '      read the comments)' ! There:
-        ! Turn writeMovingDatabases .true. in the case of GPU computing if the generation of moving source databases takes
-        ! a long time. Then the simulation is done in two steps: first you run the code and it writes the databases to file
-        ! (in DATA folder by default). Then you rerun the code and it will read the databases in there directly saving a lot of time.
+      if (.not. write_moving_sources_database) then
+        write(IMAIN,*) '      If this step takes too much time in your case, you may want to turn in the Par_file:'
+        write(IMAIN,*) '         write_moving_sources_database = .true.'
+        write(IMAIN,*) '      In this case you may also want to goto subroutine init_moving_sources and read the comments.'
+        ! There:
+        ! Turn write_moving_sources_database to .true. in the case of GPU computing
+        ! if the generation of moving source databases takes a long time.
+        ! The simulation is done in two steps:
+        !  1. you run the code and it writes the databases to file (in DATA folder by default).
+        !  2. then you rerun the code and it will read the databases in there directly saving a lot of time.
       endif
       call flush_IMAIN()
     endif
@@ -508,11 +512,11 @@ module moving_sources_par
     enddo ! NSTEP
 
     ! Write moving databases to a binary file
-    if (writeMovingDatabases) then
+    if (write_moving_sources_database) then
       call write_moving_databases(pathToMovingDatabase)
     endif
   else
-    ! Read the binary file file_exists .and. writeMovingDatabases
+    ! Read the binary file file_exists .and. write_moving_sources_database
     call read_moving_databases(pathToMovingDatabase)
   endif
 
@@ -937,7 +941,7 @@ end subroutine init_moving_sources_GPU
       ! endif
     endif
   else
-    ! single mpi process
+    ! single MPI process
     islice_selected_source = 0
   endif
 #endif

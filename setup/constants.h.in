@@ -323,7 +323,7 @@
   double precision, parameter :: GAUSSALPHA = 0.d0,GAUSSBETA = 0.d0
 
 ! number of lines per source in SOURCE file
-  integer, parameter :: NLINES_PER_SOURCE = 17
+  integer, parameter :: NLINES_PER_SOURCE = 16
 
 ! number of iterations to solve the system for xi and eta
 ! setting it to 5 instead of 4 ensures that the result obtained is not compiler dependent

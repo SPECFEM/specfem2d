@@ -153,16 +153,18 @@ void FC_FUNC_(compute_add_sources_ac_cuda,
                                            int* iphasef,
                                            int * itf) {}
 
-void FC_FUNC_(compute_add_moving_sources_ac_cuda,
-              COMPUTE_ADD_MOVING_SOURCES_AC_CUDA)(long* Mesh_pointer,
-                                                  int* iphasef,
-                                                  int* itf,
-                                                  int* nsources) {}
-
 void FC_FUNC_(compute_add_sources_ac_s3_cuda,
               COMPUTE_ADD_SOURCES_AC_s3_CUDA)(long* Mesh_pointer,
                                               int* iphasef,
                                               int* itf) {}
+
+void FC_FUNC_(compute_add_moving_sources_ac_cuda,
+              COMPUTE_ADD_MOVING_SOURCES_AC_CUDA)(long* Mesh_pointer,
+                                                  int* iphase_f,
+                                                  int* nsources_local_moving,
+                                                  int* it_f,
+                                                  int* NSTEP_f,
+                                                  int* nsources_f) {}
 
 void FC_FUNC_(add_sources_ac_sim_2_or_3_cuda,
               ADD_SOURCES_AC_SIM_2_OR_3_CUDA)(long* Mesh_pointer,
@@ -421,6 +423,21 @@ void FC_FUNC_(prepare_stacey_device,
                                      int* h_ib_right,
                                      int* h_ib_top){}
 
+void FC_FUNC_(prepare_moving_sources_cuda,
+              PREPARE_MOVING_SOURCES_CUDA)(long* Mesh_pointer,
+                                           int* h_nsources_local_f_moving,
+                                           int* NSOURCES,
+                                           realw* h_sourcearrays_moving,
+                                           int* h_ispec_selected_source_moving,
+                                           int* NSTEP,
+                                           realw* h_source_time_function_moving) {}
+
+//void FC_FUNC_(recompute_source_position_cuda,
+//              RECOMPUTE_SOURCE_POSITION_CUDA)(long* Mesh_pointer,
+//                                        int* nsources_local_f,
+//                                        realw* h_sourcearrays,
+//                                        int* h_ispec_selected_source) {}
+
 void FC_FUNC_(prepare_cleanup_device,
               PREPARE_CLEANUP_DEVICE)(long* Mesh_pointer,
                                       int* ACOUSTIC_SIMULATION,
@@ -432,20 +449,6 @@ void FC_FUNC_(prepare_cleanup_device,
                                       int* NO_BACKWARD_RECONSTRUCTION,
                                       realw * h_no_backward_acoustic_buffer) {}
 
-void FC_FUNC_(recompute_source_position_cuda,
-              RECOMPUTE_SOURCE_POSITION_CUDA)(long* Mesh_pointer,
-                                        int* nsources_local_f,
-                                        realw* h_sourcearrays,
-                                        int* h_ispec_selected_source) {}
-
-void FC_FUNC_(prepare_moving_sources_cuda,
-              PREPARE_MOVING_SOURCES_CUDA)(long* Mesh_pointer,
-                                        int* h_nsources_local_f_moving,
-                                        int* NSOURCES,
-                                        realw* h_sourcearrays_moving,
-                                        int* h_ispec_selected_source_moving,
-                                        int* NSTEP,
-                                        realw* h_source_time_function_moving) {}
 
 //
 // src/cuda/transfer_fields_cuda.cu

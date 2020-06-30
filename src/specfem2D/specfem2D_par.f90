@@ -45,7 +45,7 @@ module specfem_par
 
   use source_file_par, only: source_type,time_function_type,name_of_source_file,burst_band_width, &
     x_source,z_source,vx_source,vz_source,Mxx,Mzz,Mxz,f0_source,tshift_src,factor,anglesource, &
-    writeMovingDatabases, SOURCE_IS_MOVING
+    SOURCE_IS_MOVING
 
   implicit none
   !=====================================================================

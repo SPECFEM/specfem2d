@@ -1,5 +1,4 @@
 ## Source 1
-## Position
 source_surf                     = .false.        # source inside the medium, or source automatically moved exactly at the surface by the solver
 xs                              = 350280.81      # source location x in meters
 zs                              = 283883.49      # source location z in meters (zs is ignored if source_surf is set to true, it is replaced with the topography height)
@@ -53,11 +52,6 @@ Mxz                             = 0.000000       # Mxz component (for a moment t
 ## Amplification (factor to amplify source time function)
 factor                          = 1.000e+10      # amplification factor
 ## Moving source parameters
-# Turn writeMovingDatabases .true. if the generation of moving source databases takes
-# a long time. Then the simulation is done in two steps: first you run the code and it writes the databases to file
-# (in DATA folder by default). Then you rerun the code and it will read the databases in there directly possibly
-# saving a lot of time. This is only useful for GPU version (for now)
 vx                              = 0.0            # Horizontal source velocity (m/s)
 vz                              = 0.0            # Vertical source velocity (m/s)
-writeMovingDatabases            = .false.
 

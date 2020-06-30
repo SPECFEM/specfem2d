@@ -174,6 +174,9 @@ module shared_input_parameters
   ! noise simulations - source time function type
   integer :: noise_source_time_function_type
 
+  ! Flag for writing moving source databases or not
+  logical :: write_moving_sources_database
+
   !#-----------------------------------------------------------------------------
   !#
   !# receivers
@@ -468,9 +471,6 @@ module source_file_par
 
   ! File name can't exceed MAX_STRING_LEN characters
   character(len=MAX_STRING_LEN), dimension(:),allocatable :: name_of_source_file
-
-  ! Flag for writing moving source databases or not
-  logical :: writeMovingDatabases
 
   ! Flag for moving sources
   logical :: SOURCE_IS_MOVING

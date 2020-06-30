@@ -200,9 +200,6 @@
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,vx_source(i_source))
       call read_value_double_precision(IIN_SOURCE,IGNORE_JUNK,vz_source(i_source))
 
-      ! Read flag for writing moving source databases
-      call read_value_logical(IIN_SOURCE,IGNORE_JUNK,writeMovingDatabases)
-
       ! Set flag SOURCE_IS_MOVING
       if (any(abs(vx_source) > TINYVAL) .or. any(abs(vz_source) > TINYVAL)) then
         SOURCE_IS_MOVING = .true.
@@ -344,7 +341,6 @@
     call bcast_all_l(source_surf,NSOURCES)
 
     call bcast_all_string_array(name_of_source_file,NSOURCES)
-    call bcast_all_singlel(writeMovingDatabases)
     call bcast_all_singlel(SOURCE_IS_MOVING)
   endif
 
